@@ -1,0 +1,10 @@
+/target
+# Never commit the ROM or anything derived from it.
+/rom/*
+!/rom/README.md
+/crates/game/generated/
+/crates/fuzz/generated/
+/movies/*.bk2
+/movies/*.lsmv
+/out/
+*.miss.csv

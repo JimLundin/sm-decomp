@@ -1,0 +1,8 @@
+[package]
+name = "runtime"
+description = "Runtime for recompiled 65816 code: CPU state, bus, dispatch, ALU ops, interpreter fallback hook"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
