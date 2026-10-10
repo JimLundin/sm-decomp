@@ -134,6 +134,7 @@ def run_readiness(root,predecessor=None,original_run=None,timeout=None,jobs=4,it
     print('Run: '+str(run.path),flush=True);print('Brief: '+str(run.path/'brief.md'),flush=True)
     try:
         failures=preflight(run)
+        run.stage_timeout=timeout
         if iteration and predecessor is None:failures.append('Iteration validation requires an accepted predecessor')
         if predecessor is not None:
             try:verify_accepted(predecessor,require_pointer=True)

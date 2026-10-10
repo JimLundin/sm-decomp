@@ -458,6 +458,7 @@ class Run:
         if not name or any(character not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_" for character in name):
             raise ValueError("Stage name must be safe")
         command = [str(argument) for argument in command]
+        if timeout is None:timeout=getattr(self,"stage_timeout",None)
         started = time.monotonic()
         report = {"command": command, "cwd": str(cwd or self.root), "started_utc": utc_now(),
                   "stdout": "logs/" + name + ".stdout.log", "stderr": "logs/" + name + ".stderr.log",
