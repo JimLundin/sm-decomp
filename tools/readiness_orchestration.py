@@ -147,7 +147,9 @@ def run_readiness(root,predecessor=None,original_run=None,timeout=None,jobs=4,it
             def gate(name,operation):
                 try:return operation()
                 except KeyboardInterrupt:raise
-                except Exception as error:return missing(run,name,str(error),'error')
+                except Exception as error:
+                    failed=next((report for report in reversed(list(run.checks.values())) if report.get('status') in ('incomplete','error')),None)
+                    return missing(run,name,str(error),failed['status'] if failed else 'error')
             for name in ('check','lint'):
                 gate(name,lambda name=name:apply_reuse(run,predecessor,name) if decisions[name]['action']=='reuse' else run.run_stage(name,['just',name],timeout=timeout))
             gate('instruction',lambda:pattern_gates(run,timeout))
