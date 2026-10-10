@@ -45,8 +45,46 @@ missing terminators, invalid ROM addresses and out-of-bounds references return
 Rust errors; the fixture admission rejects these before the unchecked C routine
 is built or invoked. No malformed-input C-equivalence claim is made.
 
-Captured game calls, ordered stores, acceptance fault controls, the live C/Rust
-ABI and original-ROM execution belong to later tickets.
+Captured calls can now be supplied with `--captures MANIFEST`. The runner validates
+source/routine identity, initial and per-call full 4 MiB ROM view identities,
+source/destination bounds, and complete before/after WRAM identities before
+building either implementation. Every captured stream receives operand/read/store
+admission, and every declared call runs from a fresh initial state in separate C
+and Rust processes twice. Both full WRAM and repeated Rust diagnostics must match.
+The first mismatch retains routine/fixture/subject identity and byte offset in the
+failing verdict. Coverage absent from captured game data is listed separately
+from the synthetic coverage contract.
+
+Add `--original-rom ROM` to independently execute three eligible captured calls
+at original $80:B119. This instruction runner links the archive-verified upstream
+65816 CPU, never the C decompressor. The ROM is unchanged and must match the
+capture's original-ROM digest. Every captured compressed stream is checked byte
+for byte against that ROM; the selected calls must have output below 64 KiB and
+all destination/backreference accesses above harness scratch/stack memory. The
+bus admits only WRAM and mapped ROM, rejects MMIO and ROM writes, and disables
+gameplay hooks and interrupts. An instruction cap and an explicit RTL sentinel
+validate termination; status, DB, D and stack restoration are checked.
+
+The original ABI stages the source at direct-page $47–49 and long destination at
+$4C–4E with D=0/native mode. Original execution changes routine scratch $47–48,
+$4A–4B and $4F–50. Comparison excludes those bytes, staged pointer bytes and only
+the observed stack-write interval plus the three harness RTL-frame bytes. Every
+raw mismatch and exclusion remains in `original-evidence.json`; any other WRAM
+mismatch fails. This establishes bounded algorithm evidence using an instruction
+CPU from the same upstream project, not independent emulator timing or whole-game
+parity. Full C/Rust comparisons have no exclusions.
+
+A reproducible local run is:
+
+```sh
+python3 tools/decomp_routine.py --captures CAPTURE_DIR/manifest.json --original-rom rom/sm.sfc --output out/decomp/routine
+```
+
+Capture with `just decomp-baseline 9000`; use the resulting replay fixture manifest.
+All ROM views, states and derived evidence remain beneath ignored local output.
+The retained ticket04 run checked all 23 captured calls twice and three original
+calls; it remained partial with `routine_accepted: false`.
+Ordered stores, acceptance fault controls and the live C/Rust ABI belong to later tickets.
 No offline partial result establishes whole-game Rust ownership or original-ROM
 parity.
 
