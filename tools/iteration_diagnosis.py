@@ -24,7 +24,7 @@ def verify_history(root,increment_id):
     """Reverify ordered immutable references, source snapshots and evidence hashes."""
     directory=history_directory(root,increment_id)
     previous=None;records=[];parent=None
-    for index,path in enumerate(sorted(directory.glob('[0-9]*.json')),1):
+    for index,path in enumerate(sorted(path for path in directory.glob('*.json') if re.fullmatch(r'[0-9]{4}\.json',path.name)),1):
         reference=json.loads(path.read_text())
         if path.name!='{:04d}.json'.format(index) or reference.get('sequence')!=index or reference.get('previous_sha256')!=previous:
             raise ValueError('Experiment history ordering/hash chain differs')
