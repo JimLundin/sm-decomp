@@ -208,7 +208,7 @@ pub fn instruction(r: &mut Wram<'_>, rom: &[u8], opcode: u16, pc: u16, k: u16) -
             audio::queue_music(r, byte(0)? as u16, 8, true)?;
             advance = 1;
         }
-        0x8c07..=0x8c85 if (opcode - 0x8c07) % 9 == 0 => {
+        0x8c07..=0x8c85 if (opcode - 0x8c07).is_multiple_of(9) => {
             let index = (opcode - 0x8c07) / 9;
             let quotas = [6, 15, 3, 9, 1];
             audio::queue_sfx(r, (index % 3) as usize, ((byte(0)? as u16) << 8) | quotas[(index / 3) as usize])?;

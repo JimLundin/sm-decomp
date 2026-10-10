@@ -1,6 +1,4 @@
-use port::{WRAM_SIZE, Wram};
-#[path = "../src/plm_instructions.rs"]
-mod instructions;
+use port::{WRAM_SIZE, Wram, plm_instructions as instructions};
 fn rom_with(pc: u16, data: &[u8]) -> Vec<u8> {
     let mut rom = vec![0; 0x300000];
     let off = 0x20000 + (pc as usize & 0x7fff);
