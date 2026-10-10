@@ -84,3 +84,9 @@ snapshots share storage. Independent process comparison evidence stays intact.
 
 `port_batch.py run` and `verify` share storage for immutable snapshots within
 that finished batch automatically.
+
+Finished implementer Git worktrees and their build outputs are removed after
+integration. Where an existing evidence seal names an implementer source path,
+only the exact sealed Rust source snapshot remains at that path so historical
+verification still works. These small snapshots are evidence dependencies;
+they contain no Git worktree metadata or retained build tree.
