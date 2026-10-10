@@ -11,9 +11,19 @@ from port_family import IDENTIFIER, ROOT, WRAM_SIZE, digest, execute, parse_resu
 
 
 def build(manifest, source, run):
+    eproj = any(r["symbol"] == "EprojInstruction" for r in manifest["routines"])
+    pointer_bank = 0x86 if eproj else 0x84
     (run / "plm-shim.c").write_text(
         '#include "sm_rtl.h"\n#include "variables.h"\n#include "funcs.h"\nextern const uint8 *CallPlmInstr(uint32,const uint8*,uint16);\nextern CoroutineRet PlmHandler_Async(void);\nconst uint16 *PlmInstruction(uint16 slot,const uint16 *script) {\n const uint8 *p=(const uint8*)script;\n return (const uint16*)CallPlmInstr(GET_WORD(p)|0x840000,p+2,slot);\n}\nuint32 PlmControlFrame(void) {return PlmHandler_Async();}\nuint32 PlmFrame(void) {return PlmHandler_Async();}\n'
     )
+    if eproj:
+        (run / "plm-shim.c").write_text('#include ' + json.dumps(str((source / "src/sm_86.c").resolve())) + '\n')
+        with (run / "plm-shim.c").open("a") as shim:
+            shim.write('const uint16 *EprojInstruction(uint16 slot,const uint16 *script) {\n'
+                       'const uint8 *p=(const uint8*)script;\n'
+                       'return (const uint16*)CallEprojInstr(GET_WORD(p)|0x860000,slot,p+2);}\n')
+            shim.write('void EprojPreinstruction(uint16 slot,uint16 address) {'
+                       'CallEprojPreInstr(address|0x860000,slot);}\n')
     host_support = run / "host-support.c"
     host_support.write_text(
         "#define main retained_main\n#include "
@@ -104,6 +114,8 @@ int main(int argc, char **argv) {
 }
 """
     )
+    if pointer_bank == 0x86:
+        oracle.write_text(oracle.read_text().replace("0x18000", "0x28000").replace("0x840000", "0x860000"))
     module = Path(manifest["rust_module"])
     if not module.is_absolute():
         module = ROOT / module
@@ -152,6 +164,8 @@ fn main() {{
         + [source / "src" / n for n in ("spc_player.c", "tracing.c", "util.c")]
         + sorted((source / "src/snes").glob("*.c"))
     )
+    if eproj:
+        units = [p for p in units if p != source / "src/sm_86.c"]
     execute(
         [
             "cc",

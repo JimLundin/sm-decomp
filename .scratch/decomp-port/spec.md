@@ -54,6 +54,7 @@ observable hardware effects, Rust hits and fallback measurements.
 - 30: native PLM tilemap rendering and drawn-frame execution, offline verified.
 - 31: native lava/room/trigger PLM conditions and single-block drawing, offline verified.
 - 32: enemy-projectile allocation, nine room-effect initializers and PLM spawning, offline verified.
+- 33: enemy-projectile bytecode, shared movement, room-effect preinstructions and frame scheduling, offline verified.
 
 This is the first frontier, not the completion boundary of the user's goal.
 Expand tickets into substantive gameplay subsystems after this frontier, using
