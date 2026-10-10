@@ -221,3 +221,16 @@ fn left_yellow_non_bomb_falls_through_and_wakes_opposite_gate() {
     assert_eq!(ram.word(0x1d77 + 78), 1);
     assert_eq!(ram.word(0x1c37), 0);
 }
+
+#[test]
+fn super_missile_door_wakeup_sets_hit_variable_and_link_timer() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut ram = Wram::new(&mut bytes).unwrap();
+    ram.set_word(0x1d77, 0x8200);
+    ram.set_word(0xdebc, 0x9234);
+    plm::preinstruction(&mut ram, 0xbd50, 0).unwrap();
+    assert_eq!(ram.word(0x1d77), 0);
+    assert_eq!(ram.word(0xdf0c), 119);
+    assert_eq!(ram.word(0x1d27), 0x9234);
+    assert_eq!(ram.word(0xde1c), 1);
+}

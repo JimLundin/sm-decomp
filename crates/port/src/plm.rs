@@ -534,7 +534,90 @@ fn spawn_positioned(
     }
     Ok(())
 }
+/// Execute supported door and room-condition preinstructions on canonical state.
+pub fn preinstruction(r: &mut Wram, address: u16, k: u16) -> Result<(), &'static str> {
+    let j = slot(k)?;
+    let hit = r.word(0x1d77 + j);
+    let wake = match address {
+        0xbd0f => hit != 0,
+        0xbd26 => hit & 0xf00 == 0x300,
+        0xbd50 => {
+            if hit & 0xf00 == 0x200 {
+                r.set_word(0xdf0c + j, 119);
+            }
+            matches!(hit & 0xf00, 0x100 | 0x200)
+        }
+        0xbd88 => hit & 0xf00 == 0x200,
+        0xbdb2 => true,
+        0xbe1c => false,
+        0xbdd4 | 0xbde3 | 0xbdf2 => {
+            crate::system::dispatch(
+                r,
+                "CheckBossBitForCurArea",
+                match address {
+                    0xbdd4 => 1,
+                    0xbde3 => 2,
+                    _ => 4,
+                },
+                0,
+            )? & 1
+                != 0
+        }
+        0xbe01 => {
+            if r.word(0xe50) >= r.word(0xe52) {
+                crate::system::dispatch(r, "SetEventHappened", 0, 0)?;
+                true
+            } else {
+                false
+            }
+        }
+        0xbe1f => r.word(0x1e6d) & 0x8000 != 0,
+        0xbe30 => crate::system::dispatch(r, "CheckEventHappened", 15, 0)? & 1 != 0,
+        0xb7dd => {
+            r.set_word(0x1d77 + j, hit.wrapping_sub(1));
+            if hit == 1 {
+                r.set_word(0x5f5, 0);
+                delete(r, j);
+            }
+            return Ok(());
+        }
+        _ => return Err("unsupported PLM preinstruction"),
+    };
+    if wake {
+        r.set_word(0x1d77 + j, 0);
+        r.set_word(INSTR + j, r.word(0xdebc + j));
+        r.set_word(TIMER + j, 1);
+    } else {
+        if hit != 0 && address != 0xbd0f {
+            crate::audio::dispatch(r, "QueueSfx2_Max6", 0x57, 0)?;
+        }
+        if address != 0xbd0f {
+            r.set_word(0x1d77 + j, 0);
+        }
+    }
+    Ok(())
+}
 pub fn dispatch_rom(r: &mut Wram, _rom: &[u8], name: &str, a: i32, _b: i32) -> Result<u32, &'static str> {
+    let pre = match name {
+        "PlmPreInstr_GoToLinkInstrIfShot" => Some(0xbd0f),
+        "PlmPreInstr_GoToLinkInstrIfShotWithPowerBomb" => Some(0xbd26),
+        "PlmPreInstr_GoToLinkInstrIfShotWithAnyMissile" => Some(0xbd50),
+        "PlmPreInstr_GoToLinkInstrIfShotWithSuperMissile" => Some(0xbd88),
+        "PlmPreInstr_GoToLinkInstruction" => Some(0xbdb2),
+        "PlmPreInstr_PlayDudSound" => Some(0xbe1c),
+        "PlmPreInstr_GotoLinkIfBoss1Dead" => Some(0xbdd4),
+        "PlmPreInstr_GotoLinkIfMiniBossDead" => Some(0xbde3),
+        "PlmPreInstr_GotoLinkIfTorizoDead" => Some(0xbdf2),
+        "PlmPreInstr_GotoLinkIfEnemyDeathQuotaOk" => Some(0xbe01),
+        "PlmPreInstr_GotoLinkIfTourianStatueFinishedProcessing" => Some(0xbe1f),
+        "PlmPreInstr_GotoLinkIfCrittersEscaped" => Some(0xbe30),
+        "PlmPreInstr_B7EB_DecTimerEnableSoundsDeletePlm" => Some(0xb7dd),
+        _ => None,
+    };
+    if let Some(address) = pre {
+        preinstruction(r, address, u16::try_from(a).map_err(|_| "invalid PLM argument")?)?;
+        return Ok(0);
+    }
     let address = match name {
         "PlmSetup_C806_LeftGreenGateTrigger" => 0xc54d,
         "PlmSetup_C80A_RightGreenGateTrigger" => 0xc56c,

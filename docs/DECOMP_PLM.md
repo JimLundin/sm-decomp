@@ -131,3 +131,18 @@ verifies62setup routines/576cases, including144new gate cases covering projectil
 kinds, absent/present partner and nonzero timers. Fourteen independent PLM tests,
 full Rust tests and Clippy pass. Gate trigger additions are offline verified;
 closed gate projectile creation and the PLM frame/rendering engine remain C-owned.
+
+## Door preinstructions
+
+Native preinstructions cover ordinary/power-bomb/missile/super-missile shot
+conditions, unconditional link wakeup, dud sound, boss/miniboss/Torizo state,
+enemy death quota, Tourian statue and critter event checks, plus boot sound timer
+expiry. System/event scratch writes and native audio queues are preserved.
+Super-missile hit state119 belongs to the distinct plm_variables overlay0xdf0c,
+not setup variable0x1e17. The bounded control frame dispatches these handlers;
+unsupported preinstructions/rendering/coroutines remain explicit errors.
+
+Actual-C evidence `out/port/plm-door-preinstructions/20261010T225127.240913Z/verdict.json`
+passes75routines/680cases (104new preinstruction cases). Fifteen independent
+PLM tests, full Rust suite and Clippy pass. New preinstructions are offline
+verified; no additional live or original-ROM parity claim is made.

@@ -49,6 +49,7 @@ observable hardware effects, Rust hits and fallback measurements.
 - 25: native room/hardcoded PLM allocation, offline verified; hardcoded sound-enable setup live-exercised.
 - 26: native doors, open gates and escape-room PLM setups, offline verified (ten additions).
 - 27: all eight colored gate triggers and adjacent-PLM wakeup, offline verified.
+- 28: door shot/room-condition preinstructions and bounded-frame dispatch, offline verified.
 
 This is the first frontier, not the completion boundary of the user's goal.
 Expand tickets into substantive gameplay subsystems after this frontier, using

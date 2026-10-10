@@ -293,7 +293,10 @@ pub fn process_control_frame(r: &mut Wram<'_>, rom: &[u8], limit: usize) -> Resu
             continue;
         }
         if ![0x84e6, 0x853d, 0x86d0, 0x8aa6, 0x8ae0, 0xbba3].contains(&r.word(PRE + k)) {
-            return Err("unsupported PLM preinstruction");
+            crate::plm::preinstruction(r, r.word(PRE + k), k as u16)?;
+            if r.word(HEADER + k) == 0 {
+                continue;
+            }
         }
         let timer = r.word(INSTR_TIMER + k).wrapping_sub(1);
         r.set_word(INSTR_TIMER + k, timer);
