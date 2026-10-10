@@ -160,11 +160,13 @@ class ProductionOperations:
         self.root=Path(root).resolve();self.original_run=original_run;self.timeout=timeout;self.jobs=jobs
 
     def accepted(self,verify_material=True):
-        from readiness_reuse import verify_accepted
+        from readiness_reuse import verify_accepted,accepted_pointer
         from readiness_orchestration import verify_origins
         pointer=json.loads((self.root/'out/accepted.json').read_text())
         owner=Path(pointer['run_path']);verified=verify_accepted(owner,require_pointer=True);verify_origins(owner,verified)
-        if pointer.get('run_id')!=verified['manifest']['run_id']:raise ValueError('Current accepted pointer run identity differs')
+        expected_pointer=accepted_pointer(owner,verified)
+        if any(pointer.get(key)!=value for key,value in expected_pointer.items() if key!='accepted_utc') or not pointer.get('accepted_utc'):
+            raise ValueError('Current accepted pointer fields differ from verified accepted origin')
         coverage=verified['verdict']['checks']['changed-entry-coverage']
         total=coverage['generated_instructions']+coverage['interpreted_instructions']
         inputs=verified['manifest']['identities']['inputs']
