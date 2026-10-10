@@ -102,6 +102,8 @@ dependencies = [
  "anyhow",
  "game",
  "movie",
+ "serde_json",
+ "sha2",
  "snes",
 ]
 

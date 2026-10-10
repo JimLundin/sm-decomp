@@ -11,3 +11,6 @@ anyhow.workspace = true
 movie = { path = "../movie" }
 snes = { path = "../snes" }
 game = { path = "../game" }
+
+serde_json.workspace = true
+sha2.workspace = true

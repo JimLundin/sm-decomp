@@ -8,7 +8,7 @@ use std::path::PathBuf;
 
 fn main() -> anyhow::Result<()> {
     let out = PathBuf::from(std::env::var("OUT_DIR")?).join("generated.rs");
-    let real = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR")?).join("../../out/generated/game.rs");
+    let real = generated_input("SM_RECOMP_GENERATED_GAME", "game.rs")?;
     println!("cargo:rerun-if-changed={}", real.display());
     println!("cargo:rerun-if-changed=build.rs");
 
@@ -19,7 +19,7 @@ fn main() -> anyhow::Result<()> {
         std::fs::write(&out, demo()?)?;
     }
     println!("cargo:rustc-check-cfg=cfg(sm_generated)");
-    let steps = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR")?).join("../../out/generated/steps.rs");
+    let steps = generated_input("SM_RECOMP_GENERATED_STEPS", "steps.rs")?;
     println!("cargo:rerun-if-changed={}", steps.display());
     let steps_out = PathBuf::from(std::env::var("OUT_DIR")?).join("steps.rs");
     if steps.exists() {
@@ -31,6 +31,17 @@ fn main() -> anyhow::Result<()> {
         )?;
     }
     Ok(())
+}
+
+/// Explicit run-local inputs must exist; never substitute shared output or demo.
+fn generated_input(variable: &str, filename: &str) -> anyhow::Result<PathBuf> {
+    println!("cargo:rerun-if-env-changed={variable}");
+    if let Some(path) = std::env::var_os(variable) {
+        let path = PathBuf::from(path);
+        anyhow::ensure!(path.is_file(), "{variable} names a missing generated input: {}", path.display());
+        return Ok(path);
+    }
+    Ok(PathBuf::from(std::env::var("CARGO_MANIFEST_DIR")?).join("../../out/generated").join(filename))
 }
 
 /// Demo "ROM" at $80:8000 exercising widths, a loop, a call and a store.
