@@ -20,18 +20,63 @@ fn bounded_views_preserve_unaligned_words_and_rom_bank_mirrors() {
 }
 
 #[test]
-fn unsupported_commands_and_destination_overflow_are_explicit() {
+fn destination_overflow_is_explicit() {
     let mut bytes = vec![0xa5; WRAM_SIZE];
     let mut wram = WramView::new(&mut bytes).unwrap();
-    let rom = RomView::new(&[0x20, 0x42, 0xff]).unwrap();
-    assert!(matches!(
-        decompress_to_mem(&rom, &mut wram, 0x808000, 4096),
-        Err(DecompressError::UnsupportedCommand(0x20))
-    ));
-    assert_eq!(wram.read(4096).unwrap(), 0xa5);
     let literal = RomView::new(&[1, 0x12, 0x34, 0xff]).unwrap();
     assert!(matches!(
         decompress_to_mem(&literal, &mut wram, 0x808000, WRAM_SIZE - 1),
         Err(DecompressError::WramBounds(WRAM_SIZE))
     ));
+}
+
+#[test]
+fn fills_preserve_odd_words_and_wrapping_bytes() {
+    let stream = [0x22, 0x42, 0x44, 0x12, 0x34, 0x63, 0xfe, 0xff];
+    let mut bytes = vec![0xa5; WRAM_SIZE];
+    let result =
+        decompress_to_mem(&RomView::new(&stream).unwrap(), &mut WramView::new(&mut bytes).unwrap(), 0x808000, 4096)
+            .unwrap();
+    assert_eq!(&bytes[4095..4109], &[0xa5, 0x42, 0x42, 0x42, 0x12, 0x34, 0x12, 0x34, 0x12, 0xfe, 0xff, 0, 1, 0xa5]);
+    assert_eq!(result.written, 12);
+}
+
+#[test]
+fn overlapping_and_preexisting_backreferences_are_sequential() {
+    let stream = [0x00, 0x12, 0x83, 0, 0, 0xa1, 0, 0, 0xc2, 1, 0xfc, 2, 1, 0xff];
+    let mut bytes = vec![0xa5; WRAM_SIZE];
+    let result =
+        decompress_to_mem(&RomView::new(&stream).unwrap(), &mut WramView::new(&mut bytes).unwrap(), 0x808000, 4096)
+            .unwrap();
+    assert_eq!(&bytes[4096..4109], &[0x12, 0x12, 0x12, 0x12, 0x12, 0xed, 0xed, 0xed, 0xed, 0xed, 0x12, 0xed, 0x12]);
+    assert_eq!(result.written, 13);
+    let stream = [0xc1, 3, 0xff];
+    let result =
+        decompress_to_mem(&RomView::new(&stream).unwrap(), &mut WramView::new(&mut bytes).unwrap(), 0x808000, 8)
+            .unwrap();
+    assert_eq!(&bytes[8..10], &[0xa5, 0xa5]);
+    assert!(result.cases.contains("preexisting-reference"));
+}
+
+#[test]
+fn malformed_streams_fail_at_checked_memory_boundaries() {
+    for (stream, destination, error) in [
+        (vec![0xe0], 4096, DecompressError::InvalidSource(0x808001)),
+        (vec![0x40, 0x12], 4096, DecompressError::InvalidSource(0x808002)),
+        (vec![0xc0, 1, 0xff], 0, DecompressError::WramBounds(usize::MAX)),
+        (vec![0x80, 1, 0, 0xff], WRAM_SIZE - 1, DecompressError::WramBounds(WRAM_SIZE)),
+        (vec![0x00, 0x12], 4096, DecompressError::InvalidSource(0x808002)),
+    ] {
+        let mut bytes = vec![0xa5; WRAM_SIZE];
+        assert_eq!(
+            decompress_to_mem(
+                &RomView::new(&stream).unwrap(),
+                &mut WramView::new(&mut bytes).unwrap(),
+                0x808000,
+                destination
+            )
+            .unwrap_err(),
+            error
+        );
+    }
 }
