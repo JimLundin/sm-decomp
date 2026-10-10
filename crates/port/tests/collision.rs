@@ -1,6 +1,4 @@
-use port::{WRAM_SIZE, Wram, audio, samus, samus_control};
-#[path = "../src/collision.rs"]
-mod collision;
+use port::{WRAM_SIZE, Wram, collision};
 struct NoPlm;
 impl collision::Host for NoPlm {
     fn spawn_plm(&mut self, _: &mut Wram<'_>, _: u16, _: &mut i32) -> Result<u8, &'static str> {

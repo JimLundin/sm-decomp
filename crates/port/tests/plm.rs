@@ -1,6 +1,4 @@
-use port::{WRAM_SIZE, Wram};
-#[path = "../src/plm.rs"]
-mod plm;
+use port::{WRAM_SIZE, Wram, plm};
 #[test]
 fn quicksand_clamps_fractional_displacement_and_tracks_contact() {
     let mut bytes = vec![0; WRAM_SIZE];
