@@ -396,6 +396,10 @@ int main(int argc,char **argv) {
             raise ValueError('PLM callback execution counts diverged')
         if verdict['plm_callback_hits']['mixed-0'] != verdict['plm_callback_hits']['mixed-1']:
             raise ValueError('native PLM ownership differs across independent replays')
+        # Preserve successful comparison evidence even if an additional installed
+        # subsystem was unexercised and therefore cannot receive admission.
+        verdict.update(state_effects_match=True, hits=hits, artifacts=inventories['c-0'],
+                       transformations=transformations, binary_sha256=digest(run / 'live'))
         if args.plm_verdict and not verdict['plm_callback_hits']['mixed-0']['rust']:
             raise ValueError('no native Rust PLM setup executed')
         verdict.update(status='mixed-C-Rust-integration', live_exercised=True, hits=hits,
