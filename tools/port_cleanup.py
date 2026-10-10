@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Preview/remove unsealed Cargo intermediates from finished evidence runs.
+"""Preview/remove unsealed Cargo and archive intermediates from finished evidence runs.
 
-Never removes fixtures, verdicts, pointers, binaries or sealed build files.
+Never removes fixtures, verdicts, pointers, linked binaries or sealed build files.
 Unfinished runs and symlinked directories are skipped. Existing evidence is
 immutable: an inventory entry anywhere under a target directory protects it.
 """
@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 import shutil
 import time
+import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -130,9 +131,12 @@ def deduplicate(root, apply):
                     # atomic replacement so interruption never loses a snapshot.
                     if path.read_bytes() != payload or previous.read_bytes() != payload:
                         raise RuntimeError(f'snapshot changed: {path}')
-                    temporary = path.with_name(path.name + '.dedup-link')
-                    os.link(previous, temporary)
-                    os.replace(temporary, path)
+                    temporary = path.with_name(path.name + '.dedup-link-' + uuid.uuid4().hex)
+                    try:
+                        os.link(previous, temporary)
+                        os.replace(temporary, path)
+                    finally:
+                        temporary.unlink(missing_ok=True)
     return reclaimed
 
 
