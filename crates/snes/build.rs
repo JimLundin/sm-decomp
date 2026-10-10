@@ -37,5 +37,19 @@ fn main() -> anyhow::Result<()> {
         let src = recomp::step::emit_table(&[(cfg, None)], &read)?;
         std::fs::write(PathBuf::from(std::env::var("OUT_DIR")?).join(name), src)?;
     }
+    for phase in 0..8 {
+        let mut program = vec![0x18, 0xfb, 0xe2, 0x30, 0xa9, 0x80, 0x8d, 0, 0x42];
+        program.extend(std::iter::repeat_n(0xea, phase));
+        program.extend([0xea, 0xea, 0x80, 0xfc]);
+        let read = |addr: u32| program.get(addr.wrapping_sub(0x8000) as usize).copied();
+        let cfg = recomp::cfg::build(&read, 0x8000, true, true, &HashSet::new())?;
+        let src = recomp::step::emit_table(&[(cfg, None)], &read)?;
+        std::fs::write(PathBuf::from(std::env::var("OUT_DIR")?).join(format!("nmi_phase_{phase}.rs")), src)?;
+    }
+    let program = [0xa9, 1, 0x8d, 0x0b, 0x42, 0xea, 0xea];
+    let read = |addr: u32| program.get(addr.wrapping_sub(0x8000) as usize).copied();
+    let cfg = recomp::cfg::build(&read, 0x8000, true, true, &HashSet::new())?;
+    let src = recomp::step::emit_table(&[(cfg, None)], &read)?;
+    std::fs::write(PathBuf::from(std::env::var("OUT_DIR")?).join("dma_steps.rs"), src)?;
     Ok(())
 }

@@ -119,6 +119,38 @@ fn generated_and_interpreted_implied_cycles_agree_across_hdma_pauses() {
 }
 
 #[test]
+fn emitted_nop_matches_all_independent_hdma_boundaries_without_observer_effects() {
+    let rom = hdma_cartridge();
+    let expected: Vec<_> = include_str!("hdma_oracle.csv")
+        .lines()
+        .filter(|row| !row.starts_with('#'))
+        .map(|row| {
+            let (clock, pc) = row.split_once(',').unwrap();
+            (clock.parse::<u64>().unwrap(), u32::from_str_radix(pc, 16).unwrap())
+        })
+        .collect();
+    let mut inspected = snes::Subject::with_steps(&rom, 0, hdma_emitted::STEP_TABLE).unwrap();
+    let mut plain = snes::Subject::with_steps(&rom, 0, hdma_emitted::STEP_TABLE).unwrap();
+    let mut index = 0;
+    for pad in [0, 0x1000, 0x8000] {
+        inspected
+            .run_frame_inspected(pad, |boundary, _| {
+                if index < expected.len() && boundary.master_clock >= expected[index].0 {
+                    assert_eq!((boundary.master_clock, boundary.pc), expected[index]);
+                    index += 1;
+                }
+            })
+            .unwrap();
+        plain.run_frame(pad).unwrap();
+        assert_eq!(inspected.state_bytes(), plain.state_bytes(), "passive observer");
+        assert_eq!(inspected.wram(), plain.wram());
+        assert_eq!(inspected.framebuffer_bytes(), plain.framebuffer_bytes());
+    }
+    assert_eq!(index, expected.len());
+    assert!(inspected.generated_steps > 100);
+}
+
+#[test]
 fn terminated_channels_do_not_charge_cpu_pause_alignment() {
     use rustysnes_core::{Bus, cart::Region, cpu::Bus as CpuBus};
     let mut bus = Bus::new(Region::Ntsc);

@@ -15,6 +15,10 @@ doctor:
 readiness-preflight:
     python3 tools/readiness.py preflight
 
+# Complete enabled native corpus and independent generated-step timing checks.
+pattern-check:
+    python3 tools/readiness_patterns.py --timing
+
 # Includes corpus cases if `just fuzz` has generated them.
 check:
     cargo fmt --all --check
