@@ -164,13 +164,23 @@ def main():
                 text, replacements = signature.subn(r'\1C_' + symbol + r'\2', text)
                 if replacements != 1:
                     raise ValueError(f'definition rename count differs: {symbol}')
+                # Some bank-local functions have no funcs.h declaration. Keep a
+                # declaration for callers after renaming their original definition.
+                definition = signature.search(bank.read_text())
+                prototype = definition.group(0).rsplit('{', 1)[0].rstrip() + ';\n'
+                include_end = text.find('#include "funcs.h"')
+                if include_end < 0:
+                    raise ValueError(f'owning unit lacks declarations include: {symbol}')
+                include_end = text.index('\n', include_end) + 1
+                text = text[:include_end] + prototype + text[include_end:]
                 bank_texts[bank] = text
                 c_type = {'void': 'void', 'uint8': 'uint8_t', 'uint16': 'uint16_t', 'uint32': 'uint32_t', 'int32': 'int32_t', 'rom_ptr': 'const uint16_t *'}[routine['return']]
                 declaration = ','.join(('const uint16_t *' if kind == 'rom_ptr' else kind + '_t ') + name for kind, name in zip(types, ['a', 'b'])) or 'void'
                 arguments = ','.join(['a', 'b'][:count])
-                actual = ','.join(['a' if count > 0 else '0', 'b' if count > 1 else '0'])
+                actual_args = ['a' if count > 0 else '0', 'b' if count > 1 else '0']
                 if 'rom_ptr' in types:
-                    actual = ','.join(f'PortPointerResult({name},a)' if kind == 'rom_ptr' else name for kind, name in zip(types, ['a', 'b']))
+                    actual_args = [f'PortPointerResult({name},a)' if kind == 'rom_ptr' else name for kind, name in zip(types, ['a', 'b'])]
+                actual = ','.join(actual_args)
                 c_call = f'C_{symbol}({arguments})'
                 reference = f'{c_call};' if c_type == 'void' else f'result=(uint32_t){c_call};'
                 returned = '' if c_type == 'void' else f'return ({c_type})result;'
@@ -188,7 +198,7 @@ def main():
  port_call_depth--;
  if(outer) {{
   if(capture<=8)PortCapture({index},capture,"after");
-  fprintf(port_calls,"{index} %lu %lld %lld %lld\\n",capture,(long long)({actual.split(',')[0]}),(long long)({actual.split(',')[1]}),(long long)result);
+  fprintf(port_calls,"{index} %lu %lld %lld %lld\\n",capture,(long long)({actual_args[0]}),(long long)({actual_args[1]}),(long long)result);
  }}
  {returned}
 }}''')
