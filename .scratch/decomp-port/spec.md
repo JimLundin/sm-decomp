@@ -68,3 +68,12 @@ or original-ROM movie completion. The current public crate additionally owns
 offline-verified projectile core (34 routines/3,656 cases) and common flying
 enemy AI/movement (17 routines/454 cases), with 63 independent Rust tests.
 Projectile terrain flight/firing and Norfair Rio expansion are active tickets16/17.
+
+Normal projectile flight/firing now has accepted live replacement at
+`out/port/flight-fixed-live/20261010T204643.443282Z/verdict.json`: four fresh
+9,000-frame C/mixed processes match and execute434 Rust flight/firing calls
+across four symbols, with the accepted Rust decompressor/RNG retained and zero
+CPU fallback. Native PLM has no calls in this prefix and stays offline-verified.
+Public crate includes Norfair Rio's18 state routines/162 C fixtures; Sidehopper
+and Desgeega jump closure is active ticket18. Overall full Rust ownership and
+original-ROM gameplay parity remain unproven.
