@@ -50,7 +50,7 @@ def verify_source(manifest, source):
 
 
 def prepare_fixture(fixture, directory):
-    # Validate the initial literal-only contract before letting unsafe C see it.
+    # Admission proves every C access is bounded, without predicting output values.
     if not fixture['id'].replace('-', '').isalnum():
         raise ValueError('invalid fixture id')
     destination = fixture['destination']
@@ -61,42 +61,62 @@ def prepare_fixture(fixture, directory):
     stream = bytes(fixture['stream'])
     cursor = 0
     stores = 0
+    def take(count):
+        nonlocal cursor
+        if cursor + count > len(stream):
+            raise ValueError('truncated fixture operand or data')
+        result = stream[cursor:cursor + count]
+        cursor += count
+        return result
     while cursor < len(stream):
-        header = stream[cursor]
-        cursor += 1
+        header = take(1)[0]
         if header == 255:
             break
         if header & 0xe0 == 0xe0:
-            if cursor == len(stream):
-                raise ValueError('truncated extended header')
-            command = (header * 8) & 0xe0
-            length = ((header & 3) << 8 | stream[cursor]) + 1
-            cursor += 1
+            mode = (header * 8) & 0xe0
+            length = ((header & 3) << 8 | take(1)[0]) + 1
         else:
-            command = header & 0xe0
+            mode = header & 0xe0
             length = (header & 31) + 1
-        if command != 0:
-            raise ValueError('fixture command outside initial literal-only C contract')
-        stores += length
-        cursor += length
-        if stores + destination > 0x20000:
+        if destination + stores + length > 0x20000:
             raise ValueError('fixture destination writes outside WRAM')
+        if mode & 0x80:
+            if mode >= 0xc0:
+                reference = destination + stores - take(1)[0]
+            else:
+                reference = destination + int.from_bytes(take(2), 'little')
+            if reference < 0 or reference + length > 0x20000:
+                raise ValueError('fixture backreference reads outside WRAM')
+        else:
+            take(length if mode == 0 else 2 if mode == 0x40 else 1)
+        stores += length
     else:
         raise ValueError('fixture lacks bounded terminator')
     if cursor != len(stream):
-        raise ValueError('fixture stream truncated or trailing bytes')
+        raise ValueError('fixture stream has trailing bytes')
     if len(fixture['expected_bytes']) != stores or fixture['expected_written'] != stores:
         raise ValueError('fixture expected extent differs from declared write extent')
     directory.mkdir()
     # Fixture bytes and expected bytes are separately specified, never derived by decompression.
-    rom = bytearray(0x8000)
     source = fixture['source']
     if not 0 <= source <= 0xffffff or source & 0x8000 == 0:
         raise ValueError('invalid fixture source')
-    offset = (((source >> 16) << 15) | (source & 0x7fff)) & 0x3fffff
-    if offset + len(stream) > len(rom) or (source & 0xffff) + len(stream) > 0x10000:
-        raise ValueError('initial fixture contract excludes bank-crossing streams')
-    rom[offset:offset + len(fixture['stream'])] = bytes(fixture['stream'])
+    placements = []
+    address = source
+    for byte in stream:
+        if address > 0xffffff:
+            raise ValueError('fixture source exceeds 24-bit ROM')
+        offset = (((address >> 16) << 15) | (address & 0x7fff)) & 0x3fffff
+        placements.append((offset, byte))
+        old = address
+        address += 1
+        if old & 0xffff == 0xffff:
+            address += 0x8000
+    if len({offset for offset, _ in placements}) != len(placements):
+        raise ValueError('fixture source aliases earlier stream bytes')
+    rom = bytearray(max(offset for offset, _ in placements) + 1)
+    for offset, byte in placements:
+        rom[offset] = byte
     initial = bytes([fixture['initial_fill']]) * 0x20000
     expected = bytearray(initial)
     dst = fixture['destination']
@@ -158,6 +178,7 @@ def run_job(args):
             candidate = json.loads((directory / 'rust.json').read_text())
             if candidate['status'] != 'ok' or candidate['written'] != fixture['expected_written'] or candidate['final_source'] != fixture['expected_final_source'] or candidate['cases'] != fixture['expected_cases']:
                 raise ValueError(f"candidate diagnostics differ: {fixture['id']}")
+            record['observed_cases'] = candidate['cases']
             observed.update(candidate['cases'])
             expected = (directory / 'expected.wram').read_bytes()
             for subject in ['c', 'rust']:
@@ -168,6 +189,9 @@ def run_job(args):
             record['status'] = 'matched'
         verdict['observed_cases'] = sorted(observed)
         verdict['missing_cases'] = sorted(set(manifest['required_cases']) - observed)
+        if verdict['missing_cases']:
+            raise ValueError('required synthetic cases were not exercised')
+        verdict['synthetic_verified'] = True
         verdict['stages'].append('compare')
         # Later tickets establish full coverage and negative controls before any acceptance.
         verdict['status'] = 'partial'
