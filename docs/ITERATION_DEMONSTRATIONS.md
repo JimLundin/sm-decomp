@@ -17,8 +17,10 @@ The release `iteration-probe` uses a literal synthetic cartridge, real productio
 emitted store, actual Subject/Reference fetch/PC execution and a state-dependent
 faulty body. An early 65-instruction window passes; the same key's later execution
 fails at instruction 86. Cold failed-frame localization retains instruction and
-bus mismatch snapshots even though paired-cache next-frame validation rejects
-the candidate. Correct emitted predecessor and disabled-key controls both pass
+bus mismatch snapshots. Valid paired-cache evidence compares each restored side
+against its own cold execution through two rollovers and records candidate/reference
+divergence. Matching warm focus still fails at instruction 86; serializer fidelity
+does not certify candidate correctness. Correct emitted predecessor and disabled-key controls both pass
 through the identical 87-instruction interval. ROM/input/emitted source, executable
 and report identities remain with the evidence. The probe is nonaccepting.
 

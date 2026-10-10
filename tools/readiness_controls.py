@@ -173,6 +173,8 @@ def diagnose_failure(run, failure, predecessor=None, intervals=None, timeout=Non
     if child:
         old_reports=[item['predecessor'] for item in reports]
         child_status='pass' if old_reports and all(item.get('status')=='pass' and item.get('complete') is True for item in old_reports) else next((item.get('status','incomplete') for item in old_reports if item.get('status')!='pass' or item.get('complete') is not True),'incomplete')
+        from readiness_reuse import seal_owned_evidence
+        seal_owned_evidence(child);child.save_manifest()
         child.finalize(child_status,reason='Matched predecessor controls '+child_status)
         result["predecessor_control_run"]=str(child.path)
     result.update(complete=all(all(control.get("complete") is True for control in (item["candidate"],item["disabled"],item["predecessor"])) for item in reports),controls=reports,routing=reports[0]["routing"] if reports else route_failure(failure))

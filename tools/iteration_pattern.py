@@ -186,9 +186,14 @@ def verify_increment(owner, verified):
     if proof_report['opcode']!=increment['opcode'] or report['opcode']!=increment['opcode']:raise ValueError('Promoted pattern proof differs')
     snapshot=Path(owner)/'source/files'
     if digest(snapshot/DECLARATION)!=report['proposed_declaration_sha256']:raise ValueError('Promoted declaration differs from independently proved proposal')
-    for entry in json.loads((preparation/'source/inventory.json').read_text())['files']:
-        if entry['path'] in (DECLARATION,'config/functions.toml'):continue
-        if digest(snapshot/entry['path'])!=entry['sha256']:raise ValueError('Promoted emitter/runtime source differs from proved preparation')
+    if digest(snapshot/'config/functions.toml')!=report['proposed_config_sha256']:
+        raise ValueError('Promoted config differs from sealed bounded proposal')
+    _,candidate_source=source_snapshot(owner)
+    _,prepared_source=source_snapshot(preparation)
+    excluded={DECLARATION,'config/functions.toml'}
+    expected={row['path']:(row['sha256'],row['mode']) for row in prepared_source['files'] if row['path'] not in excluded}
+    current={row['path']:(row['sha256'],row['mode']) for row in candidate_source['files'] if row['path'] not in excluded}
+    if current!=expected:raise ValueError('Promoted emitter/runtime source inventory differs from proved preparation')
     coverage=verified['verdict']['checks']['changed-entry-coverage'];chosen=report['chosen']
     if not any(row['address']==chosen['address'] and row['mx']==chosen['mx'] and row['count']>0 for row in coverage.get('executed',[])):
         raise ValueError('Promoted pattern lacks real-ROM generated execution')

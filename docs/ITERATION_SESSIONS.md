@@ -3,13 +3,17 @@
 `just recomp-iteration` requests one accepted increment. `--count N` requests a
 positive number; `--target-generated N` instead stops once the verified same-domain
 generated-instruction total reaches that target. These forms are mutually exclusive.
-Readiness remains its own bounded command. A target already met performs no
+Readiness remains its own bounded command. Direct `validate-iteration` requires
+explicit `--increment` metadata from a verified sealed preparation. A target already met performs no
 candidate changes.
 
 The session coordinates separate exact-source child runs for baseline readiness,
 measured selection, preparation, candidate validation and experiments. Its mutable
 `state.json` is a control log, not candidate validation evidence. Every operation
-also has an immutable numbered event. Failed/uncovered/error/incomplete candidates
+has an immutable numbered request before side effects, a durable mutable child journal,
+and an immutable result event. Resume verifies the exact operation, source, child and
+publication; applying its result and counting the publication happen in one atomic
+state update. Failed/uncovered/error/incomplete candidates
 and original user work remain preserved; only published acceptance reverified from
 the current pointer and this session's candidate counts as progress. A baseline
 refresh or competing/stale acceptance does not count.

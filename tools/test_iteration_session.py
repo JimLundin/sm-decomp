@@ -33,6 +33,37 @@ class RecoveryTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'changed'):
                 verify_recovery_pointer(root,recovery)
             self.assertEqual(pointer.read_bytes(),b'{"run_id":"competing"}')
+    def test_production_recovers_applied_source_with_real_failed_readiness_and_rejects_request_tamper(self):
+        from iteration_session import ProductionOperations,durable_json
+        from readiness import Run,digest,read_verdict
+        from readiness_reuse import seal_owned_evidence
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary);subprocess.run(['git','init','-q',str(root)],check=True)
+            (root/'config').mkdir();config=root/'config/functions.toml';config.write_text('prior')
+            preparation=Run.create(root,'increment-preparation',{'frames':18000},'parent');preparation.capture_source()
+            proposal=preparation.path/'generated/functions.toml';proposal.write_text('applied')
+            increment={'kind':'supported-expansion','baseline_path':str(preparation.path),'preparation_path':str(preparation.path),'chosen':{'address':0x808000}}
+            preparation.manifest['increment']=increment
+            preparation.record_check('candidate-proposal',{'status':'pass','complete':True,'prior_config_sha256':digest(config),'proposed_config_sha256':digest(proposal)})
+            seal_owned_evidence(preparation);preparation.save_manifest();preparation.finalize('pass',mandatory_checks=['candidate-proposal'])
+            config.write_bytes(proposal.read_bytes());(root/'out/accepted.json').write_text('{"run_id":"parent"}')
+            payload={'baseline':{'run_id':'parent'},'session_id':'session-test','increment_id':'increment-test',
+                'preparation':{'preparation_path':str(preparation.path)}}
+            journal=root/'request.request.json';durable_json(journal,{'operation':'validate','payload':payload,'operation_id':'own-operation'})
+            operations=ProductionOperations(root);operations.bind_journal(journal)
+            increment.update(session_id=payload['session_id'],increment_id=payload['increment_id'],operation_id='own-operation')
+            operations.journal_update(increment=increment)
+            result=operations.recover('validate',payload,journal)
+            self.assertFalse(result['published'])
+            children=[path for path in (root/'out/runs').iterdir() if path!=preparation.path and json.loads((path/'manifest.json').read_text()).get('type')=='iteration']
+            self.assertEqual(len(children),2)
+            self.assertTrue(all((path/'source/files/config/functions.toml').read_text()=='applied' for path in children))
+            self.assertTrue(all(read_verdict(path)['status'] in ('error','incomplete') for path in children))
+            self.assertEqual(config.read_text(),'applied')
+            self.assertEqual(json.loads((root/'out/accepted.json').read_text())['run_id'],'parent')
+            request=json.loads(journal.read_text());request['payload']['increment_id']='other';durable_json(journal,request)
+            with self.assertRaisesRegex(ValueError,'identity differs'):operations.recover('validate',payload,journal)
+
 
 
 class SessionTests(unittest.TestCase):
@@ -119,6 +150,29 @@ class SessionTests(unittest.TestCase):
                 '--root',str(root),'--count','1','--target-generated','100'],capture_output=True,text=True)
             self.assertEqual(command.returncode,2)
             self.assertIn('not allowed',command.stderr)
+
+    def test_interrupt_after_publication_recovers_same_increment_and_counts_once(self):
+        from iteration_session import Session
+        class Interrupted(FixtureOperations):
+            def __init__(self):super().__init__();self.publication=None
+            def run(self,name,payload):
+                result=super().run(name,payload)
+                if name=='validate':
+                    self.publication=result
+                    raise KeyboardInterrupt
+                return result
+            def recover(self,name,payload,journal):
+                return self.publication if name=='validate' else None
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary);operations=Interrupted();session=Session.create(root)
+            stopped=session.run(operations)
+            self.assertEqual(stopped['status'],'stopped')
+            self.assertIsNotNone(stopped.get('pending'))
+            result=Session.resume(root,session.state['session_id']).run(operations)
+            self.assertEqual(result['status'],'complete')
+            self.assertEqual(result['accepted_count'],1)
+            self.assertEqual(operations.counter,1)
+            self.assertEqual(len([row for row in operations.events if row['operation']=='select']),1)
 
     def test_invalid_request_rejects_before_creating_session(self):
         from iteration_session import Session

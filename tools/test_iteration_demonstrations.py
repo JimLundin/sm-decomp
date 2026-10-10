@@ -25,6 +25,21 @@ class DemonstrationTests(unittest.TestCase):
             result=subprocess.run(command,cwd=root,capture_output=True,text=True)
             self.assertEqual(result.returncode,2)
 
+    def test_probe_verifier_rejects_forged_embedded_report_and_snapshot(self):
+        from iteration_demonstrations import verify_probe
+        from readiness import digest,write_json
+        with tempfile.TemporaryDirectory() as temporary:
+            output=Path(temporary);binary=output/'probe';binary.write_bytes(b'preserved binary')
+            (output/'fixture.sfc').write_bytes(b'rom');(output/'fixture.inputs').write_bytes(b'0000\n')
+            report={'status':'pass','complete':True,'accepted_count':0,'source_sha256':'a'*64,'binary_sha256':digest(binary),
+                'rom_sha256':digest(output/'fixture.sfc'),'input_sha256':digest(output/'fixture.inputs')}
+            for name in ('early','candidate','predecessor','disabled','warm'):
+                (output/name).mkdir();value={'status':'pass','complete':True,'start_input_index':0,'start_instruction':0,'completed_instructions':87}
+                write_json(output/name/'instruction.json',value);report[name]=value
+            report['predecessor']=dict(report['predecessor'],start_instruction=999)
+            with self.assertRaisesRegex(ValueError,'embedded report differs'):
+                verify_probe(report,output,'a'*64,binary)
+
     def test_private_failure_history_rejects_publication_and_preserves_three_candidates(self):
         from iteration_demonstrations import failed_lineage
         from iteration_diagnosis import verify_history

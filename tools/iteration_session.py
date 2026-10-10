@@ -3,6 +3,7 @@
 import argparse
 import fcntl
 import json
+import os
 import re
 import sys
 import uuid
@@ -10,6 +11,16 @@ from pathlib import Path
 
 from readiness import Run, digest, utc_now, write_json
 from readiness_contract import DOMAIN
+
+
+def durable_json(path,value):
+    path=Path(path);temporary=path.with_suffix(path.suffix+'.tmp')
+    with temporary.open('w') as target:
+        json.dump(value,target,indent=2,sort_keys=True);target.write('\n');target.flush();os.fsync(target.fileno())
+    os.replace(temporary,path)
+    directory=os.open(path.parent,os.O_DIRECTORY)
+    try:os.fsync(directory)
+    finally:os.close(directory)
 
 
 def record_rejected_pointer(root,reason):
@@ -62,20 +73,46 @@ class Session:
         return cls(Path(root).resolve(),path,state)
 
     def __init__(self,root,path,state):self.root,self.path,self.state=root,path,state
-    def save(self):write_json(self.path/'state.json',self.state)
+    def save(self):durable_json(self.path/'state.json',self.state)
+
+    def apply_result(self,name,result):
+        if name=='baseline':
+            self.state['baseline']=result
+            if self.state['initial_baseline'] is None:self.state['initial_baseline']=result
+        elif name=='select':self.state['selection']=result
+        elif name=='prepare':self.state['preparation']=result
+        elif name in ('validate','retry'):
+            self.state['candidate']=result
+            if result.get('published'):
+                counted=self.state.setdefault('counted_publications',[])
+                if result['run_id'] not in counted:
+                    counted.append(result['run_id']);self.state['accepted_count']+=1
+                self.state['baseline']=result
+                self.state.update(increment_id=None,selection=None,preparation=None,candidate=None)
 
     def operation(self,operations,name,payload):
-        sequence=len(self.state['events'])+1
-        try:result=operations.run(name,payload)
-        except KeyboardInterrupt:
-            event={'sequence':sequence,'operation':name,'payload':payload,'result':{'status':'stopped'},'utc':utc_now()}
-            write_json(self.path/'{:04d}-{}.json'.format(sequence,name),event)
-            self.state['events'].append({'sequence':sequence,'operation':name,'evidence':'{:04d}-{}.json'.format(sequence,name)})
-            self.save();raise
-        event={'sequence':sequence,'operation':name,'payload':payload,'result':result,'utc':utc_now()}
-        write_json(self.path/'{:04d}-{}.json'.format(sequence,name),event)
-        self.state['events'].append({'sequence':sequence,'operation':name,'evidence':'{:04d}-{}.json'.format(sequence,name)})
-        self.save();return result
+        pending=self.state.get('pending')
+        if pending is None:
+            sequence=len(self.state['events'])+1
+            journal=self.path/'{:04d}-{}.request.json'.format(sequence,name)
+            pending={'sequence':sequence,'operation':name,'payload':payload,'journal':journal.name,'operation_id':uuid.uuid4().hex}
+            durable_json(journal,pending)
+            self.state['pending']=pending;self.save()
+        else:
+            name,payload=pending['operation'],pending['payload']
+            journal=self.path/pending['journal']
+        result_path=self.path/'{:04d}-{}.json'.format(pending['sequence'],name)
+        if result_path.exists():result=json.loads(result_path.read_text())['result']
+        else:
+            result=operations.recover(name,payload,journal) if hasattr(operations,'recover') else None
+            if result is None:
+                if hasattr(operations,'bind_journal'):operations.bind_journal(journal)
+                result=operations.run(name,payload)
+            event={'sequence':pending['sequence'],'operation':name,'payload':payload,'result':result,'utc':utc_now()}
+            durable_json(result_path,event)
+        self.apply_result(name,result)
+        self.state['events'].append({'sequence':pending['sequence'],'operation':name,'evidence':result_path.name})
+        self.state['pending']=None;self.save();return result
 
     def finish(self,status,reason):
         self.state.update(status=status,reason=reason,finished_utc=utc_now());self.save()
@@ -100,7 +137,7 @@ class Session:
         text+='\n'
         text+='Warm focus target: 60s. Each cold replay target: 1200s. Actual timeouts remain incomplete.\n\n'
         for event in self.state['events']:text+='- [{}]({})\n'.format(event['operation'],event['evidence'])
-        text+='\n[Session state](state.json) · [Accepted evidence]({}/brief.md)\n'.format(baseline.get('run_path','unavailable'))
+        text+='\n[Session state](state.json) · [Accepted evidence and later hardware debt]({}/brief.md)\n'.format(baseline.get('run_path','unavailable'))
         for event in self.state['events']:
             evidence=json.loads((self.path/event['evidence']).read_text()).get('result',{})
             if evidence.get('source_diff_text') is not None:
@@ -123,33 +160,30 @@ class Session:
             if self.state['status']=='complete':return self.state
             self.state['status']='running';self.save()
             try:
+                if self.state.get('pending'):
+                    pending=self.state['pending']
+                    self.operation(operations,pending['operation'],pending['payload'])
                 while True:
-                    if self.state.get('candidate') and not self.state['candidate'].get('published'):
+                    if self.state.get('candidate'):
                         payload={'baseline':self.state['baseline'],'session_id':self.state['session_id'],'increment_id':self.state['increment_id'],
                             'candidate':self.state['candidate'],'preparation':self.state['preparation'],'selection':self.state['selection']}
-                        candidate=self.operation(operations,'retry',payload);self.state['candidate']=candidate;self.save()
+                        candidate=self.operation(operations,'retry',payload)
                         if not candidate.get('published'):return self.finish(candidate.get('status','repair-needed'),candidate.get('reason','Next diagnostic experiment required'))
-                        self.state['accepted_count']+=1;self.state['baseline']=candidate
-                        self.state.update(increment_id=None,selection=None,preparation=None,candidate=None);self.save()
-                    baseline=self.operation(operations,'baseline',{'previous':self.state['baseline'],'session_id':self.state['session_id']})
-                    if baseline.get('status') in ('error','incomplete'):return self.finish(baseline['status'],baseline.get('reason','Baseline unavailable'))
-                    self.state['baseline']=baseline
-                    if self.state['initial_baseline'] is None:self.state['initial_baseline']=baseline
-                    self.save()
-                    done=(self.state['count'] is not None and self.state['accepted_count']>=self.state['count']) or (self.state['target'] is not None and baseline['metrics']['generated']>=self.state['target'])
-                    if done:return self.finish('complete','Requested measured scope completed')
-                    if self.state['increment_id'] is None:self.state['increment_id']='increment-'+uuid.uuid4().hex
-                    payload={'baseline':baseline,'session_id':self.state['session_id'],'increment_id':self.state['increment_id']}
-                    selection=self.operation(operations,'select',payload);self.state['selection']=selection;self.save()
+                    if self.state['increment_id'] is None:
+                        baseline=self.operation(operations,'baseline',{'previous':self.state['baseline'],'session_id':self.state['session_id']})
+                        if baseline.get('status') in ('error','incomplete'):return self.finish(baseline['status'],baseline.get('reason','Baseline unavailable'))
+                        done=(self.state['count'] is not None and self.state['accepted_count']>=self.state['count']) or (self.state['target'] is not None and baseline['metrics']['generated']>=self.state['target'])
+                        if done:return self.finish('complete','Requested measured scope completed')
+                        self.state['increment_id']='increment-'+uuid.uuid4().hex;self.save()
+                    payload={'baseline':self.state['baseline'],'session_id':self.state['session_id'],'increment_id':self.state['increment_id']}
+                    selection=self.state['selection'] or self.operation(operations,'select',payload)
                     if selection.get('outcome')=='no-covered-candidate':return self.finish('decision-required','No remaining covered candidate; independently validate a concrete domain extension')
                     if selection.get('outcome') not in ('supported-routine','needs-timed-pattern'):return self.finish(selection.get('status','error'),selection.get('reason','Measured selection failed'))
-                    preparation=self.operation(operations,'prepare',dict(payload,selection=selection));self.state['preparation']=preparation;self.save()
+                    preparation=self.state['preparation'] or self.operation(operations,'prepare',dict(payload,selection=selection))
                     if preparation.get('status') in ('error','incomplete','decision-required'):return self.finish(preparation['status'],preparation.get('reason','Candidate preparation failed'))
-                    candidate=self.operation(operations,'validate',dict(payload,selection=selection,preparation=preparation));self.state['candidate']=candidate;self.save()
+                    candidate=self.operation(operations,'validate',dict(payload,selection=selection,preparation=preparation))
                     if not candidate.get('published'):
                         return self.finish(candidate.get('status','repair-needed'),candidate.get('reason','Candidate needs an evidence-based repair and fresh validation'))
-                    self.state['accepted_count']+=1;self.state['baseline']=candidate
-                    self.state.update(increment_id=None,selection=None,preparation=None,candidate=None);self.save()
             except KeyboardInterrupt:return self.finish('stopped','User stopped the current operation; accepted evidence and candidate remain preserved')
             except Exception as error:return self.finish('error',str(error))
 
@@ -158,6 +192,89 @@ class ProductionOperations:
     """Hardwired production gates; fixture runners exist only in the session API."""
     def __init__(self,root,original_run=None,timeout=None,jobs=4):
         self.root=Path(root).resolve();self.original_run=original_run;self.timeout=timeout;self.jobs=jobs
+
+    def bind_journal(self,path):
+        self.journal=Path(path)
+        self.progress=self.journal.with_name(self.journal.name.replace('.request.json','.progress.json'))
+        if not self.progress.exists():durable_json(self.progress,{'request_sha256':digest(self.journal)})
+
+    def allocated(self,run):
+        durable_json(run.path/'manifest.json',run.manifest)
+        self.journal_update(child_path=str(run.path))
+
+    def journal_update(self,**values):
+        record=json.loads(self.progress.read_text());record.update(values);durable_json(self.progress,record)
+
+    def recover(self,name,payload,journal):
+        self.bind_journal(journal)
+        request=json.loads(journal.read_text());progress=json.loads(self.progress.read_text())
+        if (progress.get('request_sha256')!=digest(journal) or request.get('operation')!=name or request.get('payload')!=payload):
+            raise ValueError('Interrupted operation request/journal identity differs')
+        record=dict(request,**progress)
+        if name not in ('validate','retry') or not record.get('increment'):return None
+        from readiness import read_verdict
+        increment=record['increment'];child=record.get('child_path')
+        matches=[]
+        for manifest_path in (self.root/'out/runs').glob('*/manifest.json'):
+            candidate_manifest=json.loads(manifest_path.read_text())
+            if candidate_manifest.get('operation_id')==record['operation_id']:matches.append(manifest_path.parent)
+        if matches:
+            pointer=json.loads((self.root/'out/accepted.json').read_text())
+            own_published=[path for path in matches if path.name==pointer.get('run_id')]
+            recovered=own_published[0] if own_published else sorted(matches)[-1]
+            if child!=str(recovered):child=str(recovered);self.journal_update(child_path=child)
+        if child:
+            candidate=Path(child)
+            manifest=json.loads((candidate/'manifest.json').read_text())
+            if any(manifest.get(key)!=value for key,value in (
+                ('operation_id',record['operation_id']),('session_id',payload['session_id']),
+                ('increment_id',payload['increment_id']),('accepted_parent',payload['baseline']['run_id']))):
+                raise ValueError('Interrupted child does not belong to this exact session operation')
+            pointer=json.loads((self.root/'out/accepted.json').read_text())
+            if pointer.get('run_id')==candidate.name:
+                return self.published_result(candidate,increment)
+            from readiness import read_verdict
+            verdict=read_verdict(candidate)
+            if verdict.get('status') in ('divergence','uncovered','error'):
+                return {'published':False,'status':'repair-needed','candidate_path':str(candidate),'reason':'Interrupted operation retained its failed exact-source candidate','preparation_path':payload['preparation']['preparation_path']}
+            if manifest.get('state')=='running':
+                from readiness import source_inventory
+                from readiness_orchestration import source_snapshot
+                if not (candidate/'source/inventory.json').exists():
+                    abandoned=Run(self.root,candidate,manifest);abandoned.capture_source();abandoned.finalize('incomplete','readiness','Interrupted before source capture')
+                    return self.validate_candidate(increment,payload)
+                _,inventory=source_snapshot(candidate)
+                if source_inventory(self.root)!=inventory['files']:raise ValueError('Source changed after interrupted candidate; retained child requires diagnosis')
+                abandoned=Run(self.root,candidate,manifest)
+                abandoned.finalize('incomplete','readiness','Interrupted before operation completed')
+        else:
+            # Mutation completed before allocation: retain its exact source now,
+            # after verifying it is precisely the sealed prepared proposal.
+            from readiness import source_inventory
+            preparation=Path(increment.get('preparation_path',payload['preparation']['preparation_path']))
+            from readiness_orchestration import source_snapshot
+            from readiness_reuse import verify_owned_evidence
+            prepared_manifest,prepared_source=source_snapshot(preparation);verify_owned_evidence(preparation,prepared_manifest)
+            expected={row['path']:(row['sha256'],row['mode']) for row in prepared_source['files']}
+            report=read_verdict(preparation)['checks'];proposal=report.get('candidate-proposal',report.get('pattern-proposal'))
+            expected['config/functions.toml']=(proposal['proposed_config_sha256'],expected['config/functions.toml'][1])
+            if 'proposed_declaration_sha256' in proposal:
+                path='crates/recomp/src/timed_patterns.json';expected[path]=(proposal['proposed_declaration_sha256'],expected[path][1])
+            actual={row['path']:(row['sha256'],row['mode']) for row in source_inventory(self.root)}
+            prior={row['path']:(row['sha256'],row['mode']) for row in prepared_source['files']}
+            if actual==prior:return None
+            if actual!=expected:
+                preserved=Run.create(self.root,'iteration',dict(DOMAIN),payload['baseline']['run_id'],metadata={
+                    'increment':increment,'session_id':payload['session_id'],'increment_id':payload['increment_id'],'operation_id':record['operation_id']})
+                preserved.capture_source();preserved.finalize('error','candidate-application','Interrupted mutation differs from sealed preparation')
+                self.journal_update(child_path=str(preserved.path))
+                return {'published':False,'status':'repair-needed','candidate_path':str(preserved.path),
+                    'reason':'Interrupted candidate mutation differs from sealed preparation; exact source retained for diagnosis'}
+            preserved=Run.create(self.root,'iteration',dict(DOMAIN),payload['baseline']['run_id'])
+            preserved.manifest.update(increment=increment,session_id=payload['session_id'],increment_id=payload['increment_id'],operation_id=record['operation_id'])
+            preserved.capture_source();preserved.finalize('incomplete','readiness','Interrupted after applying prepared source')
+            self.journal_update(child_path=str(preserved.path))
+        return self.validate_candidate(increment,payload)
 
     def accepted(self,verify_material=True):
         from readiness_reuse import verify_accepted,accepted_pointer
@@ -242,16 +359,25 @@ class ProductionOperations:
             if baseline['run_id']!=payload['baseline']['run_id']:raise ValueError('Accepted predecessor changed during unresolved increment')
             candidate=Path(payload['candidate']['candidate_path'])
             manifest=json.loads((candidate/'manifest.json').read_text());increment=dict(manifest['increment'])
-            from readiness import source_inventory
+            from readiness import source_inventory,read_verdict
             previous=json.loads((candidate/'source/inventory.json').read_text())['files']
             if source_inventory(self.root)==previous:
                 if history and history[-1]['next_action']=='prune-unexecuted-keys':
                     from iteration_increment import prune_uncovered,apply_preparation
-                    proposal=prune_uncovered(self.root,candidate,self.timeout);increment=apply_preparation(self.root,proposal)
+                    proposal=prune_uncovered(self.root,candidate,self.timeout)
+                    increment=dict(json.loads((proposal/'manifest.json').read_text())['increment'])
+                    if hasattr(self,'journal'):self.journal_update(increment=increment)
+                    apply_preparation(self.root,proposal)
+                elif read_verdict(candidate).get('status')=='incomplete':
+                    return self.validate_candidate(increment,payload)
                 else:
                     return {'published':False,'status':'repair-needed','candidate_path':str(candidate),
                         'reason':history[-1]['next_experiment'] if history else 'Apply the bounded affected-layer repair or new discriminating experiment before resume',
                         'diagnostics':history[-1] if history else None}
+            elif increment.get('kind')=='supported-expansion':
+                from iteration_increment import prepare_repair
+                prepared=prepare_repair(self.root,candidate,self.timeout)
+                increment=dict(json.loads((prepared/'manifest.json').read_text())['increment'])
             increment.update(session_id=payload['session_id'],increment_id=payload['increment_id'])
             return self.validate_candidate(increment,payload)
         if name=='validate':
@@ -261,7 +387,12 @@ class ProductionOperations:
             from iteration_increment import apply_preparation
             if preparation.get('route')=='needs-timed-pattern':
                 from iteration_pattern import apply_preparation
-            increment=apply_preparation(self.root,Path(preparation['preparation_path']))
+            increment=dict(json.loads((Path(preparation['preparation_path'])/'manifest.json').read_text())['increment'])
+            increment.update(session_id=payload['session_id'],increment_id=payload['increment_id'])
+            if hasattr(self,'journal'):
+                increment['operation_id']=json.loads(self.journal.read_text())['operation_id']
+                self.journal_update(increment=increment)
+            apply_preparation(self.root,Path(preparation['preparation_path']))
             increment.update(session_id=payload['session_id'],increment_id=payload['increment_id'])
             return self.validate_candidate(increment,payload)
         raise ValueError('Unknown session operation '+name)
@@ -269,7 +400,11 @@ class ProductionOperations:
     def validate_candidate(self,increment,payload):
         from readiness_orchestration import run_readiness
         before={path.name for path in (self.root/'out/runs').iterdir()}
-        code=run_readiness(self.root,Path(increment['baseline_path']),self.original_run,self.timeout,self.jobs,True,increment)
+        if hasattr(self,'journal'):
+            increment['operation_id']=json.loads(self.journal.read_text())['operation_id']
+            self.journal_update(increment=increment)
+        code=run_readiness(self.root,Path(increment['baseline_path']),self.original_run,self.timeout,self.jobs,True,increment,
+            allocated=lambda run:self.allocated(run) if hasattr(self,'journal') else None)
         added=[path for path in (self.root/'out/runs').iterdir() if path.name not in before]
         candidates=[path for path in added if json.loads((path/'manifest.json').read_text()).get('type')=='iteration']
         candidate=candidates[-1] if candidates else None
@@ -286,11 +421,15 @@ class ProductionOperations:
             raise ValueError('Published result is not this session candidate; competing acceptance cannot count')
         acceptance=json.loads((candidate/'acceptance-result.json').read_text())
         if acceptance.get('accepted') is not True:raise ValueError('Validation did not publish acceptance')
+        return self.published_result(candidate,increment)
+
+    def published_result(self,candidate,increment):
+        accepted=self.accepted()
         accepted['published']=True
         # Preserve source delta against accepted predecessor, not merely Git.
         from readiness import source_inventory
         old={row['path']:row['sha256'] for row in json.loads((Path(increment['baseline_path'])/'source/inventory.json').read_text())['files']}
-        new={row['path']:row['sha256'] for row in source_inventory(self.root)}
+        new={row['path']:row['sha256'] for row in json.loads((candidate/'source/inventory.json').read_text())['files']}
         accepted['source_diff']=[{'path':path,'before':old.get(path),'after':new.get(path)} for path in sorted(set(old)|set(new)) if old.get(path)!=new.get(path)]
         import difflib
         changes=[]

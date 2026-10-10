@@ -320,7 +320,7 @@ class Run:
     """Own one evidence directory. Callers must allocate before checking setup."""
 
     @classmethod
-    def create(cls, root, run_type, scope, accepted_parent=None):
+    def create(cls, root, run_type, scope, accepted_parent=None, metadata=None):
         root = Path(root).resolve()
         timestamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
         run_id = timestamp + "-" + uuid.uuid4().hex[:12]
@@ -335,6 +335,7 @@ class Run:
                     "frame_conventions": {"input_indices": "0..17999",
                                           "original_frame_labels": "272..18000 inclusive",
                                           "candidate_frame_offset": 0}}
+        if metadata:manifest.update(metadata)
         run = cls(root, path, manifest)
         run.save_manifest()
         (path / "brief.md").write_text("# Not ready: incomplete\n\nRun allocated; checks have not completed.\n")

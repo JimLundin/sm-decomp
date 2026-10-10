@@ -1,5 +1,5 @@
 //! Real emitted bodies against public SNES cycle lengths and DMA wait vectors.
-use runtime::{Bus as RuntimeBus, Machine, TimedBus};
+use runtime::{Machine, TimedBus};
 use rustysnes_core::{
     Bus,
     cart::{Cart, Region},
@@ -11,46 +11,9 @@ mod emitted {
     #![allow(unused_imports)]
     include!(concat!(env!("OUT_DIR"), "/prospective_lda.rs"));
 }
-#[derive(Default)]
-struct Observations {
-    events: Vec<(String, u32, u64)>,
-    waits: Vec<u64>,
-}
-struct Passive {
-    bus: Rc<RefCell<Bus>>,
-    observed: Rc<RefCell<Observations>>,
-}
-impl RuntimeBus for Passive {
-    fn read(&mut self, address: u32) -> u8 {
-        let mut bus = self.bus.borrow_mut();
-        let value = bus.read24(address);
-        self.observed.borrow_mut().events.push(("read".into(), address, bus.clock.master));
-        value
-    }
-    fn write(&mut self, address: u32, value: u8) {
-        let mut bus = self.bus.borrow_mut();
-        bus.write24(address, value);
-        self.observed.borrow_mut().events.push(("write".into(), address, bus.clock.master));
-    }
-    fn tick(&mut self, clocks: u32) {
-        self.bus.borrow_mut().advance(clocks);
-    }
-    fn access_cycles(&self, address: u32) -> u32 {
-        self.bus.borrow().access_cycles(address)
-    }
-    fn begin_cpu_cycle(&mut self, clocks: u32) {
-        let mut bus = self.bus.borrow_mut();
-        let before = bus.clock.master;
-        bus.begin_cpu_cycle(clocks);
-        self.observed.borrow_mut().waits.push(bus.clock.master - before);
-    }
-    fn halt_pending(&self) -> bool {
-        self.bus.borrow().halt_pending()
-    }
-    fn interrupt_pending(&self, masked: bool) -> bool {
-        self.bus.borrow().interrupt_pending(masked)
-    }
-}
+#[path = "support/passive.rs"]
+mod passive;
+use passive::{Observations, Passive};
 fn machine() -> (Machine, Rc<RefCell<Bus>>, Rc<RefCell<Observations>>) {
     let mut rom = vec![0; 0x10000];
     rom[..7].copy_from_slice(&[0xad, 0x10, 0, 0xea, 0xea, 0xea, 0xea]);

@@ -27,6 +27,22 @@ def _table_rows(source):
     return rows
 
 
+def execution_bindings(source_files,source):
+    """Shared runtime stays conservative; declaration scope binds each opcode."""
+    from pattern_contract import DECLARATION,identity
+    relevant=[entry for entry in source_files if entry['path'].startswith(
+        ('crates/recomp/src/','crates/runtime/src/','crates/snes/src/')) or entry['path'] in
+        ('Cargo.toml','Cargo.lock','crates/game/build.rs','config/jump_tables.toml')]
+    shared=[entry for entry in relevant if entry['path']!=DECLARATION]
+    declaration=Path(source)/DECLARATION
+    patterns={}
+    if declaration.exists():
+        raw=json.loads(declaration.read_text())
+        semantic_fields=('opcode','mnemonic','mode','mx','addressing')
+        patterns={row['opcode']:identity({field:row[field] for field in semantic_fields}) for row in raw['patterns']}
+    return inventory_digest(relevant),inventory_digest(shared),patterns
+
+
 def generated_inventory(run, steps):
     """Preserve exact generated bodies and the maintained inputs defining them."""
     steps = Path(steps)
@@ -36,11 +52,10 @@ def generated_inventory(run, steps):
     if not match:
         raise RuntimeError("Generated table lacks ROM identity")
     config = run.path / "source/files/config/functions.toml"
-    relevant = [entry for entry in run.source_files if entry["path"].startswith(
-        ("crates/recomp/src/", "crates/runtime/src/", "crates/snes/src/")) or entry["path"] in
-        ("Cargo.toml", "Cargo.lock", "crates/game/build.rs", "config/jump_tables.toml")]
+    global_source,shared,patterns=execution_bindings(run.source_files,run.path/'source/files')
     report = {"schema_version": 1, "rom_sha256": match.group(1), "steps_sha256": digest(steps),
-              "steps_evidence": steps.relative_to(run.path).as_posix(), "config_sha256": digest(config), "execution_source_sha256": inventory_digest(relevant),
+              "steps_evidence": steps.relative_to(run.path).as_posix(), "config_sha256": digest(config), "execution_source_sha256": global_source,
+              "execution_binding_version":2,"shared_execution_source_sha256":shared,"declaration_pattern_sha256":patterns,
               "source_sha256": run.manifest["identities"]["source"]["sha256"], "keys": sorted(rows, key=lambda row: (row["address"], row["mx"]))}
     path = run.path / "generated/key-inventory.json"
     write_json(path, report)
@@ -138,9 +153,21 @@ def evaluate_coverage(run, profile_path, inventory_path, predecessor=None):
         old = {(row["address"], row["mx"]): row for row in previous["keys"]}
         parent_identity = {"run_id": manifest["run_id"], "inventory_sha256": manifest["identities"]["generated-key-inventory"]["sha256"],
                            "source_sha256": manifest["identities"]["source"]["sha256"]}
-        shared_change = candidate.get("execution_source_sha256") != previous.get("execution_source_sha256")
+        if candidate.get('execution_binding_version')==2:
+            global_source,shared,patterns=execution_bindings(run.source_files,run.path/'source/files')
+            if (candidate.get('execution_source_sha256'),candidate.get('shared_execution_source_sha256'),candidate.get('declaration_pattern_sha256'))!=(global_source,shared,patterns):
+                raise RuntimeError('Candidate execution dependency binding differs from preserved source')
+            # Derive new bindings from historical preserved sources without
+            # changing their original v1 inventories or verification behavior.
+            previous_source=json.loads((Path(predecessor)/'source/inventory.json').read_text())['files']
+            _,old_shared,old_patterns=execution_bindings(previous_source,Path(predecessor)/'source/files')
+            shared_change=shared!=old_shared
+        else:
+            shared_change=candidate.get('execution_source_sha256')!=previous.get('execution_source_sha256')
+            patterns=old_patterns={}
+
         for key, row in sorted(current.items()):
-            reason = "added" if key not in old else "body changed" if row != old[key] else "execution source changed" if shared_change else None
+            reason = "added" if key not in old else "body changed" if row != old[key] else "execution source changed" if shared_change else "pattern declaration changed" if patterns.get(format(row["opcode"],"02x"))!=old_patterns.get(format(row["opcode"],"02x")) else None
             if reason:
                 required.append({"address": key[0], "mx": key[1], "reason": reason})
     uncovered = [{"address": row["address"], "mx": row["mx"]} for row in required

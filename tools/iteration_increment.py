@@ -12,11 +12,21 @@ from readiness_contract import DOMAIN
 from readiness_coverage import comparable_progress
 
 
+def require_increment(increment):
+    kind=(increment or {}).get('kind')
+    required={'supported-expansion':('baseline_path','preparation_path','chosen'),
+        'timed-pattern-expansion':('baseline_path','pattern_preparation_path','pattern_proof_path','opcode'),
+        'correctness-fix':('baseline_path','rationale','reproduction')}
+    if kind not in required or any(not increment.get(key) for key in required[kind]):
+        raise ValueError('Explicit verified bounded increment metadata is required; use recomp-iteration or a sealed preparation')
+    return kind
+
+
 def progress_report(coverage, increment=None):
     """Expansion is progress only when comparable measured generated work grows."""
-    kind = (increment or {}).get('kind','supported-expansion')
+    kind = (increment or {}).get('kind')
     if kind not in ('supported-expansion','timed-pattern-expansion','correctness-fix'):
-        return {'schema_version':1,'status':'uncovered','complete':True,'kind':kind,'reason':'Unknown increment kind'}
+        return {'schema_version':1,'status':'uncovered','complete':True,'kind':kind,'reason':'Explicit bounded increment metadata is required'}
     progress = coverage.get('progress',{})
     valid = coverage.get('status') == 'pass' and coverage.get('complete') is True
     reason = 'Expansion requires positive observed generated-instruction gain in the identical validated domain'
@@ -44,45 +54,115 @@ def progress_gate(run):
     return report
 
 
+def verify_focus_execution(owner,evidence,sha256=None,sealed=True):
+    """Verify a preserved actual focus process, its binary, inputs and interval."""
+    from readiness_orchestration import source_snapshot
+    from readiness_reuse import safe_artifact,verify_owned_evidence
+    owner=Path(owner).resolve();manifest,_=source_snapshot(owner)
+    if sealed:verify_owned_evidence(owner,manifest)
+    path=safe_artifact(owner,evidence)
+    if sha256 and digest(path)!=sha256:raise ValueError('Focused execution report checksum differs')
+    actual=json.loads(path.read_text())
+    if path.name!='instruction.json' or not path.parent.name.endswith('-instructions'):
+        raise ValueError('Focused execution must use actual production diagnostic evidence')
+    prefix=path.parent.name[:-len('instructions')]
+    binary=safe_artifact(owner,'generated/'+prefix+'focused-replay')
+    process=json.loads(safe_artifact(owner,'logs/'+prefix+'focused-replay.json').read_text())
+    identities=manifest['identities']
+    prepared=identities.get('focused-prepared-binary',{})
+    if prepared.get('sha256')!=digest(binary):raise ValueError('Focused execution lacks preserved candidate build identity')
+    candidate_steps=identities.get('generated-generated-steps',{})
+    steps=safe_artifact(owner,candidate_steps['evidence'])
+    if digest(steps)!=candidate_steps.get('sha256'):raise ValueError('Focused generated inputs differ from preserved source build')
+    build_inputs=manifest.get('parity_build_inputs',{}).get('generated',{})
+    build=next((row for row in manifest.get('commands',[]) if row.get('command')==['cargo','build','--release','-p','diff','--bin','focused-replay','--locked','--offline']
+        and row.get('complete') is True and row.get('returncode')==0),None)
+    if not build or build_inputs.get('steps')!=candidate_steps['evidence'] or build_inputs.get('environment',{}).get('SM_RECOMP_GENERATED_STEPS')!=str(owner/build_inputs.get('steps','')):
+        raise ValueError('Focused execution lacks exact generated-source build provenance')
+    command=process.get('command',[])
+    if (process not in manifest.get('commands',[]) or process.get('complete') is not True
+            or process.get('returncode')!=(0 if actual.get('status')=='pass' else 1)
+            or not command or Path(command[0]).resolve()!=binary.resolve()
+            or actual.get('binary_sha256')!=digest(binary) or actual.get('complete') is not True):
+        raise ValueError('Focused execution lacks actual completed preserved binary/process provenance')
+    for field in ('stdout','stderr'):safe_artifact(owner,process[field])
+    for flag,field in (('--out',None),('--start-input','start_input_index'),('--start-instruction','start_instruction'),('--instructions','expected_instructions')):
+        if flag not in command:raise ValueError('Focused process interval command missing')
+        value=command[command.index(flag)+1]
+        if flag=='--out' and Path(value).resolve()!=path.parent.resolve():raise ValueError('Focused process output differs')
+        if field and actual.get(field) is not None and int(value)!=actual[field]:raise ValueError('Focused process interval differs')
+    if (actual.get('scope')=='until-frame-end')!=('--until-frame-end' in command):raise ValueError('Focused frame scope differs')
+    inputs=manifest['identities']['inputs']
+    if any(actual.get('identities',{}).get(key)!=inputs[key] for key in ('rom_sha256','movie_sha256','input_sha256')):
+        raise ValueError('Focused source input identities differ')
+    disabled=actual.get('disabled_keys',[])
+    if disabled:
+        if '--disabled-keys' not in command:raise ValueError('Disabled control lacks actual disabled dispatch')
+        disabled_path=Path(command[command.index('--disabled-keys')+1])
+        if json.loads(safe_artifact(owner,str(disabled_path.relative_to(owner))).read_text())!=disabled:raise ValueError('Disabled control keys differ')
+    elif '--disabled-keys' in command:raise ValueError('Focused disabled dispatch differs')
+    mismatch=actual.get('first_mismatch')
+    if actual.get('status')=='divergence':
+        if not mismatch:raise ValueError('Focused failure lacks actual first mismatch')
+        from iteration_diagnosis import verify_observation
+        verify_observation({'run_path':str(owner),'evidence':evidence,'sha256':digest(path),
+            'process':str((owner/'logs'/(prefix+'focused-replay.json')).relative_to(owner)),
+            'process_sha256':digest(owner/'logs'/(prefix+'focused-replay.json')),
+            'executable':str(binary.relative_to(owner)),'executable_sha256':digest(binary),'kind':'first-mismatch'})
+        for side in ('reference','subject'):
+            trace=mismatch[side]
+            for phase in ('before','after'):
+                expected=trace.get('hardware_'+phase+'_sha256')
+                if expected and digest(safe_artifact(owner,str((path.parent/(side+'-'+phase+'.hardware.bin')).relative_to(owner))))!=expected:
+                    raise ValueError('Focused mismatch hardware snapshot differs')
+    return manifest,actual
+
+
 def verify_reproduction(owner,increment):
-    """Bind a focused production instruction/bus regression and cold controls."""
-    from readiness_reuse import safe_artifact
+    """Bind the actual historical first mismatch, matched controls and repaired focus."""
+    from readiness_reuse import safe_artifact,verify_accepted
+    from readiness_orchestration import source_snapshot
     reproduction=increment.get('reproduction',{})
     artifact=safe_artifact(owner,reproduction['evidence'])
-    if digest(artifact)!=reproduction['sha256']:
-        raise ValueError('Correctness reproduction checksum differs')
+    if digest(artifact)!=reproduction['sha256']:raise ValueError('Correctness reproduction checksum differs')
     actual=json.loads(artifact.read_text())
-    if (actual.get('status')!='pass' or actual.get('complete') is not True
-            or actual.get('kind')!='focused-instruction-regression'):
+    if actual.get('status')!='pass' or actual.get('complete') is not True or actual.get('kind')!='focused-instruction-regression':
         raise ValueError('Correctness repair requires a verified focused regression')
-    from readiness_orchestration import source_snapshot
-    from readiness import read_verdict
     failure_path=Path(actual['failed_candidate'])
-    source_snapshot(failure_path)
-    failure=read_verdict(failure_path)
-    if failure.get('status')!='divergence':
-        raise ValueError('Correctness reproduction lacks preserved failing candidate')
-    diagnostic=json.loads(safe_artifact(failure_path,actual['failure_evidence']).read_text())
-    if digest(safe_artifact(failure_path,actual['failure_evidence']))!=actual['failure_sha256'] or diagnostic.get('status')!='divergence':
-        raise ValueError('Correctness reproduction failing instruction evidence differs')
+    if read_verdict(failure_path).get('status')!='divergence':raise ValueError('Correctness reproduction lacks preserved failing candidate')
+    failed_manifest,failed=verify_focus_execution(failure_path,actual['failure_evidence'],actual['failure_sha256'])
+    if failed.get('status')!='divergence' or failed.get('disabled_keys'):raise ValueError('Correctness reproduction is not a candidate failure')
+    mismatch=failed['first_mismatch'];key=mismatch['subject'].get('generated_key')
+    if not key:raise ValueError('Correctness reproduction lacks affected generated key')
+    baseline=verify_accepted(increment['baseline_path'],require_pointer=True)
+    if failed_manifest.get('accepted_parent')!=baseline['manifest']['run_id']:raise ValueError('Correctness failure predecessor differs')
+    fixed_manifest,fixed=verify_focus_execution(owner,actual['fixed_evidence'],actual['fixed_sha256'],sealed=False)
+    reports=[fixed]
     for name in ('predecessor','disabled_entry'):
         control=actual['controls'][name]
-        path=safe_artifact(failure_path,control['evidence'])
-        report=json.loads(path.read_text())
-        if digest(path)!=control['sha256'] or report.get('status')!='pass' or report.get('complete') is not True:
-            raise ValueError('Correctness reproduction control is not a complete pass')
-    fixed=safe_artifact(owner,actual['fixed_evidence'])
-    report=json.loads(fixed.read_text())
-    if digest(fixed)!=actual['fixed_sha256'] or report.get('status')!='pass' or report.get('complete') is not True or report.get('completed_instructions',0)<=0:
-        raise ValueError('Correctness reproduction repaired focus did not pass')
-    if (report.get('start_input_index'),report.get('start_instruction'),report.get('expected_instructions')) != (
-            diagnostic.get('start_input_index'),diagnostic.get('start_instruction'),diagnostic.get('expected_instructions')):
-        raise ValueError('Correctness reproduction repaired interval differs from failure')
-    # Full origin verification later validates this same actual focus executable,
-    # subprocess, checkpoint, trace/state and candidate source identity.
-    focus=Path(owner)/'checks/instruction-diagnosis.json'
-    if not focus.exists() or not any(row.get('evidence')==actual['fixed_evidence'] for row in json.loads(focus.read_text()).get('reports',[])):
+        control_owner=Path(control.get('run_path',failure_path))
+        manifest,report=verify_focus_execution(control_owner,control['evidence'],control['sha256'])
+        if name=='predecessor':
+            if manifest['identities']['source']['sha256']!=baseline['manifest']['identities']['source']['sha256'] or report.get('disabled_keys'):
+                raise ValueError('Correctness predecessor control is not rebuilt accepted source')
+        elif (manifest['identities']['source']['sha256']!=failed_manifest['identities']['source']['sha256']
+                or {'address':key[0],'mx':key[1]} not in report.get('disabled_keys',[])):
+            raise ValueError('Correctness disabled control does not disable affected candidate key')
+        reports.append(report)
+    for report in reports:
+        if (report.get('status')!='pass' or report.get('complete') is not True
+                or report.get('start_input_index')!=failed.get('start_input_index')
+                or report.get('start_instruction')!=failed.get('start_instruction')
+                or report.get('identities')!=failed.get('identities')
+                or report.get('completed_instructions',0)<failed.get('completed_instructions',0)):
+            raise ValueError('Correctness repaired/control interval or input differs from localized failure')
+        expected=failed.get('expected_instructions')
+        if expected is not None and report.get('expected_instructions')!=expected:raise ValueError('Correctness control interval differs')
+    if fixed.get('disabled_keys') or key not in fixed.get('executed_generated_keys',[]):raise ValueError('Correctness repaired focus did not execute affected key')
+    focus=json.loads(safe_artifact(owner,'checks/instruction-diagnosis.json').read_text())
+    if not any(row.get('evidence')==actual['fixed_evidence'] and row.get('status')=='pass' for row in focus.get('reports',[])):
         raise ValueError('Correctness reproduction is outside verified mandatory focus')
+    if fixed_manifest.get('accepted_parent')!=failed_manifest.get('accepted_parent'):raise ValueError('Correctness repaired predecessor differs')
     return True
 
 
@@ -91,6 +171,7 @@ def verify_progress(owner,verified):
     manifest = verified['manifest']
     if manifest.get('type') != 'iteration':
         return
+    require_increment(manifest.get('increment'))
     if manifest.get('increment',{}).get('kind')=='supported-expansion':
         verify_supported_increment(owner,verified)
     checks = verified['verdict']['checks']
@@ -138,6 +219,55 @@ def verify_supported_increment(owner,verified):
     config=Path(owner)/'source/files/config/functions.toml'
     if digest(config)!=report['proposed_config_sha256']:
         raise ValueError('Accepted supported config differs from sealed bounded proposal')
+    _,candidate_inventory=source_snapshot(owner)
+    expected={row['path']:(row['sha256'],row['mode']) for row in inventory['files'] if row['path']!='config/functions.toml'}
+    current_source={row['path']:(row['sha256'],row['mode']) for row in candidate_inventory['files'] if row['path']!='config/functions.toml'}
+    if current_source!=expected:raise ValueError('Supported candidate maintained source differs from bounded preparation')
+    ancestor=preparation;seen=set();deferred=set()
+    from readiness_coverage import _table_rows
+    while True:
+        if str(ancestor) in seen:raise ValueError('Supported preparation lineage is cyclic')
+        seen.add(str(ancestor));ancestor_manifest,_=source_snapshot(ancestor);verify_owned_evidence(ancestor,ancestor_manifest)
+        ancestor_report=read_verdict(ancestor)['checks']['candidate-proposal']
+        if read_verdict(ancestor).get('status')!='pass' or ancestor_manifest.get('increment',{}).get('chosen')!=increment.get('chosen'):
+            raise ValueError('Supported preparation lineage changes selected choice')
+        parent=ancestor_report.get('parent_preparation_path') or ancestor_report.get('pruning_parent_path')
+        if not parent:break
+        parent=Path(parent);parent_manifest,_=source_snapshot(parent);verify_owned_evidence(parent,parent_manifest)
+        parent_report=read_verdict(parent)['checks']['candidate-proposal']
+        parent_steps=parent/'generated/proposed-steps.rs'
+        if not parent_steps.exists():parent_steps=parent/'generated/steps.rs'
+        ancestor_steps=ancestor/'generated/proposed-steps.rs'
+        if not ancestor_steps.exists():ancestor_steps=ancestor/'generated/steps.rs'
+        parent_keys={(row['address'],row['mx']) for row in _table_rows(parent_steps.read_text())}
+        ancestor_keys={(row['address'],row['mx']) for row in _table_rows(ancestor_steps.read_text())}
+        if ancestor_report.get('parent_preparation_path'):
+            if (digest(parent/'checks/candidate-proposal.json')!=ancestor_report['parent_proposal_sha256']
+                    or parent_report['proposed_config_sha256']!=ancestor_report['proposed_config_sha256'] or ancestor_keys!=parent_keys):
+                raise ValueError('Supported semantic repair changes selected config or keys')
+        else:
+            failed=Path(ancestor_report['pruning_failed_path']);failed_manifest,_=source_snapshot(failed);verify_owned_evidence(failed,failed_manifest)
+            failed_report=read_verdict(failed)['checks']['changed-entry-coverage']
+            required={(row['address'],row['mx']):row['reason'] for row in failed_report['required_keys']}
+            remove={(row['address'],row['mx']) for row in ancestor_report['deferred']}
+            uncovered={(row['address'],row['mx']) for row in failed_report['uncovered_keys']}
+            if (digest(parent/'checks/candidate-proposal.json')!=ancestor_report['pruning_parent_sha256'] or remove!=uncovered
+                    or any(required.get(key)!='added' for key in remove) or ancestor_keys!=parent_keys-remove
+                    or failed_manifest.get('increment',{}).get('preparation_path')!=str(parent)):
+                raise ValueError('Supported deferred scope lacks immutable cold-unexecuted new-key evidence')
+            deferred.update(remove)
+        ancestor=parent
+    selection=Path(increment['selection_path'])
+    selection_manifest,_=source_snapshot(selection);verify_owned_evidence(selection,selection_manifest)
+    from iteration_selection import verify_selection_result
+    selected=verify_selection_result(json.loads((selection/'selection.json').read_text()))
+    gate=read_verdict(selection)['checks']['measured-selection']
+    if (read_verdict(selection).get('status')!='pass' or selection_manifest.get('type')!='iteration-selection'
+            or digest(selection/'selection.json')!=gate['sha256'] or digest(selection/'selection.json')!=increment['selection_sha256']
+            or selected.get('chosen')!=increment.get('chosen') or selected.get('baseline',{}).get('run_path')!=increment['baseline_path']):
+        raise ValueError('Supported accepted choice is not the verified measured selection')
+    if increment.get('chosen')!=manifest.get('increment',{}).get('chosen'):
+        raise ValueError('Supported chosen selection differs from sealed preparation')
     baseline=verify_accepted(increment['baseline_path'],require_pointer=True)
     identity=baseline['manifest']['identities']['generated-key-inventory']
     previous=json.loads(safe_artifact(increment['baseline_path'],identity['evidence']).read_text())
@@ -152,7 +282,7 @@ def verify_supported_increment(owner,verified):
         raise ValueError('Supported accepted table differs from baseline plus one selected bounded slice')
     chosen=increment['chosen']
     desired={(key['address'],key['mx']) for key in chosen['new_executed_keys']}
-    if not current-prior<=desired or not current-prior:
+    if current-prior!=desired-deferred or not current-prior:
         raise ValueError('Supported accepted expansion exceeds selected observed keys')
     return True
 
@@ -168,8 +298,9 @@ def propose_candidate(run,baseline,generator,timeout=None):
     addition='\n\n# One measured routine/width increment; retained preparation identifies evidence.\n[[function]]\naddr = "{:06X}"\nvariants = ["{}"]\n'.format(chosen['address'],chosen['variant'])
     # Existing address with another width requires extending that one declaration.
     found=False
-    parts=re.split(r'(?=^\[\[function\]\]\s*$)',source,flags=re.M)
+    parts=re.split(r'(?=^\[\[[^\n]+\]\]\s*$)',source,flags=re.M)
     for index,part in enumerate(parts):
+        if not part.startswith('[[function]]'):continue
         match=re.search(r'^addr\s*=\s*"([^"]+)"',part,re.M)
         if match and int(re.sub(r'[^0-9a-fA-F]','',match.group(1)),16)==chosen['address']:
             variants=re.search(r'^variants\s*=\s*\[([^]]*)\]',part,re.M)
@@ -333,6 +464,50 @@ def apply_preparation(root,owner):
     return manifest['increment']
 
 
+def prepare_repair(root,failed_owner,timeout=None):
+    """Seal repaired source while preserving the selected exact config/key scope."""
+    from readiness_orchestration import source_snapshot
+    from readiness_reuse import verify_owned_evidence,safe_artifact,seal_owned_evidence
+    from readiness_coverage import _table_rows
+    root=Path(root).resolve();failed_owner=Path(failed_owner).resolve()
+    failed_manifest,_=source_snapshot(failed_owner);verify_owned_evidence(failed_owner,failed_manifest)
+    increment=dict(failed_manifest['increment'])
+    parent=Path(increment['preparation_path']);parent_manifest,_=source_snapshot(parent);verify_owned_evidence(parent,parent_manifest)
+    report=read_verdict(parent)['checks']['candidate-proposal']
+    if digest(root/'config/functions.toml')!=report['proposed_config_sha256']:
+        raise ValueError('Semantic retry config differs from sealed selected proposal; prepare a bounded proposal first')
+    run=Run.create(root,'increment-preparation',dict(DOMAIN),failed_manifest['accepted_parent'])
+    try:
+        run.capture_source()
+        proposal=run.path/'generated/functions.toml';proposal.write_bytes((root/'config/functions.toml').read_bytes())
+        environment=dict(os.environ,CARGO_TARGET_DIR=str(run.path/'build/generator'),CARGO_INCREMENTAL='0')
+        stage=run.run_stage('repair-generator-build',['cargo','build','--release','-p','recomp','--locked','--offline'],env=environment,timeout=timeout)
+        if stage['status']!='pass':raise ValueError('Repaired generator build failed')
+        run.record_artifact('repair-generator',run.path/'build/generator/release/recomp','generated/recomp')
+        steps=run.path/'generated/proposed-steps.rs'
+        stage=run.run_stage('repaired-generation',[run.path/'generated/recomp','--rom',root/'rom/sm.sfc','--functions',proposal,
+            '--out',run.path/'generated/game.rs','--steps-out',steps],timeout=timeout)
+        if stage['status']!='pass':raise ValueError('Repaired generation failed')
+        original=parent/'generated/proposed-steps.rs'
+        if not original.exists():original=parent/'generated/steps.rs'
+        old={(row['address'],row['mx']):row['bytes'] for row in _table_rows(original.read_text())}
+        actual={(row['address'],row['mx']):row['bytes'] for row in _table_rows(steps.read_text())}
+        if actual!=old:raise ValueError('Repaired table changes selected keys/instruction bytes beyond semantic repair')
+        before={row['path']:row['sha256'] for row in json.loads((failed_owner/'source/inventory.json').read_text())['files']}
+        after={row['path']:row['sha256'] for row in run.source_files}
+        changes=[{'path':path,'before':before.get(path),'after':after.get(path)} for path in sorted(set(before)|set(after)) if before.get(path)!=after.get(path)]
+        run.record_check('candidate-proposal',dict(report,prior_config_sha256=digest(root/'config/functions.toml'),
+            proposed_config_sha256=digest(proposal),steps_sha256=digest(steps),repair_source_diff=changes,
+            parent_preparation_path=str(parent),parent_proposal_sha256=digest(parent/'checks/candidate-proposal.json'),failed_candidate=str(failed_owner)))
+        increment.update(preparation_path=str(run.path),repair_parent=str(parent))
+        run.manifest['increment']=increment;run.check_sources();seal_owned_evidence(run);run.save_manifest()
+        run.finalize('pass','candidate-proposal','Same selected table prepared with exact repaired source; full affected gates still mandatory',mandatory_checks=['candidate-proposal'])
+        return run.path
+    except Exception as error:
+        if run.manifest['state']=='running':run.finalize('error','candidate-proposal',str(error))
+        raise
+
+
 def prune_uncovered(root,failed_owner,timeout=None):
     """Make a new source-bound retry removing only newly added cold-unexecuted keys."""
     from readiness_orchestration import source_snapshot
@@ -378,7 +553,9 @@ def prune_uncovered(root,failed_owner,timeout=None):
         if actual!=set(candidate)-remove:raise ValueError('Pruned compiled table differs beyond deferred new keys')
         report={'status':'pass','complete':True,'prior_config_sha256':digest(root/'config/functions.toml'),
             'proposed_config_sha256':digest(proposal),'steps_sha256':digest(run.path/'generated/steps.rs'),
-            'deferred':[candidate[key] for key in sorted(remove)],'failed_run_id':manifest['run_id']}
+            'deferred':[candidate[key] for key in sorted(remove)],'failed_run_id':manifest['run_id'],
+            'pruning_parent_path':increment['preparation_path'],'pruning_failed_path':str(failed_owner),
+            'pruning_parent_sha256':digest(Path(increment['preparation_path'])/'checks/candidate-proposal.json')}
         run.record_check('candidate-proposal',report)
         increment=dict(increment,preparation_path=str(run.path),failed_candidate=str(failed_owner),
             deferred=increment.get('deferred',[])+report['deferred'])

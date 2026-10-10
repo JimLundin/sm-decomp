@@ -99,6 +99,40 @@ class CoverageTests(unittest.TestCase):
             self.assertEqual(report["status"], "uncovered")
             self.assertEqual(report["required_keys"][0]["reason"], "body changed")
 
+    def test_pattern_promotion_preserves_unaffected_legacy_debt_but_runtime_change_requires_it(self):
+        from readiness_coverage import generated_inventory,evaluate_coverage
+        from pattern_contract import DECLARATION
+        for changed in ('promotion','pattern','runtime'):
+            with self.subTest(changed=changed),tempfile.TemporaryDirectory() as temporary:
+                root=Path(temporary);subprocess.run(['git','init','-q',str(root)],check=True)
+                declaration=json.loads((Path(__file__).resolve().parent.parent/DECLARATION).read_text())
+                path=root/DECLARATION;path.parent.mkdir(parents=True);path.write_text(json.dumps(declaration))
+                runtime=root/'crates/runtime/src/lib.rs';runtime.parent.mkdir(parents=True);runtime.write_text('unchanged shared runtime')
+                (root/'config').mkdir();(root/'config/functions.toml').write_text('config')
+                def table(run,extra=False):
+                    rows=[(0x8002,0xea)]+([(0x8020,0xad)] if extra else [])
+                    text='pub const ROM_SHA256: Option<&str> = Some("'+'a'*64+'");\n'
+                    text+=''.join('fn step_{:06x}_3(m: &mut Machine) {{\nbody\n}}\n'.format(addr) for addr,_ in rows)
+                    text+='pub static STEP_TABLE: &[StepEntry] = &[\n'+''.join('(0x{:06x}, 3, &[{}], step_{:06x}_3),\n'.format(addr,op,addr) for addr,op in rows)+'];\n'
+                    steps=run.path/'generated/steps.rs';steps.write_text(text)
+                    return generated_inventory(run,steps)
+                parent=Run.create(root,'parity',{'frames':2});parent.capture_source();old=table(parent)
+                # Historical inventory retains its original global binding.
+                prior=json.loads(old.read_text());prior.pop('execution_binding_version',None);prior.pop('shared_execution_source_sha256',None);prior.pop('declaration_pattern_sha256',None);old.write_text(json.dumps(prior))
+                parent.manifest['identities'].pop('generated-key-inventory');identity=parent.record_artifact('generated-key-inventory',old);identity['evidence']=old.relative_to(parent.path).as_posix();parent.save_manifest();parent.finalize('pass')
+                if changed=='runtime':runtime.write_text('changed shared runtime')
+                else:
+                    promoted=declaration['prospective_patterns'].pop(0);declaration['patterns'].append(promoted)
+                    if changed=='pattern':next(row for row in declaration['patterns'] if row['opcode']=='ea')['addressing']='changed semantic declaration'
+                    path.write_text(json.dumps(declaration))
+                candidate=Run.create(root,'parity',{'frames':2},parent.manifest['run_id']);candidate.capture_source();current=table(candidate,True)
+                profile=candidate.path/'diagnostics/profile.json'
+                write(profile,{'schema_version':1,'complete':True,'expected_frames':2,'completed_frames':2,'candidate_inventory_sha256':hashlib.sha256(current.read_bytes()).hexdigest(),
+                    'compiled':[dict(key(0x8002),count=0),dict(key(0x8020),opcode=0xad,bytes=[0xad],count=10)],'interpreted':[], 'generated_instructions':10,'interpreted_instructions':0})
+                report=evaluate_coverage(candidate,profile,current,parent.path)
+                self.assertEqual(report['status'],'pass' if changed=='promotion' else 'uncovered')
+                self.assertEqual(any(row['address']==0x8002 for row in report['required_keys']),changed!='promotion')
+
     def test_progress_delta_is_absent_when_replay_intervals_differ(self):
         from readiness_coverage import comparable_progress
         parent = {"domain": {"rom": "same", "movie": "same", "profile": "same", "seed": 0, "start": 0, "frames": 300},

@@ -26,7 +26,7 @@ fn execute(output: &Path, source: &str) -> Result<()> {
     rom[0x7ffc..0x7ffe].copy_from_slice(&0x8000u16.to_le_bytes());
     let correct = emitted::STEP_TABLE.iter().copied().find(|row| row.0 == 0x8004 && row.1 == 3).unwrap();
     let candidate = [(correct.0, correct.1, correct.2, wrong_late as runtime::StepFn)];
-    let pads = [0];
+    let pads = [0, 0];
     std::fs::write(output.join("fixture.sfc"), &rom)?;
     std::fs::write(output.join("fixture.inputs"), movie::write_inputs(&pads))?;
     std::fs::write(output.join("production-steps.rs"), include_str!(concat!(env!("OUT_DIR"), "/feedback_steps.rs")))?;
@@ -67,15 +67,45 @@ fn execute(output: &Path, source: &str) -> Result<()> {
         &output.join("disabled"),
     )?;
     ensure!(predecessor["status"] == "pass" && disabled["status"] == "pass", "matching controls fail");
-    let cache_error =
-        snes::paired::prepare_cache(&rom, 0, &candidate, &pads, (0, 0), json!({}), &output.join("divergent-cache"))
-            .err()
-            .map(|e| e.to_string());
-    ensure!(cache_error.is_some(), "divergent cache unexpectedly validates");
+    let identities = json!({"rom_sha256":sha256(&rom),"movie_sha256":sha256(movie::write_inputs(&pads).as_bytes()),
+        "input_sha256":sha256(movie::write_inputs(&pads).as_bytes()),"source_sha256":source,
+        "hardware_sha256":sha256(include_bytes!("../paired.rs")),"profile":"lsnes-profile","serializer":"paired-v1",
+        "compiler":"fixture release build","features":[],"settings":{"seed":0}});
+    let (pair, cache) = snes::paired::prepare_cache(
+        &rom,
+        0,
+        &candidate,
+        &pads,
+        (0, 0),
+        identities.clone(),
+        &output.join("divergent-cache"),
+    )?;
+    ensure!(
+        cache["validation"]["complete"] == true
+            && cache["validation"]["observed_rollovers"] == 2
+            && cache["validation"]["candidate_reference_comparison"] == "divergence",
+        "cache did not record actual next-frame divergence"
+    );
+    let mut warm_r = Reference::new(&rom, 0)?;
+    let mut warm_s = Subject::with_steps(&rom, 0, &candidate)?;
+    snes::paired::restore(&pair, &pair.identities, &mut warm_r, &mut warm_s)?;
+    let warm = snes::focused::compare_restored(
+        &mut warm_r,
+        &mut warm_s,
+        &pads,
+        (0, 0, 0),
+        count,
+        &output.join("warm"),
+        "warm",
+    )?;
+    ensure!(
+        warm["status"] == "divergence" && warm["first_mismatch"]["instruction"] == 86,
+        "warm cache hid candidate divergence"
+    );
     let report = json!({"schema_version":1,"scope":"synthetic late occurrence; acceptance not certified","status":"pass","complete":true,"accepted_count":0,
         "source_sha256":source,"binary_sha256":sha256(&std::fs::read(std::env::current_exe()?)?),
         "rom_sha256":sha256(&rom),"input_sha256":sha256(movie::write_inputs(&pads).as_bytes()),
-        "early":early,"candidate":late,"predecessor":predecessor,"disabled":disabled,"cache_refusal":cache_error,
+        "early":early,"candidate":late,"predecessor":predecessor,"disabled":disabled,"cache":cache,"warm":warm,
         "altered_key":[0x8004,3],"independent_expectation":{"source":"literal cartridge instructions and production emitted correct store","reference_write":0,"candidate_write":0x99}});
     std::fs::write(output.join("report.json"), serde_json::to_vec_pretty(&report)?)?;
     Ok(())

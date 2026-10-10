@@ -80,13 +80,43 @@ def failed_lineage(output):
 
 
 def verify_probe(report,output,source,binary):
+    output=Path(output)
     if report.get('status')!='pass' or report.get('complete') is not True or report.get('accepted_count')!=0 or report.get('source_sha256')!=source or report.get('binary_sha256')!=digest(binary):raise ValueError('Synthetic probe scope/source differs')
-    if report.get('rom_sha256')!=digest(Path(output)/'fixture.sfc') or report.get('input_sha256')!=digest(Path(output)/'fixture.inputs'):raise ValueError('Synthetic probe material differs')
-    if report['early']['status']!='pass' or report['early']['completed_instructions']!=65 or report['candidate']['status']!='divergence' or report['candidate']['first_mismatch']['instruction']!=86 or report['candidate']['first_mismatch']['subject']['generated_key']!=[0x8004,3] or not report.get('cache_refusal'):raise ValueError('Late failure did not reproduce')
+    if report.get('rom_sha256')!=digest(output/'fixture.sfc') or report.get('input_sha256')!=digest(output/'fixture.inputs'):raise ValueError('Synthetic probe material differs')
+    for name in ('early','candidate','predecessor','disabled','warm'):
+        actual=json.loads((output/name/'instruction.json').read_text())
+        if report.get(name)!=actual:raise ValueError('Probe embedded report differs from actual execution: '+name)
+        if actual.get('complete') is not True or actual.get('start_input_index')!=0 or actual.get('start_instruction')!=0:
+            raise ValueError('Probe matching execution interval incomplete: '+name)
+    if report['early']['status']!='pass' or report['early']['completed_instructions']!=65:raise ValueError('Early occurrence differs')
+    for name in ('candidate','warm'):
+        row=report[name];mismatch=row.get('first_mismatch',{});bus=row.get('first_bus_difference',{})
+        if (row.get('status')!='divergence' or row.get('completed_instructions')!=87
+                or mismatch.get('instruction')!=86 or mismatch.get('input_index')!=0 or mismatch.get('pad')!=0
+                or mismatch.get('subject',{}).get('generated_key')!=[0x8004,3]
+                or any(bus.get(side,{}).get(field)!=value for side,value in (('reference',0),('subject',0x99)) for field in ('value',))
+                or any(bus.get(side,{}).get('kind')!='write' or bus.get(side,{}).get('address')!=0x10 for side in ('reference','subject'))):
+            raise ValueError('Late failure did not reproduce actual literal store disagreement')
+        for side in ('reference','subject'):
+            for phase in ('before','after'):
+                if digest(output/name/(side+'-'+phase+'.hardware.bin'))!=mismatch[side]['hardware_'+phase+'_sha256']:
+                    raise ValueError('Late mismatch snapshot differs')
     for name in ('predecessor','disabled'):
-        if report[name]['status']!='pass' or report[name]['completed_instructions']!=87 or report[name]['start_input_index']!=0:raise ValueError('Matching late controls incomplete')
-    for name in ('reference-before','subject-before','reference-after','subject-after'):
-        if not (Path(output)/'candidate'/(name+'.hardware.bin')).is_file():raise ValueError('Late mismatch snapshot missing')
+        row=report[name]
+        if row.get('status')!='pass' or row.get('completed_instructions')!=87 or row.get('expected_instructions')!=87:raise ValueError('Matching late controls incomplete')
+    cache=report.get('cache',{})
+    record=json.loads((output/'divergent-cache/cache.json').read_text())
+    validation=json.loads((output/'divergent-cache/validation.json').read_text());pair=json.loads((output/'divergent-cache/pair.json').read_text())
+    if (cache.get('validation')!=validation or validation.get('status')!='pass'
+            or validation.get('complete') is not True or validation.get('observed_rollovers')!=2 or validation.get('completed_frames')!=1
+            or validation.get('candidate_reference_comparison')!='divergence'
+            or validation.get('pair_sha256')!=pair.get('pair_sha256')
+            or pair['identities'].get('rom_sha256')!=report['rom_sha256'] or pair['identities'].get('input_sha256')!=report['input_sha256']
+            or pair['identities'].get('source_sha256')!=source):raise ValueError('Actual paired cache divergence evidence differs')
+    if record.get('pair_file_sha256')!=digest(output/'divergent-cache/pair.json') or record.get('validation_file_sha256')!=digest(output/'divergent-cache/validation.json'):
+        raise ValueError('Actual paired cache files differ')
+    from paired_checkpoint_verify import verify_pair
+    verify_pair(pair,validation,{'cache_history_sha256':pair['history_sha256']})
     return True
 
 

@@ -152,20 +152,25 @@ def brief(run,status,reason):
     return text
 
 
-def run_readiness(root,predecessor=None,original_run=None,timeout=None,jobs=4,iteration=False,increment=None,rejected_pointer=None):
+def run_readiness(root,predecessor=None,original_run=None,timeout=None,jobs=4,iteration=False,increment=None,rejected_pointer=None,allocated=None):
+    if iteration:
+        from iteration_increment import require_increment
+        require_increment(increment)
     root=Path(root).resolve()
     pointer=root/'out/accepted.json'
     if predecessor is None and pointer.exists() and rejected_pointer is None:
         try:predecessor=Path(json.loads(pointer.read_text())['run_path'])
         except (OSError,ValueError,KeyError):predecessor=pointer
-    run=Run.create(root,'iteration' if iteration else 'readiness',dict(DOMAIN),Path(predecessor).name if predecessor else None)
+    run=Run.create(root,'iteration' if iteration else 'readiness',dict(DOMAIN),Path(predecessor).name if predecessor else None,
+        metadata={name:increment[name] for name in ('session_id','increment_id','operation_id') if increment and increment.get(name)})
     if rejected_pointer is not None:
         run.manifest['rejected_pointer_recovery']=str(rejected_pointer);run.save_manifest()
     if increment is not None:
         run.manifest['increment']=increment;run.save_manifest()
-        for name in ('session_id','increment_id'):
+        for name in ('session_id','increment_id','operation_id'):
             if increment.get(name):run.manifest[name]=increment[name]
         run.save_manifest()
+    if allocated is not None:allocated(run)
     print('Run: '+str(run.path),flush=True);print('Brief: '+str(run.path/'brief.md'),flush=True)
     try:
         failures=preflight(run)
@@ -244,6 +249,7 @@ def main(argv=None):
     for name in ('readiness','validate-iteration'):
         command=sub.add_parser(name);command.add_argument('--root',type=Path,default=Path(__file__).resolve().parent.parent)
         command.add_argument('--predecessor',type=Path);command.add_argument('--original-run',type=Path);command.add_argument('--timeout',type=float);command.add_argument('--jobs',type=int,default=4)
+    sub.choices['validate-iteration'].add_argument('--increment',type=Path,help='Explicit sealed preparation metadata JSON')
     command=sub.add_parser('restore');command.add_argument('--run',type=Path,required=True);command.add_argument('--destination',type=Path,required=True);command.add_argument('--accepted',action='store_true')
     command=sub.add_parser('accept');command.add_argument('--run',type=Path,required=True)
     command=sub.add_parser('verify-patterns');command.add_argument('--run',type=Path,required=True);command.add_argument('--output',type=Path,required=True);command.add_argument('--development-scope',action='store_true')
@@ -259,7 +265,7 @@ def main(argv=None):
             previous=sys.argv;sys.argv=[previous[0]]+args.arguments
             try:return replay()
             finally:sys.argv=previous
-        return run_readiness(args.root,args.predecessor,args.original_run,args.timeout,args.jobs,args.command=='validate-iteration')
+        return run_readiness(args.root,args.predecessor,args.original_run,args.timeout,args.jobs,args.command=='validate-iteration',json.loads(args.increment.read_text()) if getattr(args,'increment',None) else None)
     except (Exception,KeyboardInterrupt) as error:print(str(error),file=sys.stderr);return 2
 
 
@@ -285,12 +291,8 @@ def verify_pattern_evidence(output,manifest,strict=True):
             # Standalone verification must still bind the declaration to the
             # preserved source inventory, even without a parent source copy.
             raw_declaration=json.loads((output/'declaration.json').read_text())
-            if report.get('prospective_opcode'):
-                candidates=[row for row in raw_declaration.get('prospective_patterns',[]) if row['opcode']==report['prospective_opcode']]
-                if len(candidates)!=1:raise ValueError('Preserved prospective declaration missing')
-                declaration=dict(raw_declaration,patterns=candidates)
-                for field in ('timing_tests','timing_oracles','hardware_conditions'):declaration[field]=candidates[0][field]
-            else:declaration = raw_declaration
+            from pattern_contract import project_declaration
+            declaration=project_declaration(raw_declaration,report.get('prospective_opcode'))
         if report['declaration'] != declaration or identity(declaration) != report['declaration_sha256']:
             raise ValueError('Pattern declaration differs from candidate source')
         declared_source = next((row for row in report['source_inventory'] if row['path'] == DECLARATION), {})

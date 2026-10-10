@@ -17,14 +17,15 @@ def load_declaration(root, override=None, prospective=None):
     if override is not None and Path(override).read_bytes() != raw:
         raise ValueError('Pattern declaration differs from production source declaration')
     declaration = json.loads(raw)
+    return project_declaration(declaration,prospective)
+
+
+def project_declaration(declaration,prospective=None):
     if prospective:
-        candidates = [row for row in declaration.get('prospective_patterns', []) if row['opcode'] == prospective]
-        if len(candidates) != 1:
-            raise ValueError('Unknown prospective pattern; independent implementation decision required')
-        declaration = dict(declaration, patterns=candidates)
-        pattern = candidates[0]
-        for field in ('timing_tests', 'timing_oracles', 'hardware_conditions'):
-            declaration[field] = pattern[field]
+        candidates=[row for row in declaration.get('prospective_patterns',[]) if row['opcode']==prospective]
+        if len(candidates)!=1:raise ValueError('Unknown prospective pattern; independent implementation decision required')
+        declaration=dict(declaration,patterns=candidates)
+        for field in ('timing_tests','timing_oracles','hardware_conditions'):declaration[field]=candidates[0][field]
     validate_declaration(declaration)
     return declaration
 

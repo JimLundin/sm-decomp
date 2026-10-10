@@ -111,11 +111,18 @@ fn cold_frame_focus_finds_later_failure_after_first_key_window_passes() {
     assert!(later["first_mismatch"]["instruction"].as_u64().unwrap() > 65);
     assert_eq!(later["first_mismatch"]["subject"]["generated_key"], serde_json::json!([0x8004, 3]));
     assert!(output.join("later/subject-after.hardware.bin").is_file());
-    // A failing next-frame cache cannot prevent cold mismatch evidence.
-    assert!(
-        snes::paired::prepare_cache(&rom, 0, &table, &[0], (0, 0), serde_json::json!({}), &output.join("bad-cache"))
-            .is_err()
-    );
+    // Serialization fidelity preserves and reports genuine candidate divergence.
+    let identities = serde_json::json!({"rom_sha256":snes::paired::sha256(&rom),
+        "movie_sha256":snes::paired::sha256(movie::write_inputs(&[0,0]).as_bytes()),
+        "input_sha256":snes::paired::sha256(movie::write_inputs(&[0,0]).as_bytes()),
+        "source_sha256":"a".repeat(64),"hardware_sha256":"b".repeat(64),
+        "profile":"lsnes-profile","serializer":"paired-v1","compiler":"test",
+        "features":[],"settings":{"seed":0}});
+    let (_, cache) =
+        snes::paired::prepare_cache(&rom, 0, &table, &[0, 0], (0, 0), identities, &output.join("divergent-cache"))
+            .unwrap();
+    assert_eq!(cache["validation"]["observed_rollovers"], 2);
+    assert_eq!(cache["validation"]["candidate_reference_comparison"], "divergence");
     for (name, steps) in [("predecessor", &[][..]), ("disabled", &[][..])] {
         let report = snes::focused::compare_from_boundary(
             &mut Reference::new(&rom, 0).unwrap(),
