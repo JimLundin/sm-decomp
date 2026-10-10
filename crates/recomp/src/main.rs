@@ -90,7 +90,15 @@ fn main() -> Result<()> {
             std::fs::create_dir_all(parent)?;
         }
         use sha2::{Digest, Sha256};
-        let mut source = step::emit_table(&built, &read)?;
+        let exclusions = funcs
+            .excluded_steps
+            .iter()
+            .map(|row| {
+                let (m8, x8) = config::parse_variant(&row.variant)?;
+                Ok((config::parse_addr(&row.addr)?, emit::mx_key(m8, x8)))
+            })
+            .collect::<Result<HashSet<_>>>()?;
+        let mut source = step::emit_table_excluding(&built, &read, &exclusions)?;
         source.push_str(&format!("pub const ROM_SHA256: Option<&str> = Some(\"{:x}\");\n", Sha256::digest(&rom.data)));
         std::fs::write(path, source)?;
     }
