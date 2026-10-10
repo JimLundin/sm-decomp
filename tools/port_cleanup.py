@@ -89,6 +89,8 @@ def deduplicate(root, apply):
             verdict = json.loads((base / 'verdict.json').read_text())
         except (OSError, ValueError):
             continue
+        if not isinstance(verdict, dict):
+            continue
         if verdict.get('status') not in ('accepted', 'offline-verified', 'mixed-C-Rust-integration'):
             continue
         inventory = verdict.get('artifacts', {})
