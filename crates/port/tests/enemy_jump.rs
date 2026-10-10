@@ -1,6 +1,4 @@
-#[path = "../src/enemy_jump.rs"]
-mod enemy_jump;
-use port::{WRAM_SIZE, Wram, audio, enemy_ai};
+use port::{WRAM_SIZE, Wram, enemy_jump};
 struct NoEffects;
 impl enemy_jump::Host for NoEffects {
     fn spawn_plm(&mut self, _: &mut Wram<'_>, _: u16, _: &mut i32) -> Result<u8, &'static str> {

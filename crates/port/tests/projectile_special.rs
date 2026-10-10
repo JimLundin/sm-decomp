@@ -1,6 +1,4 @@
-use port::{WRAM_SIZE, Wram, audio, projectile_flight, projectiles};
-#[path = "../src/projectile_special.rs"]
-mod special;
+use port::{WRAM_SIZE, Wram, projectile_special as special};
 struct NoPlm;
 impl special::Host for NoPlm {
     fn spawn_plm(&mut self, _: &mut Wram<'_>, _: u16) -> Result<u8, &'static str> {
