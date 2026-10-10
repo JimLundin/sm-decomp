@@ -31,6 +31,7 @@ class HistoryTests(unittest.TestCase):
                 self.assertEqual(report['consecutive_without_evidence'],number+1)
                 self.assertEqual(report['decision_required'],number==2)
                 self.assertEqual((candidate.path/'verdict.json').read_bytes(),before)
+            (root/'out/iteration-history/increment-one/20261010-candidate-diagnosis.json').write_text('{"next_action":"repair"}')
             verified=verify_history(root,'increment-one')
             self.assertEqual(len(verified),3)
             self.assertEqual({item['session_id'] for item in verified},{'session-one'})
