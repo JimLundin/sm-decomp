@@ -59,3 +59,14 @@ Captured actual-C differential passed:
 `/tmp/sm-flight-zero-room-capture/20261010T204245.091212Z/verdict.json`, one actual
 Ceres missile call, full WRAM/return/callback comparison. Nine independent tests
 and targeted clippy pass; prior1233fixture seal precedes this admission widening.
+
+Integrated public source full42/1233 acceptance:
+`out/port/flight-current/20261010T204523.841029Z/verdict.json`.
+Accepted four-process live9,000-frame run:
+`out/port/flight-fixed-live/20261010T204643.443282Z/verdict.json`.
+Full checkpoints, terminal WRAM/SRAM, ordered hardware effects and call captures
+match. Four public symbols execute434 Rust calls: normal beam17, missile68,
+uncharged firing3, missile HUD/firing346. Accepted decompressor23 and RNG8,783
+remain exclusively Rust in each mixed process; measured CPU fallback is zero.
+The prefix has zero PLM calls, so it proves flight/firing replacement but does
+not establish native PLM execution or original-ROM parity.
