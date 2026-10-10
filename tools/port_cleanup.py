@@ -93,6 +93,8 @@ def deduplicate(root, apply):
         inventory = verdict.get('artifacts', {})
         if not isinstance(inventory, dict):
             continue
+        # Finished runs enumerate their snapshots; avoid walking all case dirs.
+        dirs.clear()
         for relative, expected in inventory.items():
             source = base / relative
             choices = [source]
