@@ -53,3 +53,18 @@ PLM instruction fixtures are generated automatically in the batch's asset
 directory. Their bounded interpreter is verified offline and is excluded from
 the whole live PLM loop. Individual harness commands remain available for focused
 diagnosis; batch orchestration should use the checked-in runner.
+
+To reclaim disposable Cargo build intermediates without changing existing
+acceptance evidence:
+
+```sh
+python3 tools/port_cleanup.py                 # preview under out/
+python3 tools/port_cleanup.py --apply         # remove eligible target/ directories
+```
+
+Cleanup skips unfinished runs, symlinks and every build directory named by an
+artifact inventory, including nested inventories. Fixtures, replay observations,
+verdicts, acceptance pointers and linked binaries remain retained. Existing
+sealed offline runs often contain large full-WRAM fixtures; cleanup preserves
+those files. New live runs discard their unsealed Cargo target directory after
+completion automatically.
