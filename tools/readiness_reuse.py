@@ -104,7 +104,7 @@ def verify_policy(owner, accepted):
         raise ValueError('Dependency policy checksum differs')
     policy = json.loads(path.read_text())
     expected = dependency_policy(manifest, accepted['inventory']['files'], Path(owner) / 'source/files')
-    if (policy.get('schema_version') != POLICY_VERSION or policy.get('contract_version') != CONTRACT_VERSION
+    if (policy.get('schema_version') != POLICY_VERSION or policy.get('contract_version') not in (1, 2)
             or policy.get('source_sha256') != manifest['identities']['source']['sha256'] or policy.get('checks') != expected):
         raise ValueError('Dependency policy does not match actual source/settings')
     return policy
@@ -275,6 +275,16 @@ def verify_accepted(owner, require_pointer=False):
     if inventory['sha256'] != inventory_digest(inventory['files']) or inventory['sha256'] != manifest['identities']['source']['sha256']:
         raise ValueError('Accepted source inventory checksum differs')
     guarded = [inventory_path, owner / 'manifest.json', owner / 'verdict.json']
+    from pattern_contract import DECLARATION, load_declaration
+    has_declaration = any(entry['path'] == DECLARATION for entry in inventory['files'])
+    contract_version = 2 if has_declaration else manifest.get('contract_version', 1)
+    if has_declaration:
+        declaration = load_declaration(owner / 'source/files')
+        if manifest.get('contract_version') != 2:
+            raise ValueError('Candidate declaration cannot downgrade readiness evidence contract')
+        for name in ('instruction', 'timing'):
+            if verdict.get('checks', {}).get(name, {}).get('declaration') != declaration:
+                raise ValueError('Accepted pattern declaration differs from candidate source')
     for entry in inventory['files']:
         path = safe_artifact(owner / 'source/files', entry['path'])
         if digest(path) != entry['sha256'] or (path.stat().st_mode & 0o777) != entry['mode']:
@@ -284,7 +294,7 @@ def verify_accepted(owner, require_pointer=False):
         check = verdict.get('checks', {}).get(name, {})
         if check.get('status') != 'pass' or check.get('complete') is not True:
             raise ValueError('Accepted mandatory check failed or incomplete: ' + name)
-        validate_gate_scope(name, check)
+        validate_gate_scope(name, check, contract_version)
         evidence = manifest.get('check_evidence', {}).get(name)
         if not evidence:
             raise ValueError('Accepted mandatory check lacks digest-bound evidence: ' + name)
@@ -351,7 +361,7 @@ def apply_reuse(run, predecessor, name):
 def accepted_pointer(owner, accepted):
     owner = Path(owner).resolve()
     manifest = accepted['manifest']
-    return {'schema_version': 1, 'contract_version': CONTRACT_VERSION, 'run_id': manifest['run_id'],
+    return {'schema_version': 1, 'contract_version': manifest.get('contract_version', 1), 'run_id': manifest['run_id'],
             'run_path': str(owner), 'domain': DOMAIN,
             'source_inventory': 'source/inventory.json', 'source_sha256': manifest['identities']['source']['sha256'],
             'source_path': 'source/files', 'verdict_sha256': digest(owner / 'verdict.json'),

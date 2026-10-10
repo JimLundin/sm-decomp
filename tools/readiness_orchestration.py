@@ -238,6 +238,29 @@ def verify_pattern_evidence(output,manifest,strict=True):
     if report.get('compiler','').strip()!=manifest['identities']['compiler']['version'].strip():raise ValueError('Pattern compiler differs')
     if report.get('status')!='pass' or report.get('failed')!=0 or report.get('skipped')!=0 or report.get('passed')!=report.get('expected'):raise ValueError('Pattern successful terminal counts missing')
     if strict:validate_gate_scope('instruction',dict(report,complete=True))
+    declaration = None
+    from pattern_contract import DECLARATION
+    candidate_declared = any(row['path'] == DECLARATION for row in report.get('source_inventory', []))
+    if candidate_declared and report.get('schema_version') != 2:
+        raise ValueError('Candidate declaration cannot downgrade pattern evidence contract')
+    if report.get('schema_version') == 2:
+        from pattern_contract import load_declaration, identity, DECLARATION, FIXTURES
+        snapshot = output.parent.parent / 'source/files'
+        if snapshot.is_dir():
+            declaration = load_declaration(snapshot)
+        else:
+            # Standalone verification must still bind the declaration to the
+            # preserved source inventory, even without a parent source copy.
+            declaration = json.loads((output/'declaration.json').read_text())
+        if report['declaration'] != declaration or identity(declaration) != report['declaration_sha256']:
+            raise ValueError('Pattern declaration differs from candidate source')
+        declared_source = next((row for row in report['source_inventory'] if row['path'] == DECLARATION), {})
+        fixture_source = next((row for row in report['source_inventory'] if row['path'] == FIXTURES), {})
+        # Raw declaration identity is recorded separately from canonical JSON.
+        if declared_source.get('sha256') != report.get('declaration_file_sha256') or fixture_source.get('sha256') != report.get('fixtures_sha256'):
+            raise ValueError('Pattern declaration/fixture source binding differs')
+        if digest(output/'declaration.json') != declared_source['sha256'] or digest(output/'independent-fixtures.json') != fixture_source['sha256']:
+            raise ValueError('Pattern preserved source declaration/fixtures differ')
     generator=output/report['generator']['path']
     if digest(generator)!=report['generator']['sha256']:raise ValueError('Pattern generator executable differs')
     expected=[json.loads(line) for line in (output/'expected-cases.jsonl').read_text().splitlines()]
@@ -245,6 +268,22 @@ def verify_pattern_evidence(output,manifest,strict=True):
     if digest(output/'expected-cases.jsonl')!=report['expected_inventory_sha256'] or len(expected)!=report['expected'] or len(rows)!=report['run']:
         raise ValueError('Pattern expected/completed ledger differs')
     if len(rows)!=len(expected):raise ValueError('Pattern ledger truncated')
+    if declaration:
+        from pattern_contract import identity, pattern_conditions
+        patterns={row['opcode']:row for row in declaration['patterns']}
+        fixtures={case['name']:case for case in json.loads((output/'independent-fixtures.json').read_text())}
+        complete=[]
+        for corpus in report['corpus']:
+            path=output/'corpus'/(corpus['opcode']+'.n.json')
+            if digest(path)!=corpus['sha256']:raise ValueError('Pattern preserved complete corpus differs')
+            cases=json.loads(path.read_text())
+            if len(cases)!=corpus['cases']:raise ValueError('Pattern available corpus count differs')
+            for case in cases:complete.append((corpus['opcode'],case))
+        for opcode in report['opcodes']:
+            for name in patterns[opcode]['independent_fixtures']:
+                complete.append((opcode,fixtures[name]))
+        reconstructed=[{'name':case['name'],'case_sha256':identity(case),'opcode':opcode,'conditions':pattern_conditions(case,patterns[opcode])} for opcode,case in complete]
+        if expected!=reconstructed:raise ValueError('Pattern ordered complete corpus/independent fixture scope differs')
     combined=[]
     for batch in sorted(output.glob('batch-*')):
         identity=json.loads((batch/'identities.json').read_text())
@@ -262,20 +301,38 @@ def verify_pattern_evidence(output,manifest,strict=True):
         if Path(generated['command'][0])!=generator or generated['returncode']!=0 or json.loads((batch/'build.json').read_text())['returncode']!=0:
             raise ValueError('Pattern generation/build did not complete')
         combined.extend(json.loads(line) for line in (batch/'cases.jsonl').read_text().splitlines())
+        if declaration:
+            from pattern_contract import identity, pattern_conditions
+            inputs=json.loads((batch/'input.json').read_text())
+            patterns={row['opcode']:row for row in declaration['patterns']}
+            offset=len(combined)-len(inputs)
+            for case,expected_case in zip(inputs,expected[offset:]):
+                opcode=case['opcode']
+                fields={key:value for key,value in case.items() if key not in ('case_sha256','opcode','conditions','independent_fixture')}
+                if identity(fields)!=case['case_sha256'] or expected_case.get('opcode')!=opcode or expected_case.get('conditions')!=pattern_conditions(case,patterns[opcode]):
+                    raise ValueError('Pattern input identity/declared conditions differ')
     if combined!=rows:raise ValueError('Pattern batch ledger differs from combined ledger')
-    counts={opcode:0 for opcode in OPCODES}
+    counts={opcode:0 for opcode in report['opcodes']}
+    coverage={opcode:{} for opcode in counts}
     for expected_row,row in zip(expected,rows):
         if row.get('name')!=expected_row['name'] or row.get('case_sha256')!=expected_row['case_sha256'] or row.get('status')!='pass':raise ValueError('Pattern ordered case identity/outcome differs')
         if row['opcode'] not in counts:raise ValueError('Unexpected validated opcode')
         counts[row['opcode']]+=1
+        for condition in expected_row.get('conditions', []):
+            coverage[row['opcode']][condition]=coverage[row['opcode']].get(condition,0)+1
     if any(report['opcodes'][key]['run']!=count for key,count in counts.items() if key in report['opcodes']):raise ValueError('Pattern opcode counts differ')
+    if declaration:
+        for opcode, conditions in report['coverage'].items():
+            if any(value.get('expected') != coverage[opcode].get(condition,0) or value.get('passed') != coverage[opcode].get(condition,0) for condition,value in conditions.items()):
+                raise ValueError('Pattern declared condition ledger differs')
     return report
 
 
 def pattern_gates(run,timeout=None):
-    from readiness_patterns import OPCODES
+    from pattern_contract import load_declaration
+    declaration=load_declaration(run.root)
     corpus=run.root/'deps/65816/v1'
-    for opcode in OPCODES:run.guard_input(corpus/(opcode+'.n.json'))
+    for pattern in declaration['patterns']:run.guard_input(corpus/pattern['corpus'])
     output=run.path/'checks/patterns'
     stage=run.run_stage('pattern-validation',[sys.executable,run.root/'tools/readiness_patterns.py','--out',output,'--timing'],timeout=timeout,exit_statuses={1:'divergence',2:'error'})
     raw_path=output/'instruction.json'
@@ -288,7 +345,8 @@ def pattern_gates(run,timeout=None):
         dependency=next(item for item in json.loads((run.root/'tools/dependencies.json').read_text()) if item['name']=='65816')
         if report['pinned_dependency']!=dependency:raise ValueError('Pattern corpus provenance differs')
         for item in report['corpus']:
-            if digest(corpus/(item['opcode']+'.n.json'))!=item['sha256'] or item['cases']!=10000:raise ValueError('Pattern consumed corpus identity/count differs')
+            cases=json.loads((corpus/(item['opcode']+'.n.json')).read_text())
+            if digest(corpus/(item['opcode']+'.n.json'))!=item['sha256'] or item['cases']!=len(cases):raise ValueError('Pattern consumed corpus identity/count differs')
     report['evidence']='checks/patterns/instruction.json';run.record_check('instruction',report)
     timing_path=output/'timing.json'
     if timing_path.is_file():
@@ -306,6 +364,14 @@ def verify_timing(output,report,source):
     validate_gate_scope('timing',report)
     process_path=Path(output)/report['process_evidence'];process=json.loads(process_path.read_text())
     expected=['cargo','test','-p','snes','--test','integration','--test','irq_mask_timing','--test','interrupt_timing','--test','dma_timing','--test','hdma_timing','--test','generated_bus_timing','--locked','--offline']
+    if report.get('schema_version') == 2:
+        from pattern_contract import load_declaration, identity
+        declaration=load_declaration(source)
+        if declaration != report['declaration'] or identity(declaration) != report['declaration_sha256']:
+            raise ValueError('Timing declaration differs from candidate source')
+        expected=['cargo','test','-p','snes']
+        for test in declaration['timing_tests']:expected.extend(['--test',test])
+        expected.extend(['--locked','--offline'])
     if digest(process_path)!=report['process_sha256'] or process.get('command')!=expected or process.get('returncode')!=0 or process.get('complete') is not True:
         raise ValueError('Timing actual process scope incomplete')
     for name in ('stdout','stderr'):
@@ -359,7 +425,7 @@ def feedback_gate(run,timeout=None):
 
 def verify_origins(owner,verified):
     owner=Path(owner);manifest=verified['manifest'];checks=verified['verdict']['checks']
-    for name in MANDATORY_CHECKS:validate_gate_scope(name,checks[name])
+    for name in MANDATORY_CHECKS:validate_gate_scope(name,checks[name],manifest.get('contract_version',1))
     preflight=checks['preflight']
     if preflight.get('failures')!=[]:raise ValueError('Preflight did not establish setup')
     for name in ('doctor','compiler'):

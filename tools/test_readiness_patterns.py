@@ -9,6 +9,19 @@ from pathlib import Path
 
 
 class PatternCommandTests(unittest.TestCase):
+    def test_production_declaration_cannot_omit_an_enabled_pattern(self):
+        root = Path(__file__).resolve().parent.parent
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            declaration = directory / "reduced.toml"
+            declaration.write_text('schema_version = 2\npatterns = []\n')
+            result = subprocess.run([sys.executable, str(root / "tools/readiness_patterns.py"),
+                "--declaration", str(declaration), "--out", str(directory / "evidence")],
+                cwd=root, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+            report = json.loads((directory / "evidence/instruction.json").read_text())
+            self.assertIn("declaration", report["reason"])
+
     def test_real_step_runner_keeps_case_ledger_and_rejects_incorrect_expectation(self):
         root = Path(__file__).resolve().parent.parent
         with tempfile.TemporaryDirectory() as temporary:
@@ -26,9 +39,9 @@ class PatternCommandTests(unittest.TestCase):
             command = [sys.executable, str(root / "tools/readiness_patterns.py"),
                        "--corpus", str(corpus), "--opcodes", "a9", "--out", str(directory / "good")]
             result = subprocess.run(command, cwd=root, capture_output=True, text=True)
-            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr + json.loads((directory / "good/instruction.json").read_text()).get("reason", ""))
             report = json.loads((directory / "good/instruction.json").read_text())
-            self.assertEqual((report["expected"], report["passed"], report["skipped"]), (1, 1, 0))
+            self.assertEqual((report["expected"], report["passed"], report["skipped"]), (3, 3, 0))
             rows = [json.loads(line) for line in (directory / "good/cases.jsonl").read_text().splitlines()]
             self.assertEqual(rows[0]["name"], case["name"])
             self.assertEqual(rows[0]["status"], "pass")
@@ -45,6 +58,20 @@ class PatternCommandTests(unittest.TestCase):
             verify=[sys.executable,str(root/"tools/readiness_orchestration.py"),"verify-patterns","--run",str(directory),"--output",str(directory/"good"),"--development-scope"]
             result=subprocess.run(verify,cwd=root,capture_output=True,text=True)
             self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+            strict = [argument for argument in verify if argument != "--development-scope"]
+            result = subprocess.run(strict, cwd=root, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 2)
+            self.assertIn("Development", result.stderr)
+            # A report cannot remove a width/branch or substitute its declaration.
+            report_path = directory / "good/instruction.json"
+            original = report_path.read_text()
+            altered = json.loads(original)
+            altered["declaration"]["patterns"][0]["mx"] = [3]
+            report_path.write_text(json.dumps(altered))
+            result = subprocess.run(verify, cwd=root, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 2)
+            self.assertIn("declaration", result.stderr)
+            report_path.write_text(original)
             executable.write_bytes(executable.read_bytes()+b"corrupt")
             result=subprocess.run(verify,cwd=root,capture_output=True,text=True)
             self.assertEqual(result.returncode,2)
