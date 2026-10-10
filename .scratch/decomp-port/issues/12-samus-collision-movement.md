@@ -36,3 +36,12 @@ and signed collision flag corrected before acceptance.
 Exact committed manifest and latest shared dependencies passed all 1,752 cases at
 `/tmp/sm-collision-committed/20261010T201757.945722Z`. Live integration is root's
 remaining ticket gate; offline evidence alone does not resolve this ticket.
+
+Integrated source seal: `out/port/collision-final/20261010T202435.794119Z/verdict.json`.
+The four-process 9,000-frame run at
+`out/port/collision-plm-live/20261010T203112.471878Z` matched state/effect and
+progress comparisons, executing native normal movement 2,108 times and five
+other newly installed collision/instruction paths. The run rejects its additional
+native PLM admission because every process had zero PLM calls. It must not be
+reported as PLM live acceptance. An 18,000-frame replay is investigating that
+execution boundary; ticket remains claimed pending the required integration gate.
