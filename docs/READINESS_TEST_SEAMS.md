@@ -30,3 +30,9 @@ interpreted instruction profiles and unexecuted table inventory. Run coverage
 compares preserved generated bodies/config/source identities; old aggregate
 execution cannot satisfy an added or changed key. Original hardware accuracy
 continues to require its separate synchronization gate.
+
+Ticket 09 uses the confirmed command/evidence seam: dependency policy and reuse
+planning inspect immutable complete accepted evidence and real preserved files.
+Tests cover eligible CPU-only changes, shared dependency changes, modified evidence,
+missing gates and exact checkpoint compatibility. Generated parity, changed-key
+coverage and focused execution always require new candidate evidence.
