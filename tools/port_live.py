@@ -106,13 +106,18 @@ def main():
                 text, replacements = signature.subn(r'\1C_' + symbol + r'\2', text)
                 if replacements != 1:
                     raise ValueError(f'definition rename count differs: {symbol}')
-                c_type = {'void': 'void', 'uint8': 'uint8_t', 'uint16': 'uint16_t', 'uint32': 'uint32_t', 'int32': 'int32_t'}[routine['return']]
-                declaration = ','.join(kind + '_t ' + name for kind, name in zip(types, ['a', 'b'])) or 'void'
+                c_type = {'void': 'void', 'uint8': 'uint8_t', 'uint16': 'uint16_t', 'uint32': 'uint32_t', 'int32': 'int32_t', 'rom_ptr': 'const uint16_t *'}[routine['return']]
+                declaration = ','.join(('const uint16_t *' if kind == 'rom_ptr' else kind + '_t ') + name for kind, name in zip(types, ['a', 'b'])) or 'void'
                 arguments = ','.join(['a', 'b'][:count])
                 actual = ','.join(['a' if count > 0 else '0', 'b' if count > 1 else '0'])
+                if 'rom_ptr' in types:
+                    actual = ','.join(f'PortPointerResult({name},a)' if kind == 'rom_ptr' else name for kind, name in zip(types, ['a', 'b']))
                 c_call = f'C_{symbol}({arguments})'
                 reference = f'{c_call};' if c_type == 'void' else f'result=(uint32_t){c_call};'
                 returned = '' if c_type == 'void' else f'return ({c_type})result;'
+                if routine['return'] == 'rom_ptr':
+                    reference = f'const uint16_t *reference={c_call};result=PortPointerResult(reference,a);'
+                    returned = 'return PortPointerFromResult((uint32_t)result);'
                 wrappers.append(f'''extern {c_type} C_{symbol}({declaration});
 {c_type} {symbol}({declaration}) {{
  int64_t result=0;
@@ -186,6 +191,22 @@ void __wrap_DecompressToMem(uint32 src,uint8 *dst) {
 static FILE *port_effects;
 static FILE *port_calls;
 static unsigned port_call_depth;
+static uint32_t PortPointerResult(const uint16_t *pointer,uint16_t enemy) {
+ if(!pointer)return 0;
+ if(enemy>=0x800 || (enemy&0x3f))exit(4);
+ uintptr_t p=(uintptr_t)pointer;unsigned bank=g_ram[0xf78+enemy+0x2e];
+ if(p<0x10000){if(p<0x8000)exit(4);return (bank<<16)|p;}
+ uintptr_t base=(uintptr_t)g_rom+((bank&0x7f)*0x8000);
+ if(p<base || p>=base+0x8000)exit(4);
+ return (bank<<16)|(0x8000+p-base);
+}
+static const uint16_t *PortPointerFromResult(uint32_t address) {
+ if(!address)return NULL;
+ if((address&0xffff)<0x8000)exit(4);
+ size_t offset=(((address>>16)<<15)|(address&0x7fff))&0x3fffff;
+ if(offset>=g_snes->cart->romSize)exit(4);
+ return (const uint16_t*)(g_rom+offset);
+}
 static void PortCapture(unsigned routine,unsigned long sequence,const char *phase) {
  char name[120];snprintf(name,sizeof(name),"fixtures/port-%03u-%03lu-%s.wram",routine,sequence,phase);
  FILE *f=fopen(name,"wb");if(!f || fwrite(g_ram,1,sizeof(g_ram),f)!=sizeof(g_ram) || fclose(f))exit(2);
