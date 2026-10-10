@@ -10,6 +10,15 @@ SOURCE = Path('/home/jim/sm-decomp/deps/snesrev-sm')
 ROM = Path('/home/jim/sm-decomp/rom/sm.sfc')
 
 class CollisionCallbackTests(unittest.TestCase):
+    def test_null_context_generator_uses_distinct_callback_signature(self):
+        generated = port_collision.generate_collision_abi(
+            {'plm_amount_context': 'none', 'routines': [{'symbol': 'Flight'}]}, Path('/tmp/flight.rs'))
+        self.assertIn('fn sm_rust_collision_spawn_plm_without_amount(', generated)
+        self.assertIn("header:u16)->Result<u8", generated)
+        self.assertNotIn('amount:&mut i32', generated)
+        with self.assertRaisesRegex(ValueError, 'amount context'):
+            port_collision.generate_collision_abi({'plm_amount_context': 'unknown'}, Path('/tmp/flight.rs'))
+
     def test_actual_quicksand_callback_mutates_amount_and_full_ram_and_rejects_control(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp = Path(tmp)

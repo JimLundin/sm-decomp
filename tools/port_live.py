@@ -285,6 +285,13 @@ int32_t sm_rust_collision_spawn_plm(uint8_t *transaction,size_t len,uint16_t hea
  memcpy(transaction,g_ram,len);
  return result;
 }
+int32_t sm_rust_collision_spawn_plm_without_amount(uint8_t *transaction,size_t len,uint16_t header) {
+ if(!transaction || len!=sizeof(g_ram) || transaction==g_ram)return -1;
+ memcpy(g_ram,transaction,len);
+ int32 *previous=cur_coll_amt32;cur_coll_amt32=NULL;
+ uint8 result=__wrap_SpawnPLM(header);cur_coll_amt32=previous;
+ memcpy(transaction,g_ram,len);return result;
+}
 static uint32_t PortPointerResult(const uint16_t *pointer,uint16_t enemy) {
  if(!pointer)return 0;
  if(enemy>=0x800 || (enemy&0x3f))exit(4);

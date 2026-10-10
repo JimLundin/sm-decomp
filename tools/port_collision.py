@@ -16,14 +16,21 @@ from port_family import (ROOT, WRAM_SIZE, IDENTIFIER, digest, verify_source,
 
 def generate_collision_abi(manifest,module):
     """Reusable guarded synchronous bridge; caller imports Wram/root gameplay modules."""
+    context = manifest.get('plm_amount_context', 'collision')
+    if context not in ('collision', 'none'):
+        raise ValueError('invalid PLM amount context')
+    bridge = 'sm_rust_collision_spawn_plm' if context == 'collision' else 'sm_rust_collision_spawn_plm_without_amount'
+    ffi_amount = ',amount:*mut i32' if context == 'collision' else ''
+    method_amount = ',amount:&mut i32' if context == 'collision' else ''
+    call_amount = ',amount' if context == 'collision' else ''
     return f'''#[path={json.dumps(str(module))}] mod family;
-unsafe extern "C" {{fn sm_rust_collision_spawn_plm(ram:*mut u8,len:usize,header:u16,amount:*mut i32)->i32;}}
+unsafe extern "C" {{fn {bridge}(ram:*mut u8,len:usize,header:u16{ffi_amount})->i32;}}
 struct CCallback;
 impl family::Host for CCallback {{
- fn spawn_plm(&mut self,ram:&mut Wram<'_>,header:u16,amount:&mut i32)->Result<u8,&'static str>{{
+ fn spawn_plm(&mut self,ram:&mut Wram<'_>,header:u16{method_amount})->Result<u8,&'static str>{{
   // Isolated owned buffer: C never aliases the live Wram reference.
   let mut transaction:Vec<u8>=(0..WRAM_SIZE).map(|i|ram.byte(i)).collect();
-  let result=unsafe{{sm_rust_collision_spawn_plm(transaction.as_mut_ptr(),transaction.len(),header,amount)}};
+  let result=unsafe{{{bridge}(transaction.as_mut_ptr(),transaction.len(),header{call_amount})}};
   if !(0..=255).contains(&result){{return Err("C collision callback failed");}}
   for (i,value) in transaction.into_iter().enumerate(){{ram.set_byte(i,value);}}
   Ok(result as u8)
@@ -97,6 +104,12 @@ uint8 __wrap_SpawnPLM(uint16 header) {
 int32_t sm_rust_collision_spawn_plm(uint8_t *ram,size_t len,uint16_t header,int32_t *amount) {
  if(!ram||len!=sizeof(g_ram)||!amount||ram==g_ram)return -1;
  memcpy(g_ram,ram,len);int32 *previous=cur_coll_amt32;cur_coll_amt32=amount;
+ uint8 result=__wrap_SpawnPLM(header);cur_coll_amt32=previous;
+ memcpy(ram,g_ram,len);return result;
+}
+int32_t sm_rust_collision_spawn_plm_without_amount(uint8_t *ram,size_t len,uint16_t header) {
+ if(!ram||len!=sizeof(g_ram)||ram==g_ram)return -1;
+ memcpy(g_ram,ram,len);int32 *previous=cur_coll_amt32;cur_coll_amt32=NULL;
  uint8 result=__wrap_SpawnPLM(header);cur_coll_amt32=previous;
  memcpy(ram,g_ram,len);return result;
 }
