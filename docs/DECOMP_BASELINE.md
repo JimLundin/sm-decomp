@@ -92,3 +92,36 @@ calls, and prove wrong-output, transient-write and unexecuted replacements fail.
 Only then connect the live Rust replacement and compare independent C/mixed
 replays. The new baseline is preparation evidence, not an offline translation
 acceptance gate or the launch of a parallel translation queue.
+
+## Retained foundation contract
+
+Ticket 01 adds mandatory isolated observation controls to the public command.
+Before replay, a separate process runs an injected literal decompression stream
+and a tiny 65816 fallback program through the actual linked C entry points. The
+program stores `$0042` in WRAM and returns; the decompressor writes `$12,$34,$56`.
+The verdict requires one fallback call, positive executed CPU instructions and
+one wrapped decompression call. Control memory changes never enter either
+candidate replay process.
+
+Each fresh replay now has its own `replay/` or `repeat/` directory, including
+independent saves, ROM views and fixtures. `fixtures/manifest.json` uses
+`decomp-c-captures-v1`: numeric sequence, host frame, source address and WRAM
+destination offset; full before/after WRAM file identities and SHA-256; source
+revision, original-ROM identity and the actual routine-entry ROM view identity.
+Content-addressed ROM captures bind every call to its own immutable byte view.
+The host's initial ROM view is also retained. Upstream expands the verified
+3 MiB original to 4 MiB by mirroring its final MiB, then applies in-memory
+patches. The verdict records expansion and changed file offsets relative to
+that expanded original, without committing ROM bytes.
+
+Use `--rom`, `--inputs` and `--output` for explicit data and durable evidence
+locations, especially in temporary worktrees. Both artifacts and structured
+manifests must match across the two processes. Captures still observe boundary
+state; transient-write acceptance belongs to the offline pilot. These controls
+validate the measured wrappers, while same-translation-unit calls remain
+outside their stated inventory. Original-ROM parity remains untested.
+
+The retained foundation validation completed two fresh 9,000-frame replays at
+`out/decomp/ticket01/20261010T181153.663151Z`, reproducing the terminal state
+above and all 23 structured call manifests plus 46 full WRAM snapshots. Public
+command tests pass for both capture/control behavior and missing-input errors.
