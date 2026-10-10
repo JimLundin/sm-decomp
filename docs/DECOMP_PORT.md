@@ -70,7 +70,7 @@ The CLI returns nonzero on mismatch/build/error/empty fixture sets. A successful
 verdict is `offline-verified`, with `live_exercised: false` and original-ROM
 parity explicitly `not-tested`. Live replacement evidence is a separate gate.
 
-The public CLI regression compiles actual `NextRandom` and independently known
+The public CLI regressions compile actual `NextRandom` and independently known
 zero-seed result (273). Deliberately incorrect return and unrelated upper-WRAM
 mutation both reject with retained mismatch artifacts:
 
@@ -116,3 +116,43 @@ than accumulating short independent helpers. Concrete dependency examples:
 
 Family offline acceptance, mixed live execution and original-ROM parity remain
 separate claims. Full large-scale gameplay ownership remains the active goal.
+
+## Gameplay arguments, ROM and captured cases
+
+For wider gameplay routines, replace `args` with explicit `arg_types`, each of
+`uint8`, `uint16`, `uint32` or `int32`. Prototype declarations are checked against
+actual upstream `funcs.h`/`sm_rtl.h`; return `int32` is compared as raw `u32` bits.
+A typed family without ROM exports `dispatch_i32`; a ROM family exports
+`dispatch_rom(ram: &mut Wram, rom: &[u8], symbol: &str, a: i32, b: i32)`.
+Unsigned 32-bit arguments travel as decimal `i64` then cast to `i32`, retaining
+all bits; the family casts back to `u32` for unsigned routines.
+
+A manifest ROM asset is `"rom": {"file": "/absolute/game.sfc", "sha256": "..."}`.
+The harness validates its hash and 1-byte to 4MiB extent, retains the exact ROM,
+and passes identical bytes to both subjects. Each family's dispatch must reject
+out-of-range ROM addresses/table indices before access. Add actual dependency
+sources via `"c_support": ["sm_rtl.c", "sm_cpu_infra.c"]`; section garbage
+collection keeps the needed real functions/storage. No hardware oracle stubs
+are introduced.
+
+**Rust runs before unchecked C on every case.** Its guarded dispatch must return
+an error or panic on every state outside the declared valid C domain, without
+unsafe memory access. A rejected candidate stops the case before C execution.
+This is an executable admission check, including ROM table/state-dependent
+indices, not merely trusting that a fixture's initial patches are in WRAM.
+Candidate arithmetic alone is not a proof of C safety; family guards must match
+the original indexed-access constraints and signed-overflow limits.
+
+Captured fixtures can replace synthetic initialization with `before_file` and
+mandatory `before_sha256`. Such captures cannot also specify `fill` or `writes`.
+Optional `expected_after_file` plus mandatory `expected_after_sha256` authenticates
+a live capture's full resulting WRAM. `expected_return` compares the captured
+return value. Both subjects must agree with the capture; hashes and every byte
+are retained, while original-ROM parity remains a distinct gate.
+
+`verify_family_evidence(path_to_verdict)` authenticates evidence before live
+consumption. It checks the complete retained artifact inventory, current module,
+memory and harness hashes, binaries, actual full-memory/return equality, capture
+expectations and nonempty complete manifest coverage. Older verdicts without
+artifact inventories must be regenerated. This detects corruption against local
+records; it is not an external cryptographic signature.
