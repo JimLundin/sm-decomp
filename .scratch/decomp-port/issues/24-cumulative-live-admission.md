@@ -1,5 +1,5 @@
 # Admit cumulative gameplay families in live replay
-Status: claimed
+Status: resolved
 Blocked by: 16, 17, 18, 19, 20, 21
 Triage: ready-for-agent
 
@@ -34,3 +34,42 @@ The finished cumulative batch's sealed snapshot deduplication additionally
 reclaimed11,747,590,144 bytes. Combined with root's measured historical cleanup
 of9,417,670,502 bytes, measured total cleanup is21,165,260,646 bytes (19.71GiB).
 Interrupted broad-scan savings are excluded.
+
+
+## Completion evidence
+
+Authenticated cumulative15-family verification and live replay passed in
+`out/port/batches/20261010T213631.753519Z`, final verdict
+`replays/20261010T215856.742725Z/evidence/20261010T215856.841221Z/verdict.json`.
+Four fresh independent18,000-frame C/mixed processes match full periodic
+hardware/game state, terminal WRAM/SRAM, per-call captured states/raw returns
+and ordered PPU/APU effects without state repair or hidden retry. Each mixed
+process executes235,952 Rust gameplay calls across76 symbols,37 accepted Rust
+decompressions and17,594 Rust RNG calls. Measured CPU fallback is zero; C still
+owns frame scheduling and untranslated gameplay. Final frame is game-state8,
+room0xdf8d, Samus111/187; adapted movie completion/original-ROM parity unproven.
+
+| Family | Rust calls | Exercised symbols |
+| --- | ---: | ---: |
+| system |46707|7|
+| audio |538|9|
+| Samus physics |61227|10|
+| enemy mechanics |28267|2|
+| input/control |28655|16|
+| instructions |9241|1|
+| projectile core |1104|2|
+| room/scroll |47229|20|
+| collision/movement |12021|5|
+| projectile flight |963|4|
+
+Enemy AI/Rio/jump, jump instructions and special projectiles have zero calls and
+remain offline verified. New crawlers and power-bomb lifecycle remain offline;
+they were not installed in this accepted15-family replay. Terrain SpawnPLM is
+unexercised (zero callbacks); room/hardcoded allocation is a separate C entry
+point, so zero terrain calls do not mean no PLM gameplay. Native PLM setup and
+bounded PLM instruction engine keep their offline status.
+
+The initial batch retained a rejected changed-source collision seal after module
+registration advanced during verification; all1,752 comparisons matched but
+authentication correctly rejected the changed lib.rs dependency. The final batch
+rebuilt every stale source seal before replay.
