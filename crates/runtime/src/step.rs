@@ -7,6 +7,19 @@ pub type StepFn = fn(&mut Machine);
 /// Native-mode instruction address, widths, encoded bytes, and compiled body.
 pub type StepEntry = (u32, Mx, &'static [u8], StepFn);
 
+/// Fetch the exact compiled bytes, execute their timed body, and advance within
+/// the program bank. Interrupt dispatch belongs to the caller before this step.
+pub fn execute_step(machine: &mut Machine, pc: u32, bytes: &[u8], body: StepFn) -> Result<u32, u32> {
+    for (index, expected) in bytes.iter().enumerate() {
+        let address = (pc & 0xff0000) | u32::from((pc as u16).wrapping_add(index as u16));
+        if machine.read8(address) != *expected {
+            return Err(address);
+        }
+    }
+    body(machine);
+    Ok((pc & 0xff0000) | u32::from((pc as u16).wrapping_add(bytes.len() as u16)))
+}
+
 /// Bus cycles for generated instructions: reads latch four clocks before the
 /// end of a cycle, writes latch at its end, and internal cycles take six clocks.
 /// The frame runner uses the same sequencing as the interpreter's bus contract.

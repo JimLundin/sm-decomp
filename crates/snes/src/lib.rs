@@ -9,7 +9,7 @@ use rustysnes_core::{System, cart::Cart};
 
 pub mod checkpoint;
 mod subject;
-pub use subject::{InterpreterFallback, SnesBus, Subject};
+pub use subject::{InstructionBoundary, InterpreterFallback, SnesBus, Subject};
 
 fn state_bytes(cpu: &rustysnes_core::cpu::Cpu, bus: &rustysnes_core::Bus) -> Vec<u8> {
     let r = cpu.regs;

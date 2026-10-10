@@ -202,6 +202,14 @@ pub struct Subject {
     pub interpreted_steps: u64,
 }
 
+/// Passive instruction-boundary values for independently specified timing tests.
+#[derive(Clone, Copy, Debug)]
+pub struct InstructionBoundary {
+    pub pc: u32,
+    pub cpu_cycles: u64,
+    pub master_clock: u64,
+}
+
 impl Subject {
     /// Construct only for the base NTSC SNES hardware used by Super Metroid.
     pub fn fallback_only(rom: &[u8], seed: u64) -> Result<Self> {
@@ -237,9 +245,27 @@ impl Subject {
 
     /// Advance a frame through the runtime bus, collecting actual JSR/JSL targets.
     pub fn run_frame(&mut self, pad: u16) -> Result<()> {
+        self.run_frame_inspected(pad, |_, _| {})
+    }
+
+    /// Inspect existing instruction boundaries without reading the emulated bus,
+    /// ticking hardware, or polling/consuming an interrupt.
+    pub fn run_frame_inspected(&mut self, pad: u16, mut inspect: impl FnMut(InstructionBoundary, &[u8])) -> Result<()> {
         self.bus.hardware.borrow_mut().set_joypad(0, pad);
         let frame = self.bus.hardware.borrow().ppu.frame_count();
         for _ in 0..2_000_000 {
+            {
+                let hardware = self.bus.hardware.borrow();
+                let regs = self.interpreter.regs;
+                inspect(
+                    InstructionBoundary {
+                        pc: (u32::from(regs.pbr) << 16) | u32::from(regs.pc),
+                        cpu_cycles: self.interpreter.cycles,
+                        master_clock: hardware.clock.master,
+                    },
+                    hardware.wram(),
+                );
+            }
             let before = self.interpreter.regs;
             let waiting = self.interpreter.waiting;
             let stopped = self.interpreter.stopped;
@@ -271,14 +297,9 @@ impl Subject {
                     let cycles_before = self.machine.bus.cpu_cycles();
                     // Fetch even constant-folded ROM operands: these bus accesses
                     // preserve open bus, CPU/DMA timing, and hardware progression.
-                    for (index, expected) in bytes.iter().enumerate() {
-                        let value =
-                            self.machine.read8((addr & 0xff0000) | u32::from(before.pc.wrapping_add(index as u16)));
-                        ensure!(value == *expected, "compiled instruction changed at ${addr:06X}");
-                    }
-                    body(&mut self.machine);
-                    self.interpreter.regs =
-                        interpreter_regs(&self.machine.cpu, before.pc.wrapping_add(bytes.len() as u16));
+                    let next = runtime::step::execute_step(&mut self.machine, addr, bytes, body)
+                        .map_err(|changed| anyhow::anyhow!("compiled instruction changed at ${changed:06X}"))?;
+                    self.interpreter.regs = interpreter_regs(&self.machine.cpu, next as u16);
                     if matches!(bytes[0], 0x58 | 0x78 | 0x28 | 0xc2 | 0xe2) {
                         self.interpreter.record_irq_mask(before.p.contains(Status::I));
                     }
