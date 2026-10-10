@@ -71,6 +71,7 @@ def pattern_conditions(case, pattern):
     conditions.add('m8' if mx & 2 else 'm16')
     conditions.add('x8' if mx & 1 else 'x16')
     conditions.add('fixed')
+    conditions.add('mx' + str(mx) + ('-decimal' if state['p'] & 8 else '-binary'))
     conditions.update(case.get('coverage', []))
     return sorted(conditions & (set(pattern['required_conditions']) | set(pattern['timing_branches'])))
 

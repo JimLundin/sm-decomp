@@ -107,6 +107,17 @@ fn prospective_lda_orders_mixed_speed_reads_and_wide_bank_boundary() {
         vec![(0, 4), (1, 12), (2, 20), (0x7effff, 28), (0x7f0000, 36)]
     );
     assert_eq!(bus.borrow().clock.master, 40);
+    let (mut m, bus, observed) = machine();
+    bus.borrow_mut().cart = None;
+    for (address, value) in [(0, 0xad), (1, 0), (2, 0x40)] {
+        bus.borrow_mut().write24(address, value);
+    }
+    runtime::step::execute_step(&mut m, 0, &[0xad, 0, 0x40], emitted::slow_io).unwrap();
+    assert_eq!(
+        observed.borrow().events.iter().map(|row| (row.1, row.2)).collect::<Vec<_>>(),
+        vec![(0, 4), (1, 12), (2, 20), (0x4000, 32)]
+    );
+    assert_eq!(bus.borrow().clock.master, 36, "three 8-clock fetches and one 12-clock data read");
 }
 
 #[test]

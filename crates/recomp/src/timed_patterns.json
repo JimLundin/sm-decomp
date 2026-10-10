@@ -306,7 +306,15 @@
         "program-bank-wrap",
         "accumulator-high-preservation",
         "data-bank-crossing",
-        "data-24bit-wrap"
+        "data-24bit-wrap",
+        "mx0-binary",
+        "mx0-decimal",
+        "mx1-binary",
+        "mx1-decimal",
+        "mx2-binary",
+        "mx2-decimal",
+        "mx3-binary",
+        "mx3-decimal"
       ],
       "independent_fixtures": [
         "independent AD MX0 DFalse fetch data boundary",

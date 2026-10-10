@@ -441,6 +441,9 @@ def verify_origins(owner,verified):
     from iteration_increment import verify_progress
     verify_progress(owner,verified)
     owner=Path(owner);manifest=verified['manifest'];checks=verified['verdict']['checks']
+    if manifest.get('increment',{}).get('kind') == 'timed-pattern-expansion':
+        from iteration_pattern import verify_increment
+        verify_increment(owner,verified)
     for name in MANDATORY_CHECKS:validate_gate_scope(name,checks[name],manifest.get('contract_version',1))
     preflight=checks['preflight']
     if preflight.get('failures')!=[]:raise ValueError('Preflight did not establish setup')
@@ -460,6 +463,8 @@ def verify_origins(owner,verified):
 
     for name in ('check','lint','fallback-only-parity','synchronization'):verify_check(owner,name,verified)
     patterns=owner/'checks/patterns';verify_pattern_evidence(patterns,manifest);verify_timing(patterns,checks['timing'],owner/'source/files')
+    if checks['timing'].get('schema_version') == 2 and checks['timing'].get('source_sha256') != manifest['identities']['source']['sha256']:
+        raise ValueError('Timing source identity differs from accepted candidate')
     inputs=manifest['identities']['inputs']
     from readiness_reuse import safe_artifact
     entries=json.loads((owner/'source/files/movies/manifest.json').read_text());entry=next(row for row in entries if row['file']=='super-metroid-any-3653.lsmv')
