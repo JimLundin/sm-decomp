@@ -145,3 +145,19 @@ fn firing_uses_actual_initial_left_direction_minus_one_speed_quirk() {
     assert_eq!(r.word(0xbdc), 0xfc00);
     assert_eq!(r.word(0xcce), 1);
 }
+
+#[test]
+fn unloaded_room_zero_extent_preserves_reference_out_of_room_reaction() {
+    let mut rom = vec![0; 0x300000];
+    rw(&mut rom, 0x93867f, 0xa000);
+    let mut b = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut b).unwrap();
+    setup(&mut r);
+    r.set_word(0x7b9, 0);
+    r.set_word(0xc18, 0x100);
+    r.set_word(0xc04, 7);
+    r.set_word(0xbdc, 0xff00);
+    assert_eq!(flight::collide(&mut r, &rom, &mut NoPlm, 0, false, false, true), Ok(1));
+    assert_eq!(r.word(0xc18), 0x800);
+    assert_eq!(r.word(0xc2c), 8);
+}

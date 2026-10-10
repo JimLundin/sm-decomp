@@ -45,3 +45,17 @@ is moderate42routines/1233cases; commercial fixture data remains local/ignored.
 - This is offline equivalence only; live replacement/original-ROM parity remain
   untested. C PLM setup callbacks are explicit and measured. Full HandleProjectile,
   SBA/speed echoes/spread bombs, bomb tile reactions and power-bomb HDMA remain.
+
+## Live admission correction
+
+The first actual live ProjPreInstr_Missile call in Ceres has room width/height
+16 but room_size_in_blocks=0. Upstream explicitly returns an out-of-room solid
+reaction whenever its byte-index is >= that extent; rejecting size zero was
+an unnecessarily strict Rust domain. Preserve zero extent and reference kill
+behavior without bypassing collision. An independent synthetic zero-extent
+missile fixture covers destruction and damage; original failure remains at
+`out/port/flight-live/20261010T204106.008976Z`.
+Captured actual-C differential passed:
+`/tmp/sm-flight-zero-room-capture/20261010T204245.091212Z/verdict.json`, one actual
+Ceres missile call, full WRAM/return/callback comparison. Nine independent tests
+and targeted clippy pass; prior1233fixture seal precedes this admission widening.
