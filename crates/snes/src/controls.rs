@@ -13,7 +13,14 @@ pub fn covered_intervals(
     keys: &[(u32, u8)],
 ) -> Result<Value> {
     ensure!(frames <= pads.len() && frames > 0, "discovery scope exceeds available input");
+    ensure!(keys.iter().collect::<std::collections::BTreeSet<_>>().len() == keys.len(), "duplicate discovery keys");
+    if keys.is_empty() {
+        return Ok(json!({"schema_version":1,"status":"uncovered","complete":true,
+        "scope":"discover covered prefix","expected_frames":frames,"completed_frames":0,"intervals":[],"unexecuted":[]}));
+    }
     let mut found = BTreeMap::new();
+    let mut completed = 0;
+    let mut boundary_divergence = None;
     for (input, pad) in pads[..frames].iter().enumerate() {
         reference.set_input(*pad);
         subject.set_input(*pad);
@@ -26,14 +33,23 @@ pub fn covered_intervals(
             {
                 found.entry(key).or_insert((input, instruction));
             }
+            let reference_frame = reference.instruction_frame();
+            let subject_frame = subject.instruction_frame();
+            if reference_frame != subject_frame {
+                boundary_divergence = Some(
+                    json!({"input_index":input,"instruction":instruction,"reference_frame":reference_frame,"subject_frame":subject_frame}),
+                );
+                break;
+            }
+            if reference_frame != frame {
+                completed = input + 1;
+                break;
+            }
             if found.len() == keys.len() {
                 break;
             }
-            if reference.instruction_frame() != frame {
-                break;
-            }
         }
-        if found.len() == keys.len() {
+        if found.len() == keys.len() || boundary_divergence.is_some() {
             break;
         }
     }
@@ -45,8 +61,10 @@ pub fn covered_intervals(
         .filter(|key| !found.contains_key(key))
         .map(|&(address, mx)| json!({"address":address,"mx":mx}))
         .collect();
-    Ok(json!({"schema_version":1,"status":if missing.is_empty(){"pass"}else{"uncovered"},"complete":true,
-              "expected_frames":frames,"intervals":intervals,"unexecuted":missing}))
+    Ok(
+        json!({"schema_version":1,"status":if boundary_divergence.is_some(){"divergence"}else if missing.is_empty(){"pass"}else{"uncovered"},"complete":true,
+              "scope":"discover covered prefix","expected_frames":frames,"completed_frames":completed,"boundary_divergence":boundary_divergence,"intervals":intervals,"unexecuted":missing}),
+    )
 }
 
 pub fn compare_interval(

@@ -460,6 +460,10 @@ impl Subject {
 
     /// Actual instruction counts and complete compiled-key inventory, excluding
     /// hardware interrupt dispatch and idle wait/stop steps.
+    pub fn instruction_frame(&self) -> u64 {
+        self.bus.hardware.borrow().ppu.frame_count()
+    }
+
     pub fn coverage(&self) -> super::coverage::Coverage {
         self.accounting.report(
             self.steps.iter().map(|(&(address, mx), (bytes, _))| (address, mx, bytes[0])),
