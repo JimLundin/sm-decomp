@@ -20,7 +20,8 @@ Issues and specs live as Markdown files in `.scratch/`.
 - A ticket is ready when it is open and every blocker is resolved.
 - Claim a ticket by setting `Status: claimed` before implementation.
 - Resolve by appending implementation, verification and commit/evidence pointers
-  under `## Completion evidence`, then setting `Status: resolved`.
+  under `## Completion evidence`, completing `run-cleanup.md` and recording its
+  result there, then setting `Status: resolved`.
 - Resolve a spec once every required ticket is resolved; append its integration
   branch and verification evidence. Local resolution requires no PR.
 - Existing tickets with `Status: done` remain completed and satisfy blockers.

@@ -18,3 +18,8 @@ For triage, use the default role names defined in `docs/agents/triage-labels.md`
 
 Before codebase exploration, follow the single-context reading rules in
 `docs/agents/domain.md`.
+
+### Run cleanup
+
+After verification runs and before closing work or handing it back, follow
+`docs/agents/run-cleanup.md`. Cleanup is part of completion.
