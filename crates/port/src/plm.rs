@@ -43,6 +43,10 @@ pub fn setup(r: &mut Wram, address: u16, j: u16, amount: &mut i32) -> Result<u8,
     let j = slot(j)?;
     let b = block(r, j)?;
     match address {
+        0xb7c3 => {
+            r.set_word(0x1d77 + j, if r.word(0x79f) == 6 { 32 } else { 240 });
+            r.set_word(0x1cd7 + j, 0xb7dd);
+        }
         0xab28 => r.set_word(TIMER + j, 64),
         0xb04a => {
             if b + 112 > 0xc800 {
@@ -280,7 +284,8 @@ fn rom_word(rom: &[u8], header: u16) -> Result<u16, &'static str> {
 pub fn supports_header(rom: &[u8], header: u16) -> Result<bool, &'static str> {
     Ok(matches!(
         rom_word(rom, header)?,
-        0xab27
+        0xb7c3
+            | 0xab27
             | 0xb3cf
             | 0xb8ef
             | 0xbafa
@@ -361,6 +366,71 @@ pub fn spawn(r: &mut Wram, rom: &[u8], header: u16, amount: &mut i32) -> Result<
     }
     *amount = displacement;
     Ok(flags)
+}
+/// Read a room entry from bank8F or the door-closing scratch entry at WRAM 0x12.
+pub fn room_entry(r: &Wram, rom: &[u8], entry: u16) -> Result<(u16, u8, u8, u16), &'static str> {
+    if entry == 0x12 {
+        return Ok((r.word(0x12), r.byte(0x14), r.byte(0x15), r.word(0x16)));
+    }
+    if !(0x8000..=0xfffa).contains(&entry) {
+        return Err("room PLM entry extent");
+    }
+    let offset = (15 << 15) + usize::from(entry & 0x7fff);
+    let b = rom.get(offset..offset + 6).ok_or("room PLM ROM extent")?;
+    Ok((u16::from_le_bytes([b[0], b[1]]), b[2], b[3], u16::from_le_bytes([b[4], b[5]])))
+}
+/// Collision displacement callbacks are not valid room/hardcoded setup context.
+pub fn supports_positioned_header(rom: &[u8], header: u16) -> Result<bool, &'static str> {
+    Ok(supports_header(rom, header)? && !matches!(rom_word(rom, header)?, 0xb4b6 | 0xb4c4 | 0xb541 | 0xb551 | 0xb56f))
+}
+/// Room allocation preserves its distinct preinstruction and room argument.
+pub fn spawn_room(r: &mut Wram, rom: &[u8], entry: u16) -> Result<(), &'static str> {
+    if !(0..40).any(|i| r.word(HEADER + i * 2) == 0) {
+        return Ok(());
+    }
+    let (header, x, y, argument) = room_entry(r, rom, entry)?;
+    spawn_positioned(r, rom, header, x, y, argument, 0x84e6)
+}
+/// Hardcoded allocation uses byte coordinates and the original empty preinstruction.
+pub fn spawn_hardcoded(r: &mut Wram, rom: &[u8], x: u8, y: u8, header: u16) -> Result<(), &'static str> {
+    spawn_positioned(r, rom, header, x, y, 0, 0x8469)
+}
+fn spawn_positioned(
+    r: &mut Wram,
+    rom: &[u8],
+    header: u16,
+    x: u8,
+    y: u8,
+    argument: u16,
+    preinstruction: u16,
+) -> Result<(), &'static str> {
+    let Some(j) = (0..40).rev().map(|i| i * 2).find(|&j| r.word(HEADER + j) == 0) else {
+        return Ok(());
+    };
+    if !supports_positioned_header(rom, header)? {
+        return Err("untranslated PLM setup");
+    }
+    let setup_address = rom_word(rom, header)?;
+    let instructions = rom_word(rom, header.checked_add(2).ok_or("PLM header extent")?)?;
+    let mut transaction: Vec<_> = (0..crate::WRAM_SIZE).map(|i| r.byte(i)).collect();
+    let mut state = Wram::new(&mut transaction)?;
+    let block = (u16::from(y) * u16::from(state.word(0x7a5) as u8) + u16::from(x)).wrapping_mul(2);
+    state.set_word(BLOCK + j, block);
+    state.set_word(HEADER + j, header);
+    state.set_word(0x1dc7 + j, argument);
+    state.set_word(VARIABLE + j, 0);
+    state.set_word(0x1cd7 + j, preinstruction);
+    state.set_word(INSTR + j, instructions);
+    state.set_word(TIMER + j, 1);
+    state.set_word(0xde6c + j, 0x8da0);
+    state.set_word(0x1d77 + j, 0);
+    state.set_word(0xdf0c + j, 0);
+    state.set_word(0x1c27, j as u16);
+    setup(&mut state, setup_address, j as u16, &mut 0)?;
+    for (i, value) in transaction.into_iter().enumerate() {
+        r.set_byte(i, value);
+    }
+    Ok(())
 }
 pub fn dispatch_rom(r: &mut Wram, _rom: &[u8], name: &str, a: i32, _b: i32) -> Result<u32, &'static str> {
     let address = match name {

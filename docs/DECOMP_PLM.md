@@ -49,3 +49,51 @@ Admission rechecks the pinned source identity, current Rust dependency inventory
 and every retained case output. All evidence is
 restricted to declared valid fixture inputs; live exercise and original-ROM
 parity require separate integration verification.
+
+## Room and hardcoded allocation
+
+`spawn_room` reads six-byte bank8F room entries, including the special door-closing
+WRAM entry at 0x12. `spawn_hardcoded` receives byte coordinates and a bank84
+header. Both preserve highest-free-slot selection, original Mult8x8 truncation,
+room arguments, instruction/draw/timer initialization and synchronous native setup.
+Room preinstruction is 0x84e6; hardcoded preinstruction is 0x8469. Full pools
+return before reading entries or headers. Supported setup errors commit no writes.
+
+`supports_positioned_header` excludes collision-context setup headers from positioned admission; their
+terrain evidence remains separate. In particular, quicksand surface B requires
+a displacement context in actual C. Other untranslated setups
+remain explicitly counted C ownership. The PLM frame interpreter, rendering and
+message coroutine are not replaced by these entry points.
+
+`tools/port_plm.py` seals separate terrain/room/hardcoded fixture counts. The live
+consumer requires those authenticated counts for `--room-plm`, renames only the
+original C allocator definitions so same-bank callers also reach the adapter,
+and keeps their original bodies for measured unsupported-setup ownership.
+Independent C/mixed processes compare full state and ordered allocation effects.
+Room and hardcoded counters separately report total, C, Rust and actual native
+setup calls; full-pool calls do not count as native setup execution.
+
+Use `tools/port_batch.py run --room-plm` for cumulative verification and admission.
+For focused admission, provide current system-family and PLM allocator verdicts
+to `tools/port_live.py --room-plm`. A passing focused run establishes the new
+allocation seam with the accepted decompressor/RNG; it does not refresh every
+previous gameplay family's source seal or prove original-ROM parity.
+
+The observed boot hardcoded header 0xb7eb additionally owns native
+`PlmSetup_B7EB_EnableSoundsIn32Frames`: area6 starts the original32-frame timer,
+other areas start240, and preinstruction0xb7dd remains executed by the C engine.
+
+Fresh full-WRAM actual-C allocation evidence:
+`out/port/room-plm-final/20261010T223633.137790Z/verdict.json`:1,969cases
+(673terrain,648room,648hardcoded), fiveABIrejections and zeroCPUfallback.
+The independent18,000-frame run
+`out/port/room-plm-live/20261010T223747.065046Z/verdict.json` matches four
+C/mixed processes and executes one native hardcoded setup in each mixed process.
+Room and terrain allocation have zero calls in this prefix and remain offline.
+
+Final current-tooling live evidence:
+`out/port/room-plm-current-live/20261010T224032.887967Z/verdict.json`, four
+fresh9,000-frame processes, one native hardcoded setup per mixed process,
+matching full state/returns/effects and zero measured CPU fallback. The original
+18,000-frame comparison predates only the counter-parser correction and host
+source generator extraction; the final run validates both tooling fixes.

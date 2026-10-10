@@ -51,6 +51,14 @@ def verify(manifest_path, source, output):
  let result=std::panic::catch_unwind(std::panic::AssertUnwindSafe(||plm::spawn(&mut Wram::new(state).unwrap(),rom,header,amount)));
  match result{{Ok(Ok(flags))=>flags.into(),_=>-1}}
 }}
+#[unsafe(no_mangle)]pub unsafe extern "C" fn native_positioned(ram:*mut u8,len:usize,rom:*const u8,rom_len:usize,kind:u16,a:u16,b:u16)->i32{{
+ if ram.is_null()||len!=WRAM_SIZE||rom.is_null()||rom_len==0||rom_len>0x400000{{return -1;}}
+ let Some(rend)=(ram as usize).checked_add(len)else{{return -1;}};let Some(oend)=(rom as usize).checked_add(rom_len)else{{return -1;}};
+ if (ram as usize)<oend&&(rom as usize)<rend{{return -1;}}
+ let state=unsafe{{std::slice::from_raw_parts_mut(ram,len)}};let rom=unsafe{{std::slice::from_raw_parts(rom,rom_len)}};
+ let result=std::panic::catch_unwind(std::panic::AssertUnwindSafe(||{{let mut r=Wram::new(state).unwrap();match kind{{1=>plm::spawn_room(&mut r,rom,a),2=>plm::spawn_hardcoded(&mut r,rom,b as u8,(b>>8) as u8,a),_=>Err("allocation kind")}}}}));
+ match result{{Ok(Ok(()))=>0,_=>-1}}
+}}
 """)
         host = run / "oracle.c"
         host.write_text(
@@ -60,6 +68,7 @@ def verify(manifest_path, source, output):
             + """#undef main
 #include "funcs.h"
 extern int32 *cur_coll_amt32;
+extern int32_t native_positioned(uint8_t*,size_t,const uint8_t*,size_t,uint16_t,uint16_t,uint16_t);
 extern int32_t native_spawn(uint8_t*,size_t,const uint8_t*,size_t,uint16_t,int32_t*);
 int main(int argc,char **argv){
  if(argc!=8||!SnesInit(argv[6]))return 2;g_spc_player=SpcPlayer_Create();SpcPlayer_Initialize(g_spc_player);
@@ -74,7 +83,9 @@ int main(int argc,char **argv){
  }
  FILE*f=fopen(argv[4],"rb");if(!f||fread(g_ram,1,sizeof(g_ram),f)!=sizeof(g_ram)||fgetc(f)!=EOF||fclose(f))return 2;
  uint16_t header=strtoul(argv[2],NULL,10);int32_t amount=(int32_t)strtoll(argv[3],NULL,10);int32_t flags;
- if(!strcmp(argv[1],"rust")){flags=native_spawn(g_ram,sizeof(g_ram),g_rom,g_snes->cart->romSize,header,&amount);if(flags<0)return 4;}
+ int kind=atoi(argv[7]);
+ if(kind){if(!strcmp(argv[1],"rust")){flags=native_positioned(g_ram,sizeof(g_ram),g_rom,g_snes->cart->romSize,kind,header,(uint16_t)amount);if(flags<0)return 4;}else{if(kind==1)SpawnRoomPLM(header);else if(kind==2)SpawnHardcodedPlm((SpawnHardcodedPlmArgs){(uint8_t)amount,(uint8_t)(amount>>8),header});else return 2;flags=0;}}
+ else if(!strcmp(argv[1],"rust")){flags=native_spawn(g_ram,sizeof(g_ram),g_rom,g_snes->cart->romSize,header,&amount);if(flags<0)return 4;}
  else{cur_coll_amt32=&amount;flags=SpawnPLM(header);cur_coll_amt32=NULL;}
  f=fopen(argv[5],"wb");if(!f||fwrite(g_ram,1,sizeof(g_ram),f)!=sizeof(g_ram)||fclose(f))return 2;
  printf("{\\"flags\\":%d,\\"amount\\":%d,\\"cpu_fallback_calls\\":%lu,\\"cpu_fallback_instructions\\":%lu}\\n",flags,amount,fallback_calls,fallback_instructions);return 0;
@@ -102,7 +113,7 @@ int main(int argc,char **argv){
         execute(
             [
                 "cc",
-                "-O2",
+                "-O0",
                 "-fno-strict-aliasing",
                 "-ffunction-sections",
                 "-fdata-sections",
@@ -152,10 +163,14 @@ int main(int argc,char **argv){
             "binary_sha256": digest(run / "spawn"),
         }
         seen = set()
+        allocator_counts = {}
         for case in manifest["cases"]:
             if case["name"] in seen:
                 raise ValueError("duplicate case")
             seen.add(case["name"])
+            allocator = case.get("allocator", "terrain")
+            if allocator not in ("terrain", "room", "hardcoded"):raise ValueError("invalid allocator")
+            allocator_counts[allocator] = allocator_counts.get(allocator, 0) + 1
             directory = run / case["name"]
             prepare_case(case, directory, ["uint16", "int32"])
             results = {}
@@ -169,7 +184,7 @@ int main(int argc,char **argv){
                         str(directory / "before.wram"),
                         str(directory / (subject + "-after.wram")),
                         str(run / "rom.bin"),
-                        "reserved",
+                        str({"terrain":0,"room":1,"hardcoded":2}[case.get("allocator", "terrain")]),
                     ],
                     directory,
                     subject,
@@ -209,8 +224,9 @@ int main(int argc,char **argv){
             status="offline-verified",
             verified_cases=len(seen),
             native_rust_spawn_calls=len(seen),
+            allocator_cases=allocator_counts,
             remaining_c_gameplay_callbacks=0,
-            scope="declared SpawnPLM headers/input domain; full WRAM plus flags and synchronous amount",
+            scope="declared terrain/room/hardcoded allocators; full WRAM plus flags and synchronous amount",
         )
     except (
         OSError,
@@ -281,6 +297,7 @@ def verify_plm_evidence(verdict_path):
     manifest = json.loads((run / "manifest.json").read_text())
     expected = {c["name"]: c for c in manifest["cases"]}
     observed = set()
+    allocator_counts = {}
     if len(expected) != len(manifest["cases"]):
         raise ValueError("duplicate PLM cases")
     for record in v["cases"]:
@@ -288,6 +305,9 @@ def verify_plm_evidence(verdict_path):
         if name not in expected or name in observed:
             raise ValueError("PLM coverage changed")
         observed.add(name)
+        allocator = expected[name].get("allocator", "terrain")
+        if allocator not in ("terrain", "room", "hardcoded"):raise ValueError("invalid allocator")
+        allocator_counts[allocator] = allocator_counts.get(allocator, 0) + 1
         directory = run / name
         if any(
             str((directory / n).relative_to(run)) not in artifacts
@@ -327,6 +347,7 @@ def verify_plm_evidence(verdict_path):
                 raise ValueError("PLM expected output changed")
     if observed != expected.keys() or v["verified_cases"] != len(observed):
         raise ValueError("PLM coverage incomplete")
+    if v.get("allocator_cases") != allocator_counts:raise ValueError("allocator coverage changed")
     return v
 
 

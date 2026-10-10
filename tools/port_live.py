@@ -17,9 +17,9 @@ def definition_pattern(symbol):
                       + r'(\s*\([^\n]*\)\s*\{)')
 
 
-def generate_plm_abi():
+def generate_plm_abi(positioned=False):
     """Choose supported setup before mutation; errors never trigger a C retry."""
-    return '''#[unsafe(no_mangle)]
+    abi = '''#[unsafe(no_mangle)]
 pub unsafe extern "C" fn port_native_plm(ram:*mut u8,len:usize,rom:*const u8,rom_len:usize,header:u16,amount:*mut i32)->i32 {
  if ram.is_null() || len!=WRAM_SIZE || rom.is_null() || rom_len==0 || rom_len>0x400000 || amount.is_null() || (amount as usize)%4!=0 {return -1;}
  let Some(rend)=(ram as usize).checked_add(len) else {return -1;};
@@ -33,7 +33,42 @@ pub unsafe extern "C" fn port_native_plm(ram:*mut u8,len:usize,rom:*const u8,rom
  let mut displacement=unsafe {*amount};
  let result=std::panic::catch_unwind(std::panic::AssertUnwindSafe(||memory::plm::spawn(&mut Wram::new(&mut owned).unwrap(),rom,header,&mut displacement)));
  match result {Ok(Ok(flags))=>{unsafe {std::ptr::copy_nonoverlapping(owned.as_ptr(),ram,len);*amount=displacement;}flags.into()},_=>-1}
+}
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn port_native_positioned_plm(ram:*mut u8,len:usize,rom:*const u8,rom_len:usize,kind:u16,a:u16,b:u16)->i32 {
+ if ram.is_null()||len!=WRAM_SIZE||rom.is_null()||rom_len==0||rom_len>0x400000{return -1;}
+ let Some(rend)=(ram as usize).checked_add(len)else{return -1;};let Some(oend)=(rom as usize).checked_add(rom_len)else{return -1;};
+ if (ram as usize)<oend&&(rom as usize)<rend{return -1;}
+ let rom=unsafe{std::slice::from_raw_parts(rom,rom_len)};
+ let mut owned=unsafe{std::slice::from_raw_parts(ram,len)}.to_vec();
+ let result=std::panic::catch_unwind(std::panic::AssertUnwindSafe(||{
+  let mut r=Wram::new(&mut owned).unwrap();
+  if !(0..40).any(|i|r.word(0x1c37+i*2)==0){return Ok(0);}
+  let header=match kind{1=>memory::plm::room_entry(&r,rom,a)?.0,2=>a,_=>return Err("allocation kind")};
+  if !memory::plm::supports_positioned_header(rom,header)?{return Ok(-2);}
+  match kind{1=>memory::plm::spawn_room(&mut r,rom,a)?,2=>memory::plm::spawn_hardcoded(&mut r,rom,b as u8,(b>>8) as u8,a)?,_=>unreachable!()};Ok(1)
+ }));
+ match result{Ok(Ok(value))=>{if value>=0{unsafe{std::ptr::copy_nonoverlapping(owned.as_ptr(),ram,len);}}value},_=>-1}
 }'''
+    return abi if positioned else abi[:abi.index('#[unsafe(no_mangle)]', 1)]
+
+
+def generate_positioned_plm_host():
+    """Intercept both allocation entries, including original same-bank callers."""
+    return r"""void PortC_SpawnRoomPLM(uint16);
+void PortC_SpawnHardcodedPlm(SpawnHardcodedPlmArgs);
+extern int32_t port_native_positioned_plm(uint8_t*,size_t,const uint8_t*,size_t,uint16_t,uint16_t,uint16_t);
+static void PortPositionedPlm(unsigned kind,uint16 a,uint16 b) {
+ int32 native=-2;
+ if(port_mixed)native=port_native_positioned_plm(g_ram,sizeof(g_ram),g_rom,g_snes->cart->romSize,kind,a,b);
+ port_room_total[kind-1]++;
+ if(native==-2){port_room_c[kind-1]++;if(kind==1)PortC_SpawnRoomPLM(a);else PortC_SpawnHardcodedPlm((SpawnHardcodedPlmArgs){b,b>>8,a});}
+ else {if(native<0){fprintf(stderr,"room PLM error %u %u\n",kind,a);exit(4);}port_room_rust[kind-1]++;port_room_setups[kind-1]+=native;}
+ fprintf(port_effects,"room-plm %u %u %u\n",kind,a,b);
+}
+void SpawnRoomPLM(uint16 entry){PortPositionedPlm(1,entry,0);}
+void SpawnHardcodedPlm(SpawnHardcodedPlmArgs p){PortPositionedPlm(2,p.field_2,p.field_0|p.field_1<<8);}
+"""
 
 
 def generate_family_abi(manifest, module, index):
@@ -64,6 +99,7 @@ def main():
     parser.add_argument('--family-verdict', type=Path, action='append', default=[])
     parser.add_argument('--collision-verdict', type=Path, action='append', default=[])
     parser.add_argument('--plm-verdict', type=Path)
+    parser.add_argument('--room-plm', action='store_true', help='Require native room/hardcoded setup hits')
     parser.add_argument('--frames', type=int, default=9000)
     parser.add_argument('--accepted', type=Path, default=ROOT / 'out/port/decompressor-offline/decomp-acceptance.json')
     parser.add_argument('--output', type=Path, required=True)
@@ -110,6 +146,8 @@ def main():
             families.append((collision_manifest, collision_module))
         if not families:
             raise ValueError('no family contracts')
+        if args.room_plm and not args.plm_verdict:
+            raise ValueError('room PLM requires allocation evidence')
         if args.plm_verdict:
             from port_plm import verify_plm_evidence
             plm_evidence = verify_plm_evidence(args.plm_verdict)
@@ -117,6 +155,8 @@ def main():
                 raise ValueError('native PLM source identity differs')
             if Path(plm_evidence['implementation']['module']).resolve() != ROOT / 'crates/port/src/plm.rs':
                 raise ValueError('native PLM evidence does not seal the installed module')
+            if args.room_plm:
+                if not {'room','hardcoded'} <= plm_evidence.get('allocator_cases',{}).keys():raise ValueError('positioned allocation coverage missing')
             verdict['plm_predecessor_sha256'] = digest(args.plm_verdict)
         from decomp_routine import verify_accepted
         verify_accepted(args.accepted)
@@ -130,7 +170,7 @@ def main():
                 raise ValueError(f'{label} failed with exit {result.returncode}')
         rust = [f'#[path={json.dumps(str(ROOT / "crates/port/src/lib.rs"))}] mod memory;', 'use memory::*;']
         if args.plm_verdict:
-            rust.append(generate_plm_abi())
+            rust.append(generate_plm_abi(args.room_plm))
         imports = sorted({name for manifest, _ in families for name in manifest.get('rust_imports', [])})
         for name in imports:
             if not re.fullmatch('[A-Za-z_][A-Za-z_0-9]*', name):
@@ -222,6 +262,14 @@ def main():
         if digest(run / 'rng-exhaustive.stdout') != rng_verified['synthetic']['table_sha256']:
             raise ValueError('RNG exhaustive behavior differs from predecessor')
         verdict['rng_predecessor_sha256'] = digest(rng_predecessor / 'verdict.json')
+        if args.room_plm:
+            bank=source/'src/sm_84.c'
+            text=bank_texts.get(bank,bank.read_text())
+            for symbol in ('SpawnRoomPLM','SpawnHardcodedPlm'):
+                pattern=definition_pattern(symbol)
+                if len(pattern.findall(text))!=1:raise ValueError('allocator definition count differs')
+                text=pattern.sub(lambda m:m.group(1)+'PortC_'+symbol+m.group(2),text)
+            bank_texts[bank]=text
         rng_bank = source / 'src/sm_80.c'
         rng_text = bank_texts.get(rng_bank, rng_bank.read_text())
         if rng_text.count('uint16 NextRandom(void) {') != 1:
@@ -239,6 +287,7 @@ def main():
 ''' + f'#include {json.dumps(str(ROOT / "tools/decomp/headless.c"))}\n' + '''#undef main
 #undef __wrap_DecompressToMem
 #include "snes/ppu.h"
+#include "funcs.h"
 static int port_mixed;
 static unsigned long port_decompress_c,port_decompress_rust,port_rng_c,port_rng_rust;
 typedef struct PortDecompressReport {size_t written;uint32_t final_source,modes;} PortDecompressReport;
@@ -316,6 +365,8 @@ static void PortCapture(unsigned routine,unsigned long sequence,const char *phas
  char name[120];snprintf(name,sizeof(name),"fixtures/port-%03u-%03lu-%s.wram",routine,sequence,phase);
  FILE *f=fopen(name,"wb");if(!f || fwrite(g_ram,1,sizeof(g_ram),f)!=sizeof(g_ram) || fclose(f))exit(2);
 }
+static unsigned long port_room_total[2],port_room_c[2],port_room_rust[2],port_room_setups[2];
+''' + (generate_positioned_plm_host() if args.room_plm else '') + '''
 static unsigned port_frame;
 void __real_ppu_write(Ppu *,uint8_t,uint8_t);
 void __wrap_ppu_write(Ppu *ppu,uint8_t adr,uint8_t val) {
@@ -357,6 +408,7 @@ int main(int argc,char **argv) {
  if(result) return result;
  for(unsigned i=0;i<sizeof(port_c_hits)/sizeof(*port_c_hits);i++) printf("port-hit %u %lu %lu\\n",i,port_c_hits[i],port_rust_hits[i]);
  printf("predecessor-hit %lu %lu %lu %lu\\n",port_decompress_c,port_decompress_rust,port_rng_c,port_rng_rust);
+ for(unsigned i=0;i<2;i++)printf("room-plm-hit %u %lu %lu %lu %lu\\n",i,port_room_total[i],port_room_c[i],port_room_rust[i],port_room_setups[i]);
  printf("plm-callback-hit %lu %lu %lu %lu\\n",port_plm_callbacks,port_plm_c,port_plm_rust,port_plm_rust_setups);
  return 0;
 }
@@ -393,6 +445,14 @@ int main(int argc,char **argv) {
                 total, c_calls, rust_calls, rust_setups = map(int, callbacks[0])
                 if total != c_calls + rust_calls or rust_setups > rust_calls or (mode == 'c' and rust_calls):
                     raise ValueError('invalid PLM callback ownership counts')
+                positioned=[line.split()[1:] for line in (directory/'replay.stdout').read_text().splitlines() if line.startswith('room-plm-hit ')]
+                if len(positioned)!=2:raise ValueError('missing positioned PLM counters')
+                counts={}
+                for row in positioned:
+                    kind,positioned_total,pc,pr,setups=map(int,row)
+                    if kind not in (0,1) or kind in counts or positioned_total!=pc+pr or setups>pr or (mode=='c' and pr):raise ValueError('invalid positioned counters')
+                    counts[kind]={'total':positioned_total,'c':pc,'rust':pr,'rust_setups':setups}
+                verdict.setdefault('room_plm_hits',{})[name]=counts
                 verdict.setdefault('plm_callback_hits', {})[name] = {'total': total, 'c': c_calls, 'rust': rust_calls, 'rust_setups': rust_setups}
                 if any(row['c' if mode == 'mixed' else 'rust'] for row in hits[name].values()):
                     raise ValueError('replacement execution was not exclusive')
@@ -409,9 +469,13 @@ int main(int argc,char **argv) {
             raise ValueError('native PLM ownership differs across independent replays')
         # Preserve successful comparison evidence even if an additional installed
         # subsystem was unexercised and therefore cannot receive admission.
+        verdict["room_plm_installed"] = args.room_plm
         verdict.update(state_effects_match=True, hits=hits, artifacts=inventories['c-0'],
                        transformations=transformations, binary_sha256=digest(run / 'live'))
-        if args.plm_verdict and not verdict['plm_callback_hits']['mixed-0']['rust_setups']:
+        if args.room_plm:
+            if verdict['room_plm_hits']['mixed-0']!=verdict['room_plm_hits']['mixed-1']:raise ValueError('positioned ownership differs')
+            if not sum(row['rust_setups'] for row in verdict['room_plm_hits']['mixed-0'].values()):raise ValueError('no native positioned setup executed')
+        if args.plm_verdict and not args.room_plm and not verdict['plm_callback_hits']['mixed-0']['rust_setups']:
             raise ValueError('no native Rust PLM setup executed')
         verdict.update(status='mixed-C-Rust-integration', live_exercised=True, hits=hits,
                        transformations=transformations, artifacts=inventories['c-0'],

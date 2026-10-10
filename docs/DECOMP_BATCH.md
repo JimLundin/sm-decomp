@@ -90,3 +90,9 @@ integration. Where an existing evidence seal names an implementer source path,
 only the exact sealed Rust source snapshot remains at that path so historical
 verification still works. These small snapshots are evidence dependencies;
 they contain no Git worktree metadata or retained build tree.
+
+`--room-plm` verifies terrain, room and hardcoded allocation evidence and requires
+exercised native room/hardcoded setup calls during live replay. Unlike
+`--native-plm`, its admission gate does not require terrain collision callbacks.
+Unsupported room setups remain counted C ownership. The PLM rendering/frame
+engine remains separately owned.

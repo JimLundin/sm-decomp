@@ -9,6 +9,36 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class LivePortTests(unittest.TestCase):
+    def test_positioned_plm_abi_rejects_aliases_and_commits_only_success(self):
+        import sys
+        sys.path.insert(0, str(ROOT/'tools'))
+        from port_live import generate_plm_abi
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            source=root/'control.rs'
+            source.write_text('#[path='+json.dumps(str(ROOT/'crates/port/src/lib.rs'))+'] mod memory;use memory::*;\n'+generate_plm_abi(True)+r"""
+fn main(){
+ let mut ram=vec![0u8;WRAM_SIZE];let mut rom=vec![0u8;0x300000];
+ rom[0x21000..0x21004].copy_from_slice(&[0x27,0xab,0x00,0x80]);
+ Wram::new(&mut ram).unwrap().set_word(0x7a5,16);
+ unsafe {
+ assert_eq!(port_native_positioned_plm(ram.as_mut_ptr(),WRAM_SIZE,ram.as_ptr(),WRAM_SIZE,2,0x9000,0x0203),-1);
+ assert_eq!(port_native_positioned_plm(ram.as_mut_ptr(),WRAM_SIZE,rom.as_ptr(),rom.len(),2,0x9000,0x0203),1);
+ assert_eq!(Wram::new(&mut ram).unwrap().word(0x1c87+78),70);
+ let before=ram.clone();
+ rom[0x21000..0x21002].copy_from_slice(&[0xff,0xff]);
+ assert_eq!(port_native_positioned_plm(ram.as_mut_ptr(),WRAM_SIZE,rom.as_ptr(),rom.len(),2,0x9000,0x0203),-2);
+ assert_eq!(ram,before);
+ assert_eq!(port_native_positioned_plm(ram.as_mut_ptr(),WRAM_SIZE,rom.as_ptr(),rom.len(),1,0xffff,0),-1);
+ assert_eq!(ram,before);
+ }
+}
+""")
+            result=subprocess.run(['rustc','--edition=2024',str(source),'-o',str(root/'control')],capture_output=True,text=True)
+            self.assertEqual(result.returncode,0,result.stderr)
+            result=subprocess.run([str(root/'control')],capture_output=True,text=True)
+            self.assertEqual(result.returncode,0,result.stderr)
+
     def test_pointer_definition_rename_preserves_calls_and_declarations(self):
         import sys
         sys.path.insert(0, str(ROOT / 'tools'))

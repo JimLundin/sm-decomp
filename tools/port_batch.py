@@ -137,7 +137,7 @@ def verify_batch(path, batch, config, names, jobs=3, fresh=False):
     return 1 if failures else 0
 
 
-def replay_command(batch, config, names, frames, output, native_plm=False):
+def replay_command(batch, config, names, frames, output, native_plm=False, room_plm=False):
     from port_family import digest
 
     def require_current_manifest(name, record):
@@ -160,12 +160,14 @@ def replay_command(batch, config, names, frames, output, native_plm=False):
         contracts += 1
     if not contracts:
         raise ValueError('No live-eligible families selected')
-    if native_plm:
+    if native_plm or room_plm:
         record = batch['families'].get('plm-spawn', {})
         if record.get('exit_code') != 0 or not record.get('verdict'):
             raise ValueError('Native PLM requires passing plm-spawn evidence')
         require_current_manifest('plm-spawn', record)
         command += ['--plm-verdict', record['verdict']]
+    if room_plm:
+        command.append('--room-plm')
     return command
 
 
@@ -178,6 +180,7 @@ def run_main():
     parser.add_argument('--jobs', type=int, default=3)
     parser.add_argument('--fresh', action='store_true', help='Rebuild instead of reusing authenticated evidence')
     parser.add_argument('--frames', type=int, default=18000)
+    parser.add_argument('--room-plm', action='store_true', help='Require native room/hardcoded PLM setup execution')
     parser.add_argument('--native-plm', action='store_true', help='Require exercised native PLM setup in replay')
     args = parser.parse_args()
     try:
@@ -195,7 +198,7 @@ def run_main():
             return 0
         config = json.loads(CONFIG.read_text())
         names = list(dict.fromkeys(args.families or config['profiles'][args.profile]))
-        if args.native_plm and 'plm-spawn' not in names:
+        if (args.native_plm or args.room_plm) and 'plm-spawn' not in names:
             names.append('plm-spawn')
         if not 1 <= args.jobs <= 8 or not 1 <= args.frames <= 129712:
             raise ValueError('jobs must be 1..8; frames must be 1..129712')
@@ -214,7 +217,7 @@ def run_main():
         if args.command in ('replay', 'run'):
             stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S.%fZ')
             directory = path.parent / 'replays' / stamp
-            record = execute(replay_command(batch, config, names, args.frames, directory / 'evidence', args.native_plm), directory, 'replay')
+            record = execute(replay_command(batch, config, names, args.frames, directory / 'evidence', args.native_plm, args.room_plm), directory, 'replay')
             batch['replays'].append(record)
             save(path, batch)
             from port_cleanup import deduplicate

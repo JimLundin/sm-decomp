@@ -46,6 +46,7 @@ observable hardware effects, Rust hits and fallback measurements.
 - 22: Geemer, Zoomer, Zeela and Sova crawler closure, offline verified.
 - 23: power-bomb allocation and afterglow lifecycle, offline verified.
 - 24: cumulative authenticated gameplay live admission and evidence storage cleanup, resolved.
+- 25: native room/hardcoded PLM allocation, offline verified; hardcoded sound-enable setup live-exercised.
 
 This is the first frontier, not the completion boundary of the user's goal.
 Expand tickets into substantive gameplay subsystems after this frontier, using
@@ -96,3 +97,12 @@ measured CPU fallback zero. Collision/movement ticket12 is exercised and
 resolved. Zero-call bank-specific enemies, special projectiles and PLMs remain
 offline; crawler/power-bomb expansions are offline verified. Full gameplay
 ownership and movie completion remain active goals.
+
+
+Room/hardcoded allocation frontier: ticket25 implements both entry points with
+1,969 actual-C full-WRAM cases. Final9,000-frame live evidence at
+`out/port/room-plm-current-live/20261010T224032.887967Z/verdict.json` matches
+four independent processes and exercises one native hardcoded setup per mixed
+process, retaining Rust decompression/RNG and zero measured CPU fallback.
+An18,000-frame run also matches. Room and terrain allocation remain unexercised
+in these prefixes; whole PLM engine/rendering and original-ROM parity remain open.
