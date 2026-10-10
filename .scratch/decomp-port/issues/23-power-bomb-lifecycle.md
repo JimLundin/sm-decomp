@@ -48,3 +48,9 @@ module, dependency and harness seals revalidated. Misleading collision evidence
 errors now identify power bombs. The larger shared callback harness extraction
 is deferred with concrete source-seal and regression-control rationale documented
 in docs/DECOMP_POWER_BOMB.md. No gameplay behavior or HDMA ownership claim expands.
+
+Final integration evidence uses canonical repository source paths, independent of
+temporary implementer worktrees: out/port/power-bomb/20261010T215017.142110Z/verdict.json.
+Fresh actual-C verification and retained-evidence revalidation pass: 88 cases,
+four exported symbols, 54 ordered callbacks, zero CPU fallback. Integrated
+power-bomb tests (five), formatting and Clippy pass at merge commit 7226ff4.
