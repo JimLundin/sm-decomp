@@ -123,7 +123,7 @@ fn room(r: &Wram<'_>) -> Result<()> {
     let w = r.word(WIDTH);
     let h = r.word(HEIGHT);
     let size = r.word(ROOM_BYTES);
-    if w == 0 || h == 0 || w > 255 || h > 255 || size == 0 || size & 1 != 0 || size > 0x6400 {
+    if w == 0 || h == 0 || w > 255 || h > 255 || size & 1 != 0 || size > 0x6400 {
         return Err("room geometry/backing extent");
     }
     Ok(())
