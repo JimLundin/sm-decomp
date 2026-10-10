@@ -33,6 +33,6 @@ flag at `/tmp/sm-collision-focused/20261010T201356.809185Z` and
 `/tmp/sm-collision-enemy-focused/20261010T201509.789890Z`; actual source layout
 and signed collision flag corrected before acceptance.
 
-Exact committed manifest and latest shared dependencies are being sealed at
+Exact committed manifest and latest shared dependencies passed all 1,752 cases at
 `/tmp/sm-collision-committed/20261010T201757.945722Z`. Live integration is root's
 remaining ticket gate; offline evidence alone does not resolve this ticket.
