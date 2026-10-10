@@ -100,3 +100,64 @@ fn refresh_pause_follows_the_eight_clock_phase_from_reset() {
     bus.advance(1);
     assert_eq!(bus.clock.master, 1364 + 574);
 }
+
+macro_rules! emitted_phase {
+    ($name:ident,$file:literal) => {
+        mod $name {
+            #![allow(unused_imports)]
+            include!(concat!(env!("OUT_DIR"), $file));
+        }
+    };
+}
+emitted_phase!(phase0, "/nmi_phase_0.rs");
+emitted_phase!(phase1, "/nmi_phase_1.rs");
+emitted_phase!(phase2, "/nmi_phase_2.rs");
+emitted_phase!(phase3, "/nmi_phase_3.rs");
+emitted_phase!(phase4, "/nmi_phase_4.rs");
+emitted_phase!(phase5, "/nmi_phase_5.rs");
+emitted_phase!(phase6, "/nmi_phase_6.rs");
+emitted_phase!(phase7, "/nmi_phase_7.rs");
+
+#[test]
+fn emitted_patterns_match_all_independent_nmi_phase_oracles() {
+    for (phase, steps, handler, return_pc) in [
+        (0, phase0::STEP_TABLE, 94, 0x8009),
+        (1, phase1::STEP_TABLE, 88, 0x800c),
+        (2, phase2::STEP_TABLE, 88, 0x800c),
+        (3, phase3::STEP_TABLE, 86, 0x800c),
+        (4, phase4::STEP_TABLE, 80, 0x800f),
+        (5, phase5::STEP_TABLE, 80, 0x800f),
+        (6, phase6::STEP_TABLE, 78, 0x800f),
+        (7, phase7::STEP_TABLE, 92, 0x8010),
+    ] {
+        let mut rom = vec![0; 0x10000];
+        let mut code = vec![0x18, 0xfb, 0xe2, 0x30, 0xa9, 0x80, 0x8d, 0, 0x42];
+        code.extend(std::iter::repeat_n(0xea, phase));
+        code.extend([0xea, 0xea, 0x80, 0xfc]);
+        rom[..code.len()].copy_from_slice(&code);
+        rom[0x1000] = 0x40;
+        rom[0x7fc0..0x7fd5].copy_from_slice(b"SM NMI ORACLE TEST   ");
+        rom[0x7fd5] = 0x20;
+        rom[0x7fd9] = 1;
+        rom[0x7fdc..0x7fe0].copy_from_slice(&[0xcb, 0xed, 0x34, 0x12]);
+        rom[0x7fea..0x7fec].copy_from_slice(&0x9000u16.to_le_bytes());
+        rom[0x7ffc..0x7ffe].copy_from_slice(&0x8000u16.to_le_bytes());
+        let mut subject = snes::Subject::with_steps(&rom, 0, steps).unwrap();
+        let mut observed = None;
+        let mut returned = None;
+        for _ in 0..2 {
+            subject
+                .run_frame_inspected(0, |boundary, _| {
+                    if boundary.pc == 0x9000 && observed.is_none() {
+                        observed = Some(boundary.master_clock);
+                    } else if observed.is_some() && returned.is_none() {
+                        returned = Some((boundary.master_clock, boundary.pc));
+                    }
+                })
+                .unwrap();
+        }
+        assert_eq!(observed, Some(225 * 1364 + handler), "phase {phase}");
+        assert_eq!(returned, Some((225 * 1364 + handler + 52, return_pc)), "phase {phase}");
+        assert!(subject.generated_steps > 0);
+    }
+}

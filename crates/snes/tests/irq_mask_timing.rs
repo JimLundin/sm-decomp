@@ -105,6 +105,31 @@ fn generated_rep_and_sep_preserve_the_old_mask() {
 }
 
 #[test]
+fn emitted_rep_sep_and_nop_match_independent_handler_clock_and_stack() {
+    for (case, steps, clock, return_pc, masked) in [
+        (0, emitted::STEP_TABLE, 1044, 0x8080, false),
+        (1, emitted_rep::STEP_TABLE, 1050, 0x8081, false),
+        (4, emitted_sep::STEP_TABLE, 1050, 0x8081, true),
+    ] {
+        let mut subject = snes::Subject::with_steps(&cartridge(case), 0, steps).unwrap();
+        let mut observed = None;
+        subject
+            .run_frame_inspected(0, |boundary, ram| {
+                if boundary.pc == 0x9000 && observed.is_none() {
+                    observed = Some((
+                        boundary.master_clock,
+                        u16::from_le_bytes([ram[0x1fd], ram[0x1fe]]),
+                        ram[0x1fc] & 4 != 0,
+                    ));
+                }
+            })
+            .unwrap();
+        assert_eq!(observed, Some((clock, return_pc, masked)), "independent rr2-beta23 case {case}");
+        assert!(subject.generated_steps > 0);
+    }
+}
+
+#[test]
 fn generated_nop_after_cli_consumes_the_same_mask_sample() {
     let rom = cartridge(0);
     let mut reference = snes::Reference::new(&rom, 0).unwrap();

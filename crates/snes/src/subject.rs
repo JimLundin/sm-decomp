@@ -198,8 +198,17 @@ pub struct Subject {
     wram: Vec<u8>,
     machine: runtime::Machine,
     steps: HashMap<(u32, u8), (&'static [u8], runtime::StepFn)>,
+    accounting: super::coverage::Accounting,
     pub generated_steps: u64,
     pub interpreted_steps: u64,
+}
+
+/// Passive instruction-boundary values for independently specified timing tests.
+#[derive(Clone, Copy, Debug)]
+pub struct InstructionBoundary {
+    pub pc: u32,
+    pub cpu_cycles: u64,
+    pub master_clock: u64,
 }
 
 impl Subject {
@@ -230,6 +239,7 @@ impl Subject {
             wram,
             machine,
             steps: steps.iter().map(|&(addr, mx, bytes, f)| ((addr, mx), (bytes, f))).collect(),
+            accounting: super::coverage::Accounting::default(),
             generated_steps: 0,
             interpreted_steps: 0,
         })
@@ -237,9 +247,27 @@ impl Subject {
 
     /// Advance a frame through the runtime bus, collecting actual JSR/JSL targets.
     pub fn run_frame(&mut self, pad: u16) -> Result<()> {
+        self.run_frame_inspected(pad, |_, _| {})
+    }
+
+    /// Inspect existing instruction boundaries without reading the emulated bus,
+    /// ticking hardware, or polling/consuming an interrupt.
+    pub fn run_frame_inspected(&mut self, pad: u16, mut inspect: impl FnMut(InstructionBoundary, &[u8])) -> Result<()> {
         self.bus.hardware.borrow_mut().set_joypad(0, pad);
         let frame = self.bus.hardware.borrow().ppu.frame_count();
         for _ in 0..2_000_000 {
+            {
+                let hardware = self.bus.hardware.borrow();
+                let regs = self.interpreter.regs;
+                inspect(
+                    InstructionBoundary {
+                        pc: (u32::from(regs.pbr) << 16) | u32::from(regs.pc),
+                        cpu_cycles: self.interpreter.cycles,
+                        master_clock: hardware.clock.master,
+                    },
+                    hardware.wram(),
+                );
+            }
             let before = self.interpreter.regs;
             let waiting = self.interpreter.waiting;
             let stopped = self.interpreter.stopped;
@@ -259,11 +287,17 @@ impl Subject {
                             == *value
                     })
             });
+            let mut executed_generated = false;
+            let mut executed_opcode = None;
             if let Some((bytes, body)) = candidate {
                 let nmi = self.bus.poll_nmi();
                 let irq = self.bus.poll_irq();
                 if nmi || (irq && !self.interpreter.irq_masked()) {
-                    self.interpreter.step(&mut PolledBus { bus: InterpreterBus(&mut self.bus), nmi, irq });
+                    self.interpreter.step(&mut super::coverage::OpcodeBus {
+                        inner: PolledBus { bus: InterpreterBus(&mut self.bus), nmi, irq },
+                        opcode: &mut executed_opcode,
+                        armed: !waiting && !stopped,
+                    });
                     self.interpreted_steps += 1;
                 } else {
                     self.interpreter.take_irq_mask();
@@ -271,23 +305,27 @@ impl Subject {
                     let cycles_before = self.machine.bus.cpu_cycles();
                     // Fetch even constant-folded ROM operands: these bus accesses
                     // preserve open bus, CPU/DMA timing, and hardware progression.
-                    for (index, expected) in bytes.iter().enumerate() {
-                        let value =
-                            self.machine.read8((addr & 0xff0000) | u32::from(before.pc.wrapping_add(index as u16)));
-                        ensure!(value == *expected, "compiled instruction changed at ${addr:06X}");
-                    }
-                    body(&mut self.machine);
-                    self.interpreter.regs =
-                        interpreter_regs(&self.machine.cpu, before.pc.wrapping_add(bytes.len() as u16));
+                    let next = runtime::step::execute_step(&mut self.machine, addr, bytes, body)
+                        .map_err(|changed| anyhow::anyhow!("compiled instruction changed at ${changed:06X}"))?;
+                    self.interpreter.regs = interpreter_regs(&self.machine.cpu, next as u16);
                     if matches!(bytes[0], 0x58 | 0x78 | 0x28 | 0xc2 | 0xe2) {
                         self.interpreter.record_irq_mask(before.p.contains(Status::I));
                     }
                     self.interpreter.cycles += self.machine.bus.cpu_cycles() - cycles_before;
                     self.generated_steps += 1;
+                    executed_generated = true;
+                    executed_opcode = Some(bytes[0]);
                 }
             } else {
-                self.interpreter.step(&mut InterpreterBus(&mut self.bus));
+                self.interpreter.step(&mut super::coverage::OpcodeBus {
+                    inner: InterpreterBus(&mut self.bus),
+                    opcode: &mut executed_opcode,
+                    armed: !waiting && !stopped,
+                });
                 self.interpreted_steps += 1;
+            }
+            if let Some(actual_opcode) = executed_opcode {
+                self.accounting.record(executed_generated, addr, mx, before.emulation, actual_opcode);
             }
             if !before.emulation
                 && !waiting
@@ -326,6 +364,16 @@ impl Subject {
     }
     pub fn framebuffer_bytes(&self) -> Vec<u8> {
         self.bus.hardware.borrow().framebuffer().iter().flat_map(|pixel| pixel.to_le_bytes()).collect()
+    }
+
+    /// Actual instruction counts and complete compiled-key inventory, excluding
+    /// hardware interrupt dispatch and idle wait/stop steps.
+    pub fn coverage(&self) -> super::coverage::Coverage {
+        self.accounting.report(
+            self.steps.iter().map(|(&(address, mx), (bytes, _))| (address, mx, bytes[0])),
+            self.generated_steps,
+            self.interpreted_steps,
+        )
     }
 
     pub fn misses_csv(&self) -> String {

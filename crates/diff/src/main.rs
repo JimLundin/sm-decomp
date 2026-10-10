@@ -36,91 +36,212 @@ impl Console for SubjectConsole {
     }
 }
 
-fn main() -> Result<()> {
+struct Args {
+    input: PathBuf,
+    rom: PathBuf,
+    out: PathBuf,
+    limit: Option<usize>,
+    generated: bool,
+}
+
+fn parse_args() -> Result<Args> {
     let mut args = std::env::args().skip(1);
     let input = args
         .next()
         .context("usage: diff <movie> (--generated|--fallback-only) [--frames N] [--rom PATH] [--out DIR]")?;
-    let mut rom = PathBuf::from("rom/sm.sfc");
-    let mut out = PathBuf::from("out/diff");
-    let mut limit = None;
+    let mut result =
+        Args { input: input.into(), rom: "rom/sm.sfc".into(), out: "out/diff".into(), limit: None, generated: false };
     let mut fallback_only = false;
-    let mut generated = false;
     while let Some(arg) = args.next() {
         match arg.as_str() {
             "--fallback-only" => fallback_only = true,
-            "--generated" => generated = true,
-            "--frames" => limit = Some(args.next().context("--frames needs a number")?.parse::<usize>()?),
-            "--rom" => rom = args.next().context("--rom needs a path")?.into(),
-            "--out" => out = args.next().context("--out needs a directory")?.into(),
+            "--generated" => result.generated = true,
+            "--frames" => result.limit = Some(args.next().context("--frames needs a number")?.parse()?),
+            "--rom" => result.rom = args.next().context("--rom needs a path")?.into(),
+            "--out" => result.out = args.next().context("--out needs a directory")?.into(),
             _ => anyhow::bail!("unknown argument {arg}"),
         }
     }
-    ensure!(fallback_only != generated, "select exactly one of --generated or --fallback-only");
-    let movie = movie::load(input.as_ref())?;
-    let rom = fs::read(rom)?;
+    ensure!(fallback_only != result.generated, "select exactly one of --generated or --fallback-only");
+    Ok(result)
+}
+
+fn sha256(bytes: &[u8]) -> String {
+    use sha2::{Digest, Sha256};
+    format!("{:x}", Sha256::digest(bytes))
+}
+
+fn save_report(out: &std::path::Path, report: &serde_json::Value) -> Result<()> {
+    let temporary = out.join("parity.json.tmp");
+    fs::write(&temporary, serde_json::to_vec_pretty(report)?)?;
+    fs::rename(temporary, out.join("parity.json"))?;
+    Ok(())
+}
+
+fn decoded_cpu(bytes: &[u8]) -> serde_json::Value {
+    if bytes.len() != 43 {
+        return serde_json::Value::Null;
+    }
+    let mut values = serde_json::Map::new();
+    for (index, name) in ["a", "x", "y", "s", "d", "pc"].iter().enumerate() {
+        values.insert((*name).into(), u16::from_le_bytes([bytes[index * 2], bytes[index * 2 + 1]]).into());
+    }
+    for (index, name) in ["db", "pb", "p", "emulation", "waiting", "stopped", "irq_masked"].iter().enumerate() {
+        values.insert((*name).into(), bytes[12 + index].into());
+    }
+    for (index, name) in ["cpu_cycles", "interrupts_taken", "master_clocks"].iter().enumerate() {
+        values.insert(
+            (*name).into(),
+            u64::from_le_bytes(bytes[19 + index * 8..27 + index * 8].try_into().unwrap()).into(),
+        );
+    }
+    values.into()
+}
+
+fn replay(args: &Args, report: &mut serde_json::Value) -> Result<()> {
+    report["stage"] = "inputs".into();
+    let movie_bytes = fs::read(&args.input)?;
+    let movie = movie::load(&args.input)?;
+    let rom = fs::read(&args.rom)?;
     snes::verify_movie_rom(&movie, &rom)?;
-    let count = limit.unwrap_or(movie.frames.len()).min(movie.frames.len());
+    let count = args.limit.unwrap_or(movie.frames.len());
+    report["expected_frames"] = count.into();
+    report["available_frames"] = movie.frames.len().into();
+    report["identities"] = serde_json::json!({
+        "rom_sha256": sha256(&rom), "movie_sha256": sha256(&movie_bytes),
+        "input_sha256": sha256(movie::write_inputs(&movie.frames).as_bytes()),
+        "binary_sha256": sha256(&fs::read(std::env::current_exe()?)?),
+        "compiled_rom_sha256": if args.generated { game::steps::ROM_SHA256 } else { None },
+    });
+    if count > movie.frames.len() {
+        report["status"] = "incomplete".into();
+        anyhow::bail!("movie is shorter than the requested frame scope");
+    }
     ensure!(count > 0, "no frames selected");
-    let steps = if generated { game::steps::STEP_TABLE } else { &[] };
-    ensure!(!generated || !steps.is_empty(), "no compiled steps; run just recompile-steps first");
-    if generated {
+    report["identities"]["selected_input_sha256"] =
+        sha256(movie::write_inputs(&movie.frames[..count]).as_bytes()).into();
+    let steps = if args.generated { game::steps::STEP_TABLE } else { &[] };
+    report["compiled_table_entries"] = steps.len().into();
+    if args.generated && steps.is_empty() {
+        report["status"] = "uncovered".into();
+        anyhow::bail!("no compiled steps; regenerate a nonempty step table");
+    }
+    if args.generated {
         let identity = movie::Movie { frames: Vec::new(), rom_sha256: game::steps::ROM_SHA256.map(str::to_owned) };
         ensure!(identity.rom_sha256.is_some(), "compiled table has no ROM identity; regenerate");
         snes::verify_movie_rom(&identity, &rom)?;
     }
+    report["stage"] = "initialization".into();
     let mut reference = ReferenceConsole(Reference::new(&rom, 0)?, Vec::new(), Vec::new());
     let mut subject = SubjectConsole(Subject::with_steps(&rom, 0, steps)?, Vec::new(), Vec::new());
-    fs::create_dir_all(&out)?;
-    // A reused output directory must never retain the previous run's verdict.
-    for report in ["match.txt", "divergence.txt"] {
-        match fs::remove_file(out.join(report)) {
-            Ok(()) => {}
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
-            Err(error) => return Err(error.into()),
+    report["stage"] = "replay".into();
+    fs::write(args.out.join("coverage.json"), serde_json::to_vec_pretty(&subject.0.coverage())?)?;
+    save_report(&args.out, report)?;
+    for (frame, pad) in movie.frames[..count].iter().enumerate() {
+        let outcome = diff::run(&mut reference, &mut subject, std::slice::from_ref(pad));
+        report["generated_steps"] = subject.0.generated_steps.into();
+        report["interpreted_steps"] = subject.0.interpreted_steps.into();
+        if outcome.is_err() {
+            fs::write(args.out.join("coverage.json"), serde_json::to_vec_pretty(&subject.0.coverage())?)?;
         }
-    }
-    let started = Instant::now();
-    for (index, chunk) in movie.frames[..count].chunks(600).enumerate() {
-        let result = diff::run(&mut reference, &mut subject, chunk);
-        fs::write(out.join("misses.csv"), subject.0.misses_csv())?;
-        fs::write(
-            out.join("coverage.txt"),
-            format!(
-                "compiled table entries: {}\ngenerated steps: {}\ninterpreted steps: {}\n",
-                steps.len(),
-                subject.0.generated_steps,
-                subject.0.interpreted_steps
-            ),
-        )?;
-        match result? {
-            Outcome::Match { .. } => {}
+        match outcome? {
+            Outcome::Match { .. } => {
+                report["completed_frames"] = (frame + 1).into();
+                report["matched_frames"] = (frame + 1).into();
+            }
             Outcome::Diverged(mut divergence) => {
-                divergence.frame += index * 600;
-                let report = diff::report(&divergence, Some(&subject.0.misses_csv()));
-                fs::write(out.join("divergence.txt"), &report)?;
-                anyhow::bail!("{report}");
+                divergence.frame = frame;
+                report["completed_frames"] = (frame + 1).into();
+                report["status"] = "divergence".into();
+                report["first_divergence"] = serde_json::json!({"frame": frame,
+                    "region": divergence.region, "total_diffs": divergence.total_diffs,
+                    "bytes": divergence.bytes,
+                    "reference_cpu": decoded_cpu(&reference.1), "subject_cpu": decoded_cpu(&subject.1)});
+                fs::write(args.out.join("divergence.txt"), diff::report(&divergence, Some(&subject.0.misses_csv())))?;
+                fs::write(args.out.join("misses.csv"), subject.0.misses_csv())?;
+                fs::write(args.out.join("coverage.json"), serde_json::to_vec_pretty(&subject.0.coverage())?)?;
+                anyhow::bail!("first frame disagreement at input index {frame} in {}", divergence.region);
             }
         }
-        eprintln!(
-            "diff: {}/{} frames match ({:.1}s)",
-            index * 600 + chunk.len(),
-            count,
-            started.elapsed().as_secs_f64()
-        );
+        if (frame + 1) % 600 == 0 || frame + 1 == count {
+            fs::write(args.out.join("misses.csv"), subject.0.misses_csv())?;
+            fs::write(args.out.join("coverage.json"), serde_json::to_vec_pretty(&subject.0.coverage())?)?;
+            save_report(&args.out, report)?;
+            eprintln!("diff: {}/{} frames match", frame + 1, count);
+        }
     }
-    ensure!(
-        !generated || subject.0.generated_steps > 0,
-        "no compiled steps executed; selected functions are not covered by this prefix"
-    );
+    if args.generated && subject.0.generated_steps == 0 {
+        report["status"] = "uncovered".into();
+        anyhow::bail!("no compiled steps executed; selected keys are not covered by this prefix");
+    }
+    report["status"] = "pass".into();
+    report["complete"] = true.into();
+    report["stage"] = "complete".into();
     let summary = format!(
-        "MATCH: {count} frames, {}, CPU/clocks + WRAM + framebuffer; {:.2}s\nInput: {input}\nGenerated steps: {}\nInterpreted steps: {}\n",
-        if generated { "generated subject" } else { "fallback-only subject" },
-        started.elapsed().as_secs_f64(),
+        "MATCH: {count} frames, {}, CPU/clocks + WRAM + framebuffer\nGenerated steps: {}\nInterpreted steps: {}\n",
+        if args.generated { "generated subject" } else { "fallback-only subject" },
         subject.0.generated_steps,
         subject.0.interpreted_steps
     );
-    fs::write(out.join("match.txt"), &summary)?;
+    fs::write(args.out.join("match.txt"), &summary)?;
     print!("{summary}");
     Ok(())
+}
+
+fn execute() -> Result<i32> {
+    let args = parse_args()?;
+    ensure!(!args.out.exists(), "output directory already exists; choose a fresh evidence directory");
+    if let Some(parent) = args.out.parent().filter(|path| !path.as_os_str().is_empty()) {
+        fs::create_dir_all(parent)?;
+    }
+    fs::create_dir(&args.out)?;
+    let started = Instant::now();
+    let mut report = serde_json::json!({"schema_version": 1, "status": "incomplete", "complete": false,
+        "mode": if args.generated { "generated" } else { "fallback-only" },
+        "expected_frames": args.limit, "completed_frames": 0, "matched_frames": 0,
+        "available_frames": null, "compiled_table_entries": 0, "generated_steps": 0, "interpreted_steps": 0,
+        "regions": ["CPU+clocks", "WRAM", "framebuffer"], "first_divergence": null,
+        "seed": 0, "controller": "P1", "profile": "lsnes-profile", "frame_convention": "zero-based input indices",
+        "stage": "allocated"});
+    save_report(&args.out, &report)?;
+    if let Err(error) = replay(&args, &mut report) {
+        let reason = format!("{error:#}");
+        if report["status"] == "incomplete" && report["stage"] != "inputs" {
+            report["status"] = if reason.contains("budget") { "incomplete" } else { "error" }.into();
+        } else if report["status"] == "incomplete" && !reason.contains("shorter") {
+            report["status"] = "error".into();
+        }
+        report["reason"] = reason.clone().into();
+        eprintln!("{reason}");
+    }
+    if let Some(identities) = report["identities"].as_object() {
+        let mutation = [("movie_sha256", &args.input), ("rom_sha256", &args.rom)].iter().any(|(name, path)| {
+            fs::read(path).map_or(true, |bytes| identities.get(*name) != Some(&sha256(&bytes).into()))
+        });
+        if mutation {
+            report["status"] = "error".into();
+            report["complete"] = false.into();
+            report["reason"] = "Movie or ROM changed during parity replay".into();
+        }
+    }
+    if args.out.join("coverage.json").is_file() {
+        report["coverage_sha256"] = sha256(&fs::read(args.out.join("coverage.json"))?).into();
+    }
+    report["elapsed_seconds"] = started.elapsed().as_secs_f64().into();
+    save_report(&args.out, &report)?;
+    Ok(match report["status"].as_str() {
+        Some("pass") => 0,
+        Some("divergence" | "uncovered") => 1,
+        _ => 2,
+    })
+}
+
+fn main() {
+    match execute() {
+        Ok(code) => std::process::exit(code),
+        Err(error) => {
+            eprintln!("{error:#}");
+            std::process::exit(2);
+        }
+    }
 }

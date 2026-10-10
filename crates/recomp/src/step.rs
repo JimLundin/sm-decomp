@@ -20,6 +20,19 @@ pub fn supported(i: &Insn) -> bool {
     }
 }
 
+/// Complete timed body shared by production tables and instruction validation.
+pub fn emit_body(i: &Insn) -> Result<String> {
+    anyhow::ensure!(supported(i), "unsupported timed pattern {}", i.mnem);
+    let mut body = String::new();
+    if matches!(i.mode, Mode::Imp) {
+        writeln!(body, "m.bus.implied_cycle(0x{:06x}, m.cpu.flag(flag::I));", i.next())?;
+    } else if matches!(i.mode, Mode::Imm8) {
+        writeln!(body, "m.bus.tick(6);")?;
+    }
+    writeln!(body, "{}", emit::emit_straight(i)?)?;
+    Ok(body)
+}
+
 pub fn emit_table(funcs: &[(FunctionCfg, Option<String>)], read: &dyn Fn(u32) -> Option<u8>) -> Result<String> {
     let mut instructions = BTreeMap::new();
     for (cfg, _) in funcs {
@@ -32,13 +45,7 @@ pub fn emit_table(funcs: &[(FunctionCfg, Option<String>)], read: &dyn Fn(u32) ->
     );
     for ((addr, mx), i) in &instructions {
         writeln!(out, "fn step_{addr:06x}_{mx}(m: &mut Machine) {{")?;
-        if matches!(i.mode, Mode::Imp) {
-            let next_pc = (i.addr & 0xff0000) | ((i.addr + i.len) & 0xffff);
-            writeln!(out, "    m.bus.implied_cycle(0x{next_pc:06x}, m.cpu.flag(flag::I));")?;
-        } else if matches!(i.mode, Mode::Imm8) {
-            writeln!(out, "    m.bus.tick(6);")?;
-        }
-        writeln!(out, "    {}", emit::emit_straight(i)?)?;
+        writeln!(out, "    {}", emit_body(i)?)?;
         writeln!(out, "}}")?;
     }
     writeln!(out, "pub static STEP_TABLE: &[StepEntry] = &[")?;

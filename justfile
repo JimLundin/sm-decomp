@@ -15,6 +15,10 @@ doctor:
 readiness-preflight:
     python3 tools/readiness.py preflight
 
+# Complete enabled native corpus and independent generated-step timing checks.
+pattern-check:
+    python3 tools/readiness_patterns.py --timing
+
 # Includes corpus cases if `just fuzz` has generated them.
 check:
     cargo fmt --all --check
@@ -118,3 +122,7 @@ trace-names:
 # Fresh strict original-core synchronization with immutable evidence.
 readiness-sync *args:
     python3 tools/readiness_sync.py {{args}}
+
+# One isolated cold parity run; readiness defaults retain the complete domain.
+readiness-parity mode="generated" frames="18000":
+    python3 tools/readiness_parity.py --mode {{quote(mode)}} --frames {{frames}}
