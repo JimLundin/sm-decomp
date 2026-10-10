@@ -138,6 +138,35 @@ def generate(output_dir: Path, manifest_path: Path | None = None) -> Path:
             [0xDE1C + slot, le([1, 2, 0][seed % 3])],
         ]
         frames.append({"name": f"frame-{seed}", "writes": writes, "expected_return": 0})
+    # Real frame dispatch: wakeups execute the link in the same frame;
+    # deletion does not suppress instruction timer decrement or script execution.
+    preinstructions = [0xBD0F, 0xBD26, 0xBD50, 0xBD88, 0xBDB2, 0xBE1C,
+                       0xBDD4, 0xBDE3, 0xBDF2, 0xBE01, 0xBE1F, 0xBE30, 0xB7DD,
+                       0x8469, 0x84E6, 0x853D, 0x86D0, 0x8AA6, 0x8AE0,
+                       0xBAFA, 0xBB6A, 0xBBA3, 0xD356, *range(0xDAD5, 0xDADE), 0xDFA8]
+    for pre in preinstructions:
+        for seed in range(12):
+            slot = [0, 2, 38, 78][seed % 4]
+            pc, link = 0xA800, 0xA810
+            write(0x84, pc, le(0x874E) + [5] + le(0x86BC))
+            write(0x84, link, le(0x874E) + [7] + le(0x86BC))
+            writes = [
+                [0x1C23, le(0x8000)],
+                [0x1C37 + slot, le(0xB703)],
+                [0x1CD7 + slot, le(pre)],
+                [0x1D27 + slot, le(pc)],
+                [0xDEBC + slot, le(link)],
+                [0xDE1C + slot, le([0, 1, 2][seed % 3])],
+                [0x1D77 + slot, le([0, 1, 0x100, 0x200, 0x300, 0x400][seed % 6])],
+                [0x79F, le(seed % 8)],
+                [0xD828 + seed % 8, [7 if seed % 2 else 0]],
+                [0xE50, le(seed)], [0xE52, le(6)],
+                [0x1E6D, le(0x8000 if seed % 2 else 0)],
+                [0xD821, [0x80 if seed % 2 else 0]],
+                [0x5F5, le(1)],
+            ]
+            frames.append({"name": f"frame-pre-{pre:04x}-{seed}",
+                           "writes": writes, "expected_return": 0})
     draw = []
     for seed in range(12):
         pc = 0xB000 + seed * 32

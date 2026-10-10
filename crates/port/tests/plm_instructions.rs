@@ -6,6 +6,28 @@ fn rom_with(pc: u16, data: &[u8]) -> Vec<u8> {
     rom
 }
 #[test]
+fn deleted_preinstruction_still_ticks_and_runs_expiring_script() {
+    for timer in [0u16, 1, 2] {
+        let mut bytes = vec![0; WRAM_SIZE];
+        let mut r = Wram::new(&mut bytes).unwrap();
+        // Set a visible script timer, then delete. The deleted slot still runs.
+        let rom = rom_with(0x9000, &[0x4e, 0x87, 7, 0xbc, 0x86]);
+        r.set_word(0x1c23, 0x8000);
+        r.set_word(0x1c37 + 78, 0xb7c3);
+        r.set_word(0x1cd7 + 78, 0xb7dd);
+        r.set_word(0x1d77 + 78, 1);
+        r.set_word(0x1d27 + 78, 0x9000);
+        r.set_word(0xde1c + 78, timer);
+        r.set_word(0x5f5, 1);
+        instructions::process_control_frame(&mut r, &rom, 8).unwrap();
+        assert_eq!(r.word(0x1c37 + 78), 0);
+        assert_eq!(r.word(0x5f5), 0);
+        assert_eq!(r.word(0xde1c + 78), timer.wrapping_sub(1));
+        assert_eq!(r.word(0x1d77 + 78), if timer == 1 { 7 } else { 0 });
+        assert_eq!(r.word(0x1c27), 0);
+    }
+}
+#[test]
 fn byte_timer_preserves_high_byte_and_zero_underflows() {
     let mut bytes = vec![0; WRAM_SIZE];
     let mut r = Wram::new(&mut bytes).unwrap();

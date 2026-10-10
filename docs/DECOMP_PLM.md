@@ -146,3 +146,12 @@ Actual-C evidence `out/port/plm-door-preinstructions/20261010T225127.240913Z/ver
 passes75routines/680cases (104new preinstruction cases). Fifteen independent
 PLM tests, full Rust suite and Clippy pass. New preinstructions are offline
 verified; no additional live or original-ROM parity claim is made.
+
+Frame ordering is now verified against actual `PlmHandler_Async`: a deleted PLM
+still decrements its instruction timer and executes an expiring script; a link
+wakeup runs in the same frame. All twenty C dispatcher no-ops are supported,
+including the hardcoded allocation default. Evidence
+`out/port/plm-frame-preinstructions/20261010T225440.281820Z/verdict.json`
+passes 756 full-WRAM/raw-return cases, including 408 frame cases. Independent
+deletion regression, full Rust tests and Clippy pass. Rendering and coroutine
+ownership remain with C.

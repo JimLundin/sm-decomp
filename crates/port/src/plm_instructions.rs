@@ -292,11 +292,13 @@ pub fn process_control_frame(r: &mut Wram<'_>, rom: &[u8], limit: usize) -> Resu
         if r.word(HEADER + k) == 0 {
             continue;
         }
-        if ![0x84e6, 0x853d, 0x86d0, 0x8aa6, 0x8ae0, 0xbba3].contains(&r.word(PRE + k)) {
+        if ![
+            0x8469, 0x84e6, 0x853d, 0x86d0, 0x8aa6, 0x8ae0, 0xbafa, 0xbb6a, 0xbba3, 0xd356, 0xdad5, 0xdad6, 0xdad7,
+            0xdad8, 0xdad9, 0xdada, 0xdadb, 0xdadc, 0xdadd, 0xdfa8,
+        ]
+        .contains(&r.word(PRE + k))
+        {
             crate::plm::preinstruction(r, r.word(PRE + k), k as u16)?;
-            if r.word(HEADER + k) == 0 {
-                continue;
-            }
         }
         let timer = r.word(INSTR_TIMER + k).wrapping_sub(1);
         r.set_word(INSTR_TIMER + k, timer);
