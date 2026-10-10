@@ -11,12 +11,20 @@ def identity(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
 
 
-def load_declaration(root, override=None):
+def load_declaration(root, override=None, prospective=None):
     root = Path(root)
     raw = (root / DECLARATION).read_bytes()
     if override is not None and Path(override).read_bytes() != raw:
         raise ValueError('Pattern declaration differs from production source declaration')
     declaration = json.loads(raw)
+    if prospective:
+        candidates = [row for row in declaration.get('prospective_patterns', []) if row['opcode'] == prospective]
+        if len(candidates) != 1:
+            raise ValueError('Unknown prospective pattern; independent implementation decision required')
+        declaration = dict(declaration, patterns=candidates)
+        pattern = candidates[0]
+        for field in ('timing_tests', 'timing_oracles', 'hardware_conditions'):
+            declaration[field] = pattern[field]
     validate_declaration(declaration)
     return declaration
 
@@ -72,7 +80,7 @@ def validate_report(report, kind='instruction'):
     validate_declaration(declaration)
     if identity(declaration) != report.get('declaration_sha256') or not report.get('source_sha256'):
         raise ValueError('Pattern declaration/source identity incomplete')
-    if report.get('scope') != 'complete production declaration':
+    if report.get('scope') not in ('complete production declaration', 'complete prospective declaration'):
         raise ValueError('Development pattern scope cannot establish acceptance')
     patterns = {row['opcode']: row for row in declaration['patterns']}
     if kind == 'timing':

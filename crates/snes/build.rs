@@ -63,5 +63,20 @@ fn main() -> anyhow::Result<()> {
     let cfg = recomp::cfg::build(&read, 0x8000, true, true, &HashSet::new())?;
     let src = recomp::step::emit_table(&[(cfg, None)], &read)?;
     std::fs::write(PathBuf::from(std::env::var("OUT_DIR")?).join("dma_steps.rs"), src)?;
+    let mut prospective = String::from("use runtime::{Machine, ops, flag, ea};\n");
+    for (name, address, operand, m8) in [
+        ("load8", 0x8000, 0x0010u16, true),
+        ("load16", 0x8000, 0xffff, false),
+        ("io", 0x8000, 0x4210, true),
+        ("loop_load", 0x8002, 0x0010, true),
+    ] {
+        let bytes = [0xad, operand as u8, (operand >> 8) as u8];
+        let read = |addr: u32| bytes.get(addr.wrapping_sub(address) as usize).copied();
+        let instruction = recomp::decode::decode_with(read, address, m8, true).unwrap();
+        let body = recomp::step::emit_prospective_body(&instruction, "ad")?;
+        prospective.push_str(&format!("pub fn {name}(m: &mut Machine) {{ {body} }}\n"));
+    }
+    prospective.push_str("pub static STEP_TABLE: &[runtime::StepEntry] = &[(0x8002,3,&[0xad,0x10,0],loop_load)];\n");
+    std::fs::write(PathBuf::from(std::env::var("OUT_DIR")?).join("prospective_lda.rs"), prospective)?;
     Ok(())
 }

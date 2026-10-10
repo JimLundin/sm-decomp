@@ -283,7 +283,8 @@ def verify_accepted(owner, require_pointer=False):
         if manifest.get('contract_version') != 2:
             raise ValueError('Candidate declaration cannot downgrade readiness evidence contract')
         for name in ('instruction', 'timing'):
-            if verdict.get('checks', {}).get(name, {}).get('declaration') != declaration:
+            check = verdict.get('checks', {}).get(name, {})
+            if check.get('declaration') != declaration or check.get('scope') != 'complete production declaration' or check.get('prospective_opcode'):
                 raise ValueError('Accepted pattern declaration differs from candidate source')
     for entry in inventory['files']:
         path = safe_artifact(owner / 'source/files', entry['path'])

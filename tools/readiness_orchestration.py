@@ -247,11 +247,17 @@ def verify_pattern_evidence(output,manifest,strict=True):
         from pattern_contract import load_declaration, identity, DECLARATION, FIXTURES
         snapshot = output.parent.parent / 'source/files'
         if snapshot.is_dir():
-            declaration = load_declaration(snapshot)
+            declaration = load_declaration(snapshot, prospective=report.get('prospective_opcode'))
         else:
             # Standalone verification must still bind the declaration to the
             # preserved source inventory, even without a parent source copy.
-            declaration = json.loads((output/'declaration.json').read_text())
+            raw_declaration=json.loads((output/'declaration.json').read_text())
+            if report.get('prospective_opcode'):
+                candidates=[row for row in raw_declaration.get('prospective_patterns',[]) if row['opcode']==report['prospective_opcode']]
+                if len(candidates)!=1:raise ValueError('Preserved prospective declaration missing')
+                declaration=dict(raw_declaration,patterns=candidates)
+                for field in ('timing_tests','timing_oracles','hardware_conditions'):declaration[field]=candidates[0][field]
+            else:declaration = raw_declaration
         if report['declaration'] != declaration or identity(declaration) != report['declaration_sha256']:
             raise ValueError('Pattern declaration differs from candidate source')
         declared_source = next((row for row in report['source_inventory'] if row['path'] == DECLARATION), {})
@@ -367,7 +373,7 @@ def verify_timing(output,report,source):
     expected=['cargo','test','-p','snes','--test','integration','--test','irq_mask_timing','--test','interrupt_timing','--test','dma_timing','--test','hdma_timing','--test','generated_bus_timing','--locked','--offline']
     if report.get('schema_version') == 2:
         from pattern_contract import load_declaration, identity
-        declaration=load_declaration(source)
+        declaration=load_declaration(source,prospective=report.get('prospective_opcode'))
         if declaration != report['declaration'] or identity(declaration) != report['declaration_sha256']:
             raise ValueError('Timing declaration differs from candidate source')
         expected=['cargo','test','-p','snes']

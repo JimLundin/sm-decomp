@@ -31,11 +31,11 @@ def command(argv, root, output, name, env=None):
     return result.returncode
 
 
-def run(corpus, output, opcodes=None, batch_size=500, timing=False, declaration_path=None):
+def run(corpus, output, opcodes=None, batch_size=500, timing=False, declaration_path=None, prospective=None):
     root = Path(__file__).resolve().parent.parent
     output.mkdir(parents=True, exist_ok=False)
     started = time.monotonic()
-    declaration = load_declaration(root, declaration_path)
+    declaration = load_declaration(root, declaration_path, prospective)
     shutil.copy2(root / DECLARATION, output / 'declaration.json')
     shutil.copy2(root / FIXTURES, output / 'independent-fixtures.json')
     declared = tuple(pattern["opcode"] for pattern in declaration["patterns"])
@@ -53,6 +53,8 @@ def run(corpus, output, opcodes=None, batch_size=500, timing=False, declaration_
               "corpus_verified": False,
               "expectation_source": "SingleStepTests/65816 native JSON; independent literal boundary fixtures",
               "unsupported_debt": "ADC overflow remains unsupported; docs/SETUP.md and workflows/recomp-iteration.md"}
+    report['prospective_opcode'] = prospective
+    if prospective and set(opcodes) == set(declared):report['scope'] = 'complete prospective declaration'
     write_json(output / "instruction.json", report)
     sources = source_inventory(root)
     report["source_sha256"] = inventory_digest(sources)
@@ -147,7 +149,8 @@ def run(corpus, output, opcodes=None, batch_size=500, timing=False, declaration_
             input_path = batch / "input.json"
             write_json(input_path, cases[index:index + batch_size])
             bodies, prepared, ledger = batch / "bodies.rs", batch / "prepared.json", batch / "cases.jsonl"
-            if command([generator, input_path, bodies, prepared], root, batch, "generate", environment):
+            generation = [generator, input_path, bodies, prepared] + ([prospective] if prospective else [])
+            if command(generation, root, batch, "generate", environment):
                 report["status"] = "error"
                 break
             environment["SM_TIMED_STEPS"] = str(bodies)
@@ -201,6 +204,7 @@ def run(corpus, output, opcodes=None, batch_size=500, timing=False, declaration_
             "complete": code == 0, "returncode": code, "process_evidence":"timing-execution.json", "process_sha256":digest(output/"timing-execution.json"), "elapsed_seconds": time.monotonic()-timing_started,
             "scope": report["scope"], "source_sha256": report["source_sha256"],
             "declaration": declaration, "declaration_sha256": identity(declaration),
+            "prospective_opcode": prospective,
             "oracles": {name: digest(root/name) for name in declaration["timing_oracles"]},
             "sources": declaration["timing_sources"], "tests": declaration["timing_tests"],
             "conditions": {"applicable": declaration["hardware_conditions"], "inapplicable": declaration["exclusions"]}}
@@ -219,6 +223,7 @@ def main():
     parser.add_argument("--batch-size", type=int, default=500)
     parser.add_argument("--opcodes", help="development subset of production-declared opcodes")
     parser.add_argument("--declaration", type=Path, help="must match exact production source declaration")
+    parser.add_argument("--prospective", help="explicit proof of one source-declared pattern; does not enable support")
     parser.add_argument("--timing", action="store_true")
     args = parser.parse_args()
     if args.batch_size <= 0:
@@ -235,7 +240,7 @@ def main():
     if output.exists():
         parser.error("output must not already exist; completed evidence is immutable")
     try:
-        result = run(args.corpus.resolve(), output, tuple(args.opcodes.split(",")) if args.opcodes else None, args.batch_size,args.timing,args.declaration)
+        result = run(args.corpus.resolve(), output, tuple(args.opcodes.split(",")) if args.opcodes else None, args.batch_size,args.timing,args.declaration,args.prospective)
         if evidence_run:
             evidence_run.check_sources()
             report=json.loads((output/"instruction.json").read_text())
