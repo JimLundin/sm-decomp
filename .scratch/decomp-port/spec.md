@@ -34,6 +34,9 @@ observable hardware effects, Rust hits and fallback measurements.
 - 10: live failure controls and dependency seals, in progress.
 - 11: actual PLM collision callback harness, in progress.
 - 12: complete Samus collision/movement closure, in progress.
+- 13: native PLM allocation and terrain setup, offline verified; live integration underway.
+- 14: projectile initialization/damage/instructions and missile behavior, in progress.
+- 15: common flying enemy AI and shared movement collision, in progress.
 
 This is the first frontier, not the completion boundary of the user's goal.
 Expand tickets into substantive gameplay subsystems after this frontier, using
