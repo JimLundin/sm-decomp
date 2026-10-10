@@ -160,3 +160,7 @@ select-iteration *args:
 # Prepare/apply one bounded measured supported slice, then require cold acceptance.
 supported-increment *args:
     python3 tools/iteration_increment.py {{args}}
+
+# Carry an evidence-bound experiment history across the same unresolved increment.
+iteration-diagnosis *args:
+    python3 tools/iteration_diagnosis.py {{args}}
