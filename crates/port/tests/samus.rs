@@ -2,7 +2,19 @@ use port::{Wram, WRAM_SIZE};
 #[path = "../src/samus.rs"]
 mod samus;
 fn rom() -> Vec<u8> {
-    include_bytes!("../../../rom/sm.sfc").to_vec()
+    // Small independent table fixture; routine tests do not require a game ROM.
+    let mut image = vec![0; 0x100000];
+    let mut write = |address: u32, value: u16| {
+        let offset = (((address >> 16) << 15) | (address & 0x7fff)) as usize & 0x3fffff;
+        image[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
+    };
+    write(0x91b637, 21); // Standing radius.
+    write(0x91b837, 7); // Morph-ball radius.
+    write(0x91b61f, 1); // Initial speed-booster counter.
+    for (n, value) in [0, 0x3000, 2, 0xc000, 0, 0x8000].into_iter().enumerate() {
+        write(0x909f61 + n as u32 * 2, value);
+    }
+    image
 }
 #[test]
 fn pose_radius_sets_bounds_and_preserves_the_bottom_across_pose_changes() {
@@ -16,6 +28,12 @@ fn pose_radius_sets_bounds_and_preserves_the_bottom_across_pose_changes() {
     assert_eq!(samus::dispatch_rom(&mut ram, &rom, "Samus_SetRadius", 0, 0), Ok(0));
     assert_eq!(ram.word(0xafe), 5);
     assert_eq!(ram.word(0xb00), 21);
+    ram.set_word(0xa20, 1);
+    ram.set_word(0xa1c, 0x41);
+    ram.set_word(0xb14, 100);
+    assert_eq!(samus::dispatch_rom(&mut ram, &rom, "Samus_AlignBottomWithPrevPose", 0, 0), Ok(0));
+    assert_eq!(ram.word(0xafa), 114);
+    assert_eq!(ram.word(0xb14), 114);
 }
 #[test]
 fn water_reduces_jump_and_acceleration_unless_gravity_suit_is_equipped() {
