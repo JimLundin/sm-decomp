@@ -108,6 +108,8 @@ def verify_selection_result(report):
             raise ValueError('Selection candidate address/width invalid')
         if candidate.get('variant') != 'm{}x{}'.format(mx >> 1,mx & 1):
             raise ValueError('Selection candidate width name differs')
+        if candidate.get('action','add-routine-width') not in ('add-routine-width','enable-deferred-keys'):
+            raise ValueError('Selection candidate action differs')
         keys = candidate.get('new_executed_keys')
         if not isinstance(keys,list) or not keys:
             raise ValueError('Selection candidate lacks newly executed keys')

@@ -31,6 +31,12 @@ keys after subtracting every existing generated key. Larger exact measured gains
 rank first; equal gains prefer fewer keys, then fewer blocks, then address/MX.
 This deterministic tie rule treats indistinguishable counts as similar gains.
 
+Configured routine/width slices are evaluated too: a reviewed root can contain
+deferred supported keys absent from the compiled table. When those keys are
+observed interpreted, `enable-deferred-keys` selects a bounded revisit before
+the pattern route. Preparation preserves the reviewed variants and lifts only
+the selected keys' exclusions; other exclusions and comments remain intact.
+
 A `supported-routine` result chooses exactly one `{address,mx,variant}`. Candidate
 preparation consumes `chosen.new_executed_keys`; `chosen.deferred_keys` must remain
 excluded from the actual new compiled table until independently covered. Other

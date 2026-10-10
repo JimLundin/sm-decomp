@@ -64,6 +64,37 @@ class PreparationTests(unittest.TestCase):
     def tearDownClass(cls):
         cls.target.cleanup()
 
+    def test_measured_revisit_lifts_only_selected_exclusion_and_preserves_reviewed_variants(self):
+        from iteration_increment import propose_candidate
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary)
+            subprocess.run(['git','init','-q',str(root)],check=True)
+            (root/'config').mkdir();config=root/'config/functions.toml'
+            config.write_text('# Reviewed routine\n[[function]]\naddr = "808000"\nname = "Existing"\nvariants = ["m1x1", "m0x0"]\n'
+                '\n# Now observed key\n[[excluded_step]]\naddr = "808001"\nvariant = "m1x1"\nreason = "deferred unexecuted proposed key"\n'
+                '\n# Keep this deferred key\n[[excluded_step]]\naddr = "808002"\nvariant = "m1x1"\nreason = "deferred unexecuted proposed key"\n')
+            before=config.read_bytes()
+            run=Run.create(root,'increment-preparation',{'domain':'fixture','frames':2});run.capture_source()
+            rom=bytearray([0xff])*(3*1024*1024);rom[:4]=bytes([0xea,0xca,0xea,0x60])
+            (root/'rom').mkdir();(root/'rom/sm.sfc').write_bytes(rom)
+            (run.path/'generated/selection.json').write_text(json.dumps({'chosen':{
+                'address':0x808000,'mx':3,'variant':'m1x1','action':'enable-deferred-keys',
+                'new_executed_keys':[{'address':0x808001,'mx':3,'opcode':0xca,'bytes':[0xca],'count':20}]}}))
+            baseline={'keys':[{'address':0x808000,'mx':3,'opcode':0xea,'bytes':[0xea]},
+                {'address':0x808000,'mx':0,'opcode':0xea,'bytes':[0xea]},
+                {'address':0x808001,'mx':0,'opcode':0xca,'bytes':[0xca]},
+                {'address':0x808002,'mx':0,'opcode':0xea,'bytes':[0xea]}]}
+            proposal=propose_candidate(run,baseline,self.generator)
+            self.assertEqual(config.read_bytes(),before)
+            self.assertIn('variants = ["m1x1", "m0x0"]',proposal.read_text())
+            self.assertIn('# Now observed key',proposal.read_text())
+            self.assertIn('# Keep this deferred key',proposal.read_text())
+            self.assertNotIn('addr = "808001"',proposal.read_text())
+            self.assertIn('addr = "808002"',proposal.read_text())
+            table=(run.path/'generated/proposed-steps.rs').read_text()
+            self.assertIn('step_808001_3',table)
+            self.assertNotIn('step_808002_3',table)
+
     def test_preparation_keeps_root_untouched_and_physically_prunes_unselected_keys(self):
         from iteration_increment import propose_candidate
         with tempfile.TemporaryDirectory() as temporary:

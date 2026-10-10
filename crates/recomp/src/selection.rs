@@ -64,7 +64,7 @@ pub fn select(
     let mut ranked = Vec::new();
     let mut rejected = Vec::new();
     for (address, mx) in candidates {
-        if configured.contains(&(address, mx)) || overrides.contains(&address) {
+        if overrides.contains(&address) {
             continue;
         }
         // Calls discover a root; their frequency never contributes to estimated gain.
@@ -115,6 +115,7 @@ pub fn select(
             continue;
         }
         ranked.push(json!({"address":address,"mx":mx,"variant":format!("m{}x{}",mx >> 1,mx & 1),
+                           "action":if configured.contains(&(address,mx)){"enable-deferred-keys"}else{"add-routine-width"},
                            "estimated_compiled_step_gain":gain,"complexity":{"blocks":graph.blocks.len(),"instruction_keys":unique.len()},
                            "new_executed_keys":executed,"deferred_keys":deferred,"overlapping_keys":overlaps}));
     }
