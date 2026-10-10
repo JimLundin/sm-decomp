@@ -69,6 +69,9 @@ def validate(kind, verdict):
     if kind == 'callback':
         from port_collision import verify_collision_evidence
         return verify_collision_evidence(verdict)
+    if kind == 'power-bomb':
+        from port_power_bomb import verify_power_bomb_evidence
+        return verify_power_bomb_evidence(verdict)
     if kind == 'plm':
         from port_plm import verify_plm_evidence
         return verify_plm_evidence(verdict)
@@ -79,6 +82,7 @@ def validate(kind, verdict):
 def verification_command(kind, manifest, output):
     script = {'family': 'port_family.py', 'offline-family': 'port_family.py',
               'callback': 'port_collision.py', 'plm': 'port_plm.py',
+              'power-bomb': 'port_power_bomb.py',
               'plm-instructions': 'port_plm_instructions.py'}[kind]
     command = [sys.executable, str(ROOT / 'tools' / script)]
     if kind in ('family', 'offline-family'):

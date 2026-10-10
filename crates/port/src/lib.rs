@@ -3,6 +3,7 @@
 
 pub const WRAM_SIZE: usize = 0x20000;
 
+pub mod power_bomb;
 pub mod audio;
 pub mod collision;
 pub mod enemy;
