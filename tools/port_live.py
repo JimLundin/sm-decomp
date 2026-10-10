@@ -82,6 +82,11 @@ def main():
             if result.returncode:
                 raise ValueError(f'{label} failed with exit {result.returncode}')
         rust = [f'#[path={json.dumps(str(ROOT / "crates/port/src/lib.rs"))}] mod memory;', 'use memory::Wram;']
+        imports = sorted({name for manifest, _ in families for name in manifest.get('rust_imports', [])})
+        for name in imports:
+            if not re.fullmatch('[A-Za-z_][A-Za-z_0-9]*', name):
+                raise ValueError('invalid imported gameplay module')
+            rust.append(f'use memory::{name};')
         wrappers, symbols, units = [], [], sorted((source / 'src').glob('sm_*.c'))
         bank_texts = {}
         for family_index, (manifest, module) in enumerate(families):
@@ -106,7 +111,7 @@ def main():
                 arguments = ','.join(['a', 'b'][:count])
                 actual = ','.join(['a' if count > 0 else '0', 'b' if count > 1 else '0'])
                 c_call = f'C_{symbol}({arguments})'
-                reference = f'{c_call};' if c_type == 'void' else f'result={c_call};'
+                reference = f'{c_call};' if c_type == 'void' else f'result=(uint32_t){c_call};'
                 returned = '' if c_type == 'void' else f'return ({c_type})result;'
                 wrappers.append(f'''extern {c_type} C_{symbol}({declaration});
 {c_type} {symbol}({declaration}) {{
@@ -247,7 +252,8 @@ int main(int argc,char **argv) {
                 if any(row['c' if mode == 'mixed' else 'rust'] for row in hits[name].values()):
                     raise ValueError('replacement execution was not exclusive')
         if any(inventory != inventories['c-0'] for inventory in inventories.values()):
-            raise ValueError('independent C/mixed state or effects diverged')
+            mismatches = [key for key in inventories['c-0'] if any(inventory.get(key) != inventories['c-0'][key] for inventory in inventories.values())]
+            raise ValueError(f'independent C/mixed state or effects diverged: {mismatches[:5]}')
         if not sum(row['rust'] for row in hits['mixed-0'].values()):
             raise ValueError('no Rust gameplay family executed')
         if any(progress != verdict['progress']['c-0'] for progress in verdict['progress'].values()):
