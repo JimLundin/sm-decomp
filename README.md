@@ -4,10 +4,13 @@ A Super Metroid (SNES) decompilation project targeting a playable source port
 with gameplay logic in readable Rust and emulated SNES hardware. Get vanilla
 Super Metroid working first, then integrate Map Rando.
 
-**Status: decompilation direction agreed; implementation is starting.** See
-[docs/DECOMP_PIVOT.md](docs/DECOMP_PIVOT.md) for the scope and first implementation
-plan. The existing static recompilation runner remains an oracle and diagnostic
-tool. Its validation records apply to recompilation, not decompilation readiness.
+**Status: the eight-ticket decomp foundation is implemented.** RAM decompression
+and `NextRandom` have accepted C/Rust comparisons and exercised replacements in
+independent 9,000-frame mixed replays. See [docs/DECOMP_PIVOT.md](docs/DECOMP_PIVOT.md)
+for the evidence and remaining work. Original-ROM input adaptation remains
+nonaccepting; full any% completion, full Rust gameplay ownership and Map Rando
+remain future work. The static recompilation runner remains an oracle and
+diagnostic tool with its own validation records.
 
 The recompilation loop is ready for incremental validation. `just iterate`
 generates an instruction table, builds, and compares mixed compiled/interpreted
@@ -29,6 +32,7 @@ is ever committed — see `.gitignore`.
 
 | Crate | What it does | Status |
 |---|---|---|
+| `decomp` | Readable RAM decompressor, safe byte memory views and synchronous C ABI | accepted offline fixtures and exercised mixed C/Rust prefix |
 | `runtime` | CPU registers, `Bus` trait, call dispatch, ALU ops, addressing modes, fallback hook, miss log | working |
 | `recomp` | ROM → decode → control-flow graph (tracks M/X widths) → Rust source | working, needs real-ROM shakedown |
 | `game` | Generated code + hand-written overrides; builds a demo program when no ROM output exists | resumable instruction table and subroutine output |

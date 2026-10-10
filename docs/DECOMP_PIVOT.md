@@ -138,21 +138,32 @@ Map Rando generates modified ROMs with gameplay code patches, settings-dependent
 
 The final goal is actual seed play with topology, items, settings and custom behavior. Navigation logic and technique inventories can guide testing but are not executable behavior oracles. Document unsupported tricks and their seed consequences rather than promising every technique or silently treating intended vanilla quirks as bugs. This later scope supersedes the older source assessment's blanket exclusion of randomizer behavior; that exclusion still applies when using a vanilla ROM as the immediate reference.
 
-## Status and immediate next task
+## Status and next work
 
-Execution has started: [DECOMP_BASELINE.md](DECOMP_BASELINE.md) records the selected
-pinned C reference, executable headless build, deterministic 9,000-frame runs,
-C# lag-adapter assessment, limitations and proposed C-to-Rust replacement seam.
-`just decomp-baseline 9000` reproduces this preparation evidence and captures
-RAM-decompression fixtures. The next implementation increment is the offline
-decompression manifest/harness/pilot; Rust ownership is still zero and neither
-adapted TAS parity nor live Rust integration has been demonstrated.
+The approved [eight-ticket foundation](../.scratch/decomp-foundation/spec.md) is
+implemented on `decomp-foundation-integration`. [DECOMP_BASELINE.md](DECOMP_BASELINE.md)
+records the pinned executable C reference. [DECOMP_ROUTINE.md](DECOMP_ROUTINE.md)
+documents the accepted Rust RAM decompressor: 40 synthetic fixtures, 23 captured
+calls, 38 exercised cases, complete ordered stores and 11 rejecting fault controls.
+Three captured calls also match bounded original-ROM instruction execution with
+explicit scratch and stack exclusions. Acceptance consumers verify the retained
+artifact inventory and current source identities before linking.
 
-At the planning interview, no gameplay code had been imported, candidates built,
-new runner implemented or translation started. The preceding status records the
-first implementation since that interview; existing recomp acceptance remains
-separate.
+[DECOMP_NEXT_RANDOM.md](DECOMP_NEXT_RANDOM.md) records the second routine: all
+65,536 seeds match pinned C, and 16 captured calls verify complete WRAM effects.
+Four independent C/mixed replay processes each run two reset epochs through the
+9,000-frame prefix. Every mixed epoch executes 23 Rust decompression calls and
+8,783 Rust RNG calls; checkpoints and hardware effects match C with zero measured
+gameplay CPU fallback in this prefix. Other gameplay remains C-owned.
 
-Continue with the decompression harness and pilot, prove live integration, and
-expand toward any%. These deliverables should be reviewable implementation
-evidence, not another broad research report.
+[DECOMP_PREFIX.md](DECOMP_PREFIX.md) preserves the nonaccepting original-ROM input
+adapter investigation: the first unsupported prelude poll is at source frame 19,
+and the first diagnostic controller-state mismatch is at original frame 272
+against C step 151. A separate changed-RNG control produces an additional C/C
+discrepancy. This result establishes neither adapted movie completion nor
+original-ROM gameplay parity.
+
+Follow-on bounded work should address that input boundary, expand verified
+gameplay coverage toward any%, and select further exercised routines. Full Rust
+ownership, hardware-host migration and Map Rando remain outside this completed
+foundation batch. Existing recomp acceptance remains separate.

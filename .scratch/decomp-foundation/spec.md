@@ -1,6 +1,6 @@
 # Decomp foundation
 
-Status: open
+Status: resolved
 
 The authoritative direction is [the agreed decomp pivot](../../docs/DECOMP_PIVOT.md).
 The [executable C baseline](../../docs/DECOMP_BASELINE.md) records work already
@@ -42,3 +42,32 @@ integration-branch and verification evidence. Keep routine equivalence, mixed
 C/Rust integration and original-ROM replay verdicts distinct. A reproducible
 nonaccepting result may complete the bounded adapter investigation under ticket
 07's criteria; it cannot establish adapted movie completion.
+
+## Resolution evidence
+
+All eight tickets are resolved on `decomp-foundation-integration`. Review fixes
+were implemented in `57703be`: acceptance now verifies the complete retained
+artifact inventory and current original instruction CPU, synthetic and captured
+admission share one bounds validator, and ABI safety documentation and Rust
+formatting/lint findings are corrected.
+
+Final accepted decompression evidence is
+`/home/jim/sm-decomp/out/decomp/review/offline/decomp-acceptance.json`: 63 fixtures,
+38 exercised cases, 11 rejecting controls and 2,930 verified artifacts. The
+accepted additional-routine run is
+`/home/jim/sm-decomp/out/decomp/review/jobs/20261010T185638.603810Z/verdict.json`
+(SHA-256 `a2e58037755569015582d4d339e231bd9fb4c7f7c6c2863b7648dbfa2f2a81bf`).
+It verifies all 65,536 RNG seeds, 16 captured calls and four independent mixed/C
+processes each replayed twice after reset. Each mixed epoch executes 23 Rust
+decompressions and 8,783 Rust RNG calls with zero measured gameplay CPU fallback.
+
+Standards and spec review findings were fixed and relevant public Python tests,
+six Rust memory tests, formatting, Clippy and whitespace checks passed. Fresh
+offline and live acceptance was regenerated after code changes; artifact mutation
+tests prove that consumers reject altered retained evidence.
+
+The bounded original-ROM adapter remains reproducibly nonaccepting under ticket
+07's permitted completion criteria. Full any% completion, original-ROM gameplay
+parity, full Rust ownership, hardware-host migration and Map Rando remain future
+work. Two maintained Rust routines have exercised acceptance within the declared
+foundation scope.
