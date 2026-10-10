@@ -25,12 +25,16 @@ symbol counts. The synthetic ROM generator provides arbitrary byte-aligned
 branches and scroll data without copying commercial ROM bytes.
 
 ```sh
-python3 tools/port_plm_fixtures.py
-python3 tools/port_plm_instructions.py --manifest tools/port/plm-instructions.json --source deps/snesrev-sm --output out/port/plm-instructions
+python3 tools/port_plm_fixtures.py --output-dir out/port/plm-fixtures
+python3 tools/port_plm_instructions.py --manifest out/port/plm-fixtures/plm-instructions.json --source deps/snesrev-sm --output out/port/plm-instructions
 ```
 
 The declared fixture domain covers 42 opcode handlers over 336 direct cases,
 12 real-dispatcher frame-control scenarios and 12 ROM/WRAM draw-data cases.
 Malformed input is tested against Rust errors separately, not unchecked C.
+The generator writes assets and its manifest under ignored `out/` by default.
+Use `--output-dir` for a run directory and `--manifest` for an explicit manifest
+destination; importing the generator performs no filesystem writes.
+
 These are offline equivalence fixtures; live replacement and original-ROM
 parity require separate evidence.
