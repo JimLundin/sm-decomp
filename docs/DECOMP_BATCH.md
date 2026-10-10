@@ -77,7 +77,7 @@ python3 tools/port_cleanup.py --deduplicate --apply
 ```
 
 This verifies SHA-256 and byte equality before atomically replacing duplicate
-immutable WRAM/frame/terminal/ROM-view snapshots with hardlinks on the same
+immutable WRAM/frame/terminal/ROM-view snapshots and sealed replay effect logs with hardlinks on the same
 filesystem. Paths, bytes, verdicts and hashes remain unchanged. Only finished
 accepted runs qualify; retained evidence must remain immutable because linked
 snapshots share storage. Independent process comparison evidence stays intact.
