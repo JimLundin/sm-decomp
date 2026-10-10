@@ -7,7 +7,7 @@ pub fn calculate_block_coords(r: &mut Wram<'_>, k: u16) -> Result<(), &'static s
     let k = slot(k)?;
     let block = r.word(0x1c87 + k) >> 1;
     let width = r.byte(0x7a5) as u16;
-    r.set_word(0x1c2b, if width == 0 { 0xffff } else { block / width });
+    r.set_word(0x1c2b, block.checked_div(width).unwrap_or(0xffff));
     r.set_word(0x1c29, if width == 0 { block } else { block % width });
     Ok(())
 }
