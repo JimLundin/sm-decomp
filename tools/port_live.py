@@ -61,7 +61,7 @@ pub unsafe extern "C" fn port_family_{index}(ram:*mut u8,len:usize,rom:*const u8
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--family-verdict', type=Path, action='append', required=True)
+    parser.add_argument('--family-verdict', type=Path, action='append', default=[])
     parser.add_argument('--collision-verdict', type=Path)
     parser.add_argument('--plm-verdict', type=Path)
     parser.add_argument('--frames', type=int, default=9000)
