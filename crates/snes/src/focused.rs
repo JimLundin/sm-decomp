@@ -44,8 +44,32 @@ pub fn compare_from_boundary(
     instructions: usize,
     output: &Path,
 ) -> Result<Value> {
+    compare_cold(reference, subject, pads, (start, skip), Some(instructions), output)
+}
+
+/// Observe every instruction in one recorded failed input frame. This cold
+/// path needs no paired cache whose validation might mask the actual mismatch.
+pub fn compare_frame_from_boundary(
+    reference: &mut Reference,
+    subject: &mut Subject,
+    pads: &[u16],
+    start: usize,
+    output: &Path,
+) -> Result<Value> {
+    compare_cold(reference, subject, pads, (start, 0), None, output)
+}
+
+fn compare_cold(
+    reference: &mut Reference,
+    subject: &mut Subject,
+    pads: &[u16],
+    boundary: (usize, usize),
+    instructions: Option<usize>,
+    output: &Path,
+) -> Result<Value> {
+    let (start, skip) = boundary;
     ensure!(
-        start < pads.len() && instructions > 0,
+        start < pads.len() && instructions.is_none_or(|count| count > 0),
         "focused scope requires existing input and positive instruction count"
     );
     std::fs::create_dir(output)?;
@@ -73,7 +97,7 @@ pub fn compare_from_boundary(
             subject.set_input(pads[input]);
         }
     }
-    compare_restored(reference, subject, pads, (input, start, skip), instructions, output, "cold")
+    compare_scope(reference, subject, pads, (input, start, skip), instructions, output, "cold")
 }
 
 /// Compare from an already restored exact paired boundary without replaying its prefix.
@@ -86,8 +110,21 @@ pub fn compare_restored(
     output: &Path,
     replay: &str,
 ) -> Result<Value> {
+    compare_scope(reference, subject, pads, boundary, Some(instructions), output, replay)
+}
+
+fn compare_scope(
+    reference: &mut Reference,
+    subject: &mut Subject,
+    pads: &[u16],
+    boundary: (usize, usize, usize),
+    instructions: Option<usize>,
+    output: &Path,
+    replay: &str,
+) -> Result<Value> {
     let (mut input, start, skip) = boundary;
-    ensure!(input < pads.len() && instructions > 0, "invalid warm focus scope");
+    ensure!(input < pads.len() && instructions.is_none_or(|count| count > 0), "invalid warm focus scope");
+    let limit = instructions.unwrap_or(2_000_000);
     if !output.exists() {
         std::fs::create_dir(output)?;
     }
@@ -96,8 +133,11 @@ pub fn compare_restored(
     let mut executed_generated_keys = std::collections::BTreeSet::new();
     let mut report = json!({"schema_version":1,"status":"incomplete","complete":false,"start_input_index":start,
         "start_instruction":skip,"expected_instructions":instructions,"completed_instructions":0,"replay":replay,"observer":"passive actual effects", "history_limit":64});
+    report["scope"] = json!(if instructions.is_none() { "until-frame-end" } else { "instruction-count" });
+    report["instruction_budget"] = json!(limit);
+    report["observed_rollovers"] = json!(0);
     std::fs::write(output.join("instruction.json"), serde_json::to_vec_pretty(&report)?)?;
-    for index in 0..instructions {
+    for index in 0..limit {
         let before_reference = reference.instruction_snapshot();
         let before_subject = subject.instruction_snapshot();
         if before_reference != before_subject {
@@ -166,7 +206,14 @@ pub fn compare_restored(
         if history.len() > 64 {
             history.pop_front();
         }
-        if a.after.cpu.frame != a.before.cpu.frame && index + 1 < instructions {
+        if a.after.cpu.frame != a.before.cpu.frame {
+            report["observed_rollovers"] = json!(1);
+            if instructions.is_none() {
+                report["completed_instructions"] = json!(index + 1);
+                break;
+            }
+        }
+        if a.after.cpu.frame != a.before.cpu.frame && index + 1 < limit {
             input += 1;
             ensure!(input < pads.len(), "focused replay exhausted input");
             reference.set_input(pads[input]);
@@ -175,6 +222,11 @@ pub fn compare_restored(
         report["completed_instructions"] = (index + 1).into();
     }
     report["executed_generated_keys"] = serde_json::to_value(&executed_generated_keys)?;
+    if instructions.is_none() && report["observed_rollovers"] != 1 {
+        report["reason"] = json!("Instruction budget exhausted before failed frame rollover");
+        std::fs::write(output.join("instruction.json"), serde_json::to_vec_pretty(&report)?)?;
+        return Ok(report);
+    }
     report["status"] = "pass".into();
     report["complete"] = true.into();
     report["history"] = serde_json::to_value(&history)?;

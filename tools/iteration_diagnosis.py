@@ -78,11 +78,14 @@ def failure_summary(owner):
     from readiness_controls import route_failure
     matched=controls.get('controls',[])
     routing=route_failure(selected,
-        matched[0].get('predecessor') if matched else None,matched[0].get('disabled') if matched else None)
+        matched[0].get('predecessor') if matched else None,matched[0].get('disabled') if matched else None,
+        matched[0].get('candidate') if matched else selected if selected.get('first_mismatch') else None)
     if selected['status'] in ('error','incomplete'):
         routing={'route':'setup/build/budget','conclusion':'Candidate validation did not complete; preserve stage logs and repair setup or budgets',
                  'next_experiment':'Repair the first retained setup/build/budget failure and rerun fresh candidate validation'}
     earliest=selected.get('first_mismatch',selected.get('first_divergence'))
+    if not earliest:
+        earliest=next((report.get('first_mismatch') for report in selected.get('reports',[]) if report.get('first_mismatch')),None)
     for matched_control in matched:
         actual=matched_control.get('candidate',{}).get('first_mismatch')
         if actual:
@@ -153,7 +156,7 @@ def append_experiment(root,session_id,increment_id,candidate,hypothesis,discrimi
             previous=digest(directory/'{:04d}.json'.format(sequence-1)) if history else None
             decision=streak>=3
             route=summary['routing']
-            action='decision-required' if decision else 'prune-unexecuted-keys' if route['route']=='coverage' else 'independent-observation' if route['route']=='independent hardware/input observation' else 'repair-and-validate'
+            action='decision-required' if decision else 'prune-unexecuted-keys' if route['route']=='coverage' else 'independent-observation' if route['route']=='independent hardware/input observation' else 'localize-failure' if route['route']=='failure not reproduced' else 'repair-and-validate'
             record={'schema_version':2,'session_id':session_id,'increment_id':increment_id,'sequence':sequence,
                 'previous_sha256':previous,'candidate_run_id':manifest['run_id'],'candidate_path':str(candidate),
                 'candidate_source_sha256':manifest['identities']['source']['sha256'],'experiment_source_sha256':run.manifest['identities']['source']['sha256'],
@@ -223,6 +226,8 @@ def verify_observation(descriptor):
     elif kind=='controls':
         controls=actual.get('controls',[])
         if not controls:raise ValueError('Observation lacks matched controls')
+        if not any(control.get('candidate',{}).get('status')=='divergence' and control.get('candidate',{}).get('first_mismatch') for control in controls):
+            raise ValueError('Passing candidate controls are not a reproduced failure or new discriminating evidence')
         facts={'kind':kind,'controls':[]}
         for control in controls:
             row={'interval':substantive(control.get('interval',{}))}
