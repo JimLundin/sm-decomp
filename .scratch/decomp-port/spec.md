@@ -29,6 +29,9 @@ observable hardware effects, Rust hits and fallback measurements.
 - 05: Samus movement physics and ROM tables, in progress.
 - 06: generic enemy geometry and solid-block mechanics, in progress.
 - 07: harness assets, captures and 32-bit values, in progress.
+- 08: complete Samus animation/input family, in progress.
+- 09: generic enemy instruction handlers, in progress.
+- 10: live failure controls and dependency seals, in progress.
 
 This is the first frontier, not the completion boundary of the user's goal.
 Expand tickets into substantive gameplay subsystems after this frontier, using

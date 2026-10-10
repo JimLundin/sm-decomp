@@ -122,3 +122,17 @@ let value=rng::next_random(&mut bytes)?; ram.set_word(0x5e5,value); Ok(value.int
             (evidence/'known'/'c-after.wram').write_bytes(bytes(0x20000))
             with self.assertRaisesRegex(ValueError,'artifact'):
                 verify_family_evidence(evidence/'verdict.json')
+
+    def test_imported_module_identity_is_required_for_family_acceptance(self):
+        import sys
+        sys.path.insert(0,str(ROOT/'tools'))
+        from port_family import verify, verify_family_evidence
+        with tempfile.TemporaryDirectory() as directory:
+            run=Path(directory)
+            dependency=run/'logic.rs';dependency.write_text('pub fn value()->u32{273}')
+            module=run/'family.rs';module.write_text(f'#[path={json.dumps(str(dependency))}]mod logic;use crate::Wram;pub fn dispatch(r:&mut Wram,_:&str,_:u16,_:u16)->Result<u32,&\'static str>{{r.set_word(0x5e5,logic::value() as u16);Ok(logic::value())}}')
+            manifest=run/'manifest.json';manifest.write_text(json.dumps({'family':'dependencies','rust_module':str(module),'rust_dependencies':[str(dependency)],'bank':'sm_80.c','routines':[{'symbol':'NextRandom','args':0,'return':'uint16','cases':[{'name':'known','expected_return':273}]}]}))
+            verdict=verify(manifest,SOURCE,run/'out');self.assertEqual(verdict['status'],'offline-verified',verdict.get('error'))
+            dependency.write_text('pub fn value()->u32{274}')
+            with self.assertRaisesRegex(ValueError,'dependency'):
+                verify_family_evidence(Path(verdict['run'])/'verdict.json')
