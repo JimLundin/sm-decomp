@@ -109,6 +109,7 @@ def run_parity(run, mode, frames=18000, timeout=None, predecessor=None):
         return report
     preparation = prepare_candidate(run, mode, timeout)
     if preparation["status"] != "pass":
+        preparation=dict(preparation,expected_frames=frames,completed_frames=0)
         run.record_check(mode + "-parity", preparation)
         return preparation
     generated, build = preparation["generated"], preparation["build"]

@@ -458,6 +458,8 @@ class Run:
         if not name or any(character not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_" for character in name):
             raise ValueError("Stage name must be safe")
         command = [str(argument) for argument in command]
+        inherited=getattr(self,"stage_timeout",None)
+        if inherited is not None:timeout=min(timeout,inherited) if timeout is not None else inherited
         started = time.monotonic()
         report = {"command": command, "cwd": str(cwd or self.root), "started_utc": utc_now(),
                   "stdout": "logs/" + name + ".stdout.log", "stderr": "logs/" + name + ".stderr.log",
@@ -510,7 +512,7 @@ class Run:
         self.ensure_open()
         write_json(self.path / "manifest.json", self.manifest)
 
-    def finalize(self, status, stage=None, reason=None, mandatory_checks=()):
+    def finalize(self, status, stage=None, reason=None, mandatory_checks=(), brief_text=None):
         self.ensure_open()
         if status not in ("pass", "divergence", "uncovered", "error", "incomplete"):
             raise ValueError("Unknown terminal status")
@@ -526,7 +528,7 @@ class Run:
                 if status == "pass" or status not in order:
                     status = "incomplete"
                 reason = report.get("reason") or "Recorded check failed or did not complete: " + stage
-        eligible = (status == "pass" and self.manifest["type"] == "readiness"
+        eligible = (status == "pass" and self.manifest["type"] in ("readiness", "iteration")
                     and bool(mandatory_checks)
                     and all(self.checks.get(name, {}).get("status") == "pass"
                             and self.checks[name].get("complete") is True
@@ -542,7 +544,7 @@ class Run:
                    "finished_utc": utc_now(), "evidence": "manifest.json"}
         self.manifest.update(state="complete", finished_utc=verdict["finished_utc"])
         write_json(self.path / "manifest.json", self.manifest)
-        (self.path / "brief.md").write_text(
+        (self.path / "brief.md").write_text(brief_text if brief_text is not None else
             "# {}: {}\n\nScope: `{}`\n\n{}\n\n"
             "[Manifest](manifest.json) · [Verdict](verdict.json) · [Logs](logs/)\n".format(
                 "Ready" if eligible else "Not ready", status,

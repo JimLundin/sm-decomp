@@ -32,6 +32,22 @@ class PatternCommandTests(unittest.TestCase):
             rows = [json.loads(line) for line in (directory / "good/cases.jsonl").read_text().splitlines()]
             self.assertEqual(rows[0]["name"], case["name"])
             self.assertEqual(rows[0]["status"], "pass")
+            identities=json.loads((directory/"good/batch-0000/identities.json").read_text())
+            executable=directory/"good/batch-0000"/identities["binary"]
+            self.assertTrue(executable.is_file())
+            from readiness import digest
+            self.assertEqual(digest(executable),identities["binary_sha256"])
+            execution=json.loads((directory/"good/batch-0000/execute.json").read_text())
+            self.assertEqual(Path(execution["command"][0]),executable)
+
+            manifest={"identities":{"source":{"sha256":json.loads((directory/"good/instruction.json").read_text())["source_sha256"]},"compiler":{"version":json.loads((directory/"good/instruction.json").read_text())["compiler"]}}}
+            (directory/"manifest.json").write_text(json.dumps(manifest))
+            verify=[sys.executable,str(root/"tools/readiness_orchestration.py"),"verify-patterns","--run",str(directory),"--output",str(directory/"good"),"--development-scope"]
+            result=subprocess.run(verify,cwd=root,capture_output=True,text=True)
+            self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+            executable.write_bytes(executable.read_bytes()+b"corrupt")
+            result=subprocess.run(verify,cwd=root,capture_output=True,text=True)
+            self.assertEqual(result.returncode,2)
             final["a"] = 0xab81
             (corpus / "a9.n.json").write_text(json.dumps([case]))
             command[-1] = str(directory / "bad")

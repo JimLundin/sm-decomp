@@ -134,3 +134,17 @@ readiness-parity mode="generated" frames="18000":
 # Explain verified reuse eligibility; this scope never accepts a candidate.
 readiness-reuse *args:
     python3 tools/readiness_reuse.py {{args}}
+
+# Complete fixed readiness domain and atomic acceptance after all mandatory gates.
+readiness *args:
+    python3 tools/readiness_orchestration.py readiness {{args}}
+
+validate-iteration *args:
+    python3 tools/readiness_orchestration.py validate-iteration {{args}}
+
+# Explicit diagnostic scope; never updates the accepted pointer.
+replay *args:
+    python3 tools/readiness_diagnostics.py {{args}}
+
+readiness-restore run destination *args:
+    python3 tools/readiness_orchestration.py restore --run {{quote(run)}} --destination {{quote(destination)}} {{args}}
