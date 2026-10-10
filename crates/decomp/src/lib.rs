@@ -56,7 +56,9 @@ impl<'a> WramView<'a> {
     }
     pub fn write(&mut self, offset: usize, value: u8) -> Result<(), DecompressError> {
         *self.bytes.get_mut(offset).ok_or(DecompressError::WramBounds(offset))? = value;
-        if let Some(observer) = &mut self.observer { observer(offset, value); }
+        if let Some(observer) = &mut self.observer {
+            observer(offset, value);
+        }
         Ok(())
     }
     pub fn read_u16_le(&self, offset: usize) -> Result<u16, DecompressError> {

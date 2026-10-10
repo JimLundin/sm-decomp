@@ -13,14 +13,9 @@ fn run() -> Result<(), String> {
     let mut writes = Vec::new();
     let mut observer = |offset, value| writes.push((offset, value));
     let mut wram = WramView::with_observer(&mut bytes, &mut observer).map_err(|e| format!("{e:?}"))?;
-    let result = decompress_to_mem(
-        &RomView::new(&rom).map_err(|e| format!("{e:?}"))?,
-        &mut wram,
-        source,
-        destination,
-    )
-    .map_err(|e| format!("{e:?}"))?;
-    drop(wram);
+    let result = decompress_to_mem(&RomView::new(&rom).map_err(|e| format!("{e:?}"))?, &mut wram, source, destination)
+        .map_err(|e| format!("{e:?}"))?;
+    // Finished the observed WRAM mutation.
     let trace: String = writes.iter().map(|(offset, value)| format!("{offset} {value}\n")).collect();
     fs::write(format!("{}.writes", args[5]), trace).map_err(|e| e.to_string())?;
     fs::write(&args[5], bytes).map_err(|e| e.to_string())?;

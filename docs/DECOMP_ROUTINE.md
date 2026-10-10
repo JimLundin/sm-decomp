@@ -111,7 +111,15 @@ verdicts, and predecessor lineage in `acceptance.json`. The separate
 preserve earlier acceptance as predecessor evidence but exit with their own result
 and cannot acquire its verdict. `verify_accepted(pointer_path)` validates current
 source and contract identities plus the sealed artifacts before another consumer
-uses an accepted routine. No decomp artifact changes recomp acceptance.
+uses an accepted routine. The `decomp-artifact-inventory-v1` seal hashes every
+retained file before publishing the seal and final verdict: all fixture outputs,
+repeat traces and diagnostics, original CPU source snapshot/shim/executable/results,
+and complete negative-control sources, executables, logs and failing verdicts.
+The final verdict is authenticated by the pointer and the seal by the verdict.
+Consumers reject missing or changed artifacts and inconsistent verdict/seal status
+or evidence. Historical seals lacking this inventory remain unchanged evidence;
+they fail consumption with an explicit unsupported-seal error and require a fresh
+accepting run using current sources. No decomp artifact changes recomp acceptance.
 The live C/Rust ABI belongs to ticket06.
 No offline partial result establishes whole-game Rust ownership or original-ROM
 parity.
@@ -152,3 +160,29 @@ executed 23 Rust calls and zero C decompression calls; seven command modes were
 actually reached (relative XOR remains synthetic-only). Gameplay CPU fallback
 was measured as zero in this prefix. This measurement does not establish
 coverage beyond the prefix. Hardware write streams are retained as gzip logs.
+
+Review verification regenerated current-source acceptance at
+`out/decomp/review/offline/decomp-acceptance.json`: 63 fixtures, 38 observed cases,
+11 rejected controls and 2,930 authenticated artifacts. Use this explicit pointer
+with the live or bounded-job command; historical ticket05/06 seals remain immutable
+and lack the required inventory. For example:
+
+```sh
+python3 tools/decomp_jobs.py --count 1 --accepted out/decomp/review/offline/decomp-acceptance.json --output out/decomp/review/jobs
+```
+
+The retained current-source job is `out/decomp/review/jobs/20261010T185638.603810Z`;
+its verdict SHA-256 is `a2e58037755569015582d4d339e231bd9fb4c7f7c6c2863b7648dbfa2f2a81bf`.
+It verifies every RNG seed, 16 captured states and 8,783 observed calls per epoch,
+plus the independent 9,000-frame decompressor/RNG live comparison across four
+processes and two epochs each. Every mixed epoch records 23 Rust decompressions,
+8,783 Rust RNG calls, zero C replacements and zero measured gameplay CPU fallback.
+The ABI error control still exits with no successful Rust/C calls. Original movie
+parity and full Rust gameplay ownership remain unproven.
+
+Public acceptance-consumer tests reject copied runs missing final outputs, repeat
+traces, original CPU/shim/executable/results, negative-control sources/executables/logs,
+altered original diagnostics, and inconsistent accepted status. The 16-test Python
+suite passed apart from its optional live-test skip after worktree assets were
+supplied (the prefix test was rerun separately). Six Rust tests, Clippy with warnings
+denied, workspace formatting and whitespace checks pass.
