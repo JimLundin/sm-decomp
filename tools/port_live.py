@@ -149,6 +149,8 @@ def main():
                 abi_symbol = f'port_family_{family_index}'
             wrappers.append(f'extern int64_t {abi_symbol}(uint8_t*,size_t,const uint8_t*,size_t,uint32_t,int32_t,int32_t);')
             for routine_index, routine in enumerate(manifest['routines']):
+                if routine.get('live_eligible', True) is not True:
+                    continue
                 symbol = routine['symbol']
                 types = routine.get('arg_types', ['uint16'] * routine.get('args', 0))
                 count = len(types)
