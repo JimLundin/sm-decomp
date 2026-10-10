@@ -222,10 +222,10 @@ pub fn dispatch_host(
     match symbol {
         "Sidehopper_Init" => {
             let pointer = r.word(e);
-            if pointer < 0x8000 || pointer > 0xffac {
+            if !(0x8000..=0xffac).contains(&pointer) {
                 return Err("enemy definition outside bank A0");
             }
-            let kind = word(rom, 0xa00000 | u32::from(pointer) + 0x2a)?;
+            let kind = word(rom, 0xa00000 | (u32::from(pointer) + 0x2a))?;
             if kind > 3 {
                 return Err("jump definition variant outside four rows");
             }
