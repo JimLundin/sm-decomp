@@ -178,6 +178,53 @@ pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Res
     let k = slot(k)?;
     match address {
         0x8170 => {}
+        0x90b3 | 0xd3bf => {
+            if address == 0xd3bf {
+                r.set_word(0x19bb + k, 0);
+            }
+            if crate::enemy_projectile_collision::horizontal(r, rom, k as u16)? != 0
+                || crate::enemy_projectile_collision::vertical(r, rom, k as u16)? != 0
+            {
+                r.set_word(0x1997 + k, 0);
+            }
+        }
+        0xb6b9 => {
+            let angle = usize::from(r.word(0x1aff + k) >> 1);
+            if angle >= 256 {
+                return Err("eye projectile angle extent");
+            }
+            let hit = crate::enemy_projectile_collision::horizontal(r, rom, k as u16)? != 0
+                || crate::enemy_projectile_collision::vertical(r, rom, k as u16)? != 0;
+            let opened = if hit {
+                false
+            } else {
+                r.set_word(
+                    0x1ab7 + k,
+                    r.word(0x1ab7 + k).wrapping_add((crate::enemy_projectiles::SINE[angle + 64] >> 4) as u16),
+                );
+                r.set_word(
+                    0x1adb + k,
+                    r.word(0x1adb + k).wrapping_add((crate::enemy_projectiles::SINE[angle] >> 4) as u16),
+                );
+                let t = crate::system::dispatch(r, "PrepareBitAccess", r.word(0x1b23 + k), 0)? as usize;
+                r.word(0x5e7) & u16::from(r.byte(0xd8b0 + t)) != 0
+            };
+            if hit || opened {
+                r.set_word(0x1b47 + k, 0xb5f3);
+                r.set_word(0x1b8f + k, 1);
+            }
+        }
+        0xb714 => {
+            crate::enemy_projectile_collision::horizontal(r, rom, k as u16)?;
+            let hit = crate::enemy_projectile_collision::vertical(r, rom, k as u16)? != 0;
+            if r.word(0x1adb + k) & 0x8000 != 0 || !hit {
+                r.set_word(0x1adb + k, r.word(0x1adb + k).wrapping_add(12));
+            } else {
+                r.set_word(0x1a93 + k, r.word(0x1a93 + k).wrapping_sub(4));
+                r.set_word(0x1b47 + k, 0xb61d);
+                r.set_word(0x1b8f + k, 1);
+            }
+        }
         0xe4fe => {
             let x = r.word(0x1a4b + k);
             let y = r.word(0x1a93 + k);
