@@ -11,6 +11,10 @@ setup-lsnes:
 doctor:
     python3 tools/doctor.py
 
+# Immutable setup evidence; a pass verifies setup only and cannot accept readiness.
+readiness-preflight:
+    python3 tools/readiness.py preflight
+
 # Includes corpus cases if `just fuzz` has generated them.
 check:
     cargo fmt --all --check
