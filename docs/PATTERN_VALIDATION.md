@@ -47,3 +47,30 @@ unchanged inputs throughout execution. `--out`, `--opcodes` and `--batch-size`
 support development runs; selected-opcode evidence declares its reduced scope.
 The public `run(corpus, output, opcodes, batch_size, timing)` operation returns
 0 for a scoped pass, 1 for divergence, and 2 for infrastructure/incomplete work.
+
+Fresh evidence uses declaration contract version 2. The source-owned timed
+pattern declaration is also the production support registry: each opcode has
+its addressing behavior, native M/X scope, required input conditions and timing
+branches, independent fixture names, and explained exclusions. Changing a
+report cannot shrink production support. A declaration override must exactly
+match the candidate source. Extending support requires a declared complete
+corpus, fixtures filling missing applicable conditions, and independently
+specified hardware tests; existing unsupported patterns remain interpreted.
+
+Required case counts are derived from the verified pinned opcode files and
+named independent fixtures. Evidence retains a source-bound declaration,
+complete consumed corpus files, independent expectations, ordered expected and
+completed ledgers, and condition counts. Terminal verification reconstructs
+the expected cases and conditions from those inputs, checks the actual emitted
+binaries/processes, and requires every supported mode and timing branch to
+pass. Development opcode subsets and custom corpus samples cannot establish
+acceptance, even when their scoped execution passes. The command
+`--declaration PATH` rejects a declaration differing from production source.
+
+Readiness contract version 2 requires these extensible instruction and timing
+reports. Historical accepted runs without the source-owned declaration retain
+their original version 1 seven-opcode, 70,011-case contract and pointer lineage.
+A candidate containing the declaration cannot downgrade its reports or
+manifest to version 1. Pattern success alone still leaves fresh generated
+parity, focused execution, independent validation and the other cold acceptance
+gates mandatory.

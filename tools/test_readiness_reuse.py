@@ -91,9 +91,30 @@ class ReuseTests(unittest.TestCase):
                                                'sha256': __import__('readiness').digest(run.path / 'checks' / (name + '.json'))}
                                            for name in MANDATORY_CHECKS}
         seal_gate_evidence(run)
+        # These fixtures deliberately exercise the historical v1 contract.
+        run.manifest["contract_version"] = 1
+        run.save_manifest()
         run.finalize('pass', mandatory_checks=MANDATORY_CHECKS)
         (self.root / 'out/accepted.json').write_text(json.dumps(accepted_pointer(run.path, verify_accepted(run.path))))
         return run
+
+    def test_source_owned_declaration_prevents_historical_contract_downgrade(self):
+        run = self.candidate()
+        project = Path(__file__).resolve().parent.parent
+        declaration = self.root / 'crates/recomp/src/timed_patterns.json'
+        declaration.write_bytes((project / 'crates/recomp/src/timed_patterns.json').read_bytes())
+        run = self.candidate()
+        for name in MANDATORY_CHECKS:
+            if name in ('check', 'lint'):
+                run.run_stage(name, ['just', name])
+            else:
+                run.record_check(name, gate(name))
+        seal_gate_evidence(run)
+        run.manifest['contract_version'] = 1
+        run.save_manifest()
+        run.finalize('pass', mandatory_checks=MANDATORY_CHECKS)
+        with self.assertRaisesRegex(ValueError, 'downgrade'):
+            verify_accepted(run.path)
 
     def test_complete_check_files_bind_accepted_origin_and_detect_mutation(self):
         run = self.accepted()
@@ -174,6 +195,9 @@ class ReuseTests(unittest.TestCase):
                 run.record_check(name, report)
         run.manifest['check_evidence'] = {name: {'path':'checks/'+name+'.json','sha256':digest(run.path/'checks'/(name+'.json'))} for name in MANDATORY_CHECKS}
         seal_gate_evidence(run)
+        # These fixtures deliberately exercise the historical v1 contract.
+        run.manifest["contract_version"] = 1
+        run.save_manifest()
         run.finalize('pass', mandatory_checks=MANDATORY_CHECKS)
         (self.root / 'out/accepted.json').write_text(json.dumps(accepted_pointer(run.path, verify_accepted(run.path))))
         (self.root / 'crates/recomp/src/step.rs').write_text('changed immediate LDA body')
