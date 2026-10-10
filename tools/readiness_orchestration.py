@@ -116,6 +116,8 @@ def brief(run,status,reason):
         text+='| {} | {}{} | [report](checks/{}.json) |\n'.format(name,report['status'],scope,name)
     text+='\nActual generated instructions: {}; interpreted: {}; validated distinct keys: {}; fallback fraction: {}.\n'.format(coverage.get('generated_instructions','unavailable'),coverage.get('interpreted_instructions','unavailable'),coverage.get('validated_distinct_keys','unavailable'),coverage.get('fallback_fraction','unavailable'))
     text+='Progress: {}.\n'.format(json.dumps(coverage.get('progress',{'comparable':False,'reason':'No comparable coverage'}),sort_keys=True))
+    if run.manifest.get('increment'):
+        text+='Increment: {}. [Observed progress](checks/increment-progress.json) · [Preserved preparation]({}/brief.md).\n'.format(json.dumps(run.manifest['increment'],sort_keys=True),run.manifest['increment'].get('preparation_path','unavailable'))
     text+='Supported native patterns: LDA immediate, LDX immediate, REP, SEP, STA absolute, NOP and DEX. ADC overflow remains unsupported debt. Historical later-domain synchronization is noncertifying.\n\nTargets: cold replay 1200s, warm focus 60s. Overruns are reported; timeouts are incomplete.\n'
     for name in ('fallback-only-parity','generated-parity','instruction-diagnosis'):
         report=run.checks[name]
@@ -139,13 +141,15 @@ def brief(run,status,reason):
     return text
 
 
-def run_readiness(root,predecessor=None,original_run=None,timeout=None,jobs=4,iteration=False):
+def run_readiness(root,predecessor=None,original_run=None,timeout=None,jobs=4,iteration=False,increment=None):
     root=Path(root).resolve()
     pointer=root/'out/accepted.json'
     if predecessor is None and pointer.exists():
         try:predecessor=Path(json.loads(pointer.read_text())['run_path'])
         except (OSError,ValueError,KeyError):predecessor=pointer
     run=Run.create(root,'iteration' if iteration else 'readiness',dict(DOMAIN),Path(predecessor).name if predecessor else None)
+    if increment is not None:
+        run.manifest['increment']=increment;run.save_manifest()
     print('Run: '+str(run.path),flush=True);print('Brief: '+str(run.path/'brief.md'),flush=True)
     try:
         failures=preflight(run)
@@ -172,12 +176,15 @@ def run_readiness(root,predecessor=None,original_run=None,timeout=None,jobs=4,it
             from readiness_parity import run_parity
             for mode in ('fallback-only','generated'):
                 name=mode+'-parity'
-                gate(name,lambda mode=mode,name=name:apply_reuse(run,predecessor,name) if mode=='fallback-only' and decisions[name]['action']=='reuse' else run_parity(run,mode,18000,timeout,predecessor if mode=='generated' else None))
+                gate(name,lambda mode=mode,name=name:apply_reuse(run,predecessor,name) if mode=='fallback-only' and decisions[name]['action']=='reuse' else run_parity(run,mode,18000,timeout,predecessor if iteration and mode=='generated' else None))
             missing(run,'changed-entry-coverage','Generated replay produced no complete coverage')
             from readiness_sync import synchronization
             gate('synchronization',lambda:apply_reuse(run,predecessor,'synchronization') if predecessor and decisions['synchronization']['action']=='reuse' else synchronization(run,original_run,18000,jobs))
             gate('instruction-diagnosis',lambda:focused_gates(run,timeout))
             missing(run,'checkpoint-validation','Focused candidate did not complete validated checkpoint creation')
+            if iteration:
+                from iteration_increment import progress_gate
+                gate('increment-progress',lambda:progress_gate(run))
             gate('feedback-demonstrations',lambda:feedback_gate(run,timeout))
             validation_failure=next((dict(report,stage=name) for name,report in run.checks.items() if name in ('generated-parity','changed-entry-coverage','synchronization','instruction-diagnosis') and report.get('status') in ('divergence','uncovered')),None)
             if validation_failure:
@@ -424,6 +431,8 @@ def feedback_gate(run,timeout=None):
 
 
 def verify_origins(owner,verified):
+    from iteration_increment import verify_progress
+    verify_progress(owner,verified)
     owner=Path(owner);manifest=verified['manifest'];checks=verified['verdict']['checks']
     for name in MANDATORY_CHECKS:validate_gate_scope(name,checks[name],manifest.get('contract_version',1))
     preflight=checks['preflight']

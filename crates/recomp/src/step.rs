@@ -58,10 +58,21 @@ pub fn emit_body(i: &Insn) -> Result<String> {
 }
 
 pub fn emit_table(funcs: &[(FunctionCfg, Option<String>)], read: &dyn Fn(u32) -> Option<u8>) -> Result<String> {
+    emit_table_excluding(funcs, read, &std::collections::HashSet::new())
+}
+
+pub fn emit_table_excluding(
+    funcs: &[(FunctionCfg, Option<String>)],
+    read: &dyn Fn(u32) -> Option<u8>,
+    exclusions: &std::collections::HashSet<(u32, u8)>,
+) -> Result<String> {
     let mut instructions = BTreeMap::new();
     for (cfg, _) in funcs {
         for i in cfg.blocks.iter().flat_map(|b| &b.insns).filter(|i| supported(i)) {
-            instructions.entry((i.addr, emit::mx_key(i.m8, i.x8))).or_insert(i);
+            let key = (i.addr, emit::mx_key(i.m8, i.x8));
+            if !exclusions.contains(&key) {
+                instructions.entry(key).or_insert(i);
+            }
         }
     }
     let mut out = String::from(

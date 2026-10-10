@@ -8,6 +8,16 @@ use serde::{Deserialize, Serialize};
 pub struct Functions {
     #[serde(default, rename = "function")]
     pub functions: Vec<Function>,
+    /// Deferred address/width keys must be absent from resumable generated steps.
+    #[serde(default, rename = "excluded_step")]
+    pub excluded_steps: Vec<ExcludedStep>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExcludedStep {
+    pub addr: String,
+    pub variant: String,
+    pub reason: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

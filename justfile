@@ -156,3 +156,7 @@ readiness-restore run destination *args:
 # Choose one identity-bound measured routine/width without mutating reviewed config.
 select-iteration *args:
     python3 tools/iteration_selection.py {{args}}
+
+# Prepare/apply one bounded measured supported slice, then require cold acceptance.
+supported-increment *args:
+    python3 tools/iteration_increment.py {{args}}
