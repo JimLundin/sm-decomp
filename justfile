@@ -19,6 +19,10 @@ readiness-preflight:
 pattern-check:
     python3 tools/readiness_patterns.py --timing
 
+# Cold instruction/bus replay; immutable evidence names the first disagreement.
+diagnose start="0" instructions="100":
+    python3 tools/readiness_diagnostics.py --start-input {{start}} --instructions {{instructions}}
+
 # Includes corpus cases if `just fuzz` has generated them.
 check:
     cargo fmt --all --check

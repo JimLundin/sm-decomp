@@ -11,6 +11,11 @@ ORIGINAL = "caf0b70ac78a39a6a2bfa1e5389ee904d18535cdf1ebf17eb1cde7b38214fe75"
 PATCHED = "c854a6c72ed20c5863819befa551f4b2f74d67656602c2a1a979785f9250b718"
 
 
+def observation_identity(relative, identity):
+    records = json.loads((ROOT / "tools/patches/rustysnes-readiness-observation.json").read_text())
+    return any(record["path"] == relative and record["patched_sha256"] == identity for record in records)
+
+
 def apply_patch():
     source = ROOT / "deps/rustysnes"
     target = source / "crates/rustysnes-core/src/dma.rs"
@@ -37,7 +42,7 @@ def apply_clocked_apu_patch():
            json.loads((ROOT / "tools/patches/rustysnes-clocked-dma.json").read_text())}
     interrupts = {record["path"]: record for record in
                   json.loads((ROOT / "tools/patches/rustysnes-clocked-interrupts.json").read_text())}
-    if all(identity == record["patched_sha256"] or
+    if all(identity == record["patched_sha256"] or observation_identity(record["path"], identity) or
            (record["path"] in dma and identity == dma[record["path"]]["patched_sha256"]) or
            (record["path"] in interrupts and identity == interrupts[record["path"]]["patched_sha256"])
            for identity, record in zip(identities, records)):
@@ -58,7 +63,7 @@ def apply_clocked_dma_patch():
     identities = [digest(source / record["path"]) for record in records]
     interrupts = {record["path"]: record for record in
                   json.loads((ROOT / "tools/patches/rustysnes-clocked-interrupts.json").read_text())}
-    if all(identity == record["patched_sha256"] or
+    if all(identity == record["patched_sha256"] or observation_identity(record["path"], identity) or
            (record["path"] in interrupts and identity == interrupts[record["path"]]["patched_sha256"])
            for identity, record in zip(identities, records)):
         print("Ready: RustySNES clocked DMA alignment patch")
@@ -76,7 +81,7 @@ def apply_clocked_interrupts_patch():
     source = ROOT / "deps/rustysnes"
     records = json.loads((ROOT / "tools/patches/rustysnes-clocked-interrupts.json").read_text())
     identities = [digest(source / record["path"]) for record in records]
-    if identities == [record["patched_sha256"] for record in records]:
+    if all(identity == record["patched_sha256"] or observation_identity(record["path"], identity) for identity, record in zip(identities, records)):
         print("Ready: RustySNES clocked interrupt sampling patch")
         return
     if identities != [record["original_sha256"] for record in records]:
@@ -92,7 +97,7 @@ def apply_lsnes_reset_patch():
     source = ROOT / "deps/rustysnes"
     records = json.loads((ROOT / "tools/patches/rustysnes-lsnes-reset.json").read_text())
     identities = [digest(source / record["path"]) for record in records]
-    if identities == [record["patched_sha256"] for record in records]:
+    if all(identity == record["patched_sha256"] or observation_identity(record["path"], identity) for identity, record in zip(identities, records)):
         print("Ready: lsnes recording-core reset phase patch")
         return
     if identities != [record["original_sha256"] for record in records]:
@@ -102,6 +107,20 @@ def apply_lsnes_reset_patch():
     for record in records:
         if digest(source / record["path"]) != record["patched_sha256"]:
             raise RuntimeError("RustySNES recording-core reset patch checksum mismatch")
+
+
+def apply_readiness_observation_patch():
+    source = ROOT / "deps/rustysnes"
+    records = json.loads((ROOT / "tools/patches/rustysnes-readiness-observation.json").read_text())
+    identities = [digest(source / record["path"]) for record in records]
+    if all(identity == record["patched_sha256"] or observation_identity(record["path"], identity) for identity, record in zip(identities, records)):
+        print("Ready: passive readiness bus/state observation")
+        return
+    if identities != [record["original_sha256"] for record in records]:
+        raise RuntimeError("Readiness observer patch targets differ; preserve and review local hardware edits")
+    subprocess.run(["patch", "--batch", "-p1", "-i", str(ROOT / "tools/patches/rustysnes-readiness-observation.patch")], cwd=source, check=True)
+    if [digest(source / record["path"]) for record in records] != [record["patched_sha256"] for record in records]:
+        raise RuntimeError("Readiness observation patch checksum mismatch")
 
 
 def main():
@@ -116,6 +135,7 @@ def main():
     apply_clocked_dma_patch()
     apply_clocked_interrupts_patch()
     apply_lsnes_reset_patch()
+    apply_readiness_observation_patch()
 
 
 if __name__ == "__main__":

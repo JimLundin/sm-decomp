@@ -82,12 +82,13 @@ def main():
             continue
         prepare(dep, args.offline)
         if dep["name"] == "rustysnes":
-            from prepare_rustysnes import apply_patch, apply_clocked_apu_patch, apply_clocked_dma_patch, apply_clocked_interrupts_patch, apply_lsnes_reset_patch
+            from prepare_rustysnes import apply_patch, apply_clocked_apu_patch, apply_clocked_dma_patch, apply_clocked_interrupts_patch, apply_lsnes_reset_patch, apply_readiness_observation_patch
             apply_patch()
             apply_clocked_apu_patch()
             apply_clocked_dma_patch()
             apply_clocked_interrupts_patch()
             apply_lsnes_reset_patch()
+            apply_readiness_observation_patch()
     if not args.skip_mesen:
         libraries = DEPS / "mesen-runtime/lib/x86_64-linux-gnu"
         run(DEPS / "patchelf/usr/bin/patchelf", "--set-interpreter",

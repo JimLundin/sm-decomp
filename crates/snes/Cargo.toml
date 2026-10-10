@@ -13,6 +13,7 @@ runtime.workspace = true
 movie = { path = "../movie" }
 sha2.workspace = true
 serde.workspace = true
+serde_json.workspace = true
 recomp.workspace = true
 
 [build-dependencies]

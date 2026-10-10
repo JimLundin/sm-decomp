@@ -147,3 +147,24 @@ of the line counter; indirect pointer reads add their own cost. These changes
 are gated by `clocked-dma`. The black-box synthetic cartridge regression in
 `crates/snes/tests/hdma_timing.rs` checks 105 original-core boundary observations.
 See `docs/LSNES_BASELINE.md` for the independent TAS acceptance status.
+# Passive readiness observation
+
+`rustysnes-readiness-observation.patch` is applied after the recording-profile
+patches. It adds an explicitly armed event buffer at existing CPU and internal
+DMA bus operations, plus passive complete pending-hardware serialization. It
+does not read extra registers, poll interrupts, advance clocks, or change chip
+execution. Events distinguish cycle starts, real reads/writes, clock spans,
+interrupt entry and DMA A/B transfers. Instruction metadata classifies the
+already recorded first opcode fetch and final implied cycle.
+
+Ordinary bus serialization supplies hardware, latches, input and pending DMA;
+additional serialization includes CPU-visible DMA scratch and per-dot PPU
+pixels/carry/cursors omitted from ordinary frame saves. Observer buffers are
+excluded from state equality. Readiness comparison normalizes only the
+interpreter's private per-step cycle accumulator, which is reset on every
+instruction; architectural cycles and pending old-I override are retained.
+Checkpoint restoration must preserve raw bookkeeping separately.
+
+Synthetic reference/subject instruction equality, transient-store detection,
+and observed/unobserved internal DMA equivalence exercise passivity. Patch
+source identities are checked by preparation, doctor and readiness preflight.

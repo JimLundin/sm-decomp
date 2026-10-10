@@ -25,6 +25,9 @@ impl Bus for SnesBus {
     fn interrupt_pending(&self, irq_masked: bool) -> bool {
         self.hardware.borrow().interrupt_pending(irq_masked)
     }
+    fn begin_interrupt(&mut self) {
+        self.hardware.borrow_mut().begin_interrupt();
+    }
     fn begin_cpu_cycle(&mut self, clocks: u32) {
         self.hardware.borrow_mut().begin_cpu_cycle(clocks);
     }
@@ -52,6 +55,9 @@ impl Bus for SnesBus {
 // generated -> fallback -> generated transition. No second memory map exists.
 struct InterpreterBus<'a>(&'a mut dyn Bus);
 impl CpuBus for InterpreterBus<'_> {
+    fn begin_interrupt(&mut self) {
+        self.0.begin_interrupt();
+    }
     fn halt_pending(&self) -> bool {
         self.0.halt_pending()
     }
@@ -89,6 +95,9 @@ struct PolledBus<'a> {
     irq: bool,
 }
 impl CpuBus for PolledBus<'_> {
+    fn begin_interrupt(&mut self) {
+        self.bus.begin_interrupt();
+    }
     fn halt_pending(&self) -> bool {
         self.bus.halt_pending()
     }
@@ -268,78 +277,7 @@ impl Subject {
                     hardware.wram(),
                 );
             }
-            let before = self.interpreter.regs;
-            let waiting = self.interpreter.waiting;
-            let stopped = self.interpreter.stopped;
-            let interrupts = self.interpreter.interrupts_taken;
-            let opcode = self.bus.hardware.borrow_mut().peek((u32::from(before.pbr) << 16) | u32::from(before.pc));
-            let addr = (u32::from(before.pbr) << 16) | u32::from(before.pc);
-            let mx = (u8::from(before.m8()) << 1) | u8::from(before.x8());
-            let candidate = self.steps.get(&(addr, mx)).copied().filter(|(bytes, _)| {
-                !before.emulation
-                    && !waiting
-                    && !stopped
-                    && bytes.iter().enumerate().all(|(index, value)| {
-                        self.bus
-                            .hardware
-                            .borrow_mut()
-                            .peek((addr & 0xff0000) | (u32::from(before.pc.wrapping_add(index as u16))))
-                            == *value
-                    })
-            });
-            let mut executed_generated = false;
-            let mut executed_opcode = None;
-            if let Some((bytes, body)) = candidate {
-                let nmi = self.bus.poll_nmi();
-                let irq = self.bus.poll_irq();
-                if nmi || (irq && !self.interpreter.irq_masked()) {
-                    self.interpreter.step(&mut super::coverage::OpcodeBus {
-                        inner: PolledBus { bus: InterpreterBus(&mut self.bus), nmi, irq },
-                        opcode: &mut executed_opcode,
-                        armed: !waiting && !stopped,
-                    });
-                    self.interpreted_steps += 1;
-                } else {
-                    self.interpreter.take_irq_mask();
-                    self.machine.cpu = runtime_regs(before);
-                    let cycles_before = self.machine.bus.cpu_cycles();
-                    // Fetch even constant-folded ROM operands: these bus accesses
-                    // preserve open bus, CPU/DMA timing, and hardware progression.
-                    let next = runtime::step::execute_step(&mut self.machine, addr, bytes, body)
-                        .map_err(|changed| anyhow::anyhow!("compiled instruction changed at ${changed:06X}"))?;
-                    self.interpreter.regs = interpreter_regs(&self.machine.cpu, next as u16);
-                    if matches!(bytes[0], 0x58 | 0x78 | 0x28 | 0xc2 | 0xe2) {
-                        self.interpreter.record_irq_mask(before.p.contains(Status::I));
-                    }
-                    self.interpreter.cycles += self.machine.bus.cpu_cycles() - cycles_before;
-                    self.generated_steps += 1;
-                    executed_generated = true;
-                    executed_opcode = Some(bytes[0]);
-                }
-            } else {
-                self.interpreter.step(&mut super::coverage::OpcodeBus {
-                    inner: InterpreterBus(&mut self.bus),
-                    opcode: &mut executed_opcode,
-                    armed: !waiting && !stopped,
-                });
-                self.interpreted_steps += 1;
-            }
-            if let Some(actual_opcode) = executed_opcode {
-                self.accounting.record(executed_generated, addr, mx, before.emulation, actual_opcode);
-            }
-            if !before.emulation
-                && !waiting
-                && !stopped
-                && self.interpreter.interrupts_taken == interrupts
-                && matches!(opcode, 0x20 | 0x22 | 0xfc)
-            {
-                let regs = self.interpreter.regs;
-                let miss = Miss {
-                    addr: (u32::from(regs.pbr) << 16) | u32::from(regs.pc),
-                    mx: (u8::from(regs.m8()) << 1) | u8::from(regs.x8()),
-                };
-                *self.misses.entry(miss).or_default() += 1;
-            }
+            self.step_instruction()?;
             let hardware = self.bus.hardware.borrow();
             if hardware.ppu.frame_count() != frame {
                 ensure!(hardware.ppu.frame_count() == frame + 1, "subject skipped a frame");
@@ -348,6 +286,100 @@ impl Subject {
             }
         }
         anyhow::bail!("subject exceeded instruction budget at frame {frame}");
+    }
+
+    pub fn set_input(&mut self, pad: u16) {
+        self.bus.hardware.borrow_mut().set_joypad(0, pad);
+    }
+    pub fn instruction_snapshot(&self) -> super::diagnostic::InstructionSnapshot {
+        super::diagnostic::snapshot(&self.interpreter, &self.bus.hardware.borrow())
+    }
+    pub fn step_instruction_observed(&mut self) -> Result<super::diagnostic::InstructionTrace> {
+        let before = self.instruction_snapshot();
+        self.bus.hardware.borrow_mut().readiness_observe();
+        let result = self.step_instruction();
+        let mut events = super::diagnostic::events(&mut self.bus.hardware.borrow_mut());
+        let generated_key = result?;
+        super::diagnostic::classify(&mut events, before.cpu.pc);
+        let after = self.instruction_snapshot();
+        Ok(super::diagnostic::InstructionTrace { before, after, events, generated_key })
+    }
+    pub fn step_instruction(&mut self) -> Result<Option<(u32, u8)>> {
+        let before = self.interpreter.regs;
+        let waiting = self.interpreter.waiting;
+        let stopped = self.interpreter.stopped;
+        let interrupts = self.interpreter.interrupts_taken;
+        let opcode = self.bus.hardware.borrow_mut().peek((u32::from(before.pbr) << 16) | u32::from(before.pc));
+        let addr = (u32::from(before.pbr) << 16) | u32::from(before.pc);
+        let mx = (u8::from(before.m8()) << 1) | u8::from(before.x8());
+        let candidate = self.steps.get(&(addr, mx)).copied().filter(|(bytes, _)| {
+            !before.emulation
+                && !waiting
+                && !stopped
+                && bytes.iter().enumerate().all(|(index, value)| {
+                    self.bus
+                        .hardware
+                        .borrow_mut()
+                        .peek((addr & 0xff0000) | (u32::from(before.pc.wrapping_add(index as u16))))
+                        == *value
+                })
+        });
+        let mut generated_key = None;
+        let mut executed_generated = false;
+        let mut executed_opcode = None;
+        if let Some((bytes, body)) = candidate {
+            let nmi = self.bus.poll_nmi();
+            let irq = self.bus.poll_irq();
+            if nmi || (irq && !self.interpreter.irq_masked()) {
+                self.interpreter.step(&mut super::coverage::OpcodeBus {
+                    inner: PolledBus { bus: InterpreterBus(&mut self.bus), nmi, irq },
+                    opcode: &mut executed_opcode,
+                    armed: !waiting && !stopped,
+                });
+                self.interpreted_steps += 1;
+            } else {
+                self.interpreter.take_irq_mask();
+                self.machine.cpu = runtime_regs(before);
+                let cycles_before = self.machine.bus.cpu_cycles();
+                // Fetch even constant-folded ROM operands: these bus accesses
+                // preserve open bus, CPU/DMA timing, and hardware progression.
+                let next = runtime::step::execute_step(&mut self.machine, addr, bytes, body)
+                    .map_err(|changed| anyhow::anyhow!("compiled instruction changed at ${changed:06X}"))?;
+                self.interpreter.regs = interpreter_regs(&self.machine.cpu, next as u16);
+                if matches!(bytes[0], 0x58 | 0x78 | 0x28 | 0xc2 | 0xe2) {
+                    self.interpreter.record_irq_mask(before.p.contains(Status::I));
+                }
+                self.interpreter.cycles += self.machine.bus.cpu_cycles() - cycles_before;
+                self.generated_steps += 1;
+                executed_generated = true;
+                generated_key = Some((addr, mx));
+                executed_opcode = Some(bytes[0]);
+            }
+        } else {
+            self.interpreter.step(&mut super::coverage::OpcodeBus {
+                inner: InterpreterBus(&mut self.bus),
+                opcode: &mut executed_opcode,
+                armed: !waiting && !stopped,
+            });
+            self.interpreted_steps += 1;
+        }
+        if let Some(actual_opcode) = executed_opcode {
+            self.accounting.record(executed_generated, addr, mx, before.emulation, actual_opcode);
+        }
+        if !before.emulation
+            && !waiting
+            && !stopped
+            && self.interpreter.interrupts_taken == interrupts
+            && matches!(opcode, 0x20 | 0x22 | 0xfc)
+        {
+            let regs = self.interpreter.regs;
+            let miss = Miss {
+                addr: (u32::from(regs.pbr) << 16) | u32::from(regs.pc),
+                mx: (u8::from(regs.m8()) << 1) | u8::from(regs.x8()),
+            };
+            *self.misses.entry(miss).or_default() += 1;
+        }
+        Ok(generated_key)
     }
 
     pub fn wram(&self) -> &[u8] {
