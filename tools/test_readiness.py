@@ -66,6 +66,16 @@ class ReadinessEvidenceTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "changed"):
             run.check_sources()
 
+    def test_user_interrupt_logs_current_process_and_prevents_later_stages(self):
+        run=Run.create(self.root,'readiness',{});run.capture_source()
+        with self.assertRaises(KeyboardInterrupt):
+            run.run_stage('user-stop',[sys.executable,'-c',
+                'import os,signal,time; os.kill(os.getppid(),signal.SIGINT); time.sleep(5)'])
+        self.assertEqual(run.checks['user-stop']['status'],'incomplete')
+        self.assertEqual(run.checks['user-stop']['reason'],'Stage interrupted')
+        with self.assertRaises(KeyboardInterrupt):run.run_stage('never-started',[sys.executable,'-c','print("unexpected")'])
+        self.assertNotIn('never-started',run.checks)
+
     def test_failed_and_interrupted_stages_retain_logs_and_never_invent_artifacts(self):
         run = Run.create(self.root, "readiness", {})
         run.capture_source()

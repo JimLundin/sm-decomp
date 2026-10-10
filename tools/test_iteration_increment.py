@@ -51,6 +51,27 @@ class IncrementProgressTests(unittest.TestCase):
             self.assertFalse(json.loads((run.path/'verdict.json').read_text())['acceptance_eligible'])
 
 
+class PreparedEvidenceTests(unittest.TestCase):
+    def test_modified_proposal_cannot_apply_even_when_source_is_unchanged(self):
+        from iteration_increment import apply_preparation
+        from readiness_reuse import seal_owned_evidence
+        from readiness import write_json,digest
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary);subprocess.run(['git','init','-q',str(root)],check=True)
+            (root/'config').mkdir();(root/'config/functions.toml').write_text('baseline config')
+            run=Run.create(root,'increment-preparation',{'frames':18000},'parent');run.capture_source()
+            proposal=run.path/'generated/functions.toml';proposal.write_text('one selected config')
+            run.record_check('candidate-proposal',{'status':'pass','complete':True,'prior_config_sha256':digest(root/'config/functions.toml'),
+                'proposed_config_sha256':digest(proposal)})
+            run.manifest['increment']={'kind':'supported-expansion'};run.save_manifest()
+            seal_owned_evidence(run);run.save_manifest();run.finalize('pass',mandatory_checks=['candidate-proposal'])
+            write_json(root/'out/accepted.json',{'run_id':'parent'})
+            proposal.write_text('unreviewed extra config')
+            with self.assertRaisesRegex(ValueError,'checksum'):
+                apply_preparation(root,run.path)
+            self.assertEqual((root/'config/functions.toml').read_text(),'baseline config')
+
+
 class PreparationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

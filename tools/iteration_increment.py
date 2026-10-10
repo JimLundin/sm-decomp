@@ -7,7 +7,7 @@ import re
 import sys
 from pathlib import Path
 
-from readiness import Run, digest, source_inventory
+from readiness import Run, digest, source_inventory, read_verdict
 from readiness_contract import DOMAIN
 from readiness_coverage import comparable_progress
 
@@ -91,6 +91,8 @@ def verify_progress(owner,verified):
     manifest = verified['manifest']
     if manifest.get('type') != 'iteration':
         return
+    if manifest.get('increment',{}).get('kind')=='supported-expansion':
+        verify_supported_increment(owner,verified)
     checks = verified['verdict']['checks']
     coverage = checks['changed-entry-coverage']
     report = checks.get('increment-progress')
@@ -121,6 +123,38 @@ def verify_progress(owner,verified):
     if comparable_progress(coverage,baseline) != coverage.get('progress'):
         raise ValueError('Iteration progress delta differs from actual comparable counts')
 
+
+
+def verify_supported_increment(owner,verified):
+    from readiness_orchestration import source_snapshot
+    from readiness_reuse import verify_owned_evidence,verify_accepted,safe_artifact
+    increment=verified['manifest']['increment']
+    preparation=Path(increment['preparation_path'])
+    manifest,inventory=source_snapshot(preparation);verify_owned_evidence(preparation,manifest)
+    verdict=read_verdict(preparation)
+    report=verdict['checks']['candidate-proposal']
+    if verdict.get('status')!='pass' or manifest.get('accepted_parent')!=verified['manifest']['accepted_parent']:
+        raise ValueError('Supported increment preparation identity differs')
+    config=Path(owner)/'source/files/config/functions.toml'
+    if digest(config)!=report['proposed_config_sha256']:
+        raise ValueError('Accepted supported config differs from sealed bounded proposal')
+    baseline=verify_accepted(increment['baseline_path'],require_pointer=True)
+    identity=baseline['manifest']['identities']['generated-key-inventory']
+    previous=json.loads(safe_artifact(increment['baseline_path'],identity['evidence']).read_text())
+    prior={(key['address'],key['mx']) for key in previous['keys']}
+    proposed=preparation/'generated/proposed-steps.rs'
+    if not proposed.exists():proposed=preparation/'generated/steps.rs'
+    from readiness_coverage import _table_rows
+    expected={(key['address'],key['mx']) for key in _table_rows(proposed.read_text())}
+    actual=json.loads((Path(owner)/'generated/key-inventory.json').read_text())
+    current={(key['address'],key['mx']) for key in actual['keys']}
+    if current!=expected or not prior<=current:
+        raise ValueError('Supported accepted table differs from baseline plus one selected bounded slice')
+    chosen=increment['chosen']
+    desired={(key['address'],key['mx']) for key in chosen['new_executed_keys']}
+    if not current-prior<=desired or not current-prior:
+        raise ValueError('Supported accepted expansion exceeds selected observed keys')
+    return True
 
 
 def propose_candidate(run,baseline,generator,timeout=None):
@@ -251,6 +285,8 @@ def prepare(root,selection_owner,timeout=None):
             'preparation_path':str(run.path),'chosen':report['chosen'],'deferred':run.checks['candidate-proposal']['deferred']}
         run.save_manifest()
         summary='Prepared one selected routine/width; reviewed root configuration remains unchanged.\n\n[Proposal](generated/functions.toml) · [Exact compiled keys and deferred inventory](checks/candidate-proposal.json) · [Selected evidence](generated/selection.json) · [Source before mutation](source/inventory.json)\n'
+        from readiness_reuse import seal_owned_evidence
+        seal_owned_evidence(run);run.save_manifest()
         run.finalize('pass','candidate-proposal','One bounded candidate prepared',mandatory_checks=['candidate-proposal'],brief_text=summary)
         return run.path
     except Exception as error:
@@ -275,9 +311,14 @@ def apply_preparation(root,owner):
     from readiness_orchestration import source_snapshot
     from readiness import read_verdict
     manifest,inventory=source_snapshot(owner)
+    from readiness_reuse import verify_owned_evidence
+    verify_owned_evidence(owner,manifest)
     verdict=read_verdict(owner)
     if manifest.get('type')!='increment-preparation' or verdict['status']!='pass':
         raise ValueError('Candidate preparation did not complete')
+    pointer=json.loads((root/'out/accepted.json').read_text())
+    if pointer.get('run_id')!=manifest.get('accepted_parent'):
+        raise ValueError('Current accepted predecessor changed before candidate application')
     if source_inventory(root)!=inventory['files']:
         raise ValueError('User source/config changed since preparation; preserve work and select again')
     proposal=owner/'generated/functions.toml'
@@ -343,6 +384,8 @@ def prune_uncovered(root,failed_owner,timeout=None):
             deferred=increment.get('deferred',[])+report['deferred'])
         run.manifest.update(type='increment-preparation',accepted_parent=manifest['accepted_parent'],increment=increment)
         run.save_manifest();run.check_sources()
+        from readiness_reuse import seal_owned_evidence
+        seal_owned_evidence(run);run.save_manifest()
         run.finalize('pass','candidate-proposal','Pruned new unexecuted keys; full fresh validation still required',mandatory_checks=['candidate-proposal'])
         return run.path
     except Exception as error:
