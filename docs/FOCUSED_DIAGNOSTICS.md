@@ -35,3 +35,21 @@ interpret RAM offsets but are optional; absent symbols do not block diagnosis.
 consumes these public seams. Current replay is cold; checkpoint speedups require
 separate restoration validation. Diagnostic results are scoped and never
 advance readiness acceptance by themselves.
+
+Candidate preparation is separate from validation: focused commands build exact
+run-local artifacts without a one-frame parity claim. `--failure <JSON>` with a
+selected `--predecessor <run>` invokes failure controls. The automatic Python
+API `diagnose_failure(run, failure, predecessor, intervals=None)` discovers
+actual changed-key execution boundaries, starts up to 64 preceding instructions,
+and uses validated separate candidate, disabled-key and predecessor caches over
+identical inputs and intervals. Disabled controls filter runtime table entries;
+they preserve reviewed source/config. A predecessor is restored and rebuilt in
+an isolated checkout from its verified source snapshot.
+
+Passing controls support attribution to the increment; a failing or incomplete
+control routes investigation to shared paths/input/cache/harness. Original-core
+synchronization failures require independent observations/probes. Unexecuted
+required keys yield uncovered with covered-interval or removal/deferral choices.
+Experiment records retain hypotheses, predicted discriminators, results and
+new evidence. Three successive experiments without new evidence produce a
+concrete decision artifact while retaining both candidate and predecessor.

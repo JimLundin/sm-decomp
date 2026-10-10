@@ -20,12 +20,48 @@ fn main() -> Result<()> {
     let movie = movie::load(&movie_path)?;
     snes::verify_movie_rom(&movie, &rom)?;
     let fallback = args.iter().any(|arg| arg == "--fallback-only");
-    let table = if fallback { &[][..] } else { game::steps::STEP_TABLE };
+    let all = if fallback { &[][..] } else { game::steps::STEP_TABLE };
+    let disabled: Vec<serde_json::Value> = option("--disabled-keys")
+        .map(|path| {
+            std::fs::read(path).map_err(anyhow::Error::from).and_then(|bytes| Ok(serde_json::from_slice(&bytes)?))
+        })
+        .transpose()?
+        .unwrap_or_default();
+    let filtered: Vec<_> = all
+        .iter()
+        .copied()
+        .filter(|&(address, mx, _, _)| {
+            !disabled
+                .iter()
+                .any(|key| key["address"].as_u64() == Some(address.into()) && key["mx"].as_u64() == Some(mx.into()))
+        })
+        .collect();
+    let table = filtered.as_slice();
     if !fallback {
-        ensure!(!table.is_empty(), "focused compiled replay requires nonempty table");
+        ensure!(!all.is_empty(), "focused compiled replay requires nonempty table");
+        let identity = movie::Movie { frames: Vec::new(), rom_sha256: game::steps::ROM_SHA256.map(str::to_owned) };
+        ensure!(identity.rom_sha256.is_some(), "compiled table has no ROM identity");
+        snes::verify_movie_rom(&identity, &rom)?;
     }
     let mut reference = snes::Reference::new(&rom, 0)?;
     let mut subject = snes::Subject::with_steps(&rom, 0, table)?;
+    if let Some(keys_path) = option("--discover-keys") {
+        let keys: Vec<serde_json::Value> = serde_json::from_slice(&std::fs::read(keys_path)?)?;
+        let keys: Vec<_> = keys
+            .iter()
+            .map(|key| {
+                Ok((
+                    key["address"].as_u64().context("key address")? as u32,
+                    key["mx"].as_u64().context("key width")? as u8,
+                ))
+            })
+            .collect::<Result<_>>()?;
+        let frames = option("--frames").context("discovery --frames required")?.parse()?;
+        let report = snes::controls::covered_intervals(&mut reference, &mut subject, &movie.frames, frames, &keys)?;
+        std::fs::create_dir(&output)?;
+        std::fs::write(output.join("discovery.json"), serde_json::to_vec_pretty(&report)?)?;
+        std::process::exit(if report["status"] == "pass" { 0 } else { 1 });
+    }
     let mut report = if let Some(cache_path) = option("--cache") {
         let identity_path = option("--identities").context("--identities required for validated cache")?;
         let identities: serde_json::Value = serde_json::from_slice(&std::fs::read(identity_path)?)?;
@@ -60,6 +96,8 @@ fn main() -> Result<()> {
     report["identities"] = serde_json::json!({"rom_sha256":format!("{:x}",Sha256::digest(&rom)),
         "movie_sha256":format!("{:x}",Sha256::digest(std::fs::read(movie_path)?)),
         "input_sha256":format!("{:x}",Sha256::digest(movie::write_inputs(&movie.frames).as_bytes()))});
+    report["disabled_keys"] = disabled.into();
+    report["binary_sha256"] = format!("{:x}", Sha256::digest(std::fs::read(std::env::current_exe()?)?)).into();
     report["rerun"] = serde_json::to_value(std::env::args().collect::<Vec<_>>())?;
     std::fs::write(output.join("instruction.json"), serde_json::to_vec_pretty(&report)?)?;
     if report["status"] == "divergence" {
