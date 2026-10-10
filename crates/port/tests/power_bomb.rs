@@ -66,3 +66,18 @@ fn cleanup_still_performs_contact_with_the_cleared_type() {
     assert_eq!(r.word(0xc22), 0);
     assert!(h.0.is_empty());
 }
+#[test]
+fn wide_slot_arguments_reject_without_aliasing_state_or_callbacks() {
+    for symbol in ["BlockFunc_A06A", "BombOrPowerBomb_Func1", "ProjPreInstr_PowerBomb"] {
+        for argument in [65536, -65536] {
+            let mut bytes = vec![0; WRAM_SIZE];
+            let before = bytes.clone();
+            let mut host = Host(vec![]);
+            let result =
+                power_bomb::dispatch_host(&mut Wram::new(&mut bytes).unwrap(), &[], &mut host, symbol, argument, 0);
+            assert!(result.is_err(), "{symbol} accepted {argument}");
+            assert_eq!(bytes, before, "{symbol} mutated state for {argument}");
+            assert!(host.0.is_empty());
+        }
+    }
+}

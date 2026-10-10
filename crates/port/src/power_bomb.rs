@@ -121,18 +121,24 @@ pub fn contact(r: &mut Wram<'_>, rom: &[u8], h: &mut impl Host, k: u16) -> Resul
     radius(r, rom, h, k)
 }
 pub fn dispatch_host(r: &mut Wram<'_>, rom: &[u8], h: &mut impl Host, s: &str, a: i32, _: i32) -> Result<u32> {
+    let k = match s {
+        "BlockFunc_A06A" | "BombOrPowerBomb_Func1" | "ProjPreInstr_PowerBomb" => {
+            u16::try_from(a).map_err(|_| "projectile slot width")?
+        }
+        _ => 0,
+    };
     match s {
         "PowerBomb_Func3" => fuse(r, h)?,
         "SpawnPowerBombExplosion" => spawn(r, h)?,
-        "BlockFunc_A06A" => radius(r, rom, h, a as u16)?,
-        "BombOrPowerBomb_Func1" => contact(r, rom, h, a as u16)?,
+        "BlockFunc_A06A" => radius(r, rom, h, k)?,
+        "BombOrPowerBomb_Func1" => contact(r, rom, h, k)?,
         "ProjPreInstr_PowerBomb" => {
-            let p = slot(a as u16)?;
+            let p = slot(k)?;
             if r.word(PROJECTILE_DIR + p) & 0xf0 != 0 {
                 projectiles::dispatch_rom(r, rom, "ClearProjectile", a, 0)?;
             } else {
                 fuse(r, h)?;
-                contact(r, rom, h, a as u16)?;
+                contact(r, rom, h, k)?;
             }
         }
         _ => return Err("unknown power bomb routine"),
