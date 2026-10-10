@@ -97,6 +97,26 @@ pub fn compare_restored(
         "start_instruction":skip,"expected_instructions":instructions,"completed_instructions":0,"replay":replay,"observer":"passive actual effects", "history_limit":64});
     std::fs::write(output.join("instruction.json"), serde_json::to_vec_pretty(&report)?)?;
     for index in 0..instructions {
+        let before_reference = reference.instruction_snapshot();
+        let before_subject = subject.instruction_snapshot();
+        if before_reference != before_subject {
+            for (name, snapshot) in [("reference-before", &before_reference), ("subject-before", &before_subject)] {
+                std::fs::write(output.join(format!("{name}.hardware.bin")), &snapshot.hardware)?;
+                std::fs::write(output.join(format!("{name}.cpu.bin")), &snapshot.pending_cpu)?;
+            }
+            report["status"] = "divergence".into();
+            report["complete"] = true.into();
+            report["first_mismatch"] = json!({"instruction":index,"phase":"before execution","input_index":input,"pad":pads[input],
+                "reference":{"before":before_reference.cpu},"subject":{"before":before_subject.cpu}});
+            report["preceding_matching_boundary"] = preceding.unwrap_or(Value::Null);
+            report["history"] = serde_json::to_value(&history)?;
+            report["hardware_difference"] =
+                first_difference(&before_reference.hardware, &before_subject.hardware).unwrap_or(Value::Null);
+            report["pending_cpu_difference"] =
+                first_difference(&before_reference.pending_cpu, &before_subject.pending_cpu).unwrap_or(Value::Null);
+            std::fs::write(output.join("instruction.json"), serde_json::to_vec_pretty(&report)?)?;
+            return Ok(report);
+        }
         let a = reference.step_instruction_observed()?;
         let b = subject.step_instruction_observed()?;
         let mismatch = a.before != b.before || a.after != b.after || a.events != b.events;

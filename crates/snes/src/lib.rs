@@ -8,6 +8,7 @@ use anyhow::{Result, ensure};
 use rustysnes_core::{System, cart::Cart};
 
 pub mod checkpoint;
+pub mod controls;
 pub mod coverage;
 pub mod diagnostic;
 pub mod focused;
@@ -148,6 +149,11 @@ impl Reference {
     pub fn framebuffer(&self) -> &[u16] {
         self.system.bus.framebuffer()
     }
+    /// Passive current frame counter for instruction-level input scheduling.
+    pub fn instruction_frame(&self) -> u64 {
+        self.system.bus.ppu.frame_count()
+    }
+
     pub fn state_bytes(&self) -> Vec<u8> {
         state_bytes(&self.system.cpu, &self.system.bus)
     }

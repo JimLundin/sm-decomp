@@ -12,24 +12,34 @@ from readiness import Run, preflight, write_json, digest
 from readiness_coverage import generated_inventory, evaluate_coverage
 
 
-def run_parity(run, mode, frames=18000, timeout=None, predecessor=None):
-    """Run one cold parity gate within an open, preflight-verified parent run."""
-    if mode not in ("fallback-only", "generated") or frames <= 0:
-        raise ValueError("Parity requires a valid mode and positive exact frame count")
-    started = time.monotonic()
-    inputs = run.manifest["identities"]["inputs"]
-    if frames > inputs["frames"]:
-        report = {"status": "incomplete", "complete": False, "expected_frames": frames,
-                  "completed_frames": 0, "reason": "Verified movie is shorter than requested scope"}
-        run.record_check(mode + "-parity", report)
-        return report
+def prepare_candidate(run, mode="generated", timeout=None):
+    """Build exact candidate inputs without running or recording parity validation."""
+    if mode not in ("fallback-only", "generated"):
+        raise ValueError("Unknown candidate mode")
     generated = run.path / "generated" / mode
+    if generated.exists():
+        source = generated / "steps.rs"
+        game = generated / "game.rs"
+        if source.is_file() and game.is_file():
+            run.check_sources()
+            for name,path in (("steps",source),("game",game)):
+                expected=run.manifest["identities"].get(mode+"-generated-"+name,{})
+                if expected.get("sha256")!=digest(path):
+                    raise RuntimeError("Prepared generated inputs lack matching build provenance")
+            candidate=generated/"diff"
+            if run.manifest["identities"].get(mode+"-binary",{}).get("sha256")!=digest(candidate):
+                raise RuntimeError("Prepared candidate binary lacks matching build provenance")
+            return {"status": "pass", "complete": True, "generated": generated,
+                    "build": run.path / "build" / mode, "game": game, "steps": source, "timings": {},
+                    "key_inventory": run.path / "generated/key-inventory.json" if mode == "generated" else None}
+        raise RuntimeError("Incomplete candidate artifacts already exist")
     generated.mkdir()
     build = run.path / "build" / mode
     env = os.environ.copy()
     env["CARGO_TARGET_DIR"] = str(build)
     game_source, steps_source = generated / "game.rs", generated / "steps.rs"
     timings = {}
+    frames = 0
 
     def stage(name, command, **kwargs):
         report = run.run_stage(mode + "-" + name, command, env=env, **kwargs)
@@ -42,7 +52,6 @@ def run_parity(run, mode, frames=18000, timeout=None, predecessor=None):
             report = {"status": result["status"], "complete": False, "expected_frames": frames,
                       "completed_frames": 0, "reason": result.get("reason", "Required build/generation stage failed"),
                       "timings": timings, "failed_stage": result["command"]}
-            run.record_check(mode + "-parity", report)
             return report
         binary = build / "release/recomp"
         run.record_artifact(mode + "-generator-binary", binary, "generated/" + mode + "/recomp")
@@ -55,7 +64,6 @@ def run_parity(run, mode, frames=18000, timeout=None, predecessor=None):
             report = {"status": result["status"], "complete": False, "expected_frames": frames,
                       "completed_frames": 0, "reason": result.get("reason", "Required build/generation stage failed"),
                       "timings": timings, "failed_stage": result["command"]}
-            run.record_check(mode + "-parity", report)
             return report
     else:
         # Untimed whole-subroutine output is not used to establish cycle evidence.
@@ -80,10 +88,41 @@ def run_parity(run, mode, frames=18000, timeout=None, predecessor=None):
     if result["status"] != "pass":
         report = {"status": result["status"], "complete": False, "expected_frames": frames,
                   "completed_frames": 0, "reason": result.get("reason", "Required build stage failed"), "timings": timings}
-        run.record_check(mode + "-parity", report)
         return report
     binary = build / "release/diff"
-    identity = run.record_artifact(mode + "-binary", binary, "generated/" + mode + "/diff")
+    run.record_artifact(mode + "-binary", binary, "generated/" + mode + "/diff")
+    run.guard_input(generated / "diff")
+    return {"status": "pass", "complete": True, "generated": generated, "build": build,
+            "game": game_source, "steps": steps_source, "timings": timings, "key_inventory": key_inventory}
+
+
+def run_parity(run, mode, frames=18000, timeout=None, predecessor=None):
+    """Run one cold parity gate within an open, preflight-verified parent run."""
+    if mode not in ("fallback-only", "generated") or frames <= 0:
+        raise ValueError("Parity requires a valid mode and positive exact frame count")
+    started = time.monotonic()
+    inputs = run.manifest["identities"]["inputs"]
+    if frames > inputs["frames"]:
+        report = {"status": "incomplete", "complete": False, "expected_frames": frames,
+                  "completed_frames": 0, "reason": "Verified movie is shorter than requested scope"}
+        run.record_check(mode + "-parity", report)
+        return report
+    preparation = prepare_candidate(run, mode, timeout)
+    if preparation["status"] != "pass":
+        run.record_check(mode + "-parity", preparation)
+        return preparation
+    generated, build = preparation["generated"], preparation["build"]
+    game_source, steps_source = preparation["game"], preparation["steps"]
+    key_inventory = preparation["key_inventory"]
+    timings = preparation["timings"]
+    env = dict(os.environ, CARGO_TARGET_DIR=str(build), SM_RECOMP_GENERATED_GAME=str(game_source),
+               SM_RECOMP_GENERATED_STEPS=str(steps_source))
+    def stage(name, command, **kwargs):
+        report = run.run_stage(mode + "-" + name, command, env=env, **kwargs)
+        timings[name] = report["elapsed_seconds"]
+        return report
+    binary = build / "release/diff"
+    identity = run.manifest["identities"][mode + "-binary"]
     candidate = generated / "diff"
     run.guard_input(candidate)
     output = run.path / "diagnostics" / (mode + "-frame-parity")
