@@ -84,7 +84,35 @@ Capture with `just decomp-baseline 9000`; use the resulting replay fixture manif
 All ROM views, states and derived evidence remain beneath ignored local output.
 The retained ticket04 run checked all 23 captured calls twice and three original
 calls; it remained partial with `routine_accepted: false`.
-Ordered stores, acceptance fault controls and the live C/Rust ABI belong to later tickets.
+Every admitted fixture also executes an explicitly instrumented copy of the pinned
+C bank. Only its six destination store expressions change, with exact replacement
+counts and original/transformed digests retained. Its whole WRAM must equal the
+unchanged C oracle before its complete ordered `(offset,value)` store stream is
+compared with the Rust safe WRAM observer. Repeated/transient stores are retained;
+complete write sets and store counts appear in each fixture record.
+
+Use `--accept` with the frozen capture manifest and original ROM to request bounded
+offline acceptance. The independently checked-in `offline-acceptance-v1` contract
+pins the canonical job digest (all 40 synthetic fixtures and branch declarations),
+exact 23-call capture manifest and original ROM digest. User manifests that alter
+fixtures or shrink coverage fail, even when their remaining expectations match.
+An accepting run executes 11 real controls through the same public CLI: wrong
+output, write-and-restore, disabled/unexecuted replacement, reduced executed branch,
+build error, crash, runtime timeout, altered source identity, removed fixture and
+reduced case declaration. Runtime controls must actually build and reach a fixture;
+unrelated compiler failure cannot satisfy them. `--fault NAME` reproduces each
+control, retaining generated faulty candidate sources and an error verdict.
+
+Acceptance retains the contract, exact source/implementation/build and binary
+identities, full fixture states and ordered writes, observed cases, all negative
+verdicts, and predecessor lineage in `acceptance.json`. The separate
+`decomp-acceptance.json` pointer references that immutable run and verdict digest;
+`latest-attempt.json` always records the current result. Failed/partial attempts
+preserve earlier acceptance as predecessor evidence but exit with their own result
+and cannot acquire its verdict. `verify_accepted(pointer_path)` validates current
+source and contract identities plus the sealed artifacts before another consumer
+uses an accepted routine. No decomp artifact changes recomp acceptance.
+The live C/Rust ABI belongs to ticket06.
 No offline partial result establishes whole-game Rust ownership or original-ROM
 parity.
 

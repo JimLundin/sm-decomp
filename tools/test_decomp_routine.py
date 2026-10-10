@@ -23,6 +23,10 @@ class SyntheticJob(unittest.TestCase):
             self.assertEqual(verdict['missing_cases'], [])
             self.assertTrue(all(f['status'] == 'matched' for f in verdict['fixtures']))
             for fixture in verdict['fixtures']:
+                self.assertEqual(fixture['c_ordered_writes_sha256'], fixture['rust_ordered_writes_sha256'])
+                self.assertGreaterEqual(fixture['write_count'], 0)
+                self.assertEqual(len(fixture['write_set']), fixture['write_count'])
+            for fixture in verdict['fixtures']:
                 self.assertEqual(fixture['c_sha256'], fixture['expected_sha256'])
                 self.assertEqual(fixture['rust_sha256'], fixture['expected_sha256'])
 
@@ -130,3 +134,37 @@ class CapturedJob(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+class AcceptanceControls(unittest.TestCase):
+    def test_transient_store_is_rejected_even_when_final_wram_matches(self):
+        with tempfile.TemporaryDirectory() as directory:
+            result = subprocess.run(['python3', 'tools/decomp_routine.py', '--fault', 'write-restore',
+                                     '--output', directory], capture_output=True, text=True, cwd=ROOT)
+            self.assertEqual(result.returncode, 1)
+            verdict = json.loads(next(Path(directory).glob('*/verdict.json')).read_text())
+            self.assertIn('ordered WRAM stores differ', verdict['error'])
+            self.assertEqual(verdict['fixtures'][0]['c_sha256'], verdict['fixtures'][0]['rust_sha256'])
+            self.assertFalse(verdict['routine_accepted'])
+
+    def test_exercised_acceptance_seals_coverage_and_rejects_real_controls(self):
+        captures = Path('/home/jim/sm-decomp/out/decomp/ticket01/20261010T181241.402731Z/replay/fixtures/manifest.json')
+        rom = Path('/home/jim/sm-decomp/rom/sm.sfc')
+        if not captures.exists() or not rom.exists(): self.skipTest('local captures unavailable')
+        with tempfile.TemporaryDirectory() as directory:
+            result = subprocess.run(['python3', 'tools/decomp_routine.py', '--accept', '--captures', str(captures),
+                                     '--original-rom', str(rom), '--output', directory], capture_output=True, text=True, cwd=ROOT)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            pointer = json.loads((Path(directory) / 'decomp-acceptance.json').read_text())
+            verdict = json.loads((Path(pointer['run']) / 'verdict.json').read_text())
+            self.assertTrue(verdict['routine_accepted'])
+            from tools.decomp_routine import verify_accepted
+            self.assertEqual(len(verify_accepted(Path(directory) / 'decomp-acceptance.json')['fixtures']), 63)
+            self.assertEqual(verdict['status'], 'accepted')
+            self.assertTrue(all(control['rejected'] for control in verdict['negative_controls']))
+            self.assertEqual(len(verdict['negative_controls']), 11)
+            self.assertEqual(len(verdict['fixtures']), 63)
+            failure = subprocess.run(['python3', 'tools/decomp_routine.py', '--fault', 'crash', '--output', directory], capture_output=True, text=True, cwd=ROOT)
+            self.assertEqual(failure.returncode, 1)
+            self.assertEqual(json.loads((Path(directory) / 'decomp-acceptance.json').read_text()), pointer)
+            self.assertTrue(json.loads((Path(pointer['run']) / 'verdict.json').read_text())['routine_accepted'])
+            self.assertFalse(json.loads((Path(directory) / 'latest-attempt.json').read_text())['routine_accepted'])

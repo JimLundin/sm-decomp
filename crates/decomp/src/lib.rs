@@ -34,19 +34,29 @@ impl<'a> RomView<'a> {
 }
 
 /// The canonical full WRAM slice preserves aliases as byte offsets into one allocation.
-pub struct WramView<'a>(&'a mut [u8]);
+pub struct WramView<'a> {
+    bytes: &'a mut [u8],
+    observer: Option<&'a mut dyn FnMut(usize, u8)>,
+}
 impl<'a> WramView<'a> {
     pub fn new(bytes: &'a mut [u8]) -> Result<Self, DecompressError> {
         if bytes.len() != WRAM_SIZE {
             return Err(DecompressError::InvalidWramExtent);
         }
-        Ok(Self(bytes))
+        Ok(Self { bytes, observer: None })
+    }
+    /// Reports every successful byte store, including repeated stores of the same value.
+    pub fn with_observer(bytes: &'a mut [u8], observer: &'a mut dyn FnMut(usize, u8)) -> Result<Self, DecompressError> {
+        let mut view = Self::new(bytes)?;
+        view.observer = Some(observer);
+        Ok(view)
     }
     pub fn read(&self, offset: usize) -> Result<u8, DecompressError> {
-        self.0.get(offset).copied().ok_or(DecompressError::WramBounds(offset))
+        self.bytes.get(offset).copied().ok_or(DecompressError::WramBounds(offset))
     }
     pub fn write(&mut self, offset: usize, value: u8) -> Result<(), DecompressError> {
-        *self.0.get_mut(offset).ok_or(DecompressError::WramBounds(offset))? = value;
+        *self.bytes.get_mut(offset).ok_or(DecompressError::WramBounds(offset))? = value;
+        if let Some(observer) = &mut self.observer { observer(offset, value); }
         Ok(())
     }
     pub fn read_u16_le(&self, offset: usize) -> Result<u16, DecompressError> {
