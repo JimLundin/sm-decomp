@@ -1,6 +1,4 @@
-use port::{WRAM_SIZE, Wram, audio};
-#[path = "../src/projectiles.rs"]
-mod projectiles;
+use port::{WRAM_SIZE, Wram, projectiles};
 fn offset(a: u32) -> usize {
     (((a >> 16) & 127) * 0x8000 + (a & 0x7fff)) as usize
 }

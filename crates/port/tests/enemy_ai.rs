@@ -1,6 +1,4 @@
-#[path = "../src/enemy_ai.rs"]
-mod enemy_ai;
-use port::{WRAM_SIZE, Wram, audio, enemy};
+use port::{WRAM_SIZE, Wram, enemy_ai};
 struct NoEffects;
 impl enemy_ai::Host for NoEffects {
     fn spawn_plm(&mut self, _: &mut Wram<'_>, _: u16, _: &mut i32) -> Result<u8, &'static str> {
