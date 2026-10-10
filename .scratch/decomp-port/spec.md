@@ -32,6 +32,8 @@ observable hardware effects, Rust hits and fallback measurements.
 - 08: complete Samus animation/input family, in progress.
 - 09: generic enemy instruction handlers, in progress.
 - 10: live failure controls and dependency seals, in progress.
+- 11: actual PLM collision callback harness, in progress.
+- 12: complete Samus collision/movement closure, in progress.
 
 This is the first frontier, not the completion boundary of the user's goal.
 Expand tickets into substantive gameplay subsystems after this frontier, using
