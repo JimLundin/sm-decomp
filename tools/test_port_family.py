@@ -136,3 +136,15 @@ let value=rng::next_random(&mut bytes)?; ram.set_word(0x5e5,value); Ok(value.int
             dependency.write_text('pub fn value()->u32{274}')
             with self.assertRaisesRegex(ValueError,'dependency'):
                 verify_family_evidence(Path(verdict['run'])/'verdict.json')
+
+    def test_actual_enemy_instruction_rom_pointer_results_are_canonicalized(self):
+        import hashlib
+        with tempfile.TemporaryDirectory() as directory:
+            run=Path(directory);rom=run/'rom.bin'
+            data=bytearray(0x180000);data[0x100000:0x100002]=(0x8123).to_bytes(2,'little');rom.write_bytes(data)
+            module=run/'instr.rs'
+            module.write_text('use crate::Wram;pub fn dispatch_rom(r: &mut Wram,_:&[u8],s:&str,_:i32,b:i32)->Result<u32,&\'static str>{Ok(match s{"EnemyInstr_Goto"=>0xa08123,"EnemyInstr_StopScript"=>{r.set_word(0xf86,0x200);0},_=>b as u32+2})}')
+            manifest=run/'manifest.json'
+            manifest.write_text(json.dumps({'family':'pointers','rust_module':str(module),'bank':'sm_a0.c','rom':{'file':str(rom),'sha256':hashlib.sha256(rom.read_bytes()).hexdigest()},'routines':[{'symbol':symbol,'arg_types':['uint16','rom_ptr'],'return':'rom_ptr','cases':[{'name':symbol,'a':0,'b':0xa08000,'writes':[[0xfa6,[0xa0,0]]],'expected_return':expected}]} for symbol,expected in [('EnemyInstr_Skip2bytes',0xa08002),('EnemyInstr_Goto',0xa08123),('EnemyInstr_StopScript',0)]]}))
+            result=subprocess.run(['python3',str(ROOT/'tools/port_family.py'),'verify','--manifest',str(manifest),'--source',str(SOURCE),'--output',str(run/'out')],capture_output=True,text=True)
+            self.assertEqual(result.returncode,0,result.stdout+result.stderr)
