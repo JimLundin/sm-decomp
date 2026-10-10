@@ -1,0 +1,19 @@
+{
+  "schema": "decomp-routine-job-v1",
+  "routine": "DecompressToMem",
+  "address": 8433945,
+  "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+  "source_archive_sha256": "69c78831351112887575f852dadf0281dd5c23cef890b07a268ae6cf60aa9193",
+  "notice": "snesrev-sm LICENSE.txt: MIT; Copyright (c) 2023 snesrev; Copyright (c) 2021 elzo_d. Retain complete upstream notices with each job.",
+  "dependencies": ["whole unchanged sm_80.c bank; retained DecompressToMem and DecompNextByte", "RomPtr validated LoROM shim"],
+  "memory": {"reads": "immutable ROM bytes and sequential byte-addressed WRAM backreferences", "writes": "canonical 128 KiB WRAM; destination-relative offsets", "mapping": "LoROM (((bank << 15) | (address & 32767)) & 4194303); low-half and outside loaded extent rejected", "word_access": "explicit little-endian byte operations; unaligned addresses allowed"},
+  "numeric": {"source": "u32 cursor; increment then add 32768 after low word FFFF; reads require 24-bit address", "destination": "bounded absolute WRAM offsets; signed C backreferences must remain within WRAM", "length": "short 1..32; extended 1..1024; FF terminates before header decode", "fill": "u8 wrapping; word alternation may end on first byte", "copy": "sequential overlapping byte reads and stores, never memcpy"},
+  "limits": {"wram_size": 131072, "rom_max_size": 4194304, "source_read_budget": 8388608},
+  "required_cases": ["terminator", "literal-short", "literal-extended", "byte-fill", "word-fill", "increment-fill", "absolute-copy", "absolute-xor", "relative-copy", "relative-xor", "overlap", "byte-wrap", "source-rollover"],
+  "implemented_scope": ["literal-short", "literal-extended", "terminator"],
+  "exclusions": ["This initial fixture suite exercises short literal and terminator only and is partial", "Malformed/unbounded C streams are excluded from oracle execution; Rust reports errors", "No original-ROM parity, ordered-store equivalence, live ABI or whole-game Rust ownership"],
+  "fixtures": [
+    {"id": "literal", "source": 8421376, "destination": 4096, "initial_fill": 165, "stream": [2, 18, 52, 86, 255], "expected_bytes": [18, 52, 86], "expected_written": 3, "expected_final_source": 8421381, "expected_cases": ["literal-short", "terminator"]},
+    {"id": "terminator", "source": 8421376, "destination": 4096, "initial_fill": 165, "stream": [255], "expected_bytes": [], "expected_written": 0, "expected_final_source": 8421377, "expected_cases": ["terminator"]}
+  ]
+}

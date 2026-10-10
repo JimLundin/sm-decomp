@@ -2,6 +2,7 @@
 resolver = "3"
 exclude = ["deps/rustysnes"]
 members = [
+    "crates/decomp",
     "crates/runtime",
     "crates/recomp",
     "crates/game",
