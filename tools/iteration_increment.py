@@ -141,11 +141,29 @@ def propose_candidate(run,baseline,generator,timeout=None):
             variants=re.search(r'^variants\s*=\s*\[([^]]*)\]',part,re.M)
             if not variants:raise ValueError('Existing routine declaration lacks explicit variants')
             values=re.findall(r'"(m[01]x[01])"',variants.group(1))
-            if chosen['variant'] in values:raise ValueError('Selected routine/width is already reviewed')
-            values.append(chosen['variant'])
-            parts[index]=part[:variants.start()]+ 'variants = ['+', '.join(json.dumps(value) for value in values)+']'+part[variants.end():]
+            if chosen['variant'] in values:
+                if chosen.get('action')!='enable-deferred-keys':raise ValueError('Selected routine/width is already reviewed')
+            else:
+                if chosen.get('action')=='enable-deferred-keys':raise ValueError('Deferred revisit requires an existing reviewed routine/width')
+                values.append(chosen['variant'])
+                parts[index]=part[:variants.start()]+ 'variants = ['+', '.join(json.dumps(value) for value in values)+']'+part[variants.end():]
             found=True;break
-    proposal.write_text(''.join(parts) if found else source+addition)
+    if chosen.get('action')=='enable-deferred-keys' and not found:
+        raise ValueError('Deferred revisit routine is no longer reviewed')
+    proposed=''.join(parts) if found else source+addition
+    # Lift only measured keys; keep unrelated exclusions and user comments.
+    desired={(row['address'],row['mx']):row for row in chosen['new_executed_keys']}
+    sections=re.split(r'(?=^\[\[[^\n]+\]\]\s*$)',proposed,flags=re.M)
+    for index,section in enumerate(sections):
+        if not section.startswith('[[excluded_step]]'):continue
+        address=re.search(r'^addr\s*=\s*"([^"]+)"',section,re.M)
+        variant=re.search(r'^variant\s*=\s*"m([01])x([01])"',section,re.M)
+        if address and variant:
+            key=(int(re.sub(r'[^0-9a-fA-F]','',address.group(1)),16),int(variant.group(1))*2+int(variant.group(2)))
+            if key in desired:
+                sections[index]=''.join(line for line in section.splitlines(keepends=True)
+                    if not re.match(r'^(?:\[\[excluded_step\]\]|\s*(?:addr|variant|reason)\s*=)',line))
+    proposal.write_text(''.join(sections))
     run.guard_input(generator)
     first=run.path/'generated/unpruned-steps.rs'
     result=run.run_stage('proposed-generation',[generator,'--rom',run.root/'rom/sm.sfc','--functions',proposal,
@@ -153,7 +171,6 @@ def propose_candidate(run,baseline,generator,timeout=None):
     if result['status']!='pass':raise ValueError('Candidate generation failed; preserved stage logs explain the error')
     all_rows=_table_rows(first.read_text())
     previous={(row['address'],row['mx']) for row in baseline['keys']}
-    desired={(row['address'],row['mx']):row for row in chosen['new_executed_keys']}
     actual={(row['address'],row['mx']):row for row in all_rows}
     if not previous <= set(actual):raise ValueError('Candidate proposal removes a legacy baseline key')
     if not set(desired) <= set(actual):raise ValueError('Measured selected key is absent from candidate CFG')

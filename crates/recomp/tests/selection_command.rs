@@ -3,6 +3,52 @@ use serde_json::{Value, json};
 use std::{fs, process::Command};
 
 #[test]
+fn observed_deferred_supported_key_in_configured_routine_precedes_new_pattern() {
+    let root = std::env::temp_dir().join(format!("recomp-selection-deferred-{}", std::process::id()));
+    fs::create_dir_all(&root).unwrap();
+    let mut rom = vec![0xff; 3 * 1024 * 1024];
+    rom[..6].copy_from_slice(&[0xea, 0xca, 0xad, 0x00, 0x20, 0x60]);
+    fs::write(root.join("rom.sfc"), rom).unwrap();
+    fs::write(root.join("functions.toml"),
+        "[[function]]\naddr = \"808000\"\nvariants = [\"m1x1\"]\n\n[[excluded_step]]\naddr = \"808001\"\nvariant = \"m1x1\"\nreason = \"deferred unexecuted proposed key\"\n").unwrap();
+    fs::write(root.join("entries.csv"), "addr,mx,count\n808000,m1x1,1\n").unwrap();
+    fs::write(root.join("inventory.json"), json!({"keys":[{"address":0x808000,"mx":3}]}).to_string()).unwrap();
+    fs::write(
+        root.join("profile.json"),
+        json!({"interpreted":[
+            {"address":0x808001,"mx":3,"opcode":0xca,"emulation":false,"count":20},
+            {"address":0x808002,"mx":3,"opcode":0xad,"emulation":false,"count":1000}
+        ]})
+        .to_string(),
+    )
+    .unwrap();
+    let output = Command::new(env!("CARGO_BIN_EXE_recomp"))
+        .args([
+            "--rom",
+            root.join("rom.sfc").to_str().unwrap(),
+            "--functions",
+            root.join("functions.toml").to_str().unwrap(),
+            "--selection-profile",
+            root.join("profile.json").to_str().unwrap(),
+            "--selection-entries",
+            root.join("entries.csv").to_str().unwrap(),
+            "--selection-inventory",
+            root.join("inventory.json").to_str().unwrap(),
+            "--selection-out",
+            root.join("selection.json").to_str().unwrap(),
+        ])
+        .output()
+        .unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let report: Value = serde_json::from_slice(&fs::read(root.join("selection.json")).unwrap()).unwrap();
+    assert_eq!(report["outcome"], "supported-routine");
+    assert_eq!(report["chosen"]["action"], "enable-deferred-keys");
+    assert_eq!(report["chosen"]["estimated_compiled_step_gain"], 20);
+    assert_eq!(report["chosen"]["new_executed_keys"][0]["address"], 0x808001);
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
 fn measured_selection_excludes_overlapping_work_and_prefers_simpler_equal_gain() {
     let root = std::env::temp_dir().join(format!("recomp-selection-{}", std::process::id()));
     fs::create_dir_all(&root).unwrap();
