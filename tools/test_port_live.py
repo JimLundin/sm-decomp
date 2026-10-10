@@ -70,7 +70,7 @@ raise SystemExit(port_live.main())
             run=Path(temporary); module=run/'panic.rs'
             module.write_text('use crate::Wram;pub fn dispatch(r:&mut Wram,_:&str,_:u16,_:u16)->Result<u32,&\'static str>{r.set_byte(1,99);panic!("candidate panic") }')
             source=run/'abi.rs'
-            source.write_text(f'#[path={json.dumps(str(ROOT/"crates/port/src/lib.rs"))}] mod memory;use memory::Wram;\n'+generate_family_abi({'routines':[{'symbol':'PanicControl'}]},module,0))
+            source.write_text(f'#[path={json.dumps(str(ROOT/"crates/port/src/lib.rs"))}] mod memory;use memory::*;\n'+generate_family_abi({'routines':[{'symbol':'PanicControl'}]},module,0))
             library=run/'libabi.a'
             result=subprocess.run(['rustc','--edition=2024','--crate-type=staticlib',str(source),'-o',str(library)],capture_output=True,text=True)
             self.assertEqual(result.returncode,0,result.stderr)

@@ -81,7 +81,7 @@ def main():
                 result = subprocess.run(command, cwd=directory, stdout=stdout, stderr=stderr, timeout=240)
             if result.returncode:
                 raise ValueError(f'{label} failed with exit {result.returncode}')
-        rust = [f'#[path={json.dumps(str(ROOT / "crates/port/src/lib.rs"))}] mod memory;', 'use memory::Wram;']
+        rust = [f'#[path={json.dumps(str(ROOT / "crates/port/src/lib.rs"))}] mod memory;', 'use memory::*;']
         imports = sorted({name for manifest, _ in families for name in manifest.get('rust_imports', [])})
         for name in imports:
             if not re.fullmatch('[A-Za-z_][A-Za-z_0-9]*', name):
