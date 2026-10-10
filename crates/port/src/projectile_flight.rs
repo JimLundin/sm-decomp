@@ -1,8 +1,6 @@
 //! Normal Samus projectile flight, shot terrain reactions and firing.
 //! Pinned snesrev/sm banks $90/$94/$9B/$8B; upstream MIT notice applies.
-use crate::{Wram, audio};
-#[path = "projectiles.rs"]
-mod projectile_core;
+use crate::{Wram, audio, projectiles as projectile_core};
 pub trait Host {
     fn spawn_plm(&mut self, ram: &mut Wram<'_>, header: u16) -> Result<u8>;
 }

@@ -1,6 +1,4 @@
-use port::{WRAM_SIZE, Wram, audio};
-#[path = "../src/projectile_flight.rs"]
-mod flight;
+use port::{WRAM_SIZE, Wram, projectile_flight as flight};
 struct NoPlm;
 impl flight::Host for NoPlm {
     fn spawn_plm(&mut self, _: &mut Wram<'_>, _: u16) -> Result<u8, &'static str> {

@@ -9,6 +9,7 @@ pub mod enemy;
 pub mod enemy_ai;
 pub mod enemy_instructions;
 pub mod plm;
+pub mod projectile_flight;
 pub mod projectiles;
 pub mod samus;
 pub mod samus_control;
