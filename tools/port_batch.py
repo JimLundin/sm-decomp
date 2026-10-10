@@ -69,6 +69,9 @@ def validate(kind, verdict):
     if kind == 'callback':
         from port_collision import verify_collision_evidence
         return verify_collision_evidence(verdict)
+    if kind == 'power-bomb':
+        from port_power_bomb import verify_power_bomb_evidence
+        return verify_power_bomb_evidence(verdict)
     if kind == 'plm':
         from port_plm import verify_plm_evidence
         return verify_plm_evidence(verdict)
@@ -79,6 +82,7 @@ def validate(kind, verdict):
 def verification_command(kind, manifest, output):
     script = {'family': 'port_family.py', 'offline-family': 'port_family.py',
               'callback': 'port_collision.py', 'plm': 'port_plm.py',
+              'power-bomb': 'port_power_bomb.py',
               'plm-instructions': 'port_plm_instructions.py'}[kind]
     command = [sys.executable, str(ROOT / 'tools' / script)]
     if kind in ('family', 'offline-family'):
@@ -213,7 +217,12 @@ def run_main():
             record = execute(replay_command(batch, config, names, args.frames, directory / 'evidence', args.native_plm), directory, 'replay')
             batch['replays'].append(record)
             save(path, batch)
+            from port_cleanup import deduplicate
+            print(f"Reclaimed {deduplicate(path.parent, True)} snapshot bytes")
             return record['exit_code']
+        if args.command == 'verify':
+            from port_cleanup import deduplicate
+            print(f"Reclaimed {deduplicate(path.parent, True)} snapshot bytes")
         return 0
     except (OSError, ValueError, KeyError, TypeError) as error:
         print(f'port batch: {error}', file=sys.stderr)

@@ -12,16 +12,55 @@
     "collision": "callback",
     "enemy-ai": "callback",
     "enemy-rio": "callback",
-    "enemy-crawler": "callback",
     "projectile_flight": "callback",
     "enemy-jump": "callback",
     "projectile_special": "callback",
     "plm": "offline-family",
     "plm-spawn": "plm",
-    "plm-instructions": "plm-instructions"
+    "plm-instructions": "plm-instructions",
+    "power_bomb": "power-bomb",
+    "enemy-crawler": "callback"
   },
   "profiles": {
-    "gameplay": ["system", "audio", "samus", "enemy", "control", "instructions", "projectiles", "room", "enemy-jump-instructions", "collision", "enemy-ai", "enemy-rio", "enemy-crawler", "projectile_flight", "enemy-jump", "projectile_special"],
-    "all": ["system", "audio", "samus", "enemy", "control", "instructions", "projectiles", "room", "enemy-jump-instructions", "collision", "enemy-ai", "enemy-rio", "enemy-crawler", "projectile_flight", "enemy-jump", "projectile_special", "plm", "plm-spawn", "plm-instructions"]
+    "gameplay": [
+      "system",
+      "audio",
+      "samus",
+      "enemy",
+      "control",
+      "instructions",
+      "projectiles",
+      "room",
+      "enemy-jump-instructions",
+      "collision",
+      "enemy-ai",
+      "enemy-rio",
+      "enemy-crawler",
+      "projectile_flight",
+      "enemy-jump",
+      "projectile_special"
+    ],
+    "all": [
+      "system",
+      "audio",
+      "samus",
+      "enemy",
+      "control",
+      "instructions",
+      "projectiles",
+      "room",
+      "enemy-jump-instructions",
+      "collision",
+      "enemy-ai",
+      "enemy-rio",
+      "enemy-crawler",
+      "projectile_flight",
+      "enemy-jump",
+      "projectile_special",
+      "plm",
+      "plm-spawn",
+      "plm-instructions",
+      "power_bomb"
+    ]
   }
 }
