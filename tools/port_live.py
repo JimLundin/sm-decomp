@@ -15,6 +15,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--family-verdict', type=Path, action='append', required=True)
     parser.add_argument('--frames', type=int, default=9000)
+    parser.add_argument('--accepted', type=Path, default=ROOT / 'out/decomp/review/offline/decomp-acceptance.json')
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     run = args.output.resolve() / datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%S.%fZ')
@@ -49,6 +50,9 @@ def main():
             families.append((manifest, module))
         if not families:
             raise ValueError('no family contracts')
+        from decomp_routine import verify_accepted
+        verify_accepted(args.accepted)
+        verdict['decompressor_predecessor_sha256'] = digest(args.accepted)
         def execute(command, directory, label):
             verdict['commands'].append({'argv': command, 'cwd': str(directory)})
             with (directory / (label + '.stdout')).open('wb') as stdout, (directory / (label + '.stderr')).open('wb') as stderr:
@@ -100,6 +104,14 @@ pub unsafe extern "C" fn port_family_{family_index}(ram:*mut u8,len:usize,id:u32
         library_source = run / 'families.rs'
         library_source.write_text('\n'.join(rust))
         execute(['rustc', '--edition=2024', '-O', '--crate-type=staticlib', str(library_source), '-o', str(run / 'libfamilies.a')], run, 'rust-build')
+        execute(['cargo', 'build', '-p', 'decomp', '--lib', '--release', '--locked', '--offline', '--target-dir', str(run / 'target')], ROOT, 'decompressor-build')
+        verify_accepted(args.accepted)
+        execute(['rustc', '--edition=2024', '-O', '--crate-type=staticlib', str(ROOT / 'tools/decomp/next_random.rs'), '-o', str(run / 'librng.a')], run, 'rng-build')
+        rng_bank = source / 'src/sm_80.c'
+        rng_text = bank_texts.get(rng_bank, rng_bank.read_text())
+        if rng_text.count('uint16 NextRandom(void) {') != 1:
+            raise ValueError('RNG definition rename count differs')
+        bank_texts[rng_bank] = rng_text.replace('uint16 NextRandom(void) {', 'uint16 C_NextRandom(void) {')
         transformations = {}
         for bank, text in bank_texts.items():
             transformed = run / bank.name
@@ -108,8 +120,30 @@ pub unsafe extern "C" fn port_family_{family_index}(ram:*mut u8,len:usize,id:u32
             transformations[bank.name] = {'original_sha256': digest(bank), 'transformed_sha256': digest(transformed)}
         host = run / 'host.c'
         host.write_text('''#define main retained_main
+#define __wrap_DecompressToMem retained_decompression_observer
 ''' + f'#include {json.dumps(str(ROOT / "tools/decomp/headless.c"))}\n' + '''#undef main
+#undef __wrap_DecompressToMem
 #include "snes/ppu.h"
+static int port_mixed;
+static unsigned long port_decompress_c,port_decompress_rust,port_rng_c,port_rng_rust;
+typedef struct PortDecompressReport {size_t written;uint32_t final_source,modes;} PortDecompressReport;
+extern int sm_decompress_v1(const uint8_t*,size_t,uint8_t*,size_t,uint32_t,size_t,PortDecompressReport*);
+extern int32_t sm_next_random_v1(uint8_t*,size_t);
+extern uint16 C_NextRandom(void);
+uint16 NextRandom(void) {
+ if(!port_mixed){port_rng_c++;return C_NextRandom();}
+ int32_t result=sm_next_random_v1(g_ram,sizeof(g_ram));
+ if(result<0)exit(4);port_rng_rust++;return result;
+}
+void __wrap_DecompressToMem(uint32 src,uint8 *dst) {
+ if(!port_mixed){retained_decompression_observer(src,dst);port_decompress_c++;return;}
+ uintptr_t base=(uintptr_t)g_ram,address=(uintptr_t)dst;
+ if(address<base || address-base>=sizeof(g_ram))exit(4);
+ decompression_calls++;SaveRoutineState("before");
+ PortDecompressReport report={0};
+ if(sm_decompress_v1(g_rom,g_snes->cart->romSize,g_ram,sizeof(g_ram),src,address-base,&report))exit(4);
+ port_decompress_rust++;SaveRoutineState("after");
+}
 static FILE *port_effects;
 static unsigned port_frame;
 void __real_ppu_write(Ppu *,uint8_t,uint8_t);
@@ -139,7 +173,6 @@ bool __wrap_RtlRunFrame(int pad) {
  }
  return result;
 }
-static int port_mixed;
 ''' + f'static unsigned long port_c_hits[{len(symbols)}],port_rust_hits[{len(symbols)}];\n' + '\n'.join(wrappers) + '''
 int main(int argc,char **argv) {
  if(argc!=6) return 2;
@@ -150,12 +183,13 @@ int main(int argc,char **argv) {
  if(fclose(port_effects))return 2;
  if(result) return result;
  for(unsigned i=0;i<sizeof(port_c_hits)/sizeof(*port_c_hits);i++) printf("port-hit %u %lu %lu\\n",i,port_c_hits[i],port_rust_hits[i]);
+ printf("predecessor-hit %lu %lu %lu %lu\\n",port_decompress_c,port_decompress_rust,port_rng_c,port_rng_rust);
  return 0;
 }
 ''')
         units += [source / 'src' / name for name in ('spc_player.c', 'tracing.c', 'util.c')]
         units += sorted((source / 'src/snes').glob('*.c'))
-        build = ['cc', '-O2', '-fno-strict-aliasing', '-ffunction-sections', '-fdata-sections', '-iquote', str(source / 'src'), *map(str, units), str(host), str(run / 'libfamilies.a'), '-Wl,--gc-sections', '-Wl,--wrap=Call', '-Wl,--wrap=cpu_runOpcode', '-Wl,--wrap=DecompressToMem', '-Wl,--wrap=ppu_write', '-Wl,--wrap=RtlApuWrite', '-Wl,--wrap=RtlRunFrame', '-lm', '-ldl', '-lpthread', '-o', str(run / 'live')]
+        build = ['cc', '-O2', '-fno-strict-aliasing', '-ffunction-sections', '-fdata-sections', '-iquote', str(source / 'src'), *map(str, units), str(host), str(run / 'libfamilies.a'), str(run / 'target/release/libdecomp.a'), str(run / 'librng.a'), '-Wl,--gc-sections', '-Wl,--wrap=Call', '-Wl,--wrap=cpu_runOpcode', '-Wl,--wrap=DecompressToMem', '-Wl,--wrap=ppu_write', '-Wl,--wrap=RtlApuWrite', '-Wl,--wrap=RtlRunFrame', '-lm', '-ldl', '-lpthread', '-o', str(run / 'live')]
         execute(build, run, 'host-build')
         inventories, hits = {}, {}
         for mode in ('c', 'mixed'):
@@ -165,13 +199,20 @@ int main(int argc,char **argv) {
                 (directory / 'fixtures').mkdir(parents=True)
                 (directory / 'saves').mkdir()
                 execute([str(run / 'live'), mode, str(rom), str(inputs), str(args.frames), str(directory / 'terminal.bin')], directory, 'replay')
-                inventories[name] = {str(p.relative_to(directory)): digest(p) for p in directory.rglob('*') if p.is_file() and p.name not in ('replay.stdout', 'replay.stderr')}
+                inventories[name] = {str(p.relative_to(directory)): digest(p) for p in directory.rglob('*') if p.is_file() and p.name not in ('replay.stdout', 'replay.stderr', 'calls.jsonl') and p.suffix != '.rom'}
                 rows = [line.split() for line in (directory / 'replay.stdout').read_text().splitlines() if line.startswith('port-hit ')]
                 if len(rows) != len(symbols):
                     raise ValueError('missing per-routine execution counters')
                 hits[name] = {symbols[int(row[1])]: {'c': int(row[2]), 'rust': int(row[3])} for row in rows}
                 progress = [json.loads(line) for line in (directory / 'replay.stdout').read_text().splitlines() if line.startswith('{')]
                 verdict.setdefault('progress', {})[name] = progress
+                predecessor = [line.split()[1:] for line in (directory / 'replay.stdout').read_text().splitlines() if line.startswith('predecessor-hit ')]
+                if len(predecessor) != 1:
+                    raise ValueError('missing predecessor execution counters')
+                dc, dr, rc, rr = map(int, predecessor[0])
+                if (mode == 'mixed' and (dc or rc or not dr or not rr)) or (mode == 'c' and (dr or rr or not dc or not rc)):
+                    raise ValueError('prior Rust replacements were not exclusively exercised')
+                verdict.setdefault('predecessor_hits', {})[name] = {'decompressor_c': dc, 'decompressor_rust': dr, 'rng_c': rc, 'rng_rust': rr}
                 if any(row['c' if mode == 'mixed' else 'rust'] for row in hits[name].values()):
                     raise ValueError('replacement execution was not exclusive')
         if any(inventory != inventories['c-0'] for inventory in inventories.values()):

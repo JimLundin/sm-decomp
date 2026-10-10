@@ -1,6 +1,4 @@
-pub use port::Wram;
-#[path = "../src/system.rs"]
-mod system;
+use port::{Wram, system};
 
 #[test]
 fn held_buttons_wait_then_report_new_edges_once() {
