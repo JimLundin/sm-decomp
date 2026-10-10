@@ -71,13 +71,12 @@ fn block_probe(ram: &Wram<'_>, enemy: u16, amount: i32, horizontal: bool) -> Res
     let integer = (position.wrapping_add(amount as u32) >> 16) as u16;
     let radius = if horizontal { width } else { height };
     let edge = if amount < 0 { integer.wrapping_sub(radius) } else { radius.wrapping_add(integer).wrapping_sub(1) };
-    let first = if horizontal {
-        mult8(perpendicular_min >> 4, room_width).wrapping_add(edge >> 4)
-    } else {
-        mult8(edge >> 4, room_width).wrapping_add(perpendicular_min >> 4)
-    };
     // Horizontal C stores the byte index in u16; vertical C uses an int loop index.
-    let mut byte_index = if horizontal { usize::from(first.wrapping_mul(2)) } else { usize::from(first) * 2 };
+    let mut byte_index = if horizontal {
+        usize::from(mult8(perpendicular_min >> 4, room_width).wrapping_add(edge >> 4).wrapping_mul(2))
+    } else {
+        (usize::from(mult8(edge >> 4, room_width)) + usize::from(perpendicular_min >> 4)) * 2
+    };
     loop {
         if byte_index / 2 >= 0x3200 {
             return Err("probe crosses level-data allocation");

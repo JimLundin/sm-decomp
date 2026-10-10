@@ -147,3 +147,13 @@ fn enemy_block_probe_scans_full_height_with_fixed_point_motion() {
     assert_eq!(enemy::dispatch_rom(&mut ram, &[], "CalculateBlockContainingPixelPos", 0x1020, 0x1030), Ok(0));
     assert_eq!(ram.word(0xdc4), 306);
 }
+
+#[test]
+fn vertical_probe_rejects_unwrapped_c_index_outside_level_allocation() {
+    let mut bytes = vec![0; port::WRAM_SIZE];
+    let mut ram = Wram::new(&mut bytes).unwrap();
+    for (offset, value) in [(0x7a5, 255), (0xf7a, 65520), (0xf7e, 4080), (0xf82, 1), (0xf84, 1)] {
+        ram.set_word(offset, value);
+    }
+    assert!(enemy::dispatch_rom(&mut ram, &[], "EnemyFunc_BC76", 0, 0).is_err());
+}
