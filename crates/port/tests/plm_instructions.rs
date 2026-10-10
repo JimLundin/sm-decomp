@@ -6,6 +6,37 @@ fn rom_with(pc: u16, data: &[u8]) -> Vec<u8> {
     rom
 }
 #[test]
+fn drawn_frame_updates_level_tiles_and_queues_two_tilemap_rows() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    let mut rom = rom_with(0x9000, &[3, 0, 0x00, 0x98, 0xbc, 0x86]);
+    rom[0x21800..0x21806].copy_from_slice(&[1, 0, 1, 0, 0, 0]);
+    r.set_word(0x1c23, 0x8000);
+    r.set_word(0x1c37, 0xb703);
+    r.set_word(0x1cd7, 0x8469);
+    r.set_word(0x1d27, 0x9000);
+    r.set_word(0xde1c, 1);
+    r.set_word(0x7a5, 32);
+    r.set_word(0x1c87, 2 * (32 + 1));
+    for (i, tile) in [0x1111, 0x2222, 0x3333, 0x4444].into_iter().enumerate() {
+        r.set_word(0xa008 + i * 2, tile);
+    }
+    instructions::process_frame(&mut r, &rom, 8).unwrap();
+    assert_eq!(r.word(0x10002 + 66), 1);
+    assert_eq!(r.word(0xde1c), 3);
+    assert_eq!(r.word(0x1d27), 0x9004);
+    assert_eq!(r.word(0x1c29), 1);
+    assert_eq!(r.word(0x1c2b), 1);
+    assert_eq!(r.word(0x330), 14);
+    assert_eq!(r.word(0x1c25), 8);
+    assert_eq!(r.word(0xc6c8), 0x1111);
+    assert_eq!(r.word(0xc6ca), 0x2222);
+    assert_eq!(r.word(0xc6cc), 0x3333);
+    assert_eq!(r.word(0xc6ce), 0x4444);
+    assert_eq!(r.word(0xd5), 0x5042);
+    assert_eq!(r.word(0xdc), 0x5062);
+}
+#[test]
 fn deleted_preinstruction_still_ticks_and_runs_expiring_script() {
     for timer in [0u16, 1, 2] {
         let mut bytes = vec![0; WRAM_SIZE];

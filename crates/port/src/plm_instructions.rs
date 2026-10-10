@@ -277,6 +277,13 @@ pub fn process_draw_data(r: &mut Wram<'_>, rom: &[u8], k: u16) -> Result<(), &'s
 }
 /// Bounded control-only frame path. Rendering/message/preinstruction gaps reject.
 pub fn process_control_frame(r: &mut Wram<'_>, rom: &[u8], limit: usize) -> Result<(), &'static str> {
+    process_frame_inner(r, rom, limit, false)
+}
+/// Execute a bounded PLM frame, including level-data and queued tilemap drawing.
+pub fn process_frame(r: &mut Wram<'_>, rom: &[u8], limit: usize) -> Result<(), &'static str> {
+    process_frame_inner(r, rom, limit, true)
+}
+fn process_frame_inner(r: &mut Wram<'_>, rom: &[u8], limit: usize, render: bool) -> Result<(), &'static str> {
     if r.byte(0x613) != 0 {
         return Err("active PLM coroutine requires host");
     }
@@ -310,7 +317,17 @@ pub fn process_control_frame(r: &mut Wram<'_>, rom: &[u8], limit: usize) -> Resu
         for _ in 0..limit {
             let opcode = word(rom, 0x84, pc)?;
             if opcode & 0x8000 == 0 {
-                return Err("PLM frame rendering requires draw host");
+                if !render {
+                    return Err("PLM frame rendering requires draw host");
+                }
+                r.set_word(INSTR_TIMER + k, opcode);
+                r.set_word(DRAW + k, word(rom, 0x84, next(pc, 2)?)?);
+                r.set_word(LIST + k, next(pc, 4)?);
+                process_draw_data(r, rom, k as u16)?;
+                crate::plm_render::calculate_block_coords(r, k as u16)?;
+                crate::plm_render::draw(r, rom, k as u16)?;
+                ended = true;
+                break;
             }
             match instruction(r, rom, opcode, next(pc, 2)?, k as u16)? {
                 Some(p) => pc = p,
@@ -328,6 +345,18 @@ pub fn process_control_frame(r: &mut Wram<'_>, rom: &[u8], limit: usize) -> Resu
     Ok(())
 }
 pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], symbol: &str, a: i32, b: i32) -> Result<u32, &'static str> {
+    if symbol == "PlmFrame" {
+        process_frame(r, rom, 4096)?;
+        return Ok(0);
+    }
+    if symbol == "DrawPlm" {
+        crate::plm_render::draw(r, rom, a as u16)?;
+        return Ok(0);
+    }
+    if symbol == "CalculatePlmBlockCoords" {
+        crate::plm_render::calculate_block_coords(r, a as u16)?;
+        return Ok(0);
+    }
     if symbol == "PlmControlFrame" {
         process_control_frame(r, rom, 4096)?;
         return Ok(0);

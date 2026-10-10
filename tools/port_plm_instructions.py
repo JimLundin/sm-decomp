@@ -12,7 +12,7 @@ from port_family import IDENTIFIER, ROOT, WRAM_SIZE, digest, execute, parse_resu
 
 def build(manifest, source, run):
     (run / "plm-shim.c").write_text(
-        '#include "sm_rtl.h"\n#include "variables.h"\n#include "funcs.h"\nextern const uint8 *CallPlmInstr(uint32,const uint8*,uint16);\nextern CoroutineRet PlmHandler_Async(void);\nconst uint16 *PlmInstruction(uint16 slot,const uint16 *script) {\n const uint8 *p=(const uint8*)script;\n return (const uint16*)CallPlmInstr(GET_WORD(p)|0x840000,p+2,slot);\n}\nuint32 PlmControlFrame(void) {return PlmHandler_Async();}\n'
+        '#include "sm_rtl.h"\n#include "variables.h"\n#include "funcs.h"\nextern const uint8 *CallPlmInstr(uint32,const uint8*,uint16);\nextern CoroutineRet PlmHandler_Async(void);\nconst uint16 *PlmInstruction(uint16 slot,const uint16 *script) {\n const uint8 *p=(const uint8*)script;\n return (const uint16*)CallPlmInstr(GET_WORD(p)|0x840000,p+2,slot);\n}\nuint32 PlmControlFrame(void) {return PlmHandler_Async();}\nuint32 PlmFrame(void) {return PlmHandler_Async();}\n'
     )
     host_support = run / "host-support.c"
     host_support.write_text(

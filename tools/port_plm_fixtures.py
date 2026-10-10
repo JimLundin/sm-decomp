@@ -190,6 +190,76 @@ def generate(output_dir: Path, manifest_path: Path | None = None) -> Path:
         draw.append(
             {"name": f"draw-{seed}", "a": slot, "writes": writes, "expected_return": 0}
         )
+    render = []
+    # Cross camera edges, quadrant flips, buffer limits and screen splitting.
+    for vertical in [False, True]:
+        for count in [1, 2, 4, 16]:
+            for seed in range(32):
+                pc = 0xB800
+                data = le(count | (0x8000 if vertical else 0))
+                for i in range(count):
+                    data += le(((i + seed) % 8) | ((seed % 4) << 10))
+                # A second segment tests offset relative to the original origin.
+                data += le(0x0101) + le(1) + le(3 | ((seed % 4) << 10)) + le(0)
+                # Each case needs its own ROM address because seed affects tiles.
+                pc += len(render) * 64
+                write(0x84, pc, data)
+                slot = [0, 2, 38, 78][seed % 4]
+                camera_x, camera_y = 16 * (seed % 3), 16 * (seed % 5)
+                x = [0, 1, 15, 16, 17, 31, 32, 48][seed % 8]
+                y = [0, 1, 14, 15, 16, 17, 20, 32][(seed // 4) % 8]
+                tiles = []
+                for tile in range(8):
+                    for quadrant in range(4):
+                        tiles += le(0x1000 + tile * 16 + quadrant)
+                writes = [[0xDE6C + slot, le(pc)], [0x1C29, le(x)],
+                          [0x1C2B, le(y)], [0x911, le(camera_x)],
+                          [0x915, le(camera_y)], [0x91D, le(0x100 if seed % 2 else 0)],
+                          [0x1C25, le([0, 8, 480, 504][seed % 4])],
+                          [0x330, le([0, 14, 224, 240, 476, 480][seed % 6])],
+                          [0xA000, tiles]]
+                if seed % 2:
+                    writes += [[0x1000, data], [0xDE6C + slot, le(0x1000)]]
+                render.append({"name": f"render-{int(vertical)}-{count}-{seed}",
+                               "a": slot, "writes": writes, "expected_return": 0})
+    drawn_frames = []
+    for seed in range(32):
+        slot = [0, 2, 38, 78][seed % 4]
+        pc, data_pc = 0xA900 + seed * 16, 0xAB00 + seed * 32
+        write(0x84, pc, le(3) + le(data_pc) + le(0x86BC))
+        data = le(2 | (0x8000 if seed % 2 else 0))
+        data += le(1 | ((seed % 4) << 10)) + le(2) + le(0)
+        write(0x84, data_pc, data)
+        tiles = []
+        for tile in range(8):
+            for quadrant in range(4):
+                tiles += le(0x2000 + tile * 16 + quadrant)
+        writes = [[0x1C23, le(0x8000)], [0x1C37 + slot, le(0xB703)],
+                  [0x1CD7 + slot, le(0x8469)], [0x1D27 + slot, le(pc)],
+                  [0xDE1C + slot, le(1)], [0x1C87 + slot, le(2 * (32 + seed))],
+                  [0x7A5, le(32)], [0xA000, tiles],
+                  [0x911, le(seed % 3 * 16)], [0x915, le(0)],
+                  [0x91D, le(0x100 if seed % 2 else 0)]]
+        drawn_frames.append({"name": f"drawn-frame-{seed}", "writes": writes,
+                             "expected_return": 0})
+    for seed in range(8):
+        writes = [[0x1C23, le(0x8000)], [0x7A5, le(32)], [0xA000, tiles]]
+        for slot in [0, 2, 38, 78]:
+            pc, data_pc = 0xAE00 + slot * 8, 0xB100 + slot * 8
+            write(0x84, pc, le(2) + le(data_pc))
+            write(0x84, data_pc, le(1) + le(1 + slot % 4) + le(0))
+            writes += [[0x1C37 + slot, le(0xB703)], [0x1CD7 + slot, le(0x8469)],
+                       [0x1D27 + slot, le(pc)], [0xDE1C + slot, le(1)],
+                       [0x1C87 + slot, le(2 * (32 + 1 + seed))]]
+        drawn_frames.append({"name": f"drawn-multi-frame-{seed}", "writes": writes,
+                             "expected_return": 0})
+    coordinates = []
+    for width in [0, 1, 16, 31, 255, 256, 272, 65535]:
+        for block_index in [0, 2, 30, 32, 1022, 65534]:
+            coordinates.append({"name": f"coords-{width}-{block_index}", "a": 78,
+                                "writes": [[0x7A5, le(width)],
+                                           [0x1C87 + 78, le(block_index)]],
+                                "expected_return": 0})
     output_dir = output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
     path = output_dir / "plm-instructions-synthetic.sfc"
@@ -215,6 +285,24 @@ def generate(output_dir: Path, manifest_path: Path | None = None) -> Path:
                 "args": 0,
                 "return": "uint32",
                 "cases": frames,
+            },
+            {
+                "symbol": "PlmFrame",
+                "args": 0,
+                "return": "uint32",
+                "cases": drawn_frames,
+            },
+            {
+                "symbol": "CalculatePlmBlockCoords",
+                "args": 1,
+                "return": "void",
+                "cases": coordinates,
+            },
+            {
+                "symbol": "DrawPlm",
+                "args": 1,
+                "return": "void",
+                "cases": render,
             },
             {
                 "symbol": "ProcessPlmDrawInstruction",

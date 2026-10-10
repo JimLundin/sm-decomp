@@ -155,3 +155,19 @@ including the hardcoded allocation default. Evidence
 passes 756 full-WRAM/raw-return cases, including 408 frame cases. Independent
 deletion regression, full Rust tests and Clippy pass. Rendering and coroutine
 ownership remain with C.
+
+## Native drawn frames
+
+`plm_render` now owns block coordinates and the complete `DrawPlm` tilemap path:
+horizontal/vertical camera clipping, quadrant flips, two/four-entry VRAM queues,
+screen crossing, chained signed offsets and shared tilemap capacity stops.
+`plm_instructions::process_frame` executes drawn instructions through level-data
+updates, coordinates and queued rendering. The host still executes hardware
+transfers and message coroutines; unsupported preinstructions reject.
+
+Actual pinned C evidence
+`out/port/plm-rendering/20261010T225759.092054Z/verdict.json` passes 1,100 cases
+across six seams, including 256 renderer cases, 48 coordinate cases and 40
+drawn frames. Seven independent renderer tests and a literal full-frame example,
+the full Rust suite and Clippy pass. This expands offline ownership; live
+rendering and original-ROM parity remain unproven.
