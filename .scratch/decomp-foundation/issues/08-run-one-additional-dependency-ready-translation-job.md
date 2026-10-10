@@ -22,7 +22,7 @@ The disjoint standalone Rust candidate leaves every sealed decompressor source
 identity unchanged. The predecessor ticket06 acceptance was independently verified
 before and after execution and its pointer was never rewritten.
 
-Accepted local run: `out/decomp/ticket08/20261010T184747.278832Z`.
+Accepted local run: `/home/jim/sm-decomp/out/decomp/ticket08/20261010T184747.278832Z`.
 Verdict SHA-256: `b3dcfb952b4c044aad3d4b9bea74f51bc8bbf1bd1326d0cef615b92c351e0857`.
 All 65,536 seeds match actual pinned C and Rust with complete surrounding WRAM
 invariance and independently worked edge expectations. Sixteen actual C live calls
