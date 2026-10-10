@@ -38,7 +38,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--family-verdict', type=Path, action='append', required=True)
     parser.add_argument('--frames', type=int, default=9000)
-    parser.add_argument('--accepted', type=Path, default=ROOT / 'out/decomp/review/offline/decomp-acceptance.json')
+    parser.add_argument('--accepted', type=Path, default=ROOT / 'out/port/decompressor-offline/decomp-acceptance.json')
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     run = args.output.resolve() / datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%S.%fZ')
@@ -135,6 +135,17 @@ def main():
         execute(['cargo', 'build', '-p', 'decomp', '--lib', '--release', '--locked', '--offline', '--target-dir', str(run / 'target')], ROOT, 'decompressor-build')
         verify_accepted(args.accepted)
         execute(['rustc', '--edition=2024', '-O', '--crate-type=staticlib', str(ROOT / 'tools/decomp/next_random.rs'), '-o', str(run / 'librng.a')], run, 'rng-build')
+        verdict['rng_source_sha256'] = digest(ROOT / 'tools/decomp/next_random.rs')
+        rng_cli = run / 'rng-cli'
+        execute(['rustc', '--edition=2024', '-O', '--cfg', 'cli', str(ROOT / 'tools/decomp/next_random.rs'), '-o', str(rng_cli)], run, 'rng-cli-build')
+        execute([str(rng_cli), 'exhaustive'], run, 'rng-exhaustive')
+        rng_predecessor = ROOT / 'out/decomp/review/jobs/20261010T185638.603810Z'
+        rng_verified = json.loads((rng_predecessor / 'verdict.json').read_text())
+        if rng_verified.get('status') != 'accepted' or rng_verified['implementation']['tools/decomp/next_random.rs'] != verdict['rng_source_sha256']:
+            raise ValueError('RNG source differs from accepted exhaustive predecessor')
+        if digest(run / 'rng-exhaustive.stdout') != rng_verified['synthetic']['table_sha256']:
+            raise ValueError('RNG exhaustive behavior differs from predecessor')
+        verdict['rng_predecessor_sha256'] = digest(rng_predecessor / 'verdict.json')
         rng_bank = source / 'src/sm_80.c'
         rng_text = bank_texts.get(rng_bank, rng_bank.read_text())
         if rng_text.count('uint16 NextRandom(void) {') != 1:
