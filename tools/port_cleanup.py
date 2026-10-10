@@ -50,6 +50,10 @@ def candidates(root):
             except (OSError, ValueError):
                 # An unreadable manifest makes cleanup unsafe.
                 return []
+    protected_paths = set()
+    for base, document in documents:
+        for name in inventories(document):
+            protected_paths.add(Path(os.path.abspath(base / name)))
     result = []
     for target in targets:
         verdict = target.parent / 'verdict.json'
@@ -58,14 +62,7 @@ def candidates(root):
         data = json.loads(verdict.read_text())
         if not isinstance(data, dict) or data.get('status') not in ('accepted', 'offline-verified', 'mixed-C-Rust-integration', 'rejected', 'failed'):
             continue
-        protected = False
-        for base, document in documents:
-            if not isinstance(document, dict):
-                continue
-            for name in inventories(document):
-                path = Path(os.path.abspath(base / name))
-                if path == target or target in path.parents:
-                    protected = True
+        protected = any(path == target or target in path.parents for path in protected_paths)
         if target.name != 'target' and data.get('status') != 'mixed-C-Rust-integration':
             continue
         if not protected:
@@ -89,11 +86,15 @@ def deduplicate(root, apply):
             verdict = json.loads((base / 'verdict.json').read_text())
         except (OSError, ValueError):
             continue
+        if not isinstance(verdict, dict):
+            continue
         if verdict.get('status') not in ('accepted', 'offline-verified', 'mixed-C-Rust-integration'):
             continue
         inventory = verdict.get('artifacts', {})
         if not isinstance(inventory, dict):
             continue
+        # Finished runs enumerate their snapshots; avoid walking all case dirs.
+        dirs.clear()
         for relative, expected in inventory.items():
             source = base / relative
             choices = [source]
