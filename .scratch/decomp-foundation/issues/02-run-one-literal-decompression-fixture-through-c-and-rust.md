@@ -30,3 +30,13 @@ passed. `python3 -m unittest tools.test_decomp_routine` (2 tests),
 `/tmp/sm-decomp-foundation-context/ticket02-verdict.json` (points to immutable
 run directory with binaries, inputs, outputs, commands, identities and notices).
 Implementation commit is the commit adding this completion record.
+
+Follow-up verification corrected a relative script-path identity error discovered
+by the merger: the runner now resolves its own source path. The public-job tests
+invoke `python3 tools/decomp_routine.py` from repository root. Both that exact
+relative invocation and `just decomp-routine` were run and their retained JSON
+verdicts explicitly checked for `partial`, all four completed stages and disabled
+routine acceptance. Evidence pointers:
+`/tmp/sm-decomp-foundation-context/ticket02-verdict.json` and
+`/tmp/sm-decomp-foundation-context/ticket02-just-verdict.json`. The earlier error
+run remains retained; it was not accepted or reused.

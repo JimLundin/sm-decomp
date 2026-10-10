@@ -10,8 +10,8 @@ ROOT = Path(__file__).resolve().parents[1]
 class LiteralJob(unittest.TestCase):
     def test_literal_and_terminator_are_partial_not_routine_acceptance(self):
         with tempfile.TemporaryDirectory() as directory:
-            result = subprocess.run(['python3', str(ROOT / 'tools/decomp_routine.py'),
-                                     '--output', directory], capture_output=True, text=True)
+            result = subprocess.run(['python3', 'tools/decomp_routine.py',
+                                     '--output', directory], capture_output=True, text=True, cwd=ROOT)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             verdict = json.loads(next(Path(directory).glob('*/verdict.json')).read_text())
             self.assertEqual(verdict['status'], 'partial')
@@ -28,8 +28,8 @@ class LiteralJob(unittest.TestCase):
             manifest['fixtures'][0]['destination'] = 0x20000 - 1
             path = Path(directory) / 'invalid.json'
             path.write_text(json.dumps(manifest))
-            result = subprocess.run(['python3', str(ROOT / 'tools/decomp_routine.py'),
-                                     '--manifest', str(path), '--output', directory], capture_output=True, text=True)
+            result = subprocess.run(['python3', 'tools/decomp_routine.py',
+                                     '--manifest', str(path), '--output', directory], capture_output=True, text=True, cwd=ROOT)
             self.assertEqual(result.returncode, 1)
             verdict = json.loads(next(Path(directory).glob('*/verdict.json')).read_text())
             self.assertEqual(verdict['status'], 'error')

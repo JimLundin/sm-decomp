@@ -121,7 +121,7 @@ def run_job(args):
         source = ROOT / 'deps/snesrev-sm'
         verdict['source_identities'] = verify_source(manifest, source)
         shutil.copyfile(source / 'LICENSE.txt', run / 'LICENSE.txt')
-        inputs = [ROOT / 'tools/decomp/routine_oracle.c', Path(__file__),
+        inputs = [ROOT / 'tools/decomp/routine_oracle.c', Path(__file__).resolve(),
                   ROOT / 'crates/decomp/src/lib.rs', ROOT / 'crates/decomp/src/main.rs']
         verdict['implementation_identities'] = {str(p.relative_to(ROOT)): digest(p) for p in inputs}
         for p in inputs:
