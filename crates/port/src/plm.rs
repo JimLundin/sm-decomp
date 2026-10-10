@@ -38,11 +38,49 @@ fn mark_broken(r: &mut Wram, j: usize, b: usize, graphic: u16, mask: u16) {
     r.set_word(VARIABLE + j, value);
     set_tile(r, b, value & mask);
 }
+fn wake_adjacent_gate(r: &mut Wram, j: usize, target: u16) -> u8 {
+    if let Some(partner) = (0..40).rev().map(|i| i * 2).find(|&other| r.word(BLOCK + other) == target)
+        && r.word(0x1d77 + partner) == 0
+    {
+        r.set_word(0x1d77 + partner, 1);
+    }
+    delete(r, j);
+    1
+}
 /// Synchronous setup flags and optional movement amount mutation.
 pub fn setup(r: &mut Wram, address: u16, j: u16, amount: &mut i32) -> Result<u8, &'static str> {
     let j = slot(j)?;
     let b = block(r, j)?;
     match address {
+        0xc54d | 0xc56c | 0xc58b | 0xc5af | 0xc5d3 | 0xc5f1 | 0xc610 | 0xc627 => {
+            let projectile = r.word(0xdde);
+            if projectile > 18 || projectile & 1 != 0 {
+                return Err("gate projectile index");
+            }
+            let kind = r.word(0xc18 + usize::from(projectile)) & 0xfff;
+            let accepted = match address {
+                0xc54d | 0xc56c => kind == 0x200,
+                0xc58b | 0xc5af => kind == 0x100 || kind == 0x200,
+                0xc5d3 => kind == 0x300,
+                _ => kind != 0x300,
+            };
+            let left = matches!(address, 0xc54d | 0xc58b | 0xc5d3 | 0xc610);
+            if accepted {
+                return Ok(wake_adjacent_gate(
+                    r,
+                    j,
+                    if left { (b as u16).wrapping_add(2) } else { (b as u16).wrapping_sub(2) },
+                ));
+            }
+            if !matches!(address, 0xc610 | 0xc627) {
+                crate::audio::dispatch(r, "QueueSfx2_Max6", 0x57, 0)?;
+            }
+            delete(r, j);
+            // Preserve the recovered left-side fallthrough, including the yellow dud.
+            if address == 0xc5d3 {
+                return Ok(wake_adjacent_gate(r, j, (b as u16).wrapping_sub(2)));
+            }
+        }
         0xb8dc => {
             r.set_word(0xcd20, 1);
             r.set_word(0xcd22, 0);
@@ -498,6 +536,14 @@ fn spawn_positioned(
 }
 pub fn dispatch_rom(r: &mut Wram, _rom: &[u8], name: &str, a: i32, _b: i32) -> Result<u32, &'static str> {
     let address = match name {
+        "PlmSetup_C806_LeftGreenGateTrigger" => 0xc54d,
+        "PlmSetup_C80A_RightGreenGateTrigger" => 0xc56c,
+        "PlmSetup_C80E_LeftRedGateTrigger" => 0xc58b,
+        "PlmSetup_C812_RightRedGateTrigger" => 0xc5af,
+        "PlmSetup_C81E_LeftYellowGateTrigger" => 0xc5d3,
+        "PlmSetup_C822_RightYellowGateTrigger" => 0xc5f1,
+        "PlmSetup_C816_LeftBlueGateTrigger" => 0xc610,
+        "PlmSetup_C81A_RightBlueGateTrigger" => 0xc627,
         "PlmSetup_C794_GreyDoor" => 0xc794,
         "PlmSetup_Door_Colored" => 0xc7b1,
         "PlmSetup_Door_Blue" => 0xc7bb,

@@ -193,3 +193,31 @@ fn escape_door_initializes_vertical_extensions_and_scroll_setup_resets_words() {
     assert_eq!(ram.word(0xcd20), 1);
     assert_eq!(ram.word(0xcd22), 0);
 }
+
+#[test]
+fn left_green_trigger_wakes_highest_adjacent_gate_without_resetting_timer() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut ram = Wram::new(&mut bytes).unwrap();
+    ram.set_word(0x1c87, 0x100);
+    ram.set_word(0x1c37, 0xbeef);
+    ram.set_word(0xc18, 0x200);
+    ram.set_word(0x1c87 + 78, 0x102);
+    assert_eq!(plm::setup(&mut ram, 0xc54d, 0, &mut 0), Ok(1));
+    assert_eq!(ram.word(0x1d77 + 78), 1);
+    assert_eq!(ram.word(0x1c37), 0);
+    ram.set_word(0x1d77 + 78, 9);
+    assert_eq!(plm::setup(&mut ram, 0xc54d, 0, &mut 0), Ok(1));
+    assert_eq!(ram.word(0x1d77 + 78), 9);
+}
+
+#[test]
+fn left_yellow_non_bomb_falls_through_and_wakes_opposite_gate() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut ram = Wram::new(&mut bytes).unwrap();
+    ram.set_word(0x1c87, 0x100);
+    ram.set_word(0x1c87 + 78, 0xfe);
+    ram.set_word(0xc18, 0x100);
+    assert_eq!(plm::setup(&mut ram, 0xc5d3, 0, &mut 0), Ok(1));
+    assert_eq!(ram.word(0x1d77 + 78), 1);
+    assert_eq!(ram.word(0x1c37), 0);
+}

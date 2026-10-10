@@ -115,3 +115,19 @@ Exact actual-C full-WRAM evidence:
 full port tests, formatting and Clippy pass. These ten additions are offline
 verified; previous hardcoded live admission belongs to its earlier exact source
 snapshot. New module seals require refreshed consumers before installation.
+
+## Colored gate trigger closure
+
+All eight colored gate triggers now execute native projectile filtering and
+adjacent-gate wakeup. Highest matching PLM slot is selected independently of
+header occupancy; only a zero gate timer becomes1. The trigger is deleted and
+carry1 is returned even when no partner exists. Green/red projectile masks,
+right-yellow exclusion and recovered left-yellow/blue fallthrough remain intact.
+Dud sound queues use the native audio module, compared against actual bank80 C.
+Malformed projectile slots reject before mutation.
+
+Actual-C evidence `out/port/plm-gate-triggers/20261010T224905.433245Z/verdict.json`
+verifies62setup routines/576cases, including144new gate cases covering projectile
+kinds, absent/present partner and nonzero timers. Fourteen independent PLM tests,
+full Rust tests and Clippy pass. Gate trigger additions are offline verified;
+closed gate projectile creation and the PLM frame/rendering engine remain C-owned.
