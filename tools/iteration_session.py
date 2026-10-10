@@ -85,8 +85,19 @@ class Session:
         before=initial.get('metrics',{});after=baseline.get('metrics',{})
         text+='Generated instructions: {} → {}. Interpreted: {} → {}. Generated fraction: {} → {}.\n\n'.format(before.get('generated','unavailable'),after.get('generated','unavailable'),before.get('interpreted','unavailable'),after.get('interpreted','unavailable'),before.get('fraction','unavailable'),after.get('fraction','unavailable'))
         text+='Validated distinct keys: {} → {}.\n\n'.format(before.get('validated_distinct_keys','unavailable'),after.get('validated_distinct_keys','unavailable'))
-        text+='Declared pattern scope: {}. Reused evidence: {}.\n\n'.format(json.dumps(baseline.get('patterns',{}),sort_keys=True),json.dumps(baseline.get('reused_evidence',[]),sort_keys=True))
-        text+='[Per-key metrics and deferred/unsupported inventory](state.json). Timings: {}.\n\n'.format(json.dumps(baseline.get('timings',{}),sort_keys=True))
+        patterns=baseline.get('patterns',{}).get('patterns',[])
+        text+='Declared patterns: {}. [Full per-key, pattern, deferred/unsupported and reuse evidence](state.json).\n\n'.format(', '.join(row['mnemonic']+'/'+row['mode'] for row in patterns) or 'see accepted instruction evidence')
+        reused=baseline.get('reused_evidence',[])
+        text+='Reused gates: {}.\n\n'.format(', '.join(str(row.get('check',row.get('name','gate')))+' from '+str(row.get('run_id',row.get('source_run_id','verified predecessor'))) for row in reused) or 'none')
+        from datetime import datetime
+        elapsed=(datetime.fromisoformat(self.state['finished_utc'])-datetime.fromisoformat(self.state['started_utc'])).total_seconds()
+        text+='Total session time including readiness, preparation and retries: {:.1f}s.\n\n'.format(elapsed)
+        text+='| Completed validation work | Seconds |\n| --- | --- |\n'
+        for name,report in baseline.get('timings',{}).items():
+            seconds=report.get('total_seconds',report.get('elapsed_seconds'))
+            if seconds is not None:text+='| {} | {:.1f} |\n'.format(name,seconds)
+            for stage,duration in report.get('timings',{}).items():text+='| {} {} | {:.1f} |\n'.format(name,stage,duration)
+        text+='\n'
         text+='Warm focus target: 60s. Each cold replay target: 1200s. Actual timeouts remain incomplete.\n\n'
         for event in self.state['events']:text+='- [{}]({})\n'.format(event['operation'],event['evidence'])
         text+='\n[Session state](state.json) · [Accepted evidence]({}/brief.md)\n'.format(baseline.get('run_path','unavailable'))
@@ -96,8 +107,12 @@ class Session:
                 artifact=self.path/(str(event['sequence'])+'-source.diff')
                 artifact.write_text(evidence['source_diff_text'])
                 text+='\n[Candidate source diff]({})\n'.format(artifact.name)
+            if evidence.get('candidate_path'):
+                text+='\n[Preserved candidate]({}/brief.md) · [Verdict]({}/verdict.json) · [Source snapshot]({}/source/inventory.json).\n'.format(evidence['candidate_path'],evidence['candidate_path'],evidence['candidate_path'])
             if evidence.get('diagnostics'):
-                text+='\nDiagnosis: {}.\n'.format(json.dumps(evidence['diagnostics'].get('failure',{}),sort_keys=True))
+                diagnostic=evidence['diagnostics'];failure=diagnostic.get('failure',{})
+                text+='\nEarliest disagreement: {}. Controls: {}. Next action: {}.\n'.format(json.dumps(failure.get('earliest_disagreement'),sort_keys=True),failure.get('routing',{}).get('conclusion','unresolved'),diagnostic.get('next_action','repair-and-validate'))
+                text+='[Ordered diagnostic history]({}/brief.md). Preserved predecessor: {}.\n'.format(diagnostic.get('run_path','unavailable'),diagnostic.get('accepted_parent'))
         (self.path/'brief.md').write_text(text)
         return self.state
 
