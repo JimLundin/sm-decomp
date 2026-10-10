@@ -5,6 +5,8 @@
 #include "variables.h"
 #include "spc_player.h"
 #include <stdlib.h>
+#include <string.h>
+#include "snes/cart.h"
 
 bool g_debug_flag, g_is_turbo, g_other_image;
 bool g_new_ppu = true;
@@ -44,9 +46,21 @@ void __wrap_DecompressToMem(uint32 src, uint8 *dst) {
   decompression_calls++;
   fprintf(stderr, "decompression frame=%d source=%06x destination=%ld\n",
           snes_frame_counter, src, (long)(dst - g_ram));
+  char rom_name[96];
+  snprintf(rom_name, sizeof(rom_name), "fixtures/decompress-%04lu.rom", decompression_calls);
+  FILE *rom = fopen(rom_name, "wb");
+  if (!rom || fwrite(g_rom, 1, g_snes->cart->romSize, rom) != g_snes->cart->romSize || fclose(rom)) exit(2);
   SaveRoutineState("before");
   __real_DecompressToMem(src, dst);
   SaveRoutineState("after");
+  FILE *manifest = fopen("fixtures/calls.jsonl", "a");
+  if (!manifest) exit(2);
+  fprintf(manifest, "{\"sequence\":%lu,\"frame\":%d,\"source_address\":%u,"
+          "\"destination_offset\":%ld,\"before_file\":\"decompress-%04lu-before.wram\","
+          "\"after_file\":\"decompress-%04lu-after.wram\"}\n",
+          decompression_calls, snes_frame_counter, src, (long)(dst - g_ram),
+          decompression_calls, decompression_calls);
+  if (fclose(manifest)) exit(2);
 }
 
 // The host has no audio thread; preserve the real player and hardware routines.
@@ -56,15 +70,42 @@ void Die(const char *error) { fprintf(stderr, "%s\n", error); exit(2); }
 void Warning(const char *error) { fprintf(stderr, "%s\n", error); exit(2); }
 
 int main(int argc, char **argv) {
-  if (argc != 5) {
+  bool control = argc == 4 && !strcmp(argv[1], "--observation-control");
+  if (argc != 5 && !control) {
     fprintf(stderr, "usage: headless ROM INPUTS FRAMES STATE_OUTPUT\n");
     return 2;
+  }
+  if (control) {
+    if (!SnesInit(argv[2])) return 2;
+    g_spc_player = SpcPlayer_Create();
+    SpcPlayer_Initialize(g_spc_player);
+    g_runmode = 1;
+    RtlReset(0);
+    // Isolated observation control, never part of candidate replay: execute
+    // an actual C-to-CPU fallback and an actual cross-unit decompression call.
+    uint8 *code = (uint8 *)RomPtr(0xff8000);
+    const uint8 program[] = {0xa9, 0x42, 0x00, 0x8f, 0x00, 0x10, 0x7e, 0x6b}; // LDA #$0042; STA $7e1000; RTL
+    memcpy(code, program, sizeof(program));
+    g_cpu->sp = 0x1ff;
+    Call(0xff8000);
+    if (g_ram[0x1000] != 0x42) return 3;
+    uint8 *stream = (uint8 *)RomPtr(0xff8100);
+    const uint8 literal[] = {0x02, 0x12, 0x34, 0x56, 0xff};
+    memcpy(stream, literal, sizeof(literal));
+    DecompressToMem(0xff8100, g_ram + 0x12000);
+    if (memcmp(g_ram + 0x12000, literal + 1, 3)) return 3;
+    printf("{\"fallback_calls\":%lu,\"fallback_instructions\":%lu,"
+           "\"decompression_calls\":%lu}\n", fallback_calls, fallback_instructions, decompression_calls);
+    return 0;
   }
   char *end;
   long frames = strtol(argv[3], &end, 10);
   if (*end || frames < 1 || frames > 1000000) return 2;
   FILE *inputs = fopen(argv[2], "r");
   if (!inputs || !SnesInit(argv[1])) return 2;
+  FILE *rom_view = fopen("rom-view.bin", "wb");
+  if (!rom_view || fwrite(g_rom, 1, g_snes->cart->romSize, rom_view) != g_snes->cart->romSize ||
+      fclose(rom_view)) return 2;
   g_spc_player = SpcPlayer_Create();
   SpcPlayer_Initialize(g_spc_player);
   g_runmode = 1; // RM_MINE: candidate runs independently; no comparison restoration.
