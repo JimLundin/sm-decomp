@@ -7,6 +7,18 @@ from pathlib import Path
 
 
 class ControlsTests(unittest.TestCase):
+    def test_predecessor_material_linking_preserves_restored_rom_directory(self):
+        from readiness_controls import link_control_material
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)/'root';checkout=Path(directory)/'checkout'
+            (root/'rom').mkdir(parents=True);(checkout/'rom').mkdir(parents=True)
+            (root/'rom/sm.sfc').write_bytes(b'private fixture ROM')
+            (checkout/'rom/README.md').write_text('restored tracked documentation')
+            link_control_material(checkout,root)
+            self.assertEqual((checkout/'rom/README.md').read_text(),'restored tracked documentation')
+            self.assertTrue((checkout/'rom/sm.sfc').is_symlink())
+            self.assertEqual((checkout/'rom/sm.sfc').read_bytes(),b'private fixture ROM')
+
     def test_discovery_keeps_process_provenance_separate_from_result(self):
         from readiness import Run
         from readiness_diagnostics import discover_intervals

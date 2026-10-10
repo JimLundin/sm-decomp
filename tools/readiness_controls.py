@@ -51,6 +51,18 @@ def route_failure(failure, predecessor=None, disabled=None):
             "next_experiment": "Verify input/profile, preserved predecessor, cache fidelity and shared hardware at the first disagreement"}
 
 
+def link_control_material(checkout,root):
+    """Attach ignored ROM files without replacing restored tracked documentation."""
+    checkout,root=Path(checkout),Path(root)
+    (checkout/'rom').mkdir(exist_ok=True)
+    for material in (root/'rom').iterdir():
+        if material.suffix.lower() not in ('.sfc','.smc'):continue
+        destination=checkout/'rom'/material.name
+        if destination.exists() or destination.is_symlink():
+            raise RuntimeError('Preserved control ROM path already exists: '+str(destination))
+        destination.symlink_to(material.resolve())
+
+
 def _predecessor_run(parent, predecessor):
     """Rebuild from intact preserved source in an isolated checkout."""
     import subprocess
@@ -69,7 +81,7 @@ def _predecessor_run(parent, predecessor):
     subprocess.run(["git","-C",str(checkout),"add","."],check=True)
     subprocess.run(["git","-C",str(checkout),"-c","user.name=Readiness","-c","user.email=readiness@local.invalid",
                     "commit","-qm","Preserved predecessor source"],check=True)
-    (checkout/"rom").symlink_to(parent.root/"rom",target_is_directory=True)
+    link_control_material(checkout,parent.root)
     (checkout/"deps").mkdir()
     for material in (parent.root/"deps").iterdir():
         if material.name!="rustysnes":
@@ -146,7 +158,9 @@ def diagnose_failure(run, failure, predecessor=None, intervals=None, timeout=Non
                           {"controls":reports,"routing":route},discriminating=route["route"]=="increment",
                           evidence=route["conclusion"])
     if child:
-        child.finalize("pass",reason="Matched predecessor control scopes complete")
+        old_reports=[item['predecessor'] for item in reports]
+        child_status='pass' if old_reports and all(item.get('status')=='pass' and item.get('complete') is True for item in old_reports) else next((item.get('status','incomplete') for item in old_reports if item.get('status')!='pass' or item.get('complete') is not True),'incomplete')
+        child.finalize(child_status,reason='Matched predecessor controls '+child_status)
         result["predecessor_control_run"]=str(child.path)
     result.update(complete=all(all(control.get("complete") is True for control in (item["candidate"],item["disabled"],item["predecessor"])) for item in reports),controls=reports,routing=reports[0]["routing"] if reports else route_failure(failure))
     write_json(run.path/"diagnostics/failure-controls.json",result);run.record_check("failure-controls",result)

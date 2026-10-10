@@ -150,6 +150,9 @@ def run_readiness(root,predecessor=None,original_run=None,timeout=None,jobs=4,it
     run=Run.create(root,'iteration' if iteration else 'readiness',dict(DOMAIN),Path(predecessor).name if predecessor else None)
     if increment is not None:
         run.manifest['increment']=increment;run.save_manifest()
+        for name in ('session_id','increment_id'):
+            if increment.get(name):run.manifest[name]=increment[name]
+        run.save_manifest()
     print('Run: '+str(run.path),flush=True);print('Brief: '+str(run.path/'brief.md'),flush=True)
     try:
         failures=preflight(run)
@@ -195,6 +198,16 @@ def run_readiness(root,predecessor=None,original_run=None,timeout=None,jobs=4,it
         summary=brief(run,status,reason);seal_gate_evidence(run)
         if status=='pass':verify_origins(run.path,{'manifest':run.manifest,'verdict':{'checks':run.checks},'inventory':{'files':run.source_files}})
         code=run.finalize(status,stage,reason,MANDATORY_CHECKS,brief_text=summary)
+        if iteration and code!=0 and increment and increment.get('session_id') and increment.get('increment_id'):
+            from iteration_diagnosis import append_experiment
+            try:
+                history=append_experiment(root,increment['session_id'],increment['increment_id'],run.path,
+                    'Selected increment changes the first observed execution effect',
+                    'Matched predecessor/disabled controls isolate changed instruction or shared path',
+                    'Candidate validation '+status+' at '+str(stage))
+                write_json(root/'out/iteration-history'/increment['increment_id']/(run.manifest['run_id']+'-diagnosis.json'),{'experiment_run':history['run_path'],'next_action':history['next_action'],'decision_required':history['decision_required']})
+            except Exception as error:
+                write_json(root/'out/iteration-history'/increment['increment_id']/(run.manifest['run_id']+'-diagnosis.json'),{'status':'error','reason':str(error)})
         if code==0:
             try:
                 pointer=publish_acceptance(run.path,root);write_json(run.path/'acceptance-result.json',{'status':'pass','accepted':True,'pointer':str(pointer)})
