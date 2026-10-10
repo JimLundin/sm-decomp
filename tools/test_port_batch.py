@@ -22,22 +22,57 @@ class PortBatchTests(unittest.TestCase):
                     run.assert_not_called()
 
     def test_replay_includes_only_live_families_and_optional_plm(self):
-        config = {'families': {'pure': 'family', 'collision': 'callback',
-                               'setup': 'offline-family', 'plm-spawn': 'plm'}}
-        batch = {'families': {name: {'exit_code': 0, 'verdict': name + '.json'}
-                              for name in config['families']}}
-        command = port_batch.replay_command(batch, config, list(config['families']), 9000, Path('/tmp/replay'), True)
-        self.assertIn('--family-verdict', command)
-        self.assertIn('pure.json', command)
-        self.assertIn('--collision-verdict', command)
-        self.assertIn('collision.json', command)
-        self.assertNotIn('setup.json', command)
-        self.assertIn('--plm-verdict', command)
-        with self.assertRaisesRegex(ValueError, 'No live-eligible'):
-            port_batch.replay_command(batch, config, ['setup'], 9000, Path('/tmp/replay'))
-        batch['families']['pure']['exit_code'] = 1
-        with self.assertRaisesRegex(ValueError, 'missing passing evidence'):
-            port_batch.replay_command(batch, config, ['pure'], 9000, Path('/tmp/replay'))
+        from port_family import digest
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config = {'families': {'pure': 'family', 'collision': 'callback',
+                                   'setup': 'offline-family', 'plm-spawn': 'plm'}}
+            records = {}
+            for name in config['families']:
+                manifest = root / 'tools/port' / (name + '.json')
+                manifest.parent.mkdir(parents=True, exist_ok=True)
+                manifest.write_text('{}')
+                records[name] = {'exit_code': 0, 'verdict': name + '.json',
+                                 'manifest_sha256': digest(manifest)}
+            batch = {'families': records}
+            with patch.object(port_batch, 'ROOT', root):
+                command = port_batch.replay_command(batch, config, list(config['families']), 9000, Path('/tmp/replay'), True)
+                self.assertIn('--family-verdict', command)
+                self.assertIn('pure.json', command)
+                self.assertIn('--collision-verdict', command)
+                self.assertIn('collision.json', command)
+                self.assertNotIn('setup.json', command)
+                self.assertIn('--plm-verdict', command)
+                with self.assertRaisesRegex(ValueError, 'No live-eligible'):
+                    port_batch.replay_command(batch, config, ['setup'], 9000, Path('/tmp/replay'))
+                batch['families']['pure']['exit_code'] = 1
+                with self.assertRaisesRegex(ValueError, 'missing passing evidence'):
+                    port_batch.replay_command(batch, config, ['pure'], 9000, Path('/tmp/replay'))
+
+    def test_replay_rejects_changed_eligibility_and_native_plm_contract(self):
+        from port_family import digest
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            records = {}
+            manifests = {}
+            config = {'families': {'pure': 'family', 'collision': 'callback', 'plm-spawn': 'plm'}}
+            for name in config['families']:
+                manifest = root / 'tools/port' / (name + '.json')
+                manifest.parent.mkdir(parents=True, exist_ok=True)
+                manifest.write_text('{"routines":[{"symbol":"Partial","live_eligible":true}]}')
+                manifests[name] = manifest
+                records[name] = {'exit_code': 0, 'verdict': name + '.json',
+                                 'manifest_sha256': digest(manifest)}
+            batch = {'families': records}
+            with patch.object(port_batch, 'ROOT', root):
+                for name in config['families']:
+                    with self.subTest(family=name):
+                        original = manifests[name].read_text()
+                        manifests[name].write_text(original.replace('true', 'false'))
+                        names = ['pure'] if name == 'plm-spawn' else [name]
+                        with self.assertRaisesRegex(ValueError, name + ': manifest changed.*run verify'):
+                            port_batch.replay_command(batch, config, names, 9000, Path('/tmp/replay'), name == 'plm-spawn')
+                        manifests[name].write_text(original)
 
     def test_resume_authenticates_evidence_and_rebuilds_stale_dependency(self):
         with tempfile.TemporaryDirectory() as temporary:

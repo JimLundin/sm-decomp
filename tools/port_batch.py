@@ -134,6 +134,13 @@ def verify_batch(path, batch, config, names, jobs=3, fresh=False):
 
 
 def replay_command(batch, config, names, frames, output, native_plm=False):
+    from port_family import digest
+
+    def require_current_manifest(name, record):
+        manifest = ROOT / 'tools/port' / (name + '.json')
+        if record.get('manifest_sha256') != digest(manifest):
+            raise ValueError(f'{name}: manifest changed since verification; run verify first')
+
     command = [sys.executable, str(ROOT / 'tools/port_live.py'), '--frames', str(frames), '--output', str(output)]
     contracts = 0
     for name in names:
@@ -143,6 +150,7 @@ def replay_command(batch, config, names, frames, output, native_plm=False):
         record = batch['families'].get(name, {})
         if record.get('exit_code') != 0 or not record.get('verdict'):
             raise ValueError(f'{name}: missing passing evidence; run verify first')
+        require_current_manifest(name, record)
         # The live consumer authenticates every retained artifact before building.
         command += ['--collision-verdict' if kind == 'callback' else '--family-verdict', record['verdict']]
         contracts += 1
@@ -152,6 +160,7 @@ def replay_command(batch, config, names, frames, output, native_plm=False):
         record = batch['families'].get('plm-spawn', {})
         if record.get('exit_code') != 0 or not record.get('verdict'):
             raise ValueError('Native PLM requires passing plm-spawn evidence')
+        require_current_manifest('plm-spawn', record)
         command += ['--plm-verdict', record['verdict']]
     return command
 
