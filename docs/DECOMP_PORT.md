@@ -1,5 +1,8 @@
 # Readable Rust gameplay translation
 
+Use [the batch runner](DECOMP_BATCH.md) for repeatable verification, replay,
+status and project checks: `python3 tools/port_batch.py run`.
+
 Primary source: snesrev/sm revision
 `578f90b3cc49557bb70060ad033bb90b8cf8ac50`, with the upstream MIT notice retained
 in `crates/decomp/LICENSE.upstream.txt`. The immutable decomp foundation remains
