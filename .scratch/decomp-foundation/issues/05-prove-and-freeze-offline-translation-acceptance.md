@@ -26,9 +26,9 @@ controls reject with their intended runtime/build/admission cause.
 Validation: `python3 -m unittest tools.test_decomp_routine` (9 tests),
 `cargo test -p decomp --locked --offline` (6 integration tests), and diff whitespace
 check. Retained accepting evidence:
-`out/decomp/ticket05/20261010T183439.571835Z/verdict.json`,
-`out/decomp/ticket05/20261010T183439.571835Z/acceptance.json`, and separate pointer
-`out/decomp/ticket05/decomp-acceptance.json`. Public `verify_accepted` successfully
+`/home/jim/sm-decomp/out/decomp/ticket05/20261010T183439.571835Z/verdict.json`,
+`/home/jim/sm-decomp/out/decomp/ticket05/20261010T183439.571835Z/acceptance.json`, and separate pointer
+`/home/jim/sm-decomp/out/decomp/ticket05/decomp-acceptance.json`. Public `verify_accepted` successfully
 verified all 63 fixture identities, 38 observed cases and 11 negative controls.
 
 Reproduce with `python3 tools/decomp_routine.py --accept --captures CAPTURES
