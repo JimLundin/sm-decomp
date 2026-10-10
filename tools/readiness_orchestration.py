@@ -286,7 +286,8 @@ def verify_pattern_evidence(output,manifest,strict=True):
             cases=json.loads(path.read_text())
             if len(cases)!=corpus['cases']:raise ValueError('Pattern available corpus count differs')
             for case in cases:complete.append((corpus['opcode'],case))
-        for opcode in report['opcodes']:
+        for item in report['corpus']:
+            opcode=item['opcode']
             for name in patterns[opcode]['independent_fixtures']:
                 complete.append((opcode,fixtures[name]))
         reconstructed=[{'name':case['name'],'case_sha256':identity(case),'opcode':opcode,'conditions':pattern_conditions(case,patterns[opcode])} for opcode,case in complete]

@@ -9,6 +9,29 @@ from pathlib import Path
 
 
 class PatternCommandTests(unittest.TestCase):
+    def test_reordered_opcode_reports_preserve_declared_fixture_execution_order(self):
+        root = Path(__file__).resolve().parent.parent
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            corpus = directory / 'corpus'
+            corpus.mkdir()
+            for opcode in ('ea', 'ca'):
+                # Small real corpus input, retaining independent expected state.
+                cases = json.loads((root / 'deps/65816/v1' / (opcode + '.n.json')).read_text())
+                (corpus / (opcode + '.n.json')).write_text(json.dumps(cases[:1]))
+            output = directory / 'patterns'
+            result = subprocess.run([sys.executable, str(root / 'tools/readiness_patterns.py'),
+                '--corpus', str(corpus), '--opcodes', 'ea,ca', '--out', str(output)],
+                cwd=root, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            report = json.loads((output / 'instruction.json').read_text())
+            (directory / 'manifest.json').write_text(json.dumps({'identities': {
+                'source': {'sha256': report['source_sha256']}, 'compiler': {'version': report['compiler']}}}))
+            result = subprocess.run([sys.executable, str(root / 'tools/readiness_orchestration.py'),
+                'verify-patterns', '--run', str(directory), '--output', str(output), '--development-scope'],
+                cwd=root, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_production_declaration_cannot_omit_an_enabled_pattern(self):
         root = Path(__file__).resolve().parent.parent
         with tempfile.TemporaryDirectory() as temporary:
