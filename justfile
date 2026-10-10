@@ -11,6 +11,10 @@ setup-lsnes:
 doctor:
     python3 tools/doctor.py
 
+# Build the pinned C game headlessly and replay twice with visible CPU fallback.
+decomp-baseline frames="9000":
+    python3 tools/decomp_baseline.py --frames {{quote(frames)}}
+
 # Immutable setup evidence; a pass verifies setup only and cannot accept readiness.
 readiness-preflight:
     python3 tools/readiness.py preflight

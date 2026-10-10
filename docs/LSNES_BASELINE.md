@@ -39,8 +39,8 @@ The build log is `deps/lsnes/build.log`. The underlying build command is:
 
 ```sh
 cd deps/lsnes/source
-PATH=/home/jim/sm-recomp/deps/lsnes-build-deps/usr/bin:$PATH \
-PKG_CONFIG_PATH=/home/jim/sm-recomp/deps/lsnes-build-deps/usr/lib/x86_64-linux-gnu/pkgconfig \
+PATH=/home/jim/sm-decomp/deps/lsnes-build-deps/usr/bin:$PATH \
+PKG_CONFIG_PATH=/home/jim/sm-decomp/deps/lsnes-build-deps/usr/lib/x86_64-linux-gnu/pkgconfig \
 make -j4 headless
 ```
 
@@ -53,7 +53,7 @@ Use `--rom-a=rom/sm.sfc`, the manual's explicit first ROM slot form. The histori
 The script observes CPU execution at `$82:8948` and reads semantic WRAM words. This is the entry of `RunOneFrameOfGame` in [snesrev's original-address annotation](https://github.com/snesrev/sm/blob/578f90b3cc49557bb70060ad033bb90b8cf8ac50/src/sm_82.c); field addresses come from its [variables header](https://github.com/snesrev/sm/blob/578f90b3cc49557bb70060ad033bb90b8cf8ac50/src/variables.h). The `items` column is **collected items**, not equipped items. Multiple visits in a video frame must remain distinct.
 
 ```lua
-local out = assert(io.open('/home/jim/sm-recomp/out/lsnes-any-checkpoints.csv', 'w'))
+local out = assert(io.open('/home/jim/sm-decomp/out/lsnes-any-checkpoints.csv', 'w'))
 out:write('frame,event,game_state,room,x,y,health,items,time_frames,time_seconds,time_minutes,time_hours\n')
 local offsets = {0x0998,0x079B,0x0AF6,0x0AFA,0x09C2,0x09A4,0x09DA,0x09DC,0x09DE,0x09E0}
 local event = 0

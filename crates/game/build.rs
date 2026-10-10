@@ -8,7 +8,7 @@ use std::path::PathBuf;
 
 fn main() -> anyhow::Result<()> {
     let out = PathBuf::from(std::env::var("OUT_DIR")?).join("generated.rs");
-    let real = generated_input("SM_RECOMP_GENERATED_GAME", "game.rs")?;
+    let real = generated_input("SM_DECOMP_GENERATED_GAME", "game.rs")?;
     println!("cargo:rerun-if-changed={}", real.display());
     println!("cargo:rerun-if-changed=build.rs");
 
@@ -19,7 +19,7 @@ fn main() -> anyhow::Result<()> {
         std::fs::write(&out, demo()?)?;
     }
     println!("cargo:rustc-check-cfg=cfg(sm_generated)");
-    let steps = generated_input("SM_RECOMP_GENERATED_STEPS", "steps.rs")?;
+    let steps = generated_input("SM_DECOMP_GENERATED_STEPS", "steps.rs")?;
     println!("cargo:rerun-if-changed={}", steps.display());
     let steps_out = PathBuf::from(std::env::var("OUT_DIR")?).join("steps.rs");
     if steps.exists() {

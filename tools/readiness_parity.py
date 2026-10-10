@@ -78,12 +78,12 @@ def prepare_candidate(run, mode="generated", timeout=None):
         run.guard_input(path)
     run.manifest.setdefault("parity_build_inputs", {})[mode] = {
         "game": game_source.relative_to(run.path).as_posix(), "steps": steps_source.relative_to(run.path).as_posix(),
-        "target_directory": str(build), "environment": {"SM_RECOMP_GENERATED_GAME": str(game_source),
-                                                         "SM_RECOMP_GENERATED_STEPS": str(steps_source)}}
+        "target_directory": str(build), "environment": {"SM_DECOMP_GENERATED_GAME": str(game_source),
+                                                         "SM_DECOMP_GENERATED_STEPS": str(steps_source)}}
     run.save_manifest()
     key_inventory = generated_inventory(run, steps_source) if mode == "generated" else None
-    env["SM_RECOMP_GENERATED_GAME"] = str(game_source)
-    env["SM_RECOMP_GENERATED_STEPS"] = str(steps_source)
+    env["SM_DECOMP_GENERATED_GAME"] = str(game_source)
+    env["SM_DECOMP_GENERATED_STEPS"] = str(steps_source)
     result = stage("build", ["cargo", "build", "--release", "-p", "diff", "--locked", "--offline"])
     if result["status"] != "pass":
         report = {"status": result["status"], "complete": False, "expected_frames": frames,
@@ -116,8 +116,8 @@ def run_parity(run, mode, frames=18000, timeout=None, predecessor=None):
     game_source, steps_source = preparation["game"], preparation["steps"]
     key_inventory = preparation["key_inventory"]
     timings = preparation["timings"]
-    env = dict(os.environ, CARGO_TARGET_DIR=str(build), SM_RECOMP_GENERATED_GAME=str(game_source),
-               SM_RECOMP_GENERATED_STEPS=str(steps_source))
+    env = dict(os.environ, CARGO_TARGET_DIR=str(build), SM_DECOMP_GENERATED_GAME=str(game_source),
+               SM_DECOMP_GENERATED_STEPS=str(steps_source))
     def stage(name, command, **kwargs):
         report = run.run_stage(mode + "-" + name, command, env=env, **kwargs)
         timings[name] = report["elapsed_seconds"]

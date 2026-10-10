@@ -25,7 +25,7 @@ def diagnose(run,start_input=0,instructions=100,mode="generated",timeout=None,st
             result={"status":report["status"],"complete":False,"reason":"Candidate preparation failed"}
             run.record_check(prefix+"instruction-diagnosis",result);return result
     environment=dict(os.environ,CARGO_TARGET_DIR=str(run.path/"build"/mode),
-                     SM_RECOMP_GENERATED_GAME=str(game),SM_RECOMP_GENERATED_STEPS=str(source))
+                     SM_DECOMP_GENERATED_GAME=str(game),SM_DECOMP_GENERATED_STEPS=str(source))
     focused_shared=run.path/"build"/mode/"release/focused-replay"
     stage={"status":"pass"}
     if not focused_shared.exists() or "focused-prepared-binary" not in run.manifest["identities"]:
@@ -94,7 +94,7 @@ def diagnose(run,start_input=0,instructions=100,mode="generated",timeout=None,st
 def discover_intervals(run,keys,frames=18000,timeout=None):
     preparation=prepare_candidate(run,"generated",timeout)
     if preparation["status"]!="pass":return preparation
-    environment=dict(os.environ,CARGO_TARGET_DIR=str(preparation["build"]),SM_RECOMP_GENERATED_GAME=str(preparation["game"]),SM_RECOMP_GENERATED_STEPS=str(preparation["steps"]))
+    environment=dict(os.environ,CARGO_TARGET_DIR=str(preparation["build"]),SM_DECOMP_GENERATED_GAME=str(preparation["game"]),SM_DECOMP_GENERATED_STEPS=str(preparation["steps"]))
     binary=preparation["build"]/"release/focused-replay"
     if not binary.exists() or "focused-prepared-binary" not in run.manifest["identities"]:
         stage=run.run_stage("discovery-build",["cargo","build","--release","-p","diff","--bin","focused-replay","--locked","--offline"],env=environment,timeout=timeout)

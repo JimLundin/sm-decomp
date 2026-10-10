@@ -1,10 +1,15 @@
-# sm-recomp
+# sm-decomp
 
-A static recompilation of Super Metroid (SNES) to Rust — the 65816 CPU code is
-translated to Rust ahead of time; the PPU, audio and DMA stay emulated.
-"Recompile the CPU, emulate the silicon."
+A Super Metroid (SNES) decompilation project targeting a playable source port
+with gameplay logic in readable Rust and emulated SNES hardware. Get vanilla
+Super Metroid working first, then integrate Map Rando.
 
-**Status: recompilation loop ready for incremental validation.** `just iterate`
+**Status: decompilation direction agreed; implementation is starting.** See
+[docs/DECOMP_PIVOT.md](docs/DECOMP_PIVOT.md) for the scope and first implementation
+plan. The existing static recompilation runner remains an oracle and diagnostic
+tool. Its validation records apply to recompilation, not decompilation readiness.
+
+The recompilation loop is ready for incremental validation. `just iterate`
 generates an instruction table, builds, and compares mixed compiled/interpreted
 execution against the reference. Timing support starts with a small whitelist;
 full TAS synchronization remains an independent acceptance milestone.
