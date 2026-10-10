@@ -73,3 +73,17 @@ The initial batch retained a rejected changed-source collision seal after module
 registration advanced during verification; all1,752 comparisons matched but
 authentication correctly rejected the changed lib.rs dependency. The final batch
 rebuilt every stale source seal before replay.
+
+
+Source-snapshot scope: the live/static libraries include the earlier uninstalled
+power-bomb module as an exhaustive shared-crate dependency. Its subsequent
+argument-guard review correction is verified separately by ticket23; power-bomb
+was never installed or exercised in this replay. The retained source snapshot
+keeps the exact earlier module bytes so its exhaustive dependency seal remains
+authenticatable. All15 installed gameplay family bytes match final integration.
+
+
+Post-replay automatic batch cleanup reclaimed a further6,359,641,562 bytes.
+Total measured cleanup across the documented historical/current batch scopes is
+27,524,902,208 bytes (25.64GiB), excluding the interrupted scan's unmeasured
+savings. The final accepted replay's linked binary and all observations remain.
