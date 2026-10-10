@@ -68,12 +68,16 @@ def build(manifest, source, run):
         symbol, return_type = routine['symbol'], routine['return']
         types = routine.get('arg_types', ['uint16'] * routine.get('args', 0))
         count = len(types)
-        if not IDENTIFIER.fullmatch(symbol) or count not in (0, 1, 2) or return_type not in ('void', 'uint8', 'uint16', 'uint32', 'int32') or any(t not in ('uint8', 'uint16', 'uint32', 'int32') for t in types):
+        if not IDENTIFIER.fullmatch(symbol) or count not in (0, 1, 2) or return_type not in ('void', 'uint8', 'uint16', 'uint32', 'int32', 'rom_ptr') or any(t not in ('uint8', 'uint16', 'uint32', 'int32', 'rom_ptr') for t in types):
             raise ValueError('invalid routine signature')
-        c_type = {'void': 'void', 'uint8': 'uint8_t', 'uint16': 'uint16_t', 'uint32': 'uint32_t', 'int32': 'int32_t'}[return_type]
-        prototypes.append(f'extern {c_type} {symbol}({", ".join(t + "_t" for t in types) or "void"});')
-        call = f'{symbol}({", ".join("(" + t + "_t)" + arg for t, arg in zip(types, ["a", "b"]))})'
+        c_type = {'void': 'void', 'uint8': 'uint8_t', 'uint16': 'uint16_t', 'uint32': 'uint32_t', 'int32': 'int32_t', 'rom_ptr': 'const uint16_t *'}[return_type]
+        prototypes.append(f'extern {c_type} {symbol}({", ".join("const uint16_t *" if t == "rom_ptr" else t + "_t" for t in types) or "void"});')
+        call = f'{symbol}({", ".join("(const uint16_t*)(g_rom+((((uint32_t)" + arg + " >>16)<<15)|((uint32_t)" + arg + "&0x7fff))%0x400000)" if t == "rom_ptr" else "(" + t + "_t)" + arg for t, arg in zip(types, ["a", "b"]))})'
         result = f'{call}; result=0;' if return_type == 'void' else f'result={call};'
+        if 'rom_ptr' in types and 'rom' not in manifest:
+            raise ValueError('ROM pointer argument requires ROM asset')
+        if return_type == 'rom_ptr':
+            result = f'const uint16_t *pointer={call}; result=PortPointerResult(pointer,(uint16_t)a);'
         branches.append(f'if (!strcmp(argv[1], "{symbol}")) {{ {result} }}')
     support = manifest.get('c_support', [])
     uses_rtl = 'sm_rtl.c' in support or manifest['bank'] == 'sm_rtl.c'
@@ -86,7 +90,16 @@ def build(manifest, source, run):
 #include <string.h>
 #include "sm_rtl.h"
 #include "funcs.h"
-''' + globals_c + '\n' + '\n'.join(prototypes) + '''
+''' + globals_c + '''
+static uint32_t PortPointerResult(const uint16_t *pointer,uint16_t enemy) {
+ if(!pointer)return 0; uintptr_t p=(uintptr_t)pointer;
+ unsigned bank=g_ram[0xf78+enemy+0x2e];
+ if(p<0x10000){if(p<0x8000)exit(3);return (bank<<16)|p;}
+ uintptr_t base=(uintptr_t)g_rom+((bank&0x7f)*0x8000);
+ if(p<base || p>=base+0x8000)exit(3);
+ return (bank<<16)|(0x8000+(p-base));
+}
+''' + '\n'.join(prototypes) + '''
 int main(int argc, char **argv) {
  if(argc!=6 && argc!=7) return 2;
  int64_t a=strtoll(argv[2],0,10), b=strtoll(argv[3],0,10); uint32_t result=0;
@@ -180,9 +193,11 @@ def prepare_case(case, directory, arg_types):
         ram[offset:offset + len(data)] = bytes(data)
     for index, key in enumerate(('a', 'b')):
         kind = arg_types[index] if index < len(arg_types) else 'uint16'
-        low, high = {'uint8': (0, 255), 'uint16': (0, 65535), 'int32': (-2147483648, 2147483647), 'uint32': (0, 4294967295)}[kind]
+        low, high = {'uint8': (0, 255), 'uint16': (0, 65535), 'int32': (-2147483648, 2147483647), 'uint32': (0, 4294967295), 'rom_ptr': (0x8000, 0xffffff)}[kind]
         if not isinstance(case.get(key, 0), int) or not low <= case.get(key, 0) <= high:
             raise ValueError(f'argument outside {kind}')
+        if kind == 'rom_ptr' and (case.get(key, 0) & 0xffff) < 0x8000:
+            raise ValueError('ROM pointer below banked data extent')
     directory.mkdir()
     (directory / 'before.wram').write_bytes(ram)
     if 'expected_after_file' in case:
