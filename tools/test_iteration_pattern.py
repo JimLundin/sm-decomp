@@ -39,9 +39,12 @@ class ProspectivePatternTests(unittest.TestCase):
         root=Path(__file__).resolve().parent.parent
         with tempfile.TemporaryDirectory() as temporary:
             directory=Path(temporary);(directory/'selection').mkdir();(directory/'proof').mkdir()
-            declaration=root/'crates/recomp/src/timed_patterns.json';before=declaration.read_bytes()
+            repository=directory/'repository';repository.mkdir()
+            subprocess.run(['git','init','-q',str(repository)],check=True)
+            declaration=repository/'declared.json';declaration.write_text('preserved source')
+            before=declaration.read_bytes()
             result=subprocess.run([sys.executable,str(root/'tools/iteration_pattern.py'),'promote',
-                '--selection',str(directory/'selection'),'--proof',str(directory/'proof')],cwd=root,capture_output=True,text=True)
+                '--root',str(repository),'--selection',str(directory/'selection'),'--proof',str(directory/'proof')],cwd=root,capture_output=True,text=True)
             self.assertEqual(result.returncode,2)
             self.assertEqual(declaration.read_bytes(),before)
 

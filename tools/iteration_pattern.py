@@ -192,6 +192,15 @@ def verify_increment(owner, verified):
     coverage=verified['verdict']['checks']['changed-entry-coverage'];chosen=report['chosen']
     if not any(row['address']==chosen['address'] and row['mx']==chosen['mx'] and row['count']>0 for row in coverage.get('executed',[])):
         raise ValueError('Promoted pattern lacks real-ROM generated execution')
+    from readiness_reuse import verify_accepted,safe_artifact
+    baseline=verify_accepted(increment['baseline_path'],require_pointer=True)
+    baseline_inventory=baseline['manifest']['identities']['generated-key-inventory']
+    previous=json.loads(safe_artifact(increment['baseline_path'],baseline_inventory['evidence']).read_text())
+    prior_keys={(row['address'],row['mx']) for row in previous['keys']}
+    current=json.loads((Path(owner)/'generated/key-inventory.json').read_text())
+    actual={(row['address'],row['mx']) for row in current['keys']}
+    if actual != prior_keys|{(chosen['address'],chosen['mx'])}:
+        raise ValueError('Promoted compiled table differs from baseline plus one measured pattern key')
     instruction=verified['verdict']['checks']['instruction'];timing=verified['verdict']['checks']['timing']
     if increment['opcode'] not in instruction['opcodes'] or timing['source_sha256']!=verified['manifest']['identities']['source']['sha256']:
         raise ValueError('Promoted candidate requires fresh complete pattern/timing source proof')
