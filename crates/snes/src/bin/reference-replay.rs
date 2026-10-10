@@ -27,7 +27,8 @@ fn main() -> Result<()> {
     let rom = fs::read(rom)?;
     snes::verify_movie_rom(&movie, &rom)?;
     let mut reference = Reference::new(&rom, 0)?;
-    let count = limit.unwrap_or(movie.frames.len()).min(movie.frames.len());
+    let count = limit.unwrap_or(movie.frames.len());
+    ensure!(count <= movie.frames.len(), "requested {count} frames, movie contains only {}", movie.frames.len());
     ensure!(count > 0, "no frames selected");
     if let Some(parent) = out.parent().filter(|p| !p.as_os_str().is_empty()) {
         fs::create_dir_all(parent)?;

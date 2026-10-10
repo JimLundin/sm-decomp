@@ -37,21 +37,8 @@ def main():
     # Use a Lua long string to preserve paths without shell interpolation.
     if "]]" in str(out):
         parser.error("unsupported output path")
-    script.write_text("local out = assert(io.open([[" + str(out) + "]], 'w'))\n" +
-        "out:write('frame,event,game_state,room,x,y,health,items,time_frames,time_seconds,time_minutes,time_hours\\n')\n" +
-        "local fields = {" + ",".join(str(offset) for offset in FIELDS) + "}\n" + """
-local event = 0
-local function checkpoint()
-    event = event + 1
-    local parts = {tostring(movie.currentframe()), tostring(event)}
-    for _,address in ipairs(fields) do
-        parts[#parts+1] = string.format('%04X', memory.readword('WRAM', address))
-    end
-    out:write(table.concat(parts, ','), '\\n')
-    out:flush()
-end
-memory.registerexec('BUS', 0x828948, checkpoint)
-""")
+    from readiness_sync import observer_script
+    script.write_text(observer_script(out))
     env = os.environ.copy()
     env["XDG_CONFIG_HOME"] = str(out.parent / "lsnes-config")
     command = [str(binary), "--dumper=INTERNAL-NULL", "--rom-a=" + str(rom),

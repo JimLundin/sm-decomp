@@ -119,6 +119,10 @@ trace-merge misses:
 trace-names:
     cargo run -p trace --locked --offline -- names config/functions.toml out/symbols.toml
 
+# Fresh strict original-core synchronization with immutable evidence.
+readiness-sync *args:
+    python3 tools/readiness_sync.py {{args}}
+
 # One isolated cold parity run; readiness defaults retain the complete domain.
 readiness-parity mode="generated" frames="18000":
     python3 tools/readiness_parity.py --mode {{quote(mode)}} --frames {{frames}}
