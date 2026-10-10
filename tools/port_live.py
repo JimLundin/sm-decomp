@@ -92,8 +92,6 @@ def main():
         for family_index, (manifest, module) in enumerate(families):
             rust.append(generate_family_abi(manifest, module, family_index))
             wrappers.append(f'extern int64_t port_family_{family_index}(uint8_t*,size_t,const uint8_t*,size_t,uint32_t,int32_t,int32_t);')
-            bank = source / 'src' / manifest['bank']
-            text = bank_texts.get(bank, bank.read_text())
             for routine_index, routine in enumerate(manifest['routines']):
                 symbol = routine['symbol']
                 types = routine.get('arg_types', ['uint16'] * routine.get('args', 0))
@@ -103,9 +101,15 @@ def main():
                 index = len(symbols)
                 symbols.append(symbol)
                 signature = re.compile(r'(?m)^(\w+\s+)' + re.escape(symbol) + r'(\s*\([^\n]*\)\s*\{)')
+                owners = [bank for bank in sorted((source / 'src').glob('sm_*.c')) if signature.search(bank.read_text())]
+                if len(owners) != 1:
+                    raise ValueError(f'expected one owning source unit for {symbol}')
+                bank = owners[0]
+                text = bank_texts.get(bank, bank.read_text())
                 text, replacements = signature.subn(r'\1C_' + symbol + r'\2', text)
                 if replacements != 1:
                     raise ValueError(f'definition rename count differs: {symbol}')
+                bank_texts[bank] = text
                 c_type = {'void': 'void', 'uint8': 'uint8_t', 'uint16': 'uint16_t', 'uint32': 'uint32_t', 'int32': 'int32_t', 'rom_ptr': 'const uint16_t *'}[routine['return']]
                 declaration = ','.join(('const uint16_t *' if kind == 'rom_ptr' else kind + '_t ') + name for kind, name in zip(types, ['a', 'b'])) or 'void'
                 arguments = ','.join(['a', 'b'][:count])
@@ -133,7 +137,6 @@ def main():
  }}
  {returned}
 }}''')
-            bank_texts[bank] = text
         library_source = run / 'families.rs'
         library_source.write_text('\n'.join(rust))
         execute(['rustc', '--edition=2024', '-O', '--crate-type=staticlib', str(library_source), '-o', str(run / 'libfamilies.a')], run, 'rust-build')
