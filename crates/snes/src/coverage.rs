@@ -59,6 +59,21 @@ fn entry(key: (u32, u8, bool, u8), count: u64) -> InstructionCount {
 }
 
 impl Accounting {
+    pub(crate) fn checkpoint(&self) -> Vec<(bool, u32, u8, bool, u8, u64)> {
+        self.generated
+            .iter()
+            .map(|(&(a, m, e, o), &n)| (true, a, m, e, o, n))
+            .chain(self.interpreted.iter().map(|(&(a, m, e, o), &n)| (false, a, m, e, o, n)))
+            .collect()
+    }
+    pub(crate) fn restore(&mut self, rows: Vec<(bool, u32, u8, bool, u8, u64)>) {
+        self.generated.clear();
+        self.interpreted.clear();
+        for (g, a, m, e, o, n) in rows {
+            let table = if g { &mut self.generated } else { &mut self.interpreted };
+            table.insert((a, m, e, o), n);
+        }
+    }
     pub fn record(&mut self, generated: bool, address: u32, mx: u8, emulation: bool, opcode: u8) {
         let counts = if generated { &mut self.generated } else { &mut self.interpreted };
         *counts.entry((address, mx, emulation, opcode)).or_default() += 1;

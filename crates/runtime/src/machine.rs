@@ -42,6 +42,8 @@ pub trait Bus {
     fn cpu_cycles(&self) -> u64 {
         0
     }
+    /// Restore adapter bookkeeping from a verified same-machine checkpoint.
+    fn restore_cpu_cycles(&mut self, _cycles: u64) {}
 }
 
 /// Executes original ROM code for anything that has no generated function yet.
