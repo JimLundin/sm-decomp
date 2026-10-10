@@ -761,8 +761,24 @@ pub fn preinstruction(r: &mut Wram, address: u16, k: u16) -> Result<(), &'static
     }
     Ok(())
 }
+/// ROM-aware preinstructions include native room projectile spawning.
+pub fn preinstruction_rom(r: &mut Wram, rom: &[u8], address: u16, k: u16) -> Result<(), &'static str> {
+    if address != 0xb927 {
+        return preinstruction(r, address, k);
+    }
+    if k > 78 || k & 1 != 0 {
+        return Err("invalid PLM slot");
+    }
+    if r.word(0xaf6) > 240 && r.word(0xafa) > 2080 {
+        crate::enemy_projectiles::spawn_room(r, rom, 0xb4b1, 0)?;
+        inc(r, INSTR + k as usize, 2);
+        r.set_word(TIMER + k as usize, 1);
+    }
+    Ok(())
+}
 pub fn dispatch_rom(r: &mut Wram, _rom: &[u8], name: &str, a: i32, _b: i32) -> Result<u32, &'static str> {
     let pre = match name {
+        "PlmPreInstr_OldTourianEscapeShaftEscape" => Some(0xb927),
         "PlmPreInstr_PositionSamusAndInvincible" => Some(0xac89),
         "PlmPreInstr_WakeAndLavaIfBoosterCollected" => Some(0xb7ef),
         "PlmPreInstr_WakePLMAndStartFxMotionSamusFarLeft" => Some(0xb82a),
@@ -800,7 +816,7 @@ pub fn dispatch_rom(r: &mut Wram, _rom: &[u8], name: &str, a: i32, _b: i32) -> R
         _ => None,
     };
     if let Some(address) = pre {
-        preinstruction(r, address, u16::try_from(a).map_err(|_| "invalid PLM argument")?)?;
+        preinstruction_rom(r, _rom, address, u16::try_from(a).map_err(|_| "invalid PLM argument")?)?;
         return Ok(0);
     }
     let address = match name {
