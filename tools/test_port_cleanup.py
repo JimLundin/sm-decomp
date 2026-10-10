@@ -28,6 +28,24 @@ class CleanupTests(unittest.TestCase):
             self.assertEqual((root / 'two/before.wram').read_bytes(), payload)
             self.assertEqual((root / 'one/before.wram').stat().st_ino, (root / 'two/before.wram').stat().st_ino)
 
+    def test_deduplicate_skips_running_and_symlinked_snapshots(self):
+        from port_cleanup import deduplicate
+        import hashlib
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            payload = bytes(16)
+            digest = hashlib.sha256(payload).hexdigest()
+            outside = root / 'outside'
+            outside.mkdir()
+            (outside / 'before.wram').write_bytes(payload)
+            for name, status in (('running', 'running'), ('finished', 'offline-verified')):
+                run = root / name
+                run.mkdir()
+                (run / 'link').symlink_to(outside, target_is_directory=True)
+                (run / 'verdict.json').write_text(json.dumps({'status': status, 'artifacts': {'link/before.wram': digest, '../outside/before.wram': digest}}))
+            self.assertEqual(deduplicate(root, True), 0)
+            self.assertEqual((outside / 'before.wram').stat().st_nlink, 1)
+
     def test_preview_and_apply_preserve_sealed_and_unfinished_builds(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
