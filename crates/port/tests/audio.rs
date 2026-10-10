@@ -1,6 +1,4 @@
-use port::{Wram, WRAM_SIZE};
-#[path = "../src/audio.rs"]
-mod audio;
+use port::{WRAM_SIZE, Wram, audio};
 
 #[test]
 fn music_presence_scans_delay_even_when_ring_positions_are_equal() {

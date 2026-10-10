@@ -3,15 +3,24 @@
 
 pub const WRAM_SIZE: usize = 0x20000;
 
+pub mod audio;
+pub mod system;
+
 pub struct Wram<'a>(&'a mut [u8]);
 
 impl<'a> Wram<'a> {
     pub fn new(bytes: &'a mut [u8]) -> Result<Self, &'static str> {
-        if bytes.len() != WRAM_SIZE { return Err("full canonical WRAM required"); }
+        if bytes.len() != WRAM_SIZE {
+            return Err("full canonical WRAM required");
+        }
         Ok(Self(bytes))
     }
-    pub fn byte(&self, offset: usize) -> u8 { self.0[offset] }
-    pub fn set_byte(&mut self, offset: usize, value: u8) { self.0[offset] = value; }
+    pub fn byte(&self, offset: usize) -> u8 {
+        self.0[offset]
+    }
+    pub fn set_byte(&mut self, offset: usize, value: u8) {
+        self.0[offset] = value;
+    }
     pub fn word(&self, offset: usize) -> u16 {
         u16::from_le_bytes([self.0[offset], self.0[offset + 1]])
     }
