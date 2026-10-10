@@ -21,6 +21,14 @@ def prepare_candidate(run, mode="generated", timeout=None):
         source = generated / "steps.rs"
         game = generated / "game.rs"
         if source.is_file() and game.is_file():
+            run.check_sources()
+            for name,path in (("steps",source),("game",game)):
+                expected=run.manifest["identities"].get(mode+"-generated-"+name,{})
+                if expected.get("sha256")!=digest(path):
+                    raise RuntimeError("Prepared generated inputs lack matching build provenance")
+            candidate=generated/"diff"
+            if run.manifest["identities"].get(mode+"-binary",{}).get("sha256")!=digest(candidate):
+                raise RuntimeError("Prepared candidate binary lacks matching build provenance")
             return {"status": "pass", "complete": True, "generated": generated,
                     "build": run.path / "build" / mode, "game": game, "steps": source, "timings": {},
                     "key_inventory": run.path / "generated/key-inventory.json" if mode == "generated" else None}

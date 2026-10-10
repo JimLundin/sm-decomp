@@ -26,15 +26,22 @@ def diagnose(run,start_input=0,instructions=100,mode="generated",timeout=None,st
                      SM_RECOMP_GENERATED_GAME=str(game),SM_RECOMP_GENERATED_STEPS=str(source))
     focused_shared=run.path/"build"/mode/"release/focused-replay"
     stage={"status":"pass"}
-    if not focused_shared.exists():
+    if not focused_shared.exists() or "focused-prepared-binary" not in run.manifest["identities"]:
         stage=run.run_stage(prefix+"focused-build",["cargo","build","--release","-p","diff","--bin","focused-replay","--locked","--offline"],env=environment,timeout=timeout)
     if stage["status"]!="pass":
         result={"status":stage["status"],"complete":False,"reason":"Focused binary build failed"}
         run.record_check(prefix+"instruction-diagnosis",result);return result
     binary=run.path/"build"/mode/"release/focused-replay"
+    if "focused-prepared-binary" not in run.manifest["identities"]:
+        run.record_artifact("focused-prepared-binary",binary,"generated/focused-prepared")
+    else:
+        from readiness import digest
+        if digest(binary)!=run.manifest["identities"]["focused-prepared-binary"]["sha256"]:
+            raise RuntimeError("Focused build binary changed after preparation")
     candidate=run.path/"generated"/(prefix+"focused-replay")
     if not candidate.exists():run.record_artifact(prefix+"focused-binary",binary,"generated/"+prefix+"focused-replay")
-    else:run.record_artifact(prefix+"focused-binary",candidate);run.guard_input(candidate)
+    else:run.record_artifact(prefix+"focused-binary",candidate)
+    run.guard_input(candidate)
     output=run.path/"diagnostics"/(prefix+"instructions")
     command=[candidate,run.root/"movies/super-metroid-any-3653.lsmv","--out",output,"--start-input",str(start_input),"--start-instruction",str(start_instruction),"--instructions",str(instructions),"--rom",run.root/"rom/sm.sfc"]
     if mode=="fallback-only":command.append("--fallback-only")
@@ -86,14 +93,26 @@ def discover_intervals(run,keys,frames=18000,timeout=None):
     if preparation["status"]!="pass":return preparation
     environment=dict(os.environ,CARGO_TARGET_DIR=str(preparation["build"]),SM_RECOMP_GENERATED_GAME=str(preparation["game"]),SM_RECOMP_GENERATED_STEPS=str(preparation["steps"]))
     binary=preparation["build"]/"release/focused-replay"
-    if not binary.exists():
+    if not binary.exists() or "focused-prepared-binary" not in run.manifest["identities"]:
         stage=run.run_stage("discovery-build",["cargo","build","--release","-p","diff","--bin","focused-replay","--locked","--offline"],env=environment,timeout=timeout)
         if stage["status"]!="pass":return stage
+    if "focused-prepared-binary" not in run.manifest["identities"]:
+        run.record_artifact("focused-prepared-binary",binary,"generated/focused-prepared")
+    frozen=run.path/"generated/discovery-replay"
+    if not frozen.exists():run.record_artifact("discovery-binary",binary,"generated/discovery-replay")
+    run.guard_input(frozen)
     keys_path=run.path/"generated/discovery-keys.json";keys_path.write_text(json.dumps(keys,sort_keys=True));run.guard_input(keys_path)
     output=run.path/"diagnostics/discovery"
-    stage=run.run_stage("instruction-discovery",[binary,run.root/"movies/super-metroid-any-3653.lsmv","--discover-keys",keys_path,"--frames",str(frames),"--rom",run.root/"rom/sm.sfc","--out",output],timeout=timeout,exit_statuses={1:"uncovered",2:"error"})
+    stage=run.run_stage("instruction-discovery",[frozen,run.root/"movies/super-metroid-any-3653.lsmv","--discover-keys",keys_path,"--frames",str(frames),"--rom",run.root/"rom/sm.sfc","--out",output],timeout=timeout,exit_statuses={1:"uncovered",2:"error"})
     if not (output/"discovery.json").exists():return dict(stage,complete=False)
     report=json.loads((output/"discovery.json").read_text());run.record_artifact("instruction-discovery-report",output/"discovery.json")
+    import hashlib
+    valid=report.get("schema_version")==1 and report.get("expected_frames")==frames and report.get("keys")==keys and report.get("complete") is True
+    valid=valid and report.get("binary_sha256")==hashlib.sha256(frozen.read_bytes()).hexdigest()
+    valid=valid and all(report.get("identities",{}).get(key)==run.manifest["identities"]["inputs"][key] for key in ("rom_sha256","movie_sha256","input_sha256"))
+    if not valid:report.update(status="error",complete=False,reason="Discovery identity/scope mismatch")
+    elif stage["status"] not in ("pass","uncovered"):report.update(status=stage["status"],complete=False,reason=stage.get("reason"))
+    run.record_check("instruction-discovery",report)
     return report
 
 

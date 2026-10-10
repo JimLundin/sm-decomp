@@ -69,8 +69,13 @@ def _predecessor_run(parent, predecessor):
     subprocess.run(["git","-C",str(checkout),"add","."],check=True)
     subprocess.run(["git","-C",str(checkout),"-c","user.name=Readiness","-c","user.email=readiness@local.invalid",
                     "commit","-qm","Preserved predecessor source"],check=True)
-    for name in ("deps","rom"):
-        (checkout/name).symlink_to(parent.root/name,target_is_directory=True)
+    (checkout/"rom").symlink_to(parent.root/"rom",target_is_directory=True)
+    (checkout/"deps").mkdir()
+    for material in (parent.root/"deps").iterdir():
+        if material.name!="rustysnes":
+            (checkout/"deps"/material.name).symlink_to(material,target_is_directory=material.is_dir())
+    subprocess.run(["python3",str(checkout/"tools/prepare_rustysnes.py"),"--offline"],cwd=checkout,check=True,
+                   stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     for movie in (parent.root/"movies").iterdir():
         if movie.suffix in (".lsmv",".inputs"):
             (checkout/"movies"/movie.name).symlink_to(movie)
@@ -109,15 +114,16 @@ def diagnose_failure(run, failure, predecessor=None, intervals=None, timeout=Non
     if intervals is None:
         from readiness_diagnostics import discover_intervals
         discovery=discover_intervals(run,keys,18000,timeout)
+        if discovery["status"] not in ("pass","uncovered"):
+            result.update(status=discovery["status"],complete=False,reason="Instruction discovery failed",discovery=discovery)
+            run.record_check("failure-controls",result);return result
         if discovery["status"]=="uncovered":
             result.update(status="uncovered",complete=True,discovery=discovery,**route_failure({"status":"uncovered"}))
             run.record_check("failure-controls",result);return result
         intervals=discovery.get("intervals",[])
     if not intervals:
-        # The instruction count starts at the first failing frame. When changed
-        # keys are known, discovery obtains their actual execution boundaries.
-        frame=failure.get("first_divergence",{}).get("frame",0)
-        intervals=[{"start_input":frame,"start_instruction":0,"instructions":20000}]
+        result.update(status="uncovered",complete=True,**route_failure({"status":"uncovered"}))
+        run.record_check("failure-controls",result);return result
     reports=[]
     child=None
     if predecessor:

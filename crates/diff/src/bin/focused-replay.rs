@@ -57,7 +57,12 @@ fn main() -> Result<()> {
             })
             .collect::<Result<_>>()?;
         let frames = option("--frames").context("discovery --frames required")?.parse()?;
-        let report = snes::controls::covered_intervals(&mut reference, &mut subject, &movie.frames, frames, &keys)?;
+        let mut report = snes::controls::covered_intervals(&mut reference, &mut subject, &movie.frames, frames, &keys)?;
+        report["keys"] = serde_json::to_value(
+            keys.iter().map(|&(address, mx)| serde_json::json!({"address":address,"mx":mx})).collect::<Vec<_>>(),
+        )?;
+        report["binary_sha256"] = format!("{:x}", Sha256::digest(std::fs::read(std::env::current_exe()?)?)).into();
+        report["identities"] = serde_json::json!({"rom_sha256":format!("{:x}",Sha256::digest(&rom)),"movie_sha256":format!("{:x}",Sha256::digest(std::fs::read(&movie_path)?)),"input_sha256":format!("{:x}",Sha256::digest(movie::write_inputs(&movie.frames).as_bytes()))});
         std::fs::create_dir(&output)?;
         std::fs::write(output.join("discovery.json"), serde_json::to_vec_pretty(&report)?)?;
         std::process::exit(if report["status"] == "pass" { 0 } else { 1 });
