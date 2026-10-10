@@ -104,3 +104,16 @@ fn empty_generated_table_cannot_validate_fallback_execution() {
     assert_eq!(report["complete"], false);
     assert_eq!(report["generated_steps"], 0);
 }
+
+#[test]
+fn frame_report_preserves_instruction_profile_separate_from_discovery() {
+    let fixture = Fixture::new();
+    assert!(fixture.run("2", "--fallback-only").status.success());
+    let coverage: serde_json::Value =
+        serde_json::from_slice(&fs::read(fixture.0.join("evidence/coverage.json")).unwrap()).unwrap();
+    assert_eq!(coverage["schema_version"], 1);
+    assert_eq!(coverage["generated_instructions"], 0);
+    assert!(coverage["interpreted_instructions"].as_u64().unwrap() > 0);
+    assert!(coverage["interpreted"].as_array().unwrap().iter().any(|entry| entry["opcode"] == 0x80));
+    assert!(fixture.0.join("evidence/misses.csv").exists());
+}

@@ -17,3 +17,10 @@ exercise exact requested scope and fallback execution without commercial inputs;
 real any% prefixes exercise generated dispatch and identity-bound build artifacts.
 These tests establish shared-backend parity/report honesty, not independent
 hardware synchronization or full readiness.
+
+Ticket 03 uses the confirmed Subject instruction-accounting and public command/
+evidence seams. Synthetic cartridges verify actual generated-key execution,
+interpreted instruction profiles and unexecuted table inventory. Run coverage
+compares preserved generated bodies/config/source identities; old aggregate
+execution cannot satisfy an added or changed key. Original hardware accuracy
+continues to require its separate synchronization gate.

@@ -8,6 +8,7 @@ use anyhow::{Result, ensure};
 use rustysnes_core::{System, cart::Cart};
 
 pub mod checkpoint;
+pub mod coverage;
 pub mod diagnostic;
 pub mod focused;
 mod subject;

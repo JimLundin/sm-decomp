@@ -207,6 +207,7 @@ pub struct Subject {
     wram: Vec<u8>,
     machine: runtime::Machine,
     steps: HashMap<(u32, u8), (&'static [u8], runtime::StepFn)>,
+    accounting: super::coverage::Accounting,
     pub generated_steps: u64,
     pub interpreted_steps: u64,
 }
@@ -247,6 +248,7 @@ impl Subject {
             wram,
             machine,
             steps: steps.iter().map(|&(addr, mx, bytes, f)| ((addr, mx), (bytes, f))).collect(),
+            accounting: super::coverage::Accounting::default(),
             generated_steps: 0,
             interpreted_steps: 0,
         })
@@ -310,7 +312,6 @@ impl Subject {
         let opcode = self.bus.hardware.borrow_mut().peek((u32::from(before.pbr) << 16) | u32::from(before.pc));
         let addr = (u32::from(before.pbr) << 16) | u32::from(before.pc);
         let mx = (u8::from(before.m8()) << 1) | u8::from(before.x8());
-        let mut generated_key = None;
         let candidate = self.steps.get(&(addr, mx)).copied().filter(|(bytes, _)| {
             !before.emulation
                 && !waiting
@@ -323,11 +324,18 @@ impl Subject {
                         == *value
                 })
         });
+        let mut generated_key = None;
+        let mut executed_generated = false;
+        let mut executed_opcode = None;
         if let Some((bytes, body)) = candidate {
             let nmi = self.bus.poll_nmi();
             let irq = self.bus.poll_irq();
             if nmi || (irq && !self.interpreter.irq_masked()) {
-                self.interpreter.step(&mut PolledBus { bus: InterpreterBus(&mut self.bus), nmi, irq });
+                self.interpreter.step(&mut super::coverage::OpcodeBus {
+                    inner: PolledBus { bus: InterpreterBus(&mut self.bus), nmi, irq },
+                    opcode: &mut executed_opcode,
+                    armed: !waiting && !stopped,
+                });
                 self.interpreted_steps += 1;
             } else {
                 self.interpreter.take_irq_mask();
@@ -343,11 +351,20 @@ impl Subject {
                 }
                 self.interpreter.cycles += self.machine.bus.cpu_cycles() - cycles_before;
                 self.generated_steps += 1;
+                executed_generated = true;
                 generated_key = Some((addr, mx));
+                executed_opcode = Some(bytes[0]);
             }
         } else {
-            self.interpreter.step(&mut InterpreterBus(&mut self.bus));
+            self.interpreter.step(&mut super::coverage::OpcodeBus {
+                inner: InterpreterBus(&mut self.bus),
+                opcode: &mut executed_opcode,
+                armed: !waiting && !stopped,
+            });
             self.interpreted_steps += 1;
+        }
+        if let Some(actual_opcode) = executed_opcode {
+            self.accounting.record(executed_generated, addr, mx, before.emulation, actual_opcode);
         }
         if !before.emulation
             && !waiting
@@ -379,6 +396,16 @@ impl Subject {
     }
     pub fn framebuffer_bytes(&self) -> Vec<u8> {
         self.bus.hardware.borrow().framebuffer().iter().flat_map(|pixel| pixel.to_le_bytes()).collect()
+    }
+
+    /// Actual instruction counts and complete compiled-key inventory, excluding
+    /// hardware interrupt dispatch and idle wait/stop steps.
+    pub fn coverage(&self) -> super::coverage::Coverage {
+        self.accounting.report(
+            self.steps.iter().map(|(&(address, mx), (bytes, _))| (address, mx, bytes[0])),
+            self.generated_steps,
+            self.interpreted_steps,
+        )
     }
 
     pub fn misses_csv(&self) -> String {
