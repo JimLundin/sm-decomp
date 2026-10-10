@@ -7,6 +7,7 @@ pub mod audio;
 pub mod collision;
 pub mod enemy;
 pub mod enemy_instructions;
+pub mod plm;
 pub mod samus;
 pub mod samus_control;
 pub mod system;
