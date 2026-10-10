@@ -37,3 +37,17 @@ Offline verification: `out/port/power-bomb/20261010T214306.622558Z/verdict.json`
 contains 88 matching cases across four exported symbols and 54 matching ordered
 callbacks, with zero CPU fallback. Four independent Rust tests pass. Dedicated
 batch kind `power-bomb` is available in the `all` profile only.
+
+Review hardening rejects signed or wide dispatch slot arguments before converting
+them to the original 16-bit domain. `65536` and `-65536` cannot alias slot zero;
+all three argument-taking entries reject without WRAM changes or host callbacks.
+
+The dedicated harness deliberately retains the same full-WRAM transaction,
+artifact and callback comparison protocol as `port_collision.py`. Its HDMA seam
+requires a second host interface, an allocator-definition rename in bank88,
+allocation-specific arguments and a retained source-copy seal. Moving build,
+wrapper generation and evidence validation into a shared configurable harness
+would change both existing PLM/crawler and power-bomb evidence consumers and their
+source seals. That is a separate harness-maintenance change requiring regression
+controls for both callback kinds; this review keeps those boundaries stable.
+User-visible errors now identify power-bomb evidence rather than collision evidence.

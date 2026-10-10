@@ -34,3 +34,17 @@ kind; exact upstream/archive, ROM, module and dependency seals are retained.
 Four independent Rust tests pass; complete port suite passed during implementation.
 Rejected intermediate builds/comparisons are retained in the same output family.
 No live exercise or complete bank88 HDMA ownership is claimed.
+
+## Final review fixes
+
+Spec review found wide dispatch arguments could truncate to slot zero. Checked
+conversion now rejects 65536/-65536 at all three argument-taking public entries
+before mutation or callbacks. Regression failed before the fix and passes after.
+Five power-bomb tests and the complete public port suite pass.
+
+Refreshed actual-C evidence: out/port/power-bomb-review/20261010T214904.459882Z/verdict.json,
+88 cases, four exported symbols, 54 ordered callbacks, zero CPU fallback; current
+module, dependency and harness seals revalidated. Misleading collision evidence
+errors now identify power bombs. The larger shared callback harness extraction
+is deferred with concrete source-seal and regression-control rationale documented
+in docs/DECOMP_POWER_BOMB.md. No gameplay behavior or HDMA ownership claim expands.
