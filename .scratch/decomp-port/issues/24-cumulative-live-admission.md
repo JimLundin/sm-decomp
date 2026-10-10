@@ -28,3 +28,9 @@ root additionally reclaimed355,637,476 bytes of unsealed historical build
 intermediates. A broad snapshot-only cleanup was interrupted after preserving
 already completed atomic deduplications; its unmeasured savings are not added
 to these totals. No accepted verdict, pointer, hash or observation was rewritten.
+
+
+The finished cumulative batch's sealed snapshot deduplication additionally
+reclaimed11,747,590,144 bytes. Combined with root's measured historical cleanup
+of9,417,670,502 bytes, measured total cleanup is21,165,260,646 bytes (19.71GiB).
+Interrupted broad-scan savings are excluded.
