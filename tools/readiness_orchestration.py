@@ -120,6 +120,21 @@ def brief(run,status,reason):
     for name in ('fallback-only-parity','generated-parity','instruction-diagnosis'):
         report=run.checks[name]
         text+='{}: total {}s, warm {}s, target overrun {}.\n'.format(name,report.get('total_seconds','unavailable'),report.get('warm_replay_seconds','unavailable'),report.get('warm_target_overrun',report.get('feedback_target_overrun','unavailable')))
+    text+='\n| Timed work | Seconds |\n| --- | --- |\n'
+    for name in ('check','lint','pattern-validation','sync-reference-build','sync-reference-replay','feedback-build'):
+        report=run.checks.get(name,{})
+        text+='| {} | {} |\n'.format(name,report.get('elapsed_seconds','unavailable'))
+    for mode in ('fallback-only','generated'):
+        for name,seconds in run.checks.get(mode+'-parity',{}).get('timings',{}).items():
+            text+='| {} {} | {} |\n'.format(mode,name,seconds)
+    for index,report in enumerate(run.checks.get('instruction-diagnosis',{}).get('reports',[])):
+        text+='| Paired cache {} creation | {} |\n'.format(index,report.get('cache',{}).get('cache_creation_seconds','unavailable'))
+        text+='| Focus {} warm replay | {} |\n'.format(index,report.get('warm_replay_seconds','unavailable'))
+    text+='| Feedback demonstrations | {} |\n'.format(run.checks['feedback-demonstrations'].get('total_seconds','unavailable'))
+    from datetime import datetime
+    text+='| Total suite through verdict | {:.3f} |\n'.format((datetime.now().astimezone()-datetime.fromisoformat(run.manifest['started_utc'])).total_seconds())
+    debt=run.manifest.get('historical_debt')
+    if debt:text+='\n[Later hardware debt and identities]({}): label mismatch 18,195 versus 18,196; later X=44 versus 43 at frame 35,203. Later gameplay, low%, 100%, different ROM/reset, full completion and zero interpreter execution require separate validation.\n'.format(debt)
     text+='\n[Manifest](manifest.json) · [Verdict](verdict.json) · [Coverage](coverage.json) · [Logs](logs/) · [Acceptance](acceptance-result.json)\n'
     return text
 
@@ -170,8 +185,8 @@ def run_readiness(root,predecessor=None,original_run=None,timeout=None,jobs=4,it
                 gate('failure-controls',lambda:diagnose_failure(run,validation_failure,predecessor,timeout=timeout))
         for name in MANDATORY_CHECKS:missing(run,name,'Mandatory gate did not run')
         run.check_sources();status,stage,reason=outcome(run)
-        if status=='pass':verify_origins(run.path,{'manifest':run.manifest,'verdict':{'checks':run.checks},'inventory':{'files':run.source_files}})
         summary=brief(run,status,reason);seal_gate_evidence(run)
+        if status=='pass':verify_origins(run.path,{'manifest':run.manifest,'verdict':{'checks':run.checks},'inventory':{'files':run.source_files}})
         code=run.finalize(status,stage,reason,MANDATORY_CHECKS,brief_text=summary)
         if code==0:
             try:
@@ -336,8 +351,7 @@ def focused_gates(run,timeout=None):
 
 
 def feedback_gate(run,timeout=None):
-    try:from readiness_feedback import run_demonstrations
-    except ImportError:return missing(run,'feedback-demonstrations','Mandatory feedback demonstrations are not implemented yet')
+    from readiness_feedback import run_demonstrations
     report=run_demonstrations(run,timeout=timeout)
     if 'feedback-demonstrations' not in run.checks:run.record_check('feedback-demonstrations',report)
     return report
@@ -456,6 +470,8 @@ def verify_origins(owner,verified):
         if validation['identities']['source_sha256']!=manifest['identities']['source']['sha256'] or validation['identities']['hardware_sha256']!=manifest['identities']['hardware']['source_sha256']:
             raise ValueError('Checkpoint source/hardware differs')
     feedback=checks['feedback-demonstrations']
+    from readiness_feedback import verify_feedback
+    verify_feedback(owner,manifest,feedback)
     for name,case in feedback['cases'].items():
         evidence=case.get('evidence',{});processes=case.get('processes',[])
         if not evidence.get('path') or not evidence.get('sha256') or not processes or not case.get('assertions') or not case.get('provenance'):

@@ -103,7 +103,7 @@ def discover_intervals(run,keys,frames=18000,timeout=None):
     run.guard_input(frozen)
     keys_path=run.path/"generated/discovery-keys.json";keys_path.write_text(json.dumps(keys,sort_keys=True));run.guard_input(keys_path)
     output=run.path/"diagnostics/discovery"
-    stage=run.run_stage("instruction-discovery",[frozen,run.root/"movies/super-metroid-any-3653.lsmv","--discover-keys",keys_path,"--frames",str(frames),"--rom",run.root/"rom/sm.sfc","--out",output],timeout=timeout,exit_statuses={1:"uncovered",2:"error"})
+    stage=run.run_stage("instruction-discovery-process",[frozen,run.root/"movies/super-metroid-any-3653.lsmv","--discover-keys",keys_path,"--frames",str(frames),"--rom",run.root/"rom/sm.sfc","--out",output],timeout=timeout,exit_statuses={1:"uncovered",2:"error"})
     if not (output/"discovery.json").exists():return dict(stage,complete=False)
     report=json.loads((output/"discovery.json").read_text());run.record_artifact("instruction-discovery-report",output/"discovery.json")
     import hashlib

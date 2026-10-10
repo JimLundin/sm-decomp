@@ -6,8 +6,9 @@ It prints the run directory and brief immediately. Doctor, check, lint, every
 70,011 enabled native instruction case, independent timing, cold fallback and
 current generated parity, actual key coverage, independent synchronization,
 focused generated execution and paired cache fidelity remain mandatory.
-Feedback demonstrations are also mandatory; absent implementation or evidence
-produces incomplete and prevents acceptance.
+Feedback demonstrations are also mandatory; absent or failed evidence prevents
+acceptance. `just readiness-feedback` exercises the nine isolated synthetic
+controls separately; see [their contract](FEEDBACK_DEMONSTRATIONS.md).
 
 `just readiness --original-run out/runs/RUN` can consume a separately verified
 original recording-core capture. Initial candidate synchronization always runs

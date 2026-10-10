@@ -46,6 +46,18 @@ fn main() -> anyhow::Result<()> {
         let src = recomp::step::emit_table(&[(cfg, None)], &read)?;
         std::fs::write(PathBuf::from(std::env::var("OUT_DIR")?).join(format!("nmi_phase_{phase}.rs")), src)?;
     }
+    let program = [0x18, 0xfb, 0xa9, 0x12, 0x8d, 0x10, 0, 0xa9, 0, 0x8d, 0x10, 0, 0x80, 0xfe];
+    let read = |addr: u32| {
+        if addr == 0x8100 { Some(0xea) } else { program.get(addr.wrapping_sub(0x8000) as usize).copied() }
+    };
+    let mut functions = Vec::new();
+    for address in [0x8000, 0x8100] {
+        functions.push((recomp::cfg::build(&read, address, true, true, &HashSet::new())?, None));
+    }
+    std::fs::write(
+        PathBuf::from(std::env::var("OUT_DIR")?).join("feedback_steps.rs"),
+        recomp::step::emit_table(&functions, &read)?,
+    )?;
     let program = [0xa9, 1, 0x8d, 0x0b, 0x42, 0xea, 0xea];
     let read = |addr: u32| program.get(addr.wrapping_sub(0x8000) as usize).copied();
     let cfg = recomp::cfg::build(&read, 0x8000, true, true, &HashSet::new())?;

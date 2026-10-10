@@ -139,6 +139,10 @@ readiness-reuse *args:
 readiness *args:
     python3 tools/readiness_orchestration.py readiness {{args}}
 
+# Isolated synthetic fault controls; a scoped pass cannot accept readiness.
+readiness-feedback *args:
+    python3 tools/readiness_feedback.py {{args}}
+
 validate-iteration *args:
     python3 tools/readiness_orchestration.py validate-iteration {{args}}
 
