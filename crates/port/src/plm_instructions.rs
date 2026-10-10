@@ -215,13 +215,7 @@ pub fn instruction(r: &mut Wram<'_>, rom: &[u8], opcode: u16, pc: u16, k: u16) -
             advance = 1;
         }
         0x8d41 => {
-            let b = block(r, k)? / 2;
-            let width = r.word(0x7a5) as usize;
-            if width == 0 {
-                return Err("PLM room width zero");
-            }
-            r.set_word(0x1c29, (b % width) as u16);
-            r.set_word(0x1c2b, (b / width) as u16);
+            crate::plm_render::calculate_block_coords(r, k as u16)?;
             let abs = |a: u16, b: u16| {
                 let delta = a.wrapping_sub(b) as i16;
                 delta.wrapping_abs() as u8
@@ -232,6 +226,23 @@ pub fn instruction(r: &mut Wram<'_>, rom: &[u8], opcode: u16, pc: u16, k: u16) -
                 return Ok(Some(w(2)?));
             }
             advance = 4;
+        }
+        0x8b17 => {
+            let target = block(r, k)?;
+            let tile = r.word(VARIABLE + k);
+            r.set_word(0x10002 + target, tile);
+            r.set_word(0x1e67, 1);
+            r.set_word(0x1e69, tile);
+            r.set_word(0x1e6b, 0);
+            r.set_word(INSTR_TIMER + k, 1);
+            r.set_word(DRAW + k, 0x1e67);
+            r.set_word(LIST + k, pc);
+            process_draw_data(r, rom, k as u16)?;
+            // C intentionally draws the globally active slot after updating k.
+            let active = r.word(0x1c27);
+            crate::plm_render::calculate_block_coords(r, active)?;
+            crate::plm_render::draw(r, rom, active)?;
+            return Ok(None);
         }
         _ => return Err("unsupported PLM instruction"),
     }

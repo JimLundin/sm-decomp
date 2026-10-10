@@ -6,6 +6,27 @@ fn rom_with(pc: u16, data: &[u8]) -> Vec<u8> {
     rom
 }
 #[test]
+fn draw_block_instruction_builds_ram_script_and_preserves_continuation() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x7a5, 32);
+    r.set_word(0x1c87, 66);
+    r.set_word(0x1e17, 0x0401);
+    r.set_word(0xa008, 0x1111);
+    r.set_word(0xa00a, 0x2222);
+    r.set_word(0xa00c, 0x3333);
+    r.set_word(0xa00e, 0x4444);
+    assert_eq!(instructions::instruction(&mut r, &[], 0x8b17, 0x9002, 0), Ok(None));
+    assert_eq!(r.word(0x10044), 0x0401);
+    assert_eq!(r.word(0x1e67), 1);
+    assert_eq!(r.word(0x1e69), 0x0401);
+    assert_eq!(r.word(0x1e6b), 0);
+    assert_eq!(r.word(0xde6c), 0x1e67);
+    assert_eq!(r.word(0x1d27), 0x9002);
+    assert_eq!(r.word(0xc6c8), 0x6222);
+    assert_eq!(r.word(0xc6ca), 0x5111);
+}
+#[test]
 fn drawn_frame_updates_level_tiles_and_queues_two_tilemap_rows() {
     let mut bytes = vec![0; WRAM_SIZE];
     let mut r = Wram::new(&mut bytes).unwrap();

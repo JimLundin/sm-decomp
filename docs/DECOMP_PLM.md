@@ -171,3 +171,19 @@ across six seams, including 256 renderer cases, 48 coordinate cases and 40
 drawn frames. Seven independent renderer tests and a literal full-frame example,
 the full Rust suite and Clippy pass. This expands offline ownership; live
 rendering and original-ROM parity remain unproven.
+
+## Room gameplay conditions
+
+Twenty-one further preinstructions own lava progression, speed-booster escape,
+Shaktool scroll/event changes, escape liquid motion, triggered blocks, Samus
+position/proximity, door bits, Metroid quotas and keypress wakeups. Missile room
+arguments and trigger low-byte conditions retain distinct behavior. Native
+single-block drawing builds the RAM script and queues rendering; proximity
+instruction division now matches the SNES byte divisor, including zero.
+
+Actual-C evidence `out/port/plm-room-conditions/20261010T230206.177568Z/verdict.json`
+passes96routines/1,184cases. Frame evidence
+`out/port/plm-room-frames/20261010T230207.358573Z/verdict.json` passes1,368cases,
+including252new condition-frame cases and16block-draw cases. Independent Rust
+examples, full suite and Clippy pass. Escape-shaft wall projectile spawning and
+message coroutine ownership remain open; additions are offline verified.

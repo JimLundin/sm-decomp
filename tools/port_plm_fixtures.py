@@ -114,6 +114,16 @@ def generate(output_dir: Path, manifest_path: Path | None = None) -> Path:
                     "writes": writes,
                 }
             )
+    for seed in range(16):
+        slot = [0, 2, 38, 78][seed % 4]
+        pc = 0x9700 + seed * 8
+        write(0x84, pc, le(0x8B17) + le(0x86BC))
+        writes = [[0x1C27, le(slot)], [0x1C87 + slot, le(66)],
+                  [0x1E17 + slot, le(1 | ((seed % 4) << 10))],
+                  [0x7A5, le([0, 32, 256, 288][seed % 4])],
+                  [0x330, le(0)], [0x1C25, le(0)]]
+        cases.append({"name": f"draw-block-{seed}", "a": slot,
+                      "b": 0x840000 | pc, "writes": writes, "expected_return": 0})
     frames = []
     for seed in range(12):
         pc = 0xA000 + seed * 64
@@ -144,11 +154,15 @@ def generate(output_dir: Path, manifest_path: Path | None = None) -> Path:
                        0xBDD4, 0xBDE3, 0xBDF2, 0xBE01, 0xBE1F, 0xBE30, 0xB7DD,
                        0x8469, 0x84E6, 0x853D, 0x86D0, 0x8AA6, 0x8AE0,
                        0xBAFA, 0xBB6A, 0xBBA3, 0xD356, *range(0xDAD5, 0xDADE), 0xDFA8]
+    preinstructions += [0xAC89, 0xB7EF, 0xB82A, 0xB846, 0xB8B0, 0xB948,
+                        0xBB52, 0xBB6B, 0xBBA4, 0xD15C, 0xD1E6, 0xD33B,
+                        0xD4BF, 0xD753, 0xDADE, 0xDAEE, 0xDAFE, 0xDB0E,
+                        0xDB64, 0xDF89, 0xDFE6]
     for pre in preinstructions:
         for seed in range(12):
             slot = [0, 2, 38, 78][seed % 4]
             pc, link = 0xA800, 0xA810
-            write(0x84, pc, le(0x874E) + [5] + le(0x86BC))
+            write(0x84, pc, le(0x86BC) + le(0x874E) + [5] + le(0x86BC))
             write(0x84, link, le(0x874E) + [7] + le(0x86BC))
             writes = [
                 [0x1C23, le(0x8000)],
@@ -164,7 +178,19 @@ def generate(output_dir: Path, manifest_path: Path | None = None) -> Path:
                 [0x1E6D, le(0x8000 if seed % 2 else 0)],
                 [0xD821, [0x80 if seed % 2 else 0]],
                 [0x5F5, le(1)],
+                [0x7A5, le(32)], [0x1C87 + slot, le(2 * (32 * 8 + 4))],
+                [0x1DC7 + slot, le(seed % 8)],
+                [0x9A4, le([0, 0x1000, 0x2000, 0x3000][seed % 4])],
+                [0xAF6, le([0, 240, 241, 0x348, 0x349, 0xAE0][seed % 6])],
+                [0xAFA, le(1345 if seed % 2 else 128)],
+                [0x197A, le(0x8000 if seed % 2 else 0x200)],
+                [0x1978, le(0x400)], [0x592, le(seed % 2)],
+                [0x8F, le(0x8000 if seed % 2 else 0)],
+                [0xD8B0, [0xFF if seed % 2 else 0]],
+                [0x10202 + 2 * (32 * 8 + 4), le(255 if seed % 2 else 254)],
             ]
+            if pre == 0xB846:
+                writes.append([0x1D77 + slot, le([0, 6, 12, 18][seed % 4])])
             frames.append({"name": f"frame-pre-{pre:04x}-{seed}",
                            "writes": writes, "expected_return": 0})
     draw = []

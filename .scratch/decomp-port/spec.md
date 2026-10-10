@@ -52,6 +52,7 @@ observable hardware effects, Rust hits and fallback measurements.
 - 28: door shot/room-condition preinstructions and bounded-frame dispatch, offline verified.
 - 29: actual-C PLM frame preinstruction ordering, deletion timers and no-op closure, offline verified.
 - 30: native PLM tilemap rendering and drawn-frame execution, offline verified.
+- 31: native lava/room/trigger PLM conditions and single-block drawing, offline verified.
 
 This is the first frontier, not the completion boundary of the user's goal.
 Expand tickets into substantive gameplay subsystems after this frontier, using
