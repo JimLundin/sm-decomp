@@ -234,3 +234,135 @@ fn super_missile_door_wakeup_sets_hit_variable_and_link_timer() {
     assert_eq!(ram.word(0x1d27), 0x9234);
     assert_eq!(ram.word(0xde1c), 1);
 }
+
+#[test]
+fn speed_booster_escape_advances_lava_then_sets_completion_event() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut ram = Wram::new(&mut bytes).unwrap();
+    ram.set_word(0xaf6, 0x72b);
+    ram.set_word(0x1978, 0x200);
+    assert_eq!(plm::preinstruction(&mut ram, 0xb846, 78), Ok(()));
+    assert_eq!(ram.word(0x1978), 0x1bf);
+    assert_eq!(ram.word(0x197c), 0xff50);
+    assert_eq!(ram.word(0x1d77 + 78), 6);
+    ram.set_word(0x1d77 + 78, 18);
+    assert_eq!(plm::preinstruction(&mut ram, 0xb846, 78), Ok(()));
+    assert_eq!(ram.byte(0xd822) & 0x20, 0x20);
+}
+
+#[test]
+fn room_triggers_preserve_their_distinct_wake_and_position_state() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut ram = Wram::new(&mut bytes).unwrap();
+    ram.set_word(0x1d27, 0xffff);
+    ram.set_word(0x1d77, 0x12ff);
+    assert_eq!(plm::preinstruction(&mut ram, 0xdfe6, 0), Ok(()));
+    assert_eq!(ram.word(0x1d27), 1);
+    assert_eq!(ram.word(0xde1c), 1);
+    assert_eq!(ram.word(0x1d77), 0);
+    ram.set_word(0x1e17, 0x1234);
+    ram.set_word(0xdf0c, 0x5678);
+    ram.set_word(0x18a8, 1);
+    assert_eq!(plm::preinstruction(&mut ram, 0xac89, 0), Ok(()));
+    assert_eq!(ram.word(0xaf6), 0x1234);
+    assert_eq!(ram.word(0xafa), 0x5678);
+    assert_eq!(ram.word(0x18a8), 0x11);
+}
+
+#[test]
+fn proximity_wakes_from_block_coordinates_and_preserves_trigger() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut ram = Wram::new(&mut bytes).unwrap();
+    ram.set_word(0x7a5, 16);
+    ram.set_word(0x1c87 + 38, 100);
+    ram.set_word(0xaf6, 32);
+    ram.set_word(0xafa, 112);
+    ram.set_word(0x1d27 + 38, 0x9000);
+    assert_eq!(plm::preinstruction(&mut ram, 0xbb6b, 38), Ok(()));
+    assert_eq!(ram.word(0x1c29), 2);
+    assert_eq!(ram.word(0x1c2b), 3);
+    assert_eq!(ram.word(0x1d27 + 38), 0x9002);
+    assert_eq!(ram.word(0x1cd7 + 38), 0xbba3);
+}
+
+#[test]
+fn opened_room_door_links_and_metroid_quota_marks_event() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut ram = Wram::new(&mut bytes).unwrap();
+    ram.set_word(0x1dc7, 9);
+    ram.set_byte(0xd8b1, 2);
+    ram.set_word(0xdebc, 0xabcd);
+    assert_eq!(plm::preinstruction(&mut ram, 0xd753, 0), Ok(()));
+    assert_eq!(ram.word(0x5e7), 2);
+    assert_eq!(ram.word(0x1d27), 0xabcd);
+    assert_eq!(ram.word(0x1cd7), 0xd779);
+    ram.set_word(0xe50, 3);
+    ram.set_word(0xe52, 3);
+    assert_eq!(plm::preinstruction(&mut ram, 0xdafe, 0), Ok(()));
+    assert_eq!(ram.byte(0xd822), 4);
+}
+
+#[test]
+fn booster_collection_and_shaktool_room_control_environment() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut ram = Wram::new(&mut bytes).unwrap();
+    ram.set_word(0x1c37, 0xabcd);
+    ram.set_word(0x1980, 9);
+    assert_eq!(plm::preinstruction(&mut ram, 0xb7ef, 0), Ok(()));
+    assert_eq!(ram.word(0x197a), 0xffff);
+    assert_eq!(ram.word(0x1980), 0);
+    assert_eq!(ram.word(0x1c37), 0);
+    ram.set_word(0x592, 1);
+    ram.set_word(0xaf6, 0x349);
+    assert_eq!(plm::preinstruction(&mut ram, 0xb8b0, 0), Ok(()));
+    assert_eq!(ram.word(0xcd20), 0x101);
+    assert_eq!(ram.word(0xcd22), 0x101);
+    assert_eq!(ram.byte(0xd821) & 0x20, 0x20);
+}
+
+#[test]
+fn escape_and_input_conditions_advance_scripts_without_clearing_unrelated_triggers() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut ram = Wram::new(&mut bytes).unwrap();
+    ram.set_word(0xaf6, 241);
+    ram.set_word(0xafa, 1345);
+    ram.set_word(0x1d27, 0x9000);
+    ram.set_word(0x1d77, 0x100);
+    assert_eq!(plm::preinstruction(&mut ram, 0xb948, 0), Ok(()));
+    assert_eq!(ram.word(0x197c), 0xff98);
+    assert_eq!(ram.word(0x1980), 16);
+    assert_eq!(ram.word(0x1d27), 0x9002);
+    assert_eq!(ram.word(0x1d77), 0x100);
+    assert_eq!(plm::preinstruction(&mut ram, 0xd1e6, 0), Ok(()));
+    assert_eq!(ram.word(0x1dc7), 1);
+    assert_eq!(ram.word(0x1d77), 0);
+    ram.set_word(0x8f, 0x40);
+    assert_eq!(plm::preinstruction(&mut ram, 0xd4bf, 0), Ok(()));
+    assert_eq!(ram.word(0x1d27), 0x9004);
+    ram.set_word(0x9a4, 0x1000);
+    assert_eq!(plm::preinstruction(&mut ram, 0xd33b, 0), Ok(()));
+    assert_eq!(ram.word(0x1cd7), 0xd356);
+}
+
+#[test]
+fn destroyed_block_deletes_current_plm_and_eye_door_uses_room_argument() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut ram = Wram::new(&mut bytes).unwrap();
+    ram.set_word(0x7a5, 16);
+    ram.set_word(0x1010a, 0xff);
+    ram.set_word(0x1c27, 38);
+    ram.set_word(0x1c37 + 38, 0xaaaa);
+    assert_eq!(plm::preinstruction(&mut ram, 0xd15c, 0), Ok(()));
+    assert_eq!(ram.word(0x1010a), 0xb0ff);
+    assert_eq!(ram.byte(0x16486), 0x83);
+    assert_eq!(ram.word(0x1c37 + 38), 0);
+    ram.set_word(0x1d77, 0x200);
+    ram.set_word(0xdebc, 0xbeef);
+    assert_eq!(plm::preinstruction(&mut ram, 0xdb64, 0), Ok(()));
+    assert_eq!(ram.word(0x1dc7), 119);
+    assert_eq!(ram.word(0x1d27), 0xbeef);
+    ram.set_word(0x1d77, 0x12ff);
+    assert_eq!(plm::preinstruction(&mut ram, 0xdf89, 0), Ok(()));
+    assert_eq!(ram.word(0x1cd7), 0xdfa8);
+    assert_eq!(ram.word(0x1d77), 0x12ff);
+}

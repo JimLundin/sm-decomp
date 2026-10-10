@@ -538,6 +538,170 @@ fn spawn_positioned(
 pub fn preinstruction(r: &mut Wram, address: u16, k: u16) -> Result<(), &'static str> {
     let j = slot(k)?;
     let hit = r.word(0x1d77 + j);
+    match address {
+        0xbb52 | 0xbb6b | 0xbba4 => {
+            let mut near = false;
+            if address != 0xbb52 {
+                crate::plm_render::calculate_block_coords(r, k)?;
+                let x = r.word(0x1c29);
+                let y = r.word(0x1c2b);
+                let dy = (r.word(0xafa) >> 4).wrapping_sub(y);
+                near = r.word(0xaf6) >> 4 == x && if address == 0xbb6b { dy < 5 } else { dy >= 0xfffc };
+            }
+            if near || hit != 0 {
+                inc(r, INSTR + j, 2);
+                r.set_word(TIMER + j, 1);
+                r.set_word(
+                    0x1cd7 + j,
+                    match address {
+                        0xbb52 => 0xbb6a,
+                        0xbb6b => 0xbba3,
+                        _ => 0xbbdc,
+                    },
+                );
+            }
+            return Ok(());
+        }
+        0xd753 => {
+            let argument = r.word(0x1dc7 + j);
+            if argument >> 3 >= 64 {
+                return Err("invalid room door bit");
+            }
+            let idx = crate::system::dispatch(r, "PrepareBitAccess", argument, 0)? as usize;
+            if r.word(0x5e7) & u16::from(r.byte(0xd8b0 + idx)) != 0 {
+                r.set_word(0x1cd7 + j, 0xd779);
+                r.set_word(INSTR + j, r.word(0xdebc + j));
+                r.set_word(TIMER + j, 1);
+            }
+            return Ok(());
+        }
+        0xdade | 0xdaee | 0xdafe | 0xdb0e => {
+            if r.word(0xe50) >= r.word(0xe52) {
+                crate::system::dispatch(r, "SetEventHappened", 0x10 + (address - 0xdade) / 16, 0)?;
+            }
+            return Ok(());
+        }
+        0xb7ef => {
+            if r.word(0x9a4) & 0x2000 == 0 {
+                r.set_word(0x197a, 0xffff);
+                r.set_word(0x197c, 0);
+                r.set_word(0x1980, 0);
+                r.set_word(0x1840, 0);
+                delete(r, j);
+            } else if r.word(0x197a) & 0x8000 != 0 {
+                delete(r, j);
+            } else {
+                r.set_word(0x197c, 0xff80);
+                r.set_word(TIMER + j, 1);
+                inc(r, INSTR + j, 2);
+                r.set_word(0x1d77 + j, 0);
+            }
+            return Ok(());
+        }
+        0xb8b0 => {
+            if r.word(0x592) != 0 {
+                r.set_word(0xcd20, 0x101);
+                r.set_word(0xcd22, 0x101);
+            }
+            if r.word(0xaf6) > 0x348 {
+                crate::system::dispatch(r, "SetEventHappened", 0xd, 0)?;
+                delete(r, j);
+            }
+            return Ok(());
+        }
+        0xb82a | 0xb948 | 0xd33b | 0xd4bf => {
+            let ready = match address {
+                0xb82a => r.word(0xaf6) <= 0xae0,
+                0xb948 => r.word(0xaf6) > 240 && r.word(0xafa) > 1344,
+                0xd33b => r.word(0x9a4) & 0x1000 != 0,
+                _ => r.word(0x8f) & 0xc3c0 != 0,
+            };
+            if ready {
+                inc(r, INSTR + j, 2);
+                r.set_word(TIMER + j, 1);
+                match address {
+                    0xb82a => {
+                        r.set_word(0x1980, 1);
+                        r.set_word(0x1d77 + j, 0);
+                    }
+                    0xb948 => {
+                        r.set_word(0x197c, 0xff98);
+                        r.set_word(0x1980, 16);
+                    }
+                    0xd33b => r.set_word(0x1cd7 + j, 0xd356),
+                    _ => {}
+                }
+            }
+            return Ok(());
+        }
+        0xd1e6 => {
+            if matches!(hit & 0xf00, 0x100 | 0x200) {
+                inc(r, 0x1dc7 + j, 1);
+            }
+            r.set_word(0x1d77 + j, 0);
+            return Ok(());
+        }
+        0xd15c => {
+            let b = 2 * (8 * usize::from(r.byte(0x7a5)) + 4);
+            if tile(r, b) == 255 {
+                let current = slot(r.word(0x1c27))?;
+                write_type(r, b, 0xb083);
+                delete(r, current);
+            }
+            return Ok(());
+        }
+        0xdb64 => {
+            if hit & 0xf00 == 0x200 {
+                r.set_word(0x1dc7 + j, 119);
+            }
+            if matches!(hit & 0xf00, 0x100 | 0x200) {
+                r.set_word(0x1d77 + j, 0);
+                r.set_word(INSTR + j, r.word(0xdebc + j));
+                r.set_word(TIMER + j, 1);
+            }
+            return Ok(());
+        }
+        0xdf89 => {
+            if hit as u8 == 0xff {
+                r.set_word(0x1cd7 + j, 0xdfa8);
+                r.set_word(INSTR + j, r.word(0xdebc + j));
+                r.set_word(TIMER + j, 1);
+            }
+            return Ok(());
+        }
+        0xac89 => {
+            r.set_word(0xaf6, r.word(VARIABLE + j));
+            r.set_word(0xafa, r.word(0xdf0c + j));
+            r.set_word(0x18a8, r.word(0x18a8) | 0x10);
+            return Ok(());
+        }
+        0xdfe6 => {
+            if hit != 0x300 && hit as u8 == 0xff {
+                r.set_word(0x1d77 + j, 0);
+                inc(r, INSTR + j, 2);
+                r.set_word(TIMER + j, 1);
+            }
+            return Ok(());
+        }
+        _ => {}
+    }
+    if address == 0xb846 {
+        const LAVA: [u16; 10] = [0x72b, 0x1bf, 0xff50, 0x50a, 0x167, 0xff20, 0x244, 0x100, 0xff20, 0x8000];
+        let index = usize::from(hit >> 1);
+        if !matches!(hit, 0 | 6 | 12 | 18) {
+            return Err("invalid lava stage");
+        }
+        if LAVA[index] & 0x8000 != 0 {
+            crate::system::dispatch(r, "SetEventHappened", 0x15, 0)?;
+        } else if LAVA[index] >= r.word(0xaf6) {
+            if LAVA[index + 1] < r.word(0x1978) {
+                r.set_word(0x1978, LAVA[index + 1]);
+            }
+            r.set_word(0x197c, LAVA[index + 2]);
+            r.set_word(0x1d77 + j, hit.wrapping_add(6));
+        }
+        return Ok(());
+    }
     let wake = match address {
         0xbd0f => hit != 0,
         0xbd26 => hit & 0xf00 == 0x300,
@@ -599,6 +763,27 @@ pub fn preinstruction(r: &mut Wram, address: u16, k: u16) -> Result<(), &'static
 }
 pub fn dispatch_rom(r: &mut Wram, _rom: &[u8], name: &str, a: i32, _b: i32) -> Result<u32, &'static str> {
     let pre = match name {
+        "PlmPreInstr_PositionSamusAndInvincible" => Some(0xac89),
+        "PlmPreInstr_WakeAndLavaIfBoosterCollected" => Some(0xb7ef),
+        "PlmPreInstr_WakePLMAndStartFxMotionSamusFarLeft" => Some(0xb82a),
+        "PlmPreInstr_AdvanceLavaSamusMovesLeft" => Some(0xb846),
+        "PlmPreInstr_ShaktoolsRoom" => Some(0xb8b0),
+        "PlmPreInstr_EscapeRoomBeforeOldTourianEscapeShaft" => Some(0xb948),
+        "PlmPreInstr_WakePlmIfTriggered" => Some(0xbb52),
+        "PlmPreInstr_WakePlmIfTriggeredOrSamusBelowPlm" => Some(0xbb6b),
+        "PlmPreInstr_WakePlmIfTriggeredOrSamusAbovePlm" => Some(0xbba4),
+        "PlmPreInstr_DeletePlmAndSpawnTriggerIfBlockDestroyed" => Some(0xd15c),
+        "PlmPreInstr_IncrementRoomArgIfShotBySuperMissile" => Some(0xd1e6),
+        "PlmPreInstr_WakePlmIfSamusHasBombs" => Some(0xd33b),
+        "PlmPreInstr_WakeOnKeyPress" => Some(0xd4bf),
+        "PlmPreInstr_WakePlmIfRoomArgumentDoorIsSet" => Some(0xd753),
+        "PlmPreInstr_SetMetroidsClearState_Ev0x10" => Some(0xdade),
+        "PlmPreInstr_SetMetroidsClearState_Ev0x11" => Some(0xdaee),
+        "PlmPreInstr_SetMetroidsClearState_Ev0x12" => Some(0xdafe),
+        "PlmPreInstr_SetMetroidsClearState_Ev0x13" => Some(0xdb0e),
+        "PlmPreInstr_GotoLinkIfShotWithSuperMissile" => Some(0xdb64),
+        "PlmPreInstr_GotoLinkIfTriggered" => Some(0xdf89),
+        "PlmPreInstr_WakeIfTriggered" => Some(0xdfe6),
         "PlmPreInstr_GoToLinkInstrIfShot" => Some(0xbd0f),
         "PlmPreInstr_GoToLinkInstrIfShotWithPowerBomb" => Some(0xbd26),
         "PlmPreInstr_GoToLinkInstrIfShotWithAnyMissile" => Some(0xbd50),
