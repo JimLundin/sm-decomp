@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Preview/remove unsealed Cargo intermediates from finished evidence runs.
+"""Preview/remove unsealed Cargo and archive intermediates from finished evidence runs.
 
-Never removes fixtures, verdicts, pointers, binaries or sealed build files.
+Never removes fixtures, verdicts, pointers, linked binaries or sealed build files.
 Unfinished runs and symlinked directories are skipped. Existing evidence is
 immutable: an inventory entry anywhere under a target directory protects it.
 """
