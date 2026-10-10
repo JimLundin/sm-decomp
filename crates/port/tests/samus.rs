@@ -1,8 +1,21 @@
-use port::{Wram, WRAM_SIZE};
-#[path = "../src/samus.rs"]
-mod samus;
+use port::{WRAM_SIZE, Wram, samus};
 fn rom() -> Vec<u8> {
-    include_bytes!("../../../rom/sm.sfc").to_vec()
+    // Independent synthetic table examples; commercial ROM stays out of tests.
+    let mut bytes = vec![0; 0x300000];
+    let mut word = |address: u32, value: u16| {
+        let offset = ((((address >> 16) << 15) | (address & 0x7fff)) & 0x3fffff) as usize;
+        bytes[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
+    };
+    word(0x91b629 + 8 + 6, 21);
+    word(0x91b837, 7);
+    word(0x91b61f, 1);
+    word(0x909f61, 0);
+    word(0x909f63, 0x1000);
+    word(0x909f65, 2);
+    word(0x909f67, 0xc000);
+    word(0x909f69, 0);
+    word(0x909f6b, 0x1000);
+    bytes
 }
 #[test]
 fn pose_radius_sets_bounds_and_preserves_the_bottom_across_pose_changes() {
@@ -16,6 +29,12 @@ fn pose_radius_sets_bounds_and_preserves_the_bottom_across_pose_changes() {
     assert_eq!(samus::dispatch_rom(&mut ram, &rom, "Samus_SetRadius", 0, 0), Ok(0));
     assert_eq!(ram.word(0xafe), 5);
     assert_eq!(ram.word(0xb00), 21);
+    ram.set_word(0xa20, 1);
+    ram.set_word(0xa1c, 0x41);
+    ram.set_word(0xb14, 100);
+    assert_eq!(samus::dispatch_rom(&mut ram, &rom, "Samus_AlignBottomWithPrevPose", 0, 0), Ok(0));
+    assert_eq!(ram.word(0xafa), 114);
+    assert_eq!(ram.word(0xb14), 114);
 }
 #[test]
 fn water_reduces_jump_and_acceleration_unless_gravity_suit_is_equipped() {

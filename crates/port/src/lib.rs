@@ -4,6 +4,8 @@
 pub const WRAM_SIZE: usize = 0x20000;
 
 pub mod audio;
+pub mod enemy;
+pub mod samus;
 pub mod system;
 
 pub struct Wram<'a>(&'a mut [u8]);

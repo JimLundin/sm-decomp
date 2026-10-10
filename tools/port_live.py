@@ -23,7 +23,7 @@ def main():
     verdict = {'status': 'rejected', 'live_exercised': False,
                'original_rom_parity': 'not-tested', 'commands': []}
     try:
-        from port_family import digest, verify_source
+        from port_family import digest, verify_source, verify_family_evidence
         from decomp_baseline import ROM_SHA256
         source = ROOT / 'deps/snesrev-sm'
         verdict['source'] = verify_source(source)
@@ -36,9 +36,7 @@ def main():
         verdict.update(rom_sha256=digest(rom), inputs_sha256=digest(inputs), frames=args.frames)
         families = []
         for path in args.family_verdict:
-            previous = json.loads(path.read_text())
-            if previous['status'] != 'offline-verified':
-                raise ValueError('family evidence is not offline verified')
+            previous = verify_family_evidence(path)
             manifest = json.loads((path.parent / 'manifest.json').read_text())
             module = Path(previous['implementation']['module'])
             if digest(module) != previous['implementation']['module_sha256']:
@@ -55,7 +53,8 @@ def main():
         verdict['decompressor_predecessor_sha256'] = digest(args.accepted)
         def execute(command, directory, label):
             verdict['commands'].append({'argv': command, 'cwd': str(directory)})
-            with (directory / (label + '.stdout')).open('wb') as stdout, (directory / (label + '.stderr')).open('wb') as stderr:
+            logs = run if directory == ROOT else directory
+            with (logs / (label + '.stdout')).open('wb') as stdout, (logs / (label + '.stderr')).open('wb') as stderr:
                 result = subprocess.run(command, cwd=directory, stdout=stdout, stderr=stderr, timeout=240)
             if result.returncode:
                 raise ValueError(f'{label} failed with exit {result.returncode}')
@@ -64,20 +63,30 @@ def main():
         bank_texts = {}
         for family_index, (manifest, module) in enumerate(families):
             rust.append(f'#[path={json.dumps(str(module))}] mod family{family_index};')
+            if 'rom' in manifest:
+                call = f'family{family_index}::dispatch_rom(&mut Wram::new(bytes).unwrap(),rom,name,a,b)'
+            elif any('arg_types' in r for r in manifest['routines']):
+                call = f'family{family_index}::dispatch_i32(&mut Wram::new(bytes).unwrap(),name,a,b)'
+            else:
+                call = f'family{family_index}::dispatch(&mut Wram::new(bytes).unwrap(),name,a as u16,b as u16)'
             rust.append(f'''#[unsafe(no_mangle)]
-pub unsafe extern "C" fn port_family_{family_index}(ram:*mut u8,len:usize,id:u32,a:u16,b:u16)->i64 {{
+pub unsafe extern "C" fn port_family_{family_index}(ram:*mut u8,len:usize,rom:*const u8,rom_len:usize,id:u32,a:i32,b:i32)->i64 {{
  if ram.is_null() || len!=0x20000 || (ram as usize).checked_add(len).is_none() {{return -1;}}
+ if rom.is_null() || rom_len==0 || rom_len>0x400000 || (rom as usize).checked_add(rom_len).is_none() {{return -1;}}
  let names={json.dumps([r['symbol'] for r in manifest['routines']])};
  let Some(name)=names.get(id as usize) else {{return -1;}};
  let bytes=unsafe {{std::slice::from_raw_parts_mut(ram,len)}};
- let result=std::panic::catch_unwind(std::panic::AssertUnwindSafe(||family{family_index}::dispatch(&mut Wram::new(bytes).unwrap(),name,a,b)));
+ let rom=unsafe {{std::slice::from_raw_parts(rom,rom_len)}};
+ let result=std::panic::catch_unwind(std::panic::AssertUnwindSafe(||{call}));
  match result {{Ok(Ok(value))=>i64::from(value),_=>-1}}
 }}''')
-            wrappers.append(f'extern int64_t port_family_{family_index}(uint8_t*,size_t,uint32_t,uint16_t,uint16_t);')
+            wrappers.append(f'extern int64_t port_family_{family_index}(uint8_t*,size_t,const uint8_t*,size_t,uint32_t,int32_t,int32_t);')
             bank = source / 'src' / manifest['bank']
             text = bank_texts.get(bank, bank.read_text())
             for routine_index, routine in enumerate(manifest['routines']):
-                symbol, count = routine['symbol'], routine['args']
+                symbol = routine['symbol']
+                types = routine.get('arg_types', ['uint16'] * routine.get('args', 0))
+                count = len(types)
                 if symbol in symbols or not re.fullmatch('[A-Za-z_][A-Za-z_0-9]*', symbol):
                     raise ValueError('duplicate or invalid live symbol')
                 index = len(symbols)
@@ -86,8 +95,8 @@ pub unsafe extern "C" fn port_family_{family_index}(ram:*mut u8,len:usize,id:u32
                 text, replacements = signature.subn(r'\1C_' + symbol + r'\2', text)
                 if replacements != 1:
                     raise ValueError(f'definition rename count differs: {symbol}')
-                c_type = {'void': 'void', 'uint8': 'uint8_t', 'uint16': 'uint16_t', 'uint32': 'uint32_t'}[routine['return']]
-                declaration = ','.join(['uint16_t a', 'uint16_t b'][:count]) or 'void'
+                c_type = {'void': 'void', 'uint8': 'uint8_t', 'uint16': 'uint16_t', 'uint32': 'uint32_t', 'int32': 'int32_t'}[routine['return']]
+                declaration = ','.join(kind + '_t ' + name for kind, name in zip(types, ['a', 'b'])) or 'void'
                 arguments = ','.join(['a', 'b'][:count])
                 actual = ','.join(['a' if count > 0 else '0', 'b' if count > 1 else '0'])
                 c_call = f'C_{symbol}({arguments})'
@@ -96,8 +105,16 @@ pub unsafe extern "C" fn port_family_{family_index}(ram:*mut u8,len:usize,id:u32
                 wrappers.append(f'''extern {c_type} C_{symbol}({declaration});
 {c_type} {symbol}({declaration}) {{
  int64_t result=0;
- if(port_mixed) {{result=port_family_{family_index}(g_ram,sizeof(g_ram),{routine_index},{actual}); if(result<0) {{fprintf(stderr,"Rust family error {symbol}\\n");exit(4);}} port_rust_hits[{index}]++;}}
+ int outer=port_call_depth++==0;
+ unsigned long capture=outer?++port_outer_hits[{index}]:0;
+ if(outer && capture<=8)PortCapture({index},capture,"before");
+ if(port_mixed) {{result=port_family_{family_index}(g_ram,sizeof(g_ram),g_rom,g_snes->cart->romSize,{routine_index},{actual}); if(result<0) {{fprintf(stderr,"Rust family error {symbol}\\n");exit(4);}} port_rust_hits[{index}]++;}}
  else {{{reference} port_c_hits[{index}]++;}}
+ port_call_depth--;
+ if(outer) {{
+  if(capture<=8)PortCapture({index},capture,"after");
+  fprintf(port_calls,"{index} %lu %lld %lld %lld\\n",capture,(long long)({actual.split(',')[0]}),(long long)({actual.split(',')[1]}),(long long)result);
+ }}
  {returned}
 }}''')
             bank_texts[bank] = text
@@ -145,6 +162,12 @@ void __wrap_DecompressToMem(uint32 src,uint8 *dst) {
  port_decompress_rust++;SaveRoutineState("after");
 }
 static FILE *port_effects;
+static FILE *port_calls;
+static unsigned port_call_depth;
+static void PortCapture(unsigned routine,unsigned long sequence,const char *phase) {
+ char name[120];snprintf(name,sizeof(name),"fixtures/port-%03u-%03lu-%s.wram",routine,sequence,phase);
+ FILE *f=fopen(name,"wb");if(!f || fwrite(g_ram,1,sizeof(g_ram),f)!=sizeof(g_ram) || fclose(f))exit(2);
+}
 static unsigned port_frame;
 void __real_ppu_write(Ppu *,uint8_t,uint8_t);
 void __wrap_ppu_write(Ppu *ppu,uint8_t adr,uint8_t val) {
@@ -173,14 +196,16 @@ bool __wrap_RtlRunFrame(int pad) {
  }
  return result;
 }
-''' + f'static unsigned long port_c_hits[{len(symbols)}],port_rust_hits[{len(symbols)}];\n' + '\n'.join(wrappers) + '''
+''' + f'static unsigned long port_c_hits[{len(symbols)}],port_rust_hits[{len(symbols)}],port_outer_hits[{len(symbols)}];\n' + '\n'.join(wrappers) + '''
 int main(int argc,char **argv) {
  if(argc!=6) return 2;
  port_mixed=!strcmp(argv[1],"mixed");
  port_effects=fopen("hardware.log","wb");if(!port_effects)return 2;
+ port_calls=fopen("routine-calls.log","wb");if(!port_calls)return 2;
  char *original[]={argv[0],argv[2],argv[3],argv[4],argv[5],NULL};
  int result=retained_main(5,original);
  if(fclose(port_effects))return 2;
+ if(fclose(port_calls))return 2;
  if(result) return result;
  for(unsigned i=0;i<sizeof(port_c_hits)/sizeof(*port_c_hits);i++) printf("port-hit %u %lu %lu\\n",i,port_c_hits[i],port_rust_hits[i]);
  printf("predecessor-hit %lu %lu %lu %lu\\n",port_decompress_c,port_decompress_rust,port_rng_c,port_rng_rust);

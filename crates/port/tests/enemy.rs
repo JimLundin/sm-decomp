@@ -1,6 +1,4 @@
-pub use port::Wram;
-#[path = "../src/enemy.rs"]
-mod enemy;
+use port::{Wram, enemy};
 
 #[test]
 fn enemy_distances_keep_record_offsets_and_signed_threshold_quirk() {

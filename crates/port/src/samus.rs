@@ -165,7 +165,7 @@ fn base_speed(ram: &mut Wram<'_>, rom: &[u8], pointer: u16) -> Result<u32, &'sta
     // Only known table records are admitted to the unchecked C oracle.
     let valid = [(0x9f25u16, 3u16), (0x9f49, 28), (0xa08d, 28), (0xa1dd, 28)]
         .iter()
-        .any(|&(base, count)| pointer >= base && (pointer - base) % 12 == 0 && (pointer - base) / 12 < count);
+        .any(|&(base, count)| pointer >= base && (pointer - base).is_multiple_of(12) && (pointer - base) / 12 < count);
     if !valid {
         return Err("invalid Samus speed table entry");
     }
@@ -210,11 +210,7 @@ fn clamp_speed(amount: u32) -> u32 {
     let integer = (amount >> 16) as i16;
     // Preserve the original fractional word, even at either signed clamp.
     let clamped = if integer < 0 {
-        if negative((integer as u16).wrapping_add(15)) {
-            -15
-        } else {
-            integer
-        }
+        if negative((integer as u16).wrapping_add(15)) { -15 } else { integer }
     } else if !negative((integer as u16).wrapping_sub(16)) {
         15
     } else {
