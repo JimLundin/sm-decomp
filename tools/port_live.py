@@ -420,6 +420,12 @@ int main(int argc,char **argv) {
                        scope='four fresh processes; serialized periodic hardware/game state, full terminal WRAM/SRAM, ordered PPU/APU effects and captures; no original-ROM parity or same-process reset claim')
     except (OSError, ValueError, KeyError, TypeError, ImportError, subprocess.SubprocessError) as error:
         verdict['error'] = str(error)
+    # Cargo intermediates are not part of the replay artifact inventory. The
+    # linked live binary and serialized observations remain retained.
+    shutil.rmtree(run / 'target', ignore_errors=True)
+    if verdict.get('status') == 'mixed-C-Rust-integration':
+        for archive in ('libfamilies.a', 'librng.a'):
+            (run / archive).unlink(missing_ok=True)
     (run / 'verdict.json').write_text(json.dumps(verdict, indent=2) + '\n')
     print(json.dumps({key: verdict[key] for key in ('status', 'run', 'error') if key in verdict}))
     return 0 if verdict['live_exercised'] else 1

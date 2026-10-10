@@ -217,7 +217,12 @@ def run_main():
             record = execute(replay_command(batch, config, names, args.frames, directory / 'evidence', args.native_plm), directory, 'replay')
             batch['replays'].append(record)
             save(path, batch)
+            from port_cleanup import deduplicate
+            print(f"Reclaimed {deduplicate(path.parent, True)} snapshot bytes")
             return record['exit_code']
+        if args.command == 'verify':
+            from port_cleanup import deduplicate
+            print(f"Reclaimed {deduplicate(path.parent, True)} snapshot bytes")
         return 0
     except (OSError, ValueError, KeyError, TypeError) as error:
         print(f'port batch: {error}', file=sys.stderr)
