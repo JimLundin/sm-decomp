@@ -42,7 +42,10 @@ observable hardware effects, Rust hits and fallback measurements.
 - 18: Sidehopper/Desgeega jump states and script handlers, offline verified.
 - 19: bombs/spread/SBA/speed echoes, offline verified; power-bomb path partial.
 - 20: room/door data and camera scrolling, offline verified.
-- 21: PLM instruction handlers and bounded frame-control engine, in progress.
+- 21: PLM instruction handlers and bounded frame-control engine, offline verified.
+- 22: Geemer, Zoomer, Zeela and Sova crawler closure, offline verified.
+- 23: power-bomb allocation and afterglow lifecycle, offline verified.
+- 24: cumulative authenticated gameplay live admission and evidence storage cleanup, resolved.
 
 This is the first frontier, not the completion boundary of the user's goal.
 Expand tickets into substantive gameplay subsystems after this frontier, using
@@ -83,3 +86,13 @@ CPU fallback. Native PLM has no calls in this prefix and stays offline-verified.
 Public crate includes Norfair Rio's18 state routines/162 C fixtures; Sidehopper
 and Desgeega jump closure is active ticket18. Overall full Rust ownership and
 original-ROM gameplay parity remain unproven.
+
+
+Latest cumulative admission: batch`20261010T213631.753519Z`, live verdict
+`replays/20261010T215856.742725Z/evidence/20261010T215856.841221Z/verdict.json`
+passes four independent18,000-frame processes.76 symbols execute235,952 Rust
+gameplay calls per mixed process plus37 decompressions and17,594 RNG calls;
+measured CPU fallback zero. Collision/movement ticket12 is exercised and
+resolved. Zero-call bank-specific enemies, special projectiles and PLMs remain
+offline; crawler/power-bomb expansions are offline verified. Full gameplay
+ownership and movie completion remain active goals.

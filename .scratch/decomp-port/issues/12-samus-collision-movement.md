@@ -1,5 +1,5 @@
 # Complete Samus collision and movement closure
-Status: claimed
+Status: resolved
 Blocked by: 05, 08
 Triage: ready-for-agent
 
@@ -45,3 +45,14 @@ other newly installed collision/instruction paths. The run rejects its additiona
 native PLM admission because every process had zero PLM calls. It must not be
 reported as PLM live acceptance. An 18,000-frame replay is investigating that
 execution boundary; ticket remains claimed pending the required integration gate.
+
+
+Final exercised admission: cumulative batch `20261010T213631.753519Z`, live
+verdict `replays/20261010T215856.742725Z/evidence/20261010T215856.841221Z/verdict.json`.
+Four independent18,000-frame C/mixed processes match periodic hardware/game
+checkpoints, full terminal WRAM/SRAM, per-call before/after states, raw returns
+and ordered PPU/APU effects. Collision executes12,021 Rust calls across5 symbols,
+including10,791 normal movement dispatches,996 right movements,212 pose-change
+collision checks and11 each vertical speed and bomb-jump rising movement calls.
+This resolves the exercised collision/movement integration gate. Terrain PLM
+callbacks remain zero; native PLM admission is not claimed.
