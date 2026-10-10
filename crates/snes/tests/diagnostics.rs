@@ -75,6 +75,64 @@ fn transient_wrong_generated_store_is_caught_before_next_store_restores_frame_by
 }
 
 #[test]
+fn cold_frame_focus_finds_later_failure_after_first_key_window_passes() {
+    fn late_wrong(m: &mut runtime::Machine) {
+        let value = m.cpu.a as u8;
+        m.write8(0x10, if value == 0 { 0x99 } else { value });
+    }
+    let mut rom = cartridge();
+    let mut program = vec![0x18, 0xfb, 0xa9, 0x12, 0x8d, 0x10, 0];
+    program.extend(std::iter::repeat_n(0xea, 80));
+    program.extend([0xa9, 0, 0x82, 0xa8, 0xff]); // same store key, later A=0
+    rom[..program.len()].copy_from_slice(&program);
+    let table = [(0x8004, 3, &[0x8d, 0x10, 0][..], late_wrong as runtime::StepFn)];
+    let output = std::env::temp_dir().join(format!("sm-focused-later-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&output);
+    std::fs::create_dir(&output).unwrap();
+    let early = snes::focused::compare(
+        &mut Reference::new(&rom, 0).unwrap(),
+        &mut Subject::with_steps(&rom, 0, &table).unwrap(),
+        &[0],
+        0,
+        65,
+        &output.join("early"),
+    )
+    .unwrap();
+    assert_eq!(early["status"], "pass");
+    let later = snes::focused::compare_frame_from_boundary(
+        &mut Reference::new(&rom, 0).unwrap(),
+        &mut Subject::with_steps(&rom, 0, &table).unwrap(),
+        &[0],
+        0,
+        &output.join("later"),
+    )
+    .unwrap();
+    assert_eq!(later["status"], "divergence");
+    assert!(later["first_mismatch"]["instruction"].as_u64().unwrap() > 65);
+    assert_eq!(later["first_mismatch"]["subject"]["generated_key"], serde_json::json!([0x8004, 3]));
+    assert!(output.join("later/subject-after.hardware.bin").is_file());
+    // A failing next-frame cache cannot prevent cold mismatch evidence.
+    assert!(
+        snes::paired::prepare_cache(&rom, 0, &table, &[0], (0, 0), serde_json::json!({}), &output.join("bad-cache"))
+            .is_err()
+    );
+    for (name, steps) in [("predecessor", &[][..]), ("disabled", &[][..])] {
+        let report = snes::focused::compare_from_boundary(
+            &mut Reference::new(&rom, 0).unwrap(),
+            &mut Subject::with_steps(&rom, 0, steps).unwrap(),
+            &[0],
+            0,
+            0,
+            later["completed_instructions"].as_u64().unwrap() as usize,
+            &output.join(name),
+        )
+        .unwrap();
+        assert_eq!(report["status"], "pass");
+    }
+    std::fs::remove_dir_all(output).unwrap();
+}
+
+#[test]
 fn internal_dma_accesses_are_ordered_and_observation_preserves_hardware() {
     use rustysnes_core::{Bus, cart::Region, cpu::Bus as CpuBus};
     fn ready() -> Bus {

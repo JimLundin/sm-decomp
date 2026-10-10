@@ -82,6 +82,7 @@ class ObservationTests(unittest.TestCase):
                 run=Run.create(root,'iteration',{'frames':18000},'accepted-parent');run.capture_source()
                 run.record_check('instruction-diagnosis',{'status':'divergence','complete':True,'first_mismatch':{'instruction':3,'region':'bus'}})
                 run.record_check('failure-controls',{'status':'divergence','complete':True,'controls':[{
+                    'candidate':{'status':'divergence','complete':True,'first_mismatch':{'instruction':3,'region':'bus'}},
                     'predecessor':{'status':predecessor,'complete':True},'disabled':{'status':'pass','complete':True}}]})
                 run.finalize('divergence')
                 manifest,summary=failure_summary(run.path)
@@ -91,6 +92,21 @@ class ObservationTests(unittest.TestCase):
             run.record_check('synchronization',{'status':'divergence','complete':True})
             run.finalize('divergence')
             self.assertEqual(failure_summary(run.path)[1]['routing']['route'],'independent hardware/input observation')
+
+    def test_all_passing_focus_reports_do_not_reset_cold_failure_evidence_streak(self):
+        from iteration_diagnosis import failure_summary,append_experiment
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary);subprocess.run(['git','init','-q',str(root)],check=True)
+            run=Run.create(root,'iteration',{'frames':18000},'accepted-parent');run.capture_source()
+            run.record_check('generated-parity',{'status':'divergence','complete':True,'first_divergence':{'frame':7}})
+            run.record_check('failure-controls',{'status':'divergence','complete':True,'controls':[{
+                name:{'status':'pass','complete':True} for name in ('candidate','disabled','predecessor')}]})
+            run.finalize('divergence')
+            self.assertEqual(failure_summary(run.path)[1]['routing']['route'],'failure not reproduced')
+            record=append_experiment(root,'session','increment',run.path,'Later key misbehaves','Cold failed-frame trace diverges','Early window passes')
+            self.assertEqual(record['next_action'],'localize-failure')
+            self.assertFalse(record['new_discriminating_evidence'])
+            self.assertEqual(record['consecutive_without_evidence'],1)
 
     def test_substantive_observation_resets_streak_but_new_paths_and_timing_do_not(self):
         from iteration_diagnosis import append_experiment

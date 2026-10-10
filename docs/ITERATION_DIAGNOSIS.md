@@ -58,3 +58,18 @@ independent observations can be supplied explicitly. Existing readiness version 
 in-run experiments remain historical evidence; the iteration version 2 lineage
 owns continuity across candidates and never trusts their caller-supplied novelty
 boolean.
+
+Failure attribution requires the candidate itself to reproduce a complete
+instruction/state/bus mismatch, with predecessor and disabled-entry controls
+matching its input identities and interval. A passing early window routes to
+`failure not reproduced`, with a concrete cold failed-frame operation; it cannot
+reset the no-evidence streak or attribute a later parity failure.
+
+Automatic cold parity diagnosis starts at the retained failed input frame,
+without skipped instructions or paired-cache validation. The focused command
+`--until-frame-end` observes up to one rollover with a 2,000,000-instruction
+budget, preserving the first mismatch and bounded history. A budget exhaustion
+is incomplete. After reproduction, controls compare through that actual failing
+instruction. Passing the complete failed frame requests further independent
+hardware/video observation or an earlier transient search; it does not establish
+a root cause or claim globally earliest instruction evidence since power-on.

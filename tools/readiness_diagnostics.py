@@ -9,9 +9,11 @@ from readiness import Run,preflight
 from readiness_parity import prepare_candidate
 
 
-def diagnose(run,start_input=0,instructions=100,mode="generated",timeout=None,start_instruction=0,cache_path=None, namespace="", disabled_keys=None):
+def diagnose(run,start_input=0,instructions=100,mode="generated",timeout=None,start_instruction=0,cache_path=None, namespace="", disabled_keys=None, until_frame_end=False):
     """Use a preserved parity candidate when available; otherwise build it in isolation."""
     started=time.monotonic()
+    if until_frame_end and (cache_path is not None or start_instruction!=0):
+        raise ValueError('Failed-frame localization requires a cold frame boundary without skipped instructions')
     prefix=(namespace+"-") if namespace else ""
     disabled_keys=sorted(disabled_keys or [], key=lambda key:(key["address"],key["mx"]))
     generated=run.path/"generated"/mode
@@ -44,6 +46,7 @@ def diagnose(run,start_input=0,instructions=100,mode="generated",timeout=None,st
     run.guard_input(candidate)
     output=run.path/"diagnostics"/(prefix+"instructions")
     command=[candidate,run.root/"movies/super-metroid-any-3653.lsmv","--out",output,"--start-input",str(start_input),"--start-instruction",str(start_instruction),"--instructions",str(instructions),"--rom",run.root/"rom/sm.sfc"]
+    if until_frame_end:command.append('--until-frame-end')
     if mode=="fallback-only":command.append("--fallback-only")
     if disabled_keys:
         disabled_path=run.path/"generated"/(prefix+"disabled-keys.json")
@@ -63,7 +66,7 @@ def diagnose(run,start_input=0,instructions=100,mode="generated",timeout=None,st
     if not path.is_file():result={"status":stage["status"] if stage["status"]!="pass" else "incomplete","complete":False,"reason":"No focused completion report"}
     else:
         result=json.loads(path.read_text());identities=run.manifest["identities"]["inputs"]
-        valid=(result.get("schema_version")==1 and result.get("expected_instructions")==instructions
+        valid=(result.get("schema_version")==1 and (result.get("expected_instructions")==instructions if not until_frame_end else result.get('scope')=='until-frame-end' and result.get('expected_instructions') is None and result.get('instruction_budget')==2000000)
                and result.get("start_input_index")==start_input and result.get("replay")==("warm" if cache_path is not None else "cold")
                and result.get("start_instruction")==start_instruction
                and result.get("binary_sha256")==__import__("hashlib").sha256(candidate.read_bytes()).hexdigest()
@@ -74,7 +77,7 @@ def diagnose(run,start_input=0,instructions=100,mode="generated",timeout=None,st
             valid=valid and cache.get("status")=="pass" and cache.get("complete") is True and validation.get("completed_frames")==1 and validation.get("observed_rollovers")==2 and validation.get("complete") is True
         if not valid:result.update(status="error",complete=False,reason="Focused identity/scope mismatch")
         elif stage["status"] not in ("pass","divergence"):result.update(status=stage["status"],complete=False,reason=stage.get("reason"))
-        elif result.get("status")=="pass" and (stage["returncode"]!=0 or result.get("completed_instructions")!=instructions or result.get("complete") is not True):result.update(status="incomplete",complete=False,reason="Focused scope did not complete")
+        elif result.get("status")=="pass" and (stage["returncode"]!=0 or (result.get("completed_instructions")!=instructions if not until_frame_end else result.get('observed_rollovers')!=1) or result.get("complete") is not True):result.update(status="incomplete",complete=False,reason="Focused scope did not complete")
         result["evidence"]=path.relative_to(run.path).as_posix()
         run.record_artifact(prefix+"focused-report",path)
     if cache_path is not None and result.get("cache",{}).get("status")=="pass":
@@ -120,6 +123,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument("--start-input",type=int,default=0)
     parser.add_argument("--instructions",type=int,default=100);parser.add_argument("--fallback-only",action="store_true")
     parser.add_argument("--start-instruction",type=int,default=0)
+    parser.add_argument('--until-frame-end',action='store_true')
     parser.add_argument("--cache",type=Path);parser.add_argument("--timeout",type=float)
     parser.add_argument("--failure",type=Path);parser.add_argument("--predecessor",type=Path);args=parser.parse_args()
     run=Run.create(Path(__file__).resolve().parent.parent,"diagnostic",{"start_input":args.start_input,"instructions":args.instructions})
@@ -132,7 +136,7 @@ def main():
             report=diagnose_failure(run,json.loads(args.failure.read_text()),args.predecessor,
                 [{"start_input":args.start_input,"start_instruction":args.start_instruction,"instructions":args.instructions}],args.timeout)
             return run.finalize(report["status"],"failure-controls",report.get("routing",{}).get("conclusion","Failure evidence preserved"))
-        report=diagnose(run,args.start_input,args.instructions,"fallback-only" if args.fallback_only else "generated",args.timeout,args.start_instruction,args.cache)
+        report=diagnose(run,args.start_input,args.instructions,"fallback-only" if args.fallback_only else "generated",args.timeout,args.start_instruction,args.cache,until_frame_end=args.until_frame_end)
         return run.finalize(report["status"],"instruction-diagnosis",report.get("reason","Focused scope complete; readiness requires other gates"),["preflight","instruction-diagnosis"])
     except KeyboardInterrupt:return run.finalize("incomplete","instruction-diagnosis","Interrupted")
     except Exception as error:return run.finalize("error","instruction-diagnosis",str(error))

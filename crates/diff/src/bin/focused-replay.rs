@@ -15,6 +15,11 @@ fn main() -> Result<()> {
     let start = option("--start-input").map(|v| v.parse()).transpose()?.unwrap_or(0);
     let count = option("--instructions").map(|v| v.parse()).transpose()?.unwrap_or(100);
     let skip = option("--start-instruction").map(|v| v.parse()).transpose()?.unwrap_or(0);
+    let until_frame_end = args.iter().any(|arg| arg == "--until-frame-end");
+    ensure!(
+        !until_frame_end || (skip == 0 && option("--cache").is_none()),
+        "failed-frame localization requires a cold frame boundary without skipped instructions"
+    );
     let rom_path = option("--rom").map(PathBuf::from).unwrap_or_else(|| "rom/sm.sfc".into());
     let rom = std::fs::read(&rom_path)?;
     let movie = movie::load(&movie_path)?;
@@ -67,7 +72,9 @@ fn main() -> Result<()> {
         std::fs::write(output.join("discovery.json"), serde_json::to_vec_pretty(&report)?)?;
         std::process::exit(if report["status"] == "pass" { 0 } else { 1 });
     }
-    let mut report = if let Some(cache_path) = option("--cache") {
+    let mut report = if until_frame_end {
+        snes::focused::compare_frame_from_boundary(&mut reference, &mut subject, &movie.frames, start, &output)?
+    } else if let Some(cache_path) = option("--cache") {
         let identity_path = option("--identities").context("--identities required for validated cache")?;
         let identities: serde_json::Value = serde_json::from_slice(&std::fs::read(identity_path)?)?;
         let (pair, cache) = snes::paired::prepare_cache(
@@ -107,6 +114,9 @@ fn main() -> Result<()> {
     std::fs::write(output.join("instruction.json"), serde_json::to_vec_pretty(&report)?)?;
     if report["status"] == "divergence" {
         std::process::exit(1);
+    }
+    if report["status"] != "pass" || report["complete"] != true {
+        std::process::exit(2);
     }
     Ok(())
 }

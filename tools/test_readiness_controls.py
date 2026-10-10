@@ -84,10 +84,50 @@ class ControlsTests(unittest.TestCase):
         from readiness_controls import route_failure
         result = route_failure({"status": "divergence"},
                                {"status": "pass", "complete": True},
-                               {"status": "pass", "complete": True})
+                               {"status": "pass", "complete": True},
+                               candidate={"status":"divergence","complete":True,"first_mismatch":{"instruction":3}})
         self.assertEqual(result["route"], "increment")
         self.assertNotIn("root_cause", result)
         self.assertIn("supports", result["conclusion"])
+
+    def test_passing_early_candidate_focus_does_not_attribute_later_cold_failure(self):
+        from readiness_controls import route_failure
+        passing={"status":"pass","complete":True}
+        result=route_failure({"status":"divergence","stage":"generated-parity",
+            "first_divergence":{"frame":7}},passing,passing,candidate=passing)
+        self.assertEqual(result["route"],"failure not reproduced")
+        self.assertEqual(result["next_operation"]["start_input"],7)
+        self.assertFalse(result["new_discriminating_evidence"])
+
+    def test_failed_occurrence_drives_cold_localization_and_incomplete_candidate_cannot_attribute(self):
+        from readiness_controls import failure_intervals,route_failure
+        failure={'status':'divergence','stage':'generated-parity','first_divergence':{'frame':9}}
+        self.assertEqual(failure_intervals(failure),[{'start_input':9,'start_instruction':0,'instructions':2000000,'until_frame_end':True}])
+        passing={'status':'pass','complete':True}
+        result=route_failure(failure,passing,passing,candidate={'status':'error','complete':False})
+        self.assertEqual(result['route'],'failure not reproduced')
+
+    def test_cold_frame_command_report_requires_a_rollover_and_preserves_identity(self):
+        from readiness import Run
+        from readiness_diagnostics import diagnose
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);subprocess.run(['git','init','-q',str(root)],check=True)
+            run=Run.create(root,'diagnostic',{'frames':1});run.capture_source()
+            inputs={'rom_sha256':'a'*64,'movie_sha256':'b'*64,'input_sha256':'c'*64}
+            run.manifest['identities']['inputs']=inputs
+            generated=run.path/'generated/generated';generated.mkdir()
+            for name in ('game','steps'):(generated/(name+'.rs')).write_text('// fixture')
+            binary=run.path/'build/generated/release/focused-replay';binary.parent.mkdir(parents=True)
+            binary.write_text('#!/usr/bin/env python3\nimport sys,json,hashlib\nfrom pathlib import Path\n'
+                'assert "--until-frame-end" in sys.argv and "--cache" not in sys.argv\n'
+                'output=Path(sys.argv[sys.argv.index("--out")+1]);output.mkdir()\n'
+                'report={"schema_version":1,"status":"pass","complete":True,"scope":"until-frame-end","instruction_budget":2000000,"observed_rollovers":1,"expected_instructions":None,"completed_instructions":123,"start_input_index":9,"start_instruction":0,"replay":"cold","disabled_keys":[],"identities":'+repr(inputs)+'}\n'
+                'report["binary_sha256"]=hashlib.sha256(Path(sys.argv[0]).read_bytes()).hexdigest()\n'
+                '(output/"instruction.json").write_text(json.dumps(report))\n')
+            binary.chmod(0o755);run.record_artifact('focused-prepared-binary',binary,'generated/focused-prepared')
+            report=diagnose(run,start_input=9,until_frame_end=True)
+            self.assertEqual(report['status'],'pass')
+            self.assertEqual(report['observed_rollovers'],1)
 
     def test_sync_failure_requests_independent_observations(self):
         from readiness_controls import route_failure

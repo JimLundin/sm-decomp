@@ -35,7 +35,7 @@ def record_experiment(run, hypothesis, discriminator, result, discriminating=Fal
     return report
 
 
-def route_failure(failure, predecessor=None, disabled=None):
+def route_failure(failure, predecessor=None, disabled=None, candidate=None):
     if failure.get("stage") == "synchronization":
         return {"route": "independent hardware/input observation",
                 "conclusion": "Shared-backend passing controls do not establish the recording core's hardware/input behavior",
@@ -44,6 +44,21 @@ def route_failure(failure, predecessor=None, disabled=None):
         return {"route": "coverage", "conclusion": "Required changed keys did not execute",
                 "next_experiment": "Use a covered interval within the validated domain, or remove/defer unexecuted candidate keys"}
     passing = lambda report: report and report.get("status") == "pass" and report.get("complete") is True
+    reproduced = candidate and candidate.get('status') == 'divergence' and candidate.get('complete') is True and bool(candidate.get('first_mismatch'))
+    if not reproduced:
+        frame=failure.get('first_divergence',{}).get('frame',failure.get('start_input_index',0))
+        return {'route':'failure not reproduced','conclusion':'Candidate focus did not reproduce an actual instruction/state/bus mismatch; passing controls cannot attribute the cold failure',
+            'next_experiment':'Compare the candidate cold from the recorded failed input frame through its first rollover; extend independent hardware/video observation if that frame matches',
+            'next_operation':{'command':'cold-focus','start_input':frame,'start_instruction':0,'until_frame_end':True},
+            'new_discriminating_evidence':False}
+    def matching(report):
+        same=all(report.get(key)==candidate.get(key) for key in ('start_input_index','start_instruction','identities'))
+        if candidate.get('scope')=='until-frame-end':
+            return same and report.get('completed_instructions',0)>=candidate.get('completed_instructions',0)
+        return same and all(report.get(key)==candidate.get(key) for key in ('expected_instructions','scope'))
+    if passing(predecessor) and passing(disabled) and (not matching(predecessor) or not matching(disabled)):
+        return {'route':'shared paths/input/cache/harness','conclusion':'Control input/interval differs from reproduced candidate; attribution unresolved',
+            'next_experiment':'Rebuild matched controls over the candidate mismatch interval and identical input identities'}
     if passing(predecessor) and passing(disabled):
         return {"route": "increment", "conclusion": "Passing predecessor and disabled-entry controls supports attribution to the increment",
                 "next_experiment": "Probe changed instruction semantics, width dispatch and ordered bus timing at the first disagreement"}
@@ -124,15 +139,7 @@ def diagnose_failure(run, failure, predecessor=None, intervals=None, timeout=Non
         inventory=json.loads((run.path/"generated/key-inventory.json").read_text())
         keys=[{"address":row["address"],"mx":row["mx"]} for row in inventory["keys"]]
     if intervals is None:
-        from readiness_diagnostics import discover_intervals
-        discovery=discover_intervals(run,keys,18000,timeout)
-        if discovery["status"] not in ("pass","uncovered"):
-            result.update(status=discovery["status"],complete=False,reason="Instruction discovery failed",discovery=discovery)
-            run.record_check("failure-controls",result);return result
-        if discovery["status"]=="uncovered":
-            result.update(status="uncovered",complete=True,discovery=discovery,**route_failure({"status":"uncovered"}))
-            run.record_check("failure-controls",result);return result
-        intervals=discovery.get("intervals",[])
+        intervals=failure_intervals(failure)
     if not intervals:
         result.update(status="uncovered",complete=True,**route_failure({"status":"uncovered"}))
         run.record_check("failure-controls",result);return result
@@ -144,13 +151,19 @@ def diagnose_failure(run, failure, predecessor=None, intervals=None, timeout=Non
     for index,interval in enumerate(intervals):
         prefix="failure-{:02d}".format(index)
         args=(interval["start_input"],interval["instructions"],"generated",timeout,interval.get("start_instruction",0))
-        candidate=diagnose(run,*args,cache_path=run.path/"cache"/(prefix+"-candidate"),namespace=prefix+"-candidate")
-        disabled=diagnose(run,*args,cache_path=run.path/"cache"/(prefix+"-disabled"),namespace=prefix+"-disabled",disabled_keys=keys)
+        frame_scope=interval.get('until_frame_end',False)
+        candidate=diagnose(run,*args,namespace=prefix+"-candidate",until_frame_end=frame_scope)
+        if frame_scope and candidate.get('status')=='divergence' and candidate.get('first_mismatch') and candidate.get('completed_instructions',0)>0:
+            # Compare controls through the reproduced instruction, without
+            # observing the rest of an already localized frame unnecessarily.
+            args=(interval['start_input'],candidate['completed_instructions'],'generated',timeout,0)
+            frame_scope=False
+        disabled=diagnose(run,*args,namespace=prefix+"-disabled",disabled_keys=keys,until_frame_end=frame_scope)
         old={"status":"incomplete","complete":False,"reason":result.get("predecessor_error","No preserved predecessor selected")}
         if child:
-            old=diagnose(child,*args,cache_path=child.path/"cache"/(prefix+"-predecessor"),namespace=prefix+"-predecessor")
+            old=diagnose(child,*args,namespace=prefix+"-predecessor",until_frame_end=frame_scope)
         reports.append({"interval":interval,"candidate":candidate,"disabled":disabled,"predecessor":old,
-                        "routing":route_failure(failure,old,disabled)})
+                        "routing":route_failure(failure,old,disabled,candidate)})
     if reports:
         route=reports[0]["routing"]
         record_experiment(run,"Candidate increment changes the first observed execution effect",
@@ -165,3 +178,21 @@ def diagnose_failure(run, failure, predecessor=None, intervals=None, timeout=Non
     result.update(complete=all(all(control.get("complete") is True for control in (item["candidate"],item["disabled"],item["predecessor"])) for item in reports),controls=reports,routing=reports[0]["routing"] if reports else route_failure(failure))
     write_json(run.path/"diagnostics/failure-controls.json",result);run.record_check("failure-controls",result)
     return result
+
+
+def failure_intervals(failure):
+    """Replay the retained failed occurrence, never its first generated key."""
+    if failure.get('stage')=='generated-parity':
+        frame=failure.get('first_divergence',{}).get('frame')
+        if not isinstance(frame,int) or isinstance(frame,bool) or not 0<=frame<18000:
+            raise ValueError('Cold parity failure lacks a recorded input frame for localization')
+        return [{'start_input':frame,'start_instruction':0,'instructions':2000000,'until_frame_end':True}]
+    reports=failure.get('reports',[failure])
+    for report in reports:
+        mismatch=report.get('first_mismatch')
+        if report.get('status')=='divergence' and mismatch:
+            # Starting at frame boundary observes any cause omitted by a skip.
+            frame=report.get('start_input_index',mismatch.get('input_index'))
+            if isinstance(frame,int) and 0<=frame<18000:
+                return [{'start_input':frame,'start_instruction':0,'instructions':2000000,'until_frame_end':True}]
+    raise ValueError('Failure has no actual instruction occurrence; preserve evidence and localize the recorded failed frame')
