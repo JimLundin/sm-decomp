@@ -8,10 +8,11 @@ import time
 import sys
 from pathlib import Path
 
-from readiness import Run, preflight
+from readiness import Run, preflight, write_json, digest
+from readiness_coverage import generated_inventory, evaluate_coverage
 
 
-def run_parity(run, mode, frames=18000, timeout=None):
+def run_parity(run, mode, frames=18000, timeout=None, predecessor=None):
     """Run one cold parity gate within an open, preflight-verified parent run."""
     if mode not in ("fallback-only", "generated") or frames <= 0:
         raise ValueError("Parity requires a valid mode and positive exact frame count")
@@ -72,6 +73,7 @@ def run_parity(run, mode, frames=18000, timeout=None):
         "target_directory": str(build), "environment": {"SM_RECOMP_GENERATED_GAME": str(game_source),
                                                          "SM_RECOMP_GENERATED_STEPS": str(steps_source)}}
     run.save_manifest()
+    key_inventory = generated_inventory(run, steps_source) if mode == "generated" else None
     env["SM_RECOMP_GENERATED_GAME"] = str(game_source)
     env["SM_RECOMP_GENERATED_STEPS"] = str(steps_source)
     result = stage("build", ["cargo", "build", "--release", "-p", "diff", "--locked", "--offline"])
@@ -130,6 +132,29 @@ def run_parity(run, mode, frames=18000, timeout=None):
     report["feedback_target_seconds"] = 1200
     report["feedback_target_overrun"] = timings.get("replay", 0) > 1200
     run.check_sources()
+    coverage_path = output / "coverage.json"
+    if mode == "generated" and coverage_path.is_file() and report.get("status") in ("pass", "divergence", "uncovered"):
+        if report.get("coverage_sha256") != digest(coverage_path):
+            raise RuntimeError("Instruction profile digest differs from replay report")
+        coverage_identity = run.record_artifact("generated-instruction-profile", coverage_path)
+        coverage_identity["evidence"] = coverage_path.relative_to(run.path).as_posix()
+        run.save_manifest()
+        gate_profile = json.loads(coverage_path.read_text())
+        gate_profile.update(complete=report.get("complete") is True, expected_frames=frames,
+                            completed_frames=report.get("completed_frames", 0),
+                            candidate_inventory_sha256=run.manifest["identities"]["generated-key-inventory"]["sha256"])
+        bound_profile = run.path / "checks/generated-profile-bound.json"
+        write_json(bound_profile, gate_profile)
+        if report.get("complete") is True:
+            gate = evaluate_coverage(run, bound_profile, key_inventory, predecessor)
+        else:
+            gate = {"status": "incomplete", "complete": False, "reason": "Replay incomplete; instruction coverage is partial"}
+            run.record_check("changed-entry-coverage", gate)
+        report["coverage"] = "coverage.json"
+        if report["status"] == "pass" and gate["status"] != "pass":
+            report.update(status=gate["status"], reason=gate.get("reason"))
+    elif mode == "generated" and report.get("status") == "pass":
+        report.update(status="incomplete", complete=False, reason="Actual instruction coverage evidence is absent")
     run.record_check(mode + "-parity", report)
     return report
 
@@ -140,16 +165,20 @@ def main(argv=None):
     parser.add_argument("--mode", choices=("fallback-only", "generated"), default="generated")
     parser.add_argument("--frames", type=int, default=18000)
     parser.add_argument("--timeout", type=float)
+    parser.add_argument("--predecessor", type=Path)
     args = parser.parse_args(argv)
+    parent_id = None
+    if args.predecessor is not None:
+        parent_id = args.predecessor.name
     run = Run.create(args.root, "parity", {"domain": "Japan/USA any%", "frames": args.frames,
-                                          "mode": args.mode, "seed": 0, "controller": "P1"})
+                                          "mode": args.mode, "seed": 0, "controller": "P1"}, parent_id)
     print("Run: " + str(run.path), flush=True)
     print("Brief: " + str(run.path / "brief.md"), flush=True)
     try:
         failures = preflight(run)
         if failures:
             return run.finalize("error", "preflight", "; ".join(failures))
-        report = run_parity(run, args.mode, args.frames, args.timeout)
+        report = run_parity(run, args.mode, args.frames, args.timeout, args.predecessor)
         status = report["status"]
         return run.finalize(status, args.mode + "-parity", report.get("reason", "Cold parity scope complete; other readiness gates remain pending"),
                             mandatory_checks=["preflight", args.mode + "-parity"])

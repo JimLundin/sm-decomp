@@ -224,6 +224,9 @@ fn execute() -> Result<i32> {
             report["reason"] = "Movie or ROM changed during parity replay".into();
         }
     }
+    if args.out.join("coverage.json").is_file() {
+        report["coverage_sha256"] = sha256(&fs::read(args.out.join("coverage.json"))?).into();
+    }
     report["elapsed_seconds"] = started.elapsed().as_secs_f64().into();
     save_report(&args.out, &report)?;
     Ok(match report["status"].as_str() {

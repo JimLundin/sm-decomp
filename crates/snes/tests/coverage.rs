@@ -13,7 +13,9 @@ fn cartridge(program: &[u8]) -> Vec<u8> {
 
 #[test]
 fn compiled_inventory_names_executed_and_unexecuted_keys() {
-    fn nop(m: &mut runtime::Machine) { m.bus.implied_cycle(0x8003, m.cpu.flag(runtime::flag::I)); }
+    fn nop(m: &mut runtime::Machine) {
+        m.bus.implied_cycle(0x8003, m.cpu.flag(runtime::flag::I));
+    }
     let rom = cartridge(&[0x18, 0xfb, 0xea, 0x80, 0xfd]);
     let mut subject = Subject::with_steps(&rom, 0, &[(0x8002, 3, &[0xea], nop), (0x8020, 3, &[0xea], nop)]).unwrap();
     subject.run_frame(0).unwrap();
@@ -26,13 +28,17 @@ fn compiled_inventory_names_executed_and_unexecuted_keys() {
 
 #[test]
 fn interrupt_takeover_does_not_count_the_discarded_opcode_as_generated() {
-    fn nop(m: &mut runtime::Machine) { m.bus.implied_cycle(0x800b, m.cpu.flag(runtime::flag::I)); }
+    fn nop(m: &mut runtime::Machine) {
+        m.bus.implied_cycle(0x800b, m.cpu.flag(runtime::flag::I));
+    }
     let mut rom = cartridge(&[0x18, 0xfb, 0xe2, 0x30, 0xa9, 0x80, 0x8d, 0x00, 0x42, 0xcb, 0xea, 0x80, 0xfc]);
     rom[0x100..0x103].copy_from_slice(&[0xee, 0x10, 0x00]);
     rom[0x103] = 0x40;
     rom[0x7fea..0x7fec].copy_from_slice(&0x8100u16.to_le_bytes());
     let mut subject = Subject::with_steps(&rom, 0, &[(0x800a, 3, &[0xea], nop)]).unwrap();
-    for _ in 0..3 { subject.run_frame(0).unwrap(); }
+    for _ in 0..3 {
+        subject.run_frame(0).unwrap();
+    }
     let report = subject.coverage();
     assert!(report.noninstruction_dispatches > 0);
     assert_eq!(report.generated_instructions, subject.generated_steps);

@@ -64,3 +64,21 @@ decoded CPU/clocks, aggregate execution totals and stage timings. The explicit
 an overrun and keeps its actual outcome. Scoped parity never updates acceptance.
 Direct `diff` commands require a fresh output directory and write `parity.json`
 before input validation; incomplete/old/absent reports cannot certify a pass.
+
+Generated parity now writes `coverage.json`: actual instruction counts by
+address/MX, opcode/pattern and native/emulation mode; generated table executed/
+unexecuted inventory; supported deferred and unsupported interpreted work;
+aggregate instruction totals and fallback fraction. Hardware interrupt entry and
+idle wait/stop dispatches are excluded from instruction totals. Call-target
+`misses.csv` remains discovery evidence and is never a coverage rate.
+
+`tools/readiness_coverage.py` preserves exact generated bodies and bytes, binding
+source/config/table digests. `readiness_parity.py --predecessor <run directory>`
+requires a completed passing predecessor with intact source and generated-table
+artifacts, then requires every added or changed body key to execute. Shared
+execution-source changes conservatively require all current keys. Initial
+readiness retains legacy unexecuted keys as unvalidated inventory; those keys do
+not count as validated progress. Empty compilation and zero compiled execution
+remain uncovered. Progress deltas require identical ROM/movie/input/profile/
+reset/seed/controller and cold interval. Full integrated readiness still needs
+all independent gates beyond these shared-backend coverage observations.

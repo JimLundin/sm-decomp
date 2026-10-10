@@ -288,11 +288,16 @@ impl Subject {
                     })
             });
             let mut executed_generated = false;
+            let mut executed_opcode = None;
             if let Some((bytes, body)) = candidate {
                 let nmi = self.bus.poll_nmi();
                 let irq = self.bus.poll_irq();
                 if nmi || (irq && !self.interpreter.irq_masked()) {
-                    self.interpreter.step(&mut PolledBus { bus: InterpreterBus(&mut self.bus), nmi, irq });
+                    self.interpreter.step(&mut super::coverage::OpcodeBus {
+                        inner: PolledBus { bus: InterpreterBus(&mut self.bus), nmi, irq },
+                        opcode: &mut executed_opcode,
+                        armed: !waiting && !stopped,
+                    });
                     self.interpreted_steps += 1;
                 } else {
                     self.interpreter.take_irq_mask();
@@ -309,13 +314,18 @@ impl Subject {
                     self.interpreter.cycles += self.machine.bus.cpu_cycles() - cycles_before;
                     self.generated_steps += 1;
                     executed_generated = true;
+                    executed_opcode = Some(bytes[0]);
                 }
             } else {
-                self.interpreter.step(&mut InterpreterBus(&mut self.bus));
+                self.interpreter.step(&mut super::coverage::OpcodeBus {
+                    inner: InterpreterBus(&mut self.bus),
+                    opcode: &mut executed_opcode,
+                    armed: !waiting && !stopped,
+                });
                 self.interpreted_steps += 1;
             }
-            if !waiting && !stopped && self.interpreter.interrupts_taken == interrupts {
-                self.accounting.record(executed_generated, addr, mx, before.emulation, opcode);
+            if let Some(actual_opcode) = executed_opcode {
+                self.accounting.record(executed_generated, addr, mx, before.emulation, actual_opcode);
             }
             if !before.emulation
                 && !waiting
@@ -359,8 +369,11 @@ impl Subject {
     /// Actual instruction counts and complete compiled-key inventory, excluding
     /// hardware interrupt dispatch and idle wait/stop steps.
     pub fn coverage(&self) -> super::coverage::Coverage {
-        self.accounting.report(self.steps.iter().map(|(&(address, mx), (bytes, _))| (address, mx, bytes[0])),
-                               self.generated_steps, self.interpreted_steps)
+        self.accounting.report(
+            self.steps.iter().map(|(&(address, mx), (bytes, _))| (address, mx, bytes[0])),
+            self.generated_steps,
+            self.interpreted_steps,
+        )
     }
 
     pub fn misses_csv(&self) -> String {
