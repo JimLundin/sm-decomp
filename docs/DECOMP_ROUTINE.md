@@ -118,3 +118,37 @@ parity.
 
 Validation: `python3 -m unittest tools.test_decomp_routine` and
 `cargo test -p decomp --locked --offline`.
+
+The live command is `just decomp-live --accepted PATH/TO/decomp-acceptance.json`.
+It checks the current offline seal before building, then links the Rust static
+library into a dedicated single-threaded C host. The unchanged C scheduler,
+canonical C-owned WRAM, ROM loading and hardware remain in charge. The ABI takes
+explicit pointers and extents, validates overflow/overlap and bounds, borrows
+only synchronously, retains no pointers and invokes no callbacks. Rust panics are
+caught and errors exit replay immediately; no original C fallback follows errors.
+The caller must provide live disjoint allocations and exclude concurrent access.
+
+Live acceptance uses the frozen 9000-frame prefix, four independent C/mixed
+processes and two complete replay epochs per process after the real C reset.
+Each corresponding checkpoint includes serialized CPU, APU, DMA, cart/SRAM and
+full WRAM state, both PPU states and rendered pixels. All before/after call states
+and ordered PPU/APU writes must also match. The host reports successful Rust/C
+routine calls, actual executed command modes and remaining C-to-CPU fallback.
+Seven ABI controls exercise pointer/extent/overlap/source/destination guards and
+repeated allocation reuse. A separate gameplay error control forces an invalid
+source at the first real replacement call and requires exit with zero Rust/C
+success hits and no completed checkpoint or after-call state.
+
+Success is labeled `mixed-C-Rust-integration`; original-ROM movie parity remains
+`not-tested`. The input conversion remains bit reversal without lag adaptation.
+Run `DECOMP_ACCEPTED=PATH python3 -m unittest tools.test_decomp_live` to exercise
+the full public integration test; without the variable the unsealed-pointer
+rejection test runs and the asset-dependent replay test is skipped.
+
+The retained ticket06 run accepted all 63 offline fixtures and rejected all 11
+acceptance controls with the new ABI source identities, then independently
+matched all live checkpoints across eight replay epochs. Each mixed epoch
+executed 23 Rust calls and zero C decompression calls; seven command modes were
+actually reached (relative XOR remains synthetic-only). Gameplay CPU fallback
+was measured as zero in this prefix. This measurement does not establish
+coverage beyond the prefix. Hardware write streams are retained as gzip logs.
