@@ -14,6 +14,7 @@ class LivePortTests(unittest.TestCase):
         sys.path.insert(0, str(ROOT / 'tools'))
         from port_live import definition_pattern
         text = ('const uint16 *EnemyInstr_Goto(uint16 k, const uint16 *jp);\n'
+                'uint16 Other_EnemyInstr_Goto(uint16 k, const uint16 *jp) {return 0;}\n'
                 'const uint16 *EnemyInstr_Goto(uint16 k, const uint16 *jp) {\n'
                 '  return EnemyInstr_Goto(k, jp);\n}\n')
         renamed, count = definition_pattern('EnemyInstr_Goto').subn(r'\1C_EnemyInstr_Goto\2', text)

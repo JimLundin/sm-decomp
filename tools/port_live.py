@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def definition_pattern(symbol):
     """Match a definition, including const pointer returns, without call sites."""
-    return re.compile(r'(?m)^([A-Za-z_][\w \t]*?(?:\*[ \t]*)?)' + re.escape(symbol)
+    return re.compile(r'(?m)^((?:[A-Za-z_]\w*[ \t]+)+(?:\*[ \t]*)?)' + re.escape(symbol)
                       + r'(\s*\([^\n]*\)\s*\{)')
 
 
