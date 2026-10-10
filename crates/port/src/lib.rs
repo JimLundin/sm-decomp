@@ -10,6 +10,7 @@ pub mod enemy_ai;
 pub mod enemy_crawler;
 pub mod enemy_instructions;
 pub mod enemy_jump;
+pub mod enemy_projectile_instructions;
 pub mod enemy_projectiles;
 pub mod enemy_rio;
 pub mod plm;

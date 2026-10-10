@@ -76,6 +76,7 @@ fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'sta
     let i = param as usize / 2;
     let table = match init {
         0xb49d | 0xd6a5 => None,
+        0xce6d if i < 18 => None,
         0xa764 if i < 16 => Some((0xa7ab, i)),
         0xb62d if i < 19 => None,
         0xb683 if i < 3 => None,
@@ -98,12 +99,12 @@ fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'sta
     if let Some((p, i)) = table {
         word(rom, p + i as u16 * 2)?;
     }
-    if init != 0xb49d && (r.word(0x1c27) > 78 || r.word(0x1c27) & 1 != 0) {
+    if init != 0xb49d && init != 0xce6d && (r.word(0x1c27) > 78 || r.word(0x1c27) & 1 != 0) {
         return Err("invalid PLM slot");
     }
     Ok(())
 }
-fn random(r: &mut Wram<'_>) -> u16 {
+pub(crate) fn random(r: &mut Wram<'_>) -> u16 {
     let n = r.word(0x5e5);
     let low = u16::from(n as u8) * 5;
     let high = (u16::from((n >> 8) as u8) * 5) as u8;
@@ -113,6 +114,15 @@ fn random(r: &mut Wram<'_>) -> u16 {
     n
 }
 fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> Result<(), &'static str> {
+    if init == 0xce6d {
+        let source = param as usize / 2 * 2;
+        let x = r.word(0x1a4b + source).wrapping_add(random(r) & 31).wrapping_sub(16);
+        r.set_word(0x1a4b + k, x);
+        let y = r.word(0x1a93 + source).wrapping_add(random(r) & 31).wrapping_sub(16);
+        r.set_word(0x1a93 + k, y);
+        r.set_word(0x19bb + k, 1600);
+        return Ok(());
+    }
     if init == 0xb49d {
         r.set_word(0x1a4b + k, 272);
         r.set_word(0x1aff + k, 272);
@@ -203,7 +213,7 @@ fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> 
     }
     Ok(())
 }
-const SINE: [i16; 320] = [
+pub(crate) const SINE: [i16; 320] = [
     -256, -255, -255, -255, -254, -254, -253, -252, -251, -249, -248, -246, -244, -243, -241, -238, -236, -234, -231,
     -228, -225, -222, -219, -216, -212, -209, -205, -201, -197, -193, -189, -185, -181, -176, -171, -167, -162, -157,
     -152, -147, -142, -136, -131, -126, -120, -115, -109, -103, -97, -92, -86, -80, -74, -68, -62, -56, -49, -43, -37,
