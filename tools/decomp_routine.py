@@ -44,7 +44,7 @@ def verify_source(manifest, source):
         for member in archive.getmembers():
             if member.isfile():
                 relative = Path(*Path(member.name).parts[1:])
-                if relative == Path('LICENSE.txt') or relative == Path('src/sm_80.c') or relative.suffix == '.h':
+                if relative == Path('LICENSE.txt') or relative in [Path('src/sm_80.c'), Path('src/snes/cpu.c')] or relative.suffix == '.h':
                     path = source / relative
                     if path.read_bytes() != archive.extractfile(member).read():
                         raise ValueError(f'source differs from pinned archive: {relative}')
@@ -54,6 +54,32 @@ def verify_source(manifest, source):
     end = bank.index(b'static uint8 ReadPpuByte', start)
     identities['routine-and-helper'] = hashlib.sha256(bank[start:end]).hexdigest()
     return identities
+
+
+def admit_stream(take, destination):
+    """Bound every unchecked C WRAM access using either fixture or LoROM byte reads."""
+    stores, reads = 0, []
+    while True:
+        header = take(1)[0]
+        if header == 255:
+            return stores, reads
+        if header & 0xe0 == 0xe0:
+            mode = (header * 8) & 0xe0
+            length = ((header & 3) << 8 | take(1)[0]) + 1
+        else:
+            mode = header & 0xe0
+            length = (header & 31) + 1
+        if destination + stores + length > 0x20000:
+            raise ValueError('fixture destination writes outside WRAM')
+        if mode & 0x80:
+            reference = (destination + stores - take(1)[0] if mode >= 0xc0
+                         else destination + int.from_bytes(take(2), 'little'))
+            if reference < 0 or reference + length > 0x20000:
+                raise ValueError('fixture backreference reads outside WRAM')
+            reads.append([reference, reference + length])
+        else:
+            take(length if mode == 0 else 2 if mode == 0x40 else 1)
+        stores += length
 
 
 def prepare_fixture(fixture, directory):
@@ -75,30 +101,7 @@ def prepare_fixture(fixture, directory):
         result = stream[cursor:cursor + count]
         cursor += count
         return result
-    while cursor < len(stream):
-        header = take(1)[0]
-        if header == 255:
-            break
-        if header & 0xe0 == 0xe0:
-            mode = (header * 8) & 0xe0
-            length = ((header & 3) << 8 | take(1)[0]) + 1
-        else:
-            mode = header & 0xe0
-            length = (header & 31) + 1
-        if destination + stores + length > 0x20000:
-            raise ValueError('fixture destination writes outside WRAM')
-        if mode & 0x80:
-            if mode >= 0xc0:
-                reference = destination + stores - take(1)[0]
-            else:
-                reference = destination + int.from_bytes(take(2), 'little')
-            if reference < 0 or reference + length > 0x20000:
-                raise ValueError('fixture backreference reads outside WRAM')
-        else:
-            take(length if mode == 0 else 2 if mode == 0x40 else 1)
-        stores += length
-    else:
-        raise ValueError('fixture lacks bounded terminator')
+    stores, _ = admit_stream(take, destination)
     if cursor != len(stream):
         raise ValueError('fixture stream has trailing bytes')
     if len(fixture['expected_bytes']) != stores or fixture['expected_written'] != stores:
@@ -180,27 +183,7 @@ def prepare_captures(path, manifest, run):
                 old = address; address += 1
                 if old & 0xffff == 0xffff: address += 0x8000
             return values
-        stores = 0
-        reads = []
-        while True:
-            header = take(1)[0]
-            if header == 255: break
-            if header & 0xe0 == 0xe0:
-                mode = (header * 8) & 0xe0
-                length = ((header & 3) << 8 | take(1)[0]) + 1
-            else:
-                mode = header & 0xe0; length = (header & 31) + 1
-            if destination + stores + length > 0x20000:
-                raise ValueError('capture destination writes outside WRAM')
-            if mode & 0x80:
-                reference = (destination + stores - take(1)[0] if mode >= 0xc0
-                             else destination + int.from_bytes(take(2), 'little'))
-                if reference < 0 or reference + length > 0x20000:
-                    raise ValueError('capture backreference reads outside WRAM')
-                reads.append([reference, reference + length])
-            else:
-                take(length if mode == 0 else 2 if mode == 0x40 else 1)
-            stores += length
+        stores, reads = admit_stream(take, destination)
         directory = run / call['fixture_id']; directory.mkdir()
         fixture = {'id': call['fixture_id'], 'captured': True, 'source': source,
                    'destination': destination, 'expected_written': stores,
@@ -227,6 +210,7 @@ def compare_original(args, captures, fixtures, run, source):
         cpu = source / 'src/snes/cpu.c'
         if cpu.read_bytes() != archive.extractfile(cpu_member).read():
             raise ValueError('original instruction runner CPU source differs from archive')
+    shutil.copyfile(cpu, run / 'original_cpu.c')
     command(['cc', '-std=c11', '-O2', '-ffunction-sections', '-fdata-sections', '-iquote',
              str(source / 'src'), str(cpu), str(run / runner.name), '-Wl,--gc-sections',
              '-o', str(run / 'original-oracle')], run, args.timeout)
@@ -310,7 +294,7 @@ def inject_fault(fault, run):
     main = run / 'main.rs'; lib = run / 'lib.rs'
     text = main.read_text()
     if fault == 'wrong-output':
-        text = text.replace('    drop(wram);', '    wram.write(destination, 0x99).map_err(|e| format!("{e:?}"))?;\n    drop(wram);')
+        text = text.replace('    // Finished the observed WRAM mutation.', '    wram.write(destination, 0x99).map_err(|e| format!("{e:?}"))?;\n    // Finished the observed WRAM mutation.')
     elif fault == 'write-restore':
         text = text.replace('    let result = decompress_to_mem(', '    let old = wram.read(destination).unwrap();\n    wram.write(destination, old ^ 255).unwrap();\n    wram.write(destination, old).unwrap();\n    let result = decompress_to_mem(')
     elif fault in ['disabled', 'unexecuted']:
@@ -377,6 +361,14 @@ def freeze_acceptance(args, manifest, verdict, run):
             'predecessor': {'capture_manifest_sha256': verdict['captures_manifest_sha256'],
                             'ticket04_contract': 'decomp-offline-v1', 'previous_attempt': verdict.get('previous_attempt'),
                             'previous_acceptance': verdict.get('previous_acceptance')}}
+    # Every retained execution artifact is material, including partial negative runs.
+    # The final verdict and seal are authenticated by the pointer and verdict respectively.
+    seal['artifact_inventory_schema'] = 'decomp-artifact-inventory-v1'
+    seal['artifacts'] = {str(p.relative_to(run)): digest(p)
+                         for p in sorted(run.rglob('*')) if p.is_file()}
+    seal['original_rom_parity'] = verdict['original_rom_parity']
+    seal['status'] = 'accepted'
+    seal['routine_accepted'] = True
     (run / 'acceptance.json').write_text(json.dumps(seal, indent=2) + '\n')
     verdict['acceptance_sha256'] = digest(run / 'acceptance.json')
     verdict['status'] = 'accepted'; verdict['routine_accepted'] = True
@@ -390,9 +382,28 @@ def verify_accepted(pointer_path):
     if digest(run / 'verdict.json') != pointer['verdict_sha256']:
         raise ValueError('accepted verdict identity differs')
     verdict = json.loads((run / 'verdict.json').read_text())
-    if not verdict['routine_accepted'] or digest(run / 'acceptance.json') != verdict['acceptance_sha256']:
+    if verdict.get('status') != 'accepted' or not verdict['routine_accepted'] or digest(run / 'acceptance.json') != verdict['acceptance_sha256']:
         raise ValueError('accepted seal identity differs')
     seal = json.loads((run / 'acceptance.json').read_text())
+    if seal.get('artifact_inventory_schema') != 'decomp-artifact-inventory-v1':
+        raise ValueError('unsupported accepted seal: complete artifact inventory required')
+    if seal.get('status') != 'accepted' or not seal.get('routine_accepted'):
+        raise ValueError('accepted seal status differs')
+    for key, verdict_key in [('fixtures', 'fixtures'), ('observed_cases', 'observed_cases'),
+                             ('negative_controls', 'negative_controls'), ('original_rom_parity', 'original_rom_parity'),
+                             ('implementation', 'implementation_identities'), ('source', 'source_identities'),
+                             ('binaries', 'binaries'), ('job_sha256', 'manifest_sha256')]:
+        if seal[key] != verdict[verdict_key]:
+            raise ValueError(f'accepted verdict/seal evidence differs: {key}')
+    if not seal['artifacts']:
+        raise ValueError('accepted artifact inventory is empty')
+    for relative, identity in seal['artifacts'].items():
+        path = Path(relative)
+        if path.is_absolute() or '..' in path.parts:
+            raise ValueError('accepted artifact inventory has an invalid path')
+        artifact = run / path
+        if not artifact.is_file() or digest(artifact) != identity:
+            raise ValueError(f'accepted artifact missing or changed: {relative}')
     contract_path = ROOT / 'tools/decomp/offline-acceptance-v1.json'
     if digest(contract_path) != seal['contract_sha256'] or digest(ROOT / 'tools/decomp/decompress-job.json') != seal['job_sha256']:
         raise ValueError('accepted contract/job changed')
@@ -409,7 +420,8 @@ def verify_accepted(pointer_path):
                           ('c_trace.wram.writes', 'c_ordered_writes_sha256'), ('rust.wram.writes', 'rust_ordered_writes_sha256')]:
             if digest(directory / file) != fixture[key]: raise ValueError(f'accepted fixture changed: {fixture["id"]}/{file}')
     for control in seal['negative_controls']:
-        if not control['rejected'] or digest(Path(control['run']) / 'verdict.json') != control['verdict_sha256']:
+        control_run = run / Path(control['run']).relative_to(Path(seal['run']))
+        if not control['rejected'] or digest(control_run / 'verdict.json') != control['verdict_sha256']:
             raise ValueError('accepted negative evidence changed')
     return seal
 

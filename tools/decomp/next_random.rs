@@ -3,7 +3,9 @@ const RNG: usize = 0x5e5;
 const WRAM: usize = 0x20000;
 
 pub fn next_random(ram: &mut [u8]) -> Result<u16, &'static str> {
-    if ram.len() != WRAM { return Err("full canonical WRAM required"); }
+    if ram.len() != WRAM {
+        return Err("full canonical WRAM required");
+    }
     let seed = u16::from_le_bytes([ram[RNG], ram[RNG + 1]]);
     // The original multiplier retains the high-byte overflow as an end-around carry.
     let low_product = u16::from(seed as u8) * 5;
@@ -17,10 +19,12 @@ pub fn next_random(ram: &mut [u8]) -> Result<u16, &'static str> {
 }
 
 /// Caller supplies one live, exclusive 128 KiB allocation for this synchronous call.
-/// No pointer is retained, no callback or panic is permitted. Zero denotes invalid input.
+/// No pointer is retained, no callback or panic is permitted. -1 denotes invalid input; successful results span 0–65535.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn sm_next_random_v1(ram: *mut u8, len: usize) -> i32 {
-    if ram.is_null() || len != WRAM || (ram as usize).checked_add(len).is_none() { return -1; }
+    if ram.is_null() || len != WRAM || (ram as usize).checked_add(len).is_none() {
+        return -1;
+    }
     // SAFETY: allocation validity and exclusive access are the caller's ABI contract.
     let bytes = unsafe { std::slice::from_raw_parts_mut(ram, len) };
     i32::from(next_random(bytes).expect("validated extent"))
@@ -47,5 +51,7 @@ fn main() {
         let result = next_random(&mut ram).unwrap();
         std::fs::write(&args[2], ram).unwrap();
         println!("{}", result);
-    } else { std::process::exit(2); }
+    } else {
+        std::process::exit(2);
+    }
 }

@@ -1,6 +1,7 @@
 """Exercise the public offline job against independent whole-WRAM expectations."""
 import hashlib
 import json
+import shutil
 from pathlib import Path
 import subprocess
 import tempfile
@@ -163,6 +164,47 @@ class AcceptanceControls(unittest.TestCase):
             self.assertTrue(all(control['rejected'] for control in verdict['negative_controls']))
             self.assertEqual(len(verdict['negative_controls']), 11)
             self.assertEqual(len(verdict['fixtures']), 63)
+            # Consumers must reject sparse copies, even when inputs and seal remain intact.
+            run = Path(pointer['run'])
+            original_id = verdict['original_rom_parity']['fixtures'][0]['id']
+            runtime_control = next(c for c in verdict['negative_controls'] if c['fault'] == 'wrong-output')
+            control_relative = Path(runtime_control['run']).relative_to(run)
+            omissions = [Path(verdict['fixtures'][0]['id']) / 'c.wram',
+                         Path(verdict['fixtures'][0]['id']) / 'rust_repeat.wram.writes',
+                         Path(original_id) / 'original.wram', Path('original-oracle'),
+                         Path('original_cpu.c'), Path('original_oracle.c'),
+                         control_relative / 'rust-candidate', control_relative / 'main.rs',
+                         control_relative / 'build-execution.log']
+            for omitted in omissions:
+                with self.subTest(omitted=omitted), tempfile.TemporaryDirectory() as sparse:
+                    sparse_run = Path(sparse) / 'run'
+                    shutil.copytree(run, sparse_run, copy_function=lambda src, dst: Path(dst).symlink_to(src),
+                                    ignore=lambda directory, names: [omitted.name] if Path(directory) == run / omitted.parent else [])
+                    sparse_pointer = Path(sparse) / 'pointer.json'
+                    sparse_pointer.write_text(json.dumps(dict(pointer, run=str(sparse_run))))
+                    with self.assertRaises(ValueError):
+                        verify_accepted(sparse_pointer)
+            # Replaced diagnostics are also material evidence.
+            with tempfile.TemporaryDirectory() as altered:
+                altered_run = Path(altered) / 'run'
+                shutil.copytree(run, altered_run, copy_function=lambda src, dst: Path(dst).symlink_to(src))
+                diagnostic = altered_run / original_id / 'original.json'
+                diagnostic.unlink(); diagnostic.write_text('{}')
+                altered_pointer = Path(altered) / 'pointer.json'
+                altered_pointer.write_text(json.dumps(dict(pointer, run=str(altered_run))))
+                with self.assertRaises(ValueError):
+                    verify_accepted(altered_pointer)
+            with tempfile.TemporaryDirectory() as inconsistent:
+                inconsistent_run = Path(inconsistent) / 'run'
+                shutil.copytree(run, inconsistent_run, copy_function=lambda src, dst: Path(dst).symlink_to(src))
+                verdict_path = inconsistent_run / 'verdict.json'
+                verdict_path.unlink()
+                verdict_path.write_text(json.dumps(dict(verdict, status='partial')))
+                inconsistent_pointer = Path(inconsistent) / 'pointer.json'
+                inconsistent_pointer.write_text(json.dumps(dict(pointer, run=str(inconsistent_run),
+                    verdict_sha256=hashlib.sha256(verdict_path.read_bytes()).hexdigest())))
+                with self.assertRaises(ValueError):
+                    verify_accepted(inconsistent_pointer)
             failure = subprocess.run(['python3', 'tools/decomp_routine.py', '--fault', 'crash', '--output', directory], capture_output=True, text=True, cwd=ROOT)
             self.assertEqual(failure.returncode, 1)
             self.assertEqual(json.loads((Path(directory) / 'decomp-acceptance.json').read_text()), pointer)
