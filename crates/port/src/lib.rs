@@ -3,7 +3,6 @@
 
 pub const WRAM_SIZE: usize = 0x20000;
 
-pub mod power_bomb;
 pub mod audio;
 pub mod collision;
 pub mod enemy;
@@ -13,6 +12,7 @@ pub mod enemy_jump;
 pub mod enemy_rio;
 pub mod plm;
 pub mod plm_instructions;
+pub mod power_bomb;
 pub mod projectile_flight;
 pub mod projectile_special;
 pub mod projectiles;
