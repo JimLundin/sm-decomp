@@ -10,6 +10,8 @@ use crate::{cfg::FunctionCfg, decode::Insn, emit, opcodes::Mode};
 struct Declaration {
     schema_version: u32,
     patterns: Vec<Pattern>,
+    #[serde(default)]
+    prospective_patterns: Vec<Pattern>,
 }
 #[derive(serde::Deserialize)]
 struct Pattern {
@@ -47,6 +49,26 @@ pub fn supported(i: &Insn) -> bool {
 /// Complete timed body shared by production tables and instruction validation.
 pub fn emit_body(i: &Insn) -> Result<String> {
     anyhow::ensure!(supported(i), "unsupported timed pattern {}", i.mnem);
+    emit_timed_body(i)
+}
+
+/// Explicit proof path for one source-declared prospective pattern. Normal
+/// dispatch remains governed solely by the enabled production patterns.
+pub fn emit_prospective_body(i: &Insn, opcode: &str) -> Result<String> {
+    anyhow::ensure!(
+        patterns().prospective_patterns.iter().any(|pattern| {
+            pattern.opcode == opcode
+                && u8::from_str_radix(opcode, 16).ok() == Some(i.op)
+                && pattern.mnemonic == i.mnem
+                && pattern.mode == format!("{:?}", i.mode)
+                && pattern.mx.contains(&emit::mx_key(i.m8, i.x8))
+        }),
+        "undeclared prospective timed pattern {opcode}"
+    );
+    emit_timed_body(i)
+}
+
+fn emit_timed_body(i: &Insn) -> Result<String> {
     let mut body = String::new();
     if matches!(i.mode, Mode::Imp) {
         writeln!(body, "m.bus.implied_cycle(0x{:06x}, m.cpu.flag(flag::I));", i.next())?;
@@ -58,7 +80,7 @@ pub fn emit_body(i: &Insn) -> Result<String> {
 }
 
 pub fn emit_table(funcs: &[(FunctionCfg, Option<String>)], read: &dyn Fn(u32) -> Option<u8>) -> Result<String> {
-    emit_table_excluding(funcs, read, &std::collections::HashSet::new())
+    emit_table_for_proof(funcs, read, &std::collections::HashSet::new(), None)
 }
 
 pub fn emit_table_excluding(
@@ -66,9 +88,25 @@ pub fn emit_table_excluding(
     read: &dyn Fn(u32) -> Option<u8>,
     exclusions: &std::collections::HashSet<(u32, u8)>,
 ) -> Result<String> {
+    emit_table_for_proof(funcs, read, exclusions, None)
+}
+
+/// Isolated proposal generation. An explicit prospective opcode and exclusion
+/// inventory never affect normal compiled support.
+pub fn emit_table_for_proof(
+    funcs: &[(FunctionCfg, Option<String>)],
+    read: &dyn Fn(u32) -> Option<u8>,
+    exclusions: &std::collections::HashSet<(u32, u8)>,
+    prospective: Option<&str>,
+) -> Result<String> {
     let mut instructions = BTreeMap::new();
     for (cfg, _) in funcs {
-        for i in cfg.blocks.iter().flat_map(|b| &b.insns).filter(|i| supported(i)) {
+        for i in cfg
+            .blocks
+            .iter()
+            .flat_map(|b| &b.insns)
+            .filter(|i| supported(i) || prospective.is_some_and(|opcode| emit_prospective_body(i, opcode).is_ok()))
+        {
             let key = (i.addr, emit::mx_key(i.m8, i.x8));
             if !exclusions.contains(&key) {
                 instructions.entry(key).or_insert(i);
@@ -80,7 +118,8 @@ pub fn emit_table_excluding(
     );
     for ((addr, mx), i) in &instructions {
         writeln!(out, "fn step_{addr:06x}_{mx}(m: &mut Machine) {{")?;
-        writeln!(out, "    {}", emit_body(i)?)?;
+        let body = if supported(i) { emit_body(i)? } else { emit_prospective_body(i, prospective.unwrap())? };
+        writeln!(out, "    {body}")?;
         writeln!(out, "}}")?;
     }
     writeln!(out, "pub static STEP_TABLE: &[StepEntry] = &[")?;

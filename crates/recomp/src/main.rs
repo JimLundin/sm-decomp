@@ -14,6 +14,7 @@ struct Args {
     functions: PathBuf,
     out: PathBuf,
     steps_out: Option<PathBuf>,
+    prospective_pattern: Option<String>,
     selection_profile: Option<PathBuf>,
     selection_entries: Option<PathBuf>,
     selection_inventory: Option<PathBuf>,
@@ -26,6 +27,7 @@ fn parse_args() -> Result<Args> {
         functions: "config/functions.toml".into(),
         out: "out/generated/game.rs".into(),
         steps_out: None,
+        prospective_pattern: None,
         selection_profile: None,
         selection_entries: None,
         selection_inventory: None,
@@ -39,6 +41,7 @@ fn parse_args() -> Result<Args> {
             "--functions" => a.functions = v.into(),
             "--out" => a.out = v.into(),
             "--steps-out" => a.steps_out = Some(v.into()),
+            "--prospective-pattern" => a.prospective_pattern = Some(v),
             "--selection-profile" => a.selection_profile = Some(v.into()),
             "--selection-entries" => a.selection_entries = Some(v.into()),
             "--selection-inventory" => a.selection_inventory = Some(v.into()),
@@ -98,7 +101,8 @@ fn main() -> Result<()> {
                 Ok((config::parse_addr(&row.addr)?, emit::mx_key(m8, x8)))
             })
             .collect::<Result<HashSet<_>>>()?;
-        let mut source = step::emit_table_excluding(&built, &read, &exclusions)?;
+        let mut source = step::emit_table_for_proof(&built, &read, &exclusions, args.prospective_pattern.as_deref())?;
+
         source.push_str(&format!("pub const ROM_SHA256: Option<&str> = Some(\"{:x}\");\n", Sha256::digest(&rom.data)));
         std::fs::write(path, source)?;
     }

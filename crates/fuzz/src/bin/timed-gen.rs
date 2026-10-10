@@ -5,7 +5,10 @@ use std::{collections::BTreeMap, fmt::Write, path::PathBuf};
 
 fn main() -> Result<()> {
     let args: Vec<_> = std::env::args().skip(1).collect();
-    ensure!(args.len() == 3, "usage: timed-gen input.json bodies.rs prepared.json");
+    ensure!(
+        args.len() == 3 || args.len() == 4,
+        "usage: timed-gen input.json bodies.rs prepared.json [prospective-opcode]"
+    );
     let mut cases: Vec<Value> = serde_json::from_slice(&std::fs::read(&args[0])?)?;
     ensure!(!cases.is_empty(), "empty timed corpus batch");
     let mut bodies = BTreeMap::new();
@@ -24,7 +27,11 @@ fn main() -> Result<()> {
         };
         let instruction =
             recomp::decode::decode_with(read, pc, p & 0x20 != 0, p & 0x10 != 0).context("decode failed")?;
-        let body = recomp::step::emit_body(&instruction)?;
+        let body = if let Some(opcode) = args.get(3) {
+            recomp::step::emit_prospective_body(&instruction, opcode)?
+        } else {
+            recomp::step::emit_body(&instruction)?
+        };
         let next_id = bodies.len();
         let id = *bodies.entry(body.clone()).or_insert_with(|| {
             writeln!(output, "fn body_{next_id}(m: &mut Machine) {{ {body} }}").unwrap();

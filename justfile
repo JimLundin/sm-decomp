@@ -19,6 +19,14 @@ readiness-preflight:
 pattern-check:
     python3 tools/readiness_patterns.py --timing
 
+# Complete independent proof of disabled, source-declared instruction support.
+pattern-prove opcode="ad":
+    python3 tools/iteration_pattern.py prove --opcode {{quote(opcode)}}
+
+# Promotion requires supported exhaustion and complete proof before cold gates.
+pattern-promote selection proof *args:
+    python3 tools/iteration_pattern.py promote --selection {{quote(selection)}} --proof {{quote(proof)}} {{args}}
+
 # Cold instruction/bus replay; immutable evidence names the first disagreement.
 diagnose start="0" instructions="100":
     python3 tools/readiness_diagnostics.py --start-input {{start}} --instructions {{instructions}}

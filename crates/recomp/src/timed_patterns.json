@@ -282,5 +282,73 @@
         "control/stack substitution: this pattern performs no control or stack operation"
       ]
     }
+  ],
+  "prospective_patterns": [
+    {
+      "opcode": "ad",
+      "mnemonic": "LDA",
+      "mode": "Abs",
+      "addressing": "absolute DBR read",
+      "mx": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "corpus": "ad.n.json",
+      "required_conditions": [
+        "native-mx-0",
+        "native-mx-1",
+        "native-mx-2",
+        "native-mx-3",
+        "binary",
+        "decimal",
+        "program-bank-wrap",
+        "accumulator-high-preservation",
+        "data-bank-crossing",
+        "data-24bit-wrap",
+        "mx0-binary",
+        "mx0-decimal",
+        "mx1-binary",
+        "mx1-decimal",
+        "mx2-binary",
+        "mx2-decimal",
+        "mx3-binary",
+        "mx3-decimal"
+      ],
+      "independent_fixtures": [
+        "independent AD MX0 DFalse fetch data boundary",
+        "independent AD MX0 DTrue fetch data boundary",
+        "independent AD MX1 DFalse fetch data boundary",
+        "independent AD MX1 DTrue fetch data boundary",
+        "independent AD MX2 DFalse fetch data boundary",
+        "independent AD MX2 DTrue fetch data boundary",
+        "independent AD MX3 DFalse fetch data boundary",
+        "independent AD MX3 DTrue fetch data boundary"
+      ],
+      "timing_branches": [
+        "m8",
+        "m16"
+      ],
+      "inapplicable": [
+        "decimal ALU: LDA preserves D and performs no arithmetic",
+        "branch/direct-page/indexed penalties: absolute mode has none",
+        "control/stack substitution: LDA performs no control or stack operation"
+      ],
+      "timing_tests": [
+        "prospective_lda_timing"
+      ],
+      "timing_oracles": [
+        "crates/snes/tests/prospective_lda_timing.rs"
+      ],
+      "hardware_conditions": [
+        "ordered mixed-speed reads and register read effects",
+        "final-data-cycle IRQ/NMI sampling",
+        "pending DMA/HDMA waits",
+        "refresh",
+        "frame/input rollover and save/restore",
+        "passive observer"
+      ]
+    }
   ]
 }
