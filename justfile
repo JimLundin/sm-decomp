@@ -184,3 +184,7 @@ iteration-diagnosis *args:
 # Explicit bounded recompilation session: default one accepted increment.
 recomp-iteration *args:
     python3 tools/iteration_session.py {{args}}
+
+# Fresh partial offline routine job; whole-routine acceptance remains disabled.
+decomp-routine *args:
+    python3 tools/decomp_routine.py {{args}}
