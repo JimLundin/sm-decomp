@@ -187,3 +187,18 @@ passes96routines/1,184cases. Frame evidence
 including252new condition-frame cases and16block-draw cases. Independent Rust
 examples, full suite and Clippy pass. Escape-shaft wall projectile spawning and
 message coroutine ownership remain open; additions are offline verified.
+
+## Native room-effect spawning
+
+Enemy-projectile allocation now preserves eighteen-slot highest-free selection,
+definition fields and partial resets, with nine native room-effect initializers.
+Escape-shaft wall spawning and eight PLM effect instructions execute native
+allocation, including four glass shards and two smoke clouds. RNG, coordinate
+scratch, audio and partial pool exhaustion match actual C. External spawn-point
+initializers and enemy-projectile scheduling/movement remain open.
+
+Evidence `out/port/enemy-projectile-allocation/20261010T230633.151973Z/verdict.json`
+passes303cases; `out/port/plm-projectile-effects/20261010T230714.137767Z/verdict.json`
+passes1,444cases, including64new effect-instruction cases and12escape frames.
+Four independent allocator tests, full Rust suite and Clippy pass. These additions
+are offline verified; no further live or original-ROM parity claim is made.

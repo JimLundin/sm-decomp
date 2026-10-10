@@ -244,6 +244,32 @@ pub fn instruction(r: &mut Wram<'_>, rom: &[u8], opcode: u16, pc: u16, k: u16) -
             crate::plm_render::draw(r, rom, active)?;
             return Ok(None);
         }
+        0xbbe1 | 0xd357 | 0xd52c | 0xd77a | 0xd790 | 0xd79f | 0xd7b6 => {
+            let (definition, parameter, bytes, repeats) = match opcode {
+                0xbbe1 => (w(0)?, 0, 2, 1),
+                0xd357 => (0xa993, w(0)?, 2, 1),
+                0xd52c => (0xd904, 0, 0, 1),
+                0xd77a => (0xb743, w(0)?, 2, 1),
+                0xd790 => (0xb751, w(0)?, 2, 1),
+                0xd79f => (0xe517, 0x30a, 0, 2),
+                _ => (0xe517, 0xb, 0, 1),
+            };
+            for _ in 0..repeats {
+                crate::enemy_projectiles::spawn_room(r, rom, definition, parameter)?;
+            }
+            if opcode == 0xd77a {
+                audio::dispatch(r, "QueueSfx2_Max6", 0x4c, 0)?;
+            }
+            advance = bytes;
+        }
+        0xd30b => {
+            let parameters = [w(0)?, w(2)?, w(4)?, w(6)?];
+            audio::dispatch(r, "QueueSfx3_Max15", 0x2e, 0)?;
+            for parameter in parameters {
+                crate::enemy_projectiles::spawn_room(r, rom, 0xcefc, parameter)?;
+            }
+            advance = 8;
+        }
         _ => return Err("unsupported PLM instruction"),
     }
     Ok(Some(next(pc, advance)?))
@@ -316,7 +342,7 @@ fn process_frame_inner(r: &mut Wram<'_>, rom: &[u8], limit: usize, render: bool)
         ]
         .contains(&r.word(PRE + k))
         {
-            crate::plm::preinstruction(r, r.word(PRE + k), k as u16)?;
+            crate::plm::preinstruction_rom(r, rom, r.word(PRE + k), k as u16)?;
         }
         let timer = r.word(INSTR_TIMER + k).wrapping_sub(1);
         r.set_word(INSTR_TIMER + k, timer);

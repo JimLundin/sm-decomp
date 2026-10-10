@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate synthetic PLM bytecode/WRAM fixtures; no original-ROM bytes."""
+"""Generate PLM fixtures with synthetic scripts and pinned room-effect tables."""
 
 from __future__ import annotations
 
@@ -124,6 +124,31 @@ def generate(output_dir: Path, manifest_path: Path | None = None) -> Path:
                   [0x330, le(0)], [0x1C25, le(0)]]
         cases.append({"name": f"draw-block-{seed}", "a": slot,
                       "b": 0x840000 | pc, "writes": writes, "expected_return": 0})
+    effect_definitions = [0xB4B1, 0xA993, 0xB743, 0xB751, 0xCEFC, 0xD904, 0xE517]
+    original = (ROOT / "rom/sm.sfc").read_bytes()
+    for start, size in [(0xA7AB, 32), (0xCE41, 32), (0xE42C, 60), (0xE47E, 40)]:
+        offset = 0x30000 + (start & 0x7FFF)
+        write(0x86, start, original[offset:offset + size])
+    for definition in effect_definitions:
+        offset = 0x30000 + (definition & 0x7FFF)
+        write(0x86, definition, original[offset:offset + 14])
+    effect_case_index = 0
+    for opcode in [0xBBE1, 0xD357, 0xD52C, 0xD77A, 0xD790, 0xD79F, 0xD7B6, 0xD30B]:
+        for seed in range(8):
+            slot = [0, 2, 38, 78][seed % 4]
+            pc = 0x8000 + effect_case_index * 16
+            effect_case_index += 1
+            operand = le(0xB4B1 if opcode == 0xBBE1 else seed % 3 * 2)
+            if opcode == 0xD30B:
+                operand = le(0) + le(2) + le(4) + le(0)
+            write(0x84, pc, le(opcode) + operand)
+            writes = [[0x1997, [0] * 36], [0x1C27, le(slot)],
+                      [0x1C87 + slot, le(0x208)], [0x7A5, le(32)],
+                      [0x1DC7 + slot, le(0x1234)], [0x5E5, le(seed * 193)]]
+            if seed % 2:
+                writes.append([0x1997, le(0xB4B1) * 17 + le(0)])
+            cases.append({"name": f"spawn-op-{opcode:04x}-{seed}", "a": slot,
+                          "b": 0x840000 | pc, "writes": writes})
     frames = []
     for seed in range(12):
         pc = 0xA000 + seed * 64
@@ -278,6 +303,17 @@ def generate(output_dir: Path, manifest_path: Path | None = None) -> Path:
                        [0x1D27 + slot, le(pc)], [0xDE1C + slot, le(1)],
                        [0x1C87 + slot, le(2 * (32 + 1 + seed))]]
         drawn_frames.append({"name": f"drawn-multi-frame-{seed}", "writes": writes,
+                             "expected_return": 0})
+    for seed in range(12):
+        slot = [0, 2, 38, 78][seed % 4]
+        pc = 0x8400 + seed * 8
+        write(0x84, pc, le(0x86BC) + le(0x86BC))
+        writes = [[0x1C23, le(0x8000)], [0x1C37 + slot, le(0xB703)],
+                  [0x1CD7 + slot, le(0xB927)], [0x1D27 + slot, le(pc)],
+                  [0xDE1C + slot, le(2)], [0x1997, [0] * 36],
+                  [0xAF6, le(241 if seed % 2 else 240)],
+                  [0xAFA, le(2081 if seed % 3 else 2080)]]
+        drawn_frames.append({"name": f"escape-spawn-frame-{seed}", "writes": writes,
                              "expected_return": 0})
     coordinates = []
     for width in [0, 1, 16, 31, 255, 256, 272, 65535]:
