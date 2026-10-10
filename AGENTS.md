@@ -1,5 +1,10 @@
 ## Agent skills
 
+### Reusable Python scripts
+
+When a custom Python script has been reused more than 10 times, promote it into
+a checked-in project tool or utility and use that entry point for subsequent runs.
+
 ### Issue tracker
 
 For specs, tickets and work status, use local Markdown in `.scratch/` following

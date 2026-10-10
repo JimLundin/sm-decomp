@@ -91,8 +91,11 @@ def verify_batch(path, batch, config, names, jobs=3, fresh=False):
     def verify_one(name):
         kind = config['families'][name]
         manifest = ROOT / 'tools/port' / (name + '.json')
+        generator_sha256 = (digest(ROOT / 'tools/port_plm_fixtures.py')
+                            if kind == 'plm-instructions' else None)
         previous = batch['families'].get(name)
-        if previous and not fresh and previous.get('manifest_sha256') == digest(manifest):
+        if (previous and not fresh and previous.get('manifest_sha256') == digest(manifest)
+                and previous.get('generator_sha256') == generator_sha256):
             try:
                 validate(kind, Path(previous['verdict']))
                 print(f'{name}: reused authenticated evidence', flush=True)
@@ -110,7 +113,7 @@ def verify_batch(path, batch, config, names, jobs=3, fresh=False):
             if generated['exit_code']:
                 return name, generated
         record = execute(verification_command(kind, selected_manifest, directory / 'evidence'), directory, name)
-        record.update(kind=kind, manifest_sha256=digest(manifest))
+        record.update(kind=kind, manifest_sha256=digest(manifest), generator_sha256=generator_sha256)
         if not record['exit_code']:
             validate(kind, Path(record['verdict']))
         return name, record
