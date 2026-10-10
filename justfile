@@ -130,3 +130,7 @@ readiness-sync *args:
 # One isolated cold parity run; readiness defaults retain the complete domain.
 readiness-parity mode="generated" frames="18000":
     python3 tools/readiness_parity.py --mode {{quote(mode)}} --frames {{frames}}
+
+# Explain verified reuse eligibility; this scope never accepts a candidate.
+readiness-reuse *args:
+    python3 tools/readiness_reuse.py {{args}}
