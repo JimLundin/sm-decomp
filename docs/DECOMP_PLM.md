@@ -97,3 +97,21 @@ fresh9,000-frame processes, one native hardcoded setup per mixed process,
 matching full state/returns/effects and zero measured CPU fallback. The original
 18,000-frame comparison predates only the counter-parser correction and host
 source generator extraction; the final run validates both tooling fixes.
+
+## Door, open-gate and escape-room setup expansion
+
+Native setup additionally owns grey/colored/blue doors, open upwards/downwards
+gates, Mother Brain escape doorway extensions, critter escape terrain, solid
+four-cell door columns, the unused B974 no-op and Shaktools scroll initialization.
+Grey doors extract condition bits from the high room-argument byte while keeping
+remaining bits; blue doors preserve the negative projectile sentinel and power
+bomb deletion. Gate BTS writes preserve neighboring bytes and reject invalid
+column extents before mutation. Shaktools writes canonical scroll cells0xcd20.
+Closed gates and projectile-spawning escape preinstructions remain unowned.
+
+Exact actual-C full-WRAM evidence:
+`out/port/plm-door-setups/20261010T224620.249147Z/verdict.json`:54routines,
+432cases including80new branch fixtures. Twelve independent public PLM tests,
+full port tests, formatting and Clippy pass. These ten additions are offline
+verified; previous hardcoded live admission belongs to its earlier exact source
+snapshot. New module seals require refreshed consumers before installation.

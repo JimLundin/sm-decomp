@@ -132,3 +132,64 @@ fn hardcoded_sound_enable_timer_uses_area_and_original_preinstruction() {
     assert_eq!(ram.word(0x1d77 + 78), 32);
     assert_eq!(ram.word(0x1cd7 + 78), 0xb7dd);
 }
+
+#[test]
+fn grey_door_extracts_condition_and_preserves_room_argument_bits() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut ram = Wram::new(&mut bytes).unwrap();
+    ram.set_word(0x1c87, 0x100);
+    ram.set_word(0x1dc7, 0xfe35);
+    ram.set_word(0x10102, 0x1234);
+    plm::setup(&mut ram, 0xc794, 0, &mut 0).unwrap();
+    assert_eq!(ram.word(0x1e17), 62);
+    assert_eq!(ram.word(0x1dc7), 0x8235);
+    assert_eq!(ram.word(0x10102), 0xc234);
+    assert_eq!(ram.byte(0x16482), 0x44);
+}
+
+#[test]
+fn blue_door_power_bomb_deletes_and_negative_projectile_sentinel_makes_solid() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut ram = Wram::new(&mut bytes).unwrap();
+    ram.set_word(0x1c87, 0x100);
+    ram.set_word(0x1c37, 0xbeef);
+    ram.set_word(0xc18, 0x300);
+    plm::setup(&mut ram, 0xc7bb, 0, &mut 0).unwrap();
+    assert_eq!(ram.word(0x1c37), 0);
+    ram.set_word(0xc04, 0);
+    ram.set_word(0xdde, 0xffff);
+    ram.set_word(0x10102, 0xf234);
+    plm::setup(&mut ram, 0xc7bb, 0, &mut 0).unwrap();
+    assert_eq!(ram.word(0x10102), 0x8234);
+}
+
+#[test]
+fn open_upward_gate_writes_five_bts_cells_and_keeps_adjacent_bytes() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut ram = Wram::new(&mut bytes).unwrap();
+    ram.set_word(0x1c87, 0x100);
+    ram.set_word(0x7a5, 16);
+    ram.set_byte(0x16483, 0xaa);
+    plm::setup(&mut ram, 0xc6dc, 0, &mut 0).unwrap();
+    for index in [128, 112, 96, 80, 64] {
+        assert_eq!(ram.byte(0x16402 + index), 0x10);
+    }
+    assert_eq!(ram.byte(0x16483), 0xaa);
+}
+
+#[test]
+fn escape_door_initializes_vertical_extensions_and_scroll_setup_resets_words() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut ram = Wram::new(&mut bytes).unwrap();
+    ram.set_word(0x1c87, 0x100);
+    ram.set_word(0x7a5, 16);
+    plm::setup(&mut ram, 0xb5f8, 0, &mut 0).unwrap();
+    assert_eq!(ram.byte(0x10103), 0x90);
+    assert_eq!(ram.byte(0x16482), 1);
+    for index in [144, 160, 176] {
+        assert_eq!(ram.byte(0x16402 + index), 0xff);
+    }
+    plm::setup(&mut ram, 0xb8dc, 0, &mut 0).unwrap();
+    assert_eq!(ram.word(0xcd20), 1);
+    assert_eq!(ram.word(0xcd22), 0);
+}

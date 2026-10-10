@@ -43,6 +43,60 @@ pub fn setup(r: &mut Wram, address: u16, j: u16, amount: &mut i32) -> Result<u8,
     let j = slot(j)?;
     let b = block(r, j)?;
     match address {
+        0xb8dc => {
+            r.set_word(0xcd20, 1);
+            r.set_word(0xcd22, 0);
+        }
+        0xb96c => {}
+        0xb5f8 | 0xb9c5 | 0xb9f1 => {
+            let width = usize::from(r.word(0x7a5));
+            let rows = if address == 0xb9c5 { 3 } else { 4 };
+            if width == 0 || width > 255 || b + (rows - 1) * width * 2 >= 0x6400 {
+                return Err("escape door column extent");
+            }
+            for row in 0..rows {
+                let off = b + row * width * 2;
+                if address == 0xb9f1 {
+                    set_tile(r, off, tile(r, off) & 0xfff | 0x8000);
+                } else {
+                    write_type(r, off, if row == 0 { if address == 0xb5f8 { 0x9001 } else { 0xc04f } } else { 0xd0ff });
+                }
+            }
+        }
+        0xc6d8 | 0xc6dc => {
+            let width = usize::from(r.word(0x7a5));
+            if width == 0 || width > 255 {
+                return Err("gate room width");
+            }
+            let indices: Vec<_> = (0..5)
+                .map(|row| {
+                    if address == 0xc6dc { (b / 2).checked_sub(row * width) } else { (b / 2).checked_add(row * width) }
+                })
+                .collect();
+            if indices.iter().any(|index| index.is_none_or(|i| i >= 0x3200)) {
+                return Err("gate column extent");
+            }
+            for index in indices {
+                r.set_byte(0x16402 + index.unwrap(), 0x10);
+            }
+        }
+        0xc7b1 => write_type(r, b, 0xc044),
+        0xc7bb => {
+            let projectile = r.word(0xdde);
+            if projectile & 0x8000 == 0 && (projectile > 18 || projectile & 1 != 0) {
+                return Err("door projectile index");
+            }
+            if projectile & 0x8000 == 0 && r.word(0xc18 + usize::from(projectile)) & 0xf00 == 0x300 {
+                delete(r, j);
+            } else {
+                set_tile(r, b, tile(r, b) & 0xfff | 0x8000);
+            }
+        }
+        0xc794 => {
+            r.set_word(VARIABLE + j, (r.word(0x1dc7 + j) >> 8 & 0x7c) >> 1);
+            r.set_word(0x1dc7 + j, r.word(0x1dc7 + j) & !0x7c00);
+            write_type(r, b, 0xc044);
+        }
         0xb7c3 => {
             r.set_word(0x1d77 + j, if r.word(0x79f) == 6 { 32 } else { 240 });
             r.set_word(0x1cd7 + j, 0xb7dd);
@@ -284,7 +338,17 @@ fn rom_word(rom: &[u8], header: u16) -> Result<u16, &'static str> {
 pub fn supports_header(rom: &[u8], header: u16) -> Result<bool, &'static str> {
     Ok(matches!(
         rom_word(rom, header)?,
-        0xb7c3
+        0xc794
+            | 0xc7b1
+            | 0xc7bb
+            | 0xc6d8
+            | 0xc6dc
+            | 0xb5f8
+            | 0xb8dc
+            | 0xb96c
+            | 0xb9c5
+            | 0xb9f1
+            | 0xb7c3
             | 0xab27
             | 0xb3cf
             | 0xb8ef
@@ -434,6 +498,16 @@ fn spawn_positioned(
 }
 pub fn dispatch_rom(r: &mut Wram, _rom: &[u8], name: &str, a: i32, _b: i32) -> Result<u32, &'static str> {
     let address = match name {
+        "PlmSetup_C794_GreyDoor" => 0xc794,
+        "PlmSetup_Door_Colored" => 0xc7b1,
+        "PlmSetup_Door_Blue" => 0xc7bb,
+        "PlmSetup_C826_DownwardsOpenGate" => 0xc6d8,
+        "PlmSetup_C82E_UpwardsOpenGate" => 0xc6dc,
+        "PlmSetup_MotherBrainRoomEscapeDoor" => 0xb5f8,
+        "PlmSetup_ShaktoolsRoom" => 0xb8dc,
+        "PlmSetup_B974" => 0xb96c,
+        "PlmSetup_B9ED_CrittersEscapeBlock" => 0xb9c5,
+        "sub_84B9F1" => 0xb9f1,
         "PlmSetup_CrumbleBotwoonWall" => 0xab28,
         "PlmSetup_SetrupWreckedShipEntrance" => 0xb04a,
         "PlmSetup_BTS_Brinstar_0x80_Floorplant" => 0xb0dc,

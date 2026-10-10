@@ -47,6 +47,7 @@ observable hardware effects, Rust hits and fallback measurements.
 - 23: power-bomb allocation and afterglow lifecycle, offline verified.
 - 24: cumulative authenticated gameplay live admission and evidence storage cleanup, resolved.
 - 25: native room/hardcoded PLM allocation, offline verified; hardcoded sound-enable setup live-exercised.
+- 26: native doors, open gates and escape-room PLM setups, offline verified (ten additions).
 
 This is the first frontier, not the completion boundary of the user's goal.
 Expand tickets into substantive gameplay subsystems after this frontier, using
