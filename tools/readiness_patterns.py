@@ -11,42 +11,15 @@ import time
 from pathlib import Path
 
 from readiness import Run, digest, write_json, source_inventory, inventory_digest
+from pattern_contract import load_declaration, identity, pattern_conditions, DECLARATION, FIXTURES
 
 OPCODES = ("a9", "a2", "c2", "e2", "8d", "ea", "ca")
 
 
 def boundary_cases():
-    """Literal independent vectors for guaranteed boundaries absent in random corpus."""
-    cases = []
-    def add(name, opcode, pc, p, registers, changes, operand=(), writes=()):
-        initial = dict(pc=pc, pbr=0x80, s=0x1ff, p=p, a=0xabcd, x=0x1234,
-                       y=0x5678, dbr=0xff, d=0, e=0)
-        initial.update(registers)
-        addresses = [(0x800000 | ((pc + n) & 0xffff), byte) for n, byte in enumerate((opcode,) + operand)]
-        ram = dict(addresses)
-        for address, _ in writes:
-            ram[address] = 0
-        initial["ram"] = sorted(ram.items())
-        final = dict(initial, pc=(pc + len(operand) + 1) & 0xffff, **changes)
-        ram.update(writes)
-        final["ram"] = sorted(ram.items())
-        cycles = [[address, byte, "dp-r---"] for address, byte in addresses]
-        if opcode in (0xea, 0xca):
-            cycles.append([0x800000 | final["pc"], None, "---r---"])
-        if opcode in (0xc2, 0xe2):
-            cycles.append([addresses[-1][0], None, "---r---"])
-        cycles.extend([[address, byte, "d--w---"] for address, byte in writes])
-        cases.append(dict(name=name, initial=initial, final=final, cycles=cycles))
-    add("boundary LDA8 preserves A high across FFFF",0xa9,0xffff,0x30,{"x":0,"y":0},{"a":0xab80,"p":0xb0},(0x80,))
-    add("boundary LDA16 wraps operand bank at FFFE",0xa9,0xfffe,0,{},{"a":0x8000,"p":0x80},(0,0x80))
-    add("boundary LDX16 wraps operand bank at FFFE",0xa2,0xfffe,0,{},{"x":0,"p":2},(0,0))
-    add("boundary SEP truncates X Y and preserves A",0xe2,0xffff,0,{},{"x":0x34,"y":0x78,"p":0x30},(0x30,))
-    add("boundary REP preserves native mode and decimal",0xc2,0xffff,0x38,{"x":0x34,"y":0x78},{"p":8},(0x30,))
-    add("boundary STA16 wraps 24 bit data address",0x8d,0xfffe,0,{},{},(0xff,0xff),((0xffffff,0xcd),(0,0xab)))
-    add("boundary NOP wraps PC and preserves decimal",0xea,0xffff,8,{},{})
-    for p,x,want,flags in [(0,0,0xffff,0x80),(0,1,0,2),(0x10,0,0xff,0x90),(0x10,1,0,0x12)]:
-        add("boundary DEX zero sign wrap P{:02X} X{}".format(p,x),0xca,0xffff,p,{"x":x,"y":0},{"x":want,"p":flags})
-    return cases
+    """Source-owned independent expectations; never generated from the emitter."""
+    root = Path(__file__).resolve().parent.parent
+    return json.loads((root / "tools/pattern_fixtures.json").read_text())
 
 
 def command(argv, root, output, name, env=None):
@@ -58,18 +31,28 @@ def command(argv, root, output, name, env=None):
     return result.returncode
 
 
-def run(corpus, output, opcodes=OPCODES, batch_size=500, timing=False):
+def run(corpus, output, opcodes=None, batch_size=500, timing=False, declaration_path=None):
     root = Path(__file__).resolve().parent.parent
     output.mkdir(parents=True, exist_ok=False)
     started = time.monotonic()
-    report = {"schema_version": 1, "status": "incomplete", "expected": 0, "run": 0,
+    declaration = load_declaration(root, declaration_path)
+    shutil.copy2(root / DECLARATION, output / 'declaration.json')
+    shutil.copy2(root / FIXTURES, output / 'independent-fixtures.json')
+    declared = tuple(pattern["opcode"] for pattern in declaration["patterns"])
+    opcodes = declared if opcodes is None else tuple(opcodes)
+    if not opcodes or len(set(opcodes)) != len(opcodes) or not set(opcodes) <= set(declared):
+        raise ValueError("Selected opcodes outside production declaration")
+    patterns = {pattern["opcode"]: pattern for pattern in declaration["patterns"]}
+    report = {"schema_version": 2, "status": "incomplete", "expected": 0, "run": 0,
               "passed": 0, "failed": 0, "skipped": 0, "opcodes": {}, "corpus": [],
-              "scope": "complete declared native opcodes" if tuple(opcodes) == OPCODES else "development selected opcodes",
+              "scope": "complete production declaration" if set(opcodes) == set(declared) else "development selected opcodes",
+              "declaration": declaration, "declaration_sha256": identity(declaration),
+              "declaration_file_sha256": digest(root / DECLARATION),
+              "declaration_path": DECLARATION, "fixtures_path": FIXTURES,
+              "fixtures_sha256": digest(root / FIXTURES), "coverage": {},
+              "corpus_verified": False,
               "expectation_source": "SingleStepTests/65816 native JSON; independent literal boundary fixtures",
-              "unsupported_debt": "ADC overflow remains unsupported; docs/SETUP.md and workflows/recomp-iteration.md",
-              "conditions": {"native_mx": ["m0x0","m0x1","m1x0","m1x1"], "decimal_flag": [False,True],
-                             "preserved_status": "all nonaffected flags", "addressing": ["immediate","absolute","implied"],
-                             "inapplicable": ["decimal ALU","branch/direct-page/indexed penalties","emulation compiled execution"]}}
+              "unsupported_debt": "ADC overflow remains unsupported; docs/SETUP.md and workflows/recomp-iteration.md"}
     write_json(output / "instruction.json", report)
     sources = source_inventory(root)
     report["source_sha256"] = inventory_digest(sources)
@@ -95,29 +78,54 @@ def run(corpus, output, opcodes=OPCODES, batch_size=500, timing=False):
                         break
         if remaining:
             raise RuntimeError("Pinned archive lacks declared opcodes: "+",".join(sorted(remaining)))
+        report['corpus_verified'] = True
+        report['corpus_archive_sha256'] = digest(archive)
     cases = []
+    (output / 'corpus').mkdir()
     for opcode in opcodes:
         path = corpus / (opcode + ".n.json")
         selected = json.loads(path.read_text())
+        shutil.copy2(path, output / 'corpus' / path.name)
+        if not selected:
+            raise ValueError("Complete declared corpus is empty: " + opcode)
         report["corpus"].append({"opcode": opcode, "sha256": digest(path), "cases": len(selected)})
         report["opcodes"][opcode] = {"expected": len(selected), "run": 0, "passed": 0, "failed": 0, "skipped": 0}
         for case in selected:
+            if case["initial"]["e"] != 0 or case["final"]["e"] != 0 or ((case["initial"]["p"] >> 4) & 3) not in patterns[opcode]["mx"]:
+                raise ValueError("Declared native corpus contains unsupported mode/width: " + opcode)
             case["case_sha256"] = hashlib.sha256(json.dumps(case, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+            case["opcode"] = opcode
         cases.extend(selected)
     report["expected"] = len(cases)
-    if tuple(opcodes) == OPCODES:
-        additions = boundary_cases()
-        for case in additions:
-            case["case_sha256"] = hashlib.sha256(json.dumps(case, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-            pc = 0x800000 | case["initial"]["pc"]
-            opcode = "{:02x}".format(dict(case["initial"]["ram"])[pc])
+    fixtures = {case["name"]: case for case in boundary_cases()}
+    additions = []
+    for opcode in opcodes:
+        report["opcodes"][opcode]["independent_fixtures"] = patterns[opcode]["independent_fixtures"]
+        for name in patterns[opcode]["independent_fixtures"]:
+            if name not in fixtures:
+                raise ValueError("Declared independent fixture missing: " + name)
+            case = fixtures[name]
+            pc = (case["initial"]["pbr"] << 16) | case["initial"]["pc"]
+            if dict(case["initial"]["ram"])[pc] != int(opcode, 16):
+                raise ValueError("Independent fixture opcode differs")
+            case["case_sha256"] = identity(case)
+            case["opcode"] = opcode
+            case["independent_fixture"] = True
+            additions.append(case)
             report["opcodes"][opcode]["expected"] += 1
-        cases.extend(additions)
-        report["boundary_fixtures"] = len(additions)
-        report["expected"] = len(cases)
+    cases.extend(additions)
+    report["boundary_fixtures"] = len(additions)
+    report["expected"] = len(cases)
+    for opcode in opcodes:
+        report["coverage"][opcode] = {condition: {"expected": 0, "passed": 0} for condition in
+            patterns[opcode]["required_conditions"] + patterns[opcode]["timing_branches"]}
+    for case in cases:
+        case["conditions"] = pattern_conditions(case, patterns[case["opcode"]])
+        for condition in case["conditions"]:
+            report["coverage"][case["opcode"]][condition]["expected"] += 1
     with (output/"expected-cases.jsonl").open("w") as inventory:
         for case in cases:
-            inventory.write(json.dumps({"name":case["name"],"case_sha256":case["case_sha256"]},sort_keys=True)+"\n")
+            inventory.write(json.dumps({"name":case["name"],"case_sha256":case["case_sha256"],"opcode":case["opcode"],"conditions":case["conditions"]},sort_keys=True)+"\n")
     report["expected_inventory_sha256"]=digest(output/"expected-cases.jsonl")
     write_json(output / "instruction.json", report)
     if not cases:
@@ -169,6 +177,9 @@ def run(corpus, output, opcodes=OPCODES, batch_size=500, timing=False):
                 count = report["opcodes"][row["opcode"]]
                 count["run"] += 1
                 count["passed" if passed else "failed"] += 1
+                if passed:
+                    for condition in expected_case["conditions"]:
+                        report["coverage"][row["opcode"]][condition]["passed"] += 1
             write_json(batch / "identities.json", {"bodies_sha256": digest(bodies), "prepared_sha256": digest(prepared),
                 "binary": "timed-run", "binary_sha256": digest(executable), "input_sha256":digest(input_path), "ledger_sha256":digest(ledger)})
             combined.flush()
@@ -181,16 +192,18 @@ def run(corpus, output, opcodes=OPCODES, batch_size=500, timing=False):
     write_json(output / "instruction.json", report)
     if timing:
         timing_started = time.monotonic()
-        code = command(["cargo", "test", "-p", "snes", "--test", "integration", "--test", "irq_mask_timing",
-                        "--test", "interrupt_timing", "--test", "dma_timing", "--test", "hdma_timing",
-                        "--test", "generated_bus_timing",
-                        "--locked", "--offline"], root, output, "timing-execution", environment)
-        timing_report={"schema_version": 1, "status": "pass" if code == 0 else "error",
+        timing_command = ["cargo", "test", "-p", "snes"]
+        for test in declaration["timing_tests"]:
+            timing_command.extend(["--test", test])
+        timing_command.extend(["--locked", "--offline"])
+        code = command(timing_command, root, output, "timing-execution", environment)
+        timing_report={"schema_version": 2, "status": "pass" if code == 0 else "error",
             "complete": code == 0, "returncode": code, "process_evidence":"timing-execution.json", "process_sha256":digest(output/"timing-execution.json"), "elapsed_seconds": time.monotonic()-timing_started,
-            "oracles": {name: digest(root/name) for name in ("crates/snes/tests/hdma_oracle.csv", "crates/snes/tests/irq_mask_timing.rs", "crates/snes/tests/interrupt_timing.rs", "crates/snes/tests/dma_timing.rs")},
-            "sources": ["https://wiki.superfamicom.org/timing", "Original rr2-beta23 / bsnes085Compatibility black-box fixtures"],
-            "conditions": {"applicable": ["native M/X, D preservation", "6/8/12 access clocks", "program/data bank wrap", "IRQ old-I and NMI phase", "DMA/HDMA pending pause", "refresh", "frame/input rollover and resume"],
-                           "inapplicable": ["decimal ALU: no enabled ALU opcode", "branches/direct-page/indexed penalties: no enabled mode", "emulation mode: compiled domain is native"]}}
+            "scope": report["scope"], "source_sha256": report["source_sha256"],
+            "declaration": declaration, "declaration_sha256": identity(declaration),
+            "oracles": {name: digest(root/name) for name in declaration["timing_oracles"]},
+            "sources": declaration["timing_sources"], "tests": declaration["timing_tests"],
+            "conditions": {"applicable": declaration["hardware_conditions"], "inapplicable": declaration["exclusions"]}}
         write_json(output / "timing.json", timing_report)
         if code:
             return 2
@@ -204,7 +217,8 @@ def main():
     parser.add_argument("--corpus", type=Path, default=Path("deps/65816/v1"))
     parser.add_argument("--out", type=Path)
     parser.add_argument("--batch-size", type=int, default=500)
-    parser.add_argument("--opcodes", default=",".join(OPCODES))
+    parser.add_argument("--opcodes", help="development subset of production-declared opcodes")
+    parser.add_argument("--declaration", type=Path, help="must match exact production source declaration")
     parser.add_argument("--timing", action="store_true")
     args = parser.parse_args()
     if args.batch_size <= 0:
@@ -221,7 +235,7 @@ def main():
     if output.exists():
         parser.error("output must not already exist; completed evidence is immutable")
     try:
-        result = run(args.corpus.resolve(), output, tuple(args.opcodes.split(",")), args.batch_size,args.timing)
+        result = run(args.corpus.resolve(), output, tuple(args.opcodes.split(",")) if args.opcodes else None, args.batch_size,args.timing,args.declaration)
         if evidence_run:
             evidence_run.check_sources()
             report=json.loads((output/"instruction.json").read_text())

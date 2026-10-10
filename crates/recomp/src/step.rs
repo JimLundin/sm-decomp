@@ -6,18 +6,42 @@ use anyhow::Result;
 
 use crate::{cfg::FunctionCfg, decode::Insn, emit, opcodes::Mode};
 
+#[derive(serde::Deserialize)]
+struct Declaration {
+    schema_version: u32,
+    patterns: Vec<Pattern>,
+}
+#[derive(serde::Deserialize)]
+struct Pattern {
+    opcode: String,
+    mnemonic: String,
+    mode: String,
+    mx: Vec<u8>,
+}
+
+/// The same source-owned declaration drives production support and validation.
+pub const PATTERN_DECLARATION: &str = include_str!("timed_patterns.json");
+
+fn patterns() -> &'static Declaration {
+    static DECLARATION: std::sync::OnceLock<Declaration> = std::sync::OnceLock::new();
+    DECLARATION.get_or_init(|| {
+        let declaration: Declaration =
+            serde_json::from_str(PATTERN_DECLARATION).expect("valid timed pattern declaration");
+        assert_eq!(declaration.schema_version, 2, "unsupported timed declaration version");
+        declaration
+    })
+}
+
 /// Keep this whitelist small until each timing pattern passes the hardware
 /// differential tests. Calls, stack operations, interrupts, and indirect modes
 /// remain interpreted and can be added without changing the frame interface.
 pub fn supported(i: &Insn) -> bool {
-    match i.mode {
-        Mode::ImmM => i.mnem == "LDA",
-        Mode::ImmX => i.mnem == "LDX",
-        Mode::Imm8 => matches!(i.mnem, "REP" | "SEP"),
-        Mode::Abs => i.mnem == "STA",
-        Mode::Imp => matches!(i.mnem, "NOP" | "DEX"),
-        _ => false,
-    }
+    patterns().patterns.iter().any(|pattern| {
+        u8::from_str_radix(&pattern.opcode, 16).expect("valid declared opcode") == i.op
+            && pattern.mnemonic == i.mnem
+            && pattern.mode == format!("{:?}", i.mode)
+            && pattern.mx.contains(&emit::mx_key(i.m8, i.x8))
+    })
 }
 
 /// Complete timed body shared by production tables and instruction validation.
