@@ -114,3 +114,7 @@ trace-merge misses:
 
 trace-names:
     cargo run -p trace --locked --offline -- names config/functions.toml out/symbols.toml
+
+# Fresh strict original-core synchronization with immutable evidence.
+readiness-sync *args:
+    python3 tools/readiness_sync.py {{args}}
