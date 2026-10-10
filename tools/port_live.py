@@ -11,6 +11,29 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def generate_family_abi(manifest, module, index):
+    """Generate the bounded synchronous ABI used by the live host."""
+    if 'rom' in manifest:
+        call = f'family{index}::dispatch_rom(&mut Wram::new(bytes).unwrap(),rom,name,a,b)'
+    elif any('arg_types' in r for r in manifest['routines']):
+        call = f'family{index}::dispatch_i32(&mut Wram::new(bytes).unwrap(),name,a,b)'
+    else:
+        call = f'family{index}::dispatch(&mut Wram::new(bytes).unwrap(),name,a as u16,b as u16)'
+    return f'''#[path={json.dumps(str(module))}] mod family{index};
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn port_family_{index}(ram:*mut u8,len:usize,rom:*const u8,rom_len:usize,id:u32,a:i32,b:i32)->i64 {{
+ if ram.is_null() || len!=0x20000 || (ram as usize).checked_add(len).is_none() {{return -1;}}
+ if rom.is_null() || rom_len==0 || rom_len>0x400000 || (rom as usize).checked_add(rom_len).is_none() {{return -1;}}
+ if (ram as usize)<(rom as usize)+rom_len && (rom as usize)<(ram as usize)+len {{return -1;}}
+ let names={json.dumps([r['symbol'] for r in manifest['routines']])};
+ let Some(name)=names.get(id as usize) else {{return -1;}};
+ let bytes=unsafe {{std::slice::from_raw_parts_mut(ram,len)}};
+ let rom=unsafe {{std::slice::from_raw_parts(rom,rom_len)}};
+ let result=std::panic::catch_unwind(std::panic::AssertUnwindSafe(||{call}));
+ match result {{Ok(Ok(value))=>i64::from(value),_=>-1}}
+}}'''
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--family-verdict', type=Path, action='append', required=True)
@@ -62,24 +85,7 @@ def main():
         wrappers, symbols, units = [], [], sorted((source / 'src').glob('sm_*.c'))
         bank_texts = {}
         for family_index, (manifest, module) in enumerate(families):
-            rust.append(f'#[path={json.dumps(str(module))}] mod family{family_index};')
-            if 'rom' in manifest:
-                call = f'family{family_index}::dispatch_rom(&mut Wram::new(bytes).unwrap(),rom,name,a,b)'
-            elif any('arg_types' in r for r in manifest['routines']):
-                call = f'family{family_index}::dispatch_i32(&mut Wram::new(bytes).unwrap(),name,a,b)'
-            else:
-                call = f'family{family_index}::dispatch(&mut Wram::new(bytes).unwrap(),name,a as u16,b as u16)'
-            rust.append(f'''#[unsafe(no_mangle)]
-pub unsafe extern "C" fn port_family_{family_index}(ram:*mut u8,len:usize,rom:*const u8,rom_len:usize,id:u32,a:i32,b:i32)->i64 {{
- if ram.is_null() || len!=0x20000 || (ram as usize).checked_add(len).is_none() {{return -1;}}
- if rom.is_null() || rom_len==0 || rom_len>0x400000 || (rom as usize).checked_add(rom_len).is_none() {{return -1;}}
- let names={json.dumps([r['symbol'] for r in manifest['routines']])};
- let Some(name)=names.get(id as usize) else {{return -1;}};
- let bytes=unsafe {{std::slice::from_raw_parts_mut(ram,len)}};
- let rom=unsafe {{std::slice::from_raw_parts(rom,rom_len)}};
- let result=std::panic::catch_unwind(std::panic::AssertUnwindSafe(||{call}));
- match result {{Ok(Ok(value))=>i64::from(value),_=>-1}}
-}}''')
+            rust.append(generate_family_abi(manifest, module, family_index))
             wrappers.append(f'extern int64_t port_family_{family_index}(uint8_t*,size_t,const uint8_t*,size_t,uint32_t,int32_t,int32_t);')
             bank = source / 'src' / manifest['bank']
             text = bank_texts.get(bank, bank.read_text())
