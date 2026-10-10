@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import tarfile
 import time
@@ -53,7 +54,7 @@ def command(argv, root, output, name, env=None):
     with (output / (name + ".stdout.log")).open("wb") as stdout, (output / (name + ".stderr.log")).open("wb") as stderr:
         result = subprocess.run([str(item) for item in argv], cwd=root, env=env, stdout=stdout, stderr=stderr)
     write_json(output / (name + ".json"), {"command": [str(item) for item in argv], "returncode": result.returncode,
-                "elapsed_seconds": time.monotonic() - started})
+                "elapsed_seconds": time.monotonic() - started, "stdout":name+".stdout.log", "stderr":name+".stderr.log", "complete":result.returncode>=0, "status":"pass" if result.returncode==0 else "divergence" if result.returncode==1 else "error", "signal":-result.returncode if result.returncode<0 else None})
     return result.returncode
 
 
@@ -127,6 +128,8 @@ def run(corpus, output, opcodes=OPCODES, batch_size=500, timing=False):
         report["status"] = "error"
         write_json(output / "instruction.json", report)
         return 2
+    generator=output/"timed-gen";shutil.copy2(target/"debug/timed-gen",generator)
+    report["generator"]={"path":"timed-gen","sha256":digest(generator)}
     with (output / "cases.jsonl").open("w") as combined:
         for number, index in enumerate(range(0, len(cases), batch_size)):
             if source_inventory(root) != sources or any(digest(corpus/(entry["opcode"]+".n.json")) != entry["sha256"] for entry in report["corpus"]):
@@ -136,14 +139,15 @@ def run(corpus, output, opcodes=OPCODES, batch_size=500, timing=False):
             input_path = batch / "input.json"
             write_json(input_path, cases[index:index + batch_size])
             bodies, prepared, ledger = batch / "bodies.rs", batch / "prepared.json", batch / "cases.jsonl"
-            if command([target / "debug/timed-gen", input_path, bodies, prepared], root, batch, "generate", environment):
+            if command([generator, input_path, bodies, prepared], root, batch, "generate", environment):
                 report["status"] = "error"
                 break
             environment["SM_TIMED_STEPS"] = str(bodies)
             if command(["cargo", "build", "-p", "fuzz", "--bin", "timed-run", "--locked", "--offline"], root, batch, "build", environment):
                 report["status"] = "error"
                 break
-            code = command([target / "debug/timed-run", prepared, ledger], root, batch, "execute", environment)
+            executable=batch/"timed-run";shutil.copy2(target/"debug/timed-run",executable)
+            code = command([executable, prepared, ledger], root, batch, "execute", environment)
             if code not in (0, 1) or not ledger.is_file():
                 report["status"] = "incomplete"
                 break
@@ -166,7 +170,7 @@ def run(corpus, output, opcodes=OPCODES, batch_size=500, timing=False):
                 count["run"] += 1
                 count["passed" if passed else "failed"] += 1
             write_json(batch / "identities.json", {"bodies_sha256": digest(bodies), "prepared_sha256": digest(prepared),
-                "binary_sha256": digest(target / "debug/timed-run")})
+                "binary": "timed-run", "binary_sha256": digest(executable), "input_sha256":digest(input_path), "ledger_sha256":digest(ledger)})
             combined.flush()
             write_json(output / "instruction.json", report)
         else:
@@ -180,9 +184,9 @@ def run(corpus, output, opcodes=OPCODES, batch_size=500, timing=False):
         code = command(["cargo", "test", "-p", "snes", "--test", "integration", "--test", "irq_mask_timing",
                         "--test", "interrupt_timing", "--test", "dma_timing", "--test", "hdma_timing",
                         "--test", "generated_bus_timing",
-                        "--locked", "--offline"], root, output, "timing", environment)
+                        "--locked", "--offline"], root, output, "timing-execution", environment)
         timing_report={"schema_version": 1, "status": "pass" if code == 0 else "error",
-            "complete": code == 0, "returncode": code, "elapsed_seconds": time.monotonic()-timing_started,
+            "complete": code == 0, "returncode": code, "process_evidence":"timing-execution.json", "process_sha256":digest(output/"timing-execution.json"), "elapsed_seconds": time.monotonic()-timing_started,
             "oracles": {name: digest(root/name) for name in ("crates/snes/tests/hdma_oracle.csv", "crates/snes/tests/irq_mask_timing.rs", "crates/snes/tests/interrupt_timing.rs", "crates/snes/tests/dma_timing.rs")},
             "sources": ["https://wiki.superfamicom.org/timing", "Original rr2-beta23 / bsnes085Compatibility black-box fixtures"],
             "conditions": {"applicable": ["native M/X, D preservation", "6/8/12 access clocks", "program/data bank wrap", "IRQ old-I and NMI phase", "DMA/HDMA pending pause", "refresh", "frame/input rollover and resume"],

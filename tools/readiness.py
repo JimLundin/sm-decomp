@@ -510,7 +510,7 @@ class Run:
         self.ensure_open()
         write_json(self.path / "manifest.json", self.manifest)
 
-    def finalize(self, status, stage=None, reason=None, mandatory_checks=()):
+    def finalize(self, status, stage=None, reason=None, mandatory_checks=(), brief_text=None):
         self.ensure_open()
         if status not in ("pass", "divergence", "uncovered", "error", "incomplete"):
             raise ValueError("Unknown terminal status")
@@ -526,7 +526,7 @@ class Run:
                 if status == "pass" or status not in order:
                     status = "incomplete"
                 reason = report.get("reason") or "Recorded check failed or did not complete: " + stage
-        eligible = (status == "pass" and self.manifest["type"] == "readiness"
+        eligible = (status == "pass" and self.manifest["type"] in ("readiness", "iteration")
                     and bool(mandatory_checks)
                     and all(self.checks.get(name, {}).get("status") == "pass"
                             and self.checks[name].get("complete") is True
@@ -542,7 +542,7 @@ class Run:
                    "finished_utc": utc_now(), "evidence": "manifest.json"}
         self.manifest.update(state="complete", finished_utc=verdict["finished_utc"])
         write_json(self.path / "manifest.json", self.manifest)
-        (self.path / "brief.md").write_text(
+        (self.path / "brief.md").write_text(brief_text if brief_text is not None else
             "# {}: {}\n\nScope: `{}`\n\n{}\n\n"
             "[Manifest](manifest.json) · [Verdict](verdict.json) · [Logs](logs/)\n".format(
                 "Ready" if eligible else "Not ready", status,

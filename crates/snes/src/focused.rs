@@ -93,6 +93,7 @@ pub fn compare_restored(
     }
     let mut history = VecDeque::new();
     let mut preceding = None;
+    let mut executed_generated_keys = std::collections::BTreeSet::new();
     let mut report = json!({"schema_version":1,"status":"incomplete","complete":false,"start_input_index":start,
         "start_instruction":skip,"expected_instructions":instructions,"completed_instructions":0,"replay":replay,"observer":"passive actual effects", "history_limit":64});
     std::fs::write(output.join("instruction.json"), serde_json::to_vec_pretty(&report)?)?;
@@ -119,6 +120,9 @@ pub fn compare_restored(
         }
         let a = reference.step_instruction_observed()?;
         let b = subject.step_instruction_observed()?;
+        if let Some(key) = b.generated_key {
+            executed_generated_keys.insert(key);
+        }
         let mismatch = a.before != b.before || a.after != b.after || a.events != b.events;
         let paired = json!({"instruction":index,"input_index":input,"pad":pads[input],"reference":summary(&a),"subject":summary(&b)});
         if mismatch {
@@ -170,6 +174,7 @@ pub fn compare_restored(
         }
         report["completed_instructions"] = (index + 1).into();
     }
+    report["executed_generated_keys"] = serde_json::to_value(&executed_generated_keys)?;
     report["status"] = "pass".into();
     report["complete"] = true.into();
     report["history"] = serde_json::to_value(&history)?;
