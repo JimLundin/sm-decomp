@@ -18,6 +18,9 @@ static unsigned long rust_hits, c_hits;
 static unsigned rust_modes;
 static gzFile effects;
 static int epoch;
+#ifdef NEXT_RANDOM_JOB
+#include "next_random_live.c"
+#endif
 
 void __real_ppu_write(Ppu *, uint8_t, uint8_t);
 void __wrap_ppu_write(Ppu *ppu, uint8_t adr, uint8_t val) {
@@ -107,6 +110,9 @@ int main(int argc, char **argv) {
     FILE *inputs = fopen(argv[3], "r");
     if (!effects || !inputs) return 2;
     fallback_calls = fallback_instructions = decompression_calls = rust_hits = c_hits = rust_modes = 0;
+    #ifdef NEXT_RANDOM_JOB
+    rng_c_hits = rng_rust_hits = 0;
+#endif
     memset(pixels, 0, sizeof(pixels));
     RtlReset(0);
     PpuBeginDrawing(g_snes->my_ppu, pixels, 512 * 4, 0);
@@ -121,6 +127,9 @@ int main(int argc, char **argv) {
     }
     printf("{\"epoch\":%d,\"frames\":%ld,\"rust_hits\":%lu,\"c_hits\":%lu,\"modes\":%u,\"fallback_calls\":%lu,\"fallback_instructions\":%lu}\n",
         epoch, frames, rust_hits, c_hits, rust_modes, fallback_calls, fallback_instructions);
+    #ifdef NEXT_RANDOM_JOB
+    printf("{\"rng_c_hits\":%lu,\"rng_rust_hits\":%lu,\"epoch\":%d}\n", rng_c_hits, rng_rust_hits, epoch);
+#endif
     if (gzclose(effects) || fclose(inputs) || chdir("..")) return 2;
   }
   return 0;
