@@ -8,6 +8,7 @@ pub mod collision;
 pub mod enemy;
 pub mod enemy_ai;
 pub mod enemy_instructions;
+pub mod enemy_rio;
 pub mod plm;
 pub mod projectile_flight;
 pub mod projectiles;
