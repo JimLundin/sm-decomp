@@ -5,6 +5,7 @@ pub const WRAM_SIZE: usize = 0x20000;
 
 pub mod audio;
 pub mod enemy;
+pub mod enemy_instructions;
 pub mod samus;
 pub mod samus_control;
 pub mod system;

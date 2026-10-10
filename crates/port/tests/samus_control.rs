@@ -1,6 +1,4 @@
-use port::{WRAM_SIZE, Wram, audio, samus};
-#[path = "../src/samus_control.rs"]
-mod control;
+use port::{WRAM_SIZE, Wram, samus_control as control};
 fn rom() -> Vec<u8> {
     let mut rom = vec![0; 0x100000];
     for (address, bytes) in [(0x9b9400u32, vec![0x11; 32]), (0x9b9520, vec![0x22; 32]), (0x9b9800, vec![0x33; 32])] {

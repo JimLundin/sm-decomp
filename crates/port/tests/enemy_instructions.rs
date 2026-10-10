@@ -1,6 +1,4 @@
-#[path = "../src/enemy_instructions.rs"]
-mod instructions;
-use port::Wram;
+use port::{Wram, enemy_instructions as instructions};
 
 #[test]
 fn pre_instruction_updates_use_banked_rom_and_keep_other_record_bytes() {
