@@ -14,6 +14,7 @@ pub mod plm;
 pub mod projectile_flight;
 pub mod projectile_special;
 pub mod projectiles;
+pub mod room;
 pub mod samus;
 pub mod samus_control;
 pub mod system;

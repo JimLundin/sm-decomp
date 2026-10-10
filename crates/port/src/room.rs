@@ -121,7 +121,7 @@ fn layer2(r: &mut Wram<'_>, x: bool) -> u32 {
         p
     } else {
         let t = u16::from(factor & 254);
-        t * u16::from((p >> 8) as u8) + (t * u16::from(p as u8) >> 8)
+        t * u16::from((p >> 8) as u8) + ((t * u16::from(p as u8)) >> 8)
     };
     r.set_word(target, value);
     0

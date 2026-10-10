@@ -1,6 +1,4 @@
-#[path = "../src/room.rs"]
-mod room;
-use port::{WRAM_SIZE, Wram, audio, system};
+use port::{WRAM_SIZE, Wram, room};
 #[test]
 fn parallax_manual_modes_and_signed_blocks() {
     let mut b = vec![0; WRAM_SIZE];
