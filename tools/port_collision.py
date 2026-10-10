@@ -222,6 +222,9 @@ def verify_collision_evidence(verdict_path):
         key=(record['routine'],record['case'])
         if key not in expected or key in observed:raise ValueError('collision coverage changed')
         observed.add(key);directory=run/record['case']
+        if any(str((directory/name).relative_to(run)) not in artifacts
+               for name in ('before.wram','c-after.wram','rust-after.wram','c.stdout','rust.stdout')):
+            raise ValueError('collision case artifacts incomplete')
         states=[(directory/name).read_bytes() for name in ('before.wram','c-after.wram','rust-after.wram')]
         if any(len(state)!=WRAM_SIZE for state in states) or states[1]!=states[2]:raise ValueError('actual collision WRAM mismatch')
         results={subject:json.loads((directory/(subject+'.stdout')).read_bytes().splitlines()[-1]) for subject in ('c','rust')}
@@ -235,6 +238,10 @@ def verify_collision_evidence(verdict_path):
                     raise ValueError('callback artifact inventory incomplete')
         count=results['rust']['c_gameplay_callbacks']
         if count!=record['callbacks'] or count<expected[key].get('minimum_callbacks',0):raise ValueError('callback coverage changed')
+        for subject in ('c','rust'):
+            logs=callbacks[subject]
+            if len(logs)!=1+2*count or len(logs.get('callbacks.txt',b'').splitlines())!=count:
+                raise ValueError('callback capture extent changed')
         if 'expected_return' in expected[key] and results['rust']['return']!=expected[key]['expected_return']:raise ValueError('expected collision return changed')
     if observed!=expected.keys() or verdict['verified_cases']!=len(observed) or verdict['verified_routines']!=len(manifest['routines']):
         raise ValueError('collision coverage incomplete')

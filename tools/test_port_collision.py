@@ -41,6 +41,15 @@ let mut amount=a;host.spawn_plm(ram,b as u16,&mut amount)?;Ok(amount as u32)}
             self.assertFalse(verdict['gameplay_translation'])
             evidence=Path(verdict['run'])/'verdict.json'
             port_collision.verify_collision_evidence(evidence)
+            original_evidence=evidence.read_text()
+            for filename in ('before.wram','c-after.wram','rust-after.wram','c.stdout','rust.stdout'):
+                incomplete=json.loads(original_evidence)
+                del incomplete['artifacts']['quicksand-clamp/'+filename]
+                evidence.write_text(json.dumps(incomplete))
+                with self.subTest(missing=filename):
+                    with self.assertRaisesRegex(ValueError,'case artifact inventory incomplete'):
+                        port_collision.verify_collision_evidence(evidence)
+            evidence.write_text(original_evidence)
             callback=Path(verdict['run'])/'quicksand-clamp'/'rust'/'callbacks.txt'
             original=callback.read_bytes();callback.write_bytes(b'')
             with self.assertRaisesRegex(ValueError,'artifact'):

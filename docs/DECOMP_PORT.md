@@ -185,10 +185,11 @@ collision amount reference, the host classifies the immutable PLM header before
 execution and selects native Rust for supported setup functions. Other headers
 and calls without collision context execute measured C. Native errors terminate
 the replay without a C retry. Total, C and Rust PLM call counts are retained;
-native admission requires Rust execution and matching ownership in both mixed
+native admission requires actual setup execution and matching ownership in both mixed
 processes. Ordered effects compare header, before/after amount and return flags.
-These counters measure allocation calls, including an exhausted slot pool;
-they do not independently prove that every supported setup was reached live.
+Allocation counters include an exhausted slot pool. A separate Rust setup
+counter requires a free slot at native entry; only successful calls with that
+slot count as setup execution. Neither count proves every setup was reached.
 
 Generic enemy instruction handlers can be installed individually with normalized
 banked pointer arguments/returns. The bounded generic interpreter remains an

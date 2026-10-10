@@ -261,18 +261,19 @@ static FILE *port_effects;
 static FILE *port_calls;
 static unsigned port_call_depth;
 extern int32 *cur_coll_amt32;
-static unsigned long port_plm_callbacks,port_plm_c,port_plm_rust;
+static unsigned long port_plm_callbacks,port_plm_c,port_plm_rust,port_plm_rust_setups;
 ''' + ('#define PORT_NATIVE_PLM\nextern int32_t port_native_plm(uint8_t*,size_t,const uint8_t*,size_t,uint16_t,int32_t*);\n' if args.plm_verdict else '') + '''
 extern uint8 __real_SpawnPLM(uint16);
 uint8 __wrap_SpawnPLM(uint16 header) {
  int32 before=cur_coll_amt32?*cur_coll_amt32:0;
  uint8 result;int32 displacement=before;int32 native=-2;
+ int free_slot=0;for(unsigned j=0;j<80;j+=2)if(GET_WORD(g_ram+0x1c37+j)==0){free_slot=1;break;}
 #ifdef PORT_NATIVE_PLM
  // Native acceptance covers synchronous collision context with a real amount.
  if(port_mixed && cur_coll_amt32)native=port_native_plm(g_ram,sizeof(g_ram),g_rom,g_snes->cart->romSize,header,&displacement);
 #endif
  if(native==-2){result=__real_SpawnPLM(header);port_plm_c++;}
- else {if(native<0){fprintf(stderr,"native PLM error %u\\n",header);exit(4);}result=native;if(cur_coll_amt32)*cur_coll_amt32=displacement;port_plm_rust++;}
+ else {if(native<0){fprintf(stderr,"native PLM error %u\\n",header);exit(4);}result=native;if(cur_coll_amt32)*cur_coll_amt32=displacement;port_plm_rust++;if(free_slot)port_plm_rust_setups++;}
  port_plm_callbacks++;
  fprintf(port_effects,"plm %u %d %d %u\\n",header,before,cur_coll_amt32?*cur_coll_amt32:0,result);
  return result;
@@ -354,7 +355,7 @@ int main(int argc,char **argv) {
  if(result) return result;
  for(unsigned i=0;i<sizeof(port_c_hits)/sizeof(*port_c_hits);i++) printf("port-hit %u %lu %lu\\n",i,port_c_hits[i],port_rust_hits[i]);
  printf("predecessor-hit %lu %lu %lu %lu\\n",port_decompress_c,port_decompress_rust,port_rng_c,port_rng_rust);
- printf("plm-callback-hit %lu %lu %lu\\n",port_plm_callbacks,port_plm_c,port_plm_rust);
+ printf("plm-callback-hit %lu %lu %lu %lu\\n",port_plm_callbacks,port_plm_c,port_plm_rust,port_plm_rust_setups);
  return 0;
 }
 ''')
@@ -385,12 +386,12 @@ int main(int argc,char **argv) {
                     raise ValueError('prior Rust replacements were not exclusively exercised')
                 verdict.setdefault('predecessor_hits', {})[name] = {'decompressor_c': dc, 'decompressor_rust': dr, 'rng_c': rc, 'rng_rust': rr}
                 callbacks = [line.split()[1:] for line in (directory / 'replay.stdout').read_text().splitlines() if line.startswith('plm-callback-hit ')]
-                if len(callbacks) != 1 or len(callbacks[0]) != 3:
+                if len(callbacks) != 1 or len(callbacks[0]) != 4:
                     raise ValueError('missing PLM callback execution counter')
-                total, c_calls, rust_calls = map(int, callbacks[0])
-                if total != c_calls + rust_calls or (mode == 'c' and rust_calls):
+                total, c_calls, rust_calls, rust_setups = map(int, callbacks[0])
+                if total != c_calls + rust_calls or rust_setups > rust_calls or (mode == 'c' and rust_calls):
                     raise ValueError('invalid PLM callback ownership counts')
-                verdict.setdefault('plm_callback_hits', {})[name] = {'total': total, 'c': c_calls, 'rust': rust_calls}
+                verdict.setdefault('plm_callback_hits', {})[name] = {'total': total, 'c': c_calls, 'rust': rust_calls, 'rust_setups': rust_setups}
                 if any(row['c' if mode == 'mixed' else 'rust'] for row in hits[name].values()):
                     raise ValueError('replacement execution was not exclusive')
         if any(inventory != inventories['c-0'] for inventory in inventories.values()):
@@ -408,7 +409,7 @@ int main(int argc,char **argv) {
         # subsystem was unexercised and therefore cannot receive admission.
         verdict.update(state_effects_match=True, hits=hits, artifacts=inventories['c-0'],
                        transformations=transformations, binary_sha256=digest(run / 'live'))
-        if args.plm_verdict and not verdict['plm_callback_hits']['mixed-0']['rust']:
+        if args.plm_verdict and not verdict['plm_callback_hits']['mixed-0']['rust_setups']:
             raise ValueError('no native Rust PLM setup executed')
         verdict.update(status='mixed-C-Rust-integration', live_exercised=True, hits=hits,
                        transformations=transformations, artifacts=inventories['c-0'],
