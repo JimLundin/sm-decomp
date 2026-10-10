@@ -29,7 +29,7 @@ in force.
 - [x] [01: Retain the executable C baseline](issues/01-retain-the-executable-c-baseline.md) — blocked by None.
 - [x] [02: Run one literal decompression fixture through C and Rust](issues/02-run-one-literal-decompression-fixture-through-c-and-rust.md) — blocked by 01.
 - [x] [03: Complete synthetic RAM decompression coverage](issues/03-complete-synthetic-ram-decompression-coverage.md) — blocked by 02.
-- [ ] [04: Replay captured decompression calls offline](issues/04-replay-captured-decompression-calls-offline.md) — blocked by 03.
+- [x] [04: Replay captured decompression calls offline](issues/04-replay-captured-decompression-calls-offline.md) — blocked by 03.
 - [ ] [05: Prove and freeze offline translation acceptance](issues/05-prove-and-freeze-offline-translation-acceptance.md) — blocked by 04.
 - [ ] [06: Exercise the Rust decompressor in the live C game](issues/06-exercise-the-rust-decompressor-in-the-live-c-game.md) — blocked by 05.
 - [x] [07: Verify an update-aligned original-ROM replay prefix](issues/07-verify-an-update-aligned-original-rom-replay-prefix.md) — blocked by 01.
