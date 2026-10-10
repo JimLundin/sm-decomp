@@ -13,3 +13,9 @@
 addr = "808338"
 name = "WaitForNMI"
 variants = ["m0x0", "m0x1", "m1x0", "m1x1"]
+
+
+# One measured routine/width increment; retained preparation identifies evidence.
+[[function]]
+addr = "80B119"
+variants = ["m0x0"]

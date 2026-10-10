@@ -4,13 +4,13 @@
 
 **Blocked by:** 03: Prepare and accept one supported routine/width increment; 04: Validate and accept one new timed instruction pattern; 05: Carry diagnosis through successive candidate retries.
 
-**Status:** implemented; full real session demonstration pending ticket 07
+**Status:** done; real default-one session completed in ticket 07
 
 - [x] Surface a repository-root iteration entry point that honors an explicit increment count or target and defaults to one accepted increment when unspecified. Readiness requests finish readiness without starting an unbounded iteration session.
 - [x] Verify the accepted baseline before each selection, establish necessary readiness gates when absent or invalid, and dispatch the measured supported-slice or new-pattern route. Handle no remaining covered candidate with a specific result; independently validate any proposed domain extension first.
 - [x] Own routine selection, candidate changes, checks, controls, repairs and retries within the agreed scope. Preserve user work, accepted predecessors, rejected candidates and immutable evidence; no per-change human checkpoint is required for local acceptance.
 - [x] Count an increment only after mandatory validation and successful atomic acceptance. Failed, uncovered, incomplete, errored, unchanged or zero-gain expansion attempts cannot satisfy the requested count; an explicitly identified correctness fix may have zero gain with demonstrated repair and complete acceptance evidence.
-- [ ] Continue from each newly verified accepted state only while requested scope remains. Honor user stop, missing required inputs, decisions beyond the design and the three-experiment escalation rule, reporting accepted/requested progress and preserved candidate state.
+- [x] Continue from each newly verified accepted state only while requested scope remains. Honor user stop, missing required inputs, decisions beyond the design and the three-experiment escalation rule, reporting accepted/requested progress and preserved candidate state.
 - [x] Before/after metrics use identical validated inputs/domain and report compiled/interpreted totals and fraction, per-key counts, validated distinct keys, declared pattern coverage, deferred/unsupported inventory and comparable deltas. Record evidence reuse and refreshed gates explicitly.
 - [x] Report warm focused replay and per-cold-replay targets of 60 seconds and 20 minutes, with build/cache/corpus/test/total-suite durations separate. Investigate/report completed overruns; actual timeouts remain incomplete and cannot advance acceptance.
 - [x] Write a concise session brief with outcome, accepted/requested count or target progress, selected changes/rationale, domain, metrics, reused evidence, timings and debt, linking source diffs, verdicts, coverage and diagnostics. Failures include earliest disagreement, control conclusions, recent experiments, next choices and candidate/predecessor IDs.
@@ -43,3 +43,11 @@ process interruption, five orchestration tests and five increment tests includin
 prepared-evidence tamper rejection passed. Real multi-gate 18,000-frame session
 acceptance remains the final integration demonstration in ticket 07; none was
 claimed or published from this worktree.
+
+Final root session `session-130a159941774a5aaf1cd27c4e714c4d` completed with 1/1
+accepted increments. It refreshed readiness, measured/prepared `$80B119 m0x0`,
+preserved an application failure and an incomplete validation candidate, resumed
+the same unresolved increment after bounded orchestration fixes, independently
+verified its own publication and stopped without selecting another increment.
+Accepted run: `20261010T151922.381522Z-f49d430ddf6c`; linked brief and full
+execution/timing evidence are recorded in ticket 07.

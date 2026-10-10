@@ -90,7 +90,7 @@ def plan_reuse(run, predecessor=None):
             evidence = verify_check(predecessor, name, accepted)
             result[name] = {'action': 'reuse', 'reason': 'Verified accepted scope and unchanged dependencies',
                             'run_id': accepted['manifest']['run_id'], 'dependency_sha256': inventory_digest(old['checks'][name]),
-                            'report': evidence['report'], 'artifacts': evidence['artifacts']}
+                            'report': evidence['report'], 'artifacts': [str(path) for path in evidence['artifacts']]}
         except (OSError, ValueError, KeyError, TypeError, StopIteration) as error:
             result[name]['reason'] = 'Accepted check origin cannot be verified: ' + str(error)
     return result

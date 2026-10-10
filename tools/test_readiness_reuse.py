@@ -130,6 +130,11 @@ class ReuseTests(unittest.TestCase):
         plan = plan_reuse(current, old.path)
         self.assertEqual(plan['check']['action'], 'reuse')
         self.assertEqual(plan['lint']['action'], 'reuse')
+        from readiness import write_json
+        plan_path=current.path/'checks/reuse-decisions.json'
+        write_json(plan_path,plan)
+        self.assertEqual(json.loads(plan_path.read_text()),plan)
+        self.assertIn(str(old.path/'logs/check.json'),plan['check']['artifacts'])
         (self.root / 'crates/runtime/src/bus.rs').write_text('changed timing')
         altered = self.candidate()
         plan = plan_reuse(altered, old.path)
@@ -209,6 +214,10 @@ class ReuseTests(unittest.TestCase):
         record_dependency_policy(current)
         plan = plan_reuse(current, run.path)
         self.assertEqual(plan['fallback-only-parity']['action'], 'reuse')
+        plan_path=current.path/'checks/reuse-decisions.json'
+        write_json(plan_path,plan)
+        self.assertEqual(json.loads(plan_path.read_text()),plan)
+        self.assertIn(str(binary),plan['fallback-only-parity']['artifacts'])
         report = apply_reuse(current, run.path, 'fallback-only-parity')
         self.assertEqual(report['completed_frames'], 18000)
         self.assertEqual(current.manifest['reused_evidence'][0]['run_id'], run.manifest['run_id'])

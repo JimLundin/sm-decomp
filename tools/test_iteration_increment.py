@@ -52,6 +52,37 @@ class IncrementProgressTests(unittest.TestCase):
 
 
 class PreparedEvidenceTests(unittest.TestCase):
+    def test_verified_proposal_applies_atomically_and_preserves_source_mode_and_evidence(self):
+        from iteration_increment import apply_preparation
+        from readiness_reuse import seal_owned_evidence,verify_owned_evidence
+        from readiness_orchestration import source_snapshot
+        from readiness import write_json,digest
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary);subprocess.run(['git','init','-q',str(root)],check=True)
+            (root/'config').mkdir();config=root/'config/functions.toml'
+            config.write_text('# User comment\n');config.chmod(0o640)
+            unrelated=root/'unrelated.py';unrelated.write_text('preserved = True\n')
+            run=Run.create(root,'increment-preparation',{'frames':18000},'parent');run.capture_source()
+            proposal=run.path/'generated/functions.toml'
+            proposal.write_text('# User comment\n[[function]]\naddr = "808000"\nvariants = ["m1x1"]\n')
+            run.record_check('candidate-proposal',{'status':'pass','complete':True,
+                'prior_config_sha256':digest(config),'proposed_config_sha256':digest(proposal)})
+            increment={'kind':'supported-expansion','baseline_path':'preserved-parent'}
+            run.manifest['increment']=increment;run.save_manifest()
+            seal_owned_evidence(run);run.save_manifest();run.finalize('pass',mandatory_checks=['candidate-proposal'])
+            write_json(root/'out/accepted.json',{'run_id':'parent'})
+            pointer=(root/'out/accepted.json').read_bytes();prior_inode=config.stat().st_ino
+
+            self.assertEqual(apply_preparation(root,run.path),increment)
+
+            self.assertEqual(config.read_bytes(),proposal.read_bytes())
+            self.assertEqual(config.stat().st_mode & 0o777,0o640)
+            self.assertNotEqual(config.stat().st_ino,prior_inode)
+            self.assertEqual(unrelated.read_text(),'preserved = True\n')
+            self.assertEqual((root/'out/accepted.json').read_bytes(),pointer)
+            self.assertEqual(list((root/'config').iterdir()),[config])
+            manifest,_=source_snapshot(run.path);verify_owned_evidence(run.path,manifest)
+
     def test_modified_proposal_cannot_apply_even_when_source_is_unchanged(self):
         from iteration_increment import apply_preparation
         from readiness_reuse import seal_owned_evidence

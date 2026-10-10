@@ -325,7 +325,7 @@ def apply_preparation(root,owner):
     check=verdict['checks']['candidate-proposal']
     if digest(proposal)!=check['proposed_config_sha256'] or digest(root/'config/functions.toml')!=check['prior_config_sha256']:
         raise ValueError('Prepared configuration checksum differs')
-    temporary=root/'config/.functions.increment-'+__import__('uuid').uuid4().hex+'.tmp'
+    temporary=root/'config'/('.functions.increment-'+__import__('uuid').uuid4().hex+'.tmp')
     with temporary.open('xb') as target:
         target.write(proposal.read_bytes());target.flush();os.fsync(target.fileno())
     temporary.chmod((root/'config/functions.toml').stat().st_mode & 0o777)

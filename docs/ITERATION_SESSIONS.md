@@ -51,5 +51,7 @@ candidate against preserved accepted source, including preexisting user work.
 
 Session fixture operations are an in-process public boundary for testing request,
 continuation and stop behavior with actual temporary evidence files. Production
-commands expose no alternative gate runner or acceptance bypass. Real complete
-18,000-frame acceptance is demonstrated after integration review.
+commands expose no alternative gate runner or acceptance bypass. The completed
+[real integration session](ITERATION_DEMONSTRATIONS.md#completed-real-integration)
+accepted exactly one increment after full 18,000-frame validation and stopped,
+with preserved retries, source diffs, per-key progress and separate timings.

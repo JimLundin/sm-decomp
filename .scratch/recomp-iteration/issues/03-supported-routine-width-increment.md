@@ -4,7 +4,7 @@
 
 **Blocked by:** 02: Select a measured routine/width increment.
 
-**Status:** implemented; final commercial-domain acceptance delegated to ticket 07
+**Status:** done; real-domain acceptance recorded in ticket 07
 
 - [x] Preserve the verified accepted snapshot and unrelated user edits, allocate evidence before mutation, and prepare exactly one selected routine/width slice using existing timed support. Bind selection, candidate source/config, generated artifacts and binaries to the run.
 - [x] Regenerate resumable compiled steps and build through existing machinery. Preserve build failures as errors with stage logs; whole-subroutine untimed output cannot provide cycle evidence.
@@ -13,8 +13,8 @@
 - [x] Choose covered focused intervals for all changed keys and relevant boundaries. Run instruction/bus comparison even when frame parity passes, using paired checkpoints validated against cold execution and recording cache creation separately from warm replay.
 - [x] Require candidate check/lint and relevant regressions plus fresh generated/reference cold parity for all 18,000 any% input frames, comparing CPU/clocks, complete WRAM and framebuffer. Reuse independent synchronization, fallback or checks only with verified unchanged dependencies; shared changes require refreshed affected gates.
 - [x] Require positive observed generated-instruction gain under identical ROM/movie/profile/reset/seed/input interval. Report generated/interpreted totals and fraction, per-key counts, validated distinct keys, comparable deltas and deferred/unsupported inventory separately from call-target discovery.
-- [ ] Finalize and atomically advance the local accepted pointer only after every mandatory gate passes and the predecessor remains current. Divergence, uncovered execution, infrastructure failure, incomplete scope and timeouts preserve the predecessor and failed candidate.
-- [ ] Expose a reproducible one-increment validation outcome through repository commands and a linked brief, with meaningful coverage/acceptance rejection cases. Report the 60-second warm and 20-minute per-cold-replay targets without weakening gates on overruns.
+- [x] Finalize and atomically advance the local accepted pointer only after every mandatory gate passes and the predecessor remains current. Divergence, uncovered execution, infrastructure failure, incomplete scope and timeouts preserve the predecessor and failed candidate.
+- [x] Expose a reproducible one-increment validation outcome through repository commands and a linked brief, with meaningful coverage/acceptance rejection cases. Report the 60-second warm and 20-minute per-cold-replay targets without weakening gates on overruns.
 
 
 ## Completion evidence
@@ -42,3 +42,10 @@ The complete configured gates and atomic acceptance path are implemented; the
 requested real 18,000-frame positive-gain acceptance is the final integration
 demonstration in ticket 07, after combined source review. Original accepted
 pointer and shared evidence remain unchanged during implementation.
+
+Final root demonstration accepted run `20261010T151922.381522Z-f49d430ddf6c`
+after all mandatory gates: 12 new executed keys, +908,233 generated instructions,
+18,000-frame fresh generated and fallback parity, strict synchronization and six
+passing focused intervals. Session `session-130a159941774a5aaf1cd27c4e714c4d`
+completed with exactly 1/1 accepted. See ticket 07 and
+`docs/ITERATION_DEMONSTRATIONS.md` for retained source, failures and timing links.
