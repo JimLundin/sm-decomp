@@ -26,6 +26,9 @@ observable hardware effects, Rust hits and fallback measurements.
 - 02: system state routines, no blockers; verification uses 01.
 - 03: music and SFX queue routines, no blockers; verification uses 01.
 - 04: integrate and exercise family replacements, blocked by 01, 02, 03.
+- 05: Samus movement physics and ROM tables, in progress.
+- 06: generic enemy geometry and solid-block mechanics, in progress.
+- 07: harness assets, captures and 32-bit values, in progress.
 
 This is the first frontier, not the completion boundary of the user's goal.
 Expand tickets into substantive gameplay subsystems after this frontier, using
