@@ -7,6 +7,8 @@ use crate::{Mx, mx_name};
 /// The non-CPU half of the console. Implement this on top of an emulator core
 /// (`snes::SnesBus` wraps RustySNES), and on a sparse RAM map for tests.
 pub trait Bus {
+    /// Passive notification before interrupt-entry discarded fetch.
+    fn begin_interrupt(&mut self) {}
     /// Inspect the latest interrupt sample without consuming a pending edge.
     fn interrupt_pending(&self, _irq_masked: bool) -> bool {
         false

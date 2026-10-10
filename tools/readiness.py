@@ -169,7 +169,7 @@ def verify_hardware(run):
     expected_patches = {}
     patches = []
     for name in ("rustysnes-hdma", "rustysnes-clocked-apu", "rustysnes-clocked-dma",
-                 "rustysnes-clocked-interrupts", "rustysnes-lsnes-reset"):
+                 "rustysnes-clocked-interrupts", "rustysnes-lsnes-reset", "rustysnes-readiness-observation"):
         patch = run.root / "tools/patches" / (name + ".patch")
         patches.append({"path": patch.relative_to(run.root).as_posix(), "sha256": run.guard_input(patch)})
         records = patch.with_suffix(".json")

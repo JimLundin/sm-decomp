@@ -1,0 +1,207 @@
+--- a/crates/rustysnes-core/src/bus.rs
++++ b/crates/rustysnes-core/src/bus.rs
+@@ -159,6 +159,8 @@
+ #[derive(Debug, Clone)]
+ pub struct Clock {
+     /// Cumulative master-clock ticks since power-on.
++    /// Existing master-clock instant.
++    /// Existing master-clock instant.
+     pub master: u64,
+     /// Master cycles owed to the PPU before its next dot.
+     dot_accum: u32,
+@@ -314,7 +316,30 @@
+ }
+ 
+ /// Everything mutable lives here.
++/// Passive bus effect retained only while explicitly armed for one instruction.
++#[derive(Clone, Debug, PartialEq, Eq)]
++pub struct ReadinessEvent {
++    /// Effect kind; observational only.
++    /// Effect kind; observational only.
++    pub kind: &'static str,
++    /// Address already used by the real access.
++    /// Address already used by the real access.
++    pub address: u32,
++    /// Real accessed value, absent for clocks.
++    /// Real accessed value, absent for clocks.
++    pub value: Option<u8>,
++    /// Existing master-clock instant.
++    pub master: u64,
++    /// Actual clock-span argument.
++    /// Actual clock-span argument.
++    pub clocks: u32,
++}
++
++/// Mutable SNES bus and explicitly armed passive observation.
++/// Mutable SNES bus and explicitly armed passive observation.
+ pub struct Bus {
++    readiness_events: Option<alloc::vec::Vec<ReadinessEvent>>,
++
+     /// The video subsystem (PPU1 + PPU2).
+     pub ppu: Ppu,
+     /// The audio subsystem (SPC700 + S-DSP + ARAM).
+@@ -435,6 +460,27 @@
+ }
+ 
+ impl Bus {
++    /// Arm a passive effect buffer. This neither reads hardware nor changes clocks.
++    pub fn readiness_observe(&mut self) { self.readiness_events = Some(alloc::vec::Vec::new()); }
++    /// Disarm and take events without touching hardware.
++    /// Disarm and take events without touching hardware.
++    pub fn readiness_events(&mut self) -> alloc::vec::Vec<ReadinessEvent> {
++        self.readiness_events.take().unwrap_or_default()
++    }
++    fn readiness_note(&mut self, kind: &'static str, address: u32, value: Option<u8>, clocks: u32) {
++        if let Some(events) = &mut self.readiness_events {
++            events.push(ReadinessEvent { kind, address, value, master: self.clock.master, clocks });
++        }
++    }
++    /// Canonical mutable hardware with serialized pending state and omitted CPU-visible DMA scratch.
++    pub fn readiness_state(&self) -> alloc::vec::Vec<u8> {
++        let mut writer = SaveWriter::new();
++        self.save_state(&mut writer);
++        self.ppu.readiness_state(&mut writer);
++        for channel in &self.dma.channels { writer.write_u8(channel.scratch); }
++        writer.into_bytes()
++    }
++
+     /// Construct a power-on Bus for the given console region.
+     ///
+     /// # Panics
+@@ -447,6 +493,7 @@
+             Region::Pal => PpuRegion::Pal,
+         };
+         Self {
++            readiness_events: None,
+             ppu: Ppu::with_region(ppu_region),
+             apu: Apu::new(),
+             cart: None,
+@@ -1589,6 +1636,7 @@
+             // hard `0`, not "leave it unchanged" — corroborated by every reference; see
+             // `docs/scheduler.md` §Open bus via DMA/HDMA for the full citation trail.
+             self.open_bus = 0;
++            self.readiness_note("dma-read-a", addr, Some(0), 0);
+             return 0;
+         }
+         let val = self.decode_read(addr);
+@@ -1600,11 +1648,13 @@
+         // `write_a`/`write_b` below) — ares' `writeA`/`writeB` never touch `mdr` either. See
+         // `docs/scheduler.md` §Open bus via DMA/HDMA for the full investigation this fix closes.
+         self.open_bus = val;
++        self.readiness_note("dma-read-a", addr, Some(val), 0);
+         #[cfg(feature = "debug-hooks")]
+         self.note_bus_access(addr, val, false);
+         val
+     }
+     fn write_a(&mut self, addr: u32, val: u8) {
++        self.readiness_note("dma-write-a", addr, Some(val), 0);
+         let bank = (addr >> 16) & 0xFF;
+         let off = addr & 0xFFFF;
+         if matches!(bank, 0x00..=0x3F | 0x80..=0xBF)
+@@ -1618,6 +1668,7 @@
+     }
+     fn read_b(&mut self, addr: u8) -> u8 {
+         let val = self.b_read(addr);
++        self.readiness_note("dma-read-b", 0x2100 | u32::from(addr), Some(val), 0);
+         // See `read_a`'s doc above — DMA/HDMA B-bus reads update open_bus too.
+         self.open_bus = val;
+         #[cfg(feature = "debug-hooks")]
+@@ -1625,11 +1676,13 @@
+         val
+     }
+     fn write_b(&mut self, addr: u8, val: u8) {
++        self.readiness_note("dma-write-b", 0x2100 | u32::from(addr), Some(val), 0);
+         #[cfg(feature = "debug-hooks")]
+         self.note_bus_access(0x00_2100 | u32::from(addr), val, true);
+         self.b_write(addr, val);
+     }
+     fn step(&mut self, clocks: u32) {
++        self.readiness_note("dma-clock", 0, None, clocks);
+         // Advance the whole system (PPU dot clock, SPC, host-synced coprocessor) mid-DMA so the
+         // scanline that gates VRAM/CGRAM/OAM access is current at each transferred byte.
+         self.advance_master(clocks);
+@@ -1650,7 +1703,9 @@
+ 
+ /// The 65C816's view: route a 24-bit access + drive the master clock in lockstep.
+ impl CpuBus for Bus {
++    fn begin_interrupt(&mut self) { self.readiness_note("interrupt", 0, None, 0); }
+     fn begin_cpu_cycle(&mut self, clocks: u32) {
++        self.readiness_note("cycle", 0, None, clocks);
+         #[cfg(feature = "clocked-dma")]
+         {
+             // Super Famicom Dev Timing: setup near H=6 dots; transfer at
+@@ -1766,6 +1821,7 @@
+             val = patch.value;
+         }
+         self.open_bus = val;
++        self.readiness_note("read", addr24, Some(val), 0);
+         // `v0.8.0`, T-81-001b: logs the value actually observed (post-cheat-intercept), matching
+         // what the CPU itself sees. Compiled out entirely when `debug-hooks` is off.
+         #[cfg(feature = "debug-hooks")]
+@@ -1774,6 +1830,7 @@
+     }
+ 
+     fn write24(&mut self, addr24: u32, val: u8) {
++        self.readiness_note("write", addr24, Some(val), 0);
+         self.open_bus = val;
+         #[cfg(feature = "debug-hooks")]
+         self.note_bus_access(addr24, val, true);
+@@ -1785,6 +1842,7 @@
+     }
+ 
+     fn advance(&mut self, clocks: u32) {
++        self.readiness_note("clock", 0, None, clocks);
+         // ares `CPU::step`: tick the PPU dot clock, SPC, host-synced coprocessor, and HDMA in
+         // lockstep. The CPU sequences its calls to this around each access (see `CpuBus`) so a
+         // register write lands at the hardware-exact hcounter.
+--- a/crates/rustysnes-core/src/lib.rs
++++ b/crates/rustysnes-core/src/lib.rs
+@@ -37,3 +37,6 @@
+ 
+ pub use bus::Bus;
+ pub use scheduler::System;
++
++/// Save-state primitives for maintained diagnostic/checkpoint adapters.
++pub use rustysnes_savestate::{SaveReader, SaveStateError, SaveWriter};
+--- a/crates/rustysnes-ppu/src/lib.rs
++++ b/crates/rustysnes-ppu/src/lib.rs
+@@ -1365,6 +1365,18 @@
+     /// section. There is no firmware/ROM byte here to exclude — the PPU carries no chip-ROM
+     /// dump (`docs/adr/0003`); `region` is written too since it's set by cart detection, not
+     /// re-derivable from anything else stored here.
++    /// Passive full pending compositor state, including fields omitted by ordinary frame saves.
++    pub fn readiness_state(&self, w: &mut SaveWriter) {
++        for column in self.pd_bg.iter() {for pixel in column {pixel.readiness_state(w);}}
++        for pixel in self.pd_sprite.iter() {pixel.readiness_state(w);}
++        self.pd_carry.readiness_state(w);
++        for value in [self.pd_draw_x,self.pd_fetch_x,self.pd_fetched_line,self.pd_over_computed_line] {w.write_u16(value);}
++        w.write_u8(self.internal_cgram_address);
++        for value in [self.pd_over_range_dot,self.pd_over_time_dot] {w.write_bool(value.is_some());w.write_u16(value.unwrap_or(0));}
++    }
++
++    /// Ordinary versioned PPU state for frame-boundary save files.
++    /// Ordinary versioned PPU state for frame-boundary save files.
+     pub fn save_state(&self, w: &mut SaveWriter) {
+         w.section(*b"PPU0", |s| {
+             for &word in self.vram.iter() {
+--- a/crates/rustysnes-ppu/src/render.rs
++++ b/crates/rustysnes-ppu/src/render.rs
+@@ -101,6 +101,18 @@
+     bg: [[u8; 2]; 4],
+     obj: [u8; 4],
+     active: [bool; 4], // which BGs participate in this mode
++}
++
++impl Pixel {
++    pub(crate) fn readiness_state(&self, w: &mut rustysnes_savestate::SaveWriter) {
++        for value in [self.palette,self.priority,self.layer,self.palette_group] {w.write_u8(value);}
++        w.write_bool(self.opaque);
++    }
++}
++impl DacCarry {
++    pub(crate) fn readiness_state(&self,w:&mut rustysnes_savestate::SaveWriter) {
++        w.write_bool(self.above_enable);w.write_bool(self.below_enable);w.write_u16(self.above_raw);w.write_bool(self.below_opaque);
++    }
+ }
+ 
+ impl Ppu {

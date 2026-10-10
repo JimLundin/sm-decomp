@@ -38,7 +38,7 @@ source = root / "deps/rustysnes/crates/rustysnes-core/src/dma.rs"
 interrupt_records = json.loads((root / "tools/patches/rustysnes-clocked-interrupts.json").read_text())
 final_hdma = next(record["patched_sha256"] for record in interrupt_records if record["path"] == "crates/rustysnes-core/src/dma.rs")
 check("RustySNES HDMA timing patch", source.exists() and hashlib.sha256(source.read_bytes()).hexdigest() in (PATCHED, final_hdma))
-records = [record for name in ("rustysnes-clocked-apu", "rustysnes-clocked-dma", "rustysnes-clocked-interrupts", "rustysnes-lsnes-reset")
+records = [record for name in ("rustysnes-clocked-apu", "rustysnes-clocked-dma", "rustysnes-clocked-interrupts", "rustysnes-lsnes-reset", "rustysnes-readiness-observation")
            for record in json.loads((root / "tools/patches" / (name + ".json")).read_text())]
 final_hashes = {record["path"]: record["patched_sha256"] for record in records}
 for relative, expected in final_hashes.items():

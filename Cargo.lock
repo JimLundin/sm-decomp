@@ -398,6 +398,8 @@ dependencies = [
  "recomp",
  "runtime",
  "rustysnes-core",
+ "serde",
+ "serde_json",
  "sha2",
 ]
 

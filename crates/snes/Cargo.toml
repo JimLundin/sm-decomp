@@ -12,6 +12,8 @@ rustysnes-core.workspace = true
 runtime.workspace = true
 movie = { path = "../movie" }
 sha2.workspace = true
+serde.workspace = true
+serde_json.workspace = true
 
 [build-dependencies]
 recomp.workspace = true

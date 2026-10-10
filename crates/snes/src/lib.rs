@@ -8,6 +8,8 @@ use anyhow::{Result, ensure};
 use rustysnes_core::{System, cart::Cart};
 
 pub mod checkpoint;
+pub mod diagnostic;
+pub mod focused;
 mod subject;
 pub use subject::{InstructionBoundary, InterpreterFallback, SnesBus, Subject};
 
@@ -47,6 +49,26 @@ pub struct Reference {
 }
 
 impl Reference {
+    pub fn set_input(&mut self, pad: u16) {
+        self.system.bus.set_joypad(0, pad);
+    }
+    pub fn instruction_snapshot(&self) -> diagnostic::InstructionSnapshot {
+        diagnostic::snapshot(&self.system.cpu, &self.system.bus)
+    }
+    pub fn step_instruction(&mut self) -> Result<()> {
+        self.system.cpu.step(&mut self.system.bus);
+        Ok(())
+    }
+    pub fn step_instruction_observed(&mut self) -> Result<diagnostic::InstructionTrace> {
+        let before = self.instruction_snapshot();
+        self.system.bus.readiness_observe();
+        let result = self.step_instruction();
+        let mut events = diagnostic::events(&mut self.system.bus);
+        result?;
+        diagnostic::classify(&mut events, before.cpu.pc);
+        let after = self.instruction_snapshot();
+        Ok(diagnostic::InstructionTrace { before, after, events, generated_key: None })
+    }
     /// Save the complete hardware and CPU state between instructions.
     pub fn save_state(&self) -> Vec<u8> {
         self.system.save_state()
