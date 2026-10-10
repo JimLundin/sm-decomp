@@ -135,11 +135,15 @@ fn replay(args: &Args, report: &mut serde_json::Value) -> Result<()> {
     let mut reference = ReferenceConsole(Reference::new(&rom, 0)?, Vec::new(), Vec::new());
     let mut subject = SubjectConsole(Subject::with_steps(&rom, 0, steps)?, Vec::new(), Vec::new());
     report["stage"] = "replay".into();
+    fs::write(args.out.join("coverage.json"), serde_json::to_vec_pretty(&subject.0.coverage())?)?;
     save_report(&args.out, report)?;
     for (frame, pad) in movie.frames[..count].iter().enumerate() {
         let outcome = diff::run(&mut reference, &mut subject, std::slice::from_ref(pad));
         report["generated_steps"] = subject.0.generated_steps.into();
         report["interpreted_steps"] = subject.0.interpreted_steps.into();
+        if outcome.is_err() {
+            fs::write(args.out.join("coverage.json"), serde_json::to_vec_pretty(&subject.0.coverage())?)?;
+        }
         match outcome? {
             Outcome::Match { .. } => {
                 report["completed_frames"] = (frame + 1).into();
@@ -155,11 +159,13 @@ fn replay(args: &Args, report: &mut serde_json::Value) -> Result<()> {
                     "reference_cpu": decoded_cpu(&reference.1), "subject_cpu": decoded_cpu(&subject.1)});
                 fs::write(args.out.join("divergence.txt"), diff::report(&divergence, Some(&subject.0.misses_csv())))?;
                 fs::write(args.out.join("misses.csv"), subject.0.misses_csv())?;
+                fs::write(args.out.join("coverage.json"), serde_json::to_vec_pretty(&subject.0.coverage())?)?;
                 anyhow::bail!("first frame disagreement at input index {frame} in {}", divergence.region);
             }
         }
         if (frame + 1) % 600 == 0 || frame + 1 == count {
             fs::write(args.out.join("misses.csv"), subject.0.misses_csv())?;
+            fs::write(args.out.join("coverage.json"), serde_json::to_vec_pretty(&subject.0.coverage())?)?;
             save_report(&args.out, report)?;
             eprintln!("diff: {}/{} frames match", frame + 1, count);
         }
