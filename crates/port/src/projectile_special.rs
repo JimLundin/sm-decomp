@@ -184,7 +184,7 @@ fn calculate(r: &mut Wram<'_>, x: u16, y: u16) {
         },
     );
 }
-fn bomb_reaction(r: &mut Wram<'_>, rom: &[u8], h: &mut impl Host, byte_index: u16) -> Result<()> {
+pub(crate) fn bomb_reaction(r: &mut Wram<'_>, rom: &[u8], h: &mut impl Host, byte_index: u16) -> Result<()> {
     let mut i = byte_index >> 1;
     r.set_word(BLOCK, i);
     for _ in 0..256 {
