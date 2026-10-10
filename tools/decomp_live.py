@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--next-random-library', type=Path)
     parser.add_argument('--accepted', type=Path, default=ROOT / 'out/decomp/routine/decomp-acceptance.json')
     parser.add_argument('--frames', type=int, default=9000)
     parser.add_argument('--rom', type=Path, default=ROOT / 'rom/sm.sfc')
@@ -63,12 +64,21 @@ def main():
         verify_accepted(args.accepted.resolve())
         library = run / 'target/release/libdecomp.a'
         units = sorted((source / 'src').glob('sm_*.c'))
+        if args.next_random_library:
+            bank = source / 'src/sm_80.c'
+            text = bank.read_text()
+            signature = 'uint16 NextRandom(void) {'
+            if text.count(signature) != 1: raise ValueError('NextRandom definition identity/count differs')
+            transformed = run / 'sm_80_rng.c'
+            transformed.write_text(text.replace(signature, 'uint16 C_NextRandom(void) {'))
+            units[units.index(bank)] = transformed
+            verdict['rng_bank_transformation'] = {'original_sha256': digest(bank), 'transformed_sha256': digest(transformed), 'definition_renames': 1}
         units += [source / 'src' / n for n in ('spc_player.c', 'tracing.c', 'util.c')]
         units += sorted((source / 'src/snes').glob('*.c'))
         host = ROOT / 'tools/decomp/live.c'
         copied = [host, ROOT / 'tools/decomp/headless.c', Path(__file__).resolve(), source / 'LICENSE.txt']
         for path in copied: shutil.copyfile(path, run / path.name)
-        verdict['sources'] = {str(p.relative_to(ROOT)): digest(p) for p in [*units, *copied]}
+        verdict['sources'] = {str(p): digest(p) for p in [*units, *copied]}
         verdict['rust_library_sha256'] = digest(library)
         verdict['compiler'] = subprocess.check_output(['cc', '--version'], text=True).splitlines()[0]
         verdict['rust_compiler'] = subprocess.check_output(['rustc', '--version'], text=True).strip()
@@ -77,6 +87,11 @@ def main():
             '-Wl,--gc-sections', '-Wl,--wrap=Call', '-Wl,--wrap=cpu_runOpcode',
             '-Wl,--wrap=DecompressToMem', '-Wl,--wrap=ppu_write', '-Wl,--wrap=RtlApuWrite',
             '-lm', '-ldl', '-lpthread', '-lz', '-o', str(run / 'live')]
+        if args.next_random_library:
+            build[1:1] = ['-DNEXT_RANDOM_JOB', '-iquote', str(ROOT / 'tools/decomp')]
+            build.insert(build.index('-lm'), str(args.next_random_library.resolve()))
+            verdict['rng_library_sha256'] = digest(args.next_random_library)
+            verdict['rng_host_sha256'] = digest(ROOT / 'tools/decomp/next_random_live.c')
         execute(build, run, 'host-build')
         verdict['binary_sha256'] = digest(run / 'live')
         verdict['stages'].append('built')
@@ -91,7 +106,16 @@ def main():
                 subject.mkdir()
                 command = [str(run / 'live'), mode, str(args.rom.resolve()), str(args.inputs.resolve()), str(args.frames), 'unused']
                 execute(command, subject, 'replay')
-                rows = [json.loads(line) for line in (subject / 'replay.stdout.log').read_text().splitlines() if line.startswith('{')]
+                all_rows = [json.loads(line) for line in (subject / 'replay.stdout.log').read_text().splitlines() if line.startswith('{')]
+                rows = [r for r in all_rows if 'frames' in r]
+                if args.next_random_library:
+                    rng_rows = [r for r in all_rows if 'rng_c_hits' in r]
+                    if len(rng_rows) != 2 or any(r['epoch'] != i for i, r in enumerate(rng_rows)):
+                        raise ValueError('missing RNG epochs')
+                    for row in rng_rows:
+                        if row['rng_rust_hits' if mode == 'mixed' else 'rng_c_hits'] <= 0 or row['rng_c_hits' if mode == 'mixed' else 'rng_rust_hits'] != 0:
+                            raise ValueError('NextRandom replacement not exclusively exercised')
+                    verdict.setdefault('rng_subjects', {})[name] = rng_rows
                 if len(rows) != 2 or any(r['frames'] != 9000 or r['epoch'] != i for i, r in enumerate(rows)):
                     raise ValueError('incomplete same-process replay')
                 for row in rows:
@@ -104,7 +128,7 @@ def main():
                 for epoch in range(2):
                     directory = subject / f'epoch-{epoch}'
                     inventory = {str(p.relative_to(directory)): digest(p) for p in sorted(directory.rglob('*')) if p.is_file()}
-                    if len(list(directory.glob('frame-*.bin'))) != 10 or len(list((directory / 'fixtures').glob('*.wram'))) != 46:
+                    if len(list(directory.glob('frame-*.bin'))) != 10 or len(list((directory / 'fixtures').glob('decompress-*.wram'))) != 46:
                         raise ValueError('missing checkpoints or call states')
                     epoch_sets.append(inventory)
                 if epoch_sets[0] != epoch_sets[1]:
