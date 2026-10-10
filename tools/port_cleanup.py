@@ -101,7 +101,7 @@ def deduplicate(root, apply):
             if verdict.get('status') == 'mixed-C-Rust-integration':
                 choices = [base / subject / relative for subject in ('c-0', 'c-1', 'mixed-0', 'mixed-1')]
             for path in choices:
-                if not (path.suffix == '.wram' or path.name == 'terminal.bin' or path.name == 'rom-view.bin' or path.name.startswith('frame-') and path.suffix == '.bin'):
+                if not (path.suffix == '.wram' or path.name == 'terminal.bin' or path.name == 'rom-view.bin' or path.name in ('hardware.log', 'effects.log', 'port-effects.log', 'routine-calls.log') or path.name.startswith('frame-') and path.suffix == '.bin'):
                     continue
                 if not path.is_file() or path.is_symlink() or base.resolve() not in path.resolve().parents or any(parent.is_symlink() for parent in path.parents if parent != base and base in parent.parents):
                     continue
