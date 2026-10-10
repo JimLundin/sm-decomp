@@ -8,6 +8,7 @@ use anyhow::{Result, ensure};
 use rustysnes_core::{System, cart::Cart};
 
 pub mod checkpoint;
+pub mod coverage;
 mod subject;
 pub use subject::{InstructionBoundary, InterpreterFallback, SnesBus, Subject};
 
