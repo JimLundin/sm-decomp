@@ -5,6 +5,10 @@ pub mod generated {
 }
 pub mod hw;
 pub mod overrides;
+pub mod steps {
+    #![allow(non_snake_case, unused_imports)]
+    include!(concat!(env!("OUT_DIR"), "/steps.rs"));
+}
 
 use runtime::{Fallback, Machine, TableEntry};
 

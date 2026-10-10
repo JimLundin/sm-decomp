@@ -6,36 +6,24 @@
 //! SingleStepTests 65816 corpus. Decimal-mode V flag in particular is marked
 //! TODO until those tests pass.
 
-use crate::cpu::flag;
 use crate::Machine;
+use crate::cpu::flag;
 
 #[inline]
 fn mask(w: bool) -> u32 {
-    if w {
-        0xffff
-    } else {
-        0xff
-    }
+    if w { 0xffff } else { 0xff }
 }
 
 #[inline]
 fn sign(w: bool) -> u32 {
-    if w {
-        0x8000
-    } else {
-        0x80
-    }
+    if w { 0x8000 } else { 0x80 }
 }
 
 // ---- register access ---------------------------------------------------------
 
 #[inline]
 pub fn get_a(m: &Machine, w: bool) -> u16 {
-    if w {
-        m.cpu.a
-    } else {
-        m.cpu.a & 0xff
-    }
+    if w { m.cpu.a } else { m.cpu.a & 0xff }
 }
 
 #[inline]
@@ -45,11 +33,7 @@ pub fn set_a(m: &mut Machine, v: u16, w: bool) {
 
 #[inline]
 fn set_index(v: u16, w: bool) -> u16 {
-    if w {
-        v
-    } else {
-        v & 0xff
-    }
+    if w { v } else { v & 0xff }
 }
 
 // ---- loads -------------------------------------------------------------------
@@ -324,11 +308,7 @@ pub fn xce(m: &mut Machine) {
 
 pub fn pha(m: &mut Machine, w: bool) {
     let a = m.cpu.a;
-    if w {
-        m.push16(a)
-    } else {
-        m.push8(a as u8)
-    }
+    if w { m.push16(a) } else { m.push8(a as u8) }
 }
 pub fn pla(m: &mut Machine, w: bool) {
     let v = if w { m.pull16() } else { m.pull8() as u16 };
@@ -336,11 +316,7 @@ pub fn pla(m: &mut Machine, w: bool) {
 }
 pub fn phx(m: &mut Machine, w: bool) {
     let v = m.cpu.x;
-    if w {
-        m.push16(v)
-    } else {
-        m.push8(v as u8)
-    }
+    if w { m.push16(v) } else { m.push8(v as u8) }
 }
 pub fn plx(m: &mut Machine, w: bool) {
     let v = if w { m.pull16() } else { m.pull8() as u16 };
@@ -348,11 +324,7 @@ pub fn plx(m: &mut Machine, w: bool) {
 }
 pub fn phy(m: &mut Machine, w: bool) {
     let v = m.cpu.y;
-    if w {
-        m.push16(v)
-    } else {
-        m.push8(v as u8)
-    }
+    if w { m.push16(v) } else { m.push8(v as u8) }
 }
 pub fn ply(m: &mut Machine, w: bool) {
     let v = if w { m.pull16() } else { m.pull8() as u16 };

@@ -1,0 +1,489 @@
+--- a/crates/rustysnes-apu/src/lib.rs
++++ b/crates/rustysnes-apu/src/lib.rs
+@@ -41,6 +41,8 @@
+ mod spc700_exec;
+ 
+ mod nostd_math;
++#[cfg(feature = "clocked-smp")]
++mod clocked;
+ 
+ use dsp::{ARAM_SIZE, Dsp};
+ use rustysnes_savestate::{SaveReader, SaveStateError, SaveWriter};
+@@ -52,6 +54,7 @@
+ /// access is 2 of those base ticks, giving the ~1.024 MHz effective opcode-cycle rate. Kept as a
+ /// named constant because it is the value every unit test and every shipped program actually sees:
+ /// `$F0`'s wait selectors reset to 0 and no commercial driver reprograms them.
++#[cfg(any(test, not(feature = "clocked-smp")))]
+ const SMP_WAIT: u32 = 2;
+ 
+ /// SMP base clocks the **CPU** consumes per opcode cycle, indexed by a `$F0` wait selector.
+@@ -371,6 +374,8 @@
+     /// Base clocks already drained from `plan[plan_pos]` (a single micro-op may span several base
+     /// clocks — a normal access is [`SMP_WAIT`] — and we release exactly one per cycle pump).
+     plan_sub: u32,
++    #[cfg(feature = "clocked-smp")]
++    clocked: clocked::Execution,
+ }
+ 
+ impl core::fmt::Debug for Apu {
+@@ -409,6 +414,8 @@
+             plan: Vec::new(),
+             plan_pos: 0,
+             plan_sub: 0,
++            #[cfg(feature = "clocked-smp")]
++            clocked: clocked::Execution::default(),
+         }
+     }
+ 
+@@ -455,6 +462,16 @@
+     /// needs the per-cycle precision, because it is the sole state shared across the two clock
+     /// domains. Integer-only and order-deterministic (`docs/adr/0004`).
+     pub fn advance_smp_cycle(&mut self) {
++        #[cfg(feature = "clocked-smp")]
++        {
++            self.advance_clocked_smp_cycle();
++        }
++        #[cfg(not(feature = "clocked-smp"))]
++        self.advance_planned_smp_cycle();
++    }
++
++    #[cfg(not(feature = "clocked-smp"))]
++    fn advance_planned_smp_cycle(&mut self) {
+         if self.cpu.stopped {
+             // A stopped/sleeping SMP makes no architectural progress and writes no ports; drop any
+             // in-flight plan and idle. (Reset is the only exit, handled by the core.)
+@@ -472,6 +489,7 @@
+ 
+     /// Drain one SMP base clock from the in-flight instruction plan, committing a deferred port
+     /// write the moment the micro-op it belongs to completes.
++    #[cfg(not(feature = "clocked-smp"))]
+     fn drain_one_base_clock(&mut self) {
+         let Some(step) = self.plan.get(self.plan_pos).copied() else {
+             return;
+@@ -494,6 +512,7 @@
+     /// as [`SmpBus`] would (so the architectural result is bit-identical to [`Apu::step_instruction`]
+     /// and the SPC700 oracle), while capturing the ordered micro-op timeline + per-cycle catch-up of
+     /// the DSP into [`Self::plan`] for cycle-exact draining.
++    #[cfg(not(feature = "clocked-smp"))]
+     fn record_next_instruction(&mut self) {
+         self.plan.clear();
+         self.plan_pos = 0;
+@@ -662,6 +681,8 @@
+             #[allow(clippy::cast_possible_truncation)] // <= plan.len(), same bound
+             s.write_u32(self.plan_pos as u32);
+             s.write_u32(self.plan_sub);
++            #[cfg(feature = "clocked-smp")]
++            self.clocked.save_state(s);
+         });
+     }
+ 
+@@ -738,6 +759,8 @@
+             )));
+         }
+         self.plan_sub = plan_sub;
++        #[cfg(feature = "clocked-smp")]
++        self.clocked.load_state(&mut s)?;
+         if s.remaining() != 0 {
+             return Err(SaveStateError::Invalid(alloc::format!(
+                 "APU0 section has {} trailing byte(s)",
+@@ -911,6 +934,7 @@
+ /// clocks. The recorded instruction's architectural effect is byte-for-byte the same as
+ /// [`SmpBus`]; the plan is what lets the core drain the instruction one base clock at a time for
+ /// cycle-exact CPU↔SMP lockstep.
++#[cfg(not(feature = "clocked-smp"))]
+ struct RecordingSmpBus<'a> {
+     aram: &'a mut [u8; ARAM_SIZE],
+     dsp: &'a mut Dsp,
+@@ -925,6 +949,7 @@
+     plan: &'a mut Vec<CycleStep>,
+ }
+ 
++#[cfg(not(feature = "clocked-smp"))]
+ impl RecordingSmpBus<'_> {
+     /// Advance the timers by `clocks` base ticks, **cycle-step the S-DSP one micro-tick per 2 base
+     /// clocks**, and push a micro-op of that length onto the plan. Mirrors [`SmpBus::step`] for the
+@@ -1057,6 +1082,7 @@
+     }
+ }
+ 
++#[cfg(not(feature = "clocked-smp"))]
+ impl Spc700Bus for RecordingSmpBus<'_> {
+     fn read(&mut self, address: u16) -> u8 {
+         if address & 0xFFFC == 0x00F4 {
+@@ -1336,3 +1362,4 @@
+         ));
+     }
+ }
++
+--- a/crates/rustysnes-apu/Cargo.toml
++++ b/crates/rustysnes-apu/Cargo.toml
+@@ -9,6 +9,7 @@
+ [features]
+ default = ["std"]
+ std = []
++clocked-smp = []
+ 
+ [dependencies]
+ bitflags = "2"
+--- a/crates/rustysnes-core/Cargo.toml
++++ b/crates/rustysnes-core/Cargo.toml
+@@ -18,6 +18,8 @@
+ # a shipped build carries zero extra code on the accuracy-critical `Bus::read24`/`write24` path —
+ # see that module's own doc for the discipline this matches (`cheat.rs`'s read intercept).
+ debug-hooks = []
++clocked-smp = ["rustysnes-apu/clocked-smp"]
++lsnes-profile = ["clocked-smp"]
+ # `v1.3.0`: propagates down to `rustysnes-ppu/hd-pack` (the `TileTag` recording hook). This crate
+ # has no HD-pack code of its own -- `Bus::ppu` and `System::bus` are both already `pub`, so the
+ # frontend reaches `Ppu::set_hd_pack_tagging`/`Ppu::tile_tags` directly via
+--- /dev/null
++++ b/crates/rustysnes-apu/src/clocked.rs
+@@ -0,0 +1,316 @@
++//! Clocked SPC bus execution: ports are sampled when their bus cycle elapses.
++//!
++//! Independent implementation from the SPC700 bus contract and public S-SMP
++//! timing docs (<https://problemkaputt.de/fullsnes.htm#snesapulowleveltimings>).
++//! The CPU decoder is replayed from the instruction's initial registers using
++//! cached completed reads. Only the next bus operation touches hardware; later
++//! speculative calls are discarded until that operation finishes. This keeps
++//! the existing decoder while allowing an external CPU write during a read.
++use super::{
++    Apu, DSP_BASE_CLOCKS_PER_TICK, Io, MAX_PLAN_BASE_CLOCKS, SaveReader, SaveStateError,
++    SaveWriter, SmpBus, Spc700Bus,
++};
++
++const CAPACITY: usize = 32;
++
++#[derive(Default)]
++pub struct Execution {
++    active: bool,
++    reads: [u8; CAPACITY],
++    completed: usize,
++    pending: Option<Pending>,
++}
++
++#[derive(Clone, Copy)]
++struct Pending {
++    kind: u8, // 0 read, 1 write, 2 idle
++    address: u16,
++    data: u8,
++    remaining: u32,
++    tail: u32,
++    clocks: u32,
++    timer_clocks: u32,
++    elapsed: u32,
++}
++
++struct Resume<'a> {
++    execution: &'a mut Execution,
++    io: &'a Io,
++    cursor: usize,
++    blocked: bool,
++}
++
++impl Resume<'_> {
++    fn operation(&mut self, kind: u8, address: u16, data: u8) -> u8 {
++        if self.blocked {
++            return 0;
++        }
++        if self.cursor < self.execution.completed {
++            let value = self.execution.reads[self.cursor];
++            self.cursor += 1;
++            return value;
++        }
++        assert!(
++            self.cursor < CAPACITY,
++            "SPC instruction bus operation budget"
++        );
++        let half = kind == 0 && address & 0xfffc == 0xf4;
++        let target = if kind == 2 { None } else { Some(address) };
++        let (clocks, timer_clocks) = self.io.wait_clocks(false, target);
++        let tail = if half { clocks / 2 } else { 0 };
++        self.execution.pending = Some(Pending {
++            kind,
++            address,
++            data,
++            remaining: clocks - tail,
++            tail,
++            clocks,
++            timer_clocks,
++            elapsed: 0,
++        });
++        self.blocked = true;
++        0
++    }
++}
++
++impl Spc700Bus for Resume<'_> {
++    fn read(&mut self, address: u16) -> u8 {
++        self.operation(0, address, 0)
++    }
++    fn write(&mut self, address: u16, data: u8) {
++        self.operation(1, address, data);
++    }
++    fn idle(&mut self) {
++        self.operation(2, 0, 0);
++    }
++}
++
++impl Apu {
++    fn resume_clocked_instruction(&mut self) {
++        let mut cpu = self.cpu;
++        let mut bus = Resume {
++            execution: &mut self.clocked,
++            io: &self.io,
++            cursor: 0,
++            blocked: false,
++        };
++        cpu.step(&mut bus);
++        if !bus.blocked {
++            self.cpu = cpu;
++            self.clocked.active = false;
++            self.clocked.completed = 0;
++        }
++    }
++
++    pub(super) fn advance_clocked_smp_cycle(&mut self) {
++        if !self.clocked.active {
++            self.clocked.active = true;
++            self.resume_clocked_instruction();
++        }
++        let Some(mut pending) = self.clocked.pending.take() else {
++            return;
++        };
++        pending.elapsed += 1;
++        let ticks = pending.elapsed * pending.timer_clocks / pending.clocks
++            - (pending.elapsed - 1) * pending.timer_clocks / pending.clocks;
++        for timer in &mut self.timers {
++            timer.step(ticks as u16, self.io.timers_enable, self.io.timers_disable);
++        }
++        self.dsp_counter += 1;
++        if self.dsp_counter >= DSP_BASE_CLOCKS_PER_TICK {
++            self.dsp_counter -= DSP_BASE_CLOCKS_PER_TICK;
++            self.dsp.tick(&mut self.aram);
++        }
++        pending.remaining -= 1;
++        if pending.remaining != 0 {
++            self.clocked.pending = Some(pending);
++            return;
++        }
++        // The first half of a port read samples the latch; its second half
++        // retains that sampled value even if the main CPU writes again.
++        if pending.kind == 0 {
++            let mut bus = self.clocked_io_bus();
++            pending.data = bus
++                .read_io(pending.address)
++                .unwrap_or_else(|| bus.read_ram(pending.address));
++            pending.kind = 3; // sampled read awaiting the remaining half-cycle
++        } else if pending.kind == 1 {
++            let mut bus = self.clocked_io_bus();
++            if bus.io.ram_writable && !bus.io.ram_disable {
++                bus.aram[pending.address as usize] = pending.data;
++            }
++            bus.write_io(pending.address, pending.data);
++        }
++        if pending.tail != 0 {
++            pending.remaining = pending.tail;
++            pending.tail = 0;
++            self.clocked.pending = Some(pending);
++            return;
++        }
++        self.clocked.reads[self.clocked.completed] = pending.data;
++        self.clocked.completed += 1;
++        self.resume_clocked_instruction();
++    }
++
++    fn clocked_io_bus(&mut self) -> SmpBus<'_> {
++        SmpBus {
++            aram: &mut self.aram,
++            dsp: &mut self.dsp,
++            io: &mut self.io,
++            timers: &mut self.timers,
++            iplrom: &self.iplrom,
++            cycles: 0,
++        }
++    }
++}
++
++impl Execution {
++    pub fn save_state(&self, w: &mut SaveWriter) {
++        w.write_bytes(b"CLK1");
++        w.write_bool(self.active);
++        w.write_u8(self.completed as u8);
++        w.write_bytes(&self.reads);
++        w.write_bool(self.pending.is_some());
++        if let Some(p) = self.pending {
++            w.write_u8(p.kind);
++            w.write_u16(p.address);
++            w.write_u8(p.data);
++            for v in [p.remaining, p.tail, p.clocks, p.timer_clocks, p.elapsed] {
++                w.write_u32(v);
++            }
++        }
++    }
++    pub fn load_state(&mut self, r: &mut SaveReader) -> Result<(), SaveStateError> {
++        if r.read_bytes(4)? != b"CLK1" {
++            return Err(SaveStateError::Invalid("clocked SMP state required".into()));
++        }
++        self.active = r.read_bool()?;
++        self.completed = r.read_u8()? as usize;
++        if self.completed >= CAPACITY {
++            return Err(SaveStateError::Invalid("SPC bus operation budget".into()));
++        }
++        self.reads.copy_from_slice(r.read_bytes(CAPACITY)?);
++        self.pending = if r.read_bool()? {
++            let p = Pending {
++                kind: r.read_u8()?,
++                address: r.read_u16()?,
++                data: r.read_u8()?,
++                remaining: r.read_u32()?,
++                tail: r.read_u32()?,
++                clocks: r.read_u32()?,
++                timer_clocks: r.read_u32()?,
++                elapsed: r.read_u32()?,
++            };
++            if p.kind > 3
++                || p.clocks == 0
++                || p.clocks > MAX_PLAN_BASE_CLOCKS
++                || p.remaining == 0
++                || p.remaining > p.clocks
++                || p.elapsed >= p.clocks
++                || p.tail > p.clocks
++                || p.timer_clocks > MAX_PLAN_BASE_CLOCKS
++            {
++                return Err(SaveStateError::Invalid(
++                    "invalid clocked SPC operation".into(),
++                ));
++            }
++            Some(p)
++        } else {
++            None
++        };
++        if self.active != self.pending.is_some() {
++            return Err(SaveStateError::Invalid(
++                "inconsistent clocked SPC state".into(),
++            ));
++        }
++        Ok(())
++    }
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    fn program(bytes: &[u8]) -> Apu {
++        let mut apu = Apu::new();
++        apu.cpu.regs.pc = 0x0200;
++        apu.aram[0x0200..0x0200 + bytes.len()].copy_from_slice(bytes);
++        apu
++    }
++
++    #[test]
++    fn port_is_sampled_on_its_bus_cycle_and_held_through_the_second_half() {
++        // MOV A,$F4; MOV $F5,A. Opcode/operand fetches take four base clocks;
++        // the read samples on clock five and completes on clock six.
++        for write_at in 0..=6 {
++            let mut apu = program(&[0xe4, 0xf4, 0xc4, 0xf5]);
++            apu.cpu_write_port(0, 0x11);
++            for _ in 0..write_at {
++                apu.advance_smp_cycle();
++            }
++            apu.cpu_write_port(0, 0x22);
++            for _ in write_at..6 {
++                apu.advance_smp_cycle();
++            }
++            let expected = if write_at < 5 { 0x22 } else { 0x11 };
++            assert_eq!(
++                apu.cpu.regs.a, expected,
++                "CPU write after base clock {write_at}"
++            );
++            for _ in 0..7 {
++                apu.advance_smp_cycle();
++            }
++            assert_eq!(
++                apu.cpu_read_port(1),
++                0,
++                "port write must wait for the write cycle"
++            );
++            apu.advance_smp_cycle();
++            assert_eq!(apu.cpu_read_port(1), expected);
++        }
++    }
++
++    #[test]
++    fn compare_uses_the_port_value_at_the_read_cycle() {
++        // CMP Y,$F4: a different destination/ALU path than MOV.
++        let mut apu = program(&[0x7e, 0xf4]);
++        apu.cpu.regs.y = 0x22;
++        apu.cpu_write_port(0, 0x11);
++        for _ in 0..4 {
++            apu.advance_smp_cycle();
++        }
++        apu.cpu_write_port(0, 0x22);
++        for _ in 0..2 {
++            apu.advance_smp_cycle();
++        }
++        assert!(apu.cpu.regs.psw.z());
++        assert!(apu.cpu.regs.psw.c());
++    }
++
++    #[test]
++    fn mid_read_state_preserves_the_sampled_value_and_pending_write() {
++        let mut apu = program(&[0xe4, 0xf4, 0xc4, 0xf5]);
++        apu.cpu_write_port(0, 0x11);
++        for _ in 0..5 {
++            apu.advance_smp_cycle();
++        }
++        let mut writer = SaveWriter::new();
++        apu.save_state(&mut writer);
++        let mut restored = Apu::new();
++        restored
++            .load_state(&mut SaveReader::new(writer.as_bytes()))
++            .unwrap();
++        for machine in [&mut apu, &mut restored] {
++            machine.cpu_write_port(0, 0x22);
++            for _ in 0..9 {
++                machine.advance_smp_cycle();
++            }
++            assert_eq!(machine.cpu_read_port(1), 0x11);
++        }
++        let mut left = SaveWriter::new();
++        let mut right = SaveWriter::new();
++        apu.save_state(&mut left);
++        restored.save_state(&mut right);
++        assert_eq!(left.as_bytes(), right.as_bytes());
++    }
++}
+--- a/crates/rustysnes-core/src/bus.rs
++++ b/crates/rustysnes-core/src/bus.rs
+@@ -124,9 +124,18 @@
+ /// `2_050_560 / 21_477_270` (SMP base rate over the NTSC master rate); gcd = 30, giving the reduced
+ /// `68_352 / 715_909` kept here to bound accumulator growth (`spc_accum` stays below the
+ /// denominator). The DENOMINATOR is region-dependent; see `SPC_DEN_PAL` for why.
++#[cfg(not(feature = "lsnes-profile"))]
+ const SPC_NUM: u64 = 68_352;
++/// Recording-core profile: 32,040.5 samples/s, or 4,101,184/2 SMP base clocks/s.
++/// Calibrated against the rr2-beta23 black-box timer trace; see sm-recomp's
++/// docs/LSNES_BASELINE.md. The separate audio oscillator is hardware-variable.
++#[cfg(feature = "lsnes-profile")]
++const SPC_NUM: u64 = 4_101_184;
+ /// SPC700 fractional-clock denominator on **NTSC**: `21_477_270 / 30`.
++#[cfg(not(feature = "lsnes-profile"))]
+ const SPC_DEN_NTSC: u64 = 715_909;
++#[cfg(feature = "lsnes-profile")]
++const SPC_DEN_NTSC: u64 = 42_954_540;
+ /// SPC700 fractional-clock denominator on **PAL**: `21_281_370 / 30`.
+ ///
+ /// **The APU's oscillator is region-independent and the master clock's is not**, so this ratio is
+@@ -141,7 +150,10 @@
+ /// explicit ratios — `15664/328125` and `34176/709379` — which both work out to an APU rate of
+ /// exactly **1,025,280 Hz**, differing only in the master-clock denominator. `709_379 * 30` is
+ /// `21_281_370`, which is where this number comes from.
++#[cfg(not(feature = "lsnes-profile"))]
+ const SPC_DEN_PAL: u64 = 709_379;
++#[cfg(feature = "lsnes-profile")]
++const SPC_DEN_PAL: u64 = 42_562_740;
+ 
+ /// The master-clock phase + the CPU-side timing registers the Bus advances in lockstep.
+ #[derive(Debug, Clone)]

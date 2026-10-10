@@ -1,10 +1,16 @@
 /target
+# Downloaded upstream sources, test corpora and emulator binaries.
+/deps/
 # Never commit the ROM or anything derived from it.
 /rom/*
 !/rom/README.md
+# Ignore legacy output locations as well as the current /out tree.
 /crates/game/generated/
 /crates/fuzz/generated/
 /movies/*.bk2
 /movies/*.lsmv
+/movies/*.inputs
 /out/
 *.miss.csv
+/lsnes.log
+__pycache__/

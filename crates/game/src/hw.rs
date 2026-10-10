@@ -1,7 +1,7 @@
 //! Hardware side of the runtime.
 //!
-//! `RamBus` is a flat 16 MiB map for tests. The real implementation is
-//! `SnesBus` (TODO): wrap RustySNES's `rustysnes-core::Bus` so reads/writes to
+//! `RamBus` is a flat 16 MiB map for the demo and tests. The real implementation
+//! is `snes::SnesBus`, wrapping RustySNES's `rustysnes-core::Bus` so reads/writes to
 //! $2100-$21FF, $4200-$43FF and DMA go to its PPU/APU/DMA models, and ROM/WRAM
 //! map normally. Its 65816 core becomes the `Fallback`.
 

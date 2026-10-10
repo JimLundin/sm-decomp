@@ -1,0 +1,38 @@
+[
+  {
+    "category": "any%",
+    "author": "Sniq",
+    "publication": "https://tasvideos.org/3653M",
+    "submission": "https://tasvideos.org/5833S",
+    "download": "https://tasvideos.org/3653M?handler=Download",
+    "file": "super-metroid-any-3653.lsmv",
+    "frames": 129712,
+    "emulator": "lsnes rr2-beta23 / bsnes v085 (Compatibility core)",
+    "rom_sha256": "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72",
+    "sha256": "e53b1ce15b3f01516eb64c68a6db2911f91bd97197eb05960779561be5c7cbe9"
+  },
+  {
+    "category": "low% (13%)",
+    "author": "Sniq",
+    "publication": "https://tasvideos.org/3273M",
+    "submission": "https://tasvideos.org/5291S",
+    "download": "https://tasvideos.org/3273M?handler=Download",
+    "file": "super-metroid-low-3273.lsmv",
+    "frames": 167797,
+    "emulator": "lsnes rr2-beta23 / bsnes v085 (Compatibility core)",
+    "rom_sha256": "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72",
+    "sha256": "1d217bb073309ae44ea3d972c5ec3201be0ec434c60f034e1e958f94fd1bcda8"
+  },
+  {
+    "category": "100%",
+    "author": "Sniq",
+    "publication": "https://tasvideos.org/4010M",
+    "submission": "https://tasvideos.org/6381S",
+    "download": "https://tasvideos.org/4010M?handler=Download",
+    "file": "super-metroid-100-4010.lsmv",
+    "frames": 222788,
+    "emulator": "lsnes rr2-beta23 / bsnes v085 (Compatibility core)",
+    "rom_sha256": "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72",
+    "sha256": "1bd065d89b70c16efb6f9276e82b1c07fd57ec40095f030cc6efe6663458929c"
+  }
+]

@@ -1,0 +1,22 @@
+[package]
+name = "snes"
+description = "SNES hardware integration and headless reference runner"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+rustysnes-core.workspace = true
+runtime.workspace = true
+movie = { path = "../movie" }
+sha2.workspace = true
+
+[build-dependencies]
+recomp.workspace = true
+anyhow.workspace = true
+
+[[bin]]
+name = "reference-smoke"
+path = "src/bin/reference-smoke.rs"

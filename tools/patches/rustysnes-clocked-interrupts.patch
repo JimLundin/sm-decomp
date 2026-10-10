@@ -1,0 +1,693 @@
+--- a/crates/rustysnes-core/Cargo.toml
++++ b/crates/rustysnes-core/Cargo.toml
+@@ -19,7 +19,7 @@
+ # see that module's own doc for the discipline this matches (`cheat.rs`'s read intercept).
+ debug-hooks = []
+ clocked-smp = ["rustysnes-apu/clocked-smp"]
+-clocked-dma = []
++clocked-dma = ["rustysnes-cpu/clocked-interrupts"]
+ lsnes-profile = ["clocked-smp", "clocked-dma"]
+ # `v1.3.0`: propagates down to `rustysnes-ppu/hd-pack` (the `TileTag` recording hook). This crate
+ # has no HD-pack code of its own -- `Bus::ppu` and `System::bus` are both already `pub`, so the
+--- a/crates/rustysnes-core/src/bus.rs
++++ b/crates/rustysnes-core/src/bus.rs
+@@ -400,6 +400,13 @@
+     /// Pending DMA: 0 idle, 1 allow one CPU cycle, 2 halt before next cycle.
+     #[cfg(feature = "clocked-dma")]
+     dma_stage: u8,
++    /// Interrupt line values sampled before the current complete CPU cycle.
++    #[cfg(feature = "clocked-dma")]
++    sampled_nmi: bool,
++    #[cfg(feature = "clocked-dma")]
++    sampled_irq: bool,
++    #[cfg(feature = "clocked-dma")]
++    nmi_ready_at: u64,
+     /// Active cheat-code patches (`v0.8.0`, T-81-003) — checked on every CPU-visible read in
+     /// [`CpuBus::read24`]. Empty (the default, and the only state possible unless a frontend
+     /// explicitly calls [`Self::set_cheats`]) costs exactly one `is_empty()` branch per read.
+@@ -467,6 +474,12 @@
+             in_refresh: false,
+             #[cfg(feature = "clocked-dma")]
+             dma_stage: 0,
++            #[cfg(feature = "clocked-dma")]
++            sampled_nmi: false,
++            #[cfg(feature = "clocked-dma")]
++            sampled_irq: false,
++            #[cfg(feature = "clocked-dma")]
++            nmi_ready_at: 0,
+             cheats: alloc::vec::Vec::new(),
+             #[cfg(feature = "debug-hooks")]
+             watchpoints: crate::watchpoint::WatchpointState::default(),
+@@ -879,6 +892,18 @@
+             // frame-crossing framebuffer DMA, shifting the whole HDMA table late (Star Fox's
+             // force-blank then missed its own framebuffer DMA). The `in_hdma` guard stops the
+             // transfer's own cost (the nested `advance_master`) from re-triggering the same line.
++            #[cfg(feature = "clocked-dma")]
++            if !self.in_hdma {
++                if self.ppu.scanline() != 0 {
++                    self.hdma_setup_done = false;
++                } else if self.ppu.dot() >= 6 && !self.hdma_setup_done && self.dma.hdma_enable == 0
++                {
++                    self.hdma_setup_done = true;
++                    self.service_hdma(0, self.ppu.visible_height());
++                    self.last_hdma_line = u16::MAX;
++                }
++            }
++            #[cfg(not(feature = "clocked-dma"))]
+             if !self.in_hdma && self.dma.hdma_enable != 0 {
+                 let v = self.ppu.scanline();
+                 let vh = self.ppu.visible_height();
+@@ -915,7 +940,16 @@
+             // here without the frame growing — the reallocation `docs/scheduler.md` §DRAM refresh
+             // calls for. `in_refresh` stops the nested advance from re-entering; dots 134-144 can't
+             // match the trigger anyway, but the guard makes that explicit.
+-            if dot_ticked && pre_tick_dot == DRAM_REFRESH_DOT - 1 && !self.in_refresh {
++            #[cfg(feature = "clocked-dma")]
++            let refresh_tick = self.ppu.dot() == DRAM_REFRESH_DOT - 1
++                && self.clock.dot_accum == 2
++                && self.clock.master % 8 == 2
++                || self.ppu.dot() == DRAM_REFRESH_DOT
++                    && self.clock.dot_accum == 2
++                    && self.clock.master % 8 == 2;
++            #[cfg(not(feature = "clocked-dma"))]
++            let refresh_tick = dot_ticked && pre_tick_dot == DRAM_REFRESH_DOT - 1;
++            if refresh_tick && !self.in_refresh {
+                 self.in_refresh = true;
+                 self.advance_master(DRAM_REFRESH_CLOCKS);
+                 self.in_refresh = false;
+@@ -993,6 +1027,10 @@
+             self.clock.rdnmi_hold = true;
+             if self.clock.nmitimen & 0x80 != 0 {
+                 self.clock.nmi_line = true;
++                #[cfg(feature = "clocked-dma")]
++                {
++                    self.nmi_ready_at = self.clock.master + 6;
++                }
+             }
+             // The automatic joypad read runs at the start of vblank while armed — but NOT at this
+             // edge: hardware begins it ~dot 32.5-95.5 into the first vblank line, so `$4212` bit 0
+@@ -1422,6 +1460,9 @@
+             {
+                 s.write_bytes(b"DMA1");
+                 s.write_u8(self.dma_stage);
++                s.write_bool(self.sampled_nmi);
++                s.write_bool(self.sampled_irq);
++                s.write_u64(self.nmi_ready_at);
+             }
+         });
+         match &self.cart {
+@@ -1481,6 +1522,9 @@
+                 return Err(SaveStateError::Invalid("clocked DMA state required".into()));
+             }
+             self.dma_stage = s.read_u8()?;
++            self.sampled_nmi = s.read_bool()?;
++            self.sampled_irq = s.read_bool()?;
++            self.nmi_ready_at = s.read_u64()?;
+             if self.dma_stage > 2 {
+                 return Err(SaveStateError::Invalid("invalid DMA cycle stage".into()));
+             }
+@@ -1608,6 +1652,45 @@
+ impl CpuBus for Bus {
+     fn begin_cpu_cycle(&mut self, clocks: u32) {
+         #[cfg(feature = "clocked-dma")]
++        {
++            // Super Famicom Dev Timing: setup near H=6 dots; transfer at
++            // dot 278, after finishing the current CPU cycle. Divider waits
++            // are positive and resume relative to the pause, as for GP-DMA.
++            // Golden synthetic cartridge traces cover setup and all phases.
++            let v = self.ppu.scanline();
++            let setup = v == 0 && self.ppu.dot() >= 6 && !self.hdma_setup_done;
++            let run = v <= self.ppu.visible_height()
++                && self.ppu.dot() >= HDMA_RUN_DOT + 2
++                && self.last_hdma_line != v;
++            let active = run
++                && self.dma.hdma_enable != 0
++                && (0..8).any(|ch| {
++                    self.dma.hdma_enable & (1 << ch) != 0 && !self.dma.channels[ch].hdma_completed
++                });
++            if self.dma.hdma_enable != 0 && (setup || (run && active)) {
++                if setup {
++                    self.hdma_setup_done = true;
++                    self.last_hdma_line = u16::MAX;
++                } else {
++                    self.last_hdma_line = v;
++                }
++                let pause = self.clock.master;
++                self.advance_master(8 - (pause & 7) as u32);
++                if setup {
++                    self.service_hdma(0, self.ppu.visible_height());
++                } else {
++                    self.in_hdma = true;
++                    let mut dma = core::mem::take(&mut self.dma);
++                    let cost = dma.hdma_run(self);
++                    self.dma = dma;
++                    self.advance_master(cost);
++                    self.in_hdma = false;
++                }
++                let elapsed = self.clock.master - pause;
++                self.advance_master(clocks - (elapsed % u64::from(clocks)) as u32);
++            }
++        }
++        #[cfg(feature = "clocked-dma")]
+         match self.dma_stage {
+             1 => self.dma_stage = 2,
+             2 => {
+@@ -1624,8 +1707,48 @@
+             }
+             _ => {}
+         }
++        #[cfg(feature = "clocked-dma")]
++        {
++            // Interrupts are sampled before an instruction's final cycle.
++            // Updating before each whole cycle leaves that final sample for
++            // the next instruction-boundary poll (not after split read tails).
++            // Super Famicom Dev, "Timing", Interrupts.
++            self.sampled_nmi = self.clock.nmi_line && self.clock.master >= self.nmi_ready_at;
++            self.sampled_irq =
++                self.clock.irq_line || self.cart.as_ref().is_some_and(|c| c.board.irq_pending());
++        }
+         #[cfg(not(feature = "clocked-dma"))]
+         let _ = clocks;
++    }
++
++    fn halt_pending(&self) -> bool {
++        #[cfg(feature = "clocked-dma")]
++        {
++            let v = self.ppu.scanline();
++            v > 0
++                && v <= self.ppu.visible_height()
++                && self.last_hdma_line != v
++                && (self.ppu.dot() > 278 || (self.ppu.dot() == 278 && self.clock.dot_accum > 0))
++                && (0..8).any(|ch| {
++                    self.dma.hdma_enable & (1 << ch) != 0 && !self.dma.channels[ch].hdma_completed
++                })
++        }
++        #[cfg(not(feature = "clocked-dma"))]
++        {
++            false
++        }
++    }
++
++    fn interrupt_pending(&self, irq_masked: bool) -> bool {
++        #[cfg(feature = "clocked-dma")]
++        {
++            self.sampled_nmi || (self.sampled_irq && !irq_masked)
++        }
++        #[cfg(not(feature = "clocked-dma"))]
++        {
++            let _ = irq_masked;
++            false
++        }
+     }
+ 
+     // `decode_read` must always run first for its side effects (e.g. an NMI-flag-clear-on-read
+@@ -1669,6 +1792,15 @@
+     }
+ 
+     fn poll_nmi(&mut self) -> bool {
++        #[cfg(feature = "clocked-dma")]
++        {
++            if core::mem::take(&mut self.sampled_nmi) {
++                self.clock.nmi_line = false;
++                return true;
++            }
++            return false;
++        }
++        #[cfg(not(feature = "clocked-dma"))]
+         core::mem::take(&mut self.clock.nmi_line)
+     }
+ 
+@@ -1676,7 +1808,14 @@
+         // OR the PPU/APU HV-IRQ level with any on-cart coprocessor IRQ (SA-1 → S-CPU, SPC7110 RTC,
+         // …). The `Board::irq_pending` hook is documented to be ORed here; base/host-sync boards
+         // return `false` so non-coprocessor carts are unaffected.
+-        self.clock.irq_line || self.cart.as_ref().is_some_and(|c| c.board.irq_pending())
++        #[cfg(feature = "clocked-dma")]
++        {
++            self.sampled_irq
++        }
++        #[cfg(not(feature = "clocked-dma"))]
++        {
++            self.clock.irq_line || self.cart.as_ref().is_some_and(|c| c.board.irq_pending())
++        }
+     }
+ }
+ 
+--- a/crates/rustysnes-cpu/Cargo.toml
++++ b/crates/rustysnes-cpu/Cargo.toml
+@@ -7,6 +7,7 @@
+ authors.workspace = true
+ 
+ [features]
++clocked-interrupts = []
+ default = ["std"]
+ std = []
+ 
+--- a/crates/rustysnes-cpu/src/bus.rs
++++ b/crates/rustysnes-cpu/src/bus.rs
+@@ -18,6 +18,17 @@
+     /// Begin one complete CPU bus or internal cycle. DMA can halt the CPU
+     /// here before its cycle advances; split read phases remain one cycle.
+     fn begin_cpu_cycle(&mut self, _clocks: u32) {}
++    /// Notify observers that the following discarded fetch is interrupt entry.
++    fn begin_interrupt(&mut self) {}
++    /// Whether the next CPU cycle will be paused by active HDMA.
++    fn halt_pending(&self) -> bool {
++        false
++    }
++
++    /// Peek at the current interrupt sample without consuming its edge.
++    fn interrupt_pending(&self, _irq_masked: bool) -> bool {
++        false
++    }
+ 
+     /// Read a byte at a 24-bit address (no clock advance — the CPU sequences timing via
+     /// [`Bus::advance`] around this call).
+--- a/crates/rustysnes-cpu/src/exec.rs
++++ b/crates/rustysnes-cpu/src/exec.rs
+@@ -69,6 +69,30 @@
+         bus.advance(6);
+         self.cycles += 1;
+         self.cyc += 1;
++    }
++
++    /// Implied-instruction final cycle. WDC Table 5-7, 19a exposes PB:PC
++    /// on this cycle. Original-core black-box phase probes show a pending
++    /// interrupt makes it a memory-speed discarded read rather than idle.
++    fn implied_cycle(&mut self, bus: &mut impl Bus) {
++        #[cfg(feature = "clocked-interrupts")]
++        {
++            let halt = bus.halt_pending();
++            bus.begin_cpu_cycle(6);
++            if halt || bus.interrupt_pending(self.regs.p.contains(Status::I)) {
++                let address = (u32::from(self.regs.pbr) << 16) | u32::from(self.regs.pc);
++                let speed = bus.access_cycles(address);
++                bus.advance(speed - 4);
++                let _ = bus.read24(address);
++                bus.advance(4);
++            } else {
++                bus.advance(6);
++            }
++            self.cycles += 1;
++            self.cyc += 1;
++        }
++        #[cfg(not(feature = "clocked-interrupts"))]
++        self.io(bus);
+     }
+ 
+     /// Fetch the next program byte from `PBR:PC`, incrementing `PC` with 16-bit bank wrap.
+@@ -682,6 +706,7 @@
+ 
+         let nmi = bus.poll_nmi();
+         let irq = bus.poll_irq();
++        let irq_masked = self.take_irq_mask();
+ 
+         if nmi {
+             self.wake_from_wai(bus);
+@@ -691,7 +716,7 @@
+             self.interrupts_taken = self.interrupts_taken.wrapping_add(1);
+             self.last_interrupt_was_nmi = true;
+             self.service_interrupt(bus, false, true);
+-        } else if irq && !self.regs.p.contains(Status::I) {
++        } else if irq && !irq_masked {
+             self.wake_from_wai(bus);
+             self.interrupts_taken = self.interrupts_taken.wrapping_add(1);
+             self.last_interrupt_was_nmi = false;
+@@ -707,7 +732,16 @@
+             self.io(bus);
+         } else {
+             let opcode = self.fetch8(bus);
++            #[cfg(feature = "clocked-interrupts")]
++            let old_mask = self.regs.p.contains(Status::I);
+             self.execute(bus, opcode);
++            // Super Famicom Dev, Timing: these instructions update I during
++            // their final cycle, after the interrupt sample. Keep the old
++            // mask for the next boundary while pushing the updated flags.
++            #[cfg(feature = "clocked-interrupts")]
++            if matches!(opcode, 0x58 | 0x78 | 0x28 | 0xc2 | 0xe2) {
++                self.irq_mask_override = Some(old_mask);
++            }
+         }
+ 
+         self.normalize_emulation();
+@@ -758,6 +792,16 @@
+         // oracle, so widening this to the correct 2 cycles does not touch their counts. The extra
+         // cycle also matters for interrupt *latency*: it pushes an IRQ-driven register write ~1
+         // dot later, which is one input to the `hdmaen_latch_test` HDMAEN-vs-latch race.
++        #[cfg(feature = "clocked-interrupts")]
++        {
++            // Super Famicom Dev, "Timing", Interrupts: the first cycle is
++            // a discarded opcode fetch at PB:PC, not a six-clock idle.
++            // Notify checkpoint observers so this is not a gameplay visit.
++            bus.begin_interrupt();
++            let address = (u32::from(self.regs.pbr) << 16) | u32::from(self.regs.pc);
++            let _ = self.bus_read8(bus, address);
++        }
++        #[cfg(not(feature = "clocked-interrupts"))]
+         self.io(bus);
+         self.io(bus);
+         if !self.regs.emulation {
+@@ -1575,11 +1619,11 @@
+ 
+             // ---- INC / DEC memory + accumulator ----
+             0x1A => {
+-                self.io(bus);
++                self.implied_cycle(bus);
+                 self.op_inc_a();
+             }
+             0x3A => {
+-                self.io(bus);
++                self.implied_cycle(bus);
+                 self.op_dec_a();
+             }
+             0xE6 => {
+@@ -1619,7 +1663,7 @@
+ 
+             // ---- ASL / LSR / ROL / ROR ----
+             0x0A => {
+-                self.io(bus);
++                self.implied_cycle(bus);
+                 self.op_asl_a();
+             }
+             0x06 => {
+@@ -1640,7 +1684,7 @@
+                 self.rmw_asl(bus, e);
+             }
+             0x4A => {
+-                self.io(bus);
++                self.implied_cycle(bus);
+                 self.op_lsr_a();
+             }
+             0x46 => {
+@@ -1661,7 +1705,7 @@
+                 self.rmw_lsr(bus, e);
+             }
+             0x2A => {
+-                self.io(bus);
++                self.implied_cycle(bus);
+                 self.op_rol_a();
+             }
+             0x26 => {
+@@ -1682,7 +1726,7 @@
+                 self.rmw_rol(bus, e);
+             }
+             0x6A => {
+-                self.io(bus);
++                self.implied_cycle(bus);
+                 self.op_ror_a();
+             }
+             0x66 => {
+@@ -1723,25 +1767,25 @@
+ 
+             // ---- INX/INY/DEX/DEY ----
+             0xE8 => {
+-                self.io(bus);
++                self.implied_cycle(bus);
+                 let v = self.regs.x_val().wrapping_add(1);
+                 self.regs.set_x(v);
+                 self.regs.set_nz_x(self.regs.x_val());
+             }
+             0xC8 => {
+-                self.io(bus);
++                self.implied_cycle(bus);
+                 let v = self.regs.y_val().wrapping_add(1);
+                 self.regs.set_y(v);
+                 self.regs.set_nz_x(self.regs.y_val());
+             }
+             0xCA => {
+-                self.io(bus);
++                self.implied_cycle(bus);
+                 let v = self.regs.x_val().wrapping_sub(1);
+                 self.regs.set_x(v);
+                 self.regs.set_nz_x(self.regs.x_val());
+             }
+             0x88 => {
+-                self.io(bus);
++                self.implied_cycle(bus);
+                 let v = self.regs.y_val().wrapping_sub(1);
+                 self.regs.set_y(v);
+                 self.regs.set_nz_x(self.regs.y_val());
+@@ -1749,68 +1793,68 @@
+ 
+             // ---- Transfers ----
+             0xAA => {
+-                self.io(bus);
++                self.implied_cycle(bus);
+                 let v = self.regs.a;
+                 self.regs.set_x(v);
+                 self.regs.set_nz_x(self.regs.x_val());
+             }
+             0xA8 => {
+-                self.io(bus);
++                self.implied_cycle(bus);
+                 let v = self.regs.a;
+                 self.regs.set_y(v);
+                 self.regs.set_nz_x(self.regs.y_val());
+             }
+             0x8A => {
+-                self.io(bus);
++                self.implied_cycle(bus);
+                 let v = self.regs.x_val();
+                 self.regs.set_a(v);
+                 self.regs.set_nz_m(self.regs.a_val());
+             }
+             0x98 => {
+-                self.io(bus);
++                self.implied_cycle(bus);
+                 let v = self.regs.y_val();
+                 self.regs.set_a(v);
+                 self.regs.set_nz_m(self.regs.a_val());
+             }
+             0xBA => {
+-                self.io(bus);
++                self.implied_cycle(bus);
+                 let v = self.regs.s;
+                 self.regs.set_x(v);
+                 self.regs.set_nz_x(self.regs.x_val());
+             }
+             0x9A => {
+-                self.io(bus);
++                self.implied_cycle(bus);
+                 self.op_txs();
+             }
+             0x9B => {
+-                self.io(bus);
++                self.implied_cycle(bus);
+                 let v = self.regs.x_val();
+                 self.regs.set_y(v);
+                 self.regs.set_nz_x(self.regs.y_val());
+             }
+             0xBB => {
+-                self.io(bus);
++                self.implied_cycle(bus);
+                 let v = self.regs.y_val();
+                 self.regs.set_x(v);
+                 self.regs.set_nz_x(self.regs.x_val());
+             }
+             0x5B => {
+-                self.io(bus);
++                self.implied_cycle(bus);
+                 self.regs.d = self.regs.a;
+                 self.regs.set_nz16(self.regs.d);
+             }
+             0x7B => {
+-                self.io(bus);
++                self.implied_cycle(bus);
+                 let v = self.regs.d;
+                 self.regs.a = v;
+                 self.regs.set_nz16(v);
+             }
+             0x1B => {
+-                self.io(bus);
++                self.implied_cycle(bus);
+                 self.op_tcs();
+             }
+             0x3B => {
+-                self.io(bus);
++                self.implied_cycle(bus);
+                 let v = self.regs.s;
+                 self.regs.a = v;
+                 self.regs.set_nz16(v);
+@@ -1901,31 +1945,31 @@
+ 
+             // ---- Flag ops ----
+             0x18 => {
+-                self.io(bus);
++                self.implied_cycle(bus);
+                 self.regs.set_flag(Status::C, false);
+             }
+             0x38 => {
+-                self.io(bus);
++                self.implied_cycle(bus);
+                 self.regs.set_flag(Status::C, true);
+             }
+             0x58 => {
+-                self.io(bus);
++                self.implied_cycle(bus);
+                 self.regs.set_flag(Status::I, false);
+             }
+             0x78 => {
+-                self.io(bus);
++                self.implied_cycle(bus);
+                 self.regs.set_flag(Status::I, true);
+             }
+             0xD8 => {
+-                self.io(bus);
++                self.implied_cycle(bus);
+                 self.regs.set_flag(Status::D, false);
+             }
+             0xF8 => {
+-                self.io(bus);
++                self.implied_cycle(bus);
+                 self.regs.set_flag(Status::D, true);
+             }
+             0xB8 => {
+-                self.io(bus);
++                self.implied_cycle(bus);
+                 self.regs.set_flag(Status::V, false);
+             }
+             0xC2 => {
+@@ -1939,7 +1983,7 @@
+                 self.op_sep(m);
+             }
+             0xFB => {
+-                self.io(bus);
++                self.implied_cycle(bus);
+                 self.op_xce();
+             }
+ 
+@@ -2062,7 +2106,7 @@
+                 self.waiting = true;
+             }
+             0xEA => {
+-                self.io(bus);
++                self.implied_cycle(bus);
+             }
+             0x42 => {
+                 let _ = self.fetch8(bus);
+--- a/crates/rustysnes-core/src/dma.rs
++++ b/crates/rustysnes-core/src/dma.rs
+@@ -556,7 +556,18 @@
+             cost += 8;
+             self.channels[ch].line_counter = self.channels[ch].line_counter.wrapping_sub(1);
+             self.channels[ch].hdma_do_transfer = self.channels[ch].line_counter & 0x80 != 0;
+-            cost += self.hdma_reload(ch, bus);
++            let reload = self.hdma_reload(ch, bus);
++            // Super Famicom Dev "DMA and HDMA": the per-channel eight
++            // clocks above include the line-counter read when reloading.
++            // Only an indirect pointer adds two further eight-clock reads.
++            #[cfg(feature = "clocked-dma")]
++            {
++                cost += reload.saturating_sub(8);
++            }
++            #[cfg(not(feature = "clocked-dma"))]
++            {
++                cost += reload;
++            }
+         }
+         cost
+     }
+--- a/crates/rustysnes-cpu/src/lib.rs
++++ b/crates/rustysnes-cpu/src/lib.rs
+@@ -89,6 +89,9 @@
+     pub last_interrupt_was_nmi: bool,
+     /// Per-instruction CPU-cycle accumulator (reset at the start of each [`Cpu::step`]).
+     cyc: u32,
++    /// I flag sampled before a flag-changing instruction's final cycle.
++    #[cfg(feature = "clocked-interrupts")]
++    irq_mask_override: Option<bool>,
+ }
+ 
+ impl Default for Cpu {
+@@ -110,6 +113,8 @@
+             interrupts_taken: 0,
+             last_interrupt_was_nmi: false,
+             cyc: 0,
++            #[cfg(feature = "clocked-interrupts")]
++            irq_mask_override: None,
+         }
+     }
+ 
+@@ -121,6 +126,10 @@
+         self.waiting = false;
+         self.stopped = false;
+         self.cyc = 0;
++        #[cfg(feature = "clocked-interrupts")]
++        {
++            self.irq_mask_override = None;
++        }
+         let lo = self.bus_read8(bus, vectors::RESET);
+         let hi = self.bus_read8(bus, vectors::RESET + 1);
+         self.regs.pc = u16::from(lo) | (u16::from(hi) << 8);
+@@ -148,6 +157,12 @@
+             s.write_bool(self.waiting);
+             s.write_bool(self.stopped);
+             s.write_u32(self.cyc);
++            #[cfg(feature = "clocked-interrupts")]
++            {
++                s.write_bytes(b"IM01");
++                s.write_bool(self.irq_mask_override.is_some());
++                s.write_bool(self.irq_mask_override.unwrap_or(false));
++            }
+         });
+     }
+ 
+@@ -178,6 +193,17 @@
+         self.waiting = s.read_bool()?;
+         self.stopped = s.read_bool()?;
+         self.cyc = s.read_u32()?;
++        #[cfg(feature = "clocked-interrupts")]
++        {
++            if s.read_bytes(4)? != b"IM01" {
++                return Err(SaveStateError::Invalid(alloc::string::String::from(
++                    "CPU IRQ mask profile mismatch",
++                )));
++            }
++            let present = s.read_bool()?;
++            let masked = s.read_bool()?;
++            self.irq_mask_override = present.then_some(masked);
++        }
+         if s.remaining() != 0 {
+             return Err(SaveStateError::Invalid(alloc::format!(
+                 "CPU0 section has {} trailing byte(s)",
+@@ -195,6 +221,40 @@
+         }
+         Ok(())
+     }
++
++    /// Interrupt mask for the next instruction-boundary poll. CLI, SEI,
++    /// PLP, REP and SEP use the value before their final cycle; RTI does not.
++    #[must_use]
++    pub const fn irq_masked(&self) -> bool {
++        #[cfg(feature = "clocked-interrupts")]
++        if let Some(masked) = self.irq_mask_override {
++            return masked;
++        }
++        self.regs.p.contains(Status::I)
++    }
++
++    /// Consume the mask sample before executing an interpreted or generated
++    /// instruction. Generated instructions that change I must record a new
++    /// sample with [`Self::record_irq_mask`].
++    pub fn take_irq_mask(&mut self) -> bool {
++        let masked = self.irq_masked();
++        #[cfg(feature = "clocked-interrupts")]
++        {
++            self.irq_mask_override = None;
++        }
++        masked
++    }
++
++    /// Record the old I flag when generated execution completes CLI, SEI,
++    /// PLP, REP or SEP. The architectural flags already contain the new value.
++    pub fn record_irq_mask(&mut self, masked: bool) {
++        #[cfg(feature = "clocked-interrupts")]
++        {
++            self.irq_mask_override = Some(masked);
++        }
++        #[cfg(not(feature = "clocked-interrupts"))]
++        let _ = masked;
++    }
+ }
+ 
+ #[cfg(test)]

@@ -2,22 +2,50 @@ use std::collections::{BTreeMap, HashMap};
 use std::fmt;
 
 use crate::cpu::Cpu;
-use crate::{mx_name, Mx};
+use crate::{Mx, mx_name};
 
 /// The non-CPU half of the console. Implement this on top of an emulator core
-/// (planned: RustySNES `rustysnes-core::Bus`), and on a sparse RAM map for tests.
+/// (`snes::SnesBus` wraps RustySNES), and on a sparse RAM map for tests.
 pub trait Bus {
+    /// Inspect the latest interrupt sample without consuming a pending edge.
+    fn interrupt_pending(&self, _irq_masked: bool) -> bool {
+        false
+    }
+    /// Whether the next cycle is paused by active HDMA.
+    fn halt_pending(&self) -> bool {
+        false
+    }
+    /// Final cycle of an implied instruction, with the next program address.
+    fn implied_cycle(&mut self, _next_pc: u32, _irq_masked: bool) {
+        self.tick(6);
+    }
+    /// Begin a CPU cycle before its clock phases; allows hardware DMA stalls.
+    fn begin_cpu_cycle(&mut self, _clocks: u32) {}
     fn read(&mut self, addr: u32) -> u8;
     fn write(&mut self, addr: u32, v: u8);
     /// Advance the rest of the console by this many master clocks.
     /// Generated code calls this with per-block cycle estimates once timing work starts.
     fn tick(&mut self, _master_cycles: u32) {}
+    /// Interpreter timing and interrupt hooks. Test buses can keep the defaults.
+    fn access_cycles(&self, _addr: u32) -> u32 {
+        6
+    }
+    fn poll_nmi(&mut self) -> bool {
+        false
+    }
+    fn poll_irq(&mut self) -> bool {
+        false
+    }
+    /// Bus/internal CPU cycles charged by a timed generated execution adapter.
+    fn cpu_cycles(&self) -> u64 {
+        0
+    }
 }
 
 /// Executes original ROM code for anything that has no generated function yet.
 /// Contract: start at `target` with the current CPU state and run until the
 /// subroutine returns (stack pointer climbs back above its value at entry).
-/// Planned implementation: RustySNES's 65816 core driven over the same `Bus`.
+/// `snes::InterpreterFallback` drives RustySNES's 65816 core over the same `Bus`.
 pub trait Fallback {
     fn run_subroutine(&mut self, cpu: &mut Cpu, bus: &mut dyn Bus, target: u32);
 }
@@ -35,13 +63,7 @@ pub struct Miss {
 
 impl fmt::Display for Miss {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "${:02X}:{:04X} {}",
-            self.addr >> 16,
-            self.addr & 0xffff,
-            mx_name(self.mx)
-        )
+        write!(f, "${:02X}:{:04X} {}", self.addr >> 16, self.addr & 0xffff, mx_name(self.mx))
     }
 }
 
@@ -85,11 +107,7 @@ impl Machine {
     #[inline]
     pub fn read(&mut self, addr: u32, wide: bool) -> u16 {
         let lo = self.read8(addr) as u16;
-        if wide {
-            lo | (self.read8(addr.wrapping_add(1)) as u16) << 8
-        } else {
-            lo
-        }
+        if wide { lo | (self.read8(addr.wrapping_add(1)) as u16) << 8 } else { lo }
     }
 
     #[inline]

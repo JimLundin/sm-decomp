@@ -4,6 +4,7 @@ description = "Check emitted instruction semantics against the SingleStepTests 6
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+publish.workspace = true
 
 [dependencies]
 anyhow.workspace = true

@@ -4,7 +4,10 @@ description = "Lockstep harness: recompiled game vs reference emulator, frame by
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+publish.workspace = true
 
 [dependencies]
 anyhow.workspace = true
 movie = { path = "../movie" }
+snes = { path = "../snes" }
+game = { path = "../game" }

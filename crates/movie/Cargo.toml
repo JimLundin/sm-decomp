@@ -4,6 +4,7 @@ description = "Convert TAS movies (BizHawk .bk2) into a plain per-frame SNES joy
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+publish.workspace = true
 
 [dependencies]
 anyhow.workspace = true

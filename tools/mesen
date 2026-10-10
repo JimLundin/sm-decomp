@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+export XDG_CONFIG_HOME="$root/deps/config"
+binary="$root/deps/mesen/Mesen"
+loader="$root/deps/mesen-runtime/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2"
+if [[ -x "$loader" ]]; then
+    # Mesen restarts itself after first-run configuration. Patch its interpreter
+    # during setup so the restart uses the same private runtime.
+    export LD_LIBRARY_PATH="$root/deps/mesen-runtime/lib/x86_64-linux-gnu:$root/deps/mesen-runtime/usr/lib/x86_64-linux-gnu"
+fi
+exec "$binary" "$@"

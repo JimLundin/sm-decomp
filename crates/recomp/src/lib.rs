@@ -13,3 +13,4 @@ pub mod decode;
 pub mod emit;
 pub mod opcodes;
 pub mod rom;
+pub mod step;

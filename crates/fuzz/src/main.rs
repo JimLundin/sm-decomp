@@ -3,7 +3,7 @@
 //! Reads the SingleStepTests / ProcessorTests 65816 JSON files (native mode,
 //! `*.n.json`), runs each test's instruction through the *same* emitter the
 //! recompiler uses (`recomp::emit::emit_straight`), and writes Rust tests to
-//! `crates/fuzz/generated/cases.rs`. Then `cargo test -p fuzz` compiles and runs
+//! `out/generated/fuzz.rs`. Then `cargo test -p fuzz` compiles and runs
 //! them. A failure means `runtime::ops`/`ea` or the emitter is wrong.
 //!
 //! Control-flow instructions and block moves are skipped: generated code does
@@ -110,8 +110,8 @@ fn main() -> Result<()> {
             emitted += 1;
         }
     }
-    std::fs::create_dir_all("crates/fuzz/generated")?;
-    std::fs::write("crates/fuzz/generated/cases.rs", out)?;
+    std::fs::create_dir_all("out/generated")?;
+    std::fs::write("out/generated/fuzz.rs", out)?;
     eprintln!("fuzz: {emitted} cases written, {skipped} skipped → run `cargo test -p fuzz`");
     Ok(())
 }

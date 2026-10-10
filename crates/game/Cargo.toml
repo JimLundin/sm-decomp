@@ -1,13 +1,13 @@
 [package]
 name = "game"
-description = "The recompiled game: generated code + hand-written overrides + hardware glue"
+description = "The recompiled game: generated code + hand-written overrides"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+publish.workspace = true
 
 [dependencies]
 runtime.workspace = true
-anyhow.workspace = true
 
 [build-dependencies]
 recomp.workspace = true

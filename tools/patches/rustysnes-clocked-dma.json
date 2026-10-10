@@ -1,0 +1,22 @@
+[
+  {
+    "path": "crates/rustysnes-core/Cargo.toml",
+    "original_sha256": "082e2246cba71db8d2b3adc4e4d150969caf683d96005a772b3b2e9d8ab59f17",
+    "patched_sha256": "13eff8147ae788a24c8107e564f961d0b9c8568ea485bce3c6c23053f2b28a3f"
+  },
+  {
+    "path": "crates/rustysnes-core/src/bus.rs",
+    "original_sha256": "2589b432207e4205a0c61861a2d2bdf963eb60fb156509d93d15f4cf4a9a930e",
+    "patched_sha256": "6ae38b02557ef22d5b277ef988f17b08bca65a773d641fee8ddbc2709e46a9a6"
+  },
+  {
+    "path": "crates/rustysnes-cpu/src/bus.rs",
+    "original_sha256": "64de8d4b4d53ba6ea13f5380d1ebb09da0536d0273ebf5a1c9573948efaae3ab",
+    "patched_sha256": "66a2b0476d332e06c4b610293ad35db216e0302021acb8953ccb647d6e5956b6"
+  },
+  {
+    "path": "crates/rustysnes-cpu/src/exec.rs",
+    "original_sha256": "8597f5d043f72e2c4482ca2272281a2f80434c78d5d28516a22b9cc9de5e6602",
+    "patched_sha256": "54c15f82ba98ed167f472a31beb943e6c2227a23a1d154297623dd7ebcc78b21"
+  }
+]

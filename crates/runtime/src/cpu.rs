@@ -33,11 +33,7 @@ impl Cpu {
 
     #[inline]
     pub fn set_flag(&mut self, f: u8, on: bool) {
-        if on {
-            self.p |= f
-        } else {
-            self.p &= !f
-        }
+        if on { self.p |= f } else { self.p &= !f }
     }
 
     /// True when the accumulator is 8-bit.

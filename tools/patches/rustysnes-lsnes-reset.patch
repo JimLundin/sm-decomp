@@ -1,0 +1,18 @@
+--- a/crates/rustysnes-core/src/scheduler.rs
++++ b/crates/rustysnes-core/src/scheduler.rs
+@@ -164,6 +164,15 @@
+     /// (frontend or test) having to know or guess the region up front.
+     pub fn reset(&mut self) {
+         self.bus.sync_region_from_cart();
++        #[cfg(feature = "lsnes-profile")]
++        if self.bus.clock.master == 0 {
++            // rr2-beta23 / bsnes085Compatibility startup profile, measured with
++            // a synthetic deterministic cartridge: first opcode at H=186.
++            // The two reset-vector reads below consume 16 clocks. This sets
++            // recording-core power-on phase, not a universal console oscillator
++            // or a movie-specific delay. Soft reset retains the running phase.
++            rustysnes_cpu::Bus::advance(&mut self.bus, 170);
++        }
+         self.cpu.reset(&mut self.bus);
+         self.booted = self.bus.cart.is_some();
+         self.last_line = self.bus.ppu.scanline();

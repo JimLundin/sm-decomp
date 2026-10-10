@@ -1,5 +1,5 @@
 //! Picks the code to compile in:
-//! - `generated/generated.rs` if you've run `cargo run -p recomp` against your ROM;
+//! - `out/generated/game.rs` if you've run `cargo run -p recomp` against your ROM;
 //! - otherwise a tiny built-in demo program, recompiled right here, so the
 //!   workspace builds and the end-to-end test runs without a ROM.
 
@@ -8,8 +8,8 @@ use std::path::PathBuf;
 
 fn main() -> anyhow::Result<()> {
     let out = PathBuf::from(std::env::var("OUT_DIR")?).join("generated.rs");
-    let real = PathBuf::from("generated/generated.rs");
-    println!("cargo:rerun-if-changed=generated");
+    let real = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR")?).join("../../out/generated/game.rs");
+    println!("cargo:rerun-if-changed={}", real.display());
     println!("cargo:rerun-if-changed=build.rs");
 
     if real.exists() {
@@ -19,6 +19,17 @@ fn main() -> anyhow::Result<()> {
         std::fs::write(&out, demo()?)?;
     }
     println!("cargo:rustc-check-cfg=cfg(sm_generated)");
+    let steps = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR")?).join("../../out/generated/steps.rs");
+    println!("cargo:rerun-if-changed={}", steps.display());
+    let steps_out = PathBuf::from(std::env::var("OUT_DIR")?).join("steps.rs");
+    if steps.exists() {
+        std::fs::copy(steps, steps_out)?;
+    } else {
+        std::fs::write(
+            steps_out,
+            "pub static STEP_TABLE: &[runtime::StepEntry] = &[];\npub const ROM_SHA256: Option<&str> = None;\n",
+        )?;
+    }
     Ok(())
 }
 

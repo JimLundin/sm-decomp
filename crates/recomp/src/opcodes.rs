@@ -58,8 +58,7 @@ impl Mode {
                     2
                 }
             }
-            Imm8 | Dp | DpX | DpY | DpInd | DpIndX | DpIndY | DpIndLong | DpIndLongY | Sr | SrIndY
-            | Rel8 => 1,
+            Imm8 | Dp | DpX | DpY | DpInd | DpIndX | DpIndY | DpIndLong | DpIndLongY | Sr | SrIndY | Rel8 => 1,
             Imm16 | Abs | AbsX | AbsY | AbsInd | AbsIndX | AbsIndLong | Rel16 | Block => 2,
             Long | LongX => 3,
         }

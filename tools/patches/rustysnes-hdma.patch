@@ -1,0 +1,26 @@
+--- a/crates/rustysnes-core/src/dma.rs
++++ b/crates/rustysnes-core/src/dma.rs
+@@ -504,7 +504,11 @@
+     /// `hdmaTransfer` + `hdmaAdvance`). Returns the master-clock cost (the per-line budget).
+     #[must_use]
+     pub fn hdma_run(&mut self, bus: &mut impl DmaBus) -> u32 {
+-        if self.hdma_enable == 0 {
++        // A terminated channel can remain enabled in $420C. No transfer period
++        // (and no global overhead) occurs once every enabled channel terminates.
++        // Super Famicom Dev, "DMA and HDMA": overhead applies only while at
++        // least one channel is active and has not terminated for this frame.
++        if !(0..8).any(|ch| self.hdma_active(ch)) {
+             return 0;
+         }
+         let mut cost: u32 = 8; // per-line overhead
+@@ -546,6 +550,10 @@
+             if !self.hdma_active(ch) {
+                 continue;
+             }
++            // Each active channel costs eight master clocks on every scanline,
++            // including held-data lines. Super Famicom Dev, "DMA and HDMA",
++            // https://wiki.superfamicom.org/dma-and-hdma (HDMA Transfer).
++            cost += 8;
+             self.channels[ch].line_counter = self.channels[ch].line_counter.wrapping_sub(1);
+             self.channels[ch].hdma_do_transfer = self.channels[ch].line_counter & 0x80 != 0;
+             cost += self.hdma_reload(ch, bus);

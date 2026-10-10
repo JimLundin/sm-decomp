@@ -1,0 +1,147 @@
+--- a/crates/rustysnes-core/Cargo.toml
++++ b/crates/rustysnes-core/Cargo.toml
+@@ -19,7 +19,8 @@
+ # see that module's own doc for the discipline this matches (`cheat.rs`'s read intercept).
+ debug-hooks = []
+ clocked-smp = ["rustysnes-apu/clocked-smp"]
+-lsnes-profile = ["clocked-smp"]
++clocked-dma = []
++lsnes-profile = ["clocked-smp", "clocked-dma"]
+ # `v1.3.0`: propagates down to `rustysnes-ppu/hd-pack` (the `TileTag` recording hook). This crate
+ # has no HD-pack code of its own -- `Bus::ppu` and `System::bus` are both already `pub`, so the
+ # frontend reaches `Ppu::set_hd_pack_tagging`/`Ppu::tile_tags` directly via
+--- a/crates/rustysnes-core/src/bus.rs
++++ b/crates/rustysnes-core/src/bus.rs
+@@ -397,6 +397,9 @@
+     /// fires statelessly, once per scanline, on the single sub-tick that completes dot 133 =
+     /// [`DRAM_REFRESH_DOT`] - 1), so it is neither serialized nor part of determinism.
+     in_refresh: bool,
++    /// Pending DMA: 0 idle, 1 allow one CPU cycle, 2 halt before next cycle.
++    #[cfg(feature = "clocked-dma")]
++    dma_stage: u8,
+     /// Active cheat-code patches (`v0.8.0`, T-81-003) — checked on every CPU-visible read in
+     /// [`CpuBus::read24`]. Empty (the default, and the only state possible unless a frontend
+     /// explicitly calls [`Self::set_cheats`]) costs exactly one `is_empty()` branch per read.
+@@ -462,6 +465,8 @@
+             in_hdma: false,
+             hdma_setup_done: false,
+             in_refresh: false,
++            #[cfg(feature = "clocked-dma")]
++            dma_stage: 0,
+             cheats: alloc::vec::Vec::new(),
+             #[cfg(feature = "debug-hooks")]
+             watchpoints: crate::watchpoint::WatchpointState::default(),
+@@ -1194,7 +1199,15 @@
+             0x4208 => self.clock.htime = (self.clock.htime & 0x00FF) | (u16::from(val & 1) << 8),
+             0x4209 => self.clock.vtime = (self.clock.vtime & 0x0100) | u16::from(val),
+             0x420A => self.clock.vtime = (self.clock.vtime & 0x00FF) | (u16::from(val & 1) << 8),
+-            0x420B => self.run_gp_dma(val),
++            0x420B => {
++                #[cfg(feature = "clocked-dma")]
++                {
++                    self.dma.gp_enable = val;
++                    self.dma_stage = u8::from(val != 0);
++                }
++                #[cfg(not(feature = "clocked-dma"))]
++                self.run_gp_dma(val);
++            }
+             0x420C => self.dma.hdma_enable = val,
+             0x420D => self.clock.fast_rom = val & 1 != 0,
+             _ => {}
+@@ -1405,6 +1418,11 @@
+             // the VBlank edge and the read's start dot must restore the pending start, or the read
+             // never begins on load.
+             s.write_u64(self.auto_joypad_start_at);
++            #[cfg(feature = "clocked-dma")]
++            {
++                s.write_bytes(b"DMA1");
++                s.write_u8(self.dma_stage);
++            }
+         });
+         match &self.cart {
+             Some(cart) => {
+@@ -1457,6 +1475,16 @@
+         self.auto_joypad_busy_until = s.read_u64()?;
+         // The scheduled auto-read start (`FORMAT_VERSION` 9).
+         self.auto_joypad_start_at = s.read_u64()?;
++        #[cfg(feature = "clocked-dma")]
++        {
++            if s.read_bytes(4)? != b"DMA1" {
++                return Err(SaveStateError::Invalid("clocked DMA state required".into()));
++            }
++            self.dma_stage = s.read_u8()?;
++            if self.dma_stage > 2 {
++                return Err(SaveStateError::Invalid("invalid DMA cycle stage".into()));
++            }
++        }
+         if s.remaining() != 0 {
+             return Err(SaveStateError::Invalid(alloc::format!(
+                 "BUS0 section has {} trailing byte(s)",
+@@ -1578,6 +1606,28 @@
+ 
+ /// The 65C816's view: route a 24-bit access + drive the master clock in lockstep.
+ impl CpuBus for Bus {
++    fn begin_cpu_cycle(&mut self, clocks: u32) {
++        #[cfg(feature = "clocked-dma")]
++        match self.dma_stage {
++            1 => self.dma_stage = 2,
++            2 => {
++                self.dma_stage = 0;
++                // Super Famicom Dev, "Timing", DMA: allow one CPU cycle,
++                // align to the 8-clock divider, run DMA, then resume on a
++                // whole following CPU cycle. Both waits are strictly positive.
++                // https://wiki.superfamicom.org/timing#dma-114
++                let pause = self.clock.master;
++                self.advance_master(8 - (pause & 7) as u32);
++                self.run_gp_dma(self.dma.gp_enable);
++                let elapsed = self.clock.master - pause;
++                self.advance_master(clocks - (elapsed % u64::from(clocks)) as u32);
++            }
++            _ => {}
++        }
++        #[cfg(not(feature = "clocked-dma"))]
++        let _ = clocks;
++    }
++
+     // `decode_read` must always run first for its side effects (e.g. an NMI-flag-clear-on-read
+     // register) even when a cheat overrides the value the CPU observes — so this can't be
+     // rephrased as a plain `if/else` expression the way clippy suggests.
+--- a/crates/rustysnes-cpu/src/bus.rs
++++ b/crates/rustysnes-cpu/src/bus.rs
+@@ -15,6 +15,10 @@
+ /// the end (advance cost−4, read, advance 4). This phase matters: it decides the exact hcounter
+ /// at which a register write becomes visible to the PPU/HDMA (e.g. the HDMAEN mid-scanline latch).
+ pub trait Bus {
++    /// Begin one complete CPU bus or internal cycle. DMA can halt the CPU
++    /// here before its cycle advances; split read phases remain one cycle.
++    fn begin_cpu_cycle(&mut self, _clocks: u32) {}
++
+     /// Read a byte at a 24-bit address (no clock advance — the CPU sequences timing via
+     /// [`Bus::advance`] around this call).
+     fn read24(&mut self, addr24: u32) -> u8;
+--- a/crates/rustysnes-cpu/src/exec.rs
++++ b/crates/rustysnes-cpu/src/exec.rs
+@@ -40,6 +40,7 @@
+     pub(crate) fn bus_read8(&mut self, bus: &mut impl Bus, addr: u32) -> u8 {
+         let addr = addr & 0x00FF_FFFF;
+         let speed = bus.access_cycles(addr);
++        bus.begin_cpu_cycle(speed);
+         bus.advance(speed - 4);
+         let v = bus.read24(addr);
+         bus.advance(4);
+@@ -54,6 +55,7 @@
+     pub(crate) fn bus_write8(&mut self, bus: &mut impl Bus, addr: u32, val: u8) {
+         let addr = addr & 0x00FF_FFFF;
+         let speed = bus.access_cycles(addr);
++        bus.begin_cpu_cycle(speed);
+         bus.advance(speed);
+         bus.write24(addr, val);
+         self.cycles += 1;
+@@ -63,6 +65,7 @@
+     /// Internal (no-bus) cycle, e.g. ALU/indexing dead cycles. Charges one CPU cycle (ares
+     /// `CPU::idle`: a flat six-clock step with no memory access).
+     pub(crate) fn io(&mut self, bus: &mut impl Bus) {
++        bus.begin_cpu_cycle(6);
+         bus.advance(6);
+         self.cycles += 1;
+         self.cyc += 1;

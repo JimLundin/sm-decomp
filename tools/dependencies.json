@@ -1,0 +1,74 @@
+[
+  {
+    "name": "rustysnes",
+    "revision": "98f8d398020b8798b16076fae315960031c6b3b7",
+    "url": "https://codeload.github.com/doublegate/RustySNES/tar.gz/98f8d398020b8798b16076fae315960031c6b3b7",
+    "archive": "rustysnes.tar.gz",
+    "sha256": "0223d43d75ca943a0f4ae3d2771b5d2982bd938cdc0cc5cc6b0710129be75b42",
+    "kind": "source"
+  },
+  {
+    "name": "snesrev-sm",
+    "revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+    "url": "https://codeload.github.com/snesrev/sm/tar.gz/578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+    "archive": "snesrev-sm.tar.gz",
+    "sha256": "69c78831351112887575f852dadf0281dd5c23cef890b07a268ae6cf60aa9193",
+    "kind": "source"
+  },
+  {
+    "name": "65816",
+    "revision": "db6b10401729d5f20f2181dde5d3d7b037093a4a",
+    "url": "https://codeload.github.com/SingleStepTests/65816/tar.gz/db6b10401729d5f20f2181dde5d3d7b037093a4a",
+    "archive": "65816.tar.gz",
+    "sha256": "075c4a6d2881983849ca9ef1ab4029c170f54d4f900aaf131cd74d0fdec88b75",
+    "kind": "native-tests"
+  },
+  {
+    "name": "mesen",
+    "revision": "2.2.1",
+    "url": "https://github.com/nesdev-org/MesenCE/releases/download/2.2.1/Mesen_2.2.1_Linux_x64.zip",
+    "archive": "mesen-linux-x64.zip",
+    "sha256": "c88ff4d251b407515c43d3332d641927655cd69fb538996b6a21da4509dbb58f",
+    "kind": "zip"
+  },
+  {
+    "name": "glibc",
+    "revision": "2.35-0ubuntu3.15",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/g/glibc/libc6_2.35-0ubuntu3.15_amd64.deb",
+    "archive": "libc6.deb",
+    "sha256": "79e35256227e16a607c154cdeb8d76ff12d20e31de286ea7fd9ad3b96fe0452d",
+    "kind": "runtime-deb"
+  },
+  {
+    "name": "patchelf",
+    "revision": "0.10-2build1",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/p/patchelf/patchelf_0.10-2build1_amd64.deb",
+    "archive": "patchelf.deb",
+    "sha256": "2e5668d981fe99027ae32edae8c6cbdaf35d0bd203d62c0f8725ed132cb8b4c1",
+    "kind": "tool-deb"
+  },
+  {
+    "name": "sdl2",
+    "revision": "2.0.10+dfsg1-3",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/libs/libsdl2/libsdl2-2.0-0_2.0.10+dfsg1-3_amd64.deb",
+    "archive": "sdl2.deb",
+    "sha256": "c088a21ed51ae64edafbdfe9a6b694db7f35a7f3d307952a13271dfb474dd10e",
+    "kind": "runtime-deb"
+  },
+  {
+    "name": "wayland-egl",
+    "revision": "1.18.0-1ubuntu0.1",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/w/wayland/libwayland-egl1_1.18.0-1ubuntu0.1_amd64.deb",
+    "archive": "wayland-egl.deb",
+    "sha256": "127b800e32b6c938a6d7535dceb54f8d5a3f506f013e44f22a84d8502547ba2e",
+    "kind": "runtime-deb"
+  },
+  {
+    "name": "wayland-cursor",
+    "revision": "1.18.0-1ubuntu0.1",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/w/wayland/libwayland-cursor0_1.18.0-1ubuntu0.1_amd64.deb",
+    "archive": "wayland-cursor.deb",
+    "sha256": "68ead329395b07df74897225e99af28299c0bfe8e59d62567e01ee2a0c9433c7",
+    "kind": "runtime-deb"
+  }
+]

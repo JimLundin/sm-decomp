@@ -4,5 +4,6 @@ description = "Runtime for recompiled 65816 code: CPU state, bus, dispatch, ALU 
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+publish.workspace = true
 
 [dependencies]

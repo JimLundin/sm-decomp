@@ -10,7 +10,7 @@
 
 use std::collections::BTreeMap;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use recomp::config::{self, Function, Functions};
 
 fn save(path: &str, f: &Functions) -> Result<()> {
@@ -67,17 +67,15 @@ fn merge(fpath: &str, csvs: &[String]) -> Result<()> {
 fn names(fpath: &str, sympath: &str) -> Result<()> {
     let mut funcs: Functions = config::load(fpath.as_ref())?;
     let syms: BTreeMap<String, String> = toml::from_str(&std::fs::read_to_string(sympath)?)?;
-    let syms: BTreeMap<u32, String> = syms
-        .into_iter()
-        .map(|(k, v)| Ok((config::parse_addr(&k)?, v)))
-        .collect::<Result<_>>()?;
+    let syms: BTreeMap<u32, String> =
+        syms.into_iter().map(|(k, v)| Ok((config::parse_addr(&k)?, v))).collect::<Result<_>>()?;
     let mut n = 0;
     for f in &mut funcs.functions {
-        if f.name.is_none() {
-            if let Some(s) = syms.get(&config::parse_addr(&f.addr)?) {
-                f.name = Some(s.clone());
-                n += 1;
-            }
+        if f.name.is_none()
+            && let Some(s) = syms.get(&config::parse_addr(&f.addr)?)
+        {
+            f.name = Some(s.clone());
+            n += 1;
         }
     }
     save(fpath, &funcs)?;

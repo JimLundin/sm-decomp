@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 
 /// Super Metroid is LoROM, 3 MiB. Code lives in banks $80-$B4 (FastROM mirror).
 pub struct Rom {
@@ -12,11 +12,7 @@ impl Rom {
             data.drain(..512); // copier header
         }
         if data.len() != 3 * 1024 * 1024 {
-            bail!(
-                "{}: expected a 3 MiB Super Metroid ROM, got {} bytes",
-                path.display(),
-                data.len()
-            );
+            bail!("{}: expected a 3 MiB Super Metroid ROM, got {} bytes", path.display(), data.len());
         }
         Ok(Self { data })
     }

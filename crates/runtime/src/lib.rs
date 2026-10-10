@@ -13,9 +13,11 @@ pub mod cpu;
 pub mod ea;
 pub mod machine;
 pub mod ops;
+pub mod step;
 
-pub use cpu::{flag, Cpu};
+pub use cpu::{Cpu, flag};
 pub use machine::{Bus, Fallback, GenFn, Machine, Miss, TableEntry};
+pub use step::{StepEntry, StepFn, TimedBus};
 
 /// Width/flag key used everywhere: bit 1 = M (8-bit A), bit 0 = X (8-bit X/Y).
 /// `0b11` means both 8-bit ("m1x1"), `0b00` both 16-bit ("m0x0").

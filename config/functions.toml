@@ -6,3 +6,10 @@
 # name = "WaitForNMI"        # optional
 # variants = ["m1x1"]        # m0x0 / m0x1 / m1x0 / m1x1 (M,X: 1 = 8-bit)
 # override = true            # optional: hand-written in crates/game/src/overrides.rs
+
+# First hardware-validated slice. Unsupported instructions stay interpreted in
+# the resumable step table; widen this list only after the movie checks pass.
+[[function]]
+addr = "808338"
+name = "WaitForNMI"
+variants = ["m0x0", "m0x1", "m1x0", "m1x1"]

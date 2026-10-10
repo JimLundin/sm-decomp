@@ -1,5 +1,5 @@
 #![allow(unused_braces, unused_imports, unused_variables)]
-use runtime::{ea, flag, ops, Cpu, Machine};
+use runtime::{Cpu, Machine, ea, flag, ops};
 
 mod support {
     use std::collections::HashMap;
@@ -20,6 +20,7 @@ mod support {
         Machine::new(Box::new(Sparse(ram.iter().copied().collect())), &[], None)
     }
 
+    #[allow(dead_code)] // Used when the external corpus has generated cases.
     pub fn check(m: &mut Machine, want: Cpu, ram: &[(u32, u8)], name: &str) {
         // PC is not modelled by generated code; compare everything else.
         assert_eq!(m.cpu, want, "registers: {name}");

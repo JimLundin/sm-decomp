@@ -8,9 +8,9 @@
 
 use std::collections::{HashMap, HashSet, VecDeque};
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 
-use crate::decode::{decode_with, Insn};
+use crate::decode::{Insn, decode_with};
 use crate::opcodes::Mode;
 
 pub const MAX_BLOCKS: usize = 4096;
