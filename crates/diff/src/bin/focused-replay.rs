@@ -26,8 +26,37 @@ fn main() -> Result<()> {
     }
     let mut reference = snes::Reference::new(&rom, 0)?;
     let mut subject = snes::Subject::with_steps(&rom, 0, table)?;
-    let mut report =
-        snes::focused::compare_from_boundary(&mut reference, &mut subject, &movie.frames, start, skip, count, &output)?;
+    let mut report = if let Some(cache_path) = option("--cache") {
+        let identity_path = option("--identities").context("--identities required for validated cache")?;
+        let identities: serde_json::Value = serde_json::from_slice(&std::fs::read(identity_path)?)?;
+        let (pair, cache) = snes::paired::prepare_cache(
+            &rom,
+            0,
+            table,
+            &movie.frames,
+            (start, skip),
+            identities.clone(),
+            &PathBuf::from(cache_path),
+        )?;
+        snes::paired::restore(&pair, &pair.identities, &mut reference, &mut subject)?;
+        let began = std::time::Instant::now();
+        let mut report = snes::focused::compare_restored(
+            &mut reference,
+            &mut subject,
+            &movie.frames,
+            (pair.input_index, start, skip),
+            count,
+            &output,
+            "warm",
+        )?;
+        report["warm_replay_seconds"] = began.elapsed().as_secs_f64().into();
+        report["cache"] = cache;
+        report["cache_pair_sha256"] = pair.pair_sha256.into();
+        report["cache_history_sha256"] = pair.history_sha256.into();
+        report
+    } else {
+        snes::focused::compare_from_boundary(&mut reference, &mut subject, &movie.frames, start, skip, count, &output)?
+    };
     report["identities"] = serde_json::json!({"rom_sha256":format!("{:x}",Sha256::digest(&rom)),
         "movie_sha256":format!("{:x}",Sha256::digest(std::fs::read(movie_path)?)),
         "input_sha256":format!("{:x}",Sha256::digest(movie::write_inputs(&movie.frames).as_bytes()))});

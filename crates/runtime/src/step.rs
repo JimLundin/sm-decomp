@@ -80,4 +80,7 @@ impl<B: Bus> Bus for TimedBus<B> {
     fn cpu_cycles(&self) -> u64 {
         self.cycles
     }
+    fn restore_cpu_cycles(&mut self, cycles: u64) {
+        self.cycles = cycles;
+    }
 }

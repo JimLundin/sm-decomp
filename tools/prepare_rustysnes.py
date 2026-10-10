@@ -12,7 +12,7 @@ PATCHED = "c854a6c72ed20c5863819befa551f4b2f74d67656602c2a1a979785f9250b718"
 
 
 def observation_identity(relative, identity):
-    records = json.loads((ROOT / "tools/patches/rustysnes-readiness-observation.json").read_text())
+    records = [record for name in ("rustysnes-readiness-observation","rustysnes-readiness-checkpoints") for record in json.loads((ROOT / ("tools/patches/"+name+".json")).read_text())]
     return any(record["path"] == relative and record["patched_sha256"] == identity for record in records)
 
 
@@ -123,6 +123,20 @@ def apply_readiness_observation_patch():
         raise RuntimeError("Readiness observation patch checksum mismatch")
 
 
+def apply_readiness_checkpoints_patch():
+    source = ROOT / "deps/rustysnes"
+    records = json.loads((ROOT / "tools/patches/rustysnes-readiness-checkpoints.json").read_text())
+    identities = [digest(source / record["path"]) for record in records]
+    if identities == [record["patched_sha256"] for record in records]:
+        print("Ready: complete paired readiness checkpoint restoration")
+        return
+    if identities != [record["original_sha256"] for record in records]:
+        raise RuntimeError("Readiness checkpoint targets differ; preserve and review local hardware edits")
+    subprocess.run(["patch", "--batch", "-p1", "-i", str(ROOT / "tools/patches/rustysnes-readiness-checkpoints.patch")], cwd=source, check=True)
+    if [digest(source / record["path"]) for record in records] != [record["patched_sha256"] for record in records]:
+        raise RuntimeError("Readiness checkpoint patch checksum mismatch")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--offline", action="store_true")
@@ -136,6 +150,7 @@ def main():
     apply_clocked_interrupts_patch()
     apply_lsnes_reset_patch()
     apply_readiness_observation_patch()
+    apply_readiness_checkpoints_patch()
 
 
 if __name__ == "__main__":

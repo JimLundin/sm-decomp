@@ -221,6 +221,66 @@ pub struct InstructionBoundary {
 }
 
 impl Subject {
+    pub fn checkpoint_state(&self) -> Vec<u8> {
+        let c = &self.machine.cpu;
+        let mut table: Vec<_> = self.steps.iter().map(|(&(a, m), (bytes, _))| (a, m, bytes.to_vec())).collect();
+        table.sort();
+        let metadata = serde_json::json!({"table":table,"generated":self.generated_steps,"interpreted":self.interpreted_steps,
+            "timed_cycles":self.machine.bus.cpu_cycles(),"machine_cpu":[c.a,c.x,c.y,c.s,c.d,u16::from(c.db),u16::from(c.pb),u16::from(c.p),u16::from(c.e)],
+            "generated_calls":self.machine.generated_calls,
+            "machine_misses":self.machine.misses.iter().map(|(m,&n)|(m.addr,m.mx,n)).collect::<Vec<_>>(),
+            "misses":self.misses.iter().map(|(m,&n)|(m.addr,m.mx,n)).collect::<Vec<_>>(),"accounting":self.accounting.checkpoint(),"wram":self.wram});
+        super::paired::envelope(
+            b"SCP1",
+            &super::paired::raw_cpu(&self.interpreter),
+            &self.bus.hardware.borrow().readiness_state(),
+            &metadata,
+        )
+    }
+    pub fn restore_checkpoint_state(&mut self, bytes: &[u8]) -> Result<()> {
+        let (cpu, hardware, metadata) = super::paired::open(bytes, b"SCP1")?;
+        let mut table: Vec<_> = self.steps.iter().map(|(&(a, m), (bytes, _))| (a, m, bytes.to_vec())).collect();
+        table.sort();
+        ensure!(
+            serde_json::to_value(table)? == metadata["table"],
+            "subject dispatch table incompatible with checkpoint"
+        );
+        super::paired::load_cpu(&mut self.interpreter, cpu)?;
+        self.bus.hardware.borrow_mut().readiness_load(hardware)?;
+        self.generated_steps =
+            metadata["generated"].as_u64().ok_or_else(|| anyhow::anyhow!("missing generated count"))?;
+        self.interpreted_steps =
+            metadata["interpreted"].as_u64().ok_or_else(|| anyhow::anyhow!("missing interpreted count"))?;
+        self.machine.bus.restore_cpu_cycles(
+            metadata["timed_cycles"].as_u64().ok_or_else(|| anyhow::anyhow!("missing timed count"))?,
+        );
+        let c: Vec<u16> = serde_json::from_value(metadata["machine_cpu"].clone())?;
+        ensure!(c.len() == 9, "invalid machine CPU");
+        self.machine.cpu = Cpu {
+            a: c[0],
+            x: c[1],
+            y: c[2],
+            s: c[3],
+            d: c[4],
+            db: c[5] as u8,
+            pb: c[6] as u8,
+            p: c[7] as u8,
+            e: c[8] != 0,
+        };
+        self.machine.generated_calls =
+            metadata["generated_calls"].as_u64().ok_or_else(|| anyhow::anyhow!("missing call count"))?;
+        self.accounting.restore(serde_json::from_value(metadata["accounting"].clone())?);
+        for (target, field) in [(&mut self.misses, "misses"), (&mut self.machine.misses, "machine_misses")] {
+            target.clear();
+            let rows: Vec<(u32, u8, u64)> = serde_json::from_value(metadata[field].clone())?;
+            for (addr, mx, count) in rows {
+                target.insert(Miss { addr, mx }, count);
+            }
+        }
+        self.wram = serde_json::from_value(metadata["wram"].clone())?;
+        ensure!(self.wram.len() == 128 * 1024, "invalid cached WRAM");
+        Ok(())
+    }
     /// Construct only for the base NTSC SNES hardware used by Super Metroid.
     pub fn fallback_only(rom: &[u8], seed: u64) -> Result<Self> {
         Self::with_steps(rom, seed, &[])

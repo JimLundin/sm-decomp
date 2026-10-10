@@ -73,10 +73,28 @@ pub fn compare_from_boundary(
             subject.set_input(pads[input]);
         }
     }
+    compare_restored(reference, subject, pads, (input, start, skip), instructions, output, "cold")
+}
+
+/// Compare from an already restored exact paired boundary without replaying its prefix.
+pub fn compare_restored(
+    reference: &mut Reference,
+    subject: &mut Subject,
+    pads: &[u16],
+    boundary: (usize, usize, usize),
+    instructions: usize,
+    output: &Path,
+    replay: &str,
+) -> Result<Value> {
+    let (mut input, start, skip) = boundary;
+    ensure!(input < pads.len() && instructions > 0, "invalid warm focus scope");
+    if !output.exists() {
+        std::fs::create_dir(output)?;
+    }
     let mut history = VecDeque::new();
     let mut preceding = None;
     let mut report = json!({"schema_version":1,"status":"incomplete","complete":false,"start_input_index":start,
-        "start_instruction":skip,"expected_instructions":instructions,"completed_instructions":0,"replay":"cold","observer":"passive actual effects", "history_limit":64});
+        "start_instruction":skip,"expected_instructions":instructions,"completed_instructions":0,"replay":replay,"observer":"passive actual effects", "history_limit":64});
     std::fs::write(output.join("instruction.json"), serde_json::to_vec_pretty(&report)?)?;
     for index in 0..instructions {
         let a = reference.step_instruction_observed()?;

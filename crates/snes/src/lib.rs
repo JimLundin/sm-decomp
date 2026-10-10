@@ -11,6 +11,7 @@ pub mod checkpoint;
 pub mod coverage;
 pub mod diagnostic;
 pub mod focused;
+pub mod paired;
 mod subject;
 pub use subject::{InstructionBoundary, InterpreterFallback, SnesBus, Subject};
 
@@ -50,6 +51,22 @@ pub struct Reference {
 }
 
 impl Reference {
+    pub fn checkpoint_state(&self) -> Vec<u8> {
+        paired::envelope(
+            b"RCP1",
+            &paired::raw_cpu(&self.system.cpu),
+            &self.system.bus.readiness_state(),
+            &serde_json::json!({"system":self.system.save_state()}),
+        )
+    }
+    pub fn restore_checkpoint_state(&mut self, bytes: &[u8]) -> Result<()> {
+        let (cpu, hardware, metadata) = paired::open(bytes, b"RCP1")?;
+        let system: Vec<u8> = serde_json::from_value(metadata["system"].clone())?;
+        self.system.load_state(&system)?;
+        paired::load_cpu(&mut self.system.cpu, cpu)?;
+        self.system.bus.readiness_load(hardware)?;
+        Ok(())
+    }
     pub fn set_input(&mut self, pad: u16) {
         self.system.bus.set_joypad(0, pad);
     }

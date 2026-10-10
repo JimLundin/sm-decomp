@@ -1,0 +1,79 @@
+--- a/crates/rustysnes-core/src/bus.rs
++++ b/crates/rustysnes-core/src/bus.rs
+@@ -463,7 +463,6 @@
+     /// Arm a passive effect buffer. This neither reads hardware nor changes clocks.
+     pub fn readiness_observe(&mut self) { self.readiness_events = Some(alloc::vec::Vec::new()); }
+     /// Disarm and take events without touching hardware.
+-    /// Disarm and take events without touching hardware.
+     pub fn readiness_events(&mut self) -> alloc::vec::Vec<ReadinessEvent> {
+         self.readiness_events.take().unwrap_or_default()
+     }
+@@ -472,7 +471,15 @@
+             events.push(ReadinessEvent { kind, address, value, master: self.clock.master, clocks });
+         }
+     }
+-    /// Canonical mutable hardware with serialized pending state and omitted CPU-visible DMA scratch.
++    /// Restore complete canonical hardware including ordinary-save omissions.
++    pub fn readiness_load(&mut self,bytes:&[u8])->Result<(),SaveStateError>{
++        let mut reader=SaveReader::new(bytes);self.load_state(&mut reader)?;
++        self.ppu.readiness_load(&mut reader)?;
++        for channel in &mut self.dma.channels{channel.scratch=reader.read_u8()?;}
++        if reader.remaining()!=0{return Err(SaveStateError::Invalid("trailing readiness hardware state".into()));}
++        Ok(())
++    }
++    /// Canonical mutable hardware with pending state and CPU-visible DMA scratch.
+     pub fn readiness_state(&self) -> alloc::vec::Vec<u8> {
+         let mut writer = SaveWriter::new();
+         self.save_state(&mut writer);
+--- a/crates/rustysnes-ppu/src/lib.rs
++++ b/crates/rustysnes-ppu/src/lib.rs
+@@ -1365,7 +1365,17 @@
+     /// section. There is no firmware/ROM byte here to exclude — the PPU carries no chip-ROM
+     /// dump (`docs/adr/0003`); `region` is written too since it's set by cart detection, not
+     /// re-derivable from anything else stored here.
+-    /// Passive full pending compositor state, including fields omitted by ordinary frame saves.
++    /// Restore the exact pending per-dot compositor after ordinary PPU state loading.
++    pub fn readiness_load(&mut self,r:&mut SaveReader<'_>)->Result<(),SaveStateError>{
++        for column in self.pd_bg.iter_mut(){for pixel in column{pixel.readiness_load(r)?;}}
++        for pixel in self.pd_sprite.iter_mut(){pixel.readiness_load(r)?;}
++        self.pd_carry.readiness_load(r)?;
++        self.pd_draw_x=r.read_u16()?;self.pd_fetch_x=r.read_u16()?;self.pd_fetched_line=r.read_u16()?;self.pd_over_computed_line=r.read_u16()?;
++        self.internal_cgram_address=r.read_u8()?;
++        let range=r.read_bool()?;let value=r.read_u16()?;self.pd_over_range_dot=range.then_some(value);
++        let time=r.read_bool()?;let value=r.read_u16()?;self.pd_over_time_dot=time.then_some(value);Ok(())
++    }
++    /// Passive full pending compositor state omitted by ordinary frame saves.
+     pub fn readiness_state(&self, w: &mut SaveWriter) {
+         for column in self.pd_bg.iter() {for pixel in column {pixel.readiness_state(w);}}
+         for pixel in self.pd_sprite.iter() {pixel.readiness_state(w);}
+@@ -1375,7 +1385,6 @@
+         for value in [self.pd_over_range_dot,self.pd_over_time_dot] {w.write_bool(value.is_some());w.write_u16(value.unwrap_or(0));}
+     }
+ 
+-    /// Ordinary versioned PPU state for frame-boundary save files.
+     /// Ordinary versioned PPU state for frame-boundary save files.
+     pub fn save_state(&self, w: &mut SaveWriter) {
+         w.section(*b"PPU0", |s| {
+--- a/crates/rustysnes-ppu/src/render.rs
++++ b/crates/rustysnes-ppu/src/render.rs
+@@ -104,12 +104,20 @@
+ }
+ 
+ impl Pixel {
++    pub(crate) fn readiness_load(&mut self,r:&mut rustysnes_savestate::SaveReader<'_>)->Result<(),rustysnes_savestate::SaveStateError>{
++        self.palette=r.read_u8()?;self.priority=r.read_u8()?;self.layer=r.read_u8()?;self.palette_group=r.read_u8()?;self.opaque=r.read_bool()?;Ok(())
++    }
++
+     pub(crate) fn readiness_state(&self, w: &mut rustysnes_savestate::SaveWriter) {
+         for value in [self.palette,self.priority,self.layer,self.palette_group] {w.write_u8(value);}
+         w.write_bool(self.opaque);
+     }
+ }
+ impl DacCarry {
++    pub(crate) fn readiness_load(&mut self,r:&mut rustysnes_savestate::SaveReader<'_>)->Result<(),rustysnes_savestate::SaveStateError>{
++        self.above_enable=r.read_bool()?;self.below_enable=r.read_bool()?;self.above_raw=r.read_u16()?;self.below_opaque=r.read_bool()?;Ok(())
++    }
++
+     pub(crate) fn readiness_state(&self,w:&mut rustysnes_savestate::SaveWriter) {
+         w.write_bool(self.above_enable);w.write_bool(self.below_enable);w.write_u16(self.above_raw);w.write_bool(self.below_opaque);
+     }
