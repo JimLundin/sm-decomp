@@ -32,7 +32,7 @@ in force.
 - [ ] [04: Replay captured decompression calls offline](issues/04-replay-captured-decompression-calls-offline.md) — blocked by 03.
 - [ ] [05: Prove and freeze offline translation acceptance](issues/05-prove-and-freeze-offline-translation-acceptance.md) — blocked by 04.
 - [ ] [06: Exercise the Rust decompressor in the live C game](issues/06-exercise-the-rust-decompressor-in-the-live-c-game.md) — blocked by 05.
-- [ ] [07: Verify an update-aligned original-ROM replay prefix](issues/07-verify-an-update-aligned-original-rom-replay-prefix.md) — blocked by 01.
+- [x] [07: Verify an update-aligned original-ROM replay prefix](issues/07-verify-an-update-aligned-original-rom-replay-prefix.md) — blocked by 01.
 - [ ] [08: Run one additional dependency-ready translation job](issues/08-run-one-additional-dependency-ready-translation-job.md) — blocked by 06.
 
 ## Completion
