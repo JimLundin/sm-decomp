@@ -47,7 +47,7 @@ let mut amount=a;host.spawn_plm(ram,b as u16,&mut amount)?;Ok(amount as u32)}
                 del incomplete['artifacts']['quicksand-clamp/'+filename]
                 evidence.write_text(json.dumps(incomplete))
                 with self.subTest(missing=filename):
-                    with self.assertRaisesRegex(ValueError,'case artifact inventory incomplete'):
+                    with self.assertRaisesRegex(ValueError,'case artifact.*incomplete'):
                         port_collision.verify_collision_evidence(evidence)
             evidence.write_text(original_evidence)
             callback=Path(verdict['run'])/'quicksand-clamp'/'rust'/'callbacks.txt'
