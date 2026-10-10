@@ -450,7 +450,7 @@ class Run:
         return identity
 
     def run_stage(self, name, command, cwd=None, env=None, timeout=None,
-                  failure_status="error", guard=True):
+                  failure_status="error", guard=True, exit_statuses=None):
         """Log a real subprocess, retaining underlying code/signal and bounded timeout."""
         self.ensure_open()
         if name in self.checks:
@@ -475,7 +475,8 @@ class Run:
                 report["signal"] = -process.returncode if process.returncode < 0 else None
                 report["complete"] = process.returncode >= 0
                 report["status"] = ("incomplete" if process.returncode < 0 else
-                                    "pass" if process.returncode == 0 else failure_status)
+                                    "pass" if process.returncode == 0 else
+                                    (exit_statuses or {}).get(process.returncode, failure_status))
                 if process.returncode != 0:
                     report["reason"] = "Command exited with " + str(process.returncode)
                 if guard:

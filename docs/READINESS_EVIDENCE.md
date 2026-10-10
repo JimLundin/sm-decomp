@@ -45,3 +45,22 @@ The shared API is `Run.create()`, `capture_source()`, `guard_input()`,
 setup checks without finalizing, leaving later orchestration to define its full
 mandatory-check set. Evidence consumers must verify the declared checks and
 scope as well as the terminal result before changing accepted state.
+
+`run_stage(..., exit_statuses={1: "divergence", 2: "error"})` may classify
+known tool exit codes before recording immutable stage reports. Signals and
+timeouts remain incomplete, and source/input mutation remains error regardless
+of that map. Other callers retain the default nonzero infrastructure status.
+
+Run `just readiness-parity fallback-only` and `just readiness-parity generated`
+for separate 18,000-frame cold parity runs. `tools/readiness_parity.py` exposes
+`run_parity(run, mode, frames=18000, timeout=None)` for the full suite. Each mode
+uses isolated generated inputs and a target directory, preserves generator and
+candidate binaries, and verifies the actual replay report against all input and
+binary identities. The fresh generated table binds the ROM and must be nonempty
+and execute. Untimed whole-subroutine output is preserved separately and does
+not supply cycle evidence. Reports include first frame/region/byte disagreement,
+decoded CPU/clocks, aggregate execution totals and stage timings. The explicit
+`--timeout` is a hard limit; a completed replay over the 20-minute target reports
+an overrun and keeps its actual outcome. Scoped parity never updates acceptance.
+Direct `diff` commands require a fresh output directory and write `parity.json`
+before input validation; incomplete/old/absent reports cannot certify a pass.
