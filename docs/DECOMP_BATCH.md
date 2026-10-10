@@ -68,3 +68,16 @@ verdicts, acceptance pointers and linked binaries remain retained. Existing
 sealed offline runs often contain large full-WRAM fixtures; cleanup preserves
 those files. New live runs discard their unsealed Cargo target directory after
 completion automatically.
+
+For larger savings, deduplicate identical sealed snapshots:
+
+```sh
+python3 tools/port_cleanup.py --deduplicate
+python3 tools/port_cleanup.py --deduplicate --apply
+```
+
+This verifies SHA-256 and byte equality before atomically replacing duplicate
+immutable WRAM/frame/terminal/ROM-view snapshots with hardlinks on the same
+filesystem. Paths, bytes, verdicts and hashes remain unchanged. Only finished
+accepted runs qualify; retained evidence must remain immutable because linked
+snapshots share storage. Independent process comparison evidence stays intact.
