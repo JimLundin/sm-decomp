@@ -62,7 +62,7 @@ pub unsafe extern "C" fn port_family_{index}(ram:*mut u8,len:usize,rom:*const u8
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--family-verdict', type=Path, action='append', default=[])
-    parser.add_argument('--collision-verdict', type=Path)
+    parser.add_argument('--collision-verdict', type=Path, action='append', default=[])
     parser.add_argument('--plm-verdict', type=Path)
     parser.add_argument('--frames', type=int, default=9000)
     parser.add_argument('--accepted', type=Path, default=ROOT / 'out/port/decompressor-offline/decomp-acceptance.json')
@@ -96,17 +96,17 @@ def main():
             if previous['source'] != verdict['source']:
                 raise ValueError('family source identity differs')
             families.append((manifest, module))
-        collision_index = None
-        if args.collision_verdict:
+        collision_indexes = set()
+        for collision_path in args.collision_verdict:
             from port_collision import verify_collision_evidence
-            evidence = verify_collision_evidence(args.collision_verdict)
-            collision_manifest = json.loads((args.collision_verdict.parent / 'manifest.json').read_text())
+            evidence = verify_collision_evidence(collision_path)
+            collision_manifest = json.loads((collision_path.parent / 'manifest.json').read_text())
             if collision_manifest.get('infrastructure_probe') or not evidence.get('gameplay_translation', True):
                 raise ValueError('infrastructure callback probe cannot replace gameplay')
             collision_module = Path(collision_manifest['rust_module'])
             if not collision_module.is_absolute():
                 collision_module = ROOT / collision_module
-            collision_index = len(families)
+            collision_indexes.add(len(families))
             families.append((collision_manifest, collision_module))
         if not families:
             raise ValueError('no family contracts')
@@ -139,10 +139,11 @@ def main():
         wrappers, symbols, units = [], [], sorted((source / 'src').glob('sm_*.c'))
         bank_texts = {}
         for family_index, (manifest, module) in enumerate(families):
-            if family_index == collision_index:
+            if family_index in collision_indexes:
                 from port_collision import generate_collision_abi
-                rust.append(generate_collision_abi(manifest, module))
-                abi_symbol = 'port_collision_call'
+                abi_symbol = f'port_collision_{family_index}'
+                generated = generate_collision_abi(manifest, module).replace('port_collision_call', abi_symbol)
+                rust.append(f'mod collision{family_index} {{use super::*;\n{generated}\n}}')
             else:
                 rust.append(generate_family_abi(manifest, module, family_index))
                 abi_symbol = f'port_family_{family_index}'
