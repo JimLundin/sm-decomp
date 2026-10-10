@@ -22,6 +22,48 @@ class LivePortTests(unittest.TestCase):
         self.assertIn('return EnemyInstr_Goto(k, jp);', renamed)
         self.assertIn('const uint16 *EnemyInstr_Goto(uint16 k, const uint16 *jp);', renamed)
 
+    def test_native_plm_rejection_is_transactional_and_unsupported_is_classified(self):
+        import sys
+        sys.path.insert(0, str(ROOT / 'tools'))
+        from port_live import generate_plm_abi
+        with tempfile.TemporaryDirectory() as temporary:
+            run = Path(temporary)
+            source = run / 'abi.rs'
+            source.write_text('''const WRAM_SIZE:usize=0x20000;
+struct Wram<'a>(&'a mut [u8]);
+impl<'a> Wram<'a>{fn new(r:&'a mut [u8])->Result<Self,&'static str>{Ok(Self(r))}}
+mod memory {pub mod plm {
+ use crate::Wram;
+ pub fn supports_header(_: &[u8],header:u16)->Result<bool,&'static str>{Ok(header!=0)}
+ pub fn spawn(r:&mut Wram,_:&[u8],header:u16,amount:&mut i32)->Result<u8,&'static str>{
+  r.0[0]=99;*amount=77;if header==1{Err("setup error")}else{Ok(3)}
+ }
+}}
+''' + generate_plm_abi())
+            library = run / 'libabi.a'
+            result = subprocess.run(['rustc', '--edition=2024', '--crate-type=staticlib', str(source), '-o', str(library)], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            caller = run / 'control.c'
+            caller.write_text('''#include <stdint.h>
+#include <stddef.h>
+static uint8_t ram[0x20000],rom[8];
+extern int32_t port_native_plm(uint8_t*,size_t,const uint8_t*,size_t,uint16_t,int32_t*);
+int main(void){int32_t amount=12;
+ if(port_native_plm(ram,sizeof(ram),rom,sizeof(rom),0,&amount)!=-2)return 1;
+ if(ram[0]||amount!=12)return 2;
+ if(port_native_plm(ram,sizeof(ram),rom,sizeof(rom),1,&amount)!=-1)return 3;
+ if(ram[0]||amount!=12)return 4;
+ if(port_native_plm(ram,sizeof(ram),rom,sizeof(rom),2,(int32_t*)(ram+1))!=-1)return 5;
+ if(port_native_plm(ram,sizeof(ram),ram+1,8,2,&amount)!=-1)return 6;
+ if(port_native_plm(ram,sizeof(ram),rom,sizeof(rom),2,&amount)!=3)return 7;
+ if(ram[0]!=99||amount!=77)return 8;return 0;}
+''')
+            executable = run / 'control'
+            result = subprocess.run(['cc', str(caller), str(library), '-ldl', '-lpthread', '-lm', '-o', str(executable)], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            result = subprocess.run([str(executable)], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_missing_family_evidence_cannot_start_replay(self):
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary) / 'output'
