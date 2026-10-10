@@ -172,3 +172,7 @@ supported-increment *args:
 # Carry an evidence-bound experiment history across the same unresolved increment.
 iteration-diagnosis *args:
     python3 tools/iteration_diagnosis.py {{args}}
+
+# Explicit bounded recompilation session: default one accepted increment.
+recomp-iteration *args:
+    python3 tools/iteration_session.py {{args}}

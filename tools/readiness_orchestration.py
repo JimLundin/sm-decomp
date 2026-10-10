@@ -45,7 +45,7 @@ def restore(owner,destination,accepted=False):
     return destination
 
 
-def publish_acceptance(owner,root=None):
+def publish_acceptance(owner,root=None,rejected_pointer=None):
     """Reverify a complete run and current source under the acceptance lock."""
     owner=Path(owner).resolve();root=Path(root).resolve() if root else owner.parent.parent.parent
     output=root/'out';output.mkdir(exist_ok=True)
@@ -59,7 +59,15 @@ def publish_acceptance(owner,root=None):
         for path,name in ((root/'rom/sm.sfc','rom_sha256'),(root/'movies/super-metroid-any-3653.lsmv','movie_sha256')):
             if digest(path)!=inputs[name]:raise ValueError('Current input differs before acceptance: '+str(path))
         previous=output/'accepted.json';history=output/'accepted-history';history.mkdir(exist_ok=True)
-        if previous.exists():
+        if rejected_pointer is not None:
+            from iteration_session import verify_recovery_pointer
+            preserved=verify_recovery_pointer(root,rejected_pointer)
+            if verified['manifest'].get('accepted_parent') is not None:
+                raise ValueError('Recovered fresh readiness cannot inherit rejected pointer lineage')
+            rejected=output/'rejected-pointers';rejected.mkdir(exist_ok=True)
+            retained=rejected/(Path(rejected_pointer).name+'-'+uuid.uuid4().hex[:8]+'.bin')
+            with retained.open('xb') as handle:handle.write(preserved.read_bytes());handle.flush();os.fsync(handle.fileno())
+        elif previous.exists():
             old=json.loads(previous.read_text());verify_accepted(old['run_path'],require_pointer=True)
             if verified['manifest'].get('accepted_parent')!=old['run_id']:
                 raise ValueError('Accepted predecessor changed during validation')
@@ -72,6 +80,8 @@ def publish_acceptance(owner,root=None):
         if source_inventory(root)!=verified['inventory']['files']:raise ValueError('Source changed before acceptance')
         for path,name in ((root/'rom/sm.sfc','rom_sha256'),(root/'movies/super-metroid-any-3653.lsmv','movie_sha256')):
             if digest(path)!=inputs[name]:raise ValueError('Input changed before acceptance')
+        if rejected_pointer is not None:
+            verify_recovery_pointer(root,rejected_pointer)
         temporary=output/('accepted-'+uuid.uuid4().hex+'.tmp')
         with temporary.open('x') as handle:
             json.dump(accepted_pointer(owner,verified),handle,sort_keys=True,indent=2);handle.write('\n');handle.flush();os.fsync(handle.fileno())
@@ -118,7 +128,8 @@ def brief(run,status,reason):
     text+='Progress: {}.\n'.format(json.dumps(coverage.get('progress',{'comparable':False,'reason':'No comparable coverage'}),sort_keys=True))
     if run.manifest.get('increment'):
         text+='Increment: {}. [Observed progress](checks/increment-progress.json) · [Preserved preparation]({}/brief.md).\n'.format(json.dumps(run.manifest['increment'],sort_keys=True),run.manifest['increment'].get('preparation_path','unavailable'))
-    text+='Supported native patterns: LDA immediate, LDX immediate, REP, SEP, STA absolute, NOP and DEX. ADC overflow remains unsupported debt. Historical later-domain synchronization is noncertifying.\n\nTargets: cold replay 1200s, warm focus 60s. Overruns are reported; timeouts are incomplete.\n'
+    declaration=run.checks.get('instruction',{}).get('declaration',{})
+    text+='Supported native patterns: {}. ADC overflow remains unsupported debt. Historical later-domain synchronization is noncertifying.\n\nTargets: cold replay 1200s, warm focus 60s. Overruns are reported; timeouts are incomplete.\n'.format(', '.join(row['mnemonic']+'/'+row['mode'] for row in declaration.get('patterns',[])) or 'see preserved instruction evidence')
     for name in ('fallback-only-parity','generated-parity','instruction-diagnosis'):
         report=run.checks[name]
         text+='{}: total {}s, warm {}s, target overrun {}.\n'.format(name,report.get('total_seconds','unavailable'),report.get('warm_replay_seconds','unavailable'),report.get('warm_target_overrun',report.get('feedback_target_overrun','unavailable')))
@@ -141,13 +152,15 @@ def brief(run,status,reason):
     return text
 
 
-def run_readiness(root,predecessor=None,original_run=None,timeout=None,jobs=4,iteration=False,increment=None):
+def run_readiness(root,predecessor=None,original_run=None,timeout=None,jobs=4,iteration=False,increment=None,rejected_pointer=None):
     root=Path(root).resolve()
     pointer=root/'out/accepted.json'
-    if predecessor is None and pointer.exists():
+    if predecessor is None and pointer.exists() and rejected_pointer is None:
         try:predecessor=Path(json.loads(pointer.read_text())['run_path'])
         except (OSError,ValueError,KeyError):predecessor=pointer
     run=Run.create(root,'iteration' if iteration else 'readiness',dict(DOMAIN),Path(predecessor).name if predecessor else None)
+    if rejected_pointer is not None:
+        run.manifest['rejected_pointer_recovery']=str(rejected_pointer);run.save_manifest()
     if increment is not None:
         run.manifest['increment']=increment;run.save_manifest()
         for name in ('session_id','increment_id'):
@@ -210,7 +223,7 @@ def run_readiness(root,predecessor=None,original_run=None,timeout=None,jobs=4,it
                 write_json(root/'out/iteration-history'/increment['increment_id']/(run.manifest['run_id']+'-diagnosis.json'),{'status':'error','reason':str(error)})
         if code==0:
             try:
-                pointer=publish_acceptance(run.path,root);write_json(run.path/'acceptance-result.json',{'status':'pass','accepted':True,'pointer':str(pointer)})
+                pointer=publish_acceptance(run.path,root,rejected_pointer);write_json(run.path/'acceptance-result.json',{'status':'pass','accepted':True,'pointer':str(pointer)})
             except Exception as error:
                 write_json(run.path/'acceptance-result.json',{'status':'error','accepted':False,'reason':str(error)});print('Acceptance failed: '+str(error),file=sys.stderr);return 2
         return code

@@ -343,6 +343,7 @@ class Run:
     def __init__(self, root, path, manifest):
         self.root, self.path, self.manifest = root, path, manifest
         self.checks = {}
+        self.interrupted = False
         self.source_files = None
         self.guarded_inputs = {}
 
@@ -453,6 +454,8 @@ class Run:
                   failure_status="error", guard=True, exit_statuses=None):
         """Log a real subprocess, retaining underlying code/signal and bounded timeout."""
         self.ensure_open()
+        if self.interrupted:
+            raise KeyboardInterrupt
         if name in self.checks:
             raise RuntimeError("Stage already recorded: " + name)
         if not name or any(character not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_" for character in name):
@@ -484,6 +487,7 @@ class Run:
                 if guard:
                     self.check_sources()
             except (subprocess.TimeoutExpired, KeyboardInterrupt) as error:
+                if isinstance(error, KeyboardInterrupt):self.interrupted = True
                 if process is not None and process.poll() is None:
                     os.killpg(process.pid, signal.SIGTERM)
                     try:
@@ -502,6 +506,7 @@ class Run:
         report.update(elapsed_seconds=time.monotonic() - started, finished_utc=utc_now())
         write_json(self.path / "logs" / (name + ".json"), report)
         self.record_check(name, report)
+        if self.interrupted:raise KeyboardInterrupt
         return report
 
     def ensure_open(self):
