@@ -20,7 +20,10 @@ fn save(path: &str, f: &Functions) -> Result<()> {
         f.variants.sort();
         f.variants.dedup();
     }
-    std::fs::write(path, toml::to_string_pretty(&Functions { functions: fs })?)?;
+    std::fs::write(
+        path,
+        toml::to_string_pretty(&Functions { functions: fs, excluded_steps: f.excluded_steps.clone() })?,
+    )?;
     Ok(())
 }
 

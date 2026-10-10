@@ -226,6 +226,8 @@ def main(argv=None):
         chosen = report['chosen']
         reason = ('Selected ${:06X} {} with {} newly compiled observed instructions'.format(
             chosen['address'],chosen['variant'],chosen['estimated_compiled_step_gain']) if chosen else report['outcome'])
+        from readiness_reuse import seal_owned_evidence
+        seal_owned_evidence(run);run.save_manifest()
         return run.finalize('pass','measured-selection',reason,mandatory_checks=['selection-baseline','selection-profile','measured-selection'],
             brief_text=reason+'\n\nDomain: Japan/USA any%, input indices 0..17999; baseline '+report['baseline']['run_id']+
             '.\n\n[Ranked choice and exact keys](selection.json) · [Profile provenance](checks/selection-profile-provenance.json) · [Manifest](manifest.json) · [Logs](logs/)\n')

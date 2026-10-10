@@ -80,22 +80,37 @@ fn emit_timed_body(i: &Insn) -> Result<String> {
 }
 
 pub fn emit_table(funcs: &[(FunctionCfg, Option<String>)], read: &dyn Fn(u32) -> Option<u8>) -> Result<String> {
-    emit_table_for_proof(funcs, read, None)
+    emit_table_for_proof(funcs, read, &std::collections::HashSet::new(), None)
 }
 
-/// Isolated proposal generation; an explicit prospective opcode never affects
-/// normal generation or the compiled game's dispatch table.
+pub fn emit_table_excluding(
+    funcs: &[(FunctionCfg, Option<String>)],
+    read: &dyn Fn(u32) -> Option<u8>,
+    exclusions: &std::collections::HashSet<(u32, u8)>,
+) -> Result<String> {
+    emit_table_for_proof(funcs, read, exclusions, None)
+}
+
+/// Isolated proposal generation. An explicit prospective opcode and exclusion
+/// inventory never affect normal compiled support.
 pub fn emit_table_for_proof(
     funcs: &[(FunctionCfg, Option<String>)],
     read: &dyn Fn(u32) -> Option<u8>,
+    exclusions: &std::collections::HashSet<(u32, u8)>,
     prospective: Option<&str>,
 ) -> Result<String> {
     let mut instructions = BTreeMap::new();
     for (cfg, _) in funcs {
-        for i in cfg.blocks.iter().flat_map(|b| &b.insns).filter(|i| {
-            supported(i) || prospective.is_some_and(|opcode| emit_prospective_body(i, opcode).is_ok())
-        }) {
-            instructions.entry((i.addr, emit::mx_key(i.m8, i.x8))).or_insert(i);
+        for i in cfg
+            .blocks
+            .iter()
+            .flat_map(|b| &b.insns)
+            .filter(|i| supported(i) || prospective.is_some_and(|opcode| emit_prospective_body(i, opcode).is_ok()))
+        {
+            let key = (i.addr, emit::mx_key(i.m8, i.x8));
+            if !exclusions.contains(&key) {
+                instructions.entry(key).or_insert(i);
+            }
         }
     }
     let mut out = String::from(
