@@ -43,6 +43,14 @@ def verify_source(source):
             'freshness': 'exact pinned archive; no latest-upstream assertion'}
 
 
+def parse_result(stdout):
+    # Original C diagnostics remain in retained stdout; final line is ABI result.
+    lines = stdout.splitlines()
+    if not lines or not re.fullmatch(rb'[0-9]+', lines[-1]):
+        raise ValueError('missing final numeric routine return')
+    return int(lines[-1])
+
+
 def execute(command, run, label):
     with (run / 'commands.jsonl').open('a') as log:
         log.write(json.dumps(command) + '\n')
@@ -104,10 +112,14 @@ int main(int argc, char **argv) {
     else:
         rust_setup = ''
         rust_call = 'family::dispatch(&mut Wram::new(&mut bytes).unwrap(),&args[1],args[2].parse().unwrap(),args[3].parse().unwrap())'
+    imports = manifest.get('rust_imports', [])
+    if any(not IDENTIFIER.fullmatch(name) for name in imports):
+        raise ValueError('invalid Rust module import')
+    root_imports = ''.join(f'use memory::{name};\n' for name in imports)
     wrapper = run / 'wrapper.rs'
     wrapper.write_text(f'''#[path = {json.dumps(str(ROOT / 'crates/port/src/lib.rs'))}] mod memory;
 use memory::Wram;
-#[path = {json.dumps(str(module))}] mod family;
+{root_imports}#[path = {json.dumps(str(module))}] mod family;
 fn main() {{
  let args:Vec<String>=std::env::args().collect(); assert!(args.len()==6 || args.len()==7);
  let mut bytes=std::fs::read(&args[4]).unwrap();
@@ -129,7 +141,14 @@ fn main() {{
     execute(['rustc', '--edition=2024', '-O', str(wrapper), '-o', str(run / 'rust')], run, 'rust-build')
     shutil.copyfile(module, run / 'candidate.rs')
     shutil.copyfile(ROOT / 'crates/port/src/lib.rs', run / 'memory.rs')
-    return {'module': str(module), 'module_sha256': digest(module), 'memory_sha256': digest(ROOT / 'crates/port/src/lib.rs'), 'harness_sha256': digest(__file__), 'binaries': {name: digest(run / name) for name in ('c', 'rust')}}
+    dependency_paths = {p.resolve() for p in (ROOT / 'crates/port/src').glob('*.rs')}
+    for value in manifest.get('rust_dependencies', []):
+        path = Path(value)
+        dependency_paths.add((path if path.is_absolute() else ROOT / path).resolve())
+    dependencies = {str(path): digest(path) for path in sorted(dependency_paths)}
+    for index, path in enumerate(sorted(dependency_paths)):
+        shutil.copyfile(path, run / f'dependency-{index:03d}.rs')
+    return {'rust_dependencies': dependencies, 'module': str(module), 'module_sha256': digest(module), 'memory_sha256': digest(ROOT / 'crates/port/src/lib.rs'), 'harness_sha256': digest(__file__), 'binaries': {name: digest(run / name) for name in ('c', 'rust')}}
 
 
 def load_asset(path, expected_digest, extent=None):
@@ -200,7 +219,7 @@ def verify(manifest_path, source, output):
                 for subject in ('rust', 'c'):
                     # Bounded candidate admission precedes any unchecked C execution.
                     result = execute([str(run / subject), routine['symbol'], str(case.get('a', 0)), str(case.get('b', 0)), str(directory / 'before.wram'), str(directory / (subject + '-after.wram'))] + ([str(run / 'rom.bin')] if 'rom' in manifest else []), directory, subject)
-                    results[subject] = int(result)
+                    results[subject] = parse_result(result)
                 record = {'routine': routine['symbol'], 'case': case['name'], 'return': results, 'before_sha256': digest(directory / 'before.wram'), 'after_sha256': {subject: digest(directory / (subject + '-after.wram')) for subject in ('c', 'rust')}}
                 verdict['cases'].append(record)
                 if results['c'] != results['rust']:
@@ -264,6 +283,9 @@ def verify_family_evidence(verdict_path):
                            (Path(__file__), implementation['harness_sha256'])]:
         if digest(path) != expected:
             raise ValueError(f'family implementation changed: {path}')
+    for dependency, expected in implementation.get('rust_dependencies', {}).items():
+        if digest(dependency) != expected:
+            raise ValueError(f'family Rust dependency changed: {dependency}')
     for binary in ('c', 'rust'):
         if digest(run / binary) != implementation['binaries'][binary]:
             raise ValueError(f'family binary changed: {binary}')
@@ -283,7 +305,7 @@ def verify_family_evidence(verdict_path):
         before, c, rust = [path.read_bytes() for path in paths]
         if any(len(data) != WRAM_SIZE for data in (before, c, rust)) or c != rust:
             raise ValueError('family actual full WRAM outputs differ')
-        results = {subject: int((directory / (subject + '.stdout')).read_text()) for subject in ('c', 'rust')}
+        results = {subject: parse_result((directory / (subject + '.stdout')).read_bytes()) for subject in ('c', 'rust')}
         if results != case['return'] or results['c'] != results['rust']:
             raise ValueError('family actual return outputs differ')
         config = expected_cases[key]

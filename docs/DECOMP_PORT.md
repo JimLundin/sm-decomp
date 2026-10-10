@@ -156,3 +156,23 @@ memory and harness hashes, binaries, actual full-memory/return equality, capture
 expectations and nonempty complete manifest coverage. Older verdicts without
 artifact inventories must be regenerated. This detects corruption against local
 records; it is not an external cryptographic signature.
+
+A family that calls existing Rust modules declares `rust_imports`, for example
+`["audio", "samus"]`, to expose those shared modules at the wrapper's root.
+`rust_dependencies` lists additional source paths outside `crates/port/src`.
+The harness seals and retains every source in the shared port directory plus
+these declared dependencies; changed imported implementations invalidate prior
+verification. C diagnostics are retained verbatim; the final numeric stdout
+line supplies the routine return. This supports actual upstream diagnostic
+output without discarding evidence.
+
+Live controls run at the generated family ABI, rejecting null/invalid extents,
+unknown routine IDs and overlapping ROM/WRAM without mutation, and converting
+candidate panics to an error. Retained offline output corruption rejects before
+any live build. The opt-in compiled gameplay control intentionally supplies an
+incomplete `ClearUnusedOam` candidate that passes an empty-loop fixture and then
+must reject observed gameplay divergence:
+
+```sh
+SM_PORT_LIVE_CONTROLS=1 python3 -m unittest discover -s tools -p test_port_live.py
+```
