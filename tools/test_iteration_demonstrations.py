@@ -25,5 +25,17 @@ class DemonstrationTests(unittest.TestCase):
             result=subprocess.run(command,cwd=root,capture_output=True,text=True)
             self.assertEqual(result.returncode,2)
 
+    def test_private_failure_history_rejects_publication_and_preserves_three_candidates(self):
+        from iteration_demonstrations import failed_lineage
+        from iteration_diagnosis import verify_history
+        with tempfile.TemporaryDirectory() as temporary:
+            output=Path(temporary)/'lineage';report=failed_lineage(output)
+            self.assertEqual(report['publication_returncode'],2)
+            self.assertEqual(report['pointer_before_sha256'],report['pointer_after_sha256'])
+            self.assertEqual(len(report['candidates']),3)
+            history=verify_history(report['history_root'],'synthetic-increment')
+            self.assertEqual([row['consecutive_without_evidence'] for row in history],[1,2,3])
+            self.assertEqual([row['decision_required'] for row in history],[False,False,True])
+
 
 if __name__=='__main__':unittest.main()
