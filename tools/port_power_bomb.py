@@ -31,7 +31,7 @@ impl crate::projectile_special::Host for CCallback {{
   // Isolated owned buffer: C never aliases the live Wram reference.
   let mut transaction:Vec<u8>=(0..WRAM_SIZE).map(|i|ram.byte(i)).collect();
   let result=unsafe{{{bridge}(transaction.as_mut_ptr(),transaction.len(),header{call_amount})}};
-  if !(0..=255).contains(&result){{return Err("C collision callback failed");}}
+  if !(0..=255).contains(&result){{return Err("C power bomb PLM callback failed");}}
   for (i,value) in transaction.into_iter().enumerate(){{ram.set_byte(i,value);}}
   Ok(result as u8)
  }}
@@ -72,9 +72,9 @@ def build(manifest, source, run):
             raise ValueError('invalid routine symbol')
         kinds = routine.get('arg_types', [])
         if len(kinds) > 2 or any(k not in ('int32', 'uint8', 'uint16', 'uint32') for k in kinds):
-            raise ValueError('unsupported collision argument signature')
+            raise ValueError('unsupported power bomb argument signature')
         if routine['return'] not in ('int32', 'uint32', 'uint8', 'uint16', 'void'):
-            raise ValueError('unsupported collision return signature')
+            raise ValueError('unsupported power bomb return signature')
         args = ','.join('('+kind+')'+name for kind,name in zip(kinds,['a','b']))
         call = f'{symbol}({args})'
         statement = f'{call};result=0;' if routine['return']=='void' else f'result=(uint32_t){call};'
@@ -197,7 +197,7 @@ def verify(manifest_path,source,output):
                 record={'routine':routine['symbol'],'case':case['name'],'results':results,'callbacks':results['rust']['c_gameplay_callbacks']}
                 verdict['cases'].append(record)
                 if results['c']!=results['rust']:raise ValueError('return/callback/fallback metrics mismatch')
-                if results['rust']['cpu_fallback_calls'] or results['rust']['cpu_fallback_instructions']:raise ValueError('CPU fallback during offline collision comparison')
+                if results['rust']['cpu_fallback_calls'] or results['rust']['cpu_fallback_instructions']:raise ValueError('CPU fallback during offline power bomb comparison')
                 if results['rust']['return']!=case.get('expected_return',results['rust']['return']):raise ValueError('independent expected return mismatch')
                 if record['callbacks']<case.get('minimum_callbacks',0):raise ValueError('callback coverage missing')
                 before,c,rust=[(directory/name).read_bytes() for name in ('before.wram','c-after.wram','rust-after.wram')]
@@ -211,7 +211,7 @@ def verify(manifest_path,source,output):
                 if c_files!=rust_files:raise ValueError('ordered actual C callback state/argument sequence mismatch')
                 if len(c_files)!=1+2*record['callbacks'] or len(c_files['callbacks.txt'].splitlines())!=record['callbacks']:
                     raise ValueError('callback record extent missing')
-        if not seen:raise ValueError('empty collision family')
+        if not seen:raise ValueError('empty power bomb family')
         verdict.update(status='offline-verified',verified_cases=len(seen),verified_routines=len(manifest['routines']),scope='full WRAM, return, ordered callback arguments and complete callback state; declared valid inputs')
     except (OSError,ValueError,KeyError,TypeError,subprocess.SubprocessError) as error:verdict['error']=str(error)
     verdict['artifacts']={str(p.relative_to(run)):digest(p) for p in sorted(run.rglob('*')) if p.is_file() and p.name!='verdict.json'}
@@ -224,19 +224,19 @@ def verify_power_bomb_evidence(verdict_path):
     verdict_path=Path(verdict_path);run=verdict_path.parent
     verdict=json.loads(verdict_path.read_text())
     if verdict.get('status')!='offline-verified' or not verdict.get('cases'):
-        raise ValueError('collision evidence is not verified')
+        raise ValueError('power bomb evidence is not verified')
     artifacts=verdict.get('artifacts',{})
     for name,expected in artifacts.items():
         path=run/name
         if run.resolve() not in path.resolve().parents or digest(path)!=expected:
-            raise ValueError(f'collision artifact changed: {name}')
+            raise ValueError(f'power bomb artifact changed: {name}')
     if not {'manifest.json','collision','oracle.c','wrapper.rs','libcollision.a','rom.bin','sm_88-allocation-seam.c'}<=artifacts.keys():
-        raise ValueError('collision evidence artifacts incomplete')
+        raise ValueError('power bomb evidence artifacts incomplete')
     implementation=verdict['implementation']
     if digest(__file__)!=implementation['harness_sha256']:
-        raise ValueError('collision harness changed')
+        raise ValueError('power bomb harness changed')
     for path,expected in implementation['rust_dependencies'].items():
-        if digest(path)!=expected:raise ValueError(f'collision dependency changed: {path}')
+        if digest(path)!=expected:raise ValueError(f'power bomb dependency changed: {path}')
     current_source=verify_source(ROOT/'deps/snesrev-sm')
     if current_source!=verdict['source']:raise ValueError('power bomb current upstream seal changed')
     source=(ROOT/'deps/snesrev-sm/src/sm_88.c').read_text()
@@ -245,22 +245,22 @@ def verify_power_bomb_evidence(verdict_path):
     manifest=json.loads((run/'manifest.json').read_text())
     pin=next(p for p in json.loads((ROOT/'tools/dependencies.json').read_text()) if p['name']=='snesrev-sm')
     if verdict['source']['revision']!=pin['revision'] or verdict['source']['archive_sha256']!=pin['sha256']:
-        raise ValueError('collision pinned source identity changed')
+        raise ValueError('power bomb pinned source identity changed')
     expected={(r['symbol'],c['name']):c for r in manifest['routines'] for c in r['cases']}
-    if len(expected)!=sum(len(r['cases']) for r in manifest['routines']):raise ValueError('duplicate collision cases')
+    if len(expected)!=sum(len(r['cases']) for r in manifest['routines']):raise ValueError('duplicate power bomb cases')
     observed=set()
     for record in verdict['cases']:
         key=(record['routine'],record['case'])
-        if key not in expected or key in observed:raise ValueError('collision coverage changed')
+        if key not in expected or key in observed:raise ValueError('power bomb coverage changed')
         observed.add(key);directory=run/record['case']
         if any(str((directory/name).relative_to(run)) not in artifacts
                for name in ('before.wram','c-after.wram','rust-after.wram','c.stdout','rust.stdout')):
-            raise ValueError('collision case artifacts incomplete')
+            raise ValueError('power bomb case artifacts incomplete')
         states=[(directory/name).read_bytes() for name in ('before.wram','c-after.wram','rust-after.wram')]
-        if any(len(state)!=WRAM_SIZE for state in states) or states[1]!=states[2]:raise ValueError('actual collision WRAM mismatch')
+        if any(len(state)!=WRAM_SIZE for state in states) or states[1]!=states[2]:raise ValueError('actual power bomb WRAM mismatch')
         results={subject:json.loads((directory/(subject+'.stdout')).read_bytes().splitlines()[-1]) for subject in ('c','rust')}
-        if results!=record['results'] or results['c']!=results['rust']:raise ValueError('actual collision metrics mismatch')
-        if results['rust']['cpu_fallback_calls'] or results['rust']['cpu_fallback_instructions']:raise ValueError('collision CPU fallback')
+        if results!=record['results'] or results['c']!=results['rust']:raise ValueError('actual power bomb metrics mismatch')
+        if results['rust']['cpu_fallback_calls'] or results['rust']['cpu_fallback_instructions']:raise ValueError('power bomb CPU fallback')
         callbacks={subject:{p.name:p.read_bytes() for p in (directory/subject).iterdir()} for subject in ('c','rust')}
         if callbacks['c']!=callbacks['rust']:raise ValueError('actual callback sequence mismatch')
         for subject in ('c','rust'):
@@ -273,9 +273,9 @@ def verify_power_bomb_evidence(verdict_path):
             logs=callbacks[subject]
             if len(logs)!=1+2*count or len(logs.get('callbacks.txt',b'').splitlines())!=count:
                 raise ValueError('callback capture extent changed')
-        if 'expected_return' in expected[key] and results['rust']['return']!=expected[key]['expected_return']:raise ValueError('expected collision return changed')
+        if 'expected_return' in expected[key] and results['rust']['return']!=expected[key]['expected_return']:raise ValueError('expected power bomb return changed')
     if observed!=expected.keys() or verdict['verified_cases']!=len(observed) or verdict['verified_routines']!=len(manifest['routines']):
-        raise ValueError('collision coverage incomplete')
+        raise ValueError('power bomb coverage incomplete')
     return verdict
 
 
