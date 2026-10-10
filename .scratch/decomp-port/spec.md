@@ -36,7 +36,13 @@ observable hardware effects, Rust hits and fallback measurements.
 - 12: complete Samus collision/movement closure, in progress.
 - 13: native PLM allocation and terrain setup, offline verified; live integration underway.
 - 14: projectile initialization/damage/instructions and missile behavior, in progress.
-- 15: common flying enemy AI and shared movement collision, in progress.
+- 15: common flying enemy AI and shared movement collision, offline verified.
+- 16: projectile terrain flight and firing, live verified.
+- 17: Norfair Rio state machines, offline verified.
+- 18: Sidehopper/Desgeega jump states and script handlers, offline verified.
+- 19: bombs/spread/SBA/speed echoes, offline verified; power-bomb path partial.
+- 20: room/door data and camera scrolling, offline verified.
+- 21: PLM instruction handlers and bounded frame-control engine, in progress.
 
 This is the first frontier, not the completion boundary of the user's goal.
 Expand tickets into substantive gameplay subsystems after this frontier, using
