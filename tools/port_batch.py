@@ -172,6 +172,7 @@ def run_main():
     parser.add_argument('--profile', default='gameplay')
     parser.add_argument('--families', nargs='+', help='Verify/replay a subset from the catalog')
     parser.add_argument('--jobs', type=int, default=3)
+    parser.add_argument('--deduplicate', action='store_true', help='Deduplicate immutable finished batch snapshots after verification/replay')
     parser.add_argument('--fresh', action='store_true', help='Rebuild instead of reusing authenticated evidence')
     parser.add_argument('--frames', type=int, default=18000)
     parser.add_argument('--native-plm', action='store_true', help='Require exercised native PLM setup in replay')
@@ -213,7 +214,13 @@ def run_main():
             record = execute(replay_command(batch, config, names, args.frames, directory / 'evidence', args.native_plm), directory, 'replay')
             batch['replays'].append(record)
             save(path, batch)
+            if args.deduplicate:
+                from port_cleanup import deduplicate
+                print(f"Reclaimed {deduplicate(path.parent, True)} snapshot bytes")
             return record['exit_code']
+        if args.deduplicate and args.command == 'verify':
+            from port_cleanup import deduplicate
+            print(f"Reclaimed {deduplicate(path.parent, True)} snapshot bytes")
         return 0
     except (OSError, ValueError, KeyError, TypeError) as error:
         print(f'port batch: {error}', file=sys.stderr)

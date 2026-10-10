@@ -81,3 +81,6 @@ immutable WRAM/frame/terminal/ROM-view snapshots with hardlinks on the same
 filesystem. Paths, bytes, verdicts and hashes remain unchanged. Only finished
 accepted runs qualify; retained evidence must remain immutable because linked
 snapshots share storage. Independent process comparison evidence stays intact.
+
+Use `port_batch.py run --deduplicate` (or `verify --deduplicate`) to share
+storage for immutable snapshots within that finished batch automatically.
