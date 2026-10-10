@@ -33,3 +33,8 @@ then `python3 tools/port_collision.py --manifest tools/port/enemy-crawler.json
 verification are distinct from live exercise: the any% prefix may not encounter
 these enemies, and no original-ROM parity or full Rust gameplay ownership is
 claimed by routine fixtures.
+
+The accepted offline run is `out/port/crawler/20261010T214436.664722Z/verdict.json`:
+sixteen routines, 800 complete-state cases and 104 ordered actual PLM callbacks.
+Later integration dependency changes require a fresh batch seal before live
+admission; the recorded routine comparison remains immutable evidence.
