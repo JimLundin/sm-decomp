@@ -257,7 +257,8 @@ uint8 __wrap_SpawnPLM(uint16 header) {
  int32 before=cur_coll_amt32?*cur_coll_amt32:0;
  uint8 result;int32 displacement=before;int32 native=-2;
 #ifdef PORT_NATIVE_PLM
- if(port_mixed)native=port_native_plm(g_ram,sizeof(g_ram),g_rom,g_snes->cart->romSize,header,&displacement);
+ // Native acceptance covers synchronous collision context with a real amount.
+ if(port_mixed && cur_coll_amt32)native=port_native_plm(g_ram,sizeof(g_ram),g_rom,g_snes->cart->romSize,header,&displacement);
 #endif
  if(native==-2){result=__real_SpawnPLM(header);port_plm_c++;}
  else {if(native<0){fprintf(stderr,"native PLM error %u\\n",header);exit(4);}result=native;if(cur_coll_amt32)*cur_coll_amt32=displacement;port_plm_rust++;}

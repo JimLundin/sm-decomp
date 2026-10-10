@@ -176,3 +176,20 @@ must reject observed gameplay divergence:
 ```sh
 SM_PORT_LIVE_CONTROLS=1 python3 -m unittest discover -s tools -p test_port_live.py
 ```
+
+The collision live adapter accepts `--collision-verdict` from the actual PLM
+callback harness. Rust collision owns an independent WRAM transaction; its
+synchronous callback transfers state and displacement to the canonical host and
+back. `--plm-verdict` additionally admits native allocation evidence. With a real
+collision amount reference, the host classifies the immutable PLM header before
+execution and selects native Rust for supported setup functions. Other headers
+and calls without collision context execute measured C. Native errors terminate
+the replay without a C retry. Total, C and Rust PLM call counts are retained;
+native admission requires Rust execution and matching ownership in both mixed
+processes. Ordered effects compare header, before/after amount and return flags.
+These counters measure allocation calls, including an exhausted slot pool;
+they do not independently prove that every supported setup was reached live.
+
+Generic enemy instruction handlers can be installed individually with normalized
+banked pointer arguments/returns. The bounded generic interpreter remains an
+offline implementation: the live C dispatcher still owns bank-specific scripts.
