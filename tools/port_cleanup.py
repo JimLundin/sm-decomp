@@ -74,6 +74,7 @@ def candidates(root):
 def deduplicate(root, apply):
     """Share storage only for authenticated immutable snapshot bytes."""
     seen = {}
+    reclaimed_inodes = set()
     reclaimed = 0
     for directory, dirs, files in os.walk(root, followlinks=False):
         base = Path(directory)
@@ -97,7 +98,7 @@ def deduplicate(root, apply):
             for path in choices:
                 if not (path.suffix == '.wram' or path.name == 'terminal.bin' or path.name == 'rom-view.bin' or path.name.startswith('frame-') and path.suffix == '.bin'):
                     continue
-                if not path.is_file() or path.is_symlink() or base not in path.absolute().parents:
+                if not path.is_file() or path.is_symlink() or base.resolve() not in path.resolve().parents or any(parent.is_symlink() for parent in path.parents if parent != base and base in parent.parents):
                     continue
                 payload = path.read_bytes()
                 identity = hashlib.sha256(payload).hexdigest()
@@ -113,11 +114,14 @@ def deduplicate(root, apply):
                     continue
                 if previous.read_bytes() != payload:
                     continue
-                reclaimed += stat.st_size
+                inode = (stat.st_dev, stat.st_ino)
+                if stat.st_nlink == 1 and inode not in reclaimed_inodes:
+                    reclaimed += stat.st_size
+                    reclaimed_inodes.add(inode)
                 if apply:
                     # Files belong to finished immutable runs; recheck before an
                     # atomic replacement so interruption never loses a snapshot.
-                    if path.read_bytes() != payload:
+                    if path.read_bytes() != payload or previous.read_bytes() != payload:
                         raise RuntimeError(f'snapshot changed: {path}')
                     temporary = path.with_name(path.name + '.dedup-link')
                     os.link(previous, temporary)
