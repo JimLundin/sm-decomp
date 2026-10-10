@@ -62,13 +62,15 @@ def build(manifest, source, run):
         if not IDENTIFIER.fullmatch(symbol):
             raise ValueError('invalid routine symbol')
         kinds = routine.get('arg_types', [])
-        if len(kinds) > 2 or any(k not in ('int32', 'uint8', 'uint16', 'uint32') for k in kinds):
+        if len(kinds) > 2 or any(k not in ('int32', 'uint8', 'uint16', 'uint32', 'rom_ptr') for k in kinds):
             raise ValueError('unsupported collision argument signature')
-        if routine['return'] not in ('int32', 'uint32', 'uint8', 'uint16', 'void'):
+        if routine['return'] not in ('int32', 'uint32', 'uint8', 'uint16', 'void', 'rom_ptr'):
             raise ValueError('unsupported collision return signature')
-        args = ','.join('('+kind+')'+name for kind,name in zip(kinds,['a','b']))
+        args = ','.join('(const uint16 *)(g_rom+(((uint32_t)'+name+'>>16&127)*0x8000)+((uint32_t)'+name+'&0x7fff))' if kind=='rom_ptr' else '('+kind+')'+name for kind,name in zip(kinds,['a','b']))
         call = f'{symbol}({args})'
         statement = f'{call};result=0;' if routine['return']=='void' else f'result=(uint32_t){call};'
+        if routine['return']=='rom_ptr':
+            statement = f'const uint16 *p={call};uintptr_t start=(uintptr_t)g_rom+(((uint32_t)b>>16&127)*0x8000);if((uintptr_t)p<start||(uintptr_t)p>=start+0x8000)return 3;result=((uint32_t)b&0xff0000)|0x8000|((uintptr_t)p-start);'
         if probe:
             if symbol != 'CollisionCallbackProbe':
                 raise ValueError('infrastructure probe cannot claim actual routine')

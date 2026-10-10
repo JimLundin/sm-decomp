@@ -97,12 +97,13 @@ struct Collision {
     remaining: u16,
     total: u16,
     horizontal: bool,
+    process_slopes: bool,
 }
 fn terrain(
     r: &mut Wram<'_>,
     rom: &[u8],
     host: &mut impl Host,
-    coll: &Collision,
+    coll: &mut Collision,
     index: u16,
 ) -> Result<bool, &'static str> {
     r.set_word(BLOCK, index);
@@ -126,8 +127,8 @@ fn terrain(
                 r.set_word(BLOCK, block.wrapping_add(shift as u16));
             }
             10 => {
-                if bts & 0x7f >= 15 {
-                    return Err("spike BTS outside 15-entry PLM header table");
+                if bts & 0x7f >= 16 {
+                    return Err("spike BTS outside 16-entry PLM header table");
                 }
                 let header = rom_word(rom, 0xa0c2da + 2 * u32::from(bts & 0x7f))?;
                 if header == 0 {
@@ -158,6 +159,14 @@ fn terrain(
                 }
                 if coll.horizontal {
                     r.set_word(0x1e77, u16::from(bts));
+                    if coll.process_slopes {
+                        let factor = i32::from(rom_word(rom, 0xa0c49f + u32::from(slope) * 4 + 2)?);
+                        coll.amount = if coll.amount >= 0 {
+                            (coll.amount >> 8).wrapping_mul(factor)
+                        } else {
+                            -(-i32::from((coll.amount >> 8) as i16)).wrapping_mul(factor)
+                        };
+                    }
                     return Ok(false);
                 }
                 let width = r.word(ROOM_WIDTH);
@@ -194,13 +203,14 @@ fn terrain(
     }
 }
 /// A0 collision movement, including fractional carry, extensions, slopes and PLMs.
-fn movement(
+fn movement_slopes(
     r: &mut Wram<'_>,
     rom: &[u8],
     host: &mut impl Host,
     k: u16,
     amount: i32,
     horizontal: bool,
+    process_slopes: bool,
 ) -> Result<bool, &'static str> {
     let e = record(k)?;
     if amount == 0 {
@@ -225,15 +235,20 @@ fn movement(
     } else {
         2u16.wrapping_mul(mult(edge >> 4).wrapping_add(lower >> 4))
     };
-    let mut coll = Collision { amount, position, edge, remaining: total, total, horizontal };
+    let mut coll = Collision { amount, position, edge, remaining: total, total, horizontal, process_slopes };
     loop {
-        if terrain(r, rom, host, &coll, byte_index >> 1)? {
+        if terrain(r, rom, host, &mut coll, byte_index >> 1)? {
             break;
         }
         coll.remaining = coll.remaining.wrapping_sub(1);
         if coll.remaining & 0x8000 != 0 {
-            set(r, e, axis, (new >> 16) as u16);
-            set(r, e, sub, new as u16);
+            let final_position = if horizontal {
+                ((u32::from(r.word(e + axis)) << 16) | u32::from(r.word(e + sub))).wrapping_add(coll.amount as u32)
+            } else {
+                new
+            };
+            set(r, e, axis, (final_position >> 16) as u16);
+            set(r, e, sub, final_position as u16);
             return Ok(false);
         }
         byte_index = byte_index.wrapping_add(if horizontal { width.wrapping_mul(2) } else { 2 });
@@ -259,6 +274,16 @@ fn speed(rom: &[u8], index: u16, offset: u16) -> Result<u16, &'static str> {
         return Err("Ripper speed index outside linear table");
     }
     rom_word(rom, 0xa28187 + 2 * u32::from(index + offset))
+}
+fn movement(
+    r: &mut Wram<'_>,
+    rom: &[u8],
+    host: &mut impl Host,
+    k: u16,
+    amount: i32,
+    horizontal: bool,
+) -> Result<bool, &'static str> {
+    movement_slopes(r, rom, host, k, amount, horizontal, false)
 }
 fn ripper_init(r: &mut Wram<'_>, rom: &[u8], e: usize, jet: bool) -> Result<(), &'static str> {
     let parameter = r.word(e + PARAM1);
@@ -434,14 +459,15 @@ pub fn dispatch_host(
     let k = r.word(CURRENT);
     let e = record(k)?;
     match symbol {
-        "Enemy_MoveRight_IgnoreSlopes" | "Enemy_MoveDown" => {
-            return Ok(u32::from(movement(
+        "Enemy_MoveRight_IgnoreSlopes" | "Enemy_MoveRight_ProcessSlopes" | "Enemy_MoveDown" => {
+            return Ok(u32::from(movement_slopes(
                 r,
                 rom,
                 host,
                 u16::try_from(a).map_err(|_| "invalid enemy argument")?,
                 b,
-                symbol == "Enemy_MoveRight_IgnoreSlopes",
+                symbol != "Enemy_MoveDown",
+                symbol == "Enemy_MoveRight_ProcessSlopes",
             )?));
         }
         "Ripper_Init" | "JetPowerRipper_Init" => ripper_init(r, rom, e, symbol.starts_with("Jet"))?,

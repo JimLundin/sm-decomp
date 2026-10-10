@@ -7,6 +7,7 @@ pub mod audio;
 pub mod collision;
 pub mod enemy;
 pub mod enemy_ai;
+pub mod enemy_crawler;
 pub mod enemy_instructions;
 pub mod enemy_jump;
 pub mod enemy_rio;

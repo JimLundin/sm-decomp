@@ -18,7 +18,8 @@
     "plm": "offline-family",
     "plm-spawn": "plm",
     "plm-instructions": "plm-instructions",
-    "power_bomb": "power-bomb"
+    "power_bomb": "power-bomb",
+    "enemy-crawler": "callback"
   },
   "profiles": {
     "gameplay": [
@@ -34,6 +35,7 @@
       "collision",
       "enemy-ai",
       "enemy-rio",
+      "enemy-crawler",
       "projectile_flight",
       "enemy-jump",
       "projectile_special"
@@ -51,6 +53,7 @@
       "collision",
       "enemy-ai",
       "enemy-rio",
+      "enemy-crawler",
       "projectile_flight",
       "enemy-jump",
       "projectile_special",
