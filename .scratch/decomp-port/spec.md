@@ -55,3 +55,16 @@ prefix; untranslated C still owns scheduling and many game systems. The user's
 goal remains active: collision/movement, bank-specific enemy behavior, projectiles,
 PLMs, rooms/doors and further gameplay must continue before broad ownership can
 be claimed. Counts are inventory, not a percentage of complete gameplay.
+
+The later four-process 18,000-frame comparison at
+`out/port/collision-plm-extended-live/20261010T203333.584044Z` passed all state,
+effect and gameplay-progress comparison gates before rejecting the additional
+native PLM execution requirement: zero PLM calls in every process. Each mixed
+process executes 186,736 Rust gameplay calls across 50 symbols, 37 Rust
+decompressions and 17,594 Rust RNG calls with zero measured CPU fallback.
+Native normal movement executes 10,791 times and enemy Goto 9,241 times.
+This is an exercised comparison observation, not accepted PLM live integration
+or original-ROM movie completion. The current public crate additionally owns
+offline-verified projectile core (34 routines/3,656 cases) and common flying
+enemy AI/movement (17 routines/454 cases), with 63 independent Rust tests.
+Projectile terrain flight/firing and Norfair Rio expansion are active tickets16/17.
