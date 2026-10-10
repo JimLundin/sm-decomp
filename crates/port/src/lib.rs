@@ -13,6 +13,7 @@ pub mod enemy_jump;
 pub mod enemy_rio;
 pub mod plm;
 pub mod plm_instructions;
+pub mod plm_render;
 pub mod power_bomb;
 pub mod projectile_flight;
 pub mod projectile_special;
