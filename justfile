@@ -188,3 +188,7 @@ recomp-iteration *args:
 # Fresh partial offline routine job; whole-routine acceptance remains disabled.
 decomp-routine *args:
     python3 tools/decomp_routine.py {{args}}
+
+# Independent C/mixed replay, requires a current sealed offline acceptance pointer.
+decomp-live *args:
+    python3 tools/decomp_live.py {{args}}

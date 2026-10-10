@@ -220,3 +220,5 @@ pub fn decompress_to_mem(
     cases.extend(source_cases);
     Ok(DecompressResult { written, final_source: cursor, cases })
 }
+
+pub mod ffi;
