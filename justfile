@@ -151,6 +151,10 @@ readiness *args:
 readiness-feedback *args:
     python3 tools/readiness_feedback.py {{args}}
 
+# Retained synthetic iteration policy, late-failure and publication controls.
+iteration-feedback *args:
+    python3 tools/iteration_demonstrations.py run {{args}}
+
 validate-iteration *args:
     python3 tools/readiness_orchestration.py validate-iteration {{args}}
 
