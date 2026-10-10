@@ -19,7 +19,7 @@
 ## Completion evidence
 
 - Prospective native AD body shares exact timed emitter and fetch/PC execution with production. AD remains disabled in ordinary support; existing supported increments take precedence.
-- Complete public proof run `20261010T124052.761996Z-804dab489d86` passed all 10,000 pinned native AD cases plus eight independent fixtures (10,008 expected/run/passed, zero failed/skipped). Instruction 53.91s; independent timing 22.38s. `verify_proof` rechecked preserved source, ledgers, binaries, processes and hardware oracle identities.
+- Complete public proof run [20261010T124052.761996Z-804dab489d86](/home/jim/sm-recomp-iteration-context/ticket04-ad-proof-run/brief.md) passed all 10,000 pinned native AD cases plus eight independent fixtures (10,008 expected/run/passed, zero failed/skipped). Instruction 53.91s; independent timing 22.38s. `verify_proof` rechecked preserved source, ledgers, binaries, processes and hardware oracle identities.
 - Six AD-specific hardware regressions passed: ordered 6/8/12-clock accesses and wide crossing, register read effects, final-data-cycle IRQ/NMI sampling, exact DMA/HDMA waits/refresh, frame/input rollover, checkpoint resume and passive observation.
 - Two public prospective command tests and 12 readiness reuse tests pass; recomp tests, format and recomp/snes all-target clippy pass.
 - `pattern-prove` and `pattern-promote` commands implement proof-before-promotion, verified supported exhaustion, observed AD key selection, actual deferred-table exclusions, preserved pre-mutation proposal, fresh complete promoted-source gates and a final proof/bounded-table/real-ROM acceptance hook.
