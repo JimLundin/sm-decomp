@@ -42,7 +42,10 @@ observable hardware effects, Rust hits and fallback measurements.
 - 18: Sidehopper/Desgeega jump states and script handlers, offline verified.
 - 19: bombs/spread/SBA/speed echoes, offline verified; power-bomb path partial.
 - 20: room/door data and camera scrolling, offline verified.
-- 21: PLM instruction handlers and bounded frame-control engine, in progress.
+- 21: PLM instruction handlers and bounded frame-control engine, offline verified.
+- 22: Geemer, Zoomer, Zeela and Sova crawler closure, offline verified.
+- 23: power-bomb allocation and afterglow lifecycle, offline verified.
+- 24: cumulative authenticated gameplay live admission and evidence storage cleanup, in progress.
 
 This is the first frontier, not the completion boundary of the user's goal.
 Expand tickets into substantive gameplay subsystems after this frontier, using
