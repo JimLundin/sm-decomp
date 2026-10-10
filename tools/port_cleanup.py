@@ -11,6 +11,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import time
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -75,6 +76,8 @@ def deduplicate(root, apply):
     """Share storage only for authenticated immutable snapshot bytes."""
     seen = {}
     reclaimed_inodes = set()
+    last_report = time.monotonic()
+    checked = 0
     reclaimed = 0
     for directory, dirs, files in os.walk(root, followlinks=False):
         base = Path(directory)
@@ -100,6 +103,10 @@ def deduplicate(root, apply):
                     continue
                 if not path.is_file() or path.is_symlink() or base.resolve() not in path.resolve().parents or any(parent.is_symlink() for parent in path.parents if parent != base and base in parent.parents):
                     continue
+                checked += 1
+                if time.monotonic() - last_report >= 30:
+                    print(f'Checked {checked} snapshots; {reclaimed} reclaimable bytes', flush=True)
+                    last_report = time.monotonic()
                 payload = path.read_bytes()
                 identity = hashlib.sha256(payload).hexdigest()
                 if identity != expected:
