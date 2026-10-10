@@ -24,9 +24,14 @@ The prior direct setup evidence contains 44 routines/352 matching full-WRAM
 cases: `/tmp/sm-plm-offline/20261010T201617.310520Z/verdict.json`.
 These predecessor records remain evidence of their retained source versions;
 current source seals are regenerated for root integration after registration.
-Three independent Rust tests pass. The real-C wrong-displacement and retained
+Four independent Rust tests pass, including rollback on supported setup failure. The real-C wrong-displacement and retained
 WRAM tamper controls pass; admission additionally rejects missing case artifacts
 and changed pinned source. `docs/DECOMP_PLM.md` records domains and remaining
 C setup ownership. Live exercise and original-ROM parity remain separate work.
 
-Final formatted harness/manifests native seal: pending recorded below.
+Final formatted harness/manifests native seal:
+`/tmp/sm-plm-spawn-sealed/20261010T202327.007047Z/verdict.json`, all 673 native
+cases plus five ABI rejection controls, authenticated by `verify_plm_evidence`.
+The complete actual-C negative-control test passed in 57.84 seconds, including
+wrong displacement, retained WRAM tamper, omitted case artifact and changed pin.
+Implementation commit: `18baa6a` (follow-up adds rollback test and final pointer).

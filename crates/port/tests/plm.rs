@@ -43,3 +43,20 @@ fn occupied_pool_does_not_read_unknown_header_or_change_displacement() {
     assert_eq!(plm::spawn(&mut ram, &[], 0, &mut amount), Ok(0));
     assert_eq!(amount, -1);
 }
+
+#[test]
+fn supported_setup_failure_commits_neither_slot_nor_displacement() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut ram = Wram::new(&mut bytes).unwrap();
+    let mut rom = vec![0; 0x300000];
+    let off = (4 << 15) + 0x1000;
+    rom[off..off + 4].copy_from_slice(&[0x4a, 0xb0, 0x00, 0x80]);
+    ram.set_word(0xdc4, 0x63ff);
+    ram.set_word(0x1c27, 18);
+    let before: Vec<_> = (0..WRAM_SIZE).map(|i| ram.byte(i)).collect();
+    let mut amount = -123;
+    assert_eq!(plm::supports_header(&rom, 0x9000), Ok(true));
+    assert_eq!(plm::spawn(&mut ram, &rom, 0x9000, &mut amount), Err("room row extent"));
+    assert_eq!(before, (0..WRAM_SIZE).map(|i| ram.byte(i)).collect::<Vec<_>>());
+    assert_eq!(amount, -123);
+}
