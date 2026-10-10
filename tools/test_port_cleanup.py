@@ -23,6 +23,7 @@ class CleanupTests(unittest.TestCase):
                 (run / 'verdict.json').write_text(json.dumps({'status': 'offline-verified', 'artifacts': {'before.wram': digest}}))
             self.assertEqual(deduplicate(root, False), len(payload))
             self.assertNotEqual((root / 'one/before.wram').stat().st_ino, (root / 'two/before.wram').stat().st_ino)
+            (root / 'two/before.wram.dedup-link').write_bytes(b'interrupted')
             self.assertEqual(deduplicate(root, True), len(payload))
             self.assertEqual((root / 'one/before.wram').read_bytes(), payload)
             self.assertEqual((root / 'two/before.wram').read_bytes(), payload)
