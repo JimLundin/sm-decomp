@@ -80,3 +80,17 @@ fn malformed_streams_fail_at_checked_memory_boundaries() {
         );
     }
 }
+
+#[test]
+fn observer_retains_repeated_transient_stores() {
+    let mut bytes = vec![0; decomp::WRAM_SIZE];
+    let mut writes = Vec::new();
+    {
+        let mut observer = |offset, value| writes.push((offset, value));
+        let mut ram = decomp::WramView::with_observer(&mut bytes, &mut observer).unwrap();
+        ram.write(7, 42).unwrap();
+        ram.write(7, 0).unwrap();
+    }
+    assert_eq!(writes, vec![(7, 42), (7, 0)]);
+    assert_eq!(bytes[7], 0);
+}
