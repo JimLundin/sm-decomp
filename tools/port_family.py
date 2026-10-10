@@ -131,7 +131,7 @@ int main(int argc, char **argv) {
     root_imports = ''.join(f'use memory::{name};\n' for name in imports)
     wrapper = run / 'wrapper.rs'
     wrapper.write_text(f'''#[path = {json.dumps(str(ROOT / 'crates/port/src/lib.rs'))}] mod memory;
-use memory::Wram;
+use memory::*;
 {root_imports}#[path = {json.dumps(str(module))}] mod family;
 fn main() {{
  let args:Vec<String>=std::env::args().collect(); assert!(args.len()==6 || args.len()==7);

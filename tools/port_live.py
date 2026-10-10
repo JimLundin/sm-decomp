@@ -37,6 +37,7 @@ pub unsafe extern "C" fn port_family_{index}(ram:*mut u8,len:usize,rom:*const u8
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--family-verdict', type=Path, action='append', required=True)
+    parser.add_argument('--collision-verdict', type=Path)
     parser.add_argument('--frames', type=int, default=9000)
     parser.add_argument('--accepted', type=Path, default=ROOT / 'out/port/decompressor-offline/decomp-acceptance.json')
     parser.add_argument('--output', type=Path, required=True)
@@ -69,6 +70,18 @@ def main():
             if previous['source'] != verdict['source']:
                 raise ValueError('family source identity differs')
             families.append((manifest, module))
+        collision_index = None
+        if args.collision_verdict:
+            from port_collision import verify_collision_evidence
+            evidence = verify_collision_evidence(args.collision_verdict)
+            collision_manifest = json.loads((args.collision_verdict.parent / 'manifest.json').read_text())
+            if collision_manifest.get('infrastructure_probe') or not evidence.get('gameplay_translation', True):
+                raise ValueError('infrastructure callback probe cannot replace gameplay')
+            collision_module = Path(collision_manifest['rust_module'])
+            if not collision_module.is_absolute():
+                collision_module = ROOT / collision_module
+            collision_index = len(families)
+            families.append((collision_manifest, collision_module))
         if not families:
             raise ValueError('no family contracts')
         from decomp_routine import verify_accepted
@@ -81,7 +94,7 @@ def main():
                 result = subprocess.run(command, cwd=directory, stdout=stdout, stderr=stderr, timeout=240)
             if result.returncode:
                 raise ValueError(f'{label} failed with exit {result.returncode}')
-        rust = [f'#[path={json.dumps(str(ROOT / "crates/port/src/lib.rs"))}] mod memory;', 'use memory::Wram;']
+        rust = [f'#[path={json.dumps(str(ROOT / "crates/port/src/lib.rs"))}] mod memory;', 'use memory::*;']
         imports = sorted({name for manifest, _ in families for name in manifest.get('rust_imports', [])})
         for name in imports:
             if not re.fullmatch('[A-Za-z_][A-Za-z_0-9]*', name):
@@ -90,10 +103,14 @@ def main():
         wrappers, symbols, units = [], [], sorted((source / 'src').glob('sm_*.c'))
         bank_texts = {}
         for family_index, (manifest, module) in enumerate(families):
-            rust.append(generate_family_abi(manifest, module, family_index))
-            wrappers.append(f'extern int64_t port_family_{family_index}(uint8_t*,size_t,const uint8_t*,size_t,uint32_t,int32_t,int32_t);')
-            bank = source / 'src' / manifest['bank']
-            text = bank_texts.get(bank, bank.read_text())
+            if family_index == collision_index:
+                from port_collision import generate_collision_abi
+                rust.append(generate_collision_abi(manifest, module))
+                abi_symbol = 'port_collision_call'
+            else:
+                rust.append(generate_family_abi(manifest, module, family_index))
+                abi_symbol = f'port_family_{family_index}'
+            wrappers.append(f'extern int64_t {abi_symbol}(uint8_t*,size_t,const uint8_t*,size_t,uint32_t,int32_t,int32_t);')
             for routine_index, routine in enumerate(manifest['routines']):
                 symbol = routine['symbol']
                 types = routine.get('arg_types', ['uint16'] * routine.get('args', 0))
@@ -103,23 +120,34 @@ def main():
                 index = len(symbols)
                 symbols.append(symbol)
                 signature = re.compile(r'(?m)^(\w+\s+)' + re.escape(symbol) + r'(\s*\([^\n]*\)\s*\{)')
+                owners = [bank for bank in sorted((source / 'src').glob('sm_*.c')) if signature.search(bank.read_text())]
+                if len(owners) != 1:
+                    raise ValueError(f'expected one owning source unit for {symbol}')
+                bank = owners[0]
+                text = bank_texts.get(bank, bank.read_text())
                 text, replacements = signature.subn(r'\1C_' + symbol + r'\2', text)
                 if replacements != 1:
                     raise ValueError(f'definition rename count differs: {symbol}')
-                c_type = {'void': 'void', 'uint8': 'uint8_t', 'uint16': 'uint16_t', 'uint32': 'uint32_t', 'int32': 'int32_t'}[routine['return']]
-                declaration = ','.join(kind + '_t ' + name for kind, name in zip(types, ['a', 'b'])) or 'void'
+                bank_texts[bank] = text
+                c_type = {'void': 'void', 'uint8': 'uint8_t', 'uint16': 'uint16_t', 'uint32': 'uint32_t', 'int32': 'int32_t', 'rom_ptr': 'const uint16_t *'}[routine['return']]
+                declaration = ','.join(('const uint16_t *' if kind == 'rom_ptr' else kind + '_t ') + name for kind, name in zip(types, ['a', 'b'])) or 'void'
                 arguments = ','.join(['a', 'b'][:count])
                 actual = ','.join(['a' if count > 0 else '0', 'b' if count > 1 else '0'])
+                if 'rom_ptr' in types:
+                    actual = ','.join(f'PortPointerResult({name},a)' if kind == 'rom_ptr' else name for kind, name in zip(types, ['a', 'b']))
                 c_call = f'C_{symbol}({arguments})'
                 reference = f'{c_call};' if c_type == 'void' else f'result=(uint32_t){c_call};'
                 returned = '' if c_type == 'void' else f'return ({c_type})result;'
+                if routine['return'] == 'rom_ptr':
+                    reference = f'const uint16_t *reference={c_call};result=PortPointerResult(reference,a);'
+                    returned = 'return PortPointerFromResult((uint32_t)result);'
                 wrappers.append(f'''extern {c_type} C_{symbol}({declaration});
 {c_type} {symbol}({declaration}) {{
  int64_t result=0;
  int outer=port_call_depth++==0;
  unsigned long capture=outer?++port_outer_hits[{index}]:0;
  if(outer && capture<=8)PortCapture({index},capture,"before");
- if(port_mixed) {{result=port_family_{family_index}(g_ram,sizeof(g_ram),g_rom,g_snes->cart->romSize,{routine_index},{actual}); if(result<0) {{fprintf(stderr,"Rust family error {symbol}\\n");exit(4);}} port_rust_hits[{index}]++;}}
+ if(port_mixed) {{result={abi_symbol}(g_ram,sizeof(g_ram),g_rom,g_snes->cart->romSize,{routine_index},{actual}); if(result<0) {{fprintf(stderr,"Rust family error {symbol}\\n");exit(4);}} port_rust_hits[{index}]++;}}
  else {{{reference} port_c_hits[{index}]++;}}
  port_call_depth--;
  if(outer) {{
@@ -128,7 +156,6 @@ def main():
  }}
  {returned}
 }}''')
-            bank_texts[bank] = text
         library_source = run / 'families.rs'
         library_source.write_text('\n'.join(rust))
         execute(['rustc', '--edition=2024', '-O', '--crate-type=staticlib', str(library_source), '-o', str(run / 'libfamilies.a')], run, 'rust-build')
@@ -186,6 +213,40 @@ void __wrap_DecompressToMem(uint32 src,uint8 *dst) {
 static FILE *port_effects;
 static FILE *port_calls;
 static unsigned port_call_depth;
+extern int32 *cur_coll_amt32;
+static unsigned long port_plm_callbacks;
+extern uint8 __real_SpawnPLM(uint16);
+uint8 __wrap_SpawnPLM(uint16 header) {
+ int32 before=cur_coll_amt32?*cur_coll_amt32:0;
+ uint8 result=__real_SpawnPLM(header);port_plm_callbacks++;
+ fprintf(port_effects,"plm %u %d %d %u\\n",header,before,cur_coll_amt32?*cur_coll_amt32:0,result);
+ return result;
+}
+int32_t sm_rust_collision_spawn_plm(uint8_t *transaction,size_t len,uint16_t header,int32_t *amount) {
+ if(!transaction || len!=sizeof(g_ram) || !amount || transaction==g_ram)return -1;
+ // Owned Rust transaction has no alias with canonical C state or retained refs.
+ memcpy(g_ram,transaction,len);
+ int32 *previous=cur_coll_amt32;cur_coll_amt32=amount;
+ uint8 result=__wrap_SpawnPLM(header);cur_coll_amt32=previous;
+ memcpy(transaction,g_ram,len);
+ return result;
+}
+static uint32_t PortPointerResult(const uint16_t *pointer,uint16_t enemy) {
+ if(!pointer)return 0;
+ if(enemy>=0x800 || (enemy&0x3f))exit(4);
+ uintptr_t p=(uintptr_t)pointer;unsigned bank=g_ram[0xf78+enemy+0x2e];
+ if(p<0x10000){if(p<0x8000)exit(4);return (bank<<16)|p;}
+ uintptr_t base=(uintptr_t)g_rom+((bank&0x7f)*0x8000);
+ if(p<base || p>=base+0x8000)exit(4);
+ return (bank<<16)|(0x8000+p-base);
+}
+static const uint16_t *PortPointerFromResult(uint32_t address) {
+ if(!address)return NULL;
+ if((address&0xffff)<0x8000)exit(4);
+ size_t offset=(((address>>16)<<15)|(address&0x7fff))&0x3fffff;
+ if(offset>=g_snes->cart->romSize)exit(4);
+ return (const uint16_t*)(g_rom+offset);
+}
 static void PortCapture(unsigned routine,unsigned long sequence,const char *phase) {
  char name[120];snprintf(name,sizeof(name),"fixtures/port-%03u-%03lu-%s.wram",routine,sequence,phase);
  FILE *f=fopen(name,"wb");if(!f || fwrite(g_ram,1,sizeof(g_ram),f)!=sizeof(g_ram) || fclose(f))exit(2);
@@ -231,12 +292,13 @@ int main(int argc,char **argv) {
  if(result) return result;
  for(unsigned i=0;i<sizeof(port_c_hits)/sizeof(*port_c_hits);i++) printf("port-hit %u %lu %lu\\n",i,port_c_hits[i],port_rust_hits[i]);
  printf("predecessor-hit %lu %lu %lu %lu\\n",port_decompress_c,port_decompress_rust,port_rng_c,port_rng_rust);
+ printf("plm-callback-hit %lu\\n",port_plm_callbacks);
  return 0;
 }
 ''')
         units += [source / 'src' / name for name in ('spc_player.c', 'tracing.c', 'util.c')]
         units += sorted((source / 'src/snes').glob('*.c'))
-        build = ['cc', '-O2', '-fno-strict-aliasing', '-ffunction-sections', '-fdata-sections', '-iquote', str(source / 'src'), *map(str, units), str(host), str(run / 'libfamilies.a'), str(run / 'target/release/libdecomp.a'), str(run / 'librng.a'), '-Wl,--gc-sections', '-Wl,--wrap=Call', '-Wl,--wrap=cpu_runOpcode', '-Wl,--wrap=DecompressToMem', '-Wl,--wrap=ppu_write', '-Wl,--wrap=RtlApuWrite', '-Wl,--wrap=RtlRunFrame', '-lm', '-ldl', '-lpthread', '-o', str(run / 'live')]
+        build = ['cc', '-O2', '-fno-strict-aliasing', '-ffunction-sections', '-fdata-sections', '-iquote', str(source / 'src'), *map(str, units), str(host), str(run / 'libfamilies.a'), str(run / 'target/release/libdecomp.a'), str(run / 'librng.a'), '-Wl,--gc-sections', '-Wl,--wrap=Call', '-Wl,--wrap=cpu_runOpcode', '-Wl,--wrap=DecompressToMem', '-Wl,--wrap=ppu_write', '-Wl,--wrap=RtlApuWrite', '-Wl,--wrap=RtlRunFrame', '-Wl,--wrap=SpawnPLM', '-lm', '-ldl', '-lpthread', '-o', str(run / 'live')]
         execute(build, run, 'host-build')
         inventories, hits = {}, {}
         for mode in ('c', 'mixed'):
