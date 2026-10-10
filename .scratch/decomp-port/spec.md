@@ -39,3 +39,16 @@ This is the first frontier, not the completion boundary of the user's goal.
 Expand tickets into substantive gameplay subsystems after this frontier, using
 observed dependencies and fixtures. Full ownership remains the direction; do not
 equate a count of short helpers with large parts of the game being translated.
+
+## Verified progress
+
+Five-family live run out/port/gameplay-control-live/20261010T201048.927361Z/verdict.json
+matches four independent 9,000-frame C/mixed processes, full periodic game/hardware
+checkpoints, terminal WRAM/SRAM, per-call captured states, ordered PPU/APU effects
+and raw-bit returns. 143 translated symbols have declared offline fixtures;
+48 are live-exercised with 48,033 Rust calls plus 23 accepted Rust decompressions
+and 8,783 Rust RNG calls per process. Measured CPU fallback is zero in this
+prefix; untranslated C still owns scheduling and many game systems. The user's
+goal remains active: collision/movement, bank-specific enemy behavior, projectiles,
+PLMs, rooms/doors and further gameplay must continue before broad ownership can
+be claimed. Counts are inventory, not a percentage of complete gameplay.

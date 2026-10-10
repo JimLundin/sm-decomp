@@ -37,6 +37,7 @@ pub unsafe extern "C" fn port_family_{index}(ram:*mut u8,len:usize,rom:*const u8
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--family-verdict', type=Path, action='append', required=True)
+    parser.add_argument('--collision-verdict', type=Path)
     parser.add_argument('--frames', type=int, default=9000)
     parser.add_argument('--accepted', type=Path, default=ROOT / 'out/port/decompressor-offline/decomp-acceptance.json')
     parser.add_argument('--output', type=Path, required=True)
@@ -69,6 +70,18 @@ def main():
             if previous['source'] != verdict['source']:
                 raise ValueError('family source identity differs')
             families.append((manifest, module))
+        collision_index = None
+        if args.collision_verdict:
+            from port_collision import verify_collision_evidence
+            evidence = verify_collision_evidence(args.collision_verdict)
+            collision_manifest = json.loads((args.collision_verdict.parent / 'manifest.json').read_text())
+            if collision_manifest.get('infrastructure_probe') or not evidence.get('gameplay_translation', True):
+                raise ValueError('infrastructure callback probe cannot replace gameplay')
+            collision_module = Path(collision_manifest['rust_module'])
+            if not collision_module.is_absolute():
+                collision_module = ROOT / collision_module
+            collision_index = len(families)
+            families.append((collision_manifest, collision_module))
         if not families:
             raise ValueError('no family contracts')
         from decomp_routine import verify_accepted
@@ -90,8 +103,14 @@ def main():
         wrappers, symbols, units = [], [], sorted((source / 'src').glob('sm_*.c'))
         bank_texts = {}
         for family_index, (manifest, module) in enumerate(families):
-            rust.append(generate_family_abi(manifest, module, family_index))
-            wrappers.append(f'extern int64_t port_family_{family_index}(uint8_t*,size_t,const uint8_t*,size_t,uint32_t,int32_t,int32_t);')
+            if family_index == collision_index:
+                from port_collision import generate_collision_abi
+                rust.append(generate_collision_abi(manifest, module))
+                abi_symbol = 'port_collision_call'
+            else:
+                rust.append(generate_family_abi(manifest, module, family_index))
+                abi_symbol = f'port_family_{family_index}'
+            wrappers.append(f'extern int64_t {abi_symbol}(uint8_t*,size_t,const uint8_t*,size_t,uint32_t,int32_t,int32_t);')
             for routine_index, routine in enumerate(manifest['routines']):
                 symbol = routine['symbol']
                 types = routine.get('arg_types', ['uint16'] * routine.get('args', 0))
@@ -128,7 +147,7 @@ def main():
  int outer=port_call_depth++==0;
  unsigned long capture=outer?++port_outer_hits[{index}]:0;
  if(outer && capture<=8)PortCapture({index},capture,"before");
- if(port_mixed) {{result=port_family_{family_index}(g_ram,sizeof(g_ram),g_rom,g_snes->cart->romSize,{routine_index},{actual}); if(result<0) {{fprintf(stderr,"Rust family error {symbol}\\n");exit(4);}} port_rust_hits[{index}]++;}}
+ if(port_mixed) {{result={abi_symbol}(g_ram,sizeof(g_ram),g_rom,g_snes->cart->romSize,{routine_index},{actual}); if(result<0) {{fprintf(stderr,"Rust family error {symbol}\\n");exit(4);}} port_rust_hits[{index}]++;}}
  else {{{reference} port_c_hits[{index}]++;}}
  port_call_depth--;
  if(outer) {{
@@ -194,6 +213,24 @@ void __wrap_DecompressToMem(uint32 src,uint8 *dst) {
 static FILE *port_effects;
 static FILE *port_calls;
 static unsigned port_call_depth;
+extern int32 *cur_coll_amt32;
+static unsigned long port_plm_callbacks;
+extern uint8 __real_SpawnPLM(uint16);
+uint8 __wrap_SpawnPLM(uint16 header) {
+ int32 before=cur_coll_amt32?*cur_coll_amt32:0;
+ uint8 result=__real_SpawnPLM(header);port_plm_callbacks++;
+ fprintf(port_effects,"plm %u %d %d %u\\n",header,before,cur_coll_amt32?*cur_coll_amt32:0,result);
+ return result;
+}
+int32_t sm_rust_collision_spawn_plm(uint8_t *transaction,size_t len,uint16_t header,int32_t *amount) {
+ if(!transaction || len!=sizeof(g_ram) || !amount || transaction==g_ram)return -1;
+ // Owned Rust transaction has no alias with canonical C state or retained refs.
+ memcpy(g_ram,transaction,len);
+ int32 *previous=cur_coll_amt32;cur_coll_amt32=amount;
+ uint8 result=__wrap_SpawnPLM(header);cur_coll_amt32=previous;
+ memcpy(transaction,g_ram,len);
+ return result;
+}
 static uint32_t PortPointerResult(const uint16_t *pointer,uint16_t enemy) {
  if(!pointer)return 0;
  if(enemy>=0x800 || (enemy&0x3f))exit(4);
@@ -255,12 +292,13 @@ int main(int argc,char **argv) {
  if(result) return result;
  for(unsigned i=0;i<sizeof(port_c_hits)/sizeof(*port_c_hits);i++) printf("port-hit %u %lu %lu\\n",i,port_c_hits[i],port_rust_hits[i]);
  printf("predecessor-hit %lu %lu %lu %lu\\n",port_decompress_c,port_decompress_rust,port_rng_c,port_rng_rust);
+ printf("plm-callback-hit %lu\\n",port_plm_callbacks);
  return 0;
 }
 ''')
         units += [source / 'src' / name for name in ('spc_player.c', 'tracing.c', 'util.c')]
         units += sorted((source / 'src/snes').glob('*.c'))
-        build = ['cc', '-O2', '-fno-strict-aliasing', '-ffunction-sections', '-fdata-sections', '-iquote', str(source / 'src'), *map(str, units), str(host), str(run / 'libfamilies.a'), str(run / 'target/release/libdecomp.a'), str(run / 'librng.a'), '-Wl,--gc-sections', '-Wl,--wrap=Call', '-Wl,--wrap=cpu_runOpcode', '-Wl,--wrap=DecompressToMem', '-Wl,--wrap=ppu_write', '-Wl,--wrap=RtlApuWrite', '-Wl,--wrap=RtlRunFrame', '-lm', '-ldl', '-lpthread', '-o', str(run / 'live')]
+        build = ['cc', '-O2', '-fno-strict-aliasing', '-ffunction-sections', '-fdata-sections', '-iquote', str(source / 'src'), *map(str, units), str(host), str(run / 'libfamilies.a'), str(run / 'target/release/libdecomp.a'), str(run / 'librng.a'), '-Wl,--gc-sections', '-Wl,--wrap=Call', '-Wl,--wrap=cpu_runOpcode', '-Wl,--wrap=DecompressToMem', '-Wl,--wrap=ppu_write', '-Wl,--wrap=RtlApuWrite', '-Wl,--wrap=RtlRunFrame', '-Wl,--wrap=SpawnPLM', '-lm', '-ldl', '-lpthread', '-o', str(run / 'live')]
         execute(build, run, 'host-build')
         inventories, hits = {}, {}
         for mode in ('c', 'mixed'):
