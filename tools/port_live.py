@@ -11,6 +11,31 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def definition_pattern(symbol):
+    """Match a definition, including const pointer returns, without call sites."""
+    return re.compile(r'(?m)^([A-Za-z_][\w \t]*?(?:\*[ \t]*)?)' + re.escape(symbol)
+                      + r'(\s*\([^\n]*\)\s*\{)')
+
+
+def generate_plm_abi():
+    """Choose supported setup before mutation; errors never trigger a C retry."""
+    return '''#[unsafe(no_mangle)]
+pub unsafe extern "C" fn port_native_plm(ram:*mut u8,len:usize,rom:*const u8,rom_len:usize,header:u16,amount:*mut i32)->i32 {
+ if ram.is_null() || len!=WRAM_SIZE || rom.is_null() || rom_len==0 || rom_len>0x400000 || amount.is_null() || (amount as usize)%4!=0 {return -1;}
+ let Some(rend)=(ram as usize).checked_add(len) else {return -1;};
+ let Some(oend)=(rom as usize).checked_add(rom_len) else {return -1;};
+ let Some(aend)=(amount as usize).checked_add(4) else {return -1;};
+ if (ram as usize)<oend && (rom as usize)<rend || (amount as usize)<rend && (ram as usize)<aend || (amount as usize)<oend && (rom as usize)<aend {return -1;}
+ let rom=unsafe {std::slice::from_raw_parts(rom,rom_len)};
+ let supported=std::panic::catch_unwind(||memory::plm::supports_header(rom,header));
+ match supported {Ok(Ok(false))=>return -2,Ok(Ok(true))=>{},_=>return -1}
+ let mut owned=unsafe {std::slice::from_raw_parts(ram,len)}.to_vec();
+ let mut displacement=unsafe {*amount};
+ let result=std::panic::catch_unwind(std::panic::AssertUnwindSafe(||memory::plm::spawn(&mut Wram::new(&mut owned).unwrap(),rom,header,&mut displacement)));
+ match result {Ok(Ok(flags))=>{unsafe {std::ptr::copy_nonoverlapping(owned.as_ptr(),ram,len);*amount=displacement;}flags.into()},_=>-1}
+}'''
+
+
 def generate_family_abi(manifest, module, index):
     """Generate the bounded synchronous ABI used by the live host."""
     if 'rom' in manifest:
@@ -38,6 +63,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--family-verdict', type=Path, action='append', required=True)
     parser.add_argument('--collision-verdict', type=Path)
+    parser.add_argument('--plm-verdict', type=Path)
     parser.add_argument('--frames', type=int, default=9000)
     parser.add_argument('--accepted', type=Path, default=ROOT / 'out/port/decompressor-offline/decomp-acceptance.json')
     parser.add_argument('--output', type=Path, required=True)
@@ -84,6 +110,14 @@ def main():
             families.append((collision_manifest, collision_module))
         if not families:
             raise ValueError('no family contracts')
+        if args.plm_verdict:
+            from port_plm import verify_plm_evidence
+            plm_evidence = verify_plm_evidence(args.plm_verdict)
+            if plm_evidence['source'] != verdict['source']:
+                raise ValueError('native PLM source identity differs')
+            if Path(plm_evidence['implementation']['module']).resolve() != ROOT / 'crates/port/src/plm.rs':
+                raise ValueError('native PLM evidence does not seal the installed module')
+            verdict['plm_predecessor_sha256'] = digest(args.plm_verdict)
         from decomp_routine import verify_accepted
         verify_accepted(args.accepted)
         verdict['decompressor_predecessor_sha256'] = digest(args.accepted)
@@ -95,6 +129,8 @@ def main():
             if result.returncode:
                 raise ValueError(f'{label} failed with exit {result.returncode}')
         rust = [f'#[path={json.dumps(str(ROOT / "crates/port/src/lib.rs"))}] mod memory;', 'use memory::*;']
+        if args.plm_verdict:
+            rust.append(generate_plm_abi())
         imports = sorted({name for manifest, _ in families for name in manifest.get('rust_imports', [])})
         for name in imports:
             if not re.fullmatch('[A-Za-z_][A-Za-z_0-9]*', name):
@@ -119,7 +155,7 @@ def main():
                     raise ValueError('duplicate or invalid live symbol')
                 index = len(symbols)
                 symbols.append(symbol)
-                signature = re.compile(r'(?m)^(\w+\s+)' + re.escape(symbol) + r'(\s*\([^\n]*\)\s*\{)')
+                signature = definition_pattern(symbol)
                 owners = [bank for bank in sorted((source / 'src').glob('sm_*.c')) if signature.search(bank.read_text())]
                 if len(owners) != 1:
                     raise ValueError(f'expected one owning source unit for {symbol}')
@@ -214,11 +250,18 @@ static FILE *port_effects;
 static FILE *port_calls;
 static unsigned port_call_depth;
 extern int32 *cur_coll_amt32;
-static unsigned long port_plm_callbacks;
+static unsigned long port_plm_callbacks,port_plm_c,port_plm_rust;
+''' + ('#define PORT_NATIVE_PLM\nextern int32_t port_native_plm(uint8_t*,size_t,const uint8_t*,size_t,uint16_t,int32_t*);\n' if args.plm_verdict else '') + '''
 extern uint8 __real_SpawnPLM(uint16);
 uint8 __wrap_SpawnPLM(uint16 header) {
  int32 before=cur_coll_amt32?*cur_coll_amt32:0;
- uint8 result=__real_SpawnPLM(header);port_plm_callbacks++;
+ uint8 result;int32 displacement=before;int32 native=-2;
+#ifdef PORT_NATIVE_PLM
+ if(port_mixed)native=port_native_plm(g_ram,sizeof(g_ram),g_rom,g_snes->cart->romSize,header,&displacement);
+#endif
+ if(native==-2){result=__real_SpawnPLM(header);port_plm_c++;}
+ else {if(native<0){fprintf(stderr,"native PLM error %u\\n",header);exit(4);}result=native;if(cur_coll_amt32)*cur_coll_amt32=displacement;port_plm_rust++;}
+ port_plm_callbacks++;
  fprintf(port_effects,"plm %u %d %d %u\\n",header,before,cur_coll_amt32?*cur_coll_amt32:0,result);
  return result;
 }
@@ -292,7 +335,7 @@ int main(int argc,char **argv) {
  if(result) return result;
  for(unsigned i=0;i<sizeof(port_c_hits)/sizeof(*port_c_hits);i++) printf("port-hit %u %lu %lu\\n",i,port_c_hits[i],port_rust_hits[i]);
  printf("predecessor-hit %lu %lu %lu %lu\\n",port_decompress_c,port_decompress_rust,port_rng_c,port_rng_rust);
- printf("plm-callback-hit %lu\\n",port_plm_callbacks);
+ printf("plm-callback-hit %lu %lu %lu\\n",port_plm_callbacks,port_plm_c,port_plm_rust);
  return 0;
 }
 ''')
@@ -322,6 +365,13 @@ int main(int argc,char **argv) {
                 if (mode == 'mixed' and (dc or rc or not dr or not rr)) or (mode == 'c' and (dr or rr or not dc or not rc)):
                     raise ValueError('prior Rust replacements were not exclusively exercised')
                 verdict.setdefault('predecessor_hits', {})[name] = {'decompressor_c': dc, 'decompressor_rust': dr, 'rng_c': rc, 'rng_rust': rr}
+                callbacks = [line.split()[1:] for line in (directory / 'replay.stdout').read_text().splitlines() if line.startswith('plm-callback-hit ')]
+                if len(callbacks) != 1 or len(callbacks[0]) != 3:
+                    raise ValueError('missing PLM callback execution counter')
+                total, c_calls, rust_calls = map(int, callbacks[0])
+                if total != c_calls + rust_calls or (mode == 'c' and rust_calls):
+                    raise ValueError('invalid PLM callback ownership counts')
+                verdict.setdefault('plm_callback_hits', {})[name] = {'total': total, 'c': c_calls, 'rust': rust_calls}
                 if any(row['c' if mode == 'mixed' else 'rust'] for row in hits[name].values()):
                     raise ValueError('replacement execution was not exclusive')
         if any(inventory != inventories['c-0'] for inventory in inventories.values()):
@@ -331,6 +381,12 @@ int main(int argc,char **argv) {
             raise ValueError('no Rust gameplay family executed')
         if any(progress != verdict['progress']['c-0'] for progress in verdict['progress'].values()):
             raise ValueError('gameplay progress or measured fallback diverged')
+        if len({counts['total'] for counts in verdict['plm_callback_hits'].values()}) != 1:
+            raise ValueError('PLM callback execution counts diverged')
+        if verdict['plm_callback_hits']['mixed-0'] != verdict['plm_callback_hits']['mixed-1']:
+            raise ValueError('native PLM ownership differs across independent replays')
+        if args.plm_verdict and not verdict['plm_callback_hits']['mixed-0']['rust']:
+            raise ValueError('no native Rust PLM setup executed')
         verdict.update(status='mixed-C-Rust-integration', live_exercised=True, hits=hits,
                        transformations=transformations, artifacts=inventories['c-0'],
                        binary_sha256=digest(run / 'live'),

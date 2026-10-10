@@ -9,6 +9,19 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class LivePortTests(unittest.TestCase):
+    def test_pointer_definition_rename_preserves_calls_and_declarations(self):
+        import sys
+        sys.path.insert(0, str(ROOT / 'tools'))
+        from port_live import definition_pattern
+        text = ('const uint16 *EnemyInstr_Goto(uint16 k, const uint16 *jp);\n'
+                'const uint16 *EnemyInstr_Goto(uint16 k, const uint16 *jp) {\n'
+                '  return EnemyInstr_Goto(k, jp);\n}\n')
+        renamed, count = definition_pattern('EnemyInstr_Goto').subn(r'\1C_EnemyInstr_Goto\2', text)
+        self.assertEqual(count, 1)
+        self.assertIn('const uint16 *C_EnemyInstr_Goto(', renamed)
+        self.assertIn('return EnemyInstr_Goto(k, jp);', renamed)
+        self.assertIn('const uint16 *EnemyInstr_Goto(uint16 k, const uint16 *jp);', renamed)
+
     def test_missing_family_evidence_cannot_start_replay(self):
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary) / 'output'

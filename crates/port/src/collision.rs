@@ -608,10 +608,10 @@ fn air_base_speed(ram: &mut Wram<'_>, rom: &[u8]) -> Result<(bool, i32), &'stati
     let pointer = samus::dispatch_rom(ram, rom, "Samus_DetermineSpeedTableEntryPtr_X", 0, 0)?;
     let mode = ram.word(SAMUS_X_ACCEL_MODE);
     let accel =
-        (u32::from(rom_word(rom, 0x900000 | pointer)?) << 16) | u32::from(rom_word(rom, 0x900000 | pointer + 2)?);
+        (u32::from(rom_word(rom, 0x900000 | pointer)?) << 16) | u32::from(rom_word(rom, 0x900000 | (pointer + 2))?);
     let tentative = pair(ram, SAMUS_X_BASE_SPEED, SAMUS_X_BASE_SUBSPEED).wrapping_add(accel);
-    let max_hi = rom_word(rom, 0x900000 | pointer + 4)?;
-    let max_lo = rom_word(rom, 0x900000 | pointer + 6)?;
+    let max_hi = rom_word(rom, 0x900000 | (pointer + 4))?;
+    let max_lo = rom_word(rom, 0x900000 | (pointer + 6))?;
     let hi = (tentative >> 16) as u16;
     let lo = tentative as u16;
     let clamped = mode & 1 == 0
@@ -968,7 +968,7 @@ fn handler(ram: &mut Wram<'_>, rom: &[u8], host: &mut impl Host, mode: u8) -> Re
         }
         15 => {
             let pose = ram.word(SAMUS_POSE);
-            if pose >= 0xf1 || pose < 0xdb {
+            if !(0xdb..0xf1).contains(&pose) {
                 if pose < 0xf1 {
                     let slot = pose.wrapping_sub(53);
                     if slot >= 12 {
