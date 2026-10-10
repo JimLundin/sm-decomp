@@ -52,3 +52,73 @@ let value=rng::next_random(&mut bytes)?; ram.set_word(0x5e5,value); Ok(value.int
             self.assertIn('Samus_HandleAnimDelay',routines['Samus_Animate']['calls'])
             self.assertTrue(all(r['translation_status']=='unverified' for r in inventory['routines']))
             self.assertGreater(len(inventory['routines']),3000)
+
+    def test_rejecting_candidate_domain_stops_before_unchecked_c_execution(self):
+        with tempfile.TemporaryDirectory() as directory:
+            run=Path(directory)
+            module=run/'reject.rs'
+            module.write_text("use crate::Wram; pub fn dispatch(_: &mut Wram,_:&str,_:u16,_:u16)->Result<u32,&'static str>{Err(\"invalid indexed state\")}")
+            manifest=run/'family.json'
+            manifest.write_text(json.dumps({'family':'invalid-domain','rust_module':str(module),'bank':'sm_80.c','routines':[{'symbol':'SetBossBitForCurArea','args':1,'return':'void','cases':[{'name':'bad-area','writes':[[0x79f,[255,255]]]}]}]}))
+            result=subprocess.run(['python3',str(ROOT/'tools/port_family.py'),'verify','--manifest',str(manifest),'--source',str(SOURCE),'--output',str(run/'out')],capture_output=True,text=True)
+            self.assertNotEqual(result.returncode,0)
+            evidence=next((run/'out').iterdir())
+            self.assertTrue((evidence/'bad-area'/'rust.stderr').exists())
+            self.assertFalse((evidence/'bad-area'/'c-after.wram').exists())
+
+    def test_capture_digest_and_expected_full_memory_are_checked(self):
+        with tempfile.TemporaryDirectory() as directory:
+            run=Path(directory)
+            module=run/'same.rs'
+            module.write_text("use crate::Wram; pub fn dispatch(r:&mut Wram,_:&str,_:u16,_:u16)->Result<u32,&'static str>{r.set_word(0x5e5,273);Ok(273)}")
+            before=run/'before.wram'; before.write_bytes(bytes(0x20000))
+            after=run/'after.wram'; data=bytearray(before.read_bytes());data[1509:1511]=(273).to_bytes(2,'little');after.write_bytes(data)
+            import hashlib
+            manifest=run/'family.json'
+            case={'name':'captured','before_file':str(before),'before_sha256':hashlib.sha256(before.read_bytes()).hexdigest(),'expected_after_file':str(after),'expected_after_sha256':hashlib.sha256(after.read_bytes()).hexdigest(),'expected_return':273}
+            config={'family':'capture','rust_module':str(module),'bank':'sm_80.c','routines':[{'symbol':'NextRandom','args':0,'return':'uint16','cases':[case]}]}
+            def execute(label):
+                manifest.write_text(json.dumps(config))
+                result=subprocess.run(['python3',str(ROOT/'tools/port_family.py'),'verify','--manifest',str(manifest),'--source',str(SOURCE),'--output',str(run/label)],capture_output=True,text=True)
+                return result, json.loads(next((run/label).glob('*/verdict.json')).read_text())
+            result, verdict=execute('good'); self.assertEqual(result.returncode,0,result.stdout)
+            case['before_sha256']='0'*64
+            result, verdict=execute('wrong-digest');self.assertNotEqual(result.returncode,0);self.assertIn('identity',verdict['error'])
+
+    def test_signed_argument_and_rom_input_execute_actual_support_source(self):
+        with tempfile.TemporaryDirectory() as directory:
+            run=Path(directory)
+            module=run/'signed.rs'
+            # SnesDivide is actual pinned sm_rtl.c and independently 65535/2=32767.
+            module.write_text("use crate::Wram; pub fn dispatch_rom(_: &mut Wram,rom:&[u8],_:&str,a:i32,b:i32)->Result<u32,&'static str>{if rom.len()!=0x300000{return Err(\"ROM extent\")};Ok((a as u16/b as u16).into())}")
+            rom=run/'rom.bin';rom.write_bytes(bytes(0x300000))
+            import hashlib
+            manifest=run/'family.json'
+            manifest.write_text(json.dumps({'family':'signed-rom','rust_module':str(module),'bank':'sm_rtl.c','c_support':['sm_rtl.c'],'rom':{'file':str(rom),'sha256':hashlib.sha256(rom.read_bytes()).hexdigest()},'routines':[{'symbol':'SnesDivide','arg_types':['uint16','uint8'],'return':'uint16','cases':[{'name':'negative-raw-word','a':65535,'b':2,'expected_return':32767}]}]}))
+            result=subprocess.run(['python3',str(ROOT/'tools/port_family.py'),'verify','--manifest',str(manifest),'--source',str(SOURCE),'--output',str(run/'out')],capture_output=True,text=True)
+            self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+
+    def test_negative_movement_argument_preserves_raw_signed_bits(self):
+        with tempfile.TemporaryDirectory() as directory:
+            run=Path(directory)
+            module=run/'move.rs'
+            module.write_text("use crate::Wram; pub fn dispatch_i32(r:&mut Wram,_:&str,a:i32,_:i32)->Result<u32,&'static str>{r.set_word(0xaf6,(a as u32>>16) as u16);r.set_word(0xaf8,a as u16);r.set_word(0xdae,(a as u32>>16) as u16);r.set_word(0xdb0,a as u16);Ok(0)}")
+            manifest=run/'family.json'
+            manifest.write_text(json.dumps({'family':'signed-movement','rust_module':str(module),'bank':'sm_90.c','routines':[{'symbol':'Samus_MoveRight_NoColl','arg_types':['int32'],'return':'void','cases':[{'name':'negative-one-fraction','a':-1,'expected_return':0}]}]}))
+            result=subprocess.run(['python3',str(ROOT/'tools/port_family.py'),'verify','--manifest',str(manifest),'--source',str(SOURCE),'--output',str(run/'out')],capture_output=True,text=True)
+            self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+
+    def test_live_consumer_rejects_tampered_retained_family_outputs(self):
+        import sys
+        sys.path.insert(0,str(ROOT/'tools'))
+        from port_family import verify, verify_family_evidence
+        with tempfile.TemporaryDirectory() as directory:
+            run=Path(directory); module=run/'same.rs'
+            module.write_text("use crate::Wram; pub fn dispatch(r:&mut Wram,_:&str,_:u16,_:u16)->Result<u32,&'static str>{r.set_word(0x5e5,273);Ok(273)}")
+            manifest=run/'family.json'
+            manifest.write_text(json.dumps({'family':'auth','rust_module':str(module),'bank':'sm_80.c','routines':[{'symbol':'NextRandom','args':0,'return':'uint16','cases':[{'name':'known','expected_return':273}]}]}))
+            verdict=verify(manifest,SOURCE,run/'out'); evidence=Path(verdict['run'])
+            verify_family_evidence(evidence/'verdict.json')
+            (evidence/'known'/'c-after.wram').write_bytes(bytes(0x20000))
+            with self.assertRaisesRegex(ValueError,'artifact'):
+                verify_family_evidence(evidence/'verdict.json')
