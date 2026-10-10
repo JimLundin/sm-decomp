@@ -152,3 +152,7 @@ replay *args:
 
 readiness-restore run destination *args:
     python3 tools/readiness_orchestration.py restore --run {{quote(run)}} --destination {{quote(destination)}} {{args}}
+
+# Choose one identity-bound measured routine/width without mutating reviewed config.
+select-iteration *args:
+    python3 tools/iteration_selection.py {{args}}

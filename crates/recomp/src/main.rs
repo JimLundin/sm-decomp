@@ -14,6 +14,10 @@ struct Args {
     functions: PathBuf,
     out: PathBuf,
     steps_out: Option<PathBuf>,
+    selection_profile: Option<PathBuf>,
+    selection_entries: Option<PathBuf>,
+    selection_inventory: Option<PathBuf>,
+    selection_out: Option<PathBuf>,
 }
 
 fn parse_args() -> Result<Args> {
@@ -22,6 +26,10 @@ fn parse_args() -> Result<Args> {
         functions: "config/functions.toml".into(),
         out: "out/generated/game.rs".into(),
         steps_out: None,
+        selection_profile: None,
+        selection_entries: None,
+        selection_inventory: None,
+        selection_out: None,
     };
     let mut it = std::env::args().skip(1);
     while let Some(k) = it.next() {
@@ -31,6 +39,10 @@ fn parse_args() -> Result<Args> {
             "--functions" => a.functions = v.into(),
             "--out" => a.out = v.into(),
             "--steps-out" => a.steps_out = Some(v.into()),
+            "--selection-profile" => a.selection_profile = Some(v.into()),
+            "--selection-entries" => a.selection_entries = Some(v.into()),
+            "--selection-inventory" => a.selection_inventory = Some(v.into()),
+            "--selection-out" => a.selection_out = Some(v.into()),
             _ => anyhow::bail!("unknown flag {k}; flags: --rom --functions --out --steps-out"),
         }
     }
@@ -41,6 +53,18 @@ fn main() -> Result<()> {
     let args = parse_args()?;
     let rom = Rom::load(&args.rom)?;
     let funcs: config::Functions = config::load(&args.functions)?;
+
+    if let Some(output) = args.selection_out {
+        let report = recomp::selection::select(
+            &rom,
+            &funcs,
+            &args.selection_profile.context("--selection-profile required")?,
+            &args.selection_entries.context("--selection-entries required")?,
+            &args.selection_inventory.context("--selection-inventory required")?,
+        )?;
+        std::fs::write(output, serde_json::to_string_pretty(&report)? + "\n")?;
+        return Ok(());
+    }
 
     let entries: HashSet<u32> = funcs.functions.iter().map(|f| config::parse_addr(&f.addr)).collect::<Result<_>>()?;
 
