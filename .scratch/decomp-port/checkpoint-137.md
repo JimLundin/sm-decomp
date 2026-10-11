@@ -1,7 +1,10 @@
 # Ticket 137 resume checkpoint
 
 Branch `decomp-port-integration`, refreshed on 2026-10-11. Ticket 137 remains
-claimed and the broader decomp goal remains active. Earlier checkpoints:
+claimed and the broader decomp goal remains active. This checkpoint includes
+the current chain/requirements audit, cleaned supplemental Ceres boundary
+evidence, partial live inspection and open next-frontier ticket 138.
+Earlier checkpoints:
 `91c513c` (native RoomGfx/scheduler implementation), `de166b0` (allocation gap
 and handoff). Current sources implement that missing native WithGfx bridge.
 
@@ -11,8 +14,10 @@ and handoff). Current sources implement that missing native WithGfx bridge.
    - Run: `out/port/observed-projectile-with-gfx-live-full/20261011T142927.603436Z`.
    - Root process 878713 (`tools/port_live.py`), tool session 8416, gzip storage,
      129,712 inputs. Sources are frozen.
-   - C0 finished 129,712 inputs with zero CPU fallback. C1 has started;
-     mixed subjects follow. Read each subject's `replay.stdout` for progress.
+   - Both C0 and C1 finished 129,712 inputs with zero CPU fallback. Mixed0
+     is running (PID 907963), last observed at 104,000 inputs with zero fallback;
+     mixed1 follows. Revalidate processes and read each subject's
+     `replay.stdout` for current progress. No final verdict exists yet.
 2. Require the finished `mixed-C-Rust-integration` verdict with four matching
    inventories/progress, zero CPU fallback, all three native entries exclusively
    Rust with zero support refusals, and all nine scheduler IDs exclusively Rust.
@@ -22,7 +27,9 @@ and handoff). Current sources implement that missing native WithGfx bridge.
 3. Complete read-only material inspection:
    `observed-projectile-with-gfx-live-inspection.json`. Ownership-support agent
    owns it; compare all four subjects and their final verdict member hashes.
-   Initial C0 captures prove highest-free allocation and Ceres/Ridley state.
+   Both C baselines match all six allocation capture pairs and 18 scheduler
+   capture pairs. Initial mixed0 Ceres captures also match; later mixed0 and
+   mixed1 captures still need comparison. The record is deliberately partial.
 4. After all writing processes finish, clean and authenticate the run:
 
    ```sh
@@ -31,11 +38,22 @@ and handoff). Current sources implement that missing native WithGfx bridge.
    python3 tools/port_authenticate_live.py out/port/observed-projectile-with-gfx-live-full/20261011T142927.603436Z/verdict.json --output .scratch/decomp-port/observed-projectile-with-gfx-live-authentication.json
    ```
 
-5. Record final admission/inspection/cleanup/authentication in ticket 137 and
+5. Consult `observed-projectile-with-gfx-completion-audit.json` for the
+   requirement-by-requirement audit. Requirements 1–5 have current evidence,
+   including supplemental boundary authentication below; existing workspace
+   formatting debt is explicit. Requirements 6–7 still need complete live
+   acceptance and post-cleanup authentication.
+6. Record final admission/inspection/cleanup/authentication in ticket 137 and
    `out/port/observed-projectile-with-gfx-final/batch.json`. Resolve ticket 137
    only after all requirements pass. Commit final status/evidence separately.
    Continue the broader decomp effort; whole-game Rust ownership and original
    input/movie parity remain outstanding.
+7. After ticket 137 resolves and the freeze ends, claim ticket 138,
+   `issues/138-observed-ridley-instruction-frame-ownership.md`, and inventory
+   actual-C `ProcessEnemyInstructions` and bank-A6 opcode use through both
+   combat intervals. Its Ridley aiming/spawning script closure advances
+   naturally exercised gameplay ownership. This checkpoint leaves it open
+   and blocked by 137; no implementation or diagnostic run has started.
 
 ## Verified current implementation
 
@@ -64,6 +82,18 @@ and handoff). Current sources implement that missing native WithGfx bridge.
   changing only parameter, 162 actual-ROM B4B1 graphics OR controls. Full WRAM,
   returns and all eight host words match C/Rust; 9,182 sealed members checked.
   Record: `observed-projectile-with-gfx-offline-inspection.json`.
+- Current 1,840-step chain audit independently reads/hashes 11,040 artifacts,
+  verifying both impact branches, eight splits/deletion, F suppression before
+  host reuse, lower/higher newborn scheduling and persistent eight-word host.
+  Record: `observed-projectile-with-gfx-chain-inspection.json`.
+- Fresh supplemental actual-C Ceres boundary evidence passes and authenticates
+  1,674 cases after cleanup: 1,296 pad timer/height cases and 378 platform
+  cases across all 18 slots. Independent expected full WRAM matches C/Rust.
+  Pad timer coverage includes 0/1/2/60/7FFF/8000/8001/FFFF and signed height
+  release boundaries. Exact verdicts, hashes, source identity and cleanup:
+  `observed-projectile-with-gfx-ceres-boundary-authentication.json`.
+  These leaf cases supplement the six-family batch; they do not replace
+  the pending whole-frame live ownership acceptance.
 
 ## Retained earlier live evidence
 
@@ -94,6 +124,13 @@ post-cleanup 1,305-artifact authentication passed. Cleanup records are
 `observed-projectile-cleanup.json`, `observed-projectile-with-gfx-checks.json`
 and earlier build-cleanup records. Current live cleanup is pending because
 processes still write the run; commands above complete it after termination.
+Supplemental Ceres boundary cleanup under
+`out/port/observed-projectile-with-gfx-ceres-boundaries` reclaimed zero ordinary
+bytes and 330,301,440 snapshot bytes. All 1,674 cases authenticate afterward.
+The read-only live inspection reader was removed (8,062 bytes). No new
+disposable build or extraction was created for this checkpoint. The boundary
+authentication record contains measured remaining disk space. The active
+full live run is retained for completion, with cleanup explicitly pending.
 
 Preserve shared `out/evidence`, subject pointers/readers, exact sealed sources,
 binaries, ROM/native scripts, WRAM/host captures and diagnostic verdicts.

@@ -1,0 +1,39 @@
+{
+  "status": "authenticated-after-cleanup",
+  "checked_at": "2026-10-11T14:41:56.614685+00:00",
+  "scope": "Supplemental current-source actual-C Ceres timer/height leaf boundary evidence; separate from native whole-frame live ownership.",
+  "cases": 1674,
+  "families": [
+    {
+      "verdict": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-ceres-boundaries/pad/20261011T143900.115262Z/verdict.json",
+      "verdict_sha256": "c96bcd89b5b0812bd704f4452da1847ede1cf0223e2c51f10930a7b5e521d9cc",
+      "cases": 1296,
+      "status": "authenticated-after-cleanup",
+      "artifacts": 11712,
+      "current_source_identity_checked": true,
+      "verified_routines": 1,
+      "full_WRAM_and_raw_returns_match": true
+    },
+    {
+      "verdict": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-ceres-boundaries/platform/20261011T143900.115256Z/verdict.json",
+      "verdict_sha256": "fbaf22cfa0c6113fcf69ed4758b9051798a77a063c98ba9c396623bd0080ba92",
+      "cases": 378,
+      "status": "authenticated-after-cleanup",
+      "artifacts": 3450,
+      "current_source_identity_checked": true,
+      "verified_routines": 1,
+      "full_WRAM_and_raw_returns_match": true
+    }
+  ],
+  "cleanup": {
+    "commands": [
+      "python3 tools/port_cleanup.py --root out/port/observed-projectile-with-gfx-ceres-boundaries --apply",
+      "python3 tools/port_cleanup.py --root out/port/observed-projectile-with-gfx-ceres-boundaries --deduplicate --apply"
+    ],
+    "ordinary_bytes_reclaimed": 0,
+    "snapshot_bytes_reclaimed": 330301440,
+    "free_bytes": 256026095616,
+    "implementer_worktrees_created": false,
+    "retained": "Exact sealed sources, ROM, binaries, manifests, verdicts and full WRAM/raw-return case artifacts; running live evidence and unrelated worktrees preserved."
+  }
+}

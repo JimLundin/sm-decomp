@@ -357,3 +357,50 @@ Fresh six-family post-cleanup authentication completed successfully for all
 Current free space: 257,219,448,832 bytes. Updated resume note:
 `../checkpoint-137.md`. The complete WithGfx live replay remains in progress;
 source freeze, final live cleanup and ticket resolution are still pending.
+
+## Completion evidence
+
+Partial checkpoint on 2026-10-11 at the user's request for a repo commit and
+handoff note. Status remains claimed. Implementation is committed at `692805c`;
+this checkpoint adds verification records and the current resume state.
+
+Current-source chain audit reads and hashes all 1,840 steps / 11,040 artifacts:
+`../observed-projectile-with-gfx-chain-inspection.json`. Full WRAM, raw returns
+and eight host words match actual C; independent inspection covers both impact
+branches, eight splits/deletion, F suppression before host reuse and descending
+newborn scheduling. Requirement-by-requirement audit:
+`../observed-projectile-with-gfx-completion-audit.json`. Requirements 1–5 are
+supported with existing workspace formatting debt documented; requirements
+6–7 require complete live acceptance and final run cleanup/authentication.
+
+Fresh supplemental current-source Ceres evidence adds 1,674 actual-C cases:
+1,296 pad and 378 platform cases across all 18 slots, signed timer/height
+boundaries and release behavior. Independent expected complete WRAM matches
+both C and Rust. Exact verdict pointers, hashes and post-cleanup authentication:
+`../observed-projectile-with-gfx-ceres-boundary-authentication.json`.
+
+Finished supplemental runs were cleaned with
+`python3 tools/port_cleanup.py --root out/port/observed-projectile-with-gfx-ceres-boundaries --apply`
+and the same command with `--deduplicate --apply`: zero ordinary bytes and
+330,301,440 snapshot bytes reclaimed. All 1,674 cases authenticate after cleanup
+against current source identities. Measured remaining free space was
+256,026,095,616 bytes. The live inspection reader was removed (8,062 bytes).
+No implementer worktrees or new disposable checkpoint builds were created.
+Sealed source/ROM/binary/state evidence, shared packed dependencies and unrelated
+worktrees remain retained.
+
+The existing full129712 WithGfx run remains active at
+`out/port/observed-projectile-with-gfx-live-full/20261011T142927.603436Z`:
+parent PID 878713, tool session 8416. Both C baselines finish with zero fallback;
+all six allocation capture pairs and 18 scheduler pairs match. Mixed0 is
+running, mixed1 follows. `../observed-projectile-with-gfx-live-inspection.json`
+is explicitly partial. Keep sources frozen; after completion require all three
+entry/all-nine scheduler Rust counts, 16/4/4 native allocations, full four-process
+state/effects parity, zero refusal/fallback, scoped cleanup/dedup and retained
+authentication. Live cleanup remains pending because the process writes this
+run. Exact resume and cleanup steps: `../checkpoint-137.md`.
+
+Ticket138 records the next naturally exercised Ridley enemy instruction-frame
+frontier. It remains open and blocked by137; no new implementation or run starts
+at this checkpoint. Whole-game Rust ownership and original-ROM parity remain
+outstanding.

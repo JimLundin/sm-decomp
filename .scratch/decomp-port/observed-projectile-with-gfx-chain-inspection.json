@@ -1,0 +1,1169 @@
+{
+  "verdict": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/observed-projectile-ownership/20261011T142735.935766Z/evidence/20261011T142735.994888Z/verdict.json",
+  "verdict_sha256": "d518b0216da9ce57e170af704d24fe0d7f7e20b5f5d6f826deace6be0246cc21",
+  "manifest_sha256": "ede8a59602186005ff70aba3877efa1108def5df6d55736b38406988b37ce5ad",
+  "status": "all1840caseoutputs-read-and-hash-checked",
+  "scope": "controlled native-ROM actual-C chain; separate from live replay",
+  "cases": 1840,
+  "sealed_artifacts_read": 11040,
+  "artifact_hash_inventory_sha256": "542a756577b17731681bfd167c524acac8e23a01ee9ed6ac48f9c204bb3dd4cf",
+  "full_WRAM_returns_and8hostwords_equal": true,
+  "all_continuations_inherit_matching_previous_WRAM_and_host": true,
+  "chains": {
+    "horizontal-0-0": {
+      "observed_pre_reuse_ids": [
+        "9642",
+        "965e",
+        "9688",
+        "9696"
+      ],
+      "impact": {
+        "frame": 12,
+        "source_slot": 0,
+        "source_F": 0,
+        "host_before": [
+          42330,
+          23205,
+          11,
+          22,
+          33,
+          44,
+          55,
+          66
+        ],
+        "host_after": [
+          154,
+          128,
+          11,
+          22,
+          33,
+          44,
+          55,
+          66
+        ],
+        "after_ids": [
+          "965e"
+        ],
+        "explosion_id": "965e",
+        "explosion_slot": 34,
+        "explosion_script_pc": "95d3",
+        "explosion_timer": 1
+      },
+      "peak_pre_reuse_splits": 8,
+      "first_empty_frame": 58,
+      "empty_until_reuse": true,
+      "reuse_frame": 80,
+      "reuse_point": [
+        154,
+        128
+      ],
+      "newborn_samples": [
+        {
+          "frame": 18,
+          "slot": 30,
+          "id": "9696",
+          "pre": "8170",
+          "timer": 5,
+          "pc": "960c"
+        },
+        {
+          "frame": 18,
+          "slot": 32,
+          "id": "9688",
+          "pre": "8170",
+          "timer": 5,
+          "pc": "960c"
+        }
+      ],
+      "reuse_before_sha256": "d64ca3c3788496fea7f0b42ab2467576388e020453eeb511d50147524233f3d7",
+      "reuse_after_sha256": "85052a7577656d095a0d2e55d22416987853f220a80f4fc1864311df82cbed83",
+      "reuse_host_sha256": "756fb165a34dc979fef57d89241e9cc355cfecb5678411a20202088eb8d1dc14"
+    },
+    "horizontal-0-1": {
+      "observed_pre_reuse_ids": [
+        "9642"
+      ],
+      "impact": {
+        "frame": 12,
+        "source_slot": 0,
+        "source_F": 1,
+        "host_before": [
+          42330,
+          23205,
+          11,
+          22,
+          33,
+          44,
+          55,
+          66
+        ],
+        "host_after": [
+          42330,
+          23205,
+          11,
+          22,
+          33,
+          44,
+          55,
+          66
+        ],
+        "after_ids": []
+      },
+      "peak_pre_reuse_splits": 0,
+      "first_empty_frame": 12,
+      "empty_until_reuse": true,
+      "reuse_frame": 80,
+      "reuse_point": [
+        42330,
+        23205
+      ],
+      "newborn_samples": [],
+      "reuse_before_sha256": "cbd06cf515331266cb705440c00cbb05374cd867b87483396e4b3df5f54b8452",
+      "reuse_after_sha256": "026f9b5914c031b3fc92689106d96e98aa15e72d3e5f6a4bc55cd289934fe6bc",
+      "reuse_host_sha256": "f3583e1ecf19a78d2238a8965ee656cec231c78c65be31021314a7e6881cdc6f"
+    },
+    "horizontal-16-0": {
+      "observed_pre_reuse_ids": [
+        "9642",
+        "965e",
+        "9688",
+        "9696"
+      ],
+      "impact": {
+        "frame": 12,
+        "source_slot": 16,
+        "source_F": 0,
+        "host_before": [
+          42330,
+          23205,
+          11,
+          22,
+          33,
+          44,
+          55,
+          66
+        ],
+        "host_after": [
+          154,
+          128,
+          11,
+          22,
+          33,
+          44,
+          55,
+          66
+        ],
+        "after_ids": [
+          "965e"
+        ],
+        "explosion_id": "965e",
+        "explosion_slot": 34,
+        "explosion_script_pc": "95d3",
+        "explosion_timer": 1
+      },
+      "peak_pre_reuse_splits": 8,
+      "first_empty_frame": 58,
+      "empty_until_reuse": true,
+      "reuse_frame": 80,
+      "reuse_point": [
+        154,
+        128
+      ],
+      "newborn_samples": [
+        {
+          "frame": 18,
+          "slot": 30,
+          "id": "9696",
+          "pre": "8170",
+          "timer": 5,
+          "pc": "960c"
+        },
+        {
+          "frame": 18,
+          "slot": 32,
+          "id": "9688",
+          "pre": "8170",
+          "timer": 5,
+          "pc": "960c"
+        }
+      ],
+      "reuse_before_sha256": "f46d57904123c2173dfd1f9c6b2b48239fc6f7492014b2f5ef1aaf41b350af61",
+      "reuse_after_sha256": "f32efcaf30a8c6768d4de6ac37ca4e2e198b0c9ca391fb47cd81edd704d2c94b",
+      "reuse_host_sha256": "756fb165a34dc979fef57d89241e9cc355cfecb5678411a20202088eb8d1dc14"
+    },
+    "horizontal-16-1": {
+      "observed_pre_reuse_ids": [
+        "9642"
+      ],
+      "impact": {
+        "frame": 12,
+        "source_slot": 16,
+        "source_F": 1,
+        "host_before": [
+          42330,
+          23205,
+          11,
+          22,
+          33,
+          44,
+          55,
+          66
+        ],
+        "host_after": [
+          42330,
+          23205,
+          11,
+          22,
+          33,
+          44,
+          55,
+          66
+        ],
+        "after_ids": []
+      },
+      "peak_pre_reuse_splits": 0,
+      "first_empty_frame": 12,
+      "empty_until_reuse": true,
+      "reuse_frame": 80,
+      "reuse_point": [
+        42330,
+        23205
+      ],
+      "newborn_samples": [],
+      "reuse_before_sha256": "76fd760445a572a71e394289745024f439b2bfa014af2c7e0a638b1ff859c423",
+      "reuse_after_sha256": "5ea1d1dadf70350f7577e21cb5d2a84cf861ad897c46ab184a9b416fbef761d4",
+      "reuse_host_sha256": "f3583e1ecf19a78d2238a8965ee656cec231c78c65be31021314a7e6881cdc6f"
+    },
+    "horizontal-34-0": {
+      "observed_pre_reuse_ids": [
+        "9642",
+        "965e",
+        "9688",
+        "9696"
+      ],
+      "impact": {
+        "frame": 12,
+        "source_slot": 34,
+        "source_F": 0,
+        "host_before": [
+          42330,
+          23205,
+          11,
+          22,
+          33,
+          44,
+          55,
+          66
+        ],
+        "host_after": [
+          154,
+          128,
+          11,
+          22,
+          33,
+          44,
+          55,
+          66
+        ],
+        "after_ids": [
+          "965e"
+        ],
+        "explosion_id": "965e",
+        "explosion_slot": 34,
+        "explosion_script_pc": "95d9",
+        "explosion_timer": 5
+      },
+      "peak_pre_reuse_splits": 8,
+      "first_empty_frame": 57,
+      "empty_until_reuse": true,
+      "reuse_frame": 80,
+      "reuse_point": [
+        154,
+        128
+      ],
+      "newborn_samples": [
+        {
+          "frame": 17,
+          "slot": 30,
+          "id": "9696",
+          "pre": "8170",
+          "timer": 5,
+          "pc": "960c"
+        },
+        {
+          "frame": 17,
+          "slot": 32,
+          "id": "9688",
+          "pre": "8170",
+          "timer": 5,
+          "pc": "960c"
+        }
+      ],
+      "reuse_before_sha256": "bd55052ac76e3bb067757c62b88def0f22682afc996c7faefaf16635b460a58a",
+      "reuse_after_sha256": "bbcd040a4f268c80e1d0daf9b102293e7903f16dddb617d3bc5524128734d27f",
+      "reuse_host_sha256": "756fb165a34dc979fef57d89241e9cc355cfecb5678411a20202088eb8d1dc14"
+    },
+    "horizontal-34-1": {
+      "observed_pre_reuse_ids": [
+        "9642"
+      ],
+      "impact": {
+        "frame": 12,
+        "source_slot": 34,
+        "source_F": 1,
+        "host_before": [
+          42330,
+          23205,
+          11,
+          22,
+          33,
+          44,
+          55,
+          66
+        ],
+        "host_after": [
+          42330,
+          23205,
+          11,
+          22,
+          33,
+          44,
+          55,
+          66
+        ],
+        "after_ids": []
+      },
+      "peak_pre_reuse_splits": 0,
+      "first_empty_frame": 12,
+      "empty_until_reuse": true,
+      "reuse_frame": 80,
+      "reuse_point": [
+        42330,
+        23205
+      ],
+      "newborn_samples": [],
+      "reuse_before_sha256": "6abe8e0251753e5ce0b17331ed37d3fbf47249893d774fce66310dc8baeb9fcc",
+      "reuse_after_sha256": "c3c03cb5567d153de1c3a61c044ae655a90c47645725eaa2f291eed914600593",
+      "reuse_host_sha256": "f3583e1ecf19a78d2238a8965ee656cec231c78c65be31021314a7e6881cdc6f"
+    },
+    "vertical-0-0": {
+      "observed_pre_reuse_ids": [
+        "9642",
+        "9650",
+        "966c",
+        "967a"
+      ],
+      "impact": {
+        "frame": 12,
+        "source_slot": 0,
+        "source_F": 0,
+        "host_before": [
+          42330,
+          23205,
+          11,
+          22,
+          33,
+          44,
+          55,
+          66
+        ],
+        "host_after": [
+          128,
+          154,
+          11,
+          22,
+          33,
+          44,
+          55,
+          66
+        ],
+        "after_ids": [
+          "9650"
+        ],
+        "explosion_id": "9650",
+        "explosion_slot": 34,
+        "explosion_script_pc": "95a0",
+        "explosion_timer": 1
+      },
+      "peak_pre_reuse_splits": 8,
+      "first_empty_frame": 58,
+      "empty_until_reuse": true,
+      "reuse_frame": 80,
+      "reuse_point": [
+        128,
+        154
+      ],
+      "newborn_samples": [
+        {
+          "frame": 18,
+          "slot": 30,
+          "id": "967a",
+          "pre": "8170",
+          "timer": 5,
+          "pc": "960c"
+        },
+        {
+          "frame": 18,
+          "slot": 32,
+          "id": "966c",
+          "pre": "8170",
+          "timer": 5,
+          "pc": "960c"
+        }
+      ],
+      "reuse_before_sha256": "e8e390ec86ee7a1a654eaaee3a1b0336d921d8333c16675fe364849a2db46363",
+      "reuse_after_sha256": "832ca9015bff7b5617570d4bdad06748f5eed9f51da287e3cd91d16198fcaad5",
+      "reuse_host_sha256": "48c30182d7ea38950cddc7b1f2315c97116ef1e5d4dd8803065641a64e6b0ff0"
+    },
+    "vertical-0-1": {
+      "observed_pre_reuse_ids": [
+        "9642"
+      ],
+      "impact": {
+        "frame": 12,
+        "source_slot": 0,
+        "source_F": 1,
+        "host_before": [
+          42330,
+          23205,
+          11,
+          22,
+          33,
+          44,
+          55,
+          66
+        ],
+        "host_after": [
+          42330,
+          23205,
+          11,
+          22,
+          33,
+          44,
+          55,
+          66
+        ],
+        "after_ids": []
+      },
+      "peak_pre_reuse_splits": 0,
+      "first_empty_frame": 12,
+      "empty_until_reuse": true,
+      "reuse_frame": 80,
+      "reuse_point": [
+        42330,
+        23205
+      ],
+      "newborn_samples": [],
+      "reuse_before_sha256": "819d54219fc69277fb40f4416c707ffc4cac30d37e91271bfcf529b6c7dffc72",
+      "reuse_after_sha256": "95fc87606fb94a751de1b876089c530409966238941f10269e9ba7a203c2468a",
+      "reuse_host_sha256": "f3583e1ecf19a78d2238a8965ee656cec231c78c65be31021314a7e6881cdc6f"
+    },
+    "vertical-16-0": {
+      "observed_pre_reuse_ids": [
+        "9642",
+        "9650",
+        "966c",
+        "967a"
+      ],
+      "impact": {
+        "frame": 12,
+        "source_slot": 16,
+        "source_F": 0,
+        "host_before": [
+          42330,
+          23205,
+          11,
+          22,
+          33,
+          44,
+          55,
+          66
+        ],
+        "host_after": [
+          128,
+          154,
+          11,
+          22,
+          33,
+          44,
+          55,
+          66
+        ],
+        "after_ids": [
+          "9650"
+        ],
+        "explosion_id": "9650",
+        "explosion_slot": 34,
+        "explosion_script_pc": "95a0",
+        "explosion_timer": 1
+      },
+      "peak_pre_reuse_splits": 8,
+      "first_empty_frame": 58,
+      "empty_until_reuse": true,
+      "reuse_frame": 80,
+      "reuse_point": [
+        128,
+        154
+      ],
+      "newborn_samples": [
+        {
+          "frame": 18,
+          "slot": 30,
+          "id": "967a",
+          "pre": "8170",
+          "timer": 5,
+          "pc": "960c"
+        },
+        {
+          "frame": 18,
+          "slot": 32,
+          "id": "966c",
+          "pre": "8170",
+          "timer": 5,
+          "pc": "960c"
+        }
+      ],
+      "reuse_before_sha256": "7d14b1911cc436df51f930ee26c1212d2154a44fc6e82a11510f0e74d1ae7b69",
+      "reuse_after_sha256": "04a649e45e48c82d72de0bce05f59420b4db2ff3e37a81540648f6696ccc9a50",
+      "reuse_host_sha256": "48c30182d7ea38950cddc7b1f2315c97116ef1e5d4dd8803065641a64e6b0ff0"
+    },
+    "vertical-16-1": {
+      "observed_pre_reuse_ids": [
+        "9642"
+      ],
+      "impact": {
+        "frame": 12,
+        "source_slot": 16,
+        "source_F": 1,
+        "host_before": [
+          42330,
+          23205,
+          11,
+          22,
+          33,
+          44,
+          55,
+          66
+        ],
+        "host_after": [
+          42330,
+          23205,
+          11,
+          22,
+          33,
+          44,
+          55,
+          66
+        ],
+        "after_ids": []
+      },
+      "peak_pre_reuse_splits": 0,
+      "first_empty_frame": 12,
+      "empty_until_reuse": true,
+      "reuse_frame": 80,
+      "reuse_point": [
+        42330,
+        23205
+      ],
+      "newborn_samples": [],
+      "reuse_before_sha256": "2f4b7c8718b64d1fb8aae789d367c388660dc8235aab9c0672d368bc939a9550",
+      "reuse_after_sha256": "bbef18efa88ae60fb01de636a6d3d6fefcb136b542156b14528de836f80ec9f8",
+      "reuse_host_sha256": "f3583e1ecf19a78d2238a8965ee656cec231c78c65be31021314a7e6881cdc6f"
+    },
+    "vertical-34-0": {
+      "observed_pre_reuse_ids": [
+        "9642",
+        "9650",
+        "966c",
+        "967a"
+      ],
+      "impact": {
+        "frame": 12,
+        "source_slot": 34,
+        "source_F": 0,
+        "host_before": [
+          42330,
+          23205,
+          11,
+          22,
+          33,
+          44,
+          55,
+          66
+        ],
+        "host_after": [
+          128,
+          154,
+          11,
+          22,
+          33,
+          44,
+          55,
+          66
+        ],
+        "after_ids": [
+          "9650"
+        ],
+        "explosion_id": "9650",
+        "explosion_slot": 34,
+        "explosion_script_pc": "95a6",
+        "explosion_timer": 5
+      },
+      "peak_pre_reuse_splits": 8,
+      "first_empty_frame": 57,
+      "empty_until_reuse": true,
+      "reuse_frame": 80,
+      "reuse_point": [
+        128,
+        154
+      ],
+      "newborn_samples": [
+        {
+          "frame": 17,
+          "slot": 30,
+          "id": "967a",
+          "pre": "8170",
+          "timer": 5,
+          "pc": "960c"
+        },
+        {
+          "frame": 17,
+          "slot": 32,
+          "id": "966c",
+          "pre": "8170",
+          "timer": 5,
+          "pc": "960c"
+        }
+      ],
+      "reuse_before_sha256": "d55a8797abc778a3eabfcaf6f409e0bcc223c240568ac75d7e9e101676c2027d",
+      "reuse_after_sha256": "a93615355deeb1d0e81eba50b9ea2bea75058433a049aba28a96bd285cd21c95",
+      "reuse_host_sha256": "48c30182d7ea38950cddc7b1f2315c97116ef1e5d4dd8803065641a64e6b0ff0"
+    },
+    "vertical-34-1": {
+      "observed_pre_reuse_ids": [
+        "9642"
+      ],
+      "impact": {
+        "frame": 12,
+        "source_slot": 34,
+        "source_F": 1,
+        "host_before": [
+          42330,
+          23205,
+          11,
+          22,
+          33,
+          44,
+          55,
+          66
+        ],
+        "host_after": [
+          42330,
+          23205,
+          11,
+          22,
+          33,
+          44,
+          55,
+          66
+        ],
+        "after_ids": []
+      },
+      "peak_pre_reuse_splits": 0,
+      "first_empty_frame": 12,
+      "empty_until_reuse": true,
+      "reuse_frame": 80,
+      "reuse_point": [
+        42330,
+        23205
+      ],
+      "newborn_samples": [],
+      "reuse_before_sha256": "1d812b8f80037f782fb2e7ce00bcd96ee12a156425bd1d6e5766eaacfd29011b",
+      "reuse_after_sha256": "d531e915de39b7bae87a6688c421e894b7e7163923b77cefe1850a0a3e58eb14",
+      "reuse_host_sha256": "f3583e1ecf19a78d2238a8965ee656cec231c78c65be31021314a7e6881cdc6f"
+    }
+  },
+  "ceres": {
+    "0": {
+      "native_with_gfx_allocation_slots": [
+        34,
+        32
+      ],
+      "samples": [
+        {
+          "frame": 0,
+          "SamusY": 0,
+          "pad_E": 59,
+          "pad_Y": 28,
+          "pad_id": "a387",
+          "platform_id": "a395",
+          "Samus_handlers": [
+            "0000",
+            "0000"
+          ]
+        },
+        {
+          "frame": 58,
+          "SamusY": 0,
+          "pad_E": 1,
+          "pad_Y": 28,
+          "pad_id": "a387",
+          "platform_id": "a395",
+          "Samus_handlers": [
+            "0000",
+            "0000"
+          ]
+        },
+        {
+          "frame": 59,
+          "SamusY": 1,
+          "pad_E": 0,
+          "pad_Y": 28,
+          "pad_id": "a387",
+          "platform_id": "a395",
+          "Samus_handlers": [
+            "0000",
+            "0000"
+          ]
+        },
+        {
+          "frame": 60,
+          "SamusY": 2,
+          "pad_E": 0,
+          "pad_Y": 29,
+          "pad_id": "a387",
+          "platform_id": "a395",
+          "Samus_handlers": [
+            "0000",
+            "0000"
+          ]
+        },
+        {
+          "frame": 69,
+          "SamusY": 11,
+          "pad_E": 0,
+          "pad_Y": 38,
+          "pad_id": "a387",
+          "platform_id": "a395",
+          "Samus_handlers": [
+            "0000",
+            "0000"
+          ]
+        }
+      ]
+    },
+    "71": {
+      "native_with_gfx_allocation_slots": [
+        34,
+        32
+      ],
+      "samples": [
+        {
+          "frame": 0,
+          "SamusY": 71,
+          "pad_E": 59,
+          "pad_Y": 99,
+          "pad_id": "a387",
+          "platform_id": "a395",
+          "Samus_handlers": [
+            "0000",
+            "0000"
+          ]
+        },
+        {
+          "frame": 58,
+          "SamusY": 71,
+          "pad_E": 1,
+          "pad_Y": 99,
+          "pad_id": "a387",
+          "platform_id": "a395",
+          "Samus_handlers": [
+            "0000",
+            "0000"
+          ]
+        },
+        {
+          "frame": 59,
+          "SamusY": 72,
+          "pad_E": 0,
+          "pad_Y": 99,
+          "pad_id": "a387",
+          "platform_id": "0000",
+          "Samus_handlers": [
+            "0000",
+            "0000"
+          ]
+        },
+        {
+          "frame": 60,
+          "SamusY": 72,
+          "pad_E": 0,
+          "pad_Y": 100,
+          "pad_id": "0000",
+          "platform_id": "0000",
+          "Samus_handlers": [
+            "e695",
+            "e8aa"
+          ]
+        },
+        {
+          "frame": 69,
+          "SamusY": 72,
+          "pad_E": 0,
+          "pad_Y": 100,
+          "pad_id": "0000",
+          "platform_id": "0000",
+          "Samus_handlers": [
+            "e695",
+            "e8aa"
+          ]
+        }
+      ]
+    },
+    "72": {
+      "native_with_gfx_allocation_slots": [
+        34,
+        32
+      ],
+      "samples": [
+        {
+          "frame": 0,
+          "SamusY": 72,
+          "pad_E": 59,
+          "pad_Y": 100,
+          "pad_id": "a387",
+          "platform_id": "0000",
+          "Samus_handlers": [
+            "0000",
+            "0000"
+          ]
+        },
+        {
+          "frame": 58,
+          "SamusY": 72,
+          "pad_E": 1,
+          "pad_Y": 100,
+          "pad_id": "a387",
+          "platform_id": "0000",
+          "Samus_handlers": [
+            "0000",
+            "0000"
+          ]
+        },
+        {
+          "frame": 59,
+          "SamusY": 72,
+          "pad_E": 0,
+          "pad_Y": 100,
+          "pad_id": "0000",
+          "platform_id": "0000",
+          "Samus_handlers": [
+            "e695",
+            "e8aa"
+          ]
+        },
+        {
+          "frame": 60,
+          "SamusY": 72,
+          "pad_E": 0,
+          "pad_Y": 100,
+          "pad_id": "0000",
+          "platform_id": "0000",
+          "Samus_handlers": [
+            "e695",
+            "e8aa"
+          ]
+        },
+        {
+          "frame": 69,
+          "SamusY": 72,
+          "pad_E": 0,
+          "pad_Y": 100,
+          "pad_id": "0000",
+          "platform_id": "0000",
+          "Samus_handlers": [
+            "e695",
+            "e8aa"
+          ]
+        }
+      ]
+    },
+    "73": {
+      "native_with_gfx_allocation_slots": [
+        34,
+        32
+      ],
+      "samples": [
+        {
+          "frame": 0,
+          "SamusY": 73,
+          "pad_E": 59,
+          "pad_Y": 101,
+          "pad_id": "a387",
+          "platform_id": "a395",
+          "Samus_handlers": [
+            "0000",
+            "0000"
+          ]
+        },
+        {
+          "frame": 58,
+          "SamusY": 73,
+          "pad_E": 1,
+          "pad_Y": 101,
+          "pad_id": "a387",
+          "platform_id": "a395",
+          "Samus_handlers": [
+            "0000",
+            "0000"
+          ]
+        },
+        {
+          "frame": 59,
+          "SamusY": 72,
+          "pad_E": 0,
+          "pad_Y": 101,
+          "pad_id": "0000",
+          "platform_id": "0000",
+          "Samus_handlers": [
+            "e695",
+            "e8aa"
+          ]
+        },
+        {
+          "frame": 60,
+          "SamusY": 72,
+          "pad_E": 0,
+          "pad_Y": 101,
+          "pad_id": "0000",
+          "platform_id": "0000",
+          "Samus_handlers": [
+            "e695",
+            "e8aa"
+          ]
+        },
+        {
+          "frame": 69,
+          "SamusY": 72,
+          "pad_E": 0,
+          "pad_Y": 101,
+          "pad_id": "0000",
+          "platform_id": "0000",
+          "Samus_handlers": [
+            "e695",
+            "e8aa"
+          ]
+        }
+      ]
+    },
+    "32767": {
+      "native_with_gfx_allocation_slots": [
+        34,
+        32
+      ],
+      "samples": [
+        {
+          "frame": 0,
+          "SamusY": 32767,
+          "pad_E": 59,
+          "pad_Y": 32795,
+          "pad_id": "a387",
+          "platform_id": "a395",
+          "Samus_handlers": [
+            "0000",
+            "0000"
+          ]
+        },
+        {
+          "frame": 58,
+          "SamusY": 32767,
+          "pad_E": 1,
+          "pad_Y": 32795,
+          "pad_id": "a387",
+          "platform_id": "a395",
+          "Samus_handlers": [
+            "0000",
+            "0000"
+          ]
+        },
+        {
+          "frame": 59,
+          "SamusY": 72,
+          "pad_E": 0,
+          "pad_Y": 32795,
+          "pad_id": "0000",
+          "platform_id": "0000",
+          "Samus_handlers": [
+            "e695",
+            "e8aa"
+          ]
+        },
+        {
+          "frame": 60,
+          "SamusY": 72,
+          "pad_E": 0,
+          "pad_Y": 32795,
+          "pad_id": "0000",
+          "platform_id": "0000",
+          "Samus_handlers": [
+            "e695",
+            "e8aa"
+          ]
+        },
+        {
+          "frame": 69,
+          "SamusY": 72,
+          "pad_E": 0,
+          "pad_Y": 32795,
+          "pad_id": "0000",
+          "platform_id": "0000",
+          "Samus_handlers": [
+            "e695",
+            "e8aa"
+          ]
+        }
+      ]
+    },
+    "32768": {
+      "native_with_gfx_allocation_slots": [
+        34,
+        32
+      ],
+      "samples": [
+        {
+          "frame": 0,
+          "SamusY": 32768,
+          "pad_E": 59,
+          "pad_Y": 32796,
+          "pad_id": "a387",
+          "platform_id": "a395",
+          "Samus_handlers": [
+            "0000",
+            "0000"
+          ]
+        },
+        {
+          "frame": 58,
+          "SamusY": 32768,
+          "pad_E": 1,
+          "pad_Y": 32796,
+          "pad_id": "a387",
+          "platform_id": "a395",
+          "Samus_handlers": [
+            "0000",
+            "0000"
+          ]
+        },
+        {
+          "frame": 59,
+          "SamusY": 72,
+          "pad_E": 0,
+          "pad_Y": 32796,
+          "pad_id": "0000",
+          "platform_id": "0000",
+          "Samus_handlers": [
+            "e695",
+            "e8aa"
+          ]
+        },
+        {
+          "frame": 60,
+          "SamusY": 72,
+          "pad_E": 0,
+          "pad_Y": 32796,
+          "pad_id": "0000",
+          "platform_id": "0000",
+          "Samus_handlers": [
+            "e695",
+            "e8aa"
+          ]
+        },
+        {
+          "frame": 69,
+          "SamusY": 72,
+          "pad_E": 0,
+          "pad_Y": 32796,
+          "pad_id": "0000",
+          "platform_id": "0000",
+          "Samus_handlers": [
+            "e695",
+            "e8aa"
+          ]
+        }
+      ]
+    },
+    "65535": {
+      "native_with_gfx_allocation_slots": [
+        34,
+        32
+      ],
+      "samples": [
+        {
+          "frame": 0,
+          "SamusY": 65535,
+          "pad_E": 59,
+          "pad_Y": 27,
+          "pad_id": "a387",
+          "platform_id": "a395",
+          "Samus_handlers": [
+            "0000",
+            "0000"
+          ]
+        },
+        {
+          "frame": 58,
+          "SamusY": 65535,
+          "pad_E": 1,
+          "pad_Y": 27,
+          "pad_id": "a387",
+          "platform_id": "a395",
+          "Samus_handlers": [
+            "0000",
+            "0000"
+          ]
+        },
+        {
+          "frame": 59,
+          "SamusY": 0,
+          "pad_E": 0,
+          "pad_Y": 27,
+          "pad_id": "a387",
+          "platform_id": "a395",
+          "Samus_handlers": [
+            "0000",
+            "0000"
+          ]
+        },
+        {
+          "frame": 60,
+          "SamusY": 1,
+          "pad_E": 0,
+          "pad_Y": 28,
+          "pad_id": "a387",
+          "platform_id": "a395",
+          "Samus_handlers": [
+            "0000",
+            "0000"
+          ]
+        },
+        {
+          "frame": 69,
+          "SamusY": 10,
+          "pad_E": 0,
+          "pad_Y": 37,
+          "pad_id": "a387",
+          "platform_id": "a395",
+          "Samus_handlers": [
+            "0000",
+            "0000"
+          ]
+        }
+      ]
+    }
+  },
+  "disabled_enabled_values": [
+    0,
+    1,
+    32767
+  ]
+}

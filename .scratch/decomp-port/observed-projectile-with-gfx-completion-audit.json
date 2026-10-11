@@ -1,0 +1,265 @@
+{
+  "status": "requirements1-5-audited-with-existing-workspace-format-limit",
+  "scope": "Ticket137 requirements1\u20135 only. Root owns complete live acceptance(requirement6) and final live cleanup/authentication(requirement7).",
+  "current_sources_sha256": {
+    "crates/port/src/enemy_projectiles.rs": "beb34d23351a3427ebc994ed46f9b161013f9e80f6ce60e9d3458fdf7e2bdfdc",
+    "crates/port/src/enemy_projectile_instructions.rs": "ae00e7dc1f8a5ef6eac07c27a0b4f44126dd78137c206d66f4ab29c79622b01d",
+    "crates/port/src/observed_projectile_ownership.rs": "b8e77711094a2de4e0222c587d81a104f48af25fde7b60335ba409063fc54b56",
+    "crates/port/src/enemy_projectile_collision.rs": "f117da8bf86a387b0e5693fb19a84c938486fc089a10abf3155365e6627b837e",
+    "tools/port_live.py": "14d14140d473aa533725f86fc5f04d01a7052e985f9948498a1a16a19e5e45f8",
+    "tools/port_family.py": "a3a443aafb372ae9b0c2330e449da0fe32df336cf2697da5db01b1a1befe6033",
+    "tools/port_plm_instructions.py": "b9fabcd155cc85320ae418e9dd953cde7d0116a73defa51441c3a4305f04aab0",
+    "crates/port/tests/observed_projectile_initializers.rs": "87e57253a3e765df3a9fe3e33b1eade3489b62d9f13d5a460c32d3c64c185452",
+    "crates/port/tests/observed_projectile_ownership.rs": "150f7185f79e71b914174511ff11ac3ede440acbf0cb7d732cfb5f11638fab5a",
+    "crates/port/tests/projectile_host.rs": "a3de70975b1b4c8b29ecbca375b28f2b26471efa812abfb8f5ddaf1dbb9b4d74",
+    "crates/port/tests/enemy_projectile_instructions.rs": "1342b24e3e11c535f61bb244c9996f9b01246b8e86d4ab4e6e8bcdfb48ab8e53",
+    "tools/test_port_projectile_live.py": "d93fa30b32f447678101529157cc7d59d92cf96091303d6dfd28516e1b904954",
+    "tools/test_port_plm_instructions.py": "be6fe72a998b241ca3d4002f2920ca44de9ee85f154c3540c9fc086d10565804"
+  },
+  "families": {
+    "observed-projectile-frame-boundaries": {
+      "verdict": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/observed-projectile-frame-boundaries/20261011T142735.935334Z/evidence/20261011T142736.002860Z/verdict.json",
+      "verdict_sha256": "83c95fef3fcaf63470d8da9fe3e632dc4c50520265f1a50eb06d0a60af01a07e",
+      "cases": 577,
+      "current_dependency_hashes_match": true
+    },
+    "observed-projectile-ownership": {
+      "verdict": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/observed-projectile-ownership/20261011T142735.935766Z/evidence/20261011T142735.994888Z/verdict.json",
+      "verdict_sha256": "d518b0216da9ce57e170af704d24fe0d7f7e20b5f5d6f826deace6be0246cc21",
+      "cases": 1840,
+      "current_dependency_hashes_match": true
+    },
+    "enemy-projectile-rendering": {
+      "verdict": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/enemy-projectile-rendering/20261011T142834.477534Z/evidence/20261011T142834.535722Z/verdict.json",
+      "verdict_sha256": "0ff41431852e28d1e39b6b4d23bb85410a79dee53d2e6dcbddc882a5354b8c34",
+      "cases": 1448,
+      "current_dependency_hashes_match": true
+    },
+    "enemy-projectile-detect-samus": {
+      "verdict": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/enemy-projectile-detect-samus/20261011T142900.327899Z/evidence/20261011T142900.386095Z/verdict.json",
+      "verdict_sha256": "7ab8f4dec0170a4cdd0df4cffa1a97794490bff4e2cee7e7259fe32baa2a9477",
+      "cases": 2310,
+      "current_dependency_hashes_match": true
+    },
+    "enemy-projectile-detect-projectiles": {
+      "verdict": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/enemy-projectile-detect-projectiles/20261011T142918.713125Z/evidence/20261011T142918.792629Z/verdict.json",
+      "verdict_sha256": "245a729a3e93acd0d27c64621baab421b7f9feda9c996a6b2d9c9ff758cda727",
+      "cases": 2040,
+      "current_dependency_hashes_match": true
+    },
+    "observed-projectile-initializers": {
+      "verdict": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/observed-projectile-initializers/20261011T142735.934805Z/evidence/20261011T142735.986673Z/verdict.json",
+      "verdict_sha256": "aafc4b82ff4eae6ec0400318dcab4802dfa717942db88a85eb6583820142f90c",
+      "cases": 5409,
+      "current_dependency_hashes_match": true
+    }
+  },
+  "checks_logs_sha256": {
+    "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-checks/full-rust/test.stdout": "241eb4ecf8fc2a7e8ff0e66752143236942fcea8c40870b04791d4333370e0d2",
+    "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-checks/full-rust/test.stderr": "5e9f818aa0a836a0210e2138a412280892a8219593e6bf3b14e0b170094904c2",
+    "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-checks/full-rust/clippy.stderr": "8b19310c9bc7abdff15641b92d355cccd7afc3c8e1732493b89f6f6afdc629d8",
+    "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-checks/ownership/test.stdout": "06689ed24945a17d9b2b621886016de4ce0546b2b4c3aa449324117bb4abb7ad",
+    "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-checks/oracle-harness/test.stderr": "2fe77973f4a8230c6686e11e0aa31871c797a86dca244e4488f6521430245346",
+    "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-checks/live-abi/unittest.stderr": "dec519186b18a6e27afcc4a4ee1254ca29b5d78ba983bf0e77764c80898abdee",
+    "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-checks/remaining-harness/test.stderr": "10ee0143e7dbd7d7d398a1e4fbec78dd67a922b66cc76833c9cd641540ca7c22"
+  },
+  "native_chain_inspection": {
+    "path": "/home/jim/sm-decomp/.scratch/decomp-port/observed-projectile-with-gfx-chain-inspection.json",
+    "sha256": "d7f6ea99dc10a8d34e9ab37fc5fc82ac548094831b45ee88aa929879fe35fc4f",
+    "cases": 1840,
+    "sealed_artifacts_read": 11040
+  },
+  "requirements": {
+    "1": {
+      "status": "proven-current-source-and-offline",
+      "evidence": [
+        "enemy_projectiles.rs:65: highest-free search and saturated parameter write return before ROM or host access; native allocator partial resets at113\u2013126.",
+        "enemy_projectiles.rs:342: direct canonical initializer dispatch;643: shared area property rule;673: Ridley enemy0 alias;685: Ceres partial initialization.",
+        "enemy_projectile_instructions.rs:1499: native950C no-op;1591: descending scheduler;239: directional split pair;247: low-byte repeat count.",
+        {
+          "verdict": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/observed-projectile-initializers/20261011T142735.934805Z/evidence/20261011T142735.986673Z/verdict.json",
+          "verdict_sha256": "aafc4b82ff4eae6ec0400318dcab4802dfa717942db88a85eb6583820142f90c",
+          "cases": 5409,
+          "current_dependency_hashes_match": true
+        },
+        ".scratch/decomp-port/observed-projectile-with-gfx-offline-inspection.json",
+        {
+          "verdict": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/observed-projectile-ownership/20261011T142735.935766Z/evidence/20261011T142735.994888Z/verdict.json",
+          "verdict_sha256": "d518b0216da9ce57e170af704d24fe0d7f7e20b5f5d6f826deace6be0246cc21",
+          "cases": 1840,
+          "current_dependency_hashes_match": true
+        }
+      ],
+      "limits": [
+        "WithGfx native caller validates/reads enemy graphics before saturation, matching C; inner allocator still only writes parameter on saturation."
+      ]
+    },
+    "2": {
+      "status": "proven-current-source-and-compiled-controls",
+      "evidence": [
+        "observed_projectile_ownership.rs:16 pins all nine definition headers;29 pins native script bytes;76 verifies ROM;90 restricts canonical script continuations.",
+        "observed_projectile_ownership.rs:122 validates terrain extension bounds/cycles;145 checks wrapped movement envelopes;193 uses immutable WRAM for supports_call.",
+        "Admission checks every active slot, lower newborn closure, required slope ROM extent and sound cursors. WithGfx at209 validates aligned enemy slots0..7C0 and canonical split parameters.",
+        "port_live.py:335: ABI copies WRAM, evaluates support first, loads host after support, dispatches a private transaction and publishes only successful results.",
+        "port_live.py:454: only -2 permits C fallback;461: accepted Rust errors terminate with exit4.",
+        "Current ownership tests inspect byte-identical refusal state for unknown definitions, script/callback mutations, invalid enemy/parameter values, truncated ROM and extension cycles. Compiled ABI controls exercise accepted failure/panic without publication and same-bank no-C-retry behavior."
+      ],
+      "limits": [
+        "Live admission intentionally bounded to exact nine IDs/scripts and validated terrain envelope; other calls may refuse before mutation."
+      ]
+    },
+    "3": {
+      "status": "proven-source-compiled-ABI-controls-and-native-chained-host",
+      "evidence": [
+        "port_live.py:362: bank86 adapters load/save actual eproj_spawn_pt, eproj_spawn_rect, eproj_spawn_r22 and eproj_spawn_varE24, all eight words.",
+        "port_live.py:894: all three native definitions are renamed while public bridge wrappers retain their names, routing same-bank callers.475 retains the genuine three-word WithGfx entry.",
+        "test_port_projectile_live.py:150: compiled actual sm_86 same-bank RoomGfx and WithGfx caller controls verify all eight host words, publication, refusal and accepted-error exit4 without C retry.",
+        "Current native chained outputs: impacts persist points(154,128)/(128,154); every continuation inherits all eight matching host words; frame80 allocation reuses the persisted point after complete deletion."
+      ],
+      "limits": [
+        "Final live cross-process publication/parity belongs to requirement6 and is still pending."
+      ]
+    },
+    "4": {
+      "status": "proven-current-offline-domain",
+      "evidence": [
+        {
+          "verdict": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/observed-projectile-initializers/20261011T142735.934805Z/evidence/20261011T142735.986673Z/verdict.json",
+          "verdict_sha256": "aafc4b82ff4eae6ec0400318dcab4802dfa717942db88a85eb6583820142f90c",
+          "cases": 5409,
+          "current_dependency_hashes_match": true
+        },
+        {
+          "verdict": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/observed-projectile-ownership/20261011T142735.935766Z/evidence/20261011T142735.994888Z/verdict.json",
+          "verdict_sha256": "d518b0216da9ce57e170af704d24fe0d7f7e20b5f5d6f826deace6be0246cc21",
+          "cases": 1840,
+          "current_dependency_hashes_match": true
+        },
+        {
+          "verdict": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/observed-projectile-frame-boundaries/20261011T142735.935334Z/evidence/20261011T142736.002860Z/verdict.json",
+          "verdict_sha256": "83c95fef3fcaf63470d8da9fe3e632dc4c50520265f1a50eb06d0a60af01a07e",
+          "cases": 577,
+          "current_dependency_hashes_match": true
+        },
+        ".scratch/decomp-port/observed-projectile-with-gfx-chain-inspection.json",
+        "All1,840 chained outputs and11,040 artifacts read/hash checked. Full WRAM, raw returns and eight host words match; every continuation inherits previous state. Six unsuppressed chains peak at eight splits and delete at frame57/58; six F=1 chains produce no impact explosion or splits before reuse.",
+        "Native WithGfx Ceres allocations occupy pad34/platform32; 60-countdown reaches1 then0. Seven height boundaries exercise equality/release and coordinate wrapping; disabled scheduler values0/1/7FFF preserve every byte.",
+        "Initializer cases cover every slot, all nine IDs, saturation, self/lower/higher projectile aliases, areas0/2/5/FFFF and current enemy distinct from enemy0.162 actual-ROM B4B1 controls expose graphics OR;577 frame cases cover negative/positive speeds and fraction/coordinate boundaries.",
+        {
+          "pad": {
+            "verdict": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-ceres-boundaries/pad/20261011T143900.115262Z/verdict.json",
+            "verdict_sha256": "c96bcd89b5b0812bd704f4452da1847ede1cf0223e2c51f10930a7b5e521d9cc",
+            "cases": 1296,
+            "branches": {
+              "expired-move": 288,
+              "release": 360,
+              "wait": 648
+            },
+            "current_Rust_dependencies_match": true,
+            "full_WRAM_C_Rust_independent_expected_match": true,
+            "artifact_hashes_checked": 3888,
+            "artifact_inventory_sha256": "db855e7d34790135d7b91cc4adc581803dc9a55270f42394c6a73b5a7cafdb5d",
+            "cleanup_authentication": {
+              "path": "/home/jim/sm-decomp/.scratch/decomp-port/observed-projectile-with-gfx-ceres-boundary-authentication.json",
+              "sha256": "3fafdb2ed9f3fd52d3f9e72312497c5e8bb032d54611784a7865fd2add0af097",
+              "status": "authenticated-after-cleanup",
+              "cases": 1674
+            }
+          },
+          "platform": {
+            "verdict": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-ceres-boundaries/platform/20261011T143900.115256Z/verdict.json",
+            "verdict_sha256": "fbaf22cfa0c6113fcf69ed4758b9051798a77a063c98ba9c396623bd0080ba92",
+            "cases": 378,
+            "branches": {
+              "preserve": 324,
+              "equality-release": 54
+            },
+            "current_Rust_dependencies_match": true,
+            "full_WRAM_C_Rust_independent_expected_match": true,
+            "artifact_hashes_checked": 1134,
+            "artifact_inventory_sha256": "e687c94ed60fc55aad52c9701fed1deb0b22376d5a0f6da7c7afcb634cea4a41",
+            "cleanup_authentication": {
+              "path": "/home/jim/sm-decomp/.scratch/decomp-port/observed-projectile-with-gfx-ceres-boundary-authentication.json",
+              "sha256": "3fafdb2ed9f3fd52d3f9e72312497c5e8bb032d54611784a7865fd2add0af097",
+              "status": "authenticated-after-cleanup",
+              "cases": 1674
+            }
+          }
+        }
+      ],
+      "pending": [],
+      "limits": [
+        "Controlled chained inputs are separate from live replay; native scripts/maps pinned, no scripted data substitution."
+      ]
+    },
+    "5": {
+      "status": "proven-checks-with-documented-existing-format-limit",
+      "evidence": [
+        "Current logs prove298 port tests, strict all-target Clippy,12 ownership tests, six native oracle/host controls, seven compiled live ABI controls and22 remaining live/batch controls(one opt-in skip).",
+        {
+          "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-checks/full-rust/test.stdout": "241eb4ecf8fc2a7e8ff0e66752143236942fcea8c40870b04791d4333370e0d2",
+          "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-checks/full-rust/test.stderr": "5e9f818aa0a836a0210e2138a412280892a8219593e6bf3b14e0b170094904c2",
+          "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-checks/full-rust/clippy.stderr": "8b19310c9bc7abdff15641b92d355cccd7afc3c8e1732493b89f6f6afdc629d8",
+          "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-checks/ownership/test.stdout": "06689ed24945a17d9b2b621886016de4ce0546b2b4c3aa449324117bb4abb7ad",
+          "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-checks/oracle-harness/test.stderr": "2fe77973f4a8230c6686e11e0aa31871c797a86dca244e4488f6521430245346",
+          "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-checks/live-abi/unittest.stderr": "dec519186b18a6e27afcc4a4ee1254ca29b5d78ba983bf0e77764c80898abdee",
+          "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-checks/remaining-harness/test.stderr": "10ee0143e7dbd7d7d398a1e4fbec78dd67a922b66cc76833c9cd641540ca7c22"
+        },
+        "observed_projectile_initializers.rs compares entire independently constructed expected WRAM for enemy0 alias, partial resets, orientation and Ceres common setup; invalid slots/missing ROM preserve every byte; absent-host full pool writes only parameter.",
+        "projectile_host.rs:64 checks impact host point and cleared-slot reuse; ownership tests retain extra host words through140 native frames; compiled same-bank controls prove host publication and no C retry.",
+        "enemy_projectile_instructions.rs independently checks Ceres timers2/0/1/FFFF/8000 and signed height boundaries; stationary950C test checks both byte-identical no-op and scheduler timer progress."
+      ],
+      "limits": [
+        "Changed/new Rust formatting passes. Full workspace formatting discrepancy in pre-existing projectile/PLM/room sources remains documented; no full-workspace-format success is claimed.",
+        "Opt-in skipped broad replay test is replaced by requested actual root live requirement6 verification, currently pending."
+      ]
+    }
+  },
+  "Ceres_boundary_refresh": {
+    "pad": {
+      "verdict": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-ceres-boundaries/pad/20261011T143900.115262Z/verdict.json",
+      "verdict_sha256": "c96bcd89b5b0812bd704f4452da1847ede1cf0223e2c51f10930a7b5e521d9cc",
+      "cases": 1296,
+      "branches": {
+        "expired-move": 288,
+        "release": 360,
+        "wait": 648
+      },
+      "current_Rust_dependencies_match": true,
+      "full_WRAM_C_Rust_independent_expected_match": true,
+      "artifact_hashes_checked": 3888,
+      "artifact_inventory_sha256": "db855e7d34790135d7b91cc4adc581803dc9a55270f42394c6a73b5a7cafdb5d",
+      "cleanup_authentication": {
+        "path": "/home/jim/sm-decomp/.scratch/decomp-port/observed-projectile-with-gfx-ceres-boundary-authentication.json",
+        "sha256": "3fafdb2ed9f3fd52d3f9e72312497c5e8bb032d54611784a7865fd2add0af097",
+        "status": "authenticated-after-cleanup",
+        "cases": 1674
+      }
+    },
+    "platform": {
+      "verdict": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-ceres-boundaries/platform/20261011T143900.115256Z/verdict.json",
+      "verdict_sha256": "fbaf22cfa0c6113fcf69ed4758b9051798a77a063c98ba9c396623bd0080ba92",
+      "cases": 378,
+      "branches": {
+        "preserve": 324,
+        "equality-release": 54
+      },
+      "current_Rust_dependencies_match": true,
+      "full_WRAM_C_Rust_independent_expected_match": true,
+      "artifact_hashes_checked": 1134,
+      "artifact_inventory_sha256": "e687c94ed60fc55aad52c9701fed1deb0b22376d5a0f6da7c7afcb634cea4a41",
+      "cleanup_authentication": {
+        "path": "/home/jim/sm-decomp/.scratch/decomp-port/observed-projectile-with-gfx-ceres-boundary-authentication.json",
+        "sha256": "3fafdb2ed9f3fd52d3f9e72312497c5e8bb032d54611784a7865fd2add0af097",
+        "status": "authenticated-after-cleanup",
+        "cases": 1674
+      }
+    }
+  },
+  "supplemental_Ceres_cleanup_authentication": {
+    "path": "/home/jim/sm-decomp/.scratch/decomp-port/observed-projectile-with-gfx-ceres-boundary-authentication.json",
+    "sha256": "3fafdb2ed9f3fd52d3f9e72312497c5e8bb032d54611784a7865fd2add0af097",
+    "status": "authenticated-after-cleanup",
+    "cases": 1674
+  }
+}

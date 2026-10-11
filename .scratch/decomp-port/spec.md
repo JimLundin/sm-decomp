@@ -674,3 +674,15 @@ store objects, subject pointers and predecessor sources remain required. Overall
 scoped offline cleanup including the final aggregate sharing pass reclaimed
 2,472,017,920 bytes. No implementer worktree was created. The goal remains active;
 full gameplay ownership and ticket137 allocation/scheduler work are unfinished.
+
+
+Ticket137 checkpoint on 2026-10-11: native Ridley/Ceres allocation and host-aware
+scheduling, including the genuine three-word WithGfx bridge, are committed at
+`692805c`. Current six-family actual-C evidence authenticates 13,624 cases;
+1,674 supplemental signed Ceres timer/height cases also authenticate after
+cleanup. The current chain/requirements audit and partial full129712 live
+inspection are recorded under ticket137. Both C baselines finish; mixed replay
+and final live cleanup/authentication remain pending, so137 remains claimed.
+Resume through `.scratch/decomp-port/checkpoint-137.md` with sources frozen.
+Ticket138 proposes naturally observed Ridley aiming/spawning instruction-frame
+ownership and remains open, blocked by137. The broader goal remains active.

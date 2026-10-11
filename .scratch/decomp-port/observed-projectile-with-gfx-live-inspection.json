@@ -1,0 +1,4572 @@
+{
+  "scope": "Read-only actual129712route native allocation snapshots: first two A387/A395 WithGfx and first two9642 RoomGfx allocations. Materialhighest-free/initializer/host preservation plus exactfullWRAM/all8host comparisons across available independentsubjects. Native source/outerentry counters inspected separately. No immediate internalbirth/fullpool/dirtypartialreset/liveunknownselector inference from these bounded snapshots. Whole-game parity/authentication root-owned.",
+  "root": "out/port/observed-projectile-with-gfx-live-full/20261011T142927.603436Z",
+  "progress": {
+    "c-0": {
+      "frame": 129712,
+      "game_state": 8,
+      "room": 57229,
+      "samus_x": 173,
+      "samus_y": 159,
+      "rng": 13022,
+      "fallback_calls": 0,
+      "fallback_instructions": 0,
+      "decompression_calls": 419
+    },
+    "c-1": {
+      "frame": 129712,
+      "game_state": 8,
+      "room": 57229,
+      "samus_x": 173,
+      "samus_y": 159,
+      "rng": 13022,
+      "fallback_calls": 0,
+      "fallback_instructions": 0,
+      "decompression_calls": 419
+    },
+    "mixed-0": {
+      "frame": 17000,
+      "game_state": 8,
+      "room": 57157,
+      "samus_x": 65,
+      "samus_y": 683,
+      "rng": 46849,
+      "fallback_calls": 0,
+      "fallback_instructions": 0,
+      "decompression_calls": 32
+    },
+    "mixed-1": null
+  },
+  "captures": [
+    {
+      "capture": "projectile-allocation-a387-001",
+      "subjects_present": [
+        "c-0",
+        "c-1",
+        "mixed-0"
+      ],
+      "matches_C0_full_WRAM_and_all8_host": {
+        "c-0": true,
+        "c-1": true,
+        "mixed-0": true
+      },
+      "member_sha256": {
+        "c-0": {
+          "fixtures/projectile-allocation-a387-001-before.wram": "51429307d26d0acca2e67751c176be76fb5049dae9c87e7b15552924eea7b9c7",
+          "fixtures/projectile-allocation-a387-001-before.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+          "fixtures/projectile-allocation-a387-001-after.wram": "1d5ad437bf582fb2f6cafcea1f419d0d5e6b26b932b96e6ac2bcc5593a1f4412",
+          "fixtures/projectile-allocation-a387-001-after.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+        },
+        "c-1": {
+          "fixtures/projectile-allocation-a387-001-before.wram": "51429307d26d0acca2e67751c176be76fb5049dae9c87e7b15552924eea7b9c7",
+          "fixtures/projectile-allocation-a387-001-before.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+          "fixtures/projectile-allocation-a387-001-after.wram": "1d5ad437bf582fb2f6cafcea1f419d0d5e6b26b932b96e6ac2bcc5593a1f4412",
+          "fixtures/projectile-allocation-a387-001-after.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+        },
+        "mixed-0": {
+          "fixtures/projectile-allocation-a387-001-before.wram": "51429307d26d0acca2e67751c176be76fb5049dae9c87e7b15552924eea7b9c7",
+          "fixtures/projectile-allocation-a387-001-before.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+          "fixtures/projectile-allocation-a387-001-after.wram": "1d5ad437bf582fb2f6cafcea1f419d0d5e6b26b932b96e6ac2bcc5593a1f4412",
+          "fixtures/projectile-allocation-a387-001-after.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+        }
+      },
+      "C0_material": {
+        "highest_free_destination": 34,
+        "samus_before": [
+          128,
+          0
+        ],
+        "enemy0_before": [
+          232,
+          631
+        ],
+        "current_enemy_before": 64,
+        "parameter_after": 0,
+        "slot_after": {
+          "id": 41863,
+          "gfx": 0,
+          "pre": 41768,
+          "x_fraction": 0,
+          "x": 128,
+          "y_fraction": 0,
+          "y": 28,
+          "x_speed": 0,
+          "y_speed": 0,
+          "E": 60,
+          "F": 0,
+          "script": 41613,
+          "map": 32768,
+          "timer": 1,
+          "radius": 257,
+          "properties": 12288,
+          "G": 0
+        },
+        "host_before_and_after": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "other_slot_IDs_preserved": true,
+        "unrelated_partial_reset_words_preserved": [
+          "0xf3ea",
+          "0xf432"
+        ]
+      }
+    },
+    {
+      "capture": "projectile-allocation-a387-002",
+      "subjects_present": [
+        "c-0",
+        "c-1"
+      ],
+      "matches_C0_full_WRAM_and_all8_host": {
+        "c-0": true,
+        "c-1": true
+      },
+      "member_sha256": {
+        "c-0": {
+          "fixtures/projectile-allocation-a387-002-before.wram": "d93eae717205e946581edf1efc6b13d6ea68756695329ca9485425dcc21673d5",
+          "fixtures/projectile-allocation-a387-002-before.host": "18911a9140430544f71b1049befc6da8c8761313656eb149de1a4d3996dac9c4",
+          "fixtures/projectile-allocation-a387-002-after.wram": "f417521892f8bf4aead0d3fa36af4b8e452702b44e6019b75cf5abc9a0e965b9",
+          "fixtures/projectile-allocation-a387-002-after.host": "18911a9140430544f71b1049befc6da8c8761313656eb149de1a4d3996dac9c4"
+        },
+        "c-1": {
+          "fixtures/projectile-allocation-a387-002-before.wram": "d93eae717205e946581edf1efc6b13d6ea68756695329ca9485425dcc21673d5",
+          "fixtures/projectile-allocation-a387-002-before.host": "18911a9140430544f71b1049befc6da8c8761313656eb149de1a4d3996dac9c4",
+          "fixtures/projectile-allocation-a387-002-after.wram": "f417521892f8bf4aead0d3fa36af4b8e452702b44e6019b75cf5abc9a0e965b9",
+          "fixtures/projectile-allocation-a387-002-after.host": "18911a9140430544f71b1049befc6da8c8761313656eb149de1a4d3996dac9c4"
+        }
+      },
+      "C0_material": {
+        "highest_free_destination": 34,
+        "samus_before": [
+          128,
+          0
+        ],
+        "enemy0_before": [
+          232,
+          631
+        ],
+        "current_enemy_before": 64,
+        "parameter_after": 0,
+        "slot_after": {
+          "id": 41863,
+          "gfx": 0,
+          "pre": 41768,
+          "x_fraction": 0,
+          "x": 128,
+          "y_fraction": 0,
+          "y": 28,
+          "x_speed": 0,
+          "y_speed": 0,
+          "E": 60,
+          "F": 0,
+          "script": 41613,
+          "map": 32768,
+          "timer": 1,
+          "radius": 257,
+          "properties": 12288,
+          "G": 0
+        },
+        "host_before_and_after": [
+          66,
+          202,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "other_slot_IDs_preserved": true,
+        "unrelated_partial_reset_words_preserved": [
+          "0xf3ea",
+          "0xf432"
+        ]
+      }
+    },
+    {
+      "capture": "projectile-allocation-a395-001",
+      "subjects_present": [
+        "c-0",
+        "c-1",
+        "mixed-0"
+      ],
+      "matches_C0_full_WRAM_and_all8_host": {
+        "c-0": true,
+        "c-1": true,
+        "mixed-0": true
+      },
+      "member_sha256": {
+        "c-0": {
+          "fixtures/projectile-allocation-a395-001-before.wram": "1d5ad437bf582fb2f6cafcea1f419d0d5e6b26b932b96e6ac2bcc5593a1f4412",
+          "fixtures/projectile-allocation-a395-001-before.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+          "fixtures/projectile-allocation-a395-001-after.wram": "a238d6d5fdec664b363bd571cb00c64911234e3f73287be81db5855223421983",
+          "fixtures/projectile-allocation-a395-001-after.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+        },
+        "c-1": {
+          "fixtures/projectile-allocation-a395-001-before.wram": "1d5ad437bf582fb2f6cafcea1f419d0d5e6b26b932b96e6ac2bcc5593a1f4412",
+          "fixtures/projectile-allocation-a395-001-before.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+          "fixtures/projectile-allocation-a395-001-after.wram": "a238d6d5fdec664b363bd571cb00c64911234e3f73287be81db5855223421983",
+          "fixtures/projectile-allocation-a395-001-after.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+        },
+        "mixed-0": {
+          "fixtures/projectile-allocation-a395-001-before.wram": "1d5ad437bf582fb2f6cafcea1f419d0d5e6b26b932b96e6ac2bcc5593a1f4412",
+          "fixtures/projectile-allocation-a395-001-before.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+          "fixtures/projectile-allocation-a395-001-after.wram": "a238d6d5fdec664b363bd571cb00c64911234e3f73287be81db5855223421983",
+          "fixtures/projectile-allocation-a395-001-after.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+        }
+      },
+      "C0_material": {
+        "highest_free_destination": 32,
+        "samus_before": [
+          128,
+          0
+        ],
+        "enemy0_before": [
+          232,
+          631
+        ],
+        "current_enemy_before": 64,
+        "parameter_after": 0,
+        "slot_after": {
+          "id": 41877,
+          "gfx": 0,
+          "pre": 41828,
+          "x_fraction": 0,
+          "x": 128,
+          "y_fraction": 0,
+          "y": 97,
+          "x_speed": 0,
+          "y_speed": 0,
+          "E": 0,
+          "F": 0,
+          "script": 41625,
+          "map": 32768,
+          "timer": 1,
+          "radius": 257,
+          "properties": 12288,
+          "G": 0
+        },
+        "host_before_and_after": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "other_slot_IDs_preserved": true,
+        "unrelated_partial_reset_words_preserved": [
+          "0xf3e8",
+          "0xf430"
+        ]
+      }
+    },
+    {
+      "capture": "projectile-allocation-a395-002",
+      "subjects_present": [
+        "c-0",
+        "c-1"
+      ],
+      "matches_C0_full_WRAM_and_all8_host": {
+        "c-0": true,
+        "c-1": true
+      },
+      "member_sha256": {
+        "c-0": {
+          "fixtures/projectile-allocation-a395-002-before.wram": "f417521892f8bf4aead0d3fa36af4b8e452702b44e6019b75cf5abc9a0e965b9",
+          "fixtures/projectile-allocation-a395-002-before.host": "18911a9140430544f71b1049befc6da8c8761313656eb149de1a4d3996dac9c4",
+          "fixtures/projectile-allocation-a395-002-after.wram": "5be460fad8150851a9056775704e452fa964b00f4218b45d8f0565c7bb27acb3",
+          "fixtures/projectile-allocation-a395-002-after.host": "18911a9140430544f71b1049befc6da8c8761313656eb149de1a4d3996dac9c4"
+        },
+        "c-1": {
+          "fixtures/projectile-allocation-a395-002-before.wram": "f417521892f8bf4aead0d3fa36af4b8e452702b44e6019b75cf5abc9a0e965b9",
+          "fixtures/projectile-allocation-a395-002-before.host": "18911a9140430544f71b1049befc6da8c8761313656eb149de1a4d3996dac9c4",
+          "fixtures/projectile-allocation-a395-002-after.wram": "5be460fad8150851a9056775704e452fa964b00f4218b45d8f0565c7bb27acb3",
+          "fixtures/projectile-allocation-a395-002-after.host": "18911a9140430544f71b1049befc6da8c8761313656eb149de1a4d3996dac9c4"
+        }
+      },
+      "C0_material": {
+        "highest_free_destination": 32,
+        "samus_before": [
+          128,
+          0
+        ],
+        "enemy0_before": [
+          232,
+          631
+        ],
+        "current_enemy_before": 64,
+        "parameter_after": 0,
+        "slot_after": {
+          "id": 41877,
+          "gfx": 0,
+          "pre": 41828,
+          "x_fraction": 0,
+          "x": 128,
+          "y_fraction": 0,
+          "y": 97,
+          "x_speed": 0,
+          "y_speed": 0,
+          "E": 0,
+          "F": 0,
+          "script": 41625,
+          "map": 32768,
+          "timer": 1,
+          "radius": 257,
+          "properties": 12288,
+          "G": 0
+        },
+        "host_before_and_after": [
+          66,
+          202,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "other_slot_IDs_preserved": true,
+        "unrelated_partial_reset_words_preserved": [
+          "0xf3e8",
+          "0xf430"
+        ]
+      }
+    },
+    {
+      "capture": "projectile-allocation-9642-001",
+      "subjects_present": [
+        "c-0",
+        "c-1"
+      ],
+      "matches_C0_full_WRAM_and_all8_host": {
+        "c-0": true,
+        "c-1": true
+      },
+      "member_sha256": {
+        "c-0": {
+          "fixtures/projectile-allocation-9642-001-before.wram": "9e274cee81a35bec874b385b78f4be624bd695c29674bde1acf363e5bf5ade16",
+          "fixtures/projectile-allocation-9642-001-before.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+          "fixtures/projectile-allocation-9642-001-after.wram": "e3c6c7480928345dea5052aa747437f8daa0fa88f95b4d5dba9ad6ec8da39de4",
+          "fixtures/projectile-allocation-9642-001-after.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+        },
+        "c-1": {
+          "fixtures/projectile-allocation-9642-001-before.wram": "9e274cee81a35bec874b385b78f4be624bd695c29674bde1acf363e5bf5ade16",
+          "fixtures/projectile-allocation-9642-001-before.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+          "fixtures/projectile-allocation-9642-001-after.wram": "e3c6c7480928345dea5052aa747437f8daa0fa88f95b4d5dba9ad6ec8da39de4",
+          "fixtures/projectile-allocation-9642-001-after.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+        }
+      },
+      "C0_material": {
+        "highest_free_destination": 34,
+        "samus_before": [
+          214,
+          187
+        ],
+        "enemy0_before": [
+          180,
+          111
+        ],
+        "current_enemy_before": 0,
+        "parameter_after": 0,
+        "slot_after": {
+          "id": 38466,
+          "gfx": 2560,
+          "pre": 37902,
+          "x_fraction": 0,
+          "x": 155,
+          "y_fraction": 0,
+          "y": 68,
+          "x_speed": 64906,
+          "y_speed": 1110,
+          "E": 0,
+          "F": 0,
+          "script": 38226,
+          "map": 32768,
+          "timer": 1,
+          "radius": 1542,
+          "properties": 20483,
+          "G": 0
+        },
+        "host_before_and_after": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "other_slot_IDs_preserved": true,
+        "unrelated_partial_reset_words_preserved": [
+          "0xf3ea",
+          "0xf432"
+        ]
+      }
+    },
+    {
+      "capture": "projectile-allocation-9642-002",
+      "subjects_present": [
+        "c-0",
+        "c-1"
+      ],
+      "matches_C0_full_WRAM_and_all8_host": {
+        "c-0": true,
+        "c-1": true
+      },
+      "member_sha256": {
+        "c-0": {
+          "fixtures/projectile-allocation-9642-002-before.wram": "6a11e607c8ba62c02c0c8f84ef0fa68a7213b7d7b222a21dcda1169fdbbba963",
+          "fixtures/projectile-allocation-9642-002-before.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+          "fixtures/projectile-allocation-9642-002-after.wram": "8551bab3edf825798f8e352f0542f6d034cc5a41bb79985f3b4efed4f3571fdf",
+          "fixtures/projectile-allocation-9642-002-after.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+        },
+        "c-1": {
+          "fixtures/projectile-allocation-9642-002-before.wram": "6a11e607c8ba62c02c0c8f84ef0fa68a7213b7d7b222a21dcda1169fdbbba963",
+          "fixtures/projectile-allocation-9642-002-before.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+          "fixtures/projectile-allocation-9642-002-after.wram": "8551bab3edf825798f8e352f0542f6d034cc5a41bb79985f3b4efed4f3571fdf",
+          "fixtures/projectile-allocation-9642-002-after.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+        }
+      },
+      "C0_material": {
+        "highest_free_destination": 32,
+        "samus_before": [
+          209,
+          187
+        ],
+        "enemy0_before": [
+          182,
+          107
+        ],
+        "current_enemy_before": 0,
+        "parameter_after": 0,
+        "slot_after": {
+          "id": 38466,
+          "gfx": 2560,
+          "pre": 37902,
+          "x_fraction": 0,
+          "x": 157,
+          "y_fraction": 0,
+          "y": 64,
+          "x_speed": 64906,
+          "y_speed": 1110,
+          "E": 0,
+          "F": 14,
+          "script": 38226,
+          "map": 32768,
+          "timer": 1,
+          "radius": 1542,
+          "properties": 20483,
+          "G": 0
+        },
+        "host_before_and_after": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "other_slot_IDs_preserved": true,
+        "unrelated_partial_reset_words_preserved": [
+          "0xf3e8",
+          "0xf430"
+        ]
+      }
+    }
+  ],
+  "scheduler_captures": [
+    {
+      "capture": "projectile-id-9642-001",
+      "subjects_present": [
+        "c-0",
+        "c-1"
+      ],
+      "matches_C0_full_WRAM_and_all8_host": {
+        "c-0": true,
+        "c-1": true
+      },
+      "member_sha256": {
+        "c-0": {
+          "fixtures/projectile-id-9642-001-before.wram": "f90d24860a68a777f1206831010ab7c2a72198358ec73b34b2f94aa8da675d08",
+          "fixtures/projectile-id-9642-001-before.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+          "fixtures/projectile-id-9642-001-after.wram": "62f6f8e6dc2ce50089198d5d57da9d1ac7ce1b03bc7a91b934a2f0b534dcfd83",
+          "fixtures/projectile-id-9642-001-after.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+        },
+        "c-1": {
+          "fixtures/projectile-id-9642-001-before.wram": "f90d24860a68a777f1206831010ab7c2a72198358ec73b34b2f94aa8da675d08",
+          "fixtures/projectile-id-9642-001-before.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+          "fixtures/projectile-id-9642-001-after.wram": "62f6f8e6dc2ce50089198d5d57da9d1ac7ce1b03bc7a91b934a2f0b534dcfd83",
+          "fixtures/projectile-id-9642-001-after.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+        }
+      },
+      "C0_material": {
+        "before": {
+          "host_words": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 34,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 0,
+              "x": 155,
+              "y_fraction": 0,
+              "y": 68,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 0,
+              "script": 38226,
+              "map": 32768,
+              "timer": 1,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            }
+          ]
+        },
+        "after": {
+          "host_words": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 34,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 35328,
+              "x": 152,
+              "y_fraction": 22016,
+              "y": 72,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 0,
+              "script": 38232,
+              "map": 32970,
+              "timer": 4,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "capture": "projectile-id-9642-002",
+      "subjects_present": [
+        "c-0",
+        "c-1"
+      ],
+      "matches_C0_full_WRAM_and_all8_host": {
+        "c-0": true,
+        "c-1": true
+      },
+      "member_sha256": {
+        "c-0": {
+          "fixtures/projectile-id-9642-002-before.wram": "b37e199ee9c0d4c3da64c67c3466643f30e7e1ce9ee5cad1e4d1ab8b94628281",
+          "fixtures/projectile-id-9642-002-before.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+          "fixtures/projectile-id-9642-002-after.wram": "28c9aa843631c91219507c746d2c6aa31fe8e822085f1df5ccc7b57ad387e7dd",
+          "fixtures/projectile-id-9642-002-after.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+        },
+        "c-1": {
+          "fixtures/projectile-id-9642-002-before.wram": "b37e199ee9c0d4c3da64c67c3466643f30e7e1ce9ee5cad1e4d1ab8b94628281",
+          "fixtures/projectile-id-9642-002-before.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+          "fixtures/projectile-id-9642-002-after.wram": "28c9aa843631c91219507c746d2c6aa31fe8e822085f1df5ccc7b57ad387e7dd",
+          "fixtures/projectile-id-9642-002-after.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+        }
+      },
+      "C0_material": {
+        "before": {
+          "host_words": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 34,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 35328,
+              "x": 152,
+              "y_fraction": 22016,
+              "y": 72,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 0,
+              "script": 38232,
+              "map": 32970,
+              "timer": 4,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            }
+          ]
+        },
+        "after": {
+          "host_words": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 34,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 35328,
+              "x": 152,
+              "y_fraction": 22016,
+              "y": 72,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 0,
+              "script": 38232,
+              "map": 32970,
+              "timer": 3,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "capture": "projectile-id-9650-001",
+      "subjects_present": [
+        "c-0",
+        "c-1"
+      ],
+      "matches_C0_full_WRAM_and_all8_host": {
+        "c-0": true,
+        "c-1": true
+      },
+      "member_sha256": {
+        "c-0": {
+          "fixtures/projectile-id-9650-001-before.wram": "dcb74f0796e7d69aba36834bdf84de0c0305a8e244b6b22e2e2713ebdbc1079a",
+          "fixtures/projectile-id-9650-001-before.host": "b24896a807f51ce17ae23247997cfec28aaf8c1a422e2835e0fb92159842d5db",
+          "fixtures/projectile-id-9650-001-after.wram": "38322f597a9dce93f54f24e579fb424e243250d2628c167b40403e516f109097",
+          "fixtures/projectile-id-9650-001-after.host": "b24896a807f51ce17ae23247997cfec28aaf8c1a422e2835e0fb92159842d5db"
+        },
+        "c-1": {
+          "fixtures/projectile-id-9650-001-before.wram": "dcb74f0796e7d69aba36834bdf84de0c0305a8e244b6b22e2e2713ebdbc1079a",
+          "fixtures/projectile-id-9650-001-before.host": "b24896a807f51ce17ae23247997cfec28aaf8c1a422e2835e0fb92159842d5db",
+          "fixtures/projectile-id-9650-001-after.wram": "38322f597a9dce93f54f24e579fb424e243250d2628c167b40403e516f109097",
+          "fixtures/projectile-id-9650-001-after.host": "b24896a807f51ce17ae23247997cfec28aaf8c1a422e2835e0fb92159842d5db"
+        }
+      },
+      "C0_material": {
+        "before": {
+          "host_words": [
+            76,
+            202,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 28,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 10752,
+              "x": 117,
+              "y_fraction": 46592,
+              "y": 131,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 14,
+              "script": 38252,
+              "map": 32984,
+              "timer": 2,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 30,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 56320,
+              "x": 103,
+              "y_fraction": 25600,
+              "y": 156,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 14,
+              "script": 38244,
+              "map": 32970,
+              "timer": 1,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 32,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 36352,
+              "x": 90,
+              "y_fraction": 4608,
+              "y": 181,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 14,
+              "script": 38256,
+              "map": 32991,
+              "timer": 2,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 38480,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 76,
+              "y_fraction": 0,
+              "y": 202,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 3,
+              "F": 0,
+              "script": 38310,
+              "map": 32998,
+              "timer": 5,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            }
+          ]
+        },
+        "after": {
+          "host_words": [
+            76,
+            202,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 28,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 46080,
+              "x": 114,
+              "y_fraction": 3072,
+              "y": 136,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 14,
+              "script": 38252,
+              "map": 32984,
+              "timer": 1,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 30,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 26112,
+              "x": 101,
+              "y_fraction": 47616,
+              "y": 160,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 14,
+              "script": 38248,
+              "map": 32977,
+              "timer": 2,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 32,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 6144,
+              "x": 88,
+              "y_fraction": 26624,
+              "y": 185,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 14,
+              "script": 38256,
+              "map": 32991,
+              "timer": 1,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 38480,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 76,
+              "y_fraction": 0,
+              "y": 202,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 3,
+              "F": 0,
+              "script": 38310,
+              "map": 32998,
+              "timer": 4,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "capture": "projectile-id-9650-002",
+      "subjects_present": [
+        "c-0",
+        "c-1"
+      ],
+      "matches_C0_full_WRAM_and_all8_host": {
+        "c-0": true,
+        "c-1": true
+      },
+      "member_sha256": {
+        "c-0": {
+          "fixtures/projectile-id-9650-002-before.wram": "ecfa7a2f7c2c1faa416d7fef423cf3cec32f94bcbf3f31258e6fa88be6b3d31a",
+          "fixtures/projectile-id-9650-002-before.host": "b24896a807f51ce17ae23247997cfec28aaf8c1a422e2835e0fb92159842d5db",
+          "fixtures/projectile-id-9650-002-after.wram": "271f387231e7f84c8597ce5bda65f4bd61215ca56b1ad9a8048b002f4486cbb5",
+          "fixtures/projectile-id-9650-002-after.host": "b24896a807f51ce17ae23247997cfec28aaf8c1a422e2835e0fb92159842d5db"
+        },
+        "c-1": {
+          "fixtures/projectile-id-9650-002-before.wram": "ecfa7a2f7c2c1faa416d7fef423cf3cec32f94bcbf3f31258e6fa88be6b3d31a",
+          "fixtures/projectile-id-9650-002-before.host": "b24896a807f51ce17ae23247997cfec28aaf8c1a422e2835e0fb92159842d5db",
+          "fixtures/projectile-id-9650-002-after.wram": "271f387231e7f84c8597ce5bda65f4bd61215ca56b1ad9a8048b002f4486cbb5",
+          "fixtures/projectile-id-9650-002-after.host": "b24896a807f51ce17ae23247997cfec28aaf8c1a422e2835e0fb92159842d5db"
+        }
+      },
+      "C0_material": {
+        "before": {
+          "host_words": [
+            76,
+            202,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 28,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 46080,
+              "x": 114,
+              "y_fraction": 3072,
+              "y": 136,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 14,
+              "script": 38252,
+              "map": 32984,
+              "timer": 1,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 30,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 26112,
+              "x": 101,
+              "y_fraction": 47616,
+              "y": 160,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 14,
+              "script": 38248,
+              "map": 32977,
+              "timer": 2,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 32,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 6144,
+              "x": 88,
+              "y_fraction": 26624,
+              "y": 185,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 14,
+              "script": 38256,
+              "map": 32991,
+              "timer": 1,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 38480,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 76,
+              "y_fraction": 0,
+              "y": 202,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 3,
+              "F": 0,
+              "script": 38310,
+              "map": 32998,
+              "timer": 4,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            }
+          ]
+        },
+        "after": {
+          "host_words": [
+            76,
+            202,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 28,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 15872,
+              "x": 112,
+              "y_fraction": 25088,
+              "y": 140,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 14,
+              "script": 38256,
+              "map": 32991,
+              "timer": 2,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 30,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 61440,
+              "x": 98,
+              "y_fraction": 4096,
+              "y": 165,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 14,
+              "script": 38248,
+              "map": 32977,
+              "timer": 1,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 32,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 41472,
+              "x": 85,
+              "y_fraction": 48640,
+              "y": 189,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 14,
+              "script": 38244,
+              "map": 32970,
+              "timer": 2,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 38480,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 76,
+              "y_fraction": 0,
+              "y": 202,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 3,
+              "F": 0,
+              "script": 38310,
+              "map": 32998,
+              "timer": 3,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "capture": "projectile-id-965e-001",
+      "subjects_present": [
+        "c-0",
+        "c-1"
+      ],
+      "matches_C0_full_WRAM_and_all8_host": {
+        "c-0": true,
+        "c-1": true
+      },
+      "member_sha256": {
+        "c-0": {
+          "fixtures/projectile-id-965e-001-before.wram": "35a2a8e283267f9153379e1cc4a894dcbc14ad8881d62b2ceccead2f5db6efde",
+          "fixtures/projectile-id-965e-001-before.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
+          "fixtures/projectile-id-965e-001-after.wram": "a6cd978d10ae6821e6f3bad9c532b1f0f1505bef667154497af14cc468696264",
+          "fixtures/projectile-id-965e-001-after.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58"
+        },
+        "c-1": {
+          "fixtures/projectile-id-965e-001-before.wram": "35a2a8e283267f9153379e1cc4a894dcbc14ad8881d62b2ceccead2f5db6efde",
+          "fixtures/projectile-id-965e-001-before.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
+          "fixtures/projectile-id-965e-001-after.wram": "a6cd978d10ae6821e6f3bad9c532b1f0f1505bef667154497af14cc468696264",
+          "fixtures/projectile-id-965e-001-after.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58"
+        }
+      },
+      "C0_material": {
+        "before": {
+          "host_words": [
+            22,
+            120,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 28,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 29440,
+              "x": 84,
+              "y_fraction": 5632,
+              "y": 95,
+              "x_speed": 64261,
+              "y_speed": 90,
+              "E": 0,
+              "F": 14,
+              "script": 38248,
+              "map": 32977,
+              "timer": 2,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 30,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 48128,
+              "x": 61,
+              "y_fraction": 52224,
+              "y": 107,
+              "x_speed": 64281,
+              "y_speed": 245,
+              "E": 0,
+              "F": 14,
+              "script": 38256,
+              "map": 32991,
+              "timer": 1,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 32,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 48128,
+              "x": 41,
+              "y_fraction": 45568,
+              "y": 121,
+              "x_speed": 64316,
+              "y_speed": 370,
+              "E": 0,
+              "F": 14,
+              "script": 38252,
+              "map": 32984,
+              "timer": 2,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 38494,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 22,
+              "y_fraction": 0,
+              "y": 120,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 3,
+              "F": 0,
+              "script": 38361,
+              "map": 32998,
+              "timer": 5,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            }
+          ]
+        },
+        "after": {
+          "host_words": [
+            22,
+            120,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 28,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 30720,
+              "x": 79,
+              "y_fraction": 28672,
+              "y": 95,
+              "x_speed": 64261,
+              "y_speed": 90,
+              "E": 0,
+              "F": 14,
+              "script": 38248,
+              "map": 32977,
+              "timer": 1,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 30,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 54528,
+              "x": 56,
+              "y_fraction": 49408,
+              "y": 108,
+              "x_speed": 64281,
+              "y_speed": 245,
+              "E": 0,
+              "F": 14,
+              "script": 38244,
+              "map": 32970,
+              "timer": 2,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 32,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 63488,
+              "x": 36,
+              "y_fraction": 9216,
+              "y": 123,
+              "x_speed": 64316,
+              "y_speed": 370,
+              "E": 0,
+              "F": 14,
+              "script": 38252,
+              "map": 32984,
+              "timer": 1,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 38494,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 22,
+              "y_fraction": 0,
+              "y": 120,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 3,
+              "F": 0,
+              "script": 38361,
+              "map": 32998,
+              "timer": 4,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "capture": "projectile-id-965e-002",
+      "subjects_present": [
+        "c-0",
+        "c-1"
+      ],
+      "matches_C0_full_WRAM_and_all8_host": {
+        "c-0": true,
+        "c-1": true
+      },
+      "member_sha256": {
+        "c-0": {
+          "fixtures/projectile-id-965e-002-before.wram": "71d34dc9cc1c65671d1b2e989860d6428bcfac5bb82dd702f405503c56e5d7cc",
+          "fixtures/projectile-id-965e-002-before.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
+          "fixtures/projectile-id-965e-002-after.wram": "d9e0745408d6c8e89297ef7720b0230f96dd56f835819b4e49ad8a021d438c97",
+          "fixtures/projectile-id-965e-002-after.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58"
+        },
+        "c-1": {
+          "fixtures/projectile-id-965e-002-before.wram": "71d34dc9cc1c65671d1b2e989860d6428bcfac5bb82dd702f405503c56e5d7cc",
+          "fixtures/projectile-id-965e-002-before.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
+          "fixtures/projectile-id-965e-002-after.wram": "d9e0745408d6c8e89297ef7720b0230f96dd56f835819b4e49ad8a021d438c97",
+          "fixtures/projectile-id-965e-002-after.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58"
+        }
+      },
+      "C0_material": {
+        "before": {
+          "host_words": [
+            22,
+            120,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 28,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 30720,
+              "x": 79,
+              "y_fraction": 28672,
+              "y": 95,
+              "x_speed": 64261,
+              "y_speed": 90,
+              "E": 0,
+              "F": 14,
+              "script": 38248,
+              "map": 32977,
+              "timer": 1,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 30,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 54528,
+              "x": 56,
+              "y_fraction": 49408,
+              "y": 108,
+              "x_speed": 64281,
+              "y_speed": 245,
+              "E": 0,
+              "F": 14,
+              "script": 38244,
+              "map": 32970,
+              "timer": 2,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 32,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 63488,
+              "x": 36,
+              "y_fraction": 9216,
+              "y": 123,
+              "x_speed": 64316,
+              "y_speed": 370,
+              "E": 0,
+              "F": 14,
+              "script": 38252,
+              "map": 32984,
+              "timer": 1,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 38494,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 22,
+              "y_fraction": 0,
+              "y": 120,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 3,
+              "F": 0,
+              "script": 38361,
+              "map": 32998,
+              "timer": 4,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            }
+          ]
+        },
+        "after": {
+          "host_words": [
+            22,
+            120,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 28,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 32000,
+              "x": 74,
+              "y_fraction": 51712,
+              "y": 95,
+              "x_speed": 64261,
+              "y_speed": 90,
+              "E": 0,
+              "F": 14,
+              "script": 38252,
+              "map": 32984,
+              "timer": 2,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 30,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 60928,
+              "x": 51,
+              "y_fraction": 46592,
+              "y": 109,
+              "x_speed": 64281,
+              "y_speed": 245,
+              "E": 0,
+              "F": 14,
+              "script": 38244,
+              "map": 32970,
+              "timer": 1,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 32,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 13312,
+              "x": 32,
+              "y_fraction": 38400,
+              "y": 124,
+              "x_speed": 64316,
+              "y_speed": 370,
+              "E": 0,
+              "F": 14,
+              "script": 38256,
+              "map": 32991,
+              "timer": 2,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 38494,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 22,
+              "y_fraction": 0,
+              "y": 120,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 3,
+              "F": 0,
+              "script": 38361,
+              "map": 32998,
+              "timer": 3,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "capture": "projectile-id-966c-001",
+      "subjects_present": [
+        "c-0",
+        "c-1"
+      ],
+      "matches_C0_full_WRAM_and_all8_host": {
+        "c-0": true,
+        "c-1": true
+      },
+      "member_sha256": {
+        "c-0": {
+          "fixtures/projectile-id-966c-001-before.wram": "cf78dfb764d4e0bab3086b19ca48be119756b683a7cd8654c77388a1f41fef39",
+          "fixtures/projectile-id-966c-001-before.host": "b24896a807f51ce17ae23247997cfec28aaf8c1a422e2835e0fb92159842d5db",
+          "fixtures/projectile-id-966c-001-after.wram": "7985464afdcc87ad4e515575f9f0a794597efe1bc2c4ce8fcb4ed8c19388af2b",
+          "fixtures/projectile-id-966c-001-after.host": "b24896a807f51ce17ae23247997cfec28aaf8c1a422e2835e0fb92159842d5db"
+        },
+        "c-1": {
+          "fixtures/projectile-id-966c-001-before.wram": "cf78dfb764d4e0bab3086b19ca48be119756b683a7cd8654c77388a1f41fef39",
+          "fixtures/projectile-id-966c-001-before.host": "b24896a807f51ce17ae23247997cfec28aaf8c1a422e2835e0fb92159842d5db",
+          "fixtures/projectile-id-966c-001-after.wram": "7985464afdcc87ad4e515575f9f0a794597efe1bc2c4ce8fcb4ed8c19388af2b",
+          "fixtures/projectile-id-966c-001-after.host": "b24896a807f51ce17ae23247997cfec28aaf8c1a422e2835e0fb92159842d5db"
+        }
+      },
+      "C0_material": {
+        "before": {
+          "host_words": [
+            76,
+            202,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 24,
+              "id": 38522,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 62,
+              "y_fraction": 0,
+              "y": 202,
+              "x_speed": 61952,
+              "y_speed": 0,
+              "E": 3,
+              "F": 38522,
+              "script": 38412,
+              "map": 32998,
+              "timer": 5,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 26,
+              "id": 38508,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 90,
+              "y_fraction": 0,
+              "y": 202,
+              "x_speed": 3584,
+              "y_speed": 0,
+              "E": 3,
+              "F": 38508,
+              "script": 38412,
+              "map": 32998,
+              "timer": 5,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 28,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 56320,
+              "x": 104,
+              "y_fraction": 25600,
+              "y": 153,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 14,
+              "script": 38244,
+              "map": 32970,
+              "timer": 1,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 30,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 36352,
+              "x": 91,
+              "y_fraction": 4608,
+              "y": 178,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 14,
+              "script": 38256,
+              "map": 32991,
+              "timer": 2,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 32,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 16384,
+              "x": 78,
+              "y_fraction": 49152,
+              "y": 202,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 14,
+              "script": 38248,
+              "map": 32977,
+              "timer": 1,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 38480,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 76,
+              "y_fraction": 0,
+              "y": 202,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 3,
+              "F": 0,
+              "script": 38316,
+              "map": 33005,
+              "timer": 5,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            }
+          ]
+        },
+        "after": {
+          "host_words": [
+            76,
+            202,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 24,
+              "id": 38522,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 62,
+              "y_fraction": 0,
+              "y": 202,
+              "x_speed": 61952,
+              "y_speed": 0,
+              "E": 3,
+              "F": 38522,
+              "script": 38412,
+              "map": 32998,
+              "timer": 4,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 26,
+              "id": 38508,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 90,
+              "y_fraction": 0,
+              "y": 202,
+              "x_speed": 3584,
+              "y_speed": 0,
+              "E": 3,
+              "F": 38508,
+              "script": 38412,
+              "map": 32998,
+              "timer": 4,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 28,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 26112,
+              "x": 102,
+              "y_fraction": 47616,
+              "y": 157,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 14,
+              "script": 38248,
+              "map": 32977,
+              "timer": 2,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 30,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 6144,
+              "x": 89,
+              "y_fraction": 26624,
+              "y": 182,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 14,
+              "script": 38256,
+              "map": 32991,
+              "timer": 1,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 38480,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 76,
+              "y_fraction": 0,
+              "y": 202,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 3,
+              "F": 0,
+              "script": 38316,
+              "map": 33005,
+              "timer": 4,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "capture": "projectile-id-966c-002",
+      "subjects_present": [
+        "c-0",
+        "c-1"
+      ],
+      "matches_C0_full_WRAM_and_all8_host": {
+        "c-0": true,
+        "c-1": true
+      },
+      "member_sha256": {
+        "c-0": {
+          "fixtures/projectile-id-966c-002-before.wram": "f8976881da99f2a8b769b158aac5262fb9ecbbe7d601966879316717192bf2b6",
+          "fixtures/projectile-id-966c-002-before.host": "b24896a807f51ce17ae23247997cfec28aaf8c1a422e2835e0fb92159842d5db",
+          "fixtures/projectile-id-966c-002-after.wram": "6f37fbaee616043d15a62c635f5491ea2001013af4f283b6876ab004fb328fbb",
+          "fixtures/projectile-id-966c-002-after.host": "b24896a807f51ce17ae23247997cfec28aaf8c1a422e2835e0fb92159842d5db"
+        },
+        "c-1": {
+          "fixtures/projectile-id-966c-002-before.wram": "f8976881da99f2a8b769b158aac5262fb9ecbbe7d601966879316717192bf2b6",
+          "fixtures/projectile-id-966c-002-before.host": "b24896a807f51ce17ae23247997cfec28aaf8c1a422e2835e0fb92159842d5db",
+          "fixtures/projectile-id-966c-002-after.wram": "6f37fbaee616043d15a62c635f5491ea2001013af4f283b6876ab004fb328fbb",
+          "fixtures/projectile-id-966c-002-after.host": "b24896a807f51ce17ae23247997cfec28aaf8c1a422e2835e0fb92159842d5db"
+        }
+      },
+      "C0_material": {
+        "before": {
+          "host_words": [
+            76,
+            202,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 24,
+              "id": 38522,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 62,
+              "y_fraction": 0,
+              "y": 202,
+              "x_speed": 61952,
+              "y_speed": 0,
+              "E": 3,
+              "F": 38522,
+              "script": 38412,
+              "map": 32998,
+              "timer": 4,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 26,
+              "id": 38508,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 90,
+              "y_fraction": 0,
+              "y": 202,
+              "x_speed": 3584,
+              "y_speed": 0,
+              "E": 3,
+              "F": 38508,
+              "script": 38412,
+              "map": 32998,
+              "timer": 4,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 28,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 26112,
+              "x": 102,
+              "y_fraction": 47616,
+              "y": 157,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 14,
+              "script": 38248,
+              "map": 32977,
+              "timer": 2,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 30,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 6144,
+              "x": 89,
+              "y_fraction": 26624,
+              "y": 182,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 14,
+              "script": 38256,
+              "map": 32991,
+              "timer": 1,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 38480,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 76,
+              "y_fraction": 0,
+              "y": 202,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 3,
+              "F": 0,
+              "script": 38316,
+              "map": 33005,
+              "timer": 4,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            }
+          ]
+        },
+        "after": {
+          "host_words": [
+            76,
+            202,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 24,
+              "id": 38522,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 62,
+              "y_fraction": 0,
+              "y": 202,
+              "x_speed": 61952,
+              "y_speed": 0,
+              "E": 3,
+              "F": 38522,
+              "script": 38412,
+              "map": 32998,
+              "timer": 3,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 26,
+              "id": 38508,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 90,
+              "y_fraction": 0,
+              "y": 202,
+              "x_speed": 3584,
+              "y_speed": 0,
+              "E": 3,
+              "F": 38508,
+              "script": 38412,
+              "map": 32998,
+              "timer": 3,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 28,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 61440,
+              "x": 99,
+              "y_fraction": 4096,
+              "y": 162,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 14,
+              "script": 38248,
+              "map": 32977,
+              "timer": 1,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 30,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 41472,
+              "x": 86,
+              "y_fraction": 48640,
+              "y": 186,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 14,
+              "script": 38244,
+              "map": 32970,
+              "timer": 2,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 38480,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 76,
+              "y_fraction": 0,
+              "y": 202,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 3,
+              "F": 0,
+              "script": 38316,
+              "map": 33005,
+              "timer": 3,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "capture": "projectile-id-967a-001",
+      "subjects_present": [
+        "c-0",
+        "c-1"
+      ],
+      "matches_C0_full_WRAM_and_all8_host": {
+        "c-0": true,
+        "c-1": true
+      },
+      "member_sha256": {
+        "c-0": {
+          "fixtures/projectile-id-967a-001-before.wram": "cf78dfb764d4e0bab3086b19ca48be119756b683a7cd8654c77388a1f41fef39",
+          "fixtures/projectile-id-967a-001-before.host": "b24896a807f51ce17ae23247997cfec28aaf8c1a422e2835e0fb92159842d5db",
+          "fixtures/projectile-id-967a-001-after.wram": "7985464afdcc87ad4e515575f9f0a794597efe1bc2c4ce8fcb4ed8c19388af2b",
+          "fixtures/projectile-id-967a-001-after.host": "b24896a807f51ce17ae23247997cfec28aaf8c1a422e2835e0fb92159842d5db"
+        },
+        "c-1": {
+          "fixtures/projectile-id-967a-001-before.wram": "cf78dfb764d4e0bab3086b19ca48be119756b683a7cd8654c77388a1f41fef39",
+          "fixtures/projectile-id-967a-001-before.host": "b24896a807f51ce17ae23247997cfec28aaf8c1a422e2835e0fb92159842d5db",
+          "fixtures/projectile-id-967a-001-after.wram": "7985464afdcc87ad4e515575f9f0a794597efe1bc2c4ce8fcb4ed8c19388af2b",
+          "fixtures/projectile-id-967a-001-after.host": "b24896a807f51ce17ae23247997cfec28aaf8c1a422e2835e0fb92159842d5db"
+        }
+      },
+      "C0_material": {
+        "before": {
+          "host_words": [
+            76,
+            202,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 24,
+              "id": 38522,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 62,
+              "y_fraction": 0,
+              "y": 202,
+              "x_speed": 61952,
+              "y_speed": 0,
+              "E": 3,
+              "F": 38522,
+              "script": 38412,
+              "map": 32998,
+              "timer": 5,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 26,
+              "id": 38508,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 90,
+              "y_fraction": 0,
+              "y": 202,
+              "x_speed": 3584,
+              "y_speed": 0,
+              "E": 3,
+              "F": 38508,
+              "script": 38412,
+              "map": 32998,
+              "timer": 5,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 28,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 56320,
+              "x": 104,
+              "y_fraction": 25600,
+              "y": 153,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 14,
+              "script": 38244,
+              "map": 32970,
+              "timer": 1,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 30,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 36352,
+              "x": 91,
+              "y_fraction": 4608,
+              "y": 178,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 14,
+              "script": 38256,
+              "map": 32991,
+              "timer": 2,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 32,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 16384,
+              "x": 78,
+              "y_fraction": 49152,
+              "y": 202,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 14,
+              "script": 38248,
+              "map": 32977,
+              "timer": 1,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 38480,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 76,
+              "y_fraction": 0,
+              "y": 202,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 3,
+              "F": 0,
+              "script": 38316,
+              "map": 33005,
+              "timer": 5,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            }
+          ]
+        },
+        "after": {
+          "host_words": [
+            76,
+            202,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 24,
+              "id": 38522,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 62,
+              "y_fraction": 0,
+              "y": 202,
+              "x_speed": 61952,
+              "y_speed": 0,
+              "E": 3,
+              "F": 38522,
+              "script": 38412,
+              "map": 32998,
+              "timer": 4,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 26,
+              "id": 38508,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 90,
+              "y_fraction": 0,
+              "y": 202,
+              "x_speed": 3584,
+              "y_speed": 0,
+              "E": 3,
+              "F": 38508,
+              "script": 38412,
+              "map": 32998,
+              "timer": 4,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 28,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 26112,
+              "x": 102,
+              "y_fraction": 47616,
+              "y": 157,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 14,
+              "script": 38248,
+              "map": 32977,
+              "timer": 2,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 30,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 6144,
+              "x": 89,
+              "y_fraction": 26624,
+              "y": 182,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 14,
+              "script": 38256,
+              "map": 32991,
+              "timer": 1,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 38480,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 76,
+              "y_fraction": 0,
+              "y": 202,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 3,
+              "F": 0,
+              "script": 38316,
+              "map": 33005,
+              "timer": 4,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "capture": "projectile-id-967a-002",
+      "subjects_present": [
+        "c-0",
+        "c-1"
+      ],
+      "matches_C0_full_WRAM_and_all8_host": {
+        "c-0": true,
+        "c-1": true
+      },
+      "member_sha256": {
+        "c-0": {
+          "fixtures/projectile-id-967a-002-before.wram": "f8976881da99f2a8b769b158aac5262fb9ecbbe7d601966879316717192bf2b6",
+          "fixtures/projectile-id-967a-002-before.host": "b24896a807f51ce17ae23247997cfec28aaf8c1a422e2835e0fb92159842d5db",
+          "fixtures/projectile-id-967a-002-after.wram": "6f37fbaee616043d15a62c635f5491ea2001013af4f283b6876ab004fb328fbb",
+          "fixtures/projectile-id-967a-002-after.host": "b24896a807f51ce17ae23247997cfec28aaf8c1a422e2835e0fb92159842d5db"
+        },
+        "c-1": {
+          "fixtures/projectile-id-967a-002-before.wram": "f8976881da99f2a8b769b158aac5262fb9ecbbe7d601966879316717192bf2b6",
+          "fixtures/projectile-id-967a-002-before.host": "b24896a807f51ce17ae23247997cfec28aaf8c1a422e2835e0fb92159842d5db",
+          "fixtures/projectile-id-967a-002-after.wram": "6f37fbaee616043d15a62c635f5491ea2001013af4f283b6876ab004fb328fbb",
+          "fixtures/projectile-id-967a-002-after.host": "b24896a807f51ce17ae23247997cfec28aaf8c1a422e2835e0fb92159842d5db"
+        }
+      },
+      "C0_material": {
+        "before": {
+          "host_words": [
+            76,
+            202,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 24,
+              "id": 38522,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 62,
+              "y_fraction": 0,
+              "y": 202,
+              "x_speed": 61952,
+              "y_speed": 0,
+              "E": 3,
+              "F": 38522,
+              "script": 38412,
+              "map": 32998,
+              "timer": 4,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 26,
+              "id": 38508,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 90,
+              "y_fraction": 0,
+              "y": 202,
+              "x_speed": 3584,
+              "y_speed": 0,
+              "E": 3,
+              "F": 38508,
+              "script": 38412,
+              "map": 32998,
+              "timer": 4,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 28,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 26112,
+              "x": 102,
+              "y_fraction": 47616,
+              "y": 157,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 14,
+              "script": 38248,
+              "map": 32977,
+              "timer": 2,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 30,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 6144,
+              "x": 89,
+              "y_fraction": 26624,
+              "y": 182,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 14,
+              "script": 38256,
+              "map": 32991,
+              "timer": 1,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 38480,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 76,
+              "y_fraction": 0,
+              "y": 202,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 3,
+              "F": 0,
+              "script": 38316,
+              "map": 33005,
+              "timer": 4,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            }
+          ]
+        },
+        "after": {
+          "host_words": [
+            76,
+            202,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 24,
+              "id": 38522,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 62,
+              "y_fraction": 0,
+              "y": 202,
+              "x_speed": 61952,
+              "y_speed": 0,
+              "E": 3,
+              "F": 38522,
+              "script": 38412,
+              "map": 32998,
+              "timer": 3,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 26,
+              "id": 38508,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 90,
+              "y_fraction": 0,
+              "y": 202,
+              "x_speed": 3584,
+              "y_speed": 0,
+              "E": 3,
+              "F": 38508,
+              "script": 38412,
+              "map": 32998,
+              "timer": 3,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 28,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 61440,
+              "x": 99,
+              "y_fraction": 4096,
+              "y": 162,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 14,
+              "script": 38248,
+              "map": 32977,
+              "timer": 1,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 30,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 41472,
+              "x": 86,
+              "y_fraction": 48640,
+              "y": 186,
+              "x_speed": 64906,
+              "y_speed": 1110,
+              "E": 0,
+              "F": 14,
+              "script": 38244,
+              "map": 32970,
+              "timer": 2,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 38480,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 76,
+              "y_fraction": 0,
+              "y": 202,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 3,
+              "F": 0,
+              "script": 38316,
+              "map": 33005,
+              "timer": 3,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "capture": "projectile-id-9688-001",
+      "subjects_present": [
+        "c-0",
+        "c-1"
+      ],
+      "matches_C0_full_WRAM_and_all8_host": {
+        "c-0": true,
+        "c-1": true
+      },
+      "member_sha256": {
+        "c-0": {
+          "fixtures/projectile-id-9688-001-before.wram": "431bda0168646f32b29ca0c79395ecac4669028c8745c290948af5c2f2ba18bd",
+          "fixtures/projectile-id-9688-001-before.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
+          "fixtures/projectile-id-9688-001-after.wram": "431be088769289fc0402a68e3adc4ee1108fc133cbcc3ae80e6daeaf8a67c46d",
+          "fixtures/projectile-id-9688-001-after.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58"
+        },
+        "c-1": {
+          "fixtures/projectile-id-9688-001-before.wram": "431bda0168646f32b29ca0c79395ecac4669028c8745c290948af5c2f2ba18bd",
+          "fixtures/projectile-id-9688-001-before.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
+          "fixtures/projectile-id-9688-001-after.wram": "431be088769289fc0402a68e3adc4ee1108fc133cbcc3ae80e6daeaf8a67c46d",
+          "fixtures/projectile-id-9688-001-after.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58"
+        }
+      },
+      "C0_material": {
+        "before": {
+          "host_words": [
+            22,
+            120,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 24,
+              "id": 38550,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 22,
+              "y_fraction": 0,
+              "y": 134,
+              "x_speed": 0,
+              "y_speed": 3584,
+              "E": 3,
+              "F": 38550,
+              "script": 38412,
+              "map": 32998,
+              "timer": 5,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 26,
+              "id": 38536,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 22,
+              "y_fraction": 0,
+              "y": 106,
+              "x_speed": 0,
+              "y_speed": 61952,
+              "E": 3,
+              "F": 38536,
+              "script": 38412,
+              "map": 32998,
+              "timer": 5,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 28,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 35840,
+              "x": 59,
+              "y_fraction": 55296,
+              "y": 96,
+              "x_speed": 64261,
+              "y_speed": 90,
+              "E": 0,
+              "F": 14,
+              "script": 38256,
+              "map": 32991,
+              "timer": 1,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 30,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 14592,
+              "x": 37,
+              "y_fraction": 38144,
+              "y": 112,
+              "x_speed": 64281,
+              "y_speed": 245,
+              "E": 0,
+              "F": 14,
+              "script": 38252,
+              "map": 32984,
+              "timer": 2,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 38494,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 22,
+              "y_fraction": 0,
+              "y": 120,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 3,
+              "F": 0,
+              "script": 38367,
+              "map": 33005,
+              "timer": 5,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            }
+          ]
+        },
+        "after": {
+          "host_words": [
+            22,
+            120,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 24,
+              "id": 38550,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 22,
+              "y_fraction": 0,
+              "y": 134,
+              "x_speed": 0,
+              "y_speed": 3584,
+              "E": 3,
+              "F": 38550,
+              "script": 38412,
+              "map": 32998,
+              "timer": 4,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 26,
+              "id": 38536,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 22,
+              "y_fraction": 0,
+              "y": 106,
+              "x_speed": 0,
+              "y_speed": 61952,
+              "E": 3,
+              "F": 38536,
+              "script": 38412,
+              "map": 32998,
+              "timer": 4,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 28,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 37120,
+              "x": 54,
+              "y_fraction": 12800,
+              "y": 97,
+              "x_speed": 64261,
+              "y_speed": 90,
+              "E": 0,
+              "F": 14,
+              "script": 38244,
+              "map": 32970,
+              "timer": 2,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 30,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 20992,
+              "x": 32,
+              "y_fraction": 35328,
+              "y": 113,
+              "x_speed": 64281,
+              "y_speed": 245,
+              "E": 0,
+              "F": 14,
+              "script": 38252,
+              "map": 32984,
+              "timer": 1,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 38494,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 22,
+              "y_fraction": 0,
+              "y": 120,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 3,
+              "F": 0,
+              "script": 38367,
+              "map": 33005,
+              "timer": 4,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "capture": "projectile-id-9688-002",
+      "subjects_present": [
+        "c-0",
+        "c-1"
+      ],
+      "matches_C0_full_WRAM_and_all8_host": {
+        "c-0": true,
+        "c-1": true
+      },
+      "member_sha256": {
+        "c-0": {
+          "fixtures/projectile-id-9688-002-before.wram": "05edc0591531fa4eaa4a412a09f9329b76a365e50b0bf5ca8c01c1abe1ef451b",
+          "fixtures/projectile-id-9688-002-before.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
+          "fixtures/projectile-id-9688-002-after.wram": "ef5d1ff527ed7a4d5f607b3a072c05b934aa6312b5a1960d5c67fa4602ab2a9e",
+          "fixtures/projectile-id-9688-002-after.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58"
+        },
+        "c-1": {
+          "fixtures/projectile-id-9688-002-before.wram": "05edc0591531fa4eaa4a412a09f9329b76a365e50b0bf5ca8c01c1abe1ef451b",
+          "fixtures/projectile-id-9688-002-before.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
+          "fixtures/projectile-id-9688-002-after.wram": "ef5d1ff527ed7a4d5f607b3a072c05b934aa6312b5a1960d5c67fa4602ab2a9e",
+          "fixtures/projectile-id-9688-002-after.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58"
+        }
+      },
+      "C0_material": {
+        "before": {
+          "host_words": [
+            22,
+            120,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 24,
+              "id": 38550,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 22,
+              "y_fraction": 0,
+              "y": 134,
+              "x_speed": 0,
+              "y_speed": 3584,
+              "E": 3,
+              "F": 38550,
+              "script": 38412,
+              "map": 32998,
+              "timer": 4,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 26,
+              "id": 38536,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 22,
+              "y_fraction": 0,
+              "y": 106,
+              "x_speed": 0,
+              "y_speed": 61952,
+              "E": 3,
+              "F": 38536,
+              "script": 38412,
+              "map": 32998,
+              "timer": 4,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 28,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 37120,
+              "x": 54,
+              "y_fraction": 12800,
+              "y": 97,
+              "x_speed": 64261,
+              "y_speed": 90,
+              "E": 0,
+              "F": 14,
+              "script": 38244,
+              "map": 32970,
+              "timer": 2,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 30,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 20992,
+              "x": 32,
+              "y_fraction": 35328,
+              "y": 113,
+              "x_speed": 64281,
+              "y_speed": 245,
+              "E": 0,
+              "F": 14,
+              "script": 38252,
+              "map": 32984,
+              "timer": 1,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 38494,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 22,
+              "y_fraction": 0,
+              "y": 120,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 3,
+              "F": 0,
+              "script": 38367,
+              "map": 33005,
+              "timer": 4,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            }
+          ]
+        },
+        "after": {
+          "host_words": [
+            22,
+            120,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 24,
+              "id": 38550,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 22,
+              "y_fraction": 0,
+              "y": 134,
+              "x_speed": 0,
+              "y_speed": 3584,
+              "E": 3,
+              "F": 38550,
+              "script": 38412,
+              "map": 32998,
+              "timer": 3,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 26,
+              "id": 38536,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 22,
+              "y_fraction": 0,
+              "y": 106,
+              "x_speed": 0,
+              "y_speed": 61952,
+              "E": 3,
+              "F": 38536,
+              "script": 38412,
+              "map": 32998,
+              "timer": 3,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 28,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 38400,
+              "x": 49,
+              "y_fraction": 35840,
+              "y": 97,
+              "x_speed": 64261,
+              "y_speed": 90,
+              "E": 0,
+              "F": 14,
+              "script": 38244,
+              "map": 32970,
+              "timer": 1,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 30,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 27392,
+              "x": 27,
+              "y_fraction": 32512,
+              "y": 114,
+              "x_speed": 64281,
+              "y_speed": 245,
+              "E": 0,
+              "F": 14,
+              "script": 38256,
+              "map": 32991,
+              "timer": 2,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 38494,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 22,
+              "y_fraction": 0,
+              "y": 120,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 3,
+              "F": 0,
+              "script": 38367,
+              "map": 33005,
+              "timer": 3,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "capture": "projectile-id-9696-001",
+      "subjects_present": [
+        "c-0",
+        "c-1"
+      ],
+      "matches_C0_full_WRAM_and_all8_host": {
+        "c-0": true,
+        "c-1": true
+      },
+      "member_sha256": {
+        "c-0": {
+          "fixtures/projectile-id-9696-001-before.wram": "431bda0168646f32b29ca0c79395ecac4669028c8745c290948af5c2f2ba18bd",
+          "fixtures/projectile-id-9696-001-before.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
+          "fixtures/projectile-id-9696-001-after.wram": "431be088769289fc0402a68e3adc4ee1108fc133cbcc3ae80e6daeaf8a67c46d",
+          "fixtures/projectile-id-9696-001-after.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58"
+        },
+        "c-1": {
+          "fixtures/projectile-id-9696-001-before.wram": "431bda0168646f32b29ca0c79395ecac4669028c8745c290948af5c2f2ba18bd",
+          "fixtures/projectile-id-9696-001-before.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
+          "fixtures/projectile-id-9696-001-after.wram": "431be088769289fc0402a68e3adc4ee1108fc133cbcc3ae80e6daeaf8a67c46d",
+          "fixtures/projectile-id-9696-001-after.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58"
+        }
+      },
+      "C0_material": {
+        "before": {
+          "host_words": [
+            22,
+            120,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 24,
+              "id": 38550,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 22,
+              "y_fraction": 0,
+              "y": 134,
+              "x_speed": 0,
+              "y_speed": 3584,
+              "E": 3,
+              "F": 38550,
+              "script": 38412,
+              "map": 32998,
+              "timer": 5,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 26,
+              "id": 38536,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 22,
+              "y_fraction": 0,
+              "y": 106,
+              "x_speed": 0,
+              "y_speed": 61952,
+              "E": 3,
+              "F": 38536,
+              "script": 38412,
+              "map": 32998,
+              "timer": 5,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 28,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 35840,
+              "x": 59,
+              "y_fraction": 55296,
+              "y": 96,
+              "x_speed": 64261,
+              "y_speed": 90,
+              "E": 0,
+              "F": 14,
+              "script": 38256,
+              "map": 32991,
+              "timer": 1,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 30,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 14592,
+              "x": 37,
+              "y_fraction": 38144,
+              "y": 112,
+              "x_speed": 64281,
+              "y_speed": 245,
+              "E": 0,
+              "F": 14,
+              "script": 38252,
+              "map": 32984,
+              "timer": 2,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 38494,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 22,
+              "y_fraction": 0,
+              "y": 120,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 3,
+              "F": 0,
+              "script": 38367,
+              "map": 33005,
+              "timer": 5,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            }
+          ]
+        },
+        "after": {
+          "host_words": [
+            22,
+            120,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 24,
+              "id": 38550,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 22,
+              "y_fraction": 0,
+              "y": 134,
+              "x_speed": 0,
+              "y_speed": 3584,
+              "E": 3,
+              "F": 38550,
+              "script": 38412,
+              "map": 32998,
+              "timer": 4,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 26,
+              "id": 38536,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 22,
+              "y_fraction": 0,
+              "y": 106,
+              "x_speed": 0,
+              "y_speed": 61952,
+              "E": 3,
+              "F": 38536,
+              "script": 38412,
+              "map": 32998,
+              "timer": 4,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 28,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 37120,
+              "x": 54,
+              "y_fraction": 12800,
+              "y": 97,
+              "x_speed": 64261,
+              "y_speed": 90,
+              "E": 0,
+              "F": 14,
+              "script": 38244,
+              "map": 32970,
+              "timer": 2,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 30,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 20992,
+              "x": 32,
+              "y_fraction": 35328,
+              "y": 113,
+              "x_speed": 64281,
+              "y_speed": 245,
+              "E": 0,
+              "F": 14,
+              "script": 38252,
+              "map": 32984,
+              "timer": 1,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 38494,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 22,
+              "y_fraction": 0,
+              "y": 120,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 3,
+              "F": 0,
+              "script": 38367,
+              "map": 33005,
+              "timer": 4,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "capture": "projectile-id-9696-002",
+      "subjects_present": [
+        "c-0",
+        "c-1"
+      ],
+      "matches_C0_full_WRAM_and_all8_host": {
+        "c-0": true,
+        "c-1": true
+      },
+      "member_sha256": {
+        "c-0": {
+          "fixtures/projectile-id-9696-002-before.wram": "05edc0591531fa4eaa4a412a09f9329b76a365e50b0bf5ca8c01c1abe1ef451b",
+          "fixtures/projectile-id-9696-002-before.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
+          "fixtures/projectile-id-9696-002-after.wram": "ef5d1ff527ed7a4d5f607b3a072c05b934aa6312b5a1960d5c67fa4602ab2a9e",
+          "fixtures/projectile-id-9696-002-after.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58"
+        },
+        "c-1": {
+          "fixtures/projectile-id-9696-002-before.wram": "05edc0591531fa4eaa4a412a09f9329b76a365e50b0bf5ca8c01c1abe1ef451b",
+          "fixtures/projectile-id-9696-002-before.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
+          "fixtures/projectile-id-9696-002-after.wram": "ef5d1ff527ed7a4d5f607b3a072c05b934aa6312b5a1960d5c67fa4602ab2a9e",
+          "fixtures/projectile-id-9696-002-after.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58"
+        }
+      },
+      "C0_material": {
+        "before": {
+          "host_words": [
+            22,
+            120,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 24,
+              "id": 38550,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 22,
+              "y_fraction": 0,
+              "y": 134,
+              "x_speed": 0,
+              "y_speed": 3584,
+              "E": 3,
+              "F": 38550,
+              "script": 38412,
+              "map": 32998,
+              "timer": 4,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 26,
+              "id": 38536,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 22,
+              "y_fraction": 0,
+              "y": 106,
+              "x_speed": 0,
+              "y_speed": 61952,
+              "E": 3,
+              "F": 38536,
+              "script": 38412,
+              "map": 32998,
+              "timer": 4,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 28,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 37120,
+              "x": 54,
+              "y_fraction": 12800,
+              "y": 97,
+              "x_speed": 64261,
+              "y_speed": 90,
+              "E": 0,
+              "F": 14,
+              "script": 38244,
+              "map": 32970,
+              "timer": 2,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 30,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 20992,
+              "x": 32,
+              "y_fraction": 35328,
+              "y": 113,
+              "x_speed": 64281,
+              "y_speed": 245,
+              "E": 0,
+              "F": 14,
+              "script": 38252,
+              "map": 32984,
+              "timer": 1,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 38494,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 22,
+              "y_fraction": 0,
+              "y": 120,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 3,
+              "F": 0,
+              "script": 38367,
+              "map": 33005,
+              "timer": 4,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            }
+          ]
+        },
+        "after": {
+          "host_words": [
+            22,
+            120,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 24,
+              "id": 38550,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 22,
+              "y_fraction": 0,
+              "y": 134,
+              "x_speed": 0,
+              "y_speed": 3584,
+              "E": 3,
+              "F": 38550,
+              "script": 38412,
+              "map": 32998,
+              "timer": 3,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 26,
+              "id": 38536,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 22,
+              "y_fraction": 0,
+              "y": 106,
+              "x_speed": 0,
+              "y_speed": 61952,
+              "E": 3,
+              "F": 38536,
+              "script": 38412,
+              "map": 32998,
+              "timer": 3,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 28,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 38400,
+              "x": 49,
+              "y_fraction": 35840,
+              "y": 97,
+              "x_speed": 64261,
+              "y_speed": 90,
+              "E": 0,
+              "F": 14,
+              "script": 38244,
+              "map": 32970,
+              "timer": 1,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 30,
+              "id": 38466,
+              "gfx": 2560,
+              "pre": 37902,
+              "x_fraction": 27392,
+              "x": 27,
+              "y_fraction": 32512,
+              "y": 114,
+              "x_speed": 64281,
+              "y_speed": 245,
+              "E": 0,
+              "F": 14,
+              "script": 38256,
+              "map": 32991,
+              "timer": 2,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 38494,
+              "gfx": 2560,
+              "pre": 33136,
+              "x_fraction": 0,
+              "x": 22,
+              "y_fraction": 0,
+              "y": 120,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 3,
+              "F": 0,
+              "script": 38367,
+              "map": 33005,
+              "timer": 3,
+              "radius": 1542,
+              "properties": 20483,
+              "G": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "capture": "projectile-id-a387-001",
+      "subjects_present": [
+        "c-0",
+        "c-1",
+        "mixed-0"
+      ],
+      "matches_C0_full_WRAM_and_all8_host": {
+        "c-0": true,
+        "c-1": true,
+        "mixed-0": true
+      },
+      "member_sha256": {
+        "c-0": {
+          "fixtures/projectile-id-a387-001-before.wram": "3e2f942dad5c01905bc6d504804b981f4eea9192d89b5a07c1aa5d59e226e6e8",
+          "fixtures/projectile-id-a387-001-before.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+          "fixtures/projectile-id-a387-001-after.wram": "13e9f3cce432b26d56c8d034fa3576a58dee96d850b0c4d25e615dd6d2274a5c",
+          "fixtures/projectile-id-a387-001-after.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+        },
+        "c-1": {
+          "fixtures/projectile-id-a387-001-before.wram": "3e2f942dad5c01905bc6d504804b981f4eea9192d89b5a07c1aa5d59e226e6e8",
+          "fixtures/projectile-id-a387-001-before.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+          "fixtures/projectile-id-a387-001-after.wram": "13e9f3cce432b26d56c8d034fa3576a58dee96d850b0c4d25e615dd6d2274a5c",
+          "fixtures/projectile-id-a387-001-after.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+        },
+        "mixed-0": {
+          "fixtures/projectile-id-a387-001-before.wram": "3e2f942dad5c01905bc6d504804b981f4eea9192d89b5a07c1aa5d59e226e6e8",
+          "fixtures/projectile-id-a387-001-before.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+          "fixtures/projectile-id-a387-001-after.wram": "13e9f3cce432b26d56c8d034fa3576a58dee96d850b0c4d25e615dd6d2274a5c",
+          "fixtures/projectile-id-a387-001-after.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+        }
+      },
+      "C0_material": {
+        "before": {
+          "host_words": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 32,
+              "id": 41877,
+              "gfx": 0,
+              "pre": 41828,
+              "x_fraction": 0,
+              "x": 128,
+              "y_fraction": 0,
+              "y": 97,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 0,
+              "F": 0,
+              "script": 41625,
+              "map": 32768,
+              "timer": 1,
+              "radius": 257,
+              "properties": 12288,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 41863,
+              "gfx": 0,
+              "pre": 41768,
+              "x_fraction": 0,
+              "x": 128,
+              "y_fraction": 0,
+              "y": 28,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 60,
+              "F": 0,
+              "script": 41613,
+              "map": 32768,
+              "timer": 1,
+              "radius": 257,
+              "properties": 12288,
+              "G": 0
+            }
+          ]
+        },
+        "after": {
+          "host_words": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 32,
+              "id": 41877,
+              "gfx": 0,
+              "pre": 41828,
+              "x_fraction": 0,
+              "x": 128,
+              "y_fraction": 0,
+              "y": 97,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 0,
+              "F": 0,
+              "script": 41629,
+              "map": 33901,
+              "timer": 1,
+              "radius": 257,
+              "properties": 12288,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 41863,
+              "gfx": 0,
+              "pre": 41768,
+              "x_fraction": 0,
+              "x": 128,
+              "y_fraction": 0,
+              "y": 28,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 59,
+              "F": 0,
+              "script": 41617,
+              "map": 45498,
+              "timer": 1,
+              "radius": 257,
+              "properties": 12288,
+              "G": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "capture": "projectile-id-a387-002",
+      "subjects_present": [
+        "c-0",
+        "c-1",
+        "mixed-0"
+      ],
+      "matches_C0_full_WRAM_and_all8_host": {
+        "c-0": true,
+        "c-1": true,
+        "mixed-0": true
+      },
+      "member_sha256": {
+        "c-0": {
+          "fixtures/projectile-id-a387-002-before.wram": "2a912a444afdda45f809d40b2bf5482fd50eb090f5b44b21d276f4377d4b0169",
+          "fixtures/projectile-id-a387-002-before.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+          "fixtures/projectile-id-a387-002-after.wram": "a29f168ef733a964799f320f14b0ec705af894deb64131ecc4afcb560156aee3",
+          "fixtures/projectile-id-a387-002-after.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+        },
+        "c-1": {
+          "fixtures/projectile-id-a387-002-before.wram": "2a912a444afdda45f809d40b2bf5482fd50eb090f5b44b21d276f4377d4b0169",
+          "fixtures/projectile-id-a387-002-before.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+          "fixtures/projectile-id-a387-002-after.wram": "a29f168ef733a964799f320f14b0ec705af894deb64131ecc4afcb560156aee3",
+          "fixtures/projectile-id-a387-002-after.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+        },
+        "mixed-0": {
+          "fixtures/projectile-id-a387-002-before.wram": "2a912a444afdda45f809d40b2bf5482fd50eb090f5b44b21d276f4377d4b0169",
+          "fixtures/projectile-id-a387-002-before.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+          "fixtures/projectile-id-a387-002-after.wram": "a29f168ef733a964799f320f14b0ec705af894deb64131ecc4afcb560156aee3",
+          "fixtures/projectile-id-a387-002-after.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+        }
+      },
+      "C0_material": {
+        "before": {
+          "host_words": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 32,
+              "id": 41877,
+              "gfx": 0,
+              "pre": 41828,
+              "x_fraction": 0,
+              "x": 128,
+              "y_fraction": 0,
+              "y": 97,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 0,
+              "F": 0,
+              "script": 41629,
+              "map": 33901,
+              "timer": 1,
+              "radius": 257,
+              "properties": 12288,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 41863,
+              "gfx": 0,
+              "pre": 41768,
+              "x_fraction": 0,
+              "x": 128,
+              "y_fraction": 0,
+              "y": 28,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 59,
+              "F": 0,
+              "script": 41617,
+              "map": 45498,
+              "timer": 1,
+              "radius": 257,
+              "properties": 12288,
+              "G": 0
+            }
+          ]
+        },
+        "after": {
+          "host_words": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 32,
+              "id": 41877,
+              "gfx": 0,
+              "pre": 41828,
+              "x_fraction": 0,
+              "x": 128,
+              "y_fraction": 0,
+              "y": 97,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 0,
+              "F": 0,
+              "script": 41629,
+              "map": 33901,
+              "timer": 1,
+              "radius": 257,
+              "properties": 12288,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 41863,
+              "gfx": 0,
+              "pre": 41768,
+              "x_fraction": 0,
+              "x": 128,
+              "y_fraction": 0,
+              "y": 28,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 58,
+              "F": 0,
+              "script": 41621,
+              "map": 45520,
+              "timer": 1,
+              "radius": 257,
+              "properties": 12288,
+              "G": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "capture": "projectile-id-a395-001",
+      "subjects_present": [
+        "c-0",
+        "c-1",
+        "mixed-0"
+      ],
+      "matches_C0_full_WRAM_and_all8_host": {
+        "c-0": true,
+        "c-1": true,
+        "mixed-0": true
+      },
+      "member_sha256": {
+        "c-0": {
+          "fixtures/projectile-id-a395-001-before.wram": "3e2f942dad5c01905bc6d504804b981f4eea9192d89b5a07c1aa5d59e226e6e8",
+          "fixtures/projectile-id-a395-001-before.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+          "fixtures/projectile-id-a395-001-after.wram": "13e9f3cce432b26d56c8d034fa3576a58dee96d850b0c4d25e615dd6d2274a5c",
+          "fixtures/projectile-id-a395-001-after.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+        },
+        "c-1": {
+          "fixtures/projectile-id-a395-001-before.wram": "3e2f942dad5c01905bc6d504804b981f4eea9192d89b5a07c1aa5d59e226e6e8",
+          "fixtures/projectile-id-a395-001-before.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+          "fixtures/projectile-id-a395-001-after.wram": "13e9f3cce432b26d56c8d034fa3576a58dee96d850b0c4d25e615dd6d2274a5c",
+          "fixtures/projectile-id-a395-001-after.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+        },
+        "mixed-0": {
+          "fixtures/projectile-id-a395-001-before.wram": "3e2f942dad5c01905bc6d504804b981f4eea9192d89b5a07c1aa5d59e226e6e8",
+          "fixtures/projectile-id-a395-001-before.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+          "fixtures/projectile-id-a395-001-after.wram": "13e9f3cce432b26d56c8d034fa3576a58dee96d850b0c4d25e615dd6d2274a5c",
+          "fixtures/projectile-id-a395-001-after.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+        }
+      },
+      "C0_material": {
+        "before": {
+          "host_words": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 32,
+              "id": 41877,
+              "gfx": 0,
+              "pre": 41828,
+              "x_fraction": 0,
+              "x": 128,
+              "y_fraction": 0,
+              "y": 97,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 0,
+              "F": 0,
+              "script": 41625,
+              "map": 32768,
+              "timer": 1,
+              "radius": 257,
+              "properties": 12288,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 41863,
+              "gfx": 0,
+              "pre": 41768,
+              "x_fraction": 0,
+              "x": 128,
+              "y_fraction": 0,
+              "y": 28,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 60,
+              "F": 0,
+              "script": 41613,
+              "map": 32768,
+              "timer": 1,
+              "radius": 257,
+              "properties": 12288,
+              "G": 0
+            }
+          ]
+        },
+        "after": {
+          "host_words": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 32,
+              "id": 41877,
+              "gfx": 0,
+              "pre": 41828,
+              "x_fraction": 0,
+              "x": 128,
+              "y_fraction": 0,
+              "y": 97,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 0,
+              "F": 0,
+              "script": 41629,
+              "map": 33901,
+              "timer": 1,
+              "radius": 257,
+              "properties": 12288,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 41863,
+              "gfx": 0,
+              "pre": 41768,
+              "x_fraction": 0,
+              "x": 128,
+              "y_fraction": 0,
+              "y": 28,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 59,
+              "F": 0,
+              "script": 41617,
+              "map": 45498,
+              "timer": 1,
+              "radius": 257,
+              "properties": 12288,
+              "G": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "capture": "projectile-id-a395-002",
+      "subjects_present": [
+        "c-0",
+        "c-1",
+        "mixed-0"
+      ],
+      "matches_C0_full_WRAM_and_all8_host": {
+        "c-0": true,
+        "c-1": true,
+        "mixed-0": true
+      },
+      "member_sha256": {
+        "c-0": {
+          "fixtures/projectile-id-a395-002-before.wram": "2a912a444afdda45f809d40b2bf5482fd50eb090f5b44b21d276f4377d4b0169",
+          "fixtures/projectile-id-a395-002-before.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+          "fixtures/projectile-id-a395-002-after.wram": "a29f168ef733a964799f320f14b0ec705af894deb64131ecc4afcb560156aee3",
+          "fixtures/projectile-id-a395-002-after.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+        },
+        "c-1": {
+          "fixtures/projectile-id-a395-002-before.wram": "2a912a444afdda45f809d40b2bf5482fd50eb090f5b44b21d276f4377d4b0169",
+          "fixtures/projectile-id-a395-002-before.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+          "fixtures/projectile-id-a395-002-after.wram": "a29f168ef733a964799f320f14b0ec705af894deb64131ecc4afcb560156aee3",
+          "fixtures/projectile-id-a395-002-after.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+        },
+        "mixed-0": {
+          "fixtures/projectile-id-a395-002-before.wram": "2a912a444afdda45f809d40b2bf5482fd50eb090f5b44b21d276f4377d4b0169",
+          "fixtures/projectile-id-a395-002-before.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+          "fixtures/projectile-id-a395-002-after.wram": "a29f168ef733a964799f320f14b0ec705af894deb64131ecc4afcb560156aee3",
+          "fixtures/projectile-id-a395-002-after.host": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+        }
+      },
+      "C0_material": {
+        "before": {
+          "host_words": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 32,
+              "id": 41877,
+              "gfx": 0,
+              "pre": 41828,
+              "x_fraction": 0,
+              "x": 128,
+              "y_fraction": 0,
+              "y": 97,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 0,
+              "F": 0,
+              "script": 41629,
+              "map": 33901,
+              "timer": 1,
+              "radius": 257,
+              "properties": 12288,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 41863,
+              "gfx": 0,
+              "pre": 41768,
+              "x_fraction": 0,
+              "x": 128,
+              "y_fraction": 0,
+              "y": 28,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 59,
+              "F": 0,
+              "script": 41617,
+              "map": 45498,
+              "timer": 1,
+              "radius": 257,
+              "properties": 12288,
+              "G": 0
+            }
+          ]
+        },
+        "after": {
+          "host_words": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slots": [
+            {
+              "slot": 32,
+              "id": 41877,
+              "gfx": 0,
+              "pre": 41828,
+              "x_fraction": 0,
+              "x": 128,
+              "y_fraction": 0,
+              "y": 97,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 0,
+              "F": 0,
+              "script": 41629,
+              "map": 33901,
+              "timer": 1,
+              "radius": 257,
+              "properties": 12288,
+              "G": 0
+            },
+            {
+              "slot": 34,
+              "id": 41863,
+              "gfx": 0,
+              "pre": 41768,
+              "x_fraction": 0,
+              "x": 128,
+              "y_fraction": 0,
+              "y": 28,
+              "x_speed": 0,
+              "y_speed": 0,
+              "E": 58,
+              "F": 0,
+              "script": 41621,
+              "map": 45520,
+              "timer": 1,
+              "radius": 257,
+              "properties": 12288,
+              "G": 0
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "all_nine_scheduler_capture_pairs_present": true,
+  "all_four_scheduler_subjects_present": false,
+  "all_six_captures_present": true,
+  "all_four_subjects_present": false,
+  "all_available_subjects_match_C0": true,
+  "sealed_verdict_member_hashes_verified": false,
+  "counters": {
+    "c-0": {
+      "three_entries": {
+        "0": {
+          "total": 16,
+          "c": 16,
+          "rust": 0,
+          "refused": 0,
+          "active_c": 16,
+          "active_rust": 0,
+          "9642_c": 16,
+          "9642_rust": 0
+        },
+        "1": {
+          "total": 95325,
+          "c": 95325,
+          "rust": 0,
+          "refused": 0,
+          "active_c": 866,
+          "active_rust": 0,
+          "9642_c": 213,
+          "9642_rust": 0
+        },
+        "2": {
+          "total": 8,
+          "c": 8,
+          "rust": 0,
+          "refused": 0,
+          "active_c": 4,
+          "active_rust": 0,
+          "9642_c": 0,
+          "9642_rust": 0
+        }
+      },
+      "scheduler_per_id": {
+        "9642": {
+          "c": 617,
+          "rust": 0,
+          "refused": 0
+        },
+        "9650": {
+          "c": 50,
+          "rust": 0,
+          "refused": 0
+        },
+        "965e": {
+          "c": 50,
+          "rust": 0,
+          "refused": 0
+        },
+        "966c": {
+          "c": 201,
+          "rust": 0,
+          "refused": 0
+        },
+        "967a": {
+          "c": 75,
+          "rust": 0,
+          "refused": 0
+        },
+        "9688": {
+          "c": 152,
+          "rust": 0,
+          "refused": 0
+        },
+        "9696": {
+          "c": 177,
+          "rust": 0,
+          "refused": 0
+        },
+        "a387": {
+          "c": 528,
+          "rust": 0,
+          "refused": 0
+        },
+        "a395": {
+          "c": 524,
+          "rust": 0,
+          "refused": 0
+        }
+      },
+      "allocation_per_id": {
+        "9642": {
+          "total": 16,
+          "c": 16,
+          "rust": 0,
+          "refused": 0
+        },
+        "9650": {
+          "total": 0,
+          "c": 0,
+          "rust": 0,
+          "refused": 0
+        },
+        "965e": {
+          "total": 0,
+          "c": 0,
+          "rust": 0,
+          "refused": 0
+        },
+        "966c": {
+          "total": 0,
+          "c": 0,
+          "rust": 0,
+          "refused": 0
+        },
+        "967a": {
+          "total": 0,
+          "c": 0,
+          "rust": 0,
+          "refused": 0
+        },
+        "9688": {
+          "total": 0,
+          "c": 0,
+          "rust": 0,
+          "refused": 0
+        },
+        "9696": {
+          "total": 0,
+          "c": 0,
+          "rust": 0,
+          "refused": 0
+        },
+        "a387": {
+          "total": 4,
+          "c": 4,
+          "rust": 0,
+          "refused": 0
+        },
+        "a395": {
+          "total": 4,
+          "c": 4,
+          "rust": 0,
+          "refused": 0
+        }
+      }
+    },
+    "c-1": {
+      "three_entries": {
+        "0": {
+          "total": 16,
+          "c": 16,
+          "rust": 0,
+          "refused": 0,
+          "active_c": 16,
+          "active_rust": 0,
+          "9642_c": 16,
+          "9642_rust": 0
+        },
+        "1": {
+          "total": 95325,
+          "c": 95325,
+          "rust": 0,
+          "refused": 0,
+          "active_c": 866,
+          "active_rust": 0,
+          "9642_c": 213,
+          "9642_rust": 0
+        },
+        "2": {
+          "total": 8,
+          "c": 8,
+          "rust": 0,
+          "refused": 0,
+          "active_c": 4,
+          "active_rust": 0,
+          "9642_c": 0,
+          "9642_rust": 0
+        }
+      },
+      "scheduler_per_id": {
+        "9642": {
+          "c": 617,
+          "rust": 0,
+          "refused": 0
+        },
+        "9650": {
+          "c": 50,
+          "rust": 0,
+          "refused": 0
+        },
+        "965e": {
+          "c": 50,
+          "rust": 0,
+          "refused": 0
+        },
+        "966c": {
+          "c": 201,
+          "rust": 0,
+          "refused": 0
+        },
+        "967a": {
+          "c": 75,
+          "rust": 0,
+          "refused": 0
+        },
+        "9688": {
+          "c": 152,
+          "rust": 0,
+          "refused": 0
+        },
+        "9696": {
+          "c": 177,
+          "rust": 0,
+          "refused": 0
+        },
+        "a387": {
+          "c": 528,
+          "rust": 0,
+          "refused": 0
+        },
+        "a395": {
+          "c": 524,
+          "rust": 0,
+          "refused": 0
+        }
+      },
+      "allocation_per_id": {
+        "9642": {
+          "total": 16,
+          "c": 16,
+          "rust": 0,
+          "refused": 0
+        },
+        "9650": {
+          "total": 0,
+          "c": 0,
+          "rust": 0,
+          "refused": 0
+        },
+        "965e": {
+          "total": 0,
+          "c": 0,
+          "rust": 0,
+          "refused": 0
+        },
+        "966c": {
+          "total": 0,
+          "c": 0,
+          "rust": 0,
+          "refused": 0
+        },
+        "967a": {
+          "total": 0,
+          "c": 0,
+          "rust": 0,
+          "refused": 0
+        },
+        "9688": {
+          "total": 0,
+          "c": 0,
+          "rust": 0,
+          "refused": 0
+        },
+        "9696": {
+          "total": 0,
+          "c": 0,
+          "rust": 0,
+          "refused": 0
+        },
+        "a387": {
+          "total": 4,
+          "c": 4,
+          "rust": 0,
+          "refused": 0
+        },
+        "a395": {
+          "total": 4,
+          "c": 4,
+          "rust": 0,
+          "refused": 0
+        }
+      }
+    },
+    "mixed-0": {
+      "three_entries": {},
+      "scheduler_per_id": {},
+      "allocation_per_id": {}
+    },
+    "mixed-1": {
+      "three_entries": {},
+      "scheduler_per_id": {},
+      "allocation_per_id": {}
+    }
+  },
+  "native_entry_mapping": {
+    "0": "SpawnEprojWithRoomGfx",
+    "1": "EprojRunAll",
+    "2": "SpawnEprojWithGfx"
+  },
+  "source_contract": {
+    "ceres_actual_caller": "deps/snesrev-sm/src/sm_90.c:6776/6777 SpawnEprojWithGfx(0,0,A387/A395)",
+    "ridley_actual_caller": "deps/snesrev-sm/src/sm_a6.c:4498 Ridley_E90C writes1995 then SpawnEprojWithRoomGfx(9642,enemy0.ridley_var10)",
+    "packed_WithGfx": "parameter=a; enemy=b&65535; definition=b>>16",
+    "allocation_count_scope": "Outer-nativeentry counters; nested Rust scheduler births are not counted as allocatorentrycalls. Expected9642=16,A387=4,A395=4,WithGfx8calls plusRoomGfx16calls, all9schedulerIDs present.",
+    "source_sha256": {
+      "tools/port_live.py": "14d14140d473aa533725f86fc5f04d01a7052e985f9948498a1a16a19e5e45f8",
+      "crates/port/src/observed_projectile_ownership.rs": "b8e77711094a2de4e0222c587d81a104f48af25fde7b60335ba409063fc54b56",
+      "deps/snesrev-sm/src/sm_90.c": "ad9f103509160abd8a9e0f85f3c3c96187c89f31dd770cf533fa32a97925247a",
+      "deps/snesrev-sm/src/sm_a6.c": "36ce5f36896e6a28555fba833be68fc189bf1a35b17a64cab04cd3a4e34e6b96",
+      "out/port/observed-projectile-with-gfx-live-full/20261011T142927.603436Z/host.c": "674da2b84e3cdd87c5fd227453f25f8696386ae662ad2d4be38c8a0f6e4c9f08"
+    }
+  },
+  "cleanup": {
+    "disposable_extraction_or_builds_created": false,
+    "bytes_reclaimed": 0,
+    "free_bytes": 255946735616,
+    "root_handles_run_cleanup": true,
+    "temporary_reader_removed": true,
+    "temporary_reader_bytes_reclaimed": 8062
+  },
+  "C0_actual_WithGfx_ordered_effects": [
+    {
+      "kind": 3,
+      "parameter": 0,
+      "packed_b": 2743533568,
+      "enemy_slot": 0,
+      "definition": "a387"
+    },
+    {
+      "kind": 3,
+      "parameter": 0,
+      "packed_b": 2744451072,
+      "enemy_slot": 0,
+      "definition": "a395"
+    },
+    {
+      "kind": 3,
+      "parameter": 0,
+      "packed_b": 2743533568,
+      "enemy_slot": 0,
+      "definition": "a387"
+    },
+    {
+      "kind": 3,
+      "parameter": 0,
+      "packed_b": 2744451072,
+      "enemy_slot": 0,
+      "definition": "a395"
+    },
+    {
+      "kind": 3,
+      "parameter": 0,
+      "packed_b": 2743533568,
+      "enemy_slot": 0,
+      "definition": "a387"
+    },
+    {
+      "kind": 3,
+      "parameter": 0,
+      "packed_b": 2744451072,
+      "enemy_slot": 0,
+      "definition": "a395"
+    },
+    {
+      "kind": 3,
+      "parameter": 0,
+      "packed_b": 2743533568,
+      "enemy_slot": 0,
+      "definition": "a387"
+    },
+    {
+      "kind": 3,
+      "parameter": 0,
+      "packed_b": 2744451072,
+      "enemy_slot": 0,
+      "definition": "a395"
+    }
+  ],
+  "handoff_status": "partial: both independent Cbaselines complete129712; mixed0live, mixed1pending; material sixallocationpairs/all9scheduler capturepairs match completed baselines; only available mixedcaptures compared",
+  "remaining_action": "Continue existing rootlive878713 and mixed0PID907963; no duplicate replay. After mixed subjects reach>=37000 compare six allocationpairs and eighteen schedulerpairs fullWRAM/8host against recorded C0hashes; verify all9schedulerIDs after>=71000. At final129712 verdict require all4subjects match every recorded member SHA256, threeexclusiveRust entry counts16/95325/8, perIDallocation16/4/4, nonzero9schedulerIDs, zeroCrefusal/fallback; root cleanup/deduplicate/authenticate finalrun and resolve ticket only after all gates."
+}
