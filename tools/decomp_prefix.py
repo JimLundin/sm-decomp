@@ -235,7 +235,7 @@ def investigate(args,run,verdict):
     host=ROOT/'tools/decomp/prefix_host.c'
     build=["cc","-std=gnu11","-O2","-fno-strict-aliasing","-ffunction-sections","-fdata-sections","-iquote",source/'src',*units,host,
            '-Wl,--gc-sections','-Wl,--wrap=Call','-Wl,--wrap=cpu_runOpcode','-Wl,--wrap=DecompressToMem',
-           '-Wl,--wrap=RtlApuUpload','-Wl,--wrap=ReadJoypadInputs','-Wl,--wrap=Vector_NMI','-Wl,--wrap=NextRandom','-lm','-o',run/'prefix-host']
+           '-Wl,--wrap=WaitUntilEndOfVblankAndClearHdma','-Wl,--wrap=RtlApuUpload','-Wl,--wrap=ReadJoypadInputs','-Wl,--wrap=Vector_NMI','-Wl,--wrap=NextRandom','-lm','-o',run/'prefix-host']
     invoke(build,run,args.timeout)
     verdict['build']={'command':list(map(str,build)),'binary_sha256':digest(run/'prefix-host'),
         'compiler':subprocess.check_output(['cc','--version'],text=True).splitlines()[0],
@@ -299,13 +299,15 @@ def investigate(args,run,verdict):
     after=next(row for row in polls if row['source_event']>first_complete['source_event'])
     causal_inputs.write_text(''.join(f"{row['hardware_pad']:04x}\n" for row in polls))
     causal_results={}
-    for name,mode in (('causal-candidate','causal-polling'),('causal-control','changed-causal-rng')):
+    causal_modes=[('causal-candidate','causal-polling'),('causal-control','changed-causal-rng')]
+    if args.frames>320: causal_modes.append(('omitted-wait-control','omitted-causal-wait'))
+    for name,mode in causal_modes:
         directory=run/name;(directory/'fixtures').mkdir(parents=True);(directory/'saves').mkdir()
         cmd=[run/'prefix-host',rom,causal_inputs,str(len(polls)),mode]
         invoke(cmd,directory,args.timeout)
         records=[json.loads(line) for line in (directory/'events.jsonl').read_text().splitlines()]
         completed=[row for row in records if row['kind']=='dispatch-complete']
-        verdict[name]={'upload_entry_hits':sum(row['kind']=='upload-entry' for row in records),'upload_return_hits':sum(row['kind']=='upload-return' for row in records),'events_sha256':digest(directory/'events.jsonl')}
+        verdict[name]={'within_dispatch_vblank_wait_hits':sum(row['kind']=='within-dispatch-vblank-wait' for row in records),'upload_entry_hits':sum(row['kind']=='upload-entry' for row in records),'upload_return_hits':sum(row['kind']=='upload-return' for row in records),'events_sha256':digest(directory/'events.jsonl')}
         if args.frames==320 and len(completed)!=len(original): raise ValueError('bounded causal seam completion count differs')
         causal_results[name]=completed
         before=[row for row in records if row['kind']=='controller-return' and row['event']<completed[0]['event']]
@@ -334,6 +336,8 @@ def investigate(args,run,verdict):
         'next_poll_event':after['source_event'],'policy':'real NMI polling after completion; relocated main poll suppressed; real reset clearing; no WRAM loading',
         'candidate':causal_results['causal-candidate'][0],'changed_rng_control':control_diff,
         'inputs_sha256':digest(causal_inputs),'scope':'first completed gameplay dispatch only; boot video timing and later waits unproven'}
+    if args.frames>320 and 'first_poll_provenance_failure' not in verdict['omitted-wait-control']:
+        raise ValueError('omitted vblank wait escaped causal poll provenance control')
     causal_comparisons=compare(original,causal_results['causal-candidate'])
     if args.frames==320 and any(row['differences'] for row in causal_comparisons):
         raise ValueError('later causal completion semantic mismatch')

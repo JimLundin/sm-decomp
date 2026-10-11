@@ -170,3 +170,22 @@ The640frame trace exposes the next incomplete controller boundary rather than
 accepting later ordinal matches. The standalone controller arithmetic fixture
 remains restricted to calls captured through frame320; a later native stack
 return-address transition belongs to another callsite and remains unverified.
+
+## Within-dispatch VBlank polling seam
+
+`WaitUntilEndOfVblankAndClearHdma` ($88:829E) originally calls the hardware
+VBlank wait at$80:82C5 before clearing DMA/HDMA. The pinned C helper explicitly
+removes that wait. In the retained trace, dispatch49 completes atframe393;
+inside dispatch50 the removed wait admits a real controller poll atframe394
+before completion396. A poll only after C completion therefore misses that
+sample.
+
+The causal host now wraps this actual cross-unit helper and executes the real
+NMI/controller primitive inside the pending dispatch, consuming the next actual
+source sample. It leaves `waiting_for_nmi` unchanged, as the native wait does,
+and observes nested NMI as a continuation rather than another completed update.
+The original helper still performs DMA/HDMA clearing. Input consumption counts
+are independent of host iteration counts; no extra gameplay update or coroutine
+state write supplies the missing poll. A separate omitted-wait control must
+recover a poll-provenance failure. This restores the observed semantic polling
+seam; hardware$4212predicate timing remains unproved.

@@ -178,3 +178,31 @@ finalrun; noimplementerworktree. Postcleanup authenticated finalbinary/allhost
 snapshots includingframeheader,nativeallWRAM/events,causalinputs,allcandidate/
 controlcompletedstates/terminals/events/logs againstverdict. RetainpassiveAPU
 captureandpriorfailureevidence; nosealedartifactsremoved.
+
+## Restored within-dispatch VBlank poll
+
+Firstmissingpoll is grounded in FileSelectMenu_0_FadeOutConfigGfx calling
+WaitUntilEndOfVblankAndClearHdma($88829E). Nativebytes call$8082C5 hardware
+4212VBlank predicate wait; pinnedC explicitlyremoves wait. Nativeframe394poll
+occurs inside pendingupdate50 beforeframe396completion. Implemented actual
+cross-TU helperwrapper executing realNMI/controllerpoll insidependingdispatch
+and consumingnextactualsample in order, leavingwaiting_for_nmi untouched.
+OriginalDMA/HDMAclear stillruns; nestedNMIobservescontinuation ratherthanfalse
+completedupdate. Pollconsumption separatesfromhoststepcount; noextra gameplay
+update/noWRAMsnapshot/no coroutinealiaswrites.
+
+Finalsource-stable640capture:
+`out/port/controller-vblank-seam/20261011T070303.316475Z/verdict.json`.
+Causalprefix improves49→51updates throughnativeframe397. Actualwithin-dispatch
+wait hit1; omitted-waitcontrol reproducesoldordinal50failure(C199/native200
+priorpolls), independentlyofchangedRNGcontrol. Nextprovenancefailure remains
+ordinal52; futurecauseunproved. Overallnonaccepting, video4212timing andAPUwait
+runtime stillunproven.3public320tests pass77.772s; diffcheckpasses.
+
+Cleanup apply/dedup bothfinished070132/070303runs0bytes (unsupportedformat).
+Prototypeforcedwaitingflag existedonlyfirstintermediate; finalpreservesnative
+flagbehavior, evidenceclearlyseparate. Publictesttempdirectories removed.
+11,209,625,600bytesavailable whilefinalrunactive. Postcleanupauth finalbinary,
+allhostsnapshots/nativeWRAM/events/causalinputs/allcandidate,RNGcontrol,and
+omittedwaitcontrolcompletedstates/terminals/events/logs. Retainsealeddependencies;
+noimplementerworktree. Ticket78remainsclaimed nextpollseam unfinished.

@@ -8,6 +8,30 @@ static FILE *events;
 static unsigned long sequence, host_step, completed;
 static bool changed_gameplay, causal_polling;
 static unsigned scheduled_pad;
+static FILE *causal_inputs;
+static unsigned long causal_poll_count;
+static bool inside_vblank_wait, omit_vblank_wait;
+static void Observe(const char *kind);
+void __wrap_Vector_NMI(void);
+static void PresentCausalPoll(void) {
+  if (fscanf(causal_inputs, "%x", &scheduled_pad) != 1) exit(4);
+  unsigned reversed = 0;
+  for (unsigned bit = 0; bit < 16; bit++) reversed |= ((scheduled_pad >> bit) & 1) << (15-bit);
+  g_snes->input1->currentState = reversed;
+  ++causal_poll_count;
+}
+void __real_WaitUntilEndOfVblankAndClearHdma(void);
+void __real_Vector_NMI(void);
+void __real_ReadJoypadInputs(void);
+void __wrap_WaitUntilEndOfVblankAndClearHdma(void) {
+  if (causal_polling && !omit_vblank_wait) {
+    inside_vblank_wait = true;
+    Observe("within-dispatch-vblank-wait");
+    __wrap_Vector_NMI();
+    inside_vblank_wait = false;
+  }
+  __real_WaitUntilEndOfVblankAndClearHdma();
+}
 
 static void Observe(const char *kind) {
   fprintf(events, "{\"event\":%lu,\"host_step\":%lu,\"kind\":\"%s\",\"coroutine\":%u,\"state\":{",
@@ -34,7 +58,7 @@ void __wrap_ReadJoypadInputs(void) {
 }
 void __real_Vector_NMI(void);
 void __wrap_Vector_NMI(void) {
-  if (coroutine_state_0 == 0) {
+  if (coroutine_state_0 == 0 && !inside_vblank_wait) {
     Observe("dispatch-complete");
     char name[80];
     snprintf(name,sizeof(name),"complete-%04lu.wram",++completed);
@@ -43,9 +67,7 @@ void __wrap_Vector_NMI(void) {
   } else Observe("continuation");
   __real_Vector_NMI();
   if (causal_polling) {
-    unsigned reversed = 0;
-    for (unsigned bit = 0; bit < 16; bit++) reversed |= ((scheduled_pad >> bit) & 1) << (15 - bit);
-    g_snes->input1->currentState = reversed;
+    PresentCausalPoll();
     Observe("controller-entry");
     __real_ReadJoypadInputs();
     Observe("controller-return");
@@ -99,7 +121,8 @@ int main(int argc,char **argv) {
   if (!strcmp(argv[4], "poll-fixtures")) return PollFixtures(argv[1], argv[2], argv[3], 0);
   if (!strcmp(argv[4], "changed-poll-fixtures")) return PollFixtures(argv[1], argv[2], argv[3], 1);
   if (!strcmp(argv[4], "changed-state-poll-fixtures")) return PollFixtures(argv[1], argv[2], argv[3], 2);
-  causal_polling = !strcmp(argv[4], "causal-polling") || !strcmp(argv[4], "changed-causal-rng");
+  omit_vblank_wait = !strcmp(argv[4], "omitted-causal-wait");
+  causal_polling = !strcmp(argv[4], "causal-polling") || !strcmp(argv[4], "changed-causal-rng") || omit_vblank_wait;
   changed_gameplay = !strcmp(argv[4],"changed-rng") || !strcmp(argv[4], "changed-causal-rng");
   FILE *inputs=fopen(argv[2],"r");
   events=fopen("events.jsonl","w");
@@ -110,10 +133,12 @@ int main(int argc,char **argv) {
   g_runmode=1; RtlReset(0);
   PpuBeginDrawing(g_snes->my_ppu,pixels,512*4,0);
   PpuBeginDrawing(g_snes->snes_ppu,pixels,512*4,0);
+  causal_inputs = inputs;
   unsigned long steps=strtoul(argv[3],NULL,10);
-  for (host_step=1;host_step<=steps;host_step++) {
+  for (host_step=1;causal_polling ? causal_poll_count<steps : host_step<=steps;host_step++) {
     unsigned pad;
-    if (fscanf(inputs,"%x",&pad)!=1 || pad>0xffff) return 2;
+    if (causal_polling) pad=scheduled_pad;
+    else if (fscanf(inputs,"%x",&pad)!=1 || pad>0xffff) return 2;
     scheduled_pad = pad;
     unsigned reversed=0;
     for (int bit=0;bit<16;bit++) reversed|=((pad>>bit)&1)<<(15-bit);
