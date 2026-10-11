@@ -381,3 +381,18 @@ fn torizo_probability_branch_consumes_exactly_one_rng_call() {
     assert_eq!(e::instruction(&mut r, &rom, 0xa456, 0xf000, 0).unwrap(), 0xf002);
     assert_eq!(r.word(0x5e5), 0x0111);
 }
+
+#[test]
+fn torizo_drool_near_zero_motion_preserves_three_velocity_quirk() {
+    use port::enemy_projectile_instructions as e;
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x7a5, 16);
+    r.set_word(0x1a4b, 24);
+    r.set_word(0x1a93, 24);
+    r.set_word(0x1bb3, 0x202);
+    r.set_word(0x1ab7, 0);
+    e::preinstruction(&mut r, &[], 0xa887, 0).unwrap();
+    assert_eq!(r.word(0x1ab7), 3);
+    assert_eq!(r.word(0x1adb), 16);
+}

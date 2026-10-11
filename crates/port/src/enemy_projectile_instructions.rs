@@ -35,6 +35,11 @@ pub fn move_xy(r: &mut Wram<'_>, k: u16) -> Result<u16, &'static str> {
 pub fn instruction(r: &mut Wram<'_>, rom: &[u8], opcode: u16, pc: u16, k: u16) -> Result<u16, &'static str> {
     let k = slot(k)?;
     match opcode {
+        0xa3be => {
+            r.set_word(0x1a4b + k, r.word(0x1aff + k));
+            r.set_word(0x1a93 + k, r.word(0x1b23 + k));
+            Ok(pc)
+        }
         0xa456 => {
             if crate::enemy_projectiles::random(r) & 0xc000 == 0xc000 {
                 word(rom, pc)
@@ -231,6 +236,29 @@ fn delete_below(r: &mut Wram<'_>, k: usize) {
 pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Result<(), &'static str> {
     let k = slot(k)?;
     match address {
+        0xa887 => {
+            if crate::enemy_projectile_collision::horizontal(r, rom, k as u16)? != 0 {
+                r.set_word(0x1b47 + k, 0xa48a);
+                r.set_word(0x1b8f + k, 1);
+            } else {
+                let old = r.word(0x1ab7 + k) as i16;
+                let next = if old >= 0 { old.wrapping_sub(4) } else { old.wrapping_add(4) };
+                let crossed = if old >= 0 { next < 0 } else { next >= 0 };
+                r.set_word(0x1ab7 + k, if crossed { 3 } else { next as u16 });
+                let hit = crate::enemy_projectile_collision::vertical(r, rom, k as u16)? != 0;
+                if r.word(0x1adb + k) & 0x8000 != 0 || !hit {
+                    let next = r.word(0x1adb + k).wrapping_add(16);
+                    r.set_word(0x1adb + k, next);
+                    if next & 0xf000 == 0x1000 {
+                        r.set_word(0x1997 + k, 0);
+                    }
+                } else {
+                    r.set_word(0x1a93 + k, r.word(0x1a93 + k).wrapping_sub(3));
+                    r.set_word(0x1b47 + k, 0xa48e);
+                    r.set_word(0x1b8f + k, 1);
+                }
+            }
+        }
         0xa05b => {}
         0xa05c | 0xa07a | 0xa0d1 | 0xa124 => {
             let left = matches!(address, 0xa05c | 0xa0d1);
