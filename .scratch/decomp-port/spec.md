@@ -365,3 +365,21 @@ control reproduces oldordinal50failure199C/200native. One actualhelperhit;
 nextordinal52remainsunresolved.3public320tests and independentRNGcontrol pass.
 Bothfinishedruns cleaned0bytes; retained binary/source/states/controllogs
 authenticate. Ticket78claimed: hardwareframe/APU/laterpoll timing unfinished.
+
+
+Screen-enable polling seam: commit a3b3226 restores the native ScreenOnWaitNMI
+continuation at all three pinned ScreenOn call sites. The source-stable 640-frame
+capture matches 229 causal completed updates through original frame 639, with
+229 candidate/native completions and exact preceding controller poll sequences.
+Omitting only this seam reproduces ordinal 52 failure (202 versus 203 polls).
+Three public tests pass; finished-run cleanup reclaimed zero bytes and retained
+evidence authenticates. Ticket 78 remains claimed: hardware timing, full WRAM
+and full-movie parity remain unproved.
+
+
+Pirate host allocation: ticket 85 ports A009 laser point/r22 selection and A098
+claw rectangle coordinates with wrapping. Final 549 actual-C cases match full
+WRAM, returns and all eight host words, including sound quota refusals and
+independently seeded script/flight frames. Crate tests, formatting and strict
+Clippy pass. Cleanup reclaimed 414,056,448 bytes; evidence reauthenticated.
+Live pirate caller ownership and allocation-to-flight replay remain unproved.

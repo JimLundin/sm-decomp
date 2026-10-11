@@ -66,8 +66,17 @@ fn spawn_context(
         return Ok(());
     };
     let init = word(rom, definition)?;
-    if matches!(init, 0x947f | 0xe468 | 0xef29 | 0xdc8d) {
+    if matches!(init, 0x947f | 0xe468 | 0xef29 | 0xdc8d | 0xa009 | 0xa098) {
         host.ok_or("projectile initializer requires host context")?;
+        if init == 0xa009 {
+            let enemy = r.word(0xe54);
+            if enemy > 0x7c0 || enemy & 63 != 0 {
+                return Err("invalid enemy slot");
+            }
+            let header = r.word(0xf78 + usize::from(enemy));
+            let p = 0x100000 + usize::from(header & 0x7fff) + 6;
+            rom.get(p..p + 2).ok_or("missing pirate laser properties")?;
+        }
         if init == 0xef29 {
             for drop in 1..6 {
                 word(rom, 0xef04 + drop * 2)?;
@@ -112,7 +121,7 @@ fn spawn_context(
     for p in [0x1aff, 0x1b23, 0x19df, 0x1a27, 0x1a6f, 0x1bfb] {
         r.set_word(p + k, 0);
     }
-    if let Some(host) = host.filter(|_| matches!(init, 0x947f | 0xe468 | 0xef29 | 0xdc8d)) {
+    if let Some(host) = host.filter(|_| matches!(init, 0x947f | 0xe468 | 0xef29 | 0xdc8d | 0xa009 | 0xa098)) {
         r.set_word(0x1a4b + k, host.x);
         r.set_word(0x1a93 + k, host.y);
         match init {
@@ -121,6 +130,23 @@ fn spawn_context(
                 r.set_word(0x1aff + k, parameter);
                 r.set_word(0x1ab7 + k, 0);
                 r.set_word(0x1adb + k, 0);
+            }
+            0xa009 => {
+                r.set_word(0x1b47 + k, if host.r22 != 0 { 0x9f7d } else { 0x9f41 });
+                r.set_word(0x1a03 + k, 0xa05b);
+                let enemy = 0xf78 + usize::from(r.word(0xe54));
+                let p = 0x100000 + usize::from(r.word(enemy) & 0x7fff) + 6;
+                r.set_word(0x1bd7 + k, u16::from_le_bytes([rom[p], rom[p + 1]]) | 0x1000);
+                r.set_word(0x1aff + k, r.word(enemy + 0x3c));
+                crate::audio::queue_sfx(r, 1, 0x6706)?;
+            }
+            0xa098 => {
+                r.set_word(0x1a4b + k, host.rect_x.wrapping_add(host.rect_width));
+                r.set_word(0x1a93 + k, host.rect_y.wrapping_add(host.rect_height));
+                r.set_word(0x1b47 + k, if parameter != 0 { 0x9fe1 } else { 0x9fb9 });
+                r.set_word(0x1a03 + k, 0xa05b);
+                r.set_word(0x1aff + k, 2048);
+                r.set_word(0x1b23 + k, 1);
             }
             0xdc8d => {
                 r.set_word(0x1b23 + k, host.x);

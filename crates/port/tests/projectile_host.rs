@@ -159,3 +159,21 @@ fn offscreen_living_turret_preserves_countdown_and_rng() {
     assert_eq!(r.word(0x1adb), 1);
     assert_eq!(r.word(0x5e5), 123);
 }
+
+#[test]
+fn pirate_claw_uses_rectangle_wrapping_without_enemy_dependency() {
+    let mut rom = vec![0; 0x38000];
+    rom[0x32189..0x3218b].copy_from_slice(&0xa098u16.to_le_bytes());
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0xe54, 0xffff);
+    let mut host =
+        ProjectileHost { rect_x: 0xffff, rect_y: 1, rect_width: 2, rect_height: 0xffff, r22: 99, ..Default::default() };
+    spawn_room_with_host(&mut r, &rom, 0xa189, 0xffff, &mut host).unwrap();
+    assert_eq!(r.word(0x1a4b + 34), 1);
+    assert_eq!(r.word(0x1a93 + 34), 0);
+    assert_eq!(r.word(0x1b47 + 34), 0x9fe1);
+    assert_eq!(r.word(0x1aff + 34), 2048);
+    assert_eq!(r.word(0x1b23 + 34), 1);
+    assert_eq!(host.r22, 99);
+}
