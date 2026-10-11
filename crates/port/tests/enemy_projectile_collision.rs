@@ -190,3 +190,51 @@ fn directional_fireball_keeps_velocity_after_impact_script_transition() {
     assert_eq!(r.word(0x1ab7), 0x100);
     assert_eq!(r.word(0x1adb), 0x300);
 }
+
+#[test]
+fn phantoon_fireball_lands_waits_and_launches_with_frame_parity() {
+    use port::enemy_projectile_instructions as e;
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x7a5, 16);
+    r.set_word(0x1a4b, 24);
+    r.set_word(0x1a93, 29);
+    r.set_word(0x1bb3, 0x202);
+    r.set_word(0x1adb, 0x300);
+    r.set_word(0x1bd7, 0x7345);
+    r.set_word(0x10002 + 33 * 2, 0x8000);
+    e::preinstruction(&mut r, &[], 0x9981, 0).unwrap();
+    assert_eq!(r.word(0x1a93), 38);
+    assert_eq!(r.word(0x1aff), 8);
+    assert_eq!(r.word(0x1bd7), 0x8345);
+    assert_eq!(r.word(0x1a03), 0x99bf);
+    for _ in 0..7 {
+        e::preinstruction(&mut r, &[], 0x99bf, 0).unwrap();
+    }
+    assert_eq!(r.word(0x1aff), 1);
+    r.set_word(0x5b6, 1);
+    e::preinstruction(&mut r, &[], 0x99bf, 0).unwrap();
+    assert_eq!(r.word(0x1a93), 30);
+    assert_eq!(r.word(0x1a03), 0x9a01);
+    assert_eq!(r.word(0x1adb), 0xfd00);
+    assert_eq!(r.word(0x1ab7), 0xff80);
+    assert_eq!(r.word(0x1aff), 0);
+}
+
+#[test]
+fn phantoon_third_bounce_stops_preinstruction() {
+    use port::enemy_projectile_instructions as e;
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x7a5, 16);
+    r.set_word(0x1a4b, 24);
+    r.set_word(0x1a93, 29);
+    r.set_word(0x1bb3, 0x202);
+    r.set_word(0x1adb, 0x300);
+    r.set_word(0x1aff, 2);
+    r.set_word(0x10002 + 33 * 2, 0x8000);
+    e::preinstruction(&mut r, &[], 0x9a01, 0).unwrap();
+    assert_eq!(r.word(0x1aff), 3);
+    assert_eq!(r.word(0x1a03), 0x9a44);
+    assert_eq!(r.word(0x1b47), 0x9782);
+}

@@ -59,6 +59,7 @@ observable hardware effects, Rust hits and fallback measurements.
 - 35: native Crocomire projectile/bridge and delayed fireball spawning, terrain transitions and scheduled frames, offline verified (354 cases); explosion host-state seam and further boss behavior remain open.
 - 36: enemy-projectile random-radius opcode and scheduled execution, offline verified (384 cases).
 - 37: directional fireball split/repeat spawning, area properties and collision transitions through scheduled frames, offline verified (528 cases).
+- 38: Phantoon starting-fireball radial allocation, landing/pause/bounce lifecycle and scheduled transitions, offline verified (449 cases).
 
 This is the first frontier, not the completion boundary of the user's goal.
 Expand tickets into substantive gameplay subsystems after this frontier, using

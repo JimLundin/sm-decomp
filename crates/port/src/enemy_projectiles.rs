@@ -75,6 +75,7 @@ pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) ->
 fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'static str> {
     let i = param as usize / 2;
     let table = match init {
+        0x993a if param < 8 => None,
         0x94a0 | 0x94b4 | 0x94c8 | 0x94dc if param <= 34 && param & 1 == 0 => {
             for p in [0x9408, 0x940a, 0x940c] {
                 word(rom, p)?;
@@ -108,7 +109,7 @@ fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'sta
     if let Some((p, i)) = table {
         word(rom, p + i as u16 * 2)?;
     }
-    if !matches!(init, 0xb49d | 0xce6d | 0x9023 | 0x9286 | 0x934d | 0x94a0 | 0x94b4 | 0x94c8 | 0x94dc)
+    if !matches!(init, 0xb49d | 0xce6d | 0x9023 | 0x9286 | 0x934d | 0x94a0 | 0x94b4 | 0x94c8 | 0x94dc | 0x993a)
         && (r.word(0x1c27) > 78 || r.word(0x1c27) & 1 != 0)
     {
         return Err("invalid PLM slot");
@@ -125,6 +126,25 @@ pub(crate) fn random(r: &mut Wram<'_>) -> u16 {
     n
 }
 fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> Result<(), &'static str> {
+    if init == 0x993a {
+        let angle = param * 32;
+        let component = |angle: u16| {
+            let negative = angle >= 128;
+            let index = usize::from(if negative { (angle + 128) as u8 } else { angle as u8 });
+            let sine = SINE[index + 64] as u16;
+            let value = ((u16::from(sine as u8) * 48) >> 8) + u16::from((sine >> 8) as u8) * 48;
+            if negative { value.wrapping_neg() } else { value }
+        };
+        r.set_word(0x1aff + k, angle);
+        r.set_word(0x1ab7 + k, 0);
+        r.set_word(0x1adb + k, 0);
+        r.set_word(0x1a4b + k, r.word(0xf7a).wrapping_add(component(angle)));
+        r.set_word(
+            0x1a93 + k,
+            r.word(0xf7e).wrapping_add(component(u16::from(angle.wrapping_sub(64) as u8))).wrapping_add(16),
+        );
+        return Ok(());
+    }
     if matches!(init, 0x94a0 | 0x94b4 | 0x94c8 | 0x94dc) {
         let (vx, vy, definition) = match init {
             0x94a0 => (0, 0xf200, 0x9688),

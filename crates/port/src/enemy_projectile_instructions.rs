@@ -220,6 +220,53 @@ fn delete_below(r: &mut Wram<'_>, k: usize) {
 pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Result<(), &'static str> {
     let k = slot(k)?;
     match address {
+        0x9a44 => {}
+        0x9981 => {
+            r.set_word(0x1adb + k, r.word(0x1adb + k).wrapping_add(16));
+            if crate::enemy_projectile_collision::vertical(r, rom, k as u16)? != 0 {
+                r.set_word(0x1bd7 + k, (r.word(0x1bd7 + k) & 0x0fff) | 0x8000);
+                r.set_word(0x1a03 + k, 0x99bf);
+                r.set_word(0x1b47 + k, 0x976c);
+                r.set_word(0x1b8f + k, 1);
+                r.set_word(0x1aff + k, 8);
+                r.set_word(0x1a93 + k, r.word(0x1a93 + k).wrapping_add(8));
+            }
+        }
+        0x99bf => {
+            let old = r.word(0x1aff + k);
+            let next = old.wrapping_sub(1);
+            r.set_word(0x1aff + k, next);
+            if old == 1 || next & 0x8000 != 0 {
+                r.set_word(0x1a03 + k, 0x9a01);
+                r.set_word(0x1b47 + k, 0x9772);
+                r.set_word(0x1b8f + k, 1);
+                r.set_word(0x1a93 + k, r.word(0x1a93 + k).wrapping_sub(8));
+                r.set_word(0x1adb + k, 0xfd00);
+                r.set_word(0x1aff + k, 0);
+                r.set_word(0x1ab7 + k, if r.word(0x5b6) & 1 != 0 { 0xff80 } else { 128 });
+            }
+        }
+        0x9a01 => {
+            let count = r.word(0x1aff + k);
+            if count > 2 {
+                return Err("Phantoon fireball bounce extent");
+            }
+            r.set_word(0x1adb + k, r.word(0x1adb + k).wrapping_add(16));
+            let vertical = crate::enemy_projectile_collision::vertical(r, rom, k as u16)? != 0;
+            if vertical {
+                let next = count + 1;
+                r.set_word(0x1aff + k, next);
+                if next < 3 {
+                    r.set_word(0x1adb + k, [0xfd00, 0xfe00, 0xff00][usize::from(next)]);
+                    return Ok(());
+                }
+            }
+            if vertical || crate::enemy_projectile_collision::horizontal(r, rom, k as u16)? != 0 {
+                r.set_word(0x1b47 + k, 0x9782);
+                r.set_word(0x1b8f + k, 1);
+                r.set_word(0x1a03 + k, 0x9a44);
+            }
+        }
         0x950d | 0x9522 => {
             let hit = if address == 0x950d {
                 move_x(r, k as u16)?;
