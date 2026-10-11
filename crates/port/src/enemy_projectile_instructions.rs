@@ -83,6 +83,25 @@ pub fn instruction(r: &mut Wram<'_>, rom: &[u8], opcode: u16, pc: u16, k: u16) -
                 Ok(pc.wrapping_add(2))
             }
         }
+        0xeeaf => {
+            let drop = random_drop(r, rom, k as u16)?;
+            if k != 0 && (drop.wrapping_sub(6) as i16) < 0 {
+                let script = word(rom, 0xef04 + drop * 2)?;
+                r.set_word(0x1aff + k, drop * 2);
+                r.set_word(0x1b47 + k, script);
+                r.set_word(0x1b8f + k, 1);
+                r.set_word(0x1b23 + k, 400);
+                r.set_word(0x1a03 + k, 0xefe0);
+                r.set_word(0x1bd7 + k, r.word(0x1bd7 + k) & !0x4000);
+                Ok(script)
+            } else {
+                r.set_word(0x1b8f + k, 1);
+                r.set_word(0x1bd7 + k, 0x3000);
+                r.set_word(0x1a03 + k, 0xefdf);
+                r.set_word(0x1b47 + k, 0xeca3);
+                Ok(0xeca3)
+            }
+        }
         0xa050 => {
             r.set_word(0x1a03 + k, word(rom, pc)?);
             Ok(pc)
@@ -970,7 +989,7 @@ pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Res
                 }
             }
         }
-        0x8170 | 0x84fb | 0xdd44 => {}
+        0x8170 | 0x84fb | 0xdd44 | 0xefdf => {}
         0x90b3 | 0xd3bf => {
             if address == 0xd3bf {
                 r.set_word(0x19bb + k, 0);
