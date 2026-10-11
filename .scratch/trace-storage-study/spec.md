@@ -1,6 +1,6 @@
 # Trace and frame storage study
 
-Status: open
+Status: resolved
 
 Investigate lossless storage for translated-code validation in the isolated
 `research/trace-storage-format` worktree, starting at `8bbef1f`. Measure existing
@@ -41,3 +41,9 @@ extraction measured; cleanup complete. Retained working store under
 `out/storage-spike/final`, with physical seals in ticket03 and compact benchmark
 JSON committed with source. Production integration and end-to-end replay timing
 remain outside this spike.
+
+Combined Rust workspace crate: [rust-crate-results.md](rust-crate-results.md),
+ticket05. Same two-capture input 5.73GB -> 27.46MB including indexes. Ten crate
+integration tests, formatting, Clippy and complete real capture source comparison
+pass. Runnable authenticated evidence under `out/storage-rust-final`; disposable
+builds and temporary scopes removed. Production integration remains separate.

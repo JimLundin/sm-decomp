@@ -48,9 +48,9 @@ records the initial and current binary hashes and reauthenticates final closure
 with the final binary. Do not present 138 seconds as an optimized converter
 number. The Python/C converter remains faster at migration in this experiment.
 
-Warm-store reads measured about **9–21 ms for trace frames** (including loading
-the entire stream directory each call), and **3–5 ms for a 1.40 MB snapshot**.
-Opening the store took 172 ms; one-process CLI reads including startup/index
+Warm-store reads measured about **5–21 ms for trace frames** (including loading
+the entire stream directory each call), and **2–5 ms for a 1.40 MB snapshot**.
+Opening the store took 109–172 ms; one-process CLI reads including startup/index
 loading took roughly 190–307 ms. Reads are slower than raw files, but seek directly
 to relevant compressed data. A cached stream-directory API is a future improvement.
 
@@ -88,3 +88,9 @@ supports one writer and keeps object indexes in memory. Pack ordinals require
 exporting the complete ordered store. No automatic garbage collection/repack,
 stale-lock recovery, live C integration or acceptance-verdict integration is
 included. A completed run is storage completeness, not a validation verdict.
+
+Cleanup removed 313873225 disposable file bytes after successful scoped cleanup
+apply/deduplicate (zero eligible bytes). Retained sealed packs and the small final
+executable `out/storage-rust-final/bin/sm-evidence` were reauthenticated. Final
+binary can verify both run ids above without the deleted build trees. Available
+disk after cleanup: about 268.35 GB. Full cleanup details in ticket05.
