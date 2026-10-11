@@ -345,3 +345,24 @@ fn seahorse_fireball_floor_contact_skips_horizontal_motion() {
     assert_eq!(r.word(0x1a4b), 24);
     assert_eq!(r.word(0x1ab7), 1024);
 }
+
+#[test]
+fn pirate_claw_reverses_after_zero_speed_and_preserves_camera_wrap() {
+    use port::enemy_projectile_instructions as e;
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x911, 65520);
+    r.set_word(0x1a4b, 16);
+    r.set_word(0x1a93, 50);
+    r.set_word(0x1aff, 32);
+    r.set_word(0x1b23, 1);
+    r.set_word(0x1997, 0xa189);
+    e::preinstruction(&mut r, &[], 0xa0d1, 0).unwrap();
+    assert_eq!(r.word(0x1b23), 0);
+    assert_eq!(r.word(0x1aff), 0);
+    assert_eq!(r.word(0x1997), 0xa189);
+    r.set_word(0x1aff, 256);
+    e::preinstruction(&mut r, &[], 0xa0d1, 0).unwrap();
+    assert_eq!(r.word(0x1a4b), 17);
+    assert_eq!(r.word(0x1a93), 52);
+}

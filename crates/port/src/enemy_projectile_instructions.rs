@@ -35,6 +35,10 @@ pub fn move_xy(r: &mut Wram<'_>, k: u16) -> Result<u16, &'static str> {
 pub fn instruction(r: &mut Wram<'_>, rom: &[u8], opcode: u16, pc: u16, k: u16) -> Result<u16, &'static str> {
     let k = slot(k)?;
     match opcode {
+        0xa050 => {
+            r.set_word(0x1a03 + k, word(rom, pc)?);
+            Ok(pc)
+        }
         0x95ba | 0x95ed => {
             let definitions = if opcode == 0x95ba { [0x966c, 0x967a] } else { [0x9688, 0x9696] };
             for definition in definitions {
@@ -220,6 +224,36 @@ fn delete_below(r: &mut Wram<'_>, k: usize) {
 pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Result<(), &'static str> {
     let k = slot(k)?;
     match address {
+        0xa05b => {}
+        0xa05c | 0xa07a | 0xa0d1 | 0xa124 => {
+            let left = matches!(address, 0xa05c | 0xa0d1);
+            let delta = if matches!(address, 0xa05c | 0xa07a) {
+                if r.word(0x1aff + k) & 0x8000 == 0 { 4 } else { 2 }
+            } else {
+                let speed = r.word(0x1aff + k);
+                let outward = r.word(0x1b23 + k) != 0;
+                let next = if outward { speed.wrapping_sub(32) } else { speed.wrapping_add(32) };
+                r.set_word(0x1aff + k, next);
+                if outward && next == 0 {
+                    r.set_word(0x1b23 + k, 0);
+                }
+                r.set_word(0x1a93 + k, r.word(0x1a93 + k).wrapping_add(1));
+                let delta = speed >> 8;
+                if outward { delta } else { delta.wrapping_neg() }
+            };
+            let x = r.word(0x1a4b + k).wrapping_add(if left { delta.wrapping_neg() } else { delta });
+            r.set_word(0x1a4b + k, x);
+            let y = r.word(0x1a93 + k);
+            let cx = r.word(0x911);
+            let cy = r.word(0x915);
+            if (x.wrapping_sub(cx) as i16) < 0
+                || x.wrapping_sub(cx.wrapping_add(256)) as i16 >= 0
+                || (y.wrapping_sub(cy) as i16) < 0
+                || y.wrapping_sub(cy.wrapping_add(256)) as i16 >= 0
+            {
+                r.set_word(0x1997 + k, 0);
+            }
+        }
         0x9eff => {
             if crate::enemy_projectile_collision::vertical(r, rom, k as u16)? != 0
                 || crate::enemy_projectile_collision::horizontal(r, rom, k as u16)? != 0
