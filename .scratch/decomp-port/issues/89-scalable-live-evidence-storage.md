@@ -27,3 +27,7 @@ Cleanup: both bounded scopes `python3 tools/port_cleanup.py --root <scope> --app
 Authorized historical ticket87 storage cleanup: `out/port/projectile-paired-live/20261011T071554.615327Z/c-0` shared418 of419 identical actual patched ROM snapshots, reclaiming1753219072bytes. Every existing file hash was verified before and after sharing; historical inventory and grouping results are retained in `storage-cleanup.json`. Project cleanup apply/deduplicate both0additionalbytes. Actual remaining disk3.9GiB at completion of sharing.
 
 Final frozen-source tool suite: 15 tests passed, one expensive opt-in control skipped. Bounded actual host storage comparison, cleanup and retained artifact authentication completed; ticket90 owns separate full-movie gameplay admission.
+
+## Follow-up: compressed same-run sharing
+
+Ticket90 full-movie disk constraints required compressed runs to share equal completed observations within the same run. This validates the finished baseline and subject SHA256 seals and exact streamed bytes before hardlinking `hardware.log.gz` and `rom-view.bin`. Changed values/order remain distinct, and gameplay admission is evaluated separately after all four independent processes. Baseline inventory and reclaimed bytes are recorded. Plain default behavior is unchanged. Frozen suite16passed, one opt-in control skipped; focused controls verify changed-value/order preservation and stale-seal rejection.

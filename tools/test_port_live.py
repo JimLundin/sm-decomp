@@ -463,3 +463,34 @@ int main(void){
                 self.assertEqual(snapshot.read_bytes(), b'patched ROM')
                 self.assertEqual(snapshot.stat().st_ino, (run / 'fixtures/0.rom').stat().st_ino)
             self.assertEqual(view.read_bytes(), b'initial ROM')
+
+    def test_finished_baseline_shares_equal_stream_and_keeps_changed_event_order(self):
+        import gzip
+        import sys
+        sys.path.insert(0, str(ROOT / 'tools'))
+        from port_live import share_finished_baseline, stream_digest
+        with tempfile.TemporaryDirectory() as temporary:
+            run = Path(temporary)
+            baseline = run / 'c-0'
+            baseline.mkdir()
+            current = run / 'mixed-0'
+            current.mkdir()
+            content = b'ppu 0 1 2 3\napu 0 4 5\n'
+            for directory in (baseline, current):
+                (directory / 'hardware.log.gz').write_bytes(gzip.compress(content, mtime=0))
+                (directory / 'rom-view.bin').write_bytes(b'rom')
+            inventory = {p.name: stream_digest(p) for p in baseline.iterdir()}
+            for changed in (b'ppu 0 1 2 4\napu 0 4 5\n', b'apu 0 4 5\nppu 0 1 2 3\n'):
+                (current / 'hardware.log.gz').write_bytes(gzip.compress(changed, mtime=0))
+                actual = {p.name: stream_digest(p) for p in current.iterdir()}
+                share_finished_baseline(current, actual, baseline, inventory)
+                self.assertEqual(gzip.decompress((current / 'hardware.log.gz').read_bytes()), changed)
+                self.assertNotEqual((current / 'hardware.log.gz').stat().st_ino,
+                                    (baseline / 'hardware.log.gz').stat().st_ino)
+            with self.assertRaisesRegex(ValueError, 'seal differs'):
+                share_finished_baseline(current, inventory, baseline, inventory)
+            (current / 'hardware.log.gz').write_bytes((baseline / 'hardware.log.gz').read_bytes())
+            expected = (current / 'hardware.log.gz').stat().st_size
+            self.assertEqual(share_finished_baseline(current, inventory, baseline, inventory), expected)
+            self.assertEqual((current / 'hardware.log.gz').stat().st_ino,
+                             (baseline / 'hardware.log.gz').stat().st_ino)

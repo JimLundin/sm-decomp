@@ -130,6 +130,43 @@ def reclaim_duplicate_rom_fixtures(directory, inventory):
             'retained_views': groups}
 
 
+def share_finished_baseline(directory, inventory, baseline, baseline_inventory):
+    """Share finished observations without admitting the baseline gameplay."""
+    reclaimed = 0
+    for relative in (hardware_output(inventory), 'rom-view.bin'):
+        current = directory / relative
+        previous = baseline / relative
+        expected = baseline_inventory.get(relative)
+        if not expected or current.is_symlink() or previous.is_symlink():
+            raise ValueError('invalid finished baseline observation')
+        if stream_digest(previous) != expected or stream_digest(current) != inventory[relative]:
+            raise ValueError('finished baseline observation seal differs')
+        if inventory[relative] != expected:
+            continue
+        old = current.stat()
+        prior = previous.stat()
+        if old.st_dev != prior.st_dev or old.st_ino == prior.st_ino:
+            continue
+        with current.open('rb') as left, previous.open('rb') as right:
+            while True:
+                chunk = left.read(1024 * 1024)
+                if chunk != right.read(1024 * 1024):
+                    raise ValueError('finished baseline observation bytes differ')
+                if not chunk:
+                    break
+        temporary = current.with_name(current.name + '.dedup-' + uuid.uuid4().hex)
+        try:
+            os.link(previous, temporary)
+            os.replace(temporary, current)
+        finally:
+            temporary.unlink(missing_ok=True)
+        if stream_digest(current) != expected:
+            raise ValueError('finished baseline observation seal differs after sharing')
+        if old.st_nlink == 1:
+            reclaimed += old.st_size
+    return reclaimed
+
+
 def share_finished_outputs(directory, inventory, anchor_verdict):
     """Share identical sealed outputs only after the producing process exits."""
     anchor = json.loads(anchor_verdict.read_text())
@@ -619,6 +656,9 @@ int main(int argc,char **argv) {
                                               'sha256': stream_digest(args.dedup_anchor_verdict),
                                               'outputs': {key: inventories[name][key] for key in (hardware_output(inventories[name]), 'rom-view.bin')},
                                               'scope': 'historical immutable bytes only; no current-source admission'}
+                if args.compress_effects and name != 'c-0':
+                    reclaimed = share_finished_baseline(directory, inventories[name], run / 'c-0', inventories['c-0'])
+                    verdict.setdefault('finished_baseline_sharing', {})[name] = {'bytes_reclaimed': reclaimed, 'baseline': 'c-0', 'inventory': inventories['c-0'], 'scope': 'finished immutable observations; gameplay admission checked separately'}
                 if name != 'mixed-1':
                     prior_rom_peak = max(row['snapshot_count'] for row in verdict['rom_fixture_cleanup'].values()) * (directory / 'rom-view.bin').stat().st_size
                     next_peak = (directory / hardware_output(inventories[name])).stat().st_size + prior_rom_peak + 512 * 1024 * 1024

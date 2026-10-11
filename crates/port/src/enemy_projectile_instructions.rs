@@ -399,6 +399,12 @@ fn preinstruction_context(
 ) -> Result<(), &'static str> {
     let k = slot(k)?;
     match address {
+        0xa364 => {
+            if r.word(0xafa) == 72 {
+                r.set_word(0x1b8f + k, 1);
+                r.set_word(0x1b47 + k, 0xa28b);
+            }
+        }
         0xbfdf => {
             let host = host.ok_or("projectile preinstruction requires host context")?;
             let x = r.word(0x1a4b + k);
@@ -1511,6 +1517,10 @@ pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) ->
             let pc = b as u16;
             let result = instruction(r, rom, word(rom, pc)?, pc.wrapping_add(2), a as u16)?;
             Ok(if result == 0 { 0 } else { 0x860000 | u32::from(result) })
+        }
+        "EprojPreInstr_CeresElevatorPlatform" => {
+            preinstruction(r, rom, 0xa364, a as u16)?;
+            Ok(0)
         }
         "EprojPreinstruction" => {
             preinstruction(r, rom, b as u16, a as u16)?;

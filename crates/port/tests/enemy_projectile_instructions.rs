@@ -92,3 +92,29 @@ fn script_cycle_is_rejected_and_disabled_scheduler_preserves_index() {
     rom[0x31000..0x31004].copy_from_slice(&[0xab, 0x81, 0, 0x90]);
     assert_eq!(e::run_all(&mut r, &rom, 16), Err("enemy projectile instruction budget"));
 }
+
+#[test]
+fn ceres_platform_changes_only_its_timer_and_script_at_exact_samus_height() {
+    use port::enemy_projectile_instructions::dispatch_rom;
+    for y in [0u16, 71, 72, 73, 0x8000, 0xffff] {
+        let mut bytes = vec![0xa5; port::WRAM_SIZE];
+        bytes[0xafa..0xafc].copy_from_slice(&y.to_le_bytes());
+        let mut expected = bytes.clone();
+        if y == 72 {
+            expected[0x1b8f + 34..0x1b91 + 34].copy_from_slice(&1u16.to_le_bytes());
+            expected[0x1b47 + 34..0x1b49 + 34].copy_from_slice(&0xa28bu16.to_le_bytes());
+        }
+        assert_eq!(
+            dispatch_rom(&mut port::Wram::new(&mut bytes).unwrap(), &[], "EprojPreInstr_CeresElevatorPlatform", 34, 0)
+                .unwrap(),
+            0
+        );
+        assert_eq!(bytes, expected);
+        let before = bytes.clone();
+        assert!(
+            dispatch_rom(&mut port::Wram::new(&mut bytes).unwrap(), &[], "EprojPreInstr_CeresElevatorPlatform", 35, 0)
+                .is_err()
+        );
+        assert_eq!(bytes, before);
+    }
+}

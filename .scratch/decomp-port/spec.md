@@ -434,3 +434,12 @@ without inventing a following controller sample. Reused authenticated original
 and final RNG 883. Actual EOF controls and three public tests pass. All retained
 evidence authenticates after cleanup and lossless sharing reclaimed 2.97 GB of
 duplicate immutable files. Hardware/full-WRAM and full-movie parity remain open.
+
+
+Ceres platform live ownership: ticket 90 ports A364 and verifies 378 actual-C
+cases plus four fresh full 129712-input C/mixed processes. Both mixed subjects
+execute 524 exclusive Rust platform calls; all 990 state/effect artifacts match
+and measured CPU fallback is zero. Original-ROM parity remains not tested by
+this C/mixed run. Tests, scoped cleanup and authentication pass. Lossless storage
+sharing and cleanup reclaimed 5,693,252,058 bytes; approximately 3.48 GiB remains
+free. Work stops at this verified boundary for the user's capacity upgrade.
