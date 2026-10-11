@@ -400,3 +400,11 @@ return and host comparisons pass. Independent Rust checks and 12 Python harness
 tests pass, with crate tests, formatting and strict Clippy. Scoped cleanup
 reclaimed 178,388,992 bytes; root reauthenticated final evidence. Whole pirate
 AI and live original-ROM caller exercise remain unproved.
+
+
+Paired-helper live investigation: ticket 87 adds exact-signature support for
+E73E movement and E722 bounds with fresh 321-case offline evidence. The sole
+full-movie C process measured zero calls to either, so live ownership remains
+unproved. Finished log sharing reclaimed 4.97 GB; the next process was stopped
+by the disk check. The diagnostic is sealed and cleaned. A naturally exercised
+trajectory is needed; this result cannot substitute for C/mixed acceptance.

@@ -3,13 +3,22 @@
 import argparse
 import datetime
 import json
+import hashlib
+import os
+import uuid
 from pathlib import Path
 import re
 import shutil
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
-DISPATCHER_LEAVES = {'MoveEprojWithVelocity', 'MoveEprojWithVelocityX', 'MoveEprojWithVelocityY'}
+DISPATCHER_LEAVES = {
+    'MoveEprojWithVelocity': 'uint16',
+    'MoveEprojWithVelocityX': 'uint16',
+    'MoveEprojWithVelocityY': 'uint16',
+    'Eproj_FuncE73E_MoveXY': 'void',
+    'Eproj_FuncE722': 'uint16',
+}
 DISPATCHER_SYNTHETIC = {'EprojInstruction', 'EprojPreinstruction'}
 
 
@@ -32,7 +41,7 @@ def load_dispatcher_contract(path, source_identity):
         elif routine.get('live_eligible', True):
             if symbol not in DISPATCHER_LEAVES:
                 raise ValueError(f'dispatcher routine requires support selection before live admission: {symbol}')
-            if routine.get('arg_types', ['uint16'] * routine.get('args', 0)) != ['uint16'] or routine['return'] != 'uint16':
+            if routine.get('arg_types', ['uint16'] * routine.get('args', 0)) != ['uint16'] or routine['return'] != DISPATCHER_LEAVES[symbol]:
                 raise ValueError(f'dispatcher leaf signature differs: {symbol}')
         routines.append(routine)
     if not any(r.get('live_eligible', True) for r in routines):
@@ -42,6 +51,62 @@ def load_dispatcher_contract(path, source_identity):
         'audio', 'enemy', 'enemy_projectiles', 'enemy_projectile_collision', 'system',
     })
     return manifest, module
+
+
+def stream_digest(path):
+    digest = hashlib.sha256()
+    with path.open('rb') as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b''):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def share_finished_outputs(directory, inventory, anchor_verdict):
+    """Share identical sealed outputs only after the producing process exits."""
+    anchor = json.loads(anchor_verdict.read_text())
+    # Historical source seals may be stale: this authenticates immutable bytes,
+    # not admission of the historical implementation against current source.
+    if stream_digest(anchor_verdict.parent / 'live') != anchor.get('binary_sha256'):
+        raise ValueError('dedup anchor binary seal differs')
+    if anchor.get('status') != 'mixed-C-Rust-integration':
+        raise ValueError('dedup anchor is not an accepted live run')
+    reclaimed = 0
+    for relative in ('hardware.log', 'rom-view.bin'):
+        expected = anchor['artifacts'].get(relative)
+        previous = anchor_verdict.parent / 'c-0' / relative
+        current = directory / relative
+        if not expected or previous.is_symlink() or current.is_symlink():
+            raise ValueError('invalid dedup anchor output')
+        if stream_digest(previous) != expected:
+            raise ValueError('dedup anchor output seal differs')
+        if inventory.get(relative) != expected:
+            continue
+        if stream_digest(current) != expected:
+            raise ValueError('finished output seal differs before dedup')
+        old = current.stat()
+        prior = previous.stat()
+        if old.st_dev != prior.st_dev or old.st_ino == prior.st_ino:
+            continue
+        if old.st_size != prior.st_size:
+            raise ValueError('sealed dedup output sizes differ')
+        with previous.open('rb') as left, current.open('rb') as right:
+            while True:
+                chunk = left.read(1024 * 1024)
+                if chunk != right.read(1024 * 1024):
+                    raise ValueError('sealed dedup output bytes differ')
+                if not chunk:
+                    break
+        temporary = current.with_name(current.name + '.dedup-' + uuid.uuid4().hex)
+        try:
+            os.link(previous, temporary)
+            os.replace(temporary, current)
+        finally:
+            temporary.unlink(missing_ok=True)
+        if stream_digest(current) != expected:
+            raise ValueError('finished output seal differs after dedup')
+        if old.st_nlink == 1:
+            reclaimed += old.st_size
+    return reclaimed
 
 
 def definition_pattern(symbol):
@@ -132,7 +197,8 @@ def main():
     parser.add_argument('--family-verdict', type=Path, action='append', default=[])
     parser.add_argument('--collision-verdict', type=Path, action='append', default=[])
     parser.add_argument('--dispatcher-verdict', type=Path, action='append', default=[],
-                        help='Authenticated bank86 dispatcher evidence for safe movement leaves')
+                        help='Authenticated bank86 dispatcher evidence for safe movement and extent leaves')
+    parser.add_argument('--dedup-anchor-verdict', type=Path, help='Share byte-identical finished logs with a sealed prior live run')
     parser.add_argument('--plm-verdict', type=Path)
     parser.add_argument('--room-plm', action='store_true', help='Require native room/hardcoded setup hits')
     parser.add_argument('--frames', type=int, default=9000)
@@ -472,6 +538,15 @@ int main(int argc,char **argv) {
                 (directory / 'saves').mkdir()
                 execute([str(run / 'live'), mode, str(rom), str(inputs), str(args.frames), str(directory / 'terminal.bin')], directory, 'replay')
                 inventories[name] = {str(p.relative_to(directory)): digest(p) for p in directory.rglob('*') if p.is_file() and p.name not in ('replay.stdout', 'replay.stderr', 'calls.jsonl') and p.suffix != '.rom'}
+                if args.dedup_anchor_verdict:
+                    reclaimed = share_finished_outputs(directory, inventories[name], args.dedup_anchor_verdict)
+                    verdict.setdefault('finished_output_dedup', {})[name] = reclaimed
+                    if name != 'mixed-1' and shutil.disk_usage(run).free < (directory / 'hardware.log').stat().st_size + 512 * 1024 * 1024:
+                        raise ValueError('insufficient space for another independent replay log')
+                    verdict['dedup_anchor'] = {'path': str(args.dedup_anchor_verdict.resolve()),
+                                              'sha256': stream_digest(args.dedup_anchor_verdict),
+                                              'outputs': {key: inventories[name][key] for key in ('hardware.log', 'rom-view.bin')},
+                                              'scope': 'historical immutable bytes only; no current-source admission'}
                 rows = [line.split() for line in (directory / 'replay.stdout').read_text().splitlines() if line.startswith('port-hit ')]
                 if len(rows) != len(symbols):
                     raise ValueError('missing per-routine execution counters')

@@ -243,11 +243,40 @@ class DispatcherAdmissionControls(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, 'support selection'):
                     load_dispatcher_contract(path, source)
 
+    def test_dispatcher_exact_leaf_signatures(self):
+        import sys
+        from unittest.mock import patch
+        sys.path.insert(0, str(ROOT / 'tools'))
+        from port_live import DISPATCHER_LEAVES, load_dispatcher_contract
+        source = {'identity': 'pinned'}
+        evidence = {'source': source, 'implementation': {
+            'module': str(ROOT / 'crates/port/src/enemy_projectile_instructions.rs')}}
+        with tempfile.TemporaryDirectory() as temporary:
+            run = Path(temporary)
+            for symbol, returned in DISPATCHER_LEAVES.items():
+                with self.subTest(symbol=symbol):
+                    routine = {'symbol': symbol, 'args': 1, 'return': returned}
+                    manifest = {'bank': 'sm_86.c', 'rom': {}, 'routines': [routine]}
+                    with patch('port_plm_instructions.verify_plm_instruction_evidence', return_value=evidence):
+                        (run / 'manifest.json').write_text(json.dumps(manifest))
+                        selected, _ = load_dispatcher_contract(run / 'verdict.json', source)
+                        self.assertEqual(selected['routines'][0]['return'], returned)
+                        routine['return'] = 'uint16' if returned == 'void' else 'void'
+                        (run / 'manifest.json').write_text(json.dumps(manifest))
+                        with self.assertRaisesRegex(ValueError, 'signature differs'):
+                            load_dispatcher_contract(run / 'verdict.json', source)
+                        routine['return'] = returned
+                        routine['arg_types'] = ['uint32']
+                        (run / 'manifest.json').write_text(json.dumps(manifest))
+                        with self.assertRaisesRegex(ValueError, 'signature differs'):
+                            load_dispatcher_contract(run / 'verdict.json', source)
+
     def test_dispatcher_leaf_abi_compiles_with_gameplay_dependencies(self):
         import sys
         sys.path.insert(0, str(ROOT / 'tools'))
         from port_live import generate_family_abi
-        manifest = {'rom': {}, 'routines': [{'symbol': 'EprojInstruction'}, {'symbol': 'MoveEprojWithVelocityY'}]}
+        manifest = {'rom': {}, 'routines': [{'symbol': 'EprojInstruction'}, {'symbol': 'MoveEprojWithVelocityY'},
+                                            {'symbol': 'Eproj_FuncE73E_MoveXY'}, {'symbol': 'Eproj_FuncE722'}]}
         with tempfile.TemporaryDirectory() as temporary:
             run = Path(temporary)
             source = run / 'leaf.rs'
@@ -258,8 +287,55 @@ class DispatcherAdmissionControls(unittest.TestCase):
  unsafe{assert_eq!(port_family_0(bytes.as_mut_ptr(),WRAM_SIZE,rom.as_ptr(),1,1,0,0),11);}
  assert_eq!(Wram::new(&mut bytes).unwrap().byte(0x1a70),128);
  let before=bytes.clone();unsafe{assert_eq!(port_family_0(bytes.as_mut_ptr(),WRAM_SIZE,rom.as_ptr(),1,1,35,0),-1);}
- assert_eq!(bytes,before);}\n''')
+ assert_eq!(bytes,before);
+ {let mut r=Wram::new(&mut bytes).unwrap();r.set_word(0x97dc,0);r.set_word(0x1a4b,10);r.set_word(0x1a27,0);r.set_word(0x1a93,20);r.set_word(0x1a6f,0);r.set_word(0x1ab7,0);r.set_word(0x1aff,1);r.set_word(0x1adb,0);r.set_word(0x1b23,1);}
+ unsafe{assert_eq!(port_family_0(bytes.as_mut_ptr(),WRAM_SIZE,rom.as_ptr(),1,2,0,0),0);}
+ {let r=Wram::new(&mut bytes).unwrap();assert_eq!(r.word(0x1a4b),10);assert_eq!(r.word(0x1a27),1);assert_eq!(r.word(0x1a93),19);assert_eq!(r.word(0x1a6f),65535);}
+ unsafe{assert_eq!(port_family_0(bytes.as_mut_ptr(),WRAM_SIZE,rom.as_ptr(),1,3,0,0),0);}
+ Wram::new(&mut bytes).unwrap().set_word(0x1a4b,512);
+ unsafe{assert_eq!(port_family_0(bytes.as_mut_ptr(),WRAM_SIZE,rom.as_ptr(),1,3,0,0),1);}
+ for id in [2,3]{let before=bytes.clone();unsafe{assert_eq!(port_family_0(bytes.as_mut_ptr(),WRAM_SIZE,rom.as_ptr(),1,id,35,0),-1);}assert_eq!(bytes,before);}}
+\n''')
             result = subprocess.run(['rustc', '--edition=2024', str(source), '-o', str(run / 'leaf')], capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
             result = subprocess.run([str(run / 'leaf')], capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
+
+
+class FinishedOutputDedupControls(unittest.TestCase):
+    def test_sealed_sharing_preserves_mismatches_and_rejects_mutation(self):
+        import sys
+        sys.path.insert(0, str(ROOT / 'tools'))
+        from port_live import share_finished_outputs, stream_digest
+        with tempfile.TemporaryDirectory() as temporary:
+            run = Path(temporary)
+            anchor = run / 'anchor'
+            (anchor / 'c-0').mkdir(parents=True)
+            current = run / 'current'
+            current.mkdir()
+            for name in ('hardware.log', 'rom-view.bin'):
+                (anchor / 'c-0' / name).write_bytes(b'original')
+                (current / name).write_bytes(b'original')
+            inventory = {name: stream_digest(current / name) for name in ('hardware.log', 'rom-view.bin')}
+            verdict = anchor / 'verdict.json'
+            (anchor / 'live').write_bytes(b'binary')
+            verdict.write_text(json.dumps({'status': 'mixed-C-Rust-integration', 'artifacts': inventory,
+                                           'binary_sha256': stream_digest(anchor / 'live')}))
+            (current / 'hardware.log').write_bytes(b'mutated!')
+            mismatch_inventory = dict(inventory, **{'hardware.log': stream_digest(current / 'hardware.log')})
+            self.assertEqual(share_finished_outputs(current, mismatch_inventory, verdict), 8)
+            self.assertNotEqual((current / 'hardware.log').stat().st_ino,
+                                (anchor / 'c-0' / 'hardware.log').stat().st_ino)
+            self.assertEqual((current / 'hardware.log').read_bytes(), b'mutated!')
+            with self.assertRaisesRegex(ValueError, 'finished output seal differs'):
+                share_finished_outputs(current, inventory, verdict)
+            (current / 'hardware.log').write_bytes(b'original')
+            self.assertEqual(share_finished_outputs(current, inventory, verdict), 8)
+            for name, expected in inventory.items():
+                self.assertEqual(stream_digest(current / name), expected)
+                self.assertEqual((current / name).stat().st_ino, (anchor / 'c-0' / name).stat().st_ino)
+            # Replace the anchor inode instead of mutating any already shared file.
+            (anchor / 'c-0' / 'hardware.log').unlink()
+            (anchor / 'c-0' / 'hardware.log').write_bytes(b'mutated!')
+            with self.assertRaisesRegex(ValueError, 'anchor output seal differs'):
+                share_finished_outputs(current, inventory, verdict)
