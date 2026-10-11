@@ -108,3 +108,22 @@ The version is a new format and does not read either spike's old physical files.
 See `.scratch/trace-storage-study/rust-crate-results.md` for measurements and the
 exact comparison scope. `tools/storage_rust_benchmark.py` reproduces the real
 capture benchmark; `examples/record.rs` measures direct native event recording.
+
+## Pipeline capture
+
+`port_live.py` defaults to packed storage in `out/evidence`. It retains a sealed
+`evidence.json` per subject and the exact `sm-evidence` reader next to the live
+binary. The `capture` command consumes legacy observation bytes on stdin while
+the producer runs, commits its trace, ingests staged members, and writes a sealed
+candidate pointer after reopening and checking its closure. Pipeline admission
+uses original byte hashes, not physical pack hashes. Producer completion and
+successful hash comparison are required before the Python runner publishes the
+pointer and releases staging files. Failed runs retain staged diagnostics and a
+trace receipt when the trace was successfully committed. Pending pack/lock
+recovery remains manual after an unclean collector exit.
+
+`inventory STORE RUN` restores and authenticates all member hashes. It follows
+only the run's logical closure, so an unrelated interrupted pending write does
+not invalidate existing evidence. `verify` additionally checks physical seals
+of all committed packs in the store. Do not delete shared packs when deleting a
+run directory: other runs can reference them.

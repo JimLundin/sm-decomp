@@ -54,6 +54,34 @@ directory. Their bounded interpreter is verified offline and is excluded from
 the whole live PLM loop. Individual harness commands remain available for focused
 diagnosis; batch orchestration should use the checked-in runner.
 
+Future `port_live.py` replays (including batch replay) use the Rust evidence store
+by default. Hardware events stream into compressed binary records as the C host
+runs. Snapshots, ROM views and fixture files are packed after each process exits;
+the runner authenticates their restored byte hashes before publishing a durable
+`evidence.json` pointer and removing staging files. Four independent subjects
+still compare the same exact observation inventories. Identical pages, bursts
+and captures share `out/evidence` across runs. Provenance is sealed separately
+from observations; storage completeness does not grant gameplay acceptance.
+
+```sh
+# Authenticate the retained binary, subject pointers and packed observations.
+python3 tools/port_authenticate_live.py out/port/example/RUN/verdict.json
+
+# Restore a subject into a new directory, or one exact member/frame.
+python3 tools/port_evidence.py out/port/example/RUN/c-0 restored
+python3 tools/port_evidence.py out/port/example/RUN/c-0 frame.bin --member frame-001000.bin
+python3 tools/port_evidence.py out/port/example/RUN/c-0 effects.log --member hardware.log --frame 100
+```
+
+`port_live.py --evidence-store PATH` selects another shared store. `--storage
+plain` or `--storage gzip` keeps the legacy file layout; `--compress-effects`
+remains an alias for gzip. Historical accepted evidence is unchanged and stays
+readable. Failed producers never publish a subject pointer or release staging
+files. Shared pipeline writers serialize while capturing; an unclean Rust writer
+can leave `writer.lock` and `.pending` files, requiring manual recovery after
+confirming that process has exited. Keep the store together with its dependent
+run pointers; do not remove a shared pack as part of run cleanup.
+
 To reclaim disposable Cargo build intermediates without changing existing
 acceptance evidence:
 

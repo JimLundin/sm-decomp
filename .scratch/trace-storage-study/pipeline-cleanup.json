@@ -1,0 +1,6 @@
+{
+  "removed_file_bytes": 319347708,
+  "free_bytes": 266493509632,
+  "source_snapshot": "/home/jim/sm-decomp/out/port/storage-pipeline/source",
+  "source_policy": "exact source dependency snapshot retained without symlinks, build trees or Git metadata"
+}

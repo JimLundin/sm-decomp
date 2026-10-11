@@ -17,6 +17,7 @@ This is a study, not authorization to migrate accepted evidence. The separate
 - [03 — Disk-backed storage spike](issues/03-storage-spike.md)
 - [04 — Matched other-worktree comparison](issues/04-other-spike-comparison.md)
 - [05 — Combined Rust evidence crate](issues/05-rust-evidence-crate.md)
+- [06 — Live pipeline integration](issues/06-pipeline-integration.md)
 
 ## Integration evidence
 
@@ -47,3 +48,9 @@ ticket05. Same two-capture input 5.73GB -> 27.46MB including indexes. Ten crate
 integration tests, formatting, Clippy and complete real capture source comparison
 pass. Runnable authenticated evidence under `out/storage-rust-final`; disposable
 builds and temporary scopes removed. Production integration remains separate.
+
+Live pipeline integration: [pipeline-results.md](pipeline-results.md), ticket06.
+Main port live/batch runner defaults to shared packed evidence with original-byte
+admission and historical readers. Four real 1000-frame subjects verify against
+plain output; 319MB -> 3.20MB. Scoped cleanup complete. Integrated on
+`decomp-port-integration`; prior study source/evidence remains retained.

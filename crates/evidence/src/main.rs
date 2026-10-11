@@ -25,6 +25,52 @@ fn main() -> Result<()> {
                 serde_json::json!({"run":hex(&run), "observations":hex(&tree), "pack":pack.as_ref().map(hex), "new_objects":stats.new_objects, "shared_objects":stats.shared_objects, "seconds":start.elapsed().as_secs_f64()})
             );
         }
+        Some("capture") if args.len() == 6 => {
+            // Pipeline holds its shared-store admission lock while recording and sealing.
+            let mut store = Store::create(Path::new(&args[1]))?;
+            println!("ready");
+            std::io::stdout().flush()?;
+            let stream = ingest_trace(&mut store, &mut std::io::stdin().lock())?;
+            let info = read_stream(&store, &stream)?;
+            ensure!(info.bytes > 0, "empty captured trace");
+            store.commit()?;
+            let temporary =
+                serde_json::json!({"stream":hex(&stream), "bytes":info.bytes, "sha256":hex(&info.legacy_sha256)});
+            let mut out = OpenOptions::new().write(true).create_new(true).open(&args[2])?;
+            writeln!(out, "{temporary}")?;
+            out.sync_all()?;
+            let mut store = Store::create(Path::new(&args[1]))?;
+            let observations = ingest_tree(&mut store, Path::new(&args[3]), &mut |_| {})?;
+            let mut entries = read_tree(&store, &observations)?;
+            entries.push(Entry { name: "hardware.log".into(), kind: EntryKind::Stream, id: stream });
+            let tree = put_tree(&mut store, entries)?;
+            let provenance = serde_json::from_reader(File::open(&args[4])?)?;
+            let run = put_run(&mut store, tree, &provenance)?;
+            store.commit()?;
+            // Reopen sealed packs before allowing staging bytes to be released.
+            let store = Store::open(Path::new(&args[1]))?;
+            let verified = verify_run(&store, &run, None)?;
+            let inventory = tree_inventory(&store, &tree)?;
+            let artifacts: serde_json::Map<String, serde_json::Value> =
+                inventory.iter().map(|(name, info)| (name.clone(), hex(&info.sha256).into())).collect();
+            let sizes: serde_json::Map<String, serde_json::Value> =
+                inventory.iter().map(|(name, info)| (name.clone(), info.bytes.into())).collect();
+            let pointer = serde_json::json!({"format":"sm-evidence-v1", "run":hex(&run), "observations":hex(&tree), "files":verified.files, "bytes":verified.bytes, "artifacts":artifacts, "sizes":sizes});
+            let mut out = OpenOptions::new().write(true).create_new(true).open(&args[5])?;
+            writeln!(out, "{pointer}")?;
+            out.sync_all()?;
+        }
+        Some("inventory") if args.len() == 3 => {
+            let store = Store::open(Path::new(&args[1]))?;
+            let run = verify_run(&store, &parse_id(&args[2])?, None)?;
+            let inventory = tree_inventory(&store, &run.observations)?;
+            let artifacts: serde_json::Map<String, serde_json::Value> =
+                inventory.iter().map(|(name, info)| (name.clone(), hex(&info.sha256).into())).collect();
+            println!(
+                "{}",
+                serde_json::json!({"observations":hex(&run.observations), "files":run.files, "bytes":run.bytes, "artifacts":artifacts, "provenance":run.provenance})
+            );
+        }
         Some("verify") if (3..=4).contains(&args.len()) => {
             let store = Store::open(Path::new(&args[1]))?;
             store.verify_packs()?;
@@ -66,7 +112,7 @@ fn main() -> Result<()> {
             println!("{}", serde_json::json!({"offsets":offsets,"node_reads":reads}));
         }
         _ => bail!(
-            "usage: sm-evidence ingest STORE DIRECTORY [PROVENANCE.json] | verify STORE RUN [DIRECTORY] | stats STORE | cat STORE RUN MEMBER | frame STORE RUN MEMBER FRAME | extract STORE RUN NEW_DIRECTORY | diff-image STORE LEFT RIGHT"
+            "usage: sm-evidence capture STORE TRACE_RECEIPT DIRECTORY PROVENANCE POINTER | inventory STORE RUN | ingest STORE DIRECTORY [PROVENANCE.json] | verify STORE RUN [DIRECTORY] | stats STORE | cat STORE RUN MEMBER | frame STORE RUN MEMBER FRAME | extract STORE RUN NEW_DIRECTORY | diff-image STORE LEFT RIGHT"
         ),
     }
     Ok(())

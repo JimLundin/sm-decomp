@@ -75,6 +75,64 @@ fn valid_name(name: &str) -> Result<()> {
     Ok(())
 }
 
+/// Construct a sorted directory from already recorded observations.
+pub fn put_tree(store: &mut Store, mut entries: Vec<Entry>) -> Result<Id> {
+    entries.sort_by(|a, b| a.name.as_bytes().cmp(b.name.as_bytes()));
+    let mut out = Vec::new();
+    let mut previous: Option<&str> = None;
+    for entry in &entries {
+        valid_name(&entry.name)?;
+        ensure!(entry.name.len() <= 65535 && previous != Some(&entry.name), "duplicate or oversized tree name");
+        previous = Some(&entry.name);
+        let expected = match entry.kind {
+            EntryKind::File => FILE,
+            EntryKind::Image => crate::IMAGE,
+            EntryKind::Stream => crate::STREAM,
+            EntryKind::Tree => TREE,
+        };
+        store.get_kind(&entry.id, expected)?;
+        varint(&mut out, entry.name.len() as u64);
+        out.extend_from_slice(entry.name.as_bytes());
+        out.push(entry.kind as u8);
+        out.extend_from_slice(&entry.id);
+        ensure!(out.len() <= MAX_OBJECT, "directory exceeds entry limit");
+    }
+    store.put(TREE, &out)
+}
+
+#[derive(Debug, Clone)]
+pub struct MemberInfo {
+    pub bytes: u64,
+    pub sha256: Id,
+}
+
+/// Restore and hash every member without materialising it on disk.
+pub fn tree_inventory(store: &Store, id: &Id) -> Result<std::collections::BTreeMap<String, MemberInfo>> {
+    fn walk(
+        store: &Store,
+        id: &Id,
+        prefix: &str,
+        depth: usize,
+        result: &mut std::collections::BTreeMap<String, MemberInfo>,
+    ) -> Result<()> {
+        ensure!(depth <= 64, "tree nesting exceeds limit");
+        for entry in read_tree(store, id)? {
+            let path = format!("{prefix}{}", entry.name);
+            if entry.kind == EntryKind::Tree {
+                walk(store, &entry.id, &format!("{path}/"), depth + 1, result)?;
+            } else {
+                let mut hash = HashWriter::default();
+                write_entry(store, entry.kind, &entry.id, &mut hash)?;
+                result.insert(path, MemberInfo { bytes: hash.1, sha256: hash.0.finalize().into() });
+            }
+        }
+        Ok(())
+    }
+    let mut result = std::collections::BTreeMap::new();
+    walk(store, id, "", 0, &mut result)?;
+    Ok(result)
+}
+
 /// Ingest a directory without following symlinks. Names are UTF-8 and sorted.
 /// Captures observations exactly; does not mark them as accepted evidence.
 pub fn ingest_tree(store: &mut Store, directory: &Path, progress: &mut dyn FnMut(&Path)) -> Result<Id> {

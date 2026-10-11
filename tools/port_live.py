@@ -69,8 +69,14 @@ def hardware_output(inventory):
     return names[0]
 
 
-def generate_effect_writer(compressed=False):
+def generate_effect_writer(compressed=False, packed=False):
     """Keep the observer's formatted bytes and order; only change storage."""
+    if packed:
+        return ('#include <stdarg.h>\n#include <unistd.h>\nstatic FILE *port_effects;\n'
+                'static void PortEffect(FILE *stream,const char *format,...) {\n'
+                ' va_list args;va_start(args,format);int n=vfprintf(stream,format,args);va_end(args);if(n<0)exit(2);\n}\n'
+                '#define PortEffectsOpen() fopen(getenv("SM_EVIDENCE_PIPE"),"wb")\n'
+                '#define PortEffectsClose() fclose(port_effects)\n')
     if not compressed:
         return ('static FILE *port_effects;\n'
                 '#define PortEffect fprintf\n'
@@ -307,6 +313,8 @@ def main():
     parser.add_argument('--collision-verdict', type=Path, action='append', default=[])
     parser.add_argument('--dispatcher-verdict', type=Path, action='append', default=[],
                         help='Authenticated bank86 dispatcher evidence for safe movement and extent leaves')
+    parser.add_argument('--storage', choices=('packed', 'plain', 'gzip'), default='packed', help='Storage for future observations (default: shared packed store)')
+    parser.add_argument('--evidence-store', type=Path, default=ROOT / 'out/evidence', help='Shared immutable evidence store')
     parser.add_argument('--compress-effects', action='store_true', help='Losslessly gzip every ordered hardware event')
     parser.add_argument('--dedup-anchor-verdict', type=Path, help='Share byte-identical finished logs with a sealed prior live run')
     parser.add_argument('--plm-verdict', type=Path)
@@ -315,6 +323,10 @@ def main():
     parser.add_argument('--accepted', type=Path, default=ROOT / 'out/port/decompressor-offline/decomp-acceptance.json')
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
+    if args.compress_effects:
+        args.storage = "gzip"
+    args.compress_effects = args.storage == "gzip"
+    packed = args.storage == "packed"
     run = args.output.resolve() / datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%S.%fZ')
     run.mkdir(parents=True)
     verdict = {'status': 'rejected', 'live_exercised': False,
@@ -330,7 +342,7 @@ def main():
         inputs = ROOT / 'movies/super-metroid-any-3653.inputs'
         if digest(rom) != ROM_SHA256:
             raise ValueError('original ROM identity differs')
-        verdict.update(rom_sha256=digest(rom), inputs_sha256=digest(inputs), frames=args.frames, hardware_storage='gzip' if args.compress_effects else 'plain')
+        verdict.update(rom_sha256=digest(rom), inputs_sha256=digest(inputs), frames=args.frames, hardware_storage=args.storage)
         families = []
         dispatcher_indexes = set()
         for path in args.family_verdict:
@@ -385,6 +397,11 @@ def main():
                 result = subprocess.run(command, cwd=directory, stdout=stdout, stderr=stderr, timeout=timeout)
             if result.returncode:
                 raise ValueError(f'{label} failed with exit {result.returncode}')
+        if packed:
+            import port_evidence
+            evidence_binary = port_evidence.build(run, execute)
+            verdict['evidence_reader_sha256'] = stream_digest(evidence_binary)
+            verdict['evidence_storage'] = {'format': 'sm-evidence-v1', 'subjects': {}}
         rust = [f'#[path={json.dumps(str(ROOT / "crates/port/src/lib.rs"))}] mod memory;', 'use memory::*;']
         if args.plm_verdict:
             rust.append(generate_plm_abi(args.room_plm))
@@ -530,7 +547,7 @@ void __wrap_DecompressToMem(uint32 src,uint8 *dst) {
  if(sm_decompress_v1(g_rom,g_snes->cart->romSize,g_ram,sizeof(g_ram),src,address-base,&report))exit(4);
  port_decompress_rust++;SaveRoutineState("after");
 }
-''' + generate_effect_writer(args.compress_effects) + '''
+''' + generate_effect_writer(args.compress_effects, packed) + '''
 static FILE *port_calls;
 static unsigned port_call_depth;
 extern int32 *cur_coll_amt32;
@@ -621,6 +638,7 @@ bool __wrap_RtlRunFrame(int pad) {
 int main(int argc,char **argv) {
  if(argc!=6) return 2;
  port_mixed=!strcmp(argv[1],"mixed");
+ if(getenv("SM_EVIDENCE_STAGING") && chdir(getenv("SM_EVIDENCE_STAGING")))return 2;
  port_effects=PortEffectsOpen();if(!port_effects)return 2;
  port_calls=fopen("routine-calls.log","wb");if(!port_calls)return 2;
  char *original[]={argv[0],argv[2],argv[3],argv[4],argv[5],NULL};
@@ -646,24 +664,41 @@ int main(int argc,char **argv) {
                 directory = run / name
                 (directory / 'fixtures').mkdir(parents=True)
                 (directory / 'saves').mkdir()
-                execute([str(run / 'live'), mode, str(rom), str(inputs), str(args.frames), str(directory / 'terminal.bin')], directory, 'replay')
-                inventories[name] = {str(p.relative_to(directory)): stream_digest(p) for p in directory.rglob('*') if p.is_file() and p.name not in ('replay.stdout', 'replay.stderr', 'calls.jsonl') and p.suffix != '.rom'}
-                verdict.setdefault('rom_fixture_cleanup', {})[name] = reclaim_duplicate_rom_fixtures(directory, inventories[name])
-                if args.dedup_anchor_verdict:
-                    reclaimed = share_finished_outputs(directory, inventories[name], args.dedup_anchor_verdict)
-                    verdict.setdefault('finished_output_dedup', {})[name] = reclaimed
-                    verdict['dedup_anchor'] = {'path': str(args.dedup_anchor_verdict.resolve()),
-                                              'sha256': stream_digest(args.dedup_anchor_verdict),
-                                              'outputs': {key: inventories[name][key] for key in (hardware_output(inventories[name]), 'rom-view.bin')},
-                                              'scope': 'historical immutable bytes only; no current-source admission'}
-                if args.compress_effects and name != 'c-0':
-                    reclaimed = share_finished_baseline(directory, inventories[name], run / 'c-0', inventories['c-0'])
-                    verdict.setdefault('finished_baseline_sharing', {})[name] = {'bytes_reclaimed': reclaimed, 'baseline': 'c-0', 'inventory': inventories['c-0'], 'scope': 'finished immutable observations; gameplay admission checked separately'}
-                if name != 'mixed-1':
-                    prior_rom_peak = max(row['snapshot_count'] for row in verdict['rom_fixture_cleanup'].values()) * (directory / 'rom-view.bin').stat().st_size
-                    next_peak = (directory / hardware_output(inventories[name])).stat().st_size + prior_rom_peak + 512 * 1024 * 1024
-                    if shutil.disk_usage(run).free < next_peak:
-                        raise ValueError('insufficient space for another independent replay log and ROM snapshots')
+                if packed:
+                    command = [str(run / 'live'), mode, str(rom), str(inputs), str(args.frames), str(directory / '.evidence-stage/terminal.bin')]
+                    verdict['commands'].append({'argv': command, 'cwd': str(directory)})
+                    provenance = {'subject': name, 'binary_sha256': stream_digest(run / 'live'),
+                                  'reader_sha256': verdict['evidence_reader_sha256'],
+                                  'rom_sha256': verdict['rom_sha256'], 'inputs_sha256': verdict['inputs_sha256'],
+                                  'frames': args.frames, 'source': verdict['source']}
+                    pointer = port_evidence.packed_replay(command, directory, evidence_binary, args.evidence_store.resolve(),
+                                                         provenance, max(240, args.frames / 40))
+                    inventories[name] = {k: v for k, v in pointer['artifacts'].items()
+                                         if Path(k).name != 'calls.jsonl' and Path(k).suffix != '.rom'}
+                    verdict['evidence_storage']['subjects'][name] = {'run': pointer['run'], 'observations': pointer['observations'],
+                        'pointer_sha256': stream_digest(directory / 'evidence.json')}
+                    verdict.setdefault('storage_metrics', {})[name] = {'logical_bytes': pointer['bytes'], 'pipeline_seconds': pointer['pipeline_seconds'],
+                        'producer_seconds': pointer['producer_seconds'], 'seal_seconds': pointer['seal_seconds'],
+                        'stored_added_bytes': pointer['stored_added_bytes']}
+                else:
+                    execute([str(run / 'live'), mode, str(rom), str(inputs), str(args.frames), str(directory / 'terminal.bin')], directory, 'replay')
+                    inventories[name] = {str(p.relative_to(directory)): stream_digest(p) for p in directory.rglob('*') if p.is_file() and p.name not in ('replay.stdout', 'replay.stderr', 'calls.jsonl') and p.suffix != '.rom'}
+                    verdict.setdefault('rom_fixture_cleanup', {})[name] = reclaim_duplicate_rom_fixtures(directory, inventories[name])
+                    if args.dedup_anchor_verdict:
+                        reclaimed = share_finished_outputs(directory, inventories[name], args.dedup_anchor_verdict)
+                        verdict.setdefault('finished_output_dedup', {})[name] = reclaimed
+                        verdict['dedup_anchor'] = {'path': str(args.dedup_anchor_verdict.resolve()),
+                                                  'sha256': stream_digest(args.dedup_anchor_verdict),
+                                                  'outputs': {key: inventories[name][key] for key in (hardware_output(inventories[name]), 'rom-view.bin')},
+                                                  'scope': 'historical immutable bytes only; no current-source admission'}
+                    if args.compress_effects and name != 'c-0':
+                        reclaimed = share_finished_baseline(directory, inventories[name], run / 'c-0', inventories['c-0'])
+                        verdict.setdefault('finished_baseline_sharing', {})[name] = {'bytes_reclaimed': reclaimed, 'baseline': 'c-0', 'inventory': inventories['c-0'], 'scope': 'finished immutable observations; gameplay admission checked separately'}
+                    if name != 'mixed-1':
+                        prior_rom_peak = max(row['snapshot_count'] for row in verdict['rom_fixture_cleanup'].values()) * (directory / 'rom-view.bin').stat().st_size
+                        next_peak = (directory / hardware_output(inventories[name])).stat().st_size + prior_rom_peak + 512 * 1024 * 1024
+                        if shutil.disk_usage(run).free < next_peak:
+                            raise ValueError('insufficient space for another independent replay log and ROM snapshots')
                 rows = [line.split() for line in (directory / 'replay.stdout').read_text().splitlines() if line.startswith('port-hit ')]
                 if len(rows) != len(symbols):
                     raise ValueError('missing per-routine execution counters')
@@ -732,6 +767,7 @@ int main(int argc,char **argv) {
     # Cargo intermediates are not part of the replay artifact inventory. The
     # linked live binary and serialized observations remain retained.
     shutil.rmtree(run / 'target', ignore_errors=True)
+    shutil.rmtree(run / 'evidence-build', ignore_errors=True)
     if verdict.get('status') == 'mixed-C-Rust-integration':
         for archive in ('libfamilies.a', 'librng.a'):
             (run / archive).unlink(missing_ok=True)
