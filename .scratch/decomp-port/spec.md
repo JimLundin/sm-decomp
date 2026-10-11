@@ -215,3 +215,9 @@ consume these dispatcher seals; no new live ownership claim is made.
 Enemy death allocation frontier: ticket72 adds native EF89 position/metadata,
 respawn flag and five death scripts.961 actual-C cases match; cleanup/evidence
 recorded in ticket72. Drop/pickup scheduling and live ownership remain open.
+
+Bank86 live admission progress: ticket73/commit7b37fcb adds authenticated
+dispatcher leaf contracts and requires subsystem-specific Rust hits. Ticket74
+seals385 actual-C movement cases.9000/18000 prefixes match state/effects across
+eight processes but leaves execute zero times; actual leaf ownership remains
+unproven and ticket73 stays claimed.
