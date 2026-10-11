@@ -327,3 +327,23 @@ checks its entire preceding poll sequence/count; repeated heldvalues cannot
 hide shiftedpollordinals. Allten changed-RNG comparisons detect errors;3public
 tests pass. Retained source/binary/states/logs authenticate after cleanup0bytes.
 Ticket78stillclaimed: native video/APUwait timing and fullmovie parity unproven.
+
+
+Host-aware spores: ticket83/commit1b14934 connects DC77 spawning to DC8D
+initialization and nativeDCEE movement in descending frames.768 actual-C cases
+match completeWRAM/rawreturn/hostsidecars with actualDE88spawner/scriptDC0E,
+all256movementphasebytes and coordinate/allocation boundaries. Fullcrate checks
+and7independenthosttests pass. Cleanup218,103,808bytes; retained evidence
+authenticated. Live spore ownership remains unproven.
+
+
+APU wait frontier: commit771ab14 retains passive original uploads at boot
+frames168–254 and music316–355, with278147/140879portreads and zero NMI/controller
+polls inside each interval. Two actual cross-unit C uploads complete instantly;
+hardware/SPC handshake remains unmodeled. Extended640capture verifies49causal
+completed updates through nativeframe393; ordinal50/frame396 firstpollcount
+mismatch199C/200native.82pairedsemanticmatches are diagnostic only. Completion
+counts231C/229native differ; overallverdict remains nonaccepting. Prefixhost
+uses existingrealsoftreset helper and completes raw640run.3public320tests pass.
+All5finishedruns cleaned0bytes; finalsealed artifacts authenticate. Ticket78
+remainsclaimed; broader originalmovie timing/ownership is unfinished.
