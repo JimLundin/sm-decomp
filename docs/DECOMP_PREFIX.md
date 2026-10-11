@@ -148,3 +148,25 @@ All compared semantic fields match. The changed-RNG control is compared across
 all10updates independently. Native explicit-wait events remain in the ledger
 and the verdict explicitly leaves their timing unmapped. These source-ordered
 completed-update comparisons do not prove full WRAM or hardware-frame parity.
+
+## Extended APU-wait investigation
+
+`--frames 640` retains extended comparisons as nonaccepting diagnostic evidence,
+including completion-count mismatch and the first poll-provenance failure.
+`matching_causal_prefix` stops at the earlier of the semantic or source-poll
+failure; equal fields after a poll failure do not extend that claim. The strict
+320frame contract remains checked separately.
+
+Passive upload entry/return hooks and actual $2140..$2143 reads show that boot
+upload occupies original frames168..254 and music upload316..355. Neither
+interval contains an NMI or controller poll: these are hardware-only SPC
+handshake waits. C's cross-unit `RtlApuUpload` wrapper observes real instantaneous
+player uploads. Inserting gameplay or NMI iterations to mimic those elapsed
+frames would change the original schedule. The host now uses its existing
+soft-reset preparation before every replay frame, preventing the known sentinel
+from reaching the dispatcher during longer diagnostic replay.
+
+The640frame trace exposes the next incomplete controller boundary rather than
+accepting later ordinal matches. The standalone controller arithmetic fixture
+remains restricted to calls captured through frame320; a later native stack
+return-address transition belongs to another callsite and remains unverified.

@@ -22,7 +22,7 @@ FIELDS = {'game_state':0x998,'room':0x79b,'samus_x':0xaf6,'samus_y':0xafa,'healt
 HOOKS = {'reset':0x80841c,'boot-clear':0x808482,'controller-entry':0x809459,
          'controller-return':0x809496,'dispatch-entry':0x828948,'dispatch-complete':0x82897a,
          'explicit-wait':0x808338,'nmi-entry':0x809583,'message-entry':0x858080,
-         'message-return':0x8580ba,'upload-entry':0x808028}
+         'message-return':0x8580ba,'upload-entry':0x808028,'upload-return':0x8080f1,'upload-return-short':0x80802e,'upload-return-abort':0x8080ff}
 SEMANTIC = tuple(name for name in FIELDS if name not in ('accepted_nmi','all_nmi','waiting'))
 
 def digest(path):
@@ -51,10 +51,13 @@ def controller_causality(events):
 def observer(directory):
     # Registration address is captured explicitly: callback address is memoryspace-global.
     text = 'local out=assert(io.open([['+str(directory/'events.csv')+"]],'w'))\n"
-    text += "out:write('frame,event,kind,address,value,"+','.join(FIELDS)+"\\n')\nlocal sequence=0\n"
+    text += "out:write('frame,event,kind,address,value,"+','.join(FIELDS)+"\\n')\nlocal sequence=0\nlocal uploading=false\n"
     text += 'local offsets={'+','.join(str(a) for a in FIELDS.values())+'}\n'
     text += r'''
 local function observe(kind,address,value)
+ if kind=='upload-entry' then uploading=true end
+ if kind=='upload-return' or kind=='upload-return-short' or kind=='upload-return-abort' then uploading=false end
+ if kind=='apu-register' and not uploading then return end
  sequence=sequence+1
  local parts={tostring(movie.currentframe()),tostring(sequence),kind,tostring(address),tostring(value or 0)}
  for _,a in ipairs(offsets) do
@@ -76,6 +79,8 @@ function on_frame_emulated() observe('frame-complete',0,0) end
         text += "memory.registerexec('BUS',"+str(address)+",function(a,v) observe('"+kind+"',"+str(address)+",v) end)\n"
     for address in (0x4218,0x4219,0x421a,0x421b,0x804218,0x804219,0x80421a,0x80421b):
         text += "memory.registerread('BUS',"+str(address)+",function(a,v) observe('controller-register',"+str(address)+",v) end)\n"
+    for address in (0x2140,0x2141,0x2142,0x2143,0x802140,0x802141,0x802142,0x802143):
+        text += "memory.registerread('BUS',"+str(address)+",function(a,v) observe('apu-register',"+str(address)+",v) end)\n"
     return text
 
 def invoke(command, directory, timeout, env=None):
@@ -149,6 +154,19 @@ def investigate(args,run,verdict):
         'stdout_sha256':digest(native/'stdout.log'),'stderr_sha256':digest(native/'stderr.log'),
         'completed_frames':len(frames),'core':'lsnes rr2-beta23 / bsnes v085 Compatibility','region':'snes_ntsc',
         'raw_states':{path.name:digest(path) for path in native.glob('*.wram')}}
+    intervals=[];active=None
+    for row in events:
+        if row['kind']=='upload-entry':
+            if active is not None: raise ValueError('nested native APU upload')
+            active={'entry_event':row['source_event'],'entry_frame':row['source_frame'],'register_reads':0,'nmi_events':0,'controller_polls':0}
+        elif active is not None and row['kind']=='apu-register': active['register_reads']+=1
+        elif active is not None and row['kind']=='nmi-entry': active['nmi_events']+=1
+        elif active is not None and row['kind']=='controller-return': active['controller_polls']+=1
+        elif active is not None and row['kind'].startswith('upload-return'):
+            active.update(return_event=row['source_event'],return_frame=row['source_frame'],return_kind=row['kind'])
+            intervals.append(active);active=None
+    verdict['native_apu_upload_intervals']={'completed':intervals,'unfinished':active,
+        'scope':'passive original-ROM register reads within actual upload entry/return interval'}
     # Every actual poll is retained, including prelude and message polls. We do not infer
     # skipped waits from repeated positions. Hardware-only frames remain source records.
     steps=[];mapped=[];started=False;first=None;last_held=0;hardware=[];poll_entry=None
@@ -200,8 +218,9 @@ def investigate(args,run,verdict):
     verdict['timeline_sha256']=digest(run/'timeline.json')
     poll_cases=run/'poll-cases.txt'
     polls=[row for row in mapped if row['kind']=='controller-return']
+    primitive_polls=[row for row in polls if row['source_frame']<=320]
     fixture_lines=[]
-    for row in polls:
+    for row in primitive_polls:
         entry_state=(native/f"state-{row['controller_entry_event']}.wram").read_bytes()
         return_state=(native/f"state-{row['source_event']}.wram").read_bytes()
         stack=[i for i in range(0x1f00,0x2000) if entry_state[i]!=return_state[i]]
@@ -216,7 +235,7 @@ def investigate(args,run,verdict):
     host=ROOT/'tools/decomp/prefix_host.c'
     build=["cc","-std=gnu11","-O2","-fno-strict-aliasing","-ffunction-sections","-fdata-sections","-iquote",source/'src',*units,host,
            '-Wl,--gc-sections','-Wl,--wrap=Call','-Wl,--wrap=cpu_runOpcode','-Wl,--wrap=DecompressToMem',
-           '-Wl,--wrap=ReadJoypadInputs','-Wl,--wrap=Vector_NMI','-Wl,--wrap=NextRandom','-lm','-o',run/'prefix-host']
+           '-Wl,--wrap=RtlApuUpload','-Wl,--wrap=ReadJoypadInputs','-Wl,--wrap=Vector_NMI','-Wl,--wrap=NextRandom','-lm','-o',run/'prefix-host']
     invoke(build,run,args.timeout)
     verdict['build']={'command':list(map(str,build)),'binary_sha256':digest(run/'prefix-host'),
         'compiler':subprocess.check_output(['cc','--version'],text=True).splitlines()[0],
@@ -232,7 +251,7 @@ def investigate(args,run,verdict):
     cmd=[run/'prefix-host',rom,native,poll_cases,'poll-fixtures']
     invoke(cmd,primitive,args.timeout)
     primitive_rows=[json.loads(line) for line in (primitive/'stdout.log').read_text().splitlines() if line.startswith('{')]
-    if len(primitive_rows)!=len(polls) or not all(row['gameplay_wram_match'] for row in primitive_rows):
+    if len(primitive_rows)!=len(primitive_polls) or not all(row['gameplay_wram_match'] for row in primitive_rows):
         raise ValueError('native captured controller primitive differs from pinned C')
     verdict['poll_primitive']={'scope':'offline routine differential from original entry WRAM and actual hardware read pair; no movie replay state injection',
         'command':list(map(str,cmd)),'cases':len(primitive_rows),'gameplay_wram_match':True,'full_wram_match':all(row['full_wram_match'] for row in primitive_rows),
@@ -244,7 +263,7 @@ def investigate(args,run,verdict):
     control_cmd=[run/'prefix-host',rom,native,poll_cases,'changed-poll-fixtures']
     invoke(control_cmd,poll_control,args.timeout)
     changed_polls=[json.loads(line) for line in (poll_control/'stdout.log').read_text().splitlines() if line.startswith('{')]
-    if len(changed_polls)!=len(polls) or not any(not row['gameplay_wram_match'] for row in changed_polls):
+    if len(changed_polls)!=len(primitive_polls) or not any(not row['gameplay_wram_match'] for row in changed_polls):
         raise ValueError('changed hardware sample escaped polling primitive comparison')
     verdict['poll_primitive']['changed_sample_control']={'detected':True,'change':'toggle actual presented hardware A button bit in separate offline process',
         'command':list(map(str,control_cmd)),'stdout_sha256':digest(poll_control/'stdout.log'),
@@ -253,12 +272,13 @@ def investigate(args,run,verdict):
     state_cmd=[run/'prefix-host',rom,native,poll_cases,'changed-state-poll-fixtures']
     invoke(state_cmd,state_control,args.timeout)
     state_rows=[json.loads(line) for line in (state_control/'stdout.log').read_text().splitlines() if line.startswith('{')]
-    if len(state_rows)!=len(polls) or not all(not row['gameplay_wram_match'] for row in state_rows):
+    if len(state_rows)!=len(primitive_polls) or not all(not row['gameplay_wram_match'] for row in state_rows):
         raise ValueError('unrelated WRAM error escaped polling primitive comparison')
     verdict['poll_primitive']['unrelated_state_control']={'detected':True,'change':'toggle room byte0x79b after real primitive, separate offline process',
         'command':list(map(str,state_cmd)),'stdout_sha256':digest(state_control/'stdout.log'),'stderr_sha256':digest(state_control/'stderr.log')}
     subjects={}
-    for name,mode in (('candidate','unchanged'),('changed-gameplay','changed-rng')):
+    diagnostic_modes=(('candidate','unchanged'),('changed-gameplay','changed-rng'))
+    for name,mode in diagnostic_modes:
         directory=run/name;(directory/'fixtures').mkdir(parents=True);(directory/'saves').mkdir()
         cmd=[run/'prefix-host',rom,inputs,str(len(steps)),mode]
         invoke(cmd,directory,args.timeout)
@@ -285,7 +305,8 @@ def investigate(args,run,verdict):
         invoke(cmd,directory,args.timeout)
         records=[json.loads(line) for line in (directory/'events.jsonl').read_text().splitlines()]
         completed=[row for row in records if row['kind']=='dispatch-complete']
-        if len(completed)!=len(original): raise ValueError('bounded causal seam completion count differs')
+        verdict[name]={'upload_entry_hits':sum(row['kind']=='upload-entry' for row in records),'upload_return_hits':sum(row['kind']=='upload-return' for row in records),'events_sha256':digest(directory/'events.jsonl')}
+        if args.frames==320 and len(completed)!=len(original): raise ValueError('bounded causal seam completion count differs')
         causal_results[name]=completed
         before=[row for row in records if row['kind']=='controller-return' and row['event']<completed[0]['event']]
         if [row['state']['held'] for row in before]!=[row['held'] for row in prelude]:
@@ -293,12 +314,14 @@ def investigate(args,run,verdict):
         post=[row for row in records if row['kind']=='controller-return' and row['event']>completed[0]['event']]
         if len(post)!=len(polls)-len(prelude) or [row['state']['held'] for row in post]!=[row['held'] for row in polls[len(prelude):]]:
             raise ValueError('causal post-completion sample boundary differs')
-        for ordinal,boundary in enumerate(completed):
+        for ordinal,boundary in enumerate(completed[:len(original)]):
             prior=[row for row in records if row['kind']=='controller-return' and row['event']<boundary['event']]
             expected_prior=[row for row in polls if row['source_event']<original[ordinal]['source_event']]
             if [row['state']['held'] for row in prior]!=[row['held'] for row in expected_prior]:
-                raise ValueError('causal completion consumed future or reordered poll')
-        verdict[name]={'command':list(map(str,cmd)),'events_sha256':digest(directory/'events.jsonl'),
+                verdict[name]['first_poll_provenance_failure']={'ordinal':ordinal+1,'candidate_poll_count':len(prior),'native_poll_count':len(expected_prior)}
+                if args.frames==320: raise ValueError('causal completion consumed future or reordered poll')
+                break
+        verdict[name]={**verdict[name],'command':list(map(str,cmd)),'events_sha256':digest(directory/'events.jsonl'),
             'terminal_sha256':digest(directory/'terminal.bin'),'complete_states':{path.name:digest(path) for path in directory.glob('complete-*.wram')},
             'stdout_sha256':digest(directory/'stdout.log'),'stderr_sha256':digest(directory/'stderr.log')}
     causal_diff={key:{'original':first_complete['state'][key],'candidate':causal_results['causal-candidate'][0]['state'][key]}
@@ -312,12 +335,16 @@ def investigate(args,run,verdict):
         'candidate':causal_results['causal-candidate'][0],'changed_rng_control':control_diff,
         'inputs_sha256':digest(causal_inputs),'scope':'first completed gameplay dispatch only; boot video timing and later waits unproven'}
     causal_comparisons=compare(original,causal_results['causal-candidate'])
-    if any(row['differences'] for row in causal_comparisons):
+    if args.frames==320 and any(row['differences'] for row in causal_comparisons):
         raise ValueError('later causal completion semantic mismatch')
     prefix_controls=[{'ordinal':i,'differences':{key:{'candidate':a['state'][key],'changed':b['state'][key]} for key in SEMANTIC if a['state'][key]!=b['state'][key]}}
         for i,(a,b) in enumerate(zip(causal_results['causal-candidate'],causal_results['causal-control']),1)]
     if not any(row['differences'] for row in prefix_controls): raise ValueError('changed causal prefix escaped detection')
-    verdict['causal_update_prefix']={'semantic_match':True,'completed_updates':len(causal_comparisons),
+    verdict['causal_update_prefix']={'semantic_match':not any(row['differences'] for row in causal_comparisons),'completed_updates':len(causal_comparisons),
+        'candidate_completed_updates':len(causal_results['causal-candidate']),'native_completed_updates':len(original),
+        'completion_count_match':len(causal_results['causal-candidate'])==len(original),
+        'matching_causal_prefix':min(next((i for i,row in enumerate(causal_comparisons) if row['differences']),len(causal_comparisons)),verdict['causal-candidate'].get('first_poll_provenance_failure',{}).get('ordinal',len(causal_comparisons)+1)-1),
+        'matching_semantic_prefix':next((i for i,row in enumerate(causal_comparisons) if row['differences']),len(causal_comparisons)),
         'comparisons':causal_comparisons,'changed_rng_control':prefix_controls,'polls_executed':len(polls),
         'scope':'source-ordered controller and completed-update semantic fields; native waits and video timing remain retained but unmapped',
         'explicit_native_wait_events':[row['source_event'] for row in mapped if row['kind']=='explicit-wait']}

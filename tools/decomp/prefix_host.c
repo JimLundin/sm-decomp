@@ -19,6 +19,12 @@ static void Observe(const char *kind) {
   fprintf(events, ",\"waiting\":%u}}\n", waiting_for_nmi);
   fflush(events);
 }
+void __real_RtlApuUpload(const uint8 *data);
+void __wrap_RtlApuUpload(const uint8 *data) {
+  Observe("upload-entry");
+  __real_RtlApuUpload(data);
+  Observe("upload-return");
+}
 void __real_ReadJoypadInputs(void);
 void __wrap_ReadJoypadInputs(void) {
   if (causal_polling) { Observe("relocated-main-poll-suppressed"); return; }
@@ -111,6 +117,7 @@ int main(int argc,char **argv) {
     scheduled_pad = pad;
     unsigned reversed=0;
     for (int bit=0;bit<16;bit++) reversed|=((pad>>bit)&1)<<(15-bit);
+    HeadlessPrepareFrame();
     RtlRunFrame(reversed);
     if (g_fail) return 3;
   }

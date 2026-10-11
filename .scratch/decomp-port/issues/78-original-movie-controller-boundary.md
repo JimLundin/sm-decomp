@@ -144,3 +144,37 @@ removed.17,074,159,616bytes available. Authenticated finalbinary/allhost snapsho
 includingframeheader,nativeallWRAM/events,causalinputs,all10candidate/control
 completedstates,terminals/events/logs againstverdict aftercleanup. Noimplementer
 worktree; retained sealeddependencies prove boundedcomparison only.
+
+## Forty-nine causal updates and hardware-only upload waits
+
+Extended actualoriginal capture to640frames and recorded passive upload entry,
+allreal2140..2143reads, normal/short/abortreturn hooks. Realcross-TU
+RtlApuUpload entry/returnobservations record2Cuploads. Bootnativeupload168→254
+has278147registerreads; music316→355 has140879reads. Both contain0NMI/0controller
+polls. Thirdnativeuploadstarts639 and remainsunfinished. These are actual
+hardware-only SPC handshake waits; insertingCgameplay/NMIsteps would bewrong.
+RealAPUwaitruntime remainsunfinished; no fabricatedwaitframes implemented.
+
+Source-stablefinal640frame evidence:
+`out/port/controller-apu-wait/20261011T065804.359904Z/verdict.json`.
+Matchingcausalprefix49updates throughnativeframe393. Firstpollprovenancefailure
+ordinal50/frame396:199C precedingpolls versus200native.82pairedsemanticmatches
+are diagnosticonly beyondthatfailure. Native229completedupdates/C231; explicit
+completion_count_match false and overallnonaccepting. Percompletionpollcount/
+order stillgate claims; nofuturestate search or WRAMcorrection. Laterframe355
+pollstack23→21 belongs todifferentcallsite; offline arithmeticfixtures remain
+explicitlyfirst160pre320calls ratherthanrelaxingstackexclusion.
+
+Prefixhost nowusesexisting HeadlessPrepareFrame beforeeachRtlRunFrame, handling
+knownSoftResetffffsentinel viaactualresetcoroutine; priorraw640SIGSEGV atstep346
+is retained. Finalraw and causalprocesses complete.3public320prefix tests
+pass62.582s; diffcheck passes. Ticket78 remainsclaimed actuallaterpoll/wait
+alignment unresolved.
+
+Cleanup applied/deduplicated all5finishedAPUwaitruns065135/065323/065458/065630/
+065804:0bytes reclaimed (unsupported nonacceptingformat), includingfailedruns.
+Publictestdirectories automaticallyremoved.13,201,436,672bytesavailable during
+finalrun; noimplementerworktree. Postcleanup authenticated finalbinary/allhost
+snapshots includingframeheader,nativeallWRAM/events,causalinputs,allcandidate/
+controlcompletedstates/terminals/events/logs againstverdict. RetainpassiveAPU
+captureandpriorfailureevidence; nosealedartifactsremoved.
