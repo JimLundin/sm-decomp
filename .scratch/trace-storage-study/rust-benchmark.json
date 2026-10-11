@@ -1,0 +1,128 @@
+{
+  "binary": "/tmp/sm-trace-storage-study/out/storage-rust-release/release/sm-evidence",
+  "store": "/tmp/sm-trace-storage-study/out/storage-rust-final/store",
+  "binary_sha256": "6f711f1d3b1947534b3aa078e5af730562cce1029914dc002692cfb30f98cbd9",
+  "captures": [
+    {
+      "source": "/home/jim/sm-decomp/out/port/projectile-movement-live/20261011T061431.667466Z/c-0",
+      "files": 1001,
+      "logical_bytes": 5264039623,
+      "ingest": {
+        "seconds": 138.09977171199898,
+        "stdout": "{\"new_objects\":189086,\"observations\":\"c01b49b1c311019e0a581a0870f8605e5a0452c9c09f1277e72ed0f6981413e4\",\"pack\":\"4b33b6cb25fddb41873da1c0ff3927647275020241fea8d3b8bfee792ae5ef6a\",\"run\":\"ec931a1ceb3347bb6eec0f4bc52ba756490ed40df5eee4c2c35471ee7b180806\",\"seconds\":138.092660859,\"shared_objects\":1838088}\n"
+      },
+      "new_objects": 189086,
+      "observations": "c01b49b1c311019e0a581a0870f8605e5a0452c9c09f1277e72ed0f6981413e4",
+      "pack": "4b33b6cb25fddb41873da1c0ff3927647275020241fea8d3b8bfee792ae5ef6a",
+      "run": "ec931a1ceb3347bb6eec0f4bc52ba756490ed40df5eee4c2c35471ee7b180806",
+      "seconds": 138.092660859,
+      "shared_objects": 1838088,
+      "verify": {
+        "seconds": 47.20876308900006,
+        "stdout": "{\"bytes\":5264039623,\"files\":1001,\"seconds\":47.108028814}\n"
+      },
+      "stats": {
+        "objects": 189086,
+        "packs": 1,
+        "stored_bytes": 27377604
+      },
+      "frame_60_cold": {
+        "seconds": 0.3073917530000472,
+        "stdout": null
+      },
+      "snapshot_cold": {
+        "seconds": 0.2917817420002393,
+        "stdout": null
+      },
+      "final_closure_verification": {
+        "seconds": 42.58026037300078,
+        "stdout": "{\"bytes\":5264039623,\"files\":1001,\"seconds\":42.547118796}\n"
+      }
+    },
+    {
+      "source": "/home/jim/sm-decomp/out/port/room-plm-current-live/20261010T224032.887967Z/c-0",
+      "files": 143,
+      "logical_bytes": 470433851,
+      "ingest": {
+        "seconds": 10.017856075999589,
+        "stdout": "{\"new_objects\":542,\"observations\":\"ff5d49aae3d694b95c5e55f49d1f63663820471b745b7310e563f5b0c9bd9577\",\"pack\":\"7f7a179d5b15496e10df29ed4e58e8618cf50a7efadbc0282b72a83a8c079bab\",\"run\":\"9e1a5db7fd4aec5f9f9b20eb3b2a76e3c4cda8d9bfd9232a895f3aef3d180569\",\"seconds\":10.011010285,\"shared_objects\":172704}\n"
+      },
+      "new_objects": 542,
+      "observations": "ff5d49aae3d694b95c5e55f49d1f63663820471b745b7310e563f5b0c9bd9577",
+      "pack": "7f7a179d5b15496e10df29ed4e58e8618cf50a7efadbc0282b72a83a8c079bab",
+      "run": "9e1a5db7fd4aec5f9f9b20eb3b2a76e3c4cda8d9bfd9232a895f3aef3d180569",
+      "seconds": 10.011010285,
+      "shared_objects": 172704,
+      "verify": {
+        "seconds": 5.548344513999837,
+        "stdout": "{\"bytes\":470433851,\"files\":143,\"seconds\":5.511455139}\n"
+      },
+      "stats": {
+        "objects": 189628,
+        "packs": 2,
+        "stored_bytes": 27457588
+      },
+      "frame_60_cold": {
+        "seconds": 0.23878663499999675,
+        "stdout": null
+      },
+      "snapshot_cold": {
+        "seconds": 0.1906472959999519,
+        "stdout": null
+      },
+      "final_closure_verification": {
+        "seconds": 3.1225204709990066,
+        "stdout": "{\"bytes\":470433851,\"files\":143,\"seconds\":3.085307073}\n"
+      }
+    }
+  ],
+  "pack_sha256": {
+    "0000000000000000-4b33b6cb25fddb41873da1c0ff3927647275020241fea8d3b8bfee792ae5ef6a.pack": "4b33b6cb25fddb41873da1c0ff3927647275020241fea8d3b8bfee792ae5ef6a",
+    "0000000000000001-7f7a179d5b15496e10df29ed4e58e8618cf50a7efadbc0282b72a83a8c079bab.pack": "7f7a179d5b15496e10df29ed4e58e8618cf50a7efadbc0282b72a83a8c079bab"
+  },
+  "timing_note": "First capture ingest used the initial unbuffered decoder. Later verification/second ingest used the buffered decoder; both share identical canonical/physical format. Primary binary hash is the binary at benchmark start. Current binary is authenticated separately.",
+  "current_binary_sha256": "07328b5eeaea01ceb5c0db88b98dfaeb5289219c466dc63b8c0f63a0471680c6",
+  "warm_reader": {
+    "frames": [
+      {
+        "events": 1108,
+        "frame": 60,
+        "seconds": 0.015977513
+      },
+      {
+        "events": 1112,
+        "frame": 614,
+        "seconds": 0.005349858
+      },
+      {
+        "events": 2061,
+        "frame": 9156,
+        "seconds": 0.008516665
+      },
+      {
+        "events": 3164,
+        "frame": 1408,
+        "seconds": 0.006505244
+      },
+      {
+        "events": 2176,
+        "frame": 72226,
+        "seconds": 0.006839882
+      }
+    ],
+    "open_seconds": 0.108662832,
+    "snapshot_seconds": [
+      0.003658908,
+      0.00230574,
+      0.002516305,
+      0.002296919,
+      0.002259691
+    ]
+  },
+  "native_microbenchmark": {
+    "events": 10000000,
+    "seconds": 2.244462566,
+    "event_pattern": "repeated alternating PPU data-port pairs; synthetic, not comparable to previous C sample distribution",
+    "integrated_runtime_measured": false
+  }
+}

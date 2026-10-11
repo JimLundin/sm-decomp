@@ -1,6 +1,6 @@
 # Trace and frame storage study
 
-Status: resolved
+Status: open
 
 Investigate lossless storage for translated-code validation in the isolated
 `research/trace-storage-format` worktree, starting at `8bbef1f`. Measure existing
@@ -16,6 +16,7 @@ This is a study, not authorization to migrate accepted evidence. The separate
 - [02 — Global-store comparison](issues/02-global-store-comparison.md)
 - [03 — Disk-backed storage spike](issues/03-storage-spike.md)
 - [04 — Matched other-worktree comparison](issues/04-other-spike-comparison.md)
+- [05 — Combined Rust evidence crate](issues/05-rust-evidence-crate.md)
 
 ## Integration evidence
 
