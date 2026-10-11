@@ -486,6 +486,10 @@ fn preinstruction_context(
 ) -> Result<(), &'static str> {
     let k = slot(k)?;
     match address {
+        0xdcc3 => {
+            r.set_word(0x1a4b + k, r.word(0xf7a));
+            r.set_word(0x1a93 + k, r.word(0xf7e).wrapping_sub(96));
+        }
         0xd9db => {
             let direction = r.word(0x1aff + k) >> 1;
             let (x, y) = match direction {
@@ -1864,6 +1868,10 @@ pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) ->
         }
         "EprojPreInstr_TimeBombSetJapaneseText" => {
             preinstruction(r, rom, 0xcafa, a as u16)?;
+            Ok(0)
+        }
+        "sub_86DCC3" => {
+            preinstruction(r, rom, 0xdcc3, a as u16)?;
             Ok(0)
         }
         "sub_86CFD5" | "sub_86CFE6" | "sub_86CFF8" => {
