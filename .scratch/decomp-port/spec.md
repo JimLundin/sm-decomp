@@ -206,3 +206,12 @@ live ownership remain open.
 Parallel allocation frontier: tickets70/71 add Botwoon spit quarter-circle
 velocity setup and Yapping Maw body linkage.257+385 actual-C cases match.
 Final combined tests/fmt/Clippy pass; live gameplay ownership remains open.
+
+Live admission investigation: ticket73 records dispatcher evidence authentication,
+actual-symbol registration and pre-mutation support selection required to admit
+bank86 coverage. Read-only parallel audit confirms existing live tooling cannot
+consume these dispatcher seals; no new live ownership claim is made.
+
+Enemy death allocation frontier: ticket72 adds native EF89 position/metadata,
+respawn flag and five death scripts.961 actual-C cases match; cleanup/evidence
+recorded in ticket72. Drop/pickup scheduling and live ownership remain open.
