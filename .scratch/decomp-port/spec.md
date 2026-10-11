@@ -292,3 +292,21 @@ fullWRAM. All otherWRAM matches, with wronginput/unrelatedWRAM rejectioncontrols
 and3publictests. Retained evidence authenticates after cleanup0bytes. Ticket78
 remainsclaimed: bootclearing/dispatch scheduling and originalmovie parity remain
 unfinished; ordinary replay remains nonaccepting.
+
+
+Host-aware caller coverage: ticket81/commitaf6dbd2 propagates mutable projectile
+host state through Ridley fireball terrain impact940E and descending frames.
+Horizontal collision has priority; impact publishes coordinates, frees/reuses a
+slot, allocates947Fexplosion and preserves sound gates.585 actual-C cases match
+WRAM/returns/host globals; independent tests/fullcrate checks pass. Cleanup
+394,264,576bytes; retained final evidence authenticated. Live admission remains
+open; unrelated opcode host propagation remains incomplete.
+
+Causal first update: commite354c34 restores native NMIpoll ownership and suppresses
+relocated main-entry poll in a separate bounded C subject.150actual prelude
+samples execute in original order before real reset clearing. First completed
+update matches all compared semantic fields at originalframe272/event1025,
+Cstep151/state1/RNG758/inputs0; poll1030 occurs afterward. ChangedRNGcontrol
+yields759;3publictests pass. Final retained evidence authenticated after cleanup
+0bytes. Ticket78claimed: boot video timing/later waits and full movie parity
+remain unproven; broad replay remains nonaccepting.
