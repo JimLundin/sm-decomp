@@ -261,3 +261,17 @@ executes11times and Y13times per mixed process; all RAM/effects/progress match
 and CPUfallback0. Combinedmovement0hits remains unexercised. Ticket73resolved
 for safe leaf integration; broader scheduler/allocator and original-ROM timing
 remain open. Cleanup reclaimed19,355,467,749bytes; retained hashes authenticate.
+
+
+Pickup collection frontier: ticket79 extends EFE0 through expiration, grapple
+proximity, Samus-radius collision, all five inventory rewards, reserve handling
+and sound refusal. Initial2561C comparisons pass; final2804case evidence includes
+orthogonal grapple-delay/radius/inventory/audio boundary cases and matches C.
+Ticket79resolved in commitdc8b934; both verdicts authenticate after cleanup
+reclaimed703,987,712bytes. Live pickup ownership remains unproven.
+
+Controller timing diagnosis: ticket78 records actual event ordering: first
+original completion1025 precedes poll1030 at frame272, while diagnostic poll-as-
+step replay assigns that future poll to its corresponding C completion. New
+causal ledger retains prelude polls and boot clearing; full mapping remains
+nonaccepting until missing boot/NMI polling and reset-clear boundaries are modeled.
