@@ -753,3 +753,21 @@ fn paired_projectile_motion_negates_complete_fractional_velocity() {
     assert_eq!(r.word(0x1a93), 197);
     assert_eq!(r.word(0x1a6f), 0xc000);
 }
+
+#[test]
+fn draygon_projectile_moves_after_power_bomb_deletes_it() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x1997, 1);
+    r.set_word(0x1a4b, 100);
+    r.set_word(0x1a93, 100);
+    r.set_word(0x1ab7, 1);
+    r.set_word(0xcea, 0x1000);
+    r.set_word(0xce2, 100);
+    r.set_word(0xce4, 100);
+    r.set_word(0xa66, 3);
+    port::enemy_projectile_instructions::preinstruction(&mut r, &[], 0x8dff, 0).unwrap();
+    assert_eq!(r.word(0x1997), 0);
+    assert_eq!(r.word(0xa66), 0);
+    assert_eq!(r.word(0x1a4b), 101);
+}

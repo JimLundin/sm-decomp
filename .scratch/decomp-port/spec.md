@@ -183,3 +183,7 @@ remains open.
 Paired projectile motion frontier: ticket64 ports Draygon shared E73E
 16.16 movement and E722 fixed extent predicate. 321 actual-C cases match;
 full Draygon scheduling and live ownership remain open.
+
+Draygon scheduling frontier: ticket65 adds power-bomb collision and turret/gunk
+paired movement/proximity updates. 897 actual-C cases match. Allocation,
+attached gunk and live gameplay ownership remain open.

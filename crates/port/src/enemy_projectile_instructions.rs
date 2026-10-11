@@ -301,6 +301,20 @@ fn lavaquake_arc(r: &mut Wram<'_>, rom: &[u8], k: usize, state: u16) -> Result<(
 pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Result<(), &'static str> {
     let k = slot(k)?;
     match address {
+        0x8dff | 0x8e0f => {
+            dispatch_rom(r, rom, "EprojPowerBombCollision", k as i32, 0)?;
+            dispatch_rom(r, rom, "Eproj_FuncE73E_MoveXY", k as i32, 0)?;
+            let abs = |v: u16| if v & 0x8000 != 0 { v.wrapping_neg() } else { v };
+            let near = address == 0x8e0f
+                && (abs(r.word(0xaf6).wrapping_sub(r.word(0x1a4b + k))).wrapping_sub(16) as i16) < 0
+                && (abs(r.word(0xafa).wrapping_sub(r.word(0x1a93 + k))).wrapping_sub(20) as i16) < 0;
+            if near {
+                r.set_word(0x1b47 + k, 0x8c38);
+                r.set_word(0x1b8f + k, 1);
+            } else if r.word(0x1a4b + k) >= 512 || r.word(0x1a93 + k) >= 512 {
+                r.set_word(0x1997 + k, 0);
+            }
+        }
         0x8a7d => {
             move_y(r, k as u16)?;
             if r.word(0x1a93 + k) >= r.word(0x19df + k) {
@@ -1005,6 +1019,20 @@ pub fn run_all(r: &mut Wram<'_>, rom: &[u8], mut budget: usize) -> Result<(), &'
 }
 pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) -> Result<u32, &'static str> {
     match name {
+        "EprojPowerBombCollision" => {
+            let k = slot(a as u16)?;
+            let radius = r.word(0xcea) >> 8;
+            let ry = (radius + (radius & 1) + (r.word(0xcea) >> 9)) >> 1;
+            let abs = |v: u16| if v & 0x8000 != 0 { v.wrapping_neg() } else { v };
+            if radius != 0
+                && abs(r.word(0xce2).wrapping_sub(r.word(0x1a4b + k))) < radius
+                && abs(r.word(0xce4).wrapping_sub(r.word(0x1a93 + k))) < ry
+            {
+                r.set_word(0x1997 + k, 0);
+                r.set_word(0xa66, 0);
+            }
+            Ok(0)
+        }
         "Eproj_FuncE722" => {
             let k = slot(a as u16)?;
             Ok(u32::from(r.word(0x1a4b + k) >= 512 || r.word(0x1a93 + k) >= 512))
