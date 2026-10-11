@@ -295,11 +295,11 @@ fn lavaquake_arc(r: &mut Wram<'_>, rom: &[u8], k: usize, state: u16) -> Result<(
 pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Result<(), &'static str> {
     let k = slot(k)?;
     match address {
-        0xdb5b | 0xdf39 => {
+        0xdb5b | 0xdf39 | 0xe049 => {
             let state = r.word(0x1aff + k);
             let velocity = match (address, state) {
-                (0xdb5b, 0xdb62) | (0xdf39, 0xdf40) => r.word(0x1adb + k),
-                (0xdb5b, 0xdb8c) | (0xdf39, 0xdf6a) => r.word(0x1ab7 + k),
+                (0xdb5b, 0xdb62) | (0xdf39, 0xdf40) | (0xe049, 0xe050) => r.word(0x1adb + k),
+                (0xdb5b, 0xdb8c) | (0xdf39, 0xdf6a) | (0xe049, 0xe07a) => r.word(0x1ab7 + k),
                 _ => return Err("unsupported horizontal enemy projectile state"),
             };
             add_hilo(r, k, 0x1a4b, 0x1a27, velocity);
@@ -307,8 +307,8 @@ pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Res
                 r.set_word(0x1997 + k, 0);
             }
         }
-        0xdb62 | 0xdb8c => {
-            let velocity = r.word(if address == 0xdb62 { 0x1adb } else { 0x1ab7 } + k);
+        0xdb62 | 0xdb8c | 0xe050 | 0xe07a => {
+            let velocity = r.word(if matches!(address, 0xdb62 | 0xe050) { 0x1adb } else { 0x1ab7 } + k);
             add_hilo(r, k, 0x1a4b, 0x1a27, velocity);
         }
         0xdcee => {

@@ -163,3 +163,7 @@ creation host-state seam and live gameplay ownership remain open.
 Nami/Fune projectile frontier: ticket59 ports fireball and DBF2 allocation/
 horizontal motion with ROM speed selection and inclusive camera culling.
 769 actual-C cases match. Drop-spawn host seam and live ownership remain open.
+
+Lavaman thrown-lava frontier: ticket60 adds native allocation and horizontal
+scheduling, with 385 actual-C cases plus 769 shared-path regression cases.
+Live gameplay ownership remains open.

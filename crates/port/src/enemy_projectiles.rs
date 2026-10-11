@@ -75,7 +75,7 @@ pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) ->
 fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'static str> {
     let i = param as usize / 2;
     let table = match init {
-        0xdb18 if r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => None,
+        0xdb18 | 0xe000 if r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => None,
         0xded6 if r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => {
             let row = u16::from(r.byte(0xfb6 + usize::from(r.word(0xe54))));
             if row >= 8 {
@@ -242,6 +242,7 @@ fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'sta
             | 0xdca3
             | 0xdcd4
             | 0xdb18
+            | 0xe000
             | 0xded6
             | 0xb8b5
             | 0xb8e8
@@ -279,16 +280,28 @@ pub(crate) fn random(r: &mut Wram<'_>) -> u16 {
     n
 }
 fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> Result<(), &'static str> {
-    if matches!(init, 0xdb18 | 0xded6) {
+    if matches!(init, 0xdb18 | 0xded6 | 0xe000) {
         let fireball = init == 0xded6;
-        r.set_word(0x1b47 + k, if fireball { if param == 0 { 0xde96 } else { 0xdea6 } } else { 0xdb0c });
+        let lava = init == 0xe000;
+        r.set_word(
+            0x1b47 + k,
+            if lava {
+                if param == 0 { 0xdfd8 } else { 0xdfde }
+            } else if fireball {
+                if param == 0 { 0xde96 } else { 0xdea6 }
+            } else {
+                0xdb0c
+            },
+        );
         r.set_word(
             0x1aff + k,
-            match (fireball, param == 0) {
-                (true, true) => 0xdf40,
-                (true, false) => 0xdf6a,
-                (false, true) => 0xdb62,
-                (false, false) => 0xdb8c,
+            match (init, param == 0) {
+                (0xe000, true) => 0xe050,
+                (0xe000, false) => 0xe07a,
+                (0xded6, true) => 0xdf40,
+                (0xded6, false) => 0xdf6a,
+                (_, true) => 0xdb62,
+                (_, false) => 0xdb8c,
             },
         );
         let enemy = 0xf78 + usize::from(r.word(0xe54));
@@ -301,7 +314,7 @@ fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> 
             let row = u16::from(r.byte(enemy + 0x3e));
             (word(rom, 0xdeb6 + row * 4)?, word(rom, 0xdeb8 + row * 4)?)
         } else {
-            (0xff00, 0x100)
+            if lava { (0xfd00, 0x300) } else { (0xff00, 0x100) }
         };
         r.set_word(0x1adb + k, vy);
         r.set_word(0x1ab7 + k, vx);
