@@ -33,7 +33,7 @@ pub fn move_xy(r: &mut Wram<'_>, k: u16) -> Result<u16, &'static str> {
 }
 /// Execute one opcode. Zero stops this frame; other returns are bank86 continuations.
 pub fn instruction(r: &mut Wram<'_>, rom: &[u8], opcode: u16, pc: u16, k: u16) -> Result<u16, &'static str> {
-    if matches!(opcode, 0xab8a | 0x9270 | 0x8c68 | 0xdc61) {
+    if matches!(opcode, 0xab8a | 0x9270 | 0x8c68 | 0xdc61 | 0xdc77) {
         return Err("projectile instruction requires host context");
     }
     instruction_context(r, rom, opcode, pc, k, None)
@@ -58,6 +58,13 @@ fn instruction_context(
 ) -> Result<u16, &'static str> {
     let k = slot(k)?;
     match opcode {
+        0xdc77 => {
+            let host = host.ok_or("projectile instruction requires host context")?;
+            host.x = r.word(0x1a4b + k);
+            host.y = r.word(0x1a93 + k);
+            crate::enemy_projectiles::spawn_room_with_host(r, rom, 0xde7a, 0, host)?;
+            Ok(pc)
+        }
         0xab8a | 0x9270 | 0x8c68 | 0xdc61 => {
             let host = host.ok_or("projectile instruction requires host context")?;
             let header = match opcode {

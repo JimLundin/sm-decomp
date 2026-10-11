@@ -66,7 +66,7 @@ fn spawn_context(
         return Ok(());
     };
     let init = word(rom, definition)?;
-    if matches!(init, 0x947f | 0xe468 | 0xef29) {
+    if matches!(init, 0x947f | 0xe468 | 0xef29 | 0xdc8d) {
         host.ok_or("projectile initializer requires host context")?;
         if init == 0xef29 {
             for drop in 1..6 {
@@ -112,7 +112,7 @@ fn spawn_context(
     for p in [0x1aff, 0x1b23, 0x19df, 0x1a27, 0x1a6f, 0x1bfb] {
         r.set_word(p + k, 0);
     }
-    if let Some(host) = host.filter(|_| matches!(init, 0x947f | 0xe468 | 0xef29)) {
+    if let Some(host) = host.filter(|_| matches!(init, 0x947f | 0xe468 | 0xef29 | 0xdc8d)) {
         r.set_word(0x1a4b + k, host.x);
         r.set_word(0x1a93 + k, host.y);
         match init {
@@ -121,6 +121,10 @@ fn spawn_context(
                 r.set_word(0x1aff + k, parameter);
                 r.set_word(0x1ab7 + k, 0);
                 r.set_word(0x1adb + k, 0);
+            }
+            0xdc8d => {
+                r.set_word(0x1b23 + k, host.x);
+                r.set_word(0x19bb + k, 512);
             }
             0xe468 => r.set_word(0x1b47 + k, word(rom, 0xe42c + parameter * 2)?),
             _ => {

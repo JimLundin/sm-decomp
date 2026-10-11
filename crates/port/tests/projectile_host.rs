@@ -112,3 +112,22 @@ fn legacy_drop_instruction_refuses_before_point_or_wram_changes() {
     );
     assert_eq!(bytes, before);
 }
+
+#[test]
+fn spore_spawn_keeps_source_x_as_movement_direction_and_host_point() {
+    let mut rom = vec![0; 0x38000];
+    rom[0x35e7a..0x35e7c].copy_from_slice(&0xdc8du16.to_le_bytes());
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x1a4b, 128);
+    r.set_word(0x1a93, 520);
+    let mut host = ProjectileHost { r22: 55, ..Default::default() };
+    let result =
+        port::enemy_projectile_instructions::instruction_with_host(&mut r, &rom, 0xdc77, 0x9000, 0, &mut host).unwrap();
+    assert_eq!(result, 0x9000);
+    assert_eq!((host.x, host.y), (128, 520));
+    assert_eq!(host.r22, 55);
+    assert_eq!(r.word(0x1b23 + 34), 128);
+    assert_eq!(r.word(0x19bb + 34), 512);
+    assert_eq!(r.word(0x1a4b + 34), 128);
+}
