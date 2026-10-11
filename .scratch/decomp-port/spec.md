@@ -221,3 +221,16 @@ dispatcher leaf contracts and requires subsystem-specific Rust hits. Ticket74
 seals385 actual-C movement cases.9000/18000 prefixes match state/effects across
 eight processes but leaves execute zero times; actual leaf ownership remains
 unproven and ticket73 stays claimed.
+
+Enemy drop-selection frontier: ticket75/commitbd5ad1d ports RandomDropRoutine
+weighted selection, inventory eligibility and health-bias hysteresis.1,794actual-C
+cases include every RNG zero-byte retry seed. Full tests/fmt/Clippy pass;
+cleanup reclaimed503,840,768bytes and retained evidence authenticated.
+Live bank86 admission replay of all129712supplied frames is underway separately.
+
+Full-movie bank86 admission attempt: commit e51e552/ticket73 extends bounded
+replay timeout and attempts all129712inputs with fresh385-case leaf evidence.
+Reference C crashes at43188before mixed processes: game_stateffff from SoftReset
+indexes45-entry game-state table at65535. Ticket76 records exact debugger
+reproduction/backtraces and remaining correct runtime-reset work. No live leaf
+ownership claim. Diagnostic and replay cleanup measured in tickets73/76.
