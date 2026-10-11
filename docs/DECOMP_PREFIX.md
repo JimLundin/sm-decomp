@@ -208,3 +208,25 @@ initialization$81A038, and Kraid transfer$A7C29A. Only the file-selection call i
 exercised here. The omitted-screen-wait control restores the prior ordinal52
 poll-count failure, separately from the RNG and omitted-HDMA-wait controls.
 Overall acceptance still requires hardware timing and full state validation.
+
+## Captured terminal completion
+
+The causal host accepts an observed native completion count as its terminal
+boundary. After the last captured poll, it executes a pending real dispatch
+only when a native completion remains. At that actual completion it records
+WRAM and stops before the uncaptured next NMI/poll. An unfinished continuation
+that needs another sample rejects at EOF; no last sample is repeated. Completed
+nested waits remain excluded from the dispatch count.
+
+`--reuse-native <retained-run>` rebuilds and executes new C subjects against an
+existing original capture. It authenticates frame count, movie/ROM identity,
+emulator/observer hashes, native event bytes and all native WRAM snapshots.
+The verdict seals the referenced capture verdict and identifies reuse explicitly;
+it does not claim a new ROM execution. Byte-identical timelines can share their
+immutable file after SHA256 comparison.
+
+The 1600-frame terminal replay now matches all1097causal updates, including the
+last native completion at frame1600 with RNG883. Public engine controls check
+EOF before a required boot continuation, completion with no next poll, and
+ordinary completed boundaries. Hardware timing and full WRAM parity remain
+unproved; the overall verdict stays nonaccepting.

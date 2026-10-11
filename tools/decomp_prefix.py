@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import shutil
 import sys
 import tarfile
 import zipfile
@@ -135,7 +136,25 @@ def investigate(args,run,verdict):
     exe=assets/'deps/lsnes/source/src/util/lsnes-dumpavi.util'
     command=[exe,'--dumper=INTERNAL-NULL','--rom-a='+str(rom),'--length='+str(args.frames),'--lua='+str(lua),movie]
     env=dict(os.environ,LD_LIBRARY_PATH=str(assets/'deps/lsnes-build-deps/usr/lib/x86_64-linux-gnu'),XDG_CONFIG_HOME=str(native/'config'))
-    invoke(command,native,args.timeout,env)
+    if args.reuse_native:
+        retained=args.reuse_native.resolve()
+        prior=json.loads((retained/'verdict.json').read_text())
+        if prior['requested_frames']!=args.frames or prior['movie_sha256']!=verdict['movie_sha256'] or prior['rom_sha256']!=ROM_HASH:
+            raise ValueError('reused native frame/movie identity differs')
+        if digest(retained/'native/observe.lua')!=prior['native']['observer_sha256']:
+            raise ValueError('reused native observer hash differs')
+        if digest(exe)!=prior['native']['executable_sha256']:
+            raise ValueError('reused native emulator identity differs')
+        for name,expected in prior['native']['raw_states'].items():
+            if digest(retained/'native'/name)!=expected: raise ValueError('reused native state hash differs')
+        if digest(retained/'native/events.csv')!=prior['native']['events_sha256']: raise ValueError('reused native event hash differs')
+        shutil.rmtree(native)
+        shutil.copytree(retained/'native',native,copy_function=os.link)
+        verdict['reused_native_capture']={'verdict':str(retained/'verdict.json'),'verdict_sha256':digest(retained/'verdict.json'),
+            'policy':'immutable authenticated original capture reused; no new original execution'}
+        command=prior['native']['command']
+    else:
+        invoke(command,native,args.timeout,env)
     log=(native/'stderr.log').read_text()+(native/'stdout.log').read_text()
     if 'Finished!' not in log or 'bsnes v085 (Compatibility core)' not in log or 'snes_ntsc' not in log:
         raise ValueError('native completion/core/region missing')
@@ -210,7 +229,10 @@ def investigate(args,run,verdict):
     timeline={'contract':'decomp-prefix-map-v1','accepted':False,'events':mapped,'host_steps':steps,
               'policy':'retain every actual poll and every boundary; no future-state search, no corrective injection',
               'terminal':'all unfinished native dispatches retained; no completion inferred'}
-    write(run/'timeline.json',timeline)
+    if args.reuse_native and digest(args.reuse_native.resolve()/'timeline.json')==hashlib.sha256((json.dumps(timeline,indent=2)+'\n').encode()).hexdigest():
+        os.link(args.reuse_native.resolve()/'timeline.json',run/'timeline.json')
+    else:
+        write(run/'timeline.json',timeline)
     causality={'accepted':False,'policy':'source-order controller ledger; boot clearing invalidates prior controller ownership; no replay state injection',
                'events':controller_causality(events)}
     write(run/'controller-causality.json',causality)
@@ -303,7 +325,7 @@ def investigate(args,run,verdict):
     if args.frames>320: causal_modes.extend([('omitted-wait-control','omitted-causal-wait'),('omitted-screen-wait-control','omitted-causal-screen-wait')])
     for name,mode in causal_modes:
         directory=run/name;(directory/'fixtures').mkdir(parents=True);(directory/'saves').mkdir()
-        cmd=[run/'prefix-host',rom,causal_inputs,str(len(polls)),mode]
+        cmd=[run/'prefix-host',rom,causal_inputs,str(len(polls)),mode,str(len(original))]
         invoke(cmd,directory,args.timeout)
         records=[json.loads(line) for line in (directory/'events.jsonl').read_text().splitlines()]
         completed=[row for row in records if row['kind']=='dispatch-complete']
@@ -387,6 +409,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--asset-root',type=Path,default=ROOT)
     parser.add_argument('--movie',type=Path)
+    parser.add_argument('--reuse-native',type=Path,help='reuse an authenticated retained original capture without rerunning the ROM')
     parser.add_argument('--frames',type=int,default=320)
     parser.add_argument('--timeout',type=int,default=120)
     parser.add_argument('--output',type=Path,default=ROOT/'out/decomp/prefix')

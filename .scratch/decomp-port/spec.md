@@ -426,3 +426,11 @@ path. Bounded plain/compressed four-process runs match state/effects and all
 control skipped). Finished-run cleanup and authentication complete; historical
 diagnostic ROM sharing reclaimed 1,753,219,072 bytes without changing hashes.
 This is storage verification; full gameplay admission remains separate.
+
+
+Terminal replay boundary: ticket 78 now completes actual observed final dispatches
+without inventing a following controller sample. Reused authenticated original
+1600-frame capture verifies all 1,097 causal updates, matching completion counts
+and final RNG 883. Actual EOF controls and three public tests pass. All retained
+evidence authenticates after cleanup and lossless sharing reclaimed 2.97 GB of
+duplicate immutable files. Hardware/full-WRAM and full-movie parity remain open.

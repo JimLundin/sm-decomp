@@ -267,3 +267,66 @@ binary, all host snapshots, native WRAM/events, causal inputs, and all four
 causal subjects' completed states, terminals, events and process logs against
 the verdict. Remaining disk space: 7,567,847,424 bytes. No implementer worktree
 or active run remains. Retained sealed dependencies prove this bounded scope.
+
+## Source-unchanged 1600-frame extension and terminal boundary
+
+Fresh bounded original capture using the existing adapter:
+`out/port/controller-1600-frontier/20261011T072145.761041Z/verdict.json`.
+All 1,096 paired causal completed updates match through original frame 1599,
+with exact preceding controller order/count and semantic fields. All 1,248
+captured polls execute. There is no interior semantic or poll-provenance
+mismatch in that verified prefix. Native has 1,097 completions versus 1,096 C
+completions; completion_count_match remains false and overall nonaccepting.
+
+The remaining completion is a concrete terminal-converter omission. Native
+frame 1600 has controller return 781079, dispatch entry 781080, completion
+781081 (RNG 883), then an explicit wait and frame completion. No later poll is
+captured. The C poll-driven host stops immediately after consuming that last
+poll, leaving RNG 13229 before the final dispatch. This is not evidence of a
+matching final update; executing that true dispatch without inventing a next
+poll remains required. No source changes, state repair or new run were used.
+The causal frontier advances from 516 to 1,096 completed updates. Hardware-frame
+and full WRAM parity remain unproved; ticket 78 remains claimed.
+
+Cleanup applied and deduplicated the sole finished 1600-frame run: zero bytes
+reclaimed (unsupported nonaccepting format). After cleanup authenticated the
+binary, all host snapshots, native WRAM/events, causal inputs, and all four
+causal subjects' completed states, terminals, events and process logs against
+the verdict. Remaining space: 2,478,329,856 bytes. No active run or implementer
+worktree remains. No further capture was started.
+
+## Execute the observed final completion without inventing a poll
+
+Fixed the terminal omission using the observed native dispatch-complete count.
+The host continues after the last poll only if native captured a remaining
+completion. It executes the real pending dispatch, records its actual state,
+and returns before the uncaptured next NMI/poll. A continuation needing another
+sample rejects EOF. There are no repeated inputs, snapshot loads, corrective
+WRAM writes, or completion claims derived from matching state.
+
+Final rebuilt candidate evidence reuses authenticated original capture:
+`out/port/controller-terminal-seam/20261011T072946.717098Z/verdict.json`.
+All 1,097 causal updates now match through frame 1600, including final RNG 883;
+completion counts match. Original capture reuse is explicitly sealed by verdict
+hash, frame/movie/ROM identity, emulator/observer hashes, events and all WRAM.
+No new original-ROM capture occurred. The earlier 1,096-update diagnostic and
+first terminal prototype remain separate evidence. Hardware-frame/full WRAM/APU
+handshake parity is still unproved, so ticket 78 remains claimed.
+
+Public tests pass (3 tests, 56.180 seconds), including actual-engine terminal
+controls: 149 boot polls with required completion rejects missing continuation
+input; 150/151 polls with one completion succeed without invented next sample;
+160 polls with ten completions succeed. A first test expectation incorrectly
+expected the valid 150-poll terminal completion to reject; corrected after real
+execution showed the distinction. Final diff check passes.
+
+Both terminal replay runs received cleanup apply/dedup: zero utility bytes
+(unsupported nonaccepting format). Subsequently shared 14,128 byte-identical
+immutable artifacts across old 1600, prototype and final runs using streaming
+SHA256 before hardlink replacement: reclaimed 2,969,931,669 bytes. Native capture
+and identical timeline were already shared; timeline sharing reclaimed another
+703,748,353 bytes during prototype creation. All paths/hashes remain intact.
+Reauthenticated all three verdicts' binaries/hosts/native WRAM/events/timelines,
+causal inputs and all four causal subjects' states/terminals/events/logs after
+sharing. Free space after sharing: 4,354,621,440 bytes. Temporary public-test
+runs removed automatically; no implementer worktree or active verification run.

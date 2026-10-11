@@ -9,7 +9,7 @@ static unsigned long sequence, host_step, completed;
 static bool changed_gameplay, causal_polling;
 static unsigned scheduled_pad;
 static FILE *causal_inputs;
-static unsigned long causal_poll_count;
+static unsigned long causal_poll_count, causal_poll_limit, causal_completion_limit;
 static bool inside_vblank_wait, omit_vblank_wait, omit_screen_wait;
 static void Observe(const char *kind);
 void __wrap_Vector_NMI(void);
@@ -76,6 +76,7 @@ void __wrap_Vector_NMI(void) {
     snprintf(name,sizeof(name),"complete-%04lu.wram",++completed);
     FILE *state=fopen(name,"wb");
     if (!state || fwrite(g_ram,1,sizeof(g_ram),state)!=sizeof(g_ram) || fclose(state)) exit(2);
+    if (causal_polling && causal_poll_count == causal_poll_limit && completed == causal_completion_limit) return;
   } else Observe("continuation");
   __real_Vector_NMI();
   if (causal_polling) {
@@ -129,7 +130,7 @@ static int PollFixtures(const char *rom, const char *native, const char *cases, 
   return 0;
 }
 int main(int argc,char **argv) {
-  if (argc!=5) return 2;
+  if (argc!=5 && argc!=6) return 2;
   if (!strcmp(argv[4], "poll-fixtures")) return PollFixtures(argv[1], argv[2], argv[3], 0);
   if (!strcmp(argv[4], "changed-poll-fixtures")) return PollFixtures(argv[1], argv[2], argv[3], 1);
   if (!strcmp(argv[4], "changed-state-poll-fixtures")) return PollFixtures(argv[1], argv[2], argv[3], 2);
@@ -148,7 +149,9 @@ int main(int argc,char **argv) {
   PpuBeginDrawing(g_snes->snes_ppu,pixels,512*4,0);
   causal_inputs = inputs;
   unsigned long steps=strtoul(argv[3],NULL,10);
-  for (host_step=1;causal_polling ? causal_poll_count<steps : host_step<=steps;host_step++) {
+  causal_poll_limit=steps;
+  causal_completion_limit=argc==6 ? strtoul(argv[5],NULL,10) : 0;
+  for (host_step=1;causal_polling ? (causal_poll_count<steps || completed<causal_completion_limit) : host_step<=steps;host_step++) {
     unsigned pad;
     if (causal_polling) pad=scheduled_pad;
     else if (fscanf(inputs,"%x",&pad)!=1 || pad>0xffff) return 2;

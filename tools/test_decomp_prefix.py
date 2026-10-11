@@ -73,6 +73,19 @@ class PrefixCommandTests(unittest.TestCase):
             self.assertEqual(verdict['candidate']['initializations'], 1)
             self.assertTrue((run / 'native/events.csv').exists())
             self.assertTrue((run / 'candidate/terminal.bin').exists())
+            # Execute the real host with observed completion counts at both kinds
+            # of captured terminal boundary; never repeat the final sample.
+            for count,target,expected_code in ((149,1,4),(150,1,0),(151,1,0),(160,10,0)):
+                directory=run/f'terminal-control-{count}'
+                (directory/'fixtures').mkdir(parents=True);(directory/'saves').mkdir()
+                inputs=directory/'inputs';inputs.write_text(''.join(f"{row['hardware_pad']:04x}\n" for row in polls[:count]))
+                terminal=subprocess.run([str(run/'prefix-host'),str(ASSETS/'rom/sm.sfc'),str(inputs),str(count),'causal-polling',str(target)],
+                    cwd=directory,capture_output=True,text=True,timeout=120)
+                self.assertEqual(terminal.returncode,expected_code,terminal.stderr)
+                actual=[json.loads(line) for line in (directory/'events.jsonl').read_text().splitlines()]
+                done=[row for row in actual if row['kind']=='dispatch-complete']
+                if expected_code==0:self.assertEqual(len(done),target)
+
 
 
 class ControllerCausalityTests(unittest.TestCase):
