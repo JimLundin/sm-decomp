@@ -58,6 +58,93 @@ fn instruction_context(
 ) -> Result<u16, &'static str> {
     let k = slot(k)?;
     match opcode {
+        0x8171 => {
+            let address = u32::from(word(rom, pc)?) | (u32::from(byte(rom, pc.wrapping_add(2))?) << 16);
+            if address != 0x86c7fb { return Err("unsupported projectile function call"); }
+            crate::enemy_projectiles::spawn_room(r, rom, 0xcb75, r.word(0x1aff + k))?;
+            Ok(pc.wrapping_add(3))
+        }
+        0xcaee => {
+            r.set_word(0x786a, 0);
+            Ok(pc)
+        }
+        0xb3b8 => {
+            let enemy = usize::from(r.word(0x1b23 + k));
+            if enemy > 0x7c0 || enemy & 63 != 0 {
+                return Err("Kraid projectile enemy state extent");
+            }
+            if r.word(0x780c + enemy) & 0x8000 == 0 {
+                word(rom, pc)
+            } else {
+                Ok(pc.wrapping_add(2))
+            }
+        }
+        0x82a5 => {
+            let x = r.word(0xaf6).wrapping_sub(r.word(0x1a4b + k));
+            let y = r.word(0xafa).wrapping_sub(r.word(0x1a93 + k));
+            let angle = crate::enemy::dispatch_rom(r, rom, "CalculateAngleFromXY", i32::from(x), i32::from(y))? as u16;
+            let destination = slot(r.word(0x1991))?;
+            r.set_word(0x1aff + destination, angle.wrapping_mul(2));
+            r.set_word(0x1ab7 + destination, crate::enemy_projectiles::SINE[usize::from(angle) + 64] as u16);
+            r.set_word(0x1adb + destination, crate::enemy_projectiles::SINE[usize::from(angle)] as u16);
+            Ok(pc)
+        }
+        0x8cf6 | 0x8cfd => {
+            r.set_word(0x1a03 + k, if opcode == 0x8cf6 { 0x8dff } else { 0x8dca });
+            Ok(pc)
+        }
+        0x9475 => {
+            r.set_word(0x1bd7 + k, r.word(0x1bd7 + k) | 0x2000);
+            Ok(pc)
+        }
+        0xaf92 | 0xc8d0 => {
+            r.set_word(0x1a93 + k, r.word(0x1a93 + k).wrapping_add(if opcode == 0xaf92 { 0xfffc } else { 12 }));
+            Ok(pc)
+        }
+        0xb436 => {
+            r.set_word(0x1a4b + k, r.word(0x1aff + k));
+            r.set_word(0x1a93 + k, r.word(0x1b23 + k));
+            Ok(pc)
+        }
+        0xd1b6 => {
+            r.set_word(0x1bfb + k, (r.word(0x5e5) & 0x1f) + 1);
+            r.set_word(0x1a03 + k, 0xd0ca);
+            Ok(pc)
+        }
+        0xd15c => {
+            preinstruction(r, rom, 0xd0b3, k as u16)?;
+            preinstruction(r, rom, 0xd1e4, k as u16)?;
+            let mut magnitude = (r.word(0x5e5) & 0x300) + 2048;
+            r.set_word(0x1adb + k, magnitude.wrapping_neg());
+            let delta = r.word(0xf7a + usize::from(r.word(0x1b23 + k))).wrapping_sub(r.word(0x1a4b + k));
+            let absolute = if delta & 0x8000 != 0 { delta.wrapping_neg() } else { delta };
+            if (absolute.wrapping_sub(48) as i16) >= 0 { magnitude = if delta & 0x8000 != 0 { 0xffff } else { 0 }; }
+            r.set_word(0x1ab7 + k, if magnitude & 0x100 != 0 { (-512_i16) as u16 } else { 512 });
+            r.set_word(0x1a03 + k, 0xd0ec);
+            Ok(pc)
+        }
+        0xd1c7 => {
+            r.set_word(0x19bb + k, 0);
+            Ok(pc)
+        }
+        0xdc5a => {
+            r.set_word(0x1bd7 + k, 0x3000);
+            Ok(pc)
+        }
+        0xee8b | 0xee97 | 0xeea3 => {
+            let sound = match opcode { 0xee8b => 9, 0xee97 => 0x24, _ => 0xb };
+            crate::audio::queue_sfx(r, 1, (sound << 8) | 1)?;
+            Ok(pc)
+        }
+        0xece3 | 0xed17 => {
+            let radius = if opcode == 0xece3 { 32 } else { 16 };
+            let mask = radius * 2 - 1;
+            let random = crate::enemy_projectiles::random(r);
+            let x = r.word(0x1a4b + k).wrapping_add(random & mask).wrapping_sub(radius);
+            let y = r.word(0x1a93 + k).wrapping_add((random >> 8) & mask).wrapping_sub(radius);
+            crate::sprite_objects::create(r, rom, x, y, word(rom, pc)?, 0)?;
+            Ok(pc.wrapping_add(2))
+        }
         0xdc77 => {
             let host = host.ok_or("projectile instruction requires host context")?;
             host.x = r.word(0x1a4b + k);
@@ -399,6 +486,211 @@ fn preinstruction_context(
 ) -> Result<(), &'static str> {
     let k = slot(k)?;
     match address {
+        0xd9db => {
+            let direction = r.word(0x1aff + k) >> 1;
+            let (x, y) = match direction {
+                0 | 3 => (Some(0x1adb), None),
+                1 => (None, Some(0x1adb)),
+                2 | 5 => (Some(0x1ab7), None),
+                4 => (None, Some(0x1ab7)),
+                6 => (Some(0x1adb), Some(0x1adb)),
+                7 => (Some(0x1ab7), Some(0x1adb)),
+                8 => (Some(0x1adb), Some(0x1ab7)),
+                9 => (Some(0x1ab7), Some(0x1ab7)),
+                _ => return Err("invalid plant spike direction"),
+            };
+            if let Some(velocity) = x { add_hilo(r, k, 0x1a4b, 0x1a27, r.word(velocity + k)); }
+            if let Some(velocity) = y { add_hilo(r, k, 0x1a93, 0x1a6f, r.word(velocity + k)); }
+            let x = r.word(0x1a4b + k);
+            let y = r.word(0x1a93 + k);
+            let camera_x = r.word(0x911);
+            let camera_y = r.word(0x915);
+            if (x.wrapping_sub(camera_x) as i16) < 0
+                || (camera_x.wrapping_add(256).wrapping_sub(x) as i16) < 0
+                || (y.wrapping_sub(camera_y) as i16) < 0
+                || (camera_y.wrapping_add(256).wrapping_sub(y) as i16) < 0 {
+                r.set_word(0x1997 + k, 0);
+            }
+        }
+        0xd263 => {
+            const X: [i16; 8] = [0, 32, 32, 32, 0, -32, -32, -32];
+            const Y: [i16; 8] = [-32, -32, 0, 32, 32, 32, 0, -32];
+            let direction = usize::from(r.word(0x1aff + k));
+            let x = *X.get(direction).ok_or("invalid floater spike direction")?;
+            r.set_word(0x1ab7 + k, r.word(0x1ab7 + k).wrapping_add(x as u16));
+            let hit = if crate::enemy_projectile_collision::horizontal(r, rom, k as u16)? & 1 != 0 { true }
+            else {
+                r.set_word(0x1adb + k, r.word(0x1adb + k).wrapping_add(Y[direction] as u16));
+                crate::enemy_projectile_collision::vertical(r, rom, k as u16)? & 1 != 0
+            };
+            if hit {
+                r.set_word(0x1b47 + k, 0xd218);
+                r.set_word(0x1b8f + k, 1);
+            }
+        }
+        0xd0eb => {}
+        0xd0b3 => {
+            let timer = r.word(0x1aff + k);
+            if timer != 0 {
+                r.set_word(0x1aff + k, timer - 1);
+                if timer == 1 { crate::audio::queue_sfx(r, 1, 0x6c06)?; }
+            }
+        }
+        0xd1e4 => {
+            let enemy = r.word(0x1b23 + k);
+            if enemy > 0x7c0 || enemy & 63 != 0 { return Err("invalid Kago bug enemy slot"); }
+            let delta = r.word(0xf7a + usize::from(enemy)).wrapping_sub(r.word(0x1a4b + k));
+            let absolute = if delta & 0x8000 != 0 { delta.wrapping_neg() } else { delta };
+            if (absolute.wrapping_sub(23) as i16) >= 0 { r.set_word(0x1bd7 + k, r.word(0x1bd7 + k) | 0x8000); }
+        }
+        0xd0ca | 0xd0ec | 0xd128 => {
+            preinstruction(r, rom, 0xd0b3, k as u16)?;
+            preinstruction(r, rom, 0xd1e4, k as u16)?;
+            if address == 0xd0ca {
+                let timer = r.word(0x1bfb + k);
+                if timer != 0 { r.set_word(0x1bfb + k, timer - 1); }
+                else {
+                    r.set_word(0x1b47 + k, 0xd052);
+                    r.set_word(0x1b8f + k, 1);
+                    r.set_word(0x1a03 + k, 0xd0eb);
+                }
+            } else {
+                let horizontal = crate::enemy_projectile_collision::horizontal(r, rom, k as u16)?;
+                let mut transition = false;
+                if horizontal & 1 != 0 {
+                    r.set_word(0x1ab7 + k, 0);
+                    if address == 0xd0ec { r.set_word(0x1adb + k, 256); transition = true; }
+                } else if crate::enemy_projectile_collision::vertical(r, rom, k as u16)? & 1 != 0 {
+                    if address == 0xd0ec { r.set_word(0x1adb + k, 256); }
+                    transition = true;
+                } else {
+                    let velocity = r.word(0x1adb + k).wrapping_add(224);
+                    r.set_word(0x1adb + k, velocity);
+                    transition = address == 0xd0ec && (velocity as i16) >= 0;
+                }
+                if transition {
+                    r.set_word(0x1a03 + k, if address == 0xd0ec { 0xd128 } else { 0xd0eb });
+                    r.set_word(0x1b47 + k, if address == 0xd0ec { 0xd04a } else { 0xd03c });
+                    r.set_word(0x1b8f + k, 1);
+                }
+            }
+        }
+        0xcfd5 | 0xcfe6 => {
+            r.set_word(0x1a03 + k, 0xcff8);
+            r.set_word(0x1a4b + k, r.word(0x1a4b + k).wrapping_add(if address == 0xcfd5 { (-19_i16) as u16 } else { 19 }));
+        }
+        0xcff8 => {
+            if crate::enemy_projectile_collision::vertical(r, rom, k as u16)? & 1 != 0 {
+                r.set_word(0x1b47 + k, 0xcf56);
+                r.set_word(0x1b8f + k, 1);
+            } else if crate::enemy_projectile_collision::horizontal(r, rom, k as u16)? & 1 != 0 {
+                r.set_word(0x1ab7 + k, 0);
+            } else {
+                let velocity = r.word(0x1adb + k).wrapping_add(16);
+                r.set_word(0x1adb + k, if (velocity.wrapping_sub(512) as i16) >= 0 { 512 } else { velocity });
+            }
+        }
+        0xcafa => {
+            r.set_word(0x1ab7 + k, 0);
+            r.set_word(0x1adb + k, 0);
+            r.set_word(0x1a4b + k, 128);
+            r.set_word(0x1a93 + k, 192);
+        }
+        0xcbe7 | 0xcbea | 0xcc08 => {
+            let host = host.ok_or("projectile preinstruction requires host context")?;
+            let state = if address == 0xcbe7 { r.word(0x1aff + k) } else { address };
+            if !matches!(state, 0xcbea | 0xcc08) { return Err("unsupported falling Mother Brain tube state"); }
+            if state == 0xcbea {
+                host.x = r.word(0x1a4b + k);
+                host.y = r.word(0x1a93 + k).wrapping_add(8);
+                crate::enemy_projectiles::spawn_room_with_host(r, rom, 0xe509, 9, host)?;
+                r.set_word(0x1aff + k, 0xcc08);
+            }
+            r.set_word(0x1adb + k, r.word(0x1adb + k).wrapping_add(6));
+            let y = move_y(r, k as u16)?;
+            if (y.wrapping_sub(208) as i16) >= 0 {
+                r.set_word(0x1997 + k, 0);
+                host.x = r.word(0x1a4b + k);
+                host.y = y;
+                crate::enemy_projectiles::spawn_room_with_host(r, rom, 0xe509, 12, host)?;
+            }
+        }
+        0xc9d2 => {
+            let host = host.ok_or("projectile preinstruction requires host context")?;
+            let velocity = r.word(0x1ab7 + k);
+            let absolute = if velocity & 0x8000 != 0 { velocity.wrapping_neg() } else { velocity };
+            let slowed = absolute.wrapping_sub(16);
+            let slowed = if (slowed as i16) < 0 { 0 } else { slowed };
+            r.set_word(0x1ab7 + k, if velocity & 0x8000 != 0 { slowed.wrapping_neg() } else { slowed });
+            r.set_word(0x1adb + k, r.word(0x1adb + k).wrapping_add(32));
+            move_xy(r, k as u16)?;
+            let timer = r.word(0x1aff + k).wrapping_sub(1);
+            r.set_word(0x1aff + k, timer);
+            if timer & 0x8000 != 0 {
+                r.set_word(0x1997 + k, 0);
+                r.set_word(0x1a93 + k, r.word(0x1a93 + k).wrapping_sub(4));
+                host.x = r.word(0x1a4b + k);
+                host.y = r.word(0x1a93 + k);
+                crate::enemy_projectiles::spawn_room_with_host(r, rom, 0xe509, 9, host)?;
+            }
+        }
+        0xc914 | 0xc94c => {
+            let (x, y) = if address == 0xc914 { (0xf7a, 0xf7e) } else { (0xaf6, 0xafa) };
+            r.set_word(0x1a4b + k, r.word(x).wrapping_add(r.word(0x1ab7 + k)));
+            r.set_word(0x1a93 + k, r.word(y).wrapping_add(r.word(0x1adb + k)));
+        }
+        0xc84d => {
+            const OFFSETS: [(u16, u16); 6] = [(6, 20), (14, 18), (8, 23), (10, 19), (11, 25), (12, 18)];
+            let &(x, y) = OFFSETS.get(usize::from(r.word(0x1aff + k))).ok_or("invalid Mother Brain drool offset")?;
+            r.set_word(0x1a4b + k, r.word(0xfba).wrapping_add(x));
+            r.set_word(0x1a93 + k, r.word(0xfbe).wrapping_add(y));
+            r.set_word(0x1ab7 + k, 0);
+            r.set_word(0x1adb + k, 0);
+        }
+        0xc886 => {
+            r.set_word(0x1adb + k, r.word(0x1adb + k).wrapping_add(12));
+            if move_y(r, k as u16)? >= 0xd7 {
+                r.set_word(0x1a93 + k, r.word(0x1a93 + k).wrapping_sub(4));
+                r.set_word(0x1b47 + k, 0xc8e1);
+                r.set_word(0x1b8f + k, 1);
+            }
+        }
+        0xc814 => {
+            r.set_word(0x1a4b + k, r.word(0xfba));
+            r.set_word(0x1a93 + k, r.word(0xfbe));
+        }
+        0xa3a3 => r.set_word(0x923, 0),
+        0xa328 => {
+            let timer = r.word(0x1aff + k);
+            let expired = if timer == 0 {
+                true
+            } else {
+                let remaining = timer.wrapping_sub(1);
+                r.set_word(0x1aff + k, remaining);
+                (remaining as i16) <= 0
+            };
+            if expired {
+                let height = r.word(0xafa);
+                r.set_word(0x1a93 + k, height.wrapping_add(28));
+                let next_height = height.wrapping_add(1);
+                r.set_word(0xafa, next_height);
+                if (next_height.wrapping_sub(73) as i16) >= 0 {
+                    r.set_word(0xafa, 72);
+                    r.set_word(0x1b8f + k, 1);
+                    r.set_word(0x1b47 + k, 0xa28b);
+                    // SamusCode_0E releases the elevator's Samus frame handlers.
+                    r.set_word(0xa42, 0xe695);
+                    r.set_word(0xa44, 0xe8aa);
+                    // CallSomeSamusCode clears pending transitions for an odd result.
+                    for address in [0xa28, 0xa2a, 0xa2c] {
+                        r.set_word(address, 0xffff);
+                    }
+                    for address in [0xa2e, 0xa30, 0xa32] {
+                        r.set_word(address, 0);
+                    }
+                }
+            }
+        }
         0xa364 => {
             if r.word(0xafa) == 72 {
                 r.set_word(0x1b8f + k, 1);
@@ -1513,13 +1805,105 @@ pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) ->
             }
             Ok(0)
         }
+        "EprojInstr_SetPreInstrA" => {
+            let result = instruction(r, rom, 0x8cf6, b as u16, a as u16)?;
+            Ok(if result == 0 { 0 } else { 0x860000 | u32::from(result) })
+        }
+        "EprojInstr_SetPreInstrB" => {
+            let result = instruction(r, rom, 0x8cfd, b as u16, a as u16)?;
+            Ok(if result == 0 { 0 } else { 0x860000 | u32::from(result) })
+        }
+        "EprojInstr_DisableCollisionsWithSamus" => {
+            let result = instruction(r, rom, 0x9475, b as u16, a as u16)?;
+            Ok(if result == 0 { 0 } else { 0x860000 | u32::from(result) })
+        }
+        "EprojInstr_MoveY_Minus4" => {
+            let result = instruction(r, rom, 0xaf92, b as u16, a as u16)?;
+            Ok(if result == 0 { 0 } else { 0x860000 | u32::from(result) })
+        }
+        "EprojInstr_ResetXYpos2" => {
+            let result = instruction(r, rom, 0xb436, b as u16, a as u16)?;
+            Ok(if result == 0 { 0 } else { 0x860000 | u32::from(result) })
+        }
+        "EprojInstr_Add12ToY" => {
+            let result = instruction(r, rom, 0xc8d0, b as u16, a as u16)?;
+            Ok(if result == 0 { 0 } else { 0x860000 | u32::from(result) })
+        }
+        "EprojInstr_D1B6" => {
+            let result = instruction(r, rom, 0xd1b6, b as u16, a as u16)?;
+            Ok(if result == 0 { 0 } else { 0x860000 | u32::from(result) })
+        }
+        "EprojInstr_CalculateDirectionTowardsSamus" => {
+            let result = instruction(r, rom, 0x82a5, b as u16, a as u16)?;
+            Ok(if result == 0 { 0 } else { 0x860000 | u32::from(result) })
+        }
+        "EprojInstr_MotherBrainPurpleBreathIsActive" => {
+            let result = instruction(r, rom, 0xcaee, b as u16, a as u16)?;
+            Ok(if result == 0 { 0 } else { 0x860000 | u32::from(result) })
+        }
+        "EprojInstr_GotoIfFunc1" => {
+            let result = instruction(r, rom, 0xb3b8, b as u16, a as u16)?;
+            Ok(if result == 0 { 0 } else { 0x860000 | u32::from(result) })
+        }
+        "SpawnMotherBrainDeathBeam" => {
+            let k = slot(a as u16)?;
+            crate::enemy_projectiles::spawn_room(r, rom, 0xcb75, r.word(0x1aff + k))?;
+            Ok(0)
+        }
+        "EprojInstr_CallFunc" => {
+            let result = instruction(r, rom, 0x8171, b as u16, a as u16)?;
+            Ok(if result == 0 { 0 } else { 0x860000 | u32::from(result) })
+        }
+        "EprojPreInstr_MotherBrainRainbowBeam" => {
+            preinstruction(r, rom, 0xc814, a as u16)?;
+            Ok(0)
+        }
+        "EprojPreInstr_C84D" => {
+            preinstruction(r, rom, 0xc84d, a as u16)?;
+            Ok(0)
+        }
+        "EprojPreInstr_TimeBombSetJapaneseText" => {
+            preinstruction(r, rom, 0xcafa, a as u16)?;
+            Ok(0)
+        }
+        "sub_86CFD5" | "sub_86CFE6" | "sub_86CFF8" => {
+            preinstruction(r, rom, match name { "sub_86CFD5" => 0xcfd5, "sub_86CFE6" => 0xcfe6, _ => 0xcff8 }, a as u16)?;
+            Ok(0)
+        }
+        "EprojPreInit_MotherBrainsDeathExplosion_0" | "EprojPreInstr_MotherBrainsRainbowBeamExplosion" => {
+            preinstruction(r, rom, if name == "EprojPreInit_MotherBrainsDeathExplosion_0" { 0xc914 } else { 0xc94c }, a as u16)?;
+            Ok(0)
+        }
         "EprojInstruction" => {
             let pc = b as u16;
             let result = instruction(r, rom, word(rom, pc)?, pc.wrapping_add(2), a as u16)?;
             Ok(if result == 0 { 0 } else { 0x860000 | u32::from(result) })
         }
-        "EprojPreInstr_CeresElevatorPlatform" => {
-            preinstruction(r, rom, 0xa364, a as u16)?;
+        "EprojInstr_Delete" | "EprojInstr_SetPreInstr_" | "EprojInstr_ClearPreInstr" | "EprojInstr_Goto"
+        | "EprojInstr_ECE3" | "EprojInstr_ED17"
+        | "EprojInstr_D1C7" | "EprojInstr_DC5A" | "EprojInstr_A3BE" | "EprojInstr_GotoWithProbability25"
+        | "EprojInstr_QueueSfx2_9" | "EprojInstr_QueueSfx2_24" | "EprojInstr_QueueSfx2_B" => {
+            let opcode = match name {
+                "EprojInstr_Delete" => 0x8154,
+                "EprojInstr_SetPreInstr_" => 0x8161,
+                "EprojInstr_ClearPreInstr" => 0x816a,
+                "EprojInstr_ECE3" => 0xece3,
+                "EprojInstr_ED17" => 0xed17,
+                "EprojInstr_D1C7" => 0xd1c7,
+                "EprojInstr_DC5A" => 0xdc5a,
+                "EprojInstr_A3BE" => 0xa3be,
+                "EprojInstr_GotoWithProbability25" => 0xa456,
+                "EprojInstr_QueueSfx2_9" => 0xee8b,
+                "EprojInstr_QueueSfx2_24" => 0xee97,
+                "EprojInstr_QueueSfx2_B" => 0xeea3,
+                _ => 0x81ab,
+            };
+            let result = instruction(r, rom, opcode, b as u16, a as u16)?;
+            Ok(if result == 0 { 0 } else { 0x860000 | u32::from(result) })
+        }
+        "EprojPreInstr_CeresElevatorPlatform" | "EprojPreInstr_CeresElevatorPad" => {
+            let address = if name == "EprojPreInstr_CeresElevatorPad" { 0xa328 } else { 0xa364 };
+            preinstruction(r, rom, address, a as u16)?;
             Ok(0)
         }
         "EprojPreinstruction" => {

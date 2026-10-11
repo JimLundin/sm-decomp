@@ -52,6 +52,11 @@ pub fn setup(r: &mut Wram, address: u16, j: u16, amount: &mut i32) -> Result<u8,
     let j = slot(j)?;
     let b = block(r, j)?;
     match address {
+        0xbb09 => {
+            if crate::system::dispatch(r, "CheckEventHappened", 15, 0)? == 0 {
+                delete(r, j);
+            }
+        }
         0xc54d | 0xc56c | 0xc58b | 0xc5af | 0xc5d3 | 0xc5f1 | 0xc610 | 0xc627 => {
             let projectile = r.word(0xdde);
             if projectile > 18 || projectile & 1 != 0 {
@@ -396,6 +401,7 @@ pub fn supports_header(rom: &[u8], header: u16) -> Result<bool, &'static str> {
             | 0xd6f7
             | 0xab28
             | 0xb04a
+            | 0xbb09
             | 0xb0dc
             | 0xb113
             | 0xb33a
@@ -520,7 +526,6 @@ fn spawn_positioned(
     state.set_word(BLOCK + j, block);
     state.set_word(HEADER + j, header);
     state.set_word(0x1dc7 + j, argument);
-    state.set_word(VARIABLE + j, 0);
     state.set_word(0x1cd7 + j, preinstruction);
     state.set_word(INSTR + j, instructions);
     state.set_word(TIMER + j, 1);
@@ -820,6 +825,7 @@ pub fn dispatch_rom(r: &mut Wram, _rom: &[u8], name: &str, a: i32, _b: i32) -> R
         return Ok(0);
     }
     let address = match name {
+        "PlmSetup_BB30_CrateriaMainstreetEscape" => 0xbb09,
         "PlmSetup_C806_LeftGreenGateTrigger" => 0xc54d,
         "PlmSetup_C80A_RightGreenGateTrigger" => 0xc56c,
         "PlmSetup_C80E_LeftRedGateTrigger" => 0xc58b,

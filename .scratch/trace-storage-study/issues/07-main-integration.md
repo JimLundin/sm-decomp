@@ -36,3 +36,10 @@ unlinked the temporary dependency symlink, and removed the integrated
 `/tmp/sm-storage-main-check` worktree. No evidence depends on that checkout.
 Retained earlier sealed evidence/source snapshots stay in their original paths.
 Remaining free space after build cleanup: 263625818112 bytes (263.63 GB).
+
+Post-integration check with ongoing gameplay edits present: `main` and
+`decomp-port-integration` both point to `35945eb`. `cargo test -p port -p evidence
+--quiet`, strict Clippy for both crates/all targets and `git diff --check` pass.
+No new isolated checkout or sealed run created. Shared Cargo target retained
+for continued development; scoped cleanup utility reports zero eligible bytes.
+Available disk: 263,667,990,528 bytes. Gameplay edits remain uncommitted.

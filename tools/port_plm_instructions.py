@@ -161,9 +161,13 @@ fn main() {{
  std::fs::write(&args[5],bytes).unwrap(); println!("{{}}",result);
 }}
 """)
+    if module.name == "enemy_projectiles.rs":
+        # Allocator and instruction callbacks share ProjectileHost. Compile the
+        # allocator once so cross-module calls retain the same Rust type.
+        text = wrapper.read_text().replace('#[path = ' + json.dumps(str(module)) + '] mod family;', 'use memory::enemy_projectiles as family;')
+        wrapper.write_text(text)
     if manifest.get("projectile_host"):
         text = wrapper.read_text().replace('assert!(args.len()==6 || args.len()==7)', 'assert_eq!(args.len(),9)')
-        text = text.replace('#[path = ' + json.dumps(str(module)) + '] mod family;', 'use memory::enemy_projectiles as family;')
         text = text.replace(' let result=family::dispatch_rom(', ' let raw=std::fs::read(&args[7]).unwrap();assert_eq!(raw.len(),16);let mut words=[0;8];for (i,w) in words.iter_mut().enumerate(){*w=u16::from_le_bytes([raw[i*2],raw[i*2+1]]);}let mut host=family::ProjectileHost::from_words(words);\n let result=family::dispatch_host(')
         text = text.replace('&rom,&args[1]', '&rom,&mut host,&args[1]')
         text = text.replace(' std::fs::write(&args[5]', ' let out:Vec<u8>=host.words().into_iter().flat_map(u16::to_le_bytes).collect();std::fs::write(&args[8],out).unwrap();\n std::fs::write(&args[5]')

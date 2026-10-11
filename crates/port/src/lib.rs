@@ -3,6 +3,7 @@
 
 pub const WRAM_SIZE: usize = 0x20000;
 
+pub mod animated_tiles;
 pub mod audio;
 pub mod collision;
 pub mod enemy;
@@ -24,6 +25,7 @@ pub mod projectiles;
 pub mod room;
 pub mod samus;
 pub mod samus_control;
+pub mod sprite_objects;
 pub mod system;
 
 pub struct Wram<'a>(&'a mut [u8]);

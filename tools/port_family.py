@@ -73,7 +73,17 @@ def build(manifest, source, run):
         c_type = {'void': 'void', 'uint8': 'uint8_t', 'uint16': 'uint16_t', 'uint32': 'uint32_t', 'int32': 'int32_t', 'rom_ptr': 'const uint16_t *'}[return_type]
         prototypes.append(f'extern {c_type} {symbol}({", ".join("const uint16_t *" if t == "rom_ptr" else t + "_t" for t in types) or "void"});')
         call = f'{symbol}({", ".join("(const uint16_t*)(g_rom+((((uint32_t)" + arg + " >>16)<<15)|((uint32_t)" + arg + "&0x7fff))%0x400000)" if t == "rom_ptr" else "(" + t + "_t)" + arg for t, arg in zip(types, ["a", "b"]))})'
+        if routine.get('packed_u16_args'):
+            if types != ['uint32', 'uint32'] or routine['packed_u16_args'] != 4:
+                raise ValueError('invalid packed four-word signature')
+            prototypes[-1] = f'extern {c_type} {symbol}(uint16_t,uint16_t,uint16_t,uint16_t);'
+            call = f'{symbol}((uint16_t)a,(uint16_t)((uint32_t)a>>16),(uint16_t)b,(uint16_t)((uint32_t)b>>16))'
         result = f'{call}; result=0;' if return_type == 'void' else f'result={call};'
+        if routine.get('pair_u16_return'):
+            if return_type != 'uint32' or types != ['uint16', 'uint16']:
+                raise ValueError('invalid pair return signature')
+            prototypes[-1] = f'extern PairU16 {symbol}(uint16_t,uint16_t);'
+            result = f'PairU16 pair={call}; result=(uint32_t)pair.k|((uint32_t)pair.j<<16);'
         if 'rom_ptr' in types and 'rom' not in manifest:
             raise ValueError('ROM pointer argument requires ROM asset')
         if return_type == 'rom_ptr':
@@ -82,6 +92,8 @@ def build(manifest, source, run):
     support = manifest.get('c_support', [])
     uses_rtl = 'sm_rtl.c' in support or manifest['bank'] == 'sm_rtl.c'
     globals_c = 'extern uint8_t g_ram[0x20000]; extern const uint8_t *g_rom;' if uses_rtl else 'uint8_t g_ram[0x20000]; const uint8_t *g_rom;'
+    if uses_rtl:
+        globals_c += ' bool g_fail;'
     rom_setup = '''FILE *rf=fopen(argv[6],"rb"); if(!rf)return 2; if(fseek(rf,0,SEEK_END))return 2; long n=ftell(rf); rewind(rf); uint8_t *rom=malloc(n); if(!rom||fread(rom,1,n,rf)!=(size_t)n||fclose(rf))return 2; g_rom=rom;''' if 'rom' in manifest else ''
     oracle = run / 'oracle.c'
     oracle.write_text('''#include <stdint.h>

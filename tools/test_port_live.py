@@ -256,6 +256,9 @@ class DispatcherAdmissionControls(unittest.TestCase):
             for symbol, returned in DISPATCHER_LEAVES.items():
                 with self.subTest(symbol=symbol):
                     routine = {'symbol': symbol, 'args': 1, 'return': returned}
+                    if returned == 'rom_ptr':
+                        routine['arg_types'] = ['uint16', 'rom_ptr']
+                        routine['pointer_bank'] = 0x86
                     manifest = {'bank': 'sm_86.c', 'rom': {}, 'routines': [routine]}
                     with patch('port_plm_instructions.verify_plm_instruction_evidence', return_value=evidence):
                         (run / 'manifest.json').write_text(json.dumps(manifest))
@@ -266,6 +269,12 @@ class DispatcherAdmissionControls(unittest.TestCase):
                         with self.assertRaisesRegex(ValueError, 'signature differs'):
                             load_dispatcher_contract(run / 'verdict.json', source)
                         routine['return'] = returned
+                        if returned == 'rom_ptr':
+                            routine['pointer_bank'] = 0xb2
+                            (run / 'manifest.json').write_text(json.dumps(manifest))
+                            with self.assertRaisesRegex(ValueError, 'pointer bank differs'):
+                                load_dispatcher_contract(run / 'verdict.json', source)
+                            routine['pointer_bank'] = 0x86
                         routine['arg_types'] = ['uint32']
                         (run / 'manifest.json').write_text(json.dumps(manifest))
                         with self.assertRaisesRegex(ValueError, 'signature differs'):

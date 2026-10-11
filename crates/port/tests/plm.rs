@@ -366,3 +366,14 @@ fn destroyed_block_deletes_current_plm_and_eye_door_uses_room_argument() {
     assert_eq!(ram.word(0x1cd7), 0xdfa8);
     assert_eq!(ram.word(0x1d77), 0x12ff);
 }
+#[test]
+fn hardcoded_shaktool_allocation_preserves_native_primary_variable() {
+    let rom = std::fs::read(concat!(env!("CARGO_MANIFEST_DIR"), "/../../rom/sm.sfc")).unwrap();
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut ram = Wram::new(&mut bytes).unwrap();
+    ram.set_word(0x7a5, 32);
+    ram.set_word(0x1e17 + 78, 0xa5a5);
+    plm::spawn_hardcoded(&mut ram, &rom, 0, 0, 0xb8eb).unwrap();
+    assert_eq!(ram.word(0x1e17 + 78), 0xa5a5);
+    assert_eq!(ram.word(0xdf0c + 78), 0);
+}

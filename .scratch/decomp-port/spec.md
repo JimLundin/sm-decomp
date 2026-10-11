@@ -443,3 +443,147 @@ and measured CPU fallback is zero. Original-ROM parity remains not tested by
 this C/mixed run. Tests, scoped cleanup and authentication pass. Lossless storage
 sharing and cleanup reclaimed 5,693,252,058 bytes; approximately 3.48 GiB remains
 free. Work stops at this verified boundary for the user's capacity upgrade.
+
+
+Native projectile script leaves: ticket 91 adds delete, set/clear preinstruction
+and absolute goto dispatch. All 342 actual-C cases match full WRAM and returns.
+Four fresh full 129712-input C/mixed subjects match all 1038 artifacts; each mixed
+subject exclusively executes 36/16/44/827 Rust leaf calls with zero measured CPU
+fallback. Tests and post-cleanup authentication pass. Scoped cleanup/sharing
+reclaimed 5827779702 bytes; approximately 261 GiB remains free. Original-ROM
+parity remains separate. Integration branch: decomp-port-integration.
+
+
+Ceres pad: ticket 92 translates timer/movement and complete Samus release
+transition. All 1296 actual-C cases pass; four fresh full-movie subjects match
+990 artifacts with 528 exclusive Rust pad calls in each mixed replay and zero
+CPU fallback. Cleanup and post-cleanup authentication pass. Original-ROM parity
+remains separate. Integration branch: decomp-port-integration.
+
+
+Sprite scheduling: ticket 93 translates B4 scheduler, clear-range aliases and
+three script controls. All 1221 actual-C cases pass. Four full-movie subjects
+match 1006 artifacts; each mixed run executes 96336 schedulers and 64 clears
+exclusively in Rust with zero CPU fallback. Controls have offline coverage only.
+Cleanup/authentication pass. Sprite allocation and rendering remain outstanding.
+Integration branch: decomp-port-integration; original-ROM parity separate.
+
+
+Sprite rendering: ticket 95 translates B4 drawing and base-tile OAM writes.
+486 actual-C cases and independent wrap/extension tests pass. Four full-movie
+subjects match 990 artifacts with 96336 exclusive Rust draw calls per mixed
+replay and zero CPU fallback. Cleanup/authentication pass. Allocation ticket 94
+has 1485 passing offline cases but zero movie calls; live ownership remains open.
+Integration branch decomp-port-integration; original-ROM parity separate.
+
+Palette frame translation now passes 268 actual-C full-WRAM cases; full-movie
+live replay is active under out/port/palette-effect-frame-replay. Animated tile
+handler replay finished with 95385 exclusive Rust calls per mixed process and
+990 matching artifacts; active internal script exercise remains unproved.
+Tickets 99/100 translate randomized projectile sprite and room explosion callers:
+180 and 1024 actual-C cases pass, respectively, with cleanup/authentication.
+Whole-game Rust translation and allocator live coverage remain outstanding.
+
+Palette frame live replay now passes four fresh full-movie subjects with 1038
+matching artifacts, 114717 exclusive Rust handlers per mixed subject and zero
+CPU fallback. Active native script/color work is observed; ticket 98 resolved
+after cleanup/authentication. Tickets 101/102 add fixed projectile sounds and
+statue room animation setup, with 96/64 actual-C cases and completed cleanup.
+Original-ROM parity and whole-game translation remain open.
+
+Tickets 103/104 translate both native treadmill door setups and all 78 constant
+door scroll callbacks, including UNUSED routines. Current-source actual-C
+full-WRAM verification passes 54/312 cases, with independent semantics tests,
+full port suite, strict Clippy, scoped cleanup and post-cleanup authentication.
+This is offline translation coverage; live ownership remains separate.
+
+Tickets 105/106 translate three escape room setups, missing event-gated BB09
+PLM initializer and five map/quake callbacks. Actual-C full-WRAM verification
+passes 54/240 current-source cases; full port suite, strict Clippy, scoped cleanup
+and authentication pass. Whole existing decomp translation remains in progress.
+
+Ticket 107 translates both horizontal/diagonal room shake transitions through
+the existing Rust explosion caller. All 240 actual-C full-WRAM cases, full port
+tests and strict Clippy pass; cleanup/authentication complete. Live ownership
+and whole-game translation remain separate outstanding requirements.
+
+Ticket 108 translates Crocomire and Ridley room shaking. All 148 actual-C
+full-WRAM cases, full port tests and strict Clippy pass; scoped cleanup and
+authentication complete. Whole-decomp translation and live ownership remain open.
+
+Ticket 109 translates Draygon pause hooks and Shaktool room PLM setup. Actual-C
+oracle exposed and drove correction of an existing positioned allocator extra
+field clear; regression failed before fix and passes after. All 48 current-source
+cases, full port tests and strict Clippy pass; cleanup/authentication complete.
+Prior allocator-dependent live/source seals remain historical pending refresh.
+
+Ticket 110 translates Dachora room camera scrolling. All 96 actual-C full-WRAM
+cases and independent overshoot test pass, with cleanup/authentication complete.
+Whole-decomp translation remains active; live ownership separate.
+
+Ticket 111 translates pre-Phantoon room projectile allocation and A3A3 behavior.
+All 57 actual-C full-WRAM cases, full port suite and strict Clippy pass; scoped
+cleanup/authentication complete. Whole-decomp translation remains active.
+
+Ticket 114 translates native projectile direction toward Samus, preserving
+distinct source/global destination slots. All 72 actual-C full-WRAM/return cases,
+full port suite and strict Clippy pass; cleanup/authentication complete.
+
+Ticket 115 translates Mother Brain purple-breath state clear and Kraid projectile
+conditional branch. All 72 actual-C full-WRAM/return cases pass with full port
+tests, strict Clippy, cleanup and authentication. Whole-decomp translation remains
+active; live ownership separate.
+
+Ticket 116 translates native projectile CallFunc and complete Mother Brain death
+beam spawn initializer, including movement/RNG and boundary dust/audio/quake.
+All 48 spawn and 144 native-ROM call actual-C cases pass, with full port tests,
+strict Clippy, cleanup and authentication complete. Whole-decomp remains active.
+
+Ticket 112 adds two missing projectile state instructions and native wrappers
+for two existing paths. All 288 actual-C full-WRAM/return cases pass; full port
+suite, strict Clippy, cleanup and authentication complete. Live ownership remains
+separate and whole-decomp translation is still in progress.
+
+Ticket 113 adds seven missing native projectile state instruction paths. All
+504 actual-C full-WRAM/return cases, full port suite and strict Clippy pass;
+cleanup/authentication complete. Whole-decomp translation remains active.
+
+Ticket 117 translates Mother Brain rainbow-beam allocation and head tracking.
+All 63 actual-C full-WRAM cases pass with cleanup/authentication complete.
+Ticket 118 translates adjacent drool initialization, tracking and falling motion.
+All 583 actual-C cases pass with full port tests, strict Clippy, cleanup and
+authentication complete. Whole-decomp translation remains active.
+
+Ticket 119 translates Mother Brain death/rainbow explosion allocation and
+tracking, including native script table and host offsets. All 379 actual-C
+cases pass and authenticate after cleanup. Ticket 120 translates escape-door
+particle initialization and complete dust-spawning lifecycle; all 511 actual-C
+cases pass. Full port tests and strict Clippy pass. Live ownership separate;
+whole-decomp translation remains active.
+
+Ticket 121 translates Mother Brain purple-breath and time-bomb text allocation,
+and complete falling-tube lifecycle including both dust spawns. All 551 actual-C
+cases pass with full port tests, strict Clippy, cleanup and authentication.
+Whole-decomp translation remains active; live ownership separate.
+
+Ticket 122 translates Ki-Hunter acid-spit initialization and complete collision
+callbacks. All 1,404 actual-C full-WRAM cases pass with full port tests, strict
+Clippy, cleanup and authentication. Whole-decomp remains active.
+
+Ticket 123 translates Kago bug allocation, shared sound/proximity updates,
+delay/collision states and native launch instruction. All 1,908 actual-C cases
+pass with full port tests, strict Clippy, cleanup and authentication complete.
+Whole-decomp remains active; live ownership separate.
+
+Ticket 124 translates Maridia floater spike initialization and eight-direction
+acceleration/collision callback. All 5,145 actual-C full-WRAM/return cases pass
+with full port tests, strict Clippy, cleanup and authentication complete.
+Whole-decomp translation remains active; live ownership separate.
+
+Ticket 125 translates all Wrecked Ship robot laser initializers and common
+positioning/visibility sound gate. All 1,097 actual-C cases pass with full port
+tests, strict Clippy, cleanup and authentication. Whole-decomp remains active.
+
+Ticket 126 translates spike-shooting plant initialization and complete directional
+movement/camera deletion. All 1,561 actual-C cases pass with port tests, strict
+Clippy, cleanup and authentication. Whole-decomp remains active.

@@ -305,9 +305,264 @@ fn automatic_y(r: &mut Wram<'_>) -> Result<(), &'static str> {
     Ok(())
 }
 
-pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], symbol: &str, a: i32, _b: i32) -> Result<u32, &'static str> {
+/// Native constant door scroll writes, including unused recovered callbacks.
+fn door_scroll_writes(symbol: &str) -> Option<&'static [(usize, u8)]> {
+    Some(match symbol {
+        "DoorCode_Scroll6_Green" => &[(6, 2)],
+        "DoorCode_Scroll0_Blue" => &[(0, 1)],
+        "DoorCode_Scroll13_Blue" => &[(19, 1)],
+        "DoorCode_Scroll_4Blue_8Green" => &[(4, 0), (8, 2)],
+        "DoorCode_Scroll_8toB_Red" => &[(8, 0), (9, 0), (10, 0), (11, 0)],
+        "DoorCode_Scroll_LotsRed" => &[(2, 0), (3, 0), (4, 0), (5, 0), (11, 0), (12, 0), (13, 0), (17, 0)],
+        "DoorCode_Scroll_1_4_Green" => &[(1, 2), (4, 2)],
+        "DoorCode_Scroll_2_Blue" => &[(2, 1)],
+        "DoorCode_Scroll_17_Blue" => &[(23, 1)],
+        "DoorCode_Scroll_4_Blue" => &[(4, 1)],
+        "DoorCode_Scroll_6_Green" => &[(6, 2)],
+        "DoorCode_Scroll_3_Green" => &[(3, 2)],
+        "DoorCode_SetScroll_0" => &[(24, 2), (28, 2)],
+        "DoorCode_SetScroll_1" => &[(5, 1), (6, 1)],
+        "DoorCode_SetScroll_2" => &[(29, 1)],
+        "DoorCode_SetScroll_3" => &[(2, 2), (3, 2)],
+        "DoorCode_SetScroll_4" => &[(0, 0), (1, 2)],
+        "DoorCode_SetScroll_5" => &[(11, 2)],
+        "DoorCode_SetScroll_6" => &[(28, 0), (29, 1)],
+        "DoorCode_SetScroll_7" => &[(4, 0)],
+        "DoorCode_SetScroll_8" => &[(32, 2), (36, 2), (37, 2)],
+        "DoorCode_SetScroll_9" => &[(2, 1)],
+        "DoorCode_SetScroll_10" => &[(0, 2)],
+        "DoorCode_SetScroll_11" => &[(6, 2), (7, 2)],
+        "DoorCode_SetScroll_12" => &[(1, 1), (2, 0)],
+        "DoorCode_SetScroll_13" => &[(1, 1), (3, 0)],
+        "DoorCode_SetScroll_14" => &[(0, 0), (4, 1)],
+        "DoorCode_SetScroll_15" => &[(2, 1), (3, 1)],
+        "DoorCode_SetScroll_16" => &[(0, 2), (1, 2)],
+        "DoorCode_SetScroll_17" => &[(1, 2)],
+        "DoorCode_SetScroll_18" => &[(15, 2), (18, 2)],
+        "DoorCode_SetScroll_19" => &[(6, 2)],
+        "DoorCode_SetScroll_20" => &[(0, 2), (1, 1)],
+        "DoorCode_SetScroll_21" => &[(2, 2)],
+        "DoorCode_SetScroll_22" => &[(3, 0), (4, 0), (6, 1), (7, 1), (8, 1)],
+        "DoorCode_SetScroll_23" => &[(1, 1), (2, 1), (3, 1), (4, 2), (6, 0)],
+        "DoorCode_SetScroll_24" => &[(0, 1), (1, 1)],
+        "DoorCode_SetScroll_25" => &[(1, 0), (0, 1)],
+        "DoorCode_SetScroll_26" => &[(10, 2)],
+        "DoorCode_SetScroll_27" => &[(0, 1), (2, 0)],
+        "DoorCode_SetScroll_28" => &[(0, 2), (2, 2)],
+        "DoorCode_SetScroll_29" => &[(6, 1), (7, 1), (8, 0)],
+        "DoorCode_SetScroll_30" => &[(2, 0), (3, 1)],
+        "DoorCode_SetScroll_31" => &[(7, 2)],
+        "DoorCode_SetScroll_32" => &[(1, 0), (2, 1)],
+        "DoorCode_SetScroll_33" => &[(3, 0), (0, 1)],
+        "DoorCode_SetScroll_34" => &[(1, 1), (4, 0)],
+        "DoorCode_SetScroll_35" => &[(0, 1), (1, 0), (2, 0), (3, 0)],
+        "DoorCode_SetScroll_36" => &[(0, 2)],
+        "DoorCode_SetScroll_37" => &[(0, 1), (1, 1), (4, 0)],
+        "DoorCode_SetScroll_38" => &[(0, 1), (3, 0)],
+        "DoorCode_SetScroll_39" => &[(0, 1)],
+        "DoorCode_SetScroll_40" => &[(0, 1), (1, 0)],
+        "DoorCode_SetScroll_41" => &[(24, 1)],
+        "DoorCode_SetScroll_42" => &[(3, 0), (2, 1)],
+        "DoorCode_SetScroll_43" => &[(14, 0)],
+        "DoorCode_SetScroll_44" => &[(1, 1)],
+        "DoorCode_SetScroll_45" => &[(0, 2)],
+        "DoorCode_SetScroll_46" => &[(3, 0), (4, 1)],
+        "DoorCode_SetScroll_47" => &[(41, 1)],
+        "DoorCode_SetScroll_48" => &[(40, 2), (46, 2)],
+        "DoorCode_SetScroll_49" => &[(6, 0), (7, 0), (8, 0), (9, 0), (10, 0), (11, 0)],
+        "DoorCode_SetScroll_50" => &[(10, 0), (11, 1)],
+        "UNUSED_DoorCode_SetScroll_51" => &[(17, 0), (16, 1)],
+        "UNUSED_DoorCode_SetScroll_52" => &[(4, 2)],
+        "DoorCode_SetScroll_53" => &[(0, 0), (4, 1)],
+        "DoorCode_SetScroll_54" => &[(0, 0), (1, 1)],
+        "DoorCode_SetScroll_55" => &[(9, 0), (10, 1)],
+        "DoorCode_SetScroll_56" => &[(0, 0), (2, 0), (1, 1)],
+        "DoorCode_SetScroll_57" => &[(1, 1)],
+        "DoorCode_SetScroll_58" => &[(6, 1)],
+        "DoorCode_SetScroll_59" => &[(4, 0)],
+        "DoorCode_SetScroll_60" => &[(1, 0)],
+        "DoorCode_SetScroll_61" => &[(4, 0), (7, 0)],
+        "DoorCode_SetScroll_62" => &[(2, 0), (1, 1)],
+        "DoorCode_SetScroll_63" => &[(0, 2), (2, 2)],
+        "DoorCode_SetScroll_64" => &[(0, 2), (1, 2)],
+        "DoorCode_SetScroll_65" => &[(24, 1), (25, 0)],
+        _ => return None,
+    })
+}
+
+pub fn random_explosion(r: &mut Wram<'_>, rom: &[u8], x: u16, y: u16) -> Result<(), &'static str> {
+    let selector = usize::from(crate::enemy_projectiles::random(r) & 15);
+    let sounds = [0x24, 0, 0, 0x25, 0, 0, 0, 0];
+    if selector < 8 && sounds[selector] != 0 {
+        crate::audio::queue_sfx(r, 1, (sounds[selector] << 8) | 6)?;
+    }
+    let sprites = [3, 3, 9, 12, 12, 18, 18, 21];
+    crate::sprite_objects::create(r, rom, x, y, sprites[selector & 7], 0)?;
+    Ok(())
+}
+
+pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], symbol: &str, a: i32, b: i32) -> Result<u32, &'static str> {
+    if let Some(writes) = door_scroll_writes(symbol) {
+        for &(index, value) in writes {
+            r.set_byte(SCROLLS + index, value);
+        }
+        return Ok(0);
+    }
     let a = u16::try_from(a).map_err(|_| "invalid room argument")?;
     match symbol {
+        "RoomCode_8FC8C8" => crate::enemy_projectiles::spawn_room(r, rom, 0xa3b0, 0)?,
+        "RoomCode_ScrollRightDachora" => {
+            let x = r.word(LX);
+            if r.byte(SCROLLS + 11) == 2 && r.word(LY) < 0x500 && x < 0x380 {
+                r.set_word(LX, x.wrapping_add(3));
+            }
+        }
+        "RoomCode_SetupShaktoolRoomPlm" => {
+            crate::plm::spawn_hardcoded(r, rom, 0, 0, 0xb8eb)?;
+        }
+        "RoomCode_SetPauseCodeForDraygon" => {
+            r.set_word(0x601, 0xc8f6);
+            r.set_byte(0x603, 0x8f);
+            r.set_word(0x604, 0xc8fc);
+            r.set_byte(0x606, 0x8f);
+        }
+        "PauseHook_DraygonRoom" => r.set_word(0xa7, 4),
+        "UnpauseHook_DraygonRoom" => {
+            if r.word(0x18b6) == 8 {
+                r.set_word(0xa7, 12);
+            }
+        }
+        "RoomCode_CrocomireShaking" => {
+            if r.word(0xf86) & 0x200 == 0 {
+                if r.word(0xfa8) == 64 {
+                    r.set_word(0xb3, r.word(0xfee).wrapping_add(r.word(0x91f)).wrapping_add(r.word(LY)));
+                } else if r.word(0xfaa) & 0x400 != 0 {
+                    let timer = r.word(0xfee).wrapping_sub(1);
+                    r.set_word(0xfee, timer);
+                    let displacement = if neg(timer.wrapping_add(7)) {
+                        timer.wrapping_sub(timer.wrapping_add(7).wrapping_mul(2))
+                    } else {
+                        timer
+                    };
+                    r.set_word(0xb3, r.word(0xb3).wrapping_add(displacement));
+                    r.set_word(0xb7, displacement.wrapping_sub(48));
+                } else if r.word(0xfac) == 34 && r.word(0xfae) != 0 {
+                    let timer = r.word(0xfae).wrapping_sub(1);
+                    r.set_word(0xfae, timer);
+                    r.set_word(LX, r.word(LX).wrapping_add(if timer & 1 != 0 { 0xfffc } else { 4 }));
+                }
+            }
+        }
+        "RoomCode_RidleyRoomShaking" => {
+            let timer = r.word(0x10a8);
+            if timer != 0 {
+                if timer > 8 {
+                    return Err("Ridley room shake table extent");
+                }
+                let index = usize::from(timer - 1);
+                let x: [u16; 8] = [0, 2, 2, 2, 0, 0xfffe, 0xfffe, 0xfffe];
+                let y: [u16; 8] = [0xfffe, 0xfffe, 0, 2, 2, 2, 0, 0xfffe];
+                r.set_word(0x10a8, timer - 1);
+                for (address, displacement) in [(0xb1, x[index]), (0xb5, x[index]), (0xb3, y[index]), (0xb7, y[index])] {
+                    r.set_word(address, r.word(address).wrapping_add(displacement));
+                }
+            }
+        }
+        "RoomCode_ShakeScreenHorizDiag" | "RoomCode_ShakeScreenHorizDiagStrong" => {
+            let strong = symbol == "RoomCode_ShakeScreenHorizDiagStrong";
+            let timer = r.word(0x7e1);
+            let next_kind = if timer != 0 {
+                r.set_word(0x7e1, timer.wrapping_sub(1));
+                (timer == 1).then_some(if strong { 21 } else { 18 })
+            } else if crate::enemy_projectiles::random(r) < if strong { 0x180 } else { 0x200 } {
+                r.set_word(0x7e1, 42);
+                Some(if strong { 26 } else { 23 })
+            } else {
+                None
+            };
+            if let Some(kind) = next_kind {
+                r.set_word(if strong { 0x7e3 } else { 0x183e }, kind);
+            }
+            if strong {
+                r.set_word(0x183e, r.word(0x7e3));
+            }
+            dispatch_rom(r, rom, "RoomCode_GenRandomExplodes_4th", 0, 0)?;
+        }
+        "RoomCode_SetCollectedMap" => {
+            let area = usize::from(r.word(0x79f));
+            if area >= 8 {
+                return Err("room map area extent");
+            }
+            let value = r.word(0xd908 + area) | 1;
+            r.set_word(0xd908 + area, value);
+            r.set_word(0x789, value);
+        }
+        "RoomCode_SetZebesTimebombEvent" => {
+            system::dispatch(r, "SetEventHappened", 14, 0)?;
+            r.set_word(0x183e, 18);
+            r.set_word(0x1840, 0xffff);
+        }
+        "RoomCode_SetLightHorizRoomShake" | "RoomCode_SetMediumHorizRoomShake"
+        | "RoomCode_Escape4_SetMediumHorizRoomShake" => {
+            if symbol == "RoomCode_Escape4_SetMediumHorizRoomShake" {
+                crate::plm::spawn_hardcoded(r, rom, 16, 16, 0xb968)?;
+            }
+            let kind = if symbol == "RoomCode_SetLightHorizRoomShake" { 18 } else { 21 };
+            r.set_word(0x183e, kind);
+            if symbol != "RoomCode_SetMediumHorizRoomShake" {
+                r.set_word(0x7e3, kind);
+                r.set_word(0x7e1, 0);
+            }
+            r.set_word(0x1840, 0xffff);
+        }
+        "RoomSetup_AfterSavingAnimals" => {
+            crate::plm::spawn_hardcoded(r, rom, 0x3d, 0x0b, 0xbb30)?;
+            r.set_word(0x183e, 24);
+            r.set_word(0x1840, 0xffff);
+        }
+        "RoomSetup_AutoDestroyWallAfterEscape" => {
+            crate::plm::spawn_hardcoded(r, rom, 0x10, 0x87, 0xb964)?;
+        }
+        "RoomSetup_TurnWallIntoShotblocks" => {
+            crate::plm::spawn_hardcoded(r, rom, 0x0f, 0x0a, 0xb9ed)?;
+        }
+        "DoorCode_StartWreckedShipTreadmillWest" | "DoorCode_StartWreckedSkipTreadmill_East" => {
+            let west = symbol == "DoorCode_StartWreckedShipTreadmillWest";
+            crate::animated_tiles::spawn(r, rom, if west { 0x8275 } else { 0x827b })?;
+            crate::plm::spawn_hardcoded(r, rom, 4, 9, if west { 0xb64b } else { 0xb64f })?;
+        }
+        "RoomSetup_RunStatueUnlockAnims" => {
+            for header in [0x8558, 0x854c, 0x855e, 0x8552] {
+                crate::animated_tiles::spawn(r, rom, header)?;
+            }
+        }
+        "RoomCode_GenRandomExplodes" => random_explosion(r, rom, a, b as u16)?,
+        "RoomCode_GenRandomExplodes_Nonblank" | "RoomCode_GenRandomExplodes_4th" | "RoomCode_ExplodeShakes" => {
+            let nonblank = symbol != "RoomCode_GenRandomExplodes_4th";
+            let frame_mask = if nonblank { 1 } else { 3 };
+            if r.word(0xa78) == 0 && r.word(0x5b6) & frame_mask == 0 {
+                let random = crate::enemy_projectiles::random(r);
+                let x = r.word(LX).wrapping_add(u16::from(random as u8));
+                let y = r.word(LY).wrapping_add(random >> 8);
+                let visible = if nonblank {
+                    let row = u16::from((y >> 4) as u8) * u16::from(r.word(0x7a5) as u8);
+                    // C promotes the sum to int before indexing level_data.
+                    let address = 0x10002 + (usize::from(row) + usize::from(x >> 4)) * 2;
+                    if address + 2 > crate::WRAM_SIZE {
+                        return Err("room explosion level data extent");
+                    }
+                    r.word(address) & 0x3ff != 255
+                } else {
+                    true
+                };
+                if visible {
+                    random_explosion(r, rom, x, y)?;
+                }
+            }
+            if symbol == "RoomCode_ExplodeShakes" {
+                r.set_word(0x1840, r.word(0x1840) | 0x8000);
+            }
+        }
         "HandleRoomDefStateSelect" => select_room(r, rom, a)?,
         s if s.starts_with("RoomDefStateSelect_") => return Ok(u32::from(select(r, rom, s, a)?)),
         "LoadRoomHeader" => header(r, rom)?,

@@ -180,6 +180,20 @@ must reject observed gameplay divergence:
 SM_PORT_LIVE_CONTROLS=1 python3 -m unittest discover -s tools -p test_port_live.py
 ```
 
+For continued gameplay translation, use actual-C family verification first, then
+run live validation with `tools/port_live.py` or the batch runner. Future live
+captures default to packed evidence in the shared `out/evidence` store. Omit
+the historical `--compress-effects` option from ordinary replay commands: it
+selects legacy gzip storage. Use `--storage packed` to make the current default
+explicit. Family oracle runs keep their existing full-WRAM comparison format.
+
+After live verification and scoped cleanup, authenticate the retained verdict
+with `python3 tools/port_authenticate_live.py RUN/verdict.json`. Inspect packed
+members and individual frames through `tools/port_evidence.py`; commands and
+store retention requirements are in [DECOMP_BATCH.md](DECOMP_BATCH.md).
+Packed storage changes retention and inspection, while gameplay admission still
+requires its own authenticated source, coverage and ownership evidence.
+
 The collision live adapter accepts `--collision-verdict` from the actual PLM
 callback harness. Rust collision owns an independent WRAM transaction; its
 synchronous callback transfers state and displacement to the canonical host and

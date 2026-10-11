@@ -15,6 +15,12 @@ handles cleanup across implementer worktrees.
    Scope cleanup to the work just completed. `port_batch.py` automatically
    deduplicates finished batches and `port_live.py` removes build intermediates;
    check their cleanup output and run the utility for any remaining directories.
+   Packed live runs also depend on the shared store (default `out/evidence`),
+   their subject `evidence.json` pointers and retained `sm-evidence` reader.
+   Preserve these dependencies; never treat shared store objects as disposable
+   run intermediates. Authenticate the finished live verdict with
+   `tools/port_authenticate_live.py` after cleanup. See `docs/DECOMP_BATCH.md`
+   for extraction and frame inspection commands.
 3. Remove integrated implementer Git worktrees and disposable build outputs.
    Preserve exact source files referenced by evidence before removing their
    worktree. Retain only those small source snapshots at the referenced paths,

@@ -19,6 +19,11 @@ DISPATCHER_LEAVES = {
     'Eproj_FuncE73E_MoveXY': 'void',
     'Eproj_FuncE722': 'uint16',
     'EprojPreInstr_CeresElevatorPlatform': 'void',
+    'EprojPreInstr_CeresElevatorPad': 'void',
+    'EprojInstr_Delete': 'rom_ptr',
+    'EprojInstr_SetPreInstr_': 'rom_ptr',
+    'EprojInstr_ClearPreInstr': 'rom_ptr',
+    'EprojInstr_Goto': 'rom_ptr',
 }
 DISPATCHER_SYNTHETIC = {'EprojInstruction', 'EprojPreinstruction'}
 
@@ -42,8 +47,11 @@ def load_dispatcher_contract(path, source_identity):
         elif routine.get('live_eligible', True):
             if symbol not in DISPATCHER_LEAVES:
                 raise ValueError(f'dispatcher routine requires support selection before live admission: {symbol}')
-            if routine.get('arg_types', ['uint16'] * routine.get('args', 0)) != ['uint16'] or routine['return'] != DISPATCHER_LEAVES[symbol]:
+            expected_args = ['uint16', 'rom_ptr'] if DISPATCHER_LEAVES[symbol] == 'rom_ptr' else ['uint16']
+            if routine.get('arg_types', ['uint16'] * routine.get('args', 0)) != expected_args or routine['return'] != DISPATCHER_LEAVES[symbol]:
                 raise ValueError(f'dispatcher leaf signature differs: {symbol}')
+            if DISPATCHER_LEAVES[symbol] == 'rom_ptr' and routine.get('pointer_bank') != 0x86:
+                raise ValueError(f'dispatcher leaf pointer bank differs: {symbol}')
         routines.append(routine)
     if not any(r.get('live_eligible', True) for r in routines):
         raise ValueError('no live dispatcher leaf contracts')
@@ -453,17 +461,32 @@ def main():
                 bank_texts[bank] = text
                 c_type = {'void': 'void', 'uint8': 'uint8_t', 'uint16': 'uint16_t', 'uint32': 'uint32_t', 'int32': 'int32_t', 'rom_ptr': 'const uint16_t *'}[routine['return']]
                 declaration = ','.join(('const uint16_t *' if kind == 'rom_ptr' else kind + '_t ') + name for kind, name in zip(types, ['a', 'b'])) or 'void'
+                if family_index in dispatcher_indexes and routine['return'] == 'rom_ptr':
+                    c_type = 'const uint8_t *'
+                    declaration = declaration.replace('const uint16_t *', c_type)
                 arguments = ','.join(['a', 'b'][:count])
                 actual_args = ['a' if count > 0 else '0', 'b' if count > 1 else '0']
                 if 'rom_ptr' in types:
                     actual_args = [f'PortPointerResult({name},a)' if kind == 'rom_ptr' else name for kind, name in zip(types, ['a', 'b'])]
+                if family_index in dispatcher_indexes and 'rom_ptr' in types:
+                    actual_args = [f'PortBank86PointerResult({name})' if kind == 'rom_ptr' else name for kind, name in zip(types, ['a', 'b'])]
                 actual = ','.join(actual_args)
+                if routine.get('packed_u16_args'):
+                    if types != ['uint32', 'uint32'] or routine['packed_u16_args'] != 4:
+                        raise ValueError('invalid packed four-word signature')
+                    declaration = 'uint16_t a,uint16_t b,uint16_t c,uint16_t d'
+                    arguments = 'a,b,c,d'
+                    actual = '(uint32_t)a|((uint32_t)b<<16),(uint32_t)c|((uint32_t)d<<16)'
                 c_call = f'C_{symbol}({arguments})'
                 reference = f'{c_call};' if c_type == 'void' else f'result=(uint32_t){c_call};'
                 returned = '' if c_type == 'void' else f'return ({c_type})result;'
                 if routine['return'] == 'rom_ptr':
                     reference = f'const uint16_t *reference={c_call};result=PortPointerResult(reference,a);'
+                    if family_index in dispatcher_indexes:
+                        reference = f'{c_type}reference={c_call};result=PortBank86PointerResult(reference);'
                     returned = 'return PortPointerFromResult((uint32_t)result);'
+                    if family_index in dispatcher_indexes:
+                        returned = 'return (const uint8_t *)PortPointerFromResult((uint32_t)result);'
                 wrappers.append(f'''extern {c_type} C_{symbol}({declaration});
 {c_type} {symbol}({declaration}) {{
  int64_t result=0;
@@ -583,6 +606,13 @@ int32_t sm_rust_collision_spawn_plm_without_amount(uint8_t *transaction,size_t l
  int32 *previous=cur_coll_amt32;cur_coll_amt32=NULL;
  uint8 result=__wrap_SpawnPLM(header);cur_coll_amt32=previous;
  memcpy(transaction,g_ram,len);return result;
+}
+static uint32_t PortBank86PointerResult(const uint8_t *pointer) {
+ if(!pointer)return 0;
+ uintptr_t p=(uintptr_t)pointer,base=(uintptr_t)g_rom+0x30000;
+ if(p<0x10000){if(p<0x8000)exit(4);return 0x860000|(uint32_t)p;}
+ if(p<base || p>=base+0x8000)exit(4);
+ return 0x868000+(uint32_t)(p-base);
 }
 static uint32_t PortPointerResult(const uint16_t *pointer,uint16_t enemy) {
  if(!pointer)return 0;
@@ -748,8 +778,11 @@ int main(int argc,char **argv) {
         verdict['dispatcher_symbols'] = sorted(dispatcher_symbols)
         verdict['dispatcher_hits'] = {name: {symbol: counts[symbol] for symbol in dispatcher_symbols}
                                       for name, counts in hits.items()}
-        if dispatcher_symbols and not sum(hits['mixed-0'][symbol]['rust'] for symbol in dispatcher_symbols):
-            raise ValueError('no Rust bank86 dispatcher leaf executed')
+        for symbol in dispatcher_symbols:
+            counts = [hits[name][symbol]['c' if name.startswith('c-') else 'rust']
+                      for name in ('c-0', 'c-1', 'mixed-0', 'mixed-1')]
+            if not counts[0] or len(set(counts)) != 1:
+                raise ValueError(f'dispatcher leaf lacks matching nonzero exclusive execution: {symbol}')
         if not sum(row['rust'] for row in hits['mixed-0'].values()):
             raise ValueError('no Rust gameplay family executed')
         if args.room_plm:

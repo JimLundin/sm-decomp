@@ -66,8 +66,12 @@ fn spawn_context(
         return Ok(());
     };
     let init = word(rom, definition)?;
-    if matches!(init, 0x947f | 0xe468 | 0xef29 | 0xdc8d | 0xa009 | 0xa098) {
+    if matches!(init, 0xcbc9 | 0xc8f5 | 0xc92f | 0x947f | 0xe468 | 0xef29 | 0xdc8d | 0xa009 | 0xa098) {
         host.ok_or("projectile initializer requires host context")?;
+        if init == 0xc8f5 {
+            if parameter >= 3 { return Err("Mother Brain death explosion script index"); }
+            word(rom, 0xc929 + parameter * 2)?;
+        }
         if init == 0xa009 {
             let enemy = r.word(0xe54);
             if enemy > 0x7c0 || enemy & 63 != 0 {
@@ -121,10 +125,26 @@ fn spawn_context(
     for p in [0x1aff, 0x1b23, 0x19df, 0x1a27, 0x1a6f, 0x1bfb] {
         r.set_word(p + k, 0);
     }
-    if let Some(host) = host.filter(|_| matches!(init, 0x947f | 0xe468 | 0xef29 | 0xdc8d | 0xa009 | 0xa098)) {
+    if let Some(host) = host.filter(|_| matches!(init, 0xcbc9 | 0xc8f5 | 0xc92f | 0x947f | 0xe468 | 0xef29 | 0xdc8d | 0xa009 | 0xa098)) {
         r.set_word(0x1a4b + k, host.x);
         r.set_word(0x1a93 + k, host.y);
         match init {
+            0xcbc9 => {
+                r.set_word(0x19bb + k, 3584);
+                r.set_word(0x1ab7 + k, 0);
+                r.set_word(0x1adb + k, 0);
+                r.set_word(0x1aff + k, 0xcbea);
+            }
+            0xc8f5 | 0xc92f => {
+                r.set_word(0x19bb + k, 0);
+                r.set_word(0x1ab7 + k, host.x);
+                r.set_word(0x1adb + k, host.y);
+                if init == 0xc8f5 {
+                    r.set_word(0x1b47 + k, word(rom, 0xc929 + parameter * 2)?);
+                    r.set_word(0x1b8f + k, 1);
+                }
+                crate::enemy_projectile_instructions::preinstruction(r, rom, if init == 0xc8f5 { 0xc914 } else { 0xc94c }, k as u16)?;
+            }
             0x947f => {
                 r.set_word(0x19bb + k, 2560);
                 r.set_word(0x1aff + k, parameter);
@@ -308,6 +328,13 @@ pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) ->
 fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'static str> {
     let i = param as usize / 2;
     let table = match init {
+        0xca6a | 0xca83 | 0xcaf6 | 0xa3a3 | 0xc684 | 0xc80a => None,
+        0xc843 if param < 6 => None,
+        0xc961 if param < 8 => None,
+        0xd992 if param < 20 && r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => Some((0xd96a, i)),
+        0xd30c | 0xd32e | 0xd341 if r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => None,
+        0xd23a if param < 8 && r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => None,
+        0xd088 | 0xcf90 | 0xcfa6 if r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => None,
         0xef89 if param < 5 && r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => {
             word(rom, 0xefd5 + param * 2)?;
             None
@@ -472,7 +499,8 @@ fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'sta
     }
     if !matches!(
         init,
-        0x9dec
+        0xd992 | 0xd30c | 0xd32e | 0xd341 | 0xd23a | 0xd088 | 0xcf90 | 0xcfa6 | 0xca6a | 0xca83 | 0xcaf6 | 0xc961 | 0xc843 | 0xc80a | 0xc684 | 0xa3a3
+            | 0x9dec
             | 0x9e46
             | 0x9e4b
             | 0x9eb2
@@ -547,7 +575,142 @@ pub(crate) fn random(r: &mut Wram<'_>) -> u16 {
     r.set_word(0x5e5, n);
     n
 }
+pub(crate) fn beam_component(magnitude: u16, angle: u8) -> u16 {
+    let sine = SINE[usize::from(angle) + 64];
+    let product = ((u32::from(magnitude) * u32::from(sine.unsigned_abs())) >> 8) as u16;
+    if sine < 0 { product.wrapping_neg() } else { product }
+}
+
 fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> Result<(), &'static str> {
+    if init == 0xd992 {
+        r.set_word(0x1aff + k, param);
+        r.set_word(0x1b47 + k, word(rom, 0xd96a + (param >> 1) * 2)?);
+        let enemy = 0xf78 + usize::from(r.word(0xe54));
+        for (projectile, offset) in [(0x1a4b, 2), (0x1a27, 4), (0x1a93, 6), (0x1a6f, 8)] {
+            r.set_word(projectile + k, r.word(enemy + offset));
+        }
+        let velocity: u16 = if param >= 12 { 384 } else { 512 };
+        r.set_word(0x1adb + k, velocity.wrapping_neg());
+        r.set_word(0x1ab7 + k, velocity);
+        return Ok(());
+    }
+    if matches!(init, 0xd30c | 0xd32e | 0xd341) {
+        let enemy = 0xf78 + usize::from(r.word(0xe54));
+        let velocity = r.word(enemy + 0x30);
+        let x = r.word(enemy + 2);
+        let y = r.word(enemy + 6);
+        let width = r.word(enemy + 0xa);
+        let height = r.word(enemy + 0xc);
+        r.set_word(0x1ab7 + k, velocity);
+        r.set_word(0x1adb + k, match init { 0xd30c => 128, 0xd341 => (-128_i16) as u16, _ => 0 });
+        if init == 0xd30c { r.set_word(0x19bb + k, 0); }
+        r.set_word(0x1a4b + k, x.wrapping_add(if velocity & 0x8000 != 0 { (-4_i16) as u16 } else { 4 }));
+        r.set_word(0x1a93 + k, y.wrapping_sub(16));
+        r.set_word(0x1a27 + k, 0);
+        r.set_word(0x1a6f + k, 0);
+        if (width.wrapping_add(x).wrapping_sub(r.word(0x911)) as i16) >= 0
+            && (x.wrapping_sub(width).wrapping_sub(257).wrapping_sub(r.word(0x911)) as i16) < 0
+            && (height.wrapping_add(y).wrapping_sub(r.word(0x915)) as i16) >= 0
+            && (y.wrapping_sub(height).wrapping_sub(224) as i16) < 0 {
+            crate::audio::queue_sfx(r, 1, 0x6706)?;
+        }
+        return Ok(());
+    }
+    if init == 0xd23a {
+        for base in [0x1a27, 0x1a6f, 0x1ab7, 0x1adb] { r.set_word(base + k, 0); }
+        let enemy = usize::from(r.word(0xe54));
+        r.set_word(0x1a4b + k, r.word(0xf7a + enemy));
+        r.set_word(0x1a93 + k, r.word(0xf7e + enemy));
+        r.set_word(0x1aff + k, param);
+        return Ok(());
+    }
+    if init == 0xd088 {
+        let enemy = r.word(0xe54);
+        r.set_word(0x1b23 + k, enemy);
+        r.set_word(0x1a4b + k, r.word(0xf7a + usize::from(enemy)));
+        r.set_word(0x1a93 + k, r.word(0xf7e + usize::from(enemy)));
+        let delay = (r.word(0x5e5) & 7) + 1;
+        r.set_word(0x1bfb + k, delay);
+        r.set_word(0x1aff + k, delay + 4);
+        r.set_word(0x1a03 + k, 0xd0ca);
+        return Ok(());
+    }
+    if matches!(init, 0xcf90 | 0xcfa6) {
+        let enemy = 0xf78 + usize::from(r.word(0xe54));
+        let left = init == 0xcf90;
+        r.set_word(0x1ab7 + k, if left { (-768_i16) as u16 } else { 768 });
+        r.set_word(0x1a4b + k, r.word(enemy + 2).wrapping_add(if left { (-22_i16) as u16 } else { 22 }));
+        r.set_word(0x1adb + k, 0);
+        r.set_word(0x1a93 + k, r.word(enemy + 6).wrapping_sub(16));
+        r.set_word(0x1a27 + k, 0);
+        r.set_word(0x1a6f + k, 0);
+        return Ok(());
+    }
+    if matches!(init, 0xca6a | 0xca83 | 0xcaf6) {
+        r.set_word(0x19bb + k, 0);
+        if init == 0xcaf6 {
+            return crate::enemy_projectile_instructions::preinstruction(r, rom, 0xcafa, k as u16);
+        }
+        r.set_word(0x1a4b + k, r.word(0xfba).wrapping_add(6));
+        r.set_word(0x1a93 + k, r.word(0xfbe).wrapping_add(16));
+        if init == 0xca83 { r.set_word(0x786a, 1); }
+        return Ok(());
+    }
+    if init == 0xc961 {
+        const Y: [u16; 8] = [(-32_i16) as u16, (-24_i16) as u16, (-16_i16) as u16, (-8_i16) as u16, 0, 8, 16, 24];
+        const Y_VELOCITY: [u16; 8] = [(-512_i16) as u16, (-256_i16) as u16, (-256_i16) as u16, (-128_i16) as u16, (-128_i16) as u16, 128, (-256_i16) as u16, 512];
+        r.set_word(0x19bb + k, 0);
+        r.set_word(0x1a4b + k, 16);
+        r.set_word(0x1a93 + k, Y[usize::from(param)].wrapping_add(128));
+        r.set_word(0x1ab7 + k, 0x500);
+        r.set_word(0x1adb + k, Y_VELOCITY[usize::from(param)]);
+        r.set_word(0x1aff + k, 32);
+        return Ok(());
+    }
+    if init == 0xc843 {
+        r.set_word(0x19bb + k, 0);
+        r.set_word(0x1aff + k, param);
+        return crate::enemy_projectile_instructions::preinstruction(r, rom, 0xc84d, k as u16);
+    }
+    if init == 0xc80a {
+        for base in [0x19bb, 0x1ab7, 0x1adb] { r.set_word(base + k, 0); }
+        r.set_word(0x1a4b + k, r.word(0xfba));
+        r.set_word(0x1a93 + k, r.word(0xfbe));
+        return Ok(());
+    }
+    if init == 0xc684 {
+        for (projectile, mother) in [(0x1a4b, 0x8008), (0x1a27, 0x8006), (0x1a93, 0x800c), (0x1a6f, 0x800a), (0x1ab7, 0x800e), (0x1adb, 0x8010)] {
+            r.set_word(projectile + k, r.word(mother));
+        }
+        crate::enemy_projectile_instructions::move_xy(r, k as u16)?;
+        for (projectile, mother) in [(0x1a4b, 0x8008), (0x1a27, 0x8006), (0x1a93, 0x800c), (0x1a6f, 0x800a)] {
+            r.set_word(mother, r.word(projectile + k));
+        }
+        let angle = r.word(0x8012).wrapping_add(random(r)) as u8;
+        let magnitude = random(r) & 0x700;
+        r.set_word(0x1ab7 + k, beam_component(magnitude, angle));
+        r.set_word(0x1adb + k, beam_component(magnitude, angle.wrapping_add(64)));
+        crate::enemy_projectile_instructions::move_xy(r, k as u16)?;
+        let x = r.word(0x1a4b + k);
+        let y = r.word(0x1a93 + k);
+        if (y.wrapping_sub(34) as i16) < 0 || (y.wrapping_sub(206) as i16) >= 0
+            || (x.wrapping_sub(2) as i16) < 0 || (x.wrapping_sub(238) as i16) >= 0 {
+            r.set_word(0x1997 + k, 0);
+            let mut host = ProjectileHost { x, y, ..ProjectileHost::default() };
+            spawn_room_with_host(r, rom, 0xe509, 0x1d, &mut host)?;
+            crate::audio::queue_sfx(r, 2, 0x1306)?;
+            r.set_word(0x1840, 10);
+            r.set_word(0x183e, 5);
+        } else {
+            r.set_word(0x1aff + k, r.word(0x1aff + k).wrapping_add(1) & 3);
+            for base in [0x1b23, 0x1ab7, 0x1adb] { r.set_word(base + k, 0); }
+        }
+        return Ok(());
+    }
+    if init == 0xa3a3 {
+        r.set_word(0x923, 0);
+        return Ok(());
+    }
     if init == 0xef89 {
         let enemy_slot = r.word(0xe54);
         let enemy = 0xf78 + usize::from(enemy_slot);

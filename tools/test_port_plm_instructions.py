@@ -9,6 +9,7 @@ from unittest.mock import patch
 from pathlib import Path
 
 import port_family
+import port_plm_fixtures
 import port_plm_instructions as adapter
 
 
@@ -69,6 +70,8 @@ class PlmInstructionEvidenceTests(unittest.TestCase):
         ]
         with tempfile.TemporaryDirectory() as directory:
             directory = Path(directory)
+            generated = json.loads(port_plm_fixtures.generate(directory / "fixtures").read_text())
+            config["rom"] = generated["rom"]
             manifest = directory / "manifest.json"
             manifest.write_text(json.dumps(config))
             predecessor = port_family.build
