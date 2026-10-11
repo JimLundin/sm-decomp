@@ -347,3 +347,21 @@ counts231C/229native differ; overallverdict remains nonaccepting. Prefixhost
 uses existingrealsoftreset helper and completes raw640run.3public320tests pass.
 All5finishedruns cleaned0bytes; finalsealed artifacts authenticate. Ticket78
 remainsclaimed; broader originalmovie timing/ownership is unfinished.
+
+
+Mother Brain room turret lifecycle: ticket84/commit9e60825 adds BFDF viewport/
+destruction handling, hostpoint/dust allocation, rotation and firing timers and
+bullet spawning through host-aware frames.577actual-C fullWRAM/return/host cases
+match, with fullcrate checks and9independenthosttests. Cleanup104,464,384bytes;
+finalevidence authenticates. Legacyhostless frames preflight BFDF beforewrites;
+live lifecycle ownership remains unproven.
+
+
+Within-update wait seam: commitc3d2c13 restores actual polling at the patched
+WaitUntilEndOfVblankAndClearHdma call in a separate causal subject. NestedNMI
+uses existingwaitingflag and consumes sourceordered samples without another
+gameupdate. Verifiedcausalprefix49→51 through originalframe397; omittedwait
+control reproduces oldordinal50failure199C/200native. One actualhelperhit;
+nextordinal52remainsunresolved.3public320tests and independentRNGcontrol pass.
+Bothfinishedruns cleaned0bytes; retained binary/source/states/controllogs
+authenticate. Ticket78claimed: hardwareframe/APU/laterpoll timing unfinished.
