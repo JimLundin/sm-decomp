@@ -1,0 +1,18 @@
+[
+  {
+    "file": "Cargo.toml",
+    "sha256": "9071ef5a851727992a8038b87527f53a6f61e1791d12659e2d800072e3e47c4e"
+  },
+  {
+    "file": "src/lib.rs",
+    "sha256": "5302e70118b7004fae4d099dbbbb5e04effeac46dd8fd3a2e48ac722766f1be8"
+  },
+  {
+    "file": "src/main.rs",
+    "sha256": "389f97d507aafaac2e2d124bcba808578c91cecb76952e3072800193e74e4688"
+  },
+  {
+    "file": "tests/store.rs",
+    "sha256": "c4c3cb00ce1ff4727566a0c408655e8a41e51bbc6758bbe5aca4abb3cca0a2a8"
+  }
+]

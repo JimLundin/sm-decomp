@@ -1,0 +1,19 @@
+{
+  "binary": "/home/jim/sm-decomp/.claude/worktrees/trace-storage-format/target/release/sm-evidence",
+  "binary_sha256": "953cf9c865363305ce4a424a0db26a3eb1c00712039e2def69920e9a2ab50205",
+  "source": "/home/jim/sm-decomp/out/port/projectile-movement-live/20261011T061431.667466Z/c-0",
+  "scope": "/home/jim/sm-decomp/out/storage-spike-other-comparison/matched-input",
+  "files": 1001,
+  "logical_bytes": 5264039623,
+  "note": "matched source scope via temporary hardlinks; source bytes untouched",
+  "wall_seconds": 172.17609247000019,
+  "returncode": 0,
+  "stdout": "a43236b527b7c27db2b952edf70f953520a461598fcb82294de44dab5cbe2315 /home/jim/sm-decomp/out/storage-spike-other-comparison/matched-input  (172.2s)\nkind            new      new bytes     shared   shared bytes\nblob         102741      137548700    1715171      672613158\nsegment        1894      133887036        133        9532006\nimage           697          25789        303          11211\nnode          12168        5928872      66122       33648618\nstream            1          66900          0              0\ntree              2          59129          0              0\ntotal                    277516426                 715804993\n",
+  "stderr": "  large file /home/jim/sm-decomp/out/storage-spike-other-comparison/matched-input/hardware.log\nTIME wall=172.15 cpu_user=115.24 cpu_system=52.41 rss_kib=32632\n",
+  "store": {
+    "objects": 117503,
+    "logical_bytes": 277516426,
+    "allocated_bytes": 612683776,
+    "note": "actual file blocks; directory metadata not included"
+  }
+}

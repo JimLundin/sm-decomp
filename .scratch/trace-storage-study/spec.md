@@ -15,6 +15,7 @@ This is a study, not authorization to migrate accepted evidence. The separate
 - [01 — Format investigation](issues/01-format-investigation.md)
 - [02 — Global-store comparison](issues/02-global-store-comparison.md)
 - [03 — Disk-backed storage spike](issues/03-storage-spike.md)
+- [04 — Matched other-worktree comparison](issues/04-other-spike-comparison.md)
 
 ## Integration evidence
 

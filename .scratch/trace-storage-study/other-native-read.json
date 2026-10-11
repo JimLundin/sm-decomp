@@ -1,0 +1,20 @@
+{
+  "store": "/tmp/evidence-spike/store",
+  "image_id": "907ddd00b9f07bb4c7ee7e5439de24b6fe24144ce073bf29d9079600f040fd5f",
+  "source": "/home/jim/sm-decomp/out/port/projectile-movement-live/20261011T061431.667466Z/c-0/frame-001000.bin",
+  "measurements": [
+    {
+      "wall_seconds": 0.11433521100025246,
+      "bytes": 1401335
+    },
+    {
+      "wall_seconds": 0.06862671600083559,
+      "bytes": 1401335
+    },
+    {
+      "wall_seconds": 0.04428548299983959,
+      "bytes": 1401335
+    }
+  ],
+  "note": "native subprocess start, Merkle page reads/hash verification and stdout pipe; warm OS cache after first request"
+}
