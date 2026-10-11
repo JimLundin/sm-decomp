@@ -1,0 +1,398 @@
+{
+  "schema": "storage-study-v1",
+  "source_root": "/home/jim/sm-decomp/out/port/projectile-movement-live/20261011T061431.667466Z/c-0",
+  "zstd_version": "1.4.4",
+  "levels": [
+    1,
+    3,
+    9
+  ],
+  "controls": {
+    "duplicates_order_changes_resets": true,
+    "varint_truncation_overflow": true,
+    "compressed_frame_truncation": true,
+    "same_process_determinism": true
+  },
+  "traces": [
+    {
+      "path": "/home/jim/sm-decomp/out/port/projectile-movement-live/20261011T061431.667466Z/c-0/hardware.log",
+      "offset": 0,
+      "source_file_bytes": 4967833433,
+      "text_bytes": 16777203,
+      "text_sha256": "7bb3e89368a16c857df266cf783dceda7b3573ecdb08d27a6d31535ede7f9b66",
+      "records": 1092305,
+      "binary_bytes": 5462029,
+      "encode_seconds": 1.9563712910003233,
+      "decode_seconds": 2.038606672000242,
+      "text_codecs": {
+        "gzip-1": {
+          "bytes": 1186828,
+          "ratio": 14.13617053187151,
+          "compress_seconds": 0.06744194000020798,
+          "decompress_seconds": 0.050928552000186755
+        },
+        "zstd-1": {
+          "bytes": 895806,
+          "ratio": 18.72861199858005,
+          "compress_seconds": 0.04648873000041931,
+          "decompress_seconds": 0.02535402499961492
+        },
+        "zstd-3": {
+          "bytes": 711797,
+          "ratio": 23.570207517030838,
+          "compress_seconds": 0.031067168999470596,
+          "decompress_seconds": 0.016026520999730565
+        },
+        "zstd-9": {
+          "bytes": 599826,
+          "ratio": 27.970116333736783,
+          "compress_seconds": 0.09779749599965726,
+          "decompress_seconds": 0.01599105100012821
+        }
+      },
+      "binary_codecs": {
+        "gzip-1": {
+          "bytes": 309379,
+          "ratio": 17.6548149680489,
+          "compress_seconds": 0.024046247000114818,
+          "decompress_seconds": 0.01858877599988773
+        },
+        "zstd-1": {
+          "bytes": 106216,
+          "ratio": 51.42378737666642,
+          "compress_seconds": 0.010047228999610525,
+          "decompress_seconds": 0.002443950999804656
+        },
+        "zstd-3": {
+          "bytes": 96170,
+          "ratio": 56.795559945929085,
+          "compress_seconds": 0.004080921999957354,
+          "decompress_seconds": 0.0023488980004913174
+        },
+        "zstd-9": {
+          "bytes": 79634,
+          "ratio": 68.58915789738052,
+          "compress_seconds": 0.015774948999933258,
+          "decompress_seconds": 0.001628270000765042
+        }
+      },
+      "round_trip": true
+    },
+    {
+      "path": "/home/jim/sm-decomp/out/port/projectile-movement-live/20261011T061431.667466Z/c-0/hardware.log",
+      "offset": 2483916721,
+      "source_file_bytes": 4967833433,
+      "text_bytes": 16777200,
+      "text_sha256": "ce62b995a98e154214c3ce006d00808a3ff74522f3d2e9c47d69ab52de87971b",
+      "records": 948501,
+      "binary_bytes": 4742539,
+      "encode_seconds": 1.7297537820004436,
+      "decode_seconds": 2.2075836770000024,
+      "text_codecs": {
+        "gzip-1": {
+          "bytes": 1591205,
+          "ratio": 10.543707441844388,
+          "compress_seconds": 0.18241463499998645,
+          "decompress_seconds": 0.10081816000001709
+        },
+        "zstd-1": {
+          "bytes": 842046,
+          "ratio": 19.924327174524908,
+          "compress_seconds": 0.09630644700064295,
+          "decompress_seconds": 0.11451862499961862
+        },
+        "zstd-3": {
+          "bytes": 791266,
+          "ratio": 21.202983573159973,
+          "compress_seconds": 0.09747361799963983,
+          "decompress_seconds": 0.03515709300063463
+        },
+        "zstd-9": {
+          "bytes": 775457,
+          "ratio": 21.635242186220513,
+          "compress_seconds": 0.3266758609997851,
+          "decompress_seconds": 0.045150570000259904
+        }
+      },
+      "binary_codecs": {
+        "gzip-1": {
+          "bytes": 491157,
+          "ratio": 9.655851387641833,
+          "compress_seconds": 0.06799568200040085,
+          "decompress_seconds": 0.02896242000042548
+        },
+        "zstd-1": {
+          "bytes": 66127,
+          "ratio": 71.7186474511168,
+          "compress_seconds": 0.010229385999991791,
+          "decompress_seconds": 0.003374275000169291
+        },
+        "zstd-3": {
+          "bytes": 77689,
+          "ratio": 61.04518014133275,
+          "compress_seconds": 0.007664308000130404,
+          "decompress_seconds": 0.0040157060002457
+        },
+        "zstd-9": {
+          "bytes": 44253,
+          "ratio": 107.16875692043477,
+          "compress_seconds": 0.04070645499996317,
+          "decompress_seconds": 0.0026689280002756277
+        }
+      },
+      "round_trip": true
+    },
+    {
+      "path": "/home/jim/sm-decomp/out/port/projectile-movement-live/20261011T061431.667466Z/c-0/hardware.log",
+      "offset": 4471050091,
+      "source_file_bytes": 4967833433,
+      "text_bytes": 16777211,
+      "text_sha256": "08bf62c9c0a21653ef66c677e9fb3f86f4e5c14cff67820c70012b08c4b81b13",
+      "records": 903408,
+      "binary_bytes": 4517060,
+      "encode_seconds": 3.1903654689995165,
+      "decode_seconds": 2.2999360190005973,
+      "text_codecs": {
+        "gzip-1": {
+          "bytes": 1395697,
+          "ratio": 12.020668526191573,
+          "compress_seconds": 0.09669722200032993,
+          "decompress_seconds": 0.057378476999474515
+        },
+        "zstd-1": {
+          "bytes": 774786,
+          "ratio": 21.653993489815253,
+          "compress_seconds": 0.05431792699982907,
+          "decompress_seconds": 0.03843110599973443
+        },
+        "zstd-3": {
+          "bytes": 776280,
+          "ratio": 21.61231900860514,
+          "compress_seconds": 0.04846328099938546,
+          "decompress_seconds": 0.022627537000516895
+        },
+        "zstd-9": {
+          "bytes": 703757,
+          "ratio": 23.839494314088526,
+          "compress_seconds": 0.18357085400020878,
+          "decompress_seconds": 0.025906724000378745
+        }
+      },
+      "binary_codecs": {
+        "gzip-1": {
+          "bytes": 371223,
+          "ratio": 12.168049932250964,
+          "compress_seconds": 0.02883752299931075,
+          "decompress_seconds": 0.014562019000550208
+        },
+        "zstd-1": {
+          "bytes": 39711,
+          "ratio": 113.74833169650726,
+          "compress_seconds": 0.004160714999670745,
+          "decompress_seconds": 0.0011569830003281822
+        },
+        "zstd-3": {
+          "bytes": 54903,
+          "ratio": 82.27346410942936,
+          "compress_seconds": 0.003630181000517041,
+          "decompress_seconds": 0.002555887000198709
+        },
+        "zstd-9": {
+          "bytes": 21741,
+          "ratio": 207.76689204728393,
+          "compress_seconds": 0.014333435000480677,
+          "decompress_seconds": 0.001596340000105556
+        }
+      },
+      "round_trip": true
+    }
+  ],
+  "snapshots": [
+    {
+      "label": "wram",
+      "files": 870,
+      "raw_bytes": 114032640,
+      "unique_whole_files": 567,
+      "whole_file_dedup_bytes": 74317824,
+      "manifest_sha256": "a6f08e0d2ce4016c9481466ee819d7b65eedc6e44de2673459a845f14c35fc79",
+      "manifest_zstd_bytes": 22681,
+      "chunk_members": 32,
+      "candidates": {
+        "individual-zstd-1": {
+          "bytes": 21561400,
+          "ratio": 5.288740063261198,
+          "round_trip_seconds": 0.5541053550005017
+        },
+        "individual-zstd-3": {
+          "bytes": 21197009,
+          "ratio": 5.3796571016222146,
+          "round_trip_seconds": 0.9578485579995686
+        },
+        "individual-zstd-9": {
+          "bytes": 20309065,
+          "ratio": 5.614864101326181,
+          "round_trip_seconds": 2.768450431999554
+        },
+        "pages-256-zstd-3": {
+          "bytes": 1091402,
+          "ratio": 104.48271122831001,
+          "unique_pages_across_chunks": 12630,
+          "raw_page_table_bytes": 1781760,
+          "round_trip_seconds": 0.9280484999999317
+        },
+        "pages-1024-zstd-3": {
+          "bytes": 1070064,
+          "ratio": 106.56618669537524,
+          "unique_pages_across_chunks": 4534,
+          "raw_page_table_bytes": 445440,
+          "round_trip_seconds": 0.3788384870003938
+        },
+        "pages-4096-zstd-3": {
+          "bytes": 1066987,
+          "ratio": 106.87350455066463,
+          "unique_pages_across_chunks": 1863,
+          "raw_page_table_bytes": 111360,
+          "round_trip_seconds": 0.26250769999933254
+        },
+        "concatenated-zstd-3": {
+          "bytes": 1308479,
+          "ratio": 87.14900277344917,
+          "round_trip_seconds": 0.22744102400065458
+        },
+        "xor-zstd-3": {
+          "bytes": 1505581,
+          "ratio": 75.73995686714963,
+          "round_trip_seconds": 33.659837392000554
+        }
+      },
+      "median_changed_byte_fraction": 0.0164794921875,
+      "round_trip": true,
+      "available_files": 870,
+      "sample_order": "filename lexical"
+    },
+    {
+      "label": "frames",
+      "files": 130,
+      "raw_bytes": 182173550,
+      "unique_whole_files": 130,
+      "whole_file_dedup_bytes": 182173550,
+      "manifest_sha256": "5d1039bc11621c219d38764c72c496076deecce1007f0c2a2b7fc7016e9e9673",
+      "manifest_zstd_bytes": 5099,
+      "chunk_members": 32,
+      "candidates": {
+        "individual-zstd-1": {
+          "bytes": 6945526,
+          "ratio": 26.228906205231972,
+          "round_trip_seconds": 0.28352214499955153
+        },
+        "individual-zstd-3": {
+          "bytes": 6717349,
+          "ratio": 27.119857848684056,
+          "round_trip_seconds": 0.32695272199998726
+        },
+        "individual-zstd-9": {
+          "bytes": 5943432,
+          "ratio": 30.651238207150346,
+          "round_trip_seconds": 0.9902704439991794
+        },
+        "pages-256-zstd-3": {
+          "bytes": 1694638,
+          "ratio": 107.49997934662152,
+          "unique_pages_across_chunks": 56847,
+          "raw_page_table_bytes": 2846480,
+          "round_trip_seconds": 1.1811281620002774
+        },
+        "pages-1024-zstd-3": {
+          "bytes": 1815553,
+          "ratio": 100.34052985509098,
+          "unique_pages_across_chunks": 31851,
+          "raw_page_table_bytes": 711880,
+          "round_trip_seconds": 0.43554840500019054
+        },
+        "pages-4096-zstd-3": {
+          "bytes": 1920115,
+          "ratio": 94.87637459214683,
+          "unique_pages_across_chunks": 10666,
+          "raw_page_table_bytes": 178360,
+          "round_trip_seconds": 0.35993377300019347
+        },
+        "concatenated-zstd-3": {
+          "bytes": 3050699,
+          "ratio": 59.715347204034224,
+          "round_trip_seconds": 0.6247986929993203
+        },
+        "xor-zstd-3": {
+          "bytes": 3458383,
+          "ratio": 52.675932654075616,
+          "round_trip_seconds": 36.79373675700026
+        }
+      },
+      "median_changed_byte_fraction": 0.045662172142992216,
+      "round_trip": true,
+      "available_files": 130,
+      "sample_order": "filename lexical"
+    },
+    {
+      "label": "rom-views",
+      "files": 32,
+      "raw_bytes": 134217728,
+      "unique_whole_files": 1,
+      "whole_file_dedup_bytes": 4194304,
+      "manifest_sha256": "1b270623b3965507773d2ea48d17f666f046e8df9392864cdd552cc12e6eff30",
+      "manifest_zstd_bytes": 203,
+      "chunk_members": 32,
+      "candidates": {
+        "individual-zstd-1": {
+          "bytes": 71316000,
+          "ratio": 1.882014246452409,
+          "round_trip_seconds": 0.6336067970005388
+        },
+        "individual-zstd-3": {
+          "bytes": 48018432,
+          "ratio": 2.795129337001258,
+          "round_trip_seconds": 0.7405792809995546
+        },
+        "individual-zstd-9": {
+          "bytes": 46822752,
+          "ratio": 2.8665066077277985,
+          "round_trip_seconds": 3.6526162000000113
+        },
+        "pages-256-zstd-3": {
+          "bytes": 1525288,
+          "ratio": 87.99500684460902,
+          "unique_pages_across_chunks": 10754,
+          "raw_page_table_bytes": 2097152,
+          "round_trip_seconds": 0.6618587279999701
+        },
+        "pages-1024-zstd-3": {
+          "bytes": 1510229,
+          "ratio": 88.87243457780244,
+          "unique_pages_across_chunks": 2789,
+          "raw_page_table_bytes": 524288,
+          "round_trip_seconds": 0.31556619299954036
+        },
+        "pages-4096-zstd-3": {
+          "bytes": 1503914,
+          "ratio": 89.24561377844744,
+          "unique_pages_across_chunks": 720,
+          "raw_page_table_bytes": 131072,
+          "round_trip_seconds": 0.25190011500035325
+        },
+        "concatenated-zstd-3": {
+          "bytes": 48019021,
+          "ratio": 2.795095052021156,
+          "round_trip_seconds": 1.2710061799998584
+        },
+        "xor-zstd-3": {
+          "bytes": 1504544,
+          "ratio": 89.20824382670098,
+          "round_trip_seconds": 24.704459638000117
+        }
+      },
+      "median_changed_byte_fraction": 0.0,
+      "round_trip": true,
+      "available_files": 419,
+      "sample_order": "filename lexical"
+    }
+  ]
+}

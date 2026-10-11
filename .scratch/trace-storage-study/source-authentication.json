@@ -1,0 +1,16 @@
+[
+  {
+    "run": "/home/jim/sm-decomp/out/port/projectile-movement-live/20261011T061431.667466Z",
+    "verdict_sha256": "2501312944d80db391528da739d117813405aaca0de650b827a6da22eb3b3907",
+    "status": "mixed-C-Rust-integration",
+    "authenticated_files": 1001,
+    "authenticated_bytes": 5264039623
+  },
+  {
+    "run": "/home/jim/sm-decomp/out/port/room-plm-current-live/20261010T224032.887967Z",
+    "verdict_sha256": "a3c23353ba8fa110e50cc4ba5d45957f86046d4019885527bd43b553f507eb8a",
+    "status": "mixed-C-Rust-integration",
+    "authenticated_files": 143,
+    "authenticated_bytes": 470433851
+  }
+]

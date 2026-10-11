@@ -1,0 +1,398 @@
+{
+  "schema": "storage-study-v1",
+  "source_root": "/home/jim/sm-decomp/out/port/room-plm-current-live/20261010T224032.887967Z/c-0",
+  "zstd_version": "1.4.4",
+  "levels": [
+    1,
+    3,
+    9
+  ],
+  "controls": {
+    "duplicates_order_changes_resets": true,
+    "varint_truncation_overflow": true,
+    "compressed_frame_truncation": true,
+    "same_process_determinism": true
+  },
+  "traces": [
+    {
+      "path": "/home/jim/sm-decomp/out/port/room-plm-current-live/20261010T224032.887967Z/c-0/hardware.log",
+      "offset": 0,
+      "source_file_bytes": 439118997,
+      "text_bytes": 8388595,
+      "text_sha256": "552e73c6369d5b2e45783029d3efb61e0d5f4994206bad3e5e1a75fe53d4e08a",
+      "records": 550200,
+      "binary_bytes": 2751208,
+      "encode_seconds": 2.0612344599994685,
+      "decode_seconds": 2.383794461999969,
+      "text_codecs": {
+        "gzip-1": {
+          "bytes": 634719,
+          "ratio": 13.216234270598486,
+          "compress_seconds": 0.05967313600012858,
+          "decompress_seconds": 0.03831190799974138
+        },
+        "zstd-1": {
+          "bytes": 457363,
+          "ratio": 18.341219119167924,
+          "compress_seconds": 0.05584656300015922,
+          "decompress_seconds": 0.014240709999285173
+        },
+        "zstd-3": {
+          "bytes": 408390,
+          "ratio": 20.540647420357992,
+          "compress_seconds": 0.02589213400005974,
+          "decompress_seconds": 0.010271758000271802
+        },
+        "zstd-9": {
+          "bytes": 331542,
+          "ratio": 25.30175664018435,
+          "compress_seconds": 0.09107053500065376,
+          "decompress_seconds": 0.009657431999585242
+        }
+      },
+      "binary_codecs": {
+        "gzip-1": {
+          "bytes": 211358,
+          "ratio": 13.016815072057836,
+          "compress_seconds": 0.022506868000164104,
+          "decompress_seconds": 0.012597955999808619
+        },
+        "zstd-1": {
+          "bytes": 89591,
+          "ratio": 30.708530990836135,
+          "compress_seconds": 0.005413159999989148,
+          "decompress_seconds": 0.001884123000309046
+        },
+        "zstd-3": {
+          "bytes": 78960,
+          "ratio": 34.84305977710233,
+          "compress_seconds": 0.003577251000024262,
+          "decompress_seconds": 0.0018137039996872772
+        },
+        "zstd-9": {
+          "bytes": 66633,
+          "ratio": 41.28897093031981,
+          "compress_seconds": 0.016018196000004536,
+          "decompress_seconds": 0.0013158020001355908
+        }
+      },
+      "round_trip": true
+    },
+    {
+      "path": "/home/jim/sm-decomp/out/port/room-plm-current-live/20261010T224032.887967Z/c-0/hardware.log",
+      "offset": 219559499,
+      "source_file_bytes": 439118997,
+      "text_bytes": 8388595,
+      "text_sha256": "e8d6b0fc65dc942023577c48c06c068a3bc6b5ed0fa7d1ffe1989a93747d063d",
+      "records": 504464,
+      "binary_bytes": 2522345,
+      "encode_seconds": 1.0556903350006905,
+      "decode_seconds": 1.4028238739992958,
+      "text_codecs": {
+        "gzip-1": {
+          "bytes": 415741,
+          "ratio": 20.17745423232253,
+          "compress_seconds": 0.049898898999344965,
+          "decompress_seconds": 0.024028479000662628
+        },
+        "zstd-1": {
+          "bytes": 361687,
+          "ratio": 23.192967952953797,
+          "compress_seconds": 0.03434848799952306,
+          "decompress_seconds": 0.02330054000049131
+        },
+        "zstd-3": {
+          "bytes": 294990,
+          "ratio": 28.43687921624462,
+          "compress_seconds": 0.028943325000000186,
+          "decompress_seconds": 0.013803462999931071
+        },
+        "zstd-9": {
+          "bytes": 184752,
+          "ratio": 45.40462349528016,
+          "compress_seconds": 0.06508691100043507,
+          "decompress_seconds": 0.008565230999920459
+        }
+      },
+      "binary_codecs": {
+        "gzip-1": {
+          "bytes": 144823,
+          "ratio": 17.416743196867902,
+          "compress_seconds": 0.012891027000478061,
+          "decompress_seconds": 0.007979873999829579
+        },
+        "zstd-1": {
+          "bytes": 17654,
+          "ratio": 142.8766851704996,
+          "compress_seconds": 0.002646399000695965,
+          "decompress_seconds": 0.0007806609992258018
+        },
+        "zstd-3": {
+          "bytes": 23750,
+          "ratio": 106.204,
+          "compress_seconds": 0.001815953999539488,
+          "decompress_seconds": 0.0008873790002326132
+        },
+        "zstd-9": {
+          "bytes": 11112,
+          "ratio": 226.9928905687545,
+          "compress_seconds": 0.011928843999157834,
+          "decompress_seconds": 0.0008285480007543811
+        }
+      },
+      "round_trip": true
+    },
+    {
+      "path": "/home/jim/sm-decomp/out/port/room-plm-current-live/20261010T224032.887967Z/c-0/hardware.log",
+      "offset": 395207111,
+      "source_file_bytes": 439118997,
+      "text_bytes": 8388604,
+      "text_sha256": "417af420203e6104f30af641eed9849f3b5eb13d5058494029da22e522b25d22",
+      "records": 514742,
+      "binary_bytes": 2573711,
+      "encode_seconds": 1.0493412120003995,
+      "decode_seconds": 1.1126970649993382,
+      "text_codecs": {
+        "gzip-1": {
+          "bytes": 415196,
+          "ratio": 20.20396150251929,
+          "compress_seconds": 0.04456729199955589,
+          "decompress_seconds": 0.02823472000000038
+        },
+        "zstd-1": {
+          "bytes": 343070,
+          "ratio": 24.45158130993675,
+          "compress_seconds": 0.029898107000008167,
+          "decompress_seconds": 0.015126342999792541
+        },
+        "zstd-3": {
+          "bytes": 301973,
+          "ratio": 27.779318018498344,
+          "compress_seconds": 0.019381377000172506,
+          "decompress_seconds": 0.014287384999988717
+        },
+        "zstd-9": {
+          "bytes": 319062,
+          "ratio": 26.291454325491596,
+          "compress_seconds": 0.07514933699985704,
+          "decompress_seconds": 0.011506410000038159
+        }
+      },
+      "binary_codecs": {
+        "gzip-1": {
+          "bytes": 146679,
+          "ratio": 17.546554039773927,
+          "compress_seconds": 0.01530866099983541,
+          "decompress_seconds": 0.007976490000146441
+        },
+        "zstd-1": {
+          "bytes": 14842,
+          "ratio": 173.40729012262497,
+          "compress_seconds": 0.00244413899963547,
+          "decompress_seconds": 0.0006184750000102213
+        },
+        "zstd-3": {
+          "bytes": 13601,
+          "ratio": 189.2295419454452,
+          "compress_seconds": 0.0011621200001172838,
+          "decompress_seconds": 0.0004961949998687487
+        },
+        "zstd-9": {
+          "bytes": 6248,
+          "ratio": 411.925576184379,
+          "compress_seconds": 0.009253742000510101,
+          "decompress_seconds": 0.0005312869998306269
+        }
+      },
+      "round_trip": true
+    }
+  ],
+  "snapshots": [
+    {
+      "label": "wram",
+      "files": 128,
+      "raw_bytes": 16777216,
+      "unique_whole_files": 100,
+      "whole_file_dedup_bytes": 13107200,
+      "manifest_sha256": "555113f7341150a92926220a8e2efeedaa4dc3c7b54c863e373f31a5d3dcb2dc",
+      "manifest_zstd_bytes": 4244,
+      "chunk_members": 32,
+      "candidates": {
+        "individual-zstd-1": {
+          "bytes": 2145955,
+          "ratio": 7.8180651504807885,
+          "round_trip_seconds": 0.057551201000023866
+        },
+        "individual-zstd-3": {
+          "bytes": 2103872,
+          "ratio": 7.974447114653363,
+          "round_trip_seconds": 0.08275688300000184
+        },
+        "individual-zstd-9": {
+          "bytes": 1993059,
+          "ratio": 8.417822051429486,
+          "round_trip_seconds": 0.25663728099971195
+        },
+        "pages-256-zstd-3": {
+          "bytes": 159684,
+          "ratio": 105.06510357956965,
+          "unique_pages_across_chunks": 1678,
+          "raw_page_table_bytes": 262144,
+          "round_trip_seconds": 0.12780748499972105
+        },
+        "pages-1024-zstd-3": {
+          "bytes": 156815,
+          "ratio": 106.98731626438797,
+          "unique_pages_across_chunks": 603,
+          "raw_page_table_bytes": 65536,
+          "round_trip_seconds": 0.0513949070000308
+        },
+        "pages-4096-zstd-3": {
+          "bytes": 157015,
+          "ratio": 106.85103970958188,
+          "unique_pages_across_chunks": 264,
+          "raw_page_table_bytes": 16384,
+          "round_trip_seconds": 0.03735602399956406
+        },
+        "concatenated-zstd-3": {
+          "bytes": 173038,
+          "ratio": 96.95683029161225,
+          "round_trip_seconds": 0.036975913999413024
+        },
+        "xor-zstd-3": {
+          "bytes": 221774,
+          "ratio": 75.6500581673235,
+          "round_trip_seconds": 4.760548722999374
+        }
+      },
+      "median_changed_byte_fraction": 0.00014495849609375,
+      "round_trip": true,
+      "available_files": 132,
+      "sample_order": "filename lexical"
+    },
+    {
+      "label": "frames",
+      "files": 10,
+      "raw_bytes": 14013350,
+      "unique_whole_files": 10,
+      "whole_file_dedup_bytes": 14013350,
+      "manifest_sha256": "4f08250816e125b238bb7c19f39f1b50777ca30e80344135e7bb619f8e7ab424",
+      "manifest_zstd_bytes": 478,
+      "chunk_members": 32,
+      "candidates": {
+        "individual-zstd-1": {
+          "bytes": 437035,
+          "ratio": 32.06459436887206,
+          "round_trip_seconds": 0.019736125999770593
+        },
+        "individual-zstd-3": {
+          "bytes": 426085,
+          "ratio": 32.888625508994686,
+          "round_trip_seconds": 0.021897655999964627
+        },
+        "individual-zstd-9": {
+          "bytes": 390002,
+          "ratio": 35.931482402654346,
+          "round_trip_seconds": 0.08009995500015066
+        },
+        "pages-256-zstd-3": {
+          "bytes": 170110,
+          "ratio": 82.37816706836753,
+          "unique_pages_across_chunks": 4968,
+          "raw_page_table_bytes": 218960,
+          "round_trip_seconds": 0.06637173899980553
+        },
+        "pages-1024-zstd-3": {
+          "bytes": 169830,
+          "ratio": 82.5139845728081,
+          "unique_pages_across_chunks": 2540,
+          "raw_page_table_bytes": 54760,
+          "round_trip_seconds": 0.040362844999435765
+        },
+        "pages-4096-zstd-3": {
+          "bytes": 169713,
+          "ratio": 82.57086964463535,
+          "unique_pages_across_chunks": 801,
+          "raw_page_table_bytes": 13720,
+          "round_trip_seconds": 0.029276412000399432
+        },
+        "concatenated-zstd-3": {
+          "bytes": 238129,
+          "ratio": 58.84772539253934,
+          "round_trip_seconds": 0.059608332000607334
+        },
+        "xor-zstd-3": {
+          "bytes": 307694,
+          "ratio": 45.54313701274643,
+          "round_trip_seconds": 3.5574726020004164
+        }
+      },
+      "median_changed_byte_fraction": 0.08740522430396729,
+      "round_trip": true,
+      "available_files": 10,
+      "sample_order": "filename lexical"
+    },
+    {
+      "label": "rom-views",
+      "files": 23,
+      "raw_bytes": 96468992,
+      "unique_whole_files": 1,
+      "whole_file_dedup_bytes": 4194304,
+      "manifest_sha256": "72b3c894729806df66ecf170a7c2edf9b9aca91440c2fead218f74f6b2b2b54a",
+      "manifest_zstd_bytes": 190,
+      "chunk_members": 32,
+      "candidates": {
+        "individual-zstd-1": {
+          "bytes": 51258375,
+          "ratio": 1.882014246452409,
+          "round_trip_seconds": 0.646380537999903
+        },
+        "individual-zstd-3": {
+          "bytes": 34513248,
+          "ratio": 2.795129337001258,
+          "round_trip_seconds": 0.7996335869993345
+        },
+        "individual-zstd-9": {
+          "bytes": 33653853,
+          "ratio": 2.8665066077277985,
+          "round_trip_seconds": 4.945988085999488
+        },
+        "pages-256-zstd-3": {
+          "bytes": 1525229,
+          "ratio": 63.24885771251399,
+          "unique_pages_across_chunks": 10754,
+          "raw_page_table_bytes": 1507328,
+          "round_trip_seconds": 0.9281960210000761
+        },
+        "pages-1024-zstd-3": {
+          "bytes": 1510217,
+          "ratio": 63.877569912138455,
+          "unique_pages_across_chunks": 2789,
+          "raw_page_table_bytes": 376832,
+          "round_trip_seconds": 0.4004672559995015
+        },
+        "pages-4096-zstd-3": {
+          "bytes": 1503913,
+          "ratio": 64.14532755551684,
+          "unique_pages_across_chunks": 720,
+          "raw_page_table_bytes": 94208,
+          "round_trip_seconds": 0.25343732300007105
+        },
+        "concatenated-zstd-3": {
+          "bytes": 34513666,
+          "ratio": 2.7950954847856497,
+          "round_trip_seconds": 1.6166484859995762
+        },
+        "xor-zstd-3": {
+          "bytes": 1503392,
+          "ratio": 64.16755709755007,
+          "round_trip_seconds": 27.02028146200064
+        }
+      },
+      "median_changed_byte_fraction": 0.0,
+      "round_trip": true,
+      "available_files": 23,
+      "sample_order": "filename lexical"
+    }
+  ]
+}

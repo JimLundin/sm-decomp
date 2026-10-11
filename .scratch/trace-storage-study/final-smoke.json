@@ -1,0 +1,250 @@
+{
+  "schema": "storage-study-v1",
+  "source_root": "/home/jim/sm-decomp/out/port/room-plm-current-live/20261010T224032.887967Z/c-0",
+  "zstd_version": "1.4.4",
+  "levels": [
+    1,
+    3,
+    9
+  ],
+  "controls": {
+    "duplicates_order_changes_resets": true,
+    "varint_truncation_overflow": true,
+    "compressed_frame_truncation": true,
+    "same_process_determinism": true
+  },
+  "traces": [
+    {
+      "path": "/home/jim/sm-decomp/out/port/room-plm-current-live/20261010T224032.887967Z/c-0/hardware.log",
+      "offset": 0,
+      "source_file_bytes": 439118997,
+      "text_bytes": 1048575,
+      "text_sha256": "38f5a344d97c0f55e38fa44a51532b72f13aa5ee5e19e51ec92b549ad7cf8fb2",
+      "records": 75101,
+      "binary_bytes": 375505,
+      "encode_seconds": 0.16067138700054784,
+      "decode_seconds": 0.16966968399992766,
+      "text_codecs": {
+        "gzip-1": {
+          "bytes": 84948,
+          "ratio": 12.3437279276734,
+          "compress_seconds": 0.006537909000144282,
+          "decompress_seconds": 0.004852759999266709
+        },
+        "zstd-1": {
+          "bytes": 67145,
+          "ratio": 15.616576066721274,
+          "compress_seconds": 0.003802901000199199,
+          "decompress_seconds": 0.0013064740005575004
+        },
+        "zstd-3": {
+          "bytes": 51661,
+          "ratio": 20.297226147383906,
+          "compress_seconds": 0.0022013999996488565,
+          "decompress_seconds": 0.0013150390004739165
+        },
+        "zstd-9": {
+          "bytes": 46990,
+          "ratio": 22.314854224303044,
+          "compress_seconds": 0.01132724099988991,
+          "decompress_seconds": 0.0007543450001321617
+        }
+      },
+      "binary_codecs": {
+        "gzip-1": {
+          "bytes": 24474,
+          "ratio": 15.343017079349513,
+          "compress_seconds": 0.0024982679997265222,
+          "decompress_seconds": 0.00140322599963838
+        },
+        "zstd-1": {
+          "bytes": 11125,
+          "ratio": 33.75325842696629,
+          "compress_seconds": 0.0003845649998766021,
+          "decompress_seconds": 0.00019435800004430348
+        },
+        "zstd-3": {
+          "bytes": 11530,
+          "ratio": 32.56764960971379,
+          "compress_seconds": 0.0006020710006851004,
+          "decompress_seconds": 0.00022096300017437898
+        },
+        "zstd-9": {
+          "bytes": 9510,
+          "ratio": 39.48527865404837,
+          "compress_seconds": 0.0033867580004880438,
+          "decompress_seconds": 0.00015925699972285656
+        }
+      },
+      "round_trip": true,
+      "chunked_zstd_3": {
+        "chunks": 1,
+        "frames_per_group": 64,
+        "text_input_cap": 1048576,
+        "binary_bytes": 11530,
+        "text_bytes": 51661,
+        "binary_ratio": 90.94319167389419,
+        "text_ratio": 20.297226147383906,
+        "index_bytes_estimate": 64,
+        "round_trip_seconds": 0.3081752059997598
+      }
+    },
+    {
+      "path": "/home/jim/sm-decomp/out/port/room-plm-current-live/20261010T224032.887967Z/c-0/hardware.log",
+      "offset": 219559499,
+      "source_file_bytes": 439118997,
+      "text_bytes": 1048570,
+      "text_sha256": "d7c685ed3d6c63a3091b7194eef04130a243a37462c5cc32cea6857c1cdc6dbe",
+      "records": 62846,
+      "binary_bytes": 314233,
+      "encode_seconds": 0.1256998789995123,
+      "decode_seconds": 0.128636168000412,
+      "text_codecs": {
+        "gzip-1": {
+          "bytes": 59235,
+          "ratio": 17.701865451169073,
+          "compress_seconds": 0.00446947300042666,
+          "decompress_seconds": 0.0029106869997121976
+        },
+        "zstd-1": {
+          "bytes": 49159,
+          "ratio": 21.33017351858256,
+          "compress_seconds": 0.002113388999532617,
+          "decompress_seconds": 0.0009229540000887937
+        },
+        "zstd-3": {
+          "bytes": 42180,
+          "ratio": 24.85941204362257,
+          "compress_seconds": 0.001770455000041693,
+          "decompress_seconds": 0.0012891169999420526
+        },
+        "zstd-9": {
+          "bytes": 29472,
+          "ratio": 35.57851520086862,
+          "compress_seconds": 0.007454808999682427,
+          "decompress_seconds": 0.0007983640007296344
+        }
+      },
+      "binary_codecs": {
+        "gzip-1": {
+          "bytes": 22312,
+          "ratio": 14.083587307278595,
+          "compress_seconds": 0.0017904080004882417,
+          "decompress_seconds": 0.0012504879996413365
+        },
+        "zstd-1": {
+          "bytes": 2815,
+          "ratio": 111.62806394316164,
+          "compress_seconds": 0.0002163360004487913,
+          "decompress_seconds": 0.00010005399963119999
+        },
+        "zstd-3": {
+          "bytes": 3158,
+          "ratio": 99.50379987333756,
+          "compress_seconds": 0.00021771399951830972,
+          "decompress_seconds": 0.00023748800049361307
+        },
+        "zstd-9": {
+          "bytes": 2298,
+          "ratio": 136.74194952132288,
+          "compress_seconds": 0.001756100999955379,
+          "decompress_seconds": 0.00011822400028904667
+        }
+      },
+      "round_trip": true,
+      "chunked_zstd_3": {
+        "chunks": 1,
+        "frames_per_group": 64,
+        "text_input_cap": 1048576,
+        "binary_bytes": 3158,
+        "text_bytes": 42180,
+        "binary_ratio": 332.03609879670677,
+        "text_ratio": 24.85941204362257,
+        "index_bytes_estimate": 64,
+        "round_trip_seconds": 0.24393127700022887
+      }
+    },
+    {
+      "path": "/home/jim/sm-decomp/out/port/room-plm-current-live/20261010T224032.887967Z/c-0/hardware.log",
+      "offset": 395207111,
+      "source_file_bytes": 439118997,
+      "text_bytes": 1048573,
+      "text_sha256": "a25454b8a51182a23775c40d5d5766d1e9486bf44181d11f2cce124a835de1c9",
+      "records": 64344,
+      "binary_bytes": 321721,
+      "encode_seconds": 0.11655456400058029,
+      "decode_seconds": 0.11929916600001889,
+      "text_codecs": {
+        "gzip-1": {
+          "bytes": 52289,
+          "ratio": 20.05341467612691,
+          "compress_seconds": 0.005209361999732209,
+          "decompress_seconds": 0.00340802899972914
+        },
+        "zstd-1": {
+          "bytes": 41444,
+          "ratio": 25.300960332014284,
+          "compress_seconds": 0.0023330860003625276,
+          "decompress_seconds": 0.0011998679992757388
+        },
+        "zstd-3": {
+          "bytes": 38590,
+          "ratio": 27.172143042238922,
+          "compress_seconds": 0.0022923420001461636,
+          "decompress_seconds": 0.0011675639998429688
+        },
+        "zstd-9": {
+          "bytes": 41386,
+          "ratio": 25.336418112405163,
+          "compress_seconds": 0.00911630199971114,
+          "decompress_seconds": 0.0012130169998272322
+        }
+      },
+      "binary_codecs": {
+        "gzip-1": {
+          "bytes": 19034,
+          "ratio": 16.902437742986237,
+          "compress_seconds": 0.001805838000109361,
+          "decompress_seconds": 0.0011345279999659397
+        },
+        "zstd-1": {
+          "bytes": 2596,
+          "ratio": 123.92950693374422,
+          "compress_seconds": 0.0002402929994786973,
+          "decompress_seconds": 0.00011666499995044433
+        },
+        "zstd-3": {
+          "bytes": 6091,
+          "ratio": 52.81907732720407,
+          "compress_seconds": 0.00033306199929938884,
+          "decompress_seconds": 0.0001623900006961776
+        },
+        "zstd-9": {
+          "bytes": 1885,
+          "ratio": 170.6742705570292,
+          "compress_seconds": 0.001265130000319914,
+          "decompress_seconds": 8.306799918500474e-05
+        }
+      },
+      "round_trip": true,
+      "chunked_zstd_3": {
+        "chunks": 1,
+        "frames_per_group": 64,
+        "text_input_cap": 1048576,
+        "binary_bytes": 6091,
+        "text_bytes": 38590,
+        "binary_ratio": 172.1512066984075,
+        "text_ratio": 27.172143042238922,
+        "index_bytes_estimate": 64,
+        "round_trip_seconds": 0.21944301599978644
+      }
+    }
+  ],
+  "snapshots": [],
+  "capture_verdict": {
+    "path": "/home/jim/sm-decomp/out/port/room-plm-current-live/20261010T224032.887967Z/verdict.json",
+    "sha256": "a3c23353ba8fa110e50cc4ba5d45957f86046d4019885527bd43b553f507eb8a",
+    "status": "mixed-C-Rust-integration",
+    "stored_trace_sha256": "c1f1fd5d5cf1c547dadd9675d97cb8108802c0f2cfd34e37576ed2415fb3b6f5"
+  }
+}

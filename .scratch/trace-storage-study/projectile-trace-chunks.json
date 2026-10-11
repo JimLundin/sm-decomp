@@ -1,0 +1,250 @@
+{
+  "schema": "storage-study-v1",
+  "source_root": "/home/jim/sm-decomp/out/port/projectile-movement-live/20261011T061431.667466Z/c-0",
+  "zstd_version": "1.4.4",
+  "levels": [
+    1,
+    3,
+    9
+  ],
+  "controls": {
+    "duplicates_order_changes_resets": true,
+    "varint_truncation_overflow": true,
+    "compressed_frame_truncation": true,
+    "same_process_determinism": true
+  },
+  "traces": [
+    {
+      "path": "/home/jim/sm-decomp/out/port/projectile-movement-live/20261011T061431.667466Z/c-0/hardware.log",
+      "offset": 0,
+      "source_file_bytes": 4967833433,
+      "text_bytes": 16777203,
+      "text_sha256": "7bb3e89368a16c857df266cf783dceda7b3573ecdb08d27a6d31535ede7f9b66",
+      "records": 1092305,
+      "binary_bytes": 5462029,
+      "encode_seconds": 1.9465742459997273,
+      "decode_seconds": 2.2031937460005793,
+      "text_codecs": {
+        "gzip-1": {
+          "bytes": 1186828,
+          "ratio": 14.13617053187151,
+          "compress_seconds": 0.08016852400032803,
+          "decompress_seconds": 0.05880045499998232
+        },
+        "zstd-1": {
+          "bytes": 895806,
+          "ratio": 18.72861199858005,
+          "compress_seconds": 0.04597034900052677,
+          "decompress_seconds": 0.022288326999841956
+        },
+        "zstd-3": {
+          "bytes": 711797,
+          "ratio": 23.570207517030838,
+          "compress_seconds": 0.04025126799933787,
+          "decompress_seconds": 0.017101364000154717
+        },
+        "zstd-9": {
+          "bytes": 599826,
+          "ratio": 27.970116333736783,
+          "compress_seconds": 0.10272420399996918,
+          "decompress_seconds": 0.010712616000091657
+        }
+      },
+      "binary_codecs": {
+        "gzip-1": {
+          "bytes": 309379,
+          "ratio": 17.6548149680489,
+          "compress_seconds": 0.0254936009996527,
+          "decompress_seconds": 0.01885682500051189
+        },
+        "zstd-1": {
+          "bytes": 106216,
+          "ratio": 51.42378737666642,
+          "compress_seconds": 0.007874572999753582,
+          "decompress_seconds": 0.002453367999805778
+        },
+        "zstd-3": {
+          "bytes": 96170,
+          "ratio": 56.795559945929085,
+          "compress_seconds": 0.0061206500004118425,
+          "decompress_seconds": 0.003554095999788842
+        },
+        "zstd-9": {
+          "bytes": 79634,
+          "ratio": 68.58915789738052,
+          "compress_seconds": 0.01706820500021422,
+          "decompress_seconds": 0.001950015999682364
+        }
+      },
+      "round_trip": true,
+      "chunked_zstd_3": {
+        "chunks": 24,
+        "frames_per_group": 64,
+        "text_input_cap": 1048576,
+        "binary_bytes": 118472,
+        "text_bytes": 791507,
+        "binary_ratio": 141.61323350665137,
+        "text_ratio": 21.196531426759332,
+        "index_bytes_estimate": 1536,
+        "round_trip_seconds": 4.288229033999414
+      }
+    },
+    {
+      "path": "/home/jim/sm-decomp/out/port/projectile-movement-live/20261011T061431.667466Z/c-0/hardware.log",
+      "offset": 2483916721,
+      "source_file_bytes": 4967833433,
+      "text_bytes": 16777200,
+      "text_sha256": "ce62b995a98e154214c3ce006d00808a3ff74522f3d2e9c47d69ab52de87971b",
+      "records": 948501,
+      "binary_bytes": 4742539,
+      "encode_seconds": 2.106319638000059,
+      "decode_seconds": 2.2203388960006123,
+      "text_codecs": {
+        "gzip-1": {
+          "bytes": 1591205,
+          "ratio": 10.543707441844388,
+          "compress_seconds": 0.11840181699972163,
+          "decompress_seconds": 0.06080085200028407
+        },
+        "zstd-1": {
+          "bytes": 842046,
+          "ratio": 19.924327174524908,
+          "compress_seconds": 0.04603826100083097,
+          "decompress_seconds": 0.040728489999310113
+        },
+        "zstd-3": {
+          "bytes": 791266,
+          "ratio": 21.202983573159973,
+          "compress_seconds": 0.053905742000097234,
+          "decompress_seconds": 0.01565066500006651
+        },
+        "zstd-9": {
+          "bytes": 775457,
+          "ratio": 21.635242186220513,
+          "compress_seconds": 0.19679548900057853,
+          "decompress_seconds": 0.020200300999931642
+        }
+      },
+      "binary_codecs": {
+        "gzip-1": {
+          "bytes": 491157,
+          "ratio": 9.655851387641833,
+          "compress_seconds": 0.04128667800068797,
+          "decompress_seconds": 0.018418439999550174
+        },
+        "zstd-1": {
+          "bytes": 66127,
+          "ratio": 71.7186474511168,
+          "compress_seconds": 0.003895099000146729,
+          "decompress_seconds": 0.0025077239997699508
+        },
+        "zstd-3": {
+          "bytes": 77689,
+          "ratio": 61.04518014133275,
+          "compress_seconds": 0.005866651999895112,
+          "decompress_seconds": 0.0034066139996866696
+        },
+        "zstd-9": {
+          "bytes": 44253,
+          "ratio": 107.16875692043477,
+          "compress_seconds": 0.01884366099966428,
+          "decompress_seconds": 0.0012402600004861597
+        }
+      },
+      "round_trip": true,
+      "chunked_zstd_3": {
+        "chunks": 21,
+        "frames_per_group": 64,
+        "text_input_cap": 1048576,
+        "binary_bytes": 114512,
+        "text_bytes": 850616,
+        "binary_ratio": 146.51040938940898,
+        "text_ratio": 19.723588552296217,
+        "index_bytes_estimate": 1344,
+        "round_trip_seconds": 4.951016013999833
+      }
+    },
+    {
+      "path": "/home/jim/sm-decomp/out/port/projectile-movement-live/20261011T061431.667466Z/c-0/hardware.log",
+      "offset": 4471050091,
+      "source_file_bytes": 4967833433,
+      "text_bytes": 16777211,
+      "text_sha256": "08bf62c9c0a21653ef66c677e9fb3f86f4e5c14cff67820c70012b08c4b81b13",
+      "records": 903408,
+      "binary_bytes": 4517060,
+      "encode_seconds": 2.0511346070006766,
+      "decode_seconds": 2.211398028000076,
+      "text_codecs": {
+        "gzip-1": {
+          "bytes": 1395697,
+          "ratio": 12.020668526191573,
+          "compress_seconds": 0.12388199400083977,
+          "decompress_seconds": 0.07301229999939096
+        },
+        "zstd-1": {
+          "bytes": 774786,
+          "ratio": 21.653993489815253,
+          "compress_seconds": 0.0594581269997434,
+          "decompress_seconds": 0.04200787400077388
+        },
+        "zstd-3": {
+          "bytes": 776280,
+          "ratio": 21.61231900860514,
+          "compress_seconds": 0.06542994000028557,
+          "decompress_seconds": 0.02778993499941862
+        },
+        "zstd-9": {
+          "bytes": 703757,
+          "ratio": 23.839494314088526,
+          "compress_seconds": 0.26955350499974884,
+          "decompress_seconds": 0.020358919000500464
+        }
+      },
+      "binary_codecs": {
+        "gzip-1": {
+          "bytes": 371223,
+          "ratio": 12.168049932250964,
+          "compress_seconds": 0.04633281999940664,
+          "decompress_seconds": 0.02191748200039001
+        },
+        "zstd-1": {
+          "bytes": 39711,
+          "ratio": 113.74833169650726,
+          "compress_seconds": 0.0035809889996016864,
+          "decompress_seconds": 0.0022684229998048977
+        },
+        "zstd-3": {
+          "bytes": 54903,
+          "ratio": 82.27346410942936,
+          "compress_seconds": 0.005694712000149593,
+          "decompress_seconds": 0.002952048999759427
+        },
+        "zstd-9": {
+          "bytes": 21741,
+          "ratio": 207.76689204728393,
+          "compress_seconds": 0.022069409000323503,
+          "decompress_seconds": 0.001846360999479657
+        }
+      },
+      "round_trip": true,
+      "chunked_zstd_3": {
+        "chunks": 19,
+        "frames_per_group": 64,
+        "text_input_cap": 1048576,
+        "binary_bytes": 90675,
+        "text_bytes": 807687,
+        "binary_ratio": 185.0257623380204,
+        "text_ratio": 20.771921548817797,
+        "index_bytes_estimate": 1216,
+        "round_trip_seconds": 4.095030481999856
+      }
+    }
+  ],
+  "snapshots": [],
+  "capture_verdict": {
+    "path": "/home/jim/sm-decomp/out/port/projectile-movement-live/20261011T061431.667466Z/verdict.json",
+    "sha256": "2501312944d80db391528da739d117813405aaca0de650b827a6da22eb3b3907",
+    "status": "mixed-C-Rust-integration",
+    "stored_trace_sha256": "ade76f110aa3833e707b549a07b22a746f359a8cb1a614f4bed4fed9d72621eb"
+  }
+}
