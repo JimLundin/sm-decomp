@@ -254,3 +254,35 @@ User requested a repo commit and handoff checkpoint. Resume instructions are
 is running.45kpostcleanupauthentication passed607artifacts/all4subjects,
 377,696,038snapshotbytes reclaimed. Checkpoint is an intermediate verified
 implementation commit, not ticketresolution or whole-game acceptance.
+
+
+## Completion evidence
+
+Intermediate implementation checkpoint: `91c513c` on `decomp-port-integration`.
+Ticket remains claimed. Refreshed handoff: `../checkpoint-137.md`.
+
+Read-only acceptance audit found a remaining native allocation gap: live and
+observed offline native-entry contracts cover `SpawnEprojWithRoomGfx`, while
+Ceres calls three-argument `SpawnEprojWithGfx` from `sm_90.c`. Current live Rust
+allocation counts therefore cover Ridley only; all-nine scheduler admission does
+not establish exclusive Ceres allocation. After the current frozen replay
+finishes, extend support/host ABI/same-bank routing and actual-C native fixtures,
+add per-ID allocation captures/counters, and verify four pad plus four platform
+allocations exclusively Rust in a fresh four-process full-route replay.
+
+Current full run: `out/port/observed-projectile-corrected-live-full/20261011T135146.556016Z`.
+Both C baselines completed 129,712 inputs, matching counters/progress and zero
+CPU fallback. Mixed 0 passed 89,000 inputs with zero fallback; mixed 1 pending.
+Later 965E/9688/9696 captures match full WRAM/all eight host words across both C
+subjects and mixed 0, including point (22,120) and vertical splits at
+(22,106)/(22,134). Partial inspection record:
+`../observed-projectile-live-full-inspection.json`.
+
+Completed-run cleanup/authentication remains recorded in the existing cleanup
+and authentication JSON records. Full-run cleanup is pending because processes
+still write the run; the handoff contains exact scoped cleanup/dedup/authentication
+commands. This refresh created no disposable build or capture extraction; the
+inspection script was removed, reclaiming 4,316 bytes. Remaining free space:
+257,736,871,936 bytes. Required sealed artifacts, shared store dependencies and
+unrelated worktrees remain retained. No full-route or complete allocation
+acceptance is claimed yet.
