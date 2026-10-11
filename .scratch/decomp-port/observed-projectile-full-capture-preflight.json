@@ -1,0 +1,168 @@
+{
+  "scope": "bounded staged full replay native C captures, first two scheduled frames each containing965E/9688/9696 after second combat interval around70716. Every before/after is131072-byte WRAM+16-byte8word host, staged copies sampled twice for completeness. Capture state hashes require final packed seal corroboration after baseline finishes. No whole-game parity inferred.",
+  "subject": "out/port/observed-projectile-live-full/20261011T133721.233571Z/c-0",
+  "baseline_observed_progress": 129712,
+  "live_pid_confirmed": 686107,
+  "capture_count": 6,
+  "admitted": 6,
+  "refused": 0,
+  "mismatches": [],
+  "retained_final_rust_binary": "out/port/observed-projectile-final/ownership/20261011T132800.186971Z/rust",
+  "retained_final_rust_sha256": "7f7b7334a5ecf4f29e91299dc4def3ae5c50599df439d0cbaaba55055784061c",
+  "rom_view_sha256": "40aaebb25b9646bea2dffdc5e1ae680768a39dd122de9353885e1c7456ceae27",
+  "support_runner_source_sha256": "d8d734944df37282a6d36c865df8c3cfa58016808c721b5f52888e3a3d471efd",
+  "source_dependencies_sha256": {
+    "crates/port/src/observed_projectile_ownership.rs": "68464c8b0bb2b8ed15afb5d03c8f9b08a2515eee8876e8e30f11692c13bd24d9",
+    "crates/port/src/lib.rs": "5f21b25b07ea01c951683ffe4c25b40608f194c50da3abc4f2986f341abe4037",
+    "crates/port/src/enemy_projectiles.rs": "beb34d23351a3427ebc994ed46f9b161013f9e80f6ce60e9d3458fdf7e2bdfdc",
+    "crates/port/src/enemy_projectile_instructions.rs": "ae00e7dc1f8a5ef6eac07c27a0b4f44126dd78137c206d66f4ab29c79622b01d",
+    "crates/port/src/enemy_projectile_collision.rs": "f117da8bf86a387b0e5693fb19a84c938486fc089a10abf3155365e6627b837e",
+    "crates/port/src/audio.rs": "4308e496267857ca869db45f4127e505bec4ad29c4c9ede8f08d6e9769ccf69d"
+  },
+  "captures": [
+    {
+      "capture": "projectile-id-965e-001",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission": "Ok(true)",
+      "supported": true,
+      "retained_final_rust_return": "0",
+      "member_sha256": {
+        "fixtures/projectile-id-965e-001-before.wram": "35a2a8e283267f9153379e1cc4a894dcbc14ad8881d62b2ceccead2f5db6efde",
+        "fixtures/projectile-id-965e-001-before.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
+        "fixtures/projectile-id-965e-001-after.wram": "a6cd978d10ae6821e6f3bad9c532b1f0f1505bef667154497af14cc468696264",
+        "fixtures/projectile-id-965e-001-after.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58"
+      },
+      "wram_equal": true,
+      "host_equal": true,
+      "rust_wram_sha256": "a6cd978d10ae6821e6f3bad9c532b1f0f1505bef667154497af14cc468696264",
+      "rust_host_sha256": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
+      "original_admission": "Ok(false)"
+    },
+    {
+      "capture": "projectile-id-965e-002",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission": "Ok(true)",
+      "supported": true,
+      "retained_final_rust_return": "0",
+      "member_sha256": {
+        "fixtures/projectile-id-965e-002-before.wram": "71d34dc9cc1c65671d1b2e989860d6428bcfac5bb82dd702f405503c56e5d7cc",
+        "fixtures/projectile-id-965e-002-before.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
+        "fixtures/projectile-id-965e-002-after.wram": "d9e0745408d6c8e89297ef7720b0230f96dd56f835819b4e49ad8a021d438c97",
+        "fixtures/projectile-id-965e-002-after.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58"
+      },
+      "wram_equal": true,
+      "host_equal": true,
+      "rust_wram_sha256": "d9e0745408d6c8e89297ef7720b0230f96dd56f835819b4e49ad8a021d438c97",
+      "rust_host_sha256": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
+      "original_admission": "Ok(false)"
+    },
+    {
+      "capture": "projectile-id-9688-001",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission": "Ok(true)",
+      "supported": true,
+      "retained_final_rust_return": "0",
+      "member_sha256": {
+        "fixtures/projectile-id-9688-001-before.wram": "431bda0168646f32b29ca0c79395ecac4669028c8745c290948af5c2f2ba18bd",
+        "fixtures/projectile-id-9688-001-before.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
+        "fixtures/projectile-id-9688-001-after.wram": "431be088769289fc0402a68e3adc4ee1108fc133cbcc3ae80e6daeaf8a67c46d",
+        "fixtures/projectile-id-9688-001-after.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58"
+      },
+      "wram_equal": true,
+      "host_equal": true,
+      "rust_wram_sha256": "431be088769289fc0402a68e3adc4ee1108fc133cbcc3ae80e6daeaf8a67c46d",
+      "rust_host_sha256": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
+      "original_admission": "Ok(false)"
+    },
+    {
+      "capture": "projectile-id-9688-002",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission": "Ok(true)",
+      "supported": true,
+      "retained_final_rust_return": "0",
+      "member_sha256": {
+        "fixtures/projectile-id-9688-002-before.wram": "05edc0591531fa4eaa4a412a09f9329b76a365e50b0bf5ca8c01c1abe1ef451b",
+        "fixtures/projectile-id-9688-002-before.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
+        "fixtures/projectile-id-9688-002-after.wram": "ef5d1ff527ed7a4d5f607b3a072c05b934aa6312b5a1960d5c67fa4602ab2a9e",
+        "fixtures/projectile-id-9688-002-after.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58"
+      },
+      "wram_equal": true,
+      "host_equal": true,
+      "rust_wram_sha256": "ef5d1ff527ed7a4d5f607b3a072c05b934aa6312b5a1960d5c67fa4602ab2a9e",
+      "rust_host_sha256": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
+      "original_admission": "Ok(false)"
+    },
+    {
+      "capture": "projectile-id-9696-001",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission": "Ok(true)",
+      "supported": true,
+      "retained_final_rust_return": "0",
+      "member_sha256": {
+        "fixtures/projectile-id-9696-001-before.wram": "431bda0168646f32b29ca0c79395ecac4669028c8745c290948af5c2f2ba18bd",
+        "fixtures/projectile-id-9696-001-before.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
+        "fixtures/projectile-id-9696-001-after.wram": "431be088769289fc0402a68e3adc4ee1108fc133cbcc3ae80e6daeaf8a67c46d",
+        "fixtures/projectile-id-9696-001-after.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58"
+      },
+      "wram_equal": true,
+      "host_equal": true,
+      "rust_wram_sha256": "431be088769289fc0402a68e3adc4ee1108fc133cbcc3ae80e6daeaf8a67c46d",
+      "rust_host_sha256": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
+      "original_admission": "Ok(false)"
+    },
+    {
+      "capture": "projectile-id-9696-002",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission": "Ok(true)",
+      "supported": true,
+      "retained_final_rust_return": "0",
+      "member_sha256": {
+        "fixtures/projectile-id-9696-002-before.wram": "05edc0591531fa4eaa4a412a09f9329b76a365e50b0bf5ca8c01c1abe1ef451b",
+        "fixtures/projectile-id-9696-002-before.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
+        "fixtures/projectile-id-9696-002-after.wram": "ef5d1ff527ed7a4d5f607b3a072c05b934aa6312b5a1960d5c67fa4602ab2a9e",
+        "fixtures/projectile-id-9696-002-after.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58"
+      },
+      "wram_equal": true,
+      "host_equal": true,
+      "rust_wram_sha256": "ef5d1ff527ed7a4d5f607b3a072c05b934aa6312b5a1960d5c67fa4602ab2a9e",
+      "rust_host_sha256": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
+      "original_admission": "Ok(false)"
+    }
+  ],
+  "original_refusal_diagnostic": {
+    "admitted": 0,
+    "refused": 6,
+    "module_sha256": "68464c8b0bb2b8ed15afb5d03c8f9b08a2515eee8876e8e30f11692c13bd24d9",
+    "cause": "nonwrapping rectangle rejected actual x41 with dx43, plus later x37/32. Maintained dispatch fullWRAM+8host already matched C; support refused solely due conservative coordinate0 bound."
+  },
+  "corrected_module_sha256": "bce024f95bb3079933fccfcf8f76ec71c1685fd16dec903285eb05ff83007c66",
+  "correction": "Inspect wrapped coordinates, low-byte row multiply and doubled uint16 terrain index; additionally inspect contiguous row/column scan increments across coordinate wraps. All extension paths still require terrain extent/cycle checks.",
+  "correction_verification": "8 ownership Rust tests and strict cargo clippy -p port --all-targets -- -D warnings pass; all6 actual secondorientation captures now admitted; unchanged maintained dispatcher matches retained final Rust/fullWRAM/8host.",
+  "support_source_dependencies_sha256": {
+    "crates/port/src/observed_projectile_ownership.rs": "bce024f95bb3079933fccfcf8f76ec71c1685fd16dec903285eb05ff83007c66",
+    "crates/port/src/lib.rs": "5f21b25b07ea01c951683ffe4c25b40608f194c50da3abc4f2986f341abe4037",
+    "crates/port/src/enemy_projectiles.rs": "beb34d23351a3427ebc994ed46f9b161013f9e80f6ce60e9d3458fdf7e2bdfdc",
+    "crates/port/src/enemy_projectile_instructions.rs": "ae00e7dc1f8a5ef6eac07c27a0b4f44126dd78137c206d66f4ab29c79622b01d",
+    "crates/port/src/enemy_projectile_collision.rs": "f117da8bf86a387b0e5693fb19a84c938486fc089a10abf3155365e6627b837e",
+    "crates/port/src/audio.rs": "4308e496267857ca869db45f4127e505bec4ad29c4c9ede8f08d6e9769ccf69d"
+  },
+  "dispatcher_comparison_scope": "Retained final Rust binary predates support-only correction. Its maintained dispatch behavior is unchanged; all six after-state/host comparisons use that exact binary. Corrected source runner independently evaluates admission only.",
+  "packed_seal_corroboration": {
+    "subject_pointer_sha256": "9e28d8e74f3805ee8376e95cb150117db6c6e66ef03e31282ffc4ca38525589b",
+    "run": "7d29d25ce81e47d17737cc8794a8c7d261636657e38562bd2ac8bcbdb1e3ad50",
+    "observations": "1f47fba648aaec73b0277753738b972c8340e266f8f6a0b00e2ed3ead9f418a3",
+    "all_sampled_members": "match sealed inventory"
+  }
+}

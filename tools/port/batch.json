@@ -20,6 +20,9 @@
     "plm-instructions": "plm-instructions",
     "power_bomb": "power-bomb",
     "enemy-crawler": "callback",
+    "observed-projectile-initializers": "offline-projectile",
+    "observed-projectile-frame-boundaries": "offline-projectile",
+    "observed-projectile-ownership": "projectile",
     "enemy-projectile-rendering": "family",
     "enemy-projectile-detect-samus": "family",
     "enemy-projectile-detect-projectiles": "family",
@@ -27,6 +30,14 @@
     "enemy-projectile-hit-projectile": "family"
   },
   "profiles": {
+    "observed-projectiles": [
+      "observed-projectile-initializers",
+      "observed-projectile-frame-boundaries",
+      "observed-projectile-ownership",
+      "enemy-projectile-rendering",
+      "enemy-projectile-detect-samus",
+      "enemy-projectile-detect-projectiles"
+    ],
     "gameplay": [
       "system",
       "audio",

@@ -21,6 +21,7 @@ pub mod enemy_rio;
 pub mod glass_shattering;
 pub mod mother_brain_bomb;
 pub mod n00b_tube;
+pub mod observed_projectile_ownership;
 pub mod plm;
 pub mod plm_instructions;
 pub mod plm_render;

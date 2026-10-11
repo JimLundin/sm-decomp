@@ -193,7 +193,15 @@ def prepare_case(case, directory, arg_types):
     fill = case.get('fill', 0)
     if not isinstance(fill, int) or not 0 <= fill <= 255:
         raise ValueError('invalid initial fill')
-    if 'before_file' in case:
+    if 'continue_from' in case:
+        if 'before_file' in case or 'fill' in case:
+            raise ValueError('continuation cannot replace its inherited state')
+        previous = continuation_directory(case, directory.parent)
+        outputs = [(previous / (subject + '-after.wram')).read_bytes() for subject in ('c', 'rust')]
+        if len(outputs[0]) != WRAM_SIZE or outputs[0] != outputs[1]:
+            raise ValueError('continuation requires matching full previous WRAM')
+        ram = bytearray(outputs[0])
+    elif 'before_file' in case:
         if 'writes' in case or 'fill' in case:
             raise ValueError('captured before_file cannot be patched')
         ram = bytearray(load_asset(case['before_file'], case.get('before_sha256'), WRAM_SIZE))
@@ -217,6 +225,58 @@ def prepare_case(case, directory, arg_types):
     (directory / 'case.json').write_text(json.dumps(case, indent=2) + '\n')
 
 
+def continuation_directory(case, run):
+    name = case['continue_from']
+    if not isinstance(name, str) or not re.fullmatch('[A-Za-z_0-9-]+', name) or name == case['name']:
+        raise ValueError('invalid continuation case')
+    return run / name
+
+
+def projectile_host_words(case, run):
+    if 'continue_from' not in case:
+        return case['host_words']
+    if 'host_words' in case:
+        raise ValueError('continuation must inherit all external host words')
+    previous = continuation_directory(case, run)
+    outputs = [(previous / (subject + '-host-after.bin')).read_bytes() for subject in ('c', 'rust')]
+    if len(outputs[0]) != 16 or outputs[0] != outputs[1]:
+        raise ValueError('continuation requires matching previous host state')
+    return [int.from_bytes(outputs[0][i:i + 2], 'little') for i in range(0, 16, 2)]
+
+
+def verify_continuation(case, run, before):
+    if 'continue_from' not in case:
+        return
+    previous = continuation_directory(case, run)
+    outputs = [(previous / (subject + '-after.wram')).read_bytes() for subject in ('c', 'rust')]
+    if len(outputs[0]) != WRAM_SIZE or outputs[0] != outputs[1]:
+        raise ValueError('continuation previous state differs')
+    expected = bytearray(outputs[0])
+    for offset, data in case.get('writes', []):
+        expected[offset:offset + len(data)] = bytes(data)
+    if before != expected:
+        raise ValueError('continuation did not inherit previous WRAM')
+
+
+def execution_routines(manifest):
+    routines = manifest['routines']
+    if 'case_order' not in manifest:
+        return routines
+    cases = {case['name']: (routine, case) for routine in routines for case in routine['cases']}
+    order = manifest['case_order']
+    if len(cases) != sum(len(r['cases']) for r in routines) or len(order) != len(cases) or set(order) != cases.keys():
+        raise ValueError('case order must include every unique case exactly once')
+    seen = set()
+    result = []
+    for name in order:
+        routine, case = cases[name]
+        if 'continue_from' in case and case['continue_from'] not in seen:
+            raise ValueError('continuation must follow its verified predecessor')
+        seen.add(name)
+        result.append(dict(routine, cases=[case]))
+    return result
+
+
 def verify(manifest_path, source, output):
     run = output.resolve() / datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%S.%fZ')
     run.mkdir(parents=True)
@@ -236,14 +296,14 @@ def verify(manifest_path, source, output):
             verdict['rom'] = {'sha256': digest(run / 'rom.bin'), 'bytes': len(rom)}
         verdict['implementation'] = build(manifest, source, run)
         count = 0
-        for routine in manifest['routines']:
+        for routine in execution_routines(manifest):
             if not routine['cases']:
                 raise ValueError(f'no declared valid cases for {routine["symbol"]}')
             for case in routine['cases']:
                 directory = run / case['name']
                 prepare_case(case, directory, routine.get('arg_types', ['uint16'] * routine.get('args', 0)))
                 if manifest.get('projectile_host'):
-                    words = case['host_words']
+                    words = projectile_host_words(case, run)
                     if len(words) != 8 or any(type(v) is not int or not 0 <= v <= 65535 for v in words):
                         raise ValueError('invalid projectile host words')
                     (directory/'host-before.bin').write_bytes(bytes(b for v in words for b in (v&255,v>>8)))
@@ -345,6 +405,7 @@ def verify_family_evidence(verdict_path):
         if results != case['return'] or results['c'] != results['rust']:
             raise ValueError('family actual return outputs differ')
         config = expected_cases[key]
+        verify_continuation(config, run, before)
         if 'expected_return' in config and results['c'] != config['expected_return']:
             raise ValueError('family expected return changed')
         if 'expected_after_file' in config and str((directory / 'expected-after.wram').relative_to(run)) not in artifacts:

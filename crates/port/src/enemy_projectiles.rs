@@ -339,9 +339,15 @@ pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) ->
                 0xd6a5 | 0xd6c9 | 0xd774 => crate::n00b_tube::initialize(r, rom, b as u16, parameter, a as u16)?,
                 0xc482 => crate::mother_brain_bomb::initialize(r, a as u16, parameter)?,
                 0xf391 => crate::enemy_projectile_sparks::initialize(r, rom, a as u16)?,
+                0x93ca | 0xa2ee | 0xa31b => {
+                    let k = projectile_slot(a as u16)?;
+                    validate(r, rom, b as u16, parameter)?;
+                    initialize(r, rom, b as u16, parameter, k)?;
+                }
                 _ => return Err("unsupported direct enemy projectile initializer"),
             }
         }
+        "sub_86A301" => ceres_common(r, projectile_slot(a as u16)?),
         "EprojPreInstr_N00bTubeShards" | "sub_86D7BF" | "sub_86D7DE" | "sub_86D83D" | "sub_86D89F" | "sub_86D8DF" => {
             let address = match name {
                 "EprojPreInstr_N00bTubeShards" => 0xd7fd,
@@ -390,7 +396,7 @@ fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'sta
     }
     let i = param as usize / 2;
     let table = match init {
-        0xca6a | 0xca83 | 0xcaf6 | 0xa3a3 | 0xc684 | 0xc80a | 0xc2f3 | 0xc482 => None,
+        0xca6a | 0xca83 | 0xcaf6 | 0xa3a3 | 0xc684 | 0xc80a | 0xc2f3 | 0xc482 | 0xa2ee | 0xa31b => None,
         0xc843 if param < 6 => None,
         0xc961 if param < 8 => None,
         0xd992 if param < 20 && r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => Some((0xd96a, i)),
@@ -526,6 +532,12 @@ fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'sta
             None
         }
         0x993a if param < 8 => None,
+        0x93ca => {
+            for p in [0x9408, 0x940a, 0x940c] {
+                word(rom, p)?;
+            }
+            None
+        }
         0x94a0 | 0x94b4 | 0x94c8 | 0x94dc if param <= 34 && param & 1 == 0 => {
             for p in [0x9408, 0x940a, 0x940c] {
                 word(rom, p)?;
@@ -603,6 +615,9 @@ fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'sta
             | 0x9023
             | 0x9286
             | 0x934d
+            | 0x93ca
+            | 0xa2ee
+            | 0xa31b
             | 0x94a0
             | 0x94b4
             | 0x94c8
@@ -617,6 +632,27 @@ fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'sta
         return Err("invalid PLM slot");
     }
     Ok(())
+}
+fn projectile_slot(k: u16) -> Result<usize, &'static str> {
+    if k > 34 || k & 1 != 0 {
+        Err("invalid enemy projectile slot")
+    } else {
+        Ok(usize::from(k))
+    }
+}
+fn area_properties(r: &Wram<'_>, rom: &[u8]) -> Result<u16, &'static str> {
+    let offset = match r.word(0x79f) {
+        2 => 2,
+        5 => 4,
+        _ => 0,
+    };
+    word(rom, 0x9408 + offset)
+}
+fn ceres_common(r: &mut Wram<'_>, k: usize) {
+    for p in [0x1a27, 0x1a6f, 0x1ab7, 0x1adb, 0x19bb] {
+        r.set_word(p + k, 0);
+    }
+    r.set_word(0x1a4b + k, r.word(0xaf6));
 }
 pub(crate) fn random(r: &mut Wram<'_>) -> u16 {
     let n = r.word(0x5e5);
@@ -634,6 +670,28 @@ pub(crate) fn beam_component(magnitude: u16, angle: u8) -> u16 {
 }
 
 fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> Result<(), &'static str> {
+    if init == 0x93ca {
+        r.set_word(0x1b23 + k, r.word(0x1995));
+        // Ridley's native caller always aliases enemy slot zero, even when
+        // the current enemy index names another enemy.
+        r.set_word(0x1a4b + k, r.word(0xf7a).wrapping_add(if param != 0 { 25 } else { (-25_i16) as u16 }));
+        r.set_word(0x1a93 + k, r.word(0xf7e).wrapping_sub(43));
+        r.set_word(0x19bb + k, 2560);
+        r.set_word(0x1ab7 + k, r.word(0x7832));
+        r.set_word(0x1adb + k, r.word(0x7834));
+        r.set_word(0x1bd7 + k, area_properties(r, rom)?);
+        return Ok(());
+    }
+    if matches!(init, 0xa2ee | 0xa31b) {
+        if init == 0xa2ee {
+            r.set_word(0x1a93 + k, r.word(0xafa).wrapping_add(28));
+            r.set_word(0x1aff + k, 60);
+        } else {
+            r.set_word(0x1a93 + k, 97);
+        }
+        ceres_common(r, k);
+        return Ok(());
+    }
     if init == 0xf391 {
         return crate::enemy_projectile_sparks::initialize(r, rom, k as u16);
     }
@@ -1277,12 +1335,7 @@ fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> 
         r.set_word(0x1a93 + k, r.word(0x1a93 + source));
         r.set_word(0x1aff + k, r.word(0x1aff + source));
         r.set_word(0x19bb + k, 2560);
-        let offset = match r.word(0x79f) {
-            2 => 2,
-            5 => 4,
-            _ => 0,
-        };
-        r.set_word(0x1bd7 + k, word(rom, 0x9408 + offset)?);
+        r.set_word(0x1bd7 + k, area_properties(r, rom)?);
         return Ok(());
     }
     if matches!(init, 0x9023 | 0x9286 | 0x934d) {

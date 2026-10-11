@@ -1,0 +1,15 @@
+{
+  "disposable_builds_removed": {
+    "out/port/observed-projectile-check-build": 485391594,
+    "out/port/observed-projectile-clippy-build": 38850836
+  },
+  "bytes_reclaimed": 524242430,
+  "free_bytes": 256266932224,
+  "utility_result": "0ordinary+0deduplicate; verification target dirs outside recognized run formats removed explicitly; logs retained",
+  "capture_audit_extraction_bytes": 22030273,
+  "corrected_disposable_cleanup": {
+    "out/port/observed-projectile-corrected-check-build": 477849930,
+    "out/port/observed-projectile-corrected-clippy-build": 38908111,
+    "/tmp/decomp137-full-capture-members": 6553888
+  }
+}

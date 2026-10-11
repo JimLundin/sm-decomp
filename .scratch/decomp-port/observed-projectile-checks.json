@@ -1,0 +1,41 @@
+{
+  "port_tests": 293,
+  "clippy_all_targets": "passed",
+  "new_rustfmt": "passed",
+  "workspace_fmt": "preexisting projectile/PLM/room formatting discrepancies",
+  "harness_tests": 36,
+  "harness_skipped": 1,
+  "batch_tests": 5,
+  "final_bridge_tests": 6,
+  "python_syntax": "passed",
+  "diff_check": "passed",
+  "final_controls": 14,
+  "actual_c_cases": 12094,
+  "batch_profile": "observed-projectiles",
+  "frozen_source_sha256": {
+    "crates/port/src/lib.rs": "5f21b25b07ea01c951683ffe4c25b40608f194c50da3abc4f2986f341abe4037",
+    "crates/port/src/enemy_projectiles.rs": "beb34d23351a3427ebc994ed46f9b161013f9e80f6ce60e9d3458fdf7e2bdfdc",
+    "crates/port/src/enemy_projectile_instructions.rs": "ae00e7dc1f8a5ef6eac07c27a0b4f44126dd78137c206d66f4ab29c79622b01d",
+    "crates/port/src/observed_projectile_ownership.rs": "68464c8b0bb2b8ed15afb5d03c8f9b08a2515eee8876e8e30f11692c13bd24d9",
+    "tools/port_live.py": "9e0040b0ed1861033aacbfb2a1648a270fbc58897ef35a689fd8005298f75ce5",
+    "tools/port_family.py": "a3a443aafb372ae9b0c2330e449da0fe32df336cf2697da5db01b1a1befe6033",
+    "tools/port_plm_instructions.py": "2fdd370105d9ad0d6611579c5bde65874805197c5ae0536cd10246bc5d45f9eb"
+  },
+  "offline_artifact_cases": 12094,
+  "native_initializers": 3879,
+  "native_lifecycle": 1840,
+  "native_frame_boundaries": 577,
+  "rendering_contacts": 5798,
+  "corrected_port_tests": 294,
+  "corrected_clippy_all_targets": "passed",
+  "corrected_controls": 14,
+  "corrected_frozen_source_sha256": {
+    "crates/port/src/lib.rs": "5f21b25b07ea01c951683ffe4c25b40608f194c50da3abc4f2986f341abe4037",
+    "crates/port/src/enemy_projectiles.rs": "beb34d23351a3427ebc994ed46f9b161013f9e80f6ce60e9d3458fdf7e2bdfdc",
+    "crates/port/src/enemy_projectile_instructions.rs": "ae00e7dc1f8a5ef6eac07c27a0b4f44126dd78137c206d66f4ab29c79622b01d",
+    "crates/port/src/observed_projectile_ownership.rs": "bce024f95bb3079933fccfcf8f76ec71c1685fd16dec903285eb05ff83007c66",
+    "tools/port_live.py": "9e0040b0ed1861033aacbfb2a1648a270fbc58897ef35a689fd8005298f75ce5",
+    "tools/port_family.py": "a3a443aafb372ae9b0c2330e449da0fe32df336cf2697da5db01b1a1befe6033",
+    "tools/port_plm_instructions.py": "2fdd370105d9ad0d6611579c5bde65874805197c5ae0536cd10246bc5d45f9eb"
+  }
+}

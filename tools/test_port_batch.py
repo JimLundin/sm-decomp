@@ -26,7 +26,8 @@ class PortBatchTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             config = {'families': {'pure': 'family', 'collision': 'callback',
-                                   'setup': 'offline-family', 'plm-spawn': 'plm'}}
+                                   'setup': 'offline-family', 'plm-spawn': 'plm',
+                                   'owned': 'projectile', 'init': 'offline-projectile'}}
             records = {}
             for name in config['families']:
                 manifest = root / 'tools/port' / (name + '.json')
@@ -43,6 +44,9 @@ class PortBatchTests(unittest.TestCase):
                 self.assertIn('collision.json', command)
                 self.assertNotIn('setup.json', command)
                 self.assertIn('--plm-verdict', command)
+                self.assertIn('--projectile-verdict', command)
+                self.assertIn('owned.json', command)
+                self.assertNotIn('init.json', command)
                 with self.assertRaisesRegex(ValueError, 'No live-eligible'):
                     port_batch.replay_command(batch, config, ['setup'], 9000, Path('/tmp/replay'))
                 batch['families']['pure']['exit_code'] = 1

@@ -1,0 +1,26 @@
+{
+  "preliminary_initializers_snapshot_bytes": 783417344,
+  "preliminary_lifecycle_snapshot_bytes": 555614208,
+  "final_batch_auto_snapshot_bytes": 1370357760,
+  "final_initializers_snapshot_bytes": 795213824,
+  "final_boundaries_snapshot_bytes": 151519232,
+  "final_batch_explicit_snapshot_bytes": 524288,
+  "ordinary_bytes": 0,
+  "disposable_build_bytes": 524242430,
+  "capture_extraction_bytes": 22030273,
+  "retained_dependencies": [
+    "out/evidence",
+    "subject evidence.json",
+    "sm-evidence readers",
+    "sealed source/binaries/ROM/native-script fixtures/verdicts"
+  ],
+  "unrelated_worktrees": "preserved",
+  "live_cleanup": "pending completion",
+  "corrected_batch_auto_snapshot_bytes": 2241724416,
+  "corrected45000_live_snapshot_bytes": 377696038,
+  "superseded_full_target_bytes": 47444393,
+  "superseded45000_target_bytes": 47444398,
+  "superseded_full_authenticated_staging_bytes": 2076419097,
+  "live45000_authentication": "passed all4subjects/607artifacts",
+  "live_full_cleanup": "pending"
+}

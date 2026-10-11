@@ -40,6 +40,43 @@ class PointerBankTests(unittest.TestCase):
 
 
 class ProjectileHostEvidenceTests(unittest.TestCase):
+    def test_continuation_carries_previous_wram_and_all_host_words(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            previous = root / 'previous'
+            previous.mkdir()
+            ram = bytearray(port_family.WRAM_SIZE)
+            ram[0x10000] = 0x5A
+            host = bytes(range(16))
+            for subject in ('c', 'rust'):
+                (previous / (subject + '-after.wram')).write_bytes(ram)
+                (previous / (subject + '-host-after.bin')).write_bytes(host)
+            config = dict(name='next', continue_from='previous', writes=[[7, [99]]])
+            port_family.prepare_case(config, root / 'next', [])
+            before = (root / 'next/before.wram').read_bytes()
+            self.assertEqual(before[0x10000], 0x5A)
+            self.assertEqual(before[7], 99)
+            port_family.verify_continuation(config, root, before)
+            self.assertEqual(port_family.projectile_host_words(config, root),
+                             [int.from_bytes(host[i:i + 2], 'little') for i in range(0, 16, 2)])
+            with self.assertRaisesRegex(ValueError, 'inherit previous WRAM'):
+                port_family.verify_continuation(config, root, bytes(port_family.WRAM_SIZE))
+            (previous / 'rust-host-after.bin').write_bytes(bytes(16))
+            with self.assertRaisesRegex(ValueError, 'previous host state'):
+                port_family.projectile_host_words(config, root)
+            (previous / 'rust-after.wram').write_bytes(bytes(port_family.WRAM_SIZE))
+            with self.assertRaisesRegex(ValueError, 'matching full previous WRAM'):
+                port_family.prepare_case(dict(config, name='bad'), root / 'bad', [])
+
+    def test_case_order_rejects_missing_duplicate_or_forward_continuation(self):
+        manifest = dict(routines=[dict(symbol='A', cases=[dict(name='first')]),
+                                  dict(symbol='B', cases=[dict(name='second', continue_from='first')])],
+                        case_order=['first', 'second'])
+        self.assertEqual([r['symbol'] for r in port_family.execution_routines(manifest)], ['A', 'B'])
+        for order in (['second', 'first'], ['first', 'first'], ['first']):
+            with self.assertRaises(ValueError):
+                port_family.execution_routines(dict(manifest, case_order=order))
+
     def test_host_only_mismatch_and_missing_sidecar_are_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

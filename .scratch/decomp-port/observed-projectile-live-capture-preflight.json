@@ -1,0 +1,549 @@
+{
+  "scope": "bounded actual C before/after native captures: first eight active allocation/scheduler, first eight9642 allocation/scheduler, first two per-ID scheduled frames available through45000 inputs. Allocator arguments recovered from unique native allocation destination and post-call1993, then independently corroborated against ordered hardware projectile events (first eight9642 calls). Full WRAM and all eight host words compare; no full-replay or unseen-ID inference.",
+  "subject": "out/port/observed-projectile-live-45000/20261011T133252.262548Z/c-0",
+  "evidence_pointer_sha256": "bc346634945755983aa371bae419ae9c2b9db00c79198bfa81c3a99b04a4aa94",
+  "packed_run": "a0106e0112bea93825d50d541df1439aa78996ec81aa946c3abfe40f36a392d0",
+  "rom_view_sha256": "40aaebb25b9646bea2dffdc5e1ae680768a39dd122de9353885e1c7456ceae27",
+  "rust_module_sha256": "68464c8b0bb2b8ed15afb5d03c8f9b08a2515eee8876e8e30f11692c13bd24d9",
+  "capture_count": 44,
+  "admitted": 44,
+  "refused": 0,
+  "mismatches": [],
+  "captures": [
+    {
+      "capture": "projectile-9642-1-001",
+      "symbol": "SpawnEprojWithRoomGfx",
+      "a": 38466,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "9e274cee81a35bec874b385b78f4be624bd695c29674bde1acf363e5bf5ade16",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-9642-1-002",
+      "symbol": "SpawnEprojWithRoomGfx",
+      "a": 38466,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "6a11e607c8ba62c02c0c8f84ef0fa68a7213b7d7b222a21dcda1169fdbbba963",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-9642-1-003",
+      "symbol": "SpawnEprojWithRoomGfx",
+      "a": 38466,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "db5116df55f3f7eccb450727225670dfe5f504fb72edf2b637d4de68f139448e",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-9642-1-004",
+      "symbol": "SpawnEprojWithRoomGfx",
+      "a": 38466,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "18049cf90d72bf1aec96e1a55d42eeb9534428b0efe275456accd201582aebdd",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-9642-1-005",
+      "symbol": "SpawnEprojWithRoomGfx",
+      "a": 38466,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "351c6e6e2cf539fbb0c6650a17f7aa95ec78f3000331eb733f21ab78d608b6d8",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-9642-1-006",
+      "symbol": "SpawnEprojWithRoomGfx",
+      "a": 38466,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "169691b5b75594782643c13195424e70d6daee34b394eb82e2041a10566af89e",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-9642-1-007",
+      "symbol": "SpawnEprojWithRoomGfx",
+      "a": 38466,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "6d2d1ccd5eedd5f90ecb272e8de5103a1bac949b789738def9de8aeaf8d3b604",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-9642-1-008",
+      "symbol": "SpawnEprojWithRoomGfx",
+      "a": 38466,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "00c9fdd25040cc75e2a83522e458a094ae0c7d42a106bc275caf47f64a7748bc",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-9642-2-001",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "f90d24860a68a777f1206831010ab7c2a72198358ec73b34b2f94aa8da675d08",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-9642-2-002",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "b37e199ee9c0d4c3da64c67c3466643f30e7e1ce9ee5cad1e4d1ab8b94628281",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-9642-2-003",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "891ef26b4e7c9e3460877d0a13843c5f565470436612ad91a19a95d36f3f3cfe",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-9642-2-004",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "b47332d751834796bf7c2ea0ed3af1aaa8aec68bd45b562f7c773bcc25a06107",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-9642-2-005",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "09ccf1a84edf9d42ac7ca7dbe8ef6fb2a78ed63c3d2c8d05b87e15591e2312d6",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-9642-2-006",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "c4abb97b6de276df2e37309c28ef0f5702427dff31d42cb43b41c427eb26410a",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-9642-2-007",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "debcf217d82f846d4901895a9d64e027527487fa0a32386ace687be6855614ff",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-9642-2-008",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "48179628cc2898aa8db8d1074a15c32785dca2a1a95b7d8f07835cf4ffe29357",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-active-1-001",
+      "symbol": "SpawnEprojWithRoomGfx",
+      "a": 38466,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "9e274cee81a35bec874b385b78f4be624bd695c29674bde1acf363e5bf5ade16",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-active-1-002",
+      "symbol": "SpawnEprojWithRoomGfx",
+      "a": 38466,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "6a11e607c8ba62c02c0c8f84ef0fa68a7213b7d7b222a21dcda1169fdbbba963",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-active-1-003",
+      "symbol": "SpawnEprojWithRoomGfx",
+      "a": 38466,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "db5116df55f3f7eccb450727225670dfe5f504fb72edf2b637d4de68f139448e",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-active-1-004",
+      "symbol": "SpawnEprojWithRoomGfx",
+      "a": 38466,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "18049cf90d72bf1aec96e1a55d42eeb9534428b0efe275456accd201582aebdd",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-active-1-005",
+      "symbol": "SpawnEprojWithRoomGfx",
+      "a": 38466,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "351c6e6e2cf539fbb0c6650a17f7aa95ec78f3000331eb733f21ab78d608b6d8",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-active-1-006",
+      "symbol": "SpawnEprojWithRoomGfx",
+      "a": 38466,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "169691b5b75594782643c13195424e70d6daee34b394eb82e2041a10566af89e",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-active-1-007",
+      "symbol": "SpawnEprojWithRoomGfx",
+      "a": 38466,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "6d2d1ccd5eedd5f90ecb272e8de5103a1bac949b789738def9de8aeaf8d3b604",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-active-1-008",
+      "symbol": "SpawnEprojWithRoomGfx",
+      "a": 38466,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "00c9fdd25040cc75e2a83522e458a094ae0c7d42a106bc275caf47f64a7748bc",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-active-2-001",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "3e2f942dad5c01905bc6d504804b981f4eea9192d89b5a07c1aa5d59e226e6e8",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-active-2-002",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "2a912a444afdda45f809d40b2bf5482fd50eb090f5b44b21d276f4377d4b0169",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-active-2-003",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "d46bcb167bf12dfa831dcfde528d2a84208f87432d5766204be9d77e017f96ae",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-active-2-004",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "e6e5e5b63e64604e10e7ff6df6191dcdf0b8e1b217c1478743e33a0fa5630b1c",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-active-2-005",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "2cf67023a3eda717aab3f41212e79a6face39742854529fdeab3320d03d67c29",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-active-2-006",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "f3f9fedc0ef6e94f475e9b6b99f01a9d83634454a1dad8884eb9526d08651a35",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-active-2-007",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "6751aaa45f4a5549f384e2ba271ed6cebb4f4455dd152658a9fe0d27e049c135",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-active-2-008",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "0cc64b9f2ed5e6fdd0d30ffd1c3a9a37ff5bdefbfde22ec95ad527e374e595ef",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-id-9642-001",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "f90d24860a68a777f1206831010ab7c2a72198358ec73b34b2f94aa8da675d08",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-id-9642-002",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "b37e199ee9c0d4c3da64c67c3466643f30e7e1ce9ee5cad1e4d1ab8b94628281",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-id-9650-001",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "dcb74f0796e7d69aba36834bdf84de0c0305a8e244b6b22e2e2713ebdbc1079a",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-id-9650-002",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "ecfa7a2f7c2c1faa416d7fef423cf3cec32f94bcbf3f31258e6fa88be6b3d31a",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-id-966c-001",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "cf78dfb764d4e0bab3086b19ca48be119756b683a7cd8654c77388a1f41fef39",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-id-966c-002",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "f8976881da99f2a8b769b158aac5262fb9ecbbe7d601966879316717192bf2b6",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-id-967a-001",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "cf78dfb764d4e0bab3086b19ca48be119756b683a7cd8654c77388a1f41fef39",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-id-967a-002",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "f8976881da99f2a8b769b158aac5262fb9ecbbe7d601966879316717192bf2b6",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-id-a387-001",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "3e2f942dad5c01905bc6d504804b981f4eea9192d89b5a07c1aa5d59e226e6e8",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-id-a387-002",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "2a912a444afdda45f809d40b2bf5482fd50eb090f5b44b21d276f4377d4b0169",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-id-a395-001",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "3e2f942dad5c01905bc6d504804b981f4eea9192d89b5a07c1aa5d59e226e6e8",
+      "wram_equal": true,
+      "host_equal": true
+    },
+    {
+      "capture": "projectile-id-a395-002",
+      "symbol": "EprojRunAll",
+      "a": 0,
+      "b": 0,
+      "admission_and_return": "Ok(true) Ok(0)",
+      "supported": true,
+      "before_sha256": "2a912a444afdda45f809d40b2bf5482fd50eb090f5b44b21d276f4377d4b0169",
+      "wram_equal": true,
+      "host_equal": true
+    }
+  ],
+  "allocator_effect_arguments_corroborated": true,
+  "allocator_event_count": 8,
+  "first_eight9642_effect_arguments": [
+    [
+      1,
+      38466,
+      0
+    ],
+    [
+      1,
+      38466,
+      0
+    ],
+    [
+      1,
+      38466,
+      0
+    ],
+    [
+      1,
+      38466,
+      0
+    ],
+    [
+      1,
+      38466,
+      0
+    ],
+    [
+      1,
+      38466,
+      0
+    ],
+    [
+      1,
+      38466,
+      0
+    ],
+    [
+      1,
+      38466,
+      0
+    ]
+  ],
+  "source_dependencies_sha256": {
+    "crates/port/src/lib.rs": "5f21b25b07ea01c951683ffe4c25b40608f194c50da3abc4f2986f341abe4037",
+    "crates/port/src/enemy_projectiles.rs": "beb34d23351a3427ebc994ed46f9b161013f9e80f6ce60e9d3458fdf7e2bdfdc",
+    "crates/port/src/enemy_projectile_instructions.rs": "ae00e7dc1f8a5ef6eac07c27a0b4f44126dd78137c206d66f4ab29c79622b01d",
+    "crates/port/src/enemy_projectile_collision.rs": "f117da8bf86a387b0e5693fb19a84c938486fc089a10abf3155365e6627b837e",
+    "crates/port/src/audio.rs": "4308e496267857ca869db45f4127e505bec4ad29c4c9ede8f08d6e9769ccf69d"
+  }
+}

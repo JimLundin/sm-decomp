@@ -1496,7 +1496,7 @@ fn preinstruction_context(
             }
         }
         0xefe0 => pickup(r, k)?,
-        0x8170 | 0x84fb | 0xdd44 | 0xefdf => {}
+        0x8170 | 0x84fb | 0x950c | 0xdd44 | 0xefdf => {}
         0x90b3 | 0xd3bf => {
             if address == 0xd3bf {
                 r.set_word(0x19bb + k, 0);

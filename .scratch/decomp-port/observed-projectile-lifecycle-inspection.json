@@ -1,0 +1,154 @@
+{
+  "verdict": "out/port/observed-projectile-final/ownership/20261011T132800.186971Z/verdict.json",
+  "scope": "controlled native-ROM actual-C chains; separate from live replay",
+  "chains": {
+    "horizontal-0-0": {
+      "IDs": [
+        "0x9642",
+        "0x9650",
+        "0x965e",
+        "0x9688",
+        "0x9696"
+      ],
+      "peak_splits": 8,
+      "deleted_before_host_reuse": true,
+      "host_changes": [
+        "horizontal-0-0-frame-12"
+      ]
+    },
+    "horizontal-0-1": {
+      "IDs": [
+        "0x9642",
+        "0x9650",
+        "0x965e",
+        "0x9688",
+        "0x9696"
+      ],
+      "peak_splits": 2,
+      "deleted_before_host_reuse": true,
+      "host_changes": []
+    },
+    "horizontal-16-0": {
+      "IDs": [
+        "0x9642",
+        "0x9650",
+        "0x965e",
+        "0x9688",
+        "0x9696"
+      ],
+      "peak_splits": 8,
+      "deleted_before_host_reuse": true,
+      "host_changes": [
+        "horizontal-16-0-frame-12"
+      ]
+    },
+    "horizontal-16-1": {
+      "IDs": [
+        "0x9642",
+        "0x9650",
+        "0x965e",
+        "0x9688",
+        "0x9696"
+      ],
+      "peak_splits": 2,
+      "deleted_before_host_reuse": true,
+      "host_changes": []
+    },
+    "horizontal-34-0": {
+      "IDs": [
+        "0x9642",
+        "0x965e",
+        "0x9688",
+        "0x9696"
+      ],
+      "peak_splits": 8,
+      "deleted_before_host_reuse": true,
+      "host_changes": [
+        "horizontal-34-0-frame-12"
+      ]
+    },
+    "horizontal-34-1": {
+      "IDs": [
+        "0x9642",
+        "0x965e",
+        "0x9688",
+        "0x9696"
+      ],
+      "peak_splits": 2,
+      "deleted_before_host_reuse": true,
+      "host_changes": []
+    },
+    "vertical-0-0": {
+      "IDs": [
+        "0x9642",
+        "0x9650",
+        "0x966c",
+        "0x967a"
+      ],
+      "peak_splits": 8,
+      "deleted_before_host_reuse": true,
+      "host_changes": [
+        "vertical-0-0-frame-12"
+      ]
+    },
+    "vertical-0-1": {
+      "IDs": [
+        "0x9642",
+        "0x9650",
+        "0x966c",
+        "0x967a"
+      ],
+      "peak_splits": 2,
+      "deleted_before_host_reuse": true,
+      "host_changes": []
+    },
+    "vertical-16-0": {
+      "IDs": [
+        "0x9642",
+        "0x9650",
+        "0x966c",
+        "0x967a"
+      ],
+      "peak_splits": 8,
+      "deleted_before_host_reuse": true,
+      "host_changes": [
+        "vertical-16-0-frame-12"
+      ]
+    },
+    "vertical-16-1": {
+      "IDs": [
+        "0x9642",
+        "0x9650",
+        "0x966c",
+        "0x967a"
+      ],
+      "peak_splits": 2,
+      "deleted_before_host_reuse": true,
+      "host_changes": []
+    },
+    "vertical-34-0": {
+      "IDs": [
+        "0x9642",
+        "0x9650",
+        "0x966c",
+        "0x967a"
+      ],
+      "peak_splits": 8,
+      "deleted_before_host_reuse": true,
+      "host_changes": [
+        "vertical-34-0-frame-12"
+      ]
+    },
+    "vertical-34-1": {
+      "IDs": [
+        "0x9642",
+        "0x9650",
+        "0x966c",
+        "0x967a"
+      ],
+      "peak_splits": 2,
+      "deleted_before_host_reuse": true,
+      "host_changes": []
+    }
+  }
+}

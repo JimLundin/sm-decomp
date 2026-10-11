@@ -12,7 +12,7 @@ from port_family import IDENTIFIER, ROOT, WRAM_SIZE, digest, execute, parse_resu
 
 def build(manifest, source, run):
     if manifest.get("projectile_host") and ("rom" not in manifest or
-            Path(manifest["rust_module"]).name != "enemy_projectiles.rs"):
+            Path(manifest["rust_module"]).name not in ("enemy_projectiles.rs", "observed_projectile_ownership.rs")):
         raise ValueError("projectile host requires ROM and allocator module")
     eproj = any(r["symbol"] == "EprojInstruction" for r in manifest["routines"])
     pointer_bank = 0x86 if eproj else 0x84
@@ -173,10 +173,10 @@ fn main() {{
  std::fs::write(&args[5],bytes).unwrap(); println!("{{}}",result);
 }}
 """)
-    if module.name == "enemy_projectiles.rs":
+    if module.name in ("enemy_projectiles.rs", "observed_projectile_ownership.rs"):
         # Allocator and instruction callbacks share ProjectileHost. Compile the
         # allocator once so cross-module calls retain the same Rust type.
-        text = wrapper.read_text().replace('#[path = ' + json.dumps(str(module)) + '] mod family;', 'use memory::enemy_projectiles as family;')
+        text = wrapper.read_text().replace('#[path = ' + json.dumps(str(module)) + '] mod family;', f'use memory::{module.stem} as family;')
         wrapper.write_text(text)
     if manifest.get("projectile_host"):
         text = wrapper.read_text().replace('assert!(args.len()==6 || args.len()==7)', 'assert_eq!(args.len(),9)')
@@ -294,6 +294,7 @@ def verify_plm_instruction_evidence(verdict_path):
     if not required <= artifacts.keys():
         raise ValueError("family artifacts incomplete")
     manifest = json.loads((run / "manifest.json").read_text())
+    port_family.execution_routines(manifest)
     pin = next(
         p
         for p in json.loads((ROOT / "tools/dependencies.json").read_text())
@@ -350,8 +351,9 @@ def verify_plm_instruction_evidence(verdict_path):
         if results != case["return"] or results["c"] != results["rust"]:
             raise ValueError("family actual return outputs differ")
         if manifest.get("projectile_host"):
-            verify_projectile_host(directory, run, artifacts, expected_cases[key]["host_words"])
+            verify_projectile_host(directory, run, artifacts, port_family.projectile_host_words(expected_cases[key], run))
         config = expected_cases[key]
+        port_family.verify_continuation(config, run, before)
         if "expected_return" in config and results["c"] != config["expected_return"]:
             raise ValueError("family expected return changed")
         if (

@@ -1,0 +1,32 @@
+{
+  "enemy-projectile-rendering": {
+    "verdict": "/home/jim/sm-decomp/out/port/observed-projectile-final/enemy-projectile-rendering/20261011T132838.679085Z/evidence/20261011T132838.795267Z/verdict.json",
+    "status": "offline-verified",
+    "cases": 1448
+  },
+  "enemy-projectile-detect-projectiles": {
+    "verdict": "/home/jim/sm-decomp/out/port/observed-projectile-final/enemy-projectile-detect-projectiles/20261011T132838.680504Z/evidence/20261011T132838.797579Z/verdict.json",
+    "status": "offline-verified",
+    "cases": 2040
+  },
+  "enemy-projectile-detect-samus": {
+    "verdict": "/home/jim/sm-decomp/out/port/observed-projectile-final/enemy-projectile-detect-samus/20261011T132838.679871Z/evidence/20261011T132838.798126Z/verdict.json",
+    "status": "offline-verified",
+    "cases": 2310
+  },
+  "observed-projectile-ownership": {
+    "verdict": "/home/jim/sm-decomp/out/port/observed-projectile-final/ownership/20261011T132800.186971Z/verdict.json",
+    "status": "offline-verified",
+    "cases": 1840
+  },
+  "observed-projectile-initializers": {
+    "verdict": "/home/jim/sm-decomp/out/port/observed-projectile-final/initializers/20261011T132755.906611Z/verdict.json",
+    "status": "offline-verified",
+    "cases": 3879
+  },
+  "observed-projectile-frame-boundaries": {
+    "verdict": "/home/jim/sm-decomp/out/port/observed-projectile-final/boundaries/20261011T133554.778757Z/verdict.json",
+    "status": "offline-verified",
+    "cases": 577
+  }
+}

@@ -1,6 +1,6 @@
 # Observed enemy projectile allocator and scheduler ownership
 
-Status: open
+Status: claimed
 Blocked by: 32, 37, 80, 81, 88
 Triage: ready-for-agent
 
@@ -141,3 +141,116 @@ already exists and must continue working through shared dispatch.
 Selected read-only while ticket136 live runs are source-frozen. No gameplay or
 harness source was changed and no verification run was launched for this
 selection. All listed blocker tickets are resolved, so the ticket is ready.
+
+
+Claimed by root integration owner on 2026-10-11. Parallel ownership: native
+initializer integration, bounded ownership/support module, and C/Rust live host
+bridge. Root owns final fixture orchestration, source freeze, evidence and cleanup.
+
+Integration update on 2026-10-11: native initializers/common setup and950C are
+implemented. Immutable support selection recognizes the exact nine native
+definitions and script continuations, preflights terrain extents/extensions and
+sound cursors, and permits saturation/disabled no-host short circuits. The
+live bridge carries actual external eight-word globals transactionally and
+terminates accepted errors with exit4, without C retry.
+
+Preliminary actual-C evidence (not final current-source seals):
+- `out/port/observed-projectile-initializers-preliminary/20261011T132206.715644Z/verdict.json`:3,825cases/sixroutines.
+- `out/port/observed-projectile-lifecycle-preliminary/20261011T132517.239553Z/verdict.json`:1,840cases/threeroutines, native scripts, both impact branches,
+  peak8splits, deletion and host-point reuse. Each chained step inherits matching
+  previous fullWRAM and all8hostwords; controlled inputs are explicitly separate
+  from live replay.
+
+Final Rust checks currently pass293tests and strict all-target Clippy. New Rust
+files pass rustfmt; workspace format check retains preexisting projectile/PLM/room
+formatting discrepancies. Relevant Python harness run passes36tests with1opt-in
+skip; batch controls pass5tests. Final actual-C seals and live runs are pending.
+
+Preliminary cleanup completed with `tools/port_cleanup.py --root <each above
+preliminary root> --apply` then `--deduplicate --apply`:0ordinary bytes,
+783,417,344initializer snapshot bytes and555,614,208lifecycle snapshot bytes
+reclaimed. Sealed snapshots/binaries/verdicts remain.
+
+Final source-frozen actual-C seals:
+- `out/port/observed-projectile-final/initializers/20261011T132755.906611Z/verdict.json`:3,879cases.
+- `out/port/observed-projectile-final/ownership/20261011T132800.186971Z/verdict.json`:1,840chained steps.
+- `out/port/observed-projectile-final/boundaries/20261011T133554.778757Z/verdict.json`:577frame coordinate/speed/fraction boundaries.
+- Refreshed rendering/contact detector contracts in
+  `out/port/observed-projectile-final/batch.json`:5,798cases.
+
+All12,094actual-C cases authenticate after cleanup against frozen current Rust
+and harness sources. `observed-projectile-offline-authentication.json` retains
+the six family pointers. Native chain inspection is recorded separately in
+`observed-projectile-lifecycle-inspection.json`. Latest batch includes dedicated
+`projectile`/`offline-projectile` kinds and `observed-projectiles` profile; no
+standalone leaf hit count substitutes for native scheduler ownership.
+
+Live45000 started with packed four-process native allocator/scheduler plus
+rendering/contact detectors, run20261011T133252.262548Z. An earlier command used
+incorrect manually copied detector timestamps and was rejected before build;
+its retained run20261011T133244.878534Z cleaned with0bytes reclaimed. Correct
+command is produced from the batch's exact stored verdict paths. Full129712
+run20261011T133721.233571Z is building independently; both use the same frozen
+sources, exact ROM/movie and packed evidence store. Live admission pending.
+
+Read-only actual live-C capture preflight:44/44native allocation/scheduler calls
+admitted and matched complete WRAM/all8hostwords, zero refused/errors. Includes
+first8active/first89642native calls and first2scheduled frames for each of six
+IDs observed by45000. Summary/member/source hashes retained in
+`observed-projectile-live-capture-preflight.json`. Remaining three IDs and
+four-process route parity require full129712 replay. Extracted22,030,273bytes
+and temporary compiled audit reader removed; sealed packed observations retained.
+
+Final cleanup so far: batch automatic dedup1,370,357,760bytes; explicit final
+initializer dedup795,213,824bytes; boundary dedup151,519,232bytes; final whole
+batch dedup524,288bytes; ordinary cleanup0bytes. Disposable Rust check/clippy
+builds524,242,430bytes removed after utility reported0/0 (outside recognized
+run format), verification logs retained. `observed-projectile-build-cleanup.json`
+records these disposable outputs and remaining free space. No implementer
+worktrees were created; unrelated pipeline/review/trace worktrees preserved.
+
+Full C baseline reached129712 with allnine observed IDs and zeroCPUfallback.
+Actual second-orientation captures exposed6supportrefusals solely from an
+overconservative nonwrapping collision rectangle (x41 with envelope43, then
+x37/32). Direct Rust dispatcher already matched all6fullWRAM/8host outputs.
+Correction inspects wrapped row/column origins plus contiguous native scan
+increments while retaining extent/cycle validation. Eight semantic ownership
+tests and strict Clippy pass; all6captured calls now admit. Original sourcehash,
+refusal and C/Rust comparisons preserved in
+`observed-projectile-full-capture-preflight.json`. Previous current-source
+seals are superseded; corrected final batch regenerating all broad dependencies.
+
+Partial45000runner exited143 before mixed gameplay while waiting storelock.
+Root recovered diagnostic rejected verdict at
+`out/port/observed-projectile-live-45000/20261011T133252.262548Z/verdict.json`;
+cleanup reclaimed47,444,398unsealed targetbytes,0deduplicate. Both packed C
+subject pointers retained/authenticated separately; no four-process claim.
+
+Corrected final batch completed12,094actual-Ccases, six families, all current
+source checks and retained post-cleanup authentication pass. Batch dedup reclaimed
+2,241,724,416bytes. Corrected tests294/strictClippy/14focusedABIbatchcontrols pass.
+Old complete129712 C baseline packed/authenticated; root stopped superseded
+runner after durable pointer. Full capture member hashes corroborate its packed
+inventory; removed2,076,419,097authenticated stagingbytes. Diagnostic rejected
+verdict retained, separate from ownership admission. Fresh corrected45000 and
+129712 four-process live runs use gzip to progress independently of shared-store
+packing; native allocator/scheduler plus previously accepted RNG/decompressor
+are installed, while rendering/contact family behavior remains evidenced in
+the corrected offline batch and previous live tickets.
+
+Corrected45,000 live run
+`out/port/observed-projectile-corrected-live-45000/20261011T135145.693993Z/verdict.json`
+passes mixed-C-Rust-integration. Four fresh processes match607state/effect
+artifacts; each mixed process executes8native allocations and31,305scheduler
+calls exclusively Rust,0supportrefusals/0CPUfallback,296activeframes/1039642
+frames. Six observed IDs each have nonzero exclusive Rust scheduler counts and
+fullWRAM/8host captures; later3IDs are not observed in this interval. Accepted
+predecessors execute166Rustdecompressions/43,276RustRNG calls per mixedsubject.
+Scoped cleanup/authentication pending record; full129712stillrunning.
+
+User requested a repo commit and handoff checkpoint. Resume instructions are
+`../checkpoint-137.md`; ticket137 remainsclaimed while the corrected full
+129712four-process run continues. Both Cbaselines finished; firstmixedsubject
+is running.45kpostcleanupauthentication passed607artifacts/all4subjects,
+377,696,038snapshotbytes reclaimed. Checkpoint is an intermediate verified
+implementation commit, not ticketresolution or whole-game acceptance.

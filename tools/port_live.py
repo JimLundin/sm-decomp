@@ -26,6 +26,41 @@ DISPATCHER_LEAVES = {
     'EprojInstr_Goto': 'rom_ptr',
 }
 DISPATCHER_SYNTHETIC = {'EprojInstruction', 'EprojPreinstruction'}
+PROJECTILE_ENTRIES = {
+    'SpawnEprojWithRoomGfx': ['uint16', 'uint16'],
+    'EprojRunAll': [],
+}
+OBSERVED_PROJECTILE_IDS = (0x9642, 0x9650, 0x965e, 0x966c, 0x967a, 0x9688, 0x9696, 0xa387, 0xa395)
+
+
+def load_projectile_contract(path, source_identity):
+    """Keep host-aware allocator ownership separate from ordinary family ABI."""
+    from port_plm_instructions import verify_plm_instruction_evidence
+    evidence = verify_plm_instruction_evidence(path)
+    manifest = json.loads((path.parent / 'manifest.json').read_text())
+    module = Path(evidence['implementation']['module']).resolve()
+    if evidence['source'] != source_identity:
+        raise ValueError('projectile source identity differs')
+    if (module != ROOT / 'crates/port/src/observed_projectile_ownership.rs'
+            or manifest.get('bank') != 'sm_86.c' or not manifest.get('projectile_host')
+            or 'rom' not in manifest):
+        raise ValueError('projectile evidence requires installed host-aware ownership module and bank86 ROM')
+    entries = set()
+    for routine in manifest['routines']:
+        symbol = routine['symbol']
+        if symbol == 'EprojInstruction':
+            if routine.get('live_eligible', True):
+                raise ValueError('projectile synthetic instruction must be offline-only')
+            continue
+        if routine.get('live_eligible', True):
+            if (symbol not in PROJECTILE_ENTRIES or symbol in entries
+                    or routine.get('arg_types', ['uint16'] * routine.get('args', 0)) != PROJECTILE_ENTRIES[symbol]
+                    or routine['return'] != 'void'):
+                raise ValueError(f'projectile native signature differs: {symbol}')
+            entries.add(symbol)
+    if entries != PROJECTILE_ENTRIES.keys():
+        raise ValueError('projectile allocator and scheduler contracts both required')
+    return manifest, module
 
 
 def load_dispatcher_contract(path, source_identity):
@@ -292,8 +327,140 @@ void SpawnHardcodedPlm(SpawnHardcodedPlmArgs p){PortPositionedPlm(2,p.field_2,p.
 """
 
 
+def generate_projectile_abi():
+    """An eight-word synchronous transaction; -2 alone permits native C."""
+    return r'''#[unsafe(no_mangle)]
+pub unsafe extern "C" fn port_native_projectile(ram:*mut u8,len:usize,rom:*const u8,rom_len:usize,host:*mut u16,host_len:usize,kind:u16,a:u16,b:u16)->i32 {
+ if ram.is_null() || len!=WRAM_SIZE || rom_len>0x400000 || (rom.is_null() && rom_len!=0) {return -1;}
+ let Some(rend)=(ram as usize).checked_add(len)else{return -1;};
+ let Some(oend)=(rom as usize).checked_add(rom_len)else{return -1;};
+ if (ram as usize)<oend && (rom as usize)<rend {return -1;}
+ let name=match kind{1=>"SpawnEprojWithRoomGfx",2=>"EprojRunAll",_=>return -1};
+ let rom=if rom_len==0{&[]}else{unsafe{std::slice::from_raw_parts(rom,rom_len)}};
+ let mut owned=unsafe{std::slice::from_raw_parts(ram,len)}.to_vec();
+ let no_host=if kind==1{(0..18).all(|i|owned[0x1997+i*2]!=0 || owned[0x1998+i*2]!=0)}else{owned[0x198e]&0x80==0};
+ if !no_host {
+  if host.is_null() || host_len!=8 || (host as usize)%2!=0{return -1;}
+  let Some(hend)=(host as usize).checked_add(16)else{return -1;};
+  if (host as usize)<rend && (ram as usize)<hend || (host as usize)<oend && (rom.as_ptr() as usize)<hend{return -1;}
+ }
+ let supported=std::panic::catch_unwind(std::panic::AssertUnwindSafe(||memory::observed_projectile_ownership::supports_call(&Wram::new(&mut owned).unwrap(),rom,name,a.into(),b.into())));
+ match supported{Ok(Ok(false))=>return -2,Ok(Ok(true))=>{},_=>return -1}
+ let mut context=if no_host{memory::enemy_projectiles::ProjectileHost::default()}else{memory::enemy_projectiles::ProjectileHost::from_words(unsafe{std::ptr::read(host.cast::<[u16;8]>())})};
+ let result=std::panic::catch_unwind(std::panic::AssertUnwindSafe(||memory::observed_projectile_ownership::dispatch_host(&mut Wram::new(&mut owned).unwrap(),rom,&mut context,name,a.into(),b.into())));
+ match result{Ok(Ok(value))=>{let Ok(value)=i32::try_from(value)else{return -1;};unsafe{std::ptr::copy_nonoverlapping(owned.as_ptr(),ram,len);if !no_host{std::ptr::write(host.cast::<[u16;8]>(),context.words());}}value},_=>-1}
+}'''
+
+
+def generate_projectile_bank_adapters():
+    """Access the actual bank86 globals, including its static r22 scratch."""
+    return r'''
+void PortProjectileHostLoad(const uint16 *v) {
+ eproj_spawn_pt=(Point16U){v[0],v[1]};eproj_spawn_rect=(Rect16U){v[2],v[3],v[4],v[5]};
+ eproj_spawn_r22=v[6];eproj_spawn_varE24=v[7];
+}
+void PortProjectileHostSave(uint16 *v) {
+ v[0]=eproj_spawn_pt.x;v[1]=eproj_spawn_pt.y;
+ v[2]=eproj_spawn_rect.x;v[3]=eproj_spawn_rect.y;v[4]=eproj_spawn_rect.w;v[5]=eproj_spawn_rect.h;
+ v[6]=eproj_spawn_r22;v[7]=eproj_spawn_varE24;
+}
+'''
+
+
+def generate_projectile_host():
+    """Bound native ownership and retain material combat separately from Ceres."""
+    return r'''void PortC_SpawnEprojWithRoomGfx(uint16,uint16);
+void PortC_EprojRunAll(void);
+void PortProjectileHostLoad(const uint16*);
+void PortProjectileHostSave(uint16*);
+extern int32_t port_native_projectile(uint8_t*,size_t,const uint8_t*,size_t,uint16_t*,size_t,uint16_t,uint16_t,uint16_t);
+static unsigned long port_projectile_total[2],port_projectile_c[2],port_projectile_rust[2],port_projectile_refused[2];
+static unsigned long port_projectile_active_c[2],port_projectile_active_rust[2],port_projectile_9642_c[2],port_projectile_9642_rust[2];
+static unsigned port_projectile_capture[2],port_projectile_combat_capture[2];
+static unsigned port_projectile_depth;
+static const uint16 port_projectile_ids[9]={0x9642,0x9650,0x965e,0x966c,0x967a,0x9688,0x9696,0xa387,0xa395};
+static unsigned long port_projectile_id_c[9],port_projectile_id_rust[9],port_projectile_id_refused[9];
+static unsigned port_projectile_id_capture[9];
+static int PortProjectileActive(void) {
+ for(unsigned k=0;k<36;k+=2)if(GET_WORD(g_ram+0x1997+k))return 1;
+ return 0;
+}
+static int PortProjectileHas9642(void) {
+ for(unsigned k=0;k<36;k+=2)if(GET_WORD(g_ram+0x1997+k)==0x9642)return 1;
+ return 0;
+}
+static int PortProjectileFree(void) {
+ for(unsigned k=0;k<36;k+=2)if(!GET_WORD(g_ram+0x1997+k))return 1;
+ return 0;
+}
+static void PortProjectileCapture(unsigned kind,unsigned sequence,int combat,const char *phase) {
+ char name[120];uint16 words[8];uint8 bytes[16];PortProjectileHostSave(words);
+ snprintf(name,sizeof(name),"fixtures/projectile-%s-%u-%03u-%s.wram",combat?"9642":"active",kind,sequence,phase);
+ FILE *f=fopen(name,"wb");if(!f || fwrite(g_ram,1,sizeof(g_ram),f)!=sizeof(g_ram) || fclose(f))exit(2);
+ for(unsigned i=0;i<8;i++){bytes[i*2]=words[i];bytes[i*2+1]=words[i]>>8;}
+ snprintf(name,sizeof(name),"fixtures/projectile-%s-%u-%03u-%s.host",combat?"9642":"active",kind,sequence,phase);
+ f=fopen(name,"wb");if(!f || fwrite(bytes,1,sizeof(bytes),f)!=sizeof(bytes) || fclose(f))exit(2);
+}
+static void PortProjectileIdCapture(unsigned id,unsigned sequence,const char *phase) {
+ char name[120];uint16 words[8];uint8 bytes[16];PortProjectileHostSave(words);
+ snprintf(name,sizeof(name),"fixtures/projectile-id-%04x-%03u-%s.wram",port_projectile_ids[id],sequence,phase);
+ FILE *f=fopen(name,"wb");if(!f || fwrite(g_ram,1,sizeof(g_ram),f)!=sizeof(g_ram) || fclose(f))exit(2);
+ for(unsigned i=0;i<8;i++){bytes[i*2]=words[i];bytes[i*2+1]=words[i]>>8;}
+ snprintf(name,sizeof(name),"fixtures/projectile-id-%04x-%03u-%s.host",port_projectile_ids[id],sequence,phase);
+ f=fopen(name,"wb");if(!f || fwrite(bytes,1,sizeof(bytes),f)!=sizeof(bytes) || fclose(f))exit(2);
+}
+static void PortProjectile(unsigned kind,uint16 a,uint16 b) {
+ if(port_projectile_depth){if(kind==1)PortC_SpawnEprojWithRoomGfx(a,b);else PortC_EprojRunAll();return;}
+ unsigned i=kind-1;uint16 words[8];int32 native=-2;
+ int executing=kind==1?PortProjectileFree():(GET_WORD(g_ram+0x198d)&0x8000)!=0;
+ int active=executing && (PortProjectileActive() || (kind==1 && a==0x9642));
+ int combat=executing && (kind==1?a==0x9642:PortProjectileHas9642());
+ unsigned capture=active && port_projectile_capture[i]<8?++port_projectile_capture[i]:0;
+ unsigned material=combat && port_projectile_combat_capture[i]<8?++port_projectile_combat_capture[i]:0;
+ unsigned ids[9]={0},id_capture[9]={0};
+ if(kind==2 && executing)for(unsigned k=0;k<36;k+=2)for(unsigned j=0;j<9;j++)if(GET_WORD(g_ram+0x1997+k)==port_projectile_ids[j])ids[j]++;
+ for(unsigned j=0;j<9;j++)if(ids[j] && port_projectile_id_capture[j]<2){id_capture[j]=++port_projectile_id_capture[j];PortProjectileIdCapture(j,id_capture[j],"before");}
+ if(capture)PortProjectileCapture(kind,capture,0,"before");
+ if(material)PortProjectileCapture(kind,material,1,"before");
+ PortProjectileHostSave(words);
+ if(port_mixed)native=port_native_projectile(g_ram,sizeof(g_ram),g_rom,g_snes->cart->romSize,words,8,kind,a,b);
+ port_projectile_total[i]++;
+ if(native==-2) {
+  port_projectile_c[i]++;port_projectile_refused[i]+=port_mixed;
+  port_projectile_depth++;if(kind==1)PortC_SpawnEprojWithRoomGfx(a,b);else PortC_EprojRunAll();port_projectile_depth--;
+  port_projectile_active_c[i]+=active;port_projectile_9642_c[i]+=combat;
+  for(unsigned j=0;j<9;j++){port_projectile_id_c[j]+=ids[j];port_projectile_id_refused[j]+=port_mixed?ids[j]:0;}
+ } else {
+  if(native<0){fprintf(stderr,"accepted projectile error %u %u %u\n",kind,a,b);exit(4);}
+  PortProjectileHostLoad(words);port_projectile_rust[i]++;
+  port_projectile_active_rust[i]+=active;port_projectile_9642_rust[i]+=combat;
+  for(unsigned j=0;j<9;j++)port_projectile_id_rust[j]+=ids[j];
+ }
+ for(unsigned j=0;j<9;j++)if(id_capture[j])PortProjectileIdCapture(j,id_capture[j],"after");
+ if(capture)PortProjectileCapture(kind,capture,0,"after");
+ if(material)PortProjectileCapture(kind,material,1,"after");
+ PortEffect(port_effects,"projectile %u %u %u\n",kind,a,b);
+}
+void SpawnEprojWithRoomGfx(uint16 definition,uint16 parameter){PortProjectile(1,definition,parameter);}
+void EprojRunAll(void){PortProjectile(2,0,0);}
+static void PortProjectileCounters(void) {
+ for(unsigned i=0;i<2;i++)printf("projectile-hit %u %lu %lu %lu %lu %lu %lu %lu %lu\n",i,
+ port_projectile_total[i],port_projectile_c[i],port_projectile_rust[i],port_projectile_refused[i],
+ port_projectile_active_c[i],port_projectile_active_rust[i],port_projectile_9642_c[i],port_projectile_9642_rust[i]);
+ for(unsigned i=0;i<9;i++)printf("projectile-id-hit %u %lu %lu %lu\n",port_projectile_ids[i],port_projectile_id_c[i],port_projectile_id_rust[i],port_projectile_id_refused[i]);
+}
+static void PortProjectileState(const char *name) {
+ uint16 words[8];uint8 bytes[16];PortProjectileHostSave(words);
+ for(unsigned i=0;i<8;i++){bytes[i*2]=words[i];bytes[i*2+1]=words[i]>>8;}
+ FILE *f=fopen(name,"wb");if(!f || fwrite(bytes,1,sizeof(bytes),f)!=sizeof(bytes) || fclose(f))exit(2);
+}
+'''
+
+
 def generate_family_abi(manifest, module, index):
     """Generate the bounded synchronous ABI used by the live host."""
+    if manifest.get('projectile_host'):
+        raise ValueError('projectile host requires explicit --projectile-verdict ABI')
     if 'rom' in manifest:
         call = f'family{index}::dispatch_rom(&mut Wram::new(bytes).unwrap(),rom,name,a,b)'
     elif any('arg_types' in r for r in manifest['routines']):
@@ -313,6 +480,88 @@ pub unsafe extern "C" fn port_family_{index}(ram:*mut u8,len:usize,rom:*const u8
  let result=std::panic::catch_unwind(std::panic::AssertUnwindSafe(||{call}));
  match result {{Ok(Ok(value))=>i64::from(value),_=>-1}}
 }}'''
+
+
+def parse_projectile_counts(stdout, mode):
+    rows = [line.split()[1:] for line in stdout.splitlines() if line.startswith('projectile-hit ')]
+    if len(rows) != 2:
+        raise ValueError('missing native projectile ownership counters')
+    counts = {}
+    fields = ('total', 'c', 'rust', 'refused', 'active_c', 'active_rust', '9642_c', '9642_rust')
+    for row in rows:
+        if len(row) != 9:
+            raise ValueError('invalid native projectile counter shape')
+        kind, *values = map(int, row)
+        if kind not in (0, 1) or kind in counts or any(v < 0 for v in values):
+            raise ValueError('invalid native projectile counter kind')
+        entry = dict(zip(fields, values))
+        if (entry['total'] != entry['c'] + entry['rust']
+                or entry['refused'] != (entry['c'] if mode == 'mixed' else 0)
+                or entry['9642_c'] > entry['active_c'] or entry['active_c'] > entry['c']
+                or entry['9642_rust'] > entry['active_rust'] or entry['active_rust'] > entry['rust']
+                or mode == 'c' and entry['rust']):
+            raise ValueError('invalid native projectile ownership counts')
+        counts[kind] = entry
+    return counts
+
+
+def parse_projectile_id_counts(stdout, mode):
+    rows = [line.split()[1:] for line in stdout.splitlines() if line.startswith('projectile-id-hit ')]
+    counts = {}
+    for row in rows:
+        if len(row) != 4:
+            raise ValueError('invalid projectile ID counter shape')
+        projectile, c, rust, refused = map(int, row)
+        if (projectile not in OBSERVED_PROJECTILE_IDS or projectile in counts
+                or min(c, rust, refused) < 0 or refused != (c if mode == 'mixed' else 0)
+                or mode == 'c' and rust):
+            raise ValueError('invalid projectile ID ownership counts')
+        counts[projectile] = {'c': c, 'rust': rust, 'refused': refused}
+    if set(counts) != set(OBSERVED_PROJECTILE_IDS):
+        raise ValueError('missing observed projectile ID counters')
+    return counts
+
+
+def require_projectile_id_admission(hits, inventories, frames):
+    if hits['c-0'] != hits['c-1'] or hits['mixed-0'] != hits['mixed-1']:
+        raise ValueError('projectile ID ownership differs across independent replays')
+    required = set(OBSERVED_PROJECTILE_IDS if frames == 129712 else
+                   (0x9642, 0x9650, 0x966c, 0x967a, 0xa387, 0xa395))
+    for projectile in OBSERVED_PROJECTILE_IDS:
+        baseline, mixed = hits['c-0'][projectile], hits['mixed-0'][projectile]
+        if baseline['c'] != mixed['c'] + mixed['rust']:
+            raise ValueError('projectile ID scheduler traversal counts diverged')
+        if baseline['c']:
+            required.add(projectile)
+        if projectile in required:
+            if not mixed['rust'] or mixed['c']:
+                raise ValueError(f'observed projectile ID lacks exclusive Rust scheduler execution: {projectile:04x}')
+            for phase in ('before', 'after'):
+                for suffix in ('wram', 'host'):
+                    member = f'fixtures/projectile-id-{projectile:04x}-001-{phase}.{suffix}'
+                    if any(member not in inventory for inventory in inventories.values()):
+                        raise ValueError('missing per-ID WRAM/eight-word host capture')
+
+
+def require_projectile_admission(hits, inventories, fallback_calls):
+    """Empty scheduler passes cannot admit the observed combat lifecycle."""
+    if hits['mixed-0'] != hits['mixed-1'] or hits['c-0'] != hits['c-1']:
+        raise ValueError('native projectile ownership differs across independent replays')
+    if fallback_calls:
+        raise ValueError('native projectile admission requires zero CPU fallback')
+    for kind in (0, 1):
+        baseline, mixed = hits['c-0'][kind], hits['mixed-0'][kind]
+        if (baseline['total'] != mixed['total']
+                or baseline['active_c'] != mixed['active_c'] + mixed['active_rust']
+                or baseline['9642_c'] != mixed['9642_c'] + mixed['9642_rust']):
+            raise ValueError('native projectile traversal counts diverged')
+        if not mixed['active_rust'] or not mixed['9642_rust'] or mixed['9642_c']:
+            raise ValueError('native projectile allocator/scheduler lacks exclusive nonempty 9642 execution')
+        for phase in ('before', 'after'):
+            for suffix in ('wram', 'host'):
+                material = f'fixtures/projectile-9642-{kind+1}-001-{phase}.{suffix}'
+                if any(material not in inventory for inventory in inventories.values()):
+                    raise ValueError('missing material 9642 WRAM/eight-word host capture')
 
 
 def generate_active_eproj_capture(symbol_count):
@@ -343,6 +592,8 @@ def main():
     parser.add_argument('--compress-effects', action='store_true', help='Losslessly gzip every ordered hardware event')
     parser.add_argument('--dedup-anchor-verdict', type=Path, help='Share byte-identical finished logs with a sealed prior live run')
     parser.add_argument('--plm-verdict', type=Path)
+    parser.add_argument('--projectile-verdict', type=Path,
+                        help='Authenticated host-aware native projectile allocator/scheduler evidence')
     parser.add_argument('--room-plm', action='store_true', help='Require native room/hardcoded setup hits')
     parser.add_argument('--capture-active-eprojs', action='store_true',
                         help='Retain the first eight outer calls per symbol with a nonempty enemy projectile pool')
@@ -385,6 +636,11 @@ def main():
                 raise ValueError('family source identity differs')
             families.append((manifest, module))
         collision_indexes = set()
+        projectile_contract = None
+        if args.projectile_verdict:
+            projectile_contract = load_projectile_contract(args.projectile_verdict, verdict['source'])
+            verdict['projectile_predecessor'] = {'path': str(args.projectile_verdict.resolve()),
+                                               'sha256': digest(args.projectile_verdict)}
         for path in args.dispatcher_verdict:
             dispatcher_indexes.add(len(families))
             families.append(load_dispatcher_contract(path, verdict['source']))
@@ -400,7 +656,7 @@ def main():
                 collision_module = ROOT / collision_module
             collision_indexes.add(len(families))
             families.append((collision_manifest, collision_module))
-        if not families:
+        if not families and not projectile_contract:
             raise ValueError('no family contracts')
         if args.room_plm and not args.plm_verdict:
             raise ValueError('room PLM requires allocation evidence')
@@ -433,6 +689,8 @@ def main():
         rust = [f'#[path={json.dumps(str(ROOT / "crates/port/src/lib.rs"))}] mod memory;', 'use memory::*;']
         if args.plm_verdict:
             rust.append(generate_plm_abi(args.room_plm))
+        if projectile_contract:
+            rust.append(generate_projectile_abi())
         imports = sorted({name for manifest, _ in families for name in manifest.get('rust_imports', [])})
         for name in imports:
             if not re.fullmatch('[A-Za-z_][A-Za-z_0-9]*', name):
@@ -454,6 +712,8 @@ def main():
                 if routine.get('live_eligible', True) is not True:
                     continue
                 symbol = routine['symbol']
+                if projectile_contract and symbol in PROJECTILE_ENTRIES:
+                    raise ValueError('native projectile entries require only --projectile-verdict')
                 types = routine.get('arg_types', ['uint16'] * routine.get('args', 0))
                 count = len(types)
                 if symbol in symbols or not re.fullmatch('[A-Za-z_][A-Za-z_0-9]*', symbol):
@@ -554,6 +814,14 @@ def main():
                 if len(pattern.findall(text))!=1:raise ValueError('allocator definition count differs')
                 text=pattern.sub(lambda m:m.group(1)+'PortC_'+symbol+m.group(2),text)
             bank_texts[bank]=text
+        if projectile_contract:
+            bank=source/'src/sm_86.c'
+            text=bank_texts.get(bank,bank.read_text())
+            for symbol in PROJECTILE_ENTRIES:
+                pattern=definition_pattern(symbol)
+                if len(pattern.findall(text))!=1:raise ValueError('projectile definition count differs')
+                text=pattern.sub(lambda m:m.group(1)+'PortC_'+symbol+m.group(2),text)
+            bank_texts[bank]=text+generate_projectile_bank_adapters()
         rng_bank = source / 'src/sm_80.c'
         rng_text = bank_texts.get(rng_bank, rng_bank.read_text())
         if rng_text.count('uint16 NextRandom(void) {') != 1:
@@ -662,7 +930,8 @@ static void PortCapture(unsigned routine,unsigned long sequence,const char *phas
  FILE *f=fopen(name,"wb");if(!f || fwrite(g_ram,1,sizeof(g_ram),f)!=sizeof(g_ram) || fclose(f))exit(2);
 }
 static unsigned long port_room_total[2],port_room_c[2],port_room_rust[2],port_room_setups[2];
-''' + (generate_positioned_plm_host() if args.room_plm else '') + '''
+''' + (generate_positioned_plm_host() if args.room_plm else '')
+        + (generate_projectile_host() if projectile_contract else '') + '''
 static unsigned port_frame;
 void __real_ppu_write(Ppu *,uint8_t,uint8_t);
 void __wrap_ppu_write(Ppu *ppu,uint8_t adr,uint8_t val) {
@@ -688,6 +957,7 @@ bool __wrap_RtlRunFrame(int pad) {
   ppu_saveload(g_snes->my_ppu,PortSave,f);ppu_saveload(g_snes->snes_ppu,PortSave,f);
   PortSave(f,g_sram,0x2000);PortSave(f,pixels,sizeof(pixels));
   if(fclose(f))exit(2);
+''' + ('  snprintf(name,sizeof(name),"frame-%06u.host",port_frame);PortProjectileState(name);\n' if projectile_contract else '') + '''
  }
  return result;
 }
@@ -701,6 +971,7 @@ int main(int argc,char **argv) {
  port_calls=fopen("routine-calls.log","wb");if(!port_calls)return 2;
  char *original[]={argv[0],argv[2],argv[3],argv[4],argv[5],NULL};
  int result=retained_main(5,original);
+''' + (' PortProjectileState("projectile-terminal.host");PortProjectileCounters();\n' if projectile_contract else '') + '''
  if(PortEffectsClose())return 2;
  if(fclose(port_calls))return 2;
  if(result) return result;
@@ -785,6 +1056,9 @@ int main(int argc,char **argv) {
                     counts[kind]={'total':positioned_total,'c':pc,'rust':pr,'rust_setups':setups}
                 verdict.setdefault('room_plm_hits',{})[name]=counts
                 verdict.setdefault('plm_callback_hits', {})[name] = {'total': total, 'c': c_calls, 'rust': rust_calls, 'rust_setups': rust_setups}
+                if projectile_contract:
+                    verdict.setdefault('projectile_hits', {})[name] = parse_projectile_counts((directory/'replay.stdout').read_text(), mode)
+                    verdict.setdefault('projectile_id_hits', {})[name] = parse_projectile_id_counts((directory/'replay.stdout').read_text(), mode)
                 if any(row['c' if mode == 'mixed' else 'rust'] for row in hits[name].values()):
                     raise ValueError('replacement execution was not exclusive')
         if any(inventory != inventories['c-0'] for inventory in inventories.values()):
@@ -811,8 +1085,14 @@ int main(int argc,char **argv) {
                       for name in ('c-0', 'c-1', 'mixed-0', 'mixed-1')]
             if not counts[0] or len(set(counts)) != 1:
                 raise ValueError(f'dispatcher leaf lacks matching nonzero exclusive execution: {symbol}')
-        if not sum(row['rust'] for row in hits['mixed-0'].values()):
+        if not sum(row['rust'] for row in hits['mixed-0'].values()) and not projectile_contract:
             raise ValueError('no Rust gameplay family executed')
+        if projectile_contract:
+            require_projectile_admission(verdict['projectile_hits'], inventories,
+                                         verdict['progress']['mixed-0'][-1]['fallback_calls'])
+            require_projectile_id_admission(verdict['projectile_id_hits'], inventories, args.frames)
+            verdict['projectile_native_installed'] = True
+            verdict['projectile_abi'] = 'synchronous-eight-word-host-v1'
         if args.room_plm:
             if verdict['room_plm_hits']['mixed-0']!=verdict['room_plm_hits']['mixed-1']:raise ValueError('positioned ownership differs')
             if not sum(row['rust_setups'] for row in verdict['room_plm_hits']['mixed-0'].values()):raise ValueError('no native positioned setup executed')

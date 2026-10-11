@@ -1,0 +1,9 @@
+{
+  "status": "authenticated",
+  "subject": "c-0",
+  "frames": 129712,
+  "run": "7d29d25ce81e47d17737cc8794a8c7d261636657e38562bd2ac8bcbdb1e3ad50",
+  "observations": "1f47fba648aaec73b0277753738b972c8340e266f8f6a0b00e2ed3ead9f418a3",
+  "staging_removed_bytes": 2076419097,
+  "free_bytes": 258253533184
+}

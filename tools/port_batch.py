@@ -83,6 +83,8 @@ def verification_command(kind, manifest, output):
     script = {'family': 'port_family.py', 'offline-family': 'port_family.py',
               'callback': 'port_collision.py', 'plm': 'port_plm.py',
               'power-bomb': 'port_power_bomb.py',
+              'projectile': 'port_plm_instructions.py',
+              'offline-projectile': 'port_plm_instructions.py',
               'plm-instructions': 'port_plm_instructions.py'}[kind]
     command = [sys.executable, str(ROOT / 'tools' / script)]
     if kind in ('family', 'offline-family'):
@@ -149,14 +151,15 @@ def replay_command(batch, config, names, frames, output, native_plm=False, room_
     contracts = 0
     for name in names:
         kind = config['families'][name]
-        if kind not in ('family', 'callback'):
+        if kind not in ('family', 'callback', 'projectile'):
             continue
         record = batch['families'].get(name, {})
         if record.get('exit_code') != 0 or not record.get('verdict'):
             raise ValueError(f'{name}: missing passing evidence; run verify first')
         require_current_manifest(name, record)
         # The live consumer authenticates every retained artifact before building.
-        command += ['--collision-verdict' if kind == 'callback' else '--family-verdict', record['verdict']]
+        flag = {'callback': '--collision-verdict', 'projectile': '--projectile-verdict'}.get(kind, '--family-verdict')
+        command += [flag, record['verdict']]
         contracts += 1
     if not contracts:
         raise ValueError('No live-eligible families selected')
