@@ -248,10 +248,58 @@ fn delete_below(r: &mut Wram<'_>, k: usize) {
         r.set_word(0x1997 + k, 0)
     }
 }
+fn lavaquake_outside(r: &Wram<'_>, k: usize) -> bool {
+    [(0x1a4b, 0x911), (0x1a93, 0x915)].into_iter().any(|(pos, camera)| {
+        (r.word(pos + k).wrapping_sub(r.word(camera)) as i16) < 0
+            || (r.word(camera).wrapping_add(256).wrapping_sub(r.word(pos + k)) as i16) < 0
+    })
+}
+fn lavaquake_arc(r: &mut Wram<'_>, rom: &[u8], k: usize, state: u16) -> Result<(), &'static str> {
+    let rising = state == 0xbc16;
+    let speed = r.word(0x1adb + k).wrapping_add(if rising { 0xfffe } else { 2 });
+    if rising && (speed as i16) < 0 {
+        r.set_word(0x1adb + k, 0);
+        r.set_word(0x1aff + k, 0xbc8f);
+        return Ok(());
+    }
+    let speed = if !rising && (speed.wrapping_sub(64) as i16) >= 0 { 64 } else { speed };
+    let mut steps = [(0u32, 0u16); 2];
+    for (i, step) in steps.iter_mut().enumerate() {
+        let row = if rising { (i32::from(speed) + 1 - i as i32).max(0) } else { i32::from(speed) - 1 + i as i32 };
+        if !(0..95).contains(&row) {
+            return Err("lavaquake quadratic speed extent");
+        }
+        // A0:CBC7 contains paired 16.16 downward/upward speeds per row.
+        let p = 0x104bc7 + row as usize * 8 + usize::from(rising) * 4;
+        let bytes = rom.get(p..p + 4).ok_or("missing lavaquake quadratic ROM")?;
+        let amount = u32::from_le_bytes(bytes.try_into().unwrap());
+        *step = (amount, (amount >> 16) as u16);
+    }
+    r.set_word(0x1adb + k, speed);
+    for (amount, scratch) in steps {
+        let position = (u32::from(r.word(0x1a93 + k)) << 16) | u32::from(r.word(0x1a6f + k));
+        let position = position.wrapping_add(amount);
+        r.set_word(0x1a93 + k, (position >> 16) as u16);
+        r.set_word(0x1a6f + k, position as u16);
+        r.set_word(0x1b23 + k, scratch);
+    }
+    move_x(r, k as u16)?;
+    Ok(())
+}
 /// Dispatch supported movement and room-effect preinstructions. Collision remains explicit.
 pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Result<(), &'static str> {
     let k = slot(k)?;
     match address {
+        0xbc0f => {
+            let state = r.word(0x1aff + k);
+            if !matches!(state, 0xbc16 | 0xbc8f) {
+                return Err("unsupported lavaquake rock state");
+            }
+            lavaquake_arc(r, rom, k, state)?;
+            if lavaquake_outside(r, k) {
+                r.set_word(0x1997 + k, 0);
+            }
+        }
         0xb977 => r.set_word(0x1a93 + k, r.word(0x195e).wrapping_sub(4)),
         0xb982 => {
             move_x(r, k as u16)?;

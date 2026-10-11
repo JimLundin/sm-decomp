@@ -138,3 +138,7 @@ Tourian scheduling frontier: ticket53 ports particle/soul/splash/statue updates,
 water-crossing allocation and particle/tail script spawns. 538 actual-C cases
 match, including descending same-frame scheduling. Offline verification only;
 live admission and full gameplay ownership remain active.
+
+Lavaquake rock frontier: ticket54 adds native allocation and the complete
+rising/falling arc with quadratic ROM half-steps and inclusive camera culling.
+437 actual-C cases match. Offline coverage; live admission remains open.

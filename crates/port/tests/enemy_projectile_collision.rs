@@ -500,3 +500,45 @@ fn tourian_statue_tracks_hdma_scroll_and_preserves_finished_flags() {
     assert_eq!(r.word(0x1a93), 0xfff5);
     assert_eq!(r.word(0x1e6d), 0x8003);
 }
+
+#[test]
+fn lavaquake_apex_defers_horizontal_motion_and_keeps_inclusive_edges() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x1997, 1);
+    r.set_word(0x1aff, 0xbc16);
+    r.set_word(0x1adb, 1);
+    r.set_word(0x1ab7, 0x100);
+    r.set_word(0x1a4b, 256);
+    r.set_word(0x1a93, 256);
+    r.set_word(0x1b23, 0xdead);
+    port::enemy_projectile_instructions::preinstruction(&mut r, &[], 0xbc0f, 0).unwrap();
+    assert_eq!(r.word(0x1aff), 0xbc8f);
+    assert_eq!(r.word(0x1adb), 0);
+    assert_eq!(r.word(0x1a4b), 256);
+    assert_eq!(r.word(0x1b23), 0xdead);
+    assert_eq!(r.word(0x1997), 1);
+    r.set_word(0x1aff, 0xbc16);
+    r.set_word(0x1adb, 1);
+    r.set_word(0x1a4b, 257);
+    port::enemy_projectile_instructions::preinstruction(&mut r, &[], 0xbc0f, 0).unwrap();
+    assert_eq!(r.word(0x1997), 0);
+}
+
+#[test]
+fn lavaquake_arc_consumes_both_rom_half_steps_and_retains_last_high_word() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    let mut rom = vec![0; 0x105000];
+    // Falling speed 2 reads rows 1 and 2, downward halves.
+    rom[0x104bcf..0x104bd3].copy_from_slice(&0x00018000u32.to_le_bytes());
+    rom[0x104bd7..0x104bdb].copy_from_slice(&0x00028000u32.to_le_bytes());
+    r.set_word(0x1aff, 0xbc8f);
+    r.set_word(0x1a93, 100);
+    r.set_word(0x1a6f, 0x1234);
+    port::enemy_projectile_instructions::preinstruction(&mut r, &rom, 0xbc0f, 0).unwrap();
+    assert_eq!(r.word(0x1adb), 2);
+    assert_eq!(r.word(0x1a93), 104);
+    assert_eq!(r.word(0x1a6f), 0x1234);
+    assert_eq!(r.word(0x1b23), 2);
+}
