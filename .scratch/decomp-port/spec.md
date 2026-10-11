@@ -191,3 +191,7 @@ attached gunk and live gameplay ownership remain open.
 Draygon attached-gunk frontier: ticket66 ports attach opcode and Samus
 follow/release scheduling. 1,281 actual-C cases match including regression.
 Draygon allocation and live ownership remain open.
+
+Botwoon body frontier: ticket67 adds native allocation and extended-RAM
+body linkage. 193 actual-C cases match. Lifecycle scheduling and live ownership
+remain open.
