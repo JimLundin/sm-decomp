@@ -248,6 +248,16 @@ fn delete_below(r: &mut Wram<'_>, k: usize) {
 pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Result<(), &'static str> {
     let k = slot(k)?;
     match address {
+        0xb38a => {
+            if crate::enemy_projectile_collision::horizontal(r, rom, k as u16)? != 0 {
+                r.set_word(0x1b47 + k, 0xb3cd);
+                r.set_word(0x1b8f + k, 1);
+            } else if crate::enemy_projectile_collision::vertical(r, rom, k as u16)? != 0 {
+                r.set_word(0x1a93 + k, ((r.word(0x1a93 + k) & 0xfff0) | 8).wrapping_sub(2));
+                r.set_word(0x1b47 + k, 0xb3e5);
+                r.set_word(0x1b8f + k, 1);
+            }
+        }
         0xb20d => {
             let enemy = r.word(0x1aff + k);
             if enemy > 0x7c0 || enemy & 63 != 0 {

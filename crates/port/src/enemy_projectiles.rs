@@ -75,6 +75,12 @@ pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) ->
 fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'static str> {
     let i = param as usize / 2;
     let table = match init {
+        0xb328 if r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => {
+            for p in (0xb376..0xb38a).step_by(2) {
+                word(rom, p)?;
+            }
+            None
+        }
         0xb1ce if r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => {
             word(rom, 0xb209)?;
             word(rom, 0xb20b)?;
@@ -185,6 +191,7 @@ fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'sta
             | 0xac7c
             | 0xae15
             | 0xb001
+            | 0xb328
             | 0xb1ce
     ) && !matches!(
         init,
@@ -240,7 +247,7 @@ fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> 
         r.set_word(0x1b47 + k, if right { 0xadd2 } else { 0xadbf });
         return Ok(());
     }
-    if matches!(init, 0xabeb | 0xac7c | 0xb001) {
+    if matches!(init, 0xabeb | 0xac7c | 0xb001 | 0xb328) {
         let enemy = usize::from(r.word(0xe54));
         if init == 0xb001 {
             r.set_word(0x1b23 + k, 66);
@@ -249,6 +256,7 @@ fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> 
         let p = (match init {
             0xabeb => 0xac08,
             0xac7c => 0xac99,
+            0xb328 => 0xb376,
             _ => 0xb02f,
         }) + if r.word(0xfb4 + enemy) & 0x8000 != 0 { 0 } else { 10 };
         r.set_word(0x1b47 + k, word(rom, p)?);
@@ -258,6 +266,15 @@ fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> 
         r.set_word(0x1a93 + k, r.word(0xf7e + enemy).wrapping_add(word(rom, p + 6)?));
         let vy = word(rom, p + 8)?.wrapping_add(u16::from(random(r) as u8)).wrapping_sub(128);
         r.set_word(0x1adb + k, vy);
+        if init == 0xb328 {
+            let mut angle = (random(r) & 30) + 176;
+            if r.word(0xfb4 + enemy) & 0x8000 == 0 {
+                angle += 128;
+            }
+            let i = usize::from(angle >> 1);
+            r.set_word(0x1ab7 + k, (SINE[i + 64] as u16).wrapping_mul(8));
+            r.set_word(0x1adb + k, (SINE[i] as u16).wrapping_mul(8));
+        }
         return Ok(());
     }
     if matches!(init, 0xa81b | 0xa871) {
