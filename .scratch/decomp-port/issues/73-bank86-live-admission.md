@@ -1,5 +1,5 @@
 # Bank86 dispatcher evidence live admission
-Status: claimed
+Status: resolved
 Blocked by: None
 Triage: ready-for-agent
 
@@ -84,3 +84,44 @@ Reference C process SIGSEGV at43188, before any mixed process. Ticket76records
 deterministic null-call diagnosis and reset sentinel. No new Rust ownership
 claim; ticket73stillclaimed pending runtime repair/exercising replay.
 Cleanup/retained diagnostic authentication details are in ticket76.
+
+
+## Corrected reset replay in progress
+
+After ticket77 Rust source settled, fresh385-case leaf evidence:
+`out/port/projectile-movement-live-leaves/20261011T061240.572959Z/verdict.json`.
+Cleanup apply0bytes/deduplicate92,143,616bytes; retained dispatcher evidence
+authenticated against current source. 25GiB free; snapshots/binaries retained.
+
+Corrected headless host mirrors pinned comparison runtime soft-reset entry.
+Full129712-frame C/mixed run:
+`out/port/projectile-movement-live/20261011T061431.667466Z`.
+Run remains active; no live admission or completion claim yet.
+
+
+## Completion evidence
+
+Full129712-frame replay verdict:
+`out/port/projectile-movement-live/20261011T061431.667466Z/verdict.json`,
+status mixed-C-Rust-integration/live_exercisedtrue/state_effects_matchtrue.
+Two C and two mixed fresh processes match full RAM/hardware/effects inventories
+and progress, with zero CPUfallback. Each mixed process executes native
+MoveEprojWithVelocityX11times and Y13times, with corresponding C counts0.
+Combined MoveEprojWithVelocity has0calls in every process; its live exercise
+remains unproven. Broad allocator/scheduler admission remains excluded.
+Original-ROM parity is explicitly not-tested; raw movie timing is ticket78.
+
+Source-stable predecessor385cases authenticated. Live binary, retained host/header
+seals, transformed sources and all four artifact inventories authenticate.
+Ticket76/commit33ef42c fixes the C-only host reset; ticket77/commitb6a874c
+adds offline drop transition coverage. Final Rust tests/fmt/Clippy and live
+tool suite10passes/1optional skip pass.
+
+Cleanup commands apply0bytes; deduplicate10,864,418,956snapshotbytes.
+Additional byte-identical completed-process ROM snapshots reclaimed
+3,523,215,360bytes; identical C hardwarelogs reclaimed4,967,833,433bytes,
+with hashes checked before sharing. Total19,355,467,749bytes reclaimed.
+Automatic target/archive cleanup finished.20GiBfree. Retain exact binary,
+host/header, transformed sources, verdict/predecessors and authenticated
+inventories; no implementerworktree exists. Post-cleanup inventory checks
+cover all four processes.

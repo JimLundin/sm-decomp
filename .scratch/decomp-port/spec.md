@@ -234,3 +234,30 @@ Reference C crashes at43188before mixed processes: game_stateffff from SoftReset
 indexes45-entry game-state table at65535. Ticket76 records exact debugger
 reproduction/backtraces and remaining correct runtime-reset work. No live leaf
 ownership claim. Diagnostic and replay cleanup measured in tickets73/76.
+
+
+Enemy death-drop transition: ticket77/commitb6a874c connects native weighted
+selection to pickup scripts, preserving slot-zero RNG/exclusion, timer/lifetime
+and property behavior.2,434actual-C opcode/scheduler cases pass, with full
+crate checks. Cleanup319,160,320bytes; evidence retained/authenticated.
+Subsequent pickup collection and host-coordinate drop allocation remain open.
+
+Reset repair: ticket76 mirrors the pinned comparison runtime's explicit
+soft-reset entry in the C-only headless host. Two45000-frame C runs pass the
+old43188crash and match through terminalstate1; zero CPUfallback. Fullmovie
+C/mixed replay remains underway under ticket73, without an ownership claim.
+
+
+Original movie timing frontier: ticket78 records the existing bounded controller
+diagnosis (unsupported prelude poll19, controller mismatch272) and separates
+actual input polling from gameplay dispatch. Raw fullmovie C replay diverges
+from legacy original-ROM checkpoints before9000; corrected reset/C-mixed parity
+cannot establish original-ROM movie progression.
+
+
+Bank86 leaf admission: full129712-frame four-process C/mixed replay passes
+with current-source evidence after commitsb6a874c/33ef42c. Native movement-X
+executes11times and Y13times per mixed process; all RAM/effects/progress match
+and CPUfallback0. Combinedmovement0hits remains unexercised. Ticket73resolved
+for safe leaf integration; broader scheduler/allocator and original-ROM timing
+remain open. Cleanup reclaimed19,355,467,749bytes; retained hashes authenticate.
