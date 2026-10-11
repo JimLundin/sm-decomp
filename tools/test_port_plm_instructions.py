@@ -22,7 +22,7 @@ class PointerBankTests(unittest.TestCase):
             run = Path(directory)
             for name in ("c", "rust"):
                 (run / name).write_bytes(b"mock")
-            with patch.object(adapter, "execute"):
+            with patch.object(adapter, "execute"), patch.object(adapter, "compiler_dependencies", return_value={}):
                 adapter.build(config, port_family.ROOT / "deps/snesrev-sm", run)
             oracle = (run / "oracle.c").read_text()
             for bank in (0x84, 0x86, 0xb2):

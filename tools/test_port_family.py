@@ -137,6 +137,31 @@ let value=rng::next_random(&mut bytes)?; ram.set_word(0x5e5,value); Ok(value.int
             with self.assertRaisesRegex(ValueError,'dependency'):
                 verify_family_evidence(Path(verdict['run'])/'verdict.json')
 
+    def test_unrelated_gameplay_edit_preserves_isolated_system_evidence(self):
+        from port_family import verify, verify_family_evidence
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            original=json.loads((ROOT/'tools/port/system.json').read_text())
+            original['routines']=original['routines'][:1]
+            original['routines'][0]['cases']=original['routines'][0]['cases'][:2]
+            manifest=root/'manifest.json';manifest.write_text(json.dumps(original))
+            verdict=verify(manifest,SOURCE,root/'runs')
+            self.assertEqual(verdict['status'],'offline-verified',verdict.get('error'))
+            path=Path(verdict['run'])/'verdict.json'
+            dependencies=verdict['implementation']['rust_dependencies']
+            self.assertNotIn('crates/port/src/audio.rs',dependencies)
+            audio=ROOT/'crates/port/src/audio.rs';before=audio.read_bytes()
+            try:
+                audio.write_bytes(before+b'\n// Unrelated dependency regression probe.\n')
+                self.assertEqual(verify_family_evidence(path)['status'],'offline-verified')
+            finally:audio.write_bytes(before)
+            memory=ROOT/'crates/port/src/memory.rs';before=memory.read_bytes()
+            try:
+                memory.write_bytes(before+b'\n// Actual dependency regression probe.\n')
+                with self.assertRaisesRegex(ValueError,'implementation|dependency'):
+                    verify_family_evidence(path)
+            finally:memory.write_bytes(before)
+
     def test_actual_enemy_instruction_rom_pointer_results_are_canonicalized(self):
         import hashlib
         with tempfile.TemporaryDirectory() as directory:

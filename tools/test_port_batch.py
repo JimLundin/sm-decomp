@@ -4,6 +4,7 @@ import fcntl
 from pathlib import Path
 import tempfile
 import unittest
+import sys
 from unittest.mock import patch
 
 import port_batch
@@ -13,13 +14,39 @@ class PortBatchTests(unittest.TestCase):
     def test_second_command_rejects_while_batch_record_is_locked(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            lock_path = root / 'out/port/batches/runner.lock'
+            lock_path = root / 'batch/batch.lock'
             lock_path.parent.mkdir(parents=True)
             with lock_path.open('a') as held:
                 fcntl.flock(held, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                with patch.object(port_batch, 'ROOT', root), patch.object(port_batch, 'run_main') as run:
+                with patch.object(port_batch, 'ROOT', root), patch.object(port_batch, 'CONFIG', Path(port_batch.CONFIG)), patch.object(port_batch, 'read_batch', return_value=(root / 'batch/batch.json', {'families':{},'replays':[]})), patch.object(port_batch, 'operate') as run, patch.object(sys, 'argv', ['port_batch.py','status']):
                     self.assertEqual(port_batch.main(), 1)
                     run.assert_not_called()
+
+    def test_independent_batch_is_not_blocked_by_another_record(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            lock = root / 'first/batch.lock';lock.parent.mkdir()
+            other = root / 'second/batch.json';other.parent.mkdir()
+            with lock.open('a') as held:
+                fcntl.flock(held, fcntl.LOCK_EX)
+                with patch.object(port_batch, 'read_batch', return_value=(other,{})), patch.object(port_batch, 'operate', return_value=0) as run, patch.object(sys,'argv',['port_batch.py','status']):
+                    self.assertEqual(port_batch.main(),0)
+                    run.assert_called_once()
+
+    def test_explicit_dispatcher_adapter_and_discovery_stay_separate(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); manifests=root/'tools/port';manifests.mkdir(parents=True)
+            manifest=manifests/'leaves.json';manifest.write_text('{"rust_module":"leaf.rs","routines":[{"symbol":"EprojInstruction"}]}')
+            config={'families':{},'profiles':{}}
+            with patch.object(port_batch,'ROOT',root):
+                discovered=port_batch.catalog(config)
+                self.assertEqual(discovered['families']['leaves']['kind'],'dispatcher')
+                self.assertIsNone(discovered['families']['leaves']['live'])
+                discovered['families']['leaves']['live']='dispatcher'
+                from port_family import digest
+                record={'exit_code':0,'verdict':'leaves-verdict.json','manifest_sha256':digest(manifest)}
+                command=port_batch.replay_command({'families':{'leaves':record}},discovered,['leaves'],1000,root/'replay')
+                self.assertIn('--dispatcher-verdict',command)
 
     def test_replay_includes_only_live_families_and_optional_plm(self):
         from port_family import digest

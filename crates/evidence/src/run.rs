@@ -46,3 +46,17 @@ pub fn verify_run(store: &Store, id: &Id, source: Option<&Path>) -> Result<Run> 
     ensure!(files == run.files && bytes == run.bytes, "run closure counts differ");
     Ok(run)
 }
+
+/// Restore each member once, returning its authenticated digest and run counts.
+pub fn verified_inventory(
+    store: &Store,
+    id: &Id,
+) -> Result<(Run, std::collections::BTreeMap<String, crate::MemberInfo>)> {
+    let run = read_run(store, id)?;
+    let inventory = crate::tree_inventory(store, &run.observations)?;
+    let bytes = inventory.values().try_fold(0u64, |total, member| {
+        total.checked_add(member.bytes).ok_or_else(|| anyhow::anyhow!("inventory byte count overflow"))
+    })?;
+    ensure!(inventory.len() as u64 == run.files && bytes == run.bytes, "run closure counts differ");
+    Ok((run, inventory))
+}

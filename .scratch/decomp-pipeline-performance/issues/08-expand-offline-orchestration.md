@@ -1,6 +1,6 @@
 # Cover the current manifest frontier and parallel fixture pairs
 
-Status: open
+Status: resolved
 Blocked by: 02, 05
 Triage: ready-for-agent
 Type: task
@@ -24,3 +24,14 @@ proven complete-global-state reset contract and are outside this ticket.
 - Serial/parallel fixture inventories and returns agree; rejecting Rust prevents C.
 - Failed pairs retain diagnostic evidence and safe retry behavior.
 - Measure throughput and resource usage, then complete scoped cleanup.
+
+## Completion evidence
+
+Catalog accepts explicit manifests/kind/prepare/live adapters and detects the offline frontier, with explicit dispatcher opt-in and changed-source selection. Family/dispatcher/callback case pairs run independently under shared leases, preserve Rust-before-C and deterministic records, and retain mismatch diagnostics. Current batch verifies 475 system, 1147 audio, 342 dispatcher and 43 animated-tile cases and reuses all four after authentication.
+
+Integration evidence and actual measurements: [implementation.md](../implementation.md).
+Final serial/parallel 45000 integration passed and reauthenticated after cleanup.
+Scoped cleanup and deduplication finished (zero additional bytes on final passes);
+prior scoped snapshots reclaimed 1768292352 bytes and disposable builds reclaimed
+843648190 bytes. Shared evidence dependencies preserved; final free bytes
+256302972928. Integration branch: `decomp-pipeline-performance`.

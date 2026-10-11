@@ -42,3 +42,25 @@ eight offline family runs, a 475-case narrow compiler experiment and an unrelate
 dependency invalidation probe completed. Retained evidence reauthenticated after
 scoped cleanup. Implementation is separately specified in open tickets 02–08;
 this investigation does not claim those changes are implemented.
+
+## Authorized implementation
+
+User requested implementation on this dedicated worktree. Required tickets 02–08
+are now the completion scope; investigation evidence above remains historical.
+
+## Language direction
+
+User requested keeping the new pipeline machinery in Rust. `crates/pipeline`
+implements shared worker leases, authenticated cache publication, conservative
+module discovery, exact compiler inventories and pinned C translation-unit builds.
+Existing Python verification/admission harnesses use adapters to this CLI. Packed
+verified inventories and ordinal-remapping imports remain in `crates/evidence`.
+This change does not migrate all historical harness code or alter gameplay logic.
+
+## Implementation completion
+
+Tickets 02–08 resolved on `decomp-pipeline-performance`. Rust owns the new
+scheduling/cache/dependency/C-build core; evidence storage/import is Rust.
+See [implementation.md](implementation.md) for measurements, exact passing
+serial/parallel 1000/9000/45000 evidence, 52 harness tests, Rust tests/Clippy,
+formatting limitation, cleanup and post-cleanup authentication.

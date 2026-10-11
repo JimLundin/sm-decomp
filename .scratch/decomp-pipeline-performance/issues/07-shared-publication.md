@@ -1,6 +1,6 @@
 # Publish private observations to shared storage without serializing capture
 
-Status: open
+Status: resolved
 Blocked by: 03, 06
 Triage: ready-for-agent
 Type: task
@@ -24,3 +24,14 @@ private dependencies and never steal crash-recovery locks.
 - Missing packs, ordinal inconsistencies and corrupt imports reject.
 - Measure import cost, lock occupancy, physical deduplication and throughput.
 - Reauthenticate after private-store cleanup/relocation.
+
+## Completion evidence
+
+Rust import reconstructs canonical objects in dependency order and remaps physical ordinals. Source and reopened destination inventories/provenance must agree; returned inventory is checked against the pointer before durable replacement. Private stores release only after final authentication. Failed imports retain private evidence; real runs share a store safely. Full import cost remains material for multi-GB logical observations.
+
+Integration evidence and actual measurements: [implementation.md](../implementation.md).
+Final serial/parallel 45000 integration passed and reauthenticated after cleanup.
+Scoped cleanup and deduplication finished (zero additional bytes on final passes);
+prior scoped snapshots reclaimed 1768292352 bytes and disposable builds reclaimed
+843648190 bytes. Shared evidence dependencies preserved; final free bytes
+256302972928. Integration branch: `decomp-pipeline-performance`.

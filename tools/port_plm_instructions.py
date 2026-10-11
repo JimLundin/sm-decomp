@@ -9,6 +9,8 @@ from pathlib import Path
 import port_family
 from port_family import IDENTIFIER, ROOT, WRAM_SIZE, digest, execute, parse_result
 
+from port_inputs import wrapper_memory, compiler_dependencies, verify_dependencies, resolve_source, memory_source
+
 
 def build(manifest, source, run):
     if manifest.get("projectile_host") and ("rom" not in manifest or
@@ -149,8 +151,9 @@ int main(int argc, char **argv) {
     if any(not IDENTIFIER.fullmatch(name) for name in imports):
         raise ValueError("invalid Rust module import")
     root_imports = "".join(f"use memory::{name};\n" for name in imports)
+    memory = wrapper_memory(run, [module], manifest.get("rust_imports", []))
     wrapper = run / "wrapper.rs"
-    wrapper.write_text(f"""#[path = {json.dumps(str(ROOT / "crates/port/src/lib.rs"))}] mod memory;
+    wrapper.write_text(f"""#[path = {json.dumps(str(memory))}] mod memory;
 use memory::*;
 {root_imports}#[path = {json.dumps(str(module))}] mod family;
 fn main() {{
@@ -215,24 +218,19 @@ fn main() {{
         "c-build",
     )
     execute(
-        ["rustc", "--edition=2024", "-O", str(wrapper), "-o", str(run / "rust")],
+        ["rustc", "--edition=2024", "-O", "--emit=link,dep-info=" + str(run / "compiler.d"), str(wrapper), "-o", str(run / "rust")],
         run,
         "rust-build",
     )
     shutil.copyfile(module, run / "candidate.rs")
-    shutil.copyfile(ROOT / "crates/port/src/lib.rs", run / "memory.rs")
-    dependency_paths = {p.resolve() for p in (ROOT / "crates/port/src").glob("*.rs")}
-    for value in manifest.get("rust_dependencies", []):
-        path = Path(value)
-        dependency_paths.add((path if path.is_absolute() else ROOT / path).resolve())
-    dependencies = {str(path): digest(path) for path in sorted(dependency_paths)}
-    for index, path in enumerate(sorted(dependency_paths)):
-        shutil.copyfile(path, run / f"dependency-{index:03d}.rs")
+    dependencies = compiler_dependencies(wrapper, run, manifest)
     return {
+        "dependency_contract": "compiler-v2", "source_root": str(ROOT),
+        "inputs_harness_sha256": digest(ROOT / "tools/port_inputs.py"),
         "rust_dependencies": dependencies,
         "module": str(module),
         "module_sha256": digest(module),
-        "memory_sha256": digest(ROOT / "crates/port/src/lib.rs"),
+        "memory_sha256": digest(memory_source({"dependency_contract": "compiler-v2"})),
         "harness_sha256": digest(__file__),
         "family_harness_sha256": digest(port_family.__file__),
         "binaries": {name: digest(run / name) for name in ("c", "rust")},
@@ -294,15 +292,13 @@ def verify_plm_instruction_evidence(verdict_path):
         raise ValueError("family pinned source identity changed")
     implementation = verdict["implementation"]
     for path, expected in [
-        (Path(implementation["module"]), implementation["module_sha256"]),
-        (ROOT / "crates/port/src/lib.rs", implementation["memory_sha256"]),
+        (resolve_source(implementation["module"], implementation), implementation["module_sha256"]),
+        (memory_source(implementation), implementation["memory_sha256"]),
         (Path(__file__), implementation["harness_sha256"]),
     ]:
         if digest(path) != expected:
             raise ValueError(f"family implementation changed: {path}")
-    for dependency, expected in implementation.get("rust_dependencies", {}).items():
-        if digest(dependency) != expected:
-            raise ValueError(f"family Rust dependency changed: {dependency}")
+    verify_dependencies(implementation)
     for binary in ("c", "rust"):
         if digest(run / binary) != implementation["binaries"][binary]:
             raise ValueError(f"family binary changed: {binary}")

@@ -13,6 +13,8 @@ import subprocess
 from port_family import (ROOT, WRAM_SIZE, IDENTIFIER, digest, verify_source,
                          execute, load_asset, prepare_case)
 
+from port_inputs import wrapper_memory, compiler_dependencies, verify_dependencies, resolve_source, memory_source
+
 
 def generate_collision_abi(manifest,module):
     """Reusable guarded synchronous bridge; caller imports Wram/root gameplay modules."""
@@ -85,8 +87,9 @@ def build(manifest, source, run):
         branches.append(f'if(!strcmp(argv[2],"{symbol}")){{{statement}}}')
     module = Path(manifest['rust_module'])
     if not module.is_absolute(): module = ROOT / module
+    memory = wrapper_memory(run, [module], manifest.get('rust_imports', []))
     wrapper = run / 'wrapper.rs'
-    wrapper.write_text(f'#[path={json.dumps(str(ROOT/"crates/port/src/lib.rs"))}] mod memory;\nuse memory::*;\n'+generate_collision_abi(manifest,module))
+    wrapper.write_text(f'#[path={json.dumps(str(memory))}] mod memory;\nuse memory::*;\n'+generate_collision_abi(manifest,module))
     host = run / 'oracle.c'
     host.write_text('''#define main retained_headless_main
 ''' + f'#include {json.dumps(str(ROOT/"tools/decomp/headless.c"))}\n' + '''#undef main
@@ -152,7 +155,7 @@ int main(int argc,char **argv){
  printf("{\\"return\\":%u,\\"c_gameplay_callbacks\\":%lu,\\"cpu_fallback_calls\\":%lu,\\"cpu_fallback_instructions\\":%lu}\\n",result,callbacks,fallback_calls,fallback_instructions);return 0;
 }
 ''')
-    execute(['rustc','--edition=2024','-O','--crate-type=staticlib',str(wrapper),'-o',str(run/'libcollision.a')],run,'rust-build')
+    execute(['rustc','--edition=2024','-O','--crate-type=staticlib','--emit=link,dep-info=' + str(run / 'compiler.d'),str(wrapper),'-o',str(run/'libcollision.a')],run,'rust-build')
     # sm88 defines and calls allocation in one translation unit: linker wrapping
     # cannot interpose those local calls. Rename only its definition token.
     original=(source/'src/sm_88.c').read_text()
@@ -163,10 +166,8 @@ int main(int argc,char **argv){
     units += [source/'src'/name for name in ('spc_player.c','tracing.c','util.c')]
     units += sorted((source/'src/snes').glob('*.c'))
     execute(['cc','-O0','-fno-strict-aliasing','-ffunction-sections','-fdata-sections','-iquote',str(source/'src'),*map(str,units),str(host),str(run/'libcollision.a'),'-Wl,--gc-sections','-Wl,--wrap=SpawnPLM','-Wl,--wrap=Call','-Wl,--wrap=cpu_runOpcode','-Wl,--wrap=DecompressToMem','-lm','-ldl','-lpthread','-o',str(run/'collision')],run,'c-build')
-    dependencies = {str(path):digest(path) for path in sorted((ROOT/'crates/port/src').glob('*.rs'))}
-    dependencies[str(module)] = digest(module)
-    for i,path in enumerate(dependencies):shutil.copyfile(path,run/f'dependency-{i:03d}.rs')
-    return {'rust_dependencies':dependencies,'module':str(module),'module_sha256':digest(module),
+    dependencies = compiler_dependencies(wrapper, run, manifest)
+    return {'dependency_contract':'compiler-v2','source_root':str(ROOT),'inputs_harness_sha256':digest(ROOT/'tools/port_inputs.py'),'rust_dependencies':dependencies,'module':str(module),'module_sha256':digest(module),
             'harness_sha256':digest(__file__),'binary_sha256':digest(run/'collision')}
 
 
@@ -235,8 +236,7 @@ def verify_power_bomb_evidence(verdict_path):
     implementation=verdict['implementation']
     if digest(__file__)!=implementation['harness_sha256']:
         raise ValueError('power bomb harness changed')
-    for path,expected in implementation['rust_dependencies'].items():
-        if digest(path)!=expected:raise ValueError(f'power bomb dependency changed: {path}')
+    verify_dependencies(implementation)
     current_source=verify_source(ROOT/'deps/snesrev-sm')
     if current_source!=verdict['source']:raise ValueError('power bomb current upstream seal changed')
     source=(ROOT/'deps/snesrev-sm/src/sm_88.c').read_text()

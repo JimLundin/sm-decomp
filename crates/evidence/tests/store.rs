@@ -27,6 +27,38 @@ impl Drop for Temp {
 }
 
 #[test]
+fn independent_stores_import_with_remapped_ordinals_and_verified_inventory() -> anyhow::Result<()> {
+    let temp = Temp::new();
+    let source_path = temp.path().join("source-store");
+    let dest_path = temp.path().join("dest-store");
+    let input = temp.path().join("input");
+    fs::create_dir(&input)?;
+    fs::write(input.join("frame.bin"), vec![7u8; 65537])?;
+    fs::write(input.join("hardware.log"), b"ppu 1 0 24 7\napu 1 2 3\n")?;
+    let mut source = Store::create(&source_path)?;
+    let tree = ingest_tree(&mut source, &input, &mut |_| {})?;
+    let run = put_run(&mut source, tree, &serde_json::json!({"subject":"c-0"}))?;
+    source.commit()?;
+    let source = Store::open(&source_path)?;
+    let mut dest = Store::create(&dest_path)?;
+    // Different preceding objects force every physical compact ordinal to differ.
+    put_image(&mut dest, &[99u8; 1000])?;
+    dest.import_store(&source)?;
+    dest.commit()?;
+    let dest = Store::open(&dest_path)?;
+    let (verified, inventory) = verified_inventory(&dest, &run)?;
+    assert_eq!(verified.observations, tree);
+    assert_eq!(inventory.len(), 2);
+    assert_eq!(inventory["frame.bin"].bytes, 65537);
+    verify_run(&dest, &run, Some(&input))?;
+    let mut dest = Store::create(&dest_path)?;
+    dest.import_store(&source)?;
+    assert_eq!(dest.stats().new_objects, 0);
+    dest.commit()?;
+    Ok(())
+}
+
+#[test]
 fn images_roundtrip_diff_and_survive_reopen() -> anyhow::Result<()> {
     let temp = Temp::new();
     let mut store = Store::create(temp.path())?;

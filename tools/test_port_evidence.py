@@ -6,10 +6,12 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from concurrent.futures import ThreadPoolExecutor
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'tools'))
-from port_evidence import packed_replay, authenticate_subject, materialize, digest
+from port_evidence import packed_replay, authenticate_subject, materialize, digest, publish_subject
 from port_live import generate_effect_writer
 
 
@@ -120,6 +122,33 @@ int main(int argc,char **argv){
                 packed_replay([str(producer)], directory, root / 'sm-evidence', store, {}, 60)
             self.assertFalse((directory / 'replay.stdout').exists())
             self.assertEqual((store / 'writer.lock').read_text(), 'crashed writer')
+
+    def test_parallel_private_captures_import_preserves_roots_and_releases_only_owned_stores(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); producer = self.setup_run(root)
+            def capture(name):
+                directory = root / name;directory.mkdir()
+                return packed_replay([str(producer)], directory, root / 'sm-evidence', directory/'store', {'subject':name},60)
+            names=('c-0','c-1','mixed-0','mixed-1')
+            with ThreadPoolExecutor(max_workers=4) as executor:
+                pointers=list(executor.map(capture,names))
+            self.assertEqual(len({p['observations'] for p in pointers}),1)
+            self.assertEqual(len({p['run'] for p in pointers}),4)
+            for name, previous in zip(names,pointers):
+                updated=publish_subject(root/name,root/'shared')
+                self.assertEqual(updated['observations'],previous['observations'])
+                self.assertFalse((root/name/'store').exists())
+                self.assertEqual(authenticate_subject(root/name),updated)
+            self.assertLess(sum(p.stat().st_size for p in (root/'shared').glob('*.pack')),100000)
+
+    def test_failed_import_preserves_private_pointer_and_dependencies(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); producer = self.setup_run(root);directory=root/'c-0';directory.mkdir()
+            pointer=packed_replay([str(producer)],directory,root/'sm-evidence',directory/'store',{'subject':'c-0'},60)
+            store=root/'shared';store.mkdir();(store/'writer.lock').write_text('crashed writer')
+            with self.assertRaises(subprocess.CalledProcessError):publish_subject(directory,store)
+            self.assertEqual(authenticate_subject(directory),pointer)
+            self.assertTrue((directory/'store').exists())
 
 
 if __name__ == '__main__':

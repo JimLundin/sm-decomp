@@ -49,8 +49,7 @@ fn main() -> Result<()> {
             store.commit()?;
             // Reopen sealed packs before allowing staging bytes to be released.
             let store = Store::open(Path::new(&args[1]))?;
-            let verified = verify_run(&store, &run, None)?;
-            let inventory = tree_inventory(&store, &tree)?;
+            let (verified, inventory) = verified_inventory(&store, &run)?;
             let artifacts: serde_json::Map<String, serde_json::Value> =
                 inventory.iter().map(|(name, info)| (name.clone(), hex(&info.sha256).into())).collect();
             let sizes: serde_json::Map<String, serde_json::Value> =
@@ -62,13 +61,39 @@ fn main() -> Result<()> {
         }
         Some("inventory") if args.len() == 3 => {
             let store = Store::open(Path::new(&args[1]))?;
-            let run = verify_run(&store, &parse_id(&args[2])?, None)?;
-            let inventory = tree_inventory(&store, &run.observations)?;
+            let (run, inventory) = verified_inventory(&store, &parse_id(&args[2])?)?;
             let artifacts: serde_json::Map<String, serde_json::Value> =
                 inventory.iter().map(|(name, info)| (name.clone(), hex(&info.sha256).into())).collect();
             println!(
                 "{}",
                 serde_json::json!({"observations":hex(&run.observations), "files":run.files, "bytes":run.bytes, "artifacts":artifacts, "provenance":run.provenance})
+            );
+        }
+        Some("import") if args.len() == 4 => {
+            let source = Store::open(Path::new(&args[1]))?;
+            let id = parse_id(&args[3])?;
+            let (original, inventory) = verified_inventory(&source, &id)?;
+            let mut destination = Store::create(Path::new(&args[2]))?;
+            destination.import_store(&source)?;
+            destination.commit()?;
+            let destination = Store::open(Path::new(&args[2]))?;
+            let (restored, actual) = verified_inventory(&destination, &id)?;
+            ensure!(
+                original.observations == restored.observations && original.provenance == restored.provenance,
+                "imported run differs"
+            );
+            ensure!(
+                inventory.len() == actual.len()
+                    && inventory.iter().all(|(name, member)| actual
+                        .get(name)
+                        .is_some_and(|other| member.bytes == other.bytes && member.sha256 == other.sha256)),
+                "imported inventory differs"
+            );
+            println!(
+                "{}",
+                serde_json::json!({"run":hex(&id), "observations":hex(&restored.observations),
+                "files":restored.files,"bytes":restored.bytes,"seconds":start.elapsed().as_secs_f64(),
+                "provenance":restored.provenance,"artifacts":actual.iter().map(|(name,member)|(name.clone(),hex(&member.sha256))).collect::<std::collections::BTreeMap<_,_>>()})
             );
         }
         Some("verify") if (3..=4).contains(&args.len()) => {
@@ -112,7 +137,7 @@ fn main() -> Result<()> {
             println!("{}", serde_json::json!({"offsets":offsets,"node_reads":reads}));
         }
         _ => bail!(
-            "usage: sm-evidence capture STORE TRACE_RECEIPT DIRECTORY PROVENANCE POINTER | inventory STORE RUN | ingest STORE DIRECTORY [PROVENANCE.json] | verify STORE RUN [DIRECTORY] | stats STORE | cat STORE RUN MEMBER | frame STORE RUN MEMBER FRAME | extract STORE RUN NEW_DIRECTORY | diff-image STORE LEFT RIGHT"
+            "usage: sm-evidence capture STORE TRACE_RECEIPT DIRECTORY PROVENANCE POINTER | inventory STORE RUN | import SOURCE_STORE DEST_STORE RUN | ingest STORE DIRECTORY [PROVENANCE.json] | verify STORE RUN [DIRECTORY] | stats STORE | cat STORE RUN MEMBER | frame STORE RUN MEMBER FRAME | extract STORE RUN NEW_DIRECTORY | diff-image STORE LEFT RIGHT"
         ),
     }
     Ok(())

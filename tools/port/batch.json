@@ -19,7 +19,12 @@
     "plm-spawn": "plm",
     "plm-instructions": "plm-instructions",
     "power_bomb": "power-bomb",
-    "enemy-crawler": "callback"
+    "enemy-crawler": "callback",
+    "projectile-script-leaves": {
+      "kind": "dispatcher",
+      "manifest": "tools/port/projectile-script-leaves.json",
+      "live": "dispatcher"
+    }
   },
   "profiles": {
     "gameplay": [
@@ -61,6 +66,9 @@
       "plm-spawn",
       "plm-instructions",
       "power_bomb"
+    ],
+    "dispatcher-leaves": [
+      "projectile-script-leaves"
     ]
   }
 }

@@ -10,6 +10,10 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+import time
+from concurrent.futures import ThreadPoolExecutor
+from port_pipeline import lease, cargo_artifact, cached_c_build, cache_artifact
+from port_inputs import wrapper_memory, memory_source, resolve_source
 
 ROOT = Path(__file__).resolve().parents[1]
 DISPATCHER_LEAVES = {
@@ -33,7 +37,7 @@ def load_dispatcher_contract(path, source_identity):
     from port_plm_instructions import verify_plm_instruction_evidence
     evidence = verify_plm_instruction_evidence(path)
     manifest = json.loads((path.parent / 'manifest.json').read_text())
-    module = Path(evidence['implementation']['module']).resolve()
+    module = resolve_source(evidence['implementation']['module'], evidence['implementation']).resolve()
     if evidence['source'] != source_identity:
         raise ValueError('dispatcher source identity differs')
     if module != ROOT / 'crates/port/src/enemy_projectile_instructions.rs' or manifest.get('bank') != 'sm_86.c':
@@ -325,6 +329,8 @@ def main():
     parser.add_argument('--evidence-store', type=Path, default=ROOT / 'out/evidence', help='Shared immutable evidence store')
     parser.add_argument('--compress-effects', action='store_true', help='Losslessly gzip every ordered hardware event')
     parser.add_argument('--dedup-anchor-verdict', type=Path, help='Share byte-identical finished logs with a sealed prior live run')
+    parser.add_argument('--live-jobs', type=int, default=4, help='Independent packed subject workers (1..4)')
+    parser.add_argument('--retain-private-stores', action='store_true', help='Keep private stores instead of shared publication')
     parser.add_argument('--plm-verdict', type=Path)
     parser.add_argument('--room-plm', action='store_true', help='Require native room/hardcoded setup hits')
     parser.add_argument('--frames', type=int, default=9000)
@@ -344,6 +350,8 @@ def main():
         from decomp_baseline import ROM_SHA256
         source = ROOT / 'deps/snesrev-sm'
         verdict['source'] = verify_source(source)
+        if not 1 <= args.live_jobs <= 4:
+            raise ValueError('live jobs must be 1..4')
         if not 1 <= args.frames <= 129712:
             raise ValueError('frames outside supplied movie extent')
         rom = ROOT / 'rom/sm.sfc'
@@ -356,10 +364,10 @@ def main():
         for path in args.family_verdict:
             previous = verify_family_evidence(path)
             manifest = json.loads((path.parent / 'manifest.json').read_text())
-            module = Path(previous['implementation']['module'])
+            module = resolve_source(previous['implementation']['module'], previous['implementation'])
             if digest(module) != previous['implementation']['module_sha256']:
                 raise ValueError('family source changed since verification')
-            if digest(ROOT / 'crates/port/src/lib.rs') != previous['implementation']['memory_sha256']:
+            if digest(memory_source(previous['implementation'])) != previous['implementation']['memory_sha256']:
                 raise ValueError('shared memory boundary changed since verification')
             if previous['source'] != verdict['source']:
                 raise ValueError('family source identity differs')
@@ -375,7 +383,7 @@ def main():
             collision_manifest = json.loads((collision_path.parent / 'manifest.json').read_text())
             if collision_manifest.get('infrastructure_probe') or not evidence.get('gameplay_translation', True):
                 raise ValueError('infrastructure callback probe cannot replace gameplay')
-            collision_module = Path(collision_manifest['rust_module'])
+            collision_module = resolve_source(evidence['implementation']['module'], evidence['implementation'])
             if not collision_module.is_absolute():
                 collision_module = ROOT / collision_module
             collision_indexes.add(len(families))
@@ -389,7 +397,7 @@ def main():
             plm_evidence = verify_plm_evidence(args.plm_verdict)
             if plm_evidence['source'] != verdict['source']:
                 raise ValueError('native PLM source identity differs')
-            if Path(plm_evidence['implementation']['module']).resolve() != ROOT / 'crates/port/src/plm.rs':
+            if resolve_source(plm_evidence['implementation']['module'], plm_evidence['implementation']).resolve() != ROOT / 'crates/port/src/plm.rs':
                 raise ValueError('native PLM evidence does not seal the installed module')
             if args.room_plm:
                 if not {'room','hardcoded'} <= plm_evidence.get('allocator_cases',{}).keys():raise ValueError('positioned allocation coverage missing')
@@ -398,11 +406,17 @@ def main():
         verify_accepted(args.accepted)
         verdict['decompressor_predecessor_sha256'] = digest(args.accepted)
         def execute(command, directory, label):
+            if command[0] == 'cc' and label == 'host-build':
+                cached_c_build(command, run, execute)
+                return
+            started = time.monotonic()
             verdict['commands'].append({'argv': command, 'cwd': str(directory)})
             logs = run if directory == ROOT else directory
             with (logs / (label + '.stdout')).open('wb') as stdout, (logs / (label + '.stderr')).open('wb') as stderr:
                 timeout = max(240, args.frames / 40) if label == 'replay' else 240
-                result = subprocess.run(command, cwd=directory, stdout=stdout, stderr=stderr, timeout=timeout)
+                with lease() as wait:
+                    result = subprocess.run(command, cwd=directory, stdout=stdout, stderr=stderr, timeout=timeout)
+            verdict.setdefault("stage_timings", []).append({"stage": label, "seconds": time.monotonic()-started, "worker_wait_seconds": wait, "exit_code": result.returncode})
             if result.returncode:
                 raise ValueError(f'{label} failed with exit {result.returncode}')
         if packed:
@@ -410,14 +424,12 @@ def main():
             evidence_binary = port_evidence.build(run, execute)
             verdict['evidence_reader_sha256'] = stream_digest(evidence_binary)
             verdict['evidence_storage'] = {'format': 'sm-evidence-v1', 'subjects': {}}
-        rust = [f'#[path={json.dumps(str(ROOT / "crates/port/src/lib.rs"))}] mod memory;', 'use memory::*;']
+        imports = sorted({name for manifest, _ in families for name in manifest.get('rust_imports', [])})
+        memory = wrapper_memory(run, [module for _, module in families] +
+                                ([ROOT / 'crates/port/src/plm.rs'] if args.plm_verdict else []), imports)
+        rust = [f'#[path={json.dumps(str(memory))}] mod memory;', 'use memory::*;']
         if args.plm_verdict:
             rust.append(generate_plm_abi(args.room_plm))
-        imports = sorted({name for manifest, _ in families for name in manifest.get('rust_imports', [])})
-        for name in imports:
-            if not re.fullmatch('[A-Za-z_][A-Za-z_0-9]*', name):
-                raise ValueError('invalid imported gameplay module')
-            rust.append(f'use memory::{name};')
         wrappers, symbols, units = [], [], sorted((source / 'src').glob('sm_*.c'))
         bank_texts = {}
         for family_index, (manifest, module) in enumerate(families):
@@ -505,12 +517,16 @@ def main():
         library_source = run / 'families.rs'
         library_source.write_text('\n'.join(rust))
         execute(['rustc', '--edition=2024', '-O', '--crate-type=staticlib', str(library_source), '-o', str(run / 'libfamilies.a')], run, 'rust-build')
-        execute(['cargo', 'build', '-p', 'decomp', '--lib', '--release', '--locked', '--offline', '--target-dir', str(run / 'target')], ROOT, 'decompressor-build')
+        (run / 'target/release').mkdir(parents=True)
+        verdict['decompressor_cache'] = cargo_artifact('decomp', 'libdecomp.a', run / 'target/release/libdecomp.a', execute)
         verify_accepted(args.accepted)
-        execute(['rustc', '--edition=2024', '-O', '--crate-type=staticlib', str(ROOT / 'tools/decomp/next_random.rs'), '-o', str(run / 'librng.a')], run, 'rng-build')
+        rng_source = ROOT / 'tools/decomp/next_random.rs'
+        rng_command = ['rustc', '--edition=2024', '-O', '--crate-type=staticlib', str(rng_source), '-o', '{artifact}']
+        verdict['rng_cache'] = cache_artifact(rng_command, [rng_source], run / 'librng.a', lambda artifact: execute(rng_command[:-1] + [str(artifact)], run, 'rng-build'))
         verdict['rng_source_sha256'] = digest(ROOT / 'tools/decomp/next_random.rs')
         rng_cli = run / 'rng-cli'
-        execute(['rustc', '--edition=2024', '-O', '--cfg', 'cli', str(ROOT / 'tools/decomp/next_random.rs'), '-o', str(rng_cli)], run, 'rng-cli-build')
+        rng_cli_command = ['rustc', '--edition=2024', '-O', '--cfg', 'cli', str(rng_source), '-o', '{artifact}']
+        verdict['rng_cli_cache'] = cache_artifact(rng_cli_command, [rng_source], rng_cli, lambda artifact: execute(rng_cli_command[:-1] + [str(artifact)], run, 'rng-cli-build'))
         execute([str(rng_cli), 'exhaustive'], run, 'rng-exhaustive')
         rng_predecessor = ROOT / 'out/decomp/review/jobs/20261010T185638.603810Z'
         rng_verified = json.loads((rng_predecessor / 'verdict.json').read_text())
@@ -688,12 +704,34 @@ int main(int argc,char **argv) {
         build = ['cc', '-O2', '-fno-strict-aliasing', '-ffunction-sections', '-fdata-sections', '-iquote', str(source / 'src'), *map(str, units), str(host), str(run / 'libfamilies.a'), str(run / 'target/release/libdecomp.a'), str(run / 'librng.a'), '-Wl,--gc-sections', '-Wl,--wrap=Call', '-Wl,--wrap=cpu_runOpcode', '-Wl,--wrap=DecompressToMem', '-Wl,--wrap=ppu_write', '-Wl,--wrap=RtlApuWrite', '-Wl,--wrap=RtlRunFrame', '-Wl,--wrap=SpawnPLM', '-lm', '-ldl', '-lpthread', *(['-lz'] if args.compress_effects else []), '-o', str(run / 'live')]
         execute(build, run, 'host-build')
         inventories, hits = {}, {}
+        pointers = {}
+        if packed:
+            def capture(name):
+                directory = run / name
+                directory.mkdir()
+                mode = name.split('-')[0]
+                command = [str(run / 'live'), mode, str(rom), str(inputs), str(args.frames),
+                           str(directory / '.evidence-stage/terminal.bin')]
+                provenance = {'subject': name, 'binary_sha256': stream_digest(run / 'live'),
+                              'reader_sha256': verdict['evidence_reader_sha256'],
+                              'rom_sha256': verdict['rom_sha256'], 'inputs_sha256': verdict['inputs_sha256'],
+                              'frames': args.frames, 'source': verdict['source']}
+                started = time.monotonic()
+                try:
+                    pointer = port_evidence.packed_replay(command, directory, evidence_binary, directory / 'store',
+                                                         provenance, max(240, args.frames / 40))
+                    return name, pointer
+                finally:
+                    (directory / 'capture-timing.json').write_text(json.dumps({'seconds': time.monotonic()-started}) + '\n')
+            with ThreadPoolExecutor(max_workers=args.live_jobs) as executor:
+                pointers = dict(executor.map(capture, port_evidence.SUBJECTS))
         for mode in ('c', 'mixed'):
             for repeat in range(2):
                 name = f'{mode}-{repeat}'
                 directory = run / name
-                (directory / 'fixtures').mkdir(parents=True)
-                (directory / 'saves').mkdir()
+                if not packed:
+                    (directory / 'fixtures').mkdir(parents=True)
+                    (directory / 'saves').mkdir()
                 if packed:
                     command = [str(run / 'live'), mode, str(rom), str(inputs), str(args.frames), str(directory / '.evidence-stage/terminal.bin')]
                     verdict['commands'].append({'argv': command, 'cwd': str(directory)})
@@ -701,15 +739,14 @@ int main(int argc,char **argv) {
                                   'reader_sha256': verdict['evidence_reader_sha256'],
                                   'rom_sha256': verdict['rom_sha256'], 'inputs_sha256': verdict['inputs_sha256'],
                                   'frames': args.frames, 'source': verdict['source']}
-                    pointer = port_evidence.packed_replay(command, directory, evidence_binary, args.evidence_store.resolve(),
-                                                         provenance, max(240, args.frames / 40))
+                    pointer = pointers[name]
                     inventories[name] = {k: v for k, v in pointer['artifacts'].items()
                                          if Path(k).name != 'calls.jsonl' and Path(k).suffix != '.rom'}
                     verdict['evidence_storage']['subjects'][name] = {'run': pointer['run'], 'observations': pointer['observations'],
                         'pointer_sha256': stream_digest(directory / 'evidence.json')}
                     verdict.setdefault('storage_metrics', {})[name] = {'logical_bytes': pointer['bytes'], 'pipeline_seconds': pointer['pipeline_seconds'],
                         'producer_seconds': pointer['producer_seconds'], 'seal_seconds': pointer['seal_seconds'],
-                        'stored_added_bytes': pointer['stored_added_bytes']}
+                        'stored_added_bytes': pointer['stored_added_bytes'], 'worker_wait_seconds': pointer['worker_wait_seconds'], 'store_wait_seconds': pointer['store_wait_seconds']}
                 else:
                     execute([str(run / 'live'), mode, str(rom), str(inputs), str(args.frames), str(directory / 'terminal.bin')], directory, 'replay')
                     inventories[name] = {str(p.relative_to(directory)): stream_digest(p) for p in directory.rglob('*') if p.is_file() and p.name not in ('replay.stdout', 'replay.stderr', 'calls.jsonl') and p.suffix != '.rom'}
@@ -790,6 +827,11 @@ int main(int argc,char **argv) {
             if not sum(row['rust_setups'] for row in verdict['room_plm_hits']['mixed-0'].values()):raise ValueError('no native positioned setup executed')
         if args.plm_verdict and not args.room_plm and not verdict['plm_callback_hits']['mixed-0']['rust_setups']:
             raise ValueError('no native Rust PLM setup executed')
+        if packed and not args.retain_private_stores:
+            for name in port_evidence.SUBJECTS:
+                pointer = port_evidence.publish_subject(run / name, args.evidence_store.resolve())
+                verdict['evidence_storage']['subjects'][name]['pointer_sha256'] = stream_digest(run / name / 'evidence.json')
+                verdict['storage_metrics'][name]['publication_seconds'] = pointer['publication_seconds']
         verdict.update(status='mixed-C-Rust-integration', live_exercised=True, hits=hits,
                        transformations=transformations, artifacts=inventories['c-0'],
                        binary_sha256=digest(run / 'live'),

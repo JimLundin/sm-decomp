@@ -18,6 +18,8 @@ from port_family import (
     verify_source,
 )
 
+from port_inputs import wrapper_memory, compiler_dependencies, verify_dependencies, resolve_source, memory_source
+
 
 def verify(manifest_path, source, output):
     run = output.resolve() / datetime.datetime.now(datetime.timezone.utc).strftime(
@@ -39,8 +41,9 @@ def verify(manifest_path, source, output):
         module = module if module.is_absolute() else ROOT / module
         rom = load_asset(manifest["rom"]["file"], manifest["rom"]["sha256"])
         (run / "rom.bin").write_bytes(rom)
+        memory = wrapper_memory(run, [module])
         wrapper = run / "wrapper.rs"
-        wrapper.write_text(f"""#[path={json.dumps(str(ROOT / "crates/port/src/lib.rs"))}]mod memory;use memory::*;
+        wrapper.write_text(f"""#[path={json.dumps(str(memory))}]mod memory;use memory::*;
 #[path={json.dumps(str(module))}]mod plm;
 #[unsafe(no_mangle)]pub unsafe extern "C" fn native_spawn(ram:*mut u8,len:usize,rom:*const u8,rom_len:usize,header:u16,amount:*mut i32)->i32{{
  if ram.is_null()||len!=WRAM_SIZE||rom.is_null()||rom_len==0||rom_len>0x400000||amount.is_null()||(amount as usize)%std::mem::align_of::<i32>()!=0{{return -1;}}
@@ -98,6 +101,7 @@ int main(int argc,char **argv){
                 "--edition=2024",
                 "-O",
                 "--crate-type=staticlib",
+                "--emit=link,dep-info=" + str(run / "compiler.d"),
                 str(wrapper),
                 "-o",
                 str(run / "libplm.a"),
@@ -150,13 +154,10 @@ int main(int argc,char **argv){
             "abi-controls",
         )
         verdict["rejected_abi_inputs"] = 5
-        dependencies = {
-            str(p): digest(p) for p in sorted((ROOT / "crates/port/src").glob("*.rs"))
-        }
-        dependencies[str(module)] = digest(module)
-        for i, p in enumerate(dependencies):
-            shutil.copyfile(p, run / f"dependency-{i:03d}.rs")
+        dependencies = compiler_dependencies(wrapper, run, manifest)
         verdict["implementation"] = {
+            "dependency_contract": "compiler-v2", "source_root": str(ROOT),
+            "inputs_harness_sha256": digest(ROOT / "tools/port_inputs.py"),
             "module": str(module),
             "rust_dependencies": dependencies,
             "harness_sha256": digest(__file__),
@@ -267,14 +268,17 @@ def verify_plm_evidence(verdict_path):
         raise ValueError("PLM artifact inventory incomplete")
     if digest(__file__) != v["implementation"]["harness_sha256"]:
         raise ValueError("PLM harness changed")
-    dependencies = v["implementation"]["rust_dependencies"]
-    required_dependencies = {str(p) for p in (ROOT / "crates/port/src").glob("*.rs")}
-    required_dependencies.add(v["implementation"]["module"])
-    if not required_dependencies <= dependencies.keys():
-        raise ValueError("PLM Rust dependency inventory incomplete")
-    for dependency, expected in dependencies.items():
-        if digest(dependency) != expected:
-            raise ValueError(f"PLM dependency changed: {dependency}")
+    if v['implementation'].get('dependency_contract') == 'compiler-v2':
+        verify_dependencies(v['implementation'])
+    else:
+        dependencies = v["implementation"]["rust_dependencies"]
+        required_dependencies = {str(p) for p in (ROOT / "crates/port/src").glob("*.rs")}
+        required_dependencies.add(v["implementation"]["module"])
+        if not required_dependencies <= dependencies.keys():
+            raise ValueError("PLM Rust dependency inventory incomplete")
+        for dependency, expected in dependencies.items():
+            if digest(dependency) != expected:
+                raise ValueError(f"PLM dependency changed: {dependency}")
     pin = next(
         p
         for p in json.loads((ROOT / "tools/dependencies.json").read_text())

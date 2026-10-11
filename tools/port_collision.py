@@ -13,6 +13,8 @@ import subprocess
 from port_family import (ROOT, WRAM_SIZE, IDENTIFIER, digest, verify_source,
                          execute, load_asset, prepare_case)
 
+from port_inputs import wrapper_memory, compiler_dependencies, verify_dependencies, resolve_source, memory_source
+
 
 def generate_collision_abi(manifest,module):
     """Reusable guarded synchronous bridge; caller imports Wram/root gameplay modules."""
@@ -78,8 +80,9 @@ def build(manifest, source, run):
         branches.append(f'if(!strcmp(argv[2],"{symbol}")){{{statement}}}')
     module = Path(manifest['rust_module'])
     if not module.is_absolute(): module = ROOT / module
+    memory = wrapper_memory(run, [module], manifest.get('rust_imports', []))
     wrapper = run / 'wrapper.rs'
-    wrapper.write_text(f'#[path={json.dumps(str(ROOT/"crates/port/src/lib.rs"))}] mod memory;\nuse memory::*;\n'+generate_collision_abi(manifest,module))
+    wrapper.write_text(f'#[path={json.dumps(str(memory))}] mod memory;\nuse memory::*;\n'+generate_collision_abi(manifest,module))
     host = run / 'oracle.c'
     host.write_text('''#define main retained_headless_main
 ''' + f'#include {json.dumps(str(ROOT/"tools/decomp/headless.c"))}\n' + '''#undef main
@@ -134,15 +137,13 @@ int main(int argc,char **argv){
  printf("{\\"return\\":%u,\\"c_gameplay_callbacks\\":%lu,\\"cpu_fallback_calls\\":%lu,\\"cpu_fallback_instructions\\":%lu}\\n",result,callbacks,fallback_calls,fallback_instructions);return 0;
 }
 ''')
-    execute(['rustc','--edition=2024','-O','--crate-type=staticlib',str(wrapper),'-o',str(run/'libcollision.a')],run,'rust-build')
+    execute(['rustc','--edition=2024','-O','--crate-type=staticlib','--emit=link,dep-info=' + str(run / 'compiler.d'),str(wrapper),'-o',str(run/'libcollision.a')],run,'rust-build')
     units = sorted((source/'src').glob('sm_*.c'))
     units += [source/'src'/name for name in ('spc_player.c','tracing.c','util.c')]
     units += sorted((source/'src/snes').glob('*.c'))
     execute(['cc','-O2','-fno-strict-aliasing','-ffunction-sections','-fdata-sections','-iquote',str(source/'src'),*map(str,units),str(host),str(run/'libcollision.a'),'-Wl,--gc-sections','-Wl,--wrap=SpawnPLM','-Wl,--wrap=Call','-Wl,--wrap=cpu_runOpcode','-Wl,--wrap=DecompressToMem','-lm','-ldl','-lpthread','-o',str(run/'collision')],run,'c-build')
-    dependencies = {str(path):digest(path) for path in sorted((ROOT/'crates/port/src').glob('*.rs'))}
-    dependencies[str(module)] = digest(module)
-    for i,path in enumerate(dependencies):shutil.copyfile(path,run/f'dependency-{i:03d}.rs')
-    return {'rust_dependencies':dependencies,'module':str(module),'module_sha256':digest(module),
+    dependencies = compiler_dependencies(wrapper, run, manifest)
+    return {'dependency_contract':'compiler-v2','source_root':str(ROOT),'inputs_harness_sha256':digest(ROOT/'tools/port_inputs.py'),'rust_dependencies':dependencies,'module':str(module),'module_sha256':digest(module),
             'harness_sha256':digest(__file__),'binary_sha256':digest(run/'collision')}
 
 
@@ -158,35 +159,40 @@ def verify(manifest_path,source,output):
         if not 0<len(data)<=0x400000:raise ValueError('invalid ROM extent')
         (run/'rom.bin').write_bytes(data)
         verdict['implementation']=build(manifest,source,run)
-        seen=set()
-        for index,routine in enumerate(manifest['routines']):
-            if not routine['cases']:raise ValueError('empty routine coverage')
-            for case in routine['cases']:
-                if case['name'] in seen:raise ValueError('duplicate case name')
-                seen.add(case['name']);directory=run/case['name']
-                prepare_case(case,directory,routine.get('arg_types',[]))
-                results={}
-                for subject in ('rust','c'):
-                    callbacks=directory/subject;callbacks.mkdir()
-                    stdout=execute([str(run/'collision'),subject,routine['symbol'],str(case.get('a',0)),str(case.get('b',0)),str(directory/'before.wram'),str(directory/(subject+'-after.wram')),str(index),str(run/'rom.bin'),str(callbacks)],directory,subject)
-                    results[subject]=json.loads(stdout.splitlines()[-1])
-                record={'routine':routine['symbol'],'case':case['name'],'results':results,'callbacks':results['rust']['c_gameplay_callbacks']}
-                verdict['cases'].append(record)
-                if results['c']!=results['rust']:raise ValueError('return/callback/fallback metrics mismatch')
-                if results['rust']['cpu_fallback_calls'] or results['rust']['cpu_fallback_instructions']:raise ValueError('CPU fallback during offline collision comparison')
-                if results['rust']['return']!=case.get('expected_return',results['rust']['return']):raise ValueError('independent expected return mismatch')
-                if record['callbacks']<case.get('minimum_callbacks',0):raise ValueError('callback coverage missing')
-                before,c,rust=[(directory/name).read_bytes() for name in ('before.wram','c-after.wram','rust-after.wram')]
-                if any(len(s)!=WRAM_SIZE for s in (before,c,rust)):raise ValueError('full WRAM extent missing')
-                if c!=rust:
-                    offset=next(i for i in range(WRAM_SIZE) if c[i]!=rust[i]);record['first_mismatch']={'offset':offset,'c':c[offset],'rust':rust[offset]}
-                    raise ValueError(f'WRAM mismatch at {offset:#x}')
-                if 'expected_after_file' in case and c!=(directory/'expected-after.wram').read_bytes():raise ValueError('captured full WRAM mismatch')
-                c_files={p.name:p.read_bytes() for p in (directory/'c').iterdir()}
-                rust_files={p.name:p.read_bytes() for p in (directory/'rust').iterdir()}
-                if c_files!=rust_files:raise ValueError('ordered actual C callback state/argument sequence mismatch')
-                if len(c_files)!=1+2*record['callbacks'] or len(c_files['callbacks.txt'].splitlines())!=record['callbacks']:
-                    raise ValueError('callback record extent missing')
+        tasks=[(index,routine,case) for index,routine in enumerate(manifest['routines']) for case in routine['cases']]
+        if any(not routine['cases'] for routine in manifest['routines']):raise ValueError('empty routine coverage')
+        seen={case['name'] for _,_,case in tasks}
+        if len(seen)!=len(tasks):raise ValueError('duplicate case name')
+        def verify_case(task):
+            index,routine,case=task
+            directory=run/case['name']
+            prepare_case(case,directory,routine.get('arg_types',[]))
+            results={}
+            for subject in ('rust','c'):
+                callbacks=directory/subject;callbacks.mkdir()
+                stdout=execute([str(run/'collision'),subject,routine['symbol'],str(case.get('a',0)),str(case.get('b',0)),str(directory/'before.wram'),str(directory/(subject+'-after.wram')),str(index),str(run/'rom.bin'),str(callbacks)],directory,subject)
+                results[subject]=json.loads(stdout.splitlines()[-1])
+            record={'routine':routine['symbol'],'case':case['name'],'results':results,'callbacks':results['rust']['c_gameplay_callbacks']}
+            if results['c']!=results['rust']:raise ValueError('return/callback/fallback metrics mismatch')
+            if results['rust']['cpu_fallback_calls'] or results['rust']['cpu_fallback_instructions']:raise ValueError('CPU fallback during offline collision comparison')
+            if results['rust']['return']!=case.get('expected_return',results['rust']['return']):raise ValueError('independent expected return mismatch')
+            if record['callbacks']<case.get('minimum_callbacks',0):raise ValueError('callback coverage missing')
+            before,c,rust=[(directory/name).read_bytes() for name in ('before.wram','c-after.wram','rust-after.wram')]
+            if any(len(s)!=WRAM_SIZE for s in (before,c,rust)):raise ValueError('full WRAM extent missing')
+            if c!=rust:
+                offset=next(i for i in range(WRAM_SIZE) if c[i]!=rust[i]);record['first_mismatch']={'offset':offset,'c':c[offset],'rust':rust[offset]}
+                (directory/'rejection.json').write_text(json.dumps(record)+'\n')
+                error=ValueError(f'WRAM mismatch at {offset:#x}');error.case_record=record
+                raise error
+            if 'expected_after_file' in case and c!=(directory/'expected-after.wram').read_bytes():raise ValueError('captured full WRAM mismatch')
+            c_files={p.name:p.read_bytes() for p in (directory/'c').iterdir()}
+            rust_files={p.name:p.read_bytes() for p in (directory/'rust').iterdir()}
+            if c_files!=rust_files:raise ValueError('ordered actual C callback state/argument sequence mismatch')
+            if len(c_files)!=1+2*record['callbacks'] or len(c_files['callbacks.txt'].splitlines())!=record['callbacks']:
+                raise ValueError('callback record extent missing')
+            return record
+        from port_family import parallel_cases
+        parallel_cases(tasks,verify_case,verdict['cases'])
         if not seen:raise ValueError('empty collision family')
         verdict.update(status='offline-verified',verified_cases=len(seen),verified_routines=len(manifest['routines']),scope='full WRAM, return, ordered callback arguments and complete callback state; declared valid inputs')
     except (OSError,ValueError,KeyError,TypeError,subprocess.SubprocessError) as error:verdict['error']=str(error)
@@ -211,8 +217,7 @@ def verify_collision_evidence(verdict_path):
     implementation=verdict['implementation']
     if digest(__file__)!=implementation['harness_sha256']:
         raise ValueError('collision harness changed')
-    for path,expected in implementation['rust_dependencies'].items():
-        if digest(path)!=expected:raise ValueError(f'collision dependency changed: {path}')
+    verify_dependencies(implementation)
     manifest=json.loads((run/'manifest.json').read_text())
     pin=next(p for p in json.loads((ROOT/'tools/dependencies.json').read_text()) if p['name']=='snesrev-sm')
     if verdict['source']['revision']!=pin['revision'] or verdict['source']['archive_sha256']!=pin['sha256']:

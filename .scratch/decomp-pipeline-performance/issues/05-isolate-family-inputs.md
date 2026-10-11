@@ -1,6 +1,6 @@
 # Compile and seal the actual family dependency closure
 
-Status: open
+Status: resolved
 Blocked by: 02
 Triage: ready-for-agent
 Type: task
@@ -24,3 +24,14 @@ accepting changed bytes.
 - Actual-C full WRAM/return tests and captured-state checks pass.
 - Preserve exact compiler input snapshots and validate relocated identical evidence.
 - Measure recompilation and invalidation reduction; complete cleanup.
+
+## Completion evidence
+
+Canonical Wram moved without behavior change into memory.rs and reexported. Rust generates conservative narrow wrappers and seals actual compiler dependencies under compiler-v2. Unrelated audio changes leave system reusable; canonical memory and real/transitive dependencies reject. Exact source snapshots and tool identity checks retain relocated authentication.
+
+Integration evidence and actual measurements: [implementation.md](../implementation.md).
+Final serial/parallel 45000 integration passed and reauthenticated after cleanup.
+Scoped cleanup and deduplication finished (zero additional bytes on final passes);
+prior scoped snapshots reclaimed 1768292352 bytes and disposable builds reclaimed
+843648190 bytes. Shared evidence dependencies preserved; final free bytes
+256302972928. Integration branch: `decomp-pipeline-performance`.

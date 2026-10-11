@@ -14,6 +14,9 @@ import re
 import shutil
 import subprocess
 import tarfile
+import time
+from port_pipeline import lease, cached_c_build
+from port_inputs import wrapper_memory, compiler_dependencies, memory_source, resolve_source, verify_dependencies
 
 ROOT = Path(__file__).resolve().parents[1]
 WRAM_SIZE = 0x20000
@@ -52,9 +55,24 @@ def parse_result(stdout):
 
 
 def execute(command, run, label):
+    if command[0] == 'cc' and label == 'c-build':
+        cached_c_build(command, run, execute)
+        return b''
     with (run / 'commands.jsonl').open('a') as log:
         log.write(json.dumps(command) + '\n')
-    result = subprocess.run(command, capture_output=True, timeout=180)
+    started = time.monotonic()
+    wait = None
+    try:
+        with lease() as wait:
+            result = subprocess.run(command, capture_output=True, timeout=180)
+    except subprocess.TimeoutExpired as error:
+        (run / (label + '.stdout')).write_bytes(error.stdout or b'')
+        (run / (label + '.stderr')).write_bytes(error.stderr or b'')
+        raise
+    finally:
+        with (run / 'timings.jsonl').open('a') as log:
+            log.write(json.dumps({'stage': label, 'seconds': time.monotonic() - started,
+                                  'worker_wait_seconds': wait, 'exit_code': result.returncode if 'result' in locals() else None}) + '\n')
     (run / (label + '.stdout')).write_bytes(result.stdout)
     (run / (label + '.stderr')).write_bytes(result.stderr)
     if result.returncode:
@@ -142,7 +160,8 @@ int main(int argc, char **argv) {
         raise ValueError('invalid Rust module import')
     root_imports = ''.join(f'use memory::{name};\n' for name in imports)
     wrapper = run / 'wrapper.rs'
-    wrapper.write_text(f'''#[path = {json.dumps(str(ROOT / 'crates/port/src/lib.rs'))}] mod memory;
+    memory = wrapper_memory(run, [module], imports)
+    wrapper.write_text(f'''#[path = {json.dumps(str(memory))}] mod memory;
 use memory::*;
 {root_imports}#[path = {json.dumps(str(module))}] mod family;
 fn main() {{
@@ -163,17 +182,14 @@ fn main() {{
             raise ValueError('invalid C support source')
         if path != bank: extra.append(str(path))
     execute(['cc', '-O2', '-fno-strict-aliasing', '-ffunction-sections', '-fdata-sections', '-iquote', str(source / 'src'), str(bank), *extra, str(oracle), '-Wl,--gc-sections', '-o', str(run / 'c')], run, 'c-build')
-    execute(['rustc', '--edition=2024', '-O', str(wrapper), '-o', str(run / 'rust')], run, 'rust-build')
+    execute(['rustc', '--edition=2024', '-O', '--emit=link,dep-info=' + str(run / 'compiler.d'), str(wrapper), '-o', str(run / 'rust')], run, 'rust-build')
     shutil.copyfile(module, run / 'candidate.rs')
-    shutil.copyfile(ROOT / 'crates/port/src/lib.rs', run / 'memory.rs')
-    dependency_paths = {p.resolve() for p in (ROOT / 'crates/port/src').glob('*.rs')}
-    for value in manifest.get('rust_dependencies', []):
-        path = Path(value)
-        dependency_paths.add((path if path.is_absolute() else ROOT / path).resolve())
-    dependencies = {str(path): digest(path) for path in sorted(dependency_paths)}
-    for index, path in enumerate(sorted(dependency_paths)):
-        shutil.copyfile(path, run / f'dependency-{index:03d}.rs')
-    return {'rust_dependencies': dependencies, 'module': str(module), 'module_sha256': digest(module), 'memory_sha256': digest(ROOT / 'crates/port/src/lib.rs'), 'harness_sha256': digest(__file__), 'binaries': {name: digest(run / name) for name in ('c', 'rust')}}
+    dependencies = compiler_dependencies(wrapper, run, manifest)
+    return {'dependency_contract': 'compiler-v2', 'source_root': str(ROOT),
+            'inputs_harness_sha256': digest(ROOT / 'tools/port_inputs.py'),
+            'rust_dependencies': dependencies, 'module': str(module), 'module_sha256': digest(module),
+            'memory_sha256': digest(memory_source({'dependency_contract': 'compiler-v2'})),
+            'harness_sha256': digest(__file__), 'binaries': {name: digest(run / name) for name in ('c', 'rust')}}
 
 
 def load_asset(path, expected_digest, extent=None):
@@ -217,6 +233,25 @@ def prepare_case(case, directory, arg_types):
     (directory / 'case.json').write_text(json.dumps(case, indent=2) + '\n')
 
 
+def parallel_cases(tasks, operation, records):
+    """Publish outcomes in manifest order, retaining all completed diagnostics."""
+    from concurrent.futures import ThreadPoolExecutor
+    workers = int(__import__('os').environ.get('SM_PORT_CASE_JOBS', '1'))
+    if not 1 <= workers <= 64:
+        raise ValueError('SM_PORT_CASE_JOBS must be 1..64')
+    def attempt(task):
+        try:
+            return operation(task), None
+        except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as error:
+            return getattr(error, 'case_record', None), error
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        outcomes = list(executor.map(attempt, tasks))
+    records.extend(record for record, error in outcomes if record is not None)
+    errors = [error for record, error in outcomes if error is not None]
+    if errors:
+        raise errors[0]
+
+
 def verify(manifest_path, source, output):
     run = output.resolve() / datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%S.%fZ')
     run.mkdir(parents=True)
@@ -235,47 +270,54 @@ def verify(manifest_path, source, output):
             (run / 'rom.bin').write_bytes(rom)
             verdict['rom'] = {'sha256': digest(run / 'rom.bin'), 'bytes': len(rom)}
         verdict['implementation'] = build(manifest, source, run)
-        count = 0
-        for routine in manifest['routines']:
-            if not routine['cases']:
-                raise ValueError(f'no declared valid cases for {routine["symbol"]}')
-            for case in routine['cases']:
-                directory = run / case['name']
-                prepare_case(case, directory, routine.get('arg_types', ['uint16'] * routine.get('args', 0)))
-                if manifest.get('projectile_host'):
-                    words = case['host_words']
-                    if len(words) != 8 or any(type(v) is not int or not 0 <= v <= 65535 for v in words):
-                        raise ValueError('invalid projectile host words')
-                    (directory/'host-before.bin').write_bytes(bytes(b for v in words for b in (v&255,v>>8)))
-                results = {}
-                for subject in ('rust', 'c'):
-                    # Bounded candidate admission precedes any unchecked C execution.
-                    result = execute([str(run / subject), routine['symbol'], str(case.get('a', 0)), str(case.get('b', 0)), str(directory / 'before.wram'), str(directory / (subject + '-after.wram'))] + ([str(run / 'rom.bin')] if 'rom' in manifest else []) + ([str(directory/'host-before.bin'),str(directory/(subject+'-host-after.bin'))] if manifest.get('projectile_host') else []), directory, subject)
-                    results[subject] = parse_result(result)
-                if manifest.get('projectile_host'):
-                    host_c,host_rust=[(directory/(subject+'-host-after.bin')).read_bytes() for subject in ('c','rust')]
-                    if len(host_c)!=16 or host_c!=host_rust:
-                        raise ValueError('projectile host state mismatch: '+case['name'])
-                record = {'routine': routine['symbol'], 'case': case['name'], 'return': results, 'before_sha256': digest(directory / 'before.wram'), 'after_sha256': {subject: digest(directory / (subject + '-after.wram')) for subject in ('c', 'rust')}}
-                verdict['cases'].append(record)
-                if results['c'] != results['rust']:
-                    raise ValueError(f'return mismatch: {routine["symbol"]}/{case["name"]}')
-                if 'expected_return' in case and results['c'] != case['expected_return']:
-                    raise ValueError(f'independent expected return mismatch: {case["name"]}')
-                c, rust = [(directory / (subject + '-after.wram')).read_bytes() for subject in ('c', 'rust')]
-                if len(c) != WRAM_SIZE or len(rust) != WRAM_SIZE:
-                    raise ValueError('subject did not retain full WRAM extent')
-                if c != rust:
-                    offset = next(i for i in range(WRAM_SIZE) if c[i] != rust[i])
-                    record['first_mismatch'] = {'offset': offset, 'c': c[offset], 'rust': rust[offset]}
-                    raise ValueError(f'WRAM mismatch at {offset:#x}: {routine["symbol"]}/{case["name"]}')
-                if 'expected_after_file' in case:
-                    expected = (directory / 'expected-after.wram').read_bytes()
-                    record['capture_after_sha256'] = digest(directory / 'expected-after.wram')
-                    if c != expected:
-                        offset = next(i for i in range(WRAM_SIZE) if c[i] != expected[i])
-                        raise ValueError(f'captured expected WRAM mismatch at {offset:#x}: {case["name"]}')
-                count += 1
+        tasks = [(routine, case) for routine in manifest['routines'] for case in routine['cases']]
+        if any(not routine['cases'] for routine in manifest['routines']):
+            raise ValueError('empty declared routine coverage')
+        if len({case['name'] for _, case in tasks}) != len(tasks):
+            raise ValueError('duplicate fixture case names')
+        def verify_case(pair):
+            routine, case = pair
+            directory = run / case['name']
+            prepare_case(case, directory, routine.get('arg_types', ['uint16'] * routine.get('args', 0)))
+            if manifest.get('projectile_host'):
+                words = case['host_words']
+                if len(words) != 8 or any(type(v) is not int or not 0 <= v <= 65535 for v in words):
+                    raise ValueError('invalid projectile host words')
+                (directory/'host-before.bin').write_bytes(bytes(b for v in words for b in (v&255,v>>8)))
+            results = {}
+            for subject in ('rust', 'c'):
+                # Bounded candidate admission precedes any unchecked C execution.
+                result = execute([str(run / subject), routine['symbol'], str(case.get('a', 0)), str(case.get('b', 0)), str(directory / 'before.wram'), str(directory / (subject + '-after.wram'))] + ([str(run / 'rom.bin')] if 'rom' in manifest else []) + ([str(directory/'host-before.bin'),str(directory/(subject+'-host-after.bin'))] if manifest.get('projectile_host') else []), directory, subject)
+                results[subject] = parse_result(result)
+            if manifest.get('projectile_host'):
+                host_c,host_rust=[(directory/(subject+'-host-after.bin')).read_bytes() for subject in ('c','rust')]
+                if len(host_c)!=16 or host_c!=host_rust:
+                    raise ValueError('projectile host state mismatch: '+case['name'])
+            record = {'routine': routine['symbol'], 'case': case['name'], 'return': results, 'before_sha256': digest(directory / 'before.wram'), 'after_sha256': {subject: digest(directory / (subject + '-after.wram')) for subject in ('c', 'rust')}}
+            # Results are published deterministically by the owner.
+            if results['c'] != results['rust']:
+                raise ValueError(f'return mismatch: {routine["symbol"]}/{case["name"]}')
+            if 'expected_return' in case and results['c'] != case['expected_return']:
+                raise ValueError(f'independent expected return mismatch: {case["name"]}')
+            c, rust = [(directory / (subject + '-after.wram')).read_bytes() for subject in ('c', 'rust')]
+            if len(c) != WRAM_SIZE or len(rust) != WRAM_SIZE:
+                raise ValueError('subject did not retain full WRAM extent')
+            if c != rust:
+                offset = next(i for i in range(WRAM_SIZE) if c[i] != rust[i])
+                record['first_mismatch'] = {'offset': offset, 'c': c[offset], 'rust': rust[offset]}
+                (directory / 'rejection.json').write_text(json.dumps(record) + '\n')
+                error = ValueError(f'WRAM mismatch at {offset:#x}: {routine["symbol"]}/{case["name"]}')
+                error.case_record = record
+                raise error
+            if 'expected_after_file' in case:
+                expected = (directory / 'expected-after.wram').read_bytes()
+                record['capture_after_sha256'] = digest(directory / 'expected-after.wram')
+                if c != expected:
+                    offset = next(i for i in range(WRAM_SIZE) if c[i] != expected[i])
+                    raise ValueError(f'captured expected WRAM mismatch at {offset:#x}: {case["name"]}')
+            return record
+        parallel_cases(tasks, verify_case, verdict['cases'])
+        count = len(verdict['cases'])
         if not count:
             raise ValueError('empty family cannot be verified')
         verdict.update(status='offline-verified', verified_cases=count, verified_routines=len(manifest['routines']), scope='declared valid fixture domain only; full canonical WRAM and return values')
@@ -314,14 +356,14 @@ def verify_family_evidence(verdict_path):
     if verdict['source']['revision'] != pin['revision'] or verdict['source']['archive_sha256'] != pin['sha256']:
         raise ValueError('family pinned source identity changed')
     implementation = verdict['implementation']
-    for path, expected in [(Path(implementation['module']), implementation['module_sha256']),
-                           (ROOT / 'crates/port/src/lib.rs', implementation['memory_sha256']),
+    for path, expected in [(resolve_source(implementation['module'], implementation), implementation['module_sha256']),
+                           (memory_source(implementation), implementation['memory_sha256']),
                            (Path(__file__), implementation['harness_sha256'])]:
         if digest(path) != expected:
             raise ValueError(f'family implementation changed: {path}')
-    for dependency, expected in implementation.get('rust_dependencies', {}).items():
-        if digest(dependency) != expected:
-            raise ValueError(f'family Rust dependency changed: {dependency}')
+    verify_dependencies(implementation)
+    if implementation.get('inputs_harness_sha256') and digest(ROOT / 'tools/port_inputs.py') != implementation['inputs_harness_sha256']:
+        raise ValueError('compiler input harness changed')
     for binary in ('c', 'rust'):
         if digest(run / binary) != implementation['binaries'][binary]:
             raise ValueError(f'family binary changed: {binary}')

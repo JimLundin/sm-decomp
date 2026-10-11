@@ -12,7 +12,7 @@ mod tree;
 pub use canonical::{Id, hex, parse_id};
 pub use image::{diff_images, put_image, write_image};
 pub use pack::{Store, StoreStats};
-pub use run::{Run, put_run, read_run, verify_run};
+pub use run::{Run, put_run, read_run, verified_inventory, verify_run};
 pub use trace::{Event, StreamInfo, TraceWriter, ingest_trace, read_stream, write_frame, write_stream};
 pub use tree::{
     Entry, EntryKind, MemberInfo, ingest_tree, put_file, put_tree, read_tree, tree_inventory, verify_tree, write_entry,

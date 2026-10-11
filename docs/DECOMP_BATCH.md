@@ -24,9 +24,37 @@ dependencies and manifest are authenticated. Stale families are rebuilt;
 rejected evidence never proceeds to replay. Replay itself always starts fresh
 processes. Existing failed attempts remain retained.
 
-One batch command runs at a time to protect the record; verification jobs inside
-it run concurrently. Long jobs print progress every 30 seconds, with full output
-kept in their log directories.
+One command owns each batch record; distinct batch records and worktrees can run
+concurrently. Long jobs print progress every 30 seconds, with full output kept
+in their log directories.
+
+`sm-pipeline` in `crates/pipeline` owns process leases, authenticated build reuse,
+compiler dependency inventories and C translation-unit builds. Existing Python
+commands adapt the family-specific harnesses to this Rust module. Worktrees
+share a budget and cache under the main checkout's `out/pipeline` (located through
+Git's common directory). `SM_PIPELINE_ROOT` selects another shared directory;
+`SM_PIPELINE_WORKERS` sets its capacity, defaulting to four or the machine's CPU
+count if smaller. Every user of one directory must select the same capacity.
+Use a new directory when changing capacity between experiments. OS locks release
+when a lease holder exits. Each batch still owns its evidence independently.
+
+`--jobs` controls family scheduling, `--case-jobs` controls isolated fixture pairs,
+and `--live-jobs` controls the four fresh live subjects. All compilers, fixture
+processes and captures use the same shared worker budget. Within a fixture pair,
+Rust admission always runs before C. Packed live subjects capture to private
+stores concurrently, then import authenticated observations into the shared
+store after the comparison gates pass. `port_live.py --retain-private-stores`
+keeps those stores for diagnostics. Plain and gzip capture remain sequential.
+
+The cache seals compiler identity/options/environment and source contents. It
+checks artifact bytes on every hit and rechecks inputs before publication under
+a per-key lock. Generated C wrappers are rebuilt and relinked each time; pinned
+objects use the compiler's preprocessor dependency inventory. Cargo artifacts
+include workspace manifests, lock/config/toolchain and package sources. Cache
+entries are disposable build products, retained separately from run cleanup;
+they never substitute for a fresh live replay. Do not remove a shared cache while
+workers are publishing to it. Per-command timings and cache hit records remain
+in evidence directories, including failed builds.
 
 For explicit control:
 
@@ -42,7 +70,21 @@ python3 tools/port_batch.py replay --frames 9000
 
 # Select a batch explicitly or create one at a chosen path.
 python3 tools/port_batch.py run --batch out/port/batches/review/batch.json --jobs 2
+
+# Discover the current offline manifest frontier and run isolated case pairs.
+python3 tools/port_batch.py verify --profile offline-all --case-jobs 4
+
+# Select families affected by source changes relative to a commit.
+python3 tools/port_batch.py verify --profile offline-all --changed-since HEAD~1
 ```
+
+Catalog entries may declare `kind`, `manifest`, `live`, and a `prepare` command
+with `{root}`, `{output}` and `{manifest}` placeholders. List imported generator
+files in `prepare_inputs` so their contents also invalidate generated evidence.
+Discovered manifests are offline only; live adapters require explicit catalog
+entries. The `dispatcher-leaves` profile exercises the bank86 dispatcher harness.
+The versioned compiler dependency contract seals actual source reads and canonical
+memory, allowing unchanged narrow families to survive unrelated gameplay edits.
 
 Use `--fresh` to force verification rebuilds. `--native-plm` requires passing
 `plm-spawn` evidence and actual native setup execution during replay; a full PLM

@@ -2,6 +2,7 @@
 resolver = "3"
 exclude = ["deps/rustysnes"]
 members = [
+    "crates/pipeline",
     "crates/evidence",
     "crates/port",
     "crates/decomp",
