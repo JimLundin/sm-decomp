@@ -167,3 +167,7 @@ horizontal motion with ROM speed selection and inclusive camera culling.
 Lavaman thrown-lava frontier: ticket60 adds native allocation and horizontal
 scheduling, with 385 actual-C cases plus 769 shared-path regression cases.
 Live gameplay ownership remains open.
+
+Shot gate/electricity frontier: ticket61 adds native PLM-linked allocation
+and gate fractional movement/timer scheduling. 513 actual-C cases match.
+Live gameplay ownership remains open.

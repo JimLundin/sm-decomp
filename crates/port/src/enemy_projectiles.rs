@@ -75,6 +75,9 @@ pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) ->
 fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'static str> {
     let i = param as usize / 2;
     let table = match init {
+        0xe5d0 | 0xe5d5 | 0xe5da | 0xe6ad if r.word(0x1c27) <= 78 && r.word(0x1c27) & 1 == 0 && r.word(0x7a5) != 0 => {
+            None
+        }
         0xdb18 | 0xe000 if r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => None,
         0xded6 if r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => {
             let row = u16::from(r.byte(0xfb6 + usize::from(r.word(0xe54))));
@@ -280,6 +283,25 @@ pub(crate) fn random(r: &mut Wram<'_>) -> u16 {
     n
 }
 fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> Result<(), &'static str> {
+    if matches!(init, 0xe5d0 | 0xe5d5 | 0xe5da | 0xe6ad) {
+        let plm = r.word(0x1c27);
+        crate::plm_render::calculate_block_coords(r, plm)?;
+        let (x, y) = (r.word(0x1c29), r.word(0x1c2b));
+        if init == 0xe6ad {
+            r.set_word(0x1a4b + k, x.wrapping_add(1).wrapping_mul(16));
+            r.set_word(0x1a93 + k, y.wrapping_sub(2).wrapping_mul(16));
+        } else {
+            r.set_word(0x1aff + k, r.word(0x1c87 + usize::from(plm)));
+            r.set_word(0x1a4b + k, x.wrapping_mul(16));
+            let offset = match init {
+                0xe5d5 => 64,
+                0xe5da => 0xffc0,
+                _ => 0,
+            };
+            r.set_word(0x1a93 + k, y.wrapping_mul(16).wrapping_add(offset));
+        }
+        return Ok(());
+    }
     if matches!(init, 0xdb18 | 0xded6 | 0xe000) {
         let fireball = init == 0xded6;
         let lava = init == 0xe000;

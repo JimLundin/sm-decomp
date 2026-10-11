@@ -295,6 +295,18 @@ fn lavaquake_arc(r: &mut Wram<'_>, rom: &[u8], k: usize, state: u16) -> Result<(
 pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Result<(), &'static str> {
     let k = slot(k)?;
     match address {
+        0xe605 => {
+            let velocity = r.word(0x1adb + k);
+            let distance = if velocity & 0x8000 != 0 { velocity.wrapping_neg() } else { velocity };
+            let timer = r.word(0x19df + k).wrapping_add(distance);
+            if timer >= 0x1000 {
+                r.set_word(0x1b8f + k, 1);
+                r.set_word(0x1b47 + k, r.word(0x1b47 + k).wrapping_add(2));
+            }
+            r.set_word(0x19df + k, if timer >= 0x1000 { 0 } else { timer });
+            r.set_word(0x1a6f + k, r.word(0x1a6f + k).wrapping_add(velocity << 8));
+            r.set_word(0x1a93 + k, r.word(0x1a93 + k).wrapping_add((velocity >> 8) as u8 as i8 as u16));
+        }
         0xdb5b | 0xdf39 | 0xe049 => {
             let state = r.word(0x1aff + k);
             let velocity = match (address, state) {

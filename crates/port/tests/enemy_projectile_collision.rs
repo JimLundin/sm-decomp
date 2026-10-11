@@ -685,3 +685,20 @@ fn nami_fune_left_state_moves_x_using_y_velocity_and_leaves_y_unchanged() {
     assert_eq!(r.word(0x1a6f), 0xabcd);
     assert_eq!(r.word(0x1997), 1);
 }
+
+#[test]
+fn shot_gate_fraction_wrap_does_not_carry_into_y_and_threshold_advances_script() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x1adb, 1);
+    r.set_word(0x1a93, 100);
+    r.set_word(0x1a6f, 0xffa5);
+    r.set_word(0x19df, 0xfff);
+    r.set_word(0x1b47, 0x9752);
+    port::enemy_projectile_instructions::preinstruction(&mut r, &[], 0xe605, 0).unwrap();
+    assert_eq!(r.word(0x1a93), 100);
+    assert_eq!(r.word(0x1a6f), 0xa5);
+    assert_eq!(r.word(0x19df), 0);
+    assert_eq!(r.word(0x1b47), 0x9754);
+    assert_eq!(r.word(0x1b8f), 1);
+}
