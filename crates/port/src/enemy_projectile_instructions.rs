@@ -1123,8 +1123,92 @@ pub fn run_all(r: &mut Wram<'_>, rom: &[u8], mut budget: usize) -> Result<(), &'
     }
     Ok(())
 }
+// The historical get_EnemyDef_A2 helper actually addresses bank A0.
+fn random_drop(r: &mut Wram<'_>, rom: &[u8], k: u16) -> Result<u16, &'static str> {
+    let k = slot(k)?;
+    let header = r.word(0xf3c8 + k);
+    if header == 0 {
+        return Ok(6);
+    }
+    let address = 0x100000 + usize::from(header & 0x7fff) + 0x3a;
+    let pointer = rom.get(address..address + 2).ok_or("missing enemy drop definition")?;
+    let pointer = u16::from_le_bytes([pointer[0], pointer[1]]);
+    if pointer == 0 {
+        return Ok(6);
+    }
+    let address = 0x1a0000 + usize::from(pointer & 0x7fff);
+    let weights = rom.get(address..address + 6).ok_or("missing enemy drop chances")?;
+    let random = loop {
+        let value = crate::enemy_projectiles::random(r) as u8;
+        if value != 0 {
+            break u16::from(value);
+        }
+    };
+    let health = r.word(0x9c2).wrapping_add(r.word(0x9d6));
+    if health < 30 {
+        r.set_word(0xe1a, 1);
+    } else if health >= 50 {
+        r.set_word(0xe1a, 0);
+    }
+    let mut available = 255u8;
+    let (total, mut mask) = if r.byte(0xe1a) != 0 {
+        (weights[0].wrapping_add(weights[1]), 3u8)
+    } else {
+        let mut total = weights[3];
+        let mut mask = 8u8;
+        if r.word(0x9c2) != r.word(0x9c4) || r.word(0x9d6) != r.word(0x9d4) {
+            total = total.wrapping_add(weights[0]).wrapping_add(weights[1]);
+            mask |= 3;
+        }
+        if r.word(0x9c6) != r.word(0x9c8) {
+            total = total.wrapping_add(weights[2]);
+            mask |= 4;
+        }
+        if r.word(0x9ca) != r.word(0x9cc) {
+            available = available.wrapping_sub(weights[4]);
+            mask |= 16;
+        }
+        if r.word(0x9ce) != r.word(0x9d0) {
+            available = available.wrapping_sub(weights[5]);
+            mask |= 32;
+        }
+        (total, mask)
+    };
+    let drops = [1, 2, 4, 6, 5, 3];
+    let mut cumulative = 0u16;
+    for i in 0..4 {
+        if total == 0 {
+            // C discards the entire lower nibble when its denominator is zero.
+            mask >>= 4;
+            break;
+        }
+        let selected = mask & 1 != 0;
+        mask >>= 1;
+        if selected {
+            let next = cumulative.wrapping_add(u16::from(available) * u16::from(weights[i]) / u16::from(total));
+            if next >= random {
+                return Ok(drops[i]);
+            }
+            cumulative = next;
+        }
+    }
+    for i in 4..6 {
+        let selected = mask & 1 != 0;
+        mask >>= 1;
+        if selected {
+            let next = cumulative.wrapping_add(u16::from(weights[i]));
+            if next >= random {
+                return Ok(drops[i]);
+            }
+            cumulative = next;
+        }
+    }
+    Ok(6)
+}
+
 pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) -> Result<u32, &'static str> {
     match name {
+        "RandomDropRoutine" => Ok(u32::from(random_drop(r, rom, a as u16)?)),
         "EprojPowerBombCollision" => {
             let k = slot(a as u16)?;
             let radius = r.word(0xcea) >> 8;
