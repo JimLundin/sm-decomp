@@ -734,3 +734,22 @@ fn falling_particle_removal_uses_unsigned_y_threshold() {
     assert_eq!(r.word(0x1a93), 100);
     assert_eq!(r.word(0x1997), 0);
 }
+
+#[test]
+fn paired_projectile_motion_negates_complete_fractional_velocity() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x97dc, 64);
+    r.set_word(0x1a4b, 100);
+    r.set_word(0x1a27, 0x1234);
+    r.set_word(0x1ab7, 1);
+    r.set_word(0x1aff, 0x8000);
+    r.set_word(0x1a93, 200);
+    r.set_word(0x1adb, 2);
+    r.set_word(0x1b23, 0x4000);
+    port::enemy_projectile_instructions::dispatch_rom(&mut r, &[], "Eproj_FuncE73E_MoveXY", 0, 0).unwrap();
+    assert_eq!(r.word(0x1a4b), 98);
+    assert_eq!(r.word(0x1a27), 0x9234);
+    assert_eq!(r.word(0x1a93), 197);
+    assert_eq!(r.word(0x1a6f), 0xc000);
+}

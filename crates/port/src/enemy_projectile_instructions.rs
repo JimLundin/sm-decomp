@@ -1005,6 +1005,25 @@ pub fn run_all(r: &mut Wram<'_>, rom: &[u8], mut budget: usize) -> Result<(), &'
 }
 pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) -> Result<u32, &'static str> {
     match name {
+        "Eproj_FuncE722" => {
+            let k = slot(a as u16)?;
+            Ok(u32::from(r.word(0x1a4b + k) >= 512 || r.word(0x1a93 + k) >= 512))
+        }
+        "Eproj_FuncE73E_MoveXY" => {
+            let k = slot(a as u16)?;
+            let angle = r.word(0x97dc + k);
+            for (pos, sub, high, low, phase) in
+                [(0x1a4b, 0x1a27, 0x1ab7, 0x1aff, 64), (0x1a93, 0x1a6f, 0x1adb, 0x1b23, 128)]
+            {
+                let amount = (u32::from(r.word(high + k)) << 16) | u32::from(r.word(low + k));
+                let amount = if angle.wrapping_add(phase) & 128 != 0 { amount.wrapping_neg() } else { amount };
+                let position = (u32::from(r.word(pos + k)) << 16) | u32::from(r.word(sub + k));
+                let next = position.wrapping_add(amount);
+                r.set_word(pos + k, (next >> 16) as u16);
+                r.set_word(sub + k, next as u16);
+            }
+            Ok(0)
+        }
         "Eproj_SetXvelRandom" | "Eproj_SetYvelRandom" => {
             let k = slot(a as u16)?;
             let x = name == "Eproj_SetXvelRandom";

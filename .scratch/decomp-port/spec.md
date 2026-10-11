@@ -179,3 +179,7 @@ regression. Live gameplay ownership remains open.
 Enemy falling-particle frontier: ticket63 adds 8A39/8A7D random allocation
 and unsigned endpoint movement. 305 actual-C cases match; live ownership
 remains open.
+
+Paired projectile motion frontier: ticket64 ports Draygon shared E73E
+16.16 movement and E722 fixed extent predicate. 321 actual-C cases match;
+full Draygon scheduling and live ownership remain open.
