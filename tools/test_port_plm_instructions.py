@@ -10,6 +10,25 @@ import port_family
 import port_plm_instructions as adapter
 
 
+class ProjectileHostEvidenceTests(unittest.TestCase):
+    def test_host_only_mismatch_and_missing_sidecar_are_rejected(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            case = root / "case"
+            case.mkdir()
+            names = ("host-before.bin", "c-host-after.bin", "rust-host-after.bin")
+            for name in names:
+                (case / name).write_bytes(bytes(16))
+            artifacts = {"case/" + name: "sealed" for name in names}
+            adapter.verify_projectile_host(case, root, artifacts, [0] * 8)
+            (case / names[2]).write_bytes(bytes([1]) + bytes(15))
+            with self.assertRaisesRegex(ValueError, "host state differs"):
+                adapter.verify_projectile_host(case, root, artifacts, [0] * 8)
+            artifacts.pop("case/" + names[2])
+            with self.assertRaisesRegex(ValueError, "host artifact missing"):
+                adapter.verify_projectile_host(case, root, artifacts, [0] * 8)
+
+
 class PlmInstructionEvidenceTests(unittest.TestCase):
     def test_actual_timer_and_retained_inventory_controls(self):
         full = json.loads(

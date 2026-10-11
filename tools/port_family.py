@@ -230,11 +230,20 @@ def verify(manifest_path, source, output):
             for case in routine['cases']:
                 directory = run / case['name']
                 prepare_case(case, directory, routine.get('arg_types', ['uint16'] * routine.get('args', 0)))
+                if manifest.get('projectile_host'):
+                    words = case['host_words']
+                    if len(words) != 8 or any(type(v) is not int or not 0 <= v <= 65535 for v in words):
+                        raise ValueError('invalid projectile host words')
+                    (directory/'host-before.bin').write_bytes(bytes(b for v in words for b in (v&255,v>>8)))
                 results = {}
                 for subject in ('rust', 'c'):
                     # Bounded candidate admission precedes any unchecked C execution.
-                    result = execute([str(run / subject), routine['symbol'], str(case.get('a', 0)), str(case.get('b', 0)), str(directory / 'before.wram'), str(directory / (subject + '-after.wram'))] + ([str(run / 'rom.bin')] if 'rom' in manifest else []), directory, subject)
+                    result = execute([str(run / subject), routine['symbol'], str(case.get('a', 0)), str(case.get('b', 0)), str(directory / 'before.wram'), str(directory / (subject + '-after.wram'))] + ([str(run / 'rom.bin')] if 'rom' in manifest else []) + ([str(directory/'host-before.bin'),str(directory/(subject+'-host-after.bin'))] if manifest.get('projectile_host') else []), directory, subject)
                     results[subject] = parse_result(result)
+                if manifest.get('projectile_host'):
+                    host_c,host_rust=[(directory/(subject+'-host-after.bin')).read_bytes() for subject in ('c','rust')]
+                    if len(host_c)!=16 or host_c!=host_rust:
+                        raise ValueError('projectile host state mismatch: '+case['name'])
                 record = {'routine': routine['symbol'], 'case': case['name'], 'return': results, 'before_sha256': digest(directory / 'before.wram'), 'after_sha256': {subject: digest(directory / (subject + '-after.wram')) for subject in ('c', 'rust')}}
                 verdict['cases'].append(record)
                 if results['c'] != results['rust']:

@@ -11,6 +11,9 @@ from port_family import IDENTIFIER, ROOT, WRAM_SIZE, digest, execute, parse_resu
 
 
 def build(manifest, source, run):
+    if manifest.get("projectile_host") and ("rom" not in manifest or
+            Path(manifest["rust_module"]).name != "enemy_projectiles.rs"):
+        raise ValueError("projectile host requires ROM and allocator module")
     eproj = any(r["symbol"] == "EprojInstruction" for r in manifest["routines"])
     pointer_bank = 0x86 if eproj else 0x84
     (run / "plm-shim.c").write_text(
@@ -24,6 +27,12 @@ def build(manifest, source, run):
                        'return (const uint16*)CallEprojInstr(GET_WORD(p)|0x860000,slot,p+2);}\n')
             shim.write('void EprojPreinstruction(uint16 slot,uint16 address) {'
                        'CallEprojPreInstr(address|0x860000,slot);}\n')
+    if manifest.get("projectile_host"):
+        if not eproj:
+            raise ValueError("projectile host requires bank86 dispatcher")
+        with (run / "plm-shim.c").open("a") as shim:
+            shim.write("void PortHostLoad(uint16 *v){ eproj_spawn_pt=(Point16U){v[0],v[1]}; eproj_spawn_rect=(Rect16U){v[2],v[3],v[4],v[5]}; eproj_spawn_r22=v[6]; eproj_spawn_varE24=v[7]; }\n")
+            shim.write("void PortHostSave(uint16 *v){ v[0]=eproj_spawn_pt.x;v[1]=eproj_spawn_pt.y;v[2]=eproj_spawn_rect.x;v[3]=eproj_spawn_rect.y;v[4]=eproj_spawn_rect.w;v[5]=eproj_spawn_rect.h;v[6]=eproj_spawn_r22;v[7]=eproj_spawn_varE24;}\n")
     host_support = run / "host-support.c"
     host_support.write_text(
         "#define main retained_main\n#include "
@@ -116,6 +125,12 @@ int main(int argc, char **argv) {
     )
     if pointer_bank == 0x86:
         oracle.write_text(oracle.read_text().replace("0x18000", "0x28000").replace("0x840000", "0x860000"))
+    if manifest.get("projectile_host"):
+        text = oracle.read_text().replace('int main(int argc, char **argv) {', 'void PortHostLoad(uint16*);void PortHostSave(uint16*);\nint main(int argc, char **argv) {')
+        text = text.replace('if(argc!=6 && argc!=7)', 'if(argc!=9)')
+        text = text.replace(' int64_t a=', ' uint16 host[8]; FILE *hf=fopen(argv[7],"rb"); if(!hf||fread(host,2,8,hf)!=8||fgetc(hf)!=EOF||fclose(hf))return 2; PortHostLoad(host);\n int64_t a=')
+        text = text.replace(' printf("%u\\n",result);', ' PortHostSave(host);hf=fopen(argv[8],"wb");if(!hf||fwrite(host,2,8,hf)!=8||fclose(hf))return 2;\n printf("%u\\n",result);')
+        oracle.write_text(text)
     module = Path(manifest["rust_module"])
     if not module.is_absolute():
         module = ROOT / module
@@ -145,6 +160,12 @@ fn main() {{
  std::fs::write(&args[5],bytes).unwrap(); println!("{{}}",result);
 }}
 """)
+    if manifest.get("projectile_host"):
+        text = wrapper.read_text().replace('assert!(args.len()==6 || args.len()==7)', 'assert_eq!(args.len(),9)')
+        text = text.replace(' let result=family::dispatch_rom(', ' let raw=std::fs::read(&args[7]).unwrap();assert_eq!(raw.len(),16);let mut words=[0;8];for (i,w) in words.iter_mut().enumerate(){*w=u16::from_le_bytes([raw[i*2],raw[i*2+1]]);}let mut host=family::ProjectileHost::from_words(words);\n let result=family::dispatch_host(')
+        text = text.replace('&rom,&args[1]', '&rom,&mut host,&args[1]')
+        text = text.replace(' std::fs::write(&args[5]', ' let out:Vec<u8>=host.words().into_iter().flat_map(u16::to_le_bytes).collect();std::fs::write(&args[8],out).unwrap();\n std::fs::write(&args[5]')
+        wrapper.write_text(text)
     bank = source / "src" / manifest["bank"]
     if (
         bank.parent != source / "src"
@@ -210,6 +231,17 @@ fn main() {{
         "family_harness_sha256": digest(port_family.__file__),
         "binaries": {name: digest(run / name) for name in ("c", "rust")},
     }
+
+
+def verify_projectile_host(directory, run, artifacts, words):
+    """Host globals must be compared independently even if WRAM matches."""
+    paths = [directory / name for name in ("host-before.bin", "c-host-after.bin", "rust-host-after.bin")]
+    if any(str(path.relative_to(run)) not in artifacts for path in paths):
+        raise ValueError("projectile host artifact missing")
+    before, c, rust = [path.read_bytes() for path in paths]
+    expected = bytes(value for word in words for value in (word & 255, word >> 8))
+    if before != expected or len(c) != 16 or c != rust:
+        raise ValueError("projectile host state differs")
 
 
 def verify_plm_instruction_evidence(verdict_path):
@@ -299,6 +331,8 @@ def verify_plm_instruction_evidence(verdict_path):
         }
         if results != case["return"] or results["c"] != results["rust"]:
             raise ValueError("family actual return outputs differ")
+        if manifest.get("projectile_host"):
+            verify_projectile_host(directory, run, artifacts, expected_cases[key]["host_words"])
         config = expected_cases[key]
         if "expected_return" in config and results["c"] != config["expected_return"]:
             raise ValueError("family expected return changed")

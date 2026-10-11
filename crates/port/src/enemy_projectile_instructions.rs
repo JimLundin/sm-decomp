@@ -1211,7 +1211,7 @@ fn pickup(r: &mut Wram<'_>, k: usize) -> Result<(), &'static str> {
 }
 
 // The historical get_EnemyDef_A2 helper actually addresses bank A0.
-fn random_drop(r: &mut Wram<'_>, rom: &[u8], k: u16) -> Result<u16, &'static str> {
+pub(crate) fn random_drop(r: &mut Wram<'_>, rom: &[u8], k: u16) -> Result<u16, &'static str> {
     let k = slot(k)?;
     let header = r.word(0xf3c8 + k);
     if header == 0 {

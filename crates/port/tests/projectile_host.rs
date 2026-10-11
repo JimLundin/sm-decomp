@@ -1,0 +1,40 @@
+use port::{
+    WRAM_SIZE, Wram,
+    enemy_projectiles::{ProjectileHost, spawn_room, spawn_room_with_host},
+};
+#[test]
+fn host_required_initializers_refuse_without_mutating_wram() {
+    let mut rom = vec![0; 0x38000];
+    rom[0x30000..0x30002].copy_from_slice(&0x947fu16.to_le_bytes());
+    let mut bytes = vec![0; WRAM_SIZE];
+    let before = bytes.clone();
+    assert!(spawn_room(&mut Wram::new(&mut bytes).unwrap(), &rom, 0x8000, 7).is_err());
+    assert_eq!(bytes, before);
+    let mut host = ProjectileHost { x: 0xffff, y: 12, rect_width: 123, r22: 1, ..Default::default() };
+    let before = host;
+    let mut r = Wram::new(&mut bytes).unwrap();
+    spawn_room_with_host(&mut r, &rom, 0x8000, 7, &mut host).unwrap();
+    assert_eq!(r.word(0x1a4b + 34), 0xffff);
+    assert_eq!(r.word(0x1a93 + 34), 12);
+    assert_eq!(r.word(0x19bb + 34), 2560);
+    assert_eq!(r.word(0x1aff + 34), 7);
+    assert_eq!(host, before);
+}
+#[test]
+fn full_slots_preserve_host_and_only_set_parameter_without_rom() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    for k in (0..36).step_by(2) {
+        r.set_word(0x1997 + k, 1);
+    }
+    let mut expected = vec![0; WRAM_SIZE];
+    for k in (0..36).step_by(2) {
+        expected[0x1997 + k] = 1;
+    }
+    expected[0x1993..0x1995].copy_from_slice(&99u16.to_le_bytes());
+    let mut host = ProjectileHost::from_words([1, 2, 3, 4, 5, 6, 7, 8]);
+    spawn_room_with_host(&mut r, &[], 0, 99, &mut host).unwrap();
+    assert_eq!(r.word(0x1993), 99);
+    assert_eq!(host.words(), [1, 2, 3, 4, 5, 6, 7, 8]);
+    assert_eq!(bytes, expected);
+}

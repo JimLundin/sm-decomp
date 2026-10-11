@@ -1,5 +1,35 @@
 //! Enemy projectile allocation and room-effect initialization, pinned bank86.
 use crate::Wram;
+/// Upstream projectile scratch globals live outside canonical WRAM.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct ProjectileHost {
+    pub x: u16,
+    pub y: u16,
+    pub rect_x: u16,
+    pub rect_y: u16,
+    pub rect_width: u16,
+    pub rect_height: u16,
+    pub r22: u16,
+    pub enemy_header: u16,
+}
+impl ProjectileHost {
+    pub fn words(self) -> [u16; 8] {
+        [self.x, self.y, self.rect_x, self.rect_y, self.rect_width, self.rect_height, self.r22, self.enemy_header]
+    }
+    pub fn from_words(v: [u16; 8]) -> Self {
+        Self {
+            x: v[0],
+            y: v[1],
+            rect_x: v[2],
+            rect_y: v[3],
+            rect_width: v[4],
+            rect_height: v[5],
+            r22: v[6],
+            enemy_header: v[7],
+        }
+    }
+}
+
 fn word(rom: &[u8], p: u16) -> Result<u16, &'static str> {
     if p < 0x8000 || p == 0xffff {
         return Err("enemy projectile ROM extent");
@@ -20,13 +50,53 @@ pub fn clear(r: &mut Wram<'_>) {
     }
 }
 fn spawn(r: &mut Wram<'_>, rom: &[u8], definition: u16, parameter: u16, gfx: u16) -> Result<(), &'static str> {
+    spawn_context(r, rom, definition, parameter, gfx, None)
+}
+fn spawn_context(
+    r: &mut Wram<'_>,
+    rom: &[u8],
+    definition: u16,
+    parameter: u16,
+    gfx: u16,
+    host: Option<&ProjectileHost>,
+) -> Result<(), &'static str> {
     let free = (0..18).rev().map(|i| i * 2).find(|k| r.word(0x1997 + k) == 0);
     let Some(k) = free else {
         r.set_word(0x1993, parameter);
         return Ok(());
     };
     let init = word(rom, definition)?;
-    validate(r, rom, init, parameter)?;
+    if matches!(init, 0x947f | 0xe468 | 0xef29) {
+        host.ok_or("projectile initializer requires host context")?;
+        if init == 0xef29 {
+            for drop in 1..6 {
+                word(rom, 0xef04 + drop * 2)?;
+            }
+            let header = host.unwrap().enemy_header;
+            if header != 0 {
+                let p = 0x100000 + usize::from(header & 0x7fff) + 0x3a;
+                let value = rom.get(p..p + 2).ok_or("missing enemy drop definition")?;
+                let pointer = u16::from_le_bytes([value[0], value[1]]);
+                if pointer != 0 {
+                    let p = 0x1a0000 + usize::from(pointer & 0x7fff);
+                    rom.get(p..p + 6).ok_or("missing enemy drop chances")?;
+                }
+            }
+        }
+        if init == 0xe468 {
+            if parameter >= 30 {
+                return Err("dust script index");
+            }
+            word(
+                rom,
+                0xe42c_u16
+                    .checked_add(parameter.checked_mul(2).ok_or("dust script extent")?)
+                    .ok_or("dust script extent")?,
+            )?;
+        }
+    } else {
+        validate(r, rom, init, parameter)?;
+    }
     let mut fields = [0; 4];
     for (i, v) in fields.iter_mut().enumerate() {
         *v = word(rom, definition.checked_add(2 + 2 * i as u16).ok_or("enemy projectile definition extent")?)?;
@@ -42,11 +112,68 @@ fn spawn(r: &mut Wram<'_>, rom: &[u8], definition: u16, parameter: u16, gfx: u16
     for p in [0x1aff, 0x1b23, 0x19df, 0x1a27, 0x1a6f, 0x1bfb] {
         r.set_word(p + k, 0);
     }
-    initialize(r, rom, init, parameter, k)?;
+    if let Some(host) = host.filter(|_| matches!(init, 0x947f | 0xe468 | 0xef29)) {
+        r.set_word(0x1a4b + k, host.x);
+        r.set_word(0x1a93 + k, host.y);
+        match init {
+            0x947f => {
+                r.set_word(0x19bb + k, 2560);
+                r.set_word(0x1aff + k, parameter);
+                r.set_word(0x1ab7 + k, 0);
+                r.set_word(0x1adb + k, 0);
+            }
+            0xe468 => r.set_word(0x1b47 + k, word(rom, 0xe42c + parameter * 2)?),
+            _ => {
+                r.set_word(0x19bb + k, 0);
+                r.set_word(0xf3c8 + k, host.enemy_header);
+                let drop = crate::enemy_projectile_instructions::random_drop(r, rom, k as u16)?;
+                if drop != 0 && (drop.wrapping_sub(6) as i16) < 0 {
+                    r.set_word(0x1aff + k, drop * 2);
+                    r.set_word(0x1b47 + k, word(rom, 0xef04 + drop * 2)?);
+                    r.set_word(0x1b8f + k, 1);
+                    r.set_word(0x1b23 + k, 400);
+                    r.set_word(0xf410 + k, 0xffff);
+                } else {
+                    r.set_word(0x1b47 + k, 0xeca3);
+                    r.set_word(0x1b8f + k, 1);
+                    r.set_word(0x1bd7 + k, 0x3000);
+                    r.set_word(0x1a03 + k, 0xefdf);
+                }
+            }
+        }
+    } else {
+        initialize(r, rom, init, parameter, k)?;
+    }
     Ok(())
 }
 pub fn spawn_room(r: &mut Wram<'_>, rom: &[u8], definition: u16, parameter: u16) -> Result<(), &'static str> {
     spawn(r, rom, definition, parameter, 0)
+}
+pub fn spawn_room_with_host(
+    r: &mut Wram<'_>,
+    rom: &[u8],
+    definition: u16,
+    parameter: u16,
+    host: &mut ProjectileHost,
+) -> Result<(), &'static str> {
+    spawn_context(r, rom, definition, parameter, 0, Some(host))
+}
+pub fn dispatch_host(
+    r: &mut Wram<'_>,
+    rom: &[u8],
+    host: &mut ProjectileHost,
+    name: &str,
+    a: i32,
+    b: i32,
+) -> Result<u32, &'static str> {
+    if name == "SpawnEprojWithRoomGfx" {
+        spawn_room_with_host(r, rom, a as u16, b as u16, host)?;
+        Ok(0)
+    } else if name == "EprojInstruction" {
+        crate::enemy_projectile_instructions::dispatch_rom(r, rom, name, a, b)
+    } else {
+        dispatch_rom(r, rom, name, a, b)
+    }
 }
 pub fn spawn_with_gfx(
     r: &mut Wram<'_>,
