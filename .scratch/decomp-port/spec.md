@@ -275,3 +275,20 @@ original completion1025 precedes poll1030 at frame272, while diagnostic poll-as-
 step replay assigns that future poll to its corresponding C completion. New
 causal ledger retains prelude polls and boot clearing; full mapping remains
 nonaccepting until missing boot/NMI polling and reset-clear boundaries are modeled.
+
+
+Explicit projectile host context: ticket80/commiteb9f1ab represents actual
+point/rectangle/r22/enemy-header C globals outside WRAM and adds stationary
+fireball explosion947F, dust/explosionE468 and dropEF29 allocation.769 actual-C
+cases match complete WRAM, raw return and mandatory host sidecars. Independent
+Rust checks/fullcrate checks/11harness tests pass. Cleanup361,103,360bytes; final
+evidence authenticated. Ticket35hostinitializer gap resolved in0214bac; host
+context propagation through callers/scheduler and live ownership remain open.
+
+Callable controller foundation: commitbca5ad0 verifies160original-ROM controller
+polls includingprelude19 using actual register samples and entry/return captures.
+151cases differ only in one explicitly validated native callstack byte;9match
+fullWRAM. All otherWRAM matches, with wronginput/unrelatedWRAM rejectioncontrols
+and3publictests. Retained evidence authenticates after cleanup0bytes. Ticket78
+remainsclaimed: bootclearing/dispatch scheduling and originalmovie parity remain
+unfinished; ordinary replay remains nonaccepting.
