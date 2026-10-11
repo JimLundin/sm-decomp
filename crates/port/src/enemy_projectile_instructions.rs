@@ -33,8 +33,44 @@ pub fn move_xy(r: &mut Wram<'_>, k: u16) -> Result<u16, &'static str> {
 }
 /// Execute one opcode. Zero stops this frame; other returns are bank86 continuations.
 pub fn instruction(r: &mut Wram<'_>, rom: &[u8], opcode: u16, pc: u16, k: u16) -> Result<u16, &'static str> {
+    if matches!(opcode, 0xab8a | 0x9270 | 0x8c68 | 0xdc61) {
+        return Err("projectile instruction requires host context");
+    }
+    instruction_context(r, rom, opcode, pc, k, None)
+}
+pub fn instruction_with_host(
+    r: &mut Wram<'_>,
+    rom: &[u8],
+    opcode: u16,
+    pc: u16,
+    k: u16,
+    host: &mut crate::enemy_projectiles::ProjectileHost,
+) -> Result<u16, &'static str> {
+    instruction_context(r, rom, opcode, pc, k, Some(host))
+}
+fn instruction_context(
+    r: &mut Wram<'_>,
+    rom: &[u8],
+    opcode: u16,
+    pc: u16,
+    k: u16,
+    host: Option<&mut crate::enemy_projectiles::ProjectileHost>,
+) -> Result<u16, &'static str> {
     let k = slot(k)?;
     match opcode {
+        0xab8a | 0x9270 | 0x8c68 | 0xdc61 => {
+            let host = host.ok_or("projectile instruction requires host context")?;
+            let header = match opcode {
+                0x9270 => 0xddbf,
+                0x8c68 => 0xde7f,
+                0xdc61 => 0xdf7f,
+                _ => word(rom, pc.wrapping_add(if r.word(0x79f) != 0 { 2 } else { 0 }))?,
+            };
+            host.x = r.word(0x1a4b + k);
+            host.y = r.word(0x1a93 + k);
+            crate::enemy_projectiles::spawn_enemy_drops(r, rom, host, header, k as u16, 0)?;
+            Ok(if opcode == 0xab8a { pc.wrapping_add(4) } else { pc })
+        }
         0x8d99 => {
             dispatch_rom(r, rom, "EprojPowerBombCollision", k as i32, 0)?;
             let divisor = r.word(0xa66);
@@ -1192,7 +1228,7 @@ fn run_all_context(
                         r.set_word(0x1b47 + active, pc.wrapping_add(4));
                         break;
                     }
-                    pc = instruction(r, rom, opcode, pc.wrapping_add(2), active as u16)?;
+                    pc = instruction_context(r, rom, opcode, pc.wrapping_add(2), active as u16, host.as_deref_mut())?;
                     if pc == 0 {
                         break;
                     }
@@ -1354,6 +1390,22 @@ pub(crate) fn random_drop(r: &mut Wram<'_>, rom: &[u8], k: u16) -> Result<u16, &
     Ok(6)
 }
 
+pub fn dispatch_with_host(
+    r: &mut Wram<'_>,
+    rom: &[u8],
+    host: &mut crate::enemy_projectiles::ProjectileHost,
+    name: &str,
+    a: i32,
+    b: i32,
+) -> Result<u32, &'static str> {
+    if name == "EprojInstruction" {
+        let pc = b as u16;
+        let result = instruction_with_host(r, rom, word(rom, pc)?, pc.wrapping_add(2), a as u16, host)?;
+        Ok(if result == 0 { 0 } else { 0x860000 | u32::from(result) })
+    } else {
+        dispatch_rom(r, rom, name, a, b)
+    }
+}
 pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) -> Result<u32, &'static str> {
     match name {
         "RandomDropRoutine" => Ok(u32::from(random_drop(r, rom, a as u16)?)),

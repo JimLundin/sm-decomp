@@ -158,6 +158,21 @@ pub fn spawn_room_with_host(
 ) -> Result<(), &'static str> {
     spawn_context(r, rom, definition, parameter, 0, Some(host))
 }
+pub fn spawn_enemy_drops(
+    r: &mut Wram<'_>,
+    rom: &[u8],
+    host: &mut ProjectileHost,
+    header: u16,
+    k: u16,
+    parameter: u16,
+) -> Result<(), &'static str> {
+    if k > 0x7c0 {
+        return Err("enemy drop source extent");
+    }
+    host.enemy_header = header;
+    let enemy = 0xf78 + usize::from(k);
+    spawn_context(r, rom, 0xf337, parameter, r.word(enemy + 0x1e) | r.word(enemy + 0x20), Some(host))
+}
 pub fn dispatch_host(
     r: &mut Wram<'_>,
     rom: &[u8],
@@ -176,7 +191,7 @@ pub fn dispatch_host(
         crate::enemy_projectile_instructions::run_all_with_host(r, rom, 4096, host)?;
         Ok(0)
     } else if name == "EprojInstruction" {
-        crate::enemy_projectile_instructions::dispatch_rom(r, rom, name, a, b)
+        crate::enemy_projectile_instructions::dispatch_with_host(r, rom, host, name, a, b)
     } else {
         dispatch_rom(r, rom, name, a, b)
     }

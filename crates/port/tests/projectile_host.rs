@@ -77,3 +77,38 @@ fn ridley_impact_updates_external_point_and_reuses_cleared_slot() {
     assert_eq!(r.word(0x19bb + 34), 2560);
     assert_eq!(r.byte(0x666), 0x2b);
 }
+
+#[test]
+fn drop_instruction_writes_external_context_even_when_no_slot_is_free() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    for k in (0..36).step_by(2) {
+        r.set_word(0x1997 + k, 1);
+    }
+    r.set_word(0x1a4b + 2, 0xffff);
+    r.set_word(0x1a93 + 2, 123);
+    let mut expected = vec![0; WRAM_SIZE];
+    for k in (0..36).step_by(2) {
+        expected[0x1997 + k] = 1;
+    }
+    expected[0x1a4b + 2..0x1a4b + 4].copy_from_slice(&0xffffu16.to_le_bytes());
+    expected[0x1a93 + 2..0x1a93 + 4].copy_from_slice(&123u16.to_le_bytes());
+    let mut host = ProjectileHost { r22: 99, ..Default::default() };
+    let result =
+        port::enemy_projectile_instructions::instruction_with_host(&mut r, &[], 0x9270, 0x9000, 2, &mut host).unwrap();
+    assert_eq!(result, 0x9000);
+    assert_eq!((host.x, host.y, host.enemy_header), (0xffff, 123, 0xddbf));
+    assert_eq!(host.r22, 99);
+    assert_eq!(r.word(0x1993), 0);
+    assert_eq!(bytes, expected);
+}
+#[test]
+fn legacy_drop_instruction_refuses_before_point_or_wram_changes() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let before = bytes.clone();
+    assert!(
+        port::enemy_projectile_instructions::instruction(&mut Wram::new(&mut bytes).unwrap(), &[], 0x9270, 0x9000, 0)
+            .is_err()
+    );
+    assert_eq!(bytes, before);
+}
