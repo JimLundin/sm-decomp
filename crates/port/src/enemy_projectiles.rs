@@ -75,6 +75,12 @@ pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) ->
 fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'static str> {
     let i = param as usize / 2;
     let table = match init {
+        0x94a0 | 0x94b4 | 0x94c8 | 0x94dc if param <= 34 && param & 1 == 0 => {
+            for p in [0x9408, 0x940a, 0x940c] {
+                word(rom, p)?;
+            }
+            None
+        }
         0x9023 if r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => None,
         0x9286 => None,
         0x934d if r.word(0xfb4) < 4 => None,
@@ -102,7 +108,9 @@ fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'sta
     if let Some((p, i)) = table {
         word(rom, p + i as u16 * 2)?;
     }
-    if !matches!(init, 0xb49d | 0xce6d | 0x9023 | 0x9286 | 0x934d) && (r.word(0x1c27) > 78 || r.word(0x1c27) & 1 != 0) {
+    if !matches!(init, 0xb49d | 0xce6d | 0x9023 | 0x9286 | 0x934d | 0x94a0 | 0x94b4 | 0x94c8 | 0x94dc)
+        && (r.word(0x1c27) > 78 || r.word(0x1c27) & 1 != 0)
+    {
         return Err("invalid PLM slot");
     }
     Ok(())
@@ -117,6 +125,29 @@ pub(crate) fn random(r: &mut Wram<'_>) -> u16 {
     n
 }
 fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> Result<(), &'static str> {
+    if matches!(init, 0x94a0 | 0x94b4 | 0x94c8 | 0x94dc) {
+        let (vx, vy, definition) = match init {
+            0x94a0 => (0, 0xf200, 0x9688),
+            0x94b4 => (0, 0x0e00, 0x9696),
+            0x94c8 => (0x0e00, 0, 0x966c),
+            _ => (0xf200, 0, 0x967a),
+        };
+        r.set_word(0x1ab7 + k, vx);
+        r.set_word(0x1adb + k, vy);
+        r.set_word(0x1b23 + k, definition);
+        let source = usize::from(param);
+        r.set_word(0x1a4b + k, r.word(0x1a4b + source));
+        r.set_word(0x1a93 + k, r.word(0x1a93 + source));
+        r.set_word(0x1aff + k, r.word(0x1aff + source));
+        r.set_word(0x19bb + k, 2560);
+        let offset = match r.word(0x79f) {
+            2 => 2,
+            5 => 4,
+            _ => 0,
+        };
+        r.set_word(0x1bd7 + k, word(rom, 0x9408 + offset)?);
+        return Ok(());
+    }
     if matches!(init, 0x9023 | 0x9286 | 0x934d) {
         let (x, y, vx, vy) = match init {
             0x9023 => {

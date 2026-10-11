@@ -58,6 +58,7 @@ observable hardware effects, Rust hits and fallback measurements.
 - 34: enemy-projectile terrain collision, slopes, extension chains and eye-door/room collision preinstructions, offline verified (1,232 collision and 940 dispatcher cases).
 - 35: native Crocomire projectile/bridge and delayed fireball spawning, terrain transitions and scheduled frames, offline verified (354 cases); explosion host-state seam and further boss behavior remain open.
 - 36: enemy-projectile random-radius opcode and scheduled execution, offline verified (384 cases).
+- 37: directional fireball split/repeat spawning, area properties and collision transitions through scheduled frames, offline verified (528 cases).
 
 This is the first frontier, not the completion boundary of the user's goal.
 Expand tickets into substantive gameplay subsystems after this frontier, using

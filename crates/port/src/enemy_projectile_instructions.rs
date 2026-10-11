@@ -35,6 +35,22 @@ pub fn move_xy(r: &mut Wram<'_>, k: u16) -> Result<u16, &'static str> {
 pub fn instruction(r: &mut Wram<'_>, rom: &[u8], opcode: u16, pc: u16, k: u16) -> Result<u16, &'static str> {
     let k = slot(k)?;
     match opcode {
+        0x95ba | 0x95ed => {
+            let definitions = if opcode == 0x95ba { [0x966c, 0x967a] } else { [0x9688, 0x9696] };
+            for definition in definitions {
+                r.set_word(0x1995, 0);
+                crate::enemy_projectiles::spawn_room(r, rom, definition, k as u16)?;
+            }
+            Ok(pc)
+        }
+        0x9620 => {
+            let count = r.byte(0x1aff + k).wrapping_sub(1);
+            r.set_byte(0x1aff + k, count);
+            if count & 0x80 == 0 {
+                crate::enemy_projectiles::spawn_room(r, rom, r.word(0x1b23 + k), k as u16)?;
+            }
+            Ok(pc)
+        }
         0x8154 => {
             r.set_word(0x1997 + k, 0);
             Ok(0)
@@ -204,6 +220,29 @@ fn delete_below(r: &mut Wram<'_>, k: usize) {
 pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Result<(), &'static str> {
     let k = slot(k)?;
     match address {
+        0x950d | 0x9522 => {
+            let hit = if address == 0x950d {
+                move_x(r, k as u16)?;
+                crate::enemy_projectile_collision::vertical(r, rom, k as u16)?
+            } else {
+                move_y(r, k as u16)?;
+                crate::enemy_projectile_collision::horizontal(r, rom, k as u16)?
+            };
+            if hit != 0 {
+                r.set_word(0x1b47 + k, 0x9574);
+                r.set_word(0x1b8f + k, 1);
+            }
+        }
+        0x9537 | 0x9540 | 0x9549 => {
+            let hit = if address == 0x9537 {
+                crate::enemy_projectile_collision::horizontal(r, rom, k as u16)?
+            } else {
+                crate::enemy_projectile_collision::vertical(r, rom, k as u16)?
+            };
+            if hit != 0 {
+                r.set_word(0x1997 + k, 0);
+            }
+        }
         0x92ba => {
             if crate::enemy_projectile_collision::vertical(r, rom, k as u16)? != 0 {
                 r.set_word(0x1997 + k, 0);

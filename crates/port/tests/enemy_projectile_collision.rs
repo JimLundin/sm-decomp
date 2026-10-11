@@ -153,3 +153,40 @@ fn impossible_random_radius_is_rejected_before_rng_or_position_writes() {
     assert_eq!(r.word(0x5e5), before);
     assert_eq!(r.word(0x1a4b), 0);
 }
+
+#[test]
+fn fireball_repeat_decrements_only_low_timer_byte_when_pool_is_full() {
+    use port::enemy_projectile_instructions as e;
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    for k in (0..=34).step_by(2) {
+        r.set_word(0x1997 + k, 1);
+    }
+    r.set_word(0x1aff, 0x1201);
+    r.set_word(0x1b23, 0x966c);
+    assert_eq!(e::instruction(&mut r, &[], 0x9620, 0xf000, 0).unwrap(), 0xf000);
+    assert_eq!(r.word(0x1aff), 0x1200);
+    e::instruction(&mut r, &[], 0x9620, 0xf000, 0).unwrap();
+    assert_eq!(r.word(0x1aff), 0x12ff);
+}
+
+#[test]
+fn directional_fireball_keeps_velocity_after_impact_script_transition() {
+    use port::enemy_projectile_instructions as e;
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x7a5, 16);
+    r.set_word(0x1a4b, 24);
+    r.set_word(0x1a93, 29);
+    r.set_word(0x1bb3, 0x202);
+    r.set_word(0x1ab7, 0x100);
+    r.set_word(0x1adb, 0x300);
+    r.set_word(0x10002 + 33 * 2, 0x8000);
+    e::preinstruction(&mut r, &[], 0x950d, 0).unwrap();
+    assert_eq!(r.word(0x1a4b), 25);
+    assert_eq!(r.word(0x1a93), 30);
+    assert_eq!(r.word(0x1b47), 0x9574);
+    assert_eq!(r.word(0x1b8f), 1);
+    assert_eq!(r.word(0x1ab7), 0x100);
+    assert_eq!(r.word(0x1adb), 0x300);
+}
