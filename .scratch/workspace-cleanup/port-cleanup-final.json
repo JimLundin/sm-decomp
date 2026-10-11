@@ -1,0 +1,167 @@
+[
+  {
+    "command": [
+      "python3",
+      "tools/port_cleanup.py",
+      "--root",
+      "out/decomp/ticket06/live/20261010T183924.854808Z",
+      "--apply"
+    ],
+    "exit_code": 0,
+    "output": "reclaimed: 0 bytes\n"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/port_cleanup.py",
+      "--root",
+      "out/decomp/ticket06/live/20261010T184155.718973Z",
+      "--apply"
+    ],
+    "exit_code": 0,
+    "output": "reclaimed: 0 bytes\n"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/port_cleanup.py",
+      "--root",
+      "out/port/batches/20261010T211506.367424Z/replays/20261010T211540.365419Z/evidence/20261010T211540.392718Z",
+      "--apply"
+    ],
+    "exit_code": 0,
+    "output": "reclaimed: 0 bytes\n"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/port_cleanup.py",
+      "--root",
+      "out/port/room-plm-live/20261010T223316.284540Z",
+      "--apply"
+    ],
+    "exit_code": 0,
+    "output": "reclaimed: 0 bytes\n"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/port_cleanup.py",
+      "--root",
+      "out/port/room-plm-live/20261010T223414.793539Z",
+      "--apply"
+    ],
+    "exit_code": 0,
+    "output": "reclaimed: 0 bytes\n"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/port_cleanup.py",
+      "--root",
+      "out/port/flight-live/20261010T204106.008976Z",
+      "--apply"
+    ],
+    "exit_code": 0,
+    "output": "reclaimed: 0 bytes\n"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/port_cleanup.py",
+      "--root",
+      "out/port/live-storage-plain/20261011T072659.503979Z",
+      "--apply"
+    ],
+    "exit_code": 0,
+    "output": "reclaimed: 0 bytes\n"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/port_cleanup.py",
+      "--root",
+      "out/port/collision-plm-extended-live/20261010T203333.584044Z",
+      "--apply"
+    ],
+    "exit_code": 0,
+    "output": "reclaimed: 0 bytes\n"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/port_cleanup.py",
+      "--root",
+      "out/port/projectile-paired-live/20261011T071554.615327Z",
+      "--apply"
+    ],
+    "exit_code": 0,
+    "output": "reclaimed: 0 bytes\n"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/port_cleanup.py",
+      "--root",
+      "out/port/sprite-allocation-live/20261011T083728.358255Z",
+      "--apply"
+    ],
+    "exit_code": 0,
+    "output": "reclaimed: 0 bytes\n"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/port_cleanup.py",
+      "--root",
+      "out/port/live-storage-compressed/20261011T072445.750129Z",
+      "--apply"
+    ],
+    "exit_code": 0,
+    "output": "reclaimed: 0 bytes\n"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/port_cleanup.py",
+      "--root",
+      "out/port/live-storage-compressed/20261011T072613.801279Z",
+      "--apply"
+    ],
+    "exit_code": 0,
+    "output": "reclaimed: 0 bytes\n"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/port_cleanup.py",
+      "--root",
+      "out/port/collision-plm-live/20261010T202917.086157Z",
+      "--apply"
+    ],
+    "exit_code": 0,
+    "output": "reclaimed: 0 bytes\n"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/port_cleanup.py",
+      "--root",
+      "out/port/collision-plm-live/20261010T203112.471878Z",
+      "--apply"
+    ],
+    "exit_code": 0,
+    "output": "reclaimed: 0 bytes\n"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/port_cleanup.py",
+      "--root",
+      "out/port/gameplay-live/20261010T200032.332875Z",
+      "--apply"
+    ],
+    "exit_code": 0,
+    "output": "reclaimed: 0 bytes\n"
+  }
+]

@@ -1,0 +1,90 @@
+[
+  {
+    "name": "proof",
+    "path": "/home/jim/sm-recomp-iteration-04/out/runs/20261010T124052.761996Z-804dab489d86",
+    "status": "pass"
+  },
+  {
+    "name": "demonstrations",
+    "path": "/home/jim/sm-recomp-iteration-07/out/runs/20261010T130129.558468Z-ec7854cc2108",
+    "status": "pass"
+  },
+  {
+    "name": "owned-evidence",
+    "path": "out/runs/20261010T151628.733471Z-7998e6cea5e2",
+    "status": "pass",
+    "files": 199
+  },
+  {
+    "name": "owned-evidence",
+    "path": "out/runs/20261010T092505.439632Z-ec7f269e1f3d",
+    "status": "pass",
+    "files": 199
+  },
+  {
+    "name": "owned-evidence",
+    "path": "out/runs/20261010T140915.136900Z-8b81c56214b7",
+    "status": "pass",
+    "files": 415
+  },
+  {
+    "name": "owned-evidence",
+    "path": "out/runs/20261010T092556.617537Z-94608f27fee3",
+    "status": "pass",
+    "files": 199
+  },
+  {
+    "name": "owned-evidence",
+    "path": "out/runs/20261010T135956.569092Z-5d954f10d7b5",
+    "status": "pass",
+    "files": 2751
+  },
+  {
+    "name": "owned-evidence",
+    "path": "out/runs/20261010T144147.076088Z-9939cc9a1073",
+    "status": "pass",
+    "files": 2751
+  },
+  {
+    "name": "owned-evidence",
+    "path": "out/runs/20261010T102036.267015Z-71f00ab0685d",
+    "status": "pass",
+    "files": 2701
+  },
+  {
+    "name": "owned-evidence",
+    "path": "out/runs/20261010T161610.364510Z-b47c570f84c7",
+    "status": "pass",
+    "files": 415
+  },
+  {
+    "name": "owned-evidence",
+    "path": "out/runs/20261010T112635.727097Z-6bf369628146",
+    "status": "pass",
+    "files": 2714
+  },
+  {
+    "name": "owned-evidence",
+    "path": "out/runs/20261010T151922.381522Z-f49d430ddf6c",
+    "status": "pass",
+    "files": 2807
+  },
+  {
+    "name": "owned-evidence",
+    "path": "out/runs/20261010T151547.118692Z-f55ea371881d",
+    "status": "pass",
+    "files": 207
+  },
+  {
+    "name": "owned-evidence",
+    "path": "out/runs/20261010T143910.036424Z-23b17be20242",
+    "status": "pass",
+    "files": 199
+  },
+  {
+    "name": "owned-evidence",
+    "path": "out/runs/20261010T143832.516124Z-1b3c68cb110d",
+    "status": "pass",
+    "files": 207
+  }
+]

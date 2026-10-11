@@ -1,0 +1,18 @@
+[
+  {
+    "path": "/home/jim/sm-decomp/target",
+    "reclaimed_allocated_bytes": 1275133952
+  },
+  {
+    "path": "/home/jim/sm-decomp/tools/__pycache__",
+    "reclaimed_allocated_bytes": 987136
+  },
+  {
+    "path": "/home/jim/sm-decomp/.ruff_cache",
+    "reclaimed_allocated_bytes": 20480
+  },
+  {
+    "path": "/home/jim/sm-decomp/deps/rustysnes/target",
+    "reclaimed_allocated_bytes": 241274880
+  }
+]

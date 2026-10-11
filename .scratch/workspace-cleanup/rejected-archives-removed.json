@@ -1,0 +1,98 @@
+[
+  {
+    "path": "/home/jim/sm-decomp/out/port/room-plm-live/20261010T223316.284540Z/libfamilies.a",
+    "reclaimed_bytes": 23703598
+  },
+  {
+    "path": "/home/jim/sm-decomp/out/port/room-plm-live/20261010T223316.284540Z/librng.a",
+    "reclaimed_bytes": 23646236
+  },
+  {
+    "path": "/home/jim/sm-decomp/out/port/room-plm-live/20261010T223414.793539Z/libfamilies.a",
+    "reclaimed_bytes": 23703608
+  },
+  {
+    "path": "/home/jim/sm-decomp/out/port/room-plm-live/20261010T223414.793539Z/librng.a",
+    "reclaimed_bytes": 23646236
+  },
+  {
+    "path": "/home/jim/sm-decomp/out/port/flight-live/20261010T204106.008976Z/libfamilies.a",
+    "reclaimed_bytes": 23766946
+  },
+  {
+    "path": "/home/jim/sm-decomp/out/port/flight-live/20261010T204106.008976Z/librng.a",
+    "reclaimed_bytes": 23646236
+  },
+  {
+    "path": "/home/jim/sm-decomp/out/port/live-storage-plain/20261011T072659.503979Z/libfamilies.a",
+    "reclaimed_bytes": 23832770
+  },
+  {
+    "path": "/home/jim/sm-decomp/out/port/live-storage-plain/20261011T072659.503979Z/librng.a",
+    "reclaimed_bytes": 23646236
+  },
+  {
+    "path": "/home/jim/sm-decomp/out/port/collision-plm-extended-live/20261010T203333.584044Z/libfamilies.a",
+    "reclaimed_bytes": 24018902
+  },
+  {
+    "path": "/home/jim/sm-decomp/out/port/collision-plm-extended-live/20261010T203333.584044Z/librng.a",
+    "reclaimed_bytes": 23646236
+  },
+  {
+    "path": "/home/jim/sm-decomp/out/port/projectile-paired-live/20261011T071554.615327Z/libfamilies.a",
+    "reclaimed_bytes": 23832770
+  },
+  {
+    "path": "/home/jim/sm-decomp/out/port/projectile-paired-live/20261011T071554.615327Z/librng.a",
+    "reclaimed_bytes": 23646236
+  },
+  {
+    "path": "/home/jim/sm-decomp/out/port/sprite-allocation-live/20261011T083728.358255Z/libfamilies.a",
+    "reclaimed_bytes": 23647558
+  },
+  {
+    "path": "/home/jim/sm-decomp/out/port/sprite-allocation-live/20261011T083728.358255Z/librng.a",
+    "reclaimed_bytes": 23646236
+  },
+  {
+    "path": "/home/jim/sm-decomp/out/port/live-storage-compressed/20261011T072445.750129Z/libfamilies.a",
+    "reclaimed_bytes": 23832770
+  },
+  {
+    "path": "/home/jim/sm-decomp/out/port/live-storage-compressed/20261011T072445.750129Z/librng.a",
+    "reclaimed_bytes": 23646236
+  },
+  {
+    "path": "/home/jim/sm-decomp/out/port/live-storage-compressed/20261011T072613.801279Z/libfamilies.a",
+    "reclaimed_bytes": 23832770
+  },
+  {
+    "path": "/home/jim/sm-decomp/out/port/live-storage-compressed/20261011T072613.801279Z/librng.a",
+    "reclaimed_bytes": 23646236
+  },
+  {
+    "path": "/home/jim/sm-decomp/out/port/collision-plm-live/20261010T202917.086157Z/libfamilies.a",
+    "reclaimed_bytes": 24018894
+  },
+  {
+    "path": "/home/jim/sm-decomp/out/port/collision-plm-live/20261010T202917.086157Z/librng.a",
+    "reclaimed_bytes": 23646236
+  },
+  {
+    "path": "/home/jim/sm-decomp/out/port/collision-plm-live/20261010T203112.471878Z/libfamilies.a",
+    "reclaimed_bytes": 24018892
+  },
+  {
+    "path": "/home/jim/sm-decomp/out/port/collision-plm-live/20261010T203112.471878Z/librng.a",
+    "reclaimed_bytes": 23646236
+  },
+  {
+    "path": "/home/jim/sm-decomp/out/port/gameplay-live/20261010T200032.332875Z/libfamilies.a",
+    "reclaimed_bytes": 23735028
+  },
+  {
+    "path": "/home/jim/sm-decomp/out/port/gameplay-live/20261010T200032.332875Z/librng.a",
+    "reclaimed_bytes": 23646236
+  }
+]

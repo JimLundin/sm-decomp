@@ -1,0 +1,222 @@
+[
+  {
+    "run": "/home/jim/sm-decomp/out/decomp/ticket06/live/20261010T183924.854808Z",
+    "targets": [
+      {
+        "name": "target",
+        "protected": false,
+        "status": "mixed-C-Rust-integration"
+      }
+    ]
+  },
+  {
+    "run": "/home/jim/sm-decomp/out/decomp/ticket06/live/20261010T184155.718973Z",
+    "targets": [
+      {
+        "name": "target",
+        "protected": false,
+        "status": "mixed-C-Rust-integration"
+      }
+    ]
+  },
+  {
+    "run": "/home/jim/sm-decomp/out/port/batches/20261010T211506.367424Z/replays/20261010T211540.365419Z/evidence/20261010T211540.392718Z",
+    "targets": [
+      {
+        "name": "target",
+        "protected": false,
+        "status": "mixed-C-Rust-integration"
+      },
+      {
+        "name": "libfamilies.a",
+        "protected": false,
+        "status": "mixed-C-Rust-integration"
+      },
+      {
+        "name": "librng.a",
+        "protected": false,
+        "status": "mixed-C-Rust-integration"
+      }
+    ]
+  },
+  {
+    "run": "/home/jim/sm-decomp/out/port/room-plm-live/20261010T223316.284540Z",
+    "targets": [
+      {
+        "name": "libfamilies.a",
+        "protected": false,
+        "status": "rejected"
+      },
+      {
+        "name": "librng.a",
+        "protected": false,
+        "status": "rejected"
+      }
+    ]
+  },
+  {
+    "run": "/home/jim/sm-decomp/out/port/room-plm-live/20261010T223414.793539Z",
+    "targets": [
+      {
+        "name": "libfamilies.a",
+        "protected": false,
+        "status": "rejected"
+      },
+      {
+        "name": "librng.a",
+        "protected": false,
+        "status": "rejected"
+      }
+    ]
+  },
+  {
+    "run": "/home/jim/sm-decomp/out/port/flight-live/20261010T204106.008976Z",
+    "targets": [
+      {
+        "name": "libfamilies.a",
+        "protected": false,
+        "status": "rejected"
+      },
+      {
+        "name": "librng.a",
+        "protected": false,
+        "status": "rejected"
+      }
+    ]
+  },
+  {
+    "run": "/home/jim/sm-decomp/out/port/live-storage-plain/20261011T072659.503979Z",
+    "targets": [
+      {
+        "name": "libfamilies.a",
+        "protected": false,
+        "status": "rejected"
+      },
+      {
+        "name": "librng.a",
+        "protected": false,
+        "status": "rejected"
+      }
+    ]
+  },
+  {
+    "run": "/home/jim/sm-decomp/out/port/collision-plm-extended-live/20261010T203333.584044Z",
+    "targets": [
+      {
+        "name": "libfamilies.a",
+        "protected": false,
+        "status": "rejected"
+      },
+      {
+        "name": "librng.a",
+        "protected": false,
+        "status": "rejected"
+      }
+    ]
+  },
+  {
+    "run": "/home/jim/sm-decomp/out/port/projectile-paired-live/20261011T071554.615327Z",
+    "targets": [
+      {
+        "name": "libfamilies.a",
+        "protected": false,
+        "status": "rejected"
+      },
+      {
+        "name": "librng.a",
+        "protected": false,
+        "status": "rejected"
+      }
+    ]
+  },
+  {
+    "run": "/home/jim/sm-decomp/out/port/sprite-allocation-live/20261011T083728.358255Z",
+    "targets": [
+      {
+        "name": "libfamilies.a",
+        "protected": false,
+        "status": "rejected"
+      },
+      {
+        "name": "librng.a",
+        "protected": false,
+        "status": "rejected"
+      }
+    ]
+  },
+  {
+    "run": "/home/jim/sm-decomp/out/port/live-storage-compressed/20261011T072445.750129Z",
+    "targets": [
+      {
+        "name": "libfamilies.a",
+        "protected": false,
+        "status": "rejected"
+      },
+      {
+        "name": "librng.a",
+        "protected": false,
+        "status": "rejected"
+      }
+    ]
+  },
+  {
+    "run": "/home/jim/sm-decomp/out/port/live-storage-compressed/20261011T072613.801279Z",
+    "targets": [
+      {
+        "name": "libfamilies.a",
+        "protected": false,
+        "status": "rejected"
+      },
+      {
+        "name": "librng.a",
+        "protected": false,
+        "status": "rejected"
+      }
+    ]
+  },
+  {
+    "run": "/home/jim/sm-decomp/out/port/collision-plm-live/20261010T202917.086157Z",
+    "targets": [
+      {
+        "name": "libfamilies.a",
+        "protected": false,
+        "status": "rejected"
+      },
+      {
+        "name": "librng.a",
+        "protected": false,
+        "status": "rejected"
+      }
+    ]
+  },
+  {
+    "run": "/home/jim/sm-decomp/out/port/collision-plm-live/20261010T203112.471878Z",
+    "targets": [
+      {
+        "name": "libfamilies.a",
+        "protected": false,
+        "status": "rejected"
+      },
+      {
+        "name": "librng.a",
+        "protected": false,
+        "status": "rejected"
+      }
+    ]
+  },
+  {
+    "run": "/home/jim/sm-decomp/out/port/gameplay-live/20261010T200032.332875Z",
+    "targets": [
+      {
+        "name": "libfamilies.a",
+        "protected": false,
+        "status": "rejected"
+      },
+      {
+        "name": "librng.a",
+        "protected": false,
+        "status": "rejected"
+      }
+    ]
+  }
+]

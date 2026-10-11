@@ -1,0 +1,90 @@
+[
+  {
+    "path": "/home/jim/sm-recomp-iteration-01",
+    "status": "removed-worktree",
+    "before_allocated_bytes": 37482496,
+    "retained_allocated_bytes": 16384,
+    "reclaimed_allocated_bytes": 37466112,
+    "source_snapshots": {}
+  },
+  {
+    "path": "/home/jim/sm-recomp-iteration-02",
+    "status": "removed-worktree",
+    "before_allocated_bytes": 153780224,
+    "retained_allocated_bytes": 66109440,
+    "reclaimed_allocated_bytes": 87670784,
+    "source_snapshots": {}
+  },
+  {
+    "path": "/home/jim/sm-recomp-iteration-03",
+    "status": "removed-worktree",
+    "before_allocated_bytes": 84238336,
+    "retained_allocated_bytes": 12288,
+    "reclaimed_allocated_bytes": 84226048,
+    "source_snapshots": {}
+  },
+  {
+    "path": "/home/jim/sm-recomp-iteration-04",
+    "status": "removed-worktree",
+    "before_allocated_bytes": 404582400,
+    "retained_allocated_bytes": 219099136,
+    "reclaimed_allocated_bytes": 185483264,
+    "source_snapshots": {}
+  },
+  {
+    "path": "/home/jim/sm-recomp-iteration-05",
+    "status": "removed-worktree",
+    "before_allocated_bytes": 1847296,
+    "retained_allocated_bytes": 12288,
+    "reclaimed_allocated_bytes": 1835008,
+    "source_snapshots": {}
+  },
+  {
+    "path": "/home/jim/sm-recomp-iteration-06",
+    "status": "removed-worktree",
+    "before_allocated_bytes": 2056192,
+    "retained_allocated_bytes": 12288,
+    "reclaimed_allocated_bytes": 2043904,
+    "source_snapshots": {}
+  },
+  {
+    "path": "/home/jim/sm-recomp-iteration-07",
+    "status": "removed-worktree",
+    "before_allocated_bytes": 222527488,
+    "retained_allocated_bytes": 125796352,
+    "reclaimed_allocated_bytes": 96731136,
+    "source_snapshots": {}
+  },
+  {
+    "path": "/home/jim/sm-recomp-iteration-diagnosis-fix",
+    "status": "removed-worktree",
+    "before_allocated_bytes": 149716992,
+    "retained_allocated_bytes": 12288,
+    "reclaimed_allocated_bytes": 149704704,
+    "source_snapshots": {}
+  },
+  {
+    "path": "/home/jim/sm-recomp-iteration-selection-fix",
+    "status": "removed-worktree",
+    "before_allocated_bytes": 79613952,
+    "retained_allocated_bytes": 12288,
+    "reclaimed_allocated_bytes": 79601664,
+    "source_snapshots": {}
+  },
+  {
+    "path": "/tmp/sm-trace-storage-study",
+    "status": "removed-worktree",
+    "before_allocated_bytes": 143708160,
+    "retained_allocated_bytes": 84316160,
+    "reclaimed_allocated_bytes": 59392000,
+    "source_snapshots": {
+      "crates/snes/src/bin/reference-replay.rs": "db254b370e18d2b5032f58248ea38ffcb223968a729723cda38d6533d3726c22",
+      "crates/snes/src/diagnostic.rs": "672b39f3c85dab6ca4a1aa83c974481d6e182e7df4002f09efbc4f1e8279a29e",
+      "crates/snes/src/paired.rs": "5d2fa077eb29417d4c15d571f3e74d95b5f8351c1d036f9963c1edf3b3df1e51",
+      "tools/decomp/headless.c": "e6bd79e46255cf387e6b17c89153d0f57bdca61ee16a675e3865fdfa1c072138",
+      "tools/decomp/live.c": "3b7ecec30ce5f793f735f03bf8fca3996b6dd6e351f604fecdf1ef4d80f5a191",
+      "tools/port_cleanup.py": "32299dad999d9e8945e86d2ac744a99770e89ab68fbb1f90cb5558564c2e6a59",
+      "tools/port_live.py": "5c47f4a340f18229c36eee1935474e39ff9da2562e483dcffe8a270a8ce60303"
+    }
+  }
+]

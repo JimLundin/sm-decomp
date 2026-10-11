@@ -1,0 +1,26 @@
+[
+  {
+    "path": "/home/jim/sm-recomp-iteration-01",
+    "reclaimed_allocated_bytes": 16384
+  },
+  {
+    "path": "/home/jim/sm-recomp-iteration-03",
+    "reclaimed_allocated_bytes": 12288
+  },
+  {
+    "path": "/home/jim/sm-recomp-iteration-05",
+    "reclaimed_allocated_bytes": 12288
+  },
+  {
+    "path": "/home/jim/sm-recomp-iteration-06",
+    "reclaimed_allocated_bytes": 12288
+  },
+  {
+    "path": "/home/jim/sm-recomp-iteration-diagnosis-fix",
+    "reclaimed_allocated_bytes": 12288
+  },
+  {
+    "path": "/home/jim/sm-recomp-iteration-selection-fix",
+    "reclaimed_allocated_bytes": 12288
+  }
+]

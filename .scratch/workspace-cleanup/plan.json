@@ -1,0 +1,146 @@
+{
+  "remove": [
+    {
+      "path": "/home/jim/sm-recomp-iteration-01",
+      "head": "3d3c42918d5bb2ee640e87a2a473e81bc8460073",
+      "branch": "refs/heads/recomp-iteration-ticket-01",
+      "dirty": false,
+      "merged": true,
+      "archive_out": true,
+      "allocated_bytes": 37482496,
+      "source_snapshots": []
+    },
+    {
+      "path": "/home/jim/sm-recomp-iteration-02",
+      "head": "a76fb0b5ed12021d5d776daac2f75f7f8adea409",
+      "branch": "refs/heads/recomp-iteration-ticket-02",
+      "dirty": false,
+      "merged": true,
+      "archive_out": true,
+      "allocated_bytes": 153780224,
+      "source_snapshots": []
+    },
+    {
+      "path": "/home/jim/sm-recomp-iteration-03",
+      "head": "532a0f3a55821599046094ffd5591f08f8b16e4e",
+      "branch": "refs/heads/recomp-iteration-ticket-03",
+      "dirty": false,
+      "merged": true,
+      "archive_out": true,
+      "allocated_bytes": 84238336,
+      "source_snapshots": []
+    },
+    {
+      "path": "/home/jim/sm-recomp-iteration-04",
+      "head": "b96969696b638c47d2c60c4c95ec2ea05df5ce2b",
+      "branch": "refs/heads/recomp-iteration-ticket-04",
+      "dirty": false,
+      "merged": true,
+      "archive_out": true,
+      "allocated_bytes": 404582400,
+      "source_snapshots": []
+    },
+    {
+      "path": "/home/jim/sm-recomp-iteration-05",
+      "head": "c86318360a013de84b7748362809c8a20812ff8b",
+      "branch": "refs/heads/recomp-iteration-ticket-05",
+      "dirty": false,
+      "merged": true,
+      "archive_out": true,
+      "allocated_bytes": 1847296,
+      "source_snapshots": []
+    },
+    {
+      "path": "/home/jim/sm-recomp-iteration-06",
+      "head": "4b76fdfb201e934181fbaea2b0cc146b41166bac",
+      "branch": "refs/heads/recomp-iteration-ticket-06",
+      "dirty": false,
+      "merged": true,
+      "archive_out": true,
+      "allocated_bytes": 2056192,
+      "source_snapshots": []
+    },
+    {
+      "path": "/home/jim/sm-recomp-iteration-07",
+      "head": "df0570980d80616241312ef2fe963b55fe17a541",
+      "branch": "refs/heads/recomp-iteration-ticket-07",
+      "dirty": false,
+      "merged": true,
+      "archive_out": true,
+      "allocated_bytes": 222527488,
+      "source_snapshots": []
+    },
+    {
+      "path": "/home/jim/sm-recomp-iteration-diagnosis-fix",
+      "head": "1990f32985a470e8895d131e199420682b7aa1f0",
+      "branch": "refs/heads/recomp-iteration-diagnosis-fix",
+      "dirty": false,
+      "merged": true,
+      "archive_out": true,
+      "allocated_bytes": 149716992,
+      "source_snapshots": []
+    },
+    {
+      "path": "/home/jim/sm-recomp-iteration-selection-fix",
+      "head": "bd8e76e4f5cd01873f41f5cad6767310dcf0043b",
+      "branch": "refs/heads/recomp-iteration-selection-fix",
+      "dirty": false,
+      "merged": true,
+      "archive_out": true,
+      "allocated_bytes": 79613952,
+      "source_snapshots": []
+    },
+    {
+      "path": "/tmp/sm-trace-storage-study",
+      "head": "b85b0a1f0bb6999024f381f4f8947edc9df32f35",
+      "branch": "refs/heads/research/trace-storage-format",
+      "dirty": false,
+      "merged": true,
+      "archive_out": true,
+      "allocated_bytes": 143708160,
+      "source_snapshots": [
+        "crates/snes/src/bin/reference-replay.rs",
+        "crates/snes/src/diagnostic.rs",
+        "crates/snes/src/paired.rs",
+        "tools/decomp/headless.c",
+        "tools/decomp/live.c",
+        "tools/port_cleanup.py",
+        "tools/port_live.py"
+      ]
+    }
+  ],
+  "preserve": [
+    {
+      "path": "/home/jim/sm-decomp/.claude/worktrees/trace-storage-format",
+      "head": "8bbef1f47deaf462702b7994d86d6a94868d48c7",
+      "branch": "refs/heads/worktree-trace-storage-format",
+      "dirty": true,
+      "merged": true
+    },
+    {
+      "path": "/home/jim/sm-recomp-iteration-review-fixes",
+      "head": "cd91328c7725fd289fcce59394e21bb8323bdc3d",
+      "branch": "refs/heads/recomp-iteration-review-fixes",
+      "dirty": false,
+      "merged": false
+    }
+  ],
+  "cache_candidates": [
+    {
+      "path": "/home/jim/sm-decomp/target",
+      "allocated_bytes": 1275133952
+    },
+    {
+      "path": "/home/jim/sm-decomp/tools/__pycache__",
+      "allocated_bytes": 987136
+    },
+    {
+      "path": "/home/jim/sm-decomp/.ruff_cache",
+      "allocated_bytes": 20480
+    },
+    {
+      "path": "/home/jim/sm-decomp/deps/rustysnes/target",
+      "allocated_bytes": 241274880
+    }
+  ]
+}

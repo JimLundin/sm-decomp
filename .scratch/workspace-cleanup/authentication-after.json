@@ -1,0 +1,12 @@
+[
+  {
+    "name": "proof",
+    "path": "/home/jim/sm-recomp-iteration-04/out/runs/20261010T124052.761996Z-804dab489d86",
+    "status": "pass"
+  },
+  {
+    "name": "demonstrations",
+    "path": "/home/jim/sm-recomp-iteration-07/out/runs/20261010T130129.558468Z-ec7854cc2108",
+    "status": "pass"
+  }
+]

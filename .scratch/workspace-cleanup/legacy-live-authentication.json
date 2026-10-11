@@ -1,0 +1,16 @@
+[
+  {
+    "path": "out/decomp/ticket06/live/20261010T183924.854808Z",
+    "status": "authenticated",
+    "checkpoint_files": 456,
+    "binary": true,
+    "contract": "decomp-live-v1"
+  },
+  {
+    "path": "out/decomp/ticket06/live/20261010T184155.718973Z",
+    "status": "authenticated",
+    "checkpoint_files": 472,
+    "binary": true,
+    "contract": "decomp-live-v1"
+  }
+]

@@ -404,3 +404,27 @@ Ticket138 records the next naturally exercised Ridley enemy instruction-frame
 frontier. It remains open and blocked by137; no new implementation or run starts
 at this checkpoint. Whole-game Rust ownership and original-ROM parity remain
 outstanding.
+
+Final replay checkpoint on 2026-10-11, superseding the partial live handoff
+above: the retained WithGfx verdict is `mixed-C-Rust-integration`, with all four
+subjects at 129,712 inputs, matching state/effects and zero CPU fallback.
+Each mixed subject has exclusive Rust entry counts 16/95,325/8, native
+allocation counts 16/4/4 and nonzero exclusive Rust scheduling for all nine IDs,
+with zero entry/ID refusals. The completed
+`../observed-projectile-with-gfx-live-inspection.json` records full-WRAM and
+eight-host-word parity for all six allocation and eighteen scheduler pairs.
+
+With the writing processes finished, ran
+`python3 tools/port_cleanup.py --root out/port/observed-projectile-with-gfx-live-full/20261011T142927.603436Z --apply`
+and the same command with `--deduplicate --apply`: zero ordinary bytes and
+969,383,498 snapshot bytes reclaimed. Then ran
+`python3 tools/port_authenticate_live.py out/port/observed-projectile-with-gfx-live-full/20261011T142927.603436Z/verdict.json --output .scratch/decomp-port/observed-projectile-with-gfx-live-authentication.json`.
+The retained binary and all 1,345 artifacts per subject authenticate; remaining
+free space was 255,796,166,656 bytes. Retained dependencies include the exact
+binary/source/ROM, compressed observations, host captures and sealed verdict.
+No new implementer worktrees or disposable builds were created. The optimization
+worktree and branch were untouched. Cleanup details:
+`../observed-projectile-with-gfx-live-cleanup.json`.
+
+Status remains claimed for final requirement/batch reconciliation; this commit
+checkpoints the evidence without beginning ticket138 implementation.

@@ -1,0 +1,17 @@
+{
+  "totals_bytes": {
+    "worktrees-removed": 784154624,
+    "caches-removed": 1517416448,
+    "run-caches-removed": 4087648256,
+    "empty-archives-removed": 77824,
+    "accepted-run-intermediates": 189637892,
+    "rejected-run-intermediates": 569699338,
+    "initial-deduplication": 288738536,
+    "streaming-deduplication": 16387302578,
+    "final-python-cache": 258048
+  },
+  "total_bytes": 23824933544,
+  "note": "Worktree/cache values use du allocated bytes; archive and snapshot utilities report file byte sizes. Hardlinks can make total differ from filesystem-wide free-space change.",
+  "deduplicated_snapshots": 901233,
+  "final_free_bytes": 288590962688
+}

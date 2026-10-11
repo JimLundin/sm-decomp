@@ -1,0 +1,51 @@
+[
+  {
+    "status": "authenticated",
+    "artifacts_per_subject": 52,
+    "subjects": 4,
+    "binary": true,
+    "free_bytes": 267879804928,
+    "verdict_sha256": "d5f46c7febb64eb880900e9cc54d495774b8c58e683bf571724d25ac0f4d1a27",
+    "scope": "retained frozen binary and observations; current-source admission and original-ROM parity separate",
+    "path": "/home/jim/sm-decomp/out/port/batches/20261010T211506.367424Z/replays/20261010T211540.365419Z/evidence/20261010T211540.392718Z/verdict.json",
+    "seconds": 1.53
+  },
+  {
+    "status": "authenticated",
+    "artifacts_per_subject": 108,
+    "subjects": 4,
+    "binary": true,
+    "storage": "sm-evidence-v1",
+    "verdict_sha256": "a65d350d9ed1f945747ec5fc409f76c26496599e06a4c036898957b673c9e878",
+    "free_bytes": 267899629568,
+    "scope": "retained frozen binary and observations; current-source admission and original-ROM parity separate",
+    "path": "/home/jim/sm-decomp/out/port/storage-pipeline/packed/20261011T103408.758284Z/verdict.json",
+    "seconds": 16.2
+  },
+  {
+    "status": "authenticated",
+    "artifacts_per_subject": 108,
+    "subjects": 4,
+    "binary": true,
+    "storage": "sm-evidence-v1",
+    "verdict_sha256": "bd1416745d03ec5eda51d818e982f8aa911adcb5caf63f3a7b15ceb1b5652583",
+    "free_bytes": 269271441408,
+    "scope": "retained frozen binary and observations; current-source admission and original-ROM parity separate",
+    "path": "/home/jim/sm-decomp/out/port/storage-pipeline/packed-timing/verdict.json",
+    "seconds": 13.16
+  },
+  {
+    "path": "out/decomp/ticket06/live/20261010T183924.854808Z",
+    "status": "authenticated",
+    "checkpoint_files": 456,
+    "binary": true,
+    "contract": "decomp-live-v1"
+  },
+  {
+    "path": "out/decomp/ticket06/live/20261010T184155.718973Z",
+    "status": "authenticated",
+    "checkpoint_files": 472,
+    "binary": true,
+    "contract": "decomp-live-v1"
+  }
+]

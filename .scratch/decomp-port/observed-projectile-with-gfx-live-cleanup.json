@@ -1,0 +1,53 @@
+{
+  "root": "out/port/observed-projectile-with-gfx-live-full/20261011T142927.603436Z",
+  "writing_processes_finished": true,
+  "commands": [
+    {
+      "argv": [
+        "python3",
+        "tools/port_cleanup.py",
+        "--root",
+        "out/port/observed-projectile-with-gfx-live-full/20261011T142927.603436Z",
+        "--apply"
+      ],
+      "exit_code": 0,
+      "output": "reclaimed: 0 bytes\n"
+    },
+    {
+      "argv": [
+        "python3",
+        "tools/port_cleanup.py",
+        "--root",
+        "out/port/observed-projectile-with-gfx-live-full/20261011T142927.603436Z",
+        "--deduplicate",
+        "--apply"
+      ],
+      "exit_code": 0,
+      "output": "reclaimed: 969383498 snapshot bytes\n"
+    },
+    {
+      "argv": [
+        "python3",
+        "tools/port_authenticate_live.py",
+        "out/port/observed-projectile-with-gfx-live-full/20261011T142927.603436Z/verdict.json",
+        "--output",
+        ".scratch/decomp-port/observed-projectile-with-gfx-live-authentication.json"
+      ],
+      "exit_code": 0,
+      "status": "authenticated"
+    }
+  ],
+  "ordinary_bytes_reclaimed": 0,
+  "snapshot_bytes_reclaimed": 969383498,
+  "free_bytes": 255796166656,
+  "new_implementer_worktrees": 0,
+  "disposable_builds_created": false,
+  "retained_dependencies": [
+    "sealed verdict",
+    "retained live binary and exact source/ROM",
+    "compressed observations",
+    "full WRAM and eight-word host captures"
+  ],
+  "optimization_worktree_and_branch_modified": false,
+  "ticket_status": "claimed; final requirement/batch reconciliation pending"
+}

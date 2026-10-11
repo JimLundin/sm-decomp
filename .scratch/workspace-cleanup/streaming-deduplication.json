@@ -1,0 +1,7 @@
+{
+  "status": "complete",
+  "checked_snapshots": 901233,
+  "additional_reclaimed_bytes": 16387302578,
+  "seconds": 1204.7,
+  "method": "streaming SHA-256, byte equality, atomic hardlinks"
+}

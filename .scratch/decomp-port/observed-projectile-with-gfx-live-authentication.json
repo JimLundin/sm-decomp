@@ -1,0 +1,9 @@
+{
+  "status": "authenticated",
+  "artifacts_per_subject": 1345,
+  "subjects": 4,
+  "binary": true,
+  "free_bytes": 255796166656,
+  "verdict_sha256": "a5aa33ec2b0a38e18c7d052ea1ffc91855d67e516a364947dca31fdba931aead",
+  "scope": "retained frozen binary and observations; current-source admission and original-ROM parity separate"
+}

@@ -1,0 +1,22 @@
+[
+  {
+    "path": "tools/__pycache__",
+    "allocated_bytes": 258048
+  },
+  {
+    "path": "/tmp/sm-workspace-cleanup.py",
+    "status": "temporary-file-removed"
+  },
+  {
+    "path": "/tmp/sm-run-cache-cleanup.py",
+    "status": "temporary-file-removed"
+  },
+  {
+    "path": "/tmp/sm-stream-dedup.py",
+    "status": "temporary-file-removed"
+  },
+  {
+    "path": "/tmp/sm-cleanup-path-references.json",
+    "status": "temporary-file-removed"
+  }
+]

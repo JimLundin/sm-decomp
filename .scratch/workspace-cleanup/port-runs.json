@@ -1,0 +1,17 @@
+[
+  "out/decomp/ticket06/live/20261010T183924.854808Z",
+  "out/decomp/ticket06/live/20261010T184155.718973Z",
+  "out/port/batches/20261010T211506.367424Z/replays/20261010T211540.365419Z/evidence/20261010T211540.392718Z",
+  "out/port/room-plm-live/20261010T223316.284540Z",
+  "out/port/room-plm-live/20261010T223414.793539Z",
+  "out/port/flight-live/20261010T204106.008976Z",
+  "out/port/live-storage-plain/20261011T072659.503979Z",
+  "out/port/collision-plm-extended-live/20261010T203333.584044Z",
+  "out/port/projectile-paired-live/20261011T071554.615327Z",
+  "out/port/sprite-allocation-live/20261011T083728.358255Z",
+  "out/port/live-storage-compressed/20261011T072445.750129Z",
+  "out/port/live-storage-compressed/20261011T072613.801279Z",
+  "out/port/collision-plm-live/20261010T202917.086157Z",
+  "out/port/collision-plm-live/20261010T203112.471878Z",
+  "out/port/gameplay-live/20261010T200032.332875Z"
+]

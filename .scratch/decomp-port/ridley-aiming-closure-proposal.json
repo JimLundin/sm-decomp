@@ -1,0 +1,132 @@
+{
+  "status": "read-only proposal; no implementation or new execution evidence",
+  "ticket": ".scratch/decomp-port/issues/138-observed-ridley-enemy-instruction-frame-ownership.md",
+  "freeze": "Ticket137 WithGfx source/live verification remains frozen; diagnostics and implementation wait for freeze release.",
+  "source_sha256": {
+    "deps/snesrev-sm/src/sm_a6.c": "36ce5f36896e6a28555fba833be68fc189bf1a35b17a64cab04cd3a4e34e6b96",
+    "deps/snesrev-sm/src/sm_a0.c": "a2cee5c286304e7d606357ac4960413e5fe3dfe585d468d0f41a654aa093e8d3",
+    "deps/snesrev-sm/src/sm_86.c": "8268f45c3df230de54c99d833e166802d59bd942ea4ac58e75f4acf134e48cf1",
+    "deps/snesrev-sm/src/sm_rtl.c": "cafcd12cd98e5797680a1928af23ceaf244a20afea927bf600c122effd899614",
+    "crates/port/src/enemy.rs": "4faac9ac72d3b5caf206678980d915a2cb1ac03e492fd7fdb6aa59c4beb48367",
+    "crates/port/src/enemy_projectiles.rs": "beb34d23351a3427ebc994ed46f9b161013f9e80f6ce60e9d3458fdf7e2bdfdc",
+    "crates/port/src/enemy_instructions.rs": "f2349c89d4e1c825fe269807e9e1fe35f45084f2f739537e75229302101b2645",
+    "tools/port_plm_instructions.py": "b9fabcd155cc85320ae418e9dd953cde7d0116a73defa51441c3a4305f04aab0",
+    "tools/port_live.py": "14d14140d473aa533725f86fc5f04d01a7052e985f9948498a1a16a19e5e45f8"
+  },
+  "ROM_sha256": "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72",
+  "native_callback_closure": {
+    "E84D": {
+      "source": "deps/snesrev-sm/src/sm_a6.c:4453",
+      "slot_alias": "Get_Ridley(0), supplied slot and current enemy do not change source",
+      "reads": [
+        "enemy0 X atF7A,Y atF7E",
+        "enemy0 orientation7820",
+        "SamusX AF6,Y AFA"
+      ],
+      "formula": "dx=SamusX-(enemy0X+(orientation!=0?25:-25)),dy=SamusY-(enemy0Y-43), each converted to uint16 before angle calculation; raw aim=(uint8)-(CalculateAngleFromXY(dx,dy)+0x80).",
+      "nonzero_orientation_clamp": [
+        "00..14 ->15",
+        "15..4F unchanged",
+        "50..BF ->50",
+        "C0..FF ->15"
+      ],
+      "zero_orientation_clamp": [
+        "00..3F ->EB",
+        "40..AF ->B0",
+        "B0..EA unchanged",
+        "EB..FF ->EB"
+      ],
+      "writes": [
+        "7832=Math_MultBySin(0500,clamped)",
+        "7834=Math_MultByCos(0500,clamped)"
+      ],
+      "return": "unchanged native jp"
+    },
+    "E904/E909": {
+      "source": "deps/snesrev-sm/src/sm_a6.c:4490",
+      "delegate": "Ridley_E90C with sourceF0/000E",
+      "writes_in_order": [
+        "1995=F source before allocator call",
+        "SpawnEprojWithRoomGfx(9642,enemy0 orientation7820)"
+      ],
+      "return": "unchanged jp",
+      "host": "same eight-word ProjectileHost passed to complete native allocator; initializer needs no host reads, but preserve context"
+    },
+    "E4D2": {
+      "source": "deps/snesrev-sm/src/sm_a6.c:4382",
+      "condition": "area2 or signed16(SamusHealth-30)>=0 ->jp+2 bytes; else enemy0var00 at7800=8 and return immediate banked operand target",
+      "health_boundaries": [
+        0,
+        29,
+        30,
+        31,
+        32767,
+        32768,
+        32797,
+        32798,
+        65535
+      ]
+    },
+    "E4BE/E4CA": {
+      "source": "deps/snesrev-sm/src/sm_a6.c:4371",
+      "effects": "E4BE sets781E=89 and QueueSfx2_Max6(59); E4CA clears781E; both return jp"
+    },
+    "E517": {
+      "source": "deps/snesrev-sm/src/sm_a6.c:4410",
+      "required_by_native_initial_attack": "nonzero orientation ->operand targetE7B4; zero ->jp+2; always reads enemy0"
+    },
+    "other_closure_if_observed": {
+      "E727": "sets7820=1, no additional callback",
+      "E71C/E72F": "set7820=0/2 and callRidley_Func_96(A6D3F9), which copies7nativeD37Cwords to WRAM2026+20n then transforms tilemap entries; must translate, never no-op",
+      "D3F9_dependencies": "Ridley_Func_93 atD3B4 copies7bankA6words with20byte destination stride; tilemap_stuff indexes21+10n negated from8000 and18+10n OR8000 for n0..6",
+      "inventory": "Do not assume additional closures unobserved; actual interpreter inventory determines accepted set."
+    }
+  },
+  "native_ROM_layout_correction": {
+    "ticket_original_claim": "E734/E770/E7AC/E7E8 as four attack-list variants is inaccurate",
+    "actual_entry": "A6E73A is named addr_kRidley_Ilist_E73A and selected in nativeAI atsm_a6:1472/2012/2079",
+    "initial_branches": [
+      "E73A E517 ->E7B4",
+      "E73E E4D2 ->E7AC",
+      "E7B4 E4D2 ->E820"
+    ],
+    "fallthrough_repeat_segments": [
+      "E770 native frame8/E9C7, thenE774healthbranch",
+      "E7E6 native frame8/EA0B, thenE7EAhealthbranch"
+    ],
+    "terminators": [
+      "E7AC E4CA;E7AE frame1/E983;E7B2 sleep812F",
+      "E820 E4CA;E822 frame1/E9A5;E826 sleep812F"
+    ],
+    "E734": "machine-code tail precedingE73A",
+    "E7E8": "EA0B frame spritemap operand, not opcode boundary",
+    "pinned_bytes_E73A_E828_sha256": "04a1e79b51fa101b337ab6183269760110c936b914f81734f63564336b609580"
+  },
+  "math_reuse": {
+    "angle": "crates/port/src/enemy.rs:29 private angle_from_xy exactly matches sm_a0:3362 with wrapped16bit numerator<<8, denominator truncatedlow8 bySnesDivide(uint16,uint8), zero denominatorFFFF, quadrant8bit step. Expose pub(crate) helper and reuse; dispatch_rom CalculateAngleFromXY currently possible but unnecessary mutableRAM parameter.",
+    "trig": "crates/port/src/enemy_projectiles.rs:665 beam_component exactly matches sm86C27A: signed320entry table[(angle&FF)+64], abs16table, uint32amplitude product>>8 truncatedu16 then sign; Cos uses angle+64. Reuse helper for0500 amplitude, no alternate SineMult8bit helper.",
+    "boundary_requirements": [
+      "all256rawaim values for each orientation, especially14/15/4F/50/BF/C0 and3F/40/AF/B0/EA/EB",
+      "dx/dy0,\u00b11,\u00b125,\u00b143,FF/100/101,7FFF/8000/FFFF; equalabs axes; byte-denominatorzero andzero-vector",
+      "all256sin/cos angles independently againstnative Math_MultBySin/Cos; amplitudes0500 plus0/1/FF/100/FFFF controls forwidth/truncation",
+      "coordinates near0/FFFF preserve mouth offsetwrap; enemy0/current/suppliedenemy mismatch"
+    ]
+  },
+  "oracle_design": {
+    "direct_callbacks": "Actual public Ridley_Instr_11/12/13/5/6/10/1 are genuine (uint16,constuint16*)->constuint16* signatures; manifestarg_typesuint16,rom_ptr,returnrom_ptr,pointer_bankA6. No fakeCprototype. E90C threeargs can be covered throughactualE904/E909wrappers; no needpackedfakeE90C.",
+    "missing_harness_extent": "port_plm_instructions.py pointer_bank currently restricts84/86/B2; addA6 with meaningful pointercontrols. projectile_host module allowlist currently allocator/ownership only; extend explicit host-aware Ridley module, reuse actualbank86PortHostLoad/Save with all8words and nativeC entirelink.",
+    "native_frame": "ProcessEnemyInstructions genuinevoid0args; actual bankA6 scripts are selected by enemybank atF78+slot+2E,current_instruction+1A. Eachframe decrements wordtimer+1C unless ai_handlerbits+12 bit4 frozen; frame records write+1C,+16spritemap,+1Aand extra_props+10bit8000. Genericdispatchmust preserve banked/immediate/zero pointer distinctions andoddscriptpositions.",
+    "controlled_chain": "start genuineE73A for both orientations, health29/30/31 and area2/default; inherit fullWRAMand8hostwords eachstep; actualnativeframe sleeps, attacksrepeat throughactualfallthrough segments, no ROM rewriting. Need synchronous aim-spawn directchain plus complete interpreterframes; preserve native script/maps.",
+    "allocation_domain": "all18highestfreechoices plusfullpool; E904/E909sourceF0/E; parameter0/1/2/FFFF orientation; fullpoolstillupdates1995 and1993 while existingprojectilehost untouched; occupiedslotreuse and independentexpectedpartialresets.",
+    "sound_domain": "sound5906 QueueSfx2 channelindex1; validqueuecursors0/15 boundary, counts5/6 andsounddisabled/priority gates; require currentaudio admissionpreflight before mutation.",
+    "admission": "Wholeframe support must prove nativebank/header/entry/ROMopcode callbackclosure before instruction_timer decrement or E4BE/1995 mutations; unknownscripts chooseCimmutably. Frozen shortcircuit needscanonicalenemy validation but notscript reads; timeronly acceptance must still constrain actualsupportedscriptidentity if claiming coherentclosure.",
+    "error_model": "Borrow rootlivehostABI transaction pattern; publishWRAM/all8host onlysuccess; onlysupportfalse selectsC, acceptedRusterror/panic terminateswith retaineddiagnostic, neverC retry."
+  },
+  "inventory_coordination": {
+    "agent": "/root/native_live_bridge",
+    "native_frame": "public sm_a0:3395 ProcessEnemyInstructions samebankcaller EnemyMain:1775",
+    "opcode": "public sm_a0:1252 CallEnemyInstr(uint32ea,uint16slot,constuint16*jp); renameactualdefinitions and wrapsamebankcalls observationally",
+    "retained": "record countsfirst/lastframe/header/bank/script/state plusbefore/afterfullWRAMand8host; first2peropcode and material attackframes; normalize rawbankA6pointer; preserve source/ROM hashes",
+    "no_inference": "Currentprojectileinventory16spawns does not splitE904/E909counts; fourROMspawnsperattack are sourceobservation only."
+  }
+}

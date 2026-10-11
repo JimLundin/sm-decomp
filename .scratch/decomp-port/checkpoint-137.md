@@ -3,12 +3,35 @@
 Branch `decomp-port-integration`, refreshed on 2026-10-11. Ticket 137 remains
 claimed and the broader decomp goal remains active. This checkpoint includes
 the current chain/requirements audit, cleaned supplemental Ceres boundary
-evidence, partial live inspection and open next-frontier ticket 138.
+evidence, completed live inspection and open next-frontier ticket 138.
 Earlier checkpoints:
 `91c513c` (native RoomGfx/scheduler implementation), `de166b0` (allocation gap
 and handoff). Current sources implement that missing native WithGfx bridge.
 
 ## Resume immediately
+
+The replay and cleanup below have now completed. All four subjects reached
+129,712 inputs with matching state/effects and zero CPU fallback. Each mixed
+subject records 16 RoomGfx allocations, 95,325 Rust scheduler calls and eight
+WithGfx allocations, with zero C calls/refusals at those entries. Native
+allocations are 16 Ridley fireballs, four Ceres pads and four platforms; all nine
+scheduler IDs execute exclusively in Rust. The completed inspection verifies
+all six allocation and eighteen scheduler capture pairs against full WRAM and
+all eight host words across all subjects.
+
+Scoped ordinary cleanup reclaimed zero bytes; deduplication reclaimed
+969,383,498 snapshot bytes. Post-cleanup authentication passes for the retained
+binary and all 1,345 artifacts per subject. Records:
+`observed-projectile-with-gfx-live-authentication.json` and
+`observed-projectile-with-gfx-live-cleanup.json`. Available disk space at
+authentication: 255,796,166,656 bytes. No new implementer worktrees or disposable
+builds were created; the optimization worktree and branch were left untouched.
+
+Next: reconcile the completion audit and final batch/ticket status, then resolve
+137 when every requirement is accounted for. Ticket 138 remains open; its
+diagnostic drafts and aiming proposal are saved without execution. Original-ROM
+parity and whole-game Rust ownership remain outstanding. The earlier process
+handoff below is retained as history and is superseded by this update.
 
 1. Inspect the existing fresh four-process full-route replay; do not duplicate it:
    - Run: `out/port/observed-projectile-with-gfx-live-full/20261011T142927.603436Z`.
