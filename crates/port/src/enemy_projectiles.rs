@@ -75,6 +75,10 @@ pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) ->
 fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'static str> {
     let i = param as usize / 2;
     let table = match init {
+        0xef89 if param < 5 && r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => {
+            word(rom, 0xefd5 + param * 2)?;
+            None
+        }
         0xec62 if r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => None,
         0xebc6 if r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => {
             let angle = usize::from(r.byte(0x60b));
@@ -269,6 +273,7 @@ fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'sta
             | 0x8a39
             | 0xea31
             | 0xec62
+            | 0xef89
             | 0xebc6
             | 0x8af1
             | 0x8b15
@@ -310,6 +315,18 @@ pub(crate) fn random(r: &mut Wram<'_>) -> u16 {
     n
 }
 fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> Result<(), &'static str> {
+    if init == 0xef89 {
+        let enemy_slot = r.word(0xe54);
+        let enemy = 0xf78 + usize::from(enemy_slot);
+        r.set_word(0x1a4b + k, r.word(enemy + 2));
+        r.set_word(0x1a93 + k, r.word(enemy + 6));
+        r.set_word(0xf410 + k, enemy_slot | if r.word(enemy + 0x0e) & 0x4000 != 0 { 0x8000 } else { 0 });
+        r.set_word(0xf3c8 + k, r.word(enemy));
+        r.set_word(0x19bb + k, 0);
+        r.set_word(0x1b47 + k, word(rom, 0xefd5 + param * 2)?);
+        r.set_word(0x1b8f + k, 1);
+        return Ok(());
+    }
     if init == 0xec62 {
         let enemy_slot = r.word(0xe54);
         let enemy = 0xf78 + usize::from(enemy_slot);
