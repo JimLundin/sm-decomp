@@ -771,3 +771,20 @@ fn draygon_projectile_moves_after_power_bomb_deletes_it() {
     assert_eq!(r.word(0xa66), 0);
     assert_eq!(r.word(0x1a4b), 101);
 }
+
+#[test]
+fn attached_gunk_contact_release_skips_follow_and_timer_update() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x1997, 1);
+    r.set_word(0xa6e, 1);
+    r.set_word(0xa66, 0);
+    r.set_word(0x1aff, 256);
+    r.set_word(0x1a4b, 100);
+    r.set_word(0xaf6, 200);
+    port::enemy_projectile_instructions::preinstruction(&mut r, &[], 0x8dca, 0).unwrap();
+    assert_eq!(r.word(0x1997), 0);
+    assert_eq!(r.word(0xa66), 0);
+    assert_eq!(r.word(0x1aff), 256);
+    assert_eq!(r.word(0x1a4b), 100);
+}

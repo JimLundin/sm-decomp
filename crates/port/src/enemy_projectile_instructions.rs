@@ -35,6 +35,21 @@ pub fn move_xy(r: &mut Wram<'_>, k: u16) -> Result<u16, &'static str> {
 pub fn instruction(r: &mut Wram<'_>, rom: &[u8], opcode: u16, pc: u16, k: u16) -> Result<u16, &'static str> {
     let k = slot(k)?;
     match opcode {
+        0x8d99 => {
+            dispatch_rom(r, rom, "EprojPowerBombCollision", k as i32, 0)?;
+            let divisor = r.word(0xa66);
+            if (divisor.wrapping_sub(5) as i16) < 0 {
+                let next = divisor.wrapping_add(1);
+                r.set_word(0xa66, next);
+                r.set_word(0x1b23 + k, next);
+                r.set_word(0x1aff + k, 256);
+                r.set_word(0x1a03 + k, 0x8dca);
+                r.set_word(0x1bd7 + k, (r.word(0x1bd7 + k) & 0x5fff) | 0x2000);
+                r.set_word(0x18a8, 0);
+                r.set_word(0x18aa, 0);
+            }
+            Ok(pc)
+        }
         0xc173 => word(rom, pc.wrapping_add(r.word(0x1aff + k))),
         0xc1b4 => {
             r.set_word(0x19bb + k, 0);
@@ -301,6 +316,23 @@ fn lavaquake_arc(r: &mut Wram<'_>, rom: &[u8], k: usize, state: u16) -> Result<(
 pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Result<(), &'static str> {
     let k = slot(k)?;
     match address {
+        0x8dca => {
+            dispatch_rom(r, rom, "EprojPowerBombCollision", k as i32, 0)?;
+            let release = if r.word(0xa6e) != 0 {
+                true
+            } else {
+                r.set_word(0x1a4b + k, r.word(0xaf6));
+                r.set_word(0x1a93 + k, r.word(0xafa).wrapping_add(r.word(0x1b23 + k).wrapping_mul(4)).wrapping_sub(12));
+                let timer = r.word(0x1aff + k).wrapping_sub(1);
+                r.set_word(0x1aff + k, timer);
+                timer == 0
+            };
+            if release {
+                r.set_word(0x1997 + k, 0);
+                let divisor = r.word(0xa66).wrapping_sub(1);
+                r.set_word(0xa66, if divisor & 0x8000 != 0 { 0 } else { divisor });
+            }
+        }
         0x8dff | 0x8e0f => {
             dispatch_rom(r, rom, "EprojPowerBombCollision", k as i32, 0)?;
             dispatch_rom(r, rom, "Eproj_FuncE73E_MoveXY", k as i32, 0)?;

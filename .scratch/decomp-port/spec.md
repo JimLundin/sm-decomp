@@ -187,3 +187,7 @@ full Draygon scheduling and live ownership remain open.
 Draygon scheduling frontier: ticket65 adds power-bomb collision and turret/gunk
 paired movement/proximity updates. 897 actual-C cases match. Allocation,
 attached gunk and live gameplay ownership remain open.
+
+Draygon attached-gunk frontier: ticket66 ports attach opcode and Samus
+follow/release scheduling. 1,281 actual-C cases match including regression.
+Draygon allocation and live ownership remain open.
