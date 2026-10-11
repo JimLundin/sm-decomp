@@ -122,3 +122,25 @@ removed automatically.17,794,060,288bytes available; noimplementerworktree.
 Postcleanup authenticated finalbinary/host/driver/basehost/frameheader,allnative
 WRAM/events,causalinputs and candidate/controlevents/fullcompletedWRAM/terminal
 states/logs against verdict. Retain these dependencies as boundedproof.
+
+## Ten causal completed updates
+
+Extended restored-NMI polling execution to all160captured polls and all10native
+completed updates through sourceframe316. Each completion compares its entire
+preceding poll prefix and count to originalsource order, rejecting ordinal
+shifts even when heldvalues repeat. AllSEMANTIC fields match at everycompletion;
+changed-RNG controls compare all10candidate/control updates separately. Explicit
+native wait events remain retained/unmapped; noclaim ofhardwareframe/fullWRAM
+parity or authentic APUwait timing. Ticket78 remainsclaimed.
+
+Finalsource-stable320frame evidence:
+`out/port/controller-causal-updates/20261011T064741.189171Z/verdict.json`.
+All10semantic comparisons pass; all160polls execute;3publicprefix tests
+pass51.072s; diffcheck passes. Realresetclearing retained, noWRAMinjection.
+
+Cleanup applied/deduplicated both finished064702/064741runs:0bytes reclaimed
+(nonacceptingformat unsupported); publictest tempdirectories automatically
+removed.17,074,159,616bytes available. Authenticated finalbinary/allhost snapshots
+includingframeheader,nativeallWRAM/events,causalinputs,all10candidate/control
+completedstates,terminals/events/logs againstverdict aftercleanup. Noimplementer
+worktree; retained sealeddependencies prove boundedcomparison only.

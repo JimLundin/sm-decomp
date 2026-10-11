@@ -47,6 +47,12 @@ class PrefixCommandTests(unittest.TestCase):
             self.assertEqual(causal['candidate']['state']['held'],0)
             self.assertEqual(causal['candidate']['state']['rng'],758)
             self.assertIn('rng',causal['changed_rng_control'])
+            prefix=verdict['causal_update_prefix']
+            self.assertTrue(prefix['semantic_match'])
+            self.assertEqual(prefix['completed_updates'],10)
+            self.assertEqual(prefix['polls_executed'],160)
+            self.assertTrue(all(not row['differences'] for row in prefix['comparisons']))
+            self.assertTrue(prefix['explicit_native_wait_events'])
             primitive=verdict['poll_primitive']
             self.assertEqual(primitive['cases'],len(polls))
             self.assertEqual(primitive['first_source_frame'],19)

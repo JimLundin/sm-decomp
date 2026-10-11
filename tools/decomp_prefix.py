@@ -277,35 +277,50 @@ def investigate(args,run,verdict):
     prelude=[row for row in polls if row['source_event']<first_complete['source_event']]
     causal_inputs=run/'causal.inputs'
     after=next(row for row in polls if row['source_event']>first_complete['source_event'])
-    causal_inputs.write_text(''.join(f"{row['hardware_pad']:04x}\n" for row in prelude+[after]))
+    causal_inputs.write_text(''.join(f"{row['hardware_pad']:04x}\n" for row in polls))
     causal_results={}
     for name,mode in (('causal-candidate','causal-polling'),('causal-control','changed-causal-rng')):
         directory=run/name;(directory/'fixtures').mkdir(parents=True);(directory/'saves').mkdir()
-        cmd=[run/'prefix-host',rom,causal_inputs,str(len(prelude)+1),mode]
+        cmd=[run/'prefix-host',rom,causal_inputs,str(len(polls)),mode]
         invoke(cmd,directory,args.timeout)
         records=[json.loads(line) for line in (directory/'events.jsonl').read_text().splitlines()]
         completed=[row for row in records if row['kind']=='dispatch-complete']
-        if len(completed)!=1: raise ValueError('bounded causal seam did not produce exactly one completion')
-        causal_results[name]=completed[0]
+        if len(completed)!=len(original): raise ValueError('bounded causal seam completion count differs')
+        causal_results[name]=completed
         before=[row for row in records if row['kind']=='controller-return' and row['event']<completed[0]['event']]
         if [row['state']['held'] for row in before]!=[row['held'] for row in prelude]:
             raise ValueError('causal prelude polls changed order or sample')
         post=[row for row in records if row['kind']=='controller-return' and row['event']>completed[0]['event']]
-        if len(post)!=1 or post[0]['state']['held']!=after['held']:
+        if len(post)!=len(polls)-len(prelude) or [row['state']['held'] for row in post]!=[row['held'] for row in polls[len(prelude):]]:
             raise ValueError('causal post-completion sample boundary differs')
+        for ordinal,boundary in enumerate(completed):
+            prior=[row for row in records if row['kind']=='controller-return' and row['event']<boundary['event']]
+            expected_prior=[row for row in polls if row['source_event']<original[ordinal]['source_event']]
+            if [row['state']['held'] for row in prior]!=[row['held'] for row in expected_prior]:
+                raise ValueError('causal completion consumed future or reordered poll')
         verdict[name]={'command':list(map(str,cmd)),'events_sha256':digest(directory/'events.jsonl'),
-            'terminal_sha256':digest(directory/'terminal.bin'),'complete_sha256':digest(directory/'complete-0001.wram'),
+            'terminal_sha256':digest(directory/'terminal.bin'),'complete_states':{path.name:digest(path) for path in directory.glob('complete-*.wram')},
             'stdout_sha256':digest(directory/'stdout.log'),'stderr_sha256':digest(directory/'stderr.log')}
-    causal_diff={key:{'original':first_complete['state'][key],'candidate':causal_results['causal-candidate']['state'][key]}
-        for key in SEMANTIC if first_complete['state'][key]!=causal_results['causal-candidate']['state'][key]}
-    control_diff={key:{'candidate':causal_results['causal-candidate']['state'][key],'changed':causal_results['causal-control']['state'][key]}
-        for key in SEMANTIC if causal_results['causal-candidate']['state'][key]!=causal_results['causal-control']['state'][key]}
+    causal_diff={key:{'original':first_complete['state'][key],'candidate':causal_results['causal-candidate'][0]['state'][key]}
+        for key in SEMANTIC if first_complete['state'][key]!=causal_results['causal-candidate'][0]['state'][key]}
+    control_diff={key:{'candidate':causal_results['causal-candidate'][0]['state'][key],'changed':causal_results['causal-control'][0]['state'][key]}
+        for key in SEMANTIC if causal_results['causal-candidate'][0]['state'][key]!=causal_results['causal-control'][0]['state'][key]}
     if causal_diff or not control_diff: raise ValueError('bounded causal first-completion seam failed parity or control')
     verdict['causal_first_completion']={'semantic_match':True,'source_frame':first_complete['source_frame'],
         'source_event':first_complete['source_event'],'prelude_polls_executed':len(prelude),
         'next_poll_event':after['source_event'],'policy':'real NMI polling after completion; relocated main poll suppressed; real reset clearing; no WRAM loading',
-        'candidate':causal_results['causal-candidate'],'changed_rng_control':control_diff,
+        'candidate':causal_results['causal-candidate'][0],'changed_rng_control':control_diff,
         'inputs_sha256':digest(causal_inputs),'scope':'first completed gameplay dispatch only; boot video timing and later waits unproven'}
+    causal_comparisons=compare(original,causal_results['causal-candidate'])
+    if any(row['differences'] for row in causal_comparisons):
+        raise ValueError('later causal completion semantic mismatch')
+    prefix_controls=[{'ordinal':i,'differences':{key:{'candidate':a['state'][key],'changed':b['state'][key]} for key in SEMANTIC if a['state'][key]!=b['state'][key]}}
+        for i,(a,b) in enumerate(zip(causal_results['causal-candidate'],causal_results['causal-control']),1)]
+    if not any(row['differences'] for row in prefix_controls): raise ValueError('changed causal prefix escaped detection')
+    verdict['causal_update_prefix']={'semantic_match':True,'completed_updates':len(causal_comparisons),
+        'comparisons':causal_comparisons,'changed_rng_control':prefix_controls,'polls_executed':len(polls),
+        'scope':'source-ordered controller and completed-update semantic fields; native waits and video timing remain retained but unmapped',
+        'explicit_native_wait_events':[row['source_event'] for row in mapped if row['kind']=='explicit-wait']}
     comparisons=compare(original,subjects['candidate'])
     if not comparisons: raise ValueError('no diagnostic completed-boundary comparisons')
     verdict['comparisons']=comparisons

@@ -139,3 +139,12 @@ removes the diagnosed future-poll assignment for that bounded completion by
 executing the omitted NMI polling at its semantic seam. It proves neither the
 original boot video-frame timing nor subsequent asynchronous wait scheduling;
 the general diagnostic replay and overall verdict remain nonaccepting.
+
+The causal subject now executes all160captured polls and compares all10completed
+updates in the320frame capture, through original frame316. Each completion
+requires its entire preceding poll sequence and count to equal the native
+preceding sequence; repeated held values cannot hide a shifted poll ordinal.
+All compared semantic fields match. The changed-RNG control is compared across
+all10updates independently. Native explicit-wait events remain in the ledger
+and the verdict explicitly leaves their timing unmapped. These source-ordered
+completed-update comparisons do not prove full WRAM or hardware-frame parity.
