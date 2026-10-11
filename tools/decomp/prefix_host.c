@@ -10,7 +10,7 @@ static bool changed_gameplay, causal_polling;
 static unsigned scheduled_pad;
 static FILE *causal_inputs;
 static unsigned long causal_poll_count;
-static bool inside_vblank_wait, omit_vblank_wait;
+static bool inside_vblank_wait, omit_vblank_wait, omit_screen_wait;
 static void Observe(const char *kind);
 void __wrap_Vector_NMI(void);
 static void PresentCausalPoll(void) {
@@ -19,6 +19,18 @@ static void PresentCausalPoll(void) {
   for (unsigned bit = 0; bit < 16; bit++) reversed |= ((scheduled_pad >> bit) & 1) << (15-bit);
   g_snes->input1->currentState = reversed;
   ++causal_poll_count;
+}
+void __real_ScreenOn(void);
+void __wrap_ScreenOn(void) {
+  __real_ScreenOn();
+  if (causal_polling && !omit_screen_wait) {
+    inside_vblank_wait = true;
+    Observe("within-dispatch-screen-on-wait");
+    // Native ScreenOnWaitNMI calls WaitForNMI, which explicitly sets this flag.
+    waiting_for_nmi = 1;
+    __wrap_Vector_NMI();
+    inside_vblank_wait = false;
+  }
 }
 void __real_WaitUntilEndOfVblankAndClearHdma(void);
 void __real_Vector_NMI(void);
@@ -121,8 +133,9 @@ int main(int argc,char **argv) {
   if (!strcmp(argv[4], "poll-fixtures")) return PollFixtures(argv[1], argv[2], argv[3], 0);
   if (!strcmp(argv[4], "changed-poll-fixtures")) return PollFixtures(argv[1], argv[2], argv[3], 1);
   if (!strcmp(argv[4], "changed-state-poll-fixtures")) return PollFixtures(argv[1], argv[2], argv[3], 2);
+  omit_screen_wait = !strcmp(argv[4], "omitted-causal-screen-wait");
   omit_vblank_wait = !strcmp(argv[4], "omitted-causal-wait");
-  causal_polling = !strcmp(argv[4], "causal-polling") || !strcmp(argv[4], "changed-causal-rng") || omit_vblank_wait;
+  causal_polling = !strcmp(argv[4], "causal-polling") || !strcmp(argv[4], "changed-causal-rng") || omit_vblank_wait || omit_screen_wait;
   changed_gameplay = !strcmp(argv[4],"changed-rng") || !strcmp(argv[4], "changed-causal-rng");
   FILE *inputs=fopen(argv[2],"r");
   events=fopen("events.jsonl","w");

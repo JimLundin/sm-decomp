@@ -235,7 +235,7 @@ def investigate(args,run,verdict):
     host=ROOT/'tools/decomp/prefix_host.c'
     build=["cc","-std=gnu11","-O2","-fno-strict-aliasing","-ffunction-sections","-fdata-sections","-iquote",source/'src',*units,host,
            '-Wl,--gc-sections','-Wl,--wrap=Call','-Wl,--wrap=cpu_runOpcode','-Wl,--wrap=DecompressToMem',
-           '-Wl,--wrap=WaitUntilEndOfVblankAndClearHdma','-Wl,--wrap=RtlApuUpload','-Wl,--wrap=ReadJoypadInputs','-Wl,--wrap=Vector_NMI','-Wl,--wrap=NextRandom','-lm','-o',run/'prefix-host']
+           '-Wl,--wrap=ScreenOn','-Wl,--wrap=WaitUntilEndOfVblankAndClearHdma','-Wl,--wrap=RtlApuUpload','-Wl,--wrap=ReadJoypadInputs','-Wl,--wrap=Vector_NMI','-Wl,--wrap=NextRandom','-lm','-o',run/'prefix-host']
     invoke(build,run,args.timeout)
     verdict['build']={'command':list(map(str,build)),'binary_sha256':digest(run/'prefix-host'),
         'compiler':subprocess.check_output(['cc','--version'],text=True).splitlines()[0],
@@ -300,14 +300,14 @@ def investigate(args,run,verdict):
     causal_inputs.write_text(''.join(f"{row['hardware_pad']:04x}\n" for row in polls))
     causal_results={}
     causal_modes=[('causal-candidate','causal-polling'),('causal-control','changed-causal-rng')]
-    if args.frames>320: causal_modes.append(('omitted-wait-control','omitted-causal-wait'))
+    if args.frames>320: causal_modes.extend([('omitted-wait-control','omitted-causal-wait'),('omitted-screen-wait-control','omitted-causal-screen-wait')])
     for name,mode in causal_modes:
         directory=run/name;(directory/'fixtures').mkdir(parents=True);(directory/'saves').mkdir()
         cmd=[run/'prefix-host',rom,causal_inputs,str(len(polls)),mode]
         invoke(cmd,directory,args.timeout)
         records=[json.loads(line) for line in (directory/'events.jsonl').read_text().splitlines()]
         completed=[row for row in records if row['kind']=='dispatch-complete']
-        verdict[name]={'within_dispatch_vblank_wait_hits':sum(row['kind']=='within-dispatch-vblank-wait' for row in records),'upload_entry_hits':sum(row['kind']=='upload-entry' for row in records),'upload_return_hits':sum(row['kind']=='upload-return' for row in records),'events_sha256':digest(directory/'events.jsonl')}
+        verdict[name]={'within_dispatch_screen_on_wait_hits':sum(row['kind']=='within-dispatch-screen-on-wait' for row in records),'within_dispatch_vblank_wait_hits':sum(row['kind']=='within-dispatch-vblank-wait' for row in records),'upload_entry_hits':sum(row['kind']=='upload-entry' for row in records),'upload_return_hits':sum(row['kind']=='upload-return' for row in records),'events_sha256':digest(directory/'events.jsonl')}
         if args.frames==320 and len(completed)!=len(original): raise ValueError('bounded causal seam completion count differs')
         causal_results[name]=completed
         before=[row for row in records if row['kind']=='controller-return' and row['event']<completed[0]['event']]
@@ -338,6 +338,8 @@ def investigate(args,run,verdict):
         'inputs_sha256':digest(causal_inputs),'scope':'first completed gameplay dispatch only; boot video timing and later waits unproven'}
     if args.frames>320 and 'first_poll_provenance_failure' not in verdict['omitted-wait-control']:
         raise ValueError('omitted vblank wait escaped causal poll provenance control')
+    if args.frames>320 and 'first_poll_provenance_failure' not in verdict['omitted-screen-wait-control']:
+        raise ValueError('omitted screen wait escaped causal poll provenance control')
     causal_comparisons=compare(original,causal_results['causal-candidate'])
     if args.frames==320 and any(row['differences'] for row in causal_comparisons):
         raise ValueError('later causal completion semantic mismatch')

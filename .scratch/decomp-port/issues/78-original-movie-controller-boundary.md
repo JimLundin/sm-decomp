@@ -206,3 +206,39 @@ flagbehavior, evidenceclearlyseparate. Publictesttempdirectories removed.
 allhostsnapshots/nativeWRAM/events/causalinputs/allcandidate,RNGcontrol,and
 omittedwaitcontrolcompletedstates/terminals/events/logs. Retainsealeddependencies;
 noimplementerworktree. Ticket78remainsclaimed nextpollseam unfinished.
+
+## Screen-enable wait restores the complete 640-frame causal prefix
+
+The next missing poll came from FileSelectMenu_16 calling native
+ScreenOnWaitNMI ($80:8382), which clears force blank then calls WaitForNMI.
+Native $80:8338 stores byte 1 to $05B4; the pinned C ScreenOn omits that wait.
+The wrapper now executes real ScreenOn, restores that genuine waiting flag,
+and runs the real NMI/controller primitive within the pending dispatch. It
+consumes the next observed sample and records a continuation, without another
+gameplay update, snapshot loading or coroutine writes.
+
+All three pinned ScreenOn callers map to the same native routine: original
+JSL $808382 appears at GameOverMenu_1_Init $819260, FileSelectMenu_16 $81A038,
+and Kraid_TransferTopHalfToVram $A7C29A. The 640-frame candidate executes the
+validated file-select call once. ScreenOff was not changed.
+
+Final source-stable evidence:
+`out/port/controller-screen-on-seam/20261011T070726.941312Z/verdict.json`.
+All 229 completed updates match semantic fields and exact preceding poll
+sequence/count through original frame 639. Candidate/native completion counts
+both equal 229. The omitted-screen-wait control independently reproduces the
+previous ordinal 52 failure (202 candidate versus 203 native preceding polls),
+while retaining the HDMA wait seam. RNG and omitted-HDMA-wait controls also run.
+Three public 320-frame tests pass in 83.574 seconds; diff check passes.
+
+The overall verdict remains nonaccepting: hardware-frame timing, full WRAM
+parity and the real APU handshake scheduler remain unproved. Ticket 78 stays
+claimed. This advances the verified causal frontier from 51 to 229 updates.
+
+Cleanup applied and deduplicated the sole finished screen-on run: zero bytes
+reclaimed (unsupported nonaccepting format). Temporary test directories were
+removed automatically. Remaining space: 9,310,453,760 bytes. After cleanup,
+authenticated the binary, all host snapshots, native WRAM/events, causal inputs,
+and all four candidate/control subjects' completed states, terminals, event
+logs and process logs against the verdict. No implementer worktree remains;
+sealed dependencies are retained.

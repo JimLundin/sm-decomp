@@ -189,3 +189,22 @@ are independent of host iteration counts; no extra gameplay update or coroutine
 state write supplies the missing poll. A separate omitted-wait control must
 recover a poll-provenance failure. This restores the observed semantic polling
 seam; hardware$4212predicate timing remains unproved.
+
+The next missing sample is the screen-enable wait, not an inferred IRQ wait.
+Original `FileSelectMenu_16` ends with `JSL $80:8382` (`ScreenOnWaitNMI`), which
+clears force blank then calls `$80:8338`. That wait stores byte1 to$05B4 before
+waiting for NMI. Pinned C `ScreenOn` only clears force blank. The causal host
+wraps the actual cross-unit call, performs the real screen-enable write, then
+restores its NMI/controller seam with the native waiting flag set. Nested NMI
+remains a continuation, consumes the next actual sample and resumes the pending
+update. The separate omitted-screen-wait control retains the restored HDMA
+wait, isolating the second missing poll. Screen-off behavior is unchanged.
+
+The screen-enable seam raises the verified causal prefix to all229completed
+updates in the640frame capture, through original frame639. Native and candidate
+completion counts match. All three pinned `ScreenOn` callers have original
+`JSL $808382` instructions: game-over initialization$819260, file-selection
+initialization$81A038, and Kraid transfer$A7C29A. Only the file-selection call is
+exercised here. The omitted-screen-wait control restores the prior ordinal52
+poll-count failure, separately from the RNG and omitted-HDMA-wait controls.
+Overall acceptance still requires hardware timing and full state validation.
