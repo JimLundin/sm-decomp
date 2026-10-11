@@ -1,0 +1,22 @@
+[
+  {
+    "root": "71de132bc5e7aaa54c0979f757d69632ed947675f6be9729d4fce077a502b258",
+    "trace_object_verify": {
+      "wall_seconds": 4.393817800999386,
+      "cpu_seconds": 4.393498674,
+      "compressed_read_bytes": 20888172,
+      "chunks": 2086
+    },
+    "manifest_cached_lookup_seconds": 3.4109998523490503e-06
+  },
+  {
+    "root": "e87c5144669e69a969d192043b6f3c2f05c9fb626ac21d2d2d0ce7b630a14891",
+    "trace_object_verify": {
+      "wall_seconds": 0.2922152419996564,
+      "cpu_seconds": 0.2921966869999997,
+      "compressed_read_bytes": 931495,
+      "chunks": 170
+    },
+    "manifest_cached_lookup_seconds": 3.0649998734588735e-06
+  }
+]

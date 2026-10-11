@@ -1,0 +1,13 @@
+{
+  "reason": "interrupted slow sscanf converter; replaced with checked native decimal parser; final reader controls passed",
+  "cleanup": [
+    {
+      "scope": "out/storage-spike/full",
+      "unsealed_intermediate_bytes_removed": 23849595
+    },
+    {
+      "scope": "out/storage-spike/reader-controls",
+      "unsealed_intermediate_bytes_removed": 76427
+    }
+  ]
+}

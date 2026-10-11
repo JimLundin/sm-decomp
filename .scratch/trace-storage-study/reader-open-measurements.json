@@ -1,0 +1,40 @@
+[
+  {
+    "root": "71de132bc5e7aaa54c0979f757d69632ed947675f6be9729d4fce077a502b258",
+    "reader_open": {
+      "wall_seconds": 0.07425860400053352,
+      "cpu_seconds": 0.07296974899999999
+    },
+    "initial_manifest_verify_and_index": {
+      "wall_seconds": 0.7188367130002007,
+      "cpu_seconds": 0.718133852
+    },
+    "first_frame_read": {
+      "wall_seconds": 0.014101355000093463,
+      "cpu_seconds": 0.014108841999999955
+    },
+    "same_frame_cached": {
+      "wall_seconds": 0.010573624999778986,
+      "cpu_seconds": 0.010579759999999938
+    }
+  },
+  {
+    "root": "e87c5144669e69a969d192043b6f3c2f05c9fb626ac21d2d2d0ce7b630a14891",
+    "reader_open": {
+      "wall_seconds": 0.10215045199947781,
+      "cpu_seconds": 0.09807588999999994
+    },
+    "initial_manifest_verify_and_index": {
+      "wall_seconds": 0.02588858200033428,
+      "cpu_seconds": 0.025890113999999853
+    },
+    "first_frame_read": {
+      "wall_seconds": 0.003088624999691092,
+      "cpu_seconds": 0.0030899620000000017
+    },
+    "same_frame_cached": {
+      "wall_seconds": 0.002047466000476561,
+      "cpu_seconds": 0.002051274999999908
+    }
+  }
+]

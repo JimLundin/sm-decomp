@@ -1,0 +1,8 @@
+{
+  "exact_round_trip": true,
+  "duplicates_resets": true,
+  "different_run_equal_observations": true,
+  "missing_dependency_rejected": true,
+  "corruption_truncation_missing_footer_rejected": true,
+  "partial_page_and_changed_snapshot": true
+}

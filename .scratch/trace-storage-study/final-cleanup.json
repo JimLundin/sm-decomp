@@ -1,0 +1,10 @@
+[
+  {
+    "scope": "out/storage-spike/final-controls",
+    "unsealed_intermediate_bytes_removed": 76427
+  },
+  {
+    "scope": "out/storage-spike/memory-probe",
+    "unsealed_intermediate_bytes_removed": 17950665
+  }
+]

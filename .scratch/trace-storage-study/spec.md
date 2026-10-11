@@ -14,6 +14,7 @@ This is a study, not authorization to migrate accepted evidence. The separate
 
 - [01 — Format investigation](issues/01-format-investigation.md)
 - [02 — Global-store comparison](issues/02-global-store-comparison.md)
+- [03 — Disk-backed storage spike](issues/03-storage-spike.md)
 
 ## Integration evidence
 
@@ -30,3 +31,11 @@ Original sealed traces/WRAM/frames were reauthenticated (1,144 files,
 Scoped cleanup apply/deduplicate succeeded with zero eligible bytes. Disposable
 Python bytecode (13,452 bytes) was removed. No captures or build outputs were
 created. The research ticket contains detailed cleanup and evidence dependencies.
+
+Working follow-up spike: [spike-results.md](spike-results.md), ticket03. Full two
+capture store54.93MB includes all indexes/manifests versus5.73GBoriginal. Native
+writer, full conversion/exact decoding, reopened snapshot reads and indexed frame
+extraction measured; cleanup complete. Retained working store under
+`out/storage-spike/final`, with physical seals in ticket03 and compact benchmark
+JSON committed with source. Production integration and end-to-end replay timing
+remain outside this spike.

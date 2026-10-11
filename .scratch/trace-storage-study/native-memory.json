@@ -1,0 +1,14 @@
+{
+  "writer": {
+    "mode": "binary",
+    "events": 10000000,
+    "bytes": 1138193,
+    "wall_seconds": 0.301684,
+    "cpu_seconds": 0.296643,
+    "level": 3,
+    "loaded_events": 948501,
+    "sink": 0
+  },
+  "native_writer_peak_rss_kib": 16468,
+  "note": "measured writer process; includes ~11MB preloaded Event sample for benchmarking, not needed by live observer; single extra run after final benchmark"
+}

@@ -1,0 +1,5 @@
+{
+  "failed_probe": "literal room-plm event not supported by initial typed writer; fixed via exact literal fallback",
+  "unsealed_intermediate_bytes_removed": 18886504,
+  "scope": "out/storage-spike/probe"
+}
