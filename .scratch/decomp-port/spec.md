@@ -408,3 +408,11 @@ full-movie C process measured zero calls to either, so live ownership remains
 unproved. Finished log sharing reclaimed 4.97 GB; the next process was stopped
 by the disk check. The diagnostic is sealed and cleaned. A naturally exercised
 trajectory is needed; this result cannot substitute for C/mixed acceptance.
+
+
+Measured projectile execution: ticket 88 records a fresh 129712-input C counter
+trace with zero CPU fallback and 419 decompressions. Actual Ceres platform A364
+executes 524 times, providing a grounded next Rust/live target. A328 pad executes
+528 times but includes a Samus callback. Full trace and current-tool control
+artifacts are authenticated after scoped zero-byte cleanup. Counters establish
+C exercise only; they do not prove Rust ownership or original-ROM parity.
