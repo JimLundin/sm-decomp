@@ -1,5 +1,5 @@
 # Boss projectile spawning and terrain transitions
-Status: claimed
+Status: resolved
 Blocked by: 34
 Triage: ready-for-agent
 
@@ -33,3 +33,15 @@ Cleanup in the selected run root: `port_cleanup.py --apply` reclaimed zero bytes
 worktree was created. Immutable artifacts/source snapshots retained; final verdict
 authenticated after cleanup; 36 GiB free. Earlier valid runs retained but superseded
 by the final scheduler-expanded evidence.
+
+## Host-context obligation closed
+
+Ticket80 implements the missing stationary fireball explosion initializer947F
+(definition9660) through explicit ProjectileHost coordinates outside WRAM.
+No guessed WRAM alias is used. Commit eb9f1ab also adds dust/drop host initializers
+and actual-C comparison of all external globals. Current final769-case evidence:
+`out/port/projectile-host-context/20261011T063835.827427Z/verdict.json`.
+FullWRAM/hoststate/return comparison, fullcrate checks, cleanup and authentication
+passed as recorded in ticket80. Historical boss-transition evidence remains
+retained; its source hashes differ after subsequent expansions. This closes the
+initializer obligation only; live context propagation/ownership remains open.
