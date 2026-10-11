@@ -4,10 +4,38 @@ import copy
 import json
 import tempfile
 import unittest
+import subprocess
+from unittest.mock import patch
 from pathlib import Path
 
 import port_family
 import port_plm_instructions as adapter
+
+
+class PointerBankTests(unittest.TestCase):
+    def test_mixed_pointer_banks_and_invalid_configuration(self):
+        config = json.loads((port_family.ROOT / "tools/port/pirate-host-callers.json").read_text())
+        config["routines"].append(dict(symbol="PlmInstruction", arg_types=["uint16", "rom_ptr"],
+                                      pointer_bank=0x84, **{"return": "rom_ptr"}, cases=[]))
+        with tempfile.TemporaryDirectory() as directory:
+            run = Path(directory)
+            for name in ("c", "rust"):
+                (run / name).write_bytes(b"mock")
+            with patch.object(adapter, "execute"):
+                adapter.build(config, port_family.ROOT / "deps/snesrev-sm", run)
+            oracle = (run / "oracle.c").read_text()
+            for bank in (0x84, 0x86, 0xb2):
+                self.assertIn(f"PortPointerResult(pointer,{bank})", oracle)
+            function = oracle[oracle.index("static uint32_t PortPointerResult"):oracle.index("\nextern const uint16_t")]
+            test = run / "pointer-test.c"
+            test.write_text("#include <stdint.h>\n#include <stdlib.h>\n#include <assert.h>\ntypedef uint16_t uint16; static uint8_t rom[0x400000]; static uint8_t *g_rom=rom;\n" + function + "\nint main(int argc,char **argv){if(argc>1){PortPointerResult((void*)(rom+0x190000),0x86);return 1;}for(int bank=0x84;bank<=0xb2;bank++){ if(bank!=0x84&&bank!=0x86&&bank!=0xb2)continue; assert(PortPointerResult((void*)(rom+((bank&0x7f)*0x8000)+0x1234),bank)==((bank<<16)|0x9234)); assert(PortPointerResult((void*)0x9234,bank)==((bank<<16)|0x9234)); assert(PortPointerResult(0,bank)==0);} return 0;}\n")
+            subprocess.run(["cc", str(test), "-o", str(run / "pointer-test")], check=True)
+            subprocess.run([str(run / "pointer-test")], check=True)
+            rejected = subprocess.run([str(run / "pointer-test"), "wrong-bank"])
+            self.assertEqual(rejected.returncode, 3)
+            config["routines"][0]["pointer_bank"] = 0x100
+            with patch.object(adapter, "execute"), self.assertRaisesRegex(ValueError, "invalid pointer bank"):
+                adapter.build(config, port_family.ROOT / "deps/snesrev-sm", run)
 
 
 class ProjectileHostEvidenceTests(unittest.TestCase):

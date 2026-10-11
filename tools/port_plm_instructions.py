@@ -71,7 +71,10 @@ def build(manifest, source, run):
         if "rom_ptr" in types and "rom" not in manifest:
             raise ValueError("ROM pointer argument requires ROM asset")
         if return_type == "rom_ptr":
-            result = f"const uint16_t *pointer={call}; result=PortPointerResult(pointer,(uint16_t)a);"
+            bank = routine.get("pointer_bank", pointer_bank)
+            if type(bank) is not int or bank not in (0x84, 0x86, 0xb2):
+                raise ValueError("invalid pointer bank")
+            result = f"const uint16_t *pointer={call}; result=PortPointerResult(pointer,{bank});"
         branches.append(f'if (!strcmp(argv[1], "{symbol}")) {{ {result} }}')
     support = manifest.get("c_support", [])
     uses_rtl = "sm_rtl.c" in support or manifest["bank"] == "sm_rtl.c"
@@ -96,12 +99,12 @@ def build(manifest, source, run):
 """
         + globals_c
         + """
-static uint32_t PortPointerResult(const uint16_t *pointer,uint16_t unused) {
+static uint32_t PortPointerResult(const uint16_t *pointer,uint16_t bank) {
  if(!pointer)return 0;uintptr_t p=(uintptr_t)pointer;
- uintptr_t base=(uintptr_t)g_rom+0x18000;
- if(p<0x10000){if(p<0x8000)exit(3);return 0x840000|p;}
+ uintptr_t base=(uintptr_t)g_rom+((bank&0x7f)*0x8000)-0x8000;
+ if(p<0x10000){if(p<0x8000)exit(3);return ((uint32_t)bank<<16)|p;}
  if(p<base+0x8000||p>=base+0x10000)exit(3);
- return 0x840000|(p-base);
+ return ((uint32_t)bank<<16)|(p-base);
 }
 """
         + "\n".join(prototypes)
@@ -123,8 +126,6 @@ int main(int argc, char **argv) {
 }
 """
     )
-    if pointer_bank == 0x86:
-        oracle.write_text(oracle.read_text().replace("0x18000", "0x28000").replace("0x840000", "0x860000"))
     if manifest.get("projectile_host"):
         text = oracle.read_text().replace('int main(int argc, char **argv) {', 'void PortHostLoad(uint16*);void PortHostSave(uint16*);\nint main(int argc, char **argv) {')
         text = text.replace('if(argc!=6 && argc!=7)', 'if(argc!=9)')

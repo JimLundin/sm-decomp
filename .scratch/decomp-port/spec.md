@@ -391,3 +391,12 @@ counts and no new semantic or poll provenance failure. Omitted HDMA and screen
 wait controls still fail at ordinals 50 and 52. The completed run was cleaned
 (zero bytes) and authenticated. Ticket 78 stays claimed for broader original
 replay, full WRAM and hardware scheduler ownership.
+
+
+Pirate caller ownership: ticket 86 translates native bank-B2 left/right laser
+instructions and the claw instruction into host-aware allocation, including
+enemy graphics and real B2 operand/return pointers. All 577 actual-C full-WRAM,
+return and host comparisons pass. Independent Rust checks and 12 Python harness
+tests pass, with crate tests, formatting and strict Clippy. Scoped cleanup
+reclaimed 178,388,992 bytes; root reauthenticated final evidence. Whole pirate
+AI and live original-ROM caller exercise remain unproved.

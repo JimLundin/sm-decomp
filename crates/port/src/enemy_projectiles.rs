@@ -211,7 +211,9 @@ pub fn dispatch_host(
     a: i32,
     b: i32,
 ) -> Result<u32, &'static str> {
-    if name == "SpawnEprojWithRoomGfx" {
+    if matches!(name, "SpacePirates_Instr_15" | "SpacePirates_Instr_FireLaserL" | "SpacePirates_Instr_FireLaserR") {
+        pirate_instruction(r, rom, host, name, b as u16)
+    } else if name == "SpawnEprojWithRoomGfx" {
         spawn_room_with_host(r, rom, a as u16, b as u16, host)?;
         Ok(0)
     } else if name == "EprojPreinstruction" {
@@ -224,6 +226,59 @@ pub fn dispatch_host(
         crate::enemy_projectile_instructions::dispatch_with_host(r, rom, host, name, a, b)
     } else {
         dispatch_rom(r, rom, name, a, b)
+    }
+}
+pub fn spawn_with_gfx_host(
+    r: &mut Wram<'_>,
+    rom: &[u8],
+    parameter: u16,
+    enemy_slot: u16,
+    definition: u16,
+    host: &mut ProjectileHost,
+) -> Result<(), &'static str> {
+    if enemy_slot > 0x7c0 || enemy_slot & 63 != 0 {
+        return Err("invalid enemy slot");
+    }
+    let enemy = 0xf78 + usize::from(enemy_slot);
+    spawn_context(r, rom, definition, parameter, r.word(enemy + 0x1e) | r.word(enemy + 0x20), Some(host))
+}
+fn pirate_instruction(
+    r: &mut Wram<'_>,
+    rom: &[u8],
+    host: &mut ProjectileHost,
+    name: &str,
+    pc: u16,
+) -> Result<u32, &'static str> {
+    if pc < 0x8000 || (name == "SpacePirates_Instr_15" && pc > 0xfff8) {
+        return Err("invalid pirate instruction pointer");
+    }
+    let slot = r.word(0xe54);
+    if slot > 0x7c0 || slot & 63 != 0 {
+        return Err("invalid enemy slot");
+    }
+    let enemy = 0xf78 + usize::from(slot);
+    if name == "SpacePirates_Instr_15" {
+        let p = 0x190000 + usize::from(pc & 0x7fff);
+        let data = rom.get(p..p + 6).ok_or("missing pirate claw operands")?;
+        let values: [u16; 3] = std::array::from_fn(|i| u16::from_le_bytes([data[i * 2], data[i * 2 + 1]]));
+        host.rect_x = r.word(enemy + 2);
+        host.rect_y = r.word(enemy + 6);
+        host.rect_width = values[1];
+        host.rect_height = values[2];
+        spawn_with_gfx_host(r, rom, values[0], slot, 0xa189, host)?;
+        Ok(0xb20000 | u32::from(pc.wrapping_add(6)))
+    } else {
+        let right = name == "SpacePirates_Instr_FireLaserR";
+        if !right {
+            let p = 0x100000 + usize::from(r.word(enemy) & 0x7fff) + 6;
+            let data = rom.get(p..p + 2).ok_or("missing pirate laser properties")?;
+            r.set_word(0x1993, u16::from_le_bytes([data[0], data[1]]));
+        }
+        host.x = r.word(enemy + 2).wrapping_add(if right { 24 } else { (-24i16) as u16 });
+        host.y = r.word(enemy + 6).wrapping_sub(16);
+        host.r22 = u16::from(right);
+        spawn_room_with_host(r, rom, 0xa17b, u16::from(right), host)?;
+        Ok(0xb20000 | u32::from(pc))
     }
 }
 pub fn spawn_with_gfx(

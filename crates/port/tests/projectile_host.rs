@@ -177,3 +177,52 @@ fn pirate_claw_uses_rectangle_wrapping_without_enemy_dependency() {
     assert_eq!(r.word(0x1b23 + 34), 1);
     assert_eq!(host.r22, 99);
 }
+
+#[test]
+fn pirate_callers_keep_full_slot_context_and_consume_claw_operands() {
+    use port::enemy_projectiles::dispatch_host;
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    for k in (0..36).step_by(2) {
+        r.set_word(0x1997 + k, 1);
+    }
+    r.set_word(0xe54, 64);
+    r.set_word(0xfb8, 0xd37f);
+    r.set_word(0xfba, 0xffff);
+    r.set_word(0xfbe, 0);
+    let mut rom = vec![0; 0x198000];
+    rom[0x105385..0x105387].copy_from_slice(&0x1234u16.to_le_bytes());
+    rom[0x19717a..0x197180].copy_from_slice(&[1, 0, 0xe0, 0xff, 8, 0]);
+    let mut host = ProjectileHost::from_words([1, 2, 3, 4, 5, 6, 7, 8]);
+    assert_eq!(dispatch_host(&mut r, &rom, &mut host, "SpacePirates_Instr_FireLaserL", 0, 0xb2ecce).unwrap(), 0xb2ecce);
+    assert_eq!(host.words(), [0xffe7, 0xfff0, 3, 4, 5, 6, 0, 8]);
+    assert_eq!(r.word(0x1993), 0);
+    assert_eq!(dispatch_host(&mut r, &[], &mut host, "SpacePirates_Instr_FireLaserR", 0, 0xb2ed8e).unwrap(), 0xb2ed8e);
+    assert_eq!(host.words(), [23, 0xfff0, 3, 4, 5, 6, 1, 8]);
+    assert_eq!(r.word(0x1993), 1);
+    assert_eq!(dispatch_host(&mut r, &rom, &mut host, "SpacePirates_Instr_15", 0, 0xb2f17a).unwrap(), 0xb2f180);
+    assert_eq!(host.words(), [23, 0xfff0, 0xffff, 0, 0xffe0, 8, 1, 8]);
+    assert_eq!(r.word(0x1993), 1);
+}
+
+#[test]
+fn pirate_claw_allocates_with_current_enemy_gfx_and_rectangle() {
+    use port::enemy_projectiles::dispatch_host;
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0xe54, 64);
+    r.set_word(0xfba, 0xffff);
+    r.set_word(0xfbe, 4);
+    r.set_word(0xfd6, 0x8000);
+    r.set_word(0xfd8, 0x1ff);
+    let mut rom = vec![0; 0x198000];
+    rom[0x32189..0x32193].copy_from_slice(&[0x98, 0xa0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    rom[0x19717a..0x197180].copy_from_slice(&[1, 0, 2, 0, 0xfc, 0xff]);
+    let mut host = ProjectileHost::default();
+    assert_eq!(dispatch_host(&mut r, &rom, &mut host, "SpacePirates_Instr_15", 0, 0xb2f17a).unwrap(), 0xb2f180);
+    assert_eq!(r.word(0x19bb + 34), 0x81ff);
+    assert_eq!(r.word(0x1a4b + 34), 1);
+    assert_eq!(r.word(0x1a93 + 34), 0);
+    assert_eq!(r.word(0x1b47 + 34), 0x9fe1);
+    assert_eq!(r.word(0x1aff + 34), 2048);
+}
