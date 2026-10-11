@@ -133,3 +133,8 @@ four independent processes and exercises one native hardcoded setup per mixed
 process, retaining Rust decompression/RNG and zero measured CPU fallback.
 An18,000-frame run also matches. Room and terrain allocation remain unexercised
 in these prefixes; whole PLM engine/rendering and original-ROM parity remain open.
+
+Tourian scheduling frontier: ticket53 ports particle/soul/splash/statue updates,
+water-crossing allocation and particle/tail script spawns. 538 actual-C cases
+match, including descending same-frame scheduling. Offline verification only;
+live admission and full gameplay ownership remain active.

@@ -467,3 +467,36 @@ fn torizo_super_missile_tracks_saved_enemy_slot() {
     assert_eq!(r.word(0x1a4b), 132);
     assert_eq!(r.word(0x1a93), 148);
 }
+
+#[test]
+fn tourian_soul_removal_tests_bit_eight_and_still_accelerates() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x1a93, 768);
+    r.set_word(0x1adb, 0);
+    port::enemy_projectile_instructions::preinstruction(&mut r, &[], 0xb9fd, 0).unwrap();
+    assert_eq!(r.word(0x1b47), 0xb79f);
+    assert_eq!(r.word(0x1b8f), 1);
+    assert_eq!(r.word(0x1adb), 0xff80);
+    // Particles use the complete high byte, unlike souls.
+    r.set_word(0x1b47, 0x9754);
+    r.set_word(0x1adb, 0);
+    port::enemy_projectile_instructions::preinstruction(&mut r, &[], 0xb982, 0).unwrap();
+    assert_eq!(r.word(0x1b47), 0x9754);
+    assert_eq!(r.word(0x1adb), 16);
+}
+
+#[test]
+fn tourian_statue_tracks_hdma_scroll_and_preserves_finished_flags() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x1aff, 142);
+    r.set_word(0x1b23, 85);
+    r.set_word(0x915, 32);
+    r.set_word(0x9e00, 128);
+    r.set_word(0x1e6d, 3);
+    port::enemy_projectile_instructions::preinstruction(&mut r, &[], 0xba37, 0).unwrap();
+    assert_eq!(r.word(0x1a4b), 142);
+    assert_eq!(r.word(0x1a93), 0xfff5);
+    assert_eq!(r.word(0x1e6d), 0x8003);
+}

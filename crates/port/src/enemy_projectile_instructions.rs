@@ -35,6 +35,10 @@ pub fn move_xy(r: &mut Wram<'_>, k: u16) -> Result<u16, &'static str> {
 pub fn instruction(r: &mut Wram<'_>, rom: &[u8], opcode: u16, pc: u16, k: u16) -> Result<u16, &'static str> {
     let k = slot(k)?;
     match opcode {
+        0xb7ea | 0xb818 => {
+            crate::enemy_projectiles::spawn_room(r, rom, if opcode == 0xb7ea { 0xba78 } else { 0xba86 }, k as u16)?;
+            Ok(pc)
+        }
         0xb269 | 0xb272 => {
             let angle = crate::enemy::dispatch_rom(r, rom, "CalculateAngleOfSamusFromEproj", k as i32, 0)? as usize;
             let angle = if opcode == 0xb269 { angle & 127 } else { angle | 128 };
@@ -248,6 +252,37 @@ fn delete_below(r: &mut Wram<'_>, k: usize) {
 pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Result<(), &'static str> {
     let k = slot(k)?;
     match address {
+        0xb977 => r.set_word(0x1a93 + k, r.word(0x195e).wrapping_sub(4)),
+        0xb982 => {
+            move_x(r, k as u16)?;
+            let before = r.word(0x195e).wrapping_sub(r.word(0x1a93 + k));
+            move_y(r, k as u16)?;
+            let after = r.word(0x195e).wrapping_sub(r.word(0x1a93 + k));
+            if (before ^ after) & 0x8000 != 0 {
+                crate::enemy_projectiles::spawn_room(r, rom, 0xba5c, k as u16)?;
+            }
+            if r.word(0x1a93 + k) & 0xff00 == 0x100 {
+                r.set_word(0x1b47 + k, 0xb79f);
+                r.set_word(0x1b8f + k, 1);
+            } else {
+                r.set_word(0x1adb + k, r.word(0x1adb + k).wrapping_add(16));
+            }
+        }
+        0xb9fd => {
+            move_y(r, k as u16)?;
+            if r.word(0x1a93 + k) & 0x100 != 0 {
+                r.set_word(0x1b47 + k, 0xb79f);
+                r.set_word(0x1b8f + k, 1);
+            }
+            r.set_word(0x1adb + k, r.word(0x1adb + k).wrapping_sub(128));
+        }
+        0xba37 | 0xba42 => {
+            if address == 0xba37 && r.word(0x1e6f) == 0 {
+                r.set_word(0x1e6d, r.word(0x1e6d) | 0x8000);
+            }
+            r.set_word(0x1a4b + k, r.word(0x1aff + k));
+            r.set_word(0x1a93 + k, r.word(0x1b23 + k).wrapping_add(r.word(0x915)).wrapping_sub(r.word(0x9e00)));
+        }
         0xb38a => {
             if crate::enemy_projectile_collision::horizontal(r, rom, k as u16)? != 0 {
                 r.set_word(0x1b47 + k, 0xb3cd);
