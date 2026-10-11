@@ -80,3 +80,44 @@ fn sweat_splash_and_robot_laser_delete_on_terrain() {
     assert_eq!(r.word(0x19bb), 0);
     assert_eq!(r.word(0x1997), 0);
 }
+
+#[test]
+fn delayed_fireball_waits_then_hits_floor_and_queues_explosion_sound() {
+    use port::enemy_projectile_instructions as e;
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x7a5, 16);
+    r.set_word(0x1a4b, 24);
+    r.set_word(0x1a93, 27);
+    r.set_word(0x1bb3, 0x0202);
+    r.set_word(0x1adb, 0x0200);
+    r.set_word(0x1aff, 7);
+    r.set_word(0x10002 + 33 * 2, 0x8000);
+    e::preinstruction(&mut r, &[], 0x9392, 0).unwrap();
+    assert_eq!(r.word(0x1a93), 27);
+    assert_eq!(r.word(0x1aff), 8);
+    e::preinstruction(&mut r, &[], 0x9392, 0).unwrap();
+    assert_eq!(r.word(0x1a93), 30);
+    assert_eq!(r.word(0x1aff), 9);
+    assert_eq!(r.word(0x1b47), 0x9574);
+    assert_eq!(r.word(0x1b8f), 1);
+    assert_eq!(r.word(0x1adb), 0);
+    assert_eq!(r.word(0x19bb), 2560);
+    assert_eq!(r.byte(0x666), 0x2b);
+    assert_eq!(r.byte(0x647), 1);
+    assert_eq!(r.byte(0x654), 6);
+}
+
+#[test]
+fn bridge_debris_acceleration_wraps_to_fourteen_bits() {
+    use port::enemy_projectile_instructions as e;
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x7a5, 16);
+    r.set_word(0x1a4b, 24);
+    r.set_word(0x1a93, 24);
+    r.set_word(0x1bb3, 0x0202);
+    r.set_word(0x1adb, 0x3ff8);
+    e::preinstruction(&mut r, &[], 0x92ba, 0).unwrap();
+    assert_eq!(r.word(0x1adb), 16);
+}

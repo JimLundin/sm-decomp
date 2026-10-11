@@ -177,6 +177,30 @@ fn delete_below(r: &mut Wram<'_>, k: usize) {
 pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Result<(), &'static str> {
     let k = slot(k)?;
     match address {
+        0x92ba => {
+            if crate::enemy_projectile_collision::vertical(r, rom, k as u16)? != 0 {
+                r.set_word(0x1997 + k, 0);
+            } else {
+                r.set_word(0x1adb + k, r.word(0x1adb + k).wrapping_add(24) & 0x3fff);
+            }
+        }
+        0x9392 => {
+            let timer = r.word(0x1aff + k);
+            if timer < 8 {
+                r.set_word(0x1aff + k, timer + 1);
+            } else {
+                move_xy(r, k as u16)?;
+                if crate::enemy_projectile_collision::vertical(r, rom, k as u16)? != 0 {
+                    r.set_word(0x1b47 + k, 0x9574);
+                    r.set_word(0x1aff + k, timer.wrapping_add(1));
+                    r.set_word(0x1b8f + k, 1);
+                    r.set_word(0x1ab7 + k, 0);
+                    r.set_word(0x1adb + k, 0);
+                    r.set_word(0x19bb + k, 2560);
+                    crate::audio::queue_sfx(r, 1, 0x2b06)?;
+                }
+            }
+        }
         0x8170 => {}
         0x90b3 | 0xd3bf => {
             if address == 0xd3bf {
@@ -351,6 +375,10 @@ pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) ->
         }
         "EprojRunAll" => {
             run_all(r, rom, 4096)?;
+            Ok(0)
+        }
+        "SpawnEprojWithRoomGfx" => {
+            crate::enemy_projectiles::spawn_room(r, rom, a as u16, b as u16)?;
             Ok(0)
         }
         "MoveEprojWithVelocity" => Ok(u32::from(move_xy(r, a as u16)?)),

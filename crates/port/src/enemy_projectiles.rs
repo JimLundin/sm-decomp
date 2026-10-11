@@ -75,6 +75,9 @@ pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) ->
 fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'static str> {
     let i = param as usize / 2;
     let table = match init {
+        0x9023 if r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => None,
+        0x9286 => None,
+        0x934d if r.word(0xfb4) < 4 => None,
         0xb49d | 0xd6a5 => None,
         0xce6d if i < 18 => None,
         0xa764 if i < 16 => Some((0xa7ab, i)),
@@ -99,7 +102,7 @@ fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'sta
     if let Some((p, i)) = table {
         word(rom, p + i as u16 * 2)?;
     }
-    if init != 0xb49d && init != 0xce6d && (r.word(0x1c27) > 78 || r.word(0x1c27) & 1 != 0) {
+    if !matches!(init, 0xb49d | 0xce6d | 0x9023 | 0x9286 | 0x934d) && (r.word(0x1c27) > 78 || r.word(0x1c27) & 1 != 0) {
         return Err("invalid PLM slot");
     }
     Ok(())
@@ -114,6 +117,34 @@ pub(crate) fn random(r: &mut Wram<'_>) -> u16 {
     n
 }
 fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> Result<(), &'static str> {
+    if matches!(init, 0x9023 | 0x9286 | 0x934d) {
+        let (x, y, vx, vy) = match init {
+            0x9023 => {
+                let p = 0xf78 + usize::from(r.word(0xe54));
+                r.set_word(0x1bfb + k, 0);
+                (r.word(p + 2).wrapping_sub(32), r.word(p + 6).wrapping_sub(16), 0xfe00, 1)
+            }
+            0x9286 => (param, 187, 0, (r.word(0x5e5) & 63) + 64),
+            0x934d => {
+                let i = usize::from(r.word(0xfb4));
+                r.set_word(0x1aff + k, 0);
+                r.set_word(0x1b23 + k, 0);
+                (
+                    r.word(0xf7a).wrapping_sub(29),
+                    r.word(0xf7e).wrapping_sub(35),
+                    [0xfe00, 0xfe10, 0xfe44, 0xfe96][i],
+                    [0, 0x88, 0xfc, 0x16a][i],
+                )
+            }
+            _ => unreachable!(),
+        };
+        r.set_word(0x1a4b + k, x);
+        r.set_word(0x1a93 + k, y);
+        r.set_word(0x1ab7 + k, vx);
+        r.set_word(0x1adb + k, vy);
+        r.set_word(0x19bb + k, if init == 0x9286 { 1024 } else { 2560 });
+        return Ok(());
+    }
     if init == 0xce6d {
         let source = param as usize / 2 * 2;
         let x = r.word(0x1a4b + source).wrapping_add(random(r) & 31).wrapping_sub(16);
