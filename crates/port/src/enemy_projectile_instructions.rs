@@ -259,6 +259,12 @@ fn lavaquake_outside(r: &Wram<'_>, k: usize) -> bool {
             || (r.word(camera).wrapping_add(256).wrapping_sub(r.word(pos + k)) as i16) < 0
     })
 }
+fn outside_screen(r: &Wram<'_>, k: usize) -> bool {
+    [(0x1a4b, 0x911), (0x1a93, 0x915)].into_iter().any(|(pos, camera)| {
+        (r.word(pos + k).wrapping_sub(r.word(camera)) as i16) < 0
+            || (r.word(pos + k).wrapping_sub(r.word(camera).wrapping_add(256)) as i16) >= 0
+    })
+}
 fn lavaquake_arc(r: &mut Wram<'_>, rom: &[u8], k: usize, state: u16) -> Result<(), &'static str> {
     let rising = state == 0xbc16;
     let speed = r.word(0x1adb + k).wrapping_add(if rising { 0xfffe } else { 2 });
@@ -295,6 +301,13 @@ fn lavaquake_arc(r: &mut Wram<'_>, rom: &[u8], k: usize, state: u16) -> Result<(
 pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Result<(), &'static str> {
     let k = slot(k)?;
     match address {
+        0x8b5d => {
+            move_xy(r, k as u16)?;
+            r.set_word(0x1adb + k, r.word(0x1adb + k).wrapping_add(80));
+            if outside_screen(r, k) {
+                r.set_word(0x1997 + k, 0);
+            }
+        }
         0xe605 => {
             let velocity = r.word(0x1adb + k);
             let distance = if velocity & 0x8000 != 0 { velocity.wrapping_neg() } else { velocity };
@@ -880,15 +893,7 @@ pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Res
             }
         }
         0xe4fe => {
-            let x = r.word(0x1a4b + k);
-            let y = r.word(0x1a93 + k);
-            let cx = r.word(0x911);
-            let cy = r.word(0x915);
-            if (x.wrapping_sub(cx) as i16) < 0
-                || x.wrapping_sub(cx.wrapping_add(256)) as i16 >= 0
-                || (y.wrapping_sub(cy) as i16) < 0
-                || y.wrapping_sub(cy.wrapping_add(256)) as i16 >= 0
-            {
+            if outside_screen(r, k) {
                 r.set_word(0x1997 + k, 0)
             }
         }

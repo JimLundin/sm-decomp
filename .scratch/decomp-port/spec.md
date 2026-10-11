@@ -171,3 +171,7 @@ Live gameplay ownership remains open.
 Shot gate/electricity frontier: ticket61 adds native PLM-linked allocation
 and gate fractional movement/timer scheduling. 513 actual-C cases match.
 Live gameplay ownership remains open.
+
+Skree frontier: ticket62 ports four particle allocations and motion/gravity
+with exclusive screen bounds. 705 actual-C cases include dust visibility
+regression. Live gameplay ownership remains open.
