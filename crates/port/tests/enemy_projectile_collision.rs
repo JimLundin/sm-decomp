@@ -665,3 +665,23 @@ fn spore_spawner_freezes_countdown_and_rng_when_boss_flag_is_set() {
     assert_eq!(r.word(0x5e5), 0xface);
     assert_eq!(r.word(0x1b47), 0x9754);
 }
+
+#[test]
+fn nami_fune_left_state_moves_x_using_y_velocity_and_leaves_y_unchanged() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x1997, 1);
+    r.set_word(0x1aff, 0xdf40);
+    r.set_word(0x1a4b, 100);
+    r.set_word(0x1a27, 0x1234);
+    r.set_word(0x1a93, 256);
+    r.set_word(0x1a6f, 0xabcd);
+    r.set_word(0x1ab7, 0x200);
+    r.set_word(0x1adb, 0xff80);
+    port::enemy_projectile_instructions::preinstruction(&mut r, &[], 0xdf39, 0).unwrap();
+    assert_eq!(r.word(0x1a4b), 99);
+    assert_eq!(r.word(0x1a27), 0x9234);
+    assert_eq!(r.word(0x1a93), 256);
+    assert_eq!(r.word(0x1a6f), 0xabcd);
+    assert_eq!(r.word(0x1997), 1);
+}

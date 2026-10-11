@@ -159,3 +159,7 @@ cases match. Live gameplay ownership remains open.
 Spore projectile frontier: ticket58 adds stalk/spawner allocation and native
 ROM spore motion/random countdown. 1,185 actual-C cases match. Actual spore
 creation host-state seam and live gameplay ownership remain open.
+
+Nami/Fune projectile frontier: ticket59 ports fireball and DBF2 allocation/
+horizontal motion with ROM speed selection and inclusive camera culling.
+769 actual-C cases match. Drop-spawn host seam and live ownership remain open.
