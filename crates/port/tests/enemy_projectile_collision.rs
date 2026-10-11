@@ -308,3 +308,21 @@ fn kraid_wall_collision_skips_vertical_motion_and_acceleration() {
     assert_eq!(r.word(0x1ab7), 0x300);
     assert_eq!(r.word(0x1adb), 0x200);
 }
+
+#[test]
+fn mini_kraid_spit_clamps_positive_speed_but_preserves_signed_wrap() {
+    use port::enemy_projectile_instructions as e;
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x7a5, 16);
+    r.set_word(0x1a4b, 24);
+    r.set_word(0x1a93, 24);
+    r.set_word(0x1bb3, 0x202);
+    r.set_word(0x1adb, 960);
+    e::preinstruction(&mut r, &[], 0x9e1e, 0).unwrap();
+    assert_eq!(r.word(0x1adb), 1024);
+    r.set_word(0x1a93, 24);
+    r.set_word(0x1adb, 0x7ff0);
+    e::preinstruction(&mut r, &[], 0x9e1e, 0).unwrap();
+    assert_eq!(r.word(0x1adb), 0x8030);
+}

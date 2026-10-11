@@ -75,6 +75,16 @@ pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) ->
 fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'static str> {
     let i = param as usize / 2;
     let table = match init {
+        0x9dec | 0x9e46 | 0x9e4b => {
+            let enemy = r.word(0xe54);
+            if enemy > 0x7c0 || enemy & 63 != 0 {
+                return Err("invalid Mini-Kraid enemy slot");
+            }
+            if init != 0x9dec && r.word(0x780c + usize::from(enemy)) >> 1 >= 3 {
+                return Err("Mini-Kraid spike height extent");
+            }
+            None
+        }
         0x9cd8 => None,
         0x9ca3 | 0x9d0c if r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => None,
         0x9824
@@ -122,23 +132,25 @@ fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'sta
     if let Some((p, i)) = table {
         word(rom, p + i as u16 * 2)?;
     }
-    if !matches!(
-        init,
-        0xb49d
-            | 0xce6d
-            | 0x9023
-            | 0x9286
-            | 0x934d
-            | 0x94a0
-            | 0x94b4
-            | 0x94c8
-            | 0x94dc
-            | 0x993a
-            | 0x9824
-            | 0x9ca3
-            | 0x9cd8
-            | 0x9d0c
-    ) && (r.word(0x1c27) > 78 || r.word(0x1c27) & 1 != 0)
+    if !matches!(init, 0x9dec | 0x9e46 | 0x9e4b)
+        && !matches!(
+            init,
+            0xb49d
+                | 0xce6d
+                | 0x9023
+                | 0x9286
+                | 0x934d
+                | 0x94a0
+                | 0x94b4
+                | 0x94c8
+                | 0x94dc
+                | 0x993a
+                | 0x9824
+                | 0x9ca3
+                | 0x9cd8
+                | 0x9d0c
+        )
+        && (r.word(0x1c27) > 78 || r.word(0x1c27) & 1 != 0)
     {
         return Err("invalid PLM slot");
     }
@@ -154,6 +166,30 @@ pub(crate) fn random(r: &mut Wram<'_>) -> u16 {
     n
 }
 fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> Result<(), &'static str> {
+    if matches!(init, 0x9dec | 0x9e46 | 0x9e4b) {
+        let enemy = usize::from(r.word(0xe54));
+        let (x, y, vx, vy) = if init == 0x9dec {
+            (
+                r.word(0xf7a + enemy).wrapping_add(r.word(0x7804 + enemy)),
+                r.word(0xf7e + enemy).wrapping_sub(16),
+                r.word(0x7800 + enemy),
+                r.word(0x7802 + enemy),
+            )
+        } else {
+            let height = [0xfffe, 12, 24][usize::from(r.word(0x780c + enemy) >> 1)];
+            (
+                r.word(0xf7a + enemy),
+                r.word(0xf7e + enemy).wrapping_add(height),
+                if init == 0x9e46 { 0xfe00 } else { 0x200 },
+                0,
+            )
+        };
+        r.set_word(0x1a4b + k, x);
+        r.set_word(0x1a93 + k, y);
+        r.set_word(0x1ab7 + k, vx);
+        r.set_word(0x1adb + k, vy);
+        return Ok(());
+    }
     if matches!(init, 0x9ca3 | 0x9cd8 | 0x9d0c) {
         let p = 0xf78 + usize::from(r.word(0xe54));
         let random = r.word(0x5e5);
