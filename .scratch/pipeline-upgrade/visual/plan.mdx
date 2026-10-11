@@ -1,54 +1,124 @@
 ---
-title: "Faster packed capture with exact evidence"
-brief: "Versioned binary FIFO and complete measurements; existing stored evidence and admission remain exact."
+title: "Measure the native Rust pipeline before selecting the next upgrade"
+brief: "Reuse the active migration; integrate current decomp, measure complete costs, then gate binary transport on the profile."
 kind: "plan"
 localOnly: true
 ---
 
-# Faster capture with exact evidence and complete measurements
+# Measure the native Rust pipeline, then upgrade its measured bottleneck
 
 Status: proposed
-Baseline: optimization commit `e820a6b77338eb4e84a2d91baeed2dc9f33c72f1`.
+Committed baseline: `e820a6b77338eb4e84a2d91baeed2dc9f33c72f1`.
+Implementation basis: the uncommitted Rust migration in `/tmp/sm-decomp-pipeline`,
+read on 2026-10-11 and pinned in `optimization-source-snapshot.toml`.
 Planning checkout: `decomp-port-integration`. No optimization source, worktree,
 branch or existing evidence is changed by this plan.
 
 ## Outcome and scope
 
-A future packed replay emits PPU/APU events through a compact binary FIFO and
-reports complete capture/publication costs. The retained `hardware.log` restores
-byte-for-byte as before, with identical stream/observation identities for identical
-observations. Four fresh processes, full-WRAM/host captures, ordered effects,
-progress and Rust ownership remain the acceptance gates.
+The first deliverable is a coherent native Rust pipeline integrated with current
+decomp, complete process/publication measurements, and a controlled text-capture
+baseline. Reuse the migration owner's native commands and templates. New tooling,
+orchestration and tests are Rust; new internal interfaces are typed Rust, small
+configuration/receipts use versioned TOML, and large ordered transport uses binary.
+Preserve existing JSON readers and sealed formats where historical evidence or
+external corpora require them; do not rewrite sealed verdicts to meet that policy.
 
-Start with measurement, add the opt-in transport, then adopt it only if controlled
+Binary PPU/APU FIFO capture is a conditional second phase. Activate it only after
+the measured profile supports text conversion/transport as the next useful target.
+The retained `hardware.log` must restore byte-for-byte with identical stream and
+observation identities for identical observations. Four fresh processes,
+full-WRAM/host captures, ordered effects, progress and Rust ownership remain gates.
+
+For that candidate, adopt it only if controlled
 runs pass the proposed promotion gate: at least 15% lower median warm-build
 end-to-end wall time at 45,000 inputs, with at most 5% growth in aggregate sampled
 peak RSS and allocated staging/private-store peak at the same worker capacity.
 These are proposed thresholds, not predicted results. Freeze absolute memory/disk
-budgets for the benchmark host before ticket 05; both variants must fit those
+budgets for the benchmark host before ticket 03; all variants must fit those
 budgets. A smaller gain leaves binary opt-in unless the owner records an explicit
 exception with measurements and rationale. Original-ROM fidelity advances through
 its own gates.
 
-Reuse Rust `sm-pipeline` leases and caches, private per-subject stores,
-`verified_inventory`, supported ordinal-remapping import and durable pointers.
-The new delta is a framed producer/collector protocol and complete telemetry.
+Reuse Rust `sm-pipeline` leases/caches and the worktree's native `builds`, `family`,
+`batch`, `packed`, `live`, `observations` and `cleanup` modules. Reuse the evidence
+crate's `verified_inventory`, ordinal-remapping import and durable pointers.
+The new delta is missing observability and a profile-gated capture protocol.
 Persistent gameplay workers, offline fixture packing, checkpoints, cache eviction,
 weighted admission and distributed execution are later efforts.
 
 The source and measurement basis is recorded in
 [the branch comparison](../../pipeline-review/optimization-comparison.md),
 [measurement audit](../../pipeline-review/optimization-measurements.md), and
-[pinned source index](../../pipeline-review/optimization-source-index.json).
+[pinned committed source index](../../pipeline-review/optimization-source-index.json).
+The current worktree findings and limits are in
+[optimization-progress.md](../optimization-progress.md); its source snapshot takes
+precedence for implementation seams. No new optimization commit was observed.
 
-## Decisions fixed for the first implementation
+## Progress to reuse and prerequisites
+
+| Area | Observed optimization worktree progress | Remaining gate for this plan |
+| --- | --- | --- |
+| Native process/build/cleanup | `builds.rs`, `cleanup.rs`, worker/cache commands and Rust filesystem controls exist | Extend missing measurements; preserve process ownership and retained evidence |
+| Native family/batch | Full WRAM/returns, eight-word host checks, Rust-before-C, private cases, atomic batch/reuse exist | Reconcile current dependent chains; refreshed combined-source seals |
+| Native packed/live | `packed::{capture,publish}`, `live::verify`, native host/effect templates, `observations` authentication exist | Complete pending live controls; preserve latest projectile ownership/WithGfx |
+| Fixtures/bootstrap | Native fixture domains and independent Rust bootstrap have recorded controls | Reuse migration results; check final source and tool identities |
+| Readiness/language migration | Native readiness modules exist; migration tickets remain open/claimed; Python CI/recipes remain | Owner completes migration gates; this plan adds no Python adapters or duplicate ports |
+| Capture/metrics | Text `vfprintf` still emits PPU/APU; elapsed/wait receipts exist | CPU/RSS/staging/full outer wall and profile; binary transport remains unimplemented |
+
+The five-family native batch and authenticated reuse, four-subject 1,000-frame
+native live runs, 9,000-frame decompressor reset runs and RNG controls are useful
+recorded evidence. They are not a controlled whole-pipeline benchmark or the
+current 129,712-input projectile acceptance. Claimed migration tickets with
+completion notes are not treated as resolved work or current-source acceptance.
+
+<Diagram id="capture-boundaries" caption="Native migration is the implementation basis; profile before selecting binary.">
+
+```html
+<div class="upgrade-grid"><section class="diagram-panel"><h3>Existing native migration</h3><div class="diagram-card">Rust builds, family and batch</div><div class="diagram-card">Packed/live + private stores</div><div class="diagram-card">Observation auth + cleanup</div></section><section class="diagram-panel"><h3>First phase: tickets 01–03</h3><div class="diagram-card">Current chains + WithGfx integration</div><div class="diagram-card">Missing CPU/RSS + total wall</div><div class="diagram-card">Text baseline + bottleneck choice</div></section><section class="diagram-panel"><h3>Conditional: tickets 04–08</h3><div class="diagram-card">Binary PPU/APU + exact literals</div><div class="diagram-card">Compatibility + complete benchmarks</div><div class="diagram-card">Full route + promotion gates</div></section><section class="diagram-panel upgrade-wide"><h3>Evidence stays exact</h3><div class="acceptance-row"><div class="diagram-node">sm-evidence-v1 + historical readers</div><div class="diagram-node">Four fresh processes + ownership</div><div class="diagram-node">129712 WRAM/host + effects</div></div><p class="diagram-muted">New tooling and tests are Rust. Typed interfaces/TOML sidecars; binary capture is selected only from the measured profile. Original-ROM accuracy remains separate.</p></section></div>
+```
+
+```css
+.upgrade-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}.diagram-panel{padding:18px}.diagram-card{padding:12px;margin-top:10px}.upgrade-wide{grid-column:1/-1}.acceptance-row{display:flex;gap:12px;flex-wrap:wrap}.diagram-node{flex:1;min-width:180px;padding:12px}
+```
+
+</Diagram>
+
+## First phase and candidate selection
+
+Tickets 01–03 are the proposed first phase. Depend on the migration owner's
+reviewed delivered revision and completed migration controls as an external
+prerequisite for ticket 01; its lack of local blockers does not waive that gate.
+Integrate into a new
+future integration checkout, preserving `/tmp/sm-decomp-pipeline`. Verify combined
+current decomp semantics before using measurements to choose further work.
+
+Reuse existing native timing records and add only missing fields/stages. Produce
+three alternating text-baseline repeats at 1,000/45,000 inputs for capacities
+two/four on a quiet host, with fixed cache/store warmth and full publication,
+authentication and cleanup boundaries. Keep cold-build/empty-store runs separate.
+Record a profile-based choice in ticket 03 before claiming any transport ticket.
+
+The choice must identify the limiting critical path and a credible route to the
+proposed total-runtime gain. Binary removes C formatting and Rust text parsing;
+Rust legacy rendering/hashing and snapshot/import work remain. Producer elapsed
+time alone does not establish text parsing as the bottleneck. Use bounded CPU
+profiling or controlled attribution samples for producer and collector, and do
+not add overlapping intervals. If import/authentication, host build, fixture
+execution or I/O dominates, write a separate scoped plan for that measured cost.
+Tickets 04–08 stay conditional and unclaimed unless binary is selected. A
+completed first phase may conclude that transport should be deferred.
+
+## Conditional binary phase: fixed compatibility decisions
 
 ### Keep stored evidence unchanged
 
 Keep `sm-evidence-v1`, canonical `Event`, segment layout, exact legacy-byte SHA-256,
 frame/member extraction and historical reader compatibility. Version the transport
 separately as `sm-capture-v1`. Add `--capture-transport text|binary` to live/batch
-adapters and a distinct Rust `capture-binary` CLI entry. Text remains available for
+commands and a distinct evidence-reader `capture-binary` CLI entry. Thread the
+typed selection through `live`, `batch` and `packed`; add no Python transport
+adapter. Text remains available for
 comparison and rollback. Select the decoder explicitly; reject a protocol mismatch.
 
 Compare legacy bytes, stream IDs, observation IDs, counts, progress and ownership.
@@ -121,23 +191,18 @@ that Rust formatting/hash work remains. Reuse a bounded rendering buffer as a
 separate measured improvement if the profile justifies it; do not alter rendering,
 canonical boundaries or logical digest to create an artificial speedup.
 
-<Diagram id="capture-boundaries" caption="Reuse existing leases/stores; upgrade only transport and measurement.">
-
-```html
-<div class="upgrade-grid"><section class="diagram-panel"><h3>Existing infrastructure</h3><div class="diagram-card">Shared leases and compiler cache</div><div class="diagram-card">Fresh subjects + private stores</div><div class="diagram-card">Verified import + durable pointers</div></section><section class="diagram-panel"><h3>New capture boundary</h3><div class="diagram-card">C: typed PPU/APU + exact literals</div><div class="diagram-card">sm-capture-v1 FIFO + required END</div><div class="diagram-card">Rust: validate + restore legacy bytes</div></section><section class="diagram-panel upgrade-wide"><h3>Unchanged acceptance</h3><div class="acceptance-row"><div class="diagram-node">Exact member bytes and observation IDs</div><div class="diagram-node">Four fresh processes + ownership gates</div><div class="diagram-node">Current WRAM/host chain integration</div></div><p class="diagram-muted">Metrics surround readiness, capture, commit, import, authentication and cleanup. Original-ROM accuracy has its own gate.</p></section></div>
-```
-
-```css
-.upgrade-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}.diagram-panel{padding:18px}.diagram-card{padding:12px;margin-top:10px}.upgrade-wide{grid-column:1/-1}.acceptance-row{display:flex;gap:12px;flex-wrap:wrap}.diagram-node{flex:1;min-width:180px;padding:12px}
-```
-
-</Diagram>
-
 ## Complete measurement contract
 
-Add versioned `pipeline-metrics-v1` receipts to Rust collectors/importers and
-Rust process helpers. Python adapters combine these into a run summary. Include
+Extend `builds::execute_timeout`, `packed::capture/publish`, `live::verify` and
+`batch::operate`, reusing their existing elapsed/wait records. Add a typed
+`pipeline-metrics-v1` model and TOML sidecar receipts; native Rust combines them
+into the run summary. Keep existing timing/verdict readers compatible. Include
 failed/interrupted runs with outcome and the last completed stage.
+
+Instrument existing text `capture` and `import` in `crates/evidence/src/main.rs`
+in ticket 02, independently of binary selection; otherwise the baseline cannot
+separate collector commit, staged ingestion and verification costs. The metrics
+worker owns that file in phase one; transfer ownership for binary work later.
 
 Measure monotonic start/end timestamps, elapsed durations and parent/child links
 for worker/store wait, collector ready, build/cache restore, replay, FIFO drain,
@@ -147,6 +212,10 @@ subject authentication, private-store release, final verdict publication and
 scoped cleanup. Intervals may overlap; compute total wall time from one outer
 boundary rather than adding parallel/nested durations. Never reset that boundary
 at a cache hit, successful producer exit or early publication timestamp.
+Across Linux processes, use the same `CLOCK_MONOTONIC` origin with a run-relative
+offset, or parent-normalize child timestamps against a documented handshake.
+Independently serialized `Instant` durations are not a shared timeline. Record
+clock/sampling semantics and never combine unrelated clock domains.
 
 Capture PID-scoped CPU user/system time, per-process peak RSS, aggregate concurrent
 RSS sampled at a stated interval, transport bytes, logical bytes, pack bytes,
@@ -156,7 +225,9 @@ wait4-equivalent child accounting plus per-run `/proc` sampling and sampled disk
 accounting; do not use all historical `RUSAGE_CHILDREN` as one run's CPU time or
 sum nonconcurrent peak RSS as a claimed machine peak. Include both producer and
 collector and the known sampled-peak limitation. Metrics sample/scan frequency
-is bounded so telemetry does not dominate capture.
+is bounded so telemetry does not dominate capture. One process owner must reap
+each child exactly once; `Child::try_wait` must not consume an exit before the
+resource-accounting path collects it. Preserve timeout/kill/wait diagnostics.
 
 Use buffered batches up to 64 KiB. Handle short writes and interruptions; closed
 pipe/collector death fails the run. Measure write calls and blocked time per
@@ -168,16 +239,21 @@ Use receipts outside immutable evidence to preserve comparable observations.
 
 | Ticket | Work and reused seam | Dependencies | Owner |
 | --- | --- | --- | --- |
-| 01 | Complete stage/process metrics around existing leases, capture/import and pointer paths | None | Metrics worker |
-| 02 | Shared literal scanner and versioned binary decoder in evidence crate; documented protocol | 01 | Evidence worker |
-| 03 | Generated C typed emitters, END close path and explicit adapter flag; reuse FIFO/private stores | 02 | Integration worker |
-| 04 | Real text/binary equivalence and failure matrix; retain old reader and logical IDs | 03 | Independent reviewer |
-| 05 | Controlled local benchmarks and current-decomp integration gate | 04 | Integration owner |
-| 06 | Promote default if gates pass; document rollback, receipts and cleanup | 05 | Integration owner |
+| 01 | Pin delivered native migration, reconcile current decomp chains/host ABI, refresh admission | External: reviewed migration delivery/controls | Integration owner |
+| 02 | Extend native metrics, typed/TOML receipts and single-owner child accounting | 01 | Metrics worker |
+| 03 | Controlled native text baseline, profile and explicit next-bottleneck decision | 02 | Integration owner + reviewer |
+| 04 | Conditional exact scanner and framed binary evidence decoder | 03 + binary selection | Evidence worker |
+| 05 | Conditional native C templates and Rust transport selection | 04 | Native integration worker |
+| 06 | Conditional real compatibility and failure/publication controls | 05 | Independent reviewer |
+| 07 | Conditional controlled text/binary benchmarks and full-route acceptance | 06 | Integration owner |
+| 08 | Conditional promotion or documented opt-in retention/rollback | 07 | Integration owner |
 
-One integration owner defines the protocol and source freeze. Metrics and evidence
-workers can prepare independently after shared metrics fields are fixed, but edits
-to evidence CLI/adapter are serialized to one file owner. Give separate worktrees
+One integration owner coordinates the migration source freeze and decomp
+reconciliation. A metrics worker owns `metrics.rs`, `builds.rs` and instrumentation;
+an evidence worker may inspect/design the decoder while first-phase work proceeds,
+but implementation waits for ticket 03's binary selection. The native integration
+worker owns `packed.rs`, `live.rs`, `batch.rs` and C templates in the binary phase.
+Serialize shared-file edits and use one independent correctness reviewer. Give separate worktrees
 exclusive file ownership when implementation is authorized. All producers,
 collectors, compilers and benchmark jobs share one `SM_PIPELINE_ROOT` and matching
 capacity. One packed subject's producer/collector pair consumes one orchestration
@@ -190,36 +266,53 @@ that confound results.
 
 ## Files and interfaces
 
+- `crates/pipeline/src/family.rs`: reuse native case execution/authentication;
+  add current ordered continuation/host inheritance when reconciling decomp.
+- `crates/pipeline/src/builds.rs`, new `src/metrics.rs`: typed process/stage
+  measurements around existing native execution/cache operations.
+- `crates/pipeline/src/packed.rs`: instrument capture/publication and optionally
+  select the evidence decoder; retain private stores, readiness and safe release.
+- `crates/pipeline/src/live.rs`, `batch.rs`, `observations.rs`, `cleanup.rs`:
+  native selection, outer wall boundary, current admission, auth and cleanup.
+- New `crates/pipeline/src/benchmark.rs`: native matrix runner reusing existing
+  commands, frozen inputs and alternating configurations; no Python helper.
+- `crates/pipeline/src/effect_writer.c.in`, `live_host.c.in`: conditional explicit
+  typed PPU/APU emitters, bounded literals, successful END placement and flushing.
 - `crates/evidence/src/trace.rs`: reuse `Event`, `TraceWriter`, `ingest_trace`;
-  extract the exact literal scanner and add framed ingestion.
+  conditionally extract the exact literal scanner and add framed ingestion.
 - New `crates/evidence/src/capture.rs` plus `src/lib.rs`: protocol validation,
   checked footer/digest/count receipt and parser tests.
-- `crates/evidence/src/main.rs`: `capture-binary` reuses existing trace/tree/run
-  commits and `verified_inventory`; emit stage receipts without changing objects.
-- `crates/pipeline/src/main.rs` and new `src/metrics.rs`: PID-scoped accounting
-  and versioned execution receipts. Reuse current worker leases and cache keys.
-- `tools/port_live.py`: explicit generated PPU/APU emitters, literal path,
-  successful END placement, transport selection and final acceptance.
-- `tools/port_evidence.py`: select collector command, attach process metrics,
-  account for readiness/drain/import/authentication/pointer/release boundaries.
-- `tools/port_pipeline.py`, `tools/port_batch.py`: adapt receipts and flag;
-  retain isolated fixture chains, global budget and per-batch ownership.
-- New `tools/port_benchmark.py`: checked-in matrix runner using existing commands,
-  explicit frozen inputs and alternating configuration order; compact summaries.
-- `crates/evidence/tests/capture.rs`, `tools/test_port_evidence.py`,
-  `tools/test_port_live.py`, pipeline tests: real parser/producer/publication
-  controls and interrupted writer/reader cases.
+- `crates/evidence/src/main.rs`: phase-one text capture/import stage receipts;
+  conditional `capture-binary` reuses trace/tree/run commits and
+  `verified_inventory` without changing canonical objects.
+- `crates/pipeline/src/main.rs`: expose typed native selection/benchmark commands;
+  preserve transitional historical request compatibility.
+- `crates/evidence/tests/capture.rs`, native pipeline `tests/{packed,live,family,
+  processes,observations}.rs` and new metrics/benchmark tests: reuse meaningful
+  controls and extend parser/producer/publication/continuation behavior.
 - New `docs/CAPTURE_PROTOCOL.md`, updated `docs/DECOMP_BATCH.md`: exact transport,
   metric meanings, versioned sidecars, fallback and run retention.
 
-These filenames identify implementation seams on optimization commit `e820a6b`;
-new files are proposed. Planning does not modify these sources.
+These filenames identify inspected uncommitted migration seams or unchanged
+evidence-crate sources. New files and binary changes are proposed; this plan
+does not port migration functionality that is already in progress.
 
-<AnnotatedCode id="decoder-seam" filename="crates/evidence/src/capture.rs (proposed)" language="rust" code={"// Proposed new boundary; storage encoding and Event remain existing.\npub fn ingest_capture_v1(store: &mut Store, input: &mut dyn BufRead)\n    -> Result<(Id, CaptureReceipt)> {\n    // Validate magic/version, fixed lengths, values and END counters.\n    // Typed events push directly only at a clean scanner line boundary.\n    // Otherwise render typed bytes into the shared literal scanner.\n    // Require END then EOF; return legacy digest and complete counts.\n    todo!()\n}"} annotations={[{"lines": "2-3", "label": "Transport only", "note": "Return the existing stream Id plus a sidecar receipt. Stored evidence stays sm-evidence-v1."}, {"lines": "5-7", "label": "Exact compatibility", "note": "Share partial/long-line state across literal and typed records; finalize at END. Preserve legacy frames, segmentation and stream IDs."}]} />
+<AnnotatedCode id="decoder-seam" filename="crates/evidence/src/capture.rs (proposed)" language="rust" code={"// Conditional on ticket 03 selection; existing Event/storage remain.\npub fn ingest_capture_v1(store: &mut Store, input: &mut dyn BufRead)\n    -> Result<(Id, CaptureReceipt)> {\n    // Validate magic/version, fixed lengths, values and END counters.\n    // Typed events push directly only at a clean scanner line boundary.\n    // Otherwise render typed bytes into the shared literal scanner.\n    // Require END then EOF; return legacy digest and complete counts.\n    todo!()\n}"} annotations={[{"lines": "2-3", "label": "Transport only", "note": "Return the existing stream Id plus a sidecar receipt. Stored evidence stays sm-evidence-v1."}, {"lines": "5-7", "label": "Exact compatibility", "note": "Share partial/long-line state across literal and typed records; finalize at END. Preserve legacy frames, segmentation and stream IDs."}]} />
 
 ## Acceptance and rollout
 
-First validate synthetic mixed typed/literal streams and actual generated C
+In phase one, preserve migration negative controls, run current combined-source
+Rust tests and actual-C boundaries, and retain native text admission through
+129,712 inputs with all nine IDs, 16/4/4 allocations and material WRAM/host state.
+Check that new metrics do not change stored identities/observations; measure their
+text overhead against disabled telemetry and keep it at most 2%. Observe the
+migration owner's final-source controls and completion rather than rerunning
+obsolete Python verification.
+Regenerate source-dependent admission for reconciled Rust/templates/manifests;
+reject stale cache/reuse seals. Imported historical observations remain readable
+under their retained reader/source snapshots and do not grant current admission.
+
+If binary is selected, validate synthetic mixed typed/literal streams and actual generated C
 emitters against text ingestion. Cover signed PLM values, zeros/max fields,
 frame resets, line fragmentation, giant lines, partial literal→typed events,
 giant-line continuation→typed and typed→partial literal→END, empty literals
@@ -241,11 +334,11 @@ accepted-error/no-C-retry tests. Compare four fresh text subjects with four fres
 binary subjects using the same frozen source/inputs and wrappers. Test both text
 and binary against an unchanged historical reader for stored evidence.
 
-Reconcile optimization with the newer dependent `continue_from`/`case_order`
-WRAM and eight-word host chains and native projectile WithGfx bridge before the
-promotion benchmark matrix. Preliminary transport measurements on unreconciled
-optimization sources may guide development but cannot justify current-decomp
-promotion. This is a future integration prerequisite; planning performs no merge.
+Ticket 01 reconciles the newer `continue_from`/`case_order` WRAM/eight-word host
+chains and native projectile WithGfx bridge with the Rust migration. The inspected
+native family path still flattens cases and reads explicit `host_words`; those
+are distinct from inherited chain state. Preliminary measurements on unreconciled
+sources cannot justify current-decomp promotion. Planning performs no merge.
 
 On that frozen combined source, record three alternating warm-build runs each at
 1,000 and 45,000 inputs for
@@ -264,11 +357,16 @@ full-WRAM/all-eight-host captures, exact effects/progress and zero refusal/fallb
 Promote binary only with correctness, the 15% total-wall/5% resource thresholds,
 and the frozen absolute host budgets. Record median/range for every capacity;
 promote only capacities that pass. Any exception needs an explicit owner decision
-in ticket 06. Preserve `text` as a
+in ticket 08. Preserve `text` as a
 rollback flag and retain producer/reader/protocol/source receipts per run.
 Historical verdicts/readers remain immutable. After every successful, failed or
-interrupted experiment, wait for writers, apply scoped project cleanup/dedup,
-authenticate retained live evidence, and record reclaimed/free bytes and required
+interrupted experiment, wait for writers, apply scoped native cleanup/dedup
+(`sm-pipeline cleanup --root RUN --apply`, then `--deduplicate --apply`),
+authenticate retained subject/store dependencies that exist. Run
+`sm-pipeline live-authenticate VERDICT` when a complete live verdict exists;
+failed/interrupted runs may only have sealed subjects or partial diagnostics.
+Preserve those diagnostics and record any incomplete/unavailable authentication.
+Record reclaimed/free bytes and required
 store/reader/source dependencies. Remove only integrated implementer worktrees
 with exact cited source snapshots preserved. Cache retention stays separate.
 
@@ -282,4 +380,4 @@ benchmarking or an explicit exception at promotion.
 
 ### Open Questions
 
-<QuestionForm id="upgrade-scope-review" questions={[{"id": "upgrade-scope", "title": "Scope for the next implementation", "subtitle": "Recommended: complete metrics and opt-in binary capture, then current-source validation before promotion.", "mode": "single", "options": [{"id": "transport-and-metrics", "label": "Metrics + binary capture", "detail": "Six dependency-ordered tickets; benchmark and exact compatibility gates.", "recommended": true}, {"id": "metrics-first", "label": "Alternative: metrics only", "detail": "Replaces the six-ticket scope: complete ticket 01, defer 02–06 and choose the next upgrade from measured costs."}], "required": true}]} submitLabel="Record scope preference" />
+<QuestionForm id="upgrade-scope-review" questions={[{"id": "handoff-constraints", "title": "Implementation handoff constraints", "subtitle": "The proposed first phase is native integration, missing metrics and profile-based selection. Binary stays conditional on ticket 03.", "mode": "freeform", "placeholder": "Record any runner budget, scheduling or integration constraint."}]} submitLabel="Record constraints" />

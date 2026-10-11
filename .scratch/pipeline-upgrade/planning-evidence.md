@@ -1,11 +1,12 @@
 # Planning evidence and handoff
 
 Date: 2026-10-11
-Status: planning complete; implementation tickets 01–06 remain open.
+Status: revised planning complete; tickets 01–03 first phase, 04–08 conditional.
+All implementation tickets remain open.
 Integration checkout: `decomp-port-integration`.
 Protected optimization ref: `e820a6b77338eb4e84a2d91baeed2dc9f33c72f1`.
 
-## Grounding
+## Initial committed-baseline grounding
 
 The proposal reuses the committed optimization infrastructure documented in
 [the comparison](../pipeline-review/optimization-comparison.md) and
@@ -26,7 +27,7 @@ for this proposed binary transport. The 15% wall/5% resource thresholds are
 proposed adoption criteria. Current decomp chain/WithGfx reconciliation precedes
 measurements that could justify promotion; original-ROM accuracy stays separate.
 
-## Independent design review
+## Initial independent design review
 
 The visual-plan skill's skeptical-review pass was performed by
 `capture_design_check`. All six concrete findings were incorporated into the plan,
@@ -45,7 +46,7 @@ relevant tickets and visual source:
   combined-source benchmark requirements. Exceptions need a recorded owner decision.
 - Metrics-only is an alternative that replaces tickets 02–06 with deferred scope.
 
-## Artifact verification
+## Initial artifact verification
 
 - Fetched the public no-auth block catalog before authoring MDX; no plan content
   was sent for catalog lookup.
@@ -70,7 +71,7 @@ No pipeline implementation, replay, merge, build or performance benchmark was
 performed. These checks validate the planning artifact, not transport correctness
 or simulation accuracy.
 
-## Completion evidence and cleanup
+## Initial completion evidence and cleanup
 
 No port run/batch directories were created, so there is no new scope for
 `port_cleanup.py` or live-evidence reauthentication. Run bytes reclaimed: 0.
@@ -82,3 +83,50 @@ optimization worktree and branch were preserved. The review bridge remains activ
 Remaining filesystem space after cleanup (`df -B1 .`): 252,176,052,224 bytes
 available (about 234.9 GiB). Implementation remains proposed under the six open tickets; the committed
 planning folder is the handoff artifact.
+
+## Revision against active optimization worktree
+
+At the user's request, inspected `/tmp/sm-decomp-pipeline` directly with
+`git --no-optional-locks status`, diffs, source and local migration notes.
+HEAD remained e820a6b; uncommitted native Rust tooling had progressed beyond
+the previous committed-baseline comparison. No optimization mutation or run
+was performed. [optimization-progress.md](optimization-progress.md) records
+the findings and [optimization-source-snapshot.toml](optimization-source-snapshot.toml)
+pins 42 inspected source/report paths and the 192-entry status hash. The
+[recheck](optimization-observation-recheck.toml) found identical inspected hashes,
+status and HEAD at 17:02:44 UTC. This records a stable observation interval,
+not an atomic source freeze or proof that other work cannot continue.
+
+The revised plan replaces Python seams with native `builds`, `family`, `batch`,
+`packed`, `live`, `observations`, `cleanup` and C templates. New models/interfaces
+are typed Rust with TOML sidecars; existing sealed/external JSON stays readable.
+Migration completion and current decomp reconciliation precede native measurements
+and a text-baseline profile. Binary tickets are conditional on the explicit
+selection in ticket 03. No migration tickets were claimed or resolved here.
+
+The skeptical reviewer found four remaining gaps, all addressed:
+
+- Text evidence capture/import receives phase-one stage instrumentation.
+- Cross-process timestamps share a monotonic origin or normalized offsets.
+- Child resource accounting shares one exit owner with polling/timeout handling.
+- Migration delivery is an explicit external prerequisite; stale source/cache
+  seals reject, and failed-run cleanup authenticates available dependencies even
+  when no final live verdict exists.
+
+Final offline MDX lint passed. Chromium connected to the existing local bridge
+and verified the revised full document, native/first-phase/conditional diagram,
+annotated decoder, handoff form and no invalid-block placeholders. The diagram
+was visually inspected at 1440×1000. Verified local citations, eight open ticket
+dependencies and exact Markdown/visual prose agreement. A temporary checker
+first used the environment's older Python lacking `tomllib`; the check completed
+using the available Python 3.13. No Python source/tool was added to the project.
+
+This was documentation verification only, with no port run/batch scope or new
+implementation worktree. Run bytes reclaimed: 0. Removed this revision's catalog
+and screenshot after checking them: 216,706 logical bytes. Retained the intentional
+review bridge and all existing sources, readers, stores and optimization evidence.
+Remaining free space after cleanup is recorded below. Final diff/commit checks
+confirm documentation-only changes on decomp and unchanged optimization HEAD.
+
+Revision cleanup free space (`df -B1 .`): 240,539,230,208 bytes available
+(about 224.0 GiB).

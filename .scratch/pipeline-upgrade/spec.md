@@ -1,22 +1,31 @@
-# Upgrade packed capture transport and measurement
+# Measure the native Rust pipeline and select its next upgrade
 
 Status: open
 
 Authoritative plan: `plan.md`, rendered locally from `visual/plan.mdx`.
-Baseline optimization branch: `decomp-pipeline-performance` at `e820a6b`.
+Committed optimization branch: `decomp-pipeline-performance` at `e820a6b`.
+Implementation basis: active native Rust migration worktree, pinned in
+`optimization-source-snapshot.toml` and assessed in `optimization-progress.md`.
 
-Deliver an opt-in `sm-capture-v1` binary FIFO for typed PPU/APU events and exact
-literal records, reusing `sm-evidence-v1`, private stores, leases and import.
-Add complete process/stage telemetry and prove exact text/binary observation
-compatibility. Promote only after current-decomp integration, correctness,
-resource and controlled end-to-end performance gates pass.
+First integrate the migration owner's delivered native Rust pipeline with current
+decomp semantics, extend missing native metrics using typed models/TOML sidecars,
+and measure/profile a controlled native text baseline. Tickets 01–03 define this
+first phase. Record the next-bottleneck selection before binary implementation.
+
+Tickets 04–08 are conditional on selecting binary: opt-in `sm-capture-v1`, native
+C templates and Rust selection, exact `sm-evidence-v1` compatibility, real failure
+controls, controlled benchmarks/full-route admission and promotion/retention.
+No new Python tooling or duplicate native migration ports are proposed.
 
 Implementation is proposed. This planning task changes documentation only and
-preserves the optimization worktree/branch. Tickets remain open for execution.
+preserves the optimization worktree/branch. All eight tickets remain open;
+conditional tickets cannot be claimed without the selection decision in 03.
 
 ## Planning evidence
 
-Read current source and pinned optimization Git objects. Planned contracts were
+Read committed optimization Git objects and, at the user's request, inspected
+the active optimization worktree status/diffs/source/notes without mutation.
+Planned contracts were
 checked against Event/TraceWriter/literal scanning, generated host emitters,
 private-store capture/publication, and shared lease behavior. Independent review
 and local plan validation are recorded under `planning-evidence.md`.

@@ -1,0 +1,261 @@
+version = "optimization-worktree-snapshot-v1"
+observed_utc = "2026-10-11T16:59:43.019994+00:00"
+worktree = "/tmp/sm-decomp-pipeline"
+head = "e820a6b77338eb4e84a2d91baeed2dc9f33c72f1"
+branch = "decomp-pipeline-performance"
+access = "read-only; no build, replay, cleanup, index or ref mutation"
+consistency = "per-file hashes observed during active work; not an atomic source freeze"
+status_sha256 = "1c0351ce9ffbcd92a39f1329e30a32f60d6f6b346d8aace62795501623c4a111"
+status_entries = 192
+
+[[files]]
+path = "AGENTS.md"
+sha256 = "7a255ff77ead739adbabf9c3c6b1d07b15ff28a764818a967915538b1bb579b7"
+bytes = 779
+tracked_at_head = true
+
+[[files]]
+path = ".scratch/rust-tooling/spec.md"
+sha256 = "47627a9301d648f1a680afdd27c1f593361bceb834c6881ee9e3c88b3ca5a3d5"
+bytes = 2019
+tracked_at_head = false
+
+[[files]]
+path = ".scratch/rust-tooling/issues/01-native-pipeline.md"
+sha256 = "e17b9273373ce593f412da53db82c3157aba679bde8b595d5926735ba32a32ab"
+bytes = 1125
+tracked_at_head = false
+
+[[files]]
+path = ".scratch/rust-tooling/issues/02-bootstrap.md"
+sha256 = "492b7eab5a5e02caf06f7b7688b90f5d0c2d0fccedcb128747376718e30914c3"
+bytes = 884
+tracked_at_head = false
+
+[[files]]
+path = ".scratch/rust-tooling/issues/03-offline-family.md"
+sha256 = "13951ddec44444963a4b347917eaf3dda95242ee1f2b9916a9745c742103a2ab"
+bytes = 1007
+tracked_at_head = false
+
+[[files]]
+path = ".scratch/rust-tooling/issues/04-specialized-fixtures.md"
+sha256 = "eca332e884b87e8c368be20b470cc186e529108fa069610cc42ad1ce0795b165"
+bytes = 1049
+tracked_at_head = false
+
+[[files]]
+path = ".scratch/rust-tooling/issues/05-packed-live.md"
+sha256 = "d638fd80b3435a774befb1b2b2158ff1f3d1975a403244d5f9486db05307a14c"
+bytes = 998
+tracked_at_head = false
+
+[[files]]
+path = ".scratch/rust-tooling/issues/06-readiness-decomp.md"
+sha256 = "b08a277e14536be04d105c60d501d89df5be24e780518e948f4f527bea3afc3b"
+bytes = 1274
+tracked_at_head = false
+
+[[files]]
+path = ".scratch/rust-tooling/issues/07-no-python.md"
+sha256 = "a95bd1edb0452ab7f6a05ec14b5866cffa7d392114cd00394498bae3cdee8ded"
+bytes = 536
+tracked_at_head = false
+
+[[files]]
+path = ".scratch/rust-tooling/evidence/sm-final-native-batch-reuse.json"
+sha256 = "0aee0646f5c35fd765362afbcddb3ee6c557b91822824086a28fbf7f60678ed0"
+bytes = 1992
+tracked_at_head = false
+
+[[files]]
+path = ".scratch/rust-tooling/evidence/sm-final-native-batch.json"
+sha256 = "58a2966f13042876607152b31c44a65fa7b2a06989e33600385f0d4a6d2cf391"
+bytes = 2051
+tracked_at_head = false
+
+[[files]]
+path = ".scratch/rust-tooling/evidence/sm-rust-bootstrap-doctor.log"
+sha256 = "547de48b87caf5b9c61fa9c17a91c9193178184b2c6916d8b9532754f425d842"
+bytes = 1978
+tracked_at_head = false
+
+[[files]]
+path = ".scratch/rust-tooling/evidence/sm-rust-cleanup-current-builds.json"
+sha256 = "b3efb7321a8b14ef599b93e57d6da42caa760df93d22cd1d62d9a3ded17f0088"
+bytes = 38
+tracked_at_head = false
+
+[[files]]
+path = ".scratch/rust-tooling/evidence/sm-rust-cleanup-current-snapshots.json"
+sha256 = "81b729073acc5e6bea1878a2ca3e5320d058d1cf55fe9e501de3b1038cf93ab2"
+bytes = 59
+tracked_at_head = false
+
+[[files]]
+path = ".scratch/rust-tooling/evidence/sm-rust-dispatcher-clippy.log"
+sha256 = "c994dbb3e40f6c439c09e3673ac5df8d033f84360dc4e00c90dfdb99680ed8bf"
+bytes = 143
+tracked_at_head = false
+
+[[files]]
+path = ".scratch/rust-tooling/evidence/sm-rust-dispatcher-tests.log"
+sha256 = "5c959d08b2188f3faff124029e44ea9bf11fc1e3b81d1238f8900ee713e7fc1c"
+bytes = 3012
+tracked_at_head = false
+
+[[files]]
+path = ".scratch/rust-tooling/evidence/sm-rust-live-retained-auth.json"
+sha256 = "22b7b1338cf437cfde671a0e043687aa9b20373a6e1248d1fb8eaeb5fb391b99"
+bytes = 302
+tracked_at_head = false
+
+[[files]]
+path = "crates/pipeline/README.md"
+sha256 = "a3ef0d459fb0bdaadeb1dc4771eae39c5194b0e5ad27b9d1e24ef040214b52e4"
+bytes = 2732
+tracked_at_head = false
+
+[[files]]
+path = "crates/pipeline/src/main.rs"
+sha256 = "da53224fe314f3ecb6255f5f76ca22e71f140e74749653423ea3c91d79fb0b1c"
+bytes = 47046
+tracked_at_head = true
+
+[[files]]
+path = "crates/pipeline/src/builds.rs"
+sha256 = "7132ddd31a7a0d313ec51c2d927de319e3382620ad13dd97666533ed61a30c20"
+bytes = 11089
+tracked_at_head = true
+
+[[files]]
+path = "crates/pipeline/src/family.rs"
+sha256 = "5b2720931c09ba8e966163408cb9c63a81f6cc14fbc46f75db4f04e0d775e7df"
+bytes = 44623
+tracked_at_head = false
+
+[[files]]
+path = "crates/pipeline/src/batch.rs"
+sha256 = "d062b70dec50a012f3e0b68e6f51cb8e32fccfad3a4933b7d7caafc8ea4b8b7e"
+bytes = 15882
+tracked_at_head = false
+
+[[files]]
+path = "crates/pipeline/src/packed.rs"
+sha256 = "830bb01780e6cd37db8c5f20c98ec565494710538ecbb36281e4250b2ef0b546"
+bytes = 11200
+tracked_at_head = false
+
+[[files]]
+path = "crates/pipeline/src/live.rs"
+sha256 = "b2afa8bc1d592b31f595e479f817ee82503a1f98374723886ea17f4713aa54ab"
+bytes = 41163
+tracked_at_head = false
+
+[[files]]
+path = "crates/pipeline/src/observations.rs"
+sha256 = "1fc4d371ef143d862a2df8a5358134289359a184d48f4aac00ff8d090a05fbf9"
+bytes = 6384
+tracked_at_head = false
+
+[[files]]
+path = "crates/pipeline/src/cleanup.rs"
+sha256 = "104acacc6c9c89dc73c99e0ead6c22b24d3737a35456356393686e6df1395b97"
+bytes = 9953
+tracked_at_head = false
+
+[[files]]
+path = "crates/pipeline/src/effect_writer.c.in"
+sha256 = "bdf4e58d84509e88ce7b297d02e12aeaedf7457044d7c3f40bea7a1bfd0850ff"
+bytes = 344
+tracked_at_head = false
+
+[[files]]
+path = "crates/pipeline/src/live_host.c.in"
+sha256 = "ca2bc9f33f1a6bfe46f0789f737eeffe2a9a5afd3254b848f28dd448b004560d"
+bytes = 6783
+tracked_at_head = false
+
+[[files]]
+path = "crates/pipeline/src/live_positioned.c.in"
+sha256 = "b0478d0d818d3585a4fd52b114ca4db809324989bfea634011960c1fd9b8cab0"
+bytes = 915
+tracked_at_head = false
+
+[[files]]
+path = "crates/pipeline/tests/packed.rs"
+sha256 = "a93b4e10afb9033c34072aea66d9fb7ca2bf4d708b08580702386b4c2f21080d"
+bytes = 5489
+tracked_at_head = false
+
+[[files]]
+path = "crates/pipeline/tests/live.rs"
+sha256 = "790970e70d9235c19a539af01429e3bf5f46e8a676f21b393b7d1146d0021106"
+bytes = 8564
+tracked_at_head = false
+
+[[files]]
+path = "crates/pipeline/tests/family.rs"
+sha256 = "943b1c3726fe92fedf9c2c035e7b0c8b20c9b5d0b8dff65bbaf32a67a462b3d8"
+bytes = 10470
+tracked_at_head = false
+
+[[files]]
+path = "crates/pipeline/tests/observations.rs"
+sha256 = "33750ac4b102f61363d925dd60596f5240ce9426711c3f226703b0cf0194031e"
+bytes = 4157
+tracked_at_head = false
+
+[[files]]
+path = "crates/pipeline/src/readiness.rs"
+sha256 = "8efa25b984d9cb17d5d1c66195b40ed5d73e9f0712ef792342a5c7394716a09d"
+bytes = 24899
+tracked_at_head = false
+
+[[files]]
+path = "crates/pipeline/src/parity.rs"
+sha256 = "30f385466eafa127f0cd098e48c174b4e931f4736d22ab29592593327f521ff7"
+bytes = 13305
+tracked_at_head = false
+
+[[files]]
+path = "crates/evidence/src/trace.rs"
+sha256 = "644e3d2fdb379c2e68a1f2f30fd399ddb7ef6fa1df11dc81646033f915be89ea"
+bytes = 14344
+tracked_at_head = true
+
+[[files]]
+path = "crates/evidence/src/main.rs"
+sha256 = "17e51ea0842b943dbdd5ae43d8764af9b5c74564a939f49d87c476ef8c12d7bd"
+bytes = 9300
+tracked_at_head = true
+
+[[files]]
+path = "docs/DECOMP_BATCH.md"
+sha256 = "ff56883604bc6fd2b2a0380aa911a2f474d29c0bc11378279a1f423a76761c24"
+bytes = 9295
+tracked_at_head = true
+
+[[files]]
+path = "docs/agents/run-cleanup.md"
+sha256 = "f6934ca20789a20313d447e4a1450e5ab1972b78a0b4118232eb23dc00c49137"
+bytes = 2506
+tracked_at_head = true
+
+[[files]]
+path = "justfile"
+sha256 = "e22e4a598f9cc4bc2befcd0ca081fd3207ed2246f8e8250f271139b939cc4170"
+bytes = 8689
+tracked_at_head = true
+
+[[files]]
+path = ".github/workflows/ci.yml"
+sha256 = "a118e3ccf28c1e2104dc5358b000bb9082c5991cae7a8ca9f7f901dca3305eb2"
+bytes = 1322
+tracked_at_head = true
+
+[[files]]
+path = "tools/bootstrap/README.md"
+sha256 = "3dd1d3764d6e62fa0508ac1cb5c5464e00cb03a9f5eb39cff7465b28bfbe4904"
+bytes = 1039
+tracked_at_head = false
