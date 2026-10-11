@@ -92,3 +92,33 @@ removed directories. Retain native states, sealed binary/source/cases/logs and
 original observer evidence; no implementer worktree.18,243,407,872bytes available.
 Postcleanup authenticated finalbinary,host/driver/frameheader snapshots,pollcases,all native
 WRAM states/events,ledger/timeline and all primitive/control logs against verdict.
+
+## Executed causal first-completion seam
+
+Implemented isolated `causal-polling` candidate restoring real polling after
+C NMI and suppressing only the main-entry poll relocated by upstream. Native
+150prelude samples execute in exact order during the logo/reset coroutine's
+150yielding NMI calls. Its real64KiB reset clear then removes those inputs;
+first gameplay completion observes cleared words before sample1030 is presented.
+No WRAM snapshots load into this candidate; no coroutine aliases are changed.
+
+Final source-stable320frame evidence:
+`out/port/controller-causal-seam/20261011T064410.228683Z/verdict.json`.
+All compared SEMANTIC fields match firstnativecompleted gameplay boundary at
+frame272/event1025:game_state1/RNG758/heldpressedprevious0. Candidatecompletion
+atstep151 precedes its next poll; all150earlier held samples match source order,
+and exactlyone postcompletion sample matches originalpoll1030. Separate actual
+linked RNG-bit control changes758→759. Existing160offlinepoll fixtures and both
+controls stillpass; public3prefix tests pass58.084s; diffcheck passes.
+
+This is actual bounded execution progress beyond ordinal diagnosis, not full
+WRAM or video-frame parity. The original boot video timing and later waits
+remainunproved; generaldiagnostic replay stillrejects futurepoll assignment and
+overallverdict nonaccepting. Ticket78 remainsclaimed.
+
+Cleanup applied/deduplicated both finished causalruns064325/064410:0bytes
+reclaimed; unsupported nonacceptingformat retained. Publictest tempdirectories
+removed automatically.17,794,060,288bytes available; noimplementerworktree.
+Postcleanup authenticated finalbinary/host/driver/basehost/frameheader,allnative
+WRAM/events,causalinputs and candidate/controlevents/fullcompletedWRAM/terminal
+states/logs against verdict. Retain these dependencies as boundedproof.

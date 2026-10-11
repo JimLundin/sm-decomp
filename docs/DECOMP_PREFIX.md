@@ -119,3 +119,23 @@ This proves a callable polling foundation, including the prelude, but does not
 supply boot/reset clearing or controller-to-dispatch scheduling. The overall
 original-ROM prefix therefore remains nonaccepting, with its future-poll
 assignment diagnosis intact.
+
+## Bounded causal NMI polling execution
+
+A separate `causal-polling` candidate restores the real controller primitive
+after each C NMI and suppresses the poll relocated into C main-dispatch entry.
+The source-order150prelude samples execute during the actual logo/reset
+coroutine's150yielding NMI calls. `Vector_RESET_Async` then performs its real
+64KiB clearing before gameplay begins. No snapshots are loaded into this
+candidate and no coroutine aliases are changed. The first completed gameplay
+boundary is observed before the next sample, sourceevent1030, is presented.
+Every preceding poll's held word must match the native sequence in order;
+matching counts alone do not pass.
+
+The first completed gameplay dispatch at original frame272 matches all compared
+semantic fields, including game_state1, RNG758 and held/pressed/previous0. A
+separate changed-RNG process must introduce an additional discrepancy. This
+removes the diagnosed future-poll assignment for that bounded completion by
+executing the omitted NMI polling at its semantic seam. It proves neither the
+original boot video-frame timing nor subsequent asynchronous wait scheduling;
+the general diagnostic replay and overall verdict remain nonaccepting.

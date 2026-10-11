@@ -271,6 +271,41 @@ def investigate(args,run,verdict):
                         'complete_states':{path.name:digest(path) for path in directory.glob('*.wram')},
                         'stdout_sha256':digest(directory/'stdout.log'),'stderr_sha256':digest(directory/'stderr.log')}
     original=[row for row in mapped if row['kind']=='dispatch-complete']
+    # Bounded causal seam: original NMI samples are restored after the completed
+    # boundary, while the C-relocated main-entry poll is suppressed. No state loading.
+    first_complete=original[0]
+    prelude=[row for row in polls if row['source_event']<first_complete['source_event']]
+    causal_inputs=run/'causal.inputs'
+    after=next(row for row in polls if row['source_event']>first_complete['source_event'])
+    causal_inputs.write_text(''.join(f"{row['hardware_pad']:04x}\n" for row in prelude+[after]))
+    causal_results={}
+    for name,mode in (('causal-candidate','causal-polling'),('causal-control','changed-causal-rng')):
+        directory=run/name;(directory/'fixtures').mkdir(parents=True);(directory/'saves').mkdir()
+        cmd=[run/'prefix-host',rom,causal_inputs,str(len(prelude)+1),mode]
+        invoke(cmd,directory,args.timeout)
+        records=[json.loads(line) for line in (directory/'events.jsonl').read_text().splitlines()]
+        completed=[row for row in records if row['kind']=='dispatch-complete']
+        if len(completed)!=1: raise ValueError('bounded causal seam did not produce exactly one completion')
+        causal_results[name]=completed[0]
+        before=[row for row in records if row['kind']=='controller-return' and row['event']<completed[0]['event']]
+        if [row['state']['held'] for row in before]!=[row['held'] for row in prelude]:
+            raise ValueError('causal prelude polls changed order or sample')
+        post=[row for row in records if row['kind']=='controller-return' and row['event']>completed[0]['event']]
+        if len(post)!=1 or post[0]['state']['held']!=after['held']:
+            raise ValueError('causal post-completion sample boundary differs')
+        verdict[name]={'command':list(map(str,cmd)),'events_sha256':digest(directory/'events.jsonl'),
+            'terminal_sha256':digest(directory/'terminal.bin'),'complete_sha256':digest(directory/'complete-0001.wram'),
+            'stdout_sha256':digest(directory/'stdout.log'),'stderr_sha256':digest(directory/'stderr.log')}
+    causal_diff={key:{'original':first_complete['state'][key],'candidate':causal_results['causal-candidate']['state'][key]}
+        for key in SEMANTIC if first_complete['state'][key]!=causal_results['causal-candidate']['state'][key]}
+    control_diff={key:{'candidate':causal_results['causal-candidate']['state'][key],'changed':causal_results['causal-control']['state'][key]}
+        for key in SEMANTIC if causal_results['causal-candidate']['state'][key]!=causal_results['causal-control']['state'][key]}
+    if causal_diff or not control_diff: raise ValueError('bounded causal first-completion seam failed parity or control')
+    verdict['causal_first_completion']={'semantic_match':True,'source_frame':first_complete['source_frame'],
+        'source_event':first_complete['source_event'],'prelude_polls_executed':len(prelude),
+        'next_poll_event':after['source_event'],'policy':'real NMI polling after completion; relocated main poll suppressed; real reset clearing; no WRAM loading',
+        'candidate':causal_results['causal-candidate'],'changed_rng_control':control_diff,
+        'inputs_sha256':digest(causal_inputs),'scope':'first completed gameplay dispatch only; boot video timing and later waits unproven'}
     comparisons=compare(original,subjects['candidate'])
     if not comparisons: raise ValueError('no diagnostic completed-boundary comparisons')
     verdict['comparisons']=comparisons

@@ -39,6 +39,14 @@ class PrefixCommandTests(unittest.TestCase):
             self.assertEqual([row['held'] for row in polls[:3]], [0x1000, 0x80, 0x1000])
             self.assertTrue(all('source_event' in row and 'classification' in row for row in timeline['events']))
             self.assertTrue(verdict['comparisons'])
+            causal=verdict['causal_first_completion']
+            self.assertTrue(causal['semantic_match'])
+            self.assertEqual(causal['source_frame'],272)
+            self.assertEqual(causal['prelude_polls_executed'],150)
+            self.assertGreater(causal['next_poll_event'],causal['source_event'])
+            self.assertEqual(causal['candidate']['state']['held'],0)
+            self.assertEqual(causal['candidate']['state']['rng'],758)
+            self.assertIn('rng',causal['changed_rng_control'])
             primitive=verdict['poll_primitive']
             self.assertEqual(primitive['cases'],len(polls))
             self.assertEqual(primitive['first_source_frame'],19)

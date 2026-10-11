@@ -6,7 +6,8 @@
 
 static FILE *events;
 static unsigned long sequence, host_step, completed;
-static bool changed_gameplay;
+static bool changed_gameplay, causal_polling;
+static unsigned scheduled_pad;
 
 static void Observe(const char *kind) {
   fprintf(events, "{\"event\":%lu,\"host_step\":%lu,\"kind\":\"%s\",\"coroutine\":%u,\"state\":{",
@@ -20,6 +21,7 @@ static void Observe(const char *kind) {
 }
 void __real_ReadJoypadInputs(void);
 void __wrap_ReadJoypadInputs(void) {
+  if (causal_polling) { Observe("relocated-main-poll-suppressed"); return; }
   Observe("controller-entry");
   __real_ReadJoypadInputs();
   Observe("controller-return");
@@ -34,6 +36,14 @@ void __wrap_Vector_NMI(void) {
     if (!state || fwrite(g_ram,1,sizeof(g_ram),state)!=sizeof(g_ram) || fclose(state)) exit(2);
   } else Observe("continuation");
   __real_Vector_NMI();
+  if (causal_polling) {
+    unsigned reversed = 0;
+    for (unsigned bit = 0; bit < 16; bit++) reversed |= ((scheduled_pad >> bit) & 1) << (15 - bit);
+    g_snes->input1->currentState = reversed;
+    Observe("controller-entry");
+    __real_ReadJoypadInputs();
+    Observe("controller-return");
+  }
   Observe("nmi-return");
 }
 uint16 __real_NextRandom(void);
@@ -83,7 +93,8 @@ int main(int argc,char **argv) {
   if (!strcmp(argv[4], "poll-fixtures")) return PollFixtures(argv[1], argv[2], argv[3], 0);
   if (!strcmp(argv[4], "changed-poll-fixtures")) return PollFixtures(argv[1], argv[2], argv[3], 1);
   if (!strcmp(argv[4], "changed-state-poll-fixtures")) return PollFixtures(argv[1], argv[2], argv[3], 2);
-  changed_gameplay = !strcmp(argv[4],"changed-rng");
+  causal_polling = !strcmp(argv[4], "causal-polling") || !strcmp(argv[4], "changed-causal-rng");
+  changed_gameplay = !strcmp(argv[4],"changed-rng") || !strcmp(argv[4], "changed-causal-rng");
   FILE *inputs=fopen(argv[2],"r");
   events=fopen("events.jsonl","w");
   if (!inputs || !events || !SnesInit(argv[1])) return 2;
@@ -97,6 +108,7 @@ int main(int argc,char **argv) {
   for (host_step=1;host_step<=steps;host_step++) {
     unsigned pad;
     if (fscanf(inputs,"%x",&pad)!=1 || pad>0xffff) return 2;
+    scheduled_pad = pad;
     unsigned reversed=0;
     for (int bit=0;bit<16;bit++) reversed|=((pad>>bit)&1)<<(15-bit);
     RtlRunFrame(reversed);
