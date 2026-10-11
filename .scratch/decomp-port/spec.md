@@ -70,6 +70,7 @@ observable hardware effects, Rust hits and fallback measurements.
 - 46: Bomb/Golden Torizo orb spawning, collision/bounce lifecycle and direction branch, offline verified (384 cases).
 - 47: Torizo sonic-boom allocation, flight/impact snapshots and position reset, offline verified (196 cases).
 - 48: Golden Torizo egg allocation, bounce/launch/impact lifecycle and facing branch, offline verified (436 cases).
+- 49: Golden Torizo super-missile allocation, saved-slot tracking, aiming and collision flight, offline verified (368 cases).
 
 This is the first frontier, not the completion boundary of the user's goal.
 Expand tickets into substantive gameplay subsystems after this frontier, using

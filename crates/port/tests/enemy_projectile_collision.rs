@@ -452,3 +452,18 @@ fn torizo_egg_timer_underflow_launches_without_moving() {
     assert_eq!(r.word(0x1a4b), 123);
     assert_eq!(r.word(0x1a93), 45);
 }
+
+#[test]
+fn torizo_super_missile_tracks_saved_enemy_slot() {
+    use port::enemy_projectile_instructions as e;
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x1aff, 64);
+    r.set_word(0xe54, 0);
+    r.set_word(0xf7a + 64, 100);
+    r.set_word(0xf7e + 64, 200);
+    r.set_word(0xfb4 + 64, 0x8000);
+    e::preinstruction(&mut r, &[], 0xb20d, 0).unwrap();
+    assert_eq!(r.word(0x1a4b), 132);
+    assert_eq!(r.word(0x1a93), 148);
+}

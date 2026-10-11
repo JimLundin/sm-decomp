@@ -35,6 +35,13 @@ pub fn move_xy(r: &mut Wram<'_>, k: u16) -> Result<u16, &'static str> {
 pub fn instruction(r: &mut Wram<'_>, rom: &[u8], opcode: u16, pc: u16, k: u16) -> Result<u16, &'static str> {
     let k = slot(k)?;
     match opcode {
+        0xb269 | 0xb272 => {
+            let angle = crate::enemy::dispatch_rom(r, rom, "CalculateAngleOfSamusFromEproj", k as i32, 0)? as usize;
+            let angle = if opcode == 0xb269 { angle & 127 } else { angle | 128 };
+            r.set_word(0x1ab7 + k, (crate::enemy_projectiles::SINE[angle + 64] as u16).wrapping_mul(4));
+            r.set_word(0x1adb + k, (crate::enemy_projectiles::SINE[angle] as u16).wrapping_mul(4));
+            Ok(pc)
+        }
         0xb13e => Ok(if r.word(0x1aff + k) & 0x8000 != 0 { 0xb166 } else { 0xb14b }),
         0xad92 => {
             add_hilo(r, k, 0x1a4b, 0x1a27, r.word(0x1ab7 + k));
@@ -241,6 +248,35 @@ fn delete_below(r: &mut Wram<'_>, k: usize) {
 pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Result<(), &'static str> {
     let k = slot(k)?;
     match address {
+        0xb20d => {
+            let enemy = r.word(0x1aff + k);
+            if enemy > 0x7c0 || enemy & 63 != 0 {
+                return Err("invalid tracked Torizo enemy slot");
+            }
+            let p = 0xf78 + usize::from(enemy);
+            r.set_word(
+                0x1a4b + k,
+                r.word(p + 2).wrapping_add(if r.word(p + 0x3c) & 0x8000 != 0 { 32 } else { 0xffe0 }),
+            );
+            r.set_word(0x1a93 + k, r.word(p + 6).wrapping_sub(52));
+        }
+        0xb237 => {
+            let hit = if crate::enemy_projectile_collision::horizontal(r, rom, k as u16)? != 0 {
+                true
+            } else {
+                crate::enemy_projectile_collision::vertical(r, rom, k as u16)? != 0 && r.word(0x1adb + k) & 0x8000 == 0
+            };
+            if hit {
+                r.set_word(0x1b47 + k, 0xb2ef);
+                r.set_word(0x1b8f + k, 1);
+            } else {
+                let vy = r.word(0x1adb + k).wrapping_add(16);
+                r.set_word(0x1adb + k, vy);
+                if vy & 0xf000 == 0x1000 {
+                    r.set_word(0x1997 + k, 0);
+                }
+            }
+        }
         0xb043 => {
             let timer = r.word(0x1b23 + k).wrapping_sub(1);
             r.set_word(0x1b23 + k, timer);

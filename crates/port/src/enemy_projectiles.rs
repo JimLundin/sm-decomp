@@ -75,6 +75,11 @@ pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) ->
 fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'static str> {
     let i = param as usize / 2;
     let table = match init {
+        0xb1ce if r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => {
+            word(rom, 0xb209)?;
+            word(rom, 0xb20b)?;
+            None
+        }
         0xb001 if r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => {
             for p in (0xb02f..0xb043).step_by(2) {
                 word(rom, p)?;
@@ -168,7 +173,19 @@ fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'sta
     }
     if !matches!(
         init,
-        0x9dec | 0x9e46 | 0x9e4b | 0x9eb2 | 0xa5d3 | 0xa65d | 0xa81b | 0xa871 | 0xabeb | 0xac7c | 0xae15 | 0xb001
+        0x9dec
+            | 0x9e46
+            | 0x9e4b
+            | 0x9eb2
+            | 0xa5d3
+            | 0xa65d
+            | 0xa81b
+            | 0xa871
+            | 0xabeb
+            | 0xac7c
+            | 0xae15
+            | 0xb001
+            | 0xb1ce
     ) && !matches!(
         init,
         0xb49d
@@ -201,6 +218,17 @@ pub(crate) fn random(r: &mut Wram<'_>) -> u16 {
     n
 }
 fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> Result<(), &'static str> {
+    if init == 0xb1ce {
+        let enemy = r.word(0xe54);
+        let p = 0xf78 + usize::from(enemy);
+        let right = r.word(p + 0x3c) & 0x8000 != 0;
+        r.set_word(0x1aff + k, enemy);
+        r.set_word(0x1a4b + k, r.word(p + 2).wrapping_add(if right { 30 } else { 0xffe2 }));
+        r.set_word(0x1a93 + k, r.word(p + 6).wrapping_sub(52));
+        r.set_word(0x1b47 + k, word(rom, if right { 0xb20b } else { 0xb209 })?);
+        return Ok(());
+    }
+
     if init == 0xae15 {
         let offset = if random(r) & 1 != 0 { 0xfff4 } else { 20 };
         let enemy = usize::from(r.word(0xe54));
