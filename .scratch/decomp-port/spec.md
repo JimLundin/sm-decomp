@@ -65,6 +65,7 @@ observable hardware effects, Rust hits and fallback measurements.
 - 41: Mini-Kraid spit and spike allocation, extra enemy-RAM aliases and collision flight through scheduled frames, offline verified (401 cases).
 - 42: walking lava seahorse fireball spawn, trajectories and vertical-first collision flight through scheduled frames, offline verified (241 cases).
 - 43: pirate laser/claw script callbacks and camera-relative flight through scheduled frames, offline verified (644 cases); host-global initializers remain open.
+- 44: Bomb Torizo low-health drool initializers and probabilistic script branch through frames, offline verified (384 cases).
 
 This is the first frontier, not the completion boundary of the user's goal.
 Expand tickets into substantive gameplay subsystems after this frontier, using

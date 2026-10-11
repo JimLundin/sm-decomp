@@ -35,6 +35,13 @@ pub fn move_xy(r: &mut Wram<'_>, k: u16) -> Result<u16, &'static str> {
 pub fn instruction(r: &mut Wram<'_>, rom: &[u8], opcode: u16, pc: u16, k: u16) -> Result<u16, &'static str> {
     let k = slot(k)?;
     match opcode {
+        0xa456 => {
+            if crate::enemy_projectiles::random(r) & 0xc000 == 0xc000 {
+                word(rom, pc)
+            } else {
+                Ok(pc.wrapping_add(2))
+            }
+        }
         0xa050 => {
             r.set_word(0x1a03 + k, word(rom, pc)?);
             Ok(pc)

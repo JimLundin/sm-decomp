@@ -366,3 +366,18 @@ fn pirate_claw_reverses_after_zero_speed_and_preserves_camera_wrap() {
     assert_eq!(r.word(0x1a4b), 17);
     assert_eq!(r.word(0x1a93), 52);
 }
+
+#[test]
+fn torizo_probability_branch_consumes_exactly_one_rng_call() {
+    use port::enemy_projectile_instructions as e;
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    let mut rom = vec![0; 0x38000];
+    rom[0x37000..0x37002].copy_from_slice(&0xf100u16.to_le_bytes());
+    r.set_word(0x5e5, 0x5c15);
+    assert_eq!(e::instruction(&mut r, &rom, 0xa456, 0xf000, 0).unwrap(), 0xf100);
+    assert_eq!(r.word(0x5e5), 0xcd7a);
+    r.set_word(0x5e5, 0);
+    assert_eq!(e::instruction(&mut r, &rom, 0xa456, 0xf000, 0).unwrap(), 0xf002);
+    assert_eq!(r.word(0x5e5), 0x0111);
+}
