@@ -25,17 +25,27 @@
       "decompression_calls": 419
     },
     "mixed-0": {
-      "frame": 89000,
+      "frame": 129712,
       "game_state": 8,
-      "room": 57525,
-      "samus_x": 235,
-      "samus_y": 187,
-      "rng": 7265,
+      "room": 57229,
+      "samus_x": 173,
+      "samus_y": 159,
+      "rng": 13022,
       "fallback_calls": 0,
       "fallback_instructions": 0,
-      "decompression_calls": 327
+      "decompression_calls": 419
     },
-    "mixed-1": null
+    "mixed-1": {
+      "frame": 129712,
+      "game_state": 8,
+      "room": 57229,
+      "samus_x": 173,
+      "samus_y": 159,
+      "rng": 13022,
+      "fallback_calls": 0,
+      "fallback_instructions": 0,
+      "decompression_calls": 419
+    }
   },
   "captures": [
     {
@@ -43,12 +53,14 @@
       "subjects_present": [
         "c-0",
         "c-1",
-        "mixed-0"
+        "mixed-0",
+        "mixed-1"
       ],
       "matches_C0_full_WRAM_and_all8_host": {
         "c-0": true,
         "c-1": true,
-        "mixed-0": true
+        "mixed-0": true,
+        "mixed-1": true
       },
       "member_sha256": {
         "c-0": {
@@ -64,6 +76,12 @@
           "fixtures/projectile-id-965e-001-after.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58"
         },
         "mixed-0": {
+          "fixtures/projectile-id-965e-001-before.wram": "35a2a8e283267f9153379e1cc4a894dcbc14ad8881d62b2ceccead2f5db6efde",
+          "fixtures/projectile-id-965e-001-before.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
+          "fixtures/projectile-id-965e-001-after.wram": "a6cd978d10ae6821e6f3bad9c532b1f0f1505bef667154497af14cc468696264",
+          "fixtures/projectile-id-965e-001-after.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58"
+        },
+        "mixed-1": {
           "fixtures/projectile-id-965e-001-before.wram": "35a2a8e283267f9153379e1cc4a894dcbc14ad8881d62b2ceccead2f5db6efde",
           "fixtures/projectile-id-965e-001-before.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
           "fixtures/projectile-id-965e-001-after.wram": "a6cd978d10ae6821e6f3bad9c532b1f0f1505bef667154497af14cc468696264",
@@ -226,12 +244,14 @@
       "subjects_present": [
         "c-0",
         "c-1",
-        "mixed-0"
+        "mixed-0",
+        "mixed-1"
       ],
       "matches_C0_full_WRAM_and_all8_host": {
         "c-0": true,
         "c-1": true,
-        "mixed-0": true
+        "mixed-0": true,
+        "mixed-1": true
       },
       "member_sha256": {
         "c-0": {
@@ -247,6 +267,12 @@
           "fixtures/projectile-id-965e-002-after.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58"
         },
         "mixed-0": {
+          "fixtures/projectile-id-965e-002-before.wram": "71d34dc9cc1c65671d1b2e989860d6428bcfac5bb82dd702f405503c56e5d7cc",
+          "fixtures/projectile-id-965e-002-before.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
+          "fixtures/projectile-id-965e-002-after.wram": "d9e0745408d6c8e89297ef7720b0230f96dd56f835819b4e49ad8a021d438c97",
+          "fixtures/projectile-id-965e-002-after.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58"
+        },
+        "mixed-1": {
           "fixtures/projectile-id-965e-002-before.wram": "71d34dc9cc1c65671d1b2e989860d6428bcfac5bb82dd702f405503c56e5d7cc",
           "fixtures/projectile-id-965e-002-before.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
           "fixtures/projectile-id-965e-002-after.wram": "d9e0745408d6c8e89297ef7720b0230f96dd56f835819b4e49ad8a021d438c97",
@@ -409,12 +435,14 @@
       "subjects_present": [
         "c-0",
         "c-1",
-        "mixed-0"
+        "mixed-0",
+        "mixed-1"
       ],
       "matches_C0_full_WRAM_and_all8_host": {
         "c-0": true,
         "c-1": true,
-        "mixed-0": true
+        "mixed-0": true,
+        "mixed-1": true
       },
       "member_sha256": {
         "c-0": {
@@ -430,6 +458,12 @@
           "fixtures/projectile-id-9688-001-after.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58"
         },
         "mixed-0": {
+          "fixtures/projectile-id-9688-001-before.wram": "431bda0168646f32b29ca0c79395ecac4669028c8745c290948af5c2f2ba18bd",
+          "fixtures/projectile-id-9688-001-before.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
+          "fixtures/projectile-id-9688-001-after.wram": "431be088769289fc0402a68e3adc4ee1108fc133cbcc3ae80e6daeaf8a67c46d",
+          "fixtures/projectile-id-9688-001-after.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58"
+        },
+        "mixed-1": {
           "fixtures/projectile-id-9688-001-before.wram": "431bda0168646f32b29ca0c79395ecac4669028c8745c290948af5c2f2ba18bd",
           "fixtures/projectile-id-9688-001-before.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
           "fixtures/projectile-id-9688-001-after.wram": "431be088769289fc0402a68e3adc4ee1108fc133cbcc3ae80e6daeaf8a67c46d",
@@ -622,12 +656,14 @@
       "subjects_present": [
         "c-0",
         "c-1",
-        "mixed-0"
+        "mixed-0",
+        "mixed-1"
       ],
       "matches_C0_full_WRAM_and_all8_host": {
         "c-0": true,
         "c-1": true,
-        "mixed-0": true
+        "mixed-0": true,
+        "mixed-1": true
       },
       "member_sha256": {
         "c-0": {
@@ -643,6 +679,12 @@
           "fixtures/projectile-id-9688-002-after.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58"
         },
         "mixed-0": {
+          "fixtures/projectile-id-9688-002-before.wram": "05edc0591531fa4eaa4a412a09f9329b76a365e50b0bf5ca8c01c1abe1ef451b",
+          "fixtures/projectile-id-9688-002-before.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
+          "fixtures/projectile-id-9688-002-after.wram": "ef5d1ff527ed7a4d5f607b3a072c05b934aa6312b5a1960d5c67fa4602ab2a9e",
+          "fixtures/projectile-id-9688-002-after.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58"
+        },
+        "mixed-1": {
           "fixtures/projectile-id-9688-002-before.wram": "05edc0591531fa4eaa4a412a09f9329b76a365e50b0bf5ca8c01c1abe1ef451b",
           "fixtures/projectile-id-9688-002-before.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
           "fixtures/projectile-id-9688-002-after.wram": "ef5d1ff527ed7a4d5f607b3a072c05b934aa6312b5a1960d5c67fa4602ab2a9e",
@@ -835,12 +877,14 @@
       "subjects_present": [
         "c-0",
         "c-1",
-        "mixed-0"
+        "mixed-0",
+        "mixed-1"
       ],
       "matches_C0_full_WRAM_and_all8_host": {
         "c-0": true,
         "c-1": true,
-        "mixed-0": true
+        "mixed-0": true,
+        "mixed-1": true
       },
       "member_sha256": {
         "c-0": {
@@ -856,6 +900,12 @@
           "fixtures/projectile-id-9696-001-after.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58"
         },
         "mixed-0": {
+          "fixtures/projectile-id-9696-001-before.wram": "431bda0168646f32b29ca0c79395ecac4669028c8745c290948af5c2f2ba18bd",
+          "fixtures/projectile-id-9696-001-before.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
+          "fixtures/projectile-id-9696-001-after.wram": "431be088769289fc0402a68e3adc4ee1108fc133cbcc3ae80e6daeaf8a67c46d",
+          "fixtures/projectile-id-9696-001-after.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58"
+        },
+        "mixed-1": {
           "fixtures/projectile-id-9696-001-before.wram": "431bda0168646f32b29ca0c79395ecac4669028c8745c290948af5c2f2ba18bd",
           "fixtures/projectile-id-9696-001-before.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
           "fixtures/projectile-id-9696-001-after.wram": "431be088769289fc0402a68e3adc4ee1108fc133cbcc3ae80e6daeaf8a67c46d",
@@ -1048,12 +1098,14 @@
       "subjects_present": [
         "c-0",
         "c-1",
-        "mixed-0"
+        "mixed-0",
+        "mixed-1"
       ],
       "matches_C0_full_WRAM_and_all8_host": {
         "c-0": true,
         "c-1": true,
-        "mixed-0": true
+        "mixed-0": true,
+        "mixed-1": true
       },
       "member_sha256": {
         "c-0": {
@@ -1069,6 +1121,12 @@
           "fixtures/projectile-id-9696-002-after.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58"
         },
         "mixed-0": {
+          "fixtures/projectile-id-9696-002-before.wram": "05edc0591531fa4eaa4a412a09f9329b76a365e50b0bf5ca8c01c1abe1ef451b",
+          "fixtures/projectile-id-9696-002-before.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
+          "fixtures/projectile-id-9696-002-after.wram": "ef5d1ff527ed7a4d5f607b3a072c05b934aa6312b5a1960d5c67fa4602ab2a9e",
+          "fixtures/projectile-id-9696-002-after.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58"
+        },
+        "mixed-1": {
           "fixtures/projectile-id-9696-002-before.wram": "05edc0591531fa4eaa4a412a09f9329b76a365e50b0bf5ca8c01c1abe1ef451b",
           "fixtures/projectile-id-9696-002-before.host": "2553ab36df263a03f04f1b49042d49084319a3bd0f2b5f6ffd16109056960d58",
           "fixtures/projectile-id-9696-002-after.wram": "ef5d1ff527ed7a4d5f607b3a072c05b934aa6312b5a1960d5c67fa4602ab2a9e",
@@ -1257,9 +1315,9 @@
       }
     }
   ],
-  "all_four_subjects_present": false,
+  "all_four_subjects_present": true,
   "all_available_subjects_match_C0": true,
-  "sealed_verdict_member_hashes_verified": false,
+  "sealed_verdict_member_hashes_verified": true,
   "material_findings": {
     "impact_point": [
       22,
@@ -1288,12 +1346,297 @@
   "cleanup": {
     "disposable_extraction_or_builds_created": false,
     "bytes_reclaimed": 0,
-    "free_bytes": 257736871936,
+    "free_bytes": 261100711936,
     "root_handles_run_cleanup": true,
     "temporary_inspection_script_removed": true,
-    "temporary_script_bytes_reclaimed": 4316
+    "temporary_script_bytes_reclaimed": 4316,
+    "run_ordinary_bytes": 0,
+    "run_deduplicated_bytes": 960208458,
+    "retained_authentication": "authenticated1305artifacts/all4subjects"
   },
-  "handoff_status": "partial; C-0/C-1 complete, mixed-0 neworientation captures match, mixed-1 pending",
+  "handoff_status": "Finished RoomGfx-only full route passed1305artifact four-process admission and postcleanup authentication. All9scheduler IDs exclusivelyRust; WithGfxallocation stillC in this frozen evidence.",
   "native_scope_limit": "Live allocator ownership covers SpawnEprojWithRoomGfx only. Ceres pad/platform callers use SpawnEprojWithGfx and remain C allocation; native scheduler ownership covers their active A387/A395 frames. Direct offline initializer/allocation comparisons do not prove live WithGfx ownership.",
-  "future_reinspection": "After mixed-1 reaches>=71000, compare fixtures/projectile-id-{965e,9688,9696}-{001,002}-{before,after}.{wram,host} against recorded C-0 SHA256 across all four subjects; require131072-byte WRAM/16-byte host. After final verdict exists, require every member SHA256 equal verdict.artifacts, inspect actual exclusive native counts/refusals and ordered effects/terminal parity, then root runs cleanup and authentication. Do not launch a second replay."
+  "future_reinspection": "After native WithGfx integration, use a fresh four-process full-route run and require complete per-entry/per-ID allocation counts plus all-nine exclusive Rust scheduler counts; do not reuse this RoomGfx-only replay for Ceres allocation admission.",
+  "verdict": "out/port/observed-projectile-corrected-live-full/20261011T135146.556016Z/verdict.json",
+  "verdict_sha256": "c00a11b0701cb8433861063ba99908162992bb9d50b8ef6d6dad9c73910df626",
+  "projectile_hits": {
+    "c-0": {
+      "0": {
+        "total": 16,
+        "c": 16,
+        "rust": 0,
+        "refused": 0,
+        "active_c": 16,
+        "active_rust": 0,
+        "9642_c": 16,
+        "9642_rust": 0
+      },
+      "1": {
+        "total": 95325,
+        "c": 95325,
+        "rust": 0,
+        "refused": 0,
+        "active_c": 866,
+        "active_rust": 0,
+        "9642_c": 213,
+        "9642_rust": 0
+      }
+    },
+    "c-1": {
+      "0": {
+        "total": 16,
+        "c": 16,
+        "rust": 0,
+        "refused": 0,
+        "active_c": 16,
+        "active_rust": 0,
+        "9642_c": 16,
+        "9642_rust": 0
+      },
+      "1": {
+        "total": 95325,
+        "c": 95325,
+        "rust": 0,
+        "refused": 0,
+        "active_c": 866,
+        "active_rust": 0,
+        "9642_c": 213,
+        "9642_rust": 0
+      }
+    },
+    "mixed-0": {
+      "0": {
+        "total": 16,
+        "c": 0,
+        "rust": 16,
+        "refused": 0,
+        "active_c": 0,
+        "active_rust": 16,
+        "9642_c": 0,
+        "9642_rust": 16
+      },
+      "1": {
+        "total": 95325,
+        "c": 0,
+        "rust": 95325,
+        "refused": 0,
+        "active_c": 0,
+        "active_rust": 866,
+        "9642_c": 0,
+        "9642_rust": 213
+      }
+    },
+    "mixed-1": {
+      "0": {
+        "total": 16,
+        "c": 0,
+        "rust": 16,
+        "refused": 0,
+        "active_c": 0,
+        "active_rust": 16,
+        "9642_c": 0,
+        "9642_rust": 16
+      },
+      "1": {
+        "total": 95325,
+        "c": 0,
+        "rust": 95325,
+        "refused": 0,
+        "active_c": 0,
+        "active_rust": 866,
+        "9642_c": 0,
+        "9642_rust": 213
+      }
+    }
+  },
+  "projectile_id_hits": {
+    "c-0": {
+      "38466": {
+        "c": 617,
+        "rust": 0,
+        "refused": 0
+      },
+      "38480": {
+        "c": 50,
+        "rust": 0,
+        "refused": 0
+      },
+      "38494": {
+        "c": 50,
+        "rust": 0,
+        "refused": 0
+      },
+      "38508": {
+        "c": 201,
+        "rust": 0,
+        "refused": 0
+      },
+      "38522": {
+        "c": 75,
+        "rust": 0,
+        "refused": 0
+      },
+      "38536": {
+        "c": 152,
+        "rust": 0,
+        "refused": 0
+      },
+      "38550": {
+        "c": 177,
+        "rust": 0,
+        "refused": 0
+      },
+      "41863": {
+        "c": 528,
+        "rust": 0,
+        "refused": 0
+      },
+      "41877": {
+        "c": 524,
+        "rust": 0,
+        "refused": 0
+      }
+    },
+    "c-1": {
+      "38466": {
+        "c": 617,
+        "rust": 0,
+        "refused": 0
+      },
+      "38480": {
+        "c": 50,
+        "rust": 0,
+        "refused": 0
+      },
+      "38494": {
+        "c": 50,
+        "rust": 0,
+        "refused": 0
+      },
+      "38508": {
+        "c": 201,
+        "rust": 0,
+        "refused": 0
+      },
+      "38522": {
+        "c": 75,
+        "rust": 0,
+        "refused": 0
+      },
+      "38536": {
+        "c": 152,
+        "rust": 0,
+        "refused": 0
+      },
+      "38550": {
+        "c": 177,
+        "rust": 0,
+        "refused": 0
+      },
+      "41863": {
+        "c": 528,
+        "rust": 0,
+        "refused": 0
+      },
+      "41877": {
+        "c": 524,
+        "rust": 0,
+        "refused": 0
+      }
+    },
+    "mixed-0": {
+      "38466": {
+        "c": 0,
+        "rust": 617,
+        "refused": 0
+      },
+      "38480": {
+        "c": 0,
+        "rust": 50,
+        "refused": 0
+      },
+      "38494": {
+        "c": 0,
+        "rust": 50,
+        "refused": 0
+      },
+      "38508": {
+        "c": 0,
+        "rust": 201,
+        "refused": 0
+      },
+      "38522": {
+        "c": 0,
+        "rust": 75,
+        "refused": 0
+      },
+      "38536": {
+        "c": 0,
+        "rust": 152,
+        "refused": 0
+      },
+      "38550": {
+        "c": 0,
+        "rust": 177,
+        "refused": 0
+      },
+      "41863": {
+        "c": 0,
+        "rust": 528,
+        "refused": 0
+      },
+      "41877": {
+        "c": 0,
+        "rust": 524,
+        "refused": 0
+      }
+    },
+    "mixed-1": {
+      "38466": {
+        "c": 0,
+        "rust": 617,
+        "refused": 0
+      },
+      "38480": {
+        "c": 0,
+        "rust": 50,
+        "refused": 0
+      },
+      "38494": {
+        "c": 0,
+        "rust": 50,
+        "refused": 0
+      },
+      "38508": {
+        "c": 0,
+        "rust": 201,
+        "refused": 0
+      },
+      "38522": {
+        "c": 0,
+        "rust": 75,
+        "refused": 0
+      },
+      "38536": {
+        "c": 0,
+        "rust": 152,
+        "refused": 0
+      },
+      "38550": {
+        "c": 0,
+        "rust": 177,
+        "refused": 0
+      },
+      "41863": {
+        "c": 0,
+        "rust": 528,
+        "refused": 0
+      },
+      "41877": {
+        "c": 0,
+        "rust": 524,
+        "refused": 0
+      }
+    }
+  }
 }

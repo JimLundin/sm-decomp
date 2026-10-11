@@ -46,8 +46,9 @@ def case(name, values, **args):
 
 def main():
     manifest = json.loads((ROOT / 'tools/port/projectile-host-context.json').read_text())
-    manifest['family'] = 'observed-projectile-initializers'
-    direct, common, allocation, noop, frames = [], [], [], [], []
+    manifest.update(family='observed-projectile-initializers',
+                    rust_module='crates/port/src/observed_projectile_ownership.rs')
+    direct, common, allocation, with_gfx, noop, frames = [], [], [], [], [], []
     for k in SLOTS:
         for i, (area, parameter) in enumerate(itertools.product((0, 2, 5, 0xFFFF), PARAMETERS)):
             values = source_values(i) + stale_slot(k, i)
@@ -87,11 +88,52 @@ def main():
             (0x9642, 0xA387, 0xA395, 0x9650, 0x965E, 0x966C, 0x967A, 0x9688, 0x9696, 0xFFFF), PARAMETERS)):
         values = [(0x1997 + s, 1) for s in SLOTS] + source_values(i)
         allocation.append(case(f'saturated-{definition:x}-{i}', values, a=definition, b=parameter))
+    # Exercise the genuine native three-word caller through a packed Rust
+    # seam. Current enemy, graphics source enemy and Ridley's enemy-zero
+    # position/velocity source deliberately differ.
+    for k in (*SLOTS, None):
+        for enemy in (0, 0x40, 0x7C0):
+            for definition in (0x9642, 0xA387, 0xA395):
+                for i, parameter in enumerate(PARAMETERS):
+                    current = 0x80 if enemy != 0x80 else 0xC0
+                    values = [(0x1997 + slot, 1) for slot in SLOTS]
+                    values += source_values(i) + [(0xE54, current)]
+                    values += [(0xF7A, 0xFFF0), (0xF7E, 0xFFF8),
+                               (0x7832, 0x8000), (0x7834, 0xFFFF),
+                               (0xF7A + current, 0x1234), (0xF7E + current, 0x5678),
+                               (0x7832 + current, 0x1111), (0x7834 + current, 0x2222)]
+                    for source, tiles, palette in ((0, 0x123, 0xA00), (0x40, 0x456, 0x1400), (0x7C0, 0x789, 0x1C00)):
+                        values += [(0xF96 + source, tiles), (0xF98 + source, palette)]
+                    if k is not None:
+                        values += stale_slot(k, i) + [(0x1997 + k, 0)]
+                        if i & 1 and k >= 2:
+                            values += [(0x1997 + k - 2, 0)]
+                    name = f'with-gfx-{definition:x}-{enemy}-{k if k is not None else "full"}-{i}'
+                    with_gfx.append(case(name, values, a=parameter, b=enemy | (definition << 16)))
+    # Observed definitions override gfx during initialization. Actual native
+    # B4B1 (Tourian fake wall) retains allocator gfx, making the source OR
+    # observable through this same host-aware allocator seam. This bounded
+    # offline control does not expand the live nine-definition support set.
+    for k in SLOTS:
+        for enemy in (0, 0x40, 0x7C0):
+            for i, (tiles, palette) in enumerate(((0x123, 0xA00), (0xF0F0, 0x0FF0), (0xFFFF, 0))):
+                values = [(0x1997 + slot, 1) for slot in SLOTS]
+                values += stale_slot(k, i) + [(0x1997 + k, 0), (0xE54, 0x80)]
+                for source in (0, 0x40, 0x7C0, 0x80):
+                    values += [(0xF96 + source, 0x1111), (0xF98 + source, 0x2222)]
+                values += [(0xF96 + enemy, tiles), (0xF98 + enemy, palette)]
+                with_gfx.append(case(f'offline-gfx-or-b4b1-{enemy}-{k}-{i}', values,
+                                     a=0xBEEF, b=enemy | (0xB4B1 << 16)))
     manifest['routines'] = [manifest['routines'][0]]
     for symbol, args, cases in [('EprojInitializer', 2, direct), ('sub_86A301', 1, common),
                                 ('SpawnEprojWithRoomGfx', 2, allocation),
                                 ('EprojPreinstruction', 2, noop), ('EprojRunAll', 0, frames)]:
         manifest['routines'].append(dict(symbol=symbol, args=args, **{'return': 'void'}, cases=cases))
+    manifest['routines'].append(dict(symbol='SpawnEprojWithGfx', arg_types=['uint16', 'uint32'],
+                                     packed_args='eproj-with-gfx-v1', **{'return': 'void'},
+                                     live_eligible=False, cases=with_gfx))
+    for routine in manifest['routines']:
+        routine['live_eligible'] = False
     path = ROOT / 'tools/port/observed-projectile-initializers.json'
     path.write_text(json.dumps(manifest, separators=(',', ':')) + '\n')
 

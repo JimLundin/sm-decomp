@@ -1,0 +1,109 @@
+{
+  "status": "read-only-inspected",
+  "scope": "1530 native SpawnEprojWithGfx compiled-actual-C cases; full canonical WRAM/raw returns/eight host words; bounded offline domain only",
+  "verdict": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/observed-projectile-initializers/20261011T142735.934805Z/evidence/20261011T142735.986673Z/verdict.json",
+  "verdict_sha256": "aafc4b82ff4eae6ec0400318dcab4802dfa717942db88a85eb6583820142f90c",
+  "manifest_sha256": "e7cef90e67338fb0c7d9f6e4d002027abc80788e75fe552a1b3899d3813cc577",
+  "oracle_sha256": "6c2add866ddc7fc730fafa0122ecbddf4ed97b5bca96d302cb078c5f2dae3676",
+  "rom_sha256": "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72",
+  "native_C_prototype": "extern void SpawnEprojWithGfx(uint16_t,uint16_t,uint16_t);",
+  "native_C_call": "SpawnEprojWithGfx((uint16_t)a,(uint16_t)b,(uint16_t)((uint32_t)b>>16))",
+  "packed_contract": {
+    "marker": "eproj-with-gfx-v1",
+    "arg_types": [
+      "uint16",
+      "uint32"
+    ],
+    "a": "parameter",
+    "b_low16": "enemy slot",
+    "b_high16": "definition",
+    "bit31_preserved": true
+  },
+  "counts": {
+    "native-nine-free-allocation": 1296,
+    "native-nine-saturation": 72,
+    "B4B1-observable-OR": 162
+  },
+  "OR_expected_values": {
+    "0b23": 54,
+    "fff0": 54,
+    "ffff": 54
+  },
+  "source_slots": [
+    0,
+    64,
+    1984
+  ],
+  "all_18_highest_free_choices": true,
+  "saturation_changes_only_parameter": true,
+  "host_unchanged_in_all_cases": true,
+  "all_Wram_and_host_hashes_match_verdict_artifacts": true,
+  "read_artifacts": 9182,
+  "read_artifact_inventory_sha256": "4ba9b12ddc910279cb59539e79fd62ef6a3f6141dc9539da5e73d01b6414c089",
+  "inspected_case_records_sha256": "ddb9c01441a404d3cbcd7d1b7328fa8cda5b5e04a0040092526fe016a4ca39bb",
+  "definitions": {
+    "observed_native": [
+      "9642",
+      "a387",
+      "a395"
+    ],
+    "offline_OR_control": "b4b1"
+  },
+  "representative_cases": [
+    {
+      "name": "with-gfx-9642-1984-34-7",
+      "definition": "9642",
+      "enemy_slot": 1984,
+      "highest_free": 34,
+      "parameter": 65535,
+      "expected_gfx": "0a00",
+      "before_sha256": "a8d7349f642895f5259cff41dc174d41bfdb5ece68606e78e791621346a3bc29",
+      "after_wram_sha256": "cf5fd651ecbdab4b73e1e903e12c69ba62f44d812b02eeb42b9ce8160e1d7047",
+      "host_sha256": "f3583e1ecf19a78d2238a8965ee656cec231c78c65be31021314a7e6881cdc6f"
+    },
+    {
+      "name": "with-gfx-a387-1984-full-7",
+      "definition": "a387",
+      "enemy_slot": 1984,
+      "highest_free": null,
+      "parameter": 65535,
+      "expected_gfx": null,
+      "before_sha256": "636409000b129dbf6534d8c60349e625c24b11ba11d6198713b54b1e2e3d018d",
+      "after_wram_sha256": "8aaa5dd602a039668115c256516f6923fc8259fcaf00d1360d50c761a9d466da",
+      "host_sha256": "f3583e1ecf19a78d2238a8965ee656cec231c78c65be31021314a7e6881cdc6f"
+    },
+    {
+      "name": "offline-gfx-or-b4b1-1984-34-0",
+      "definition": "b4b1",
+      "enemy_slot": 1984,
+      "highest_free": 34,
+      "parameter": 48879,
+      "expected_gfx": "0b23",
+      "before_sha256": "32de8d0e0d9984b6aee37b62872f442f50455bb5502d486a1ae2496226934921",
+      "after_wram_sha256": "9a94960981e9f95ab27e12a7ab9d0ba85d8f4083d407e84d1c64c1c74a6202e5",
+      "host_sha256": "f3583e1ecf19a78d2238a8965ee656cec231c78c65be31021314a7e6881cdc6f"
+    },
+    {
+      "name": "offline-gfx-or-b4b1-1984-34-1",
+      "definition": "b4b1",
+      "enemy_slot": 1984,
+      "highest_free": 34,
+      "parameter": 48879,
+      "expected_gfx": "fff0",
+      "before_sha256": "5af12ed58e8507f07f4413e9ce0b2d3d0a1cdbce9a5d12480d4b4e136e3e8328",
+      "after_wram_sha256": "bd27f801d3a8ff28bafd3c542ddc77602e15c86c9cc6c0d82d4fcb825ee21bbf",
+      "host_sha256": "f3583e1ecf19a78d2238a8965ee656cec231c78c65be31021314a7e6881cdc6f"
+    },
+    {
+      "name": "offline-gfx-or-b4b1-1984-34-2",
+      "definition": "b4b1",
+      "enemy_slot": 1984,
+      "highest_free": 34,
+      "parameter": 48879,
+      "expected_gfx": "ffff",
+      "before_sha256": "01beaafeeae6d643d7f672a309bf7b020cd450b0a0e7b4c171985d0ab817d21b",
+      "after_wram_sha256": "c31600de0b93880d3a889acf4588bbdfe1f27fa10c0da0452140e879fcacafe9",
+      "host_sha256": "f3583e1ecf19a78d2238a8965ee656cec231c78c65be31021314a7e6881cdc6f"
+    }
+  ]
+}

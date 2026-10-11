@@ -1,0 +1,38 @@
+{
+  "observed-projectile-frame-boundaries": {
+    "verdict": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/observed-projectile-frame-boundaries/20261011T142735.935334Z/evidence/20261011T142736.002860Z/verdict.json",
+    "cases": 577,
+    "status": "offline-verified"
+  },
+  "observed-projectile-ownership": {
+    "verdict": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/observed-projectile-ownership/20261011T142735.935766Z/evidence/20261011T142735.994888Z/verdict.json",
+    "cases": 1840,
+    "status": "offline-verified"
+  },
+  "enemy-projectile-rendering": {
+    "verdict": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/enemy-projectile-rendering/20261011T142834.477534Z/evidence/20261011T142834.535722Z/verdict.json",
+    "cases": 1448,
+    "status": "offline-verified"
+  },
+  "enemy-projectile-detect-samus": {
+    "verdict": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/enemy-projectile-detect-samus/20261011T142900.327899Z/evidence/20261011T142900.386095Z/verdict.json",
+    "cases": 2310,
+    "status": "offline-verified"
+  },
+  "enemy-projectile-detect-projectiles": {
+    "verdict": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/enemy-projectile-detect-projectiles/20261011T142918.713125Z/evidence/20261011T142918.792629Z/verdict.json",
+    "cases": 2040,
+    "status": "offline-verified"
+  },
+  "observed-projectile-initializers": {
+    "verdict": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/observed-projectile-initializers/20261011T142735.934805Z/evidence/20261011T142735.986673Z/verdict.json",
+    "cases": 5409,
+    "status": "offline-verified"
+  },
+  "_cleanup": {
+    "batch_auto_snapshot_bytes": 2722496512,
+    "ordinary_bytes": 0,
+    "free_bytes": 255755923456,
+    "scope": "current implementation and all retained6family artifacts authenticated aftercleanup"
+  }
+}

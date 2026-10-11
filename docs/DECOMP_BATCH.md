@@ -80,19 +80,27 @@ be resumed explicitly with
 `--batch out/port/projectile-contact-render-final/batch.json`; the runner checks
 its current manifests, source dependencies and retained artifacts before reuse.
 
-The `observed-projectiles` profile includes native room allocation and the
-complete scheduler through the separate `--projectile-verdict` contract. Its
+The `observed-projectiles` profile includes both native graphics allocation
+entry points and the complete scheduler through the separate
+`--projectile-verdict` contract. Its
 immutable admission checks recognize nine observed bank86 definitions and their
 native script continuations. Refused calls select C before mutation; accepted
 Rust failures terminate the replay. The synchronous bridge carries all eight
 external projectile host words, with full-pool allocation and disabled scheduler
-paths requiring no host reads. This remains bounded projectile ownership.
+paths requiring no host reads. `SpawnEprojWithGfx` retains its native three-word
+C signature; the two-argument Rust fixture seam packs enemy slot and definition
+into the low/high halves of its second argument, declared explicitly with
+`packed_args: "eproj-with-gfx-v1"`. This remains bounded projectile ownership.
 
 Native projectile evidence includes first-eight active and fireball captures,
 first-two enabled scheduler captures per observed ID, and periodic/terminal
 sixteen-byte host snapshots. Per-ID counters distinguish C, Rust and support
 refusals. Full129,712-input admission requires all nine IDs to have exclusive
-Rust scheduler calls and complete WRAM/host captures. Controlled offline
+Rust scheduler calls and complete WRAM/host captures. Allocation counters and
+first-two per-ID captures separately prove Ridley and Ceres native allocation;
+full-route admission requires 16 Ridley, four pad and four platform allocations
+exclusively Rust. Every native entry must execute with zero support refusals.
+Controlled offline
 `continue_from` fixtures inherit the preceding matching full WRAM and host
 state; their `case_order` records cross-routine allocation/frame sequences.
 

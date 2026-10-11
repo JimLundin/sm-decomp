@@ -79,6 +79,16 @@ def build(manifest, source, run):
             f"extern {c_type} {symbol}({', '.join('const uint16_t *' if t == 'rom_ptr' else t + '_t' for t in types) or 'void'});"
         )
         call = f"{symbol}({', '.join('(const uint16_t*)(g_rom+((((uint32_t)' + arg + ' >>16)<<15)|((uint32_t)' + arg + '&0x7fff))%0x400000)' if t == 'rom_ptr' else '(' + t + '_t)' + arg for t, arg in zip(types, ['a', 'b']))})"
+        if "packed_args" in routine or symbol == "SpawnEprojWithGfx":
+            if (routine.get("packed_args") != "eproj-with-gfx-v1"
+                    or symbol != "SpawnEprojWithGfx" or types != ["uint16", "uint32"]
+                    or return_type != "void"):
+                raise ValueError("invalid native projectile packed signature")
+            # The maintained two-argument Rust seam carries enemy slot in the
+            # low half of b and definition in its high half. Native C remains
+            # the original three-word allocator; never call a fake prototype.
+            prototypes[-1] = "extern void SpawnEprojWithGfx(uint16_t,uint16_t,uint16_t);"
+            call = "SpawnEprojWithGfx((uint16_t)a,(uint16_t)b,(uint16_t)((uint32_t)b>>16))"
         result = f"{call}; result=0;" if return_type == "void" else f"result={call};"
         if "rom_ptr" in types and "rom" not in manifest:
             raise ValueError("ROM pointer argument requires ROM asset")

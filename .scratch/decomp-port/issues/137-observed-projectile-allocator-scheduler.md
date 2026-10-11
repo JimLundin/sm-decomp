@@ -286,3 +286,74 @@ inspection script was removed, reclaiming 4,316 bytes. Remaining free space:
 257,736,871,936 bytes. Required sealed artifacts, shared store dependencies and
 unrelated worktrees remain retained. No full-route or complete allocation
 acceptance is claimed yet.
+
+
+The RoomGfx-only corrected full route finished with `mixed-C-Rust-integration`:
+`out/port/observed-projectile-corrected-live-full/20261011T135146.556016Z/verdict.json`.
+Four independent subjects match 1,305 artifacts and all periodic/terminal progress.
+Each mixed process owns 16 RoomGfx allocations and 95,325 scheduler calls, with
+866 nonempty/213 fireball scheduler frames, all nine observed IDs exclusively
+Rust and zero support refusals/CPU fallback. Predecessors execute 419 Rust
+RAM decompressions and 125,529 Rust RNG calls. Second-orientation snapshots
+match complete WRAM/eight host words across all four subjects and their final
+verdict inventory. This run does not establish Ceres WithGfx allocation ownership.
+
+Scoped full-run ordinary cleanup reclaimed 0 bytes; deduplication reclaimed
+960,208,458 snapshot bytes. Retained live authentication is being completed at
+`../observed-projectile-live-full-authentication.json`. Sources stayed frozen
+through replay completion. Prepared disjoint WithGfx patches cover native host
+ABI/admission, exact three-word actual-C fixture dispatch and allocation counters;
+integration and fresh acceptance remain required before resolution.
+
+
+WithGfx allocation integration applied after prior full-run authentication:
+immutable support selects by canonical enemy source, exact observed ROM definition
+and split parameter; synchronous host ABI now routes native three-word WithGfx
+including same-bank C callers. Actual-C oracle retains the genuine three-word
+prototype through an explicit packed-argument marker. New successful allocation
+per-ID counters/captures and all-three-entry exclusive Rust/zero-refusal gates
+require full-route 16 Ridley, four Ceres pad and four platform allocations.
+
+Checks pass: 298 port tests, strict all-target Clippy, changed Rust formatting,
+seven compiled live ABI controls, six targeted native oracle/host controls and
+22 remaining live/batch controls (one opt-in skip). Twelve ownership tests include
+four new WithGfx semantic cases. Logs and cleanup record:
+`../observed-projectile-with-gfx-checks.json`. Test cleanup utility reclaimed
+0 ordinary/0 snapshot bytes; disposable Cargo build removed 517,703,381 bytes,
+applied drafts removed 151,971 bytes. TemporaryDirectory test builds cleaned
+automatically; retained evidence dependencies and unrelated worktrees preserved.
+Fresh source-frozen six-family batch is running at
+`out/port/observed-projectile-with-gfx-final/batch.json`. Native WithGfx fixture
+coverage adds 1,368 observed allocation/free-slot/saturation cases and 162
+actual-ROM B4B1 controls exposing graphics OR behavior. Final offline seals,
+cleanup/authentication and fresh full live admission remain pending.
+
+
+Fresh WithGfx source-frozen six-family evidence passes 13,624 actual-C cases:
+5,409 initializer/allocation cases, 1,840 native chained steps, 577 frame-boundary
+cases and 5,798 rendering/contact cases. Exact family pointers are retained in
+`out/port/observed-projectile-with-gfx-final/batch.json`. Automatic batch dedup
+and post-cleanup authentication are finishing. Full four-process replay is
+running at `out/port/observed-projectile-with-gfx-live-full/20261011T142927.603436Z`
+(tool session 8416); root process 878713 and current C subject 892548.
+Source frozen; retain the live run and wait for complete 16/4/4 allocation and
+all-nine scheduler admission. Ceres C captures already show pad in slot 34 at
+X=128/Y=28/E=60 and platform in slot 32 at X=128/Y=97/E=0, both gfx=0.
+
+
+Fresh WithGfx offline batch cleanup finished: automatic dedup reclaimed
+2,722,496,512 bytes; explicit ordinary and dedup passes reclaimed 0 bytes each.
+All 1,530 native WithGfx cases were independently inspected with 9,182 sealed
+artifact/member hashes checked: 1,296 free allocations, 72 saturation cases
+changing only parameter, 162 actual-ROM B4B1 controls proving graphics OR values.
+Inspection: `../observed-projectile-with-gfx-offline-inspection.json`.
+Full six-family post-cleanup current-source authentication is recorded in
+`../observed-projectile-with-gfx-offline-authentication.json` when it completes.
+Live WithGfx run remains writing; its cleanup is deferred until termination.
+
+
+Fresh six-family post-cleanup authentication completed successfully for all
+13,624 actual-C cases. Record: `../observed-projectile-with-gfx-offline-authentication.json`.
+Current free space: 257,219,448,832 bytes. Updated resume note:
+`../checkpoint-137.md`. The complete WithGfx live replay remains in progress;
+source freeze, final live cleanup and ticket resolution are still pending.

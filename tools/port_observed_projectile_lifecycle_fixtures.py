@@ -51,7 +51,7 @@ def main():
     manifest.update(family='observed-projectile-ownership',
                     rust_module='crates/port/src/observed_projectile_ownership.rs')
     manifest['routines'][0]['live_eligible'] = False
-    allocations, frames = [], []
+    allocations, with_gfx, frames = [], [], []
     for axis in ('horizontal', 'vertical'):
         for start in (0, 16, 34):
             for suppression in (0, 1):
@@ -93,10 +93,13 @@ def main():
     # actual native scripts. Height updates are explicit controlled inputs.
     for height in (0, 71, 72, 73, 0x7FFF, 0x8000, 0xFFFF):
         previous = f'ceres-{height}-pad'
-        allocations.append(dict(name=previous, a=0xA387, b=0, host_words=HOST,
-                                writes=writes([(0x198D, 0x8000), (0xAF6, 128), (0xAFA, height)])))
+        with_gfx.append(dict(name=previous, a=0, b=0x7C0 | (0xA387 << 16), host_words=HOST,
+                             writes=writes([(0x198D, 0x8000), (0xAF6, 128), (0xAFA, height),
+                                            (0xE54, 0x40), (0xF96 + 0x7C0, 0x321),
+                                            (0xF98 + 0x7C0, 0x1400)])))
         name = f'ceres-{height}-platform'
-        allocations.append(dict(name=name, a=0xA395, b=0, continue_from=previous))
+        with_gfx.append(dict(name=name, a=0, b=0x40 | (0xA395 << 16), continue_from=previous,
+                             writes=writes([(0xF96 + 0x40, 0x456), (0xF98 + 0x40, 0xA00)])))
         previous = name
         for frame in range(70):
             name = f'ceres-{height}-frame-{frame}'
@@ -109,7 +112,7 @@ def main():
     # Cases are ordered globally: a continuation can switch routine. The
     # verifier executes the manifest's explicit order below.
     by_name = {case['name']: (symbol, case) for symbol, cases in
-               [('SpawnEprojWithRoomGfx', allocations), ('EprojRunAll', frames)] for case in cases}
+               [('SpawnEprojWithRoomGfx', allocations), ('SpawnEprojWithGfx', with_gfx), ('EprojRunAll', frames)] for case in cases}
     ordered, visited = [], set()
 
     def visit(name):
@@ -127,6 +130,9 @@ def main():
     manifest['routines'] = [manifest['routines'][0],
                             dict(symbol='SpawnEprojWithRoomGfx', args=2, **{'return': 'void'},
                                  live_eligible=True, cases=allocations),
+                            dict(symbol='SpawnEprojWithGfx', arg_types=['uint16', 'uint32'],
+                                 packed_args='eproj-with-gfx-v1', **{'return': 'void'},
+                                 live_eligible=True, cases=with_gfx),
                             dict(symbol='EprojRunAll', args=0, **{'return': 'void'},
                                  live_eligible=True, cases=frames)]
     (ROOT / 'tools/port/observed-projectile-ownership.json').write_text(

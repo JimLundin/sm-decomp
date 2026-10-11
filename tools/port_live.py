@@ -29,6 +29,7 @@ DISPATCHER_SYNTHETIC = {'EprojInstruction', 'EprojPreinstruction'}
 PROJECTILE_ENTRIES = {
     'SpawnEprojWithRoomGfx': ['uint16', 'uint16'],
     'EprojRunAll': [],
+    'SpawnEprojWithGfx': ['uint16', 'uint32'],
 }
 OBSERVED_PROJECTILE_IDS = (0x9642, 0x9650, 0x965e, 0x966c, 0x967a, 0x9688, 0x9696, 0xa387, 0xa395)
 
@@ -58,6 +59,10 @@ def load_projectile_contract(path, source_identity):
                     or routine['return'] != 'void'):
                 raise ValueError(f'projectile native signature differs: {symbol}')
             entries.add(symbol)
+            if symbol == 'SpawnEprojWithGfx' and routine.get('packed_args') != 'eproj-with-gfx-v1':
+                raise ValueError('projectile gfx native contract requires packed enemy/definition marker')
+            if symbol != 'SpawnEprojWithGfx' and 'packed_args' in routine:
+                raise ValueError('projectile packed marker only applies to native WithGfx')
     if entries != PROJECTILE_ENTRIES.keys():
         raise ValueError('projectile allocator and scheduler contracts both required')
     return manifest, module
@@ -330,24 +335,24 @@ void SpawnHardcodedPlm(SpawnHardcodedPlmArgs p){PortPositionedPlm(2,p.field_2,p.
 def generate_projectile_abi():
     """An eight-word synchronous transaction; -2 alone permits native C."""
     return r'''#[unsafe(no_mangle)]
-pub unsafe extern "C" fn port_native_projectile(ram:*mut u8,len:usize,rom:*const u8,rom_len:usize,host:*mut u16,host_len:usize,kind:u16,a:u16,b:u16)->i32 {
+pub unsafe extern "C" fn port_native_projectile(ram:*mut u8,len:usize,rom:*const u8,rom_len:usize,host:*mut u16,host_len:usize,kind:u16,a:u16,b:u32)->i32 {
  if ram.is_null() || len!=WRAM_SIZE || rom_len>0x400000 || (rom.is_null() && rom_len!=0) {return -1;}
  let Some(rend)=(ram as usize).checked_add(len)else{return -1;};
  let Some(oend)=(rom as usize).checked_add(rom_len)else{return -1;};
  if (ram as usize)<oend && (rom as usize)<rend {return -1;}
- let name=match kind{1=>"SpawnEprojWithRoomGfx",2=>"EprojRunAll",_=>return -1};
+ let name=match kind{1=>"SpawnEprojWithRoomGfx",2=>"EprojRunAll",3=>"SpawnEprojWithGfx",_=>return -1};
  let rom=if rom_len==0{&[]}else{unsafe{std::slice::from_raw_parts(rom,rom_len)}};
  let mut owned=unsafe{std::slice::from_raw_parts(ram,len)}.to_vec();
- let no_host=if kind==1{(0..18).all(|i|owned[0x1997+i*2]!=0 || owned[0x1998+i*2]!=0)}else{owned[0x198e]&0x80==0};
+ let no_host=if kind!=2{(0..18).all(|i|owned[0x1997+i*2]!=0 || owned[0x1998+i*2]!=0)}else{owned[0x198e]&0x80==0};
  if !no_host {
   if host.is_null() || host_len!=8 || (host as usize)%2!=0{return -1;}
   let Some(hend)=(host as usize).checked_add(16)else{return -1;};
   if (host as usize)<rend && (ram as usize)<hend || (host as usize)<oend && (rom.as_ptr() as usize)<hend{return -1;}
  }
- let supported=std::panic::catch_unwind(std::panic::AssertUnwindSafe(||memory::observed_projectile_ownership::supports_call(&Wram::new(&mut owned).unwrap(),rom,name,a.into(),b.into())));
+ let supported=std::panic::catch_unwind(std::panic::AssertUnwindSafe(||memory::observed_projectile_ownership::supports_call(&Wram::new(&mut owned).unwrap(),rom,name,a.into(),b as i32)));
  match supported{Ok(Ok(false))=>return -2,Ok(Ok(true))=>{},_=>return -1}
  let mut context=if no_host{memory::enemy_projectiles::ProjectileHost::default()}else{memory::enemy_projectiles::ProjectileHost::from_words(unsafe{std::ptr::read(host.cast::<[u16;8]>())})};
- let result=std::panic::catch_unwind(std::panic::AssertUnwindSafe(||memory::observed_projectile_ownership::dispatch_host(&mut Wram::new(&mut owned).unwrap(),rom,&mut context,name,a.into(),b.into())));
+ let result=std::panic::catch_unwind(std::panic::AssertUnwindSafe(||memory::observed_projectile_ownership::dispatch_host(&mut Wram::new(&mut owned).unwrap(),rom,&mut context,name,a.into(),b as i32)));
  match result{Ok(Ok(value))=>{let Ok(value)=i32::try_from(value)else{return -1;};unsafe{std::ptr::copy_nonoverlapping(owned.as_ptr(),ram,len);if !no_host{std::ptr::write(host.cast::<[u16;8]>(),context.words());}}value},_=>-1}
 }'''
 
@@ -370,17 +375,20 @@ void PortProjectileHostSave(uint16 *v) {
 def generate_projectile_host():
     """Bound native ownership and retain material combat separately from Ceres."""
     return r'''void PortC_SpawnEprojWithRoomGfx(uint16,uint16);
+void PortC_SpawnEprojWithGfx(uint16,uint16,uint16);
 void PortC_EprojRunAll(void);
 void PortProjectileHostLoad(const uint16*);
 void PortProjectileHostSave(uint16*);
-extern int32_t port_native_projectile(uint8_t*,size_t,const uint8_t*,size_t,uint16_t*,size_t,uint16_t,uint16_t,uint16_t);
-static unsigned long port_projectile_total[2],port_projectile_c[2],port_projectile_rust[2],port_projectile_refused[2];
-static unsigned long port_projectile_active_c[2],port_projectile_active_rust[2],port_projectile_9642_c[2],port_projectile_9642_rust[2];
-static unsigned port_projectile_capture[2],port_projectile_combat_capture[2];
+extern int32_t port_native_projectile(uint8_t*,size_t,const uint8_t*,size_t,uint16_t*,size_t,uint16_t,uint16_t,uint32_t);
+static unsigned long port_projectile_total[3],port_projectile_c[3],port_projectile_rust[3],port_projectile_refused[3];
+static unsigned long port_projectile_active_c[3],port_projectile_active_rust[3],port_projectile_9642_c[3],port_projectile_9642_rust[3];
+static unsigned port_projectile_capture[3],port_projectile_combat_capture[3];
 static unsigned port_projectile_depth;
 static const uint16 port_projectile_ids[9]={0x9642,0x9650,0x965e,0x966c,0x967a,0x9688,0x9696,0xa387,0xa395};
 static unsigned long port_projectile_id_c[9],port_projectile_id_rust[9],port_projectile_id_refused[9];
 static unsigned port_projectile_id_capture[9];
+static unsigned long port_projectile_alloc_total[9],port_projectile_alloc_c[9],port_projectile_alloc_rust[9],port_projectile_alloc_refused[9];
+static unsigned port_projectile_alloc_capture[9];
 static int PortProjectileActive(void) {
  for(unsigned k=0;k<36;k+=2)if(GET_WORD(g_ram+0x1997+k))return 1;
  return 0;
@@ -409,12 +417,30 @@ static void PortProjectileIdCapture(unsigned id,unsigned sequence,const char *ph
  snprintf(name,sizeof(name),"fixtures/projectile-id-%04x-%03u-%s.host",port_projectile_ids[id],sequence,phase);
  f=fopen(name,"wb");if(!f || fwrite(bytes,1,sizeof(bytes),f)!=sizeof(bytes) || fclose(f))exit(2);
 }
-static void PortProjectile(unsigned kind,uint16 a,uint16 b) {
- if(port_projectile_depth){if(kind==1)PortC_SpawnEprojWithRoomGfx(a,b);else PortC_EprojRunAll();return;}
+static void PortProjectileAllocCapture(unsigned id,unsigned sequence,const char *phase) {
+ char name[120];uint16 words[8];uint8 bytes[16];PortProjectileHostSave(words);
+ snprintf(name,sizeof(name),"fixtures/projectile-allocation-%04x-%03u-%s.wram",port_projectile_ids[id],sequence,phase);
+ FILE *f=fopen(name,"wb");if(!f || fwrite(g_ram,1,sizeof(g_ram),f)!=sizeof(g_ram) || fclose(f))exit(2);
+ for(unsigned i=0;i<8;i++){bytes[i*2]=words[i];bytes[i*2+1]=words[i]>>8;}
+ snprintf(name,sizeof(name),"fixtures/projectile-allocation-%04x-%03u-%s.host",port_projectile_ids[id],sequence,phase);
+ f=fopen(name,"wb");if(!f || fwrite(bytes,1,sizeof(bytes),f)!=sizeof(bytes) || fclose(f))exit(2);
+}
+static void PortProjectileC(unsigned kind,uint16 a,uint32_t b) {
+ if(kind==1)PortC_SpawnEprojWithRoomGfx(a,(uint16)b);
+ else if(kind==3)PortC_SpawnEprojWithGfx(a,(uint16)b,(uint16)(b>>16));
+ else PortC_EprojRunAll();
+}
+static void PortProjectile(unsigned kind,uint16 a,uint32_t b) {
+ if(port_projectile_depth){PortProjectileC(kind,a,b);return;}
  unsigned i=kind-1;uint16 words[8];int32 native=-2;
- int executing=kind==1?PortProjectileFree():(GET_WORD(g_ram+0x198d)&0x8000)!=0;
- int active=executing && (PortProjectileActive() || (kind==1 && a==0x9642));
- int combat=executing && (kind==1?a==0x9642:PortProjectileHas9642());
+ uint16 definition=kind==1?a:(uint16)(b>>16);
+ int allocating=kind!=2;
+ int executing=allocating?PortProjectileFree():(GET_WORD(g_ram+0x198d)&0x8000)!=0;
+ int active=executing && (PortProjectileActive() || (allocating && definition==0x9642));
+ int combat=executing && (allocating?definition==0x9642:PortProjectileHas9642());
+ unsigned allocation_id=9,allocation_capture=0;
+ if(allocating && executing)for(unsigned j=0;j<9;j++)if(definition==port_projectile_ids[j]){allocation_id=j;break;}
+ if(allocation_id<9){port_projectile_alloc_total[allocation_id]++;if(port_projectile_alloc_capture[allocation_id]<2){allocation_capture=++port_projectile_alloc_capture[allocation_id];PortProjectileAllocCapture(allocation_id,allocation_capture,"before");}}
  unsigned capture=active && port_projectile_capture[i]<8?++port_projectile_capture[i]:0;
  unsigned material=combat && port_projectile_combat_capture[i]<8?++port_projectile_combat_capture[i]:0;
  unsigned ids[9]={0},id_capture[9]={0};
@@ -427,15 +453,18 @@ static void PortProjectile(unsigned kind,uint16 a,uint16 b) {
  port_projectile_total[i]++;
  if(native==-2) {
   port_projectile_c[i]++;port_projectile_refused[i]+=port_mixed;
-  port_projectile_depth++;if(kind==1)PortC_SpawnEprojWithRoomGfx(a,b);else PortC_EprojRunAll();port_projectile_depth--;
+  port_projectile_depth++;PortProjectileC(kind,a,b);port_projectile_depth--;
   port_projectile_active_c[i]+=active;port_projectile_9642_c[i]+=combat;
   for(unsigned j=0;j<9;j++){port_projectile_id_c[j]+=ids[j];port_projectile_id_refused[j]+=port_mixed?ids[j]:0;}
+  if(allocation_id<9){port_projectile_alloc_c[allocation_id]++;port_projectile_alloc_refused[allocation_id]+=port_mixed;}
  } else {
   if(native<0){fprintf(stderr,"accepted projectile error %u %u %u\n",kind,a,b);exit(4);}
   PortProjectileHostLoad(words);port_projectile_rust[i]++;
   port_projectile_active_rust[i]+=active;port_projectile_9642_rust[i]+=combat;
   for(unsigned j=0;j<9;j++)port_projectile_id_rust[j]+=ids[j];
+  if(allocation_id<9)port_projectile_alloc_rust[allocation_id]++;
  }
+ if(allocation_capture)PortProjectileAllocCapture(allocation_id,allocation_capture,"after");
  for(unsigned j=0;j<9;j++)if(id_capture[j])PortProjectileIdCapture(j,id_capture[j],"after");
  if(capture)PortProjectileCapture(kind,capture,0,"after");
  if(material)PortProjectileCapture(kind,material,1,"after");
@@ -443,11 +472,13 @@ static void PortProjectile(unsigned kind,uint16 a,uint16 b) {
 }
 void SpawnEprojWithRoomGfx(uint16 definition,uint16 parameter){PortProjectile(1,definition,parameter);}
 void EprojRunAll(void){PortProjectile(2,0,0);}
+void SpawnEprojWithGfx(uint16 parameter,uint16 enemy,uint16 definition){PortProjectile(3,parameter,(uint32_t)enemy|((uint32_t)definition<<16));}
 static void PortProjectileCounters(void) {
- for(unsigned i=0;i<2;i++)printf("projectile-hit %u %lu %lu %lu %lu %lu %lu %lu %lu\n",i,
+ for(unsigned i=0;i<3;i++)printf("projectile-hit %u %lu %lu %lu %lu %lu %lu %lu %lu\n",i,
  port_projectile_total[i],port_projectile_c[i],port_projectile_rust[i],port_projectile_refused[i],
  port_projectile_active_c[i],port_projectile_active_rust[i],port_projectile_9642_c[i],port_projectile_9642_rust[i]);
  for(unsigned i=0;i<9;i++)printf("projectile-id-hit %u %lu %lu %lu\n",port_projectile_ids[i],port_projectile_id_c[i],port_projectile_id_rust[i],port_projectile_id_refused[i]);
+ for(unsigned i=0;i<9;i++)printf("projectile-allocation-hit %u %lu %lu %lu %lu\n",port_projectile_ids[i],port_projectile_alloc_total[i],port_projectile_alloc_c[i],port_projectile_alloc_rust[i],port_projectile_alloc_refused[i]);
 }
 static void PortProjectileState(const char *name) {
  uint16 words[8];uint8 bytes[16];PortProjectileHostSave(words);
@@ -484,7 +515,7 @@ pub unsafe extern "C" fn port_family_{index}(ram:*mut u8,len:usize,rom:*const u8
 
 def parse_projectile_counts(stdout, mode):
     rows = [line.split()[1:] for line in stdout.splitlines() if line.startswith('projectile-hit ')]
-    if len(rows) != 2:
+    if len(rows) != 3:
         raise ValueError('missing native projectile ownership counters')
     counts = {}
     fields = ('total', 'c', 'rust', 'refused', 'active_c', 'active_rust', '9642_c', '9642_rust')
@@ -492,7 +523,7 @@ def parse_projectile_counts(stdout, mode):
         if len(row) != 9:
             raise ValueError('invalid native projectile counter shape')
         kind, *values = map(int, row)
-        if kind not in (0, 1) or kind in counts or any(v < 0 for v in values):
+        if kind not in (0, 1, 2) or kind in counts or any(v < 0 for v in values):
             raise ValueError('invalid native projectile counter kind')
         entry = dict(zip(fields, values))
         if (entry['total'] != entry['c'] + entry['rust']
@@ -543,19 +574,67 @@ def require_projectile_id_admission(hits, inventories, frames):
                         raise ValueError('missing per-ID WRAM/eight-word host capture')
 
 
+def parse_projectile_allocation_counts(stdout, mode):
+    rows = [line.split()[1:] for line in stdout.splitlines() if line.startswith('projectile-allocation-hit ')]
+    counts = {}
+    for row in rows:
+        if len(row) != 5:
+            raise ValueError('invalid projectile allocation counter shape')
+        projectile, total, c, rust, refused = map(int, row)
+        if (projectile not in OBSERVED_PROJECTILE_IDS or projectile in counts
+                or min(total, c, rust, refused) < 0 or total != c + rust
+                or refused != (c if mode == 'mixed' else 0) or mode == 'c' and rust):
+            raise ValueError('invalid projectile allocation ownership counts')
+        counts[projectile] = {'total': total, 'c': c, 'rust': rust, 'refused': refused}
+    if set(counts) != set(OBSERVED_PROJECTILE_IDS):
+        raise ValueError('missing observed projectile allocation counters')
+    return counts
+
+
+def require_projectile_allocation_admission(hits, inventories, frames):
+    if hits['c-0'] != hits['c-1'] or hits['mixed-0'] != hits['mixed-1']:
+        raise ValueError('projectile allocation ownership differs across independent replays')
+    for projectile in OBSERVED_PROJECTILE_IDS:
+        baseline, mixed = hits['c-0'][projectile], hits['mixed-0'][projectile]
+        if baseline['total'] != mixed['total']:
+            raise ValueError('projectile allocation traversal counts diverged')
+        if baseline['total'] and (mixed['c'] or not mixed['rust']):
+            raise ValueError(f'observed projectile allocation lacks exclusive Rust execution: {projectile:04x}')
+        if baseline['total']:
+            for phase in ('before', 'after'):
+                for suffix in ('wram', 'host'):
+                    member = f'fixtures/projectile-allocation-{projectile:04x}-001-{phase}.{suffix}'
+                    if any(member not in inventory for inventory in inventories.values()):
+                        raise ValueError('missing native allocation WRAM/eight-word host capture')
+    expected = {0x9642: 16, 0xa387: 4, 0xa395: 4} if frames == 129712 else {}
+    if not expected:
+        for projectile in (0x9642, 0xa387, 0xa395):
+            if not hits['mixed-0'][projectile]['rust']:
+                raise ValueError('native allocation lacks Ridley/Ceres exercise')
+    for projectile, total in expected.items():
+        if hits['mixed-0'][projectile]['rust'] != total:
+            raise ValueError(f'full-route native allocation count differs: {projectile:04x}')
+
+
 def require_projectile_admission(hits, inventories, fallback_calls):
     """Empty scheduler passes cannot admit the observed combat lifecycle."""
     if hits['mixed-0'] != hits['mixed-1'] or hits['c-0'] != hits['c-1']:
         raise ValueError('native projectile ownership differs across independent replays')
     if fallback_calls:
         raise ValueError('native projectile admission requires zero CPU fallback')
-    for kind in (0, 1):
+    for kind in (0, 1, 2):
         baseline, mixed = hits['c-0'][kind], hits['mixed-0'][kind]
         if (baseline['total'] != mixed['total']
                 or baseline['active_c'] != mixed['active_c'] + mixed['active_rust']
                 or baseline['9642_c'] != mixed['9642_c'] + mixed['9642_rust']):
             raise ValueError('native projectile traversal counts diverged')
-        if not mixed['active_rust'] or not mixed['9642_rust'] or mixed['9642_c']:
+        if not mixed['total'] or mixed['rust'] != mixed['total'] or mixed['c'] or mixed['refused']:
+            raise ValueError('complete observed native call ownership requires exclusive Rust and zero support refusals')
+        if not mixed['active_rust']:
+            raise ValueError('native projectile entry lacks nonempty execution')
+        if kind == 2:
+            continue
+        if not mixed['9642_rust'] or mixed['9642_c']:
             raise ValueError('native projectile allocator/scheduler lacks exclusive nonempty 9642 execution')
         for phase in ('before', 'after'):
             for suffix in ('wram', 'host'):
@@ -1059,6 +1138,7 @@ int main(int argc,char **argv) {
                 if projectile_contract:
                     verdict.setdefault('projectile_hits', {})[name] = parse_projectile_counts((directory/'replay.stdout').read_text(), mode)
                     verdict.setdefault('projectile_id_hits', {})[name] = parse_projectile_id_counts((directory/'replay.stdout').read_text(), mode)
+                    verdict.setdefault('projectile_allocation_hits', {})[name] = parse_projectile_allocation_counts((directory/'replay.stdout').read_text(), mode)
                 if any(row['c' if mode == 'mixed' else 'rust'] for row in hits[name].values()):
                     raise ValueError('replacement execution was not exclusive')
         if any(inventory != inventories['c-0'] for inventory in inventories.values()):
@@ -1091,8 +1171,9 @@ int main(int argc,char **argv) {
             require_projectile_admission(verdict['projectile_hits'], inventories,
                                          verdict['progress']['mixed-0'][-1]['fallback_calls'])
             require_projectile_id_admission(verdict['projectile_id_hits'], inventories, args.frames)
+            require_projectile_allocation_admission(verdict['projectile_allocation_hits'], inventories, args.frames)
             verdict['projectile_native_installed'] = True
-            verdict['projectile_abi'] = 'synchronous-eight-word-host-v1'
+            verdict['projectile_abi'] = 'synchronous-eight-word-host-v2-with-gfx'
         if args.room_plm:
             if verdict['room_plm_hits']['mixed-0']!=verdict['room_plm_hits']['mixed-1']:raise ValueError('positioned ownership differs')
             if not sum(row['rust_setups'] for row in verdict['room_plm_hits']['mixed-0'].values()):raise ValueError('no native positioned setup executed')

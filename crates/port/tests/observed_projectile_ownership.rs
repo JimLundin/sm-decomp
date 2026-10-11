@@ -238,3 +238,120 @@ fn coordinate_envelopes_admit_native_wrapping_and_check_contiguous_scan_indices(
     r.set_byte(0x16402 + block + 1, 255);
     assert!(!ownership::supports_call(&r, &rom, "EprojRunAll", 0, 0).unwrap());
 }
+
+fn packed_gfx(enemy: u16, definition: u16) -> i32 {
+    (u32::from(enemy) | (u32::from(definition) << 16)) as i32
+}
+
+#[test]
+fn with_gfx_refuses_invalid_source_definition_or_split_parameter_without_mutation() {
+    let rom = rom();
+    let mut bytes = vec![0; WRAM_SIZE];
+    let before = bytes.clone();
+    let r = Wram::new(&mut bytes).unwrap();
+    let h = host();
+    for (parameter, enemy, id) in
+        [(0, 1, 0xa387), (0, 0x800, 0xa395), (0, 64, 0xffff), (3, 64, 0x966c), (36, 64, 0x9688)]
+    {
+        assert!(!ownership::supports_call(&r, &rom, "SpawnEprojWithGfx", parameter, packed_gfx(enemy, id)).unwrap());
+    }
+    assert!(!ownership::supports_call(&r, &[], "SpawnEprojWithGfx", 0, packed_gfx(64, 0xa387)).unwrap());
+    assert_eq!(h, host());
+    assert_eq!(bytes, before);
+    let mut r = Wram::new(&mut bytes).unwrap();
+    let mut h = h;
+    assert!(ownership::dispatch_host(&mut r, &[], &mut h, "SpawnEprojWithGfx", 0, packed_gfx(1, 0xffff)).is_err());
+    assert_eq!(h, host());
+    assert_eq!(bytes, before);
+}
+
+#[test]
+fn with_gfx_saturation_validates_source_then_only_writes_parameter_without_rom() {
+    for enemy in [0, 64, 0x7c0] {
+        let mut bytes = vec![0xa5; WRAM_SIZE];
+        let mut expected = bytes.clone();
+        expected[0x1993..0x1995].copy_from_slice(&0xbeefu16.to_le_bytes());
+        let mut r = Wram::new(&mut bytes).unwrap();
+        let mut h = host();
+        let packed = packed_gfx(enemy, 0xffff);
+        assert!(ownership::supports_call(&r, &[], "SpawnEprojWithGfx", 0xbeef, packed).unwrap());
+        assert!(!ownership::supports_call(&r, &[], "SpawnEprojWithGfx", 0xbeef, packed_gfx(1, 0xffff)).unwrap());
+        ownership::dispatch_host(&mut r, &[], &mut h, "SpawnEprojWithGfx", 0xbeef, packed).unwrap();
+        assert_eq!(bytes, expected);
+        assert_eq!(h, host());
+    }
+}
+
+#[test]
+fn with_gfx_ceres_common_overrides_selected_enemy_gfx_and_retains_partial_reset() {
+    let rom = rom();
+    for id in [0xa387, 0xa395] {
+        let mut bytes = vec![0xa5; WRAM_SIZE];
+        let mut r = Wram::new(&mut bytes).unwrap();
+        // Highest free slot is2; dirty destination state distinguishes fields
+        // reset by allocation/common setup from the source-index alias.
+        r.set_word(0x1997 + 2, 0);
+        r.set_word(0xe54, 128);
+        r.set_word(0xaf6, 321);
+        r.set_word(0xafa, 654);
+        r.set_word(0xf96 + 64, 0x1234);
+        r.set_word(0xf98 + 64, 0x4000);
+        r.set_word(0xf96 + 128, 0xffff);
+        let mut h = host();
+        let packed = packed_gfx(64, id);
+        assert!(ownership::supports_call(&r, &rom, "SpawnEprojWithGfx", 0xbeef, packed).unwrap());
+        ownership::dispatch_host(&mut r, &rom, &mut h, "SpawnEprojWithGfx", 0xbeef, packed).unwrap();
+        assert_eq!(r.word(0x1997 + 2), id);
+        assert_eq!(r.word(0x1993), 0xbeef);
+        assert_eq!(r.word(0x19bb + 2), 0);
+        assert_eq!(r.word(0x1a4b + 2), 321);
+        assert_eq!(r.word(0x1a93 + 2), if id == 0xa387 { 682 } else { 97 });
+        for p in [0x19df, 0x1a27, 0x1a6f, 0x1ab7, 0x1adb, 0x1b23, 0x1bfb] {
+            assert_eq!(r.word(p + 2), 0);
+        }
+        assert_eq!(r.word(0x1aff + 2), if id == 0xa387 { 60 } else { 0 });
+        assert_eq!(r.word(0x1b8f + 2), 1);
+        assert_eq!(r.word(0x1b6b + 2), 0x8000);
+        assert_eq!(r.word(0x1bd7 + 2), 0x3000);
+        assert_eq!(r.word(0x1bb3 + 2), 0x0101);
+        // Allocation/common setup does not touch unrelated per-slot storage.
+        assert_eq!(r.word(0xf3c8 + 2), 0xa5a5);
+        assert_eq!(r.word(0xf410 + 2), 0xa5a5);
+        assert_eq!(r.word(0xe54), 128);
+        assert_eq!(h, host());
+    }
+}
+
+#[test]
+fn with_gfx_split_copies_projectile_source_while_ridley_uses_enemy_zero() {
+    let rom = rom();
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0xe54, 128);
+    r.set_word(0x1a4b, 432);
+    r.set_word(0x1a93, 543);
+    r.set_word(0x1aff, 3);
+    r.set_word(0xf96 + 64, 0x1234);
+    r.set_word(0xf98 + 64, 0x4000);
+    let mut h = host();
+    ownership::dispatch_host(&mut r, &rom, &mut h, "SpawnEprojWithGfx", 0, packed_gfx(64, 0x966c)).unwrap();
+    assert_eq!(r.word(0x1a4b + 34), 432);
+    assert_eq!(r.word(0x1a93 + 34), 543);
+    assert_eq!(r.word(0x1aff + 34), 3);
+    assert_eq!(r.word(0x1b23 + 34), 0x966c);
+    assert_eq!(r.word(0x19bb + 34), 2560);
+    r.set_word(0xf7a, 100);
+    r.set_word(0xf7e, 200);
+    r.set_word(0xf7a + 64, 1000);
+    r.set_word(0xf7e + 64, 2000);
+    r.set_word(0x7832, 0xfb00);
+    r.set_word(0x7834, 0x0600);
+    ownership::dispatch_host(&mut r, &rom, &mut h, "SpawnEprojWithGfx", 7, packed_gfx(64, 0x9642)).unwrap();
+    assert_eq!(r.word(0x1a4b + 32), 125);
+    assert_eq!(r.word(0x1a93 + 32), 157);
+    assert_eq!(r.word(0x1ab7 + 32), 0xfb00);
+    assert_eq!(r.word(0x1adb + 32), 0x0600);
+    assert_eq!(r.word(0x19bb + 32), 2560);
+    assert_eq!(r.word(0xe54), 128);
+    assert_eq!(h, host());
+}

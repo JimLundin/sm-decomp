@@ -13,7 +13,8 @@ from port_live import (generate_projectile_abi, generate_projectile_bank_adapter
                        generate_projectile_host, load_projectile_contract,
                        parse_projectile_counts, require_projectile_admission,
                        OBSERVED_PROJECTILE_IDS, parse_projectile_id_counts,
-                       require_projectile_id_admission)
+                       require_projectile_id_admission, parse_projectile_allocation_counts,
+                       require_projectile_allocation_admission)
 
 
 class ProjectileLiveControls(unittest.TestCase):
@@ -37,7 +38,14 @@ fn main(){
   let mut expected=before;expected[0x1993]=0xcd;expected[0x1994]=0xab;assert_eq!(ram,expected);assert_eq!(host,hbefore);
   ram.fill(0);{let mut r=Wram::new(&mut ram).unwrap();r.set_word(0xf7a,200);r.set_word(0xf7e,100);r.set_word(0x1995,1);r.set_word(0x7832,0x321);r.set_word(0x7834,0x456);}
   assert_eq!(port_native_projectile(ram.as_mut_ptr(),WRAM_SIZE,rom.as_ptr(),rom.len(),host.as_mut_ptr(),8,1,0x9642,1),0);
-  let r=Wram::new(&mut ram).unwrap();assert_eq!(r.word(0x1997+34),0x9642);assert_eq!(r.word(0x1a4b+34),225);assert_eq!(r.word(0x1a93+34),57);assert_eq!(host,hbefore);
+  {let r=Wram::new(&mut ram).unwrap();assert_eq!(r.word(0x1997+34),0x9642);assert_eq!(r.word(0x1a4b+34),225);assert_eq!(r.word(0x1a93+34),57);assert_eq!(host,hbefore);}
+  ram.fill(0);{let mut r=Wram::new(&mut ram).unwrap();r.set_word(0xaf6,42);r.set_word(0xafa,100);r.set_word(0xe54,128);r.set_word(0xf78+64+0x1e,0x1200);r.set_word(0xf78+64+0x20,0x3400);}
+  let before=ram.clone();assert_eq!(port_native_projectile(ram.as_mut_ptr(),WRAM_SIZE,rom.as_ptr(),rom.len(),host.as_mut_ptr(),8,3,0,0xa3870001),-2);assert_eq!(ram,before);assert_eq!(host,hbefore);
+  assert_eq!(port_native_projectile(ram.as_mut_ptr(),WRAM_SIZE,rom.as_ptr(),rom.len(),host.as_mut_ptr(),8,3,0,0xa3870040),0);
+  {let r=Wram::new(&mut ram).unwrap();assert_eq!(r.word(0x1997+34),0xa387);assert_eq!(r.word(0x1a4b+34),42);assert_eq!(r.word(0x1a93+34),128);assert_eq!(r.word(0x19bb+34),0);assert_eq!(host,hbefore);}
+  for k in (0..36).step_by(2){Wram::new(&mut ram).unwrap().set_word(0x1997+k,1);}
+  let mut expected=ram.clone();expected[0x1993]=0xcd;expected[0x1994]=0xab;
+  assert_eq!(port_native_projectile(ram.as_mut_ptr(),WRAM_SIZE,std::ptr::null(),0,std::ptr::null_mut(),0,3,0xabcd,0xffff0040),0);assert_eq!(ram,expected);
  }
 }
 ''')
@@ -55,12 +63,18 @@ fn main(){
             manifest = {'bank': 'sm_86.c', 'rom': {}, 'projectile_host': True, 'routines': [
                 {'symbol': 'SpawnEprojWithRoomGfx', 'args': 2, 'return': 'void'},
                 {'symbol': 'EprojRunAll', 'args': 0, 'return': 'void'},
+                {'symbol': 'SpawnEprojWithGfx', 'arg_types': ['uint16', 'uint32'], 'return': 'void', 'packed_args': 'eproj-with-gfx-v1'},
                 {'symbol': 'EprojInstruction', 'live_eligible': False}]}
             path = root / 'manifest.json'
             with patch('port_plm_instructions.verify_plm_instruction_evidence', return_value=evidence) as verify:
                 path.write_text(json.dumps(manifest))
                 load_projectile_contract(root / 'verdict.json', identity)
                 verify.assert_called_once()
+                manifest['routines'][2]['packed_args'] = 'wrong'
+                path.write_text(json.dumps(manifest))
+                with self.assertRaisesRegex(ValueError, 'packed'):
+                    load_projectile_contract(root / 'verdict.json', identity)
+                manifest['routines'][2]['packed_args'] = 'eproj-with-gfx-v1'
                 for key, value in [('projectile_host', False), ('bank', 'sm_84.c')]:
                     changed = dict(manifest, **{key: value})
                     path.write_text(json.dumps(changed))
@@ -111,7 +125,7 @@ fn main(){
   assert_eq!(port_native_projectile(ram.as_mut_ptr(),WRAM_SIZE,rom.as_ptr(),32,rom.as_ptr().cast_mut().cast(),8,1,0,0),-1);
   assert_eq!(port_native_projectile(ram.as_mut_ptr(),WRAM_SIZE,rom.as_ptr(),32,host.as_mut_ptr(),7,1,0,0),-1);
   assert_eq!(port_native_projectile(ram.as_mut_ptr(),WRAM_SIZE,rom.as_ptr(),32,host.as_mut_ptr().cast::<u8>().add(1).cast(),8,1,0,0),-1);
-  assert_eq!(port_native_projectile(ram.as_mut_ptr(),WRAM_SIZE,rom.as_ptr(),32,host.as_mut_ptr(),8,3,0,0),-1);
+  assert_eq!(port_native_projectile(ram.as_mut_ptr(),WRAM_SIZE,rom.as_ptr(),32,host.as_mut_ptr(),8,4,0,0),-1);
   for a in [0xffff,0xfffe,0xfffd]{
    assert_eq!(port_native_projectile(ram.as_mut_ptr(),WRAM_SIZE,rom.as_ptr(),32,host.as_mut_ptr(),8,1,a,0),if a==0xffff{-2}else{-1});
    assert_eq!(ram,before);assert_eq!(host,host_before);
@@ -141,10 +155,15 @@ fn main(){
             original = (ROOT / 'deps/snesrev-sm/src/sm_86.c').read_text()
             original = original.replace('void SpawnEprojWithRoomGfx(', 'void ControlUnused_SpawnEprojWithRoomGfx(')
             original = original.replace('void EprojRunAll(', 'void ControlUnused_EprojRunAll(')
+            original = original.replace('void SpawnEprojWithGfx(', 'void ControlUnused_SpawnEprojWithGfx(')
             bank.write_text(original + generate_projectile_bank_adapters() + r'''
 void ControlSameBank(void) {
  eproj_spawn_pt=(Point16U){123,456};eproj_spawn_rect=(Rect16U){3,4,5,6};
  eproj_spawn_r22=7;eproj_spawn_varE24=8;SpawnEprojWithRoomGfx(0x9642,9);
+}
+void ControlSameBankGfx(void) {
+ eproj_spawn_pt=(Point16U){123,456};eproj_spawn_rect=(Rect16U){3,4,5,6};
+ eproj_spawn_r22=7;eproj_spawn_varE24=8;SpawnEprojWithGfx(9,64,0xa387);
 }
 ''')
             source = root / 'host.c'
@@ -166,19 +185,21 @@ static int port_mixed=1;
 static int mode;
 void PortC_SpawnEprojWithRoomGfx(uint16 a,uint16 b){FILE *f=fopen("c-retry","wb");assert(f);fclose(f);}
 void PortC_EprojRunAll(void){PortC_SpawnEprojWithRoomGfx(0,0);}
-int32_t port_native_projectile(uint8_t*r,size_t n,const uint8_t*o,size_t z,uint16_t*h,size_t hlen,uint16_t k,uint16_t a,uint16_t b){
- assert(hlen==8);if(k==2)return 0;assert(k==1);assert(a==0x9642);assert(b==9);
+void PortC_SpawnEprojWithGfx(uint16 parameter,uint16 enemy,uint16 definition){assert(parameter==9 && enemy==64 && definition==0xa387);PortC_SpawnEprojWithRoomGfx(0,0);}
+int32_t port_native_projectile(uint8_t*r,size_t n,const uint8_t*o,size_t z,uint16_t*h,size_t hlen,uint16_t k,uint16_t a,uint32_t b){
+ assert(hlen==8);if(k==2)return 0;if(k==1){assert(a==0x9642);assert(b==9);}else{assert(k==3);assert(a==9);assert(b==0xa3870040);}
  assert(h[0]==123 && h[1]==456);for(unsigned i=2;i<8;i++)assert(h[i]==i+1);
  if(mode==1)return -1;if(mode==2)return -2;
- h[0]=321;h[1]=654;h[6]=0xabcd;r[0x1997]=0x42;r[0x1998]=0x96;return 0;
+ h[0]=321;h[1]=654;h[6]=0xabcd;r[0x1997]=k==3?0x87:0x42;r[0x1998]=k==3?0xa3:0x96;return 0;
 }
 ''' + generate_projectile_host() + r'''
 void ControlSameBank(void);
+void ControlSameBankGfx(void);
 int main(int argc,char **argv){
- mode=argc>1?atoi(argv[1]):0;ControlSameBank();uint16 words[8];PortProjectileHostSave(words);
- if(mode==0){assert(words[0]==321 && words[1]==654 && words[6]==0xabcd);assert(port_projectile_rust[0]==1 && port_projectile_9642_rust[0]==1);
- g_ram[0x198e]=0x80;for(unsigned i=0;i<5;i++)EprojRunAll();assert(port_projectile_id_rust[0]==5);assert(port_projectile_id_capture[0]==2);}
- if(mode==2){assert(port_projectile_refused[0]==1 && port_projectile_c[0]==1);assert(words[0]==123 && words[1]==456);}
+ mode=argc>1?atoi(argv[1]):0;int gfx=argc>2;int entry=gfx?2:0;if(gfx)ControlSameBankGfx();else ControlSameBank();uint16 words[8];PortProjectileHostSave(words);
+ if(mode==0){assert(words[0]==321 && words[1]==654 && words[6]==0xabcd);assert(port_projectile_rust[entry]==1);
+ g_ram[0x198e]=0x80;for(unsigned i=0;i<5;i++)EprojRunAll();unsigned id=gfx?7:0;assert(port_projectile_id_rust[id]==5);assert(port_projectile_id_capture[id]==2);assert(port_projectile_alloc_rust[id]==1);assert(port_projectile_alloc_capture[id]==1);}
+ if(mode==2){assert(port_projectile_refused[entry]==1 && port_projectile_c[entry]==1);assert(words[0]==123 && words[1]==456);}
  PortProjectileState("terminal.host");return 0;
 }
 ''')
@@ -202,10 +223,21 @@ int main(int argc,char **argv){
             result = subprocess.run([str(root / 'host'), '2'], cwd=root, capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertTrue((root / 'c-retry').exists())
+            (root / 'c-retry').unlink()
+            result = subprocess.run([str(root / 'host'), '0', 'gfx'], cwd=root, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertFalse((root / 'c-retry').exists())
+            self.assertEqual(len((root / 'fixtures/projectile-allocation-a387-001-after.host').read_bytes()), 16)
+            result = subprocess.run([str(root / 'host'), '1', 'gfx'], cwd=root, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 4)
+            self.assertFalse((root / 'c-retry').exists())
+            result = subprocess.run([str(root / 'host'), '2', 'gfx'], cwd=root, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertTrue((root / 'c-retry').exists())
 
     def test_nonempty_9642_admission_rejects_empty_traversals_and_refusals(self):
-        baseline = parse_projectile_counts('projectile-hit 0 10 10 0 0 4 0 2 0\nprojectile-hit 1 100 100 0 0 20 0 5 0\n', 'c')
-        mixed = parse_projectile_counts('projectile-hit 0 10 1 9 1 0 4 0 2\nprojectile-hit 1 100 0 100 0 0 20 0 5\n', 'mixed')
+        baseline = parse_projectile_counts('projectile-hit 0 10 10 0 0 4 0 2 0\nprojectile-hit 1 100 100 0 0 20 0 5 0\nprojectile-hit 2 8 8 0 0 4 0 0 0\n', 'c')
+        mixed = parse_projectile_counts('projectile-hit 0 10 0 10 0 0 4 0 2\nprojectile-hit 1 100 0 100 0 0 20 0 5\nprojectile-hit 2 8 0 8 0 0 4 0 0\n', 'mixed')
         hits = {'c-0': baseline, 'c-1': baseline, 'mixed-0': mixed, 'mixed-1': mixed}
         inventory = {f'fixtures/projectile-9642-{kind}-001-{phase}.{suffix}': 'sealed'
                      for kind in (1, 2) for phase in ('before', 'after') for suffix in ('wram', 'host')}
@@ -220,6 +252,16 @@ int main(int argc,char **argv){
             changed[1][field] = 1 if field == '9642_c' else 0
             with self.assertRaises(ValueError):
                 require_projectile_admission(dict(hits, **{'mixed-0': changed, 'mixed-1': changed}), inventories, 0)
+        for kind in (0, 1, 2):
+            changed = {key: dict(row) for key, row in mixed.items()}
+            changed[kind]['c'] = changed[kind]['refused'] = 1
+            changed[kind]['rust'] -= 1
+            with self.assertRaisesRegex(ValueError, 'exclusive Rust'):
+                require_projectile_admission(dict(hits, **{'mixed-0': changed, 'mixed-1': changed}), inventories, 0)
+        changed = {key: dict(row) for key, row in mixed.items()}
+        changed[2]['total'] = changed[2]['rust'] = 7
+        with self.assertRaisesRegex(ValueError, 'traversal'):
+            require_projectile_admission(dict(hits, **{'mixed-0': changed, 'mixed-1': changed}), inventories, 0)
 
     def test_per_id_full_route_requires_all_nine_and_material_host_captures(self):
         baseline = parse_projectile_id_counts('\n'.join(f'projectile-id-hit {p} 3 0 0' for p in OBSERVED_PROJECTILE_IDS), 'c')
@@ -236,6 +278,27 @@ int main(int argc,char **argv){
                 require_projectile_id_admission(dict(hits, **{'mixed-0': changed, 'mixed-1': changed}), inventories, 129712)
         with self.assertRaisesRegex(ValueError, 'capture'):
             require_projectile_id_admission(hits, {name: {} for name in hits}, 129712)
+
+    def test_allocation_full_route_requires_sixteen_ridley_four_pads_four_platforms(self):
+        expected = {0x9642: 16, 0xa387: 4, 0xa395: 4}
+        baseline = parse_projectile_allocation_counts('\n'.join(
+            f'projectile-allocation-hit {p} {expected.get(p,0)} {expected.get(p,0)} 0 0'
+            for p in OBSERVED_PROJECTILE_IDS), 'c')
+        mixed = parse_projectile_allocation_counts('\n'.join(
+            f'projectile-allocation-hit {p} {expected.get(p,0)} 0 {expected.get(p,0)} 0'
+            for p in OBSERVED_PROJECTILE_IDS), 'mixed')
+        hits = {'c-0': baseline, 'c-1': baseline, 'mixed-0': mixed, 'mixed-1': mixed}
+        inventory = {f'fixtures/projectile-allocation-{p:04x}-001-{phase}.{suffix}': 'sealed'
+                     for p in expected for phase in ('before', 'after') for suffix in ('wram', 'host')}
+        inventories = {name: inventory for name in hits}
+        require_projectile_allocation_admission(hits, inventories, 129712)
+        for p in expected:
+            changed = {key: dict(row) for key, row in mixed.items()}
+            changed[p] = {'total': expected[p], 'c': 1, 'rust': expected[p]-1, 'refused': 1}
+            with self.assertRaisesRegex(ValueError, 'exclusive'):
+                require_projectile_allocation_admission(dict(hits, **{'mixed-0': changed, 'mixed-1': changed}), inventories, 129712)
+        with self.assertRaisesRegex(ValueError, 'capture'):
+            require_projectile_allocation_admission(hits, {name: {} for name in hits}, 129712)
 
 
 if __name__ == '__main__':

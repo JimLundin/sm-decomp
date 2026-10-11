@@ -1,0 +1,18 @@
+{
+  "port_tests": 298,
+  "strict_clippy_all_targets": "passed",
+  "changed_rustfmt": "passed",
+  "compiled_live_controls": 7,
+  "targeted_native_oracle_host_controls": 6,
+  "remaining_live_batch_controls": 22,
+  "optional_skipped": 1,
+  "ownership_tests": 12,
+  "logs": "out/port/observed-projectile-with-gfx-checks",
+  "utility_ordinary_bytes": 0,
+  "utility_deduplicate_bytes": 0,
+  "disposable_cargo_bytes_reclaimed": 517703381,
+  "free_bytes": 261102301184,
+  "retained_evidence_dependencies": "preserved; prior full1305artifacts authenticated",
+  "scope": "tests and ABI controls; fresh actual-C source seals and full liveallocation acceptance pending",
+  "applied_draft_bytes_reclaimed": 151971
+}

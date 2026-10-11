@@ -206,6 +206,27 @@ pub fn supports_call(r: &Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) -> Re
             }
             Ok(true)
         }
+        "SpawnEprojWithGfx" => {
+            // Packed b keeps native arguments intact: low16 is the source
+            // enemy slot, high16 the bank86 projectile definition. Validate
+            // gfx source even on saturation, since native C reads it first.
+            let packed = b as u32;
+            let enemy = packed as u16;
+            if enemy > 0x7c0 || enemy & 63 != 0 {
+                return Ok(false);
+            }
+            if (0..36).step_by(2).all(|k| r.word(0x1997 + k) != 0) {
+                return Ok(true);
+            }
+            let id = (packed >> 16) as u16;
+            if definition(id).is_none() || !pinned_rom(rom) {
+                return Ok(false);
+            }
+            if split(id) && (a as u16 > 34 || a as u16 & 1 != 0) {
+                return Ok(false);
+            }
+            Ok(true)
+        }
         "EprojRunAll" => {
             if r.word(0x198d) & 0x8000 == 0 {
                 return Ok(true);
@@ -251,5 +272,10 @@ pub fn dispatch_host(
     a: i32,
     b: i32,
 ) -> Result<u32, &'static str> {
+    if name == "SpawnEprojWithGfx" {
+        let packed = b as u32;
+        crate::enemy_projectiles::spawn_with_gfx_host(r, rom, a as u16, packed as u16, (packed >> 16) as u16, host)?;
+        return Ok(0);
+    }
     crate::enemy_projectiles::dispatch_host(r, rom, host, name, a, b)
 }
