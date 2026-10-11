@@ -9,6 +9,39 @@ import shutil
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
+DISPATCHER_LEAVES = {'MoveEprojWithVelocity', 'MoveEprojWithVelocityX', 'MoveEprojWithVelocityY'}
+DISPATCHER_SYNTHETIC = {'EprojInstruction', 'EprojPreinstruction'}
+
+
+def load_dispatcher_contract(path, source_identity):
+    """Authenticate dispatcher seals and admit only the supported live leaves."""
+    from port_plm_instructions import verify_plm_instruction_evidence
+    evidence = verify_plm_instruction_evidence(path)
+    manifest = json.loads((path.parent / 'manifest.json').read_text())
+    module = Path(evidence['implementation']['module']).resolve()
+    if evidence['source'] != source_identity:
+        raise ValueError('dispatcher source identity differs')
+    if module != ROOT / 'crates/port/src/enemy_projectile_instructions.rs' or manifest.get('bank') != 'sm_86.c':
+        raise ValueError('dispatcher evidence does not seal the installed bank86 module')
+    routines = []
+    for routine in manifest['routines']:
+        routine = dict(routine)
+        symbol = routine['symbol']
+        if symbol in DISPATCHER_SYNTHETIC:
+            routine['live_eligible'] = False
+        elif routine.get('live_eligible', True):
+            if symbol not in DISPATCHER_LEAVES:
+                raise ValueError(f'dispatcher routine requires support selection before live admission: {symbol}')
+            if routine.get('arg_types', ['uint16'] * routine.get('args', 0)) != ['uint16'] or routine['return'] != 'uint16':
+                raise ValueError(f'dispatcher leaf signature differs: {symbol}')
+        routines.append(routine)
+    if not any(r.get('live_eligible', True) for r in routines):
+        raise ValueError('no live dispatcher leaf contracts')
+    manifest = dict(manifest, routines=routines)
+    manifest['rust_imports'] = sorted(set(manifest.get('rust_imports', [])) | {
+        'audio', 'enemy', 'enemy_projectiles', 'enemy_projectile_collision', 'system',
+    })
+    return manifest, module
 
 
 def definition_pattern(symbol):
@@ -98,6 +131,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--family-verdict', type=Path, action='append', default=[])
     parser.add_argument('--collision-verdict', type=Path, action='append', default=[])
+    parser.add_argument('--dispatcher-verdict', type=Path, action='append', default=[],
+                        help='Authenticated bank86 dispatcher evidence for safe movement leaves')
     parser.add_argument('--plm-verdict', type=Path)
     parser.add_argument('--room-plm', action='store_true', help='Require native room/hardcoded setup hits')
     parser.add_argument('--frames', type=int, default=9000)
@@ -121,6 +156,7 @@ def main():
             raise ValueError('original ROM identity differs')
         verdict.update(rom_sha256=digest(rom), inputs_sha256=digest(inputs), frames=args.frames)
         families = []
+        dispatcher_indexes = set()
         for path in args.family_verdict:
             previous = verify_family_evidence(path)
             manifest = json.loads((path.parent / 'manifest.json').read_text())
@@ -133,6 +169,10 @@ def main():
                 raise ValueError('family source identity differs')
             families.append((manifest, module))
         collision_indexes = set()
+        for path in args.dispatcher_verdict:
+            dispatcher_indexes.add(len(families))
+            families.append(load_dispatcher_contract(path, verdict['source']))
+            verdict.setdefault('dispatcher_predecessors', []).append({'path': str(path.resolve()), 'sha256': digest(path)})
         for collision_path in args.collision_verdict:
             from port_collision import verify_collision_evidence
             evidence = verify_collision_evidence(collision_path)
@@ -459,8 +499,6 @@ int main(int argc,char **argv) {
         if any(inventory != inventories['c-0'] for inventory in inventories.values()):
             mismatches = [key for key in inventories['c-0'] if any(inventory.get(key) != inventories['c-0'][key] for inventory in inventories.values())]
             raise ValueError(f'independent C/mixed state or effects diverged: {mismatches[:5]}')
-        if not sum(row['rust'] for row in hits['mixed-0'].values()):
-            raise ValueError('no Rust gameplay family executed')
         if any(progress != verdict['progress']['c-0'] for progress in verdict['progress'].values()):
             raise ValueError('gameplay progress or measured fallback diverged')
         if len({counts['total'] for counts in verdict['plm_callback_hits'].values()}) != 1:
@@ -472,6 +510,15 @@ int main(int argc,char **argv) {
         verdict["room_plm_installed"] = args.room_plm
         verdict.update(state_effects_match=True, hits=hits, artifacts=inventories['c-0'],
                        transformations=transformations, binary_sha256=digest(run / 'live'))
+        dispatcher_symbols = {r['symbol'] for i in dispatcher_indexes for r in families[i][0]['routines']
+                              if r.get('live_eligible', True)}
+        verdict['dispatcher_symbols'] = sorted(dispatcher_symbols)
+        verdict['dispatcher_hits'] = {name: {symbol: counts[symbol] for symbol in dispatcher_symbols}
+                                      for name, counts in hits.items()}
+        if dispatcher_symbols and not sum(hits['mixed-0'][symbol]['rust'] for symbol in dispatcher_symbols):
+            raise ValueError('no Rust bank86 dispatcher leaf executed')
+        if not sum(row['rust'] for row in hits['mixed-0'].values()):
+            raise ValueError('no Rust gameplay family executed')
         if args.room_plm:
             if verdict['room_plm_hits']['mixed-0']!=verdict['room_plm_hits']['mixed-1']:raise ValueError('positioned ownership differs')
             if not sum(row['rust_setups'] for row in verdict['room_plm_hits']['mixed-0'].values()):raise ValueError('no native positioned setup executed')

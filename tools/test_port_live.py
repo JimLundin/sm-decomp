@@ -218,3 +218,48 @@ raise SystemExit(port_live.main())
             verdict=json.loads(next((run/'live').glob('*/verdict.json')).read_text())
             self.assertFalse(verdict['live_exercised'])
             self.assertIn('diverged',verdict['error'])
+
+class DispatcherAdmissionControls(unittest.TestCase):
+    def test_dispatcher_contract_filters_shim_and_rejects_scheduler(self):
+        import sys
+        from unittest.mock import patch
+        sys.path.insert(0, str(ROOT / 'tools'))
+        from port_live import load_dispatcher_contract
+        source = {'identity': 'pinned'}
+        evidence = {'source': source, 'implementation': {'module': str(ROOT / 'crates/port/src/enemy_projectile_instructions.rs')}}
+        with tempfile.TemporaryDirectory() as temporary:
+            run = Path(temporary)
+            path = run / 'verdict.json'
+            routines = [{'symbol': 'EprojInstruction', 'args': 2, 'return': 'rom_ptr'},
+                        {'symbol': 'MoveEprojWithVelocityY', 'args': 1, 'return': 'uint16'}]
+            manifest = {'bank': 'sm_86.c', 'rom': {}, 'routines': routines}
+            (run / 'manifest.json').write_text(json.dumps(manifest))
+            with patch('port_plm_instructions.verify_plm_instruction_evidence', return_value=evidence):
+                selected, _ = load_dispatcher_contract(path, source)
+                self.assertFalse(selected['routines'][0]['live_eligible'])
+                self.assertEqual(selected['routines'][1]['symbol'], 'MoveEprojWithVelocityY')
+                routines.append({'symbol': 'EprojRunAll', 'args': 0, 'return': 'void'})
+                (run / 'manifest.json').write_text(json.dumps(manifest))
+                with self.assertRaisesRegex(ValueError, 'support selection'):
+                    load_dispatcher_contract(path, source)
+
+    def test_dispatcher_leaf_abi_compiles_with_gameplay_dependencies(self):
+        import sys
+        sys.path.insert(0, str(ROOT / 'tools'))
+        from port_live import generate_family_abi
+        manifest = {'rom': {}, 'routines': [{'symbol': 'EprojInstruction'}, {'symbol': 'MoveEprojWithVelocityY'}]}
+        with tempfile.TemporaryDirectory() as temporary:
+            run = Path(temporary)
+            source = run / 'leaf.rs'
+            source.write_text('#[path=' + json.dumps(str(ROOT / 'crates/port/src/lib.rs')) + '] mod memory;use memory::*;\n'
+                              + generate_family_abi(manifest, ROOT / 'crates/port/src/enemy_projectile_instructions.rs', 0)
+                              + '''\nfn main(){let mut bytes=vec![0u8;WRAM_SIZE];let rom=[0u8;1];
+ {let mut r=Wram::new(&mut bytes).unwrap();r.set_word(0x1a93,10);r.set_word(0x1adb,0x0180);}
+ unsafe{assert_eq!(port_family_0(bytes.as_mut_ptr(),WRAM_SIZE,rom.as_ptr(),1,1,0,0),11);}
+ assert_eq!(Wram::new(&mut bytes).unwrap().byte(0x1a70),128);
+ let before=bytes.clone();unsafe{assert_eq!(port_family_0(bytes.as_mut_ptr(),WRAM_SIZE,rom.as_ptr(),1,1,35,0),-1);}
+ assert_eq!(bytes,before);}\n''')
+            result = subprocess.run(['rustc', '--edition=2024', str(source), '-o', str(run / 'leaf')], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            result = subprocess.run([str(run / 'leaf')], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
