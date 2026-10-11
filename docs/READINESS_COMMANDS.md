@@ -36,9 +36,9 @@ process report, so result data cannot overwrite its execution provenance.
 
 Acceptance rechecks every gate's actual origin and exact scope, sealed evidence,
 source snapshot, current material identities and predecessor under an acceptance
-lock. It then atomically replaces `out/accepted.json` and retains prior pointers
+lock. It then atomically replaces `out/accepted.toml` and retains prior pointers
 in `out/accepted-history/`. Acceptance does not imply a Git commit. The immutable
-brief says validation passed with acceptance pending; `acceptance-result.json`
+brief says validation passed with acceptance pending; `acceptance-result.toml`
 records publication success or failure. A standalone scoped pass cannot publish.
 
 `just readiness-restore RUN NEW_DIRECTORY` verifies and restores a selected

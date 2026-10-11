@@ -9,13 +9,14 @@ not certify readiness; the readiness command must combine all required gates.
 Each batch compiles exactly the `recomp::step::emit_body` strings used by the
 production table and executes those function pointers through the same
 `runtime::step::execute_step` fetch-and-PC operation used by `Subject`. Only
-identical complete body strings are deduplicated. Expectations remain runtime
-JSON. The command preserves generated bodies, prepared inputs, binary hashes,
-stdout/stderr, durations and ordered case-name/digest ledgers. Complete sparse
+identical complete body strings are deduplicated. SingleStepTests JSON is read
+at the external corpus boundary; prepared expectations and ordered case ledgers
+use the native binary format. The command preserves generated bodies, prepared
+inputs, binary hashes, stdout/stderr, durations and ordered case-name/digest ledgers. Complete sparse
 memory, all registers/status/emulation state, PBR/PC, ordered active bus accesses
 and cycle count are compared. An inactive runner, missing/reordered ledger row,
-unsupported case or compilation error cannot produce a pass. The ordinary
-legacy fuzz output and tests remain intact.
+unsupported case or compilation error cannot produce a pass. Native fuzz output
+uses binary case ledgers and TOML summaries.
 
 The complete pinned native corpus contains 10,000 cases for each of seven
 opcodes: 70,000 cases. All four M/X widths and D flag states are represented.
@@ -41,14 +42,15 @@ state, WRAM and video. An inspected/plain generated replay also establishes
 that instruction-boundary observation does not alter execution.
 
 Build output is isolated under each evidence output, allowing concurrent runs
-without sharing generated binaries. The script verifies the pinned corpus
+without sharing generated binaries. The Rust command verifies the pinned corpus
 archive and consumed-file identities, compiler, source/config inventory and
 unchanged inputs throughout execution. `--out`, `--opcodes` and `--batch-size`
 support development runs; selected-opcode evidence declares its reduced scope.
-The public `run(corpus, output, opcodes, batch_size, timing)` operation returns
-0 for a scoped pass, 1 for divergence, and 2 for infrastructure/incomplete work.
+The `sm-pipeline pattern-check` command returns 0 for a scoped pass, 1 for
+divergence, and 2 for infrastructure/incomplete work.
 
-Fresh evidence uses declaration contract version 2. The source-owned timed
+Fresh instruction and timing reports use schema version 3 and readiness
+declaration contract version 2. The source-owned timed
 pattern declaration is also the production support registry: each opcode has
 its addressing behavior, native M/X scope, required input conditions and timing
 branches, independent fixture names, and explained exclusions. Changing a
@@ -74,3 +76,8 @@ A candidate containing the declaration cannot downgrade its reports or
 manifest to version 1. Pattern success alone still leaves fresh generated
 parity, focused execution, independent validation and the other cold acceptance
 gates mandatory.
+
+`instruction.toml` and `timing.toml` summarize the checks, `expected-cases.bin`
+preserves all typed expectations, and `cases.bin` preserves the ordered result
+ledger. Each batch retains `input.bin`, `prepared.bin`, emitted `bodies.rs`, and
+separate TOML generation/build/execution records.

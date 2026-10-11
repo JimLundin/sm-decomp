@@ -12,7 +12,7 @@ just import-movies
 just diff-fallback movies/super-metroid-any-3653.lsmv 3600
 ```
 
-`just fetch-movies` fetches the three published runs recorded in `manifest.json`:
+`just fetch-movies` fetches the three published runs recorded in `manifest.toml`:
 any%, low% (13%), and 100%. It verifies the actual `.lsmv` files and their ROM
 hashes. The local ROM matches all three. Downloads remain gitignored.
 

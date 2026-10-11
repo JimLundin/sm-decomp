@@ -463,7 +463,8 @@ pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], symbol: &str, a: i32, b: i32) 
                 let x: [u16; 8] = [0, 2, 2, 2, 0, 0xfffe, 0xfffe, 0xfffe];
                 let y: [u16; 8] = [0xfffe, 0xfffe, 0, 2, 2, 2, 0, 0xfffe];
                 r.set_word(0x10a8, timer - 1);
-                for (address, displacement) in [(0xb1, x[index]), (0xb5, x[index]), (0xb3, y[index]), (0xb7, y[index])] {
+                for (address, displacement) in [(0xb1, x[index]), (0xb5, x[index]), (0xb3, y[index]), (0xb7, y[index])]
+                {
                     r.set_word(address, r.word(address).wrapping_add(displacement));
                 }
             }
@@ -502,7 +503,8 @@ pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], symbol: &str, a: i32, b: i32) 
             r.set_word(0x183e, 18);
             r.set_word(0x1840, 0xffff);
         }
-        "RoomCode_SetLightHorizRoomShake" | "RoomCode_SetMediumHorizRoomShake"
+        "RoomCode_SetLightHorizRoomShake"
+        | "RoomCode_SetMediumHorizRoomShake"
         | "RoomCode_Escape4_SetMediumHorizRoomShake" => {
             if symbol == "RoomCode_Escape4_SetMediumHorizRoomShake" {
                 crate::plm::spawn_hardcoded(r, rom, 16, 16, 0xb968)?;

@@ -9,3 +9,6 @@ publish.workspace = true
 [dependencies]
 anyhow.workspace = true
 zip.workspace = true
+serde.workspace = true
+toml.workspace = true
+sha2.workspace = true

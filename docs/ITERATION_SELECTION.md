@@ -3,7 +3,7 @@
 `just select-iteration` allocates an immutable evidence run before checking the
 accepted predecessor and current material inputs. `--predecessor RUN` selects a
 preserved accepted lineage explicitly. Selection leaves reviewed configuration,
-user changes and `out/accepted.json` untouched. It produces `selection.json`, a
+user changes and `out/accepted.toml` untouched. It produces `selection.toml`, a
 ranked choice with its exact address/MX/opcode/ROM-byte keys, observed counts,
 overlapping existing keys and unexecuted deferred inventory.
 

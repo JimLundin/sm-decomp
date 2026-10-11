@@ -25,8 +25,8 @@ symbol counts. The synthetic ROM generator provides arbitrary byte-aligned
 branches and scroll data without copying commercial ROM bytes.
 
 ```sh
-python3 tools/port_plm_fixtures.py --output-dir out/port/plm-fixtures
-python3 tools/port_plm_instructions.py --manifest out/port/plm-fixtures/plm-instructions.json --source deps/snesrev-sm --output out/port/plm-instructions
+cargo run -p pipeline --locked --offline -- plm-fixtures --output-dir out/port/plm-fixtures
+cargo run -p pipeline --locked --offline -- family-verify --manifest out/port/plm-fixtures/plm-instructions.toml --source deps/snesrev-sm --output out/port/plm-instructions --case-jobs 4
 ```
 
 The declared fixture domain covers 42 opcode handlers over 336 direct cases,

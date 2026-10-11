@@ -1,10 +1,21 @@
 # Bounded original-ROM prefix investigation
 
-Run `python3 tools/decomp_prefix.py --frames 320` with local verified assets.
+Run `cargo run -p pipeline --locked --offline -- decomp-prefix --frames 320` with local verified assets.
 In a temporary worktree, add `--asset-root /home/jim/sm-decomp`. Evidence defaults
 beneath `out/decomp/prefix`; choose `--output` to retain it elsewhere. Exit 2 means
 the investigation completed with a **nonaccepting** result; exit 1 is an error.
 This command cannot emit a passing movie verdict.
+
+Native runs retain `verdict.toml`, typed timeline/causality records and binary
+states. `sm-pipeline decomp-prefix-authenticate RUN` checks retained artifact
+hashes. `--reuse-native RUN` also requires the same frames, ROM/movie, executable
+and observer contract. Retained results below describe historical runs.
+
+The C observation seam writes `events.txt` as numeric whitespace records;
+controller fixture results and summaries use the same numeric protocol. Typed
+Rust readers validate field counts and parse those records into the retained
+TOML reports and binary timeline. Movie identity comes from
+`movies/manifest.toml`. New runs do not depend on project JSON readers.
 
 The read-only lsnes observer runs the unmodified original ROM in the recording
 core (rr2-beta23 / bsnes v085 Compatibility). It records actual fetches at reset,
@@ -20,7 +31,7 @@ frames, emulator log completion/core/region, ROM/movie hashes, Lua script and
 binary hashes bind the capture; full WRAM is retained at completed dispatches
 and boot clearing. The waiting-for-NMI field is read as a byte.
 
-`timeline.json` retains every source event, actual held/pressed/released inputs,
+`timeline.bin` (SMPT version 1) retains every source event, actual held/pressed/previous inputs,
 source authored masks and host-step assignments. Every native controller return
 becomes one diagnostic C host step. Frames without a host step are explicitly
 classified as skipped with all their boundary evidence retained. Explicit waits
@@ -75,7 +86,7 @@ capture/map/C replay/control path. ROM-derived artifacts stay ignored.
 
 ## Controller causality audit
 
-`controller-causality.json` retains polls and dispatches in native event order.
+`controller-causality.toml` retains polls and dispatches in native event order.
 Boot clearing ends the preceding-poll association; this is a diagnostic ledger,
 not a claim of complete input ownership across every memory-clearing path.
 The verdict's `future_poll_assignments` identifies where the existing poll-as-

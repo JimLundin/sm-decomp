@@ -3,6 +3,12 @@ use anyhow::Result;
 use evidence::{Event, Store, TraceWriter, hex};
 use std::path::Path;
 use std::time::Instant;
+#[derive(serde::Serialize)]
+struct Report {
+    events: u64,
+    stream: String,
+    seconds: f64,
+}
 
 fn main() -> Result<()> {
     let args: Vec<_> = std::env::args().skip(1).collect();
@@ -21,6 +27,9 @@ fn main() -> Result<()> {
     }
     let stream = recorder.finish()?;
     store.commit()?;
-    println!("{}", serde_json::json!({"events":count,"stream":hex(&stream),"seconds":start.elapsed().as_secs_f64()}));
+    print!(
+        "{}",
+        toml::to_string(&Report { events: count, stream: hex(&stream), seconds: start.elapsed().as_secs_f64() })?
+    );
     Ok(())
 }

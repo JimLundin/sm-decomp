@@ -20,9 +20,9 @@ fn discovery_finds_actual_compiled_execution_and_names_missing_key() {
     let result =
         snes::controls::covered_intervals(&mut reference, &mut subject, &[0, 0], 1, &[(0x8002, 3), (0x8020, 3)])
             .unwrap();
-    assert_eq!(result["status"], "uncovered");
-    assert_eq!(result["intervals"][0]["first_execution_instruction"], 2);
-    assert_eq!(result["unexecuted"][0]["address"], 0x8020);
+    assert_eq!(result.status, "uncovered");
+    assert_eq!(result.intervals[0].first_execution_instruction, 2);
+    assert_eq!(result.unexecuted[0].address, 0x8020);
 }
 
 #[test]
@@ -44,8 +44,8 @@ fn wrong_generated_candidate_diverges_and_disabled_and_predecessor_controls_pass
     let failed =
         snes::controls::compare_interval(&mut reference, &mut faulty, &pads, 0, 0, 6, &folder.join("candidate"))
             .unwrap();
-    assert_eq!(failed["status"], "divergence");
-    assert_eq!(failed["first_mismatch"]["subject"]["generated_key"][0], 0x8002);
+    assert_eq!(failed.status, "divergence");
+    assert_eq!(failed.first_mismatch.as_ref().unwrap().subject.generated_key.unwrap().0, 0x8002);
     for (name, table) in
         [("disabled", &[][..]), ("predecessor", &[(0x8002, 3, &[0xea][..], correct as runtime::StepFn)][..])]
     {
@@ -53,8 +53,8 @@ fn wrong_generated_candidate_diverges_and_disabled_and_predecessor_controls_pass
         let mut subject = Subject::with_steps(&rom, 0, table).unwrap();
         let result =
             snes::controls::compare_interval(&mut reference, &mut subject, &pads, 0, 0, 6, &folder.join(name)).unwrap();
-        assert_eq!(result["status"], "pass");
-        assert_eq!(result["completed_instructions"], 6);
+        assert_eq!(result.status, "pass");
+        assert_eq!(result.completed_instructions, 6);
     }
     std::fs::remove_dir_all(folder).unwrap();
 }

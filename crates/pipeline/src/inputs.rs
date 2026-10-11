@@ -1,20 +1,36 @@
 //! Compiler inputs and conservative module discovery for legacy family wrappers.
-use crate::{atomic_json, digest};
+use crate::{atomic_toml, digest};
 use anyhow::{Context, Result, ensure};
-use serde_json::{Value, json};
+use serde::{Deserialize, Serialize};
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
     path::{Path, PathBuf},
 };
 
-fn path(request: &Value, key: &str) -> Result<PathBuf> {
-    Ok(fs::canonicalize(request[key].as_str().context(format!("missing {key}"))?)?)
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct WrapperRequest {
+    pub checkout: PathBuf,
+    pub run: PathBuf,
+    pub modules: Vec<PathBuf>,
+    pub imports: Vec<String>,
+}
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct DependenciesRequest {
+    pub checkout: PathBuf,
+    pub run: PathBuf,
+    pub extra: Vec<PathBuf>,
+}
+#[derive(Debug, Deserialize, Serialize)]
+pub(crate) struct WrapperResult {
+    pub path: PathBuf,
 }
 
-pub fn wrapper(request: Value) -> Result<Value> {
-    let checkout = path(&request, "checkout")?;
-    let run = path(&request, "run")?;
+pub fn wrapper(request: WrapperRequest) -> Result<WrapperResult> {
+    let checkout = fs::canonicalize(request.checkout)?;
+    let run = fs::canonicalize(request.run)?;
     let sources = checkout.join("crates/port/src");
     let mut available = BTreeMap::new();
     for entry in fs::read_dir(&sources)? {
@@ -27,17 +43,11 @@ pub fn wrapper(request: Value) -> Result<Value> {
             available.insert(name, p);
         }
     }
-    let mut pending: Vec<PathBuf> = request["modules"]
-        .as_array()
-        .context("modules missing")?
-        .iter()
-        .map(|v| Ok(fs::canonicalize(v.as_str().context("invalid module")?)?))
-        .collect::<Result<_>>()?;
+    let mut pending: Vec<PathBuf> = request.modules.iter().map(fs::canonicalize).collect::<std::io::Result<_>>()?;
     let mut selected = BTreeSet::new();
-    for name in request["imports"].as_array().context("imports missing")? {
-        let name = name.as_str().context("invalid import")?;
-        pending.push(available.get(name).context("unknown gameplay import")?.clone());
-        selected.insert(name.to_owned());
+    for name in request.imports {
+        pending.push(available.get(&name).context("unknown gameplay import")?.clone());
+        selected.insert(name);
     }
     let mut visited = BTreeSet::new();
     while let Some(p) = pending.pop() {
@@ -54,13 +64,19 @@ pub fn wrapper(request: Value) -> Result<Value> {
         }
     }
     let memory = sources.join("memory.rs");
-    let mut output = format!("#[path={}] mod canonical;\npub use canonical::*;\n", json!(memory));
+    let mut output = format!(
+        "#[path={:?}] mod canonical;\npub use canonical::*;\n",
+        memory.to_str().context("non-UTF8 source path")?
+    );
     for name in selected {
-        output.push_str(&format!("#[path={}] pub mod {name};\n", json!(available[&name])));
+        output.push_str(&format!(
+            "#[path={:?}] pub mod {name};\n",
+            available[&name].to_str().context("non-UTF8 source path")?
+        ));
     }
     let destination = run.join("memory.rs");
     fs::write(&destination, output)?;
-    Ok(json!({"path":destination}))
+    Ok(WrapperResult { path: destination })
 }
 
 pub(crate) fn dep_paths(text: &str) -> Result<Vec<String>> {
@@ -91,16 +107,15 @@ pub(crate) fn dep_paths(text: &str) -> Result<Vec<String>> {
     Ok(result)
 }
 
-pub fn dependencies(request: Value) -> Result<Value> {
-    let checkout = path(&request, "checkout")?;
-    let run = path(&request, "run")?;
+pub fn dependencies(request: DependenciesRequest) -> Result<BTreeMap<String, String>> {
+    let checkout = fs::canonicalize(request.checkout)?;
+    let run = fs::canonicalize(request.run)?;
     let mut paths = BTreeSet::new();
     for name in dep_paths(&fs::read_to_string(run.join("compiler.d"))?)? {
         let p = Path::new(&name);
         paths.insert(fs::canonicalize(if p.is_absolute() { p.to_path_buf() } else { run.join(p) })?);
     }
-    for name in request["extra"].as_array().context("extra dependencies missing")? {
-        let p = Path::new(name.as_str().context("invalid dependency")?);
+    for p in &request.extra {
         paths.insert(fs::canonicalize(if p.is_absolute() { p.to_path_buf() } else { checkout.join(p) })?);
     }
     let mut result = BTreeMap::new();
@@ -130,11 +145,16 @@ pub fn dependencies(request: Value) -> Result<Value> {
         tools.insert(key, hash);
         fs::copy(checkout.join(format!("crates/pipeline/src/{name}")), run.join(format!("pipeline-{name}")))?;
     }
-    atomic_json(
-        &run.join("pipeline-inputs.json"),
-        &json!({"binary_sha256":digest(&std::env::current_exe()?)?, "sources":tools}),
+    #[derive(Serialize)]
+    struct PipelineInputs<'a> {
+        binary_sha256: &'a str,
+        sources: BTreeMap<String, String>,
+    }
+    atomic_toml(
+        &run.join("pipeline-inputs.toml"),
+        &PipelineInputs { binary_sha256: crate::binary_digest()?, sources: tools },
     )?;
-    Ok(json!(result))
+    Ok(result)
 }
 
 #[cfg(test)]

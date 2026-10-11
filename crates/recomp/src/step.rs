@@ -6,30 +6,16 @@ use anyhow::Result;
 
 use crate::{cfg::FunctionCfg, decode::Insn, emit, opcodes::Mode};
 
-#[derive(serde::Deserialize)]
-struct Declaration {
-    schema_version: u32,
-    patterns: Vec<Pattern>,
-    #[serde(default)]
-    prospective_patterns: Vec<Pattern>,
-}
-#[derive(serde::Deserialize)]
-struct Pattern {
-    opcode: String,
-    mnemonic: String,
-    mode: String,
-    mx: Vec<u8>,
-}
+use pipeline_model::timed_pattern::Declaration;
 
 /// The same source-owned declaration drives production support and validation.
-pub const PATTERN_DECLARATION: &str = include_str!("timed_patterns.json");
+pub const PATTERN_DECLARATION: &str = include_str!("timed_patterns.toml");
 
 fn patterns() -> &'static Declaration {
     static DECLARATION: std::sync::OnceLock<Declaration> = std::sync::OnceLock::new();
     DECLARATION.get_or_init(|| {
-        let declaration: Declaration =
-            serde_json::from_str(PATTERN_DECLARATION).expect("valid timed pattern declaration");
-        assert_eq!(declaration.schema_version, 2, "unsupported timed declaration version");
+        let declaration: Declaration = toml::from_str(PATTERN_DECLARATION).expect("valid timed pattern declaration");
+        declaration.validate().expect("complete timed pattern declaration");
         declaration
     })
 }

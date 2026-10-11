@@ -90,7 +90,7 @@ static int AbiControl(void) {
       sm_decompress_v1(rom, 0x400000, ram, sizeof(g_ram), 0, 0x1000, &report) != 2 ||
       sm_decompress_v1(rom, 0x400000, ram, sizeof(g_ram), 0x808000, sizeof(g_ram), &report) != 2) return 3;
   free(rom); free(ram);
-  puts("{\"abi_controls\":7,\"repeat_calls\":2}");
+  puts("abi-controls 7 2");
   return 0;
 }
 int main(int argc, char **argv) {
@@ -125,10 +125,10 @@ int main(int argc, char **argv) {
       if (g_fail) return 3;
       if (frame == 0 || (frame + 1) % 1000 == 0 || frame + 1 == frames) Snapshot(frame + 1);
     }
-    printf("{\"epoch\":%d,\"frames\":%ld,\"rust_hits\":%lu,\"c_hits\":%lu,\"modes\":%u,\"fallback_calls\":%lu,\"fallback_instructions\":%lu}\n",
+    printf("epoch %d %ld %lu %lu %u %lu %lu\n",
         epoch, frames, rust_hits, c_hits, rust_modes, fallback_calls, fallback_instructions);
     #ifdef NEXT_RANDOM_JOB
-    printf("{\"rng_c_hits\":%lu,\"rng_rust_hits\":%lu,\"epoch\":%d}\n", rng_c_hits, rng_rust_hits, epoch);
+    printf("rng-epoch %d %lu %lu\n", epoch, rng_c_hits, rng_rust_hits);
 #endif
     if (gzclose(effects) || fclose(inputs) || chdir("..")) return 2;
   }

@@ -1,6 +1,50 @@
 //! Isolated synthetic execution evidence for the mandatory feedback gate.
 use anyhow::{Context, Result, ensure};
-use serde_json::{Value, json};
+use serde::Serialize;
+#[derive(Serialize)]
+struct WramHashes {
+    reference: String,
+    subject: String,
+}
+#[derive(Serialize, Default)]
+struct Evidence {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    focus: Option<snes::focused::Report>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    frame_end_equal: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    frame_end_wram_sha256: Option<WramHashes>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    altered_key: Option<(u32, u8)>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    profile: Option<snes::coverage::Coverage>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    matched_frames: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    added_key: Option<(u32, u8)>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    created: Option<snes::paired::CacheReport>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    reused: Option<snes::paired::CacheReport>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    corrupt: Option<snes::paired::CacheReport>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    incompatible: Option<snes::paired::CacheReport>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    warm: Option<snes::focused::Report>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    cold: Option<snes::focused::Report>,
+}
+#[derive(Serialize)]
+struct Report {
+    schema_version: u32,
+    status: String,
+    complete: bool,
+    identities: pipeline_model::CheckpointIdentities,
+    binary_sha256: String,
+    #[serde(flatten)]
+    evidence: Evidence,
+}
 use snes::{Reference, Subject, paired::sha256};
 use std::path::Path;
 
@@ -25,12 +69,12 @@ fn wrong_store(m: &mut runtime::Machine) {
     m.write8(0x10, 0x99);
 }
 
-fn write(path: &Path, value: &Value) -> Result<()> {
-    std::fs::write(path, serde_json::to_vec_pretty(value)?)?;
+fn write<T: Serialize>(path: &Path, value: &T) -> Result<()> {
+    std::fs::write(path, toml::to_string_pretty(value)?)?;
     Ok(())
 }
 
-fn execute(case: &str, output: &Path, source: &str, hardware: &str) -> Result<Value> {
+fn execute(case: &str, output: &Path, source: &str, hardware: &str) -> Result<Report> {
     std::fs::create_dir(output)?;
     let mut rom = rom();
     if case == "paired-cache" {
@@ -46,9 +90,24 @@ fn execute(case: &str, output: &Path, source: &str, hardware: &str) -> Result<Va
     std::fs::write(output.join("fixture.sfc"), &rom)?;
     std::fs::write(output.join("fixture.inputs"), movie::write_inputs(&pads))?;
     std::fs::write(output.join("steps.rs"), include_str!(concat!(env!("OUT_DIR"), "/feedback_steps.rs")))?;
-    let identities = json!({"rom_sha256":sha256(&rom),"movie_sha256":sha256(movie::write_inputs(&pads).as_bytes()),
-        "input_sha256":sha256(movie::write_inputs(&pads).as_bytes()),"source_sha256":source,"hardware_sha256":hardware,
-        "profile":"lsnes-profile","serializer":"paired-v1","compiler":"feedback-probe","features":["lsnes-profile"],"settings":{"seed":0}});
+    let identities = pipeline_model::CheckpointIdentities {
+        rom_sha256: sha256(&rom),
+        movie_sha256: sha256(movie::write_inputs(&pads).as_bytes()),
+        input_sha256: sha256(movie::write_inputs(&pads).as_bytes()),
+        source_sha256: source.into(),
+        hardware_sha256: hardware.into(),
+        profile: "lsnes-profile".into(),
+        serializer: "paired-v2".into(),
+        compiler: "feedback-probe".into(),
+        features: vec!["lsnes-profile".into()],
+        settings: pipeline_model::CheckpointSettings {
+            seed: 0,
+            mode: None,
+            candidate_sha256: None,
+            disabled_keys: vec![],
+        },
+        dispatch_sha256: None,
+    };
     let mut table = emitted::STEP_TABLE.to_vec();
     if case == "paired-cache" {
         table.clear();
@@ -62,22 +121,29 @@ fn execute(case: &str, output: &Path, source: &str, hardware: &str) -> Result<Va
     }
     let mut r = Reference::new(&rom, 0)?;
     let mut s = Subject::with_steps(&rom, 0, &table)?;
-    let mut report = match case {
+    let (status, evidence) = match case {
         "correct-execution" | "wrong-instruction" | "transient-effect" => {
-            let mut report = snes::focused::compare(&mut r, &mut s, &pads, 0, 8, &output.join("focus"))?;
+            let report = snes::focused::compare(&mut r, &mut s, &pads, 0, 8, &output.join("focus"))?;
             let mut frame_r = Reference::new(&rom, 0)?;
             let mut frame_s = Subject::with_steps(&rom, 0, &table)?;
             frame_r.run_frame(0)?;
             frame_s.run_frame(0)?;
-            report["frame_end_equal"] = json!(
-                frame_r.state_bytes() == frame_s.state_bytes()
-                    && frame_r.wram() == frame_s.wram()
-                    && frame_r.framebuffer_bytes() == frame_s.framebuffer_bytes()
-            );
-            report["frame_end_wram_sha256"] =
-                json!({"reference":sha256(frame_r.wram()),"subject":sha256(frame_s.wram())});
-            report["altered_key"] = if case == "correct-execution" { Value::Null } else { json!([0x8004, 3]) };
-            report
+            let equal = frame_r.state_bytes() == frame_s.state_bytes()
+                && frame_r.wram() == frame_s.wram()
+                && frame_r.framebuffer_bytes() == frame_s.framebuffer_bytes();
+            (
+                report.status.clone(),
+                Evidence {
+                    focus: Some(report),
+                    frame_end_equal: Some(equal),
+                    frame_end_wram_sha256: Some(WramHashes {
+                        reference: sha256(frame_r.wram()),
+                        subject: sha256(frame_s.wram()),
+                    }),
+                    altered_key: if case == "correct-execution" { None } else { Some((0x8004, 3)) },
+                    ..Default::default()
+                },
+            )
         }
         "uncovered-key" | "empty-compilation" => {
             for pad in &pads[..2] {
@@ -90,10 +156,17 @@ fn execute(case: &str, output: &Path, source: &str, hardware: &str) -> Result<Va
                     "fixture frame parity"
                 );
             }
-            let profile = serde_json::to_value(s.coverage())?;
-            write(&output.join("profile.json"), &profile)?;
-            json!({"status":if table.is_empty(){"uncovered"}else{"pass"},"complete":true,
-                "profile":profile,"matched_frames":2,"added_key":[0x8100,3]})
+            let profile = s.coverage();
+            write(&output.join("profile.toml"), &profile)?;
+            (
+                if table.is_empty() { "uncovered" } else { "pass" }.into(),
+                Evidence {
+                    profile: Some(profile),
+                    matched_frames: Some(2),
+                    added_key: Some((0x8100, 3)),
+                    ..Default::default()
+                },
+            )
         }
         "paired-cache" => {
             let cache_path = output.join("cache");
@@ -106,26 +179,39 @@ fn execute(case: &str, output: &Path, source: &str, hardware: &str) -> Result<Va
             let mut cold_s = Subject::with_steps(&rom, 0, &table)?;
             let cold =
                 snes::focused::compare_from_boundary(&mut cold_r, &mut cold_s, &pads, 0, 3, 5, &output.join("cold"))?;
-            ensure!(
-                warm["status"] == cold["status"] && warm["history"] == cold["history"],
-                "warm/cold outcome and trace"
-            );
+            ensure!(warm.status == cold.status && warm.history == cold.history, "warm/cold outcome and trace");
             let (_, reused) =
                 snes::paired::prepare_cache(&rom, 0, &table, &pads, (0, 3), identities.clone(), &cache_path)?;
-            std::fs::write(cache_path.join("pair.json"), b"truncated")?;
+            std::fs::write(cache_path.join("pair.bin"), b"truncated")?;
             let (_, corrupt) =
                 snes::paired::prepare_cache(&rom, 0, &table, &pads, (0, 3), identities.clone(), &cache_path)?;
             let mut changed = identities.clone();
-            changed["source_sha256"] = "f".repeat(64).into();
+            changed.source_sha256 = "f".repeat(64);
             let (_, incompatible) = snes::paired::prepare_cache(&rom, 0, &table, &pads, (0, 3), changed, &cache_path)?;
-            json!({"status":"pass","complete":true,"created":created,"reused":reused,
-                "corrupt":corrupt,"incompatible":incompatible,"warm":warm,"cold":cold})
+            (
+                "pass".into(),
+                Evidence {
+                    created: Some(created),
+                    reused: Some(reused),
+                    corrupt: Some(corrupt),
+                    incompatible: Some(incompatible),
+                    warm: Some(warm),
+                    cold: Some(cold),
+                    ..Default::default()
+                },
+            )
         }
         _ => anyhow::bail!("unknown feedback case"),
     };
-    report["identities"] = identities;
-    report["binary_sha256"] = sha256(&std::fs::read(std::env::current_exe()?)?).into();
-    write(&output.join("report.json"), &report)?;
+    let report = Report {
+        schema_version: 2,
+        status,
+        complete: true,
+        identities,
+        binary_sha256: sha256(&std::fs::read(std::env::current_exe()?)?),
+        evidence,
+    };
+    write(&output.join("report.toml"), &report)?;
     Ok(report)
 }
 
@@ -133,7 +219,7 @@ fn main() -> Result<()> {
     let args: Vec<_> = std::env::args().skip(1).collect();
     ensure!(args.len() == 4, "usage: feedback-probe CASE NEW_OUTPUT SOURCE_SHA256 HARDWARE_SHA256");
     let report = execute(&args[0], Path::new(&args[1]), &args[2], &args[3])?;
-    if matches!(report["status"].as_str(), Some("divergence" | "uncovered")) {
+    if matches!(report.status.as_str(), "divergence" | "uncovered") {
         std::process::exit(1);
     }
     Ok(())

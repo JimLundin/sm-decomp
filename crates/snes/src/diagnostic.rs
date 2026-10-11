@@ -1,8 +1,8 @@
 //! Passive canonical instruction state shared by reference and mixed execution.
 use rustysnes_core::{Bus, SaveWriter, cpu::Cpu};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CpuBoundary {
     pub pc: u32,
     pub a: u16,
@@ -30,7 +30,7 @@ pub struct InstructionSnapshot {
     pub pending_cpu: Vec<u8>,
     pub hardware: Vec<u8>,
 }
-#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BusEvent {
     pub kind: String,
     pub address: u32,

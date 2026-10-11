@@ -12,7 +12,7 @@ fail the command. ROM-derived states and fixtures remain ignored.
 Use snesrev/sm at `578f90b3cc49557bb70060ad033bb90b8cf8ac50` for the
 initial integration reference and decompression oracle. A fresh upstream ref
 check on 2026-10-10 confirmed that revision still heads main. The driver checks
-the archive SHA-256 from `tools/dependencies.json` and every extracted file;
+the archive SHA-256 from `tools/dependencies.toml` and every extracted file;
 the source remains unmodified. Each run records compiler, source, host, binary,
 ROM and input digests and retains the MIT/third-party notice. It builds the bank
 sources, runtime, SNES hardware and real SPC player with GCC 12.2.0, GNU C11,
@@ -104,8 +104,8 @@ one wrapped decompression call. Control memory changes never enter either
 candidate replay process.
 
 Each fresh replay now has its own `replay/` or `repeat/` directory, including
-independent saves, ROM views and fixtures. `fixtures/manifest.json` uses
-`decomp-c-captures-v1`: numeric sequence, host frame, source address and WRAM
+independent saves, ROM views and fixtures. New native runs write `fixtures/manifest.toml` using
+the versioned capture schema: numeric sequence, host frame, source address and WRAM
 destination offset; full before/after WRAM file identities and SHA-256; source
 revision, original-ROM identity and the actual routine-entry ROM view identity.
 Content-addressed ROM captures bind every call to its own immutable byte view.

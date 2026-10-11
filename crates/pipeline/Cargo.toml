@@ -8,7 +8,16 @@ publish.workspace = true
 [dependencies]
 anyhow.workspace = true
 serde_json.workspace = true
+serde.workspace = true
 sha2.workspace = true
+zip.workspace = true
+toml.workspace = true
+toml_edit = "0.22"
+pipeline-model.workspace = true
+movie = { path = "../movie" }
+evidence = { path = "../evidence" }
+flate2 = "1"
+zstd = { version = "=0.13.3", default-features = false }
 
 [[bin]]
 name = "sm-pipeline"

@@ -30,10 +30,11 @@ first later gameplay disagreement is event 24,934, frame 35,203, X=44 versus 43.
 See [the independent baseline](LSNES_BASELINE.md) for the historical probes.
 
 An independently verified original capture can also be preserved as its own
-immutable run with `python3 tools/readiness_sync.py --attest-original <run>`. This
+immutable run with `cargo run -p pipeline --locked --offline -- readiness-sync --attest-original <run>`. This
 rehashes all captured artifacts and reconstructs expected source bytes from the
 official tar plus the maintained build-only recipe. It preserves historical
-commands and configuration paths as recorded facts, while owned artifact links
-become relative to the new run. The original run is never changed or upgraded.
+commands and configuration paths as recorded facts. The attestation links the
+original capture owner as a retained dependency; preserve that run, its source
+snapshot, packages and capture artifacts. The original run is never changed.
 Use the resulting original-attestation run with `--original-run` to avoid another
 clean build and original replay. This attestation certifies only the oracle.

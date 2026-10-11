@@ -2,7 +2,7 @@
 
 `just diagnose <start-input> <instructions>` cold-replays the candidate and
 reference to corresponding instruction boundaries, then compares a bounded
-interval. `tools/readiness_diagnostics.py --start-instruction N` additionally
+interval. `sm-pipeline readiness-diagnose --start-instruction N` additionally
 selects an instruction offset within the cold frame. The prefix must pass frame
 parity; an earlier failure requests an earlier focus instead of attributing it
 to the selected compiled entry. The command prints its immutable run and brief.
@@ -37,9 +37,10 @@ separate restoration validation. Diagnostic results are scoped and never
 advance readiness acceptance by themselves.
 
 Candidate preparation is separate from validation: focused commands build exact
-run-local artifacts without a one-frame parity claim. `--failure <JSON>` with a
-selected `--predecessor <run>` invokes failure controls. The automatic Python
-API `diagnose_failure(run, failure, predecessor, intervals=None)` discovers
+run-local artifacts without a one-frame parity claim. `sm-pipeline
+iteration-diagnose` records candidate failure experiments and their evidence.
+The native
+diagnostic orchestration discovers
 actual changed-key execution boundaries, starts up to 64 preceding instructions,
 and uses validated separate candidate, disabled-key and predecessor caches over
 identical inputs and intervals. Disabled controls filter runtime table entries;

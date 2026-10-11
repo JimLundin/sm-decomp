@@ -15,16 +15,19 @@ jobs:
       - name: Install the project toolchain
         run: rustup show
       - name: Prepare pinned hardware source and timing patch
-        run: python3 tools/prepare_rustysnes.py
+        run: cargo run --manifest-path tools/bootstrap/Cargo.toml --locked -- prepare-rustysnes
       - name: Fetch locked dependencies
         run: cargo fetch --locked
+      - name: Check Rust bootstrap
+        run: |
+          cargo fmt --manifest-path tools/bootstrap/Cargo.toml -- --check
+          cargo clippy --manifest-path tools/bootstrap/Cargo.toml --all-targets --locked --offline -- -D warnings
+          cargo test --manifest-path tools/bootstrap/Cargo.toml --locked --offline
       - name: Check formatting
         run: cargo fmt --all --check
       - name: Clippy
         run: cargo clippy --workspace --all-targets --locked --offline -- -D warnings
       - name: Test without ROM or generated inputs
         run: cargo test --workspace --locked --offline
-      - name: Test synchronization comparison
-        run: python3 -m unittest discover -s tools -p 'test_*.py'
       - name: Test clocked APU timing
-        run: python3 tools/test_hardware.py
+        run: cargo run --manifest-path tools/bootstrap/Cargo.toml --locked --offline -- hardware-check

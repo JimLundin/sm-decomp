@@ -1,5 +1,5 @@
 /* THROWAWAY storage spike: native writer costs and exact trace conversion.
- * Build through storage_spike.py. Uses installed zstd/zlib/OpenSSL only.
+ * Historical storage experiment. Uses installed zstd/zlib/OpenSSL only.
  * Supported grammar is the native port's decimal PPU/APU event profile.
  */
 #include <stdio.h>
@@ -131,7 +131,7 @@ static int convert(const char *source,const char *dest,int level) {
   if(ferror(input))fail("read");fclose(input);flush_binary(w);
   unsigned char seal[32];SHA256_Final(seal,&whole);u64(output,UINT64_MAX);u64(output,w->sequence);u64(output,source_bytes);u64(output,w->chunk_count);write_bytes(output,seal,32);
   finish(output);char identity[65]={0};hex(seal,identity);
-  printf("{\"mode\":\"convert\",\"events\":%llu,\"source_bytes\":%llu,\"chunks\":%llu,\"wall_seconds\":%.6f,\"cpu_seconds\":%.6f,\"source_sha256\":\"%s\",\"zstd_version\":\"%s\"}\n",
+  printf("mode = \"convert\"\nevents = %llu\nsource_bytes = %llu\nchunks = %llu\nwall_seconds = %.6f\ncpu_seconds = %.6f\nsource_sha256 = \"%s\"\nzstd_version = \"%s\"\n",
          (unsigned long long)w->sequence,(unsigned long long)source_bytes,(unsigned long long)w->chunk_count,
          clock_sec(CLOCK_MONOTONIC)-start,clock_sec(CLOCK_PROCESS_CPUTIME_ID)-cpu,identity,ZSTD_versionString());free(w);return 0;
 }
@@ -162,7 +162,7 @@ static int verify(const char *source) {
       if(seen==1 && e.frame!=first)fail("first frame");}
     SHA256_Final(seal,&text);if(memcmp(seal,seals+32,32)||seen!=count||length!=text_len||prev_frame!=last||index_pos!=frames)fail("text or counts");
     total+=seen;text_total+=length;chunks++;free(raw);free(packed);
-  }fclose(f);printf("{\"mode\":\"verify\",\"events\":%llu,\"source_bytes\":%llu,\"chunks\":%llu,\"wall_seconds\":%.6f,\"cpu_seconds\":%.6f}\n",
+  }fclose(f);printf("mode = \"verify\"\nevents = %llu\nsource_bytes = %llu\nchunks = %llu\nwall_seconds = %.6f\ncpu_seconds = %.6f\n",
        (unsigned long long)total,(unsigned long long)text_total,(unsigned long long)chunks,clock_sec(CLOCK_MONOTONIC)-start,clock_sec(CLOCK_PROCESS_CPUTIME_ID)-cpu);return 0;
 }
 static int bench(const char *sample,const char *mode,const char *dest,uint64_t events,int level) {
@@ -185,7 +185,7 @@ static int bench(const char *sample,const char *mode,const char *dest,uint64_t e
   if(!strcmp(mode,"binary"))flush_binary(w);if(!strcmp(mode,"zstd-text"))flush_text(w);
   if(gz){if(gzclose(gz)!=Z_OK)fail("gzip close");output=fopen(dest,"rb");if(!output)fail("gzip fsync open");}
   finish(output);struct stat st;if(stat(dest,&st))fail("stat");
-  printf("{\"mode\":\"%s\",\"events\":%llu,\"bytes\":%llu,\"wall_seconds\":%.6f,\"cpu_seconds\":%.6f,\"level\":%d,\"loaded_events\":%zu,\"sink\":%llu}\n",mode,(unsigned long long)events,(unsigned long long)st.st_size,clock_sec(CLOCK_MONOTONIC)-start,clock_sec(CLOCK_PROCESS_CPUTIME_ID)-cpu,level,count,(unsigned long long)sink);
+  printf("mode = \"%s\"\nevents = %llu\nbytes = %llu\nwall_seconds = %.6f\ncpu_seconds = %.6f\nlevel = %d\nloaded_events = %zu\nsink = %llu\n",mode,(unsigned long long)events,(unsigned long long)st.st_size,clock_sec(CLOCK_MONOTONIC)-start,clock_sec(CLOCK_PROCESS_CPUTIME_ID)-cpu,level,count,(unsigned long long)sink);
   free(w);free(input);return 0;
 }
 int main(int argc,char **argv) {

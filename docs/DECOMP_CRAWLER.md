@@ -27,8 +27,8 @@ script aliasing, all property orientations and invalid inputs. The actual-C mani
 all property orientations, positive/negative velocities, air/solid terrain,
 flipped slopes and ordered actual PLM callbacks.
 
-Run `python3 tools/port_crawler_fixtures.py` to regenerate the checked-in manifest,
-then `python3 tools/port_collision.py --manifest tools/port/enemy-crawler.json
+Run `cargo run -p pipeline --locked --offline -- fixtures enemy-crawler tools/fixtures/enemy-crawler.toml` to regenerate the checked-in manifest,
+then `cargo run -p pipeline --locked --offline -- family-verify --adapter callback --manifest tools/port/enemy-crawler.toml
 --source deps/snesrev-sm --output out/port/crawler`. Translation and offline
 verification are distinct from live exercise: the any% prefix may not encounter
 these enemies, and no original-ROM parity or full Rust gameplay ownership is

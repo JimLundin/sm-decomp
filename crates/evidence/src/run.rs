@@ -6,7 +6,7 @@ use std::path::Path;
 #[derive(Debug, Clone)]
 pub struct Run {
     pub observations: Id,
-    pub provenance: serde_json::Value,
+    pub provenance: crate::Provenance,
     pub files: u64,
     pub bytes: u64,
 }
@@ -14,11 +14,12 @@ pub struct Run {
 /// Authenticate the observation closure before constructing the completed-run
 /// object. Acceptance verdicts remain a separate concern for pipeline consumers.
 /// The observation root stays stable when producer provenance changes.
-pub fn put_run(store: &mut Store, observations: Id, provenance: &serde_json::Value) -> Result<Id> {
+pub fn put_run(store: &mut Store, observations: Id, provenance: &crate::Provenance) -> Result<Id> {
     let (files, bytes) = verify_tree(store, &observations, None)?;
-    let canonical = serde_json::to_vec(provenance)?;
+    provenance.validate()?;
+    let canonical = toml::to_string(provenance)?.into_bytes();
     let producer = store.put(BLOB, &canonical)?;
-    let mut out = vec![1]; // completed, never an implicit partial run
+    let mut out = vec![2]; // v2 completed run; producer metadata is canonical typed TOML
     out.extend_from_slice(&observations);
     out.extend_from_slice(&producer);
     crate::canonical::varint(&mut out, files);
@@ -29,11 +30,12 @@ pub fn put_run(store: &mut Store, observations: Id, provenance: &serde_json::Val
 pub fn read_run(store: &Store, id: &Id) -> Result<Run> {
     let bytes = store.get_kind(id, RUN)?;
     let mut r = Reader::new(&bytes);
-    ensure!(r.byte()? == 1, "run is incomplete or unknown status");
+    ensure!(r.byte()? == 2, "unknown completed run version");
     let observations = r.id()?;
     let provenance_bytes = store.get_kind(&r.id()?, BLOB)?;
-    let provenance: serde_json::Value = serde_json::from_slice(&provenance_bytes)?;
-    ensure!(serde_json::to_vec(&provenance)? == provenance_bytes, "noncanonical provenance JSON");
+    let provenance: crate::Provenance = toml::from_str(std::str::from_utf8(&provenance_bytes)?)?;
+    provenance.validate()?;
+    ensure!(toml::to_string(&provenance)?.as_bytes() == provenance_bytes, "noncanonical provenance TOML");
     let files = r.varint()?;
     let count = r.varint()?;
     r.done()?;

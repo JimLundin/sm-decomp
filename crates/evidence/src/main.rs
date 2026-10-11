@@ -1,6 +1,28 @@
 use anyhow::{Context, Result, bail, ensure};
 use evidence::*;
-use std::fs::{File, OpenOptions};
+use serde::Serialize;
+use std::fs::OpenOptions;
+fn emit<T: Serialize>(value: &T) -> Result<()> {
+    print!("{}", toml::to_string_pretty(value)?);
+    Ok(())
+}
+#[derive(Serialize)]
+struct VerifyReceipt {
+    files: u64,
+    bytes: u64,
+    seconds: f64,
+}
+#[derive(Serialize)]
+struct StatsReceipt {
+    objects: u64,
+    packs: u64,
+    stored_bytes: u64,
+}
+#[derive(Serialize)]
+struct DifferenceReceipt {
+    offsets: Vec<u64>,
+    node_reads: u64,
+}
 use std::io::{BufWriter, Write};
 use std::path::Path;
 use std::time::Instant;
@@ -13,17 +35,21 @@ fn main() -> Result<()> {
             let mut store = Store::create(Path::new(&args[1]))?;
             let tree = ingest_tree(&mut store, Path::new(&args[2]), &mut |p| eprintln!("ingest {}", p.display()))?;
             let provenance = if let Some(path) = args.get(3) {
-                serde_json::from_reader(File::open(path)?)?
+                toml::from_str(&std::fs::read_to_string(path)?)?
             } else {
-                serde_json::json!({})
+                Provenance::default()
             };
             let run = put_run(&mut store, tree, &provenance)?;
             let stats = store.stats();
             let pack = store.commit()?;
-            println!(
-                "{}",
-                serde_json::json!({"run":hex(&run), "observations":hex(&tree), "pack":pack.as_ref().map(hex), "new_objects":stats.new_objects, "shared_objects":stats.shared_objects, "seconds":start.elapsed().as_secs_f64()})
-            );
+            emit(&IngestReceipt {
+                run: hex(&run),
+                observations: hex(&tree),
+                pack: pack.as_ref().map(hex),
+                new_objects: stats.new_objects,
+                shared_objects: stats.shared_objects,
+                seconds: start.elapsed().as_secs_f64(),
+            })?;
         }
         Some("capture") if args.len() == 6 => {
             // Pipeline holds its shared-store admission lock while recording and sealing.
@@ -34,40 +60,56 @@ fn main() -> Result<()> {
             let info = read_stream(&store, &stream)?;
             ensure!(info.bytes > 0, "empty captured trace");
             store.commit()?;
-            let temporary =
-                serde_json::json!({"stream":hex(&stream), "bytes":info.bytes, "sha256":hex(&info.legacy_sha256)});
+            let temporary = TraceReceipt { stream: hex(&stream), bytes: info.bytes, sha256: hex(&info.legacy_sha256) };
             let mut out = OpenOptions::new().write(true).create_new(true).open(&args[2])?;
-            writeln!(out, "{temporary}")?;
+            out.write_all(toml::to_string(&temporary)?.as_bytes())?;
             out.sync_all()?;
             let mut store = Store::create(Path::new(&args[1]))?;
             let observations = ingest_tree(&mut store, Path::new(&args[3]), &mut |_| {})?;
             let mut entries = read_tree(&store, &observations)?;
             entries.push(Entry { name: "hardware.log".into(), kind: EntryKind::Stream, id: stream });
             let tree = put_tree(&mut store, entries)?;
-            let provenance = serde_json::from_reader(File::open(&args[4])?)?;
+            let provenance = toml::from_str(&std::fs::read_to_string(&args[4])?)?;
             let run = put_run(&mut store, tree, &provenance)?;
             store.commit()?;
             // Reopen sealed packs before allowing staging bytes to be released.
             let store = Store::open(Path::new(&args[1]))?;
             let (verified, inventory) = verified_inventory(&store, &run)?;
-            let artifacts: serde_json::Map<String, serde_json::Value> =
-                inventory.iter().map(|(name, info)| (name.clone(), hex(&info.sha256).into())).collect();
-            let sizes: serde_json::Map<String, serde_json::Value> =
-                inventory.iter().map(|(name, info)| (name.clone(), info.bytes.into())).collect();
-            let pointer = serde_json::json!({"format":"sm-evidence-v1", "run":hex(&run), "observations":hex(&tree), "files":verified.files, "bytes":verified.bytes, "artifacts":artifacts, "sizes":sizes});
+            let artifacts = inventory.iter().map(|(name, info)| (name.clone(), hex(&info.sha256))).collect();
+            let sizes = inventory.iter().map(|(name, info)| (name.clone(), info.bytes)).collect();
+            let pointer = Pointer {
+                format: "sm-evidence-v2".into(),
+                run: hex(&run),
+                observations: hex(&tree),
+                files: verified.files,
+                bytes: verified.bytes,
+                artifacts,
+                sizes,
+                provenance: verified.provenance,
+                store: None,
+                pipeline_seconds: None,
+                producer_seconds: None,
+                seal_seconds: None,
+                stored_added_bytes: None,
+                worker_wait_seconds: None,
+                store_wait_seconds: None,
+                publication_seconds: None,
+            };
             let mut out = OpenOptions::new().write(true).create_new(true).open(&args[5])?;
-            writeln!(out, "{pointer}")?;
+            out.write_all(toml::to_string(&pointer)?.as_bytes())?;
             out.sync_all()?;
         }
         Some("inventory") if args.len() == 3 => {
             let store = Store::open(Path::new(&args[1]))?;
             let (run, inventory) = verified_inventory(&store, &parse_id(&args[2])?)?;
-            let artifacts: serde_json::Map<String, serde_json::Value> =
-                inventory.iter().map(|(name, info)| (name.clone(), hex(&info.sha256).into())).collect();
-            println!(
-                "{}",
-                serde_json::json!({"observations":hex(&run.observations), "files":run.files, "bytes":run.bytes, "artifacts":artifacts, "provenance":run.provenance})
-            );
+            let artifacts = inventory.iter().map(|(name, info)| (name.clone(), hex(&info.sha256))).collect();
+            emit(&Inventory {
+                observations: hex(&run.observations),
+                files: run.files,
+                bytes: run.bytes,
+                artifacts,
+                provenance: run.provenance,
+            })?;
         }
         Some("import") if args.len() == 4 => {
             let source = Store::open(Path::new(&args[1]))?;
@@ -89,28 +131,25 @@ fn main() -> Result<()> {
                         .is_some_and(|other| member.bytes == other.bytes && member.sha256 == other.sha256)),
                 "imported inventory differs"
             );
-            println!(
-                "{}",
-                serde_json::json!({"run":hex(&id), "observations":hex(&restored.observations),
-                "files":restored.files,"bytes":restored.bytes,"seconds":start.elapsed().as_secs_f64(),
-                "provenance":restored.provenance,"artifacts":actual.iter().map(|(name,member)|(name.clone(),hex(&member.sha256))).collect::<std::collections::BTreeMap<_,_>>()})
-            );
+            emit(&ImportReceipt {
+                run: hex(&id),
+                observations: hex(&restored.observations),
+                files: restored.files,
+                bytes: restored.bytes,
+                seconds: start.elapsed().as_secs_f64(),
+                provenance: restored.provenance,
+                artifacts: actual.iter().map(|(name, member)| (name.clone(), hex(&member.sha256))).collect(),
+            })?;
         }
         Some("verify") if (3..=4).contains(&args.len()) => {
             let store = Store::open(Path::new(&args[1]))?;
             store.verify_packs()?;
             let run = verify_run(&store, &parse_id(&args[2])?, args.get(3).map(Path::new))?;
-            println!(
-                "{}",
-                serde_json::json!({"files":run.files, "bytes":run.bytes, "seconds":start.elapsed().as_secs_f64()})
-            );
+            emit(&VerifyReceipt { files: run.files, bytes: run.bytes, seconds: start.elapsed().as_secs_f64() })?;
         }
         Some("stats") if args.len() == 2 => {
             let stats = Store::open(Path::new(&args[1]))?.stats();
-            println!(
-                "{}",
-                serde_json::json!({"objects":stats.objects,"packs":stats.packs,"stored_bytes":stats.stored_bytes})
-            );
+            emit(&StatsReceipt { objects: stats.objects, packs: stats.packs, stored_bytes: stats.stored_bytes })?;
         }
         Some("cat") if args.len() == 4 => {
             let store = Store::open(Path::new(&args[1]))?;
@@ -134,10 +173,10 @@ fn main() -> Result<()> {
         Some("diff-image") if args.len() == 4 => {
             let store = Store::open(Path::new(&args[1]))?;
             let (offsets, reads) = diff_images(&store, &parse_id(&args[2])?, &parse_id(&args[3])?)?;
-            println!("{}", serde_json::json!({"offsets":offsets,"node_reads":reads}));
+            emit(&DifferenceReceipt { offsets, node_reads: reads })?;
         }
         _ => bail!(
-            "usage: sm-evidence capture STORE TRACE_RECEIPT DIRECTORY PROVENANCE POINTER | inventory STORE RUN | import SOURCE_STORE DEST_STORE RUN | ingest STORE DIRECTORY [PROVENANCE.json] | verify STORE RUN [DIRECTORY] | stats STORE | cat STORE RUN MEMBER | frame STORE RUN MEMBER FRAME | extract STORE RUN NEW_DIRECTORY | diff-image STORE LEFT RIGHT"
+            "usage: sm-evidence capture STORE TRACE_RECEIPT DIRECTORY PROVENANCE POINTER | inventory STORE RUN | import SOURCE_STORE DEST_STORE RUN | ingest STORE DIRECTORY [PROVENANCE.toml] | verify STORE RUN [DIRECTORY] | stats STORE | cat STORE RUN MEMBER | frame STORE RUN MEMBER FRAME | extract STORE RUN NEW_DIRECTORY | diff-image STORE LEFT RIGHT"
         ),
     }
     Ok(())

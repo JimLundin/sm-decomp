@@ -26,20 +26,21 @@ fn main() -> Result<()> {
     snes::verify_movie_rom(&movie, &rom)?;
     let fallback = args.iter().any(|arg| arg == "--fallback-only");
     let all = if fallback { &[][..] } else { game::steps::STEP_TABLE };
-    let disabled: Vec<serde_json::Value> = option("--disabled-keys")
-        .map(|path| {
-            std::fs::read(path).map_err(anyhow::Error::from).and_then(|bytes| Ok(serde_json::from_slice(&bytes)?))
+    #[derive(serde::Deserialize)]
+    struct Keys {
+        keys: Vec<snes::focused::Key>,
+    }
+    let disabled = option("--disabled-keys")
+        .map(|path| -> Result<_> {
+            let keys: Keys = toml::from_str(&std::fs::read_to_string(path)?)?;
+            Ok(keys.keys)
         })
         .transpose()?
         .unwrap_or_default();
     let filtered: Vec<_> = all
         .iter()
         .copied()
-        .filter(|&(address, mx, _, _)| {
-            !disabled
-                .iter()
-                .any(|key| key["address"].as_u64() == Some(address.into()) && key["mx"].as_u64() == Some(mx.into()))
-        })
+        .filter(|&(address, mx, _, _)| !disabled.iter().any(|key| key.address == address && key.mx == mx))
         .collect();
     let table = filtered.as_slice();
     if !fallback {
@@ -51,32 +52,26 @@ fn main() -> Result<()> {
     let mut reference = snes::Reference::new(&rom, 0)?;
     let mut subject = snes::Subject::with_steps(&rom, 0, table)?;
     if let Some(keys_path) = option("--discover-keys") {
-        let keys: Vec<serde_json::Value> = serde_json::from_slice(&std::fs::read(keys_path)?)?;
-        let keys: Vec<_> = keys
-            .iter()
-            .map(|key| {
-                Ok((
-                    key["address"].as_u64().context("key address")? as u32,
-                    key["mx"].as_u64().context("key width")? as u8,
-                ))
-            })
-            .collect::<Result<_>>()?;
+        let keys: Keys = toml::from_str(&std::fs::read_to_string(keys_path)?)?;
+        let keys = keys.keys.iter().map(|key| (key.address, key.mx)).collect::<Vec<_>>();
         let frames = option("--frames").context("discovery --frames required")?.parse()?;
         let mut report = snes::controls::covered_intervals(&mut reference, &mut subject, &movie.frames, frames, &keys)?;
-        report["keys"] = serde_json::to_value(
-            keys.iter().map(|&(address, mx)| serde_json::json!({"address":address,"mx":mx})).collect::<Vec<_>>(),
-        )?;
-        report["binary_sha256"] = format!("{:x}", Sha256::digest(std::fs::read(std::env::current_exe()?)?)).into();
-        report["identities"] = serde_json::json!({"rom_sha256":format!("{:x}",Sha256::digest(&rom)),"movie_sha256":format!("{:x}",Sha256::digest(std::fs::read(&movie_path)?)),"input_sha256":format!("{:x}",Sha256::digest(movie::write_inputs(&movie.frames).as_bytes()))});
+        report.keys = keys.iter().map(|&(address, mx)| snes::focused::Key { address, mx }).collect();
+        report.binary_sha256 = Some(format!("{:x}", Sha256::digest(std::fs::read(std::env::current_exe()?)?)));
+        report.identities = Some(snes::focused::Identities {
+            rom_sha256: format!("{:x}", Sha256::digest(&rom)),
+            movie_sha256: format!("{:x}", Sha256::digest(std::fs::read(&movie_path)?)),
+            input_sha256: format!("{:x}", Sha256::digest(movie::write_inputs(&movie.frames).as_bytes())),
+        });
         std::fs::create_dir(&output)?;
-        std::fs::write(output.join("discovery.json"), serde_json::to_vec_pretty(&report)?)?;
-        std::process::exit(if report["status"] == "pass" { 0 } else { 1 });
+        std::fs::write(output.join("discovery.toml"), toml::to_string_pretty(&report)?)?;
+        std::process::exit(if report.status == "pass" { 0 } else { 1 });
     }
     let mut report = if until_frame_end {
         snes::focused::compare_frame_from_boundary(&mut reference, &mut subject, &movie.frames, start, &output)?
     } else if let Some(cache_path) = option("--cache") {
         let identity_path = option("--identities").context("--identities required for validated cache")?;
-        let identities: serde_json::Value = serde_json::from_slice(&std::fs::read(identity_path)?)?;
+        let identities: pipeline_model::CheckpointIdentities = pipeline_model::read(&PathBuf::from(identity_path))?;
         let (pair, cache) = snes::paired::prepare_cache(
             &rom,
             0,
@@ -97,25 +92,27 @@ fn main() -> Result<()> {
             &output,
             "warm",
         )?;
-        report["warm_replay_seconds"] = began.elapsed().as_secs_f64().into();
-        report["cache"] = cache;
-        report["cache_pair_sha256"] = pair.pair_sha256.into();
-        report["cache_history_sha256"] = pair.history_sha256.into();
+        report.warm_replay_seconds = Some(began.elapsed().as_secs_f64());
+        report.cache = Some(cache);
+        report.cache_pair_sha256 = Some(pair.pair_sha256);
+        report.cache_history_sha256 = Some(pair.history_sha256);
         report
     } else {
         snes::focused::compare_from_boundary(&mut reference, &mut subject, &movie.frames, start, skip, count, &output)?
     };
-    report["identities"] = serde_json::json!({"rom_sha256":format!("{:x}",Sha256::digest(&rom)),
-        "movie_sha256":format!("{:x}",Sha256::digest(std::fs::read(movie_path)?)),
-        "input_sha256":format!("{:x}",Sha256::digest(movie::write_inputs(&movie.frames).as_bytes()))});
-    report["disabled_keys"] = disabled.into();
-    report["binary_sha256"] = format!("{:x}", Sha256::digest(std::fs::read(std::env::current_exe()?)?)).into();
-    report["rerun"] = serde_json::to_value(std::env::args().collect::<Vec<_>>())?;
-    std::fs::write(output.join("instruction.json"), serde_json::to_vec_pretty(&report)?)?;
-    if report["status"] == "divergence" {
+    report.identities = Some(snes::focused::Identities {
+        rom_sha256: format!("{:x}", Sha256::digest(&rom)),
+        movie_sha256: format!("{:x}", Sha256::digest(std::fs::read(movie_path)?)),
+        input_sha256: format!("{:x}", Sha256::digest(movie::write_inputs(&movie.frames).as_bytes())),
+    });
+    report.disabled_keys = disabled;
+    report.binary_sha256 = Some(format!("{:x}", Sha256::digest(std::fs::read(std::env::current_exe()?)?)));
+    report.rerun = std::env::args().collect();
+    pipeline_model::write(&output.join("instruction.toml"), &report)?;
+    if report.status == "divergence" {
         std::process::exit(1);
     }
-    if report["status"] != "pass" || report["complete"] != true {
+    if report.status != "pass" || !report.complete {
         std::process::exit(2);
     }
     Ok(())

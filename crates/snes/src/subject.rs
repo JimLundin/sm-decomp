@@ -225,37 +225,69 @@ impl Subject {
         let c = &self.machine.cpu;
         let mut table: Vec<_> = self.steps.iter().map(|(&(a, m), (bytes, _))| (a, m, bytes.to_vec())).collect();
         table.sort();
-        let metadata = serde_json::json!({"table":table,"generated":self.generated_steps,"interpreted":self.interpreted_steps,
-            "timed_cycles":self.machine.bus.cpu_cycles(),"machine_cpu":[c.a,c.x,c.y,c.s,c.d,u16::from(c.db),u16::from(c.pb),u16::from(c.p),u16::from(c.e)],
-            "generated_calls":self.machine.generated_calls,
-            "machine_misses":self.machine.misses.iter().map(|(m,&n)|(m.addr,m.mx,n)).collect::<Vec<_>>(),
-            "misses":self.misses.iter().map(|(m,&n)|(m.addr,m.mx,n)).collect::<Vec<_>>(),"accounting":self.accounting.checkpoint(),"wram":self.wram});
+        let mut metadata = rustysnes_core::SaveWriter::new();
+        metadata.write_u32(table.len() as u32);
+        for (address, mx, bytes) in &table {
+            metadata.write_u32(*address);
+            metadata.write_u8(*mx);
+            metadata.write_len_prefixed(bytes);
+        }
+        for count in
+            [self.generated_steps, self.interpreted_steps, self.machine.bus.cpu_cycles(), self.machine.generated_calls]
+        {
+            metadata.write_u64(count);
+        }
+        for value in [c.a, c.x, c.y, c.s, c.d, u16::from(c.db), u16::from(c.pb), u16::from(c.p), u16::from(c.e)] {
+            metadata.write_u16(value);
+        }
+        for misses in [&self.misses, &self.machine.misses] {
+            metadata.write_u32(misses.len() as u32);
+            for (key, count) in misses {
+                metadata.write_u32(key.addr);
+                metadata.write_u8(key.mx);
+                metadata.write_u64(*count);
+            }
+        }
+        let accounting = self.accounting.checkpoint();
+        metadata.write_u32(accounting.len() as u32);
+        for (generated, address, mx, emulation, opcode, count) in accounting {
+            metadata.write_bool(generated);
+            metadata.write_u32(address);
+            metadata.write_u8(mx);
+            metadata.write_bool(emulation);
+            metadata.write_u8(opcode);
+            metadata.write_u64(count);
+        }
+        metadata.write_len_prefixed(&self.wram);
         super::paired::envelope(
-            b"SCP1",
+            b"SCP2",
             &super::paired::raw_cpu(&self.interpreter),
             &self.bus.hardware.borrow().readiness_state(),
-            &metadata,
+            &metadata.into_bytes(),
         )
     }
     pub fn restore_checkpoint_state(&mut self, bytes: &[u8]) -> Result<()> {
-        let (cpu, hardware, metadata) = super::paired::open(bytes, b"SCP1")?;
+        let (cpu, hardware, metadata) = super::paired::open(bytes, b"SCP2")?;
         let mut table: Vec<_> = self.steps.iter().map(|(&(a, m), (bytes, _))| (a, m, bytes.to_vec())).collect();
         table.sort();
-        ensure!(
-            serde_json::to_value(table)? == metadata["table"],
-            "subject dispatch table incompatible with checkpoint"
-        );
-        super::paired::load_cpu(&mut self.interpreter, cpu)?;
-        self.bus.hardware.borrow_mut().readiness_load(hardware)?;
-        self.generated_steps =
-            metadata["generated"].as_u64().ok_or_else(|| anyhow::anyhow!("missing generated count"))?;
-        self.interpreted_steps =
-            metadata["interpreted"].as_u64().ok_or_else(|| anyhow::anyhow!("missing interpreted count"))?;
-        self.machine.bus.restore_cpu_cycles(
-            metadata["timed_cycles"].as_u64().ok_or_else(|| anyhow::anyhow!("missing timed count"))?,
-        );
-        let c: Vec<u16> = serde_json::from_value(metadata["machine_cpu"].clone())?;
-        ensure!(c.len() == 9, "invalid machine CPU");
+        let mut reader = rustysnes_core::SaveReader::new(metadata);
+        let table_count = reader.read_u32()? as usize;
+        ensure!(table_count == table.len(), "subject dispatch table incompatible with checkpoint");
+        for (address, mx, bytes) in table {
+            ensure!(
+                reader.read_u32()? == address && reader.read_u8()? == mx && reader.read_len_prefixed()? == bytes,
+                "subject dispatch table incompatible with checkpoint"
+            );
+        }
+        self.generated_steps = reader.read_u64()?;
+        self.interpreted_steps = reader.read_u64()?;
+        self.machine.bus.restore_cpu_cycles(reader.read_u64()?);
+        self.machine.generated_calls = reader.read_u64()?;
+        let mut c = [0u16; 9];
+        for value in &mut c {
+            *value = reader.read_u16()?;
+        }
+        ensure!(c[5..8].iter().all(|n| *n <= 255) && c[8] <= 1, "invalid machine CPU");
         self.machine.cpu = Cpu {
             a: c[0],
             x: c[1],
@@ -267,18 +299,45 @@ impl Subject {
             p: c[7] as u8,
             e: c[8] != 0,
         };
-        self.machine.generated_calls =
-            metadata["generated_calls"].as_u64().ok_or_else(|| anyhow::anyhow!("missing call count"))?;
-        self.accounting.restore(serde_json::from_value(metadata["accounting"].clone())?);
-        for (target, field) in [(&mut self.misses, "misses"), (&mut self.machine.misses, "machine_misses")] {
+        for target in [&mut self.misses, &mut self.machine.misses] {
             target.clear();
-            let rows: Vec<(u32, u8, u64)> = serde_json::from_value(metadata[field].clone())?;
-            for (addr, mx, count) in rows {
-                target.insert(Miss { addr, mx }, count);
+            let count = reader.read_u32()?;
+            ensure!(count as usize <= reader.remaining() / 13, "invalid cached miss count");
+            for _ in 0..count {
+                let addr = reader.read_u32()?;
+                let mx = reader.read_u8()?;
+                let count = reader.read_u64()?;
+                ensure!(
+                    addr <= 0xffffff && mx < 4 && target.insert(Miss { addr, mx }, count).is_none(),
+                    "invalid duplicate cached miss"
+                );
             }
         }
-        self.wram = serde_json::from_value(metadata["wram"].clone())?;
-        ensure!(self.wram.len() == 128 * 1024, "invalid cached WRAM");
+        let count = reader.read_u32()?;
+        ensure!(count as usize <= reader.remaining() / 16, "invalid cached accounting count");
+        let mut accounting = Vec::new();
+        let mut seen = std::collections::BTreeSet::new();
+        for _ in 0..count {
+            let generated = reader.read_bool()?;
+            let address = reader.read_u32()?;
+            let mx = reader.read_u8()?;
+            let emulation = reader.read_bool()?;
+            let opcode = reader.read_u8()?;
+            let count = reader.read_u64()?;
+            ensure!(
+                address <= 0xffffff && mx < 4 && seen.insert((generated, address, mx, emulation, opcode)),
+                "invalid duplicate cached accounting key"
+            );
+            accounting.push((generated, address, mx, emulation, opcode, count));
+        }
+        self.accounting.restore(accounting);
+        let wram = reader.read_len_prefixed()?;
+        ensure!(wram.len() == 128 * 1024, "invalid cached WRAM");
+        self.wram = wram.to_vec();
+        ensure!(reader.remaining() == 0, "trailing subject checkpoint metadata");
+        super::paired::load_cpu(&mut self.interpreter, cpu)?;
+        self.bus.hardware.borrow_mut().readiness_load(hardware)?;
+
         Ok(())
     }
     /// Construct only for the base NTSC SNES hardware used by Super Metroid.

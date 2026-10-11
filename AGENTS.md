@@ -1,9 +1,10 @@
 ## Agent skills
 
-### Reusable Python scripts
+### Project language
 
-When a custom Python script has been reused more than 10 times, promote it into
-a checked-in project tool or utility and use that entry point for subsequent runs.
+Implement project tools, orchestration and tests in Rust. The migration target
+is a project with no Python source or runtime dependency. Replace legacy Python
+entry points with validated Rust commands; preserve their evidence contracts.
 
 ### Issue tracker
 

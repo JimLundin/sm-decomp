@@ -20,7 +20,7 @@ bytes must agree, including counters. A faulty generated candidate can pass
 restoration fidelity while the validation report records candidate/reference
 divergence; focused replay still reports its first incorrect instruction.
 
-`pair.json`, `validation.json` and digest-bound `cache.json` are retained together.
+`pair.bin`, `validation.toml` and digest-bound `cache.toml` are retained together.
 Unknown, truncated, corrupt, incomplete or incompatible caches are moved to a
 unique `.rejected-*` sibling before a fresh candidate cache is built cold.
 Cross-candidate reuse is conservatively rejected: a source identity change

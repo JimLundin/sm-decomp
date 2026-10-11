@@ -118,9 +118,11 @@ dependencies = [
  "anyhow",
  "game",
  "movie",
- "serde_json",
+ "pipeline-model",
+ "serde",
  "sha2",
  "snes",
+ "toml",
 ]
 
 [[package]]
@@ -155,8 +157,9 @@ name = "evidence"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "serde_json",
+ "serde",
  "sha2",
+ "toml",
  "zstd",
 ]
 
@@ -182,6 +185,7 @@ name = "fuzz"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "pipeline-model",
  "recomp",
  "runtime",
  "serde",
@@ -283,6 +287,9 @@ name = "movie"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "serde",
+ "sha2",
+ "toml",
  "zip 2.4.2",
 ]
 
@@ -291,8 +298,27 @@ name = "pipeline"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "evidence",
+ "flate2",
+ "movie",
+ "pipeline-model",
+ "serde",
  "serde_json",
  "sha2",
+ "toml",
+ "toml_edit",
+ "zip 2.4.2",
+ "zstd",
+]
+
+[[package]]
+name = "pipeline-model"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "serde",
+ "sha2",
+ "toml",
 ]
 
 [[package]]
@@ -334,8 +360,8 @@ name = "recomp"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "pipeline-model",
  "serde",
- "serde_json",
  "sha2",
  "toml",
 ]
@@ -480,12 +506,13 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "movie",
+ "pipeline-model",
  "recomp",
  "runtime",
  "rustysnes-core",
  "serde",
- "serde_json",
  "sha2",
+ "toml",
 ]
 
 [[package]]

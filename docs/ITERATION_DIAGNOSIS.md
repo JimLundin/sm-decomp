@@ -16,8 +16,9 @@ experiment captures that source independently while retaining the failed source.
 A different candidate run name, file name, elapsed time or restart cannot reset
 the consecutive-without-evidence count.
 
-Use `--evidence JSON_FILE` to link substantive observations. Each descriptor names
-an immutable run, report/hash, actual process/hash and executable/hash, plus its
+Use `--evidence FILE.toml` to link substantive observations. The typed TOML file
+contains `[[evidence]]` descriptors. Each descriptor names an immutable run,
+report/hash, actual process/hash and executable/hash, plus its
 kind: `first-mismatch`, `controls`, `coverage` or `independent-hardware`.
 Verification binds actual process completion to the preserved executable, source
 and logs. Novelty derives from instruction/state/bus facts, matched control

@@ -46,13 +46,10 @@ void __wrap_WaitUntilEndOfVblankAndClearHdma(void) {
 }
 
 static void Observe(const char *kind) {
-  fprintf(events, "{\"event\":%lu,\"host_step\":%lu,\"kind\":\"%s\",\"coroutine\":%u,\"state\":{",
-          ++sequence, host_step, kind, coroutine_state_0);
+  fprintf(events, "%lu %lu %s %u",++sequence,host_step,kind,coroutine_state_0);
   const unsigned offsets[] = {0x998,0x79b,0xaf6,0xafa,0x9c2,0x9a4,0x9a2,0x9da,0x9dc,0x9de,0x9e0,0x5e5,0x8b,0x8f,0x97,0x5b6,0x5b8,0x617};
-  const char *names[] = {"game_state","room","samus_x","samus_y","health","items","equipped_items","clock_frames","clock_seconds","clock_minutes","clock_hours","rng","held","pressed","previous","accepted_nmi","all_nmi","upload"};
-  for (unsigned i=0; i<sizeof(offsets)/sizeof(offsets[0]); i++)
-    fprintf(events, "%s\"%s\":%u", i ? "," : "", names[i], g_ram[offsets[i]] | (g_ram[offsets[i]+1]<<8));
-  fprintf(events, ",\"waiting\":%u}}\n", waiting_for_nmi);
+  for(unsigned i=0;i<sizeof(offsets)/sizeof(offsets[0]);i++)fprintf(events," %u",g_ram[offsets[i]]|(g_ram[offsets[i]+1]<<8));
+  fprintf(events," %u\n",waiting_for_nmi);
   fflush(events);
 }
 void __real_RtlApuUpload(const uint8 *data);
@@ -123,7 +120,7 @@ static int PollFixtures(const char *rom, const char *native, const char *cases, 
       differences += g_ram[i] != expected[i];
       if (i != stack_byte || g_ram[i] != 0x94 || expected[i] != 0x16) gameplay_differences += g_ram[i] != expected[i];
     }
-    printf("{\"entry_event\":%u,\"return_event\":%u,\"pad\":%u,\"different_bytes\":%u,\"full_wram_match\":%s,\"gameplay_wram_match\":%s,\"gameplay_different_bytes\":%u,\"native_stack_offset\":%u,\"native_stack_entry\":148,\"native_stack_return\":22}\n",
+    printf("poll %u %u %u %u %s %s %u %u 148 22\n",
            entry, leave, pad, differences, differences ? "false" : "true", gameplay_differences ? "false" : "true", gameplay_differences, stack_byte);
   }
   fclose(list);
@@ -139,7 +136,7 @@ int main(int argc,char **argv) {
   causal_polling = !strcmp(argv[4], "causal-polling") || !strcmp(argv[4], "changed-causal-rng") || omit_vblank_wait || omit_screen_wait;
   changed_gameplay = !strcmp(argv[4],"changed-rng") || !strcmp(argv[4], "changed-causal-rng");
   FILE *inputs=fopen(argv[2],"r");
-  events=fopen("events.jsonl","w");
+  events=fopen("events.txt","w");
   if (!inputs || !events || !SnesInit(argv[1])) return 2;
   FILE *view=fopen("rom-view.bin","wb");
   if (!view || fwrite(g_rom,1,g_snes->cart->romSize,view)!=g_snes->cart->romSize || fclose(view)) return 2;
@@ -165,6 +162,6 @@ int main(int argc,char **argv) {
   FILE *state=fopen("terminal.bin","wb");
   if (!state || fwrite(g_ram,1,sizeof(g_ram),state)!=sizeof(g_ram) ||
       fwrite(g_sram,1,0x2000,state)!=0x2000 || fclose(state)) return 2;
-  printf("{\"steps\":%lu,\"complete\":%lu,\"initializations\":1,\"fallback_calls\":%lu,\"fallback_instructions\":%lu}\n",steps,completed,fallback_calls,fallback_instructions);
+  printf("summary %lu %lu 1 %lu %lu\n",steps,completed,fallback_calls,fallback_instructions);
   fclose(inputs); fclose(events); return 0;
 }

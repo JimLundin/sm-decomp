@@ -2,9 +2,9 @@
 
 `just iteration-feedback` allocates a new immutable scoped run and preserves
 synthetic policy, hardware and rejected-publication evidence. It does not alter
-reviewed configuration or publish acceptance. `--feedback-owner ACCEPTED_RUN`
-also rechecks and links that accepted run's mandatory feedback: uncovered keys,
-transient faults, missing/incomplete evidence and checkpoint controls. The
+reviewed configuration or publish acceptance. An accepted run's mandatory
+feedback retains uncovered keys, transient faults, missing/incomplete evidence
+and checkpoint controls separately. The
 standalone demonstration verdict never substitutes for a real-ROM increment.
 
 The session policy driver calls the public Session operation seam using explicit
@@ -29,7 +29,7 @@ a decision. A real production `accept` command rejects the private incomplete
 candidate and preserves the private pointer's exact bytes. These policy failures
 explicitly make no claim that commercial frame parity executed.
 
-`python3 tools/iteration_demonstrations.py verify --run RUN` checks the captured
+`cargo run -p pipeline --locked --offline -- iteration-demonstrations verify --run RUN` checks the captured
 source, sealed owned artifacts, process origins, retained policy state, literal
 hardware assertions, failed candidate/history lineage and unchanged pointer
 digests. Commercial source and accepted-state evidence remain separate. The
@@ -37,7 +37,7 @@ final integrated readiness refresh and default-one real session also require
 all mandatory checks, cold 18,000-frame generated parity, changed-key and focused
 coverage, legitimate independent reuse and positive comparable execution gain.
 
-## Completed real integration
+## Historical completed real integration
 
 Root session [session-130a159941774a5aaf1cd27c4e714c4d](../out/iteration-sessions/session-130a159941774a5aaf1cd27c4e714c4d/brief.md)
 completed with exactly **1/1 accepted increments**. It selected `$80B119 m0x0`
@@ -106,11 +106,11 @@ Final [nonaccepting demonstrations](../out/runs/20261010T161610.364510Z-b47c570f
 passed on the accepted executable source and reverified its mandatory feedback.
 They retain count/target/stop policy, later faulty execution with matched controls,
 three-experiment escalation, incomplete publication refusal and unchanged pointer
-digests. `iteration_demonstrations.py verify --run` rechecks their sealed evidence.
+digests. These historical artifacts use the predecessor format; the native
+verification command applies to newly produced Rust demonstration runs.
 
-Reproduce a new bounded real session with `just recomp-iteration --original-run
-out/runs/20261010T082358.413496Z-53c5f3809a64 --jobs 4`. Verify the retained
-demonstrations with `python3 tools/iteration_demonstrations.py verify --run
-out/runs/20261010T161610.364510Z-b47c570f84c7`. These commands preserve previous
-evidence; new sessions allocate new runs. No Git commit or external publication
-was performed.
+Produce a new native demonstration with `just iteration-feedback`, then verify
+its printed run using `cargo run -p pipeline --locked --offline --
+iteration-demonstrations verify --run RUN`. A real session uses `just
+recomp-iteration --original-run ORIGINAL_RUN`; that oracle must pass the native
+capture provenance checks. New sessions allocate new evidence.

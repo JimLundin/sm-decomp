@@ -1,5 +1,5 @@
 //! Exercise the real CLI protocol, OS locks and durable cache with two workers.
-use serde_json::{Value, json};
+use serde::{Deserialize, Serialize};
 use std::{
     fs,
     io::{Read, Write},
@@ -8,6 +8,7 @@ use std::{
     sync::atomic::{AtomicUsize, Ordering},
     time::Duration,
 };
+use toml::Value;
 
 static NEXT: AtomicUsize = AtomicUsize::new(0);
 struct Directory(PathBuf);
@@ -27,6 +28,30 @@ impl Drop for Directory {
         let _ = fs::remove_dir_all(&self.0);
     }
 }
+#[derive(Serialize)]
+struct CacheRequest<'a> {
+    root: &'a Path,
+    checkout: &'a Path,
+    command: Vec<&'a str>,
+    inputs: Vec<PathBuf>,
+    destination: PathBuf,
+}
+#[derive(Deserialize)]
+struct CacheOffer {
+    hit: bool,
+    artifact: Option<PathBuf>,
+}
+#[derive(Deserialize)]
+struct CacheResult {
+    key: String,
+}
+fn send<T: Serialize>(child: &mut Child, request: &T) {
+    let bytes = toml::to_string(request).unwrap().into_bytes();
+    let input = child.stdin.as_mut().unwrap();
+    input.write_all(&(bytes.len() as u32).to_le_bytes()).unwrap();
+    input.write_all(&bytes).unwrap();
+    input.flush().unwrap();
+}
 fn start(root: &Path, checkout: &Path, option: &str) -> Child {
     let mut child = Command::new(env!("CARGO_BIN_EXE_sm-pipeline"))
         .arg("cache")
@@ -35,23 +60,28 @@ fn start(root: &Path, checkout: &Path, option: &str) -> Child {
         .stderr(Stdio::null())
         .spawn()
         .unwrap();
-    writeln!(child.stdin.as_mut().unwrap(), "{}", json!({"root":root,"checkout":checkout,"command":["rustc",option],"inputs":[checkout.join("source")],"destination":checkout.join("output")})).unwrap();
+    send(
+        &mut child,
+        &CacheRequest {
+            root,
+            checkout,
+            command: vec!["rustc", option],
+            inputs: vec![checkout.join("source")],
+            destination: checkout.join("output"),
+        },
+    );
     child
 }
-fn reply(child: &mut Child) -> Value {
-    let mut line = Vec::new();
-    let mut byte = [0u8];
-    while child.stdout.as_mut().unwrap().read_exact(&mut byte).is_ok() {
-        if byte[0] == b'\n' {
-            break;
-        }
-        line.push(byte[0]);
-    }
-    serde_json::from_slice(&line).unwrap()
+fn reply<T: serde::de::DeserializeOwned>(child: &mut Child) -> T {
+    let mut header = [0; 4];
+    child.stdout.as_mut().unwrap().read_exact(&mut header).unwrap();
+    let mut bytes = vec![0; u32::from_le_bytes(header) as usize];
+    child.stdout.as_mut().unwrap().read_exact(&mut bytes).unwrap();
+    toml::from_str(std::str::from_utf8(&bytes).unwrap()).unwrap()
 }
-fn commit(child: &mut Child, first: &Value) -> Value {
-    if !first["hit"].as_bool().unwrap() {
-        fs::write(first["artifact"].as_str().unwrap(), "compiled").unwrap();
+fn commit(child: &mut Child, first: &CacheOffer) -> CacheResult {
+    if !first.hit {
+        fs::write(first.artifact.as_ref().unwrap(), "compiled").unwrap();
         writeln!(child.stdin.as_mut().unwrap(), "commit").unwrap();
     }
     let completed = reply(child);
@@ -68,24 +98,24 @@ fn equivalent_worktrees_share_one_build_and_corruption_is_rejected() {
         fs::write(p.join("source"), "same source").unwrap();
     }
     let mut first = start(&root.0, &a.0, "test");
-    let initial = reply(&mut first);
-    assert_eq!(initial["hit"], false);
+    let initial: CacheOffer = reply(&mut first);
+    assert!(!initial.hit);
     let mut second = start(&root.0, &b.0, "test");
     std::thread::sleep(Duration::from_millis(150));
     assert!(second.try_wait().unwrap().is_none());
     let result = commit(&mut first, &initial);
-    let hit = reply(&mut second);
-    assert_eq!(hit["hit"], true);
+    let hit: CacheOffer = reply(&mut second);
+    assert!(hit.hit);
     let result2 = commit(&mut second, &hit);
-    assert_eq!(result["key"], result2["key"]);
-    fs::write(root.0.join("build-cache").join(result["key"].as_str().unwrap()).join("artifact"), "corrupt").unwrap();
+    assert_eq!(result.key, result2.key);
+    fs::write(root.0.join("build-cache").join(&result.key).join("artifact"), "corrupt").unwrap();
     let mut third = start(&root.0, &a.0, "test");
-    let miss = reply(&mut third);
-    assert_eq!(miss["hit"], false);
+    let miss: CacheOffer = reply(&mut third);
+    assert!(!miss.hit);
     commit(&mut third, &miss);
     let mut changed = start(&root.0, &a.0, "changed-options");
-    let miss = reply(&mut changed);
-    assert_eq!(miss["hit"], false);
+    let miss: CacheOffer = reply(&mut changed);
+    assert!(!miss.hit);
     commit(&mut changed, &miss);
 }
 
@@ -94,20 +124,20 @@ fn mutation_and_abandoned_publication_never_become_hits() {
     let root = Directory::new();
     fs::write(root.0.join("source"), "before").unwrap();
     let mut child = start(&root.0, &root.0, "mutation");
-    let miss = reply(&mut child);
-    fs::write(miss["artifact"].as_str().unwrap(), "partial").unwrap();
+    let miss: CacheOffer = reply(&mut child);
+    fs::write(miss.artifact.as_ref().unwrap(), "partial").unwrap();
     fs::write(root.0.join("source"), "after").unwrap();
     writeln!(child.stdin.as_mut().unwrap(), "commit").unwrap();
     assert!(!child.wait().unwrap().success());
     assert!(!root.0.join("output").exists());
     let mut abandoned = start(&root.0, &root.0, "abandoned");
-    let miss = reply(&mut abandoned);
-    fs::write(miss["artifact"].as_str().unwrap(), "partial").unwrap();
+    let miss: CacheOffer = reply(&mut abandoned);
+    fs::write(miss.artifact.as_ref().unwrap(), "partial").unwrap();
     drop(abandoned.stdin.take());
     assert!(!abandoned.wait().unwrap().success());
     let mut retry = start(&root.0, &root.0, "abandoned");
-    let miss = reply(&mut retry);
-    assert_eq!(miss["hit"], false);
+    let miss: CacheOffer = reply(&mut retry);
+    assert!(!miss.hit);
     commit(&mut retry, &miss);
 }
 
@@ -123,13 +153,13 @@ fn killed_lease_holder_releases_capacity() {
             .unwrap()
     };
     let mut first = spawn();
-    reply(&mut first);
+    let _: Value = reply(&mut first);
     let mut second = spawn();
     std::thread::sleep(Duration::from_millis(150));
     assert!(second.try_wait().unwrap().is_none());
     first.kill().unwrap();
     first.wait().unwrap();
-    reply(&mut second);
+    let _: Value = reply(&mut second);
     drop(second.stdin.take());
     assert!(second.wait().unwrap().success());
 }
@@ -142,8 +172,39 @@ fn real_c_objects_preserve_options_and_invalidate_on_header_edits() {
     fs::write(pinned.join("value.h"), "#define VALUE 3\n").unwrap();
     fs::write(pinned.join("value.c"), "#include \"value.h\"\nint value(void){return VALUE + EXTRA;}\n").unwrap();
     fs::write(root.0.join("main.c"), "int value(void); int main(void){return value();}\n").unwrap();
-    let request = json!({"root":root.0,"checkout":root.0,"run":root.0,"workers":1,
-        "command":["cc","-O2","-DEXTRA=2","-iquote",pinned,pinned.join("value.c"),root.0.join("main.c"),"-o",root.0.join("program")]});
+    #[derive(Serialize)]
+    struct CRequest {
+        root: PathBuf,
+        checkout: PathBuf,
+        run: PathBuf,
+        workers: usize,
+        command: Vec<String>,
+    }
+    #[derive(Deserialize)]
+    struct ObjectRecord {
+        hit: bool,
+    }
+    #[derive(Deserialize)]
+    struct CacheRecords {
+        objects: Vec<ObjectRecord>,
+    }
+    let request = CRequest {
+        root: root.0.clone(),
+        checkout: root.0.clone(),
+        run: root.0.clone(),
+        workers: 1,
+        command: vec![
+            "cc".into(),
+            "-O2".into(),
+            "-DEXTRA=2".into(),
+            "-iquote".into(),
+            pinned.to_str().unwrap().into(),
+            pinned.join("value.c").to_str().unwrap().into(),
+            root.0.join("main.c").to_str().unwrap().into(),
+            "-o".into(),
+            root.0.join("program").to_str().unwrap().into(),
+        ],
+    };
     let run = || {
         let mut child = Command::new(env!("CARGO_BIN_EXE_sm-pipeline"))
             .arg("c-build")
@@ -151,16 +212,16 @@ fn real_c_objects_preserve_options_and_invalidate_on_header_edits() {
             .stdout(Stdio::null())
             .spawn()
             .unwrap();
-        writeln!(child.stdin.as_mut().unwrap(), "{request}").unwrap();
+        child.stdin.take().unwrap().write_all(toml::to_string(&request).unwrap().as_bytes()).unwrap();
         assert!(child.wait().unwrap().success());
-        serde_json::from_slice::<Value>(&fs::read(root.0.join("c-cache.json")).unwrap()).unwrap()
+        toml::from_str::<CacheRecords>(&fs::read_to_string(root.0.join("c-cache.toml")).unwrap()).unwrap()
     };
     let first = run();
-    assert_eq!(first[0]["hit"], false);
+    assert!(!first.objects[0].hit);
     assert_eq!(Command::new(root.0.join("program")).status().unwrap().code(), Some(5));
-    assert_eq!(run()[0]["hit"], true);
+    assert!(run().objects[0].hit);
     fs::write(pinned.join("value.h"), "#define VALUE 8\n").unwrap();
     let changed = run();
-    assert_eq!(changed[0]["hit"], false);
+    assert!(!changed.objects[0].hit);
     assert_eq!(Command::new(root.0.join("program")).status().unwrap().code(), Some(10));
 }

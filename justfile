@@ -3,57 +3,59 @@ default:
 
 # Download pinned dependencies and build the Rust tools.
 setup:
-    python3 tools/setup.py
+    cargo run --manifest-path tools/bootstrap/Cargo.toml --locked -- setup
 
 setup-lsnes:
-    python3 tools/setup_lsnes.py
+    cargo run --manifest-path tools/bootstrap/Cargo.toml --locked --offline -- setup-lsnes
 
 doctor:
-    python3 tools/doctor.py
+    cargo run --manifest-path tools/bootstrap/Cargo.toml --locked --offline -- doctor
 
 # Build the pinned C game headlessly and replay twice with visible CPU fallback.
 decomp-baseline frames="9000":
-    python3 tools/decomp_baseline.py --frames {{quote(frames)}}
+    cargo run -p pipeline --locked --offline -- decomp-baseline --frames {{quote(frames)}}
 
 # Immutable setup evidence; a pass verifies setup only and cannot accept readiness.
 readiness-preflight:
-    python3 tools/readiness.py preflight
+    cargo run -p pipeline --locked --offline -- readiness-preflight
 
 # Complete enabled native corpus and independent generated-step timing checks.
 pattern-check:
-    python3 tools/readiness_patterns.py --timing
+    cargo run -p pipeline --locked --offline -- pattern-check --timing
 
 # Complete independent proof of disabled, source-declared instruction support.
 pattern-prove opcode="ad":
-    python3 tools/iteration_pattern.py prove --opcode {{quote(opcode)}}
+    cargo run -p pipeline --locked --offline -- iteration-pattern prove --opcode {{quote(opcode)}}
 
 # Promotion requires supported exhaustion and complete proof before cold gates.
 pattern-promote selection proof *args:
-    python3 tools/iteration_pattern.py promote --selection {{quote(selection)}} --proof {{quote(proof)}} {{args}}
+    cargo run -p pipeline --locked --offline -- iteration-pattern promote --selection {{quote(selection)}} --proof {{quote(proof)}} {{args}}
 
 # Cold instruction/bus replay; immutable evidence names the first disagreement.
 diagnose start="0" instructions="100":
-    python3 tools/readiness_diagnostics.py --start-input {{start}} --instructions {{instructions}}
+    cargo run -p pipeline --locked --offline -- readiness-diagnose --start-input {{start}} --instructions {{instructions}}
 
 # Includes corpus cases if `just fuzz` has generated them.
 check:
     cargo fmt --all --check
+    cargo fmt --manifest-path tools/bootstrap/Cargo.toml -- --check
+    cargo test --manifest-path tools/bootstrap/Cargo.toml --locked --offline
     cargo test --workspace --locked --offline
     just hardware-check
-    python3 -m unittest discover -s tools -p 'test_*.py'
 
 hardware-check:
-    python3 tools/test_hardware.py
+    cargo run --manifest-path tools/bootstrap/Cargo.toml --locked --offline -- hardware-check
 
 # Independent synthetic timing diagnostic; NOP cases expose an open HDMA issue.
 probe-hdma kind="indirect" loop="nop" phases="8":
-    python3 tools/probe_hdma.py --kind {{quote(kind)}} --loop {{quote(loop)}} --phases {{phases}}
+    cargo run -p pipeline --locked --offline -- probe-hdma --kind {{quote(kind)}} --loop {{quote(loop)}} --phases {{phases}}
 
 fmt:
     cargo fmt --all
 
 lint:
     cargo clippy --workspace --all-targets --locked --offline -- -D warnings
+    cargo clippy --manifest-path tools/bootstrap/Cargo.toml --all-targets --locked --offline -- -D warnings
 
 demo:
     cargo run -p game --locked --offline
@@ -75,10 +77,10 @@ iterate input="movies/super-metroid-any-3653.lsmv" frames="9000":
     just diff-generated {{quote(input)}} {{frames}}
 
 sync-compare baseline candidate start end offset="0":
-    python3 tools/compare_sync.py {{quote(baseline)}} {{quote(candidate)}} --start-frame {{start}} --end-frame {{end}} --candidate-frame-offset {{offset}}
+    cargo run -p pipeline --locked --offline -- checkpoints {{quote(baseline)}} {{quote(candidate)}} --start-frame {{start}} --end-frame {{end}} --candidate-frame-offset {{offset}}
 
 lsnes-replay input frames="12000" out="out/sync/lsnes.csv":
-    python3 tools/lsnes-replay.py {{quote(input)}} --frames {{frames}} --out {{quote(out)}}
+    cargo run -p pipeline --locked --offline -- lsnes-replay {{quote(input)}} --frames {{frames}} --out {{quote(out)}}
 
 sync-smoke:
     just sync-check movies/super-metroid-any-3653.lsmv 390 272
@@ -108,16 +110,16 @@ fuzz cases="20":
     cargo test -p fuzz --locked --offline
 
 symbols:
-    python3 tools/symbols.py
+    cargo run --manifest-path tools/bootstrap/Cargo.toml --locked --offline -- symbols
 
 fetch-movies:
-    python3 tools/fetch_movies.py
+    cargo run -p movie --locked --offline -- fetch-corpus
 
 movie input output:
     cargo run -p movie --locked --offline -- {{quote(input)}} {{quote(output)}}
 
 import-movies:
-    python3 tools/import_movies.py
+    cargo run -p movie --locked --offline -- import-corpus --offline
 
 reference-replay input frames="3600" out="out/reference-replay.csv":
     cargo run --release -p snes --bin reference-replay --locked --offline -- {{quote(input)}} --frames {{frames}} --out {{quote(out)}}
@@ -126,7 +128,7 @@ diff-fallback input frames="3600" out="out/diff":
     cargo run --release -p diff --locked --offline -- {{quote(input)}} --fallback-only --frames {{frames}} --out {{quote(out)}}
 
 mesen-replay input frames="3600":
-    python3 tools/mesen-replay.py {{quote(input)}} --frames {{frames}}
+    cargo run -p pipeline --locked --offline -- mesen-replay {{quote(input)}} --frames {{frames}}
     tools/mesen --doNotSaveSettings --snes.port1.type=SnesController --snes.port2.type=None --testRunner out/mesen-replay.lua rom/sm.sfc --timeout=180
 
 trace-merge misses:
@@ -137,58 +139,58 @@ trace-names:
 
 # Fresh strict original-core synchronization with immutable evidence.
 readiness-sync *args:
-    python3 tools/readiness_sync.py {{args}}
+    cargo run -p pipeline --locked --offline -- readiness-sync {{args}}
 
 # One isolated cold parity run; readiness defaults retain the complete domain.
 readiness-parity mode="generated" frames="18000":
-    python3 tools/readiness_parity.py --mode {{quote(mode)}} --frames {{frames}}
+    cargo run -p pipeline --locked --offline -- readiness-parity --mode {{quote(mode)}} --frames {{frames}}
 
 # Explain verified reuse eligibility; this scope never accepts a candidate.
 readiness-reuse *args:
-    python3 tools/readiness_reuse.py {{args}}
+    cargo run -p pipeline --locked --offline -- readiness-reuse {{args}}
 
 # Complete fixed readiness domain and atomic acceptance after all mandatory gates.
 readiness *args:
-    python3 tools/readiness_orchestration.py readiness {{args}}
+    cargo run -p pipeline --locked --offline -- readiness {{args}}
 
 # Isolated synthetic fault controls; a scoped pass cannot accept readiness.
 readiness-feedback *args:
-    python3 tools/readiness_feedback.py {{args}}
+    cargo run -p pipeline --locked --offline -- readiness-feedback {{args}}
 
 # Retained synthetic iteration policy, late-failure and publication controls.
 iteration-feedback *args:
-    python3 tools/iteration_demonstrations.py run {{args}}
+    cargo run -p pipeline --locked --offline -- iteration-demonstrations run {{args}}
 
 validate-iteration *args:
-    python3 tools/readiness_orchestration.py validate-iteration {{args}}
+    cargo run -p pipeline --locked --offline -- validate-iteration {{args}}
 
 # Explicit diagnostic scope; never updates the accepted pointer.
 replay *args:
-    python3 tools/readiness_diagnostics.py {{args}}
+    cargo run -p pipeline --locked --offline -- readiness-diagnose {{args}}
 
 readiness-restore run destination *args:
-    python3 tools/readiness_orchestration.py restore --run {{quote(run)}} --destination {{quote(destination)}} {{args}}
+    cargo run -p pipeline --locked --offline -- readiness-restore {{quote(run)}} {{quote(destination)}} {{args}}
 
 # Choose one identity-bound measured routine/width without mutating reviewed config.
 select-iteration *args:
-    python3 tools/iteration_selection.py {{args}}
+    cargo run -p pipeline --locked --offline -- iteration-selection {{args}}
 
 # Prepare/apply one bounded measured supported slice, then require cold acceptance.
 supported-increment *args:
-    python3 tools/iteration_increment.py {{args}}
+    cargo run -p pipeline --locked --offline -- supported-increment {{args}}
 
 # Carry an evidence-bound experiment history across the same unresolved increment.
 iteration-diagnosis *args:
-    python3 tools/iteration_diagnosis.py {{args}}
+    cargo run -p pipeline --locked --offline -- iteration-diagnosis {{args}}
 
 # Explicit bounded recompilation session: default one accepted increment.
 recomp-iteration *args:
-    python3 tools/iteration_session.py {{args}}
+    cargo run -p pipeline --locked --offline -- recomp-iteration {{args}}
 
 # Fresh partial offline routine job; whole-routine acceptance remains disabled.
 decomp-routine *args:
-    python3 tools/decomp_routine.py {{args}}
+    cargo run -p pipeline --locked --offline -- decomp-verify {{args}}
 
 # Independent C/mixed replay, requires a current sealed offline acceptance pointer.
 decomp-live *args:
-    python3 tools/decomp_live.py {{args}}
+    cargo run -p pipeline --locked --offline -- routine-live {{args}}

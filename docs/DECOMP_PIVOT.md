@@ -50,7 +50,7 @@ The last item is an inspection of recorded evidence, not a fresh rerun or a comp
 | `game` crate | Possible home for maintained game logic | Current module only includes generated source and an empty override table; its routine table is not wired into `Subject::with_steps` as readable gameplay execution |
 | Generated instruction tables | Keep locally as an oracle/archived implementation | They retain CPU mechanics and do not provide the desired readable game source |
 
-Local evidence: [architecture](ARCHITECTURE.md), [subject runner](../crates/snes/src/subject.rs), [game library](../crates/game/src/lib.rs), [overrides](../crates/game/src/overrides.rs), [console comparator](../crates/diff/src/lib.rs), [readiness contract](../tools/readiness_contract.py), [reuse policy](READINESS_REUSE.md), [paired checkpoints](PAIRED_CHECKPOINTS.md), [dependency pins](../tools/dependencies.json), [symbol converter](../tools/symbols.py).
+Local evidence: [architecture](ARCHITECTURE.md), [subject runner](../crates/snes/src/subject.rs), [game library](../crates/game/src/lib.rs), [overrides](../crates/game/src/overrides.rs), [console comparator](../crates/diff/src/lib.rs), [readiness contract](../crates/pipeline/src/readiness_contract.rs), [reuse policy](READINESS_REUSE.md), [paired checkpoints](PAIRED_CHECKPOINTS.md), [dependency pins](../tools/dependencies.toml), [symbol converter](../tools/bootstrap/src/main.rs).
 
 ## Missing foundations
 

@@ -1,5 +1,8 @@
 //! Selection's public command/evidence seam uses a synthetic LoROM and measured counts.
-use serde_json::{Value, json};
+use pipeline_model::{
+    GeneratedKey, InstructionCount, InstructionProfile, KeyInventory, SelectionAction, SelectionOutcome,
+    SelectionReport,
+};
 use std::{fs, process::Command};
 
 #[test]
@@ -12,16 +15,8 @@ fn observed_deferred_supported_key_in_configured_routine_precedes_new_pattern() 
     fs::write(root.join("functions.toml"),
         "[[function]]\naddr = \"808000\"\nvariants = [\"m1x1\"]\n\n[[excluded_step]]\naddr = \"808001\"\nvariant = \"m1x1\"\nreason = \"deferred unexecuted proposed key\"\n").unwrap();
     fs::write(root.join("entries.csv"), "addr,mx,count\n808000,m1x1,1\n").unwrap();
-    fs::write(root.join("inventory.json"), json!({"keys":[{"address":0x808000,"mx":3}]}).to_string()).unwrap();
-    fs::write(
-        root.join("profile.json"),
-        json!({"interpreted":[
-            {"address":0x808001,"mx":3,"opcode":0xca,"emulation":false,"count":20},
-            {"address":0x808002,"mx":3,"opcode":0xad,"emulation":false,"count":1000}
-        ]})
-        .to_string(),
-    )
-    .unwrap();
+    inventory(&root, &[(0x808000, 3)]);
+    profile(&root, &[(0x808001, 0xca, 20), (0x808002, 0xad, 1000)]);
     let output = Command::new(env!("CARGO_BIN_EXE_recomp"))
         .args([
             "--rom",
@@ -29,22 +24,22 @@ fn observed_deferred_supported_key_in_configured_routine_precedes_new_pattern() 
             "--functions",
             root.join("functions.toml").to_str().unwrap(),
             "--selection-profile",
-            root.join("profile.json").to_str().unwrap(),
+            root.join("profile.toml").to_str().unwrap(),
             "--selection-entries",
             root.join("entries.csv").to_str().unwrap(),
             "--selection-inventory",
-            root.join("inventory.json").to_str().unwrap(),
+            root.join("inventory.toml").to_str().unwrap(),
             "--selection-out",
-            root.join("selection.json").to_str().unwrap(),
+            root.join("selection.toml").to_str().unwrap(),
         ])
         .output()
         .unwrap();
     assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
-    let report: Value = serde_json::from_slice(&fs::read(root.join("selection.json")).unwrap()).unwrap();
-    assert_eq!(report["outcome"], "supported-routine");
-    assert_eq!(report["chosen"]["action"], "enable-deferred-keys");
-    assert_eq!(report["chosen"]["estimated_compiled_step_gain"], 20);
-    assert_eq!(report["chosen"]["new_executed_keys"][0]["address"], 0x808001);
+    let report: SelectionReport = pipeline_model::read(&root.join("selection.toml")).unwrap();
+    assert_eq!(report.outcome, SelectionOutcome::SupportedRoutine);
+    assert_eq!(report.chosen.as_ref().unwrap().action, SelectionAction::EnableDeferredKeys);
+    assert_eq!(report.chosen.as_ref().unwrap().estimated_compiled_step_gain, 20);
+    assert_eq!(report.chosen.as_ref().unwrap().new_executed_keys[0].address, 0x808001);
     fs::remove_dir_all(root).unwrap();
 }
 
@@ -59,17 +54,8 @@ fn measured_selection_excludes_overlapping_work_and_prefers_simpler_equal_gain()
     fs::write(root.join("rom.sfc"), rom).unwrap();
     fs::write(root.join("functions.toml"), "").unwrap();
     fs::write(root.join("entries.csv"), "addr,mx,count\n808000,m1x1,999999\n808010,m1x1,1\n").unwrap();
-    fs::write(root.join("inventory.json"), json!({"keys":[{"address":0x808000,"mx":3}]}).to_string()).unwrap();
-    fs::write(
-        root.join("profile.json"),
-        json!({"interpreted":[
-            {"address":0x808000,"mx":3,"opcode":0xa9,"emulation":false,"count":100},
-            {"address":0x808002,"mx":3,"opcode":0x8d,"emulation":false,"count":20},
-            {"address":0x808010,"mx":3,"opcode":0xea,"emulation":false,"count":20}
-        ]})
-        .to_string(),
-    )
-    .unwrap();
+    inventory(&root, &[(0x808000, 3)]);
+    profile(&root, &[(0x808000, 0xa9, 100), (0x808002, 0x8d, 20), (0x808010, 0xea, 20)]);
     let output = Command::new(env!("CARGO_BIN_EXE_recomp"))
         .args([
             "--rom",
@@ -77,23 +63,23 @@ fn measured_selection_excludes_overlapping_work_and_prefers_simpler_equal_gain()
             "--functions",
             root.join("functions.toml").to_str().unwrap(),
             "--selection-profile",
-            root.join("profile.json").to_str().unwrap(),
+            root.join("profile.toml").to_str().unwrap(),
             "--selection-entries",
             root.join("entries.csv").to_str().unwrap(),
             "--selection-inventory",
-            root.join("inventory.json").to_str().unwrap(),
+            root.join("inventory.toml").to_str().unwrap(),
             "--selection-out",
-            root.join("selection.json").to_str().unwrap(),
+            root.join("selection.toml").to_str().unwrap(),
         ])
         .output()
         .unwrap();
     assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
-    let report: Value = serde_json::from_slice(&fs::read(root.join("selection.json")).unwrap()).unwrap();
-    assert_eq!(report["chosen"]["address"], 0x808010);
-    assert_eq!(report["chosen"]["estimated_compiled_step_gain"], 20);
-    assert_eq!(report["ranked"][1]["overlapping_keys"].as_array().unwrap().len(), 1);
-    assert_eq!(report["ranked"][1]["new_executed_keys"][0]["address"], 0x808002);
-    assert_eq!(report["ranked"][1]["new_executed_keys"][0]["bytes"], json!([0x8d, 0x00, 0x20]));
+    let report: SelectionReport = pipeline_model::read(&root.join("selection.toml")).unwrap();
+    assert_eq!(report.chosen.as_ref().unwrap().address, 0x808010);
+    assert_eq!(report.chosen.as_ref().unwrap().estimated_compiled_step_gain, 20);
+    assert_eq!(report.ranked[1].overlapping_keys.len(), 1);
+    assert_eq!(report.ranked[1].new_executed_keys[0].address, 0x808002);
+    assert_eq!(report.ranked[1].new_executed_keys[0].bytes, vec![0x8d, 0x00, 0x20]);
     assert!(!root.join("out/generated/game.rs").exists());
     fs::remove_dir_all(root).unwrap();
 }
@@ -107,12 +93,12 @@ fn selection_distinguishes_uncovered_work_from_observed_unsupported_pattern() {
     fs::write(root.join("rom.sfc"), rom).unwrap();
     fs::write(root.join("functions.toml"), "").unwrap();
     fs::write(root.join("entries.csv"), "addr,mx,count\n808000,m1x1,1000000\n").unwrap();
-    fs::write(root.join("inventory.json"), json!({"keys":[]}).to_string()).unwrap();
+    inventory(&root, &[]);
     for (rows, outcome) in [
-        (json!([]), "no-covered-candidate"),
-        (json!([{"address":0x808000,"mx":3,"opcode":0x18,"emulation":false,"count":40}]), "needs-timed-pattern"),
+        (vec![], SelectionOutcome::NoCoveredCandidate),
+        (vec![(0x808000, 0x18, 40)], SelectionOutcome::NeedsTimedPattern),
     ] {
-        fs::write(root.join("profile.json"), json!({"interpreted":rows}).to_string()).unwrap();
+        profile(&root, &rows);
         let result = Command::new(env!("CARGO_BIN_EXE_recomp"))
             .args([
                 "--rom",
@@ -120,23 +106,76 @@ fn selection_distinguishes_uncovered_work_from_observed_unsupported_pattern() {
                 "--functions",
                 root.join("functions.toml").to_str().unwrap(),
                 "--selection-profile",
-                root.join("profile.json").to_str().unwrap(),
+                root.join("profile.toml").to_str().unwrap(),
                 "--selection-entries",
                 root.join("entries.csv").to_str().unwrap(),
                 "--selection-inventory",
-                root.join("inventory.json").to_str().unwrap(),
+                root.join("inventory.toml").to_str().unwrap(),
                 "--selection-out",
-                root.join("selection.json").to_str().unwrap(),
+                root.join("selection.toml").to_str().unwrap(),
             ])
             .output()
             .unwrap();
         assert!(result.status.success(), "{}", String::from_utf8_lossy(&result.stderr));
-        let report: Value = serde_json::from_slice(&fs::read(root.join("selection.json")).unwrap()).unwrap();
-        assert_eq!(report["outcome"], outcome);
-        assert!(report["chosen"].is_null());
-        if outcome == "needs-timed-pattern" {
-            assert_eq!(report["observed_unsupported_patterns"][0], json!({"pattern":"CLC/Imp","count":40}));
+        let report: SelectionReport = pipeline_model::read(&root.join("selection.toml")).unwrap();
+        assert_eq!(report.outcome, outcome);
+        assert!(report.chosen.is_none());
+        if outcome == SelectionOutcome::NeedsTimedPattern {
+            assert_eq!(report.observed_unsupported_patterns[0].pattern, "CLC/Imp");
+            assert_eq!(report.observed_unsupported_patterns[0].count, 40);
         }
     }
     fs::remove_dir_all(root).unwrap();
+}
+
+fn inventory(root: &std::path::Path, keys: &[(u32, u8)]) {
+    pipeline_model::write(
+        &root.join("inventory.toml"),
+        &KeyInventory {
+            schema_version: 1,
+            keys: keys
+                .iter()
+                .map(|&(address, mx)| GeneratedKey {
+                    address,
+                    mx,
+                    opcode: fs::read(root.join("rom.sfc")).unwrap()
+                        [(address as usize & 0x7fff) | ((address as usize >> 16 & 0x7f) << 15)],
+                    bytes: vec![
+                        fs::read(root.join("rom.sfc")).unwrap()
+                            [(address as usize & 0x7fff) | ((address as usize >> 16 & 0x7f) << 15)],
+                    ],
+                    body_sha256: "0".repeat(64),
+                })
+                .collect(),
+        },
+    )
+    .unwrap();
+}
+fn profile(root: &std::path::Path, rows: &[(u32, u8, u64)]) {
+    let total = rows.iter().map(|r| r.2).sum();
+    pipeline_model::write(
+        &root.join("profile.toml"),
+        &InstructionProfile {
+            schema_version: 1,
+            compiled: vec![],
+            interpreted: rows
+                .iter()
+                .map(|&(address, opcode, count)| InstructionCount {
+                    address,
+                    mx: 3,
+                    opcode,
+                    count,
+                    emulation: false,
+                    pattern: "fixture".into(),
+                    supported: false,
+                })
+                .collect(),
+            generated_instructions: 0,
+            interpreted_instructions: total,
+            generated_dispatches: 0,
+            interpreted_dispatches: total,
+            noninstruction_dispatches: 0,
+        },
+    )
+    .unwrap();
 }

@@ -1,4 +1,4 @@
-Run `python3 tools/decomp_jobs.py --accepted PATH --output DIR` to execute one
+Run `cargo run -p pipeline --locked --offline -- decomp-jobs --accepted PATH --output DIR` to execute one
 additional dependency-ready job. `--count` defaults to 1; zero, negative values,
 counts above the available frontier and unknown `--job` names fail with an error
 progress record and no accepted jobs. The bounded job is `next-random`.

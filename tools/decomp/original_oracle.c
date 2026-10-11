@@ -66,6 +66,6 @@ int main(int argc, char **argv) {
   if (cpu->sp != 0x1ff || cpu->dp || cpu->db || cpu->e || cpu->mf || cpu->xf) return 5;
   f = fopen(argv[5], "wb");
   if (!f || fwrite(ram, 1, sizeof(ram), f) != sizeof(ram) || fclose(f)) return 2;
-  printf("{\"status\":\"ok\",\"instructions\":%u,\"stack_written_min\":%u,\"stack_written_max\":%u,\"return_address\":8265728}\n", instructions, stack_min, stack_max);
+  printf("status = \"ok\"\ninstructions = %u\nstack_written_min = %u\nstack_written_max = %u\nreturn_address = 8265728\n", instructions, stack_min, stack_max);
   cpu_free(cpu); free(rom); return 0;
 }
