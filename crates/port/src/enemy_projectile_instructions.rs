@@ -290,6 +290,26 @@ fn lavaquake_arc(r: &mut Wram<'_>, rom: &[u8], k: usize, state: u16) -> Result<(
 pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Result<(), &'static str> {
     let k = slot(k)?;
     match address {
+        0xbe03 => {
+            if crate::enemy_projectile_collision::horizontal(r, rom, k as u16)? != 0
+                || crate::enemy_projectile_collision::vertical(r, rom, k as u16)? != 0
+            {
+                r.set_word(0x1997 + k, 0);
+            }
+        }
+        0xbe12 => {
+            // C indexes by E >> 1, including odd byte-offset aliases.
+            let linked = usize::from(r.word(0x1aff + k) & !1);
+            if linked > 34 {
+                return Err("invalid linked Shaktool projectile slot");
+            }
+            if r.word(0x1997 + linked) != 0 {
+                crate::enemy_projectile_collision::horizontal(r, rom, k as u16)?;
+                crate::enemy_projectile_collision::vertical(r, rom, k as u16)?;
+            } else {
+                r.set_word(0x1997 + k, 0);
+            }
+        }
         0xbc0f => {
             let state = r.word(0x1aff + k);
             if !matches!(state, 0xbc16 | 0xbc8f) {
@@ -739,7 +759,7 @@ pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Res
                 }
             }
         }
-        0x8170 => {}
+        0x8170 | 0x84fb => {}
         0x90b3 | 0xd3bf => {
             if address == 0xd3bf {
                 r.set_word(0x19bb + k, 0);

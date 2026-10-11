@@ -542,3 +542,38 @@ fn lavaquake_arc_consumes_both_rom_half_steps_and_retains_last_high_word() {
     assert_eq!(r.word(0x1a6f), 0x1234);
     assert_eq!(r.word(0x1b23), 2);
 }
+
+#[test]
+fn shaktool_front_stops_before_vertical_check_but_linked_circle_checks_both() {
+    for (address, expected_y, alive) in [(0xbe03, 29, 0), (0xbe12, 31, 1)] {
+        let mut bytes = vec![0; WRAM_SIZE];
+        let mut r = Wram::new(&mut bytes).unwrap();
+        r.set_word(0x7a5, 16);
+        r.set_word(0x1997, 1);
+        r.set_word(0x1aff, 1); // Odd offset aliases the current slot.
+        r.set_word(0x1a4b, 27);
+        r.set_word(0x1a93, 29);
+        r.set_word(0x1bb3, 0x0404);
+        r.set_word(0x1ab7, 0x0400);
+        r.set_word(0x1adb, 0x0200);
+        r.set_word(0x10002 + 18 * 2, 0x8000);
+        r.set_word(0x10002 + 34 * 2, 0x8000);
+        port::enemy_projectile_instructions::preinstruction(&mut r, &[], address, 0).unwrap();
+        assert_eq!(r.word(0x1a4b), 28);
+        assert_eq!(r.word(0x1a93), expected_y);
+        assert_eq!(r.word(0x1997), alive);
+    }
+}
+
+#[test]
+fn shaktool_linked_circle_expires_without_movement_when_reference_is_dead() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x1997, 1);
+    r.set_word(0x1aff, 35);
+    r.set_word(0x1a4b, 100);
+    r.set_word(0x1ab7, 0x400);
+    port::enemy_projectile_instructions::preinstruction(&mut r, &[], 0xbe12, 0).unwrap();
+    assert_eq!(r.word(0x1997), 0);
+    assert_eq!(r.word(0x1a4b), 100);
+}

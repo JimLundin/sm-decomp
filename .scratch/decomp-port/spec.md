@@ -142,3 +142,7 @@ live admission and full gameplay ownership remain active.
 Lavaquake rock frontier: ticket54 adds native allocation and the complete
 rising/falling arc with quadratic ROM half-steps and inclusive camera culling.
 437 actual-C cases match. Offline coverage; live admission remains open.
+
+Shaktool circle frontier: ticket55 ports direction/offset allocation and
+front/linked terrain scheduling, including initial no-op script phases.
+1,159 actual-C cases match; live admission and full gameplay ownership stay open.
