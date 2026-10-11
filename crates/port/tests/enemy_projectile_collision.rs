@@ -801,3 +801,18 @@ fn botwoon_death_delay_initializes_from_slot_then_increments_same_frame() {
     assert_eq!(r.word(0x1b8f + 10), 0);
     assert_eq!(r.word(0x19bb + 10), 0xe00);
 }
+
+#[test]
+fn botwoon_spit_keeps_inclusive_camera_edge_after_paired_motion() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x1997, 1);
+    r.set_word(0x1a4b, 255);
+    r.set_word(0x1a93, 100);
+    r.set_word(0x1ab7, 1);
+    port::enemy_projectile_instructions::preinstruction(&mut r, &[], 0xec05, 0).unwrap();
+    assert_eq!(r.word(0x1a4b), 256);
+    assert_eq!(r.word(0x1997), 1);
+    port::enemy_projectile_instructions::preinstruction(&mut r, &[], 0xec05, 0).unwrap();
+    assert_eq!(r.word(0x1997), 0);
+}

@@ -198,3 +198,7 @@ remain open.
 
 Botwoon lifecycle frontier: ticket68 ports main/flash/death delay/fall and
 landing scheduling. 833 actual-C cases match; live ownership remains open.
+
+Botwoon spit frontier: ticket69 adds native paired motion and inclusive
+camera removal. 833 actual-C cases match. Allocation/angle conversion and
+live ownership remain open.

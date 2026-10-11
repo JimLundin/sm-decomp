@@ -316,6 +316,12 @@ fn lavaquake_arc(r: &mut Wram<'_>, rom: &[u8], k: usize, state: u16) -> Result<(
 pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Result<(), &'static str> {
     let k = slot(k)?;
     match address {
+        0xec05 => {
+            dispatch_rom(r, rom, "Eproj_FuncE73E_MoveXY", k as i32, 0)?;
+            if lavaquake_outside(r, k) {
+                r.set_word(0x1997 + k, 0);
+            }
+        }
         0xea80 => {
             let mut state = r.word(0x1ab7 + k);
             if r.word(0x8020) != 0 && state == 0xea98 {
