@@ -376,7 +376,7 @@ fn lavaquake_arc(r: &mut Wram<'_>, rom: &[u8], k: usize, state: u16) -> Result<(
 }
 /// Dispatch supported movement and room-effect preinstructions. Collision remains explicit.
 pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Result<(), &'static str> {
-    if address == 0x940e {
+    if matches!(address, 0x940e | 0xbfdf) {
         return Err("projectile preinstruction requires host context");
     }
     preinstruction_context(r, rom, address, k, None)
@@ -399,6 +399,42 @@ fn preinstruction_context(
 ) -> Result<(), &'static str> {
     let k = slot(k)?;
     match address {
+        0xbfdf => {
+            let host = host.ok_or("projectile preinstruction requires host context")?;
+            let x = r.word(0x1a4b + k);
+            let y = r.word(0x1a93 + k);
+            let sx = x.wrapping_add(4).wrapping_sub(r.word(0x911));
+            let sy = y.wrapping_add(16).wrapping_sub(r.word(0x915));
+            let outside = (x as i16) < 0
+                || (y as i16) < 0
+                || (sx as i16) < 0
+                || (sy as i16) < 0
+                || (sx.wrapping_sub(264) as i16) >= 0
+                || (sy.wrapping_sub(256) as i16) >= 0;
+            if r.word(0x783a) != 0 {
+                r.set_word(0x1997 + k, 0);
+                if !outside {
+                    host.x = x;
+                    host.y = y;
+                    crate::enemy_projectiles::spawn_room_with_host(r, rom, 0xe509, 12, host)?;
+                }
+            } else if !outside {
+                let timer = r.word(0x1ab7 + k);
+                r.set_word(0x1ab7 + k, timer.wrapping_sub(1));
+                if timer == 1 {
+                    dispatch_rom(r, rom, "Eproj_SetXvelRandom", k as i32, 0)?;
+                    dispatch_rom(r, rom, "Eproj_MotherBrainRoomTurretBullets_Func2", k as i32, 0)?;
+                    r.set_word(0x1b47 + k, word(rom, 0xc040 + u16::from(r.byte(0x1a6f + k)) * 2)?);
+                    r.set_word(0x1b8f + k, 1);
+                }
+                let timer = r.word(0x1adb + k);
+                r.set_word(0x1adb + k, timer.wrapping_sub(1));
+                if timer == 1 {
+                    dispatch_rom(r, rom, "Eproj_SetYvelRandom", k as i32, 0)?;
+                    crate::enemy_projectiles::spawn_room_with_host(r, rom, 0xc18c, k as u16, host)?;
+                }
+            }
+        }
         0x940e => {
             let host = host.ok_or("projectile preinstruction requires host context")?;
             let explosion = if crate::enemy_projectile_collision::horizontal(r, rom, k as u16)? & 1 != 0 {
@@ -1188,7 +1224,7 @@ fn preinstruction_context(
 /// Descending canonical scheduler, bounded to reject cyclic malformed scripts.
 pub fn run_all(r: &mut Wram<'_>, rom: &[u8], budget: usize) -> Result<(), &'static str> {
     if r.word(0x198d) & 0x8000 != 0
-        && (0..36).step_by(2).any(|k| r.word(0x1997 + k) != 0 && r.word(0x1a03 + k) == 0x940e)
+        && (0..36).step_by(2).any(|k| r.word(0x1997 + k) != 0 && matches!(r.word(0x1a03 + k), 0x940e | 0xbfdf))
     {
         return Err("projectile frame requires host context");
     }

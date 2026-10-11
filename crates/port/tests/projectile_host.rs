@@ -131,3 +131,31 @@ fn spore_spawn_keeps_source_x_as_movement_direction_and_host_point() {
     assert_eq!(r.word(0x19bb + 34), 512);
     assert_eq!(r.word(0x1a4b + 34), 128);
 }
+
+#[test]
+fn destroyed_offscreen_turret_does_not_change_external_spawn_point() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x1997, 0xc17e);
+    r.set_word(0x783a, 1);
+    r.set_word(0x1a4b, 260);
+    let mut host = ProjectileHost { x: 99, y: 77, ..Default::default() };
+    port::enemy_projectile_instructions::preinstruction_with_host(&mut r, &[], 0xbfdf, 0, &mut host).unwrap();
+    assert_eq!(r.word(0x1997), 0);
+    assert_eq!((host.x, host.y), (99, 77));
+}
+#[test]
+fn offscreen_living_turret_preserves_countdown_and_rng() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x1997, 0xc17e);
+    r.set_word(0x1a4b, 260);
+    r.set_word(0x1ab7, 1);
+    r.set_word(0x1adb, 1);
+    r.set_word(0x5e5, 123);
+    let mut host = ProjectileHost::default();
+    port::enemy_projectile_instructions::preinstruction_with_host(&mut r, &[], 0xbfdf, 0, &mut host).unwrap();
+    assert_eq!(r.word(0x1ab7), 1);
+    assert_eq!(r.word(0x1adb), 1);
+    assert_eq!(r.word(0x5e5), 123);
+}
