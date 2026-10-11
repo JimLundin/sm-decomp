@@ -75,6 +75,15 @@ pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) ->
 fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'static str> {
     let i = param as usize / 2;
     let table = match init {
+        0xbb30 if param < 3 && r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => Some((0xbb1e, usize::from(param))),
+        0xbb92 if r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => {
+            let enemy = usize::from(r.word(0xe54));
+            let linked = enemy + usize::from(r.word(0x8014 + enemy));
+            if linked > 0x7c0 || linked & 63 != 0 {
+                return Err("invalid Nuclear Waffle linked enemy slot");
+            }
+            None
+        }
         0xbe4f if param < 12 => {
             let direction = word(rom, 0xbee1 + param * 2)?;
             word(rom, 0xbeb9 + (direction & 255) * 2)?;
@@ -216,6 +225,8 @@ fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'sta
             | 0xbd9c
             | 0xbe4f
             | 0xbf59
+            | 0xbb30
+            | 0xbb92
             | 0xb8b5
             | 0xb8e8
             | 0xb8f8
@@ -252,6 +263,23 @@ pub(crate) fn random(r: &mut Wram<'_>) -> u16 {
     n
 }
 fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> Result<(), &'static str> {
+    if init == 0xbb30 {
+        let enemy = usize::from(r.word(0xe54));
+        r.set_word(0x1a4b + k, r.word(0x8022 + enemy));
+        r.set_word(0x1a93 + k, r.word(0x8024 + enemy));
+        r.set_word(0x1b47 + k, word(rom, 0xbb1e + param * 2)?);
+        return Ok(());
+    }
+    if init == 0xbb92 {
+        let enemy = usize::from(r.word(0xe54));
+        for (dest, source) in [(0x1a4b, 2), (0x1a27, 4), (0x1a93, 6), (0x1a6f, 8)] {
+            r.set_word(dest + k, r.word(0xf78 + enemy + source));
+        }
+        let linked = enemy + usize::from(r.word(0x8014 + enemy));
+        r.set_word(0x7800 + linked, k as u16);
+        r.set_word(0xf380 + k, 1);
+        return Ok(());
+    }
     if init == 0xbe4f {
         let i = usize::from(param);
         let direction = word(rom, 0xbee1 + param * 2)? | 0x100;

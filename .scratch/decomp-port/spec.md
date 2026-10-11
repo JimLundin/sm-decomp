@@ -151,3 +151,7 @@ Mother Brain turret projectile frontier: ticket56 ports layout/bullet allocation
 rotation/random timers and bullet terrain scheduling plus script switch/palette
 operations. 1,281 actual-C cases match. Turret destruction host-state seam and
 live gameplay ownership remain open.
+
+Enemy-linked allocation frontier: ticket57 adds BB30 decoration setup and
+BB92 Nuclear Waffle body extended-RAM linkage/fraction copying. 385 actual-C
+cases match. Live gameplay ownership remains open.

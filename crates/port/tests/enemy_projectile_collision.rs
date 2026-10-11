@@ -611,3 +611,25 @@ fn turret_rotation_reverses_direction_at_disallowed_octant() {
         .unwrap();
     assert_eq!(r.word(0x1a6f), 0xff01);
 }
+
+#[test]
+fn nuclear_waffle_body_records_allocated_slot_in_linked_enemy_ram() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    let mut rom = vec![0; 0x38000];
+    rom[0x33bc7..0x33bc9].copy_from_slice(&0xbb92u16.to_le_bytes());
+    r.set_word(0xe54, 64);
+    r.set_word(0x8054, 128);
+    r.set_word(0xfba, 100);
+    r.set_word(0xfbc, 0x1234);
+    r.set_word(0xfbe, 200);
+    r.set_word(0xfc0, 0x5678);
+    r.set_word(0x78c0, 0xdead);
+    port::enemy_projectiles::spawn_room(&mut r, &rom, 0xbbc7, 0).unwrap();
+    assert_eq!(r.word(0x78c0), 34);
+    assert_eq!(r.word(0xf3a2), 1);
+    assert_eq!(r.word(0x1a6d), 100);
+    assert_eq!(r.word(0x1a49), 0x1234);
+    assert_eq!(r.word(0x1ab5), 200);
+    assert_eq!(r.word(0x1a91), 0x5678);
+}
