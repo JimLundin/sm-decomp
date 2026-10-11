@@ -39,7 +39,7 @@ pub fn instruction(r: &mut Wram<'_>, rom: &[u8], opcode: u16, pc: u16, k: u16) -
             add_hilo(r, k, 0x1a4b, 0x1a27, r.word(0x1ab7 + k));
             word(rom, pc.wrapping_add(if r.word(0x1ab7 + k) & 0x8000 == 0 { 2 } else { 0 }))
         }
-        0xa3be => {
+        0xa3be | 0xaf36 => {
             r.set_word(0x1a4b + k, r.word(0x1aff + k));
             r.set_word(0x1a93 + k, r.word(0x1b23 + k));
             Ok(pc)
@@ -240,6 +240,21 @@ fn delete_below(r: &mut Wram<'_>, k: usize) {
 pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Result<(), &'static str> {
     let k = slot(k)?;
     match address {
+        0xae6c => {
+            if crate::enemy_projectile_collision::horizontal(r, rom, k as u16)? != 0 {
+                r.set_word(0x1b47 + k, 0xade5);
+                r.set_word(0x1b8f + k, 1);
+                r.set_word(0x1aff + k, r.word(0x1a4b + k));
+                r.set_word(0x1b23 + k, r.word(0x1a93 + k));
+            } else {
+                let old = r.word(0x1ab7 + k);
+                let next = old.wrapping_add(if old & 0x8000 != 0 { 0xfff0 } else { 16 });
+                r.set_word(0x1ab7 + k, next);
+                if next & 0xf000 == 0x1000 {
+                    r.set_word(0x1997 + k, 0);
+                }
+            }
+        }
         0xacad => {
             if crate::enemy_projectile_collision::horizontal(r, rom, k as u16)? != 0 {
                 r.set_word(0x1b47 + k, 0xab25);

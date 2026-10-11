@@ -68,6 +68,7 @@ observable hardware effects, Rust hits and fallback measurements.
 - 44: Bomb Torizo low-health drool initializers and probabilistic script branch through frames, offline verified (384 cases).
 - 45: Torizo drool impacts, explosion placement/shared parameter mutation and position restore, offline verified (292 cases).
 - 46: Bomb/Golden Torizo orb spawning, collision/bounce lifecycle and direction branch, offline verified (384 cases).
+- 47: Torizo sonic-boom allocation, flight/impact snapshots and position reset, offline verified (196 cases).
 
 This is the first frontier, not the completion boundary of the user's goal.
 Expand tickets into substantive gameplay subsystems after this frontier, using
