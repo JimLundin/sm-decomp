@@ -1,7 +1,7 @@
 # Readable Rust gameplay translation
 
 Use [the batch runner](DECOMP_BATCH.md) for repeatable verification, replay,
-status and project checks: `python3 tools/port_batch.py run`.
+status and project checks: `cargo run -p pipeline --locked --offline -- batch run`.
 
 Primary source: snesrev/sm revision
 `578f90b3cc49557bb70060ad033bb90b8cf8ac50`, with the upstream MIT notice retained
@@ -13,31 +13,29 @@ predecessor evidence. New gameplay modules live in `crates/port`.
 Run a family against actual compiled upstream C:
 
 ```sh
-python3 tools/port_family.py verify system --source deps/snesrev-sm --output /tmp/system-evidence
-python3 tools/port_family.py verify audio --source deps/snesrev-sm --output /tmp/audio-evidence
+cargo run -p pipeline --locked --offline -- family-verify --manifest tools/port/system.toml --source deps/snesrev-sm --output /tmp/system-evidence
+cargo run -p pipeline --locked --offline -- family-verify --manifest tools/port/audio.toml --source deps/snesrev-sm --output /tmp/audio-evidence
 ```
 
-Each family has `tools/port/<family>.json`:
+Each family has `tools/port/<family>.toml`:
 
-```json
-{
-  "family": "example",
-  "rust_module": "crates/port/src/example.rs",
-  "bank": "sm_80.c",
-  "routines": [{
-    "symbol": "PrepareBitAccess",
-    "args": 1,
-    "return": "uint16",
-    "cases": [{
-      "name": "bit-zero",
-      "a": 0,
-      "b": 0,
-      "fill": 165,
-      "writes": [[1509, [0, 0]]],
-      "expected_return": 0
-    }]
-  }]
-}
+```toml
+family = "example"
+rust_module = "crates/port/src/example.rs"
+bank = "sm_80.c"
+
+[[routines]]
+symbol = "PrepareBitAccess"
+args = 1
+return = "uint16"
+
+[[routines.cases]]
+name = "bit-zero"
+a = 0
+b = 0
+fill = 165
+writes = [{ offset = 1509, data = [0, 0] }]
+expected_return = 0
 ```
 
 `args` supports zero to two `uint16` parameters; `return` supports `void`,
@@ -78,7 +76,7 @@ zero-seed result (273). Deliberately incorrect return and unrelated upper-WRAM
 mutation both reject with retained mismatch artifacts:
 
 ```sh
-python3 -m unittest discover -s tools -p test_port_family.py
+cargo test -p pipeline --test family --locked --offline
 ```
 
 ## Inventory and next substantial gameplay frontier
@@ -86,7 +84,7 @@ python3 -m unittest discover -s tools -p test_port_family.py
 Regenerate the definition index with:
 
 ```sh
-python3 tools/port_family.py inventory --source deps/snesrev-sm --output tools/port/source-inventory.json
+cargo run -p pipeline --locked --offline -- source-inventory --source deps/snesrev-sm --output tools/port/source-inventory.toml
 ```
 
 The checked-in inventory records **5,354 actual function definitions**, their
@@ -130,11 +128,11 @@ A typed family without ROM exports `dispatch_i32`; a ROM family exports
 Unsigned 32-bit arguments travel as decimal `i64` then cast to `i32`, retaining
 all bits; the family casts back to `u32` for unsigned routines.
 
-A manifest ROM asset is `"rom": {"file": "/absolute/game.sfc", "sha256": "..."}`.
+A manifest ROM asset is `rom = { file = "/absolute/game.sfc", sha256 = "..." }`.
 The harness validates its hash and 1-byte to 4MiB extent, retains the exact ROM,
 and passes identical bytes to both subjects. Each family's dispatch must reject
 out-of-range ROM addresses/table indices before access. Add actual dependency
-sources via `"c_support": ["sm_rtl.c", "sm_cpu_infra.c"]`; section garbage
+sources via `c_support = ["sm_rtl.c", "sm_cpu_infra.c"]`; section garbage
 collection keeps the needed real functions/storage. No hardware oracle stubs
 are introduced.
 
@@ -177,19 +175,16 @@ incomplete `ClearUnusedOam` candidate that passes an empty-loop fixture and then
 must reject observed gameplay divergence:
 
 ```sh
-SM_PORT_LIVE_CONTROLS=1 python3 -m unittest discover -s tools -p test_port_live.py
+cargo test -p pipeline --test live --locked --offline
 ```
 
 For continued gameplay translation, use actual-C family verification first, then
-run live validation with `tools/port_live.py` or the batch runner. Future live
-captures default to packed evidence in the shared `out/evidence` store. Omit
-the historical `--compress-effects` option from ordinary replay commands: it
-selects legacy gzip storage. Use `--storage packed` to make the current default
-explicit. Family oracle runs keep their existing full-WRAM comparison format.
+run live validation with `sm-pipeline live-verify` or the batch runner. Future live
+captures default to packed evidence in the shared `out/evidence` store. Native captures use typed TOML metadata and compressed binary storage. Family oracle runs keep their existing full-WRAM comparison format.
 
 After live verification and scoped cleanup, authenticate the retained verdict
-with `python3 tools/port_authenticate_live.py RUN/verdict.json`. Inspect packed
-members and individual frames through `tools/port_evidence.py`; commands and
+with `cargo run -p pipeline --locked --offline -- live-authenticate RUN/verdict.toml`. Inspect packed
+members and individual frames through `sm-pipeline packed-materialize`; commands and
 store retention requirements are in [DECOMP_BATCH.md](DECOMP_BATCH.md).
 Packed storage changes retention and inspection, while gameplay admission still
 requires its own authenticated source, coverage and ownership evidence.

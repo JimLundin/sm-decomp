@@ -1,0 +1,6 @@
+schema_version = 1
+
+[[files]]
+original_sha256 = "c6c8a9ba446beccd5202dbabfb208a64893d6225e1681101a1e961547e3c3160"
+patched_sha256 = "3810eefe8c67b29e3c69b2bacd447528aae37284efa07a093c6b8a28685b57cb"
+path = "crates/rustysnes-core/src/scheduler.rs"

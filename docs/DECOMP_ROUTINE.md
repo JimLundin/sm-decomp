@@ -1,6 +1,6 @@
 # Offline RAM decompression pilot
 
-Run `just decomp-routine` (or `python3 tools/decomp_routine.py --output DIR`).
+Run `just decomp-routine` (or `cargo run -p pipeline --locked --offline -- decomp-verify --output DIR`).
 Each invocation creates fresh prepare/build/compare/verdict evidence. A successful
 synthetic job reports **partial**, exits zero, and sets `routine_accepted: false`.
 Errors exit nonzero and retain an error verdict. The 40 checked-in synthetic fixtures specify expected bytes independently and compare every byte
@@ -24,7 +24,7 @@ WRAM allocation. Source reads preserve bank rollover. All eight RAM command mode
 are 1–32 and extended lengths are 1–1024; relative XOR exists only in extended
 form and stops at 768 because header FF is reserved for termination. Errors may leave stores already performed; a fresh process and
 initial state are required for each comparison. The candidate CLI accepts
-`ROM WRAM SOURCE DESTINATION OUTPUT` and emits JSON diagnostics.
+`ROM WRAM SOURCE DESTINATION OUTPUT` and emits TOML diagnostics.
 
 The C fixture admission validates every source operand and every WRAM read/store
 extent for all command modes, without predicting decompressed values. The shim validates ROM reads but cannot bound arbitrary stores
@@ -69,7 +69,7 @@ The original ABI stages the source at direct-page $47–49 and long destination 
 $4C–4E with D=0/native mode. Original execution changes routine scratch $47–48,
 $4A–4B and $4F–50. Comparison excludes those bytes, staged pointer bytes and only
 the observed stack-write interval plus the three harness RTL-frame bytes. Every
-raw mismatch and exclusion remains in `original-evidence.json`; any other WRAM
+raw mismatch and exclusion remains in `original-evidence.toml`; any other WRAM
 mismatch fails. This establishes bounded algorithm evidence using an instruction
 CPU from the same upstream project, not independent emulator timing or whole-game
 parity. Full C/Rust comparisons have no exclusions.
@@ -77,7 +77,7 @@ parity. Full C/Rust comparisons have no exclusions.
 A reproducible local run is:
 
 ```sh
-python3 tools/decomp_routine.py --captures CAPTURE_DIR/manifest.json --original-rom rom/sm.sfc --output out/decomp/routine
+cargo run -p pipeline --locked --offline -- decomp-verify --captures CAPTURE_DIR/manifest.toml --original-rom rom/sm.sfc --output out/decomp/routine
 ```
 
 Capture with `just decomp-baseline 9000`; use the resulting replay fixture manifest.
@@ -92,9 +92,12 @@ compared with the Rust safe WRAM observer. Repeated/transient stores are retaine
 complete write sets and store counts appear in each fixture record.
 
 Use `--accept` with the frozen capture manifest and original ROM to request bounded
-offline acceptance. The independently checked-in `offline-acceptance-v1` contract
-pins the canonical job digest (all 40 synthetic fixtures and branch declarations),
-exact 23-call capture manifest and original ROM digest. User manifests that alter
+offline acceptance. The checked-in schema-2 acceptance contract pins the canonical TOML job digest
+(all 40 synthetic fixtures and branch declarations), 23-call coverage and original
+ROM digest. A fresh `decomp-c-captures-v2` manifest must validate source and routine
+identity, bounded source operands, full ROM and WRAM extents, and all artifact hashes.
+The accepting run seals its exact capture manifest digest; historical JSON capture
+digests do not authorize current sources. User manifests that alter
 fixtures or shrink coverage fail, even when their remaining expectations match.
 An accepting run executes 11 real controls through the same public CLI: wrong
 output, write-and-restore, disabled/unexecuted replacement, reduced executed branch,
@@ -105,13 +108,13 @@ control, retaining generated faulty candidate sources and an error verdict.
 
 Acceptance retains the contract, exact source/implementation/build and binary
 identities, full fixture states and ordered writes, observed cases, all negative
-verdicts, and predecessor lineage in `acceptance.json`. The separate
-`decomp-acceptance.json` pointer references that immutable run and verdict digest;
-`latest-attempt.json` always records the current result. Failed/partial attempts
+verdicts, and predecessor lineage in `acceptance.toml`. The separate
+`decomp-acceptance.toml` pointer references that immutable run and verdict digest;
+`latest-attempt.toml` always records the current result. Failed/partial attempts
 preserve earlier acceptance as predecessor evidence but exit with their own result
 and cannot acquire its verdict. `verify_accepted(pointer_path)` validates current
 source and contract identities plus the sealed artifacts before another consumer
-uses an accepted routine. The `decomp-artifact-inventory-v1` seal hashes every
+uses an accepted routine. The `decomp-artifact-inventory-v2` seal hashes every
 retained file before publishing the seal and final verdict: all fixture outputs,
 repeat traces and diagnostics, original CPU source snapshot/shim/executable/results,
 and complete negative-control sources, executables, logs and failing verdicts.
@@ -124,10 +127,10 @@ The live C/Rust ABI belongs to ticket06.
 No offline partial result establishes whole-game Rust ownership or original-ROM
 parity.
 
-Validation: `python3 -m unittest tools.test_decomp_routine` and
+Validation: `cargo test -p pipeline --test decomp --locked --offline` and
 `cargo test -p decomp --locked --offline`.
 
-The live command is `just decomp-live --accepted PATH/TO/decomp-acceptance.json`.
+The live command is `just decomp-live --accepted PATH/TO/decomp-acceptance.toml`.
 It checks the current offline seal before building, then links the Rust static
 library into a dedicated single-threaded C host. The unchanged C scheduler,
 canonical C-owned WRAM, ROM loading and hardware remain in charge. The ABI takes
@@ -149,9 +152,8 @@ success hits and no completed checkpoint or after-call state.
 
 Success is labeled `mixed-C-Rust-integration`; original-ROM movie parity remains
 `not-tested`. The input conversion remains bit reversal without lag adaptation.
-Run `DECOMP_ACCEPTED=PATH python3 -m unittest tools.test_decomp_live` to exercise
-the full public integration test; without the variable the unsealed-pointer
-rejection test runs and the asset-dependent replay test is skipped.
+Run `cargo test -p pipeline --test routine_jobs --locked --offline` for native
+admission controls. `just decomp-live --accepted PATH` runs the full replay.
 
 The retained ticket06 run accepted all 63 offline fixtures and rejected all 11
 acceptance controls with the new ABI source identities, then independently
@@ -161,14 +163,13 @@ actually reached (relative XOR remains synthetic-only). Gameplay CPU fallback
 was measured as zero in this prefix. This measurement does not establish
 coverage beyond the prefix. Hardware write streams are retained as gzip logs.
 
-Review verification regenerated current-source acceptance at
+Historical review verification regenerated acceptance at
 `out/decomp/review/offline/decomp-acceptance.json`: 63 fixtures, 38 observed cases,
-11 rejected controls and 2,930 authenticated artifacts. Use this explicit pointer
-with the live or bounded-job command; historical ticket05/06 seals remain immutable
-and lack the required inventory. For example:
+11 rejected controls and 2,930 authenticated artifacts. That pointer retains its original JSON contract. Current consumers require fresh
+TOML acceptance. For example:
 
 ```sh
-python3 tools/decomp_jobs.py --count 1 --accepted out/decomp/review/offline/decomp-acceptance.json --output out/decomp/review/jobs
+cargo run -p pipeline --locked --offline -- decomp-jobs --count 1 --accepted out/decomp/current/offline/decomp-acceptance.toml --output out/decomp/review/jobs
 ```
 
 The retained current-source job is `out/decomp/review/jobs/20261010T185638.603810Z`;
@@ -182,7 +183,5 @@ parity and full Rust gameplay ownership remain unproven.
 
 Public acceptance-consumer tests reject copied runs missing final outputs, repeat
 traces, original CPU/shim/executable/results, negative-control sources/executables/logs,
-altered original diagnostics, and inconsistent accepted status. The 16-test Python
-suite passed apart from its optional live-test skip after worktree assets were
-supplied (the prefix test was rerun separately). Six Rust tests, Clippy with warnings
-denied, workspace formatting and whitespace checks pass.
+altered original diagnostics, and inconsistent accepted status. Those historical checks used the retired Python suite. Maintained regression
+tests now run in Rust through the commands above.

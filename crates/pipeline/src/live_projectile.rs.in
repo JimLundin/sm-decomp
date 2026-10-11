@@ -1,0 +1,21 @@
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn port_native_projectile(ram:*mut u8,len:usize,rom:*const u8,rom_len:usize,host:*mut u16,host_len:usize,kind:u16,a:u16,b:u32)->i32 {
+ if ram.is_null() || len!=WRAM_SIZE || rom_len>0x400000 || (rom.is_null() && rom_len!=0) {return -1;}
+ let Some(rend)=(ram as usize).checked_add(len)else{return -1;};
+ let Some(oend)=(rom as usize).checked_add(rom_len)else{return -1;};
+ if (ram as usize)<oend && (rom as usize)<rend {return -1;}
+ let name=match kind{1=>"SpawnEprojWithRoomGfx",2=>"EprojRunAll",3=>"SpawnEprojWithGfx",_=>return -1};
+ let rom=if rom_len==0{&[]}else{unsafe{std::slice::from_raw_parts(rom,rom_len)}};
+ let mut owned=unsafe{std::slice::from_raw_parts(ram,len)}.to_vec();
+ let no_host=if kind!=2{(0..18).all(|i|owned[0x1997+i*2]!=0 || owned[0x1998+i*2]!=0)}else{owned[0x198e]&0x80==0};
+ if !no_host {
+  if host.is_null() || host_len!=8 || (host as usize)%2!=0{return -1;}
+  let Some(hend)=(host as usize).checked_add(16)else{return -1;};
+  if (host as usize)<rend && (ram as usize)<hend || (host as usize)<oend && (rom.as_ptr() as usize)<hend{return -1;}
+ }
+ let supported=std::panic::catch_unwind(std::panic::AssertUnwindSafe(||memory::observed_projectile_ownership::supports_call(&Wram::new(&mut owned).unwrap(),rom,name,a.into(),b as i32)));
+ match supported{Ok(Ok(false))=>return -2,Ok(Ok(true))=>{},_=>return -1}
+ let mut context=if no_host{memory::enemy_projectiles::ProjectileHost::default()}else{memory::enemy_projectiles::ProjectileHost::from_words(unsafe{std::ptr::read(host.cast::<[u16;8]>())})};
+ let result=std::panic::catch_unwind(std::panic::AssertUnwindSafe(||memory::observed_projectile_ownership::dispatch_host(&mut Wram::new(&mut owned).unwrap(),rom,&mut context,name,a.into(),b as i32)));
+ match result{Ok(Ok(value))=>{let Ok(value)=i32::try_from(value)else{return -1;};unsafe{std::ptr::copy_nonoverlapping(owned.as_ptr(),ram,len);if !no_host{std::ptr::write(host.cast::<[u16;8]>(),context.words());}}value},_=>-1}
+}

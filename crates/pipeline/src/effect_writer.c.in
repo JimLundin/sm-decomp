@@ -1,0 +1,8 @@
+#include <stdarg.h>
+#include <unistd.h>
+static FILE *port_effects;
+static void PortEffect(FILE *stream,const char *format,...) {
+ va_list args;va_start(args,format);int n=vfprintf(stream,format,args);va_end(args);if(n<0)exit(2);
+}
+#define PortEffectsOpen() fopen(getenv("SM_EVIDENCE_PIPE"),"wb")
+#define PortEffectsClose() fclose(port_effects)

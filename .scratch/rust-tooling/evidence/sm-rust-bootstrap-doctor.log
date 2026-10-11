@@ -1,0 +1,54 @@
+   Compiling version_check v0.9.5
+   Compiling typenum v1.20.1
+   Compiling zmij v1.0.23
+   Compiling serde_core v1.0.229
+   Compiling anyhow v1.0.104
+   Compiling serde_json v1.0.151
+   Compiling cfg-if v1.0.5
+   Compiling cpufeatures v0.2.17
+   Compiling itoa v1.0.18
+   Compiling memchr v2.8.3
+   Compiling generic-array v0.14.7
+   Compiling block-buffer v0.10.4
+   Compiling crypto-common v0.1.7
+   Compiling digest v0.10.7
+   Compiling sha2 v0.10.9
+   Compiling sm-bootstrap v0.1.0 (/tmp/sm-decomp-pipeline/tools/bootstrap)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 6.92s
+     Running `tools/bootstrap/target/debug/sm-bootstrap doctor`
+OK: rustup
+OK: cargo
+OK: cc
+OK: g++
+OK: make
+OK: pkg-config
+OK: curl
+OK: tar
+OK: patch
+OK: unzip
+OK: dpkg-deb
+OK: just
+OK: Rust nightly-2026-09-29
+OK: unheadered Super Metroid ROM (expected SHA-256)
+OK: RustySNES sources
+OK: hardware profile patch crates/rustysnes-apu/Cargo.toml
+OK: hardware profile patch crates/rustysnes-apu/src/clocked.rs
+OK: hardware profile patch crates/rustysnes-apu/src/lib.rs
+OK: hardware profile patch crates/rustysnes-core/Cargo.toml
+OK: hardware profile patch crates/rustysnes-core/src/bus.rs
+OK: hardware profile patch crates/rustysnes-core/src/dma.rs
+OK: hardware profile patch crates/rustysnes-core/src/lib.rs
+OK: hardware profile patch crates/rustysnes-core/src/scheduler.rs
+OK: hardware profile patch crates/rustysnes-cpu/Cargo.toml
+OK: hardware profile patch crates/rustysnes-cpu/src/bus.rs
+OK: hardware profile patch crates/rustysnes-cpu/src/exec.rs
+OK: hardware profile patch crates/rustysnes-cpu/src/lib.rs
+OK: hardware profile patch crates/rustysnes-ppu/src/lib.rs
+OK: hardware profile patch crates/rustysnes-ppu/src/render.rs
+OK: snesrev symbols
+OK: 65816 corpus (256 native-mode opcode files)
+OK: MesenCE binary
+OK: original lsnes recording core
+OK: TAS movie super-metroid-any-3653.lsmv
+OK: TAS movie super-metroid-low-3273.lsmv
+OK: TAS movie super-metroid-100-4010.lsmv

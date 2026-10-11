@@ -31,10 +31,10 @@ these changes idempotently and creates the private build configuration:
 
 ```sh
 just setup-lsnes
-python3 tools/setup_lsnes.py --offline  # verify cached downloads and rebuild
+cargo run --manifest-path tools/bootstrap/Cargo.toml --locked --offline -- setup-lsnes --offline  # verify cached downloads and rebuild
 ```
 
-Download URLs and hashes are in [lsnes-dependencies.json](lsnes-dependencies.json).
+Download URLs and hashes are in [lsnes-dependencies.toml](lsnes-dependencies.toml).
 The build log is `deps/lsnes/build.log`. The underlying build command is:
 
 ```sh
@@ -69,7 +69,7 @@ end
 memory.registerexec('BUS', 0x828948, checkpoint)
 ```
 
-`tools/lsnes-replay.py` creates this observer and an isolated configuration
+`sm-pipeline lsnes-replay` creates this observer and an isolated configuration
 directory, verifies the movie's ROM and core identity, and runs the null dumper:
 
 ```sh

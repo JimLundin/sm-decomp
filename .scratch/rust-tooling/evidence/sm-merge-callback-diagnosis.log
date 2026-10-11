@@ -1,0 +1,8 @@
+   Compiling pipeline v0.1.0 (/home/jim/sm-decomp/crates/pipeline)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 6.63s
+     Running tests/callback.rs (target/debug/build/pipeline/1aa12d77280d56cf/out/callback-1aa12d77280d56cf)
+
+running 1 test
+test quicksand_amount_and_ordered_actual_callback_snapshots_authenticate_and_wrong_state_fails ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 48.29s

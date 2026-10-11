@@ -66,6 +66,16 @@ pub struct Store {
 }
 
 impl Store {
+    /// Re-encode canonical objects in dependency order, remapping compact ordinals.
+    /// Independent sealed packs must never be copied between store directories.
+    pub fn import_store(&mut self, source: &Store) -> Result<()> {
+        for id in &source.ids {
+            let (kind, logical) = source.get(id)?;
+            ensure!(self.put(kind, &logical)? == *id, "imported canonical identity differs");
+        }
+        Ok(())
+    }
+
     pub fn create(root: &Path) -> Result<Self> {
         if let Ok(meta) = root.symlink_metadata() {
             ensure!(!meta.file_type().is_symlink(), "store symlink rejected");

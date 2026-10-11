@@ -1,0 +1,8 @@
+   Compiling pipeline v0.1.0 (/home/jim/sm-decomp/crates/pipeline)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 11.75s
+     Running unittests src/main.rs (target/debug/build/pipeline/7e711bd14bbce342/out/sm_pipeline-7e711bd14bbce342)
+
+running 1 test
+test family::host_tests::projectile_rendering_selects_specialized_bank86_adapter_without_dispatcher_symbols ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 59 filtered out; finished in 0.00s

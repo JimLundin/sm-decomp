@@ -8,7 +8,7 @@ candidate changes.
 
 The session coordinates separate exact-source child runs for baseline readiness,
 measured selection, preparation, candidate validation and experiments. Its mutable
-`state.json` is a control log, not candidate validation evidence. Every operation
+`state.toml` is a control log, not candidate validation evidence. Every operation
 also has an immutable numbered event. Failed/uncovered/error/incomplete candidates
 and original user work remain preserved; only published acceptance reverified from
 the current pointer and this session's candidate counts as progress. A baseline

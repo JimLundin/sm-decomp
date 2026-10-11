@@ -27,6 +27,38 @@ impl Drop for Temp {
 }
 
 #[test]
+fn independent_stores_import_with_remapped_ordinals_and_verified_inventory() -> anyhow::Result<()> {
+    let temp = Temp::new();
+    let source_path = temp.path().join("source-store");
+    let dest_path = temp.path().join("dest-store");
+    let input = temp.path().join("input");
+    fs::create_dir(&input)?;
+    fs::write(input.join("frame.bin"), vec![7u8; 65537])?;
+    fs::write(input.join("hardware.log"), b"ppu 1 0 24 7\napu 1 2 3\n")?;
+    let mut source = Store::create(&source_path)?;
+    let tree = ingest_tree(&mut source, &input, &mut |_| {})?;
+    let run = put_run(&mut source, tree, &Provenance { subject: Some("c-0".into()), ..Default::default() })?;
+    source.commit()?;
+    let source = Store::open(&source_path)?;
+    let mut dest = Store::create(&dest_path)?;
+    // Different preceding objects force every physical compact ordinal to differ.
+    put_image(&mut dest, &[99u8; 1000])?;
+    dest.import_store(&source)?;
+    dest.commit()?;
+    let dest = Store::open(&dest_path)?;
+    let (verified, inventory) = verified_inventory(&dest, &run)?;
+    assert_eq!(verified.observations, tree);
+    assert_eq!(inventory.len(), 2);
+    assert_eq!(inventory["frame.bin"].bytes, 65537);
+    verify_run(&dest, &run, Some(&input))?;
+    let mut dest = Store::create(&dest_path)?;
+    dest.import_store(&source)?;
+    assert_eq!(dest.stats().new_objects, 0);
+    dest.commit()?;
+    Ok(())
+}
+
+#[test]
 fn images_roundtrip_diff_and_survive_reopen() -> anyhow::Result<()> {
     let temp = Temp::new();
     let mut store = Store::create(temp.path())?;
@@ -136,8 +168,8 @@ fn sealed_directory_and_provenance_are_independent() -> anyhow::Result<()> {
     let root = temp.path().join("store");
     let mut store = Store::create(&root)?;
     let tree = ingest_tree(&mut store, &source, &mut |_| {})?;
-    let a = put_run(&mut store, tree, &serde_json::json!({"compiler":"a","nested":{"z":1,"a":2}}))?;
-    let b = put_run(&mut store, tree, &serde_json::json!({"compiler":"b"}))?;
+    let a = put_run(&mut store, tree, &Provenance { compiler: Some("a".into()), ..Default::default() })?;
+    let b = put_run(&mut store, tree, &Provenance { compiler: Some("b".into()), ..Default::default() })?;
     assert_ne!(a, b);
     assert_eq!(read_run(&store, &a)?.observations, read_run(&store, &b)?.observations);
     store.commit()?;
@@ -296,8 +328,8 @@ fn cli_ingest_extract_frame_and_verify() -> anyhow::Result<()> {
     let source_path = source.to_str().unwrap();
     let ingest = run_cmd(&["ingest", store_path, source_path]);
     assert!(ingest.status.success());
-    let roots: serde_json::Value = serde_json::from_slice(&ingest.stdout)?;
-    let id = roots["run"].as_str().unwrap();
+    let roots: IngestReceipt = toml::from_str(std::str::from_utf8(&ingest.stdout)?)?;
+    let id = roots.run.as_str();
     assert!(run_cmd(&["verify", store_path, id, source_path]).status.success());
     assert_eq!(run_cmd(&["cat", store_path, id, "frame.bin"]).stdout, b"exact state");
     assert_eq!(run_cmd(&["frame", store_path, id, "hardware.log", "2"]).stdout, b"ppu 2 0 4 1\nunknown 2 x\n");

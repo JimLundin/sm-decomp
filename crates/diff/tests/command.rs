@@ -32,8 +32,8 @@ impl Fixture {
             .output()
             .unwrap()
     }
-    fn report(&self) -> serde_json::Value {
-        serde_json::from_slice(&fs::read(self.0.join("evidence/parity.json")).unwrap()).unwrap()
+    fn report(&self) -> toml::Value {
+        toml::from_str(&fs::read_to_string(self.0.join("evidence/parity.toml")).unwrap()).unwrap()
     }
 }
 impl Drop for Fixture {
@@ -48,10 +48,10 @@ fn requested_scope_cannot_be_truncated_into_a_pass() {
     let result = fixture.run("3", "--fallback-only");
     assert_eq!(result.status.code(), Some(2));
     let report = fixture.report();
-    assert_eq!(report["status"], "incomplete");
-    assert_eq!(report["expected_frames"], 3);
-    assert_eq!(report["completed_frames"], 0);
-    assert_eq!(report["available_frames"], 2);
+    assert_eq!(report["status"].as_str().unwrap(), "incomplete");
+    assert_eq!(report["expected_frames"].as_integer().unwrap(), 3);
+    assert_eq!(report["completed_frames"].as_integer().unwrap(), 0);
+    assert_eq!(report["available_frames"].as_integer().unwrap(), 2);
 }
 
 #[test]
@@ -60,14 +60,17 @@ fn cold_fallback_reports_complete_frame_comparison() {
     let result = fixture.run("2", "--fallback-only");
     assert!(result.status.success(), "{}", String::from_utf8_lossy(&result.stderr));
     let report = fixture.report();
-    assert_eq!(report["status"], "pass");
-    assert_eq!(report["complete"], true);
-    assert_eq!(report["expected_frames"], 2);
-    assert_eq!(report["completed_frames"], 2);
-    assert_eq!(report["matched_frames"], 2);
-    assert_eq!(report["regions"], serde_json::json!(["CPU+clocks", "WRAM", "framebuffer"]));
-    assert_eq!(report["generated_steps"], 0);
-    assert!(report["interpreted_steps"].as_u64().unwrap() > 0);
+    assert_eq!(report["status"].as_str().unwrap(), "pass");
+    assert!(report["complete"].as_bool().unwrap());
+    assert_eq!(report["expected_frames"].as_integer().unwrap(), 2);
+    assert_eq!(report["completed_frames"].as_integer().unwrap(), 2);
+    assert_eq!(report["matched_frames"].as_integer().unwrap(), 2);
+    assert_eq!(
+        report["regions"].as_array().unwrap().iter().map(|x| x.as_str().unwrap()).collect::<Vec<_>>(),
+        vec!["CPU+clocks", "WRAM", "framebuffer"]
+    );
+    assert_eq!(report["generated_steps"].as_integer().unwrap(), 0);
+    assert!(report["interpreted_steps"].as_integer().unwrap() > 0);
     assert_eq!(report["identities"]["rom_sha256"].as_str().unwrap().len(), 64);
     assert_eq!(report["identities"]["binary_sha256"].as_str().unwrap().len(), 64);
 }
@@ -76,9 +79,9 @@ fn cold_fallback_reports_complete_frame_comparison() {
 fn prior_terminal_evidence_cannot_be_overwritten() {
     let fixture = Fixture::new();
     assert!(fixture.run("2", "--fallback-only").status.success());
-    let original = fs::read(fixture.0.join("evidence/parity.json")).unwrap();
+    let original = fs::read(fixture.0.join("evidence/parity.toml")).unwrap();
     assert_eq!(fixture.run("3", "--fallback-only").status.code(), Some(2));
-    assert_eq!(fs::read(fixture.0.join("evidence/parity.json")).unwrap(), original);
+    assert_eq!(fs::read(fixture.0.join("evidence/parity.toml")).unwrap(), original);
 }
 
 #[test]
@@ -87,9 +90,9 @@ fn missing_rom_preserves_setup_error_evidence() {
     fs::remove_file(fixture.0.join("test.sfc")).unwrap();
     assert_eq!(fixture.run("2", "--fallback-only").status.code(), Some(2));
     let report = fixture.report();
-    assert_eq!(report["status"], "error");
-    assert_eq!(report["stage"], "inputs");
-    assert_eq!(report["complete"], false);
+    assert_eq!(report["status"].as_str().unwrap(), "error");
+    assert_eq!(report["stage"].as_str().unwrap(), "inputs");
+    assert!(!report["complete"].as_bool().unwrap());
 }
 
 #[test]
@@ -100,20 +103,20 @@ fn empty_generated_table_cannot_validate_fallback_execution() {
     let fixture = Fixture::new();
     assert_eq!(fixture.run("2", "--generated").status.code(), Some(1));
     let report = fixture.report();
-    assert_eq!(report["status"], "uncovered");
-    assert_eq!(report["complete"], false);
-    assert_eq!(report["generated_steps"], 0);
+    assert_eq!(report["status"].as_str().unwrap(), "uncovered");
+    assert!(!report["complete"].as_bool().unwrap());
+    assert_eq!(report["generated_steps"].as_integer().unwrap(), 0);
 }
 
 #[test]
 fn frame_report_preserves_instruction_profile_separate_from_discovery() {
     let fixture = Fixture::new();
     assert!(fixture.run("2", "--fallback-only").status.success());
-    let coverage: serde_json::Value =
-        serde_json::from_slice(&fs::read(fixture.0.join("evidence/coverage.json")).unwrap()).unwrap();
-    assert_eq!(coverage["schema_version"], 1);
-    assert_eq!(coverage["generated_instructions"], 0);
-    assert!(coverage["interpreted_instructions"].as_u64().unwrap() > 0);
-    assert!(coverage["interpreted"].as_array().unwrap().iter().any(|entry| entry["opcode"] == 0x80));
+    let coverage: pipeline_model::InstructionProfile =
+        pipeline_model::read(&fixture.0.join("evidence/coverage.toml")).unwrap();
+    assert_eq!(coverage.schema_version, 1);
+    assert_eq!(coverage.generated_instructions, 0);
+    assert!(coverage.interpreted_instructions > 0);
+    assert!(coverage.interpreted.iter().any(|entry| entry.opcode == 0x80));
     assert!(fixture.0.join("evidence/misses.csv").exists());
 }

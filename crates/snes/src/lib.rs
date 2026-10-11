@@ -54,16 +54,15 @@ pub struct Reference {
 impl Reference {
     pub fn checkpoint_state(&self) -> Vec<u8> {
         paired::envelope(
-            b"RCP1",
+            b"RCP2",
             &paired::raw_cpu(&self.system.cpu),
             &self.system.bus.readiness_state(),
-            &serde_json::json!({"system":self.system.save_state()}),
+            &self.system.save_state(),
         )
     }
     pub fn restore_checkpoint_state(&mut self, bytes: &[u8]) -> Result<()> {
-        let (cpu, hardware, metadata) = paired::open(bytes, b"RCP1")?;
-        let system: Vec<u8> = serde_json::from_value(metadata["system"].clone())?;
-        self.system.load_state(&system)?;
+        let (cpu, hardware, metadata) = paired::open(bytes, b"RCP2")?;
+        self.system.load_state(metadata)?;
         paired::load_cpu(&mut self.system.cpu, cpu)?;
         self.system.bus.readiness_load(hardware)?;
         Ok(())

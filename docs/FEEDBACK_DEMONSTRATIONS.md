@@ -34,6 +34,6 @@ validation or rejected cache evidence. Cache creation is separate from warm
 focus timing; no frame scope is shortened for performance.
 
 Reports live under `diagnostics/feedback/`, execution logs under `logs/`, and the
-mandatory summary in `checks/feedback-demonstrations.json`. An expected fault is
+mandatory summary in `checks/feedback-demonstrations.toml`. An expected fault is
 a successful demonstration only after its actual failure evidence is checked;
 unexpected outcomes, interruption or absent artifacts block the gate.

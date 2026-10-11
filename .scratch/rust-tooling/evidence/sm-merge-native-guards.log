@@ -1,0 +1,9 @@
+   Compiling pipeline v0.1.0 (/home/jim/sm-decomp/crates/pipeline)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 25.23s
+     Running tests/no_python.rs (target/debug/build/pipeline/a834b1b68d56baf5/out/no_python-a834b1b68d56baf5)
+
+running 2 tests
+test maintained_configuration_has_no_json_files ... ok
+test project_sources_recipes_and_ci_have_no_python_dependency ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s

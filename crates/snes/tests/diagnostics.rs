@@ -1,4 +1,24 @@
 use snes::{Reference, Subject};
+fn identities(rom: &[u8], pads: &[u16]) -> pipeline_model::CheckpointIdentities {
+    pipeline_model::CheckpointIdentities {
+        rom_sha256: snes::paired::sha256(rom),
+        movie_sha256: "b".repeat(64),
+        input_sha256: snes::paired::sha256(movie::write_inputs(pads).as_bytes()),
+        source_sha256: "d".repeat(64),
+        hardware_sha256: "e".repeat(64),
+        profile: "lsnes-profile".into(),
+        serializer: "paired-v2".into(),
+        compiler: "fixture".into(),
+        features: vec!["lsnes-profile".into()],
+        settings: pipeline_model::CheckpointSettings {
+            seed: 0,
+            mode: None,
+            candidate_sha256: None,
+            disabled_keys: vec![],
+        },
+        dispatch_sha256: None,
+    }
+}
 mod emitted {
     #![allow(unused_imports)]
     include!(concat!(env!("OUT_DIR"), "/test_steps.rs"));
@@ -53,9 +73,9 @@ fn transient_wrong_generated_store_is_caught_before_next_store_restores_frame_by
     let mut cold_r = Reference::new(&rom, 0).unwrap();
     let mut cold_s = Subject::with_steps(&rom, 0, table).unwrap();
     let report = snes::focused::compare(&mut cold_r, &mut cold_s, &[0, 0], 0, 10, &output).unwrap();
-    assert_eq!(report["status"], "divergence");
-    assert_eq!(report["first_mismatch"]["subject"]["generated_key"], serde_json::json!([0x8004, 3]));
-    assert!(report["preceding_matching_boundary"].is_object());
+    assert_eq!(report.status, "divergence");
+    assert_eq!(report.first_mismatch.as_ref().unwrap().subject.generated_key, Some((0x8004, 3)));
+    assert!(report.preceding_matching_boundary.is_some());
     assert!(output.join("subject-after.hardware.bin").is_file());
     std::fs::remove_dir_all(output).unwrap();
     let mut r = Reference::new(&rom, 0).unwrap();
@@ -98,7 +118,7 @@ fn cold_frame_focus_finds_later_failure_after_first_key_window_passes() {
         &output.join("early"),
     )
     .unwrap();
-    assert_eq!(early["status"], "pass");
+    assert_eq!(early.status, "pass");
     let later = snes::focused::compare_frame_from_boundary(
         &mut Reference::new(&rom, 0).unwrap(),
         &mut Subject::with_steps(&rom, 0, &table).unwrap(),
@@ -107,13 +127,13 @@ fn cold_frame_focus_finds_later_failure_after_first_key_window_passes() {
         &output.join("later"),
     )
     .unwrap();
-    assert_eq!(later["status"], "divergence");
-    assert!(later["first_mismatch"]["instruction"].as_u64().unwrap() > 65);
-    assert_eq!(later["first_mismatch"]["subject"]["generated_key"], serde_json::json!([0x8004, 3]));
+    assert_eq!(later.status, "divergence");
+    assert!(later.first_mismatch.as_ref().unwrap().instruction > 65);
+    assert_eq!(later.first_mismatch.as_ref().unwrap().subject.generated_key, Some((0x8004, 3)));
     assert!(output.join("later/subject-after.hardware.bin").is_file());
     // A failing next-frame cache cannot prevent cold mismatch evidence.
     assert!(
-        snes::paired::prepare_cache(&rom, 0, &table, &[0], (0, 0), serde_json::json!({}), &output.join("bad-cache"))
+        snes::paired::prepare_cache(&rom, 0, &table, &[0], (0, 0), identities(&rom, &[0]), &output.join("bad-cache"))
             .is_err()
     );
     for (name, steps) in [("predecessor", &[][..]), ("disabled", &[][..])] {
@@ -123,11 +143,11 @@ fn cold_frame_focus_finds_later_failure_after_first_key_window_passes() {
             &[0],
             0,
             0,
-            later["completed_instructions"].as_u64().unwrap() as usize,
+            later.completed_instructions,
             &output.join(name),
         )
         .unwrap();
-        assert_eq!(report["status"], "pass");
+        assert_eq!(report.status, "pass");
     }
     std::fs::remove_dir_all(output).unwrap();
 }

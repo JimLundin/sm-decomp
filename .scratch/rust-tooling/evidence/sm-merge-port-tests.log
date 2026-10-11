@@ -1,0 +1,533 @@
+   Compiling port v0.1.0 (/home/jim/sm-decomp/crates/port)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 13.28s
+     Running unittests src/lib.rs (target/debug/build/port/36b1d629980279d6/out/port-36b1d629980279d6)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/animated_tiles.rs (target/debug/build/port/99572d26b67d5463/out/animated_tiles-99572d26b67d5463)
+
+running 6 tests
+test allocation_uses_highest_free_slot_and_preserves_every_other_byte ... ok
+test palette_frame_skips_colors_and_waits_at_the_next_duration ... ok
+test byte_timer_preserves_high_byte_and_relative_branch_wraps ... ok
+test interpreter_runs_control_then_timed_frame_and_preserves_wait_pointer ... ok
+test one_byte_operand_at_bank_end_does_not_require_another_byte ... ok
+test palette_instruction_pair_preserves_color_cursor_and_timer_high_byte ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/audio.rs (target/debug/build/port/938f43fa3fa45e7c/out/audio-938f43fa3fa45e7c)
+
+running 6 tests
+test inhibited_sfx_still_records_quota_without_changing_ring ... ok
+test invalid_queue_cursors_are_rejected_without_unchecked_c_or_memory_writes ... ok
+test music_presence_scans_delay_even_when_ring_positions_are_equal ... ok
+test sfx_wrappers_truncate_sound_to_a_byte_and_clear_the_next_slot ... ok
+test full_sfx_ring_replaces_only_with_lower_sound_priority_without_advancing ... ok
+test delayed_music_clamps_delay_and_only_fixed_delay_respects_full_ring ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/blue_ring.rs (target/debug/build/port/80e3e045f8c064a4/out/blue_ring-80e3e045f8c064a4)
+
+running 3 tests
+test linked_enemy_collision_retains_signed_promotion_and_death_sentinel ... ok
+test spawn_delay_tracks_the_head_then_stops_reading_it ... ok
+test missing_host_and_invalid_linked_slot_reject_before_mutation ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/collision.rs (target/debug/build/port/501729a9162c74e8/out/collision-501729a9162c74e8)
+
+running 4 tests
+test landing_on_floor_preserves_the_original_ffff_enemy_collision_flag ... ok
+test solid_wall_clamps_horizontal_movement_and_retains_contact_subposition ... ok
+test solid_enemy_limits_movement_and_records_directional_contact ... ok
+test special_tile_setup_can_synchronously_change_displacement ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/enemy.rs (target/debug/build/port/6d04da4d53e4f9dc/out/enemy-6d04da4d53e4f9dc)
+
+running 9 tests
+test enemy_block_probe_scans_full_height_with_fixed_point_motion ... ok
+test enemy_distances_keep_record_offsets_and_signed_threshold_quirk ... ok
+test vertical_probe_rejects_unwrapped_c_index_outside_level_allocation ... ok
+test sine_negative_fraction_negates_words_independently ... ok
+test angles_preserve_snes_byte_divisor_and_zero_vector_behavior ... ok
+test enemy_touch_checks_above_contact_and_forgiving_horizontal_radius ... ok
+test frozen_ai_keeps_original_handler_bits_as_thaw_timer ... ok
+test screen_geometry_uses_signed_wrapping_and_reports_offscreen ... ok
+test samus_enemy_timers_and_previous_positions_follow_c_clamp ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/enemy_ai.rs (target/debug/build/port/b8baa6697448beb0/out/enemy_ai-b8baa6697448beb0)
+
+running 4 tests
+test waver_left_initialization_preserves_nonstandard_sign_extension ... ok
+test rio_swoop_transitions_into_hover_with_saved_horizontal_velocity ... ok
+test cyclic_extensions_and_invalid_ai_states_are_rejected ... ok
+test fractional_enemy_movement_and_wall_snap ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/enemy_crawler.rs (target/debug/build/port/b40ea19214fdc065/out/enemy_crawler-b40ea19214fdc065)
+
+running 9 tests
+test every_property_orientation_has_independent_expected_speed ... ok
+test gravity_carries_fraction_into_integer ... ok
+test malformed_dispatch_and_indexes_are_rejected ... ok
+test horizontal_slope_scales_each_contact_before_displacement ... ok
+test earthquake_records_orientation_before_fall_and_fourth_miss_starts_fall ... ok
+test landing_restores_saved_orientation_and_sentinel_speed ... ok
+test sentinel_keeps_existing_velocities_and_orients_them ... ok
+test corner_contact_reverses_primary_speed_and_selects_floor_script ... ok
+test instruction_preinstruction_aliases_crawler_state ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/enemy_death_explosion.rs (target/debug/build/port/3824a7da7773383c/out/enemy_death_explosion-3824a7da7773383c)
+
+running 1 test
+test death_explosion_retains_enemy_metadata_before_the_enemy_is_cleared ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/enemy_drop_selection.rs (target/debug/build/port/50fc2d11c42e9d04/out/enemy_drop_selection-50fc2d11c42e9d04)
+
+running 5 tests
+test full_inventory_rejects_rare_ammo_and_missing_header_preserves_rng ... ok
+test pickup_expiry_precedes_collection_and_grapple_has_delay ... ok
+test low_health_forces_health_drops_and_hysteresis_preserves_bias ... ok
+test pickup_health_overflow_fills_reserve_even_when_sound_is_refused ... ok
+test death_drop_instruction_excludes_slot_zero_after_consuming_random ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/enemy_instructions.rs (target/debug/build/port/44ccc49e7a8ccd3e/out/enemy_instructions-44ccc49e7a8ccd3e)
+
+running 8 tests
+test interpreter_runs_timer_loop_then_animation_and_waits_across_frames ... ok
+test interpreter_rejects_real_bank_specific_dispatch_and_nonterminating_script ... ok
+test malformed_instruction_contracts_reject_before_memory_mutation ... ok
+test pre_instruction_updates_use_banked_rom_and_keep_other_record_bytes ... ok
+test interpreter_wait_and_sleep_terminate_without_refreshing_spritemap_flags ... ok
+test timer_branches_keep_word_and_byte_widths_and_odd_relative_pointers ... ok
+test script_wait_sleep_deletion_and_offscreen_flags_keep_distinct_contracts ... ok
+test vram_instruction_copies_packed_seven_byte_entry_at_unaligned_tail ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/enemy_jump.rs (target/debug/build/port/cd665ed5b3bebced/out/enemy_jump-cd665ed5b3bebced)
+
+running 5 tests
+test facing_selection_and_animation_signal_preserve_state_order ... ok
+test ascent_crosses_apex_and_switches_to_descent ... ok
+test script_signal_keeps_pointer_and_current_enemy_quirk ... ok
+test invalid_quadratic_integrals_and_unknown_states_fail_admission ... ok
+test descent_clamps_speed_and_reverses_on_horizontal_wall ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/enemy_projectile_collision.rs (target/debug/build/port/08740715e1459b2b/out/enemy_projectile_collision-08740715e1459b2b)
+
+running 46 tests
+test attached_gunk_contact_release_skips_follow_and_timer_update ... ok
+test botwoon_spit_keeps_inclusive_camera_edge_after_paired_motion ... ok
+test bridge_debris_acceleration_wraps_to_fourteen_bits ... ok
+test draygon_projectile_moves_after_power_bomb_deletes_it ... ok
+test extension_chain_resolves_target_and_leaves_final_block_index ... ok
+test directional_fireball_keeps_velocity_after_impact_script_transition ... ok
+test floor_slope_uses_global_slot_and_outer_collision_clamp ... ok
+test fireball_repeat_decrements_only_low_timer_byte_when_pool_is_full ... ok
+test impossible_random_radius_is_rejected_before_rng_or_position_writes ... ok
+test falling_particle_removal_uses_unsigned_y_threshold ... ok
+test delayed_fireball_waits_then_hits_floor_and_queues_explosion_sound ... ok
+test kraid_rock_acceleration_wraps_at_positive_threshold ... ok
+test kraid_wall_collision_skips_vertical_motion_and_acceleration ... ok
+test lavaquake_apex_defers_horizontal_motion_and_keeps_inclusive_edges ... ok
+test lavaquake_arc_consumes_both_rom_half_steps_and_retains_last_high_word ... ok
+test mini_kraid_spit_clamps_positive_speed_but_preserves_signed_wrap ... ok
+test nami_fune_left_state_moves_x_using_y_velocity_and_leaves_y_unchanged ... ok
+test golden_torizo_orb_reflects_wall_then_settles_small_floor_bounce ... ok
+test nuclear_waffle_body_records_allocated_slot_in_linked_enemy_ram ... ok
+test botwoon_death_delay_initializes_from_slot_then_increments_same_frame ... ok
+test botwoon_spit_allocation_uses_byte_angle_and_unsigned_rom_magnitudes ... ok
+test paired_projectile_motion_negates_complete_fractional_velocity ... ok
+test phantoon_fireball_lands_waits_and_launches_with_frame_parity ... ok
+test phantoon_orbit_contracts_only_after_delay_on_odd_frames ... ok
+test phantoon_third_bounce_stops_preinstruction ... ok
+test pirate_claw_reverses_after_zero_speed_and_preserves_camera_wrap ... ok
+test random_radius_rejects_negative_bytes_before_advancing_each_axis ... ok
+test seahorse_fireball_floor_contact_skips_horizontal_motion ... ok
+test shaktool_front_stops_before_vertical_check_but_linked_circle_checks_both ... ok
+test shaktool_linked_circle_expires_without_movement_when_reference_is_dead ... ok
+test shot_gate_fraction_wrap_does_not_carry_into_y_and_threshold_advances_script ... ok
+test spore_motion_sign_extends_rom_deltas_and_wraps_phase_as_a_word ... ok
+test solid_wall_stops_motion_at_projectile_radius ... ok
+test skree_particle_accelerates_before_deletion_at_exclusive_screen_edge ... ok
+test spore_spawner_freezes_countdown_and_rng_when_boss_flag_is_set ... ok
+test phantoon_orbit_offscreen_x_preserves_previous_y ... ok
+test torizo_egg_timer_underflow_launches_without_moving ... ok
+test sweat_splash_and_robot_laser_delete_on_terrain ... ok
+test torizo_super_missile_tracks_saved_enemy_slot ... ok
+test torizo_probability_branch_consumes_exactly_one_rng_call ... ok
+test tourian_soul_removal_tests_bit_eight_and_still_accelerates ... ok
+test turret_bullet_hits_nonair_tiles_and_deletes_global_active_slot ... ok
+test turret_rotation_reverses_direction_at_disallowed_octant ... ok
+test tourian_statue_tracks_hdma_scroll_and_preserves_finished_flags ... ok
+test torizo_drool_near_zero_motion_preserves_three_velocity_quirk ... ok
+test torizo_sonic_impact_saves_position_without_acceleration ... ok
+
+test result: ok. 46 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/enemy_projectile_contacts.rs (target/debug/build/port/5508750a98d33221/out/enemy_projectile_contacts-5508750a98d33221)
+
+running 7 tests
+test dud_sprite_uses_enemy_slot_wram_alias_and_sound_survives_full_sprite_pool ... ok
+test flag_two_blocks_detection_but_direct_handler_uses_normal_shot_branch ... ok
+test overlap_uses_c_signed_promotion_including_zero_axis_radius ... ok
+test samus_detection_keeps_descending_after_invincibility_and_accumulates_damage ... ok
+test projectile_detection_keeps_ascending_after_properties_are_cleared ... ok
+test zero_hit_list_preserves_instruction_state_and_entry_gates_preserve_collision_index ... ok
+test suit_division_precedes_reserved_damage_and_frozen_health_gate ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/enemy_projectile_instructions.rs (target/debug/build/port/1905bb5bbe633931/out/enemy_projectile_instructions-1905bb5bbe633931)
+
+running 12 tests
+test fixed_projectile_sound_keeps_pointer_and_queues_channel_two ... ok
+test fractional_velocity_preserves_low_subpixel_byte ... ok
+test ceres_platform_changes_only_its_timer_and_script_at_exact_samus_height ... ok
+test script_cycle_is_rejected_and_disabled_scheduler_preserves_index ... ok
+test shard_spawns_sparkle_into_lower_slot_that_runs_in_same_frame ... ok
+test relative_branch_underflows_timer_and_sleep_keeps_opcode_address ... ok
+test native_graphics_and_property_leaves_preserve_other_fields ... ok
+test frame_runs_deleting_preinstruction_before_script_and_descends_slots ... ok
+test palette_count_is_inclusive_and_property_clear_uses_mask ... ok
+test native_script_leaves_preserve_wram_and_return_bank86_pointers ... ok
+test ceres_pad_waits_then_moves_and_releases_samus_with_wrapping_height ... ok
+test randomized_sprite_uses_one_rng_draw_and_keeps_projectile_position ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests/enemy_projectile_rendering.rs (target/debug/build/port/208774a207101d65/out/enemy_projectile_rendering-208774a207101d65)
+
+running 6 tests
+test camera_clipping_short_circuits_invalid_maps_and_odd_slot_floors ... ok
+test frozen_quake_needs_no_rom_and_phase_negates_wrapped_native_table_values ... ok
+test metadata_cursor_alias_obeys_c_write_order_and_captured_cursor ... ok
+test priority_pass_uses_reverse_pool_order_and_preserves_projectile_state ... ok
+test cursor_wrap_preserves_extension_bits_and_tile_addition_precedes_attributes ... ok
+test vertical_sign_and_carry_choose_opposite_onscreen_and_offscreen_entries ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/enemy_projectile_sparks.rs (target/debug/build/port/35ba94740d0aaa02/out/enemy_projectile_sparks-35ba94740d0aaa02)
+
+running 4 tests
+test downward_probe_and_full_fractional_gravity_both_move_the_spark ... ok
+test initializer_copies_enemy_fractions_and_reads_the_eighth_pair_from_rom ... ok
+test upward_trail_uses_byte_nmi_phase_final_position_and_highest_sprite_slot ... ok
+test landing_quadruples_full_horizontal_velocity_and_returns_before_trail ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/enemy_projectiles.rs (target/debug/build/port/b94bcb7b03f63cda/out/enemy_projectiles-b94bcb7b03f63cda)
+
+running 4 tests
+test enemy_graphics_combine_palette_and_tiles_from_selected_enemy ... ok
+test tube_shard_uses_plm_coordinates_without_overwriting_stale_x_position ... ok
+test highest_free_slot_gets_definition_and_native_wall_position ... ok
+test full_pool_sets_parameter_without_reading_definition_and_rejections_are_atomic ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/enemy_rio.rs (target/debug/build/port/cab54b58f44090a2/out/enemy_rio-cab54b58f44090a2)
+
+running 4 tests
+test lower_recovery_waits_for_animation_signal ... ok
+test paired_child_uses_packed_spawn_stride_and_signed_y_offset ... ok
+test rising_transition_preserves_horizontal_velocity_and_sets_audio ... ok
+test paired_child_deletes_when_parent_is_missing ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/glass_shattering.rs (target/debug/build/port/332d4ef2e9fe3843/out/glass_shattering-332d4ef2e9fe3843)
+
+running 5 tests
+test aliased_sparkle_uses_two_rng_draws_and_source_parameter_floor ... ok
+test shard_cull_keeps_rng_and_velocity_but_preserves_fractional_motion ... ok
+test malformed_initializers_reject_before_mutation ... ok
+test sparkle_native_delete_script_runs_while_shard_is_culled ... ok
+test four_shards_consume_rng_only_for_successful_allocations ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/mother_brain_bomb.rs (target/debug/build/port/b33352d9bffb44c4/out/mother_brain_bomb-b33352d9bffb44c4)
+
+running 7 tests
+test scheduled_final_explosion_runs_reused_and_lower_slots_in_the_same_frame ... ok
+test wall_reversal_precedes_floor_bounce_and_keeps_low_fraction_bytes ... ok
+test allocation_preserves_scratch_high_byte_and_wraps_head_position_and_counter ... ok
+test hostless_scheduler_rejects_before_writing_frame_index ... ok
+test damping_matches_signed_minimum_velocity_and_odd_acceleration_stage ... ok
+test explosion_allocation_reuses_slot_before_the_native_second_spawn ... ok
+test active_bombs_require_overlap_on_both_axes_and_zero_projectile_variable ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/n00b_tube.rs (target/debug/build/port/989f55dae9b30d4f/out/n00b_tube-989f55dae9b30d4f)
+
+running 4 tests
+test shard_fractional_carry_deletes_at_signed_camera_boundary ... ok
+test sixteen_effect_caller_obeys_partial_pool_order_and_final_parameter ... ok
+test velocity_instruction_preserves_byte_after_rng_in_unaligned_read ... ok
+test shard_phase_comes_from_argument_but_motion_targets_global_slot ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/observed_projectile_initializers.rs (target/debug/build/port/fe4149d19b1b204d/out/observed_projectile_initializers-fe4149d19b1b204d)
+
+running 6 tests
+test full_pool_with_invalid_definition_and_no_host_changes_only_parameter ... ok
+test direct_initializers_refuse_invalid_slots_and_missing_ridley_table_before_mutation ... ok
+test ceres_direct_initializers_and_common_setup_have_native_partial_resets ... ok
+test observed_allocation_selects_highest_free_slot_and_resets_native_fields_only ... ok
+test stationary_fireball_noop_preserves_wram_and_scheduler_still_advances ... ok
+test ridley_direct_initializer_uses_enemy_zero_and_preserves_every_other_byte ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/observed_projectile_ownership.rs (target/debug/build/port/7214d05ca397b9dd/out/observed_projectile_ownership-7214d05ca397b9dd)
+
+running 12 tests
+test collision_extents_cycles_sound_and_repeat_identity_are_checked_before_admission ... ok
+test full_pool_admits_invalid_definition_without_rom_and_only_sets_parameter ... ok
+test with_gfx_ceres_common_overrides_selected_enemy_gfx_and_retains_partial_reset ... ok
+test disabled_scheduler_admits_unrecognized_state_without_accessing_rom ... ok
+test with_gfx_saturation_validates_source_then_only_writes_parameter_without_rom ... ok
+test coordinate_envelopes_admit_native_wrapping_and_check_contiguous_scan_indices ... ok
+test with_gfx_refuses_invalid_source_definition_or_split_parameter_without_mutation ... ok
+test all_observed_definitions_and_all_free_slots_are_admitted ... ok
+test direct_dispatch_reports_an_error_after_mutation_without_retry_or_rollback ... ok
+test with_gfx_split_copies_projectile_source_while_ridley_uses_enemy_zero ... ok
+test refusal_is_immutable_for_definition_script_callback_and_whole_frame ... ok
+test native_scripts_impact_split_repeat_and_delete_remain_admitted ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/plm.rs (target/debug/build/port/cd20f4fbdb710295/out/plm-cd20f4fbdb710295)
+
+running 23 tests
+test booster_collection_and_shaktool_room_control_environment ... ok
+test destroyed_block_deletes_current_plm_and_eye_door_uses_room_argument ... ok
+test grey_door_extracts_condition_and_preserves_room_argument_bits ... ok
+test escape_and_input_conditions_advance_scripts_without_clearing_unrelated_triggers ... ok
+test left_yellow_non_bomb_falls_through_and_wakes_opposite_gate ... ok
+test blue_door_power_bomb_deletes_and_negative_projectile_sentinel_makes_solid ... ok
+test escape_door_initializes_vertical_extensions_and_scroll_setup_resets_words ... ok
+test open_upward_gate_writes_five_bts_cells_and_keeps_adjacent_bytes ... ok
+test opened_room_door_links_and_metroid_quota_marks_event ... ok
+test quicksand_clamps_fractional_displacement_and_tracks_contact ... ok
+test left_green_trigger_wakes_highest_adjacent_gate_without_resetting_timer ... ok
+test proximity_wakes_from_block_coordinates_and_preserves_trigger ... ok
+test room_triggers_preserve_their_distinct_wake_and_position_state ... ok
+test occupied_pool_does_not_read_unknown_header_or_change_displacement ... ok
+test speed_booster_escape_advances_lava_then_sets_completion_event ... ok
+test super_missile_door_wakeup_sets_hit_variable_and_link_timer ... ok
+test hardcoded_sound_enable_timer_uses_area_and_original_preinstruction ... ok
+test hardcoded_spawn_and_full_pool_preserve_original_order ... ok
+test native_spawn_uses_highest_free_slot_and_rejects_unknown_before_mutation ... ok
+test room_spawn_preserves_arguments_and_room_preinstruction ... ok
+test hardcoded_shaktool_allocation_preserves_native_primary_variable ... ok
+test supported_setup_failure_commits_neither_slot_nor_displacement ... ok
+test room_rom_entry_and_collision_only_setup_admission ... ok
+
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/plm_instructions.rs (target/debug/build/port/dac41ab4f0132d3a/out/plm_instructions-dac41ab4f0132d3a)
+
+running 8 tests
+test byte_timer_preserves_high_byte_and_zero_underflows ... ok
+test door_counter_copies_overlapping_two_byte_bit_array ... ok
+test deleted_preinstruction_still_ticks_and_runs_expiring_script ... ok
+test call_return_and_sleep_use_single_link_register ... ok
+test draw_rows_columns_and_negative_origin_offsets ... ok
+test draw_block_instruction_builds_ram_script_and_preserves_continuation ... ok
+test frame_budget_and_rendering_gaps_reject ... ok
+test drawn_frame_updates_level_tiles_and_queues_two_tilemap_rows ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/plm_render.rs (target/debug/build/port/203e4a850e8b9e3a/out/plm_render-203e4a850e8b9e3a)
+
+running 7 tests
+test column_clips_top_and_uses_vertical_vram_addressing ... ok
+test horizontal_draw_queues_top_and_bottom_rows_with_flips ... ok
+test coordinates_use_snes_eight_bit_divisor ... ok
+test full_tilemap_stops_before_following_segment_and_full_queue_does_not_draw ... ok
+test malformed_draw_pointer_and_slot_reject_safely ... ok
+test row_crossing_screen_boundary_has_four_transfers ... ok
+test segment_offsets_are_relative_to_original_block ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/power_bomb.rs (target/debug/build/port/d58f121040de9417/out/power_bomb-d58f121040de9417)
+
+running 5 tests
+test activation_allocates_two_channels_in_order_even_when_full ... ok
+test cleanup_still_performs_contact_with_the_cleared_type ... ok
+test malformed_radius_is_rejected_before_any_tile_callback ... ok
+test radius_walks_clipped_perimeter_including_repeated_corners ... ok
+test wide_slot_arguments_reject_without_aliasing_state_or_callbacks ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/projectile_flight.rs (target/debug/build/port/b4fec35b0ffb3b1c/out/projectile_flight-b4fec35b0ffb3b1c)
+
+running 9 tests
+test cyclic_tile_extensions_fail_before_any_host_callback ... ok
+test mode7_trail_rotation_and_signed_offsets_are_native ... ok
+test dispatch_rejects_unknown_symbols ... ok
+test firing_uses_actual_initial_left_direction_minus_one_speed_quirk ... ok
+test no_amount_quicksand_setup_rejects_before_callback ... ok
+test room_and_slot_reject_before_movement ... ok
+test unloaded_room_zero_extent_preserves_reference_out_of_room_reaction ... ok
+test signed_fixed_point_flight_preserves_fraction ... ok
+test wave_reacts_to_solid_without_exploding ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/projectile_host.rs (target/debug/build/port/dacb97ed54aa800c/out/projectile_host-dacb97ed54aa800c)
+
+running 12 tests
+test destroyed_offscreen_turret_does_not_change_external_spawn_point ... ok
+test host_required_initializers_refuse_without_mutating_wram ... ok
+test legacy_drop_instruction_refuses_before_point_or_wram_changes ... ok
+test legacy_frame_rejects_host_required_slot_before_any_scheduler_writes ... ok
+test pirate_claw_allocates_with_current_enemy_gfx_and_rectangle ... ok
+test offscreen_living_turret_preserves_countdown_and_rng ... ok
+test full_slots_preserve_host_and_only_set_parameter_without_rom ... ok
+test spore_spawn_keeps_source_x_as_movement_direction_and_host_point ... ok
+test drop_instruction_writes_external_context_even_when_no_slot_is_free ... ok
+test pirate_callers_keep_full_slot_context_and_consume_claw_operands ... ok
+test ridley_impact_updates_external_point_and_reuses_cleared_slot ... ok
+test pirate_claw_uses_rectangle_wrapping_without_enemy_dependency ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/projectile_special.rs (target/debug/build/port/0b68bfc537dbbf88/out/projectile_special-0b68bfc537dbbf88)
+
+running 7 tests
+test sine_cardinal_points_use_exact_byte_products ... ok
+test bomb_explosion_visits_five_tiles_once_in_reference_order ... ok
+test malformed_special_indices_reject_before_clear ... ok
+test plasma_phases_expand_contract_and_escape ... ok
+test bomb_fuse_does_not_react_before_explosion ... ok
+test wave_acceleration_preserves_fraction_and_signed_terminal_speed ... ok
+test spazer_orbit_switches_at_half_turn_and_pairs_cleanup_slots ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/projectiles.rs (target/debug/build/port/333d73f2a0760720/out/projectiles-333d73f2a0760720)
+
+running 9 tests
+test bomb_countdown_changes_fuse_then_explodes ... ok
+test goto_then_delete_clears_bomb_and_preserves_other_slot ... ok
+test cooldown_uses_low_byte_and_projectile_slot_validation_precedes_writes ... ok
+test inherited_upward_speed_uses_low_byte_gate_and_unaligned_word ... ok
+test initialization_and_instruction_data_are_distinct_stages ... ok
+test missile_acceleration_wraps_each_signed_component_independently ... ok
+test cyclic_or_unknown_instructions_reject_without_mutating_state ... ok
+test super_missile_link_returns_without_mutation_when_slots_are_full ... ok
+test super_missile_link_uses_free_damage_slot_and_updates_parent_link ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/room.rs (target/debug/build/port/9a73eb85b3f7b474/out/room-9a73eb85b3f7b474)
+
+running 16 tests
+test dachora_camera_can_overshoot_gate_then_stops ... ok
+test door_negative_distance_uses_direction_specific_default ... ok
+test native_door_scroll_names_preserve_actual_byte_indices_and_neighbors ... ok
+test parallax_manual_modes_and_signed_blocks ... ok
+test draygon_hooks_write_exact_long_pointers_and_test_full_hdma_word ... ok
+test closed_scroll_cell_pushes_camera_toward_next_screen ... ok
+test frozen_explosion_still_shakes_and_blank_tile_consumes_only_coordinate_rng ... ok
+test collected_map_preserves_adjacent_byte_in_aliased_word ... ok
+test horizontal_ideal_reset_clears_its_own_fractional_word ... ok
+test diagonal_shake_expires_or_starts_without_explosion_when_frozen ... ok
+test boss_room_shakes_reflect_negative_offset_and_complete_ridley_cycle ... ok
+test room_state_morph_gate_selects_actual_rom_destination ... ok
+test statue_setup_allocates_headers_in_native_order_and_full_table_needs_no_rom ... ok
+test pre_phantoon_room_spawn_clears_bg2_scroll_and_preserves_position ... ok
+test rescued_animals_gate_plm_but_always_start_earthquake ... ok
+test treadmill_door_allocates_both_objects_and_clears_exact_native_tile_range ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+     Running tests/samus.rs (target/debug/build/port/b149ab83e182bdc6/out/samus-b149ab83e182bdc6)
+
+running 6 tests
+test displacement_clamps_integer_speed_but_keeps_fraction_and_position_wraps ... ok
+test pose_radius_sets_bounds_and_preserves_the_bottom_across_pose_changes ... ok
+test running_builds_momentum_and_boosted_jumps_drop_fractional_carry ... ok
+test acceleration_clamps_at_run_speed_and_deceleration_stops_at_zero ... ok
+test water_reduces_jump_and_acceleration_unless_gravity_suit_is_equipped ... ok
+test falling_transition_and_echo_cadence_update_the_observable_state ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/samus_control.rs (target/debug/build/port/393112dd31c1866c/out/samus_control-393112dd31c1866c)
+
+running 5 tests
+test animation_bytecode_changes_pose_and_loops_with_buffered_delay ... ok
+test transition_table_matches_configured_buttons_and_preserves_running_momentum ... ok
+test cancelling_momentum_restores_equipped_suit_palette_and_releases_echoes ... ok
+test entering_water_spawns_splash_records_and_queues_the_entry_sound ... ok
+test speed_booster_animation_advances_stage_and_keeps_its_frame_timer ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/sprite_objects.rs (target/debug/build/port/3a62a5fe735b6367/out/sprite_objects-3a62a5fe735b6367)
+
+running 5 tests
+test frame_advances_then_terminates_and_leaves_final_index_underflow ... ok
+test allocation_chooses_highest_free_slot_and_refuses_full_without_writes ... ok
+test clear_preserves_word_zero_and_clears_original_overlapping_range ... ok
+test frozen_handler_preserves_all_wram_and_invalid_slot_is_rejected ... ok
+test rendering_wraps_oam_and_preserves_extension_bits ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/system.rs (target/debug/build/port/75a53ce79961d38d/out/system-75a53ce79961d38d)
+
+running 8 tests
+test event_access_sets_scratch_mask_and_preserves_adjacent_boss_state ... ok
+test released_buttons_reset_timer_when_release_mask_changes ... ok
+test held_buttons_wait_then_report_new_edges_once ... ok
+test boss_bits_truncate_updates_to_bytes_but_accept_wide_masks ... ok
+test multiply_returns_full_unsigned_product_without_removed_scratch_writes ... ok
+test map_fill_writes_exactly_1024_little_endian_words_per_map ... ok
+test fade_preserves_upstream_signed_counter_and_brightness_quirks ... ok
+test unused_oam_clears_only_y_coordinates_after_flooring_cursor ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/yapping_maw.rs (target/debug/build/port/2a1911529e8b9361/out/yapping_maw-2a1911529e8b9361)
+
+running 1 test
+test body_allocation_wraps_the_link_index_and_selects_orientation ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests port
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

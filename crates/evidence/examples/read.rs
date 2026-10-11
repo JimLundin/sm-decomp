@@ -4,6 +4,18 @@ use evidence::*;
 use std::io;
 use std::path::Path;
 use std::time::Instant;
+#[derive(serde::Serialize)]
+struct FrameReport {
+    frame: u64,
+    events: u64,
+    seconds: f64,
+}
+#[derive(serde::Serialize)]
+struct Report {
+    open_seconds: f64,
+    frames: Vec<FrameReport>,
+    snapshot_seconds: Vec<f64>,
+}
 
 fn main() -> Result<()> {
     let args: Vec<_> = std::env::args().skip(1).collect();
@@ -20,13 +32,13 @@ fn main() -> Result<()> {
     for frame in [60, 614, 9156, 1408, 72226] {
         let start = Instant::now();
         let events = write_frame(&store, &stream.id, frame, &mut io::sink())?;
-        frames.push(serde_json::json!({"frame":frame,"events":events,"seconds":start.elapsed().as_secs_f64()}));
+        frames.push(FrameReport { frame, events, seconds: start.elapsed().as_secs_f64() });
     }
     for _ in 0..5 {
         let start = Instant::now();
         write_entry(&store, snapshot.kind, &snapshot.id, &mut io::sink())?;
         images.push(start.elapsed().as_secs_f64());
     }
-    println!("{}", serde_json::json!({"open_seconds":opened,"frames":frames,"snapshot_seconds":images}));
+    print!("{}", toml::to_string(&Report { open_seconds: opened, frames, snapshot_seconds: images })?);
     Ok(())
 }

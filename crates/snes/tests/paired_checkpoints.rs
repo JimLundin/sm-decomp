@@ -1,4 +1,41 @@
 use snes::{Reference, Subject};
+struct CacheScope(std::path::PathBuf);
+impl CacheScope {
+    fn new(label: &str) -> Self {
+        let path = std::env::temp_dir().join(format!(
+            "sm-paired-scope-{label}-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+        ));
+        std::fs::create_dir(&path).unwrap();
+        Self(path)
+    }
+}
+impl Drop for CacheScope {
+    fn drop(&mut self) {
+        std::fs::remove_dir_all(&self.0).unwrap();
+    }
+}
+fn identities(rom: &[u8], pads: &[u16]) -> pipeline_model::CheckpointIdentities {
+    pipeline_model::CheckpointIdentities {
+        rom_sha256: snes::paired::sha256(rom),
+        movie_sha256: "b".repeat(64),
+        input_sha256: snes::paired::sha256(movie::write_inputs(pads).as_bytes()),
+        source_sha256: "d".repeat(64),
+        hardware_sha256: "e".repeat(64),
+        profile: "lsnes-profile".into(),
+        serializer: "paired-v2".into(),
+        compiler: "fixture".into(),
+        features: vec!["lsnes-profile".into()],
+        settings: pipeline_model::CheckpointSettings {
+            seed: 0,
+            mode: None,
+            candidate_sha256: None,
+            disabled_keys: vec![],
+        },
+        dispatch_sha256: None,
+    }
+}
 mod emitted {
     #![allow(unused_imports)]
     include!(concat!(env!("OUT_DIR"), "/test_steps.rs"));
@@ -67,7 +104,7 @@ fn pair_cache_requires_cold_next_frame_validation_and_rejects_corruption_or_othe
         r.step_instruction().unwrap();
         s.step_instruction().unwrap();
     }
-    let identities = serde_json::json!({"rom_sha256":"a".repeat(64),"movie_sha256":"b".repeat(64),"input_sha256":snes::paired::sha256(b"0000\n0000\n0000\n0000\n"),"source_sha256":"d".repeat(64),"hardware_sha256":"e".repeat(64),"profile":"lsnes-profile","serializer":"paired-v1","compiler":"fixture","features":["lsnes-profile"],"settings":{"seed":0}});
+    let identities = identities(&rom, &[0, 0, 0, 0]);
     let pair = snes::paired::capture(
         &r,
         &s,
@@ -81,12 +118,28 @@ fn pair_cache_requires_cold_next_frame_validation_and_rejects_corruption_or_othe
     let mut warm_s = Subject::fallback_only(&rom, 0).unwrap();
     snes::paired::restore(&pair, &identities, &mut warm_r, &mut warm_s).unwrap();
     let report = snes::paired::validate_next_frame(&mut r, &mut s, &mut warm_r, &mut warm_s, 0).unwrap();
-    assert_eq!(report["status"], "pass");
-    assert_eq!(report["completed_frames"], 1);
+    assert_eq!(report.status, "pass");
+    assert_eq!(report.completed_frames, 1);
     let mut corrupt = pair.clone();
     corrupt.reference[10] ^= 1;
     assert!(snes::paired::restore(&corrupt, &identities, &mut warm_r, &mut warm_s).is_err());
-    assert!(snes::paired::restore(&pair, &serde_json::json!({"source":"other"}), &mut warm_r, &mut warm_s).is_err());
+    let bytes = snes::paired::encode_pair(&pair).unwrap();
+    assert!(bytes.len() < pair.reference.len() + pair.subject.len() + 4096);
+    let decoded = snes::paired::decode_pair(&bytes).unwrap();
+    snes::paired::restore(&decoded, &identities, &mut warm_r, &mut warm_s).unwrap();
+    let mut altered = bytes.clone();
+    altered.push(0);
+    assert!(snes::paired::decode_pair(&altered).is_err());
+    altered = bytes.clone();
+    altered[4] = 1;
+    assert!(snes::paired::decode_pair(&altered).is_err());
+    altered = bytes.clone();
+    altered[6..10].copy_from_slice(&u32::MAX.to_le_bytes());
+    assert!(snes::paired::decode_pair(&altered).is_err());
+    assert!(snes::paired::decode_pair(&bytes[..bytes.len() - 1]).is_err());
+    let mut other = identities.clone();
+    other.source_sha256 = "f".repeat(64);
+    assert!(snes::paired::restore(&pair, &other, &mut warm_r, &mut warm_s).is_err());
 }
 
 #[test]
@@ -97,25 +150,30 @@ fn persisted_cache_rebuilds_corrupt_or_changed_candidates_and_records_cold_valid
         5, 0x43, 0xa9, 0x20, 0x8d, 6, 0x43, 0xa9, 1, 0x8d, 0x0b, 0x42, 0xea, 0x80, 0xe8,
     ];
     rom[..program.len()].copy_from_slice(&program);
-    let ids = serde_json::json!({"rom_sha256":snes::paired::sha256(&rom),"movie_sha256":"b".repeat(64),"input_sha256":snes::paired::sha256(b"0000\n0000\n0000\n0000\n"),"source_sha256":"d".repeat(64),"hardware_sha256":"e".repeat(64),"profile":"lsnes-profile","serializer":"paired-v1","compiler":"fixture","features":["lsnes-profile"],"settings":{"seed":0}});
-    let path = std::env::temp_dir().join(format!("paired-public-cache-{}", std::process::id()));
+    let ids = identities(&rom, &[0, 0, 0, 0]);
+    let scope = CacheScope::new("public");
+    let path = scope.0.join("cache");
     let _ = std::fs::remove_dir_all(&path);
     let (pair, created) =
         snes::paired::prepare_cache(&rom, 0, &[], &[0, 0, 0, 0], (0, 50), ids.clone(), &path).unwrap();
-    assert_eq!(created["action"], "created");
-    assert_eq!(created["validation"]["completed_frames"], 1);
-    assert_eq!(created["validation"]["observed_rollovers"], 2);
+    assert_eq!(created.action, "created");
+    assert_eq!(created.validation.completed_frames, 1);
+    assert_eq!(created.validation.observed_rollovers, 2);
+    assert!(path.join("pair.bin").is_file());
+    assert!(path.join("cache.toml").is_file());
+    assert!(path.join("validation.toml").is_file());
+    assert!(!path.join("pair.json").exists());
     let (_, reused) = snes::paired::prepare_cache(&rom, 0, &[], &[0, 0, 0, 0], (0, 50), ids.clone(), &path).unwrap();
-    assert_eq!(reused["action"], "reused");
-    std::fs::write(path.join("pair.json"), b"truncated").unwrap();
+    assert_eq!(reused.action, "reused");
+    std::fs::write(path.join("pair.bin"), b"truncated").unwrap();
     let (_, rebuilt) = snes::paired::prepare_cache(&rom, 0, &[], &[0, 0, 0, 0], (0, 50), ids.clone(), &path).unwrap();
-    assert_eq!(rebuilt["action"], "rebuilt");
-    assert!(rebuilt["rejection"].is_string());
+    assert_eq!(rebuilt.action, "rebuilt");
+    assert!(rebuilt.rejection.is_some());
     let mut changed = ids;
-    changed["source_sha256"] = "f".repeat(64).into();
+    changed.source_sha256 = "f".repeat(64);
     let (new_pair, changed) =
         snes::paired::prepare_cache(&rom, 0, &[], &[0, 0, 0, 0], (0, 50), changed, &path).unwrap();
-    assert_eq!(changed["action"], "rebuilt");
+    assert_eq!(changed.action, "rebuilt");
     assert_ne!(pair.pair_sha256, new_pair.pair_sha256);
     let _ = std::fs::remove_dir_all(path);
 }
@@ -132,19 +190,20 @@ fn faithful_cache_for_incorrect_generated_store_retains_warm_first_mismatch() {
     ];
     rom[..program.len()].copy_from_slice(&program);
     let table = &[(0x8004, 3, &[0x8d, 1, 0x43][..], wrong as runtime::StepFn)];
-    let ids = serde_json::json!({"rom_sha256":snes::paired::sha256(&rom),"movie_sha256":"b".repeat(64),"input_sha256":snes::paired::sha256(b"0000\n0000\n0000\n0000\n"),"source_sha256":"d".repeat(64),"hardware_sha256":"e".repeat(64),"profile":"lsnes-profile","serializer":"paired-v1","compiler":"fixture","features":["lsnes-profile"],"settings":{"seed":0}});
-    let path = std::env::temp_dir().join(format!("paired-bad-store-{}", std::process::id()));
+    let ids = identities(&rom, &[0, 0, 0, 0]);
+    let scope = CacheScope::new("bad-store");
+    let path = scope.0.join("cache");
     let _ = std::fs::remove_dir_all(&path);
     let (pair, cache) = snes::paired::prepare_cache(&rom, 0, table, &[0, 0, 0, 0], (0, 3), ids, &path).unwrap();
-    assert_eq!(cache["validation"]["status"], "pass");
-    assert_eq!(cache["validation"]["candidate_reference_comparison"], "divergence");
+    assert_eq!(cache.validation.status, "pass");
+    assert_eq!(cache.validation.candidate_reference_comparison, "divergence");
     let mut r = Reference::new(&rom, 0).unwrap();
     let mut s = Subject::with_steps(&rom, 0, table).unwrap();
     snes::paired::restore(&pair, &pair.identities, &mut r, &mut s).unwrap();
     let report =
         snes::focused::compare_restored(&mut r, &mut s, &[0, 0, 0, 0], (0, 0, 3), 2, &path.join("focus"), "warm")
             .unwrap();
-    assert_eq!(report["status"], "divergence");
-    assert_eq!(report["first_mismatch"]["subject"]["generated_key"], serde_json::json!([0x8004, 3]));
+    assert_eq!(report.status, "divergence");
+    assert_eq!(report.first_mismatch.as_ref().unwrap().subject.generated_key, Some((0x8004, 3)));
     let _ = std::fs::remove_dir_all(path);
 }

@@ -15,7 +15,7 @@ channel updates and final explosion completion remain C-owned. This module does
 not replace `HandleProjectile`, nor establish complete HDMA ownership or live
 movie parity.
 
-`tools/port_power_bomb.py` compares actual pinned C and Rust with full WRAM,
+`sm-pipeline family-verify --adapter power-bomb` compares actual pinned C and Rust with full WRAM,
 returns, fallback counts and ordered PLM/HDMA callback before/after snapshots.
 Because sm88 calls its allocator locally, linker wrapping alone does not measure
 those calls. The harness seals and retains a temporary source copy with only the
@@ -43,7 +43,7 @@ them to the original 16-bit domain. `65536` and `-65536` cannot alias slot zero;
 all three argument-taking entries reject without WRAM changes or host callbacks.
 
 The dedicated harness deliberately retains the same full-WRAM transaction,
-artifact and callback comparison protocol as `port_collision.py`. Its HDMA seam
+artifact and callback comparison protocol as `sm-pipeline callback-verify`. Its HDMA seam
 requires a second host interface, an allocator-definition rename in bank88,
 allocation-specific arguments and a retained source-copy seal. Moving build,
 wrapper generation and evidence validation into a shared configurable harness

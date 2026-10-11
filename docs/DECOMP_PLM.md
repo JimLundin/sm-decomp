@@ -30,9 +30,9 @@ C inputs are not correctness oracles.
 Verification commands:
 
 ```sh
-python3 tools/port_family.py verify --manifest tools/port/plm.json --output out/port/plm
-python3 tools/port_plm.py --manifest tools/port/plm-spawn.json --output out/port/plm-spawn
-python3 -m unittest discover -s tools -p test_port_plm.py
+cargo run -p pipeline --locked --offline -- family-verify --manifest tools/port/plm.toml --output out/port/plm
+cargo run -p pipeline --locked --offline -- family-verify --adapter plm --manifest tools/port/plm-spawn.toml --output out/port/plm-spawn
+cargo test -p pipeline --test plm_spawn --locked --offline
 ```
 
 The generic manifest compares 44 actual C setup symbols over 352 full-WRAM cases.
@@ -65,7 +65,7 @@ a displacement context in actual C. Other untranslated setups
 remain explicitly counted C ownership. The PLM frame interpreter, rendering and
 message coroutine are not replaced by these entry points.
 
-`tools/port_plm.py` seals separate terrain/room/hardcoded fixture counts. The live
+`sm-pipeline family-verify --adapter plm` seals separate terrain/room/hardcoded fixture counts. The live
 consumer requires those authenticated counts for `--room-plm`, renames only the
 original C allocator definitions so same-bank callers also reach the adapter,
 and keeps their original bodies for measured unsupported-setup ownership.
@@ -73,9 +73,9 @@ Independent C/mixed processes compare full state and ordered allocation effects.
 Room and hardcoded counters separately report total, C, Rust and actual native
 setup calls; full-pool calls do not count as native setup execution.
 
-Use `tools/port_batch.py run --room-plm` for cumulative verification and admission.
+Use `sm-pipeline batch run --room-plm` for cumulative verification and admission.
 For focused admission, provide current system-family and PLM allocator verdicts
-to `tools/port_live.py --room-plm`. A passing focused run establishes the new
+to `sm-pipeline live-verify --room-plm`. A passing focused run establishes the new
 allocation seam with the accepted decompressor/RNG; it does not refresh every
 previous gameplay family's source seal or prove original-ROM parity.
 

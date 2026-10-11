@@ -11,6 +11,8 @@ use std::path::Path;
 
 use anyhow::{Context, Result, bail};
 
+pub mod corpus;
+
 /// Imported input and the ROM identity recorded by its container, if available.
 pub struct Movie {
     pub frames: Vec<u16>,

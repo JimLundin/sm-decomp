@@ -16,23 +16,25 @@ just setup-lsnes                  # build the original TAS recording core locall
 just sync-smoke                   # verify its capture path on the passing boot prefix
 ```
 
-The setup script requires `rustup`, `cargo`, `cc`, `python3`, `curl`, `tar`,
+The Rust bootstrap requires `rustup`, `cargo`, `cc`, `curl`, `tar`,
 `unzip`, `patch`, and `dpkg-deb`; `just` provides the shortcuts. These tools were already
-installed on this host. Without `just`, use `python3 tools/setup.py` and
-`python3 tools/doctor.py`. `python3 tools/setup.py --offline` reuses cached
+installed on this host. Without `just`, use the Rust `tools/bootstrap` commands
+`setup` and `doctor`. `setup --offline` reuses cached
 downloads and Cargo packages. `--skip-mesen` prepares the Rust tools and corpus
 on hosts other than Linux x64.
 
 ## Local dependencies
 
-Versions, URLs, and archive checksums live in `tools/dependencies.json`.
+Versions, URLs, and archive checksums live in `tools/dependencies.toml`.
 External archives and reference material are in gitignored `deps/`; Cargo
 packages and git dependencies use Cargo's normal cache. `rustysnes-core` is
 pinned by git revision in the root `Cargo.toml` and the shared `Cargo.lock`.
 The root Cargo patch uses the verified `deps/rustysnes` source with the
 HDMA, clocked APU, DMA alignment, interrupt timing, and lsnes recording-profile patches. Before running Cargo in a fresh checkout,
-run `just setup` or `python3 tools/prepare_rustysnes.py`. CI does this too.
-The base revision stays pinned in `Cargo.toml` and `tools/dependencies.json`;
+run `just setup` or
+`cargo run --manifest-path tools/bootstrap/Cargo.toml --locked -- prepare-rustysnes`.
+The independent bootstrap package resolves before the root workspace. CI uses it too.
+The base revision stays pinned in `Cargo.toml` and `tools/dependencies.toml`;
 the maintained difference is [the timing patch](../tools/patches/README.md).
 Setup does not modify system libraries or install global packages.
 
@@ -59,11 +61,11 @@ patched interpreter keeps that restart on the same runtime. Headless test mode
 uses `--testRunner`, a Lua script, and a ROM. GUI mode requires a working display.
 
 `just setup-lsnes` downloads and verifies the original source archive and the
-private development packages recorded in `docs/lsnes-dependencies.json`,
+private development packages recorded in `docs/lsnes-dependencies.toml`,
 applies build compatibility fixes, and builds the headless recording core.
 This recipe targets Ubuntu 20.04 x86_64 and requires host `g++`, `make`,
 `pkg-config`, libarchive, zlib headers, and the libcurl OpenSSL runtime.
-Use `python3 tools/setup_lsnes.py --offline` for cached rebuilds. The build
+Use `cargo run --manifest-path tools/bootstrap/Cargo.toml --locked --offline -- setup-lsnes --offline` for cached rebuilds. The build
 log is `deps/lsnes/build.log`. Rerun after moving the repository to refresh
 private include/library paths. See [LSNES_BASELINE.md](LSNES_BASELINE.md).
 
@@ -108,7 +110,7 @@ cargo run -p recomp --locked --offline -- --out out/setup-generated.rs
 
 `just fetch-movies` downloads three published Super Metroid TAS inputs matching
 the local ROM: any%, low% (13%), and 100%. Their sources and checksums are in
-`movies/manifest.json`; details are in [TAS_MOVIES.md](TAS_MOVIES.md). These are
+`movies/manifest.toml`; details are in [TAS_MOVIES.md](TAS_MOVIES.md). These are
 lsnes `.lsmv` files. `just import-movies` verifies each archive and its frame
 count, then writes `.inputs`. `movie` also accepts BizHawk `.bk2`, extracted
 logs, and `.inputs`. The frame runner supports clean starts with one P1

@@ -79,7 +79,7 @@ from the repository root. `just` ensures that working directory automatically.
 
 RustySNES's base is a commit-pinned Cargo git dependency. A root Cargo patch
 selects its verified local source plus the documented HDMA fix, clocked APU bus, and explicit lsnes recording profile.
-Run `just setup` or `python3 tools/prepare_rustysnes.py` before Cargo in a clean
+Run `just setup` or the Rust `tools/bootstrap` command `prepare-rustysnes` before Cargo in a clean
 checkout; CI runs the latter. It still builds without a commercial ROM or
 movie data. Setup downloads the other material used during investigation and
 validation. Never commit the ROM,

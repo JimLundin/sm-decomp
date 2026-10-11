@@ -69,7 +69,9 @@ fn spawn_context(
     if matches!(init, 0xcbc9 | 0xc8f5 | 0xc92f | 0x947f | 0xe468 | 0xef29 | 0xdc8d | 0xa009 | 0xa098) {
         host.ok_or("projectile initializer requires host context")?;
         if init == 0xc8f5 {
-            if parameter >= 3 { return Err("Mother Brain death explosion script index"); }
+            if parameter >= 3 {
+                return Err("Mother Brain death explosion script index");
+            }
             word(rom, 0xc929 + parameter * 2)?;
         }
         if init == 0xa009 {
@@ -125,7 +127,9 @@ fn spawn_context(
     for p in [0x1aff, 0x1b23, 0x19df, 0x1a27, 0x1a6f, 0x1bfb] {
         r.set_word(p + k, 0);
     }
-    if let Some(host) = host.filter(|_| matches!(init, 0xcbc9 | 0xc8f5 | 0xc92f | 0x947f | 0xe468 | 0xef29 | 0xdc8d | 0xa009 | 0xa098)) {
+    if let Some(host) =
+        host.filter(|_| matches!(init, 0xcbc9 | 0xc8f5 | 0xc92f | 0x947f | 0xe468 | 0xef29 | 0xdc8d | 0xa009 | 0xa098))
+    {
         r.set_word(0x1a4b + k, host.x);
         r.set_word(0x1a93 + k, host.y);
         match init {
@@ -143,7 +147,12 @@ fn spawn_context(
                     r.set_word(0x1b47 + k, word(rom, 0xc929 + parameter * 2)?);
                     r.set_word(0x1b8f + k, 1);
                 }
-                crate::enemy_projectile_instructions::preinstruction(r, rom, if init == 0xc8f5 { 0xc914 } else { 0xc94c }, k as u16)?;
+                crate::enemy_projectile_instructions::preinstruction(
+                    r,
+                    rom,
+                    if init == 0xc8f5 { 0xc914 } else { 0xc94c },
+                    k as u16,
+                )?;
             }
             0x947f => {
                 r.set_word(0x19bb + k, 2560);
@@ -365,13 +374,18 @@ pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) ->
         }
         "EprojPreInstr_MotherBrainGlassShatteringShard" => crate::glass_shattering::update(r, rom, a as u16)?,
         "SpawnMotherBrainGlassShatteringShard" => crate::glass_shattering::spawn_shard(r, rom, a as u16)?,
-        "PlmInstr_SpawnFourMotherBrainGlass" => return crate::glass_shattering::instruction(r, rom, a as u16).map(|pc| 0x840000 | u32::from(pc)),
+        "PlmInstr_SpawnFourMotherBrainGlass" => {
+            return crate::glass_shattering::instruction(r, rom, a as u16).map(|pc| 0x840000 | u32::from(pc));
+        }
         "MoveMotherBrainBomb" => return crate::mother_brain_bomb::move_bomb(r, a as u16, b as u16).map(u32::from),
         "SpawnEprojWithRoomGfx" => spawn_room(r, rom, a as u16, b as u16)?,
         "EnableEprojs" => enable(r),
         "DisableEprojs" => disable(r),
         "ClearEprojs" => clear(r),
-        "CheckForCollisionWithShitroid_DoubleRet" | "CheckForBlueRingCollisionWithRoom" | "sub_86C320" | "sub_86C42E" => {
+        "CheckForCollisionWithShitroid_DoubleRet"
+        | "CheckForBlueRingCollisionWithRoom"
+        | "sub_86C320"
+        | "sub_86C42E" => {
             return crate::enemy_projectile_instructions::dispatch_rom(r, rom, name, a, b);
         }
         _ => return Err("unsupported enemy projectile routine"),
@@ -564,7 +578,25 @@ fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'sta
     }
     if !matches!(
         init,
-        0xdcd4 | 0xd992 | 0xd30c | 0xd32e | 0xd341 | 0xd23a | 0xd088 | 0xcf90 | 0xcfa6 | 0xca6a | 0xca83 | 0xcaf6 | 0xc961 | 0xc843 | 0xc80a | 0xc684 | 0xc2f3 | 0xc482 | 0xa3a3
+        0xdcd4
+            | 0xd992
+            | 0xd30c
+            | 0xd32e
+            | 0xd341
+            | 0xd23a
+            | 0xd088
+            | 0xcf90
+            | 0xcfa6
+            | 0xca6a
+            | 0xca83
+            | 0xcaf6
+            | 0xc961
+            | 0xc843
+            | 0xc80a
+            | 0xc684
+            | 0xc2f3
+            | 0xc482
+            | 0xa3a3
             | 0x9dec
             | 0x9e46
             | 0x9e4b
@@ -634,11 +666,7 @@ fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'sta
     Ok(())
 }
 fn projectile_slot(k: u16) -> Result<usize, &'static str> {
-    if k > 34 || k & 1 != 0 {
-        Err("invalid enemy projectile slot")
-    } else {
-        Ok(usize::from(k))
-    }
+    if k > 34 || k & 1 != 0 { Err("invalid enemy projectile slot") } else { Ok(usize::from(k)) }
 }
 fn area_properties(r: &Wram<'_>, rom: &[u8]) -> Result<u16, &'static str> {
     let offset = match r.word(0x79f) {
@@ -734,8 +762,17 @@ fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> 
         let width = r.word(enemy + 0xa);
         let height = r.word(enemy + 0xc);
         r.set_word(0x1ab7 + k, velocity);
-        r.set_word(0x1adb + k, match init { 0xd30c => 128, 0xd341 => (-128_i16) as u16, _ => 0 });
-        if init == 0xd30c { r.set_word(0x19bb + k, 0); }
+        r.set_word(
+            0x1adb + k,
+            match init {
+                0xd30c => 128,
+                0xd341 => (-128_i16) as u16,
+                _ => 0,
+            },
+        );
+        if init == 0xd30c {
+            r.set_word(0x19bb + k, 0);
+        }
         r.set_word(0x1a4b + k, x.wrapping_add(if velocity & 0x8000 != 0 { (-4_i16) as u16 } else { 4 }));
         r.set_word(0x1a93 + k, y.wrapping_sub(16));
         r.set_word(0x1a27 + k, 0);
@@ -743,13 +780,16 @@ fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> 
         if (width.wrapping_add(x).wrapping_sub(r.word(0x911)) as i16) >= 0
             && (x.wrapping_sub(width).wrapping_sub(257).wrapping_sub(r.word(0x911)) as i16) < 0
             && (height.wrapping_add(y).wrapping_sub(r.word(0x915)) as i16) >= 0
-            && (y.wrapping_sub(height).wrapping_sub(224) as i16) < 0 {
+            && (y.wrapping_sub(height).wrapping_sub(224) as i16) < 0
+        {
             crate::audio::queue_sfx(r, 1, 0x6706)?;
         }
         return Ok(());
     }
     if init == 0xd23a {
-        for base in [0x1a27, 0x1a6f, 0x1ab7, 0x1adb] { r.set_word(base + k, 0); }
+        for base in [0x1a27, 0x1a6f, 0x1ab7, 0x1adb] {
+            r.set_word(base + k, 0);
+        }
         let enemy = usize::from(r.word(0xe54));
         r.set_word(0x1a4b + k, r.word(0xf7a + enemy));
         r.set_word(0x1a93 + k, r.word(0xf7e + enemy));
@@ -785,12 +825,23 @@ fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> 
         }
         r.set_word(0x1a4b + k, r.word(0xfba).wrapping_add(6));
         r.set_word(0x1a93 + k, r.word(0xfbe).wrapping_add(16));
-        if init == 0xca83 { r.set_word(0x786a, 1); }
+        if init == 0xca83 {
+            r.set_word(0x786a, 1);
+        }
         return Ok(());
     }
     if init == 0xc961 {
         const Y: [u16; 8] = [(-32_i16) as u16, (-24_i16) as u16, (-16_i16) as u16, (-8_i16) as u16, 0, 8, 16, 24];
-        const Y_VELOCITY: [u16; 8] = [(-512_i16) as u16, (-256_i16) as u16, (-256_i16) as u16, (-128_i16) as u16, (-128_i16) as u16, 128, (-256_i16) as u16, 512];
+        const Y_VELOCITY: [u16; 8] = [
+            (-512_i16) as u16,
+            (-256_i16) as u16,
+            (-256_i16) as u16,
+            (-128_i16) as u16,
+            (-128_i16) as u16,
+            128,
+            (-256_i16) as u16,
+            512,
+        ];
         r.set_word(0x19bb + k, 0);
         r.set_word(0x1a4b + k, 16);
         r.set_word(0x1a93 + k, Y[usize::from(param)].wrapping_add(128));
@@ -805,13 +856,17 @@ fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> 
         return crate::enemy_projectile_instructions::preinstruction(r, rom, 0xc84d, k as u16);
     }
     if init == 0xc80a {
-        for base in [0x19bb, 0x1ab7, 0x1adb] { r.set_word(base + k, 0); }
+        for base in [0x19bb, 0x1ab7, 0x1adb] {
+            r.set_word(base + k, 0);
+        }
         r.set_word(0x1a4b + k, r.word(0xfba));
         r.set_word(0x1a93 + k, r.word(0xfbe));
         return Ok(());
     }
     if init == 0xc684 {
-        for (projectile, mother) in [(0x1a4b, 0x8008), (0x1a27, 0x8006), (0x1a93, 0x800c), (0x1a6f, 0x800a), (0x1ab7, 0x800e), (0x1adb, 0x8010)] {
+        for (projectile, mother) in
+            [(0x1a4b, 0x8008), (0x1a27, 0x8006), (0x1a93, 0x800c), (0x1a6f, 0x800a), (0x1ab7, 0x800e), (0x1adb, 0x8010)]
+        {
             r.set_word(projectile + k, r.word(mother));
         }
         crate::enemy_projectile_instructions::move_xy(r, k as u16)?;
@@ -825,8 +880,11 @@ fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> 
         crate::enemy_projectile_instructions::move_xy(r, k as u16)?;
         let x = r.word(0x1a4b + k);
         let y = r.word(0x1a93 + k);
-        if (y.wrapping_sub(34) as i16) < 0 || (y.wrapping_sub(206) as i16) >= 0
-            || (x.wrapping_sub(2) as i16) < 0 || (x.wrapping_sub(238) as i16) >= 0 {
+        if (y.wrapping_sub(34) as i16) < 0
+            || (y.wrapping_sub(206) as i16) >= 0
+            || (x.wrapping_sub(2) as i16) < 0
+            || (x.wrapping_sub(238) as i16) >= 0
+        {
             r.set_word(0x1997 + k, 0);
             let mut host = ProjectileHost { x, y, ..ProjectileHost::default() };
             spawn_room_with_host(r, rom, 0xe509, 0x1d, &mut host)?;
@@ -835,7 +893,9 @@ fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> 
             r.set_word(0x183e, 5);
         } else {
             r.set_word(0x1aff + k, r.word(0x1aff + k).wrapping_add(1) & 3);
-            for base in [0x1b23, 0x1ab7, 0x1adb] { r.set_word(base + k, 0); }
+            for base in [0x1b23, 0x1ab7, 0x1adb] {
+                r.set_word(base + k, 0);
+            }
         }
         return Ok(());
     }

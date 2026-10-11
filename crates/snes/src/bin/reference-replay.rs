@@ -37,7 +37,7 @@ fn main() -> Result<()> {
     use std::io::Write;
     writeln!(file, "frame,game_state,room,wram_sha256,framebuffer_sha256")?;
     let started = Instant::now();
-    let capture_metadata = checkpoints.as_ref().map(|path| path.with_extension("capture.json"));
+    let capture_metadata = checkpoints.as_ref().map(|path| path.with_extension("capture.toml"));
     if let Some(path) = &capture_metadata
         && path.exists()
     {
@@ -112,7 +112,7 @@ fn main() -> Result<()> {
         fs::write(
             path,
             format!(
-                "{{\"completed_frames\":{count},\"checkpoint_sha256\":\"{:x}\",\"core\":\"RustySNES with lsnes-profile\"}}\n",
+                "completed_frames = {count}\ncheckpoint_sha256 = \"{:x}\"\ncore = \"RustySNES with lsnes-profile\"\n",
                 checkpoint_digest.finalize()
             ),
         )?;

@@ -1,0 +1,65 @@
+    Blocking waiting for file lock on build directory
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.46s
+     Running tests/family.rs (target/debug/build/pipeline/aa4eb9a569b2a343/out/family-aa4eb9a569b2a343)
+
+running 8 tests
+test dispatcher_pointer_banks_normalize_raw_and_host_pointers_and_reject_other_banks ... ok
+test invalid_dispatcher_pointer_bank_is_rejected_before_compilation ... ok
+test rust_admission_rejection_precedes_c_and_other_cases_keep_diagnostics ... ok
+test empty_duplicate_and_out_of_bounds_cases_cannot_pass ... ok
+test native_batch_lock_conflicts_do_not_block_independent_batches ... ok
+test native_batch_reuses_authenticated_runs_and_rejects_stale_candidate ... ok
+test live_generation_rejects_missing_tampered_and_stale_admission_before_writing_sources ... ok
+test valid_cases_authenticate_and_tampering_is_rejected_even_with_rebound_inventory ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.54s
+
+     Running tests/no_python.rs (target/debug/build/pipeline/a834b1b68d56baf5/out/no_python-a834b1b68d56baf5)
+
+running 2 tests
+test maintained_configuration_has_no_json_files ... ok
+test project_sources_recipes_and_ci_have_no_python_dependency ... FAILED
+
+failures:
+
+---- project_sources_recipes_and_ci_have_no_python_dependency stdout ----
+
+thread 'project_sources_recipes_and_ci_have_no_python_dependency' (511) panicked at crates/pipeline/tests/no_python.rs:49:5:
+maintained Python sources/runtime calls remain:
+tools/__pycache__/port_collision.cpython-38.pyc
+tools/__pycache__/port_observed_projectile_initializers_fixtures.cpython-38.pyc
+tools/__pycache__/port_plm_instructions.cpython-38.pyc
+tools/__pycache__/port_family.cpython-38.pyc
+tools/__pycache__/port_glass_fixtures.cpython-38.pyc
+tools/__pycache__/port_sparks_fixtures.cpython-38.pyc
+tools/__pycache__/decomp_baseline.cpython-38.pyc
+tools/__pycache__/port_bomb_fixtures.cpython-38.pyc
+tools/__pycache__/test_port_plm_instructions.cpython-38.pyc
+tools/__pycache__/test_port_batch.cpython-38.pyc
+tools/__pycache__/port_batch.cpython-38.pyc
+tools/__pycache__/port_eproj_render_fixtures.cpython-38.pyc
+tools/__pycache__/test_port_collision.cpython-38.pyc
+tools/__pycache__/test_port_plm.cpython-38.pyc
+tools/__pycache__/port_plm_fixtures.cpython-38.pyc
+tools/__pycache__/test_port_family.cpython-38.pyc
+tools/__pycache__/test_port_projectile_live.cpython-38.pyc
+tools/__pycache__/port_observed_projectile_lifecycle_fixtures.cpython-38.pyc
+tools/__pycache__/port_cleanup.cpython-38.pyc
+tools/__pycache__/port_tube_fixtures.cpython-38.pyc
+tools/__pycache__/decomp_routine.cpython-38.pyc
+tools/__pycache__/test_port_evidence.cpython-38.pyc
+tools/__pycache__/port_evidence.cpython-38.pyc
+tools/__pycache__/port_plm.cpython-38.pyc
+tools/__pycache__/test_port_cleanup.cpython-38.pyc
+tools/__pycache__/test_port_live.cpython-38.pyc
+tools/__pycache__/port_eproj_contacts_fixtures.cpython-38.pyc
+tools/__pycache__/port_live.cpython-38.pyc
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    project_sources_recipes_and_ci_have_no_python_dependency
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+error: test failed, to rerun pass `-p pipeline --test no_python`

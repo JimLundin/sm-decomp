@@ -23,7 +23,7 @@ the second correction. A cached door-transition replay then passes frames
 17,975–17,989, where the uncorrected core misses NMI at frame 17,976. Fresh
 power-on validation passes through 18,000 frames; see `docs/LSNES_BASELINE.md` for acceptance.
 
-`tools/prepare_rustysnes.py` verifies the pinned archive and the original and
+The Rust `tools/bootstrap` command `prepare-rustysnes` verifies the pinned archive and the original and
 patched file hashes. It refuses unexpected local edits. `just setup` and CI
 apply this patch before Cargo builds. The root Cargo patch selects that local
 hardware core and its unchanged sibling chip crates. Downloaded sources remain

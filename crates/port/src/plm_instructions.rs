@@ -392,7 +392,13 @@ fn process_frame_inner(r: &mut Wram<'_>, rom: &[u8], limit: usize, render: bool)
     Ok(())
 }
 pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], symbol: &str, a: i32, b: i32) -> Result<u32, &'static str> {
-    if matches!(symbol, "PlmInstr_EnableWaterPhysics" | "PlmInstr_SpawnN00bTubeCrackEproj" | "PlmInstr_DiagonalEarthquake" | "PlmInstr_Spawn10shardsAnd6n00bs") {
+    if matches!(
+        symbol,
+        "PlmInstr_EnableWaterPhysics"
+            | "PlmInstr_SpawnN00bTubeCrackEproj"
+            | "PlmInstr_DiagonalEarthquake"
+            | "PlmInstr_Spawn10shardsAnd6n00bs"
+    ) {
         let opcode = match symbol {
             "PlmInstr_EnableWaterPhysics" => 0xd525,
             "PlmInstr_SpawnN00bTubeCrackEproj" => 0xd52c,

@@ -1,0 +1,65 @@
+    Blocking waiting for file lock on build directory
+   Compiling pipeline v0.1.0 (/home/jim/sm-decomp/crates/pipeline)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 27.94s
+     Running unittests src/main.rs (target/debug/build/pipeline/7e711bd14bbce342/out/sm_pipeline-7e711bd14bbce342)
+
+running 57 tests
+test decomp_job::tests::malformed_streams_never_enter_unsafe_oracle ... ok
+test callback::tests::absent_amount_uses_a_distinct_callback_signature_and_invalid_context_fails ... ok
+test checkpoints::tests::repeated_visits_keep_order_and_frame_offset_is_constant ... ok
+test decomp_job::tests::negative_control_ledger_roundtrips_as_a_toml_document ... ok
+test decomp_prefix::tests::clearing_severs_poll_ownership_and_completion_never_borrows_future_input ... ok
+test family::host_tests::host_only_mismatch_and_missing_sidecar_fail_independently_of_wram ... ok
+test hdma_probe::tests::cartridge_has_literal_register_program_and_indirect_table ... ok
+test hdma_probe::tests::incomplete_and_clock_mismatches_are_independent_failures ... ok
+test decomp_prefix::tests::observer_keeps_read_addresses_passive_and_rejects_lua_delimiter ... ok
+test hdma_probe::tests::sealed_capture_rejects_changes_and_path_escape ... ok
+test inputs::tests::parses_compiler_rules_with_spaces_and_continuations ... ok
+test batch::tests::replay_selection_authenticates_manifests_and_optional_plm ... ok
+test checkpoints::tests::completed_sidecar_authenticates_capture_beyond_final_visit ... ok
+test family::host_tests::continuation_orders_and_inherits_verified_wram_and_host ... ok
+test iteration_diagnosis::tests::routing_requires_matched_controls_and_preserves_cold_failure ... ok
+test hdma_probe::tests::trace_rollover_uses_ntsc_frame_clock_and_rejects_third_frame ... ok
+test coverage::tests::actual_table_parser_rejects_duplicate_or_mismatched_symbols_and_profiles_bind_totals ... ok
+test iteration_increment::tests::progress_rejects_zero_negative_uncomparable_and_self_certified_repairs ... ok
+test iteration_pattern::tests::altered_preparation_never_records_application_intent_or_changes_sources ... ok
+test iteration_increment::tests::atomic_application_preserves_mode_and_rejects_tampered_proposal_or_changed_source ... ok
+test iteration_pattern::tests::promotion_preserves_other_patterns_and_rejects_repeated_or_unknown_proof ... ok
+test iteration_pattern::tests::sealed_application_recovers_partial_rename_and_rejects_unowned_edits ... ok
+test iteration_diagnosis::tests::lineage_safe_ids_and_legacy_history_cannot_reset_streak ... ok
+test iteration_session::tests::invalid_requests_and_corrupt_ordered_events_reject_before_candidate_work ... ok
+test iteration_session::tests::replay_rejects_forged_count_and_recovers_committed_event_before_state_save ... ok
+test live::tests::counter_exclusivity_rejects_double_execution_and_unexecuted_predecessors ... ok
+test live::tests::dispatcher_contract_rejects_unowned_bank_signature_and_ineligible_only_matrix ... ok
+test live::tests::native_projectile_contract_requires_owned_host_and_packed_gfx_signature ... ok
+test iteration_session::tests::published_event_recovery_counts_once_and_reauthenticates_before_counting ... ok
+test live::tests::projectile_admission_rejects_refusal_missing_material_and_wrong_full_route_allocations ... ok
+test pattern_contract::tests::native_declaration_preserves_complete_scope_and_rejects_missing_width_conditions ... ok
+test pattern_contract::tests::native_fixtures_preserve_inactive_cycles_and_literal_boundaries ... ok
+test preflight::tests::hardware_inventory_ignores_documentation_and_rejects_symlinked_build_inputs ... ok
+test coverage::tests::added_or_modified_unexecuted_keys_cannot_borrow_old_execution_and_corrupt_predecessors_fail ... ok
+test preflight::tests::original_movie_inputs_are_independently_bound_and_stateful_or_modified_inputs_fail ... ok
+test readiness::tests::final_origin_and_publication_refusals_retain_durable_error_without_acceptance ... ok
+test readiness_reuse::tests::compiler_changes_refresh_candidate_checks_and_shared_changes_refresh_reusable_checks ... ok
+test iteration_diagnosis::tests::retries_preserve_candidate_and_escalate_on_third_without_evidence ... ok
+test readiness_reuse::tests::scoped_pass_cannot_publish_or_replace_predecessor ... ok
+test readiness_run::tests::timestamps_are_utc_and_preserve_calendar_boundaries ... ok
+test replay::tests::original_observer_preserves_actual_fetch_and_literal_paths ... ok
+test rng_job::tests::ordered_rng_effects_bind_values_stores_and_call_count ... ok
+test rng_job::tests::retained_rng_artifacts_reject_missing_tampered_extra_symlink_and_escaping_members ... ok
+test routine_live::tests::native_epoch_rows_preserve_reset_and_exclusive_dispatch_counts ... ok
+test source_inventory::tests::comments_strings_and_nested_bodies_do_not_create_dependencies ... ok
+test storage_studies::tests::event_and_codec_adversarial_controls ... ok
+test storage_studies::tests::merkle_missing_corrupt_partial_pages_and_shared_roots ... ok
+test readiness_run::tests::snapshots_preserve_dirty_untracked_files_exclude_private_material_and_reject_corruption ... ok
+test storage_studies::tests::output_containment_and_scope_failure_cleanup ... ok
+test storage_studies::tests::receipts_authenticate_inventory_and_producer_independently ... ok
+test storage_studies::tests::native_format_and_merkle_preserve_sources_and_sampling ... ok
+test readiness_run::tests::failures_timeouts_mutation_and_missing_checks_prevent_success_and_completed_runs_are_immutable ... ok
+test iteration_session::tests::bounded_count_target_and_failed_publication_preserve_exact_unresolved_increment ... ok
+test iteration_diagnosis::tests::mutated_process_logs_artifacts_and_unexecuted_outputs_fail_closed ... ok
+test iteration_diagnosis::tests::actual_effect_novelty_survives_paths_timing_and_restart ... ok
+test plm_fixtures::tests::pinned_rom_and_all_fixture_domains_match_the_migration_reference ... ok
+test iteration_increment::tests::measured_proposal_and_deferred_revisit_physically_prune_only_unselected_keys ... ok
+
+test result: ok. 57 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 47.68s

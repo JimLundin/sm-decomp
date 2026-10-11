@@ -21,7 +21,7 @@ fn run() -> Result<(), String> {
     fs::write(&args[5], bytes).map_err(|e| e.to_string())?;
     let cases: Vec<String> = result.cases.iter().map(|s| format!("\"{s}\"")).collect();
     println!(
-        "{{\"status\":\"ok\",\"written\":{},\"final_source\":{},\"cases\":[{}]}}",
+        "status = \"ok\"\nwritten = {}\nfinal_source = {}\ncases = [{}]",
         result.written,
         result.final_source,
         cases.join(",")
@@ -30,8 +30,8 @@ fn run() -> Result<(), String> {
 }
 fn main() {
     if let Err(error) = run() {
-        // Debug escaping creates a JSON string for the ASCII error messages emitted here.
-        println!("{{\"status\":\"error\",\"error\":{error:?}}}");
+        // Retain the error as a TOML diagnostic for the native admission reader.
+        println!("status = \"error\"\nerror = {error:?}");
         std::process::exit(1);
     }
 }

@@ -54,13 +54,16 @@ void __wrap_DecompressToMem(uint32 src, uint8 *dst) {
   SaveRoutineState("before");
   __real_DecompressToMem(src, dst);
   SaveRoutineState("after");
-  FILE *manifest = fopen("fixtures/calls.jsonl", "a");
+  FILE *manifest = fopen("fixtures/calls.bin", "ab+");
+  if (manifest && fseek(manifest, 0, SEEK_END) != 0) exit(2);
   if (!manifest) exit(2);
-  fprintf(manifest, "{\"sequence\":%lu,\"frame\":%d,\"source_address\":%u,"
-          "\"destination_offset\":%ld,\"before_file\":\"decompress-%04lu-before.wram\","
-          "\"after_file\":\"decompress-%04lu-after.wram\"}\n",
-          decompression_calls, snes_frame_counter, src, (long)(dst - g_ram),
-          decompression_calls, decompression_calls);
+  if (ftell(manifest) == 0 && fwrite("SMDC2", 1, 5, manifest) != 5) exit(2);
+  const uint64_t fields[] = {decompression_calls, snes_frame_counter, src, (uint64_t)(dst - g_ram)};
+  for (unsigned field = 0; field < 4; field++) {
+    uint8_t encoded[8];
+    for (unsigned byte = 0; byte < 8; byte++) encoded[byte] = (uint8_t)(fields[field] >> (byte * 8));
+    if (fwrite(encoded, 1, 8, manifest) != 8) exit(2);
+  }
   if (fclose(manifest)) exit(2);
 }
 
@@ -95,8 +98,7 @@ int main(int argc, char **argv) {
     memcpy(stream, literal, sizeof(literal));
     DecompressToMem(0xff8100, g_ram + 0x12000);
     if (memcmp(g_ram + 0x12000, literal + 1, 3)) return 3;
-    printf("{\"fallback_calls\":%lu,\"fallback_instructions\":%lu,"
-           "\"decompression_calls\":%lu}\n", fallback_calls, fallback_instructions, decompression_calls);
+    printf("control %lu %lu %lu\n", fallback_calls, fallback_instructions, decompression_calls);
     return 0;
   }
   char *end;
@@ -123,9 +125,7 @@ int main(int argc, char **argv) {
     RtlRunFrame(reversed);
     if (g_fail) { fprintf(stderr, "candidate error frame=%ld\n", frame); return 3; }
     if (frame == 0 || (frame + 1) % 1000 == 0 || frame + 1 == frames) {
-      printf("{\"frame\":%ld,\"game_state\":%u,\"room\":%u,\"samus_x\":%u,"
-             "\"samus_y\":%u,\"rng\":%u,\"fallback_calls\":%lu,"
-             "\"fallback_instructions\":%lu,\"decompression_calls\":%lu}\n",
+      printf("progress %ld %u %u %u %u %u %lu %lu %lu\n",
              frame + 1, game_state, room_ptr, samus_x_pos, samus_y_pos, random_number,
              fallback_calls, fallback_instructions, decompression_calls);
       fflush(stdout);

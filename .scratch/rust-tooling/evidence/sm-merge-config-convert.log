@@ -1,0 +1,4 @@
+   Compiling sm-native-config-convert v0.0.0 (/tmp/sm-native-config-convert)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.39s
+     Running `/tmp/sm-native-config-convert/target/debug/sm-native-config-convert`
+converted and roundtrip-verified 30 new/main JSON manifests

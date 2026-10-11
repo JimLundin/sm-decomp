@@ -1,0 +1,52 @@
+   Compiling pipeline v0.1.0 (/tmp/sm-decomp-pipeline/crates/pipeline)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.20s
+     Running unittests src/main.rs (out/port/rust-migration/build-target/debug/build/pipeline/dd6308b3ec618ea9/out/sm_pipeline-dd6308b3ec618ea9)
+
+running 3 tests
+test inputs::tests::parses_compiler_rules_with_spaces_and_continuations ... ok
+test family::host_tests::host_only_mismatch_and_missing_sidecar_fail_independently_of_wram ... ok
+test plm_fixtures::tests::pinned_rom_and_all_fixture_domains_match_the_migration_reference ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.41s
+
+     Running tests/cleanup.rs (out/port/rust-migration/build-target/debug/build/pipeline/59fbf708d596c342/out/cleanup-59fbf708d596c342)
+
+running 3 tests
+test unreadable_evidence_prevents_any_deletion ... ok
+test preview_and_apply_preserve_nested_seals_unfinished_builds_and_symlinks ... ok
+test deduplication_preserves_bytes_and_skips_invalid_seals_escapes_and_running_runs ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.57s
+
+     Running tests/family.rs (out/port/rust-migration/build-target/debug/build/pipeline/d4faeb38f2a7f172/out/family-d4faeb38f2a7f172)
+
+running 7 tests
+test dispatcher_pointer_banks_normalize_raw_and_host_pointers_and_reject_other_banks ... ok
+test invalid_dispatcher_pointer_bank_is_rejected_before_compilation ... ok
+test rust_admission_rejection_precedes_c_and_other_cases_keep_diagnostics ... ok
+test empty_duplicate_and_out_of_bounds_cases_cannot_pass ... ok
+test valid_cases_authenticate_and_tampering_is_rejected_even_with_rebound_inventory ... ok
+test native_batch_lock_conflicts_do_not_block_independent_batches ... ok
+test native_batch_reuses_authenticated_runs_and_rejects_stale_candidate ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.20s
+
+     Running tests/observations.rs (out/port/rust-migration/build-target/debug/build/pipeline/509919628b5cf782/out/observations-509919628b5cf782)
+
+running 4 tests
+test packed_pointer_and_reader_are_checked_before_reader_execution ... ok
+test frozen_binary_and_incomplete_inventory_cannot_authenticate ... ok
+test symlinked_observations_and_escaping_paths_are_rejected ... ok
+test full_subjects_match_and_a_changed_subject_is_rejected ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.47s
+
+     Running tests/processes.rs (out/port/rust-migration/build-target/debug/build/pipeline/5aa2295c5b6d6a9a/out/processes-5aa2295c5b6d6a9a)
+
+running 4 tests
+test killed_lease_holder_releases_capacity ... ok
+test real_c_objects_preserve_options_and_invalidate_on_header_edits ... ok
+test mutation_and_abandoned_publication_never_become_hits ... ok
+test equivalent_worktrees_share_one_build_and_corruption_is_rejected ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.85s

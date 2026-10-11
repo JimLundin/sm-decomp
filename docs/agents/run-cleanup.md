@@ -8,18 +8,19 @@ handles cleanup across implementer worktrees.
 2. Clean the finished run or batch using the project utility:
 
    ```sh
-   python3 tools/port_cleanup.py --root <run-or-batch-directory> --apply
-   python3 tools/port_cleanup.py --root <run-or-batch-directory> --deduplicate --apply
+   cargo run -p pipeline --locked --offline --bin sm-pipeline -- cleanup --root <run-or-batch-directory> --apply
+   cargo run -p pipeline --locked --offline --bin sm-pipeline -- cleanup --root <run-or-batch-directory> --deduplicate --apply
    ```
 
-   Scope cleanup to the work just completed. `port_batch.py` automatically
-   deduplicates finished batches and `port_live.py` removes build intermediates;
+   Scope cleanup to the work just completed. `sm-pipeline batch` automatically
+   deduplicates finished batches and `sm-pipeline live-verify` removes build intermediates;
    check their cleanup output and run the utility for any remaining directories.
    Packed live runs also depend on the shared store (default `out/evidence`),
-   their subject `evidence.json` pointers and retained `sm-evidence` reader.
+   their subject `evidence.toml` pointers and retained `sm-evidence` reader.
    Preserve these dependencies; never treat shared store objects as disposable
    run intermediates. Authenticate the finished live verdict with
-   `tools/port_authenticate_live.py` after cleanup. See `docs/DECOMP_BATCH.md`
+   `cargo run -p pipeline --locked --offline -- live-authenticate RUN/verdict.toml`
+   after cleanup. See `docs/DECOMP_BATCH.md`
    for extraction and frame inspection commands.
 3. Remove integrated implementer Git worktrees and disposable build outputs.
    Preserve exact source files referenced by evidence before removing their

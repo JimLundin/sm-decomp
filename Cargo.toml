@@ -1,7 +1,9 @@
 [workspace]
 resolver = "3"
-exclude = ["deps/rustysnes"]
+exclude = ["deps/rustysnes", "tools/bootstrap"]
 members = [
+    "crates/pipeline",
+    "crates/pipeline-model",
     "crates/evidence",
     "crates/port",
     "crates/decomp",
@@ -30,6 +32,7 @@ sha2 = "0.10"
 zip = { version = "2", default-features = false, features = ["deflate"] }
 runtime = { path = "crates/runtime" }
 recomp = { path = "crates/recomp" }
+pipeline-model = { path = "crates/pipeline-model" }
 rustysnes-core = { git = "https://github.com/doublegate/RustySNES", rev = "98f8d398020b8798b16076fae315960031c6b3b7", features = ["lsnes-profile"] }
 
 [patch."https://github.com/doublegate/RustySNES"]

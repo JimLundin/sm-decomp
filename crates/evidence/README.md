@@ -7,7 +7,7 @@ the capture pipeline; existing evidence is not migrated automatically.
 
 ```sh
 cargo build -p evidence --release
-sm-evidence ingest STORE CAPTURE_DIRECTORY [PROVENANCE.json]
+sm-evidence ingest STORE CAPTURE_DIRECTORY [PROVENANCE.toml]
 sm-evidence verify STORE RUN_ID [CAPTURE_DIRECTORY]
 sm-evidence cat STORE RUN_ID frame-000000.bin > restored.bin
 sm-evidence frame STORE RUN_ID hardware.log 60 > frame-60.log
@@ -15,7 +15,7 @@ sm-evidence extract STORE RUN_ID NEW_DIRECTORY
 sm-evidence stats STORE
 ```
 
-Ingestion prints the observation root, completed run id and physical pack seal.
+Ingestion emits a typed TOML receipt with the observation root, completed run id and physical pack seal. Optional producer provenance uses the version 2 `Provenance` schema; arbitrary document fields are rejected by canonical readback.
 Retain the run id externally as the trusted pointer. A completed run proves its
 referenced closure is readable and internally consistent; the validation system
 must still decide whether those observations are accepted. `verify` authenticates
@@ -48,7 +48,7 @@ ids. Logical identities do not depend on compression or pack location.
 | `D` | Up to 1024 ordered (typed flag, frame-presence flag, optional frame, id) entries |
 | `S` | Legacy byte/newline/event counts, SHA-256 of restored bytes, segment count, ordered directory-block ids |
 | `T` | UTF-8 names in byte order, name length/name, entry kind (`f/i/s/t`), id |
-| `R` | Completed flag `1`, observation-tree id, canonical provenance-JSON blob id, file/byte counts |
+| `R` | Completed version `2`, observation-tree id, canonical typed provenance-TOML blob id, file/byte counts |
 
 Images use 256-byte pages and fanout 16. Final pages keep their exact length.
 `diff_images` visits only unequal branches and returns differing page offsets for
@@ -106,18 +106,19 @@ protection against a writer that can replace both evidence and its trusted point
 The version is a new format and does not read either spike's old physical files.
 
 See `.scratch/trace-storage-study/rust-crate-results.md` for measurements and the
-exact comparison scope. `tools/storage_rust_benchmark.py` reproduces the real
-capture benchmark; `examples/record.rs` measures direct native event recording.
+exact historical comparison scope. `sm-pipeline storage-study benchmark`
+reproduces the native capture benchmark; `examples/record.rs` measures direct
+native event recording.
 
 ## Pipeline capture
 
-`port_live.py` defaults to packed storage in `out/evidence`. It retains a sealed
-`evidence.json` per subject and the exact `sm-evidence` reader next to the live
+`sm-pipeline live-verify` defaults to packed storage in `out/evidence`. It retains a sealed
+`evidence.toml` per subject and the exact `sm-evidence` reader next to the live
 binary. The `capture` command consumes legacy observation bytes on stdin while
 the producer runs, commits its trace, ingests staged members, and writes a sealed
 candidate pointer after reopening and checking its closure. Pipeline admission
 uses original byte hashes, not physical pack hashes. Producer completion and
-successful hash comparison are required before the Python runner publishes the
+successful hash comparison are required before the Rust runner publishes the
 pointer and releases staging files. Failed runs retain staged diagnostics and a
 trace receipt when the trace was successfully committed. Pending pack/lock
 recovery remains manual after an unclean collector exit.

@@ -1,6 +1,31 @@
 //! Retained late-occurrence candidate and matching controls, synthetic only.
-use anyhow::{Result, ensure};
-use serde_json::json;
+use anyhow::{Context, Result, ensure};
+use serde::Serialize;
+#[derive(Serialize)]
+struct Expectation {
+    source: String,
+    reference_write: u8,
+    candidate_write: u8,
+}
+#[derive(Serialize)]
+struct Report {
+    schema_version: u32,
+    scope: String,
+    status: String,
+    complete: bool,
+    accepted_count: u64,
+    source_sha256: String,
+    binary_sha256: String,
+    rom_sha256: String,
+    input_sha256: String,
+    early: snes::focused::Report,
+    candidate: snes::focused::Report,
+    predecessor: snes::focused::Report,
+    disabled: snes::focused::Report,
+    cache_refusal: String,
+    altered_key: (u32, u8),
+    independent_expectation: Expectation,
+}
 use snes::{Reference, Subject, paired::sha256};
 use std::path::Path;
 
@@ -46,10 +71,12 @@ fn execute(output: &Path, source: &str) -> Result<()> {
         &output.join("candidate"),
     )?;
     ensure!(
-        early["status"] == "pass" && late["status"] == "divergence" && late["first_mismatch"]["instruction"] == 86,
+        early.status == "pass"
+            && late.status == "divergence"
+            && late.first_mismatch.as_ref().is_some_and(|trace| trace.instruction == 86),
         "late occurrence not localized"
     );
-    let count = late["completed_instructions"].as_u64().unwrap() as usize;
+    let count = late.completed_instructions;
     let predecessor = snes::focused::compare(
         &mut Reference::new(&rom, 0)?,
         &mut Subject::with_steps(&rom, 0, &[correct])?,
@@ -66,18 +93,53 @@ fn execute(output: &Path, source: &str) -> Result<()> {
         count,
         &output.join("disabled"),
     )?;
-    ensure!(predecessor["status"] == "pass" && disabled["status"] == "pass", "matching controls fail");
+    ensure!(predecessor.status == "pass" && disabled.status == "pass", "matching controls fail");
+    let ids = pipeline_model::CheckpointIdentities {
+        rom_sha256: sha256(&rom),
+        movie_sha256: sha256(movie::write_inputs(&pads).as_bytes()),
+        input_sha256: sha256(movie::write_inputs(&pads).as_bytes()),
+        source_sha256: source.into(),
+        hardware_sha256: "e".repeat(64),
+        profile: "lsnes-profile".into(),
+        serializer: "paired-v2".into(),
+        compiler: "iteration-probe".into(),
+        features: vec!["lsnes-profile".into()],
+        settings: pipeline_model::CheckpointSettings {
+            seed: 0,
+            mode: None,
+            candidate_sha256: None,
+            disabled_keys: vec![],
+        },
+        dispatch_sha256: None,
+    };
     let cache_error =
-        snes::paired::prepare_cache(&rom, 0, &candidate, &pads, (0, 0), json!({}), &output.join("divergent-cache"))
+        snes::paired::prepare_cache(&rom, 0, &candidate, &pads, (0, 0), ids, &output.join("divergent-cache"))
             .err()
-            .map(|e| e.to_string());
-    ensure!(cache_error.is_some(), "divergent cache unexpectedly validates");
-    let report = json!({"schema_version":1,"scope":"synthetic late occurrence; acceptance not certified","status":"pass","complete":true,"accepted_count":0,
-        "source_sha256":source,"binary_sha256":sha256(&std::fs::read(std::env::current_exe()?)?),
-        "rom_sha256":sha256(&rom),"input_sha256":sha256(movie::write_inputs(&pads).as_bytes()),
-        "early":early,"candidate":late,"predecessor":predecessor,"disabled":disabled,"cache_refusal":cache_error,
-        "altered_key":[0x8004,3],"independent_expectation":{"source":"literal cartridge instructions and production emitted correct store","reference_write":0,"candidate_write":0x99}});
-    std::fs::write(output.join("report.json"), serde_json::to_vec_pretty(&report)?)?;
+            .context("divergent cache unexpectedly validates")?
+            .to_string();
+    let report = Report {
+        schema_version: 2,
+        scope: "synthetic late occurrence; acceptance not certified".into(),
+        status: "pass".into(),
+        complete: true,
+        accepted_count: 0,
+        source_sha256: source.into(),
+        binary_sha256: sha256(&std::fs::read(std::env::current_exe()?)?),
+        rom_sha256: sha256(&rom),
+        input_sha256: sha256(movie::write_inputs(&pads).as_bytes()),
+        early,
+        candidate: late,
+        predecessor,
+        disabled,
+        cache_refusal: cache_error,
+        altered_key: (0x8004, 3),
+        independent_expectation: Expectation {
+            source: "literal cartridge instructions and production emitted correct store".into(),
+            reference_write: 0,
+            candidate_write: 0x99,
+        },
+    };
+    pipeline_model::write(&output.join("report.toml"), &report)?;
     Ok(())
 }
 fn main() -> Result<()> {

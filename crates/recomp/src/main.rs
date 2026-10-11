@@ -65,7 +65,7 @@ fn main() -> Result<()> {
             &args.selection_entries.context("--selection-entries required")?,
             &args.selection_inventory.context("--selection-inventory required")?,
         )?;
-        std::fs::write(output, serde_json::to_string_pretty(&report)? + "\n")?;
+        pipeline_model::write(&output, &report)?;
         return Ok(());
     }
 

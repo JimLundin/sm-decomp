@@ -1,4 +1,5 @@
 /target
+/tools/bootstrap/target/
 # Downloaded upstream sources, test corpora and emulator binaries.
 /deps/
 # Never commit the ROM or anything derived from it.

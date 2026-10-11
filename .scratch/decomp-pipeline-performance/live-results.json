@@ -1,0 +1,315 @@
+{
+  "baseline": "/home/jim/sm-decomp/out/port/storage-pipeline/packed-timing/verdict.json",
+  "baseline_authentication": {
+    "status": "authenticated",
+    "artifacts_per_subject": 108,
+    "subjects": 4,
+    "binary": true,
+    "storage": "sm-evidence-v1",
+    "verdict_sha256": "bd1416745d03ec5eda51d818e982f8aa911adcb5caf63f3a7b15ceb1b5652583",
+    "free_bytes": 269868093440,
+    "scope": "retained frozen binary and observations; current-source admission and original-ROM parity separate"
+  },
+  "samples": [
+    {
+      "label": "serial-shared",
+      "repeat": 0,
+      "workers": 1,
+      "shared_store": true,
+      "wall_seconds": 36.61379858299915,
+      "authentication_seconds": 17.377443354002025,
+      "stored_bytes": 3196451,
+      "verdict": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live/0-serial-shared/verdict.json",
+      "verdict_sha256": "edfffae42309af0ae529db11b2a82f7d7f8da660c4ea43e4b54c81e5a83ecdb5",
+      "exact_inventory": true,
+      "exact_roots": true,
+      "authentication": {
+        "status": "authenticated",
+        "artifacts_per_subject": 108,
+        "subjects": 4,
+        "binary": true,
+        "storage": "sm-evidence-v1",
+        "verdict_sha256": "edfffae42309af0ae529db11b2a82f7d7f8da660c4ea43e4b54c81e5a83ecdb5",
+        "free_bytes": 269834178560,
+        "scope": "retained frozen binary and observations; current-source admission and original-ROM parity separate"
+      },
+      "subjects": {
+        "c-0": {
+          "pipeline_seconds": 8.093928010999662,
+          "producer_seconds": 2.9114727350024623,
+          "seal_seconds": 5.182450486001471,
+          "stored_added_bytes": 3173012
+        },
+        "c-1": {
+          "pipeline_seconds": 9.599307944998145,
+          "producer_seconds": 4.182233936000557,
+          "seal_seconds": 5.41706017999968,
+          "stored_added_bytes": 6340
+        },
+        "mixed-0": {
+          "pipeline_seconds": 6.065157909000845,
+          "producer_seconds": 3.277877708998858,
+          "seal_seconds": 2.7872764579988143,
+          "stored_added_bytes": 10763
+        },
+        "mixed-1": {
+          "pipeline_seconds": 12.686711112000921,
+          "producer_seconds": 7.870276579000347,
+          "seal_seconds": 4.816375832000631,
+          "stored_added_bytes": 6336
+        }
+      },
+      "exact_progress_and_ownership": true
+    },
+    {
+      "label": "parallel-shared",
+      "repeat": 0,
+      "workers": 4,
+      "shared_store": true,
+      "wall_seconds": 68.2525899659995,
+      "authentication_seconds": 16.361986267002067,
+      "stored_bytes": 3196450,
+      "verdict": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live/0-parallel-shared/verdict.json",
+      "verdict_sha256": "a55fb3eeba11cade603c13bfb7d3a9277ff8a860611d851c7630c4c720464373",
+      "exact_inventory": true,
+      "exact_roots": true,
+      "authentication": {
+        "status": "authenticated",
+        "artifacts_per_subject": 108,
+        "subjects": 4,
+        "binary": true,
+        "storage": "sm-evidence-v1",
+        "verdict_sha256": "a55fb3eeba11cade603c13bfb7d3a9277ff8a860611d851c7630c4c720464373",
+        "free_bytes": 269828644864,
+        "scope": "retained frozen binary and observations; current-source admission and original-ROM parity separate"
+      },
+      "subjects": {
+        "c-0": {
+          "pipeline_seconds": 41.99143071299841,
+          "producer_seconds": 30.661916027998814,
+          "seal_seconds": 11.329509196999425,
+          "stored_added_bytes": 6339
+        },
+        "c-1": {
+          "pipeline_seconds": 24.311728165001114,
+          "producer_seconds": 10.145619958999305,
+          "seal_seconds": 14.166092329000094,
+          "stored_added_bytes": 3173012
+        },
+        "mixed-0": {
+          "pipeline_seconds": 56.00703183299993,
+          "producer_seconds": 49.73236127199925,
+          "seal_seconds": 6.274665043998539,
+          "stored_added_bytes": 10763
+        },
+        "mixed-1": {
+          "pipeline_seconds": 68.13484219900056,
+          "producer_seconds": 61.33755057900271,
+          "seal_seconds": 6.7972801760006405,
+          "stored_added_bytes": 6336
+        }
+      },
+      "exact_progress_and_ownership": true
+    },
+    {
+      "label": "parallel-private",
+      "repeat": 0,
+      "workers": 4,
+      "shared_store": false,
+      "wall_seconds": 17.35051031200055,
+      "authentication_seconds": 14.211047091997898,
+      "stored_bytes": 12721523,
+      "verdict": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live/0-parallel-private/verdict.json",
+      "verdict_sha256": "bcae4c096a75d8fc4b37596e97b7d43ef4d436d836bd59b5df046e2ebd5a961a",
+      "exact_inventory": true,
+      "exact_roots": true,
+      "authentication": {
+        "status": "authenticated",
+        "artifacts_per_subject": 108,
+        "subjects": 4,
+        "binary": true,
+        "storage": "sm-evidence-v1",
+        "verdict_sha256": "bcae4c096a75d8fc4b37596e97b7d43ef4d436d836bd59b5df046e2ebd5a961a",
+        "free_bytes": 269797519360,
+        "scope": "retained frozen binary and observations; current-source admission and original-ROM parity separate"
+      },
+      "subjects": {
+        "c-0": {
+          "pipeline_seconds": 16.055087579999963,
+          "producer_seconds": 6.169071636999433,
+          "seal_seconds": 9.886008413999662,
+          "stored_added_bytes": 3173012
+        },
+        "c-1": {
+          "pipeline_seconds": 17.283902396000485,
+          "producer_seconds": 6.713419239000359,
+          "seal_seconds": 10.570483602998138,
+          "stored_added_bytes": 3173012
+        },
+        "mixed-0": {
+          "pipeline_seconds": 12.09351106199756,
+          "producer_seconds": 7.554299291998177,
+          "seal_seconds": 4.539211606999743,
+          "stored_added_bytes": 3187749
+        },
+        "mixed-1": {
+          "pipeline_seconds": 11.556036211000901,
+          "producer_seconds": 6.119579809997958,
+          "seal_seconds": 5.436410120000801,
+          "stored_added_bytes": 3187750
+        }
+      },
+      "exact_progress_and_ownership": true
+    },
+    {
+      "label": "serial-shared",
+      "repeat": 1,
+      "workers": 1,
+      "shared_store": true,
+      "wall_seconds": 59.68974979700215,
+      "authentication_seconds": 11.860854712998844,
+      "stored_bytes": 3196451,
+      "verdict": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live/1-serial-shared/verdict.json",
+      "verdict_sha256": "967ba6d7a9409acdd157a83e5172c1c071034843fb0930ad82b510c2546fe22a",
+      "exact_inventory": true,
+      "exact_roots": true,
+      "authentication": {
+        "status": "authenticated",
+        "artifacts_per_subject": 108,
+        "subjects": 4,
+        "binary": true,
+        "storage": "sm-evidence-v1",
+        "verdict_sha256": "967ba6d7a9409acdd157a83e5172c1c071034843fb0930ad82b510c2546fe22a",
+        "free_bytes": 269814419456,
+        "scope": "retained frozen binary and observations; current-source admission and original-ROM parity separate"
+      },
+      "subjects": {
+        "c-0": {
+          "pipeline_seconds": 14.681604167999467,
+          "producer_seconds": 4.357218880999426,
+          "seal_seconds": 10.324374222000188,
+          "stored_added_bytes": 3173012
+        },
+        "c-1": {
+          "pipeline_seconds": 27.151026236999314,
+          "producer_seconds": 7.481864088000293,
+          "seal_seconds": 19.669149715999083,
+          "stored_added_bytes": 6340
+        },
+        "mixed-0": {
+          "pipeline_seconds": 10.03595884600145,
+          "producer_seconds": 6.402028399003029,
+          "seal_seconds": 3.633917664999899,
+          "stored_added_bytes": 10763
+        },
+        "mixed-1": {
+          "pipeline_seconds": 7.512759526998707,
+          "producer_seconds": 4.13531461599996,
+          "seal_seconds": 3.377434796999296,
+          "stored_added_bytes": 6336
+        }
+      },
+      "exact_progress_and_ownership": true
+    },
+    {
+      "label": "parallel-shared",
+      "repeat": 1,
+      "workers": 4,
+      "shared_store": true,
+      "wall_seconds": 17.898976888001926,
+      "authentication_seconds": 5.085090269996726,
+      "stored_bytes": 3196450,
+      "verdict": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live/1-parallel-shared/verdict.json",
+      "verdict_sha256": "71899fa79d75c56bac97424c78cecdd54192e6171176875048ccf59c83fae5d2",
+      "exact_inventory": true,
+      "exact_roots": true,
+      "authentication": {
+        "status": "authenticated",
+        "artifacts_per_subject": 108,
+        "subjects": 4,
+        "binary": true,
+        "storage": "sm-evidence-v1",
+        "verdict_sha256": "71899fa79d75c56bac97424c78cecdd54192e6171176875048ccf59c83fae5d2",
+        "free_bytes": 269351440384,
+        "scope": "retained frozen binary and observations; current-source admission and original-ROM parity separate"
+      },
+      "subjects": {
+        "c-0": {
+          "pipeline_seconds": 7.011966531001235,
+          "producer_seconds": 2.640606168002705,
+          "seal_seconds": 4.371348124001088,
+          "stored_added_bytes": 3173012
+        },
+        "c-1": {
+          "pipeline_seconds": 17.860390496000036,
+          "producer_seconds": 14.805154503999802,
+          "seal_seconds": 3.055219264999323,
+          "stored_added_bytes": 6340
+        },
+        "mixed-0": {
+          "pipeline_seconds": 13.163693748003425,
+          "producer_seconds": 11.814310776000639,
+          "seal_seconds": 1.3493651249991672,
+          "stored_added_bytes": 6334
+        },
+        "mixed-1": {
+          "pipeline_seconds": 10.318224537000788,
+          "producer_seconds": 8.806822874001227,
+          "seal_seconds": 1.511394470999221,
+          "stored_added_bytes": 10764
+        }
+      },
+      "exact_progress_and_ownership": true
+    },
+    {
+      "label": "parallel-private",
+      "repeat": 1,
+      "workers": 4,
+      "shared_store": false,
+      "wall_seconds": 8.049426057001256,
+      "authentication_seconds": 5.632892395999079,
+      "stored_bytes": 12721523,
+      "verdict": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live/1-parallel-private/verdict.json",
+      "verdict_sha256": "b2b17b74e8fc0ba1712452641b2939a3f8ae44bb8dcb117205c24a0698503794",
+      "exact_inventory": true,
+      "exact_roots": true,
+      "authentication": {
+        "status": "authenticated",
+        "artifacts_per_subject": 108,
+        "subjects": 4,
+        "binary": true,
+        "storage": "sm-evidence-v1",
+        "verdict_sha256": "b2b17b74e8fc0ba1712452641b2939a3f8ae44bb8dcb117205c24a0698503794",
+        "free_bytes": 269089824768,
+        "scope": "retained frozen binary and observations; current-source admission and original-ROM parity separate"
+      },
+      "subjects": {
+        "c-0": {
+          "pipeline_seconds": 8.00863806200141,
+          "producer_seconds": 3.2101814930028922,
+          "seal_seconds": 4.798444432999531,
+          "stored_added_bytes": 3173012
+        },
+        "c-1": {
+          "pipeline_seconds": 7.974452389000362,
+          "producer_seconds": 3.154182361999119,
+          "seal_seconds": 4.820264291000058,
+          "stored_added_bytes": 3173012
+        },
+        "mixed-0": {
+          "pipeline_seconds": 5.676594934997411,
+          "producer_seconds": 3.0329992919978395,
+          "seal_seconds": 2.6435844949992315,
+          "stored_added_bytes": 3187749
+        },
+        "mixed-1": {
+          "pipeline_seconds": 5.746279088998563,
+          "producer_seconds": 3.0440318299988576,
+          "seal_seconds": 2.7022468100003607,
+          "stored_added_bytes": 3187750
+        }
+      },
+      "exact_progress_and_ownership": true
+    }
+  ]
+}

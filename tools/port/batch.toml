@@ -1,0 +1,103 @@
+[families]
+audio = "family"
+collision = "callback"
+control = "family"
+enemy = "family"
+enemy-ai = "callback"
+enemy-crawler = "callback"
+enemy-jump = "callback"
+enemy-jump-instructions = "family"
+enemy-projectile-detect-projectiles = "family"
+enemy-projectile-detect-samus = "family"
+enemy-projectile-hit-projectile = "family"
+enemy-projectile-hit-samus = "family"
+enemy-projectile-rendering = "family"
+enemy-rio = "callback"
+instructions = "family"
+observed-projectile-frame-boundaries = "offline-projectile"
+observed-projectile-initializers = "offline-projectile"
+observed-projectile-ownership = "projectile"
+plm = "offline-family"
+plm-instructions = "plm-instructions"
+plm-spawn = "plm"
+power_bomb = "power-bomb"
+projectile_flight = "callback"
+projectile_special = "callback"
+projectiles = "family"
+room = "family"
+samus = "family"
+system = "family"
+
+[families.projectile-script-leaves]
+kind = "dispatcher"
+live = "dispatcher"
+manifest = "tools/port/projectile-script-leaves.toml"
+
+[profiles]
+all = [
+    "system",
+    "audio",
+    "samus",
+    "enemy",
+    "control",
+    "instructions",
+    "projectiles",
+    "room",
+    "enemy-jump-instructions",
+    "collision",
+    "enemy-ai",
+    "enemy-rio",
+    "enemy-crawler",
+    "projectile_flight",
+    "enemy-jump",
+    "projectile_special",
+    "plm",
+    "plm-spawn",
+    "plm-instructions",
+    "power_bomb",
+    "enemy-projectile-rendering",
+    "enemy-projectile-detect-samus",
+    "enemy-projectile-detect-projectiles",
+    "enemy-projectile-hit-samus",
+    "enemy-projectile-hit-projectile",
+]
+dispatcher-leaves = ["projectile-script-leaves"]
+gameplay = [
+    "system",
+    "audio",
+    "samus",
+    "enemy",
+    "control",
+    "instructions",
+    "projectiles",
+    "room",
+    "enemy-jump-instructions",
+    "collision",
+    "enemy-ai",
+    "enemy-rio",
+    "enemy-crawler",
+    "projectile_flight",
+    "enemy-jump",
+    "projectile_special",
+    "enemy-projectile-rendering",
+    "enemy-projectile-detect-samus",
+    "enemy-projectile-detect-projectiles",
+]
+observed-projectiles = [
+    "observed-projectile-initializers",
+    "observed-projectile-frame-boundaries",
+    "observed-projectile-ownership",
+    "enemy-projectile-rendering",
+    "enemy-projectile-detect-samus",
+    "enemy-projectile-detect-projectiles",
+]
+projectile-render-contacts = [
+    "enemy-projectile-rendering",
+    "enemy-projectile-detect-samus",
+    "enemy-projectile-detect-projectiles",
+]
+projectile-render-hits = [
+    "enemy-projectile-rendering",
+    "enemy-projectile-hit-samus",
+    "enemy-projectile-hit-projectile",
+]
