@@ -175,3 +175,7 @@ Live gameplay ownership remains open.
 Skree frontier: ticket62 ports four particle allocations and motion/gravity
 with exclusive screen bounds. 705 actual-C cases include dust visibility
 regression. Live gameplay ownership remains open.
+
+Enemy falling-particle frontier: ticket63 adds 8A39/8A7D random allocation
+and unsigned endpoint movement. 305 actual-C cases match; live ownership
+remains open.

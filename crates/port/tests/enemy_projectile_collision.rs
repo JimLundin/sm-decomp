@@ -717,3 +717,20 @@ fn skree_particle_accelerates_before_deletion_at_exclusive_screen_edge() {
     assert_eq!(r.word(0x1adb), 80);
     assert_eq!(r.word(0x1997), 0);
 }
+
+#[test]
+fn falling_particle_removal_uses_unsigned_y_threshold() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x1997, 1);
+    r.set_word(0x1a93, 0xffff);
+    r.set_word(0x19df, 100);
+    port::enemy_projectile_instructions::preinstruction(&mut r, &[], 0x8a7d, 0).unwrap();
+    assert_eq!(r.word(0x1997), 0);
+    r.set_word(0x1997, 1);
+    r.set_word(0x1a93, 99);
+    r.set_word(0x1adb, 0x100);
+    port::enemy_projectile_instructions::preinstruction(&mut r, &[], 0x8a7d, 0).unwrap();
+    assert_eq!(r.word(0x1a93), 100);
+    assert_eq!(r.word(0x1997), 0);
+}

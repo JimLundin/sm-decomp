@@ -301,6 +301,12 @@ fn lavaquake_arc(r: &mut Wram<'_>, rom: &[u8], k: usize, state: u16) -> Result<(
 pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Result<(), &'static str> {
     let k = slot(k)?;
     match address {
+        0x8a7d => {
+            move_y(r, k as u16)?;
+            if r.word(0x1a93 + k) >= r.word(0x19df + k) {
+                r.set_word(0x1997 + k, 0);
+            }
+        }
         0x8b5d => {
             move_xy(r, k as u16)?;
             r.set_word(0x1adb + k, r.word(0x1adb + k).wrapping_add(80));
