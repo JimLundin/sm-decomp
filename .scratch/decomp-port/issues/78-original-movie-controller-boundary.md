@@ -60,3 +60,35 @@ nonacceptingunsupported). Authenticatednativeevents,Cbinary,allnative/Ccompleted
 WRAMsnapshots and finalcausalityledger aftercleanup. ExistingROMduplicates
 alreadyshared/no newbytesreclaimed. Temporarypublictests useautomaticdirectory
 cleanup.18GiBavailablewhileintegrationfullmoviewrites; noimplementerworktree.
+
+## Callable polling seam evidence
+
+Implemented separate offline `poll-fixtures` mode in
+`tools/decomp/prefix_host.c`: real pinned `ReadJoypadInputs` executes against
+original controller-entry WRAM and actual captured $4218/$4219 register samples,
+without a main/NMI/boot step. Observer now captures full entry/return states and
+second-controller register reads; nonzero/incomplete second-controller backing
+rejects. Movie candidate still executes ordinary reset with no fixture loading.
+
+Retained final320frame run:
+`out/port/controller-poll-primitive/20261011T064009.696175Z/verdict.json`.
+All160 polls match all gameplay WRAM, including frame19 prelude.151 polls differ
+only in one native CPU return-address stack byte, independently validated per
+case as sole stack delta$94→$16;9 match full WRAM exactly. C must preserve$94
+at the exact excluded byte; other stack and gameplay bytes remain compared.
+FullWRAM equality is explicitly false overall. Sealed per-case source fixtures
+record exact offsets. Hardware A-bit and unrelated room-byte controls both
+reject independently; changed-RNG replay control and future-poll assignment
+rejection remain present. Public3prefix tests pass; py_compile and diffcheck pass.
+
+Ticket remainsclaimed: callablepoll foundation is proven, but authentic boot
+clear and controller/dispatch scheduling are still unfinished; original movie
+parity remainsunproven. No futurepoll shift or corrective movie state injection.
+
+Cleanup applied and deduplicated all five finished retained primitive runs
+(063625,063719,063820,063848,064009):0bytes reclaimed because this nonaccepting format
+is unsupported by snapshotdedup. Failed temporary publictests automatically
+removed directories. Retain native states, sealed binary/source/cases/logs and
+original observer evidence; no implementer worktree.18,243,407,872bytes available.
+Postcleanup authenticated finalbinary,host/driver/frameheader snapshots,pollcases,all native
+WRAM states/events,ledger/timeline and all primitive/control logs against verdict.

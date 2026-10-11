@@ -89,3 +89,33 @@ C omits the original NMI controller call; its first poll happens after boot
 clearing inside the first resumed update. Feedingzero at that call might match
 one checkpoint but would leave150nativeprelude polls unexecuted. The diagnostic
 command therefore preserves every poll and remains nonaccepting.
+
+## Callable controller primitive
+
+The command also verifies a standalone controller polling seam. The original
+observer passively captures full WRAM at each controller entry and return,
+including frame19 before main dispatch. An independent offline C subject loads
+that entry fixture, presents the actual recorded $4218/$4219 read pair through
+the SNES input-register backing, and invokes the real linked `ReadJoypadInputs`
+without advancing boot, gameplay or NMI. These fixture loads occur only in the
+routine differential subject; the movie candidate still starts from ordinary
+reset and receives no state injection. Captured second-controller reads are
+required to be complete and zero when present; nonzero values reject this
+bounded implementation rather than receiving invented samples.
+
+All131072 WRAM bytes are compared and raw differences are retained. Native
+execution may change one CPU-stack return-address byte from$94 to$16; the
+per-case fixture identifies its exact offset only when it is the sole changed
+stack byte and has that known transition. C must preserve$94 at that byte to
+qualify for the architecture exclusion. Every other byte, including other stack
+bytes, must match. A poll with no native stack change excludes nothing. The
+verdict distinguishes `full_wram_match` from `gameplay_wram_match` and records
+per-case raw stack differences. Sealed poll cases, binary, observer and native
+entry/return snapshots bind this narrower claim.
+
+Separate controls change the presented hardware A-button bit and corrupt the
+room byte after the real primitive; both must fail the routine comparison.
+This proves a callable polling foundation, including the prelude, but does not
+supply boot/reset clearing or controller-to-dispatch scheduling. The overall
+original-ROM prefix therefore remains nonaccepting, with its future-poll
+assignment diagnosis intact.

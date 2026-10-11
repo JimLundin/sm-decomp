@@ -63,7 +63,7 @@ local function observe(kind,address,value)
   parts[#parts+1]=tostring(v)
  end
  out:write(table.concat(parts,','),'\n');out:flush()
- if kind=='dispatch-complete' or kind=='boot-clear' then
+ if kind=='dispatch-complete' or kind=='boot-clear' or kind=='controller-entry' or kind=='controller-return' then
   local file=assert(io.open([['''+str(directory)+r''']]..'/state-'..sequence..'.wram','wb'))
   local bytes=memory.readregion('WRAM',0,131072)
   for i=0,131071 do file:write(string.char(bytes[i])) end
@@ -74,7 +74,7 @@ function on_frame_emulated() observe('frame-complete',0,0) end
 '''
     for kind,address in HOOKS.items():
         text += "memory.registerexec('BUS',"+str(address)+",function(a,v) observe('"+kind+"',"+str(address)+",v) end)\n"
-    for address in (0x4218,0x4219,0x804218,0x804219):
+    for address in (0x4218,0x4219,0x421a,0x421b,0x804218,0x804219,0x80421a,0x80421b):
         text += "memory.registerread('BUS',"+str(address)+",function(a,v) observe('controller-register',"+str(address)+",v) end)\n"
     return text
 
@@ -171,8 +171,10 @@ def investigate(args,run,verdict):
             highs=[r for r in hardware if r['address']&0xffff==0x4219]
             if poll_entry is None or len(lows)!=1 or len(highs)!=1:
                 raise ValueError('native controller return lacks one actual register pair')
-            if lows[0]['value']+(highs[0]['value']<<8)!=row['held']:
-                raise ValueError('native consumed input differs from actual read pair')
+            row['hardware_pad']=lows[0]['value']+(highs[0]['value']<<8)
+            joy2=[r for r in hardware if r['address']&0xffff in (0x421a,0x421b)]
+            if joy2 and (sorted(r['address']&0xffff for r in joy2)!=[0x421a,0x421b] or any(r['value'] for r in joy2)):
+                raise ValueError('captured nonzero or incomplete second controller needs register backing support')
             row['controller_entry_event']=poll_entry;row['actual_register_reads']=hardware
             poll_entry=None
             row['classification']='retimed-controller-poll'
@@ -196,6 +198,18 @@ def investigate(args,run,verdict):
     write(run/'controller-causality.json',causality)
     verdict['controller_causality_sha256']=digest(run/'controller-causality.json')
     verdict['timeline_sha256']=digest(run/'timeline.json')
+    poll_cases=run/'poll-cases.txt'
+    polls=[row for row in mapped if row['kind']=='controller-return']
+    fixture_lines=[]
+    for row in polls:
+        entry_state=(native/f"state-{row['controller_entry_event']}.wram").read_bytes()
+        return_state=(native/f"state-{row['source_event']}.wram").read_bytes()
+        stack=[i for i in range(0x1f00,0x2000) if entry_state[i]!=return_state[i]]
+        if stack and (len(stack)!=1 or entry_state[stack[0]]!=0x94 or return_state[stack[0]]!=0x16):
+            raise ValueError('native controller call lacks bounded known return-address stack transition')
+        fixture_lines.append(f"{row['controller_entry_event']} {row['source_event']} {row['hardware_pad']:04x} {stack[0] if stack else 0xffff:04x}\n")
+    poll_cases.write_text(''.join(fixture_lines))
+    verdict['poll_cases_sha256']=digest(poll_cases)
     inputs=run/'derived.inputs';inputs.write_text(''.join('%04x\n'%row['pad'] for row in steps))
     verdict['derived_inputs_sha256']=digest(inputs)
     units=sorted((source/'src').glob('sm_*.c'))+[source/'src'/name for name in ('spc_player.c','tracing.c','util.c')]+sorted((source/'src/snes').glob('*.c'))
@@ -206,12 +220,43 @@ def investigate(args,run,verdict):
     invoke(build,run,args.timeout)
     verdict['build']={'command':list(map(str,build)),'binary_sha256':digest(run/'prefix-host'),
         'compiler':subprocess.check_output(['cc','--version'],text=True).splitlines()[0],
-        'host_sha256':digest(host),'base_host_sha256':digest(ROOT/'tools/decomp/headless.c'),'driver_sha256':digest(Path(__file__)),
+        'host_sha256':digest(host),'base_host_sha256':digest(ROOT/'tools/decomp/headless.c'),
+        'frame_header_sha256':digest(ROOT/'tools/decomp/headless_frame.h'),'driver_sha256':digest(Path(__file__)),
         'sources':{str(path.relative_to(source)):digest(path) for path in units}}
     (run/'LICENSE.txt').write_bytes((source/'LICENSE.txt').read_bytes())
     (run/'prefix_host.c').write_bytes(host.read_bytes())
+    (run/'headless_frame.h').write_bytes((ROOT/'tools/decomp/headless_frame.h').read_bytes())
     (run/'headless.c').write_bytes((ROOT/'tools/decomp/headless.c').read_bytes())
     (run/'driver.py').write_bytes(Path(__file__).read_bytes())
+    primitive=run/'poll-primitive';primitive.mkdir()
+    cmd=[run/'prefix-host',rom,native,poll_cases,'poll-fixtures']
+    invoke(cmd,primitive,args.timeout)
+    primitive_rows=[json.loads(line) for line in (primitive/'stdout.log').read_text().splitlines() if line.startswith('{')]
+    if len(primitive_rows)!=len(polls) or not all(row['gameplay_wram_match'] for row in primitive_rows):
+        raise ValueError('native captured controller primitive differs from pinned C')
+    verdict['poll_primitive']={'scope':'offline routine differential from original entry WRAM and actual hardware read pair; no movie replay state injection',
+        'command':list(map(str,cmd)),'cases':len(primitive_rows),'gameplay_wram_match':True,'full_wram_match':all(row['full_wram_match'] for row in primitive_rows),
+        'raw_stack_differences':[{key:row[key] for key in ('entry_event','return_event','different_bytes','native_stack_offset')} for row in primitive_rows],
+        'excluded_bytes':{'per-case exact stack byte':'only native entry0x94→return0x16 call-address transition; validated unique changed stack byte; C must preserve entry0x94; all other stack bytes compared'},
+        'first_source_frame':polls[0]['source_frame'],'stdout_sha256':digest(primitive/'stdout.log'),
+        'stderr_sha256':digest(primitive/'stderr.log')}
+    poll_control=run/'changed-poll-primitive';poll_control.mkdir()
+    control_cmd=[run/'prefix-host',rom,native,poll_cases,'changed-poll-fixtures']
+    invoke(control_cmd,poll_control,args.timeout)
+    changed_polls=[json.loads(line) for line in (poll_control/'stdout.log').read_text().splitlines() if line.startswith('{')]
+    if len(changed_polls)!=len(polls) or not any(not row['gameplay_wram_match'] for row in changed_polls):
+        raise ValueError('changed hardware sample escaped polling primitive comparison')
+    verdict['poll_primitive']['changed_sample_control']={'detected':True,'change':'toggle actual presented hardware A button bit in separate offline process',
+        'command':list(map(str,control_cmd)),'stdout_sha256':digest(poll_control/'stdout.log'),
+        'stderr_sha256':digest(poll_control/'stderr.log'),'first_mismatch':next(row for row in changed_polls if not row['gameplay_wram_match'])}
+    state_control=run/'changed-state-poll-primitive';state_control.mkdir()
+    state_cmd=[run/'prefix-host',rom,native,poll_cases,'changed-state-poll-fixtures']
+    invoke(state_cmd,state_control,args.timeout)
+    state_rows=[json.loads(line) for line in (state_control/'stdout.log').read_text().splitlines() if line.startswith('{')]
+    if len(state_rows)!=len(polls) or not all(not row['gameplay_wram_match'] for row in state_rows):
+        raise ValueError('unrelated WRAM error escaped polling primitive comparison')
+    verdict['poll_primitive']['unrelated_state_control']={'detected':True,'change':'toggle room byte0x79b after real primitive, separate offline process',
+        'command':list(map(str,state_cmd)),'stdout_sha256':digest(state_control/'stdout.log'),'stderr_sha256':digest(state_control/'stderr.log')}
     subjects={}
     for name,mode in (('candidate','unchanged'),('changed-gameplay','changed-rng')):
         directory=run/name;(directory/'fixtures').mkdir(parents=True);(directory/'saves').mkdir()

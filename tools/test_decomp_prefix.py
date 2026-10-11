@@ -39,6 +39,16 @@ class PrefixCommandTests(unittest.TestCase):
             self.assertEqual([row['held'] for row in polls[:3]], [0x1000, 0x80, 0x1000])
             self.assertTrue(all('source_event' in row and 'classification' in row for row in timeline['events']))
             self.assertTrue(verdict['comparisons'])
+            primitive=verdict['poll_primitive']
+            self.assertEqual(primitive['cases'],len(polls))
+            self.assertEqual(primitive['first_source_frame'],19)
+            self.assertTrue(primitive['gameplay_wram_match'])
+            self.assertFalse(primitive['full_wram_match'])
+            self.assertTrue(primitive['changed_sample_control']['detected'])
+            self.assertTrue(primitive['unrelated_state_control']['detected'])
+            first=polls[0]
+            self.assertTrue((run/f"native/state-{first['controller_entry_event']}.wram").exists())
+            self.assertTrue((run/f"native/state-{first['source_event']}.wram").exists())
             violation=verdict['future_poll_assignments'][0]
             self.assertEqual(violation['completion_frame'],272)
             self.assertGreater(violation['assigned_poll_event'],violation['completion_event'])

@@ -2,6 +2,7 @@
 #define main baseline_main
 #include "headless.c"
 #undef main
+#include "snes/input.h"
 
 static FILE *events;
 static unsigned long sequence, host_step, completed;
@@ -42,8 +43,46 @@ uint16 __wrap_NextRandom(void) {
   if (changed_gameplay) random_number = result ^= 1;
   return result;
 }
+// Standalone polling seam: fixture loading is restricted to this offline subject.
+// Gameplay replay below continues from its ordinary reset without state loading.
+static int PollFixtures(const char *rom, const char *native, const char *cases, int control) {
+  if (!SnesInit(rom)) return 2;
+  FILE *list = fopen(cases, "r");
+  if (!list) return 2;
+  unsigned entry, leave, pad, stack_byte;
+  uint8 expected[sizeof(g_ram)];
+  while (fscanf(list, "%u %u %x %x", &entry, &leave, &pad, &stack_byte) == 4) {
+    char path[4096];
+    snprintf(path, sizeof(path), "%s/state-%u.wram", native, entry);
+    FILE *file = fopen(path, "rb");
+    if (!file || fread(g_ram, 1, sizeof(g_ram), file) != sizeof(g_ram) || fclose(file)) return 2;
+    snprintf(path, sizeof(path), "%s/state-%u.wram", native, leave);
+    file = fopen(path, "rb");
+    if (!file || fread(expected, 1, sizeof(expected), file) != sizeof(expected) || fclose(file)) return 2;
+    if (control == 1) pad ^= 0x80;
+    if (stack_byte != 0xffff && (stack_byte < 0x1f00 || stack_byte >= 0x2000 || g_ram[stack_byte] != 0x94 || expected[stack_byte] != 0x16)) return 2;
+    unsigned reversed = 0;
+    for (unsigned bit = 0; bit < 16; bit++) reversed |= ((pad >> bit) & 1) << (15 - bit);
+    g_snes->input1->currentState = reversed;
+    // Invoke the real linked primitive, independently of boot/main/NMI scheduling.
+    __real_ReadJoypadInputs();
+    if (control == 2) g_ram[0x79b] ^= 1;
+    unsigned differences = 0, gameplay_differences = 0;
+    for (unsigned i = 0; i < sizeof(g_ram); i++) {
+      differences += g_ram[i] != expected[i];
+      if (i != stack_byte || g_ram[i] != 0x94 || expected[i] != 0x16) gameplay_differences += g_ram[i] != expected[i];
+    }
+    printf("{\"entry_event\":%u,\"return_event\":%u,\"pad\":%u,\"different_bytes\":%u,\"full_wram_match\":%s,\"gameplay_wram_match\":%s,\"gameplay_different_bytes\":%u,\"native_stack_offset\":%u,\"native_stack_entry\":148,\"native_stack_return\":22}\n",
+           entry, leave, pad, differences, differences ? "false" : "true", gameplay_differences ? "false" : "true", gameplay_differences, stack_byte);
+  }
+  fclose(list);
+  return 0;
+}
 int main(int argc,char **argv) {
   if (argc!=5) return 2;
+  if (!strcmp(argv[4], "poll-fixtures")) return PollFixtures(argv[1], argv[2], argv[3], 0);
+  if (!strcmp(argv[4], "changed-poll-fixtures")) return PollFixtures(argv[1], argv[2], argv[3], 1);
+  if (!strcmp(argv[4], "changed-state-poll-fixtures")) return PollFixtures(argv[1], argv[2], argv[3], 2);
   changed_gameplay = !strcmp(argv[4],"changed-rng");
   FILE *inputs=fopen(argv[2],"r");
   events=fopen("events.jsonl","w");
