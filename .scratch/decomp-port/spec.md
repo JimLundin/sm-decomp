@@ -146,3 +146,8 @@ rising/falling arc with quadratic ROM half-steps and inclusive camera culling.
 Shaktool circle frontier: ticket55 ports direction/offset allocation and
 front/linked terrain scheduling, including initial no-op script phases.
 1,159 actual-C cases match; live admission and full gameplay ownership stay open.
+
+Mother Brain turret projectile frontier: ticket56 ports layout/bullet allocation,
+rotation/random timers and bullet terrain scheduling plus script switch/palette
+operations. 1,281 actual-C cases match. Turret destruction host-state seam and
+live gameplay ownership remain open.

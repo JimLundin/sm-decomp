@@ -75,6 +75,13 @@ pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) ->
 fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'static str> {
     let i = param as usize / 2;
     let table = match init {
+        0xbe4f if param < 12 => {
+            let direction = word(rom, 0xbee1 + param * 2)?;
+            word(rom, 0xbeb9 + (direction & 255) * 2)?;
+            word(rom, 0xbec9 + param * 2)?;
+            None
+        }
+        0xbf59 if param <= 35 && r.byte(0x1a6f + usize::from(param & !1)) < 8 => None,
         0xbda2 | 0xbd9c if r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => None,
         0xbbdb if r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => None,
         0xb88e | 0xb8f8 if param <= 6 && param & 1 == 0 => None,
@@ -207,6 +214,8 @@ fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'sta
             | 0xbbdb
             | 0xbda2
             | 0xbd9c
+            | 0xbe4f
+            | 0xbf59
             | 0xb8b5
             | 0xb8e8
             | 0xb8f8
@@ -243,6 +252,37 @@ pub(crate) fn random(r: &mut Wram<'_>) -> u16 {
     n
 }
 fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> Result<(), &'static str> {
+    if init == 0xbe4f {
+        let i = usize::from(param);
+        let direction = word(rom, 0xbee1 + param * 2)? | 0x100;
+        r.set_word(0x19bb + k, 1024);
+        r.set_word(0x1a6f + k, direction);
+        r.set_word(0x1b47 + k, word(rom, 0xbeb9 + (direction & 255) * 2)?);
+        r.set_word(0x1a4b + k, [920, 840, 808, 728, 648, 616, 536, 456, 424, 344, 264, 232][i]);
+        r.set_word(0x1a93 + k, [48, 64, 64, 48, 64, 64, 48, 64, 64, 48, 64, 64][i]);
+        r.set_word(0x1a27 + k, word(rom, 0xbec9 + param * 2)?);
+        let timer = u16::from(random(r) as u8).max(32);
+        r.set_word(0x1ab7 + k, timer);
+        let timer = u16::from(random(r) as u8).max(128);
+        r.set_word(0x1adb + k, timer);
+        return Ok(());
+    }
+    if init == 0xbf59 {
+        r.set_word(0x1b23 + k, 0);
+        r.set_word(0x19bb + k, 1024);
+        let source = usize::from(param & !1);
+        let direction = usize::from(r.byte(0x1a6f + source));
+        r.set_word(0x1aff + k, direction as u16 * 2);
+        let x: [i16; 8] = [-17, -12, 0, 12, 17, 12, 0, -12];
+        let y: [i16; 8] = [-9, 3, 7, 3, -9, -19, -21, -19];
+        let vx: [i16; 8] = [-704, -498, 0, 498, 704, 498, 0, -498];
+        let vy: [i16; 8] = [0, 498, 704, 498, 0, -498, -704, -498];
+        r.set_word(0x1ab7 + k, vx[direction] as u16);
+        r.set_word(0x1adb + k, vy[direction] as u16);
+        r.set_word(0x1a4b + k, r.word(0x1a4b + source).wrapping_add(x[direction] as u16));
+        r.set_word(0x1a93 + k, r.word(0x1a93 + source).wrapping_add(y[direction] as u16));
+        return Ok(());
+    }
     if matches!(init, 0xbda2 | 0xbd9c) {
         if init == 0xbd9c {
             r.set_word(0x1aff + k, param);

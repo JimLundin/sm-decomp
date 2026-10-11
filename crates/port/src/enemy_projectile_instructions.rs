@@ -35,6 +35,11 @@ pub fn move_xy(r: &mut Wram<'_>, k: u16) -> Result<u16, &'static str> {
 pub fn instruction(r: &mut Wram<'_>, rom: &[u8], opcode: u16, pc: u16, k: u16) -> Result<u16, &'static str> {
     let k = slot(k)?;
     match opcode {
+        0xc173 => word(rom, pc.wrapping_add(r.word(0x1aff + k))),
+        0xc1b4 => {
+            r.set_word(0x19bb + k, 0);
+            Ok(pc)
+        }
         0xb7ea | 0xb818 => {
             crate::enemy_projectiles::spawn_room(r, rom, if opcode == 0xb7ea { 0xba78 } else { 0xba86 }, k as u16)?;
             Ok(pc)
@@ -290,6 +295,19 @@ fn lavaquake_arc(r: &mut Wram<'_>, rom: &[u8], k: usize, state: u16) -> Result<(
 pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Result<(), &'static str> {
     let k = slot(k)?;
     match address {
+        0xc0e0 => {
+            r.set_word(0x1bd7 + k, r.word(0x1bd7 + k) ^ 0x8000);
+            move_xy(r, k as u16)?;
+            let product = u16::from((r.word(0x1a93 + k) >> 4) as u8) * u16::from(r.word(0x7a5) as u8);
+            let block = usize::from(product) + usize::from(r.word(0x1a4b + k) >> 4);
+            if block >= 0x3200 {
+                return Err("turret bullet terrain extent");
+            }
+            if r.word(0x10002 + block * 2) & 0xf000 != 0 {
+                let active = slot(r.word(0x1991))?;
+                r.set_word(0x1997 + active, 0);
+            }
+        }
         0xbe03 => {
             if crate::enemy_projectile_collision::horizontal(r, rom, k as u16)? != 0
                 || crate::enemy_projectile_collision::vertical(r, rom, k as u16)? != 0
@@ -922,6 +940,28 @@ pub fn run_all(r: &mut Wram<'_>, rom: &[u8], mut budget: usize) -> Result<(), &'
 }
 pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) -> Result<u32, &'static str> {
     match name {
+        "Eproj_SetXvelRandom" | "Eproj_SetYvelRandom" => {
+            let k = slot(a as u16)?;
+            let x = name == "Eproj_SetXvelRandom";
+            let timer = u16::from(crate::enemy_projectiles::random(r) as u8).max(if x { 32 } else { 128 });
+            r.set_word(if x { 0x1ab7 } else { 0x1adb } + k, timer);
+            Ok(0)
+        }
+        "Eproj_MotherBrainRoomTurretBullets_Func2" => {
+            let k = slot(a as u16)?;
+            let direction = r.byte(0x1a6f + k);
+            let step = r.byte(0x1a70 + k);
+            let next = direction.wrapping_add(step) & 7;
+            let allowed = byte(rom, r.word(0x1a27 + k).wrapping_add(u16::from(next)))?;
+            if allowed != 0 {
+                r.set_byte(0x1a6f + k, next);
+            } else {
+                let step = step.wrapping_neg();
+                r.set_byte(0x1a70 + k, step);
+                r.set_byte(0x1a6f + k, direction.wrapping_add(step));
+            }
+            Ok(0)
+        }
         "EprojInstruction" => {
             let pc = b as u16;
             let result = instruction(r, rom, word(rom, pc)?, pc.wrapping_add(2), a as u16)?;

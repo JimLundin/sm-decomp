@@ -577,3 +577,37 @@ fn shaktool_linked_circle_expires_without_movement_when_reference_is_dead() {
     assert_eq!(r.word(0x1997), 0);
     assert_eq!(r.word(0x1a4b), 100);
 }
+
+#[test]
+fn turret_bullet_hits_nonair_tiles_and_deletes_global_active_slot() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x7a5, 16);
+    r.set_word(0x1991, 2);
+    r.set_word(0x1997, 1);
+    r.set_word(0x1999, 1);
+    r.set_word(0x1a4b, 32);
+    r.set_word(0x1a93, 32);
+    r.set_word(0x1bd7, 0x1234);
+    r.set_word(0x10002 + 34 * 2, 0x5000);
+    port::enemy_projectile_instructions::preinstruction(&mut r, &[], 0xc0e0, 0).unwrap();
+    assert_eq!(r.word(0x1997), 1);
+    assert_eq!(r.word(0x1999), 0);
+    assert_eq!(r.word(0x1bd7), 0x9234);
+}
+
+#[test]
+fn turret_rotation_reverses_direction_at_disallowed_octant() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    let mut rom = vec![0; 0x38000];
+    r.set_word(0x1a27, 0xbec9);
+    r.set_word(0x1a6f, 0x0103);
+    port::enemy_projectile_instructions::dispatch_rom(&mut r, &rom, "Eproj_MotherBrainRoomTurretBullets_Func2", 0, 0)
+        .unwrap();
+    assert_eq!(r.word(0x1a6f), 0xff02);
+    rom[0x33ec9 + 1] = 1;
+    port::enemy_projectile_instructions::dispatch_rom(&mut r, &rom, "Eproj_MotherBrainRoomTurretBullets_Func2", 0, 0)
+        .unwrap();
+    assert_eq!(r.word(0x1a6f), 0xff01);
+}
