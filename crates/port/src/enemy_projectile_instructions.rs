@@ -989,6 +989,7 @@ pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Res
                 }
             }
         }
+        0xefe0 => pickup(r, k)?,
         0x8170 | 0x84fb | 0xdd44 | 0xefdf => {}
         0x90b3 | 0xd3bf => {
             if address == 0xd3bf {
@@ -1142,6 +1143,73 @@ pub fn run_all(r: &mut Wram<'_>, rom: &[u8], mut budget: usize) -> Result<(), &'
     }
     Ok(())
 }
+fn pickup(r: &mut Wram<'_>, k: usize) -> Result<(), &'static str> {
+    let lifetime = r.word(0x1b23 + k).wrapping_sub(1);
+    r.set_word(0x1b23 + k, lifetime);
+    let abs = |value: u16| if value & 0x8000 != 0 { value.wrapping_neg() } else { value };
+    let grapple = r.word(0xd32) != 0xc4f0
+        && (lifetime.wrapping_sub(384) as i16) < 0
+        && (abs(r.word(0x1a4b + k).wrapping_sub(r.word(0xd08))).wrapping_sub(16) as i16) < 0
+        && (abs(r.word(0x1a93 + k).wrapping_sub(r.word(0xd0c))).wrapping_sub(16) as i16) < 0;
+    let dx = abs(r.word(0xaf6).wrapping_sub(r.word(0x1a4b + k)));
+    let dy = abs(r.word(0xafa).wrapping_sub(r.word(0x1a93 + k)));
+    let collision = (dx < r.word(0xafe) || dx.wrapping_sub(r.word(0xafe)) < u16::from(r.byte(0x1bb3 + k)))
+        && (dy < r.word(0xb00) || dy.wrapping_sub(r.word(0xb00)) < u16::from(r.byte(0x1bb4 + k)));
+    if lifetime != 0 && (grapple || collision) {
+        let kind = r.word(0x1aff + k) >> 1;
+        let sound = match kind {
+            1 | 2 => {
+                let amount = if kind == 1 { 5 } else { 20 };
+                let health = r.word(0x9c2).wrapping_add(amount);
+                r.set_word(0x9c2, health);
+                let maximum = r.word(0x9c4);
+                if (health.wrapping_sub(maximum) as i16) >= 0 {
+                    let reserve = r.word(0x9d6).wrapping_add(health).wrapping_sub(maximum);
+                    let reserve_max = r.word(0x9d4);
+                    let reserve = if (reserve.wrapping_sub(reserve_max) as i16) >= 0 { reserve_max } else { reserve };
+                    r.set_word(0x9d6, reserve);
+                    if reserve != 0 && r.word(0x9c0) == 0 {
+                        r.set_word(0x9c0, 1);
+                    }
+                    r.set_word(0x9c2, maximum);
+                }
+                kind
+            }
+            3 | 5 => {
+                let (current, maximum) = if kind == 3 { (0x9ce, 0x9d0) } else { (0x9ca, 0x9cc) };
+                let value = r.word(current).wrapping_add(1);
+                let maximum = r.word(maximum);
+                r.set_word(
+                    current,
+                    if (value.wrapping_sub(maximum) as i16) >= 0 && value != maximum { maximum } else { value },
+                );
+                if kind == 3 { 5 } else { 4 }
+            }
+            4 => {
+                let value = r.word(0x9c6).wrapping_add(2);
+                r.set_word(0x9c6, value);
+                let maximum = r.word(0x9c8);
+                if (value.wrapping_sub(maximum) as i16) >= 0 {
+                    let reserve = r.word(0x9d8).wrapping_add(value).wrapping_sub(maximum);
+                    let limit = if (maximum.wrapping_sub(99) as i16) < 0 { maximum } else { 99 };
+                    r.set_word(0x9d8, if (reserve.wrapping_sub(limit) as i16) >= 0 { limit } else { reserve });
+                    r.set_word(0x9c6, maximum);
+                }
+                3
+            }
+            _ => return Err("invalid projectile pickup callback"),
+        };
+        crate::audio::queue_sfx(r, 1, sound << 8 | 1)?;
+    }
+    if lifetime == 0 || grapple || collision {
+        r.set_word(0x1b47 + k, 0xeca3);
+        r.set_word(0x1b8f + k, 1);
+        r.set_word(0x1bd7 + k, 0x3000);
+        r.set_word(0x1a03 + k, 0xefdf);
+    }
+    Ok(())
+}
+
 // The historical get_EnemyDef_A2 helper actually addresses bank A0.
 fn random_drop(r: &mut Wram<'_>, rom: &[u8], k: u16) -> Result<u16, &'static str> {
     let k = slot(k)?;

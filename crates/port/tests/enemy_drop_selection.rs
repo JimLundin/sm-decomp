@@ -61,3 +61,43 @@ fn death_drop_instruction_excludes_slot_zero_after_consuming_random() {
     assert_eq!(r.word(0x1a03 + 2), 0xefe0);
     assert_eq!(r.word(0x1bd7 + 2), 0xbfff);
 }
+
+#[test]
+fn pickup_health_overflow_fills_reserve_even_when_sound_is_refused() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x1aff, 4);
+    r.set_word(0x1b23, 400);
+    r.set_word(0xafe, 1);
+    r.set_word(0xb00, 1);
+    r.set_word(0x9c2, 98);
+    r.set_word(0x9c4, 99);
+    r.set_word(0x9d4, 100);
+    r.set_word(0x5f5, 1);
+    dispatch_rom(&mut r, &[], "EprojPreinstruction", 0, 0xefe0).unwrap();
+    assert_eq!(r.word(0x9c2), 99);
+    assert_eq!(r.word(0x9d6), 19);
+    assert_eq!(r.word(0x9c0), 1);
+    assert_eq!(r.byte(0x654), 1);
+    assert_eq!(r.byte(0x647), 0);
+    assert_eq!(r.word(0x1b47), 0xeca3);
+}
+
+#[test]
+fn pickup_expiry_precedes_collection_and_grapple_has_delay() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x1aff, 10);
+    r.set_word(0x1b23, 1);
+    r.set_word(0x9cc, 10);
+    dispatch_rom(&mut r, &[], "EprojPreinstruction", 0, 0xefe0).unwrap();
+    assert_eq!(r.word(0x9ca), 0);
+    r.set_word(0xaf6, 100);
+    r.set_word(0xafa, 100);
+    r.set_word(0x1b23, 385);
+    dispatch_rom(&mut r, &[], "EprojPreinstruction", 0, 0xefe0).unwrap();
+    assert_eq!(r.word(0x9ca), 0);
+    dispatch_rom(&mut r, &[], "EprojPreinstruction", 0, 0xefe0).unwrap();
+    assert_eq!(r.word(0x9ca), 1);
+    assert_eq!(r.byte(0x666), 4);
+}
