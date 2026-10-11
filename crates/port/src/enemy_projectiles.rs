@@ -75,6 +75,17 @@ pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) ->
 fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'static str> {
     let i = param as usize / 2;
     let table = match init {
+        0x9824
+            if match param >> 8 {
+                0 => true,
+                2 => (param as u8) < 16,
+                4 => param & 15 < 9,
+                6 => (param as u8) < 8,
+                _ => false,
+            } =>
+        {
+            None
+        }
         0x993a if param < 8 => None,
         0x94a0 | 0x94b4 | 0x94c8 | 0x94dc if param <= 34 && param & 1 == 0 => {
             for p in [0x9408, 0x940a, 0x940c] {
@@ -109,7 +120,7 @@ fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'sta
     if let Some((p, i)) = table {
         word(rom, p + i as u16 * 2)?;
     }
-    if !matches!(init, 0xb49d | 0xce6d | 0x9023 | 0x9286 | 0x934d | 0x94a0 | 0x94b4 | 0x94c8 | 0x94dc | 0x993a)
+    if !matches!(init, 0xb49d | 0xce6d | 0x9023 | 0x9286 | 0x934d | 0x94a0 | 0x94b4 | 0x94c8 | 0x94dc | 0x993a | 0x9824)
         && (r.word(0x1c27) > 78 || r.word(0x1c27) & 1 != 0)
     {
         return Err("invalid PLM slot");
@@ -126,23 +137,46 @@ pub(crate) fn random(r: &mut Wram<'_>) -> u16 {
     n
 }
 fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> Result<(), &'static str> {
+    if init == 0x9824 {
+        let mode = param >> 8;
+        let low = param as u8;
+        r.set_word(0x1adb + k, 0);
+        let (x, y, vx) = match mode {
+            0 => {
+                r.set_word(0x1b47 + k, 0x97b4);
+                r.set_word(0x1bd7 + k, (r.word(0x1bd7 + k) & 0xfff) | 0x2000);
+                (r.word(0xf7a), r.word(0xf7e).wrapping_add(32), 0)
+            }
+            2 => {
+                const ANGLES: [u16; 16] = [16, 32, 48, 64, 80, 96, 112, 128, 240, 224, 208, 192, 176, 160, 144, 128];
+                r.set_word(0x1aff + k, ANGLES[usize::from(low)]);
+                r.set_word(0x1a03 + k, 0x9a45);
+                (r.word(0xf7a), r.word(0xf7e).wrapping_add(32), if low < 8 { 2 } else { 0xfffe })
+            }
+            4 => {
+                const POSITIONS: [u16; 9] = [48, 68, 88, 108, 128, 148, 168, 188, 208];
+                r.set_word(0x1a03 + k, 0x9a94);
+                (POSITIONS[usize::from(low & 15)], 40, u16::from(low & 0xf0) >> 1)
+            }
+            _ => {
+                r.set_word(0x1aff + k, u16::from(low) * 32);
+                r.set_word(0x1a03 + k, 0x9ada);
+                (r.word(0xf7a), r.word(0xf7e).wrapping_add(16), 128)
+            }
+        };
+        r.set_word(0x1a4b + k, x);
+        r.set_word(0x1a93 + k, y);
+        r.set_word(0x1ab7 + k, vx);
+        return Ok(());
+    }
     if init == 0x993a {
         let angle = param * 32;
-        let component = |angle: u16| {
-            let negative = angle >= 128;
-            let index = usize::from(if negative { (angle + 128) as u8 } else { angle as u8 });
-            let sine = SINE[index + 64] as u16;
-            let value = ((u16::from(sine as u8) * 48) >> 8) + u16::from((sine >> 8) as u8) * 48;
-            if negative { value.wrapping_neg() } else { value }
-        };
+        let (x, y) = phantoon_offset(angle as u8, 48);
         r.set_word(0x1aff + k, angle);
         r.set_word(0x1ab7 + k, 0);
         r.set_word(0x1adb + k, 0);
-        r.set_word(0x1a4b + k, r.word(0xf7a).wrapping_add(component(angle)));
-        r.set_word(
-            0x1a93 + k,
-            r.word(0xf7e).wrapping_add(component(u16::from(angle.wrapping_sub(64) as u8))).wrapping_add(16),
-        );
+        r.set_word(0x1a4b + k, r.word(0xf7a).wrapping_add(x));
+        r.set_word(0x1a93 + k, r.word(0xf7e).wrapping_add(y).wrapping_add(16));
         return Ok(());
     }
     if matches!(init, 0x94a0 | 0x94b4 | 0x94c8 | 0x94dc) {
@@ -312,3 +346,16 @@ pub(crate) const SINE: [i16; 320] = [
     -209, -205, -201, -197, -193, -189, -185, -181, -176, -171, -167, -162, -157, -152, -147, -142, -136, -131, -126,
     -120, -115, -109, -103, -97, -92, -86, -80, -74, -68, -62, -56, -49, -43, -37, -31, -25, -18, -12, -6,
 ];
+
+/// Original byte-width sine products; radius is truncated by hardware multiply.
+pub(crate) fn phantoon_offset(angle: u8, radius: u16) -> (u16, u16) {
+    let component = |angle: u8| {
+        let negative = angle >= 128;
+        let index = usize::from(if negative { angle.wrapping_add(128) } else { angle });
+        let sine = SINE[index + 64] as u16;
+        let radius = u16::from(radius as u8);
+        let value = ((u16::from(sine as u8) * radius) >> 8) + u16::from((sine >> 8) as u8) * radius;
+        if negative { value.wrapping_neg() } else { value }
+    };
+    (component(angle), component(angle.wrapping_sub(64)))
+}

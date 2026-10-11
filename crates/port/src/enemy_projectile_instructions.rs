@@ -220,6 +220,74 @@ fn delete_below(r: &mut Wram<'_>, k: usize) {
 pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Result<(), &'static str> {
     let k = slot(k)?;
     match address {
+        0x9a45 | 0x9ada => {
+            let step = if address == 0x9a45 { 4 } else { 2 };
+            let radius = r.word(0x1adb + k).wrapping_add(step);
+            r.set_word(0x1adb + k, radius);
+            let angle =
+                r.word(0x1aff + k).wrapping_add(if address == 0x9a45 { r.word(0x1ab7 + k) & 255 } else { 2 }) as u8;
+            r.set_word(0x1aff + k, u16::from(angle));
+            let (dx, dy) = crate::enemy_projectiles::phantoon_offset(angle, radius);
+            let x = r.word(0xf7a).wrapping_add(dx);
+            r.set_word(0x1a4b + k, x);
+            let mut outside = (x as i16) < 0 || x.wrapping_sub(256) as i16 >= 0;
+            if !outside {
+                let y = r.word(0xf7e).wrapping_add(dy).wrapping_add(16);
+                r.set_word(0x1a93 + k, y);
+                outside = (y as i16) < 0 || y.wrapping_sub(256) as i16 >= 0;
+            }
+            if outside {
+                r.set_word(0x1b47 + k, 0x97f8);
+                r.set_word(0x1b8f + k, 1);
+            }
+        }
+        0x9a94 => {
+            let old = r.word(0x1ab7 + k);
+            if old != 0 {
+                let next = old.wrapping_sub(1);
+                r.set_word(0x1ab7 + k, next);
+                if old != 1 && next & 0x8000 == 0 {
+                    return Ok(());
+                }
+                crate::audio::queue_sfx(r, 2, 0x1d06)?;
+            }
+            r.set_word(0x1adb + k, r.word(0x1adb + k).wrapping_add(16));
+            if crate::enemy_projectile_collision::vertical(r, rom, k as u16)? != 0 {
+                r.set_word(0x1b47 + k, 0x97ac);
+                r.set_word(0x1b8f + k, 1);
+                r.set_word(0x1a93 + k, r.word(0x1a93 + k).wrapping_add(8));
+                r.set_word(0x1a03 + k, 0x9a44);
+                crate::audio::queue_sfx(r, 2, 0x1d06)?;
+            }
+        }
+        0x9b29 => {
+            if r.word(0xfaa) != 0 {
+                r.set_word(0x1a03 + k, 0x9b41);
+                r.set_word(0x1ab7 + k, 180);
+                r.set_word(0x1adb + k, 48);
+            }
+        }
+        0x9b41 => {
+            let delay = r.word(0x1ab7 + k);
+            if delay != 0 {
+                r.set_word(0x1ab7 + k, delay - 1);
+            } else if r.word(0x5b6) & 1 != 0 {
+                let radius = r.word(0x1adb + k).wrapping_sub(1);
+                r.set_word(0x1adb + k, radius);
+                if radius == 0 {
+                    r.set_word(0x1a4b + k, r.word(0xf7a));
+                    r.set_word(0x1a93 + k, r.word(0xf7e).wrapping_add(16));
+                    r.set_word(0x1b8f + k, 1);
+                    r.set_word(0x1b47 + k, 0x97f8);
+                    return Ok(());
+                }
+            }
+            let angle = r.word(0x1aff + k).wrapping_add(1) as u8;
+            r.set_word(0x1aff + k, u16::from(angle));
+            let (x, y) = crate::enemy_projectiles::phantoon_offset(angle, r.word(0x1adb + k));
+            r.set_word(0x1a4b + k, r.word(0xf7a).wrapping_add(x));
+            r.set_word(0x1a93 + k, r.word(0xf7e).wrapping_add(y).wrapping_add(16));
+        }
         0x9a44 => {}
         0x9981 => {
             r.set_word(0x1adb + k, r.word(0x1adb + k).wrapping_add(16));

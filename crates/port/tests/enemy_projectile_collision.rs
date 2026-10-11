@@ -238,3 +238,37 @@ fn phantoon_third_bounce_stops_preinstruction() {
     assert_eq!(r.word(0x1a03), 0x9a44);
     assert_eq!(r.word(0x1b47), 0x9782);
 }
+
+#[test]
+fn phantoon_orbit_offscreen_x_preserves_previous_y() {
+    use port::enemy_projectile_instructions as e;
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0xf7a, 300);
+    r.set_word(0x1a93, 123);
+    e::preinstruction(&mut r, &[], 0x9ada, 0).unwrap();
+    assert_eq!(r.word(0x1a93), 123);
+    assert_eq!(r.word(0x1b47), 0x97f8);
+    assert_eq!(r.word(0x1aff), 2);
+}
+
+#[test]
+fn phantoon_orbit_contracts_only_after_delay_on_odd_frames() {
+    use port::enemy_projectile_instructions as e;
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0xf7a, 128);
+    r.set_word(0xf7e, 64);
+    r.set_word(0x1adb, 1);
+    r.set_word(0x1ab7, 1);
+    r.set_word(0x5b6, 1);
+    e::preinstruction(&mut r, &[], 0x9b41, 0).unwrap();
+    assert_eq!(r.word(0x1adb), 1);
+    assert_eq!(r.word(0x1aff), 1);
+    e::preinstruction(&mut r, &[], 0x9b41, 0).unwrap();
+    assert_eq!(r.word(0x1adb), 0);
+    assert_eq!(r.word(0x1aff), 1);
+    assert_eq!(r.word(0x1a4b), 128);
+    assert_eq!(r.word(0x1a93), 80);
+    assert_eq!(r.word(0x1b47), 0x97f8);
+}
