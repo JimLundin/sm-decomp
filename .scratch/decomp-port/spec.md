@@ -383,3 +383,11 @@ WRAM, returns and all eight host words, including sound quota refusals and
 independently seeded script/flight frames. Crate tests, formatting and strict
 Clippy pass. Cleanup reclaimed 414,056,448 bytes; evidence reauthenticated.
 Live pirate caller ownership and allocation-to-flight replay remain unproved.
+
+
+Controller frontier extension: a fresh source-stable 960-frame original capture
+verifies 516 causal completed updates and all 668 polls, with matching completion
+counts and no new semantic or poll provenance failure. Omitted HDMA and screen
+wait controls still fail at ordinals 50 and 52. The completed run was cleaned
+(zero bytes) and authenticated. Ticket 78 stays claimed for broader original
+replay, full WRAM and hardware scheduler ownership.

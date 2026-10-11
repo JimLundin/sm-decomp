@@ -242,3 +242,28 @@ authenticated the binary, all host snapshots, native WRAM/events, causal inputs,
 and all four candidate/control subjects' completed states, terminals, event
 logs and process logs against the verdict. No implementer worktree remains;
 sealed dependencies are retained.
+
+## Source-unchanged 960-frame extension
+
+Ran the existing controller adapter without source changes against a fresh
+original-ROM 960-frame capture. Evidence:
+`out/port/controller-960-frontier/20261011T071122.611767Z/verdict.json`.
+All 516 causal completed updates match through original frame 960: semantic
+fields, exact preceding controller sample order/count, and native/candidate
+completion counts. All 668 observed polls execute. There is no new poll
+provenance failure or semantic mismatch within this bounded capture.
+
+Both omitted-wait controls still reject independently: omitted HDMA wait fails
+at ordinal 50 (199 versus 200 preceding polls), and omitted screen-enable wait
+fails at ordinal 52 (202 versus 203). The changed-RNG control also remains
+independent. No state correction, future-state matching or additional scheduler
+intervention was needed. This extends the causal frontier from 229 to 516
+updates; hardware-frame, full WRAM and actual APU handshake parity remain
+unproved. Ticket 78 remains claimed.
+
+Cleanup applied and deduplicated this sole finished 960-frame run: zero bytes
+reclaimed (unsupported nonaccepting format). After cleanup authenticated the
+binary, all host snapshots, native WRAM/events, causal inputs, and all four
+causal subjects' completed states, terminals, events and process logs against
+the verdict. Remaining disk space: 7,567,847,424 bytes. No implementer worktree
+or active run remains. Retained sealed dependencies prove this bounded scope.
