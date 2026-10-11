@@ -1,5 +1,5 @@
 # Original movie controller boundary alignment
-Status: open
+Status: claimed
 Blocked by: None
 Triage: ready-for-agent
 
@@ -34,3 +34,29 @@ mapping that handles frame19 and frame272 without altering gameplay state.
 Require read-only original-ROM observer, sealed assets/harness/binaries, changed
 gameplay rejection control and cleanup. Extend through first Ceres divergence
 only after bounded mapping is sound.
+
+## Interim causal evidence
+
+Reproduced current320frameoriginal/Ccapture twice. Final retained run:
+`out/port/controller-boundary/20261011T063208.149600Z/verdict.json`.
+Nativecompleted-event1025 atframe272 precedes actualcontrollerpoll1030(0080),
+but derivedCstep151 consumes1030beforeitsfirstcompletion. New sealed
+controller-causality ledger and `future_poll_assignments` report this causal
+violation explicitly; no future-sample reassignment or state correction occurs.
+Bootclear1005 atframe254 severs earlierpoll association. FirstCpoll301 occurs
+insidebootcompletion(coroutine2/game_state0) afteritsclear, while150earlier
+nativepolls have no Cpoll seam. ActualCinputmath is therefore not implicated
+bythefirst0080mismatch; the adapter feeds a future poll.
+
+Regression firstfailed(missingledger), thenpasses sourceordering/prelude/clear
+example. Publicthreeprefixtests pass, includingnewcaptureeventassertions and
+separatechanged-RNG detection. `git diff --check` passes. Stillclaimed:
+fullsoundmapping requires callablebootNMI/controller and resetclear boundaries;
+interceptingfirstCpoll withzero alone drops nativeearlypoll effects and would
+be unsound. No gameplayexecutionadapter was invented.
+
+Cleanup applied/deduplicatedbothfinishedcontroller-boundaryruns:0bytes(format
+nonacceptingunsupported). Authenticatednativeevents,Cbinary,allnative/Ccompleted
+WRAMsnapshots and finalcausalityledger aftercleanup. ExistingROMduplicates
+alreadyshared/no newbytesreclaimed. Temporarypublictests useautomaticdirectory
+cleanup.18GiBavailablewhileintegrationfullmoviewrites; noimplementerworktree.

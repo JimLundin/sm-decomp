@@ -31,6 +31,23 @@ def digest(path):
 def write(path,value):
     path.write_text(json.dumps(value,indent=2)+'\n')
 
+def controller_causality(events):
+    """Retain source order and reset boundaries; never borrow a future poll."""
+    rows=[];poll=None;started=False
+    for event in events:
+        kind=event['kind']
+        row={'source_event':event['source_event'],'source_frame':event['source_frame'],'kind':kind}
+        if kind=='controller-return':
+            poll=event['source_event'];row.update(phase='dispatch' if started else 'prelude',held=event['state']['held'])
+        elif kind=='boot-clear':
+            row['cleared_poll']=poll;poll=None
+        elif kind in ('dispatch-entry','dispatch-complete'):
+            started=True;row['preceding_poll']=poll
+        else:
+            continue
+        rows.append(row)
+    return rows
+
 def observer(directory):
     # Registration address is captured explicitly: callback address is memoryspace-global.
     text = 'local out=assert(io.open([['+str(directory/'events.csv')+"]],'w'))\n"
@@ -174,6 +191,10 @@ def investigate(args,run,verdict):
               'policy':'retain every actual poll and every boundary; no future-state search, no corrective injection',
               'terminal':'all unfinished native dispatches retained; no completion inferred'}
     write(run/'timeline.json',timeline)
+    causality={'accepted':False,'policy':'source-order controller ledger; boot clearing invalidates prior controller ownership; no replay state injection',
+               'events':controller_causality(events)}
+    write(run/'controller-causality.json',causality)
+    verdict['controller_causality_sha256']=digest(run/'controller-causality.json')
     verdict['timeline_sha256']=digest(run/'timeline.json')
     inputs=run/'derived.inputs';inputs.write_text(''.join('%04x\n'%row['pad'] for row in steps))
     verdict['derived_inputs_sha256']=digest(inputs)
@@ -209,6 +230,16 @@ def investigate(args,run,verdict):
     if not comparisons: raise ValueError('no diagnostic completed-boundary comparisons')
     verdict['comparisons']=comparisons
     verdict['first_semantic_mismatch']=next((row for row in comparisons if row['differences']),None)
+    completed_ledger=[row for row in causality['events'] if row['kind']=='dispatch-complete']
+    poll_order={row['host_step']:row['source_event'] for row in mapped if row['kind']=='controller-return'}
+    causal_violations=[]
+    for comparison,ledger in zip(comparisons,completed_ledger):
+        assigned=poll_order.get(comparison['host_step'])
+        if assigned is not None and assigned>ledger['source_event']:
+            causal_violations.append({'completion_event':ledger['source_event'],'completion_frame':ledger['source_frame'],
+                                     'candidate_host_step':comparison['host_step'],'assigned_poll_event':assigned,
+                                     'reason':'diagnostic poll-as-step assigns input observed after the compared original completion'})
+    verdict['future_poll_assignments']=causal_violations
     # Compare changed subject to unchanged subject with the very same timeline. Existing
     # native mapping failure cannot count as detecting this independently introduced error.
     control=[]

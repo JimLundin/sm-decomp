@@ -72,3 +72,20 @@ completion and later gameplay acceptance remain unproven.
 
 Public command tests cover missing-input error evidence and the complete native
 capture/map/C replay/control path. ROM-derived artifacts stay ignored.
+
+## Controller causality audit
+
+`controller-causality.json` retains polls and dispatches in native event order.
+Boot clearing ends the preceding-poll association; this is a diagnostic ledger,
+not a claim of complete input ownership across every memory-clearing path.
+The verdict's `future_poll_assignments` identifies where the existing poll-as-
+host-step conversion feeds a sample observed after the original completion
+being compared. In the bounded capture, completion1025 atframe272 precedes
+poll1030, but C firstcompletion uses that poll. This explains the0080 mismatch
+as future input attribution rather than proof of differing input arithmetic.
+
+A sound adapter still requires callable boot NMI/poll and reset-clear boundaries.
+C omits the original NMI controller call; its first poll happens after boot
+clearing inside the first resumed update. Feedingzero at that call might match
+one checkpoint but would leave150nativeprelude polls unexecuted. The diagnostic
+command therefore preserves every poll and remains nonaccepting.
