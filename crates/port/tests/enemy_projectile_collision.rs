@@ -121,3 +121,35 @@ fn bridge_debris_acceleration_wraps_to_fourteen_bits() {
     e::preinstruction(&mut r, &[], 0x92ba, 0).unwrap();
     assert_eq!(r.word(0x1adb), 16);
 }
+
+#[test]
+fn random_radius_rejects_negative_bytes_before_advancing_each_axis() {
+    use port::enemy_projectile_instructions as e;
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    let mut rom = vec![0; 0x38000];
+    rom[0x37000..0x37004].copy_from_slice(&[15, 8, 31, 16]);
+    r.set_word(0x5e5, 0);
+    r.set_word(0x1a4b, 65535);
+    r.set_word(0x1a93, 1);
+    assert_eq!(e::instruction(&mut r, &rom, 0x81df, 0xf000, 0).unwrap(), 0xf004);
+    // Direction 0111: positive X/Y. 0666 rejects X=-2, 210F accepts
+    // X=7, and A65C accepts Y=12, preserving all four RNG calls.
+    assert_eq!(r.word(0x1a4b), 6);
+    assert_eq!(r.word(0x1a93), 13);
+    assert_eq!(r.word(0x5e5), 0xa65c);
+}
+
+#[test]
+fn impossible_random_radius_is_rejected_before_rng_or_position_writes() {
+    use port::enemy_projectile_instructions as e;
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    let mut rom = vec![0; 0x38000];
+    rom[0x37000..0x37004].copy_from_slice(&[0, 1, 0, 0]);
+    r.set_word(0x5e5, 0x1234);
+    let before = r.word(0x5e5);
+    assert!(e::instruction(&mut r, &rom, 0x81df, 0xf000, 0).is_err());
+    assert_eq!(r.word(0x5e5), before);
+    assert_eq!(r.word(0x1a4b), 0);
+}

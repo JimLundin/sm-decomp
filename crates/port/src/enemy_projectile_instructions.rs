@@ -66,6 +66,33 @@ pub fn instruction(r: &mut Wram<'_>, rom: &[u8], opcode: u16, pc: u16, k: u16) -
             r.set_word(0x19df + k, word(rom, pc)?);
             Ok(pc.wrapping_add(2))
         }
+        0x81df => {
+            let mut parameters = [0; 4];
+            for (i, value) in parameters.iter_mut().enumerate() {
+                *value = byte(rom, pc.checked_add(i as u16).ok_or("random radius script extent")?)?;
+            }
+            for axis in parameters.as_chunks::<2>().0 {
+                if !(0..=255u16).any(|n| ((n as u8 & axis[0]).wrapping_sub(axis[1]) as i8) >= 0) {
+                    return Err("impossible enemy projectile random radius");
+                }
+            }
+            let direction = crate::enemy_projectiles::random(r);
+            for (axis, position, sign) in [(0, 0x1a4b, 0x8000), (2, 0x1a93, 0x4000)] {
+                let mut accepted = None;
+                for _ in 0..65536 {
+                    let value = (crate::enemy_projectiles::random(r) as u8 & parameters[axis])
+                        .wrapping_sub(parameters[axis + 1]);
+                    if value & 0x80 == 0 {
+                        accepted = Some(u16::from(value));
+                        break;
+                    }
+                }
+                let value = accepted.ok_or("enemy projectile random radius budget")?;
+                let delta = if direction & sign != 0 { value.wrapping_neg() } else { value };
+                r.set_word(position + k, r.word(position + k).wrapping_add(delta));
+            }
+            Ok(pc.checked_add(4).ok_or("random radius continuation extent")?)
+        }
         0x8230 | 0x823c => {
             let mask = word(rom, pc)?;
             let old = r.word(0x1bd7 + k);
