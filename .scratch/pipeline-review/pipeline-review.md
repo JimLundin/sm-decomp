@@ -3,6 +3,12 @@
 Reviewed 2026-10-11 against decomp checkpoint `bb184a2`. This is a proposal and
 read-only evidence review. The optimization worktree and branch were untouched.
 
+Follow-up: [comparison with the committed optimization branch](optimization-comparison.md)
+maps these proposals to implemented scheduling, caches, dependency isolation,
+parallel capture and authenticated publication. Use that comparison for the
+updated next steps; the observations below describe the decomp checkout before
+pipeline integration.
+
 ## Assessment
 
 The next gains should come from avoiding needless rebuilds and process/file

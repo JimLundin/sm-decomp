@@ -1,0 +1,33 @@
+{
+  "branch": "decomp-pipeline-performance",
+  "commit": "e820a6b77338eb4e84a2d91baeed2dc9f33c72f1",
+  "common_ancestor": "16f18837023d1498f46aa555a1f0f6cc0c938092",
+  "reviewed_from": "decomp checkout via read-only Git objects",
+  "blobs": {
+    ".scratch/decomp-pipeline-performance/implementation.md": "221a84a8ea687defcfea631c0644f9e8ab12af84",
+    ".scratch/decomp-pipeline-performance/spec.md": "a442aeb47d0f5e4cd3c5aa772f06e886143ab3ff",
+    ".scratch/decomp-pipeline-performance/findings.md": "59b4bafaf1d9574d0df48a219b0fc0fe6014c7b5",
+    ".scratch/decomp-pipeline-performance/live-results.json": "bd5e860cb49ce39c2fb7007723f97d3437d872dd",
+    ".scratch/decomp-pipeline-performance/live-lock-results.json": "a78dafc340f602789991894f6fca96b2cab35928",
+    ".scratch/decomp-pipeline-performance/offline-results.json": "36b01c68a679b6c1afddfae44b3061c873d01b44",
+    ".scratch/decomp-pipeline-performance/closure-results.json": "8b663f82e079526e2f610ac1671cdd53a98b1b65",
+    ".scratch/decomp-pipeline-performance/invalidation-results.json": "6927af55b0120b3346c56ea334d36f320b3b83d5",
+    ".scratch/decomp-pipeline-performance/post-cleanup-authentication.json": "4ae5b7f2bbae025985eb7c20571be4699f17b34d",
+    "crates/pipeline/src/main.rs": "f424326248dc22d1dbd92309197eea38f7164f72",
+    "crates/pipeline/src/inputs.rs": "0c89d9829e9b5b3479b318ba3c9ecf4ade6d9ae3",
+    "crates/pipeline/src/builds.rs": "e78177615327668b3ff8b1b22664043f6a756085",
+    "tools/port_pipeline.py": "a56a61b9acbc53941fc872d5c0580375f290a6d7",
+    "tools/port_inputs.py": "f21a0309398e484c8c55be60eefe9031ff7db6cf",
+    "tools/port_family.py": "eff9e39d2a9545993138f79e816e2ed2071acc42",
+    "tools/port_batch.py": "71eed0366cfd646203b69fe7464daf861d59b8ef",
+    "tools/port_live.py": "eaafd39e99b24e316fa89852cbb91bf67e743624",
+    "tools/port_evidence.py": "fc7e0e41ed211d851db4850d7a9f505e5e20e3b4",
+    "tools/port_plm_instructions.py": "a5c1f53ac660c537cf071c337242508c49ec7045",
+    "crates/evidence/src/main.rs": "6a7df3449f6ccb791550b91da8108895d538178b",
+    "crates/evidence/src/run.rs": "a3b7ee4d23c29daa2a0cb8461f748c449bbb5905",
+    "crates/evidence/src/pack.rs": "a1d741589cceaaed7eeeee39b364f57403b03cbd",
+    "docs/DECOMP_BATCH.md": "b834407b601731609cf39a733f140dc1099e20e5"
+  },
+  "reproduce": "git show e820a6b77338eb4e84a2d91baeed2dc9f33c72f1:<path>",
+  "scope": "committed source and records only; physical optimization worktree and run artifacts not inspected or reauthenticated"
+}
