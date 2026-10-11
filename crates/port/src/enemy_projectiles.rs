@@ -75,6 +75,13 @@ pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) ->
 fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'static str> {
     let i = param as usize / 2;
     let table = match init {
+        0xabeb | 0xac7c if r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => {
+            let p = if init == 0xabeb { 0xac08 } else { 0xac99 };
+            for offset in (0..20).step_by(2) {
+                word(rom, p + offset)?;
+            }
+            None
+        }
         0xa81b | 0xa871 => {
             let enemy = r.word(0xe54);
             if enemy > 0x7c0 || enemy & 63 != 0 {
@@ -152,7 +159,7 @@ fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'sta
     if let Some((p, i)) = table {
         word(rom, p + i as u16 * 2)?;
     }
-    if !matches!(init, 0x9dec | 0x9e46 | 0x9e4b | 0x9eb2 | 0xa5d3 | 0xa65d | 0xa81b | 0xa871)
+    if !matches!(init, 0x9dec | 0x9e46 | 0x9e4b | 0x9eb2 | 0xa5d3 | 0xa65d | 0xa81b | 0xa871 | 0xabeb | 0xac7c)
         && !matches!(
             init,
             0xb49d
@@ -186,6 +193,19 @@ pub(crate) fn random(r: &mut Wram<'_>) -> u16 {
     n
 }
 fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> Result<(), &'static str> {
+    if matches!(init, 0xabeb | 0xac7c) {
+        let enemy = usize::from(r.word(0xe54));
+        let p =
+            (if init == 0xabeb { 0xac08 } else { 0xac99 }) + if r.word(0xfb4 + enemy) & 0x8000 != 0 { 0 } else { 10 };
+        r.set_word(0x1b47 + k, word(rom, p)?);
+        r.set_word(0x1a4b + k, r.word(0xf7a + enemy).wrapping_add(word(rom, p + 2)?));
+        let vx = word(rom, p + 4)?.wrapping_add(u16::from(random(r) as u8)).wrapping_sub(128);
+        r.set_word(0x1ab7 + k, vx);
+        r.set_word(0x1a93 + k, r.word(0xf7e + enemy).wrapping_add(word(rom, p + 6)?));
+        let vy = word(rom, p + 8)?.wrapping_add(u16::from(random(r) as u8)).wrapping_sub(128);
+        r.set_word(0x1adb + k, vy);
+        return Ok(());
+    }
     if matches!(init, 0xa81b | 0xa871) {
         let enemy = usize::from(r.word(0xe54));
         let mut x = r.word(0xf7a + enemy);

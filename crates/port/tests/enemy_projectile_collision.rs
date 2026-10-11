@@ -396,3 +396,24 @@ fn torizo_drool_near_zero_motion_preserves_three_velocity_quirk() {
     assert_eq!(r.word(0x1ab7), 3);
     assert_eq!(r.word(0x1adb), 16);
 }
+
+#[test]
+fn golden_torizo_orb_reflects_wall_then_settles_small_floor_bounce() {
+    use port::enemy_projectile_instructions as e;
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x7a5, 16);
+    r.set_word(0x1a4b, 29);
+    r.set_word(0x1a93, 29);
+    r.set_word(0x1bb3, 0x202);
+    r.set_word(0x1ab7, 0x300);
+    r.set_word(0x1adb, 128);
+    for j in 0..256 {
+        r.set_word(0x10002 + j * 2, 0x8000);
+    }
+    e::preinstruction(&mut r, &[], 0xacfa, 0).unwrap();
+    assert_eq!(r.word(0x1ab7), 0xfd40);
+    assert_eq!(r.word(0x1adb), 0xffc0);
+    assert_eq!(r.word(0x1a93), 22);
+    assert_eq!(r.word(0x1b47), 0xab41);
+}
