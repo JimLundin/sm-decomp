@@ -205,7 +205,8 @@ def main():
             verdict['commands'].append({'argv': command, 'cwd': str(directory)})
             logs = run if directory == ROOT else directory
             with (logs / (label + '.stdout')).open('wb') as stdout, (logs / (label + '.stderr')).open('wb') as stderr:
-                result = subprocess.run(command, cwd=directory, stdout=stdout, stderr=stderr, timeout=240)
+                timeout = max(240, args.frames / 40) if label == 'replay' else 240
+                result = subprocess.run(command, cwd=directory, stdout=stdout, stderr=stderr, timeout=timeout)
             if result.returncode:
                 raise ValueError(f'{label} failed with exit {result.returncode}')
         rust = [f'#[path={json.dumps(str(ROOT / "crates/port/src/lib.rs"))}] mod memory;', 'use memory::*;']

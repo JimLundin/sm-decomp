@@ -67,3 +67,20 @@ Retained live binaries, transformed sources and parity observations. Checked
 binary SHA256 and every inventoried artifact in all eight processes after
 cleanup; all match. Dispatcher predecessor evidence authenticated (385 cases).
 No implementer worktree created. 26 GiB available.
+
+## Whole-movie exercise follow-up
+
+Late bank86 movement call sites mostly belong to Ridley/Mother Brain paths,
+so attempted the complete129712input movie instead of repeated guessed short
+prefixes. Added bounded frame-proportional replay timeout(max240s,frames/40)
+while retaining240s build limits; final live-tool suite9passes/1optional skip.
+Fresh385-case dispatcher evidence after ticket75source settled:
+`out/port/projectile-movement-live-leaves/20261011T060317.623936Z/verdict.json`.
+Cleanup0ordinary+92,143,616snapshotbytes; evidence reauthenticated.
+
+Whole-movie live run:
+`out/port/projectile-movement-live/20261011T060355.160063Z/verdict.json`.
+Reference C process SIGSEGV at43188, before any mixed process. Ticket76records
+deterministic null-call diagnosis and reset sentinel. No new Rust ownership
+claim; ticket73stillclaimed pending runtime repair/exercising replay.
+Cleanup/retained diagnostic authentication details are in ticket76.
