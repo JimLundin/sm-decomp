@@ -633,3 +633,35 @@ fn nuclear_waffle_body_records_allocated_slot_in_linked_enemy_ram() {
     assert_eq!(r.word(0x1ab5), 200);
     assert_eq!(r.word(0x1a91), 0x5678);
 }
+
+#[test]
+fn spore_motion_sign_extends_rom_deltas_and_wraps_phase_as_a_word() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    let mut rom = vec![0; 0x38000];
+    rom[0x35e6a] = 0xfe;
+    rom[0x35e6b] = 1;
+    r.set_word(0x1997, 1);
+    r.set_word(0x1aff, 0xa5fe);
+    r.set_word(0x1b23, 0x80);
+    r.set_word(0x1a4b, 100);
+    r.set_word(0x1a93, 767);
+    port::enemy_projectile_instructions::preinstruction(&mut r, &rom, 0xdcee, 0).unwrap();
+    assert_eq!(r.word(0x1a4b), 102);
+    assert_eq!(r.word(0x1a93), 769);
+    assert_eq!(r.word(0x1997), 0);
+    assert_eq!(r.word(0x1aff), 0);
+}
+
+#[test]
+fn spore_spawner_freezes_countdown_and_rng_when_boss_flag_is_set() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x9000, 1);
+    r.set_word(0x5e5, 0xface);
+    r.set_word(0x1b47, 0x9754);
+    port::enemy_projectile_instructions::preinstruction(&mut r, &[], 0xdd46, 0).unwrap();
+    assert_eq!(r.word(0x1b23), 0);
+    assert_eq!(r.word(0x5e5), 0xface);
+    assert_eq!(r.word(0x1b47), 0x9754);
+}

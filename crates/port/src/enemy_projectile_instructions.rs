@@ -295,6 +295,32 @@ fn lavaquake_arc(r: &mut Wram<'_>, rom: &[u8], k: usize, state: u16) -> Result<(
 pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Result<(), &'static str> {
     let k = slot(k)?;
     match address {
+        0xdcee => {
+            let phase = r.byte(0x1aff + k);
+            let mut dx = byte(rom, 0xdd6c + u16::from(phase))? as i8 as i16 as u16;
+            if r.word(0x1b23 + k) & 0x80 != 0 {
+                dx = dx.wrapping_neg();
+            }
+            let dy = byte(rom, 0xdd6d + u16::from(phase))? as i8 as i16 as u16;
+            r.set_word(0x1a4b + k, r.word(0x1a4b + k).wrapping_add(dx));
+            let y = r.word(0x1a93 + k).wrapping_add(dy.wrapping_mul(2));
+            r.set_word(0x1a93 + k, y);
+            if (y.wrapping_sub(768) as i16) >= 0 {
+                r.set_word(0x1997 + k, 0);
+            }
+            r.set_word(0x1aff + k, u16::from(phase.wrapping_add(2)));
+        }
+        0xdd46 => {
+            if r.word(0x9000) == 0 {
+                if r.word(0x1b23 + k) == 0 {
+                    r.set_word(0x1b47 + k, 0xdc06);
+                    r.set_word(0x1b8f + k, 1);
+                    let timer = crate::enemy_projectiles::random(r) & 0x1ff;
+                    r.set_word(0x1b23 + k, timer);
+                }
+                r.set_word(0x1b23 + k, r.word(0x1b23 + k).wrapping_sub(1));
+            }
+        }
         0xc0e0 => {
             r.set_word(0x1bd7 + k, r.word(0x1bd7 + k) ^ 0x8000);
             move_xy(r, k as u16)?;
@@ -777,7 +803,7 @@ pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Res
                 }
             }
         }
-        0x8170 | 0x84fb => {}
+        0x8170 | 0x84fb | 0xdd44 => {}
         0x90b3 | 0xd3bf => {
             if address == 0xd3bf {
                 r.set_word(0x19bb + k, 0);

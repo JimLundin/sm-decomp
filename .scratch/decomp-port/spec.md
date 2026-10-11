@@ -155,3 +155,7 @@ live gameplay ownership remain open.
 Enemy-linked allocation frontier: ticket57 adds BB30 decoration setup and
 BB92 Nuclear Waffle body extended-RAM linkage/fraction copying. 385 actual-C
 cases match. Live gameplay ownership remains open.
+
+Spore projectile frontier: ticket58 adds stalk/spawner allocation and native
+ROM spore motion/random countdown. 1,185 actual-C cases match. Actual spore
+creation host-state seam and live gameplay ownership remain open.
