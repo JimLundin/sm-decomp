@@ -1,0 +1,48 @@
+{
+  "observed_at_utc": "2026-10-11T15:09:08.441491+00:00",
+  "scope": "read-only capacity snapshot under concurrent load; not a benchmark",
+  "commands": [
+    {
+      "argv": [
+        "lscpu"
+      ],
+      "output": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nByte Order:                              Little Endian\nAddress sizes:                           39 bits physical, 48 bits virtual\nCPU(s):                                  8\nOn-line CPU(s) list:                     0-7\nThread(s) per core:                      2\nCore(s) per socket:                      4\nSocket(s):                               1\nNUMA node(s):                            1\nVendor ID:                               GenuineIntel\nCPU family:                              6\nModel:                                   140\nModel name:                              11th Gen Intel(R) Core(TM) i7-1165G7 @ 2.80GHz\nStepping:                                1\nCPU MHz:                                 2803.097\nBogoMIPS:                                5606.19\nVirtualization:                          VT-x\nHypervisor vendor:                       Microsoft\nVirtualization type:                     full\nL1d cache:                               192 KiB\nL1i cache:                               128 KiB\nL2 cache:                                5 MiB\nL3 cache:                                12 MiB\nNUMA node0 CPU(s):                       0-7\nVulnerability Gather data sampling:      Not affected\nVulnerability Ghostwrite:                Not affected\nVulnerability Indirect target selection: Mitigation; Aligned branch/return thunks\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Not affected\nVulnerability Mds:                       Not affected\nVulnerability Meltdown:                  Not affected\nVulnerability Mmio stale data:           Not affected\nVulnerability Old microcode:             Not affected\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Mitigation; Enhanced IBRS\nVulnerability Spec rstack overflow:      Not affected\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; Enhanced / Automatic IBRS; IBPB conditional; PBRSB-eIBRS SW sequence; BHI SW loop, KVM SW loop\nVulnerability Srbds:                     Not affected\nVulnerability Tsa:                       Not affected\nVulnerability Tsx async abort:           Not affected\nVulnerability Vmscape:                   Not affected\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon rep_good nopl xtopology tsc_reliable nonstop_tsc cpuid tsc_known_freq pni pclmulqdq vmx ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch ssbd ibrs ibpb stibp ibrs_enhanced tpr_shadow ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves vnmi avx512vbmi umip avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq rdpid movdiri movdir64b fsrm avx512_vp2intersect md_clear ibt flush_l1d arch_capabilities\n"
+    },
+    {
+      "argv": [
+        "free",
+        "-b"
+      ],
+      "output": "              total        used        free      shared  buff/cache   available\nMem:    12545552384  2188701696  4414017536     2547712  5942833152 10098892800\nSwap:    8589934592  1794334720  6795599872\n"
+    },
+    {
+      "argv": [
+        "df",
+        "-B1",
+        "."
+      ],
+      "output": "Filesystem        1B-blocks         Used    Available Use% Mounted on\n/dev/sdd       539980652544 257372418048 255103668224  51% /\n"
+    },
+    {
+      "argv": [
+        "cat",
+        "/sys/fs/cgroup/cpu.max",
+        "/sys/fs/cgroup/memory.max"
+      ],
+      "output": "max 100000\nmax\n"
+    }
+  ],
+  "latest_live": {
+    "verdict": "out/port/observed-projectile-with-gfx-live-full/20261011T142927.603436Z/verdict.json",
+    "storage": "gzip",
+    "artifacts_per_subject": 1345,
+    "logical_inventory_file_bytes": {
+      "c-0": 730857741,
+      "c-1": 730857741,
+      "mixed-0": 730857741,
+      "mixed-1": 730857741
+    },
+    "host_build_c_units": 48,
+    "scope": "logical file sizes, not allocated physical bytes; no elapsed runtime inference"
+  }
+}
