@@ -75,6 +75,12 @@ pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) ->
 fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'static str> {
     let i = param as usize / 2;
     let table = match init {
+        0xb001 if r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => {
+            for p in (0xb02f..0xb043).step_by(2) {
+                word(rom, p)?;
+            }
+            None
+        }
         0xae15 if r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => None,
         0xabeb | 0xac7c if r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => {
             let p = if init == 0xabeb { 0xac08 } else { 0xac99 };
@@ -160,25 +166,26 @@ fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'sta
     if let Some((p, i)) = table {
         word(rom, p + i as u16 * 2)?;
     }
-    if !matches!(init, 0x9dec | 0x9e46 | 0x9e4b | 0x9eb2 | 0xa5d3 | 0xa65d | 0xa81b | 0xa871 | 0xabeb | 0xac7c | 0xae15)
-        && !matches!(
-            init,
-            0xb49d
-                | 0xce6d
-                | 0x9023
-                | 0x9286
-                | 0x934d
-                | 0x94a0
-                | 0x94b4
-                | 0x94c8
-                | 0x94dc
-                | 0x993a
-                | 0x9824
-                | 0x9ca3
-                | 0x9cd8
-                | 0x9d0c
-        )
-        && (r.word(0x1c27) > 78 || r.word(0x1c27) & 1 != 0)
+    if !matches!(
+        init,
+        0x9dec | 0x9e46 | 0x9e4b | 0x9eb2 | 0xa5d3 | 0xa65d | 0xa81b | 0xa871 | 0xabeb | 0xac7c | 0xae15 | 0xb001
+    ) && !matches!(
+        init,
+        0xb49d
+            | 0xce6d
+            | 0x9023
+            | 0x9286
+            | 0x934d
+            | 0x94a0
+            | 0x94b4
+            | 0x94c8
+            | 0x94dc
+            | 0x993a
+            | 0x9824
+            | 0x9ca3
+            | 0x9cd8
+            | 0x9d0c
+    ) && (r.word(0x1c27) > 78 || r.word(0x1c27) & 1 != 0)
     {
         return Err("invalid PLM slot");
     }
@@ -205,10 +212,17 @@ fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> 
         r.set_word(0x1b47 + k, if right { 0xadd2 } else { 0xadbf });
         return Ok(());
     }
-    if matches!(init, 0xabeb | 0xac7c) {
+    if matches!(init, 0xabeb | 0xac7c | 0xb001) {
         let enemy = usize::from(r.word(0xe54));
-        let p =
-            (if init == 0xabeb { 0xac08 } else { 0xac99 }) + if r.word(0xfb4 + enemy) & 0x8000 != 0 { 0 } else { 10 };
+        if init == 0xb001 {
+            r.set_word(0x1b23 + k, 66);
+            r.set_word(0x1aff + k, r.word(0xfb4 + enemy));
+        }
+        let p = (match init {
+            0xabeb => 0xac08,
+            0xac7c => 0xac99,
+            _ => 0xb02f,
+        }) + if r.word(0xfb4 + enemy) & 0x8000 != 0 { 0 } else { 10 };
         r.set_word(0x1b47 + k, word(rom, p)?);
         r.set_word(0x1a4b + k, r.word(0xf7a + enemy).wrapping_add(word(rom, p + 2)?));
         let vx = word(rom, p + 4)?.wrapping_add(u16::from(random(r) as u8)).wrapping_sub(128);

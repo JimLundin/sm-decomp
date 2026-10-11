@@ -35,6 +35,7 @@ pub fn move_xy(r: &mut Wram<'_>, k: u16) -> Result<u16, &'static str> {
 pub fn instruction(r: &mut Wram<'_>, rom: &[u8], opcode: u16, pc: u16, k: u16) -> Result<u16, &'static str> {
     let k = slot(k)?;
     match opcode {
+        0xb13e => Ok(if r.word(0x1aff + k) & 0x8000 != 0 { 0xb166 } else { 0xb14b }),
         0xad92 => {
             add_hilo(r, k, 0x1a4b, 0x1a27, r.word(0x1ab7 + k));
             word(rom, pc.wrapping_add(if r.word(0x1ab7 + k) & 0x8000 == 0 { 2 } else { 0 }))
@@ -240,6 +241,51 @@ fn delete_below(r: &mut Wram<'_>, k: usize) {
 pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Result<(), &'static str> {
     let k = slot(k)?;
     match address {
+        0xb043 => {
+            let timer = r.word(0x1b23 + k).wrapping_sub(1);
+            r.set_word(0x1b23 + k, timer);
+            if timer & 0x8000 != 0 {
+                r.set_word(0x1b47 + k, r.word(0x1b47 + k).wrapping_add(2));
+                r.set_word(0x1b8f + k, 1);
+                r.set_word(0x1ab7 + k, if r.word(0x1aff + k) & 0x8000 != 0 { 256 } else { 0xff00 });
+            } else {
+                if crate::enemy_projectile_collision::horizontal(r, rom, k as u16)? != 0 {
+                    r.set_word(0x1ab7 + k, r.word(0x1ab7 + k).wrapping_neg());
+                    r.set_word(0x1aff + k, r.word(0x1aff + k) ^ 0x8000);
+                }
+                if crate::enemy_projectile_collision::vertical(r, rom, k as u16)? != 0
+                    && r.word(0x1adb + k) & 0x8000 == 0
+                {
+                    let vx = r.word(0x1ab7 + k);
+                    r.set_word(0x1ab7 + k, vx.wrapping_add(if vx & 0x8000 != 0 { 32 } else { 0xffe0 }));
+                    r.set_word(0x1adb + k, r.word(0x1adb + k).wrapping_neg());
+                }
+                let vy = r.word(0x1adb + k).wrapping_add(48);
+                r.set_word(0x1adb + k, vy);
+                if vy & 0xf000 == 0x1000 {
+                    r.set_word(0x1997 + k, 0);
+                }
+            }
+        }
+        0xb0b9 => {
+            if crate::enemy_projectile_collision::horizontal(r, rom, k as u16)? != 0 {
+                r.set_word(0x1a03 + k, 0xb0dd);
+                r.set_word(0x1adb + k, 0);
+            } else {
+                r.set_word(
+                    0x1ab7 + k,
+                    r.word(0x1ab7 + k).wrapping_add(if r.word(0x1aff + k) & 0x8000 != 0 { 48 } else { 0xffd0 }),
+                );
+            }
+        }
+        0xb0dd => {
+            if crate::enemy_projectile_collision::vertical(r, rom, k as u16)? != 0 {
+                r.set_word(0x1b47 + k, if r.word(0x1aff + k) & 0x8000 != 0 { 0xb1a8 } else { 0xb190 });
+                r.set_word(0x1b8f + k, 1);
+            } else {
+                r.set_word(0x1adb + k, r.word(0x1adb + k).wrapping_add(48));
+            }
+        }
         0xae6c => {
             if crate::enemy_projectile_collision::horizontal(r, rom, k as u16)? != 0 {
                 r.set_word(0x1b47 + k, 0xade5);

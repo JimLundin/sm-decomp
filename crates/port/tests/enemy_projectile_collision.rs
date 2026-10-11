@@ -435,3 +435,20 @@ fn torizo_sonic_impact_saves_position_without_acceleration() {
     assert_eq!(r.word(0x1b47), 0xade5);
     assert_eq!(r.word(0x1ab7), 624);
 }
+
+#[test]
+fn torizo_egg_timer_underflow_launches_without_moving() {
+    use port::enemy_projectile_instructions as e;
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x1a4b, 123);
+    r.set_word(0x1a93, 45);
+    r.set_word(0x1b47, 0x9000);
+    r.set_word(0x1aff, 0x8000);
+    e::preinstruction(&mut r, &[], 0xb043, 0).unwrap();
+    assert_eq!(r.word(0x1b23), 65535);
+    assert_eq!(r.word(0x1ab7), 256);
+    assert_eq!(r.word(0x1b47), 0x9002);
+    assert_eq!(r.word(0x1a4b), 123);
+    assert_eq!(r.word(0x1a93), 45);
+}
