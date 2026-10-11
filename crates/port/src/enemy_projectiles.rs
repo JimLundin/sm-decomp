@@ -75,6 +75,8 @@ pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) ->
 fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'static str> {
     let i = param as usize / 2;
     let table = match init {
+        0xb88e | 0xb8f8 if param <= 6 && param & 1 == 0 => None,
+        0xb8b5 | 0xb8e8 if param <= 34 && param & 1 == 0 => None,
         0xb4ef if r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => None,
         0xb328 if r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => {
             for p in (0xb376..0xb38a).step_by(2) {
@@ -194,6 +196,10 @@ fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'sta
             | 0xb001
             | 0xb328
             | 0xb4ef
+            | 0xb88e
+            | 0xb8b5
+            | 0xb8e8
+            | 0xb8f8
             | 0xb1ce
     ) && !matches!(
         init,
@@ -227,6 +233,36 @@ pub(crate) fn random(r: &mut Wram<'_>) -> u16 {
     n
 }
 fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> Result<(), &'static str> {
+    if matches!(init, 0xb88e | 0xb8f8 | 0xb8b5 | 0xb8e8) {
+        let (x, y) = if matches!(init, 0xb88e | 0xb8f8) {
+            let i = usize::from(param >> 1);
+            ([132, 122, 158, 104][i], [144, 81, 128, 114][i])
+        } else {
+            (r.word(0x1a4b + usize::from(param)), r.word(0x1a93 + usize::from(param)))
+        };
+        r.set_word(0x1a4b + k, x);
+        r.set_word(0x1a93 + k, y);
+        match init {
+            0xb88e => {
+                const COLORS: [u16; 16] = [
+                    0x6bff, 0x033b, 0x0216, 0x0173, 0x7f5f, 0x7c1f, 0x5816, 0x300c, 0x7f5a, 0x7ec0, 0x6de0, 0x54e0,
+                    0x6bfa, 0x3be0, 0x2680, 0x1580,
+                ];
+                for n in 0..4 {
+                    r.set_word(0xc000 + 498 + n * 2, COLORS[usize::from(param) * 2 + n]);
+                }
+            }
+            0xb8f8 => r.set_word(0x1adb + k, 0xfc00),
+            0xb8b5 => {
+                let angle = (random(r) & 63).wrapping_sub(32) as u8;
+                r.set_word(0x1aff + k, u16::from(angle) * 2);
+                r.set_word(0x1ab7 + k, SINE[usize::from(angle) + 64] as u16);
+                r.set_word(0x1adb + k, (SINE[usize::from(angle)] as u16).wrapping_mul(4));
+            }
+            _ => {}
+        }
+        return Ok(());
+    }
     if init == 0xb4ef {
         let enemy = usize::from(r.word(0xe54));
         let left = r.word(0xfa8 + enemy) & 0x8000 != 0;
