@@ -333,8 +333,48 @@ fn lavaquake_arc(r: &mut Wram<'_>, rom: &[u8], k: usize, state: u16) -> Result<(
 }
 /// Dispatch supported movement and room-effect preinstructions. Collision remains explicit.
 pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Result<(), &'static str> {
+    if address == 0x940e {
+        return Err("projectile preinstruction requires host context");
+    }
+    preinstruction_context(r, rom, address, k, None)
+}
+pub fn preinstruction_with_host(
+    r: &mut Wram<'_>,
+    rom: &[u8],
+    address: u16,
+    k: u16,
+    host: &mut crate::enemy_projectiles::ProjectileHost,
+) -> Result<(), &'static str> {
+    preinstruction_context(r, rom, address, k, Some(host))
+}
+fn preinstruction_context(
+    r: &mut Wram<'_>,
+    rom: &[u8],
+    address: u16,
+    k: u16,
+    host: Option<&mut crate::enemy_projectiles::ProjectileHost>,
+) -> Result<(), &'static str> {
     let k = slot(k)?;
     match address {
+        0x940e => {
+            let host = host.ok_or("projectile preinstruction requires host context")?;
+            let explosion = if crate::enemy_projectile_collision::horizontal(r, rom, k as u16)? & 1 != 0 {
+                Some(0x965e)
+            } else if crate::enemy_projectile_collision::vertical(r, rom, k as u16)? & 1 != 0 {
+                Some(0x9650)
+            } else {
+                None
+            };
+            if let Some(definition) = explosion {
+                r.set_word(0x1997 + k, 0);
+                if r.word(0x1b23 + k) == 0 {
+                    host.x = r.word(0x1a4b + k);
+                    host.y = r.word(0x1a93 + k);
+                    crate::enemy_projectiles::spawn_room_with_host(r, rom, definition, 3, host)?;
+                    crate::audio::queue_sfx(r, 1, 0x2b06)?;
+                }
+            }
+        }
         0xec05 => {
             dispatch_rom(r, rom, "Eproj_FuncE73E_MoveXY", k as i32, 0)?;
             if lavaquake_outside(r, k) {
@@ -1103,7 +1143,28 @@ pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Res
     Ok(())
 }
 /// Descending canonical scheduler, bounded to reject cyclic malformed scripts.
-pub fn run_all(r: &mut Wram<'_>, rom: &[u8], mut budget: usize) -> Result<(), &'static str> {
+pub fn run_all(r: &mut Wram<'_>, rom: &[u8], budget: usize) -> Result<(), &'static str> {
+    if r.word(0x198d) & 0x8000 != 0
+        && (0..36).step_by(2).any(|k| r.word(0x1997 + k) != 0 && r.word(0x1a03 + k) == 0x940e)
+    {
+        return Err("projectile frame requires host context");
+    }
+    run_all_context(r, rom, budget, None)
+}
+pub fn run_all_with_host(
+    r: &mut Wram<'_>,
+    rom: &[u8],
+    budget: usize,
+    host: &mut crate::enemy_projectiles::ProjectileHost,
+) -> Result<(), &'static str> {
+    run_all_context(r, rom, budget, Some(host))
+}
+fn run_all_context(
+    r: &mut Wram<'_>,
+    rom: &[u8],
+    mut budget: usize,
+    mut host: Option<&mut crate::enemy_projectiles::ProjectileHost>,
+) -> Result<(), &'static str> {
     if r.word(0x198d) & 0x8000 == 0 {
         return Ok(());
     }
@@ -1112,7 +1173,7 @@ pub fn run_all(r: &mut Wram<'_>, rom: &[u8], mut budget: usize) -> Result<(), &'
         let k = slot(index as u16)?;
         r.set_word(0x1991, index as u16);
         if r.word(0x1997 + k) != 0 {
-            preinstruction(r, rom, r.word(0x1a03 + k), k as u16)?;
+            preinstruction_context(r, rom, r.word(0x1a03 + k), k as u16, host.as_deref_mut())?;
             let active = slot(r.word(0x1991))?;
             let old = r.word(0x1b8f + active);
             r.set_word(0x1b8f + active, old.wrapping_sub(1));

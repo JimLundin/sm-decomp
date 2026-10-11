@@ -38,3 +38,42 @@ fn full_slots_preserve_host_and_only_set_parameter_without_rom() {
     assert_eq!(host.words(), [1, 2, 3, 4, 5, 6, 7, 8]);
     assert_eq!(bytes, expected);
 }
+
+#[test]
+fn legacy_frame_rejects_host_required_slot_before_any_scheduler_writes() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    {
+        let mut r = Wram::new(&mut bytes).unwrap();
+        r.set_word(0x198d, 0x8000);
+        r.set_word(0x1997, 0x9642);
+        r.set_word(0x1a03, 0x940e);
+        r.set_word(0x1997 + 34, 1);
+        r.set_word(0x1a03 + 34, 0x8170);
+        r.set_word(0x1b8f + 34, 2);
+    }
+    let before = bytes.clone();
+    assert!(port::enemy_projectile_instructions::run_all(&mut Wram::new(&mut bytes).unwrap(), &[], 100).is_err());
+    assert_eq!(bytes, before);
+}
+
+#[test]
+fn ridley_impact_updates_external_point_and_reuses_cleared_slot() {
+    let mut rom = vec![0; 0x38000];
+    rom[0x3165e..0x31660].copy_from_slice(&0x947fu16.to_le_bytes());
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x1997 + 34, 0x9642);
+    r.set_word(0x1a4b + 34, 29);
+    r.set_word(0x1a93 + 34, 24);
+    r.set_word(0x1bb3 + 34, 0x0202);
+    r.set_word(0x1ab7 + 34, 0x300);
+    r.set_word(0x7a5, 16);
+    r.set_word(0x10002 + 18 * 2, 0x8000);
+    let mut host = ProjectileHost { r22: 99, ..Default::default() };
+    port::enemy_projectile_instructions::preinstruction_with_host(&mut r, &rom, 0x940e, 34, &mut host).unwrap();
+    assert_eq!((host.x, host.y), (30, 24));
+    assert_eq!(host.r22, 99);
+    assert_eq!(r.word(0x1997 + 34), 0x965e);
+    assert_eq!(r.word(0x19bb + 34), 2560);
+    assert_eq!(r.byte(0x666), 0x2b);
+}

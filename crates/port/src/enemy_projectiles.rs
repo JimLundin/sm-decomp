@@ -169,6 +169,12 @@ pub fn dispatch_host(
     if name == "SpawnEprojWithRoomGfx" {
         spawn_room_with_host(r, rom, a as u16, b as u16, host)?;
         Ok(0)
+    } else if name == "EprojPreinstruction" {
+        crate::enemy_projectile_instructions::preinstruction_with_host(r, rom, b as u16, a as u16, host)?;
+        Ok(0)
+    } else if name == "EprojRunAll" {
+        crate::enemy_projectile_instructions::run_all_with_host(r, rom, 4096, host)?;
+        Ok(0)
     } else if name == "EprojInstruction" {
         crate::enemy_projectile_instructions::dispatch_rom(r, rom, name, a, b)
     } else {
