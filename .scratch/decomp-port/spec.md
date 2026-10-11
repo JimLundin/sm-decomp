@@ -202,3 +202,7 @@ landing scheduling. 833 actual-C cases match; live ownership remains open.
 Botwoon spit frontier: ticket69 adds native paired motion and inclusive
 camera removal. 833 actual-C cases match. Allocation/angle conversion and
 live ownership remain open.
+
+Parallel allocation frontier: tickets70/71 add Botwoon spit quarter-circle
+velocity setup and Yapping Maw body linkage.257+385 actual-C cases match.
+Final combined tests/fmt/Clippy pass; live gameplay ownership remains open.

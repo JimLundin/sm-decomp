@@ -816,3 +816,18 @@ fn botwoon_spit_keeps_inclusive_camera_edge_after_paired_motion() {
     port::enemy_projectile_instructions::preinstruction(&mut r, &[], 0xec05, 0).unwrap();
     assert_eq!(r.word(0x1997), 0);
 }
+
+#[test]
+fn botwoon_spit_allocation_uses_byte_angle_and_unsigned_rom_magnitudes() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    let mut rom = vec![0; 0x104000];
+    rom[0x36c48..0x36c4a].copy_from_slice(&0xebc6u16.to_le_bytes());
+    rom[0x10386e..0x103870].copy_from_slice(&0xffffu16.to_le_bytes());
+    r.set_word(0x60b, 0xff00);
+    port::enemy_projectiles::spawn_room(&mut r, &rom, 0xec48, 256).unwrap();
+    assert_eq!(r.word(0x97fe), 0);
+    assert_eq!(r.word(0x1ad9), 255);
+    assert_eq!(r.word(0x1b21), 0xff00);
+    assert_eq!(r.word(0x1afd), 0);
+}

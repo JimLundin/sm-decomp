@@ -75,6 +75,15 @@ pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) ->
 fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'static str> {
     let i = param as usize / 2;
     let table = match init {
+        0xec62 if r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => None,
+        0xebc6 if r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => {
+            let angle = usize::from(r.byte(0x60b));
+            for phase in [64, 128] {
+                let p = 0x1037ee + ((angle + phase) & 127) * 2;
+                rom.get(p..p + 2).ok_or("missing projectile quarter circle ROM")?;
+            }
+            None
+        }
         0xea31 if r.word(0xfa8) <= 0x7c0 && r.word(0xfa8) & 63 == 0 => {
             word(rom, if r.word(0xfa8) == 0 { 0xea21 } else { 0xea01 })?;
             None
@@ -259,6 +268,8 @@ fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'sta
             | 0x8acd
             | 0x8a39
             | 0xea31
+            | 0xec62
+            | 0xebc6
             | 0x8af1
             | 0x8b15
             | 0x8b39
@@ -299,6 +310,32 @@ pub(crate) fn random(r: &mut Wram<'_>) -> u16 {
     n
 }
 fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> Result<(), &'static str> {
+    if init == 0xec62 {
+        let enemy_slot = r.word(0xe54);
+        let enemy = 0xf78 + usize::from(enemy_slot);
+        r.set_word(0x1a4b + k, r.word(enemy + 2));
+        r.set_word(0x1a93 + k, r.word(enemy + 6));
+        r.set_word(0x1b47 + k, if r.word(enemy + 0x3e) == 0 { 0xec56 } else { 0xec5c });
+        let body = enemy_slot.wrapping_add(r.word(0x8808 + usize::from(enemy_slot)).wrapping_mul(2));
+        r.set_word(0x8800 + usize::from(body), k as u16);
+        return Ok(());
+    }
+    if init == 0xebc6 {
+        let enemy = 0xf78 + usize::from(r.word(0xe54));
+        r.set_word(0x1a4b + k, r.word(enemy + 2));
+        r.set_word(0x1a93 + k, r.word(enemy + 6));
+        r.set_word(0x1b47 + k, 0xebae);
+        let angle = usize::from(r.byte(0x60b));
+        r.set_word(0x97dc + k, angle as u16);
+        for (phase, high, low) in [(64, 0x1ab7, 0x1aff), (128, 0x1adb, 0x1b23)] {
+            let p = 0x1037ee + ((angle + phase) & 127) * 2;
+            let bytes = rom.get(p..p + 2).ok_or("missing projectile quarter circle ROM")?;
+            let amount = u32::from(u16::from_le_bytes([bytes[0], bytes[1]])) * u32::from(param);
+            r.set_word(high + k, (amount >> 16) as u16);
+            r.set_word(low + k, amount as u16);
+        }
+        return Ok(());
+    }
     if init == 0xea31 {
         r.set_word(0x1a4b + k, r.word(0xf7a));
         r.set_word(0x1a93 + k, r.word(0xf7e));
