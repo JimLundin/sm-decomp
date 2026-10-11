@@ -75,6 +75,8 @@ pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) ->
 fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'static str> {
     let i = param as usize / 2;
     let table = match init {
+        0x9cd8 => None,
+        0x9ca3 | 0x9d0c if r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => None,
         0x9824
             if match param >> 8 {
                 0 => true,
@@ -120,8 +122,23 @@ fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'sta
     if let Some((p, i)) = table {
         word(rom, p + i as u16 * 2)?;
     }
-    if !matches!(init, 0xb49d | 0xce6d | 0x9023 | 0x9286 | 0x934d | 0x94a0 | 0x94b4 | 0x94c8 | 0x94dc | 0x993a | 0x9824)
-        && (r.word(0x1c27) > 78 || r.word(0x1c27) & 1 != 0)
+    if !matches!(
+        init,
+        0xb49d
+            | 0xce6d
+            | 0x9023
+            | 0x9286
+            | 0x934d
+            | 0x94a0
+            | 0x94b4
+            | 0x94c8
+            | 0x94dc
+            | 0x993a
+            | 0x9824
+            | 0x9ca3
+            | 0x9cd8
+            | 0x9d0c
+    ) && (r.word(0x1c27) > 78 || r.word(0x1c27) & 1 != 0)
     {
         return Err("invalid PLM slot");
     }
@@ -137,6 +154,27 @@ pub(crate) fn random(r: &mut Wram<'_>) -> u16 {
     n
 }
 fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> Result<(), &'static str> {
+    if matches!(init, 0x9ca3 | 0x9cd8 | 0x9d0c) {
+        let p = 0xf78 + usize::from(r.word(0xe54));
+        let random = r.word(0x5e5);
+        let (x, y, vx, vy) = match init {
+            0x9ca3 => (r.word(p + 2).wrapping_add(16), r.word(p + 6).wrapping_sub(96), param, 0xfc00),
+            0x9cd8 => (param, 312, 0, (random & 63) + 64),
+            _ => {
+                let offset = if random & 1 == 0 { !(random & 63) } else { random & 63 };
+                (r.word(p + 2).wrapping_add(offset), 432, param, 0xfb00)
+            }
+        };
+        r.set_word(0x1a4b + k, x);
+        r.set_word(0x1a93 + k, y);
+        r.set_word(0x1ab7 + k, vx);
+        r.set_word(0x1adb + k, vy);
+        r.set_word(0x19bb + k, 1536);
+        if init == 0x9d0c {
+            crate::audio::queue_sfx(r, 2, 0x1e06)?;
+        }
+        return Ok(());
+    }
     if init == 0x9824 {
         let mode = param >> 8;
         let low = param as u8;

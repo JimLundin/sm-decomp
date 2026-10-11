@@ -272,3 +272,39 @@ fn phantoon_orbit_contracts_only_after_delay_on_odd_frames() {
     assert_eq!(r.word(0x1a93), 80);
     assert_eq!(r.word(0x1b47), 0x97f8);
 }
+
+#[test]
+fn kraid_rock_acceleration_wraps_at_positive_threshold() {
+    use port::enemy_projectile_instructions as e;
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x7a5, 16);
+    r.set_word(0x1a4b, 24);
+    r.set_word(0x1a93, 24);
+    r.set_word(0x1bb3, 0x202);
+    r.set_word(0x1ab7, 248);
+    r.set_word(0x1adb, 0);
+    e::preinstruction(&mut r, &[], 0x9d56, 0).unwrap();
+    assert_eq!(r.word(0x1ab7), 0xff00);
+    assert_eq!(r.word(0x1adb), 64);
+}
+
+#[test]
+fn kraid_wall_collision_skips_vertical_motion_and_acceleration() {
+    use port::enemy_projectile_instructions as e;
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x7a5, 16);
+    r.set_word(0x1a4b, 29);
+    r.set_word(0x1a93, 24);
+    r.set_word(0x1bb3, 0x202);
+    r.set_word(0x1ab7, 0x300);
+    r.set_word(0x1adb, 0x200);
+    r.set_word(0x1997, 0x9c45);
+    r.set_word(0x10002 + 18 * 2, 0x8000);
+    e::preinstruction(&mut r, &[], 0x9d56, 0).unwrap();
+    assert_eq!(r.word(0x1997), 0);
+    assert_eq!(r.word(0x1a93), 24);
+    assert_eq!(r.word(0x1ab7), 0x300);
+    assert_eq!(r.word(0x1adb), 0x200);
+}

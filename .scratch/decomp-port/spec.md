@@ -61,6 +61,7 @@ observable hardware effects, Rust hits and fallback measurements.
 - 37: directional fireball split/repeat spawning, area properties and collision transitions through scheduled frames, offline verified (528 cases).
 - 38: Phantoon starting-fireball radial allocation, landing/pause/bounce lifecycle and scheduled transitions, offline verified (449 cases).
 - 39: Phantoon destroyable-fireball modes, expanding/contracting orbits and delayed fall through scheduled frames, offline verified (809 cases).
+- 40: Kraid spit/ceiling/rising rocks, collision flight and acceleration through scheduled frames, offline verified (513 cases).
 
 This is the first frontier, not the completion boundary of the user's goal.
 Expand tickets into substantive gameplay subsystems after this frontier, using
