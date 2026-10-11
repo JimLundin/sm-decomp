@@ -323,9 +323,14 @@ def main():
             units[units.index(bank)] = transformed
             transformations[bank.name] = {'original_sha256': digest(bank), 'transformed_sha256': digest(transformed)}
         host = run / 'host.c'
+        host_dependencies = [ROOT / 'tools/decomp/headless.c', ROOT / 'tools/decomp/headless_frame.h']
+        verdict['host_dependencies'] = {}
+        for dependency in host_dependencies:
+            shutil.copyfile(dependency, run / dependency.name)
+            verdict['host_dependencies'][dependency.name] = digest(dependency)
         host.write_text('''#define main retained_main
 #define __wrap_DecompressToMem retained_decompression_observer
-''' + f'#include {json.dumps(str(ROOT / "tools/decomp/headless.c"))}\n' + '''#undef main
+''' + f'#include {json.dumps(str(run / "headless.c"))}\n' + '''#undef main
 #undef __wrap_DecompressToMem
 #include "snes/ppu.h"
 #include "funcs.h"

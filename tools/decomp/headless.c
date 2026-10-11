@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "snes/cart.h"
+#include "headless_frame.h"
 
 bool g_debug_flag, g_is_turbo, g_other_image;
 bool g_new_ppu = true;
@@ -118,6 +119,7 @@ int main(int argc, char **argv) {
     // Imported .inputs uses SNES serial order; upstream host uses bit-reversed order.
     unsigned reversed = 0;
     for (int bit = 0; bit < 16; bit++) reversed |= ((pad >> bit) & 1) << (15 - bit);
+    HeadlessPrepareFrame();
     RtlRunFrame(reversed);
     if (g_fail) { fprintf(stderr, "candidate error frame=%ld\n", frame); return 3; }
     if (frame == 0 || (frame + 1) % 1000 == 0 || frame + 1 == frames) {

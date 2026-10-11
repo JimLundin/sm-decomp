@@ -76,7 +76,7 @@ def main():
         units += [source / 'src' / n for n in ('spc_player.c', 'tracing.c', 'util.c')]
         units += sorted((source / 'src/snes').glob('*.c'))
         host = ROOT / 'tools/decomp/live.c'
-        copied = [host, ROOT / 'tools/decomp/headless.c', Path(__file__).resolve(), source / 'LICENSE.txt']
+        copied = [host, ROOT / 'tools/decomp/headless.c', ROOT / 'tools/decomp/headless_frame.h', Path(__file__).resolve(), source / 'LICENSE.txt']
         for path in copied: shutil.copyfile(path, run / path.name)
         verdict['sources'] = {str(p): digest(p) for p in [*units, *copied]}
         verdict['rust_library_sha256'] = digest(library)

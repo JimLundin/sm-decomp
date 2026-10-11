@@ -1,5 +1,5 @@
 # Reference live replay soft-reset crash
-Status: open
+Status: resolved
 Blocked by: None
 Triage: ready-for-agent
 
@@ -41,3 +41,40 @@ Utility applied/deduplicated diagnostic root0bytes (format unsupported).
 Previously authenticated parity-prefix snapshots shared identical inodes,
 reclaiming3,828,920,841bytes without changing hashes. Logs/binary identities
 validated after cleanup.26GiBavailable; no implementer worktree created.
+
+## Completion evidence
+
+Fixed the missing independent-host soft-reset transition. The pinned comparison
+runtime already redirects CPU to80:8462 and coroutine_state_0 to3 forffff.
+The independent headless host now applies that same transition before its next
+frame. This enters Vector_RESET_Async's explicitly marked soft-reset position,
+preserving hardware state, SRAM and imported input timeline; no invalid-index
+guard or hardware power cycle was introduced.
+
+Regression exercises the actual Vector_RESET_Async coroutine routing through
+its firstAPUupload. Before fix the control fails; after fix it enters position3,
+skipslogo/MEMSEL/initialRAMclear and redirectsCPUcorrectly. Normalgame states
+preserve their coroutine. Softreset+live-tooltests10pass(1optional skip);
+baseline tests2pass; decomp_live tests1pass/1optional skip.
+
+Original45000frame reproduction now completes twice in independent C processes:
+`out/port/soft-reset-reference/20261011T061242.225740Z/verdict.json`.
+At44000state4 and45000state1, fallback0; repeated WRAM/SRAM, progress and
+ordered diagnostics match. This proves the43188crash fixed, without proving
+original-ROM movie progression or bank86 Rust exercise. Full129712 C/mixed
+replay remains tracked under ticket73 by the integration owner.
+
+Baseline and live drivers now snapshot/hash headless_frame.h alongside the
+host. First45000regression ran before automatic header inventory was added;
+`header-identity.json` records the manually retained unchanged header digest
+and exact binary afterward. Do not treat that manual addition as an earlier
+sealed driver contract. Final baseline-driver tests cover updated snapshots.
+Live generatedhost compiles local retained headless.c/header, preventing
+later edits from changing its captured dependency.
+
+Cleanup utility applied/deduplicated reference root0bytes(formatunsupported).
+Shared byte-identical repeat fixtures after comparison, reclaiming52,068,903
+bytes. Binary, both terminalstates and332WRAMfixturehashes in each process
+reauthenticated after cleanup. Header snapshot retained; no debug logs added
+to code or implementerworktree created.25GiBavailable during root's active
+fullmovie run. Commit contains hostfix, regression and driverdependencyseals.

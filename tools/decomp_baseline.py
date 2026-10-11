@@ -61,9 +61,11 @@ def main():
         units += sorted((source / "src/snes").glob("*.c"))
         host = ROOT / "tools/decomp/headless.c"
         shutil.copyfile(host, run / "host.c")
+        host_header = ROOT / "tools/decomp/headless_frame.h"
+        shutil.copyfile(host_header, run / host_header.name)
         shutil.copyfile(Path(__file__), run / "driver.py")
         shutil.copyfile(source / "LICENSE.txt", run / "LICENSE.txt")
-        verdict["sources"] = {str(p.relative_to(ROOT)): digest(p) for p in [*units, host]}
+        verdict["sources"] = {str(p.relative_to(ROOT)): digest(p) for p in [*units, host, host_header]}
         verdict["license_sha256"] = digest(source / "LICENSE.txt")
         verdict["compiler"] = subprocess.check_output(["cc", "--version"], text=True, timeout=args.timeout).splitlines()[0]
         command = ["cc", "-std=gnu11", "-O2", "-fno-strict-aliasing", "-ffunction-sections",
