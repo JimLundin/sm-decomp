@@ -416,3 +416,13 @@ executes 524 times, providing a grounded next Rust/live target. A328 pad execute
 528 times but includes a Samus callback. Full trace and current-tool control
 artifacts are authenticated after scoped zero-byte cleanup. Counters establish
 C exercise only; they do not prove Rust ownership or original-ROM parity.
+
+
+Scalable live evidence storage: ticket 89 adds optional lossless gzip for every
+ordered hardware observation, streaming seals, and byte-verified sharing of
+repeated ROM snapshots while preserving each distinct patched view and every
+path. Bounded plain/compressed four-process runs match state/effects and all
+9,243,333 decompressed event bytes. Fifteen tooling tests pass (one opt-in
+control skipped). Finished-run cleanup and authentication complete; historical
+diagnostic ROM sharing reclaimed 1,753,219,072 bytes without changing hashes.
+This is storage verification; full gameplay admission remains separate.

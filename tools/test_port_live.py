@@ -339,3 +339,127 @@ class FinishedOutputDedupControls(unittest.TestCase):
             (anchor / 'c-0' / 'hardware.log').write_bytes(b'mutated!')
             with self.assertRaisesRegex(ValueError, 'anchor output seal differs'):
                 share_finished_outputs(current, inventory, verdict)
+
+
+class CompressedEffectsControls(unittest.TestCase):
+    def test_c_writer_preserves_plain_bytes_and_rejects_changed_streams(self):
+        import gzip
+        import sys
+        sys.path.insert(0, str(ROOT / 'tools'))
+        from port_live import generate_effect_writer, stream_digest
+        with tempfile.TemporaryDirectory() as temporary:
+            run = Path(temporary)
+            source = run / 'writer.c'
+            source.write_text('#include <stdio.h>\n#include <stdlib.h>\n' + generate_effect_writer(True) + r'''
+int main(void){
+ port_effects=PortEffectsOpen();if(!port_effects)return 2;
+ FILE *plain=fopen("plain.log","wb");if(!plain)return 2;
+ for(unsigned frame=0;frame<5000;frame++){
+  fprintf(plain,"ppu %u %d %u %u\n",frame,1,255,frame&255);
+  PortEffect(port_effects,"ppu %u %d %u %u\n",frame,1,255,frame&255);
+  fprintf(plain,"apu %u %u %u\n",frame,65535,0);
+  PortEffect(port_effects,"apu %u %u %u\n",frame,65535,0);
+  fprintf(plain,"plm %u %d %d %u\n",65535,-2147483647,2147483647,255);
+  PortEffect(port_effects,"plm %u %d %d %u\n",65535,-2147483647,2147483647,255);
+ }
+ return PortEffectsClose() || fclose(plain);
+}
+''')
+            binary = run / 'writer'
+            subprocess.run(['cc', '-Wall', '-Wextra', '-Werror', str(source), '-lz', '-o', str(binary)], check=True)
+            subprocess.run([str(binary)], cwd=run, check=True)
+            compressed = run / 'hardware.log.gz'
+            baseline = (run / 'plain.log').read_bytes()
+            self.assertEqual(gzip.decompress(compressed.read_bytes()), baseline)
+            seal = stream_digest(compressed)
+            subprocess.run([str(binary)], cwd=run, check=True)
+            self.assertEqual(stream_digest(compressed), seal)
+            self.assertLess(compressed.stat().st_size, len(baseline) // 4)
+            rows = baseline.splitlines(keepends=True)
+            for changed in (baseline.replace(b'apu 0 65535 0', b'apu 0 65535 1', 1),
+                            b''.join([rows[1], rows[0], *rows[2:]])):
+                self.assertNotEqual(gzip.decompress(gzip.compress(changed, mtime=0)), baseline)
+            with self.assertRaises((EOFError, OSError)):
+                gzip.decompress(compressed.read_bytes()[:-8])
+
+    def test_duplicate_rom_sharing_authenticates_before_mutation(self):
+        import sys
+        sys.path.insert(0, str(ROOT / 'tools'))
+        from port_live import reclaim_duplicate_rom_fixtures, stream_digest
+        with tempfile.TemporaryDirectory() as temporary:
+            run = Path(temporary)
+            (run / 'fixtures').mkdir()
+            view = run / 'rom-view.bin'
+            view.write_bytes(b'current ROM')
+            fixtures = [run / 'fixtures' / f'{i}.rom' for i in range(2)]
+            for fixture in fixtures:
+                fixture.write_bytes(view.read_bytes())
+            inventory = {'rom-view.bin': stream_digest(view)}
+            fixtures[1].unlink()
+            fixtures[1].symlink_to(view)
+            with self.assertRaisesRegex(ValueError, 'symlink'):
+                reclaim_duplicate_rom_fixtures(run, inventory)
+            self.assertNotEqual(fixtures[0].stat().st_ino, view.stat().st_ino)
+            fixtures[1].unlink()
+            fixtures[1].write_bytes(view.read_bytes())
+            result = reclaim_duplicate_rom_fixtures(run, inventory)
+            self.assertEqual(result['bytes_reclaimed'], 2 * view.stat().st_size)
+            self.assertEqual(result['copies_shared'], 2)
+            for fixture in fixtures:
+                self.assertEqual(fixture.stat().st_ino, view.stat().st_ino)
+                self.assertEqual(stream_digest(fixture), inventory['rom-view.bin'])
+            self.assertEqual(reclaim_duplicate_rom_fixtures(run, inventory)['bytes_reclaimed'], 0)
+
+    def test_compressed_anchor_shares_exact_bytes_and_plain_anchor_remains_valid(self):
+        import gzip
+        import sys
+        sys.path.insert(0, str(ROOT / 'tools'))
+        from port_live import share_finished_outputs, stream_digest
+        with tempfile.TemporaryDirectory() as temporary:
+            run = Path(temporary)
+            anchor = run / 'anchor'
+            (anchor / 'c-0').mkdir(parents=True)
+            current = run / 'current'
+            current.mkdir()
+            (anchor / 'live').write_bytes(b'binary')
+            for directory in (anchor / 'c-0', current):
+                (directory / 'hardware.log.gz').write_bytes(gzip.compress(b'ppu 0 1 2 3\n', mtime=0))
+                (directory / 'rom-view.bin').write_bytes(b'rom')
+            inventory = {p.name: stream_digest(p) for p in current.iterdir()}
+            verdict = anchor / 'verdict.json'
+            verdict.write_text(json.dumps({'status': 'mixed-C-Rust-integration', 'artifacts': inventory,
+                                           'binary_sha256': stream_digest(anchor / 'live')}))
+            expected_bytes = sum(p.stat().st_size for p in current.iterdir())
+            self.assertEqual(share_finished_outputs(current, inventory, verdict), expected_bytes)
+            for name in inventory:
+                self.assertEqual((current / name).stat().st_ino, (anchor / 'c-0' / name).stat().st_ino)
+            # A historical plain anchor may share the ROM view, without equating
+            # a plain hardware seal with a compressed representation.
+            (anchor / 'c-0' / 'hardware.log').write_bytes(b'ppu 0 1 2 3\n')
+            historical = {'hardware.log': stream_digest(anchor / 'c-0' / 'hardware.log'),
+                          'rom-view.bin': inventory['rom-view.bin']}
+            verdict.write_text(json.dumps({'status': 'mixed-C-Rust-integration', 'artifacts': historical,
+                                           'binary_sha256': stream_digest(anchor / 'live')}))
+            self.assertEqual(share_finished_outputs(current, inventory, verdict), 0)
+
+    def test_distinct_actual_rom_view_keeps_exemplar_and_all_snapshot_paths(self):
+        import sys
+        sys.path.insert(0, str(ROOT / 'tools'))
+        from port_live import reclaim_duplicate_rom_fixtures, stream_digest
+        with tempfile.TemporaryDirectory() as temporary:
+            run = Path(temporary)
+            (run / 'fixtures').mkdir()
+            view = run / 'rom-view.bin'
+            view.write_bytes(b'initial ROM')
+            for i in range(3):
+                (run / 'fixtures' / f'{i}.rom').write_bytes(b'patched ROM')
+            result = reclaim_duplicate_rom_fixtures(run, {'rom-view.bin': stream_digest(view)})
+            self.assertEqual(result['bytes_reclaimed'], 22)
+            self.assertEqual(result['snapshot_count'], 3)
+            self.assertEqual(result['copies_shared'], 2)
+            self.assertEqual(len(result['retained_views']), 1)
+            for i in range(3):
+                snapshot = run / 'fixtures' / f'{i}.rom'
+                self.assertEqual(snapshot.read_bytes(), b'patched ROM')
+                self.assertEqual(snapshot.stat().st_ino, (run / 'fixtures/0.rom').stat().st_ino)
+            self.assertEqual(view.read_bytes(), b'initial ROM')

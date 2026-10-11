@@ -18,6 +18,7 @@ DISPATCHER_LEAVES = {
     'MoveEprojWithVelocityY': 'uint16',
     'Eproj_FuncE73E_MoveXY': 'void',
     'Eproj_FuncE722': 'uint16',
+    'EprojPreInstr_CeresElevatorPlatform': 'void',
 }
 DISPATCHER_SYNTHETIC = {'EprojInstruction', 'EprojPreinstruction'}
 
@@ -61,6 +62,74 @@ def stream_digest(path):
     return digest.hexdigest()
 
 
+def hardware_output(inventory):
+    names = [name for name in ('hardware.log', 'hardware.log.gz') if name in inventory]
+    if len(names) != 1:
+        raise ValueError('expected one sealed hardware event stream')
+    return names[0]
+
+
+def generate_effect_writer(compressed=False):
+    """Keep the observer's formatted bytes and order; only change storage."""
+    if not compressed:
+        return ('static FILE *port_effects;\n'
+                '#define PortEffect fprintf\n'
+                '#define PortEffectsOpen() fopen("hardware.log","wb")\n'
+                '#define PortEffectsClose() fclose(port_effects)\n')
+    return r"""#include <zlib.h>
+#include <stdarg.h>
+static gzFile port_effects;
+static void PortEffect(gzFile stream,const char *format,...) {
+ char buffer[256];va_list args;va_start(args,format);
+ int count=vsnprintf(buffer,sizeof(buffer),format,args);va_end(args);
+ if(count<0 || (size_t)count>=sizeof(buffer) || gzwrite(stream,buffer,count)!=count)exit(2);
+}
+#define PortEffectsOpen() gzopen("hardware.log.gz","wb1")
+#define PortEffectsClose() (gzclose(port_effects)!=Z_OK)
+"""
+
+
+def reclaim_duplicate_rom_fixtures(directory, inventory):
+    """Share excluded copies only after all match the retained sealed ROM view."""
+    view = directory / 'rom-view.bin'
+    expected = inventory.get('rom-view.bin')
+    fixtures = sorted((directory / 'fixtures').glob('*.rom'))
+    if not expected or view.is_symlink() or stream_digest(view) != expected:
+        raise ValueError('retained ROM view seal differs')
+    exemplars = {expected: view}
+    plans = []
+    groups = {}
+    for fixture in fixtures:
+        if fixture.is_symlink():
+            raise ValueError('excluded ROM fixture is a symlink')
+        seal = stream_digest(fixture)
+        exemplar = exemplars.get(seal)
+        if exemplar is None:
+            exemplars[seal] = fixture
+            exemplar = fixture
+        elif fixture.stat().st_size != exemplar.stat().st_size or fixture.read_bytes() != exemplar.read_bytes():
+            raise ValueError('ROM fixture bytes differ despite matching seal')
+        plans.append((fixture, exemplar))
+        groups.setdefault(seal, {'retained': str(exemplar.relative_to(directory)), 'copies': 0})['copies'] += 1
+    reclaimed = 0
+    shared = 0
+    for fixture, exemplar in plans:
+        old = fixture.stat()
+        if old.st_ino == exemplar.stat().st_ino and old.st_dev == exemplar.stat().st_dev:
+            continue
+        temporary = fixture.with_name(fixture.name + '.dedup-' + uuid.uuid4().hex)
+        try:
+            os.link(exemplar, temporary)
+            os.replace(temporary, fixture)
+        finally:
+            temporary.unlink(missing_ok=True)
+        if old.st_nlink == 1:
+            reclaimed += old.st_size
+        shared += 1
+    return {'copies_shared': shared, 'snapshot_count': len(fixtures), 'bytes_reclaimed': reclaimed,
+            'retained_views': groups}
+
+
 def share_finished_outputs(directory, inventory, anchor_verdict):
     """Share identical sealed outputs only after the producing process exits."""
     anchor = json.loads(anchor_verdict.read_text())
@@ -71,8 +140,11 @@ def share_finished_outputs(directory, inventory, anchor_verdict):
     if anchor.get('status') != 'mixed-C-Rust-integration':
         raise ValueError('dedup anchor is not an accepted live run')
     reclaimed = 0
-    for relative in ('hardware.log', 'rom-view.bin'):
+    for relative in (hardware_output(inventory), 'rom-view.bin'):
         expected = anchor['artifacts'].get(relative)
+        # Historical plain and compressed representations remain separate seals.
+        if relative.startswith('hardware.log') and relative not in anchor['artifacts']:
+            continue
         previous = anchor_verdict.parent / 'c-0' / relative
         current = directory / relative
         if not expected or previous.is_symlink() or current.is_symlink():
@@ -162,7 +234,7 @@ static void PortPositionedPlm(unsigned kind,uint16 a,uint16 b) {
  port_room_total[kind-1]++;
  if(native==-2){port_room_c[kind-1]++;if(kind==1)PortC_SpawnRoomPLM(a);else PortC_SpawnHardcodedPlm((SpawnHardcodedPlmArgs){b,b>>8,a});}
  else {if(native<0){fprintf(stderr,"room PLM error %u %u\n",kind,a);exit(4);}port_room_rust[kind-1]++;port_room_setups[kind-1]+=native;}
- fprintf(port_effects,"room-plm %u %u %u\n",kind,a,b);
+ PortEffect(port_effects,"room-plm %u %u %u\n",kind,a,b);
 }
 void SpawnRoomPLM(uint16 entry){PortPositionedPlm(1,entry,0);}
 void SpawnHardcodedPlm(SpawnHardcodedPlmArgs p){PortPositionedPlm(2,p.field_2,p.field_0|p.field_1<<8);}
@@ -198,6 +270,7 @@ def main():
     parser.add_argument('--collision-verdict', type=Path, action='append', default=[])
     parser.add_argument('--dispatcher-verdict', type=Path, action='append', default=[],
                         help='Authenticated bank86 dispatcher evidence for safe movement and extent leaves')
+    parser.add_argument('--compress-effects', action='store_true', help='Losslessly gzip every ordered hardware event')
     parser.add_argument('--dedup-anchor-verdict', type=Path, help='Share byte-identical finished logs with a sealed prior live run')
     parser.add_argument('--plm-verdict', type=Path)
     parser.add_argument('--room-plm', action='store_true', help='Require native room/hardcoded setup hits')
@@ -220,7 +293,7 @@ def main():
         inputs = ROOT / 'movies/super-metroid-any-3653.inputs'
         if digest(rom) != ROM_SHA256:
             raise ValueError('original ROM identity differs')
-        verdict.update(rom_sha256=digest(rom), inputs_sha256=digest(inputs), frames=args.frames)
+        verdict.update(rom_sha256=digest(rom), inputs_sha256=digest(inputs), frames=args.frames, hardware_storage='gzip' if args.compress_effects else 'plain')
         families = []
         dispatcher_indexes = set()
         for path in args.family_verdict:
@@ -420,7 +493,7 @@ void __wrap_DecompressToMem(uint32 src,uint8 *dst) {
  if(sm_decompress_v1(g_rom,g_snes->cart->romSize,g_ram,sizeof(g_ram),src,address-base,&report))exit(4);
  port_decompress_rust++;SaveRoutineState("after");
 }
-static FILE *port_effects;
+''' + generate_effect_writer(args.compress_effects) + '''
 static FILE *port_calls;
 static unsigned port_call_depth;
 extern int32 *cur_coll_amt32;
@@ -438,7 +511,7 @@ uint8 __wrap_SpawnPLM(uint16 header) {
  if(native==-2){result=__real_SpawnPLM(header);port_plm_c++;}
  else {if(native<0){fprintf(stderr,"native PLM error %u\\n",header);exit(4);}result=native;if(cur_coll_amt32)*cur_coll_amt32=displacement;port_plm_rust++;if(free_slot)port_plm_rust_setups++;}
  port_plm_callbacks++;
- fprintf(port_effects,"plm %u %d %d %u\\n",header,before,cur_coll_amt32?*cur_coll_amt32:0,result);
+ PortEffect(port_effects,"plm %u %d %d %u\\n",header,before,cur_coll_amt32?*cur_coll_amt32:0,result);
  return result;
 }
 int32_t sm_rust_collision_spawn_plm(uint8_t *transaction,size_t len,uint16_t header,int32_t *amount) {
@@ -482,12 +555,12 @@ static unsigned long port_room_total[2],port_room_c[2],port_room_rust[2],port_ro
 static unsigned port_frame;
 void __real_ppu_write(Ppu *,uint8_t,uint8_t);
 void __wrap_ppu_write(Ppu *ppu,uint8_t adr,uint8_t val) {
- fprintf(port_effects,"ppu %u %d %u %u\\n",port_frame,ppu==g_snes->my_ppu,adr,val);
+ PortEffect(port_effects,"ppu %u %d %u %u\\n",port_frame,ppu==g_snes->my_ppu,adr,val);
  __real_ppu_write(ppu,adr,val);
 }
 void __real_RtlApuWrite(uint32 adr,uint8 val);
 void __wrap_RtlApuWrite(uint32 adr,uint8 val) {
- fprintf(port_effects,"apu %u %u %u\\n",port_frame,adr,val);
+ PortEffect(port_effects,"apu %u %u %u\\n",port_frame,adr,val);
  __real_RtlApuWrite(adr,val);
 }
 static void PortSave(void *ctx,void *data,size_t size) {
@@ -511,11 +584,11 @@ bool __wrap_RtlRunFrame(int pad) {
 int main(int argc,char **argv) {
  if(argc!=6) return 2;
  port_mixed=!strcmp(argv[1],"mixed");
- port_effects=fopen("hardware.log","wb");if(!port_effects)return 2;
+ port_effects=PortEffectsOpen();if(!port_effects)return 2;
  port_calls=fopen("routine-calls.log","wb");if(!port_calls)return 2;
  char *original[]={argv[0],argv[2],argv[3],argv[4],argv[5],NULL};
  int result=retained_main(5,original);
- if(fclose(port_effects))return 2;
+ if(PortEffectsClose())return 2;
  if(fclose(port_calls))return 2;
  if(result) return result;
  for(unsigned i=0;i<sizeof(port_c_hits)/sizeof(*port_c_hits);i++) printf("port-hit %u %lu %lu\\n",i,port_c_hits[i],port_rust_hits[i]);
@@ -527,7 +600,7 @@ int main(int argc,char **argv) {
 ''')
         units += [source / 'src' / name for name in ('spc_player.c', 'tracing.c', 'util.c')]
         units += sorted((source / 'src/snes').glob('*.c'))
-        build = ['cc', '-O2', '-fno-strict-aliasing', '-ffunction-sections', '-fdata-sections', '-iquote', str(source / 'src'), *map(str, units), str(host), str(run / 'libfamilies.a'), str(run / 'target/release/libdecomp.a'), str(run / 'librng.a'), '-Wl,--gc-sections', '-Wl,--wrap=Call', '-Wl,--wrap=cpu_runOpcode', '-Wl,--wrap=DecompressToMem', '-Wl,--wrap=ppu_write', '-Wl,--wrap=RtlApuWrite', '-Wl,--wrap=RtlRunFrame', '-Wl,--wrap=SpawnPLM', '-lm', '-ldl', '-lpthread', '-o', str(run / 'live')]
+        build = ['cc', '-O2', '-fno-strict-aliasing', '-ffunction-sections', '-fdata-sections', '-iquote', str(source / 'src'), *map(str, units), str(host), str(run / 'libfamilies.a'), str(run / 'target/release/libdecomp.a'), str(run / 'librng.a'), '-Wl,--gc-sections', '-Wl,--wrap=Call', '-Wl,--wrap=cpu_runOpcode', '-Wl,--wrap=DecompressToMem', '-Wl,--wrap=ppu_write', '-Wl,--wrap=RtlApuWrite', '-Wl,--wrap=RtlRunFrame', '-Wl,--wrap=SpawnPLM', '-lm', '-ldl', '-lpthread', *(['-lz'] if args.compress_effects else []), '-o', str(run / 'live')]
         execute(build, run, 'host-build')
         inventories, hits = {}, {}
         for mode in ('c', 'mixed'):
@@ -537,16 +610,20 @@ int main(int argc,char **argv) {
                 (directory / 'fixtures').mkdir(parents=True)
                 (directory / 'saves').mkdir()
                 execute([str(run / 'live'), mode, str(rom), str(inputs), str(args.frames), str(directory / 'terminal.bin')], directory, 'replay')
-                inventories[name] = {str(p.relative_to(directory)): digest(p) for p in directory.rglob('*') if p.is_file() and p.name not in ('replay.stdout', 'replay.stderr', 'calls.jsonl') and p.suffix != '.rom'}
+                inventories[name] = {str(p.relative_to(directory)): stream_digest(p) for p in directory.rglob('*') if p.is_file() and p.name not in ('replay.stdout', 'replay.stderr', 'calls.jsonl') and p.suffix != '.rom'}
+                verdict.setdefault('rom_fixture_cleanup', {})[name] = reclaim_duplicate_rom_fixtures(directory, inventories[name])
                 if args.dedup_anchor_verdict:
                     reclaimed = share_finished_outputs(directory, inventories[name], args.dedup_anchor_verdict)
                     verdict.setdefault('finished_output_dedup', {})[name] = reclaimed
-                    if name != 'mixed-1' and shutil.disk_usage(run).free < (directory / 'hardware.log').stat().st_size + 512 * 1024 * 1024:
-                        raise ValueError('insufficient space for another independent replay log')
                     verdict['dedup_anchor'] = {'path': str(args.dedup_anchor_verdict.resolve()),
                                               'sha256': stream_digest(args.dedup_anchor_verdict),
-                                              'outputs': {key: inventories[name][key] for key in ('hardware.log', 'rom-view.bin')},
+                                              'outputs': {key: inventories[name][key] for key in (hardware_output(inventories[name]), 'rom-view.bin')},
                                               'scope': 'historical immutable bytes only; no current-source admission'}
+                if name != 'mixed-1':
+                    prior_rom_peak = max(row['snapshot_count'] for row in verdict['rom_fixture_cleanup'].values()) * (directory / 'rom-view.bin').stat().st_size
+                    next_peak = (directory / hardware_output(inventories[name])).stat().st_size + prior_rom_peak + 512 * 1024 * 1024
+                    if shutil.disk_usage(run).free < next_peak:
+                        raise ValueError('insufficient space for another independent replay log and ROM snapshots')
                 rows = [line.split() for line in (directory / 'replay.stdout').read_text().splitlines() if line.startswith('port-hit ')]
                 if len(rows) != len(symbols):
                     raise ValueError('missing per-routine execution counters')
