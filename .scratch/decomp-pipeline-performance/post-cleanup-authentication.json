@@ -1,0 +1,176 @@
+[
+  {
+    "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live/0-parallel-private/verdict.json",
+    "seconds": 17.007596923001984,
+    "result": {
+      "status": "authenticated",
+      "artifacts_per_subject": 108,
+      "subjects": 4,
+      "binary": true,
+      "storage": "sm-evidence-v1",
+      "verdict_sha256": "bcae4c096a75d8fc4b37596e97b7d43ef4d436d836bd59b5df046e2ebd5a961a",
+      "free_bytes": 262390153216,
+      "scope": "retained frozen binary and observations; current-source admission and original-ROM parity separate"
+    }
+  },
+  {
+    "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live/0-parallel-shared/verdict.json",
+    "seconds": 15.760378040999058,
+    "result": {
+      "status": "authenticated",
+      "artifacts_per_subject": 108,
+      "subjects": 4,
+      "binary": true,
+      "storage": "sm-evidence-v1",
+      "verdict_sha256": "a55fb3eeba11cade603c13bfb7d3a9277ff8a860611d851c7630c4c720464373",
+      "free_bytes": 263050485760,
+      "scope": "retained frozen binary and observations; current-source admission and original-ROM parity separate"
+    }
+  },
+  {
+    "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live/0-serial-shared/verdict.json",
+    "seconds": 14.715700011998706,
+    "result": {
+      "status": "authenticated",
+      "artifacts_per_subject": 108,
+      "subjects": 4,
+      "binary": true,
+      "storage": "sm-evidence-v1",
+      "verdict_sha256": "edfffae42309af0ae529db11b2a82f7d7f8da660c4ea43e4b54c81e5a83ecdb5",
+      "free_bytes": 263303794688,
+      "scope": "retained frozen binary and observations; current-source admission and original-ROM parity separate"
+    }
+  },
+  {
+    "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live/1-parallel-private/verdict.json",
+    "seconds": 9.580145492000156,
+    "result": {
+      "status": "authenticated",
+      "artifacts_per_subject": 108,
+      "subjects": 4,
+      "binary": true,
+      "storage": "sm-evidence-v1",
+      "verdict_sha256": "b2b17b74e8fc0ba1712452641b2939a3f8ae44bb8dcb117205c24a0698503794",
+      "free_bytes": 263594041344,
+      "scope": "retained frozen binary and observations; current-source admission and original-ROM parity separate"
+    }
+  },
+  {
+    "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live/1-parallel-shared/verdict.json",
+    "seconds": 16.658988445000432,
+    "result": {
+      "status": "authenticated",
+      "artifacts_per_subject": 108,
+      "subjects": 4,
+      "binary": true,
+      "storage": "sm-evidence-v1",
+      "verdict_sha256": "71899fa79d75c56bac97424c78cecdd54192e6171176875048ccf59c83fae5d2",
+      "free_bytes": 264587235328,
+      "scope": "retained frozen binary and observations; current-source admission and original-ROM parity separate"
+    }
+  },
+  {
+    "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live/1-serial-shared/verdict.json",
+    "seconds": 13.53550729899871,
+    "result": {
+      "status": "authenticated",
+      "artifacts_per_subject": 108,
+      "subjects": 4,
+      "binary": true,
+      "storage": "sm-evidence-v1",
+      "verdict_sha256": "967ba6d7a9409acdd157a83e5172c1c071034843fb0930ad82b510c2546fe22a",
+      "free_bytes": 264813027328,
+      "scope": "retained frozen binary and observations; current-source admission and original-ROM parity separate"
+    }
+  },
+  {
+    "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live-lock-timing/0-parallel-private/verdict.json",
+    "seconds": 16.002894354998716,
+    "result": {
+      "status": "authenticated",
+      "artifacts_per_subject": 108,
+      "subjects": 4,
+      "binary": true,
+      "storage": "sm-evidence-v1",
+      "verdict_sha256": "fb293d4ec8ebe5a5b48d7ee5eb780c5e7754a105762a70131d80818a28c39afb",
+      "free_bytes": 264971841536,
+      "scope": "retained frozen binary and observations; current-source admission and original-ROM parity separate"
+    }
+  },
+  {
+    "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live-lock-timing/0-parallel-shared/verdict.json",
+    "seconds": 8.48664695199841,
+    "result": {
+      "status": "authenticated",
+      "artifacts_per_subject": 108,
+      "subjects": 4,
+      "binary": true,
+      "storage": "sm-evidence-v1",
+      "verdict_sha256": "7f331bf6747996a3acad75e9dd3bf74306b61787bdaefcbc7becdacd37e5e938",
+      "free_bytes": 265133056000,
+      "scope": "retained frozen binary and observations; current-source admission and original-ROM parity separate"
+    }
+  },
+  {
+    "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live-lock-timing/0-serial-shared/verdict.json",
+    "seconds": 6.594803485000739,
+    "result": {
+      "status": "authenticated",
+      "artifacts_per_subject": 108,
+      "subjects": 4,
+      "binary": true,
+      "storage": "sm-evidence-v1",
+      "verdict_sha256": "02653873da108b949f79632888d78b70f6c3e4340591d9f76dc31225f1ad58ce",
+      "free_bytes": 265008840704,
+      "scope": "retained frozen binary and observations; current-source admission and original-ROM parity separate"
+    }
+  },
+  {
+    "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/offline/0-offline-1/audio/20261011T132541.581295Z/verdict.json",
+    "seconds": 5.145497752997471,
+    "status": "offline-verified",
+    "cases": 1147
+  },
+  {
+    "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/offline/0-offline-1/system/20261011T132526.511561Z/verdict.json",
+    "seconds": 1.7815301309965434,
+    "status": "offline-verified",
+    "cases": 475
+  },
+  {
+    "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/offline/0-offline-2/audio/20261011T132630.117090Z/verdict.json",
+    "seconds": 4.956448635002744,
+    "status": "offline-verified",
+    "cases": 1147
+  },
+  {
+    "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/offline/0-offline-2/system/20261011T132630.116005Z/verdict.json",
+    "seconds": 1.7285813679991406,
+    "status": "offline-verified",
+    "cases": 475
+  },
+  {
+    "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/offline/1-offline-1/audio/20261011T132745.750131Z/verdict.json",
+    "seconds": 5.189669461000449,
+    "status": "offline-verified",
+    "cases": 1147
+  },
+  {
+    "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/offline/1-offline-1/system/20261011T132712.543558Z/verdict.json",
+    "seconds": 2.3759374350011058,
+    "status": "offline-verified",
+    "cases": 475
+  },
+  {
+    "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/offline/1-offline-2/audio/20261011T132848.925415Z/verdict.json",
+    "seconds": 5.266313355998136,
+    "status": "offline-verified",
+    "cases": 1147
+  },
+  {
+    "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/offline/1-offline-2/system/20261011T132848.937309Z/verdict.json",
+    "seconds": 1.5237653330004832,
+    "status": "offline-verified",
+    "cases": 475
+  }
+]

@@ -1,0 +1,183 @@
+{
+  "baseline": "/home/jim/sm-decomp/out/port/storage-pipeline/packed-timing/verdict.json",
+  "baseline_authentication": {
+    "status": "authenticated",
+    "artifacts_per_subject": 108,
+    "subjects": 4,
+    "binary": true,
+    "storage": "sm-evidence-v1",
+    "verdict_sha256": "bd1416745d03ec5eda51d818e982f8aa911adcb5caf63f3a7b15ceb1b5652583",
+    "free_bytes": 268661522432,
+    "scope": "retained frozen binary and observations; current-source admission and original-ROM parity separate"
+  },
+  "samples": [
+    {
+      "label": "serial-shared",
+      "repeat": 0,
+      "workers": 1,
+      "shared_store": true,
+      "wall_seconds": 35.17634920199998,
+      "authentication_seconds": 13.16681924400109,
+      "stored_bytes": 3196451,
+      "verdict": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live-lock-timing/0-serial-shared/verdict.json",
+      "verdict_sha256": "02653873da108b949f79632888d78b70f6c3e4340591d9f76dc31225f1ad58ce",
+      "exact_inventory": true,
+      "exact_roots": true,
+      "authentication": {
+        "status": "authenticated",
+        "artifacts_per_subject": 108,
+        "subjects": 4,
+        "binary": true,
+        "storage": "sm-evidence-v1",
+        "verdict_sha256": "02653873da108b949f79632888d78b70f6c3e4340591d9f76dc31225f1ad58ce",
+        "free_bytes": 267147608064,
+        "scope": "retained frozen binary and observations; current-source admission and original-ROM parity separate"
+      },
+      "host_load_before": "9.80 13.00 8.83 4/640 58",
+      "host_load_after": "10.57 12.79 8.96 5/641 71",
+      "subjects": {
+        "c-0": {
+          "pipeline_seconds": 7.299724437001714,
+          "producer_seconds": 2.476255908000894,
+          "seal_seconds": 4.823463853001158,
+          "stored_added_bytes": 3173012,
+          "measured_lock_wait_seconds": 0.0009994399988499936
+        },
+        "c-1": {
+          "pipeline_seconds": 9.951981620000879,
+          "producer_seconds": 2.5038472669984912,
+          "seal_seconds": 7.44812882900078,
+          "stored_added_bytes": 6340,
+          "measured_lock_wait_seconds": 0.0001348550031252671
+        },
+        "mixed-0": {
+          "pipeline_seconds": 10.362215114997525,
+          "producer_seconds": 5.514350869998452,
+          "seal_seconds": 4.847855575997528,
+          "stored_added_bytes": 10763,
+          "measured_lock_wait_seconds": 0.0005023270023229998
+        },
+        "mixed-1": {
+          "pipeline_seconds": 7.39255103799951,
+          "producer_seconds": 4.216153033001319,
+          "seal_seconds": 3.176390144999459,
+          "stored_added_bytes": 6336,
+          "measured_lock_wait_seconds": 0.0002098419972753618
+        }
+      },
+      "exact_progress_and_ownership": true
+    },
+    {
+      "label": "parallel-shared",
+      "repeat": 0,
+      "workers": 4,
+      "shared_store": true,
+      "wall_seconds": 37.29898263300129,
+      "authentication_seconds": 9.186179951997474,
+      "stored_bytes": 3196451,
+      "verdict": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live-lock-timing/0-parallel-shared/verdict.json",
+      "verdict_sha256": "7f331bf6747996a3acad75e9dd3bf74306b61787bdaefcbc7becdacd37e5e938",
+      "exact_inventory": true,
+      "exact_roots": true,
+      "authentication": {
+        "status": "authenticated",
+        "artifacts_per_subject": 108,
+        "subjects": 4,
+        "binary": true,
+        "storage": "sm-evidence-v1",
+        "verdict_sha256": "7f331bf6747996a3acad75e9dd3bf74306b61787bdaefcbc7becdacd37e5e938",
+        "free_bytes": 265843109888,
+        "scope": "retained frozen binary and observations; current-source admission and original-ROM parity separate"
+      },
+      "host_load_before": "10.57 12.79 8.96 5/642 71",
+      "host_load_after": "9.29 12.14 8.94 4/636 87",
+      "subjects": {
+        "c-0": {
+          "pipeline_seconds": 10.599995928998396,
+          "producer_seconds": 4.404230457999802,
+          "seal_seconds": 6.195759575002739,
+          "stored_added_bytes": 3173012,
+          "measured_lock_wait_seconds": 0.0014733819989487529
+        },
+        "c-1": {
+          "pipeline_seconds": 31.14939172600134,
+          "producer_seconds": 23.495182594000653,
+          "seal_seconds": 7.654198296997492,
+          "stored_added_bytes": 6340,
+          "measured_lock_wait_seconds": 17.532535062000534
+        },
+        "mixed-0": {
+          "pipeline_seconds": 17.504206464000163,
+          "producer_seconds": 13.925997231999645,
+          "seal_seconds": 3.5782040970007074,
+          "stored_added_bytes": 10763,
+          "measured_lock_wait_seconds": 10.617291726997792
+        },
+        "mixed-1": {
+          "pipeline_seconds": 37.21540134799943,
+          "producer_seconds": 34.57379951999974,
+          "seal_seconds": 2.641597002999333,
+          "stored_added_bytes": 6336,
+          "measured_lock_wait_seconds": 31.178144546000112
+        }
+      },
+      "exact_progress_and_ownership": true
+    },
+    {
+      "label": "parallel-private",
+      "repeat": 0,
+      "workers": 4,
+      "shared_store": false,
+      "wall_seconds": 19.15933686000062,
+      "authentication_seconds": 12.82814204999886,
+      "stored_bytes": 12721523,
+      "verdict": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live-lock-timing/0-parallel-private/verdict.json",
+      "verdict_sha256": "fb293d4ec8ebe5a5b48d7ee5eb780c5e7754a105762a70131d80818a28c39afb",
+      "exact_inventory": true,
+      "exact_roots": true,
+      "authentication": {
+        "status": "authenticated",
+        "artifacts_per_subject": 108,
+        "subjects": 4,
+        "binary": true,
+        "storage": "sm-evidence-v1",
+        "verdict_sha256": "fb293d4ec8ebe5a5b48d7ee5eb780c5e7754a105762a70131d80818a28c39afb",
+        "free_bytes": 265383206912,
+        "scope": "retained frozen binary and observations; current-source admission and original-ROM parity separate"
+      },
+      "host_load_before": "9.29 12.14 8.94 4/635 87",
+      "host_load_after": "10.84 12.26 9.08 8/852 103",
+      "subjects": {
+        "c-0": {
+          "pipeline_seconds": 19.078630855001393,
+          "producer_seconds": 9.318679185002111,
+          "seal_seconds": 9.759947654001735,
+          "stored_added_bytes": 3173012,
+          "measured_lock_wait_seconds": 0.0017865000008896459
+        },
+        "c-1": {
+          "pipeline_seconds": 18.911922248000337,
+          "producer_seconds": 9.115638041999773,
+          "seal_seconds": 9.796282978000818,
+          "stored_added_bytes": 3173012,
+          "measured_lock_wait_seconds": 0.0032487099997524638
+        },
+        "mixed-0": {
+          "pipeline_seconds": 12.115730638000969,
+          "producer_seconds": 6.518837895000615,
+          "seal_seconds": 5.596887656000035,
+          "stored_added_bytes": 3187749,
+          "measured_lock_wait_seconds": 0.0018832780006050598
+        },
+        "mixed-1": {
+          "pipeline_seconds": 12.201971812999545,
+          "producer_seconds": 6.426401484000962,
+          "seal_seconds": 5.775562060000084,
+          "stored_added_bytes": 3187750,
+          "measured_lock_wait_seconds": 0.0012103269982617348
+        }
+      },
+      "exact_progress_and_ownership": true
+    }
+  ]
+}

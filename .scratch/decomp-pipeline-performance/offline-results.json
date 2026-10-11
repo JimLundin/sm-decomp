@@ -1,0 +1,230 @@
+[
+  {
+    "workers": 1,
+    "repeat": 0,
+    "wall_seconds": 63.583718199999566,
+    "families": {
+      "system": {
+        "seconds": 15.024393211999268,
+        "command": [
+          "/usr/bin/python3",
+          "/tmp/sm-decomp-pipeline/.scratch/decomp-pipeline-performance/benchmark.py",
+          "offline-family",
+          "--manifest",
+          "/tmp/sm-decomp-pipeline/tools/port/system.json",
+          "--source",
+          "/home/jim/sm-decomp/deps/snesrev-sm",
+          "--output",
+          "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/offline/0-offline-1/system"
+        ],
+        "stages": {
+          "hashing-total-overlapping": 1.829437875883741,
+          "source-authentication": 0.12929757700112532,
+          "execute-c-build": 1.5719737590006844,
+          "execute-rust-build": 3.8419965079992835,
+          "build-total": 5.442720343999099,
+          "fixture-preparation": 0.7716927600231429,
+          "execute-rust": 2.5603266170546704,
+          "execute-c": 2.251088341981813,
+          "evidence-authentication": 1.93378025399943
+        }
+      },
+      "audio": {
+        "seconds": 48.550350890996924,
+        "command": [
+          "/usr/bin/python3",
+          "/tmp/sm-decomp-pipeline/.scratch/decomp-pipeline-performance/benchmark.py",
+          "offline-family",
+          "--manifest",
+          "/tmp/sm-decomp-pipeline/tools/port/audio.json",
+          "--source",
+          "/home/jim/sm-decomp/deps/snesrev-sm",
+          "--output",
+          "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/offline/0-offline-1/audio"
+        ],
+        "stages": {
+          "hashing-total-overlapping": 7.194410493855685,
+          "source-authentication": 0.1603691960008291,
+          "execute-c-build": 1.8385281940027198,
+          "execute-rust-build": 3.2743781870012754,
+          "build-total": 5.1442129320021195,
+          "fixture-preparation": 4.045629509990249,
+          "execute-rust": 13.084249859031843,
+          "execute-c": 11.834936950017436,
+          "evidence-authentication": 6.13672440099981
+        }
+      }
+    }
+  },
+  {
+    "workers": 2,
+    "repeat": 0,
+    "wall_seconds": 42.098726858999726,
+    "families": {
+      "system": {
+        "seconds": 25.47267946899956,
+        "command": [
+          "/usr/bin/python3",
+          "/tmp/sm-decomp-pipeline/.scratch/decomp-pipeline-performance/benchmark.py",
+          "offline-family",
+          "--manifest",
+          "/tmp/sm-decomp-pipeline/tools/port/system.json",
+          "--source",
+          "/home/jim/sm-decomp/deps/snesrev-sm",
+          "--output",
+          "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/offline/0-offline-2/system"
+        ],
+        "stages": {
+          "hashing-total-overlapping": 3.040658472044015,
+          "source-authentication": 0.16512578499896335,
+          "execute-c-build": 2.7860200479990453,
+          "execute-rust-build": 4.4454053310000745,
+          "build-total": 7.262282367999433,
+          "fixture-preparation": 1.5244630039996991,
+          "execute-rust": 5.4216384969695355,
+          "execute-c": 4.615104070016969,
+          "evidence-authentication": 2.983705752001697
+        }
+      },
+      "audio": {
+        "seconds": 42.0890499920024,
+        "command": [
+          "/usr/bin/python3",
+          "/tmp/sm-decomp-pipeline/.scratch/decomp-pipeline-performance/benchmark.py",
+          "offline-family",
+          "--manifest",
+          "/tmp/sm-decomp-pipeline/tools/port/audio.json",
+          "--source",
+          "/home/jim/sm-decomp/deps/snesrev-sm",
+          "--output",
+          "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/offline/0-offline-2/audio"
+        ],
+        "stages": {
+          "hashing-total-overlapping": 5.321275279351539,
+          "source-authentication": 0.15919612099969527,
+          "execute-c-build": 2.944572291999066,
+          "execute-rust-build": 4.385208813000645,
+          "build-total": 7.36081016299795,
+          "fixture-preparation": 2.965398254982574,
+          "execute-rust": 10.466756452053232,
+          "execute-c": 9.496848581977247,
+          "evidence-authentication": 5.991158198001358
+        }
+      }
+    }
+  },
+  {
+    "workers": 1,
+    "repeat": 1,
+    "wall_seconds": 96.66865587800203,
+    "families": {
+      "system": {
+        "seconds": 33.501690006996796,
+        "command": [
+          "/usr/bin/python3",
+          "/tmp/sm-decomp-pipeline/.scratch/decomp-pipeline-performance/benchmark.py",
+          "offline-family",
+          "--manifest",
+          "/tmp/sm-decomp-pipeline/tools/port/system.json",
+          "--source",
+          "/home/jim/sm-decomp/deps/snesrev-sm",
+          "--output",
+          "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/offline/1-offline-1/system"
+        ],
+        "stages": {
+          "hashing-total-overlapping": 3.1210628496810386,
+          "source-authentication": 0.284423589000653,
+          "execute-c-build": 6.725391137999395,
+          "execute-rust-build": 7.252612997999677,
+          "build-total": 14.036818216998654,
+          "fixture-preparation": 1.4551653659473232,
+          "execute-rust": 5.477783336973516,
+          "execute-c": 4.7967200549610425,
+          "evidence-authentication": 3.1891401409993705
+        }
+      },
+      "audio": {
+        "seconds": 63.15899798200189,
+        "command": [
+          "/usr/bin/python3",
+          "/tmp/sm-decomp-pipeline/.scratch/decomp-pipeline-performance/benchmark.py",
+          "offline-family",
+          "--manifest",
+          "/tmp/sm-decomp-pipeline/tools/port/audio.json",
+          "--source",
+          "/home/jim/sm-decomp/deps/snesrev-sm",
+          "--output",
+          "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/offline/1-offline-1/audio"
+        ],
+        "stages": {
+          "hashing-total-overlapping": 7.646077401743241,
+          "source-authentication": 0.20767016299942043,
+          "execute-c-build": 1.900552360999427,
+          "execute-rust-build": 4.367008491000888,
+          "build-total": 6.298352982001234,
+          "fixture-preparation": 5.412625534998369,
+          "execute-rust": 18.737990522011387,
+          "execute-c": 16.688829861057457,
+          "evidence-authentication": 7.844343714998104
+        }
+      }
+    }
+  },
+  {
+    "workers": 2,
+    "repeat": 1,
+    "wall_seconds": 55.386417128000176,
+    "families": {
+      "system": {
+        "seconds": 27.952492434000305,
+        "command": [
+          "/usr/bin/python3",
+          "/tmp/sm-decomp-pipeline/.scratch/decomp-pipeline-performance/benchmark.py",
+          "offline-family",
+          "--manifest",
+          "/tmp/sm-decomp-pipeline/tools/port/system.json",
+          "--source",
+          "/home/jim/sm-decomp/deps/snesrev-sm",
+          "--output",
+          "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/offline/1-offline-2/system"
+        ],
+        "stages": {
+          "hashing-total-overlapping": 2.992760242370423,
+          "source-authentication": 0.21918383299998823,
+          "execute-c-build": 2.7159039309990476,
+          "execute-rust-build": 5.296383810000407,
+          "build-total": 8.057289288000902,
+          "fixture-preparation": 1.7358699300275475,
+          "execute-rust": 5.7916287220105005,
+          "execute-c": 5.337684864985931,
+          "evidence-authentication": 3.541262219998316
+        }
+      },
+      "audio": {
+        "seconds": 55.37453072200151,
+        "command": [
+          "/usr/bin/python3",
+          "/tmp/sm-decomp-pipeline/.scratch/decomp-pipeline-performance/benchmark.py",
+          "offline-family",
+          "--manifest",
+          "/tmp/sm-decomp-pipeline/tools/port/audio.json",
+          "--source",
+          "/home/jim/sm-decomp/deps/snesrev-sm",
+          "--output",
+          "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/offline/1-offline-2/audio"
+        ],
+        "stages": {
+          "hashing-total-overlapping": 6.4562216427511885,
+          "source-authentication": 0.1912402749985631,
+          "execute-c-build": 2.727107448001334,
+          "execute-rust-build": 4.961104963997059,
+          "build-total": 7.724713753999822,
+          "fixture-preparation": 5.036518075037748,
+          "execute-rust": 14.935019199958333,
+          "execute-c": 13.347845715947187,
+          "evidence-authentication": 7.2518266109982505
+        }
+      }
+    }
+  }
+]

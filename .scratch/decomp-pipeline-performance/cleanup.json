@@ -1,0 +1,139 @@
+{
+  "build_cleanup_bytes": 0,
+  "deduplicated_snapshot_bytes": 2392719360,
+  "unsealed_compiler_binary_bytes": 9037376,
+  "free_bytes": 264838463488,
+  "retained": [
+    {
+      "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live/0-parallel-private/verdict.json",
+      "kind": "live",
+      "binary": "live",
+      "reader": "sm-evidence",
+      "store_dependencies": [
+        "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live/0-parallel-private/store-c-0",
+        "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live/0-parallel-private/store-c-1",
+        "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live/0-parallel-private/store-mixed-0",
+        "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live/0-parallel-private/store-mixed-1"
+      ]
+    },
+    {
+      "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live/0-parallel-shared/verdict.json",
+      "kind": "live",
+      "binary": "live",
+      "reader": "sm-evidence",
+      "store_dependencies": [
+        "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live/0-parallel-shared/store"
+      ]
+    },
+    {
+      "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live/0-serial-shared/verdict.json",
+      "kind": "live",
+      "binary": "live",
+      "reader": "sm-evidence",
+      "store_dependencies": [
+        "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live/0-serial-shared/store"
+      ]
+    },
+    {
+      "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live/1-parallel-private/verdict.json",
+      "kind": "live",
+      "binary": "live",
+      "reader": "sm-evidence",
+      "store_dependencies": [
+        "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live/1-parallel-private/store-c-0",
+        "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live/1-parallel-private/store-c-1",
+        "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live/1-parallel-private/store-mixed-0",
+        "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live/1-parallel-private/store-mixed-1"
+      ]
+    },
+    {
+      "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live/1-parallel-shared/verdict.json",
+      "kind": "live",
+      "binary": "live",
+      "reader": "sm-evidence",
+      "store_dependencies": [
+        "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live/1-parallel-shared/store"
+      ]
+    },
+    {
+      "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live/1-serial-shared/verdict.json",
+      "kind": "live",
+      "binary": "live",
+      "reader": "sm-evidence",
+      "store_dependencies": [
+        "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live/1-serial-shared/store"
+      ]
+    },
+    {
+      "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live-lock-timing/0-parallel-private/verdict.json",
+      "kind": "live",
+      "binary": "live",
+      "reader": "sm-evidence",
+      "store_dependencies": [
+        "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live-lock-timing/0-parallel-private/store-c-0",
+        "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live-lock-timing/0-parallel-private/store-c-1",
+        "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live-lock-timing/0-parallel-private/store-mixed-0",
+        "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live-lock-timing/0-parallel-private/store-mixed-1"
+      ]
+    },
+    {
+      "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live-lock-timing/0-parallel-shared/verdict.json",
+      "kind": "live",
+      "binary": "live",
+      "reader": "sm-evidence",
+      "store_dependencies": [
+        "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live-lock-timing/0-parallel-shared/store"
+      ]
+    },
+    {
+      "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live-lock-timing/0-serial-shared/verdict.json",
+      "kind": "live",
+      "binary": "live",
+      "reader": "sm-evidence",
+      "store_dependencies": [
+        "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/live-lock-timing/0-serial-shared/store"
+      ]
+    },
+    {
+      "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/offline/0-offline-1/audio/20261011T132541.581295Z/verdict.json",
+      "kind": "offline",
+      "source_dependencies": "exact snapshots and /tmp/sm-decomp-pipeline/crates/port/src source closure"
+    },
+    {
+      "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/offline/0-offline-1/system/20261011T132526.511561Z/verdict.json",
+      "kind": "offline",
+      "source_dependencies": "exact snapshots and /tmp/sm-decomp-pipeline/crates/port/src source closure"
+    },
+    {
+      "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/offline/0-offline-2/audio/20261011T132630.117090Z/verdict.json",
+      "kind": "offline",
+      "source_dependencies": "exact snapshots and /tmp/sm-decomp-pipeline/crates/port/src source closure"
+    },
+    {
+      "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/offline/0-offline-2/system/20261011T132630.116005Z/verdict.json",
+      "kind": "offline",
+      "source_dependencies": "exact snapshots and /tmp/sm-decomp-pipeline/crates/port/src source closure"
+    },
+    {
+      "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/offline/1-offline-1/audio/20261011T132745.750131Z/verdict.json",
+      "kind": "offline",
+      "source_dependencies": "exact snapshots and /tmp/sm-decomp-pipeline/crates/port/src source closure"
+    },
+    {
+      "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/offline/1-offline-1/system/20261011T132712.543558Z/verdict.json",
+      "kind": "offline",
+      "source_dependencies": "exact snapshots and /tmp/sm-decomp-pipeline/crates/port/src source closure"
+    },
+    {
+      "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/offline/1-offline-2/audio/20261011T132848.925415Z/verdict.json",
+      "kind": "offline",
+      "source_dependencies": "exact snapshots and /tmp/sm-decomp-pipeline/crates/port/src source closure"
+    },
+    {
+      "path": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/offline/1-offline-2/system/20261011T132848.937309Z/verdict.json",
+      "kind": "offline",
+      "source_dependencies": "exact snapshots and /tmp/sm-decomp-pipeline/crates/port/src source closure"
+    }
+  ],
+  "worktree_retained": "investigation and next implementation; not an integrated implementer worktree"
+}

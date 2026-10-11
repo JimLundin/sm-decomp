@@ -1,0 +1,5 @@
+{
+  "baseline": "offline-verified",
+  "unrelated_audio_change": "family Rust dependency changed: /tmp/sm-decomp-pipeline/crates/port/src/audio.rs",
+  "restored": "offline-verified"
+}

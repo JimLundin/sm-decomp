@@ -1,0 +1,14 @@
+{
+  "compile_seconds": {
+    "broad": 5.135729648998677,
+    "narrow": 0.8913968660017417,
+    "narrow-case-replay": 3.8830848739999055
+  },
+  "cases": 475,
+  "all_full_wram_and_returns_match": true,
+  "baseline": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/offline/0-offline-1/system/20261011T132526.511561Z/verdict.json",
+  "dependencies": {
+    "broad": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/closure/broad.d: /tmp/sm-decomp-pipeline/out/port/pipeline-performance/offline/0-offline-1/system/20261011T132526.511561Z/wrapper.rs /tmp/sm-decomp-pipeline/crates/port/src/lib.rs /tmp/sm-decomp-pipeline/crates/port/src/animated_tiles.rs /tmp/sm-decomp-pipeline/crates/port/src/audio.rs /tmp/sm-decomp-pipeline/crates/port/src/collision.rs /tmp/sm-decomp-pipeline/crates/port/src/enemy.rs /tmp/sm-decomp-pipeline/crates/port/src/enemy_ai.rs /tmp/sm-decomp-pipeline/crates/port/src/enemy_crawler.rs /tmp/sm-decomp-pipeline/crates/port/src/enemy_instructions.rs /tmp/sm-decomp-pipeline/crates/port/src/enemy_jump.rs /tmp/sm-decomp-pipeline/crates/port/src/enemy_projectile_collision.rs /tmp/sm-decomp-pipeline/crates/port/src/enemy_projectile_instructions.rs /tmp/sm-decomp-pipeline/crates/port/src/enemy_projectiles.rs /tmp/sm-decomp-pipeline/crates/port/src/enemy_rio.rs /tmp/sm-decomp-pipeline/crates/port/src/plm.rs /tmp/sm-decomp-pipeline/crates/port/src/plm_instructions.rs /tmp/sm-decomp-pipeline/crates/port/src/plm_render.rs /tmp/sm-decomp-pipeline/crates/port/src/power_bomb.rs /tmp/sm-decomp-pipeline/crates/port/src/projectile_flight.rs /tmp/sm-decomp-pipeline/crates/port/src/projectile_special.rs /tmp/sm-decomp-pipeline/crates/port/src/projectiles.rs /tmp/sm-decomp-pipeline/crates/port/src/room.rs /tmp/sm-decomp-pipeline/crates/port/src/samus.rs /tmp/sm-decomp-pipeline/crates/port/src/samus_control.rs /tmp/sm-decomp-pipeline/crates/port/src/sprite_objects.rs /tmp/sm-decomp-pipeline/crates/port/src/system.rs",
+    "narrow": "/tmp/sm-decomp-pipeline/out/port/pipeline-performance/closure/narrow.d: /tmp/sm-decomp-pipeline/out/port/pipeline-performance/closure/wrapper.rs /tmp/sm-decomp-pipeline/out/port/pipeline-performance/closure/memory.rs /tmp/sm-decomp-pipeline/crates/port/src/system.rs"
+  }
+}
