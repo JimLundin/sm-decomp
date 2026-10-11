@@ -13,6 +13,7 @@ This is a study, not authorization to migrate accepted evidence. The separate
 ## Tickets
 
 - [01 — Format investigation](issues/01-format-investigation.md)
+- [02 — Global-store comparison](issues/02-global-store-comparison.md)
 
 ## Integration evidence
 

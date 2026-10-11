@@ -1,0 +1,94 @@
+{
+  "schema": "merkle-estimate-v2",
+  "page_bytes": 256,
+  "fanout": 16,
+  "zstd_version": "1.4.4",
+  "compression_level": 3,
+  "scope": "all WRAM/full frame snapshots, no traces; whole-object pack; physical seek index and run catalog excluded",
+  "datasets": [
+    {
+      "run": "/home/jim/sm-decomp/out/port/projectile-movement-live/20261011T061431.667466Z/c-0",
+      "kind": "wram",
+      "files": 870,
+      "logical_bytes": 114032640,
+      "new_objects": 5427,
+      "new_pack_bytes": 381004,
+      "cumulative": {
+        "objects": 5427,
+        "pages": 3059,
+        "nodes": 1801,
+        "snapshot_roots": 567,
+        "object_payload_bytes": 1489027,
+        "pack_bytes_including_object_ids_lengths": 381013,
+        "single_pack_uncompressed_bytes": 1684399
+      }
+    },
+    {
+      "run": "/home/jim/sm-decomp/out/port/projectile-movement-live/20261011T061431.667466Z/c-0",
+      "kind": "frames",
+      "files": 130,
+      "logical_bytes": 182173550,
+      "new_objects": 50471,
+      "new_pack_bytes": 5712802,
+      "cumulative": {
+        "objects": 55898,
+        "pages": 43033,
+        "nodes": 12168,
+        "snapshot_roots": 697,
+        "object_payload_bytes": 17127323,
+        "pack_bytes_including_object_ids_lengths": 6093815,
+        "single_pack_uncompressed_bytes": 19139651
+      }
+    },
+    {
+      "run": "/home/jim/sm-decomp/out/port/room-plm-current-live/20261010T224032.887967Z/c-0",
+      "kind": "wram",
+      "files": 132,
+      "logical_bytes": 17301504,
+      "new_objects": 536,
+      "new_pack_bytes": 54824,
+      "cumulative": {
+        "objects": 56434,
+        "pages": 43241,
+        "nodes": 12422,
+        "snapshot_roots": 771,
+        "object_payload_bytes": 17281887,
+        "pack_bytes_including_object_ids_lengths": 6148639,
+        "single_pack_uncompressed_bytes": 19313511
+      }
+    },
+    {
+      "run": "/home/jim/sm-decomp/out/port/room-plm-current-live/20261010T224032.887967Z/c-0",
+      "kind": "frames",
+      "files": 10,
+      "logical_bytes": 14013350,
+      "new_objects": 0,
+      "new_pack_bytes": 0,
+      "cumulative": {
+        "objects": 56434,
+        "pages": 43241,
+        "nodes": 12422,
+        "snapshot_roots": 771,
+        "object_payload_bytes": 17281887,
+        "pack_bytes_including_object_ids_lengths": 6148639,
+        "single_pack_uncompressed_bytes": 19313511
+      }
+    }
+  ],
+  "roots_sha256": "62a3d14e3df28a43c4c86271096f644e2ed873c0a46a3a13152f7d033203a63c",
+  "totals": {
+    "objects": 56434,
+    "pages": 43241,
+    "nodes": 12422,
+    "snapshot_roots": 771,
+    "object_payload_bytes": 17281887,
+    "pack_bytes_including_object_ids_lengths": 6148639,
+    "single_pack_uncompressed_bytes": 19313511
+  },
+  "global_flat_pages": {
+    "unique_pages": 43240,
+    "raw_bytes": 16200680,
+    "zstd_bytes": 1230236
+  },
+  "round_trip": true
+}

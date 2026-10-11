@@ -1,5 +1,11 @@
 # Recommended storage for validation traces and frames
 
+Follow-up: [the global-store comparison](global-store-comparison.md) recommends
+content-addressed logical artifacts backed by these compact physical packs.
+It measures real cross-run sharing and distinguishes logical Merkle identities
+from the physical object representation. The original bounded-pack measurements
+below remain valid; global retention/concurrency require additional implementation.
+
 Use a **versioned binary pack with independently compressed Zstandard chunks**.
 Encode hardware effects as ordered typed records, and store snapshots as page
 references into a compressed page pool. Keep a small JSON verdict/manifest. A
