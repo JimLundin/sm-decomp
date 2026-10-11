@@ -316,6 +316,74 @@ fn lavaquake_arc(r: &mut Wram<'_>, rom: &[u8], k: usize, state: u16) -> Result<(
 pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Result<(), &'static str> {
     let k = slot(k)?;
     match address {
+        0xea80 => {
+            let mut state = r.word(0x1ab7 + k);
+            if r.word(0x8020) != 0 && state == 0xea98 {
+                state = 0xeaf4;
+                r.set_word(0x1ab7 + k, state);
+            }
+            match state {
+                0xea98 => {
+                    let direction = r.word(0x1aff + k) & !1;
+                    if direction >= 64 {
+                        return Err("Botwoon body script extent");
+                    }
+                    let script = word(rom, 0xe9f1 + direction)?;
+                    if script != r.word(0x1b23 + k) {
+                        r.set_word(0x1b47 + k, script);
+                        r.set_word(0x1b23 + k, script);
+                        r.set_word(0x1b8f + k, 1);
+                    }
+                }
+                0xeaf4 | 0xeb04 => {
+                    if state == 0xeaf4 {
+                        r.set_word(0x1aff + k, k as u16 * 4 + 96);
+                        r.set_word(0x1ab7 + k, 0xeb04);
+                    }
+                    let timer = r.word(0x1aff + k).wrapping_add(1);
+                    r.set_word(0x1aff + k, timer);
+                    if (timer.wrapping_sub(256) as i16) >= 0 {
+                        r.set_word(0x1ab7 + k, 0xeb1f);
+                    }
+                    r.set_word(0x1b8f + k, 0);
+                }
+                0xeb1f => {
+                    let row = usize::from(r.word(0x1adb + k) >> 8);
+                    if row >= 95 {
+                        return Err("Botwoon falling speed extent");
+                    }
+                    let p = 0x104bc7 + row * 8;
+                    let bytes = rom.get(p..p + 4).ok_or("missing Botwoon falling ROM")?;
+                    let amount = u32::from_le_bytes(bytes.try_into().unwrap());
+                    let position = (u32::from(r.word(0x1a93 + k)) << 16) | u32::from(r.word(0x1a6f + k));
+                    let next = position.wrapping_add(amount);
+                    r.set_word(0x1a93 + k, (next >> 16) as u16);
+                    r.set_word(0x1a6f + k, next as u16);
+                    if (r.word(0x1a93 + k).wrapping_sub(200) as i16) < 0 {
+                        r.set_word(0x1adb + k, r.word(0x1adb + k).wrapping_add(192));
+                        r.set_word(0x1b8f + k, 0);
+                    } else {
+                        r.set_word(0x1a93 + k, 200);
+                        r.set_word(0x1ab7 + k, 0xeb93);
+                        r.set_word(0x1b47 + k, 0xe208);
+                        r.set_word(0x19bb + k, 2560);
+                        r.set_word(0x1b8f + k, 1);
+                        crate::audio::queue_sfx(r, 1, 0x2406)?;
+                        if k == 10 {
+                            r.set_word(0x883e, 1);
+                        }
+                        return Ok(());
+                    }
+                }
+                0xeb93 => return Ok(()),
+                _ => return Err("unsupported Botwoon body state"),
+            }
+            let mut gfx = r.word(0x19bb + k) | 0xe00;
+            if r.word(0xf9c) != 0 && r.word(0xe44) & 2 != 0 {
+                gfx &= 0xf1ff;
+            }
+            r.set_word(0x19bb + k, gfx);
+        }
         0x8dca => {
             dispatch_rom(r, rom, "EprojPowerBombCollision", k as i32, 0)?;
             let release = if r.word(0xa6e) != 0 {

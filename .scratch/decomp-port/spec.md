@@ -195,3 +195,6 @@ Draygon allocation and live ownership remain open.
 Botwoon body frontier: ticket67 adds native allocation and extended-RAM
 body linkage. 193 actual-C cases match. Lifecycle scheduling and live ownership
 remain open.
+
+Botwoon lifecycle frontier: ticket68 ports main/flash/death delay/fall and
+landing scheduling. 833 actual-C cases match; live ownership remains open.

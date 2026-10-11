@@ -788,3 +788,16 @@ fn attached_gunk_contact_release_skips_follow_and_timer_update() {
     assert_eq!(r.word(0x1aff), 256);
     assert_eq!(r.word(0x1a4b), 100);
 }
+
+#[test]
+fn botwoon_death_delay_initializes_from_slot_then_increments_same_frame() {
+    let mut bytes = vec![0; WRAM_SIZE];
+    let mut r = Wram::new(&mut bytes).unwrap();
+    r.set_word(0x1ab7 + 10, 0xea98);
+    r.set_word(0x8020, 1);
+    port::enemy_projectile_instructions::preinstruction(&mut r, &[], 0xea80, 10).unwrap();
+    assert_eq!(r.word(0x1ab7 + 10), 0xeb04);
+    assert_eq!(r.word(0x1aff + 10), 137);
+    assert_eq!(r.word(0x1b8f + 10), 0);
+    assert_eq!(r.word(0x19bb + 10), 0xe00);
+}
