@@ -310,3 +310,20 @@ Cstep151/state1/RNG758/inputs0; poll1030 occurs afterward. ChangedRNGcontrol
 yields759;3publictests pass. Final retained evidence authenticated after cleanup
 0bytes. Ticket78claimed: boot video timing/later waits and full movie parity
 remain unproven; broad replay remains nonaccepting.
+
+
+Host-aware drop instructions: ticket82 extends instruction/context scheduling
+through AB8A,9270,8C68 and DC61, publishing externalpoint/header and invoking
+actual SpawnEnemyDrops/F337 native drop selection. Internal raw enemygfxoffset
+preserves C projectile-index use without loosening existing alignedenemy APIs.
+Final536actual-C cases match WRAM/return/host globals across real script words
+and all four scheduler callers. Ticket82resolved in commitcd32007; cleanup
+207,618,048bytes, final evidence authenticates and fullcrate checks pass.
+Live instruction ownership remains unproven.
+
+Causal update prefix: commitbdd617f executes160original polls and matches all
+ten completed-update semantic comparisons through nativeframe316. Each update
+checks its entire preceding poll sequence/count; repeated heldvalues cannot
+hide shiftedpollordinals. Allten changed-RNG comparisons detect errors;3public
+tests pass. Retained source/binary/states/logs authenticate after cleanup0bytes.
+Ticket78stillclaimed: native video/APUwait timing and fullmovie parity unproven.
