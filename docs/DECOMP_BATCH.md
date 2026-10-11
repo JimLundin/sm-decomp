@@ -63,6 +63,23 @@ still compare the same exact observation inventories. Identical pages, bursts
 and captures share `out/evidence` across runs. Provenance is sealed separately
 from observations; storage completeness does not grant gameplay acceptance.
 
+For projectile integration, `port_live.py --capture-active-eprojs` also retains
+the first eight outer calls per installed symbol whose before-state has an
+active enemy projectile slot. These complete before/after WRAM captures use
+`fixtures/active-port-<symbol-index>-<sequence>-{before,after}.wram`, alongside
+the ordinary first-eight call captures. Capture selection does not alter game
+state. Inspect actual OAM or contact changes before claiming those behaviors;
+an active pool alone can still be filtered by priority, visibility or flags.
+
+The `projectile-render-contacts` profile selects priority rendering and the two
+contact detectors. The `projectile-render-hits` profile selects rendering and
+the two hit handlers; leaving the C detectors installed gives native handler
+wrappers their own measurable calls. The ordinary gameplay profile includes
+the live-exercised rendering and detectors. Final frozen fixture evidence can
+be resumed explicitly with
+`--batch out/port/projectile-contact-render-final/batch.json`; the runner checks
+its current manifests, source dependencies and retained artifacts before reuse.
+
 ```sh
 # Authenticate the retained binary, subject pointers and packed observations.
 python3 tools/port_authenticate_live.py out/port/example/RUN/verdict.json

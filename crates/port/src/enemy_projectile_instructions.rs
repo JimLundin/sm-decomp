@@ -373,32 +373,7 @@ fn instruction_context(
             r.set_word(0x1a93 + k, r.word(0x1a93 + k).wrapping_add(word(rom, pc)?));
             Ok(pc.wrapping_add(2))
         }
-        0xd5e1 | 0xd69a => {
-            crate::enemy_projectiles::random(r);
-            r.set_word(0x1ab7 + k, r.word(0x5e6));
-            if opcode == 0xd5e1 {
-                r.set_word(0x1adb + k, 192)
-            }
-            Ok(pc)
-        }
-        0xd5f2 | 0xd62a => {
-            let odd = r.word(0x5b6) & 1 != 0;
-            let f = r.word(0x1b23 + k);
-            let (x, map, next) = if opcode == 0xd5f2 {
-                (
-                    if odd { f } else { 256u16.wrapping_sub(f) },
-                    word(rom, pc.wrapping_add(if odd { 0 } else { 2 }))?,
-                    pc.wrapping_add(4),
-                )
-            } else {
-                (if odd { f } else { 0xee00 }, word(rom, pc)?, pc.wrapping_add(2))
-            };
-            r.set_word(0x1a4b + k, x);
-            r.set_word(0x1b6b + k, map);
-            r.set_word(0x1b47 + k, next);
-            r.set_word(0x1b8f + k, 1);
-            Ok(0)
-        }
+        0xd5e1 | 0xd69a | 0xd5f2 | 0xd62a => crate::n00b_tube::instruction(r, rom, opcode, pc, k as u16),
         0xe533 => {
             r.set_word(0x1adb + k, word(rom, pc)?);
             Ok(pc.wrapping_add(2))
@@ -416,6 +391,100 @@ fn delete_below(r: &mut Wram<'_>, k: usize) {
     if r.word(0x1a93 + k).wrapping_sub(r.word(0x915)) as i16 >= 288 {
         r.set_word(0x1997 + k, 0)
     }
+}
+fn blue_ring_outside(r: &Wram<'_>, k: usize) -> bool {
+    let x = r.word(0x1a4b + k);
+    let y = r.word(0x1a93 + k);
+    let relative_x = x.wrapping_sub(r.word(0x911));
+    (y.wrapping_sub(32) as i16) < 0 || y >= 216 || (x as i16) < 0
+        || (relative_x as i16) < 0 || (relative_x.wrapping_sub(248) as i16) >= 0
+}
+fn blue_ring_enemy(r: &Wram<'_>) -> Result<usize, &'static str> {
+    let enemy = r.word(0x7854);
+    if enemy > 0x7c0 || enemy & 63 != 0 {
+        return Err("invalid blue-ring linked enemy slot");
+    }
+    Ok(usize::from(enemy))
+}
+fn blue_ring_enemy_collision(r: &mut Wram<'_>, k: usize) -> Result<u8, &'static str> {
+    let enemy = blue_ring_enemy(r)?;
+    if enemy == 0 { return Ok(0); }
+    if r.word(0xf8c + enemy) == 0 {
+        r.set_word(0x1997 + k, 0);
+        return Ok(0xff);
+    }
+    let radius = r.word(0x1bb3 + k);
+    // The C subtraction promotes both uint16 operands to int, retaining
+    // negative distances when the projectile center lies inside the enemy.
+    let hit = [(0xf7a, 0xf82, 0x1a4b, radius & 255), (0xf7e, 0xf84, 0x1a93, radius >> 8)]
+        .into_iter().all(|(pos, width, projectile, extent)| {
+            let delta = r.word(pos + enemy).wrapping_sub(r.word(projectile + k));
+            let distance = if delta & 0x8000 != 0 { delta.wrapping_neg() } else { delta };
+            i32::from(distance) - i32::from(r.word(width + enemy)) < i32::from(extent)
+        });
+    Ok(u8::from(hit))
+}
+fn blue_ring_explosion(
+    r: &mut Wram<'_>, rom: &[u8], k: usize, host: &mut crate::enemy_projectiles::ProjectileHost,
+) -> Result<(), &'static str> {
+    r.set_word(0x1997 + k, 0);
+    host.x = r.word(0x1a4b + k);
+    host.y = r.word(0x1a93 + k);
+    crate::enemy_projectiles::spawn_room_with_host(r, rom, 0xe509, 3, host)?;
+    crate::audio::queue_sfx(r, 2, 0x1306)?;
+    r.set_word(0x19bb + k, 0);
+    Ok(())
+}
+fn blue_ring_update(
+    r: &mut Wram<'_>, rom: &[u8], k: usize, host: &mut crate::enemy_projectiles::ProjectileHost,
+) -> Result<(), &'static str> {
+    let delay = r.word(0x1aff + k);
+    if delay != 0 {
+        r.set_word(0x1aff + k, delay.wrapping_sub(1));
+        r.set_word(0x1a4b + k, r.word(0xfba).wrapping_add(10));
+        r.set_word(0x1a93 + k, r.word(0xfbe).wrapping_add(16));
+        return Ok(());
+    }
+    // Validate the linked slot before any movement or collision writes.
+    blue_ring_enemy(r)?;
+    move_xy(r, k as u16)?;
+    match blue_ring_enemy_collision(r, k)? {
+        0xff => return Ok(()),
+        1 => {
+            r.set_word(0x7828, r.word(0x7828).wrapping_add(1));
+            blue_ring_explosion(r, rom, k, host)?;
+            let enemy = blue_ring_enemy(r)?;
+            r.set_word(0x780c + enemy, 16);
+            let health = r.word(0xf8c + enemy).wrapping_sub(80);
+            r.set_word(0xf8c + enemy, if (health as i16) < 0 { 0 } else { health });
+        }
+        _ => {
+            let radius = r.word(0x1bb3 + k);
+            let samus_hit = [(0xaf6, 0xafe, 0x1a4b, radius & 255), (0xafa, 0xb00, 0x1a93, radius >> 8)]
+                .into_iter().all(|(pos, width, projectile, extent)| {
+                    let delta = r.word(pos).wrapping_sub(r.word(projectile + k));
+                    let distance = if delta & 0x8000 != 0 { delta.wrapping_neg() } else { delta };
+                    distance < r.word(width) || distance.wrapping_sub(r.word(width)) < extent
+                });
+            if samus_hit {
+                blue_ring_explosion(r, rom, k, host)?;
+                if r.word(0xa78) == 0 {
+                    let items = r.word(0x9a2);
+                    let damage = if items & 32 != 0 { 20 } else if items & 1 != 0 { 40 } else { 80 };
+                    let health = r.word(0x9c2).wrapping_sub(damage);
+                    r.set_word(0x9c2, if (health as i16) < 0 { 0 } else { health });
+                }
+                r.set_word(0x18a8, 96);
+                r.set_word(0x18aa, 5);
+                r.set_word(0xa54, u16::from((r.word(0xaf6).wrapping_sub(r.word(0x1a4b + k)) as i16) >= 0));
+            } else if blue_ring_outside(r, k) {
+                r.set_word(0x1840, 10);
+                r.set_word(0x183e, 5);
+                blue_ring_explosion(r, rom, k, host)?;
+            }
+        }
+    }
+    Ok(())
 }
 fn lavaquake_outside(r: &Wram<'_>, k: usize) -> bool {
     [(0x1a4b, 0x911), (0x1a93, 0x915)].into_iter().any(|(pos, camera)| {
@@ -463,7 +532,7 @@ fn lavaquake_arc(r: &mut Wram<'_>, rom: &[u8], k: usize, state: u16) -> Result<(
 }
 /// Dispatch supported movement and room-effect preinstructions. Collision remains explicit.
 pub fn preinstruction(r: &mut Wram<'_>, rom: &[u8], address: u16, k: u16) -> Result<(), &'static str> {
-    if matches!(address, 0x940e | 0xbfdf) {
+    if matches!(address, 0x940e | 0xbfdf | 0xc335 | 0xc404 | 0xc410 | 0xc4c8) {
         return Err("projectile preinstruction requires host context");
     }
     preinstruction_context(r, rom, address, k, None)
@@ -486,6 +555,22 @@ fn preinstruction_context(
 ) -> Result<(), &'static str> {
     let k = slot(k)?;
     match address {
+        0xf3f0 => crate::enemy_projectile_sparks::update(r, rom, k as u16)?,
+        0xc4c8 => crate::mother_brain_bomb::update(r, rom, k as u16, host.ok_or("Mother Brain bomb requires host context")?)?,
+        0xc335 => blue_ring_update(r, rom, k, host.ok_or("blue-ring update requires host context")?)?,
+        0xc404 | 0xc410 => {
+            let host = host.ok_or("blue-ring explosion requires host context")?;
+            if address == 0xc404 {
+                r.set_word(0x1840, 10);
+                r.set_word(0x183e, 5);
+            }
+            blue_ring_explosion(r, rom, k, host)?;
+        }
+        0xc320 => {
+            r.set_word(0x1a4b + k, r.word(0xfba).wrapping_add(10));
+            r.set_word(0x1a93 + k, r.word(0xfbe).wrapping_add(16));
+        }
+        0xc42e => r.set_word(0x19bb + k, 0),
         0xdcc3 => {
             r.set_word(0x1a4b + k, r.word(0xf7a));
             r.set_word(0x1a93 + k, r.word(0xf7e).wrapping_sub(96));
@@ -1464,30 +1549,8 @@ fn preinstruction_context(
                 r.set_word(0x1997 + k, 0)
             }
         }
-        0xd7bf => {
-            if r.word(0x1a4b + k) != 0xee00 {
-                r.set_word(0x1aff + k, r.word(0x1a4b + k))
-            }
-            r.set_word(0x1a4b + k, if r.word(0x5b6) & 1 != 0 { 0xee00 } else { r.word(0x1aff + k) })
-        }
-        0xd7de => add_hilo(r, k, 0x1a93, 0x1a6f, 192),
-        0xd7fd => {
-            add_hilo(r, k, 0x1b23, 0x1aff, r.word(0x1ab7 + k));
-            add_hilo(r, k, 0x1a93, 0x1a6f, r.word(0x1adb + k));
-            delete_below(r, k)
-        }
-        0xce9b => {
-            add_hilo(r, k, 0x1a4b, 0x1a27, r.word(0x1ab7 + k));
-            add_hilo(r, k, 0x1a93, 0x1a6f, r.word(0x1adb + k));
-            if r.word(0x1a93 + k) & 0xff00 != 0 {
-                r.set_word(0x1997 + k, 0)
-            } else {
-                r.set_word(0x1adb + k, r.word(0x1adb + k).wrapping_add(32));
-                if crate::enemy_projectiles::random(r) & 0x420 == 0 {
-                    crate::enemy_projectiles::spawn_room(r, rom, 0xcf0a, k as u16)?
-                }
-            }
-        }
+        0xd7bf | 0xd7de | 0xd7fd | 0xd83d | 0xd89f | 0xd8df => crate::n00b_tube::preinstruction(r, rom, address, k as u16)?,
+        0xce9b => crate::glass_shattering::update(r, rom, k as u16)?,
         0xb535 => {
             add_hilo(r, k, 0x1a4b, 0x1a27, r.word(0x1ab7 + k));
             add_hilo(r, k, 0x1a93, 0x1a6f, r.word(0x1adb + k));
@@ -1501,23 +1564,6 @@ fn preinstruction_context(
                 r.set_word(0x1b8f + k, 1)
             }
         }
-        0xd83d | 0xd89f => {
-            let active = slot(r.word(0x1991))?;
-            let angle = usize::from((r.word(0x1ab7 + k) & 0x17e | 0x80) >> 1);
-            let velocity = (crate::enemy_projectiles::SINE[angle + 64] >> 2) as u16;
-            add_hilo(r, active, 0x1b23, 0x1aff, velocity);
-            r.set_word(0x1ab7 + active, r.word(0x1ab7 + active).wrapping_add(if address == 0xd83d { 2 } else { 4 }));
-            add_hilo(r, active, 0x1a93, 0x1a6f, r.word(0x1adb + active));
-            if address == 0xd83d {
-                delete_below(r, active)
-            } else {
-                r.set_word(0x1a4b + active, r.word(0x1b23 + active))
-            }
-        }
-        0xd8df => {
-            add_hilo(r, k, 0x1a93, 0x1a6f, r.word(0x1adb + k));
-            r.set_word(0x1a4b + k, r.word(0x1b23 + k))
-        }
         _ => return Err("unsupported enemy projectile preinstruction"),
     };
     let _ = rom;
@@ -1526,7 +1572,7 @@ fn preinstruction_context(
 /// Descending canonical scheduler, bounded to reject cyclic malformed scripts.
 pub fn run_all(r: &mut Wram<'_>, rom: &[u8], budget: usize) -> Result<(), &'static str> {
     if r.word(0x198d) & 0x8000 != 0
-        && (0..36).step_by(2).any(|k| r.word(0x1997 + k) != 0 && matches!(r.word(0x1a03 + k), 0x940e | 0xbfdf))
+        && (0..36).step_by(2).any(|k| r.word(0x1997 + k) != 0 && matches!(r.word(0x1a03 + k), 0x940e | 0xbfdf | 0xc335 | 0xc404 | 0xc410 | 0xc4c8))
     {
         return Err("projectile frame requires host context");
     }
@@ -1753,6 +1799,12 @@ pub fn dispatch_with_host(
 }
 pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) -> Result<u32, &'static str> {
     match name {
+        "CheckForCollisionWithShitroid_DoubleRet" => blue_ring_enemy_collision(r, slot(a as u16)?).map(u32::from),
+        "CheckForBlueRingCollisionWithRoom" => Ok(u32::from(blue_ring_outside(r, slot(a as u16)?))),
+        "sub_86C320" | "sub_86C42E" => {
+            preinstruction(r, rom, if name == "sub_86C320" { 0xc320 } else { 0xc42e }, a as u16)?;
+            Ok(0)
+        }
         "RandomDropRoutine" => Ok(u32::from(random_drop(r, rom, a as u16)?)),
         "EprojPowerBombCollision" => {
             let k = slot(a as u16)?;

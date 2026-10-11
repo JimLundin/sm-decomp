@@ -2,6 +2,16 @@
 
 Status: open
 
+Latest increment: tickets 133–135 integrate native enemy-projectile OAM
+rendering, Samus/player projectile contacts and the sparks lifecycle. All
+11,986 rendering/contact and 3,154 sparks actual-C cases pass against current
+combined source and authenticate after scoped cleanup. The 280-test port suite,
+strict all-target Clippy and 44 Python harness tests pass (one opt-in live
+control skipped); new files pass formatting checks. Broader formatting debt
+from earlier projectile/PLM/room increments is recorded explicitly. Ticket136
+is exercising native rendering/contact ownership in independent packed live
+replays. Full gameplay ownership and original-ROM movie parity remain open.
+
 Implement the user's goal: translate large parts of the existing decomps into
 maintained readable Rust. Follow docs/DECOMP_PIVOT.md. Primary source is the
 pinned snesrev/sm; consult reviewed fork corrections and original assembly for
@@ -587,3 +597,80 @@ tests, strict Clippy, cleanup and authentication. Whole-decomp remains active.
 Ticket 126 translates spike-shooting plant initialization and complete directional
 movement/camera deletion. All 1,561 actual-C cases pass with port tests, strict
 Clippy, cleanup and authentication. Whole-decomp remains active.
+
+
+Tickets 130–132 extend the dependency-ready frontier with native Mother Brain
+bomb allocation, bomb overlap, damping/bounces and explosion/drop handling;
+Maridia tube water/quake and ordered sixteen-effect PLM spawning; and glass/tube
+family ownership consolidation. Actual-C full-WRAM/raw-return comparisons cover
+7,130 bomb, 3,869 glass and 1,726 tube cases. Glass's controlled 128-call sequence
+reaches complete deletion; tube's controlled 96-frame sequence exercises shard
+and bubble transitions and culling. External host words compare wherever used.
+All 5,960 blue-ring cases refresh against the combined source. Final evidence
+and cleanup are recorded in tickets 129–132 and
+`.scratch/decomp-port/integration-130-132-verification.json`. The combined suite
+has 263 passing port tests, strict Clippy and 29 Python harness tests (one opt-in
+live control skipped). Live exercised ownership remains separate; this does
+not complete the playable boot-to-credits Rust ownership objective.
+
+
+Post-integration scoped cleanup reclaimed 4,563,664,896 bytes across current and
+preliminary family runs. Final verdicts authenticate after cleanup; the stopped
+bomb lifecycle process remains separately sealed as diagnostic evidence, and
+all original cases pass in shorter split runs. No implementer worktree was
+created; required source/ROM/binary/state dependencies remain retained.
+
+
+Tickets 133–135 final integration: complete native priority traversal and
+bank81 spritemap emission, A0 Samus/shot detection and hit handling, and F391/F3F0
+sparks allocation/collision/trails are exported from the maintained crate. Exact
+current-source verdicts and cleanup evidence are in
+`.scratch/decomp-port/contact-render-authentication.json`,
+`contact-render-cleanup.json`, `contact-render-checks.json` and
+`sparks-integration-authentication.json`. Source-reviewed packed adapters call
+actual upstream C. Final scoped offline cleanup reclaimed 2,471,493,632 bytes
+including sparks. No implementer worktree was created. A non-mutating opt-in
+live active-pool capture records material behavior beyond initial empty calls;
+its compiled state-preservation/bounding test passes. Ticket136 records live
+results separately from these offline families.
+
+
+Ticket136 first live increment: source-frozen rendering and contact detectors
+pass four independent 9,000-frame processes at
+`out/port/projectile-contact-render-live/20261011T130027.565661Z/verdict.json`.
+Each mixed process owns 676 calls to each of four native routines, 2,704 total,
+plus 23 decompressions/8,783 RNG calls; full state/effects match and measured CPU
+fallback is zero. Active packed captures prove low-priority Ceres OAM emission.
+Post-cleanup packed authentication passes all 190 artifacts per subject, retained
+binary and reader. Actual contact-hit behavior is being measured separately in
+45,000 frames with the C detectors calling native Rust hit-handler wrappers.
+
+
+Next observed ownership frontier: ticket137 closes native Ridley/Ceres allocation
+and host-aware scheduling for ticket88's nine actually observed projectile IDs.
+Missing 8693CA initialization executes 16 times starting at frame36,895; existing
+collision, split/repeat and elevator dependencies are already translated. The
+required next increment includes support selection before mutation, canonical
+external host state, full lifecycle oracle evidence and actual allocator/scheduler
+live replacement. This is substantive gameplay closure beyond additional unused
+leaf routines. Original movie input-boundary ticket78 remains unresolved.
+
+
+Ticket136 longer rendering comparison passes four independent 45,000-input
+processes at `out/port/projectile-contact-hit-live/20261011T130615.144077Z`.
+Each mixed process owns 31,713 calls per priority pass, plus 166 decompressions
+and 43,276 RNG calls, with zero CPU fallback. All 448 observation artifacts
+match. Native C detectors were retained for direct handler measurement; both
+handlers remain at zero calls and receive no live ownership credit. Combat
+properties5003 exclude shot detection, and this route has no Samus projectile
+contacts. Whole-game Rust ownership and original movie parity remain open.
+
+
+Final 45,000-input retained authentication succeeds for all four subjects' 448
+artifacts, frozen binary and retained evidence reader after ordinary cleanup and
+dedup each reclaimed zero bytes. Evidence pointer:
+`.scratch/decomp-port/contact-hit-live-45000-authentication.json`. Shared packed
+store objects, subject pointers and predecessor sources remain required. Overall
+scoped offline cleanup including the final aggregate sharing pass reclaimed
+2,472,017,920 bytes. No implementer worktree was created. The goal remains active;
+full gameplay ownership and ticket137 allocation/scheduler work are unfinished.

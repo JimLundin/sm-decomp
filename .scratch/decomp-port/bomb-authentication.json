@@ -1,0 +1,41 @@
+{
+  "runs": [
+    {
+      "verdict": "out/port/mother-brain-bomb-allocation/20261011T120705.497296Z/verdict.json",
+      "cases": 556,
+      "status": "authenticated",
+      "scope": "current-source full-WRAM/raw-return/eight-host-word evidence after cleanup"
+    },
+    {
+      "verdict": "out/port/mother-brain-bomb-movement/20261011T121418.267478Z/verdict.json",
+      "cases": 721,
+      "status": "authenticated",
+      "scope": "current-source full-WRAM/raw-return/eight-host-word evidence after cleanup"
+    },
+    {
+      "verdict": "out/port/mother-brain-bomb-collision/20261011T121418.253867Z/verdict.json",
+      "cases": 2341,
+      "status": "authenticated",
+      "scope": "current-source full-WRAM/raw-return/eight-host-word evidence after cleanup"
+    },
+    {
+      "verdict": "out/port/mother-brain-bomb-update/20261011T121418.255570Z/verdict.json",
+      "cases": 3187,
+      "status": "authenticated",
+      "scope": "current-source full-WRAM/raw-return/eight-host-word evidence after cleanup"
+    },
+    {
+      "verdict": "out/port/mother-brain-bomb-frames/20261011T120705.311214Z/verdict.json",
+      "cases": 325,
+      "status": "authenticated",
+      "scope": "current-source full-WRAM/raw-return/eight-host-word evidence after cleanup"
+    }
+  ],
+  "cases": 7130,
+  "interrupted_diagnostic": {
+    "file": "out/port/mother-brain-bomb-lifecycle/20261011T120705.377973Z/interrupted-diagnostic.json",
+    "status": "integrity-authenticated; nonaccepting interrupted execution",
+    "artifacts": 68994
+  },
+  "free_bytes": 278433026048
+}

@@ -1,0 +1,44 @@
+[
+  {
+    "verdict": "out/port/projectile-contact-render-final/rendering/20261011T125652.830322Z/verdict.json",
+    "family": "enemy-projectile-rendering",
+    "cases": 1448,
+    "status": "offline-verified",
+    "authenticated_after_cleanup": true
+  },
+  {
+    "verdict": "out/port/projectile-contact-render-final/rendering-direct/20261011T125652.825339Z/verdict.json",
+    "family": "enemy-projectile-rendering-direct",
+    "cases": 2468,
+    "status": "offline-verified",
+    "authenticated_after_cleanup": true
+  },
+  {
+    "verdict": "out/port/projectile-contact-render-final/detect-samus/20261011T125652.838381Z/verdict.json",
+    "family": "enemy-projectile-detect-samus",
+    "cases": 2310,
+    "status": "offline-verified",
+    "authenticated_after_cleanup": true
+  },
+  {
+    "verdict": "out/port/projectile-contact-render-final/detect-projectiles/20261011T125652.831698Z/verdict.json",
+    "family": "enemy-projectile-detect-projectiles",
+    "cases": 2040,
+    "status": "offline-verified",
+    "authenticated_after_cleanup": true
+  },
+  {
+    "verdict": "out/port/projectile-contact-render-final/hit-samus/20261011T125652.844686Z/verdict.json",
+    "family": "enemy-projectile-hit-samus",
+    "cases": 1728,
+    "status": "offline-verified",
+    "authenticated_after_cleanup": true
+  },
+  {
+    "verdict": "out/port/projectile-contact-render-final/hit-projectile/20261011T125652.839033Z/verdict.json",
+    "family": "enemy-projectile-hit-projectile",
+    "cases": 1992,
+    "status": "offline-verified",
+    "authenticated_after_cleanup": true
+  }
+]

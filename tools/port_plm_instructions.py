@@ -27,12 +27,24 @@ def build(manifest, source, run):
                        'return (const uint16*)CallEprojInstr(GET_WORD(p)|0x860000,slot,p+2);}\n')
             shim.write('void EprojPreinstruction(uint16 slot,uint16 address) {'
                        'CallEprojPreInstr(address|0x860000,slot);}\n')
+            shim.write('void EprojInitializer(uint16 slot,uint16 address) {'
+                       'CallEprojInit(address|0x860000,slot);}\n')
     if manifest.get("projectile_host"):
         if not eproj:
             raise ValueError("projectile host requires bank86 dispatcher")
         with (run / "plm-shim.c").open("a") as shim:
             shim.write("void PortHostLoad(uint16 *v){ eproj_spawn_pt=(Point16U){v[0],v[1]}; eproj_spawn_rect=(Rect16U){v[2],v[3],v[4],v[5]}; eproj_spawn_r22=v[6]; eproj_spawn_varE24=v[7]; }\n")
             shim.write("void PortHostSave(uint16 *v){ v[0]=eproj_spawn_pt.x;v[1]=eproj_spawn_pt.y;v[2]=eproj_spawn_rect.x;v[3]=eproj_spawn_rect.y;v[4]=eproj_spawn_rect.w;v[5]=eproj_spawn_rect.h;v[6]=eproj_spawn_r22;v[7]=eproj_spawn_varE24;}\n")
+    if manifest.get("projectile_rendering"):
+        with (run / "plm-shim.c").open("a") as shim:
+            shim.write('uint32 PortScreenShake(void) { Point16U p=GetValuesForScreenShaking(); return p.x|((uint32)p.y<<16); }\n')
+            shim.write('void PortDrawEprojs(uint16 k,uint32 xy) { DrawEprojs(k,(Point16U){(uint16)xy,(uint16)(xy>>16)}); }\n')
+            shim.write('void PortDrawEprojSpritemap(uint32 xy,uint32 map_gfx) { '
+                       'DrawEprojSpritemapWithBaseTile(0x8D,(uint16)map_gfx,(uint16)xy,(uint16)(xy>>16),'
+                       '(uint8)(map_gfx>>16),(uint16)(map_gfx>>16)&0xFF00); }\n')
+            shim.write('void PortDrawEprojSpritemapOffscreen(uint32 xy,uint32 map_gfx) { '
+                       'DrawEprojSpritemapWithBaseTileOffscreen(0x8D,(uint16)map_gfx,(uint16)xy,(uint16)(xy>>16),'
+                       '(uint8)(map_gfx>>16),(uint16)(map_gfx>>16)&0xFF00); }\n')
     host_support = run / "host-support.c"
     host_support.write_text(
         "#define main retained_main\n#include "

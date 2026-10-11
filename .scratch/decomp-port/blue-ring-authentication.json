@@ -1,0 +1,42 @@
+{
+  "runs": [
+    {
+      "verdict": "out/port/mother-brain-blue-ring-allocation/20261011T115447.880418Z/verdict.json",
+      "cases": 1044,
+      "scope": "retained historical immutable artifact and state integrity",
+      "status": "authenticated"
+    },
+    {
+      "verdict": "out/port/mother-brain-blue-ring-allocation/20261011T115700.709969Z/verdict.json",
+      "cases": 1044,
+      "scope": "current-source full-WRAM/returns/external-host authentication",
+      "status": "authenticated"
+    },
+    {
+      "verdict": "out/port/mother-brain-blue-ring-lifecycle/20261011T115447.880390Z/verdict.json",
+      "cases": 2467,
+      "scope": "retained historical immutable artifact and state integrity",
+      "status": "authenticated"
+    },
+    {
+      "verdict": "out/port/mother-brain-blue-ring-lifecycle/20261011T115700.709332Z/verdict.json",
+      "cases": 4663,
+      "scope": "current-source full-WRAM/returns/external-host authentication",
+      "status": "authenticated"
+    },
+    {
+      "verdict": "out/port/mother-brain-blue-ring-frames/20261011T115447.880562Z/verdict.json",
+      "cases": 253,
+      "scope": "retained historical immutable artifact and state integrity",
+      "status": "authenticated"
+    },
+    {
+      "verdict": "out/port/mother-brain-blue-ring-frames/20261011T115700.715277Z/verdict.json",
+      "cases": 253,
+      "scope": "current-source full-WRAM/returns/external-host authentication",
+      "status": "authenticated"
+    }
+  ],
+  "free_bytes": 286913589248,
+  "worktrees_created": 0
+}

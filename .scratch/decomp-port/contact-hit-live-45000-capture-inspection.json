@@ -1,0 +1,552 @@
+{
+  "run": "out/port/projectile-contact-hit-live/20261011T130615.144077Z",
+  "verdict_sha256": "b65e1e41cb0d6b1dd1e89b206aac514e2252040aaa9a46c5a707729ba694eb55",
+  "subject": "mixed-0",
+  "rows": [
+    {
+      "symbol": "DrawLowPriorityEprojs",
+      "sequence": 1,
+      "members": [
+        "fixtures/active-port-000-001-before.wram",
+        "fixtures/active-port-000-001-after.wram"
+      ],
+      "member_sha256": [
+        "b10405d985355ad0ca5bdf8c2f9836bddf469d0083c4d6c8576ff2c85a3c36cd",
+        "6e4405d60a4babe2526b2c0d2e5f11d8dff477101d8d559673f355d1bb7666d1"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d",
+          "radius": "0x101"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1ba",
+          "radius": "0x101"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        32
+      ],
+      "oam_changed_bytes": 33,
+      "changed_bytes": 33
+    },
+    {
+      "symbol": "DrawLowPriorityEprojs",
+      "sequence": 2,
+      "members": [
+        "fixtures/active-port-000-002-before.wram",
+        "fixtures/active-port-000-002-after.wram"
+      ],
+      "member_sha256": [
+        "4a1c6eb3f541ab993bac03a42d65ac1f1125c2889f6f70ce8c07e9f9ce8fc127",
+        "5a0757f22d821dcc796cb159fed4dde6280a835348645bd019fa3586ce60bf0d"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d",
+          "radius": "0x101"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1d0",
+          "radius": "0x101"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        32
+      ],
+      "oam_changed_bytes": 10,
+      "changed_bytes": 10
+    },
+    {
+      "symbol": "DrawLowPriorityEprojs",
+      "sequence": 3,
+      "members": [
+        "fixtures/active-port-000-003-before.wram",
+        "fixtures/active-port-000-003-after.wram"
+      ],
+      "member_sha256": [
+        "6c65adb1ff2dae9647b9aadc412f786ef66f54ebd973902d195739cc5300d6ca",
+        "5972ff094289f72c7255eebf68ce8dc7ae08780a9497575cdabfe91c501efd64"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d",
+          "radius": "0x101"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1ba",
+          "radius": "0x101"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        32
+      ],
+      "oam_changed_bytes": 10,
+      "changed_bytes": 10
+    },
+    {
+      "symbol": "DrawLowPriorityEprojs",
+      "sequence": 4,
+      "members": [
+        "fixtures/active-port-000-004-before.wram",
+        "fixtures/active-port-000-004-after.wram"
+      ],
+      "member_sha256": [
+        "ccee3d13f336d84cb63faf7e2baec4aaf3c5f7082ec578db2a861494e7df8ab5",
+        "81e81b97bf212128a9cc52326dc9d6fe92fcd34c085a37a8db11be8c9ecdb536"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d",
+          "radius": "0x101"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1d0",
+          "radius": "0x101"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        32
+      ],
+      "oam_changed_bytes": 10,
+      "changed_bytes": 10
+    },
+    {
+      "symbol": "DrawLowPriorityEprojs",
+      "sequence": 5,
+      "members": [
+        "fixtures/active-port-000-005-before.wram",
+        "fixtures/active-port-000-005-after.wram"
+      ],
+      "member_sha256": [
+        "517e2799cdba15ba85e58129421c6e8ffe3edd027984d0c4c0efd0a7457f4e07",
+        "06e5c1fb4ec1abd8d424bbbdaf76545a224920b09a57b0349f0395e659c7957e"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d",
+          "radius": "0x101"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1ba",
+          "radius": "0x101"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        32
+      ],
+      "oam_changed_bytes": 10,
+      "changed_bytes": 10
+    },
+    {
+      "symbol": "DrawLowPriorityEprojs",
+      "sequence": 6,
+      "members": [
+        "fixtures/active-port-000-006-before.wram",
+        "fixtures/active-port-000-006-after.wram"
+      ],
+      "member_sha256": [
+        "dbc957569914761ca805b7cc48921104c3702cff2ab41105cca727dd8f5fe3cb",
+        "93b6eeb354bf6599492838ee3d6ae55b29b1e7738a6e799233fd2a733419af0b"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d",
+          "radius": "0x101"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1d0",
+          "radius": "0x101"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        32
+      ],
+      "oam_changed_bytes": 10,
+      "changed_bytes": 10
+    },
+    {
+      "symbol": "DrawLowPriorityEprojs",
+      "sequence": 7,
+      "members": [
+        "fixtures/active-port-000-007-before.wram",
+        "fixtures/active-port-000-007-after.wram"
+      ],
+      "member_sha256": [
+        "766a1051bca09194a1c79cfc63971a968a14c791e410b757d51a05fc209ca36b",
+        "25916921b2e958f5cf9bb769b6c367007a020bfe8797f5ce5331c935ea41d436"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d",
+          "radius": "0x101"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1ba",
+          "radius": "0x101"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        32
+      ],
+      "oam_changed_bytes": 10,
+      "changed_bytes": 10
+    },
+    {
+      "symbol": "DrawLowPriorityEprojs",
+      "sequence": 8,
+      "members": [
+        "fixtures/active-port-000-008-before.wram",
+        "fixtures/active-port-000-008-after.wram"
+      ],
+      "member_sha256": [
+        "c49ee5bb63f632f1731be43caf70689d9c1afea82c6ef2c1671721b7a70441e6",
+        "e351018b6f75d1382d7f5ba75f1afbc9a18cbc3d585c6408a51f2e9109a63773"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d",
+          "radius": "0x101"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1d0",
+          "radius": "0x101"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        32
+      ],
+      "oam_changed_bytes": 10,
+      "changed_bytes": 10
+    },
+    {
+      "symbol": "DrawHighPriorityEprojs",
+      "sequence": 1,
+      "members": [
+        "fixtures/active-port-001-001-before.wram",
+        "fixtures/active-port-001-001-after.wram"
+      ],
+      "member_sha256": [
+        "a4ae841df1ea90ecdb60467bee55094f7f085c6476be95c4fd0040d6a698d85f",
+        "a4ae841df1ea90ecdb60467bee55094f7f085c6476be95c4fd0040d6a698d85f"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d",
+          "radius": "0x101"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1ba",
+          "radius": "0x101"
+        }
+      ],
+      "oam_cursor": [
+        76,
+        76
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 0
+    },
+    {
+      "symbol": "DrawHighPriorityEprojs",
+      "sequence": 2,
+      "members": [
+        "fixtures/active-port-001-002-before.wram",
+        "fixtures/active-port-001-002-after.wram"
+      ],
+      "member_sha256": [
+        "478ef6cb95ad6e570c80fcd9b0ff2d982a0cba27e354b3d01ddeaefde0882fc4",
+        "478ef6cb95ad6e570c80fcd9b0ff2d982a0cba27e354b3d01ddeaefde0882fc4"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d",
+          "radius": "0x101"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1d0",
+          "radius": "0x101"
+        }
+      ],
+      "oam_cursor": [
+        76,
+        76
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 0
+    },
+    {
+      "symbol": "DrawHighPriorityEprojs",
+      "sequence": 3,
+      "members": [
+        "fixtures/active-port-001-003-before.wram",
+        "fixtures/active-port-001-003-after.wram"
+      ],
+      "member_sha256": [
+        "2d5a27390d02eaf528292a1856d58d19afbf964375f16e4d197ab88a03e9d884",
+        "2d5a27390d02eaf528292a1856d58d19afbf964375f16e4d197ab88a03e9d884"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d",
+          "radius": "0x101"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1ba",
+          "radius": "0x101"
+        }
+      ],
+      "oam_cursor": [
+        76,
+        76
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 0
+    },
+    {
+      "symbol": "DrawHighPriorityEprojs",
+      "sequence": 4,
+      "members": [
+        "fixtures/active-port-001-004-before.wram",
+        "fixtures/active-port-001-004-after.wram"
+      ],
+      "member_sha256": [
+        "90b7ee50e3f1701893fc6386d7456aae20ebeb89455614a012af987cdbce5af1",
+        "90b7ee50e3f1701893fc6386d7456aae20ebeb89455614a012af987cdbce5af1"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d",
+          "radius": "0x101"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1d0",
+          "radius": "0x101"
+        }
+      ],
+      "oam_cursor": [
+        76,
+        76
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 0
+    },
+    {
+      "symbol": "DrawHighPriorityEprojs",
+      "sequence": 5,
+      "members": [
+        "fixtures/active-port-001-005-before.wram",
+        "fixtures/active-port-001-005-after.wram"
+      ],
+      "member_sha256": [
+        "6397e5491de8020957c24f23db1456e7a4941d5b13c84e6935ad64614daa2c5c",
+        "6397e5491de8020957c24f23db1456e7a4941d5b13c84e6935ad64614daa2c5c"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d",
+          "radius": "0x101"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1ba",
+          "radius": "0x101"
+        }
+      ],
+      "oam_cursor": [
+        76,
+        76
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 0
+    },
+    {
+      "symbol": "DrawHighPriorityEprojs",
+      "sequence": 6,
+      "members": [
+        "fixtures/active-port-001-006-before.wram",
+        "fixtures/active-port-001-006-after.wram"
+      ],
+      "member_sha256": [
+        "272c615abc5586f20813bb60c7e64c32e6631eb2e90e6b08248a0ce393b11213",
+        "272c615abc5586f20813bb60c7e64c32e6631eb2e90e6b08248a0ce393b11213"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d",
+          "radius": "0x101"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1d0",
+          "radius": "0x101"
+        }
+      ],
+      "oam_cursor": [
+        76,
+        76
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 0
+    },
+    {
+      "symbol": "DrawHighPriorityEprojs",
+      "sequence": 7,
+      "members": [
+        "fixtures/active-port-001-007-before.wram",
+        "fixtures/active-port-001-007-after.wram"
+      ],
+      "member_sha256": [
+        "86a3974eed7acabf2d5af04bdbfb986d0fadf60db55bf3cf5b3576b9490d0dbf",
+        "86a3974eed7acabf2d5af04bdbfb986d0fadf60db55bf3cf5b3576b9490d0dbf"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d",
+          "radius": "0x101"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1ba",
+          "radius": "0x101"
+        }
+      ],
+      "oam_cursor": [
+        76,
+        76
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 0
+    },
+    {
+      "symbol": "DrawHighPriorityEprojs",
+      "sequence": 8,
+      "members": [
+        "fixtures/active-port-001-008-before.wram",
+        "fixtures/active-port-001-008-after.wram"
+      ],
+      "member_sha256": [
+        "3a9213cfcf63998fda106054709603b9a6914d392b2b9d185878e43f75afb386",
+        "3a9213cfcf63998fda106054709603b9a6914d392b2b9d185878e43f75afb386"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d",
+          "radius": "0x101"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1d0",
+          "radius": "0x101"
+        }
+      ],
+      "oam_cursor": [
+        76,
+        76
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 0
+    }
+  ],
+  "scope": "16 retained active-pool WRAM before/after pairs restored in memory and hashes checked against matching four-subject verdict; low-priority emission, high-priority low-only skip. Both contact handlers have zero native calls in every subject; high-priority emission and contact-hit behavior remain unexercised."
+}

@@ -9,6 +9,38 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class LivePortTests(unittest.TestCase):
+    def test_active_projectile_capture_preserves_state_and_is_bounded_per_symbol(self):
+        import sys
+        sys.path.insert(0, str(ROOT / 'tools'))
+        from port_live import generate_active_eproj_capture
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / 'fixtures').mkdir()
+            source = root / 'capture.c'
+            source.write_text('#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <assert.h>\n'
+                              'static unsigned char g_ram[0x20000],before[0x20000];\n'
+                              + generate_active_eproj_capture(2) + '''
+int main(void) {
+ assert(PortActiveSequence(0)==0);
+ g_ram[0x1997+35]=1;memcpy(before,g_ram,sizeof(g_ram));
+ for(unsigned i=1;i<=8;i++)assert(PortActiveSequence(0)==i);
+ assert(PortActiveSequence(0)==0);
+ assert(PortActiveSequence(1)==1);
+ PortActiveCapture(1,1,"before");
+ assert(memcmp(g_ram,before,sizeof(g_ram))==0);
+ memset(g_ram+0x1997,0,36);
+ assert(PortActiveSequence(1)==0);
+ g_ram[0x1997]=1;assert(PortActiveSequence(1)==2);
+ return 0;
+}
+''')
+            subprocess.run(['cc', str(source), '-o', str(root / 'capture')], check=True)
+            subprocess.run([str(root / 'capture')], cwd=root, check=True)
+            state = (root / 'fixtures/active-port-001-001-before.wram').read_bytes()
+            self.assertEqual(len(state), 0x20000)
+            self.assertEqual(state[0x1997+35], 1)
+            self.assertEqual(sum(state), 1)
+
     def test_positioned_plm_abi_rejects_aliases_and_commits_only_success(self):
         import sys
         sys.path.insert(0, str(ROOT/'tools'))

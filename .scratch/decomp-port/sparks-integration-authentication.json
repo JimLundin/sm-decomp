@@ -1,0 +1,26 @@
+[
+  {
+    "verdict": "out/port/projectile-contact-render-final/sparks-allocation/20261011T125902.098529Z/verdict.json",
+    "status": "offline-verified",
+    "cases": 801,
+    "authenticated_after_cleanup": true
+  },
+  {
+    "verdict": "out/port/projectile-contact-render-final/sparks-update/20261011T125901.927889Z/verdict.json",
+    "status": "offline-verified",
+    "cases": 1677,
+    "authenticated_after_cleanup": true
+  },
+  {
+    "verdict": "out/port/projectile-contact-render-final/sparks-frames/20261011T125902.014607Z/verdict.json",
+    "status": "offline-verified",
+    "cases": 578,
+    "authenticated_after_cleanup": true
+  },
+  {
+    "verdict": "out/port/projectile-contact-render-final/sparks-sequence/20261011T125902.084738Z/verdict.json",
+    "status": "offline-verified",
+    "cases": 98,
+    "authenticated_after_cleanup": true
+  }
+]

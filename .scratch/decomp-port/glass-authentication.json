@@ -1,0 +1,58 @@
+{
+  "runs": [
+    {
+      "verdict": "out/port/mother-brain-glass-motion/20261011T120610.041043Z/verdict.json",
+      "status": "offline-verified",
+      "artifacts": 7832,
+      "scope": "retained historical artifact integrity"
+    },
+    {
+      "verdict": "out/port/mother-brain-glass-allocation/20261011T120620.677108Z/verdict.json",
+      "status": "offline-verified",
+      "artifacts": 19760,
+      "scope": "retained historical artifact integrity"
+    },
+    {
+      "verdict": "out/port/mother-brain-glass-frames/20261011T120621.826109Z/verdict.json",
+      "status": "offline-verified",
+      "artifacts": 12872,
+      "scope": "retained historical artifact integrity"
+    },
+    {
+      "verdict": "out/port/mother-brain-glass-callers/20261011T120623.100518Z/verdict.json",
+      "status": "rejected",
+      "artifacts": 1358,
+      "scope": "retained historical artifact integrity"
+    },
+    {
+      "verdict": "out/port/mother-brain-glass-callers-final/20261011T120735.363930Z/verdict.json",
+      "cases": 379,
+      "status": "authenticated",
+      "scope": "current-source full-WRAM/raw-returns/eight-word-host"
+    },
+    {
+      "verdict": "out/port/mother-brain-glass-motion-final/20261011T120731.822251Z/verdict.json",
+      "cases": 649,
+      "status": "authenticated",
+      "scope": "current-source full-WRAM/raw-returns/eight-word-host"
+    },
+    {
+      "verdict": "out/port/mother-brain-glass-allocation-final/20261011T120733.263081Z/verdict.json",
+      "cases": 1643,
+      "status": "authenticated",
+      "scope": "current-source full-WRAM/raw-returns/eight-word-host"
+    },
+    {
+      "verdict": "out/port/mother-brain-glass-frames-final/20261011T120734.107333Z/verdict.json",
+      "cases": 1069,
+      "status": "authenticated",
+      "scope": "current-source full-WRAM/raw-returns/eight-word-host"
+    },
+    {
+      "verdict": "out/port/mother-brain-glass-sequence-final/20261011T121040.700517Z/verdict.json",
+      "cases": 129,
+      "status": "authenticated",
+      "scope": "current-source full-WRAM/raw-returns/eight-word-host with captured exact C after-state"
+    }
+  ]
+}

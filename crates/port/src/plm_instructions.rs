@@ -264,11 +264,21 @@ pub fn instruction(r: &mut Wram<'_>, rom: &[u8], opcode: u16, pc: u16, k: u16) -
         }
         0xd30b => {
             let parameters = [w(0)?, w(2)?, w(4)?, w(6)?];
-            audio::dispatch(r, "QueueSfx3_Max15", 0x2e, 0)?;
-            for parameter in parameters {
-                crate::enemy_projectiles::spawn_room(r, rom, 0xcefc, parameter)?;
-            }
+            crate::glass_shattering::spawn_four(r, rom, parameters)?;
             advance = 8;
+        }
+        0xd525 => r.set_word(0x197e, r.word(0x197e) & !4),
+        0xd536 => {
+            r.set_word(0x183e, 11);
+            r.set_word(0x1840, 64);
+        }
+        0xd543 => {
+            for parameter in (0..20).step_by(2) {
+                crate::enemy_projectiles::spawn_room(r, rom, 0xd912, parameter)?;
+            }
+            for parameter in (0..12).step_by(2) {
+                crate::enemy_projectiles::spawn_room(r, rom, 0xd920, parameter)?;
+            }
         }
         _ => return Err("unsupported PLM instruction"),
     }
@@ -382,6 +392,22 @@ fn process_frame_inner(r: &mut Wram<'_>, rom: &[u8], limit: usize, render: bool)
     Ok(())
 }
 pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], symbol: &str, a: i32, b: i32) -> Result<u32, &'static str> {
+    if matches!(symbol, "PlmInstr_EnableWaterPhysics" | "PlmInstr_SpawnN00bTubeCrackEproj" | "PlmInstr_DiagonalEarthquake" | "PlmInstr_Spawn10shardsAnd6n00bs") {
+        let opcode = match symbol {
+            "PlmInstr_EnableWaterPhysics" => 0xd525,
+            "PlmInstr_SpawnN00bTubeCrackEproj" => 0xd52c,
+            "PlmInstr_DiagonalEarthquake" => 0xd536,
+            _ => 0xd543,
+        };
+        return instruction(r, rom, opcode, a as u16, b as u16).map(|pc| pc.map_or(0, |pc| 0x840000 | u32::from(pc)));
+    }
+    if symbol == "SpawnMotherBrainGlassShatteringShard" {
+        crate::glass_shattering::spawn_shard(r, rom, a as u16)?;
+        return Ok(0);
+    }
+    if symbol == "PlmInstr_SpawnFourMotherBrainGlass" {
+        return crate::glass_shattering::instruction(r, rom, a as u16).map(|pc| 0x840000 | u32::from(pc));
+    }
     if symbol == "PlmFrame" {
         process_frame(r, rom, 4096)?;
         return Ok(0);

@@ -315,6 +315,23 @@ pub unsafe extern "C" fn port_family_{index}(ram:*mut u8,len:usize,rom:*const u8
 }}'''
 
 
+def generate_active_eproj_capture(symbol_count):
+    """Retain bounded active-pool calls without changing gameplay state."""
+    return f'''static unsigned port_active_captures[{symbol_count}];
+static unsigned PortActiveSequence(unsigned routine) {{
+ if(port_active_captures[routine]>=8)return 0;
+ for(unsigned offset=0x1997;offset<0x1997+36;offset+=2) {{
+  if(g_ram[offset] || g_ram[offset+1])return ++port_active_captures[routine];
+ }}
+ return 0;
+}}
+static void PortActiveCapture(unsigned routine,unsigned sequence,const char *phase) {{
+ char name[120];snprintf(name,sizeof(name),"fixtures/active-port-%03u-%03u-%s.wram",routine,sequence,phase);
+ FILE *f=fopen(name,"wb");if(!f || fwrite(g_ram,1,sizeof(g_ram),f)!=sizeof(g_ram) || fclose(f))exit(2);
+}}
+'''
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--family-verdict', type=Path, action='append', default=[])
@@ -327,6 +344,8 @@ def main():
     parser.add_argument('--dedup-anchor-verdict', type=Path, help='Share byte-identical finished logs with a sealed prior live run')
     parser.add_argument('--plm-verdict', type=Path)
     parser.add_argument('--room-plm', action='store_true', help='Require native room/hardcoded setup hits')
+    parser.add_argument('--capture-active-eprojs', action='store_true',
+                        help='Retain the first eight outer calls per symbol with a nonempty enemy projectile pool')
     parser.add_argument('--frames', type=int, default=9000)
     parser.add_argument('--accepted', type=Path, default=ROOT / 'out/port/decompressor-offline/decomp-acceptance.json')
     parser.add_argument('--output', type=Path, required=True)
@@ -350,7 +369,8 @@ def main():
         inputs = ROOT / 'movies/super-metroid-any-3653.inputs'
         if digest(rom) != ROM_SHA256:
             raise ValueError('original ROM identity differs')
-        verdict.update(rom_sha256=digest(rom), inputs_sha256=digest(inputs), frames=args.frames, hardware_storage=args.storage)
+        verdict.update(rom_sha256=digest(rom), inputs_sha256=digest(inputs), frames=args.frames, hardware_storage=args.storage,
+                       active_eproj_captures=args.capture_active_eprojs)
         families = []
         dispatcher_indexes = set()
         for path in args.family_verdict:
@@ -487,15 +507,22 @@ def main():
                     returned = 'return PortPointerFromResult((uint32_t)result);'
                     if family_index in dispatcher_indexes:
                         returned = 'return (const uint8_t *)PortPointerFromResult((uint32_t)result);'
+                active_before = (f'unsigned active_capture=outer?PortActiveSequence({index}):0;\n'
+                                 f' if(active_capture)PortActiveCapture({index},active_capture,"before");'
+                                 if args.capture_active_eprojs else '')
+                active_after = (f'if(active_capture)PortActiveCapture({index},active_capture,"after");'
+                                if args.capture_active_eprojs else '')
                 wrappers.append(f'''extern {c_type} C_{symbol}({declaration});
 {c_type} {symbol}({declaration}) {{
  int64_t result=0;
  int outer=port_call_depth++==0;
  unsigned long capture=outer?++port_outer_hits[{index}]:0;
  if(outer && capture<=8)PortCapture({index},capture,"before");
+ {active_before}
  if(port_mixed) {{result={abi_symbol}(g_ram,sizeof(g_ram),g_rom,g_snes->cart->romSize,{routine_index},{actual}); if(result<0) {{fprintf(stderr,"Rust family error {symbol}\\n");exit(4);}} port_rust_hits[{index}]++;}}
  else {{{reference} port_c_hits[{index}]++;}}
  port_call_depth--;
+ {active_after}
  if(outer) {{
   if(capture<=8)PortCapture({index},capture,"after");
   fprintf(port_calls,"{index} %lu %lld %lld %lld\\n",capture,(long long)({actual_args[0]}),(long long)({actual_args[1]}),(long long)result);
@@ -664,7 +691,8 @@ bool __wrap_RtlRunFrame(int pad) {
  }
  return result;
 }
-''' + f'static unsigned long port_c_hits[{len(symbols)}],port_rust_hits[{len(symbols)}],port_outer_hits[{len(symbols)}];\n' + '\n'.join(wrappers) + '''
+''' + f'static unsigned long port_c_hits[{len(symbols)}],port_rust_hits[{len(symbols)}],port_outer_hits[{len(symbols)}];\n'
+        + (generate_active_eproj_capture(len(symbols)) if args.capture_active_eprojs else '') + '\n'.join(wrappers) + '''
 int main(int argc,char **argv) {
  if(argc!=6) return 2;
  port_mixed=!strcmp(argv[1],"mixed");

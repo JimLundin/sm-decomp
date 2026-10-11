@@ -1,0 +1,10 @@
+{
+  "status": "authenticated",
+  "artifacts_per_subject": 448,
+  "subjects": 4,
+  "binary": true,
+  "storage": "sm-evidence-v1",
+  "verdict_sha256": "b65e1e41cb0d6b1dd1e89b206aac514e2252040aaa9a46c5a707729ba694eb55",
+  "free_bytes": 269825470464,
+  "scope": "retained frozen binary and observations; current-source admission and original-ROM parity separate"
+}

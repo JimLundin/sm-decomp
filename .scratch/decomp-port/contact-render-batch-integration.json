@@ -1,0 +1,14 @@
+{
+  "batch": "/home/jim/sm-decomp/out/port/projectile-contact-render-final/batch.json",
+  "previous_latest": {
+    "batch": "/tmp/sm-decomp-live/out/port/batches/20261010T213631.753519Z/batch.json"
+  },
+  "current_latest": {
+    "batch": "/home/jim/sm-decomp/out/port/projectile-contact-render-final/batch.json"
+  },
+  "profiles": [
+    "projectile-render-contacts",
+    "projectile-render-hits"
+  ],
+  "family_catalog": "tools/port/batch.json"
+}

@@ -1,0 +1,1192 @@
+{
+  "run": "out/port/projectile-contact-render-live/20261011T130027.565661Z",
+  "verdict_sha256": "c3ee00ef1f66155507c60af318ac1f6aa850692e36433f08d0b1267cfd259d18",
+  "subject": "mixed-0",
+  "rows": [
+    {
+      "symbol": "DrawLowPriorityEprojs",
+      "sequence": 1,
+      "members": [
+        "fixtures/active-port-000-001-before.wram",
+        "fixtures/active-port-000-001-after.wram"
+      ],
+      "member_sha256": [
+        "b10405d985355ad0ca5bdf8c2f9836bddf469d0083c4d6c8576ff2c85a3c36cd",
+        "6e4405d60a4babe2526b2c0d2e5f11d8dff477101d8d559673f355d1bb7666d1"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1ba"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        32
+      ],
+      "oam_changed_bytes": 33,
+      "changed_bytes": 33,
+      "processing_stage": [
+        5,
+        5
+      ],
+      "player_projectile_count": 0
+    },
+    {
+      "symbol": "DrawLowPriorityEprojs",
+      "sequence": 2,
+      "members": [
+        "fixtures/active-port-000-002-before.wram",
+        "fixtures/active-port-000-002-after.wram"
+      ],
+      "member_sha256": [
+        "4a1c6eb3f541ab993bac03a42d65ac1f1125c2889f6f70ce8c07e9f9ce8fc127",
+        "5a0757f22d821dcc796cb159fed4dde6280a835348645bd019fa3586ce60bf0d"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1d0"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        32
+      ],
+      "oam_changed_bytes": 10,
+      "changed_bytes": 10,
+      "processing_stage": [
+        5,
+        5
+      ],
+      "player_projectile_count": 0
+    },
+    {
+      "symbol": "DrawLowPriorityEprojs",
+      "sequence": 3,
+      "members": [
+        "fixtures/active-port-000-003-before.wram",
+        "fixtures/active-port-000-003-after.wram"
+      ],
+      "member_sha256": [
+        "6c65adb1ff2dae9647b9aadc412f786ef66f54ebd973902d195739cc5300d6ca",
+        "5972ff094289f72c7255eebf68ce8dc7ae08780a9497575cdabfe91c501efd64"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1ba"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        32
+      ],
+      "oam_changed_bytes": 10,
+      "changed_bytes": 10,
+      "processing_stage": [
+        5,
+        5
+      ],
+      "player_projectile_count": 0
+    },
+    {
+      "symbol": "DrawLowPriorityEprojs",
+      "sequence": 4,
+      "members": [
+        "fixtures/active-port-000-004-before.wram",
+        "fixtures/active-port-000-004-after.wram"
+      ],
+      "member_sha256": [
+        "ccee3d13f336d84cb63faf7e2baec4aaf3c5f7082ec578db2a861494e7df8ab5",
+        "81e81b97bf212128a9cc52326dc9d6fe92fcd34c085a37a8db11be8c9ecdb536"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1d0"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        32
+      ],
+      "oam_changed_bytes": 10,
+      "changed_bytes": 10,
+      "processing_stage": [
+        5,
+        5
+      ],
+      "player_projectile_count": 0
+    },
+    {
+      "symbol": "DrawLowPriorityEprojs",
+      "sequence": 5,
+      "members": [
+        "fixtures/active-port-000-005-before.wram",
+        "fixtures/active-port-000-005-after.wram"
+      ],
+      "member_sha256": [
+        "517e2799cdba15ba85e58129421c6e8ffe3edd027984d0c4c0efd0a7457f4e07",
+        "06e5c1fb4ec1abd8d424bbbdaf76545a224920b09a57b0349f0395e659c7957e"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1ba"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        32
+      ],
+      "oam_changed_bytes": 10,
+      "changed_bytes": 10,
+      "processing_stage": [
+        5,
+        5
+      ],
+      "player_projectile_count": 0
+    },
+    {
+      "symbol": "DrawLowPriorityEprojs",
+      "sequence": 6,
+      "members": [
+        "fixtures/active-port-000-006-before.wram",
+        "fixtures/active-port-000-006-after.wram"
+      ],
+      "member_sha256": [
+        "dbc957569914761ca805b7cc48921104c3702cff2ab41105cca727dd8f5fe3cb",
+        "93b6eeb354bf6599492838ee3d6ae55b29b1e7738a6e799233fd2a733419af0b"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1d0"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        32
+      ],
+      "oam_changed_bytes": 10,
+      "changed_bytes": 10,
+      "processing_stage": [
+        5,
+        5
+      ],
+      "player_projectile_count": 0
+    },
+    {
+      "symbol": "DrawLowPriorityEprojs",
+      "sequence": 7,
+      "members": [
+        "fixtures/active-port-000-007-before.wram",
+        "fixtures/active-port-000-007-after.wram"
+      ],
+      "member_sha256": [
+        "766a1051bca09194a1c79cfc63971a968a14c791e410b757d51a05fc209ca36b",
+        "25916921b2e958f5cf9bb769b6c367007a020bfe8797f5ce5331c935ea41d436"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1ba"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        32
+      ],
+      "oam_changed_bytes": 10,
+      "changed_bytes": 10,
+      "processing_stage": [
+        5,
+        5
+      ],
+      "player_projectile_count": 0
+    },
+    {
+      "symbol": "DrawLowPriorityEprojs",
+      "sequence": 8,
+      "members": [
+        "fixtures/active-port-000-008-before.wram",
+        "fixtures/active-port-000-008-after.wram"
+      ],
+      "member_sha256": [
+        "c49ee5bb63f632f1731be43caf70689d9c1afea82c6ef2c1671721b7a70441e6",
+        "e351018b6f75d1382d7f5ba75f1afbc9a18cbc3d585c6408a51f2e9109a63773"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1d0"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        32
+      ],
+      "oam_changed_bytes": 10,
+      "changed_bytes": 10,
+      "processing_stage": [
+        5,
+        5
+      ],
+      "player_projectile_count": 0
+    },
+    {
+      "symbol": "DrawHighPriorityEprojs",
+      "sequence": 1,
+      "members": [
+        "fixtures/active-port-001-001-before.wram",
+        "fixtures/active-port-001-001-after.wram"
+      ],
+      "member_sha256": [
+        "a4ae841df1ea90ecdb60467bee55094f7f085c6476be95c4fd0040d6a698d85f",
+        "a4ae841df1ea90ecdb60467bee55094f7f085c6476be95c4fd0040d6a698d85f"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1ba"
+        }
+      ],
+      "oam_cursor": [
+        76,
+        76
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 0,
+      "processing_stage": [
+        5,
+        5
+      ],
+      "player_projectile_count": 0
+    },
+    {
+      "symbol": "DrawHighPriorityEprojs",
+      "sequence": 2,
+      "members": [
+        "fixtures/active-port-001-002-before.wram",
+        "fixtures/active-port-001-002-after.wram"
+      ],
+      "member_sha256": [
+        "478ef6cb95ad6e570c80fcd9b0ff2d982a0cba27e354b3d01ddeaefde0882fc4",
+        "478ef6cb95ad6e570c80fcd9b0ff2d982a0cba27e354b3d01ddeaefde0882fc4"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1d0"
+        }
+      ],
+      "oam_cursor": [
+        76,
+        76
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 0,
+      "processing_stage": [
+        5,
+        5
+      ],
+      "player_projectile_count": 0
+    },
+    {
+      "symbol": "DrawHighPriorityEprojs",
+      "sequence": 3,
+      "members": [
+        "fixtures/active-port-001-003-before.wram",
+        "fixtures/active-port-001-003-after.wram"
+      ],
+      "member_sha256": [
+        "2d5a27390d02eaf528292a1856d58d19afbf964375f16e4d197ab88a03e9d884",
+        "2d5a27390d02eaf528292a1856d58d19afbf964375f16e4d197ab88a03e9d884"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1ba"
+        }
+      ],
+      "oam_cursor": [
+        76,
+        76
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 0,
+      "processing_stage": [
+        5,
+        5
+      ],
+      "player_projectile_count": 0
+    },
+    {
+      "symbol": "DrawHighPriorityEprojs",
+      "sequence": 4,
+      "members": [
+        "fixtures/active-port-001-004-before.wram",
+        "fixtures/active-port-001-004-after.wram"
+      ],
+      "member_sha256": [
+        "90b7ee50e3f1701893fc6386d7456aae20ebeb89455614a012af987cdbce5af1",
+        "90b7ee50e3f1701893fc6386d7456aae20ebeb89455614a012af987cdbce5af1"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1d0"
+        }
+      ],
+      "oam_cursor": [
+        76,
+        76
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 0,
+      "processing_stage": [
+        5,
+        5
+      ],
+      "player_projectile_count": 0
+    },
+    {
+      "symbol": "DrawHighPriorityEprojs",
+      "sequence": 5,
+      "members": [
+        "fixtures/active-port-001-005-before.wram",
+        "fixtures/active-port-001-005-after.wram"
+      ],
+      "member_sha256": [
+        "6397e5491de8020957c24f23db1456e7a4941d5b13c84e6935ad64614daa2c5c",
+        "6397e5491de8020957c24f23db1456e7a4941d5b13c84e6935ad64614daa2c5c"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1ba"
+        }
+      ],
+      "oam_cursor": [
+        76,
+        76
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 0,
+      "processing_stage": [
+        5,
+        5
+      ],
+      "player_projectile_count": 0
+    },
+    {
+      "symbol": "DrawHighPriorityEprojs",
+      "sequence": 6,
+      "members": [
+        "fixtures/active-port-001-006-before.wram",
+        "fixtures/active-port-001-006-after.wram"
+      ],
+      "member_sha256": [
+        "272c615abc5586f20813bb60c7e64c32e6631eb2e90e6b08248a0ce393b11213",
+        "272c615abc5586f20813bb60c7e64c32e6631eb2e90e6b08248a0ce393b11213"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1d0"
+        }
+      ],
+      "oam_cursor": [
+        76,
+        76
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 0,
+      "processing_stage": [
+        5,
+        5
+      ],
+      "player_projectile_count": 0
+    },
+    {
+      "symbol": "DrawHighPriorityEprojs",
+      "sequence": 7,
+      "members": [
+        "fixtures/active-port-001-007-before.wram",
+        "fixtures/active-port-001-007-after.wram"
+      ],
+      "member_sha256": [
+        "86a3974eed7acabf2d5af04bdbfb986d0fadf60db55bf3cf5b3576b9490d0dbf",
+        "86a3974eed7acabf2d5af04bdbfb986d0fadf60db55bf3cf5b3576b9490d0dbf"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1ba"
+        }
+      ],
+      "oam_cursor": [
+        76,
+        76
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 0,
+      "processing_stage": [
+        5,
+        5
+      ],
+      "player_projectile_count": 0
+    },
+    {
+      "symbol": "DrawHighPriorityEprojs",
+      "sequence": 8,
+      "members": [
+        "fixtures/active-port-001-008-before.wram",
+        "fixtures/active-port-001-008-after.wram"
+      ],
+      "member_sha256": [
+        "3a9213cfcf63998fda106054709603b9a6914d392b2b9d185878e43f75afb386",
+        "3a9213cfcf63998fda106054709603b9a6914d392b2b9d185878e43f75afb386"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1d0"
+        }
+      ],
+      "oam_cursor": [
+        76,
+        76
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 0,
+      "processing_stage": [
+        5,
+        5
+      ],
+      "player_projectile_count": 0
+    },
+    {
+      "symbol": "EprojSamusCollDetect",
+      "sequence": 1,
+      "members": [
+        "fixtures/active-port-002-001-before.wram",
+        "fixtures/active-port-002-001-after.wram"
+      ],
+      "member_sha256": [
+        "d6a7a5dad12108b14225f5f1bba67fbaad844848e83b1b7cd3da06da4b58cfb1",
+        "be5f217f8d4b8bbcc5ef299232c9310d67f6f9056999a57959d9594cf601d9b1"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1ba"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        0
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 1,
+      "processing_stage": [
+        2,
+        11
+      ],
+      "player_projectile_count": 0
+    },
+    {
+      "symbol": "EprojSamusCollDetect",
+      "sequence": 2,
+      "members": [
+        "fixtures/active-port-002-002-before.wram",
+        "fixtures/active-port-002-002-after.wram"
+      ],
+      "member_sha256": [
+        "03229c783fc0ae2301d80cbe797611a13768aaa847327b64132931a19c078b30",
+        "24b07b88a50c4afdad4ee312d78178839555dd9558c0f83c6dbd984a1c778ccd"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1d0"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        0
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 1,
+      "processing_stage": [
+        2,
+        11
+      ],
+      "player_projectile_count": 0
+    },
+    {
+      "symbol": "EprojSamusCollDetect",
+      "sequence": 3,
+      "members": [
+        "fixtures/active-port-002-003-before.wram",
+        "fixtures/active-port-002-003-after.wram"
+      ],
+      "member_sha256": [
+        "3b6ed55a00f9b08b75d83f5529e8f45f46819148502bd7eee057592736608d91",
+        "9ab1803c9c3cace7251a7cc60c41a247a3d23f2643c42699397305b2d3b1edec"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1ba"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        0
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 1,
+      "processing_stage": [
+        2,
+        11
+      ],
+      "player_projectile_count": 0
+    },
+    {
+      "symbol": "EprojSamusCollDetect",
+      "sequence": 4,
+      "members": [
+        "fixtures/active-port-002-004-before.wram",
+        "fixtures/active-port-002-004-after.wram"
+      ],
+      "member_sha256": [
+        "732c7829e3da3fecd814987341c067f97ce71c3b59a5a1ed47ba86f9eb73e3f0",
+        "ba1f259163d2598fa9b04fc8d83348e0dddf34d23d4e39d25464101e4357c17c"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1d0"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        0
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 1,
+      "processing_stage": [
+        2,
+        11
+      ],
+      "player_projectile_count": 0
+    },
+    {
+      "symbol": "EprojSamusCollDetect",
+      "sequence": 5,
+      "members": [
+        "fixtures/active-port-002-005-before.wram",
+        "fixtures/active-port-002-005-after.wram"
+      ],
+      "member_sha256": [
+        "a41a2b6e79ff48d3a4352f5115d2f28246b079a654a8a2ee48657e5802188394",
+        "0300569ebf0940eba3b39f6750a981ff39b59c292e7a5c143754f0f930ad35a2"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1ba"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        0
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 1,
+      "processing_stage": [
+        2,
+        11
+      ],
+      "player_projectile_count": 0
+    },
+    {
+      "symbol": "EprojSamusCollDetect",
+      "sequence": 6,
+      "members": [
+        "fixtures/active-port-002-006-before.wram",
+        "fixtures/active-port-002-006-after.wram"
+      ],
+      "member_sha256": [
+        "7ca6380218eecf8af48b66f61690a058a276855b349f55d534c4c828216b3101",
+        "dcd86c8c33ab5f28e94ba522690c1be2e5a28b6c106f30a7b6a6cc86b5cd2030"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1d0"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        0
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 1,
+      "processing_stage": [
+        2,
+        11
+      ],
+      "player_projectile_count": 0
+    },
+    {
+      "symbol": "EprojSamusCollDetect",
+      "sequence": 7,
+      "members": [
+        "fixtures/active-port-002-007-before.wram",
+        "fixtures/active-port-002-007-after.wram"
+      ],
+      "member_sha256": [
+        "32e6a76ebf92a1d82d3effbe1041d28503b938abdea1ade1acda45de46475ac8",
+        "f75b1e4ca1ca5663f3ab04dfa14089024d6b47f397c81832d2c283e2c4f40c11"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1ba"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        0
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 1,
+      "processing_stage": [
+        2,
+        11
+      ],
+      "player_projectile_count": 0
+    },
+    {
+      "symbol": "EprojSamusCollDetect",
+      "sequence": 8,
+      "members": [
+        "fixtures/active-port-002-008-before.wram",
+        "fixtures/active-port-002-008-after.wram"
+      ],
+      "member_sha256": [
+        "cb0044a538c7bea52a3b0b67f56ef6d846ff060f4ae4ff59a9306c568559f8a9",
+        "c4da639abea030098926d75ee6d61d5c07405f6cdaf9a4bea0cc6da75a850529"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1d0"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        0
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 1,
+      "processing_stage": [
+        2,
+        11
+      ],
+      "player_projectile_count": 0
+    },
+    {
+      "symbol": "EprojProjCollDet",
+      "sequence": 1,
+      "members": [
+        "fixtures/active-port-003-001-before.wram",
+        "fixtures/active-port-003-001-after.wram"
+      ],
+      "member_sha256": [
+        "be5f217f8d4b8bbcc5ef299232c9310d67f6f9056999a57959d9594cf601d9b1",
+        "afef0b37118506997b78bb0c056fe2593cab16730ee9a2b26e0f9511e462a5ed"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1ba"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        0
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 1,
+      "processing_stage": [
+        11,
+        12
+      ],
+      "player_projectile_count": 0
+    },
+    {
+      "symbol": "EprojProjCollDet",
+      "sequence": 2,
+      "members": [
+        "fixtures/active-port-003-002-before.wram",
+        "fixtures/active-port-003-002-after.wram"
+      ],
+      "member_sha256": [
+        "24b07b88a50c4afdad4ee312d78178839555dd9558c0f83c6dbd984a1c778ccd",
+        "a8e8a0b6807baf75bdb54869f68acb45fbb7d24b08ae44af36bcdecaffa2a2a7"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1d0"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        0
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 1,
+      "processing_stage": [
+        11,
+        12
+      ],
+      "player_projectile_count": 0
+    },
+    {
+      "symbol": "EprojProjCollDet",
+      "sequence": 3,
+      "members": [
+        "fixtures/active-port-003-003-before.wram",
+        "fixtures/active-port-003-003-after.wram"
+      ],
+      "member_sha256": [
+        "9ab1803c9c3cace7251a7cc60c41a247a3d23f2643c42699397305b2d3b1edec",
+        "43cf00cff64afe223badd7200086eca2917e80cfe4027640ef1e46fecd219698"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1ba"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        0
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 1,
+      "processing_stage": [
+        11,
+        12
+      ],
+      "player_projectile_count": 0
+    },
+    {
+      "symbol": "EprojProjCollDet",
+      "sequence": 4,
+      "members": [
+        "fixtures/active-port-003-004-before.wram",
+        "fixtures/active-port-003-004-after.wram"
+      ],
+      "member_sha256": [
+        "ba1f259163d2598fa9b04fc8d83348e0dddf34d23d4e39d25464101e4357c17c",
+        "5aae6220057b2289c7ff6c2ef67c945a19158d8e2bde5ebba289a5654c3259da"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1d0"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        0
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 1,
+      "processing_stage": [
+        11,
+        12
+      ],
+      "player_projectile_count": 0
+    },
+    {
+      "symbol": "EprojProjCollDet",
+      "sequence": 5,
+      "members": [
+        "fixtures/active-port-003-005-before.wram",
+        "fixtures/active-port-003-005-after.wram"
+      ],
+      "member_sha256": [
+        "0300569ebf0940eba3b39f6750a981ff39b59c292e7a5c143754f0f930ad35a2",
+        "3db5857ae9b103c7da17303fc49f15e49bfd67e15e68afbc09f7c91a9d0df6ef"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1ba"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        0
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 1,
+      "processing_stage": [
+        11,
+        12
+      ],
+      "player_projectile_count": 0
+    },
+    {
+      "symbol": "EprojProjCollDet",
+      "sequence": 6,
+      "members": [
+        "fixtures/active-port-003-006-before.wram",
+        "fixtures/active-port-003-006-after.wram"
+      ],
+      "member_sha256": [
+        "dcd86c8c33ab5f28e94ba522690c1be2e5a28b6c106f30a7b6a6cc86b5cd2030",
+        "fd3a81e01339b425b0c6eb9d39d52d48a8c7ebda7d3fd47abd696fe832ae163e"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1d0"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        0
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 1,
+      "processing_stage": [
+        11,
+        12
+      ],
+      "player_projectile_count": 0
+    },
+    {
+      "symbol": "EprojProjCollDet",
+      "sequence": 7,
+      "members": [
+        "fixtures/active-port-003-007-before.wram",
+        "fixtures/active-port-003-007-after.wram"
+      ],
+      "member_sha256": [
+        "f75b1e4ca1ca5663f3ab04dfa14089024d6b47f397c81832d2c283e2c4f40c11",
+        "a69d804637311318da033197535fb31c687d2032b8e102ec634d7717077943e2"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1ba"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        0
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 1,
+      "processing_stage": [
+        11,
+        12
+      ],
+      "player_projectile_count": 0
+    },
+    {
+      "symbol": "EprojProjCollDet",
+      "sequence": 8,
+      "members": [
+        "fixtures/active-port-003-008-before.wram",
+        "fixtures/active-port-003-008-after.wram"
+      ],
+      "member_sha256": [
+        "c4da639abea030098926d75ee6d61d5c07405f6cdaf9a4bea0cc6da75a850529",
+        "69409bdae2d6bf6bfddeff4ffb76c9abbe2698e96a198b37adbd071619be3446"
+      ],
+      "active_slots": [
+        {
+          "k": 32,
+          "id": "0xa395",
+          "properties": "0x3000",
+          "spritemap": "0x846d"
+        },
+        {
+          "k": 34,
+          "id": "0xa387",
+          "properties": "0x3000",
+          "spritemap": "0xb1d0"
+        }
+      ],
+      "oam_cursor": [
+        0,
+        0
+      ],
+      "oam_changed_bytes": 0,
+      "changed_bytes": 1,
+      "processing_stage": [
+        11,
+        12
+      ],
+      "player_projectile_count": 0
+    }
+  ],
+  "scope": "32 retained active-pool WRAM before/after pairs restored in memory and hashes checked against matching four-subject verdict; low-priority emission, high-priority low-only skip, detector stage updates; no contact-hit claim"
+}

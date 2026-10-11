@@ -1,0 +1,24 @@
+{
+  "runs": [
+    {
+      "family": "mother-brain-blue-ring-allocation-combined",
+      "verdict": "out/port/mother-brain-blue-ring-allocation-combined/20261011T120706.784099Z/verdict.json",
+      "status": "offline-verified",
+      "cases": 1044
+    },
+    {
+      "family": "mother-brain-blue-ring-frames-combined",
+      "verdict": "out/port/mother-brain-blue-ring-frames-combined/20261011T120706.906108Z/verdict.json",
+      "status": "offline-verified",
+      "cases": 253
+    },
+    {
+      "family": "mother-brain-blue-ring-lifecycle-combined",
+      "verdict": "out/port/mother-brain-blue-ring-lifecycle-combined/20261011T120706.644623Z/verdict.json",
+      "status": "offline-verified",
+      "cases": 4663
+    }
+  ],
+  "bytes_reclaimed": 1497890816,
+  "free_bytes": 280198402048
+}

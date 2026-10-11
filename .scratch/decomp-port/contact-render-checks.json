@@ -1,0 +1,21 @@
+{
+  "port_tests": 280,
+  "clippy_all_targets": "passed",
+  "new_files_rustfmt": "passed",
+  "workspace_fmt": "existing formatting discrepancies in earlier projectile/PLM/room sources",
+  "python_port_tests": 44,
+  "python_skipped": 1,
+  "python_live_tests": 17,
+  "python_syntax": "passed",
+  "diff_check": "passed",
+  "root_target_cleanup_bytes": 0,
+  "root_target_deduplicate_bytes": 0,
+  "free_bytes": 270413926400,
+  "batch_contract_tests": 5,
+  "batch_catalog": "ordinary rendering/detectors in gameplay; separate contacts/hits profiles",
+  "frozen_batch": "out/port/projectile-contact-render-final/batch.json",
+  "final_batch_cleanup_bytes": 0,
+  "final_batch_deduplicate_bytes": 524288,
+  "latest_batch_status": "passed with explicit current-source batch; stale prior default pointer replaced",
+  "next_ticket": "137-observed-projectile-allocator-scheduler.md"
+}

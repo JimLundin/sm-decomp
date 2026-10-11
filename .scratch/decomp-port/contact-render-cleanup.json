@@ -1,0 +1,72 @@
+{
+  "runs": [
+    {
+      "root": "out/port/projectile-contact-render-final/rendering",
+      "cleanup": {
+        "bytes_reclaimed": 0,
+        "log": "out/port/projectile-contact-render-final/rendering/cleanup.log"
+      },
+      "deduplicate": {
+        "bytes_reclaimed": 244580352,
+        "log": "out/port/projectile-contact-render-final/rendering/deduplicate.log"
+      }
+    },
+    {
+      "root": "out/port/projectile-contact-render-final/rendering-direct",
+      "cleanup": {
+        "bytes_reclaimed": 0,
+        "log": "out/port/projectile-contact-render-final/rendering-direct/cleanup.log"
+      },
+      "deduplicate": {
+        "bytes_reclaimed": 695599104,
+        "log": "out/port/projectile-contact-render-final/rendering-direct/deduplicate.log"
+      }
+    },
+    {
+      "root": "out/port/projectile-contact-render-final/detect-samus",
+      "cleanup": {
+        "bytes_reclaimed": 0,
+        "log": "out/port/projectile-contact-render-final/detect-samus/cleanup.log"
+      },
+      "deduplicate": {
+        "bytes_reclaimed": 302776320,
+        "log": "out/port/projectile-contact-render-final/detect-samus/deduplicate.log"
+      }
+    },
+    {
+      "root": "out/port/projectile-contact-render-final/detect-projectiles",
+      "cleanup": {
+        "bytes_reclaimed": 0,
+        "log": "out/port/projectile-contact-render-final/detect-projectiles/cleanup.log"
+      },
+      "deduplicate": {
+        "bytes_reclaimed": 267386880,
+        "log": "out/port/projectile-contact-render-final/detect-projectiles/deduplicate.log"
+      }
+    },
+    {
+      "root": "out/port/projectile-contact-render-final/hit-samus",
+      "cleanup": {
+        "bytes_reclaimed": 0,
+        "log": "out/port/projectile-contact-render-final/hit-samus/cleanup.log"
+      },
+      "deduplicate": {
+        "bytes_reclaimed": 226492416,
+        "log": "out/port/projectile-contact-render-final/hit-samus/deduplicate.log"
+      }
+    },
+    {
+      "root": "out/port/projectile-contact-render-final/hit-projectile",
+      "cleanup": {
+        "bytes_reclaimed": 0,
+        "log": "out/port/projectile-contact-render-final/hit-projectile/cleanup.log"
+      },
+      "deduplicate": {
+        "bytes_reclaimed": 261095424,
+        "log": "out/port/projectile-contact-render-final/hit-projectile/deduplicate.log"
+      }
+    }
+  ],
+  "free_bytes": 270406627328,
+  "retained": "sealed source, binaries, manifests, ROM and WRAM evidence; no implementer worktree created"
+}

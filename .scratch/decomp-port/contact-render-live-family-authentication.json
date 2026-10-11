@@ -1,0 +1,27 @@
+{
+  "rendering": {
+    "path": "out/port/projectile-contact-render-final/rendering/20261011T125652.830322Z/verdict.json",
+    "status": "authenticated",
+    "cases": 1448
+  },
+  "hit-samus": {
+    "path": "out/port/projectile-contact-render-final/hit-samus/20261011T125652.844686Z/verdict.json",
+    "status": "authenticated",
+    "cases": 1728
+  },
+  "hit-projectile": {
+    "path": "out/port/projectile-contact-render-final/hit-projectile/20261011T125652.839033Z/verdict.json",
+    "status": "authenticated",
+    "cases": 1992
+  },
+  "detect-samus": {
+    "path": "out/port/projectile-contact-render-final/detect-samus/20261011T125652.838381Z/verdict.json",
+    "status": "authenticated",
+    "cases": 2310
+  },
+  "detect-projectiles": {
+    "path": "out/port/projectile-contact-render-final/detect-projectiles/20261011T125652.831698Z/verdict.json",
+    "status": "authenticated",
+    "cases": 2040
+  }
+}

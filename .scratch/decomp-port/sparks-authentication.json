@@ -1,0 +1,22 @@
+[
+  {
+    "verdict": "out/port/sparks-allocation-corrected/20261011T122702.268439Z/verdict.json",
+    "status": "offline-verified",
+    "cases": 801
+  },
+  {
+    "verdict": "out/port/sparks-update-corrected/20261011T122702.270959Z/verdict.json",
+    "status": "offline-verified",
+    "cases": 1677
+  },
+  {
+    "verdict": "out/port/sparks-frames-corrected/20261011T122702.272796Z/verdict.json",
+    "status": "offline-verified",
+    "cases": 578
+  },
+  {
+    "verdict": "out/port/sparks-sequence-corrected/20261011T122736.367203Z/verdict.json",
+    "status": "offline-verified",
+    "cases": 98
+  }
+]

@@ -19,7 +19,12 @@
     "plm-spawn": "plm",
     "plm-instructions": "plm-instructions",
     "power_bomb": "power-bomb",
-    "enemy-crawler": "callback"
+    "enemy-crawler": "callback",
+    "enemy-projectile-rendering": "family",
+    "enemy-projectile-detect-samus": "family",
+    "enemy-projectile-detect-projectiles": "family",
+    "enemy-projectile-hit-samus": "family",
+    "enemy-projectile-hit-projectile": "family"
   },
   "profiles": {
     "gameplay": [
@@ -38,7 +43,10 @@
       "enemy-crawler",
       "projectile_flight",
       "enemy-jump",
-      "projectile_special"
+      "projectile_special",
+      "enemy-projectile-rendering",
+      "enemy-projectile-detect-samus",
+      "enemy-projectile-detect-projectiles"
     ],
     "all": [
       "system",
@@ -60,7 +68,22 @@
       "plm",
       "plm-spawn",
       "plm-instructions",
-      "power_bomb"
+      "power_bomb",
+      "enemy-projectile-rendering",
+      "enemy-projectile-detect-samus",
+      "enemy-projectile-detect-projectiles",
+      "enemy-projectile-hit-samus",
+      "enemy-projectile-hit-projectile"
+    ],
+    "projectile-render-contacts": [
+      "enemy-projectile-rendering",
+      "enemy-projectile-detect-samus",
+      "enemy-projectile-detect-projectiles"
+    ],
+    "projectile-render-hits": [
+      "enemy-projectile-rendering",
+      "enemy-projectile-hit-samus",
+      "enemy-projectile-hit-projectile"
     ]
   }
 }

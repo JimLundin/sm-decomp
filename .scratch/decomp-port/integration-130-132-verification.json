@@ -1,0 +1,114 @@
+{
+  "runs": [
+    {
+      "verdict": "out/port/mother-brain-bomb-allocation/20261011T120705.497296Z/verdict.json",
+      "family": "mother-brain-bomb-allocation",
+      "cases": 556,
+      "status": "offline-verified",
+      "current_source_authenticated": true
+    },
+    {
+      "verdict": "out/port/mother-brain-bomb-frames/20261011T120705.311214Z/verdict.json",
+      "family": "mother-brain-bomb-frames",
+      "cases": 325,
+      "status": "offline-verified",
+      "current_source_authenticated": true
+    },
+    {
+      "verdict": "out/port/mother-brain-blue-ring-allocation-combined/20261011T120706.784099Z/verdict.json",
+      "family": "mother-brain-blue-ring-allocation-combined",
+      "cases": 1044,
+      "status": "offline-verified"
+    },
+    {
+      "verdict": "out/port/mother-brain-blue-ring-lifecycle-combined/20261011T120706.644623Z/verdict.json",
+      "family": "mother-brain-blue-ring-lifecycle-combined",
+      "cases": 4663,
+      "status": "offline-verified"
+    },
+    {
+      "verdict": "out/port/mother-brain-blue-ring-frames-combined/20261011T120706.906108Z/verdict.json",
+      "family": "mother-brain-blue-ring-frames-combined",
+      "cases": 253,
+      "status": "offline-verified"
+    },
+    {
+      "verdict": "out/port/mother-brain-glass-allocation-final/20261011T120733.263081Z/verdict.json",
+      "family": "mother-brain-glass-allocation-final",
+      "cases": 1643,
+      "status": "offline-verified"
+    },
+    {
+      "verdict": "out/port/mother-brain-glass-motion-final/20261011T120731.822251Z/verdict.json",
+      "family": "mother-brain-glass-motion-final",
+      "cases": 649,
+      "status": "offline-verified"
+    },
+    {
+      "verdict": "out/port/mother-brain-glass-frames-final/20261011T120734.107333Z/verdict.json",
+      "family": "mother-brain-glass-frames-final",
+      "cases": 1069,
+      "status": "offline-verified"
+    },
+    {
+      "verdict": "out/port/mother-brain-glass-callers-final/20261011T120735.363930Z/verdict.json",
+      "family": "mother-brain-glass-callers-final",
+      "cases": 379,
+      "status": "offline-verified"
+    },
+    {
+      "verdict": "out/port/mother-brain-glass-sequence-final/20261011T121040.700517Z/verdict.json",
+      "family": "mother-brain-glass-sequence-final",
+      "cases": 129,
+      "status": "offline-verified"
+    },
+    {
+      "verdict": "out/port/n00b-tube-final/20261011T120623.657444Z/verdict.json",
+      "family": "n00b-tube-final",
+      "cases": 1477,
+      "status": "offline-verified"
+    },
+    {
+      "verdict": "out/port/n00b-tube-callers-frozen/20261011T120836.264717Z/verdict.json",
+      "family": "n00b-tube-callers-frozen",
+      "cases": 152,
+      "status": "offline-verified"
+    },
+    {
+      "verdict": "out/port/n00b-tube-sequence-final/20261011T120700.004624Z/verdict.json",
+      "family": "n00b-tube-sequence-final",
+      "cases": 97,
+      "status": "offline-verified"
+    },
+    {
+      "verdict": "out/port/mother-brain-bomb-movement/20261011T121418.267478Z/verdict.json",
+      "family": "mother-brain-bomb-movement",
+      "cases": 721,
+      "status": "offline-verified",
+      "current_source_authenticated": true
+    },
+    {
+      "verdict": "out/port/mother-brain-bomb-collision/20261011T121418.253867Z/verdict.json",
+      "family": "mother-brain-bomb-collision",
+      "cases": 2341,
+      "status": "offline-verified",
+      "current_source_authenticated": true
+    },
+    {
+      "verdict": "out/port/mother-brain-bomb-update/20261011T121418.255570Z/verdict.json",
+      "family": "mother-brain-bomb-update",
+      "cases": 3187,
+      "status": "offline-verified",
+      "current_source_authenticated": true
+    }
+  ],
+  "port_tests": 263,
+  "python_harness_tests": 29,
+  "python_skipped": 1,
+  "clippy": "passed",
+  "scope": "offline full-WRAM/raw returns; host cases compare eight external words; live ownership remains open",
+  "verified_cases": 18685,
+  "cleanup": "All scoped finished runs cleaned/deduplicated; retained final evidence authenticated; interrupted bomb run sealed as diagnostic; no implementer worktrees created",
+  "cleanup_bytes_reclaimed": 4563664896,
+  "free_bytes": 278432940032
+}

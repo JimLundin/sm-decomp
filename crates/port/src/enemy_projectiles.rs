@@ -231,6 +231,13 @@ pub fn dispatch_host(
     a: i32,
     b: i32,
 ) -> Result<u32, &'static str> {
+    if name == "EprojPreInstr_MotherBrainBomb" {
+        crate::mother_brain_bomb::update(r, rom, a as u16, host)?;
+        return Ok(0);
+    }
+    if name == "MotherBrainBomb_Bomb_CollDetect_DoubleRet" {
+        return crate::mother_brain_bomb::collide_bombs(r, rom, a as u16, host).map(u32::from);
+    }
     if matches!(name, "SpacePirates_Instr_15" | "SpacePirates_Instr_FireLaserL" | "SpacePirates_Instr_FireLaserR") {
         pirate_instruction(r, rom, host, name, b as u16)
     } else if name == "SpawnEprojWithRoomGfx" {
@@ -244,6 +251,14 @@ pub fn dispatch_host(
         Ok(0)
     } else if name == "EprojInstruction" {
         crate::enemy_projectile_instructions::dispatch_with_host(r, rom, host, name, a, b)
+    } else if matches!(name, "Eproj_MoveToBlueRingSpawnPosition" | "Eproj_Earthqhake5" | "BlueRingContactExplosion") {
+        let address = match name {
+            "Eproj_MoveToBlueRingSpawnPosition" => 0xc335,
+            "Eproj_Earthqhake5" => 0xc404,
+            _ => 0xc410,
+        };
+        crate::enemy_projectile_instructions::preinstruction_with_host(r, rom, address, a as u16, host)?;
+        Ok(0)
     } else {
         dispatch_rom(r, rom, name, a, b)
     }
@@ -316,19 +331,66 @@ pub fn spawn_with_gfx(
 }
 pub fn dispatch_rom(r: &mut Wram<'_>, rom: &[u8], name: &str, a: i32, b: i32) -> Result<u32, &'static str> {
     match name {
+        "EprojPreInstr_Sparks" => crate::enemy_projectile_sparks::update(r, rom, a as u16)?,
+        "EprojInitializer" => {
+            let parameter = r.word(0x1993);
+            match b as u16 {
+                0xcdc5 | 0xce6d => crate::glass_shattering::initialize(r, rom, b as u16, a as u16, parameter)?,
+                0xd6a5 | 0xd6c9 | 0xd774 => crate::n00b_tube::initialize(r, rom, b as u16, parameter, a as u16)?,
+                0xc482 => crate::mother_brain_bomb::initialize(r, a as u16, parameter)?,
+                0xf391 => crate::enemy_projectile_sparks::initialize(r, rom, a as u16)?,
+                _ => return Err("unsupported direct enemy projectile initializer"),
+            }
+        }
+        "EprojPreInstr_N00bTubeShards" | "sub_86D7BF" | "sub_86D7DE" | "sub_86D83D" | "sub_86D89F" | "sub_86D8DF" => {
+            let address = match name {
+                "EprojPreInstr_N00bTubeShards" => 0xd7fd,
+                "sub_86D7BF" => 0xd7bf,
+                "sub_86D7DE" => 0xd7de,
+                "sub_86D83D" => 0xd83d,
+                "sub_86D89F" => 0xd89f,
+                _ => 0xd8df,
+            };
+            crate::n00b_tube::preinstruction(r, rom, address, a as u16)?;
+        }
+        "EprojInit_MotherBrainGlassShatteringShard" | "EprojInit_MotherBrainGlassShatteringSparkle" => {
+            let address = if name == "EprojInit_MotherBrainGlassShatteringShard" { 0xcdc5 } else { 0xce6d };
+            crate::glass_shattering::initialize(r, rom, address, a as u16, r.word(0x1993))?;
+        }
+        "EprojPreInstr_MotherBrainGlassShatteringShard" => crate::glass_shattering::update(r, rom, a as u16)?,
+        "SpawnMotherBrainGlassShatteringShard" => crate::glass_shattering::spawn_shard(r, rom, a as u16)?,
+        "PlmInstr_SpawnFourMotherBrainGlass" => return crate::glass_shattering::instruction(r, rom, a as u16).map(|pc| 0x840000 | u32::from(pc)),
+        "MoveMotherBrainBomb" => return crate::mother_brain_bomb::move_bomb(r, a as u16, b as u16).map(u32::from),
         "SpawnEprojWithRoomGfx" => spawn_room(r, rom, a as u16, b as u16)?,
         "EnableEprojs" => enable(r),
         "DisableEprojs" => disable(r),
         "ClearEprojs" => clear(r),
+        "CheckForCollisionWithShitroid_DoubleRet" | "CheckForBlueRingCollisionWithRoom" | "sub_86C320" | "sub_86C42E" => {
+            return crate::enemy_projectile_instructions::dispatch_rom(r, rom, name, a, b);
+        }
         _ => return Err("unsupported enemy projectile routine"),
     };
     Ok(0)
 }
 
 fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'static str> {
+    if init == 0xf391 {
+        let enemy = r.word(0xe54);
+        if enemy > 0x7c0 || enemy & 63 != 0 {
+            return Err("invalid sparks enemy slot");
+        }
+        rom.get(0x373d4..0x373f4).ok_or("missing sparks velocity ROM")?;
+        return Ok(());
+    }
+    if matches!(init, 0xcdc5 | 0xce6d) {
+        return crate::glass_shattering::validate(r, rom, init, param);
+    }
+    if matches!(init, 0xd6a5 | 0xd6c9 | 0xd774) {
+        return crate::n00b_tube::validate(r, rom, init, param);
+    }
     let i = param as usize / 2;
     let table = match init {
-        0xca6a | 0xca83 | 0xcaf6 | 0xa3a3 | 0xc684 | 0xc80a => None,
+        0xca6a | 0xca83 | 0xcaf6 | 0xa3a3 | 0xc684 | 0xc80a | 0xc2f3 | 0xc482 => None,
         0xc843 if param < 6 => None,
         0xc961 if param < 8 => None,
         0xd992 if param < 20 && r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => Some((0xd96a, i)),
@@ -473,19 +535,10 @@ fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'sta
         0x9023 if r.word(0xe54) <= 0x7c0 && r.word(0xe54) & 63 == 0 => None,
         0x9286 => None,
         0x934d if r.word(0xfb4) < 4 => None,
-        0xb49d | 0xd6a5 => None,
-        0xce6d if i < 18 => None,
+        0xb49d => None,
         0xa764 if i < 16 => Some((0xa7ab, i)),
         0xb62d if i < 19 => None,
         0xb683 if i < 3 => None,
-        0xcdc5 if i < 3 => {
-            for p in (0xce41..0xce61).step_by(2) {
-                word(rom, p)?;
-            }
-            None
-        }
-        0xd6c9 if i < 10 => Some((0xd760, i)),
-        0xd774 if i < 6 => None,
         0xe4a6 if (param as u8) < 30 && param >> 8 < 5 => {
             for n in 0..4 {
                 word(rom, 0xe47e + (param >> 8) * 8 + n * 2)?;
@@ -499,7 +552,7 @@ fn validate(r: &Wram<'_>, rom: &[u8], init: u16, param: u16) -> Result<(), &'sta
     }
     if !matches!(
         init,
-        0xdcd4 | 0xd992 | 0xd30c | 0xd32e | 0xd341 | 0xd23a | 0xd088 | 0xcf90 | 0xcfa6 | 0xca6a | 0xca83 | 0xcaf6 | 0xc961 | 0xc843 | 0xc80a | 0xc684 | 0xa3a3
+        0xdcd4 | 0xd992 | 0xd30c | 0xd32e | 0xd341 | 0xd23a | 0xd088 | 0xcf90 | 0xcfa6 | 0xca6a | 0xca83 | 0xcaf6 | 0xc961 | 0xc843 | 0xc80a | 0xc684 | 0xc2f3 | 0xc482 | 0xa3a3
             | 0x9dec
             | 0x9e46
             | 0x9e4b
@@ -581,6 +634,28 @@ pub(crate) fn beam_component(magnitude: u16, angle: u8) -> u16 {
 }
 
 fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> Result<(), &'static str> {
+    if init == 0xf391 {
+        return crate::enemy_projectile_sparks::initialize(r, rom, k as u16);
+    }
+    if matches!(init, 0xcdc5 | 0xce6d) {
+        return crate::glass_shattering::initialize(r, rom, init, k as u16, param);
+    }
+    if init == 0xc482 {
+        return crate::mother_brain_bomb::initialize(r, k as u16, param);
+    }
+    if matches!(init, 0xd6a5 | 0xd6c9 | 0xd774) {
+        return crate::n00b_tube::initialize(r, rom, init, param, k as u16);
+    }
+    if init == 0xc2f3 {
+        r.set_word(0x1aff + k, 8);
+        r.set_word(0x1b23 + k, 0);
+        r.set_word(0x19bb + k, 1024);
+        r.set_word(0x1ab7 + k, beam_component(0x450, param as u8));
+        r.set_word(0x1adb + k, beam_component(0x450, (param as u8).wrapping_add(64)));
+        r.set_word(0x1a4b + k, r.word(0xfba).wrapping_add(10));
+        r.set_word(0x1a93 + k, r.word(0xfbe).wrapping_add(16));
+        return Ok(());
+    }
     if init == 0xd992 {
         r.set_word(0x1aff + k, param);
         r.set_word(0x1b47 + k, word(rom, 0xd96a + (param >> 1) * 2)?);
@@ -1238,15 +1313,6 @@ fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> 
         r.set_word(0x19bb + k, if init == 0x9286 { 1024 } else { 2560 });
         return Ok(());
     }
-    if init == 0xce6d {
-        let source = param as usize / 2 * 2;
-        let x = r.word(0x1a4b + source).wrapping_add(random(r) & 31).wrapping_sub(16);
-        r.set_word(0x1a4b + k, x);
-        let y = r.word(0x1a93 + source).wrapping_add(random(r) & 31).wrapping_sub(16);
-        r.set_word(0x1a93 + k, y);
-        r.set_word(0x19bb + k, 1600);
-        return Ok(());
-    }
     if init == 0xb49d {
         r.set_word(0x1a4b + k, 272);
         r.set_word(0x1aff + k, 272);
@@ -1254,18 +1320,11 @@ fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> 
         r.set_word(0x1b23 + k, 2184);
         return Ok(());
     }
-    let angle = if init == 0xcdc5 {
-        let a = random(r).wrapping_mul(2) & 0x1fe;
-        r.set_word(0x1aff + k, a);
-        Some(a)
-    } else {
-        None
-    };
     crate::plm_render::calculate_block_coords(r, r.word(0x1c27))?;
     let x = r.word(0x1c29).wrapping_mul(16);
     let y = r.word(0x1c2b).wrapping_mul(16);
     let i = param as usize / 2;
-    let mut position = None;
+    let position;
     match init {
         0xa764 => {
             let dx = [8, 24, -8, 8, 24, -8, 8, 24, 8, -8, 24, 8, -8, 24, 8, -8];
@@ -1287,38 +1346,6 @@ fn initialize(r: &mut Wram<'_>, rom: &[u8], init: u16, param: u16, k: usize) -> 
             position = Some((x.wrapping_sub(8), y.wrapping_add(16)));
             r.set_word(0x1ab7 + k, vel[i] as u16);
             r.set_word(0x1adb + k, vel[i + 1] as u16);
-        }
-        0xcdc5 => {
-            let a = angle.unwrap();
-            let v = (a / 2) as usize;
-            r.set_word(0x1ab7 + k, SINE[v + 64] as u16);
-            r.set_word(0x1adb + k, (SINE[v] as u16).wrapping_mul(4));
-            r.set_word(0x1b47 + k, word(rom, 0xce41 + ((a >> 4) & 0x1e))?);
-            r.set_word(0x19bb + k, 1600);
-            let dx = [8, -40, -16];
-            position = Some((
-                x.wrapping_add(dx[i] as u16).wrapping_add((random(r) & 15).wrapping_sub(8)),
-                y.wrapping_add(32).wrapping_add((random(r) & 15).wrapping_sub(8)),
-            ));
-        }
-        0xd6a5 => position = Some((x.wrapping_add(96), y.wrapping_add(48))),
-        0xd6c9 => {
-            let dx = [-56, -64, -20, -40, -64, -48, -24, -40, 0, -8];
-            let dy = [8, -12, -26, -24, -32, 28, 16, -8, -24, 16];
-            let vx = [-384, -384, -160, -288, -288, -320, -96, -352, 0, -64];
-            let vy = [320, -256, -416, -288, -288, 448, 576, -96, -288, 384];
-            r.set_word(0x1b23 + k, x.wrapping_add(96).wrapping_add(dx[i] as u16));
-            r.set_word(0x1a93 + k, y.wrapping_add(48).wrapping_add(dy[i] as u16));
-            r.set_word(0x1b47 + k, word(rom, 0xd760 + i as u16 * 2)?);
-            r.set_word(0x1ab7 + k, vx[i] as u16);
-            r.set_word(0x1adb + k, vy[i] as u16);
-        }
-        0xd774 => {
-            let dx = [40, 80, 104, 120, 152, 184];
-            let dy = [80, 72, 84, 32, 64, 84];
-            r.set_word(0x1b23 + k, x.wrapping_add(dx[i]));
-            r.set_word(0x1a93 + k, y.wrapping_add(dy[i]));
-            r.set_word(0x1adb + k, (-1280i16) as u16);
         }
         0xe4a6 => {
             let p = 0xe47e + (param >> 8) * 8;
