@@ -366,6 +366,10 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
         .context("unknown profile or missing families")?;
     if command == "plan" || request.changed_since.is_some() {
         let report = crate::affected::select(&checkout, &names, request.changed_since.as_deref())?;
+        ensure!(
+            toml::to_string(&config)? == toml::to_string(&catalog(&checkout)?)?,
+            "Offline family catalog changed during selection; retry"
+        );
         if command == "plan" {
             return Ok(toml::Value::try_from(report)?);
         }
