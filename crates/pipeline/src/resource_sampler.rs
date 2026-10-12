@@ -37,6 +37,7 @@ pub(crate) struct ResourceSampler {
     root_start: Option<u64>,
     registered: BTreeMap<u32, u64>,
     paths: BTreeMap<PathBuf, PathKind>,
+    live_outputs: BTreeSet<PathBuf>,
     resources: Resources,
     complete: bool,
     limitations: BTreeSet<String>,
@@ -72,7 +73,7 @@ impl ResourceSampler {
     pub fn new(root_pid: u32) -> Self {
         let root_start = process(root_pid).ok().map(|p| p.start);
         Self {
-            root_pid, root_start, registered: BTreeMap::new(), paths: BTreeMap::new(),
+            root_pid, root_start, registered: BTreeMap::new(), paths: BTreeMap::new(), live_outputs: BTreeSet::new(),
             resources: Resources {
                 rss_interval_ms: 100, disk_interval_ms: 500,
                 semantics: "aggregate concurrent root-orchestrator plus registered process trees; rolling Linux /proc PID+start-time samples; summed RSS counts shared pages repeatedly and may miss short-lived or between-sample peaks; disk uses allocated blocks*512 with per-scan dev/inode deduplication and no symlink traversal; proc scan bounded to 32768 entries/20ms, disk scan to 100000 entries/50ms and depth256; filesystem calls themselves may block beyond the scan deadline; incomplete peaks are lower bounds".into(),
@@ -93,6 +94,9 @@ impl ResourceSampler {
     }
     pub fn remove_path(&mut self, path: &Path) {
         self.paths.remove(path);
+    }
+    pub fn add_live_output(&mut self, path: PathBuf) {
+        self.live_outputs.insert(path);
     }
 
     pub fn sample(&mut self, now_ns: u64, disk: bool) -> ResourceSnapshot {
@@ -208,7 +212,43 @@ impl ResourceSampler {
         }
     }
     fn sample_disk(&mut self, now_ns: u64) {
-        if self.paths.is_empty() {
+        let mut paths = self.paths.clone();
+        let mut dynamic = BTreeSet::new();
+        // Live subprocesses create/remove private paths themselves. Rediscover
+        // them at each bounded scan, so normal publication release is not a
+        // missing required static path and build outputs are not counted as staging.
+        for output in self.live_outputs.clone() {
+            match fs::read_dir(&output) {
+                Ok(runs) => {
+                    for (index, run) in runs.enumerate() {
+                        if index >= 1000 {
+                            self.incomplete("live run discovery entry bound reached");
+                            break;
+                        }
+                        let run = match run {
+                            Ok(run) => run.path(),
+                            Err(error) => {
+                                self.incomplete(format!("live run discovery failed: {error}"));
+                                continue;
+                            }
+                        };
+                        for subject in ["c-0", "c-1", "mixed-0", "mixed-1"] {
+                            for (name, kind) in
+                                [(".evidence-stage", PathKind::Staging), ("store", PathKind::PrivateStore)]
+                            {
+                                let path = run.join(subject).join(name);
+                                if path.is_dir() {
+                                    dynamic.insert(path.clone());
+                                    paths.insert(path, kind);
+                                }
+                            }
+                        }
+                    }
+                }
+                Err(error) => self.incomplete(format!("live output discovery failed: {error}")),
+            }
+        }
+        if paths.is_empty() && self.live_outputs.is_empty() {
             unavailable_if_unmeasured(&mut self.resources.staging_allocated_bytes, "no staging paths registered");
             unavailable_if_unmeasured(
                 &mut self.resources.private_store_allocated_bytes,
@@ -229,7 +269,7 @@ impl ResourceSampler {
         let mut totals = [0u64; 2];
         let mut kinds = [false; 2];
         let mut free = None::<u64>;
-        for (path, kind) in &self.paths {
+        for (path, kind) in &paths {
             let index = if *kind == PathKind::Staging { 0 } else { 1 };
             match scan.path(path) {
                 Ok(bytes) => {
@@ -240,6 +280,11 @@ impl ResourceSampler {
                     }
                 }
                 Err(error) => {
+                    if dynamic.contains(path) && error.kind() == io::ErrorKind::NotFound {
+                        // A live owner may release staging/private bytes between
+                        // discovery and scan. Peaks before release remain recorded.
+                        continue;
+                    }
                     scan.missing += 1;
                     scan.errors.push(format!("resource path {}: {error}", path.display()));
                 }
@@ -247,8 +292,17 @@ impl ResourceSampler {
             match available_bytes(path) {
                 Ok(bytes) => free = Some(free.map_or(bytes, |previous| previous.min(bytes))),
                 Err(error) => {
+                    if dynamic.contains(path) && error.kind() == io::ErrorKind::NotFound {
+                        continue;
+                    }
                     scan.errors.push(format!("free filesystem bytes {} unavailable: {error}", path.display()))
                 }
+            }
+        }
+        for output in &self.live_outputs {
+            match available_bytes(output) {
+                Ok(bytes) => free = Some(free.map_or(bytes, |previous| previous.min(bytes))),
+                Err(error) => scan.errors.push(format!("live output free reserve unavailable: {error}")),
             }
         }
         self.disk_missing_paths += scan.missing;
@@ -440,7 +494,7 @@ impl Drop for Directory {
         }
     }
 }
-fn available_bytes(path: &Path) -> io::Result<u64> {
+pub(crate) fn available_bytes(path: &Path) -> io::Result<u64> {
     let directory = open_directory(path)?;
     let mut stat = std::mem::MaybeUninit::<libc::statvfs>::uninit();
     // SAFETY: live owned descriptor and writable statvfs output.

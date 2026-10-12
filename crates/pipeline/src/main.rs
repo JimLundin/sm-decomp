@@ -11,6 +11,7 @@ use toml::Value;
 
 mod baseline;
 mod batch;
+mod benchmark;
 mod builds;
 mod callback;
 mod checkpoints;
@@ -1068,6 +1069,7 @@ fn main() -> Result<()> {
             ensure!(request.get("frame").is_none() || request.get("member").is_some(), "--frame requires --member");
             emit(&packed::materialize(request.try_into()?)?)
         }
+        Some("benchmark") => benchmark::command(&args[1..]),
         Some("live-generate") => emit(&live::generate(request()?)?),
         Some("live-verify") if args.len() == 1 => {
             let verdict = live::verify(request()?)?;

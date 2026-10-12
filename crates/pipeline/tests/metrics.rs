@@ -265,6 +265,61 @@ fn sigterm_records_interruption_stops_the_process_tree_and_releases_worker_capac
 }
 
 #[test]
+fn inherited_clock_sigterm_still_stops_descendants_and_releases_capacity() {
+    use pipeline_model::metrics::{Clock, ContextReceipt};
+    let run = Run::new();
+    let binary = retained_tree(&run.0);
+    let inherited = run.0.join("parent.context.toml");
+    fs::write(
+        &inherited,
+        toml::to_string(&ContextReceipt {
+            run_id: "benchmark-parent".into(),
+            scope_id: "live-child".into(),
+            parent_scope: Some("benchmark-parent".into()),
+            clock: Clock::new().unwrap(),
+            enabled: true,
+            path: run.0.join("inherited.metrics.toml"),
+        })
+        .unwrap(),
+    )
+    .unwrap();
+    let request = toml::toml! {
+        command=[binary.to_str().unwrap()]
+        run=run.0.to_str().unwrap()
+        label="inherited"
+        root=run.0.join("workers").to_str().unwrap()
+        workers=1
+        timeout=30
+    };
+    let mut pipeline = Command::new(env!("CARGO_BIN_EXE_sm-pipeline"))
+        .arg("exec")
+        .env("SM_PIPELINE_METRICS_CONTEXT", &inherited)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    pipeline.stdin.take().unwrap().write_all(toml::to_string(&request).unwrap().as_bytes()).unwrap();
+    let started = Instant::now();
+    while !run.0.join("grandchild.pid").is_file() && started.elapsed() < Duration::from_secs(5) {
+        std::thread::sleep(Duration::from_millis(10));
+    }
+    assert!(run.0.join("grandchild.pid").is_file());
+    let descendants = [Descendant::read(&run.0.join("child.pid")), Descendant::read(&run.0.join("grandchild.pid"))];
+    let _producer = Descendant::read(&run.0.join("producer.pid"));
+    // SAFETY: the test owns this still-running native orchestration process.
+    assert_eq!(unsafe { libc::kill(pipeline.id() as i32, libc::SIGTERM) }, 0);
+    let output = pipeline.wait_with_output().unwrap();
+    assert!(!output.status.success());
+    assert_descendants_stopped(&descendants);
+    let metrics = receipt(&run.0.join("inherited.metrics.toml"));
+    assert_eq!(metrics["outcome"].as_str(), Some("interrupted"));
+    assert_eq!(metrics["parent_scope"].as_str(), Some("benchmark-parent"));
+    let quick = compile(&run.0, "int main(void){return 0;}\n");
+    assert!(exec(&run.0, &quick, "after-inherited-interruption").status.success());
+}
+
+#[test]
 fn disabled_telemetry_preserves_execution_and_one_owned_wait4_record() {
     let run = Run::new();
     let binary = compile(

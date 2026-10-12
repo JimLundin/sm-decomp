@@ -64,3 +64,40 @@ a length-prefixed TOML receipt and holds capacity until stdin closes.
 Historical sealed evidence keeps its original format. JSON ingestion is limited to external reference corpora.
 The no-Python integration test checks maintained source, recipes and CI.
 Final migration controls and cleanup are tracked in `.scratch/rust-tooling`.
+
+## Controlled pipeline measurements
+
+`sm-pipeline benchmark prepare CONFIG.toml` prepares authenticated native live
+seeds at 1,000 and 45,000 inputs, using system, decompressor and RNG. Preparation
+is a separate cold/empty-store experiment. `benchmark freeze` seals an existing
+pair of seed runs; `benchmark validate` checks the frozen source, predecessors,
+compiler/executable identities, native cache seals and shared-store inventories.
+`benchmark run` uses three alternating repeats at each extent and capacities
+two/four. The two worker roots must already have their matching immutable
+`workers/capacity.toml` and empty `build-cache` directories must be absent.
+
+Configuration uses `pipeline-benchmark-v1`: an absolute `pipeline` executable,
+`output`, complete `request` for `live-verify`, `capacity_roots` keyed by `2` and
+`4`, `cache_seed`, `store_seed`, `seed_verdicts` and frozen identity inventories.
+`prepare` fills the initially empty seed verdicts/inventories and source revision.
+The host budgets are fixed at 8 GiB aggregate sampled RSS, 64 GiB staging/private
+allocation and a 50 GiB free disk reserve. Sources and compilation environment
+must stay fixed throughout preparation and the matrix. Each sample independently
+copies the same complete native cache/store seed and reads its bytes before
+starting the measured boundary. Final cache clones remain with their samples.
+
+Run with host `/proc` visibility; a private PID namespace cannot prove the host
+is quiet. The runner records CPU/load/memory/disk observations and process
+state/wchan samples. These classify broad activity and waiting; they do not
+attribute CPU to text formatting or parsing symbols. Resource or interference
+failures, drift, cache misses and live refusals retain diagnostics and exclude
+the sample from medians. No runner lease wraps native live orchestration.
+
+The measured boundary includes live generation/builds, four fresh captures,
+publication, authentication, cleanup/dedup and retained authentication. Seed
+preparation and post-run identity checks are outside it. Receipts, per-stage
+overlap summaries and host observations stay outside canonical evidence. Stage
+durations are nested/concurrent and must not be added to claim total wall time
+or a removable bottleneck share. The final existing 129,712-input projectile
+route remains a separate pipeline regression gate. Work status and frozen
+contracts are in `.scratch/pipeline-upgrade/`.

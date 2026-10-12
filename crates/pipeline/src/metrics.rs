@@ -83,6 +83,12 @@ pub(crate) fn command_output(command: &mut Command, role: &str) -> Result<std::p
 }
 pub(crate) struct ActiveGuard(Option<Context>);
 impl Context {
+    pub fn snapshot(&self) -> Receipt {
+        self.inner.receipt.lock().unwrap().clone()
+    }
+    pub fn add_live_output(&self, path: PathBuf) {
+        self.inner.resources.lock().unwrap().add_live_output(path);
+    }
     pub fn status(&self, command: &mut Command, role: &str) -> Result<ExitStatus> {
         let mut child = OwnedChild::spawn(command, self, role)?;
         child.wait()
@@ -216,8 +222,9 @@ impl Run {
             }),
         };
         let worker = context.clone();
-        let cancellation =
-            (previous.is_none() && inherited_context.is_none()).then(Cancellation::install).transpose()?;
+        // Every top-level native process handles teardown, even when its clock
+        // and receipt identity were inherited from a benchmark parent.
+        let cancellation = previous.is_none().then(Cancellation::install).transpose()?;
         let sampler = (context.enabled() && inherited_context.is_none()).then(|| {
             thread::spawn(move || {
                 while !worker.inner.stopped.load(Ordering::Acquire) {
@@ -460,6 +467,30 @@ pub(crate) struct OwnedChild {
     start_ticks: Measurement,
 }
 impl OwnedChild {
+    pub fn poll_exit(&mut self) -> Result<Option<ExitStatus>> {
+        self.reap(libc::WNOHANG)
+    }
+    pub fn terminate(&mut self) -> Result<ExitStatus> {
+        // Let native orchestration owners stop and reap their separately grouped
+        // producer/collector children before falling back to a forced group stop.
+        let sent = unsafe { libc::kill(-(self.child.id() as i32), libc::SIGTERM) };
+        if sent != 0 && std::io::Error::last_os_error().raw_os_error() != Some(libc::ESRCH) {
+            return Err(std::io::Error::last_os_error().into());
+        }
+        let deadline = std::time::Instant::now() + Duration::from_secs(30);
+        loop {
+            if let Some(status) = self.reap(libc::WNOHANG)? {
+                return Ok(status);
+            }
+            if std::time::Instant::now() >= deadline {
+                return self.kill_wait();
+            }
+            thread::sleep(Duration::from_millis(20));
+        }
+    }
+    pub fn take_stdin(&mut self) -> Option<std::process::ChildStdin> {
+        self.child.stdin.take()
+    }
     pub fn take_stdout(&mut self) -> Option<std::process::ChildStdout> {
         self.child.stdout.take()
     }
