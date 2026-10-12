@@ -27,6 +27,37 @@ impl Drop for Temp {
 }
 
 #[test]
+fn typed_trace_restoration_preserves_decimal_extremes_and_exact_legacy_bytes() -> anyhow::Result<()> {
+    let temp = Temp::new();
+    let mut store = Store::create(temp.path())?;
+    let mut expected = Vec::new();
+    let mut writer = TraceWriter::new(&mut store);
+    // Independent standard-formatting oracle includes every decimal width,
+    // zero, maximum values and frame resets, beyond gameplay's usual range.
+    let mut values = vec![0, 1, u64::MAX];
+    let mut power = 10u64;
+    loop {
+        values.extend([power - 1, power, power + 1]);
+        let Some(next) = power.checked_mul(10) else { break };
+        power = next;
+    }
+    for value in values {
+        use std::io::Write;
+        writeln!(expected, "ppu {value} {value} {value} {value}")?;
+        writer.push(Event::Ppu { frame: value, device: value, register: value, value })?;
+        writeln!(expected, "apu {value} {value} {value}")?;
+        writer.push(Event::Apu { frame: value, port: value, value })?;
+    }
+    let id = writer.finish()?;
+    store.commit()?;
+    let store = Store::open(temp.path())?;
+    let mut actual = Vec::new();
+    write_stream(&store, &id, &mut actual)?;
+    assert_eq!(actual, expected);
+    Ok(())
+}
+
+#[test]
 fn independent_stores_import_with_remapped_ordinals_and_verified_inventory() -> anyhow::Result<()> {
     let temp = Temp::new();
     let source_path = temp.path().join("source-store");

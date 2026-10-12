@@ -12,6 +12,7 @@ pipeline-model.workspace = true
 sha2.workspace = true
 serde.workspace = true
 toml.workspace = true
+itoa = "=1.0.18"
 zstd = { version = "=0.13.3", default-features = false }
 
 [[bin]]

@@ -10,7 +10,14 @@ Reuse builds::execute_timeout, packed::capture/publish, live::verify and batch::
 
 ## Acceptance
 
-One owner reaps each child once and integrates resource collection with polling/timeout/kill. One lease covers the producer/collector pair, without helper reacquisition. Metrics remain outside canonical comparison inventories. Enabled versus disabled text telemetry overhead is at most 2%.
+One owner reaps each child once and integrates resource collection with polling/timeout/kill. One lease covers the producer/collector pair, without helper reacquisition. Metrics remain outside canonical comparison inventories.
+
+User-directed completion revision (2026-10-12): routine verification defaults to
+no detailed telemetry; benchmarks and explicit `SM_PIPELINE_METRICS=enabled`
+retain all detailed metrics. Preserve exit/CPU accounting and elapsed receipts.
+The enabled-versus-disabled 2% target remains a requirement for future automatic
+telemetry promotion, not a claimed result or a reason to repeat hour-long tuning
+runs. Record the short control's limits and the failed/stopped long control.
 
 Follow the complete contract in [plan.md](../plan.md). Record source revision,
 controls, measured results and scoped cleanup under Completion evidence before
@@ -35,6 +42,12 @@ The <=2% gate remains unproved, so this ticket stays claimed and 03 stays blocke
 Restart: [checkpoint-02.md](../checkpoint-02.md).
 
 ## Completion evidence
+
+Latest bounded measurements and default-off delivery policy:
+[short-measurements.md](../evidence/short-measurements.md). The public default-mode
+execution control went red on the old default (enabled=true), then exercises no
+RSS/disk samples, one owned process record and successful execution. Final
+verification/integration cleanup remains pending; no large-case <=2% claim.
 
 Partial implementation, controls, fresh admission, cleanup, retained dependencies
 and the remaining overhead gate are recorded in

@@ -287,6 +287,8 @@ static void handler(int signal_number){(void)signal_number;hits++;}
 int main(void) {
  if(signal(SIGPIPE,handler)==SIG_ERR)return 9;
  port_effects=PortEffectsOpen();if(!port_effects)return 2;
+ /* Parent closes its pipe reader before allowing the failing write. */
+ if(getchar()!='x')return 9;
  raise(SIGPIPE);if(hits!=1)return 9;
  PortEffect(port_effects,"apu %u %u %u\n",0,3,255);
  if(!PortEffectsClose())return 9;
@@ -301,11 +303,14 @@ int main(void) {
         .env("SM_EVIDENCE_PIPE", "/proc/self/fd/1")
         .env("SM_PIPELINE_METRICS", "enabled")
         .env("SM_PIPELINE_METRICS_PRODUCER_PATH", &path)
+        .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
         .unwrap();
     drop(child.stdout.take());
+    use std::io::Write;
+    child.stdin.take().unwrap().write_all(b"x").unwrap();
     let output = child.wait_with_output().unwrap();
     assert_eq!(output.status.code(), Some(2), "{}", String::from_utf8_lossy(&output.stderr));
     assert_eq!(output.stderr, b"preserved 2\n");

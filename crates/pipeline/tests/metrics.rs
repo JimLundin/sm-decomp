@@ -50,15 +50,13 @@ fn spawn_exec(root: &Path, binary: &Path, label: &str, timeout: u64, telemetry: 
         timeout: u64,
     }
     let request = Request { command: vec![binary], run: root, label, root: root.join("workers"), workers: 1, timeout };
-    let mut child = Command::new(env!("CARGO_BIN_EXE_sm-pipeline"))
-        .arg("exec")
-        .env_remove("SM_PIPELINE_METRICS_CONTEXT")
-        .env("SM_PIPELINE_METRICS", telemetry)
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .unwrap();
+    let mut command = Command::new(env!("CARGO_BIN_EXE_sm-pipeline"));
+    command.env_remove("SM_PIPELINE_METRICS_CONTEXT").env_remove("SM_PIPELINE_METRICS");
+    if !telemetry.is_empty() {
+        command.env("SM_PIPELINE_METRICS", telemetry);
+    }
+    let mut child =
+        command.arg("exec").stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped()).spawn().unwrap();
     child.stdin.take().unwrap().write_all(toml::to_string(&request).unwrap().as_bytes()).unwrap();
     child
 }
@@ -328,6 +326,13 @@ fn disabled_telemetry_preserves_execution_and_one_owned_wait4_record() {
     );
     let enabled = exec_with_options(&run.0, &binary, "enabled", 240, "enabled");
     let disabled = exec_with_options(&run.0, &binary, "disabled", 240, "disabled");
+    let default = exec_with_options(&run.0, &binary, "default", 240, "");
+    assert!(default.status.success());
+    let default_metrics = receipt(&run.0.join("default.metrics.toml"));
+    assert_eq!(default_metrics["enabled"].as_bool(), Some(false));
+    assert_eq!(default_metrics["resources"]["rss_samples"].as_integer(), Some(0));
+    assert_eq!(default_metrics["resources"]["disk_samples"].as_integer(), Some(0));
+    assert_eq!(default_metrics["processes"].as_array().unwrap().len(), 1);
     assert!(enabled.status.success() && disabled.status.success());
     for suffix in ["stdout", "stderr"] {
         assert_eq!(

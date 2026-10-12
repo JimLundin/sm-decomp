@@ -57,6 +57,8 @@ fn execute(root: &Path, binary: &Path, label: &str, argument: &str, paths: &[(&P
     };
     let mut child = Command::new(env!("CARGO_BIN_EXE_sm-pipeline"))
         .arg("exec")
+        .env_remove("SM_PIPELINE_METRICS_CONTEXT")
+        .env("SM_PIPELINE_METRICS", "enabled")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())

@@ -1,5 +1,23 @@
 # Controlled text baseline execution contract
 
+## Measurement scope revision, 2026-10-12
+
+The user rejected the hour-long telemetry tuning cycle. Replace repeated
+45,000-input whole-pipeline on/off controls with a bounded diagnosis loop:
+measure the actual sampler against representative process/file counts in
+seconds, check enabled/disabled complete pipeline behavior at 1,000 inputs,
+and use retained large streams for focused restoration/profile comparisons.
+Keep the 2% overhead target, exact observation identity, complete stage coverage,
+and explicit sampled-peak limitations. A short control establishes only its
+tested workload; large-case sampling cost is measured separately. Do not claim
+the stopped long control passed or infer large-case overhead from short wall
+alone. Run the final full-route correctness gate once on final sources.
+
+The fixed 12-cell matrix below is the original statistical design, now deferred
+pending the targeted cost/profile results. Do not launch it automatically.
+Choose the smallest controlled before/after comparison that answers the measured
+bottleneck question, and record extent, worker capacity, warmth and limits.
+
 Preparation only. Ticket 03 remains blocked by ticket 02. No samples reported
 here are benchmark results, and no binary ticket is selected or claimed.
 

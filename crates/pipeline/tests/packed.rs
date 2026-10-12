@@ -51,6 +51,8 @@ fn hash(path: &Path) -> String {
 fn invoke<T: Serialize>(command: &str, request: T, success: bool) -> Option<Pointer> {
     let mut process = Command::new(env!("CARGO_BIN_EXE_sm-pipeline"))
         .arg(command)
+        .env_remove("SM_PIPELINE_METRICS_CONTEXT")
+        .env("SM_PIPELINE_METRICS", "enabled")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -252,6 +254,8 @@ fn native_capture_workers_run_two_producers_simultaneously() {
     }
     let mut process = Command::new(env!("CARGO_BIN_EXE_sm-pipeline"))
         .arg("packed-capture-many")
+        .env_remove("SM_PIPELINE_METRICS_CONTEXT")
+        .env("SM_PIPELINE_METRICS", "enabled")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())

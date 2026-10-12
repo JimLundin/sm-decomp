@@ -67,6 +67,13 @@ Final migration controls and cleanup are tracked in `.scratch/rust-tooling`.
 
 ## Controlled pipeline measurements
 
+Normal verification keeps process exit/CPU accounting and elapsed receipts,
+with detailed stage timing and periodic RSS/disk scans disabled by default.
+Set `SM_PIPELINE_METRICS=enabled` to collect detailed telemetry; use `disabled`
+to explicitly suppress it. Benchmark commands always enable detailed telemetry.
+The large-workload 2% telemetry overhead target is not yet established, so
+routine decomp iterations do not pay its unproved cost.
+
 `sm-pipeline benchmark prepare CONFIG.toml` prepares authenticated native live
 seeds at 1,000 and 45,000 inputs, using system, decompressor and RNG. Preparation
 is a separate cold/empty-store experiment. `benchmark freeze` seals an existing

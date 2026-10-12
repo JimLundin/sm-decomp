@@ -120,6 +120,7 @@ struct Summary {
 }
 
 pub fn command(args: &[String]) -> Result<()> {
+    let _detailed = crate::metrics::detailed();
     ensure!(args.len() == 2, "usage: benchmark prepare|freeze|validate|run CONFIG.toml");
     let path = Path::new(&args[1]);
     let mut config: Config = pipeline_model::read(path)?;
@@ -842,6 +843,7 @@ mod controls {
     use super::*;
     #[test]
     fn real_live_refusal_keeps_diagnostics_and_scoped_cleanup() {
+        let _detailed = crate::metrics::detailed();
         let root = std::env::temp_dir().join(format!(
             "sm-benchmark-live-refusal-{}-{}",
             std::process::id(),

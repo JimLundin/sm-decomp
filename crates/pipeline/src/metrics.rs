@@ -75,6 +75,17 @@ pub(crate) fn sidecar(directory: &Path, role: &str) -> PathBuf {
     directory.join(format!("{role}-{}-{}.metrics.toml", std::process::id(), NEXT.fetch_add(1, Ordering::Relaxed)))
 }
 thread_local! { static ACTIVE: std::cell::RefCell<Option<Context>>=const{std::cell::RefCell::new(None)}; }
+thread_local! { static DETAILED: std::cell::Cell<bool>=const{std::cell::Cell::new(false)}; }
+// Benchmark scopes opt in without mutating the process environment.
+pub(crate) struct DetailedGuard(bool);
+pub(crate) fn detailed() -> DetailedGuard {
+    DetailedGuard(DETAILED.with(|value| value.replace(true)))
+}
+impl Drop for DetailedGuard {
+    fn drop(&mut self) {
+        DETAILED.with(|value| value.set(self.0));
+    }
+}
 pub(crate) fn active() -> Option<Context> {
     ACTIVE.with(|value| value.borrow().clone())
 }
@@ -211,7 +222,8 @@ impl Run {
         let clock =
             inherited_context.as_ref().map(|context| context.clock.clone()).map(Ok).unwrap_or_else(Clock::new)?;
         let id = format!("{}-{}-{}", std::process::id(), clock.origin_ns, NEXT.fetch_add(1, Ordering::Relaxed));
-        let enabled = std::env::var("SM_PIPELINE_METRICS").as_deref() != Ok("disabled");
+        let enabled =
+            DETAILED.with(|value| value.get()) || std::env::var("SM_PIPELINE_METRICS").as_deref() == Ok("enabled");
         let start_ns = clock.offset()?;
         let receipt = Receipt { format:"pipeline-metrics-v1".into(),run_id:inherited_context.as_ref().map(|c|c.run_id.clone()).unwrap_or_else(||id.clone()),scope_id:inherited_context.as_ref().map(|c|c.scope_id.clone()).unwrap_or(id),parent_scope:inherited_context.as_ref().and_then(|c|c.parent_scope.clone()),role:role.into(),clock,enabled:inherited_context.as_ref().map(|c|c.enabled).unwrap_or(enabled),start_ns,end_ns:start_ns,elapsed_ns:0,outcome:"incomplete".into(),error:None,last_completed_stage:None,stages:vec![],processes:vec![],resources:Resources { rss_interval_ms:100,disk_interval_ms:500,semantics:"wait4 child accounting; aggregate concurrent /proc RSS sampled at 100ms; shared pages may count twice; short-lived/between-sample peaks may be missed".into(),..Default::default()},transport:Transport::default(),configuration:Default::default(),scopes:vec![] };
         let context = Context {

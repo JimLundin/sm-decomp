@@ -1,6 +1,96 @@
 # Continuation checkpoint: benchmark preparation
 
+## Current recovery state, 2026-10-12 14:13 UTC
+
+Long telemetry control remains stopped. Short old/new reader comparison passed:
+19.389% complete-boundary reduction at 1,000 inputs; 15.253/15.681s baseline,
+12.394/12.543s candidate. Exact observations agree; paired scope and limitations
+are in `evidence/short-measurements.md`. Global cleanup/dedup zero bytes.
+
+Detailed telemetry is now default-off for ordinary verification, enabled via
+`SM_PIPELINE_METRICS=enabled` or the benchmark scope. Exit/CPU accounting, elapsed
+receipts, cancellation and unavailable resource semantics are retained.
+Large-case <=2% promotion remains unproved. New default control went red first.
+No binary transport selected; conditional 04–08 remain unclaimed.
+
+Verification: 12 evidence controls, 7 benchmark refusals, 5 evidence metrics,
+6 process metrics, 4 observations, 2 packed parallel/private controls,
+8 producer fault/identity controls, 5 resource and 4 model controls passed.
+60/61 broad unit checks passed; the failed detailed-refusal control was corrected
+to opt in explicitly and passed separately. Full fixture inventory passed.
+Strict Clippy/fmt/diff pass. Fixed a real SIGPIPE test race with parent/child
+handshake; full eight-producer suite passes. No production C change.
+
+Fresh current projectile predecessor: `final-projectile/1791813609706347-2-0`,
+1,840 existing cases, post-cleanup authentication passed. Dedup554696704bytes.
+Cargo.lock changed with itoa, so fresh decompressor acceptance is
+`final-decomp/decomp-acceptance.toml`, run1791814107026485546-2, all40/23/fault
+controls accepted, post-cleanup auth passed; cleanup/dedup0bytes. Copied sealed
+capture manifests are not replay inputs: use original ticket01 baseline replay
+`fixtures/manifest.toml` and absolute ROM. Failed attempts remain diagnostic.
+Fresh RNG `final-rng/1791814189089479007-2`, accepted exhaustive/live8783calls;
+cleanup0/dedup176081290bytes and post-cleanup auth passed.
+
+**Active final full-route regression session8647**:
+`out/ticket-03/final-live/1791814326101526304-2`,129712inputs,four fresh subjects,
+current-system predecessor plus fresh decompressor/RNG/projectile. Current
+release `retained-tools/sm-pipeline-final` / `sm-evidence-final`. No statistical
+claim under shared host load. Source retention, final cleanup/authentication,
+ticket resolution and main integration/worktree removal remain pending.
+Final debug/release targets cleaned after retaining binaries. Main untouched.
+
+The old sections below are historical and do not describe active writers.
+
+## User-directed measurement correction
+
+Current work:exact decimal legacy rendering implemented in evidence/trace.rs,
+new independent decimal-extreme public test;12 evidence controls and strict
+Clippy/fmt pass. Focused24MB restoration median442.695ms→64.429ms;large1.74GB
+candidate median5.4446s, all sealed bytes/events authenticated. New ticket09
+records selection/evidence. No binary transport selected.
+
+**Active short control70453**, output `out/ticket-03/telemetry-short-decimal`.
+Four samples disabled/enabled/enabled/disabled at1000inputs, four fresh subjects,
+full publication/authentication/cleanup boundary, retained old producer/pipeline
+plus new reader `retained-tools/sm-evidence-decimal`. Logs telemetry-short-decimal.*.
+Build outputs cleaned521.5MiB tests+94.3MiB probes. Sampler fixture removed;
+sampler probe100RSS+100disk scans completed0.03s command wall. No compile while
+short control active. Long control83791 is stopped and must not resume.
+Stopped sample6 cleanup/dedup zero, four retained authentications passed.
+
+Session83791 was stopped during sample6 at the user's objection to the hour-long
+telemetry tuning loop. No native writers remain. Scoped cleanup/dedup succeeded
+(logs `user-stopped-control-*`); samples1–5 are retained, sixth has no admitted
+time. The two enabled prefix times alone imply minimum6.44% overhead against
+the complete disabled median, so no overhead success is possible from this
+prefix. Do not resume this long control. Replace it with seconds-scale targeted
+sampler/restoration measurements and a shorter complete-pipeline check; retain
+the2% target and final full-route correctness gate. See benchmark-execution.md.
+Ticket02 remains claimed. Actual decomp is still outside this session's scope.
+
 ## Latest recovery, 2026-10-12 11:42 UTC
+
+Latest active writer: **session83791**, unchanged telemetry binaries,
+`sample-3-enabled-attempt-2`, logs `telemetry-quiet-attempt-2.*`. All eight
+post-cleanup authentications of the two interrupted attempts passed. Resume
+output paths now preserve old published absolute pointers. HEAD3ead0c4 verified
+seed-lock/rolling-window checkpoint. No compilation or broad evidence scans
+while active. Free disk218227572736bytes at last check. Ticket02 still claimed.
+
+Sample3 enabled completed584042073002ns with exact observations and successful
+cleanup/dedup/retained authentication at `sample-3-enabled-attempt-2`.
+Authoritative completed prefix is `samples.toml`. Sample4 disabled running;
+do not treat this as a passing overhead gate before samples4/5/6 finish.
+
+Sample4 disabled completed531330292435ns, exact observations and all full
+boundary gates passed. Sample5 disabled running in83791. Enabled medians
+still pending; likely overhead failure must be addressed, never waived.
+
+Sample5 disabled completed559225364461ns, full gates passed. Sample6 enabled
+active in83791. Disabled median531330292435ns; with enabled prefix565550236893 /
+584042073002ns, even a fastest third enabled result cannot pass2%. Finish
+the complete control, retain failure report, then reduce telemetry cost and
+rerun unchanged full workload/guards. No admitted baseline yet.
 
 Update 12:29 UTC: session 32260 also ended in host-interference refusal at
 offset407940ms, rolling0.27256. Snapshot deltas show Codex daemon/agents and

@@ -32,10 +32,26 @@ impl Event {
         }
     }
     fn render(&self, out: &mut dyn Write) -> Result<()> {
-        match *self {
-            Self::Ppu { frame, device, register, value } => writeln!(out, "ppu {frame} {device} {register} {value}")?,
-            Self::Apu { frame, port, value } => writeln!(out, "apu {frame} {port} {value}")?,
+        // Four u64 fields need at most 80 digits, four separators and the tag.
+        // Render one bounded legacy line per write instead of formatting each
+        // field through the writer. Stored events and byte seals are unchanged.
+        let mut bytes = [0u8; 88];
+        let (tag, fields, count) = match *self {
+            Self::Ppu { frame, device, register, value } => (b"ppu ", [frame, device, register, value], 4),
+            Self::Apu { frame, port, value } => (b"apu ", [frame, port, value, 0], 3),
+        };
+        bytes[..4].copy_from_slice(tag);
+        let mut at = 4;
+        let mut decimal = itoa::Buffer::new();
+        for number in &fields[..count] {
+            let digits = decimal.format(*number).as_bytes();
+            bytes[at..at + digits.len()].copy_from_slice(digits);
+            at += digits.len();
+            bytes[at] = b' ';
+            at += 1;
         }
+        bytes[at - 1] = b'\n';
+        out.write_all(&bytes[..at])?;
         Ok(())
     }
 }
@@ -110,7 +126,7 @@ impl<'a> TraceWriter<'a> {
         Ok(())
     }
     pub fn push(&mut self, event: Event) -> Result<()> {
-        let mut text = Vec::with_capacity(64);
+        let mut text = Vec::with_capacity(88);
         event.render(&mut text)?;
         self.observe(&text)?;
         self.add_event(event)
