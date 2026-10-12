@@ -209,12 +209,19 @@ impl ResourceSampler {
     }
     fn sample_disk(&mut self, now_ns: u64) {
         if self.paths.is_empty() {
-            self.resources.staging_allocated_bytes = Measurement::unavailable("no staging paths registered");
-            self.resources.private_store_allocated_bytes =
-                Measurement::unavailable("no private-store paths registered");
-            self.resources.combined_allocated_bytes =
-                Measurement::unavailable("no staging/private-store paths registered");
-            self.resources.minimum_free_bytes = Measurement::unavailable("no resource filesystem paths registered");
+            unavailable_if_unmeasured(&mut self.resources.staging_allocated_bytes, "no staging paths registered");
+            unavailable_if_unmeasured(
+                &mut self.resources.private_store_allocated_bytes,
+                "no private-store paths registered",
+            );
+            unavailable_if_unmeasured(
+                &mut self.resources.combined_allocated_bytes,
+                "no staging/private-store paths registered",
+            );
+            unavailable_if_unmeasured(
+                &mut self.resources.minimum_free_bytes,
+                "no resource filesystem paths registered",
+            );
             return;
         }
         self.resources.disk_samples += 1;
@@ -224,12 +231,14 @@ impl ResourceSampler {
         let mut free = None::<u64>;
         for (path, kind) in &self.paths {
             let index = if *kind == PathKind::Staging { 0 } else { 1 };
-            kinds[index] = true;
             match scan.path(path) {
-                Ok(bytes) => match totals[index].checked_add(bytes) {
-                    Some(value) => totals[index] = value,
-                    None => scan.errors.push("disk allocated byte count overflow".into()),
-                },
+                Ok(bytes) => {
+                    kinds[index] = true;
+                    match totals[index].checked_add(bytes) {
+                        Some(value) => totals[index] = value,
+                        None => scan.errors.push("disk allocated byte count overflow".into()),
+                    }
+                }
                 Err(error) => {
                     scan.missing += 1;
                     scan.errors.push(format!("resource path {}: {error}", path.display()));
@@ -252,15 +261,25 @@ impl ResourceSampler {
         if kinds[0] {
             peak(&mut self.resources.staging_allocated_bytes, totals[0]);
         } else {
-            self.resources.staging_allocated_bytes = Measurement::unavailable("no staging paths registered");
+            unavailable_if_unmeasured(
+                &mut self.resources.staging_allocated_bytes,
+                "no readable staging paths registered",
+            );
         }
         if kinds[1] {
             peak(&mut self.resources.private_store_allocated_bytes, totals[1]);
         } else {
-            self.resources.private_store_allocated_bytes =
-                Measurement::unavailable("no private-store paths registered");
+            unavailable_if_unmeasured(
+                &mut self.resources.private_store_allocated_bytes,
+                "no readable private-store paths registered",
+            );
         }
-        if let Some(total) = totals[0].checked_add(totals[1]) {
+        if !kinds[0] && !kinds[1] {
+            unavailable_if_unmeasured(
+                &mut self.resources.combined_allocated_bytes,
+                "no readable staging/private-store paths registered",
+            );
+        } else if let Some(total) = totals[0].checked_add(totals[1]) {
             if peak(&mut self.resources.combined_allocated_bytes, total) {
                 self.resources.disk_peak_at_ns = now_ns;
             }
@@ -283,6 +302,11 @@ fn peak(measurement: &mut Measurement, value: u64) -> bool {
             *measurement = Measurement::value(value);
             true
         }
+    }
+}
+fn unavailable_if_unmeasured(measurement: &mut Measurement, reason: &str) {
+    if !matches!(measurement, Measurement::Measured { .. }) {
+        *measurement = Measurement::unavailable(reason);
     }
 }
 
