@@ -20,7 +20,9 @@ No new Python tooling or duplicate native migration ports are proposed.
 Implementation branch: `pipeline-upgrade-integration`, based on delivered
 merge `3ad1bf3`. Current source and format reconciliation is recorded in
 [reconciliation.md](reconciliation.md); absolute benchmark budgets are frozen in
-[benchmark-budgets.md](benchmark-budgets.md). Ticket 01 is claimed. Conditional
+[benchmark-budgets.md](benchmark-budgets.md). Ticket 01 is resolved; ticket 02 is
+being implemented on `pipeline-upgrade-metrics`, with isolated producer and
+resource-sampler support. Conditional
 tickets cannot be claimed without the selection decision in 03.
 
 ## Planning evidence
