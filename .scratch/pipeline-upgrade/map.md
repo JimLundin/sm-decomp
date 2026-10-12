@@ -41,5 +41,5 @@ If binary selected: 04 decoder → 05 native producer → 06 compatibility →
 
 Ticket 01's external prerequisite is satisfied by migration `c89db9b`, merge
 `3ad1bf3`, resolved local migration tickets and their recorded controls/cleanup.
-Ticket 01 current-source admission and cleanup are complete. Ticket 02 is ready;
+Ticket 01 current-source admission and cleanup are complete. Ticket 02 is claimed;
 ticket 03 and all conditional transport tickets remain blocked.

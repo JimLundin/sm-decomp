@@ -155,3 +155,12 @@ retained integration checkout. After removal, full retained live authentication
 passed again with four subjects and 1,345 artifacts each, unchanged verdict SHA;
 receipt `logs/full-native-text-auth-after-worktree-removal.toml`.
 Remaining disk space: 225,292,451,840 bytes. Ticket 01 is resolved.
+
+Before subsequent harness changes, the integration owner retained the exact
+Git source freeze `99d799c` under `out/ticket-01/source-freeze/`, without Git
+metadata or build trees. Its manifests, original ROM/dependency references and
+native source are preserved; generated/external manifest dependencies remain
+at their original integration-owned paths. The retained driver successfully
+authenticated the 1,840-case ownership admission using that frozen checkout
+as `checkout`: `logs/source-freeze-ownership-auth.toml`. This protects historical
+source-based authentication while later tickets change the live harness.

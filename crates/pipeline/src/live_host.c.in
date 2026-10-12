@@ -1,3 +1,6 @@
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
 #define main retained_main
 #define __wrap_DecompressToMem retained_decompression_observer
 #include __HEADLESS__

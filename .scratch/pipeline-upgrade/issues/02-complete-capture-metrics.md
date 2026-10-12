@@ -17,3 +17,12 @@ controls, measured results and scoped cleanup under Completion evidence before
 resolving. Claimed on `pipeline-upgrade-metrics` from integration
 `09d3ed16585211d697d91e04bd60e0ab062f8605`; public test seams were confirmed.
 Design/context: `/tmp/sm-pipeline-upgrade-metrics-design.md`.
+
+## Comments
+
+Claimed on `pipeline-upgrade-metrics`, based on ticket 01 completion. Producer
+and resource sampling support use separate worktrees with exclusive files.
+Process accounting (`797f3a2`) and capture/import stage instrumentation
+(`f081f21`) are partial checkpoints awaiting the complete metrics contract,
+controls, overhead measurement, integration and cleanup. They do not resolve
+this ticket.
