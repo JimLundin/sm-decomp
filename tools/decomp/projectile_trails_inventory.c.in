@@ -1,0 +1,75 @@
+/* Read-only whole-frame observation around actual pinned bank90 code. */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "sm_cpu_infra.h"
+#include "snes/cart.h"
+static unsigned long trail_total, trail_active, trail_script, trail_oam, trail_frozen;
+static unsigned long trail_opcode_hits[3], trail_active_captures, trail_script_captures, trail_oam_captures, trail_frozen_captures;
+static int trail_first = -1, trail_last = -1;
+static uint8 trail_before[0x20000];
+static FILE *trail_captures;
+static void TrailFile(const char *name, const void *data, size_t size) {
+  FILE *f = fopen(name, "wb");
+  if (!f || fwrite(data, 1, size, f) != size || fclose(f)) exit(2);
+}
+static void TrailOpcode(uint32 ea) {
+  if (ea == 0x90b525) trail_opcode_hits[0]++;
+  else if (ea == 0x90b587) trail_opcode_hits[1]++;
+  else if (ea == 0x90b5b3) trail_opcode_hits[2]++;
+}
+void C_HandleProjectileTrails(void);
+void HandleProjectileTrails(void) {
+  unsigned active = 0, scripts = 0;
+  for (unsigned k = 0; k < 18; k++) {
+    active += projectiletrail_left_instr_timer[k] != 0;
+    active += projectiletrail_right_instr_timer[k] != 0;
+    scripts += projectiletrail_left_instr_timer[k] == 1;
+    scripts += projectiletrail_right_instr_timer[k] == 1;
+  }
+  trail_total++;
+  if (active) memcpy(trail_before, g_ram, sizeof(trail_before));
+  unsigned long opcodes_before = trail_opcode_hits[0] + trail_opcode_hits[1] + trail_opcode_hits[2];
+  C_HandleProjectileTrails();
+  if (!active) return;
+  trail_active++;
+  if (trail_first < 0) trail_first = snes_frame_counter;
+  trail_last = snes_frame_counter;
+  unsigned frozen = *(uint16 *)(trail_before + 0xa78) != 0;
+  unsigned script_frame = !frozen && scripts != 0;
+  unsigned oam = memcmp(trail_before + 0x370, g_ram + 0x370, 0x224) != 0;
+  trail_script += script_frame;
+  trail_oam += oam;
+  trail_frozen += frozen;
+  unsigned capture = trail_active_captures < 8;
+  if (script_frame && trail_script_captures < 8) { trail_script_captures++; capture = 1; }
+  if (oam && trail_oam_captures < 8) { trail_oam_captures++; capture = 1; }
+  if (frozen && trail_frozen_captures < 8) { trail_frozen_captures++; capture = 1; }
+  if (!capture) return;
+  trail_active_captures++;
+  if (!trail_captures) {
+    trail_captures = fopen("trail-captures.tsv", "w");
+    if (!trail_captures) exit(2);
+    fprintf(trail_captures, "call\tframe\tactive_sides\tfrozen\tscript_frame\toam_changed\topcodes\tbefore\tafter\trom\n");
+  }
+  char before[96], after[96], rom[96];
+  snprintf(before, sizeof(before), "trail-%06lu-before.wram", trail_total);
+  snprintf(after, sizeof(after), "trail-%06lu-after.wram", trail_total);
+  snprintf(rom, sizeof(rom), "trail-%06lu.rom", trail_total);
+  TrailFile(before, trail_before, sizeof(trail_before));
+  TrailFile(after, g_ram, sizeof(g_ram));
+  TrailFile(rom, g_rom, g_snes->cart->romSize);
+  fprintf(trail_captures, "%lu\t%d\t%u\t%u\t%u\t%u\t%lu\t%s\t%s\t%s\n", trail_total, snes_frame_counter, active,
+          frozen, script_frame, oam, trail_opcode_hits[0] + trail_opcode_hits[1] + trail_opcode_hits[2] - opcodes_before,
+          before, after, rom);
+  if (fflush(trail_captures)) exit(2);
+}
+void TrailInventorySave(void) {
+  if (trail_captures && fclose(trail_captures)) exit(2);
+  FILE *f = fopen("trail-counts.tsv", "w");
+  if (!f) exit(2);
+  fprintf(f, "total_frames\tactive_frames\tscript_frames\toam_frames\tfrozen_active_frames\tfirst_frame\tlast_frame\tleft_down\tright_down\tleft_up\n");
+  fprintf(f, "%lu\t%lu\t%lu\t%lu\t%lu\t%d\t%d\t%lu\t%lu\t%lu\n", trail_total, trail_active, trail_script, trail_oam,
+          trail_frozen, trail_first, trail_last, trail_opcode_hits[0], trail_opcode_hits[1], trail_opcode_hits[2]);
+  if (fclose(f)) exit(2);
+}
