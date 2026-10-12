@@ -29,9 +29,12 @@ impl Run {
         fs::write(self.0.join("producer.c"), source).unwrap();
         let binary = self.0.join("producer");
         let mut compile = Command::new("cc");
-        compile.args(["-std=c11", "-O2", "-Wall", "-Wextra", "-Werror"]);
+        compile.args(["-std=c11", "-O2", "-Wall", "-Wextra", "-Werror", "-pthread"]);
         if main.contains("__wrap_write") {
             compile.arg("-Wl,--wrap=write");
+        }
+        if main.contains("__wrap_clock_gettime") {
+            compile.arg("-Wl,--wrap=clock_gettime");
         }
         let output = compile.arg(self.0.join("producer.c")).arg("-o").arg(&binary).output().unwrap();
         assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
@@ -237,6 +240,77 @@ impl Drop for Run {
     fn drop(&mut self) {
         let _ = fs::remove_dir_all(&self.0);
     }
+}
+#[test]
+fn failed_or_backwards_flush_clocks_cannot_report_metric_success() {
+    let run = Run::new();
+    let producer = run.producer(
+        "",
+        r#"
+int __wrap_clock_gettime(clockid_t clock_id,struct timespec *now) {
+ (void)clock_id;static unsigned calls;
+ const char *mode=getenv("CLOCK_CONTROL");
+ if(!strcmp(mode,"failed")){errno=EIO;return -1;}
+ if(!strcmp(mode,"overflow")){now->tv_sec=INT64_MAX;now->tv_nsec=0;return 0;}
+ now->tv_sec=calls++?1:2;now->tv_nsec=0;return 0;
+}
+int main(void) {
+ port_effects=PortEffectsOpen();if(!port_effects)return 2;
+ PortEffect(port_effects,"apu %u %u %u\n",0,3,255);
+ return PortEffectsClose()?2:0;
+}
+"#,
+    );
+    for mode in ["failed", "backwards", "overflow"] {
+        let path = run.0.join(format!("{mode}.toml"));
+        let status = Command::new(&producer)
+            .env("SM_EVIDENCE_PIPE", run.0.join(format!("{mode}.txt")))
+            .env("SM_PIPELINE_METRICS", "enabled")
+            .env("SM_PIPELINE_METRICS_PRODUCER_PATH", &path)
+            .env("CLOCK_CONTROL", mode)
+            .status()
+            .unwrap();
+        assert_eq!(status.code(), Some(2));
+        let receipt: Receipt = toml::from_str(&fs::read_to_string(path).unwrap()).unwrap();
+        assert_eq!(receipt.outcome, "failed");
+    }
+}
+#[test]
+fn effect_pipe_failures_preserve_the_hosts_existing_sigpipe_handler() {
+    let run = Run::new();
+    let producer = run.producer(
+        "",
+        r#"
+#include <signal.h>
+static volatile sig_atomic_t hits;
+static void handler(int signal_number){(void)signal_number;hits++;}
+int main(void) {
+ if(signal(SIGPIPE,handler)==SIG_ERR)return 9;
+ port_effects=PortEffectsOpen();if(!port_effects)return 2;
+ raise(SIGPIPE);if(hits!=1)return 9;
+ PortEffect(port_effects,"apu %u %u %u\n",0,3,255);
+ if(!PortEffectsClose())return 9;
+ if(hits!=1)return 9;
+ raise(SIGPIPE);if(hits!=2)return 9;
+ fprintf(stderr,"preserved 2\n");return 2;
+}
+"#,
+    );
+    let path = run.0.join("metrics.toml");
+    let mut child = Command::new(producer)
+        .env("SM_EVIDENCE_PIPE", "/proc/self/fd/1")
+        .env("SM_PIPELINE_METRICS", "enabled")
+        .env("SM_PIPELINE_METRICS_PRODUCER_PATH", &path)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    drop(child.stdout.take());
+    let output = child.wait_with_output().unwrap();
+    assert_eq!(output.status.code(), Some(2), "{}", String::from_utf8_lossy(&output.stderr));
+    assert_eq!(output.stderr, b"preserved 2\n");
+    let receipt: Receipt = toml::from_str(&fs::read_to_string(path).unwrap()).unwrap();
+    assert_eq!(receipt.outcome, "failed");
 }
 #[derive(Debug, Deserialize)]
 struct Receipt {

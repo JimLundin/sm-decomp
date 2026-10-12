@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <inttypes.h>
 #include <signal.h>
+#include <pthread.h>
 #include <time.h>
 #include <limits.h>
 #include <string.h>
@@ -14,9 +15,17 @@ static struct {
  const char *path;
  char buffer[65536];
 } port_effect_metrics;
+static int PortEffectAdd(uint64_t *value,uint64_t amount) {
+ if(UINT64_MAX-*value<amount){errno=EOVERFLOW;port_effect_metrics.failed=1;return -1;}
+ *value+=amount;return 0;
+}
 static uint64_t PortEffectClock(void) {
  struct timespec now;
  if(clock_gettime(CLOCK_MONOTONIC,&now)){port_effect_metrics.failed=1;return 0;}
+ if(now.tv_sec<0||now.tv_nsec<0||now.tv_nsec>=1000000000||
+  (uint64_t)now.tv_sec>(UINT64_MAX-(uint64_t)now.tv_nsec)/1000000000u){
+  errno=EOVERFLOW;port_effect_metrics.failed=1;return 0;
+ }
  return (uint64_t)now.tv_sec*1000000000u+(uint64_t)now.tv_nsec;
 }
 static int PortEffectReceipt(void) {
@@ -58,28 +67,53 @@ static void PortEffectExit(void) {
 }
 static ssize_t PortEffectWrite(void *cookie,const char *bytes,size_t length) {
  (void)cookie;
+ sigset_t pipes,previous,pending;
+ sigemptyset(&pipes);sigaddset(&pipes,SIGPIPE);
+ int mask_error=pthread_sigmask(SIG_BLOCK,&pipes,&previous);
+ if(mask_error){errno=mask_error;port_effect_metrics.failed=1;return 0;}
+ int pending_error=sigpending(&pending);
+ int had_pipe=pending_error?1:sigismember(&pending,SIGPIPE);
+ if(pending_error)port_effect_metrics.failed=1;
+ int broken_pipe=0;
  size_t offset=0;
- while(offset<length){
+ while(offset<length&&!port_effect_metrics.failed){
   size_t batch=length-offset;if(batch>sizeof(port_effect_metrics.buffer))batch=sizeof(port_effect_metrics.buffer);
   size_t end=offset+batch;
   uint64_t started=port_effect_metrics.enabled?PortEffectClock():0;
-  port_effect_metrics.flushes++;
+  if(port_effect_metrics.failed||PortEffectAdd(&port_effect_metrics.flushes,1))break;
   while(offset<end){
-   port_effect_metrics.writes++;
+   if(PortEffectAdd(&port_effect_metrics.writes,1))break;
    ssize_t written=write(port_effect_metrics.fd,bytes+offset,end-offset);
-   if(written<0){if(errno==EINTR){port_effect_metrics.interruptions++;continue;}port_effect_metrics.failed=1;break;}
+   if(written<0){
+    if(errno==EINTR){if(PortEffectAdd(&port_effect_metrics.interruptions,1))break;continue;}
+    broken_pipe=errno==EPIPE;port_effect_metrics.failed=1;break;
+   }
    if(written==0){errno=EIO;port_effect_metrics.failed=1;break;}
-   if((size_t)written<end-offset)port_effect_metrics.shorts++;
-   offset+=(size_t)written;port_effect_metrics.bytes+=(uint64_t)written;
+   if((size_t)written<end-offset&&PortEffectAdd(&port_effect_metrics.shorts,1))break;
+   offset+=(size_t)written;if(PortEffectAdd(&port_effect_metrics.bytes,(uint64_t)written))break;
   }
   if(port_effect_metrics.enabled){
-   uint64_t ended=PortEffectClock(),elapsed=ended>=started?ended-started:0;
-   port_effect_metrics.elapsed+=elapsed;if(elapsed>port_effect_metrics.max)port_effect_metrics.max=elapsed;
+   uint64_t ended=PortEffectClock();
+   if(ended<started){errno=ERANGE;port_effect_metrics.failed=1;}
+   else {
+    uint64_t elapsed=ended-started;
+    if(PortEffectAdd(&port_effect_metrics.elapsed,elapsed))break;
+    if(elapsed>port_effect_metrics.max)port_effect_metrics.max=elapsed;
+   }
   }
-  if(offset<end)break;
+  if(offset<end||port_effect_metrics.failed)break;
  }
+ int write_errno=errno;
+ /* Consume only a new pipe signal from this write; leave existing signals alone. */
+ if(broken_pipe&&!had_pipe){
+  struct timespec immediate={0,0};
+  while(sigtimedwait(&pipes,NULL,&immediate)<0&&errno==EINTR){}
+ }
+ mask_error=pthread_sigmask(SIG_SETMASK,&previous,NULL);
+ if(mask_error){port_effect_metrics.failed=1;write_errno=mask_error;}
+ errno=write_errno;
  /* GNU cookie writes report zero on error; partial bytes remain diagnostic. */
- return offset==length?(ssize_t)length:0;
+ return offset==length&&!port_effect_metrics.failed?(ssize_t)length:0;
 }
 static int PortEffectCloseCookie(void *cookie) {
  (void)cookie;
@@ -96,7 +130,6 @@ static FILE *PortEffectsOpen(void) {
  if(atexit(PortEffectExit)){port_effect_metrics.failed=1;(void)PortEffectReceipt();return NULL;}
  if(mode&&strcmp(mode,"enabled")&&strcmp(mode,"disabled")){errno=EINVAL;return NULL;}
  const char *pipe=getenv("SM_EVIDENCE_PIPE");if(!pipe){errno=EINVAL;return NULL;}
- if(signal(SIGPIPE,SIG_IGN)==SIG_ERR)return NULL;
  port_effect_metrics.fd=open(pipe,O_WRONLY|O_CREAT|O_TRUNC,0666);
  if(port_effect_metrics.fd<0)return NULL;
  cookie_io_functions_t io={.read=NULL,.write=PortEffectWrite,.seek=NULL,.close=PortEffectCloseCookie};
