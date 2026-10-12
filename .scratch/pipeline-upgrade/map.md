@@ -16,7 +16,9 @@ Plan: `plan.md`. Visual source: `visual/plan.mdx`.
 - Current decomp chains/host ownership gates are prerequisites for promotion.
 - Implementation started on `pipeline-upgrade-integration` at delivered merge
   `3ad1bf3`; see `reconciliation.md` for current native v2 evidence and retained
-  historical-reader contracts. Ticket 01 is claimed for refreshed admission.
+  historical-reader contracts. Ticket 01 is resolved with refreshed admission:
+  13,624 actual-C cases and a complete 129,712-input four-subject native text
+  verdict, post-cleanup/removal authentication. See `evidence/native-integration.md`.
 - Absolute benchmark budgets are frozen in `benchmark-budgets.md` before
   sampling; metrics and benchmark exploration notes are retained in `/tmp/`.
 
@@ -39,4 +41,5 @@ If binary selected: 04 decoder → 05 native producer → 06 compatibility →
 
 Ticket 01's external prerequisite is satisfied by migration `c89db9b`, merge
 `3ad1bf3`, resolved local migration tickets and their recorded controls/cleanup.
-Fresh current-source admission remains required before ticket 02 is ready.
+Ticket 01 current-source admission and cleanup are complete. Ticket 02 is ready;
+ticket 03 and all conditional transport tickets remain blocked.

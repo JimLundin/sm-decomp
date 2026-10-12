@@ -1,7 +1,6 @@
 # Current native integration evidence
 
-Status: implementation and verification complete; ticket 01 remains claimed
-until integration-owned implementer worktree removal.
+Status: verified and cleaned; integrated implementer worktree removed.
 
 Source: migration `c89db9bcf824a3c4f973550d390a95c3f5d05f97` delivered and
 already merged at the original integration basis `3ad1bf3`; current upgrade
@@ -149,6 +148,10 @@ diagnostic failures, full live subject `evidence.toml` pointers, sealed reader
 and shared `out/ticket-01/evidence-store` remain. Current finished evidence
 authenticates after cleanup; superseded full-bank runs retain diagnostics and
 their old seals, and do not supply current-source admission.
-Removing `/tmp/sm-pipeline-upgrade-01` is the integration owner's remaining
-completion action. It contains no admission source dependencies; all fresh
-source seals refer to the retained integration checkout.
+Integration owner removed `/tmp/sm-pipeline-upgrade-01` using `git worktree
+remove`; it contained no admission source dependencies. Its pre-removal
+allocated size was 268,840,960 bytes. All fresh source seals refer to the
+retained integration checkout. After removal, full retained live authentication
+passed again with four subjects and 1,345 artifacts each, unchanged verdict SHA;
+receipt `logs/full-native-text-auth-after-worktree-removal.toml`.
+Remaining disk space: 225,292,451,840 bytes. Ticket 01 is resolved.

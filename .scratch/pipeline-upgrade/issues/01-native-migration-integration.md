@@ -1,6 +1,6 @@
 # Integrate delivered native migration with current decomp
 
-Status: claimed
+Status: resolved
 Blocked by: None
 Triage: ready-for-agent
 Type: task
@@ -27,7 +27,7 @@ Current-source admission is refreshed independently of historical seals.
 ## Completion evidence
 
 Implementation and verification complete on source freeze `99d799c`;
-integration-owned implementer worktree removal remains before resolution.
+evidence integrated at `ef2c98f`. Integration-owned worktree cleanup is complete.
 Fixes `47fefbf`, `3da347f`, `d37c98f` require current native manifest freshness,
 an inventoried manifest input bound to the verdict, and the aliased native
 projectile module root in generated memory wrappers. Historical evidence
@@ -50,6 +50,14 @@ Scoped run cleanup/deduplication reclaimed 3,606,823,244 bytes, plus disposable
 Cargo trees reported 42.0 MiB and 1.9 GiB removed. Final `/tmp` available
 space is 225,024,139,264 bytes. Retain the stable integration source checkout,
 sealed evidence, predecessor pointers, diagnostic failures, shared packed
-store and sealed readers. Integration owner must remove
-`/tmp/sm-pipeline-upgrade-01`, reauthenticate retained evidence and record that
-final cleanup before changing Status to resolved.
+store and sealed readers.
+
+Integration owner removed the clean, integrated implementer worktree with
+`git worktree remove /tmp/sm-pipeline-upgrade-01`. Its allocated size before
+removal was 268,840,960 bytes; no admission sources depended on that path.
+Retained live evidence authenticated again after removal: four subjects,
+1,345 artifacts each, unchanged verdict SHA above. Receipt:
+`/tmp/sm-pipeline-upgrade-integration/out/ticket-01/logs/full-native-text-auth-after-worktree-removal.toml`.
+Remaining disk space: 225,292,451,840 bytes. Stable integration sources,
+original manifests, shared stores, predecessor pointers, exact readers and
+diagnostics remain retained. Ticket 02 is now unblocked.
