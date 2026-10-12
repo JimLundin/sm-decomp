@@ -84,13 +84,15 @@ void ProcessEnemyInstructions(void) {
   unsigned window = EnemyInventoryWindow();
   unsigned capture = bank == 0xa6 && frame_captures[window][pc] < 2
                        ? ++frame_captures[window][pc] : 0;
-  if (bank == 0xa6) EnemyInventoryEvent("frame", "before", slot, pc, 0, 0, 0, 0, capture);
+  int attack = bank == 0xa6 && (enemy->enemy_ptr == 0xe13f || enemy->enemy_ptr == 0xe17f)
+               && pc >= 0xe73a && pc < 0xe828;
+  if (attack || capture) EnemyInventoryEvent("frame", "before", slot, pc, 0, 0, 0, 0, capture);
   if (capture) EnemyInventoryCapture("frame", pc, window, capture, "before");
   enemy_instruction_depth++;
   CInventory_ProcessEnemyInstructions();
   enemy_instruction_depth--;
   if (capture) EnemyInventoryCapture("frame", pc, window, capture, "after");
-  if (bank == 0xa6) EnemyInventoryEvent("frame", "after", slot, pc, 0, 0, 0, 0, capture);
+  if (attack || capture) EnemyInventoryEvent("frame", "after", slot, pc, 0, 0, 0, 0, capture);
 }
 const uint16 *CallEnemyInstr(uint32 address, uint16 slot, const uint16 *argument) {
   uint8 bank = address >> 16;
