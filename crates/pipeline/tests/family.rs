@@ -307,6 +307,34 @@ fn empty_duplicate_and_out_of_bounds_cases_cannot_pass() {
 }
 
 #[test]
+fn native_projectile_candidate_is_available_to_the_compiled_host_wrapper() {
+    let project = Project::new();
+    let checkout = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().parent().unwrap();
+    if !checkout.join("rom/sm.sfc").exists() {
+        return;
+    }
+    let mut manifest: Value =
+        toml::from_str(&fs::read_to_string(checkout.join("tools/port/observed-projectile-initializers.toml")).unwrap())
+            .unwrap();
+    manifest["routines"].as_array_mut().unwrap().truncate(1);
+    manifest["routines"][0]["cases"].as_array_mut().unwrap().truncate(1);
+    write(&project.0, "one-native.toml", toml::to_string(&manifest).unwrap());
+    let verdict = project.invoke(
+        "family-verify",
+        Value::Table(toml::Table::from_iter([
+            ("checkout".into(), Value::try_from(checkout).unwrap()),
+            ("source".into(), Value::try_from(checkout.join("deps/snesrev-sm")).unwrap()),
+            ("manifest".into(), Value::try_from(project.0.join("one-native.toml")).unwrap()),
+            ("output".into(), Value::try_from(project.0.join("out")).unwrap()),
+            ("root".into(), Value::try_from(project.0.join("workers")).unwrap()),
+            ("workers".into(), 2.into()),
+        ])),
+        true,
+    );
+    assert_eq!(verdict["verified_cases"].as_integer(), Some(1));
+}
+
+#[test]
 fn changed_current_manifest_cannot_authenticate_prior_family_admission() {
     let project = Project::new();
     project.manifest(Value::Array(vec![Value::Table(toml::Table::from_iter([
