@@ -852,8 +852,16 @@ fn verification_command(argv: &[String]) -> bool {
     } else {
         return false;
     };
-    matches!(operation.first(), Some(&"family-verify" | &"live-verify" | &"routine-live"))
-        || (operation.first() == Some(&"batch") && matches!(operation.get(1), Some(&"verify" | &"run")))
+    match operation.first() {
+        Some(&"family-verify") => operation
+            .iter()
+            .position(|arg| *arg == "--manifest")
+            .and_then(|index| operation.get(index + 1))
+            .is_some_and(|manifest| relative(Path::new(manifest)) && Path::new(manifest).starts_with("tools/port")),
+        Some(&"live-verify" | &"routine-live") => operation.len() > 1,
+        Some(&"batch") => matches!(operation.get(1), Some(&"verify" | &"run")),
+        _ => false,
+    }
 }
 
 #[cfg(test)]
@@ -1053,7 +1061,7 @@ mod tests {
             vec!["sm-pipeline", "family-verify", "--manifest", "tools/port/example.toml"],
             vec!["sm-pipeline", "batch", "verify", "--families", "example"],
             vec!["sm-pipeline", "batch", "run", "--families", "example"],
-            vec!["cargo", "run", "-p", "pipeline", "--locked", "--offline", "--", "live-verify"],
+            vec!["cargo", "run", "-p", "pipeline", "--locked", "--offline", "--", "live-verify", "--frames", "9000"],
             vec![
                 "cargo",
                 "run",
@@ -1065,6 +1073,8 @@ mod tests {
                 "--locked",
                 "--",
                 "routine-live",
+                "--frames",
+                "9000",
             ],
         ] {
             assert!(command(&parts), "valid verification rejected: {parts:?}");
@@ -1086,6 +1096,10 @@ mod tests {
             vec!["sm-pipeline", "family-verify", "--checkout", "/tmp/other"],
             vec!["sm-pipeline", "family-verify", "--source", "/tmp/other"],
             vec!["sm-pipeline", "batch", "verify", "--root", "/tmp/private"],
+            vec!["sm-pipeline", "family-verify"],
+            vec!["sm-pipeline", "family-verify", "--manifest", "/tmp/other.toml"],
+            vec!["sm-pipeline", "live-verify"],
+            vec!["sm-pipeline", "routine-live"],
         ] {
             assert!(!command(&parts), "non-verification accepted: {parts:?}");
         }
