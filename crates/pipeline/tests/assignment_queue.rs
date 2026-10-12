@@ -408,3 +408,84 @@ fn owned_source_edits_do_not_invalidate_submission_but_immutable_inputs_do() {
     assert!(status.jobs.iter().find(|entry| entry.job.id == "implement").unwrap().stale);
     assert!(operate(f.request("next")).unwrap().assignment.is_none());
 }
+
+#[test]
+fn empty_affected_frontier_retires_unclaimed_work_without_granting_verification() {
+    let f = Fixture::new();
+    let mut pending = job("verify-frontier", Kind::Verify);
+    pending.inputs.insert("families".into(), "enemy\naudio".into());
+    let mut request = f.request("next");
+    request.available_slots = 0;
+    request.jobs = vec![pending.clone()];
+    operate(request).unwrap();
+    pending.revision = "no-affected-families".into();
+    pending.inputs.insert("families".into(), String::new());
+    let mut request = f.request("plan");
+    request.jobs = vec![pending.clone()];
+    let preview = operate(request).unwrap();
+    assert_eq!(preview.status, "complete");
+    assert_eq!(preview.jobs[0].state, State::NotRequired);
+    assert!(preview.jobs[0].result.is_none());
+    assert_eq!(operate(f.request("status")).unwrap().jobs[0].state, State::Ready);
+    let mut request = f.request("next");
+    request.jobs = vec![pending];
+    let retired = operate(request).unwrap();
+    assert_eq!(retired.status, "complete");
+    assert!(retired.assignment.is_none());
+    assert!(retired.jobs[0].claim.is_none());
+    assert_eq!(retired.jobs[0].history.len(), 1);
+}
+
+#[test]
+fn empty_frontier_preserves_active_old_claim_until_checked_recovery() {
+    let f = Fixture::new();
+    let mut pending = job("verify-frontier", Kind::Verify);
+    pending.inputs.insert("families".into(), "enemy".into());
+    let claim = f.start(pending.clone());
+    pending.revision = "empty-frontier".into();
+    pending.inputs.insert("families".into(), String::new());
+    let mut request = f.request("next");
+    request.jobs = vec![pending];
+    let state = operate(request).unwrap();
+    assert_eq!(state.jobs[0].state, State::Running);
+    assert_eq!(state.recovery, vec![claim.clone()]);
+    let stopped = f.artifact("stopped.toml", &format!("agent = 'agent-1'\ncoordinator = 'owner-a'\nstatus = 'interrupted'\n[claim]\nid = '{}'\nrevision = '{}'\nattempt = {}\ncoordinator = '{}'\n", claim.id, claim.revision, claim.attempt, claim.coordinator));
+    let mut request = f.request("record");
+    request.update = Some(Update::OwnerStopped { claim, observation: stopped });
+    let recovered = operate(request).unwrap();
+    assert_eq!(recovered.status, "complete");
+    assert_eq!(recovered.jobs[0].state, State::NotRequired);
+    assert!(recovered.jobs[0].result.is_none());
+}
+
+#[test]
+fn saved_verification_checks_discovery_namespace_even_without_new_seeds() {
+    let f = Fixture::new();
+    let source = f.0.join("crates/port/src");
+    fs::create_dir_all(&source).unwrap();
+    fs::write(source.join("enemy.rs"), "before").unwrap();
+    let mut candidate = job("verify-frontier", Kind::Verify);
+    candidate.inputs.insert("source-fingerprint".into(), source_fingerprint(&f.0).unwrap());
+    let mut request = f.request("next");
+    request.available_slots = 0;
+    request.jobs = vec![candidate];
+    operate(request).unwrap();
+    fs::write(source.join("new_module.rs"), "pub fn leaf() {}\n").unwrap();
+    let saved = operate(f.request("next")).unwrap();
+    assert!(saved.assignment.is_none());
+    assert!(saved.jobs[0].stale);
+}
+
+#[test]
+fn no_work_frontier_does_not_satisfy_a_verification_blocker() {
+    let f = Fixture::new();
+    let mut no_work = job("verify-frontier", Kind::Verify);
+    no_work.inputs.insert("families".into(), String::new());
+    let mut dependent = job("dependent", Kind::Research);
+    dependent.blockers.push(no_work.id.clone());
+    let mut request = f.request("next");
+    request.jobs = vec![no_work, dependent];
+    let waiting = operate(request).unwrap();
+    assert!(waiting.assignment.is_none());
+    assert!(waiting.deferred["dependent"].contains("blocked by verify-frontier"));
+}

@@ -1,6 +1,7 @@
 //! Durable decomp work ownership. Agent launch and evidence admission stay with callers.
 use anyhow::{Context, Result, bail, ensure};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs::{self, File, OpenOptions},
@@ -104,6 +105,7 @@ impl Default for Request {
 #[serde(rename_all = "kebab-case")]
 pub(crate) enum State {
     Ready,
+    NotRequired,
     Reserved,
     Running,
     Submitted,
@@ -365,6 +367,11 @@ fn refresh(ledger: &mut Ledger, jobs: &[Job]) -> Result<()> {
 }
 
 fn inputs_current(checkout: &Path, job: &Job) -> Result<bool> {
+    if let Some(expected) = job.inputs.get("source-fingerprint")
+        && source_fingerprint(checkout)? != *expected
+    {
+        return Ok(false);
+    }
     for (key, expected) in &job.inputs {
         // Providers mark file inputs explicitly; legacy plain paths are also accepted.
         let name = key.strip_prefix("file:").unwrap_or(key);
@@ -393,6 +400,48 @@ fn inputs_current(checkout: &Path, job: &Job) -> Result<bool> {
         }
     }
     Ok(true)
+}
+
+/// Namespace and source contents used by conservative verification planning.
+/// Kept here so saved jobs recheck exactly the same facts before reservation.
+pub(crate) fn source_fingerprint(checkout: &Path) -> Result<String> {
+    fn collect(root: &Path, path: &Path, files: &mut BTreeMap<String, String>) -> Result<()> {
+        ensure!(!path.is_symlink(), "source snapshot crosses a symlink: {}", path.display());
+        if path.is_dir() {
+            for entry in fs::read_dir(path)? {
+                collect(root, &entry?.path(), files)?;
+            }
+        } else if path.is_file() {
+            files.insert(path.strip_prefix(root)?.display().to_string(), crate::digest(path)?);
+        }
+        Ok(())
+    }
+    let mut files = BTreeMap::new();
+    for path in [
+        "crates/pipeline/src",
+        "crates/pipeline-model/src",
+        "crates/port/src",
+        "tools",
+        ".cargo",
+        "Cargo.toml",
+        "Cargo.lock",
+        "rust-toolchain.toml",
+        "crates/port/Cargo.toml",
+    ] {
+        let path = checkout.join(path);
+        if path.exists() {
+            collect(checkout, &path, &mut files)?;
+        }
+    }
+    Ok(format!("{:x}", Sha256::digest(toml::to_string(&files)?.as_bytes())))
+}
+fn retire_empty_verification(entry: &mut Entry) {
+    if entry.state == State::Ready
+        && entry.job.kind == Kind::Verify
+        && entry.job.inputs.get("families").is_some_and(|families| families.trim().is_empty())
+    {
+        entry.state = State::NotRequired;
+    }
 }
 fn blocker_reason(root: &Path, ledger: &Ledger, entry: &Entry) -> Result<Option<String>> {
     if entry.stale || entry.pending_job.is_some() {
@@ -506,7 +555,7 @@ fn published_status(entry: &Entry) -> &'static str {
         };
     }
     match entry.state {
-        State::Ready | State::Failed => "open",
+        State::Ready | State::Failed | State::NotRequired => "open",
         State::Reserved | State::Running | State::Submitted => "claimed",
         State::Complete => "resolved",
     }
@@ -515,6 +564,7 @@ fn publication_details(entry: &Entry) -> Result<String> {
     let ownership = entry.job.writable_paths.iter().map(|path| format!("- `{}`\n", path.display())).collect::<String>();
     let state = match entry.state {
         State::Ready => "ready",
+        State::NotRequired => "not-required",
         State::Reserved => "reserved",
         State::Running => "running",
         State::Submitted => "submitted",
@@ -917,6 +967,7 @@ pub(crate) fn operate(request: Request) -> Result<Receipt> {
         if !inputs_current(&request.checkout, &entry.job)? {
             entry.stale = true;
         }
+        retire_empty_verification(entry);
     }
     if request.operation == "record" {
         record(
@@ -926,6 +977,9 @@ pub(crate) fn operate(request: Request) -> Result<Receipt> {
             &request.coordinator,
             request.update.as_ref().context("record update missing")?,
         )?;
+        for entry in ledger.jobs.values_mut() {
+            retire_empty_verification(entry);
+        }
     }
     let mut deferred = BTreeMap::new();
     let mut recovery = Vec::new();
@@ -995,7 +1049,7 @@ pub(crate) fn operate(request: Request) -> Result<Receipt> {
     } else if !recovery.is_empty() {
         "recovery"
     } else if !ledger.jobs.is_empty()
-        && ledger.jobs.values().all(|entry| entry.state == State::Complete && !entry.stale)
+        && ledger.jobs.values().all(|entry| matches!(entry.state, State::Complete | State::NotRequired) && !entry.stale)
     {
         "complete"
     } else if readonly {
