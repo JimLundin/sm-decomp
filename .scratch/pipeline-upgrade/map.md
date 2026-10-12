@@ -1,6 +1,6 @@
 # Native pipeline upgrade work map
 
-Status: open
+Status: claimed
 
 Plan: `plan.md`. Visual source: `visual/plan.mdx`.
 
@@ -14,7 +14,11 @@ Plan: `plan.md`. Visual source: `visual/plan.mdx`.
   historical JSON formats/readers stay compatible.
 - Explicit typed PPU/APU and shared exact literal scanner; mandatory END counts.
 - Current decomp chains/host ownership gates are prerequisites for promotion.
-- Planning alone leaves all implementation tickets open.
+- Implementation started on `pipeline-upgrade-integration` at delivered merge
+  `3ad1bf3`; see `reconciliation.md` for current native v2 evidence and retained
+  historical-reader contracts. Ticket 01 is claimed for refreshed admission.
+- Absolute benchmark budgets are frozen in `benchmark-budgets.md` before
+  sampling; metrics and benchmark exploration notes are retained in `/tmp/`.
 
 ## Work
 
@@ -33,6 +37,6 @@ If binary selected: 04 decoder → 05 native producer → 06 compatibility →
 | [07](issues/07-controlled-binary-benchmarks.md) | task | Conditional binary |
 | [08](issues/08-promotion-and-retention.md) | task | Conditional binary |
 
-First ticket without local blockers: 01. Its external prerequisite is the
-migration owner’s reviewed delivery and completed controls; it does not claim
-or resolve that owner’s migration tickets.
+Ticket 01's external prerequisite is satisfied by migration `c89db9b`, merge
+`3ad1bf3`, resolved local migration tickets and their recorded controls/cleanup.
+Fresh current-source admission remains required before ticket 02 is ready.
