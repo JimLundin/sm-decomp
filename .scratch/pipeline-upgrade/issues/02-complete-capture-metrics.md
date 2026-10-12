@@ -1,6 +1,6 @@
 # Extend native capture and publication measurements
 
-Status: open
+Status: claimed
 Blocked by: 01
 Triage: ready-for-agent
 Type: task
@@ -15,3 +15,12 @@ One owner reaps each child once and integrates resource collection with polling/
 Follow the complete contract in [plan.md](../plan.md). Record source revision,
 controls, measured results and scoped cleanup under Completion evidence before
 resolving. Implementation is pending.
+
+## Comments
+
+Claimed on `pipeline-upgrade-metrics`, based on ticket 01 completion. Producer
+and resource sampling support use separate worktrees with exclusive files.
+Process accounting (`797f3a2`) and capture/import stage instrumentation
+(`f081f21`) are partial checkpoints awaiting the complete metrics contract,
+controls, overhead measurement, integration and cleanup. They do not resolve
+this ticket.
