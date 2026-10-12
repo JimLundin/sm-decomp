@@ -322,6 +322,17 @@ fn changed_current_manifest_cannot_authenticate_prior_family_admission() {
     manifest["routines"][0]["cases"][0]["a"] = 2.into();
     write(&project.0, "tools/port/fixture.toml", toml::to_string(&manifest).unwrap());
     project.authenticate(&verdict, false);
+    let mut stripped = verdict.clone();
+    stripped["implementation"].as_table_mut().unwrap().remove("manifest");
+    let verdict_path = Path::new(verdict["run"].as_str().unwrap()).join("verdict.toml");
+    fs::write(&verdict_path, toml::to_string(&stripped).unwrap()).unwrap();
+    project.authenticate(&stripped, false);
+    let mut rebound = verdict.clone();
+    rebound["implementation"]["manifest"]["file"] =
+        Value::try_from(Path::new(verdict["run"].as_str().unwrap()).join("manifest.toml")).unwrap();
+    fs::write(&verdict_path, toml::to_string(&rebound).unwrap()).unwrap();
+    project.authenticate(&rebound, false);
+    fs::write(verdict_path, toml::to_string(&verdict).unwrap()).unwrap();
     fs::write(path, original).unwrap();
     project.authenticate(&verdict, true);
 }
