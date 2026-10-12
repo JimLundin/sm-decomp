@@ -76,3 +76,9 @@ The recreated disposable target923217920allocated bytes was removed with
 disk220716728320bytes. Parent/integration/main metrics were concurrently building,
 so free-disk deltas are not attributed entirely to this cleanup. No test run,
 accepted evidence or retained source dependency remains in the support worktree.
+
+Producer support merged into integration at `6639375`. The integration owner
+removed `/tmp/sm-pipeline-upgrade-02-producer` with `git worktree remove`; it had
+no retained evidence/source dependency. Remaining filesystem free space after
+removal was 220,939,972,608 bytes. Whole-ticket metrics and overhead validation
+remain outstanding.
