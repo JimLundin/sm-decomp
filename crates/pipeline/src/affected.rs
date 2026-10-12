@@ -74,6 +74,30 @@ fn changed_paths(checkout: &Path, revision: &str) -> Result<BTreeSet<PathBuf>> {
     Ok(result)
 }
 
+fn history_paths(checkout: &Path) -> Result<BTreeSet<PathBuf>> {
+    let output = Command::new("git")
+        .args(["ls-files", "--cached", "--others", "--exclude-standard", "-z"])
+        .current_dir(checkout)
+        .output()?;
+    ensure!(output.status.success(), "cannot inspect source history paths");
+    output
+        .stdout
+        .split(|byte| *byte == 0)
+        .filter(|name| !name.is_empty())
+        .map(|name| {
+            #[cfg(unix)]
+            {
+                use std::os::unix::ffi::OsStrExt;
+                Ok(PathBuf::from(std::ffi::OsStr::from_bytes(name)))
+            }
+            #[cfg(not(unix))]
+            {
+                Ok(PathBuf::from(std::str::from_utf8(name).context("non-UTF8 source history path")?))
+            }
+        })
+        .collect()
+}
+
 fn normalize(checkout: &Path, path: &Path) -> PathBuf {
     let absolute = if path.is_absolute() { path.to_path_buf() } else { checkout.join(path) };
     let mut normalized = PathBuf::new();
@@ -107,6 +131,7 @@ struct Discovery<'a> {
     checkout: &'a Path,
     available: BTreeMap<String, PathBuf>,
     namespace: BTreeMap<String, PathBuf>,
+    history: BTreeSet<PathBuf>,
     sources: BTreeMap<PathBuf, String>,
     hashes: BTreeMap<PathBuf, String>,
 }
@@ -127,6 +152,7 @@ impl<'a> Discovery<'a> {
             checkout,
             namespace: available.clone(),
             available,
+            history: history_paths(checkout)?,
             sources: BTreeMap::new(),
             hashes: BTreeMap::new(),
         })
@@ -134,6 +160,10 @@ impl<'a> Discovery<'a> {
 
     fn source(&mut self, path: &Path) -> Result<String> {
         ensure!(!path.is_symlink(), "Rust discovery source is a symlink: {}", path.display());
+        ensure!(
+            self.history.contains(&normalize(self.checkout, path)),
+            "Rust source is ignored or outside changed-since history"
+        );
         if let Some(source) = self.sources.get(path) {
             return Ok(source.clone());
         }
@@ -215,6 +245,12 @@ impl<'a> Discovery<'a> {
         for path in &manifest.rust_dependencies {
             let path = normalize(self.checkout, path);
             ensure!(!path.is_absolute(), "external declared dependency lacks changed-since history");
+            ensure!(self.history.contains(&path), "declared dependency is ignored by changed-since history");
+            let actual = self.checkout.join(&path);
+            ensure!(
+                !actual.is_symlink() && normalize(self.checkout, &fs::canonicalize(&actual)?) == path,
+                "declared dependency has a filesystem alias"
+            );
             ensure!(self.checkout.join(&path).is_file(), "declared dependency is missing: {}", path.display());
             self.hashes.insert(path.clone(), digest(&self.checkout.join(&path))?);
             result.insert(path);

@@ -141,6 +141,18 @@ fn missing_captured_asset_cannot_exclude_its_family() {
 }
 
 #[test]
+fn ignored_new_rust_input_remains_explicit_uncertainty() {
+    let project = Project::new();
+    project.write(".gitignore", "crates/port/src/future_name.rs\n");
+    project.commit();
+    project.write("crates/port/src/future_name.rs", "pub fn omitted_from_diff() {}");
+    let report = project.plan();
+    assert_eq!(families(&report, "selected"), ["a"]);
+    assert_eq!(families(&report, "excluded"), ["b"]);
+    assert_eq!(report["selected"][0]["reasons"][0]["code"].as_str(), Some("uncertain-inputs"));
+}
+
+#[test]
 fn deleted_dependencies_and_newline_paths_do_not_disappear() {
     let project = Project::new();
     project.write("fixtures/old\nname", "old");
