@@ -86,6 +86,13 @@ impl Context {
     pub fn snapshot(&self) -> Receipt {
         self.inner.receipt.lock().unwrap().clone()
     }
+    pub fn budget_resources(&self) -> (Resources, bool) {
+        let receipt = self.inner.receipt.lock().unwrap();
+        (
+            receipt.resources.clone(),
+            receipt.configuration.get("resource-samples-complete").map(String::as_str) == Some("true"),
+        )
+    }
     pub fn add_live_output(&self, path: PathBuf) {
         self.inner.resources.lock().unwrap().add_live_output(path);
     }

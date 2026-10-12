@@ -284,10 +284,10 @@ fn inherited_clock_sigterm_still_stops_descendants_and_releases_capacity() {
     )
     .unwrap();
     let request = toml::toml! {
-        command=[binary.to_str().unwrap()]
-        run=run.0.to_str().unwrap()
+        command=[(binary.to_str().unwrap())]
+        run=(run.0.to_str().unwrap())
         label="inherited"
-        root=run.0.join("workers").to_str().unwrap()
+        root=(run.0.join("workers").to_str().unwrap().to_owned())
         workers=1
         timeout=30
     };

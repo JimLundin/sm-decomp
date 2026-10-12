@@ -62,6 +62,7 @@ struct Sample {
     workers: usize,
     frames: u64,
     comparable: bool,
+    measurement_started: bool,
     elapsed_ns: u64,
     last_completed_stage: Option<String>,
     error: Option<String>,
@@ -140,48 +141,12 @@ pub fn command(args: &[String]) -> Result<()> {
     }
 }
 
-#[cfg(test)]
-mod controls {
-    use super::*;
-    #[test]
-    fn real_live_refusal_keeps_diagnostics_and_scoped_cleanup() {
-        let root = std::env::temp_dir().join(format!(
-            "sm-benchmark-live-refusal-{}-{}",
-            std::process::id(),
-            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
-        ));
-        fs::create_dir(&root).unwrap();
-        let request = crate::live_model::Request {
-            checkout: root.clone(),
-            output: root.join("live"),
-            root: root.join("workers"),
-            workers: 2,
-            live_jobs: 2,
-            frames: 1000,
-            ..Default::default()
-        };
-        let verdict = crate::live::verify(request).unwrap();
-        assert_eq!(verdict.status, "rejected");
-        assert!(verdict.error.as_deref().is_some_and(|e| !e.is_empty()));
-        let metrics: Receipt = pipeline_model::read(&verdict.run.join("pipeline.metrics.toml")).unwrap();
-        assert_eq!(metrics.outcome, "failed");
-        assert_eq!(metrics.last_completed_stage.as_deref(), Some("scoped-cleanup"));
-        assert!(verdict.run.join("verdict.toml").is_file());
-        for deduplicate in [false, true] {
-            crate::cleanup::cleanup(crate::cleanup::CleanupRequest {
-                root: root.join("live"),
-                apply: true,
-                deduplicate,
-            })
-            .unwrap();
-        }
-        assert!(verdict.run.join("verdict.toml").is_file());
-        fs::remove_dir_all(root).unwrap();
-    }
-}
-
 fn prepare(config: &mut Config, path: &Path) -> Result<()> {
     ensure!(config.frozen.is_empty() && config.seed_verdicts.is_empty(), "seed configuration already prepared");
+    let mut preflight = config.clone();
+    preflight.seed_verdicts = vec![PathBuf::from("preparation-1000"), PathBuf::from("preparation-45000")];
+    structure(&preflight)?;
+    fs::create_dir_all(&config.output)?;
     // The live command remains the authority for current-source admission.
     // Preparation is an explicit cold/empty-store control, outside the warm matrix.
     let seeds = config.output.with_file_name(format!(
@@ -303,6 +268,11 @@ fn inventory(path: &Path) -> Result<BTreeMap<String, String>> {
 fn freeze(config: &mut Config) -> Result<()> {
     structure(config)?;
     let checkout = &config.request.checkout;
+    let clean = Command::new("git")
+        .args(["status", "--porcelain", "--untracked-files=normal"])
+        .current_dir(checkout)
+        .output()?;
+    ensure!(clean.status.success() && clean.stdout.is_empty(), "commit combined source before freezing benchmark");
     let git = Command::new("git").args(["ls-files", "-z"]).current_dir(checkout).output()?;
     ensure!(git.status.success(), "cannot enumerate combined source");
     for name in git.stdout.split(|b| *b == 0).filter(|b| !b.is_empty()) {
@@ -333,6 +303,13 @@ fn freeze(config: &mut Config) -> Result<()> {
     paths.extend(config.request.family_verdicts.clone());
     for verdict in &config.seed_verdicts {
         paths.extend([verdict.clone(), verdict.parent().context("seed parent missing")?.join("sm-evidence")]);
+        let admitted: crate::live_model::Verdict = pipeline_model::read(verdict)?;
+        for relative in admitted.rust_dependencies.keys() {
+            paths.push(crate::family::source_path(checkout, relative));
+        }
+        if let Some(source) = admitted.source {
+            paths.extend(source.files.keys().map(|relative| checkout.join("deps/snesrev-sm").join(relative)));
+        }
     }
     for compiler in ["cc", "cargo", "rustc"] {
         paths.push(crate::executable(compiler)?);
@@ -409,6 +386,7 @@ fn validate(config: &Config) -> Result<()> {
     }
     ensure!(inventory(&config.cache_seed)? == config.cache_inventory, "cache seed inventory changed");
     ensure!(inventory(&config.store_seed)? == config.store_inventory, "store seed inventory changed");
+    evidence::Store::open(&config.store_seed)?.verify_packs()?;
     let git = Command::new("git").args(["ls-files", "-z"]).current_dir(&config.request.checkout).output()?;
     ensure!(git.status.success(), "cannot recheck combined source inventory");
     for name in git.stdout.split(|b| *b == 0).filter(|b| !b.is_empty()) {
@@ -507,6 +485,11 @@ fn clone_seed(source: &Path, destination: &Path, expected: &BTreeMap<String, Str
     fs::create_dir(destination)?;
     let mut buffer = [0u8; 65536];
     for relative in expected.keys() {
+        ensure!(
+            !relative.is_empty()
+                && Path::new(relative).components().all(|c| matches!(c, std::path::Component::Normal(_))),
+            "unsafe seed inventory path"
+        );
         let target = destination.join(relative);
         fs::create_dir_all(target.parent().context("seed parent missing")?)?;
         fs::copy(source.join(relative), &target)?;
@@ -524,17 +507,12 @@ fn value(measurement: &Measurement, name: &str) -> Result<u64> {
         Measurement::Unavailable { reason } => bail!("required {name} unavailable: {reason}"),
     }
 }
-fn budgets(config: &Config, receipt: &Receipt) -> Result<()> {
-    ensure!(
-        receipt.configuration.get("resource-samples-complete").map(String::as_str) == Some("true"),
-        "incomplete resource sampling"
-    );
-    ensure!(
-        value(&receipt.resources.aggregate_sampled_rss_bytes, "RSS")? <= config.max_rss_bytes,
-        "RSS budget exceeded"
-    );
+fn budgets(config: &Config, context: &crate::metrics::Context) -> Result<()> {
+    let (resources, complete) = context.budget_resources();
+    ensure!(complete, "incomplete resource sampling");
+    ensure!(value(&resources.aggregate_sampled_rss_bytes, "RSS")? <= config.max_rss_bytes, "RSS budget exceeded");
     // Disk paths may not yet exist during preparation/build; free reserve is always checked.
-    if let Measurement::Measured { value: allocation } = receipt.resources.combined_allocated_bytes {
+    if let Measurement::Measured { value: allocation } = resources.combined_allocated_bytes {
         ensure!(allocation <= config.max_private_staging_bytes, "staging/private budget exceeded");
     }
     ensure!(
@@ -582,7 +560,7 @@ fn invoke<T: Serialize>(
         if last.elapsed() >= Duration::from_millis(500) {
             let check = (|| -> Result<()> {
                 if enforce {
-                    budgets(config, &context.snapshot())?;
+                    budgets(config, context)?;
                 }
                 host.sample(enforce)
             })();
@@ -645,23 +623,62 @@ fn run(config: Config, config_path: &Path) -> Result<()> {
         fs::create_dir(&sample)?;
         fs::create_dir(sample.join("live"))?;
         let root = &config.capacity_roots[&workers.to_string()];
-        let cache = root.join("build-cache");
-        ensure!(!cache.exists(), "capacity root cache is populated; use independent empty roots");
-        clone_seed(&config.cache_seed, &cache, &config.cache_inventory)?;
-        let store = sample.join("shared-store");
-        clone_seed(&config.store_seed, &store, &config.store_inventory)?;
-        let cloned = evidence::Store::open(&store)?;
-        for path in &config.seed_verdicts {
-            let verdict: crate::live_model::Verdict = pipeline_model::read(path)?;
-            for subject in verdict.evidence_storage.subjects.values() {
-                evidence::verified_inventory(&cloned, &evidence::parse_id(&subject.run)?)?;
-            }
-        }
-        drop(cloned);
-        let mut host = host::Monitor::start(&sample.join("host.toml"))?;
-        host.preflight()?;
         let metrics_path = sample.join("pipeline.metrics.toml");
-        let mut metrics = crate::metrics::Run::start(metrics_path.clone(), "benchmark")?;
+        let mut record = Sample {
+            sequence: index + 1,
+            workers,
+            frames,
+            comparable: false,
+            measurement_started: false,
+            elapsed_ns: 0,
+            last_completed_stage: None,
+            error: None,
+            verdict: None,
+            metrics: metrics_path.clone(),
+            cleanup: vec![],
+            free_bytes_after: 0,
+            attribution: vec![],
+        };
+        let cache = root.join("build-cache");
+        let store = sample.join("shared-store");
+        let preparation = (|| -> Result<host::Monitor> {
+            ensure!(!cache.exists(), "capacity root cache is populated; use independent empty roots");
+            clone_seed(&config.cache_seed, &cache, &config.cache_inventory)?;
+            clone_seed(&config.store_seed, &store, &config.store_inventory)?;
+            let cloned = evidence::Store::open(&store)?;
+            for path in &config.seed_verdicts {
+                let verdict: crate::live_model::Verdict = pipeline_model::read(path)?;
+                for subject in verdict.evidence_storage.subjects.values() {
+                    evidence::verified_inventory(&cloned, &evidence::parse_id(&subject.run)?)?;
+                }
+            }
+            let mut host = host::Monitor::start(&sample.join("host.toml"))?;
+            host.preflight()?;
+            Ok(host)
+        })();
+        let mut host = match preparation {
+            Ok(host) => host,
+            Err(error) => {
+                // No live writer has started. Preserve the refusal and leave any
+                // partially cloned cache in place for diagnosis; no timing is admitted.
+                record.error = Some(format!("sample preparation: {error:#}"));
+                for deduplicate in [false, true] {
+                    match crate::cleanup::cleanup(crate::cleanup::CleanupRequest {
+                        root: sample.join("live"),
+                        apply: true,
+                        deduplicate,
+                    }) {
+                        Ok(receipt) => record.cleanup.push(receipt),
+                        Err(error) => record.error.as_mut().unwrap().push_str(&format!("; cleanup: {error:#}")),
+                    }
+                }
+                record.free_bytes_after = crate::resource_sampler::available_bytes(&config.output)?;
+                crate::atomic_toml(&sample.join("sample.toml"), &record)?;
+                return Err(error);
+            }
+        };
+        let mut metrics = crate::metrics::Run::start(metrics_path, "benchmark")?;
+        record.measurement_started = true;
         metrics.context.configuration("config-sha256", &config_hash);
         metrics.context.configuration("source-revision", &config.source_revision);
         metrics
@@ -674,20 +691,6 @@ fn run(config: Config, config_path: &Path) -> Result<()> {
         request.frames = frames;
         request.output = sample.join("live");
         request.evidence_store = Some(store);
-        let mut record = Sample {
-            sequence: index + 1,
-            workers,
-            frames,
-            comparable: false,
-            elapsed_ns: 0,
-            last_completed_stage: None,
-            error: None,
-            verdict: None,
-            metrics: metrics_path,
-            cleanup: vec![],
-            free_bytes_after: 0,
-            attribution: vec![],
-        };
         metrics.context.add_live_output(sample.join("live"));
         metrics.context.sample_disk();
         let result = (|| -> Result<()> {
@@ -730,7 +733,7 @@ fn run(config: Config, config_path: &Path) -> Result<()> {
                 true,
             )?;
             stage.finish("success")?;
-            budgets(&config, &metrics.context.snapshot())?;
+            budgets(&config, &metrics.context)?;
             let final_resources = metrics.context.snapshot().resources;
             value(&final_resources.combined_allocated_bytes, "complete staging/private peak")?;
             ensure!(
@@ -827,4 +830,44 @@ fn run(config: Config, config_path: &Path) -> Result<()> {
             cells: summaries,
         },
     )
+}
+
+#[cfg(test)]
+mod controls {
+    use super::*;
+    #[test]
+    fn real_live_refusal_keeps_diagnostics_and_scoped_cleanup() {
+        let root = std::env::temp_dir().join(format!(
+            "sm-benchmark-live-refusal-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+        ));
+        fs::create_dir(&root).unwrap();
+        let request = crate::live_model::Request {
+            checkout: root.clone(),
+            output: root.join("live"),
+            root: root.join("workers"),
+            workers: 2,
+            live_jobs: 2,
+            frames: 1000,
+            ..Default::default()
+        };
+        let verdict = crate::live::verify(request).unwrap();
+        assert_eq!(verdict.status, "rejected");
+        assert!(verdict.error.as_deref().is_some_and(|e| !e.is_empty()));
+        let metrics: Receipt = pipeline_model::read(&verdict.run.join("pipeline.metrics.toml")).unwrap();
+        assert_eq!(metrics.outcome, "failed");
+        assert_eq!(metrics.last_completed_stage.as_deref(), Some("scoped-cleanup"));
+        assert!(verdict.run.join("verdict.toml").is_file());
+        for deduplicate in [false, true] {
+            crate::cleanup::cleanup(crate::cleanup::CleanupRequest {
+                root: root.join("live"),
+                apply: true,
+                deduplicate,
+            })
+            .unwrap();
+        }
+        assert!(verdict.run.join("verdict.toml").is_file());
+        fs::remove_dir_all(root).unwrap();
+    }
 }

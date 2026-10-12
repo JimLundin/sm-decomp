@@ -35,6 +35,7 @@ pub(super) struct Monitor {
     origin: Instant,
     previous_at: Instant,
     previous: BTreeMap<(u32, u64), u64>,
+    previous_boot_ticks: u64,
     clock_ticks: f64,
 }
 impl Monitor {
@@ -45,7 +46,14 @@ impl Monitor {
         let clock_ticks = unsafe { libc::sysconf(libc::_SC_CLK_TCK) };
         ensure!(clock_ticks > 0, "CPU tick frequency unavailable");
         let now = Instant::now();
-        Ok(Self { file, origin: now, previous_at: now, previous: BTreeMap::new(), clock_ticks: clock_ticks as f64 })
+        Ok(Self {
+            file,
+            origin: now,
+            previous_at: now,
+            previous: BTreeMap::new(),
+            previous_boot_ticks: 0,
+            clock_ticks: clock_ticks as f64,
+        })
     }
     pub fn preflight(&mut self) -> Result<()> {
         let init = fs::read_to_string("/proc/1/comm")?;
@@ -53,6 +61,20 @@ impl Monitor {
             init.trim() == "systemd" || init.trim() == "init",
             "host PID namespace unavailable; run benchmark with host process visibility"
         );
+        // A guest's CPU frequency/thermal host behavior may remain invisible;
+        // preserve the exposed topology and pressure data without claiming control.
+        #[derive(Serialize)]
+        struct Machine {
+            cpuinfo: String,
+            boot_id: String,
+            perf_event_paranoid: String,
+        }
+        let machine = Machine {
+            cpuinfo: fs::read_to_string("/proc/cpuinfo")?,
+            boot_id: fs::read_to_string("/proc/sys/kernel/random/boot_id")?,
+            perf_event_paranoid: fs::read_to_string("/proc/sys/kernel/perf_event_paranoid")?,
+        };
+        self.file.write_all(toml::to_string(&machine)?.as_bytes())?;
         self.sample(false)?;
         std::thread::sleep(std::time::Duration::from_secs(1));
         self.sample(true)
@@ -104,15 +126,33 @@ impl Monitor {
         }
         let now = Instant::now();
         let elapsed = now.duration_since(self.previous_at).as_secs_f64();
+        let boot_ticks = (fs::read_to_string("/proc/uptime")?
+            .split_whitespace()
+            .next()
+            .context("host uptime missing")?
+            .parse::<f64>()?
+            * self.clock_ticks) as u64;
         let external = processes
             .iter()
             .filter(|p| !ours.contains(&p.pid))
-            .map(|p| self.previous.get(&(p.pid, p.start_ticks)).map_or(0, |old| p.cpu_ticks.saturating_sub(*old)))
+            .map(|p| {
+                self.previous.get(&(p.pid, p.start_ticks)).map_or_else(
+                    || {
+                        if self.previous_boot_ticks != 0 && p.start_ticks >= self.previous_boot_ticks {
+                            p.cpu_ticks
+                        } else {
+                            0
+                        }
+                    },
+                    |old| p.cpu_ticks.saturating_sub(*old),
+                )
+            })
             .sum::<u64>() as f64
             / self.clock_ticks
             / elapsed.max(0.001);
         self.previous = processes.iter().map(|p| ((p.pid, p.start_ticks), p.cpu_ticks)).collect();
         self.previous_at = now;
+        self.previous_boot_ticks = boot_ticks;
         let memory = fs::read_to_string("/proc/meminfo")?;
         let available = memory
             .lines()

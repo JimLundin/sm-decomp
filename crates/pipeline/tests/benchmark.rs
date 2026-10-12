@@ -79,11 +79,11 @@ impl Fixture {
             .spawn()
             .unwrap();
         let request = toml::toml! {
-            root=root.to_str().unwrap()
-            checkout=root.to_str().unwrap()
+            root=(root.to_str().unwrap())
+            checkout=(root.to_str().unwrap())
             command=["rustc","--version"]
-            inputs=[source.to_str().unwrap()]
-            destination=root.join("artifact").to_str().unwrap()
+            inputs=[(source.to_str().unwrap())]
+            destination=(root.join("artifact").to_str().unwrap().to_owned())
         };
         let bytes = toml::to_string(&request).unwrap().into_bytes();
         command.stdin.as_mut().unwrap().write_all(&(bytes.len() as u32).to_le_bytes()).unwrap();
@@ -118,9 +118,8 @@ impl Fixture {
         }
         let store = root.join("store");
         let mut writer = evidence::Store::create(&store).unwrap();
-        writer.put(evidence::BLOB, b"real sealed store control").unwrap();
+        writer.put(b'B', b"real sealed store control").unwrap();
         writer.commit().unwrap();
-        drop(writer);
         let store_inventory = fs::read_dir(&store)
             .unwrap()
             .map(|e| {
@@ -139,24 +138,24 @@ impl Fixture {
             .collect::<BTreeMap<_, _>>();
         let config = toml::toml! {
             format="pipeline-benchmark-v1"
-            pipeline=pipeline.to_str().unwrap()
-            output=root.join("output").to_str().unwrap()
-            cache_seed=seed.to_str().unwrap()
-            store_seed=store.to_str().unwrap()
-            seed_verdicts=[root.join("seed-1000.toml").to_str().unwrap(),root.join("seed-45000.toml").to_str().unwrap()]
+            pipeline=(pipeline.to_str().unwrap())
+            output=(root.join("output").to_str().unwrap().to_owned())
+            cache_seed=(seed.to_str().unwrap())
+            store_seed=(store.to_str().unwrap())
+            seed_verdicts=[(root.join("seed-1000.toml").to_str().unwrap().to_owned()),(root.join("seed-45000.toml").to_str().unwrap().to_owned())]
             source_revision="control"
-            environment_sha256=environment_digest()
+            environment_sha256=(environment_digest())
             max_rss_bytes=8589934592_i64
             max_private_staging_bytes=68719476736_i64
             minimum_free_bytes=53687091200_i64
             [request]
-            checkout=root.to_str().unwrap()
-            accepted=accepted.to_str().unwrap()
-            rng_predecessor=rng.to_str().unwrap()
-            family_verdicts=[family.to_str().unwrap()]
+            checkout=(root.to_str().unwrap())
+            accepted=(accepted.to_str().unwrap())
+            rng_predecessor=(rng.to_str().unwrap())
+            family_verdicts=[(family.to_str().unwrap())]
             [capacity_roots]
-            "2"=root.join("capacity-2").to_str().unwrap()
-            "4"=root.join("capacity-4").to_str().unwrap()
+            "2"=(root.join("capacity-2").to_str().unwrap().to_owned())
+            "4"=(root.join("capacity-4").to_str().unwrap().to_owned())
         };
         let mut config = toml::Value::Table(config);
         config.as_table_mut().unwrap().insert("frozen".into(), toml::Value::try_from(frozen).unwrap());
@@ -224,4 +223,16 @@ fn corrupt_cache_artifact_with_rebound_inventory_still_fails_its_seal() {
     let key = p.strip_prefix(f.root.join("cache-seed")).unwrap().to_str().unwrap();
     f.config["cache_inventory"].as_table_mut().unwrap().insert(key.into(), hash(&p).into());
     f.refusal("cache seed seal differs");
+}
+
+#[test]
+fn corrupt_store_with_rebound_inventory_still_fails_physical_pack_authentication() {
+    let mut f = Fixture::new();
+    let p = fs::read_dir(f.root.join("store")).unwrap().next().unwrap().unwrap().path();
+    let mut bytes = fs::read(&p).unwrap();
+    bytes[8] ^= 1;
+    fs::write(&p, bytes).unwrap();
+    let name = p.file_name().unwrap().to_str().unwrap();
+    f.config["store_inventory"].as_table_mut().unwrap().insert(name.into(), hash(&p).into());
+    f.refusal("physical pack seal differs");
 }
