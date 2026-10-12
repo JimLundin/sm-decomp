@@ -440,7 +440,7 @@ fn exercise(checkout: &Path, path: &Path, source: &Source) -> Result<Vec<Hit>> {
         value.artifacts["original-source/sm_86.c"] == value.original_sm86_sha256,
         "exercise original snapshot differs"
     );
-    crate::projectile_inventory::authenticate_inputs(checkout, &run, &value.build_command)?;
+    crate::projectile_inventory::authenticate_inputs(checkout, &run, &value.build_command, source)?;
     ensure!(
         value.build_command.iter().any(|s| Path::new(s) == run.join("sm_86.c"))
             && value.build_command.iter().any(|s| Path::new(s) == run.join("headless.c")),
@@ -1133,7 +1133,7 @@ mod tests {
             "#include <stdio.h>\n#include <stdlib.h>\n",
             "typedef unsigned short uint16; typedef unsigned int uint32; typedef unsigned char uint8;\n",
             "int snes_frame_counter, decompression_calls; extern void RunOne(void);\n",
-            "void __real_DecompressToMem(uint32 src, uint8 *dst) { (void)src; (void)dst; }\n",
+            "void DecompressToMem(uint32 src, uint8 *dst) { (void)src; (void)dst; }\n",
             "static void SaveRoutineState(void) {}\n",
             "// Linker wrapping\n",
             "void __wrap_DecompressToMem(uint32 src, uint8 *dst) {}\n",

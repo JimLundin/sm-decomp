@@ -82,8 +82,20 @@ pub(crate) fn build_command(source: &Path, run: &Path) -> Result<Vec<String>> {
     Ok(command)
 }
 
-pub(crate) fn authenticate_inputs(checkout: &Path, run: &Path, command: &[String]) -> Result<()> {
+pub(crate) fn authenticate_inputs(
+    checkout: &Path,
+    run: &Path,
+    command: &[String],
+    identity: &crate::family_model::Source,
+) -> Result<()> {
     let source = checkout.join("deps/snesrev-sm");
+    for unit in family::c_units(&source)? {
+        let relative = unit.strip_prefix(&source)?.to_string_lossy().into_owned();
+        ensure!(
+            identity.files.get(&relative) == Some(&digest(&unit)?),
+            "exercise C build includes a source unit outside the pinned identity: {relative}"
+        );
+    }
     let (bank, host) = instrument(
         &fs::read_to_string(source.join("src/sm_86.c"))?,
         &fs::read_to_string(checkout.join("tools/decomp/headless.c"))?,
