@@ -1,8 +1,14 @@
 //! Deterministic actual-ROM direct callbacks and complete native attack-frame chains.
 use crate::family_model::{Asset, Case, Manifest, Routine, Write};
 use crate::{atomic_toml, digest};
-use anyhow::{Result, ensure};
-use std::{fs, path::Path};
+use anyhow::{Context, Result, ensure};
+use serde::{Deserialize, Serialize};
+use std::{
+    collections::BTreeMap,
+    fs,
+    io::{BufRead, BufReader},
+    path::{Path, PathBuf},
+};
 
 const ROM_SHA256: &str = "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72";
 fn write(offset: usize, value: u16) -> Write {
@@ -308,12 +314,8 @@ fn frame_cases(routines: &mut [Routine], order: &mut Vec<String>) -> usize {
     cases
 }
 
-pub fn generate(checkout: &Path, rom_path: &Path, output: &Path, expected: &Path) -> Result<usize> {
-    ensure!(digest(rom_path)? == ROM_SHA256, "Ridley fixture ROM identity differs");
-    fs::create_dir_all(expected)?;
-    let expected = fs::canonicalize(expected)?;
-    let rom = fs::read(rom_path)?;
-    let mut manifest=Manifest {
+fn manifest(rom_path: &Path) -> Result<Manifest> {
+    Ok(Manifest {
         family:"observed-ridley-instructions".into(),rust_module:"crates/port/src/ridley_enemy_instructions.rs".into(),
         bank:"sm_a0.c".into(),c_support:vec!["sm_a6.c".into(),"sm_86.c".into(),"sm_80.c".into(),"sm_rtl.c".into()],
         rust_imports:vec!["audio".into(),"enemy".into(),"enemy_instructions".into(),"enemy_projectiles".into(),"observed_projectile_ownership".into()],
@@ -322,7 +324,15 @@ pub fn generate(checkout: &Path, rom_path: &Path, output: &Path, expected: &Path
         scope:Some("Complete pinned A6E73A..E828 aiming/spawning attack frames; direct callback and controlled chains are offline evidence. Native live ownership requires separately authenticated replay.".into()),
         routines:vec![direct("Ridley_Instr_1"),direct("Ridley_Instr_5"),direct("Ridley_Instr_6"),direct("Ridley_Instr_10"),direct("Ridley_Instr_11"),direct("Ridley_Instr_12"),direct("Ridley_Instr_13"),Routine{symbol:"ProcessEnemyInstructions".into(),returns:"void".into(),args:0,arg_types:Some(vec![]),live_eligible:Some(true),original_address:Some(0xa0c26a),..Default::default()}],
         ..Default::default()
-    };
+    })
+}
+
+pub fn generate(checkout: &Path, rom_path: &Path, output: &Path, expected: &Path) -> Result<usize> {
+    ensure!(digest(rom_path)? == ROM_SHA256, "Ridley fixture ROM identity differs");
+    fs::create_dir_all(expected)?;
+    let expected = fs::canonicalize(expected)?;
+    let rom = fs::read(rom_path)?;
+    let mut manifest = manifest(rom_path)?;
     let direct_count = callback_cases(&mut manifest.routines, &rom, &expected)?;
     let mut order = manifest.routines.iter().flat_map(|r| r.cases.iter().map(|c| c.name.clone())).collect::<Vec<_>>();
     let frame_count = frame_cases(&mut manifest.routines, &mut order);
@@ -333,6 +343,272 @@ pub fn generate(checkout: &Path, rom_path: &Path, output: &Path, expected: &Path
     }
     atomic_toml(output, &manifest)?;
     Ok(direct_count + frame_count)
+}
+
+/// A sealed actual-C event; pointer kinds are 0=stop, 1=bank offset, 2=ROM.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct NativeEvent {
+    pub sequence: u64,
+    pub frame_sequence: u64,
+    pub frame: u32,
+    pub window: u8,
+    pub kind: String,
+    pub phase: String,
+    pub depth: u8,
+    pub slot: u16,
+    pub header: u16,
+    pub bank: u8,
+    pub entry_pc: u16,
+    pub pc: u16,
+    pub timer: u16,
+    pub ai_bits: u16,
+    pub extra: u16,
+    pub spritemap: u16,
+    pub opcode: u32,
+    pub argument: u32,
+    pub returned: u32,
+    pub return_kind: u8,
+    pub capture: u8,
+    pub orientation: u16,
+    pub f_source: u16,
+    pub health: u16,
+    pub area: u16,
+    pub host: [u16; 8],
+}
+impl NativeEvent {
+    fn attack(&self) -> bool {
+        self.bank == 0xa6 && matches!(self.header, 0xe13f | 0xe17f) && (0xe73a..0xe828).contains(&self.entry_pc)
+    }
+    fn capture_stem(&self) -> String {
+        let address = if self.kind == "frame" { self.entry_pc } else { self.opcode as u16 };
+        format!("enemy-{}-{address:04x}-window{}-{:02}", self.kind, self.window, self.capture)
+    }
+}
+#[derive(Clone, Debug, Default, Serialize)]
+pub struct WindowOwnership {
+    pub frames: usize,
+    pub first_frame: u32,
+    pub last_frame: u32,
+    pub timer_due: usize,
+    pub frozen: usize,
+    pub retained_frames: usize,
+    pub retained_callbacks: usize,
+    pub opcode_counts: BTreeMap<String, usize>,
+}
+#[derive(Clone, Debug, Serialize)]
+pub struct NaturalCapture {
+    pub name: String,
+    pub symbol: String,
+    pub before: NativeEvent,
+    pub after: NativeEvent,
+    pub before_wram: PathBuf,
+    pub after_wram: PathBuf,
+    pub before_host: PathBuf,
+    pub after_host: PathBuf,
+    pub opcodes: Vec<NativeEvent>,
+}
+#[derive(Debug, Serialize)]
+pub struct CapturedGeneration {
+    pub inventory: PathBuf,
+    pub inventory_verdict_sha256: String,
+    pub manifest: PathBuf,
+    pub manifest_sha256: String,
+    pub authenticated_artifacts: usize,
+    pub windows: BTreeMap<u8, WindowOwnership>,
+    pub captures: Vec<NaturalCapture>,
+}
+fn callback_symbol(opcode: u32) -> Result<&'static str> {
+    Ok(match opcode {
+        0xa6e517 => "Ridley_Instr_1",
+        0xa6e4be => "Ridley_Instr_5",
+        0xa6e4ca => "Ridley_Instr_6",
+        0xa6e4d2 => "Ridley_Instr_10",
+        0xa6e84d => "Ridley_Instr_11",
+        0xa6e904 => "Ridley_Instr_12",
+        0xa6e909 => "Ridley_Instr_13",
+        0xa6812f => "EnemyInstr_Sleep",
+        _ => anyhow::bail!("unexpected opcode in native Ridley attack closure: {opcode:06x}"),
+    })
+}
+fn captured_host(path: &Path) -> Result<[u16; 8]> {
+    let bytes = fs::read(path)?;
+    ensure!(bytes.len() == 16, "native host capture must contain all eight words");
+    Ok(std::array::from_fn(|i| u16::from_le_bytes([bytes[2 * i], bytes[2 * i + 1]])))
+}
+fn authenticate_inventory(inventory: &Path, rom_path: &Path) -> Result<usize> {
+    let verdict: toml::Value = toml::from_str(&fs::read_to_string(inventory.join("verdict.toml"))?)?;
+    ensure!(
+        verdict["status"].as_str() == Some("diagnostic-complete") && verdict["frames"].as_integer() == Some(129712),
+        "native inventory must be a completed full replay"
+    );
+    ensure!(
+        verdict["source"]["revision"].as_str() == Some("578f90b3cc49557bb70060ad033bb90b8cf8ac50"),
+        "native source revision differs"
+    );
+    ensure!(
+        verdict["rom_sha256"].as_str() == Some(ROM_SHA256) && digest(rom_path)? == ROM_SHA256,
+        "native inventory ROM differs"
+    );
+    ensure!(
+        verdict["inputs_sha256"].as_str() == Some("cc643d751554ad6d30b5d7e3a41a4259525517ca7614cf73abec9fac30176c0e"),
+        "native input identity differs"
+    );
+    let artifacts = verdict["artifacts"].as_table().context("native inventory artifact seal missing")?;
+    for (name, hash) in artifacts {
+        ensure!(
+            !Path::new(name).is_absolute()
+                && Path::new(name).components().all(|c| matches!(c, std::path::Component::Normal(_))),
+            "unsafe native artifact path"
+        );
+        let path = inventory.join(name);
+        ensure!(
+            !path.is_symlink() && digest(&path)? == hash.as_str().context("invalid native artifact digest")?,
+            "native artifact identity differs: {name}"
+        );
+    }
+    for (file, expected) in [
+        ("sm_a0.c", "a2cee5c286304e7d606357ac4960413e5fe3dfe585d468d0f41a654aa093e8d3"),
+        ("sm_a6.c", "36ce5f36896e6a28555fba833be68fc189bf1a35b17a64cab04cd3a4e34e6b96"),
+        ("sm_86.c", "8268f45c3df230de54c99d833e166802d59bd942ea4ac58e75f4acf134e48cf1"),
+    ] {
+        ensure!(
+            digest(&inventory.join("original-source").join(file))? == expected,
+            "native gameplay source identity differs: {file}"
+        );
+    }
+    Ok(artifacts.len())
+}
+
+/// Reuse one full native inventory to make a subsystem-sized natural capture batch.
+/// Inputs are exact captured state; timers, WRAM and host words are never patched.
+pub fn generate_captured(
+    checkout: &Path,
+    rom_path: &Path,
+    inventory: &Path,
+    output: &Path,
+) -> Result<CapturedGeneration> {
+    let inventory = fs::canonicalize(inventory)?;
+    let authenticated_artifacts = authenticate_inventory(&inventory, rom_path)?;
+    let mut manifest = manifest(rom_path)?;
+    manifest.family = "observed-ridley-instructions-captured".into();
+    manifest.routines.push(direct("EnemyInstr_Sleep"));
+    manifest.scope = Some("Exact naturally observed attack-frame and callback captures from one completed pinned actual-C replay; full WRAM and eight host words. This is offline evidence, not live Rust ownership or original-ROM parity.".into());
+    let mut windows = BTreeMap::<u8, WindowOwnership>::new();
+    let mut frames = BTreeMap::<u64, Vec<NativeEvent>>::new();
+    let mut selected = BTreeMap::<String, (Option<NativeEvent>, Option<NativeEvent>)>::new();
+    let mut last_sequence = 0;
+    for line in BufReader::new(fs::File::open(inventory.join("enemy-events.jsonl"))?).lines() {
+        let event: NativeEvent = serde_json::from_str(&line?)?;
+        ensure!(event.sequence == last_sequence + 1, "native ledger sequence differs");
+        last_sequence = event.sequence;
+        if !event.attack() {
+            continue;
+        }
+        let counts = windows.entry(event.window).or_default();
+        if event.kind == "frame" && event.phase == "before" {
+            if counts.frames == 0 {
+                counts.first_frame = event.frame;
+            }
+            counts.frames += 1;
+            counts.last_frame = event.frame;
+            counts.timer_due += usize::from(event.timer == 1);
+            counts.frozen += usize::from(event.ai_bits & 4 != 0);
+        }
+        if event.kind == "opcode" {
+            callback_symbol(event.opcode)?;
+            if event.phase == "before" {
+                *counts.opcode_counts.entry(format!("{:06x}", event.opcode)).or_default() += 1;
+            } else {
+                frames.entry(event.frame_sequence).or_default().push(event.clone());
+            }
+        }
+        if event.capture > 0 {
+            let pair = selected.entry(event.capture_stem()).or_default();
+            let phase = if event.phase == "before" { &mut pair.0 } else { &mut pair.1 };
+            ensure!(phase.replace(event).is_none(), "native capture phase duplicated");
+        }
+    }
+    ensure!(
+        windows.len() == 2 && windows.contains_key(&1) && windows.contains_key(&2),
+        "native attack combat windows differ"
+    );
+    let mut captures = Vec::new();
+    let mut order = Vec::new();
+    for (name, (before, after)) in selected {
+        let before = before.context("native capture before event missing")?;
+        let after = after.context("native capture after event missing")?;
+        ensure!(
+            before.frame_sequence == after.frame_sequence
+                && before.frame == after.frame
+                && before.slot == after.slot
+                && before.opcode == after.opcode
+                && before.argument == after.argument,
+            "native capture event pair differs"
+        );
+        let before_wram = inventory.join("fixtures").join(format!("{name}-before.wram"));
+        let after_wram = inventory.join("fixtures").join(format!("{name}-after.wram"));
+        let before_host = inventory.join("fixtures").join(format!("{name}-before.host"));
+        let after_host = inventory.join("fixtures").join(format!("{name}-after.host"));
+        ensure!(
+            fs::metadata(&before_wram)?.len() == 0x20000 && fs::metadata(&after_wram)?.len() == 0x20000,
+            "native capture WRAM extent differs"
+        );
+        ensure!(
+            captured_host(&before_host)? == before.host && captured_host(&after_host)? == after.host,
+            "native host sidecar differs from event"
+        );
+        let counts = windows.get_mut(&before.window).unwrap();
+        let symbol = if before.kind == "frame" {
+            counts.retained_frames += 1;
+            "ProcessEnemyInstructions"
+        } else {
+            counts.retained_callbacks += 1;
+            callback_symbol(before.opcode)?
+        };
+        routine(&mut manifest.routines, symbol).cases.push(Case {
+            name: name.clone(),
+            a: if before.kind == "opcode" { i64::from(before.slot) } else { 0 },
+            b: if before.kind == "opcode" { i64::from(before.argument) } else { 0 },
+            before_file: Some(before_wram.clone()),
+            before_sha256: Some(digest(&before_wram)?),
+            host_words: Some(before.host.to_vec()),
+            expected_return: Some(if before.kind == "opcode" { u64::from(after.returned) } else { 0 }),
+            expected_after_file: Some(after_wram.clone()),
+            expected_after_sha256: Some(digest(&after_wram)?),
+            ..Default::default()
+        });
+        let opcodes = frames.get(&before.frame_sequence).cloned().unwrap_or_default();
+        order.push(name.clone());
+        captures.push(NaturalCapture {
+            name,
+            symbol: symbol.into(),
+            before,
+            after,
+            before_wram,
+            after_wram,
+            before_host,
+            after_host,
+            opcodes,
+        });
+    }
+    // Native generic sleep is normally retained via its complete frame. Include
+    // its signature only if the capture policy retained a direct attack call.
+    manifest.routines.retain(|r| !r.cases.is_empty());
+    manifest.case_order = Some(order);
+    ensure!(checkout.join(&manifest.rust_module).is_file(), "Ridley gameplay module missing");
+    if let Some(parent) = output.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    atomic_toml(output, &manifest)?;
+    Ok(CapturedGeneration {
+        inventory_verdict_sha256: digest(&inventory.join("verdict.toml"))?,
+        inventory,
+        manifest: fs::canonicalize(output)?,
+        manifest_sha256: digest(output)?,
+        authenticated_artifacts,
+        windows,
+        captures,
+    })
 }
 
 #[cfg(test)]

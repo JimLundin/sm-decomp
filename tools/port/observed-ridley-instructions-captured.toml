@@ -1,0 +1,2188 @@
+family = "observed-ridley-instructions-captured"
+rust_module = "crates/port/src/ridley_enemy_instructions.rs"
+bank = "sm_a0.c"
+c_support = [
+    "sm_a6.c",
+    "sm_86.c",
+    "sm_80.c",
+    "sm_rtl.c",
+]
+rust_imports = [
+    "audio",
+    "enemy",
+    "enemy_instructions",
+    "enemy_projectiles",
+    "observed_projectile_ownership",
+]
+rust_dependencies = []
+cases = []
+projectile_host = true
+projectile_rendering = false
+case_order = [
+    "enemy-frame-e73a-window1-01",
+    "enemy-frame-e73a-window2-01",
+    "enemy-frame-e746-window1-01",
+    "enemy-frame-e746-window1-02",
+    "enemy-frame-e746-window2-01",
+    "enemy-frame-e746-window2-02",
+    "enemy-frame-e74c-window1-01",
+    "enemy-frame-e74c-window1-02",
+    "enemy-frame-e74c-window2-01",
+    "enemy-frame-e74c-window2-02",
+    "enemy-frame-e750-window1-01",
+    "enemy-frame-e750-window1-02",
+    "enemy-frame-e750-window2-01",
+    "enemy-frame-e750-window2-02",
+    "enemy-frame-e758-window1-01",
+    "enemy-frame-e758-window1-02",
+    "enemy-frame-e758-window2-01",
+    "enemy-frame-e758-window2-02",
+    "enemy-frame-e760-window1-01",
+    "enemy-frame-e760-window1-02",
+    "enemy-frame-e760-window2-01",
+    "enemy-frame-e760-window2-02",
+    "enemy-frame-e768-window1-01",
+    "enemy-frame-e768-window1-02",
+    "enemy-frame-e768-window2-01",
+    "enemy-frame-e768-window2-02",
+    "enemy-frame-e770-window1-01",
+    "enemy-frame-e770-window1-02",
+    "enemy-frame-e770-window2-01",
+    "enemy-frame-e770-window2-02",
+    "enemy-frame-e774-window1-01",
+    "enemy-frame-e774-window1-02",
+    "enemy-frame-e774-window2-01",
+    "enemy-frame-e774-window2-02",
+    "enemy-frame-e77c-window1-01",
+    "enemy-frame-e77c-window1-02",
+    "enemy-frame-e77c-window2-01",
+    "enemy-frame-e77c-window2-02",
+    "enemy-frame-e784-window1-01",
+    "enemy-frame-e784-window1-02",
+    "enemy-frame-e784-window2-01",
+    "enemy-frame-e784-window2-02",
+    "enemy-frame-e788-window1-01",
+    "enemy-frame-e788-window1-02",
+    "enemy-frame-e788-window2-01",
+    "enemy-frame-e788-window2-02",
+    "enemy-frame-e790-window1-01",
+    "enemy-frame-e790-window1-02",
+    "enemy-frame-e790-window2-01",
+    "enemy-frame-e790-window2-02",
+    "enemy-frame-e798-window1-01",
+    "enemy-frame-e798-window1-02",
+    "enemy-frame-e798-window2-01",
+    "enemy-frame-e798-window2-02",
+    "enemy-frame-e7a0-window1-01",
+    "enemy-frame-e7a0-window1-02",
+    "enemy-frame-e7a0-window2-01",
+    "enemy-frame-e7a0-window2-02",
+    "enemy-frame-e7a8-window1-01",
+    "enemy-frame-e7a8-window1-02",
+    "enemy-frame-e7a8-window2-01",
+    "enemy-frame-e7a8-window2-02",
+    "enemy-frame-e7ac-window1-01",
+    "enemy-frame-e7ac-window1-02",
+    "enemy-frame-e7ac-window2-01",
+    "enemy-frame-e7ac-window2-02",
+    "enemy-frame-e7b2-window1-01",
+    "enemy-frame-e7b2-window1-02",
+    "enemy-frame-e7b2-window2-01",
+    "enemy-frame-e7b2-window2-02",
+    "enemy-opcode-e4be-window1-02",
+    "enemy-opcode-e4be-window2-02",
+    "enemy-opcode-e4ca-window1-02",
+    "enemy-opcode-e4ca-window2-02",
+    "enemy-opcode-e4d2-window1-01",
+    "enemy-opcode-e4d2-window1-02",
+    "enemy-opcode-e4d2-window2-01",
+    "enemy-opcode-e4d2-window2-02",
+    "enemy-opcode-e84d-window1-01",
+    "enemy-opcode-e84d-window1-02",
+    "enemy-opcode-e84d-window2-01",
+    "enemy-opcode-e84d-window2-02",
+    "enemy-opcode-e904-window1-01",
+    "enemy-opcode-e904-window1-02",
+    "enemy-opcode-e904-window2-01",
+    "enemy-opcode-e904-window2-02",
+    "enemy-opcode-e909-window1-01",
+    "enemy-opcode-e909-window1-02",
+    "enemy-opcode-e909-window2-01",
+    "enemy-opcode-e909-window2-02",
+]
+infrastructure_probe = false
+source = "snesrev/sm 578f90b3cc49557bb70060ad033bb90b8cf8ac50; actual native A0/A6 interpreter and bank86 allocator"
+scope = "Exact naturally observed attack-frame and callback captures from one completed pinned actual-C replay; full WRAM and eight host words. This is offline evidence, not live Rust ownership or original-ROM parity."
+
+[rom]
+file = "/home/jim/sm-decomp/rom/sm.sfc"
+sha256 = "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72"
+
+[[routines]]
+symbol = "Ridley_Instr_5"
+args = 2
+arg_types = [
+    "uint16",
+    "rom_ptr",
+]
+return = "rom_ptr"
+live_eligible = false
+live_limitation = "Native live ownership is claimed only at complete ProcessEnemyInstructions frames."
+pointer_bank = 166
+pair_u16_return = false
+
+[[routines.cases]]
+name = "enemy-opcode-e4be-window1-02"
+a = 0
+b = 10938184
+writes = []
+host_words = [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 10938184
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e4be-window1-02-before.wram"
+before_sha256 = "11c6ed8d6bb812f1a3aefc8527d986ac2596363e7e27293c77065f474f832f0a"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e4be-window1-02-after.wram"
+expected_after_sha256 = "4adf686c466ca29678932f6571c4f0830c10c8e670c50cbc15a5688cc4b84bb3"
+
+[[routines.cases]]
+name = "enemy-opcode-e4be-window2-02"
+a = 0
+b = 10938184
+writes = []
+host_words = [
+    66,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 10938184
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e4be-window2-02-before.wram"
+before_sha256 = "10451fffeb40d039319f930760d87069e0829af5c503dac8ddef8e4ae982bd85"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e4be-window2-02-after.wram"
+expected_after_sha256 = "1d930032d865bbc219c6eadfe17cd8441eff644b86e043a392c74c92d55a8af0"
+
+[[routines]]
+symbol = "Ridley_Instr_6"
+args = 2
+arg_types = [
+    "uint16",
+    "rom_ptr",
+]
+return = "rom_ptr"
+live_eligible = false
+live_limitation = "Native live ownership is claimed only at complete ProcessEnemyInstructions frames."
+pointer_bank = 166
+pair_u16_return = false
+
+[[routines.cases]]
+name = "enemy-opcode-e4ca-window1-02"
+a = 0
+b = 10938286
+writes = []
+host_words = [
+    66,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 10938286
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e4ca-window1-02-before.wram"
+before_sha256 = "6d5cd6ce86cf399960167eb09af7564b9346c73c61673518d544750a3452fe16"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e4ca-window1-02-after.wram"
+expected_after_sha256 = "8909ab227ae4cbbd8876be36280bd7f1132c4837cf5b13245fc2854900137211"
+
+[[routines.cases]]
+name = "enemy-opcode-e4ca-window2-02"
+a = 0
+b = 10938286
+writes = []
+host_words = [
+    22,
+    49,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 10938286
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e4ca-window2-02-before.wram"
+before_sha256 = "ea31c86b708fc496024a740b2b47d2e6626f070d359e2b3ac7794b0d60526ad8"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e4ca-window2-02-after.wram"
+expected_after_sha256 = "b2d54febd655e123725520fa5b0c5778676b713dd7733c60cbb7ad7ac2b366af"
+
+[[routines]]
+symbol = "Ridley_Instr_10"
+args = 2
+arg_types = [
+    "uint16",
+    "rom_ptr",
+]
+return = "rom_ptr"
+live_eligible = false
+live_limitation = "Native live ownership is claimed only at complete ProcessEnemyInstructions frames."
+pointer_bank = 166
+pair_u16_return = false
+
+[[routines.cases]]
+name = "enemy-opcode-e4d2-window1-01"
+a = 0
+b = 10938176
+writes = []
+host_words = [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 10938178
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e4d2-window1-01-before.wram"
+before_sha256 = "f03e166d99961298ae6082a5f4174aa21e715173074c6f3d7164790f3152537a"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e4d2-window1-01-after.wram"
+expected_after_sha256 = "f03e166d99961298ae6082a5f4174aa21e715173074c6f3d7164790f3152537a"
+
+[[routines.cases]]
+name = "enemy-opcode-e4d2-window1-02"
+a = 0
+b = 10938230
+writes = []
+host_words = [
+    76,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 10938232
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e4d2-window1-02-before.wram"
+before_sha256 = "b741ab9888117315d0948619e8d13629413cc0a6842ccd95ede35e6dd02c6666"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e4d2-window1-02-after.wram"
+expected_after_sha256 = "b741ab9888117315d0948619e8d13629413cc0a6842ccd95ede35e6dd02c6666"
+
+[[routines.cases]]
+name = "enemy-opcode-e4d2-window2-01"
+a = 0
+b = 10938176
+writes = []
+host_words = [
+    66,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 10938178
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e4d2-window2-01-before.wram"
+before_sha256 = "029ec77ef3c90f493155d1b6bac05500aba1c6614e4bac161df8410ca565db24"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e4d2-window2-01-after.wram"
+expected_after_sha256 = "029ec77ef3c90f493155d1b6bac05500aba1c6614e4bac161df8410ca565db24"
+
+[[routines.cases]]
+name = "enemy-opcode-e4d2-window2-02"
+a = 0
+b = 10938230
+writes = []
+host_words = [
+    22,
+    120,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 10938232
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e4d2-window2-02-before.wram"
+before_sha256 = "e0bef037627d8b4e9807200221396e91175d0285a134dd2c361099938b879dc6"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e4d2-window2-02-after.wram"
+expected_after_sha256 = "e0bef037627d8b4e9807200221396e91175d0285a134dd2c361099938b879dc6"
+
+[[routines]]
+symbol = "Ridley_Instr_11"
+args = 2
+arg_types = [
+    "uint16",
+    "rom_ptr",
+]
+return = "rom_ptr"
+live_eligible = false
+live_limitation = "Native live ownership is claimed only at complete ProcessEnemyInstructions frames."
+pointer_bank = 166
+pair_u16_return = false
+
+[[routines.cases]]
+name = "enemy-opcode-e84d-window1-01"
+a = 0
+b = 10938194
+writes = []
+host_words = [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 10938194
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e84d-window1-01-before.wram"
+before_sha256 = "3f7f8b016084b7fedbef91bfdc61cb718a99e471b7d8706013d721bde20c110a"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e84d-window1-01-after.wram"
+expected_after_sha256 = "9e274cee81a35bec874b385b78f4be624bd695c29674bde1acf363e5bf5ade16"
+
+[[routines.cases]]
+name = "enemy-opcode-e84d-window1-02"
+a = 0
+b = 10938202
+writes = []
+host_words = [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 10938202
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e84d-window1-02-before.wram"
+before_sha256 = "d67b77d40c91946e254d73870be46f1dc10a7e0a8c750f5173dceab2fa7f6d2d"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e84d-window1-02-after.wram"
+expected_after_sha256 = "d67b77d40c91946e254d73870be46f1dc10a7e0a8c750f5173dceab2fa7f6d2d"
+
+[[routines.cases]]
+name = "enemy-opcode-e84d-window2-01"
+a = 0
+b = 10938194
+writes = []
+host_words = [
+    66,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 10938194
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e84d-window2-01-before.wram"
+before_sha256 = "a652cb12682b3daa46a7f0a1336886a66cee32bb0aee4a3f41e2c2b9380339aa"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e84d-window2-01-after.wram"
+expected_after_sha256 = "238ecc72d59e8c333e1c326794d06ed438b5787dacc6dad4115ce88746b3f7f1"
+
+[[routines.cases]]
+name = "enemy-opcode-e84d-window2-02"
+a = 0
+b = 10938202
+writes = []
+host_words = [
+    66,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 10938202
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e84d-window2-02-before.wram"
+before_sha256 = "1ad0ff7e8498775b1209d6b3624138ee4b686f24297684579b2387a005f7974a"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e84d-window2-02-after.wram"
+expected_after_sha256 = "1ad0ff7e8498775b1209d6b3624138ee4b686f24297684579b2387a005f7974a"
+
+[[routines]]
+symbol = "Ridley_Instr_12"
+args = 2
+arg_types = [
+    "uint16",
+    "rom_ptr",
+]
+return = "rom_ptr"
+live_eligible = false
+live_limitation = "Native live ownership is claimed only at complete ProcessEnemyInstructions frames."
+pointer_bank = 166
+pair_u16_return = false
+
+[[routines.cases]]
+name = "enemy-opcode-e904-window1-01"
+a = 0
+b = 10938196
+writes = []
+host_words = [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 10938196
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e904-window1-01-before.wram"
+before_sha256 = "9e274cee81a35bec874b385b78f4be624bd695c29674bde1acf363e5bf5ade16"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e904-window1-01-after.wram"
+expected_after_sha256 = "e3c6c7480928345dea5052aa747437f8daa0fa88f95b4d5dba9ad6ec8da39de4"
+
+[[routines.cases]]
+name = "enemy-opcode-e904-window1-02"
+a = 0
+b = 10938252
+writes = []
+host_words = [
+    76,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 10938252
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e904-window1-02-before.wram"
+before_sha256 = "351c6e6e2cf539fbb0c6650a17f7aa95ec78f3000331eb733f21ab78d608b6d8"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e904-window1-02-after.wram"
+expected_after_sha256 = "3544f463e932aff50a7f8f405c2f1fcc2d7153eb0b882153bcb1280cdf68a103"
+
+[[routines.cases]]
+name = "enemy-opcode-e904-window2-01"
+a = 0
+b = 10938196
+writes = []
+host_words = [
+    66,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 10938196
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e904-window2-01-before.wram"
+before_sha256 = "238ecc72d59e8c333e1c326794d06ed438b5787dacc6dad4115ce88746b3f7f1"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e904-window2-01-after.wram"
+expected_after_sha256 = "0ca7491672afb71c7ef7ae2c817a817bf573f07bb38322211fa292ea2734ac40"
+
+[[routines.cases]]
+name = "enemy-opcode-e904-window2-02"
+a = 0
+b = 10938252
+writes = []
+host_words = [
+    22,
+    120,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 10938252
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e904-window2-02-before.wram"
+before_sha256 = "002be50887e7f36fae7172226f2f95675928d1b34e66cb8447ff19f941a27af4"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e904-window2-02-after.wram"
+expected_after_sha256 = "e855eb01a83053c9f9e125cefac00969bf86094659a88385da2b50202fc7adc9"
+
+[[routines]]
+symbol = "Ridley_Instr_13"
+args = 2
+arg_types = [
+    "uint16",
+    "rom_ptr",
+]
+return = "rom_ptr"
+live_eligible = false
+live_limitation = "Native live ownership is claimed only at complete ProcessEnemyInstructions frames."
+pointer_bank = 166
+pair_u16_return = false
+
+[[routines.cases]]
+name = "enemy-opcode-e909-window1-01"
+a = 0
+b = 10938204
+writes = []
+host_words = [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 10938204
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e909-window1-01-before.wram"
+before_sha256 = "d67b77d40c91946e254d73870be46f1dc10a7e0a8c750f5173dceab2fa7f6d2d"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e909-window1-01-after.wram"
+expected_after_sha256 = "8551bab3edf825798f8e352f0542f6d034cc5a41bb79985f3b4efed4f3571fdf"
+
+[[routines.cases]]
+name = "enemy-opcode-e909-window1-02"
+a = 0
+b = 10938212
+writes = []
+host_words = [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 10938212
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e909-window1-02-before.wram"
+before_sha256 = "db5116df55f3f7eccb450727225670dfe5f504fb72edf2b637d4de68f139448e"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e909-window1-02-after.wram"
+expected_after_sha256 = "6b812967d421cf1f8d5c36776073df8249bdc5a32b4dfb2b3a047ca63a70eb2e"
+
+[[routines.cases]]
+name = "enemy-opcode-e909-window2-01"
+a = 0
+b = 10938204
+writes = []
+host_words = [
+    66,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 10938204
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e909-window2-01-before.wram"
+before_sha256 = "1ad0ff7e8498775b1209d6b3624138ee4b686f24297684579b2387a005f7974a"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e909-window2-01-after.wram"
+expected_after_sha256 = "c2df02a35caef179245d22bb22036144b6f516acac001dcb48d54fa4cbcc52d1"
+
+[[routines.cases]]
+name = "enemy-opcode-e909-window2-02"
+a = 0
+b = 10938212
+writes = []
+host_words = [
+    66,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 10938212
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e909-window2-02-before.wram"
+before_sha256 = "2ca0b8ae3c9847767859a7a7b9e862f860fca411fb01e065fc6cee305be06d05"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-opcode-e909-window2-02-after.wram"
+expected_after_sha256 = "bc04ce790b356c1390bfd46db5a7273212daed024fb32cd308d1c697bcd53b21"
+
+[[routines]]
+symbol = "ProcessEnemyInstructions"
+args = 0
+arg_types = []
+return = "void"
+live_eligible = true
+pair_u16_return = false
+original_address = 10535530
+
+[[routines.cases]]
+name = "enemy-frame-e73a-window1-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e73a-window1-01-before.wram"
+before_sha256 = "4c9d778f78e14226ed68b1557a05f3e82c3d29b1ee843483ef5acd54539d90e0"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e73a-window1-01-after.wram"
+expected_after_sha256 = "7d90d214553d94b347f3557a601cd2a339bfa206c1aac3fb15fee074eca401b0"
+
+[[routines.cases]]
+name = "enemy-frame-e73a-window2-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    66,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e73a-window2-01-before.wram"
+before_sha256 = "e2a4d8bc12066c65ac854c85a488cc6fd3e38fee08fea22406b79028f1f22f96"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e73a-window2-01-after.wram"
+expected_after_sha256 = "5b4cda9a03ba9ba277069140ac77c49d9f82ad35c6a42d23c3a641685fdb691a"
+
+[[routines.cases]]
+name = "enemy-frame-e746-window1-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e746-window1-01-before.wram"
+before_sha256 = "9da542efe47f68771d633a90a2b4f3705b63616bf74c4e20cc91ae60227905d8"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e746-window1-01-after.wram"
+expected_after_sha256 = "608a472eb0ebe0a9b4a1e560fe6dc16b8f0cd9552444384094898a8184cd63c5"
+
+[[routines.cases]]
+name = "enemy-frame-e746-window1-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e746-window1-02-before.wram"
+before_sha256 = "487aa90926766ff65d16ea7333536e8dd8defeb34748d95c3061b27d949d0176"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e746-window1-02-after.wram"
+expected_after_sha256 = "9b67ce3d3b9b207b4b9d1f6c9040ca3b2178394ebbc9d63cf51f362f0e5cd29b"
+
+[[routines.cases]]
+name = "enemy-frame-e746-window2-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    66,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e746-window2-01-before.wram"
+before_sha256 = "0ff894bece106b196c72363693e0b288bff3446bbe152c95ac64d36dfcd2837e"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e746-window2-01-after.wram"
+expected_after_sha256 = "930dca1ad2de48789116ac9e36c3e5329a204fca99ab5e08626b11edb418fed1"
+
+[[routines.cases]]
+name = "enemy-frame-e746-window2-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    66,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e746-window2-02-before.wram"
+before_sha256 = "f92c5c9bc6e38dace8ce0424d5645a40da7a783249f0c631f1734a8fe5eb4fc6"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e746-window2-02-after.wram"
+expected_after_sha256 = "106136e3d0847a0de389627a5e91db1d22e470c6682fc970fd7cc9d6a08603d4"
+
+[[routines.cases]]
+name = "enemy-frame-e74c-window1-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e74c-window1-01-before.wram"
+before_sha256 = "ce8984a6240cc25a5d4bea6a42eb7a00da8eed3f0e03582c439e98d63e249940"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e74c-window1-01-after.wram"
+expected_after_sha256 = "de11adf6dfed8418cb5780c9f3846cd8ee07a7ff25b43328c658a55fce5ccf59"
+
+[[routines.cases]]
+name = "enemy-frame-e74c-window1-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e74c-window1-02-before.wram"
+before_sha256 = "94db9b4ab0f96b062e00ff7687430344fdf0aec33c063925159bb282c4a4f64c"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e74c-window1-02-after.wram"
+expected_after_sha256 = "cb59048b1f9b070dfabad2d7bb42ca5fe626fdc633789cc0f9e98a4a614c6afd"
+
+[[routines.cases]]
+name = "enemy-frame-e74c-window2-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    66,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e74c-window2-01-before.wram"
+before_sha256 = "38d0b9ad38bdecfb906bc9455745074e800d85a89c417b6a9e138f06d318c616"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e74c-window2-01-after.wram"
+expected_after_sha256 = "0c5a85a37f9b83cf5f8fc9c1fe75996caa9094bef13021debfdd9474f069ee02"
+
+[[routines.cases]]
+name = "enemy-frame-e74c-window2-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    66,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e74c-window2-02-before.wram"
+before_sha256 = "44a8a636f51b2a22667257dd23bc5b6b4cfd459c8873a50774f214089af27b55"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e74c-window2-02-after.wram"
+expected_after_sha256 = "0a85dd0d56e5b687e861f9631931e6ce745566ea6bce2b1339ec386fe97cecf7"
+
+[[routines.cases]]
+name = "enemy-frame-e750-window1-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e750-window1-01-before.wram"
+before_sha256 = "45fdc705d19d26994a5a61b7c389af101e813c83c8defc0c3b7120f4bd4bf5ec"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e750-window1-01-after.wram"
+expected_after_sha256 = "c21b4e1670d8a1a4327c9427e9efb690af494c2ec479c857e815278f723c7314"
+
+[[routines.cases]]
+name = "enemy-frame-e750-window1-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e750-window1-02-before.wram"
+before_sha256 = "56c6d284e9a8bb41d1a5445ab8283cb50bf4000e862a0b07d620608b32676523"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e750-window1-02-after.wram"
+expected_after_sha256 = "52b81291b4f9f6cddcb6f76c679fcbb94fe64db5b1a3cd46d10d44b5b93bafc7"
+
+[[routines.cases]]
+name = "enemy-frame-e750-window2-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    66,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e750-window2-01-before.wram"
+before_sha256 = "1a8c2849fe667fdc8c6cb3012eca7cd95d49b72cfa1bfa31287efba4acc473d4"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e750-window2-01-after.wram"
+expected_after_sha256 = "d772454b57963779ba3d517a3744e63e7fffc9b5cc5ca74885516c789cbcb5ae"
+
+[[routines.cases]]
+name = "enemy-frame-e750-window2-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    66,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e750-window2-02-before.wram"
+before_sha256 = "19587c9d003ebe9f1a0b6823e9da0fc61cc6619afc31198604517cbfd7be86ee"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e750-window2-02-after.wram"
+expected_after_sha256 = "1b3b368321a929d7da49c7629db15690671f0ec7749536865f1741a5a99d8eb9"
+
+[[routines.cases]]
+name = "enemy-frame-e758-window1-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e758-window1-01-before.wram"
+before_sha256 = "fea93c3179112e4b323feae81ba0d76cc138c243772660340936cde5cfcabd45"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e758-window1-01-after.wram"
+expected_after_sha256 = "43e495cccfbb8d1067a8fe99f5828ea6d782cf443f7abe040a66d34ec80ee818"
+
+[[routines.cases]]
+name = "enemy-frame-e758-window1-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e758-window1-02-before.wram"
+before_sha256 = "562b0271f496e8b6a7f20447411660dd680fc73173bd9888ca587ff7c98594c3"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e758-window1-02-after.wram"
+expected_after_sha256 = "521972842f44341e7447efd50ada0f88639382bf498470543f27307136845e05"
+
+[[routines.cases]]
+name = "enemy-frame-e758-window2-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    66,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e758-window2-01-before.wram"
+before_sha256 = "4647487504125cd6a45528cae773f942e63f99517087d4e86de10fbccea0d5b8"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e758-window2-01-after.wram"
+expected_after_sha256 = "21daff861c19ee16cb280d24b73ea0110523cd725033b0d21c082e7a746b7770"
+
+[[routines.cases]]
+name = "enemy-frame-e758-window2-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    66,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e758-window2-02-before.wram"
+before_sha256 = "aef565c7b4e9e81e380053a8de3b40aca7040bb4ddc419a349190e50a33aa4f9"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e758-window2-02-after.wram"
+expected_after_sha256 = "cf70ac9fb899cb314459d8e20b1d652f6517f711c2f7cad3e6a682ed1fad3dc6"
+
+[[routines.cases]]
+name = "enemy-frame-e760-window1-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e760-window1-01-before.wram"
+before_sha256 = "f73effae5722e039d676eb554b7c717c3938396c025634b756ed1a8812584ef6"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e760-window1-01-after.wram"
+expected_after_sha256 = "75e02b684ba895f59c0b220fa4ae5ac0c07333ec3eaeba492ccda5c35325a0ac"
+
+[[routines.cases]]
+name = "enemy-frame-e760-window1-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e760-window1-02-before.wram"
+before_sha256 = "966f85eaaffe4085896b356a795fa770017821f36440734bdae97b8c82fd109b"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e760-window1-02-after.wram"
+expected_after_sha256 = "9e9e49f60e189b497ee4200b4cb2ce6f08792479886c3a23ca9b680d3a387686"
+
+[[routines.cases]]
+name = "enemy-frame-e760-window2-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    66,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e760-window2-01-before.wram"
+before_sha256 = "774ae8206939cf61cb965ab45a2bf485e03fca931e7d1aa97f7c4a4a2e5dce4b"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e760-window2-01-after.wram"
+expected_after_sha256 = "db4028d0789d03e0e35597e47661696dc7037499949f2b07d899496d5e0bb4bf"
+
+[[routines.cases]]
+name = "enemy-frame-e760-window2-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    66,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e760-window2-02-before.wram"
+before_sha256 = "06de4a0a39978b5ae0a592ccfd9fe0bb482f584660aa2a5b48442f2379a3eba1"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e760-window2-02-after.wram"
+expected_after_sha256 = "a1107ec48c80f868356ae2c08ca1fc505be335cfa4482bd6359cbf19dcd67e47"
+
+[[routines.cases]]
+name = "enemy-frame-e768-window1-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e768-window1-01-before.wram"
+before_sha256 = "15030dd6a456d7f25e88d9ddd30527eaee0398909b82fcec4d54685d6981c314"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e768-window1-01-after.wram"
+expected_after_sha256 = "08b8e85fd53873b8c6099c5bb3bac01c43b42cac4150adadfd0097d55f8ef996"
+
+[[routines.cases]]
+name = "enemy-frame-e768-window1-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e768-window1-02-before.wram"
+before_sha256 = "280a4fcbccd902a76f006ea78b2c76e3a86416d0fe351f7279f9e8ee21181535"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e768-window1-02-after.wram"
+expected_after_sha256 = "657515c7c6d1abf6cda8b25f254cc0052cca5315876912f31026aebf5774f898"
+
+[[routines.cases]]
+name = "enemy-frame-e768-window2-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    66,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e768-window2-01-before.wram"
+before_sha256 = "406dd8b90c252044ee10aa85980bf41b418d657fb2f80f11123d03f939e0d563"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e768-window2-01-after.wram"
+expected_after_sha256 = "8efb9d47bccc4b60ef9e4f80bae6456f6e103a2eaf9218c1ab8cddab3a7b39a5"
+
+[[routines.cases]]
+name = "enemy-frame-e768-window2-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    66,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e768-window2-02-before.wram"
+before_sha256 = "f6abcf9c244211ad2ab829ca73f9a22c20285136f45143d21296ab30269907cb"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e768-window2-02-after.wram"
+expected_after_sha256 = "a808234054b199d728dd815b87f9e3accd25fb41323b5d0e6d4e3e18e734d39a"
+
+[[routines.cases]]
+name = "enemy-frame-e770-window1-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e770-window1-01-before.wram"
+before_sha256 = "85d6740a20765a4dfb8af83ac94feccce0d3ddd0ce95c3a9d269a30571bd4412"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e770-window1-01-after.wram"
+expected_after_sha256 = "22bba1dae96857e07a9c61e933a388f49fff64023cd755a770acbd8d49f8654e"
+
+[[routines.cases]]
+name = "enemy-frame-e770-window1-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e770-window1-02-before.wram"
+before_sha256 = "26074025cddce63e8000ba524a05ae876853cdea958bbde2a5a7a964cacb845a"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e770-window1-02-after.wram"
+expected_after_sha256 = "90fb809b35d8fdf75959ae775fd759c3558f08d2fc68c7191814bc99272f96ea"
+
+[[routines.cases]]
+name = "enemy-frame-e770-window2-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    66,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e770-window2-01-before.wram"
+before_sha256 = "7274efc8fb7e5a880a2c14d79a0f032222a4e6e819c897012a53272284378d64"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e770-window2-01-after.wram"
+expected_after_sha256 = "420e7124bee058587fae453f49d301ca332de5d162f8802d053824a78508a044"
+
+[[routines.cases]]
+name = "enemy-frame-e770-window2-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    66,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e770-window2-02-before.wram"
+before_sha256 = "073dcbb7c828b303acbbbd3f99718fa67fff87c05eb2e9d24db87cd778675f34"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e770-window2-02-after.wram"
+expected_after_sha256 = "35ca2162a9c786094a31e68816cb7a2814d8edf3ecdaea435637bf8c0ce187a6"
+
+[[routines.cases]]
+name = "enemy-frame-e774-window1-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    76,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e774-window1-01-before.wram"
+before_sha256 = "f2d4e61c3c6fcc3abd5583f9af77129ac0a9cd5d1e5b82d640e925a2e5861d07"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e774-window1-01-after.wram"
+expected_after_sha256 = "675b4dedaa5573c09b2fd129b764e7b0af03c29bf81af75659fd50d5405141cc"
+
+[[routines.cases]]
+name = "enemy-frame-e774-window1-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    76,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e774-window1-02-before.wram"
+before_sha256 = "039d8c69057ae72404ac69b3c41ad3a6b51299ed0c581a1720ba0408a8eac6d6"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e774-window1-02-after.wram"
+expected_after_sha256 = "4d66f4b4fefa7ff9b4c188880c63e2e7852744c4dc638b5dfb94aa8fc440407d"
+
+[[routines.cases]]
+name = "enemy-frame-e774-window2-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    22,
+    120,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e774-window2-01-before.wram"
+before_sha256 = "97d7ddef61625caee589d850931c2ef0e356e0109cee3c7913dd9ba807b47356"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e774-window2-01-after.wram"
+expected_after_sha256 = "dd37c00ade0154494749df287ca8039d8d4d426d7929d49b485c8e2711446c30"
+
+[[routines.cases]]
+name = "enemy-frame-e774-window2-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    22,
+    120,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e774-window2-02-before.wram"
+before_sha256 = "a8604cbba653937d4e341722836049fdb31455ab6a4e5c6b23acdbba99c7fabf"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e774-window2-02-after.wram"
+expected_after_sha256 = "5597c48546cede4372572edb4d391ac479e94acfe27fb8d20ab453c951cace81"
+
+[[routines.cases]]
+name = "enemy-frame-e77c-window1-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    76,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e77c-window1-01-before.wram"
+before_sha256 = "f8f2a2c3f825e4f90b8152fe3e19e8c420a914ac89c22cd12efa3aafb34d22ff"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e77c-window1-01-after.wram"
+expected_after_sha256 = "97d79a87446b21fd1afcd2b8c717efe5be84dca2f52601e29f45c878cbef9816"
+
+[[routines.cases]]
+name = "enemy-frame-e77c-window1-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    76,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e77c-window1-02-before.wram"
+before_sha256 = "acd79967545bcfa1d90b64b0564d1d545d3b0d7e602dd8d44e8581377b3d1c8b"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e77c-window1-02-after.wram"
+expected_after_sha256 = "b418de39bd876bd79d84bc943dcad88c80aa8451bbb0f6770dfc4ffd23468240"
+
+[[routines.cases]]
+name = "enemy-frame-e77c-window2-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    22,
+    120,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e77c-window2-01-before.wram"
+before_sha256 = "e85cadae97c52a98dc6adeea6a2197dfd21265496295ed42b4975b915b6617f1"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e77c-window2-01-after.wram"
+expected_after_sha256 = "91207b8192f46aecb6287206d82a6178b4ce31e0c6a91e964ce2e7d69b83afe6"
+
+[[routines.cases]]
+name = "enemy-frame-e77c-window2-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    22,
+    120,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e77c-window2-02-before.wram"
+before_sha256 = "0e8e9ed1f215c5cbae50c91256a22a1d1c29b74e455af1b78f9c73da84e74823"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e77c-window2-02-after.wram"
+expected_after_sha256 = "ece873ebc4a0487a372934ecaf85ce399fd232ad3afa724c1d2700734b8d16a1"
+
+[[routines.cases]]
+name = "enemy-frame-e784-window1-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    76,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e784-window1-01-before.wram"
+before_sha256 = "36e9671f8076e3e6bbecfb857aec255d36cd72450dc4439c0ec38ed06d64405f"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e784-window1-01-after.wram"
+expected_after_sha256 = "977c565496e744b7a17f8ee4de9b3a92f7fbdb731d70cf91f6ad4b4089c7ff51"
+
+[[routines.cases]]
+name = "enemy-frame-e784-window1-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    76,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e784-window1-02-before.wram"
+before_sha256 = "b63460ca1da47e7624356435f208d427d5f08349b4dac0b75853aef83b60b52f"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e784-window1-02-after.wram"
+expected_after_sha256 = "7cf52250270f238bf5465c99063af9b1d9282cc0a3a2e17d498dfff0fddecec0"
+
+[[routines.cases]]
+name = "enemy-frame-e784-window2-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    22,
+    120,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e784-window2-01-before.wram"
+before_sha256 = "be952f542fc2c03b8f7967bba802714f2cedb0a1a3bef58bcbab1b0cc53c71ab"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e784-window2-01-after.wram"
+expected_after_sha256 = "a45c96fb87486825813585b9d3b979e87693867dcb75be539a564c21662b1d0f"
+
+[[routines.cases]]
+name = "enemy-frame-e784-window2-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    22,
+    120,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e784-window2-02-before.wram"
+before_sha256 = "a563c8d8b296051ecc0421e233f35a070cc1e8cf0187a409d24fa5c18c191063"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e784-window2-02-after.wram"
+expected_after_sha256 = "5a6a7d56cd620599942b22788ef27909af99dc4ef3de584015d99d2c278c3deb"
+
+[[routines.cases]]
+name = "enemy-frame-e788-window1-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    76,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e788-window1-01-before.wram"
+before_sha256 = "98560b32ca1d0185bf659802642019d275b98a17038d4ae119644e1c9dac4972"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e788-window1-01-after.wram"
+expected_after_sha256 = "cf9e6d3f124b1a423b8caba31792254d85e9fd41976c11218e6f4c84b9e1b462"
+
+[[routines.cases]]
+name = "enemy-frame-e788-window1-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    76,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e788-window1-02-before.wram"
+before_sha256 = "ed15c94aa4d717c84fb162e62673c289c08120cb0c233f0b822f5b52a1c749b4"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e788-window1-02-after.wram"
+expected_after_sha256 = "ced10083b42518aeddaa02e839a1de94433862e0b54d1c0d75a3caa0fa1c6933"
+
+[[routines.cases]]
+name = "enemy-frame-e788-window2-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    22,
+    120,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e788-window2-01-before.wram"
+before_sha256 = "8bbfa82750b1355a50874b650cd17fe58f50cd2e12b7e7f78a013d78245bd239"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e788-window2-01-after.wram"
+expected_after_sha256 = "1051ece4453bcc7efc0f52f01ff9b3803b2f66b62b6cf0f3e8681b46986fb719"
+
+[[routines.cases]]
+name = "enemy-frame-e788-window2-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    22,
+    120,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e788-window2-02-before.wram"
+before_sha256 = "a09922d05d71791b869deea145fc152a4280ea99755053479052f8c62ed08816"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e788-window2-02-after.wram"
+expected_after_sha256 = "4b3d2c1b0fcbf1f954be14885933fd534bf4af8b553ba8b03e61d3f01f01a73d"
+
+[[routines.cases]]
+name = "enemy-frame-e790-window1-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    76,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e790-window1-01-before.wram"
+before_sha256 = "c3744ef492fbdfe33b53b729e752c05b8643636495630f788ea86ac0cf40ef28"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e790-window1-01-after.wram"
+expected_after_sha256 = "d33c8e18440b28de773f92337717e9ec212b8f138366d0c1feb358259ad9d8a6"
+
+[[routines.cases]]
+name = "enemy-frame-e790-window1-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    76,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e790-window1-02-before.wram"
+before_sha256 = "94bafe444a849324b4e830c3503e541ff91a493b980fb84ee28d4ea1063585e0"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e790-window1-02-after.wram"
+expected_after_sha256 = "d60cbc2da3a0ba3687f681a264e789f001d68c1cb8b922e88d81406e11e76967"
+
+[[routines.cases]]
+name = "enemy-frame-e790-window2-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    22,
+    120,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e790-window2-01-before.wram"
+before_sha256 = "9bd5966f2ba1b2b280393b9208c12c426fa761ab0fee148f5982984e9b77e08b"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e790-window2-01-after.wram"
+expected_after_sha256 = "bfccb5ee77e7186ffbb4aff58494eab5bf8ae2f9946e2fb26953558a16d383fe"
+
+[[routines.cases]]
+name = "enemy-frame-e790-window2-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    22,
+    120,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e790-window2-02-before.wram"
+before_sha256 = "41b47d85fa6a7999e5aa68eb2ad34a0ca10bb43e05d5b81fb14a3eb3a3676566"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e790-window2-02-after.wram"
+expected_after_sha256 = "009c78cc7453adfdd3998713a17cd9ed3cdd62f436d10994b2db46cb70a7fd4f"
+
+[[routines.cases]]
+name = "enemy-frame-e798-window1-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    76,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e798-window1-01-before.wram"
+before_sha256 = "552f35dc305c22ace5187629948ad6a5e5f24fb117ee0d9d2ad4268770033a72"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e798-window1-01-after.wram"
+expected_after_sha256 = "b5c7ba53746ca1fd51b913a006dee63b52d492990bd99d9ce6c28e6bc93864d5"
+
+[[routines.cases]]
+name = "enemy-frame-e798-window1-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    76,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e798-window1-02-before.wram"
+before_sha256 = "c5b64dc9a671d2c92485685f75d55bf4a7346e802811a68dc7ad1f87aad6bcce"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e798-window1-02-after.wram"
+expected_after_sha256 = "5e2a04d16115b28a3017fbfbcf04b2f19de425f05df7801cd2a7ebefbd1b03ff"
+
+[[routines.cases]]
+name = "enemy-frame-e798-window2-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    22,
+    120,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e798-window2-01-before.wram"
+before_sha256 = "f1abdbfd300110d26e599fc623be7c71fc2891fe941a47237cfcedc85c055d1d"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e798-window2-01-after.wram"
+expected_after_sha256 = "d64baa6b7ea50d76a3b150ef6f835408be0965bac7ceee57838b05664cd5dfd7"
+
+[[routines.cases]]
+name = "enemy-frame-e798-window2-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    22,
+    120,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e798-window2-02-before.wram"
+before_sha256 = "f4231f5929bcbfb27f0cc6d94db6424342f03ba7a04a0abd8e7e045d365836f9"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e798-window2-02-after.wram"
+expected_after_sha256 = "1752fbe1f2fcda461b8bce0d81c38192ae5bc143c1f12bc9b6e4be84e5794928"
+
+[[routines.cases]]
+name = "enemy-frame-e7a0-window1-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    76,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7a0-window1-01-before.wram"
+before_sha256 = "524f3d7b450d6467d293dd029998afe777558d0fc5a22c1b9930879c67fb9f22"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7a0-window1-01-after.wram"
+expected_after_sha256 = "2ffbdfb393b6240c84f13f8a49bd61e15e6f666fd2646cd0f578709319fc747a"
+
+[[routines.cases]]
+name = "enemy-frame-e7a0-window1-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    76,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7a0-window1-02-before.wram"
+before_sha256 = "2c7a689c163293a12dc1cfd28bf23c528711294823e6cb33818bf84bd239d4c0"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7a0-window1-02-after.wram"
+expected_after_sha256 = "49c72e732e1b7d55bc9ccbb76a9a583640869cf1d8090ff97777f03828866912"
+
+[[routines.cases]]
+name = "enemy-frame-e7a0-window2-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    22,
+    120,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7a0-window2-01-before.wram"
+before_sha256 = "08f208fa1ea24d597e996a39a55e6e84667d5f397e323408bd92cfdff413ee6a"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7a0-window2-01-after.wram"
+expected_after_sha256 = "92464068acfc1e4cc62a3f80eba2190db380372121c0c424913a3b5c39e6a2ba"
+
+[[routines.cases]]
+name = "enemy-frame-e7a0-window2-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    22,
+    120,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7a0-window2-02-before.wram"
+before_sha256 = "98fb4e2d4197edc7b33cf6da353659513b1b4da20c6e4878884d4fbac570019f"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7a0-window2-02-after.wram"
+expected_after_sha256 = "3d4f6ee9ea3b2253a218b158e1fb92bb06de860b6d4b4037305b213e9691c590"
+
+[[routines.cases]]
+name = "enemy-frame-e7a8-window1-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    76,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7a8-window1-01-before.wram"
+before_sha256 = "e25fb82fab16b2a91181d6e416558ce9962e0a35cf6daca4d54202c685b7d720"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7a8-window1-01-after.wram"
+expected_after_sha256 = "068310c48ad515ccbb74214a74e0b6526b9fee6856bb8b89b7155d98c83a259f"
+
+[[routines.cases]]
+name = "enemy-frame-e7a8-window1-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    76,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7a8-window1-02-before.wram"
+before_sha256 = "acab8b50f1ce18daec06ea5d1d2600b44972c7b81a89321f18ab379e1281813c"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7a8-window1-02-after.wram"
+expected_after_sha256 = "d572863f44ebfa2cd862d60fa934ce648ebd39560b0cc64be9cbdb077e6255c9"
+
+[[routines.cases]]
+name = "enemy-frame-e7a8-window2-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    22,
+    120,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7a8-window2-01-before.wram"
+before_sha256 = "02798a8a5c434cb9ce13129a5ca2b6e1ef2ce1f6afa22f60bd191ab3577edb47"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7a8-window2-01-after.wram"
+expected_after_sha256 = "5890cc6e6b4dbef1723cee2b7618e0fde80b3c2dd1e072b268df174419b61b38"
+
+[[routines.cases]]
+name = "enemy-frame-e7a8-window2-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    22,
+    120,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7a8-window2-02-before.wram"
+before_sha256 = "bd1f7e2973207f73d2f4ff67efee7a6b613de76171eaf23269d673917f066729"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7a8-window2-02-after.wram"
+expected_after_sha256 = "9800cba250556507b374709102f4a76dfda0d447825eb93c2c9111f0a457ceaf"
+
+[[routines.cases]]
+name = "enemy-frame-e7ac-window1-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    66,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7ac-window1-01-before.wram"
+before_sha256 = "45b7919bb5e20922e162f90b4cd9560050034728e31d30aa0f9f143007e03250"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7ac-window1-01-after.wram"
+expected_after_sha256 = "210af676be8b1168f44e67810c0ede9afcb54d2bc2727a7054a254845a3f8acb"
+
+[[routines.cases]]
+name = "enemy-frame-e7ac-window1-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    66,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7ac-window1-02-before.wram"
+before_sha256 = "ad2a0831a93762b0685228beb389fb1c38d9344ab8c7438b6af41c1796b17547"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7ac-window1-02-after.wram"
+expected_after_sha256 = "f30e1b572b5f85577125ecdcf1c5b9629da959667714c37ef44175d569bc89ea"
+
+[[routines.cases]]
+name = "enemy-frame-e7ac-window2-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    22,
+    49,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7ac-window2-01-before.wram"
+before_sha256 = "9892bf74fd70ace4421bc814463a2c90fe45e3394993ab6fd8cce6eb77a57d67"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7ac-window2-01-after.wram"
+expected_after_sha256 = "635df8a2dc1b7399a86e51bf1c7ac5e101b72d0c6f352fdfe61374015503ac3e"
+
+[[routines.cases]]
+name = "enemy-frame-e7ac-window2-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    22,
+    49,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7ac-window2-02-before.wram"
+before_sha256 = "f03d8f8a66c9c06648d6cf3601cee99ee8c4d981ec6fe34c0ed29db87e526676"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7ac-window2-02-after.wram"
+expected_after_sha256 = "6cf0b1793e3b5f2acee008a8bf99ea582646b6b814f0113f6c0f570c071ebbd8"
+
+[[routines.cases]]
+name = "enemy-frame-e7b2-window1-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    66,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7b2-window1-01-before.wram"
+before_sha256 = "16a9deca59fdac094909465b23ec64e80b8a305592a648bea8b41da664a20519"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7b2-window1-01-after.wram"
+expected_after_sha256 = "77f3161b7ce071a42b598398b3e550aee27225dd87a7ded34466dbc91545577b"
+
+[[routines.cases]]
+name = "enemy-frame-e7b2-window1-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    66,
+    202,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7b2-window1-02-before.wram"
+before_sha256 = "736a26425e2dcb7d4bcd6bf78f5a63154e3a896eaf316dd89df01cfb20b81d57"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7b2-window1-02-after.wram"
+expected_after_sha256 = "dbd169722e447c673c605db9d0478b43114188e797c9493c4d68164a60f70579"
+
+[[routines.cases]]
+name = "enemy-frame-e7b2-window2-01"
+a = 0
+b = 0
+writes = []
+host_words = [
+    22,
+    49,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7b2-window2-01-before.wram"
+before_sha256 = "0d6b87d10866fb97c8aee94b8464d305cd69901da5a5bf146c9f6a7592761029"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7b2-window2-01-after.wram"
+expected_after_sha256 = "b32bb613a70d09b0c5d47c234e8dcfbe572bbac12e314a165ac939b13a69ef5d"
+
+[[routines.cases]]
+name = "enemy-frame-e7b2-window2-02"
+a = 0
+b = 0
+writes = []
+host_words = [
+    22,
+    49,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+expected_return = 0
+minimum_callbacks = 0
+before_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7b2-window2-02-before.wram"
+before_sha256 = "209b1b6bcdcd0e242efe60d27ecf30b13c995b94e945b5c7f09adcbbf1dd1647"
+expected_after_file = "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2/fixtures/enemy-frame-e7b2-window2-02-after.wram"
+expected_after_sha256 = "7d67a784394714f1389289a47a76271fbd74fd0264b2aa4a8daf53ebbb800eff"
+
+[admitted_domains]
