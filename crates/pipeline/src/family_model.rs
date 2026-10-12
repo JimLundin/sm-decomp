@@ -106,6 +106,9 @@ pub struct Implementation {
     pub module_sha256: String,
     pub memory_sha256: String,
     pub binaries: BTreeMap<String, String>,
+    /// Original manifest freshness; absent only in retained historical seals.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub manifest: Option<Asset>,
 }
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct Mismatch {

@@ -185,6 +185,7 @@ pub fn build(
     harness.insert(key.to_owned(), digest(&checkout.join(key))?);
     fs::copy(checkout.join(key), run.join("pipeline-headless.c"))?;
     Ok(Implementation {
+        manifest: None,
         dependency_contract: "rust-callback-v2".into(),
         callback_adapter: Some(if power_bomb { "power-bomb" } else { "callback" }.into()),
         source_root: checkout.into(),
