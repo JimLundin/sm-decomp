@@ -18,3 +18,12 @@ A declared set of routines and fixtures verified against actual compiled C.
 **Live replay**:
 An execution over recorded inputs that observes gameplay state, ordered hardware
 effects and exercised Rust ownership.
+
+**Affected Offline family**:
+An Offline family whose verification inputs may be changed by a proposed or
+current source change. Incomplete dependency knowledge leaves the family affected
+until it can be ruled out.
+
+**Translation scope**:
+A coherent set of gameplay behavior selected for translation, together with its
+required dependencies, writable source ownership and verification requirements.
