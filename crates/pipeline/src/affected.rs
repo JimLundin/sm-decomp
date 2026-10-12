@@ -291,7 +291,10 @@ pub(crate) fn select(checkout: &Path, names: &[String], revision: Option<&str>) 
     let checkout = fs::canonicalize(checkout)?;
     let changed = revision.map(|revision| changed_paths(&checkout, revision)).transpose()?.unwrap_or_default();
     let global = changed.iter().filter(|path| shared(path)).cloned().collect::<Vec<_>>();
+    let catalog_path = checkout.join("tools/port/batch.toml");
+    let catalog_hash = digest(&catalog_path)?;
     let config = batch::catalog(&checkout)?;
+    ensure!(catalog_hash == digest(&catalog_path)?, "Offline family catalog changed during selection");
     let mut discovery = Discovery::new(&checkout).ok();
     if let Some(discovery) = &mut discovery {
         // Include removed names when traversing source words. A surviving source
@@ -318,7 +321,7 @@ pub(crate) fn select(checkout: &Path, names: &[String], revision: Option<&str>) 
         excluded: vec![],
         planning_inputs: BTreeMap::new(),
     };
-    report.planning_inputs.insert("tools/port/batch.toml".into(), digest(&checkout.join("tools/port/batch.toml"))?);
+    report.planning_inputs.insert("tools/port/batch.toml".into(), catalog_hash);
     let mut seen = BTreeSet::new();
     for name in names.iter().filter(|name| seen.insert((*name).clone())) {
         let mut decision = FamilyDecision { family: name.clone(), reasons: vec![], dependencies: vec![] };
@@ -328,8 +331,10 @@ pub(crate) fn select(checkout: &Path, names: &[String], revision: Option<&str>) 
             let manifest_path = normalize(&checkout, &item.manifest);
             let path = checkout.join(&manifest_path);
             ensure!(!path.is_symlink(), "manifest is a symlink");
+            let manifest_hash = digest(&path)?;
             let manifest: family_model::Manifest = pipeline_model::read(&path)?;
-            report.planning_inputs.insert(manifest_path.clone(), digest(&path)?);
+            ensure!(manifest_hash == digest(&path)?, "Offline family manifest changed during selection");
+            report.planning_inputs.insert(manifest_path.clone(), manifest_hash);
             let mut dependencies = discovery
                 .as_mut()
                 .context("Rust module namespace is unavailable")?
