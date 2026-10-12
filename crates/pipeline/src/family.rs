@@ -715,10 +715,11 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
     };
     let result = (|| -> Result<()> {
         let manifest_path = source_path(&checkout, request.manifest.to_str().context("non-UTF8 manifest")?);
-        let mut manifest: Manifest = object(&manifest_path)?;
+        let manifest_bytes = fs::read(&manifest_path)?;
+        fs::write(run.join("manifest.toml"), &manifest_bytes)?;
+        let mut manifest: Manifest = toml::from_str(std::str::from_utf8(&manifest_bytes)?)?;
         let callbacks = request.adapter == "callback" || request.adapter == "power-bomb";
         let plm = request.adapter == "plm";
-        fs::copy(&manifest_path, run.join("manifest.toml"))?;
         if plm {
             manifest = crate::plm_spawn::normalize(&manifest)?;
         }
@@ -745,6 +746,10 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
         });
         verdict.implementation.as_mut().unwrap().manifest =
             Some(Asset { file: fs::canonicalize(&manifest_path)?, sha256: digest(&run.join("manifest.toml"))? });
+        atomic_toml(
+            &run.join("manifest-input.toml"),
+            verdict.implementation.as_ref().unwrap().manifest.as_ref().unwrap(),
+        )?;
         if callbacks {
             verdict.gameplay_translation = Some(!manifest.infrastructure_probe);
         }
@@ -786,6 +791,10 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
             }
         }
         ensure!(errors.is_empty(), "{}", errors.join("; "));
+        ensure!(
+            digest(&manifest_path)? == digest(&run.join("manifest.toml"))?,
+            "family manifest changed during verification"
+        );
         verdict.status = "offline-verified".into();
         verdict.verified_cases = tasks.len();
         verdict.verified_routines = manifest.routines.len();
@@ -826,12 +835,15 @@ pub fn authenticate(request: AuthenticateRequest) -> Result<Verdict> {
     let mut manifest: Manifest = object(&run.join("manifest.toml"))?;
     ensure!(manifest.family == verdict.family, "family identity differs");
     let implementation = verdict.implementation.as_ref().context("missing family implementation")?;
-    if let Some(manifest) = &implementation.manifest {
-        ensure!(
-            digest(&manifest.file)? == manifest.sha256 && digest(&run.join("manifest.toml"))? == manifest.sha256,
-            "family manifest changed"
-        );
-    }
+    let manifest_identity = implementation.manifest.as_ref().context("current family manifest seal missing")?;
+    ensure!(actual.contains_key("manifest-input.toml"), "current source inputs manifest seal missing");
+    let input_manifest: Asset = object(&run.join("manifest-input.toml"))?;
+    ensure!(input_manifest == *manifest_identity, "family manifest source input differs");
+    ensure!(
+        digest(&manifest_identity.file)? == manifest_identity.sha256
+            && digest(&run.join("manifest.toml"))? == manifest_identity.sha256,
+        "family manifest changed"
+    );
     let callbacks = implementation.dependency_contract == "rust-callback-v2";
     let plm = implementation.dependency_contract == "rust-plm-v2";
     if plm {
