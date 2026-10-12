@@ -129,6 +129,8 @@ pub(crate) struct Entry {
     #[serde(default)]
     pub history: Vec<AttemptRecord>,
     #[serde(default)]
+    pub adopted_ticket: bool,
+    #[serde(default)]
     projection_pending: bool,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -352,6 +354,7 @@ fn refresh(ledger: &mut Ledger, jobs: &[Job]) -> Result<()> {
                         observations: Vec::new(),
                         last_update: None,
                         history: Vec::new(),
+                        adopted_ticket: false,
                         projection_pending: true,
                     },
                 );
@@ -395,7 +398,28 @@ fn blocker_reason(root: &Path, ledger: &Ledger, entry: &Entry) -> Result<Option<
     if entry.stale || entry.pending_job.is_some() {
         return Ok(Some("input revision changed; refresh and reconcile existing claim".into()));
     }
-    if let Some(reason) = ticket_ready(root, &entry.job)? {
+    let parent_transfer = entry.adopted_ticket
+        && entry.job.ticket.as_ref().is_some_and(|ticket| {
+            ledger.jobs.values().any(|parent| {
+                parent.job.ticket.as_ref() == Some(ticket)
+                    && parent.job.kind == Kind::Research
+                    && parent.state == State::Complete
+                    && parent
+                        .result
+                        .as_ref()
+                        .is_some_and(|result| follows(result).iter().any(|job| job.id == entry.job.id))
+            })
+        });
+    let transfer_ready = parent_transfer
+        && entry
+            .job
+            .ticket
+            .as_ref()
+            .map(|ticket| ticket_text(root, ticket))
+            .transpose()?
+            .flatten()
+            .is_some_and(|text| field(&text, "Status:") == Some("claimed") && managed_ticket(&text));
+    if !transfer_ready && let Some(reason) = ticket_ready(root, &entry.job)? {
         // A queue-owned claim is reconciled from the ledger, never ticket copies.
         return Ok(Some(reason));
     }
@@ -466,6 +490,21 @@ fn replace_status(text: &str, status: &str) -> String {
         + "\n"
 }
 fn published_status(entry: &Entry) -> &'static str {
+    if entry.state == State::Complete
+        && entry.job.kind == Kind::Research
+        && entry.job.ticket.is_some()
+        && entry.job.inputs.get("origin-ticket-type").is_some_and(|kind| kind == "task")
+    {
+        return if entry
+            .result
+            .as_ref()
+            .is_some_and(|result| follows(result).iter().any(|job| job.kind == Kind::Implement))
+        {
+            "claimed"
+        } else {
+            "open"
+        };
+    }
     match entry.state {
         State::Ready | State::Failed => "open",
         State::Reserved | State::Running | State::Submitted => "claimed",
@@ -526,7 +565,13 @@ fn publish_ticket(root: &Path, effort: &str, entry: &Entry) -> Result<()> {
             if entry.claim.is_none() {
                 return Ok(());
             }
-            ensure!(field(&existing, "Status:") == Some("open"), "cannot claim preexisting non-open ticket");
+            ensure!(
+                field(&existing, "Status:") == Some("open")
+                    || (entry.adopted_ticket
+                        && field(&existing, "Status:") == Some("claimed")
+                        && managed_ticket(&existing)),
+                "cannot claim preexisting non-open ticket"
+            );
             let updated = with_details(&format!("{}\n{mark}\n", replace_status(&existing, status)), &details);
             return atomic_write(&path, updated.as_bytes());
         }
@@ -727,8 +772,42 @@ fn record(root: &Path, checkout: &Path, ledger: &mut Ledger, coordinator: &str, 
                 }
                 _ => bail!("result does not match assignment work kind"),
             };
-            refresh(ledger, follows(result))?;
-            if let WorkResult::Integrated { submissions, .. } = result {
+            let mut result = result.clone();
+            let origin = (entry.job.kind == Kind::Research
+                && entry.job.inputs.get("origin-ticket-type").is_some_and(|kind| kind == "task"))
+            .then(|| entry.job.ticket.clone())
+            .flatten();
+            if let Some(ticket) = origin
+                && let WorkResult::Researched { followups, .. } = &mut result
+            {
+                let implementations =
+                    followups.iter_mut().filter(|job| job.kind == Kind::Implement).collect::<Vec<_>>();
+                ensure!(implementations.len() <= 1, "task research must establish one coherent implementation scope");
+                for implementation in implementations {
+                    ensure!(
+                        implementation.ticket.as_ref().is_none_or(|existing| existing == &ticket),
+                        "promoted implementation names a different originating task"
+                    );
+                    implementation.ticket = Some(ticket.clone());
+                    if !implementation.blockers.contains(&claim.id) {
+                        implementation.blockers.push(claim.id.clone());
+                    }
+                }
+            }
+            refresh(ledger, follows(&result))?;
+            for followup in follows(&result) {
+                if followup.kind == Kind::Implement
+                    && followup.ticket.is_some()
+                    && followup.ticket == ledger.jobs[&claim.id].job.ticket
+                {
+                    let implementation = ledger.jobs.get_mut(&followup.id).unwrap();
+                    implementation.adopted_ticket = true;
+                    // The research owner projects the shared task until the
+                    // implementation actually reserves its transferred ownership.
+                    implementation.projection_pending = false;
+                }
+            }
+            if let WorkResult::Integrated { submissions, .. } = &result {
                 for submission in submissions {
                     let submitted = ledger.jobs.get_mut(&submission.id).unwrap();
                     submitted.state = State::Complete;

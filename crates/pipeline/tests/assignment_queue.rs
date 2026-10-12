@@ -324,3 +324,87 @@ fn revised_completed_work_retains_old_evidence_and_rejects_replayed_completion()
     assert!(receipt.jobs[0].history[0].result.is_some());
     assert!(f.record(&claim, result).is_err());
 }
+
+#[test]
+fn researching_existing_task_transfers_claim_and_resolves_only_after_integration() {
+    let f = Fixture::new();
+    let relative = PathBuf::from(".scratch/gameplay/issues/01-translation.md");
+    let ticket = f.0.join(&relative);
+    fs::create_dir_all(ticket.parent().unwrap()).unwrap();
+    fs::write(&ticket, "# Translate gameplay\nStatus: open\nBlocked by: None\nTriage: ready-for-agent\nType: task\n")
+        .unwrap();
+    let mut research = job("research-task", Kind::Research);
+    research.ticket = Some(relative.clone());
+    research.inputs.insert("origin-ticket-type".into(), "task".into());
+    let claim = f.start(research);
+    let evidence = f.artifact("scope.toml", "status = 'established'\n");
+    let implementation = job("implement-task", Kind::Implement);
+    let result = WorkResult::Researched { evidence: vec![evidence.clone()], followups: vec![implementation] };
+    f.record(&claim, result.clone()).unwrap();
+    f.record(&claim, result).unwrap();
+    assert!(fs::read_to_string(&ticket).unwrap().contains("Status: claimed"));
+    let ready = operate(f.request("next")).unwrap().assignment.unwrap();
+    assert_eq!(ready.job.kind, Kind::Implement);
+    assert_eq!(ready.job.ticket, Some(relative));
+    let mut start = f.request("record");
+    start.update = Some(Update::Started { claim: ready.claim.clone(), agent: "agent-1".into() });
+    operate(start).unwrap();
+    f.record(&ready.claim, WorkResult::Submitted { commit: "c".repeat(40), evidence: vec![evidence.clone()] }).unwrap();
+    assert!(fs::read_to_string(&ticket).unwrap().contains("Status: claimed"));
+    let integration = operate(f.request("next")).unwrap().assignment.unwrap();
+    let mut start = f.request("record");
+    start.update = Some(Update::Started { claim: integration.claim.clone(), agent: "agent-1".into() });
+    operate(start).unwrap();
+    let auth = f.artifact("auth.toml", "status = 'authenticated'\n");
+    let cleanup = f.artifact("cleanup.toml", "status = 'complete'\n");
+    f.record(
+        &integration.claim,
+        WorkResult::Integrated {
+            submissions: vec![ready.claim],
+            evidence: vec![evidence],
+            authentication: auth,
+            cleanup,
+        },
+    )
+    .unwrap();
+    assert!(fs::read_to_string(&ticket).unwrap().contains("Status: resolved"));
+}
+
+#[test]
+fn incomplete_scope_research_never_resolves_originating_task() {
+    let f = Fixture::new();
+    let relative = PathBuf::from(".scratch/gameplay/issues/01-translation.md");
+    let ticket = f.0.join(&relative);
+    fs::create_dir_all(ticket.parent().unwrap()).unwrap();
+    fs::write(&ticket, "# Translate gameplay\nStatus: open\nBlocked by: None\nTriage: ready-for-agent\nType: task\n")
+        .unwrap();
+    let mut research = job("research-task", Kind::Research);
+    research.ticket = Some(relative);
+    research.inputs.insert("origin-ticket-type".into(), "task".into());
+    let claim = f.start(research);
+    let evidence = f.artifact("research.toml", "status = 'missing-exercise'\n");
+    f.record(&claim, WorkResult::Researched { evidence: vec![evidence], followups: vec![] }).unwrap();
+    assert!(fs::read_to_string(&ticket).unwrap().contains("Status: open"));
+}
+
+#[test]
+fn owned_source_edits_do_not_invalidate_submission_but_immutable_inputs_do() {
+    let f = Fixture::new();
+    let owned = f.0.join("crates/port/src/enemy.rs");
+    fs::create_dir_all(owned.parent().unwrap()).unwrap();
+    fs::write(&owned, "before").unwrap();
+    let immutable = f.artifact("oracle.c", "fixed");
+    let mut implementation = job("implement", Kind::Implement);
+    implementation.inputs.insert("file:crates/port/src/enemy.rs".into(), digest(&owned).unwrap());
+    implementation.inputs.insert(format!("file:{}", immutable.path.display()), immutable.sha256.clone());
+    let claim = f.start(implementation);
+    fs::write(&owned, "after").unwrap();
+    let evidence = f.artifact("submission.toml", "status = 'submitted'\n");
+    f.record(&claim, WorkResult::Submitted { commit: "d".repeat(40), evidence: vec![evidence] }).unwrap();
+    let status = operate(f.request("status")).unwrap();
+    assert!(!status.jobs.iter().find(|entry| entry.job.id == "implement").unwrap().stale);
+    fs::write(&immutable.path, "changed").unwrap();
+    let status = operate(f.request("status")).unwrap();
+    assert!(status.jobs.iter().find(|entry| entry.job.id == "implement").unwrap().stale);
+    assert!(operate(f.request("next")).unwrap().assignment.is_none());
+}
