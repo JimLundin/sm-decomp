@@ -55,10 +55,12 @@ fn main() -> Result<()> {
                 })?;
             }
             Some("capture") if args.len() == 6 => {
-                // Pipeline holds its shared-store admission lock while recording and sealing.
-                let mut store = Store::create(Path::new(&args[1]))?;
-                println!("ready");
-                std::io::stdout().flush()?;
+                let mut store = metrics.measure("capture-store-open", || Store::create(Path::new(&args[1])))?;
+                metrics.measure("collector-ready-flush", || {
+                    println!("ready");
+                    std::io::stdout().flush()?;
+                    Ok(())
+                })?;
                 let stream =
                     metrics.measure("trace-ingest", || ingest_trace(&mut store, &mut std::io::stdin().lock()))?;
                 let info = read_stream(&store, &stream)?;
@@ -66,10 +68,13 @@ fn main() -> Result<()> {
                 metrics.measure("trace-commit", || store.commit())?;
                 let temporary =
                     TraceReceipt { stream: hex(&stream), bytes: info.bytes, sha256: hex(&info.legacy_sha256) };
-                let mut out = OpenOptions::new().write(true).create_new(true).open(&args[2])?;
-                out.write_all(toml::to_string(&temporary)?.as_bytes())?;
-                out.sync_all()?;
-                let mut store = Store::create(Path::new(&args[1]))?;
+                metrics.measure("trace-receipt-fsync", || {
+                    let mut out = OpenOptions::new().write(true).create_new(true).open(&args[2])?;
+                    out.write_all(toml::to_string(&temporary)?.as_bytes())?;
+                    out.sync_all()?;
+                    Ok(())
+                })?;
+                let mut store = metrics.measure("staged-store-open", || Store::create(Path::new(&args[1])))?;
                 let observations = metrics
                     .measure("staged-tree-ingest", || ingest_tree(&mut store, Path::new(&args[3]), &mut |_| {}))?;
                 let mut entries = read_tree(&store, &observations)?;
@@ -79,7 +84,7 @@ fn main() -> Result<()> {
                 let run = put_run(&mut store, tree, &provenance)?;
                 metrics.measure("final-commit", || store.commit())?;
                 // Reopen sealed packs before allowing staging bytes to be released.
-                let store = Store::open(Path::new(&args[1]))?;
+                let store = metrics.measure("reopened-store-open", || Store::open(Path::new(&args[1])))?;
                 let (verified, inventory) =
                     metrics.measure("reopened-verification", || verified_inventory(&store, &run))?;
                 let artifacts = inventory.iter().map(|(name, info)| (name.clone(), hex(&info.sha256))).collect();
@@ -102,13 +107,17 @@ fn main() -> Result<()> {
                     store_wait_seconds: None,
                     publication_seconds: None,
                 };
-                let mut out = OpenOptions::new().write(true).create_new(true).open(&args[5])?;
-                out.write_all(toml::to_string(&pointer)?.as_bytes())?;
-                out.sync_all()?;
+                metrics.measure("candidate-pointer-fsync", || {
+                    let mut out = OpenOptions::new().write(true).create_new(true).open(&args[5])?;
+                    out.write_all(toml::to_string(&pointer)?.as_bytes())?;
+                    out.sync_all()?;
+                    Ok(())
+                })?;
             }
             Some("inventory") if args.len() == 3 => {
-                let store = Store::open(Path::new(&args[1]))?;
-                let (run, inventory) = verified_inventory(&store, &parse_id(&args[2])?)?;
+                let store = metrics.measure("inventory-store-open", || Store::open(Path::new(&args[1])))?;
+                let (run, inventory) =
+                    metrics.measure("inventory-verification", || verified_inventory(&store, &parse_id(&args[2])?))?;
                 let artifacts = inventory.iter().map(|(name, info)| (name.clone(), hex(&info.sha256))).collect();
                 emit(&Inventory {
                     observations: hex(&run.observations),
@@ -119,14 +128,15 @@ fn main() -> Result<()> {
                 })?;
             }
             Some("import") if args.len() == 4 => {
-                let source = Store::open(Path::new(&args[1]))?;
+                let source = metrics.measure("import-source-open", || Store::open(Path::new(&args[1])))?;
                 let id = parse_id(&args[3])?;
                 let (original, inventory) =
                     metrics.measure("import-source-verification", || verified_inventory(&source, &id))?;
-                let mut destination = Store::create(Path::new(&args[2]))?;
+                let mut destination =
+                    metrics.measure("import-destination-open", || Store::create(Path::new(&args[2])))?;
                 metrics.measure("shared-import", || destination.import_store(&source))?;
                 metrics.measure("import-commit", || destination.commit())?;
-                let destination = Store::open(Path::new(&args[2]))?;
+                let destination = metrics.measure("import-destination-reopen", || Store::open(Path::new(&args[2])))?;
                 let (restored, actual) =
                     metrics.measure("import-destination-verification", || verified_inventory(&destination, &id))?;
                 ensure!(

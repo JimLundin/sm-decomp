@@ -742,6 +742,10 @@ pub fn verify(request: Request) -> Result<Verdict> {
     fs::create_dir(&run)?;
     let run = fs::canonicalize(run)?;
     let mut metrics = crate::metrics::Run::start(run.join("pipeline.metrics.toml"), "live")?;
+    metrics.context.configuration("frames", request.frames);
+    metrics.context.configuration("live-jobs", request.live_jobs);
+    metrics.context.configuration("workers", request.workers);
+    metrics.context.configuration("worker-root", request.root.display());
     let mut verdict = Verdict {
         status: "rejected".into(),
         run: run.clone(),
@@ -766,6 +770,8 @@ pub fn verify(request: Request) -> Result<Verdict> {
         let mut generate = request.clone();
         generate.run = run.clone();
         let generated = self::generate(generate)?;
+        metrics.context.configuration("source-revision", &generated.source.revision);
+        metrics.context.configuration("source-archive-sha256", &generated.source.archive_sha256);
         verdict.source = Some(generated.source.clone());
         verdict.predecessors = generated.predecessors.clone();
         verdict.decompressor_predecessor_sha256 = accepted_hash.clone();
@@ -1129,7 +1135,7 @@ pub fn verify(request: Request) -> Result<Verdict> {
         })?;
         auth.finish("success")?;
     }
-    metrics.finish(if verdict.error.is_none() { "success" } else { "failed" }, verdict.error.clone())?;
+    metrics.finish(crate::metrics::outcome(verdict.error.as_deref()), verdict.error.clone())?;
     Ok(verdict)
 }
 

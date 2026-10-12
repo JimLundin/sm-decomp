@@ -35,11 +35,15 @@ impl Metrics {
                 resources: Resources::default(),
                 transport: Transport::default(),
                 configuration: Default::default(),
+                scopes: vec![],
             }),
             finished: false,
         })
     }
     pub fn measure<T>(&mut self, name: &str, operation: impl FnOnce() -> Result<T>) -> Result<T> {
+        if !self.receipt.as_ref().is_some_and(|r| r.enabled) {
+            return operation();
+        }
         let start = self.receipt.as_ref().map(|r| r.clock.offset()).transpose()?;
         let result = operation();
         if let Some(r) = &mut self.receipt {
@@ -66,6 +70,9 @@ impl Metrics {
             r.elapsed_ns = r.end_ns - r.start_ns;
             r.outcome = outcome.into();
             r.error = error;
+            if !r.enabled {
+                r.configuration.insert("telemetry".into(), "disabled".into());
+            }
             let path = self.path.as_ref().unwrap();
             let pending = path.with_extension("metrics.pending");
             let mut out = fs::OpenOptions::new().create_new(true).write(true).open(&pending)?;

@@ -101,7 +101,13 @@ impl Project {
             .unwrap();
         writeln!(child.stdin.take().unwrap(), "{}", toml::to_string(&request).unwrap()).unwrap();
         let output = child.wait_with_output().unwrap();
-        assert_eq!(output.status.success(), success, "{}", String::from_utf8_lossy(&output.stderr));
+        assert_eq!(
+            output.status.success(),
+            success,
+            "{}\n{}",
+            String::from_utf8_lossy(&output.stderr),
+            String::from_utf8_lossy(&output.stdout)
+        );
         if output.stdout.is_empty() {
             Value::Table(toml::Table::new())
         } else {

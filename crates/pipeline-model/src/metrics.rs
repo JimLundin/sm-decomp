@@ -36,10 +36,10 @@ pub fn monotonic_ns() -> Result<u64> {
         if unsafe { libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut time) } != 0 {
             return Err(std::io::Error::last_os_error().into());
         }
-        Ok(u64::try_from(time.tv_sec)?
+        u64::try_from(time.tv_sec)?
             .checked_mul(1_000_000_000)
             .and_then(|n| n.checked_add(time.tv_nsec as u64))
-            .context("monotonic clock overflow")?)
+            .context("monotonic clock overflow")
     }
     #[cfg(not(target_os = "linux"))]
     {
@@ -94,6 +94,8 @@ pub struct Stage {
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Process {
+    #[serde(default)]
+    pub scope: String,
     pub pid: u32,
     pub parent_pid: u32,
     pub start_ticks: Measurement,
@@ -159,6 +161,21 @@ pub struct Receipt {
     pub resources: Resources,
     pub transport: Transport,
     pub configuration: std::collections::BTreeMap<String, String>,
+    #[serde(default)]
+    pub scopes: Vec<Scope>,
+}
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Scope {
+    pub id: String,
+    pub parent: String,
+    pub role: String,
+    pub start_ns: u64,
+    pub end_ns: u64,
+    pub outcome: String,
+    pub error: Option<String>,
+    pub last_completed_stage: Option<String>,
+    pub transport: Transport,
+    pub configuration: std::collections::BTreeMap<String, String>,
 }
 impl Receipt {
     pub fn validate(&self) -> Result<()> {
@@ -179,8 +196,41 @@ impl Receipt {
             "invalid metrics outcome"
         );
         let mut ids = std::collections::BTreeSet::new();
+        let mut scopes = std::collections::BTreeSet::from([self.scope_id.as_str()]);
+        let mut bounds = std::collections::BTreeMap::from([(self.scope_id.as_str(), (self.start_ns, self.end_ns))]);
+        for scope in &self.scopes {
+            ensure!(scopes.insert(scope.id.as_str()), "duplicate metrics scope");
+            bounds.insert(scope.id.as_str(), (scope.start_ns, scope.end_ns));
+            ensure!(
+                scope.start_ns >= self.start_ns && scope.end_ns >= scope.start_ns && scope.end_ns <= self.end_ns,
+                "invalid nested scope interval"
+            );
+        }
+        for scope in &self.scopes {
+            ensure!(scopes.contains(scope.parent.as_str()), "unknown metrics scope parent");
+            let parent = bounds[scope.parent.as_str()];
+            ensure!(scope.start_ns >= parent.0 && scope.end_ns <= parent.1, "scope outside its parent interval");
+            let mut visited = std::collections::BTreeSet::new();
+            let mut current = scope.id.as_str();
+            while current != self.scope_id {
+                ensure!(visited.insert(current), "cyclic metrics scope parent");
+                current = self
+                    .scopes
+                    .iter()
+                    .find(|scope| scope.id == current)
+                    .context("missing scope parent")?
+                    .parent
+                    .as_str();
+            }
+        }
         for stage in &self.stages {
             ensure!(ids.insert(&stage.id) && !stage.name.is_empty(), "duplicate/empty metrics stage");
+            ensure!(
+                stage.parent.as_deref().is_some_and(|parent| scopes.contains(parent)),
+                "unknown metrics stage parent"
+            );
+            let parent = bounds[stage.parent.as_deref().unwrap()];
+            ensure!(stage.start_ns >= parent.0 && stage.end_ns <= parent.1, "stage outside its parent interval");
             ensure!(
                 stage.start_ns >= self.start_ns
                     && stage.end_ns >= stage.start_ns
@@ -193,8 +243,18 @@ impl Receipt {
                 "invalid metrics stage outcome"
             );
         }
+        let mut launches = std::collections::BTreeSet::new();
         for process in &self.processes {
-            ensure!(process.reap_count == 1 && process.end_ns >= process.start_ns, "invalid process reap/interval");
+            ensure!(launches.insert((process.pid, process.start_ns)), "duplicate owned process record");
+            let parent = bounds.get(process.scope.as_str()).context("unknown process scope")?;
+            ensure!(process.start_ns >= parent.0 && process.end_ns <= parent.1, "process outside its scope interval");
+            ensure!(
+                process.reap_count == 1
+                    && process.start_ns >= self.start_ns
+                    && process.end_ns >= process.start_ns
+                    && process.end_ns <= self.end_ns,
+                "invalid process reap/interval"
+            );
             for metric in [&process.user_cpu_ns, &process.system_cpu_ns, &process.peak_rss_bytes, &process.start_ticks]
             {
                 if let Measurement::Unavailable { reason } = metric {

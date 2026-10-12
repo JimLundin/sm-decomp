@@ -55,7 +55,13 @@ pub(crate) fn capture_parallel(captures: &[CaptureRequest], jobs: usize) -> Resu
     Ok(pointers)
 }
 pub(crate) fn capture_many(request: CaptureManyRequest) -> Result<Vec<Pointer>> {
-    capture_parallel(&request.captures, request.jobs)
+    let directory =
+        request.captures.first().and_then(|capture| capture.directory.parent()).context("capture parent missing")?;
+    let mut metrics = crate::metrics::Run::start(directory.join("captures.metrics.toml"), "captures")?;
+    let result = capture_parallel(&request.captures, request.jobs);
+    let error = result.as_ref().err().map(|error| format!("{error:#}"));
+    metrics.finish(crate::metrics::outcome(error.as_deref()), error)?;
+    result
 }
 #[derive(Serialize, Deserialize)]
 pub struct MaterializeRequest {
@@ -148,6 +154,18 @@ fn inventory(root: &Path, path: &Path, out: &mut std::collections::BTreeMap<Stri
 pub fn capture(request: CaptureRequest) -> Result<Pointer> {
     let directory = fs::canonicalize(&request.directory)?;
     let mut metrics = crate::metrics::Run::start(directory.join("capture.metrics.toml"), "capture")?;
+    metrics.context.configuration("subject", request.provenance.subject.as_deref().unwrap_or("unspecified"));
+    metrics
+        .context
+        .configuration("reader-sha256", request.provenance.reader_sha256.as_deref().unwrap_or("unspecified"));
+    metrics
+        .context
+        .configuration("producer-sha256", request.provenance.binary_sha256.as_deref().unwrap_or("unspecified"));
+    metrics.context.configuration("workers", request.workers);
+    if let Some(source) = &request.provenance.source {
+        metrics.context.configuration("source-revision", &source.revision);
+        metrics.context.configuration("source-archive-sha256", &source.archive_sha256);
+    }
     let result = (|| -> Result<Pointer> {
         let mut timing = Timing {
             path: directory.join("pipeline-timing.toml"),
@@ -157,13 +175,19 @@ pub fn capture(request: CaptureRequest) -> Result<Pointer> {
         };
         let store = directory.join("store");
         fs::create_dir(&store)?;
+        metrics.context.add_path(store.clone(), crate::resource_sampler::PathKind::PrivateStore);
         let stage = directory.join(".evidence-stage");
         fs::create_dir(&stage)?;
+        metrics.context.add_path(stage.clone(), crate::resource_sampler::PathKind::Staging);
+        metrics.context.sample_disk();
         fs::create_dir(stage.join("fixtures"))?;
         fs::create_dir(stage.join("saves"))?;
         let fifo = directory.join(".effects.pipe");
         ensure!(
-            Command::new("mkfifo").args(["-m", "600"]).arg(&fifo).status()?.success(),
+            metrics
+                .context
+                .status(Command::new("mkfifo").args(["-m", "600"]).arg(&fifo), "capture-fifo-create")?
+                .success(),
             "create capture pipe failed"
         );
         let _pipe = Pipe(fifo.clone());
@@ -212,8 +236,24 @@ pub fn capture(request: CaptureRequest) -> Result<Pointer> {
             let result = std::io::BufReader::new(stdout).read_line(&mut buf).map(|_| buf);
             let _ = sender.send(result);
         });
-        let signal = receiver.recv_timeout(Duration::from_secs(60)).context("collector readiness timeout")??;
+        let ready_started = Instant::now();
+        let signal = loop {
+            match receiver.recv_timeout(Duration::from_millis(50)) {
+                Err(std::sync::mpsc::RecvTimeoutError::Timeout)
+                    if ready_started.elapsed() < Duration::from_secs(60)
+                        && crate::metrics::check_cancelled().is_ok() =>
+                {
+                    continue;
+                }
+                result => break result,
+            }
+        };
+        if signal.is_err() {
+            children.0[0].kill_wait()?;
+        }
         ready.join().map_err(|_| anyhow::anyhow!("collector readiness worker panicked"))?;
+        crate::metrics::check_cancelled()?;
+        let signal = signal.context("collector readiness timeout")??;
         ensure!(signal == "ready\n", "collector failed to open store");
         collector_ready.finish("success")?;
         let command = &request.command;
@@ -232,6 +272,7 @@ pub fn capture(request: CaptureRequest) -> Result<Pointer> {
             .env("SM_EVIDENCE_PIPE", &fifo)
             .env("SM_EVIDENCE_STAGING", &stage)
             .env("SM_PIPELINE_METRICS_PRODUCER_PATH", directory.join("producer.metrics.toml"))
+            .env("SM_PIPELINE_METRICS", if metrics.context.enabled() { "enabled" } else { "disabled" })
             .stdout(File::create(directory.join("replay.stdout"))?)
             .stderr(File::create(directory.join("replay.stderr"))?);
         children.0.push(crate::metrics::OwnedChild::spawn(&mut producer, &metrics.context, "producer")?);
@@ -262,6 +303,13 @@ pub fn capture(request: CaptureRequest) -> Result<Pointer> {
             "producer/collector failed: {producer_status}/{collector_status}"
         );
         let mut pointer: Pointer = document(&candidate)?;
+        metrics.context.configuration("subject", provenance.subject.as_deref().unwrap_or("unspecified"));
+        metrics.context.configuration("reader-sha256", provenance.reader_sha256.as_deref().unwrap_or("unspecified"));
+        metrics.context.configuration("producer-sha256", provenance.binary_sha256.as_deref().unwrap_or("unspecified"));
+        metrics.context.configuration("evidence-run", &pointer.run);
+        metrics.context.configuration("observations", &pointer.observations);
+        metrics.context.configuration("workers", workers);
+        metrics.context.configuration("worker-root", root.display());
         ensure!(pointer.provenance == *provenance, "collector producer provenance differs");
         let mut staged = std::collections::BTreeMap::new();
         let comparison = metrics.context.stage("staged-comparison")?;
@@ -281,14 +329,21 @@ pub fn capture(request: CaptureRequest) -> Result<Pointer> {
         pointer.stored_added_bytes = Some(bytes(&store)? - before);
         pointer.worker_wait_seconds = Some(wait);
         pointer.store_wait_seconds = Some(0.0);
+        metrics.context.transport(
+            &directory.join("producer.metrics.toml"),
+            *pointer.sizes.get("hardware.log").context("hardware bytes missing")?,
+            pointer.stored_added_bytes.unwrap_or(0),
+        )?;
         let pointer_fsync = metrics.context.stage("pointer-fsync")?;
         atomic_toml(&directory.join("evidence.toml"), &pointer)?;
         pointer_fsync.finish("success")?;
+        metrics.context.configuration("pointer-sha256", digest(&directory.join("evidence.toml"))?);
         drop(_lease);
         let authentication = metrics.context.stage("subject-authentication")?;
         observations::subject_with_metrics(&directory, root, workers, None, Some(&metrics.context))?;
         authentication.finish("success")?;
         let release = metrics.context.stage("staging-release")?;
+        metrics.context.release_path(&stage);
         fs::remove_dir_all(stage)?;
         for p in [candidate, receipt, provenance_path, child_context] {
             fs::remove_file(p)?;
@@ -302,13 +357,7 @@ pub fn capture(request: CaptureRequest) -> Result<Pointer> {
     if result.is_err() && child_metrics.exists() {
         let _ = metrics.context.merge_child(&child_metrics);
     }
-    let outcome = if result.is_ok() {
-        "success"
-    } else if error.as_deref().is_some_and(|e| e.contains("timeout")) {
-        "timed-out"
-    } else {
-        "failed"
-    };
+    let outcome = crate::metrics::outcome(error.as_deref());
     let finished = metrics.finish(outcome, error);
     if result.is_ok() {
         finished?;
@@ -358,10 +407,12 @@ pub fn publish(request: PublishRequest) -> Result<Pointer> {
         if private == target {
             return Ok(pointer);
         }
+        metrics.context.add_path(private.clone(), crate::resource_sampler::PathKind::PrivateStore);
+        metrics.context.sample_disk();
         let started = Instant::now();
         let guard = OpenOptions::new().create(true).append(true).open(target.join("pipeline.lock"))?;
         let waiting = metrics.context.stage("store-wait")?;
-        guard.lock()?;
+        crate::metrics::lock(&guard)?;
         waiting.finish("success")?;
         let waiting = metrics.context.stage("worker-wait")?;
         let (_lease, _wait) = acquire_lease(root, workers)?;
@@ -397,13 +448,14 @@ pub fn publish(request: PublishRequest) -> Result<Pointer> {
         authentication.finish("success")?;
         let release = metrics.context.stage("private-store-release")?;
         if private == directory.join("store") {
+            metrics.context.release_path(&private);
             fs::remove_dir_all(private)?;
         }
         release.finish("success")?;
         fs::remove_file(child_context)?;
         Ok(updated)
     })();
-    metrics
-        .finish(if result.is_ok() { "success" } else { "failed" }, result.as_ref().err().map(|e| format!("{e:#}")))?;
+    let error = result.as_ref().err().map(|e| format!("{e:#}"));
+    metrics.finish(crate::metrics::outcome(error.as_deref()), error)?;
     result
 }

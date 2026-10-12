@@ -201,7 +201,11 @@ fn four_private_captures_share_after_publication_and_failed_producer_keeps_stagi
             toml::from_str(&fs::read_to_string(directory.join("capture.metrics.toml")).unwrap()).unwrap();
         assert_eq!(metrics["outcome"].as_str(), Some(if name == "timeout" { "timed-out" } else { "failed" }));
         assert!(metrics["error"].as_str().is_some_and(|s| !s.is_empty()));
-        assert_eq!(metrics["processes"].as_array().unwrap().len(), 2);
+        let processes = metrics["processes"].as_array().unwrap();
+        assert_eq!(
+            processes.iter().filter(|p| [Some("producer"), Some("collector")].contains(&p["role"].as_str())).count(),
+            2
+        );
         assert!(metrics["processes"].as_array().unwrap().iter().all(|p| p["reap_count"].as_integer() == Some(1)));
     }
 }
@@ -261,4 +265,25 @@ fn native_capture_workers_run_two_producers_simultaneously() {
         .unwrap();
     let output = process.wait_with_output().unwrap();
     assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let receipt: pipeline_model::metrics::Receipt =
+        toml::from_str(&fs::read_to_string(root.0.join("captures.metrics.toml")).unwrap()).unwrap();
+    receipt.validate().unwrap();
+    let captures = receipt
+        .scopes
+        .iter()
+        .filter(|scope| scope.role == "capture" && scope.parent == receipt.scope_id)
+        .collect::<Vec<_>>();
+    assert_eq!(captures.len(), 2);
+    assert_ne!(captures[0].id, captures[1].id);
+    for capture in captures {
+        assert!(
+            matches!(capture.transport.logical_bytes, pipeline_model::metrics::Measurement::Measured { value } if value > 0)
+        );
+        assert!(
+            receipt
+                .stages
+                .iter()
+                .any(|stage| stage.parent.as_deref() == Some(capture.id.as_str()) && stage.name == "replay")
+        );
+    }
 }

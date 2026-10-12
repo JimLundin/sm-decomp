@@ -19,6 +19,13 @@ pub(crate) struct ExecRequest {
     pub workers: usize,
     #[serde(default = "default_timeout")]
     pub timeout: u64,
+    #[serde(default)]
+    pub sampler_paths: Vec<SamplerPath>,
+}
+#[derive(Debug, Deserialize, Serialize)]
+pub(crate) struct SamplerPath {
+    path: PathBuf,
+    kind: crate::resource_sampler::PathKind,
 }
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -134,21 +141,30 @@ pub(crate) fn execute_timeout(
         Ok(record)
     })();
     let error = result.as_ref().err().map(|e| format!("{e:#}"));
-    metrics.finish(
-        if result.is_ok() {
-            "success"
-        } else if error.as_deref().is_some_and(|e| e.contains("timeout after")) {
-            "timed-out"
-        } else {
-            "failed"
-        },
-        error,
-    )?;
+    metrics.finish(crate::metrics::outcome(error.as_deref()), error)?;
     result
 }
 
 pub fn exec(request: ExecRequest) -> Result<ExecutionRecord> {
-    execute_timeout(&request.command, &request.run, &request.label, &request.root, request.workers, request.timeout)
+    let mut metrics = crate::metrics::Run::start(request.run.join(format!("{}.metrics.toml", request.label)), "exec")?;
+    for path in request.sampler_paths {
+        metrics.context.add_path(path.path, path.kind);
+    }
+    metrics.context.sample_disk();
+    let result = execute_timeout(
+        &request.command,
+        &request.run,
+        &request.label,
+        &request.root,
+        request.workers,
+        request.timeout,
+    );
+    let error = result.as_ref().err().map(|e| format!("{e:#}"));
+    let finish = metrics.finish(crate::metrics::outcome(error.as_deref()), error);
+    if result.is_ok() {
+        finish?;
+    }
+    result
 }
 
 fn rust_sources(directory: &Path, result: &mut Vec<PathBuf>) -> Result<()> {
@@ -164,77 +180,100 @@ fn rust_sources(directory: &Path, result: &mut Vec<PathBuf>) -> Result<()> {
 }
 
 pub fn cargo_build(request: CargoBuildRequest) -> Result<CacheResult> {
-    let checkout = fs::canonicalize(request.checkout)?;
-    let root = request.root;
-    let run = request.run;
-    let package = request.package.as_str();
-    let member = request.member.as_str();
-    ensure!(
-        (package == "evidence" && member == "sm-evidence") || (package == "decomp" && member == "libdecomp.a"),
-        "Cargo input closure is defined only for evidence and decomp"
-    );
-    let mut inputs = ["Cargo.toml", "Cargo.lock", "rust-toolchain.toml"].map(|p| checkout.join(p)).to_vec();
-    inputs.push(checkout.join(format!("crates/{package}/Cargo.toml")));
-    rust_sources(&checkout.join(format!("crates/{package}/src")), &mut inputs)?;
-    if package == "evidence" {
-        rust_sources(&checkout.join("crates/pipeline-model/src"), &mut inputs)?;
-    }
-    for entry in fs::read_dir(checkout.join("crates"))? {
-        let manifest = entry?.path().join("Cargo.toml");
-        if manifest.is_file() {
-            inputs.push(manifest);
+    fs::create_dir_all(&request.run)?;
+    let mut metrics =
+        crate::metrics::Run::start(request.run.join(format!("{}-cache.metrics.toml", request.package)), "cargo-cache")?;
+    let result = (|| -> Result<CacheResult> {
+        let checkout = fs::canonicalize(request.checkout)?;
+        let root = request.root;
+        let run = request.run;
+        let package = request.package.as_str();
+        let member = request.member.as_str();
+        ensure!(
+            (package == "evidence" && member == "sm-evidence") || (package == "decomp" && member == "libdecomp.a"),
+            "Cargo input closure is defined only for evidence and decomp"
+        );
+        let mut inputs = ["Cargo.toml", "Cargo.lock", "rust-toolchain.toml"].map(|p| checkout.join(p)).to_vec();
+        inputs.push(checkout.join(format!("crates/{package}/Cargo.toml")));
+        rust_sources(&checkout.join(format!("crates/{package}/src")), &mut inputs)?;
+        if package == "evidence" {
+            rust_sources(&checkout.join("crates/pipeline-model/src"), &mut inputs)?;
         }
-    }
-    let config = checkout.join(".cargo");
-    if config.is_dir() {
-        for entry in fs::read_dir(config)? {
-            let p = entry?.path();
-            if p.is_file() {
-                inputs.push(p);
+        for entry in fs::read_dir(checkout.join("crates"))? {
+            let manifest = entry?.path().join("Cargo.toml");
+            if manifest.is_file() {
+                inputs.push(manifest);
             }
         }
+        let config = checkout.join(".cargo");
+        if config.is_dir() {
+            for entry in fs::read_dir(config)? {
+                let p = entry?.path();
+                if p.is_file() {
+                    inputs.push(p);
+                }
+            }
+        }
+        let external = checkout.join("deps/rustysnes/crates/rustysnes-core/Cargo.toml");
+        if external.exists() {
+            inputs.push(external);
+        }
+        let command = vec![
+            "cargo".to_owned(),
+            "build".into(),
+            "--locked".into(),
+            "--offline".into(),
+            "--release".into(),
+            "-p".into(),
+            package.into(),
+        ];
+        let workers = request.workers;
+        cached_artifact(
+            &CacheRequest {
+                root: root.clone(),
+                checkout: checkout.clone(),
+                command: command.clone(),
+                inputs,
+                destination: request.destination,
+            },
+            |artifact| {
+                let target = artifact.parent().unwrap().join("target");
+                let mut actual = command.clone();
+                actual.extend([
+                    "--jobs".into(),
+                    "1".into(),
+                    "--target-dir".into(),
+                    target.to_string_lossy().into_owned(),
+                ]);
+                // Cargo's working directory must select this checkout, while logs stay in the run.
+                fs::create_dir_all(&run)?;
+                let waiting = metrics.context.stage("cargo-worker-wait")?;
+                let (_held, _) = acquire_lease(&root, workers)?;
+                waiting.finish("success")?;
+                let mut command = Command::new(&actual[0]);
+                command
+                    .args(&actual[1..])
+                    .current_dir(&checkout)
+                    .stdout(File::create(run.join(format!("{package}-build.stdout")))?)
+                    .stderr(File::create(run.join(format!("{package}-build.stderr")))?);
+                let status = metrics.context.status(&mut command, "cargo-build")?;
+                ensure!(status.success(), "{package} build failed: {status}");
+                fs::copy(target.join("release").join(member), artifact)?;
+                fs::remove_dir_all(target)?;
+                Ok(())
+            },
+        )
+    })();
+    if let Ok(cache) = &result {
+        metrics.context.configuration("cache-key", &cache.key);
+        metrics.context.configuration("cache-hit", cache.hit);
     }
-    let external = checkout.join("deps/rustysnes/crates/rustysnes-core/Cargo.toml");
-    if external.exists() {
-        inputs.push(external);
+    let error = result.as_ref().err().map(|e| format!("{e:#}"));
+    let finished = metrics.finish(crate::metrics::outcome(error.as_deref()), error);
+    if result.is_ok() {
+        finished?;
     }
-    let command = vec![
-        "cargo".to_owned(),
-        "build".into(),
-        "--locked".into(),
-        "--offline".into(),
-        "--release".into(),
-        "-p".into(),
-        package.into(),
-    ];
-    let workers = request.workers;
-    cached_artifact(
-        &CacheRequest {
-            root: root.clone(),
-            checkout: checkout.clone(),
-            command: command.clone(),
-            inputs,
-            destination: request.destination,
-        },
-        |artifact| {
-            let target = artifact.parent().unwrap().join("target");
-            let mut actual = command.clone();
-            actual.extend(["--jobs".into(), "1".into(), "--target-dir".into(), target.to_string_lossy().into_owned()]);
-            // Cargo's working directory must select this checkout, while logs stay in the run.
-            fs::create_dir_all(&run)?;
-            let (_held, _) = acquire_lease(&root, workers)?;
-            let status = Command::new(&actual[0])
-                .args(&actual[1..])
-                .current_dir(&checkout)
-                .stdout(File::create(run.join(format!("{package}-build.stdout")))?)
-                .stderr(File::create(run.join(format!("{package}-build.stderr")))?)
-                .status()?;
-            ensure!(status.success(), "{package} build failed: {status}");
-            fs::copy(target.join("release").join(member), artifact)?;
-            fs::remove_dir_all(target)?;
-            Ok(())
-        },
-    )
+    result
 }
 
 pub fn c_build(request: CBuildRequest) -> Result<ExecutionRecord> {
@@ -293,8 +332,10 @@ pub fn c_build(request: CBuildRequest) -> Result<ExecutionRecord> {
             // system headers and textually included sources. Header edits and
             // changed include search paths must invalidate even a warm object.
             let (_held, _) = acquire_lease(&root, workers)?;
-            let dependencies =
-                Command::new(&command[0]).args(&flags).arg("-M").arg(&source).current_dir(&run).output()?;
+            let dependencies = crate::metrics::command_output(
+                Command::new(&command[0]).args(&flags).arg("-M").arg(&source).current_dir(&run),
+                "c-dependency-scan",
+            )?;
             drop(_held);
             ensure!(
                 dependencies.status.success(),

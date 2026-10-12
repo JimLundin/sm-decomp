@@ -81,11 +81,20 @@ pub(crate) fn subject_with_metrics(
     let reader = directory.parent().context("subject parent missing")?.join("sm-evidence");
     let expected = pointer.provenance.reader_sha256.as_deref().context("reader digest missing")?;
     ensure!(!reader.is_symlink() && digest(&reader)? == expected, "retained evidence reader changed");
+    let waiting = metrics.map(|metrics| metrics.stage("authentication-worker-wait")).transpose()?;
     let (_held, _wait) = acquire_lease(root, workers)?;
+    if let Some(waiting) = waiting {
+        waiting.finish("success")?;
+    }
     let mut command = Command::new(reader);
     command.arg("inventory").arg(store).arg(&pointer.run);
     let output = if let Some(metrics) = metrics {
-        metrics.output(&mut command, "subject-authentication")?
+        let sidecar = crate::metrics::sidecar(directory, "authentication");
+        let context = metrics.child_context(&mut command, &sidecar, "authentication")?;
+        let output = metrics.output(&mut command, "subject-authentication")?;
+        metrics.merge_child(&sidecar)?;
+        fs::remove_file(context)?;
+        output
     } else {
         command.output()?
     };

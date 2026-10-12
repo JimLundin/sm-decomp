@@ -149,7 +149,7 @@ fn inventory(root: &Path, dir: &Path, entries: &mut BTreeMap<String, String>) ->
         ensure!(!p.is_symlink(), "RNG evidence is a symlink");
         if p.is_dir() {
             inventory(root, &p, entries)?;
-        } else {
+        } else if !p.file_name().is_some_and(|name| name.to_string_lossy().ends_with(".metrics.toml")) {
             entries.insert(p.strip_prefix(root)?.to_string_lossy().into_owned(), digest(&p)?);
         }
     }

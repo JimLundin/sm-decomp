@@ -120,7 +120,7 @@ fn inventory(root: &Path, directory: &Path, result: &mut BTreeMap<String, String
         ensure!(!path.is_symlink(), "live artifact is a symlink");
         if path.is_dir() {
             inventory(root, &path, result)?;
-        } else {
+        } else if !path.file_name().is_some_and(|name| name.to_string_lossy().ends_with(".metrics.toml")) {
             result.insert(path.strip_prefix(root)?.to_string_lossy().into_owned(), digest(&path)?);
         }
     }
