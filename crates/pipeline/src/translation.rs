@@ -43,6 +43,7 @@ pub(crate) struct Scope {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct DependencyReview {
+    pub ready: bool,
     pub rationale: String,
     /// Pinned source, passing evidence or completed ticket supporting this decision.
     pub evidence: Vec<PathBuf>,
@@ -568,8 +569,8 @@ pub(crate) fn validate_scope(checkout: &Path, path: &Path) -> Result<Job> {
                 .get(dependency)
                 .with_context(|| format!("scope dependency review missing: {symbol} -> {dependency}"))?;
             ensure!(
-                !review.rationale.trim().is_empty() && !review.evidence.is_empty(),
-                "scope dependency needs rationale and evidence: {dependency}"
+                review.ready && !review.rationale.trim().is_empty() && !review.evidence.is_empty(),
+                "scope dependency is not ready or lacks rationale/evidence: {dependency}"
             );
             for evidence in &review.evidence {
                 ensure!(
