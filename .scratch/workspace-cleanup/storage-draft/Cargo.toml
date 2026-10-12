@@ -1,0 +1,36 @@
+[workspace]
+resolver = "3"
+exclude = ["deps/rustysnes"]
+members = [
+    "crates/port",
+    "crates/decomp",
+    "crates/runtime",
+    "crates/recomp",
+    "crates/game",
+    "crates/diff",
+    "crates/fuzz",
+    "crates/movie",
+    "crates/trace",
+    "crates/snes",
+    "crates/evidence",
+]
+
+[workspace.package]
+edition = "2024"
+license = "MIT"
+version = "0.1.0"
+publish = false
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+anyhow = "1"
+sha2 = "0.10"
+zip = { version = "2", default-features = false, features = ["deflate"] }
+runtime = { path = "crates/runtime" }
+recomp = { path = "crates/recomp" }
+rustysnes-core = { git = "https://github.com/doublegate/RustySNES", rev = "98f8d398020b8798b16076fae315960031c6b3b7", features = ["lsnes-profile"] }
+
+[patch."https://github.com/doublegate/RustySNES"]
+rustysnes-core = { path = "deps/rustysnes/crates/rustysnes-core" }
