@@ -15,7 +15,7 @@ Combined-source Rust/actual-C boundary, continuation and negative controls pass.
 
 Follow the complete contract in [plan.md](../plan.md). Record source revision,
 controls, measured results and scoped cleanup under Completion evidence before
-resolving. Implementation is pending.
+resolving.
 
 ## Comments
 
@@ -23,3 +23,33 @@ Claimed on `pipeline-upgrade-01`, based on `pipeline-upgrade-integration`
 at `3ad1bf3`. Delivered migration `c89db9bcf824a3c4f973550d390a95c3f5d05f97`
 is already merged; current continuation and WithGfx implementations are reused.
 Current-source admission is refreshed independently of historical seals.
+
+## Completion evidence
+
+Implementation and verification complete on source freeze `99d799c`;
+integration-owned implementer worktree removal remains before resolution.
+Fixes `47fefbf`, `3da347f`, `d37c98f` require current native manifest freshness,
+an inventoried manifest input bound to the verdict, and the aliased native
+projectile module root in generated memory wrappers. Historical evidence
+formats and retained sources are preserved.
+
+[Native integration evidence](../evidence/native-integration.md) records source
+and tool identities, red/green controls, strict Clippy/fmt and complete port
+checks, actual-C inherited WRAM/eighth-host mutation refusals, and all current
+admission pointers. The six-family batch passes 13,624 actual-C cases;
+supplemental Ceres pad/platform pass 1,296 / 378 cases. Full native text
+admission passes all 129,712 inputs, nine scheduler IDs, 16/4/4 allocations,
+material WRAM/all-eight-host captures, exact state/effects and zero refusal or
+fallback in four fresh subjects.
+
+Full post-cleanup authentication passes four subjects / 1,345 artifacts each:
+`/tmp/sm-pipeline-upgrade-integration/out/ticket-01/logs/full-native-text-auth-after-cleanup.toml`.
+Verdict SHA-256:
+`66c126b8b6f58397fbbba2d07aaa503fbf90495dc605959ed1582e7b5249ab61`.
+Scoped run cleanup/deduplication reclaimed 3,606,823,244 bytes, plus disposable
+Cargo trees reported 42.0 MiB and 1.9 GiB removed. Final `/tmp` available
+space is 225,024,139,264 bytes. Retain the stable integration source checkout,
+sealed evidence, predecessor pointers, diagnostic failures, shared packed
+store and sealed readers. Integration owner must remove
+`/tmp/sm-pipeline-upgrade-01`, reauthenticate retained evidence and record that
+final cleanup before changing Status to resolved.
