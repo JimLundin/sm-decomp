@@ -18,7 +18,9 @@ failure/cancellation/isolation controls and live admission, then scope cleanup.
 [Implementation and validation](../implementation.md). Shared scheduler/prompt
 execution across family/callback/PLM; sealed fork subjects default for ordinary
 Linux x86_64 families. Fresh mode selectable. No Python/runtime/live changes.
-Implementation and validation complete on decomp-port-integration.
+Implementation commit: `fc4237e` (Speed fixture verification with isolated
+preloaded workers). Integration branch: `decomp-port-integration`; user
+authorized its fast-forward integration into local `main`.
 
 Full projectile: 1,840 cases, 71.85 s total / 31.083 s fixture span; 18,400 files
 match original. Full system: 475 cases, 16.92 s. Both authenticated. All relevant
