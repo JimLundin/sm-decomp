@@ -26,3 +26,18 @@ Process accounting (`797f3a2`) and capture/import stage instrumentation
 (`f081f21`) are partial checkpoints awaiting the complete metrics contract,
 controls, overhead measurement, integration and cleanup. They do not resolve
 this ticket.
+
+2026-10-12 crash recovery integrated the completed scope/process/resource
+implementation as `a3290f5` / merge `bd82cf2`; public controls and fresh
+system/decompressor/RNG/live admission passed. The telemetry overhead control
+was interrupted because unrelated host CPU/memory activity made it incomparable.
+The <=2% gate remains unproved, so this ticket stays claimed and 03 stays blocked.
+Restart: [checkpoint-02.md](../checkpoint-02.md).
+
+## Completion evidence
+
+Partial implementation, controls, fresh admission, cleanup, retained dependencies
+and the remaining overhead gate are recorded in
+[metrics-recovery.md](../evidence/metrics-recovery.md). Native cleanup/dedup and
+post-cleanup authentication succeeded; all three integrated support worktrees
+were removed. This evidence does not resolve the ticket.

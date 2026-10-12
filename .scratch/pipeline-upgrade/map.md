@@ -43,3 +43,8 @@ Ticket 01's external prerequisite is satisfied by migration `c89db9b`, merge
 `3ad1bf3`, resolved local migration tickets and their recorded controls/cleanup.
 Ticket 01 current-source admission and cleanup are complete. Ticket 02 is claimed;
 ticket 03 and all conditional transport tickets remain blocked.
+
+Crash recovery checkpoint: [checkpoint-02.md](checkpoint-02.md). Ticket 02's
+native metrics implementation and controls are integrated, with fresh admission
+and cleanup complete. Its telemetry overhead gate awaits quiet-host measurement;
+the interrupted first sample is explicitly excluded from performance evidence.
