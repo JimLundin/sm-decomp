@@ -14,7 +14,9 @@ One owner reaps each child once and integrates resource collection with polling/
 
 Follow the complete contract in [plan.md](../plan.md). Record source revision,
 controls, measured results and scoped cleanup under Completion evidence before
-resolving. Implementation is pending.
+resolving. Claimed on `pipeline-upgrade-metrics` from integration
+`09d3ed16585211d697d91e04bd60e0ab062f8605`; public test seams were confirmed.
+Design/context: `/tmp/sm-pipeline-upgrade-metrics-design.md`.
 
 ## Comments
 

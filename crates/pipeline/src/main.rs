@@ -35,6 +35,7 @@ mod iteration_session;
 mod live;
 mod live_model;
 mod lsnes_configure;
+mod metrics;
 mod observations;
 mod packed;
 mod paired_verify;
@@ -54,6 +55,7 @@ mod readiness_reuse;
 mod readiness_run;
 mod readiness_sync;
 mod replay;
+mod resource_sampler;
 mod rng_job;
 mod routine_live;
 mod source_inventory;
@@ -81,7 +83,7 @@ fn digest(path: &Path) -> Result<String> {
 
 fn lock(path: &Path) -> Result<File> {
     let file = OpenOptions::new().create(true).append(true).open(path)?;
-    file.lock()?;
+    metrics::lock(&file)?;
     Ok(file)
 }
 
@@ -151,6 +153,7 @@ fn acquire_lease(root: &Path, requested: usize) -> Result<(File, f64)> {
     ensure!(capacity == requested, "shared worker budget already configured to {capacity}");
     drop(guard);
     let held = loop {
+        metrics::check_cancelled()?;
         let mut selected = None;
         for slot in 0..capacity {
             let file = OpenOptions::new().create(true).append(true).open(root.join(format!("{slot}.lock")))?;
@@ -248,9 +251,14 @@ fn executable(name: &str) -> Result<PathBuf> {
 }
 
 fn cached_artifact(request: &CacheRequest, build: impl FnOnce(&Path) -> Result<()>) -> Result<CacheResult> {
+    let context = metrics::active();
+    let lookup = context.as_ref().map(|context| context.stage("cache-lookup")).transpose()?;
     let root = request.root.clone();
     let checkout = request.checkout.clone();
-    let common = Command::new("git").args(["rev-parse", "--git-common-dir"]).current_dir(&checkout).output()?;
+    let common = metrics::command_output(
+        Command::new("git").args(["rev-parse", "--git-common-dir"]).current_dir(&checkout),
+        "cache-repository-identity",
+    )?;
     let repository = if common.status.success() {
         let common = PathBuf::from(String::from_utf8(common.stdout)?.trim());
         let common = fs::canonicalize(checkout.join(common))?;
@@ -262,7 +270,10 @@ fn cached_artifact(request: &CacheRequest, build: impl FnOnce(&Path) -> Result<(
     let command = &request.command;
     let compiler_name = command.first().context("compiler missing")?;
     let compiler = executable(compiler_name)?;
-    let version = Command::new(&compiler).arg("--version").current_dir(&checkout).output()?;
+    let version = metrics::command_output(
+        Command::new(&compiler).arg("--version").current_dir(&checkout),
+        "cache-compiler-identity",
+    )?;
     ensure!(version.status.success(), "compiler version failed");
     let mut sources = std::collections::BTreeMap::new();
     let mut originals = Vec::new();
@@ -321,14 +332,19 @@ fn cached_artifact(request: &CacheRequest, build: impl FnOnce(&Path) -> Result<(
         rustc: None,
     };
     if ["cargo", "rustc"].contains(&Path::new(compiler_name).file_name().and_then(|v| v.to_str()).unwrap_or_default()) {
-        let info = Command::new("rustc").arg("-vV").current_dir(&checkout).output()?;
+        let info =
+            metrics::command_output(Command::new("rustc").arg("-vV").current_dir(&checkout), "cache-rustc-identity")?;
         ensure!(info.status.success(), "rustc version failed");
         identity.rustc = Some(String::from_utf8(info.stdout)?);
     }
     let key = format!("{:x}", Sha256::digest(toml::to_string(&identity)?.as_bytes()));
     let root = root.join("build-cache");
     fs::create_dir_all(&root)?;
+    let waiting = context.as_ref().map(|context| context.stage("cache-lock-wait")).transpose()?;
     let _held = lock(&root.join(format!("{key}.lock")))?;
+    if let Some(waiting) = waiting {
+        waiting.finish("success")?;
+    }
     let entry = root.join(&key);
     for (path, expected) in &originals {
         ensure!(digest(path)? == *expected, "compiler input changed while waiting for cache");
@@ -340,6 +356,12 @@ fn cached_artifact(request: &CacheRequest, build: impl FnOnce(&Path) -> Result<(
         Ok(seal.inputs == identity && seal.sha256 == digest(&entry.join("artifact"))?)
     })()
     .unwrap_or(false);
+    if let Some(lookup) = lookup {
+        lookup.finish("success")?;
+    }
+    if let Some(context) = &context {
+        context.configuration(&format!("cache-{key}-hit"), hit);
+    }
     let stage = root.join(format!("{key}-{}.pending", std::process::id()));
     if !hit {
         if stage.exists() {
@@ -349,7 +371,11 @@ fn cached_artifact(request: &CacheRequest, build: impl FnOnce(&Path) -> Result<(
     }
     if !hit {
         let result = (|| -> Result<()> {
+            let building = context.as_ref().map(|context| context.stage("cache-build")).transpose()?;
             build(&stage.join("artifact"))?;
+            if let Some(building) = building {
+                building.finish("success")?;
+            }
             for (path, expected) in originals {
                 ensure!(digest(&path)? == expected, "compiler input changed during build");
             }
@@ -370,9 +396,13 @@ fn cached_artifact(request: &CacheRequest, build: impl FnOnce(&Path) -> Result<(
         result?;
     }
     let destination = request.destination.clone();
+    let restoring = context.as_ref().map(|context| context.stage("cache-restore-authenticate")).transpose()?;
     fs::create_dir_all(destination.parent().context("destination parent missing")?)?;
     fs::copy(entry.join("artifact"), &destination)?;
     ensure!(digest(&destination)? == digest(&entry.join("artifact"))?, "copied artifact differs");
+    if let Some(restoring) = restoring {
+        restoring.finish("success")?;
+    }
     Ok(CacheResult { key, hit })
 }
 
@@ -1115,6 +1145,10 @@ fn main() -> Result<()> {
             })?)
         }
         Some("packed-capture") if args.len() == 1 => emit(&packed::capture(request()?)?),
+        Some("packed-capture-many") if args.len() == 1 => {
+            let pointers = packed::capture_many(request()?)?;
+            emit(&crate::report!({"subjects":pointers}))
+        }
         Some("packed-publish") if args.len() == 1 => emit(&packed::publish(request()?)?),
         Some("packed-subject") if args.len() == 1 => {
             let request: Value = request()?;

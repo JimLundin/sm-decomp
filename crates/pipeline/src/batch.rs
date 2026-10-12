@@ -320,6 +320,34 @@ struct Latest {
     batch: PathBuf,
 }
 pub fn operate(request: Request) -> Result<toml::Value> {
+    if ["status", "catalog"].contains(&request.operation.as_str()) {
+        return operate_inner(request);
+    }
+    let destination = request
+        .batch
+        .as_ref()
+        .and_then(|path| path.parent())
+        .map(Path::to_path_buf)
+        .unwrap_or_else(|| request.checkout.join("out/port/batches"));
+    fs::create_dir_all(&destination)?;
+    let mut metrics = crate::metrics::Run::start(
+        destination.join(format!("batch-{}.metrics.toml", SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos())),
+        "batch",
+    )?;
+    metrics.context.configuration("workers", request.workers);
+    metrics.context.configuration("case-jobs", request.case_jobs);
+    let result = operate_inner(request);
+    let success = result.as_ref().is_ok_and(|value| {
+        value
+            .get("status")
+            .and_then(toml::Value::as_str)
+            .is_none_or(|status| ["complete", "unchanged"].contains(&status))
+    });
+    metrics
+        .finish(if success { "success" } else { "failed" }, result.as_ref().err().map(|error| format!("{error:#}")))?;
+    result
+}
+fn operate_inner(request: Request) -> Result<toml::Value> {
     let checkout = fs::canonicalize(&request.checkout)?;
     let config = catalog(&checkout)?;
     let command = request.operation.as_str();
@@ -419,16 +447,26 @@ pub fn operate(request: Request) -> Result<toml::Value> {
         ensure!((1..=8).contains(&request.jobs), "batch jobs must be 1..8");
         let state = Mutex::new(&mut batch);
         let next = AtomicUsize::new(0);
+        let metrics = crate::metrics::active();
         std::thread::scope(|scope| {
             for _ in 0..request.jobs.min(names.len()) {
-                scope.spawn(|| {
+                let metrics = metrics.clone();
+                let next = &next;
+                let state = &state;
+                let names = &names;
+                let request = &request;
+                let checkout = &checkout;
+                let path = &path;
+                let config = &config;
+                scope.spawn(move || {
+                    let _entered = metrics.as_ref().map(|metrics| metrics.enter());
                     loop {
                         let index = next.fetch_add(1, Ordering::Relaxed);
                         let Some(name) = names.get(index) else {
                             break;
                         };
                         let previous = state.lock().unwrap().families.get(name).cloned();
-                        let record = match verify_one(&request, &checkout, &path, &config, name, previous.as_ref()) {
+                        let record = match verify_one(request, checkout, path, config, name, previous.as_ref()) {
                             Ok(record) => record,
                             Err(error) => FamilyRecord {
                                 status: "failed".into(),
@@ -440,7 +478,7 @@ pub fn operate(request: Request) -> Result<toml::Value> {
                         eprintln!("{name}: {}", record.status);
                         let mut owner = state.lock().unwrap();
                         owner.families.insert(name.clone(), record);
-                        if let Err(error) = atomic_toml(&path, &**owner) {
+                        if let Err(error) = atomic_toml(path, &**owner) {
                             owner.publication_error = Some(format!("{error:#}"));
                         }
                     }
@@ -482,11 +520,16 @@ pub fn operate(request: Request) -> Result<toml::Value> {
         batch.replays.push(record);
         atomic_toml(&path, &batch)?;
     }
+    let context = crate::metrics::active();
+    let cleaning = context.as_ref().map(|context| context.stage("batch-scoped-cleanup")).transpose()?;
     let cleaned = cleanup::cleanup(cleanup::CleanupRequest {
         root: path.parent().unwrap().into(),
         apply: true,
         deduplicate: true,
     })?;
+    if let Some(cleaning) = cleaning {
+        cleaning.finish("success")?;
+    }
     let passed = replay_passed && (command == "replay" || verified);
     Ok(toml::Value::try_from(Receipt {
         status: if passed { "complete" } else { "failed" }.into(),

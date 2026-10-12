@@ -698,7 +698,9 @@ fn inventory(run: &Path, base: &Path, result: &mut BTreeMap<String, String>) -> 
         ensure!(!path.is_symlink(), "run artifact symlink");
         if path.is_dir() {
             inventory(run, &path, result)?;
-        } else if path != run.join("verdict.toml") {
+        } else if path != run.join("verdict.toml")
+            && !path.file_name().is_some_and(|name| name.to_string_lossy().ends_with(".metrics.toml"))
+        {
             result.insert(path.strip_prefix(run)?.to_string_lossy().into_owned(), digest(&path)?);
         }
     }
@@ -714,6 +716,9 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
     let run = output.join(format!("{stamp}-{}-{}", std::process::id(), NEXT.fetch_add(1, Ordering::Relaxed)));
     fs::create_dir(&run)?;
     let run = fs::canonicalize(run)?;
+    let mut metrics = crate::metrics::Run::start(run.join("family.metrics.toml"), "family")?;
+    metrics.context.configuration("manifest", request.manifest.display());
+    metrics.context.configuration("workers", request.workers);
     let mut verdict = Verdict {
         status: "rejected".into(),
         run: run.clone(),
@@ -762,9 +767,11 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
         }
         let next = AtomicUsize::new(0);
         let outcomes = Mutex::new(Vec::new());
+        let context = metrics.context.clone();
         std::thread::scope(|scope| {
             for _ in 0..jobs.min(tasks.len()) {
                 scope.spawn(|| {
+                    let _entered = context.enter();
                     loop {
                         let index = next.fetch_add(1, Ordering::Relaxed);
                         let Some((routine, fixture, routine_index)) = tasks.get(index) else {
@@ -822,6 +829,7 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
     inventory(&run, &run, &mut artifacts)?;
     verdict.artifacts = artifacts;
     atomic_toml(&run.join("verdict.toml"), &verdict)?;
+    metrics.finish(crate::metrics::outcome(verdict.error.as_deref()), verdict.error.clone())?;
     Ok(verdict)
 }
 
