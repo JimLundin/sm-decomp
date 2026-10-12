@@ -743,6 +743,8 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
         } else {
             build(&request, &manifest, &checkout, &source, &run)?
         });
+        verdict.implementation.as_mut().unwrap().manifest =
+            Some(Asset { file: fs::canonicalize(&manifest_path)?, sha256: digest(&run.join("manifest.toml"))? });
         if callbacks {
             verdict.gameplay_translation = Some(!manifest.infrastructure_probe);
         }
@@ -824,6 +826,12 @@ pub fn authenticate(request: AuthenticateRequest) -> Result<Verdict> {
     let mut manifest: Manifest = object(&run.join("manifest.toml"))?;
     ensure!(manifest.family == verdict.family, "family identity differs");
     let implementation = verdict.implementation.as_ref().context("missing family implementation")?;
+    if let Some(manifest) = &implementation.manifest {
+        ensure!(
+            digest(&manifest.file)? == manifest.sha256 && digest(&run.join("manifest.toml"))? == manifest.sha256,
+            "family manifest changed"
+        );
+    }
     let callbacks = implementation.dependency_contract == "rust-callback-v2";
     let plm = implementation.dependency_contract == "rust-plm-v2";
     if plm {

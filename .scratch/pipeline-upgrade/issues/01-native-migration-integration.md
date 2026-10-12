@@ -1,6 +1,6 @@
 # Integrate delivered native migration with current decomp
 
-Status: open
+Status: claimed
 Blocked by: None
 Triage: ready-for-agent
 Type: task
@@ -16,3 +16,10 @@ Combined-source Rust/actual-C boundary, continuation and negative controls pass.
 Follow the complete contract in [plan.md](../plan.md). Record source revision,
 controls, measured results and scoped cleanup under Completion evidence before
 resolving. Implementation is pending.
+
+## Comments
+
+Claimed on `pipeline-upgrade-01`, based on `pipeline-upgrade-integration`
+at `3ad1bf3`. Delivered migration `c89db9bcf824a3c4f973550d390a95c3f5d05f97`
+is already merged; current continuation and WithGfx implementations are reused.
+Current-source admission is refreshed independently of historical seals.

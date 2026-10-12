@@ -307,6 +307,26 @@ fn empty_duplicate_and_out_of_bounds_cases_cannot_pass() {
 }
 
 #[test]
+fn changed_current_manifest_cannot_authenticate_prior_family_admission() {
+    let project = Project::new();
+    project.manifest(Value::Array(vec![Value::Table(toml::Table::from_iter([
+        ("name".to_owned(), Value::String("one".to_owned())),
+        ("a".to_owned(), Value::Integer(1)),
+        ("expected_return".to_owned(), Value::Integer(2)),
+    ]))]));
+    let verdict = project.verify(true);
+    project.authenticate(&verdict, true);
+    let path = project.0.join("tools/port/fixture.toml");
+    let original = fs::read(&path).unwrap();
+    let mut manifest: Value = toml::from_str(&String::from_utf8(original.clone()).unwrap()).unwrap();
+    manifest["routines"][0]["cases"][0]["a"] = 2.into();
+    write(&project.0, "tools/port/fixture.toml", toml::to_string(&manifest).unwrap());
+    project.authenticate(&verdict, false);
+    fs::write(path, original).unwrap();
+    project.authenticate(&verdict, true);
+}
+
+#[test]
 fn native_batch_reuses_authenticated_runs_and_rejects_stale_candidate() {
     let project = Project::new();
     project.manifest(Value::Array(vec![Value::Table(toml::Table::from_iter([
