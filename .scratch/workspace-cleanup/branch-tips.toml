@@ -1,0 +1,301 @@
+# Local branch tips before retirement; every commit is reachable from main.
+
+[[branches]]
+name = "decomp-eproj-allocator"
+commit = "1d0a28d37ae787f9ce3bb98b6d6f6b2019f4c40d"
+
+[[branches]]
+name = "decomp-eproj-collision"
+commit = "a079726d01d786c64b4f0bebab59e220bd2616fa"
+
+[[branches]]
+name = "decomp-eproj-frame"
+commit = "79aafd3f0a2fb27d2ea7beeff935a17e16750d36"
+
+[[branches]]
+name = "decomp-foundation-integration"
+commit = "9a4e8ec555fa8d4e0c8fb29ca851e878ebb03091"
+
+[[branches]]
+name = "decomp-foundation-review-fixes"
+commit = "57703be662ae2a897ff6a76f8b1674dbb859f8eb"
+
+[[branches]]
+name = "decomp-foundation-ticket-01"
+commit = "724357a3afd74d611b8f1d66b6b51cdd1e735555"
+
+[[branches]]
+name = "decomp-foundation-ticket-02"
+commit = "41ed9bd3a0bcea79bbda7088080ceb3722ebb5e5"
+
+[[branches]]
+name = "decomp-foundation-ticket-03"
+commit = "65635dfacd8b3259409af31d0ab40c458eccedf8"
+
+[[branches]]
+name = "decomp-foundation-ticket-04"
+commit = "90b81ab4dd2fb7fd3979a30a900b1cecef167913"
+
+[[branches]]
+name = "decomp-foundation-ticket-05"
+commit = "b03dc383e970584cefddf89d3e8e7f8512ee048a"
+
+[[branches]]
+name = "decomp-foundation-ticket-06"
+commit = "69361c1a2ffedb5fab138a6b9c2a113cc7f5023d"
+
+[[branches]]
+name = "decomp-foundation-ticket-07"
+commit = "3e2dfdbb39104d2a368e132a8ed6d56ccea0c389"
+
+[[branches]]
+name = "decomp-foundation-ticket-08"
+commit = "052a7ff7dd81fbaaa058352a5dec882361c1ab01"
+
+[[branches]]
+name = "decomp-live-admission"
+commit = "e5904c9be42dab458db25518b0c459477c2d1455"
+
+[[branches]]
+name = "decomp-pipeline-performance"
+commit = "c89db9bcf824a3c4f973550d390a95c3f5d05f97"
+
+[[branches]]
+name = "decomp-plm-conditions"
+commit = "02425a689e7fde285c0a4e8d195d8d1fb6f99117"
+
+[[branches]]
+name = "decomp-plm-render"
+commit = "8d5350d75227e1a0bc448115b580d4924599c4c5"
+
+[[branches]]
+name = "decomp-port-collision-harness"
+commit = "f5865cd559782147af944de945343811da4aab94"
+
+[[branches]]
+name = "decomp-port-integration"
+commit = "d7a1c664c23526717fda19aca715800f9bf85d1d"
+
+[[branches]]
+name = "decomp-port-live-controls"
+commit = "e5bad69c0b8322df1855a231d665e4c47115d0e0"
+
+[[branches]]
+name = "decomp-port-ticket-01"
+commit = "d995ed0f5f888d879518cc4d31d761b0ba3bd171"
+
+[[branches]]
+name = "decomp-port-ticket-02"
+commit = "90d758ea1d2f3e8def19b03d1e1c06c1657c13d5"
+
+[[branches]]
+name = "decomp-port-ticket-03"
+commit = "c95fe69d49d04dc257f989395bbefcdc172487cf"
+
+[[branches]]
+name = "decomp-port-ticket-06"
+commit = "795aff100ef881bdf2c4da25515c9b4273e0bae0"
+
+[[branches]]
+name = "decomp-port-ticket-08"
+commit = "68d3c490fca9a14d82f718b08a341bfd05229f51"
+
+[[branches]]
+name = "decomp-port-ticket-09"
+commit = "32aef7141c00c75666020566f9d56a74da1fd57f"
+
+[[branches]]
+name = "decomp-port-ticket-11"
+commit = "3211b8445545f510730c538d5902f26911e2cf46"
+
+[[branches]]
+name = "decomp-port-ticket-13"
+commit = "e1cbb00f7881f806944f53890e4b3bcb9d1ae5b5"
+
+[[branches]]
+name = "decomp-port-ticket-14"
+commit = "1bdeab50e360b76666a3dbaca078357434e00056"
+
+[[branches]]
+name = "decomp-port-ticket-15"
+commit = "7a9aa3651bf2699f1533623e7f5f553b94fb4a76"
+
+[[branches]]
+name = "decomp-port-ticket-16"
+commit = "5bfbc01fe0f7492335fdc5af9c52dc3de00c73f8"
+
+[[branches]]
+name = "decomp-port-ticket-17"
+commit = "cc995f4098d12aa32672e149cfbf65b61f588dda"
+
+[[branches]]
+name = "decomp-port-ticket-18"
+commit = "dd2763597c60349c645303b6a27ec629f8d73ac0"
+
+[[branches]]
+name = "decomp-port-ticket-19"
+commit = "f476984bb24bad1f4118cf1debea4990ccbae8ce"
+
+[[branches]]
+name = "decomp-port-ticket-20"
+commit = "934061681070c6e3b444e22df8cd9453d09fee7d"
+
+[[branches]]
+name = "decomp-port-ticket-21"
+commit = "4a04538dd10a89f5bf047588cc8e8666cb764e4b"
+
+[[branches]]
+name = "decomp-port-ticket-22"
+commit = "2161df6ca86bd0585f7cf1dd0b56c5880878cead"
+
+[[branches]]
+name = "decomp-port-ticket-23"
+commit = "2161df6ca86bd0585f7cf1dd0b56c5880878cead"
+
+[[branches]]
+name = "decomp-port-ticket-24"
+commit = "2161df6ca86bd0585f7cf1dd0b56c5880878cead"
+
+[[branches]]
+name = "main"
+commit = "ae8966b06f2391fb843ee122f35825669cc39d7f"
+
+[[branches]]
+name = "pipeline-upgrade-01"
+commit = "559302a843283bebc4d66ec8065700c0d3a713f8"
+
+[[branches]]
+name = "pipeline-upgrade-02-producer"
+commit = "3b3e720b6be0b96c4499f87aa982c82b2bbd269f"
+
+[[branches]]
+name = "pipeline-upgrade-evidence-metrics"
+commit = "5bac28a2d3b0bebac3cb2be9a9813d0fd1cfcfe0"
+
+[[branches]]
+name = "pipeline-upgrade-integration"
+commit = "7c9a766362f4bff33367c0b9cf4952fa3c4d16b8"
+
+[[branches]]
+name = "pipeline-upgrade-metrics"
+commit = "a3290f58ec9992c288458fdd5f4e810ab7c7d044"
+
+[[branches]]
+name = "pipeline-upgrade-resources"
+commit = "dd834bb70e3bf0867a1d8783f9d993eef4d743b4"
+
+[[branches]]
+name = "readiness-ticket-01"
+commit = "4330a71c106f3367a4b5ad9b6b26d2756b971526"
+
+[[branches]]
+name = "readiness-ticket-02"
+commit = "a408d830fb612ed64b80f2d61da107a872227d36"
+
+[[branches]]
+name = "readiness-ticket-03"
+commit = "b7d1d4510374a095ccc82bc3385b79196c1f870b"
+
+[[branches]]
+name = "readiness-ticket-04"
+commit = "0fa9018bf64539bda597659082a30a586e2e738f"
+
+[[branches]]
+name = "readiness-ticket-05"
+commit = "43b0db0135694b751fb6fee8f1d9a7b768cd73a3"
+
+[[branches]]
+name = "readiness-ticket-06"
+commit = "c2eb8ddce9f2edc0c16aed69628937ba9822406b"
+
+[[branches]]
+name = "readiness-ticket-07"
+commit = "55a5967c13f8641bd7ad04fd68af70a76d27774d"
+
+[[branches]]
+name = "readiness-ticket-08"
+commit = "6c5fdaa12a3169aaceb20638c78f0b8f786fe719"
+
+[[branches]]
+name = "readiness-ticket-09"
+commit = "cca22e949da6bacfa007ff4a2f991abfc704f68f"
+
+[[branches]]
+name = "readiness-ticket-10"
+commit = "11676af1a877d08977ae9f926d0b8615fdd095ee"
+
+[[branches]]
+name = "readiness-ticket-11"
+commit = "388b1d4d350b05a57c2548190b8cc94c7468332b"
+
+[[branches]]
+name = "readiness-ticket-12"
+commit = "43b0db0135694b751fb6fee8f1d9a7b768cd73a3"
+
+[[branches]]
+name = "recomp-iteration-diagnosis-fix"
+commit = "1990f32985a470e8895d131e199420682b7aa1f0"
+
+[[branches]]
+name = "recomp-iteration-integration"
+commit = "7a7e93ce215bba3ecdf17b64c28e640bed0460d5"
+
+[[branches]]
+name = "recomp-iteration-review-fixes"
+commit = "cd91328c7725fd289fcce59394e21bb8323bdc3d"
+
+[[branches]]
+name = "recomp-iteration-selection-fix"
+commit = "bd8e76e4f5cd01873f41f5cad6767310dcf0043b"
+
+[[branches]]
+name = "recomp-iteration-ticket-01"
+commit = "3d3c42918d5bb2ee640e87a2a473e81bc8460073"
+
+[[branches]]
+name = "recomp-iteration-ticket-02"
+commit = "a76fb0b5ed12021d5d776daac2f75f7f8adea409"
+
+[[branches]]
+name = "recomp-iteration-ticket-03"
+commit = "532a0f3a55821599046094ffd5591f08f8b16e4e"
+
+[[branches]]
+name = "recomp-iteration-ticket-04"
+commit = "b96969696b638c47d2c60c4c95ec2ea05df5ce2b"
+
+[[branches]]
+name = "recomp-iteration-ticket-05"
+commit = "c86318360a013de84b7748362809c8a20812ff8b"
+
+[[branches]]
+name = "recomp-iteration-ticket-06"
+commit = "4b76fdfb201e934181fbaea2b0cc146b41166bac"
+
+[[branches]]
+name = "recomp-iteration-ticket-07"
+commit = "df0570980d80616241312ef2fe963b55fe17a541"
+
+[[branches]]
+name = "recomp-readiness-integration"
+commit = "3bedb39c2d03d449e8bb40a023fe500c9f6c679a"
+
+[[branches]]
+name = "research/trace-storage-format"
+commit = "b85b0a1f0bb6999024f381f4f8947edc9df32f35"
+
+[[branches]]
+name = "ticket22-crawler"
+commit = "1dfef6fd62b8e3ba2e6b06b8360318aab00c6f35"
+
+[[branches]]
+name = "ticket23-power-bomb"
+commit = "091e492c2299ccbfd82c2b48dceb2ad1cacf756f"
+
+[[branches]]
+name = "ticket23-review-fixes"
+commit = "dcfb94ae4970cd0efccf5060b448a57f8c984c67"
+
+[[branches]]
+name = "worktree-trace-storage-format"
+commit = "9a0a750892941700ff8bbe8c5064c1c3c503ac71"
