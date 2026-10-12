@@ -17,6 +17,8 @@ pub(crate) struct ExecRequest {
     pub label: String,
     pub root: PathBuf,
     pub workers: usize,
+    #[serde(default = "default_timeout")]
+    pub timeout: u64,
 }
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -26,6 +28,9 @@ pub(crate) struct CBuildRequest {
     pub checkout: PathBuf,
     pub root: PathBuf,
     pub workers: usize,
+}
+fn default_timeout() -> u64 {
+    240
 }
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -81,50 +86,69 @@ pub(crate) fn execute_timeout(
     ensure!(!command.is_empty(), "empty process command");
     ensure!(label.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_'), "unsafe process label");
     fs::create_dir_all(run)?;
-    let started = Instant::now();
-    let (_held, wait) = acquire_lease(root, workers)?;
-    let active = Instant::now();
-    let mut child = Command::new(&command[0])
-        .args(&command[1..])
-        .current_dir(run)
-        .stdout(Stdio::from(File::create(run.join(format!("{label}.stdout")))?))
-        .stderr(Stdio::from(File::create(run.join(format!("{label}.stderr")))?))
-        .spawn()?;
-    let status = loop {
-        if let Some(status) = child.try_wait()? {
-            break status;
-        }
-        if active.elapsed() > std::time::Duration::from_secs(timeout) {
-            child.kill()?;
-            child.wait()?;
-            atomic_toml(
-                &run.join(format!("{label}.timing.toml")),
-                &ExecutionRecord {
-                    argv: command.to_vec(),
-                    seconds: started.elapsed().as_secs_f64(),
-                    worker_wait_seconds: wait,
-                    exit_code: None,
-                    error: Some("compiler timeout".into()),
-                },
-            )?;
-            bail!("{label} timeout after {timeout}s");
-        }
-        std::thread::sleep(std::time::Duration::from_millis(20));
-    };
-    let record = ExecutionRecord {
-        argv: command.to_vec(),
-        seconds: started.elapsed().as_secs_f64(),
-        worker_wait_seconds: wait,
-        exit_code: status.code(),
-        error: None,
-    };
-    atomic_toml(&run.join(format!("{label}.timing.toml")), &record)?;
-    ensure!(status.success(), "{label} failed: {status}");
-    Ok(record)
+    let mut metrics = crate::metrics::Run::start(run.join(format!("{label}.metrics.toml")), label)?;
+    let result = (|| -> Result<ExecutionRecord> {
+        let started = Instant::now();
+        let waiting = metrics.context.stage("worker-wait")?;
+        let (_held, wait) = acquire_lease(root, workers)?;
+        waiting.finish("success")?;
+        let building = metrics.context.stage("execute")?;
+        let active = Instant::now();
+        let mut actual = Command::new(&command[0]);
+        actual
+            .args(&command[1..])
+            .current_dir(run)
+            .stdout(Stdio::from(File::create(run.join(format!("{label}.stdout")))?))
+            .stderr(Stdio::from(File::create(run.join(format!("{label}.stderr")))?));
+        let mut child = crate::metrics::OwnedChild::spawn(&mut actual, &metrics.context, label)?;
+        let status = loop {
+            if let Some(status) = child.poll()? {
+                break status;
+            }
+            if active.elapsed() > std::time::Duration::from_secs(timeout) {
+                child.kill_wait()?;
+                atomic_toml(
+                    &run.join(format!("{label}.timing.toml")),
+                    &ExecutionRecord {
+                        argv: command.to_vec(),
+                        seconds: started.elapsed().as_secs_f64(),
+                        worker_wait_seconds: wait,
+                        exit_code: None,
+                        error: Some("compiler timeout".into()),
+                    },
+                )?;
+                bail!("{label} timeout after {timeout}s");
+            }
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        };
+        let record = ExecutionRecord {
+            argv: command.to_vec(),
+            seconds: started.elapsed().as_secs_f64(),
+            worker_wait_seconds: wait,
+            exit_code: status.code(),
+            error: None,
+        };
+        atomic_toml(&run.join(format!("{label}.timing.toml")), &record)?;
+        ensure!(status.success(), "{label} failed: {status}");
+        building.finish("success")?;
+        Ok(record)
+    })();
+    let error = result.as_ref().err().map(|e| format!("{e:#}"));
+    metrics.finish(
+        if result.is_ok() {
+            "success"
+        } else if error.as_deref().is_some_and(|e| e.contains("timeout after")) {
+            "timed-out"
+        } else {
+            "failed"
+        },
+        error,
+    )?;
+    result
 }
 
 pub fn exec(request: ExecRequest) -> Result<ExecutionRecord> {
-    execute(&request.command, &request.run, &request.label, &request.root, request.workers)
+    execute_timeout(&request.command, &request.run, &request.label, &request.root, request.workers, request.timeout)
 }
 
 fn rust_sources(directory: &Path, result: &mut Vec<PathBuf>) -> Result<()> {

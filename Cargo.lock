@@ -300,6 +300,7 @@ dependencies = [
  "anyhow",
  "evidence",
  "flate2",
+ "libc",
  "movie",
  "pipeline-model",
  "serde",
@@ -316,6 +317,7 @@ name = "pipeline-model"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "libc",
  "serde",
  "sha2",
  "toml",

@@ -35,6 +35,7 @@ mod iteration_session;
 mod live;
 mod live_model;
 mod lsnes_configure;
+mod metrics;
 mod observations;
 mod packed;
 mod paired_verify;
