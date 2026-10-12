@@ -1,5 +1,20 @@
 # Continuation checkpoint: benchmark preparation
 
+## Completed delivery, 2026-10-12 14:38 UTC
+
+Required pipeline work complete; no active verification writers. Main branch
+decomp-port-integration merge3b53c74contains implementationc86c946and bounded
+measurement record7c9a766. Full final route1791814326101526304-2accepted;
+post-removal authentication four subjects/1,479artifacts each, exact verdict SHA.
+All system/projectile/decompressor/RNG predecessors also authenticated after
+removal. Integrated temporary Git worktree removed; same path retains only
+required34.8MBsource/manifest/movie snapshot and original evidence/readers/stores.
+Tickets01/02/03/09resolved; conditional04–08unclaimed/deferred. Large telemetry
+2%target remains unproved; detailed sampling default-off, explicitly opt-in.
+Do not resume long sweep or original matrix. Actual decomp work belongs to the
+separate session. Final controls, measured improvement and cleanup receipts:
+[final delivery](evidence/final-delivery.md). Historical checkpoints follow.
+
 ## Current recovery state, 2026-10-12 14:13 UTC
 
 Long telemetry control remains stopped. Short old/new reader comparison passed:

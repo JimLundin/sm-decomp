@@ -1,6 +1,6 @@
 # Measure native text baseline and choose next bottleneck
 
-Status: claimed
+Status: resolved
 Blocked by: 02
 Triage: ready-for-agent
 Type: task
@@ -16,6 +16,18 @@ Follow the complete contract in [plan.md](../plan.md). Record source revision,
 controls, measured results and scoped cleanup under Completion evidence before
 resolving. Runner preparation is in progress; admitted measurements remain
 blocked by ticket 02's overhead gate.
+
+## Completion evidence
+
+Resolved under the user's bounded measurement revision: exact restoration
+selected and implemented in09; binary04–08 deferred/unclaimed. Short full-boundary
+comparison passed19.389% reduction, real24MB restoration85.4%, with exact identity
+and honest large-case/telemetry limits. No original12-cell matrix admission is
+claimed. Integration`3b53c74`, full129,712-input final-route success, required
+cleanup and integrated worktree removal complete; all retained authentication
+passed afterward. See [final delivery](../evidence/final-delivery.md) and
+[measurements](../evidence/short-measurements.md) for receipts, budgets/extent,
+bytes reclaimed, remaining disk and retained source/evidence dependencies.
 
 ## Comments
 

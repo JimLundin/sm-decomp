@@ -1,6 +1,6 @@
 # Extend native capture and publication measurements
 
-Status: claimed
+Status: resolved
 Blocked by: 01
 Triage: ready-for-agent
 Type: task
@@ -42,6 +42,14 @@ The <=2% gate remains unproved, so this ticket stays claimed and 03 stays blocke
 Restart: [checkpoint-02.md](../checkpoint-02.md).
 
 ## Completion evidence
+
+Resolved under the user-directed default-off delivery scope. Implementation
+`c86c946`, main integration`3b53c74`; final controls/full-route regression,
+finished cleanup, worktree removal and all post-removal authentications passed.
+See [final delivery](../evidence/final-delivery.md) for exact receipts, reclaimed
+bytes, source dependencies and disk space. The large2% detailed-telemetry target
+remains unproved and blocks future automatic promotion, not this default-off
+delivery. No long measurement run is required or queued.
 
 Latest bounded measurements and default-off delivery policy:
 [short-measurements.md](../evidence/short-measurements.md). The public default-mode

@@ -1,10 +1,15 @@
 # Native pipeline upgrade work map
 
-Status: claimed
+Status: resolved
 
 Plan: `plan.md`. Visual source: `visual/plan.mdx`.
 
 ## Decisions so far
+
+- Required01/02/03/09resolved; main integration`3b53c74`, final full-route and
+  all post-removal authentications passed. Integrated worktree removed; snapshot/
+  readers/stores retained. See [final delivery](evidence/final-delivery.md).
+  Historical status notes below are superseded by this completed delivery.
 
 - User-directed bounded measurement replaces hour-long telemetry tuning.
   Deliver exact legacy rendering (ticket09) and default-off detailed telemetry;
@@ -48,10 +53,10 @@ If binary selected: 04 decoder → 05 native producer → 06 compatibility →
 
 Ticket 01's external prerequisite is satisfied by migration `c89db9b`, merge
 `3ad1bf3`, resolved local migration tickets and their recorded controls/cleanup.
-Ticket 01 current-source admission and cleanup are complete. Ticket 02 is claimed;
-ticket 03 and all conditional transport tickets remain blocked.
+Required tickets 01, 02, 03 and 09 are resolved under the bounded delivery scope.
+Conditional transport tickets 04–08 remain unclaimed and deferred.
 
-Crash recovery checkpoint: [checkpoint-02.md](checkpoint-02.md). Ticket 02's
-native metrics implementation and controls are integrated, with fresh admission
-and cleanup complete. Its telemetry overhead gate awaits quiet-host measurement;
-the interrupted first sample is explicitly excluded from performance evidence.
+Historical crash recovery checkpoint: [checkpoint-02.md](checkpoint-02.md).
+Current delivery: [final delivery](evidence/final-delivery.md). Detailed telemetry
+is opt-in; its large-case overhead target remains unproved. Interrupted samples
+are excluded from performance evidence.

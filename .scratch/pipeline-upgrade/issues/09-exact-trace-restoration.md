@@ -1,6 +1,6 @@
 # Reduce measured legacy trace restoration cost
 
-Status: claimed
+Status: resolved
 Blocked by: None
 Triage: ready-for-agent
 Type: task
@@ -35,3 +35,14 @@ Evidence logs/receipts under `out/ticket-03/`.
 Independent standard-format decimal oracle passed before/after. All12 evidence
 store controls, strict all-target evidence Clippy, fmt and whitespace passed.
 Bounded88-byte line uses pinned existing itoa1.0.18; no canonical format changes.
+
+## Completion evidence
+
+Implementation`c86c946`, integrated`3b53c74`. Controlled short complete boundary
+improved19.389% (two old/new repeats), preserving exact observations; focused
+restoration85.4% faster. Final-source129,712-input route accepted, all nine IDs
+and16/4/4allocations with zero refusal/fallback; canonical state/effects match.
+Cleanup/dedup and integrated worktree removal completed, retained live four
+subjects/1,479artifacts and all predecessors authenticated afterward.
+[Final delivery](../evidence/final-delivery.md) records controls, exact evidence,
+bytes reclaimed, remaining disk, retained sources/readers/stores and limitations.
