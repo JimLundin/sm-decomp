@@ -513,181 +513,6 @@ pub(crate) fn discover(checkout: &Path, source_inventory: Option<&Path>, observe
     Ok(jobs)
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::{
-        process::Command,
-        sync::atomic::{AtomicUsize, Ordering},
-    };
-    static NEXT: AtomicUsize = AtomicUsize::new(0);
-    struct Project(PathBuf);
-    impl Drop for Project {
-        fn drop(&mut self) {
-            let _ = fs::remove_dir_all(&self.0);
-        }
-    }
-    fn write(root: &Path, path: &str, data: impl AsRef<[u8]>) {
-        let path = root.join(path);
-        fs::create_dir_all(path.parent().unwrap()).unwrap();
-        fs::write(path, data).unwrap();
-    }
-    fn fresh() -> Project {
-        let root = std::env::temp_dir().join(format!(
-            "sm-translation-test-{}-{}",
-            std::process::id(),
-            NEXT.fetch_add(1, Ordering::Relaxed)
-        ));
-        fs::create_dir(&root).unwrap();
-        write(&root, "tools/dependencies.toml", "schema_version = 1\n");
-        Project(root)
-    }
-    fn ticket(root: &Path, number: u64, status: &str, blockers: &str, triage: &str) {
-        write(
-            root,
-            &format!(".scratch/work/issues/{number:02}-work.md"),
-            format!(
-                "# Work {number}\nStatus: {status}\nBlocked by: {blockers}\nTriage: {triage}\nType: task\n\nResearch first.\n"
-            ),
-        );
-    }
-    #[test]
-    fn local_work_honors_claims_blockers_triage_and_order_before_new_research() {
-        let project = fresh();
-        ticket(&project.0, 1, "done", "None", "ready-for-agent");
-        ticket(&project.0, 2, "claimed", "None", "ready-for-agent");
-        ticket(&project.0, 3, "open", "2", "ready-for-agent");
-        ticket(&project.0, 4, "open", "1", "ready-for-agent");
-        ticket(&project.0, 5, "open", "None", "ready-for-human");
-        ticket(&project.0, 6, "open", "99", "ready-for-agent");
-        let jobs = discover(&project.0, None, None).unwrap();
-        assert_eq!(jobs.len(), 2);
-        assert_eq!(jobs[0].ticket, Some(".scratch/work/issues/04-work.md".into()));
-        assert_eq!(jobs[0].kind, Kind::Research);
-        assert!(jobs[0].writable_paths.is_empty());
-        assert!(jobs[1].instructions.contains("Source inventory unavailable"));
-        assert!(jobs.iter().all(|j| !j.id.contains(':')));
-        assert_eq!(jobs, discover(&project.0, None, None).unwrap());
-    }
-    #[test]
-    fn discovery_and_scope_reading_are_bounded_and_do_not_follow_ticket_symlinks() {
-        let project = fresh();
-        for number in 1..=12 {
-            ticket(&project.0, number, "open", "None", "ready-for-agent");
-        }
-        let jobs = discover(&project.0, None, None).unwrap();
-        assert_eq!(jobs.len(), MAX_JOBS);
-        assert!(jobs.iter().all(|j| j.ticket.is_some()));
-        let root = project.0.join("out/port/projectile-inventory");
-        for number in 0..129 {
-            fs::create_dir_all(root.join(number.to_string())).unwrap();
-        }
-        assert!(default_exercise(&project.0).unwrap_err().to_string().contains("128 runs"));
-    }
-    fn pinned_inventory(root: &Path) -> Source {
-        write(
-            root,
-            "deps/snesrev-sm/src/sm_86.c",
-            "void Observed(void) { /* 0x8693ca */ Helper(); }\nvoid Helper(void) {}\n",
-        );
-        write(root, "deps/snesrev-sm/LICENSE.txt", "test pinned source\n");
-        fs::create_dir_all(root.join("deps/downloads")).unwrap();
-        let archive = root.join("deps/downloads/oracle.tar.gz");
-        assert!(
-            Command::new("tar")
-                .arg("-czf")
-                .arg(&archive)
-                .arg("-C")
-                .arg(root.join("deps"))
-                .arg("snesrev-sm")
-                .status()
-                .unwrap()
-                .success()
-        );
-        write(
-            root,
-            "tools/dependencies.toml",
-            format!(
-                "schema_version = 1\n[[dependencies]]\nname = \"snesrev-sm\"\narchive = \"oracle.tar.gz\"\nrevision = \"test-source\"\nsha256 = {:?}\n",
-                crate::digest(&archive).unwrap()
-            ),
-        );
-        let source = crate::family::verify_source(root, &root.join("deps/snesrev-sm")).unwrap();
-        let mut value = toml::Value::Table(toml::Table::new());
-        value["schema_version"] = 1.into();
-        value["source_identity"] = toml::Value::try_from(&source).unwrap();
-        value["source_identity_sha256"] = crate::digest(&root.join("tools/dependencies.toml")).unwrap().into();
-        value["routines"] = toml::Value::Array(vec![
-            toml::Value::Table(toml::Table::from_iter([
-                ("symbol".into(), "Observed".into()),
-                ("source".into(), "src/sm_86.c".into()),
-                ("line".into(), 1.into()),
-                ("definition_sha256".into(), hash("void Observed(void) { /* 0x8693ca */ Helper(); }").into()),
-                ("original_address".into(), "0x8693ca".into()),
-                ("defined_dependencies".into(), toml::Value::try_from(vec!["Helper"]).unwrap()),
-            ])),
-            toml::Value::Table(toml::Table::from_iter([
-                ("symbol".into(), "Helper".into()),
-                ("source".into(), "src/sm_86.c".into()),
-                ("line".into(), 2.into()),
-                ("definition_sha256".into(), hash("void Helper(void) {}").into()),
-            ])),
-        ]);
-        write(root, "inventory.toml", toml::to_string(&value).unwrap());
-        source
-    }
-    #[test]
-    fn stale_inventory_and_missing_exercise_remain_research_without_invented_admission() {
-        let project = fresh();
-        pinned_inventory(&project.0);
-        let jobs = discover(&project.0, Some(Path::new("inventory.toml")), None).unwrap();
-        assert_eq!(jobs.len(), 1);
-        assert_eq!(jobs[0].kind, Kind::Research);
-        assert!(jobs[0].instructions.contains("No native projectile exercise verdict"));
-        write(&project.0, "deps/snesrev-sm/src/sm_86.c", "changed\n");
-        let jobs = discover(&project.0, Some(Path::new("inventory.toml")), None).unwrap();
-        assert_eq!(jobs[0].kind, Kind::Research);
-        assert!(jobs[0].instructions.contains("stale"));
-    }
-    #[test]
-    fn native_scope_requires_every_mandatory_fact_before_promotion() {
-        let project = fresh();
-        write(&project.0, "scope.toml", "format = \"translation-scope-v1\"\nsubject = \"Incomplete\"\n");
-        assert!(validate_scope(&project.0, Path::new("scope.toml")).is_err());
-        let scope = Scope {
-            format: "translation-scope-v1".into(),
-            subject: "Empty".into(),
-            source_inventory: "inventory.toml".into(),
-            source_inventory_sha256: "missing".into(),
-            exercise: "exercise.toml".into(),
-            exercise_sha256: "missing".into(),
-            routines: vec![],
-            dependencies: vec![],
-            dependency_review: BTreeMap::new(),
-            writable_paths: vec![],
-            inputs: BTreeMap::new(),
-            verification: vec![],
-        };
-        write(&project.0, "scope.toml", toml::to_string(&scope).unwrap());
-        assert!(validate_scope(&project.0, Path::new("scope.toml")).unwrap_err().to_string().contains("1..32"));
-    }
-    #[test]
-    fn routine_and_address_mentions_preserve_existing_work_ownership() {
-        let routine = Routine {
-            symbol: "Observed".into(),
-            source: "src/sm_86.c".into(),
-            line: 1,
-            definition_sha256: "unused".into(),
-            original_address: Some("0x8693ca".into()),
-            defined_dependencies: vec![],
-            indirect_indexed_calls: vec![],
-            external_or_macro_calls: vec![],
-        };
-        assert!(mentions("Implemented `Observed`", &routine));
-        assert!(mentions("Status: claimed\nTranslate 8693CA", &routine));
-        assert!(!mentions("ObservedExtra", &routine));
-    }
-}
 fn mentions(text: &str, routine: &Routine) -> bool {
     text.split(|c: char| !(c.is_ascii_alphanumeric() || c == '_')).any(|word| word == routine.symbol)
         || address(routine).is_some_and(|a| text.to_ascii_lowercase().contains(&format!("{a:06x}")))
@@ -888,4 +713,180 @@ pub(crate) fn validate_scope(checkout: &Path, path: &Path) -> Result<Job> {
         ),
         ticket: None,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::{
+        process::Command,
+        sync::atomic::{AtomicUsize, Ordering},
+    };
+    static NEXT: AtomicUsize = AtomicUsize::new(0);
+    struct Project(PathBuf);
+    impl Drop for Project {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
+    fn write(root: &Path, path: &str, data: impl AsRef<[u8]>) {
+        let path = root.join(path);
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(path, data).unwrap();
+    }
+    fn fresh() -> Project {
+        let root = std::env::temp_dir().join(format!(
+            "sm-translation-test-{}-{}",
+            std::process::id(),
+            NEXT.fetch_add(1, Ordering::Relaxed)
+        ));
+        fs::create_dir(&root).unwrap();
+        write(&root, "tools/dependencies.toml", "schema_version = 1\n");
+        Project(root)
+    }
+    fn ticket(root: &Path, number: u64, status: &str, blockers: &str, triage: &str) {
+        write(
+            root,
+            &format!(".scratch/work/issues/{number:02}-work.md"),
+            format!(
+                "# Work {number}\nStatus: {status}\nBlocked by: {blockers}\nTriage: {triage}\nType: task\n\nResearch first.\n"
+            ),
+        );
+    }
+    #[test]
+    fn local_work_honors_claims_blockers_triage_and_order_before_new_research() {
+        let project = fresh();
+        ticket(&project.0, 1, "done", "None", "ready-for-agent");
+        ticket(&project.0, 2, "claimed", "None", "ready-for-agent");
+        ticket(&project.0, 3, "open", "2", "ready-for-agent");
+        ticket(&project.0, 4, "open", "1", "ready-for-agent");
+        ticket(&project.0, 5, "open", "None", "ready-for-human");
+        ticket(&project.0, 6, "open", "99", "ready-for-agent");
+        let jobs = discover(&project.0, None, None).unwrap();
+        assert_eq!(jobs.len(), 2);
+        assert_eq!(jobs[0].ticket, Some(".scratch/work/issues/04-work.md".into()));
+        assert_eq!(jobs[0].kind, Kind::Research);
+        assert!(jobs[0].writable_paths.is_empty());
+        assert!(jobs[1].instructions.contains("Source inventory unavailable"));
+        assert!(jobs.iter().all(|j| !j.id.contains(':')));
+        assert_eq!(jobs, discover(&project.0, None, None).unwrap());
+    }
+    #[test]
+    fn discovery_and_scope_reading_are_bounded_and_do_not_follow_ticket_symlinks() {
+        let project = fresh();
+        for number in 1..=12 {
+            ticket(&project.0, number, "open", "None", "ready-for-agent");
+        }
+        let jobs = discover(&project.0, None, None).unwrap();
+        assert_eq!(jobs.len(), MAX_JOBS);
+        assert!(jobs.iter().all(|j| j.ticket.is_some()));
+        let root = project.0.join("out/port/projectile-inventory");
+        for number in 0..129 {
+            fs::create_dir_all(root.join(number.to_string())).unwrap();
+        }
+        assert!(default_exercise(&project.0).unwrap_err().to_string().contains("128 runs"));
+    }
+    fn pinned_inventory(root: &Path) -> Source {
+        write(
+            root,
+            "deps/snesrev-sm/src/sm_86.c",
+            "void Observed(void) { /* 0x8693ca */ Helper(); }\nvoid Helper(void) {}\n",
+        );
+        write(root, "deps/snesrev-sm/LICENSE.txt", "test pinned source\n");
+        fs::create_dir_all(root.join("deps/downloads")).unwrap();
+        let archive = root.join("deps/downloads/oracle.tar.gz");
+        assert!(
+            Command::new("tar")
+                .arg("-czf")
+                .arg(&archive)
+                .arg("-C")
+                .arg(root.join("deps"))
+                .arg("snesrev-sm")
+                .status()
+                .unwrap()
+                .success()
+        );
+        write(
+            root,
+            "tools/dependencies.toml",
+            format!(
+                "schema_version = 1\n[[dependencies]]\nname = \"snesrev-sm\"\narchive = \"oracle.tar.gz\"\nrevision = \"test-source\"\nsha256 = {:?}\n",
+                crate::digest(&archive).unwrap()
+            ),
+        );
+        let source = crate::family::verify_source(root, &root.join("deps/snesrev-sm")).unwrap();
+        let mut value = toml::Value::Table(toml::Table::new());
+        value["schema_version"] = 1.into();
+        value["source_identity"] = toml::Value::try_from(&source).unwrap();
+        value["source_identity_sha256"] = crate::digest(&root.join("tools/dependencies.toml")).unwrap().into();
+        value["routines"] = toml::Value::Array(vec![
+            toml::Value::Table(toml::Table::from_iter([
+                ("symbol".into(), "Observed".into()),
+                ("source".into(), "src/sm_86.c".into()),
+                ("line".into(), 1.into()),
+                ("definition_sha256".into(), hash("void Observed(void) { /* 0x8693ca */ Helper(); }").into()),
+                ("original_address".into(), "0x8693ca".into()),
+                ("defined_dependencies".into(), toml::Value::try_from(vec!["Helper"]).unwrap()),
+            ])),
+            toml::Value::Table(toml::Table::from_iter([
+                ("symbol".into(), "Helper".into()),
+                ("source".into(), "src/sm_86.c".into()),
+                ("line".into(), 2.into()),
+                ("definition_sha256".into(), hash("void Helper(void) {}").into()),
+            ])),
+        ]);
+        write(root, "inventory.toml", toml::to_string(&value).unwrap());
+        source
+    }
+    #[test]
+    fn stale_inventory_and_missing_exercise_remain_research_without_invented_admission() {
+        let project = fresh();
+        pinned_inventory(&project.0);
+        let jobs = discover(&project.0, Some(Path::new("inventory.toml")), None).unwrap();
+        assert_eq!(jobs.len(), 1);
+        assert_eq!(jobs[0].kind, Kind::Research);
+        assert!(jobs[0].instructions.contains("No native projectile exercise verdict"));
+        write(&project.0, "deps/snesrev-sm/src/sm_86.c", "changed\n");
+        let jobs = discover(&project.0, Some(Path::new("inventory.toml")), None).unwrap();
+        assert_eq!(jobs[0].kind, Kind::Research);
+        assert!(jobs[0].instructions.contains("stale"));
+    }
+    #[test]
+    fn native_scope_requires_every_mandatory_fact_before_promotion() {
+        let project = fresh();
+        write(&project.0, "scope.toml", "format = \"translation-scope-v1\"\nsubject = \"Incomplete\"\n");
+        assert!(validate_scope(&project.0, Path::new("scope.toml")).is_err());
+        let scope = Scope {
+            format: "translation-scope-v1".into(),
+            subject: "Empty".into(),
+            source_inventory: "inventory.toml".into(),
+            source_inventory_sha256: "missing".into(),
+            exercise: "exercise.toml".into(),
+            exercise_sha256: "missing".into(),
+            routines: vec![],
+            dependencies: vec![],
+            dependency_review: BTreeMap::new(),
+            writable_paths: vec![],
+            inputs: BTreeMap::new(),
+            verification: vec![],
+        };
+        write(&project.0, "scope.toml", toml::to_string(&scope).unwrap());
+        assert!(validate_scope(&project.0, Path::new("scope.toml")).unwrap_err().to_string().contains("1..32"));
+    }
+    #[test]
+    fn routine_and_address_mentions_preserve_existing_work_ownership() {
+        let routine = Routine {
+            symbol: "Observed".into(),
+            source: "src/sm_86.c".into(),
+            line: 1,
+            definition_sha256: "unused".into(),
+            original_address: Some("0x8693ca".into()),
+            defined_dependencies: vec![],
+            indirect_indexed_calls: vec![],
+            external_or_macro_calls: vec![],
+        };
+        assert!(mentions("Implemented `Observed`", &routine));
+        assert!(mentions("Status: claimed\nTranslate 8693CA", &routine));
+        assert!(!mentions("ObservedExtra", &routine));
+    }
 }
