@@ -9,6 +9,8 @@ use std::process::Command;
 use std::time::{Duration, Instant};
 use toml::Value;
 
+mod affected;
+mod assignment;
 mod baseline;
 mod batch;
 mod benchmark;
@@ -17,6 +19,7 @@ mod callback;
 mod checkpoints;
 mod cleanup;
 mod coverage;
+mod coordination;
 mod decomp_acceptance;
 mod decomp_job;
 mod decomp_model;
@@ -62,6 +65,7 @@ mod rng_job;
 mod routine_live;
 mod source_inventory;
 mod storage_studies;
+mod translation;
 
 static BINARY_SHA256: std::sync::OnceLock<String> = std::sync::OnceLock::new();
 
@@ -1291,6 +1295,50 @@ fn main() -> Result<()> {
             Ok(())
         }
         Some("family-authenticate") if args.len() == 1 => emit(&family::authenticate(request()?)?),
+        Some("assign") if args.len() == 1 => emit(&coordination::operate(request()?)?),
+        Some("assign") => {
+            let mut options = crate::report!({"checkout":std::env::current_dir()?,"operation":args[1]});
+            let mut index = 2;
+            while index < args.len() {
+                if args[index] == "--no-translations" {
+                    set_option(&mut options, "translations", false)?;
+                    index += 1;
+                    continue;
+                }
+                let key = match args[index].as_str() {
+                    "--checkout" => "checkout",
+                    "--effort" => "effort",
+                    "--coordinator" => "coordinator",
+                    "--capacity" => "capacity",
+                    "--available-slots" => "available_slots",
+                    "--profile" => "profile",
+                    "--changed-since" => "changed_since",
+                    "--source-inventory" => "source_inventory",
+                    "--exercise" => "exercise",
+                    "--batch-result" => "batch_result",
+                    "--scope" => "scope",
+                    "--update" => "update",
+                    "--families" => "families",
+                    option => bail!("unknown assign option: {option}"),
+                };
+                index += 1;
+                if key == "families" {
+                    let mut names = Vec::new();
+                    while index < args.len() && !args[index].starts_with("--") { names.push(args[index].clone()); index += 1; }
+                    ensure!(!names.is_empty(), "families missing");
+                    set_option(&mut options, key, names)?;
+                } else {
+                    let value = args.get(index).context("assign option value missing")?;
+                    if key == "update" {
+                        set_option(&mut options, key, toml::from_str::<Value>(&fs::read_to_string(value)?)?)?;
+                    } else if ["capacity", "available_slots"].contains(&key) {
+                        set_option(&mut options, key, value.parse::<usize>()?)?;
+                    } else { set_option(&mut options, key, value)?; }
+                    index += 1;
+                }
+            }
+            emit(&coordination::operate(options.try_into()?)?)
+        }
         Some("batch") if args.len() == 1 => {
             let result = batch::operate(request()?)?;
             emit(&result)?;

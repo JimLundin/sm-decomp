@@ -1,6 +1,6 @@
 # Implement exclusive assignment state and pull queue
 
-Status: open
+Status: claimed
 Blocked by: 02
 Triage: ready-for-agent
 Type: task
@@ -22,3 +22,5 @@ restart, publication interruption and stopped-owner recovery through the interfa
 ## Comments
 
 May proceed alongside ticket03; avoid modifying existing batch execution here.
+Claimed by queue implementer on `assignment-queue` at
+`/tmp/sm-assignment-queue`; integration owner retains the authoritative status.

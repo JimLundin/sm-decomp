@@ -1,6 +1,6 @@
 # Deepen affected Offline family selection
 
-Status: open
+Status: claimed
 Blocked by: 02
 Triage: ready-for-agent
 Type: task
@@ -25,3 +25,5 @@ selection savings.
 ## Comments
 
 May proceed alongside ticket04 once the agreed shared result types are fixed.
+Claimed by selection implementer on `affected-selection` at
+`/tmp/sm-affected-selection`; integration owner retains the authoritative status.
