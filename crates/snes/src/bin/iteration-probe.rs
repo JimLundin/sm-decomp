@@ -1,5 +1,5 @@
 //! Retained late-occurrence candidate and matching controls, synthetic only.
-use anyhow::{Context, Result, ensure};
+use anyhow::{Result, ensure};
 use serde::Serialize;
 #[derive(Serialize)]
 struct Expectation {
@@ -22,7 +22,8 @@ struct Report {
     candidate: snes::focused::Report,
     predecessor: snes::focused::Report,
     disabled: snes::focused::Report,
-    cache_refusal: String,
+    cache: snes::paired::CacheReport,
+    warm: snes::focused::Report,
     altered_key: (u32, u8),
     independent_expectation: Expectation,
 }
@@ -51,7 +52,7 @@ fn execute(output: &Path, source: &str) -> Result<()> {
     rom[0x7ffc..0x7ffe].copy_from_slice(&0x8000u16.to_le_bytes());
     let correct = emitted::STEP_TABLE.iter().copied().find(|row| row.0 == 0x8004 && row.1 == 3).unwrap();
     let candidate = [(correct.0, correct.1, correct.2, wrong_late as runtime::StepFn)];
-    let pads = [0];
+    let pads = [0, 0];
     std::fs::write(output.join("fixture.sfc"), &rom)?;
     std::fs::write(output.join("fixture.inputs"), movie::write_inputs(&pads))?;
     std::fs::write(output.join("production-steps.rs"), include_str!(concat!(env!("OUT_DIR"), "/feedback_steps.rs")))?;
@@ -99,7 +100,7 @@ fn execute(output: &Path, source: &str) -> Result<()> {
         movie_sha256: sha256(movie::write_inputs(&pads).as_bytes()),
         input_sha256: sha256(movie::write_inputs(&pads).as_bytes()),
         source_sha256: source.into(),
-        hardware_sha256: "e".repeat(64),
+        hardware_sha256: sha256(include_bytes!("../paired.rs")),
         profile: "lsnes-profile".into(),
         serializer: "paired-v2".into(),
         compiler: "iteration-probe".into(),
@@ -112,13 +113,32 @@ fn execute(output: &Path, source: &str) -> Result<()> {
         },
         dispatch_sha256: None,
     };
-    let cache_error =
-        snes::paired::prepare_cache(&rom, 0, &candidate, &pads, (0, 0), ids, &output.join("divergent-cache"))
-            .err()
-            .context("divergent cache unexpectedly validates")?
-            .to_string();
+    let (pair, cache) =
+        snes::paired::prepare_cache(&rom, 0, &candidate, &pads, (0, 0), ids, &output.join("divergent-cache"))?;
+    ensure!(
+        cache.validation.complete
+            && cache.validation.observed_rollovers == 2
+            && cache.validation.candidate_reference_comparison == "divergence",
+        "cache did not record actual next-frame divergence"
+    );
+    let mut warm_r = Reference::new(&rom, 0)?;
+    let mut warm_s = Subject::with_steps(&rom, 0, &candidate)?;
+    snes::paired::restore(&pair, &pair.identities, &mut warm_r, &mut warm_s)?;
+    let warm = snes::focused::compare_restored(
+        &mut warm_r,
+        &mut warm_s,
+        &pads,
+        (0, 0, 0),
+        count,
+        &output.join("warm"),
+        "warm",
+    )?;
+    ensure!(
+        warm.status == "divergence" && warm.first_mismatch.as_ref().is_some_and(|trace| trace.instruction == 86),
+        "warm cache hid candidate divergence"
+    );
     let report = Report {
-        schema_version: 2,
+        schema_version: 3,
         scope: "synthetic late occurrence; acceptance not certified".into(),
         status: "pass".into(),
         complete: true,
@@ -131,7 +151,8 @@ fn execute(output: &Path, source: &str) -> Result<()> {
         candidate: late,
         predecessor,
         disabled,
-        cache_refusal: cache_error,
+        cache,
+        warm,
         altered_key: (0x8004, 3),
         independent_expectation: Expectation {
             source: "literal cartridge instructions and production emitted correct store".into(),

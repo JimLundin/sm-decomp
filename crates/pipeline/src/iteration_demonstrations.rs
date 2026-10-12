@@ -55,10 +55,37 @@ fn probe(output: &Path, source: &str, binary: &Path) -> Result<Value> {
                 == crate::readiness_metadata::value(&"divergence").expect("validated native metadata")
             && report["candidate"]["first_mismatch"]["instruction"]
                 == crate::readiness_metadata::value(&86).expect("validated native metadata")
-            && report["candidate"]["first_mismatch"]["subject"]["generated_key"] == crate::report!(vec![0x8004, 3])
-            && report["cache_refusal"].as_str().is_some_and(|s| !s.is_empty()),
+            && report["candidate"]["first_mismatch"]["subject"]["generated_key"] == crate::report!(vec![0x8004, 3]),
         "late occurrence probe scope or identities differ"
     );
+    if report["schema_version"].as_integer() == Some(3) {
+        let cache = &report["cache"];
+        let validation = origins::document(&output.join("divergent-cache/validation.toml"))?;
+        ensure!(
+            cache["validation"] == validation
+                && cache["status"].as_str() == Some("pass")
+                && cache["complete"].as_bool() == Some(true)
+                && cache["validation"]["complete"].as_bool() == Some(true)
+                && cache["validation"]["observed_rollovers"].as_integer() == Some(2)
+                && cache["validation"]["candidate_reference_comparison"].as_str() == Some("divergence"),
+            "late occurrence cache did not record actual divergence"
+        );
+        let warm = origins::document(&output.join("warm/instruction.toml"))?;
+        ensure!(
+            report["warm"] == warm
+                && warm["status"].as_str() == Some("divergence")
+                && warm["complete"].as_bool() == Some(true)
+                && warm["first_mismatch"]["instruction"].as_integer() == Some(86)
+                && warm["first_mismatch"]["subject"]["generated_key"] == crate::report!(vec![0x8004, 3]),
+            "restored cache hid late candidate divergence"
+        );
+    } else {
+        ensure!(
+            report["schema_version"].as_integer() == Some(2)
+                && report["cache_refusal"].as_str().is_some_and(|s| !s.is_empty()),
+            "historical late occurrence cache refusal missing"
+        );
+    }
     for name in ["predecessor", "disabled"] {
         ensure!(
             report[name]["status"] == crate::readiness_metadata::value(&"pass").expect("validated native metadata")

@@ -12,7 +12,8 @@ controls separately; see [their contract](FEEDBACK_DEMONSTRATIONS.md).
 
 `just readiness --original-run out/runs/RUN` can consume a separately verified
 original recording-core capture. Initial candidate synchronization always runs
-fresh. `just validate-iteration` consumes the verified current accepted pointer;
+fresh. `just validate-iteration --preparation RUN` requires the explicit
+sealed preparation metadata and consumes the verified current accepted pointer;
 `--predecessor RUN` selects its preserved accepted lineage explicitly. Dependency
 reuse verifies complete accepted origins and unchanged shared inputs. Generated
 parity, changed-entry coverage, focused execution and cache validation remain

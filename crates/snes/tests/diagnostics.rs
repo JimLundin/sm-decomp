@@ -131,11 +131,19 @@ fn cold_frame_focus_finds_later_failure_after_first_key_window_passes() {
     assert!(later.first_mismatch.as_ref().unwrap().instruction > 65);
     assert_eq!(later.first_mismatch.as_ref().unwrap().subject.generated_key, Some((0x8004, 3)));
     assert!(output.join("later/subject-after.hardware.bin").is_file());
-    // A failing next-frame cache cannot prevent cold mismatch evidence.
-    assert!(
-        snes::paired::prepare_cache(&rom, 0, &table, &[0], (0, 0), identities(&rom, &[0]), &output.join("bad-cache"))
-            .is_err()
-    );
+    // Serialization fidelity preserves and reports genuine candidate divergence.
+    let (_, cache) = snes::paired::prepare_cache(
+        &rom,
+        0,
+        &table,
+        &[0, 0],
+        (0, 0),
+        identities(&rom, &[0, 0]),
+        &output.join("divergent-cache"),
+    )
+    .unwrap();
+    assert_eq!(cache.validation.observed_rollovers, 2);
+    assert_eq!(cache.validation.candidate_reference_comparison, "divergence");
     for (name, steps) in [("predecessor", &[][..]), ("disabled", &[][..])] {
         let report = snes::focused::compare_from_boundary(
             &mut Reference::new(&rom, 0).unwrap(),
