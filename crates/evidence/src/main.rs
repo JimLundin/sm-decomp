@@ -2,6 +2,7 @@ use anyhow::{Context, Result, bail, ensure};
 use evidence::*;
 use serde::Serialize;
 use std::fs::OpenOptions;
+mod metrics;
 fn emit<T: Serialize>(value: &T) -> Result<()> {
     print!("{}", toml::to_string_pretty(value)?);
     Ok(())
@@ -30,6 +31,7 @@ use std::time::Instant;
 fn main() -> Result<()> {
     let args: Vec<_> = std::env::args().skip(1).collect();
     let start = Instant::now();
+    let mut metrics = metrics::Metrics::start(args.first().map(String::as_str).unwrap_or("unknown"))?;
     match args.first().map(String::as_str) {
         Some("ingest") if (3..=4).contains(&args.len()) => {
             let mut store = Store::create(Path::new(&args[1]))?;
@@ -56,25 +58,27 @@ fn main() -> Result<()> {
             let mut store = Store::create(Path::new(&args[1]))?;
             println!("ready");
             std::io::stdout().flush()?;
-            let stream = ingest_trace(&mut store, &mut std::io::stdin().lock())?;
+            let stream = metrics.measure("trace-ingest", || ingest_trace(&mut store, &mut std::io::stdin().lock()))?;
             let info = read_stream(&store, &stream)?;
             ensure!(info.bytes > 0, "empty captured trace");
-            store.commit()?;
+            metrics.measure("trace-commit", || store.commit())?;
             let temporary = TraceReceipt { stream: hex(&stream), bytes: info.bytes, sha256: hex(&info.legacy_sha256) };
             let mut out = OpenOptions::new().write(true).create_new(true).open(&args[2])?;
             out.write_all(toml::to_string(&temporary)?.as_bytes())?;
             out.sync_all()?;
             let mut store = Store::create(Path::new(&args[1]))?;
-            let observations = ingest_tree(&mut store, Path::new(&args[3]), &mut |_| {})?;
+            let observations =
+                metrics.measure("staged-tree-ingest", || ingest_tree(&mut store, Path::new(&args[3]), &mut |_| {}))?;
             let mut entries = read_tree(&store, &observations)?;
             entries.push(Entry { name: "hardware.log".into(), kind: EntryKind::Stream, id: stream });
             let tree = put_tree(&mut store, entries)?;
             let provenance = toml::from_str(&std::fs::read_to_string(&args[4])?)?;
             let run = put_run(&mut store, tree, &provenance)?;
-            store.commit()?;
+            metrics.measure("final-commit", || store.commit())?;
             // Reopen sealed packs before allowing staging bytes to be released.
             let store = Store::open(Path::new(&args[1]))?;
-            let (verified, inventory) = verified_inventory(&store, &run)?;
+            let (verified, inventory) =
+                metrics.measure("reopened-verification", || verified_inventory(&store, &run))?;
             let artifacts = inventory.iter().map(|(name, info)| (name.clone(), hex(&info.sha256))).collect();
             let sizes = inventory.iter().map(|(name, info)| (name.clone(), info.bytes)).collect();
             let pointer = Pointer {
@@ -114,12 +118,14 @@ fn main() -> Result<()> {
         Some("import") if args.len() == 4 => {
             let source = Store::open(Path::new(&args[1]))?;
             let id = parse_id(&args[3])?;
-            let (original, inventory) = verified_inventory(&source, &id)?;
+            let (original, inventory) =
+                metrics.measure("import-source-verification", || verified_inventory(&source, &id))?;
             let mut destination = Store::create(Path::new(&args[2]))?;
-            destination.import_store(&source)?;
-            destination.commit()?;
+            metrics.measure("shared-import", || destination.import_store(&source))?;
+            metrics.measure("import-commit", || destination.commit())?;
             let destination = Store::open(Path::new(&args[2]))?;
-            let (restored, actual) = verified_inventory(&destination, &id)?;
+            let (restored, actual) =
+                metrics.measure("import-destination-verification", || verified_inventory(&destination, &id))?;
             ensure!(
                 original.observations == restored.observations && original.provenance == restored.provenance,
                 "imported run differs"
@@ -179,6 +185,7 @@ fn main() -> Result<()> {
             "usage: sm-evidence capture STORE TRACE_RECEIPT DIRECTORY PROVENANCE POINTER | inventory STORE RUN | import SOURCE_STORE DEST_STORE RUN | ingest STORE DIRECTORY [PROVENANCE.toml] | verify STORE RUN [DIRECTORY] | stats STORE | cat STORE RUN MEMBER | frame STORE RUN MEMBER FRAME | extract STORE RUN NEW_DIRECTORY | diff-image STORE LEFT RIGHT"
         ),
     }
+    metrics.finish("success", None)?;
     Ok(())
 }
 fn find(store: &Store, mut tree: Id, path: &str) -> Result<Entry> {

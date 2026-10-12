@@ -112,6 +112,29 @@ fn four_private_captures_share_after_publication_and_failed_producer_keeps_stagi
             .collect::<Vec<_>>()
     });
     assert!(pointers.iter().all(|pointer| pointer.observations == pointers[0].observations));
+    for name in names {
+        let metrics: toml::Value =
+            toml::from_str(&fs::read_to_string(root.0.join(name).join("capture.metrics.toml")).unwrap()).unwrap();
+        assert_eq!(metrics["format"].as_str(), Some("pipeline-metrics-v1"));
+        let processes = metrics["processes"].as_array().unwrap();
+        assert!(processes.iter().any(|p| p["role"].as_str() == Some("producer")));
+        assert!(processes.iter().any(|p| p["role"].as_str() == Some("collector")));
+        assert!(processes.iter().all(|p| p["reap_count"].as_integer() == Some(1)));
+        let stages = metrics["stages"].as_array().unwrap();
+        for stage in [
+            "trace-commit",
+            "staged-tree-ingest",
+            "final-commit",
+            "reopened-verification",
+            "staged-comparison",
+            "pointer-fsync",
+            "subject-authentication",
+            "staging-release",
+        ] {
+            assert!(stages.iter().any(|s| s["name"].as_str() == Some(stage)), "missing {stage}");
+        }
+        assert!(pointers[0].artifacts.keys().all(|key| !key.contains("metrics")));
+    }
     for (name, pointer) in names.into_iter().zip(pointers) {
         let directory = root.0.join(name);
         assert!(!directory.join(".evidence-stage").exists());
@@ -126,6 +149,14 @@ fn four_private_captures_share_after_publication_and_failed_producer_keeps_stagi
             true,
         )
         .unwrap();
+        let publication: toml::Value =
+            toml::from_str(&fs::read_to_string(directory.join("publication.metrics.toml")).unwrap()).unwrap();
+        let stages = publication["stages"].as_array().unwrap();
+        for name in
+            ["store-wait", "shared-import", "import-commit", "import-destination-verification", "private-store-release"]
+        {
+            assert!(stages.iter().any(|s| s["name"].as_str() == Some(name)), "missing publication stage {name}");
+        }
         assert_eq!(updated.run, pointer.run);
         assert!(!directory.join("store").exists());
         let output = Command::new(&reader)

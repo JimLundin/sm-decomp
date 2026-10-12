@@ -58,6 +58,15 @@ fn document<T: serde::de::DeserializeOwned>(path: &Path) -> Result<T> {
     Ok(toml::from_str(&fs::read_to_string(path)?)?)
 }
 pub fn subject(directory: &Path, root: &Path, workers: usize, expected_pointer: Option<&str>) -> Result<Pointer> {
+    subject_with_metrics(directory, root, workers, expected_pointer, None)
+}
+pub(crate) fn subject_with_metrics(
+    directory: &Path,
+    root: &Path,
+    workers: usize,
+    expected_pointer: Option<&str>,
+    metrics: Option<&crate::metrics::Context>,
+) -> Result<Pointer> {
     ensure!(!directory.is_symlink(), "subject directory is a symlink");
     let pointer_path = directory.join("evidence.toml");
     if let Some(expected) = expected_pointer {
@@ -72,7 +81,13 @@ pub fn subject(directory: &Path, root: &Path, workers: usize, expected_pointer: 
     let expected = pointer.provenance.reader_sha256.as_deref().context("reader digest missing")?;
     ensure!(!reader.is_symlink() && digest(&reader)? == expected, "retained evidence reader changed");
     let (_held, _wait) = acquire_lease(root, workers)?;
-    let output = Command::new(reader).arg("inventory").arg(store).arg(&pointer.run).output()?;
+    let mut command = Command::new(reader);
+    command.arg("inventory").arg(store).arg(&pointer.run);
+    let output = if let Some(metrics) = metrics {
+        metrics.output(&mut command, "subject-authentication")?
+    } else {
+        command.output()?
+    };
     ensure!(
         output.status.success(),
         "packed evidence authentication failed: {}",

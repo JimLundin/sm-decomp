@@ -8,7 +8,7 @@ use std::{
     path::{Path, PathBuf},
     process::{Child, Command, ExitStatus},
     sync::{
-        Arc, Mutex,
+        Arc, Condvar, Mutex,
         atomic::{AtomicBool, AtomicU64, Ordering},
     },
     thread,
@@ -25,6 +25,8 @@ struct Inner {
     path: PathBuf,
     stopped: AtomicBool,
     pids: Mutex<BTreeSet<u32>>,
+    wake: Condvar,
+    wake_lock: Mutex<()>,
 }
 pub(crate) struct Run {
     pub context: Context,
@@ -43,6 +45,8 @@ impl Run {
                 path,
                 stopped: AtomicBool::new(false),
                 pids: Mutex::new(BTreeSet::new()),
+                wake: Condvar::new(),
+                wake_lock: Mutex::new(()),
             }),
         };
         let worker = context.clone();
@@ -50,7 +54,11 @@ impl Run {
             thread::spawn(move || {
                 while !worker.inner.stopped.load(Ordering::Acquire) {
                     worker.sample();
-                    thread::sleep(Duration::from_millis(100));
+                    let locked = worker.inner.wake_lock.lock().unwrap();
+                    if worker.inner.stopped.load(Ordering::Acquire) {
+                        break;
+                    }
+                    let _ = worker.inner.wake.wait_timeout(locked, Duration::from_millis(100)).unwrap();
                 }
             })
         });
@@ -72,6 +80,7 @@ impl Run {
     }
     fn inner_stop(&mut self) {
         self.context.inner.stopped.store(true, Ordering::Release);
+        self.context.inner.wake.notify_all();
         if let Some(t) = self.sampler.take() {
             let _ = t.join();
         }
@@ -103,6 +112,56 @@ impl Context {
     }
     pub fn now(&self) -> Result<u64> {
         self.inner.receipt.lock().unwrap().clock.offset()
+    }
+    pub fn child_context(&self, command: &mut Command, path: &Path, role: &str) -> Result<PathBuf> {
+        let r = self.inner.receipt.lock().unwrap();
+        let context_path = path.with_extension("context.toml");
+        let context = pipeline_model::metrics::ContextReceipt {
+            run_id: r.run_id.clone(),
+            scope_id: format!("{}-{role}-{}", r.scope_id, NEXT.fetch_add(1, Ordering::Relaxed)),
+            parent_scope: Some(r.scope_id.clone()),
+            clock: r.clock.clone(),
+            enabled: r.enabled,
+            path: path.to_path_buf(),
+        };
+        crate::atomic_toml(&context_path, &context)?;
+        command.env("SM_PIPELINE_METRICS_CONTEXT", &context_path);
+        Ok(context_path)
+    }
+    pub fn merge_child(&self, path: &Path) -> Result<()> {
+        let child: Receipt = toml::from_str(&fs::read_to_string(path)?)?;
+        let mut r = self.inner.receipt.lock().unwrap();
+        ensure!(
+            child.format == "pipeline-metrics-v1"
+                && child.clock.origin_ns == r.clock.origin_ns
+                && child.clock.domain == r.clock.domain
+                && child.run_id == r.run_id,
+            "child metrics clock/run differs"
+        );
+        r.stages.extend(child.stages);
+        r.processes.extend(child.processes);
+        Ok(())
+    }
+    pub fn output(&self, command: &mut Command, role: &str) -> Result<std::process::Output> {
+        use std::io::Read;
+        command.stdout(std::process::Stdio::piped()).stderr(std::process::Stdio::piped());
+        let mut child = OwnedChild::spawn(command, self, role)?;
+        let mut stdout = child.child.stdout.take().context("missing child stdout")?;
+        let mut stderr = child.child.stderr.take().context("missing child stderr")?;
+        let out = thread::spawn(move || {
+            let mut bytes = vec![];
+            stdout.read_to_end(&mut bytes).map(|_| bytes)
+        });
+        let err = thread::spawn(move || {
+            let mut bytes = vec![];
+            stderr.read_to_end(&mut bytes).map(|_| bytes)
+        });
+        let status = child.reap(0)?.context("child wait missing")?;
+        Ok(std::process::Output {
+            status,
+            stdout: out.join().map_err(|_| anyhow::anyhow!("stdout reader panicked"))??,
+            stderr: err.join().map_err(|_| anyhow::anyhow!("stderr reader panicked"))??,
+        })
     }
     fn write(&self) -> Result<()> {
         crate::atomic_toml(&self.inner.path, &*self.inner.receipt.lock().unwrap())
@@ -181,6 +240,9 @@ pub(crate) struct OwnedChild {
     status: Option<ExitStatus>,
 }
 impl OwnedChild {
+    pub fn take_stdout(&mut self) -> Option<std::process::ChildStdout> {
+        self.child.stdout.take()
+    }
     pub fn spawn(command: &mut Command, context: &Context, role: &str) -> Result<Self> {
         let argv = std::iter::once(command.get_program())
             .chain(command.get_args())
