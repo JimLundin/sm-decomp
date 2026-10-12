@@ -119,8 +119,8 @@ fn exact_angle_clamps_match_independent_native_sine_table_at_every_raw_angle() {
         for raw in 0..=255_u8 {
             let (dx, dy) = coordinates[usize::from(raw)].expect("every raw angle must have a fixture");
             let clamped = if orientation != 0 {
-                if raw < 0x15 || raw >= 0xc0 { 0x15 } else { raw.min(0x50) }
-            } else if raw < 0x40 || raw >= 0xeb {
+                if !(0x15..0xc0).contains(&raw) { 0x15 } else { raw.min(0x50) }
+            } else if !(0x40..0xeb).contains(&raw) {
                 0xeb
             } else {
                 raw.max(0xb0)
@@ -128,7 +128,7 @@ fn exact_angle_clamps_match_independent_native_sine_table_at_every_raw_angle() {
             let expected = |angle: u8| {
                 let offset = sine_offset + (usize::from(angle) + 64) * 2;
                 let sine = i16::from_le_bytes([rom[offset], rom[offset + 1]]);
-                let magnitude = (u32::from(sine.unsigned_abs()) * 0x500 >> 8) as u16;
+                let magnitude = ((u32::from(sine.unsigned_abs()) * 0x500) >> 8) as u16;
                 if sine < 0 { magnitude.wrapping_neg() } else { magnitude }
             };
             let mut bytes = initial(64);

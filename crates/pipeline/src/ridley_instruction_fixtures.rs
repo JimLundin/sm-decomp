@@ -106,8 +106,8 @@ fn callback_cases(routines: &mut [Routine], rom: &[u8], expected: &Path) -> Resu
             ]);
             let raw = raw as u8;
             let angle = if orientation != 0 {
-                if raw < 0x15 || raw >= 0xc0 { 0x15 } else { raw.min(0x50) }
-            } else if raw < 0x40 || raw >= 0xeb {
+                if !(0x15..0xc0).contains(&raw) { 0x15 } else { raw.min(0x50) }
+            } else if !(0x40..0xeb).contains(&raw) {
                 0xeb
             } else {
                 raw.max(0xb0)
