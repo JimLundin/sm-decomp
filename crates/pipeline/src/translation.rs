@@ -28,6 +28,8 @@ pub(crate) struct Verification {
 pub(crate) struct Scope {
     pub format: String,
     pub subject: String,
+    #[serde(default)]
+    pub origin_ticket: Option<PathBuf>,
     pub source_inventory: PathBuf,
     pub source_inventory_sha256: String,
     pub exercise: PathBuf,
@@ -71,7 +73,7 @@ struct Routine {
     #[serde(default)]
     external_or_macro_calls: Vec<String>,
 }
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 struct Exercise {
     schema_version: u32,
     status: String,
@@ -498,9 +500,14 @@ pub(crate) fn discover(checkout: &Path, source_inventory: Option<&Path>, observe
             .filter(|line| !line.starts_with("Status:") && !line.starts_with("<!-- assignment:"))
             .collect::<Vec<_>>()
             .join("\n");
-        let inputs = BTreeMap::from([("ticket-semantic-sha256".into(), hash(&semantic))]);
+        let origin_type = ticket.kind.as_deref().unwrap_or("task");
+        let inputs = BTreeMap::from([
+            ("ticket-semantic-sha256".into(), hash(&semantic)),
+            ("origin-ticket-type".into(), origin_type.into()),
+            ("origin-ticket".into(), ticket.path.display().to_string()),
+        ]);
         jobs.push(job(format!("ticket-{}",hash(&ticket.path.display().to_string())), subject, inputs,
-            format!("Honor existing local ticket {}. It is open, unclaimed and dependency-ready. Read its requirements and establish a complete Translation scope before implementation: observed exercise provenance, required dependencies, exact writable paths and concrete verification argv. Use native translation-scope-v1 TOML; limit each initial experiment to approximately 60 seconds. Research facts do not grant acceptance.", ticket.path.display()), Some(ticket.path.clone()))?);
+            format!("Honor existing local ticket {}. It is open, unclaimed and dependency-ready. Read its requirements and establish a complete Translation scope before implementation: observed exercise provenance, required dependencies, exact writable paths and concrete verification argv. Include a bounded pre-integration test and an integration gate. Use native translation-scope-v1 TOML; limit each initial experiment to approximately 60 seconds. Research facts do not grant acceptance. Preserve task-origin ownership until its implementation is integrated, verified and cleaned.", ticket.path.display()), Some(ticket.path.clone()))?);
     }
     if jobs.len() == MAX_JOBS {
         return Ok(jobs);
@@ -662,6 +669,21 @@ pub(crate) fn validate_scope(checkout: &Path, path: &Path) -> Result<Job> {
         "scope includes unrelated or unobserved routines outside the exercised dependency closure"
     );
     let all = tickets(&checkout)?;
+    if let Some(origin) = &scope.origin_ticket {
+        ensure!(relative(origin) && origin.starts_with(".scratch"), "scope origin must name a local task");
+        let ticket = all.iter().find(|ticket| &ticket.path == origin).context("scope origin ticket missing")?;
+        ensure!(
+            matches!(ticket.status.as_str(), "open" | "claimed")
+                && ticket.triage.as_deref().is_none_or(|s| s == "ready-for-agent")
+                && ticket.kind.as_deref().is_none_or(|kind| kind == "task"),
+            "scope origin task cannot be assigned"
+        );
+        ensure!(
+            !ticket.missing_blockers
+                && ticket.blockers.iter().all(|p| all.iter().any(|t| &t.path == p && finished(&t.status))),
+            "scope origin task has unresolved blockers"
+        );
+    }
     for dependency in &scope.dependencies {
         ensure!(
             relative(dependency) && dependency.starts_with(".scratch"),
@@ -710,6 +732,7 @@ pub(crate) fn validate_scope(checkout: &Path, path: &Path) -> Result<Job> {
     }
     ensure!(!scope.verification.is_empty(), "scope verification commands missing");
     ensure!(scope.verification.iter().any(|v| !v.integration), "scope needs bounded pre-integration verification");
+    ensure!(scope.verification.iter().any(|v| v.integration), "scope needs merged-source integration verification");
     for verification in &scope.verification {
         ensure!(
             !verification.argv.is_empty()
@@ -717,19 +740,12 @@ pub(crate) fn validate_scope(checkout: &Path, path: &Path) -> Result<Job> {
             "scope verification argv malformed"
         );
         ensure!(
-            ["cargo", "sm-pipeline"].contains(&verification.argv[0].as_str()),
-            "scope verification must use existing Rust tooling"
-        );
-        ensure!(
             verification.timeout_seconds > 0 && (verification.integration || verification.timeout_seconds <= 60),
             "initial verification must be bounded at 60 seconds"
         );
         ensure!(
-            verification
-                .argv
-                .iter()
-                .any(|a| ["test", "family-verify", "batch", "live-verify", "routine-live"].contains(&a.as_str())),
-            "scope command does not declare verification"
+            verification_command(&verification.argv),
+            "scope command must execute cargo test or existing Rust verification operations"
         );
     }
     let mut inputs: BTreeMap<_, _> =
@@ -737,6 +753,10 @@ pub(crate) fn validate_scope(checkout: &Path, path: &Path) -> Result<Job> {
     inputs.insert(file_key(&path), crate::digest(&path)?);
     inputs.insert("scope-file".into(), path.display().to_string());
     inputs.insert("scope-sha256".into(), crate::digest(&path)?);
+    if let Some(origin) = &scope.origin_ticket {
+        inputs.insert("origin-ticket".into(), origin.display().to_string());
+        inputs.insert("origin-ticket-type".into(), "task".into());
+    }
     inputs.insert(file_key(&inventory_path), scope.source_inventory_sha256.clone());
     inputs.insert(file_key(&exercise_path), scope.exercise_sha256.clone());
     let mut identity_routines = scope.routines.clone();
@@ -762,8 +782,52 @@ pub(crate) fn validate_scope(checkout: &Path, path: &Path) -> Result<Job> {
             path.display(),
             verification
         ),
-        ticket: None,
+        ticket: scope.origin_ticket,
     })
+}
+
+/// Keep command identity explicit: mentioning a verifier in arbitrary argv does
+/// not make a build, status report or agent-chosen executable a required gate.
+fn verification_command(argv: &[String]) -> bool {
+    let args: Vec<_> = argv.iter().map(String::as_str).collect();
+    if args.starts_with(&["cargo", "test"]) {
+        return !args.iter().any(|a| matches!(*a, "--no-run" | "--help" | "-h" | "--list"));
+    }
+    let operation = if args.first() == Some(&"sm-pipeline") {
+        &args[1..]
+    } else if args.starts_with(&["cargo", "run"]) {
+        let Some(separator) = args.iter().position(|a| *a == "--") else { return false };
+        let mut package = false;
+        let mut locked = false;
+        let mut offline = false;
+        let mut index = 2;
+        while index < separator {
+            match args[index] {
+                "-p" | "--package" if !package && args.get(index + 1) == Some(&"pipeline") => {
+                    package = true;
+                    index += 2;
+                }
+                "--bin" if args.get(index + 1) == Some(&"sm-pipeline") => index += 2,
+                "--locked" if !locked => {
+                    locked = true;
+                    index += 1;
+                }
+                "--offline" if !offline => {
+                    offline = true;
+                    index += 1;
+                }
+                _ => return false,
+            }
+        }
+        if !package || !locked || !offline {
+            return false;
+        }
+        &args[separator + 1..]
+    } else {
+        return false;
+    };
+    matches!(operation.first(), Some(&"family-verify" | &"live-verify" | &"routine-live"))
+        || (operation.first() == Some(&"batch") && matches!(operation.get(1), Some(&"verify" | &"run")))
 }
 
 #[cfg(test)]
@@ -815,7 +879,9 @@ mod tests {
         ticket(&project.0, 6, "open", "99", "ready-for-agent");
         let jobs = discover(&project.0, None, None).unwrap();
         assert_eq!(jobs.len(), 2);
-        assert_eq!(jobs[0].ticket, Some(".scratch/work/issues/04-work.md".into()));
+        assert_eq!(jobs[0].ticket, Some(PathBuf::from(".scratch/work/issues/04-work.md")));
+        assert_eq!(jobs[0].inputs.get("origin-ticket").map(String::as_str), Some(".scratch/work/issues/04-work.md"));
+        assert_eq!(jobs[0].inputs.get("origin-ticket-type").map(String::as_str), Some("task"));
         assert_eq!(jobs[0].kind, Kind::Research);
         assert!(jobs[0].writable_paths.is_empty());
         assert!(jobs[1].instructions.contains("Source inventory unavailable"));
@@ -830,7 +896,7 @@ mod tests {
         }
         let jobs = discover(&project.0, None, None).unwrap();
         assert_eq!(jobs.len(), MAX_JOBS);
-        assert!(jobs.iter().all(|j| j.ticket.is_some()));
+        assert!(jobs.iter().all(|j| j.inputs.contains_key("origin-ticket")));
         let root = project.0.join("out/port/projectile-inventory");
         for number in 0..129 {
             fs::create_dir_all(root.join(number.to_string())).unwrap();
@@ -866,11 +932,7 @@ mod tests {
             ),
         );
         let source = crate::family::verify_source(root, &root.join("deps/snesrev-sm")).unwrap();
-        let mut value = toml::Value::Table(toml::Table::new());
-        value["schema_version"] = 1.into();
-        value["source_identity"] = toml::Value::try_from(&source).unwrap();
-        value["source_identity_sha256"] = crate::digest(&root.join("tools/dependencies.toml")).unwrap().into();
-        value["routines"] = toml::Value::Array(vec![
+        let routines = toml::Value::Array(vec![
             toml::Value::Table(toml::Table::from_iter([
                 ("symbol".into(), "Observed".into()),
                 ("source".into(), "src/sm_86.c".into()),
@@ -886,6 +948,12 @@ mod tests {
                 ("definition_sha256".into(), hash("void Helper(void) {}").into()),
             ])),
         ]);
+        let value = toml::Value::Table(toml::Table::from_iter([
+            ("schema_version".into(), 1.into()),
+            ("source_identity".into(), toml::Value::try_from(&source).unwrap()),
+            ("source_identity_sha256".into(), crate::digest(&root.join("tools/dependencies.toml")).unwrap().into()),
+            ("routines".into(), routines),
+        ]));
         write(root, "inventory.toml", toml::to_string(&value).unwrap());
         source
     }
@@ -910,6 +978,7 @@ mod tests {
         let scope = Scope {
             format: "translation-scope-v1".into(),
             subject: "Empty".into(),
+            origin_ticket: None,
             source_inventory: "inventory.toml".into(),
             source_inventory_sha256: "missing".into(),
             exercise: "exercise.toml".into(),
@@ -939,5 +1008,213 @@ mod tests {
         assert!(mentions("Implemented `Observed`", &routine));
         assert!(mentions("Status: claimed\nTranslate 8693CA", &routine));
         assert!(!mentions("ObservedExtra", &routine));
+    }
+
+    #[test]
+    fn scope_verification_executes_real_gates_and_rejects_misleading_commands() {
+        let command = |parts: &[&str]| verification_command(&parts.iter().map(|s| (*s).into()).collect::<Vec<_>>());
+        for parts in [
+            vec!["cargo", "test", "-p", "port", "--locked", "--offline"],
+            vec!["sm-pipeline", "family-verify", "--manifest", "tools/port/example.toml"],
+            vec!["sm-pipeline", "batch", "verify", "--families", "example"],
+            vec!["sm-pipeline", "batch", "run", "--families", "example"],
+            vec!["cargo", "run", "-p", "pipeline", "--locked", "--offline", "--", "live-verify"],
+            vec![
+                "cargo",
+                "run",
+                "--offline",
+                "--package",
+                "pipeline",
+                "--bin",
+                "sm-pipeline",
+                "--locked",
+                "--",
+                "routine-live",
+            ],
+        ] {
+            assert!(command(&parts), "valid verification rejected: {parts:?}");
+        }
+        for parts in [
+            vec!["cargo", "build", "--bin", "test"],
+            vec!["cargo", "clean", "test"],
+            vec!["cargo", "test", "--no-run"],
+            vec!["cargo", "test", "--", "--list"],
+            vec!["cargo", "run", "-p", "pipeline", "--", "live-verify"],
+            vec!["cargo", "run", "-p", "other", "--locked", "--offline", "--", "live-verify"],
+            vec!["cargo", "run", "-p", "pipeline", "--locked", "--offline", "--", "batch", "status"],
+            vec!["sm-pipeline", "batch", "catalog", "--profile", "test"],
+            vec!["sm-pipeline", "unknown", "family-verify"],
+            vec!["bash", "cargo", "test"],
+        ] {
+            assert!(!command(&parts), "non-verification accepted: {parts:?}");
+        }
+    }
+
+    /// Execute a small C diagnostic with the production ROM identity and seal
+    /// its native outputs. This tests the actual scope validator without any
+    /// production bypass or long gameplay replay.
+    fn native_scope(project: &Project) -> Option<Scope> {
+        let root = &project.0;
+        let rom = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../rom/sm.sfc");
+        if !rom.is_file() {
+            eprintln!("native Translation scope control requires the repository's local ROM fixture");
+            return None;
+        }
+        let source = pinned_inventory(root);
+        fs::create_dir_all(root.join("rom")).unwrap();
+        fs::copy(&rom, root.join("rom/sm.sfc")).unwrap();
+        assert_eq!(crate::digest(&root.join("rom/sm.sfc")).unwrap(), ROM_SHA256);
+        write(root, "movies/super-metroid-any-3653.inputs", "native test movie identity\n");
+        let host = "#include <stdio.h>\nextern int observed(void);\nint main(int argc, char **argv) {\n  if (argc != 5 || observed() != 1) return 2;\n  FILE *table = fopen(\"projectiles.tsv\", \"w\");\n  if (!table) return 3;\n  fputs(\"kind\\taddress\\thits\\tfirst_frame\\tlast_frame\\ninit\\t93ca\\t1\\t0\\t0\\n\", table);\n  fclose(table);\n  FILE *terminal = fopen(argv[4], \"wb\");\n  if (!terminal) return 4;\n  fclose(terminal);\n  return 0;\n}\n";
+        write(root, "tools/decomp/headless.c", host);
+        write(root, "run/headless.c", host);
+        write(root, "run/sm_86.c", "int observed(void) { return 1; }\n");
+        write(root, "run/original-source/sm_86.c", fs::read(root.join("deps/snesrev-sm/src/sm_86.c")).unwrap());
+        let run = fs::canonicalize(root.join("run")).unwrap();
+        let build = vec![
+            "cc".to_owned(),
+            run.join("sm_86.c").display().to_string(),
+            run.join("headless.c").display().to_string(),
+            "-o".to_owned(),
+            run.join("inventory").display().to_string(),
+        ];
+        assert!(Command::new(&build[0]).args(&build[1..]).status().unwrap().success());
+        let replay = vec![
+            run.join("inventory").display().to_string(),
+            root.join("rom/sm.sfc").display().to_string(),
+            root.join("movies/super-metroid-any-3653.inputs").display().to_string(),
+            "1".to_owned(),
+            run.join("terminal.wram").display().to_string(),
+        ];
+        assert!(Command::new(&replay[0]).args(&replay[1..]).current_dir(&run).status().unwrap().success());
+        let exercise = Exercise {
+            schema_version: 2,
+            status: "diagnostic-complete".into(),
+            accepted: false,
+            frames: 1,
+            source: source.clone(),
+            artifacts: ["projectiles.tsv", "sm_86.c", "headless.c", "inventory", "original-source/sm_86.c"]
+                .into_iter()
+                .map(|name| (name.into(), crate::digest(&run.join(name)).unwrap()))
+                .collect(),
+            rom_sha256: ROM_SHA256.into(),
+            inputs_sha256: crate::digest(&root.join("movies/super-metroid-any-3653.inputs")).unwrap(),
+            original_sm86_sha256: source.files["src/sm_86.c"].clone(),
+            host_sha256: crate::digest(&root.join("tools/decomp/headless.c")).unwrap(),
+            build_command: build,
+            replay_command: replay,
+        };
+        write(root, "run/verdict.toml", toml::to_string(&exercise).unwrap());
+        write(root, "crates/port/src/example.rs", "// maintained source\n");
+        ticket(root, 1, "resolved", "None", "ready-for-agent");
+        ticket(root, 2, "claimed", "1", "ready-for-agent");
+        Some(Scope {
+            format: "translation-scope-v1".into(),
+            subject: "Observed and coherent helper behavior".into(),
+            origin_ticket: Some(".scratch/work/issues/02-work.md".into()),
+            source_inventory: "inventory.toml".into(),
+            source_inventory_sha256: crate::digest(&root.join("inventory.toml")).unwrap(),
+            exercise: "run/verdict.toml".into(),
+            exercise_sha256: crate::digest(&root.join("run/verdict.toml")).unwrap(),
+            routines: vec!["Observed".into(), "Helper".into()],
+            dependencies: vec![".scratch/work/issues/01-work.md".into()],
+            dependency_review: BTreeMap::new(),
+            writable_paths: vec!["crates/port/src/example.rs".into()],
+            inputs: ["deps/snesrev-sm/src/sm_86.c", "crates/port/src/example.rs", ".scratch/work/issues/01-work.md"]
+                .into_iter()
+                .map(|name| (name.into(), crate::digest(&root.join(name)).unwrap()))
+                .collect(),
+            verification: vec![
+                Verification {
+                    argv: vec![
+                        "cargo".into(),
+                        "test".into(),
+                        "-p".into(),
+                        "port".into(),
+                        "--locked".into(),
+                        "--offline".into(),
+                    ],
+                    timeout_seconds: 60,
+                    integration: false,
+                },
+                Verification {
+                    argv: vec![
+                        "sm-pipeline".into(),
+                        "batch".into(),
+                        "verify".into(),
+                        "--families".into(),
+                        "example".into(),
+                    ],
+                    timeout_seconds: 60,
+                    integration: true,
+                },
+            ],
+        })
+    }
+
+    fn promote(root: &Path, scope: &Scope) -> Result<Job> {
+        write(root, "scope.toml", toml::to_string(scope).unwrap());
+        validate_scope(root, Path::new("scope.toml"))
+    }
+
+    #[test]
+    fn native_scope_promotes_only_sealed_observed_dependency_complete_owned_work() {
+        let project = fresh();
+        let Some(scope) = native_scope(&project) else { return };
+        let root = &project.0;
+        let job = promote(root, &scope).unwrap();
+        assert_eq!(job.kind, Kind::Implement);
+        assert_eq!(job.writable_paths, scope.writable_paths);
+        assert_eq!(job.ticket, scope.origin_ticket);
+        assert_eq!(job.inputs["scope-sha256"], crate::digest(&root.join("scope.toml")).unwrap());
+        assert_eq!(job.inputs["origin-ticket-type"], "task");
+        let candidates =
+            discover(root, Some(Path::new("inventory.toml")), Some(Path::new("run/verdict.toml"))).unwrap();
+        assert!(candidates.iter().any(|job| job.id == "translation-research-Observed"));
+
+        let mut missing_helper = scope.clone();
+        missing_helper.routines.pop();
+        assert!(promote(root, &missing_helper).unwrap_err().to_string().contains("dependency review missing"));
+        let mut unready_helper = missing_helper.clone();
+        unready_helper.dependency_review.insert(
+            "Helper".into(),
+            DependencyReview {
+                ready: false,
+                rationale: "pinned helper reviewed".into(),
+                evidence: vec!["deps/snesrev-sm/src/sm_86.c".into()],
+            },
+        );
+        assert!(promote(root, &unready_helper).unwrap_err().to_string().contains("not ready"));
+        unready_helper.dependency_review.get_mut("Helper").unwrap().ready = true;
+        assert_eq!(promote(root, &unready_helper).unwrap().kind, Kind::Implement);
+
+        let mut no_integration = scope.clone();
+        no_integration.verification.retain(|v| !v.integration);
+        assert!(promote(root, &no_integration).unwrap_err().to_string().contains("integration verification"));
+        let mut unsafe_command = scope.clone();
+        unsafe_command.verification[1].argv = vec!["sm-pipeline".into(), "batch".into(), "status".into()];
+        assert!(promote(root, &unsafe_command).unwrap_err().to_string().contains("must execute"));
+
+        ticket(root, 1, "open", "None", "ready-for-agent");
+        assert!(promote(root, &scope).unwrap_err().to_string().contains("unresolved blockers"));
+        ticket(root, 1, "resolved", "None", "ready-for-agent");
+        write(root, "crates/port/src/example.rs", "// concurrent change\n");
+        assert!(promote(root, &scope).unwrap_err().to_string().contains("current writable source"));
+        write(root, "crates/port/src/example.rs", "// maintained source\n");
+
+        write(root, "run/projectiles.tsv", "kind\taddress\thits\tfirst_frame\tlast_frame\ninit\t93ca\t1\t0\t1\n");
+        assert!(promote(root, &scope).unwrap_err().to_string().contains("exercise artifact changed"));
+        let mut exercise: Exercise = document(&root.join("run/verdict.toml")).unwrap();
+        exercise.artifacts.insert("projectiles.tsv".into(), crate::digest(&root.join("run/projectiles.tsv")).unwrap());
+        write(root, "run/verdict.toml", toml::to_string(&exercise).unwrap());
+        let mut resealed = scope.clone();
+        resealed.exercise_sha256 = crate::digest(&root.join("run/verdict.toml")).unwrap();
+        assert!(promote(root, &resealed).unwrap_err().to_string().contains("counter bounds"));
+
+        let mut inventory: toml::Value = document(&root.join("inventory.toml")).unwrap();
+        inventory["routines"].as_array_mut().unwrap()[0]["defined_dependencies"] = toml::Value::Array(vec![]);
+        write(root, "inventory.toml", toml::to_string(&inventory).unwrap());
+        resealed.source_inventory_sha256 = crate::digest(&root.join("inventory.toml")).unwrap();
+        assert!(promote(root, &resealed).unwrap_err().to_string().contains("lexical dependency inventory differs"));
     }
 }
