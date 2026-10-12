@@ -81,7 +81,7 @@ pub fn catalog(checkout: &Path) -> Result<Catalog> {
     config.profiles.insert("offline-all".into(), config.families.keys().cloned().collect());
     Ok(config)
 }
-fn entry(config: &Catalog, name: &str) -> Result<FamilyEntry> {
+pub(crate) fn entry(config: &Catalog, name: &str) -> Result<FamilyEntry> {
     Ok(match config.families.get(name).with_context(|| format!("unknown family: {name}"))? {
         CatalogEntry::Kind(kind) => FamilyEntry {
             kind: kind.clone(),
@@ -321,7 +321,7 @@ struct Latest {
     batch: PathBuf,
 }
 pub fn operate(request: Request) -> Result<toml::Value> {
-    if ["status", "catalog"].contains(&request.operation.as_str()) {
+    if ["status", "catalog", "plan"].contains(&request.operation.as_str()) {
         return operate_inner(request);
     }
     let destination = request
@@ -353,7 +353,7 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
     let config = catalog(&checkout)?;
     let command = request.operation.as_str();
     ensure!(
-        ["verify", "replay", "run", "status", "catalog"].contains(&command),
+        ["verify", "replay", "run", "status", "catalog", "plan"].contains(&command),
         "unsupported batch operation: {command}"
     );
     if command == "catalog" {
@@ -364,37 +364,12 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
         .clone()
         .or_else(|| config.profiles.get(&request.profile).cloned())
         .context("unknown profile or missing families")?;
-    if let Some(revision) = &request.changed_since {
-        let diff = std::process::Command::new("git")
-            .args(["diff", "--name-only", revision, "--"])
-            .current_dir(&checkout)
-            .output()?;
-        ensure!(diff.status.success(), "changed-since revision cannot be resolved");
-        let changed = String::from_utf8(diff.stdout)?.lines().map(str::to_owned).collect::<BTreeSet<_>>();
-        let global = changed.iter().any(|p| {
-            p.starts_with("tools/")
-                || p.starts_with("crates/pipeline")
-                || p.starts_with(".cargo/")
-                || ["Cargo.toml", "Cargo.lock", "rust-toolchain.toml", "crates/port/src/memory.rs"]
-                    .contains(&p.as_str())
-        });
-        if !global {
-            names.retain(|name| {
-                let Ok(item) = entry(&config, name) else {
-                    return true;
-                };
-                let Ok(manifest) = pipeline_model::read::<family_model::Manifest>(&checkout.join(&item.manifest))
-                else {
-                    return true;
-                };
-                changed.iter().any(|p| {
-                    Path::new(p) == item.manifest
-                        || Path::new(p) == Path::new(&manifest.rust_module)
-                        || manifest.rust_dependencies.iter().any(|v| v == Path::new(p))
-                        || p.starts_with("crates/port/src/")
-                })
-            });
+    if command == "plan" || request.changed_since.is_some() {
+        let report = crate::affected::select(&checkout, &names, request.changed_since.as_deref())?;
+        if command == "plan" {
+            return Ok(toml::Value::try_from(report)?);
         }
+        names = report.families();
         if names.is_empty() {
             return Ok(crate::report!({"status":"unchanged","families":Vec::<String>::new()}));
         }
