@@ -250,6 +250,11 @@ fn files(root: &Path, directory: &Path, output: &mut BTreeMap<String, String>) -
         } else {
             ensure!(meta.is_file(), "inventory special file");
             let relative = path.strip_prefix(root)?.to_str().context("inventory path is not UTF-8")?;
+            // Publication's root lock coordinates writers; it is not an immutable
+            // store object and must not enter the seed clone or its byte identity.
+            if relative == "pipeline.lock" {
+                continue;
+            }
             // Seed inventories must contain only immutable native artifacts/seals/packs.
             let allowed = path.extension().is_some_and(|e| e == "pack")
                 || path.file_name().is_some_and(|n| n == "artifact" || n == "seal.toml");

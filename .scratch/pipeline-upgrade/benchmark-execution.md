@@ -59,6 +59,15 @@ never enter a passing median. Do not silently substitute a cold sample or reduce
 the workload. Record host CPU/load/memory/I/O observations throughout each sample;
 PID namespace visibility alone does not establish a quiet host.
 
+Quietness sampling retains raw 500ms external CPU fractions and enforces the
+same 0.25 CPU-seconds/wall-second limit over a five-second rolling window.
+Preflight observes five seconds before admission. This window was frozen before
+any admitted control/matrix sample after the instantaneous guard rejected brief
+Codex background bursts (12 CPU ticks across two agent processes in 0.5s), with
+no competing browser/compiler. All raw bursts remain in host receipts; heavy
+workload overlap still invalidates comparability. This is an observation-window
+correction, not a changed overhead/resource/promotion threshold.
+
 The runner's public controls exercise changed frozen input identity, changed seed
 inventory, wrong capacity root, a genuinely missing cache entry, a corrupted
 disposable store clone, and an actual live refusal with diagnostics/cleanup.

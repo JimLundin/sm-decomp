@@ -203,6 +203,14 @@ fn changed_store_seed_inventory_is_refused_before_sampling() {
     f.refusal("store seed inventory changed");
 }
 #[test]
+fn runtime_store_lock_is_excluded_from_the_immutable_seed_inventory() {
+    let f = Fixture::new();
+    fs::write(f.root.join("store/pipeline.lock"), b"runtime coordination").unwrap();
+    // Validation must authenticate the unchanged packs and proceed to seed
+    // verdict admission, rather than rejecting the runtime lock as evidence.
+    f.refusal("seed-1000.toml");
+}
+#[test]
 fn missing_native_cache_entry_is_refused_before_sampling() {
     let f = Fixture::new();
     let p = fs::read_dir(f.root.join("cache-seed")).unwrap().next().unwrap().unwrap().path();

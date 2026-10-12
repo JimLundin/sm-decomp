@@ -2,7 +2,7 @@
 use anyhow::{Context, Result, ensure};
 use serde::Serialize;
 use std::{
-    collections::{BTreeMap, BTreeSet},
+    collections::{BTreeMap, BTreeSet, VecDeque},
     fs::{self, File},
     io::Write,
     path::Path,
@@ -24,6 +24,7 @@ struct Process {
 struct Snapshot {
     offset_ms: u64,
     external_cpu_fraction: f64,
+    external_cpu_rolling_fraction: f64,
     loadavg: String,
     available_memory_bytes: u64,
     cpu_stat: String,
@@ -36,12 +37,13 @@ pub(super) struct Monitor {
     previous_at: Instant,
     previous: BTreeMap<(u32, u64), u64>,
     previous_boot_ticks: u64,
+    external_intervals: VecDeque<(Instant, Instant, u64)>,
     clock_ticks: f64,
 }
 impl Monitor {
     pub fn start(path: &Path) -> Result<Self> {
         let mut file = fs::OpenOptions::new().create_new(true).write(true).open(path)?;
-        file.write_all(b"format = \"pipeline-host-profile-v1\"\ninterval_ms = 500\nexternal_cpu_limit = 0.25\nsemantics = \"rolling host /proc snapshots; PID/start identity; state/wchan are broad attribution, not formatting/parser symbols; short processes may be missed; fraction is CPU seconds per wall second outside runner descendants\"\n")?;
+        file.write_all(b"format = \"pipeline-host-profile-v1\"\ninterval_ms = 500\nexternal_cpu_limit = 0.25\nexternal_cpu_window_ms = 5000\nsemantics = \"rolling host /proc snapshots; PID/start identity; state/wchan are broad attribution, not formatting/parser symbols; short processes may be missed; fraction is CPU seconds per wall second outside runner descendants; retain raw fractions and enforce five-second rolling fraction to avoid rejecting brief background agent bursts\"\n")?;
         // SAFETY: sysconf has no pointers or retained mutable state.
         let clock_ticks = unsafe { libc::sysconf(libc::_SC_CLK_TCK) };
         ensure!(clock_ticks > 0, "CPU tick frequency unavailable");
@@ -52,6 +54,7 @@ impl Monitor {
             previous_at: now,
             previous: BTreeMap::new(),
             previous_boot_ticks: 0,
+            external_intervals: VecDeque::new(),
             clock_ticks: clock_ticks as f64,
         })
     }
@@ -76,7 +79,10 @@ impl Monitor {
         };
         self.file.write_all(toml::to_string(&machine)?.as_bytes())?;
         self.sample(false)?;
-        std::thread::sleep(std::time::Duration::from_secs(1));
+        for _ in 0..10 {
+            std::thread::sleep(std::time::Duration::from_millis(500));
+            self.sample(false)?;
+        }
         self.sample(true)
     }
     pub fn sample(&mut self, enforce: bool) -> Result<()> {
@@ -132,7 +138,7 @@ impl Monitor {
             .context("host uptime missing")?
             .parse::<f64>()?
             * self.clock_ticks) as u64;
-        let external = processes
+        let external_ticks = processes
             .iter()
             .filter(|p| !ours.contains(&p.pid))
             .map(|p| {
@@ -147,9 +153,17 @@ impl Monitor {
                     |old| p.cpu_ticks.saturating_sub(*old),
                 )
             })
-            .sum::<u64>() as f64
+            .sum::<u64>();
+        let external = external_ticks as f64 / self.clock_ticks / elapsed.max(0.001);
+        self.external_intervals.push_back((self.previous_at, now, external_ticks));
+        let cutoff = now - std::time::Duration::from_secs(5);
+        while self.external_intervals.front().is_some_and(|(_, end, _)| *end <= cutoff) {
+            self.external_intervals.pop_front();
+        }
+        let span = now.duration_since(self.external_intervals.front().context("CPU window empty")?.0).as_secs_f64();
+        let external_rolling = self.external_intervals.iter().map(|(_, _, ticks)| *ticks).sum::<u64>() as f64
             / self.clock_ticks
-            / elapsed.max(0.001);
+            / span.max(0.001);
         self.previous = processes.iter().map(|p| ((p.pid, p.start_ticks), p.cpu_ticks)).collect();
         self.previous_at = now;
         self.previous_boot_ticks = boot_ticks;
@@ -167,6 +181,7 @@ impl Monitor {
         let snapshot = Snapshot {
             offset_ms: u64::try_from(self.origin.elapsed().as_millis())?,
             external_cpu_fraction: external,
+            external_cpu_rolling_fraction: external_rolling,
             loadavg: fs::read_to_string("/proc/loadavg")?.trim().into(),
             available_memory_bytes: available,
             cpu_stat: fs::read_to_string("/proc/stat")?,
@@ -181,7 +196,10 @@ impl Monitor {
         self.file.write_all(b"\n")?;
         self.file.write_all(toml::to_string(&Samples { samples: vec![snapshot] })?.as_bytes())?;
         if enforce {
-            ensure!(external <= 0.25, "host interference: external CPU fraction {external:.3} > 0.25");
+            ensure!(
+                external_rolling <= 0.25,
+                "host interference: rolling external CPU fraction {external_rolling:.3} > 0.25"
+            );
         }
         Ok(())
     }
