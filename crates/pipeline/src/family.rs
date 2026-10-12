@@ -378,11 +378,20 @@ fn build(
     for name in imports {
         ensure!(identifier(name), "invalid Rust module import");
     }
+    let alias_module = dispatcher
+        && module.file_name().is_some_and(|n| n == "enemy_projectiles.rs" || n == "observed_projectile_ownership.rs");
+    let mut wrapper_imports = imports.clone();
+    if alias_module {
+        let name = module.file_stem().unwrap().to_string_lossy().into_owned();
+        if !wrapper_imports.contains(&name) {
+            wrapper_imports.push(name);
+        }
+    }
     let memory = inputs::wrapper(inputs::WrapperRequest {
         checkout: checkout.into(),
         run: run.into(),
         modules: vec![module.clone()],
-        imports: imports.clone(),
+        imports: wrapper_imports,
     })?;
     let signed = manifest.routines.iter().any(|r| r.arg_types.is_some());
     let (setup, call) = if manifest.rom.as_ref().is_some() {
@@ -406,9 +415,7 @@ fn build(
         "#[path={:?}] mod memory;\nuse memory::*;\n{root_imports}#[path={module:?}] mod family;\nfn main(){{\n let args:Vec<String>=std::env::args().collect(); assert!(args.len()==6 || args.len()==7);\n let mut bytes=std::fs::read(&args[4]).unwrap(); {setup}\n let result={call}.unwrap();\n std::fs::write(&args[5],bytes).unwrap(); println!(\"{{}}\",result);\n}}\n",
         memory.path
     );
-    if dispatcher
-        && module.file_name().is_some_and(|n| n == "enemy_projectiles.rs" || n == "observed_projectile_ownership.rs")
-    {
+    if alias_module {
         wrapper = wrapper.replace(
             &format!("#[path={module:?}] mod family;"),
             &format!("use memory::{} as family;", module.file_stem().unwrap().to_string_lossy()),
@@ -691,7 +698,9 @@ fn inventory(run: &Path, base: &Path, result: &mut BTreeMap<String, String>) -> 
         ensure!(!path.is_symlink(), "run artifact symlink");
         if path.is_dir() {
             inventory(run, &path, result)?;
-        } else if path != run.join("verdict.toml") {
+        } else if path != run.join("verdict.toml")
+            && !path.file_name().is_some_and(|name| name.to_string_lossy().ends_with(".metrics.toml"))
+        {
             result.insert(path.strip_prefix(run)?.to_string_lossy().into_owned(), digest(&path)?);
         }
     }
@@ -707,6 +716,9 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
     let run = output.join(format!("{stamp}-{}-{}", std::process::id(), NEXT.fetch_add(1, Ordering::Relaxed)));
     fs::create_dir(&run)?;
     let run = fs::canonicalize(run)?;
+    let mut metrics = crate::metrics::Run::start(run.join("family.metrics.toml"), "family")?;
+    metrics.context.configuration("manifest", request.manifest.display());
+    metrics.context.configuration("workers", request.workers);
     let mut verdict = Verdict {
         status: "rejected".into(),
         run: run.clone(),
@@ -715,10 +727,11 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
     };
     let result = (|| -> Result<()> {
         let manifest_path = source_path(&checkout, request.manifest.to_str().context("non-UTF8 manifest")?);
-        let mut manifest: Manifest = object(&manifest_path)?;
+        let manifest_bytes = fs::read(&manifest_path)?;
+        fs::write(run.join("manifest.toml"), &manifest_bytes)?;
+        let mut manifest: Manifest = toml::from_str(std::str::from_utf8(&manifest_bytes)?)?;
         let callbacks = request.adapter == "callback" || request.adapter == "power-bomb";
         let plm = request.adapter == "plm";
-        fs::copy(&manifest_path, run.join("manifest.toml"))?;
         if plm {
             manifest = crate::plm_spawn::normalize(&manifest)?;
         }
@@ -743,14 +756,22 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
         } else {
             build(&request, &manifest, &checkout, &source, &run)?
         });
+        verdict.implementation.as_mut().unwrap().manifest =
+            Some(Asset { file: fs::canonicalize(&manifest_path)?, sha256: digest(&run.join("manifest.toml"))? });
+        atomic_toml(
+            &run.join("manifest-input.toml"),
+            verdict.implementation.as_ref().unwrap().manifest.as_ref().unwrap(),
+        )?;
         if callbacks {
             verdict.gameplay_translation = Some(!manifest.infrastructure_probe);
         }
         let next = AtomicUsize::new(0);
         let outcomes = Mutex::new(Vec::new());
+        let context = metrics.context.clone();
         std::thread::scope(|scope| {
             for _ in 0..jobs.min(tasks.len()) {
                 scope.spawn(|| {
+                    let _entered = context.enter();
                     loop {
                         let index = next.fetch_add(1, Ordering::Relaxed);
                         let Some((routine, fixture, routine_index)) = tasks.get(index) else {
@@ -784,6 +805,10 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
             }
         }
         ensure!(errors.is_empty(), "{}", errors.join("; "));
+        ensure!(
+            digest(&manifest_path)? == digest(&run.join("manifest.toml"))?,
+            "family manifest changed during verification"
+        );
         verdict.status = "offline-verified".into();
         verdict.verified_cases = tasks.len();
         verdict.verified_routines = manifest.routines.len();
@@ -804,6 +829,7 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
     inventory(&run, &run, &mut artifacts)?;
     verdict.artifacts = artifacts;
     atomic_toml(&run.join("verdict.toml"), &verdict)?;
+    metrics.finish(crate::metrics::outcome(verdict.error.as_deref()), verdict.error.clone())?;
     Ok(verdict)
 }
 
@@ -824,6 +850,15 @@ pub fn authenticate(request: AuthenticateRequest) -> Result<Verdict> {
     let mut manifest: Manifest = object(&run.join("manifest.toml"))?;
     ensure!(manifest.family == verdict.family, "family identity differs");
     let implementation = verdict.implementation.as_ref().context("missing family implementation")?;
+    let manifest_identity = implementation.manifest.as_ref().context("current family manifest seal missing")?;
+    ensure!(actual.contains_key("manifest-input.toml"), "current source inputs manifest seal missing");
+    let input_manifest: Asset = object(&run.join("manifest-input.toml"))?;
+    ensure!(input_manifest == *manifest_identity, "family manifest source input differs");
+    ensure!(
+        digest(&manifest_identity.file)? == manifest_identity.sha256
+            && digest(&run.join("manifest.toml"))? == manifest_identity.sha256,
+        "family manifest changed"
+    );
     let callbacks = implementation.dependency_contract == "rust-callback-v2";
     let plm = implementation.dependency_contract == "rust-plm-v2";
     if plm {

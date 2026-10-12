@@ -3,6 +3,7 @@ use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use std::{fs, path::Path};
 
+pub mod metrics;
 pub mod readiness;
 pub mod timed_corpus;
 pub mod timed_pattern;

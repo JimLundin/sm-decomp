@@ -1,0 +1,84 @@
+# Ticket 02 text-producer metrics support
+
+Support branch `pipeline-upgrade-02-producer`, based on integration `09d3ed1`.
+This completes only native text flush telemetry; ticket 02's process accounting,
+collector/publication stages, aggregate receipts and overhead gate belong to the
+main metrics implementation.
+
+`effect_writer.c.in` keeps the exact `vfprintf` legacy format and uses one GNU
+stdio cookie with the same 65,536-byte buffer in enabled/disabled modes. Its write
+callback limits batches to 64 KiB, retries interrupted/short writes, checks zero
+writes/errors, and takes monotonic clocks once per flush batch only when enabled.
+Only the effect-write callback masks SIGPIPE in its thread, consumes a newly
+generated pipe signal and restores the prior mask; existing handlers and pending
+signals are preserved. SIGPIPE becomes a checked EPIPE error; failed writes/open/abandon retain a best
+effort failed sidecar. Explicit close and sidecar durability failures return
+failure. The GNU feature macro precedes every generated live-host include.
+
+The parent's explicit absolute `SM_PIPELINE_METRICS_PRODUCER_PATH` is outside the
+evidence staging tree. `SM_PIPELINE_METRICS=enabled|disabled` selects clocks in
+the same binary, not text behavior. The `pipeline-producer-metrics-v1` TOML
+contains enabled/buffer bytes, transported bytes, flush/write counts, total/max
+flush write elapsed nanoseconds, short writes/interruptions and outcome/error.
+The parent maps disabled timing fields to unavailable. Sidecars publish with
+file fsync, rename and directory fsync. These fields do not enter canonical
+observation/provenance inventories.
+
+## Verification
+
+TDD at the user-confirmed process/metrics and evidence capture seams: initial
+exact-byte test failed because the producer receipt did not exist; the open
+failure receipt slice also failed before its implementation. Six public
+controls passed afterward (1.55 s):
+
+- Same producer binary with telemetry on/off preserves known signed PLM,
+  maximum PPU/APU fields, frame resets, a 70 KiB literal and 10,000 text events.
+  Current retained evidence CLI capture derives equal stream IDs, observation
+  roots and member hashes against an independent legacy text reference.
+- A system `write` linker control injects one EINTR and seventeen-byte short
+  writes, refuses any call over 65,536 bytes, and restores an exact 140 KiB literal
+  plus 2,000 APU events; receipts record retries and success.
+- Real closed pipe, abandoned stream and failed destination open record failure.
+- A missing sidecar directory makes explicit close refuse success after exact
+  effect bytes were flushed.
+- Public `packed-capture` refuses a nonzero real C producer, withholds
+  `evidence.toml`, and leaves diagnostic staging/logs.
+
+Follow-up review caught global SIGPIPE handling; its preservation control first
+failed, then passed after callback-scoped suppression. Counter additions,
+timespec conversion and elapsed accumulation now use checked arithmetic; failed,
+backwards or overflowing clocks produce failed receipts. Eight final controls
+passed in 2.05 s, including existing-host-handler preservation and system clock
+failure/backwards/overflow controls.
+
+Final logs: integration `out/ticket-02-producer/logs/producer-controls.log` and
+`producer-clippy.log`. Strict test Clippy, workspace formatting and whitespace
+checks passed. C harness compilation uses `-std=c11 -O2 -Wall -Wextra -Werror`.
+Live already links pthread; standalone producer controls also use `-pthread`.
+The unchanged evidence reader came from ticket 01 retained-tools. No benchmark
+or <=2% overhead claim is made by these correctness controls.
+
+## Cleanup
+
+Test guards removed their own successful/failed temporary runs after processes
+finished; native scoped cleanup/dedup of integration
+`out/ticket-02-producer/runs` both succeeded with 0 bytes/0 snapshots (receipts in
+logs). `cargo clean --target-dir .../out/ticket-02-producer/target` removed 1,842 files,
+reported 1,015 MiB; allocated target before clean was 922,877,952 bytes, filesystem
+free afterward was 221,680,988,160 bytes. Logs remain; no retained observation/store/source
+dependency was created by these disposable tests. Borrowed ticket 01 reader and
+its dependencies remain unchanged. The integration owner removes the integrated
+support worktree after merge, following run-cleanup.md.
+
+After the review changes, final scoped cleanup/dedup again succeeded with 0 bytes.
+The recreated disposable target of 923,217,920 allocated bytes was removed with
+`cargo clean`, 1,842 files/1,015.3 MiB reported (`target-clean-final.log`). Final free
+disk was 220,716,728,320 bytes. Parent/integration/main metrics were concurrently building,
+so free-disk deltas are not attributed entirely to this cleanup. No test run,
+accepted evidence or retained source dependency remains in the support worktree.
+
+Producer support merged into integration at `6639375`. The integration owner
+removed `/tmp/sm-pipeline-upgrade-02-producer` with `git worktree remove`; it had
+no retained evidence/source dependency. Remaining filesystem free space after
+removal was 220,939,972,608 bytes. Whole-ticket metrics and overhead validation
+remain outstanding.

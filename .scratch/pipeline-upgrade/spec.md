@@ -1,6 +1,27 @@
 # Measure the native Rust pipeline and select its next upgrade
 
-Status: open
+Status: claimed
+
+Required completion scope is revised by the user's 2026-10-12 instruction to
+avoid hour-long tuning: deliver native metrics/process controls and benchmark
+orchestration, the measured exact-restoration improvement, opt-in detailed
+telemetry, bounded comparison evidence with honest limits, and final full-route
+pipeline regression/integration cleanup. The original large matrix and automatic
+telemetry promotion remain deferred; no <=2% large-case success is claimed.
+Tickets 01, 02, 03 and 09 are required; binary 04–08 remain conditional/unclaimed.
+
+## Session scope, confirmed 2026-10-12
+
+Complete optimization and improvement of the decomp pipeline itself. A separate
+session continues actual decomp and gameplay porting afterward. This effort owns
+native tooling, orchestration, measurement, bottleneck improvements, evidence
+handling, verification and cleanup. Existing gameplay routes are regression
+workloads for pipeline changes; discovering or implementing new translated
+routines, gameplay families or porting frontiers is outside this effort.
+
+Completion delivers the integrated, verified pipeline improvements and their
+measured limits, with retained evidence and cleanup complete, for that separate
+decomp session to use. Binary transport remains conditional on measurement.
 
 Authoritative plan: `plan.md`, rendered locally from `visual/plan.mdx`.
 Committed optimization branch: `decomp-pipeline-performance` at `e820a6b`.
@@ -17,9 +38,14 @@ C templates and Rust selection, exact `sm-evidence-v1` compatibility, real failu
 controls, controlled benchmarks/full-route admission and promotion/retention.
 No new Python tooling or duplicate native migration ports are proposed.
 
-Implementation is proposed. This planning task changes documentation only and
-preserves the optimization worktree/branch. All eight tickets remain open;
-conditional tickets cannot be claimed without the selection decision in 03.
+Implementation branch: `pipeline-upgrade-integration`, based on delivered
+merge `3ad1bf3`. Current source and format reconciliation is recorded in
+[reconciliation.md](reconciliation.md); absolute benchmark budgets are frozen in
+[benchmark-budgets.md](benchmark-budgets.md). Ticket 01 is resolved; ticket 02 is
+integrated into this worktree with scope/process/resource controls and fresh
+regression admission; its telemetry overhead gate remains open. The integrated
+support worktrees have been removed. Conditional
+tickets cannot be claimed without the selection decision in 03.
 
 ## Planning evidence
 

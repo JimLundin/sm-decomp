@@ -214,7 +214,7 @@ fn inventory(root: &Path, directory: &Path, out: &mut BTreeMap<String, String>) 
         ensure!(!path.is_symlink(), "job artifact symlink");
         if path.is_dir() {
             inventory(root, &path, out)?;
-        } else {
+        } else if !path.file_name().is_some_and(|name| name.to_string_lossy().ends_with(".metrics.toml")) {
             out.insert(path.strip_prefix(root)?.to_string_lossy().into_owned(), digest(&path)?);
         }
     }

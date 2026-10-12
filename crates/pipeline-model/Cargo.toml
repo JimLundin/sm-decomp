@@ -10,3 +10,4 @@ anyhow.workspace = true
 serde.workspace = true
 toml.workspace = true
 sha2.workspace = true
+libc = "0.2"
