@@ -1,0 +1,131 @@
+#include <stdio.h>
+extern void InventoryProjectileHostSave(uint16 *);
+static unsigned long enemy_frames[256], enemy_first[256], enemy_last[256];
+static unsigned long enemy_opcodes[3][65536], opcode_first[3][65536], opcode_last[3][65536];
+static uint8 frame_captures[3][65536], opcode_captures[3][65536];
+static unsigned long enemy_sequence, enemy_frame_sequence;
+static unsigned enemy_instruction_depth;
+static FILE *enemy_events;
+
+static unsigned EnemyInventoryWindow(void) {
+  return snes_frame_counter < 36000 ? 0 : snes_frame_counter < 50000 ? 1 : 2;
+}
+static unsigned EnemyInventoryPointerKind(const uint16 *p) {
+  return !p ? 0 : (uintptr_t)p < 0x10000 ? 1 : 2;
+}
+static uint32 EnemyInventoryPointer(const uint16 *p, uint8 bank) {
+  if (!p) return 0;
+  uintptr_t value = (uintptr_t)p;
+  if (value < 0x10000) return ((uint32)bank << 16) | (uint16)value;
+  uintptr_t base = (uintptr_t)RomBankBase(bank);
+  if (value < base + 0x8000 || value >= base + 0x10000) {
+    fprintf(stderr, "enemy inventory pointer outside bank\n");
+    exit(2);
+  }
+  return ((uint32)bank << 16) | (uint16)(value - base);
+}
+static void EnemyInventoryCapture(const char *kind, uint16 pc, unsigned window,
+                                  unsigned capture, const char *phase) {
+  char name[160];
+  uint16 words[8];
+  uint8 bytes[16];
+  InventoryProjectileHostSave(words);
+  snprintf(name, sizeof(name), "fixtures/enemy-%s-%04x-window%u-%02u-%s.wram",
+           kind, pc, window, capture, phase);
+  FILE *file = fopen(name, "wb");
+  if (!file || fwrite(g_ram, 1, sizeof(g_ram), file) != sizeof(g_ram) || fclose(file)) exit(2);
+  for (unsigned i = 0; i < 8; i++) {
+    bytes[2 * i] = words[i];
+    bytes[2 * i + 1] = words[i] >> 8;
+  }
+  snprintf(name, sizeof(name), "fixtures/enemy-%s-%04x-window%u-%02u-%s.host",
+           kind, pc, window, capture, phase);
+  file = fopen(name, "wb");
+  if (!file || fwrite(bytes, 1, sizeof(bytes), file) != sizeof(bytes) || fclose(file)) exit(2);
+}
+static void EnemyInventoryEvent(const char *kind, const char *phase, uint16 slot,
+                                uint16 entry_pc, uint32 opcode, uint32 argument,
+                                uint32 returned, unsigned return_kind, unsigned capture) {
+  uint16 host[8];
+  InventoryProjectileHostSave(host);
+  EnemyData *enemy = gEnemyData(slot);
+  if (!enemy_events) {
+    enemy_events = fopen("enemy-events.jsonl", "w");
+    if (!enemy_events) exit(2);
+  }
+  fprintf(enemy_events,
+          "{\"sequence\":%lu,\"frame_sequence\":%lu,\"frame\":%u,\"window\":%u,"
+          "\"kind\":\"%s\",\"phase\":\"%s\",\"depth\":%u,\"slot\":%u,"
+          "\"header\":%u,\"bank\":%u,\"entry_pc\":%u,\"pc\":%u,\"timer\":%u,"
+          "\"ai_bits\":%u,\"extra\":%u,\"spritemap\":%u,\"opcode\":%u,"
+          "\"argument\":%u,\"returned\":%u,\"return_kind\":%u,\"capture\":%u,"
+          "\"orientation\":%u,\"f_source\":%u,\"health\":%u,\"area\":%u,\"host\":[",
+          ++enemy_sequence, enemy_frame_sequence, snes_frame_counter, EnemyInventoryWindow(),
+          kind, phase, enemy_instruction_depth, slot, enemy->enemy_ptr, enemy->bank,
+          entry_pc, enemy->current_instruction, enemy->instruction_timer,
+          enemy->ai_handler_bits, enemy->extra_properties, enemy->spritemap_pointer,
+          opcode, argument, returned, return_kind, capture, GET_WORD(g_ram + 0x7820),
+          eproj_unk1995, samus_health, area_index);
+  for (unsigned i = 0; i < 8; i++) fprintf(enemy_events, "%s%u", i ? "," : "", host[i]);
+  fprintf(enemy_events, "]}\n");
+}
+void CInventory_ProcessEnemyInstructions(void);
+const uint16 *CInventory_CallEnemyInstr(uint32, uint16, const uint16 *);
+
+void ProcessEnemyInstructions(void) {
+  uint16 slot = cur_enemy_index;
+  EnemyData *enemy = gEnemyData(slot);
+  uint8 bank = enemy->bank;
+  uint16 pc = enemy->current_instruction;
+  if (!enemy_frames[bank]) enemy_first[bank] = snes_frame_counter;
+  enemy_frames[bank]++;
+  enemy_last[bank] = snes_frame_counter;
+  enemy_frame_sequence++;
+  unsigned window = EnemyInventoryWindow();
+  unsigned capture = bank == 0xa6 && frame_captures[window][pc] < 2
+                       ? ++frame_captures[window][pc] : 0;
+  if (bank == 0xa6) EnemyInventoryEvent("frame", "before", slot, pc, 0, 0, 0, 0, capture);
+  if (capture) EnemyInventoryCapture("frame", pc, window, capture, "before");
+  enemy_instruction_depth++;
+  CInventory_ProcessEnemyInstructions();
+  enemy_instruction_depth--;
+  if (capture) EnemyInventoryCapture("frame", pc, window, capture, "after");
+  if (bank == 0xa6) EnemyInventoryEvent("frame", "after", slot, pc, 0, 0, 0, 0, capture);
+}
+const uint16 *CallEnemyInstr(uint32 address, uint16 slot, const uint16 *argument) {
+  uint8 bank = address >> 16;
+  uint16 opcode = address;
+  unsigned window = EnemyInventoryWindow(), capture = 0;
+  uint16 entry_pc = gEnemyData(slot)->current_instruction;
+  if (bank == 0xa6) {
+    if (!enemy_opcodes[window][opcode]) opcode_first[window][opcode] = snes_frame_counter;
+    enemy_opcodes[window][opcode]++;
+    opcode_last[window][opcode] = snes_frame_counter;
+    capture = opcode_captures[window][opcode] < 2 ? ++opcode_captures[window][opcode] : 0;
+    EnemyInventoryEvent("opcode", "before", slot, entry_pc, address,
+                        EnemyInventoryPointer(argument, bank), 0, 0, capture);
+    if (capture) EnemyInventoryCapture("opcode", opcode, window, capture, "before");
+  }
+  const uint16 *result = CInventory_CallEnemyInstr(address, slot, argument);
+  if (bank == 0xa6) {
+    if (capture) EnemyInventoryCapture("opcode", opcode, window, capture, "after");
+    EnemyInventoryEvent("opcode", "after", slot, entry_pc, address,
+                        EnemyInventoryPointer(argument, bank), EnemyInventoryPointer(result, bank),
+                        EnemyInventoryPointerKind(result), capture);
+  }
+  return result;
+}
+void EnemyInventorySave(void) {
+  FILE *file = fopen("enemy-instructions.tsv", "w");
+  if (!file) exit(2);
+  fprintf(file, "kind\taddress\twindow\thits\tfirst_frame\tlast_frame\n");
+  for (unsigned bank = 0; bank < 256; bank++) if (enemy_frames[bank]) {
+    fprintf(file, "frame-bank\t%02x\tall\t%lu\t%lu\t%lu\n", bank,
+            enemy_frames[bank], enemy_first[bank], enemy_last[bank]);
+  }
+  for (unsigned window = 0; window < 3; window++) for (unsigned opcode = 0; opcode < 65536; opcode++) {
+    if (enemy_opcodes[window][opcode]) fprintf(file, "opcode\ta6%04x\t%u\t%lu\t%lu\t%lu\n",
+        opcode, window, enemy_opcodes[window][opcode], opcode_first[window][opcode], opcode_last[window][opcode]);
+  }
+  if (fclose(file) || (enemy_events && fclose(enemy_events))) exit(2);
+}
