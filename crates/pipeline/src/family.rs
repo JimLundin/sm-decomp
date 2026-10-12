@@ -698,7 +698,9 @@ fn inventory(run: &Path, base: &Path, result: &mut BTreeMap<String, String>) -> 
         ensure!(!path.is_symlink(), "run artifact symlink");
         if path.is_dir() {
             inventory(run, &path, result)?;
-        } else if path != run.join("verdict.toml") {
+        } else if path != run.join("verdict.toml")
+            && !path.file_name().is_some_and(|name| name.to_string_lossy().ends_with(".metrics.toml"))
+        {
             result.insert(path.strip_prefix(run)?.to_string_lossy().into_owned(), digest(&path)?);
         }
     }

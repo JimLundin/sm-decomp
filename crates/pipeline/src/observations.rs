@@ -58,7 +58,8 @@ fn document<T: serde::de::DeserializeOwned>(path: &Path) -> Result<T> {
     Ok(toml::from_str(&fs::read_to_string(path)?)?)
 }
 pub fn subject(directory: &Path, root: &Path, workers: usize, expected_pointer: Option<&str>) -> Result<Pointer> {
-    subject_with_metrics(directory, root, workers, expected_pointer, None)
+    let context = crate::metrics::active();
+    subject_with_metrics(directory, root, workers, expected_pointer, context.as_ref())
 }
 pub(crate) fn subject_with_metrics(
     directory: &Path,

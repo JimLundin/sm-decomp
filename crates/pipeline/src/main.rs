@@ -1116,6 +1116,10 @@ fn main() -> Result<()> {
             })?)
         }
         Some("packed-capture") if args.len() == 1 => emit(&packed::capture(request()?)?),
+        Some("packed-capture-many") if args.len() == 1 => {
+            let pointers = packed::capture_many(request()?)?;
+            emit(&crate::report!({"subjects":pointers}))
+        }
         Some("packed-publish") if args.len() == 1 => emit(&packed::publish(request()?)?),
         Some("packed-subject") if args.len() == 1 => {
             let request: Value = request()?;

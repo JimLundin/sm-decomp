@@ -10,10 +10,6 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
     path::{Path, PathBuf},
-    sync::{
-        Mutex,
-        atomic::{AtomicUsize, Ordering},
-    },
     time::{Instant, SystemTime, UNIX_EPOCH},
 };
 const SUBJECTS: [&str; 4] = ["c-0", "c-1", "mixed-0", "mixed-1"];
@@ -745,6 +741,7 @@ pub fn verify(request: Request) -> Result<Verdict> {
         output.join(format!("{}-{}", SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos(), std::process::id()));
     fs::create_dir(&run)?;
     let run = fs::canonicalize(run)?;
+    let mut metrics = crate::metrics::Run::start(run.join("pipeline.metrics.toml"), "live")?;
     let mut verdict = Verdict {
         status: "rejected".into(),
         run: run.clone(),
@@ -980,35 +977,13 @@ pub fn verify(request: Request) -> Result<Verdict> {
                 })
             })
             .collect::<Result<Vec<_>>>()?;
-        let next = AtomicUsize::new(0);
-        let outcomes = Mutex::new(Vec::new());
         let started = Instant::now();
-        std::thread::scope(|scope| {
-            for _ in 0..jobs {
-                scope.spawn(|| {
-                    loop {
-                        let index = next.fetch_add(1, Ordering::Relaxed);
-                        let Some(request) = requests.get(index) else {
-                            break;
-                        };
-                        outcomes.lock().unwrap().push((index, packed::capture(request.clone())));
-                    }
-                });
-            }
-        });
-        let mut outcomes = outcomes.into_inner().unwrap();
-        outcomes.sort_by_key(|(index, _)| *index);
-        let mut pointers = BTreeMap::new();
-        let mut failures = Vec::new();
-        for (index, result) in outcomes {
-            match result {
-                Ok(pointer) => {
-                    pointers.insert(SUBJECTS[index].to_owned(), pointer);
-                }
-                Err(error) => failures.push(format!("{}: {error:#}", SUBJECTS[index])),
-            }
-        }
-        ensure!(failures.is_empty(), "{}", failures.join("; "));
+        let captured = packed::capture_parallel(&requests, jobs)?;
+        let mut pointers = SUBJECTS
+            .iter()
+            .zip(captured)
+            .map(|(name, pointer)| ((*name).to_owned(), pointer))
+            .collect::<BTreeMap<_, _>>();
         verdict.capture_seconds = started.elapsed().as_secs_f64();
         let mut inventories = BTreeMap::new();
         for name in SUBJECTS {
@@ -1129,14 +1104,32 @@ pub fn verify(request: Request) -> Result<Verdict> {
     if let Err(error) = result {
         verdict.error = Some(format!("{error:#}"));
     }
+    let publication = metrics.context.stage("final-verdict-publication")?;
     atomic_toml(&run.join("verdict.toml"), &verdict)?;
+    publication.finish("success")?;
     if verdict.status == "mixed-C-Rust-integration" {
+        let auth = metrics.context.stage("final-authentication")?;
         observations::authenticate(observations::AuthenticateRequest {
             verdict: run.join("verdict.toml"),
             root: request.root.clone(),
             workers: request.workers,
         })?;
+        auth.finish("success")?;
     }
+    let cleanup = metrics.context.stage("scoped-cleanup")?;
+    crate::cleanup::cleanup(crate::cleanup::CleanupRequest { root: run.clone(), apply: true, deduplicate: false })?;
+    crate::cleanup::cleanup(crate::cleanup::CleanupRequest { root: run.clone(), apply: true, deduplicate: true })?;
+    cleanup.finish("success")?;
+    if verdict.status == "mixed-C-Rust-integration" {
+        let auth = metrics.context.stage("post-cleanup-authentication")?;
+        observations::authenticate(observations::AuthenticateRequest {
+            verdict: run.join("verdict.toml"),
+            root: request.root.clone(),
+            workers: request.workers,
+        })?;
+        auth.finish("success")?;
+    }
+    metrics.finish(if verdict.error.is_none() { "success" } else { "failed" }, verdict.error.clone())?;
     Ok(verdict)
 }
 

@@ -16,6 +16,23 @@ use std::{
 };
 
 static NEXT: AtomicU64 = AtomicU64::new(0);
+thread_local! { static ACTIVE: std::cell::RefCell<Option<Context>>=const{std::cell::RefCell::new(None)}; }
+pub(crate) fn active() -> Option<Context> {
+    ACTIVE.with(|value| value.borrow().clone())
+}
+pub(crate) struct ActiveGuard(Option<Context>);
+impl Context {
+    pub fn enter(&self) -> ActiveGuard {
+        ActiveGuard(ACTIVE.with(|value| value.replace(Some(self.clone()))))
+    }
+}
+impl Drop for ActiveGuard {
+    fn drop(&mut self) {
+        ACTIVE.with(|value| {
+            value.replace(self.0.take());
+        });
+    }
+}
 #[derive(Clone)]
 pub(crate) struct Context {
     inner: Arc<Inner>,
@@ -32,17 +49,26 @@ pub(crate) struct Run {
     pub context: Context,
     sampler: Option<thread::JoinHandle<()>>,
     finished: bool,
+    previous: Option<Context>,
+    inherited: bool,
 }
 impl Run {
     pub fn start(path: PathBuf, role: &str) -> Result<Self> {
-        let clock = Clock::new()?;
+        let previous = active();
+        if let Some(context) = previous.clone() {
+            return Ok(Self { context, sampler: None, finished: false, previous, inherited: true });
+        }
+        let inherited_context = pipeline_model::metrics::ContextReceipt::from_env()?;
+        let clock =
+            inherited_context.as_ref().map(|context| context.clock.clone()).map(Ok).unwrap_or_else(Clock::new)?;
         let id = format!("{}-{}-{}", std::process::id(), clock.origin_ns, NEXT.fetch_add(1, Ordering::Relaxed));
         let enabled = std::env::var("SM_PIPELINE_METRICS").as_deref() != Ok("disabled");
-        let receipt = Receipt { format:"pipeline-metrics-v1".into(),run_id:id.clone(),scope_id:id,parent_scope:None,role:role.into(),clock,enabled,start_ns:0,end_ns:0,elapsed_ns:0,outcome:"incomplete".into(),error:None,last_completed_stage:None,stages:vec![],processes:vec![],resources:Resources { rss_interval_ms:100,disk_interval_ms:500,semantics:"wait4 child accounting; aggregate concurrent /proc RSS sampled at 100ms; shared pages may count twice; short-lived/between-sample peaks may be missed".into(),..Default::default()},transport:Transport::default(),configuration:Default::default() };
+        let start_ns = clock.offset()?;
+        let receipt = Receipt { format:"pipeline-metrics-v1".into(),run_id:inherited_context.as_ref().map(|c|c.run_id.clone()).unwrap_or_else(||id.clone()),scope_id:inherited_context.as_ref().map(|c|c.scope_id.clone()).unwrap_or(id),parent_scope:inherited_context.as_ref().and_then(|c|c.parent_scope.clone()),role:role.into(),clock,enabled:inherited_context.as_ref().map(|c|c.enabled).unwrap_or(enabled),start_ns,end_ns:start_ns,elapsed_ns:0,outcome:"incomplete".into(),error:None,last_completed_stage:None,stages:vec![],processes:vec![],resources:Resources { rss_interval_ms:100,disk_interval_ms:500,semantics:"wait4 child accounting; aggregate concurrent /proc RSS sampled at 100ms; shared pages may count twice; short-lived/between-sample peaks may be missed".into(),..Default::default()},transport:Transport::default(),configuration:Default::default() };
         let context = Context {
             inner: Arc::new(Inner {
                 receipt: Mutex::new(receipt),
-                path,
+                path: inherited_context.as_ref().map(|c| c.path.clone()).unwrap_or(path),
                 stopped: AtomicBool::new(false),
                 pids: Mutex::new(BTreeSet::new()),
                 wake: Condvar::new(),
@@ -50,7 +76,7 @@ impl Run {
             }),
         };
         let worker = context.clone();
-        let sampler = enabled.then(|| {
+        let sampler = (enabled && inherited_context.is_none()).then(|| {
             thread::spawn(move || {
                 while !worker.inner.stopped.load(Ordering::Acquire) {
                     worker.sample();
@@ -62,9 +88,16 @@ impl Run {
                 }
             })
         });
-        Ok(Self { context, sampler, finished: false })
+        ACTIVE.with(|value| {
+            value.replace(Some(context.clone()));
+        });
+        Ok(Self { context, sampler, finished: false, previous, inherited: false })
     }
     pub fn finish(&mut self, outcome: &str, error: Option<String>) -> Result<()> {
+        if self.inherited {
+            self.finished = true;
+            return Ok(());
+        }
         self.inner_stop();
         self.context.sample();
         {
@@ -76,6 +109,9 @@ impl Run {
         }
         self.context.write()?;
         self.finished = true;
+        ACTIVE.with(|value| {
+            value.replace(self.previous.take());
+        });
         Ok(())
     }
     fn inner_stop(&mut self) {
@@ -102,9 +138,10 @@ pub(crate) struct StageGuard {
 }
 impl Context {
     pub fn stage(&self, name: &str) -> Result<StageGuard> {
+        let scope = self.inner.receipt.lock().unwrap().scope_id.clone();
         Ok(StageGuard {
             context: self.clone(),
-            id: format!("stage-{}", NEXT.fetch_add(1, Ordering::Relaxed)),
+            id: format!("{scope}-stage-{}", NEXT.fetch_add(1, Ordering::Relaxed)),
             name: name.into(),
             start: self.now()?,
             finished: false,
@@ -130,6 +167,7 @@ impl Context {
     }
     pub fn merge_child(&self, path: &Path) -> Result<()> {
         let child: Receipt = toml::from_str(&fs::read_to_string(path)?)?;
+        child.validate()?;
         let mut r = self.inner.receipt.lock().unwrap();
         ensure!(
             child.format == "pipeline-metrics-v1"
@@ -138,6 +176,10 @@ impl Context {
                 && child.run_id == r.run_id,
             "child metrics clock/run differs"
         );
+        ensure!(child.parent_scope.as_deref() == Some(r.scope_id.as_str()), "child metrics parent differs");
+        if r.stages.iter().any(|stage| child.stages.iter().any(|other| stage.id == other.id)) {
+            return Ok(());
+        }
         r.stages.extend(child.stages);
         r.processes.extend(child.processes);
         Ok(())
@@ -211,9 +253,10 @@ impl StageGuard {
         if outcome == "success" {
             r.last_completed_stage = Some(self.name.clone());
         }
+        let parent = Some(r.scope_id.clone());
         r.stages.push(Stage {
             id: self.id.clone(),
-            parent: None,
+            parent,
             name: self.name.clone(),
             start_ns: self.start,
             end_ns: end,
@@ -238,6 +281,7 @@ pub(crate) struct OwnedChild {
     argv: Vec<String>,
     start: u64,
     status: Option<ExitStatus>,
+    start_ticks: Measurement,
 }
 impl OwnedChild {
     pub fn take_stdout(&mut self) -> Option<std::process::ChildStdout> {
@@ -250,8 +294,13 @@ impl OwnedChild {
             .collect();
         let start = context.now()?;
         let child = command.spawn()?;
+        let start_ticks = fs::read_to_string(format!("/proc/{}/stat", child.id()))
+            .ok()
+            .and_then(|s| s.rsplit_once(") ")?.1.split_whitespace().nth(19)?.parse::<u64>().ok())
+            .map(Measurement::value)
+            .unwrap_or_else(|| Measurement::unavailable("child exited before /proc identity read"));
         context.inner.pids.lock().unwrap().insert(child.id());
-        Ok(Self { child, context: context.clone(), role: role.into(), argv, start, status: None })
+        Ok(Self { child, context: context.clone(), role: role.into(), argv, start, status: None, start_ticks })
     }
     pub fn poll(&mut self) -> Result<Option<ExitStatus>> {
         self.reap(libc::WNOHANG)
@@ -284,6 +333,8 @@ impl OwnedChild {
             let end_ns = self.context.now()?;
             self.context.inner.receipt.lock().unwrap().processes.push(Process {
                 pid: self.child.id(),
+                parent_pid: std::process::id(),
+                start_ticks: self.start_ticks.clone(),
                 role: self.role.clone(),
                 argv: self.argv.clone(),
                 start_ns: self.start,

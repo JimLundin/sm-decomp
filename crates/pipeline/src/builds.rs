@@ -176,6 +176,9 @@ pub fn cargo_build(request: CargoBuildRequest) -> Result<CacheResult> {
     let mut inputs = ["Cargo.toml", "Cargo.lock", "rust-toolchain.toml"].map(|p| checkout.join(p)).to_vec();
     inputs.push(checkout.join(format!("crates/{package}/Cargo.toml")));
     rust_sources(&checkout.join(format!("crates/{package}/src")), &mut inputs)?;
+    if package == "evidence" {
+        rust_sources(&checkout.join("crates/pipeline-model/src"), &mut inputs)?;
+    }
     for entry in fs::read_dir(checkout.join("crates"))? {
         let manifest = entry?.path().join("Cargo.toml");
         if manifest.is_file() {

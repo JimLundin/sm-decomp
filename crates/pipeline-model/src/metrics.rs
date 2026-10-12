@@ -47,16 +47,15 @@ pub fn monotonic_ns() -> Result<u64> {
     }
 }
 impl Clock {
+    pub fn local_domain() -> Result<String> {
+        Ok(format!(
+            "{}:{}",
+            fs::read_to_string("/proc/sys/kernel/random/boot_id")?.trim(),
+            fs::read_link("/proc/self/ns/time").map(|p| p.to_string_lossy().into_owned()).unwrap_or_default()
+        ))
+    }
     pub fn new() -> Result<Self> {
-        Ok(Self {
-            name: "CLOCK_MONOTONIC".into(),
-            domain: format!(
-                "{}:{}",
-                fs::read_to_string("/proc/sys/kernel/random/boot_id")?.trim(),
-                fs::read_link("/proc/self/ns/time").map(|p| p.to_string_lossy().into_owned()).unwrap_or_default()
-            ),
-            origin_ns: monotonic_ns()?,
-        })
+        Ok(Self { name: "CLOCK_MONOTONIC".into(), domain: Self::local_domain()?, origin_ns: monotonic_ns()? })
     }
     pub fn offset(&self) -> Result<u64> {
         monotonic_ns()?.checked_sub(self.origin_ns).context("clock origin is in the future")
@@ -78,6 +77,7 @@ impl ContextReceipt {
         };
         let value: Self = toml::from_str(&fs::read_to_string(path)?)?;
         ensure!(value.clock.name == "CLOCK_MONOTONIC", "unrelated metrics clock");
+        ensure!(value.clock.domain == Clock::local_domain()?, "unrelated metrics clock domain");
         value.clock.offset()?;
         Ok(Some(value))
     }
@@ -95,6 +95,8 @@ pub struct Stage {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Process {
     pub pid: u32,
+    pub parent_pid: u32,
+    pub start_ticks: Measurement,
     pub role: String,
     pub argv: Vec<String>,
     pub start_ns: u64,
@@ -157,4 +159,49 @@ pub struct Receipt {
     pub resources: Resources,
     pub transport: Transport,
     pub configuration: std::collections::BTreeMap<String, String>,
+}
+impl Receipt {
+    pub fn validate(&self) -> Result<()> {
+        ensure!(
+            self.format == "pipeline-metrics-v1" && !self.run_id.is_empty() && !self.scope_id.is_empty(),
+            "invalid metrics identity"
+        );
+        ensure!(
+            self.clock.name == "CLOCK_MONOTONIC" && self.clock.domain == Clock::local_domain()?,
+            "unrelated metrics clock domain"
+        );
+        ensure!(
+            self.end_ns >= self.start_ns && self.elapsed_ns == self.end_ns - self.start_ns,
+            "invalid metrics outer interval"
+        );
+        ensure!(
+            ["success", "failed", "timed-out", "interrupted", "incomplete"].contains(&self.outcome.as_str()),
+            "invalid metrics outcome"
+        );
+        let mut ids = std::collections::BTreeSet::new();
+        for stage in &self.stages {
+            ensure!(ids.insert(&stage.id) && !stage.name.is_empty(), "duplicate/empty metrics stage");
+            ensure!(
+                stage.start_ns >= self.start_ns
+                    && stage.end_ns >= stage.start_ns
+                    && stage.end_ns <= self.end_ns
+                    && stage.elapsed_ns == stage.end_ns - stage.start_ns,
+                "invalid metrics stage interval"
+            );
+            ensure!(
+                ["success", "failed", "timed-out", "interrupted", "incomplete"].contains(&stage.outcome.as_str()),
+                "invalid metrics stage outcome"
+            );
+        }
+        for process in &self.processes {
+            ensure!(process.reap_count == 1 && process.end_ns >= process.start_ns, "invalid process reap/interval");
+            for metric in [&process.user_cpu_ns, &process.system_cpu_ns, &process.peak_rss_bytes, &process.start_ticks]
+            {
+                if let Measurement::Unavailable { reason } = metric {
+                    ensure!(!reason.is_empty(), "missing unavailable reason");
+                }
+            }
+        }
+        Ok(())
+    }
 }

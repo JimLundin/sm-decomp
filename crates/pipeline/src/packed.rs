@@ -13,6 +13,50 @@ pub struct CaptureRequest {
     pub provenance: Provenance,
     pub timeout: f64,
 }
+#[derive(Deserialize)]
+pub(crate) struct CaptureManyRequest {
+    pub captures: Vec<CaptureRequest>,
+    pub jobs: usize,
+}
+pub(crate) fn capture_parallel(captures: &[CaptureRequest], jobs: usize) -> Result<Vec<Pointer>> {
+    ensure!((1..=4).contains(&jobs) && !captures.is_empty(), "invalid parallel capture extent");
+    let next = std::sync::atomic::AtomicUsize::new(0);
+    let outcomes = std::sync::Mutex::new(Vec::new());
+    let context = crate::metrics::active();
+    std::thread::scope(|scope| {
+        for _ in 0..jobs {
+            let context = context.clone();
+            let next = &next;
+            let outcomes = &outcomes;
+            scope.spawn(move || {
+                let _entered = context.as_ref().map(|context| context.enter());
+                loop {
+                    let index = next.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                    let Some(request) = captures.get(index) else {
+                        break;
+                    };
+                    let outcome = capture(request.clone());
+                    outcomes.lock().unwrap().push((index, outcome));
+                }
+            });
+        }
+    });
+    let mut outcomes = outcomes.into_inner().unwrap();
+    outcomes.sort_by_key(|(index, _)| *index);
+    let mut pointers = Vec::new();
+    let mut errors = Vec::new();
+    for (index, outcome) in outcomes {
+        match outcome {
+            Ok(pointer) => pointers.push(pointer),
+            Err(error) => errors.push(format!("subject {index}: {error:#}")),
+        }
+    }
+    ensure!(errors.is_empty(), "{}", errors.join("; "));
+    Ok(pointers)
+}
+pub(crate) fn capture_many(request: CaptureManyRequest) -> Result<Vec<Pointer>> {
+    capture_parallel(&request.captures, request.jobs)
+}
 #[derive(Serialize, Deserialize)]
 pub struct MaterializeRequest {
     pub directory: PathBuf,
@@ -253,8 +297,22 @@ pub fn capture(request: CaptureRequest) -> Result<Pointer> {
         release.finish("success")?;
         Ok(pointer)
     })();
-    metrics
-        .finish(if result.is_ok() { "success" } else { "failed" }, result.as_ref().err().map(|e| format!("{e:#}")))?;
+    let error = result.as_ref().err().map(|e| format!("{e:#}"));
+    let child_metrics = directory.join("collector.metrics.toml");
+    if result.is_err() && child_metrics.exists() {
+        let _ = metrics.context.merge_child(&child_metrics);
+    }
+    let outcome = if result.is_ok() {
+        "success"
+    } else if error.as_deref().is_some_and(|e| e.contains("timeout")) {
+        "timed-out"
+    } else {
+        "failed"
+    };
+    let finished = metrics.finish(outcome, error);
+    if result.is_ok() {
+        finished?;
+    }
     result
 }
 
@@ -314,8 +372,8 @@ pub fn publish(request: PublishRequest) -> Result<Pointer> {
         command.arg("import").arg(&private).arg(&target).arg(&pointer.run);
         let child_context = metrics.context.child_context(&mut command, &child_metrics, "import")?;
         let output = metrics.context.output(&mut command, "shared-import")?;
-        ensure!(output.status.success(), "shared evidence import failed: {}", String::from_utf8_lossy(&output.stderr));
         metrics.context.merge_child(&child_metrics)?;
+        ensure!(output.status.success(), "shared evidence import failed: {}", String::from_utf8_lossy(&output.stderr));
         let imported: ImportReceipt = toml::from_str(std::str::from_utf8(&output.stdout)?)?;
         ensure!(
             imported.run == pointer.run

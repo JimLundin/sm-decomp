@@ -1,7 +1,7 @@
 //! Optional command-side measurements, never part of stored evidence.
 use anyhow::{Context, Result};
 use pipeline_model::metrics::{ContextReceipt, Receipt, Resources, Stage, Transport};
-use std::{fs, io::Write, path::Path};
+use std::{fs, io::Write};
 pub struct Metrics {
     receipt: Option<Receipt>,
     path: Option<std::path::PathBuf>,

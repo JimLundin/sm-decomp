@@ -107,3 +107,30 @@ fn timed_out_process_is_accounted_and_releases_worker_capacity() {
     let quick = compile(&run.0, "int main(void){return 0;}\n");
     assert!(exec(&run.0, &quick, "after-timeout").status.success());
 }
+
+#[test]
+fn unrelated_monotonic_domain_is_rejected_before_capture_readiness() {
+    let run = Run::new();
+    let reader = std::env::var_os("SM_EVIDENCE_TEST_BINARY")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("/tmp/sm-pipeline-upgrade-metrics-target/debug/sm-evidence"));
+    let clock = pipeline_model::metrics::Clock::new().unwrap();
+    let context = pipeline_model::metrics::ContextReceipt {
+        run_id: "foreign".into(),
+        scope_id: "foreign-child".into(),
+        parent_scope: None,
+        clock: pipeline_model::metrics::Clock { domain: "unrelated-host-clock".into(), ..clock },
+        enabled: true,
+        path: run.0.join("child.metrics.toml"),
+    };
+    fs::write(run.0.join("context.toml"), toml::to_string(&context).unwrap()).unwrap();
+    let output = Command::new(reader)
+        .arg("inventory")
+        .arg(run.0.join("store"))
+        .arg("0".repeat(64))
+        .env("SM_PIPELINE_METRICS_CONTEXT", run.0.join("context.toml"))
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("clock domain"));
+}
