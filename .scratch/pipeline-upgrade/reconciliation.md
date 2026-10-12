@@ -19,7 +19,8 @@ not build a duplicate migration.
 Native stored evidence is `sm-evidence-v2`. Preserve that delivered format and
 its observation identities. References to preserving `sm-evidence-v1` in the
 planning snapshot mean preserving the existing stored evidence contract; they
-do not authorize downgrading current v2 evidence. Historical sealed readers,+formats, verdicts and exact source dependencies remain unchanged. Small native
+do not authorize downgrading current v2 evidence. Historical sealed readers,
+formats, verdicts and exact source dependencies remain unchanged. Small native
 requests, pointers and new measurements use typed Rust and versioned TOML.
 
 The producer-to-collector FIFO still carries legacy text: `effect_writer.c.in`
