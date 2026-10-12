@@ -271,6 +271,46 @@ fn c_code(text: &str) -> Vec<u8> {
     }
     result
 }
+fn c_calls(bytes: &[u8]) -> (BTreeSet<String>, BTreeSet<String>) {
+    let mut calls = BTreeSet::new();
+    let mut indexed = BTreeSet::new();
+    let mut index = 0;
+    while index < bytes.len() {
+        if !(bytes[index].is_ascii_alphabetic() || bytes[index] == b'_') {
+            index += 1;
+            continue;
+        }
+        let start = index;
+        index += 1;
+        while index < bytes.len() && (bytes[index].is_ascii_alphanumeric() || bytes[index] == b'_') {
+            index += 1;
+        }
+        let name = String::from_utf8_lossy(&bytes[start..index]).into_owned();
+        let mut after = index;
+        while after < bytes.len() && bytes[after].is_ascii_whitespace() {
+            after += 1;
+        }
+        if bytes.get(after) == Some(&b'(')
+            && !["if", "for", "while", "switch", "sizeof", "_Alignof"].contains(&name.as_str())
+        {
+            calls.insert(name);
+        } else if bytes.get(after) == Some(&b'[') {
+            while after < bytes.len() && !b";{}]".contains(&bytes[after]) {
+                after += 1;
+            }
+            if bytes.get(after) == Some(&b']') {
+                after += 1;
+                while after < bytes.len() && bytes[after].is_ascii_whitespace() {
+                    after += 1;
+                }
+                if bytes.get(after) == Some(&b'(') {
+                    indexed.insert(name);
+                }
+            }
+        }
+    }
+    (calls, indexed)
+}
 fn inventory(checkout: &Path, path: &Path) -> Result<Inventory> {
     let value: Inventory = document(path)?;
     ensure!(value.schema_version == 1 && !value.routines.is_empty(), "unsupported or empty source inventory");
@@ -282,6 +322,7 @@ fn inventory(checkout: &Path, path: &Path) -> Result<Inventory> {
     ensure!(value.source_identity == identity, "source inventory pinned source differs");
     let mut symbols = BTreeSet::new();
     let mut source_text = BTreeMap::new();
+    let all_symbols: BTreeSet<_> = value.routines.iter().map(|r| r.symbol.as_str()).collect();
     for routine in &value.routines {
         ensure!(
             crate::family::identifier(&routine.symbol)
@@ -319,6 +360,15 @@ fn inventory(checkout: &Path, path: &Path) -> Result<Inventory> {
             end += 1;
         }
         ensure!(depth == 0 && hash(&start[..end]) == routine.definition_sha256, "routine definition identity differs");
+        let (calls, indexed) = c_calls(&clean[open..end]);
+        let defined: Vec<_> = calls.iter().filter(|s| all_symbols.contains(s.as_str())).cloned().collect();
+        let external: Vec<_> = calls.iter().filter(|s| !all_symbols.contains(s.as_str())).cloned().collect();
+        ensure!(
+            defined == routine.defined_dependencies
+                && external == routine.external_or_macro_calls
+                && indexed.into_iter().collect::<Vec<_>>() == routine.indirect_indexed_calls,
+            "routine lexical dependency inventory differs from pinned source"
+        );
         if let Some(address) = address(routine) {
             let opening_line = start[open..].lines().next().unwrap_or_default();
             ensure!(
