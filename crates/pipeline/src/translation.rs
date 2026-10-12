@@ -346,8 +346,7 @@ fn inventory(checkout: &Path, path: &Path) -> Result<Inventory> {
         let clean = &code[offset..];
         let open = clean.iter().position(|c| *c == b'{').context("routine definition body missing")?;
         ensure!(
-            start[..open].contains(&format!("{}(", routine.symbol))
-                || start[..open].contains(&format!("{} (", routine.symbol)),
+            definition_symbol(&clean[..open]) == Some(routine.symbol.as_str()),
             "routine symbol differs from pinned definition"
         );
         let mut depth = 1;
@@ -382,6 +381,18 @@ fn inventory(checkout: &Path, path: &Path) -> Result<Inventory> {
     }
     Ok(value)
 }
+fn definition_symbol(signature: &[u8]) -> Option<&str> {
+    if signature.contains(&b';') {
+        return None;
+    }
+    let paren = signature.iter().position(|byte| *byte == b'(')?;
+    let end = signature[..paren].iter().rposition(|byte| !byte.is_ascii_whitespace())? + 1;
+    let start = signature[..end]
+        .iter()
+        .rposition(|byte| !(byte.is_ascii_alphanumeric() || *byte == b'_'))
+        .map_or(0, |index| index + 1);
+    std::str::from_utf8(&signature[start..end]).ok()
+}
 fn address(routine: &Routine) -> Option<u32> {
     let value = routine.original_address.as_deref()?;
     u32::from_str_radix(value.strip_prefix("0x").unwrap_or(value), 16).ok()
@@ -414,7 +425,9 @@ fn exercise(checkout: &Path, path: &Path, source: &Source) -> Result<Vec<Hit>> {
         "exercise host source differs"
     );
     let run = fs::canonicalize(path.parent().context("exercise parent missing")?)?;
-    for required in ["projectiles.tsv", "sm_86.c", "headless.c", "inventory", "original-source/sm_86.c"] {
+    for required in
+        ["projectiles.tsv", "sm_86.c", "headless.c", "headless_frame.h", "inventory", "original-source/sm_86.c"]
+    {
         let expected =
             value.artifacts.get(required).with_context(|| format!("exercise artifact seal missing: {required}"))?;
         let artifact = run.join(required);
@@ -427,6 +440,7 @@ fn exercise(checkout: &Path, path: &Path, source: &Source) -> Result<Vec<Hit>> {
         value.artifacts["original-source/sm_86.c"] == value.original_sm86_sha256,
         "exercise original snapshot differs"
     );
+    crate::projectile_inventory::authenticate_inputs(checkout, &run, &value.build_command)?;
     ensure!(
         value.build_command.iter().any(|s| Path::new(s) == run.join("sm_86.c"))
             && value.build_command.iter().any(|s| Path::new(s) == run.join("headless.c")),
@@ -793,6 +807,15 @@ pub(crate) fn validate_scope(checkout: &Path, path: &Path) -> Result<Job> {
 /// not make a build, status report or agent-chosen executable a required gate.
 fn verification_command(argv: &[String]) -> bool {
     let args: Vec<_> = argv.iter().map(String::as_str).collect();
+    // Gate execution owns the checkout and the shared worker root. Research
+    // cannot redirect them or select a different source tree through argv.
+    if args.iter().any(|arg| {
+        ["--checkout", "--source", "--root", "--changed-since", "--manifest-path", "--config", "-C"]
+            .iter()
+            .any(|name| *arg == *name || arg.starts_with(&format!("{name}=")))
+    }) {
+        return false;
+    }
     if args.starts_with(&["cargo", "test"]) {
         return !args.iter().any(|a| matches!(*a, "--no-run" | "--help" | "-h" | "--list"));
     }
@@ -907,11 +930,10 @@ mod tests {
         assert!(default_exercise(&project.0).unwrap_err().to_string().contains("128 runs"));
     }
     fn pinned_inventory(root: &Path) -> Source {
-        write(
-            root,
-            "deps/snesrev-sm/src/sm_86.c",
-            "void Observed(void) { /* 0x8693ca */ Helper(); }\nvoid Helper(void) {}\n",
-        );
+        pinned_inventory_with(root, "void Observed(void) { /* 0x8693ca */ Helper(); }\nvoid Helper(void) {}\n")
+    }
+    fn pinned_inventory_with(root: &Path, bank: &str) -> Source {
+        write(root, "deps/snesrev-sm/src/sm_86.c", bank);
         write(root, "deps/snesrev-sm/LICENSE.txt", "test pinned source\n");
         fs::create_dir_all(root.join("deps/downloads")).unwrap();
         let archive = root.join("deps/downloads/oracle.tar.gz");
@@ -939,7 +961,12 @@ mod tests {
             toml::Value::Table(toml::Table::from_iter([
                 ("symbol".into(), "Observed".into()),
                 ("source".into(), "src/sm_86.c".into()),
-                ("line".into(), 1.into()),
+                (
+                    "line".into(),
+                    toml::Value::Integer(
+                        (bank.lines().position(|line| line.starts_with("void Observed(void) {")).unwrap() + 1) as i64,
+                    ),
+                ),
                 ("definition_sha256".into(), hash("void Observed(void) { /* 0x8693ca */ Helper(); }").into()),
                 ("original_address".into(), "0x8693ca".into()),
                 ("defined_dependencies".into(), toml::Value::try_from(vec!["Helper"]).unwrap()),
@@ -947,7 +974,12 @@ mod tests {
             toml::Value::Table(toml::Table::from_iter([
                 ("symbol".into(), "Helper".into()),
                 ("source".into(), "src/sm_86.c".into()),
-                ("line".into(), 2.into()),
+                (
+                    "line".into(),
+                    toml::Value::Integer(
+                        (bank.lines().position(|line| line.starts_with("void Helper(void) {")).unwrap() + 1) as i64,
+                    ),
+                ),
                 ("definition_sha256".into(), hash("void Helper(void) {}").into()),
             ])),
         ]);
@@ -1048,9 +1080,23 @@ mod tests {
             vec!["sm-pipeline", "batch", "catalog", "--profile", "test"],
             vec!["sm-pipeline", "unknown", "family-verify"],
             vec!["bash", "cargo", "test"],
+            vec!["cargo", "test", "--manifest-path", "/tmp/other/Cargo.toml"],
+            vec!["cargo", "test", "--config=build.target-dir='/tmp/other'"],
+            vec!["sm-pipeline", "batch", "verify", "--changed-since", "HEAD"],
+            vec!["sm-pipeline", "family-verify", "--checkout", "/tmp/other"],
+            vec!["sm-pipeline", "family-verify", "--source", "/tmp/other"],
+            vec!["sm-pipeline", "batch", "verify", "--root", "/tmp/private"],
         ] {
             assert!(!command(&parts), "non-verification accepted: {parts:?}");
         }
+    }
+
+    #[test]
+    fn pinned_definition_binds_exact_clean_function_token() {
+        assert_eq!(definition_symbol(&c_code("void Observed (void) ")), Some("Observed"));
+        assert_ne!(definition_symbol(&c_code("void NotObserved(void) ")), Some("Observed"));
+        assert_eq!(definition_symbol(&c_code("/* Observed( */ void NotObserved(void) ")), Some("NotObserved"));
+        assert_eq!(definition_symbol(&c_code("void Observed(void); void NotObserved(void) ")), None);
     }
 
     /// Execute a small C diagnostic with the production ROM identity and seal
@@ -1063,24 +1109,52 @@ mod tests {
             eprintln!("native Translation scope control requires the repository's local ROM fixture");
             return None;
         }
-        let source = pinned_inventory(root);
+        let bank = concat!(
+            "void Helper(void);\n",
+            "void Observed(void) { /* 0x8693ca */ Helper(); }\n",
+            "void Helper(void) {}\n",
+            "#include <stdlib.h>\n",
+            "typedef unsigned short uint16; typedef unsigned int uint32; typedef unsigned char uint8;\n",
+            "extern int snes_frame_counter; uint16 eproj_id[2] = {0x93ca};\n",
+            "static void InventoryHit(unsigned kind, uint16 address);\n",
+            "static void CallEprojPreInstr(uint32 ea, uint16 k) { (void)ea; (void)k; }\n",
+            "static const uint8 *CallEprojInstr(uint32 ea, uint16 k, const uint8 *j) { (void)ea; (void)k; return j; }\n",
+            "static void CallEprojInit(uint32 ea, uint16 j) { if (ea == 0x8693ca && j == 0) Observed(); }\n",
+            "static void EprojRunOne(uint16 k) { CallEprojInit(0x8693ca, k); }\n",
+            "void RunOne(void) { EprojRunOne(0); }\n",
+        );
+        let source = pinned_inventory_with(root, bank);
+        fs::create_dir_all(root.join("deps/snesrev-sm/src/snes")).unwrap();
         fs::create_dir_all(root.join("rom")).unwrap();
         fs::copy(&rom, root.join("rom/sm.sfc")).unwrap();
         assert_eq!(crate::digest(&root.join("rom/sm.sfc")).unwrap(), ROM_SHA256);
         write(root, "movies/super-metroid-any-3653.inputs", "native test movie identity\n");
-        let host = "#include <stdio.h>\nextern int observed(void);\nint main(int argc, char **argv) {\n  if (argc != 5 || observed() != 1) return 2;\n  FILE *table = fopen(\"projectiles.tsv\", \"w\");\n  if (!table) return 3;\n  fputs(\"kind\\taddress\\thits\\tfirst_frame\\tlast_frame\\ninit\\t93ca\\t1\\t0\\t0\\n\", table);\n  fclose(table);\n  FILE *terminal = fopen(argv[4], \"wb\");\n  if (!terminal) return 4;\n  fclose(terminal);\n  return 0;\n}\n";
+        let host = concat!(
+            "#include <stdio.h>\n#include <stdlib.h>\n",
+            "typedef unsigned short uint16; typedef unsigned int uint32; typedef unsigned char uint8;\n",
+            "int snes_frame_counter, decompression_calls; extern void RunOne(void);\n",
+            "void __real_DecompressToMem(uint32 src, uint8 *dst) { (void)src; (void)dst; }\n",
+            "static void SaveRoutineState(void) {}\n",
+            "// Linker wrapping\n",
+            "void __wrap_DecompressToMem(uint32 src, uint8 *dst) {}\n",
+            "// The host has no audio thread\n",
+            "int main(int argc, char **argv) {\n",
+            "  if (argc != 5 || atoi(argv[3]) != 1) return 2;\n",
+            "  FILE *rom = fopen(argv[1], \"rb\"); if (!rom || fgetc(rom) == EOF) return 3; fclose(rom);\n",
+            "  FILE *inputs = fopen(argv[2], \"rb\"); if (!inputs || fgetc(inputs) == EOF) return 4;\n",
+            "  RunOne();\n",
+            "  FILE *terminal = fopen(argv[4], \"wb\"); if (!terminal) return 5; fclose(terminal);\n",
+            "  fclose(inputs);\n  return 0;\n}\n",
+        );
         write(root, "tools/decomp/headless.c", host);
-        write(root, "run/headless.c", host);
-        write(root, "run/sm_86.c", "int observed(void) { return 1; }\n");
+        write(root, "tools/decomp/headless_frame.h", "// tiny native diagnostic frame contract\n");
+        write(root, "run/headless_frame.h", fs::read(root.join("tools/decomp/headless_frame.h")).unwrap());
+        let (instrumented_bank, instrumented_host) = crate::projectile_inventory::instrument(bank, host).unwrap();
+        write(root, "run/headless.c", instrumented_host);
+        write(root, "run/sm_86.c", instrumented_bank);
         write(root, "run/original-source/sm_86.c", fs::read(root.join("deps/snesrev-sm/src/sm_86.c")).unwrap());
         let run = fs::canonicalize(root.join("run")).unwrap();
-        let build = vec![
-            "cc".to_owned(),
-            run.join("sm_86.c").display().to_string(),
-            run.join("headless.c").display().to_string(),
-            "-o".to_owned(),
-            run.join("inventory").display().to_string(),
-        ];
+        let build = crate::projectile_inventory::build_command(&root.join("deps/snesrev-sm"), &run).unwrap();
         assert!(Command::new(&build[0]).args(&build[1..]).status().unwrap().success());
         let replay = vec![
             run.join("inventory").display().to_string(),
@@ -1096,10 +1170,17 @@ mod tests {
             accepted: false,
             frames: 1,
             source: source.clone(),
-            artifacts: ["projectiles.tsv", "sm_86.c", "headless.c", "inventory", "original-source/sm_86.c"]
-                .into_iter()
-                .map(|name| (name.into(), crate::digest(&run.join(name)).unwrap()))
-                .collect(),
+            artifacts: [
+                "projectiles.tsv",
+                "sm_86.c",
+                "headless.c",
+                "headless_frame.h",
+                "inventory",
+                "original-source/sm_86.c",
+            ]
+            .into_iter()
+            .map(|name| (name.into(), crate::digest(&run.join(name)).unwrap()))
+            .collect(),
             rom_sha256: ROM_SHA256.into(),
             inputs_sha256: crate::digest(&root.join("movies/super-metroid-any-3653.inputs")).unwrap(),
             original_sm86_sha256: source.files["src/sm_86.c"].clone(),
@@ -1174,6 +1255,19 @@ mod tests {
         let candidates =
             discover(root, Some(Path::new("inventory.toml")), Some(Path::new("run/verdict.toml"))).unwrap();
         assert!(candidates.iter().any(|job| job.id == "translation-research-Observed"));
+
+        let original_bank = fs::read(root.join("run/sm_86.c")).unwrap();
+        write(root, "run/sm_86.c", "int arbitrary(void) { return 1; }\n");
+        let mut substituted: Exercise = document(&root.join("run/verdict.toml")).unwrap();
+        substituted.artifacts.insert("sm_86.c".into(), crate::digest(&root.join("run/sm_86.c")).unwrap());
+        write(root, "run/verdict.toml", toml::to_string(&substituted).unwrap());
+        let mut substituted_scope = scope.clone();
+        substituted_scope.exercise_sha256 = crate::digest(&root.join("run/verdict.toml")).unwrap();
+        assert!(promote(root, &substituted_scope).unwrap_err().to_string().contains("transformed sources differ"));
+        write(root, "run/sm_86.c", original_bank);
+        substituted.artifacts.insert("sm_86.c".into(), crate::digest(&root.join("run/sm_86.c")).unwrap());
+        write(root, "run/verdict.toml", toml::to_string(&substituted).unwrap());
+        assert_eq!(crate::digest(&root.join("run/verdict.toml")).unwrap(), scope.exercise_sha256);
 
         let mut missing_helper = scope.clone();
         missing_helper.routines.pop();

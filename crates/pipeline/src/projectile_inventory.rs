@@ -25,7 +25,7 @@ void InventorySave(void) {
  if(fclose(f))exit(2);
 }
 "#;
-fn instrument(source: &str, host: &str) -> Result<(String, String)> {
+pub(crate) fn instrument(source: &str, host: &str) -> Result<(String, String)> {
     let mut source = source.to_owned();
     for (anchor, statement) in [
         ("static void EprojRunOne(uint16 k) {", "InventoryHit(0,eproj_id[k>>1]);"),
@@ -49,6 +49,58 @@ fn instrument(source: &str, host: &str) -> Result<(String, String)> {
     ensure!(host.matches(anchor).count() == 1, "inventory save anchor must be unique");
     host = host.replace(anchor, "  fclose(inputs);\n  InventorySave();\n  return 0;");
     Ok((source, host))
+}
+/// One command definition binds producer and planning authentication to the
+/// same pinned C units, deterministic instrumentation and output binary.
+pub(crate) fn build_command(source: &Path, run: &Path) -> Result<Vec<String>> {
+    let src = source.join("src");
+    let mut command = vec![
+        "cc".into(),
+        "-O2".into(),
+        "-fno-strict-aliasing".into(),
+        "-ffunction-sections".into(),
+        "-fdata-sections".into(),
+        "-iquote".into(),
+        src.to_string_lossy().into_owned(),
+    ];
+    command.extend(
+        family::c_units(source)?
+            .into_iter()
+            .map(|path| if path.file_name().is_some_and(|name| name == "sm_86.c") { run.join("sm_86.c") } else { path })
+            .map(|path| path.to_string_lossy().into_owned()),
+    );
+    command.extend([
+        run.join("headless.c").to_string_lossy().into_owned(),
+        "-Wl,--gc-sections".into(),
+        "-Wl,--wrap=Call".into(),
+        "-Wl,--wrap=cpu_runOpcode".into(),
+        "-Wl,--wrap=DecompressToMem".into(),
+        "-lm".into(),
+        "-o".into(),
+        run.join("inventory").to_string_lossy().into_owned(),
+    ]);
+    Ok(command)
+}
+
+pub(crate) fn authenticate_inputs(checkout: &Path, run: &Path, command: &[String]) -> Result<()> {
+    let source = checkout.join("deps/snesrev-sm");
+    let (bank, host) = instrument(
+        &fs::read_to_string(source.join("src/sm_86.c"))?,
+        &fs::read_to_string(checkout.join("tools/decomp/headless.c"))?,
+    )?;
+    ensure!(
+        fs::read(run.join("sm_86.c"))? == bank.as_bytes() && fs::read(run.join("headless.c"))? == host.as_bytes(),
+        "exercise transformed sources differ from current pinned instrumentation"
+    );
+    ensure!(
+        fs::read(run.join("headless_frame.h"))? == fs::read(checkout.join("tools/decomp/headless_frame.h"))?,
+        "exercise host frame header differs"
+    );
+    ensure!(
+        command == build_command(&source, run)?,
+        "exercise build differs from the pinned diagnostic producer command"
+    );
+    Ok(())
 }
 fn artifacts(root: &Path, directory: &Path, result: &mut BTreeMap<String, String>) -> Result<()> {
     for entry in fs::read_dir(directory)? {
@@ -127,32 +179,7 @@ pub fn operate(request: Value) -> Result<Value> {
             .map(PathBuf::from)
             .unwrap_or_else(|| common.parent().unwrap().join("out/pipeline"));
         let workers = std::env::var("SM_PIPELINE_WORKERS").unwrap_or_else(|_| "4".into()).parse()?;
-        let units = family::c_units(&source)?;
-        let mut command = vec![
-            "cc".into(),
-            "-O2".into(),
-            "-fno-strict-aliasing".into(),
-            "-ffunction-sections".into(),
-            "-fdata-sections".into(),
-            "-iquote".into(),
-            src.to_string_lossy().into_owned(),
-        ];
-        command.extend(
-            units
-                .iter()
-                .map(|p| if p.file_name().is_some_and(|n| n == "sm_86.c") { run.join("sm_86.c") } else { p.clone() })
-                .map(|p| p.to_string_lossy().into_owned()),
-        );
-        command.extend([
-            run.join("headless.c").to_string_lossy().into_owned(),
-            "-Wl,--gc-sections".into(),
-            "-Wl,--wrap=Call".into(),
-            "-Wl,--wrap=cpu_runOpcode".into(),
-            "-Wl,--wrap=DecompressToMem".into(),
-            "-lm".into(),
-            "-o".into(),
-            run.join("inventory").to_string_lossy().into_owned(),
-        ]);
+        let command = build_command(&source, &run)?;
         verdict.as_table_mut().unwrap().insert("build_command".into(), crate::report!(command));
         verdict.as_table_mut().unwrap().insert(
             "build_cache".into(),
