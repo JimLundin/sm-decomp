@@ -129,6 +129,9 @@ pub fn build(
         ("family.rs", include_str!("family.rs")),
         ("batch.rs", include_str!("batch.rs")),
         ("cleanup.rs", include_str!("cleanup.rs")),
+        ("fixture_execution.rs", include_str!("fixture_execution.rs")),
+        ("metrics.rs", include_str!("metrics.rs")),
+        ("resource_sampler.rs", include_str!("resource_sampler.rs")),
     ] {
         let key = format!("crates/pipeline/src/{name}");
         let hash = digest(&checkout.join(&key))?;
@@ -140,6 +143,7 @@ pub fn build(
     harness.insert(key.to_owned(), digest(&checkout.join(key))?);
     fs::copy(checkout.join(key), run.join("pipeline-headless.c"))?;
     Ok(Implementation {
+        fixture_execution: Some("dependency-v1-fresh".into()),
         dependency_contract: "rust-plm-v2".into(),
         source_root: checkout.into(),
         rust_dependencies: dependencies,
@@ -207,13 +211,19 @@ pub fn check(directory: &Path, fixture: &Case) -> Result<CaseRecord> {
     Ok(CaseRecord { spawn_results: results, ..Default::default() })
 }
 
-pub fn case(request: &VerifyRequest, routine: &Routine, fixture: &Case, run: &Path) -> Result<CaseRecord> {
+pub fn case(
+    _request: &VerifyRequest,
+    routine: &Routine,
+    fixture: &Case,
+    run: &Path,
+    worker: &mut crate::fixture_execution::Worker,
+) -> Result<CaseRecord> {
     let name = fixture.name.as_str();
     let kind = routine.symbol.as_str();
     let directory = run.join(name);
     family::prepare_case(fixture, &directory, &["uint16".into(), "int32".into()])?;
     for subject in ["rust", "c"] {
-        builds::execute(
+        worker.execute(
             &[
                 run.join("spawn").to_string_lossy().into_owned(),
                 subject.into(),
@@ -232,8 +242,6 @@ pub fn case(request: &VerifyRequest, routine: &Routine, fixture: &Case, run: &Pa
             ],
             &directory,
             subject,
-            &request.root,
-            request.workers,
         )?;
     }
     let mut record = check(&directory, fixture)?;

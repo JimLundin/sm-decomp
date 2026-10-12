@@ -13,6 +13,17 @@ static NEXT: AtomicUsize = AtomicUsize::new(0);
 struct Project(PathBuf);
 impl Drop for Project {
     fn drop(&mut self) {
+        if self.0.join("out").is_dir() {
+            for deduplicate in [false, true] {
+                let mut command = Command::new(env!("CARGO_BIN_EXE_sm-pipeline"));
+                command.args(["cleanup", "--root"]).arg(self.0.join("out")).arg("--apply");
+                if deduplicate {
+                    command.arg("--deduplicate");
+                }
+                let output = command.output().unwrap();
+                assert!(output.status.success(), "cleanup failed: {}", String::from_utf8_lossy(&output.stderr));
+            }
+        }
         let _ = fs::remove_dir_all(&self.0);
     }
 }
@@ -115,6 +126,9 @@ impl Project {
         }
     }
     fn verify(&self, success: bool) -> Value {
+        self.verify_mode(success, "auto")
+    }
+    fn verify_mode(&self, success: bool, mode: &str) -> Value {
         self.invoke(
             "family-verify",
             Value::Table(toml::Table::from_iter([
@@ -125,6 +139,7 @@ impl Project {
                 ("root".to_owned(), Value::try_from(self.0.join("cache")).unwrap()),
                 ("workers".to_owned(), Value::Integer(2_i64)),
                 ("case_jobs".to_owned(), Value::Integer(4_i64)),
+                ("execution".into(), mode.into()),
             ])),
             success,
         )
@@ -285,6 +300,149 @@ fn rust_admission_rejection_precedes_c_and_other_cases_keep_diagnostics() {
     assert!(run.join("reject/rust.stderr").exists());
     assert!(run.join("pass/c-after.wram").exists());
     assert_eq!(verdict["cases"][0]["case"].as_str(), Some("pass"));
+}
+
+#[test]
+fn independent_chains_overlap_and_failed_returns_block_descendants_in_both_modes() {
+    let project = Project::new();
+    let cases:Value=toml::from_str::<Value>("cases=[{name='fail',a=1,expected_return=99},{name='blocked',a=2,continue_from='fail'},{name='grandchild',a=3,continue_from='blocked'},{name='independent',a=7}]").unwrap()["cases"].clone();
+    project.manifest(cases);
+    for mode in ["fresh", "fork"] {
+        let verdict = project.verify_mode(false, mode);
+        let run = Path::new(verdict["run"].as_str().unwrap());
+        assert!(run.join("fail/c-after.wram").is_file());
+        assert!(!run.join("blocked/rust.stdout").exists());
+        assert!(!run.join("grandchild/c.stdout").exists());
+        assert_eq!(fs::read_to_string(run.join("blocked/blocked.toml")).unwrap(), "blocked_by = \"fail\"\n");
+        assert!(run.join("independent/c-after.wram").is_file());
+    }
+    // Filesystem rendezvous fails if a continuation serializes unrelated roots.
+    write(
+        &project.0,
+        "crates/port/src/fixture.rs",
+        r#"use crate::memory::Wram;
+pub fn dispatch(ram:&mut Wram<'_>,name:&str,a:u16,_b:u16)->Result<u32,&'static str>{
+if name!="Touch"{return Err("routine");}
+if a==1||a==7{std::fs::write(format!("../ready-{a}"),b"ready").unwrap();let other=if a==1{7}else{1};let deadline=std::time::Instant::now()+std::time::Duration::from_secs(3);while !std::path::Path::new(&format!("../ready-{other}")).exists(){if std::time::Instant::now()>deadline{return Err("independent chains serialized");}std::thread::sleep(std::time::Duration::from_millis(1));}}
+ram.set_byte(17,a as u8);Ok(a as u32+1)}"#,
+    );
+    project.manifest(
+        toml::from_str::<Value>(
+            "cases=[{name='root-a',a=1},{name='next-a',a=2,continue_from='root-a'},{name='root-b',a=7}]",
+        )
+        .unwrap()["cases"]
+            .clone(),
+    );
+    for mode in ["fresh", "fork"] {
+        let verdict = project.verify_mode(true, mode);
+        project.authenticate(&verdict, true);
+        assert_eq!(verdict["cases"][0]["case"].as_str(), Some("root-a"));
+        assert_eq!(verdict["cases"][1]["case"].as_str(), Some("next-a"));
+    }
+}
+
+#[test]
+fn fork_parent_is_pristine_and_execution_seals_cannot_be_stripped() {
+    let project = Project::new();
+    write(&project.0,"deps/snesrev-sm/src/sm_80.c",b"#include <stdint.h>\nextern uint8_t g_ram[0x20000];static int count;uint16_t Touch(uint16_t a){g_ram[17]=(uint8_t)a;return a+(++count);}");
+    // Re-pin the intentionally changed actual-C test source.
+    let archive = project.0.join("deps/downloads/oracle.tar.gz");
+    assert!(
+        Command::new("tar")
+            .arg("-czf")
+            .arg(&archive)
+            .arg("-C")
+            .arg(project.0.join("deps"))
+            .arg("snesrev-sm")
+            .status()
+            .unwrap()
+            .success()
+    );
+    let pins = project.0.join("tools/dependencies.toml");
+    let mut value: Value = toml::from_str(&fs::read_to_string(&pins).unwrap()).unwrap();
+    value["dependencies"][0]["sha256"] = format!("{:x}", Sha256::digest(fs::read(archive).unwrap())).into();
+    fs::write(pins, toml::to_string(&value).unwrap()).unwrap();
+    project.manifest(
+        toml::from_str::<Value>("cases=[{name='one',a=1},{name='two',a=2},{name='three',a=3}]").unwrap()["cases"]
+            .clone(),
+    );
+    let mut verdict = project.verify(true);
+    project.authenticate(&verdict, true);
+    let metrics: Value = toml::from_str(
+        &fs::read_to_string(Path::new(verdict["run"].as_str().unwrap()).join("family.metrics.toml")).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(
+        metrics["processes"].as_array().unwrap().iter().filter(|p| p["role"].as_str() == Some("rust")).count(),
+        3
+    );
+    assert!(!Path::new(verdict["run"].as_str().unwrap()).join("one/rust.metrics.toml").exists());
+    verdict["implementation"].as_table_mut().unwrap().remove("fixture_execution");
+    write(Path::new(verdict["run"].as_str().unwrap()), "verdict.toml", toml::to_string(&verdict).unwrap());
+    project.authenticate(&verdict, false);
+}
+
+#[test]
+fn cancelling_family_reaps_helper_fixture_and_descendant() {
+    let project = Project::new();
+    write(
+        &project.0,
+        "crates/port/src/fixture.rs",
+        r#"use crate::memory::Wram;
+unsafe extern "C"{fn fork()->i32;fn getppid()->i32;}
+pub fn dispatch(_ram:&mut Wram<'_>,_name:&str,_a:u16,_b:u16)->Result<u32,&'static str>{
+std::fs::write("helper.pid",unsafe{getppid()}.to_string()).unwrap();
+std::fs::write("child.pid",std::process::id().to_string()).unwrap();
+let pid=unsafe{fork()};assert!(pid>=0);if pid==0{std::fs::write("descendant.pid",std::process::id().to_string()).unwrap();}
+std::thread::sleep(std::time::Duration::from_secs(30));Ok(0)}"#,
+    );
+    project.manifest(toml::from_str::<Value>("cases=[{name='sleep',a=1}]").unwrap()["cases"].clone());
+    let request = toml::to_string(&toml::Table::from_iter([
+        ("checkout".into(), Value::try_from(&project.0).unwrap()),
+        ("source".into(), Value::try_from(project.0.join("deps/snesrev-sm")).unwrap()),
+        ("manifest".into(), "tools/port/fixture.toml".into()),
+        ("output".into(), Value::try_from(project.0.join("out")).unwrap()),
+        ("root".into(), Value::try_from(project.0.join("cache")).unwrap()),
+        ("workers".into(), 1.into()),
+        ("case_jobs".into(), 1.into()),
+        ("execution".into(), "fork".into()),
+    ]))
+    .unwrap();
+    let mut process = Command::new(env!("CARGO_BIN_EXE_sm-pipeline"))
+        .arg("family-verify")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    process.stdin.take().unwrap().write_all(request.as_bytes()).unwrap();
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(20);
+    let dir = loop {
+        if let Ok(entries) = fs::read_dir(project.0.join("out")) {
+            if let Some(dir) = entries
+                .filter_map(Result::ok)
+                .map(|e| e.path().join("sleep"))
+                .find(|p| p.join("descendant.pid").is_file())
+            {
+                break dir;
+            }
+        }
+        assert!(std::time::Instant::now() < deadline, "cancellation fixture did not start");
+        std::thread::sleep(std::time::Duration::from_millis(5));
+    };
+    unsafe {
+        libc::kill(process.id() as i32, libc::SIGTERM);
+    }
+    let output = process.wait_with_output().unwrap();
+    assert!(!output.status.success());
+    for name in ["helper.pid", "child.pid", "descendant.pid"] {
+        let pid: i32 = fs::read_to_string(dir.join(name)).unwrap().parse().unwrap();
+        assert_eq!(unsafe { libc::kill(pid, 0) }, -1, "{name} survived cancellation");
+    }
+    assert!(!dir.join("c.stdout").exists());
+    let verdict: Value =
+        toml::from_str(&fs::read_to_string(dir.parent().unwrap().join("verdict.toml")).unwrap()).unwrap();
+    assert!(verdict["error"].as_str().unwrap().contains("interrupted by signal"));
 }
 
 #[test]

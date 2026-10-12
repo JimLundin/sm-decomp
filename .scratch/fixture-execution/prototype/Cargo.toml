@@ -1,0 +1,27 @@
+[package]
+name = "fixture-execution-prototype"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[dependencies]
+anyhow = "1"
+libc = "0.2"
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
+sha2 = "0.10"
+pipeline-model = { path = "/home/jim/sm-decomp/crates/pipeline-model" }
+
+[[bin]]
+name = "fixture-prototype"
+path = "src/main.rs"
+
+[[bin]]
+name = "fixture-helper"
+path = "src/helper.rs"
+
+[[bin]]
+name = "retain"
+path = "src/retain.rs"

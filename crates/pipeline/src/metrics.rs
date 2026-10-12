@@ -94,6 +94,43 @@ pub(crate) fn command_output(command: &mut Command, role: &str) -> Result<std::p
 }
 pub(crate) struct ActiveGuard(Option<Context>);
 impl Context {
+    /// Retain child identities without duplicating helper-inclusive CPU totals.
+    pub fn fixture_process(
+        &self,
+        argv: &[String],
+        role: &str,
+        pid: u32,
+        parent_pid: u32,
+        start_ns: u64,
+        status: ExitStatus,
+        _user: u64,
+        _system: u64,
+        rss: u64,
+    ) -> Result<()> {
+        let end_ns = self.now()?;
+        let mut receipt = self.inner.receipt.lock().unwrap();
+        let scope = receipt.scope_id.clone();
+        receipt.processes.push(Process {
+            scope,
+            pid,
+            parent_pid,
+            start_ticks: Measurement::unavailable("fork child reaped by helper"),
+            role: role.into(),
+            argv: argv.to_vec(),
+            start_ns,
+            end_ns,
+            exit_code: status.code(),
+            signal: status.signal(),
+            outcome: if status.success() { "success" } else { "failed" }.into(),
+            reap_count: 1,
+            user_cpu_ns: Measurement::unavailable("retained in fixture fork receipt; included in helper CPU total"),
+            system_cpu_ns: Measurement::unavailable("retained in fixture fork receipt; included in helper CPU total"),
+            peak_rss_bytes: Measurement::value(rss),
+            accounting: "helper-reaped fixture identity; per-fixture CPU in fork receipt, inclusive CPU in helper record".into(),
+            error: None,
+        });
+        Ok(())
+    }
     pub fn snapshot(&self) -> Receipt {
         self.inner.receipt.lock().unwrap().clone()
     }
@@ -486,17 +523,26 @@ pub(crate) struct OwnedChild {
     start_ticks: Measurement,
 }
 impl OwnedChild {
+    pub fn id(&self) -> u32 {
+        self.child.id()
+    }
     pub fn poll_exit(&mut self) -> Result<Option<ExitStatus>> {
         self.reap(libc::WNOHANG)
     }
     pub fn terminate(&mut self) -> Result<ExitStatus> {
+        self.terminate_with_timeout(Duration::from_secs(30))
+    }
+    pub fn terminate_with_timeout(&mut self, timeout: Duration) -> Result<ExitStatus> {
+        if let Some(status) = self.status {
+            return Ok(status);
+        }
         // Let native orchestration owners stop and reap their separately grouped
         // producer/collector children before falling back to a forced group stop.
         let sent = unsafe { libc::kill(-(self.child.id() as i32), libc::SIGTERM) };
         if sent != 0 && std::io::Error::last_os_error().raw_os_error() != Some(libc::ESRCH) {
             return Err(std::io::Error::last_os_error().into());
         }
-        let deadline = std::time::Instant::now() + Duration::from_secs(30);
+        let deadline = std::time::Instant::now() + timeout;
         loop {
             if let Some(status) = self.reap(libc::WNOHANG)? {
                 return Ok(status);

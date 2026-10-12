@@ -152,7 +152,7 @@ impl Default for Request {
             families: None,
             batch: None,
             jobs: 3,
-            case_jobs: 1,
+            case_jobs: 4,
             live_jobs: 2,
             frames: 9000,
             accepted: None,
@@ -283,6 +283,7 @@ fn verify_one(
         manifest = plm_fixtures::generate(checkout, &output, None)?.manifest;
     }
     let verdict = family::verify(family_model::VerifyRequest {
+        execution: String::new(),
         checkout: checkout.into(),
         source: checkout.join("deps/snesrev-sm"),
         root: request.root.clone(),

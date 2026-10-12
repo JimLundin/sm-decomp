@@ -9,10 +9,7 @@ use std::{
     fs,
     path::{Component, Path, PathBuf},
     process::Command,
-    sync::{
-        Mutex,
-        atomic::{AtomicUsize, Ordering},
-    },
+    sync::atomic::{AtomicUsize, Ordering},
     time::{SystemTime, UNIX_EPOCH},
 };
 use toml::Value;
@@ -33,6 +30,22 @@ static NEXT: AtomicUsize = AtomicUsize::new(0);
 
 pub(crate) fn object<T: DeserializeOwned>(path: &Path) -> Result<T> {
     Ok(toml::from_str(&fs::read_to_string(path)?)?)
+}
+pub(crate) fn unique_id() -> usize {
+    NEXT.fetch_add(1, Ordering::Relaxed)
+}
+fn fork_execution(request: &VerifyRequest) -> Result<bool> {
+    ensure!(
+        ["", "auto", "fresh", "fork"].contains(&request.execution.as_str()),
+        "execution must be auto, fresh or fork"
+    );
+    let ordinary = !["callback", "power-bomb", "plm"].contains(&request.adapter.as_str());
+    let supported = cfg!(all(target_os = "linux", target_arch = "x86_64")) && ordinary;
+    ensure!(
+        request.execution != "fork" || supported,
+        "fork execution is supported only for ordinary Linux x86_64 families"
+    );
+    Ok(supported && request.execution != "fresh")
 }
 pub(crate) fn field<'a>(value: &'a Value, key: &str) -> Result<&'a str> {
     value[key].as_str().with_context(|| format!("missing {key}"))
@@ -264,6 +277,7 @@ fn build(
     source: &Path,
     run: &Path,
 ) -> Result<Implementation> {
+    let fork = fork_execution(request)?;
     let dispatcher = dispatcher(manifest);
     let eproj = manifest.projectile_host
         || manifest.projectile_rendering
@@ -372,6 +386,17 @@ fn build(
             .replace(" int64_t a=", " uint16_t host[8]; FILE *hf=fopen(argv[7],\"rb\"); if(!hf||fread(host,2,8,hf)!=8||fgetc(hf)!=EOF||fclose(hf))return 2; PortHostLoad(host);\n int64_t a=")
             .replace(" printf(", " PortHostSave(host);hf=fopen(argv[8],\"wb\");if(!hf||fwrite(host,2,8,hf)!=8||fclose(hf))return 2;\n printf(");
     }
+    if fork {
+        oracle = oracle.replace("int main(", "int PortFixtureInvoke(");
+        oracle = oracle.replace(rom_setup, "");
+        oracle.push_str("\nextern int sm_fixture_worker(int (*invoke)(int,char**));\nint main(int argc,char **argv){if(argc==3&&!strcmp(argv[1],\"--fixture-worker\")){\n");
+        if manifest.rom.is_some() {
+            oracle.push_str("FILE *rf=fopen(argv[2],\"rb\");if(!rf||fseek(rf,0,SEEK_END))return 2;long n=ftell(rf);if(n<=0||n>0x400000)return 2;rewind(rf);uint8_t *rom=malloc(n);if(!rom||fread(rom,1,n,rf)!=(size_t)n||fclose(rf))return 2;g_rom=rom;\n");
+        }
+        oracle.push_str("return sm_fixture_worker(PortFixtureInvoke);}\n");
+        oracle.push_str(rom_setup);
+        oracle.push_str("return PortFixtureInvoke(argc,argv);}\n");
+    }
     fs::write(run.join("oracle.c"), oracle)?;
     let module = fs::canonicalize(source_path(checkout, &manifest.rust_module))?;
     let imports = &manifest.rust_imports;
@@ -427,6 +452,30 @@ fn build(
             .replace("&rom,&args[1]", "&rom,&mut host,&args[1]")
             .replace("family::ProjectileHost::from_words", "memory::enemy_projectiles::ProjectileHost::from_words")
             .replace(" std::fs::write(&args[5]", " let out:Vec<u8>=host.words().into_iter().flat_map(u16::to_le_bytes).collect();std::fs::write(&args[8],out).unwrap();\n std::fs::write(&args[5]");
+    }
+    if fork {
+        wrapper = wrapper.replace(
+            "fn main(){\n let args:Vec<String>=std::env::args().collect();",
+            "fn invoke(args:&[String],rom:&[u8]){\n",
+        );
+        wrapper = wrapper.replace("let rom=std::fs::read(&args[6]).unwrap();", "");
+        wrapper.push_str(&format!("\n#[path={:?}] mod fixture_worker;\nfn main(){{let args:Vec<String>=std::env::args().collect();let worker=args.get(1).is_some_and(|a|a==\"--fixture-worker\");let rom=if {}{{std::fs::read(if worker{{&args[2]}}else{{&args[6]}}).unwrap()}}else{{vec![]}};if worker{{fixture_worker::serve(|args|{{invoke(args,&rom);0}}).unwrap();}}else{{invoke(&args,&rom);}}}}\n",checkout.join("crates/pipeline/src/fixture_worker.rs"),manifest.rom.is_some()));
+        fs::write(run.join("fixture-worker.rs"), include_str!("fixture_worker.rs"))?;
+        builds::execute(
+            &[
+                "rustc".into(),
+                "--edition=2024".into(),
+                "-O".into(),
+                "--crate-type=staticlib".into(),
+                run.join("fixture-worker.rs").display().to_string(),
+                "-o".into(),
+                run.join("libfixture_worker.a").display().to_string(),
+            ],
+            run,
+            "fixture-worker-build",
+            &request.root,
+            request.workers,
+        )?;
     }
     fs::write(run.join("wrapper.rs"), wrapper)?;
     let root = &request.root;
@@ -502,6 +551,12 @@ fn build(
         "-o".into(),
         run.join("c").to_string_lossy().into_owned(),
     ]);
+    if fork {
+        command.splice(
+            command.len() - 2..command.len() - 2,
+            [run.join("libfixture_worker.a").display().to_string(), "-ldl".into(), "-lpthread".into(), "-lm".into()],
+        );
+    }
     builds::c_build(builds::CBuildRequest {
         command,
         run: run.into(),
@@ -537,6 +592,10 @@ fn build(
         ("dispatcher_host.c", include_str!("dispatcher_host.c")),
         ("plm_fixtures.rs", include_str!("plm_fixtures.rs")),
         ("cleanup.rs", include_str!("cleanup.rs")),
+        ("fixture_execution.rs", include_str!("fixture_execution.rs")),
+        ("fixture_worker.rs", include_str!("fixture_worker.rs")),
+        ("metrics.rs", include_str!("metrics.rs")),
+        ("resource_sampler.rs", include_str!("resource_sampler.rs")),
     ] {
         let path = format!("crates/pipeline/src/{name}");
         let hash = digest(&checkout.join(&path))?;
@@ -550,6 +609,7 @@ fn build(
         fs::copy(checkout.join(name), run.join("pipeline-headless.c"))?;
     }
     Ok(Implementation {
+        fixture_execution: Some(if fork { "dependency-v1-fork" } else { "dependency-v1-fresh" }.into()),
         dependency_contract: "rust-family-v2".into(),
         source_root: checkout.into(),
         rust_dependencies: dependencies,
@@ -557,7 +617,14 @@ fn build(
         module: module.clone(),
         module_sha256: digest(&module)?,
         memory_sha256: digest(&checkout.join("crates/port/src/memory.rs"))?,
-        binaries: BTreeMap::from([("c".into(), digest(&run.join("c"))?), ("rust".into(), digest(&run.join("rust"))?)]),
+        binaries: {
+            let mut binaries =
+                BTreeMap::from([("c".into(), digest(&run.join("c"))?), ("rust".into(), digest(&run.join("rust"))?)]);
+            if fork {
+                binaries.insert("libfixture_worker.a".into(), digest(&run.join("libfixture_worker.a"))?);
+            }
+            binaries
+        },
         ..Default::default()
     })
 }
@@ -623,11 +690,12 @@ fn authenticate_continuation(case: &Case, run: &Path, before: &[u8]) -> Result<(
 }
 
 fn case(
-    request: &VerifyRequest,
+    _request: &VerifyRequest,
     manifest: &Manifest,
     routine: &Routine,
     case: &Case,
     run: &Path,
+    worker: &mut crate::fixture_execution::Worker,
 ) -> Result<CaseRecord> {
     let name = &case.name;
     let symbol = &routine.symbol;
@@ -656,7 +724,7 @@ fn case(
                 directory.join(format!("{subject}-host-after.bin")).to_string_lossy().into_owned(),
             ]);
         }
-        builds::execute(&command, &directory, subject, &request.root, request.workers)?;
+        worker.execute(&command, &directory, subject)?;
         returns.insert(subject.into(), numeric(&directory.join(format!("{subject}.stdout")))?);
         hashes.insert(subject.into(), digest(&directory.join(format!("{subject}-after.wram")))?);
     }
@@ -740,8 +808,8 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
         fs::copy(source.join("LICENSE.txt"), run.join("LICENSE.txt"))?;
         let tasks = ordered_tasks(&manifest)?;
         ensure!(!tasks.is_empty(), "empty family cannot be verified");
-        let jobs =
-            if tasks.iter().any(|(_, case, _)| case.continue_from.is_some()) { 1 } else { request.case_jobs.max(1) };
+        let jobs = request.case_jobs.max(1);
+        let fork = fork_execution(&request)?;
         ensure!((1..=64).contains(&jobs), "case jobs must be 1..64");
         if let Some(rom) = manifest.rom.as_ref() {
             let bytes = asset(&rom.file, &rom.sha256, None)?;
@@ -765,39 +833,30 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
         if callbacks {
             verdict.gameplay_translation = Some(!manifest.infrastructure_probe);
         }
-        let next = AtomicUsize::new(0);
-        let outcomes = Mutex::new(Vec::new());
-        let context = metrics.context.clone();
-        std::thread::scope(|scope| {
-            for _ in 0..jobs.min(tasks.len()) {
-                scope.spawn(|| {
-                    let _entered = context.enter();
-                    loop {
-                        let index = next.fetch_add(1, Ordering::Relaxed);
-                        let Some((routine, fixture, routine_index)) = tasks.get(index) else {
-                            break;
-                        };
-                        let outcome = if plm {
-                            crate::plm_spawn::case(&request, routine, fixture, &run)
-                        } else if callbacks {
-                            callback::case(&request, &manifest, routine, fixture, *routine_index, &run)
-                        } else {
-                            case(&request, &manifest, routine, fixture, &run)
-                        };
-                        outcomes.lock().unwrap().push((index, outcome));
-                    }
-                });
-            }
-        });
-        let mut outcomes = outcomes.into_inner().unwrap();
-        outcomes.sort_by_key(|(index, _)| *index);
+        let outcomes = crate::fixture_execution::run(
+            &tasks,
+            jobs,
+            &run,
+            &request.root,
+            request.workers,
+            fork,
+            |(routine, fixture, routine_index), worker| {
+                if plm {
+                    crate::plm_spawn::case(&request, routine, fixture, &run, worker)
+                } else if callbacks {
+                    callback::case(&request, &manifest, routine, fixture, routine_index, &run, worker)
+                } else {
+                    case(&request, &manifest, routine, fixture, &run, worker)
+                }
+            },
+        )?;
         let mut errors = Vec::new();
         for (index, outcome) in outcomes {
             match outcome {
                 Ok(record) => verdict.cases.push(record),
                 Err(error) => {
-                    let rejection = run.join(&tasks[index].1.name).join("rejection.toml");
-                    if rejection.is_file() {
+                    let rejection = tasks.get(index).map(|task| run.join(&task.1.name).join("rejection.toml"));
+                    if let Some(rejection) = rejection.filter(|p| p.is_file()) {
                         verdict.cases.push(object(&rejection)?);
                     }
                     errors.push(format!("{error:#}"));
@@ -850,6 +909,43 @@ pub fn authenticate(request: AuthenticateRequest) -> Result<Verdict> {
     let mut manifest: Manifest = object(&run.join("manifest.toml"))?;
     ensure!(manifest.family == verdict.family, "family identity differs");
     let implementation = verdict.implementation.as_ref().context("missing family implementation")?;
+    if let Some(execution) = &implementation.fixture_execution {
+        ensure!(
+            ["dependency-v1-fork", "dependency-v1-fresh"].contains(&execution.as_str()),
+            "unknown fixture execution contract"
+        );
+        for name in ["fixture_execution.rs", "metrics.rs", "resource_sampler.rs"] {
+            ensure!(
+                implementation.harness_sources.contains_key(&format!("crates/pipeline/src/{name}")),
+                "fixture execution source seal missing: {name}"
+            );
+        }
+        if execution == "dependency-v1-fork" {
+            ensure!(
+                implementation.dependency_contract == "rust-family-v2",
+                "fork adapter not admitted for callbacks/PLM"
+            );
+            ensure!(
+                implementation.harness_sources.contains_key("crates/pipeline/src/fixture_worker.rs"),
+                "fixture worker source seal missing"
+            );
+            ensure!(
+                actual.contains_key("fixture-worker.rs") && actual.contains_key("libfixture_worker.a"),
+                "fixture worker artifact missing"
+            );
+            ensure!(
+                digest(&run.join("fixture-worker.rs"))?
+                    == implementation.harness_sources["crates/pipeline/src/fixture_worker.rs"],
+                "fixture worker generated source differs"
+            );
+            ensure!(
+                implementation.binaries.get("libfixture_worker.a") == Some(&digest(&run.join("libfixture_worker.a"))?),
+                "fixture worker library seal differs"
+            );
+        }
+    } else {
+        ensure!(!actual.contains_key("pipeline-fixture_execution.rs"), "fixture execution contract missing");
+    }
     let manifest_identity = implementation.manifest.as_ref().context("current family manifest seal missing")?;
     ensure!(actual.contains_key("manifest-input.toml"), "current source inputs manifest seal missing");
     let input_manifest: Asset = object(&run.join("manifest-input.toml"))?;

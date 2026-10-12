@@ -174,6 +174,9 @@ pub fn build(
         ("family.rs", include_str!("family.rs")),
         ("batch.rs", include_str!("batch.rs")),
         ("cleanup.rs", include_str!("cleanup.rs")),
+        ("fixture_execution.rs", include_str!("fixture_execution.rs")),
+        ("metrics.rs", include_str!("metrics.rs")),
+        ("resource_sampler.rs", include_str!("resource_sampler.rs")),
     ] {
         let key = format!("crates/pipeline/src/{name}");
         let hash = digest(&checkout.join(&key))?;
@@ -185,6 +188,7 @@ pub fn build(
     harness.insert(key.to_owned(), digest(&checkout.join(key))?);
     fs::copy(checkout.join(key), run.join("pipeline-headless.c"))?;
     Ok(Implementation {
+        fixture_execution: Some("dependency-v1-fresh".into()),
         manifest: None,
         dependency_contract: "rust-callback-v2".into(),
         callback_adapter: Some(if power_bomb { "power-bomb" } else { "callback" }.into()),
@@ -278,12 +282,13 @@ pub fn check(directory: &Path, fixture: &Case) -> Result<CaseRecord> {
 }
 
 pub fn case(
-    request: &VerifyRequest,
+    _request: &VerifyRequest,
     _manifest: &Manifest,
     routine: &Routine,
     fixture: &Case,
     index: usize,
     run: &Path,
+    worker: &mut crate::fixture_execution::Worker,
 ) -> Result<CaseRecord> {
     let name = fixture.name.as_str();
     let symbol = routine.symbol.as_str();
@@ -291,7 +296,7 @@ pub fn case(
     family::prepare_case(fixture, &directory, &family::types(routine)?)?;
     for subject in ["rust", "c"] {
         fs::create_dir(directory.join(subject))?;
-        builds::execute(
+        worker.execute(
             &[
                 run.join("collision").to_string_lossy().into_owned(),
                 subject.into(),
@@ -306,8 +311,6 @@ pub fn case(
             ],
             &directory,
             subject,
-            &request.root,
-            request.workers,
         )?;
     }
     let mut record = check(&directory, fixture)?;

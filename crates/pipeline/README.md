@@ -6,6 +6,25 @@ packed live replay, decompressor acceptance and RNG jobs. Several worktrees shar
 `SM_PIPELINE_WORKERS` (default 4) under the Git common checkout's `out/pipeline`.
 Set the same `SM_PIPELINE_ROOT` to share an explicit directory.
 
+Fixture execution overlaps independent chains within that shared capacity.
+Continuations run only after their predecessor passes every comparison; failures
+leave causal `blocked.toml` records. Verdict case order stays canonical.
+Ordinary/projectile families on Linux x86_64 use preloaded subject workers that
+fork a fresh child for each fixture. Worker parents never execute gameplay;
+unchanged ROM data is loaded once. Callback/PLM families use prompt fresh-process
+execution through the same scheduler. `family-verify --execution fresh` selects
+fresh processes for comparison; `--execution fork` explicitly requires a supported
+ordinary family. The default `auto` selects the supported path.
+
+Per-case state, returns, host words, callback captures, stdout/stderr and command
+timings remain sealed. Fixture metrics are aggregated in `family.metrics.toml`;
+fork receipts retain per-child CPU and reaping details. Aggregate helper CPU
+includes its children; fixture identity records mark CPU unavailable to avoid
+counting it twice. RSS sampling can count shared fork pages more than once and
+miss brief child peaks. Compiler/general `exec` commands keep their own receipts.
+New execution source and worker artifacts are part of family admission; existing
+sealed historical evidence is retained under its original contract.
+
 ```sh
 cargo run -p pipeline --locked --offline -- batch verify --families system audio --jobs 2 --case-jobs 4
 cargo run -p pipeline --locked --offline -- batch status

@@ -25,6 +25,7 @@ mod diagnostics;
 mod family;
 mod family_model;
 mod fixtures;
+mod fixture_execution;
 mod hdma_probe;
 mod inputs;
 mod iteration_demonstrations;
@@ -1371,7 +1372,7 @@ fn main() -> Result<()> {
                     std::thread::available_parallelism().map(|n| n.get().min(4)).unwrap_or(1).to_string()
                 })
                 .parse::<usize>()?;
-            let mut request = crate::report!({"checkout":checkout,"source":checkout.join("deps/snesrev-sm"),"root":root,"workers":workers,"case_jobs":1});
+            let mut request = crate::report!({"checkout":checkout,"source":checkout.join("deps/snesrev-sm"),"root":root,"workers":workers,"case_jobs":workers});
             let mut index = 1;
             while index < args.len() {
                 let key = match args[index].as_str() {
@@ -1383,6 +1384,7 @@ fn main() -> Result<()> {
                     "--case-jobs" => "case_jobs",
                     "--verdict" => "verdict",
                     "--adapter" => "adapter",
+                    "--execution" => "execution",
                     value => bail!("unknown family option: {value}"),
                 };
                 index += 1;

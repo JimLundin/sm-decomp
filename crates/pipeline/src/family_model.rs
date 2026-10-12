@@ -97,6 +97,8 @@ pub struct Source {
 }
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct Implementation {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub fixture_execution: Option<String>,
     pub dependency_contract: String,
     pub callback_adapter: Option<String>,
     pub source_root: PathBuf,
@@ -176,6 +178,7 @@ pub struct Verdict {
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct VerifyRequest {
+    pub execution: String,
     pub checkout: PathBuf,
     pub source: PathBuf,
     pub output: PathBuf,

@@ -11,6 +11,17 @@ use toml::Value;
 struct Run(PathBuf);
 impl Drop for Run {
     fn drop(&mut self) {
+        if self.0.join("out").is_dir() {
+            for deduplicate in [false, true] {
+                let mut command = Command::new(env!("CARGO_BIN_EXE_sm-pipeline"));
+                command.args(["cleanup", "--root"]).arg(self.0.join("out")).arg("--apply");
+                if deduplicate {
+                    command.arg("--deduplicate");
+                }
+                let output = command.output().unwrap();
+                assert!(output.status.success(), "cleanup: {}", String::from_utf8_lossy(&output.stderr));
+            }
+        }
         let _ = fs::remove_dir_all(&self.0);
     }
 }
