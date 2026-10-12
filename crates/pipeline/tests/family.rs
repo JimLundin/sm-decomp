@@ -530,6 +530,101 @@ fn changed_current_manifest_cannot_authenticate_prior_family_admission() {
 }
 
 #[test]
+fn changed_since_verifies_one_actual_c_family_without_visiting_unrelated_history() {
+    let project = Project::new();
+    project.manifest(Value::Array(vec![Value::Table(toml::Table::from_iter([
+        ("name".into(), "one".into()),
+        ("a".into(), 1.into()),
+        ("expected_return".into(), 2.into()),
+    ]))]));
+    let first_manifest = project.0.join("tools/port/fixture.toml");
+    let mut other: Value = toml::from_str(&fs::read_to_string(&first_manifest).unwrap()).unwrap();
+    other["family"] = "other".into();
+    other["rust_module"] = "crates/port/src/other.rs".into();
+    write(&project.0, "tools/port/other.toml", toml::to_string(&other).unwrap());
+    write(&project.0, "crates/port/src/other.rs", fs::read(project.0.join("crates/port/src/fixture.rs")).unwrap());
+    write(
+        &project.0,
+        "tools/port/batch.toml",
+        "[families]\nfixture='family'\nother='family'\n[profiles]\ngameplay=['fixture','other']\n",
+    );
+    write(&project.0, ".gitignore", "/batch/\n/cache/\n/out/\n");
+    assert!(Command::new("git").args(["init", "-q"]).arg(&project.0).status().unwrap().success());
+    assert!(Command::new("git").args(["add", "."]).current_dir(&project.0).status().unwrap().success());
+    assert!(
+        Command::new("git")
+            .args(["-c", "user.name=Fixture", "-c", "user.email=fixture@example.test", "commit", "-qm", "source"])
+            .current_dir(&project.0)
+            .status()
+            .unwrap()
+            .success()
+    );
+    let request = |operation: &str, changed: bool| {
+        let mut request = Value::Table(toml::Table::from_iter([
+            ("checkout".into(), Value::try_from(&project.0).unwrap()),
+            ("operation".into(), operation.into()),
+            ("batch".into(), Value::try_from(project.0.join("batch/batch.toml")).unwrap()),
+            ("root".into(), Value::try_from(project.0.join("cache")).unwrap()),
+            ("workers".into(), 2.into()),
+        ]));
+        if changed {
+            request["changed_since"] = "HEAD".into();
+        }
+        request
+    };
+    let initial = project.invoke("batch", request("verify", false), true);
+    for name in ["fixture", "other"] {
+        assert_eq!(initial["families"][name]["status"].as_str(), Some("offline-verified"));
+    }
+    let count_runs =
+        |name: &str| fs::read_dir(project.0.join(format!("batch/families/{name}/evidence"))).unwrap().count();
+    assert_eq!(count_runs("fixture"), 1);
+    assert_eq!(count_runs("other"), 1);
+
+    // A semantic-preserving leaf edit invalidates exactly one current source seal.
+    let candidate = project.0.join("crates/port/src/fixture.rs");
+    let source = fs::read_to_string(&candidate).unwrap();
+    fs::write(&candidate, format!("{source}\n// focused leaf revision\n")).unwrap();
+    let plan = project.invoke("batch", request("plan", true), true);
+    assert_eq!(plan["selected"].as_array().unwrap().len(), 1);
+    assert_eq!(plan["selected"][0]["family"].as_str(), Some("fixture"));
+    assert_eq!(plan["excluded"][0]["family"].as_str(), Some("other"));
+
+    let other_verdict = PathBuf::from(initial["families"]["other"]["verdict"].as_str().unwrap());
+    let mut retained: Value = toml::from_str(&fs::read_to_string(&other_verdict).unwrap()).unwrap();
+    let unrelated_artifact = other_verdict.parent().unwrap().join("candidate.rs");
+    let unrelated_original = fs::read(&unrelated_artifact).unwrap();
+    // Deliberately corrupt unrelated history. Focused verification must leave it
+    // untouched; explicit current authentication still rejects this evidence.
+    fs::write(&unrelated_artifact, b"tampered unrelated retained artifact").unwrap();
+    project.authenticate(&retained, false);
+    let focused = project.invoke("batch", request("verify", true), true);
+    assert_eq!(focused["families"]["fixture"]["status"].as_str(), Some("offline-verified"));
+    assert_eq!(focused["families"]["other"], initial["families"]["other"]);
+    assert_eq!(count_runs("fixture"), 2);
+    assert_eq!(count_runs("other"), 1);
+    assert_ne!(focused["families"]["fixture"]["verdict"], initial["families"]["fixture"]["verdict"]);
+    fs::write(&unrelated_artifact, unrelated_original).unwrap();
+    project.authenticate(&retained, true);
+
+    let reused = project.invoke("batch", request("verify", true), true);
+    assert_eq!(reused["families"]["fixture"]["status"].as_str(), Some("reused"));
+    assert_eq!(reused["families"]["fixture"]["verdict"], focused["families"]["fixture"]["verdict"]);
+    assert_eq!(count_runs("fixture"), 2);
+    assert_eq!(count_runs("other"), 1);
+
+    fs::write(&candidate, source.replace("a as u32+1", "a as u32+2")).unwrap();
+    let rejected = project.invoke("batch", request("verify", true), false);
+    assert_eq!(rejected["families"]["fixture"]["status"].as_str(), Some("rejected"));
+    assert_eq!(rejected["families"]["other"], initial["families"]["other"]);
+    assert_eq!(count_runs("fixture"), 3);
+    assert_eq!(count_runs("other"), 1);
+    // Keep the restored unrelated verdict live so evidence remains valid at exit.
+    retained = toml::from_str(&fs::read_to_string(&other_verdict).unwrap()).unwrap();
+    project.authenticate(&retained, true);
+}
+
+#[test]
 fn native_batch_reuses_authenticated_runs_and_rejects_stale_candidate() {
     let project = Project::new();
     project.manifest(Value::Array(vec![Value::Table(toml::Table::from_iter([
