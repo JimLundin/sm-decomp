@@ -2,6 +2,11 @@
 
 Updated 2026-10-12 after recovering the crashed session.
 
+Scope confirmed by the user: complete optimization and improvement of the
+pipeline itself. A separate session resumes actual decomp work. Gameplay runs
+here provide regression evidence for pipeline changes; new porting work is
+outside this session. See `spec.md` for the completion boundary.
+
 Active integration: `/tmp/sm-pipeline-upgrade-integration`, branch
 `pipeline-upgrade-integration`. The developer checkout remains at `3ad1bf3` on
 `decomp-port-integration`, clean and unchanged by this continuation.

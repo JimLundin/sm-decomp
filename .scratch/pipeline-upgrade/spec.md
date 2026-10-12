@@ -2,6 +2,19 @@
 
 Status: claimed
 
+## Session scope, confirmed 2026-10-12
+
+Complete optimization and improvement of the decomp pipeline itself. A separate
+session continues actual decomp and gameplay porting afterward. This effort owns
+native tooling, orchestration, measurement, bottleneck improvements, evidence
+handling, verification and cleanup. Existing gameplay routes are regression
+workloads for pipeline changes; discovering or implementing new translated
+routines, gameplay families or porting frontiers is outside this effort.
+
+Completion delivers the integrated, verified pipeline improvements and their
+measured limits, with retained evidence and cleanup complete, for that separate
+decomp session to use. Binary transport remains conditional on measurement.
+
 Authoritative plan: `plan.md`, rendered locally from `visual/plan.mdx`.
 Committed optimization branch: `decomp-pipeline-performance` at `e820a6b`.
 Implementation basis: active native Rust migration worktree, pinned in
@@ -21,8 +34,9 @@ Implementation branch: `pipeline-upgrade-integration`, based on delivered
 merge `3ad1bf3`. Current source and format reconciliation is recorded in
 [reconciliation.md](reconciliation.md); absolute benchmark budgets are frozen in
 [benchmark-budgets.md](benchmark-budgets.md). Ticket 01 is resolved; ticket 02 is
-being implemented on `pipeline-upgrade-metrics`, with isolated producer and
-resource-sampler support. Conditional
+integrated into this worktree with scope/process/resource controls and fresh
+regression admission; its telemetry overhead gate remains open. The integrated
+support worktrees have been removed. Conditional
 tickets cannot be claimed without the selection decision in 03.
 
 ## Planning evidence
