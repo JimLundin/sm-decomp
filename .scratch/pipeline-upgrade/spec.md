@@ -1,6 +1,6 @@
 # Measure the native Rust pipeline and select its next upgrade
 
-Status: open
+Status: claimed
 
 Authoritative plan: `plan.md`, rendered locally from `visual/plan.mdx`.
 Committed optimization branch: `decomp-pipeline-performance` at `e820a6b`.
@@ -17,9 +17,11 @@ C templates and Rust selection, exact `sm-evidence-v1` compatibility, real failu
 controls, controlled benchmarks/full-route admission and promotion/retention.
 No new Python tooling or duplicate native migration ports are proposed.
 
-Implementation is proposed. This planning task changes documentation only and
-preserves the optimization worktree/branch. All eight tickets remain open;
-conditional tickets cannot be claimed without the selection decision in 03.
+Implementation branch: `pipeline-upgrade-integration`, based on delivered
+merge `3ad1bf3`. Current source and format reconciliation is recorded in
+[reconciliation.md](reconciliation.md); absolute benchmark budgets are frozen in
+[benchmark-budgets.md](benchmark-budgets.md). Ticket 01 is claimed. Conditional
+tickets cannot be claimed without the selection decision in 03.
 
 ## Planning evidence
 
