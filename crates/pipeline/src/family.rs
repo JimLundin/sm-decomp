@@ -378,11 +378,20 @@ fn build(
     for name in imports {
         ensure!(identifier(name), "invalid Rust module import");
     }
+    let alias_module = dispatcher
+        && module.file_name().is_some_and(|n| n == "enemy_projectiles.rs" || n == "observed_projectile_ownership.rs");
+    let mut wrapper_imports = imports.clone();
+    if alias_module {
+        let name = module.file_stem().unwrap().to_string_lossy().into_owned();
+        if !wrapper_imports.contains(&name) {
+            wrapper_imports.push(name);
+        }
+    }
     let memory = inputs::wrapper(inputs::WrapperRequest {
         checkout: checkout.into(),
         run: run.into(),
         modules: vec![module.clone()],
-        imports: imports.clone(),
+        imports: wrapper_imports,
     })?;
     let signed = manifest.routines.iter().any(|r| r.arg_types.is_some());
     let (setup, call) = if manifest.rom.as_ref().is_some() {
@@ -406,9 +415,7 @@ fn build(
         "#[path={:?}] mod memory;\nuse memory::*;\n{root_imports}#[path={module:?}] mod family;\nfn main(){{\n let args:Vec<String>=std::env::args().collect(); assert!(args.len()==6 || args.len()==7);\n let mut bytes=std::fs::read(&args[4]).unwrap(); {setup}\n let result={call}.unwrap();\n std::fs::write(&args[5],bytes).unwrap(); println!(\"{{}}\",result);\n}}\n",
         memory.path
     );
-    if dispatcher
-        && module.file_name().is_some_and(|n| n == "enemy_projectiles.rs" || n == "observed_projectile_ownership.rs")
-    {
+    if alias_module {
         wrapper = wrapper.replace(
             &format!("#[path={module:?}] mod family;"),
             &format!("use memory::{} as family;", module.file_stem().unwrap().to_string_lossy()),
