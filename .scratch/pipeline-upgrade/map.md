@@ -6,6 +6,12 @@ Plan: `plan.md`. Visual source: `visual/plan.mdx`.
 
 ## Decisions so far
 
+- User-directed bounded measurement replaces hour-long telemetry tuning.
+  Deliver exact legacy rendering (ticket09) and default-off detailed telemetry;
+  19.389% short complete-wall reduction with exact observations. Large telemetry
+  2% and binary15%/5% promotion remain unproved, conditional04–08 unclaimed.
+  See [short measurements](evidence/short-measurements.md).
+
 - Reuse e820a6b infrastructure and the uncommitted native Rust migration;
   preserve sm-evidence-v1. See `optimization-progress.md` and source snapshot.
 - First reconcile delivered native code/current decomp and fill measurement gaps.
@@ -38,6 +44,7 @@ If binary selected: 04 decoder → 05 native producer → 06 compatibility →
 | [06](issues/06-compatibility-and-failure-controls.md) | task | Conditional binary |
 | [07](issues/07-controlled-binary-benchmarks.md) | task | Conditional binary |
 | [08](issues/08-promotion-and-retention.md) | task | Conditional binary |
+| [09](issues/09-exact-trace-restoration.md) | task | Selected improvement |
 
 Ticket 01's external prerequisite is satisfied by migration `c89db9b`, merge
 `3ad1bf3`, resolved local migration tickets and their recorded controls/cleanup.

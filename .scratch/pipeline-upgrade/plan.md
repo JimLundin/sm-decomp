@@ -1,6 +1,25 @@
 # Measure the native Rust pipeline, then upgrade its measured bottleneck
 
 Status: proposed
+
+## Completion scope revision, 2026-10-12
+
+The user confirmed pipeline improvement only and rejected hour-long telemetry
+tuning. The repeated 45,000-input telemetry sweep and original 12-cell matrix
+below are deferred. The delivered selection is exact legacy restoration:
+85.4% faster on the retained 24 MB stream and 19.389% lower complete boundary
+wall on the controlled short four-subject workload. Those results do not prove
+large-case speedup or the 2% telemetry overhead target.
+
+Ordinary verification keeps detailed telemetry off by default; benchmark scopes
+and `SM_PIPELINE_METRICS=enabled` opt in. Process accounting/exit/elapsed receipts
+and cleanup remain. The 2% target is retained for future default-on promotion,
+not waived or reported as passing. Binary transport is deferred, with conditional
+04–08 unclaimed: no attribution establishes its large-case 15%/5% promotion
+opportunity. Complete final-source 129,712-input existing-route correctness,
+post-cleanup authentication, main integration and worktree/source retention.
+The historical design below remains for any separately authorized large study.
+
 Committed baseline: `e820a6b77338eb4e84a2d91baeed2dc9f33c72f1`.
 Implementation basis: the uncommitted Rust migration in `/tmp/sm-decomp-pipeline`,
 read on 2026-10-11 and pinned in `optimization-source-snapshot.toml`.

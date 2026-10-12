@@ -2,6 +2,14 @@
 
 Status: claimed
 
+Required completion scope is revised by the user's 2026-10-12 instruction to
+avoid hour-long tuning: deliver native metrics/process controls and benchmark
+orchestration, the measured exact-restoration improvement, opt-in detailed
+telemetry, bounded comparison evidence with honest limits, and final full-route
+pipeline regression/integration cleanup. The original large matrix and automatic
+telemetry promotion remain deferred; no <=2% large-case success is claimed.
+Tickets 01, 02, 03 and 09 are required; binary 04–08 remain conditional/unclaimed.
+
 ## Session scope, confirmed 2026-10-12
 
 Complete optimization and improvement of the decomp pipeline itself. A separate

@@ -61,6 +61,26 @@ processes/paths and zero truncated scans.
 
 ## Cleanup
 
+Implementation commit: `c86c946`. Final validation logs in `out/ticket-03/logs/`:
+12 evidence store controls; 7 benchmark refusals; 5 evidence metrics; 6 process/
+cancellation controls; 4 observations; 2 packed/private/parallel controls;
+8 producer identity/fault controls; 5 resource and 4 model controls all passed.
+The broad unit invocation passed60/61 including the complete fixture inventory;
+its detailed-refusal test required explicit opt-in after the default change and
+passed separately (`final-refusal-control.log`). Initial producer SIGPIPE control
+had a reader-close race (failed once, passed repeated); parent/child stdin
+handshake removes it, and all eight controls pass (`final-producer-controls.log`).
+Strict all-target Clippy and fmt/whitespace pass. Final check targets cleaned:
+5,892 files/2.8GiB debug and684files/126.1MiB release. Retain exact release drivers.
+
+Fresh current-source predecessors: `final-projectile/1791813609706347-2-0`
+(1,840cases), `final-decomp/decomp-acceptance.toml` (40fixtures/23calls/11faults/
+three original-ROM checks) and `final-rng/1791814189089479007-2/verdict.toml`
+(65,536seeds/8,783livecalls). All authenticated after cleanup. Projectile dedup
+reclaimed554,696,704bytes; RNG176,081,290bytes; decompressor0bytes. The earlier
+full-live preflight refused stale Cargo.lock before capture and retained its
+diagnostics. Final full-route verdict and integration receipts follow separately.
+
 Both short-control and reader-comparison global cleanup/dedup receipts succeeded
 with zero bytes reclaimed; per-sample cleanup and retained authentication passed.
 Receipts are `logs/short-control-{cleanup,dedup}.toml` and
