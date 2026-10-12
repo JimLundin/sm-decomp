@@ -11,6 +11,7 @@ use std::{
 
 const MAX_JOBS: usize = 8;
 const MAX_DOCUMENT_BYTES: u64 = 32 * 1024 * 1024;
+const MAX_INTEGRATION_GATE_SECONDS: u64 = 3600;
 const ROM_SHA256: &str = "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72";
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -740,8 +741,10 @@ pub(crate) fn validate_scope(checkout: &Path, path: &Path) -> Result<Job> {
             "scope verification argv malformed"
         );
         ensure!(
-            verification.timeout_seconds > 0 && (verification.integration || verification.timeout_seconds <= 60),
-            "initial verification must be bounded at 60 seconds"
+            verification.timeout_seconds > 0
+                && verification.timeout_seconds
+                    <= if verification.integration { MAX_INTEGRATION_GATE_SECONDS } else { 60 },
+            "verification timeout exceeds the bounded experiment or integration limit"
         );
         ensure!(
             verification_command(&verification.argv),
@@ -1194,6 +1197,9 @@ mod tests {
         let mut unsafe_command = scope.clone();
         unsafe_command.verification[1].argv = vec!["sm-pipeline".into(), "batch".into(), "status".into()];
         assert!(promote(root, &unsafe_command).unwrap_err().to_string().contains("must execute"));
+        let mut oversized_gate = scope.clone();
+        oversized_gate.verification[1].timeout_seconds = MAX_INTEGRATION_GATE_SECONDS + 1;
+        assert!(promote(root, &oversized_gate).unwrap_err().to_string().contains("timeout exceeds"));
 
         ticket(root, 1, "open", "None", "ready-for-agent");
         assert!(promote(root, &scope).unwrap_err().to_string().contains("unresolved blockers"));
