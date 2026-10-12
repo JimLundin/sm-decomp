@@ -10,22 +10,115 @@ use std::{
 };
 use toml::Value;
 static NEXT: AtomicUsize = AtomicUsize::new(0);
-struct Project(PathBuf);
+struct Project(PathBuf, bool);
 impl Drop for Project {
     fn drop(&mut self) {
-        if self.0.join("out").is_dir() {
+        let mut cleanup = Vec::new();
+        for root in ["out", "batch"] {
+            if !self.0.join(root).is_dir() {
+                continue;
+            }
             for deduplicate in [false, true] {
                 let mut command = Command::new(env!("CARGO_BIN_EXE_sm-pipeline"));
-                command.args(["cleanup", "--root"]).arg(self.0.join("out")).arg("--apply");
+                command.args(["cleanup", "--root"]).arg(self.0.join(root)).arg("--apply");
                 if deduplicate {
                     command.arg("--deduplicate");
                 }
                 let output = command.output().unwrap();
                 assert!(output.status.success(), "cleanup failed: {}", String::from_utf8_lossy(&output.stderr));
+                if self.1 {
+                    cleanup.push(toml::from_str::<Value>(std::str::from_utf8(&output.stdout).unwrap()).unwrap());
+                }
             }
         }
-        let _ = fs::remove_dir_all(&self.0);
+        if self.1 {
+            let mut disposable_bytes = 0;
+            for disposable in ["cache", ".git"] {
+                if self.0.join(disposable).is_dir() {
+                    disposable_bytes += tree_bytes(&self.0.join(disposable));
+                    fs::remove_dir_all(self.0.join(disposable)).unwrap();
+                }
+            }
+            write(
+                &self.0,
+                "retention.toml",
+                toml::to_string(&Value::Table(toml::Table::from_iter([
+                    ("cleanup".into(), Value::Array(cleanup)),
+                    ("disposable_bytes_removed".into(), Value::try_from(disposable_bytes).unwrap()),
+                    ("retained".into(), "sealed family runs and exact source snapshot; .git/cache removed".into()),
+                ])))
+                .unwrap(),
+            );
+        } else {
+            let _ = fs::remove_dir_all(&self.0);
+        }
     }
+}
+fn tree_bytes(path: &Path) -> u64 {
+    let metadata = fs::symlink_metadata(path).unwrap();
+    if metadata.is_file() {
+        metadata.len()
+    } else if metadata.is_dir() {
+        fs::read_dir(path).unwrap().map(|entry| tree_bytes(&entry.unwrap().path())).sum()
+    } else {
+        0
+    }
+}
+impl Project {
+    fn git(&self, args: &[&str]) -> String {
+        let output = Command::new("git").args(args).current_dir(&self.0).output().unwrap();
+        assert!(output.status.success(), "git {args:?}: {}", String::from_utf8_lossy(&output.stderr));
+        String::from_utf8(output.stdout).unwrap().trim().into()
+    }
+    fn initialize_git(&self) {
+        write(&self.0, ".gitignore", "/out/\n/batch/\n/cache/\n/target/\n/rom/\n/movies/\n/.scratch/coordinator/\n");
+        self.git(&["init", "-q"]);
+        self.git(&["add", "."]);
+        self.git(&["-c", "user.name=Fixture", "-c", "user.email=fixture@example.test", "commit", "-qm", "source"]);
+    }
+    fn assign(&self, operation: &str, update: Option<Value>, success: bool) -> Value {
+        let mut request = Value::Table(toml::Table::from_iter([
+            ("checkout".into(), Value::try_from(&self.0).unwrap()),
+            ("operation".into(), operation.into()),
+            ("effort".into(), "coordinator".into()),
+            ("coordinator".into(), "fixture-owner".into()),
+            ("available_slots".into(), 2.into()),
+            ("pipeline_root".into(), Value::try_from(self.0.join("cache")).unwrap()),
+            ("workers".into(), 2.into()),
+            ("translations".into(), true.into()),
+        ]));
+        if let Some(update) = update {
+            request.as_table_mut().unwrap().insert("update".into(), update);
+        } else if matches!(operation, "plan" | "next") {
+            request.as_table_mut().unwrap().insert("changed_since".into(), "HEAD".into());
+        }
+        self.invoke("assign", request, success)
+    }
+    fn start_assignment(&self, assignment: &Value) {
+        self.assign(
+            "record",
+            Some(Value::Table(toml::Table::from_iter([
+                ("event".into(), "started".into()),
+                ("claim".into(), assignment["claim"].clone()),
+                ("agent".into(), "fixture-agent".into()),
+            ]))),
+            true,
+        );
+    }
+}
+
+fn sealed(path: &Path) -> Value {
+    Value::Table(toml::Table::from_iter([
+        ("path".into(), Value::try_from(path).unwrap()),
+        ("sha256".into(), format!("{:x}", Sha256::digest(fs::read(path).unwrap())).into()),
+    ]))
+}
+fn finish(claim: &Value, result: Value) -> Value {
+    Value::Table(toml::Table::from_iter([
+        ("event".into(), "finished".into()),
+        ("claim".into(), claim.clone()),
+        ("result".into(), result),
+    ]))
 }
 fn write(root: &Path, name: &str, bytes: impl AsRef<[u8]>) {
     let p = root.join(name);
@@ -40,6 +133,9 @@ impl Project {
             NEXT.fetch_add(1, Ordering::Relaxed),
             SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
         ));
+        Self::at(root, false)
+    }
+    fn at(root: PathBuf, retain: bool) -> Self {
         fs::create_dir(&root).unwrap();
         let crate_root = Path::new(env!("CARGO_MANIFEST_DIR"));
         for entry in fs::read_dir(crate_root.join("src")).unwrap() {
@@ -83,7 +179,7 @@ impl Project {
                 "schema_version = 1\n[[dependencies]]\nname = \"snesrev-sm\"\narchive = \"oracle.tar.gz\"\nsha256 = {hash:?}\nrevision = \"test-pinned-source\"\n"
             ),
         );
-        Self(root)
+        Self(root, retain)
     }
     fn manifest(&self, cases: Value) {
         let manifest = Value::Table(toml::Table::from_iter([
@@ -418,14 +514,13 @@ std::thread::sleep(std::time::Duration::from_secs(30));Ok(0)}"#,
     process.stdin.take().unwrap().write_all(request.as_bytes()).unwrap();
     let deadline = std::time::Instant::now() + std::time::Duration::from_secs(20);
     let dir = loop {
-        if let Ok(entries) = fs::read_dir(project.0.join("out")) {
-            if let Some(dir) = entries
+        if let Ok(entries) = fs::read_dir(project.0.join("out"))
+            && let Some(dir) = entries
                 .filter_map(Result::ok)
                 .map(|e| e.path().join("sleep"))
                 .find(|p| p.join("descendant.pid").is_file())
-            {
-                break dir;
-            }
+        {
+            break dir;
         }
         assert!(std::time::Instant::now() < deadline, "cancellation fixture did not start");
         std::thread::sleep(std::time::Duration::from_millis(5));
@@ -568,7 +663,7 @@ fn changed_since_verifies_one_actual_c_family_without_visiting_unrelated_history
             ("workers".into(), 2.into()),
         ]));
         if changed {
-            request["changed_since"] = "HEAD".into();
+            request.as_table_mut().unwrap().insert("changed_since".into(), "HEAD".into());
         }
         request
     };
@@ -599,6 +694,7 @@ fn changed_since_verifies_one_actual_c_family_without_visiting_unrelated_history
     fs::write(&unrelated_artifact, b"tampered unrelated retained artifact").unwrap();
     project.authenticate(&retained, false);
     let focused = project.invoke("batch", request("verify", true), true);
+    assert_eq!(focused["selected"].as_array().unwrap(), &[Value::String("fixture".into())]);
     assert_eq!(focused["families"]["fixture"]["status"].as_str(), Some("offline-verified"));
     assert_eq!(focused["families"]["other"], initial["families"]["other"]);
     assert_eq!(count_runs("fixture"), 2);
@@ -681,4 +777,483 @@ fn native_batch_lock_conflicts_do_not_block_independent_batches() {
     assert_eq!(other["status"].as_str(), Some("complete"));
     drop(held);
     assert_eq!(project.batch(true)["status"].as_str(), Some("complete"));
+}
+
+#[test]
+fn coordinator_authenticates_verification_and_derives_failure_diagnosis() {
+    let project = Project::new();
+    project.manifest(Value::Array(vec![Value::Table(toml::Table::from_iter([
+        ("name".into(), "one".into()),
+        ("a".into(), 1.into()),
+        ("expected_return".into(), 2.into()),
+    ]))]));
+    write(&project.0, "tools/port/batch.toml", "[families]\nfixture='family'\n[profiles]\ngameplay=['fixture']\n");
+    project.initialize_git();
+    let candidate = project.0.join("crates/port/src/fixture.rs");
+    let source = fs::read_to_string(&candidate).unwrap();
+    fs::write(&candidate, format!("{source}\n// changed leaf\n")).unwrap();
+    let mut next = Value::Table(toml::Table::from_iter([
+        ("operation".into(), "next".into()),
+        ("checkout".into(), Value::try_from(&project.0).unwrap()),
+        ("effort".into(), "coordinator".into()),
+        ("coordinator".into(), "fixture-owner".into()),
+        ("translations".into(), false.into()),
+        ("available_slots".into(), 1.into()),
+        ("changed_since".into(), "HEAD".into()),
+    ]));
+    let ready = project.invoke("assign", next.clone(), true)["queue"]["assignment"].clone();
+    assert_eq!(ready["job"]["kind"].as_str(), Some("verify"));
+    project.start_assignment(&ready);
+    project.batch(true);
+    let batch = project.0.join("batch/batch.toml");
+    let placeholder = sealed(&batch);
+    let result = finish(
+        &ready["claim"],
+        Value::Table(toml::Table::from_iter([
+            ("result".into(), "verified".into()),
+            ("evidence".into(), Value::Array(vec![sealed(&batch)])),
+            ("authentication".into(), placeholder.clone()),
+        ])),
+    );
+    let completed = project.assign("record", Some(result.clone()), true);
+    assert_eq!(completed["jobs"][0]["state"].as_str(), Some("complete"));
+    assert_ne!(completed["jobs"][0]["result"]["authentication"], placeholder);
+    let repeated = project.assign("record", Some(result), true);
+    assert_eq!(repeated["jobs"][0]["result"], completed["jobs"][0]["result"]);
+
+    fs::write(&candidate, source.replace("a as u32+1", "a as u32+2")).unwrap();
+    let ready = project.invoke("assign", next.clone(), true)["queue"]["assignment"].clone();
+    project.start_assignment(&ready);
+    project.batch(false);
+    let failed = finish(
+        &ready["claim"],
+        Value::Table(toml::Table::from_iter([
+            ("result".into(), "failed".into()),
+            ("error".into(), "Rust differs from actual C".into()),
+            ("evidence".into(), Value::Array(vec![sealed(&batch)])),
+            ("followups".into(), Value::Array(vec![])),
+        ])),
+    );
+    project.assign("record", Some(failed), true);
+    next["changed_since"] = "HEAD".into();
+    let diagnosis = project.invoke("assign", next, true)["queue"]["assignment"].clone();
+    assert_eq!(diagnosis["job"]["kind"].as_str(), Some("diagnose"));
+    assert!(diagnosis["job"]["instructions"].as_str().unwrap().contains("60 seconds"));
+    assert!(batch.is_file());
+}
+
+struct IsolatedWorktree<'a> {
+    project: &'a Project,
+    path: PathBuf,
+}
+impl Drop for IsolatedWorktree<'_> {
+    fn drop(&mut self) {
+        if self.path.join(".git").exists() {
+            self.project.git(&["worktree", "remove", "--force", self.path.to_str().unwrap()]);
+        }
+    }
+}
+
+#[test]
+fn coordinator_promotes_research_runs_required_gates_and_integrates_with_cleanup() {
+    let rom = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../rom/sm.sfc");
+    if !rom.is_file() {
+        eprintln!("coordinator native exercise control requires the repository's local ROM fixture");
+        return;
+    }
+    let project = Project::new();
+    let root = &project.0;
+    project.manifest(Value::Array(vec![Value::Table(toml::Table::from_iter([
+        ("name".into(), "one".into()),
+        ("a".into(), 1.into()),
+        ("expected_return".into(), 2.into()),
+    ]))]));
+    write(root, "tools/port/batch.toml", "[families]\nfixture='family'\n[profiles]\ngameplay=['fixture']\n");
+    write(
+        root,
+        "deps/snesrev-sm/src/sm_86.c",
+        concat!(
+            "#include <stdlib.h>\n",
+            "typedef unsigned short uint16; typedef unsigned int uint32; typedef unsigned char uint8;\n",
+            "extern int snes_frame_counter; uint16 eproj_id[2]={0x93ca};\n",
+            "static void InventoryHit(unsigned kind,uint16 address);\n",
+            "int Observed(void) { // 0x8693ca\n  return 1;\n}\n",
+            "static void CallEprojPreInstr(uint32 ea, uint16 k) { (void)ea; (void)k; }\n",
+            "static const uint8 *CallEprojInstr(uint32 ea, uint16 k, const uint8 *j) { (void)ea; (void)k; return j; }\n",
+            "static void CallEprojInit(uint32 ea, uint16 j) { if(ea==0x8693ca&&j==0&&Observed()!=1)exit(6); }\n",
+            "static void EprojRunOne(uint16 k) { CallEprojInit(0x8693ca,k); }\n",
+            "void RunOne(void) { EprojRunOne(0); }\n",
+        ),
+    );
+    fs::create_dir_all(root.join("deps/snesrev-sm/src/snes")).unwrap();
+    let archive = root.join("deps/downloads/oracle.tar.gz");
+    assert!(
+        Command::new("tar")
+            .arg("-czf")
+            .arg(&archive)
+            .arg("-C")
+            .arg(root.join("deps"))
+            .arg("snesrev-sm")
+            .status()
+            .unwrap()
+            .success()
+    );
+    write(
+        root,
+        "tools/dependencies.toml",
+        format!(
+            "schema_version=1\n[[dependencies]]\nname='snesrev-sm'\narchive='oracle.tar.gz'\nrevision='test-pinned-source'\nsha256={:?}\n",
+            sealed(&archive)["sha256"].as_str().unwrap()
+        ),
+    );
+    let host = concat!(
+        "#include <stdio.h>\n#include <stdlib.h>\n",
+        "typedef unsigned short uint16; typedef unsigned int uint32; typedef unsigned char uint8;\n",
+        "int snes_frame_counter,decompression_calls; extern void RunOne(void);\n",
+        "void DecompressToMem(uint32 src,uint8 *dst){(void)src;(void)dst;}\n",
+        "extern void __real_DecompressToMem(uint32 src,uint8 *dst);\n",
+        "static void SaveRoutineState(void) {}\n// Linker wrapping\n",
+        "void __wrap_DecompressToMem(uint32 src,uint8 *dst) {}\n// The host has no audio thread\n",
+        "int main(int argc,char **argv){\n",
+        "  if(argc!=5||atoi(argv[3])!=1)return 2;\n",
+        "  FILE *rom=fopen(argv[1],\"rb\");if(!rom||fgetc(rom)==EOF)return 3;fclose(rom);\n",
+        "  FILE *inputs=fopen(argv[2],\"rb\");if(!inputs||fgetc(inputs)==EOF)return 4;\n",
+        "  RunOne();FILE *terminal=fopen(argv[4],\"wb\");if(!terminal)return 5;fclose(terminal);\n",
+        "  fclose(inputs);\n  return 0;\n}\n",
+    );
+    write(root, "tools/decomp/headless.c", host);
+    write(root, "tools/decomp/headless_frame.h", "// tiny native diagnostic frame contract\n");
+    fs::create_dir_all(root.join("rom")).unwrap();
+    fs::copy(&rom, root.join("rom/sm.sfc")).unwrap();
+    write(root, "movies/super-metroid-any-3653.inputs", "native coordinator diagnostic input\n");
+    write(
+        root,
+        "Cargo.toml",
+        "[workspace]\n[package]\nname='fixture-port'\nversion='0.1.0'\nedition='2024'\n[lib]\npath='crates/port/src/lib.rs'\n",
+    );
+    write(root, "crates/port/src/lib.rs", "pub mod memory;\npub mod fixture;\n");
+    let candidate = root.join("crates/port/src/fixture.rs");
+    let mut source = fs::read_to_string(&candidate).unwrap();
+    source.push_str("\n#[cfg(test)] mod tests { #[test] fn candidate_returns() { let mut bytes=vec![0;0x20000];let mut ram=crate::memory::Wram::new(&mut bytes).unwrap();assert_eq!(super::dispatch(&mut ram,\"Touch\",1,0),Ok(2));assert_eq!(ram.byte(17),1); } }\n");
+    fs::write(&candidate, &source).unwrap();
+    assert!(
+        Command::new("cargo").args(["generate-lockfile", "--offline"]).current_dir(root).status().unwrap().success()
+    );
+    write(
+        root,
+        ".scratch/work/issues/01-ready.md",
+        "# Dependencies ready\nStatus: resolved\nBlocked by: None\nType: task\n",
+    );
+    let origin = ".scratch/work/issues/02-translate.md";
+    write(root, origin, "# Translate Observed\nStatus: open\nBlocked by: 01\nTriage: ready-for-agent\nType: task\n");
+    project.initialize_git();
+    let inventory = root.join("out/inventory.toml");
+    let output = Command::new(env!("CARGO_BIN_EXE_sm-pipeline"))
+        .arg("source-inventory")
+        .arg("--output")
+        .arg(&inventory)
+        .current_dir(root)
+        .output()
+        .unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let output = Command::new(env!("CARGO_BIN_EXE_sm-pipeline"))
+        .args(["projectile-inventory", "--frames", "1", "--output"])
+        .arg(root.join("out/exercise"))
+        .env("SM_PIPELINE_ROOT", root.join("cache"))
+        .env("SM_PIPELINE_WORKERS", "2")
+        .current_dir(root)
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}\n{}",
+        String::from_utf8_lossy(&output.stderr),
+        String::from_utf8_lossy(&output.stdout)
+    );
+    let exercise: Value = toml::from_str(std::str::from_utf8(&output.stdout).unwrap()).unwrap();
+    let exercise_path = Path::new(exercise["evidence"].as_str().unwrap()).join("verdict.toml");
+    let gate = |argv: Vec<String>, integration: bool| {
+        Value::Table(toml::Table::from_iter([
+            ("argv".into(), Value::try_from(argv).unwrap()),
+            ("timeout_seconds".into(), 60.into()),
+            ("integration".into(), integration.into()),
+        ]))
+    };
+    let cargo_gate = vec![
+        "cargo".into(),
+        "test".into(),
+        "--locked".into(),
+        "--offline".into(),
+        "--target-dir".into(),
+        root.join("cache/port-gates").display().to_string(),
+        "candidate_returns".into(),
+    ];
+    let gate_batch = root.join("out/gate-batch/batch.toml");
+    let scope = Value::Table(toml::Table::from_iter([
+        ("format".into(), "translation-scope-v1".into()),
+        ("subject".into(), "Translate observed coherent behavior".into()),
+        ("origin_ticket".into(), origin.into()),
+        ("source_inventory".into(), Value::try_from(&inventory).unwrap()),
+        ("source_inventory_sha256".into(), sealed(&inventory)["sha256"].clone()),
+        ("exercise".into(), Value::try_from(&exercise_path).unwrap()),
+        ("exercise_sha256".into(), sealed(&exercise_path)["sha256"].clone()),
+        ("routines".into(), Value::try_from(vec!["Observed"]).unwrap()),
+        ("dependencies".into(), Value::try_from(vec![".scratch/work/issues/01-ready.md"]).unwrap()),
+        ("dependency_review".into(), Value::Table(toml::Table::new())),
+        ("writable_paths".into(), Value::try_from(vec!["crates/port/src/fixture.rs"]).unwrap()),
+        (
+            "inputs".into(),
+            Value::Table(toml::Table::from_iter(
+                ["deps/snesrev-sm/src/sm_86.c", "crates/port/src/fixture.rs", ".scratch/work/issues/01-ready.md"]
+                    .into_iter()
+                    .map(|name| (name.into(), sealed(&root.join(name))["sha256"].clone())),
+            )),
+        ),
+        (
+            "verification".into(),
+            Value::Array(vec![
+                gate(cargo_gate.clone(), false),
+                gate(cargo_gate, true),
+                gate(
+                    vec![
+                        "sm-pipeline".into(),
+                        "batch".into(),
+                        "verify".into(),
+                        "--families".into(),
+                        "fixture".into(),
+                        "--batch".into(),
+                        gate_batch.display().to_string(),
+                    ],
+                    true,
+                ),
+            ]),
+        ),
+    ]));
+    let scope_path = root.join("out/scope.toml");
+    write(root, "out/scope.toml", toml::to_string(&scope).unwrap());
+    let research = project.assign("next", None, true)["queue"]["assignment"].clone();
+    assert_eq!(research["job"]["kind"].as_str(), Some("research"));
+    assert_eq!(research["job"]["ticket"].as_str(), Some(origin));
+    project.start_assignment(&research);
+    project.assign(
+        "record",
+        Some(finish(
+            &research["claim"],
+            Value::Table(toml::Table::from_iter([
+                ("result".into(), "researched".into()),
+                ("evidence".into(), Value::Array(vec![sealed(&scope_path)])),
+                ("followups".into(), Value::Array(vec![])),
+            ])),
+        )),
+        true,
+    );
+    assert!(fs::read_to_string(root.join(origin)).unwrap().contains("Status: claimed"));
+    let implement = project.assign("next", None, true)["queue"]["assignment"].clone();
+    assert_eq!(implement["job"]["kind"].as_str(), Some("implement"));
+    let worktree = PathBuf::from(implement["workspace"]["worktree"].as_str().unwrap());
+    project.git(&[
+        "worktree",
+        "add",
+        "-q",
+        "-b",
+        implement["workspace"]["branch"].as_str().unwrap(),
+        worktree.to_str().unwrap(),
+        "HEAD",
+    ]);
+    let guard = IsolatedWorktree { project: &project, path: worktree.clone() };
+    project.start_assignment(&implement);
+    let commit = |text: &str| {
+        fs::write(worktree.join("crates/port/src/fixture.rs"), text).unwrap();
+        assert!(
+            Command::new("git")
+                .args(["add", "crates/port/src/fixture.rs"])
+                .current_dir(&worktree)
+                .status()
+                .unwrap()
+                .success()
+        );
+        assert!(
+            Command::new("git")
+                .args([
+                    "-c",
+                    "user.name=Fixture",
+                    "-c",
+                    "user.email=fixture@example.test",
+                    "commit",
+                    "-qm",
+                    "implementation"
+                ])
+                .current_dir(&worktree)
+                .status()
+                .unwrap()
+                .success()
+        );
+        String::from_utf8(
+            Command::new("git").args(["rev-parse", "HEAD"]).current_dir(&worktree).output().unwrap().stdout,
+        )
+        .unwrap()
+        .trim()
+        .to_owned()
+    };
+    let submitted = |commit: String| {
+        finish(
+            &implement["claim"],
+            Value::Table(toml::Table::from_iter([
+                ("result".into(), "submitted".into()),
+                ("commit".into(), commit.into()),
+                ("evidence".into(), Value::Array(vec![sealed(&scope_path)])),
+            ])),
+        )
+    };
+    let no_tests = commit(&source.replace("candidate_returns", "renamed_test"));
+    project.assign("record", Some(submitted(no_tests)), false);
+    let good_commit = commit(&format!("{source}\n// reviewed scoped implementation\n"));
+    let submission = submitted(good_commit.clone());
+    let completed = project.assign("record", Some(submission.clone()), true);
+    let repeated = project.assign("record", Some(submission.clone()), true);
+    assert_eq!(completed["jobs"], repeated["jobs"]);
+    let integration = project.assign("next", None, true)["queue"]["assignment"].clone();
+    assert_eq!(integration["job"]["kind"].as_str(), Some("integrate"));
+    project.start_assignment(&integration);
+    project.git(&["merge", "--ff-only", &good_commit]);
+    project.git(&["worktree", "remove", worktree.to_str().unwrap()]);
+    drop(guard);
+    // A lost submission response remains retryable after integration removes its worktree.
+    project.assign("record", Some(submission), true);
+    let integrated = finish(
+        &integration["claim"],
+        Value::Table(toml::Table::from_iter([
+            ("result".into(), "integrated".into()),
+            ("submissions".into(), Value::Array(vec![implement["claim"].clone()])),
+            ("evidence".into(), Value::Array(vec![sealed(&scope_path)])),
+            ("authentication".into(), sealed(&scope_path)),
+            ("cleanup".into(), sealed(&scope_path)),
+        ])),
+    );
+    let finished = project.assign("record", Some(integrated.clone()), true);
+    assert!(fs::read_to_string(root.join(origin)).unwrap().contains("Status: resolved"));
+    let repeated = project.assign("record", Some(integrated), true);
+    assert_eq!(finished["jobs"], repeated["jobs"]);
+    let batch: Value = toml::from_str(&fs::read_to_string(&gate_batch).unwrap()).unwrap();
+    assert_eq!(batch["families"]["fixture"]["status"].as_str(), Some("offline-verified"));
+    let verdict: Value =
+        toml::from_str(&fs::read_to_string(batch["families"]["fixture"]["verdict"].as_str().unwrap()).unwrap())
+            .unwrap();
+    project.authenticate(&verdict, true);
+}
+
+#[test]
+#[ignore = "bounded measurement retains actual-C evidence under the explicit output directory"]
+fn measure_affected_family_work_with_retained_evidence() {
+    let output =
+        PathBuf::from(std::env::var_os("SM_ASSIGNMENT_MEASUREMENT_OUTPUT").expect("measurement output required"));
+    assert!(output.is_absolute() && !output.exists(), "use a new absolute measurement directory");
+    fs::create_dir_all(output.parent().unwrap()).unwrap();
+    let project = Project::at(output.clone(), true);
+    project.manifest(Value::Array(vec![Value::Table(toml::Table::from_iter([
+        ("name".into(), "one".into()),
+        ("a".into(), 1.into()),
+        ("expected_return".into(), 2.into()),
+    ]))]));
+    let manifest: Value = toml::from_str(&fs::read_to_string(output.join("tools/port/fixture.toml")).unwrap()).unwrap();
+    let mut other = manifest.clone();
+    other["family"] = "other".into();
+    other["rust_module"] = "crates/port/src/other.rs".into();
+    write(&output, "tools/port/other.toml", toml::to_string(&other).unwrap());
+    write(&output, "crates/port/src/other.rs", fs::read(output.join("crates/port/src/fixture.rs")).unwrap());
+    write(
+        &output,
+        "tools/port/batch.toml",
+        "[families]\nfixture='family'\nother='family'\n[profiles]\ngameplay=['fixture','other']\n",
+    );
+    project.initialize_git();
+    let invoke = |operation: &str, batch: &str, focused: bool| {
+        let mut request = Value::Table(toml::Table::from_iter([
+            ("checkout".into(), Value::try_from(&output).unwrap()),
+            ("operation".into(), operation.into()),
+            ("batch".into(), Value::try_from(output.join(format!("batch/{batch}/batch.toml"))).unwrap()),
+            ("root".into(), Value::try_from(output.join("cache")).unwrap()),
+            ("workers".into(), 2.into()),
+            ("jobs".into(), 2.into()),
+            ("case_jobs".into(), 2.into()),
+        ]));
+        if focused {
+            request.as_table_mut().unwrap().insert("changed_since".into(), "HEAD".into());
+        }
+        let started = std::time::Instant::now();
+        let result = project.invoke("batch", request, true);
+        let seconds = started.elapsed().as_secs_f64();
+        assert!(seconds < 60.0, "initial measurement exceeded 60 seconds: {operation} {batch}");
+        (result, seconds)
+    };
+    let (initial, initial_seconds) = invoke("verify", "broad", false);
+    let candidate = output.join("crates/port/src/fixture.rs");
+    let revised = format!("{}\n// bounded representative leaf edit\n", fs::read_to_string(&candidate).unwrap());
+    fs::write(&candidate, revised).unwrap();
+    // Clone only mutable batch metadata. Both invocations begin with identical
+    // authenticated predecessors and the same warm compiler cache.
+    write(&output, "batch/focused/batch.toml", fs::read(output.join("batch/broad/batch.toml")).unwrap());
+    let (plan, plan_seconds) = invoke("plan", "focused", true);
+    assert_eq!(plan["selected"].as_array().unwrap().len(), 1);
+    let (broad, broad_seconds) = invoke("verify", "broad", false);
+    let (focused, focused_seconds) = invoke("verify", "focused", true);
+    assert_eq!(broad["selected"].as_array().unwrap().len(), 2);
+    assert_eq!(broad["families"]["other"]["status"].as_str(), Some("reused"));
+    assert_eq!(focused["selected"].as_array().unwrap(), &[Value::String("fixture".into())]);
+    assert_eq!(focused["families"]["other"], initial["families"]["other"]);
+    let (reuse, reuse_seconds) = invoke("verify", "focused", true);
+    assert_eq!(reuse["families"]["fixture"]["status"].as_str(), Some("reused"));
+    let other_verdict = PathBuf::from(initial["families"]["other"]["verdict"].as_str().unwrap());
+    let retained: Value = toml::from_str(&fs::read_to_string(&other_verdict).unwrap()).unwrap();
+    let artifacts_avoided = retained["artifacts"].as_table().unwrap().len();
+    let bytes_avoided: u64 = retained["artifacts"]
+        .as_table()
+        .unwrap()
+        .keys()
+        .map(|name| fs::metadata(other_verdict.parent().unwrap().join(name)).unwrap().len())
+        .sum();
+    for result in [&broad, &focused] {
+        for name in ["fixture", "other"] {
+            let verdict: Value =
+                toml::from_str(&fs::read_to_string(result["families"][name]["verdict"].as_str().unwrap()).unwrap())
+                    .unwrap();
+            project.authenticate(&verdict, true);
+        }
+    }
+    let report = Value::Table(toml::Table::from_iter([
+        ("schema".into(), "affected-family-measurement-v1".into()),
+        ("initial_seconds".into(), initial_seconds.into()), ("selection_seconds".into(), plan_seconds.into()),
+        ("broad_seconds".into(), broad_seconds.into()), ("focused_seconds".into(), focused_seconds.into()), ("focused_reuse_seconds".into(), reuse_seconds.into()),
+        ("broad_selected".into(), broad["selected"].clone()), ("focused_selected".into(), focused["selected"].clone()),
+        ("unrelated_artifact_hashes_avoided".into(), Value::try_from(artifacts_avoided).unwrap()),
+        ("unrelated_artifact_bytes_avoided".into(), Value::try_from(bytes_avoided).unwrap()),
+        ("limitations".into(), "one case per family; warm cache; broad verification ran first; selector rebuilds current conservative discovery rather than authenticating unrelated full-WRAM evidence; no full-route timing claim".into()),
+    ]));
+    write(&output, "measurement.toml", toml::to_string_pretty(&report).unwrap());
+    eprintln!("{}", toml::to_string_pretty(&report).unwrap());
+    drop(project);
+    // Source paths remain exactly where the sealed manifests record them after
+    // cleanup removes the temporary repository metadata and compiler cache.
+    for result in [&broad, &focused] {
+        for name in ["fixture", "other"] {
+            let request = Value::Table(toml::Table::from_iter([
+                ("checkout".into(), Value::try_from(&output).unwrap()),
+                ("verdict".into(), result["families"][name]["verdict"].clone()),
+            ]));
+            let mut child = Command::new(env!("CARGO_BIN_EXE_sm-pipeline"))
+                .arg("family-authenticate")
+                .stdin(Stdio::piped())
+                .stdout(Stdio::null())
+                .stderr(Stdio::piped())
+                .spawn()
+                .unwrap();
+            writeln!(child.stdin.take().unwrap(), "{}", toml::to_string(&request).unwrap()).unwrap();
+            let authenticated = child.wait_with_output().unwrap();
+            assert!(
+                authenticated.status.success(),
+                "post-cleanup authentication: {}",
+                String::from_utf8_lossy(&authenticated.stderr)
+            );
+        }
+    }
 }

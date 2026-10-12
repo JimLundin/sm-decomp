@@ -1,6 +1,6 @@
 # Choose translation research and promote established scopes
 
-Status: open
+Status: claimed
 Blocked by: 04
 Triage: ready-for-agent
 Type: task
@@ -21,6 +21,10 @@ findings do not grant acceptance and implementation submission does not imply
 integrated completion.
 
 ## Comments
+
+Resumed by the integration owner on `affected-family-assignment`. Candidate
+discovery and complete-scope validation are integrated; final coordinator controls,
+verification and cleanup remain before resolution.
 
 This implements the authorized assignment capability; gameplay translation itself
 is work dispatched by the resulting queue, not required to prove this tooling.

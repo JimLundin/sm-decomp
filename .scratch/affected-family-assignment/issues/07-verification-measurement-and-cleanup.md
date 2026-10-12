@@ -1,6 +1,6 @@
 # Verify focused work, measure selection and finish cleanup
 
-Status: open
+Status: claimed
 Blocked by: 06
 Triage: ready-for-agent
 Type: task
@@ -28,5 +28,8 @@ after cleanup/relocation and record reclaimed bytes/free space. Resolve the spec
 only after every required ticket completes.
 
 ## Comments
+
+Resumed by the integration owner. Prior merged-source controls pass; final
+coordinator controls, bounded measurements and scoped cleanup are in progress.
 
 Final evidence and cleanup are owned by the integration coordinator.

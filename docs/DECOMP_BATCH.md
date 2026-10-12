@@ -78,15 +78,24 @@ cargo run -p pipeline --locked --offline -- batch verify --profile offline-all -
 
 # Select families affected by source changes relative to a commit.
 cargo run -p pipeline --locked --offline -- batch verify --profile offline-all --changed-since HEAD~1
+
+# Explain the same conservative selection without running fixtures.
+cargo run -p pipeline --locked --offline -- batch plan --profile offline-all --changed-since HEAD~1
 ```
 
-Catalog entries may declare `kind`, `manifest`, `live`, and a `prepare` command
-with `{root}`, `{output}` and `{manifest}` placeholders. List imported generator
-files in `prepare_inputs` so their contents also invalidate generated evidence.
+Catalog entries declare `kind`, `manifest` and `live`. Native batches reject
+configured `prepare` commands; PLM instructions use built-in Rust preparation.
 Discovered manifests are offline only; live adapters require explicit catalog
 entries. The `dispatcher-leaves` profile exercises the bank86 dispatcher harness.
 The versioned compiler dependency contract seals actual source reads and canonical
 memory, allowing unchanged narrow families to survive unrelated gameplay edits.
+
+Selection explains changed inputs and uncertainty, including current Rust module
+discovery, untracked files and captured assets. It grants no evidence reuse or
+Live admission. Verification still authenticates current source; skipped historical
+records remain in the batch. The receipt's `selected` list names invocation work.
+For exclusive claims, translation research/promotion and isolated implementation
+worktrees, follow [subagent assignments](agents/assignments.md).
 
 Use `--fresh` to force verification rebuilds. `--native-plm` requires passing
 `plm-spawn` evidence and actual native setup execution during replay; a full PLM

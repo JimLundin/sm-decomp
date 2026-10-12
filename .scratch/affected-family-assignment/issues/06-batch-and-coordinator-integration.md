@@ -1,6 +1,6 @@
 # Integrate selection and assignment with existing execution
 
-Status: open
+Status: claimed
 Blocked by: 03, 04, 05
 Triage: ready-for-agent
 Type: task
@@ -20,5 +20,8 @@ assignments, overlap deferral and integration ordering. Changes to agent-facing
 instructions require the writing-for-agents skill.
 
 ## Comments
+
+Resumed by the integration owner on `affected-family-assignment`; finishing the
+coordinator result validation, invocation selection receipt and agent workflow.
 
 Integration owner coordinates shared main.rs/batch.rs edits and source freeze.

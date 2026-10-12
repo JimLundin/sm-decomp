@@ -6,6 +6,11 @@ packed live replay, decompressor acceptance and RNG jobs. Several worktrees shar
 `SM_PIPELINE_WORKERS` (default 4) under the Git common checkout's `out/pipeline`.
 Set the same `SM_PIPELINE_ROOT` to share an explicit directory.
 
+For affected-family explanations and automatic local subagent assignments,
+follow [the coordinator workflow](../../docs/agents/assignments.md).
+`batch plan --changed-since BASE` is read-only; `assign next` reserves a shared
+claim before returning work. Translation research promotes only complete scopes.
+
 Fixture execution overlaps independent chains within that shared capacity.
 Continuations run only after their predecessor passes every comparison; failures
 leave causal `blocked.toml` records. Verdict case order stays canonical.

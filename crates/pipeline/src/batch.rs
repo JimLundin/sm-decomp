@@ -312,6 +312,7 @@ fn verify_one(
 pub(crate) struct Receipt {
     pub status: String,
     pub batch: PathBuf,
+    pub selected: Vec<String>,
     pub families: BTreeMap<String, FamilyRecord>,
     pub replays: Vec<ReplayRecord>,
     pub cleanup: Option<cleanup::CleanupReceipt>,
@@ -375,7 +376,9 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
         }
         names = report.families();
         if names.is_empty() {
-            return Ok(crate::report!({"status":"unchanged","families":Vec::<String>::new()}));
+            return Ok(
+                crate::report!({"status":"unchanged","selected":Vec::<String>::new(),"families":Vec::<String>::new()}),
+            );
         }
     }
     if request.native_plm || request.room_plm {
@@ -514,6 +517,7 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
     Ok(toml::Value::try_from(Receipt {
         status: if passed { "complete" } else { "failed" }.into(),
         batch: path,
+        selected: names,
         families: batch.families,
         replays: batch.replays,
         cleanup: Some(cleaned),

@@ -421,6 +421,7 @@ pub(crate) fn source_fingerprint(checkout: &Path) -> Result<String> {
         "crates/pipeline/src",
         "crates/pipeline-model/src",
         "crates/port/src",
+        "crates/port/tests",
         "tools",
         ".cargo",
         "Cargo.toml",
@@ -648,7 +649,7 @@ fn check_artifact(artifact: &Artifact) -> Result<()> {
     );
     Ok(())
 }
-fn result_artifacts(result: &WorkResult) -> Vec<&Artifact> {
+pub(crate) fn result_artifacts(result: &WorkResult) -> Vec<&Artifact> {
     match result {
         WorkResult::Verified { evidence, authentication } => evidence.iter().chain([authentication]).collect(),
         WorkResult::Integrated { evidence, authentication, cleanup, .. } => {
@@ -915,6 +916,22 @@ fn workspace(root: &Path, effort: &str, claim: &Claim, kind: &Kind) -> Workspace
     }
 }
 
+fn priority(entry: &Entry) -> (u8, u64, &str) {
+    let local_number =
+        entry.job.ticket.as_ref().and_then(|path| path.file_name()?.to_str()?.split('-').next()?.parse::<u64>().ok());
+    if let Some(number) = local_number {
+        return (0, number, &entry.job.id);
+    }
+    let kind = match entry.job.kind {
+        Kind::Integrate => 1,
+        Kind::Implement | Kind::Diagnose => 2,
+        Kind::Verify => 3,
+        Kind::Research => 4,
+    };
+    let rank = entry.job.inputs.get("candidate-rank").and_then(|rank| rank.parse().ok()).unwrap_or(u64::MAX);
+    (kind, rank, &entry.job.id)
+}
+
 /// Caller validates evidence admission and researched scopes before recording results.
 /// `plan` and `status` are read-only. `next` reserves before exposing launchable work.
 pub(crate) fn operate(request: Request) -> Result<Receipt> {
@@ -1004,10 +1021,11 @@ pub(crate) fn operate(request: Request) -> Result<Receipt> {
                 .jobs
                 .values()
                 .filter(|entry| entry.state == State::Ready && !deferred.contains_key(&entry.job.id))
-                .find(|entry| {
+                .filter(|entry| {
                     entry.job.kind != Kind::Integrate
                         || ledger.integration_owner.as_ref().is_none_or(|owner| owner == &request.coordinator)
                 })
+                .min_by_key(|entry| priority(entry))
                 .map(|entry| entry.job.id.clone());
             if let Some(id) = chosen {
                 let entry = ledger.jobs.get_mut(&id).unwrap();

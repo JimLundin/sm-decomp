@@ -18,8 +18,8 @@ mod builds;
 mod callback;
 mod checkpoints;
 mod cleanup;
-mod coverage;
 mod coordination;
+mod coverage;
 mod decomp_acceptance;
 mod decomp_job;
 mod decomp_model;
@@ -27,8 +27,8 @@ mod decomp_prefix;
 mod diagnostics;
 mod family;
 mod family_model;
-mod fixtures;
 mod fixture_execution;
+mod fixtures;
 mod hdma_probe;
 mod inputs;
 mod iteration_demonstrations;
@@ -1297,7 +1297,12 @@ fn main() -> Result<()> {
         Some("family-authenticate") if args.len() == 1 => emit(&family::authenticate(request()?)?),
         Some("assign") if args.len() == 1 => emit(&coordination::operate(request()?)?),
         Some("assign") => {
-            let mut options = crate::report!({"checkout":std::env::current_dir()?,"operation":args[1]});
+            let workers = std::env::var("SM_PIPELINE_WORKERS").unwrap_or_else(|_| "4".into()).parse::<usize>()?;
+            let mut options =
+                crate::report!({"checkout":std::env::current_dir()?,"operation":args[1],"workers":workers});
+            if let Some(root) = std::env::var_os("SM_PIPELINE_ROOT") {
+                set_option(&mut options, "pipeline_root", PathBuf::from(root))?;
+            }
             let mut index = 2;
             while index < args.len() {
                 if args[index] == "--no-translations" {
@@ -1310,6 +1315,8 @@ fn main() -> Result<()> {
                     "--effort" => "effort",
                     "--coordinator" => "coordinator",
                     "--capacity" => "capacity",
+                    "--pipeline-root" => "pipeline_root",
+                    "--workers" => "workers",
                     "--available-slots" => "available_slots",
                     "--profile" => "profile",
                     "--changed-since" => "changed_since",
@@ -1324,16 +1331,21 @@ fn main() -> Result<()> {
                 index += 1;
                 if key == "families" {
                     let mut names = Vec::new();
-                    while index < args.len() && !args[index].starts_with("--") { names.push(args[index].clone()); index += 1; }
+                    while index < args.len() && !args[index].starts_with("--") {
+                        names.push(args[index].clone());
+                        index += 1;
+                    }
                     ensure!(!names.is_empty(), "families missing");
                     set_option(&mut options, key, names)?;
                 } else {
                     let value = args.get(index).context("assign option value missing")?;
                     if key == "update" {
                         set_option(&mut options, key, toml::from_str::<Value>(&fs::read_to_string(value)?)?)?;
-                    } else if ["capacity", "available_slots"].contains(&key) {
+                    } else if ["capacity", "available_slots", "workers"].contains(&key) {
                         set_option(&mut options, key, value.parse::<usize>()?)?;
-                    } else { set_option(&mut options, key, value)?; }
+                    } else {
+                        set_option(&mut options, key, value)?;
+                    }
                     index += 1;
                 }
             }

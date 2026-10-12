@@ -17,6 +17,6 @@ Status: open
 | [02](issues/02-selection-and-assignment-design.md) | grilling | resolved |
 | [03](issues/03-affected-family-selection.md) | task | claimed |
 | [04](issues/04-assignment-ledger-and-queue.md) | task | claimed |
-| [05](issues/05-translation-scope-promotion.md) | task | open |
-| [06](issues/06-batch-and-coordinator-integration.md) | task | open |
-| [07](issues/07-verification-measurement-and-cleanup.md) | task | open |
+| [05](issues/05-translation-scope-promotion.md) | task | claimed |
+| [06](issues/06-batch-and-coordinator-integration.md) | task | claimed |
+| [07](issues/07-verification-measurement-and-cleanup.md) | task | claimed |

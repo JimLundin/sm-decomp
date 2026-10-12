@@ -489,3 +489,35 @@ fn no_work_frontier_does_not_satisfy_a_verification_blocker() {
     assert!(waiting.assignment.is_none());
     assert!(waiting.deferred["dependent"].contains("blocked by verify-frontier"));
 }
+
+#[test]
+fn pull_order_honors_local_ticket_numbers_and_observed_candidate_ranking() {
+    let f = Fixture::new();
+    let mut first = job("z-earlier-ticket", Kind::Research);
+    let mut later = job("a-later-ticket", Kind::Research);
+    for (candidate, number) in [(&mut first, 1), (&mut later, 2)] {
+        let path = PathBuf::from(format!(".scratch/work/issues/{number:02}-task.md"));
+        fs::create_dir_all(f.0.join(path.parent().unwrap())).unwrap();
+        fs::write(
+            f.0.join(&path),
+            "# Local work\nStatus: open\nBlocked by: None\nTriage: ready-for-agent\nType: research\n",
+        )
+        .unwrap();
+        candidate.ticket = Some(path);
+    }
+    let mut observed = job("0-new-candidate", Kind::Research);
+    observed.inputs.insert("candidate-rank".into(), "0".into());
+    let mut request = f.request("next");
+    request.jobs = vec![later, observed, first];
+    assert_eq!(operate(request).unwrap().assignment.unwrap().job.id, "z-earlier-ticket");
+    assert_eq!(operate(f.request("next")).unwrap().assignment.unwrap().job.id, "a-later-ticket");
+
+    let other = Fixture::new();
+    let mut preferred = job("z-preferred-observed", Kind::Research);
+    preferred.inputs.insert("candidate-rank".into(), "0".into());
+    let mut deferred = job("a-later-observed", Kind::Research);
+    deferred.inputs.insert("candidate-rank".into(), "1".into());
+    let mut request = other.request("next");
+    request.jobs = vec![deferred, preferred];
+    assert_eq!(operate(request).unwrap().assignment.unwrap().job.id, "z-preferred-observed");
+}

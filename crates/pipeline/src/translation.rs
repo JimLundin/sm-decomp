@@ -550,7 +550,7 @@ pub(crate) fn discover(checkout: &Path, source_inventory: Option<&Path>, observe
                 .then(a.symbol.cmp(&b.symbol))
         });
         let mut covered = BTreeSet::new();
-        for (routine, hit) in selected {
+        for (rank, (routine, hit)) in selected.into_iter().enumerate() {
             if jobs.len() >= MAX_JOBS {
                 break;
             }
@@ -571,6 +571,7 @@ pub(crate) fn discover(checkout: &Path, source_inventory: Option<&Path>, observe
                 file_key(Path::new(&format!("deps/snesrev-sm/{}", routine.source))),
                 loaded.source_identity.files[&routine.source].clone(),
             );
+            inputs.insert("candidate-rank".into(), rank.to_string());
             jobs.push(job(format!("translation-research-{}",routine.symbol), format!("{} caller and dependency scope",routine.symbol), inputs,
                 format!("Research the observed {} at {:#08x} in {} ({} {} calls; first frame {}). Ranked by fewer lexical dependencies, then observed calls and first exercise. Bundle coherent caller/dependency behavior with {}. Indirect calls {:?} and external/macro calls {:?} need review. Check maintained Rust and existing evidence before declaring a gap: inventory translation_status is not translation proof. Establish native translation-scope-v1 findings with execution provenance, complete dependencies, safe exact writable ownership and concrete verification argv; initial experiments approximately 60 seconds. Do not infer caller hit counts from a callee counter or grant acceptance.",routine.symbol,hit.address,routine.source,hit.count,hit.kind,hit.first,related.join(", "),routine.indirect_indexed_calls,routine.external_or_macro_calls),None)?);
         }
