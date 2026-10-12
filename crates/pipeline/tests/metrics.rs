@@ -219,10 +219,21 @@ fn sigterm_records_interruption_stops_the_process_tree_and_releases_worker_capac
     let binary = retained_tree(&run.0);
     let mut pipeline = spawn_exec(&run.0, &binary, "interrupted", 30, "enabled");
     let ready = Instant::now();
-    while !(run.0.join("child.pid").exists() && run.0.join("grandchild.pid").exists())
-        && ready.elapsed() < Duration::from_secs(5)
-    {
+    let published_pid =
+        |name| fs::read_to_string(run.0.join(name)).ok().is_some_and(|text| text.trim().parse::<i32>().is_ok());
+    while !(published_pid("child.pid") && published_pid("grandchild.pid")) && ready.elapsed() < Duration::from_secs(5) {
         std::thread::sleep(Duration::from_millis(10));
+    }
+    if !(published_pid("child.pid") && published_pid("grandchild.pid")) {
+        let producer = run.0.join("producer.pid");
+        if published_pid("producer.pid") {
+            let pid = fs::read_to_string(producer).unwrap().trim().parse::<i32>().unwrap();
+            // SAFETY: this test's still-owned producer group has not been reaped.
+            unsafe { libc::kill(-pid, libc::SIGKILL) };
+        }
+        pipeline.kill().unwrap();
+        pipeline.wait().unwrap();
+        panic!("process-tree control failed to publish both descendant PIDs");
     }
     let descendants = [Descendant::read(&run.0.join("child.pid")), Descendant::read(&run.0.join("grandchild.pid"))];
     let _producer = Descendant::read(&run.0.join("producer.pid"));
