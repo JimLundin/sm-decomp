@@ -59,6 +59,8 @@ struct Inventory {
 struct Routine {
     symbol: String,
     source: String,
+    line: usize,
+    definition_sha256: String,
     #[serde(default)]
     original_address: Option<String>,
     #[serde(default)]
@@ -232,6 +234,42 @@ fn hash(text: &str) -> String {
     use sha2::{Digest, Sha256};
     format!("{:x}", Sha256::digest(text.as_bytes()))
 }
+fn c_code(text: &str) -> Vec<u8> {
+    let bytes = text.as_bytes();
+    let mut result = bytes.to_vec();
+    let mut index = 0;
+    while index < bytes.len() {
+        let end = if bytes[index..].starts_with(b"/*") {
+            bytes[index + 2..].windows(2).position(|v| v == b"*/").map(|p| index + p + 4).unwrap_or(bytes.len())
+        } else if bytes[index..].starts_with(b"//") {
+            bytes[index..].iter().position(|v| *v == b'\n').map(|p| index + p).unwrap_or(bytes.len())
+        } else if b"\"'".contains(&bytes[index]) {
+            let quote = bytes[index];
+            let mut cursor = index + 1;
+            while cursor < bytes.len() {
+                if bytes[cursor] == b'\\' {
+                    cursor += 2;
+                } else if bytes[cursor] == quote {
+                    cursor += 1;
+                    break;
+                } else {
+                    cursor += 1;
+                }
+            }
+            cursor.min(bytes.len())
+        } else {
+            index += 1;
+            continue;
+        };
+        for byte in &mut result[index..end] {
+            if *byte != b'\n' {
+                *byte = b' ';
+            }
+        }
+        index = end;
+    }
+    result
+}
 fn inventory(checkout: &Path, path: &Path) -> Result<Inventory> {
     let value: Inventory = document(path)?;
     ensure!(value.schema_version == 1 && !value.routines.is_empty(), "unsupported or empty source inventory");
@@ -242,6 +280,7 @@ fn inventory(checkout: &Path, path: &Path) -> Result<Inventory> {
     let identity = crate::family::verify_source(checkout, &checkout.join("deps/snesrev-sm"))?;
     ensure!(value.source_identity == identity, "source inventory pinned source differs");
     let mut symbols = BTreeSet::new();
+    let mut source_text = BTreeMap::new();
     for routine in &value.routines {
         ensure!(
             crate::family::identifier(&routine.symbol)
@@ -250,6 +289,42 @@ fn inventory(checkout: &Path, path: &Path) -> Result<Inventory> {
             "invalid or duplicate source inventory routine"
         );
         ensure!(identity.files.contains_key(&routine.source), "routine source missing from pinned inventory");
+        if !source_text.contains_key(&routine.source) {
+            let text = fs::read_to_string(checkout.join("deps/snesrev-sm").join(&routine.source))?;
+            let code = c_code(&text);
+            source_text.insert(routine.source.clone(), (text, code));
+        }
+        let (text, code) = &source_text[&routine.source];
+        ensure!(routine.line > 0, "routine source line missing");
+        let offset = text.split_inclusive('\n').take(routine.line - 1).map(str::len).sum::<usize>();
+        let start = text.get(offset..).context("routine source line outside pinned file")?;
+        let clean = &code[offset..];
+        let open = clean.iter().position(|c| *c == b'{').context("routine definition body missing")?;
+        ensure!(
+            start[..open].contains(&format!("{}(", routine.symbol))
+                || start[..open].contains(&format!("{} (", routine.symbol)),
+            "routine symbol differs from pinned definition"
+        );
+        let mut depth = 1;
+        let mut end = open + 1;
+        // The inventory producer hashes the complete C definition. A supplied
+        // inventory cannot relabel another definition's observed address.
+        while end < start.len() && depth > 0 {
+            match clean[end] {
+                b'{' => depth += 1,
+                b'}' => depth -= 1,
+                _ => {}
+            }
+            end += 1;
+        }
+        ensure!(depth == 0 && hash(&start[..end]) == routine.definition_sha256, "routine definition identity differs");
+        if let Some(address) = address(routine) {
+            let opening_line = start[open..].lines().next().unwrap_or_default();
+            ensure!(
+                opening_line.to_ascii_lowercase().contains(&format!("0x{address:06x}")),
+                "routine observed address differs from pinned definition"
+            );
+        }
     }
     Ok(value)
 }
@@ -510,7 +585,11 @@ mod tests {
         assert!(default_exercise(&project.0).unwrap_err().to_string().contains("128 runs"));
     }
     fn pinned_inventory(root: &Path) -> Source {
-        write(root, "deps/snesrev-sm/src/sm_86.c", "void Observed(void) { Helper(); }\nvoid Helper(void) {}\n");
+        write(
+            root,
+            "deps/snesrev-sm/src/sm_86.c",
+            "void Observed(void) { /* 0x8693ca */ Helper(); }\nvoid Helper(void) {}\n",
+        );
         write(root, "deps/snesrev-sm/LICENSE.txt", "test pinned source\n");
         fs::create_dir_all(root.join("deps/downloads")).unwrap();
         let archive = root.join("deps/downloads/oracle.tar.gz");
@@ -542,12 +621,16 @@ mod tests {
             toml::Value::Table(toml::Table::from_iter([
                 ("symbol".into(), "Observed".into()),
                 ("source".into(), "src/sm_86.c".into()),
+                ("line".into(), 1.into()),
+                ("definition_sha256".into(), hash("void Observed(void) { /* 0x8693ca */ Helper(); }").into()),
                 ("original_address".into(), "0x8693ca".into()),
                 ("defined_dependencies".into(), toml::Value::try_from(vec!["Helper"]).unwrap()),
             ])),
             toml::Value::Table(toml::Table::from_iter([
                 ("symbol".into(), "Helper".into()),
                 ("source".into(), "src/sm_86.c".into()),
+                ("line".into(), 2.into()),
+                ("definition_sha256".into(), hash("void Helper(void) {}").into()),
             ])),
         ]);
         write(root, "inventory.toml", toml::to_string(&value).unwrap());
@@ -593,6 +676,8 @@ mod tests {
         let routine = Routine {
             symbol: "Observed".into(),
             source: "src/sm_86.c".into(),
+            line: 1,
+            definition_sha256: "unused".into(),
             original_address: Some("0x8693ca".into()),
             defined_dependencies: vec![],
             indirect_indexed_calls: vec![],
@@ -778,7 +863,9 @@ pub(crate) fn validate_scope(checkout: &Path, path: &Path) -> Result<Job> {
     inputs.insert("scope-sha256".into(), crate::digest(&path)?);
     inputs.insert(file_key(&inventory_path), scope.source_inventory_sha256.clone());
     inputs.insert(file_key(&exercise_path), scope.exercise_sha256.clone());
-    let id = format!("translation-implementation-{}", hash(&scope.routines.join("\n")));
+    let mut identity_routines = scope.routines.clone();
+    identity_routines.sort();
+    let id = format!("translation-implementation-{}", hash(&identity_routines.join("\n")));
     let revision = hash(&toml::to_string(&scope)?);
     let verification = scope
         .verification
