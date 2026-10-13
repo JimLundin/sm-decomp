@@ -538,6 +538,90 @@ fn implementation(
     }
     Ok(checkout.to_path_buf())
 }
+fn completed_integration_retry(
+    root: &Path,
+    entry: &assignment::Entry,
+    submitted: &assignment::Entry,
+    saved: &ResultPublication,
+) -> Result<()> {
+    let Update::Finished {
+        claim,
+        result: result @ WorkResult::Integrated { submissions, evidence, authentication, cleanup },
+    } = &saved.admitted
+    else {
+        bail!("cached result is not integrated")
+    };
+    ensure!(
+        entry.state == State::Complete
+            && entry.claim.as_ref() == Some(claim)
+            && entry.result.as_ref() == Some(result)
+            && submitted.state == State::Complete
+            && submissions.as_slice()
+                == [submitted.claim.as_ref().context("completed submission claim missing")?.clone()],
+        "cached integration lacks exact completed lineage"
+    );
+    let checkout = saved.checkout.as_ref().context("cached integration checkout missing")?;
+    no_symlinks(checkout)?;
+    ensure!(fs::canonicalize(checkout)? == root, "cached integration names another checkout");
+    ensure!(source_dirty(root)?.is_empty(), "cached integration source must be frozen and clean");
+    let source = saved.source_commit.as_deref().context("cached integration source missing")?;
+    let fingerprint = saved.source_fingerprint.as_deref().context("cached integration fingerprint missing")?;
+    ensure!(exact_commit(source), "cached integration source is not an exact commit");
+    git(root, &["merge-base", "--is-ancestor", source, "HEAD"])?;
+    let Some(WorkResult::Submitted { commit, .. }) = &submitted.result else {
+        bail!("completed submission source missing")
+    };
+    git(root, &["merge-base", "--is-ancestor", commit, source])?;
+
+    // This replays the sealed historical acceptance only. Later clean merged
+    // source gains no new acceptance, gate output or source identity from it.
+    let auth: toml::Value = toml::from_str(&fs::read_to_string(&authentication.path)?)?;
+    ensure!(
+        auth.get("schema").and_then(toml::Value::as_str) == Some("decomp-infrastructure-authentication-v1")
+            && auth.get("admission_domain").and_then(toml::Value::as_str) == Some("infrastructure-v1")
+            && auth.get("source_commit").and_then(toml::Value::as_str) == Some(source)
+            && auth.get("claim").cloned().context("cached authentication claim missing")?.try_into::<Claim>()?
+                == *claim
+            && auth
+                .get("evidence")
+                .cloned()
+                .context("cached authentication evidence missing")?
+                .try_into::<Vec<Artifact>>()?
+                == *evidence,
+        "cached integration authentication differs from historical source"
+    );
+    let mut gates = 0;
+    for seal in evidence {
+        let Some(gate) = fs::read_to_string(&seal.path).ok().and_then(|text| toml::from_str::<toml::Value>(&text).ok())
+        else {
+            continue;
+        };
+        if gate.get("schema").and_then(toml::Value::as_str) != Some("decomp-infrastructure-gate-v1") {
+            continue;
+        }
+        ensure!(
+            gate.get("source_commit").and_then(toml::Value::as_str) == Some(source)
+                && gate.get("source_fingerprint").and_then(toml::Value::as_str) == Some(fingerprint)
+                && gate.get("exit_code").and_then(toml::Value::as_integer) == Some(0)
+                && gate.get("timed_out").and_then(toml::Value::as_bool) == Some(false),
+            "cached integration gate differs from historical source"
+        );
+        for key in ["stdout_sha256", "stderr_sha256"] {
+            ensure!(
+                evidence.iter().any(|seal| Some(seal.sha256.as_str()) == gate.get(key).and_then(toml::Value::as_str)),
+                "cached integration gate output is unsealed"
+            );
+        }
+        gates += 1;
+    }
+    ensure!(gates > 0, "cached integration lacks historical gate evidence");
+    let clean: Cleanup = toml::from_str(&fs::read_to_string(&cleanup.path)?)?;
+    ensure!(clean.status == "complete" && clean.remaining_action.is_none(), "cached integration cleanup incomplete");
+    for seal in clean.receipts.iter().chain(&clean.retained_dependencies) {
+        checked(seal)?;
+    }
+    Ok(())
+}
 fn admit_result(
     root: &Path,
     queue: &assignment::Request,
@@ -605,6 +689,12 @@ fn admit_result(
             for seal in assignment::result_artifacts(result) {
                 checked(seal)?;
             }
+        }
+        if entry.state == State::Complete
+            && matches!(saved.admitted, Update::Finished { result: WorkResult::Integrated { .. }, .. })
+        {
+            completed_integration_retry(root, entry, submitted, &saved)?;
+            return Ok(saved.admitted);
         }
         if let Some(checkout) = &saved.checkout {
             if checkout.join(".git").exists() {

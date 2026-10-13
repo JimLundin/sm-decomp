@@ -737,6 +737,7 @@ fn serial_integration_start_accepts_prior_disjoint_merge_and_keeps_source_frozen
     }
     prepare_authority(&f);
     let mut first_commit: Option<String> = None;
+    let mut completed = Vec::new();
     for (lane, scope) in ["a", "b"].into_iter().zip(scopes.iter()) {
         session::operate(session::Request::InfrastructureNext {
             queue: f.queue("next"),
@@ -771,8 +772,8 @@ fn serial_integration_start_accepts_prior_disjoint_merge_and_keeps_source_frozen
         .unwrap();
         let assigned = assignment::operate(f.queue("next")).unwrap().assignment.unwrap();
         if lane == "b" {
-            fs::write(f.root.join("other.txt"), "independent committed shared source\n").unwrap();
-            f.git(&["add", "other.txt"]);
+            fs::write(f.root.join("crates/pipeline/src/prior.rs"), "pub const PRIOR_MERGE: u8 = 2;\n").unwrap();
+            f.git(&["add", "crates/pipeline/src/prior.rs"]);
             f.git(&["commit", "-qm", "independent shared commit"]);
         }
         let mut handoff = Handoff {
@@ -905,24 +906,112 @@ fn serial_integration_start_accepts_prior_disjoint_merge_and_keeps_source_frozen
             })
             .unwrap(),
         );
-        infrastructure_record(
-            &f,
-            scope,
-            Update::Finished {
-                claim: assigned.claim,
-                result: WorkResult::Integrated {
-                    submissions: vec![submission],
-                    evidence: vec![f.seal(&format!("merged-{lane}.toml"), "status='frozen'\n")],
-                    authentication: f.seal(&format!("auth-{lane}.toml"), "status='native-admission'\n"),
-                    cleanup,
-                },
+        let update = Update::Finished {
+            claim: assigned.claim.clone(),
+            result: WorkResult::Integrated {
+                submissions: vec![submission],
+                evidence: vec![f.seal(&format!("merged-{lane}.toml"), "status='frozen'\n")],
+                authentication: f.seal(&format!("auth-{lane}.toml"), "status='native-admission'\n"),
+                cleanup,
             },
-        )
-        .unwrap();
+        };
+        infrastructure_record(&f, scope, update.clone()).unwrap();
+        let publication = f.root.join(format!(
+            ".scratch/{}/receipts/{}-{}-infrastructure-result.toml",
+            f.effort, assigned.claim.id, assigned.claim.attempt
+        ));
+        let published = fs::read(&publication).unwrap();
+        let value: toml::Value = toml::from_str(std::str::from_utf8(&published).unwrap()).unwrap();
+        let admitted: Update = value["admitted"].clone().try_into().unwrap();
+        let Update::Finished { result, .. } = admitted else { panic!("finished publication required") };
+        let retained = assignment::result_artifacts(&result)
+            .iter()
+            .map(|seal| (seal.path.clone(), fs::read(&seal.path).unwrap()))
+            .collect::<Vec<_>>();
+        infrastructure_record(&f, scope, update.clone())
+            .expect("same-source completed retry must already pass after implementer retirement");
+        assert_eq!(fs::read(&publication).unwrap(), published);
+        completed.push((scope.clone(), update, publication, published, retained));
     }
     let status = assignment::operate(f.queue("status")).unwrap();
     assert_eq!(status.jobs.len(), 4);
     assert!(status.jobs.iter().all(|entry| entry.state == assignment::State::Complete));
+    let first: toml::Value = toml::from_str(std::str::from_utf8(&completed[0].3).unwrap()).unwrap();
+    let second: toml::Value = toml::from_str(std::str::from_utf8(&completed[1].3).unwrap()).unwrap();
+    assert_ne!(first["source_fingerprint"], second["source_fingerprint"], "historical source fingerprints must differ");
+    for (scope, update, publication, published, retained) in &completed {
+        assert_eq!(&fs::read(publication).unwrap(), published);
+        for (path, bytes) in retained {
+            assert_eq!(&fs::read(path).unwrap(), bytes);
+        }
+        infrastructure_record(&f, scope, update.clone())
+            .expect("completed integration retry must survive a later disjoint merge and implementer retirement");
+        assert_eq!(&fs::read(publication).unwrap(), published, "retry must preserve original publication");
+        for (path, bytes) in retained {
+            assert_eq!(&fs::read(path).unwrap(), bytes, "retry must preserve original gate/authentication seals");
+        }
+    }
+
+    let (scope, update, publication, published, retained) = &completed[0];
+    let accepted_head = f.git(&["rev-parse", "HEAD"]);
+    let accepted_index = f.git(&["write-tree"]);
+    for staged in [false, true] {
+        fs::write(f.root.join("crates/pipeline/src/owned.rs"), "pub fn value() -> u8 { 99 }\n").unwrap();
+        if staged {
+            f.git(&["add", "crates/pipeline/src/owned.rs"]);
+        }
+        assert!(infrastructure_record(&f, scope, update.clone()).unwrap_err().to_string().contains("frozen and clean"));
+        f.git(&["restore", "--source=HEAD", "--staged", "--worktree", "crates/pipeline/src/owned.rs"]);
+    }
+    fs::write(f.root.join("docs/foreign.md"), "untracked foreign source\n").unwrap();
+    assert!(infrastructure_record(&f, scope, update.clone()).unwrap_err().to_string().contains("frozen and clean"));
+    fs::remove_file(f.root.join("docs/foreign.md")).unwrap();
+
+    let mut changed_request = update.clone();
+    let Update::Finished { result: WorkResult::Integrated { evidence, .. }, .. } = &mut changed_request else {
+        panic!("integrated request required")
+    };
+    evidence.push(f.seal("retry-extra.toml", "status='extra'\n"));
+    assert!(infrastructure_record(&f, scope, changed_request).unwrap_err().to_string().contains("conflicting"));
+
+    for (path, bytes) in retained {
+        fs::write(path, b"changed cached evidence\n").unwrap();
+        assert!(infrastructure_record(&f, scope, update.clone()).unwrap_err().to_string().contains("artifact changed"));
+        fs::write(path, bytes).unwrap();
+    }
+    let mut stale_queue = f.queue("record");
+    stale_queue.update = Some(update.clone());
+    stale_queue.authority.as_mut().unwrap().generation = 2;
+    assert!(
+        session::operate(session::Request::InfrastructureRecord {
+            queue: stale_queue,
+            admission: session::Admission::Infrastructure { scopes: vec![scope.clone()] },
+        })
+        .unwrap_err()
+        .to_string()
+        .contains("stale session authority")
+    );
+
+    // A retained source reference must still be present and an ancestor of the
+    // clean current checkout; another valid source object cannot authorize it.
+    f.git(&["checkout", "--detach", &baseline]);
+    assert!(infrastructure_record(&f, scope, update.clone()).unwrap_err().to_string().contains("merge-base"));
+    f.git(&["checkout", "--detach", &accepted_head]);
+    for field in ["source_commit", "source_fingerprint"] {
+        let mut changed_publication: toml::Value = toml::from_str(std::str::from_utf8(published).unwrap()).unwrap();
+        changed_publication[field] = toml::Value::String(if field == "source_commit" {
+            "0000000000000000000000000000000000000000".into()
+        } else {
+            "changed historical fingerprint".into()
+        });
+        fs::write(publication, toml::to_string_pretty(&changed_publication).unwrap()).unwrap();
+        assert!(infrastructure_record(&f, scope, update.clone()).is_err());
+        fs::write(publication, published).unwrap();
+    }
+    infrastructure_record(&f, scope, update.clone()).unwrap();
+    assert_eq!(f.git(&["rev-parse", "HEAD"]), accepted_head);
+    assert_eq!(f.git(&["write-tree"]), accepted_index);
+    assert_eq!(fs::read(publication).unwrap(), *published);
 }
 
 #[test]
