@@ -247,6 +247,17 @@
     .burn-history-table th:last-child,.burn-history-table td:last-child { text-align:left; }
     .burn-history-table td:last-child { white-space:normal; min-width:170px; }
     .burn-history-table a { font:10px ui-monospace,monospace; }
+    .submissions-table { table-layout:fixed; }
+    .submissions-table th,.submissions-table td { text-align:left; vertical-align:top; white-space:normal; overflow-wrap:anywhere; }
+    .submissions-table th:first-child { width:148px; }
+    .submissions-table th:nth-child(2) { width:30%; }
+    .submission-time { font-size:10px; font-variant-numeric:tabular-nums; }
+    .submission-scope { display:block; font-weight:600; margin-bottom:5px; }
+    .submission-meta { display:flex; flex-wrap:wrap; align-items:center; gap:5px 8px; font-size:10px; color:var(--muted); }
+    .submission-added { font-weight:600; }
+    .submission-detail { margin:5px 0 0; font-size:11px; line-height:1.45; color:var(--muted); }
+    .submissions-table tr[data-excluded="true"] .submission-added { color:var(--warning); }
+    @media(max-width:720px) { .submissions-table th:first-child { width:96px; } .submissions-table th:nth-child(2) { width:32%; } .submissions-table .badge { font-size:9px; } .submission-detail,.submission-scope { font-size:10px; } }
     @media(max-width:980px) { .work-grid { grid-template-columns:minmax(0,1fr); } .burn-hero { grid-template-columns:minmax(0,1.2fr) minmax(0,1fr); } }
     @media(max-width:720px) { .burn-controls { gap:8px 12px; margin-bottom:10px; } .burn-controls .scope-note { width:100%; margin-left:0; } .burn-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); } .burn-metric { padding:11px 12px; } .burn-metric:nth-child(2) { border-right:0; } .burn-metric:nth-child(-n+2) { border-bottom:1px solid var(--line); } .burn-metric .metric-number { font-size:29px; } .burn-hero,.audit-grid { grid-template-columns:minmax(0,1fr); } .burn-chart { height:208px; } .burn-signal { align-items:flex-start; flex-direction:column; gap:4px; } .flow-stages { gap:12px; grid-template-columns:repeat(2,minmax(0,1fr)); } .flow-stage button { font-size:23px; } .flow-queues { gap:8px; } .work-table th,.work-table td { padding:8px; } .tiny-bar { display:none; } .panel-head .subtext { font-size:11px; } }
   </style>
@@ -258,6 +269,11 @@
       <div class="actions"><div class="sync"><strong id="sync-mode"><span class="dot" aria-hidden="true"></span>Embedded snapshot</strong><span id="updated"></span><br><span id="checked"></span></div><button id="theme" type="button" aria-label="Change color theme">Theme</button><button id="load" class="primary" type="button">Open JSON</button><input id="file" type="file" accept="application/json,.json" hidden></div>
     </header>
     <div id="error" class="notice error" role="alert" hidden></div>
+    <section class="panel" aria-labelledby="submissions-title">
+      <div class="panel-head"><div><h2 id="submissions-title">Latest submissions</h2><p class="subtext">The ten most recent progress submissions, newest first.</p></div><span class="subtext" id="submissions-count"></span></div>
+      <div class="work-table-wrap"><table class="work-table submissions-table"><caption class="sr-only">Latest progress submissions and what they added</caption><thead><tr><th scope="col">Submitted (UTC)</th><th scope="col">Scope / stage</th><th scope="col">What it added</th></tr></thead><tbody id="submissions-table"></tbody></table></div>
+      <p class="burn-caption">Submission times are report publication times. New coverage counts first reports at each stage in the same source inventory; evidence updates can add no new coverage.</p>
+    </section>
     <div class="burn-controls">
       <label>Measure <select id="burn-weight"><option value="lines">C body lines</option><option value="routines">Definitions</option></select></label>
       <label>Compare pace <select id="burn-window"><option value="24">Last 24 hours</option><option value="12">Last 12 hours</option><option value="6">Last 6 hours</option></select></label>
@@ -415,6 +431,40 @@
       if(previous && ![...select.options].some(option => option.value === previous)) select.add(new Option(previous + ' (not in snapshot)',previous));
       select.value=previous;
     }
+    function renderSubmissions() {
+      const seen=new Map(), updates=state.data.updates.map((update,index) => ({update,index,at:Number(update.updated_at)||0}));
+      updates.sort((a,b) => a.at-b.at || a.index-b.index);
+      for(const item of updates) {
+        const update=item.update, key=JSON.stringify([update.source_revision,update.inventory_sha256,update.stage]);
+        if(!seen.has(key)) seen.set(key,new Set());
+        const previous=seen.get(key), routines=[...new Set(list(update.routines))].filter(symbol => state.symbols.has(symbol));
+        item.routines=routines; item.added=routines.filter(symbol => !previous.has(symbol));
+        for(const symbol of routines) previous.add(symbol);
+      }
+      const latest=updates.sort((a,b) => b.at-a.at || b.index-a.index).slice(0,10), body=$('submissions-table');
+      body.replaceChildren();
+      text('submissions-count',fmt(latest.length)+' of '+fmt(updates.length));
+      if(!latest.length) { const row=el('tr'), cell=el('td','empty','No progress submissions yet.'); cell.colSpan=3; row.append(cell); body.append(row); return; }
+      for(const item of latest) {
+        const update=item.update, row=el('tr'); row.dataset.updateId=update.id; row.dataset.excluded=String(excluded(update));
+        const submitted=el('td','submission-time'), date=new Date(item.at*1000);
+        if(item.at>0 && Number.isFinite(date.getTime())) { const node=el('time','',date.toISOString().slice(0,19).replace('T',' ')); node.dateTime=date.toISOString(); submitted.append(node); } else submitted.textContent='Time not recorded';
+        const scope=el('td'); scope.append(el('span','submission-scope',update.scope || update.id));
+        const meta=el('div','submission-meta'); meta.append(badge(update.stage),el('span','',contextLabel(contextOf(update))));
+        if(superseded(update)) meta.append(el('span','stale-tag','Superseded')); else if(stale(update)) meta.append(el('span','stale-tag','Stale'));
+        scope.append(meta); const owner=el('div','submission-detail',update.agent || 'Owner not recorded');
+        if(update.commit) owner.append(document.createTextNode(' · '),el('span','mono',String(update.commit).slice(0,8))); scope.append(owner);
+        const addition=el('td'), covered=item.added.length, bodyLines=item.added.reduce((sum,symbol) => sum+lines(state.symbols.get(symbol)),0);
+        const summary=covered ? '+'+fmt(covered)+' '+(covered===1 ? 'definition' : 'definitions')+' / '+fmt(bodyLines)+' body lines at this stage' : 'Evidence update · no new definitions at this stage';
+        addition.append(el('div','submission-added',summary),el('p','submission-detail',fmt(item.routines.length)+' routines · '+fmt(list(update.evidence).length)+' evidence records'));
+        const description=list(update.limitations).find(value => typeof value==='string' && value.trim());
+        if(description) addition.append(el('p','submission-detail',description));
+        const details=el('details','submission-detail'), label=el('summary','', 'Submission details'); details.append(label);
+        details.append(el('p','mono',update.id),el('p','',item.routines.join(', ')));
+        const evidence=list(update.evidence); if(evidence.length) { const paths=el('ul','path-list'); for(const pointer of evidence) { const entry=el('li'); entry.append(pathNode(pointer.path,state.data.root)); paths.append(entry); } details.append(paths); }
+        addition.append(details); row.append(submitted,scope,addition); body.append(row);
+      }
+    }
     function accept(data,raw,file) {
       if(!data || data.schema_version !== 1 || !Array.isArray(data.routines) || !Array.isArray(data.updates)) throw new Error('This file is not a schema version 1 progress registry.');
       if(data.routines.some(row => !row || typeof row.symbol !== 'string' || typeof row.source !== 'string') || data.updates.some(update => !update || typeof update !== 'object')) throw new Error('The registry contains malformed routine or update records.');
@@ -434,7 +484,7 @@
       fillOptions('scope',data.updates.map(update => update.scope),'All scopes');
       fillOptions('burn-bank',state.rows.map(row => row.bank),'All source banks');
       for(const group of SOURCE_GROUPS) $('burn-bank').add(new Option(group.name,'group:'+group.name));
-      $('error').hidden=true; renderOverview(); renderList(); renderProvenance(); renderBurndown();
+      $('error').hidden=true; renderSubmissions(); renderOverview(); renderList(); renderProvenance(); renderBurndown();
       text('updated','Snapshot: ' + time(data.updated_at));
       const mode=file ? 'Opened JSON snapshot' : /^https?:$/.test(location.protocol) ? 'Live registry · 7s checks' : 'Embedded snapshot · offline';
       $('sync-mode').replaceChildren(el('span','dot'),document.createTextNode(mode));
