@@ -57,6 +57,16 @@ fn clean(text: &str) -> Vec<u8> {
         }
         i = end;
     }
+    // Directives are not C declarations. In particular, a function-like macro
+    // must not supply the name of the first function body later in the file.
+    let mut continuation = false;
+    for line in result.split_mut(|value| *value == b'\n') {
+        let directive = continuation || line.iter().find(|value| !value.is_ascii_whitespace()) == Some(&b'#');
+        continuation = directive && line.iter().rfind(|value| !value.is_ascii_whitespace()) == Some(&b'\\');
+        if directive {
+            line.fill(b' ');
+        }
+    }
     result
 }
 fn names(bytes: &[u8]) -> (Vec<String>, Vec<String>) {
@@ -79,7 +89,7 @@ fn names(bytes: &[u8]) -> (Vec<String>, Vec<String>) {
             after += 1;
         }
         if bytes.get(after) == Some(&b'(')
-            && !["if", "for", "while", "switch", "sizeof", "_Alignof"].contains(&name.as_str())
+            && !["if", "for", "while", "switch", "sizeof", "_Alignof", "return"].contains(&name.as_str())
         {
             calls.insert(name);
         } else if bytes.get(after) == Some(&b'[') {
@@ -111,78 +121,7 @@ pub(crate) fn run(root: &Path, source: &Path, output: &Path) -> Result<()> {
             continue;
         }
         let text = fs::read_to_string(&path)?;
-        let bytes = clean(&text);
-        let mut offset = 0;
-        let mut body_end = 0;
-        for line in text.split_inclusive('\n') {
-            let end = offset + line.len();
-            if offset < body_end {
-                offset = end;
-                continue;
-            }
-            // A signature may span lines. Bound the search at the first body or
-            // declaration terminator so prototypes cannot absorb a later body.
-            let boundary =
-                bytes[offset..].iter().position(|c| b";{}".contains(c)).map(|at| offset + at + 1).unwrap_or(end);
-            let clean_line = &bytes[offset..boundary];
-            let open = clean_line.iter().position(|c| *c == b'(');
-            let brace = clean_line.iter().position(|c| *c == b'{');
-            if let (Some(open), Some(brace)) = (open, brace) {
-                let prefix = String::from_utf8_lossy(&clean_line[..open]);
-                let prefix = prefix.trim();
-                let symbol = prefix
-                    .split(|c: char| !(c.is_ascii_alphanumeric() || c == '_'))
-                    .rfind(|s| !s.is_empty())
-                    .unwrap_or("");
-                if open < brace
-                    && !clean_line[..brace].contains(&b';')
-                    && family::identifier(symbol)
-                    && prefix.len() > symbol.len()
-                    && !["if", "for", "while", "switch"].contains(&symbol)
-                {
-                    let start = offset + brace;
-                    let mut cursor = start + 1;
-                    let mut depth = 1;
-                    while cursor < bytes.len() && depth > 0 {
-                        if bytes[cursor] == b'{' {
-                            depth += 1;
-                        } else if bytes[cursor] == b'}' {
-                            depth -= 1;
-                        }
-                        cursor += 1;
-                    }
-                    ensure!(depth == 0, "unbalanced C definition {}:{symbol}", path.display());
-                    body_end = cursor;
-                    let (calls, indirect) = names(&bytes[start..cursor]);
-                    let opening_line = text[start..].split('\n').next().unwrap_or("");
-                    let address = opening_line
-                        .find("//")
-                        .and_then(|at| {
-                            opening_line[at + 2..].split_whitespace().find(|s| s.starts_with("0x") && s.len() == 8)
-                        })
-                        .map(str::to_owned);
-                    use sha2::{Digest, Sha256};
-                    routines.push(Routine {
-                        symbol: symbol.into(),
-                        source: path.strip_prefix(source)?.to_string_lossy().into_owned(),
-                        line: text[..offset].bytes().filter(|v| *v == b'\n').count() + 1,
-                        original_address: address,
-                        signature: String::from_utf8_lossy(&bytes[offset..start])
-                            .split_whitespace()
-                            .collect::<Vec<_>>()
-                            .join(" "),
-                        body_lines: bytes[start..cursor].iter().filter(|c| **c == b'\n').count() + 1,
-                        definition_sha256: format!("{:x}", Sha256::digest(&text.as_bytes()[offset..cursor])),
-                        calls,
-                        indirect_indexed_calls: indirect,
-                        defined_dependencies: vec![],
-                        external_or_macro_calls: vec![],
-                        translation_status: "unverified".into(),
-                    });
-                }
-            }
-            offset = end;
-        }
+        routines.extend(definitions(&text, &path.strip_prefix(source)?.to_string_lossy())?);
     }
     let symbols = routines.iter().map(|r| r.symbol.clone()).collect::<BTreeSet<_>>();
     for routine in &mut routines {
@@ -217,6 +156,83 @@ pub(crate) fn run(root: &Path, source: &Path, output: &Path) -> Result<()> {
     println!("Indexed {} definitions: {}", report.definition_count, output.display());
     Ok(())
 }
+fn definitions(text: &str, source: &str) -> Result<Vec<Routine>> {
+    let mut routines = Vec::new();
+    let bytes = clean(text);
+    let mut offset = 0;
+    let mut body_end = 0;
+    for line in text.split_inclusive('\n') {
+        let end = offset + line.len();
+        if offset < body_end || bytes[offset..end].iter().all(|value| value.is_ascii_whitespace()) {
+            offset = end;
+            continue;
+        }
+        // A signature may span lines. Bound the search at the first body or
+        // declaration terminator so prototypes cannot absorb a later body.
+        let boundary = bytes[offset..].iter().position(|c| b";{}".contains(c)).map(|at| offset + at + 1).unwrap_or(end);
+        let clean_line = &bytes[offset..boundary];
+        let open = clean_line.iter().position(|c| *c == b'(');
+        let brace = clean_line.iter().position(|c| *c == b'{');
+        if let (Some(open), Some(brace)) = (open, brace) {
+            let prefix = String::from_utf8_lossy(&clean_line[..open]);
+            let prefix = prefix.trim();
+            let symbol =
+                prefix.split(|c: char| !(c.is_ascii_alphanumeric() || c == '_')).rfind(|s| !s.is_empty()).unwrap_or("");
+            if open < brace
+                && !clean_line[..brace].contains(&b';')
+                && family::identifier(symbol)
+                && prefix.len() > symbol.len()
+                && prefix.bytes().all(|value| {
+                    value.is_ascii_alphanumeric() || value == b'_' || value == b'*' || value.is_ascii_whitespace()
+                })
+                && !clean_line[..brace].contains(&b'=')
+                && !["if", "for", "while", "switch"].contains(&symbol)
+            {
+                let start = offset + brace;
+                let mut cursor = start + 1;
+                let mut depth = 1;
+                while cursor < bytes.len() && depth > 0 {
+                    if bytes[cursor] == b'{' {
+                        depth += 1;
+                    } else if bytes[cursor] == b'}' {
+                        depth -= 1;
+                    }
+                    cursor += 1;
+                }
+                ensure!(depth == 0, "unbalanced C definition {source}:{symbol}");
+                body_end = cursor;
+                let (calls, indirect) = names(&bytes[start..cursor]);
+                let opening_line = text[start..].split('\n').next().unwrap_or("");
+                let address = opening_line
+                    .find("//")
+                    .and_then(|at| {
+                        opening_line[at + 2..].split_whitespace().find(|s| s.starts_with("0x") && s.len() == 8)
+                    })
+                    .map(str::to_owned);
+                use sha2::{Digest, Sha256};
+                routines.push(Routine {
+                    symbol: symbol.into(),
+                    source: source.into(),
+                    line: text[..offset].bytes().filter(|v| *v == b'\n').count() + 1,
+                    original_address: address,
+                    signature: String::from_utf8_lossy(&bytes[offset..start])
+                        .split_whitespace()
+                        .collect::<Vec<_>>()
+                        .join(" "),
+                    body_lines: bytes[start..cursor].iter().filter(|c| **c == b'\n').count() + 1,
+                    definition_sha256: format!("{:x}", Sha256::digest(&text.as_bytes()[offset..cursor])),
+                    calls,
+                    indirect_indexed_calls: indirect,
+                    defined_dependencies: vec![],
+                    external_or_macro_calls: vec![],
+                    translation_status: "unverified".into(),
+                });
+            }
+        }
+        offset = end;
+    }
+    Ok(routines)
+}
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -226,5 +242,50 @@ mod tests {
         let (calls, indexed) = names(&clean(text));
         assert_eq!(calls, ["Other", "Real"]);
         assert_eq!(indexed, ["array"]);
+    }
+
+    #[test]
+    fn directives_prototypes_and_initializers_do_not_consume_definitions() {
+        let text = "// Bank prelude\n#define Pointer (*(LongPtr*)RomPtr(0))\n\
+                    #define Fake(x) \\\n  Helper(x)\n\
+                    static const uint16 values[] = {1, 2};\n\
+                    static uint8 Carry(void);\n\n\
+                    void First(void) { // 0x808028\n  return (Helper());\n}\n\n\
+                    const uint16 *Ridley_Instr_5(uint16 k,\n  const uint16 *jp) { // 0xA6E4BE\n  return jp;\n}\n\n\
+                    static uint8 Carry(void) { return 1; }\n";
+        let rows = definitions(text, "src/sm_a6.c").unwrap();
+        assert_eq!(
+            rows.iter().map(|row| row.symbol.as_str()).collect::<Vec<_>>(),
+            ["First", "Ridley_Instr_5", "Carry"]
+        );
+        assert_eq!(rows[0].line, 8);
+        assert_eq!(rows[0].signature, "void First(void)");
+        assert_eq!(rows[0].calls, ["Helper"]);
+        assert_eq!(rows[1].original_address.as_deref(), Some("0xA6E4BE"));
+        assert_eq!(rows[1].signature, "const uint16 *Ridley_Instr_5(uint16 k, const uint16 *jp)");
+    }
+
+    #[test]
+    fn pinned_ridley_callbacks_and_first_bank_function_are_indexed_exactly() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let bank = root.join("deps/snesrev-sm/src/sm_a6.c");
+        if !bank.is_file() {
+            return;
+        }
+        let text = fs::read_to_string(bank).unwrap();
+        let rows = definitions(&text, "src/sm_a6.c").unwrap();
+        for symbol in ["Ridley_E90C", "Ridley_Func_40_Carry", "Ridley_Func_40_Sign"]
+            .into_iter()
+            .map(str::to_owned)
+            .chain((1..=16).map(|number| format!("Ridley_Instr_{number}")))
+        {
+            let row = rows.iter().find(|row| row.symbol == symbol).unwrap_or_else(|| panic!("missing {symbol}"));
+            assert!(text.lines().nth(row.line - 1).unwrap().contains(&symbol));
+        }
+        let text = fs::read_to_string(root.join("deps/snesrev-sm/src/sm_80.c")).unwrap();
+        let rows = definitions(&text, "src/sm_80.c").unwrap();
+        assert_eq!(rows[0].symbol, "APU_UploadBank");
+        assert_eq!(rows[0].line, 16);
+        assert!(rows.iter().all(|row| !row.signature.contains('#') && !row.signature.contains('=')));
     }
 }
