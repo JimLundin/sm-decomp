@@ -61,6 +61,7 @@ fn registry(root: &Path) -> Registry {
         stale_update_ids: Vec::new(),
         superseded_update_ids: Vec::new(),
         summary: Summary::default(),
+        coverage_history: None,
     }
 }
 fn observation(root: &Path, id: &str, symbol: &str, stage: Stage) -> Update {
@@ -83,6 +84,97 @@ fn observation(root: &Path, id: &str, symbol: &str, stage: Stage) -> Update {
         limitations: vec!["offline scope only; no gameplay acceptance".into()],
         updated_at: 2,
     }
+}
+
+#[test]
+fn committed_coverage_history_ignores_import_dates_deduplicates_and_detects_stale_inputs() {
+    use std::process::Command;
+    let scratch = Scratch::new();
+    let root = &scratch.0;
+    let run_git = |args: &[&str]| {
+        let output = Command::new("git").arg("-C").arg(root).args(args).output().unwrap();
+        assert!(output.status.success(), "Git {:?}: {}", args, String::from_utf8_lossy(&output.stderr));
+        String::from_utf8(output.stdout).unwrap().trim().to_owned()
+    };
+    let commit = |subject: &str, at: u64| {
+        run_git(&["add", "."]);
+        let date = format!("{at} +0000");
+        let output = Command::new("git")
+            .arg("-C")
+            .arg(root)
+            .args(["-c", "commit.gpgsign=false", "commit", "-m", subject])
+            .env("GIT_AUTHOR_DATE", &date)
+            .env("GIT_COMMITTER_DATE", &date)
+            .output()
+            .unwrap();
+        assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    };
+    run_git(&["init"]);
+    run_git(&["symbolic-ref", "HEAD", "refs/heads/main"]);
+    run_git(&["config", "user.name", "Reporting test"]);
+    run_git(&["config", "user.email", "reporting@example.invalid"]);
+    fs::write(root.join("baseline.txt"), "before Rust port").unwrap();
+    commit("baseline", 1_700_000_000);
+    fs::create_dir_all(root.join("crates/port/src/nested")).unwrap();
+    fs::create_dir_all(root.join("crates/pipeline/src/progress")).unwrap();
+    fs::create_dir_all(root.join("tools/progress")).unwrap();
+    for input in source::INPUTS.iter().chain(["crates/pipeline/src/progress/history.rs"].iter()) {
+        fs::write(root.join(input), "").unwrap();
+    }
+    let first = r#"fn dispatch(name: &str) { match name { "First" => body(), _ => refused() } }
+        // "Second" => comment only
+        fn supported() { let names = ["Second"]; }"#;
+    fs::write(root.join("crates/port/src/core.rs"), first).unwrap();
+    commit("first body", 1_700_000_100);
+    run_git(&["checkout", "-b", "unmerged-source"]);
+    fs::write(
+        root.join("crates/port/src/unmerged.rs"),
+        r#"fn dispatch(n: &str) { match n { "Second" => body(), _ => refused() } }"#,
+    )
+    .unwrap();
+    commit("unmerged source must receive no arrival credit", 1_700_000_150);
+    run_git(&["checkout", "main"]);
+    fs::write(root.join("crates/port/src/nested/duplicate.rs"), first).unwrap();
+    commit("second selector for the same native body", 1_700_000_200);
+    fs::write(
+        root.join("crates/port/src/core.rs"),
+        r#"fn dispatch(n: &str) { match n { "Second" => body(), _ => refused() } }"#,
+    )
+    .unwrap();
+    fs::remove_file(root.join("crates/port/src/nested/duplicate.rs")).unwrap();
+    // A backwards clock is clamped, rather than producing a backwards graph.
+    commit("replace native coverage", 1_700_000_190);
+    let mut data = registry(root);
+    let mut report = observation(root, "import-today", "Second", Stage::Translated);
+    report.evidence_context = EvidenceContext::CurrentCheckout;
+    report.updated_at = 2_000_000_000;
+    data.updates.push(report);
+    let retained = history::reconstruct(root, &data).unwrap();
+    assert_eq!(retained.checkpoints.len(), 3);
+    assert_eq!(retained.checkpoints[0].at, 1_700_000_100);
+    assert_eq!(retained.checkpoints[0].added, ["First"]);
+    assert!(retained.checkpoints[1].added.is_empty());
+    assert_eq!(retained.checkpoints[2].at, 1_700_000_200);
+    assert_eq!(retained.checkpoints[2].added, ["Second"]);
+    assert_eq!(retained.checkpoints[2].removed, ["First"]);
+    assert_eq!(retained.current_symbols, ["Second"]);
+    assert_eq!(retained.current.body_lines, 20);
+    assert!(retained.uncommitted.is_empty());
+    assert!(retained.limitations.iter().any(|s| s.contains("clamped")));
+    data.coverage_history = Some(retained);
+    history::observe(root, &mut data);
+    assert_eq!(data.coverage_history.as_ref().unwrap().status, "current");
+    fs::write(root.join("crates/port/src/nested/extra.rs"), first).unwrap();
+    history::observe(root, &mut data);
+    assert_eq!(data.coverage_history.as_ref().unwrap().status, "source-changed");
+    assert!(history::reconstruct(root, &data).is_err(), "unreviewed extra bodies must not be silently included");
+    fs::remove_file(root.join("crates/port/src/nested/extra.rs")).unwrap();
+    fs::write(root.join(source::INPUTS[0]), "# changed mapping\n").unwrap();
+    history::observe(root, &mut data);
+    assert_eq!(data.coverage_history.as_ref().unwrap().status, "mapping-changed");
+    data.source.inventory_sha256 = "f".repeat(64);
+    history::observe(root, &mut data);
+    assert_eq!(data.coverage_history.as_ref().unwrap().status, "inventory-changed");
 }
 
 fn inventory_root(root: &Path) {

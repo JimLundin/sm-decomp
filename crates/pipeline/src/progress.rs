@@ -188,6 +188,8 @@ struct Registry {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     superseded_update_ids: Vec<String>,
     summary: Summary,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    coverage_history: Option<history::History>,
 }
 
 #[derive(Deserialize)]
@@ -253,6 +255,8 @@ struct DeclaredRoutine {
 }
 
 mod declarations;
+mod history;
+mod source;
 
 #[derive(Clone)]
 struct Options {
@@ -304,9 +308,12 @@ fn options(command: &str, args: &[String]) -> Result<Options> {
 
 pub(crate) fn cli(args: &[String]) -> Result<()> {
     let command = args.first().context(
-        "usage: sm-pipeline progress refresh|update|status|serve [--root DIR] [--registry FILE] [--html FILE]",
+        "usage: sm-pipeline progress refresh|history|update|status|serve [--root DIR] [--registry FILE] [--html FILE]",
     )?;
-    ensure!(["refresh", "update", "status", "serve"].contains(&command.as_str()), "unknown progress command {command}");
+    ensure!(
+        ["refresh", "history", "update", "status", "serve"].contains(&command.as_str()),
+        "unknown progress command {command}"
+    );
     let options = options(command, &args[1..])?;
     match command.as_str() {
         "refresh" => {
@@ -316,6 +323,23 @@ pub(crate) fn cli(args: &[String]) -> Result<()> {
         "update" => {
             let registry = update(&options)?;
             print_status(&registry, &options);
+        }
+        "history" => {
+            let _lock = registry_lock(&options.registry, Duration::from_secs(10))?;
+            let mut registry = read_registry(&options)?;
+            check_current(&options.root, &registry.source)?;
+            observe_evidence(&options.root, &mut registry)?;
+            registry.coverage_history = Some(history::reconstruct(&options.root, &registry)?);
+            registry.updated_at = now()?;
+            persist(&options, &registry)?;
+            let history = registry.coverage_history.as_ref().unwrap();
+            println!(
+                "Source coverage history: {} checkpoints / {} current definitions / {} undated uncommitted definitions",
+                history.checkpoints.len(),
+                history.current.definitions,
+                history.uncommitted.len()
+            );
+            println!("Registry: {}\nDashboard: {}", options.registry.display(), options.html.display());
         }
         "status" => {
             let mut registry = read_registry(&options)?;
@@ -641,11 +665,12 @@ fn refresh(options: &Options) -> Result<Registry> {
         updated_at: now()?,
         source,
         routines,
-        updates: previous.map(|r| r.updates).unwrap_or_default(),
+        updates: previous.as_ref().map(|r| r.updates.clone()).unwrap_or_default(),
         notices,
         stale_update_ids: Vec::new(),
         superseded_update_ids: Vec::new(),
         summary: Summary::default(),
+        coverage_history: previous.and_then(|r| r.coverage_history),
     };
     observe_evidence(&options.root, &mut registry)?;
     persist(options, &registry)?;
@@ -869,6 +894,7 @@ fn observe_evidence(root: &Path, registry: &mut Registry) -> Result<()> {
         ));
     }
     registry.summary = summarize(registry, &stale, &registry.superseded_update_ids.iter().cloned().collect());
+    history::observe(root, registry);
     Ok(())
 }
 fn summarize(registry: &Registry, stale: &BTreeSet<String>, superseded: &BTreeSet<String>) -> Summary {

@@ -1,0 +1,6 @@
+# Read-only retained wall-time samples; labels and domains reviewed in the
+# 2026-10-13 architecture audit. These are examples, not a cycle-time trend.
+# path<TAB>label
+.scratch/decomp-port/ridley-hardware-recovery/controlled/1791860698541096-105766-0/family.metrics.toml	Ridley controlled comparison · 6,457 fixture pairs
+.scratch/decomp-port/ridley-hardware-recovery/natural/1791861212110218-129925-0/family.metrics.toml	Ridley natural comparison · 670 fixture pairs
+.scratch/decomp-port/ridley-hardware-recovery/inventory/1791860689806824782-105188/replay.metrics.toml	Native inventory replay · 129,712 inputs
