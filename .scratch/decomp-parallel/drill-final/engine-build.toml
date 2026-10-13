@@ -1,0 +1,10 @@
+schema = "decomp-drill-validator-build-v1"
+source_checkout = "/tmp/sm-decomp-preparation-final-source-20261013"
+source_commit = "2d59536c059a1ca9c31d9278bff2d9222eafa56c"
+source_fingerprint = "e5e412053f6dbe2cbadaba077192e885684fbb9f2699cafeaa6acd694879d78d"
+binary_path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/bin/sm-pipeline"
+binary_sha256 = "df6eb4dc3a9fd69e5d5923b5c22f34dea7b434cd7ee87f1b69085cd9e9431c84"
+build_command = "cargo build -p pipeline --bin sm-pipeline --locked --offline --target-dir /tmp/sm-serial-fix-target-20261013"
+build_configuration = 'patch."https://github.com/doublegate/RustySNES".rustysnes-core.path="/home/jim/sm-decomp/deps/rustysnes/crates/rustysnes-core"'
+elapsed_seconds = 45.57
+limitations = ["Local source/build/hash provenance; no platform attestation", "Execution and validator use the same fresh source and executable", "Original drill source and failures remain preserved independently"]
