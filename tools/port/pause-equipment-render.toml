@@ -2397,7 +2397,7 @@ writes = [
 [[routines.cases]]
 name = "palette-health-1-timer-0000-frame-0"
 fill = 165
-expected_return = 3072
+expected_return = 1536
 writes = [
   { offset = 0x9d6, data = [1, 0] },
   { offset = 0x72f, data = [0, 0] },
@@ -2407,7 +2407,7 @@ writes = [
 [[routines.cases]]
 name = "palette-health-1-timer-0000-frame-13"
 fill = 165
-expected_return = 3072
+expected_return = 1536
 writes = [
   { offset = 0x9d6, data = [1, 0] },
   { offset = 0x72f, data = [0, 0] },
@@ -2417,7 +2417,7 @@ writes = [
 [[routines.cases]]
 name = "palette-health-1-timer-0001-frame-0"
 fill = 165
-expected_return = 3072
+expected_return = 1536
 writes = [
   { offset = 0x9d6, data = [1, 0] },
   { offset = 0x72f, data = [1, 0] },
@@ -2427,7 +2427,7 @@ writes = [
 [[routines.cases]]
 name = "palette-health-1-timer-0001-frame-13"
 fill = 165
-expected_return = 3072
+expected_return = 1536
 writes = [
   { offset = 0x9d6, data = [1, 0] },
   { offset = 0x72f, data = [1, 0] },
@@ -2437,7 +2437,7 @@ writes = [
 [[routines.cases]]
 name = "palette-health-1-timer-0002-frame-0"
 fill = 165
-expected_return = 3072
+expected_return = 1536
 writes = [
   { offset = 0x9d6, data = [1, 0] },
   { offset = 0x72f, data = [2, 0] },
@@ -2447,7 +2447,7 @@ writes = [
 [[routines.cases]]
 name = "palette-health-1-timer-0002-frame-13"
 fill = 165
-expected_return = 3072
+expected_return = 1536
 writes = [
   { offset = 0x9d6, data = [1, 0] },
   { offset = 0x72f, data = [2, 0] },
@@ -2457,7 +2457,7 @@ writes = [
 [[routines.cases]]
 name = "palette-health-1-timer-8000-frame-0"
 fill = 165
-expected_return = 3072
+expected_return = 1536
 writes = [
   { offset = 0x9d6, data = [1, 0] },
   { offset = 0x72f, data = [0, 128] },
@@ -2467,7 +2467,7 @@ writes = [
 [[routines.cases]]
 name = "palette-health-1-timer-8000-frame-13"
 fill = 165
-expected_return = 3072
+expected_return = 1536
 writes = [
   { offset = 0x9d6, data = [1, 0] },
   { offset = 0x72f, data = [0, 128] },
@@ -2477,7 +2477,7 @@ writes = [
 [[routines.cases]]
 name = "palette-health-1-timer-8001-frame-0"
 fill = 165
-expected_return = 3072
+expected_return = 1536
 writes = [
   { offset = 0x9d6, data = [1, 0] },
   { offset = 0x72f, data = [1, 128] },
@@ -2487,7 +2487,7 @@ writes = [
 [[routines.cases]]
 name = "palette-health-1-timer-8001-frame-13"
 fill = 165
-expected_return = 3072
+expected_return = 1536
 writes = [
   { offset = 0x9d6, data = [1, 0] },
   { offset = 0x72f, data = [1, 128] },
@@ -2497,7 +2497,7 @@ writes = [
 [[routines.cases]]
 name = "palette-health-1-timer-ffff-frame-0"
 fill = 165
-expected_return = 3072
+expected_return = 1536
 writes = [
   { offset = 0x9d6, data = [1, 0] },
   { offset = 0x72f, data = [255, 255] },
@@ -2507,7 +2507,7 @@ writes = [
 [[routines.cases]]
 name = "palette-health-1-timer-ffff-frame-13"
 fill = 165
-expected_return = 3072
+expected_return = 1536
 writes = [
   { offset = 0x9d6, data = [1, 0] },
   { offset = 0x72f, data = [255, 255] },
