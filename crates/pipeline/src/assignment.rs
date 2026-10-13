@@ -11,6 +11,10 @@ use std::{
     sync::atomic::{AtomicU64, Ordering},
 };
 
+#[path = "authority.rs"]
+pub(crate) mod authority;
+pub(crate) use authority::SessionAuthority;
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub(crate) enum Kind {
@@ -81,6 +85,7 @@ pub(crate) struct Request {
     pub checkout: PathBuf,
     pub effort: String,
     pub coordinator: String,
+    pub authority: Option<SessionAuthority>,
     pub capacity: usize,
     pub available_slots: usize,
     pub jobs: Vec<Job>,
@@ -93,6 +98,7 @@ impl Default for Request {
             checkout: PathBuf::new(),
             effort: "affected-family-assignment".into(),
             coordinator: String::new(),
+            authority: None,
             capacity: 3,
             available_slots: 0,
             jobs: Vec::new(),
@@ -207,7 +213,20 @@ fn validate_job(job: &Job) -> Result<()> {
     Ok(())
 }
 
-fn main_checkout(checkout: &Path) -> Result<PathBuf> {
+fn validate_resources(root: &Path, checkout: &Path, job: &Job) -> Result<()> {
+    for resource in job.writable_paths.iter().chain(job.ticket.iter()) {
+        for checkout in [root, checkout] {
+            let mut path = checkout.to_path_buf();
+            for component in resource.components() {
+                path.push(component);
+                ensure!(!path.is_symlink(), "writable/ticket resource crosses a symlink: {}", path.display());
+            }
+        }
+    }
+    Ok(())
+}
+
+pub(crate) fn main_checkout(checkout: &Path) -> Result<PathBuf> {
     let checkout = fs::canonicalize(checkout)?;
     let output = Command::new("git").args(["rev-parse", "--git-common-dir"]).current_dir(&checkout).output()?;
     ensure!(output.status.success(), "cannot discover main checkout: {}", String::from_utf8_lossy(&output.stderr));
@@ -259,6 +278,56 @@ fn read_ledger(path: &Path, capacity: usize) -> Result<Ledger> {
     ensure!(ledger.schema == "decomp-assignment-v1", "unsupported assignment ledger schema");
     ensure!(ledger.capacity == capacity, "assignment capacity differs from authoritative ledger");
     Ok(ledger)
+}
+
+pub(crate) fn mutation_lock(root: &Path) -> Result<File> {
+    let scratch = root.join(".scratch");
+    ensure!(!scratch.is_symlink(), "assignment root cannot be a symlink");
+    fs::create_dir_all(&scratch)?;
+    let path = scratch.join("assignment.lock");
+    ensure!(!path.is_symlink(), "assignment lock cannot be a symlink");
+    let held = OpenOptions::new().create(true).append(true).open(path)?;
+    held.lock()?;
+    Ok(held)
+}
+
+fn read_ledgers(root: &Path) -> Result<BTreeMap<String, Ledger>> {
+    let scratch = root.join(".scratch");
+    let mut ledgers = BTreeMap::new();
+    if !scratch.exists() {
+        return Ok(ledgers);
+    }
+    ensure!(!scratch.is_symlink(), "assignment root cannot be a symlink");
+    for entry in fs::read_dir(scratch)? {
+        let entry = entry?;
+        let path = entry.path().join("ledger.toml");
+        if !path.exists() && !path.is_symlink() {
+            continue;
+        }
+        ensure!(!entry.path().is_symlink() && !path.is_symlink(), "assignment effort/ledger cannot be a symlink");
+        let name = entry.file_name().into_string().map_err(|_| anyhow::anyhow!("assignment effort is not UTF-8"))?;
+        ensure!(safe_name(&name), "invalid ledger effort identity");
+        let text = fs::read_to_string(&path)?;
+        let value: toml::Value =
+            toml::from_str(&text).with_context(|| format!("cannot inspect ledger {}", path.display()))?;
+        if value.get("schema").and_then(toml::Value::as_str) != Some("decomp-assignment-v1") {
+            continue;
+        }
+        let ledger: Ledger = toml::from_str(&text)?;
+        for (id, entry) in &ledger.jobs {
+            ensure!(id == &entry.job.id, "ledger job key differs from identity");
+            validate_job(&entry.job)?;
+            validate_resources(root, root, &entry.job)?;
+            if owns_paths(&entry.state) {
+                ensure!(
+                    entry.claim.as_ref().is_some_and(|claim| claim.id == *id && claim.revision == entry.job.revision),
+                    "held ledger job lacks exact original claim"
+                );
+            }
+        }
+        ledgers.insert(name, ledger);
+    }
+    Ok(ledgers)
 }
 fn field<'a>(text: &'a str, name: &str) -> Option<&'a str> {
     text.lines().find_map(|line| line.strip_prefix(name).map(str::trim))
@@ -487,10 +556,16 @@ fn blocker_reason(root: &Path, ledger: &Ledger, entry: &Entry) -> Result<Option<
             return Ok(Some(format!("blocked by {blocker}")));
         }
     }
-    if entry.job.kind == Kind::Implement {
+    for other in ledger.jobs.values().filter(|other| other.job.id != entry.job.id && owns_paths(&other.state)) {
+        if ticket_path("", &entry.job) == ticket_path("", &other.job) && entry.job.ticket.is_some() {
+            return Ok(Some(format!("ticket ownership held by {}", other.job.id)));
+        }
+    }
+    if matches!(entry.job.kind, Kind::Implement | Kind::Integrate) {
         for other in ledger.jobs.values() {
             if other.job.id != entry.job.id
                 && owns_paths(&other.state)
+                && !assigned_submission(&entry.job, other)
                 && entry
                     .job
                     .writable_paths
@@ -521,6 +596,41 @@ fn blocker_reason(root: &Path, ledger: &Ledger, entry: &Entry) -> Result<Option<
         }
     }
     Ok(None)
+}
+
+fn assigned_submission(job: &Job, held: &Entry) -> bool {
+    job.kind == Kind::Integrate
+        && held.state == State::Submitted
+        && held.claim.as_ref().is_some_and(|claim| {
+            job.inputs.get("submission-id") == Some(&claim.id)
+                && job.inputs.get("submission-revision") == Some(&claim.revision)
+                && job.inputs.get("submission-attempt") == Some(&claim.attempt.to_string())
+        })
+}
+
+fn repository_blocker(effort: &str, job: &Job, others: &BTreeMap<String, Ledger>) -> Option<String> {
+    let ticket = ticket_path(effort, job);
+    for (other_effort, ledger) in others {
+        if other_effort == effort {
+            continue;
+        }
+        for other in ledger.jobs.values().filter(|other| owns_paths(&other.state)) {
+            if ticket == ticket_path(other_effort, &other.job) {
+                return Some(format!("ticket ownership held by {other_effort}/{}", other.job.id));
+            }
+            if job
+                .writable_paths
+                .iter()
+                .any(|path| other.job.writable_paths.iter().any(|held| authority::overlaps(path, held)))
+            {
+                return Some(format!("writable ownership held by {other_effort}/{}", other.job.id));
+            }
+            if job.kind == Kind::Integrate && other.job.kind == Kind::Integrate && active(&other.state) {
+                return Some(format!("integration already running in {other_effort}/{}", other.job.id));
+            }
+        }
+    }
+    None
 }
 
 fn ticket_path(effort: &str, job: &Job) -> PathBuf {
@@ -677,8 +787,16 @@ struct StoppedObservation {
     coordinator: String,
     status: String,
     claim: Claim,
+    #[serde(default)]
+    session_id: Option<String>,
+    #[serde(default)]
+    observed_at: Option<String>,
+    #[serde(default)]
+    evidence: Vec<Artifact>,
+    #[serde(default)]
+    processes: Vec<authority::ProcessObservation>,
 }
-fn checked_stop(claim: &Claim, entry: &Entry, observation: &Artifact) -> Result<()> {
+fn checked_stop(claim: &Claim, entry: &Entry, observation: &Artifact, managed: bool) -> Result<()> {
     check_artifact(observation)?;
     let stopped: StoppedObservation = toml::from_str(&fs::read_to_string(&observation.path)?)?;
     ensure!(
@@ -694,10 +812,44 @@ fn checked_stop(claim: &Claim, entry: &Entry, observation: &Artifact) -> Result<
         entry.agent.is_none() || stopped.status != "not-launched",
         "started agent cannot be recovered as not launched"
     );
+    if managed {
+        ensure!(
+            stopped.session_id.as_deref().is_some_and(authority::real_session_id)
+                && stopped.observed_at.as_ref().is_some_and(|value| !value.is_empty())
+                && !stopped.evidence.is_empty(),
+            "managed stopped observation requires real owner inspection evidence"
+        );
+        if entry.agent.as_deref().is_some_and(authority::real_session_id) {
+            ensure!(
+                stopped.session_id.as_ref() == entry.agent.as_ref(),
+                "stopped observation names another real child session"
+            );
+        }
+        for artifact in &stopped.evidence {
+            check_artifact(artifact)?;
+        }
+        for process in &stopped.processes {
+            ensure!(
+                process.pid > 0
+                    && !process.argv.is_empty()
+                    && !process.started_at.is_empty()
+                    && ["exited", "stopped", "completed", "failed", "not-running"].contains(&process.status.as_str()),
+                "stopped child still has a running or ambiguous process"
+            );
+            check_artifact(&process.observation)?;
+        }
+    }
     Ok(())
 }
 
-fn record(root: &Path, checkout: &Path, ledger: &mut Ledger, coordinator: &str, update: &Update) -> Result<()> {
+fn record(
+    root: &Path,
+    checkout: &Path,
+    ledger: &mut Ledger,
+    coordinator: &str,
+    update: &Update,
+    managed: bool,
+) -> Result<()> {
     let claim = match update {
         Update::Started { claim, .. }
         | Update::LaunchFailed { claim, .. }
@@ -714,6 +866,12 @@ fn record(root: &Path, checkout: &Path, ledger: &mut Ledger, coordinator: &str, 
         && entry.pending_job.is_none()
         && !entry.stale
     {
+        if let Update::Finished { result, .. } = update {
+            ensure!(inputs_current(checkout, &entry.job)?, "stale source revision cannot retry recorded completion");
+            for artifact in result_artifacts(result) {
+                check_artifact(artifact)?;
+            }
+        }
         return Ok(());
     }
     ensure!(entry.claim.as_ref() == Some(claim), "stale assignment attempt or revision");
@@ -723,6 +881,10 @@ fn record(root: &Path, checkout: &Path, ledger: &mut Ledger, coordinator: &str, 
         && !entry.stale
         && matches!(entry.state, State::Complete | State::Submitted | State::Failed)
     {
+        ensure!(inputs_current(checkout, &entry.job)?, "stale source revision cannot retry recorded completion");
+        for artifact in result_artifacts(result) {
+            check_artifact(artifact)?;
+        }
         return Ok(());
     }
     match update {
@@ -732,6 +894,10 @@ fn record(root: &Path, checkout: &Path, ledger: &mut Ledger, coordinator: &str, 
                 return Ok(());
             }
             ensure!(entry.state == State::Reserved, "only a reserved assignment can start");
+            ensure!(
+                !managed || authority::real_session_id(agent),
+                "managed start must record the actual child thread id"
+            );
             let entry = ledger.jobs.get_mut(&claim.id).unwrap();
             entry.agent = Some(agent.clone());
             entry.state = State::Running;
@@ -753,8 +919,11 @@ fn record(root: &Path, checkout: &Path, ledger: &mut Ledger, coordinator: &str, 
             }
         }
         Update::OwnerStopped { observation, .. } => {
-            ensure!(owns_paths(&entry.state), "claim is not awaiting recovery");
-            checked_stop(claim, entry, observation)?;
+            ensure!(
+                active(&entry.state),
+                "submitted ownership remains held through integration; claim is not awaiting recovery"
+            );
+            checked_stop(claim, entry, observation, managed)?;
             let entry = ledger.jobs.get_mut(&claim.id).unwrap();
             entry.observations.push(observation.clone());
             retain_attempt(entry);
@@ -878,6 +1047,13 @@ fn record(root: &Path, checkout: &Path, ledger: &mut Ledger, coordinator: &str, 
                     writable_paths: submission.writable_paths,
                     blockers: Vec::new(),
                     inputs: BTreeMap::from([
+                        (
+                            "base-head".into(),
+                            submission.inputs.get("base-head").cloned().unwrap_or_else(|| {
+                                let WorkResult::Submitted { commit, .. } = &result else { unreachable!() };
+                                commit.clone()
+                            }),
+                        ),
                         ("submission-id".into(), claim.id.clone()),
                         ("submission-revision".into(), claim.revision.clone()),
                         ("submission-attempt".into(), claim.attempt.to_string()),
@@ -947,19 +1123,30 @@ pub(crate) fn operate(request: Request) -> Result<Receipt> {
     let path = root.join(format!(".scratch/{}/ledger.toml", request.effort));
     let parent = path.parent().unwrap();
     ensure!(!parent.is_symlink(), "assignment effort cannot be a symlink");
-    let _lock = if readonly {
-        None
+    let _lock = if readonly { None } else { Some(mutation_lock(&root)?) };
+    let policy = if readonly {
+        authority::read(&root)?
     } else {
-        fs::create_dir_all(parent)?;
-        // A global main-checkout claim lock also prevents two efforts claiming
-        // the same preexisting ticket before its Markdown projection completes.
-        let lock_path = root.join(".scratch/assignment.lock");
-        ensure!(!lock_path.is_symlink(), "assignment lock cannot be a symlink");
-        let held = OpenOptions::new().create(true).append(true).open(lock_path)?;
-        held.lock()?;
-        Some(held)
+        authority::validate_locked(&root, &request.effort, &request.coordinator, request.authority.as_ref(), false)?
     };
+    if let Some(policy) = &policy {
+        ensure!(
+            request.capacity == policy.preparation.capacity,
+            "assignment capacity differs from shared session capacity"
+        );
+    }
+    let bridge = policy.as_ref().map(|policy| authority::bridge(policy, &root, false)).transpose()?;
+    let other_ledgers = read_ledgers(&root)?;
     let mut ledger = read_ledger(&path, request.capacity)?;
+    if let Some(policy) = &policy {
+        ledger.integration_owner = Some(authority::integrator(policy).to_owned());
+    }
+    if !readonly && let Some((policy, bridge)) = policy.as_ref().zip(bridge.as_ref()) {
+        authority::validate_mutation(policy, bridge, &request.effort, &request, &ledger)?;
+    }
+    for job in &request.jobs {
+        validate_resources(&root, &request.checkout, job)?;
+    }
     if request.operation != "status" {
         let mut seeds = Vec::new();
         for job in &request.jobs {
@@ -987,13 +1174,18 @@ pub(crate) fn operate(request: Request) -> Result<Receipt> {
         retire_empty_verification(entry);
     }
     if request.operation == "record" {
-        record(
-            &root,
-            &request.checkout,
-            &mut ledger,
-            &request.coordinator,
-            request.update.as_ref().context("record update missing")?,
-        )?;
+        let update = request.update.as_ref().context("record update missing")?;
+        let claim = match update {
+            Update::Started { claim, .. }
+            | Update::LaunchFailed { claim, .. }
+            | Update::Finished { claim, .. }
+            | Update::OwnerStopped { claim, .. } => claim,
+        };
+        let integration = ledger.jobs.get(&claim.id).is_some_and(|entry| entry.job.kind == Kind::Integrate);
+        if integration {
+            authority::validate_locked(&root, &request.effort, &request.coordinator, request.authority.as_ref(), true)?;
+        }
+        record(&root, &request.checkout, &mut ledger, &request.coordinator, update, policy.is_some())?;
         for entry in ledger.jobs.values_mut() {
             retire_empty_verification(entry);
         }
@@ -1007,16 +1199,30 @@ pub(crate) fn operate(request: Request) -> Result<Receipt> {
         {
             recovery.push(claim.clone());
         }
-        if entry.state == State::Ready
-            && let Some(reason) = blocker_reason(&root, &ledger, entry)?
-        {
-            deferred.insert(entry.job.id.clone(), reason);
+        if entry.state == State::Ready {
+            let reason = repository_blocker(&request.effort, &entry.job, &other_ledgers).or_else(|| {
+                policy.as_ref().zip(bridge.as_ref()).and_then(|(policy, bridge)| {
+                    authority::held_reason(policy, bridge, &request.effort, &entry.job, request.authority.as_ref())
+                })
+            });
+            if let Some(reason) = reason.or(blocker_reason(&root, &ledger, entry)?) {
+                deferred.insert(entry.job.id.clone(), reason);
+            }
         }
     }
     let mut assignment = None;
     if request.operation == "next" && request.available_slots > 0 {
-        let used = ledger.jobs.values().filter(|e| active(&e.state)).count();
-        if used < ledger.capacity {
+        let used = ledger.jobs.values().filter(|e| active(&e.state)).count()
+            + if policy.is_some() {
+                other_ledgers
+                    .iter()
+                    .filter(|(effort, _)| *effort != &request.effort)
+                    .map(|(_, ledger)| ledger.jobs.values().filter(|entry| active(&entry.state)).count())
+                    .sum::<usize>()
+            } else {
+                0
+            };
+        if used < policy.as_ref().map(|policy| policy.preparation.capacity).unwrap_or(ledger.capacity) {
             let chosen = ledger
                 .jobs
                 .values()

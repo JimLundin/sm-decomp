@@ -219,7 +219,8 @@ fn promotion_path_conflicts_and_integration_preserve_submission_lifecycle() {
     let f = Fixture::new();
     let research = f.start(job("research", Kind::Research));
     let evidence = f.artifact("research.toml", "status = 'established'\n");
-    let implementation = job("implement", Kind::Implement);
+    let mut implementation = job("implement", Kind::Implement);
+    implementation.inputs.insert("base-head".into(), "a".repeat(40));
     let result = WorkResult::Researched { evidence: vec![evidence.clone()], followups: vec![implementation.clone()] };
     f.record(&research, result.clone()).unwrap();
     f.record(&research, result).unwrap();
@@ -241,6 +242,7 @@ fn promotion_path_conflicts_and_integration_preserve_submission_lifecycle() {
     assert_eq!(status.jobs.iter().find(|e| e.job.id == "implement").unwrap().state, State::Submitted);
     let integration = operate(f.request("next")).unwrap().assignment.unwrap();
     assert_eq!(integration.job.kind, Kind::Integrate);
+    assert_eq!(integration.job.inputs.get("base-head"), implementation.inputs.get("base-head"));
     let mut request = f.request("record");
     request.update = Some(Update::Started { claim: integration.claim.clone(), agent: "agent-1".into() });
     operate(request).unwrap();
@@ -352,6 +354,7 @@ fn researching_existing_task_transfers_claim_and_resolves_only_after_integration
     f.record(&ready.claim, WorkResult::Submitted { commit: "c".repeat(40), evidence: vec![evidence.clone()] }).unwrap();
     assert!(fs::read_to_string(&ticket).unwrap().contains("Status: claimed"));
     let integration = operate(f.request("next")).unwrap().assignment.unwrap();
+    assert_eq!(integration.job.inputs.get("base-head"), Some(&"c".repeat(40)));
     let mut start = f.request("record");
     start.update = Some(Update::Started { claim: integration.claim.clone(), agent: "agent-1".into() });
     operate(start).unwrap();
@@ -520,4 +523,126 @@ fn pull_order_honors_local_ticket_numbers_and_observed_candidate_ranking() {
     let mut request = other.request("next");
     request.jobs = vec![deferred, preferred];
     assert_eq!(operate(request).unwrap().assignment.unwrap().job.id, "z-preferred-observed");
+}
+
+#[test]
+fn concurrent_efforts_in_main_and_worktree_cannot_overlap_ancestor_paths() {
+    let f = Fixture::new();
+    assert!(
+        Command::new("git")
+            .args([
+                "-C",
+                f.0.to_str().unwrap(),
+                "-c",
+                "user.name=Test",
+                "-c",
+                "user.email=test@example.invalid",
+                "commit",
+                "--allow-empty",
+                "-qm",
+                "initial"
+            ])
+            .status()
+            .unwrap()
+            .success()
+    );
+    let worktree = f.0.join("other");
+    assert!(
+        Command::new("git")
+            .args(["-C", f.0.to_str().unwrap(), "worktree", "add", "-q", "--detach"])
+            .arg(&worktree)
+            .status()
+            .unwrap()
+            .success()
+    );
+    let mut a = f.request("next");
+    a.effort = "effort-a".into();
+    let mut parent = job("parent", Kind::Implement);
+    parent.writable_paths = vec!["crates/port/src".into()];
+    a.jobs = vec![parent];
+    let mut b = f.request("next");
+    b.checkout = worktree;
+    b.effort = "effort-b".into();
+    b.coordinator = "owner-b".into();
+    b.jobs = vec![job("child", Kind::Implement)];
+    let (a, b) = std::thread::scope(|s| {
+        let a = s.spawn(|| operate(a).unwrap());
+        let b = s.spawn(|| operate(b).unwrap());
+        (a.join().unwrap(), b.join().unwrap())
+    });
+    assert_eq!(usize::from(a.assignment.is_some()) + usize::from(b.assignment.is_some()), 1);
+    let deferred = if a.assignment.is_none() { a } else { b };
+    assert!(deferred.deferred.values().any(|reason| reason.contains("writable ownership held by effort-")));
+}
+
+#[test]
+fn separate_efforts_keep_submitted_paths_and_duplicate_ticket_identity_held() {
+    let f = Fixture::new();
+    let mut a = f.request("next");
+    a.effort = "effort-a".into();
+    a.jobs = vec![job("implement", Kind::Implement)];
+    let claim = operate(a).unwrap().assignment.unwrap().claim;
+    let mut record = f.request("record");
+    record.effort = "effort-a".into();
+    record.update = Some(Update::Started { claim: claim.clone(), agent: "agent-1".into() });
+    operate(record.clone()).unwrap();
+    let evidence = f.artifact("evidence.toml", "verified = true\n");
+    record.update = Some(Update::Finished {
+        claim: claim.clone(),
+        result: WorkResult::Submitted { commit: "e".repeat(40), evidence: vec![evidence] },
+    });
+    operate(record.clone()).unwrap();
+    let mut b = f.request("next");
+    b.effort = "effort-b".into();
+    b.jobs = vec![job("overlap", Kind::Implement)];
+    let waiting = operate(b.clone()).unwrap();
+    assert!(waiting.assignment.is_none());
+    assert!(waiting.deferred["overlap"].contains("effort-a/implement"));
+    let stopped = f.artifact("stopped-submitted.toml", &format!("agent = 'agent-1'\ncoordinator = 'owner-a'\nstatus = 'completed'\n[claim]\nid = '{}'\nrevision = '{}'\nattempt = {}\ncoordinator = '{}'\n", claim.id, claim.revision, claim.attempt, claim.coordinator));
+    record.update = Some(Update::OwnerStopped { claim, observation: stopped });
+    assert!(operate(record).unwrap_err().to_string().contains("submitted ownership remains held"));
+
+    let ticket = PathBuf::from(".scratch/effort-a/assignments/implement.md");
+    // Simulate a stale Markdown copy; durable identity still blocks it.
+    fs::write(f.0.join(&ticket), "# Copy\nStatus: open\nBlocked by: None\nTriage: ready-for-agent\n").unwrap();
+    let mut duplicate = job("duplicate-ticket", Kind::Research);
+    duplicate.ticket = Some(ticket);
+    b.jobs = vec![duplicate];
+    let waiting = operate(b).unwrap();
+    assert!(waiting.assignment.is_none());
+    assert!(waiting.deferred["duplicate-ticket"].contains("ticket ownership held by effort-a/implement"));
+}
+
+#[test]
+fn canonical_mutation_cannot_start_without_prepared_authority() {
+    let f = Fixture::new();
+    let mut request = f.request("next");
+    request.effort = "decomp-parallel".into();
+    request.jobs = vec![job("implementation", Kind::Implement)];
+    assert!(operate(request).unwrap_err().to_string().contains("has not been prepared"));
+    assert!(!f.0.join(".scratch/decomp-parallel/ledger.toml").exists());
+}
+
+#[test]
+fn completion_retry_rechecks_the_same_attempt_sealed_evidence() {
+    let f = Fixture::new();
+    let claim = f.start(job("research", Kind::Research));
+    let evidence = f.artifact("result.toml", "sealed = true\n");
+    let result = WorkResult::Researched { evidence: vec![evidence.clone()], followups: Vec::new() };
+    f.record(&claim, result.clone()).unwrap();
+    f.record(&claim, result.clone()).unwrap();
+    fs::write(evidence.path, "sealed = false\n").unwrap();
+    assert!(f.record(&claim, result).unwrap_err().to_string().contains("artifact identity differs"));
+}
+
+#[test]
+fn symlink_alias_cannot_bypass_repository_writable_ownership() {
+    let f = Fixture::new();
+    fs::create_dir_all(f.0.join("crates/port/src")).unwrap();
+    std::os::unix::fs::symlink("crates/port/src", f.0.join("alias")).unwrap();
+    let mut request = f.request("next");
+    let mut candidate = job("alias", Kind::Implement);
+    candidate.writable_paths = vec!["alias/enemy.rs".into()];
+    request.jobs = vec![candidate];
+    assert!(operate(request).unwrap_err().to_string().contains("crosses a symlink"));
 }

@@ -68,6 +68,7 @@ mod ridley_subsystem_fixtures;
 mod ridley_subsystem_inventory;
 mod rng_job;
 mod routine_live;
+mod session;
 mod source_inventory;
 mod storage_studies;
 mod translation;
@@ -1406,6 +1407,18 @@ fn main() -> Result<()> {
             Ok(())
         }
         Some("family-authenticate") if args.len() == 1 => emit(&family::authenticate(request()?)?),
+        Some("decomp-session") if args.len() == 1 => emit(&session::operate(request()?)?),
+        Some("decomp-session") => {
+            ensure!(args.len() == 4 && args[2] == "--request", "usage: sm-pipeline decomp-session OP --request REQUEST.toml");
+            let request: session::Request = toml::from_str(&fs::read_to_string(&args[3])?)?;
+            ensure!(request.operation() == args[1], "session operation differs from typed request");
+            emit(&session::operate(request)?)
+        }
+        Some("decomp-authority") if args.len() == 1 => emit(&assignment::authority::operate(request()?)?),
+        Some("decomp-authority") => {
+            ensure!(args.len() == 3 && args[1] == "--request", "usage: sm-pipeline decomp-authority --request REQUEST.toml");
+            emit(&assignment::authority::operate(toml::from_str(&fs::read_to_string(&args[2])?)?)?)
+        }
         Some("assign") if args.len() == 1 => emit(&coordination::operate(request()?)?),
         Some("assign") => {
             let workers = std::env::var("SM_PIPELINE_WORKERS").unwrap_or_else(|_| "4".into()).parse::<usize>()?;
@@ -1425,6 +1438,7 @@ fn main() -> Result<()> {
                     "--checkout" => "checkout",
                     "--effort" => "effort",
                     "--coordinator" => "coordinator",
+                    "--authority" => "authority",
                     "--capacity" => "capacity",
                     "--pipeline-root" => "pipeline_root",
                     "--workers" => "workers",
@@ -1450,7 +1464,7 @@ fn main() -> Result<()> {
                     set_option(&mut options, key, names)?;
                 } else {
                     let value = args.get(index).context("assign option value missing")?;
-                    if key == "update" {
+                    if key == "update" || key == "authority" {
                         set_option(&mut options, key, toml::from_str::<Value>(&fs::read_to_string(value)?)?)?;
                     } else if ["capacity", "available_slots", "workers"].contains(&key) {
                         set_option(&mut options, key, value.parse::<usize>()?)?;

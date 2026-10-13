@@ -34,6 +34,7 @@ pub(crate) struct Request {
     pub update: Option<Update>,
     pub pipeline_root: Option<PathBuf>,
     pub workers: usize,
+    pub authority: Option<assignment::SessionAuthority>,
 }
 impl Default for Request {
     fn default() -> Self {
@@ -55,6 +56,7 @@ impl Default for Request {
             update: None,
             pipeline_root: None,
             workers: 4,
+            authority: None,
         }
     }
 }
@@ -67,9 +69,7 @@ fn git(checkout: &Path, args: &[&str]) -> Result<String> {
     Ok(String::from_utf8(result.stdout)?.trim().into())
 }
 fn main_checkout(checkout: &Path) -> Result<PathBuf> {
-    let common = fs::canonicalize(checkout.join(git(checkout, &["rev-parse", "--git-common-dir"])?))?;
-    ensure!(common.file_name().is_some_and(|name| name == ".git"), "assignment requires a main checkout");
-    Ok(common.parent().context("main checkout missing")?.into())
+    assignment::main_checkout(checkout)
 }
 fn queue(request: &Request, operation: &str) -> assignment::Request {
     assignment::Request {
@@ -81,6 +81,7 @@ fn queue(request: &Request, operation: &str) -> assignment::Request {
         available_slots: request.available_slots,
         jobs: vec![],
         update: None,
+        authority: request.authority.clone(),
     }
 }
 fn checked(artifact: &Artifact) -> Result<()> {
@@ -561,12 +562,28 @@ pub(crate) fn operate(mut request: Request) -> Result<toml::Value> {
     if request.operation == "record" {
         let status = assignment::operate(queue(&request, "status"))?;
         let mut update = request.update.take().context("record requires a typed update")?;
+        assignment::authority::validate(
+            &request.checkout,
+            &request.effort,
+            &request.coordinator,
+            request.authority.as_ref(),
+            matches!(&update, Update::Finished { result: WorkResult::Integrated { .. }, .. }),
+        )?;
         validate_update(&request, &status, &mut update)?;
         let mut queued = queue(&request, "record");
         queued.update = Some(update);
         return Ok(toml::Value::try_from(assignment::operate(queued)?)?);
     }
     ensure!(request.update.is_none(), "updates require record");
+    if request.operation == "next" {
+        assignment::authority::validate(
+            &request.checkout,
+            &request.effort,
+            &request.coordinator,
+            request.authority.as_ref(),
+            false,
+        )?;
+    }
     let before = source_fingerprint(&request.checkout)?;
     let catalog = batch::catalog(&request.checkout)?;
     let names = request
