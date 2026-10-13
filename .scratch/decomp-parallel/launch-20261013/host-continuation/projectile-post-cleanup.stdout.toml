@@ -1,0 +1,562 @@
+status = "offline-verified"
+run = "/home/jim/sm-decomp/out/port/decomp-launch-20261013/host-matrices/families/game-host-projectile/evidence/1791899338036897-540899-0"
+live_exercised = false
+original_rom_parity = "not-tested"
+family = "game-host-projectile"
+gameplay_translation = true
+verified_cases = 7
+verified_routines = 4
+rejected_abi_inputs = 0
+native_rust_spawn_calls = 0
+remaining_c_gameplay_callbacks = 5
+scope = "declared valid fixture domain only; full canonical WRAM and return values"
+
+[source]
+revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+archive_sha256 = "69c78831351112887575f852dadf0281dd5c23cef890b07a268ae6cf60aa9193"
+freshness = "exact pinned archive; no latest-upstream assertion"
+
+[source.files]
+".gitattributes" = "57eb57db3e31225086b3a2e95153a0086ba0eb588af259ae3ec519d5abe191a0"
+".github/ISSUE_TEMPLATE/bugs.yml" = "e1b76268b36f107ad7c38467d829f3e78879857a01b83c10446c189fa0f2836d"
+".github/ISSUE_TEMPLATE/config.yml" = "fa3b762a0030e97dc09063620974623437eee4b650fbf9bc3f48272b85875535"
+".github/ISSUE_TEMPLATE/feature-request.yml" = "3eeb78a527e647412ef1ff6779b3f26c821d535416c05652c4052dcdda315b37"
+".github/PULL_REQUEST_TEMPLATE.md" = "076d7bdee27cd19843f733c67271dc89d9f4e5f7c57d3a7266721ee4baa94fa4"
+".gitignore" = "5e7686aa1ae36c9ee0425d1619c677303d971470fdbdb92f7e58a3c38d001216"
+"BUILDING.md" = "cedb482754718d71ac1e3e6393cf13bd031191c2fa0a24b71682b2588f0ba973"
+"LICENSE.txt" = "d7b321b1d1009b9d5d0dc1334b0a941def8f15f36ce2396fabd409e9327e2787"
+Makefile = "5c7844d78b04510f6d6d48c188689afe8c05f4adfb798f9fb1ff75e650d2b98c"
+"README.md" = "01f1c98c43eacb6c53b2b73a46f4987d24bb0a579304514e0085db3c6297c51b"
+"assets/.gitignore" = "f19f9b2590f52c2b773fe5200939db3988348a01d5cd6c08caba6c47e9affc44"
+"assets/animtiles_decode.py" = "b57d91da55f584dd4d69c1df6b00926065a55e3c51710a0c49d653701def082e"
+"assets/consts.py" = "a4ae5fcf1723284c2282fc0989a5010dd2642e3bfc2309d945f27bc90d466352"
+"assets/decode_common.py" = "d9a693e451dd1fbdc2454ff0f375f302d13b3f83951baaed92cdc0f13f7b20bf"
+"assets/enemy_instr_decode.py" = "9b8af4bc64ed8ab75a1c4b3f547ab798c18df0b8bbabe1857f18ea00eb621baf"
+"assets/eproj_decode.py" = "8e3a8244005f7ac15a8d4e766f6e4691a49492aa1873a3b62872e01cc2abeb9c"
+"assets/names.txt" = "904f25a85a3118820eb54ec4ee154e6f5bab6ef284883fd68e5c749dd2035940"
+"assets/palfx_decode.py" = "2e629623ed514feeba16e58141dd02eead10dcb7b34bae77b8a25452e59b5879"
+"assets/plm_decode.py" = "1fdf39dfd3eb0f8a10c45ade45ff0f5c1a6b9a1ebb88ad9e5b5c510e1ffba0d0"
+"assets/projectile_decode.py" = "ba217ce35e1164db273cfe2a8e9bf35fb40bf1e900dd2193ec39ac07251a698b"
+"assets/restool.py" = "8f86a3c56e123cb985831dd1fc6c01b303132d66bf76a6718d4650ed0da8a832"
+"assets/text_lexer.py" = "6c885c9ec56a12d1697d2dcc9cf5cbe26e2460c4606ce8ac164398e10542d478"
+"other/annotate_funcs.py" = "4c7fee70bbcb79020d416dcb26d33049b0034cdda52724d6530c846dbea70089"
+"other/strip_some.py" = "1513f70490852d0e453a978577c78919c3a4b4607dd7c339deb619cb9c446e8a"
+"other/useful_regexps.txt" = "7f5a13dbb9fcf9d5cc27d765cd32d3ddb6d2f3caf4f4c75e15c6d2d980f49f51"
+"run_with_tcc.bat" = "09c52640a5e70b19fcacdecc4add5fa081dcf61b378f6f5c4f631767a165f301"
+"sm.ini" = "d2318423e953f496623cdecffec2753aa11bd9d1723c367527f09df66baf71e6"
+"sm.sln" = "1c261e017e86a9a7c00dbad8084b6ab0340a01dcb25bdc33106dadf91a77e322"
+"src/.gitignore" = "84cf6ca549d4c05622325c3d0d9caaca9efdaf9ec0f92d2ce1e189a8cb06e803"
+"src/config.c" = "2ac227f88e5cef03ab781b47ea511b573f89300302cde7fb306f22be5005cc0e"
+"src/config.h" = "a2e6b153cae10f31422b2e5c4b493e60c3e1aa1e0cb325bdcc03bfc45c6392f0"
+"src/enemy_types.h" = "251af063d550e9e9ade1de9840df7617c8cb3648bbe241587a654b3ea3085f2d"
+"src/features.h" = "99e1d93c333e96476ae3cd27eced06e1cdcf161a1fb3db240bc094431a1ed19e"
+"src/funcs.h" = "b34fcb4451210e086845163bbfb5a9ca1ef5a2e2cb8022b8a7d7fab4fe6cb52e"
+"src/glsl_shader.c" = "392463ad44e8b73c42314f435ab0f7e5acd838fb34cc5d1233cd0488a7934214"
+"src/glsl_shader.h" = "121df5306db169979a25552f1b2e805de9747b0a3b25a39947c460f6cabab9e5"
+"src/ida_types.h" = "12974c5708740164692dac151104020b53e8316e7378521c974ddf602d1f28ff"
+"src/main.c" = "e090462d21e517d6d63e35068ac0a27f7b4a7085bf2197a354edb0b1ae965181"
+"src/move_defines.py" = "641aa63ba1de472ee1285c72c7a42bfb17862fafc5d8b48c02c38ffe5dd0454e"
+"src/opengl.c" = "d9481ecfdd5934000cf8a624324705859c1be65ba93f60ea9b6c25ef79d14b06"
+"src/packages.config" = "52d9a3f8658ed50443839112813b82908c7b046bfbe1962bf0e0e0dcd25c07c8"
+"src/platform/switch/.gitignore" = "19eaba877090bf5e5bea77d56ea5dbfa9bae4810411c5e97a4f8b82e59155e5e"
+"src/platform/switch/Makefile" = "220720e72937fd10763c995c496be730d06ffe85d4368214d3e1962ec0fc8892"
+"src/platform/switch/icon.jpg" = "d22d21acc55bdd3241ed1e272931c38bb38fc18f35a5e1e78b7567b478b69fa7"
+"src/platform/switch/sm.ini" = "e18a2b0d6334717c97cb6c96409490a2a34fd1ee0bc3f4ba3ff375af1b95b02b"
+"src/platform/switch/src/switch_impl.c" = "58f4deb903e981cb9c412118064136532b1080c04d030f8a9282e6e11e7c628c"
+"src/platform/switch/src/switch_impl.h" = "421f308e662017bda2a4df37e04893251fca2476fbdc2a66d4862690807900cf"
+"src/platform/win32/resource.h" = "b99a0006883f0211f8765df5f760d6c6988d231229a6093c87debcdb4d1f0b58"
+"src/platform/win32/sm.rc" = "cafbc80db29c4a626d2d0b3d34cfd6d96fbca338a22eea99315548e7f33be2a4"
+"src/platform/win32/volume_control.c" = "82c9525991c15629e9ebcdf7f2c48f807945ec77643c86318bc04fe14c5010d3"
+"src/platform/win32/volume_control.h" = "836ca2f7cb836a4c793493905a348a3baca4dcdf4873d9e22a683979bdd3be24"
+"src/sm.vcxproj" = "b8e70e9eca017bacea37a9bb880eb852893f1023f041beb44dc296003ebc79fe"
+"src/sm.vcxproj.filters" = "6fe688c88d42d9d06d546ce79cf6a2c5cf2d20ac66ab8c064569e6262c66671b"
+"src/sm_80.c" = "ab9abc1042ea876c51de90d00632d1af13e9a765c77cf371950ddcdc783130c7"
+"src/sm_81.c" = "bd05747f344ac18d4f5230e10fd4678b087048c24e8aeb5f685691b36badb1a0"
+"src/sm_82.c" = "afa8b6fb9e9e5ad378db4779c1c39574856a57d50d25c4536aa2bafeeb79e3ad"
+"src/sm_84.c" = "6497c1ea38669812a8d69476349f11b6ecd196ac58b605eca49d77d978febb3a"
+"src/sm_85.c" = "01035a449979bdb7c50d26f4733b2cda9d04f86a5d3d2596446216a3a096d2c2"
+"src/sm_86.c" = "8268f45c3df230de54c99d833e166802d59bd942ea4ac58e75f4acf134e48cf1"
+"src/sm_87.c" = "931192fe55ad4f5ba661f16b4314b221311e74f261ca30223152a0fe8639960a"
+"src/sm_88.c" = "aaa369946309a7ea8e4c8f4374dc4f9f771f2b4855ed7439cff71dd234d50be0"
+"src/sm_89.c" = "38987685948f42e4cc1a649d2ae22bba5a316761f181ed83a695f6a0229d3e4f"
+"src/sm_8b.c" = "b77fe217eb0e74b82d92acd4d32f44141a095da8264c15fb5f703067b0496ba3"
+"src/sm_8d.c" = "7a89da29f287ebdb717044fec90612c40309f2dba23940a0a4f3f17212a83c33"
+"src/sm_8f.c" = "e57e3dbc64f202dac3ebea1a0589b25a71a6d09a35368b31e062474955a24dff"
+"src/sm_90.c" = "ad9f103509160abd8a9e0f85f3c3c96187c89f31dd770cf533fa32a97925247a"
+"src/sm_91.c" = "8a087a687e9611d1272797522f1b5fd20f9e344d851e0a6701af8b9052b5070f"
+"src/sm_92.c" = "a5d1261dd44abd623a064850e0f500630a382cf03f18e82ffb1bda2ae5051061"
+"src/sm_93.c" = "886d3503d26ab29bf712f185e359f9fcb732c42d24f5ccdfddc53b7563a7aa79"
+"src/sm_94.c" = "fee1e46c9cd18a576766fa401840176c8e4c120a57527b8929010134919860c0"
+"src/sm_9b.c" = "987e7bb885b7496b5d5dc768ec7cf0b8b2fd793a8104daf403848a9539ba8aa0"
+"src/sm_a0.c" = "a2cee5c286304e7d606357ac4960413e5fe3dfe585d468d0f41a654aa093e8d3"
+"src/sm_a2.c" = "d62422845f0fee20c929ed7a635a0eb397d376a6b2d62b9c0aab21e3c18a315e"
+"src/sm_a3.c" = "fb8a23edb3353a970e343ced1b449b269979182b2267bae43d4ae5157ec871f6"
+"src/sm_a4.c" = "0debb63e48c8f1b3911dd680bae72496d178f127c1f7cd1110c32863ba2289d0"
+"src/sm_a5.c" = "5010db2a99d4947ef170964cf5043f4e7038112530e6af1d7decba809a0c8faa"
+"src/sm_a6.c" = "36ce5f36896e6a28555fba833be68fc189bf1a35b17a64cab04cd3a4e34e6b96"
+"src/sm_a7.c" = "d7012727ba3fd803b307b5d5db8a6eb0df7476c80019c1d206d8ac5630826cdc"
+"src/sm_a8.c" = "c2a0b15844752c61d56daa61093781339bd796edeb2c9fc3460b3c173ffada4f"
+"src/sm_a9.c" = "82b84aaa333cebca6f6913684fd41b86bfa36a4968aea8ec60b5d6dc9ecc074f"
+"src/sm_aa.c" = "0abae86d85ccda04b2dcb10e3fa032039e2991e3955e0089da25f8c2407ddb3e"
+"src/sm_ad.c" = "4a18b62599a19bab2caba7ed474df1aed64550e0c0aa949019b1a441284af8d9"
+"src/sm_b2.c" = "455f3aa8a1c59e404d84f096bbdda324b2ea3f90c3b76dae36e246dc1ded415b"
+"src/sm_b3.c" = "c92eef4fce491e23545bb593f5d08665c730d1f7b312039c133f6eaa7a6902b6"
+"src/sm_b4.c" = "b65805b13b3cfcae06cd3c772f07a7bbe694cce6bcff9bd280eae7ca473d9b66"
+"src/sm_cpu_infra.c" = "fe066c3f2a2e0a86b6b659ba651e8c2879dd723e2393718124d946575b43bed6"
+"src/sm_cpu_infra.h" = "2dfe6d82e6d138ca030543eaa43438eb710647fcd684b6a19337d201b0e88877"
+"src/sm_rtl.c" = "cafcd12cd98e5797680a1928af23ceaf244a20afea927bf600c122effd899614"
+"src/sm_rtl.h" = "0347707a3b7cbdfb3563866ee7574a67afdc53d1a0907427b157bf49c3f9afac"
+"src/snes/apu.c" = "4111477d945203b66371e605d59167d7d21c6c278afe4bb86c0f61fdf18cf105"
+"src/snes/apu.h" = "03ea8b93a31d8d4471d0a586f35a3d7578d6ad25ed27f806f026c3622b91377d"
+"src/snes/cart.c" = "a8405dfe8a5de222d674022b90b3c96783130872113f2e5083481aa73ede2109"
+"src/snes/cart.h" = "f5d9578b1bacb08b781e51b6e5c090d9339dee34ee69dd200cbbcd682fe5be8c"
+"src/snes/cpu.c" = "b0267b0993cfd2808d6466a9ac573a86eef5335df540c7c58130fff9799832b2"
+"src/snes/cpu.h" = "f2f6a5a1ac57cb074e6d32825c17867e9f16025c26b69a705f2fe49971e945f3"
+"src/snes/dma.c" = "38721c80beaa2bd2980a52483fefe29e0b5e146b389fd9c718fc375dd69d735d"
+"src/snes/dma.h" = "0df39b234f17f2b176c43f67f65b8b9e16e42f929a0d877ae0c0cb85963d0cd4"
+"src/snes/dsp.c" = "9a517e197b5a819d26637f7fcf449494e9b26bd766e17cee795312c37b249dd5"
+"src/snes/dsp.h" = "f610f532fecf9505b0bfdb9431693f834ee1ec2229c6d695c916e566b6357801"
+"src/snes/dsp_regs.h" = "a36c0ffe148ffad822873c3fac9ae326183a831ea9ed81827ef08270817617be"
+"src/snes/input.c" = "3057cce80fad613e4abc8995e3959f62ca2090616d22c5452306a96e451d3d0c"
+"src/snes/input.h" = "eaedc5b53098a3190ee53daaa70b25d1ef02ae7e9281a3c58b47d7e33d553775"
+"src/snes/ppu.c" = "0c67078083d3bc41869ce24b4325b46fcc93af9abfd4e76594e0f91fdf187428"
+"src/snes/ppu.h" = "a7a295332513d25c8ddde839cee3099d690c3d36a8cbff273ec9a6bcedaf4ab5"
+"src/snes/saveload.h" = "990c773c0b8a8be37cb4cddaf84afc69cc3d9df8db07090ff597f1896d71ef5b"
+"src/snes/snes.c" = "0a2594280c3931c2e2271111c685a535a3d620fa55b5eb6f92db1a0b4c1c0259"
+"src/snes/snes.h" = "e45095b995f555f4b07e593a38b8b50d04fca54d3070fee22f67ecb45cb0e824"
+"src/snes/snes_other.c" = "4b5440f76123a879d18ae67d8d92792379c66130d0421d22fcadfb9f5f9a9c14"
+"src/snes/spc.c" = "e4cca0afabe45a55992aad55218510c94f78b3597cd0b28203974c731520680d"
+"src/snes/spc.h" = "f4a6ceb15953c14f42e4aa5c014b3203b357fe455d256a2158f765c5d7f8abcd"
+"src/spc_player.c" = "5aae391e888d5128612bda90edb5a8be372fa8e2b58de42b4b66210a9f68c187"
+"src/spc_player.h" = "1bd4310ba756d27a225d4a3eea346447c74d8f9823fc469b244df7134e32eb4d"
+"src/spc_variables.h" = "e824d5c04637930c5c6c07654c7fbc78a9f6095fd661209d36f3d816b04ab8cb"
+"src/tracing.c" = "07b5242423a64c49da8bcc9f1e5c2c354fa61f9f0cbec863853d46938dc98154"
+"src/tracing.h" = "40884ac985183d1ebdbbc0bd39294cce78cea591ae3a3840854ce08b58abaeb5"
+"src/types.h" = "02d6acb15eb207f36fa03ebab65bf622521657f2168db0a415a55c7f9598a0c0"
+"src/util.c" = "a6b5a84245fe770e0e51984ec234cdaeb771136e76b61929c524079a3f765eb5"
+"src/util.h" = "4f852185fa0c6a4372d9caa0f0afa6c6dc5d016218401d2558bb8ec290376102"
+"src/variables.h" = "e2ce28d07ceff91129e93417099f33f20f161c37e95e745c575d0e30b3fd5585"
+"src/variables_extra.h" = "b0bcbd066690205160fad3e625820d4c51d82ac63853cae37a0fe25b0bd3844d"
+"third_party/.gitignore" = "a369c3b31faca9485a1a53169d522a21b89c8db0f3cdf23db412b715ca032b35"
+"third_party/gl_core/gl_core_3_1.c" = "31cb5ce7e4205dddac06dbbebb69e667927e98f4493ba7e8666534b06b07a5e9"
+"third_party/gl_core/gl_core_3_1.h" = "a6167bef6c8a1a096fd03d24ba5f748b80bbcfae501bbeea81f85ff386767b63"
+"third_party/stb/stb_image.h" = "91f435e0fc6a620018b878b9859c74dff60d28046f87e649191ad6f35a98c722"
+
+[implementation]
+fixture_execution = "dependency-v1-fresh"
+dependency_contract = "rust-callback-v2"
+callback_adapter = "game-host"
+source_root = "/home/jim/sm-decomp"
+module = "/home/jim/sm-decomp/crates/port/src/game_host.rs"
+module_sha256 = "baaae6c0dbc60b9c384c37088806648e96669c3714d7864bb58b5b5d93972527"
+memory_sha256 = "7c0df2e77ed2d05dda05bd6d9e98fef3f7ec5f1c76426da504229af698bfecc5"
+
+[implementation.rust_dependencies]
+"crates/pipeline/src/builds.rs" = "1141b9ed89baeb8c7e64562564488832998a7ae1e951f5e40c06bcb516f8164f"
+"crates/pipeline/src/inputs.rs" = "a308f23c7febd841a60a22e1734320421691bffd82a610ff7b944420add5742f"
+"crates/pipeline/src/main.rs" = "cec9934fcc6f80a7038a9fa752e0754c28a25249822aba84baac0ec9501f673e"
+"crates/port/src/animated_tiles.rs" = "6381e3d9caf01f3b1ca42ae56b75f3784c5b4de40f795a25b3194fd601351c57"
+"crates/port/src/audio.rs" = "4308e496267857ca869db45f4127e505bec4ad29c4c9ede8f08d6e9769ccf69d"
+"crates/port/src/collision.rs" = "881431d92845006509d2956eae0b3736459961762f5b4a021577f130c530d4f1"
+"crates/port/src/enemy.rs" = "4faac9ac72d3b5caf206678980d915a2cb1ac03e492fd7fdb6aa59c4beb48367"
+"crates/port/src/enemy_projectile_collision.rs" = "f117da8bf86a387b0e5693fb19a84c938486fc089a10abf3155365e6627b837e"
+"crates/port/src/enemy_projectile_instructions.rs" = "d1ee84dda96d514fba6fb76982aaabac76d1f6d9e324c5d8d2babf5e4fbf10c2"
+"crates/port/src/enemy_projectile_sparks.rs" = "5f4649f745a2f772c32fc30231fbb2b1c0c5624ee693e6d3efaf5e15dc3557f1"
+"crates/port/src/enemy_projectiles.rs" = "4c99175b8eb0be86554e46f7424e6ee7aa43510afebe2d555ea2dcb890e7f0de"
+"crates/port/src/game_host.rs" = "baaae6c0dbc60b9c384c37088806648e96669c3714d7864bb58b5b5d93972527"
+"crates/port/src/glass_shattering.rs" = "373bcf4c49058b7583e66f2a3f5a54d92ea4481d065e89729794871d56304dd9"
+"crates/port/src/memory.rs" = "7c0df2e77ed2d05dda05bd6d9e98fef3f7ec5f1c76426da504229af698bfecc5"
+"crates/port/src/mother_brain_bomb.rs" = "43a11bc33a270533be56203c81cd451556cf9e3473609f9b0cc192e3ecdc25e1"
+"crates/port/src/n00b_tube.rs" = "801431d3325bb23672bd0f6b5aff7ea86506440c2c8c887893599386c3c00a41"
+"crates/port/src/plm.rs" = "151a849a2a9f366b3a3175915cbd861e1f8865b5451883b67a6d4fd584e846d3"
+"crates/port/src/plm_render.rs" = "70b2739565075c44e5e5094bca1e3ccc05380140ad380a8aab4608a73488c160"
+"crates/port/src/power_bomb.rs" = "1ea2c6ec91b50bc7fac76c9b57e947320f23b7867529cd32895995f2d12c5f29"
+"crates/port/src/projectile_flight.rs" = "824dcf6c79385c02dd3c12a9347c8a7c417a2366dbf03d89c26e1526e47e76ab"
+"crates/port/src/projectile_special.rs" = "cc4c7cdc7b644822d9fe5e5be5674ac4a32cd07156c07a46a53cba7429c5880a"
+"crates/port/src/projectile_trails.rs" = "9b4fcd099ced710581da54fac03b3478aa81daee21b90c194bd1b7c53181108f"
+"crates/port/src/projectiles.rs" = "10fcb32c76cb46d8e0ee1b477901bdb0fbbc8eb58fc2e2a704a038be6d3b0656"
+"crates/port/src/room.rs" = "e7b13c17ac668f8aba50a21aedfcd4d4dcf93f5e1cd2d4c610557cb56774ba72"
+"crates/port/src/room_scroll.rs" = "cc2c7ee9138a1c781321045e28246c083fca6a53ce284ac626d9abf5bdb5bdf0"
+"crates/port/src/samus.rs" = "4f7e14ecbdf724305094d5924ec931b04dca422e8bcc3108fd5ff13531271234"
+"crates/port/src/samus_control.rs" = "d0d592bdbfad2b0bb1b845ec3fc2523cb4a6ff15c0dd07015c9736d3efb4ed60"
+"crates/port/src/samus_projectile_frame.rs" = "d6f6a8e93448f882fc3d49b35e687a856473c172389d900ab984745ce517b712"
+"crates/port/src/sprite_objects.rs" = "dfe844396edea8efd787923ab506dc3b910c70d8a67e21bf7c27ddfba90475af"
+"crates/port/src/system.rs" = "bedc7662f4c1c435c968a6c07c73331a76f6c58621b4ca885f73f6be33ccbf16"
+
+[implementation.harness_sources]
+"crates/pipeline/src/batch.rs" = "4aa716117c3cfd0fae0597a13f0fdfac7a0520c0cf99f4ef8905325763201219"
+"crates/pipeline/src/callback.rs" = "5a459152a0a8e1e7727c4dfb7ccbe5d7d35f8e92d2f7a67a2af52e76a338c8ba"
+"crates/pipeline/src/callback_abi.rs.in" = "0fb6b9d1b03e715097852222f103ac3fd6988cbb60f9e2923552662bbe986e23"
+"crates/pipeline/src/callback_host.c.in" = "bf561abcf5167b55060ae04ea3994f168a20a1dd3953a079f66aec42568222b3"
+"crates/pipeline/src/cleanup.rs" = "fc282127e388eec71dc3fc2354b6f641c1e357ac1ecf570ee57ed6bd82774204"
+"crates/pipeline/src/family.rs" = "e0a148e6d4d1d855e2073fad0275491208f7595f97f2a26c9558ef81182f901a"
+"crates/pipeline/src/fixture_execution.rs" = "2d091dda80e70ac0bd726f8bfe17932adf54938dafe992da1516867c8fc129fb"
+"crates/pipeline/src/game_host_abi.rs.in" = "ea1807f14b1d41c4ef0290c9857d7258de64d72affda4f46729306ce08d6180e"
+"crates/pipeline/src/game_host_dependency.c.in" = "e59e42227c323474c5c0fe62cbe8dbe2ecc275b10c47ff7a9da43d541558c1b5"
+"crates/pipeline/src/metrics.rs" = "30c14f63a9c8bb85f764609b5207cbc68f92c8332e54bf5ab4fd9594bfc24063"
+"crates/pipeline/src/power_bomb_abi.rs.in" = "9df65504a27d7ccdce67f5163af03d38f3468a7f1cebadc07c0aa97c43420b9d"
+"crates/pipeline/src/power_bomb_host.c.in" = "6e1802d9bb805380c34ec0b426d531c7f47a22d18012695fd9200d2b9f3643c5"
+"crates/pipeline/src/resource_sampler.rs" = "d40db3a810b33251afbf76efc1d16c19ad1b0809a6dea69473d20d6d852f266c"
+"tools/decomp/headless.c" = "ff9a5d75e007b18b231126273e8b8b69473fca71436a63476ae20f64d92f06ff"
+
+[implementation.binaries]
+collision = "fc7f897ceec5ff1a86c1cddd9bfb152b51b94ca15d73d2e19ad5ebbbd2b5bdc5"
+"libcollision.a" = "f74a60098386fd6816e57112de0e8f1e5f2b72a8bc7bfba70985c4ae6fc4f0f2"
+
+[implementation.manifest]
+file = "/home/jim/sm-decomp/tools/port/game-host-projectile.toml"
+sha256 = "97db12ceeb95b8fefd6482e26275d9d659de681b4ce8f9489b1fedb6a8b7488f"
+
+[rom]
+sha256 = "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72"
+bytes = 3145728
+
+[[cases]]
+routine = "HandleProjectile"
+case = "power-bomb-fuse-allocates-two-hdma-in-order"
+before_sha256 = ""
+callbacks = 2
+
+[cases.return]
+
+[cases.after_sha256]
+
+[cases.results.c]
+return = 0
+c_gameplay_callbacks = 2
+cpu_fallback_calls = 0
+cpu_fallback_instructions = 0
+
+[cases.results.rust]
+return = 0
+c_gameplay_callbacks = 2
+cpu_fallback_calls = 0
+cpu_fallback_instructions = 0
+
+[cases.spawn_results]
+
+[[cases]]
+routine = "HandleProjectile"
+case = "power-bomb-fuse-tries-both-full-hdma-allocations"
+before_sha256 = ""
+callbacks = 2
+
+[cases.return]
+
+[cases.after_sha256]
+
+[cases.results.c]
+return = 0
+c_gameplay_callbacks = 2
+cpu_fallback_calls = 0
+cpu_fallback_instructions = 0
+
+[cases.results.rust]
+return = 0
+c_gameplay_callbacks = 2
+cpu_fallback_calls = 0
+cpu_fallback_instructions = 0
+
+[cases.spawn_results]
+
+[[cases]]
+routine = "HandleProjectile"
+case = "power-bomb-radius-native-plm-mutates-repeated-corner"
+before_sha256 = ""
+callbacks = 1
+
+[cases.return]
+
+[cases.after_sha256]
+
+[cases.results.c]
+return = 0
+c_gameplay_callbacks = 1
+cpu_fallback_calls = 0
+cpu_fallback_instructions = 0
+
+[cases.results.rust]
+return = 0
+c_gameplay_callbacks = 1
+cpu_fallback_calls = 0
+cpu_fallback_instructions = 0
+
+[cases.spawn_results]
+
+[[cases]]
+routine = "HandleProjectile"
+case = "frozen-power-bomb-activation-has-no-hdma-request"
+before_sha256 = ""
+callbacks = 0
+
+[cases.return]
+
+[cases.after_sha256]
+
+[cases.results.c]
+return = 0
+c_gameplay_callbacks = 0
+cpu_fallback_calls = 0
+cpu_fallback_instructions = 0
+
+[cases.results.rust]
+return = 0
+c_gameplay_callbacks = 0
+cpu_fallback_calls = 0
+cpu_fallback_instructions = 0
+
+[cases.spawn_results]
+
+[[cases]]
+routine = "DrawPlayerExplosions2"
+case = "player-pass-draws-native-spritemap"
+before_sha256 = ""
+callbacks = 0
+
+[cases.return]
+
+[cases.after_sha256]
+
+[cases.results.c]
+return = 0
+c_gameplay_callbacks = 0
+cpu_fallback_calls = 0
+cpu_fallback_instructions = 0
+
+[cases.results.rust]
+return = 0
+c_gameplay_callbacks = 0
+cpu_fallback_calls = 0
+cpu_fallback_instructions = 0
+
+[cases.spawn_results]
+
+[[cases]]
+routine = "sub_9382FD"
+case = "elevated-pass-draws-native-spritemap"
+before_sha256 = ""
+callbacks = 0
+
+[cases.return]
+
+[cases.after_sha256]
+
+[cases.results.c]
+return = 0
+c_gameplay_callbacks = 0
+cpu_fallback_calls = 0
+cpu_fallback_instructions = 0
+
+[cases.results.rust]
+return = 0
+c_gameplay_callbacks = 0
+cpu_fallback_calls = 0
+cpu_fallback_instructions = 0
+
+[cases.spawn_results]
+
+[[cases]]
+routine = "DrawBombAndProjectileExplosions"
+case = "explosion-pass-draws-native-spritemap"
+before_sha256 = ""
+callbacks = 0
+
+[cases.return]
+
+[cases.after_sha256]
+
+[cases.results.c]
+return = 0
+c_gameplay_callbacks = 0
+cpu_fallback_calls = 0
+cpu_fallback_instructions = 0
+
+[cases.results.rust]
+return = 0
+c_gameplay_callbacks = 0
+cpu_fallback_calls = 0
+cpu_fallback_instructions = 0
+
+[cases.spawn_results]
+
+[allocator_cases]
+
+[artifacts]
+"LICENSE.txt" = "d7b321b1d1009b9d5d0dc1334b0a941def8f15f36ce2396fabd409e9327e2787"
+"c-cache.toml" = "b9c585a219004d19a8760c2694a28389f35b724f773cbb7e9ecb8cccfd7f6a02"
+"c-link.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"c-link.stdout" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"c-link.timing.toml" = "a931a93f2c17d82f540de1ddbbc56522459fa1cbe1f54ee99945fbd77fa4fb0c"
+"c-object-000.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"c-object-000.stdout" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"c-object-000.timing.toml" = "351eaebbe0541786567fc20e8300eb959fbc0a1e676c8d98862d118742cc5dc4"
+"c-object-007.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"c-object-007.stdout" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"c-object-007.timing.toml" = "ccf5486f56b37a114dedf97fd4bd6ae69525a5e1514a37d975326e56981626be"
+"c-object-047.stderr" = "d868849b35a93e2349fe5645519bb5492e030d9693bd7b9e47bd659b18f15129"
+"c-object-047.stdout" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"c-object-047.timing.toml" = "be1cce5c3ed1c6e87620e7f6b9701a029cca9a0d25d4dedd2fe5ea41fee61891"
+"candidate.rs" = "baaae6c0dbc60b9c384c37088806648e96669c3714d7864bb58b5b5d93972527"
+collision = "fc7f897ceec5ff1a86c1cddd9bfb152b51b94ca15d73d2e19ad5ebbbd2b5bdc5"
+"compiler.d" = "7a8780b1d55ee0f192266ee07a784c8923bc4d1f4dfa794d3a75e015361f67e5"
+"dependency-000.rs" = "6381e3d9caf01f3b1ca42ae56b75f3784c5b4de40f795a25b3194fd601351c57"
+"dependency-001.rs" = "4308e496267857ca869db45f4127e505bec4ad29c4c9ede8f08d6e9769ccf69d"
+"dependency-002.rs" = "881431d92845006509d2956eae0b3736459961762f5b4a021577f130c530d4f1"
+"dependency-003.rs" = "4faac9ac72d3b5caf206678980d915a2cb1ac03e492fd7fdb6aa59c4beb48367"
+"dependency-004.rs" = "f117da8bf86a387b0e5693fb19a84c938486fc089a10abf3155365e6627b837e"
+"dependency-005.rs" = "d1ee84dda96d514fba6fb76982aaabac76d1f6d9e324c5d8d2babf5e4fbf10c2"
+"dependency-006.rs" = "5f4649f745a2f772c32fc30231fbb2b1c0c5624ee693e6d3efaf5e15dc3557f1"
+"dependency-007.rs" = "4c99175b8eb0be86554e46f7424e6ee7aa43510afebe2d555ea2dcb890e7f0de"
+"dependency-008.rs" = "baaae6c0dbc60b9c384c37088806648e96669c3714d7864bb58b5b5d93972527"
+"dependency-009.rs" = "373bcf4c49058b7583e66f2a3f5a54d92ea4481d065e89729794871d56304dd9"
+"dependency-010.rs" = "7c0df2e77ed2d05dda05bd6d9e98fef3f7ec5f1c76426da504229af698bfecc5"
+"dependency-011.rs" = "43a11bc33a270533be56203c81cd451556cf9e3473609f9b0cc192e3ecdc25e1"
+"dependency-012.rs" = "801431d3325bb23672bd0f6b5aff7ea86506440c2c8c887893599386c3c00a41"
+"dependency-013.rs" = "151a849a2a9f366b3a3175915cbd861e1f8865b5451883b67a6d4fd584e846d3"
+"dependency-014.rs" = "70b2739565075c44e5e5094bca1e3ccc05380140ad380a8aab4608a73488c160"
+"dependency-015.rs" = "1ea2c6ec91b50bc7fac76c9b57e947320f23b7867529cd32895995f2d12c5f29"
+"dependency-016.rs" = "824dcf6c79385c02dd3c12a9347c8a7c417a2366dbf03d89c26e1526e47e76ab"
+"dependency-017.rs" = "cc4c7cdc7b644822d9fe5e5be5674ac4a32cd07156c07a46a53cba7429c5880a"
+"dependency-018.rs" = "9b4fcd099ced710581da54fac03b3478aa81daee21b90c194bd1b7c53181108f"
+"dependency-019.rs" = "10fcb32c76cb46d8e0ee1b477901bdb0fbbc8eb58fc2e2a704a038be6d3b0656"
+"dependency-020.rs" = "e7b13c17ac668f8aba50a21aedfcd4d4dcf93f5e1cd2d4c610557cb56774ba72"
+"dependency-021.rs" = "cc2c7ee9138a1c781321045e28246c083fca6a53ce284ac626d9abf5bdb5bdf0"
+"dependency-022.rs" = "4f7e14ecbdf724305094d5924ec931b04dca422e8bcc3108fd5ff13531271234"
+"dependency-023.rs" = "d0d592bdbfad2b0bb1b845ec3fc2523cb4a6ff15c0dd07015c9736d3efb4ed60"
+"dependency-024.rs" = "d6f6a8e93448f882fc3d49b35e687a856473c172389d900ab984745ce517b712"
+"dependency-025.rs" = "dfe844396edea8efd787923ab506dc3b910c70d8a67e21bf7c27ddfba90475af"
+"dependency-026.rs" = "bedc7662f4c1c435c968a6c07c73331a76f6c58621b4ca885f73f6be33ccbf16"
+"elevated-pass-draws-native-spritemap/before.wram" = "c93ccce2b34449a9912fdc1b07cd18f0e94ea5b30b91107feae4bda554a6a31f"
+"elevated-pass-draws-native-spritemap/c-after.wram" = "716eaa6ac62a11fd4d80f2dbc446fa2aad63abdefd1c5c31907db9a1898d1f4b"
+"elevated-pass-draws-native-spritemap/c.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"elevated-pass-draws-native-spritemap/c.stdout" = "c5bea6d5172950ed3fc3f0433afd51fc1913e545f5dd34c849c65dc166209a00"
+"elevated-pass-draws-native-spritemap/c.timing.toml" = "b68e0f0088101f478b2b2c7bae9349195d1b9015450f9e15d498b569998df6e4"
+"elevated-pass-draws-native-spritemap/c/callbacks.txt" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"elevated-pass-draws-native-spritemap/case.toml" = "81744f0152f5bc33d3aa6e4b67925e1e1c9ea4c0f2075efbb0ea56714c71f6ed"
+"elevated-pass-draws-native-spritemap/rust-after.wram" = "716eaa6ac62a11fd4d80f2dbc446fa2aad63abdefd1c5c31907db9a1898d1f4b"
+"elevated-pass-draws-native-spritemap/rust.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"elevated-pass-draws-native-spritemap/rust.stdout" = "c5bea6d5172950ed3fc3f0433afd51fc1913e545f5dd34c849c65dc166209a00"
+"elevated-pass-draws-native-spritemap/rust.timing.toml" = "11a3253ae619c17e308faa0ba5b68e5eada147b5febc6b2f7f4c77470a95760f"
+"elevated-pass-draws-native-spritemap/rust/callbacks.txt" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"explosion-pass-draws-native-spritemap/before.wram" = "166bd72c5884b3b3a6c6236ab5ba07d3f2b748d0edae9c649e9609b07bcee23d"
+"explosion-pass-draws-native-spritemap/c-after.wram" = "555f096fd0c064754997f6075375852bdfb8539820d256627d03b6a6c9945134"
+"explosion-pass-draws-native-spritemap/c.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"explosion-pass-draws-native-spritemap/c.stdout" = "c5bea6d5172950ed3fc3f0433afd51fc1913e545f5dd34c849c65dc166209a00"
+"explosion-pass-draws-native-spritemap/c.timing.toml" = "462c00ca455e810746fba89907bd3cf65ca45d186790caf8787b78954b356f2f"
+"explosion-pass-draws-native-spritemap/c/callbacks.txt" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"explosion-pass-draws-native-spritemap/case.toml" = "1fbc3e5c65002b7c4970a348bb0277d650e435240345147375d178bc2a5dfc10"
+"explosion-pass-draws-native-spritemap/rust-after.wram" = "555f096fd0c064754997f6075375852bdfb8539820d256627d03b6a6c9945134"
+"explosion-pass-draws-native-spritemap/rust.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"explosion-pass-draws-native-spritemap/rust.stdout" = "c5bea6d5172950ed3fc3f0433afd51fc1913e545f5dd34c849c65dc166209a00"
+"explosion-pass-draws-native-spritemap/rust.timing.toml" = "48783ddfbdce9449dd1550492cac389ba04125b479ee8d7c5ee0b65d52e03074"
+"explosion-pass-draws-native-spritemap/rust/callbacks.txt" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"frozen-power-bomb-activation-has-no-hdma-request/before.wram" = "ad60660b2bb774b167e2ce6e2e324a9fb67cd6d0f8ad98139a72ee980e831c71"
+"frozen-power-bomb-activation-has-no-hdma-request/c-after.wram" = "f7b0c3f2a31aa94eb4a0f9765e9592094aa13488039c8bd16ddf812680a5b279"
+"frozen-power-bomb-activation-has-no-hdma-request/c.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"frozen-power-bomb-activation-has-no-hdma-request/c.stdout" = "c5bea6d5172950ed3fc3f0433afd51fc1913e545f5dd34c849c65dc166209a00"
+"frozen-power-bomb-activation-has-no-hdma-request/c.timing.toml" = "b4c1155c917390f58dce208dac5b352717954e9e15fca0bdb2af15cce65f1c4d"
+"frozen-power-bomb-activation-has-no-hdma-request/c/callbacks.txt" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"frozen-power-bomb-activation-has-no-hdma-request/case.toml" = "d7a6245a74c523d81cdd794ffa18974ba6fa7d832b51f306230ddff89d0892f8"
+"frozen-power-bomb-activation-has-no-hdma-request/rust-after.wram" = "f7b0c3f2a31aa94eb4a0f9765e9592094aa13488039c8bd16ddf812680a5b279"
+"frozen-power-bomb-activation-has-no-hdma-request/rust.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"frozen-power-bomb-activation-has-no-hdma-request/rust.stdout" = "c5bea6d5172950ed3fc3f0433afd51fc1913e545f5dd34c849c65dc166209a00"
+"frozen-power-bomb-activation-has-no-hdma-request/rust.timing.toml" = "d141cd4869bb12c38213f8c94095a3b23f6b89dfd1714cb2e81c6a5de3917afb"
+"frozen-power-bomb-activation-has-no-hdma-request/rust/callbacks.txt" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"libcollision.a" = "f74a60098386fd6816e57112de0e8f1e5f2b72a8bc7bfba70985c4ae6fc4f0f2"
+"manifest-input.toml" = "6ecd601f3f0a89ef82f29db39e395bae1e0c2479ed192135e4935230fb26ec58"
+"manifest.toml" = "97db12ceeb95b8fefd6482e26275d9d659de681b4ce8f9489b1fedb6a8b7488f"
+"memory.rs" = "e32e38b3d5d6864fc5d5d9b14b9e193acc4938e7dfd62d029a18478471e7aae0"
+"oracle.c" = "3a5ec0e6c4272cee5fe70060c4f604670c1a505a4d8c230625afa4723caf9462"
+"pipeline-batch.rs" = "4aa716117c3cfd0fae0597a13f0fdfac7a0520c0cf99f4ef8905325763201219"
+"pipeline-builds.rs" = "1141b9ed89baeb8c7e64562564488832998a7ae1e951f5e40c06bcb516f8164f"
+"pipeline-callback.rs" = "5a459152a0a8e1e7727c4dfb7ccbe5d7d35f8e92d2f7a67a2af52e76a338c8ba"
+"pipeline-callback_abi.rs.in" = "0fb6b9d1b03e715097852222f103ac3fd6988cbb60f9e2923552662bbe986e23"
+"pipeline-callback_host.c.in" = "bf561abcf5167b55060ae04ea3994f168a20a1dd3953a079f66aec42568222b3"
+"pipeline-cleanup.rs" = "fc282127e388eec71dc3fc2354b6f641c1e357ac1ecf570ee57ed6bd82774204"
+"pipeline-family.rs" = "e0a148e6d4d1d855e2073fad0275491208f7595f97f2a26c9558ef81182f901a"
+"pipeline-fixture_execution.rs" = "2d091dda80e70ac0bd726f8bfe17932adf54938dafe992da1516867c8fc129fb"
+"pipeline-game_host_abi.rs.in" = "ea1807f14b1d41c4ef0290c9857d7258de64d72affda4f46729306ce08d6180e"
+"pipeline-game_host_dependency.c.in" = "e59e42227c323474c5c0fe62cbe8dbe2ecc275b10c47ff7a9da43d541558c1b5"
+"pipeline-headless.c" = "ff9a5d75e007b18b231126273e8b8b69473fca71436a63476ae20f64d92f06ff"
+"pipeline-inputs.rs" = "a308f23c7febd841a60a22e1734320421691bffd82a610ff7b944420add5742f"
+"pipeline-inputs.toml" = "1cef9a9c4621f0250f6e786f3999d7a63f55a7a86b2f4d87796894377cc73b19"
+"pipeline-main.rs" = "cec9934fcc6f80a7038a9fa752e0754c28a25249822aba84baac0ec9501f673e"
+"pipeline-metrics.rs" = "30c14f63a9c8bb85f764609b5207cbc68f92c8332e54bf5ab4fd9594bfc24063"
+"pipeline-power_bomb_abi.rs.in" = "9df65504a27d7ccdce67f5163af03d38f3468a7f1cebadc07c0aa97c43420b9d"
+"pipeline-power_bomb_host.c.in" = "6e1802d9bb805380c34ec0b426d531c7f47a22d18012695fd9200d2b9f3643c5"
+"pipeline-resource_sampler.rs" = "d40db3a810b33251afbf76efc1d16c19ad1b0809a6dea69473d20d6d852f266c"
+"player-pass-draws-native-spritemap/before.wram" = "c93ccce2b34449a9912fdc1b07cd18f0e94ea5b30b91107feae4bda554a6a31f"
+"player-pass-draws-native-spritemap/c-after.wram" = "ad9d19ad01df360ccf26fef175326fcb38c9ecf56d226890db12fd7e342cd0d6"
+"player-pass-draws-native-spritemap/c.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"player-pass-draws-native-spritemap/c.stdout" = "c5bea6d5172950ed3fc3f0433afd51fc1913e545f5dd34c849c65dc166209a00"
+"player-pass-draws-native-spritemap/c.timing.toml" = "24d9540664fb20cfc660657b67a1621d34b35004b0fb650a2d9f4934f290b03c"
+"player-pass-draws-native-spritemap/c/callbacks.txt" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"player-pass-draws-native-spritemap/case.toml" = "aeafeb7d3d5982d8ba4b9290b424798853163372201780120e2e1d53e4483d35"
+"player-pass-draws-native-spritemap/rust-after.wram" = "ad9d19ad01df360ccf26fef175326fcb38c9ecf56d226890db12fd7e342cd0d6"
+"player-pass-draws-native-spritemap/rust.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"player-pass-draws-native-spritemap/rust.stdout" = "c5bea6d5172950ed3fc3f0433afd51fc1913e545f5dd34c849c65dc166209a00"
+"player-pass-draws-native-spritemap/rust.timing.toml" = "a17bdd3290c5ecd2de0e81d141de075787f82f991ac1efe753f036e4c796fb42"
+"player-pass-draws-native-spritemap/rust/callbacks.txt" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"power-bomb-fuse-allocates-two-hdma-in-order/before.wram" = "9bde5f47b3bcd1352bda5861f9e3f7f17afca8f6f3a754c8fc8e1a6ed17a944c"
+"power-bomb-fuse-allocates-two-hdma-in-order/c-after.wram" = "377ac1665d65e5b3ba51661907f13b418a8bc4d6bb5a870edacb339ce1b3567f"
+"power-bomb-fuse-allocates-two-hdma-in-order/c.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"power-bomb-fuse-allocates-two-hdma-in-order/c.stdout" = "b558bd0e1f04b7000eb6dcdd3c79131fc34f7402044849828cd1e84850e5b4af"
+"power-bomb-fuse-allocates-two-hdma-in-order/c.timing.toml" = "0e465e9b0a56a93097907a71d628f80638b9879af3a76299b943207faf26233b"
+"power-bomb-fuse-allocates-two-hdma-in-order/c/callback-0001-after.wram" = "a2224114cd834190d8934f4429c1b8d6b0ae5073ef074150db3e8f3502253880"
+"power-bomb-fuse-allocates-two-hdma-in-order/c/callback-0001-before.wram" = "26b24168603e0d29bcf3268bd4b4092407cce170ca5f0fd3bba85a8493e47a2b"
+"power-bomb-fuse-allocates-two-hdma-in-order/c/callback-0002-after.wram" = "174ab7f216f026d2d5495658c4c60e72ba066ed59a92f52a488f29bf98e58176"
+"power-bomb-fuse-allocates-two-hdma-in-order/c/callback-0002-before.wram" = "a2224114cd834190d8934f4429c1b8d6b0ae5073ef074150db3e8f3502253880"
+"power-bomb-fuse-allocates-two-hdma-in-order/c/callbacks.txt" = "c32bd3d31b83be5c52b9ad6ff544ac60ecf8df8ce67467bb440a59e150de3359"
+"power-bomb-fuse-allocates-two-hdma-in-order/case.toml" = "91feb579903b1cdbcc2039f99a2733f107371d5a07e2e87fb866fd9875c376eb"
+"power-bomb-fuse-allocates-two-hdma-in-order/rust-after.wram" = "377ac1665d65e5b3ba51661907f13b418a8bc4d6bb5a870edacb339ce1b3567f"
+"power-bomb-fuse-allocates-two-hdma-in-order/rust.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"power-bomb-fuse-allocates-two-hdma-in-order/rust.stdout" = "b558bd0e1f04b7000eb6dcdd3c79131fc34f7402044849828cd1e84850e5b4af"
+"power-bomb-fuse-allocates-two-hdma-in-order/rust.timing.toml" = "b43280e0486864cc2a27b3b3cfd90cb850ec4c6b92c75c2095502bd742d4e0cf"
+"power-bomb-fuse-allocates-two-hdma-in-order/rust/callback-0001-after.wram" = "a2224114cd834190d8934f4429c1b8d6b0ae5073ef074150db3e8f3502253880"
+"power-bomb-fuse-allocates-two-hdma-in-order/rust/callback-0001-before.wram" = "26b24168603e0d29bcf3268bd4b4092407cce170ca5f0fd3bba85a8493e47a2b"
+"power-bomb-fuse-allocates-two-hdma-in-order/rust/callback-0002-after.wram" = "174ab7f216f026d2d5495658c4c60e72ba066ed59a92f52a488f29bf98e58176"
+"power-bomb-fuse-allocates-two-hdma-in-order/rust/callback-0002-before.wram" = "a2224114cd834190d8934f4429c1b8d6b0ae5073ef074150db3e8f3502253880"
+"power-bomb-fuse-allocates-two-hdma-in-order/rust/callbacks.txt" = "c32bd3d31b83be5c52b9ad6ff544ac60ecf8df8ce67467bb440a59e150de3359"
+"power-bomb-fuse-tries-both-full-hdma-allocations/before.wram" = "059d168e663838d05d65da427d287eb584f3262607eae0d0ab9e995a218cf881"
+"power-bomb-fuse-tries-both-full-hdma-allocations/c-after.wram" = "fbfd38511d4bd3f4dd54f42665ca505a561509adb7c4f6a8ab4a5eb6d3e5f7f8"
+"power-bomb-fuse-tries-both-full-hdma-allocations/c.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"power-bomb-fuse-tries-both-full-hdma-allocations/c.stdout" = "b558bd0e1f04b7000eb6dcdd3c79131fc34f7402044849828cd1e84850e5b4af"
+"power-bomb-fuse-tries-both-full-hdma-allocations/c.timing.toml" = "dc4c2d9052ec006443c2b95826b1a21618faed17a1dcd5185f723ec38ac78cc9"
+"power-bomb-fuse-tries-both-full-hdma-allocations/c/callback-0001-after.wram" = "322b0cc2d440b9c4988f5e3457aa431a249d6d2ae1c0e6325632c60c2a944369"
+"power-bomb-fuse-tries-both-full-hdma-allocations/c/callback-0001-before.wram" = "322b0cc2d440b9c4988f5e3457aa431a249d6d2ae1c0e6325632c60c2a944369"
+"power-bomb-fuse-tries-both-full-hdma-allocations/c/callback-0002-after.wram" = "322b0cc2d440b9c4988f5e3457aa431a249d6d2ae1c0e6325632c60c2a944369"
+"power-bomb-fuse-tries-both-full-hdma-allocations/c/callback-0002-before.wram" = "322b0cc2d440b9c4988f5e3457aa431a249d6d2ae1c0e6325632c60c2a944369"
+"power-bomb-fuse-tries-both-full-hdma-allocations/c/callbacks.txt" = "83413b90b983058986df65a1d0a20d90072adfc40747378415f8db2e39660dc2"
+"power-bomb-fuse-tries-both-full-hdma-allocations/case.toml" = "1936f3d09d7f99651ea8ece97188841b27e094b90786102bd05e22e7238eb380"
+"power-bomb-fuse-tries-both-full-hdma-allocations/rust-after.wram" = "fbfd38511d4bd3f4dd54f42665ca505a561509adb7c4f6a8ab4a5eb6d3e5f7f8"
+"power-bomb-fuse-tries-both-full-hdma-allocations/rust.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"power-bomb-fuse-tries-both-full-hdma-allocations/rust.stdout" = "b558bd0e1f04b7000eb6dcdd3c79131fc34f7402044849828cd1e84850e5b4af"
+"power-bomb-fuse-tries-both-full-hdma-allocations/rust.timing.toml" = "39cca4e529afad780611b1864acbdfe69dc08d23de4dfe5c871411ccdea9cdbc"
+"power-bomb-fuse-tries-both-full-hdma-allocations/rust/callback-0001-after.wram" = "322b0cc2d440b9c4988f5e3457aa431a249d6d2ae1c0e6325632c60c2a944369"
+"power-bomb-fuse-tries-both-full-hdma-allocations/rust/callback-0001-before.wram" = "322b0cc2d440b9c4988f5e3457aa431a249d6d2ae1c0e6325632c60c2a944369"
+"power-bomb-fuse-tries-both-full-hdma-allocations/rust/callback-0002-after.wram" = "322b0cc2d440b9c4988f5e3457aa431a249d6d2ae1c0e6325632c60c2a944369"
+"power-bomb-fuse-tries-both-full-hdma-allocations/rust/callback-0002-before.wram" = "322b0cc2d440b9c4988f5e3457aa431a249d6d2ae1c0e6325632c60c2a944369"
+"power-bomb-fuse-tries-both-full-hdma-allocations/rust/callbacks.txt" = "83413b90b983058986df65a1d0a20d90072adfc40747378415f8db2e39660dc2"
+"power-bomb-radius-native-plm-mutates-repeated-corner/before.wram" = "3c7e58f0492000774aee3ebb536cffec82c103fba7113fc547195ffa24cb91ff"
+"power-bomb-radius-native-plm-mutates-repeated-corner/c-after.wram" = "17cb3c01b6979cd093f76a53e712f9a130c8f4eeacf3cb30b75fca3b04bc3255"
+"power-bomb-radius-native-plm-mutates-repeated-corner/c.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"power-bomb-radius-native-plm-mutates-repeated-corner/c.stdout" = "1b4df9eb398b90679aef0813781ef70e272762f10babafac706382cd75c0910b"
+"power-bomb-radius-native-plm-mutates-repeated-corner/c.timing.toml" = "d95c1f162375dffc00986fb36b3a5677cba50c24b45e4e8b48ebc82b469c2fe5"
+"power-bomb-radius-native-plm-mutates-repeated-corner/c/callback-0001-after.wram" = "1fb539b813358931e1cf359cfd54ab84aef3dc197b1cfd3a7ec7309714a1fd4d"
+"power-bomb-radius-native-plm-mutates-repeated-corner/c/callback-0001-before.wram" = "cc9477956b5801e3367e6abbfbd3d81d2ac0ea859c2f5b23c4b7f9812fa1dc37"
+"power-bomb-radius-native-plm-mutates-repeated-corner/c/callbacks.txt" = "38a6b6446c2aa83262d488a9a650143e22035275c284ada49757c8cbce8424d6"
+"power-bomb-radius-native-plm-mutates-repeated-corner/case.toml" = "a2edcc62b17ad3627a89d5b394bcd8ad4642921b018374203d38a72286957515"
+"power-bomb-radius-native-plm-mutates-repeated-corner/rust-after.wram" = "17cb3c01b6979cd093f76a53e712f9a130c8f4eeacf3cb30b75fca3b04bc3255"
+"power-bomb-radius-native-plm-mutates-repeated-corner/rust.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"power-bomb-radius-native-plm-mutates-repeated-corner/rust.stdout" = "1b4df9eb398b90679aef0813781ef70e272762f10babafac706382cd75c0910b"
+"power-bomb-radius-native-plm-mutates-repeated-corner/rust.timing.toml" = "488a5fa1ed88e7e1d18a0077d355b7d6df34558c064307aaee074e0570967dc5"
+"power-bomb-radius-native-plm-mutates-repeated-corner/rust/callback-0001-after.wram" = "1fb539b813358931e1cf359cfd54ab84aef3dc197b1cfd3a7ec7309714a1fd4d"
+"power-bomb-radius-native-plm-mutates-repeated-corner/rust/callback-0001-before.wram" = "cc9477956b5801e3367e6abbfbd3d81d2ac0ea859c2f5b23c4b7f9812fa1dc37"
+"power-bomb-radius-native-plm-mutates-repeated-corner/rust/callbacks.txt" = "38a6b6446c2aa83262d488a9a650143e22035275c284ada49757c8cbce8424d6"
+"rom.bin" = "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72"
+"rust-build.stderr" = "6f3777612af952939b2c5e90c71cc31b66782126f82c87e3dd39df7b0d54aaaf"
+"rust-build.stdout" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"rust-build.timing.toml" = "8da3a2ef078e13f9643cdca8411ed96e341fe8dc38aca91d63f401bbc857ee9c"
+"sm_80-vram-seam.c" = "64d358dcd2db1c02b098759121c907e8c736d0382d26d82cc5278395b1087e39"
+"sm_88-allocation-seam.c" = "583126a13992686c311c2a6f81c2a7474ef674321ac44c503fb1ad89a2bdba0a"
+"wrapper.rs" = "9a0ca7eb58bf8d80d7a565fd698fc5ed6c7114acd73509fc5538f47215e5afe9"

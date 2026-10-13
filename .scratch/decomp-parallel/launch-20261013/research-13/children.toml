@@ -1,0 +1,106 @@
+format = "decomp-research-child-proposals-v1"
+status = "review-required"
+native_scope_admitted = false
+gameplay_acceptance = false
+source_baseline = "40a8489856f36d21925188823e33b520f74d4cb4"
+root_session_id = "01a1356e-a8dd-7a80-88b0-1239a6a9b876"
+worker_session_id = "01a13571-7282-7660-99e1-227a72a2c4ff"
+origin_ticket = ".scratch/decomp-parallel/issues/13-host-hardware-lifecycle-scope.md"
+source_inventory = "tools/port/source-inventory.toml"
+source_inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+exercise_receipt_available = false
+exercise_gap = "Current translation::exercise authenticates only schema2 bank86 projectile diagnostics; no supported per-root NMI exercise receipt was located."
+
+[[children]]
+key = "13-exercise-contract"
+type = "task"
+admission = "reviewed-infrastructure-scope-required"
+subject = "Add source-authenticated complete native-root NMI exercise provenance"
+depends_on = ["review-of-this-Answer"]
+role = "integrator-owned-infrastructure"
+writable_paths = [
+  "crates/pipeline/src/native_exercise.rs",
+  "crates/pipeline/src/native_exercise_model.rs",
+  "crates/pipeline/src/native_exercise_host.c.in",
+  "crates/pipeline/src/translation.rs",
+  "crates/pipeline/src/main.rs",
+  "crates/pipeline/tests/native_exercise.rs",
+]
+submission_argv = ["cargo", "test", "-p", "pipeline", "--locked", "--offline", "--test", "native_exercise"]
+submission_timeout_seconds = 60
+integration_argv = ["cargo", "test", "-p", "pipeline", "--locked", "--offline", "--test", "native_exercise", "--bin", "sm-pipeline"]
+integration_timeout_seconds = 3600
+acceptance = [
+  "Preserve schema2 bank86 receipt parsing and deterministic producer authentication; additive tagged format only.",
+  "Full24-bit routine/symbol/source-definition identity and explicit direct root entry/return; no callee-to-caller inference.",
+  "Bind complete pinned C input inventory, deterministic transformed sources, producer/test binary, build/replay argv, ROM/native-patch/movie identities and all artifacts.",
+  "Record accepted/missed/material per-domain counters with first/last frame/event and complete diagnostic status; accepted=false.",
+  "Reject changed sources, counters, instrumented units, banks, signatures, ROM/movie, binary/build, missing/truncated fields and redirected execution.",
+  "Source-bound compiled actual-C control proves real root measurement and negative mutation controls before NMI scope promotion.",
+]
+limitations = ["Not a gameplay Translation scope or original-ROM timing gate.", "New test/CLI targets listed above are proposed and not yet implemented."]
+
+[[children]]
+key = "13-hardware-adapter"
+type = "task"
+admission = "reviewed-infrastructure-scope-required"
+subject = "Add full-state synchronous NMI hardware service and fixture/live adapter"
+depends_on = ["11-finish-held-ceres-integration", "review-of-this-Answer"]
+role = "integrator-owned-infrastructure"
+writable_paths = [
+  "crates/pipeline/src/hardware_lifecycle_adapter.rs",
+  "crates/pipeline/src/hardware_lifecycle_host.c.in",
+  "crates/pipeline/src/hardware_lifecycle_abi.rs.in",
+  "crates/pipeline/src/hardware_lifecycle_model.rs",
+  "crates/pipeline/src/family_model.rs",
+  "crates/pipeline/src/family.rs",
+  "crates/pipeline/src/callback.rs",
+  "crates/pipeline/src/live.rs",
+  "crates/pipeline/src/live_model.rs",
+  "crates/pipeline/src/inputs.rs",
+  "crates/pipeline/src/main.rs",
+  "crates/pipeline/tests/hardware_lifecycle_adapter.rs",
+  "tools/port/batch.toml",
+]
+submission_argv = ["cargo", "test", "-p", "pipeline", "--locked", "--offline", "--test", "hardware_lifecycle_adapter"]
+submission_timeout_seconds = 60
+integration_argv = ["cargo", "test", "-p", "pipeline", "--locked", "--offline", "--test", "hardware_lifecycle_adapter", "--test", "family", "--test", "live"]
+integration_timeout_seconds = 3600
+acceptance = [
+  "Versioned binary pre/post image binds full WRAM, both PPU views/discriminator/latches/VRAM/CGRAM/OAM, DMA channels and pending flags/timers, NMI/IRQ flags and open bus.",
+  "Native byte MMIO read/write executes synchronously on latest WRAM and copies reverse-DMA changes back; word operations retain low/high order.",
+  "Rust preflight refuses unsupported transfer/MMIO/address domains before effects; failed first service is fatal with no native fallback.",
+  "Actual-C source-bound register/DMA0/DMA1/latch/read/reverse-DMA controls and negative source/state/order/refusal/failure tests.",
+  "Additive new fixture/live adapter and sealed readers; unchanged existing host receipt contracts and consumers.",
+  "Live adapter admits only explicit Vector_NMI scheduled boundary and direct nonzero material counter; scheduler/controller prerequisites remain external.",
+]
+limitations = ["Selected shared files require exact-hunk review against held legacy scopes; list does not grant ownership.", "No replacement of frozen Ridley candidates or generic20-byte PPU evidence.", "No NMI scheduling, reset, IRQ-dispatch or APU-acknowledgment acceptance."]
+
+[[children]]
+key = "13-nmi-implementation"
+type = "task"
+admission = "translation-scope-v1-after-supported-exercise"
+subject = "Implement complete accepted and missed bank80 NMI hardware body"
+depends_on = ["11-finish-held-ceres-integration", "13-exercise-contract", "13-hardware-adapter"]
+role = "isolated-gameplay-implementer"
+writable_paths = ["crates/port/src/hardware_lifecycle.rs", "crates/port/tests/hardware_lifecycle.rs", "tools/port/hardware-lifecycle.toml"]
+routines = ["Vector_NMI", "NmiUpdatePalettesAndOam", "NmiTransferSamusToVram", "NmiProcessAnimtilesVramTransfers", "NmiUpdateIoRegisters", "NMI_ProcessMode7Queue", "NMI_ProcessMode7QueueInner", "NMI_ProcessVramWriteQueue", "Nmi_ProcessHorizScrollingDma", "Nmi_ProcessVertScrollingDma", "NMI_ProcessVramReadQueue"]
+submission_argv = ["cargo", "test", "-p", "port", "--locked", "--offline", "--test", "hardware_lifecycle", "--test", "game_host", "--test", "samus_projectile_frame", "--test", "room_scroll"]
+submission_timeout_seconds = 60
+integration_argv = ["cargo", "run", "-p", "pipeline", "--locked", "--offline", "--bin", "sm-pipeline", "--", "family-verify", "--manifest", "tools/port/hardware-lifecycle.toml", "--output", "out/port/hardware-lifecycle", "--case-jobs", "4"]
+integration_timeout_seconds = 3600
+acceptance = [
+  "Generate supported native scope from exact source/exercise/dependency hashes; all11 routines form measured root closure.",
+  "Complete queue/register/HDMA/VRAM/palette/OAM/Samus/animation order, byte/word counter wrap and C aliases under full canonical WRAM.",
+  "Independent ordering/state/refusal/first-service-failure/no-retry controls and source-stable actual-C full state/return/ordered effects matrix.",
+  "Integrator alone registers lib/source/state/host and catalog; every Affected Offline family and unchanged consumer regression passes.",
+  "Separate four-subject material Live replay and independent original-ROM NMI/poll gates retain unobserved domains as unproved.",
+  "Both cleanup passes, exact frozen source/readers/evidence/store retention, integrated worktree retirement and post-cleanup authentication precede completion.",
+]
+limitations = ["Current scope admission blocked by missing native non-bank86 exercise and full hardware adapter.", "Known ticket12 extra-poll and original enabled/disabled timing are dependencies of original-ROM/live scheduling credit, not invented helper acceptance.", "No ownership of source producers, whole reset, SRAM, APU acknowledgment, IRQ table or door scheduling."]
+
+[budget]
+process_root = "/home/jim/sm-decomp/out/pipeline"
+process_workers = 4
+submission_timeout_seconds = 60
+integration_timeout_seconds = 3600

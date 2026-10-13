@@ -1,0 +1,13 @@
+schema = "decomp-session-observation-v1"
+session_id = "01a1356e-a8dd-7a80-88b0-1239a6a9b876"
+status = "active"
+observed_at = "2026-10-13T13:32:07Z"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/inspections/replacement-live.toml"
+sha256 = "1aa27efd9818767ea831d6742d31563525467da8ccbab632fb5d2a1e627d221e"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/inspections/legacy-generation-zero-transfer.toml"
+sha256 = "71d5a901ae7df0aea5dd9d869f3c3762187426c6d6383bba9c63cb82df1c95ce"
+

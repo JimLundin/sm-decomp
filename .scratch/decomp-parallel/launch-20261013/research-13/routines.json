@@ -1,0 +1,165 @@
+[
+  {
+    "symbol": "NMI_ProcessMode7Queue",
+    "source": "src/sm_80.c",
+    "line": 436,
+    "original_address": "0x808BBA",
+    "body_lines": 7,
+    "definition_sha256": "6447060a66bc67a1756679d3150ae982d2d926e67e00e189df3f10fe6d8bdc13",
+    "calls": [
+      "NMI_ProcessMode7QueueInner"
+    ],
+    "declared_in": []
+  },
+  {
+    "symbol": "NMI_ProcessMode7QueueInner",
+    "source": "src/sm_80.c",
+    "line": 444,
+    "original_address": "0x808BD3",
+    "body_lines": 33,
+    "definition_sha256": "97be435873f0e12cc129f4e2280035fcdf7386d8d93819ebf4900854cc14c209",
+    "calls": [
+      "WriteReg",
+      "WriteRegWord"
+    ],
+    "declared_in": []
+  },
+  {
+    "symbol": "NMI_ProcessVramWriteQueue",
+    "source": "src/sm_80.c",
+    "line": 478,
+    "original_address": "0x808C83",
+    "body_lines": 20,
+    "definition_sha256": "50a402ca212be259b273f39a3cb21f05003caf6df11b29134ebd49c8d1c33470",
+    "calls": [
+      "Nmi_ProcessHorizScrollingDma",
+      "Nmi_ProcessVertScrollingDma",
+      "WriteReg",
+      "WriteRegWord",
+      "gVramWriteEntry",
+      "sign16"
+    ],
+    "declared_in": []
+  },
+  {
+    "symbol": "Nmi_ProcessHorizScrollingDma",
+    "source": "src/sm_80.c",
+    "line": 499,
+    "original_address": "0x808CD8",
+    "body_lines": 57,
+    "definition_sha256": "7c9c5f03d0758d6cce50b331950553ced462196482d983c2f93a21a42cac347d",
+    "calls": [
+      "ADDR16_OF_RAM",
+      "LOBYTE",
+      "WriteReg",
+      "WriteRegWord"
+    ],
+    "declared_in": []
+  },
+  {
+    "symbol": "Nmi_ProcessVertScrollingDma",
+    "source": "src/sm_80.c",
+    "line": 557,
+    "original_address": "0x808DAC",
+    "body_lines": 57,
+    "definition_sha256": "1ccabaca78b57ce31fc5830e58fe6f0e096ac21c7ea0620a65145f63ea6d198f",
+    "calls": [
+      "ADDR16_OF_RAM",
+      "LOBYTE",
+      "WriteReg",
+      "WriteRegWord"
+    ],
+    "declared_in": []
+  },
+  {
+    "symbol": "NMI_ProcessVramReadQueue",
+    "source": "src/sm_80.c",
+    "line": 615,
+    "original_address": "0x808EA2",
+    "body_lines": 20,
+    "definition_sha256": "b4c4caf3271e27bf9e01e3684df0526ddbc94b3fed19db9a97500a32a80cf8e8",
+    "calls": [
+      "LOBYTE",
+      "ReadRegWord",
+      "WriteReg",
+      "WriteRegWord"
+    ],
+    "declared_in": []
+  },
+  {
+    "symbol": "NmiUpdateIoRegisters",
+    "source": "src/sm_80.c",
+    "line": 839,
+    "original_address": "0x8091EE",
+    "body_lines": 67,
+    "definition_sha256": "10a2c77a087f8fc36d81b4b942bfa2a5ce1f93f923356d621e02626fc8c210b5",
+    "calls": [
+      "HIBYTE",
+      "WriteReg"
+    ],
+    "declared_in": []
+  },
+  {
+    "symbol": "NmiUpdatePalettesAndOam",
+    "source": "src/sm_80.c",
+    "line": 907,
+    "original_address": "0x80933A",
+    "body_lines": 13,
+    "definition_sha256": "246dcdcb5e7874cebed93122cc59a0b1818147ed792c32aca9d4f9c2e6023e4e",
+    "calls": [
+      "ADDR16_OF_RAM",
+      "WriteReg",
+      "WriteRegWord"
+    ],
+    "declared_in": []
+  },
+  {
+    "symbol": "NmiTransferSamusToVram",
+    "source": "src/sm_80.c",
+    "line": 921,
+    "original_address": "0x809376",
+    "body_lines": 33,
+    "definition_sha256": "01b1cccd9ace9a681946bc4559a6d437f14d95bce1dd87a9dc3c19cf0428bf6e",
+    "calls": [
+      "HIBYTE",
+      "RomPtr_92",
+      "WriteReg",
+      "WriteRegWord"
+    ],
+    "declared_in": []
+  },
+  {
+    "symbol": "NmiProcessAnimtilesVramTransfers",
+    "source": "src/sm_80.c",
+    "line": 955,
+    "original_address": "0x809416",
+    "body_lines": 19,
+    "definition_sha256": "c3c28d138b54182763401f9325636332143343b1b84e37125c0d4193cb1839ca",
+    "calls": [
+      "WriteReg",
+      "WriteRegWord"
+    ],
+    "declared_in": []
+  },
+  {
+    "symbol": "Vector_NMI",
+    "source": "src/sm_80.c",
+    "line": 1052,
+    "original_address": "0x809583",
+    "body_lines": 24,
+    "definition_sha256": "f174c6c2c4f8affbf28ece1d000267a87edf06f318a0f5613deb9f4964639b33",
+    "calls": [
+      "LOBYTE",
+      "NMI_ProcessMode7Queue",
+      "NMI_ProcessVramReadQueue",
+      "NMI_ProcessVramWriteQueue",
+      "NmiProcessAnimtilesVramTransfers",
+      "NmiTransferSamusToVram",
+      "NmiUpdateIoRegisters",
+      "NmiUpdatePalettesAndOam",
+      "WriteReg",
+      "WriteRegWord"
+    ],
+    "declared_in": []
+  }
+]

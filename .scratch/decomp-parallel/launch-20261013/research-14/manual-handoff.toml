@@ -1,0 +1,35 @@
+schema = "decomp-manual-research-handoff-v1"
+sequence = 2
+phase = "answer-and-proposed-children-complete"
+parent_session_id = "01a1356e-a8dd-7a80-88b0-1239a6a9b876"
+worker_session_id = "01a13571-e61e-7e31-8e29-d8f82488f33f"
+agent = "/root/launch_policy"
+effort = "decomp-parallel"
+baseline = "40a8489856f36d21925188823e33b520f74d4cb4"
+ticket = ".scratch/decomp-parallel/issues/14-samus-frame-scope.md"
+assignment_receipt = ".scratch/decomp-parallel/launch-20261013/receipts/next-2.stdout.toml"
+worktree = "/home/jim/sm-decomp"
+source_writes_authorized = false
+scratch_output = ".scratch/decomp-parallel/launch-20261013/research-14"
+answer = ".scratch/decomp-parallel/launch-20261013/research-14/Answer.md"
+proposed_children = [".scratch/decomp-parallel/launch-20261013/research-14/proposed-children/01-samus-frame-exercise-contract.md", ".scratch/decomp-parallel/launch-20261013/research-14/proposed-children/02-samus-beta-frame-closure.md"]
+processes = []
+runs = []
+achieved_stages = []
+limitations = ["Read-only research: no new translation, verification, integration or live exercise", "Native research job omits base-head; this is an honest manual handoff and is not maintained decomp-worker-handoff-v1", "Root owns lifecycle, generated children, inventory, registration and main Git/index"]
+
+[claim]
+id = "ticket-6e51e2d92fc5cf720229a4033777377810617f068f09b01ef80339e23a6f8df7"
+revision = "838efcfad1e05746363aa40f54971b62333e35c0874ffd2639f841929bc2e7b3"
+attempt = 1
+coordinator = "decomp-launch-20261013"
+
+[next]
+cwd = "/home/jim/sm-decomp"
+argv = ["cat", ".scratch/decomp-parallel/launch-20261013/research-14/Answer.md"]
+purpose = "Root reviews Answer, allocates concrete extension/closure children and records exact researched result; mutation scopes remain blocked until direct-root provenance and dependencies are ready"
+
+[cleanup]
+status = "complete"
+reclaimed_bytes = 0
+receipt = ".scratch/decomp-parallel/launch-20261013/research-14/cleanup.toml"

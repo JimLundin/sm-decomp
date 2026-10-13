@@ -1,0 +1,46 @@
+
+running 10 tests
+test fixture_compatibility_rejects_unknown_or_parameterized_calls_before_requests ... ok
+test later_failing_request_does_not_repeat_the_first_effect_or_publish_partial_wram ... ok
+test first_failing_request_retains_rust_ownership ... ok
+test unsupported_later_slot_refuses_without_publishing_earlier_scheduler_work ... ok
+test response_kind_mismatch_is_an_owned_failure ... ok
+test malformed_later_room_column_refuses_before_the_first_flush ... ok
+test second_existing_module_flushes_all_seventeen_columns_synchronously ... ok
+test unsupported_lower_slot_after_host_effects_is_an_owned_failure ... ok
+test whole_projectile_frame_transfers_current_wram_between_ordered_hdma_requests ... ok
+test whole_projectile_frame_routes_repeated_bomb_terrain_contacts_through_shared_plm_request ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+
+running 9 tests
+test full_display_rejects_all_columns_before_first_flush_or_write ... ok
+test column_uses_low_byte_product_and_wrapping_word_stride ... ok
+test background_buffers_keep_native_264_byte_offset_and_foreground_unchanged ... ok
+test full_frame_schedules_foreground_and_background_x_then_y ... ok
+test row_contains_seventeen_blocks_and_keeps_wrapped_and_unwrapped_lengths ... ok
+test full_display_flushes_seventeen_columns_before_incrementing_each_block ... ok
+test mode7_and_frozen_frame_do_not_write_queue_or_tile_buffers ... ok
+test rejects_full_frame_tile_extent_before_publishing_registers_or_previous_blocks ... ok
+test column_and_row_preserve_all_four_native_flip_orders ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+
+running 12 tests
+test mode7_rotation_preserves_signed_products_and_wrapped_camera_subtraction ... ok
+test elevated_player_pass_subtracts_eight_and_skips_echo_flicker ... ok
+test ceres_player_uninitialized_draw_y_refuses_before_publishing ... ok
+test player_pass_draws_echoes_before_the_frozen_trail_overlay ... ok
+test ceres_uninitialized_explosion_locals_refuse_without_wram_changes ... ok
+test ceres_ignored_mode7_return_refuses_even_after_an_initialized_slot ... ok
+test unaligned_spritemap_stores_extension_before_unsigned_vertical_and_tile ... ok
+test ten_slot_scheduler_executes_delete_goto_and_data_in_reverse_order ... ok
+test native_plm_and_hdma_dependencies_do_not_enter_immutable_selection ... ok
+test oam_alias_can_activate_a_lower_projectile_in_the_same_pass ... ok
+test unsupported_later_preinstruction_refuses_before_publishing_earlier_work ... ok
+test plain_and_plasma_beams_follow_the_two_native_flicker_patterns ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+

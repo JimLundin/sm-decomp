@@ -1,0 +1,27 @@
+operation = "prepare"
+checkout = "/tmp/sm-decomp-preparation-retry-source-20261013"
+coordinator = "ceres-20261013"
+
+[authority]
+session_id = "01a1356e-a8dd-7a80-88b0-1239a6a9b876"
+generation = 1
+
+[preparation]
+canonical_effort = "decomp-parallel"
+capacity = 3
+admitted_efforts = ["ceres-continuation", "decomp-preparation-ownership-20261013", "decomp-preparation-session-tools-20261013"]
+drill_efforts = ["concurrency-drill-retry"]
+
+[preparation.bridge]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/reconciliation/legacy-owner-bridge-v2.toml"
+sha256 = "cb537f195b4f83529f2ea7a61bd65c6e77ad215366275e8d60a7a604c4eb0ba9"
+
+[preparation.integrator]
+token = "ceres-20261013"
+kind = "integrator"
+session_id = "01a1356e-a8dd-7a80-88b0-1239a6a9b876"
+
+[preparation.integrator.observation]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/inspections/integrator-registration.toml"
+sha256 = "0414e68f8e0d7ba64698511565bcc7749172ac7300bdae7b2bcaaed38f078956"
+

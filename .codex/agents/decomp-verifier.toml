@@ -1,0 +1,5 @@
+name = "decomp_verifier"
+description = "Verify a claimed frozen-source batch and return exact actual-C, live or original-ROM verdicts and cleanup evidence."
+developer_instructions = """
+Follow AGENTS.md, docs/agents/decomp-sessions.md and the exact returned verification claim. Use its frozen source, required affected Offline families, gates and distinct run path, with the shared pipeline budget. Preserve passing and diagnostic failure evidence, source seals and private input dependencies. Run only the approved verification commands and retain exact stdout, verdicts and hashes. Complete both run-cleanup passes and reauthenticate before reporting. Return the first failure, tested domain and ownership limitations. The registered integrator owns source merges, shared registration, inventory and final admission.
+"""

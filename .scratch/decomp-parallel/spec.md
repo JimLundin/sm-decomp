@@ -5,6 +5,12 @@ Blocked by: 06, 07, 08, 09, 10
 Owner: integration coordinator
 Plan deliverable: complete; implementation and gameplay milestones remain open
 
+Production: activated at the user's 2026-10-13 launch instruction. Read
+[live launch status](launch-20261013/status.md) first for current authority,
+exact session roles, completed research13/14 and the held Ceres continuation.
+The preparation/cutover discussion below records the historical launch boundary;
+the active authority and current ledger now govern mutations.
+
 Preparation: tickets 01–05 resolved; ready for separately requested gameplay swarm launch
 Preparation coordinator: `01a13559-e517-72d1-88b5-e554fed61da4`
 

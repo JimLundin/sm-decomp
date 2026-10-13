@@ -1,0 +1,20 @@
+schema = "decomp-session-authority-v1"
+status = "prepared"
+policy = "/home/jim/sm-decomp/.scratch/decomp-parallel/authority.toml"
+canonical_effort = "decomp-parallel"
+capacity = 3
+
+[[roles]]
+token = "ceres-20261013"
+kind = "integrator"
+session_id = "01a1356e-a8dd-7a80-88b0-1239a6a9b876"
+generation = 1
+transfers = []
+
+[roles.registration]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/inspections/integrator-registration.toml"
+sha256 = "0414e68f8e0d7ba64698511565bcc7749172ac7300bdae7b2bcaaed38f078956"
+
+[bridge]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/reconciliation/legacy-owner-bridge-v2.toml"
+sha256 = "cb537f195b4f83529f2ea7a61bd65c6e77ad215366275e8d60a7a604c4eb0ba9"

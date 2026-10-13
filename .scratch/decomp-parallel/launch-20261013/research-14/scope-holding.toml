@@ -1,0 +1,19 @@
+format = "decomp-subsystem-research-holding-v1"
+subject = "Normal Samus beta movement/contact/transition frame"
+source_baseline = "40a8489856f36d21925188823e33b520f74d4cb4"
+accepted = false
+assign_scope_supported = false
+readiness = "research-blocked-by-direct-root-provenance-and-dependencies"
+routines = ["HandleSamusMovementAndPause", "CallFrameHandlerBeta", "Samus_FrameHandlerBeta_Func17", "RunSamusMovementHandler", "CallSamusMovementHandler", "RunFrameHandlerGamma", "CallFrameHandlerGamma", "Samus_HandlePeriodicDamage", "Samus_PauseCheck", "Samus_LowHealthCheck_"]
+proposed_writable_paths = ["crates/port/src/samus_movement_frame.rs", "crates/port/tests/samus_movement_frame.rs", "tools/port/samus-movement-frame.toml"]
+external_dependencies_unready = ["direct beta/alfa exercise provenance", "current source inventory/reader equivalence", "UpdateMinimap/UpdateMinimapInside", "full dynamic movement and gamma dispatch", "Samus_HitInterruption/SetupBombJump", "Samus_HandleTransFromBlockColl", "Samus_HandleTransitions/F404/F433/animation reset", "Samus_HandlePalette/charge/misc indirect palette", "collision Host displacement-compatible adapter", "reviewed alfa/input and GameState8 composition", "new material live/original-ROM adapter"]
+reused_modules = ["samus", "samus_control", "collision", "projectiles", "projectile_flight", "projectile_special", "power_bomb", "samus_projectile_frame", "projectile_trails"]
+protected_shared_paths = ["crates/port/src/lib.rs", "crates/port/src/memory.rs", "crates/port/src/game_host.rs", "crates/pipeline/src/main.rs", "crates/pipeline/src/callback.rs", "tools/port/batch.toml", ".scratch/decomp-progress/registry.json"]
+limitations = ["Ten orchestrator symbols are only a proposed ownership anchor; full dynamic closure still needs explicit dependency evidence and may exceed32", "Native schema2 exercise admits bank86 projectile provenance only", "No raw custom holding can authorize native assign --scope", "No gameplay/source mutations, new verification or live stage"]
+
+[budget]
+root = "/home/jim/sm-decomp/out/pipeline"
+workers = 4
+assignment_capacity = 3
+initial_seconds = 60
+integration_seconds = 3600

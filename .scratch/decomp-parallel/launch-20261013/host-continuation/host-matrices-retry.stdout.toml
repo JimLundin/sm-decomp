@@ -1,0 +1,29 @@
+batch = "/home/jim/sm-decomp/out/port/decomp-launch-20261013/host-matrices/batch.toml"
+replays = []
+selected = [
+    "game-host-projectile",
+    "game-host-room-scroll",
+]
+status = "complete"
+
+[cleanup]
+apply = true
+bytes = 16646144
+snapshots_checked = 254
+targets = []
+
+[families.game-host-projectile]
+exit_code = 0
+kind = "callback"
+manifest_sha256 = "97db12ceeb95b8fefd6482e26275d9d659de681b4ce8f9489b1fedb6a8b7488f"
+seconds = 9.848918084
+status = "offline-verified"
+verdict = "/home/jim/sm-decomp/out/port/decomp-launch-20261013/host-matrices/families/game-host-projectile/evidence/1791899338036897-540899-0/verdict.toml"
+
+[families.game-host-room-scroll]
+exit_code = 0
+kind = "callback"
+manifest_sha256 = "8bde6b1baaebeaf975650ed0b7e1eb4f93c325b32c58f76632bf2cccba60fc64"
+seconds = 10.21685611
+status = "offline-verified"
+verdict = "/home/jim/sm-decomp/out/port/decomp-launch-20261013/host-matrices/families/game-host-room-scroll/evidence/1791899338037087-540899-1/verdict.toml"

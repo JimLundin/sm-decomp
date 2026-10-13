@@ -1,6 +1,6 @@
 # Finish the held Ceres host and controller integrations
 
-Status: open
+Status: claimed
 Blocked by: 04, 05
 Triage: ready-for-agent
 Type: task
@@ -57,3 +57,10 @@ cleanup measurements and retained dependencies. Append achieved stages only.
 
 Created by preparation ticket05 as tracking work; original ownership and
 submission evidence remain authoritative. It is not a replacement gameplay lane.
+
+2026-10-13 launch: user authorized activation and decomp startup. Current real
+integrator `01a1356e-a8dd-7a80-88b0-1239a6a9b876` owns this tracking continuation
+under `ceres-20261013`, generation1. The existing running host tuple and both
+submitted implementations remain unchanged. See `../launch-20261013/ownership.md`
+and the sealed activation receipt; no replacement implementation/research claim
+is created for this tracker.

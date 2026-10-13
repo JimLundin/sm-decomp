@@ -1,0 +1,369 @@
+[queue]
+ledger = "/home/jim/sm-decomp/.scratch/decomp-parallel/ledger.toml"
+recovery = []
+status = "ready"
+
+[queue.assignment]
+experiment_seconds = 60
+ticket = "/home/jim/sm-decomp/.scratch/decomp-parallel/issues/14-samus-frame-scope.md"
+
+[queue.assignment.claim]
+attempt = 1
+coordinator = "decomp-launch-20261013"
+id = "ticket-6e51e2d92fc5cf720229a4033777377810617f068f09b01ef80339e23a6f8df7"
+revision = "838efcfad1e05746363aa40f54971b62333e35c0874ffd2639f841929bc2e7b3"
+
+[queue.assignment.job]
+blockers = []
+id = "ticket-6e51e2d92fc5cf720229a4033777377810617f068f09b01ef80339e23a6f8df7"
+instructions = "Honor existing local ticket .scratch/decomp-parallel/issues/14-samus-frame-scope.md. It is open, unclaimed and dependency-ready. Read its requirements and establish a complete Translation scope before implementation: observed exercise provenance, required dependencies, exact writable paths and concrete verification argv. Include a bounded pre-integration test and an integration gate. Use native translation-scope-v1 TOML; limit each initial experiment to approximately 60 seconds. Research facts do not grant acceptance. Preserve task-origin ownership until its implementation is integrated, verified and cleaned."
+kind = "research"
+revision = "838efcfad1e05746363aa40f54971b62333e35c0874ffd2639f841929bc2e7b3"
+subject = "Research complete Samus movement/contact frame continuation"
+ticket = ".scratch/decomp-parallel/issues/14-samus-frame-scope.md"
+writable_paths = []
+
+[queue.assignment.job.inputs]
+origin-ticket = ".scratch/decomp-parallel/issues/14-samus-frame-scope.md"
+origin-ticket-type = "research"
+ticket-semantic-sha256 = "915f95ba17002cd72b27705c6d2492856cccf47ccf2ad74bd39de5ed6776746f"
+
+[queue.assignment.workspace]
+
+[queue.deferred]
+
+[[queue.jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[queue.jobs.job]
+blockers = []
+id = "ticket-2966e528f4696d00eed786e3a895d9034fd217c5ad6db59153329ef23da35b6d"
+instructions = "Honor existing local ticket .scratch/decomp-parallel/issues/18-audio-ui-menu-scope.md. It is open, unclaimed and dependency-ready. Read its requirements and establish a complete Translation scope before implementation: observed exercise provenance, required dependencies, exact writable paths and concrete verification argv. Include a bounded pre-integration test and an integration gate. Use native translation-scope-v1 TOML; limit each initial experiment to approximately 60 seconds. Research facts do not grant acceptance. Preserve task-origin ownership until its implementation is integrated, verified and cleaned."
+kind = "research"
+revision = "2b5be5ee42e86f922e679effe3968f60fc7d94afffa98e078f88a1c6107fa81d"
+subject = "Research complete audio acknowledgment and UI/menu boundaries"
+ticket = ".scratch/decomp-parallel/issues/18-audio-ui-menu-scope.md"
+writable_paths = []
+
+[queue.jobs.job.inputs]
+origin-ticket = ".scratch/decomp-parallel/issues/18-audio-ui-menu-scope.md"
+origin-ticket-type = "research"
+ticket-semantic-sha256 = "22608bb4c0e69ad3a3e3cb8f83e2b2ebcd3cbdda92b30f8f32d9a0ee1a63ed7e"
+
+[[queue.jobs]]
+adopted_ticket = false
+agent = "01a13571-7282-7660-99e1-227a72a2c4ff"
+attempts = 1
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "running"
+
+[queue.jobs.claim]
+attempt = 1
+coordinator = "decomp-launch-20261013"
+id = "ticket-5b357039d4b20673c7d62a43260abada8f7f4f65d7c26999c08138037691dc12"
+revision = "785e3c24a0e08cd0ab9815084aade2973c955bfcdbf96b48d00a1862d3771771"
+
+[queue.jobs.job]
+blockers = []
+id = "ticket-5b357039d4b20673c7d62a43260abada8f7f4f65d7c26999c08138037691dc12"
+instructions = "Honor existing local ticket .scratch/decomp-parallel/issues/13-host-hardware-lifecycle-scope.md. It is open, unclaimed and dependency-ready. Read its requirements and establish a complete Translation scope before implementation: observed exercise provenance, required dependencies, exact writable paths and concrete verification argv. Include a bounded pre-integration test and an integration gate. Use native translation-scope-v1 TOML; limit each initial experiment to approximately 60 seconds. Research facts do not grant acceptance. Preserve task-origin ownership until its implementation is integrated, verified and cleaned."
+kind = "research"
+revision = "785e3c24a0e08cd0ab9815084aade2973c955bfcdbf96b48d00a1862d3771771"
+subject = "Research one complete host/hardware lifecycle boundary"
+ticket = ".scratch/decomp-parallel/issues/13-host-hardware-lifecycle-scope.md"
+writable_paths = []
+
+[queue.jobs.job.inputs]
+origin-ticket = ".scratch/decomp-parallel/issues/13-host-hardware-lifecycle-scope.md"
+origin-ticket-type = "research"
+ticket-semantic-sha256 = "ffb21a5b30288c4a74a27b01e400404f298e1efbb575519fbf0c6df0d3e4bc2e"
+
+[queue.jobs.last_update]
+agent = "01a13571-7282-7660-99e1-227a72a2c4ff"
+event = "started"
+
+[queue.jobs.last_update.claim]
+attempt = 1
+coordinator = "decomp-launch-20261013"
+id = "ticket-5b357039d4b20673c7d62a43260abada8f7f4f65d7c26999c08138037691dc12"
+revision = "785e3c24a0e08cd0ab9815084aade2973c955bfcdbf96b48d00a1862d3771771"
+
+[[queue.jobs]]
+adopted_ticket = false
+attempts = 1
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "reserved"
+
+[queue.jobs.claim]
+attempt = 1
+coordinator = "decomp-launch-20261013"
+id = "ticket-6e51e2d92fc5cf720229a4033777377810617f068f09b01ef80339e23a6f8df7"
+revision = "838efcfad1e05746363aa40f54971b62333e35c0874ffd2639f841929bc2e7b3"
+
+[queue.jobs.job]
+blockers = []
+id = "ticket-6e51e2d92fc5cf720229a4033777377810617f068f09b01ef80339e23a6f8df7"
+instructions = "Honor existing local ticket .scratch/decomp-parallel/issues/14-samus-frame-scope.md. It is open, unclaimed and dependency-ready. Read its requirements and establish a complete Translation scope before implementation: observed exercise provenance, required dependencies, exact writable paths and concrete verification argv. Include a bounded pre-integration test and an integration gate. Use native translation-scope-v1 TOML; limit each initial experiment to approximately 60 seconds. Research facts do not grant acceptance. Preserve task-origin ownership until its implementation is integrated, verified and cleaned."
+kind = "research"
+revision = "838efcfad1e05746363aa40f54971b62333e35c0874ffd2639f841929bc2e7b3"
+subject = "Research complete Samus movement/contact frame continuation"
+ticket = ".scratch/decomp-parallel/issues/14-samus-frame-scope.md"
+writable_paths = []
+
+[queue.jobs.job.inputs]
+origin-ticket = ".scratch/decomp-parallel/issues/14-samus-frame-scope.md"
+origin-ticket-type = "research"
+ticket-semantic-sha256 = "915f95ba17002cd72b27705c6d2492856cccf47ccf2ad74bd39de5ed6776746f"
+
+[[queue.jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[queue.jobs.job]
+blockers = []
+id = "ticket-81d3d6691a3ab143a2034f57896e0dc7262a2ff8cc9b3b5c66d339e47f208832"
+instructions = "Honor existing local ticket .scratch/decomp-parallel/issues/16-continue-held-whole-ridley.md. It is open, unclaimed and dependency-ready. Read its requirements and establish a complete Translation scope before implementation: observed exercise provenance, required dependencies, exact writable paths and concrete verification argv. Include a bounded pre-integration test and an integration gate. Use native translation-scope-v1 TOML; limit each initial experiment to approximately 60 seconds. Research facts do not grant acceptance. Preserve task-origin ownership until its implementation is integrated, verified and cleaned."
+kind = "research"
+revision = "6e979f3b6e84360f6098e4863fb8a7c7f45629f8d0a3f5315a38bb3eb8312e93"
+subject = "Continue the held whole Ridley lifecycle admission"
+ticket = ".scratch/decomp-parallel/issues/16-continue-held-whole-ridley.md"
+writable_paths = []
+
+[queue.jobs.job.inputs]
+origin-ticket = ".scratch/decomp-parallel/issues/16-continue-held-whole-ridley.md"
+origin-ticket-type = "task"
+ticket-semantic-sha256 = "c3bd9366330dc0a37aa3fd5658406e41e57a41a36f539620ba31b9dae020b3f7"
+
+[[queue.jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[queue.jobs.job]
+blockers = []
+id = "ticket-cf844dcf0283917c8b1718f9eabb058af9a18ed0d72c0de3621ac999c7e646f2"
+instructions = "Honor existing local ticket .scratch/decomp-parallel/issues/17-other-enemy-lifecycle-scope.md. It is open, unclaimed and dependency-ready. Read its requirements and establish a complete Translation scope before implementation: observed exercise provenance, required dependencies, exact writable paths and concrete verification argv. Include a bounded pre-integration test and an integration gate. Use native translation-scope-v1 TOML; limit each initial experiment to approximately 60 seconds. Research facts do not grant acceptance. Preserve task-origin ownership until its implementation is integrated, verified and cleaned."
+kind = "research"
+revision = "bd78c1ca6d3487b6cd3adafd57452f7f26a27f54635cb57b947eab8ac0221a63"
+subject = "Research a complete non-Ridley enemy lifecycle boundary"
+ticket = ".scratch/decomp-parallel/issues/17-other-enemy-lifecycle-scope.md"
+writable_paths = []
+
+[queue.jobs.job.inputs]
+origin-ticket = ".scratch/decomp-parallel/issues/17-other-enemy-lifecycle-scope.md"
+origin-ticket-type = "research"
+ticket-semantic-sha256 = "56951200dbb3d9dd592fe6d8ce02dd160c87eb29d04ed6951b719b698c02a128"
+
+[[queue.jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[queue.jobs.job]
+blockers = []
+id = "ticket-d38d7ff4d47345a6e625b547c2a83dc6c02b260f9edfd4988f19c491b4cb888d"
+instructions = "Honor existing local ticket .scratch/decomp-parallel/issues/20-credits-cinematic-scope.md. It is open, unclaimed and dependency-ready. Read its requirements and establish a complete Translation scope before implementation: observed exercise provenance, required dependencies, exact writable paths and concrete verification argv. Include a bounded pre-integration test and an integration gate. Use native translation-scope-v1 TOML; limit each initial experiment to approximately 60 seconds. Research facts do not grant acceptance. Preserve task-origin ownership until its implementation is integrated, verified and cleaned."
+kind = "research"
+revision = "0c93011aecea372a7d459410bf90e48218efe4ab8b1c1c025c58294ff48f4eb1"
+subject = "Research complete credits cinematic ownership"
+ticket = ".scratch/decomp-parallel/issues/20-credits-cinematic-scope.md"
+writable_paths = []
+
+[queue.jobs.job.inputs]
+origin-ticket = ".scratch/decomp-parallel/issues/20-credits-cinematic-scope.md"
+origin-ticket-type = "research"
+ticket-semantic-sha256 = "1e30aab44b775a01f7f27cee61d4e1be2fb0d8e2c298d12d145b47675bda9c7e"
+
+[[queue.jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[queue.jobs.job]
+blockers = []
+id = "ticket-e76fb87d41d3e1e6cab6286936a985d5b5c9d12bc1c0f99806ad86738940ba66"
+instructions = "Honor existing local ticket .scratch/decomp-parallel/issues/19-sram-save-load-scope.md. It is open, unclaimed and dependency-ready. Read its requirements and establish a complete Translation scope before implementation: observed exercise provenance, required dependencies, exact writable paths and concrete verification argv. Include a bounded pre-integration test and an integration gate. Use native translation-scope-v1 TOML; limit each initial experiment to approximately 60 seconds. Research facts do not grant acceptance. Preserve task-origin ownership until its implementation is integrated, verified and cleaned."
+kind = "research"
+revision = "3a80add9c71186647255feadd5855a494d6859612ea56cc4c4ee5cd5ae5829cd"
+subject = "Research the native SRAM save/load transaction"
+ticket = ".scratch/decomp-parallel/issues/19-sram-save-load-scope.md"
+writable_paths = []
+
+[queue.jobs.job.inputs]
+origin-ticket = ".scratch/decomp-parallel/issues/19-sram-save-load-scope.md"
+origin-ticket-type = "research"
+ticket-semantic-sha256 = "5c507f18692a2b800590d639d178639e5f51951cca85d590d692318a083a44aa"
+
+[[queue.jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[queue.jobs.job]
+blockers = []
+id = "ticket-fd25bf762e6e92ca542277cba01e52aaaaeb05c209485978d2511a2413b31c0e"
+instructions = "Honor existing local ticket .scratch/decomp-parallel/issues/15-door-room-plm-scope.md. It is open, unclaimed and dependency-ready. Read its requirements and establish a complete Translation scope before implementation: observed exercise provenance, required dependencies, exact writable paths and concrete verification argv. Include a bounded pre-integration test and an integration gate. Use native translation-scope-v1 TOML; limit each initial experiment to approximately 60 seconds. Research facts do not grant acceptance. Preserve task-origin ownership until its implementation is integrated, verified and cleaned."
+kind = "research"
+revision = "8957b66f91dcad619098905199286c7fef94bd8581e60455273128817ba33aa4"
+subject = "Research one complete door/room/PLM scheduled boundary"
+ticket = ".scratch/decomp-parallel/issues/15-door-room-plm-scope.md"
+writable_paths = []
+
+[queue.jobs.job.inputs]
+origin-ticket = ".scratch/decomp-parallel/issues/15-door-room-plm-scope.md"
+origin-ticket-type = "research"
+ticket-semantic-sha256 = "fc4714f57b7ae8ba6d5e81a015bb27b3bdc3b9c312818a54484eee4c49a55ec0"
+
+[[queue.jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[queue.jobs.job]
+blockers = []
+id = "translation-research-establish-inputs"
+instructions = "Source inventory unavailable or stale: routine lexical dependency inventory differs from pinned source. Establish pinned source inventory and naturally exercised coherent gameplay candidates. Existing claimed/resolved tickets remain authoritative; preserve historical evidence. Use existing Rust source-inventory and projectile-inventory commands as appropriate; start with bounded approximately 60-second experiments. Missing observations remain research, never implementation readiness."
+kind = "research"
+revision = "0d8150ec33fefb0af750dd6bc5dc312fb07bcef1f288ebeadf7c2d09932b11c1"
+subject = "Establish translation exercise and scope inputs"
+writable_paths = []
+
+[queue.jobs.job.inputs]
+"file:tools/dependencies.toml" = "e74864c229949fc6f1a6bd7528f339bdb3f9364f1e4f9544f08693881d10f111"
+
+[[queue.jobs]]
+adopted_ticket = false
+attempts = 0
+observations = []
+projection_pending = false
+stale = false
+state = "not-required"
+
+[[queue.jobs.history]]
+observations = []
+
+[queue.jobs.history.job]
+blockers = []
+id = "verify-e3b0c44298fc1c14"
+instructions = "Run one `sm-pipeline batch verify --families  --batch ASSIGNMENT_BATCH` using the shared SM_PIPELINE_ROOT/SM_PIPELINE_WORKERS. Keep batch jobs within shared worker capacity. Record the batch.toml artifact; current-source authentication is required before completion. Selection rationale is available through batch plan. Preserve failed verdicts for diagnosis and complete run cleanup."
+kind = "verify"
+revision = "2448e12bbd23a17643143a27be2f5098153e0cb15e1695185473fdece56f87c2"
+subject = "Verify 0 affected Offline families"
+writable_paths = []
+
+[queue.jobs.history.job.inputs]
+families = ""
+"file:tools/port/batch.toml" = "8290b49963e805528e2ffb3fabe5e9e9db083cbf2a33d4a3e6b24856cef9cd2f"
+selection = "9e791cd3bbdbda88868877dd0252c29cbfc0a50a1fa3d89422d91faa921efbda"
+source-fingerprint = "bd103af4b5d563904a3cbdbe62e971c46c6b4a4e907b60bbbb8575a2373355ec"
+
+[queue.jobs.job]
+blockers = []
+id = "verify-e3b0c44298fc1c14"
+instructions = "Run one `sm-pipeline batch verify --families  --batch ASSIGNMENT_BATCH` using the shared SM_PIPELINE_ROOT/SM_PIPELINE_WORKERS. Keep batch jobs within shared worker capacity. Record the batch.toml artifact; current-source authentication is required before completion. Selection rationale is available through batch plan. Preserve failed verdicts for diagnosis and complete run cleanup."
+kind = "verify"
+revision = "e0c77695155f91732fb093cf40d26485e6d8ae3c65dcee1bb280e870c1ba9f54"
+subject = "Verify 0 affected Offline families"
+writable_paths = []
+
+[queue.jobs.job.inputs]
+families = ""
+"file:tools/port/batch.toml" = "8290b49963e805528e2ffb3fabe5e9e9db083cbf2a33d4a3e6b24856cef9cd2f"
+selection = "30653df95844a64b89e3deade9d5e892b5964e0c6010f62bd75ccb5cb16c5c98"
+source-fingerprint = "bd103af4b5d563904a3cbdbe62e971c46c6b4a4e907b60bbbb8575a2373355ec"
+
+[selection]
+changed_paths = [
+    ".scratch/decomp-parallel/assignments/verify-e3b0c44298fc1c14.md",
+    ".scratch/decomp-parallel/authority.toml",
+    ".scratch/decomp-parallel/issues/11-finish-held-ceres-integration.md",
+    ".scratch/decomp-parallel/issues/13-host-hardware-lifecycle-scope.md",
+    ".scratch/decomp-parallel/launch-20261013/inspections/compact-controller-observation.toml",
+    ".scratch/decomp-parallel/launch-20261013/inspections/compact-controller.json",
+    ".scratch/decomp-parallel/launch-20261013/inspections/historical-main-owner.json",
+    ".scratch/decomp-parallel/launch-20261013/inspections/integrator-registration.toml",
+    ".scratch/decomp-parallel/launch-20261013/inspections/legacy-generation-zero-transfer.toml",
+    ".scratch/decomp-parallel/launch-20261013/inspections/legacy-integrator-observation.toml",
+    ".scratch/decomp-parallel/launch-20261013/inspections/legacy-integrator.json",
+    ".scratch/decomp-parallel/launch-20261013/inspections/previous-main-owner.json",
+    ".scratch/decomp-parallel/launch-20261013/inspections/processes.txt",
+    ".scratch/decomp-parallel/launch-20261013/inspections/replacement-live.toml",
+    ".scratch/decomp-parallel/launch-20261013/inspections/root.json",
+    ".scratch/decomp-parallel/launch-20261013/inspections/shared-game-host-observation.toml",
+    ".scratch/decomp-parallel/launch-20261013/inspections/shared-game-host.json",
+    ".scratch/decomp-parallel/launch-20261013/inspections/source-equivalence.diff",
+    ".scratch/decomp-parallel/launch-20261013/ownership.md",
+    ".scratch/decomp-parallel/launch-20261013/receipts/activate.stderr.txt",
+    ".scratch/decomp-parallel/launch-20261013/receipts/activate.stdout.toml",
+    ".scratch/decomp-parallel/launch-20261013/receipts/next-1.stderr.txt",
+    ".scratch/decomp-parallel/launch-20261013/receipts/next-1.stdout.toml",
+    ".scratch/decomp-parallel/launch-20261013/receipts/next-2.stderr.txt",
+    ".scratch/decomp-parallel/launch-20261013/receipts/next-2.stdout.toml",
+    ".scratch/decomp-parallel/launch-20261013/receipts/plan.stderr.txt",
+    ".scratch/decomp-parallel/launch-20261013/receipts/plan.stdout.toml",
+    ".scratch/decomp-parallel/launch-20261013/receipts/prepare.stderr.txt",
+    ".scratch/decomp-parallel/launch-20261013/receipts/prepare.stdout.toml",
+    ".scratch/decomp-parallel/launch-20261013/receipts/register-dispatcher.stderr.txt",
+    ".scratch/decomp-parallel/launch-20261013/receipts/register-dispatcher.stdout.toml",
+    ".scratch/decomp-parallel/launch-20261013/receipts/start-13.stderr.txt",
+    ".scratch/decomp-parallel/launch-20261013/receipts/start-13.stdout.toml",
+    ".scratch/decomp-parallel/launch-20261013/receipts/validate-activation.stderr.txt",
+    ".scratch/decomp-parallel/launch-20261013/receipts/validate-activation.stdout.toml",
+    ".scratch/decomp-parallel/launch-20261013/requests/activate.toml",
+    ".scratch/decomp-parallel/launch-20261013/requests/next.toml",
+    ".scratch/decomp-parallel/launch-20261013/requests/plan.toml",
+    ".scratch/decomp-parallel/launch-20261013/requests/prepare.toml",
+    ".scratch/decomp-parallel/launch-20261013/requests/register-dispatcher.toml",
+    ".scratch/decomp-parallel/launch-20261013/requests/start-13.toml",
+    ".scratch/decomp-parallel/launch-20261013/requests/status.toml",
+    ".scratch/decomp-parallel/launch-20261013/requests/validate-activation.toml",
+    ".scratch/decomp-parallel/ledger.toml",
+    ".scratch/pipeline-upgrade/issues/04-framed-binary-ingestion.md",
+]
+changed_since = "40a8489856f36d21925188823e33b520f74d4cb4"
+checkout = "/home/jim/sm-decomp"
+excluded = []
+schema_version = 1
+scope = "selection only; no verification, evidence reuse or Live replay admission"
+selected = []
+status = "planned"
+
+[selection.planning_inputs]
+"tools/port/batch.toml" = "8290b49963e805528e2ffb3fabe5e9e9db083cbf2a33d4a3e6b24856cef9cd2f"

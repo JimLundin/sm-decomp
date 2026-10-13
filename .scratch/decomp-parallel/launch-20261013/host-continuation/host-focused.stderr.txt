@@ -1,0 +1,5 @@
+   Compiling port v0.1.0 (/home/jim/sm-decomp/crates/port)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.62s
+     Running tests/game_host.rs (target/debug/build/port/b7d24e1521de6685/out/game_host-b7d24e1521de6685)
+     Running tests/room_scroll.rs (target/debug/build/port/2eadb9a4fdc61288/out/room_scroll-2eadb9a4fdc61288)
+     Running tests/samus_projectile_frame.rs (target/debug/build/port/ffac16b8f68b7abe/out/samus_projectile_frame-ffac16b8f68b7abe)

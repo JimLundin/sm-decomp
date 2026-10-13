@@ -1,0 +1,107 @@
+[
+  {
+    "type": "message",
+    "id": "msg_01a13586-4ef8-7083-9808-96df1dd4a9a4",
+    "role": "developer",
+    "content": [
+      {
+        "type": "input_text",
+        "text": "<skills_instructions>\n## Skills\nA skill is a set of local instructions to follow that is stored in a `SKILL.md` file. Below is the list of skills that can be used. Each entry includes a name, description, and a short path that can be expanded into an absolute path using the skill roots table.\n### Skill roots\n- `r0` = `/home/jim/.codex/skills`\n- `r1` = `/home/jim/.agents/skills`\n- `r2` = `/home/jim/.codex/skills/.system`\n### Available skills\n- imagegen: Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, mockups, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, or derive visual variants from references, and the output should be a bitmap asset rather than repo-native code or vector. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the visual directly in HTML/CSS/canvas. (file: r2/imagegen/SKILL.md)\n- openai-docs: Use for Codex models/pricing, scheduled tasks, skills, settings, setup, troubleshooting, customization, automations, and self-knowledge—including 'you,' 'your,' 'this app,' or 'this coding agent' when they refer to Codex—and for OpenAI APIs/products and ChatGPT Work. Also use for model choice/migration, prompting, SDKs, Responses, Realtime, agents, evals, and Chat/Work/Codex comparisons. Do not use for generic app/software tasks that merely mention Codex. (file: r2/openai-docs/SKILL.md)\n- skill-creator: Create or update a Codex skill with appropriately scoped instructions and any needed supporting resources. (file: r2/skill-creator/SKILL.md)\n- skill-installer: Install Codex skills into $CODEX_HOME/skills from a curated list or a GitHub repo path. Use when a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos). (file: r2/skill-installer/SKILL.md)\n- code-review: Review the changes since a fixed point (commit, branch, tag, or merge-base) along two axes: Standards (does the code follow this repo's documented coding standards?) and Spec (does the code match what the originating issue/spec asked for?). Runs both reviews in parallel sub-agents and reports them side by side. Use when the user wants to review a branch, a PR, work-in-progress changes, or asks to \"review since X\". (file: r1/code-review/SKILL.md)\n- codebase-design: Shared vocabulary for designing deep modules. Use when the user wants to design or improve a module's interface, find deepening opportunities, decide where a seam goes, make code more testable or AI-navigable, or when another skill needs the deep-module vocabulary. (file: r1/codebase-design/SKILL.md)\n- diagnosing-bugs: Diagnosis loop for hard bugs and performance regressions. Use when the user says \"diagnose\"/\"debug this\", or reports something broken/throwing/failing/slow. (file: r1/diagnosing-bugs/SKILL.md)\n- domain-modeling: Build and sharpen a project's domain model. Use when discussing codebase terminology, writing or editing a GLOSSARY.md, or recording or editing an ADR. (file: r1/domain-modeling/SKILL.md)\n- find-skills: Helps users discover and install agent skills when they ask questions like \"how do I do X\", \"find a skill for X\", \"is there a skill that can...\", or express interest in extending capabilities. This skill should be used when the user is looking for functionality that might exist as an installable skill. (file: r1/find-skills/SKILL.md)\n- git-guardrails-claude-code: Set up Claude Code hooks to block dangerous git commands (push, reset --hard, clean, branch -D, etc.) before they execute. Use when user wants to prevent destructive git operations, add git safety hooks, or block git push/reset in Claude Code. (file: r1/git-guardrails-claude-code/SKILL.md)\n- grilling: Grill the user relentlessly about a plan, decision, or idea. Use when the user wants to stress-test their thinking, or uses any 'grill' trigger phrases. (file: r1/grilling/SKILL.md)\n- migrate-to-shoehorn: Migrate test files from `as` type assertions to @total-typescript/shoehorn. Use when user mentions shoehorn, wants to replace `as` in tests, or needs partial test data. (file: r1/migrate-to-shoehorn/SKILL.md)\n- pr: Use when writing a PR body. (file: r1/pr/SKILL.md)\n- prototype: Build a throwaway prototype to answer a design question. Use when the user wants to sanity-check whether a state model or logic feels right, or explore what a UI should look like. (file: r1/prototype/SKILL.md)\n- research: Investigate a question against high-trust primary sources and capture the findings as a Markdown file in the repo. Use when the user wants a topic researched, docs or API facts gathered, or reading legwork delegated to a background agent. (file: r1/research/SKILL.md)\n- resolving-merge-conflicts: Use when you need to resolve an in-progress git merge/rebase conflict. (file: r1/resolving-merge-conflicts/SKILL.md)\n- reverse-engineer-anything: Reverse engineer native, managed, Electron/JavaScript, packaged, firmware, and browser targets with REA. Use shipped-artifact or requested runtime evidence to explain features, compare versions, decompile code, or guide a reconstruction. Skip REA for ordinary source-repository architecture analysis. (file: r1/reverse-engineer-anything/SKILL.md)\n- scaffold-exercises: Create exercise directory structures with sections, problems, solutions, and explainers that pass linting. Use when user wants to scaffold exercises, create exercise stubs, or set up a new course section. (file: r1/scaffold-exercises/SKILL.md)\n- setup-pre-commit: Set up Husky pre-commit hooks with lint-staged (Prettier), type checking, and tests in the current repo. Use when user wants to add pre-commit hooks, set up Husky, configure lint-staged, or add commit-time formatting/typechecking/testing. (file: r1/setup-pre-commit/SKILL.md)\n- tdd: Test-driven development. Use when the user wants to build features or fix bugs test-first, mentions \"red-green-refactor\", or wants integration tests. (file: r1/tdd/SKILL.md)\n- visual-plan: Turn ordinary text plans into rich interactive visual plans with diagrams, file maps, annotated code, open questions, and UI/prototype review when useful. (file: r0/visual-plan/SKILL.md)\n- visual-recap: Turn a PR, branch, commit, or git diff into an interactive visual recap with diagrams, file maps, API/schema summaries, annotated diffs, and focused review notes. (file: r0/visual-recap/SKILL.md)\n- wizard: Generate an interactive bash wizard that walks a human through steps only they can perform. Use when provisioning infrastructure, setting up credentials or CI secrets, walking an unfamiliar third-party dashboard, or running a one-off migration or cutover. Don't invoke this for steps the agent can perform itself. (file: r1/wizard/SKILL.md)\n- writing-for-agents: Writing documents for agents. Use when creating or editing skills, or modifying AGENTS.md or CLAUDE.md. (file: r1/writing-for-agents/SKILL.md)\n</skills_instructions>"
+      },
+      {
+        "type": "input_text",
+        "text": "<permissions instructions>\nFilesystem sandboxing defines which files can be read or written. `sandbox_mode` is `danger-full-access`: No filesystem sandboxing - all commands are permitted. Network access is enabled.\nApproval policy is currently never. Do not provide the `sandbox_permissions` for any reason, commands will be rejected.\n</permissions instructions>"
+      },
+      {
+        "type": "input_text",
+        "text": "<collaboration_mode># Collaboration Mode: Default\n\nYou are now in Default mode. Any previous instructions for other modes (e.g. Plan mode) are no longer active.\n\nYour active mode changes only when new developer instructions with a different `<collaboration_mode>...</collaboration_mode>` change it; user requests or tool descriptions do not change mode by themselves. Known mode names are Default and Plan.\n\n## request_user_input availability\n\nUse the `request_user_input` tool only when it is listed in the available tools for this turn.\n\nUse the `request_user_input` tool only for optional questions where the answer would materially improve the quality of the work.\n\nIf `request_user_input` returns no answers, continue with best judgment instead of asking again or treating the turn as blocked.\n\nNever use the `request_user_input` tool for permission requests or permission-related escalations.\n</collaboration_mode>"
+      }
+    ],
+    "internal_chat_message_metadata_passthrough": {
+      "turn_id": "auto-compact-0",
+      "create_time": 1791899356.9209223,
+      "content_item_kinds": [
+        "host_skills.instructions",
+        "permissions.instructions",
+        "collaboration_mode.instructions"
+      ]
+    }
+  },
+  {
+    "type": "message",
+    "id": "msg_01a13586-4ef9-7122-a4d0-83e70cee904f",
+    "role": "developer",
+    "content": [
+      {
+        "type": "input_text",
+        "text": "<multi_agent_role>You are `/root`, the primary agent in a team of agents collaborating to fulfill the user's goals.\n\nAt the start of your turn, you are the active agent.\nYou can spawn sub-agents to handle subtasks, and those sub-agents can spawn their own sub-agents.\nAll agents in the team, including the agents that you can assign tasks to, are equally intelligent and capable, and have access to the same set of tools.\n\nYou can use `spawn_agent` to create a new agent, `followup_task` to give an existing agent a new task and trigger a turn, and `send_message` to pass a message to a running agent without triggering a turn.\n`send_message` calls may be read by a human, so ensure they are legible. Always put proper spaces between words and/or numbers.\nChild agents can also spawn their own sub-agents.\nYou can decide how much context you want to propagate to your sub-agents with the `fork_turns` parameter.\n\nYou will receive messages in the analysis channel in the form:\n```\nMessage Type: MESSAGE | FINAL_ANSWER\nTask name: <recipient>\nSender: <author>\nPayload:\n<payload text>\n```\nThey may be addressed as to=/root\n\nNote that collaboration tools cannot be called from inside `functions.exec`. Call `spawn_agent`, `send_message`, `followup_task`, `wait_agent`, `interrupt_agent`, and `list_agents` only as direct tool calls using the recipient shown in their tool definitions, such as `to=functions.collaboration.spawn_agent`, since they are intentionally absent from the `functions.exec` `tools.*` namespace. Available tools in `functions.exec` are explicitly described with a `tools` namespace in the developer message.\n\nAll agents share the same directory. In detail:\n- All agents have access to the same container and filesystem as you.\n- All agents use the same current working directory.\n- As a result, edits made by one agent are immediately visible to all other agents.\n\nWhen calling `wait_agent`, prefer longer waits (minutes) to avoid busy polling.\n\nThere are 4 available concurrency slots, meaning that up to 4 agents can be active at once, including you.\n\nFull-history forks (`fork_turns` omitted or `\"all\"`) inherit the parent model and reasoning effort and do not accept overrides. Only set `model` or `reasoning_effort` when explicitly requested by the user, applicable `AGENTS.md` instructions, or skill instructions; when doing so, set `fork_turns` to `\"none\"`.</multi_agent_role>"
+      }
+    ],
+    "internal_chat_message_metadata_passthrough": {
+      "turn_id": "auto-compact-0",
+      "create_time": 1791899356.9209244,
+      "content_item_kinds": [
+        "multi_agent.role_instructions"
+      ]
+    }
+  },
+  {
+    "type": "message",
+    "id": "msg_01a13586-4ef9-7122-a4d0-83f458675b02",
+    "role": "developer",
+    "content": [
+      {
+        "type": "input_text",
+        "text": "<multi_agent_mode>Any earlier instruction enabling proactive multi-agent delegation no longer applies. Do not spawn sub-agents unless the user or applicable AGENTS.md/skill instructions explicitly ask for sub-agents, delegation, or parallel agent work.</multi_agent_mode>"
+      }
+    ],
+    "internal_chat_message_metadata_passthrough": {
+      "turn_id": "auto-compact-0",
+      "create_time": 1791899356.9209247,
+      "content_item_kinds": [
+        "multi_agent.mode_instructions"
+      ]
+    }
+  },
+  {
+    "type": "message",
+    "id": "msg_01a13586-4ef9-7122-a4d0-84085ab44cf7",
+    "role": "user",
+    "content": [
+      {
+        "type": "input_text",
+        "text": "# AGENTS.md instructions for /home/jim/sm-decomp\n\n<INSTRUCTIONS>\n## Agent skills\n\n### Project language\n\nImplement project tools, orchestration and tests in Rust. The migration target\nis a project with no Python source or runtime dependency. Replace legacy Python\nentry points with validated Rust commands; preserve their evidence contracts.\n\n### Issue tracker\n\nFor specs, tickets and work status, use local Markdown in `.scratch/` following\n`docs/agents/issue-tracker.md`.\n\n### Triage labels\n\nFor triage, use the default role names defined in `docs/agents/triage-labels.md`.\n\n### Domain docs\n\nBefore codebase exploration, follow the single-context reading rules in\n`docs/agents/domain.md`.\n\n### Run cleanup\n\nAfter verification runs and before closing work or handing it back, follow\n`docs/agents/run-cleanup.md`. Cleanup is part of completion.\n\n### Translation progress\n\nFor gameplay translation, assignment or integration, follow\n`docs/agents/translation-progress.md`. Assign whole subsystems and publish each\nstage to the shared inventory before handing work back.\n\n### Parallel sessions\n\nFor decomp session startup, concurrent sessions or crash recovery, follow\n`docs/agents/decomp-sessions.md`.\n\n</INSTRUCTIONS>"
+      },
+      {
+        "type": "input_text",
+        "text": "<environment_context>\n  <cwd>/home/jim/sm-decomp</cwd>\n  <shell>zsh</shell>\n  <current_date>2026-10-13</current_date>\n  <timezone>Europe/Stockholm</timezone>\n  <filesystem><workspace_roots><root>/home/jim/sm-decomp</root></workspace_roots><permission_profile type=\"disabled\"><file_system type=\"unrestricted\" /></permission_profile></filesystem>\n</environment_context>"
+      }
+    ],
+    "internal_chat_message_metadata_passthrough": {
+      "turn_id": "auto-compact-0",
+      "create_time": 1791899356.920925,
+      "content_item_kinds": [
+        "agents_md.instructions",
+        "environments.environment_context"
+      ]
+    }
+  },
+  {
+    "type": "message",
+    "id": "msg_01a13586-4f06-7b20-8a54-2b5732e512a6",
+    "role": "user",
+    "content": [
+      {
+        "type": "input_text",
+        "text": "Inspect the project swarm roles; perform no actions."
+      }
+    ],
+    "internal_chat_message_metadata_passthrough": {
+      "turn_id": "auto-compact-0",
+      "create_time": 1791899356.9345791,
+      "content_item_kinds": [
+        "user.text"
+      ]
+    }
+  }
+]

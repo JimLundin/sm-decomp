@@ -1,0 +1,16 @@
+operation = "plan"
+checkout = "/home/jim/sm-decomp"
+effort = "decomp-parallel"
+coordinator = "decomp-launch-20261013"
+capacity = 3
+available_slots = 1
+families = []
+translations = true
+changed_since = "40a8489856f36d21925188823e33b520f74d4cb4"
+pipeline_root = "/home/jim/sm-decomp/out/pipeline"
+workers = 4
+
+[authority]
+session_id = "01a1356e-a8dd-7a80-88b0-1239a6a9b876"
+generation = 1
+

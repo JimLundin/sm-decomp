@@ -1,0 +1,17 @@
+operation = "register"
+checkout = "/tmp/sm-decomp-preparation-retry-source-20261013"
+coordinator = "ceres-20261013"
+
+[authority]
+session_id = "01a1356e-a8dd-7a80-88b0-1239a6a9b876"
+generation = 1
+
+[registration]
+token = "decomp-launch-20261013"
+kind = "dispatcher"
+session_id = "01a1356e-a8dd-7a80-88b0-1239a6a9b876"
+
+[registration.observation]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/inspections/replacement-live.toml"
+sha256 = "1aa27efd9818767ea831d6742d31563525467da8ccbab632fb5d2a1e627d221e"
+

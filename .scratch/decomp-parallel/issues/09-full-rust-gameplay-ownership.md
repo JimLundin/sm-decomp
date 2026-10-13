@@ -1,7 +1,7 @@
 # Complete Rust gameplay ownership
 
 Status: open
-Blocked by: 08, 14, 15, 16, 17, 18, 19, 20
+Blocked by: 08, 14, 15, 16, 17, 18, 19, 20, 21, 24
 Triage: ready-for-agent
 Type: task
 

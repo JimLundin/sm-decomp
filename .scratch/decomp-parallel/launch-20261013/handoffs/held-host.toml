@@ -1,0 +1,32 @@
+schema = "decomp-launch-checkpoint-v1"
+parent_session_id = "01a1356e-a8dd-7a80-88b0-1239a6a9b876"
+auditor_session_id = "01a1357f-a434-7802-ad4f-881646255fdd"
+effort = "ceres-continuation"
+coordinator = "ceres-20261013"
+authority_generation = 1
+phase = "host-focused-and-current-matrices-passed"
+source_commit = "40a8489856f36d21925188823e33b520f74d4cb4"
+worktree = "/home/jim/sm-decomp"
+source_implementation_already_merged = true
+active_processes = []
+run_roots = ["/home/jim/sm-decomp/out/port/decomp-launch-20261013/host-matrices"]
+remaining = ["all affected Offline batch from original baseline", "callback and family adapter controls", "post-cleanup authentication", "original wrapper integrated result", "controller integration", "required inventory stage publication"]
+
+[claim]
+id = "integrate-shared-game-host"
+revision = "48656a2-host-v1-1"
+attempt = 1
+coordinator = "ceres-20261013"
+
+[next]
+cwd = "/home/jim/sm-decomp"
+argv = ["cargo", "run", "-p", "pipeline", "--locked", "--offline", "--bin", "sm-pipeline", "--", "batch", "verify", "--profile", "offline-all", "--changed-since", "48656a284329d432291eca23a2ae0d1d7c0a3e48", "--batch", "/home/jim/sm-decomp/out/port/decomp-launch-20261013/host-integrated/batch.toml", "--jobs", "3", "--case-jobs", "4"]
+
+[next.env]
+SM_PIPELINE_ROOT = "/home/jim/sm-decomp/out/pipeline"
+SM_PIPELINE_WORKERS = "4"
+
+[cleanup]
+status = "complete-for-finished-host-matrices"
+remaining_action = "Future all-affected integration batch and original admission need their own cleanup; completed matrix receipts and post-cleanup authentication are in host-continuation/."
+

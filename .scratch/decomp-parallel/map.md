@@ -2,9 +2,14 @@
 
 Status: open
 Blocked by: 06, 07, 08, 09, 10
+
+Production activated 2026-10-13. Read [current launch status](launch-20261013/status.md)
+before historical preparation. Research 13/14 is resolved; children 21–24 keep
+actual exercise/hardware/Samus dependencies explicit. Original Ceres integration 11
+is claimed under retained authority and remains the first merged-source task.
 Plan deliverable: complete; implementation remains open
 
-Preparation: tickets 01–05 resolved; ready for separately requested gameplay swarm launch
+Preparation: tickets 01–05 resolved; production launch activated
 Preparation coordinator: `01a13559-e517-72d1-88b5-e554fed61da4`
 
 The [spec](spec.md) defines the outcome and authority transition. The
@@ -21,11 +26,11 @@ subject, passing final receipts and later launch procedure.
 - Source/receipts are checkpointed at
   `d8a90451695408bbf72017ea04e7f4e915b06dd9`. Passing evidence and a Git
   merge do not resolve pending durable integration.
-- Current Ceres authority remains `.scratch/ceres-continuation/ledger.toml`,
-  coordinator `ceres-20261013`, capacity `3`. Existing claims in other efforts
-  retain their original authority. The future `decomp-parallel` queue is
-  unactivated until reconciliation, fencing and the two-session drill establish
-  a preserved claim bridge and explicit cutover.
+- Production authority is active at `.scratch/decomp-parallel/authority.toml`
+  with canonical queue `.scratch/decomp-parallel/ledger.toml`, capacity `3`.
+  Held Ceres work retains `.scratch/ceres-continuation/ledger.toml`, coordinator
+  `ceres-20261013` and its original claim tuples/submissions. Current real role
+  owners and the background handoff are recorded in the launch status.
 - All workers use `SM_PIPELINE_ROOT=/home/jim/sm-decomp/out/pipeline` and
   `SM_PIPELINE_WORKERS=4`; these four process workers are shared across sessions.
   Delegate actual work to subagents. Keep branches, writable files, run paths
@@ -66,29 +71,31 @@ subject, passing final receipts and later launch procedure.
 | [03 Maintain Rust commands and durable handoffs](issues/03-maintained-rust-commands-and-handoffs.md) | task | resolved | 01 | Integrated typed Rust session commands; focused controls and cleanup complete |
 | [04 Prove concurrent sessions and crash recovery](issues/04-concurrency-and-crash-recovery-drill.md) | task | resolved | 02, 03 | Corrected actual drill/readiness/cleanup passed; production launch remains separate |
 | [05 Catalog dependency-ready subsystem scopes](issues/05-subsystem-scope-catalog.md) | research | resolved | 01 | Published catalog and children 11–20; honest research/held readiness |
-| [06 Ordinary-reset Ceres escape](issues/06-ordinary-reset-ceres-escape.md) | task | open | 04, 05, 11, 12, 13 | Existing controller/host continuation and required scheduler/hardware contract |
-| [07 Playable vanilla progression](issues/07-playable-vanilla-progression.md) | task | open | 06, 13, 14, 15, 16, 17, 18 | Parallel subsystem children; composed route gate |
-| [08 Save/load and credits](issues/08-save-load-and-credits.md) | task | open | 07, 13, 18, 19, 20 | Persistence and completion children |
-| [09 Complete Rust gameplay ownership](issues/09-full-rust-gameplay-ownership.md) | task | open | 08, 14, 15, 16, 17, 18, 19, 20 | Remaining coherent ownership gaps |
+| [06 Ordinary-reset Ceres escape](issues/06-ordinary-reset-ceres-escape.md) | task | open | 04, 05, 11, 12, 13, 21, 22, 23 | Existing controller/host continuation and required scheduler/hardware contract |
+| [07 Playable vanilla progression](issues/07-playable-vanilla-progression.md) | task | open | 06, 13, 14, 15, 16, 17, 18, 21, 22, 23, 24 | Parallel subsystem children; composed route gate |
+| [08 Save/load and credits](issues/08-save-load-and-credits.md) | task | open | 07, 13, 18, 19, 20, 21, 22, 23 | Persistence and completion children |
+| [09 Complete Rust gameplay ownership](issues/09-full-rust-gameplay-ownership.md) | task | open | 08, 14, 15, 16, 17, 18, 19, 20, 21, 24 | Remaining coherent ownership gaps |
 | [10 Map Rando compatibility](issues/10-map-rando-compatibility.md) | research | open | 09 | Later version/seed/custom-behavior contract |
-| [11 Finish held Ceres integration](issues/11-finish-held-ceres-integration.md) | task | open | 04, 05 | Tracking continuation of original host/controller claims |
+| [11 Finish held Ceres integration](issues/11-finish-held-ceres-integration.md) | task | claimed | 04, 05 | Tracking continuation of original host/controller claims |
 | [12 Ceres NMI/poll continuation](issues/12-ceres-nmi-poll-continuation.md) | research | open | 11 | Diagnose exact extra-poll boundary under ticket 78 |
-| [13 Host/hardware lifecycle scope](issues/13-host-hardware-lifecycle-scope.md) | research | open | 05 | Complete host transaction and exercise contract |
-| [14 Samus frame scope](issues/14-samus-frame-scope.md) | research | open | 05 | Reuse player/projectile leaves; establish whole caller |
+| [13 Host/hardware lifecycle scope](issues/13-host-hardware-lifecycle-scope.md) | research | resolved | 05 | Complete NMI body researched; children 21–23 retain implementation gates |
+| [14 Samus frame scope](issues/14-samus-frame-scope.md) | research | resolved | 05 | Samus beta frame researched; children 21/24 retain implementation gates |
 | [15 Door/room/PLM scope](issues/15-door-room-plm-scope.md) | research | open | 05 | Preserve camera and establish whole transition |
 | [16 Continue held whole Ridley](issues/16-continue-held-whole-ridley.md) | task | open | 04, 05 | Tracking continuation of original ticket 141 |
 | [17 Other enemy lifecycle scope](issues/17-other-enemy-lifecycle-scope.md) | research | open | 05 | Disjoint non-Ridley complete family |
 | [18 Audio/UI/menu scope](issues/18-audio-ui-menu-scope.md) | research | open | 05 | Ordered audio acknowledgments and menus |
 | [19 SRAM/save/load scope](issues/19-sram-save-load-scope.md) | research | open | 05 | Native save transaction and fresh-process continuation |
 | [20 Credits cinematic scope](issues/20-credits-cinematic-scope.md) | research | open | 05 | Whole credits root, data and route dependencies |
+| [21 Native-root exercise provenance](issues/21-native-root-exercise-provenance.md) | research | open | None | Reviewed source-authenticated NMI/Samus root evidence extension |
+| [22 NMI hardware service adapter](issues/22-nmi-hardware-service-adapter.md) | research | open | 11 | Full-state synchronous MMIO/DMA adapter contract |
+| [23 Complete NMI body scope](issues/23-complete-nmi-body-scope.md) | research | open | 11, 21, 22 | Complete eleven-routine scope after exercise and adapter admission |
+| [24 Samus beta-frame closure](issues/24-samus-beta-frame-closure.md) | research | open | 21 | Whole movement/contact boundary and dynamic dependency closure |
 
-On the separately requested gameplay launch, choose the first open, unblocked,
-unclaimed ticket by number. Readiness never reopens an existing claim.
-Tickets 01–05 are complete. Ticket 04's retained isolated drill and passing
-private readiness validation keep production authority/ledger
-absent; production activation later requires the user's launch instruction,
-passing exact drill receipts and fresh role/legacy bridge validation. Gameplay
-mutation through that workflow starts after 04 and 05. Ticket 05's lane table produces concrete
+Continue the activated queue by selecting the first open, unblocked, unclaimed
+ticket by number. Readiness never reopens an existing claim. Tickets 01–05 are
+complete. The retained isolated drill, exact readiness receipts and freshly
+validated roles/legacy bridge authorized production activation at the user's
+launch instruction. Ticket 05's lane table produces concrete
 child tickets/scopes; each child lists dependencies and is added to its
 milestone. Parent milestones do not make subsystem implementation serial.
 

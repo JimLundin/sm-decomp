@@ -1,0 +1,4 @@
+multi_agent                              stable             true
+multi_agent_mode                         removed            false
+multi_agent_v2                           stable             false
+multi_agent_v2_dynamic_tools             under development  false

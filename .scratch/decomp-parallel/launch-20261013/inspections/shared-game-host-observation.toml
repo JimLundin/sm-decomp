@@ -1,0 +1,21 @@
+schema = "decomp-child-observation-v1"
+effort = "ceres-continuation"
+session_id = "01a133ec-68e2-7033-9ee7-dba26d4db746"
+agent = "/root/host_scope"
+status = "completed"
+observed_at = "2026-10-13T13:32:07Z"
+
+[claim]
+id = "shared-game-host"
+revision = "48656a2-host-v1"
+attempt = 1
+coordinator = "ceres-20261013"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/inspections/shared-game-host.json"
+sha256 = "01e2fa3925cc01d55fa5c2ab1b0d48a87cb27216e130fd93741c5152a18aa5f4"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/inspections/processes.txt"
+sha256 = "6a5b67becd12e14f67e6fd319c3613055ee8ceeb482b4095b631a89ec42c0f36"
+

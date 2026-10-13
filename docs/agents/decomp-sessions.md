@@ -4,6 +4,14 @@ Use this runbook when starting a decomp session, resuming after a crash,
 or handing a worker to a replacement coordinator. The durable queue owns work;
 the session launches subagents and records their results.
 
+Production was activated on 2026-10-13 at the user's launch instruction. Read
+[current launch status](../../.scratch/decomp-parallel/launch-20261013/status.md)
+and actual `decomp-authority` status before the historical preparation below.
+The canonical queue is active; retained Ceres work continues under its original
+ledger/token. Resume current roles through checked transfer, inspect surviving
+claims/processes, and follow the saved next command. Completed preparation and
+activation need no repeated drill or fresh authority initialization.
+
 Read the [parallel plan](../../.scratch/decomp-parallel/spec.md) and
 [ticket map](../../.scratch/decomp-parallel/map.md) for the next dependency-ready
 work. Read the [checkpoint](../../.scratch/decomp-parallel/checkpoint-20261013.md)

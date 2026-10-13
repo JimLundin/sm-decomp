@@ -1,0 +1,15 @@
+[agents]
+enabled = true
+max_concurrent_threads_per_session = 3
+
+[agents.decomp_researcher]
+description = "Research a claimed whole subsystem and its evidence requirements."
+config_file = "agents/decomp-researcher.toml"
+
+[agents.decomp_worker]
+description = "Implement one exact claimed scope in its isolated worktree."
+config_file = "agents/decomp-worker.toml"
+
+[agents.decomp_verifier]
+description = "Verify a claimed frozen-source batch and retain cleanup evidence."
+config_file = "agents/decomp-verifier.toml"

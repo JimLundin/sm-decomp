@@ -1,0 +1,18 @@
+schema = "decomp-no-run-cleanup-v1"
+status = "complete"
+worker_session_id = "01a13571-e61e-7e31-8e29-d8f82488f33f"
+scope = ".scratch/decomp-parallel/launch-20261013/research-14"
+created_runs = []
+created_worktrees = []
+created_builds = []
+active_run_writers = []
+reclaimed_bytes = 0
+available_bytes_observed = 221118025728
+available_measurement = "df -B1 --output=avail /home/jim/sm-decomp"
+cleanup_utility_required = false
+reason = "No verification, fixture, replay, build or other run output was created; only source/receipt reads, assigned scratch notes, JSON extraction and hashes"
+source_diff = "git diff --name-only 40a8489856f36d21925188823e33b520f74d4cb4 -- Cargo.toml Cargo.lock crates tools produced no paths"
+verified_input_seals = 28
+hash_verification = "sha256sum -c .scratch/decomp-parallel/launch-20261013/research-14/inputs.sha256: every listed source/receipt/audit hash matched"
+retained_dependencies = ["Pinned original C and existing Rust source in inputs.sha256", "Retained actual-C/live verdicts and authentication pointers", "out/evidence and subject evidence.toml pointers", "Existing sm-evidence reader and frozen-source/build dependencies", "Private rom/sm.sfc and original movie inputs", "Held Ceres and Ridley submissions/worktrees"]
+limitations = ["Free-space measurement includes independent concurrent session activity; no reclamation is attributed to this research", "SHA-256 inspection is not fresh gameplay/source-context verification or recursive evidence authentication", "Root owns resulting tracker/child/result/inventory publication and Git checkpoint"]

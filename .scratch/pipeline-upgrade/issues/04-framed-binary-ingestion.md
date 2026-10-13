@@ -1,6 +1,6 @@
 # Conditional binary framing and exact literal ingestion
 
-Status: open
+Status: deferred
 Blocked by: 03
 Triage: ready-for-agent
 Type: task
@@ -15,3 +15,10 @@ Typed direct pushes require a clean scanner boundary. Otherwise feed rendered by
 Follow the complete contract in [plan.md](../plan.md). Record source revision,
 controls, measured results and scoped cleanup under Completion evidence before
 resolving. Implementation is pending.
+
+## Comments
+
+2026-10-13 decomp swarm startup: ticket03 explicitly left binary transport
+unselected and tickets04–08 deferred/unclaimed. Record that existing decision
+in lifecycle status so automatic ready-ticket discovery honors this ticket's
+binary-selection prerequisite. No binary work is claimed or completed here.

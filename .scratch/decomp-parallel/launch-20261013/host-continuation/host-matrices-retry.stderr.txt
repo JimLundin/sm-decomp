@@ -1,0 +1,2 @@
+game-host-projectile: offline-verified
+game-host-room-scroll: offline-verified

@@ -1,0 +1,25 @@
+schema = "decomp-session-observation-v1"
+session_id = "01a1356e-a8dd-7a80-88b0-1239a6a9b876"
+status = "active"
+observed_at = "2026-10-13T13:32:07Z"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/inspections/root.json"
+sha256 = "8c94ee13ee90c0104e314acfa7769825cdb48893227372a1e681beb0703d3893"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/inspections/processes.txt"
+sha256 = "6a5b67becd12e14f67e6fd319c3613055ee8ceeb482b4095b631a89ec42c0f36"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/inspections/previous-main-owner.json"
+sha256 = "ff1bb8aff981762f04d2a0b868d91c1955da06f3cdefc49eff849476bc56f700"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/inspections/historical-main-owner.json"
+sha256 = "ab3851800834711c1c8f5a30b2f4db0b348d2372f1f84778be04bde76a0d3167"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/inspections/source-equivalence.diff"
+sha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+

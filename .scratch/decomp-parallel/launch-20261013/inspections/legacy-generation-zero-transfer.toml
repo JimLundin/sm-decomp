@@ -1,0 +1,76 @@
+schema = "decomp-session-transfer-v1"
+token = "ceres-20261013"
+session_id = "01a133eb-76e2-7073-9aef-d97c03a812e4"
+generation = 0
+status = "failed"
+observed_at = "2026-10-13T13:32:07Z"
+processes = []
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/inspections/legacy-integrator.json"
+sha256 = "423f2d226a2301af43cac720d7ec5b9ff253b0c9ebe746128e96223805aeb586"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/inspections/processes.txt"
+sha256 = "6a5b67becd12e14f67e6fd319c3613055ee8ceeb482b4095b631a89ec42c0f36"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/inspections/previous-main-owner.json"
+sha256 = "ff1bb8aff981762f04d2a0b868d91c1955da06f3cdefc49eff849476bc56f700"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/inspections/source-equivalence.diff"
+sha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/ownership.md"
+sha256 = "6dd2e076ea50b2494bb15fc1324e9336dbc2a01152d29606cf4373c352af4df3"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/ceres-continuation/ledger.toml"
+sha256 = "77fdba066af4f4c045e8e8f419997563d569ac0bd8045cef0a68ac916a126b89"
+
+[replacement]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/inspections/replacement-live.toml"
+sha256 = "1aa27efd9818767ea831d6742d31563525467da8ccbab632fb5d2a1e627d221e"
+
+[[children]]
+effort = "ceres-continuation"
+agent = "/root/ceres_scope"
+status = "completed"
+[children.claim]
+id = "compact-controller"
+revision = "48656a2-compact-v1"
+attempt = 1
+coordinator = "ceres-20261013"
+[children.observation]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/inspections/compact-controller-observation.toml"
+sha256 = "44f42096afda10284cf7e087b20f4ffcc3b62b78548df5bfde6c56701507aea0"
+
+[[children]]
+effort = "ceres-continuation"
+agent = "/root/host_scope"
+status = "completed"
+[children.claim]
+id = "shared-game-host"
+revision = "48656a2-host-v1"
+attempt = 1
+coordinator = "ceres-20261013"
+[children.observation]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/inspections/shared-game-host-observation.toml"
+sha256 = "4d91316202121c9ac038fd66bc9dda7a7c3aca7619b104b5dbed404ce18b554d"
+
+[[children]]
+effort = "ceres-continuation"
+agent = "/root"
+status = "failed"
+[children.claim]
+id = "integrate-shared-game-host"
+revision = "48656a2-host-v1-1"
+attempt = 1
+coordinator = "ceres-20261013"
+[children.observation]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/inspections/legacy-integrator-observation.toml"
+sha256 = "21029e08e730871f85a93eb3cb09166642594a047639e9efad8609588f49d735"
+
+
