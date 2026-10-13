@@ -59,6 +59,7 @@ fn registry(root: &Path) -> Registry {
         updates: Vec::new(),
         notices: Vec::new(),
         stale_update_ids: Vec::new(),
+        superseded_update_ids: Vec::new(),
         summary: Summary::default(),
     }
 }
@@ -72,6 +73,8 @@ fn observation(root: &Path, id: &str, symbol: &str, stage: Stage) -> Update {
         scope: "camera scroll ownership".into(),
         agent: "worker".into(),
         stage,
+        evidence_context: EvidenceContext::Unspecified,
+        supersedes: Vec::new(),
         routines: vec![symbol.into()],
         source_revision: "a".repeat(40),
         inventory_sha256: "b".repeat(64),
@@ -318,6 +321,162 @@ fn idempotent_retry_preserves_timestamp_and_conflicting_id_is_rejected() {
     let mut conflict = update;
     conflict.stage = Stage::Verified;
     assert!(insert_update(&mut registry, conflict).unwrap_err().to_string().contains("conflicting"));
+}
+
+#[test]
+fn evidence_context_defaults_preserve_legacy_observations_and_retries() {
+    let scratch = Scratch::new();
+    let legacy = observation(&scratch.0, "legacy", "First", Stage::Verified);
+    let bytes = serde_json::to_string(&legacy).unwrap();
+    assert!(!bytes.contains("evidence_context"));
+    assert!(!bytes.contains("supersedes"));
+    let restored: Update = serde_json::from_str(&bytes).unwrap();
+    assert_eq!(restored.evidence_context, EvidenceContext::Unspecified);
+    assert!(restored.supersedes.is_empty());
+    assert_eq!(serde_json::to_string(&restored).unwrap(), bytes);
+    let mut registry = registry(&scratch.0);
+    insert_update(&mut registry, restored.clone()).unwrap();
+    let mut retry = restored.clone();
+    retry.updated_at = 99;
+    assert!(!insert_update(&mut registry, retry).unwrap());
+    let mut relabeled = restored;
+    relabeled.evidence_context = EvidenceContext::CurrentCheckout;
+    assert!(insert_update(&mut registry, relabeled).is_err());
+}
+
+#[test]
+fn evidence_context_counts_overlap_and_exclude_stale_evidence() {
+    let scratch = Scratch::new();
+    let mut registry = registry(&scratch.0);
+    let mut historical = observation(&scratch.0, "historical", "First", Stage::Verified);
+    historical.evidence_context = EvidenceContext::HistoricalFrozen;
+    let mut current = observation(&scratch.0, "current", "Second", Stage::Verified);
+    current.routines.push("First".into());
+    current.evidence_context = EvidenceContext::CurrentCheckout;
+    insert_update(&mut registry, historical).unwrap();
+    insert_update(&mut registry, current).unwrap();
+    observe_evidence(&scratch.0, &mut registry).unwrap();
+    assert_eq!(registry.summary.stages["verified"].definitions, 2);
+    assert_eq!(registry.summary.context_stages["historical-frozen"]["verified"].definitions, 1);
+    assert_eq!(registry.summary.context_stages["current-checkout"]["verified"].definitions, 2);
+    assert_eq!(registry.summary.context_stages["unspecified"]["verified"].definitions, 0);
+    fs::write(scratch.0.join("evidence.txt"), b"changed").unwrap();
+    observe_evidence(&scratch.0, &mut registry).unwrap();
+    assert_eq!(registry.summary.stages["verified"].definitions, 0);
+    assert!(
+        registry.summary.context_stages.values().flat_map(|stages| stages.values()).all(|count| count.definitions == 0)
+    );
+}
+
+#[test]
+fn reviewed_supersession_preserves_history_without_resurrecting_stale_claims() {
+    let scratch = Scratch::new();
+    let options = scratch.options();
+    let mut registry = registry(&scratch.0);
+    let mut original = observation(&scratch.0, "overstated", "First", Stage::Translated);
+    original.routines.push("Second".into());
+    let original_bytes = serde_json::to_string(&original).unwrap();
+    insert_update(&mut registry, original.clone()).unwrap();
+    let mut reviewed = observation(&scratch.0, "reviewed", "Second", Stage::Translated);
+    reviewed.evidence_context = EvidenceContext::CurrentCheckout;
+    fs::write(scratch.0.join("review.txt"), b"reviewed source correspondence").unwrap();
+    reviewed.evidence =
+        vec![Evidence { path: "review.txt".into(), sha256: crate::digest(&scratch.0.join("review.txt")).unwrap() }];
+    let mut payload = serde_json::to_value(&reviewed).unwrap();
+    payload["supersedes"] = serde_json::json!(["overstated"]);
+    let reviewed: Update = serde_json::from_value(payload).unwrap();
+    insert_update(&mut registry, reviewed).unwrap();
+    observe_evidence(&scratch.0, &mut registry).unwrap();
+    assert_eq!(registry.summary.stages["translated"].definitions, 1);
+    assert_eq!(registry.summary.stages["translated"].body_lines, 20);
+    assert_eq!(registry.superseded_update_ids, ["overstated"]);
+    assert_eq!(registry.summary.context_stages["unspecified"]["translated"].definitions, 0);
+    assert_eq!(registry.summary.context_stages["current-checkout"]["translated"].definitions, 1);
+    assert_eq!(serde_json::to_string(&registry.updates[0]).unwrap(), original_bytes);
+    assert!(
+        registry.notices.iter().any(|notice| notice.contains("Superseded update overstated: replaced by reviewed"))
+    );
+
+    fs::write(scratch.0.join("review.txt"), b"source changed after review").unwrap();
+    observe_evidence(&scratch.0, &mut registry).unwrap();
+    assert_eq!(registry.stale_update_ids, ["reviewed"]);
+    assert_eq!(registry.superseded_update_ids, ["overstated"]);
+    assert_eq!(registry.summary.stages["translated"].definitions, 0);
+    assert!(registry.summary.context_stages.values().all(|stages| stages["translated"].definitions == 0));
+    persist(&options, &registry).unwrap();
+    let mut restored = read_registry(&options).unwrap();
+    observe_evidence(&scratch.0, &mut restored).unwrap();
+    assert_eq!(restored.summary.stages["translated"].definitions, 0);
+    assert_eq!(restored.updates[0], original);
+}
+
+#[test]
+fn supersession_requires_existing_same_stage_inventory_targets_and_rejects_cycles() {
+    let scratch = Scratch::new();
+    let options = scratch.options();
+    let mut registry = registry(&scratch.0);
+    insert_update(&mut registry, observation(&scratch.0, "original", "First", Stage::Translated)).unwrap();
+    let mut reviewed = observation(&scratch.0, "reviewed", "Second", Stage::Translated);
+    reviewed.supersedes = vec!["absent".into()];
+    assert!(insert_update(&mut registry, reviewed.clone()).unwrap_err().to_string().contains("unknown superseded"));
+    reviewed.supersedes = vec!["reviewed".into()];
+    assert!(insert_update(&mut registry, reviewed.clone()).unwrap_err().to_string().contains("itself"));
+    reviewed.supersedes = vec!["original".into(), "original".into()];
+    assert!(insert_update(&mut registry, reviewed.clone()).unwrap_err().to_string().contains("duplicate superseded"));
+    reviewed.supersedes = vec!["original".into()];
+    reviewed.stage = Stage::Verified;
+    assert!(insert_update(&mut registry, reviewed.clone()).unwrap_err().to_string().contains("different stage"));
+    reviewed.stage = Stage::Translated;
+    registry.updates[0].inventory_sha256 = "f".repeat(64);
+    assert!(
+        insert_update(&mut registry, reviewed.clone()).unwrap_err().to_string().contains("different source inventory")
+    );
+    registry.updates[0].inventory_sha256 = registry.source.inventory_sha256.clone();
+    insert_update(&mut registry, reviewed.clone()).unwrap();
+    let mut retry = reviewed;
+    retry.updated_at = 99;
+    assert!(!insert_update(&mut registry, retry).unwrap());
+    let mut final_review = observation(&scratch.0, "final-review", "Second", Stage::Translated);
+    final_review.supersedes = vec!["reviewed".into()];
+    insert_update(&mut registry, final_review).unwrap();
+    observe_evidence(&scratch.0, &mut registry).unwrap();
+    assert_eq!(registry.superseded_update_ids, ["original", "reviewed"]);
+    assert_eq!(registry.summary.stages["translated"].definitions, 1);
+    persist(&options, &registry).unwrap();
+    read_registry(&options).unwrap();
+
+    // A corrupt persisted history cannot bypass the append-time graph rules.
+    registry.updates[0].supersedes = vec!["final-review".into()];
+    persist(&options, &registry).unwrap();
+    assert!(read_registry(&options).unwrap_err().to_string().contains("supersession cycle"));
+    assert!(observe_evidence(&scratch.0, &mut registry).unwrap_err().to_string().contains("supersession cycle"));
+}
+
+#[test]
+fn update_command_publishes_reviewed_correction_and_preserves_legacy_serialization() {
+    let scratch = Scratch::new();
+    inventory_root(&scratch.0);
+    let mut options = scratch.options();
+    let mut initial = refresh(&options).unwrap();
+    let mut original = observation(&scratch.0, "original", "First", Stage::Translated);
+    original.inventory_sha256 = initial.source.inventory_sha256.clone();
+    insert_update(&mut initial, original.clone()).unwrap();
+    observe_evidence(&scratch.0, &mut initial).unwrap();
+    persist(&options, &initial).unwrap();
+    assert!(!fs::read_to_string(&options.registry).unwrap().contains("superseded_update_ids"));
+    let mut payload = serde_json::to_value(original).unwrap();
+    payload["id"] = serde_json::json!("reviewed");
+    payload["supersedes"] = serde_json::json!(["original"]);
+    payload.as_object_mut().unwrap().remove("updated_at");
+    let path = scratch.0.join("reviewed.toml");
+    fs::write(&path, toml::to_string(&payload).unwrap()).unwrap();
+    options.update = Some(path);
+    let reviewed = update(&options).unwrap();
+    assert_eq!(reviewed.superseded_update_ids, ["original"]);
+    assert_eq!(reviewed.updates.len(), 2);
+    assert_eq!(reviewed.summary.stages["translated"].definitions, 1);
+    assert_eq!(update(&options).unwrap().updates, reviewed.updates);
+    assert!(fs::read_to_string(options.html).unwrap().contains("Superseded update original"));
 }
 
 #[test]

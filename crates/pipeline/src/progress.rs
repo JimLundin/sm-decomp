@@ -43,6 +43,32 @@ impl Stage {
     }
 }
 
+/// Evidence scope is reported provenance, not automatic source authentication.
+/// Legacy observations retain their safe, unspecified context and serialization.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "kebab-case")]
+enum EvidenceContext {
+    #[default]
+    Unspecified,
+    HistoricalFrozen,
+    CurrentCheckout,
+}
+impl EvidenceContext {
+    fn name(&self) -> &'static str {
+        match self {
+            Self::Unspecified => "unspecified",
+            Self::HistoricalFrozen => "historical-frozen",
+            Self::CurrentCheckout => "current-checkout",
+        }
+    }
+    fn is_unspecified(&self) -> bool {
+        *self == Self::Unspecified
+    }
+    fn all() -> [Self; 3] {
+        [Self::Unspecified, Self::HistoricalFrozen, Self::CurrentCheckout]
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 struct Evidence {
@@ -57,6 +83,10 @@ struct Update {
     scope: String,
     agent: String,
     stage: Stage,
+    #[serde(default, skip_serializing_if = "EvidenceContext::is_unspecified")]
+    evidence_context: EvidenceContext,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    supersedes: Vec<String>,
     routines: Vec<String>,
     source_revision: String,
     inventory_sha256: String,
@@ -83,6 +113,10 @@ struct UpdateInput {
     scope: String,
     agent: String,
     stage: Stage,
+    #[serde(default)]
+    evidence_context: EvidenceContext,
+    #[serde(default)]
+    supersedes: Vec<String>,
     routines: Vec<String>,
     source_revision: String,
     inventory_sha256: String,
@@ -135,6 +169,8 @@ struct Summary {
     updates: usize,
     stale_updates: usize,
     stages: BTreeMap<String, Count>,
+    #[serde(default)]
+    context_stages: BTreeMap<String, BTreeMap<String, Count>>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -149,6 +185,8 @@ struct Registry {
     notices: Vec<String>,
     #[serde(default)]
     stale_update_ids: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    superseded_update_ids: Vec<String>,
     summary: Summary,
 }
 
@@ -483,6 +521,8 @@ fn load_inventory(root: &Path, checked_source: Option<&Path>) -> Result<(Source,
         "Fixture manifests are declarations only. Stage observations do not grant routine admission or gameplay acceptance.".into(),
         "Each stage counts its own explicit observations; a translated claim does not count as verified, integrated or live-exercised.".into(),
         "Coverage is the pinned sm_*.c lexical definition inventory, including support files; external, macro and indirect dependencies require review.".into(),
+        "Evidence context is reported provenance, not automatic authentication: historical-frozen refers to retained source, current-checkout requires a supporting source check, and legacy observations remain unspecified.".into(),
+        "Reporting completeness is limited to substantiated retained observations. Missing reports do not establish missing Rust implementation; declarations, unavailable artifacts and unproved internal call closure do not grant verified coverage.".into(),
     ];
     if inventory.schema_version.is_none() || inventory.source_identity_sha256.is_none() {
         notices.push("Legacy source inventory lacks a schema version or pin digest. Its declared revision and archive hash match the root pin; refresh with --source to regenerate it.".into());
@@ -583,6 +623,7 @@ fn read_registry(options: &Options) -> Result<Registry> {
         ensure!(ids.insert(&update.id), "duplicate registry update ID");
         validate_update_shape(update)?;
     }
+    superseded_updates(&registry.updates)?;
     Ok(registry)
 }
 fn refresh(options: &Options) -> Result<Registry> {
@@ -603,6 +644,7 @@ fn refresh(options: &Options) -> Result<Registry> {
         updates: previous.map(|r| r.updates).unwrap_or_default(),
         notices,
         stale_update_ids: Vec::new(),
+        superseded_update_ids: Vec::new(),
         summary: Summary::default(),
     };
     observe_evidence(&options.root, &mut registry)?;
@@ -614,6 +656,12 @@ fn validate_update_shape(update: &Update) -> Result<()> {
     nonempty(&update.id, "update ID")?;
     nonempty(&update.scope, "translation scope")?;
     nonempty(&update.agent, "agent")?;
+    let mut supersedes = BTreeSet::new();
+    for id in &update.supersedes {
+        nonempty(id, "superseded update ID")?;
+        ensure!(id != &update.id, "a progress update cannot supersede itself");
+        ensure!(supersedes.insert(id), "duplicate superseded update ID {id}");
+    }
     ensure!(hex(&update.source_revision, 40) && hex(&update.inventory_sha256, 64), "invalid update source identity");
     ensure!(!update.routines.is_empty(), "progress update must name at least one C routine");
     let mut symbols = BTreeSet::new();
@@ -642,6 +690,48 @@ fn validate_update_shape(update: &Update) -> Result<()> {
     ensure!(update.stage != Stage::Integrated || update.commit.is_some(), "integrated observations require a commit");
     Ok(())
 }
+
+fn validate_supersession(update: &Update, target: &Update) -> Result<()> {
+    ensure!(update.stage == target.stage, "superseded update {} has a different stage", target.id);
+    ensure!(
+        update.source_revision == target.source_revision && update.inventory_sha256 == target.inventory_sha256,
+        "superseded update {} has a different source inventory",
+        target.id
+    );
+    Ok(())
+}
+
+/// Corrections are permanent history, independent of replacement freshness.
+/// A later stale source must never revive the inaccurate observation it replaced.
+fn superseded_updates(updates: &[Update]) -> Result<BTreeMap<String, BTreeSet<String>>> {
+    let by_id = updates.iter().map(|update| (update.id.as_str(), update)).collect::<BTreeMap<_, _>>();
+    let mut incoming = by_id.keys().map(|id| (*id, 0usize)).collect::<BTreeMap<_, _>>();
+    let mut superseded = BTreeMap::<String, BTreeSet<String>>::new();
+    for update in updates {
+        for id in &update.supersedes {
+            let target = by_id.get(id.as_str()).with_context(|| format!("unknown superseded update ID {id}"))?;
+            validate_supersession(update, target)?;
+            *incoming.get_mut(id.as_str()).unwrap() += 1;
+            superseded.entry(id.clone()).or_default().insert(update.id.clone());
+        }
+    }
+    // Iterative topological validation avoids stack growth for long retained histories.
+    let mut ready = incoming.iter().filter_map(|(id, count)| (*count == 0).then_some(*id)).collect::<Vec<_>>();
+    let mut visited = 0;
+    while let Some(id) = ready.pop() {
+        visited += 1;
+        for target in &by_id[id].supersedes {
+            let count = incoming.get_mut(target.as_str()).unwrap();
+            *count -= 1;
+            if *count == 0 {
+                ready.push(target.as_str());
+            }
+        }
+    }
+    ensure!(visited == updates.len(), "progress supersession cycle");
+    Ok(superseded)
+}
+
 fn evidence_path(root: &Path, pointer: &str) -> Result<PathBuf> {
     let path = Path::new(pointer);
     ensure!(path.is_absolute() || relative(pointer), "evidence path must be absolute or a safe root-relative path");
@@ -664,6 +754,8 @@ fn input_update(root: &Path, input: UpdateInput) -> Result<Update> {
         scope: input.scope,
         agent: input.agent,
         stage: input.stage,
+        evidence_context: input.evidence_context,
+        supersedes: input.supersedes,
         routines: input.routines,
         source_revision: input.source_revision,
         inventory_sha256: input.inventory_sha256,
@@ -676,6 +768,7 @@ fn input_update(root: &Path, input: UpdateInput) -> Result<Update> {
     Ok(update)
 }
 fn insert_update(registry: &mut Registry, mut update: Update) -> Result<bool> {
+    validate_update_shape(&update)?;
     ensure!(
         update.source_revision == registry.source.revision
             && update.inventory_sha256 == registry.source.inventory_sha256,
@@ -700,6 +793,14 @@ fn insert_update(registry: &mut Registry, mut update: Update) -> Result<bool> {
             update.id
         );
         return Ok(false);
+    }
+    for id in &update.supersedes {
+        let target = registry
+            .updates
+            .iter()
+            .find(|target| &target.id == id)
+            .with_context(|| format!("unknown superseded update ID {id}"))?;
+        validate_supersession(&update, target)?;
     }
     registry.updated_at = update.updated_at;
     registry.updates.push(update);
@@ -730,7 +831,8 @@ fn update(options: &Options) -> Result<Registry> {
 }
 
 fn observe_evidence(root: &Path, registry: &mut Registry) -> Result<()> {
-    registry.notices.retain(|v| !v.starts_with("Stale update "));
+    let superseded = superseded_updates(&registry.updates)?;
+    registry.notices.retain(|v| !v.starts_with("Stale update ") && !v.starts_with("Superseded update "));
     let mut stale = BTreeSet::new();
     let mut hashes: BTreeMap<String, Option<String>> = BTreeMap::new();
     let known = registry.routines.iter().map(|r| r.symbol.as_str()).collect::<BTreeSet<_>>();
@@ -759,10 +861,17 @@ fn observe_evidence(root: &Path, registry: &mut Registry) -> Result<()> {
         }
     }
     registry.stale_update_ids = stale.iter().cloned().collect();
-    registry.summary = summarize(registry, &stale);
+    registry.superseded_update_ids = superseded.keys().cloned().collect();
+    for (id, replacements) in &superseded {
+        registry.notices.push(format!(
+            "Superseded update {id}: replaced by {}; excluded from stage totals even if replacement evidence becomes stale.",
+            replacements.iter().cloned().collect::<Vec<_>>().join(", ")
+        ));
+    }
+    registry.summary = summarize(registry, &stale, &registry.superseded_update_ids.iter().cloned().collect());
     Ok(())
 }
-fn summarize(registry: &Registry, stale: &BTreeSet<String>) -> Summary {
+fn summarize(registry: &Registry, stale: &BTreeSet<String>, superseded: &BTreeSet<String>) -> Summary {
     let mut summary = Summary {
         definitions: registry.routines.len(),
         body_lines: registry.source.body_lines,
@@ -776,7 +885,7 @@ fn summarize(registry: &Registry, stale: &BTreeSet<String>) -> Summary {
         let symbols = registry
             .updates
             .iter()
-            .filter(|u| u.stage == stage && !stale.contains(&u.id))
+            .filter(|u| u.stage == stage && !stale.contains(&u.id) && !superseded.contains(&u.id))
             .flat_map(|u| u.routines.iter().map(String::as_str))
             .collect::<BTreeSet<_>>();
         let mut count = Count::default();
@@ -787,6 +896,31 @@ fn summarize(registry: &Registry, stale: &BTreeSet<String>) -> Summary {
             }
         }
         summary.stages.insert(stage.name().into(), count);
+    }
+    for context in EvidenceContext::all() {
+        let mut stages = BTreeMap::new();
+        for stage in Stage::all() {
+            let symbols = registry
+                .updates
+                .iter()
+                .filter(|u| {
+                    u.stage == stage
+                        && u.evidence_context == context
+                        && !stale.contains(&u.id)
+                        && !superseded.contains(&u.id)
+                })
+                .flat_map(|u| u.routines.iter().map(String::as_str))
+                .collect::<BTreeSet<_>>();
+            let mut count = Count::default();
+            for routine in &registry.routines {
+                if symbols.contains(routine.symbol.as_str()) {
+                    count.definitions += 1;
+                    count.body_lines += routine.body_lines;
+                }
+            }
+            stages.insert(stage.name().into(), count);
+        }
+        summary.context_stages.insert(context.name().into(), stages);
     }
     for routine in &registry.routines {
         if !routine.declared_in.is_empty() {
@@ -805,7 +939,16 @@ fn print_status(registry: &Registry, options: &Options) {
     for (stage, count) in &registry.summary.stages {
         println!("{stage}: {} explicitly observed definitions, {} body lines", count.definitions, count.body_lines);
     }
-    println!("Observations: {}; stale: {}", registry.updates.len(), registry.summary.stale_updates);
+    for (context, stages) in &registry.summary.context_stages {
+        let counts = stages.iter().map(|(stage, count)| format!("{stage}={}", count.definitions)).collect::<Vec<_>>();
+        println!("Evidence context {context}: {}", counts.join(", "));
+    }
+    println!(
+        "Observations: {}; stale: {}; superseded: {}",
+        registry.updates.len(),
+        registry.summary.stale_updates,
+        registry.superseded_update_ids.len()
+    );
     for notice in &registry.notices {
         println!("Notice: {notice}");
     }

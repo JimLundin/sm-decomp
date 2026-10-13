@@ -142,9 +142,7 @@
       <div><div class="eyebrow">Shared routine inventory</div><h1 id="title">Every routine. A visible next step.</h1><p class="description">An inventory of the original C definitions, with agent reports attached to the work they describe. Explore the source banks, see what remains, and inspect the evidence behind each observation.</p></div>
       <div class="sync"><strong id="sync-mode"><span class="dot" aria-hidden="true"></span>Embedded snapshot</strong><span id="updated"></span><br><span id="checked"></span></div>
     </section>
-    <div class="notice"><strong>Reported progress, with its limits.</strong> Stages describe agent observations. Fixture declarations mean a routine is declared, and do not establish verification. Counts and body lines measure inventory coverage; they do not establish full-game completion.</div>
     <div id="error" class="notice error" role="alert" hidden></div>
-    <div id="notices" class="notice warning" hidden></div>
     <section class="metrics" aria-label="Inventory overview">
       <div class="metric"><div class="metric-label">Original C definitions</div><div class="metric-number" id="total">—</div><small id="total-lines">Inventory body lines</small></div>
       <div class="metric emphasis"><div class="metric-label" id="reported-label">Reported translated</div><div class="metric-number" id="reported">—</div><small id="reported-lines">Current observations only</small></div>
@@ -153,7 +151,7 @@
     </section>
     <section class="panel" aria-labelledby="banks-title">
       <div class="panel-head"><div><h2 id="banks-title">Progress across source banks</h2><p class="subtext">Exact reported stage · stages do not imply one another. Select a bank to explore its routines.</p></div><div class="selectors"><label for="milestone">Reported stage <select id="milestone"><option value="translated">Translated</option><option value="verified">Verified</option><option value="integrated">Integrated</option><option value="live-exercised">Live exercised</option><option value="translating">Translating</option></select></label><label for="weight">Weight by <select id="weight"><option value="routines">Definitions</option><option value="lines">Body lines</option></select></label></div></div>
-      <div class="overview"><div id="stack" class="stack" role="img" aria-label="Selected stage observation coverage"></div><div id="legend" class="legend"></div><p class="subtext">Legend counts each stage independently. A definition may have reports in several stages.</p></div>
+      <div class="overview"><label for="context">Evidence context <select id="context"><option value="">All reported contexts</option><option value="current-checkout">Checkout at observation</option><option value="historical-frozen">Retained historical source</option><option value="unspecified">Unspecified / legacy</option></select></label><p id="context-counts" class="subtext"></p><div id="stack" class="stack" role="img" aria-label="Selected stage observation coverage"></div><div id="legend" class="legend"></div><p class="subtext">Legend counts each stage independently. A definition may have reports in several stages and evidence contexts. Inventory coverage does not establish full-game completion.</p></div>
       <div id="banks" class="bank-grid"></div>
     </section>
     <section class="panel" aria-labelledby="routines-title">
@@ -162,7 +160,7 @@
         <label class="filter-search"><span>Symbol or original address</span><input id="search" type="search" placeholder="Search routines, e.g. Samus or 0x90…" autocomplete="off"></label>
         <label><span>Source bank</span><select id="bank"><option value="">All banks</option></select></label>
         <label><span>Subsystem*</span><select id="subsystem"><option value="">All subsystems</option></select></label>
-        <label><span>Highest current stage</span><select id="stage"><option value="">All stages</option><option value="remaining">Missing selected stage report</option><option value="unreported">No current report</option><option value="translating">Translating</option><option value="translated">Translated</option><option value="verified">Verified</option><option value="integrated">Integrated</option><option value="live-exercised">Live exercised</option><option value="stale">Stale reports only</option></select></label>
+        <label><span>Highest reported stage</span><select id="stage"><option value="">All stages</option><option value="remaining">Missing selected stage report</option><option value="unreported">No matching report</option><option value="translating">Translating</option><option value="translated">Translated</option><option value="verified">Verified</option><option value="integrated">Integrated</option><option value="live-exercised">Live exercised</option><option value="stale">Stale reports only</option></select></label>
         <label><span>Reporting agent</span><select id="agent"><option value="">All agents</option></select></label>
         <label><span>Translation scope</span><select id="scope"><option value="">All scopes</option></select></label>
       </div>
@@ -171,7 +169,7 @@
       <div id="routines"></div>
       <div class="pagination"><span id="page-info"></span><div class="pagination-actions"><button id="previous" type="button">← Previous</button><span id="page"></span><button id="next" type="button">Next →</button></div></div>
     </section>
-    <details class="provenance"><summary>Source provenance and interpretation</summary><div id="provenance" class="provenance-content"></div></details>
+    <details id="report-details" class="provenance"><summary>Report details <span id="report-detail-count" class="muted"></span></summary><div class="provenance-content"><p><strong>Reported progress, with its limits.</strong> Stages describe agent observations against the current C inventory. Evidence may describe retained historical Rust source or the checkout at observation; select its context above. Fixture declarations do not establish verification. Counts and body lines measure inventory coverage; they do not establish full-game completion.</p><div id="notices" class="notice warning" hidden></div><div id="provenance"></div></div></details>
     <footer class="footer"><span>* Subsystems are navigation hints derived from routine names; source banks and reported scopes remain explicit.</span><span>Standalone HTML · embedded data works offline · served reports check registry.json every 7 seconds</span></footer>
   </main>
   <script id="progress-data" type="application/json">__PROGRESS_JSON__</script>
@@ -180,7 +178,7 @@
     'use strict';
     const $ = id => document.getElementById(id);
     const STAGES = ['unreported', 'translating', 'translated', 'verified', 'integrated', 'live-exercised'];
-    const LABELS = { unreported:'No current report', translating:'Translating', translated:'Translated', verified:'Verified', integrated:'Integrated', 'live-exercised':'Live exercised' };
+    const LABELS = { unreported:'No matching report', translating:'Translating', translated:'Translated', verified:'Verified', integrated:'Integrated', 'live-exercised':'Live exercised' };
     const COLORS = { unreported:'--unreported', translating:'--translating', translated:'--translated', verified:'--verified', integrated:'--integrated', 'live-exercised':'--live' };
     const PAGE_SIZE = 60;
     const state = { data:null, rows:[], symbols:new Map(), page:0, expanded:new Set(), raw:'', file:false, checked:null };
@@ -191,6 +189,11 @@
     const text = (id,value) => { $(id).textContent=value; };
     const list = value => Array.isArray(value) ? value : [];
     const rank = stage => STAGES.indexOf(stage);
+    const contextOf = update => update.evidence_context || 'unspecified';
+    const contextLabel = context => ({'current-checkout':'Checkout at observation','historical-frozen':'Retained historical source',unspecified:'Unspecified / legacy'}[context] || context);
+    const selectedUpdates = row => row.current.filter(update => !$('context').value || contextOf(update)===$('context').value);
+    const selectedStages = row => new Set(selectedUpdates(row).map(update => update.stage));
+    const selectedHighest = row => selectedUpdates(row).reduce((stage,update) => rank(update.stage)>rank(stage) ? update.stage : stage,'unreported');
     const lines = row => Math.max(0,Number(row.body_lines) || 0);
     const weight = row => $('weight').value === 'lines' ? lines(row) : 1;
     const bankOf = row => { const match=String(row.source || '').match(/(?:^|\/)sm_([0-9a-f]{2})(?:\.|_)/i); if(match) return match[1].toUpperCase(); const address=String(row.original_address || '').replace(/^0x/i,''); return /^[0-9a-f]{6}$/i.test(address) ? address.slice(0,2).toUpperCase() : 'Other'; };
@@ -210,6 +213,9 @@
       const source=state.data.source || {};
       return Boolean(list(state.data.stale_update_ids).includes(update.id) || (update.source_revision && source.revision && update.source_revision !== source.revision) || (update.inventory_sha256 && source.inventory_sha256 && update.inventory_sha256 !== source.inventory_sha256));
     }
+    function replacements(update) { return state.data.updates.filter(candidate => list(candidate.supersedes).includes(update.id)); }
+    function superseded(update) { return list(state.data.superseded_update_ids).includes(update.id) || replacements(update).length>0; }
+    function excluded(update) { return stale(update) || superseded(update); }
     function safeLink(path,base) {
       if(typeof path !== 'string' || !path || /[\u0000-\u001f]/.test(path) || /^(?:javascript|data|vbscript):/i.test(path)) return null;
       try {
@@ -241,7 +247,7 @@
       for(const update of data.updates) for(const symbol of list(update.routines)) { if(!bySymbol.has(symbol)) bySymbol.set(symbol,[]); bySymbol.get(symbol).push(update); }
       state.rows=data.routines.map(row => {
         const updates=(bySymbol.get(row.symbol) || []).slice().sort((a,b) => Number(b.updated_at || 0) - Number(a.updated_at || 0));
-        const current=updates.filter(update => !stale(update));
+        const current=updates.filter(update => !excluded(update));
         const highest=current.reduce((stage,update) => rank(update.stage) > rank(stage) ? update.stage : stage,'unreported');
         return {...row,bank:bankOf(row),subsystem:subsystemOf(row),updates,current,highest,stages:new Set(current.map(update => update.stage))};
       }).sort((a,b) => a.bank.localeCompare(b.bank) || String(a.source).localeCompare(String(b.source)) || Number(a.line)-Number(b.line) || a.symbol.localeCompare(b.symbol));
@@ -257,18 +263,21 @@
       const warnings=list(data.notices).map(String); const staleCount=data.updates.filter(stale).length;
       if(staleCount) warnings.push(fmt(staleCount) + ' update(s) have stale source, inventory, or evidence. They remain visible in routine details and are excluded from current coverage.');
       $('notices').hidden=!warnings.length; $('notices').replaceChildren();
+      text('report-detail-count',warnings.length ? '· '+fmt(warnings.length)+' notices' : '');
       if(warnings.length) { const ul=el('ul'); ul.style.margin='0'; ul.style.paddingLeft='18px'; for(const warning of warnings) ul.append(el('li','',warning)); $('notices').append(ul); }
     }
     function renderOverview() {
       if(!state.data) return;
-      const target=$('milestone').value, reached=state.rows.filter(row => row.stages.has(target)), outstanding=state.rows.filter(row => !row.stages.has(target)), declared=state.rows.filter(row => list(row.declared_in).length);
+      const target=$('milestone').value, reached=state.rows.filter(row => selectedStages(row).has(target)), outstanding=state.rows.filter(row => !selectedStages(row).has(target)), declared=state.rows.filter(row => list(row.declared_in).length);
+      const contextCounts=['current-checkout','historical-frozen','unspecified'].map(context => contextLabel(context)+': '+fmt(state.rows.filter(row => row.current.some(update => update.stage===target && contextOf(update)===context)).length));
+      text('context-counts',LABELS[target]+' definitions by evidence context · '+contextCounts.join(' · ')+' · contexts can overlap');
       const bodyTotal=state.rows.reduce((sum,row) => sum+lines(row),0), reachedLines=reached.reduce((sum,row) => sum+lines(row),0), outstandingLines=outstanding.reduce((sum,row) => sum+lines(row),0);
       text('total',fmt(state.rows.length)); text('total-lines',fmt(bodyTotal) + ' C body lines · all definitions');
       text('reported-label','Reported ' + LABELS[target].toLowerCase());
       text('reported',fmt(reached.length)); text('reported-lines',percent(reachedLines,bodyTotal) + ' of body lines · ' + fmt(reachedLines) + ' lines');
       text('remaining-label','Missing selected stage report'); text('remaining',fmt(outstanding.length)); text('remaining-lines',fmt(outstandingLines) + ' body lines without that report');
       text('declared',fmt(declared.length)); text('declared-lines',fmt(declared.reduce((sum,row) => sum+lines(row),0)) + ' body lines · declarations only');
-      const counts=Object.fromEntries(STAGES.map(stage => [stage,0])); for(const row of state.rows) { if(row.highest==='unreported') counts.unreported+=weight(row); for(const stage of row.stages) if(stage in counts) counts[stage]+=weight(row); }
+      const counts=Object.fromEntries(STAGES.map(stage => [stage,0])); for(const row of state.rows) { if(selectedHighest(row)==='unreported') counts.unreported+=weight(row); for(const stage of selectedStages(row)) if(stage in counts) counts[stage]+=weight(row); }
       const total=state.rows.reduce((sum,row) => sum+weight(row),0); $('stack').replaceChildren(); $('legend').replaceChildren();
       const selected=el('div','segment'); selected.style.width=(total ? counts[target]/total*100 : 0)+'%'; selected.style.background='var('+COLORS[target]+')'; selected.title=LABELS[target]+': '+fmt(counts[target]); $('stack').append(selected);
       for(const stage of STAGES) {
@@ -279,7 +288,7 @@
       const banks=new Map(); for(const row of state.rows) { if(!banks.has(row.bank)) banks.set(row.bank,[]); banks.get(row.bank).push(row); }
       $('banks').replaceChildren();
       for(const [bank,rows] of banks) {
-        const bankTotal=rows.reduce((sum,row) => sum+weight(row),0), done=rows.filter(row => row.stages.has(target)), doneWeight=done.reduce((sum,row) => sum+weight(row),0);
+        const bankTotal=rows.reduce((sum,row) => sum+weight(row),0), done=rows.filter(row => selectedStages(row).has(target)), doneWeight=done.reduce((sum,row) => sum+weight(row),0);
         const button=el('button','bank' + (doneWeight ? '' : ' bank-empty')); button.type='button'; button.setAttribute('aria-pressed',String($('bank').value===bank)); button.setAttribute('aria-label','Bank '+bank+': '+fmt(done.length)+' of '+fmt(rows.length)+' definitions reported at selected milestone; filter bank');
         const header=el('div','bank-label'); header.append(el('strong','','Bank ' + bank),el('span','bank-percent',percent(doneWeight,bankTotal)));
         const bar=el('div','bank-bar'), fill=el('div','bank-fill'); fill.style.width=(bankTotal ? doneWeight/bankTotal*100 : 0)+'%'; bar.append(fill);
@@ -292,9 +301,10 @@
       if(query && ![row.symbol,row.original_address,row.source].some(value => String(value || '').toLowerCase().includes(query))) return false;
       if($('bank').value && row.bank!==$('bank').value) return false;
       if($('subsystem').value && row.subsystem!==$('subsystem').value) return false;
-      if(stage==='remaining' && row.stages.has($('milestone').value)) return false;
-      if(stage==='stale' && (!row.updates.length || row.current.length)) return false;
-      if(stage && stage!=='remaining' && stage!=='stale' && row.highest!==stage) return false;
+      if(stage==='remaining' && selectedStages(row).has($('milestone').value)) return false;
+      if(stage==='stale' && (!row.updates.some(update => (!$('context').value || contextOf(update)===$('context').value) && stale(update)) || selectedUpdates(row).length)) return false;
+      if(stage && stage!=='remaining' && stage!=='stale' && selectedHighest(row)!==stage) return false;
+      if($('context').value && stage!=='remaining' && stage!=='unreported' && !row.updates.some(update => contextOf(update)===$('context').value)) return false;
       if($('agent').value && !row.updates.some(update => update.agent===$('agent').value)) return false;
       if($('scope').value && !row.updates.some(update => update.scope===$('scope').value)) return false;
       return true;
@@ -303,7 +313,7 @@
     function renderRoutine(row) {
       const details=el('details','routine'); details.open=state.expanded.has(row.symbol); const summary=el('summary','routine-summary'); summary.dataset.symbol=row.symbol;
       const name=el('span','routine-name'); name.append(el('span','chevron','›'),el('span','symbol',row.symbol));
-      const source=String(row.source).split('/').pop()+':'+fmt(row.line), stage=el('span','routine-stage'); stage.append(badge(row.highest));
+      const source=String(row.source).split('/').pop()+':'+fmt(row.line), stage=el('span','routine-stage'); stage.append(badge(selectedHighest(row)));
       summary.append(name,el('span','routine-source muted mono',source),el('span','routine-address muted mono',row.original_address || '—'),el('span','routine-lines number muted',fmt(lines(row))),stage); details.append(summary);
       let built=false;
       const build=() => { if(built) return; built=true; details.append(renderDetail(row)); };
@@ -322,8 +332,9 @@
       right.append(el('h3','detail-title','All reported observations · '+fmt(row.updates.length)));
       if(!row.updates.length) right.append(el('p','muted','No agent update names this routine. Its source definition remains in the inventory.'));
       for(const update of row.updates) {
-        const card=el('article','observation'), header=el('div','observation-head'); card.dataset.stale=String(stale(update)); header.append(badge(update.stage)); if(stale(update)) header.append(el('span','stale-tag','Stale source / inventory / evidence')); else header.append(el('span','muted',time(update.updated_at))); card.append(header);
-        const metadata=el('dl'); pair(metadata,'Agent',update.agent); pair(metadata,'Scope',update.scope); pair(metadata,'Update',update.id); if(update.commit) pair(metadata,'Commit',el('span','mono',update.commit)); if(stale(update)) { pair(metadata,'Reported at',time(update.updated_at)); pair(metadata,'Source revision',el('span','digest',update.source_revision || 'Not recorded')); pair(metadata,'Inventory SHA',el('span','digest',update.inventory_sha256 || 'Not recorded')); } card.append(metadata);
+        const card=el('article','observation'), header=el('div','observation-head'); card.dataset.stale=String(excluded(update)); header.append(badge(update.stage)); if(superseded(update)) header.append(el('span','stale-tag','Superseded observation · excluded from counts')); else if(stale(update)) header.append(el('span','stale-tag','Stale source / inventory / evidence')); else header.append(el('span','muted',time(update.updated_at))); card.append(header);
+        const metadata=el('dl'); pair(metadata,'Agent',update.agent); pair(metadata,'Scope',update.scope); pair(metadata,'Evidence context',contextLabel(contextOf(update))); pair(metadata,'Update',update.id); if(update.commit) pair(metadata,'Commit',el('span','mono',update.commit)); if(stale(update)) { pair(metadata,'Reported at',time(update.updated_at)); pair(metadata,'Source revision',el('span','digest',update.source_revision || 'Not recorded')); pair(metadata,'Inventory SHA',el('span','digest',update.inventory_sha256 || 'Not recorded')); } card.append(metadata);
+        if(superseded(update)) { const ids=replacements(update).map(candidate => candidate.id); card.append(el('p','muted','Replaced by '+(ids.join(', ') || 'a retained correction')+'. This observation remains excluded even if replacement evidence later becomes stale.')); }
         const evidence=list(update.evidence); if(evidence.length) { card.append(el('h4','detail-title','Evidence references')); const ul=el('ul','path-list'); for(const item of evidence) { const li=el('li'); li.append(pathNode(item.path,state.data.root)); if(item.sha256) li.append(el('div','digest','SHA-256 '+item.sha256)); ul.append(li); } card.append(ul); } else card.append(el('p','muted','No evidence reference attached.'));
         const limits=list(update.limitations); if(limits.length) { card.append(el('h4','detail-title','Reported limitations')); const ul=el('ul'); for(const limit of limits) ul.append(el('li','',limit)); card.append(ul); }
         right.append(card);
@@ -341,11 +352,11 @@
     }
     function renderProvenance() {
       const source=state.data.source || {}, dl=el('dl'); pair(dl,'Revision',el('span','mono',source.revision || 'Not recorded')); pair(dl,'Inventory SHA',el('span','digest',source.inventory_sha256 || 'Not recorded')); if(source.identity_sha256) pair(dl,'Identity SHA',el('span','digest',source.identity_sha256)); pair(dl,'Source root',source.source_root || 'Not recorded'); pair(dl,'Inventory scope',typeof source.scope==='string' ? source.scope : JSON.stringify(source.scope || 'Not recorded')); if(source.source_verified_at) pair(dl,'Source checked',time(source.source_verified_at)); pair(dl,'Registry updated',time(state.data.updated_at)); pair(dl,'Agent updates',fmt(state.data.updates.length));
-      $('provenance').replaceChildren(dl,el('p','muted','Overview counts each exact reported stage independently. A verified, integrated, or live-exercised update does not automatically count as translated. The routine explorer shows each definition’s highest current stage for navigation, and its details retain every observation. Stale source, inventory, or evidence observations are excluded from current coverage. Agent and scope filters match any attached update, including stale observations.'),el('p','muted','Body-line weighting estimates the size of source definitions, including their formatting and comments. It measures source inventory, not engineering effort or gameplay completeness. Calls are lexical references; they do not establish complete dependencies or indirect-call coverage. Evidence paths and digests are recorded references, not browser-side verification.'));
+      $('provenance').replaceChildren(dl,el('p','muted','Overview counts each exact reported stage independently. A verified, integrated, or live-exercised update does not automatically count as translated. The routine explorer shows each definition’s highest matching stage for navigation, and its details retain every observation. Stale source, inventory, or evidence observations are excluded from coverage. Checkout at observation describes the source checked when that evidence was recorded; it does not authenticate later edits. Agent and scope filters match any attached update, including stale observations.'),el('p','muted','Body-line weighting estimates the size of source definitions, including their formatting and comments. It measures source inventory, not engineering effort or gameplay completeness. Calls are lexical references; they do not establish complete dependencies or indirect-call coverage. Evidence paths and digests are recorded references, not browser-side verification.'));
     }
-    function reset() { for(const id of ['search','bank','subsystem','stage','agent','scope']) $(id).value=''; state.page=0; renderOverview(); renderList(); }
+    function reset() { for(const id of ['search','bank','subsystem','stage','agent','scope','context']) $(id).value=''; state.page=0; renderOverview(); renderList(); }
     for(const id of ['search','bank','subsystem','stage','agent','scope']) $(id).addEventListener(id==='search' ? 'input' : 'change',() => { state.page=0; if(id==='bank') renderOverview(); renderList(); });
-    for(const id of ['milestone','weight']) $(id).addEventListener('change',() => { state.page=0; renderOverview(); renderList(); });
+    for(const id of ['milestone','weight','context']) $(id).addEventListener('change',() => { state.page=0; renderOverview(); renderList(); });
     $('reset').addEventListener('click',reset); $('show-remaining').addEventListener('click',() => { $('stage').value='remaining'; state.page=0; renderList(); });
     $('previous').addEventListener('click',() => { state.page=Math.max(0,state.page-1); renderList(); }); $('next').addEventListener('click',() => { state.page++; renderList(); });
     $('load').addEventListener('click',() => $('file').click());
