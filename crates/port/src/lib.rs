@@ -20,6 +20,7 @@ pub mod enemy_projectile_rendering;
 pub mod enemy_projectile_sparks;
 pub mod enemy_projectiles;
 pub mod enemy_rio;
+pub mod game_host;
 pub mod glass_shattering;
 pub mod mother_brain_bomb;
 pub mod n00b_tube;

@@ -1,0 +1,135 @@
+family = "game-host-projectile"
+domain = "Existing complete ten-slot HandleProjectile executes once through the shared synchronous host; native PLM terrain mutation, ordered bank88 HDMA allocation, full pool and frozen activation. Full WRAM/return/callback effects comparison; diagnostic Offline family, no live admission."
+rust_module = "crates/port/src/game_host.rs"
+bank = "sm_90.c"
+rust_imports = ["projectile_special", "room_scroll", "samus_projectile_frame"]
+callback_adapter = "game-host"
+plm_amount_context = "none"
+
+[rom]
+file = "/home/jim/sm-decomp/rom/sm.sfc"
+sha256 = "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72"
+
+[[routines]]
+symbol = "HandleProjectile"
+args = 0
+return = "void"
+
+[[routines.cases]]
+name = "power-bomb-fuse-allocates-two-hdma-in-order"
+fill = 0
+expected_return = 0
+minimum_callbacks = 2
+writes = [
+  { offset = 1957, data = [16, 0, 16, 0, 1, 0, 1, 0] },
+  { offset = 2926, data = [100, 0] },
+  { offset = 2946, data = [120, 0] },
+  { offset = 3106, data = [0, 4] },
+  { offset = 3146, data = [248, 255] },
+  { offset = 3166, data = [2, 0] },
+  { offset = 3186, data = [174, 176] },
+  { offset = 3206, data = [1, 0] },
+]
+
+[[routines.cases]]
+name = "power-bomb-fuse-tries-both-full-hdma-allocations"
+fill = 0
+expected_return = 0
+minimum_callbacks = 2
+writes = [
+  { offset = 1957, data = [16, 0, 16, 0, 1, 0, 1, 0] },
+  { offset = 2926, data = [100, 0] },
+  { offset = 2946, data = [120, 0] },
+  { offset = 3106, data = [0, 4] },
+  { offset = 3146, data = [248, 255] },
+  { offset = 3166, data = [2, 0] },
+  { offset = 3186, data = [174, 176] },
+  { offset = 3206, data = [1, 0] },
+  { offset = 6324, data = [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0] },
+]
+
+[[routines.cases]]
+name = "power-bomb-radius-native-plm-mutates-repeated-corner"
+fill = 0
+expected_return = 0
+minimum_callbacks = 1
+writes = [
+  { offset = 1957, data = [16, 0, 16, 0, 1, 0, 1, 0] },
+  { offset = 2926, data = [100, 0] },
+  { offset = 2946, data = [120, 0] },
+  { offset = 3106, data = [0, 4] },
+  { offset = 3146, data = [248, 255] },
+  { offset = 3166, data = [2, 0] },
+  { offset = 3186, data = [174, 176] },
+  { offset = 3298, data = [100, 0, 120, 0] },
+  { offset = 3310, data = [1, 0] },
+  { offset = 65774, data = [0, 64] },
+]
+
+[[routines.cases]]
+name = "frozen-power-bomb-activation-has-no-hdma-request"
+fill = 0
+expected_return = 0
+writes = [
+  { offset = 1957, data = [16, 0, 16, 0, 1, 0, 1, 0] },
+  { offset = 2680, data = [1, 0] },
+  { offset = 2926, data = [100, 0] },
+  { offset = 2946, data = [120, 0] },
+  { offset = 3106, data = [0, 4] },
+  { offset = 3146, data = [248, 255] },
+  { offset = 3166, data = [2, 0] },
+  { offset = 3186, data = [174, 176] },
+  { offset = 3206, data = [1, 0] },
+]
+
+[[routines]]
+symbol = "DrawPlayerExplosions2"
+args = 0
+return = "void"
+
+[[routines.cases]]
+name = "player-pass-draws-native-spritemap"
+fill = 0
+expected_return = 0
+writes = [
+  { offset = 2924, data = [100, 0] },
+  { offset = 2944, data = [100, 0] },
+  { offset = 3104, data = [16, 0] },
+  { offset = 3144, data = [251, 134] },
+  { offset = 3264, data = [105, 162] },
+]
+
+[[routines]]
+symbol = "sub_9382FD"
+args = 0
+return = "void"
+
+[[routines.cases]]
+name = "elevated-pass-draws-native-spritemap"
+fill = 0
+expected_return = 0
+writes = [
+  { offset = 2924, data = [100, 0] },
+  { offset = 2944, data = [100, 0] },
+  { offset = 3104, data = [16, 0] },
+  { offset = 3144, data = [251, 134] },
+  { offset = 3264, data = [105, 162] },
+]
+
+[[routines]]
+symbol = "DrawBombAndProjectileExplosions"
+args = 0
+return = "void"
+
+[[routines.cases]]
+name = "explosion-pass-draws-native-spritemap"
+fill = 0
+expected_return = 0
+writes = [
+  { offset = 2926, data = [100, 0] },
+  { offset = 2946, data = [100, 0] },
+  { offset = 3106, data = [0, 5] },
+  { offset = 3146, data = [251, 134] },
+  { offset = 3206, data = [1, 0] },
+  { offset = 3266, data = [105, 162] },
+]
