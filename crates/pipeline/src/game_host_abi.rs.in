@@ -1,0 +1,45 @@
+#[path=__MODULE__] mod family;
+unsafe extern "C" {
+ fn sm_rust_collision_spawn_plm_without_amount(ram:*mut u8,len:usize,header:u16)->i32;
+ fn sm_power_bomb_hdma(ram:*mut u8,len:usize,script:u16)->i32;
+ fn sm_rust_flush_vram(ram:*mut u8,len:usize)->i32;
+}
+struct CCallback;
+impl family::Host for CCallback {
+ fn request(&mut self,ram:&mut Wram<'_>,request:family::Request)->Result<family::Response,&'static str>{
+  let mut state:Vec<u8>=(0..WRAM_SIZE).map(|i|ram.byte(i)).collect();
+  let (value,response)=unsafe{match request {
+   family::Request::SpawnPlm{header}=>{
+    let value=sm_rust_collision_spawn_plm_without_amount(state.as_mut_ptr(),state.len(),header);
+    if !(0..=255).contains(&value){return Err("native PLM host failed");}
+    (value,family::Response::Plm(value as u8))
+   }
+   family::Request::SpawnHdma{script}=>{
+    let value=sm_power_bomb_hdma(state.as_mut_ptr(),state.len(),script);
+    if !(0..=65535).contains(&value){return Err("native HDMA host failed");}
+    (value,family::Response::Hdma(value as u16))
+   }
+   family::Request::FlushVram=>{
+    let value=sm_rust_flush_vram(state.as_mut_ptr(),state.len());
+    if value!=0{return Err("native VRAM host failed");}
+    (value,family::Response::VramFlushed)
+   }
+  }};
+  let _=value;
+  for(i,value)in state.into_iter().enumerate(){ram.set_byte(i,value);}
+  Ok(response)
+ }
+}
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn port_collision_call(ram:*mut u8,len:usize,rom:*const u8,rom_len:usize,id:u32,a:i32,b:i32)->i64{
+ if ram.is_null()||len!=WRAM_SIZE||rom.is_null()||rom_len==0||rom_len>0x400000{return -1;}
+ let Some(ram_end)=(ram as usize).checked_add(len)else{return -1;};
+ let Some(rom_end)=(rom as usize).checked_add(rom_len)else{return -1;};
+ if(ram as usize)<rom_end&&(rom as usize)<ram_end{return -1;}
+ let names=__NAMES__;
+ let Some(name)=names.get(id as usize)else{return -1;};
+ let mut state=unsafe{std::slice::from_raw_parts(ram,len)}.to_vec();
+ let rom=unsafe{std::slice::from_raw_parts(rom,rom_len)};
+ let result=std::panic::catch_unwind(std::panic::AssertUnwindSafe(||family::dispatch_host(&mut Wram::new(&mut state).unwrap(),rom,&mut CCallback,name,a,b)));
+ match result{Ok(Ok(value))=>{unsafe{std::ptr::copy_nonoverlapping(state.as_ptr(),ram,len)};i64::from(value)},_=>-1}
+}

@@ -898,6 +898,10 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
             verdict.remaining_c_gameplay_callbacks =
                 usize::try_from(verdict.cases.iter().map(|case| case.callbacks).sum::<u64>())?;
         }
+        if manifest.callback_adapter.as_deref() == Some("game-host") {
+            verdict.remaining_c_gameplay_callbacks =
+                usize::try_from(verdict.cases.iter().map(|case| case.callbacks).sum::<u64>())?;
+        }
         if plm {
             verdict.rejected_abi_inputs = 5;
             verdict.native_rust_spawn_calls = tasks.len();
@@ -936,6 +940,11 @@ pub fn authenticate(request: AuthenticateRequest) -> Result<Verdict> {
     let mut manifest: Manifest = object(&run.join("manifest.toml"))?;
     ensure!(manifest.family == verdict.family, "family identity differs");
     let implementation = verdict.implementation.as_ref().context("missing family implementation")?;
+    ensure!(
+        (manifest.callback_adapter.as_deref() == Some("game-host"))
+            == (implementation.callback_adapter.as_deref() == Some("game-host")),
+        "shared game host adapter identity differs"
+    );
     if let Some(execution) = &implementation.fixture_execution {
         ensure!(
             ["dependency-v1-fork", "dependency-v1-fresh"].contains(&execution.as_str()),
@@ -1109,7 +1118,7 @@ pub fn authenticate(request: AuthenticateRequest) -> Result<Verdict> {
                 && implementation.harness_sources.contains_key("tools/decomp/headless.c"),
             "callback host input missing"
         );
-        if implementation.callback_adapter.as_deref() == Some("power-bomb") {
+        if matches!(implementation.callback_adapter.as_deref(), Some("power-bomb" | "game-host")) {
             let original = fs::read_to_string(checkout.join("deps/snesrev-sm/src/sm_88.c"))?;
             let token = "uint16 SpawnHdmaObject(uint8 db, const void *p)";
             ensure!(
@@ -1117,6 +1126,27 @@ pub fn authenticate(request: AuthenticateRequest) -> Result<Verdict> {
                     && fs::read_to_string(run.join("sm_88-allocation-seam.c"))?
                         == original.replace(token, "uint16 PortActualSpawnHdmaObject(uint8 db, const void *p)"),
                 "power bomb allocation seam changed"
+            );
+        }
+        if implementation.callback_adapter.as_deref() == Some("game-host") {
+            for required in ["game_host_abi.rs.in", "game_host_dependency.c.in"] {
+                ensure!(
+                    implementation.harness_sources.contains_key(&format!("crates/pipeline/src/{required}")),
+                    "shared host input missing: {required}"
+                );
+            }
+            let original = fs::read_to_string(checkout.join("deps/snesrev-sm/src/sm_80.c"))?;
+            let token = "void NMI_ProcessVramWriteQueue(void)";
+            ensure!(
+                original.matches(token).count() == 1
+                    && fs::read_to_string(run.join("sm_80-vram-seam.c"))?
+                        == original.replace(token, "void PortActualNmiProcessVramWriteQueue(void)"),
+                "shared host VRAM seam changed"
+            );
+            ensure!(
+                verdict.remaining_c_gameplay_callbacks
+                    == usize::try_from(verdict.cases.iter().map(|case| case.callbacks).sum::<u64>())?,
+                "shared host delegated callback count differs"
             );
         }
         ensure!(
@@ -1185,7 +1215,8 @@ pub fn authenticate(request: AuthenticateRequest) -> Result<Verdict> {
             continue;
         }
         if callbacks {
-            let checked = callback::check(&directory, fixture)?;
+            let checked =
+                callback::check(&directory, fixture, manifest.callback_adapter.as_deref() == Some("game-host"))?;
             ensure!(
                 checked.results == record.results && checked.callbacks == record.callbacks,
                 "retained callback result differs"

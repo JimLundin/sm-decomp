@@ -62,6 +62,14 @@ manifest = "tools/port/samus-projectile-frame.toml"
 kind = "ridley-subsystem"
 manifest = "tools/port/ridley-subsystem.toml"
 
+[families.game-host-projectile]
+kind = "callback"
+manifest = "tools/port/game-host-projectile.toml"
+
+[families.game-host-room-scroll]
+kind = "callback"
+manifest = "tools/port/game-host-room-scroll.toml"
+
 [profiles]
 translated-subsystems = ["projectile-trails", "camera-scroll", "room-scroll", "observed-ridley-instructions", "samus-projectile-frame"]
 all = [

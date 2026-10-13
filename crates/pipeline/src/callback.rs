@@ -12,6 +12,12 @@ pub fn abi(manifest: &Manifest, module: &Path) -> Result<String> {
     let power_bomb = module.file_name().is_some_and(|n| n == "power_bomb.rs")
         || manifest.callback_adapter.as_deref() == Some("power-bomb");
     let names = manifest.routines.iter().map(|r| r.symbol.as_str()).collect::<Vec<_>>();
+    if manifest.callback_adapter.as_deref() == Some("game-host") {
+        ensure!(!amount, "shared game host requires PLM without collision amount");
+        return Ok(include_str!("game_host_abi.rs.in")
+            .replace("__MODULE__", &format!("{module:?}"))
+            .replace("__NAMES__", &format!("{names:?}")));
+    }
     Ok(include_str!("callback_abi.rs.in")
         .replace("__MODULE__", &format!("{module:?}"))
         .replace("__PLM_HOST__", if power_bomb { "crate::projectile_special::Host" } else { "family::Host" })
@@ -34,9 +40,10 @@ pub fn build(
     run: &Path,
 ) -> Result<Implementation> {
     let module = fs::canonicalize(family::source_path(checkout, &manifest.rust_module))?;
-    let power_bomb = request.adapter == "power-bomb";
+    let game_host = manifest.callback_adapter.as_deref() == Some("game-host");
+    let power_bomb = request.adapter == "power-bomb" || game_host;
     let mut manifest = manifest.clone();
-    if power_bomb {
+    if power_bomb && !game_host {
         manifest.callback_adapter = Some("power-bomb".into());
     }
     let mut branches = Vec::new();
@@ -95,7 +102,14 @@ pub fn build(
         run.join("oracle.c"),
         include_str!("callback_host.c.in")
             .replace("__HEADLESS__", &format!("{:?}", checkout.join("tools/decomp/headless.c")))
-            .replace("__HDMA_HOST__", if power_bomb { include_str!("power_bomb_host.c.in") } else { "" })
+            .replace(
+                "__HDMA_HOST__",
+                &format!(
+                    "{}{}",
+                    if power_bomb { include_str!("power_bomb_host.c.in") } else { "" },
+                    if game_host { include_str!("game_host_dependency.c.in") } else { "" }
+                ),
+            )
             .replace("__BRANCHES__", &branches.join("else ")),
     )?;
     let root = &request.root;
@@ -136,7 +150,22 @@ pub fn build(
             units.iter_mut().find(|p| p.file_name().is_some_and(|n| n == "sm_88.c")).context("bank88 missing")?;
         *bank = seam;
     }
+    if game_host {
+        let original = fs::read_to_string(source.join("src/sm_80.c"))?;
+        let token = "void NMI_ProcessVramWriteQueue(void)";
+        ensure!(original.matches(token).count() == 1, "VRAM definition seal not found");
+        let seam = run.join("sm_80-vram-seam.c");
+        fs::write(&seam, original.replace(token, "void PortActualNmiProcessVramWriteQueue(void)"))?;
+        let bank =
+            units.iter_mut().find(|p| p.file_name().is_some_and(|n| n == "sm_80.c")).context("bank80 missing")?;
+        *bank = seam;
+    }
     command.extend(units.iter().map(|p| p.to_string_lossy().into_owned()));
+    if game_host {
+        for symbol in ["WriteReg", "ppu_write", "snes_read", "snes_write"] {
+            command.push(format!("-Wl,--wrap={symbol}"));
+        }
+    }
     command.extend([
         run.join("oracle.c").to_string_lossy().into_owned(),
         run.join("libcollision.a").to_string_lossy().into_owned(),
@@ -171,6 +200,8 @@ pub fn build(
         ("callback_host.c.in", include_str!("callback_host.c.in")),
         ("power_bomb_abi.rs.in", include_str!("power_bomb_abi.rs.in")),
         ("power_bomb_host.c.in", include_str!("power_bomb_host.c.in")),
+        ("game_host_abi.rs.in", include_str!("game_host_abi.rs.in")),
+        ("game_host_dependency.c.in", include_str!("game_host_dependency.c.in")),
         ("family.rs", include_str!("family.rs")),
         ("batch.rs", include_str!("batch.rs")),
         ("cleanup.rs", include_str!("cleanup.rs")),
@@ -191,7 +222,16 @@ pub fn build(
         fixture_execution: Some("dependency-v1-fresh".into()),
         manifest: None,
         dependency_contract: "rust-callback-v2".into(),
-        callback_adapter: Some(if power_bomb { "power-bomb" } else { "callback" }.into()),
+        callback_adapter: Some(
+            if game_host {
+                "game-host"
+            } else if power_bomb {
+                "power-bomb"
+            } else {
+                "callback"
+            }
+            .into(),
+        ),
         source_root: checkout.into(),
         rust_dependencies: dependencies,
         harness_sources: harness,
@@ -228,7 +268,57 @@ fn callback_files(directory: &Path) -> Result<BTreeMap<String, Vec<u8>>> {
     Ok(files)
 }
 
-pub fn check(directory: &Path, fixture: &Case) -> Result<CaseRecord> {
+fn check_game_host_log(log: &str, count: u64) -> Result<()> {
+    let mut requests = 0_u64;
+    let mut vram = None;
+    for line in log.lines() {
+        let words = line.split_whitespace().collect::<Vec<_>>();
+        let number = |at: usize| -> Result<u64> { Ok(words.get(at).context("truncated game host effect")?.parse()?) };
+        match words.first().copied() {
+            Some("vram-begin") => {
+                ensure!(words.len() == 2 && vram.is_none(), "invalid nested VRAM request");
+                requests += 1;
+                ensure!(number(1)? == requests, "VRAM request order differs");
+                vram = Some(requests);
+            }
+            Some("vram-end") => {
+                ensure!(words.len() == 2 && vram == Some(number(1)?), "VRAM request return differs");
+                vram = None;
+            }
+            Some("hdma") => {
+                ensure!(words.len() == 6 && vram.is_none(), "invalid HDMA host effect");
+                for at in 1..6 {
+                    number(at)?;
+                }
+                requests += 1;
+            }
+            Some("register" | "bus-read" | "bus-write") => {
+                ensure!(words.len() == 3, "invalid hardware host effect");
+                number(1)?;
+                ensure!(number(2)? <= 255, "hardware byte outside range");
+            }
+            Some("ppu") => {
+                ensure!(
+                    words.len() == 4 && number(1)? <= 1 && number(2)? <= 255 && number(3)? <= 255,
+                    "invalid PPU host effect"
+                );
+            }
+            Some(_) => {
+                ensure!(words.len() == 4 && vram.is_none(), "invalid PLM host effect");
+                number(0)?;
+                words[1].parse::<i32>()?;
+                words[2].parse::<i32>()?;
+                ensure!(number(3)? <= 255, "PLM result outside range");
+                requests += 1;
+            }
+            None => anyhow::bail!("empty game host effect"),
+        }
+    }
+    ensure!(vram.is_none() && requests == count, "game host request extent differs");
+    Ok(())
+}
+
+pub fn check(directory: &Path, fixture: &Case, game_host: bool) -> Result<CaseRecord> {
     let c = metrics(directory, "c")?;
     let rust = metrics(directory, "rust")?;
     ensure!(c == rust, "actual callback metrics mismatch");
@@ -246,7 +336,11 @@ pub fn check(directory: &Path, fixture: &Case) -> Result<CaseRecord> {
     ensure!(c_files == rust_files, "ordered actual C callback state/argument sequence mismatch");
     ensure!(c_files.len() == 1 + 2 * count as usize, "callback record extent missing");
     let log = String::from_utf8(c_files.get("callbacks.txt").context("callback log missing")?.clone())?;
-    ensure!(log.lines().count() == count as usize, "callback log count differs");
+    if game_host {
+        check_game_host_log(&log, count)?;
+    } else {
+        ensure!(log.lines().count() == count as usize, "callback log count differs");
+    }
     for index in 1..=count {
         for phase in ["before", "after"] {
             ensure!(
@@ -283,7 +377,7 @@ pub fn check(directory: &Path, fixture: &Case) -> Result<CaseRecord> {
 
 pub fn case(
     _request: &VerifyRequest,
-    _manifest: &Manifest,
+    manifest: &Manifest,
     routine: &Routine,
     fixture: &Case,
     index: usize,
@@ -313,7 +407,7 @@ pub fn case(
             subject,
         )?;
     }
-    let mut record = check(&directory, fixture)?;
+    let mut record = check(&directory, fixture, manifest.callback_adapter.as_deref() == Some("game-host"))?;
     record.routine = symbol.into();
     record.name = name.into();
     Ok(record)
@@ -322,6 +416,15 @@ pub fn case(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn game_host_log_preserves_ordered_hardware_and_requires_complete_vram_requests() {
+        let log =
+            "vram-begin 1\nregister 8469 128\nppu 1 21 128\nbus-read 82944 12\nvram-end 1\nhdma 136 64 40 35534 4\n";
+        assert!(check_game_host_log(log, 2).is_ok());
+        assert!(check_game_host_log(&log.replace("vram-end 1", "vram-end 2"), 2).is_err());
+        assert!(check_game_host_log("vram-begin 1\nregister 1 256\nvram-end 1\n", 1).is_err());
+        assert!(check_game_host_log("vram-begin 1\n", 1).is_err());
+    }
     #[test]
     fn absent_amount_uses_a_distinct_callback_signature_and_invalid_context_fails() {
         let source = abi(
