@@ -1,0 +1,67 @@
+
+running 23 tests
+test canonical_mutation_cannot_start_without_prepared_authority ... ok
+test input_changes_and_missing_file_inputs_remain_uncertainty ... ok
+test interrupted_ticket_publication_keeps_claim_for_reconciliation ... ok
+test existing_tickets_and_blockers_are_authoritative ... ok
+test empty_affected_frontier_retires_unclaimed_work_without_granting_verification ... ok
+test concurrent_efforts_in_main_and_worktree_cannot_overlap_ancestor_paths ... ok
+test incomplete_scope_research_never_resolves_originating_task ... ok
+test no_work_frontier_does_not_satisfy_a_verification_blocker ... ok
+test empty_frontier_preserves_active_old_claim_until_checked_recovery ... ok
+test plan_is_read_only_and_reservation_survives_restart ... ok
+test completion_retry_rechecks_the_same_attempt_sealed_evidence ... ok
+test saved_verification_checks_discovery_namespace_even_without_new_seeds ... ok
+test no_slots_do_not_claim_and_exact_launch_failure_is_idempotent ... ok
+test owned_source_edits_do_not_invalidate_submission_but_immutable_inputs_do ... ok
+test symlink_alias_cannot_bypass_repository_writable_ownership ... ok
+test pull_order_honors_local_ticket_numbers_and_observed_candidate_ranking ... ok
+test recovery_requires_matching_stopped_observation_and_new_attempt ... ok
+test revised_completed_work_retains_old_evidence_and_rejects_replayed_completion ... ok
+test two_coordinators_and_worktree_share_exclusive_reservation ... ok
+test stale_completion_cannot_expand_ownership_or_complete_revised_work ... ok
+test separate_efforts_keep_submitted_paths_and_duplicate_ticket_identity_held ... ok
+test researching_existing_task_transfers_claim_and_resolves_only_after_integration ... ok
+test promotion_path_conflicts_and_integration_preserve_submission_lifecycle ... ok
+
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.39s
+
+
+running 17 tests
+test failed_or_started_native_job_cannot_use_infrastructure_record ... ok
+test handoff_cannot_escape_shared_directory_or_resume_unreviewed_command ... ok
+test implementation_start_rejects_committed_foreign_path ... ok
+test infrastructure_plan_is_read_only_and_rejects_native_scope_or_raw_job ... ok
+test legacy_adapter_whitelists_exact_request_rows_not_receipts_or_nested_artifacts ... ok
+test changed_evidence_or_attempt_rejects_resume_without_releasing_ownership ... ok
+test adopted_handoff_retains_exact_surviving_child_and_original_authority_history ... ok
+test checkpoint_commits_only_owned_files_and_retry_reconstructs_exact_next_command ... ok
+test interrupted_commit_before_handoff_publication_is_recovered_without_another_commit ... ok
+test stale_handoff_generation_requires_checked_adoption ... ok
+test main_and_assigned_worktree_inspect_same_queue_and_start_retry_repairs_markdown ... ok
+test start_recovers_running_owner_when_publication_was_interrupted ... ok
+test unapproved_staged_file_is_rejected_before_index_or_commit_writes ... ok
+test reviewed_submission_runs_nonzero_gate_and_recovers_result_publication_retry ... ok
+test infrastructure_cycle_integrates_frozen_source_after_retiring_worker ... ok
+test serial_integration_start_accepts_prior_disjoint_merge_and_keeps_source_frozen ... ok
+test cli_inspection_is_read_only_and_rejects_mismatched_operation ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.47s
+
+
+running 12 tests
+test claimed_ticket_control_requires_exact_retained_owner_and_disjoint_competitor ... ok
+test bridge_hash_source_verification_and_markdown_fences_are_enforced ... ok
+test session_process ... ignored
+test activation_checks_drill_source_controls_and_keeps_arbitrary_efforts_fenced ... ok
+test prepared_policy_requires_real_sessions_and_blocks_production_and_arbitrary_efforts ... ok
+test initial_legacy_integrator_requires_checked_stop_and_retains_exact_original_tuple ... ok
+test checked_maintenance_exception_is_exact_and_retains_original_legacy_fence ... ok
+test managed_capacity_is_shared_between_admitted_efforts ... ok
+test managed_owner_stop_requires_exact_child_thread_and_preserves_old_attempt_history ... ok
+test submitted_only_legacy_integrator_requires_checked_stop_without_releasing_submission ... ok
+test explicit_integrator_keeps_first_submitter_out_and_fences_old_integrator_retries ... ok
+test stopped_parent_transfer_preserves_live_child_claim_and_rejects_omissions ... ok
+
+test result: ok. 11 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.36s
+

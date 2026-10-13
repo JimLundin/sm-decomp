@@ -1,0 +1,5 @@
+   Compiling pipeline v0.1.0 (/tmp/sm-decomp-completed-integration-retry-20261013/crates/pipeline)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 13.04s
+     Running tests/assignment_queue.rs (/tmp/sm-decomp-completed-retry-target-20261013/debug/build/pipeline/61d97b4e74205b3f/out/assignment_queue-61d97b4e74205b3f)
+     Running tests/decomp_sessions.rs (/tmp/sm-decomp-completed-retry-target-20261013/debug/build/pipeline/f1fc6a3d8ca11f14/out/decomp_sessions-f1fc6a3d8ca11f14)
+     Running tests/session_authority.rs (/tmp/sm-decomp-completed-retry-target-20261013/debug/build/pipeline/1af6da5c442e56d8/out/session_authority-1af6da5c442e56d8)

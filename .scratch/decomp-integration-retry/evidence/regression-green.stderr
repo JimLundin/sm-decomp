@@ -1,0 +1,3 @@
+   Compiling pipeline v0.1.0 (/tmp/sm-decomp-completed-integration-retry-20261013/crates/pipeline)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 10.94s
+     Running tests/decomp_sessions.rs (/tmp/sm-decomp-completed-retry-target-20261013/debug/build/pipeline/f1fc6a3d8ca11f14/out/decomp_sessions-f1fc6a3d8ca11f14)

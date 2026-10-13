@@ -1,0 +1,36 @@
+schema = "decomp-integration-retry-handoff-v1"
+status = "worker-verified"
+agent = "/root/drill_review"
+session_id = "01a13504-de1d-7941-b9ab-58f29e67cfee"
+checkout = "/tmp/sm-decomp-completed-integration-retry-20261013"
+branch = "decomp-completed-integration-retry-20261013"
+baseline = "2d59536c059a1ca9c31d9278bff2d9222eafa56c"
+commit = "57f93c5ce4e6adac2dfe181b852d4aad6e0776bd"
+writable_paths = ["crates/pipeline/src/session.rs", "crates/pipeline/tests/decomp_sessions.rs"]
+target = "/tmp/sm-decomp-completed-retry-target-20261013"
+shared_pipeline_root = "/home/jim/sm-decomp/out/pipeline"
+shared_pipeline_workers = 4
+active_processes = []
+next_action = "Root reviews/cherry-picks scoped commit, builds/freezes new source and runs fresh actual drill. Preserve target until final binary retained; retire integrated worker worktree after source retention."
+limitations = ["Historical completed replay grants no acceptance to later source", "Actual corrected CLI/drill pending root integration", "Worker target and worktree retained for root final build/integration"]
+
+[verification]
+red = "regression-red.stdout: cached infrastructure source changed, exit101, 2.64s"
+probe = "regression-probe.stdout: same-source retired retry and unchanged seals pass; A-after-B fails, exit101, 2.35s"
+green = "regression-green.stdout: 1 passed, 2.90s"
+controls = "regression-controls.stdout: 1 passed, 6.20s"
+adjacent = "adjacent-corrected.stdout: assignment_queue23, decomp_sessions17, session_authority11 passed; 1 ignored helper"
+formatting = "fmt.stdout/stderr empty, exit0; git diff --check passed"
+
+[cleanup]
+status = "complete-for-worker-evidence"
+normal = "/home/jim/sm-decomp/.scratch/decomp-integration-retry/cleanup1.toml"
+deduplicate = "/home/jim/sm-decomp/.scratch/decomp-integration-retry/cleanup2.toml"
+reclaimed_bytes = 0
+available_bytes = 219924590592
+remaining_action = "Root retires worker worktree and final build target after integrated source/binary retention."
+
+[diagnosis]
+hypotheses = ["Current HEAD equality blocks cached historical acceptance", "Worktree retirement loses source reference", "Request or evidence changes"]
+confirmed = "Current HEAD equality; retired same-source retry and unchanged-byte probes ruled out the alternatives"
+

@@ -1,0 +1,33 @@
+error: no test target named `assignment` in `pipeline` package
+help: available test targets:
+    affected
+    assignment_queue
+    baseline
+    benchmark
+    callback
+    cleanup
+    decomp
+    decomp_sessions
+    evidence_metrics
+    family
+    hdma_probe
+    iteration_demonstrations
+    live
+    live_frames
+    metrics
+    no_python
+    observations
+    packed
+    parity
+    pattern_promotion
+    patterns
+    plm_spawn
+    prefix
+    processes
+    producer_metrics
+    readiness_feedback
+    readiness_interrupt
+    resource_metrics
+    routine_jobs
+    selection
+    session_authority

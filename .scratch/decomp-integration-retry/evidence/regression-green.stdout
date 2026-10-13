@@ -1,0 +1,6 @@
+
+running 1 test
+test serial_integration_start_accepts_prior_disjoint_merge_and_keeps_source_frozen ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 16 filtered out; finished in 2.90s
+
