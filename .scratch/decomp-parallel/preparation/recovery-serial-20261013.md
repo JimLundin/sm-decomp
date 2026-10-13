@@ -1,6 +1,6 @@
 # Final preparation recovery
 
-Status: claimed; serial integration defect fix and fresh drill required
+Status: serial integration fixed and integrated; fresh drill active
 Blocked by: 04
 Coordinator: `01a134cd-dafb-7e50-8284-f285a905e05b`
 Previous coordinator: `01a13460-4aa9-7fe0-865e-a8f54ffca310`
@@ -34,3 +34,32 @@ drill, validates production readiness in a private namespace with fresh real
 owner observations, integrates source/docs/evidence and completes measured
 cleanup. Old drill evidence stays immutable and is not attributed to new source.
 Gameplay swarm launch remains the user's separate later instruction.
+
+## Recovered implementation checkpoint
+
+The serial fix is committed at `2d59536c059a1ca9c31d9278bff2d9222eafa56c`
+and integrated in main as `23fde6a`. All 51 active session/assignment/authority
+controls pass; the regression reproduced the exact prior-file rejection twice
+before the fix. Independent read-only review found no actionable issue. Source
+and validation pointers are retained in `serial-fix-handoff.md` and its evidence.
+
+The fresh execution subject is the clean coordinator-owned worktree
+`/tmp/sm-decomp-preparation-final-source-20261013`, branch
+`decomp-preparation-final-source-20261013`, at that full source commit. Its
+fingerprint is `e5e412053f6dbe2cbadaba077192e885684fbb9f2699cafeaa6acd694879d78d`.
+The locked/offline build passed in 45.57 seconds; executable SHA-256 is
+`df6eb4dc3a9fd69e5d5923b5c22f34dea7b434cd7ee87f1b69085cd9e9431c84`,
+retained in `../drill-final/bin/sm-pipeline` with `engine-build.toml`.
+The integrated implementer worktree and private target are retired; exact
+measurements and post-retirement authentication are in
+`serial-fix-evidence/integrator-cleanup.md`.
+
+Fresh actual sessions A `01a134dc-6c44-7802-9598-41b7f6e0351f` and B
+`01a134dc-6c44-78d1-8168-fc21f3499b55` own only the new isolated fixture
+`/tmp/sm-decomp-concurrency-drill-final-20261013`, effort
+`concurrency-drill-final`. Durable launch/source/control state is in
+`../drill-final/handoff.md` and that fixture's `.scratch/drill-control`.
+Final readiness uses the separately sealed `readiness-final` successor bound
+to this actual root. The production Ceres ledger and original claims remain
+unchanged. Completion still requires both sequential authenticated integrations,
+all eleven controls, root namespace validation and final cleanup.
