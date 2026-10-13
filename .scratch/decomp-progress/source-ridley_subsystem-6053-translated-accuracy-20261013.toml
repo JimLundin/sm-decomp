@@ -1,0 +1,82 @@
+agent = "/root/coverage_finish"
+commit = "3ce28ba58aba319b60bbc949153baafd4433132e"
+evidence_context = "current-checkout"
+id = "source-ridley_subsystem-6053-translated-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Maintained executable Rust implementations mapped through explicit dispatch branches, numeric selectors or reviewed private aliases to exact pinned C definitions. Source correspondence establishes translated coverage only; bounded branches, delegated C/host effects and per-module limitations are retained in source-coverage-map.json.",
+    "This observation does not grant verification, integration or live exercise. Missing routine reports and source-only mappings remain distinct from missing implementations; documentation literals and forwarding references are excluded unless their implementation owner was mapped separately.",
+]
+routines = [
+    "CallRidleyFunc",
+    "CeresRidley_Hurt",
+    "Ridley_B455",
+    "Ridley_Func_10",
+    "Ridley_Func_103",
+    "Ridley_Func_11",
+    "Ridley_Func_114",
+    "Ridley_Func_12",
+    "Ridley_Func_121",
+    "Ridley_Func_122",
+    "Ridley_Func_124",
+    "Ridley_Func_125",
+    "Ridley_Func_126",
+    "Ridley_Func_129",
+    "Ridley_Func_13",
+    "Ridley_Func_14",
+    "Ridley_Func_15",
+    "Ridley_Func_16",
+    "Ridley_Func_19",
+    "Ridley_Func_2",
+    "Ridley_Func_20",
+    "Ridley_Func_21",
+    "Ridley_Func_22",
+    "Ridley_Func_23",
+    "Ridley_Func_26",
+    "Ridley_Func_28",
+    "Ridley_Func_29",
+    "Ridley_Func_3",
+    "Ridley_Func_30",
+    "Ridley_Func_31",
+    "Ridley_Func_32",
+    "Ridley_Func_33",
+    "Ridley_Func_33b",
+    "Ridley_Func_34",
+    "Ridley_Func_35",
+    "Ridley_Func_36",
+    "Ridley_Func_37",
+    "Ridley_Func_38",
+    "Ridley_Func_39",
+    "Ridley_Func_3b",
+    "Ridley_Func_4",
+    "Ridley_Func_42",
+    "Ridley_Func_43",
+    "Ridley_Func_44",
+    "Ridley_Func_45",
+    "Ridley_Func_46",
+    "Ridley_Func_47",
+    "Ridley_Func_5",
+    "Ridley_Func_6",
+    "Ridley_Func_8",
+    "Ridley_Func_9",
+    "Ridley_Func_98",
+    "Ridley_Func_99",
+    "Ridley_Hurt",
+    "Ridley_Main",
+    "Ridley_Powerbomb",
+    "Ridley_Shot",
+    "Samus_DealDamage",
+    "Shitroid_Func_2",
+    "SuitDamageDivision",
+    "sub_A6DF59",
+    "sub_A6DF60",
+]
+scope = "Maintained ridley_subsystem implementation mapping"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "translated"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/crates/port/src/ridley_subsystem.rs"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/source-coverage-map.json"

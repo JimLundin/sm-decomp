@@ -1,0 +1,142 @@
+agent = "/root/coverage_finish"
+evidence_context = "historical-frozen"
+id = "historical-enemy_projectile_instructions-6053-verified-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Retained historical source and all sealed artifacts were hashed during recovery. These named fixture roots passed 19849 actual-C pairs across retained runs; duplicate domains may occur. Candidate/dependency snapshots and manifests are retained and C pin matches the current inventory.",
+    "Historical fixture domains only. This import does not authenticate current checkout dependencies, current integration, original-ROM parity, full-game completion, internal calls or synthetic dispatch. Exact module digests and per-run closure checks are in retained-coverage-authentication.json.",
+]
+routines = [
+    "EprojInstr_A3BE",
+    "EprojInstr_Add12ToY",
+    "EprojInstr_CalculateDirectionTowardsSamus",
+    "EprojInstr_CallFunc",
+    "EprojInstr_ClearPreInstr",
+    "EprojInstr_D1B6",
+    "EprojInstr_D1C7",
+    "EprojInstr_DC5A",
+    "EprojInstr_Delete",
+    "EprojInstr_DisableCollisionsWithSamus",
+    "EprojInstr_ECE3",
+    "EprojInstr_ED17",
+    "EprojInstr_Goto",
+    "EprojInstr_GotoIfFunc1",
+    "EprojInstr_GotoWithProbability25",
+    "EprojInstr_MotherBrainPurpleBreathIsActive",
+    "EprojInstr_MoveY_Minus4",
+    "EprojInstr_QueueSfx2_24",
+    "EprojInstr_QueueSfx2_9",
+    "EprojInstr_QueueSfx2_B",
+    "EprojInstr_ResetXYpos2",
+    "EprojInstr_SetPreInstrA",
+    "EprojInstr_SetPreInstrB",
+    "EprojInstr_SetPreInstr_",
+    "EprojPowerBombCollision",
+    "EprojPreInit_MotherBrainsDeathExplosion_0",
+    "EprojPreInstr_C84D",
+    "EprojPreInstr_CeresElevatorPad",
+    "EprojPreInstr_CeresElevatorPlatform",
+    "EprojPreInstr_MotherBrainRainbowBeam",
+    "EprojPreInstr_MotherBrainsRainbowBeamExplosion",
+    "EprojPreInstr_TimeBombSetJapaneseText",
+    "EprojRunAll",
+    "Eproj_FuncE722",
+    "Eproj_FuncE73E_MoveXY",
+    "Eproj_MotherBrainRoomTurretBullets_Func2",
+    "Eproj_SetXvelRandom",
+    "Eproj_SetYvelRandom",
+    "MoveEprojWithVelocity",
+    "MoveEprojWithVelocityX",
+    "MoveEprojWithVelocityY",
+    "RandomDropRoutine",
+    "SpawnEprojWithRoomGfx",
+    "SpawnMotherBrainDeathBeam",
+    "sub_86CFD5",
+    "sub_86CFE6",
+    "sub_86CFF8",
+    "sub_86DCC3",
+]
+scope = "Retained enemy_projectile_instructions fixture roots"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "verified"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/ceres-pad/20261011T081730.543614Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/ceres-platform/20261011T072815.113664Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/draygon-attached-gunk/20261011T043251.095224Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/enemy-drop-selection/20261011T060314.778547Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/enemy-projectile-collision-frames/20261010T231643.694004Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/floater-spike-motion/20261011T104124.492344Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/kago-bug-callbacks/20261011T103930.237180Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/kago-bug-launch/20261011T103931.429610Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/ki-hunter-acid-callbacks/20261011T103414.978335Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/mother-brain-drool-tracking/20261011T102158.514192Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/mother-brain-explosion-tracking/20261011T102400.372464Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/mother-brain-rainbow-tracking/20261011T101911.560655Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/mother-brain-turret-projectiles/20261011T041757.660581Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/plant-spike-motion/20261011T104704.598616Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/projectile-boss-state-instructions/20261011T100918.324693Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/projectile-death-beam-call/20261011T101508.038060Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/projectile-death-beam/20261011T101318.100020Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/projectile-direction-samus/20261011T100732.971866Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/projectile-fixed-sounds/20261011T093135.247259Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/projectile-native-state-leaves/20261011T100319.338369Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/projectile-script-leaves/20261011T075927.005484Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/projectile-sprite-spawns/20261011T093405.420038Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/projectile-state-instruction-gaps/20261011T100540.847127Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/robot-laser-collision/20261011T104405.931746Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/spore-stalk-tracking/20261011T111131.382886Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/time-bomb-text/20261011T103048.164943Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/retained-coverage-authentication.json"

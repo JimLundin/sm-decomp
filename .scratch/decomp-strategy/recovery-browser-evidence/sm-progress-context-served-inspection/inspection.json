@@ -1,0 +1,17 @@
+{
+  "checks": true,
+  "desktop": {
+    "metrics_top": 258.4375,
+    "notices": 20149,
+    "scroll_width": 1345,
+    "title": "Super Metroid · Translation progress",
+    "total": "6,053",
+    "viewport": 1360
+  },
+  "phone": {
+    "metrics_top": 410.375,
+    "scroll_width": 390,
+    "width": 390
+  },
+  "url": "http://127.0.0.1:4185/index.html"
+}

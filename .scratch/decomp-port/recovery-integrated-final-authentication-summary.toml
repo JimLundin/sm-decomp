@@ -1,0 +1,17 @@
+status = "post-cleanup-authenticated"
+batch = "/home/jim/sm-decomp/out/recovery-session/integrated/batch.toml"
+automatic_dedup_bytes = 4522901504
+automatic_snapshots_checked = 64952
+explicit_ordinary_bytes = 0
+explicit_dedup_bytes = 0
+explicit_snapshots_checked = 63551
+retired_worktrees = true
+source_context = "/tmp/sm-recovery-bounded-source"
+namespace_camera_authentication = "pass"
+root_family_authentication = ["projectile-trails", "camera-scroll", "room-scroll", "samus-projectile-frame", "observed-ridley-instructions", "observed-ridley-instructions-captured"]
+root_cases = [3316, 467, 1166, 476, 1804, 90]
+other_family_authentication = ["observed-projectile-initializers", "observed-projectile-frame-boundaries", "observed-projectile-ownership", "enemy-projectile-rendering", "enemy-projectile-detect-samus", "enemy-projectile-detect-projectiles"]
+other_cases = [5409, 577, 1840, 1448, 2310, 2040]
+total_cases = 20943
+other_authentication_summary = "/home/jim/sm-decomp/.scratch/decomp-port/progress-integrated-first-six-authentication-20261013.md"
+live_stages = "pending independent trail and full composed replay gates"

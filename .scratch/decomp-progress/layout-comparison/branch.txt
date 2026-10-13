@@ -1,0 +1,4 @@
+Branch: throwaway/progress-layout-comparison-20261013
+Commit: e574fef4fc1c5ee006cfc02d550dd815199adc00
+Base: 66cde488fec48a92d28c9cf1f5394e5ab1292f1e
+Capture uses a temporary index; shared checkout and index untouched.

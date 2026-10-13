@@ -1,0 +1,25 @@
+agent = "/root/coverage_finish"
+commit = "3ce28ba58aba319b60bbc949153baafd4433132e"
+evidence_context = "current-checkout"
+id = "source-mother_brain_bomb-6053-translated-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Maintained executable Rust implementations mapped through explicit dispatch branches, numeric selectors or reviewed private aliases to exact pinned C definitions. Source correspondence establishes translated coverage only; bounded branches, delegated C/host effects and per-module limitations are retained in source-coverage-map.json.",
+    "This observation does not grant verification, integration or live exercise. Missing routine reports and source-only mappings remain distinct from missing implementations; documentation literals and forwarding references are excluded unless their implementation owner was mapped separately.",
+]
+routines = [
+    "EprojInit_MotherBrainBomb",
+    "EprojPreInstr_MotherBrainBomb",
+    "Eproj_CheckForBombCollisionWithRect",
+    "MotherBrainBomb_Bomb_CollDetect_DoubleRet",
+    "MoveMotherBrainBomb",
+]
+scope = "Maintained mother_brain_bomb implementation mapping"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "translated"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/crates/port/src/mother_brain_bomb.rs"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/source-coverage-map.json"

@@ -1,0 +1,44 @@
+agent = "/root/coverage_finish"
+evidence_context = "historical-frozen"
+id = "historical-power_bomb-6053-translated-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Retained historical source and all sealed artifacts were hashed during recovery. These named fixture roots passed 617 actual-C pairs across retained runs; duplicate domains may occur. Candidate/dependency snapshots and manifests are retained and C pin matches the current inventory.",
+    "Historical fixture domains only. This import does not authenticate current checkout dependencies, current integration, original-ROM parity, full-game completion, internal calls or synthetic dispatch. Exact module digests and per-run closure checks are in retained-coverage-authentication.json.",
+]
+routines = [
+    "BombOrPowerBomb_Func1",
+    "PowerBomb_Func3",
+    "ProjPreInstr_PowerBomb",
+    "SpawnPowerBombExplosion",
+]
+scope = "Retained power_bomb fixture roots"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "translated"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/power-bomb-first/20261010T212649.330883Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/power-bomb-review/20261010T214833.307697Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/power-bomb-review/20261010T214904.459882Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/power-bomb/20261010T214137.918929Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/power-bomb/20261010T214154.876555Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/power-bomb/20261010T214254.005316Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/power-bomb/20261010T214306.622558Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/power-bomb/20261010T215017.142110Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/retained-coverage-authentication.json"

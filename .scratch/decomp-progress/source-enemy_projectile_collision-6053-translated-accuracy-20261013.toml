@@ -1,0 +1,34 @@
+agent = "/root/coverage_finish"
+commit = "3ce28ba58aba319b60bbc949153baafd4433132e"
+evidence_context = "current-checkout"
+id = "source-enemy_projectile_collision-6053-translated-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Maintained executable Rust implementations mapped through explicit dispatch branches, numeric selectors or reviewed private aliases to exact pinned C definitions. Source correspondence establishes translated coverage only; bounded branches, delegated C/host effects and per-module limitations are retained in source-coverage-map.json.",
+    "This observation does not grant verification, integration or live exercise. Missing routine reports and source-only mappings remain distinct from missing implementations; documentation literals and forwarding references are excluded unless their implementation owner was mapped separately.",
+]
+routines = [
+    "EprojBlockCollisition_CheckHorizontal",
+    "EprojBlockCollisition_CheckVertical",
+    "EprojBlockCollisition_Horiz",
+    "EprojBlockCollisition_Vertical",
+    "EprojColl_8506",
+    "EprojColl_858E",
+    "EprojColl_85AD",
+    "EprojColl_85C2",
+    "EprojColl_8676",
+    "EprojColl_873D",
+    "EprojColl_874E",
+    "EprojColl_ClearCarry",
+    "EprojColl_SetCarry",
+    "EprojColl_Unknown8536",
+]
+scope = "Maintained enemy_projectile_collision implementation mapping"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "translated"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/crates/port/src/enemy_projectile_collision.rs"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/source-coverage-map.json"

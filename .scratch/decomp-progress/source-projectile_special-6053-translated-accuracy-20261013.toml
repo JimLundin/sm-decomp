@@ -1,0 +1,53 @@
+agent = "/root/coverage_finish"
+commit = "3ce28ba58aba319b60bbc949153baafd4433132e"
+evidence_context = "current-checkout"
+id = "source-projectile_special-6053-translated-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Maintained executable Rust implementations mapped through explicit dispatch branches, numeric selectors or reviewed private aliases to exact pinned C definitions. Source correspondence establishes translated coverage only; bounded branches, delegated C/host effects and per-module limitations are retained in source-coverage-map.json.",
+    "This observation does not grant verification, integration or live exercise. Missing routine reports and source-only mappings remain distinct from missing implementations; documentation literals and forwarding references are excluded unless their implementation owner was mapped separately.",
+]
+routines = [
+    "BlockBombedReact",
+    "BlockBombedReact_Special",
+    "BlockCollSpreadBomb",
+    "BombOrPowerBomb_Func1",
+    "BombSpread",
+    "CalculateBlockAt",
+    "FireEndOfSpazerSba",
+    "FireSba",
+    "FireSba_ClearCarry",
+    "FireSba_FireIce",
+    "FireSba_FirePlasma",
+    "FireSba_FireSpazer",
+    "FireSba_FireWave",
+    "ProjPreInstr_Bomb",
+    "ProjPreInstr_EndOfSpazerSba",
+    "ProjPreInstr_IceSba",
+    "ProjPreInstr_IceSba2",
+    "ProjPreInstr_PlasmaSba",
+    "ProjPreInstr_PlasmaSbaFunc_0",
+    "ProjPreInstr_PlasmaSbaFunc_1",
+    "ProjPreInstr_PlasmaSbaFunc_2",
+    "ProjPreInstr_SpazerSba",
+    "ProjPreInstr_SpazerSba_FuncA_0",
+    "ProjPreInstr_SpazerSba_FuncA_1",
+    "ProjPreInstr_SpazerSba_FuncA_2",
+    "ProjPreInstr_SpazerSba_FuncA_3",
+    "ProjPreInstr_SpazerSba_FuncB_0",
+    "ProjPreInstr_SpazerSba_FuncB_1",
+    "ProjPreInstr_SpazerSba_FuncB_2",
+    "ProjPreInstr_SpeedEcho",
+    "ProjPreInstr_SpreadBomb",
+    "ProjPreInstr_UnknownProj8027",
+    "ProjPreInstr_WaveSba",
+]
+scope = "Maintained projectile_special implementation mapping"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "translated"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/crates/port/src/projectile_special.rs"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/source-coverage-map.json"

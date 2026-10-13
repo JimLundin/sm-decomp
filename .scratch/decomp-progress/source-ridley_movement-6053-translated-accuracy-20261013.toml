@@ -1,0 +1,66 @@
+agent = "/root/coverage_finish"
+commit = "3ce28ba58aba319b60bbc949153baafd4433132e"
+evidence_context = "current-checkout"
+id = "source-ridley_movement-6053-translated-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Maintained executable Rust implementations mapped through explicit dispatch branches, numeric selectors or reviewed private aliases to exact pinned C definitions. Source correspondence establishes translated coverage only; bounded branches, delegated C/host effects and per-module limitations are retained in source-coverage-map.json.",
+    "This observation does not grant verification, integration or live exercise. Missing routine reports and source-only mappings remain distinct from missing implementations; documentation literals and forwarding references are excluded unless their implementation owner was mapped separately.",
+]
+routines = [
+    "Ridley_CBC0",
+    "Ridley_CBC7",
+    "Ridley_CBCE",
+    "Ridley_CBD5",
+    "Ridley_CBDC",
+    "Ridley_Func_104",
+    "Ridley_Func_104_0",
+    "Ridley_Func_105",
+    "Ridley_Func_106",
+    "Ridley_Func_107",
+    "Ridley_Func_111",
+    "Ridley_Func_112",
+    "Ridley_Func_113",
+    "Ridley_Func_115",
+    "Ridley_Func_116",
+    "Ridley_Func_40_Carry",
+    "Ridley_Func_40_Sign",
+    "Ridley_Func_7",
+    "Ridley_Func_70",
+    "Ridley_Func_71",
+    "Ridley_Func_72",
+    "Ridley_Func_73",
+    "Ridley_Func_74",
+    "Ridley_Func_75",
+    "Ridley_Func_77",
+    "Ridley_Func_78",
+    "Ridley_Func_79",
+    "Ridley_Func_80_DoubleRet",
+    "Ridley_Func_81",
+    "Ridley_Func_82_DoubleRet",
+    "Ridley_Func_83",
+    "Ridley_Func_84",
+    "Ridley_Func_85",
+    "Ridley_Func_86",
+    "Ridley_Func_87",
+    "Ridley_Func_88",
+    "Ridley_Func_89",
+    "Ridley_Func_90",
+    "Ridley_Func_91",
+    "Ridley_Func_92",
+    "Ridley_Func_93",
+    "Ridley_Func_94",
+    "Ridley_Func_95",
+    "Ridley_Func_96",
+    "Ridley_Func_97",
+    "Ridley_Func_D3DC",
+]
+scope = "Maintained ridley_movement implementation mapping"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "translated"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/crates/port/src/ridley_movement.rs"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/source-coverage-map.json"

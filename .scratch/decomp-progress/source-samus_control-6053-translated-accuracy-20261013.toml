@@ -1,0 +1,81 @@
+agent = "/root/coverage_finish"
+commit = "3ce28ba58aba319b60bbc949153baafd4433132e"
+evidence_context = "current-checkout"
+id = "source-samus_control-6053-translated-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Maintained executable Rust implementations mapped through explicit dispatch branches, numeric selectors or reviewed private aliases to exact pinned C definitions. Source correspondence establishes translated coverage only; bounded branches, delegated C/host effects and per-module limitations are retained in source-coverage-map.json.",
+    "This observation does not grant verification, integration or live exercise. Missing routine reports and source-only mappings remain distinct from missing implementations; documentation literals and forwarding references are excluded unless their implementation owner was mapped separately.",
+]
+routines = [
+    "CopyToSamusSuitPalette",
+    "CopyToSamusSuitTargetPalette",
+    "SamusCrouchingEtcFunc",
+    "Samus_AnimDelayFunc_0to5",
+    "Samus_AnimDelayFunc_11_SelectDelaySequenceWalljump",
+    "Samus_AnimDelayFunc_12_TransToPose",
+    "Samus_AnimDelayFunc_13_TransToPose",
+    "Samus_AnimDelayFunc_14_Goto",
+    "Samus_AnimDelayFunc_15_GotoStart",
+    "Samus_AnimDelayFunc_6_GotoStartIfLittleHealth",
+    "Samus_AnimDelayFunc_7",
+    "Samus_AnimDelayFunc_8_AutoJumpHack",
+    "Samus_AnimDelayFunc_9_TransToPose",
+    "Samus_Animate",
+    "Samus_Animate_AcidFx",
+    "Samus_Animate_LavaFx",
+    "Samus_Animate_NoFx",
+    "Samus_Animate_SubmergedLavaAcid",
+    "Samus_Animate_WaterFx",
+    "Samus_CancelSpeedBoost",
+    "Samus_ClearXSpeedIfColl",
+    "Samus_HandleAnimDelay",
+    "Samus_HandleSpeedBoosterAnimDelay",
+    "Samus_Input_00_Standing",
+    "Samus_Input_01_Running",
+    "Samus_Input_02_NormalJumping",
+    "Samus_Input_03_SpinJumping",
+    "Samus_Input_04_MorphBallOnGround",
+    "Samus_Input_05_Crouching",
+    "Samus_Input_06_Falling",
+    "Samus_Input_07_Unused",
+    "Samus_Input_08_MorphBallFalling",
+    "Samus_Input_09_Unused",
+    "Samus_Input_0A_KnockbackOrCrystalFlashEnding",
+    "Samus_Input_0B_Unused",
+    "Samus_Input_0C_Unused",
+    "Samus_Input_0D_Unused",
+    "Samus_Input_0E_TurningAroundOnGround",
+    "Samus_Input_0F_CrouchingEtcTransition",
+    "Samus_Input_10_Moonwalking",
+    "Samus_Input_11_SpringBallOnGround",
+    "Samus_Input_12_SpringBallInAir",
+    "Samus_Input_13_SpringBallFalling",
+    "Samus_Input_14_WallJumping",
+    "Samus_Input_15_RanIntoWall",
+    "Samus_Input_16_Grappling",
+    "Samus_Input_17_TurningAroundJumping",
+    "Samus_Input_18_TurningAroundFalling",
+    "Samus_Input_19_DamageBoost",
+    "Samus_Input_1A_GrabbedByDraygon",
+    "Samus_Input_1B_ShinesparkEtc",
+    "Samus_LoadSuitPalette",
+    "Samus_LoadSuitTargetPalette",
+    "Samus_LookupTransitionTable",
+    "Samus_MoveDown_SetPoseCalcInput",
+    "Samus_MoveUp_SetPoseCalcInput",
+    "Samus_Pose_CancelGrapple",
+    "Samus_Pose_Func2",
+    "Samus_SpawnAirBubbles",
+    "Samus_SpawnWaterSplash",
+    "UNUSED_Samus_AnimDelayFunc_10",
+]
+scope = "Maintained samus_control implementation mapping"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "translated"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/crates/port/src/samus_control.rs"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/source-coverage-map.json"

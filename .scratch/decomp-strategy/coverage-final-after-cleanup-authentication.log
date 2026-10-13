@@ -1,0 +1,9 @@
+.scratch/decomp-strategy/retained-coverage-authentication.json: OK
+.scratch/decomp-strategy/source-coverage-map.json: OK
+.scratch/decomp-strategy/ticket-provenance.json: OK
+.scratch/decomp-progress/ticket-authenticated-internal-mappings-published.json: OK
+.scratch/decomp-progress/sparks-retained-coverage-authentication.json: OK
+.scratch/decomp-strategy/retained-live-coverage-audit.json: OK
+.scratch/decomp-strategy/live-internal-reconciliation.md: OK
+.scratch/decomp-strategy/ridley-inlined-source-alias-review.md: OK
+.scratch/decomp-progress/ridley-inline-translation-audit.md: OK

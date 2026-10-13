@@ -1,0 +1,730 @@
+status = "offline-verified"
+run = "/home/jim/sm-decomp/out/port/projectile-trails/natural-offline/1791838495334191-2-0"
+live_exercised = false
+original_rom_parity = "not-tested"
+family = "projectile-trails"
+verified_cases = 14
+verified_routines = 1
+rejected_abi_inputs = 0
+native_rust_spawn_calls = 0
+remaining_c_gameplay_callbacks = 0
+scope = "declared valid fixture domain only; full canonical WRAM and return values"
+
+[source]
+revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+archive_sha256 = "69c78831351112887575f852dadf0281dd5c23cef890b07a268ae6cf60aa9193"
+freshness = "exact pinned archive; no latest-upstream assertion"
+
+[source.files]
+".gitattributes" = "57eb57db3e31225086b3a2e95153a0086ba0eb588af259ae3ec519d5abe191a0"
+".github/ISSUE_TEMPLATE/bugs.yml" = "e1b76268b36f107ad7c38467d829f3e78879857a01b83c10446c189fa0f2836d"
+".github/ISSUE_TEMPLATE/config.yml" = "fa3b762a0030e97dc09063620974623437eee4b650fbf9bc3f48272b85875535"
+".github/ISSUE_TEMPLATE/feature-request.yml" = "3eeb78a527e647412ef1ff6779b3f26c821d535416c05652c4052dcdda315b37"
+".github/PULL_REQUEST_TEMPLATE.md" = "076d7bdee27cd19843f733c67271dc89d9f4e5f7c57d3a7266721ee4baa94fa4"
+".gitignore" = "5e7686aa1ae36c9ee0425d1619c677303d971470fdbdb92f7e58a3c38d001216"
+"BUILDING.md" = "cedb482754718d71ac1e3e6393cf13bd031191c2fa0a24b71682b2588f0ba973"
+"LICENSE.txt" = "d7b321b1d1009b9d5d0dc1334b0a941def8f15f36ce2396fabd409e9327e2787"
+Makefile = "5c7844d78b04510f6d6d48c188689afe8c05f4adfb798f9fb1ff75e650d2b98c"
+"README.md" = "01f1c98c43eacb6c53b2b73a46f4987d24bb0a579304514e0085db3c6297c51b"
+"assets/.gitignore" = "f19f9b2590f52c2b773fe5200939db3988348a01d5cd6c08caba6c47e9affc44"
+"assets/animtiles_decode.py" = "b57d91da55f584dd4d69c1df6b00926065a55e3c51710a0c49d653701def082e"
+"assets/consts.py" = "a4ae5fcf1723284c2282fc0989a5010dd2642e3bfc2309d945f27bc90d466352"
+"assets/decode_common.py" = "d9a693e451dd1fbdc2454ff0f375f302d13b3f83951baaed92cdc0f13f7b20bf"
+"assets/enemy_instr_decode.py" = "9b8af4bc64ed8ab75a1c4b3f547ab798c18df0b8bbabe1857f18ea00eb621baf"
+"assets/eproj_decode.py" = "8e3a8244005f7ac15a8d4e766f6e4691a49492aa1873a3b62872e01cc2abeb9c"
+"assets/names.txt" = "904f25a85a3118820eb54ec4ee154e6f5bab6ef284883fd68e5c749dd2035940"
+"assets/palfx_decode.py" = "2e629623ed514feeba16e58141dd02eead10dcb7b34bae77b8a25452e59b5879"
+"assets/plm_decode.py" = "1fdf39dfd3eb0f8a10c45ade45ff0f5c1a6b9a1ebb88ad9e5b5c510e1ffba0d0"
+"assets/projectile_decode.py" = "ba217ce35e1164db273cfe2a8e9bf35fb40bf1e900dd2193ec39ac07251a698b"
+"assets/restool.py" = "8f86a3c56e123cb985831dd1fc6c01b303132d66bf76a6718d4650ed0da8a832"
+"assets/text_lexer.py" = "6c885c9ec56a12d1697d2dcc9cf5cbe26e2460c4606ce8ac164398e10542d478"
+"other/annotate_funcs.py" = "4c7fee70bbcb79020d416dcb26d33049b0034cdda52724d6530c846dbea70089"
+"other/strip_some.py" = "1513f70490852d0e453a978577c78919c3a4b4607dd7c339deb619cb9c446e8a"
+"other/useful_regexps.txt" = "7f5a13dbb9fcf9d5cc27d765cd32d3ddb6d2f3caf4f4c75e15c6d2d980f49f51"
+"run_with_tcc.bat" = "09c52640a5e70b19fcacdecc4add5fa081dcf61b378f6f5c4f631767a165f301"
+"sm.ini" = "d2318423e953f496623cdecffec2753aa11bd9d1723c367527f09df66baf71e6"
+"sm.sln" = "1c261e017e86a9a7c00dbad8084b6ab0340a01dcb25bdc33106dadf91a77e322"
+"src/.gitignore" = "84cf6ca549d4c05622325c3d0d9caaca9efdaf9ec0f92d2ce1e189a8cb06e803"
+"src/config.c" = "2ac227f88e5cef03ab781b47ea511b573f89300302cde7fb306f22be5005cc0e"
+"src/config.h" = "a2e6b153cae10f31422b2e5c4b493e60c3e1aa1e0cb325bdcc03bfc45c6392f0"
+"src/enemy_types.h" = "251af063d550e9e9ade1de9840df7617c8cb3648bbe241587a654b3ea3085f2d"
+"src/features.h" = "99e1d93c333e96476ae3cd27eced06e1cdcf161a1fb3db240bc094431a1ed19e"
+"src/funcs.h" = "b34fcb4451210e086845163bbfb5a9ca1ef5a2e2cb8022b8a7d7fab4fe6cb52e"
+"src/glsl_shader.c" = "392463ad44e8b73c42314f435ab0f7e5acd838fb34cc5d1233cd0488a7934214"
+"src/glsl_shader.h" = "121df5306db169979a25552f1b2e805de9747b0a3b25a39947c460f6cabab9e5"
+"src/ida_types.h" = "12974c5708740164692dac151104020b53e8316e7378521c974ddf602d1f28ff"
+"src/main.c" = "e090462d21e517d6d63e35068ac0a27f7b4a7085bf2197a354edb0b1ae965181"
+"src/move_defines.py" = "641aa63ba1de472ee1285c72c7a42bfb17862fafc5d8b48c02c38ffe5dd0454e"
+"src/opengl.c" = "d9481ecfdd5934000cf8a624324705859c1be65ba93f60ea9b6c25ef79d14b06"
+"src/packages.config" = "52d9a3f8658ed50443839112813b82908c7b046bfbe1962bf0e0e0dcd25c07c8"
+"src/platform/switch/.gitignore" = "19eaba877090bf5e5bea77d56ea5dbfa9bae4810411c5e97a4f8b82e59155e5e"
+"src/platform/switch/Makefile" = "220720e72937fd10763c995c496be730d06ffe85d4368214d3e1962ec0fc8892"
+"src/platform/switch/icon.jpg" = "d22d21acc55bdd3241ed1e272931c38bb38fc18f35a5e1e78b7567b478b69fa7"
+"src/platform/switch/sm.ini" = "e18a2b0d6334717c97cb6c96409490a2a34fd1ee0bc3f4ba3ff375af1b95b02b"
+"src/platform/switch/src/switch_impl.c" = "58f4deb903e981cb9c412118064136532b1080c04d030f8a9282e6e11e7c628c"
+"src/platform/switch/src/switch_impl.h" = "421f308e662017bda2a4df37e04893251fca2476fbdc2a66d4862690807900cf"
+"src/platform/win32/resource.h" = "b99a0006883f0211f8765df5f760d6c6988d231229a6093c87debcdb4d1f0b58"
+"src/platform/win32/sm.rc" = "cafbc80db29c4a626d2d0b3d34cfd6d96fbca338a22eea99315548e7f33be2a4"
+"src/platform/win32/volume_control.c" = "82c9525991c15629e9ebcdf7f2c48f807945ec77643c86318bc04fe14c5010d3"
+"src/platform/win32/volume_control.h" = "836ca2f7cb836a4c793493905a348a3baca4dcdf4873d9e22a683979bdd3be24"
+"src/sm.vcxproj" = "b8e70e9eca017bacea37a9bb880eb852893f1023f041beb44dc296003ebc79fe"
+"src/sm.vcxproj.filters" = "6fe688c88d42d9d06d546ce79cf6a2c5cf2d20ac66ab8c064569e6262c66671b"
+"src/sm_80.c" = "ab9abc1042ea876c51de90d00632d1af13e9a765c77cf371950ddcdc783130c7"
+"src/sm_81.c" = "bd05747f344ac18d4f5230e10fd4678b087048c24e8aeb5f685691b36badb1a0"
+"src/sm_82.c" = "afa8b6fb9e9e5ad378db4779c1c39574856a57d50d25c4536aa2bafeeb79e3ad"
+"src/sm_84.c" = "6497c1ea38669812a8d69476349f11b6ecd196ac58b605eca49d77d978febb3a"
+"src/sm_85.c" = "01035a449979bdb7c50d26f4733b2cda9d04f86a5d3d2596446216a3a096d2c2"
+"src/sm_86.c" = "8268f45c3df230de54c99d833e166802d59bd942ea4ac58e75f4acf134e48cf1"
+"src/sm_87.c" = "931192fe55ad4f5ba661f16b4314b221311e74f261ca30223152a0fe8639960a"
+"src/sm_88.c" = "aaa369946309a7ea8e4c8f4374dc4f9f771f2b4855ed7439cff71dd234d50be0"
+"src/sm_89.c" = "38987685948f42e4cc1a649d2ae22bba5a316761f181ed83a695f6a0229d3e4f"
+"src/sm_8b.c" = "b77fe217eb0e74b82d92acd4d32f44141a095da8264c15fb5f703067b0496ba3"
+"src/sm_8d.c" = "7a89da29f287ebdb717044fec90612c40309f2dba23940a0a4f3f17212a83c33"
+"src/sm_8f.c" = "e57e3dbc64f202dac3ebea1a0589b25a71a6d09a35368b31e062474955a24dff"
+"src/sm_90.c" = "ad9f103509160abd8a9e0f85f3c3c96187c89f31dd770cf533fa32a97925247a"
+"src/sm_91.c" = "8a087a687e9611d1272797522f1b5fd20f9e344d851e0a6701af8b9052b5070f"
+"src/sm_92.c" = "a5d1261dd44abd623a064850e0f500630a382cf03f18e82ffb1bda2ae5051061"
+"src/sm_93.c" = "886d3503d26ab29bf712f185e359f9fcb732c42d24f5ccdfddc53b7563a7aa79"
+"src/sm_94.c" = "fee1e46c9cd18a576766fa401840176c8e4c120a57527b8929010134919860c0"
+"src/sm_9b.c" = "987e7bb885b7496b5d5dc768ec7cf0b8b2fd793a8104daf403848a9539ba8aa0"
+"src/sm_a0.c" = "a2cee5c286304e7d606357ac4960413e5fe3dfe585d468d0f41a654aa093e8d3"
+"src/sm_a2.c" = "d62422845f0fee20c929ed7a635a0eb397d376a6b2d62b9c0aab21e3c18a315e"
+"src/sm_a3.c" = "fb8a23edb3353a970e343ced1b449b269979182b2267bae43d4ae5157ec871f6"
+"src/sm_a4.c" = "0debb63e48c8f1b3911dd680bae72496d178f127c1f7cd1110c32863ba2289d0"
+"src/sm_a5.c" = "5010db2a99d4947ef170964cf5043f4e7038112530e6af1d7decba809a0c8faa"
+"src/sm_a6.c" = "36ce5f36896e6a28555fba833be68fc189bf1a35b17a64cab04cd3a4e34e6b96"
+"src/sm_a7.c" = "d7012727ba3fd803b307b5d5db8a6eb0df7476c80019c1d206d8ac5630826cdc"
+"src/sm_a8.c" = "c2a0b15844752c61d56daa61093781339bd796edeb2c9fc3460b3c173ffada4f"
+"src/sm_a9.c" = "82b84aaa333cebca6f6913684fd41b86bfa36a4968aea8ec60b5d6dc9ecc074f"
+"src/sm_aa.c" = "0abae86d85ccda04b2dcb10e3fa032039e2991e3955e0089da25f8c2407ddb3e"
+"src/sm_ad.c" = "4a18b62599a19bab2caba7ed474df1aed64550e0c0aa949019b1a441284af8d9"
+"src/sm_b2.c" = "455f3aa8a1c59e404d84f096bbdda324b2ea3f90c3b76dae36e246dc1ded415b"
+"src/sm_b3.c" = "c92eef4fce491e23545bb593f5d08665c730d1f7b312039c133f6eaa7a6902b6"
+"src/sm_b4.c" = "b65805b13b3cfcae06cd3c772f07a7bbe694cce6bcff9bd280eae7ca473d9b66"
+"src/sm_cpu_infra.c" = "fe066c3f2a2e0a86b6b659ba651e8c2879dd723e2393718124d946575b43bed6"
+"src/sm_cpu_infra.h" = "2dfe6d82e6d138ca030543eaa43438eb710647fcd684b6a19337d201b0e88877"
+"src/sm_rtl.c" = "cafcd12cd98e5797680a1928af23ceaf244a20afea927bf600c122effd899614"
+"src/sm_rtl.h" = "0347707a3b7cbdfb3563866ee7574a67afdc53d1a0907427b157bf49c3f9afac"
+"src/snes/apu.c" = "4111477d945203b66371e605d59167d7d21c6c278afe4bb86c0f61fdf18cf105"
+"src/snes/apu.h" = "03ea8b93a31d8d4471d0a586f35a3d7578d6ad25ed27f806f026c3622b91377d"
+"src/snes/cart.c" = "a8405dfe8a5de222d674022b90b3c96783130872113f2e5083481aa73ede2109"
+"src/snes/cart.h" = "f5d9578b1bacb08b781e51b6e5c090d9339dee34ee69dd200cbbcd682fe5be8c"
+"src/snes/cpu.c" = "b0267b0993cfd2808d6466a9ac573a86eef5335df540c7c58130fff9799832b2"
+"src/snes/cpu.h" = "f2f6a5a1ac57cb074e6d32825c17867e9f16025c26b69a705f2fe49971e945f3"
+"src/snes/dma.c" = "38721c80beaa2bd2980a52483fefe29e0b5e146b389fd9c718fc375dd69d735d"
+"src/snes/dma.h" = "0df39b234f17f2b176c43f67f65b8b9e16e42f929a0d877ae0c0cb85963d0cd4"
+"src/snes/dsp.c" = "9a517e197b5a819d26637f7fcf449494e9b26bd766e17cee795312c37b249dd5"
+"src/snes/dsp.h" = "f610f532fecf9505b0bfdb9431693f834ee1ec2229c6d695c916e566b6357801"
+"src/snes/dsp_regs.h" = "a36c0ffe148ffad822873c3fac9ae326183a831ea9ed81827ef08270817617be"
+"src/snes/input.c" = "3057cce80fad613e4abc8995e3959f62ca2090616d22c5452306a96e451d3d0c"
+"src/snes/input.h" = "eaedc5b53098a3190ee53daaa70b25d1ef02ae7e9281a3c58b47d7e33d553775"
+"src/snes/ppu.c" = "0c67078083d3bc41869ce24b4325b46fcc93af9abfd4e76594e0f91fdf187428"
+"src/snes/ppu.h" = "a7a295332513d25c8ddde839cee3099d690c3d36a8cbff273ec9a6bcedaf4ab5"
+"src/snes/saveload.h" = "990c773c0b8a8be37cb4cddaf84afc69cc3d9df8db07090ff597f1896d71ef5b"
+"src/snes/snes.c" = "0a2594280c3931c2e2271111c685a535a3d620fa55b5eb6f92db1a0b4c1c0259"
+"src/snes/snes.h" = "e45095b995f555f4b07e593a38b8b50d04fca54d3070fee22f67ecb45cb0e824"
+"src/snes/snes_other.c" = "4b5440f76123a879d18ae67d8d92792379c66130d0421d22fcadfb9f5f9a9c14"
+"src/snes/spc.c" = "e4cca0afabe45a55992aad55218510c94f78b3597cd0b28203974c731520680d"
+"src/snes/spc.h" = "f4a6ceb15953c14f42e4aa5c014b3203b357fe455d256a2158f765c5d7f8abcd"
+"src/spc_player.c" = "5aae391e888d5128612bda90edb5a8be372fa8e2b58de42b4b66210a9f68c187"
+"src/spc_player.h" = "1bd4310ba756d27a225d4a3eea346447c74d8f9823fc469b244df7134e32eb4d"
+"src/spc_variables.h" = "e824d5c04637930c5c6c07654c7fbc78a9f6095fd661209d36f3d816b04ab8cb"
+"src/tracing.c" = "07b5242423a64c49da8bcc9f1e5c2c354fa61f9f0cbec863853d46938dc98154"
+"src/tracing.h" = "40884ac985183d1ebdbbc0bd39294cce78cea591ae3a3840854ce08b58abaeb5"
+"src/types.h" = "02d6acb15eb207f36fa03ebab65bf622521657f2168db0a415a55c7f9598a0c0"
+"src/util.c" = "a6b5a84245fe770e0e51984ec234cdaeb771136e76b61929c524079a3f765eb5"
+"src/util.h" = "4f852185fa0c6a4372d9caa0f0afa6c6dc5d016218401d2558bb8ec290376102"
+"src/variables.h" = "e2ce28d07ceff91129e93417099f33f20f161c37e95e745c575d0e30b3fd5585"
+"src/variables_extra.h" = "b0bcbd066690205160fad3e625820d4c51d82ac63853cae37a0fe25b0bd3844d"
+"third_party/.gitignore" = "a369c3b31faca9485a1a53169d522a21b89c8db0f3cdf23db412b715ca032b35"
+"third_party/gl_core/gl_core_3_1.c" = "31cb5ce7e4205dddac06dbbebb69e667927e98f4493ba7e8666534b06b07a5e9"
+"third_party/gl_core/gl_core_3_1.h" = "a6167bef6c8a1a096fd03d24ba5f748b80bbcfae501bbeea81f85ff386767b63"
+"third_party/stb/stb_image.h" = "91f435e0fc6a620018b878b9859c74dff60d28046f87e649191ad6f35a98c722"
+
+[implementation]
+fixture_execution = "dependency-v1-fork"
+dependency_contract = "rust-family-v2"
+source_root = "/home/jim/sm-decomp"
+module = "/tmp/sm-projectile-trails/crates/port/src/projectile_trails.rs"
+module_sha256 = "9b4fcd099ced710581da54fac03b3478aa81daee21b90c194bd1b7c53181108f"
+memory_sha256 = "7c0df2e77ed2d05dda05bd6d9e98fef3f7ec5f1c76426da504229af698bfecc5"
+
+[implementation.rust_dependencies]
+"/tmp/sm-projectile-trails/crates/port/src/projectile_trails.rs" = "9b4fcd099ced710581da54fac03b3478aa81daee21b90c194bd1b7c53181108f"
+"crates/pipeline/src/builds.rs" = "1141b9ed89baeb8c7e64562564488832998a7ae1e951f5e40c06bcb516f8164f"
+"crates/pipeline/src/fixture_worker.rs" = "b4badc6fd554ee91dbdb82fdeb781ca937e64e10c4e2ce28b91e25061edd2679"
+"crates/pipeline/src/inputs.rs" = "a308f23c7febd841a60a22e1734320421691bffd82a610ff7b944420add5742f"
+"crates/pipeline/src/main.rs" = "8b84c3526281b784643a08babc047781e044214aec1304b8c3b35c1259361066"
+"crates/port/src/animated_tiles.rs" = "6381e3d9caf01f3b1ca42ae56b75f3784c5b4de40f795a25b3194fd601351c57"
+"crates/port/src/audio.rs" = "4308e496267857ca869db45f4127e505bec4ad29c4c9ede8f08d6e9769ccf69d"
+"crates/port/src/collision.rs" = "881431d92845006509d2956eae0b3736459961762f5b4a021577f130c530d4f1"
+"crates/port/src/enemy.rs" = "4faac9ac72d3b5caf206678980d915a2cb1ac03e492fd7fdb6aa59c4beb48367"
+"crates/port/src/enemy_projectile_collision.rs" = "f117da8bf86a387b0e5693fb19a84c938486fc089a10abf3155365e6627b837e"
+"crates/port/src/enemy_projectile_instructions.rs" = "d1ee84dda96d514fba6fb76982aaabac76d1f6d9e324c5d8d2babf5e4fbf10c2"
+"crates/port/src/enemy_projectile_sparks.rs" = "5f4649f745a2f772c32fc30231fbb2b1c0c5624ee693e6d3efaf5e15dc3557f1"
+"crates/port/src/enemy_projectiles.rs" = "4c99175b8eb0be86554e46f7424e6ee7aa43510afebe2d555ea2dcb890e7f0de"
+"crates/port/src/glass_shattering.rs" = "373bcf4c49058b7583e66f2a3f5a54d92ea4481d065e89729794871d56304dd9"
+"crates/port/src/memory.rs" = "7c0df2e77ed2d05dda05bd6d9e98fef3f7ec5f1c76426da504229af698bfecc5"
+"crates/port/src/mother_brain_bomb.rs" = "43a11bc33a270533be56203c81cd451556cf9e3473609f9b0cc192e3ecdc25e1"
+"crates/port/src/n00b_tube.rs" = "801431d3325bb23672bd0f6b5aff7ea86506440c2c8c887893599386c3c00a41"
+"crates/port/src/plm.rs" = "151a849a2a9f366b3a3175915cbd861e1f8865b5451883b67a6d4fd584e846d3"
+"crates/port/src/plm_render.rs" = "70b2739565075c44e5e5094bca1e3ccc05380140ad380a8aab4608a73488c160"
+"crates/port/src/projectile_flight.rs" = "824dcf6c79385c02dd3c12a9347c8a7c417a2366dbf03d89c26e1526e47e76ab"
+"crates/port/src/projectiles.rs" = "10fcb32c76cb46d8e0ee1b477901bdb0fbbc8eb58fc2e2a704a038be6d3b0656"
+"crates/port/src/room.rs" = "e7b13c17ac668f8aba50a21aedfcd4d4dcf93f5e1cd2d4c610557cb56774ba72"
+"crates/port/src/samus.rs" = "4f7e14ecbdf724305094d5924ec931b04dca422e8bcc3108fd5ff13531271234"
+"crates/port/src/samus_control.rs" = "d0d592bdbfad2b0bb1b845ec3fc2523cb4a6ff15c0dd07015c9736d3efb4ed60"
+"crates/port/src/sprite_objects.rs" = "dfe844396edea8efd787923ab506dc3b910c70d8a67e21bf7c27ddfba90475af"
+"crates/port/src/system.rs" = "bedc7662f4c1c435c968a6c07c73331a76f6c58621b4ca885f73f6be33ccbf16"
+
+[implementation.harness_sources]
+"crates/pipeline/src/batch.rs" = "882779c50e27cac4add62847d8651739e2ac6ed70d04073cfac35e4e95da0f3a"
+"crates/pipeline/src/cleanup.rs" = "fc282127e388eec71dc3fc2354b6f641c1e357ac1ecf570ee57ed6bd82774204"
+"crates/pipeline/src/dispatcher_eproj.c" = "0fca153504ff09350fa0d1c8044a427ac8c57a60cb23a622b4b0488fc9d9db68"
+"crates/pipeline/src/dispatcher_host.c" = "378daeb483f5e8561327ac18f916cb7af46b2e7b2711eb27cc2983f888a93f45"
+"crates/pipeline/src/dispatcher_plm.c" = "19702340d8d6d0e71fe3b59d303e2606c9f956e37b3796d8aa7075f6017584e7"
+"crates/pipeline/src/dispatcher_pointer.c" = "3f4d49cb9862a39fbeb4404129a5d88f77ddd6b5d8ac834a8708d8d1cab832b0"
+"crates/pipeline/src/family.rs" = "7838401fdddde9811c8016dc093da82a3946a9ef234bddbd04cece21da54502f"
+"crates/pipeline/src/family_header.c" = "df3c1f8cd5eaa51987fe78fd477e1e676b5939c6f0f0be063e094524ab74fbd8"
+"crates/pipeline/src/family_pointer.c" = "247c58ad5e2660fa8003139f9ff1f552f5464c92268b94f0ce08d923208427e5"
+"crates/pipeline/src/fixture_execution.rs" = "2d091dda80e70ac0bd726f8bfe17932adf54938dafe992da1516867c8fc129fb"
+"crates/pipeline/src/fixture_worker.rs" = "b4badc6fd554ee91dbdb82fdeb781ca937e64e10c4e2ce28b91e25061edd2679"
+"crates/pipeline/src/metrics.rs" = "30c14f63a9c8bb85f764609b5207cbc68f92c8332e54bf5ab4fd9594bfc24063"
+"crates/pipeline/src/plm_fixtures.rs" = "915e1a47b8deb6c4d1cfff2a73172b25ef461a4e9ee4a0833742b7ad44380220"
+"crates/pipeline/src/resource_sampler.rs" = "d40db3a810b33251afbf76efc1d16c19ad1b0809a6dea69473d20d6d852f266c"
+
+[implementation.binaries]
+c = "660cbe6eb28a930dabd54ec07bae0e9853faf7813c3672ddc142c0a512093dec"
+"libfixture_worker.a" = "c2858b5982d0b33f094f4907999254707f1d8bba4d86e7dbeb8b6283cf08b220"
+rust = "74abe81b0fac3f68b153bff8b10f64510192566a22170121d9c28a386442da06"
+
+[implementation.manifest]
+file = "/home/jim/sm-decomp/out/port/projectile-trails/natural-captures.toml"
+sha256 = "e968bdfa43c3b4fa5c54db55343c5fecc3c60f8af476f8dc9181e2f94d33e26f"
+
+[rom]
+sha256 = "886600dd5c645cf7f44b21718dc87dc51908585a2c523f35fda425aca9e28892"
+bytes = 4194304
+
+[[cases]]
+routine = "HandleProjectileTrails"
+case = "natural-active-call-187"
+before_sha256 = "ea6082df2c1a2e133ecc5ad855bb2fb2885322089c523b2398ab25d9d8197ee8"
+capture_after_sha256 = "74935fb9e5696298a79b2ab6f5e8f0f8bf28154b137bdd3a254d27c8fe604055"
+callbacks = 0
+
+[cases.return]
+c = 0
+rust = 0
+
+[cases.after_sha256]
+c = "74935fb9e5696298a79b2ab6f5e8f0f8bf28154b137bdd3a254d27c8fe604055"
+rust = "74935fb9e5696298a79b2ab6f5e8f0f8bf28154b137bdd3a254d27c8fe604055"
+
+[cases.results]
+
+[cases.spawn_results]
+
+[[cases]]
+routine = "HandleProjectileTrails"
+case = "natural-active-call-188"
+before_sha256 = "5d28f79b34843e81a799b6a5e722abd544141d41e806cbd253732f7403ddd8e6"
+capture_after_sha256 = "db225fbd0a085d92638a4d4fca191532e261e9d4f7dd7a050cc3116e2bc00200"
+callbacks = 0
+
+[cases.return]
+c = 0
+rust = 0
+
+[cases.after_sha256]
+c = "db225fbd0a085d92638a4d4fca191532e261e9d4f7dd7a050cc3116e2bc00200"
+rust = "db225fbd0a085d92638a4d4fca191532e261e9d4f7dd7a050cc3116e2bc00200"
+
+[cases.results]
+
+[cases.spawn_results]
+
+[[cases]]
+routine = "HandleProjectileTrails"
+case = "natural-active-call-189"
+before_sha256 = "dcbf75e0e54b95aec744872eef4d2822161b9861140552d402d3669942fcf150"
+capture_after_sha256 = "fcf75d8bd1b79adc60fb3abcb55b952d59f6529a5b960f5cb52a3f885ddb9aa6"
+callbacks = 0
+
+[cases.return]
+c = 0
+rust = 0
+
+[cases.after_sha256]
+c = "fcf75d8bd1b79adc60fb3abcb55b952d59f6529a5b960f5cb52a3f885ddb9aa6"
+rust = "fcf75d8bd1b79adc60fb3abcb55b952d59f6529a5b960f5cb52a3f885ddb9aa6"
+
+[cases.results]
+
+[cases.spawn_results]
+
+[[cases]]
+routine = "HandleProjectileTrails"
+case = "natural-active-call-190"
+before_sha256 = "4fe163eaa124296bbf8f85eee2a3fbca436fc61594359b99ffe96cf0e0c54423"
+capture_after_sha256 = "ea11a4ec439e9720f54a1494bea679ab683093cb3e6c9b8fb5a824c7944ec3cd"
+callbacks = 0
+
+[cases.return]
+c = 0
+rust = 0
+
+[cases.after_sha256]
+c = "ea11a4ec439e9720f54a1494bea679ab683093cb3e6c9b8fb5a824c7944ec3cd"
+rust = "ea11a4ec439e9720f54a1494bea679ab683093cb3e6c9b8fb5a824c7944ec3cd"
+
+[cases.results]
+
+[cases.spawn_results]
+
+[[cases]]
+routine = "HandleProjectileTrails"
+case = "natural-active-call-191"
+before_sha256 = "009901967acfff801b19ee1c6200c730659e78b9e9a8632e10542a422cca128d"
+capture_after_sha256 = "d2b79fe0b01e53ebf66191a241372625357a548509d36d2bb6575c51df4e229e"
+callbacks = 0
+
+[cases.return]
+c = 0
+rust = 0
+
+[cases.after_sha256]
+c = "d2b79fe0b01e53ebf66191a241372625357a548509d36d2bb6575c51df4e229e"
+rust = "d2b79fe0b01e53ebf66191a241372625357a548509d36d2bb6575c51df4e229e"
+
+[cases.results]
+
+[cases.spawn_results]
+
+[[cases]]
+routine = "HandleProjectileTrails"
+case = "natural-active-call-192"
+before_sha256 = "85f439271f18c42a81f28a303c538f6a1fb871df461a4194e6293dbf7e97663a"
+capture_after_sha256 = "fbcc3d3cc00735ccd5a05e17021f984bc8ee28170373c86e2146bf9adf18c27d"
+callbacks = 0
+
+[cases.return]
+c = 0
+rust = 0
+
+[cases.after_sha256]
+c = "fbcc3d3cc00735ccd5a05e17021f984bc8ee28170373c86e2146bf9adf18c27d"
+rust = "fbcc3d3cc00735ccd5a05e17021f984bc8ee28170373c86e2146bf9adf18c27d"
+
+[cases.results]
+
+[cases.spawn_results]
+
+[[cases]]
+routine = "HandleProjectileTrails"
+case = "natural-active-call-193"
+before_sha256 = "047b0e7befcece6ed896e1f11db2a46cec91fe5e43ea665277032473a4d4107a"
+capture_after_sha256 = "901a0786a1793820a5ba40d2f59a2e295568aea80c302c4077f5cad02b8005cc"
+callbacks = 0
+
+[cases.return]
+c = 0
+rust = 0
+
+[cases.after_sha256]
+c = "901a0786a1793820a5ba40d2f59a2e295568aea80c302c4077f5cad02b8005cc"
+rust = "901a0786a1793820a5ba40d2f59a2e295568aea80c302c4077f5cad02b8005cc"
+
+[cases.results]
+
+[cases.spawn_results]
+
+[[cases]]
+routine = "HandleProjectileTrails"
+case = "natural-active-call-194"
+before_sha256 = "b5947fb02529b826106ee264a2de5cb4515061141f074b4fa33f772b35e666ce"
+capture_after_sha256 = "79d713fab24079405f4cbd6c53a541cb3716b87008f32da0e15a3a8271d75d95"
+callbacks = 0
+
+[cases.return]
+c = 0
+rust = 0
+
+[cases.after_sha256]
+c = "79d713fab24079405f4cbd6c53a541cb3716b87008f32da0e15a3a8271d75d95"
+rust = "79d713fab24079405f4cbd6c53a541cb3716b87008f32da0e15a3a8271d75d95"
+
+[cases.results]
+
+[cases.spawn_results]
+
+[[cases]]
+routine = "HandleProjectileTrails"
+case = "natural-active-call-195"
+before_sha256 = "7a1a76db1cd3fffdd9532767a3a637ec6c57888f0754c5fc44c6312b33808c65"
+capture_after_sha256 = "aae21b1b1aed8a172b04d67720c9b3614f8f33743485fdb3587557e1b88ef8bb"
+callbacks = 0
+
+[cases.return]
+c = 0
+rust = 0
+
+[cases.after_sha256]
+c = "aae21b1b1aed8a172b04d67720c9b3614f8f33743485fdb3587557e1b88ef8bb"
+rust = "aae21b1b1aed8a172b04d67720c9b3614f8f33743485fdb3587557e1b88ef8bb"
+
+[cases.results]
+
+[cases.spawn_results]
+
+[[cases]]
+routine = "HandleProjectileTrails"
+case = "natural-active-call-199"
+before_sha256 = "7728c4287e8230206844d1cf2e1ef85feb755c6c100b4c6557bad3fb3429b442"
+capture_after_sha256 = "ca56a98c07ba8ddd46e2a828832a76515e02cbf9dfdde044ff5ccb9110d6e857"
+callbacks = 0
+
+[cases.return]
+c = 0
+rust = 0
+
+[cases.after_sha256]
+c = "ca56a98c07ba8ddd46e2a828832a76515e02cbf9dfdde044ff5ccb9110d6e857"
+rust = "ca56a98c07ba8ddd46e2a828832a76515e02cbf9dfdde044ff5ccb9110d6e857"
+
+[cases.results]
+
+[cases.spawn_results]
+
+[[cases]]
+routine = "HandleProjectileTrails"
+case = "natural-active-call-203"
+before_sha256 = "0d1d0fbcf67a363d5c9f8e8b43dd0df53a3b5b381cd49d06b25efe3f911d2f1f"
+capture_after_sha256 = "360e9747f7f29a05af4a4d0d343f5d8dc83c76774c5995f1dd33b7ecb8241003"
+callbacks = 0
+
+[cases.return]
+c = 0
+rust = 0
+
+[cases.after_sha256]
+c = "360e9747f7f29a05af4a4d0d343f5d8dc83c76774c5995f1dd33b7ecb8241003"
+rust = "360e9747f7f29a05af4a4d0d343f5d8dc83c76774c5995f1dd33b7ecb8241003"
+
+[cases.results]
+
+[cases.spawn_results]
+
+[[cases]]
+routine = "HandleProjectileTrails"
+case = "natural-active-call-207"
+before_sha256 = "20a7d749a1f0191c51500d4424157503a9dd50f1a169716d5176412ffd72fcef"
+capture_after_sha256 = "827c66c757ac8633615f3bed6391ddf7992623c53e8602be36cb496ce290c623"
+callbacks = 0
+
+[cases.return]
+c = 0
+rust = 0
+
+[cases.after_sha256]
+c = "827c66c757ac8633615f3bed6391ddf7992623c53e8602be36cb496ce290c623"
+rust = "827c66c757ac8633615f3bed6391ddf7992623c53e8602be36cb496ce290c623"
+
+[cases.results]
+
+[cases.spawn_results]
+
+[[cases]]
+routine = "HandleProjectileTrails"
+case = "natural-active-call-211"
+before_sha256 = "0c62a48394622ad5b4068a945e6fb1388cf0b8b9f1286dd3e19fe2890d062858"
+capture_after_sha256 = "6adea0487f869c9c906cac71d6911b794e1c01af229f9f0107d6174579646e92"
+callbacks = 0
+
+[cases.return]
+c = 0
+rust = 0
+
+[cases.after_sha256]
+c = "6adea0487f869c9c906cac71d6911b794e1c01af229f9f0107d6174579646e92"
+rust = "6adea0487f869c9c906cac71d6911b794e1c01af229f9f0107d6174579646e92"
+
+[cases.results]
+
+[cases.spawn_results]
+
+[[cases]]
+routine = "HandleProjectileTrails"
+case = "natural-active-call-215"
+before_sha256 = "a10b3a919992727e89b86b0fdcf9b9048f596e04932cf1949482b86b38869d40"
+capture_after_sha256 = "6d93f1969c77749f1253ed950054a737507420f23e0a91f8e0443955a4024514"
+callbacks = 0
+
+[cases.return]
+c = 0
+rust = 0
+
+[cases.after_sha256]
+c = "6d93f1969c77749f1253ed950054a737507420f23e0a91f8e0443955a4024514"
+rust = "6d93f1969c77749f1253ed950054a737507420f23e0a91f8e0443955a4024514"
+
+[cases.results]
+
+[cases.spawn_results]
+
+[allocator_cases]
+
+[artifacts]
+"LICENSE.txt" = "d7b321b1d1009b9d5d0dc1334b0a941def8f15f36ce2396fabd409e9327e2787"
+c = "660cbe6eb28a930dabd54ec07bae0e9853faf7813c3672ddc142c0a512093dec"
+"c-cache.toml" = "c11bb99e601c52d6e28e52ab49527e6f22bb6f0237c2bc57f083db19df0c843c"
+"c-link.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"c-link.stdout" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"c-link.timing.toml" = "fce1f782532061b4b89677e7f05f9618022233dc7d13ce380327e33c3f415442"
+"c-object-002.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"c-object-002.stdout" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"c-object-002.timing.toml" = "055bb14ca1c29efe603e9e8193cc6a5db06514c4b7b56ecdf04c87a9ca5faf2f"
+"candidate.rs" = "9b4fcd099ced710581da54fac03b3478aa81daee21b90c194bd1b7c53181108f"
+"compiler.d" = "02f84acb12cb9b2ccd2e54252586e726e3d0c6646c716c8bc7fc7deec9f02a77"
+"dependency-000.rs" = "b4badc6fd554ee91dbdb82fdeb781ca937e64e10c4e2ce28b91e25061edd2679"
+"dependency-001.rs" = "6381e3d9caf01f3b1ca42ae56b75f3784c5b4de40f795a25b3194fd601351c57"
+"dependency-002.rs" = "4308e496267857ca869db45f4127e505bec4ad29c4c9ede8f08d6e9769ccf69d"
+"dependency-003.rs" = "881431d92845006509d2956eae0b3736459961762f5b4a021577f130c530d4f1"
+"dependency-004.rs" = "4faac9ac72d3b5caf206678980d915a2cb1ac03e492fd7fdb6aa59c4beb48367"
+"dependency-005.rs" = "f117da8bf86a387b0e5693fb19a84c938486fc089a10abf3155365e6627b837e"
+"dependency-006.rs" = "d1ee84dda96d514fba6fb76982aaabac76d1f6d9e324c5d8d2babf5e4fbf10c2"
+"dependency-007.rs" = "5f4649f745a2f772c32fc30231fbb2b1c0c5624ee693e6d3efaf5e15dc3557f1"
+"dependency-008.rs" = "4c99175b8eb0be86554e46f7424e6ee7aa43510afebe2d555ea2dcb890e7f0de"
+"dependency-009.rs" = "373bcf4c49058b7583e66f2a3f5a54d92ea4481d065e89729794871d56304dd9"
+"dependency-010.rs" = "7c0df2e77ed2d05dda05bd6d9e98fef3f7ec5f1c76426da504229af698bfecc5"
+"dependency-011.rs" = "43a11bc33a270533be56203c81cd451556cf9e3473609f9b0cc192e3ecdc25e1"
+"dependency-012.rs" = "801431d3325bb23672bd0f6b5aff7ea86506440c2c8c887893599386c3c00a41"
+"dependency-013.rs" = "151a849a2a9f366b3a3175915cbd861e1f8865b5451883b67a6d4fd584e846d3"
+"dependency-014.rs" = "70b2739565075c44e5e5094bca1e3ccc05380140ad380a8aab4608a73488c160"
+"dependency-015.rs" = "824dcf6c79385c02dd3c12a9347c8a7c417a2366dbf03d89c26e1526e47e76ab"
+"dependency-016.rs" = "10fcb32c76cb46d8e0ee1b477901bdb0fbbc8eb58fc2e2a704a038be6d3b0656"
+"dependency-017.rs" = "e7b13c17ac668f8aba50a21aedfcd4d4dcf93f5e1cd2d4c610557cb56774ba72"
+"dependency-018.rs" = "4f7e14ecbdf724305094d5924ec931b04dca422e8bcc3108fd5ff13531271234"
+"dependency-019.rs" = "d0d592bdbfad2b0bb1b845ec3fc2523cb4a6ff15c0dd07015c9736d3efb4ed60"
+"dependency-020.rs" = "dfe844396edea8efd787923ab506dc3b910c70d8a67e21bf7c27ddfba90475af"
+"dependency-021.rs" = "bedc7662f4c1c435c968a6c07c73331a76f6c58621b4ca885f73f6be33ccbf16"
+"dependency-024.rs" = "9b4fcd099ced710581da54fac03b3478aa81daee21b90c194bd1b7c53181108f"
+"fixture-worker-build.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"fixture-worker-build.stdout" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"fixture-worker-build.timing.toml" = "8cac0cf95daa4cad14ea6b156be7a8967b5d4a8a488b2067c47f6613a46ebbb1"
+"fixture-worker.rs" = "b4badc6fd554ee91dbdb82fdeb781ca937e64e10c4e2ce28b91e25061edd2679"
+"helper-c-3.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"helper-c-5.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"helper-rust-2.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"helper-rust-4.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"libfixture_worker.a" = "c2858b5982d0b33f094f4907999254707f1d8bba4d86e7dbeb8b6283cf08b220"
+"manifest-input.toml" = "c7845faa1dbe1746cee12ee1d503fe1ac10c6af20809705b9817dc3d382698d2"
+"manifest.toml" = "e968bdfa43c3b4fa5c54db55343c5fecc3c60f8af476f8dc9181e2f94d33e26f"
+"memory.rs" = "6f1b8ab44a18fe576ee0967783877168906df6756286435b9d818afcf636303c"
+"natural-active-call-187/before.wram" = "ea6082df2c1a2e133ecc5ad855bb2fb2885322089c523b2398ab25d9d8197ee8"
+"natural-active-call-187/c-after.wram" = "74935fb9e5696298a79b2ab6f5e8f0f8bf28154b137bdd3a254d27c8fe604055"
+"natural-active-call-187/c.fork.toml" = "f03ce8580fedf216f109c2604df47b91a792c0892f652dbbd4ec95e5b24abe55"
+"natural-active-call-187/c.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"natural-active-call-187/c.stdout" = "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+"natural-active-call-187/c.timing.toml" = "b9b0e7d1fa2ec56807584eb643ea1c383fd4efea5e1601cd313a2eb48aaee83d"
+"natural-active-call-187/case.toml" = "cd04a149b1114438f5b734ec5f5a70e0bccfa18de687f58823ce3ef4a1890cd2"
+"natural-active-call-187/expected-after.wram" = "74935fb9e5696298a79b2ab6f5e8f0f8bf28154b137bdd3a254d27c8fe604055"
+"natural-active-call-187/rust-after.wram" = "74935fb9e5696298a79b2ab6f5e8f0f8bf28154b137bdd3a254d27c8fe604055"
+"natural-active-call-187/rust.fork.toml" = "6c1f68bd898488ccbabadd4ca3887f2ca80ed4eaa8f38aaa7757ba862c491349"
+"natural-active-call-187/rust.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"natural-active-call-187/rust.stdout" = "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+"natural-active-call-187/rust.timing.toml" = "9200bdfe3a85d1a66b71064dd45491eb7e1eafe4de10e35d9ae55adbc6b99fab"
+"natural-active-call-188/before.wram" = "5d28f79b34843e81a799b6a5e722abd544141d41e806cbd253732f7403ddd8e6"
+"natural-active-call-188/c-after.wram" = "db225fbd0a085d92638a4d4fca191532e261e9d4f7dd7a050cc3116e2bc00200"
+"natural-active-call-188/c.fork.toml" = "da2b0955b22c632fc86453147e94f5aadd2fdc89c069194811dd59644a85faf4"
+"natural-active-call-188/c.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"natural-active-call-188/c.stdout" = "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+"natural-active-call-188/c.timing.toml" = "c341894403cbc7919026d98db4f03d7519890730cdf64394a18261431bee8347"
+"natural-active-call-188/case.toml" = "e7ea60744b6763d8f6c1be476cce79edc189e5f1f5e8f6e122a7c81d73db0102"
+"natural-active-call-188/expected-after.wram" = "db225fbd0a085d92638a4d4fca191532e261e9d4f7dd7a050cc3116e2bc00200"
+"natural-active-call-188/rust-after.wram" = "db225fbd0a085d92638a4d4fca191532e261e9d4f7dd7a050cc3116e2bc00200"
+"natural-active-call-188/rust.fork.toml" = "1e4c6d5c3ca58bebe907b1e328a7437b8b08339181ae1e63fd1502e22bd1281e"
+"natural-active-call-188/rust.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"natural-active-call-188/rust.stdout" = "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+"natural-active-call-188/rust.timing.toml" = "786268b10c57e384e1c43374d6c1d18a6d103e7a0f0062a1004a2c82c3ca7584"
+"natural-active-call-189/before.wram" = "dcbf75e0e54b95aec744872eef4d2822161b9861140552d402d3669942fcf150"
+"natural-active-call-189/c-after.wram" = "fcf75d8bd1b79adc60fb3abcb55b952d59f6529a5b960f5cb52a3f885ddb9aa6"
+"natural-active-call-189/c.fork.toml" = "eb7ae41d614893aa956e51a9c50b1a0402ad915a89cd4a14d8b16c83e2ddcfeb"
+"natural-active-call-189/c.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"natural-active-call-189/c.stdout" = "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+"natural-active-call-189/c.timing.toml" = "d8d59787c3ae7c1d29d76cdfa423b2be5194b735df1e8613c5745f589a3aaab4"
+"natural-active-call-189/case.toml" = "587d4b048ef281b515a25c54a8d2a412353c76e3b82cb9c740b530744708d8a9"
+"natural-active-call-189/expected-after.wram" = "fcf75d8bd1b79adc60fb3abcb55b952d59f6529a5b960f5cb52a3f885ddb9aa6"
+"natural-active-call-189/rust-after.wram" = "fcf75d8bd1b79adc60fb3abcb55b952d59f6529a5b960f5cb52a3f885ddb9aa6"
+"natural-active-call-189/rust.fork.toml" = "ee3a8c76377c5c10b39dec4698a1e86b4cebc5010da6d424b1fea7ab98d4a4cb"
+"natural-active-call-189/rust.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"natural-active-call-189/rust.stdout" = "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+"natural-active-call-189/rust.timing.toml" = "2de4cb91deed291c3bb386737228d79bbd26c38f6f730f8ab3741fe8ac1e194b"
+"natural-active-call-190/before.wram" = "4fe163eaa124296bbf8f85eee2a3fbca436fc61594359b99ffe96cf0e0c54423"
+"natural-active-call-190/c-after.wram" = "ea11a4ec439e9720f54a1494bea679ab683093cb3e6c9b8fb5a824c7944ec3cd"
+"natural-active-call-190/c.fork.toml" = "7b9600d75008332ffa04d47577105e6f6bd6e5c881c852c0129404b8ade13772"
+"natural-active-call-190/c.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"natural-active-call-190/c.stdout" = "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+"natural-active-call-190/c.timing.toml" = "cb014ae7f4059e256ed2793af5ec1716a7354a600478132b2cbcc740fac9bffc"
+"natural-active-call-190/case.toml" = "012a8200fefb162362bffee49e1309649a2692e32d7e428fa33d0f933aa7b63b"
+"natural-active-call-190/expected-after.wram" = "ea11a4ec439e9720f54a1494bea679ab683093cb3e6c9b8fb5a824c7944ec3cd"
+"natural-active-call-190/rust-after.wram" = "ea11a4ec439e9720f54a1494bea679ab683093cb3e6c9b8fb5a824c7944ec3cd"
+"natural-active-call-190/rust.fork.toml" = "f1acb226072555d623cf115065703db2492565f5b926386c60ac45f3fd6f4c44"
+"natural-active-call-190/rust.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"natural-active-call-190/rust.stdout" = "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+"natural-active-call-190/rust.timing.toml" = "02704dba45d7474bfac581a4849f2beb2c25d9b7b061731b008203207d711d4f"
+"natural-active-call-191/before.wram" = "009901967acfff801b19ee1c6200c730659e78b9e9a8632e10542a422cca128d"
+"natural-active-call-191/c-after.wram" = "d2b79fe0b01e53ebf66191a241372625357a548509d36d2bb6575c51df4e229e"
+"natural-active-call-191/c.fork.toml" = "bfd6a4c195e24edbd7a233ed15ccd76d7f528a08bbbdbca165b41bab7b9d761f"
+"natural-active-call-191/c.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"natural-active-call-191/c.stdout" = "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+"natural-active-call-191/c.timing.toml" = "8e98b85c13e2f575d8d1dafc68e3dd39b6d098c04bccf92b3cca659b59e6dbfb"
+"natural-active-call-191/case.toml" = "79685e2006cca0f48572e7440592953818a47eebda0098b85cfaef9d89907159"
+"natural-active-call-191/expected-after.wram" = "d2b79fe0b01e53ebf66191a241372625357a548509d36d2bb6575c51df4e229e"
+"natural-active-call-191/rust-after.wram" = "d2b79fe0b01e53ebf66191a241372625357a548509d36d2bb6575c51df4e229e"
+"natural-active-call-191/rust.fork.toml" = "420a98f76542cc98c5955370affbf081910cfd28bf43b759f02b7d2b822c870c"
+"natural-active-call-191/rust.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"natural-active-call-191/rust.stdout" = "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+"natural-active-call-191/rust.timing.toml" = "728302eabbebb7e6802ab71b1dbbc1b2a7527c866db7e52ec11a8ced3b9df8f6"
+"natural-active-call-192/before.wram" = "85f439271f18c42a81f28a303c538f6a1fb871df461a4194e6293dbf7e97663a"
+"natural-active-call-192/c-after.wram" = "fbcc3d3cc00735ccd5a05e17021f984bc8ee28170373c86e2146bf9adf18c27d"
+"natural-active-call-192/c.fork.toml" = "37ab65069270e8319c9fa158ff37a54a046330f920cfb4c77aa0bf199deac937"
+"natural-active-call-192/c.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"natural-active-call-192/c.stdout" = "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+"natural-active-call-192/c.timing.toml" = "3c2c78e78f140f6ce65dfda68a62d299b3a0cbee1a2b2f2259cb6242513f6df4"
+"natural-active-call-192/case.toml" = "41654969ee327c33a8b0aa9f0e6da373dc02fa369193d93bb5bc8da40ea57c2d"
+"natural-active-call-192/expected-after.wram" = "fbcc3d3cc00735ccd5a05e17021f984bc8ee28170373c86e2146bf9adf18c27d"
+"natural-active-call-192/rust-after.wram" = "fbcc3d3cc00735ccd5a05e17021f984bc8ee28170373c86e2146bf9adf18c27d"
+"natural-active-call-192/rust.fork.toml" = "33d33d82b87b151e90d5ca807326a0b594a6f5a479a8f549b501c02e102c185e"
+"natural-active-call-192/rust.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"natural-active-call-192/rust.stdout" = "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+"natural-active-call-192/rust.timing.toml" = "626c98c1610cc8faeaadddfcca3127fe19d7cc375416ed002aeb148c7f092670"
+"natural-active-call-193/before.wram" = "047b0e7befcece6ed896e1f11db2a46cec91fe5e43ea665277032473a4d4107a"
+"natural-active-call-193/c-after.wram" = "901a0786a1793820a5ba40d2f59a2e295568aea80c302c4077f5cad02b8005cc"
+"natural-active-call-193/c.fork.toml" = "b2fcb95a9323a27483fff31d254531679016ebbd5d6c68b717ab526daad7a926"
+"natural-active-call-193/c.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"natural-active-call-193/c.stdout" = "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+"natural-active-call-193/c.timing.toml" = "bb10ae0780999b9db26f13dea7857b75d50738ad76cae99aaf024828a906f042"
+"natural-active-call-193/case.toml" = "079e3a90579bfd14df4cf330dd89b6a8d5ee30cd7263022f838f2745dd46e5c5"
+"natural-active-call-193/expected-after.wram" = "901a0786a1793820a5ba40d2f59a2e295568aea80c302c4077f5cad02b8005cc"
+"natural-active-call-193/rust-after.wram" = "901a0786a1793820a5ba40d2f59a2e295568aea80c302c4077f5cad02b8005cc"
+"natural-active-call-193/rust.fork.toml" = "2374815b1b56b2d67f22aaa5cf80e479c30cf3eb57e2e106a5f748c97f2d87f6"
+"natural-active-call-193/rust.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"natural-active-call-193/rust.stdout" = "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+"natural-active-call-193/rust.timing.toml" = "8d0b908bc36dea9e4d53daecbdec5b55acdd245c7a69397158f8358909a3fdbf"
+"natural-active-call-194/before.wram" = "b5947fb02529b826106ee264a2de5cb4515061141f074b4fa33f772b35e666ce"
+"natural-active-call-194/c-after.wram" = "79d713fab24079405f4cbd6c53a541cb3716b87008f32da0e15a3a8271d75d95"
+"natural-active-call-194/c.fork.toml" = "fedd3d32f51e010a77e49db610745ff02a1fdcb584fdbd05829be8f72f865ec1"
+"natural-active-call-194/c.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"natural-active-call-194/c.stdout" = "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+"natural-active-call-194/c.timing.toml" = "f57a0de44adb844b17391743e6ec7170efab76fbb64ae11e1ce9bb4c38ca0c29"
+"natural-active-call-194/case.toml" = "7828e49c4f071f2022181222093f4601589db1df4e03f001baba7e242fbd78bd"
+"natural-active-call-194/expected-after.wram" = "79d713fab24079405f4cbd6c53a541cb3716b87008f32da0e15a3a8271d75d95"
+"natural-active-call-194/rust-after.wram" = "79d713fab24079405f4cbd6c53a541cb3716b87008f32da0e15a3a8271d75d95"
+"natural-active-call-194/rust.fork.toml" = "68a14a07e435b0c2aaf6834d145d1edbd71e0262470f90c532494c2a53e54bef"
+"natural-active-call-194/rust.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"natural-active-call-194/rust.stdout" = "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+"natural-active-call-194/rust.timing.toml" = "6c7ce575eb2ce42fcdb2c42ad7a709a713a423a604a5d0f5e15c3483e0059445"
+"natural-active-call-195/before.wram" = "7a1a76db1cd3fffdd9532767a3a637ec6c57888f0754c5fc44c6312b33808c65"
+"natural-active-call-195/c-after.wram" = "aae21b1b1aed8a172b04d67720c9b3614f8f33743485fdb3587557e1b88ef8bb"
+"natural-active-call-195/c.fork.toml" = "3e0841a41f018c0bb2d9e4564cbf5b9d6521fa02a0827d1d57d228abd9f9403e"
+"natural-active-call-195/c.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"natural-active-call-195/c.stdout" = "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+"natural-active-call-195/c.timing.toml" = "2af35e096053a10b9619d58f72f7bd5b29cd1a6665ae7ecff432e853182dd8b0"
+"natural-active-call-195/case.toml" = "be3dd0bd6385fd7ffe038430ee2d087a8f713c85a594c15a9312163a3fca795c"
+"natural-active-call-195/expected-after.wram" = "aae21b1b1aed8a172b04d67720c9b3614f8f33743485fdb3587557e1b88ef8bb"
+"natural-active-call-195/rust-after.wram" = "aae21b1b1aed8a172b04d67720c9b3614f8f33743485fdb3587557e1b88ef8bb"
+"natural-active-call-195/rust.fork.toml" = "17612ee72105967a34e552d7717f5a76da1886f593118ab62c775c7c71990481"
+"natural-active-call-195/rust.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"natural-active-call-195/rust.stdout" = "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+"natural-active-call-195/rust.timing.toml" = "35c9a5fbb95dffea31dcee6ccccf703a43fb9dfeefc4161d3fd6026c8ae119ab"
+"natural-active-call-199/before.wram" = "7728c4287e8230206844d1cf2e1ef85feb755c6c100b4c6557bad3fb3429b442"
+"natural-active-call-199/c-after.wram" = "ca56a98c07ba8ddd46e2a828832a76515e02cbf9dfdde044ff5ccb9110d6e857"
+"natural-active-call-199/c.fork.toml" = "46a83db31bc3d50cbe34b5acd30afe6baae1d45a092c4bfa8fd257bb5126457f"
+"natural-active-call-199/c.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"natural-active-call-199/c.stdout" = "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+"natural-active-call-199/c.timing.toml" = "9966bb286bc807d8b0e6210becafe4d11578c14674a19590fea51d5c2a191dbc"
+"natural-active-call-199/case.toml" = "5fb9463aa7fb4e1d65e7245d5774c5d7febf05045dc0daabd510bbacf7b1972a"
+"natural-active-call-199/expected-after.wram" = "ca56a98c07ba8ddd46e2a828832a76515e02cbf9dfdde044ff5ccb9110d6e857"
+"natural-active-call-199/rust-after.wram" = "ca56a98c07ba8ddd46e2a828832a76515e02cbf9dfdde044ff5ccb9110d6e857"
+"natural-active-call-199/rust.fork.toml" = "8d6c005e5b2f06b3cfab2890c126ec589c7c6b038c4e9238f81797c52ebe3de2"
+"natural-active-call-199/rust.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"natural-active-call-199/rust.stdout" = "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+"natural-active-call-199/rust.timing.toml" = "aa26eaeb45d7c37c4e2801cbc712684b31aa0d5484d3adeeaeebf6489e002777"
+"natural-active-call-203/before.wram" = "0d1d0fbcf67a363d5c9f8e8b43dd0df53a3b5b381cd49d06b25efe3f911d2f1f"
+"natural-active-call-203/c-after.wram" = "360e9747f7f29a05af4a4d0d343f5d8dc83c76774c5995f1dd33b7ecb8241003"
+"natural-active-call-203/c.fork.toml" = "7498430d915b2d6390ecb588fd51bd36b8c7822e9d6a598b74f4cc87379112cb"
+"natural-active-call-203/c.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"natural-active-call-203/c.stdout" = "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+"natural-active-call-203/c.timing.toml" = "711e6a029739f59e9cf6def2b6a91319a3f9cfb53aaafa4035793e57ee6ae39a"
+"natural-active-call-203/case.toml" = "079207da24b1a5e460669326e283f2425c303eecd81c250a7c465a26073f5832"
+"natural-active-call-203/expected-after.wram" = "360e9747f7f29a05af4a4d0d343f5d8dc83c76774c5995f1dd33b7ecb8241003"
+"natural-active-call-203/rust-after.wram" = "360e9747f7f29a05af4a4d0d343f5d8dc83c76774c5995f1dd33b7ecb8241003"
+"natural-active-call-203/rust.fork.toml" = "d3356ee579a2b9fcc8c60ab0946e7eae7c213c8a336cec22dd73c88076b5a5a5"
+"natural-active-call-203/rust.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"natural-active-call-203/rust.stdout" = "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+"natural-active-call-203/rust.timing.toml" = "30a10fc9b0fad84b443972b031c0cf52dd6ea6ec6e360173b3848e4793042d84"
+"natural-active-call-207/before.wram" = "20a7d749a1f0191c51500d4424157503a9dd50f1a169716d5176412ffd72fcef"
+"natural-active-call-207/c-after.wram" = "827c66c757ac8633615f3bed6391ddf7992623c53e8602be36cb496ce290c623"
+"natural-active-call-207/c.fork.toml" = "01d05ea4dc96646ec04f4bcc5de88bb901f45f0e2e69564f44a70e604f828f65"
+"natural-active-call-207/c.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"natural-active-call-207/c.stdout" = "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+"natural-active-call-207/c.timing.toml" = "f2c3e3a3de883407ce915a5c862a4bf3289f6f50c954d49db8d579e623b1aff2"
+"natural-active-call-207/case.toml" = "85c95a3e671c04bd240e33626c1891dce9b0be9a10fd2e84bc0357ae8a2456bb"
+"natural-active-call-207/expected-after.wram" = "827c66c757ac8633615f3bed6391ddf7992623c53e8602be36cb496ce290c623"
+"natural-active-call-207/rust-after.wram" = "827c66c757ac8633615f3bed6391ddf7992623c53e8602be36cb496ce290c623"
+"natural-active-call-207/rust.fork.toml" = "043ec34d6a8c8442f70c8f5681eaabe657742a86ed4e9e7a61de1ea3c64ecd8f"
+"natural-active-call-207/rust.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"natural-active-call-207/rust.stdout" = "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+"natural-active-call-207/rust.timing.toml" = "67ba00344cea5ec6a35b5b2325c2456bdd0d9ef1d5e8f0ed1ca4210e2b459afb"
+"natural-active-call-211/before.wram" = "0c62a48394622ad5b4068a945e6fb1388cf0b8b9f1286dd3e19fe2890d062858"
+"natural-active-call-211/c-after.wram" = "6adea0487f869c9c906cac71d6911b794e1c01af229f9f0107d6174579646e92"
+"natural-active-call-211/c.fork.toml" = "7fa33777ea51c4bd44f187d36a48e6d1e686cde368051cb361d1d22ab199e9bb"
+"natural-active-call-211/c.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"natural-active-call-211/c.stdout" = "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+"natural-active-call-211/c.timing.toml" = "4b42459ed3ad7c467b581e47fe126e074cf9bdd0614453e0f0249063fa5b7d26"
+"natural-active-call-211/case.toml" = "75724eaaa75c6ce7aebd575738454a76254f059581ddc360e811ca3d8504fbe1"
+"natural-active-call-211/expected-after.wram" = "6adea0487f869c9c906cac71d6911b794e1c01af229f9f0107d6174579646e92"
+"natural-active-call-211/rust-after.wram" = "6adea0487f869c9c906cac71d6911b794e1c01af229f9f0107d6174579646e92"
+"natural-active-call-211/rust.fork.toml" = "78638877347faaa0ddd63e96d4f300bb5a512e99d132e1a2ac0b8b71044d9175"
+"natural-active-call-211/rust.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"natural-active-call-211/rust.stdout" = "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+"natural-active-call-211/rust.timing.toml" = "6ea0a84678fdd15a4002d6b6b6592ef554a4e0213b6cfb92c176e71f20cb0097"
+"natural-active-call-215/before.wram" = "a10b3a919992727e89b86b0fdcf9b9048f596e04932cf1949482b86b38869d40"
+"natural-active-call-215/c-after.wram" = "6d93f1969c77749f1253ed950054a737507420f23e0a91f8e0443955a4024514"
+"natural-active-call-215/c.fork.toml" = "6b720d597d011c029571d54806105b0dd82438f71312d6bcb228af478c8c6cd3"
+"natural-active-call-215/c.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"natural-active-call-215/c.stdout" = "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+"natural-active-call-215/c.timing.toml" = "198ea18beb095379460b1e126df13501dcf18ef8ca49feaf1d7903e15651c6c8"
+"natural-active-call-215/case.toml" = "0de1f66b30168da89bb7fd262debfb9153e7ad676b9abcdc94c2cb83c7154883"
+"natural-active-call-215/expected-after.wram" = "6d93f1969c77749f1253ed950054a737507420f23e0a91f8e0443955a4024514"
+"natural-active-call-215/rust-after.wram" = "6d93f1969c77749f1253ed950054a737507420f23e0a91f8e0443955a4024514"
+"natural-active-call-215/rust.fork.toml" = "8a3dd5296d2d43a8484b6eb56d8959048e0ddb1025364a48fd67bc325e34db04"
+"natural-active-call-215/rust.stderr" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"natural-active-call-215/rust.stdout" = "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+"natural-active-call-215/rust.timing.toml" = "b316e030fe5f0f9adf4125c2030487c8fb01fbc2be6ec3b732c02dcfc4098293"
+"oracle.c" = "cb441d3492dbe467f907a5ca1a9d2efd67bea37368976153c76e82a8ab14d378"
+"pipeline-batch.rs" = "882779c50e27cac4add62847d8651739e2ac6ed70d04073cfac35e4e95da0f3a"
+"pipeline-builds.rs" = "1141b9ed89baeb8c7e64562564488832998a7ae1e951f5e40c06bcb516f8164f"
+"pipeline-cleanup.rs" = "fc282127e388eec71dc3fc2354b6f641c1e357ac1ecf570ee57ed6bd82774204"
+"pipeline-dispatcher_eproj.c" = "0fca153504ff09350fa0d1c8044a427ac8c57a60cb23a622b4b0488fc9d9db68"
+"pipeline-dispatcher_host.c" = "378daeb483f5e8561327ac18f916cb7af46b2e7b2711eb27cc2983f888a93f45"
+"pipeline-dispatcher_plm.c" = "19702340d8d6d0e71fe3b59d303e2606c9f956e37b3796d8aa7075f6017584e7"
+"pipeline-dispatcher_pointer.c" = "3f4d49cb9862a39fbeb4404129a5d88f77ddd6b5d8ac834a8708d8d1cab832b0"
+"pipeline-family.rs" = "7838401fdddde9811c8016dc093da82a3946a9ef234bddbd04cece21da54502f"
+"pipeline-family_header.c" = "df3c1f8cd5eaa51987fe78fd477e1e676b5939c6f0f0be063e094524ab74fbd8"
+"pipeline-family_pointer.c" = "247c58ad5e2660fa8003139f9ff1f552f5464c92268b94f0ce08d923208427e5"
+"pipeline-fixture_execution.rs" = "2d091dda80e70ac0bd726f8bfe17932adf54938dafe992da1516867c8fc129fb"
+"pipeline-fixture_worker.rs" = "b4badc6fd554ee91dbdb82fdeb781ca937e64e10c4e2ce28b91e25061edd2679"
+"pipeline-inputs.rs" = "a308f23c7febd841a60a22e1734320421691bffd82a610ff7b944420add5742f"
+"pipeline-inputs.toml" = "964e755993430b52f18dadde4ca04b7560e48072f15e15069a022c4b507cfa69"
+"pipeline-main.rs" = "8b84c3526281b784643a08babc047781e044214aec1304b8c3b35c1259361066"
+"pipeline-metrics.rs" = "30c14f63a9c8bb85f764609b5207cbc68f92c8332e54bf5ab4fd9594bfc24063"
+"pipeline-plm_fixtures.rs" = "915e1a47b8deb6c4d1cfff2a73172b25ef461a4e9ee4a0833742b7ad44380220"
+"pipeline-resource_sampler.rs" = "d40db3a810b33251afbf76efc1d16c19ad1b0809a6dea69473d20d6d852f266c"
+"rom.bin" = "886600dd5c645cf7f44b21718dc87dc51908585a2c523f35fda425aca9e28892"
+rust = "74abe81b0fac3f68b153bff8b10f64510192566a22170121d9c28a386442da06"
+"rust-build.stderr" = "ee1f7ccfb12b01253628062ec0b46f05e4c43da334608fc1976f553c10dfd827"
+"rust-build.stdout" = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"rust-build.timing.toml" = "975f5d9906848e5ff41b745740ce1861414b233a0355e7ffe1e543561d2fc224"
+"wrapper.rs" = "5cd1104e42b8eeb25bc038db6018df9ddd0118a4c1cc0bb19cb59729a55d9857"

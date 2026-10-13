@@ -1,0 +1,7 @@
+status = "authenticated"
+artifacts_per_subject = 94
+subjects = 4
+binary = true
+storage = "sm-evidence-v2"
+verdict_sha256 = "312036af96f789c07af1ff370800a69fbaa28fcba2a26dc3d4c3507f2e240508"
+scope = "retained frozen binary and observations; current-source admission and original-ROM parity separate"

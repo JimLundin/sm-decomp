@@ -1,0 +1,49 @@
+agent = "/root/coverage_finish"
+commit = "3ce28ba58aba319b60bbc949153baafd4433132e"
+evidence_context = "current-checkout"
+id = "source-ridley_rendering-6053-translated-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Maintained executable Rust implementations mapped through explicit dispatch branches, numeric selectors or reviewed private aliases to exact pinned C definitions. Source correspondence establishes translated coverage only; bounded branches, delegated C/host effects and per-module limitations are retained in source-coverage-map.json.",
+    "This observation does not grant verification, integration or live exercise. Missing routine reports and source-only mappings remain distinct from missing implementations; documentation literals and forwarding references are excluded unless their implementation owner was mapped separately.",
+]
+routines = [
+    "BabyMetroid_DBCB_DoubleRetEx",
+    "BabyMetroid_Goto",
+    "BabyMetroid_Instr_1",
+    "BabyMetroid_Instr_2",
+    "BabyMetroid_Instr_3",
+    "CallBabyMetroidInstr",
+    "CallRidleyFunc_var40",
+    "DrawBabyMetroid_0",
+    "DrawSpritemap",
+    "QueueMode7Transfers",
+    "Ridley_A2DC",
+    "Ridley_A2F2",
+    "Ridley_D495",
+    "Ridley_Func_100",
+    "Ridley_Func_101",
+    "Ridley_Func_102",
+    "Ridley_Func_118",
+    "Ridley_Func_119",
+    "Ridley_Func_120",
+    "Ridley_Func_49",
+    "Ridley_Func_50",
+    "Ridley_Func_51",
+    "Ridley_Func_52",
+    "Ridley_Func_53",
+    "WriteColorsToPalette",
+    "WriteColorsToTargetPalette",
+    "sub_A6DB2A",
+    "sub_A6DBC2",
+    "sub_A6DC13",
+]
+scope = "Maintained ridley_rendering implementation mapping"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "translated"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/crates/port/src/ridley_rendering.rs"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/source-coverage-map.json"

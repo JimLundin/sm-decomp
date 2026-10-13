@@ -1,0 +1,46 @@
+agent = "/root/coverage_finish"
+evidence_context = "historical-frozen"
+id = "historical-enemy_rio-6053-verified-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Retained historical source and all sealed artifacts were hashed during recovery. These named fixture roots passed 648 actual-C pairs across retained runs; duplicate domains may occur. Candidate/dependency snapshots and manifests are retained and C pin matches the current inventory.",
+    "Historical fixture domains only. This import does not authenticate current checkout dependencies, current integration, original-ROM parity, full-game completion, internal calls or synthetic dispatch. Exact module digests and per-run closure checks are in retained-coverage-authentication.json.",
+]
+routines = [
+    "LowerNorfairRio_Func_1",
+    "LowerNorfairRio_Func_2",
+    "LowerNorfairRio_Func_3",
+    "LowerNorfairRio_Func_4",
+    "LowerNorfairRio_Func_5",
+    "LowerNorfairRio_Func_6",
+    "LowerNorfairRio_Func_7",
+    "LowerNorfairRio_Init",
+    "LowerNorfairRio_Main",
+    "NorfairRio_Func_1",
+    "NorfairRio_Func_2",
+    "NorfairRio_Func_3",
+    "NorfairRio_Func_4",
+    "NorfairRio_Func_5",
+    "NorfairRio_Func_6",
+    "NorfairRio_Func_7",
+    "NorfairRio_Init",
+    "NorfairRio_Main",
+]
+scope = "Retained enemy_rio fixture roots"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "verified"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/batches/20261010T213631.753519Z/enemy-rio/20261010T214300.061739Z/evidence/20261010T214300.152936Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/batches/20261010T213631.753519Z/enemy-rio/20261010T215449.198281Z/evidence/20261010T215449.275608Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/current-batch-enemy-rio/20261010T210418.772291Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/rio-current/20261010T204523.842131Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/retained-coverage-authentication.json"

@@ -1,0 +1,106 @@
+agent = "/root/coverage_finish"
+evidence_context = "historical-frozen"
+id = "historical-animated_tiles-6053-verified-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Retained historical source and all sealed artifacts were hashed during recovery. These named fixture roots passed 4971 actual-C pairs across retained runs; duplicate domains may occur. Candidate/dependency snapshots and manifests are retained and C pin matches the current inventory.",
+    "Historical fixture domains only. This import does not authenticate current checkout dependencies, current integration, original-ROM parity, full-game completion, internal calls or synthetic dispatch. Exact module digests and per-run closure checks are in retained-coverage-authentication.json.",
+]
+routines = [
+    "AnimtilesHandler",
+    "AnimtilesInstr_Clear3PaletteColors",
+    "AnimtilesInstr_DecrementTimerAndGoto",
+    "AnimtilesInstr_DecrementTimerAndGotoRel",
+    "AnimtilesInstr_Delete",
+    "AnimtilesInstr_Goto",
+    "AnimtilesInstr_GotoIfBossBitSet",
+    "AnimtilesInstr_GotoIfBossBitSetInArea",
+    "AnimtilesInstr_GotoIfEventHappened",
+    "AnimtilesInstr_GotoIfTourianStatueBusy",
+    "AnimtilesInstr_GotoRel",
+    "AnimtilesInstr_QueueMusic",
+    "AnimtilesInstr_QueueSfx1",
+    "AnimtilesInstr_QueueSfx2",
+    "AnimtilesInstr_QueueSfx3",
+    "AnimtilesInstr_SetBossBit",
+    "AnimtilesInstr_SetEventHappened",
+    "AnimtilesInstr_SetTimer",
+    "AnimtilesInstr_SpawnPalfxObj",
+    "AnimtilesInstr_SpawnTourianStatueEyeGlow",
+    "AnimtilesInstr_SpawnTourianStatueSoul",
+    "AnimtilesInstr_TourianStatueClearState",
+    "AnimtilesInstr_TourianStatueSetState",
+    "AnimtilesInstr_WaitUntilAreaBossDead_DoubleRet",
+    "AnimtilesInstr_Write8PaletteColors",
+    "ClearAnimtiles",
+    "ClearPaletteFXObjects",
+    "DisableAnimtiles",
+    "DisablePaletteFx",
+    "EnableAnimtiles",
+    "EnablePaletteFx",
+    "PalFx_ProcessOne",
+    "PalInstr_ClearPreInstr",
+    "PalInstr_ColorPlus15",
+    "PalInstr_ColorPlus2",
+    "PalInstr_ColorPlus3",
+    "PalInstr_ColorPlus4",
+    "PalInstr_ColorPlus8",
+    "PalInstr_ColorPlus9",
+    "PalInstr_DecTimerGoto",
+    "PalInstr_Delete",
+    "PalInstr_Goto",
+    "PalInstr_QueueMusic",
+    "PalInstr_QueueSfx1",
+    "PalInstr_QueueSfx2",
+    "PalInstr_QueueSfx3",
+    "PalInstr_SetColorIndex",
+    "PalInstr_SetPalfxIndex",
+    "PalInstr_SetPreInstr",
+    "PalInstr_SetTimer",
+    "PalInstr_Wait",
+    "PalPreInstr_CheckEnemy0Health",
+    "PalPreInstr_DeletePalfxIfMinibossDead",
+    "PalPreInstr_E1BC",
+    "PalPreInstr_F621",
+    "PalPreInstr_SamusInHeat",
+    "PalPreInstr_SwitchIfYpos",
+    "PalPreInstr_SwitchIfYpos2",
+    "PalPreInstr_nullsub_129",
+    "PaletteFxHandler",
+    "ProcessAnimtilesObject",
+    "SpawnAnimtiles",
+    "SpawnPalfxObject",
+]
+scope = "Retained animated_tiles fixture roots"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "verified"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/animated-tile-combined/20261011T090607.371012Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/animated-tile-frames/20261011T090520.929394Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/animated-tile-spawns/20261011T090242.780018Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/animated-tiles/20261011T090908.318328Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/palette-effect-allocation/20261011T090022.412533Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/palette-effect-frame-live/20261011T093431.463226Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/palette-effect-heat/20261011T091645.307470Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/palette-effect-preinstructions/20261011T091537.086837Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/palette-instructions/20261011T091856.464411Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/retained-coverage-authentication.json"

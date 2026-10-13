@@ -1,0 +1,178 @@
+C inventory: 6053 definitions, 75229 body lines at 578f90b3cc49557bb70060ad033bb90b8cf8ac50
+Fixture declarations only: 834 definitions
+integrated: 38 explicitly observed definitions, 775 body lines
+live-exercised: 110 explicitly observed definitions, 1550 body lines
+translated: 1460 explicitly observed definitions, 16498 body lines
+translating: 220 explicitly observed definitions, 3129 body lines
+verified: 924 explicitly observed definitions, 10074 body lines
+Evidence context current-checkout: integrated=38, live-exercised=15, translated=1460, translating=0, verified=38
+Evidence context historical-frozen: integrated=0, live-exercised=95, translated=911, translating=0, verified=911
+Evidence context unspecified: integrated=34, live-exercised=0, translated=34, translating=220, verified=34
+Observations: 252; stale: 16; superseded: 1
+Notice: Fixture manifests are declarations only. Stage observations do not grant routine admission or gameplay acceptance.
+Notice: Each stage counts its own explicit observations; a translated claim does not count as verified, integrated or live-exercised.
+Notice: Coverage is the pinned sm_*.c lexical definition inventory, including support files; external, macro and indirect dependencies require review.
+Notice: Evidence context is reported provenance, not automatic authentication: historical-frozen refers to retained source, current-checkout requires a supporting source check, and legacy observations remain unspecified.
+Notice: Reporting completeness is limited to substantiated retained observations. Missing reports do not establish missing Rust implementation; declarations, unavailable artifacts and unproved internal call closure do not grant verified coverage.
+Notice: This refresh consumed the retained source inventory. Source bytes were not rechecked; use refresh --source DIR for an exact pinned-archive check.
+Notice: Declaration tools/port/boss-projectile-transitions.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/boss-projectile-transitions.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/botwoon-body-allocation.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/botwoon-body-lifecycle.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/botwoon-body-lifecycle.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/botwoon-spit-allocation.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/botwoon-spit-scheduling.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/botwoon-spit-scheduling.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/draygon-attached-gunk.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/draygon-attached-gunk.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/draygon-projectile-scheduling.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/draygon-projectile-scheduling.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/enemy-death-explosion.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/enemy-drop-selection.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/enemy-drop-transition.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/enemy-falling-particles.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/enemy-falling-particles.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/enemy-linked-projectile-allocation.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/enemy-projectile-instructions.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/enemy-projectile-instructions.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/enemy-projectile-rendering-direct.toml names PortScreenShake outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/enemy-projectile-rendering-direct.toml names PortDrawEprojs outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/enemy-projectile-rendering-direct.toml names PortDrawEprojSpritemap outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/enemy-projectile-rendering-direct.toml names PortDrawEprojSpritemapOffscreen outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/fireball-split-chain.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/fireball-split-chain.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/floater-spike-motion.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/floater-spike-motion.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/host-spore-spawning.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/host-spore-spawning.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/kago-bug-callbacks.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/kago-bug-callbacks.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/kago-bug-launch.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/kraid-rocks.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/kraid-rocks.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/lava-seahorse-arc.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/lava-seahorse-arc.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/lavaman-thrown-lava.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/lavaman-thrown-lava.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/lavaquake-rocks.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/lavaquake-rocks.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mini-kraid-projectiles.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mini-kraid-projectiles.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mother-brain-blue-ring-allocation.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mother-brain-blue-ring-frames.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mother-brain-blue-ring-lifecycle.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mother-brain-blue-ring-lifecycle.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mother-brain-bomb-allocation.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mother-brain-bomb-allocation.toml names EprojInitializer outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mother-brain-bomb-collision.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mother-brain-bomb-frames.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mother-brain-bomb-movement.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mother-brain-bomb-update.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mother-brain-bomb-update.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mother-brain-breath-text-tube-allocation.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mother-brain-door-particle-motion.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mother-brain-door-particle-motion.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mother-brain-drool-tracking.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mother-brain-drool-tracking.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mother-brain-explosion-allocation.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mother-brain-glass-allocation.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mother-brain-glass-allocation.toml names EprojInitializer outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mother-brain-glass-callers.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mother-brain-glass-frames.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mother-brain-glass-motion.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mother-brain-glass-motion.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mother-brain-glass-sequence.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mother-brain-tube-motion.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mother-brain-tube-motion.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mother-brain-turret-host-lifecycle.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mother-brain-turret-host-lifecycle.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mother-brain-turret-projectiles.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/mother-brain-turret-projectiles.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/n00b-tube-callers.toml names PlmInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/n00b-tube-sequence.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/n00b-tube.toml names EprojInitializer outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/n00b-tube.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/n00b-tube.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/nami-fune-horizontal-projectiles.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/nami-fune-horizontal-projectiles.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/observed-projectile-frame-boundaries.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/observed-projectile-initializers.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/observed-projectile-initializers.toml names EprojInitializer outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/observed-projectile-initializers.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/observed-projectile-ownership.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/phantoon-orbits.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/phantoon-orbits.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/phantoon-starting-fireballs.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/phantoon-starting-fireballs.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/pirate-host-callers.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/pirate-host-context.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/pirate-projectile-flight.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/pirate-projectile-flight.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/plant-spike-motion.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/plant-spike-motion.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/plm-instructions.toml names PlmInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/plm-instructions.toml names PlmControlFrame outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/projectile-host-context.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/projectile-host-drop-instructions.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/projectile-movement-live-leaves.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/projectile-paired-live-leaves.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/projectile-paired-motion.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/projectile-pickup-collection.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/projectile-pickup-collection.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/projectile-random-motion.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/ridley-fireball-host-impact.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/ridley-fireball-host-impact.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/robot-laser-collision.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/robot-laser-collision.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/seahorse-fireball.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/seahorse-fireball.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/shaktool-attack-circles.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/shaktool-attack-circles.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/shot-gates-electricity.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/shot-gates-electricity.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/skree-particles.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/skree-particles.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/sparks-allocation.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/sparks-allocation.toml names EprojInitializer outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/sparks-frames.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/sparks-sequence.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/sparks-update.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/sparks-update.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/spore-projectile-motion.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/spore-projectile-motion.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/torizo-drool.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/torizo-eggs.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/torizo-eggs.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/torizo-eye-beam.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/torizo-eye-beam.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/torizo-impact.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/torizo-impact.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/torizo-orbs.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/torizo-orbs.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/torizo-sonic-boom.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/torizo-sonic-boom.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/torizo-super-missile.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/torizo-super-missile.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/tourian-statue-effects.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/tourian-statue-scheduling.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/tourian-statue-scheduling.toml names EprojPreinstruction outside the C inventory; it contributes no C coverage.
+Notice: Declaration tools/port/yapping-maw-body.toml names EprojInstruction outside the C inventory; it contributes no C coverage.
+Notice: Stale update samus-projectile-frame-0f59de1-translated: source inventory changed; excluded from stage totals.
+Notice: Stale update samus-projectile-frame-0f59de1-verified: source inventory changed; excluded from stage totals.
+Notice: Stale update projectile-trails-cf5f2d8-translated: source inventory changed; excluded from stage totals.
+Notice: Stale update projectile-trails-cf5f2d8-verified: source inventory changed; excluded from stage totals.
+Notice: Stale update projectile-trails-root-6053-live-20261013: evidence changed: /home/jim/sm-decomp/.scratch/decomp-progress/recovery-live-ticket-audit-20261013.md; excluded from stage totals.
+Notice: Stale update historical-dispatch-1-6053-translated-accuracy-20261013: evidence changed: /home/jim/sm-decomp/.scratch/decomp-strategy/ticket-authenticated-internal-mappings.json; excluded from stage totals.
+Notice: Stale update historical-dispatch-1-6053-verified-accuracy-20261013: evidence changed: /home/jim/sm-decomp/.scratch/decomp-strategy/ticket-authenticated-internal-mappings.json; excluded from stage totals.
+Notice: Stale update historical-dispatch-2-6053-translated-accuracy-20261013: evidence changed: /home/jim/sm-decomp/.scratch/decomp-strategy/ticket-authenticated-internal-mappings.json; excluded from stage totals.
+Notice: Stale update historical-dispatch-2-6053-verified-accuracy-20261013: evidence changed: /home/jim/sm-decomp/.scratch/decomp-strategy/ticket-authenticated-internal-mappings.json; excluded from stage totals.
+Notice: Stale update historical-dispatch-3-6053-translated-accuracy-20261013: evidence changed: /home/jim/sm-decomp/.scratch/decomp-strategy/ticket-authenticated-internal-mappings.json; excluded from stage totals.
+Notice: Stale update historical-dispatch-3-6053-verified-accuracy-20261013: evidence changed: /home/jim/sm-decomp/.scratch/decomp-strategy/ticket-authenticated-internal-mappings.json; excluded from stage totals.
+Notice: Stale update historical-dispatch-4-6053-translated-accuracy-20261013: evidence changed: /home/jim/sm-decomp/.scratch/decomp-strategy/ticket-authenticated-internal-mappings.json; excluded from stage totals.
+Notice: Stale update historical-dispatch-4-6053-verified-accuracy-20261013: evidence changed: /home/jim/sm-decomp/.scratch/decomp-strategy/ticket-authenticated-internal-mappings.json; excluded from stage totals.
+Notice: Stale update historical-dispatch-5-6053-translated-accuracy-20261013: evidence changed: /home/jim/sm-decomp/.scratch/decomp-strategy/ticket-authenticated-internal-mappings.json; excluded from stage totals.
+Notice: Stale update historical-dispatch-5-6053-verified-accuracy-20261013: evidence changed: /home/jim/sm-decomp/.scratch/decomp-strategy/ticket-authenticated-internal-mappings.json; excluded from stage totals.
+Notice: Stale update historical-dispatch-6-6053-translated-accuracy-20261013: evidence changed: /home/jim/sm-decomp/.scratch/decomp-strategy/ticket-authenticated-internal-mappings.json; excluded from stage totals.
+Notice: Superseded update ridley-whole-6053-recovered-translated-20261013: replaced by ridley-whole-reviewed-translated-20261013; excluded from stage totals even if replacement evidence becomes stale.
+Registry: /home/jim/sm-decomp/.scratch/decomp-progress/registry.json
+Dashboard: /home/jim/sm-decomp/.scratch/decomp-progress/index.html

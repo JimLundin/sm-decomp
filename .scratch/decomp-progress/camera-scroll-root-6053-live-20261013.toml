@@ -1,0 +1,31 @@
+id = "camera-scroll-root-6053-live-20261013"
+scope = "Complete camera scrolling frame"
+agent = "/root"
+stage = "live-exercised"
+evidence_context = "current-checkout"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+routines = ["MainScrollingRoutine"]
+commit = "3ce28ba58aba319b60bbc949153baafd4433132e"
+limitations = [
+"94,425 exclusive Rust calls; 35,580 active; zero refusals per mixed subject.",
+"Four fresh independent C/mixed subjects over 129,712 raw inputs; periodic/terminal WRAM/SRAM, ordered PPU/APU effects and full captures match with zero CPU fallback.",
+"The raw-input route ends in Ceres room DF8D/game state 8, not credits; original-ROM movie parity and causal controller scheduling remain separate.",
+"This observation reports installed and measured roots only. Other enemy scripts, whole Ridley AI, real boss/explosion and unmeasured internal helpers do not inherit live coverage.",
+"Gameplay source at observation matches integrated commit 3ce28ba. Exact verification CLI/source is retained at /tmp/sm-recovery-bounded-source; later source edits require their own relevant checks.",
+]
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/recovery-session/composed-live-release/1791861180321696848-129445/verdict.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-composed-post-cleanup-authentication.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-composed-final-cleanup.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-composed-final-dedup.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-live-completion-20261013.md"

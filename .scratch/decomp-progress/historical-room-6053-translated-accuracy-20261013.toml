@@ -1,0 +1,182 @@
+agent = "/root/coverage_finish"
+evidence_context = "historical-frozen"
+id = "historical-room-6053-translated-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Retained historical source and all sealed artifacts were hashed during recovery. These named fixture roots passed 2665 actual-C pairs across retained runs; duplicate domains may occur. Candidate/dependency snapshots and manifests are retained and C pin matches the current inventory.",
+    "Historical fixture domains only. This import does not authenticate current checkout dependencies, current integration, original-ROM parity, full-game completion, internal calls or synthetic dispatch. Exact module digests and per-run closure checks are in retained-coverage-authentication.json.",
+]
+routines = [
+    "CalculateBgScrollAndLayerPositionBlocks",
+    "CalculateBgScrolls",
+    "CalculateLayer2Xpos",
+    "CalculateLayer2Ypos",
+    "DoorCode_Scroll0_Blue",
+    "DoorCode_Scroll13_Blue",
+    "DoorCode_Scroll6_Green",
+    "DoorCode_Scroll_17_Blue",
+    "DoorCode_Scroll_1_4_Green",
+    "DoorCode_Scroll_2_Blue",
+    "DoorCode_Scroll_3_Green",
+    "DoorCode_Scroll_4Blue_8Green",
+    "DoorCode_Scroll_4_Blue",
+    "DoorCode_Scroll_6_Green",
+    "DoorCode_Scroll_8toB_Red",
+    "DoorCode_Scroll_LotsRed",
+    "DoorCode_SetScroll_0",
+    "DoorCode_SetScroll_1",
+    "DoorCode_SetScroll_10",
+    "DoorCode_SetScroll_11",
+    "DoorCode_SetScroll_12",
+    "DoorCode_SetScroll_13",
+    "DoorCode_SetScroll_14",
+    "DoorCode_SetScroll_15",
+    "DoorCode_SetScroll_16",
+    "DoorCode_SetScroll_17",
+    "DoorCode_SetScroll_18",
+    "DoorCode_SetScroll_19",
+    "DoorCode_SetScroll_2",
+    "DoorCode_SetScroll_20",
+    "DoorCode_SetScroll_21",
+    "DoorCode_SetScroll_22",
+    "DoorCode_SetScroll_23",
+    "DoorCode_SetScroll_24",
+    "DoorCode_SetScroll_25",
+    "DoorCode_SetScroll_26",
+    "DoorCode_SetScroll_27",
+    "DoorCode_SetScroll_28",
+    "DoorCode_SetScroll_29",
+    "DoorCode_SetScroll_3",
+    "DoorCode_SetScroll_30",
+    "DoorCode_SetScroll_31",
+    "DoorCode_SetScroll_32",
+    "DoorCode_SetScroll_33",
+    "DoorCode_SetScroll_34",
+    "DoorCode_SetScroll_35",
+    "DoorCode_SetScroll_36",
+    "DoorCode_SetScroll_37",
+    "DoorCode_SetScroll_38",
+    "DoorCode_SetScroll_39",
+    "DoorCode_SetScroll_4",
+    "DoorCode_SetScroll_40",
+    "DoorCode_SetScroll_41",
+    "DoorCode_SetScroll_42",
+    "DoorCode_SetScroll_43",
+    "DoorCode_SetScroll_44",
+    "DoorCode_SetScroll_45",
+    "DoorCode_SetScroll_46",
+    "DoorCode_SetScroll_47",
+    "DoorCode_SetScroll_48",
+    "DoorCode_SetScroll_49",
+    "DoorCode_SetScroll_5",
+    "DoorCode_SetScroll_50",
+    "DoorCode_SetScroll_53",
+    "DoorCode_SetScroll_54",
+    "DoorCode_SetScroll_55",
+    "DoorCode_SetScroll_56",
+    "DoorCode_SetScroll_57",
+    "DoorCode_SetScroll_58",
+    "DoorCode_SetScroll_59",
+    "DoorCode_SetScroll_6",
+    "DoorCode_SetScroll_60",
+    "DoorCode_SetScroll_61",
+    "DoorCode_SetScroll_62",
+    "DoorCode_SetScroll_63",
+    "DoorCode_SetScroll_64",
+    "DoorCode_SetScroll_65",
+    "DoorCode_SetScroll_7",
+    "DoorCode_SetScroll_8",
+    "DoorCode_SetScroll_9",
+    "DoorCode_StartWreckedShipTreadmillWest",
+    "DoorCode_StartWreckedSkipTreadmill_East",
+    "HandleAutoscrolling_X",
+    "HandleAutoscrolling_Y",
+    "HandleRoomDefStateSelect",
+    "HandleScrollingWhenTriggeringScrollDown",
+    "HandleScrollingWhenTriggeringScrollLeft",
+    "HandleScrollingWhenTriggeringScrollRight",
+    "HandleScrollingWhenTriggeringScrollUp",
+    "LoaadDesinationRoomCreBitset",
+    "LoadDoorHeader",
+    "LoadNewMusicTrackIfChanged",
+    "LoadRoomHeader",
+    "LoadRoomMusic",
+    "LoadStateHeader",
+    "PauseHook_DraygonRoom",
+    "PlayRoomMusicTrackAfterAFrames",
+    "RoomCode_8FC8C8",
+    "RoomCode_CrocomireShaking",
+    "RoomCode_Escape4_SetMediumHorizRoomShake",
+    "RoomCode_ExplodeShakes",
+    "RoomCode_GenRandomExplodes",
+    "RoomCode_GenRandomExplodes_4th",
+    "RoomCode_GenRandomExplodes_Nonblank",
+    "RoomCode_RidleyRoomShaking",
+    "RoomCode_ScrollRightDachora",
+    "RoomCode_SetCollectedMap",
+    "RoomCode_SetLightHorizRoomShake",
+    "RoomCode_SetMediumHorizRoomShake",
+    "RoomCode_SetPauseCodeForDraygon",
+    "RoomCode_SetZebesTimebombEvent",
+    "RoomCode_SetupShaktoolRoomPlm",
+    "RoomCode_ShakeScreenHorizDiag",
+    "RoomCode_ShakeScreenHorizDiagStrong",
+    "RoomDefStateSelect_Finish",
+    "RoomDefStateSelect_IsBossDead",
+    "RoomDefStateSelect_IsEventSet",
+    "RoomDefStateSelect_MorphBallMissiles",
+    "RoomDefStateSelect_PowerBombs",
+    "RoomDefStateSelect_TourianBoss01",
+    "RoomSetup_AfterSavingAnimals",
+    "RoomSetup_AutoDestroyWallAfterEscape",
+    "RoomSetup_RunStatueUnlockAnims",
+    "RoomSetup_TurnWallIntoShotblocks",
+    "UNUSED_DoorCode_SetScroll_51",
+    "UNUSED_DoorCode_SetScroll_52",
+    "UnpauseHook_DraygonRoom",
+    "UpdateBgScrollOffsets",
+    "UpdateMusicTrackIndex",
+    "UpdatePreviousLayerBlocks",
+]
+scope = "Retained room fixture roots"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "translated"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/batches/20261010T211506.367424Z/room/20261010T212456.196683Z/evidence/20261010T212456.275957Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/boss-room-shaking/20261011T095259.076605Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/dachora-room-scroll/20261011T095859.415077Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/door-scroll-callbacks/20261011T094605.605516Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/escape-room-setups/20261011T094810.999108Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/pre-phantoon-room-projectile/20261011T100054.468745Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/room-diagonal-shake/20261011T095059.040077Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/room-map-quake-state/20261011T094901.870249Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/room-pause-hooks-shaktool/20261011T095718.836291Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/room-random-explosions/20261011T093404.235705Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/statue-animation-room-setup/20261011T093242.601429Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/treadmill-door-setup/20261011T094615.237598Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/retained-coverage-authentication.json"

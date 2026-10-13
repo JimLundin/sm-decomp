@@ -1,0 +1,7 @@
+.scratch/decomp-progress/recovery-browser/desktop.png: OK
+.scratch/decomp-progress/recovery-browser/phone.png: OK
+.scratch/decomp-progress/recovery-browser/verification.json: OK
+.scratch/decomp-progress/recovery-browser/registry.json: OK
+.scratch/decomp-progress/recovery-browser/index.html: OK
+.scratch/decomp-progress/recovery-browser/source/src/main.rs: OK
+.scratch/decomp-progress/recovery-browser/source/source-inventory.toml: OK

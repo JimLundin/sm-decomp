@@ -1,0 +1,26 @@
+id = "composed-internal-live-reviewed-20261013"
+scope = "Measured native opcode and initializer execution inside accepted composed gameplay frames"
+agent = "/root"
+stage = "live-exercised"
+evidence_context = "current-checkout"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+commit = "3ce28ba58aba319b60bbc949153baafd4433132e"
+routines = ["Ridley_Instr_1", "Ridley_Instr_5", "Ridley_Instr_6", "Ridley_Instr_10", "Ridley_Instr_11", "Ridley_Instr_12", "Ridley_Instr_13", "EnemyInstr_Sleep", "EprojInit_9642_RidleysFireball", "EprojInit_CeresElevatorPad", "EprojInit_CeresElevatorPlatform"]
+limitations = [
+  "Measured execution composed inside accepted native interpreter and allocator calls, not separate direct-wrapper counts. Both mixed subjects have matching C=0 Rust counters: eight native opcodes sum to48 per subject, successful initializer allocations are16/4/4 with zero refusals.",
+  "The exact A6:E73A attack script admits2,393 Rust frames,36 timer-due;209,673 other interpreter calls remain explicit C/refusal ownership. Source identity, full WRAM/eight-word host captures and ordered effects remain sealed under the retained post-cleanup four-subject verdict.",
+  "This imports previously retained authenticated execution; no new replay or original-ROM comparison was run. Whole Ridley lifecycle live admission, absent opcode/boss domains, other enemy scripts and credits progression are not established. Current-checkout identifies integrated gameplay at observation; frozen harness and later edits remain separate."
+]
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/live-internal-reconciliation.md"
+[[evidence]]
+path = "/home/jim/sm-decomp/out/recovery-session/composed-live-release/1791861180321696848-129445/verdict.toml"
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-composed-post-cleanup-authentication.toml"
+[[evidence]]
+path = "/home/jim/sm-decomp/out/recovery-session/composed-live-release/1791861180321696848-129445/families.rs"
+[[evidence]]
+path = "/home/jim/sm-decomp/out/recovery-session/composed-live-release/1791861180321696848-129445/mixed-0/replay.stdout"
+[[evidence]]
+path = "/home/jim/sm-decomp/out/recovery-session/composed-live-release/1791861180321696848-129445/mixed-1/replay.stdout"

@@ -1,0 +1,28 @@
+     Locking 31 packages to highest Rust 1.101.0-nightly compatible versions
+   Compiling serde_core v1.0.229
+   Compiling version_check v0.9.5
+   Compiling serde v1.0.229
+   Compiling typenum v1.20.1
+   Compiling hashbrown v0.17.1
+   Compiling equivalent v1.0.2
+   Compiling zmij v1.0.23
+   Compiling winnow v0.7.15
+   Compiling toml_write v0.1.2
+   Compiling anyhow v1.0.104
+   Compiling serde_json v1.0.151
+   Compiling generic-array v0.14.7
+   Compiling cfg-if v1.0.5
+   Compiling itoa v1.0.18
+   Compiling memchr v2.8.3
+   Compiling cpufeatures v0.2.17
+   Compiling indexmap v2.14.2
+   Compiling crypto-common v0.1.7
+   Compiling block-buffer v0.10.4
+   Compiling digest v0.10.7
+   Compiling sha2 v0.10.9
+   Compiling serde_spanned v0.6.9
+   Compiling toml_datetime v0.6.11
+   Compiling toml_edit v0.22.27
+   Compiling toml v0.8.23
+   Compiling sm-coverage-reconciliation v0.1.0 (/tmp/sm-coverage-reconciliation/source)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 5.26s

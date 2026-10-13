@@ -1,0 +1,3 @@
+   Compiling ticket-provenance-audit v0.0.0 (/tmp/sm-ticket-provenance-tool)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.24s
+     Running `/tmp/sm-ticket-provenance-target/debug/ticket-provenance-audit`

@@ -1,0 +1,131 @@
+{
+  "admitted_native_roots": [
+    "EprojPreInstr_Sparks",
+    "EprojRunAll",
+    "SpawnEprojWithRoomGfx"
+  ],
+  "checked_runs": 4,
+  "expected_runs": 4,
+  "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+  "runs": [
+    {
+      "artifact_hashes_match": true,
+      "authenticated_artifacts": 9659,
+      "candidate_artifacts": [
+        "candidate.rs",
+        "dependency-013.rs"
+      ],
+      "current_module_matches": false,
+      "family": "sparks-allocation",
+      "limitations": [
+        "Historical valid fixture domain only; no current checkout dependency identity or full-game completion inferred.",
+        "Only explicit fixture roots are counted here; internal calls and synthetic dispatch need independent native mapping."
+      ],
+      "module": "/home/jim/sm-decomp/crates/port/src/enemy_projectiles.rs",
+      "module_sha256": "f6bf13b670057a5d168f07050fdb94190d1eac5fbb61e3e5978e9cb874d71afb",
+      "path": "out/port/projectile-contact-render-final/sparks-allocation/20261011T125902.098529Z/verdict.json",
+      "retained_source_closure": true,
+      "routines": [
+        "SpawnEprojWithRoomGfx"
+      ],
+      "rust_dependencies": 31,
+      "scope": "declared valid fixture domain only; full canonical WRAM and return values",
+      "sha256": "a6a57b89f978e3400df51f52cf8d9d68a6734d53ec00415cbd7439252347542f",
+      "synthetic_or_external": [
+        "EprojInitializer",
+        "EprojInstruction"
+      ],
+      "verified_cases": 801
+    },
+    {
+      "artifact_hashes_match": true,
+      "authenticated_artifacts": 20171,
+      "candidate_artifacts": [
+        "candidate.rs",
+        "dependency-013.rs"
+      ],
+      "current_module_matches": false,
+      "family": "sparks-update",
+      "limitations": [
+        "Historical valid fixture domain only; no current checkout dependency identity or full-game completion inferred.",
+        "Only explicit fixture roots are counted here; internal calls and synthetic dispatch need independent native mapping."
+      ],
+      "module": "/home/jim/sm-decomp/crates/port/src/enemy_projectiles.rs",
+      "module_sha256": "f6bf13b670057a5d168f07050fdb94190d1eac5fbb61e3e5978e9cb874d71afb",
+      "path": "out/port/projectile-contact-render-final/sparks-update/20261011T125901.927889Z/verdict.json",
+      "retained_source_closure": true,
+      "routines": [
+        "EprojPreInstr_Sparks"
+      ],
+      "rust_dependencies": 31,
+      "scope": "declared valid fixture domain only; full canonical WRAM and return values",
+      "sha256": "2377816066056e6239bc007775dc2c924876cac93e879e5946c292b7345c3329",
+      "synthetic_or_external": [
+        "EprojInstruction",
+        "EprojPreinstruction"
+      ],
+      "verified_cases": 1677
+    },
+    {
+      "artifact_hashes_match": true,
+      "authenticated_artifacts": 6983,
+      "candidate_artifacts": [
+        "candidate.rs",
+        "dependency-013.rs"
+      ],
+      "current_module_matches": false,
+      "family": "sparks-frames",
+      "limitations": [
+        "Historical valid fixture domain only; no current checkout dependency identity or full-game completion inferred.",
+        "Only explicit fixture roots are counted here; internal calls and synthetic dispatch need independent native mapping."
+      ],
+      "module": "/home/jim/sm-decomp/crates/port/src/enemy_projectiles.rs",
+      "module_sha256": "f6bf13b670057a5d168f07050fdb94190d1eac5fbb61e3e5978e9cb874d71afb",
+      "path": "out/port/projectile-contact-render-final/sparks-frames/20261011T125902.014607Z/verdict.json",
+      "retained_source_closure": true,
+      "routines": [
+        "EprojRunAll",
+        "SpawnEprojWithRoomGfx"
+      ],
+      "rust_dependencies": 31,
+      "scope": "declared valid fixture domain only; full canonical WRAM and return values",
+      "sha256": "d02827156389aa6ba633be08fb509b51995f7eaa08374fd4554658411e2d39c4",
+      "synthetic_or_external": [
+        "EprojInstruction"
+      ],
+      "verified_cases": 578
+    },
+    {
+      "artifact_hashes_match": true,
+      "authenticated_artifacts": 1320,
+      "candidate_artifacts": [
+        "candidate.rs",
+        "dependency-013.rs"
+      ],
+      "current_module_matches": false,
+      "family": "sparks-sequence",
+      "limitations": [
+        "Historical valid fixture domain only; no current checkout dependency identity or full-game completion inferred.",
+        "Only explicit fixture roots are counted here; internal calls and synthetic dispatch need independent native mapping."
+      ],
+      "module": "/home/jim/sm-decomp/crates/port/src/enemy_projectiles.rs",
+      "module_sha256": "f6bf13b670057a5d168f07050fdb94190d1eac5fbb61e3e5978e9cb874d71afb",
+      "path": "out/port/projectile-contact-render-final/sparks-sequence/20261011T125902.084738Z/verdict.json",
+      "retained_source_closure": true,
+      "routines": [
+        "EprojRunAll",
+        "SpawnEprojWithRoomGfx"
+      ],
+      "rust_dependencies": 31,
+      "scope": "declared valid fixture domain only; full canonical WRAM and return values",
+      "sha256": "8590e6db79c54eb1f13689f6d1acd1cfb8ed65060a8042f66538402cc7e123c2",
+      "synthetic_or_external": [
+        "EprojInstruction"
+      ],
+      "verified_cases": 98
+    }
+  ],
+  "schema_version": 1,
+  "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+  "unique_hashed_files": 34522
+}

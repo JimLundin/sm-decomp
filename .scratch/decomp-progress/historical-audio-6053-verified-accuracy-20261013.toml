@@ -1,0 +1,40 @@
+agent = "/root/coverage_finish"
+evidence_context = "historical-frozen"
+id = "historical-audio-6053-verified-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Retained historical source and all sealed artifacts were hashed during recovery. These named fixture roots passed 1147 actual-C pairs across retained runs; duplicate domains may occur. Candidate/dependency snapshots and manifests are retained and C pin matches the current inventory.",
+    "Historical fixture domains only. This import does not authenticate current checkout dependencies, current integration, original-ROM parity, full-game completion, internal calls or synthetic dispatch. Exact module digests and per-run closure checks are in retained-coverage-authentication.json.",
+]
+routines = [
+    "HasQueuedMusic",
+    "QueueMusic_Delayed8",
+    "QueueMusic_DelayedY",
+    "QueueSfx1_Internal",
+    "QueueSfx1_Max1",
+    "QueueSfx1_Max15",
+    "QueueSfx1_Max3",
+    "QueueSfx1_Max6",
+    "QueueSfx1_Max9",
+    "QueueSfx2_Internal",
+    "QueueSfx2_Max1",
+    "QueueSfx2_Max15",
+    "QueueSfx2_Max3",
+    "QueueSfx2_Max6",
+    "QueueSfx2_Max9",
+    "QueueSfx3_Internal",
+    "QueueSfx3_Max1",
+    "QueueSfx3_Max15",
+    "QueueSfx3_Max3",
+    "QueueSfx3_Max6",
+    "QueueSfx3_Max9",
+]
+scope = "Retained audio fixture roots"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "verified"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/batches/20261010T211506.367424Z/audio/20261010T212150.237926Z/evidence/20261010T212150.283741Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/retained-coverage-authentication.json"

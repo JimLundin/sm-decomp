@@ -1,0 +1,40 @@
+agent = "/root/coverage_finish"
+commit = "3ce28ba58aba319b60bbc949153baafd4433132e"
+evidence_context = "current-checkout"
+id = "source-ridley_subsystem_instructions-6053-translated-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Maintained executable Rust implementations mapped through explicit dispatch branches, numeric selectors or reviewed private aliases to exact pinned C definitions. Source correspondence establishes translated coverage only; bounded branches, delegated C/host effects and per-module limitations are retained in source-coverage-map.json.",
+    "This observation does not grant verification, integration or live exercise. Missing routine reports and source-only mappings remain distinct from missing implementations; documentation literals and forwarding references are excluded unless their implementation owner was mapped separately.",
+]
+routines = [
+    "EnemyInstr_Goto",
+    "EnemyInstr_Sleep",
+    "ProcessEnemyInstructions",
+    "Ridley_E90C",
+    "Ridley_Instr_1",
+    "Ridley_Instr_10",
+    "Ridley_Instr_11",
+    "Ridley_Instr_12",
+    "Ridley_Instr_13",
+    "Ridley_Instr_14",
+    "Ridley_Instr_15",
+    "Ridley_Instr_16",
+    "Ridley_Instr_2",
+    "Ridley_Instr_3",
+    "Ridley_Instr_4",
+    "Ridley_Instr_5",
+    "Ridley_Instr_6",
+    "Ridley_Instr_7",
+    "Ridley_Instr_8",
+    "Ridley_Instr_9",
+]
+scope = "Maintained ridley_subsystem_instructions implementation mapping"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "translated"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/crates/port/src/ridley_subsystem_instructions.rs"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/source-coverage-map.json"

@@ -1,0 +1,9 @@
+status = "retired-stale-registrations"
+command = "git worktree prune --verbose --expire now"
+preflight = "All eight registrations pointed to missing .git files; dry run confirmed none was a live Git worktree. Restored trails and Samus paths remain source-only snapshots."
+bytes_before_apparent = 963953
+bytes_after_apparent = 0
+removed_registrations = ["sm-assignment-candidates", "sm-affected-selection", "sm-projectile-trails", "sm-ridley-instructions", "sm-affected-production", "sm-camera-scroll", "sm-samus-projectile-frame", "sm-assignment-queue"]
+remaining_git_worktrees = ["/home/jim/sm-decomp"]
+retained_sources = ["/tmp/sm-projectile-trails", "/tmp/sm-projectile-trails-natural-source", "/tmp/sm-samus-projectile-frame", "/tmp/sm-samus-projectile-frame-source-final"]
+post_cleanup_authentication = "Pending coordinator current/frozen evidence authentication; registrations removed without changing source snapshots or sealed artifacts."

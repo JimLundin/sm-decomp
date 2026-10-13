@@ -1,0 +1,104 @@
+agent = "/root/coverage_finish"
+evidence_context = "historical-frozen"
+id = "historical-live-15-6053-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Historical immutable live binary only. Counters report native Rust roots positively measured in both mixed subjects; zero-hit wrappers and unmeasured internal calls are excluded.",
+    "Existing storage-authentication receipt is retained for compressed runs; no new decompression or full gameplay execution performed. Historical tested replay is not current-source authentication or credits/movie completion.",
+]
+routines = [
+    "CalculateBgScrollAndLayerPositionBlocks",
+    "CalculateBgScrolls",
+    "CalculateLayer2Xpos",
+    "CalculateLayer2Ypos",
+    "CheckBossBitForCurArea",
+    "CheckEventHappened",
+    "ClearOamExt",
+    "ClearUnusedOam",
+    "CopyToSamusSuitPalette",
+    "DecrementSamusTimers",
+    "EnemyInstr_Goto",
+    "EnemyWithNormalSpritesIsOffScreen",
+    "FireUnchargedBeam",
+    "HandleAutoscrolling_X",
+    "HandleAutoscrolling_Y",
+    "HandleFadeIn",
+    "HandleFadeOut",
+    "HandleScrollingWhenTriggeringScrollDown",
+    "HandleScrollingWhenTriggeringScrollLeft",
+    "HandleScrollingWhenTriggeringScrollRight",
+    "HandleScrollingWhenTriggeringScrollUp",
+    "HasQueuedMusic",
+    "HudSelectionHandler_MissilesOrSuperMissiles",
+    "KillProjectile",
+    "LoaadDesinationRoomCreBitset",
+    "LoadDoorHeader",
+    "LoadNewMusicTrackIfChanged",
+    "LoadRoomHeader",
+    "LoadRoomMusic",
+    "LoadStateHeader",
+    "PlayRoomMusicTrackAfterAFrames",
+    "ProjPreInstr_Beam_NoWaveBeam",
+    "ProjPreInstr_Missile",
+    "QueueMusic_Delayed8",
+    "QueueMusic_DelayedY",
+    "QueueSfx1_Max15",
+    "QueueSfx1_Max6",
+    "QueueSfx1_Max9",
+    "QueueSfx2_Max15",
+    "QueueSfx2_Max6",
+    "QueueSfx3_Max6",
+    "RunProjectileInstructions",
+    "Samus_AlignBottomWithPrevPose",
+    "Samus_Animate",
+    "Samus_BombJumpRisingXMovement_",
+    "Samus_CalcDistanceMoved_X",
+    "Samus_CalcDistanceMoved_Y",
+    "Samus_CancelSpeedBoost",
+    "Samus_CollDetectChangedPose",
+    "Samus_DetermineAccel_Y",
+    "Samus_GetTop_R20",
+    "Samus_InitJump",
+    "Samus_Input_00_Standing",
+    "Samus_Input_01_Running",
+    "Samus_Input_02_NormalJumping",
+    "Samus_Input_03_SpinJumping",
+    "Samus_Input_06_Falling",
+    "Samus_Input_0A_KnockbackOrCrystalFlashEnding",
+    "Samus_Input_0E_TurningAroundOnGround",
+    "Samus_Input_0F_CrouchingEtcTransition",
+    "Samus_Input_17_TurningAroundJumping",
+    "Samus_Input_18_TurningAroundFalling",
+    "Samus_LoadSuitPalette",
+    "Samus_LoadSuitTargetPalette",
+    "Samus_LookupTransitionTable",
+    "Samus_MoveRight_NoSolidColl",
+    "Samus_MoveY_WithSpeedCalc",
+    "Samus_MovementHandler_Normal",
+    "Samus_SetRadius",
+    "Samus_SetSpeedForKnockback_Y",
+    "Samus_UpdateSuitPaletteIndex",
+    "SetLiquidPhysicsType",
+    "UpdateBgScrollOffsets",
+    "UpdateMusicTrackIndex",
+    "UpdatePreviousLayerBlocks",
+    "WriteLotsOf0x1c2f",
+]
+scope = "Retained live replay out/port/batches/20261010T213631.753519Z/replays/20261010T215856.742725Z/evidence/20261010T215856.841221Z/verdict.json"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "live-exercised"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/batches/20261010T213631.753519Z/replays/20261010T215856.742725Z/evidence/20261010T215856.841221Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/batches/20261010T213631.753519Z/replays/20261010T215856.742725Z/evidence/20261010T215856.841221Z/live"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/batches/20261010T213631.753519Z/replays/20261010T215856.742725Z/evidence/20261010T215856.841221Z/families.rs"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/batches/20261010T213631.753519Z/replays/20261010T215856.742725Z/evidence/20261010T215856.841221Z/host.c"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/retained-live-coverage-audit.json"

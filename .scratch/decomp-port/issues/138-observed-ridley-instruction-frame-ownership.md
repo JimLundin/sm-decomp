@@ -1,6 +1,6 @@
 # Observed Ridley enemy instruction frame ownership
 
-Status: open
+Status: resolved
 Blocked by: 137
 Triage: ready-for-agent
 
@@ -140,3 +140,28 @@ Proposed read-only while ticket137 WithGfx final source/replay is frozen. No
 gameplay/harness source was changed and no new verification run launched.
 Counts above come from retained authenticated execution or are explicitly
 labeled source/ROM observations; new per-enemy/opcode counts remain required.
+
+## Completion evidence
+
+2026-10-13 recovery: implemented at `e947e968086a15c170f58472764bf9244b403a2a`,
+shared native live wiring at `3ce28ba58aba319b60bbc949153baafd4433132e`.
+The historical four-list interpretation above is superseded by the authentic
+entryA6:E73A,238-byte E73A..E828 script, SHA256
+`04a1e79b51fa101b337ab6183269760110c936b914f81734f63564336b609580`.
+Current controlled1804pairs plus90natural captures pass and authenticate after
+cleanup. Seven port controls and compiled host/ABI refusal/order controls pass.
+
+The completed129712-input four-subject composed verdict matches complete state,
+ordered effects and WRAM/eight-word host captures with zero fallback. Each mixed
+subject executes2393exclusive Rust attack frames,36timer-due frames and48opcodes:
+E5172/E4D24/E4BE4/E4CA2/E84D18/E9044/E90912/812F2. All16resulting9642allocations
+and native137 scheduler/render/contact ownership remain accepted.209673other
+interpreter calls explicitly remain C-owned. These counts match both C subjects.
+
+`../recovery-live-completion-20261013.md` gives exact verdict, retained source,
+test and cleanup pointers. `../recovery-composed-post-cleanup-authentication.toml`
+authenticates four subjects/1881artifacts each after ordinary cleanup48176296bytes
+and dedup0. Eight stale worktree registrations were retired; exact source-only
+snapshots, shared store, pointers/readers remain. Disk receipt:
+`../recovery-live-final-disk.txt`. Original-ROM movie parity, other Ridley scripts
+and whole lifecycle/AI remain separate; ticket141 owns the broader candidate.

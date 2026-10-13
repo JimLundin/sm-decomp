@@ -1,0 +1,94 @@
+agent = "/root/coverage_finish"
+evidence_context = "historical-frozen"
+id = "historical-collision-6053-translated-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Retained historical source and all sealed artifacts were hashed during recovery. These named fixture roots passed 8760 actual-C pairs across retained runs; duplicate domains may occur. Candidate/dependency snapshots and manifests are retained and C pin matches the current inventory.",
+    "Historical fixture domains only. This import does not authenticate current checkout dependencies, current integration, original-ROM parity, full-game completion, internal calls or synthetic dispatch. Exact module digests and per-run closure checks are in retained-coverage-authentication.json.",
+]
+routines = [
+    "Samus_AlignYPosSlope",
+    "Samus_BombJumpFallingXMovement_",
+    "Samus_BombJumpFallingYMovement_",
+    "Samus_BombJumpRisingXMovement_",
+    "Samus_BombJumpRisingYMovement_",
+    "Samus_CheckAndMoveY",
+    "Samus_CollDetectChangedPose",
+    "Samus_FallingMovement",
+    "Samus_FootstepGraphics",
+    "Samus_FootstepGraphics_1",
+    "Samus_FootstepGraphics_Crateria",
+    "Samus_FootstepGraphics_Maridia",
+    "Samus_GrappleWallJumpCheck",
+    "Samus_HandleMovement_DrainedCrouching",
+    "Samus_HandleMovement_X",
+    "Samus_JumpingMovement",
+    "Samus_MorphedBouncingMovement",
+    "Samus_MorphedFallingMovement",
+    "Samus_MoveDown",
+    "Samus_MoveDown_NoSolidColl",
+    "Samus_MoveExtraY",
+    "Samus_MoveHandler_ReleaseFromGrapple",
+    "Samus_MoveLeft",
+    "Samus_MoveRight",
+    "Samus_MoveRight_NoSolidColl",
+    "Samus_MoveUp",
+    "Samus_MoveX",
+    "Samus_MoveY_Simple_",
+    "Samus_MoveY_WithSpeedCalc",
+    "Samus_Move_NoBaseSpeed_X",
+    "Samus_Move_NoSpeedCalc_Y",
+    "Samus_MovementHandler_Normal",
+    "Samus_Movement_00_Standing",
+    "Samus_Movement_01_Running",
+    "Samus_Movement_02_NormalJumping",
+    "Samus_Movement_03_SpinJumping",
+    "Samus_Movement_04_MorphBallOnGround",
+    "Samus_Movement_05_Crouching",
+    "Samus_Movement_06_Falling",
+    "Samus_Movement_07_Unused",
+    "Samus_Movement_08_MorphBallFalling",
+    "Samus_Movement_09_Unused",
+    "Samus_Movement_0A_KnockbackOrCrystalFlashEnding",
+    "Samus_Movement_0B_Unused",
+    "Samus_Movement_0C_Unused",
+    "Samus_Movement_0D_Unused",
+    "Samus_Movement_0E_TurningAroundOnGround",
+    "Samus_Movement_0F_CrouchingEtcTransition",
+    "Samus_Movement_10_Moonwalking",
+    "Samus_Movement_11_SpringBallOnGround",
+    "Samus_Movement_12_SpringBallInAir",
+    "Samus_Movement_13_SpringBallFalling",
+    "Samus_Movement_14_WallJumping",
+    "Samus_Movement_15_RanIntoWall",
+    "Samus_Movement_16_Grappling",
+    "Samus_Movement_17_TurningAroundJumping",
+    "Samus_Movement_18_TurningAroundFalling",
+    "Samus_Movement_19_DamageBoost",
+    "Samus_Movement_1A_GrabbedByDraygon",
+    "Samus_Movement_1B_ShinesparkEtc",
+    "Samus_SpinJumpMovement",
+    "Samus_WallJumpCheck",
+    "WallJumpBlockCollDetect",
+]
+scope = "Retained collision fixture roots"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "translated"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/batches/20261010T213631.753519Z/collision/20261010T214235.736506Z/evidence/20261010T214235.860103Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/batches/20261010T213631.753519Z/collision/20261010T215437.245628Z/evidence/20261010T215437.324730Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/broad-current-collision/20261010T205234.360484Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/collision-final/20261010T202435.794119Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/current-batch-collision/20261010T210344.739921Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/retained-coverage-authentication.json"

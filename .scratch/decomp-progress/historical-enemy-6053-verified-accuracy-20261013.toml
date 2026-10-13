@@ -1,0 +1,51 @@
+agent = "/root/coverage_finish"
+evidence_context = "historical-frozen"
+id = "historical-enemy-6053-verified-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Retained historical source and all sealed artifacts were hashed during recovery. These named fixture roots passed 2452 actual-C pairs across retained runs; duplicate domains may occur. Candidate/dependency snapshots and manifests are retained and C pin matches the current inventory.",
+    "Historical fixture domains only. This import does not authenticate current checkout dependencies, current integration, original-ROM parity, full-game completion, internal calls or synthetic dispatch. Exact module digests and per-run closure checks are in retained-coverage-authentication.json.",
+]
+routines = [
+    "Abs16",
+    "CalculateAngleFromXY",
+    "CalculateAngleOfEnemyXfromEnemyY",
+    "CalculateAngleOfSamusFromEnemy",
+    "CalculateAngleOfSamusFromEproj",
+    "CalculateBlockContainingPixelPos",
+    "CheckIfEnemyIsOnScreen",
+    "CheckIfEnemyTouchesSamus",
+    "CompareDistToSamus_X",
+    "CompareDistToSamus_Y",
+    "CosineMult8bit",
+    "CosineMult8bitFull",
+    "DecrementSamusTimers",
+    "DetermineDirectionOfSamusFromEnemy",
+    "EnemyFunc_AC67",
+    "EnemyFunc_ADA3",
+    "EnemyFunc_B7A1",
+    "EnemyFunc_BBBF",
+    "EnemyFunc_BC76",
+    "EnemyWithNormalSpritesIsOffScreen",
+    "GetSamusEnemyDelta_X",
+    "GetSamusEnemyDelta_Y",
+    "IsEnemyLeavingScreen",
+    "IsSamusWithinEnemy_X",
+    "IsSamusWithinEnemy_Y",
+    "Mult32",
+    "NormalEnemyFrozenAI",
+    "SignExtend8",
+    "SineMult8bit",
+    "SineMult8bitFull",
+    "SubtractThenAbs16",
+    "SwitchEnemyAiToMainAi",
+]
+scope = "Retained enemy fixture roots"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "verified"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/batches/20261010T211506.367424Z/enemy/20261010T212151.028339Z/evidence/20261010T212151.061007Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/retained-coverage-authentication.json"

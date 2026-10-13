@@ -1,0 +1,12 @@
+   Compiling ticket-provenance-audit v0.0.0 (/tmp/sm-ticket-provenance-tool)
+warning: unused dependency `toml`
+ --> Cargo.toml:7:1
+  |
+7 | toml="0.8"
+  | ^^^^^^^^^^
+  |
+  = note: `cargo::unused_dependencies` is set to `warn` by default
+help: consider removing the dependency on `toml`
+warning: `ticket-provenance-audit` (manifest) generated 1 warning
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.27s
+     Running `/tmp/sm-ticket-provenance-target/debug/ticket-provenance-audit`

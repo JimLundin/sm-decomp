@@ -1,0 +1,65 @@
+agent = "/root/coverage_finish"
+evidence_context = "historical-frozen"
+id = "historical-samus_control-6053-verified-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Retained historical source and all sealed artifacts were hashed during recovery. These named fixture roots passed 4528 actual-C pairs across retained runs; duplicate domains may occur. Candidate/dependency snapshots and manifests are retained and C pin matches the current inventory.",
+    "Historical fixture domains only. This import does not authenticate current checkout dependencies, current integration, original-ROM parity, full-game completion, internal calls or synthetic dispatch. Exact module digests and per-run closure checks are in retained-coverage-authentication.json.",
+]
+routines = [
+    "CopyToSamusSuitPalette",
+    "CopyToSamusSuitTargetPalette",
+    "SamusCrouchingEtcFunc",
+    "Samus_Animate",
+    "Samus_Animate_AcidFx",
+    "Samus_Animate_LavaFx",
+    "Samus_Animate_NoFx",
+    "Samus_Animate_SubmergedLavaAcid",
+    "Samus_Animate_WaterFx",
+    "Samus_CancelSpeedBoost",
+    "Samus_ClearXSpeedIfColl",
+    "Samus_Input_00_Standing",
+    "Samus_Input_01_Running",
+    "Samus_Input_02_NormalJumping",
+    "Samus_Input_03_SpinJumping",
+    "Samus_Input_04_MorphBallOnGround",
+    "Samus_Input_06_Falling",
+    "Samus_Input_07_Unused",
+    "Samus_Input_08_MorphBallFalling",
+    "Samus_Input_09_Unused",
+    "Samus_Input_0A_KnockbackOrCrystalFlashEnding",
+    "Samus_Input_0B_Unused",
+    "Samus_Input_0C_Unused",
+    "Samus_Input_0D_Unused",
+    "Samus_Input_0E_TurningAroundOnGround",
+    "Samus_Input_0F_CrouchingEtcTransition",
+    "Samus_Input_10_Moonwalking",
+    "Samus_Input_11_SpringBallOnGround",
+    "Samus_Input_12_SpringBallInAir",
+    "Samus_Input_13_SpringBallFalling",
+    "Samus_Input_14_WallJumping",
+    "Samus_Input_16_Grappling",
+    "Samus_Input_17_TurningAroundJumping",
+    "Samus_Input_18_TurningAroundFalling",
+    "Samus_Input_19_DamageBoost",
+    "Samus_Input_1A_GrabbedByDraygon",
+    "Samus_Input_1B_ShinesparkEtc",
+    "Samus_LoadSuitPalette",
+    "Samus_LoadSuitTargetPalette",
+    "Samus_LookupTransitionTable",
+    "Samus_MoveDown_SetPoseCalcInput",
+    "Samus_MoveUp_SetPoseCalcInput",
+    "Samus_Pose_CancelGrapple",
+    "Samus_Pose_Func2",
+    "Samus_SpawnAirBubbles",
+    "Samus_SpawnWaterSplash",
+]
+scope = "Retained samus_control fixture roots"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "verified"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/current-batch-control/20261010T210123.297721Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/retained-coverage-authentication.json"

@@ -1,0 +1,41 @@
+agent = "/root/coverage_finish"
+commit = "3ce28ba58aba319b60bbc949153baafd4433132e"
+evidence_context = "current-checkout"
+id = "source-audio-6053-translated-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Maintained executable Rust implementations mapped through explicit dispatch branches, numeric selectors or reviewed private aliases to exact pinned C definitions. Source correspondence establishes translated coverage only; bounded branches, delegated C/host effects and per-module limitations are retained in source-coverage-map.json.",
+    "This observation does not grant verification, integration or live exercise. Missing routine reports and source-only mappings remain distinct from missing implementations; documentation literals and forwarding references are excluded unless their implementation owner was mapped separately.",
+]
+routines = [
+    "HasQueuedMusic",
+    "QueueMusic_Delayed8",
+    "QueueMusic_DelayedY",
+    "QueueSfx1_Internal",
+    "QueueSfx1_Max1",
+    "QueueSfx1_Max15",
+    "QueueSfx1_Max3",
+    "QueueSfx1_Max6",
+    "QueueSfx1_Max9",
+    "QueueSfx2_Internal",
+    "QueueSfx2_Max1",
+    "QueueSfx2_Max15",
+    "QueueSfx2_Max3",
+    "QueueSfx2_Max6",
+    "QueueSfx2_Max9",
+    "QueueSfx3_Internal",
+    "QueueSfx3_Max1",
+    "QueueSfx3_Max15",
+    "QueueSfx3_Max3",
+    "QueueSfx3_Max6",
+    "QueueSfx3_Max9",
+]
+scope = "Maintained audio implementation mapping"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "translated"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/crates/port/src/audio.rs"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/source-coverage-map.json"

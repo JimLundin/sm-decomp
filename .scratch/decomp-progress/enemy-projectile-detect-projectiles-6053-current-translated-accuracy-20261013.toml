@@ -1,0 +1,28 @@
+agent = "/root/coverage_finish"
+commit = "3ce28ba58aba319b60bbc949153baafd4433132e"
+evidence_context = "current-checkout"
+id = "enemy-projectile-detect-projectiles-6053-current-translated-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "2040 actual-C fixture pairs accepted and authenticated after cleanup at integrated gameplay commit 3ce28ba. Only named native roots are counted; synthetic adapter controls and internal calls require separate mapping.",
+    "Bounded valid fixture domain with canonical WRAM and returns; original-ROM parity and behavior beyond the retained inputs are not tested. Exact harness source is retained at /tmp/sm-recovery-bounded-source; later edits require relevant checks.",
+]
+routines = ["EprojProjCollDet"]
+scope = "enemy-projectile-detect-projectiles"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "translated"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/recovery-session/integrated/families/enemy-projectile-detect-projectiles/evidence/1791860151469038-47409-46/verdict.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/progress-integrated-enemy-projectile-detect-projectiles-authentication.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-final-authentication-summary.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-final-cleanup.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-final-dedup.toml"

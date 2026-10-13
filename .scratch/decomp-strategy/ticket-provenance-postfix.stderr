@@ -1,0 +1,12 @@
+   Compiling ticket-provenance-audit v0.0.0 (/tmp/sm-ticket-provenance-tool)
+warning: unused import: `PathBuf`
+ --> src/main.rs:1:88
+  |
+1 | use serde_json::{Value,json};use std::{collections::{BTreeMap,BTreeSet},fs,path::{Path,PathBuf}};const ROOT:&str="/home/jim/sm-decomp...
+  |                                                                                        ^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `ticket-provenance-audit` (bin "ticket-provenance-audit") generated 1 warning (run `cargo fix --bin "ticket-provenance-audit" -p ticket-provenance-audit` to apply 1 suggestion)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.27s
+     Running `/tmp/sm-ticket-provenance-target/debug/ticket-provenance-audit`

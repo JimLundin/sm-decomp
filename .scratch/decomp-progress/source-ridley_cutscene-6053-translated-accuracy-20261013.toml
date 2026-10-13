@@ -1,0 +1,87 @@
+agent = "/root/coverage_finish"
+commit = "3ce28ba58aba319b60bbc949153baafd4433132e"
+evidence_context = "current-checkout"
+id = "source-ridley_cutscene-6053-translated-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Maintained executable Rust implementations mapped through explicit dispatch branches, numeric selectors or reviewed private aliases to exact pinned C definitions. Source correspondence establishes translated coverage only; bounded branches, delegated C/host effects and per-module limitations are retained in source-coverage-map.json.",
+    "This observation does not grant verification, integration or live exercise. Missing routine reports and source-only mappings remain distinct from missing implementations; documentation literals and forwarding references are excluded unless their implementation owner was mapped separately.",
+]
+routines = [
+    "CeresMult",
+    "CeresRidley_A377",
+    "CeresRidley_A7F9",
+    "CeresRidley_A994",
+    "CeresRidley_AC30",
+    "CeresRidley_Func_1",
+    "CeresRidley_Func_10",
+    "CeresRidley_Func_11",
+    "CeresRidley_Func_12",
+    "CeresRidley_Func_13",
+    "CeresRidley_Func_14",
+    "CeresRidley_Func_15",
+    "CeresRidley_Func_16",
+    "CeresRidley_Func_17",
+    "CeresRidley_Func_18",
+    "CeresRidley_Func_19",
+    "CeresRidley_Func_2",
+    "CeresRidley_Func_20",
+    "CeresRidley_Func_21",
+    "CeresRidley_Func_22",
+    "CeresRidley_Func_23",
+    "CeresRidley_Func_24",
+    "CeresRidley_Func_25",
+    "CeresRidley_Func_26",
+    "CeresRidley_Func_27",
+    "CeresRidley_Func_28",
+    "CeresRidley_Func_29",
+    "CeresRidley_Func_3",
+    "CeresRidley_Func_33",
+    "CeresRidley_Func_34",
+    "CeresRidley_Func_35",
+    "CeresRidley_Func_4",
+    "CeresRidley_Func_5",
+    "CeresRidley_Func_6",
+    "CeresRidley_Func_7",
+    "CeresRidley_Func_8",
+    "CeresRidley_Func_9",
+    "CeresRidley_Init",
+    "CeresRidley_Main",
+    "HandleCeresRidleyGetawayCutscene",
+    "HandleTypewriterText_Ext",
+    "ProcessEscapeTimerTileTransfers",
+    "Ridley_C08E",
+    "Ridley_C09F",
+    "Ridley_C104",
+    "Ridley_C53E",
+    "Ridley_C551",
+    "Ridley_Func_117",
+    "Ridley_Func_54",
+    "Ridley_Func_55",
+    "Ridley_Func_56",
+    "Ridley_Func_57",
+    "Ridley_Func_58",
+    "Ridley_Func_59",
+    "Ridley_Func_61",
+    "Ridley_Func_62",
+    "Ridley_Func_63",
+    "Ridley_Func_64",
+    "Ridley_Func_65",
+    "Ridley_Func_66",
+    "Ridley_Func_67",
+    "Ridley_Func_68",
+    "Ridley_Func_69",
+    "RidleysExplosion_Func_1",
+    "RidleysExplosion_Func_2",
+    "RidleysExplosion_Init",
+    "RidleysExplosion_Main",
+]
+scope = "Maintained ridley_cutscene implementation mapping"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "translated"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/crates/port/src/ridley_cutscene.rs"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/source-coverage-map.json"

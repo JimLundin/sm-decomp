@@ -1,0 +1,41 @@
+total 464
+drwx------ 37 jim  jim    4096 Oct 13 04:25 .
+drwxrwxrwt 54 root root 311296 Oct 13 07:34 ..
+drwx------  2 jim  jim    4096 Oct 13 04:25 ActorSafetyLists
+drwx------  2 jim  jim    4096 Oct 13 04:25 AmountExtractionHeuristicRegexes
+drwx------  2 jim  jim    4096 Oct 13 04:25 CaptchaProviders
+drwx------  2 jim  jim    4096 Oct 13 04:25 CertificateRevocation
+drwx------  2 jim  jim    4096 Oct 13 04:25 Crowd Deny
+drwx------ 26 jim  jim    4096 Oct 13 04:25 Default
+drwx------  2 jim  jim    4096 Oct 13 04:25 DictationConnector
+drwx------  2 jim  jim    4096 Oct 13 04:25 Dictionaries
+drwx------  2 jim  jim    4096 Oct 13 04:25 FileTypePolicies
+drwx------  2 jim  jim    4096 Oct 13 04:25 FirstPartySetsPreloaded
+drwx------  3 jim  jim    4096 Oct 13 04:25 GPUPersistentCache
+drwx------  2 jim  jim    4096 Oct 13 04:25 HistorySearch
+-rw-r--r--  1 jim  jim      12 Oct 13 04:25 Last Version
+-rw-------  1 jim  jim    3490 Oct 13 04:25 Local State
+drwx------  2 jim  jim    4096 Oct 13 04:25 MEIPreload
+drwx------  2 jim  jim    4096 Oct 13 04:25 NativeMessagingHosts
+drwx------  2 jim  jim    4096 Oct 13 04:25 OnDeviceHeadSuggestModel
+drwx------  3 jim  jim    4096 Oct 13 04:25 OptGuidePredictionModels
+drwx------  2 jim  jim    4096 Oct 13 04:25 OptimizationGuideModelsManifest
+drwx------  2 jim  jim    4096 Oct 13 04:25 OptimizationHints
+drwx------  2 jim  jim    4096 Oct 13 04:25 OriginTrials
+drwx------  2 jim  jim    4096 Oct 13 04:25 PKIMetadata
+drwx------  2 jim  jim    4096 Oct 13 04:25 PrivacySandboxAttestationsPreloaded
+drwx------  2 jim  jim    4096 Oct 13 04:25 SODA
+drwx------  3 jim  jim    4096 Oct 13 04:25 SODALanguagePacks
+drwx------  2 jim  jim    4096 Oct 13 04:25 SSLErrorAssistant
+drwx------  2 jim  jim    4096 Oct 13 04:25 Safe Browsing
+drwx------  2 jim  jim    4096 Oct 13 04:25 SafetyTips
+drwx------  3 jim  jim    4096 Oct 13 04:25 Subresource Filter
+drwx------  2 jim  jim    4096 Oct 13 04:25 TrustTokenKeyCommitments
+-rw-r--r--  1 jim  jim      85 Oct 13 04:25 Variations
+drwx------  2 jim  jim    4096 Oct 13 04:25 WasmTtsEngine
+drwx------  2 jim  jim    4096 Oct 13 04:25 WidevineCdm
+drwx------  2 jim  jim    4096 Oct 13 04:25 ZxcvbnData
+drwx------  2 jim  jim    4096 Oct 13 04:25 component_crx_cache
+drwx------  2 jim  jim    4096 Oct 13 04:25 hyphen-data
+drwx------  2 jim  jim    4096 Oct 13 04:25 indigo
+drwx------  2 jim  jim    4096 Oct 13 04:25 segmentation_platform

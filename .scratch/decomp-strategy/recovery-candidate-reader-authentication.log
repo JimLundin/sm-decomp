@@ -1,0 +1,4 @@
+.scratch/decomp-port/ridley-live-finish/bin/sm-pipeline-whole-live: OK
+.scratch/decomp-port/ridley-live-final-source.sha256: OK
+out/recovery-session/ridley-whole-final-offline/1791866846960194-145753-0/verdict.toml: OK
+out/recovery-session/ridley-native137-final-offline/1791866852674692-145775-0/verdict.toml: OK

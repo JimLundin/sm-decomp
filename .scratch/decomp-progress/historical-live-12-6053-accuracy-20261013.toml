@@ -1,0 +1,32 @@
+agent = "/root/coverage_finish"
+evidence_context = "historical-frozen"
+id = "historical-live-12-6053-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Historical immutable live binary only. Counters report native Rust roots positively measured in both mixed subjects; zero-hit wrappers and unmeasured internal calls are excluded.",
+    "Existing storage-authentication receipt is retained for compressed runs; no new decompression or full gameplay execution performed. Historical tested replay is not current-source authentication or credits/movie completion.",
+]
+routines = [
+    "FireUnchargedBeam",
+    "HudSelectionHandler_MissilesOrSuperMissiles",
+    "ProjPreInstr_Beam_NoWaveBeam",
+    "ProjPreInstr_Missile",
+]
+scope = "Retained live replay out/port/flight-fixed-live/20261010T204643.443282Z/verdict.json"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "live-exercised"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/flight-fixed-live/20261010T204643.443282Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/flight-fixed-live/20261010T204643.443282Z/live"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/flight-fixed-live/20261010T204643.443282Z/families.rs"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/flight-fixed-live/20261010T204643.443282Z/host.c"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/retained-live-coverage-audit.json"

@@ -1,0 +1,10 @@
+apply = true
+bytes = 47310242
+
+[[targets]]
+path = "/home/jim/sm-decomp/out/recovery-session/trails-live/1791860457650339558-98848/libfamilies.a"
+bytes = 23664006
+
+[[targets]]
+path = "/home/jim/sm-decomp/out/recovery-session/trails-live/1791860457650339558-98848/librng.a"
+bytes = 23646236

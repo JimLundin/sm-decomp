@@ -1,0 +1,86 @@
+agent = "/root/coverage_finish"
+commit = "3ce28ba58aba319b60bbc949153baafd4433132e"
+evidence_context = "current-checkout"
+id = "source-animated_tiles-6053-translated-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Maintained executable Rust implementations mapped through explicit dispatch branches, numeric selectors or reviewed private aliases to exact pinned C definitions. Source correspondence establishes translated coverage only; bounded branches, delegated C/host effects and per-module limitations are retained in source-coverage-map.json.",
+    "This observation does not grant verification, integration or live exercise. Missing routine reports and source-only mappings remain distinct from missing implementations; documentation literals and forwarding references are excluded unless their implementation owner was mapped separately.",
+]
+routines = [
+    "AnimtilesHandler",
+    "AnimtilesInstr_Clear3PaletteColors",
+    "AnimtilesInstr_DecrementTimerAndGoto",
+    "AnimtilesInstr_DecrementTimerAndGotoRel",
+    "AnimtilesInstr_Delete",
+    "AnimtilesInstr_Goto",
+    "AnimtilesInstr_GotoIfBossBitSet",
+    "AnimtilesInstr_GotoIfBossBitSetInArea",
+    "AnimtilesInstr_GotoIfEventHappened",
+    "AnimtilesInstr_GotoIfTourianStatueBusy",
+    "AnimtilesInstr_GotoRel",
+    "AnimtilesInstr_QueueMusic",
+    "AnimtilesInstr_QueueSfx1",
+    "AnimtilesInstr_QueueSfx2",
+    "AnimtilesInstr_QueueSfx3",
+    "AnimtilesInstr_SetBossBit",
+    "AnimtilesInstr_SetEventHappened",
+    "AnimtilesInstr_SetTimer",
+    "AnimtilesInstr_SpawnPalfxObj",
+    "AnimtilesInstr_SpawnTourianStatueEyeGlow",
+    "AnimtilesInstr_SpawnTourianStatueSoul",
+    "AnimtilesInstr_TourianStatueClearState",
+    "AnimtilesInstr_TourianStatueSetState",
+    "AnimtilesInstr_WaitUntilAreaBossDead_DoubleRet",
+    "AnimtilesInstr_Write8PaletteColors",
+    "ClearAnimtiles",
+    "ClearPaletteFXObjects",
+    "DisableAnimtiles",
+    "DisablePaletteFx",
+    "EnableAnimtiles",
+    "EnablePaletteFx",
+    "PalFx_ProcessOne",
+    "PalInit_E1BC",
+    "PalInit_F761_Norfair1",
+    "PalInit_F779_Brinstar8",
+    "PalInstr_ClearPreInstr",
+    "PalInstr_ColorPlus15",
+    "PalInstr_ColorPlus2",
+    "PalInstr_ColorPlus3",
+    "PalInstr_ColorPlus4",
+    "PalInstr_ColorPlus8",
+    "PalInstr_ColorPlus9",
+    "PalInstr_DecTimerGoto",
+    "PalInstr_Delete",
+    "PalInstr_Goto",
+    "PalInstr_QueueMusic",
+    "PalInstr_QueueSfx1",
+    "PalInstr_QueueSfx2",
+    "PalInstr_QueueSfx3",
+    "PalInstr_SetColorIndex",
+    "PalInstr_SetPalfxIndex",
+    "PalInstr_SetPreInstr",
+    "PalInstr_SetTimer",
+    "PalInstr_Wait",
+    "PalPreInstr_CheckEnemy0Health",
+    "PalPreInstr_DeletePalfxIfMinibossDead",
+    "PalPreInstr_E1BC",
+    "PalPreInstr_F621",
+    "PalPreInstr_SamusInHeat",
+    "PalPreInstr_SwitchIfYpos",
+    "PalPreInstr_SwitchIfYpos2",
+    "PalPreInstr_nullsub_129",
+    "PaletteFxHandler",
+    "ProcessAnimtilesObject",
+    "SpawnAnimtiles",
+    "SpawnPalfxObject",
+]
+scope = "Maintained animated_tiles implementation mapping"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "translated"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/crates/port/src/animated_tiles.rs"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/source-coverage-map.json"

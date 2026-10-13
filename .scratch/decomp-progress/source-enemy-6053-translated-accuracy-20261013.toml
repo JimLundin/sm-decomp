@@ -1,0 +1,52 @@
+agent = "/root/coverage_finish"
+commit = "3ce28ba58aba319b60bbc949153baafd4433132e"
+evidence_context = "current-checkout"
+id = "source-enemy-6053-translated-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Maintained executable Rust implementations mapped through explicit dispatch branches, numeric selectors or reviewed private aliases to exact pinned C definitions. Source correspondence establishes translated coverage only; bounded branches, delegated C/host effects and per-module limitations are retained in source-coverage-map.json.",
+    "This observation does not grant verification, integration or live exercise. Missing routine reports and source-only mappings remain distinct from missing implementations; documentation literals and forwarding references are excluded unless their implementation owner was mapped separately.",
+]
+routines = [
+    "Abs16",
+    "CalculateAngleFromXY",
+    "CalculateAngleOfEnemyXfromEnemyY",
+    "CalculateAngleOfSamusFromEnemy",
+    "CalculateAngleOfSamusFromEproj",
+    "CalculateBlockContainingPixelPos",
+    "CheckIfEnemyIsOnScreen",
+    "CheckIfEnemyTouchesSamus",
+    "CompareDistToSamus_X",
+    "CompareDistToSamus_Y",
+    "CosineMult8bit",
+    "CosineMult8bitFull",
+    "DecrementSamusTimers",
+    "DetermineDirectionOfSamusFromEnemy",
+    "EnemyFunc_AC67",
+    "EnemyFunc_ADA3",
+    "EnemyFunc_B7A1",
+    "EnemyFunc_BBBF",
+    "EnemyFunc_BC76",
+    "EnemyWithNormalSpritesIsOffScreen",
+    "GetSamusEnemyDelta_X",
+    "GetSamusEnemyDelta_Y",
+    "IsEnemyLeavingScreen",
+    "IsSamusWithinEnemy_X",
+    "IsSamusWithinEnemy_Y",
+    "Mult32",
+    "NormalEnemyFrozenAI",
+    "SignExtend8",
+    "SineMult8bit",
+    "SineMult8bitFull",
+    "SubtractThenAbs16",
+    "SwitchEnemyAiToMainAi",
+]
+scope = "Maintained enemy implementation mapping"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "translated"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/crates/port/src/enemy.rs"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/source-coverage-map.json"

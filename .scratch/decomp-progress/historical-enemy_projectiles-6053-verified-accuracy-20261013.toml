@@ -1,0 +1,70 @@
+agent = "/root/coverage_finish"
+evidence_context = "historical-frozen"
+id = "historical-enemy_projectiles-6053-verified-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Retained historical source and all sealed artifacts were hashed during recovery. These named fixture roots passed 15417 actual-C pairs across retained runs; duplicate domains may occur. Candidate/dependency snapshots and manifests are retained and C pin matches the current inventory.",
+    "Historical fixture domains only. This import does not authenticate current checkout dependencies, current integration, original-ROM parity, full-game completion, internal calls or synthetic dispatch. Exact module digests and per-run closure checks are in retained-coverage-authentication.json.",
+]
+routines = [
+    "BlueRingContactExplosion",
+    "CheckForBlueRingCollisionWithRoom",
+    "CheckForCollisionWithShitroid_DoubleRet",
+    "ClearEprojs",
+    "DisableEprojs",
+    "EnableEprojs",
+    "EprojPreInstr_MotherBrainBomb",
+    "EprojPreInstr_MotherBrainGlassShatteringShard",
+    "EprojPreInstr_Sparks",
+    "Eproj_Earthqhake5",
+    "Eproj_MoveToBlueRingSpawnPosition",
+    "MotherBrainBomb_Bomb_CollDetect_DoubleRet",
+    "MoveMotherBrainBomb",
+    "PlmInstr_SpawnFourMotherBrainGlass",
+    "SpacePirates_Instr_15",
+    "SpacePirates_Instr_FireLaserL",
+    "SpacePirates_Instr_FireLaserR",
+    "SpawnEprojWithRoomGfx",
+    "SpawnMotherBrainGlassShatteringShard",
+    "sub_86C320",
+    "sub_86C42E",
+]
+scope = "Retained enemy_projectiles fixture roots"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "verified"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/enemy-projectile-allocation/20261010T230633.151973Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/mother-brain-blue-ring-lifecycle/20261011T115700.709332Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/mother-brain-bomb-collision/20261011T121418.253867Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/mother-brain-bomb-movement/20261011T121418.267478Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/mother-brain-bomb-update/20261011T121418.255570Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/mother-brain-door-particle-motion/20261011T102722.820481Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/mother-brain-glass-callers-final/20261011T120735.363930Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/mother-brain-glass-motion-final/20261011T120731.822251Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/mother-brain-tube-motion/20261011T103046.893180Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/pirate-host-callers/20261011T071437.042816Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/projectile-contact-render-final/sparks-update/20261011T125901.927889Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/retained-coverage-authentication.json"

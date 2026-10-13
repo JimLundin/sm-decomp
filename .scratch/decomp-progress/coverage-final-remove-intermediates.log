@@ -1,0 +1,13 @@
+4618288 bytes removed: /tmp/sm-coverage-compile
+6403424 bytes removed: /tmp/sm-coverage-scan
+4741 bytes removed: /tmp/sm-progress-context-file-check
+1884014 bytes removed: /tmp/sm-progress-context-file-check-v2
+167717 bytes removed: /tmp/sm-progress-context-inspection
+167717 bytes removed: /tmp/sm-progress-context-inspection-v2
+407087 bytes removed: /tmp/sm-progress-context-inspection-v3
+405606 bytes removed: /tmp/sm-progress-context-served-inspection
+4239414 bytes removed: /tmp/sm-progress-accuracy-final-offline
+4272887 bytes removed: /tmp/sm-progress-accuracy-final-served
+3863577 bytes removed: /home/jim/sm-decomp/.scratch/decomp-progress/layout-review/before/chromium-profile
+48222 bytes removed: /tmp/sm-coverage-reconciliation/source
+total_unsealed_file_bytes=26482694

@@ -1,0 +1,47 @@
+agent = "/root/coverage_finish"
+commit = "3ce28ba58aba319b60bbc949153baafd4433132e"
+evidence_context = "current-checkout"
+id = "source-samus-6053-translated-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Maintained executable Rust implementations mapped through explicit dispatch branches, numeric selectors or reviewed private aliases to exact pinned C definitions. Source correspondence establishes translated coverage only; bounded branches, delegated C/host effects and per-module limitations are retained in source-coverage-map.json.",
+    "This observation does not grant verification, integration or live exercise. Missing routine reports and source-only mappings remain distinct from missing implementations; documentation literals and forwarding references are excluded unless their implementation owner was mapped separately.",
+]
+routines = [
+    "Samus_AlignBottomWithPrevPose",
+    "Samus_CalcBaseSpeed_X",
+    "Samus_CalcDisplacementMoveLeft",
+    "Samus_CalcDisplacementMoveRight",
+    "Samus_CalcDistanceMoved_X",
+    "Samus_CalcDistanceMoved_Y",
+    "Samus_CalcSpeed_X",
+    "Samus_CheckStartFalling",
+    "Samus_DetermineAccel_Y",
+    "Samus_DetermineGrappleSwingSpeed_X",
+    "Samus_DetermineSpeedTableEntryPtr_X",
+    "Samus_Func9",
+    "Samus_GetBottom_R18",
+    "Samus_GetTop_R20",
+    "Samus_HandleExtraRunspeedX",
+    "Samus_InitBombJump",
+    "Samus_InitJump",
+    "Samus_InitWallJump",
+    "Samus_MoveDown_NoColl",
+    "Samus_MoveLeft_NoColl",
+    "Samus_MoveRight_NoColl",
+    "Samus_MoveUp_NoColl",
+    "Samus_SetRadius",
+    "Samus_SetSpeedForKnockback_Y",
+    "Samus_UpdateSpeedEchoPos",
+    "Samus_UpdateSuitPaletteIndex",
+    "SetLiquidPhysicsType",
+]
+scope = "Maintained samus implementation mapping"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "translated"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/crates/port/src/samus.rs"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/source-coverage-map.json"

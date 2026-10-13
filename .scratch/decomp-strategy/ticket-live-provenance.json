@@ -1,0 +1,612 @@
+{
+  "schema_version": 1,
+  "selected_live_verdicts": [
+    {
+      "counts": {
+        "CalculateBgScrollAndLayerPositionBlocks": {
+          "c": 0,
+          "rust": 9560
+        },
+        "CalculateBgScrolls": {
+          "c": 0,
+          "rust": 195
+        },
+        "CalculateLayer2Xpos": {
+          "c": 0,
+          "rust": 9366
+        },
+        "CalculateLayer2Ypos": {
+          "c": 0,
+          "rust": 9366
+        },
+        "CheckBossBitForCurArea": {
+          "c": 0,
+          "rust": 4
+        },
+        "CheckEventHappened": {
+          "c": 0,
+          "rust": 11028
+        },
+        "ClearOamExt": {
+          "c": 0,
+          "rust": 17746
+        },
+        "ClearUnusedOam": {
+          "c": 0,
+          "rust": 17746
+        },
+        "CopyToSamusSuitPalette": {
+          "c": 0,
+          "rust": 6
+        },
+        "DecrementSamusTimers": {
+          "c": 0,
+          "rust": 9359
+        },
+        "EnemyInstr_Goto": {
+          "c": 0,
+          "rust": 9241
+        },
+        "EnemyWithNormalSpritesIsOffScreen": {
+          "c": 0,
+          "rust": 18908
+        },
+        "FireUnchargedBeam": {
+          "c": 0,
+          "rust": 224
+        },
+        "HandleAutoscrolling_X": {
+          "c": 0,
+          "rust": 8266
+        },
+        "HandleAutoscrolling_Y": {
+          "c": 0,
+          "rust": 8128
+        },
+        "HandleFadeIn": {
+          "c": 0,
+          "rust": 75
+        },
+        "HandleFadeOut": {
+          "c": 0,
+          "rust": 107
+        },
+        "HandleScrollingWhenTriggeringScrollDown": {
+          "c": 0,
+          "rust": 827
+        },
+        "HandleScrollingWhenTriggeringScrollLeft": {
+          "c": 0,
+          "rust": 445
+        },
+        "HandleScrollingWhenTriggeringScrollRight": {
+          "c": 0,
+          "rust": 641
+        },
+        "HandleScrollingWhenTriggeringScrollUp": {
+          "c": 0,
+          "rust": 404
+        },
+        "HasQueuedMusic": {
+          "c": 0,
+          "rust": 108
+        },
+        "HudSelectionHandler_MissilesOrSuperMissiles": {
+          "c": 0,
+          "rust": 346
+        },
+        "KillProjectile": {
+          "c": 0,
+          "rust": 4
+        },
+        "LoaadDesinationRoomCreBitset": {
+          "c": 0,
+          "rust": 4
+        },
+        "LoadDoorHeader": {
+          "c": 0,
+          "rust": 4
+        },
+        "LoadNewMusicTrackIfChanged": {
+          "c": 0,
+          "rust": 3
+        },
+        "LoadRoomHeader": {
+          "c": 0,
+          "rust": 4
+        },
+        "LoadRoomMusic": {
+          "c": 0,
+          "rust": 4
+        },
+        "LoadStateHeader": {
+          "c": 0,
+          "rust": 4
+        },
+        "PlayRoomMusicTrackAfterAFrames": {
+          "c": 0,
+          "rust": 1
+        },
+        "ProjPreInstr_Beam_NoWaveBeam": {
+          "c": 0,
+          "rust": 325
+        },
+        "ProjPreInstr_Missile": {
+          "c": 0,
+          "rust": 68
+        },
+        "QueueMusic_Delayed8": {
+          "c": 0,
+          "rust": 13
+        },
+        "QueueMusic_DelayedY": {
+          "c": 0,
+          "rust": 3
+        },
+        "QueueSfx1_Max15": {
+          "c": 0,
+          "rust": 12
+        },
+        "QueueSfx1_Max6": {
+          "c": 0,
+          "rust": 14
+        },
+        "QueueSfx1_Max9": {
+          "c": 0,
+          "rust": 1
+        },
+        "QueueSfx2_Max15": {
+          "c": 0,
+          "rust": 3
+        },
+        "QueueSfx2_Max6": {
+          "c": 0,
+          "rust": 1
+        },
+        "QueueSfx3_Max6": {
+          "c": 0,
+          "rust": 383
+        },
+        "RunProjectileInstructions": {
+          "c": 0,
+          "rust": 1100
+        },
+        "Samus_AlignBottomWithPrevPose": {
+          "c": 0,
+          "rust": 1
+        },
+        "Samus_Animate": {
+          "c": 0,
+          "rust": 10802
+        },
+        "Samus_BombJumpRisingXMovement_": {
+          "c": 0,
+          "rust": 11
+        },
+        "Samus_CalcDistanceMoved_X": {
+          "c": 0,
+          "rust": 9359
+        },
+        "Samus_CalcDistanceMoved_Y": {
+          "c": 0,
+          "rust": 9359
+        },
+        "Samus_CancelSpeedBoost": {
+          "c": 0,
+          "rust": 7288
+        },
+        "Samus_CollDetectChangedPose": {
+          "c": 0,
+          "rust": 212
+        },
+        "Samus_DetermineAccel_Y": {
+          "c": 0,
+          "rust": 10552
+        },
+        "Samus_GetTop_R20": {
+          "c": 0,
+          "rust": 10814
+        },
+        "Samus_InitJump": {
+          "c": 0,
+          "rust": 33
+        },
+        "Samus_Input_00_Standing": {
+          "c": 0,
+          "rust": 6178
+        },
+        "Samus_Input_01_Running": {
+          "c": 0,
+          "rust": 545
+        },
+        "Samus_Input_02_NormalJumping": {
+          "c": 0,
+          "rust": 921
+        },
+        "Samus_Input_03_SpinJumping": {
+          "c": 0,
+          "rust": 148
+        },
+        "Samus_Input_06_Falling": {
+          "c": 0,
+          "rust": 212
+        },
+        "Samus_Input_0A_KnockbackOrCrystalFlashEnding": {
+          "c": 0,
+          "rust": 12
+        },
+        "Samus_Input_0E_TurningAroundOnGround": {
+          "c": 0,
+          "rust": 367
+        },
+        "Samus_Input_0F_CrouchingEtcTransition": {
+          "c": 0,
+          "rust": 57
+        },
+        "Samus_Input_17_TurningAroundJumping": {
+          "c": 0,
+          "rust": 254
+        },
+        "Samus_Input_18_TurningAroundFalling": {
+          "c": 0,
+          "rust": 18
+        },
+        "Samus_LoadSuitPalette": {
+          "c": 0,
+          "rust": 4
+        },
+        "Samus_LoadSuitTargetPalette": {
+          "c": 0,
+          "rust": 3
+        },
+        "Samus_LookupTransitionTable": {
+          "c": 0,
+          "rust": 1840
+        },
+        "Samus_MoveRight_NoSolidColl": {
+          "c": 0,
+          "rust": 996
+        },
+        "Samus_MoveY_WithSpeedCalc": {
+          "c": 0,
+          "rust": 11
+        },
+        "Samus_MovementHandler_Normal": {
+          "c": 0,
+          "rust": 10791
+        },
+        "Samus_SetRadius": {
+          "c": 0,
+          "rust": 10552
+        },
+        "Samus_SetSpeedForKnockback_Y": {
+          "c": 0,
+          "rust": 1
+        },
+        "Samus_UpdateSuitPaletteIndex": {
+          "c": 0,
+          "rust": 10552
+        },
+        "SetLiquidPhysicsType": {
+          "c": 0,
+          "rust": 4
+        },
+        "UpdateBgScrollOffsets": {
+          "c": 0,
+          "rust": 3
+        },
+        "UpdateMusicTrackIndex": {
+          "c": 0,
+          "rust": 1
+        },
+        "UpdatePreviousLayerBlocks": {
+          "c": 0,
+          "rust": 3
+        },
+        "WriteLotsOf0x1c2f": {
+          "c": 0,
+          "rust": 1
+        }
+      },
+      "limitations": "caller internal behavior not inferred as direct native wrapper coverage; authenticate retained binary/source and subject observations before publication",
+      "observation_kind": "direct_native_or_explicit_bounded_wrapper",
+      "retained_storage_authentication": [],
+      "verdict": "out/port/batches/20261010T213631.753519Z/replays/20261010T215856.742725Z/evidence/20261010T215856.841221Z/verdict.json"
+    },
+    {
+      "counts": {
+        "EprojRunAll": {
+          "active_c": 0,
+          "active_rust": 866,
+          "c": 0,
+          "combat_c": 0,
+          "combat_rust": 213,
+          "refused": 0,
+          "rust": 95325,
+          "total": 95325
+        },
+        "MainScrollingRoutine": {
+          "active_c": 0,
+          "active_rust": 35580,
+          "c": 0,
+          "refused": 0,
+          "rust": 94425,
+          "total": 94425
+        },
+        "ProcessEnemyInstructions": {
+          "active_c": 0,
+          "active_rust": 36,
+          "c": 209673,
+          "refused": 209673,
+          "rust": 2393,
+          "total": 212066
+        },
+        "SpawnEprojWithGfx": {
+          "active_c": 0,
+          "active_rust": 4,
+          "c": 0,
+          "combat_c": 0,
+          "combat_rust": 0,
+          "refused": 0,
+          "rust": 8,
+          "total": 8
+        },
+        "SpawnEprojWithRoomGfx": {
+          "active_c": 0,
+          "active_rust": 16,
+          "c": 0,
+          "combat_c": 0,
+          "combat_rust": 16,
+          "refused": 0,
+          "rust": 16,
+          "total": 16
+        }
+      },
+      "limitations": "caller internal behavior not inferred as direct native wrapper coverage; authenticate retained binary/source and subject observations before publication",
+      "observation_kind": "direct_native_or_explicit_bounded_wrapper",
+      "retained_storage_authentication": [],
+      "verdict": "out/recovery-session/composed-live-release/1791861180321696848-129445/verdict.toml"
+    },
+    {
+      "counts": {
+        "EprojInstr_ClearPreInstr": {
+          "c": 0,
+          "rust": 44
+        },
+        "EprojInstr_Delete": {
+          "c": 0,
+          "rust": 36
+        },
+        "EprojInstr_Goto": {
+          "c": 0,
+          "rust": 827
+        },
+        "EprojInstr_SetPreInstr_": {
+          "c": 0,
+          "rust": 16
+        }
+      },
+      "limitations": "caller internal behavior not inferred as direct native wrapper coverage; authenticate retained binary/source and subject observations before publication",
+      "observation_kind": "direct_native_or_explicit_bounded_wrapper",
+      "retained_storage_authentication": [
+        "out/port/projectile-script-leaves-live/20261011T075955.123199Z/storage-authentication.json"
+      ],
+      "verdict": "out/port/projectile-script-leaves-live/20261011T075955.123199Z/verdict.json"
+    },
+    {
+      "counts": {
+        "DrawHighPriorityEprojs": {
+          "c": 0,
+          "rust": 676
+        },
+        "DrawLowPriorityEprojs": {
+          "c": 0,
+          "rust": 676
+        },
+        "EprojProjCollDet": {
+          "c": 0,
+          "rust": 676
+        },
+        "EprojSamusCollDetect": {
+          "c": 0,
+          "rust": 676
+        }
+      },
+      "limitations": "caller internal behavior not inferred as direct native wrapper coverage; authenticate retained binary/source and subject observations before publication",
+      "observation_kind": "direct_native_or_explicit_bounded_wrapper",
+      "retained_storage_authentication": [],
+      "verdict": "out/port/projectile-contact-render-live/20261011T130027.565661Z/verdict.json"
+    },
+    {
+      "counts": {
+        "ClearPaletteFXObjects": {
+          "c": 0,
+          "rust": 95
+        },
+        "DisablePaletteFx": {
+          "c": 0,
+          "rust": 15
+        },
+        "EnablePaletteFx": {
+          "c": 0,
+          "rust": 23
+        },
+        "PaletteFxHandler": {
+          "c": 0,
+          "rust": 114717
+        }
+      },
+      "limitations": "caller internal behavior not inferred as direct native wrapper coverage; authenticate retained binary/source and subject observations before publication",
+      "observation_kind": "direct_native_or_explicit_bounded_wrapper",
+      "retained_storage_authentication": [
+        "out/port/palette-effect-frame-replay/20261011T092352.241110Z/storage-authentication.json"
+      ],
+      "verdict": "out/port/palette-effect-frame-replay/20261011T092352.241110Z/verdict.json"
+    },
+    {
+      "counts": {
+        "ClearSpriteObjects": {
+          "c": 0,
+          "rust": 64
+        },
+        "HandleSpriteObjects": {
+          "c": 0,
+          "rust": 96336
+        }
+      },
+      "limitations": "caller internal behavior not inferred as direct native wrapper coverage; authenticate retained binary/source and subject observations before publication",
+      "observation_kind": "direct_native_or_explicit_bounded_wrapper",
+      "retained_storage_authentication": [
+        "out/port/sprite-objects-live/20261011T082259.543000Z/storage-authentication.json"
+      ],
+      "verdict": "out/port/sprite-objects-live/20261011T082259.543000Z/verdict.json"
+    },
+    {
+      "counts": {
+        "MoveEprojWithVelocityX": {
+          "c": 0,
+          "rust": 11
+        },
+        "MoveEprojWithVelocityY": {
+          "c": 0,
+          "rust": 13
+        }
+      },
+      "limitations": "caller internal behavior not inferred as direct native wrapper coverage; authenticate retained binary/source and subject observations before publication",
+      "observation_kind": "direct_native_or_explicit_bounded_wrapper",
+      "retained_storage_authentication": [],
+      "verdict": "out/port/projectile-movement-live/20261011T061431.667466Z/verdict.json"
+    },
+    {
+      "counts": {
+        "ClearAnimtiles": {
+          "c": 0,
+          "rust": 64
+        },
+        "EnableAnimtiles": {
+          "c": 0,
+          "rust": 4
+        }
+      },
+      "limitations": "caller internal behavior not inferred as direct native wrapper coverage; authenticate retained binary/source and subject observations before publication",
+      "observation_kind": "direct_native_or_explicit_bounded_wrapper",
+      "retained_storage_authentication": [
+        "out/port/animated-tiles-live/20261011T085347.505558Z/storage-authentication.json"
+      ],
+      "verdict": "out/port/animated-tiles-live/20261011T085347.505558Z/verdict.json"
+    },
+    {
+      "counts": {
+        "HandleProjectileTrails": {
+          "active_c": 0,
+          "active_rust": 167,
+          "c": 0,
+          "refused": 0,
+          "rust": 3824,
+          "total": 3824
+        }
+      },
+      "limitations": "caller internal behavior not inferred as direct native wrapper coverage; authenticate retained binary/source and subject observations before publication",
+      "observation_kind": "direct_native_or_explicit_bounded_wrapper",
+      "retained_storage_authentication": [],
+      "verdict": "out/recovery-session/trails-live/1791860457650339558-98848/verdict.toml"
+    },
+    {
+      "counts": {
+        "DrawSpriteObjects": {
+          "c": 0,
+          "rust": 96336
+        }
+      },
+      "limitations": "caller internal behavior not inferred as direct native wrapper coverage; authenticate retained binary/source and subject observations before publication",
+      "observation_kind": "direct_native_or_explicit_bounded_wrapper",
+      "retained_storage_authentication": [
+        "out/port/sprite-rendering-live/20261011T083926.700735Z/storage-authentication.json"
+      ],
+      "verdict": "out/port/sprite-rendering-live/20261011T083926.700735Z/verdict.json"
+    },
+    {
+      "counts": {
+        "CheckBossBitForCurArea": {
+          "c": 0,
+          "rust": 8
+        },
+        "CheckEventHappened": {
+          "c": 0,
+          "rust": 11028
+        },
+        "ClearOamExt": {
+          "c": 0,
+          "rust": 17746
+        },
+        "ClearUnusedOam": {
+          "c": 0,
+          "rust": 17746
+        },
+        "HandleFadeIn": {
+          "c": 0,
+          "rust": 75
+        },
+        "HandleFadeOut": {
+          "c": 0,
+          "rust": 107
+        },
+        "Multiply16x16": {
+          "c": 0,
+          "rust": 14
+        },
+        "WriteLotsOf0x1c2f": {
+          "c": 0,
+          "rust": 1
+        }
+      },
+      "limitations": "caller internal behavior not inferred as direct native wrapper coverage; authenticate retained binary/source and subject observations before publication",
+      "observation_kind": "direct_native_or_explicit_bounded_wrapper",
+      "retained_storage_authentication": [],
+      "verdict": "out/port/room-plm-live/20261010T223747.065046Z/verdict.json"
+    },
+    {
+      "counts": {
+        "EprojPreInstr_CeresElevatorPlatform": {
+          "c": 0,
+          "rust": 524
+        }
+      },
+      "limitations": "caller internal behavior not inferred as direct native wrapper coverage; authenticate retained binary/source and subject observations before publication",
+      "observation_kind": "direct_native_or_explicit_bounded_wrapper",
+      "retained_storage_authentication": [
+        "out/port/ceres-platform-live/20261011T073246.635709Z/storage-authentication.json"
+      ],
+      "verdict": "out/port/ceres-platform-live/20261011T073246.635709Z/verdict.json"
+    },
+    {
+      "counts": {
+        "EprojPreInstr_CeresElevatorPad": {
+          "c": 0,
+          "rust": 528
+        }
+      },
+      "limitations": "caller internal behavior not inferred as direct native wrapper coverage; authenticate retained binary/source and subject observations before publication",
+      "observation_kind": "direct_native_or_explicit_bounded_wrapper",
+      "retained_storage_authentication": [
+        "out/port/ceres-pad-live/20261011T081814.286687Z/storage-authentication.json"
+      ],
+      "verdict": "out/port/ceres-pad-live/20261011T081814.286687Z/verdict.json"
+    },
+    {
+      "counts": {
+        "AnimtilesHandler": {
+          "c": 0,
+          "rust": 95385
+        }
+      },
+      "limitations": "caller internal behavior not inferred as direct native wrapper coverage; authenticate retained binary/source and subject observations before publication",
+      "observation_kind": "direct_native_or_explicit_bounded_wrapper",
+      "retained_storage_authentication": [
+        "out/port/animated-tile-frame-replay/20261011T090833.758853Z/storage-authentication.json"
+      ],
+      "verdict": "out/port/animated-tile-frame-replay/20261011T090833.758853Z/verdict.json"
+    }
+  ],
+  "uncovered": []
+}

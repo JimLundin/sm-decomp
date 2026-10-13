@@ -1,0 +1,1636 @@
+{
+  "basis": "exact synthetic native mapping joined to118passing artifact receipts or explicit separate post-cleanup ticket receipt",
+  "mappings": [
+    {
+      "address": "0x818c0a",
+      "fixture_case_count": 378,
+      "fixture_case_examples": [
+        "leaf-0-32768-0-0",
+        "leaf-0-32768-0-508",
+        "leaf-0-32768-0-511"
+      ],
+      "fixture_dispatch": "PortDrawEprojSpritemap",
+      "manifest": "/home/jim/sm-decomp/out/port/projectile-contact-render-final/rendering-direct/20261011T125652.825339Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "DrawEprojSpritemapWithBaseTile"
+    },
+    {
+      "address": "0x818c7f",
+      "fixture_case_count": 378,
+      "fixture_case_examples": [
+        "leaf-1-32768-0-0",
+        "leaf-1-32768-0-508",
+        "leaf-1-32768-0-511"
+      ],
+      "fixture_dispatch": "PortDrawEprojSpritemapOffscreen",
+      "manifest": "/home/jim/sm-decomp/out/port/projectile-contact-render-final/rendering-direct/20261011T125652.825339Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "DrawEprojSpritemapWithBaseTileOffscreen"
+    },
+    {
+      "address": "0x8486b4",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-86b4-0",
+        "op-86b4-1",
+        "op-86b4-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_Sleep"
+    },
+    {
+      "address": "0x8486bc",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-86bc-0",
+        "op-86bc-1",
+        "op-86bc-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_Delete"
+    },
+    {
+      "address": "0x8486c1",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-86c1-0",
+        "op-86c1-1",
+        "op-86c1-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_PreInstr"
+    },
+    {
+      "address": "0x8486ca",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-86ca-0",
+        "op-86ca-1",
+        "op-86ca-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_ClearPreInstr"
+    },
+    {
+      "address": "0x848724",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-8724-0",
+        "op-8724-1",
+        "op-8724-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_Goto"
+    },
+    {
+      "address": "0x84873f",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-873f-0",
+        "op-873f-1",
+        "op-873f-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_DecrementAndBranchNonzero"
+    },
+    {
+      "address": "0x84874e",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-874e-0",
+        "op-874e-1",
+        "op-874e-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_SetTimer"
+    },
+    {
+      "address": "0x8487e5",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-87e5-0",
+        "op-87e5-1",
+        "op-87e5-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_CopyFromRamToVram"
+    },
+    {
+      "address": "0x84880e",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-880e-0",
+        "op-880e-1",
+        "op-880e-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_GotoIfBossBitSet"
+    },
+    {
+      "address": "0x84882d",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-882d-0",
+        "op-882d-1",
+        "op-882d-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_GotoIfEventSet"
+    },
+    {
+      "address": "0x84883e",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-883e-0",
+        "op-883e-1",
+        "op-883e-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_SetEvent"
+    },
+    {
+      "address": "0x848848",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-8848-0",
+        "op-8848-1",
+        "op-8848-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_GotoIfChozoSet"
+    },
+    {
+      "address": "0x848865",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-8865-0",
+        "op-8865-1",
+        "op-8865-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_SetRoomChozoBit"
+    },
+    {
+      "address": "0x84887c",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-887c-0",
+        "op-887c-1",
+        "op-887c-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_GotoIfItemBitSet"
+    },
+    {
+      "address": "0x848899",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-8899-0",
+        "op-8899-1",
+        "op-8899-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_SetItemBit"
+    },
+    {
+      "address": "0x848a24",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-8a24-0",
+        "op-8a24-1",
+        "op-8a24-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_SetLinkReg"
+    },
+    {
+      "address": "0x848a2e",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-8a2e-0",
+        "op-8a2e-1",
+        "op-8a2e-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_Call"
+    },
+    {
+      "address": "0x848a3a",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-8a3a-0",
+        "op-8a3a-1",
+        "op-8a3a-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_Return"
+    },
+    {
+      "address": "0x848a72",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-8a72-0",
+        "op-8a72-1",
+        "op-8a72-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_GotoIfDoorBitSet"
+    },
+    {
+      "address": "0x848a91",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-8a91-0",
+        "op-8a91-1",
+        "op-8a91-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_IncrementDoorHitCounterAndJGE"
+    },
+    {
+      "address": "0x848acd",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-8acd-0",
+        "op-8acd-1",
+        "op-8acd-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_IncrementArgumentAndJGE"
+    },
+    {
+      "address": "0x848af1",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-8af1-0",
+        "op-8af1-1",
+        "op-8af1-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_SetBTS"
+    },
+    {
+      "address": "0x848b55",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-8b55-0",
+        "op-8b55-1",
+        "op-8b55-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_ProcessAirScrollUpdate"
+    },
+    {
+      "address": "0x848b93",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-8b93-0",
+        "op-8b93-1",
+        "op-8b93-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_ProcessSolidScrollUpdate"
+    },
+    {
+      "address": "0x848bd1",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-8bd1-0",
+        "op-8bd1-1",
+        "op-8bd1-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_QueueMusic"
+    },
+    {
+      "address": "0x848bdd",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-8bdd-0",
+        "op-8bdd-1",
+        "op-8bdd-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_ClearMusicQueueAndQueueTrack"
+    },
+    {
+      "address": "0x848c07",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-8c07-0",
+        "op-8c07-1",
+        "op-8c07-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_QueueSfx1_Max6"
+    },
+    {
+      "address": "0x848c10",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-8c10-0",
+        "op-8c10-1",
+        "op-8c10-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_QueueSfx2_Max6"
+    },
+    {
+      "address": "0x848c19",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-8c19-0",
+        "op-8c19-1",
+        "op-8c19-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_QueueSfx3_Max6"
+    },
+    {
+      "address": "0x848c22",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-8c22-0",
+        "op-8c22-1",
+        "op-8c22-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_QueueSfx1_Max15"
+    },
+    {
+      "address": "0x848c2b",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-8c2b-0",
+        "op-8c2b-1",
+        "op-8c2b-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_QueueSfx2_Max15"
+    },
+    {
+      "address": "0x848c34",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-8c34-0",
+        "op-8c34-1",
+        "op-8c34-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_QueueSfx3_Max15"
+    },
+    {
+      "address": "0x848c3d",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-8c3d-0",
+        "op-8c3d-1",
+        "op-8c3d-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_QueueSfx1_Max3"
+    },
+    {
+      "address": "0x848c46",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-8c46-0",
+        "op-8c46-1",
+        "op-8c46-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_QueueSfx2_Max3"
+    },
+    {
+      "address": "0x848c4f",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-8c4f-0",
+        "op-8c4f-1",
+        "op-8c4f-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_QueueSfx_Max3"
+    },
+    {
+      "address": "0x848c58",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-8c58-0",
+        "op-8c58-1",
+        "op-8c58-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_QueueSfx1_Max9"
+    },
+    {
+      "address": "0x848c61",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-8c61-0",
+        "op-8c61-1",
+        "op-8c61-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_QueueSfx2_Max9"
+    },
+    {
+      "address": "0x848c6a",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-8c6a-0",
+        "op-8c6a-1",
+        "op-8c6a-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_QueueSfx3_Max9"
+    },
+    {
+      "address": "0x848c73",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-8c73-0",
+        "op-8c73-1",
+        "op-8c73-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_QueueSfx1_Max1"
+    },
+    {
+      "address": "0x848c7c",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-8c7c-0",
+        "op-8c7c-1",
+        "op-8c7c-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_QueueSfx2_Max1"
+    },
+    {
+      "address": "0x848c85",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-8c85-0",
+        "op-8c85-1",
+        "op-8c85-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_QueueSfx3_Max1"
+    },
+    {
+      "address": "0x848d41",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-8d41-0",
+        "op-8d41-1",
+        "op-8d41-2"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/out/port/plm-render-fixtures/plm-instructions-synthetic.sfc",
+      "symbol": "PlmInstr_GotoIfSamusNear"
+    },
+    {
+      "address": "0x84d525",
+      "fixture_case_count": 38,
+      "fixture_case_examples": [
+        "caller-d513-0-0",
+        "caller-d513-0-78",
+        "caller-d513-1-0"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/n00b-tube-callers-final/20261011T120633.445726Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "PlmInstr_EnableWaterPhysics"
+    },
+    {
+      "address": "0x84d525",
+      "fixture_case_count": 38,
+      "fixture_case_examples": [
+        "caller-d513-0-0",
+        "caller-d513-0-78",
+        "caller-d513-1-0"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/n00b-tube-callers-frozen/20261011T120836.264717Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "PlmInstr_EnableWaterPhysics"
+    },
+    {
+      "address": "0x84d525",
+      "fixture_case_count": 38,
+      "fixture_case_examples": [
+        "caller-d513-0-0",
+        "caller-d513-0-78",
+        "caller-d513-1-0"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/n00b-tube-callers/20261011T120534.126214Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "PlmInstr_EnableWaterPhysics"
+    },
+    {
+      "address": "0x84d52c",
+      "fixture_case_count": 38,
+      "fixture_case_examples": [
+        "caller-d4f6-0-0",
+        "caller-d4f6-0-78",
+        "caller-d4f6-1-0"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/n00b-tube-callers-final/20261011T120633.445726Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "PlmInstr_SpawnN00bTubeCrackEproj"
+    },
+    {
+      "address": "0x84d52c",
+      "fixture_case_count": 38,
+      "fixture_case_examples": [
+        "caller-d4f6-0-0",
+        "caller-d4f6-0-78",
+        "caller-d4f6-1-0"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/n00b-tube-callers-frozen/20261011T120836.264717Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "PlmInstr_SpawnN00bTubeCrackEproj"
+    },
+    {
+      "address": "0x84d52c",
+      "fixture_case_count": 38,
+      "fixture_case_examples": [
+        "caller-d4f6-0-0",
+        "caller-d4f6-0-78",
+        "caller-d4f6-1-0"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/n00b-tube-callers/20261011T120534.126214Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "PlmInstr_SpawnN00bTubeCrackEproj"
+    },
+    {
+      "address": "0x84d536",
+      "fixture_case_count": 38,
+      "fixture_case_examples": [
+        "caller-d509-0-0",
+        "caller-d509-0-78",
+        "caller-d509-1-0"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/n00b-tube-callers-final/20261011T120633.445726Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "PlmInstr_DiagonalEarthquake"
+    },
+    {
+      "address": "0x84d536",
+      "fixture_case_count": 38,
+      "fixture_case_examples": [
+        "caller-d509-0-0",
+        "caller-d509-0-78",
+        "caller-d509-1-0"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/n00b-tube-callers-frozen/20261011T120836.264717Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "PlmInstr_DiagonalEarthquake"
+    },
+    {
+      "address": "0x84d536",
+      "fixture_case_count": 38,
+      "fixture_case_examples": [
+        "caller-d509-0-0",
+        "caller-d509-0-78",
+        "caller-d509-1-0"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/n00b-tube-callers/20261011T120534.126214Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "PlmInstr_DiagonalEarthquake"
+    },
+    {
+      "address": "0x84d543",
+      "fixture_case_count": 38,
+      "fixture_case_examples": [
+        "caller-d507-0-0",
+        "caller-d507-0-78",
+        "caller-d507-1-0"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/n00b-tube-callers-final/20261011T120633.445726Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "PlmInstr_Spawn10shardsAnd6n00bs"
+    },
+    {
+      "address": "0x84d543",
+      "fixture_case_count": 38,
+      "fixture_case_examples": [
+        "caller-d507-0-0",
+        "caller-d507-0-78",
+        "caller-d507-1-0"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/n00b-tube-callers-frozen/20261011T120836.264717Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "PlmInstr_Spawn10shardsAnd6n00bs"
+    },
+    {
+      "address": "0x84d543",
+      "fixture_case_count": 38,
+      "fixture_case_examples": [
+        "caller-d507-0-0",
+        "caller-d507-0-78",
+        "caller-d507-1-0"
+      ],
+      "fixture_dispatch": "PlmInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/n00b-tube-callers/20261011T120534.126214Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "PlmInstr_Spawn10shardsAnd6n00bs"
+    },
+    {
+      "address": "0x868159",
+      "fixture_case_count": 1,
+      "fixture_case_examples": [
+        "sleep-control"
+      ],
+      "fixture_dispatch": "EprojInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/draygon-attached-gunk/20261011T043251.095224Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInstr_Sleep"
+    },
+    {
+      "address": "0x868159",
+      "fixture_case_count": 1,
+      "fixture_case_examples": [
+        "sleep-control"
+      ],
+      "fixture_dispatch": "EprojInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/enemy-drop-selection/20261011T060314.778547Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInstr_Sleep"
+    },
+    {
+      "address": "0x868159",
+      "fixture_case_count": 1,
+      "fixture_case_examples": [
+        "dispatcher-control"
+      ],
+      "fixture_dispatch": "EprojInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/mother-brain-blue-ring-lifecycle/20261011T115700.709332Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInstr_Sleep"
+    },
+    {
+      "address": "0x868159",
+      "fixture_case_count": 1,
+      "fixture_case_examples": [
+        "dispatcher-control"
+      ],
+      "fixture_dispatch": "EprojInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/mother-brain-bomb-collision/20261011T121418.253867Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInstr_Sleep"
+    },
+    {
+      "address": "0x868159",
+      "fixture_case_count": 1,
+      "fixture_case_examples": [
+        "dispatcher-control"
+      ],
+      "fixture_dispatch": "EprojInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/mother-brain-bomb-movement/20261011T121418.267478Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInstr_Sleep"
+    },
+    {
+      "address": "0x868159",
+      "fixture_case_count": 1,
+      "fixture_case_examples": [
+        "dispatcher-control"
+      ],
+      "fixture_dispatch": "EprojInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/mother-brain-bomb-update/20261011T121418.255570Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInstr_Sleep"
+    },
+    {
+      "address": "0x868159",
+      "fixture_case_count": 1,
+      "fixture_case_examples": [
+        "dispatcher-control"
+      ],
+      "fixture_dispatch": "EprojInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/mother-brain-glass-callers-final/20261011T120735.363930Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInstr_Sleep"
+    },
+    {
+      "address": "0x868159",
+      "fixture_case_count": 1,
+      "fixture_case_examples": [
+        "dispatcher-control"
+      ],
+      "fixture_dispatch": "EprojInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/mother-brain-glass-motion-final/20261011T120731.822251Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInstr_Sleep"
+    },
+    {
+      "address": "0x868159",
+      "fixture_case_count": 1,
+      "fixture_case_examples": [
+        "sleep-control"
+      ],
+      "fixture_dispatch": "EprojInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/mother-brain-turret-projectiles/20261011T041757.660581Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInstr_Sleep"
+    },
+    {
+      "address": "0x868159",
+      "fixture_case_count": 1,
+      "fixture_case_examples": [
+        "control"
+      ],
+      "fixture_dispatch": "EprojInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/observed-projectile-initializers/20261011T142735.934805Z/evidence/20261011T142735.986673Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInstr_Sleep"
+    },
+    {
+      "address": "0x868159",
+      "fixture_case_count": 1,
+      "fixture_case_examples": [
+        "control"
+      ],
+      "fixture_dispatch": "EprojInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/pirate-host-callers/20261011T071437.042816Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInstr_Sleep"
+    },
+    {
+      "address": "0x8683d6",
+      "fixture_case_count": 938,
+      "fixture_case_examples": [
+        "direct-0-0",
+        "direct-0-1",
+        "direct-0-10"
+      ],
+      "fixture_dispatch": "PortDrawEprojs",
+      "manifest": "/home/jim/sm-decomp/out/port/projectile-contact-render-final/rendering-direct/20261011T125652.825339Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "DrawEprojs"
+    },
+    {
+      "address": "0x868427",
+      "fixture_case_count": 774,
+      "fixture_case_examples": [
+        "shake-0-0-0",
+        "shake-0-0-1",
+        "shake-0-0-65535"
+      ],
+      "fixture_dispatch": "PortScreenShake",
+      "manifest": "/home/jim/sm-decomp/out/port/projectile-contact-render-final/rendering-direct/20261011T125652.825339Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "GetValuesForScreenShaking"
+    },
+    {
+      "address": "0x868d99",
+      "fixture_case_count": 128,
+      "fixture_case_examples": [
+        "attach-op-0",
+        "attach-op-1",
+        "attach-op-10"
+      ],
+      "fixture_dispatch": "EprojInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/draygon-attached-gunk/20261011T043251.095224Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInstr_868D99"
+    },
+    {
+      "address": "0x868dca",
+      "fixture_case_count": 128,
+      "fixture_case_examples": [
+        "attached-0",
+        "attached-1",
+        "attached-10"
+      ],
+      "fixture_dispatch": "EprojPreinstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/draygon-attached-gunk/20261011T043251.095224Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojPreInstr_8DCA"
+    },
+    {
+      "address": "0x868dff",
+      "fixture_case_count": 96,
+      "fixture_case_examples": [
+        "pre-0",
+        "pre-10",
+        "pre-100"
+      ],
+      "fixture_dispatch": "EprojPreinstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/draygon-attached-gunk/20261011T043251.095224Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojPreInstr_DraygonsTurret_8DFF"
+    },
+    {
+      "address": "0x868e0f",
+      "fixture_case_count": 96,
+      "fixture_case_examples": [
+        "pre-1",
+        "pre-101",
+        "pre-103"
+      ],
+      "fixture_dispatch": "EprojPreinstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/draygon-attached-gunk/20261011T043251.095224Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojPreInstr_DraygonsGunk_8E0F"
+    },
+    {
+      "address": "0x8693ca",
+      "fixture_case_count": 576,
+      "fixture_case_examples": [
+        "ridley-init-0-0",
+        "ridley-init-0-1",
+        "ridley-init-0-10"
+      ],
+      "fixture_dispatch": "EprojInitializer",
+      "manifest": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/observed-projectile-initializers/20261011T142735.934805Z/evidence/20261011T142735.986673Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInit_9642_RidleysFireball"
+    },
+    {
+      "address": "0x8693ca",
+      "fixture_case_count": 456,
+      "fixture_case_examples": [
+        "with-gfx-9642-0-0-0",
+        "with-gfx-9642-0-0-1",
+        "with-gfx-9642-0-0-2"
+      ],
+      "fixture_dispatch": "SpawnEprojWithGfx",
+      "manifest": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/observed-projectile-initializers/20261011T142735.934805Z/evidence/20261011T142735.986673Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInit_9642_RidleysFireball"
+    },
+    {
+      "address": "0x8693ca",
+      "fixture_case_count": 584,
+      "fixture_case_examples": [
+        "allocate-9642-0-0",
+        "allocate-9642-0-1",
+        "allocate-9642-0-10"
+      ],
+      "fixture_dispatch": "SpawnEprojWithRoomGfx",
+      "manifest": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/observed-projectile-initializers/20261011T142735.934805Z/evidence/20261011T142735.986673Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInit_9642_RidleysFireball"
+    },
+    {
+      "address": "0x86947f",
+      "fixture_case_count": 304,
+      "fixture_case_examples": [
+        "allocate-9650-0-0",
+        "allocate-9650-0-1",
+        "allocate-9650-0-2"
+      ],
+      "fixture_dispatch": "SpawnEprojWithRoomGfx",
+      "manifest": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/observed-projectile-initializers/20261011T142735.934805Z/evidence/20261011T142735.986673Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInit_9660_FireballExplosion"
+    },
+    {
+      "address": "0x8694a0",
+      "fixture_case_count": 152,
+      "fixture_case_examples": [
+        "allocate-9688-0-0",
+        "allocate-9688-0-1",
+        "allocate-9688-0-2"
+      ],
+      "fixture_dispatch": "SpawnEprojWithRoomGfx",
+      "manifest": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/observed-projectile-initializers/20261011T142735.934805Z/evidence/20261011T142735.986673Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInit_9688"
+    },
+    {
+      "address": "0x8694b4",
+      "fixture_case_count": 152,
+      "fixture_case_examples": [
+        "allocate-9696-0-0",
+        "allocate-9696-0-1",
+        "allocate-9696-0-2"
+      ],
+      "fixture_dispatch": "SpawnEprojWithRoomGfx",
+      "manifest": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/observed-projectile-initializers/20261011T142735.934805Z/evidence/20261011T142735.986673Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInit_9696"
+    },
+    {
+      "address": "0x8694c8",
+      "fixture_case_count": 152,
+      "fixture_case_examples": [
+        "allocate-966c-0-0",
+        "allocate-966c-0-1",
+        "allocate-966c-0-2"
+      ],
+      "fixture_dispatch": "SpawnEprojWithRoomGfx",
+      "manifest": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/observed-projectile-initializers/20261011T142735.934805Z/evidence/20261011T142735.986673Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInit_966C"
+    },
+    {
+      "address": "0x8694dc",
+      "fixture_case_count": 152,
+      "fixture_case_examples": [
+        "allocate-967a-0-0",
+        "allocate-967a-0-1",
+        "allocate-967a-0-2"
+      ],
+      "fixture_dispatch": "SpawnEprojWithRoomGfx",
+      "manifest": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/observed-projectile-initializers/20261011T142735.934805Z/evidence/20261011T142735.986673Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInit_967A"
+    },
+    {
+      "address": "0x86a2ee",
+      "fixture_case_count": 162,
+      "fixture_case_examples": [
+        "ceres-init-a2ee-0-0",
+        "ceres-init-a2ee-0-1",
+        "ceres-init-a2ee-0-2"
+      ],
+      "fixture_dispatch": "EprojInitializer",
+      "manifest": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/observed-projectile-initializers/20261011T142735.934805Z/evidence/20261011T142735.986673Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInit_CeresElevatorPad"
+    },
+    {
+      "address": "0x86a2ee",
+      "fixture_case_count": 456,
+      "fixture_case_examples": [
+        "with-gfx-a387-0-0-0",
+        "with-gfx-a387-0-0-1",
+        "with-gfx-a387-0-0-2"
+      ],
+      "fixture_dispatch": "SpawnEprojWithGfx",
+      "manifest": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/observed-projectile-initializers/20261011T142735.934805Z/evidence/20261011T142735.986673Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInit_CeresElevatorPad"
+    },
+    {
+      "address": "0x86a2ee",
+      "fixture_case_count": 584,
+      "fixture_case_examples": [
+        "allocate-a387-0-0",
+        "allocate-a387-0-1",
+        "allocate-a387-0-10"
+      ],
+      "fixture_dispatch": "SpawnEprojWithRoomGfx",
+      "manifest": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/observed-projectile-initializers/20261011T142735.934805Z/evidence/20261011T142735.986673Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInit_CeresElevatorPad"
+    },
+    {
+      "address": "0x86a31b",
+      "fixture_case_count": 162,
+      "fixture_case_examples": [
+        "ceres-init-a31b-0-0",
+        "ceres-init-a31b-0-1",
+        "ceres-init-a31b-0-2"
+      ],
+      "fixture_dispatch": "EprojInitializer",
+      "manifest": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/observed-projectile-initializers/20261011T142735.934805Z/evidence/20261011T142735.986673Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInit_CeresElevatorPlatform"
+    },
+    {
+      "address": "0x86a31b",
+      "fixture_case_count": 456,
+      "fixture_case_examples": [
+        "with-gfx-a395-0-0-0",
+        "with-gfx-a395-0-0-1",
+        "with-gfx-a395-0-0-2"
+      ],
+      "fixture_dispatch": "SpawnEprojWithGfx",
+      "manifest": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/observed-projectile-initializers/20261011T142735.934805Z/evidence/20261011T142735.986673Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInit_CeresElevatorPlatform"
+    },
+    {
+      "address": "0x86a31b",
+      "fixture_case_count": 584,
+      "fixture_case_examples": [
+        "allocate-a395-0-0",
+        "allocate-a395-0-1",
+        "allocate-a395-0-10"
+      ],
+      "fixture_dispatch": "SpawnEprojWithRoomGfx",
+      "manifest": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/observed-projectile-initializers/20261011T142735.934805Z/evidence/20261011T142735.986673Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInit_CeresElevatorPlatform"
+    },
+    {
+      "address": "0x86a764",
+      "fixture_case_count": 32,
+      "fixture_case_examples": [
+        "spawn-a993-0",
+        "spawn-a993-1",
+        "spawn-a993-10"
+      ],
+      "fixture_dispatch": "SpawnEprojWithRoomGfx",
+      "manifest": "/home/jim/sm-decomp/out/port/enemy-projectile-allocation/20261010T230633.151973Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInit_BombTorizoStatueBreaking"
+    },
+    {
+      "address": "0x86b49d",
+      "fixture_case_count": 162,
+      "fixture_case_examples": [
+        "offline-gfx-or-b4b1-0-0-0",
+        "offline-gfx-or-b4b1-0-0-1",
+        "offline-gfx-or-b4b1-0-0-2"
+      ],
+      "fixture_dispatch": "SpawnEprojWithGfx",
+      "manifest": "/home/jim/sm-decomp/out/port/observed-projectile-with-gfx-final/observed-projectile-initializers/20261011T142735.934805Z/evidence/20261011T142735.986673Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInit_TourianEscapeShaftFakeWallExplode"
+    },
+    {
+      "address": "0x86b49d",
+      "fixture_case_count": 32,
+      "fixture_case_examples": [
+        "spawn-b4b1-0",
+        "spawn-b4b1-1",
+        "spawn-b4b1-10"
+      ],
+      "fixture_dispatch": "SpawnEprojWithRoomGfx",
+      "manifest": "/home/jim/sm-decomp/out/port/enemy-projectile-allocation/20261010T230633.151973Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInit_TourianEscapeShaftFakeWallExplode"
+    },
+    {
+      "address": "0x86b683",
+      "fixture_case_count": 32,
+      "fixture_case_examples": [
+        "spawn-b751-0",
+        "spawn-b751-1",
+        "spawn-b751-10"
+      ],
+      "fixture_dispatch": "SpawnEprojWithRoomGfx",
+      "manifest": "/home/jim/sm-decomp/out/port/enemy-projectile-allocation/20261010T230633.151973Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInit_EyeDoorSweat"
+    },
+    {
+      "address": "0x86be4f",
+      "fixture_case_count": 144,
+      "fixture_case_examples": [
+        "turret-0",
+        "turret-1",
+        "turret-10"
+      ],
+      "fixture_dispatch": "SpawnEprojWithRoomGfx",
+      "manifest": "/home/jim/sm-decomp/out/port/mother-brain-turret-projectiles/20261011T041757.660581Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInit_MotherBrainRoomTurrets"
+    },
+    {
+      "address": "0x86bf59",
+      "fixture_case_count": 128,
+      "fixture_case_examples": [
+        "bullet-0",
+        "bullet-1",
+        "bullet-10"
+      ],
+      "fixture_dispatch": "SpawnEprojWithRoomGfx",
+      "manifest": "/home/jim/sm-decomp/out/port/mother-brain-turret-projectiles/20261011T041757.660581Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInit_MotherBrainRoomTurretBullets"
+    },
+    {
+      "address": "0x86c0e0",
+      "fixture_case_count": 192,
+      "fixture_case_examples": [
+        "move-0",
+        "move-1",
+        "move-10"
+      ],
+      "fixture_dispatch": "EprojPreinstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/mother-brain-turret-projectiles/20261011T041757.660581Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojPreInstr_MotherBrainRoomTurretBullets"
+    },
+    {
+      "address": "0x86c173",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-c173-0",
+        "op-c173-1",
+        "op-c173-2"
+      ],
+      "fixture_dispatch": "EprojInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/mother-brain-turret-projectiles/20261011T041757.660581Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInstr_SwitchJump"
+    },
+    {
+      "address": "0x86c1b4",
+      "fixture_case_count": 8,
+      "fixture_case_examples": [
+        "op-c1b4-0",
+        "op-c1b4-1",
+        "op-c1b4-2"
+      ],
+      "fixture_dispatch": "EprojInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/mother-brain-turret-projectiles/20261011T041757.660581Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInstr_UserPalette0"
+    },
+    {
+      "address": "0x86c335",
+      "fixture_case_count": 2826,
+      "fixture_case_examples": [
+        "camera-update-0-0-0",
+        "camera-update-0-0-247",
+        "camera-update-0-0-248"
+      ],
+      "fixture_dispatch": "EprojPreinstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/mother-brain-blue-ring-lifecycle/20261011T115700.709332Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "Eproj_MoveToBlueRingSpawnPosition"
+    },
+    {
+      "address": "0x86c4c8",
+      "fixture_case_count": 3078,
+      "fixture_case_examples": [
+        "collision-update-0-0-0-0",
+        "collision-update-0-0-0-1",
+        "collision-update-0-0-13-0"
+      ],
+      "fixture_dispatch": "EprojPreinstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/mother-brain-bomb-update/20261011T121418.255570Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojPreInstr_MotherBrainBomb"
+    },
+    {
+      "address": "0x86c886",
+      "fixture_case_count": 150,
+      "fixture_case_examples": [
+        "fall-0-0-0-0",
+        "fall-0-0-0-65280",
+        "fall-0-0-244-0"
+      ],
+      "fixture_dispatch": "EprojPreinstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/mother-brain-drool-tracking/20261011T102158.514192Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInit_MotherBrainsDrool_Falling"
+    },
+    {
+      "address": "0x86c8d0",
+      "fixture_case_count": 1,
+      "fixture_case_examples": [
+        "native-add12"
+      ],
+      "fixture_dispatch": "EprojInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/floater-spike-motion/20261011T104124.492344Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInstr_Add12ToY"
+    },
+    {
+      "address": "0x86c8d0",
+      "fixture_case_count": 1,
+      "fixture_case_examples": [
+        "native-add12"
+      ],
+      "fixture_dispatch": "EprojInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/kago-bug-callbacks/20261011T103930.237180Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInstr_Add12ToY"
+    },
+    {
+      "address": "0x86c8d0",
+      "fixture_case_count": 1,
+      "fixture_case_examples": [
+        "native-add12"
+      ],
+      "fixture_dispatch": "EprojInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/mother-brain-door-particle-motion/20261011T102722.820481Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInstr_Add12ToY"
+    },
+    {
+      "address": "0x86c8d0",
+      "fixture_case_count": 1,
+      "fixture_case_examples": [
+        "native-drool-add12"
+      ],
+      "fixture_dispatch": "EprojInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/mother-brain-drool-tracking/20261011T102158.514192Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInstr_Add12ToY"
+    },
+    {
+      "address": "0x86c8d0",
+      "fixture_case_count": 1,
+      "fixture_case_examples": [
+        "native-add12"
+      ],
+      "fixture_dispatch": "EprojInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/mother-brain-tube-motion/20261011T103046.893180Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInstr_Add12ToY"
+    },
+    {
+      "address": "0x86c8d0",
+      "fixture_case_count": 1,
+      "fixture_case_examples": [
+        "native-add12"
+      ],
+      "fixture_dispatch": "EprojInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/plant-spike-motion/20261011T104704.598616Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInstr_Add12ToY"
+    },
+    {
+      "address": "0x86c8d0",
+      "fixture_case_count": 1,
+      "fixture_case_examples": [
+        "native-add12"
+      ],
+      "fixture_dispatch": "EprojInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/robot-laser-collision/20261011T104405.931746Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInstr_Add12ToY"
+    },
+    {
+      "address": "0x86c9d2",
+      "fixture_case_count": 486,
+      "fixture_case_examples": [
+        "0-0-0--1",
+        "0-0-0-0",
+        "0-0-0-17"
+      ],
+      "fixture_dispatch": "EprojPreinstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/mother-brain-door-particle-motion/20261011T102722.820481Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojPreInstr_MotherBrainsExplodedDoorParticles"
+    },
+    {
+      "address": "0x86cbe7",
+      "fixture_case_count": 432,
+      "fixture_case_examples": [
+        "0-52202-0-0--1",
+        "0-52202-0-0-0",
+        "0-52202-0-0-17"
+      ],
+      "fixture_dispatch": "EprojPreinstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/mother-brain-tube-motion/20261011T103046.893180Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojPreInstr_MotherBrainTubeFalling"
+    },
+    {
+      "address": "0x86cdc5",
+      "fixture_case_count": 32,
+      "fixture_case_examples": [
+        "spawn-cefc-0",
+        "spawn-cefc-1",
+        "spawn-cefc-10"
+      ],
+      "fixture_dispatch": "SpawnEprojWithRoomGfx",
+      "manifest": "/home/jim/sm-decomp/out/port/enemy-projectile-allocation/20261010T230633.151973Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInit_MotherBrainGlassShatteringShard"
+    },
+    {
+      "address": "0x86ce9b",
+      "fixture_case_count": 216,
+      "fixture_case_examples": [
+        "mask-0--1-0",
+        "mask-0--1-1024",
+        "mask-0--1-1056"
+      ],
+      "fixture_dispatch": "EprojPreinstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/mother-brain-glass-motion-final/20261011T120731.822251Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojPreInstr_MotherBrainGlassShatteringShard"
+    },
+    {
+      "address": "0x86d0b3",
+      "fixture_case_count": 168,
+      "fixture_case_examples": [
+        "0-53427-0-0-0",
+        "0-53427-0-0-1",
+        "0-53427-0-1-0"
+      ],
+      "fixture_dispatch": "EprojPreinstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/kago-bug-callbacks/20261011T103930.237180Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojPreInstr_KagosBugs_Func1"
+    },
+    {
+      "address": "0x86d0ca",
+      "fixture_case_count": 168,
+      "fixture_case_examples": [
+        "0-53450-0-0-0",
+        "0-53450-0-0-1",
+        "0-53450-0-1-0"
+      ],
+      "fixture_dispatch": "EprojPreinstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/kago-bug-callbacks/20261011T103930.237180Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojPreInstr_KagosBugs"
+    },
+    {
+      "address": "0x86d0ec",
+      "fixture_case_count": 616,
+      "fixture_case_examples": [
+        "53484-EprojBlockCollisition_Horiz-0-0",
+        "53484-EprojBlockCollisition_Horiz-0-1",
+        "53484-EprojBlockCollisition_Horiz-0-10"
+      ],
+      "fixture_dispatch": "EprojPreinstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/kago-bug-callbacks/20261011T103930.237180Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojPreInstr_D0EC"
+    },
+    {
+      "address": "0x86d128",
+      "fixture_case_count": 616,
+      "fixture_case_examples": [
+        "53544-EprojBlockCollisition_Horiz-0-0",
+        "53544-EprojBlockCollisition_Horiz-0-1",
+        "53544-EprojBlockCollisition_Horiz-0-10"
+      ],
+      "fixture_dispatch": "EprojPreinstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/kago-bug-callbacks/20261011T103930.237180Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojPreInstr_D128"
+    },
+    {
+      "address": "0x86d15c",
+      "fixture_case_count": 90,
+      "fixture_case_examples": [
+        "0-0-0",
+        "0-0-256",
+        "0-0-512"
+      ],
+      "fixture_dispatch": "EprojInstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/kago-bug-launch/20261011T103931.429610Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInstr_D15C"
+    },
+    {
+      "address": "0x86d1e4",
+      "fixture_case_count": 168,
+      "fixture_case_examples": [
+        "0-53732-0-0-0",
+        "0-53732-0-0-1",
+        "0-53732-0-1-0"
+      ],
+      "fixture_dispatch": "EprojPreinstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/kago-bug-callbacks/20261011T103930.237180Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojPreInstr_KagosBugs_Func2"
+    },
+    {
+      "address": "0x86d263",
+      "fixture_case_count": 4928,
+      "fixture_case_examples": [
+        "0-EprojBlockCollisition_Horiz-0-0",
+        "0-EprojBlockCollisition_Horiz-0-1",
+        "0-EprojBlockCollisition_Horiz-0-10"
+      ],
+      "fixture_dispatch": "EprojPreinstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/floater-spike-motion/20261011T104124.492344Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojPreInstr_MaridiaFloatersSpikes"
+    },
+    {
+      "address": "0x86d3bf",
+      "fixture_case_count": 616,
+      "fixture_case_examples": [
+        "robot-EprojBlockCollisition_Horiz-0-0",
+        "robot-EprojBlockCollisition_Horiz-0-1",
+        "robot-EprojBlockCollisition_Horiz-0-10"
+      ],
+      "fixture_dispatch": "EprojPreinstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/robot-laser-collision/20261011T104405.931746Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojPreInstr_WreckedShipRobotLaser"
+    },
+    {
+      "address": "0x86d6a5",
+      "fixture_case_count": 32,
+      "fixture_case_examples": [
+        "spawn-d904-0",
+        "spawn-d904-1",
+        "spawn-d904-10"
+      ],
+      "fixture_dispatch": "SpawnEprojWithRoomGfx",
+      "manifest": "/home/jim/sm-decomp/out/port/enemy-projectile-allocation/20261010T230633.151973Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInit_N00bTubeCrack"
+    },
+    {
+      "address": "0x86d6c9",
+      "fixture_case_count": 32,
+      "fixture_case_examples": [
+        "spawn-d912-0",
+        "spawn-d912-1",
+        "spawn-d912-10"
+      ],
+      "fixture_dispatch": "SpawnEprojWithRoomGfx",
+      "manifest": "/home/jim/sm-decomp/out/port/enemy-projectile-allocation/20261010T230633.151973Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInit_N00bTubeShards"
+    },
+    {
+      "address": "0x86d774",
+      "fixture_case_count": 32,
+      "fixture_case_examples": [
+        "spawn-d920-0",
+        "spawn-d920-1",
+        "spawn-d920-10"
+      ],
+      "fixture_dispatch": "SpawnEprojWithRoomGfx",
+      "manifest": "/home/jim/sm-decomp/out/port/enemy-projectile-allocation/20261010T230633.151973Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInit_N00bTubeReleasedAirBubbles"
+    },
+    {
+      "address": "0x86e4a6",
+      "fixture_case_count": 32,
+      "fixture_case_examples": [
+        "spawn-e517-0",
+        "spawn-e517-1",
+        "spawn-e517-10"
+      ],
+      "fixture_dispatch": "SpawnEprojWithRoomGfx",
+      "manifest": "/home/jim/sm-decomp/out/port/enemy-projectile-allocation/20261010T230633.151973Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojInit_EyeDoorSmoke"
+    },
+    {
+      "address": "0x86f391",
+      "fixture_case_count": 648,
+      "fixture_case_examples": [
+        "initialize-0-0",
+        "initialize-0-1",
+        "initialize-0-10"
+      ],
+      "fixture_dispatch": "EprojInitializer",
+      "manifest": "/home/jim/sm-decomp/out/port/projectile-contact-render-final/sparks-allocation/20261011T125902.098529Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "separate_authentication_receipt": ".scratch/decomp-port/sparks-integration-authentication.json",
+      "symbol": "EprojInit_Sparks"
+    },
+    {
+      "address": "0x86f391",
+      "fixture_case_count": 152,
+      "fixture_case_examples": [
+        "allocate--1-0",
+        "allocate--1-1",
+        "allocate--1-2"
+      ],
+      "fixture_dispatch": "SpawnEprojWithRoomGfx",
+      "manifest": "/home/jim/sm-decomp/out/port/projectile-contact-render-final/sparks-allocation/20261011T125902.098529Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "separate_authentication_receipt": ".scratch/decomp-port/sparks-integration-authentication.json",
+      "symbol": "EprojInit_Sparks"
+    },
+    {
+      "address": "0x86f391",
+      "fixture_case_count": 1,
+      "fixture_case_examples": [
+        "sequence-allocation-control"
+      ],
+      "fixture_dispatch": "SpawnEprojWithRoomGfx",
+      "manifest": "/home/jim/sm-decomp/out/port/projectile-contact-render-final/sparks-frames/20261011T125902.014607Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "separate_authentication_receipt": ".scratch/decomp-port/sparks-integration-authentication.json",
+      "symbol": "EprojInit_Sparks"
+    },
+    {
+      "address": "0x86f391",
+      "fixture_case_count": 1,
+      "fixture_case_examples": [
+        "sequence-allocate"
+      ],
+      "fixture_dispatch": "SpawnEprojWithRoomGfx",
+      "manifest": "/home/jim/sm-decomp/out/port/projectile-contact-render-final/sparks-sequence/20261011T125902.084738Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "separate_authentication_receipt": ".scratch/decomp-port/sparks-integration-authentication.json",
+      "symbol": "EprojInit_Sparks"
+    },
+    {
+      "address": "0x86f3f0",
+      "fixture_case_count": 1568,
+      "fixture_case_examples": [
+        "bounce-0-0-16384-0",
+        "bounce-0-0-16384-1",
+        "bounce-0-0-16384-2"
+      ],
+      "fixture_dispatch": "EprojPreinstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/projectile-contact-render-final/sparks-update/20261011T125901.927889Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "separate_authentication_receipt": ".scratch/decomp-port/sparks-integration-authentication.json",
+      "symbol": "EprojPreInstr_Sparks"
+    },
+    {
+      "address": "0x86f3f0",
+      "fixture_case_count": 1568,
+      "fixture_case_examples": [
+        "bounce-0-0-16384-0",
+        "bounce-0-0-16384-1",
+        "bounce-0-0-16384-2"
+      ],
+      "fixture_dispatch": "EprojPreinstruction",
+      "manifest": "/home/jim/sm-decomp/out/port/projectile-contact-render-final/sparks-update/20261011T125901.927889Z/manifest.json",
+      "rom": "/home/jim/sm-decomp/rom/sm.sfc",
+      "symbol": "EprojPreInstr_Sparks"
+    }
+  ],
+  "schema_version": 1,
+  "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+}

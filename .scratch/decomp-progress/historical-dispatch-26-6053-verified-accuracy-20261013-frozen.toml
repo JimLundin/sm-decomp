@@ -1,0 +1,27 @@
+agent = "/root/coverage_finish"
+evidence_context = "historical-frozen"
+id = "historical-dispatch-26-6053-verified-accuracy-20261013-frozen"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Exact native symbols are resolved from authenticated synthetic fixture dispatch, retained manifest ROM words/writes, or direct initializer addresses. Their candidate and all fixture artifact hashes passed retained-coverage-authentication.json or sparks-retained-coverage-authentication.json. Only these mapped tested native branches are granted historical fixture coverage.",
+    "Synthetic fixture names themselves are not recovered C definitions. This import does not grant current integration or live exercise. Script pointers are resolved through actual retained ROM opcodes, never inferred from pointer addresses; macro-only/no-op defines and unresolved selectors are excluded. Frozen sibling observations repair changed evidence without rewriting prior IDs or hashes.",
+]
+routines = ["EprojInit_Sparks"]
+scope = "Retained native synthetic dispatch mapping"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "verified"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/projectile-contact-render-final/sparks-frames/20261011T125902.014607Z/manifest.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/projectile-contact-render-final/sparks-frames/20261011T125902.014607Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-progress/ticket-authenticated-internal-mappings-published.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/retained-coverage-authentication.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-progress/sparks-retained-coverage-authentication.json"

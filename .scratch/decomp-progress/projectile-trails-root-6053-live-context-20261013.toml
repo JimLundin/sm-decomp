@@ -1,0 +1,25 @@
+agent = "/root/coverage_finish"
+commit = "3ce28ba58aba319b60bbc949153baafd4433132e"
+evidence_context = "current-checkout"
+id = "projectile-trails-root-6053-live-context-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Four fresh C/mixed subjects over 9,000 inputs; each mixed subject records 3,824 Rust whole-frame calls, 167 active calls and zero refusals, with matching state/effects and zero CPU fallback. Movement opcodes had no natural hits; native137 is not installed in this separate trail replay. Original-ROM parity and credits completion are not tested.",
+    "Gameplay source was integrated at observation; verification harness and CLI remain sealed at their retained frozen source. This sibling records context without altering the legacy ID or relying on its later-edited audit report.",
+]
+routines = ["HandleProjectileTrails"]
+scope = "Complete native projectile trail script and render frame: scheduled root"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "live-exercised"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/recovery-session/trails-live/1791860457650339558-98848/verdict.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-trails-live-post-cleanup-authentication.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-trails-live-final-cleanup.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-trails-live-final-dedup.toml"

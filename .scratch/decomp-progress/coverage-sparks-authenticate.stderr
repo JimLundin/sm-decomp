@@ -1,0 +1,7 @@
+   Compiling sm-coverage-reconciliation v0.1.0 (/tmp/sm-coverage-reconciliation/source)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.72s
+     Running `/tmp/sm-coverage-reconciliation/target/debug/coverage-sparks-authenticate`
+retained artifact check 1/4: out/port/projectile-contact-render-final/sparks-allocation/20261011T125902.098529Z/verdict.json -> authenticated
+retained artifact check 2/4: out/port/projectile-contact-render-final/sparks-update/20261011T125901.927889Z/verdict.json -> authenticated
+retained artifact check 3/4: out/port/projectile-contact-render-final/sparks-frames/20261011T125902.014607Z/verdict.json -> authenticated
+retained artifact check 4/4: out/port/projectile-contact-render-final/sparks-sequence/20261011T125902.084738Z/verdict.json -> authenticated

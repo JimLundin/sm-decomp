@@ -1,0 +1,30 @@
+agent = "/root/coverage_finish"
+evidence_context = "historical-frozen"
+id = "historical-live-3-6053-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Historical immutable live binary only. Counters report native Rust roots positively measured in both mixed subjects; zero-hit wrappers and unmeasured internal calls are excluded.",
+    "Existing storage-authentication receipt is retained for compressed runs; no new decompression or full gameplay execution performed. Historical tested replay is not current-source authentication or credits/movie completion.",
+]
+routines = ["EprojPreInstr_CeresElevatorPad"]
+scope = "Retained live replay out/port/ceres-pad-live/20261011T081814.286687Z/verdict.json"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "live-exercised"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/ceres-pad-live/20261011T081814.286687Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/ceres-pad-live/20261011T081814.286687Z/live"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/ceres-pad-live/20261011T081814.286687Z/families.rs"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/ceres-pad-live/20261011T081814.286687Z/host.c"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/ceres-pad-live/20261011T081814.286687Z/sm_86.c"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/retained-live-coverage-audit.json"

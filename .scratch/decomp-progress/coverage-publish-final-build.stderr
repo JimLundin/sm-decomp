@@ -1,0 +1,14 @@
+   Compiling sm-coverage-reconciliation v0.1.0 (/tmp/sm-coverage-reconciliation/source)
+error[E0282]: type annotations needed for `Vec<_>`
+  --> src/publish.rs:61:7
+   |
+61 |   let limits=vec!["Reviewed 220 native source correspondences: 212 owned source mappings plus eight independently reviewed helper bo...
+   |       ^^^^^^
+   |
+help: consider giving `limits` an explicit type, where the type for type parameter `T` is specified
+   |
+61 |   let limits: Vec<_>=vec!["Reviewed 220 native source correspondences: 212 owned source mappings plus eight independently reviewed helper bodies inlined into their native callers. Reachability by itself grants no implementation stage. The original 220-symbol set excludes the separate foreign-service/mathematical reference list; bounded state/ROM/record domains and per-module limits remain in the source audit.".into(),"Translation correspondence only. C Host services, refused lifecycle continuations, general helper ABIs, full current verification/integration/live acceptance and original-ROM parity remain separate. Controlled 6,457 pairs cover 33 direct roots; whole Ridley lifecycle live acceptance is still pending under ticket141. This immutable correction preserves and supersedes the older claim and its outdated limitations.".into()];
+   |             ++++++++
+
+For more information about this error, try `rustc --explain E0282`.
+error: could not compile `sm-coverage-reconciliation` (bin "coverage-publish") due to 1 previous error

@@ -1,0 +1,22 @@
+[package]
+name = "sm-coverage-reconciliation"
+version = "0.1.0"
+edition = "2024"
+[workspace]
+[dependencies]
+anyhow = "1"
+serde_json = "1"
+toml = "0.8"
+sha2 = "0.10"
+
+[[bin]]
+name = "coverage-publish"
+path = "src/publish.rs"
+
+[[bin]]
+name = "coverage-live-audit"
+path = "src/live.rs"
+
+[[bin]]
+name = "coverage-sparks-authenticate"
+path = "src/sparks.rs"

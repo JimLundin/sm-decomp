@@ -1,0 +1,75 @@
+agent = "/root/coverage_finish"
+commit = "3ce28ba58aba319b60bbc949153baafd4433132e"
+evidence_context = "current-checkout"
+id = "source-plm_instructions-6053-translated-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Maintained executable Rust implementations mapped through explicit dispatch branches, numeric selectors or reviewed private aliases to exact pinned C definitions. Source correspondence establishes translated coverage only; bounded branches, delegated C/host effects and per-module limitations are retained in source-coverage-map.json.",
+    "This observation does not grant verification, integration or live exercise. Missing routine reports and source-only mappings remain distinct from missing implementations; documentation literals and forwarding references are excluded unless their implementation owner was mapped separately.",
+]
+routines = [
+    "PlmHandler_Async",
+    "PlmInstr_Call",
+    "PlmInstr_ClearMusicQueueAndQueueTrack",
+    "PlmInstr_ClearPreInstr",
+    "PlmInstr_CopyFromRamToVram",
+    "PlmInstr_DecrementAndBranchNonzero",
+    "PlmInstr_Delete",
+    "PlmInstr_DiagonalEarthquake",
+    "PlmInstr_DrawPlmBlock",
+    "PlmInstr_EnableWaterPhysics",
+    "PlmInstr_Goto",
+    "PlmInstr_GotoIfBossBitSet",
+    "PlmInstr_GotoIfChozoSet",
+    "PlmInstr_GotoIfDoorBitSet",
+    "PlmInstr_GotoIfEventSet",
+    "PlmInstr_GotoIfItemBitSet",
+    "PlmInstr_GotoIfSamusNear",
+    "PlmInstr_IncrementArgumentAndJGE",
+    "PlmInstr_IncrementDoorHitCounterAndJGE",
+    "PlmInstr_PreInstr",
+    "PlmInstr_ProcessAirScrollUpdate",
+    "PlmInstr_ProcessSolidScrollUpdate",
+    "PlmInstr_QueueMusic",
+    "PlmInstr_QueueSfx1_Max1",
+    "PlmInstr_QueueSfx1_Max15",
+    "PlmInstr_QueueSfx1_Max3",
+    "PlmInstr_QueueSfx1_Max6",
+    "PlmInstr_QueueSfx1_Max9",
+    "PlmInstr_QueueSfx2_Max1",
+    "PlmInstr_QueueSfx2_Max15",
+    "PlmInstr_QueueSfx2_Max3",
+    "PlmInstr_QueueSfx2_Max6",
+    "PlmInstr_QueueSfx2_Max9",
+    "PlmInstr_QueueSfx3_Max1",
+    "PlmInstr_QueueSfx3_Max15",
+    "PlmInstr_QueueSfx3_Max6",
+    "PlmInstr_QueueSfx3_Max9",
+    "PlmInstr_QueueSfx_Max3",
+    "PlmInstr_Return",
+    "PlmInstr_SetBTS",
+    "PlmInstr_SetEvent",
+    "PlmInstr_SetItemBit",
+    "PlmInstr_SetLinkReg",
+    "PlmInstr_SetRoomChozoBit",
+    "PlmInstr_SetTimer",
+    "PlmInstr_ShootEyeDoorProjectileWithProjectileArg",
+    "PlmInstr_Sleep",
+    "PlmInstr_Spawn10shardsAnd6n00bs",
+    "PlmInstr_SpawnEproj",
+    "PlmInstr_SpawnEyeDoorSmokeProjectile",
+    "PlmInstr_SpawnEyeDoorSweatEproj",
+    "PlmInstr_SpawnN00bTubeCrackEproj",
+    "PlmInstr_SpawnTorizoStatueBreaking",
+    "PlmInstr_SpawnTwoEyeDoorSmoke",
+    "ProcessPlmDrawInstruction",
+]
+scope = "Maintained plm_instructions implementation mapping"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "translated"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/crates/port/src/plm_instructions.rs"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/source-coverage-map.json"

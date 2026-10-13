@@ -1,0 +1,34 @@
+agent = "/root/coverage_finish"
+commit = "3ce28ba58aba319b60bbc949153baafd4433132e"
+evidence_context = "current-checkout"
+id = "ridley-inline-helpers-6053-translated-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Eight helper bodies are inlined into owned admitted native callers. Func48 has the sole caller's 4-by-4 rectangle specialization; other state/helper domains remain bounded. Automated source mapping missed these aliases, so retained code/body comparison supplies translation correspondence.",
+    "No direct-call wrapper verification, general helper ABI, integrated acceptance or live stage is inferred from this source review. Each stage still requires independent retained evidence.",
+]
+routines = [
+    "Ridley_Func_127",
+    "Ridley_Func_17",
+    "Ridley_Func_18",
+    "Ridley_Func_24",
+    "Ridley_Func_25",
+    "Ridley_Func_27",
+    "Ridley_Func_41",
+    "Ridley_Func_48",
+]
+scope = "Reviewed inlined Ridley caller helpers"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "translated"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-progress/ridley-inline-translation-audit.md"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/ridley-inlined-source-alias-review.md"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/crates/port/src/ridley_subsystem.rs"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/crates/port/src/ridley_movement.rs"

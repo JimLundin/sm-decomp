@@ -1,0 +1,1744 @@
+{
+  "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+  "live_routines": [
+    "AnimtilesHandler",
+    "CalculateBgScrollAndLayerPositionBlocks",
+    "CalculateBgScrolls",
+    "CalculateLayer2Xpos",
+    "CalculateLayer2Ypos",
+    "CheckBossBitForCurArea",
+    "CheckEventHappened",
+    "ClearAnimtiles",
+    "ClearOamExt",
+    "ClearPaletteFXObjects",
+    "ClearSpriteObjects",
+    "ClearUnusedOam",
+    "CopyToSamusSuitPalette",
+    "DecrementSamusTimers",
+    "DisablePaletteFx",
+    "DrawSpriteObjects",
+    "EnableAnimtiles",
+    "EnablePaletteFx",
+    "EnemyInstr_Goto",
+    "EnemyWithNormalSpritesIsOffScreen",
+    "EprojInstr_ClearPreInstr",
+    "EprojInstr_Delete",
+    "EprojInstr_Goto",
+    "EprojInstr_SetPreInstr_",
+    "EprojPreInstr_CeresElevatorPad",
+    "EprojPreInstr_CeresElevatorPlatform",
+    "FireUnchargedBeam",
+    "HandleAutoscrolling_X",
+    "HandleAutoscrolling_Y",
+    "HandleFadeIn",
+    "HandleFadeOut",
+    "HandleScrollingWhenTriggeringScrollDown",
+    "HandleScrollingWhenTriggeringScrollLeft",
+    "HandleScrollingWhenTriggeringScrollRight",
+    "HandleScrollingWhenTriggeringScrollUp",
+    "HandleSpriteObjects",
+    "HasQueuedMusic",
+    "HudSelectionHandler_MissilesOrSuperMissiles",
+    "KillProjectile",
+    "LoaadDesinationRoomCreBitset",
+    "LoadDoorHeader",
+    "LoadNewMusicTrackIfChanged",
+    "LoadRoomHeader",
+    "LoadRoomMusic",
+    "LoadStateHeader",
+    "MoveEprojWithVelocityX",
+    "MoveEprojWithVelocityY",
+    "Multiply16x16",
+    "PaletteFxHandler",
+    "PlayRoomMusicTrackAfterAFrames",
+    "ProjPreInstr_Beam_NoWaveBeam",
+    "ProjPreInstr_Missile",
+    "QueueMusic_Delayed8",
+    "QueueMusic_DelayedY",
+    "QueueSfx1_Max15",
+    "QueueSfx1_Max6",
+    "QueueSfx1_Max9",
+    "QueueSfx2_Max15",
+    "QueueSfx2_Max6",
+    "QueueSfx3_Max6",
+    "RunProjectileInstructions",
+    "Samus_AlignBottomWithPrevPose",
+    "Samus_Animate",
+    "Samus_BombJumpRisingXMovement_",
+    "Samus_CalcDistanceMoved_X",
+    "Samus_CalcDistanceMoved_Y",
+    "Samus_CancelSpeedBoost",
+    "Samus_CollDetectChangedPose",
+    "Samus_DetermineAccel_Y",
+    "Samus_GetTop_R20",
+    "Samus_InitJump",
+    "Samus_Input_00_Standing",
+    "Samus_Input_01_Running",
+    "Samus_Input_02_NormalJumping",
+    "Samus_Input_03_SpinJumping",
+    "Samus_Input_06_Falling",
+    "Samus_Input_0A_KnockbackOrCrystalFlashEnding",
+    "Samus_Input_0E_TurningAroundOnGround",
+    "Samus_Input_0F_CrouchingEtcTransition",
+    "Samus_Input_17_TurningAroundJumping",
+    "Samus_Input_18_TurningAroundFalling",
+    "Samus_LoadSuitPalette",
+    "Samus_LoadSuitTargetPalette",
+    "Samus_LookupTransitionTable",
+    "Samus_MoveRight_NoSolidColl",
+    "Samus_MoveY_WithSpeedCalc",
+    "Samus_MovementHandler_Normal",
+    "Samus_SetRadius",
+    "Samus_SetSpeedForKnockback_Y",
+    "Samus_UpdateSuitPaletteIndex",
+    "SetLiquidPhysicsType",
+    "UpdateBgScrollOffsets",
+    "UpdateMusicTrackIndex",
+    "UpdatePreviousLayerBlocks",
+    "WriteLotsOf0x1c2f"
+  ],
+  "runs": [
+    {
+      "accepted": false,
+      "error": "live state/effects or CPU fallback rejected",
+      "path": "out/port/cumulative-live/20261010T195410.282578Z/verdict.json"
+    },
+    {
+      "accepted": true,
+      "binary_matches": true,
+      "counters": {
+        "ClearAnimtiles": {
+          "field": "hits",
+          "mixed0": 64,
+          "mixed1": 64
+        },
+        "EnableAnimtiles": {
+          "field": "hits",
+          "mixed0": 4,
+          "mixed1": 4
+        }
+      },
+      "evidence": [
+        "/home/jim/sm-decomp/out/port/animated-tiles-live/20261011T085347.505558Z/verdict.json",
+        "/home/jim/sm-decomp/out/port/animated-tiles-live/20261011T085347.505558Z/live",
+        "/home/jim/sm-decomp/out/port/animated-tiles-live/20261011T085347.505558Z/families.rs",
+        "/home/jim/sm-decomp/out/port/animated-tiles-live/20261011T085347.505558Z/host.c"
+      ],
+      "limitations": [
+        "Historical immutable live binary only. Counters report native Rust roots positively measured in both mixed subjects; zero-hit wrappers and unmeasured internal calls are excluded.",
+        "Existing storage-authentication receipt is retained for compressed runs; no new decompression or full gameplay execution performed. Historical tested replay is not current-source authentication or credits/movie completion."
+      ],
+      "path": "out/port/animated-tiles-live/20261011T085347.505558Z/verdict.json",
+      "read_only_artifacts_hashed": 3992,
+      "retained_authentication": null,
+      "routines": [
+        "ClearAnimtiles",
+        "EnableAnimtiles"
+      ],
+      "sha256": "dad4b838398a19cbfd883db67abe399c5dcad92d5e0688be8098b2f230381663",
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "status": "mixed-C-Rust-integration"
+    },
+    {
+      "accepted": true,
+      "binary_matches": true,
+      "counters": {
+        "ClearPaletteFXObjects": {
+          "field": "hits",
+          "mixed0": 95,
+          "mixed1": 95
+        },
+        "DisablePaletteFx": {
+          "field": "hits",
+          "mixed0": 15,
+          "mixed1": 15
+        },
+        "EnablePaletteFx": {
+          "field": "hits",
+          "mixed0": 23,
+          "mixed1": 23
+        },
+        "PaletteFxHandler": {
+          "field": "hits",
+          "mixed0": 114717,
+          "mixed1": 114717
+        }
+      },
+      "evidence": [
+        "/home/jim/sm-decomp/out/port/palette-effect-frame-replay/20261011T092352.241110Z/verdict.json",
+        "/home/jim/sm-decomp/out/port/palette-effect-frame-replay/20261011T092352.241110Z/live",
+        "/home/jim/sm-decomp/out/port/palette-effect-frame-replay/20261011T092352.241110Z/families.rs",
+        "/home/jim/sm-decomp/out/port/palette-effect-frame-replay/20261011T092352.241110Z/host.c"
+      ],
+      "limitations": [
+        "Historical immutable live binary only. Counters report native Rust roots positively measured in both mixed subjects; zero-hit wrappers and unmeasured internal calls are excluded.",
+        "Existing storage-authentication receipt is retained for compressed runs; no new decompression or full gameplay execution performed. Historical tested replay is not current-source authentication or credits/movie completion."
+      ],
+      "path": "out/port/palette-effect-frame-replay/20261011T092352.241110Z/verdict.json",
+      "read_only_artifacts_hashed": 4152,
+      "retained_authentication": null,
+      "routines": [
+        "ClearPaletteFXObjects",
+        "DisablePaletteFx",
+        "EnablePaletteFx",
+        "PaletteFxHandler"
+      ],
+      "sha256": "aea0a22579c6a2a24461357543c9d678308547dab50fcb5c966718b0055c3032",
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "status": "mixed-C-Rust-integration"
+    },
+    {
+      "accepted": true,
+      "binary_matches": true,
+      "counters": {
+        "EprojPreInstr_CeresElevatorPad": {
+          "field": "dispatcher_hits",
+          "mixed0": 528,
+          "mixed1": 528
+        }
+      },
+      "evidence": [
+        "/home/jim/sm-decomp/out/port/ceres-pad-live/20261011T081814.286687Z/verdict.json",
+        "/home/jim/sm-decomp/out/port/ceres-pad-live/20261011T081814.286687Z/live",
+        "/home/jim/sm-decomp/out/port/ceres-pad-live/20261011T081814.286687Z/families.rs",
+        "/home/jim/sm-decomp/out/port/ceres-pad-live/20261011T081814.286687Z/host.c",
+        "/home/jim/sm-decomp/out/port/ceres-pad-live/20261011T081814.286687Z/sm_86.c"
+      ],
+      "limitations": [
+        "Historical immutable live binary only. Counters report native Rust roots positively measured in both mixed subjects; zero-hit wrappers and unmeasured internal calls are excluded.",
+        "Existing storage-authentication receipt is retained for compressed runs; no new decompression or full gameplay execution performed. Historical tested replay is not current-source authentication or credits/movie completion."
+      ],
+      "path": "out/port/ceres-pad-live/20261011T081814.286687Z/verdict.json",
+      "read_only_artifacts_hashed": 3960,
+      "retained_authentication": null,
+      "routines": [
+        "EprojPreInstr_CeresElevatorPad"
+      ],
+      "sha256": "6677c09baf21436e4be388b54a343167765a81f05d7c28f4291dfc9b6634cb36",
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "status": "mixed-C-Rust-integration"
+    },
+    {
+      "accepted": true,
+      "binary_matches": true,
+      "counters": {
+        "CalculateBgScrollAndLayerPositionBlocks": {
+          "field": "hits",
+          "mixed0": 9560,
+          "mixed1": 9560
+        },
+        "CalculateBgScrolls": {
+          "field": "hits",
+          "mixed0": 195,
+          "mixed1": 195
+        },
+        "CalculateLayer2Xpos": {
+          "field": "hits",
+          "mixed0": 9366,
+          "mixed1": 9366
+        },
+        "CalculateLayer2Ypos": {
+          "field": "hits",
+          "mixed0": 9366,
+          "mixed1": 9366
+        },
+        "CheckBossBitForCurArea": {
+          "field": "hits",
+          "mixed0": 4,
+          "mixed1": 4
+        },
+        "CheckEventHappened": {
+          "field": "hits",
+          "mixed0": 11028,
+          "mixed1": 11028
+        },
+        "ClearOamExt": {
+          "field": "hits",
+          "mixed0": 17746,
+          "mixed1": 17746
+        },
+        "ClearUnusedOam": {
+          "field": "hits",
+          "mixed0": 17746,
+          "mixed1": 17746
+        },
+        "CopyToSamusSuitPalette": {
+          "field": "hits",
+          "mixed0": 6,
+          "mixed1": 6
+        },
+        "DecrementSamusTimers": {
+          "field": "hits",
+          "mixed0": 9359,
+          "mixed1": 9359
+        },
+        "EnemyInstr_Goto": {
+          "field": "hits",
+          "mixed0": 9241,
+          "mixed1": 9241
+        },
+        "EnemyWithNormalSpritesIsOffScreen": {
+          "field": "hits",
+          "mixed0": 18908,
+          "mixed1": 18908
+        },
+        "FireUnchargedBeam": {
+          "field": "hits",
+          "mixed0": 224,
+          "mixed1": 224
+        },
+        "HandleAutoscrolling_X": {
+          "field": "hits",
+          "mixed0": 8266,
+          "mixed1": 8266
+        },
+        "HandleAutoscrolling_Y": {
+          "field": "hits",
+          "mixed0": 8128,
+          "mixed1": 8128
+        },
+        "HandleFadeIn": {
+          "field": "hits",
+          "mixed0": 75,
+          "mixed1": 75
+        },
+        "HandleFadeOut": {
+          "field": "hits",
+          "mixed0": 107,
+          "mixed1": 107
+        },
+        "HandleScrollingWhenTriggeringScrollDown": {
+          "field": "hits",
+          "mixed0": 827,
+          "mixed1": 827
+        },
+        "HandleScrollingWhenTriggeringScrollLeft": {
+          "field": "hits",
+          "mixed0": 445,
+          "mixed1": 445
+        },
+        "HandleScrollingWhenTriggeringScrollRight": {
+          "field": "hits",
+          "mixed0": 641,
+          "mixed1": 641
+        },
+        "HandleScrollingWhenTriggeringScrollUp": {
+          "field": "hits",
+          "mixed0": 404,
+          "mixed1": 404
+        },
+        "HasQueuedMusic": {
+          "field": "hits",
+          "mixed0": 108,
+          "mixed1": 108
+        },
+        "HudSelectionHandler_MissilesOrSuperMissiles": {
+          "field": "hits",
+          "mixed0": 346,
+          "mixed1": 346
+        },
+        "KillProjectile": {
+          "field": "hits",
+          "mixed0": 4,
+          "mixed1": 4
+        },
+        "LoaadDesinationRoomCreBitset": {
+          "field": "hits",
+          "mixed0": 4,
+          "mixed1": 4
+        },
+        "LoadDoorHeader": {
+          "field": "hits",
+          "mixed0": 4,
+          "mixed1": 4
+        },
+        "LoadNewMusicTrackIfChanged": {
+          "field": "hits",
+          "mixed0": 3,
+          "mixed1": 3
+        },
+        "LoadRoomHeader": {
+          "field": "hits",
+          "mixed0": 4,
+          "mixed1": 4
+        },
+        "LoadRoomMusic": {
+          "field": "hits",
+          "mixed0": 4,
+          "mixed1": 4
+        },
+        "LoadStateHeader": {
+          "field": "hits",
+          "mixed0": 4,
+          "mixed1": 4
+        },
+        "PlayRoomMusicTrackAfterAFrames": {
+          "field": "hits",
+          "mixed0": 1,
+          "mixed1": 1
+        },
+        "ProjPreInstr_Beam_NoWaveBeam": {
+          "field": "hits",
+          "mixed0": 325,
+          "mixed1": 325
+        },
+        "ProjPreInstr_Missile": {
+          "field": "hits",
+          "mixed0": 68,
+          "mixed1": 68
+        },
+        "QueueMusic_Delayed8": {
+          "field": "hits",
+          "mixed0": 13,
+          "mixed1": 13
+        },
+        "QueueMusic_DelayedY": {
+          "field": "hits",
+          "mixed0": 3,
+          "mixed1": 3
+        },
+        "QueueSfx1_Max15": {
+          "field": "hits",
+          "mixed0": 12,
+          "mixed1": 12
+        },
+        "QueueSfx1_Max6": {
+          "field": "hits",
+          "mixed0": 14,
+          "mixed1": 14
+        },
+        "QueueSfx1_Max9": {
+          "field": "hits",
+          "mixed0": 1,
+          "mixed1": 1
+        },
+        "QueueSfx2_Max15": {
+          "field": "hits",
+          "mixed0": 3,
+          "mixed1": 3
+        },
+        "QueueSfx2_Max6": {
+          "field": "hits",
+          "mixed0": 1,
+          "mixed1": 1
+        },
+        "QueueSfx3_Max6": {
+          "field": "hits",
+          "mixed0": 383,
+          "mixed1": 383
+        },
+        "RunProjectileInstructions": {
+          "field": "hits",
+          "mixed0": 1100,
+          "mixed1": 1100
+        },
+        "Samus_AlignBottomWithPrevPose": {
+          "field": "hits",
+          "mixed0": 1,
+          "mixed1": 1
+        },
+        "Samus_Animate": {
+          "field": "hits",
+          "mixed0": 10802,
+          "mixed1": 10802
+        },
+        "Samus_BombJumpRisingXMovement_": {
+          "field": "hits",
+          "mixed0": 11,
+          "mixed1": 11
+        },
+        "Samus_CalcDistanceMoved_X": {
+          "field": "hits",
+          "mixed0": 9359,
+          "mixed1": 9359
+        },
+        "Samus_CalcDistanceMoved_Y": {
+          "field": "hits",
+          "mixed0": 9359,
+          "mixed1": 9359
+        },
+        "Samus_CancelSpeedBoost": {
+          "field": "hits",
+          "mixed0": 7288,
+          "mixed1": 7288
+        },
+        "Samus_CollDetectChangedPose": {
+          "field": "hits",
+          "mixed0": 212,
+          "mixed1": 212
+        },
+        "Samus_DetermineAccel_Y": {
+          "field": "hits",
+          "mixed0": 10552,
+          "mixed1": 10552
+        },
+        "Samus_GetTop_R20": {
+          "field": "hits",
+          "mixed0": 10814,
+          "mixed1": 10814
+        },
+        "Samus_InitJump": {
+          "field": "hits",
+          "mixed0": 33,
+          "mixed1": 33
+        },
+        "Samus_Input_00_Standing": {
+          "field": "hits",
+          "mixed0": 6178,
+          "mixed1": 6178
+        },
+        "Samus_Input_01_Running": {
+          "field": "hits",
+          "mixed0": 545,
+          "mixed1": 545
+        },
+        "Samus_Input_02_NormalJumping": {
+          "field": "hits",
+          "mixed0": 921,
+          "mixed1": 921
+        },
+        "Samus_Input_03_SpinJumping": {
+          "field": "hits",
+          "mixed0": 148,
+          "mixed1": 148
+        },
+        "Samus_Input_06_Falling": {
+          "field": "hits",
+          "mixed0": 212,
+          "mixed1": 212
+        },
+        "Samus_Input_0A_KnockbackOrCrystalFlashEnding": {
+          "field": "hits",
+          "mixed0": 12,
+          "mixed1": 12
+        },
+        "Samus_Input_0E_TurningAroundOnGround": {
+          "field": "hits",
+          "mixed0": 367,
+          "mixed1": 367
+        },
+        "Samus_Input_0F_CrouchingEtcTransition": {
+          "field": "hits",
+          "mixed0": 57,
+          "mixed1": 57
+        },
+        "Samus_Input_17_TurningAroundJumping": {
+          "field": "hits",
+          "mixed0": 254,
+          "mixed1": 254
+        },
+        "Samus_Input_18_TurningAroundFalling": {
+          "field": "hits",
+          "mixed0": 18,
+          "mixed1": 18
+        },
+        "Samus_LoadSuitPalette": {
+          "field": "hits",
+          "mixed0": 4,
+          "mixed1": 4
+        },
+        "Samus_LoadSuitTargetPalette": {
+          "field": "hits",
+          "mixed0": 3,
+          "mixed1": 3
+        },
+        "Samus_LookupTransitionTable": {
+          "field": "hits",
+          "mixed0": 1840,
+          "mixed1": 1840
+        },
+        "Samus_MoveRight_NoSolidColl": {
+          "field": "hits",
+          "mixed0": 996,
+          "mixed1": 996
+        },
+        "Samus_MoveY_WithSpeedCalc": {
+          "field": "hits",
+          "mixed0": 11,
+          "mixed1": 11
+        },
+        "Samus_MovementHandler_Normal": {
+          "field": "hits",
+          "mixed0": 10791,
+          "mixed1": 10791
+        },
+        "Samus_SetRadius": {
+          "field": "hits",
+          "mixed0": 10552,
+          "mixed1": 10552
+        },
+        "Samus_SetSpeedForKnockback_Y": {
+          "field": "hits",
+          "mixed0": 1,
+          "mixed1": 1
+        },
+        "Samus_UpdateSuitPaletteIndex": {
+          "field": "hits",
+          "mixed0": 10552,
+          "mixed1": 10552
+        },
+        "SetLiquidPhysicsType": {
+          "field": "hits",
+          "mixed0": 4,
+          "mixed1": 4
+        },
+        "UpdateBgScrollOffsets": {
+          "field": "hits",
+          "mixed0": 3,
+          "mixed1": 3
+        },
+        "UpdateMusicTrackIndex": {
+          "field": "hits",
+          "mixed0": 1,
+          "mixed1": 1
+        },
+        "UpdatePreviousLayerBlocks": {
+          "field": "hits",
+          "mixed0": 3,
+          "mixed1": 3
+        },
+        "WriteLotsOf0x1c2f": {
+          "field": "hits",
+          "mixed0": 1,
+          "mixed1": 1
+        }
+      },
+      "evidence": [
+        "/home/jim/sm-decomp/out/port/current-batch-live/20261010T210726.219277Z/verdict.json",
+        "/home/jim/sm-decomp/out/port/current-batch-live/20261010T210726.219277Z/live",
+        "/home/jim/sm-decomp/out/port/current-batch-live/20261010T210726.219277Z/families.rs",
+        "/home/jim/sm-decomp/out/port/current-batch-live/20261010T210726.219277Z/host.c"
+      ],
+      "limitations": [
+        "Historical immutable live binary only. Counters report native Rust roots positively measured in both mixed subjects; zero-hit wrappers and unmeasured internal calls are excluded.",
+        "Existing storage-authentication receipt is retained for compressed runs; no new decompression or full gameplay execution performed. Historical tested replay is not current-source authentication or credits/movie completion."
+      ],
+      "path": "out/port/current-batch-live/20261010T210726.219277Z/verdict.json",
+      "read_only_artifacts_hashed": 4324,
+      "retained_authentication": null,
+      "routines": [
+        "CalculateBgScrollAndLayerPositionBlocks",
+        "CalculateBgScrolls",
+        "CalculateLayer2Xpos",
+        "CalculateLayer2Ypos",
+        "CheckBossBitForCurArea",
+        "CheckEventHappened",
+        "ClearOamExt",
+        "ClearUnusedOam",
+        "CopyToSamusSuitPalette",
+        "DecrementSamusTimers",
+        "EnemyInstr_Goto",
+        "EnemyWithNormalSpritesIsOffScreen",
+        "FireUnchargedBeam",
+        "HandleAutoscrolling_X",
+        "HandleAutoscrolling_Y",
+        "HandleFadeIn",
+        "HandleFadeOut",
+        "HandleScrollingWhenTriggeringScrollDown",
+        "HandleScrollingWhenTriggeringScrollLeft",
+        "HandleScrollingWhenTriggeringScrollRight",
+        "HandleScrollingWhenTriggeringScrollUp",
+        "HasQueuedMusic",
+        "HudSelectionHandler_MissilesOrSuperMissiles",
+        "KillProjectile",
+        "LoaadDesinationRoomCreBitset",
+        "LoadDoorHeader",
+        "LoadNewMusicTrackIfChanged",
+        "LoadRoomHeader",
+        "LoadRoomMusic",
+        "LoadStateHeader",
+        "PlayRoomMusicTrackAfterAFrames",
+        "ProjPreInstr_Beam_NoWaveBeam",
+        "ProjPreInstr_Missile",
+        "QueueMusic_Delayed8",
+        "QueueMusic_DelayedY",
+        "QueueSfx1_Max15",
+        "QueueSfx1_Max6",
+        "QueueSfx1_Max9",
+        "QueueSfx2_Max15",
+        "QueueSfx2_Max6",
+        "QueueSfx3_Max6",
+        "RunProjectileInstructions",
+        "Samus_AlignBottomWithPrevPose",
+        "Samus_Animate",
+        "Samus_BombJumpRisingXMovement_",
+        "Samus_CalcDistanceMoved_X",
+        "Samus_CalcDistanceMoved_Y",
+        "Samus_CancelSpeedBoost",
+        "Samus_CollDetectChangedPose",
+        "Samus_DetermineAccel_Y",
+        "Samus_GetTop_R20",
+        "Samus_InitJump",
+        "Samus_Input_00_Standing",
+        "Samus_Input_01_Running",
+        "Samus_Input_02_NormalJumping",
+        "Samus_Input_03_SpinJumping",
+        "Samus_Input_06_Falling",
+        "Samus_Input_0A_KnockbackOrCrystalFlashEnding",
+        "Samus_Input_0E_TurningAroundOnGround",
+        "Samus_Input_0F_CrouchingEtcTransition",
+        "Samus_Input_17_TurningAroundJumping",
+        "Samus_Input_18_TurningAroundFalling",
+        "Samus_LoadSuitPalette",
+        "Samus_LoadSuitTargetPalette",
+        "Samus_LookupTransitionTable",
+        "Samus_MoveRight_NoSolidColl",
+        "Samus_MoveY_WithSpeedCalc",
+        "Samus_MovementHandler_Normal",
+        "Samus_SetRadius",
+        "Samus_SetSpeedForKnockback_Y",
+        "Samus_UpdateSuitPaletteIndex",
+        "SetLiquidPhysicsType",
+        "UpdateBgScrollOffsets",
+        "UpdateMusicTrackIndex",
+        "UpdatePreviousLayerBlocks",
+        "WriteLotsOf0x1c2f"
+      ],
+      "sha256": "5ff78e3a04fa15fcd8fc6888515c4da2567ef134ad9113df16c3763d5c22b9f5",
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "status": "mixed-C-Rust-integration"
+    },
+    {
+      "accepted": false,
+      "error": "artifact absent: /home/jim/sm-decomp/out/port/storage-pipeline/packed/20261011T103408.758284Z/c-0/fixtures/decompress-0001-after.wram: No such file or directory (os error 2)",
+      "path": "out/port/storage-pipeline/packed/20261011T103408.758284Z/verdict.json"
+    },
+    {
+      "accepted": false,
+      "error": "artifact absent: /home/jim/sm-decomp/out/port/storage-pipeline/packed-timing/c-0/fixtures/decompress-0001-after.wram: No such file or directory (os error 2)",
+      "path": "out/port/storage-pipeline/packed-timing/verdict.json"
+    },
+    {
+      "accepted": true,
+      "binary_matches": true,
+      "counters": {
+        "ClearOamExt": {
+          "field": "hits",
+          "mixed0": 1002,
+          "mixed1": 1002
+        },
+        "ClearUnusedOam": {
+          "field": "hits",
+          "mixed0": 1002,
+          "mixed1": 1002
+        },
+        "HandleFadeIn": {
+          "field": "hits",
+          "mixed0": 45,
+          "mixed1": 45
+        },
+        "HandleFadeOut": {
+          "field": "hits",
+          "mixed0": 47,
+          "mixed1": 47
+        },
+        "WriteLotsOf0x1c2f": {
+          "field": "hits",
+          "mixed0": 1,
+          "mixed1": 1
+        }
+      },
+      "evidence": [
+        "/home/jim/sm-decomp/out/port/storage-pipeline/plain/20261011T103633.871448Z/verdict.json",
+        "/home/jim/sm-decomp/out/port/storage-pipeline/plain/20261011T103633.871448Z/live",
+        "/home/jim/sm-decomp/out/port/storage-pipeline/plain/20261011T103633.871448Z/families.rs",
+        "/home/jim/sm-decomp/out/port/storage-pipeline/plain/20261011T103633.871448Z/host.c"
+      ],
+      "limitations": [
+        "Historical immutable live binary only. Counters report native Rust roots positively measured in both mixed subjects; zero-hit wrappers and unmeasured internal calls are excluded.",
+        "Existing storage-authentication receipt is retained for compressed runs; no new decompression or full gameplay execution performed. Historical tested replay is not current-source authentication or credits/movie completion."
+      ],
+      "path": "out/port/storage-pipeline/plain/20261011T103633.871448Z/verdict.json",
+      "read_only_artifacts_hashed": 432,
+      "retained_authentication": null,
+      "routines": [
+        "ClearOamExt",
+        "ClearUnusedOam",
+        "HandleFadeIn",
+        "HandleFadeOut",
+        "WriteLotsOf0x1c2f"
+      ],
+      "sha256": "002bc23f2f569ec69ad0101e0cfb3f84563ca60b55df1c206432a5e8241da98f",
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "status": "mixed-C-Rust-integration"
+    },
+    {
+      "accepted": true,
+      "binary_matches": true,
+      "counters": {
+        "MoveEprojWithVelocityX": {
+          "field": "dispatcher_hits",
+          "mixed0": 11,
+          "mixed1": 11
+        },
+        "MoveEprojWithVelocityY": {
+          "field": "dispatcher_hits",
+          "mixed0": 13,
+          "mixed1": 13
+        }
+      },
+      "evidence": [
+        "/home/jim/sm-decomp/out/port/projectile-movement-live/20261011T061431.667466Z/verdict.json",
+        "/home/jim/sm-decomp/out/port/projectile-movement-live/20261011T061431.667466Z/live",
+        "/home/jim/sm-decomp/out/port/projectile-movement-live/20261011T061431.667466Z/families.rs",
+        "/home/jim/sm-decomp/out/port/projectile-movement-live/20261011T061431.667466Z/host.c",
+        "/home/jim/sm-decomp/out/port/projectile-movement-live/20261011T061431.667466Z/sm_86.c"
+      ],
+      "limitations": [
+        "Historical immutable live binary only. Counters report native Rust roots positively measured in both mixed subjects; zero-hit wrappers and unmeasured internal calls are excluded.",
+        "Existing storage-authentication receipt is retained for compressed runs; no new decompression or full gameplay execution performed. Historical tested replay is not current-source authentication or credits/movie completion."
+      ],
+      "path": "out/port/projectile-movement-live/20261011T061431.667466Z/verdict.json",
+      "read_only_artifacts_hashed": 4024,
+      "retained_authentication": null,
+      "routines": [
+        "MoveEprojWithVelocityX",
+        "MoveEprojWithVelocityY"
+      ],
+      "sha256": "2501312944d80db391528da739d117813405aaca0de650b827a6da22eb3b3907",
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "status": "mixed-C-Rust-integration"
+    },
+    {
+      "accepted": true,
+      "binary_matches": true,
+      "counters": {
+        "EprojPreInstr_CeresElevatorPlatform": {
+          "field": "dispatcher_hits",
+          "mixed0": 524,
+          "mixed1": 524
+        }
+      },
+      "evidence": [
+        "/home/jim/sm-decomp/out/port/ceres-platform-live/20261011T073246.635709Z/verdict.json",
+        "/home/jim/sm-decomp/out/port/ceres-platform-live/20261011T073246.635709Z/live",
+        "/home/jim/sm-decomp/out/port/ceres-platform-live/20261011T073246.635709Z/storage-authentication.json",
+        "/home/jim/sm-decomp/out/port/ceres-platform-live/20261011T073246.635709Z/families.rs",
+        "/home/jim/sm-decomp/out/port/ceres-platform-live/20261011T073246.635709Z/host.c",
+        "/home/jim/sm-decomp/out/port/ceres-platform-live/20261011T073246.635709Z/sm_86.c"
+      ],
+      "limitations": [
+        "Historical immutable live binary only. Counters report native Rust roots positively measured in both mixed subjects; zero-hit wrappers and unmeasured internal calls are excluded.",
+        "Existing storage-authentication receipt is retained for compressed runs; no new decompression or full gameplay execution performed. Historical tested replay is not current-source authentication or credits/movie completion."
+      ],
+      "path": "out/port/ceres-platform-live/20261011T073246.635709Z/verdict.json",
+      "read_only_artifacts_hashed": 0,
+      "retained_authentication": {
+        "artifact_count": 990,
+        "cleanup_dedup_bytes": 923528410,
+        "disk_free_bytes": 3738198016,
+        "hardware_compressed_bytes": 416900864,
+        "hardware_uncompressed_bytes": 4967833433,
+        "hardware_uncompressed_sha256": "ade76f110aa3833e707b549a07b22a746f359a8cb1a614f4bed4fed9d72621eb",
+        "retained_authenticated": true,
+        "rom_sharing_bytes": 3506438144,
+        "same_run_sharing_bytes": 1263285504,
+        "status": "mixed-C-Rust-integration"
+      },
+      "routines": [
+        "EprojPreInstr_CeresElevatorPlatform"
+      ],
+      "sha256": "ee7f1d4607b41b407bf916c7f2cb7f6d9171dd56af2c79612e21967bb7e839d7",
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "status": "mixed-C-Rust-integration"
+    },
+    {
+      "accepted": true,
+      "binary_matches": true,
+      "counters": {
+        "CheckBossBitForCurArea": {
+          "field": "hits",
+          "mixed0": 8,
+          "mixed1": 8
+        },
+        "CheckEventHappened": {
+          "field": "hits",
+          "mixed0": 11028,
+          "mixed1": 11028
+        },
+        "ClearOamExt": {
+          "field": "hits",
+          "mixed0": 17746,
+          "mixed1": 17746
+        },
+        "ClearUnusedOam": {
+          "field": "hits",
+          "mixed0": 17746,
+          "mixed1": 17746
+        },
+        "HandleFadeIn": {
+          "field": "hits",
+          "mixed0": 75,
+          "mixed1": 75
+        },
+        "HandleFadeOut": {
+          "field": "hits",
+          "mixed0": 107,
+          "mixed1": 107
+        },
+        "Multiply16x16": {
+          "field": "hits",
+          "mixed0": 14,
+          "mixed1": 14
+        },
+        "WriteLotsOf0x1c2f": {
+          "field": "hits",
+          "mixed0": 1,
+          "mixed1": 1
+        }
+      },
+      "evidence": [
+        "/home/jim/sm-decomp/out/port/room-plm-live/20261010T223747.065046Z/verdict.json",
+        "/home/jim/sm-decomp/out/port/room-plm-live/20261010T223747.065046Z/live",
+        "/home/jim/sm-decomp/out/port/room-plm-live/20261010T223747.065046Z/families.rs",
+        "/home/jim/sm-decomp/out/port/room-plm-live/20261010T223747.065046Z/host.c",
+        "/home/jim/sm-decomp/out/port/room-plm-live/20261010T223747.065046Z/sm_84.c"
+      ],
+      "limitations": [
+        "Historical immutable live binary only. Counters report native Rust roots positively measured in both mixed subjects; zero-hit wrappers and unmeasured internal calls are excluded.",
+        "Existing storage-authentication receipt is retained for compressed runs; no new decompression or full gameplay execution performed. Historical tested replay is not current-source authentication or credits/movie completion."
+      ],
+      "path": "out/port/room-plm-live/20261010T223747.065046Z/verdict.json",
+      "read_only_artifacts_hashed": 852,
+      "retained_authentication": null,
+      "routines": [
+        "CheckBossBitForCurArea",
+        "CheckEventHappened",
+        "ClearOamExt",
+        "ClearUnusedOam",
+        "HandleFadeIn",
+        "HandleFadeOut",
+        "Multiply16x16",
+        "WriteLotsOf0x1c2f"
+      ],
+      "sha256": "f3141b9714103d9dd71f9b8b29ad7b1540eadef30fda542d0b4c436cd1a728a1",
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "status": "mixed-C-Rust-integration"
+    },
+    {
+      "accepted": false,
+      "error": "live state/effects or CPU fallback rejected",
+      "path": "out/port/gameplay-control-live/20261010T201048.927361Z/verdict.json"
+    },
+    {
+      "accepted": true,
+      "binary_matches": true,
+      "counters": {
+        "AnimtilesHandler": {
+          "field": "hits",
+          "mixed0": 95385,
+          "mixed1": 95385
+        }
+      },
+      "evidence": [
+        "/home/jim/sm-decomp/out/port/animated-tile-frame-replay/20261011T090833.758853Z/verdict.json",
+        "/home/jim/sm-decomp/out/port/animated-tile-frame-replay/20261011T090833.758853Z/live",
+        "/home/jim/sm-decomp/out/port/animated-tile-frame-replay/20261011T090833.758853Z/families.rs",
+        "/home/jim/sm-decomp/out/port/animated-tile-frame-replay/20261011T090833.758853Z/host.c"
+      ],
+      "limitations": [
+        "Historical immutable live binary only. Counters report native Rust roots positively measured in both mixed subjects; zero-hit wrappers and unmeasured internal calls are excluded.",
+        "Existing storage-authentication receipt is retained for compressed runs; no new decompression or full gameplay execution performed. Historical tested replay is not current-source authentication or credits/movie completion."
+      ],
+      "path": "out/port/animated-tile-frame-replay/20261011T090833.758853Z/verdict.json",
+      "read_only_artifacts_hashed": 3960,
+      "retained_authentication": null,
+      "routines": [
+        "AnimtilesHandler"
+      ],
+      "sha256": "0f797eab3bfa552c55b37e70ccc9bd610a462e219d69efb7d087886b9a2c1e9f",
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "status": "mixed-C-Rust-integration"
+    },
+    {
+      "accepted": true,
+      "binary_matches": true,
+      "counters": {
+        "DrawSpriteObjects": {
+          "field": "hits",
+          "mixed0": 96336,
+          "mixed1": 96336
+        }
+      },
+      "evidence": [
+        "/home/jim/sm-decomp/out/port/sprite-rendering-live/20261011T083926.700735Z/verdict.json",
+        "/home/jim/sm-decomp/out/port/sprite-rendering-live/20261011T083926.700735Z/live",
+        "/home/jim/sm-decomp/out/port/sprite-rendering-live/20261011T083926.700735Z/families.rs",
+        "/home/jim/sm-decomp/out/port/sprite-rendering-live/20261011T083926.700735Z/host.c"
+      ],
+      "limitations": [
+        "Historical immutable live binary only. Counters report native Rust roots positively measured in both mixed subjects; zero-hit wrappers and unmeasured internal calls are excluded.",
+        "Existing storage-authentication receipt is retained for compressed runs; no new decompression or full gameplay execution performed. Historical tested replay is not current-source authentication or credits/movie completion."
+      ],
+      "path": "out/port/sprite-rendering-live/20261011T083926.700735Z/verdict.json",
+      "read_only_artifacts_hashed": 3960,
+      "retained_authentication": null,
+      "routines": [
+        "DrawSpriteObjects"
+      ],
+      "sha256": "adf22412413dd6f0117d71dde51570866c20c69fe0815c9196cf954e2977a9d1",
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "status": "mixed-C-Rust-integration"
+    },
+    {
+      "accepted": false,
+      "error": "artifact absent: /home/jim/sm-decomp/out/port/projectile-contact-render-live/20261011T130027.565661Z/c-0/fixtures/active-port-000-001-after.wram: No such file or directory (os error 2)",
+      "path": "out/port/projectile-contact-render-live/20261011T130027.565661Z/verdict.json"
+    },
+    {
+      "accepted": false,
+      "error": "artifact absent: /home/jim/sm-decomp/out/port/projectile-contact-hit-live/20261011T130615.144077Z/c-0/fixtures/active-port-000-001-after.wram: No such file or directory (os error 2)",
+      "path": "out/port/projectile-contact-hit-live/20261011T130615.144077Z/verdict.json"
+    },
+    {
+      "accepted": false,
+      "error": "no explicitly measured native Rust roots",
+      "path": "out/port/observed-projectile-corrected-live-45000/20261011T135145.693993Z/verdict.json"
+    },
+    {
+      "accepted": false,
+      "error": "live state/effects or CPU fallback rejected",
+      "path": "out/port/live/20261010T194953.940696Z/verdict.json"
+    },
+    {
+      "accepted": true,
+      "binary_matches": true,
+      "counters": {
+        "CheckBossBitForCurArea": {
+          "field": "hits",
+          "mixed0": 2,
+          "mixed1": 2
+        },
+        "CheckEventHappened": {
+          "field": "hits",
+          "mixed0": 2250,
+          "mixed1": 2250
+        },
+        "ClearOamExt": {
+          "field": "hits",
+          "mixed0": 8935,
+          "mixed1": 8935
+        },
+        "ClearUnusedOam": {
+          "field": "hits",
+          "mixed0": 8935,
+          "mixed1": 8935
+        },
+        "HandleFadeIn": {
+          "field": "hits",
+          "mixed0": 75,
+          "mixed1": 75
+        },
+        "HandleFadeOut": {
+          "field": "hits",
+          "mixed0": 107,
+          "mixed1": 107
+        },
+        "WriteLotsOf0x1c2f": {
+          "field": "hits",
+          "mixed0": 1,
+          "mixed1": 1
+        }
+      },
+      "evidence": [
+        "/home/jim/sm-decomp/out/port/room-plm-current-live/20261010T224032.887967Z/verdict.json",
+        "/home/jim/sm-decomp/out/port/room-plm-current-live/20261010T224032.887967Z/live",
+        "/home/jim/sm-decomp/out/port/room-plm-current-live/20261010T224032.887967Z/families.rs",
+        "/home/jim/sm-decomp/out/port/room-plm-current-live/20261010T224032.887967Z/host.c",
+        "/home/jim/sm-decomp/out/port/room-plm-current-live/20261010T224032.887967Z/sm_84.c"
+      ],
+      "limitations": [
+        "Historical immutable live binary only. Counters report native Rust roots positively measured in both mixed subjects; zero-hit wrappers and unmeasured internal calls are excluded.",
+        "Existing storage-authentication receipt is retained for compressed runs; no new decompression or full gameplay execution performed. Historical tested replay is not current-source authentication or credits/movie completion."
+      ],
+      "path": "out/port/room-plm-current-live/20261010T224032.887967Z/verdict.json",
+      "read_only_artifacts_hashed": 592,
+      "retained_authentication": null,
+      "routines": [
+        "CheckBossBitForCurArea",
+        "CheckEventHappened",
+        "ClearOamExt",
+        "ClearUnusedOam",
+        "HandleFadeIn",
+        "HandleFadeOut",
+        "WriteLotsOf0x1c2f"
+      ],
+      "sha256": "a3c23353ba8fa110e50cc4ba5d45957f86046d4019885527bd43b553f507eb8a",
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "status": "mixed-C-Rust-integration"
+    },
+    {
+      "accepted": true,
+      "binary_matches": true,
+      "counters": {
+        "FireUnchargedBeam": {
+          "field": "hits",
+          "mixed0": 3,
+          "mixed1": 3
+        },
+        "HudSelectionHandler_MissilesOrSuperMissiles": {
+          "field": "hits",
+          "mixed0": 346,
+          "mixed1": 346
+        },
+        "ProjPreInstr_Beam_NoWaveBeam": {
+          "field": "hits",
+          "mixed0": 17,
+          "mixed1": 17
+        },
+        "ProjPreInstr_Missile": {
+          "field": "hits",
+          "mixed0": 68,
+          "mixed1": 68
+        }
+      },
+      "evidence": [
+        "/home/jim/sm-decomp/out/port/flight-fixed-live/20261010T204643.443282Z/verdict.json",
+        "/home/jim/sm-decomp/out/port/flight-fixed-live/20261010T204643.443282Z/live",
+        "/home/jim/sm-decomp/out/port/flight-fixed-live/20261010T204643.443282Z/families.rs",
+        "/home/jim/sm-decomp/out/port/flight-fixed-live/20261010T204643.443282Z/host.c"
+      ],
+      "limitations": [
+        "Historical immutable live binary only. Counters report native Rust roots positively measured in both mixed subjects; zero-hit wrappers and unmeasured internal calls are excluded.",
+        "Existing storage-authentication receipt is retained for compressed runs; no new decompression or full gameplay execution performed. Historical tested replay is not current-source authentication or credits/movie completion."
+      ],
+      "path": "out/port/flight-fixed-live/20261010T204643.443282Z/verdict.json",
+      "read_only_artifacts_hashed": 464,
+      "retained_authentication": null,
+      "routines": [
+        "FireUnchargedBeam",
+        "HudSelectionHandler_MissilesOrSuperMissiles",
+        "ProjPreInstr_Beam_NoWaveBeam",
+        "ProjPreInstr_Missile"
+      ],
+      "sha256": "367bf4ce28ff4519581ab52e1411097c3184099c180e90f8a7469080c8f174be",
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "status": "mixed-C-Rust-integration"
+    },
+    {
+      "accepted": false,
+      "error": "no explicitly measured native Rust roots",
+      "path": "out/port/observed-projectile-corrected-live-full/20261011T135146.556016Z/verdict.json"
+    },
+    {
+      "accepted": true,
+      "binary_matches": true,
+      "counters": {
+        "ClearSpriteObjects": {
+          "field": "hits",
+          "mixed0": 64,
+          "mixed1": 64
+        },
+        "HandleSpriteObjects": {
+          "field": "hits",
+          "mixed0": 96336,
+          "mixed1": 96336
+        }
+      },
+      "evidence": [
+        "/home/jim/sm-decomp/out/port/sprite-objects-live/20261011T082259.543000Z/verdict.json",
+        "/home/jim/sm-decomp/out/port/sprite-objects-live/20261011T082259.543000Z/live",
+        "/home/jim/sm-decomp/out/port/sprite-objects-live/20261011T082259.543000Z/families.rs",
+        "/home/jim/sm-decomp/out/port/sprite-objects-live/20261011T082259.543000Z/host.c"
+      ],
+      "limitations": [
+        "Historical immutable live binary only. Counters report native Rust roots positively measured in both mixed subjects; zero-hit wrappers and unmeasured internal calls are excluded.",
+        "Existing storage-authentication receipt is retained for compressed runs; no new decompression or full gameplay execution performed. Historical tested replay is not current-source authentication or credits/movie completion."
+      ],
+      "path": "out/port/sprite-objects-live/20261011T082259.543000Z/verdict.json",
+      "read_only_artifacts_hashed": 4024,
+      "retained_authentication": null,
+      "routines": [
+        "ClearSpriteObjects",
+        "HandleSpriteObjects"
+      ],
+      "sha256": "f04767f6547506d897d4c798af2a881195303e5df54c6945b970501cb3e406e3",
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "status": "mixed-C-Rust-integration"
+    },
+    {
+      "accepted": true,
+      "binary_matches": true,
+      "counters": {
+        "EprojInstr_ClearPreInstr": {
+          "field": "dispatcher_hits",
+          "mixed0": 44,
+          "mixed1": 44
+        },
+        "EprojInstr_Delete": {
+          "field": "dispatcher_hits",
+          "mixed0": 36,
+          "mixed1": 36
+        },
+        "EprojInstr_Goto": {
+          "field": "dispatcher_hits",
+          "mixed0": 827,
+          "mixed1": 827
+        },
+        "EprojInstr_SetPreInstr_": {
+          "field": "dispatcher_hits",
+          "mixed0": 16,
+          "mixed1": 16
+        }
+      },
+      "evidence": [
+        "/home/jim/sm-decomp/out/port/projectile-script-leaves-live/20261011T075955.123199Z/verdict.json",
+        "/home/jim/sm-decomp/out/port/projectile-script-leaves-live/20261011T075955.123199Z/live",
+        "/home/jim/sm-decomp/out/port/projectile-script-leaves-live/20261011T075955.123199Z/families.rs",
+        "/home/jim/sm-decomp/out/port/projectile-script-leaves-live/20261011T075955.123199Z/host.c",
+        "/home/jim/sm-decomp/out/port/projectile-script-leaves-live/20261011T075955.123199Z/sm_86.c"
+      ],
+      "limitations": [
+        "Historical immutable live binary only. Counters report native Rust roots positively measured in both mixed subjects; zero-hit wrappers and unmeasured internal calls are excluded.",
+        "Existing storage-authentication receipt is retained for compressed runs; no new decompression or full gameplay execution performed. Historical tested replay is not current-source authentication or credits/movie completion."
+      ],
+      "path": "out/port/projectile-script-leaves-live/20261011T075955.123199Z/verdict.json",
+      "read_only_artifacts_hashed": 4152,
+      "retained_authentication": null,
+      "routines": [
+        "EprojInstr_ClearPreInstr",
+        "EprojInstr_Delete",
+        "EprojInstr_Goto",
+        "EprojInstr_SetPreInstr_"
+      ],
+      "sha256": "cdaaa3a76e8379d1c7996912746dd21aa8a3382adbf52f461247eeb99256038b",
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "status": "mixed-C-Rust-integration"
+    },
+    {
+      "accepted": true,
+      "binary_matches": true,
+      "counters": {
+        "CalculateBgScrollAndLayerPositionBlocks": {
+          "field": "hits",
+          "mixed0": 9560,
+          "mixed1": 9560
+        },
+        "CalculateBgScrolls": {
+          "field": "hits",
+          "mixed0": 195,
+          "mixed1": 195
+        },
+        "CalculateLayer2Xpos": {
+          "field": "hits",
+          "mixed0": 9366,
+          "mixed1": 9366
+        },
+        "CalculateLayer2Ypos": {
+          "field": "hits",
+          "mixed0": 9366,
+          "mixed1": 9366
+        },
+        "CheckBossBitForCurArea": {
+          "field": "hits",
+          "mixed0": 4,
+          "mixed1": 4
+        },
+        "CheckEventHappened": {
+          "field": "hits",
+          "mixed0": 11028,
+          "mixed1": 11028
+        },
+        "ClearOamExt": {
+          "field": "hits",
+          "mixed0": 17746,
+          "mixed1": 17746
+        },
+        "ClearUnusedOam": {
+          "field": "hits",
+          "mixed0": 17746,
+          "mixed1": 17746
+        },
+        "CopyToSamusSuitPalette": {
+          "field": "hits",
+          "mixed0": 6,
+          "mixed1": 6
+        },
+        "DecrementSamusTimers": {
+          "field": "hits",
+          "mixed0": 9359,
+          "mixed1": 9359
+        },
+        "EnemyInstr_Goto": {
+          "field": "hits",
+          "mixed0": 9241,
+          "mixed1": 9241
+        },
+        "EnemyWithNormalSpritesIsOffScreen": {
+          "field": "hits",
+          "mixed0": 18908,
+          "mixed1": 18908
+        },
+        "FireUnchargedBeam": {
+          "field": "hits",
+          "mixed0": 224,
+          "mixed1": 224
+        },
+        "HandleAutoscrolling_X": {
+          "field": "hits",
+          "mixed0": 8266,
+          "mixed1": 8266
+        },
+        "HandleAutoscrolling_Y": {
+          "field": "hits",
+          "mixed0": 8128,
+          "mixed1": 8128
+        },
+        "HandleFadeIn": {
+          "field": "hits",
+          "mixed0": 75,
+          "mixed1": 75
+        },
+        "HandleFadeOut": {
+          "field": "hits",
+          "mixed0": 107,
+          "mixed1": 107
+        },
+        "HandleScrollingWhenTriggeringScrollDown": {
+          "field": "hits",
+          "mixed0": 827,
+          "mixed1": 827
+        },
+        "HandleScrollingWhenTriggeringScrollLeft": {
+          "field": "hits",
+          "mixed0": 445,
+          "mixed1": 445
+        },
+        "HandleScrollingWhenTriggeringScrollRight": {
+          "field": "hits",
+          "mixed0": 641,
+          "mixed1": 641
+        },
+        "HandleScrollingWhenTriggeringScrollUp": {
+          "field": "hits",
+          "mixed0": 404,
+          "mixed1": 404
+        },
+        "HasQueuedMusic": {
+          "field": "hits",
+          "mixed0": 108,
+          "mixed1": 108
+        },
+        "HudSelectionHandler_MissilesOrSuperMissiles": {
+          "field": "hits",
+          "mixed0": 346,
+          "mixed1": 346
+        },
+        "KillProjectile": {
+          "field": "hits",
+          "mixed0": 4,
+          "mixed1": 4
+        },
+        "LoaadDesinationRoomCreBitset": {
+          "field": "hits",
+          "mixed0": 4,
+          "mixed1": 4
+        },
+        "LoadDoorHeader": {
+          "field": "hits",
+          "mixed0": 4,
+          "mixed1": 4
+        },
+        "LoadNewMusicTrackIfChanged": {
+          "field": "hits",
+          "mixed0": 3,
+          "mixed1": 3
+        },
+        "LoadRoomHeader": {
+          "field": "hits",
+          "mixed0": 4,
+          "mixed1": 4
+        },
+        "LoadRoomMusic": {
+          "field": "hits",
+          "mixed0": 4,
+          "mixed1": 4
+        },
+        "LoadStateHeader": {
+          "field": "hits",
+          "mixed0": 4,
+          "mixed1": 4
+        },
+        "PlayRoomMusicTrackAfterAFrames": {
+          "field": "hits",
+          "mixed0": 1,
+          "mixed1": 1
+        },
+        "ProjPreInstr_Beam_NoWaveBeam": {
+          "field": "hits",
+          "mixed0": 325,
+          "mixed1": 325
+        },
+        "ProjPreInstr_Missile": {
+          "field": "hits",
+          "mixed0": 68,
+          "mixed1": 68
+        },
+        "QueueMusic_Delayed8": {
+          "field": "hits",
+          "mixed0": 13,
+          "mixed1": 13
+        },
+        "QueueMusic_DelayedY": {
+          "field": "hits",
+          "mixed0": 3,
+          "mixed1": 3
+        },
+        "QueueSfx1_Max15": {
+          "field": "hits",
+          "mixed0": 12,
+          "mixed1": 12
+        },
+        "QueueSfx1_Max6": {
+          "field": "hits",
+          "mixed0": 14,
+          "mixed1": 14
+        },
+        "QueueSfx1_Max9": {
+          "field": "hits",
+          "mixed0": 1,
+          "mixed1": 1
+        },
+        "QueueSfx2_Max15": {
+          "field": "hits",
+          "mixed0": 3,
+          "mixed1": 3
+        },
+        "QueueSfx2_Max6": {
+          "field": "hits",
+          "mixed0": 1,
+          "mixed1": 1
+        },
+        "QueueSfx3_Max6": {
+          "field": "hits",
+          "mixed0": 383,
+          "mixed1": 383
+        },
+        "RunProjectileInstructions": {
+          "field": "hits",
+          "mixed0": 1100,
+          "mixed1": 1100
+        },
+        "Samus_AlignBottomWithPrevPose": {
+          "field": "hits",
+          "mixed0": 1,
+          "mixed1": 1
+        },
+        "Samus_Animate": {
+          "field": "hits",
+          "mixed0": 10802,
+          "mixed1": 10802
+        },
+        "Samus_BombJumpRisingXMovement_": {
+          "field": "hits",
+          "mixed0": 11,
+          "mixed1": 11
+        },
+        "Samus_CalcDistanceMoved_X": {
+          "field": "hits",
+          "mixed0": 9359,
+          "mixed1": 9359
+        },
+        "Samus_CalcDistanceMoved_Y": {
+          "field": "hits",
+          "mixed0": 9359,
+          "mixed1": 9359
+        },
+        "Samus_CancelSpeedBoost": {
+          "field": "hits",
+          "mixed0": 7288,
+          "mixed1": 7288
+        },
+        "Samus_CollDetectChangedPose": {
+          "field": "hits",
+          "mixed0": 212,
+          "mixed1": 212
+        },
+        "Samus_DetermineAccel_Y": {
+          "field": "hits",
+          "mixed0": 10552,
+          "mixed1": 10552
+        },
+        "Samus_GetTop_R20": {
+          "field": "hits",
+          "mixed0": 10814,
+          "mixed1": 10814
+        },
+        "Samus_InitJump": {
+          "field": "hits",
+          "mixed0": 33,
+          "mixed1": 33
+        },
+        "Samus_Input_00_Standing": {
+          "field": "hits",
+          "mixed0": 6178,
+          "mixed1": 6178
+        },
+        "Samus_Input_01_Running": {
+          "field": "hits",
+          "mixed0": 545,
+          "mixed1": 545
+        },
+        "Samus_Input_02_NormalJumping": {
+          "field": "hits",
+          "mixed0": 921,
+          "mixed1": 921
+        },
+        "Samus_Input_03_SpinJumping": {
+          "field": "hits",
+          "mixed0": 148,
+          "mixed1": 148
+        },
+        "Samus_Input_06_Falling": {
+          "field": "hits",
+          "mixed0": 212,
+          "mixed1": 212
+        },
+        "Samus_Input_0A_KnockbackOrCrystalFlashEnding": {
+          "field": "hits",
+          "mixed0": 12,
+          "mixed1": 12
+        },
+        "Samus_Input_0E_TurningAroundOnGround": {
+          "field": "hits",
+          "mixed0": 367,
+          "mixed1": 367
+        },
+        "Samus_Input_0F_CrouchingEtcTransition": {
+          "field": "hits",
+          "mixed0": 57,
+          "mixed1": 57
+        },
+        "Samus_Input_17_TurningAroundJumping": {
+          "field": "hits",
+          "mixed0": 254,
+          "mixed1": 254
+        },
+        "Samus_Input_18_TurningAroundFalling": {
+          "field": "hits",
+          "mixed0": 18,
+          "mixed1": 18
+        },
+        "Samus_LoadSuitPalette": {
+          "field": "hits",
+          "mixed0": 4,
+          "mixed1": 4
+        },
+        "Samus_LoadSuitTargetPalette": {
+          "field": "hits",
+          "mixed0": 3,
+          "mixed1": 3
+        },
+        "Samus_LookupTransitionTable": {
+          "field": "hits",
+          "mixed0": 1840,
+          "mixed1": 1840
+        },
+        "Samus_MoveRight_NoSolidColl": {
+          "field": "hits",
+          "mixed0": 996,
+          "mixed1": 996
+        },
+        "Samus_MoveY_WithSpeedCalc": {
+          "field": "hits",
+          "mixed0": 11,
+          "mixed1": 11
+        },
+        "Samus_MovementHandler_Normal": {
+          "field": "hits",
+          "mixed0": 10791,
+          "mixed1": 10791
+        },
+        "Samus_SetRadius": {
+          "field": "hits",
+          "mixed0": 10552,
+          "mixed1": 10552
+        },
+        "Samus_SetSpeedForKnockback_Y": {
+          "field": "hits",
+          "mixed0": 1,
+          "mixed1": 1
+        },
+        "Samus_UpdateSuitPaletteIndex": {
+          "field": "hits",
+          "mixed0": 10552,
+          "mixed1": 10552
+        },
+        "SetLiquidPhysicsType": {
+          "field": "hits",
+          "mixed0": 4,
+          "mixed1": 4
+        },
+        "UpdateBgScrollOffsets": {
+          "field": "hits",
+          "mixed0": 3,
+          "mixed1": 3
+        },
+        "UpdateMusicTrackIndex": {
+          "field": "hits",
+          "mixed0": 1,
+          "mixed1": 1
+        },
+        "UpdatePreviousLayerBlocks": {
+          "field": "hits",
+          "mixed0": 3,
+          "mixed1": 3
+        },
+        "WriteLotsOf0x1c2f": {
+          "field": "hits",
+          "mixed0": 1,
+          "mixed1": 1
+        }
+      },
+      "evidence": [
+        "/home/jim/sm-decomp/out/port/batches/20261010T213631.753519Z/replays/20261010T215856.742725Z/evidence/20261010T215856.841221Z/verdict.json",
+        "/home/jim/sm-decomp/out/port/batches/20261010T213631.753519Z/replays/20261010T215856.742725Z/evidence/20261010T215856.841221Z/live",
+        "/home/jim/sm-decomp/out/port/batches/20261010T213631.753519Z/replays/20261010T215856.742725Z/evidence/20261010T215856.841221Z/families.rs",
+        "/home/jim/sm-decomp/out/port/batches/20261010T213631.753519Z/replays/20261010T215856.742725Z/evidence/20261010T215856.841221Z/host.c"
+      ],
+      "limitations": [
+        "Historical immutable live binary only. Counters report native Rust roots positively measured in both mixed subjects; zero-hit wrappers and unmeasured internal calls are excluded.",
+        "Existing storage-authentication receipt is retained for compressed runs; no new decompression or full gameplay execution performed. Historical tested replay is not current-source authentication or credits/movie completion."
+      ],
+      "path": "out/port/batches/20261010T213631.753519Z/replays/20261010T215856.742725Z/evidence/20261010T215856.841221Z/verdict.json",
+      "read_only_artifacts_hashed": 4324,
+      "retained_authentication": null,
+      "routines": [
+        "CalculateBgScrollAndLayerPositionBlocks",
+        "CalculateBgScrolls",
+        "CalculateLayer2Xpos",
+        "CalculateLayer2Ypos",
+        "CheckBossBitForCurArea",
+        "CheckEventHappened",
+        "ClearOamExt",
+        "ClearUnusedOam",
+        "CopyToSamusSuitPalette",
+        "DecrementSamusTimers",
+        "EnemyInstr_Goto",
+        "EnemyWithNormalSpritesIsOffScreen",
+        "FireUnchargedBeam",
+        "HandleAutoscrolling_X",
+        "HandleAutoscrolling_Y",
+        "HandleFadeIn",
+        "HandleFadeOut",
+        "HandleScrollingWhenTriggeringScrollDown",
+        "HandleScrollingWhenTriggeringScrollLeft",
+        "HandleScrollingWhenTriggeringScrollRight",
+        "HandleScrollingWhenTriggeringScrollUp",
+        "HasQueuedMusic",
+        "HudSelectionHandler_MissilesOrSuperMissiles",
+        "KillProjectile",
+        "LoaadDesinationRoomCreBitset",
+        "LoadDoorHeader",
+        "LoadNewMusicTrackIfChanged",
+        "LoadRoomHeader",
+        "LoadRoomMusic",
+        "LoadStateHeader",
+        "PlayRoomMusicTrackAfterAFrames",
+        "ProjPreInstr_Beam_NoWaveBeam",
+        "ProjPreInstr_Missile",
+        "QueueMusic_Delayed8",
+        "QueueMusic_DelayedY",
+        "QueueSfx1_Max15",
+        "QueueSfx1_Max6",
+        "QueueSfx1_Max9",
+        "QueueSfx2_Max15",
+        "QueueSfx2_Max6",
+        "QueueSfx3_Max6",
+        "RunProjectileInstructions",
+        "Samus_AlignBottomWithPrevPose",
+        "Samus_Animate",
+        "Samus_BombJumpRisingXMovement_",
+        "Samus_CalcDistanceMoved_X",
+        "Samus_CalcDistanceMoved_Y",
+        "Samus_CancelSpeedBoost",
+        "Samus_CollDetectChangedPose",
+        "Samus_DetermineAccel_Y",
+        "Samus_GetTop_R20",
+        "Samus_InitJump",
+        "Samus_Input_00_Standing",
+        "Samus_Input_01_Running",
+        "Samus_Input_02_NormalJumping",
+        "Samus_Input_03_SpinJumping",
+        "Samus_Input_06_Falling",
+        "Samus_Input_0A_KnockbackOrCrystalFlashEnding",
+        "Samus_Input_0E_TurningAroundOnGround",
+        "Samus_Input_0F_CrouchingEtcTransition",
+        "Samus_Input_17_TurningAroundJumping",
+        "Samus_Input_18_TurningAroundFalling",
+        "Samus_LoadSuitPalette",
+        "Samus_LoadSuitTargetPalette",
+        "Samus_LookupTransitionTable",
+        "Samus_MoveRight_NoSolidColl",
+        "Samus_MoveY_WithSpeedCalc",
+        "Samus_MovementHandler_Normal",
+        "Samus_SetRadius",
+        "Samus_SetSpeedForKnockback_Y",
+        "Samus_UpdateSuitPaletteIndex",
+        "SetLiquidPhysicsType",
+        "UpdateBgScrollOffsets",
+        "UpdateMusicTrackIndex",
+        "UpdatePreviousLayerBlocks",
+        "WriteLotsOf0x1c2f"
+      ],
+      "sha256": "0ac056e16fdc6009a88ec066f75d4a80d41ac5fa3f5dad13328e6202b446789c",
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "status": "mixed-C-Rust-integration"
+    },
+    {
+      "accepted": false,
+      "error": "no explicitly measured native Rust roots",
+      "path": "out/port/observed-projectile-with-gfx-live-full/20261011T142927.603436Z/verdict.json"
+    },
+    {
+      "accepted": true,
+      "binary_matches": true,
+      "counters": {
+        "ClearOamExt": {
+          "field": "hits",
+          "mixed0": 202,
+          "mixed1": 202
+        },
+        "ClearUnusedOam": {
+          "field": "hits",
+          "mixed0": 202,
+          "mixed1": 202
+        },
+        "HandleFadeOut": {
+          "field": "hits",
+          "mixed0": 1,
+          "mixed1": 1
+        },
+        "WriteLotsOf0x1c2f": {
+          "field": "hits",
+          "mixed0": 1,
+          "mixed1": 1
+        }
+      },
+      "evidence": [
+        "/home/jim/sm-decomp/out/port/batches/20261010T211506.367424Z/replays/20261010T211540.365419Z/evidence/20261010T211540.392718Z/verdict.json",
+        "/home/jim/sm-decomp/out/port/batches/20261010T211506.367424Z/replays/20261010T211540.365419Z/evidence/20261010T211540.392718Z/live",
+        "/home/jim/sm-decomp/out/port/batches/20261010T211506.367424Z/replays/20261010T211540.365419Z/evidence/20261010T211540.392718Z/families.rs",
+        "/home/jim/sm-decomp/out/port/batches/20261010T211506.367424Z/replays/20261010T211540.365419Z/evidence/20261010T211540.392718Z/host.c"
+      ],
+      "limitations": [
+        "Historical immutable live binary only. Counters report native Rust roots positively measured in both mixed subjects; zero-hit wrappers and unmeasured internal calls are excluded.",
+        "Existing storage-authentication receipt is retained for compressed runs; no new decompression or full gameplay execution performed. Historical tested replay is not current-source authentication or credits/movie completion."
+      ],
+      "path": "out/port/batches/20261010T211506.367424Z/replays/20261010T211540.365419Z/evidence/20261010T211540.392718Z/verdict.json",
+      "read_only_artifacts_hashed": 208,
+      "retained_authentication": null,
+      "routines": [
+        "ClearOamExt",
+        "ClearUnusedOam",
+        "HandleFadeOut",
+        "WriteLotsOf0x1c2f"
+      ],
+      "sha256": "d5f46c7febb64eb880900e9cc54d495774b8c58e683bf571724d25ac0f4d1a27",
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "status": "mixed-C-Rust-integration"
+    }
+  ],
+  "schema_version": 1,
+  "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+}

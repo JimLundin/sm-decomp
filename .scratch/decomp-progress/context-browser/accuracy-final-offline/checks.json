@@ -1,0 +1,11 @@
+{
+  "collapsed_report_details": true,
+  "context_counts": true,
+  "definitions": 6053,
+  "notices_retained": true,
+  "observation_context_labels": true,
+  "observations": 256,
+  "routine_evidence_details": true,
+  "supersession_history": true,
+  "visible_errors": true
+}

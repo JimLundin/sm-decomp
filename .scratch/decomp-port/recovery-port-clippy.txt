@@ -1,0 +1,2 @@
+    Checking port v0.1.0 (/home/jim/sm-decomp/crates/port)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 7.51s

@@ -1,0 +1,30 @@
+# Final trail observation after coordinator post-cleanup authentication.
+id = "projectile-trails-root-6053-live-20261013"
+scope = "Complete native projectile trail script and render frame: live scheduled root"
+agent = "/root/independent_gameplay"
+stage = "live-exercised"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+routines = ["HandleProjectileTrails"]
+commit = "2b62134bfbee7c5dcd4c81616edc5d91e781d44f"
+limitations = [
+    "Four fresh C/mixed subjects over 9,000 inputs; each mixed subject records 3,824 exclusive Rust whole-frame calls, 167 active calls and zero refusals; state/effects match with zero CPU fallback.",
+    "Three direct movement opcodes are offline verified and had no natural hits in this prefix; this live observation reports the complete scheduled root only.",
+    "This independent trail replay does not install native137 projectile admission. The full composed acceptance gate supplies that separate preservation evidence.",
+    "Installed gameplay commit is integrated at baseline c711faea56f20d42113eb63393cc4a76d4940557; shared live wiring is authenticated at its exact frozen uncommitted source. Original-ROM parity is not tested.",
+]
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/recovery-session/trails-live/1791860457650339558-98848/verdict.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-trails-live-final-cleanup.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-trails-live-final-dedup.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-trails-live-post-cleanup-authentication.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-progress/recovery-live-ticket-audit-20261013.md"

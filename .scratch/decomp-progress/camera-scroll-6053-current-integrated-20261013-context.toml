@@ -1,0 +1,33 @@
+agent = "/root/coverage_finish"
+commit = "7512b6479afe55da270931a9f3ae26c9d558e5a5"
+evidence_context = "current-checkout"
+id = "camera-scroll-6053-current-integrated-20261013-context"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Current frozen merged-source family authenticates 467 fixture pairs for the whole camera frame, directional helpers and Spore Spawn hook.",
+    "Admitted table indices, room extent and hook domains remain bounded; room and Samus dependencies remain explicit. Independent live ownership remains pending.",
+    "Installed gameplay commit is integrated into main baseline c711faea56f20d42113eb63393cc4a76d4940557; shared verifier/live wiring remains uncommitted at the authenticated exact frozen source. Final wiring commit remains coordinator work.",
+    "Both run cleanup passes and stale implementer worktree retirement completed before retained authentication. Stage observations remain distinct; original-ROM parity is not tested.",
+    "Checkout at observation refers to the integrated gameplay source checked on 2026-10-13. Retained verification harness is frozen at /tmp/sm-recovery-bounded-source; later changes require their own checks. Older limitations about pending live/final wiring are superseded by composed live observations, without granting additional roots.",
+]
+routines = [
+    "MainScrollingRoutine",
+    "Samus_HandleScroll_X",
+    "Samus_HandleScroll_Y",
+    "Samus_ScrollFinishedHook_SporeSpawnFight",
+]
+scope = "Complete camera scrolling frame and directional helpers"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "integrated"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-camera-scroll-post-cleanup-authentication.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/progress-current-integrated-stage-evidence-20261013.md"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-final-authentication-summary.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-worktree-retirement-20261013.toml"

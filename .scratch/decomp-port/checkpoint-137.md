@@ -161,3 +161,18 @@ No implementer worktrees were created. Preserve unrelated
 `.scratch/workspace-cleanup/`, `/tmp/sm-decomp-pipeline` and existing review/trace
 worktrees. All agents share the workspace; keep frozen sources unchanged until
 this replay completes.
+
+## Recovery status, 2026-10-13
+
+This checkpoint's claimed/in-progress paragraphs are historical. Ticket137 is
+resolved at its latest top-level status; preserve the recorded historical
+acceptance. The reboot removed some native source/live `/tmp` dependencies,
+so current merged evidence was regenerated independently. All twelve selected
+families now pass 20,943 actual-C pairs and authenticate after both cleanup
+passes. Summary: `recovery-integrated-final-authentication-summary.toml`.
+The full 129,712-input composed native live gate completed at
+`out/recovery-session/composed-live-release`; all four subjects authenticate
+after cleanup. See `recovery-live-completion-20261013.md` for final acceptance,
+cleanup and retained-source pointers, and
+`../decomp-strategy/recovery-checkpoint-20261013.md` for completed owner handoffs.
+Earlier missing evidence is never silently rebound.

@@ -1,0 +1,36 @@
+agent = "/root/coverage_finish"
+commit = "692805ce76eb73763a36cdf24082f829b98248cd"
+evidence_context = "current-checkout"
+id = "observed-projectile-ownership-6053-current-translated-20261013-context"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Current frozen merged-source ownership family authenticates 1,840 fixture pairs plus the separately authenticated initializer, frame, rendering and contact prerequisites.",
+    "The fourth declared entry EprojInstruction is a synthetic adapter control outside the C inventory and contributes no C-definition coverage; three actual native definitions are reported.",
+    "Admitted nine-ID projectile trajectory and typed callback/host closure remain bounded. Historical resolved native137 evidence is preserved; fresh full composed live evidence remains pending.",
+    "Installed gameplay commit is integrated into main baseline c711faea56f20d42113eb63393cc4a76d4940557; shared verifier/live wiring remains uncommitted at the authenticated exact frozen source. Final wiring commit remains coordinator work.",
+    "Both run cleanup passes and stale implementer worktree retirement completed before retained authentication. Stage observations remain distinct; original-ROM parity is not tested.",
+    "Checkout at observation refers to the integrated gameplay source checked on 2026-10-13. Retained verification harness is frozen at /tmp/sm-recovery-bounded-source; later changes require their own checks. Older limitations about pending live/final wiring are superseded by composed live observations, without granting additional roots.",
+]
+routines = [
+    "EprojRunAll",
+    "SpawnEprojWithGfx",
+    "SpawnEprojWithRoomGfx",
+]
+scope = "Complete native projectile allocation and scheduling boundaries"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "translated"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/progress-integrated-observed-projectile-ownership-authentication.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/progress-current-integrated-stage-evidence-20261013.md"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-final-authentication-summary.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-worktree-retirement-20261013.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/progress-integrated-first-six-authentication-20261013.md"

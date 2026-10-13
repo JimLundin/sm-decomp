@@ -1,0 +1,3 @@
+   Compiling pipeline v0.1.0 (/home/jim/sm-decomp/crates/pipeline)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.62s
+     Running unittests src/main.rs (target/debug/build/pipeline/033fff99630d7356/out/sm_pipeline-033fff99630d7356)

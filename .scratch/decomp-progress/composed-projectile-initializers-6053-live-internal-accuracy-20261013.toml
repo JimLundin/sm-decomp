@@ -1,0 +1,38 @@
+agent = "/root/coverage_finish"
+commit = "3ce28ba58aba319b60bbc949153baafd4433132e"
+evidence_context = "historical-frozen"
+id = "composed-projectile-initializers-6053-live-internal-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Exact projectile_allocation_hits counters count successful internal Rust execution in both independently authenticated mixed subjects; native names are mapped through frozen opcode callback or ROM-definition initializer dispatch in live-internal-reconciliation.md. These are composed internal observations, without independent direct native wrappers.",
+    "Frozen composed native replay domain only. Eight script opcodes have 48 total events inside 2,393 accepted attack interpreter calls; 209,673 other interpreter calls stay C-owned/refused. Initializer counts16/4/4include only successful fireball/Ceres allocations. General scripts/initializers, whole Ridley lifecycle, original-ROM parity and credits progression are not inferred. Matching maintained gameplay files alone does not reauthenticate every current shared dependency, so this internal import retains historical-frozen context.",
+]
+routines = [
+    "EprojInit_9642_RidleysFireball",
+    "EprojInit_CeresElevatorPad",
+    "EprojInit_CeresElevatorPlatform",
+]
+scope = "Authenticated composed internal projectile-initializers"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "live-exercised"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/live-internal-reconciliation.md"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/recovery-session/composed-live-release/1791861180321696848-129445/verdict.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/recovery-session/composed-live-release/1791861180321696848-129445/live"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/recovery-session/composed-live-release/1791861180321696848-129445/families.rs"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/recovery-session/composed-live-release/1791861180321696848-129445/mixed-0/replay.stdout"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/recovery-session/composed-live-release/1791861180321696848-129445/mixed-1/replay.stdout"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-composed-post-cleanup-authentication.toml"

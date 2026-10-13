@@ -1,0 +1,22 @@
+# module function bank actual execution selector; if adds equality/matches branches
+animated_tiles	palette_instruction	8d	opcode
+animated_tiles	spawn_palette_effect	8d	initializer
+animated_tiles	process_palette	8d	pre
+plm	setup	84	address
+plm	preinstruction	84	address
+plm	preinstruction_rom	84	address
+plm_instructions	instruction	84	opcode
+n00b_tube	initialize	86	init
+n00b_tube	instruction	86	opcode
+n00b_tube	preinstruction	86	address
+enemy_projectiles	initialize	86	init	if
+enemy_projectiles	spawn_context	86	init
+enemy_projectile_instructions	instruction_context	86	opcode
+enemy_projectile_instructions	preinstruction_context	86	address
+ridley_subsystem	run_state	a6	address
+ridley_cutscene	ceres_state	a6	address
+ridley_cutscene	death_state	a6	address
+ridley_rendering	baby_instruction	a6	opcode
+ridley_rendering	baby_position	a6	self
+ridley_movement	tail_phase	a6	state
+ridley_subsystem_instructions	callback	a6	code

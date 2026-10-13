@@ -1,0 +1,46 @@
+agent = "/root/coverage_finish"
+evidence_context = "historical-frozen"
+id = "historical-samus-6053-verified-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Retained historical source and all sealed artifacts were hashed during recovery. These named fixture roots passed 5184 actual-C pairs across retained runs; duplicate domains may occur. Candidate/dependency snapshots and manifests are retained and C pin matches the current inventory.",
+    "Historical fixture domains only. This import does not authenticate current checkout dependencies, current integration, original-ROM parity, full-game completion, internal calls or synthetic dispatch. Exact module digests and per-run closure checks are in retained-coverage-authentication.json.",
+]
+routines = [
+    "Samus_AlignBottomWithPrevPose",
+    "Samus_CalcBaseSpeed_X",
+    "Samus_CalcDisplacementMoveLeft",
+    "Samus_CalcDisplacementMoveRight",
+    "Samus_CalcDistanceMoved_X",
+    "Samus_CalcDistanceMoved_Y",
+    "Samus_CalcSpeed_X",
+    "Samus_CheckStartFalling",
+    "Samus_DetermineAccel_Y",
+    "Samus_DetermineGrappleSwingSpeed_X",
+    "Samus_DetermineSpeedTableEntryPtr_X",
+    "Samus_Func9",
+    "Samus_GetBottom_R18",
+    "Samus_GetTop_R20",
+    "Samus_HandleExtraRunspeedX",
+    "Samus_InitBombJump",
+    "Samus_InitJump",
+    "Samus_InitWallJump",
+    "Samus_MoveDown_NoColl",
+    "Samus_MoveLeft_NoColl",
+    "Samus_MoveRight_NoColl",
+    "Samus_MoveUp_NoColl",
+    "Samus_SetRadius",
+    "Samus_SetSpeedForKnockback_Y",
+    "Samus_UpdateSpeedEchoPos",
+    "Samus_UpdateSuitPaletteIndex",
+    "SetLiquidPhysicsType",
+]
+scope = "Retained samus fixture roots"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "verified"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/batches/20261010T211506.367424Z/samus/20261010T212150.238386Z/evidence/20261010T212150.281515Z/verdict.json"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/retained-coverage-authentication.json"

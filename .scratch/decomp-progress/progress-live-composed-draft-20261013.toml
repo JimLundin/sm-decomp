@@ -1,0 +1,41 @@
+# Prepared only. Replace the selected roots, exact scope, installed commit,
+# limits and all receipt paths after the coordinator supplies passing evidence.
+# This deliberately contains unresolved evidence and cannot be published.
+id = "composed-6053-selected-live-roots-20261013"
+scope = "Current composed native gameplay roots: selected scope after authentication"
+agent = "/root"
+stage = "live-exercised"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+routines = [
+    "MainScrollingRoutine",
+    "UpdateScrollVarsUpdateMap",
+    "CalculateLayer2PosAndScrollsWhenScrolling",
+    "HandleProjectile",
+    "DrawPlayerExplosions2",
+    "DrawBombAndProjectileExplosions",
+    "ProcessEnemyInstructions",
+    "SpawnEprojWithRoomGfx",
+    "SpawnEprojWithGfx",
+    "EprojRunAll",
+]
+# Per-scope observations should use each exact installed gameplay commit.
+commit = "c711faea56f20d42113eb63393cc4a76d4940557"
+limitations = [
+    "Pending exact four-subject full 129,712-input root counters and periodic/terminal state, ordered effects and capture parity from the successful composed verdict.",
+    "ProcessEnemyInstructions coverage is bounded to the admitted Ridley attack script; broader lifecycle/AI/rendering and other enemy scripts remain separate.",
+    "Only roots installed and materially exercised in the authenticated verdict may receive live observations. Internal helper and offline-only routines require independent evidence.",
+    "Original-ROM parity remains separate. Final source freeze, wiring commit and post-cleanup evidence dependencies must be recorded before publication.",
+]
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/recovery-session/composed-live-release/1791861180321696848-129445/verdict.toml"
+
+[[evidence]]
+path = "COORDINATOR_COMPOSED_POST_CLEANUP_AUTHENTICATION_RECEIPT"
+
+[[evidence]]
+path = "COORDINATOR_COMPOSED_FINAL_CLEANUP_RECEIPT"
+
+[[evidence]]
+path = "COORDINATOR_COMPOSED_FINAL_DEDUPLICATION_RECEIPT"

@@ -1,0 +1,26 @@
+out/port/cumulative-live/20261010T195410.282578Z/verdict.json: "live state/effects or CPU fallback rejected"
+out/port/animated-tiles-live/20261011T085347.505558Z/verdict.json: audited
+out/port/palette-effect-frame-replay/20261011T092352.241110Z/verdict.json: audited
+out/port/ceres-pad-live/20261011T081814.286687Z/verdict.json: audited
+out/port/current-batch-live/20261010T210726.219277Z/verdict.json: audited
+out/port/storage-pipeline/packed/20261011T103408.758284Z/verdict.json: "artifact absent: /home/jim/sm-decomp/out/port/storage-pipeline/packed/20261011T103408.758284Z/c-0/fixtures/decompress-0001-after.wram: No such file or directory (os error 2)"
+out/port/storage-pipeline/packed-timing/verdict.json: "artifact absent: /home/jim/sm-decomp/out/port/storage-pipeline/packed-timing/c-0/fixtures/decompress-0001-after.wram: No such file or directory (os error 2)"
+out/port/storage-pipeline/plain/20261011T103633.871448Z/verdict.json: audited
+out/port/projectile-movement-live/20261011T061431.667466Z/verdict.json: audited
+out/port/ceres-platform-live/20261011T073246.635709Z/verdict.json: audited
+out/port/room-plm-live/20261010T223747.065046Z/verdict.json: audited
+out/port/gameplay-control-live/20261010T201048.927361Z/verdict.json: "live state/effects or CPU fallback rejected"
+out/port/animated-tile-frame-replay/20261011T090833.758853Z/verdict.json: audited
+out/port/sprite-rendering-live/20261011T083926.700735Z/verdict.json: audited
+out/port/projectile-contact-render-live/20261011T130027.565661Z/verdict.json: "artifact absent: /home/jim/sm-decomp/out/port/projectile-contact-render-live/20261011T130027.565661Z/c-0/fixtures/active-port-000-001-after.wram: No such file or directory (os error 2)"
+out/port/projectile-contact-hit-live/20261011T130615.144077Z/verdict.json: "artifact absent: /home/jim/sm-decomp/out/port/projectile-contact-hit-live/20261011T130615.144077Z/c-0/fixtures/active-port-000-001-after.wram: No such file or directory (os error 2)"
+out/port/observed-projectile-corrected-live-45000/20261011T135145.693993Z/verdict.json: "no explicitly measured native Rust roots"
+out/port/live/20261010T194953.940696Z/verdict.json: "live state/effects or CPU fallback rejected"
+out/port/room-plm-current-live/20261010T224032.887967Z/verdict.json: audited
+out/port/flight-fixed-live/20261010T204643.443282Z/verdict.json: audited
+out/port/observed-projectile-corrected-live-full/20261011T135146.556016Z/verdict.json: "no explicitly measured native Rust roots"
+out/port/sprite-objects-live/20261011T082259.543000Z/verdict.json: audited
+out/port/projectile-script-leaves-live/20261011T075955.123199Z/verdict.json: audited
+out/port/batches/20261010T213631.753519Z/replays/20261010T215856.742725Z/evidence/20261010T215856.841221Z/verdict.json: audited
+out/port/observed-projectile-with-gfx-live-full/20261011T142927.603436Z/verdict.json: "no explicitly measured native Rust roots"
+out/port/batches/20261010T211506.367424Z/replays/20261010T211540.365419Z/evidence/20261010T211540.392718Z/verdict.json: audited

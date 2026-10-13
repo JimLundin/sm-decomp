@@ -1,0 +1,75 @@
+agent = "/root/coverage_finish"
+commit = "3ce28ba58aba319b60bbc949153baafd4433132e"
+evidence_context = "current-checkout"
+id = "source-projectile_flight-6053-translated-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Maintained executable Rust implementations mapped through explicit dispatch branches, numeric selectors or reviewed private aliases to exact pinned C definitions. Source correspondence establishes translated coverage only; bounded branches, delegated C/host effects and per-module limitations are retained in source-coverage-map.json.",
+    "This observation does not grant verification, integration or live exercise. Missing routine reports and source-only mappings remain distinct from missing implementations; documentation literals and forwarding references are excluded unless their implementation owner was mapped separately.",
+]
+routines = [
+    "BlockCollMissileHoriz",
+    "BlockCollMissileVert",
+    "BlockCollNoWaveBeamHoriz",
+    "BlockCollNoWaveBeamVert",
+    "BlockCollWaveBeamHoriz",
+    "BlockCollWaveBeamVert",
+    "BlockReact_BombableAir",
+    "BlockReact_BombableBlock",
+    "BlockReact_Shootable",
+    "BlockReact_ShootableAir",
+    "BlockShotReactHoriz",
+    "BlockShotReactHoriz_Slope",
+    "BlockShotReactHoriz_Slope_NonSquare",
+    "BlockShotReactHoriz_Slope_Square",
+    "BlockShotReactVert",
+    "BlockShotReactVert_Slope",
+    "BlockShotReactVert_Slope_NonSquare",
+    "BlockShotReactVert_Slope_Square",
+    "BlockShotReact_Slope_NonSquare",
+    "CheckBeamCollByDir",
+    "CheckBeamCollByDir_0459",
+    "CheckBeamCollByDir_1368",
+    "CheckBeamCollByDir_2",
+    "CheckBeamCollByDir_7",
+    "FireChargedBeam",
+    "FireHyperBeam",
+    "FireUnchargedBeam",
+    "HudSelectionHandler_MissilesOrSuperMissiles",
+    "ProjPreInstr_BeamOrIceWave",
+    "ProjPreInstr_Beam_NoWaveBeam",
+    "ProjPreInstr_Dir0459",
+    "ProjPreInstr_Dir1368",
+    "ProjPreInstr_Dir27",
+    "ProjPreInstr_HyperBeam",
+    "ProjPreInstr_Missile",
+    "ProjPreInstr_Missile_Func0459",
+    "ProjPreInstr_Missile_Func1368",
+    "ProjPreInstr_Missile_Func27",
+    "ProjPreInstr_SuperMissile",
+    "ProjPreInstr_SuperMissile_Func0459",
+    "ProjPreInstr_SuperMissile_Func1368",
+    "ProjPreInstr_SuperMissile_Func27",
+    "ProjPreInstr_WavePlasmaEtc",
+    "ProjPreInstr_WavePlasmaEtc_0459",
+    "ProjPreInstr_WavePlasmaEtc_1368",
+    "ProjPreInstr_WavePlasmaEtc_27",
+    "ProjectileTrail_Func5",
+    "SpawnProjectileTrail",
+    "SuperMissileBlockCollDetect_X",
+    "SuperMissileBlockCollDetect_Y",
+    "WaveBeam_CheckColl",
+    "WaveBeam_CheckColl_0459",
+    "WaveBeam_CheckColl_1368",
+    "WaveBeam_CheckColl_2",
+    "WaveBeam_CheckColl_7",
+]
+scope = "Maintained projectile_flight implementation mapping"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "translated"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/crates/port/src/projectile_flight.rs"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/source-coverage-map.json"

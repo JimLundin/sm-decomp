@@ -1,6 +1,6 @@
 # Observed enemy projectile allocator and scheduler ownership
 
-Status: claimed
+Status: resolved
 Blocked by: 32, 37, 80, 81, 88
 Triage: ready-for-agent
 
@@ -428,3 +428,21 @@ worktree and branch were untouched. Cleanup details:
 
 Status remains claimed for final requirement/batch reconciliation; this commit
 checkpoints the evidence without beginning ticket138 implementation.
+
+### Recovered completion, 2026-10-13
+
+The claimed status above is historical. Shared native live wiring is integrated
+at `3ce28ba58aba319b60bbc949153baafd4433132e`. Twelve affected Offline families
+pass 20,943 actual-C pairs and authenticate after cleanup; the completed
+129,712-input four-subject composed replay preserves native137 allocation,
+scheduling, rendering and contact ownership with matching state/effects and
+zero CPU fallback. `../recovery-live-completion-20261013.md` records the exact
+counters, verdict, bounded-source and post-cleanup authentication pointers.
+
+The recovered Offline batch deduplicated 4,522,901,504 bytes; both final utility
+passes reclaimed zero. Composed ordinary cleanup reclaimed 48,176,296 bytes
+and deduplication zero; four subjects with 1,881 artifacts each authenticate
+afterward. Stale implementer worktrees were retired, preserving source-only
+snapshots, shared packed store, pointers and readers. Remaining space is recorded
+in `../recovery-live-final-disk.txt`. Ticket137 is resolved; original-ROM parity,
+credits progression and broader Ridley lifecycle admission remain separate work.

@@ -1,0 +1,956 @@
+{
+  "authenticated_artifacts": 2353,
+  "captures": [
+    {
+      "capture": "enemy-frame-e73a-window1-01",
+      "frame": 36877,
+      "frame_opcode_count": 2,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e73a-window2-01",
+      "frame": 70656,
+      "frame_opcode_count": 2,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e746-window1-01",
+      "frame": 36878,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e746-window1-02",
+      "frame": 36879,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e746-window2-01",
+      "frame": 70657,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e746-window2-02",
+      "frame": 70658,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e74c-window1-01",
+      "frame": 36886,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e74c-window1-02",
+      "frame": 36887,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e74c-window2-01",
+      "frame": 70665,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e74c-window2-02",
+      "frame": 70666,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e750-window1-01",
+      "frame": 36894,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e750-window1-02",
+      "frame": 36895,
+      "frame_opcode_count": 2,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e750-window2-01",
+      "frame": 70673,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e750-window2-02",
+      "frame": 70674,
+      "frame_opcode_count": 2,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e758-window1-01",
+      "frame": 36896,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e758-window1-02",
+      "frame": 36897,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e758-window2-01",
+      "frame": 70675,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e758-window2-02",
+      "frame": 70676,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e760-window1-01",
+      "frame": 36901,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e760-window1-02",
+      "frame": 36902,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e760-window2-01",
+      "frame": 70680,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e760-window2-02",
+      "frame": 70681,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e768-window1-01",
+      "frame": 36906,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e768-window1-02",
+      "frame": 36907,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e768-window2-01",
+      "frame": 70685,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e768-window2-02",
+      "frame": 70686,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e770-window1-01",
+      "frame": 36911,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e770-window1-02",
+      "frame": 36912,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e770-window2-01",
+      "frame": 70690,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e770-window2-02",
+      "frame": 70691,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e774-window1-01",
+      "frame": 36959,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e774-window1-02",
+      "frame": 36960,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e774-window2-01",
+      "frame": 70738,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e774-window2-02",
+      "frame": 70739,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e77c-window1-01",
+      "frame": 36967,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e77c-window1-02",
+      "frame": 36968,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e77c-window2-01",
+      "frame": 70746,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e77c-window2-02",
+      "frame": 70747,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e784-window1-01",
+      "frame": 36999,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e784-window1-02",
+      "frame": 37000,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e784-window2-01",
+      "frame": 70778,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e784-window2-02",
+      "frame": 70779,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e788-window1-01",
+      "frame": 37007,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e788-window1-02",
+      "frame": 37008,
+      "frame_opcode_count": 2,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e788-window2-01",
+      "frame": 70786,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e788-window2-02",
+      "frame": 70787,
+      "frame_opcode_count": 2,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e790-window1-01",
+      "frame": 37009,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e790-window1-02",
+      "frame": 37010,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e790-window2-01",
+      "frame": 70788,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e790-window2-02",
+      "frame": 70789,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e798-window1-01",
+      "frame": 37014,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e798-window1-02",
+      "frame": 37015,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e798-window2-01",
+      "frame": 70793,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e798-window2-02",
+      "frame": 70794,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e7a0-window1-01",
+      "frame": 37019,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e7a0-window1-02",
+      "frame": 37020,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e7a0-window2-01",
+      "frame": 70798,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e7a0-window2-02",
+      "frame": 70799,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e7a8-window1-01",
+      "frame": 37024,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e7a8-window1-02",
+      "frame": 37025,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e7a8-window2-01",
+      "frame": 70803,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e7a8-window2-02",
+      "frame": 70804,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e7ac-window1-01",
+      "frame": 37072,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e7ac-window1-02",
+      "frame": 37073,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e7ac-window2-01",
+      "frame": 70851,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e7ac-window2-02",
+      "frame": 70852,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e7b2-window1-01",
+      "frame": 37080,
+      "frame_opcode_count": 1,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e7b2-window1-02",
+      "frame": 37081,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e7b2-window2-01",
+      "frame": 70859,
+      "frame_opcode_count": 1,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-frame-e7b2-window2-02",
+      "frame": 70860,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": true,
+      "host": "matches all eight captured words",
+      "return": 0,
+      "symbol": "ProcessEnemyInstructions",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-opcode-e4be-window1-02",
+      "frame": 36885,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": false,
+      "host": "matches all eight captured words",
+      "return": 10938184,
+      "symbol": "Ridley_Instr_5",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-opcode-e4be-window2-02",
+      "frame": 70664,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": false,
+      "host": "matches all eight captured words",
+      "return": 10938184,
+      "symbol": "Ridley_Instr_5",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-opcode-e4ca-window1-02",
+      "frame": 37079,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": false,
+      "host": "matches all eight captured words",
+      "return": 10938286,
+      "symbol": "Ridley_Instr_6",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-opcode-e4ca-window2-02",
+      "frame": 70858,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": false,
+      "host": "matches all eight captured words",
+      "return": 10938286,
+      "symbol": "Ridley_Instr_6",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-opcode-e4d2-window1-01",
+      "frame": 36877,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": false,
+      "host": "matches all eight captured words",
+      "return": 10938178,
+      "symbol": "Ridley_Instr_10",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-opcode-e4d2-window1-02",
+      "frame": 36966,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": false,
+      "host": "matches all eight captured words",
+      "return": 10938232,
+      "symbol": "Ridley_Instr_10",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-opcode-e4d2-window2-01",
+      "frame": 70656,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": false,
+      "host": "matches all eight captured words",
+      "return": 10938178,
+      "symbol": "Ridley_Instr_10",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-opcode-e4d2-window2-02",
+      "frame": 70745,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": false,
+      "host": "matches all eight captured words",
+      "return": 10938232,
+      "symbol": "Ridley_Instr_10",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-opcode-e84d-window1-01",
+      "frame": 36895,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": false,
+      "host": "matches all eight captured words",
+      "return": 10938194,
+      "symbol": "Ridley_Instr_11",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-opcode-e84d-window1-02",
+      "frame": 36900,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": false,
+      "host": "matches all eight captured words",
+      "return": 10938202,
+      "symbol": "Ridley_Instr_11",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-opcode-e84d-window2-01",
+      "frame": 70674,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": false,
+      "host": "matches all eight captured words",
+      "return": 10938194,
+      "symbol": "Ridley_Instr_11",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-opcode-e84d-window2-02",
+      "frame": 70679,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": false,
+      "host": "matches all eight captured words",
+      "return": 10938202,
+      "symbol": "Ridley_Instr_11",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-opcode-e904-window1-01",
+      "frame": 36895,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": false,
+      "host": "matches all eight captured words",
+      "return": 10938196,
+      "symbol": "Ridley_Instr_12",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-opcode-e904-window1-02",
+      "frame": 37008,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": false,
+      "host": "matches all eight captured words",
+      "return": 10938252,
+      "symbol": "Ridley_Instr_12",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-opcode-e904-window2-01",
+      "frame": 70674,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": false,
+      "host": "matches all eight captured words",
+      "return": 10938196,
+      "symbol": "Ridley_Instr_12",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-opcode-e904-window2-02",
+      "frame": 70787,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": false,
+      "host": "matches all eight captured words",
+      "return": 10938252,
+      "symbol": "Ridley_Instr_12",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-opcode-e909-window1-01",
+      "frame": 36900,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": false,
+      "host": "matches all eight captured words",
+      "return": 10938204,
+      "symbol": "Ridley_Instr_13",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-opcode-e909-window1-02",
+      "frame": 36905,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": false,
+      "host": "matches all eight captured words",
+      "return": 10938212,
+      "symbol": "Ridley_Instr_13",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-opcode-e909-window2-01",
+      "frame": 70679,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": false,
+      "host": "matches all eight captured words",
+      "return": 10938204,
+      "symbol": "Ridley_Instr_13",
+      "wram": "matches full 131072 bytes"
+    },
+    {
+      "capture": "enemy-opcode-e909-window2-02",
+      "frame": 70684,
+      "frame_opcode_count": 0,
+      "frame_opcode_identity_checked": false,
+      "host": "matches all eight captured words",
+      "return": 10938212,
+      "symbol": "Ridley_Instr_13",
+      "wram": "matches full 131072 bytes"
+    }
+  ],
+  "inventory": "/home/jim/sm-decomp/out/port/ridley-instructions/inventory/1791838371843885184-2",
+  "inventory_verdict_sha256": "a523b5a6d3611bbb8d4e40ddbae926f48f5abc9739a466265e1891b7fbc6d495",
+  "live_exercised": false,
+  "main_module_sha256": "e393dc2d8e53d709e15262a9d52bf27c600d955de5a5447c62381db0e1c6ab10",
+  "manifest": "/tmp/sm-ridley-instructions/tools/port/observed-ridley-instructions-captured.toml",
+  "manifest_sha256": "bc9383a6cad1407b89fcb514d7d93911e0802f7875496ab0a7ec79866c8f1a61",
+  "module": "/tmp/sm-ridley-instructions/crates/port/src/ridley_enemy_instructions.rs",
+  "module_sha256": "e393dc2d8e53d709e15262a9d52bf27c600d955de5a5447c62381db0e1c6ab10",
+  "original_rom_parity": "not tested",
+  "seconds": 4.95679291,
+  "status": "captured-rust-matches-native",
+  "windows": {
+    "1": {
+      "first_frame": 36877,
+      "frames": 2075,
+      "frozen": 0,
+      "last_frame": 38951,
+      "opcode_counts": {
+        "a6812f": 1,
+        "a6e4be": 2,
+        "a6e4ca": 1,
+        "a6e4d2": 2,
+        "a6e517": 1,
+        "a6e84d": 9,
+        "a6e904": 2,
+        "a6e909": 6
+      },
+      "retained_callbacks": 10,
+      "retained_frames": 35,
+      "timer_due": 18
+    },
+    "2": {
+      "first_frame": 70656,
+      "frames": 318,
+      "frozen": 0,
+      "last_frame": 70973,
+      "opcode_counts": {
+        "a6812f": 1,
+        "a6e4be": 2,
+        "a6e4ca": 1,
+        "a6e4d2": 2,
+        "a6e517": 1,
+        "a6e84d": 9,
+        "a6e904": 2,
+        "a6e909": 6
+      },
+      "retained_callbacks": 10,
+      "retained_frames": 35,
+      "timer_due": 18
+    }
+  }
+}

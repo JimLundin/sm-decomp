@@ -1,0 +1,10 @@
+apply = true
+bytes = 48176296
+
+[[targets]]
+path = "/home/jim/sm-decomp/out/recovery-session/composed-live-release/1791861180321696848-129445/libfamilies.a"
+bytes = 24530060
+
+[[targets]]
+path = "/home/jim/sm-decomp/out/recovery-session/composed-live-release/1791861180321696848-129445/librng.a"
+bytes = 23646236

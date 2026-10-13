@@ -1,0 +1,45 @@
+agent = "/root/coverage_finish"
+commit = "3ce28ba58aba319b60bbc949153baafd4433132e"
+evidence_context = "current-checkout"
+id = "source-enemy_jump-6053-translated-accuracy-20261013"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = [
+    "Maintained executable Rust implementations mapped through explicit dispatch branches, numeric selectors or reviewed private aliases to exact pinned C definitions. Source correspondence establishes translated coverage only; bounded branches, delegated C/host effects and per-module limitations are retained in source-coverage-map.json.",
+    "This observation does not grant verification, integration or live exercise. Missing routine reports and source-only mappings remain distinct from missing implementations; documentation literals and forwarding references are excluded unless their implementation owner was mapped separately.",
+]
+routines = [
+    "Sidehopper_Func_1",
+    "Sidehopper_Func_10",
+    "Sidehopper_Func_11",
+    "Sidehopper_Func_12",
+    "Sidehopper_Func_13",
+    "Sidehopper_Func_14",
+    "Sidehopper_Func_15",
+    "Sidehopper_Func_16",
+    "Sidehopper_Func_17",
+    "Sidehopper_Func_18",
+    "Sidehopper_Func_19",
+    "Sidehopper_Func_2",
+    "Sidehopper_Func_20",
+    "Sidehopper_Func_21",
+    "Sidehopper_Func_22",
+    "Sidehopper_Func_3",
+    "Sidehopper_Func_4",
+    "Sidehopper_Func_5",
+    "Sidehopper_Func_6",
+    "Sidehopper_Func_7",
+    "Sidehopper_Func_8",
+    "Sidehopper_Func_9",
+    "Sidehopper_Init",
+    "Sidehopper_Instr_1",
+    "Sidehopper_Main",
+]
+scope = "Maintained enemy_jump implementation mapping"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+stage = "translated"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/crates/port/src/enemy_jump.rs"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/source-coverage-map.json"
