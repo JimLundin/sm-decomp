@@ -1,0 +1,36 @@
+schema = "decomp-readiness-ownership-boundaries-v1"
+observed_at = "2026-10-13T11:41:15Z"
+observer_thread = "01a13502-c69b-7d73-8bdb-1d6acc07f12b"
+legacy_integrator_thread = "01a133eb-76e2-7073-9aef-d97c03a812e4"
+legacy_integrator_status = "failed"
+previous_preparation_thread = "01a134cd-dafb-7e50-8284-f285a905e05b"
+previous_preparation_status = "failed"
+replacement_integrator_thread = "01a13500-1ef8-73d3-9a0d-3446b6050eba"
+replacement_integrator_status = "running"
+replacement_integrator_generation = 1
+main_git_owner_thread = "01a13500-1ef8-73d3-9a0d-3446b6050eba"
+reporting_thread = "01a13394-29b8-76a3-aab7-5ab8eff60694"
+reporting_status = "completed"
+reporting_handoff_commit = "9ed933daa151f52e3cf922e6559c7681330e0f85"
+reporting_server_retained_pid = 420446
+reporting_server_start_ticks = 2249195
+reporting_server_boot_id = "7119fcce-5593-4526-aa9b-07127767c4ef"
+claim_processes_observed = []
+claim_states_unchanged = true
+original_claims_released = false
+gameplay_launched = false
+authority_present = false
+canonical_ledger_present = false
+limitations = ["Fresh process inspection found no retained Ceres path writer; submitted jobs and running integration remain held.", "Prospective generation1 transfer occurs only inside the private namespace; host production has never acquired it.", "Real thread/process observations remain a tool trust boundary, not platform attestation.", "Prior isolated-drill coordinator remains active; no ownership release is inferred from absence of matching processes."]
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-retry-20261013/thread-inspection-current.json"
+sha256 = "4833300bd219b25cfdb2f49fd24a84386bdebae6c750f37db028a482bd260608"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-retry-20261013/process-inspection-current.toml"
+sha256 = "9a6be49e6a410369ee61e32ee4dd398ffe73b6e5afe6b1d7fec3d94b70c7484d"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-recovery-20261013/artifacts.sha256"
+sha256 = "96c408f3e5422c1cd5db953f669490c2b23026d558667ce11745a3702fc143f1"

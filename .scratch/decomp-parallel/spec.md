@@ -5,6 +5,14 @@ Blocked by: 01, 02, 03, 04, 05
 Owner: integration coordinator
 Plan deliverable: complete; implementation and gameplay milestones remain open
 
+Preparation: tickets 01–03 and 05 resolved; corrected actual drill 04 active, readiness pending
+Preparation coordinator: `01a13500-1ef8-73d3-9a0d-3446b6050eba`
+
+Read [preparation status](preparation/status.md) for the current frozen source,
+actual final receipts and production boundary. Follow
+[the launch handoff](preparation/launch-handoff.md) only after 04 resolves and the
+user separately requests the gameplay swarm. The full gameplay spec remains open.
+
 The destination is a readable Rust Super Metroid source port, with emulated
 SNES hardware. Follow [the agreed pivot](../../docs/DECOMP_PIVOT.md) and
 [the revised strategy](../decomp-strategy/revised-strategy.md): ordinary-reset
@@ -36,12 +44,14 @@ flowchart LR
     P --> Q
 ```
 
-## Current checkpoint and limits
+## Historical checkpoint and current limits
 
 Authored source and retained receipts are checkpointed at
 `d8a90451695408bbf72017ea04e7f4e915b06dd9` on
 `affected-family-assignment`. See [the checkpoint](checkpoint-20261013.md)
 for exact source archives, raw evidence hashes, private dependencies and cleanup.
+The following table records that checkpoint's source and claim observations;
+reinspect current authority and owners through preparation status before action.
 
 | Work | Recorded state | Next action |
 | --- | --- | --- |
@@ -60,20 +70,23 @@ budgets; two sessions do not each acquire four additional process workers.
 
 | Existing Rust capability | Practical limit / planned extension |
 | --- | --- |
-| `assignment.rs`: atomic reservations, revision/attempt history, disjoint writable paths, no expiry, repeated-update recovery | Conflicts and integration activity are checked within one effort. The global mutation lock does not inspect arbitrary paths in all other ledgers. |
-| `coordination.rs`: native source/submission/gate/evidence validation and cleanup | First submission latches `integration_owner`; a coordinator token is not real session fencing. Native infrastructure admission is missing; the Ceres Rust driver records its custom jobs separately. |
+| `assignment.rs`: atomic reservations, revision/attempt history, no expiry, exact retry recovery and cross-effort ownership inspection | Shared mutation lock checks paths/aliases, tickets and linked submissions across efforts; prepared policy enforces shared capacity, and admitted mutations bind current real role generations. Actual external liveness remains a tool observation. |
+| `authority.rs` / `session.rs` / `coordination.rs`: explicit roles, native source/submission/gate/evidence validation and cleanup | Maintained infrastructure scope admission, real-session generation fencing and exact bridge-request replay exist. One registered integrator serializes frozen shared source; original legacy gates remain authoritative. |
 | `translation.rs`: pinned exercise/dependency provenance and bounded coherent scope promotion | Current scope schema permits 1–32 routines and restricted gameplay paths. Larger whole subsystems and infrastructure need explicit maintained support, not invented acceptance through this schema. |
 | `batch.rs`: affected-family selection, reusable verdict authentication and shared workers | Unknown dependency inputs remain affected. Independent batch paths do not grant independent writable ownership. |
-| `metrics.rs`: command/process lifecycle, failure/cancellation records and cost measurements | A transcript or PID alone cannot establish a recoverable claim. Compact session summaries and durable real thread identities are future work. |
+| `metrics.rs` / `session.rs`: process lifecycle and typed durable Start/Checkpoint/Inspect/Resume/Adopt | Handoffs retain exact source, real child/parent identities, commands and evidence; callers still inspect actual thread/process start identity after a crash. Resume returns reviewed commands and executes none. |
 | Progress command: locked atomic stage publication with evidence pointers | Stages remain independent. Existing observations and seals are preserved; cleanup/authentication precede integration and live publication. |
 
 ## Authority cutover
 
 The future canonical effort is **decomp-parallel**, with ledger
 `.scratch/decomp-parallel/ledger.toml` and capacity **3**. It is **unactivated**.
-No session creates claims there until tickets **01–04** pass and a cutover receipt
-records the admitted coordinator identities, integrator, current HEAD and legacy
-ownership bridge. Tickets describe future work; this document changes no claims.
+No session creates claims there until tickets **01–04** pass, the user separately
+requests launch and an actual cutover records admitted roles/generations, current
+source and the exact legacy bridge. Preparation validates a private prepared
+policy view with maintained `validate-activation`; production prepare,
+registration/checked transfer, validation and activation occur at launch.
+Ticket 04's actual final receipts remain pending. This document changes no claims.
 Ticket 04 runs its independent-session drill in a disposable isolated checkout
 and effort before production activation. Read-only catalog research in ticket
 05 starts after 01 and can run beside 02–04; mutable gameplay additionally
@@ -127,13 +140,14 @@ startup, claim, handoff, recovery and completion steps. Its durable contract is:
    completion records measured cleanup, checkpoints claims/tickets/handoffs
    and publishes each achieved stage independently.
 
-Handoffs use `.scratch/decomp-parallel/sessions/SESSION/JOB-ATTEMPT.md`, one
-writer per file, with exact real identities, claim tuple, source commits,
-writable scope, process identity, evidence dependencies, cleanup state and next
-command/cwd. The runbook specifies the fields. This manual convention works
-today; maintained infrastructure assignment and automated WIP/handoff/resume
-commands are ticket **03**. A WIP commit preserves source; gameplay acceptance
-still requires its separate evidence and integration gates.
+Typed `decomp-worker-handoff-v1` TOML is authoritative at
+`.scratch/decomp-parallel/sessions/SESSION/JOB-ATTEMPT.toml`; maintained session
+commands publish rendered Markdown at the corresponding `.md` path. Start stores
+the actual child UUID; Checkpoint validates exact owned files and recovers a
+retained commit intent; Inspect/Resume return durable pointers/reviewed commands;
+checked Adopt retains original handoff and transfer evidence. The runbook owns
+these commands and schemas. A WIP commit preserves source; gameplay acceptance
+requires its separate evidence and integration gates.
 
 ## Gameplay ownership lanes
 

@@ -9,7 +9,11 @@ Read the [parallel plan](../../.scratch/decomp-parallel/spec.md) and
 work. Read the [checkpoint](../../.scratch/decomp-parallel/checkpoint-20261013.md)
 for recovered source and retained evidence and the
 [preparation status](../../.scratch/decomp-parallel/preparation/status.md)
-for the current launch boundary and final validation subject. Follow [assignments](assignments.md)
+for the current launch boundary and final validation subject. For the user's
+later gameplay swarm launch, read
+[the launch handoff](../../.scratch/decomp-parallel/preparation/launch-handoff.md)
+and its actual final drill/readiness receipts before preparing production
+authority. Follow [assignments](assignments.md)
 for claim/result schemas, [translation progress](translation-progress.md) for
 stage publication, and [run cleanup](run-cleanup.md) before handing work back.
 
@@ -275,6 +279,15 @@ The integrator admits the exact scoped submission, freezes merged source,
 verifies all affected Offline families and required gates, publishes achieved
 stages, completes both cleanup passes, and records authenticated completion.
 Independent workers continue in their own worktrees while integration runs.
+Infrastructure integration validates baseline-to-submitted-commit writable
+ownership while retaining clean exact shared merged HEAD as the integration
+source. This permits sequential disjoint merges without assigning the first
+submission's files to the second worker. Keep the exact submitted claim/source
+and frozen merged source distinct in typed handoffs and evidence.
+Completed infrastructure result retries authenticate the original sealed
+historical source/gates/cleanup and exact completed claim lineage. Later clean
+merged HEAD may descend from that source; replay preserves original acceptance
+and executes no gate. Running/new integration still binds frozen current source.
 Shared pipeline/tools edits can invalidate source fingerprints even when
 gameplay paths are disjoint; freeze the verification checkout, inspect stale
 jobs and repeat affected verification when inputs change.
@@ -288,10 +301,11 @@ the retained evidence store, readers and private inputs listed in the handoff.
 
 Completion requires the durable integrated result, stage observations,
 authenticatable retained evidence, cleanup records and a clean scoped Git
-checkpoint. At the checkpoint, merged shared-host integration remained running
-and the controller was submitted for integration. Read the checkpoint and live
-status for those claims rather than inferring completion from passing fixtures
-or stopped workers.
+checkpoint. The checkpoint's Ceres host/controller observations are historical;
+inspect current live status and the launch handoff for the same held claims.
+Preparation resolves 01–05 only after final drill/readiness/cleanup receipts;
+spec/map and gameplay 06–20 retain their own unresolved gates. Production
+activation and gameplay launch require the user's separate launch instruction.
 
 ## Session prompts
 

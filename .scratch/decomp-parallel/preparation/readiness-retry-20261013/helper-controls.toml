@@ -1,0 +1,8 @@
+schema = "decomp-readiness-helper-controls-v1"
+wrong_caller_exit_code = 1
+wrong_caller_rejected_before_output = true
+direct_inside_exit_code = 1
+direct_inside_rejected_missing_namespace_proof = true
+namespace_validation_run = false
+production_mutation_run = false
+limitations = ["Guard checks only; actual engine/build/drill validation remains root work"]

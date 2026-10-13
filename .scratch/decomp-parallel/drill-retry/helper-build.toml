@@ -1,0 +1,19 @@
+schema = "decomp-drill-helper-build-v1"
+compiler = "rustc 1.101.0-nightly (c1070d693 2026-09-28)"
+source_path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/main.rs"
+source_sha256 = "38ac54001f602f344d130cbdffefb89f59bad014639ed655b9eb86456d55cafb"
+binary_path = "/tmp/sm-decomp-drill-retry-harness-build/debug/decomp-drill"
+binary_sha256 = "7fb9946da8f3bce191f82a4c06f1066bbf7205d672c139b261dacd6fd0b34d95"
+retained_binary = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/bin/decomp-drill"
+evidence_source_path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/evidence-tools/src/main.rs"
+evidence_source_sha256 = "d162f645ad6df5e200a0ae9c43b85b31dc1c58ff0bea88acb94995c7743c2c5d"
+evidence_binary_path = "/tmp/sm-decomp-drill-retry-harness-build/debug/decomp-drill-evidence"
+evidence_binary_sha256 = "a43b6c6601ff4d086788dc3e89bff9d9afeb8c176a0d08cc1fffca2bf1ff0451"
+retained_evidence_binary = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/bin/decomp-drill-evidence"
+build_commands = [
+ ["cargo","build","--locked","--offline","--manifest-path","/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/Cargo.toml","--target-dir","/tmp/sm-decomp-drill-retry-harness-build"],
+ ["cargo","build","--locked","--offline","--manifest-path","/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/evidence-tools/Cargo.toml","--target-dir","/tmp/sm-decomp-drill-retry-harness-build"],
+]
+predecessor_harness_sha256 = "5a9b4c7a8eaadf83b635ae8fc721bbcdbbc06bb88c90c10c40aefb3151c6fd35"
+predecessor_evidence_sha256 = "98452b6e283dd3236b480114c23f98ed89c5a64066a483ed609e019feaf6585e"
+limitations = ["local build/hash provenance only", "helper builds are not actual independent-session concurrency evidence", "previous epoch's failed cached post-B retry remains failure evidence", "source changes only affect this epoch's harness/orchestration; corrected maintained engine separately sealed by root"]

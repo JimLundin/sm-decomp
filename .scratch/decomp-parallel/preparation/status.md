@@ -1,99 +1,95 @@
 # Parallel-session preparation readiness
 
-Status: tooling and catalog complete; actual drill final integration/validation active
+Status: tooling and catalog complete; corrected actual drill active, final readiness pending
 Blocked by: 04
 Triage: ready-for-agent
 Updated: 2026-10-13
+Coordinator: `01a13500-1ef8-73d3-9a0d-3446b6050eba`
 
 The [spec](../spec.md), [ticket map](../map.md) and
 [session runbook](../../../docs/agents/decomp-sessions.md) define the workflow.
-Preparation completes tickets 01–05. The user will request the gameplay swarm
-separately; current preparation creates no gameplay assignment or acceptance.
+Preparation completes tickets 01–05; the overall gameplay spec remains open.
+The user's separate gameplay swarm launch instruction is still required.
 
-## Preparation gates
-
-| Ticket | Status | Evidence |
+| Ticket | Status | Retained evidence |
 | --- | --- | --- |
-| [01 Legacy reconciliation](../issues/01-reconcile-legacy-ownership.md) | resolved | Twelve retained holdings, immutable original/successor bridges, exact stopped/live owner observations and checked maintenance adoption |
-| [02 Ownership and integration fencing](../issues/02-fence-writable-paths-and-integration-sessions.md) | resolved | Integrated Rust engine; cross-effort path/ticket/submission fences, shared capacity and real-session generation checks; focused controls and cleanup complete |
-| [03 Rust commands and handoffs](../issues/03-maintained-rust-commands-and-handoffs.md) | resolved | Typed infrastructure/session admission, checkpoint/Start/Resume/Adopt and exact integration retries; focused controls and cleanup complete |
-| [04 Actual concurrency/recovery drill](../issues/04-concurrency-and-crash-recovery-drill.md) | claimed | Independent real A/B sessions and workers; live-child/recovery/retry/budget controls passed; serial integration, final validation and cleanup active |
-| [05 Subsystem catalog](../issues/05-subsystem-scope-catalog.md) | resolved | Published whole-subsystem catalog and children 11–20; exact held Ceres continuation and milestone blockers; later missing facts remain research |
+| [01 Legacy reconciliation](../issues/01-reconcile-legacy-ownership.md) | resolved | Twelve retained holdings, immutable original/successor bridges and checked maintenance adoption |
+| [02 Ownership and integration fencing](../issues/02-fence-writable-paths-and-integration-sessions.md) | resolved | Cross-effort path/ticket/submission fencing, capacity and real-session generations; focused verification/cleanup complete |
+| [03 Rust commands and handoffs](../issues/03-maintained-rust-commands-and-handoffs.md) | resolved | Typed infrastructure admission, Start/Checkpoint/Resume/Adopt and exact retries; focused verification/cleanup complete |
+| [04 Actual concurrency/recovery drill](../issues/04-concurrency-and-crash-recovery-drill.md) | claimed | Fresh execution at corrected source; final eleven controls, two serial authenticated integrations, maintained validation/readiness and cleanup receipts pending |
+| [05 Subsystem catalog](../issues/05-subsystem-scope-catalog.md) | resolved | Whole-subsystem catalog and children 11–20; later implementation readiness remains research |
 
-## Exact source and ownership
+## Current validation subject
 
-The actual drill execution subject is frozen at
-`c8799f326ffe198b652301f08866f1b7a7bd9ebc` on
-`decomp-preparation-20261013`, checkout
-`/tmp/sm-decomp-preparation-integration-20261013`. Its source fingerprint is
-`4d87e457e895a03f82f5a7ccdd891f7769b83d25d48caf2fd3a55432e5929338`.
-Reporting source `263ad5a` is included. The
-[integration status](integration-status.md) retains source/test/recovery history.
-The frozen executable and Rust harness are retained in `../drill/` outside
-disposable build trees. Executable bytes remain outside Git; build and SHA-256
-receipts identify the retained reader.
+Execution and validation use the same retained source and executable:
 
-Final combined locked/offline verification passed 23 assignment, 15 session
-and 10 authority controls; formatting and build passed. Original failing
-diagnostics and corrected passing logs remain in
-[integration-evidence](integration-evidence/artifacts.sha256).
-A validator-only semantic correction is being tested separately: the engine's
-actual duplicate-ticket refusal `ticket is claimed` must be tied to the exact
-held ticket/claim and sealed disjoint candidate scope. It consumes the unchanged
-frozen subject; executed engine and validator source versions stay distinct.
+| Identity | Value |
+| --- | --- |
+| Frozen checkout | `/tmp/sm-decomp-preparation-retry-source-20261013` |
+| Full source commit | `57f93c5ce4e6adac2dfe181b852d4aad6e0776bd` |
+| Source fingerprint | `bd103af4b5d563904a3cbdbe62e971c46c6b4a4e907b60bbbb8575a2373355ec` |
+| Engine | `../drill-retry/bin/sm-pipeline` |
+| Engine SHA-256 | `04f4a10aec71b9654cdc1c7f1aca6936f9a9bb7ce810f8232c955f3b11e7d573` |
+| Build receipt | [engine-build.toml](../drill-retry/engine-build.toml), SHA-256 `cdf1295fdc8ad86b574866636f68966205e5c46bf2fd19649fa9a4dd2f5bdbb9`, checkpoint `9acff17` |
 
-Preparation coordinator is real thread
-`01a13460-4aa9-7fe0-865e-a8f54ffca310`. Original preparation coordinator failure
-and recovered worker ownership are preserved in reconciliation. Reporting
-finished and released main Git/index after both `main` and
-`affected-family-assignment` reached
-`9ed933daa151f52e3cf922e6559c7681330e0f85`. Preparation now owns that Git/index
-and its isolated integration worktree. The report server remains reporting-owned.
+The prior `drill-final` completed both serial integrations but A's completed
+exact retry failed after B advanced shared HEAD. The
+[completed-retry correction](../../decomp-integration-retry/handoff.toml) retains
+that diagnosis, red/green controls and the Rust fix; all 23 assignment, 17 session
+and 11 authority controls pass. Main integration is `0d042e0`; root checked
+Cargo/crates/tools source equivalence against the retained frozen source.
+The new [drill recipe](../drill-retry/recipe.md) uses isolated fixture
+`/tmp/sm-decomp-concurrency-drill-retry-20261013`, effort
+`concurrency-drill-retry`. Actual independent sessions A
+`01a13515-9a51-7c73-9913-1deb499ba15c` and B
+`01a13515-9a51-7af3-bc9f-a144afb06090` are active. Recover exact surviving owners
+and sealed state before issuing replacement work.
 
-## Production boundary
+Root must add these actual final receipts before setting preparation ready or
+resolving 04:
 
-Production `.scratch/decomp-parallel/authority.toml` and `ledger.toml` are
-absent. The original Ceres ledger remains authoritative under `ceres-20261013`,
-capacity 3, seal
+- **PENDING:** final `drill-retry/concurrency-drill.toml`, sealed execution
+  manifest, both sequential integrations and both completed exact retries at
+  final merged HEAD, plus passing maintained validation.
+- **PENDING:** current-root readiness successor at
+  [readiness-retry-20261013](readiness-retry-20261013/README.md), actual
+  `production-validation-1` private verdict with state `prepared`, host
+  authority/ledger preservation and unchanged legacy seals.
+- **PENDING:** both scoped cleanup passes, measured reclamation/free space,
+  required source/readers retained, integrated worktrees retired and passing
+  post-cleanup authentication.
+- **PENDING:** durable final documentation/source checkpoint owned by root.
+
+Original `drill/`, `drill-final/` A replay failure, prior source/validator epochs,
+recovery records and old readiness/cutover packages remain historical evidence.
+Current root is `01a13500-1ef8-73d3-9a0d-3446b6050eba`;
+prior preparation roots `01a13460-4aa9-7fe0-865e-a8f54ffca310` and
+`01a134cd-dafb-7e50-8284-f285a905e05b` retain their historical observations.
+Current main Git/index and process owners require direct observation by root;
+these documents do not establish liveness.
+
+## Production and later launch
+
+Production `.scratch/decomp-parallel/authority.toml` and `ledger.toml` remain
+absent. Ceres authority remains `.scratch/ceres-continuation/ledger.toml`, token
+`ceres-20261013`, capacity `3`, SHA-256
 `77fdba066af4f4c045e8e8f419997563d569ac0bd8045cef0a68ac916a126b89`.
-Both submitted controller/host and the running host integration retain their
-original claims, source, evidence readers and acceptance gates. A stopped
-submitter or parent does not release any of them. The original controller
-worktree remains a held unintegrated submission.
+Its original controller/host submissions and host integration retain their
+claims, source, readers and acceptance gates. The
+[v2 bridge](../reconciliation/legacy-owner-bridge-v2.toml) retains SHA-256
+`cb537f195b4f83529f2ea7a61bd65c6e77ad215366275e8d60a7a604c4eb0ba9`.
 
-All production sessions share
-`SM_PIPELINE_ROOT=/home/jim/sm-decomp/out/pipeline` and
-`SM_PIPELINE_WORKERS=4`; assignment capacity 3 is separate. The disposable
-actual drill uses its own tiny Rust fixture, repository, authority and budget
-root, with no private ROM/movie or production source input.
+After preparation resolution and the user's separate launch instruction, follow
+[the launch handoff](launch-handoff.md). Reinspect exact real owners, source,
+bridge and ledger before creating current production requests. Private readiness
+validation prepares and validates a policy view; production prepare, actual role
+registration, validate-activation and activation occur at launch. Canonical queue
+creation follows admitted operations after activation.
 
-The planned [cutover package](cutover/README.md) preserves exact legacy lineage.
-Final production readiness uses a private mount namespace with a temporary
-prepared policy view and maintained `validate-activation`. Host canonical
-[authority/ledger](readiness/README.md) remain absent throughout. SHA-256 seals
-establish retained artifact identity; real process/session observations remain
-an explicit tool inspection trust boundary.
-
-## Later swarm launch
-
-After preparation resolution and the user's separate launch instruction,
-reinspect all real owners/processes and exact source/ledger/bridge identities.
-Use the final readiness package against its retained frozen source subject,
-register current real dispatcher/integrator roles and activate only the reviewed
-policy. A change to mutation/admission code requires fresh actual drill evidence;
-validator-only and documentation changes require an explicit source-equivalence
-review. Then choose dependency-ready whole subsystems from the catalog. Continue
-held legacy claims through their original acceptance gates rather than creating
-[duplicate implementations](../catalog/subsystem-catalog.md). Native promotion
-still accepts bank86 projectile exercise provenance; other lanes require the
-researched contract extensions.
-
-## Cleanup
-
-Completed engine, session, integration-test and validator implementer worktrees
-were retired after source/evidence retention and both cleanup passes. Their
-small historical evidence paths and main relocation manifests authenticate.
-Private targets reclaimed 1,260,555,955, 1,884,150,932, 1,218,133,244 and
-1,481,441,788 bytes; root combined target reclaimed 1,806,295,023 bytes. The
-frozen executable remains a required evidence reader. Actual-drill, final
-validator and readiness-helper cleanup remain part of ticket 04 completion.
+All production sessions share `SM_PIPELINE_ROOT=/home/jim/sm-decomp/out/pipeline`
+and `SM_PIPELINE_WORKERS=4`; assignment capacity `3` is a separate budget.
+Ticket 11 continues the existing Ceres integration first; research 13/14 can use
+free slots while it integrates. Native promotion accepts bank86 exercise
+provenance and coherent 1–32 routine scopes; other lanes need their researched
+matching contracts. One integrator owns frozen verification, stage publication,
+main Git/index and run cleanup.

@@ -1,0 +1,19 @@
+[package]
+name = "decomp-concurrency-drill"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[[bin]]
+name = "decomp-drill"
+path = "main.rs"
+
+[dependencies]
+anyhow = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+toml = "0.8"
+libc = "0.2"

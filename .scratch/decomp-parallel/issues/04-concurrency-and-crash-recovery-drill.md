@@ -4,10 +4,10 @@ Status: claimed
 Blocked by: 02, 03
 Triage: ready-for-agent
 Type: task
-Owner: preparation drill worker `/root/drill_preparation`
-Source: `c8799f326ffe198b652301f08866f1b7a7bd9ebc`
+Owner: recovered preparation coordinator `01a13500-1ef8-73d3-9a0d-3446b6050eba`
+Source: `57f93c5ce4e6adac2dfe181b852d4aad6e0776bd`
 
-Existing queue tests and the manual runbook do not prove that independent live
+Existing queue tests and the runbook do not prove that independent live
 sessions can cooperate and recover. Exercise the implemented contracts from
 02 and 03 with two actual sessions before activating production authority.
 
@@ -52,6 +52,46 @@ authentication and cutover/legacy bridge hashes. Complete scoped
 [run cleanup](../../../docs/agents/run-cleanup.md), remove disposable worktrees
 after preserving dependencies, and record measured bytes/free space before
 resolution. Keep production source, claims and retained evidence intact.
+
+### Recovered corrected-source validation subject
+
+Current root is `01a13500-1ef8-73d3-9a0d-3446b6050eba`. Execution and validator
+use clean frozen `/tmp/sm-decomp-preparation-retry-source-20261013`, full commit
+`57f93c5ce4e6adac2dfe181b852d4aad6e0776bd`, fingerprint
+`bd103af4b5d563904a3cbdbe62e971c46c6b4a4e907b60bbbb8575a2373355ec`.
+Engine SHA-256 is
+`04f4a10aec71b9654cdc1c7f1aca6936f9a9bb7ce810f8232c955f3b11e7d573`;
+[build receipt](../drill-retry/engine-build.toml) SHA-256 is
+`cdf1295fdc8ad86b574866636f68966205e5c46bf2fd19649fa9a4dd2f5bdbb9`,
+checkpoint `9acff17`; main integration is `0d042e0`.
+
+The prior [drill-final outcomes](../drill-final/outcomes.md) completed two serial
+integrations but A's completed replay failed after B advanced HEAD. The current
+[Rust correction](../../decomp-integration-retry/handoff.toml) retains red/green
+diagnosis and passes 23 assignment, 17 session and 11 authority controls. It
+replays sealed historical acceptance without rerunning gates or accepting later
+source. Original failure receipts remain unchanged. New actual drill
+`concurrency-drill-retry` uses
+`/tmp/sm-decomp-concurrency-drill-retry-20261013`; follow its
+[recipe](../drill-retry/recipe.md) and exact surviving session/claim state.
+
+**PENDING before resolution:** append actual fresh A/B session/worker/claim and
+generation identities, final `drill-retry/concurrency-drill.toml` eleven-control
+manifest, two sequential authenticated integrations, both completed A/B exact
+retries after final HEAD and retirement, stale/budget receipts, passing
+maintained drill validation, current-root
+[readiness successor](../preparation/readiness-retry-20261013/README.md)
+`production-validation-1` verdict/host-preservation seals, both cleanup passes,
+measured bytes/free space, retired implementer worktrees, post-cleanup authentication and the
+final root Git checkpoint. A helper build or earlier drill control passes do not
+replace those actual receipts.
+
+The historical section below records unchanged `c8799f3` execution and its
+separate validator epoch. Its second-integration failure is preserved as the
+originating diagnosis for the earlier serial fix; `drill-final` replay failure
+is retained separately. Fresh actual corrected-source receipts remain pending.
+Production authority/canonical ledger remain absent, legacy Ceres
+claims/seals unchanged, and gameplay launch remains separately requested.
 
 ### Actual frozen execution retained 2026-10-13
 

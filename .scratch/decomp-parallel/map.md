@@ -4,12 +4,17 @@ Status: open
 Blocked by: 01, 02, 03, 04, 05, 06, 07, 08, 09, 10
 Plan deliverable: complete; implementation remains open
 
+Preparation: tickets 01–03 and 05 resolved; corrected actual drill 04 active, readiness pending
+Preparation coordinator: `01a13500-1ef8-73d3-9a0d-3446b6050eba`
+
 The [spec](spec.md) defines the outcome and authority transition. The
 [session runbook](../../docs/agents/decomp-sessions.md) contains supported
 commands, subagent dispatch, WIP/handoff rules and fresh/resume prompts.
 The [committed checkpoint](checkpoint-20261013.md) preserves recovered source
 and evidence. The [preparation status](preparation/status.md) records the current
 tooling, actual-session drill and launch boundary.
+The [launch handoff](preparation/launch-handoff.md) records the current retained
+subject and later launch procedure; its actual final receipts remain pending.
 
 ## Decisions so far
 
@@ -32,8 +37,19 @@ tooling, actual-session drill and launch boundary.
   WIP commits and diagnostic prefixes describe bounded progress.
 - Ticket 01's retained owner bridge and exact tooling adoption are checkpointed
   at `c46b730` on `decomp-preparation-20261013`; normalized successor bridge
-  retains its immutable predecessor. Tickets 02/03 implement disjointly while
+  retains its immutable predecessor. Tickets 02/03 are integrated and resolved;
   production authority and all original gameplay submissions remain held.
+- The corrected completed-integration replay source is
+  `57f93c5ce4e6adac2dfe181b852d4aad6e0776bd`, retained at
+  `/tmp/sm-decomp-preparation-retry-source-20261013`. Execution and validation
+  use the same engine; [preparation status](preparation/status.md) owns its
+  exact fingerprint/build/seals. `drill-final` A replay failure after B's merge
+  remains historical; the Rust fix/test is integrated as `0d042e0`.
+- **PENDING:** ticket 04's final eleven-control manifest, both sequential
+  authenticated integrations and completed A/B replays at final HEAD, maintained
+  validation, current-root private readiness validation/host preservation,
+  measured cleanup and reauthentication.
+  Gameplay launch and production activation remain the user's separate request.
 - Ticket 05's [catalog](catalog/subsystem-catalog.md) identifies reused acceptance,
   exact held Ceres continuation and child research 11–20. Native promotion still
   accepts bank86 projectile exercise provenance; other observed callers need a
@@ -47,7 +63,7 @@ tooling, actual-session drill and launch boundary.
 | [01 Reconcile legacy ownership](issues/01-reconcile-legacy-ownership.md) | task | resolved | None | Retained legacy bridge and checked isolated tooling adoption |
 | [02 Fence writable paths and integration sessions](issues/02-fence-writable-paths-and-integration-sessions.md) | task | resolved | 01 | Integrated Rust ownership engine; focused controls and cleanup complete |
 | [03 Maintain Rust commands and durable handoffs](issues/03-maintained-rust-commands-and-handoffs.md) | task | resolved | 01 | Integrated typed Rust session commands; focused controls and cleanup complete |
-| [04 Prove concurrent sessions and crash recovery](issues/04-concurrency-and-crash-recovery-drill.md) | task | claimed | 02, 03 | Actual independent-session drill; integration and final authentication active |
+| [04 Prove concurrent sessions and crash recovery](issues/04-concurrency-and-crash-recovery-drill.md) | task | claimed | 02, 03 | Corrected retry-source actual drill active; final validation/readiness/cleanup pending |
 | [05 Catalog dependency-ready subsystem scopes](issues/05-subsystem-scope-catalog.md) | research | resolved | 01 | Published catalog and children 11–20; honest research/held readiness |
 | [06 Ordinary-reset Ceres escape](issues/06-ordinary-reset-ceres-escape.md) | task | open | 04, 05, 11, 12, 13 | Existing controller/host continuation and required scheduler/hardware contract |
 | [07 Playable vanilla progression](issues/07-playable-vanilla-progression.md) | task | open | 06, 13, 14, 15, 16, 17, 18 | Parallel subsystem children; composed route gate |
@@ -67,10 +83,11 @@ tooling, actual-session drill and launch boundary.
 
 On the separately requested gameplay launch, choose the first open, unblocked,
 unclaimed ticket by number. Readiness never reopens an existing claim.
-Tickets 02, 03 and 05 are complete. Ticket 04 runs in an isolated disposable checkout/effort;
-production canonical authority activates only with passing retained drill
-receipts and a validated legacy bridge/cutover. Gameplay mutation through the
-future workflow starts after 04 and 05. Ticket 05's lane table produces concrete
+Tickets 01–03 and 05 are complete. Ticket 04 runs in an isolated disposable
+checkout/effort. Private readiness validation keeps production authority/ledger
+absent; production activation later requires the user's launch instruction,
+passing exact drill receipts and fresh role/legacy bridge validation. Gameplay
+mutation through that workflow starts after 04 and 05. Ticket 05's lane table produces concrete
 child tickets/scopes; each child lists dependencies and is added to its
 milestone. Parent milestones do not make subsystem implementation serial.
 
