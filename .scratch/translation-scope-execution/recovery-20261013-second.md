@@ -4,15 +4,16 @@ Status: implementing
 Owner: `01a136a0-49bb-7690-a360-48def3c2c09b`
 Worktree: `/home/jim/sm-decomp-translation-execution`
 Branch: `architecture/translation-scope-execution-20261013`
-Parent checkpoint: `fe0de9ac8ed44971ce5ea57b72f1cbc892e2ee98`
+Checkpoint: `f845516` (ticket lifecycle authentication and recovery handoff)
 
 ## Current next action — ticket lifecycle recovery checkpoint
 
 The current continuation has inspected the same three children through
 collaboration: `bounded_git` and `managed_admission` errored with encrypted-output
 transport failures; `supervisor_audit` completed. No replacement was launched.
-No Cargo, native gate, validator or supervisor writer remains in the selected
-run directories. Root owns the returned source and this worktree's Git/index.
+At startup no Cargo, native gate, validator or supervisor writer remained in the
+selected run directories; proof11's later writer is recorded below. Root owns
+the returned source and this worktree's Git/index.
 The production integrator thread is observed completed; its held production
 claims and registered generation remain untouched.
 
@@ -38,9 +39,13 @@ The affected migration suite passed 11 tests with two ignored diagnostics;
 admitted-progress regression passed. Pipeline Clippy's one cloned-slice finding
 has been corrected and its final rerun is pending.
 
-Next, run one fresh complete managed proof at `managed-gates/actual-c-managed-11`
-using the already built test executable below. Do not rebuild this executable
-while the proof runs or overwrite any historical Installation/reader. Preserve
+The fresh managed proof at `managed-gates/actual-c-managed-11` was launched once
+at 2026-10-13 22:35:37 UTC with the command below. Current writer PID is 1098911,
+parent 3389, Linux start ticks 6514166, boot ID
+`7119fcce-5593-4526-aa9b-07127767c4ef`; exec session39653 retains its output.
+Its executable path and SHA-256 match the frozen test executable below. Inspect
+that exact start identity before resuming monitoring; a PID alone is insufficient.
+Do not launch another proof or rebuild this executable while it runs. Preserve
 any failure and diagnose the retained graph read-only before another producer.
 
 ```sh
