@@ -1,0 +1,12 @@
+schema = "decomp-drill-validator-build-v1"
+source_checkout = "/tmp/sm-decomp-preparation-retry-source-20261013"
+source_commit = "57f93c5ce4e6adac2dfe181b852d4aad6e0776bd"
+source_fingerprint = "bd103af4b5d563904a3cbdbe62e971c46c6b4a4e907b60bbbb8575a2373355ec"
+binary_path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/bin/sm-pipeline"
+binary_sha256 = "04f4a10aec71b9654cdc1c7f1aca6936f9a9bb7ce810f8232c955f3b11e7d573"
+build_source_checkout = "/tmp/sm-decomp-completed-integration-retry-20261013"
+build_source_commit = "57f93c5ce4e6adac2dfe181b852d4aad6e0776bd"
+build_command = "cargo --config 'patch.\"https://github.com/doublegate/RustySNES\".rustysnes-core.path=\"/home/jim/sm-decomp/deps/rustysnes/crates/rustysnes-core\"' build -p pipeline --bin sm-pipeline --locked --offline --target-dir /tmp/sm-decomp-completed-retry-target-20261013"
+elapsed_seconds = 0.05
+main_integration_commit = "0d042e0"
+limitations = ["Local source/build/hash provenance; no platform attestation", "Build reused verified target at exact source commit; binary retained before target cleanup", "Coordinator frozen source matches original build commit and fingerprint; main Cargo/crates/tools source equivalence checked", "Historical drill failures retain their original engine epochs; execution and validator now use this corrected fresh subject"]
