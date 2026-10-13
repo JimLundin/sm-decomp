@@ -1,0 +1,34 @@
+{
+  "identified_unsealed_bytes_reclaimed": 27686632,
+  "removed": [
+    {
+      "bytes": 4131013,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/compact-velocity/offline/chromium-profile"
+    },
+    {
+      "bytes": 4140439,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/compact-velocity/offline-final/chromium-profile"
+    },
+    {
+      "bytes": 4161791,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/compact-velocity/served-final/chromium-profile"
+    },
+    {
+      "bytes": 4522534,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/compact-velocity/served-optimized/chromium-profile"
+    },
+    {
+      "bytes": 4189995,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/compact-velocity/file-picker-final/chromium-profile"
+    },
+    {
+      "bytes": 2409660,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/compact-velocity/file-picker-final/opened.json"
+    },
+    {
+      "bytes": 4131200,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/compact-velocity/history-fixture/chromium-profile"
+    }
+  ],
+  "retained": "Rust source, locked dependencies, embedded snapshot, screenshots, assertions, logs and malformed-file diagnostic fixtures"
+}

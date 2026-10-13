@@ -1,8 +1,43 @@
 # Reporting work coordination
 
-Status: coherent WIP source and published audit stable; browser checks finishing
+Status: reporting finished; main Git/index released after the final reporting evidence commit
 Owner: report session /root
 Updated: 2026-10-13
+
+## Current ownership and scope
+
+2026-10-13 09:54 UTC: tickets 04, 05 and 06 are resolved after final reporting
+checks and cleanup. Reporting source remains frozen at `263ad5a`. The intended
+Windows-browser report is `http://localhost:4185/index.html`; PID 420446 is the
+retained report server. Main source has no gameplay or preparation edits from
+this task. The final reporting commit checkpoints only `.scratch/decomp-progress/`
+evidence and ticket completion. Once that commit is present after `263ad5a`,
+reporting releases main Git/index to preparation recovery root
+`01a13460-4aa9-7fe0-865e-a8f54ffca310`; no further reporting Git writes are planned.
+No preparation merge or drill work is performed by reporting.
+
+Prototype source/captures are preserved outside main on
+`throwaway/progress-burndown-layouts-20261013` at `6912d24a234097ea62ac7ca955b3f222707c5605`.
+The worktree, browser profiles and temporary review build are removed. Final
+served/offline/synthetic/file-picker checks and 22 Rust reporting tests pass;
+source/registry/HTML hashes and exact receipt retention are in `burndown/`.
+Cross-thread outgoing replies remain refused by tool approval policy; this note
+is the durable handoff channel without altering the preparation owner's files.
+
+2026-10-13 09:39 UTC source checkpoint: reporting Rust/template/input changes
+are committed separately at `263ad5acb096e66ae5d272c6f94534ae50c4b963`.
+Preparation may merge that exact reporting commit into its isolated branch for
+its drill. No prep path is staged. Reporting retains main Git/index until final
+browser evidence, throwaway prototype capture and cleanup are checkpointed.
+No gameplay work or main preparation merge is authorized by this reporting task.
+
+The user has redirected the redesign to full native coverage burndown and
+changing velocity as a signal for pipeline improvements; ticket 06 owns it.
+Gameplay remains stopped. The checkpoint/preparation session retains its
+isolated preparation branch and exclusively owns its parallel-plan preparation,
+reconciliation and issue documents. Reporting retains main Git/index and
+progress reporting files, and will not stage the preparation session's paths.
+Retained source history and timing are read-only inputs to the report.
 
 The user's expanded request includes current-state audit, compact report layout
 and progress velocity graph. Reporting files remain owned by this session until
@@ -34,6 +69,20 @@ policy, so this local coordination note preserves the reply without changing
 the checkpoint owner's files.
 
 ## Stable handoff
+
+The checkpoint session explicitly transferred main Git/index ownership to this
+reporting session at 2026-10-13 07:57 UTC after commit `deceefd`. Its main and
+controller worktrees were clean; gameplay integration authority and original
+claims remain unchanged. The report owner may checkpoint final scoped viewer
+checks, reporting tickets and cleanup. The checkpoint owner performs no further
+Git/index mutations.
+
+The final source freeze was committed at `97b2ffb`, with exact synthetic
+history fixtures, checks and 19 passing maintained reporting tests. Initial
+served inspection timed out while the debug binary rehashed/parsed its large
+metadata per request (measured CLI status 12.26 seconds). Rebuilding the same
+reporting source in release mode and rerunning served checks is in progress;
+no gameplay source or fixture execution is involved.
 
 ## WIP checkpoint boundary
 

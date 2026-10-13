@@ -1,0 +1,38 @@
+[
+  {
+    "case": "boundaries",
+    "forecast": "4 days",
+    "pace": "1/day",
+    "passed": true
+  },
+  {
+    "case": "zero",
+    "forecast": "—",
+    "pace": "0/day",
+    "passed": true
+  },
+  {
+    "case": "negative",
+    "forecast": "—",
+    "pace": "-1/day",
+    "passed": true
+  },
+  {
+    "case": "short",
+    "forecast": "—",
+    "pace": "—",
+    "passed": true
+  },
+  {
+    "case": "stale",
+    "forecast": "—",
+    "pace": "—",
+    "passed": true
+  },
+  {
+    "case": "none",
+    "forecast": "—",
+    "pace": "—",
+    "passed": true
+  }
+]

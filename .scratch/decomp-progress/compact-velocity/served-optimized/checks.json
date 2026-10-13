@@ -1,0 +1,18 @@
+{
+  "body_line_weighting": true,
+  "collapsed_report_details": true,
+  "compact_velocity": true,
+  "cumulative_baselines": true,
+  "declaration_notes": 142,
+  "deduplicated_history": true,
+  "evidence_and_correction_history": true,
+  "exact_notices_retained": 165,
+  "exact_stage_history": true,
+  "grouped_scrollable_notes": true,
+  "independent_context_stage_totals": true,
+  "keyboard_and_hover": true,
+  "live_refresh": true,
+  "metrics_top": 81.53125,
+  "progress_first": true,
+  "visible_errors": true
+}

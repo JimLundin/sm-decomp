@@ -1,0 +1,90 @@
+{
+  "identified_unsealed_bytes_reclaimed": 86364265,
+  "removed": [
+    {
+      "bytes": 4229667,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/burndown/offline-initial/chromium-profile"
+    },
+    {
+      "bytes": 4171925,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/burndown/offline-second/chromium-profile"
+    },
+    {
+      "bytes": 4235045,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/burndown/offline-final/chromium-profile"
+    },
+    {
+      "bytes": 4229843,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/burndown/offline-live-clock-check/chromium-profile"
+    },
+    {
+      "bytes": 4288929,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/burndown/served-final-initial/chromium-profile"
+    },
+    {
+      "bytes": 4532144,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/burndown/served-checked/chromium-profile"
+    },
+    {
+      "bytes": 4540459,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/burndown/served-final/chromium-profile"
+    },
+    {
+      "bytes": 4187286,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/burndown/file-picker/chromium-profile"
+    },
+    {
+      "bytes": 2513317,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/burndown/file-picker/opened.json"
+    },
+    {
+      "bytes": 4466154,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/burndown/file-final/chromium-profile"
+    },
+    {
+      "bytes": 2513317,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/burndown/file-final/opened.json"
+    },
+    {
+      "bytes": 4191878,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/burndown/history-fixtures/chromium-profile"
+    },
+    {
+      "bytes": 4160939,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/burndown/history-final/chromium-profile"
+    },
+    {
+      "bytes": 4470483,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/burndown/prototype/variant-a/chromium-profile"
+    },
+    {
+      "bytes": 4409928,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/burndown/prototype/variant-b/chromium-profile"
+    },
+    {
+      "bytes": 4215695,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/burndown/prototype/capture-a/chromium-profile"
+    },
+    {
+      "bytes": 4183130,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/burndown/prototype/capture-b/chromium-profile"
+    },
+    {
+      "bytes": 4185017,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/burndown/prototype/capture-c/chromium-profile"
+    },
+    {
+      "bytes": 4214814,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/burndown/prototype/fresh-a/chromium-profile"
+    },
+    {
+      "bytes": 4203105,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/burndown/prototype/fresh-b/chromium-profile"
+    },
+    {
+      "bytes": 4221190,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/burndown/prototype/fresh-c/chromium-profile"
+    }
+  ],
+  "retained": "Rust source, locked dependencies, embedded snapshot, screenshots, assertions, logs and malformed-file diagnostic fixtures"
+}

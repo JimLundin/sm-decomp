@@ -1,0 +1,213 @@
+{
+  "coverage_history": {
+    "baseline_at": 1700000000,
+    "baseline_commit": "dddddddddddddddddddddddddddddddddddddddd",
+    "checkpoints": [
+      {
+        "added": [
+          "APU_UploadBank"
+        ],
+        "at": 1700003600,
+        "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "removed": [],
+        "subject": "old baseline"
+      }
+    ],
+    "current": {
+      "body_lines": 0,
+      "definitions": 1
+    },
+    "current_symbols": [
+      "APU_UploadBank"
+    ],
+    "files": [],
+    "generated_at": 1700259200,
+    "head": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "inputs": [],
+    "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+    "limitations": [
+      "Synthetic reporting fixture, no gameplay."
+    ],
+    "schema_version": 1,
+    "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+    "status": "current",
+    "uncommitted": []
+  },
+  "notices": [],
+  "root": "/home/jim/sm-decomp",
+  "routines": [
+    {
+      "body_lines": 5,
+      "calls": [
+        "RomPtr",
+        "RtlApuUpload"
+      ],
+      "declared_in": [],
+      "definition_sha256": "32aec38ebfa1bf4b44005479c7527547a5d64adebdaa22b149af89caa7b8f47b",
+      "line": 16,
+      "original_address": "0x808028",
+      "source": "src/sm_80.c",
+      "symbol": "APU_UploadBank"
+    },
+    {
+      "body_lines": 10,
+      "calls": [
+        "HIBYTE",
+        "LOBYTE"
+      ],
+      "declared_in": [],
+      "definition_sha256": "dd9bc08f1d75ec0265ba0001d51ed7b4814e0c1175aae30cd5fe48559d4bacb8",
+      "line": 22,
+      "original_address": "0x808111",
+      "source": "src/sm_80.c",
+      "symbol": "NextRandom"
+    },
+    {
+      "body_lines": 19,
+      "calls": [],
+      "declared_in": [
+        "tools/port/system.toml"
+      ],
+      "definition_sha256": "36fb9fe47b648ddca9ab5dbb8d2c8bed4a0da1e5fd505bf77b77776d15f4c60f",
+      "line": 33,
+      "original_address": "0x808146",
+      "source": "src/sm_80.c",
+      "symbol": "ReleaseButtonsFilter"
+    },
+    {
+      "body_lines": 4,
+      "calls": [],
+      "declared_in": [
+        "tools/port/system.toml"
+      ],
+      "definition_sha256": "11deb5a2972f8596baaf9e153659670ee22375338f8143d202166046a88d130b",
+      "line": 53,
+      "original_address": "0x80818E",
+      "source": "src/sm_80.c",
+      "symbol": "PrepareBitAccess"
+    },
+    {
+      "body_lines": 3,
+      "calls": [],
+      "declared_in": [
+        "tools/port/system.toml"
+      ],
+      "definition_sha256": "8d0edbca8cf05b29cc0e88ab5d704801d3d40d85d96a5420ea65144521b75bef",
+      "line": 58,
+      "original_address": "0x8081A6",
+      "source": "src/sm_80.c",
+      "symbol": "SetBossBitForCurArea"
+    }
+  ],
+  "schema_version": 1,
+  "source": {
+    "body_lines": 41,
+    "definition_count": 5,
+    "identity_sha256": "e74864c229949fc6f1a6bd7528f339bdb3f9364f1e4f9544f08693881d10f111",
+    "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+    "revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+    "scope": "actual sm_*.c lexical definitions/calls; macros, externals and indirect calls require review; no acceptance inferred"
+  },
+  "stale_update_ids": [],
+  "summary": {
+    "body_lines": 75229,
+    "context_stages": {
+      "current-checkout": {
+        "integrated": {
+          "body_lines": 775,
+          "definitions": 38
+        },
+        "live-exercised": {
+          "body_lines": 487,
+          "definitions": 26
+        },
+        "translated": {
+          "body_lines": 16527,
+          "definitions": 1461
+        },
+        "translating": {
+          "body_lines": 0,
+          "definitions": 0
+        },
+        "verified": {
+          "body_lines": 804,
+          "definitions": 39
+        }
+      },
+      "historical-frozen": {
+        "integrated": {
+          "body_lines": 0,
+          "definitions": 0
+        },
+        "live-exercised": {
+          "body_lines": 1247,
+          "definitions": 106
+        },
+        "translated": {
+          "body_lines": 9737,
+          "definitions": 911
+        },
+        "translating": {
+          "body_lines": 0,
+          "definitions": 0
+        },
+        "verified": {
+          "body_lines": 9737,
+          "definitions": 911
+        }
+      },
+      "unspecified": {
+        "integrated": {
+          "body_lines": 719,
+          "definitions": 34
+        },
+        "live-exercised": {
+          "body_lines": 0,
+          "definitions": 0
+        },
+        "translated": {
+          "body_lines": 719,
+          "definitions": 34
+        },
+        "translating": {
+          "body_lines": 3170,
+          "definitions": 222
+        },
+        "verified": {
+          "body_lines": 719,
+          "definitions": 34
+        }
+      }
+    },
+    "declared_body_lines": 9108,
+    "declared_definitions": 835,
+    "definitions": 6053,
+    "stages": {
+      "integrated": {
+        "body_lines": 775,
+        "definitions": 38
+      },
+      "live-exercised": {
+        "body_lines": 1642,
+        "definitions": 121
+      },
+      "translated": {
+        "body_lines": 16527,
+        "definitions": 1461
+      },
+      "translating": {
+        "body_lines": 3170,
+        "definitions": 222
+      },
+      "verified": {
+        "body_lines": 10103,
+        "definitions": 925
+      }
+    },
+    "stale_updates": 16,
+    "updates": 261
+  },
+  "superseded_update_ids": [],
+  "updated_at": 1700259200,
+  "updates": []
+}

@@ -1,0 +1,15 @@
+{
+  "all_bank_scopes": true,
+  "calendar_velocity": true,
+  "conditional_forecast": true,
+  "current_mapped": 1461,
+  "evidence_gaps": true,
+  "fixed_denominator": true,
+  "keyboard_hover": true,
+  "notices": 165,
+  "original_evidence_preserved": true,
+  "remaining_definitions": 4592,
+  "served_refresh": true,
+  "source_checkpoints": 108,
+  "weighted_equal_windows": true
+}

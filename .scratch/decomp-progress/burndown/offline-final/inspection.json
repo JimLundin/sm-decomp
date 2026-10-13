@@ -1,0 +1,22 @@
+{
+  "checks": true,
+  "desktop": {
+    "change": "+83.4% vs previous 24h",
+    "coverage": "22.0%",
+    "forecast": "15.2 days",
+    "metrics_top": 126.53125,
+    "notices": 22925,
+    "pace": "3,871/day",
+    "remaining": "58,702",
+    "scroll_width": 1345,
+    "title": "Super Metroid · Decomp burndown",
+    "total": "6,053",
+    "viewport": 1360
+  },
+  "phone": {
+    "metrics_top": 267.0625,
+    "scroll_width": 390,
+    "width": 390
+  },
+  "url": "file:///home/jim/sm-decomp/.scratch/decomp-progress/index.html"
+}

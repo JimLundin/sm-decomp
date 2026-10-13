@@ -1,0 +1,871 @@
+<!doctype html>
+<html lang="en" data-fixture="none">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <title>Super Metroid · Decomp burndown</title>
+  <style>
+    :root { color-scheme: dark; --bg:#10151a; --panel:#171e25; --raised:#1d2730; --ink:#e7edf1; --muted:#9baab7; --line:#2c3944; --accent:#85d9c3; --accent-bg:#173d35; --warning:#eac778; --warning-bg:#362e1c; --unreported:#42505c; --translating:#d8af65; --translated:#69b99e; --verified:#70b8cf; --integrated:#929edf; --live:#b09ee0; --shadow:0 8px 32px #0002; }
+    :root[data-theme="light"] { color-scheme:light; --bg:#f0f3f3; --panel:#fff; --raised:#f6f8f8; --ink:#182931; --muted:#536774; --line:#d3dfe1; --accent:#176c58; --accent-bg:#e1f2ec; --warning:#765316; --warning-bg:#fff3d9; --unreported:#b2c0c5; --translating:#b38228; --translated:#3b916f; --verified:#397f9e; --integrated:#6975be; --live:#8c64b4; --shadow:0 8px 32px #24404a09; }
+    @media(prefers-color-scheme:light) { :root:not([data-theme="dark"]) { color-scheme:light; --bg:#f0f3f3; --panel:#fff; --raised:#f6f8f8; --ink:#182931; --muted:#536774; --line:#d3dfe1; --accent:#176c58; --accent-bg:#e1f2ec; --warning:#765316; --warning-bg:#fff3d9; --unreported:#b2c0c5; --translating:#b38228; --translated:#3b916f; --verified:#397f9e; --integrated:#6975be; --live:#8c64b4; --shadow:0 8px 32px #24404a09; } }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink); font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    button,input,select { font:inherit; }
+    button,select,input[type="search"] { color:var(--ink); background:var(--panel); border:1px solid var(--line); border-radius:6px; min-height:34px; }
+    button { cursor:pointer; padding:6px 11px; }
+    button:hover { background:var(--raised); border-color:var(--muted); }
+    button:disabled { opacity:.45; cursor:default; }
+    a { color:var(--accent); text-underline-offset:3px; overflow-wrap:anywhere; }
+    :focus-visible { outline:3px solid var(--accent); outline-offset:3px; }
+    .shell { max-width:1500px; margin:auto; padding:20px 26px 30px; }
+    .topbar { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:16px; }
+    .identity { display:flex; align-items:center; gap:13px; }
+    .mark { display:grid; place-items:center; height:34px; width:34px; border:1px solid var(--accent); border-radius:7px; font:700 12px/1 ui-monospace,monospace; letter-spacing:-.5px; color:var(--accent); flex:none; }
+    .eyebrow { font-size:11px; font-weight:700; letter-spacing:1.6px; text-transform:uppercase; color:var(--muted); }
+    .actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .primary { background:var(--accent-bg); color:var(--accent); border-color:var(--accent); }
+    h1 { font-size:23px; line-height:1.2; letter-spacing:-.6px; margin:2px 0 0; font-weight:650; }
+    .sync { text-align:right; min-width:165px; font-size:10px; color:var(--muted); margin-right:8px; }
+    .sync strong { color:var(--ink); font-weight:550; display:block; }
+    .dot { width:6px; height:6px; display:inline-block; border-radius:50%; background:var(--accent); margin-right:6px; }
+    .notice { border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:8px; padding:12px 16px; margin:20px 0; background:var(--panel); color:var(--muted); font-size:13px; }
+    .notice strong { color:var(--ink); }
+    .warning { border-left-color:var(--warning); background:var(--warning-bg); color:var(--warning); }
+    .error { border-left-color:#da7777; }
+    [hidden] { display:none !important; }
+    .metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:0 0 12px; }
+    .metric { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:12px 15px; }
+    .metric-label { color:var(--muted); font-size:11px; font-weight:600; }
+    .metric-number { font-size:27px; font-weight:650; line-height:1.2; letter-spacing:-.7px; margin:4px 0 2px; font-variant-numeric:tabular-nums; }
+    .metric small { color:var(--muted); font-size:10px; }
+    .metric.emphasis .metric-number { color:var(--accent); }
+    .panel { background:var(--panel); border:1px solid var(--line); border-radius:8px; overflow:hidden; margin-top:14px; min-width:0; }
+    .panel-head { padding:14px 16px 11px; display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+    h2 { font-size:15px; letter-spacing:-.2px; margin:0; font-weight:650; }
+    .subtext { color:var(--muted); font-size:12px; margin:5px 0 0; }
+    .selectors { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+    label { color:var(--muted); font-size:12px; display:block; }
+    select { padding:7px 29px 7px 10px; max-width:100%; }
+    .selectors label { display:flex; gap:7px; align-items:center; }
+    .overview { padding:0 16px 12px; }
+    .stack { height:12px; display:flex; overflow:hidden; border-radius:4px; background:var(--unreported); }
+    .segment { min-width:0; height:100%; }
+    .legend { display:flex; gap:8px 13px; flex-wrap:wrap; margin-top:9px; font-size:11px; color:var(--muted); }
+    .legend-item { display:flex; align-items:center; gap:6px; }
+    .swatch { width:8px; height:8px; border-radius:2px; flex:none; }
+    .legend-item strong { font-weight:550; color:var(--ink); font-variant-numeric:tabular-nums; }
+    .bank-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:7px; padding:0 16px 14px; }
+    .bank { text-align:left; padding:9px; background:var(--raised); min-height:65px; position:relative; }
+    .bank[aria-pressed="true"] { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent); }
+    .bank-label { display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:11px; margin-bottom:7px; }
+    .bank-label strong { font:600 13px/1.4 ui-monospace,monospace; }
+    .bank-percent { color:var(--accent); font-variant-numeric:tabular-nums; }
+    .bank-bar { background:var(--line); height:5px; border-radius:3px; overflow:hidden; }
+    .bank-fill { height:100%; background:var(--accent); }
+    .bank-count { color:var(--muted); font-size:10px; margin-top:5px; }
+    .bank-empty .bank-percent { color:var(--muted); }
+    .filters { padding:0 16px 12px; display:grid; grid-template-columns:minmax(190px,2fr) repeat(5,minmax(100px,1fr)); gap:8px; }
+    .filters label span { display:block; margin-bottom:5px; }
+    .filters select,.filters input { width:100%; }
+    input[type="search"] { padding:7px 11px; }
+    .list-toolbar { border-top:1px solid var(--line); padding:12px 22px; display:flex; align-items:center; justify-content:space-between; gap:15px; color:var(--muted); font-size:12px; background:var(--raised); }
+    .list-toolbar strong { color:var(--ink); }
+    .list-toolbar button { min-height:30px; padding:4px 9px; font-size:12px; }
+    .list-header,.routine-summary { display:grid; grid-template-columns:minmax(230px,2.6fr) 110px 100px 85px 145px; align-items:center; gap:14px; }
+    .list-header { padding:11px 22px; color:var(--muted); border-bottom:1px solid var(--line); font-size:10px; letter-spacing:.7px; text-transform:uppercase; }
+    .routine { border-bottom:1px solid var(--line); }
+    .routine:last-child { border-bottom:0; }
+    .routine-summary { padding:8px 16px; cursor:pointer; list-style:none; font-size:12px; }
+    .routine-summary::-webkit-details-marker { display:none; }
+    .routine-summary:hover { background:var(--raised); }
+    .routine[open] .routine-summary { background:var(--raised); }
+    .routine-name { display:flex; align-items:center; gap:9px; min-width:0; }
+    .chevron { color:var(--muted); font-size:12px; width:10px; flex:none; transform:rotate(0deg); }
+    .routine[open] .chevron { transform:rotate(90deg); }
+    .symbol { font:550 12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace; overflow-wrap:anywhere; }
+    .mono { font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace; }
+    .muted { color:var(--muted); }
+    .number { font-variant-numeric:tabular-nums; }
+    .badge { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:5px; padding:3px 7px; width:fit-content; color:var(--muted); font-size:10px; white-space:nowrap; }
+    .badge::before { content:""; width:5px; height:5px; border-radius:50%; background:var(--unreported); }
+    .badge[data-stage="translating"]::before { background:var(--translating); }
+    .badge[data-stage="translated"]::before { background:var(--translated); }
+    .badge[data-stage="verified"]::before { background:var(--verified); }
+    .badge[data-stage="integrated"]::before { background:var(--integrated); }
+    .badge[data-stage="live-exercised"]::before { background:var(--live); }
+    .badge[data-stage]:not([data-stage="unreported"]) { color:var(--ink); }
+    .routine-detail { padding:22px 38px 25px; display:grid; grid-template-columns:minmax(220px,1fr) minmax(300px,1.5fr); gap:28px; background:var(--raised); font-size:12px; }
+    .detail-title { font-size:11px; font-weight:650; letter-spacing:.7px; text-transform:uppercase; margin:0 0 10px; color:var(--muted); }
+    dl { margin:0 0 18px; }
+    .detail-pair { display:grid; grid-template-columns:105px 1fr; gap:9px; margin:6px 0; }
+    dt { color:var(--muted); }
+    dd { margin:0; overflow-wrap:anywhere; }
+    .digest { font:10px/1.5 ui-monospace,monospace; overflow-wrap:anywhere; color:var(--muted); }
+    .chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:18px; }
+    .chip { font:10px/1.5 ui-monospace,monospace; min-height:25px; padding:3px 7px; background:var(--panel); max-width:100%; overflow-wrap:anywhere; }
+    .path-list { margin:0 0 18px; padding-left:17px; }
+    .path-list li { margin:5px 0; overflow-wrap:anywhere; }
+    .observation { padding:13px 15px; background:var(--panel); border:1px solid var(--line); border-radius:7px; margin-bottom:9px; }
+    .observation-head { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px; }
+    .observation p { margin:6px 0; }
+    .observation ul { margin:8px 0 0; padding-left:17px; }
+    .stale-tag { color:var(--warning); font-size:10px; font-weight:600; }
+    .observation[data-stale="true"] .badge { color:var(--muted); }
+    .observation[data-stale="true"] .badge::before { background:var(--unreported); }
+    .empty { text-align:center; color:var(--muted); padding:50px 20px; }
+    .pagination { border-top:1px solid var(--line); padding:14px 22px; display:flex; justify-content:space-between; align-items:center; gap:15px; font-size:12px; color:var(--muted); }
+    .pagination-actions { display:flex; align-items:center; gap:12px; }
+    .pagination button { min-height:33px; font-size:12px; padding:5px 11px; }
+    .report-notes { border:1px solid var(--line); border-radius:7px; background:var(--panel); margin:0 0 12px; font-size:11px; }
+    .report-summary { display:flex; align-items:center; gap:10px; padding:9px 14px; cursor:pointer; list-style:none; }
+    .report-summary::-webkit-details-marker { display:none; }
+    .report-summary::before { content:"›"; font-size:18px; line-height:1; color:var(--muted); }
+    .report-notes[open] > .report-summary::before { transform:rotate(90deg); }
+    .report-summary:hover { background:var(--raised); }
+    .report-summary strong { font-weight:600; white-space:nowrap; }
+    .report-summary .muted { margin-left:auto; text-align:right; overflow-wrap:anywhere; }
+    .report-status { color:var(--warning); }
+    .report-content { padding:0 18px 18px; border-top:1px solid var(--line); }
+    .report-content > p { margin:15px 0; color:var(--muted); max-width:950px; }
+    .note-group { border-top:1px solid var(--line); padding:11px 0; }
+    .note-group > summary { display:flex; align-items:center; gap:8px; cursor:pointer; list-style:none; color:var(--ink); font-weight:550; }
+    .note-group > summary::-webkit-details-marker { display:none; }
+    .note-group > summary::before { content:"›"; color:var(--muted); }
+    .note-group[open] > summary::before { transform:rotate(90deg); }
+    .note-count { color:var(--muted); font-weight:400; font-variant-numeric:tabular-nums; }
+    .note-list { margin:11px 0 0; padding-left:20px; max-height:300px; overflow:auto; overscroll-behavior:contain; color:var(--muted); }
+    .note-list li { padding:4px 0; overflow-wrap:anywhere; }
+    .note-group[data-kind="stale"] > summary { color:var(--warning); }
+    .source-details { margin-top:6px; }
+    .source-details > summary { padding:11px 0; cursor:pointer; color:var(--muted); }
+    .provenance-content { padding:4px 0 0; font-size:12px; max-width:950px; }
+    .footer { display:flex; justify-content:space-between; gap:20px; color:var(--muted); font-size:11px; padding-top:20px; }
+    .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+    .dashboard-grid { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,1fr); gap:14px; align-items:start; }
+    .dashboard-grid > .panel { margin-top:0; }
+    .coverage-panel .panel-head { flex-wrap:wrap; }
+    .coverage-panel .selectors { gap:10px; font-size:12px; }
+    .context-control { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .context-control select { font-size:11px; }
+    #context-counts { margin:8px 0; font-size:10px; }
+    .bank-details { border-top:1px solid var(--line); }
+    .bank-details > summary { cursor:pointer; padding:10px 16px; color:var(--muted); font-size:11px; }
+    .velocity-head { align-items:center; flex-wrap:wrap; }
+    .velocity-head .selectors { gap:6px; }
+    .velocity-head select { font-size:11px; min-height:30px; padding:5px 24px 5px 8px; }
+    .velocity-stats { display:flex; gap:22px; padding:0 16px 8px; font-size:10px; color:var(--muted); flex-wrap:wrap; }
+    .velocity-stats strong { display:block; font-size:18px; color:var(--ink); font-weight:600; font-variant-numeric:tabular-nums; }
+    .chart { display:block; width:100%; height:172px; overflow:visible; }
+    .chart .grid-line { stroke:var(--line); stroke-width:1; }
+    .chart text { fill:var(--muted); font:10px system-ui,sans-serif; }
+    .chart .bucket-hit { fill:transparent; cursor:crosshair; }
+    .chart .bucket-hit:hover,.chart .bucket-hit:focus { fill:var(--ink); fill-opacity:.05; outline:none; stroke:var(--accent); stroke-width:1; }
+    .chart-readout { padding:2px 16px 8px; font-size:10px; color:var(--muted); min-height:32px; }
+    .chart-readout strong { color:var(--ink); font-weight:550; }
+    .chart-legend { display:flex; flex-wrap:wrap; gap:7px 14px; padding:0 16px 8px; font-size:10px; color:var(--muted); }
+    .history-swatch { background:repeating-linear-gradient(135deg,var(--muted) 0 1px,transparent 1px 3px); border:1px solid var(--muted); }
+    .legacy-swatch { background:var(--muted); opacity:.4; }
+    .chart-caption { color:var(--muted); font-size:10px; padding:0 16px 10px; margin:0; }
+    .chart-data { border-top:1px solid var(--line); font-size:11px; }
+    .chart-data > summary { cursor:pointer; padding:9px 16px; color:var(--muted); }
+    .chart-data-content { padding:0 16px 12px; }
+    .chart-data-content p { margin:0 0 10px; color:var(--muted); }
+    .chart-table-scroll { overflow:auto; max-height:230px; }
+    .chart-data table { border-collapse:collapse; width:100%; font-size:10px; font-variant-numeric:tabular-nums; }
+    .chart-data th,.chart-data td { border-bottom:1px solid var(--line); padding:5px 7px; text-align:right; white-space:nowrap; }
+    .chart-data th:first-child,.chart-data td:first-child { text-align:left; }
+    @media(max-width:1000px) { .dashboard-grid { grid-template-columns:minmax(0,1fr); } }
+    @media(max-width:1050px) { .shell { padding:24px; } .filters { grid-template-columns:repeat(3,1fr); } .list-header,.routine-summary { grid-template-columns:minmax(180px,2fr) 90px 80px 60px 120px; gap:10px; } .panel-head { flex-wrap:wrap; } }
+    @media(max-width:720px) { .shell { padding:20px 14px 30px; } .topbar { align-items:flex-start; margin-bottom:24px; } .top-title { max-width:140px; } .actions { justify-content:flex-end; } .actions button { font-size:12px; padding:6px 9px; min-height:34px; } .intro { display:block; } .sync { text-align:left; padding-top:16px; } .sync strong { display:inline; margin-right:8px; } h1 { letter-spacing:-.8px; } .metrics { grid-template-columns:repeat(2,1fr); gap:10px; } .metric { padding:15px; } .metric-number { font-size:28px; } .panel-head { padding:17px 15px 14px; } .selectors { gap:8px; } .selectors label { font-size:11px; } .selectors select { font-size:11px; min-height:33px; } .overview { padding:2px 15px 17px; } .legend { gap:10px; } .bank-grid { padding:0 15px 17px; grid-template-columns:repeat(3,1fr); gap:7px; } .bank { padding:10px; min-height:88px; } .bank-label { font-size:10px; } .bank-label strong { font-size:11px; } .bank-count { font-size:9px; } .filters { grid-template-columns:repeat(2,minmax(0,1fr)); padding:0 15px 15px; } .filter-search { grid-column:1 / -1; } .list-toolbar { padding:11px 15px; } .list-header { display:none; } .routine-summary { grid-template-columns:1fr auto; gap:8px; padding:14px 15px; } .routine-name { grid-column:1 / -1; } .routine-source { grid-column:1; font-size:10px; } .routine-address { grid-column:1; grid-row:3; font-size:10px; } .routine-lines { display:none; } .routine-stage { grid-column:2; grid-row:2 / 4; } .routine-detail { padding:19px 20px; grid-template-columns:minmax(0,1fr); gap:10px; } .pagination { padding:14px 15px; } .footer { display:block; } .footer span { display:block; margin-bottom:7px; } }
+    @media(max-width:720px) { .shell { padding:14px 12px 22px; } .topbar { flex-wrap:wrap; gap:10px; margin-bottom:12px; } h1 { font-size:21px; letter-spacing:-.5px; } .topbar > .actions { width:100%; justify-content:space-between; } .sync { text-align:left; margin-right:auto; min-width:0; } .sync strong { display:block; margin:0; } #checked { display:none; } .metrics { gap:8px; } .metric { padding:10px 12px; } .metric-number { font-size:25px; } .panel-head { padding:12px 14px 10px; } .bank { min-height:65px; padding:8px; } .bank-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .routine-summary { padding:9px 14px; } .report-summary { align-items:flex-start; flex-wrap:wrap; padding:9px 13px; gap:5px 8px; } .report-summary .muted { flex-basis:100%; margin-left:18px; text-align:left; } .report-content { padding:0 13px 13px; } .velocity-stats { gap:18px; } .chart { height:164px; } .velocity-head .selectors { margin-top:2px; } }
+    @media(prefers-reduced-motion:no-preference) { .bank-fill { transition:width .25s ease; } }
+    @media print { .actions,.filters,.pagination,.sync { display:none; } .shell { padding:0; } .panel,.metric { break-inside:avoid; } }
+    .burn-controls { display:flex; flex-wrap:wrap; align-items:center; gap:10px 18px; margin:0 0 14px; }
+    .burn-controls label { display:flex; gap:7px; align-items:center; font-size:11px; }
+    .burn-controls select { padding:5px 26px 5px 9px; min-height:31px; font-size:11px; }
+    .burn-controls .scope-note { margin-left:auto; color:var(--muted); font-size:11px; }
+    .burn-metrics { display:grid; grid-template-columns:1.1fr 1.1fr 1fr 1.15fr; gap:0; margin:0 0 15px; border:1px solid var(--line); background:var(--panel); border-radius:8px; }
+    .burn-metric { padding:13px 17px; border-right:1px solid var(--line); min-width:0; }
+    .burn-metric:last-child { border-right:0; }
+    .burn-metric .metric-number { font-size:32px; margin:3px 0 4px; }
+    .burn-metric p { color:var(--muted); font-size:11px; margin:0; }
+    .burn-metric .positive { color:var(--accent); }
+    .burn-metric .negative { color:var(--warning); }
+    .burn-hero { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(0,1fr); gap:14px; }
+    .burn-hero .panel { margin:0; }
+    .burn-chart { height:230px; }
+    .burn-chart .coverage-area { fill:var(--accent); fill-opacity:.09; }
+    .burn-chart .coverage-line { fill:none; stroke:var(--accent); stroke-width:2.5; }
+    .burn-chart .velocity-line { fill:none; stroke:var(--verified); stroke-width:2.3; }
+    .burn-chart .comparison-line { fill:none; stroke:var(--muted); stroke-width:1.6; stroke-dasharray:5 4; }
+    .burn-chart .sample-hit { fill:transparent; cursor:crosshair; }
+    .burn-chart .sample-hit:hover,.burn-chart .sample-hit:focus { fill:var(--ink); fill-opacity:.04; stroke:var(--accent); stroke-width:1; outline:0; }
+    .burn-readout { padding:1px 16px 10px; min-height:36px; font-size:11px; color:var(--muted); }
+    .burn-readout strong { color:var(--ink); font-weight:550; }
+    .burn-caption { color:var(--muted); font-size:11px; margin:0; padding:0 16px 13px; }
+    .burn-signal { display:flex; align-items:baseline; gap:14px; padding:11px 15px; margin:14px 0 0; background:var(--raised); border:1px solid var(--line); border-radius:7px; font-size:12px; }
+    .burn-signal strong { flex:none; color:var(--accent); }
+    .burn-signal[data-tone="slower"] strong { color:var(--warning); }
+    .burn-signal p { margin:0; color:var(--muted); }
+    .flow-panel .panel-head { align-items:baseline; }
+    .flow-stages { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); padding:0 16px 13px; gap:16px; }
+    .flow-stage { min-width:0; }
+    .flow-stage button { border:0; background:none; padding:0; min-height:0; font-weight:650; font-size:24px; font-variant-numeric:tabular-nums; }
+    .flow-stage span { display:block; font-size:11px; color:var(--muted); margin-top:3px; }
+    .flow-bar { height:5px; margin-top:10px; background:var(--line); border-radius:2px; overflow:hidden; }
+    .flow-bar div { height:100%; }
+    .flow-queues { display:flex; flex-wrap:wrap; gap:9px 22px; padding:10px 16px; border-top:1px solid var(--line); font-size:11px; color:var(--muted); background:var(--raised); }
+    .flow-queues strong { color:var(--ink); }
+    .work-grid { display:grid; grid-template-columns:minmax(0,1.25fr) minmax(0,1fr); gap:14px; margin:14px 0; align-items:start; }
+    .work-grid .panel { margin:0; }
+    .work-table-wrap { overflow:auto; }
+    .work-table { border-collapse:collapse; width:100%; font-size:11px; font-variant-numeric:tabular-nums; }
+    .work-table th,.work-table td { border-bottom:1px solid var(--line); padding:8px 13px; text-align:right; white-space:nowrap; }
+    .work-table th { color:var(--muted); font-weight:500; font-size:10px; }
+    .work-table th:first-child,.work-table td:first-child { text-align:left; }
+    .work-table button { border:0; background:none; min-height:0; padding:0; font-size:11px; color:var(--ink); }
+    .work-table button:hover { color:var(--accent); }
+    .work-name { display:flex; align-items:center; gap:9px; }
+    .tiny-bar { display:inline-flex; flex:none; width:58px; height:4px; border-radius:2px; background:var(--line); overflow:hidden; }
+    .tiny-bar span { background:var(--accent); }
+    .pipeline-content { padding:0 16px 13px; font-size:11px; }
+    .pipeline-content p { color:var(--muted); margin:0 0 11px; }
+    .pipeline-evidence { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px 15px; padding:9px 0; border-top:1px solid var(--line); }
+    .pipeline-evidence strong { font-weight:600; font-size:12px; font-variant-numeric:tabular-nums; }
+    .pipeline-evidence span { color:var(--muted); }
+    .pipeline-action { padding-top:10px; border-top:1px solid var(--line); }
+    .pipeline-action strong { display:block; font-size:12px; margin-bottom:4px; }
+    .support-details { margin-top:15px; }
+    .support-details > summary { cursor:pointer; padding:10px 0; font-size:12px; color:var(--muted); }
+    .support-details > .panel { margin-top:0; }
+    .audit-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:14px; }
+    .audit-grid .metrics { margin:0; }
+    .audit-grid > .panel { margin:0; }
+    .burn-history-table { font-size:10px; }
+    .burn-history-table th,.burn-history-table td { padding:6px 9px; }
+    .burn-history-table th:last-child,.burn-history-table td:last-child { text-align:left; }
+    .burn-history-table td:last-child { white-space:normal; min-width:170px; }
+    .burn-history-table a { font:10px ui-monospace,monospace; }
+    @media(max-width:980px) { .work-grid { grid-template-columns:minmax(0,1fr); } .burn-hero { grid-template-columns:minmax(0,1.2fr) minmax(0,1fr); } }
+    @media(max-width:720px) { .burn-controls { gap:8px 12px; margin-bottom:10px; } .burn-controls .scope-note { width:100%; margin-left:0; } .burn-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); } .burn-metric { padding:11px 12px; } .burn-metric:nth-child(2) { border-right:0; } .burn-metric:nth-child(-n+2) { border-bottom:1px solid var(--line); } .burn-metric .metric-number { font-size:29px; } .burn-hero,.audit-grid { grid-template-columns:minmax(0,1fr); } .burn-chart { height:208px; } .burn-signal { align-items:flex-start; flex-direction:column; gap:4px; } .flow-stages { gap:12px; grid-template-columns:repeat(2,minmax(0,1fr)); } .flow-stage button { font-size:23px; } .flow-queues { gap:8px; } .work-table th,.work-table td { padding:8px; } .tiny-bar { display:none; } .panel-head .subtext { font-size:11px; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="identity"><div class="mark" aria-hidden="true">SM</div><div><div class="eyebrow">Super Metroid</div><h1 id="title">Decomp burndown</h1></div></div>
+      <div class="actions"><div class="sync"><strong id="sync-mode"><span class="dot" aria-hidden="true"></span>Embedded snapshot</strong><span id="updated"></span><br><span id="checked"></span></div><button id="theme" type="button" aria-label="Change color theme">Theme</button><button id="load" class="primary" type="button">Open JSON</button><input id="file" type="file" accept="application/json,.json" hidden></div>
+    </header>
+    <div id="error" class="notice error" role="alert" hidden></div>
+    <div class="burn-controls">
+      <label>Measure <select id="burn-weight"><option value="lines">C body lines</option><option value="routines">Definitions</option></select></label>
+      <label>Compare pace <select id="burn-window"><option value="24">Last 24 hours</option><option value="12">Last 12 hours</option><option value="6">Last 6 hours</option></select></label>
+      <label>Scope <select id="burn-bank"><option value="">All source banks</option></select></label>
+      <span class="scope-note" id="burn-scope-note">Fixed native scope · source history</span>
+    </div>
+    <section class="burn-metrics" aria-label="Coverage burndown overview">
+      <div class="burn-metric"><div class="metric-label">Translated source coverage</div><div class="metric-number positive" id="burn-complete">—</div><p id="burn-complete-detail"></p></div>
+      <div class="burn-metric"><div class="metric-label">Remaining to full coverage</div><div class="metric-number" id="burn-remaining">—</div><p id="burn-remaining-detail"></p></div>
+      <div class="burn-metric"><div class="metric-label" id="burn-pace-label">Net pace · last 24h</div><div class="metric-number" id="burn-pace">—</div><p id="burn-change"></p></div>
+      <div class="burn-metric"><div class="metric-label">If this pace continues</div><div class="metric-number" id="burn-eta">—</div><p id="burn-eta-detail">Straight-line coverage scenario</p></div>
+    </section>
+    <div id="burn-unavailable" class="notice" hidden></div>
+    <div class="burn-hero">
+      <section class="panel" aria-labelledby="burn-title">
+        <div class="panel-head"><div><h2 id="burn-title">Remaining coverage</h2><p class="subtext" id="burn-subtitle">Each drop is committed source added.</p></div><span class="subtext" id="burn-span"></span></div>
+        <svg id="burndown-chart" class="chart burn-chart" role="img" aria-labelledby="burndown-chart-title burndown-chart-description"></svg>
+        <div id="burndown-readout" class="burn-readout" aria-live="polite"></div>
+        <p class="burn-caption">Fixed native denominator · retrospective source scan · flat sections include tooling, verification and pauses.</p>
+      </section>
+      <section class="panel" aria-labelledby="pace-title">
+        <div class="panel-head"><div><h2 id="pace-title">Is velocity changing?</h2><p class="subtext" id="pace-subtitle">Rolling pace compared with the previous window.</p></div></div>
+        <svg id="pace-chart" class="chart burn-chart" role="img" aria-labelledby="pace-chart-title pace-chart-description"></svg>
+        <div id="pace-readout" class="burn-readout" aria-live="polite"></div>
+        <p class="burn-caption"><span style="color:var(--verified)">━</span> Rolling net pace &nbsp; <span class="muted">┄</span> Previous-window pace · calendar time.</p>
+      </section>
+    </div>
+    <div id="burn-signal" class="burn-signal"><strong id="burn-signal-title">Reading source history…</strong><p id="burn-signal-detail"></p></div>
+    <section class="panel flow-panel" aria-labelledby="flow-title">
+      <div class="panel-head"><div><h2 id="flow-title">Coverage still has to clear verification</h2><p class="subtext">Independent evidence stages across the selected source banks.</p></div><span class="subtext">Click a count to inspect its evidence</span></div>
+      <div id="flow-stages" class="flow-stages"></div>
+      <div id="flow-queues" class="flow-queues"></div>
+    </section>
+    <div class="work-grid">
+      <section class="panel" aria-labelledby="work-title"><div class="panel-head"><div><h2 id="work-title">Where work is accumulating</h2><p class="subtext">Native source groups · recent output beside the remaining workload.</p></div><label>Sort <select id="work-sort"><option value="remaining">Most remaining</option><option value="queue">Largest verification gap</option><option value="pace">Fastest recent pace</option></select></label></div><div class="work-table-wrap"><table class="work-table"><thead><tr><th scope="col">Source group</th><th scope="col">Remaining</th><th scope="col" id="work-new-heading">New / 24h</th><th scope="col">Awaiting evidence</th></tr></thead><tbody id="work-table"></tbody></table></div><p class="burn-caption">Groups use explicit source banks. “Awaiting evidence” means translated definitions without any valid verified observation; retained historical verification is included.</p></section>
+      <section class="panel" aria-labelledby="pipeline-title"><div class="panel-head"><div><h2 id="pipeline-title">Pipeline improvement signals</h2><p class="subtext">Retained measurements and the next useful measurement.</p></div></div><div class="pipeline-content"><p id="pipeline-observation"></p><div class="pipeline-evidence" id="pipeline-samples"></div><div class="pipeline-action"><strong>Measure edit → first useful result</strong><p>Compare build, wait, comparison and publication time across similar changes to locate the bottleneck. Coverage pace alone cannot identify the cause.</p></div><details id="pipeline-details"><summary>Evidence and candidate improvements</summary><p id="pipeline-candidates" style="margin-top:10px"></p><div id="pipeline-provenance"></div></details></div></section>
+    </div>
+    <details class="support-details" id="burndown-method"><summary>Source history, counting and forecast assumptions</summary><div class="panel"><div class="pipeline-content" style="padding-top:14px"><p id="burn-history-method"></p><ul id="burn-history-limitations"></ul></div><div class="work-table-wrap"><table class="work-table burn-history-table"><thead><tr><th scope="col">Commit (UTC)</th><th scope="col">Added</th><th scope="col">Removed</th><th scope="col">Remaining</th><th scope="col">Source checkpoint</th></tr></thead><tbody id="burn-history-table"></tbody></table></div></div></details>
+    <details class="support-details" id="evidence-overview"><summary>Explore stages, evidence contexts and report imports</summary>
+    <section class="metrics" aria-label="Inventory overview">
+      <div class="metric"><div class="metric-label">Original C definitions</div><div class="metric-number" id="total">—</div><small id="total-lines">Inventory body lines</small></div>
+      <div class="metric emphasis"><div class="metric-label" id="reported-label">Reported translated</div><div class="metric-number" id="reported">—</div><small id="reported-lines">Current observations only</small></div>
+      <div class="metric"><div class="metric-label" id="remaining-label">Remaining before translation report</div><div class="metric-number" id="remaining">—</div><small id="remaining-lines">Definitions without that observation</small></div>
+      <div class="metric"><div class="metric-label">Declared in fixtures</div><div class="metric-number" id="declared">—</div><small id="declared-lines">Declarations only · no verification inferred</small></div>
+    </section>
+    <details id="report-details" class="report-notes">
+      <summary class="report-summary"><strong>Report details</strong><span id="report-detail-count" class="muted"></span></summary>
+      <div class="report-content">
+        <p>Stages describe separate agent observations. Fixture declarations do not establish verification, and inventory coverage does not measure full-game completion. Evidence can describe retained historical source or the checkout at observation; use the evidence context filter to explore each.</p>
+        <div id="notices" hidden></div>
+        <details class="source-details"><summary>Source provenance and interpretation</summary><div id="provenance" class="provenance-content"></div></details>
+      </div>
+    </details>
+    <div class="audit-grid">
+      <section class="panel velocity-panel" aria-labelledby="velocity-title">
+        <div class="panel-head velocity-head"><div><h2 id="velocity-title">Report activity</h2><p class="subtext" id="velocity-stage">First stage reports over time</p></div><div class="selectors"><label for="velocity-window" class="sr-only">Chart period</label><select id="velocity-window"><option value="24h">Last 24 hours</option><option value="7d">Last 7 days</option><option value="all">All history</option></select><label for="velocity-mode" class="sr-only">Chart measure</label><select id="velocity-mode"><option value="additions">New reports</option><option value="cumulative">Cumulative</option></select></div></div>
+        <div class="velocity-stats"><div><span>New in period</span><strong id="velocity-gains">—</strong></div><div><span id="velocity-rate-label">Per hour</span><strong id="velocity-rate">—</strong></div><div><span id="velocity-latest-label">Latest hour</span><strong id="velocity-latest">—</strong></div></div>
+        <svg id="velocity-chart" class="chart" role="img" aria-labelledby="velocity-chart-title velocity-chart-description"></svg>
+        <div id="velocity-readout" class="chart-readout" aria-live="polite"></div>
+        <div id="velocity-legend" class="chart-legend"><span class="legend-item"><span id="velocity-current-swatch" class="swatch"></span>Checkout reports</span><span class="legend-item"><span class="swatch history-swatch"></span>Historical evidence</span><span class="legend-item"><span class="swatch legacy-swatch"></span>Legacy reports</span></div>
+        <p class="chart-caption" id="velocity-caption">Report dates include evidence imports. Implementation dates are not recorded.</p>
+        <details class="chart-data"><summary>Chart data and counting</summary><div class="chart-data-content"><p>Each definition counts once at its first valid report for the selected stage and evidence context. Stale and replaced observations are excluded. Report dates include imported source and evidence audits; they do not establish implementation speed. Stage and evidence selectors apply to this chart. The last bucket is partial. Times use UTC.</p><div class="chart-table-scroll" tabindex="0" aria-label="Progress history data"><table><caption class="sr-only">Progress history by report date</caption><thead><tr><th scope="col">Period (UTC)</th><th scope="col" id="velocity-new-column">New definitions</th><th scope="col">Cumulative</th></tr></thead><tbody id="velocity-table"></tbody></table></div></div></details>
+      </section>
+      <section class="panel coverage-panel" aria-labelledby="banks-title">
+        <div class="panel-head"><div><h2 id="banks-title">Reported coverage</h2><p class="subtext">Select a stage for this evidence overview and report activity.</p></div><div class="selectors"><label for="milestone">Stage <select id="milestone"><option value="translated">Translated</option><option value="verified">Verified</option><option value="integrated">Integrated</option><option value="live-exercised">Live exercised</option><option value="translating">Translating</option></select></label><label for="weight">Count <select id="weight"><option value="routines">Definitions</option><option value="lines">Body lines</option></select></label></div></div>
+        <div class="overview"><label for="context" class="context-control">Evidence <select id="context"><option value="">All reported contexts</option><option value="current-checkout">Checkout at observation</option><option value="historical-frozen">Retained historical source</option><option value="unspecified">Unspecified / legacy</option></select></label><p id="context-counts" class="subtext"></p><div id="stack" class="stack" role="img" aria-label="Selected stage observation coverage"></div><div id="legend" class="legend"></div><p class="subtext">Stages are counted independently and can overlap.</p></div>
+        <details id="bank-details" class="bank-details"><summary id="bank-summary">Browse source banks</summary><div id="banks" class="bank-grid"></div></details>
+      </section>
+    </div>
+    </details>
+    <details class="support-details" id="routine-explorer"><summary>Routine explorer · search definitions and inspect exact evidence</summary>
+    <section class="panel" aria-labelledby="routines-title">
+      <div class="panel-head"><div><h2 id="routines-title">Routine explorer</h2><p class="subtext">Expand a definition for dependencies, declarations, scopes, and every reported update.</p></div></div>
+      <div class="filters">
+        <label class="filter-search"><span>Symbol or original address</span><input id="search" type="search" placeholder="Search routines, e.g. Samus or 0x90…" autocomplete="off"></label>
+        <label><span>Source bank</span><select id="bank"><option value="">All banks</option></select></label>
+        <label><span>Subsystem*</span><select id="subsystem"><option value="">All subsystems</option></select></label>
+        <label><span>Highest reported stage</span><select id="stage"><option value="">All stages</option><option value="remaining">Missing selected stage report</option><option value="unreported">No matching report</option><option value="translating">Translating</option><option value="translated">Translated</option><option value="verified">Verified</option><option value="integrated">Integrated</option><option value="live-exercised">Live exercised</option><option value="stale">Stale reports only</option></select></label>
+        <label><span>Reporting agent</span><select id="agent"><option value="">All agents</option></select></label>
+        <label><span>Translation scope</span><select id="scope"><option value="">All scopes</option></select></label>
+      </div>
+      <div class="list-toolbar"><span id="results" role="status" aria-live="polite">Loading inventory…</span><div class="actions"><button id="show-remaining" type="button">Show remaining</button><button id="reset" type="button">Reset filters</button></div></div>
+      <div class="list-header" aria-hidden="true"><span>Routine</span><span>Source</span><span>Address</span><span>Body lines</span><span>Observation</span></div>
+      <div id="routines"></div>
+      <div class="pagination"><span id="page-info"></span><div class="pagination-actions"><button id="previous" type="button">← Previous</button><span id="page"></span><button id="next" type="button">Next →</button></div></div>
+    </section>
+    </details>
+    <footer class="footer"><span>* Subsystems are navigation hints derived from routine names; source banks and reported scopes remain explicit.</span><span>Standalone HTML · embedded data works offline · served reports check registry.json every 7 seconds</span></footer>
+  </main>
+  <script id="progress-data" type="application/json">{"notices":[],"root":"/home/jim/sm-decomp","routines":[{"body_lines":5,"calls":["RomPtr","RtlApuUpload"],"declared_in":[],"definition_sha256":"32aec38ebfa1bf4b44005479c7527547a5d64adebdaa22b149af89caa7b8f47b","line":16,"original_address":"0x808028","source":"src/sm_80.c","symbol":"APU_UploadBank"},{"body_lines":10,"calls":["HIBYTE","LOBYTE"],"declared_in":[],"definition_sha256":"dd9bc08f1d75ec0265ba0001d51ed7b4814e0c1175aae30cd5fe48559d4bacb8","line":22,"original_address":"0x808111","source":"src/sm_80.c","symbol":"NextRandom"},{"body_lines":19,"calls":[],"declared_in":["tools/port/system.toml"],"definition_sha256":"36fb9fe47b648ddca9ab5dbb8d2c8bed4a0da1e5fd505bf77b77776d15f4c60f","line":33,"original_address":"0x808146","source":"src/sm_80.c","symbol":"ReleaseButtonsFilter"},{"body_lines":4,"calls":[],"declared_in":["tools/port/system.toml"],"definition_sha256":"11deb5a2972f8596baaf9e153659670ee22375338f8143d202166046a88d130b","line":53,"original_address":"0x80818E","source":"src/sm_80.c","symbol":"PrepareBitAccess"},{"body_lines":3,"calls":[],"declared_in":["tools/port/system.toml"],"definition_sha256":"8d0edbca8cf05b29cc0e88ab5d704801d3d40d85d96a5420ea65144521b75bef","line":58,"original_address":"0x8081A6","source":"src/sm_80.c","symbol":"SetBossBitForCurArea"}],"schema_version":1,"source":{"body_lines":41,"definition_count":5,"identity_sha256":"e74864c229949fc6f1a6bd7528f339bdb3f9364f1e4f9544f08693881d10f111","inventory_sha256":"7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25","revision":"578f90b3cc49557bb70060ad033bb90b8cf8ac50","scope":"actual sm_*.c lexical definitions/calls; macros, externals and indirect calls require review; no acceptance inferred"},"stale_update_ids":[],"summary":{"body_lines":75229,"context_stages":{"current-checkout":{"integrated":{"body_lines":775,"definitions":38},"live-exercised":{"body_lines":487,"definitions":26},"translated":{"body_lines":16527,"definitions":1461},"translating":{"body_lines":0,"definitions":0},"verified":{"body_lines":804,"definitions":39}},"historical-frozen":{"integrated":{"body_lines":0,"definitions":0},"live-exercised":{"body_lines":1247,"definitions":106},"translated":{"body_lines":9737,"definitions":911},"translating":{"body_lines":0,"definitions":0},"verified":{"body_lines":9737,"definitions":911}},"unspecified":{"integrated":{"body_lines":719,"definitions":34},"live-exercised":{"body_lines":0,"definitions":0},"translated":{"body_lines":719,"definitions":34},"translating":{"body_lines":3170,"definitions":222},"verified":{"body_lines":719,"definitions":34}}},"declared_body_lines":9108,"declared_definitions":835,"definitions":6053,"stages":{"integrated":{"body_lines":775,"definitions":38},"live-exercised":{"body_lines":1642,"definitions":121},"translated":{"body_lines":16527,"definitions":1461},"translating":{"body_lines":3170,"definitions":222},"verified":{"body_lines":10103,"definitions":925}},"stale_updates":16,"updates":261},"superseded_update_ids":[],"updated_at":1700259200,"updates":[]}</script>
+  <script>
+  (() => {
+    'use strict';
+    const $ = id => document.getElementById(id);
+    const STAGES = ['unreported', 'translating', 'translated', 'verified', 'integrated', 'live-exercised'];
+    const LABELS = { unreported:'No matching report', translating:'Translating', translated:'Translated', verified:'Verified', integrated:'Integrated', 'live-exercised':'Live exercised' };
+    const COLORS = { unreported:'--unreported', translating:'--translating', translated:'--translated', verified:'--verified', integrated:'--integrated', 'live-exercised':'--live' };
+    const PAGE_SIZE = 60;
+    const state = { data:null, rows:[], symbols:new Map(), page:0, expanded:new Set(), raw:'', file:false, checked:null, velocityIndex:null, burnIndex:null, paceIndex:null, burn:null };
+    const fmt = n => Number(n || 0).toLocaleString();
+    const percent = (part,total) => total ? (part / total * 100).toFixed(part && part / total < .01 ? 2 : 1) + '%' : '0%';
+    const time = value => { const date = new Date(Number(value) * 1000); return Number.isFinite(date.getTime()) ? date.toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}) : 'Unknown'; };
+    const el = (tag,className,text) => { const node = document.createElement(tag); if(className) node.className=className; if(text !== undefined) node.textContent=String(text); return node; };
+    const text = (id,value) => { $(id).textContent=value; };
+    const list = value => Array.isArray(value) ? value : [];
+    const rank = stage => STAGES.indexOf(stage);
+    const contextOf = update => update.evidence_context || 'unspecified';
+    const contextLabel = context => ({'current-checkout':'Checkout at observation','historical-frozen':'Retained historical source',unspecified:'Unspecified / legacy'}[context] || context);
+    const selectedUpdates = row => row.current.filter(update => !$('context').value || contextOf(update)===$('context').value);
+    const selectedStages = row => new Set(selectedUpdates(row).map(update => update.stage));
+    const selectedHighest = row => selectedUpdates(row).reduce((stage,update) => rank(update.stage)>rank(stage) ? update.stage : stage,'unreported');
+    const lines = row => Math.max(0,Number(row.body_lines) || 0);
+    const weight = row => $('weight').value === 'lines' ? lines(row) : 1;
+    const bankOf = row => { const match=String(row.source || '').match(/(?:^|\/)sm_([0-9a-f]{2})(?:\.|_)/i); if(match) return match[1].toUpperCase(); const address=String(row.original_address || '').replace(/^0x/i,''); return /^[0-9a-f]{6}$/i.test(address) ? address.slice(0,2).toUpperCase() : 'Other'; };
+    function subsystemOf(row) {
+      const name=String(row.symbol || '');
+      if(/Eproj|EnemyProjectile/i.test(name)) return 'Enemy projectiles';
+      if(/Plm|Door|RoomState|RoomTransition/i.test(name)) return 'Rooms & PLMs';
+      if(/Samus|Grapple|Bomb|Shinespark|Suit|Player/i.test(name)) return 'Samus & equipment';
+      if(/Enemy|Ridley|Kraid|MotherBrain|Phantoon|Draygon|Crocomire|SporeSpawn|Botwoon|Torizo|Metroid/i.test(name)) return 'Enemies & bosses';
+      if(/Projectile|Missile|Beam/i.test(name)) return 'Player projectiles';
+      if(/Music|Sound|Audio|Sfx|Apu/i.test(name)) return 'Audio';
+      if(/Menu|Pause|Map|Hud|Text|Message|FileSelect|Title|Ending|Intro|Demo/i.test(name)) return 'Menus & presentation';
+      if(/Dma|Ppu|Vram|Sprite|Palette|Scroll|Hdma|Draw|Tile|Fx|Screen/i.test(name)) return 'Graphics & hardware';
+      return 'Other routines';
+    }
+    function stale(update) {
+      const source=state.data.source || {};
+      return Boolean(list(state.data.stale_update_ids).includes(update.id) || (update.source_revision && source.revision && update.source_revision !== source.revision) || (update.inventory_sha256 && source.inventory_sha256 && update.inventory_sha256 !== source.inventory_sha256));
+    }
+    function replacements(update) { return state.data.updates.filter(candidate => list(candidate.supersedes).includes(update.id)); }
+    function superseded(update) { return list(state.data.superseded_update_ids).includes(update.id) || replacements(update).length>0; }
+    function excluded(update) { return stale(update) || superseded(update); }
+    function safeLink(path,base) {
+      if(typeof path !== 'string' || !path || /[\u0000-\u001f]/.test(path) || /^(?:javascript|data|vbscript):/i.test(path)) return null;
+      try {
+        if(path.startsWith('/')) return new URL('file://' + path).href;
+        if(/^(?:https?|file):\/\//i.test(path)) return new URL(path).href;
+        if(/^[a-z][a-z0-9+.-]*:/i.test(path)) return null;
+        if(base && String(base).startsWith('/')) return new URL(path,'file://' + String(base).replace(/\/$/,'') + '/').href;
+        return new URL(path,location.href).href;
+      } catch { return null; }
+    }
+    function pathNode(path,base,label) {
+      const href=safeLink(String(path || ''),base);
+      const node=el(href ? 'a' : 'span','mono',label === undefined ? path : label);
+      if(href) { node.href=href; node.target='_blank'; node.rel='noopener'; }
+      return node;
+    }
+    function pair(dl,label,value) { const wrapper=el('div','detail-pair'); wrapper.append(el('dt','',label)); const dd=el('dd'); dd.append(value instanceof Node ? value : document.createTextNode(String(value ?? 'Not recorded'))); wrapper.append(dd); dl.append(wrapper); }
+    function badge(stage) { const node=el('span','badge',LABELS[stage] || stage); node.dataset.stage=stage; return node; }
+    function fillOptions(id,values,label) {
+      const select=$(id), previous=select.value; select.replaceChildren(new Option(label,''));
+      for(const value of [...new Set(values.filter(Boolean).map(String))].sort()) select.add(new Option(value,value));
+      if(previous && ![...select.options].some(option => option.value === previous)) select.add(new Option(previous + ' (not in snapshot)',previous));
+      select.value=previous;
+    }
+    function accept(data,raw,file) {
+      if(!data || data.schema_version !== 1 || !Array.isArray(data.routines) || !Array.isArray(data.updates)) throw new Error('This file is not a schema version 1 progress registry.');
+      if(data.routines.some(row => !row || typeof row.symbol !== 'string' || typeof row.source !== 'string') || data.updates.some(update => !update || typeof update !== 'object')) throw new Error('The registry contains malformed routine or update records.');
+      state.data=data; state.raw=raw; state.file=file; const bySymbol=new Map();
+      for(const update of data.updates) for(const symbol of list(update.routines)) { if(!bySymbol.has(symbol)) bySymbol.set(symbol,[]); bySymbol.get(symbol).push(update); }
+      state.rows=data.routines.map(row => {
+        const updates=(bySymbol.get(row.symbol) || []).slice().sort((a,b) => Number(b.updated_at || 0) - Number(a.updated_at || 0));
+        const current=updates.filter(update => !excluded(update));
+        const highest=current.reduce((stage,update) => rank(update.stage) > rank(stage) ? update.stage : stage,'unreported');
+        return {...row,bank:bankOf(row),subsystem:subsystemOf(row),updates,current,highest,stages:new Set(current.map(update => update.stage))};
+      }).sort((a,b) => a.bank.localeCompare(b.bank) || String(a.source).localeCompare(String(b.source)) || Number(a.line)-Number(b.line) || a.symbol.localeCompare(b.symbol));
+      state.symbols=new Map(state.rows.map(row => [row.symbol,row]));
+      fillOptions('bank',state.rows.map(row => row.bank),'All banks');
+      for(const group of SOURCE_GROUPS) $('bank').add(new Option(group.name,'group:'+group.name));
+      fillOptions('subsystem',state.rows.map(row => row.subsystem),'All subsystems');
+      fillOptions('agent',data.updates.map(update => update.agent),'All agents');
+      fillOptions('scope',data.updates.map(update => update.scope),'All scopes');
+      fillOptions('burn-bank',state.rows.map(row => row.bank),'All source banks');
+      for(const group of SOURCE_GROUPS) $('burn-bank').add(new Option(group.name,'group:'+group.name));
+      $('error').hidden=true; renderOverview(); renderList(); renderProvenance(); renderBurndown();
+      text('updated','Snapshot: ' + time(data.updated_at));
+      const mode=file ? 'Opened JSON snapshot' : /^https?:$/.test(location.protocol) ? 'Live registry · 7s checks' : 'Embedded snapshot · offline';
+      $('sync-mode').replaceChildren(el('span','dot'),document.createTextNode(mode));
+      renderNotices();
+    }
+    const SOURCE_GROUPS = [
+      {name:'Enemies & bosses',banks:['A0','A2','A3','A4','A5','A6','A7','A8','A9','AA','AD']},
+      {name:'Samus & player projectiles',banks:['90','91','92','93','94','9B']},
+      {name:'Rooms, doors & PLMs',banks:['82','84','8F']},
+      {name:'Menus, cinematics & messages',banks:['85','8B']},
+      {name:'System & rendering',banks:['80','81','87','88','89','8D','B4']},
+      {name:'Enemy projectiles',banks:['86']},
+      {name:'Remaining source banks',banks:['B2','B3','Other']}
+    ];
+    const DAY_SECONDS=86400;
+    const utcDate=value => new Intl.DateTimeFormat(undefined,{timeZone:'UTC',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(value*1000));
+    const fixed=value => Number(value).toLocaleString(undefined,{maximumFractionDigits:1});
+    function sourceModel() {
+      const history=state.data.coverage_history;
+      if(!history || history.schema_version!==1 || !Array.isArray(history.checkpoints) || !Array.isArray(history.current_symbols)) return null;
+      if(history.source_revision!==state.data.source?.revision || history.inventory_sha256!==state.data.source?.inventory_sha256) return null;
+      const scope=$('burn-bank').value, group=SOURCE_GROUPS.find(group=>'group:'+group.name===scope), weighted=$('burn-weight').value==='lines', rows=state.rows.filter(row => !scope || (group ? group.banks.includes(row.bank) : row.bank===scope)), rowMap=new Map(rows.map(row => [row.symbol,row]));
+      const value=symbol => rowMap.has(symbol) ? weighted ? lines(rowMap.get(symbol)) : 1 : 0;
+      const total=rows.reduce((sum,row) => sum+value(row.symbol),0), symbols=new Set(), points=[];
+      const baseline=Number(history.baseline_at), generated=Number(history.generated_at), at=Math.max(generated,Number(state.data.updated_at)||0);
+      if(!(baseline>0) || !(at>=baseline)) return null;
+      points.push({at:baseline,covered:0,remaining:total,added:0,removed:0,commit:history.baseline_commit,subject:'Start of retained source history'});
+      let previousAt=baseline;
+      for(const checkpoint of history.checkpoints) {
+        const timestamp=Number(checkpoint.at);
+        if(!Number.isFinite(timestamp) || timestamp<previousAt || timestamp>at) return null;
+        let added=0,removed=0;
+        for(const symbol of list(checkpoint.removed)) if(symbols.delete(symbol)) removed+=value(symbol);
+        for(const symbol of list(checkpoint.added)) if(!symbols.has(symbol)) { symbols.add(symbol); added+=value(symbol); }
+        const covered=[...symbols].reduce((sum,symbol) => sum+value(symbol),0);
+        points.push({at:timestamp,covered,remaining:total-covered,added,removed,commit:checkpoint.commit,subject:checkpoint.subject}); previousAt=timestamp;
+      }
+      const committed=points[points.length-1].covered;
+      if(points[points.length-1].at<at) points.push({at,covered:committed,remaining:total-committed,added:0,removed:0,commit:null,subject:'Report snapshot · no source event'});
+      const currentSet=new Set(history.current_symbols), covered=rows.reduce((sum,row) => sum+(currentSet.has(row.symbol) ? value(row.symbol) : 0),0);
+      const coverageAt=timestamp => { let count=0; for(const point of points) { if(point.at>timestamp) break; count=point.covered; } return count; };
+      const duration=Number($('burn-window').value)*3600, span=at-baseline, recentAvailable=span>=duration, previousAvailable=span>=2*duration;
+      const net=committed-coverageAt(at-duration), previousNet=coverageAt(at-duration)-coverageAt(at-2*duration), pace=recentAvailable ? net/(duration/DAY_SECONDS) : null, previousPace=previousAvailable ? previousNet/(duration/DAY_SECONDS) : null;
+      const changed=list(history.uncommitted).length>0, status=history.status || 'current', usable=status==='current' && !changed;
+      const sampleCount=Math.max(2,Math.min(120,Math.ceil(span/3600)+1)), samples=Array.from({length:sampleCount},(_,i) => baseline+(at-baseline)*i/(sampleCount-1));
+      const rolling=samples.map(timestamp => ({at:timestamp,rate:timestamp-baseline>=duration ? (coverageAt(timestamp)-coverageAt(timestamp-duration))/(duration/DAY_SECONDS) : null,previous:timestamp-baseline>=2*duration ? (coverageAt(timestamp-duration)-coverageAt(timestamp-2*duration))/(duration/DAY_SECONDS) : null}));
+      return {history,rows,rowMap,value,total,covered,remaining:total-covered,committed,points,rolling,baseline,at,duration,net,previousNet,pace,previousPace,recentAvailable,previousAvailable,usable,status,changed,group,unit:weighted ? 'body lines' : 'definitions',weighted,coverageAt};
+    }
+    function chartElement(tag,attributes={},value) { const node=document.createElementNS('http://www.w3.org/2000/svg',tag); for(const [key,item] of Object.entries(attributes)) node.setAttribute(key,String(item)); if(value!==undefined) node.textContent=value; return node; }
+    function drawSourceChart(id,model,pace) {
+      const chart=$(id), width=Math.max(280,chart.getBoundingClientRect().width), height=chart.getBoundingClientRect().height||230, left=50,right=18,top=17,bottom=height-30;
+      const points=pace ? model.rolling : model.points, values=pace ? points.flatMap(p => [p.rate,p.previous].filter(v => v!==null)) : points.map(p => p.remaining);
+      const minimum=pace ? Math.min(0,...values) : 0, maximum=pace ? Math.max(1,...values)*1.1 : Math.max(1,model.total), range=maximum-minimum;
+      const y=value => bottom-(value-minimum)/range*(bottom-top), x=at => left+(at-model.baseline)/Math.max(1,model.at-model.baseline)*(width-left-right);
+      chart.replaceChildren(); chart.setAttribute('viewBox',`0 0 ${width} ${height}`);
+      const title=pace ? 'Rolling coverage velocity' : 'Native coverage burndown', description=pace ? `Rolling ${model.duration/3600}-hour net ${model.unit} per day. Missing early periods have insufficient history.` : `${fmt(model.remaining)} ${model.unit} remaining of ${fmt(model.total)}. Retrospective source correspondence. Coverage is not gameplay completion.`;
+      chart.append(chartElement('title',{id:id+'-title'},title),chartElement('desc',{id:id+'-description'},description));
+      const compact=new Intl.NumberFormat(undefined,{notation:'compact',maximumFractionDigits:1});
+      for(let i=0;i<=4;i++) { const value=minimum+range*i/4; chart.append(chartElement('line',{x1:left,y1:y(value),x2:width-right,y2:y(value),class:'grid-line'}),chartElement('text',{x:left-8,y:y(value)+3,'text-anchor':'end'},compact.format(value))); }
+      const labelFormat=new Intl.DateTimeFormat(undefined,{timeZone:'UTC',month:'short',day:'numeric'}), labels=width<400 ? 3 : 4;
+      for(let i=0;i<labels;i++) { const timestamp=model.baseline+(model.at-model.baseline)*i/(labels-1); chart.append(chartElement('text',{x:x(timestamp),y:height-10,'text-anchor':i===0 ? 'start' : i===labels-1 ? 'end' : 'middle'},labelFormat.format(new Date(timestamp*1000)))); }
+      const segments=(property,className) => {
+        let path='', active=false;
+        for(const point of points) { const value=point[property]; if(value===null || !Number.isFinite(value)) { active=false; continue; } path+=(active ? ' L' : 'M')+x(point.at)+','+y(value); active=true; }
+        if(path) chart.append(chartElement('path',{d:path,class:className}));
+      };
+      if(pace) { segments('previous','comparison-line'); segments('rate','velocity-line'); }
+      else {
+        let path='M'+x(points[0].at)+','+y(points[0].remaining);
+        for(const point of points.slice(1)) path+=' H'+x(point.at)+' V'+y(point.remaining);
+        chart.append(chartElement('path',{d:path+` L${x(model.at)},${bottom} L${left},${bottom} Z`,class:'coverage-area'}),chartElement('path',{d:path,class:'coverage-line'}));
+        chart.append(chartElement('circle',{cx:x(model.at),cy:y(model.points.at(-1).remaining),r:4,fill:'var(--accent)'}));
+      }
+      const selected=pace ? state.paceIndex : state.burnIndex;
+      const describe=i => {
+        const point=points[i], readout=$(pace ? 'pace-readout' : 'burndown-readout');
+        if(pace) { state.paceIndex=i; readout.replaceChildren(el('strong','',utcDate(point.at)+' UTC'),document.createTextNode(point.rate===null ? ' · waiting for a complete window' : ' · '+fixed(point.rate)+' '+model.unit+'/day'+(point.previous===null ? ' · earlier comparison unavailable' : ' · prior '+fixed(point.previous)+'/day'))); }
+        else { state.burnIndex=i; readout.replaceChildren(el('strong','',fmt(point.remaining)+' remaining'),document.createTextNode(' · '+utcDate(point.at)+' UTC · '+(point.commit ? '+'+fmt(point.added)+' / −'+fmt(point.removed)+' · '+point.subject : 'snapshot'))); }
+      };
+      points.forEach((point,i) => {
+        const start=i===0 ? left : (x(points[i-1].at)+x(point.at))/2, end=i===points.length-1 ? width-right : (x(point.at)+x(points[i+1].at))/2;
+        const hit=chartElement('rect',{x:start,y:top,width:Math.max(1,end-start),height:bottom-top,class:'sample-hit',tabindex:0,role:'button','aria-label':utcDate(point.at)+' UTC: '+(pace ? point.rate===null ? 'insufficient history' : fixed(point.rate)+' '+model.unit+' per day' : fmt(point.remaining)+' remaining')});
+        for(const event of ['pointerenter','focus','click']) hit.addEventListener(event,() => describe(i));
+        hit.addEventListener('keydown',event => { if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) { event.preventDefault(); const next=event.key==='Home' ? 0 : event.key==='End' ? points.length-1 : Math.max(0,Math.min(points.length-1,i+(event.key==='ArrowLeft' ? -1 : 1))); chart.querySelectorAll('.sample-hit')[next].focus(); } });
+        chart.append(hit);
+      });
+      const latestChange=points.findLastIndex(point=>point.added||point.removed), defaultIndex=pace||latestChange<0 ? points.length-1 : latestChange;
+      describe(Math.min(points.length-1,selected===null ? defaultIndex : selected));
+      chart.dataset.total=String(model.total); chart.dataset.remaining=String(model.remaining); chart.dataset.net=String(model.net); chart.dataset.pace=model.pace===null ? '' : String(model.pace);
+    }
+    function renderBurndown() {
+      if(!state.data) return;
+      const model=sourceModel(); state.burn=model;
+      $('burn-unavailable').hidden=Boolean(model?.usable);
+      if(!model) {
+        text('burn-unavailable','Source history is unavailable for this snapshot. Run “sm-pipeline progress history” to reconstruct coverage from retained source commits.');
+        for(const id of ['burn-complete','burn-remaining','burn-pace','burn-eta']) text(id,'—');
+        for(const id of ['burndown-chart','pace-chart','flow-stages','flow-queues','work-table','burn-history-table']) $(id).replaceChildren();
+        for(const id of ['burn-complete-detail','burn-remaining-detail','burn-change','burn-eta-detail','burn-span','burndown-readout','pace-readout','burn-history-method']) text(id,'');
+        $('burn-history-limitations').replaceChildren();
+        text('burn-scope-note','Fixed native scope · source history unavailable');
+        renderPipeline(null);
+        text('burn-signal-title','Source history needed'); text('burn-signal-detail','Report import timestamps cannot establish implementation velocity.'); return;
+      }
+      const windowHours=model.duration/3600, unit=model.unit;
+      if(!model.usable) text('burn-unavailable','Source history needs a refresh ('+model.status+(model.changed ? '; undated source changes' : '')+'). The retained curves are shown for inspection; pace and forecast are withheld. Run “sm-pipeline progress history”.');
+      text('burn-scope-note',fmt(model.total)+' '+(model.weighted ? 'C body lines' : 'C definitions')+' · fixed native scope'+($('burn-bank').value ? ' · '+(model.group ? model.group.name : 'bank '+$('burn-bank').value) : ''));
+      text('burn-complete',percent(model.covered,model.total)); text('burn-complete-detail',fmt(model.covered)+' / '+fmt(model.total)+' '+unit+' mapped to Rust');
+      text('burn-remaining',fmt(model.remaining)); text('burn-remaining-detail',model.weighted ? fmt(model.rows.filter(row => !new Set(model.history.current_symbols).has(row.symbol)).length)+' native definitions still unmapped' : 'Definitions without a reviewed source body');
+      text('burn-pace-label','Net pace · last '+windowHours+'h');
+      const pace=model.usable ? model.pace : null, previous=model.previousPace, ratio=pace!==null && previous!==null && previous>0 ? (pace/previous-1)*100 : null;
+      text('burn-pace',pace===null ? '—' : fixed(pace)+'/day');
+      const change=ratio!==null ? (ratio>=0 ? '+' : '')+fixed(ratio)+'% vs previous '+windowHours+'h' : previous===0 && pace>0 ? 'Resumed after zero output in prior window' : previous===0 && pace===0 ? 'No net additions in either window' : 'Need two complete windows to compare';
+      text('burn-change',model.usable ? change : 'Refresh source history to compare'); $('burn-change').className=ratio===null ? '' : ratio<0 ? 'negative' : 'positive';
+      const days=pace>0 ? model.remaining/pace : null;
+      text('burn-eta',days===null ? model.remaining===0 ? 'Covered' : '—' : days<1 ? fixed(days*24)+' hours' : fixed(days)+' days');
+      text('burn-eta-detail',days!==null ? 'At '+fixed(pace)+' '+unit+'/day · '+windowHours+'h sample · short history' : pace===0 ? 'No forecast at zero net pace' : pace<0 ? 'No forecast while net coverage is falling' : 'A complete current-source window is needed');
+      text('burn-subtitle','Remaining '+unit+' · lower is closer to full source coverage'); text('burn-span',fixed((model.at-model.baseline)/DAY_SECONDS)+' days of history');
+      text('pace-subtitle','Rolling '+windowHours+'h net '+unit+'/day · same-length comparison');
+      drawSourceChart('burndown-chart',model,false); drawSourceChart('pace-chart',model,true);
+      const tone=!model.usable || ratio!==null && ratio<-20 ? 'slower' : 'steady'; $('burn-signal').dataset.tone=tone;
+      text('burn-signal-title',!model.usable ? 'History needs refresh' : pace===null ? 'Short history' : ratio!==null && ratio<-20 ? 'Coverage pace is slowing' : ratio!==null && ratio>20 ? 'Coverage pace is increasing' : pace===0 ? 'No recent source additions' : 'Coverage is moving');
+      text('burn-signal-detail',!model.usable ? 'Keep the retained snapshot as a baseline and rescan the changed source before using the forecast.' : 'Recent '+windowHours+'h: '+fmt(model.net)+' net '+unit+(previous===null ? '; prior comparison window is incomplete.' : '; previous '+windowHours+'h: '+fmt(model.previousNet)+'.')+' Calendar time includes verification, tooling and pauses. Use the evidence queues and measured cycle time to decide where an improvement would help.');
+      const currentSymbols=new Set(model.history.current_symbols), stages=['translated','verified','integrated','live-exercised']; $('flow-stages').replaceChildren();
+      for(const stage of stages) {
+        const matched=model.rows.filter(row => stage==='translated' ? currentSymbols.has(row.symbol) : row.current.some(update => update.stage===stage)), count=matched.reduce((sum,row) => sum+model.value(row.symbol),0), column=el('div','flow-stage'), button=el('button','',fmt(count)); button.type='button'; button.style.color='var('+COLORS[stage]+')';
+        button.addEventListener('click',() => { $('evidence-overview').open=true; $('routine-explorer').open=true; $('milestone').value=stage; $('weight').value=$('burn-weight').value; $('context').value=''; $('bank').value=$('burn-bank').value; $('stage').value=''; state.page=0; renderOverview(); renderList(); $('evidence-overview').scrollIntoView({block:'start'}); });
+        const bar=el('div','flow-bar'), fill=el('div'); fill.style.width=(model.total ? count/model.total*100 : 0)+'%'; fill.style.background='var('+COLORS[stage]+')'; bar.append(fill);
+        column.append(el('div','metric-label',LABELS[stage]),button,el('span','',percent(count,model.total)+' · '+(stage==='verified' ? 'includes retained historical evidence' : stage==='translated' ? 'reviewed source correspondence' : stage==='live-exercised' ? 'bounded replay evidence' : 'reported integrated stage')),bar); $('flow-stages').append(column);
+      }
+      const queued=model.rows.filter(row => currentSymbols.has(row.symbol) && !row.current.some(u => u.stage==='verified')), recheck=model.rows.filter(row => currentSymbols.has(row.symbol) && !row.current.some(u => u.stage==='verified' && contextOf(u)==='current-checkout'));
+      $('flow-queues').replaceChildren();
+      for(const [label,count] of [['Translated without verification evidence',queued.reduce((sum,row) => sum+model.value(row.symbol),0)],['Without checkout verification observation',recheck.reduce((sum,row) => sum+model.value(row.symbol),0)]]) { const item=el('span'); item.append(el('strong','',fmt(count)+' '+unit),document.createTextNode(' · '+label)); $('flow-queues').append(item); }
+      renderWorkTable(model,currentSymbols);
+      renderPipeline(model);
+      text('burn-history-method','Source history rebuilt '+utcDate(model.history.generated_at)+' UTC from '+model.history.checkpoints.length+' first-parent commits. Native inventory '+String(model.history.inventory_sha256).slice(0,12)+'… . Net pace uses complete equal '+windowHours+'h windows, including zero-output time. Body lines are a size proxy, not an effort estimate.');
+      $('burn-history-limitations').replaceChildren(...list(model.history.limitations).map(value => el('li','',value)));
+      $('burn-history-table').replaceChildren();
+      for(const point of model.points.filter(p => p.commit)) { const row=el('tr'); row.append(el('td','',utcDate(point.at)),el('td','',fmt(point.added)),el('td','',fmt(point.removed)),el('td','',fmt(point.remaining)),el('td','',String(point.commit).slice(0,8)+' · '+point.subject)); $('burn-history-table').append(row); }
+    }
+    function renderPipeline(model) {
+      const pipeline=model?.history.pipeline, usable=pipeline?.status==='current';
+      const samples=$('pipeline-samples'), provenance=$('pipeline-provenance'); samples.replaceChildren(); provenance.replaceChildren();
+      text('pipeline-observation',!usable ? 'No current retained pipeline timing samples in this snapshot.' : 'Historical verification costs · examples, not a cycle-time trend. Detailed stage timings were not recorded for these runs.');
+      $('pipeline-details').hidden=!usable;
+      if(!usable) return;
+      for(const sample of list(pipeline.samples)) {
+        const seconds=Number(sample.elapsed_ns)/1e9, minutes=Math.floor(seconds/60);
+        samples.append(el('span','',sample.label),el('strong','',minutes+'m '+Math.round(seconds%60)+'s'));
+        const detail=el('p'); detail.append(pathNode(sample.evidence.path,state.data.root,sample.label),el('br'),el('span','mono','SHA-256 '+sample.evidence.sha256)); provenance.append(detail);
+      }
+      text('pipeline-candidates',pipeline.audit ? 'The retained architecture audit flags broad rebuild fingerprints and sequential inventory/import work as candidates to measure. Existing C-object caching is already present.' : 'Record build, wait, comparison and publication times before deciding which pipeline change will improve throughput.');
+      if(pipeline.audit) provenance.append(pathNode(pipeline.audit.path,state.data.root,'Retained timing and architecture audit'));
+    }
+    function renderWorkTable(model,currentSymbols) {
+      const groups=SOURCE_GROUPS.map(group => {
+        const rows=model.rows.filter(row => group.banks.includes(row.bank)), symbols=new Set(rows.map(r => r.symbol)), covered=rows.filter(row => currentSymbols.has(row.symbol)), total=rows.reduce((sum,row) => sum+model.value(row.symbol),0), done=covered.reduce((sum,row) => sum+model.value(row.symbol),0), queue=covered.filter(row => !row.current.some(u => u.stage==='verified')).reduce((sum,row) => sum+model.value(row.symbol),0);
+        let recent=0;
+        const active=new Set();
+        for(const checkpoint of model.history.checkpoints) { let net=0; for(const symbol of list(checkpoint.removed)) if(active.delete(symbol)&&symbols.has(symbol)) net-=model.value(symbol); for(const symbol of list(checkpoint.added)) if(!active.has(symbol)) {active.add(symbol);if(symbols.has(symbol)) net+=model.value(symbol);} if(checkpoint.at>model.at-model.duration&&checkpoint.at<=model.at) recent+=net; }
+        return {...group,rows,total,done,remaining:total-done,queue,recent};
+      }).filter(group => group.rows.length);
+      const sort=$('work-sort').value; groups.sort((a,b) => sort==='queue' ? b.queue-a.queue : sort==='pace' ? b.recent-a.recent : b.remaining-a.remaining);
+      $('work-table').replaceChildren(); text('work-new-heading','Net / '+model.duration/3600+'h');
+      for(const group of groups) {
+        const row=el('tr'), name=el('td'), button=el('button','work-name'), bar=el('span','tiny-bar'), fill=el('span'); fill.style.width=(group.total ? group.done/group.total*100 : 0)+'%'; bar.append(fill); button.append(bar,document.createTextNode(group.name)); button.type='button'; button.title='Filter burndown and velocity to these source banks'; button.addEventListener('click',() => { $('burn-bank').value='group:'+group.name; state.burnIndex=null; state.paceIndex=null; renderBurndown(); $('burn-complete').scrollIntoView({block:'center'}); }); name.append(button);
+        row.append(name,el('td','',fmt(group.remaining)),el('td',group.recent>0 ? 'positive' : 'muted',model.usable&&model.recentAvailable ? (group.recent>0 ? '+' : '')+fmt(group.recent) : '—'),el('td','',fmt(group.queue))); $('work-table').append(row);
+      }
+    }
+    function renderNotices() {
+      const notices=list(state.data.notices).map(String), staleCount=state.data.updates.filter(stale).length, correctedCount=state.data.updates.filter(superseded).length;
+      const groups=[
+        {key:'interpretation',label:'Coverage and interpretation',notes:[]},
+        {key:'declarations',label:'Fixture declaration notes',notes:[]},
+        {key:'stale',label:'Excluded stale reports',notes:[],description:staleCount ? fmt(staleCount)+' reports have stale source, inventory, or evidence. They remain in routine details and are excluded from progress counts.' : ''},
+        {key:'corrected',label:'Replaced reports',notes:[],description:correctedCount ? fmt(correctedCount)+' reports were replaced by corrections. Their original observations and replacement reasons remain in routine details; the originals are excluded from progress counts.' : ''}
+      ];
+      for(const note of notices) groups[note.startsWith('Declaration ') ? 1 : note.startsWith('Stale update ') ? 2 : note.startsWith('Superseded update ') ? 3 : 0].notes.push(note);
+      const summary=$('report-detail-count'); summary.replaceChildren(el('span','',fmt(notices.length)+' notes'));
+      if(staleCount) summary.append(document.createTextNode(' · '),el('span','report-status',fmt(staleCount)+' stale reports excluded'));
+      if(correctedCount) summary.append(document.createTextNode(' · '+fmt(correctedCount)+' replaced'));
+      if(!notices.length && !staleCount && !correctedCount) summary.textContent='Source and interpretation';
+      $('notices').hidden=!groups.some(group => group.notes.length || group.description);
+      const previous=new Set([...$('notices').querySelectorAll('details[open]')].map(group => group.dataset.kind));
+      const fragment=document.createDocumentFragment();
+      for(const group of groups) {
+        if(!group.notes.length && !group.description) continue;
+        const details=el('details','note-group'); details.dataset.kind=group.key; details.open=previous.has(group.key);
+        const heading=el('summary'); heading.append(document.createTextNode(group.label),el('span','note-count','('+fmt(group.notes.length)+(group.notes.length===1 ? ' note)' : ' notes)')));
+        const ul=el('ul','note-list'); ul.tabIndex=0; ul.setAttribute('aria-label',group.label);
+        for(const note of group.notes) ul.append(el('li','',note));
+        details.append(heading); if(group.description) details.append(el('p','muted',group.description)); details.append(ul); fragment.append(details);
+      }
+      $('notices').replaceChildren(fragment);
+    }
+    function renderOverview() {
+      if(!state.data) return;
+      const target=$('milestone').value, reached=state.rows.filter(row => selectedStages(row).has(target)), outstanding=state.rows.filter(row => !selectedStages(row).has(target)), declared=state.rows.filter(row => list(row.declared_in).length);
+      const contextCounts=['current-checkout','historical-frozen','unspecified'].map(context => contextLabel(context)+': '+fmt(state.rows.filter(row => row.current.some(update => update.stage===target && contextOf(update)===context)).length));
+      text('context-counts',LABELS[target]+' definitions by evidence context · '+contextCounts.join(' · ')+' · contexts can overlap');
+      const bodyTotal=state.rows.reduce((sum,row) => sum+lines(row),0), reachedLines=reached.reduce((sum,row) => sum+lines(row),0), outstandingLines=outstanding.reduce((sum,row) => sum+lines(row),0);
+      text('total',fmt(state.rows.length)); text('total-lines',fmt(bodyTotal) + ' C body lines · all definitions');
+      text('reported-label','Reported ' + LABELS[target].toLowerCase());
+      text('reported',fmt(reached.length)); text('reported-lines',percent(reachedLines,bodyTotal) + ' of body lines · ' + fmt(reachedLines) + ' lines');
+      text('remaining-label','Missing selected stage report'); text('remaining',fmt(outstanding.length)); text('remaining-lines',fmt(outstandingLines) + ' body lines without that report');
+      text('declared',fmt(declared.length)); text('declared-lines',fmt(declared.reduce((sum,row) => sum+lines(row),0)) + ' body lines · declarations only');
+      const counts=Object.fromEntries(STAGES.map(stage => [stage,0])); for(const row of state.rows) { if(selectedHighest(row)==='unreported') counts.unreported+=weight(row); for(const stage of selectedStages(row)) if(stage in counts) counts[stage]+=weight(row); }
+      const total=state.rows.reduce((sum,row) => sum+weight(row),0); $('stack').replaceChildren(); $('legend').replaceChildren();
+      const selected=el('div','segment'); selected.style.width=(total ? counts[target]/total*100 : 0)+'%'; selected.style.background='var('+COLORS[target]+')'; selected.title=LABELS[target]+': '+fmt(counts[target]); $('stack').append(selected);
+      for(const stage of STAGES) {
+        const color='var(' + COLORS[stage] + ')';
+        const item=el('span','legend-item'), swatch=el('span','swatch'); swatch.style.background=color; item.append(swatch,document.createTextNode(LABELS[stage] + ' '),el('strong','',fmt(counts[stage]))); $('legend').append(item);
+      }
+      $('stack').setAttribute('aria-label',LABELS[target]+': '+fmt(counts[target])+' of '+fmt(total)+($('weight').value==='lines' ? ' body lines' : ' definitions')+' have an exact valid stage observation');
+      const banks=new Map(); for(const row of state.rows) { if(!banks.has(row.bank)) banks.set(row.bank,[]); banks.get(row.bank).push(row); }
+      $('banks').replaceChildren();
+      for(const [bank,rows] of banks) {
+        const bankTotal=rows.reduce((sum,row) => sum+weight(row),0), done=rows.filter(row => selectedStages(row).has(target)), doneWeight=done.reduce((sum,row) => sum+weight(row),0);
+        const button=el('button','bank' + (doneWeight ? '' : ' bank-empty')); button.type='button'; button.setAttribute('aria-pressed',String($('bank').value===bank)); button.setAttribute('aria-label','Bank '+bank+': '+fmt(done.length)+' of '+fmt(rows.length)+' definitions reported at selected milestone; filter bank');
+        const header=el('div','bank-label'); header.append(el('strong','','Bank ' + bank),el('span','bank-percent',percent(doneWeight,bankTotal)));
+        const bar=el('div','bank-bar'), fill=el('div','bank-fill'); fill.style.width=(bankTotal ? doneWeight/bankTotal*100 : 0)+'%'; bar.append(fill);
+        button.append(header,bar,el('div','bank-count',fmt(done.length)+' / '+fmt(rows.length)+' definitions'+($('weight').value==='lines' ? ' · line weighted' : '')));
+        button.addEventListener('click',() => { $('bank').value=$('bank').value===bank ? '' : bank; state.page=0; renderOverview(); renderList(); }); $('banks').append(button);
+      }
+      text('bank-summary',$('bank').value ? 'Source banks · selected '+$('bank').value : 'Browse '+fmt(banks.size)+' source banks');
+      renderVelocity();
+    }
+    function renderVelocity() {
+      if(!state.data) return;
+      const HOUR=3600000, DAY=24*HOUR, target=$('milestone').value, context=$('context').value, weighted=$('weight').value==='lines', unit=weighted ? 'body lines' : 'definitions';
+      const timestamp=value => { const at=Number(value)*1000; return at>0 && Number.isFinite(new Date(at).getTime()) ? at : null; };
+      const events=[], undated=[];
+      for(const row of state.rows) {
+        const reports=selectedUpdates(row).filter(update => update.stage===target), dated=reports.filter(update => timestamp(update.updated_at)!==null).sort((a,b) => timestamp(a.updated_at)-timestamp(b.updated_at) || String(a.id).localeCompare(String(b.id)));
+        const report=dated[0];
+        if(report) events.push({at:timestamp(report.updated_at),value:weighted ? lines(row) : 1,context:contextOf(report),symbol:row.symbol});
+        else if(reports.length) undated.push(row);
+      }
+      events.sort((a,b) => a.at-b.at || a.symbol.localeCompare(b.symbol));
+      const latest=events.length ? events[events.length-1].at : 0, snapshot=timestamp(state.data.updated_at);
+      const end=Math.max(snapshot || latest,latest) || Date.now(), period=$('velocity-window').value, cumulative=$('velocity-mode').value==='cumulative';
+      let step=period==='7d' ? DAY : HOUR, start=end-(period==='7d' ? 7*DAY : 24*HOUR);
+      if(period==='all' && events.length) {
+        start=events[0].at;
+        step=[HOUR,DAY,7*DAY,30*DAY,365*DAY].find(size => (end-start)/size<=120) || 365*DAY;
+      }
+      const first=Math.floor(start/step)*step, count=Math.max(1,Math.floor(end/step)-Math.floor(start/step)+1);
+      const buckets=Array.from({length:count},(_,i) => ({start:Math.max(start,first+i*step),end:Math.min(end,first+(i+1)*step),current:0,historical:0,legacy:0,total:0,cumulative:0}));
+      const category=context => context==='current-checkout' ? 'current' : context==='historical-frozen' ? 'historical' : 'legacy';
+      const running={current:0,historical:0,legacy:0};
+      for(const event of events) {
+        if(event.at<start) { running[category(event.context)]+=event.value; continue; }
+        if(event.at>end) continue;
+        const bucket=buckets[Math.min(count-1,Math.floor((event.at-first)/step))];
+        bucket[category(event.context)]+=event.value;
+      }
+      const baseline=running.current+running.historical+running.legacy;
+      for(const bucket of buckets) {
+        bucket.total=bucket.current+bucket.historical+bucket.legacy;
+        for(const key of ['current','historical','legacy']) { running[key]+=bucket[key]; bucket['cumulative_'+key]=running[key]; }
+        bucket.cumulative=running.current+running.historical+running.legacy;
+      }
+      const additions=buckets.reduce((sum,bucket) => sum+bucket.total,0), hourly=step===HOUR, rateUnit=hourly ? HOUR : DAY, elapsed=(end-start)/rateUnit;
+      text('velocity-stage',LABELS[target]+' · '+(cumulative ? 'cumulative reported '+unit : 'new reported '+unit));
+      text('velocity-gains',fmt(additions));
+      text('velocity-rate-label','Average per '+(hourly ? 'hour' : 'day'));
+      text('velocity-rate',elapsed>=1 ? (additions/elapsed).toLocaleString(undefined,{maximumFractionDigits:1}) : '—');
+      text('velocity-latest-label','Latest '+(step===HOUR ? 'hour' : step===DAY ? 'day' : 'period')+' · partial');
+      text('velocity-latest',fmt(buckets[buckets.length-1].total));
+      const dateFormat=new Intl.DateTimeFormat(undefined,{timeZone:'UTC',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false});
+      const date=value => dateFormat.format(new Date(value));
+      const shortFormat=new Intl.DateTimeFormat(undefined,hourly ? {timeZone:'UTC',hour:'2-digit',minute:'2-digit',hour12:false} : {timeZone:'UTC',month:'short',day:'numeric'});
+      const range=bucket => date(bucket.start)+' – '+date(bucket.end)+' UTC';
+      const known=events.reduce((sum,event) => sum+event.value,0), missing=undated.reduce((sum,row) => sum+(weighted ? lines(row) : 1),0);
+      text('velocity-caption',(events.length ? 'Recorded since '+date(events[0].at)+' UTC. ' : 'No dated reports for this selection. ')+(missing ? fmt(missing)+' '+unit+' have no report date. ' : '')+'Report dates include evidence imports; implementation dates are not recorded.');
+      text('velocity-new-column','New '+unit);
+      const table=document.createDocumentFragment();
+      for(const bucket of buckets) {
+        const row=el('tr'); row.dataset.total=String(bucket.total); row.dataset.cumulative=String(bucket.cumulative);
+        row.append(el('td','',range(bucket)),el('td','',fmt(bucket.total)),el('td','',fmt(bucket.cumulative))); table.append(row);
+      }
+      $('velocity-table').replaceChildren(table);
+      const chart=$('velocity-chart'), width=Math.max(300,chart.getBoundingClientRect().width), height=chart.getBoundingClientRect().height || 172;
+      const left=48, right=14, top=13, bottom=height-30, plotWidth=width-left-right, plotHeight=bottom-top;
+      const values=buckets.map(bucket => cumulative ? bucket.cumulative : bucket.total), maximum=Math.max(1,...values,cumulative ? baseline : 0);
+      const magnitude=10**Math.floor(Math.log10(Math.max(1,maximum/4))), rough=maximum/4/magnitude;
+      const tickStep=([1,2,5,10].find(value => value>=rough) || 10)*magnitude, ceiling=tickStep*4;
+      const y=value => bottom-value/ceiling*plotHeight, color='var('+COLORS[target]+')', keys=['legacy','historical','current'];
+      const svg=(tag,attributes={},value) => { const node=document.createElementNS('http://www.w3.org/2000/svg',tag); for(const [key,item] of Object.entries(attributes)) node.setAttribute(key,String(item)); if(value!==undefined) node.textContent=value; return node; };
+      const hadFocus=chart.contains(document.activeElement), selected=Math.min(count-1,state.velocityIndex===null ? count-1 : state.velocityIndex);
+      chart.replaceChildren(); chart.setAttribute('viewBox','0 0 '+width+' '+height);
+      chart.dataset.known=String(known); chart.dataset.additions=String(additions); chart.dataset.baseline=String(baseline); chart.dataset.undated=String(missing);
+      chart.append(svg('title',{id:'velocity-chart-title'},LABELS[target]+' report activity'),svg('desc',{id:'velocity-chart-description'},(cumulative ? 'Cumulative first reports' : 'First reports per time period')+' of '+unit+'. '+fmt(additions)+' new in period; '+fmt(known)+' with known dates. Report dates include imported evidence. Each definition counts once. UTC.'));
+      const defs=svg('defs'), pattern=svg('pattern',{id:'velocity-hatch',width:5,height:5,patternUnits:'userSpaceOnUse'});
+      pattern.append(svg('path',{d:'M-1 1 L1 -1 M0 5 L5 0 M4 6 L6 4',stroke:'var(--muted)','stroke-width':1})); defs.append(pattern); chart.append(defs);
+      const tickFormat=new Intl.NumberFormat(undefined,{notation:'compact',maximumFractionDigits:1});
+      for(let tick=0;tick<=4;tick++) {
+        const value=tick*tickStep, position=y(value);
+        chart.append(svg('line',{x1:left,y1:position,x2:width-right,y2:position,class:'grid-line'}),svg('text',{x:left-8,y:position+3,'text-anchor':'end'},tickFormat.format(value)));
+      }
+      const colors={current:color,historical:'url(#velocity-hatch)',legacy:'var(--muted)'}, opacity={current:1,historical:.85,legacy:.4};
+      const bucketWidth=plotWidth/count;
+      if(cumulative) {
+        const initial={current:0,historical:0,legacy:0};
+        for(const event of events) if(event.at<start) initial[category(event.context)]+=event.value;
+        let lower=Array(count+1).fill(0);
+        for(const key of keys) {
+          const upper=lower.map((value,i) => value+(i===0 ? initial[key] : buckets[i-1]['cumulative_'+key]));
+          const points=upper.map((value,i) => (left+plotWidth*i/count)+','+y(value)).concat(lower.map((value,i) => (left+plotWidth*i/count)+','+y(value)).reverse());
+          chart.append(svg('polygon',{points:points.join(' '),fill:colors[key],opacity:key==='current' ? .2 : opacity[key]})); lower=upper;
+        }
+        const points=[baseline,...buckets.map(bucket => bucket.cumulative)].map((value,i) => (left+plotWidth*i/count)+','+y(value)).join(' ');
+        chart.append(svg('polyline',{points,fill:'none',stroke:color,'stroke-width':2.2,'stroke-linejoin':'round'}));
+      } else {
+        buckets.forEach((bucket,i) => {
+          let base=0;
+          for(const key of keys) {
+            if(bucket[key]) chart.append(svg('rect',{x:left+i*bucketWidth+Math.max(1,bucketWidth*.13),y:y(base+bucket[key]),width:Math.max(1,bucketWidth*.74),height:bucket[key]/ceiling*plotHeight,fill:colors[key],opacity:opacity[key],rx:1}));
+            base+=bucket[key];
+          }
+        });
+      }
+      const labelCount=width<420 ? 3 : 5, labels=new Set([0,count-1]);
+      for(let i=1;i<labelCount-1;i++) labels.add(Math.round((count-1)*i/(labelCount-1)));
+      for(const i of [...labels].sort((a,b) => a-b)) {
+        const firstLabel=i===0, lastLabel=i===count-1, x=firstLabel ? left : lastLabel ? width-right : left+(i+.5)*bucketWidth;
+        chart.append(svg('text',{x,y:height-10,'text-anchor':firstLabel ? 'start' : lastLabel ? 'end' : 'middle'},shortFormat.format(new Date(firstLabel ? buckets[i].start : lastLabel ? buckets[i].end : buckets[i].start))));
+      }
+      const describe=i => {
+        state.velocityIndex=i; const bucket=buckets[i], readout=$('velocity-readout');
+        readout.replaceChildren(el('strong','',range(bucket)),document.createTextNode(' · +'+fmt(bucket.total)+' '+unit+' · '+fmt(bucket.cumulative)+' cumulative'));
+        if(!context) readout.append(document.createTextNode(' · checkout '+fmt(bucket.current)+' / historical '+fmt(bucket.historical)+' / legacy '+fmt(bucket.legacy)));
+      };
+      buckets.forEach((bucket,i) => {
+        const hit=svg('rect',{x:left+i*bucketWidth,y:top,width:bucketWidth,height:plotHeight,class:'bucket-hit',tabindex:0,role:'button','aria-label':range(bucket)+': '+fmt(bucket.total)+' new '+unit+', '+fmt(bucket.cumulative)+' cumulative'});
+        hit.addEventListener('pointerenter',() => describe(i)); hit.addEventListener('focus',() => describe(i)); hit.addEventListener('click',() => describe(i));
+        hit.addEventListener('keydown',event => {
+          if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) {
+            event.preventDefault(); const next=event.key==='Home' ? 0 : event.key==='End' ? count-1 : Math.max(0,Math.min(count-1,i+(event.key==='ArrowLeft' ? -1 : 1)));
+            chart.querySelectorAll('.bucket-hit')[next].focus();
+          } else if(event.key==='Enter' || event.key===' ') { event.preventDefault(); describe(i); }
+        });
+        chart.append(hit);
+      });
+      describe(selected); if(hadFocus) chart.querySelectorAll('.bucket-hit')[selected].focus();
+      $('velocity-current-swatch').style.background=color;
+    }
+    function matches(row) {
+      const query=$('search').value.trim().toLowerCase(), stage=$('stage').value;
+      if(query && ![row.symbol,row.original_address,row.source].some(value => String(value || '').toLowerCase().includes(query))) return false;
+      const group=SOURCE_GROUPS.find(group=>'group:'+group.name===$('bank').value);
+      if($('bank').value && !(group ? group.banks.includes(row.bank) : row.bank===$('bank').value)) return false;
+      if($('subsystem').value && row.subsystem!==$('subsystem').value) return false;
+      if(stage==='remaining' && selectedStages(row).has($('milestone').value)) return false;
+      if(stage==='stale' && (!row.updates.some(update => (!$('context').value || contextOf(update)===$('context').value) && stale(update)) || selectedUpdates(row).length)) return false;
+      if(stage && stage!=='remaining' && stage!=='stale' && selectedHighest(row)!==stage) return false;
+      if($('context').value && stage!=='remaining' && stage!=='unreported' && !row.updates.some(update => contextOf(update)===$('context').value)) return false;
+      if($('agent').value && !row.updates.some(update => update.agent===$('agent').value)) return false;
+      if($('scope').value && !row.updates.some(update => update.scope===$('scope').value)) return false;
+      return true;
+    }
+    function jump(symbol) { $('routine-explorer').open=true; $('search').value=symbol; $('bank').value=''; $('subsystem').value=''; $('stage').value=''; $('agent').value=''; $('scope').value=''; state.page=0; state.expanded.add(symbol); renderOverview(); renderList(); $('routines').scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'}); const summary=$('routines').querySelector('summary'); if(summary) summary.focus({preventScroll:true}); }
+    function renderRoutine(row) {
+      const details=el('details','routine'); details.open=state.expanded.has(row.symbol); const summary=el('summary','routine-summary'); summary.dataset.symbol=row.symbol;
+      const name=el('span','routine-name'); name.append(el('span','chevron','›'),el('span','symbol',row.symbol));
+      const source=String(row.source).split('/').pop()+':'+fmt(row.line), stage=el('span','routine-stage'); stage.append(badge(selectedHighest(row)));
+      summary.append(name,el('span','routine-source muted mono',source),el('span','routine-address muted mono',row.original_address || '—'),el('span','routine-lines number muted',fmt(lines(row))),stage); details.append(summary);
+      let built=false;
+      const build=() => { if(built) return; built=true; details.append(renderDetail(row)); };
+      if(details.open) build();
+      details.addEventListener('toggle',() => { if(details.open) { state.expanded.add(row.symbol); build(); } else state.expanded.delete(row.symbol); });
+      return details;
+    }
+    function renderDetail(row) {
+      const wrapper=el('div','routine-detail'), left=el('div'), right=el('div'); const source=state.data.source || {};
+      left.append(el('h3','detail-title','Original C definition')); const dl=el('dl'); const sourcePath=source.source_root ? row.source : 'https://github.com/snesrev/sm/blob/'+encodeURIComponent(source.revision || 'main')+'/'+row.source+'#L'+row.line; pair(dl,'Source',pathNode(sourcePath,source.source_root,row.source+':'+row.line)); pair(dl,'Address',row.original_address || 'Not recorded'); pair(dl,'Body lines',fmt(lines(row))); pair(dl,'Bank / hint',row.bank+' / '+row.subsystem); pair(dl,'Definition SHA',el('span','digest',row.definition_sha256 || 'Not recorded')); left.append(dl);
+      left.append(el('h3','detail-title','Call references · lexical inventory')); const calls=list(row.calls), chips=el('div','chips');
+      if(!calls.length) chips.append(el('span','muted','No call references recorded.'));
+      for(const call of calls) { if(state.symbols.has(call)) { const button=el('button','chip',call); button.type='button'; button.title='Explore '+call; button.addEventListener('click',() => jump(call)); chips.append(button); } else chips.append(el('span','chip muted',call)); }
+      left.append(chips,el('h3','detail-title','Fixture declarations · declared only'));
+      const declarations=list(row.declared_in); if(declarations.length) { const paths=el('ul','path-list'); for(const path of declarations) { const item=el('li'); item.append(pathNode(path,state.data.root)); paths.append(item); } left.append(paths); } else left.append(el('p','muted','No fixture declaration recorded.'));
+      right.append(el('h3','detail-title','All reported observations · '+fmt(row.updates.length)));
+      if(!row.updates.length) right.append(el('p','muted','No agent update names this routine. Its source definition remains in the inventory.'));
+      for(const update of row.updates) {
+        const card=el('article','observation'), header=el('div','observation-head'); card.dataset.stale=String(excluded(update)); header.append(badge(update.stage)); if(superseded(update)) header.append(el('span','stale-tag','Superseded observation · excluded from counts')); else if(stale(update)) header.append(el('span','stale-tag','Stale source / inventory / evidence')); else header.append(el('span','muted',time(update.updated_at))); card.append(header);
+        const metadata=el('dl'); pair(metadata,'Agent',update.agent); pair(metadata,'Scope',update.scope); pair(metadata,'Evidence context',contextLabel(contextOf(update))); pair(metadata,'Update',update.id); if(update.commit) pair(metadata,'Commit',el('span','mono',update.commit)); if(stale(update)) { pair(metadata,'Reported at',time(update.updated_at)); pair(metadata,'Source revision',el('span','digest',update.source_revision || 'Not recorded')); pair(metadata,'Inventory SHA',el('span','digest',update.inventory_sha256 || 'Not recorded')); } card.append(metadata);
+        if(superseded(update)) { const ids=replacements(update).map(candidate => candidate.id); card.append(el('p','muted','Replaced by '+(ids.join(', ') || 'a retained correction')+'. This observation remains excluded even if replacement evidence later becomes stale.')); }
+        const evidence=list(update.evidence); if(evidence.length) { card.append(el('h4','detail-title','Evidence references')); const ul=el('ul','path-list'); for(const item of evidence) { const li=el('li'); li.append(pathNode(item.path,state.data.root)); if(item.sha256) li.append(el('div','digest','SHA-256 '+item.sha256)); ul.append(li); } card.append(ul); } else card.append(el('p','muted','No evidence reference attached.'));
+        const limits=list(update.limitations); if(limits.length) { card.append(el('h4','detail-title','Reported limitations')); const ul=el('ul'); for(const limit of limits) ul.append(el('li','',limit)); card.append(ul); }
+        right.append(card);
+      }
+      wrapper.append(left,right); return wrapper;
+    }
+    function renderList() {
+      if(!state.data) return; const rows=state.rows.filter(matches), pages=Math.max(1,Math.ceil(rows.length/PAGE_SIZE)); state.page=Math.min(state.page,pages-1);
+      const active=document.activeElement, focused=active && active.dataset ? active.dataset.symbol : null;
+      $('routines').replaceChildren(); const start=state.page*PAGE_SIZE; for(const row of rows.slice(start,start+PAGE_SIZE)) $('routines').append(renderRoutine(row));
+      if(!rows.length) $('routines').append(el('div','empty','No routines match these filters. Reset filters to return to the full inventory.'));
+      const result=el('span'); result.append(el('strong','',fmt(rows.length)),document.createTextNode(' of '+fmt(state.rows.length)+' definitions · '+fmt(rows.reduce((sum,row) => sum+lines(row),0))+' body lines')); $('results').replaceChildren(result);
+      text('page-info',rows.length ? fmt(start+1)+'–'+fmt(Math.min(start+PAGE_SIZE,rows.length))+' shown' : 'No definitions shown'); text('page',fmt(state.page+1)+' / '+fmt(pages)); $('previous').disabled=state.page===0; $('next').disabled=state.page>=pages-1;
+      if(focused) for(const summary of $('routines').querySelectorAll('summary')) if(summary.dataset.symbol===focused) { summary.focus({preventScroll:true}); break; }
+    }
+    function renderProvenance() {
+      const source=state.data.source || {}, dl=el('dl'); pair(dl,'Revision',el('span','mono',source.revision || 'Not recorded')); pair(dl,'Inventory SHA',el('span','digest',source.inventory_sha256 || 'Not recorded')); if(source.identity_sha256) pair(dl,'Identity SHA',el('span','digest',source.identity_sha256)); pair(dl,'Source root',source.source_root || 'Not recorded'); pair(dl,'Inventory scope',typeof source.scope==='string' ? source.scope : JSON.stringify(source.scope || 'Not recorded')); if(source.source_verified_at) pair(dl,'Source checked',time(source.source_verified_at)); pair(dl,'Registry updated',time(state.data.updated_at)); pair(dl,'Agent updates',fmt(state.data.updates.length));
+      $('provenance').replaceChildren(dl,el('p','muted','Overview counts each exact reported stage independently. A verified, integrated, or live-exercised update does not automatically count as translated. The routine explorer shows each definition’s highest matching stage for navigation, and its details retain every observation. Stale source, inventory, or evidence observations are excluded from coverage. Checkout at observation describes the source checked when that evidence was recorded; it does not authenticate later edits. Agent and scope filters match any attached update, including stale observations.'),el('p','muted','Body-line weighting estimates the size of source definitions, including their formatting and comments. It measures source inventory, not engineering effort or gameplay completeness. Calls are lexical references; they do not establish complete dependencies or indirect-call coverage. Evidence paths and digests are recorded references, not browser-side verification.'));
+    }
+    function reset() { for(const id of ['search','bank','subsystem','stage','agent','scope','context']) $(id).value=''; state.page=0; renderOverview(); renderList(); }
+    for(const id of ['search','bank','subsystem','stage','agent','scope']) $(id).addEventListener(id==='search' ? 'input' : 'change',() => { state.page=0; if(id==='bank') renderOverview(); renderList(); });
+    for(const id of ['milestone','weight','context']) $(id).addEventListener('change',() => { state.page=0; renderOverview(); renderList(); });
+    for(const id of ['velocity-window','velocity-mode']) $(id).addEventListener('change',() => { state.velocityIndex=null; renderVelocity(); });
+    for(const id of ['burn-weight','burn-window','burn-bank']) $(id).addEventListener('change',() => { state.burnIndex=null; state.paceIndex=null; renderBurndown(); });
+    $('work-sort').addEventListener('change',renderBurndown);
+    $('evidence-overview').addEventListener('toggle',() => { if($('evidence-overview').open) renderOverview(); });
+    if(typeof ResizeObserver!=='undefined') {
+      let lastWidth=0; new ResizeObserver(entries => { const width=entries[0].contentRect.width; if(Math.abs(width-lastWidth)>1) { lastWidth=width; renderVelocity(); } }).observe($('velocity-chart'));
+      let burnWidth=0; new ResizeObserver(entries => { const width=entries[0].contentRect.width; if(Math.abs(width-burnWidth)>1) { burnWidth=width; if(state.burn) { drawSourceChart('burndown-chart',state.burn,false); drawSourceChart('pace-chart',state.burn,true); } } }).observe($('burndown-chart'));
+    }
+    $('reset').addEventListener('click',reset); $('show-remaining').addEventListener('click',() => { $('stage').value='remaining'; state.page=0; renderList(); });
+    $('previous').addEventListener('click',() => { state.page=Math.max(0,state.page-1); renderList(); }); $('next').addEventListener('click',() => { state.page++; renderList(); });
+    $('load').addEventListener('click',() => $('file').click());
+    function showError(error) { text('error',error.message || String(error)); $('error').hidden=false; }
+    $('file').addEventListener('change',async () => { const file=$('file').files[0]; if(!file) return; try { const raw=await file.text(); accept(JSON.parse(raw),raw,true); text('checked','Opened: '+file.name); } catch(error) { showError(error); } $('file').value=''; });
+    try { const theme=localStorage.getItem('sm-progress-theme'); if(theme==='light' || theme==='dark') document.documentElement.dataset.theme=theme; } catch {}
+    $('theme').addEventListener('click',() => { const current=document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light'); const theme=current==='dark' ? 'light' : 'dark'; document.documentElement.dataset.theme=theme; try { localStorage.setItem('sm-progress-theme',theme); } catch {} });
+    try { const raw=$('progress-data').textContent; accept(JSON.parse(raw),raw,false); } catch(error) { showError(error); text('results','Open a generated registry JSON to load the inventory.'); }
+    async function refresh() {
+      if(state.file || document.hidden || !/^https?:$/.test(location.protocol)) return;
+      try { const response=await fetch(new URL('registry.json',location.href),{cache:'no-store'}); if(!response.ok) throw new Error('Registry refresh returned HTTP '+response.status+'. The last loaded snapshot is still shown.'); const raw=await response.text(); if(state.file) return; if(raw!==state.raw) accept(JSON.parse(raw),raw,false); state.checked=Date.now(); text('checked','Checked: '+new Date(state.checked).toLocaleTimeString()); $('error').hidden=true; } catch(error) { if(!state.file) showError(error); }
+    }
+    if(/^https?:$/.test(location.protocol)) { refresh(); setInterval(refresh,7000); }
+  })();
+  </script>
+</body>
+</html>

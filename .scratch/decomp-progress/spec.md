@@ -51,3 +51,17 @@ Nineteen focused Rust tests and final desktop/phone served/offline checks pass.
 The three-layout prototype comparison is retained on throwaway branch
 `throwaway/progress-layout-comparison-20261013` at `e574fef4`. Scoped cleanup and
 disposable target removal are complete, with measurements in ticket 02.
+
+2026-10-13 later reporting completion: tickets 04–06 reconcile the guarded room
+display coverage and replace the main representation with native source
+burndown and changing calendar-time velocity. The latest inventory remains
+6,053 definitions / 75,229 body lines and reports translated 1,461 / verified
+925 / integrated 38 / live exercised 121. The Rust source-history command maps
+108 retained first-parent checkpoints to the fixed denominator and excludes
+import dates from source throughput. The new prototype decision is retained on
+`throwaway/progress-burndown-layouts-20261013` at `6912d24a`.
+Reporting source is `263ad5a`; 22 focused Rust tests and final desktop/phone
+served/offline, synthetic, live-clock and JSON picker checks pass. Windows
+browser opening and scoped cleanup are complete. See
+[burndown/report.md](burndown/report.md) and [cleanup](burndown/cleanup/result.md).
+No gameplay implementation or new gameplay verification belongs to this work.

@@ -214,7 +214,7 @@ fn cleanup_profiles(root: &Path) -> Result<()> {
     ensure!(root.ends_with("compact-velocity"), "cleanup requires the compact velocity root");
     let mut removed=Vec::new();
     let mut total=0;
-    for run in ["offline", "offline-final", "served", "served-final", "file-picker", "file-picker-final", "history-fixture"] {
+    for run in ["offline", "offline-final", "served", "served-final", "served-optimized", "file-picker", "file-picker-final", "history-fixture"] {
         let profile=root.join(run).join("chromium-profile");
         if profile.exists() {
             ensure!(fs::symlink_metadata(&profile)?.is_dir(), "browser profile must be a real directory");
@@ -222,14 +222,12 @@ fn cleanup_profiles(root: &Path) -> Result<()> {
             fs::remove_dir_all(&profile)?;
             removed.push(json!({"path":profile,"bytes":size})); total+=size;
         }
-        for name in ["opened.json"] {
-        let fixture=root.join(run).join(name);
+        let fixture=root.join(run).join("opened.json");
         if fixture.exists() {
             ensure!(fs::symlink_metadata(&fixture)?.is_file(), "upload fixture must be a real file");
             let size=bytes(&fixture)?;
             fs::remove_file(&fixture)?;
             removed.push(json!({"path":fixture,"bytes":size})); total+=size;
-        }
         }
     }
     fs::create_dir_all(root.join("cleanup"))?;

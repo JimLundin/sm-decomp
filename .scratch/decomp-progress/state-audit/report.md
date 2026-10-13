@@ -1,6 +1,6 @@
 # Current progress reporting audit, 2026-10-13
 
-Status: publication verified; final viewer checks and scoped cleanup in progress
+Status: resolved; publication, viewer checks and scoped cleanup complete
 Owner: /root
 Ticket: [04](../issues/04-current-state-audit.md)
 Scope: reporting, retained evidence and source correspondence only
@@ -107,7 +107,18 @@ include audit imports and are not implementation dates.
 
 ## Completion and cleanup
 
-Pending final served viewer verification and scoped audit/build cleanup. The
-checkpoint owner alone owns Git/index mutations and preserves the coherent WIP
-source and original receipts in
-[its receipt archive](checkpoint-retention.md).
+Final served/offline reports preserve all notices, evidence contexts and exact
+stage/correction history; stored JSON, served JSON and embedded HTML agree.
+Windows browser launch succeeded. The source coverage burndown added by
+[ticket 06](../issues/06-coverage-burndown-and-bottlenecks.md) validates the full
+1,461-symbol reviewed set and separates committed source velocity from imports.
+
+Scoped ordinary/dedup cleanup succeeded with zero supported disposable bytes.
+The identified audit executable was removed; original immutable inputs still
+pass `preserved-inputs.sha256`. Final viewer/build/profile measurements, retained
+dependencies and free disk evidence are in
+[cleanup/result.md](../burndown/cleanup/result.md). The checkpoint owner
+transferred main Git/index at 07:57 UTC; reporting source is checkpointed at
+`263ad5acb096e66ae5d272c6f94534ae50c4b963`. Earlier raw receipts remain in
+[the original receipt archive](checkpoint-retention.md), and the final reporting
+raw archive preserves every original stdout/log byte without overwriting it.

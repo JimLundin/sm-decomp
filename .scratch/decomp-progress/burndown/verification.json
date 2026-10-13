@@ -1,0 +1,22 @@
+{
+  "reporting_source_commit": "263ad5acb096e66ae5d272c6f94534ae50c4b963",
+  "rust_progress_tests": { "passed": 22, "failed": 0 },
+  "source_history": { "checkpoints": 108, "current_definitions": 1461, "current_body_lines": 16527, "undated_uncommitted": 0 },
+  "browser_checks": "served-final/checks.json",
+  "offline_checks": "offline-live-clock-check/checks.json",
+  "synthetic_checks": "history-final/checks.json",
+  "file_picker_checks": "file-final/verification.json",
+  "preserved_original_audit_inputs": true,
+  "stored_served_and_embedded_registry_equal": true,
+  "calendar_windows_advance_while_source_paused": true,
+  "older_json_clears_previous_history_and_pipeline_fields": true,
+  "retained_pipeline_samples_authenticated_by_sha256": 3,
+  "windows_browser_open_command_exit_code": 0,
+  "windows_browser_url": "http://localhost:4185/index.html",
+  "gameplay_implementation_or_new_verification_runs": false,
+  "notes": [
+    "The new history test uses a temporary Git repository with deduplicated selectors, removals, an unmerged source branch and a backwards commit clock; it detects changed nested source, mappings and inventory.",
+    "Initial browser runs caught a test-oracle omission for Other banks and a preview socket timeout. Final assertions pass after correcting the oracle and retaining completed failed-run diagnostics.",
+    "Report import history remains available in collapsed evidence details and contributes no source-velocity events."
+  ]
+}
