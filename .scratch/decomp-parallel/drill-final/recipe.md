@@ -1,6 +1,6 @@
 # Fresh final independent-session concurrency drill
 
-Status: prepared; awaiting root's frozen engine before isolated setup/launch.
+Status: actual final execution and cleanup completed; root validation pending.
 Owner: fresh_drill_prepare. Production authority remains pending.
 
 The immutable previous drill and isolated repository remain untouched. The new
@@ -36,8 +36,9 @@ provides its real UUID. No made-up identity or model override is used.
    writers and release child before cleanup/integration.
 6. Authenticate first A integration, then reserve/start/resume/authenticate B
    sequentially against accumulated merged source. Both utility cleanup passes
-   and retired worktrees are mandatory. Retry exact integrated requests after
-   implementer retirement, preserving cached publication and receipt identity.
+   and retired worktrees are mandatory. Retry final B exact integrated request
+   after retirement at unchanged HEAD. An A retry after B changes merged source
+   rejects the stale cached source; retain that fence instead of rolling back.
 7. Final process observations, cleanup, retained source and manifests attest all
    11 existing controls and exactly two authenticated integrations. Root's
    read-only preparation validator is the final review boundary.
@@ -55,3 +56,19 @@ PROMPTS/session-b.md` concurrently. Every command uses the absolute helper
 path `/tmp/sm-decomp-drill-final-harness-build/debug/decomp-drill`. Store
 actual launch JSONL/process identities and root-controlled barrier transitions.
 Unexpected rejection retains diagnostics and stops dependent work.
+
+Completed-run receipt inspection uses the retained `helpers/decomp-drill` and
+`helpers/decomp-drill-evidence`; original build paths are retired. Reproduction
+also creates the reviewed explicit issue files described in setup-repair.md
+before next, seeds a same-id disjoint duplicate candidate under an open ticket
+before switching to the held B ticket, and uses versioned
+`helpers/decomp-drill-evidence-v2 start-request CLAIM` to add exact submitted
+commit from durable ledger to an inherited Start request. Frozen main.rs stays
+sealed. All approved mutations remain maintained Rust commands.
+
+`helpers/decomp-drill-evidence-replay seed-ticket` and `switch-ticket` reproduce
+the reviewed duplicate-ticket artifact repair entirely in Rust. The replay
+helper built locked/offline; switch-ticket validated the exact never-launched
+ready candidate and restored the already-sealed original scope without changing
+claim/source. It supplements the retained actual execution log, which records
+the transient repair used during that session.

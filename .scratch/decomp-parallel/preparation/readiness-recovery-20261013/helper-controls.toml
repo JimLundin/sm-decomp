@@ -1,0 +1,9 @@
+schema = "decomp-readiness-helper-controls-v1"
+caller_thread = "01a13501-0242-71b0-820d-fdea3808f4c9"
+required_integrator_thread = "01a13500-1ef8-73d3-9a0d-3446b6050eba"
+wrong_caller_exit_code = 1
+wrong_caller_created_output = false
+direct_inner_exit_code = 1
+direct_inner_namespace_missing = true
+namespace_validation_performed = false
+limitations = ["These helper guards ran before namespace launch; they do not prove final production readiness.", "No CODEX_THREAD_ID override occurred."]

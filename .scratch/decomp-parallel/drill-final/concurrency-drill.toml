@@ -1,0 +1,31 @@
+checkout = "/home/jim/sm-decomp"
+head = "2d59536c059a1ca9c31d9278bff2d9222eafa56c"
+isolated_checkout = "/tmp/sm-decomp-concurrency-drill-final-20261013"
+schema = "decomp-concurrency-drill-v1"
+source_checkout = "/tmp/sm-decomp-preparation-final-source-20261013"
+source_fingerprint = "e5e412053f6dbe2cbadaba077192e885684fbb9f2699cafeaa6acd694879d78d"
+
+[bridge]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/reconciliation/legacy-owner-bridge-v2.toml"
+sha256 = "cb537f195b4f83529f2ea7a61bd65c6e77ad215366275e8d60a7a604c4eb0ba9"
+
+[controls]
+cleanup = true
+crash-restart = true
+duplicate-ticket = true
+independent-sessions = true
+integration-success = true
+same-attempt-retry = true
+shared-capacity = true
+stale-authority = true
+stopped-transfer = true
+surviving-child = true
+writable-overlap = true
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/execution.toml"
+sha256 = "136aa8345d9292be87d66d1ead81b7d1d1d56cf3b3845bbc640dedce151db3a3"
+
+[execution]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/execution.toml"
+sha256 = "136aa8345d9292be87d66d1ead81b7d1d1d56cf3b3845bbc640dedce151db3a3"

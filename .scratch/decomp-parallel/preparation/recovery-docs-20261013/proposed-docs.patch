@@ -1,0 +1,537 @@
+--- a/.scratch/decomp-parallel/preparation/status.md
++++ b/.scratch/decomp-parallel/preparation/status.md
+@@ -1,99 +1,88 @@
+ # Parallel-session preparation readiness
+ 
+-Status: tooling and catalog complete; actual drill final integration/validation active
++Status: tooling and catalog complete; recovered final drill/readiness validation pending
+ Blocked by: 04
+ Triage: ready-for-agent
+ Updated: 2026-10-13
++Coordinator: `01a13500-1ef8-73d3-9a0d-3446b6050eba`
+ 
+ The [spec](../spec.md), [ticket map](../map.md) and
+ [session runbook](../../../docs/agents/decomp-sessions.md) define the workflow.
+-Preparation completes tickets 01–05. The user will request the gameplay swarm
+-separately; current preparation creates no gameplay assignment or acceptance.
++Preparation completes tickets 01–05; the overall gameplay spec remains open.
++The user's separate gameplay swarm launch instruction is still required.
+ 
+-## Preparation gates
+-
+-| Ticket | Status | Evidence |
++| Ticket | Status | Retained evidence |
+ | --- | --- | --- |
+-| [01 Legacy reconciliation](../issues/01-reconcile-legacy-ownership.md) | resolved | Twelve retained holdings, immutable original/successor bridges, exact stopped/live owner observations and checked maintenance adoption |
+-| [02 Ownership and integration fencing](../issues/02-fence-writable-paths-and-integration-sessions.md) | resolved | Integrated Rust engine; cross-effort path/ticket/submission fences, shared capacity and real-session generation checks; focused controls and cleanup complete |
+-| [03 Rust commands and handoffs](../issues/03-maintained-rust-commands-and-handoffs.md) | resolved | Typed infrastructure/session admission, checkpoint/Start/Resume/Adopt and exact integration retries; focused controls and cleanup complete |
+-| [04 Actual concurrency/recovery drill](../issues/04-concurrency-and-crash-recovery-drill.md) | claimed | Independent real A/B sessions and workers; live-child/recovery/retry/budget controls passed; serial integration, final validation and cleanup active |
+-| [05 Subsystem catalog](../issues/05-subsystem-scope-catalog.md) | resolved | Published whole-subsystem catalog and children 11–20; exact held Ceres continuation and milestone blockers; later missing facts remain research |
+-
+-## Exact source and ownership
+-
+-The actual drill execution subject is frozen at
+-`c8799f326ffe198b652301f08866f1b7a7bd9ebc` on
+-`decomp-preparation-20261013`, checkout
+-`/tmp/sm-decomp-preparation-integration-20261013`. Its source fingerprint is
+-`4d87e457e895a03f82f5a7ccdd891f7769b83d25d48caf2fd3a55432e5929338`.
+-Reporting source `263ad5a` is included. The
+-[integration status](integration-status.md) retains source/test/recovery history.
+-The frozen executable and Rust harness are retained in `../drill/` outside
+-disposable build trees. Executable bytes remain outside Git; build and SHA-256
+-receipts identify the retained reader.
+-
+-Final combined locked/offline verification passed 23 assignment, 15 session
+-and 10 authority controls; formatting and build passed. Original failing
+-diagnostics and corrected passing logs remain in
+-[integration-evidence](integration-evidence/artifacts.sha256).
+-A validator-only semantic correction is being tested separately: the engine's
+-actual duplicate-ticket refusal `ticket is claimed` must be tied to the exact
+-held ticket/claim and sealed disjoint candidate scope. It consumes the unchanged
+-frozen subject; executed engine and validator source versions stay distinct.
+-
+-Preparation coordinator is real thread
+-`01a13460-4aa9-7fe0-865e-a8f54ffca310`. Original preparation coordinator failure
+-and recovered worker ownership are preserved in reconciliation. Reporting
+-finished and released main Git/index after both `main` and
+-`affected-family-assignment` reached
+-`9ed933daa151f52e3cf922e6559c7681330e0f85`. Preparation now owns that Git/index
+-and its isolated integration worktree. The report server remains reporting-owned.
+-
+-## Production boundary
+-
+-Production `.scratch/decomp-parallel/authority.toml` and `ledger.toml` are
+-absent. The original Ceres ledger remains authoritative under `ceres-20261013`,
+-capacity 3, seal
++| [01 Legacy reconciliation](../issues/01-reconcile-legacy-ownership.md) | resolved | Twelve retained holdings, immutable original/successor bridges and checked maintenance adoption |
++| [02 Ownership and integration fencing](../issues/02-fence-writable-paths-and-integration-sessions.md) | resolved | Cross-effort path/ticket/submission fencing, capacity and real-session generations; focused verification/cleanup complete |
++| [03 Rust commands and handoffs](../issues/03-maintained-rust-commands-and-handoffs.md) | resolved | Typed infrastructure admission, Start/Checkpoint/Resume/Adopt and exact retries; focused verification/cleanup complete |
++| [04 Actual concurrency/recovery drill](../issues/04-concurrency-and-crash-recovery-drill.md) | claimed | Fresh execution at corrected source; final eleven controls, two serial authenticated integrations, maintained validation/readiness and cleanup receipts pending |
++| [05 Subsystem catalog](../issues/05-subsystem-scope-catalog.md) | resolved | Whole-subsystem catalog and children 11–20; later implementation readiness remains research |
++
++## Current validation subject
++
++Execution and validation use the same retained source and executable:
++
++| Identity | Value |
++| --- | --- |
++| Frozen checkout | `/tmp/sm-decomp-preparation-final-source-20261013` |
++| Full source commit | `2d59536c059a1ca9c31d9278bff2d9222eafa56c` |
++| Source fingerprint | `e5e412053f6dbe2cbadaba077192e885684fbb9f2699cafeaa6acd694879d78d` |
++| Engine | `../drill-final/bin/sm-pipeline` |
++| Engine SHA-256 | `df6eb4dc3a9fd69e5d5923b5c22f34dea7b434cd7ee87f1b69085cd9e9431c84` |
++| Build receipt | [engine-build.toml](../drill-final/engine-build.toml), SHA-256 `659caced91feb9fc00bdbce7e7ced4e464874a9b8db8db84a69051dbff610bb6` |
++
++The [serial fix](serial-fix-handoff.md) reproduced the prior second-integration
++scope rejection and passed all 51 maintained assignment/session/authority
++controls. It was integrated as `23fde6a`; this result proves the maintained
++regression controls, while the fresh actual drill proves independent sessions.
++The [fresh drill handoff](../drill-final/handoff.md) names isolated fixture
++`/tmp/sm-decomp-concurrency-drill-final-20261013`. Recover surviving owners and
++sealed state before issuing any replacement work.
++
++Root must add these actual final receipts before setting preparation ready or
++resolving 04:
++
++- **PENDING:** final `drill-final/concurrency-drill.toml`, sealed execution
++  manifest, both sequential integration results and passing maintained validation.
++- **PENDING:** current-root readiness successor at
++  `readiness-recovery-20261013/`, actual private namespace validation with state
++  `prepared`, host authority/ledger preservation and unchanged legacy seals.
++- **PENDING:** both scoped cleanup passes, measured reclamation/free space,
++  required source/readers retained, integrated worktrees retired and passing
++  post-cleanup authentication.
++- **PENDING:** durable final documentation/source checkpoint owned by root.
++
++The prior `c8799f3` execution and separate `f54fbed` validator, original `drill/`
++diagnostics, recovery records and old readiness/cutover packages remain evidence
++of their own epochs. Current root is `01a13500-1ef8-73d3-9a0d-3446b6050eba`;
++prior preparation roots `01a13460-4aa9-7fe0-865e-a8f54ffca310` and
++`01a134cd-dafb-7e50-8284-f285a905e05b` retain their historical observations.
++Current main Git/index and process owners require direct observation by root;
++these documents do not establish liveness.
++
++## Production and later launch
++
++Production `.scratch/decomp-parallel/authority.toml` and `ledger.toml` remain
++absent. Ceres authority remains `.scratch/ceres-continuation/ledger.toml`, token
++`ceres-20261013`, capacity `3`, SHA-256
+ `77fdba066af4f4c045e8e8f419997563d569ac0bd8045cef0a68ac916a126b89`.
+-Both submitted controller/host and the running host integration retain their
+-original claims, source, evidence readers and acceptance gates. A stopped
+-submitter or parent does not release any of them. The original controller
+-worktree remains a held unintegrated submission.
+-
+-All production sessions share
+-`SM_PIPELINE_ROOT=/home/jim/sm-decomp/out/pipeline` and
+-`SM_PIPELINE_WORKERS=4`; assignment capacity 3 is separate. The disposable
+-actual drill uses its own tiny Rust fixture, repository, authority and budget
+-root, with no private ROM/movie or production source input.
+-
+-The planned [cutover package](cutover/README.md) preserves exact legacy lineage.
+-Final production readiness uses a private mount namespace with a temporary
+-prepared policy view and maintained `validate-activation`. Host canonical
+-[authority/ledger](readiness/README.md) remain absent throughout. SHA-256 seals
+-establish retained artifact identity; real process/session observations remain
+-an explicit tool inspection trust boundary.
+-
+-## Later swarm launch
+-
+-After preparation resolution and the user's separate launch instruction,
+-reinspect all real owners/processes and exact source/ledger/bridge identities.
+-Use the final readiness package against its retained frozen source subject,
+-register current real dispatcher/integrator roles and activate only the reviewed
+-policy. A change to mutation/admission code requires fresh actual drill evidence;
+-validator-only and documentation changes require an explicit source-equivalence
+-review. Then choose dependency-ready whole subsystems from the catalog. Continue
+-held legacy claims through their original acceptance gates rather than creating
+-[duplicate implementations](../catalog/subsystem-catalog.md). Native promotion
+-still accepts bank86 projectile exercise provenance; other lanes require the
+-researched contract extensions.
+-
+-## Cleanup
+-
+-Completed engine, session, integration-test and validator implementer worktrees
+-were retired after source/evidence retention and both cleanup passes. Their
+-small historical evidence paths and main relocation manifests authenticate.
+-Private targets reclaimed 1,260,555,955, 1,884,150,932, 1,218,133,244 and
+-1,481,441,788 bytes; root combined target reclaimed 1,806,295,023 bytes. The
+-frozen executable remains a required evidence reader. Actual-drill, final
+-validator and readiness-helper cleanup remain part of ticket 04 completion.
++Its original controller/host submissions and host integration retain their
++claims, source, readers and acceptance gates. The
++[v2 bridge](../reconciliation/legacy-owner-bridge-v2.toml) retains SHA-256
++`cb537f195b4f83529f2ea7a61bd65c6e77ad215366275e8d60a7a604c4eb0ba9`.
++
++After preparation resolution and the user's separate launch instruction, follow
++[the launch handoff](launch-handoff.md). Reinspect exact real owners, source,
++bridge and ledger before creating current production requests. Private readiness
++validation prepares and validates a policy view; production prepare, actual role
++registration, validate-activation and activation occur at launch. Canonical queue
++creation follows admitted operations after activation.
++
++All production sessions share `SM_PIPELINE_ROOT=/home/jim/sm-decomp/out/pipeline`
++and `SM_PIPELINE_WORKERS=4`; assignment capacity `3` is a separate budget.
++Ticket 11 continues the existing Ceres integration first; research 13/14 can use
++free slots while it integrates. Native promotion accepts bank86 exercise
++provenance and coherent 1–32 routine scopes; other lanes need their researched
++matching contracts. One integrator owns frozen verification, stage publication,
++main Git/index and run cleanup.
+--- a/.scratch/decomp-parallel/preparation/launch-handoff.md
++++ b/.scratch/decomp-parallel/preparation/launch-handoff.md
+@@ -0,0 +1,105 @@
++# Gameplay swarm launch handoff
++
++Status: proposed final handoff; actual final receipts pending
++Blocked by: 04 and the user's separate gameplay swarm launch instruction
++Preparation coordinator: `01a13500-1ef8-73d3-9a0d-3446b6050eba`
++
++For a fresh or replacement session, read [AGENTS.md](../../../AGENTS.md),
++[domain rules](../../../docs/agents/domain.md), [GLOSSARY.md](../../../GLOSSARY.md)
++and relevant ADRs, then [the session runbook](../../../docs/agents/decomp-sessions.md),
++[spec](../spec.md), [map](../map.md), [preparation status](status.md),
++[checkpoint](../checkpoint-20261013.md), [fresh drill handoff](../drill-final/handoff.md),
++[current-root readiness successor](readiness-recovery-20261013/README.md),
++[catalog](../catalog/subsystem-catalog.md) and [later lanes](../catalog/later-lanes.md).
++Use [assignments](../../../docs/agents/assignments.md),
++[translation progress](../../../docs/agents/translation-progress.md) and
++[run cleanup](../../../docs/agents/run-cleanup.md) for dispatch and integration.
++
++## Retained preparation evidence
++
++Execution and validation use clean frozen checkout
++`/tmp/sm-decomp-preparation-final-source-20261013`, full source commit
++`2d59536c059a1ca9c31d9278bff2d9222eafa56c`, fingerprint
++`e5e412053f6dbe2cbadaba077192e885684fbb9f2699cafeaa6acd694879d78d`.
++Retained engine [sm-pipeline](../drill-final/bin/sm-pipeline) has SHA-256
++`df6eb4dc3a9fd69e5d5923b5c22f34dea7b434cd7ee87f1b69085cd9e9431c84`;
++[engine-build.toml](../drill-final/engine-build.toml) has SHA-256
++`659caced91feb9fc00bdbce7e7ced4e464874a9b8db8db84a69051dbff610bb6`.
++
++**PENDING:** root attaches the final actual drill/eleven-control manifest and
++passing maintained validation, both sequential integration receipts, current-root
++private readiness verdict and host-preservation seals, both cleanup passes and
++post-retirement authentication. Preparation remains claimed until these receipts
++are present. Old `drill/`, frozen subjects, readiness packages and their failures
++remain immutable historical evidence.
++
++## Launch steps
++
++1. Recheck checkout HEAD/worktrees, exact retained source/build/drill seals and
++   checkpoint archive. Inspect Ceres status with effort `ceres-continuation`,
++   token `ceres-20261013`, capacity `3`; inspect every other ledger/claimed ticket
++   for overlap. Share `SM_PIPELINE_ROOT=/home/jim/sm-decomp/out/pipeline` and
++   `SM_PIPELINE_WORKERS=4`. Inspection is complete when every held path and claim
++   has one observed owner or a retained ambiguous owner.
++2. Inspect actual session/thread ids, surviving children and process start
++   identities. Preserve live/ambiguous claims and stopped submitters' submissions.
++   Record main Git/index and integration owners. The preparation coordinator UUID
++   is a historical observation for later sessions; names and elapsed time cannot
++   establish current liveness. Replacement roles use checked transfers/adoption.
++3. Derive fresh typed production requests from the reviewed current-root readiness
++   policy, exact legacy bridge and passing retained drill. Observed integrator
++   calls maintained `decomp-authority prepare`, registers actual dispatcher and
++   integrator roles/checked transfers, then `validate-activation` and `activate`
++   with current real session id/generation. Preserve inherited `CODEX_THREAD_ID`.
++   The private readiness result has state `prepared`; production activation and
++   canonical admitted queue creation are separate later operations. This step
++   completes when active returned roles/generations match inspected owners.
++4. Before any legacy mutation, recheck Ceres ledger SHA-256
++   `77fdba066af4f4c045e8e8f419997563d569ac0bd8045cef0a68ac916a126b89`
++   and [v2 bridge](../reconciliation/legacy-owner-bridge-v2.toml) SHA-256
++   `cb537f195b4f83529f2ea7a61bd65c6e77ad215366275e8d60a7a604c4eb0ba9`.
++   Reconcile changed seals. Retain original tuples/attempts/tokens/gates; legacy
++   envelopes replay only exact requests sealed as requests in that bridge.
++5. Choose the first open, unblocked, unclaimed ticket by number. Reserve one job
++   per available subagent slot and give each actual child the returned claim,
++   pinned baseline, exact writable files, isolated worktree/run path and gates.
++   Persist its returned UUID through typed Start; checkpoint before/after gates.
++   Completion requires a durable handoff naming the exact next command and cwd.
++
++Activation binds the retained checkout's exact path, HEAD and fingerprint.
++Mutation/admission code changes require a fresh actual drill; validator/docs
++changes require explicit source-equivalence review. Cross-machine recovery
++restores required absolute source paths, binary/readers, evidence store/pointers
++and private ROM/movie inputs before authentication.
++
++## First work and completion
++
++[11](../issues/11-finish-held-ceres-integration.md) continues original Ceres work.
++Finish held `(integrate-shared-game-host, 48656a2-host-v1-1, 1, ceres-20261013)`;
++host `73547105d870f8b05f8c6bcf55b768c223889fdb` is already merged by
++`e8c9c3e10ac71bf0377dc00d7de5764a4263b445`. Then reserve existing ready
++`integrate-compact-controller`, linked to submitted
++`(compact-controller, 48656a2-compact-v1, 1, ceres-20261013)` at
++`223f8a1b0c7382817b1290d13c7a41f4e722d5e1`. Preserve original gates/readers.
++[12](../issues/12-ceres-nmi-poll-continuation.md) follows 11: research extra poll
++at ordinal 7,741/frame 8,508 and publish its Answer/reviewed correction scope
++before mutation. Its observer/pipeline/C-template work uses infrastructure
++admission; the custom holding TOML is not native `assign --scope` input.
++
++Read-only whole-subsystem research 13/14 can fill free slots while 11 integrates;
++15 and 17–20 follow ticket order. Research creates exact implementation children
++and milestone blockers. Native promotion currently admits bank86 exercise
++provenance and coherent 1–32 routines; other whole-root domains need matching
++supported evidence or reviewed Rust contract extensions. Continue held whole
++Ridley ticket 141 via 16 only when route dependencies/user steering permit.
++Reuse accepted leaves with their bounded domains. The integrator owns shared
++lib/state/ROM, CLI/catalog/ABI/observer/host wiring, inventory and main Git/index.
++
++Initial reviewed experiments are at most 60 seconds; integration gates at most
++3,600 seconds. Implement tools/orchestration/tests in Rust. Integrator freezes
++merged source, verifies every affected Offline family and required actual-C/live/
++original-ROM gates, publishes stages independently, completes both cleanup
++passes, retains source/store/readers/private inputs, retires integrated worktrees
++and authenticates before durable completion. Ceres escape requires ordinary
++reset and observed `32 → 33 → 34`; later route/save/load/credits and zero gameplay
++C/CPU fallback milestones retain their separate gates.
+--- a/.scratch/decomp-parallel/spec.md
++++ b/.scratch/decomp-parallel/spec.md
+@@ -5,6 +5,14 @@
+ Owner: integration coordinator
+ Plan deliverable: complete; implementation and gameplay milestones remain open
+ 
++Preparation: tickets 01–03 and 05 resolved; recovered final drill/readiness 04 pending
++Preparation coordinator: `01a13500-1ef8-73d3-9a0d-3446b6050eba`
++
++Read [preparation status](preparation/status.md) for the current frozen source,
++actual final receipts and production boundary. Follow
++[the launch handoff](preparation/launch-handoff.md) only after 04 resolves and the
++user separately requests the gameplay swarm. The full gameplay spec remains open.
++
+ The destination is a readable Rust Super Metroid source port, with emulated
+ SNES hardware. Follow [the agreed pivot](../../docs/DECOMP_PIVOT.md) and
+ [the revised strategy](../decomp-strategy/revised-strategy.md): ordinary-reset
+@@ -36,12 +44,14 @@
+     P --> Q
+ ```
+ 
+-## Current checkpoint and limits
++## Historical checkpoint and current limits
+ 
+ Authored source and retained receipts are checkpointed at
+ `d8a90451695408bbf72017ea04e7f4e915b06dd9` on
+ `affected-family-assignment`. See [the checkpoint](checkpoint-20261013.md)
+ for exact source archives, raw evidence hashes, private dependencies and cleanup.
++The following table records that checkpoint's source and claim observations;
++reinspect current authority and owners through preparation status before action.
+ 
+ | Work | Recorded state | Next action |
+ | --- | --- | --- |
+@@ -60,20 +70,23 @@
+ 
+ | Existing Rust capability | Practical limit / planned extension |
+ | --- | --- |
+-| `assignment.rs`: atomic reservations, revision/attempt history, disjoint writable paths, no expiry, repeated-update recovery | Conflicts and integration activity are checked within one effort. The global mutation lock does not inspect arbitrary paths in all other ledgers. |
+-| `coordination.rs`: native source/submission/gate/evidence validation and cleanup | First submission latches `integration_owner`; a coordinator token is not real session fencing. Native infrastructure admission is missing; the Ceres Rust driver records its custom jobs separately. |
++| `assignment.rs`: atomic reservations, revision/attempt history, no expiry, exact retry recovery and cross-effort ownership inspection | Shared mutation lock checks paths/aliases, tickets and linked submissions across efforts; prepared policy enforces shared capacity, and admitted mutations bind current real role generations. Actual external liveness remains a tool observation. |
++| `authority.rs` / `session.rs` / `coordination.rs`: explicit roles, native source/submission/gate/evidence validation and cleanup | Maintained infrastructure scope admission, real-session generation fencing and exact bridge-request replay exist. One registered integrator serializes frozen shared source; original legacy gates remain authoritative. |
+ | `translation.rs`: pinned exercise/dependency provenance and bounded coherent scope promotion | Current scope schema permits 1–32 routines and restricted gameplay paths. Larger whole subsystems and infrastructure need explicit maintained support, not invented acceptance through this schema. |
+ | `batch.rs`: affected-family selection, reusable verdict authentication and shared workers | Unknown dependency inputs remain affected. Independent batch paths do not grant independent writable ownership. |
+-| `metrics.rs`: command/process lifecycle, failure/cancellation records and cost measurements | A transcript or PID alone cannot establish a recoverable claim. Compact session summaries and durable real thread identities are future work. |
++| `metrics.rs` / `session.rs`: process lifecycle and typed durable Start/Checkpoint/Inspect/Resume/Adopt | Handoffs retain exact source, real child/parent identities, commands and evidence; callers still inspect actual thread/process start identity after a crash. Resume returns reviewed commands and executes none. |
+ | Progress command: locked atomic stage publication with evidence pointers | Stages remain independent. Existing observations and seals are preserved; cleanup/authentication precede integration and live publication. |
+ 
+ ## Authority cutover
+ 
+ The future canonical effort is **decomp-parallel**, with ledger
+ `.scratch/decomp-parallel/ledger.toml` and capacity **3**. It is **unactivated**.
+-No session creates claims there until tickets **01–04** pass and a cutover receipt
+-records the admitted coordinator identities, integrator, current HEAD and legacy
+-ownership bridge. Tickets describe future work; this document changes no claims.
++No session creates claims there until tickets **01–04** pass, the user separately
++requests launch and an actual cutover records admitted roles/generations, current
++source and the exact legacy bridge. Preparation validates a private prepared
++policy view with maintained `validate-activation`; production prepare,
++registration/checked transfer, validation and activation occur at launch.
++Ticket 04's actual final receipts remain pending. This document changes no claims.
+ Ticket 04 runs its independent-session drill in a disposable isolated checkout
+ and effort before production activation. Read-only catalog research in ticket
+ 05 starts after 01 and can run beside 02–04; mutable gameplay additionally
+@@ -127,13 +140,14 @@
+    completion records measured cleanup, checkpoints claims/tickets/handoffs
+    and publishes each achieved stage independently.
+ 
+-Handoffs use `.scratch/decomp-parallel/sessions/SESSION/JOB-ATTEMPT.md`, one
+-writer per file, with exact real identities, claim tuple, source commits,
+-writable scope, process identity, evidence dependencies, cleanup state and next
+-command/cwd. The runbook specifies the fields. This manual convention works
+-today; maintained infrastructure assignment and automated WIP/handoff/resume
+-commands are ticket **03**. A WIP commit preserves source; gameplay acceptance
+-still requires its separate evidence and integration gates.
++Typed `decomp-worker-handoff-v1` TOML is authoritative at
++`.scratch/decomp-parallel/sessions/SESSION/JOB-ATTEMPT.toml`; maintained session
++commands publish rendered Markdown at the corresponding `.md` path. Start stores
++the actual child UUID; Checkpoint validates exact owned files and recovers a
++retained commit intent; Inspect/Resume return durable pointers/reviewed commands;
++checked Adopt retains original handoff and transfer evidence. The runbook owns
++these commands and schemas. A WIP commit preserves source; gameplay acceptance
++requires its separate evidence and integration gates.
+ 
+ ## Gameplay ownership lanes
+ 
+--- a/.scratch/decomp-parallel/map.md
++++ b/.scratch/decomp-parallel/map.md
+@@ -4,12 +4,17 @@
+ Blocked by: 01, 02, 03, 04, 05, 06, 07, 08, 09, 10
+ Plan deliverable: complete; implementation remains open
+ 
++Preparation: tickets 01–03 and 05 resolved; recovered final drill/readiness 04 pending
++Preparation coordinator: `01a13500-1ef8-73d3-9a0d-3446b6050eba`
++
+ The [spec](spec.md) defines the outcome and authority transition. The
+ [session runbook](../../docs/agents/decomp-sessions.md) contains supported
+ commands, subagent dispatch, WIP/handoff rules and fresh/resume prompts.
+ The [committed checkpoint](checkpoint-20261013.md) preserves recovered source
+ and evidence. The [preparation status](preparation/status.md) records the current
+ tooling, actual-session drill and launch boundary.
++The [launch handoff](preparation/launch-handoff.md) records the current retained
++subject and later launch procedure; its actual final receipts remain pending.
+ 
+ ## Decisions so far
+ 
+@@ -32,8 +37,17 @@
+   WIP commits and diagnostic prefixes describe bounded progress.
+ - Ticket 01's retained owner bridge and exact tooling adoption are checkpointed
+   at `c46b730` on `decomp-preparation-20261013`; normalized successor bridge
+-  retains its immutable predecessor. Tickets 02/03 implement disjointly while
++  retains its immutable predecessor. Tickets 02/03 are integrated and resolved;
+   production authority and all original gameplay submissions remain held.
++- The corrected serial-integration source is
++  `2d59536c059a1ca9c31d9278bff2d9222eafa56c`, retained at
++  `/tmp/sm-decomp-preparation-final-source-20261013`. Execution and validation
++  use the same engine; [preparation status](preparation/status.md) owns its
++  exact fingerprint/build/seals. Old drill evidence remains historical.
++- **PENDING:** ticket 04's final eleven-control manifest, both sequential
++  authenticated integrations, maintained validation, current-root private
++  readiness validation/host preservation, measured cleanup and reauthentication.
++  Gameplay launch and production activation remain the user's separate request.
+ - Ticket 05's [catalog](catalog/subsystem-catalog.md) identifies reused acceptance,
+   exact held Ceres continuation and child research 11–20. Native promotion still
+   accepts bank86 projectile exercise provenance; other observed callers need a
+@@ -47,7 +61,7 @@
+ | [01 Reconcile legacy ownership](issues/01-reconcile-legacy-ownership.md) | task | resolved | None | Retained legacy bridge and checked isolated tooling adoption |
+ | [02 Fence writable paths and integration sessions](issues/02-fence-writable-paths-and-integration-sessions.md) | task | resolved | 01 | Integrated Rust ownership engine; focused controls and cleanup complete |
+ | [03 Maintain Rust commands and durable handoffs](issues/03-maintained-rust-commands-and-handoffs.md) | task | resolved | 01 | Integrated typed Rust session commands; focused controls and cleanup complete |
+-| [04 Prove concurrent sessions and crash recovery](issues/04-concurrency-and-crash-recovery-drill.md) | task | claimed | 02, 03 | Actual independent-session drill; integration and final authentication active |
++| [04 Prove concurrent sessions and crash recovery](issues/04-concurrency-and-crash-recovery-drill.md) | task | claimed | 02, 03 | Corrected frozen-source drill; recovered final validation/readiness/cleanup pending |
+ | [05 Catalog dependency-ready subsystem scopes](issues/05-subsystem-scope-catalog.md) | research | resolved | 01 | Published catalog and children 11–20; honest research/held readiness |
+ | [06 Ordinary-reset Ceres escape](issues/06-ordinary-reset-ceres-escape.md) | task | open | 04, 05, 11, 12, 13 | Existing controller/host continuation and required scheduler/hardware contract |
+ | [07 Playable vanilla progression](issues/07-playable-vanilla-progression.md) | task | open | 06, 13, 14, 15, 16, 17, 18 | Parallel subsystem children; composed route gate |
+@@ -67,10 +81,11 @@
+ 
+ On the separately requested gameplay launch, choose the first open, unblocked,
+ unclaimed ticket by number. Readiness never reopens an existing claim.
+-Tickets 02, 03 and 05 are complete. Ticket 04 runs in an isolated disposable checkout/effort;
+-production canonical authority activates only with passing retained drill
+-receipts and a validated legacy bridge/cutover. Gameplay mutation through the
+-future workflow starts after 04 and 05. Ticket 05's lane table produces concrete
++Tickets 01–03 and 05 are complete. Ticket 04 runs in an isolated disposable
++checkout/effort. Private readiness validation keeps production authority/ledger
++absent; production activation later requires the user's launch instruction,
++passing exact drill receipts and fresh role/legacy bridge validation. Gameplay
++mutation through that workflow starts after 04 and 05. Ticket 05's lane table produces concrete
+ child tickets/scopes; each child lists dependencies and is added to its
+ milestone. Parent milestones do not make subsystem implementation serial.
+ 
+--- a/.scratch/decomp-parallel/issues/04-concurrency-and-crash-recovery-drill.md
++++ b/.scratch/decomp-parallel/issues/04-concurrency-and-crash-recovery-drill.md
+@@ -4,10 +4,10 @@
+ Blocked by: 02, 03
+ Triage: ready-for-agent
+ Type: task
+-Owner: preparation drill worker `/root/drill_preparation`
+-Source: `c8799f326ffe198b652301f08866f1b7a7bd9ebc`
++Owner: recovered preparation coordinator `01a13500-1ef8-73d3-9a0d-3446b6050eba`
++Source: `2d59536c059a1ca9c31d9278bff2d9222eafa56c`
+ 
+-Existing queue tests and the manual runbook do not prove that independent live
++Existing queue tests and the runbook do not prove that independent live
+ sessions can cooperate and recover. Exercise the implemented contracts from
+ 02 and 03 with two actual sessions before activating production authority.
+ 
+@@ -53,6 +53,41 @@
+ after preserving dependencies, and record measured bytes/free space before
+ resolution. Keep production source, claims and retained evidence intact.
+ 
++### Recovered corrected-source validation subject
++
++Current root is `01a13500-1ef8-73d3-9a0d-3446b6050eba`. Current execution and
++validator source is clean frozen checkout
++`/tmp/sm-decomp-preparation-final-source-20261013` at full commit
++`2d59536c059a1ca9c31d9278bff2d9222eafa56c`, fingerprint
++`e5e412053f6dbe2cbadaba077192e885684fbb9f2699cafeaa6acd694879d78d`.
++The retained engine SHA-256 is
++`df6eb4dc3a9fd69e5d5923b5c22f34dea7b434cd7ee87f1b69085cd9e9431c84`;
++[build receipt](../drill-final/engine-build.toml) SHA-256 is
++`659caced91feb9fc00bdbce7e7ced4e464874a9b8db8db84a69051dbff610bb6`.
++The serial integration fix reproduced the prior baseline-path refusal, passed
++all 51 maintained controls and was integrated as `23fde6a`; its
++[handoff](../preparation/serial-fix-handoff.md) retains red/green and cleanup
++evidence. The fresh fixture is
++`/tmp/sm-decomp-concurrency-drill-final-20261013` and its current durable state is
++in [drill-final](../drill-final/handoff.md). Inspect surviving exact sessions and
++claims before continuing it.
++
++**PENDING before resolution:** append actual fresh A/B session/worker/claim and
++generation identities, final eleven-control execution manifest, two sequential
++authenticated integration results, exact retry/stale/budget receipts, passing
++maintained drill validation, current-root
++[readiness successor](../preparation/readiness-recovery-20261013/README.md)
++private validation/host-preservation seals, both cleanup passes, measured bytes/
++free space, retired implementer worktrees, post-cleanup authentication and the
++final root Git checkpoint. A helper build or earlier drill control passes do not
++replace those actual receipts.
++
++The historical section below records unchanged `c8799f3` execution and its
++separate validator epoch. Its second-integration failure is preserved as the
++regression's originating diagnosis; fresh-source receipts supply the current
++resolution. Production authority/canonical ledger remain absent, legacy Ceres
++claims/seals unchanged, and gameplay launch remains separately requested.
++
+ ### Actual frozen execution retained 2026-10-13
+ 
+ Executed engine source `c8799f326ffe198b652301f08866f1b7a7bd9ebc`, fingerprint
+--- a/docs/agents/decomp-sessions.md
++++ b/docs/agents/decomp-sessions.md
+@@ -9,7 +9,11 @@
+ work. Read the [checkpoint](../../.scratch/decomp-parallel/checkpoint-20261013.md)
+ for recovered source and retained evidence and the
+ [preparation status](../../.scratch/decomp-parallel/preparation/status.md)
+-for the current launch boundary and final validation subject. Follow [assignments](assignments.md)
++for the current launch boundary and final validation subject. For the user's
++later gameplay swarm launch, read
++[the launch handoff](../../.scratch/decomp-parallel/preparation/launch-handoff.md)
++and its actual final drill/readiness receipts before preparing production
++authority. Follow [assignments](assignments.md)
+ for claim/result schemas, [translation progress](translation-progress.md) for
+ stage publication, and [run cleanup](run-cleanup.md) before handing work back.
+ 
+@@ -275,6 +279,11 @@
+ verifies all affected Offline families and required gates, publishes achieved
+ stages, completes both cleanup passes, and records authenticated completion.
+ Independent workers continue in their own worktrees while integration runs.
++Infrastructure integration validates baseline-to-submitted-commit writable
++ownership while retaining clean exact shared merged HEAD as the integration
++source. This permits sequential disjoint merges without assigning the first
++submission's files to the second worker. Keep the exact submitted claim/source
++and frozen merged source distinct in typed handoffs and evidence.
+ Shared pipeline/tools edits can invalidate source fingerprints even when
+ gameplay paths are disjoint; freeze the verification checkout, inspect stale
+ jobs and repeat affected verification when inputs change.
+@@ -288,10 +297,11 @@
+ 
+ Completion requires the durable integrated result, stage observations,
+ authenticatable retained evidence, cleanup records and a clean scoped Git
+-checkpoint. At the checkpoint, merged shared-host integration remained running
+-and the controller was submitted for integration. Read the checkpoint and live
+-status for those claims rather than inferring completion from passing fixtures
+-or stopped workers.
++checkpoint. The checkpoint's Ceres host/controller observations are historical;
++inspect current live status and the launch handoff for the same held claims.
++Preparation resolves 01–05 only after final drill/readiness/cleanup receipts;
++spec/map and gameplay 06–20 retain their own unresolved gates. Production
++activation and gameplay launch require the user's separate launch instruction.
+ 
+ ## Session prompts
+ 

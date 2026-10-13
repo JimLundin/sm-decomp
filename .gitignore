@@ -36,6 +36,7 @@ __pycache__/
 
 # Swarm preparation retains frozen executables locally with build/hash receipts.
 /.scratch/decomp-parallel/**/bin/
+/.scratch/decomp-parallel/**/helpers/
 
 # Preserve raw command receipts locally and in checkpoint receipt archives.
 /.scratch/**/*.stdout

@@ -1,0 +1,9 @@
+e389c8e003c94faf35660d62f426b8c8f7ffc3231435780e89fa4d66b574d9b5  .scratch/decomp-parallel/preparation/final-helper-provenance/README.md
+914133c2ede422b5969b3fe79a1b6818762a2495701236456b5c5aaace62fb9c  .scratch/decomp-parallel/preparation/final-helper-provenance/bin/decomp-drill-evidence
+3b76d460c5440aff51027a1eda2da7e3af10fc57808cb8359d7a784b26406625  .scratch/decomp-parallel/preparation/final-helper-provenance/build.stderr
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  .scratch/decomp-parallel/preparation/final-helper-provenance/build.stdout
+b6182c72c18cb5d0fb6e666e06e5c065dee92337fb4ab0f8d04f0a95ccbedfbb  .scratch/decomp-parallel/preparation/final-helper-provenance/build.toml
+c48ceb23111821877e5a9e59222ed4e1b2b55abcab7d3ee1fc4b9dcc1e5fe4cc  .scratch/decomp-parallel/preparation/final-helper-provenance/request-helper.diff
+962b572761ae09498aec442b5e4f3e464b1699bf706f8e0ddddf5d8c8c8a5346  .scratch/decomp-parallel/preparation/final-helper-provenance/source/Cargo.lock
+0f441b0a5e27a6f27111463f0a941999a54ddc0f7967c2bb3ced468a7df122ec  .scratch/decomp-parallel/preparation/final-helper-provenance/source/Cargo.toml
+98452b6e283dd3236b480114c23f98ed89c5a64066a483ed609e019feaf6585e  .scratch/decomp-parallel/preparation/final-helper-provenance/source/main.rs

@@ -1,0 +1,2 @@
+2026-10-13T10:49:44.343707Z ERROR codex_core::tools::router: error=write_stdin failed: Unknown process id 90650
+2026-10-13T10:49:44.348307Z ERROR codex_core::session: failed to record rollout items: thread 01a134dc-6c44-7802-9598-41b7f6e0351f not found

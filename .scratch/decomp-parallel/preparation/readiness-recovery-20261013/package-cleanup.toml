@@ -1,0 +1,17 @@
+schema = "decomp-readiness-package-cleanup-v1"
+status = "complete"
+package_author = "01a13501-0242-71b0-820d-fdea3808f4c9"
+namespace_validation_performed = false
+commands = [
+  ["/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/bin/sm-pipeline", "cleanup", "--root", "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-recovery-20261013", "--apply"],
+  ["/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/bin/sm-pipeline", "cleanup", "--root", "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-recovery-20261013", "--deduplicate", "--apply"],
+  ["cargo", "clean", "--manifest-path", "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-recovery-20261013/Cargo.toml", "--target-dir", "/tmp/sm-readiness-recovery-20261013-target"],
+]
+utility_reclaimed_bytes = 0
+disposable_target_logical_bytes_before = 27092699
+cargo_clean_files_removed = 233
+cargo_clean_reported_bytes = "37.7MiB"
+available_space_after_bytes = 221877424128
+retained_helper_binary = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-recovery-20261013/bin/decomp-readiness"
+retained_helper_bytes = 6738864
+limitations = ["Cargo's rounded cleanup bytes, logical directory size and free-space delta use different measurements.", "Actual readiness output cleanup/authentication remains with root after final drill validation.", "Package retains source, current/predecessor observation files, build/rejection diagnostics and helper executable. No fixture, production queue or authority was created.", "The host tool rejected rm -rf for the named disposable target; cargo clean safely removed build outputs instead."]

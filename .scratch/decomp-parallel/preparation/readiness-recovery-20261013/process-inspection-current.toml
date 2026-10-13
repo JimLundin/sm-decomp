@@ -1,0 +1,440 @@
+schema = "decomp-readiness-process-inspection-v1"
+observed_at = "2026-10-13T11:29:17Z"
+observer_thread = "01a13501-0242-71b0-820d-fdea3808f4c9"
+boot_id = "7119fcce-5593-4526-aa9b-07127767c4ef"
+checked_path_prefixes = ["/tmp/sm-ceres-continuation-compact-controller-1", "/tmp/sm-ceres-continuation-shared-game-host-1", "/home/jim/sm-decomp/out/port/ceres-continuation", "/home/jim/sm-decomp/.scratch/ceres-continuation", "/tmp/sm-ceres-coordinator-target", "/tmp/sm-prefix-native-"]
+limitations = ["A transient /proc disappearance is retained as a race. Generic shared app/REA processes do not prove original-owner liveness. Read-only reporting server may remain after reporting Git handoff."]
+
+[[processes]]
+pid = 427
+argv = ["-zsh"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = false
+fresh_drill_match_details = []
+cwd = "/home/jim/sm-decomp"
+start_ticks = 1184
+ppid = 425
+
+[[processes]]
+pid = 3355
+argv = ["codex"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = false
+fresh_drill_match_details = []
+cwd = "/home/jim/sm-decomp"
+start_ticks = 8094
+ppid = 427
+
+[[processes]]
+pid = 3389
+argv = ["/home/jim/.codex/packages/app-server-daemon/releases/0.162.1-x86_64-unknown-linux-musl/bin/codex", "app-server", "--listen", "unix://", "--analytics-default-enabled", "--managed-daemon"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = false
+fresh_drill_match_details = []
+cwd = "/home/jim/sm-decomp"
+start_ticks = 8168
+ppid = 3355
+
+[[processes]]
+pid = 3441
+argv = ["/home/jim/.codex/packages/app-server-daemon/releases/0.162.1-x86_64-unknown-linux-musl/bin/codex", "app-server", "daemon", "pid-update-loop"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = false
+fresh_drill_match_details = []
+cwd = "/home/jim/sm-decomp"
+start_ticks = 8217
+ppid = 3355
+
+[[processes]]
+pid = 3981
+argv = ["/home/jim/.codex/packages/app-server-daemon/releases/0.162.1-x86_64-unknown-linux-musl/bin/codex-code-mode-host"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = false
+fresh_drill_match_details = []
+cwd = "/home/jim/sm-decomp"
+start_ticks = 10623
+ppid = 3389
+
+[[processes]]
+pid = 22341
+argv = ["node", "/home/jim/.nvm/versions/node/v24.16.0/bin/rea", "mcp"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = false
+fresh_drill_match_details = []
+cwd = "/home/jim/sm-decomp"
+start_ticks = 89037
+ppid = 3389
+
+[[processes]]
+pid = 144602
+argv = ["node", "/home/jim/.nvm/versions/node/v24.16.0/bin/rea", "mcp"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = false
+fresh_drill_match_details = []
+cwd = "/home/jim/sm-decomp"
+start_ticks = 454365
+ppid = 3389
+
+[[processes]]
+pid = 182019
+argv = ["node", "/home/jim/.nvm/versions/node/v24.16.0/bin/rea", "mcp"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = false
+fresh_drill_match_details = []
+cwd = "/home/jim/sm-decomp"
+start_ticks = 635618
+ppid = 3389
+
+[[processes]]
+pid = 188864
+argv = ["node", "/home/jim/.nvm/versions/node/v24.16.0/bin/rea", "mcp"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = false
+fresh_drill_match_details = []
+cwd = "/home/jim/sm-decomp"
+start_ticks = 703753
+ppid = 3389
+
+[[processes]]
+pid = 270377
+argv = ["node", "/home/jim/.nvm/versions/node/v24.16.0/bin/rea", "mcp"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = false
+fresh_drill_match_details = []
+cwd = "/home/jim/sm-decomp"
+start_ticks = 1195852
+ppid = 3389
+
+[[processes]]
+pid = 298555
+argv = ["node", "/home/jim/.nvm/versions/node/v24.16.0/bin/rea", "mcp"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = false
+fresh_drill_match_details = []
+cwd = "/home/jim/sm-decomp"
+start_ticks = 1377417
+ppid = 3389
+
+[[processes]]
+pid = 325103
+argv = ["node", "/home/jim/.nvm/versions/node/v24.16.0/bin/rea", "mcp"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = false
+fresh_drill_match_details = []
+cwd = "/home/jim/sm-decomp"
+start_ticks = 1599169
+ppid = 3389
+
+[[processes]]
+pid = 344454
+argv = ["node", "/home/jim/.nvm/versions/node/v24.16.0/bin/rea", "mcp"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = false
+fresh_drill_match_details = []
+cwd = "/home/jim/sm-decomp"
+start_ticks = 1787961
+ppid = 3389
+
+[[processes]]
+pid = 344627
+argv = ["node", "/home/jim/.nvm/versions/node/v24.16.0/bin/rea", "mcp"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = false
+fresh_drill_match_details = []
+cwd = "/home/jim/sm-decomp"
+start_ticks = 1792094
+ppid = 3389
+
+[[processes]]
+pid = 357697
+argv = ["node", "/home/jim/.nvm/versions/node/v24.16.0/bin/rea", "mcp"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = false
+fresh_drill_match_details = []
+cwd = "/home/jim/sm-decomp"
+start_ticks = 1972613
+ppid = 3389
+
+[[processes]]
+pid = 395944
+argv = ["node", "/home/jim/.nvm/versions/node/v24.16.0/bin/rea", "mcp"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = false
+fresh_drill_match_details = []
+cwd = "/home/jim/sm-decomp"
+start_ticks = 2153466
+ppid = 3389
+
+[[processes]]
+pid = 420446
+argv = ["target/release/sm-pipeline", "progress", "serve", "--root", "/home/jim/sm-decomp", "--bind", "127.0.0.1:4185"]
+main_checkout_cwd = true
+reporting_server = true
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = false
+fresh_drill_match_details = []
+cwd = "/home/jim/sm-decomp"
+start_ticks = 2249195
+ppid = 3389
+
+[[processes]]
+pid = 433147
+argv = ["node", "/home/jim/.nvm/versions/node/v24.16.0/bin/rea", "mcp"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = false
+fresh_drill_match_details = []
+cwd = "/home/jim/sm-decomp"
+start_ticks = 2341221
+ppid = 3389
+
+[[processes]]
+pid = 472259
+argv = ["codex", "exec", "-s", "danger-full-access", "-C", "/tmp/sm-decomp-concurrency-drill-final-20261013", "--json", "-"]
+main_checkout_cwd = false
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = true
+fresh_drill_match_details = ["cwd:/tmp/sm-decomp-concurrency-drill-final-20261013", "argv:/tmp/sm-decomp-concurrency-drill-final-20261013", "fd0:/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/prompts/integration-worker.md", "fd1:/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/integration-worker-1791890318.jsonl", "fd2:/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/integration-worker-1791890318.stderr"]
+cwd = "/tmp/sm-decomp-concurrency-drill-final-20261013"
+start_ticks = 2687656
+ppid = 425
+
+[[processes]]
+pid = 472338
+argv = ["node", "/home/jim/.nvm/versions/node/v24.16.0/bin/rea", "mcp"]
+main_checkout_cwd = false
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = true
+fresh_drill_match_details = ["cwd:/tmp/sm-decomp-concurrency-drill-final-20261013"]
+cwd = "/tmp/sm-decomp-concurrency-drill-final-20261013"
+start_ticks = 2687681
+ppid = 472259
+
+[[processes]]
+pid = 472715
+argv = ["/home/jim/.codex/packages/standalone/releases/0.162.1-x86_64-unknown-linux-musl/bin/codex-code-mode-host"]
+main_checkout_cwd = false
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = true
+fresh_drill_match_details = ["cwd:/tmp/sm-decomp-concurrency-drill-final-20261013"]
+cwd = "/tmp/sm-decomp-concurrency-drill-final-20261013"
+start_ticks = 2688229
+ppid = 472259
+
+[[processes]]
+pid = 473212
+argv = ["node", "/home/jim/.nvm/versions/node/v24.16.0/bin/rea", "mcp"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = false
+fresh_drill_match_details = []
+cwd = "/home/jim/sm-decomp"
+start_ticks = 2691460
+ppid = 3389
+
+[[processes]]
+pid = 473459
+argv = ["node", "/home/jim/.nvm/versions/node/v24.16.0/bin/rea", "mcp"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = false
+fresh_drill_match_details = []
+cwd = "/home/jim/sm-decomp"
+start_ticks = 2694144
+ppid = 3389
+
+[[processes]]
+pid = 473991
+argv = ["/usr/bin/zsh", "-c", "for integration_retry in {1..30}\ndo\n  /tmp/sm-decomp-drill-final-harness-build/debug/decomp-drill wait integration-worker-release 50\n  integration_wait_status=$?\n  if (( integration_wait_status == 0 )); then\n    exit 0\n  fi\n  if (( integration_wait_status != 1 )); then\n    exit \"$integration_wait_status\"\n  fi\ndone\nexit 1"]
+main_checkout_cwd = false
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = true
+fresh_drill_match_details = ["cwd:/tmp/sm-decomp-concurrency-drill-final-20261013", "argv:for integration_retry in {1..30}\ndo\n  /tmp/sm-decomp-drill-final-harness-build/debug/decomp-drill wait integration-worker-release 50\n  integration_wait_status=$?\n  if (( integration_wait_status == 0 )); then\n    exit 0\n  fi\n  if (( integration_wait_status != 1 )); then\n    exit \"$integration_wait_status\"\n  fi\ndone\nexit 1"]
+cwd = "/tmp/sm-decomp-concurrency-drill-final-20261013"
+start_ticks = 2697764
+ppid = 472259
+
+[[processes]]
+pid = 475290
+argv = ["node", "/home/jim/.nvm/versions/node/v24.16.0/bin/rea", "mcp"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = false
+fresh_drill_match_details = []
+cwd = "/home/jim/sm-decomp"
+start_ticks = 2702052
+ppid = 3389
+
+[[processes]]
+pid = 476737
+argv = ["codex", "exec", "-s", "danger-full-access", "-C", "/tmp/sm-decomp-concurrency-drill-final-20261013", "resume", "01a134dc-6c44-78d1-8168-fc21f3499b55", "--json", "-"]
+main_checkout_cwd = false
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = true
+fresh_drill_match_details = ["cwd:/tmp/sm-decomp-concurrency-drill-final-20261013", "argv:/tmp/sm-decomp-concurrency-drill-final-20261013", "fd0:/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/prompts/b-integrator-recovery-v2.md", "fd1:/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/b-1791890784.jsonl", "fd2:/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/b-1791890784.stderr"]
+cwd = "/tmp/sm-decomp-concurrency-drill-final-20261013"
+start_ticks = 2716256
+ppid = 425
+
+[[processes]]
+pid = 476786
+argv = ["node", "/home/jim/.nvm/versions/node/v24.16.0/bin/rea", "mcp"]
+main_checkout_cwd = false
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = true
+fresh_drill_match_details = ["cwd:/tmp/sm-decomp-concurrency-drill-final-20261013"]
+cwd = "/tmp/sm-decomp-concurrency-drill-final-20261013"
+start_ticks = 2716291
+ppid = 476737
+
+[[processes]]
+pid = 477706
+argv = ["/home/jim/.codex/packages/standalone/releases/0.162.1-x86_64-unknown-linux-musl/bin/codex-code-mode-host"]
+main_checkout_cwd = false
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = true
+fresh_drill_match_details = ["cwd:/tmp/sm-decomp-concurrency-drill-final-20261013"]
+cwd = "/tmp/sm-decomp-concurrency-drill-final-20261013"
+start_ticks = 2717113
+ppid = 476737
+
+[[processes]]
+pid = 479298
+argv = ["/tmp/sm-decomp-drill-final-harness-build/debug/decomp-drill", "wait", "integrations-go", "50"]
+main_checkout_cwd = false
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = true
+fresh_drill_match_details = ["cwd:/tmp/sm-decomp-concurrency-drill-final-20261013", "argv:/tmp/sm-decomp-drill-final-harness-build/debug/decomp-drill"]
+cwd = "/tmp/sm-decomp-concurrency-drill-final-20261013"
+start_ticks = 2727030
+ppid = 476737
+
+[[processes]]
+pid = 479321
+argv = ["/tmp/sm-decomp-drill-final-harness-build/debug/decomp-drill", "wait", "integration-worker-release", "50"]
+main_checkout_cwd = false
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = true
+fresh_drill_match_details = ["cwd:/tmp/sm-decomp-concurrency-drill-final-20261013", "argv:/tmp/sm-decomp-drill-final-harness-build/debug/decomp-drill"]
+cwd = "/tmp/sm-decomp-concurrency-drill-final-20261013"
+start_ticks = 2727831
+ppid = 473991
+
+[[processes]]
+pid = 479711
+argv = ["/usr/bin/zsh", "-c", "mkdir -p .scratch/decomp-parallel/preparation/readiness-recovery-20261013/bin && cp /tmp/sm-readiness-recovery-20261013-target/debug/decomp-readiness .scratch/decomp-parallel/preparation/readiness-recovery-20261013/bin/decomp-readiness && /tmp/sm-readiness-recovery-20261013-target/debug/decomp-readiness-process-inspect > .scratch/decomp-parallel/preparation/readiness-recovery-20261013/process-inspection-current.toml && sha256sum .scratch/decomp-parallel/preparation/readiness-recovery-20261013/thread-inspection-current.json .scratch/decomp-parallel/preparation/readiness-recovery-20261013/process-inspection-current.toml .scratch/decomp-parallel/preparation/readiness-final/artifacts.sha256 .scratch/decomp-parallel/preparation/readiness-recovery-20261013/main.rs .scratch/decomp-parallel/preparation/readiness-recovery-20261013/bin/decomp-readiness && rg -n 'pid =|claim_path_match = true|fresh_drill_path_match = true|reporting_server = true|start_ticks =' .scratch/decomp-parallel/preparation/readiness-recovery-20261013/process-inspection-current.toml"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = false
+fresh_drill_match_details = []
+cwd = "/home/jim/sm-decomp"
+start_ticks = 2728723
+ppid = 3389

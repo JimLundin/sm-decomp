@@ -1,0 +1,46 @@
+schema = "decomp-readiness-ownership-boundaries-v1"
+observed_at = "2026-10-13T11:29:17Z"
+observer_thread = "01a13501-0242-71b0-820d-fdea3808f4c9"
+legacy_integrator_thread = "01a133eb-76e2-7073-9aef-d97c03a812e4"
+legacy_integrator_status = "failed"
+previous_preparation_thread = "01a134cd-dafb-7e50-8284-f285a905e05b"
+previous_preparation_status = "failed"
+earlier_preparation_thread = "01a13460-4aa9-7fe0-865e-a8f54ffca310"
+earlier_preparation_status = "failed"
+replacement_integrator_thread = "01a13500-1ef8-73d3-9a0d-3446b6050eba"
+replacement_integrator_status = "running"
+replacement_integrator_generation = 1
+reporting_thread = "01a13394-29b8-76a3-aab7-5ab8eff60694"
+reporting_status = "completed"
+main_git_owner_thread = "01a13500-1ef8-73d3-9a0d-3446b6050eba"
+reporting_handoff_commit = "9ed933daa151f52e3cf922e6559c7681330e0f85"
+reporting_server_retained_pid = 420446
+reporting_server_start_ticks = 2249195
+reporting_server_boot_id = "7119fcce-5593-4526-aa9b-07127767c4ef"
+fresh_drill_worker_thread = "01a134d2-0902-7c81-8ab6-4f98937db3ea"
+fresh_drill_worker_status = "running"
+fresh_drill_integration_child_thread = "01a134fc-642b-7481-a4cb-d84c2d217cdd"
+fresh_drill_integration_child_pid = 472259
+fresh_drill_integration_child_start_ticks = 2687656
+fresh_drill_integration_child_boot_id = "7119fcce-5593-4526-aa9b-07127767c4ef"
+fresh_drill_ownership_retained = true
+claim_processes_observed = []
+claim_states_unchanged = true
+original_claims_released = false
+gameplay_launched = false
+authority_present = false
+canonical_ledger_present = false
+limitations = ["Fresh process scan matches retained Ceres path prefixes in cwd, argv and open descriptors; none found. Generic main-cwd app/REA processes and retained reporting server do not establish original Ceres ownership.", "The active fresh drill worker and isolated child/processes retain their original claims and budget. They belong to the old collaboration tree; direct communication rejection cannot prove stopped ownership.", "Production never acquired generation 1: predecessor policies were prospective private-namespace preparation only. This successor performs generation-zero historical transfer to the current real root only inside its private namespace.", "Historical bridge and readiness packages remain immutable. Replacement main Git ownership is recovered from the terminal failed preparation root and retained reporting handoff.", "Actual thread/process interpretation is a read-only tool trust boundary, not cryptographic platform attestation."]
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-recovery-20261013/thread-inspection-current.json"
+sha256 = "6a94d3a9aa598cf8ffe4894517846af2c8c93e47d26cea2ae3050c7f00fec4a2"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-recovery-20261013/process-inspection-current.toml"
+sha256 = "9c4ffe5c72a17c6abe96d2d51937e0cfd290f160c0c65d6ce800c976bcc81853"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-final/artifacts.sha256"
+sha256 = "95aade447633122ad0b5e8b721887430fc3ab1dd43c1e7aebc94fb5221b884b5"
+

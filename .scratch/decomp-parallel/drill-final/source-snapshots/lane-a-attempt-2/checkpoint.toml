@@ -1,0 +1,13 @@
+baseline = "c84ce871b60cf13999f55ed7b21ece1cdba907a7"
+schema = "decomp-drill-retained-checkpoint-v1"
+source_commit = "682e7e8c78026e35ca32739f1c77de3e14c37a7f"
+
+[claim]
+attempt = 2
+coordinator = "drill-a"
+id = "lane-a"
+revision = "5eae3f5aab7d9ff316e3ad9068571ad92866bf3a5a382fbacea4b6b10c5435d4"
+
+[handoff]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/decomp-parallel/sessions/01a134dc-6c44-78d1-8168-fc21f3499b55/lane-a-2.toml"
+sha256 = "faa00080ead8fddca5a49b9cba569944e1c5db1b639e76db6b1e84dd30109b63"

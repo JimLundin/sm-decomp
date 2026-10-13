@@ -1,0 +1,504 @@
+schema = "decomp-drill-execution-v1"
+
+[controls.cleanup]
+observations = []
+
+[[controls.cleanup.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/prepare-465419-1791888246311631150.execution.toml"
+sha256 = "62a65255748ac846522d32dc0b0b7e1221b5534beba707a2e6ef107339adbb1a"
+
+[[controls.cleanup.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/register-465419-1791888248120820430.execution.toml"
+sha256 = "c0d31e29c5b69bf99874200f6bb65a28b0b702ba9d6ff35fcee3f1cacedc0d05"
+
+[[controls.cleanup.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/register-465419-1791888249940259430.execution.toml"
+sha256 = "96f487e2a836fb64ffb4617d38db73ac84068bc90dfd98bca542a3b9f35dd075"
+
+[[controls.cleanup.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/transfer-469475-1791888652877672142.execution.toml"
+sha256 = "ced726a79b0a075df50dad3df06b795b70bc3ccd7cb96fd907fc29d7a0a5190b"
+
+[[controls.cleanup.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/transfer-478134-1791890800696001172.execution.toml"
+sha256 = "357f92f243c883d7ef748967b0ebbe30537f9ed9b17e9c6079e801c195d21df8"
+
+[[controls.cleanup.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/integrated-480589-1791891001115562153.execution.toml"
+sha256 = "d247164801d65f436f56a0fdb4d0e484faaff1b42db6adcb69005645680fc449"
+
+[[controls.cleanup.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/integrated-481532-1791891095258616752.execution.toml"
+sha256 = "fc918566a31d15ceaa3cbac5fc86bd5ad741382ee4f2c00e99a7c1decc5af8af"
+
+[[controls.cleanup.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/integrated-exact-retry-482343-1791891179651521531.execution.toml"
+sha256 = "eba7ef59a3b132f75abbbf2028dd474d509634cf3007b532c40a0ea2fa45651b"
+
+[controls.crash-restart]
+observations = []
+
+[[controls.crash-restart.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/resume-469529-1791888681486518070.execution.toml"
+sha256 = "8b53ce06ca0545e20aa1a3585c5a747e9aee892bf5127aaf33bfd00bdc359412"
+
+[[controls.crash-restart.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/resume-475722-1791890656773616137.execution.toml"
+sha256 = "95a7f4e8ed0ae828b1919ec7e0d3dd19d4c5bfc8551925dee8434e9eebcdfd42"
+
+[[controls.crash-restart.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/resume-479270-1791890931471358497.execution.toml"
+sha256 = "025f20ba58aab8bc257774639900207a32df2ff4de85de527ecc44ab4ea5c47b"
+
+[[controls.crash-restart.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/resume-481484-1791891081034531577.execution.toml"
+sha256 = "c6664a1d6c7e484411c38d42476828aa4bb2a747d2ccbfdc23638a01472ec7b2"
+
+[[controls.duplicate-ticket.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/next-drill-b-466545-1791888338687506023.execution.toml"
+sha256 = "1bd8a100f28b4cfa41f56e0385759801cd207a697be34e16d5929375203fcaba"
+
+[[controls.duplicate-ticket.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/ticket-disjoint-next-471704-1791890267872384462.execution.toml"
+sha256 = "dfc43c054d374b8eb14c72ef879c5e8f041159ffb81d2ba7a4c68fee0dc96665"
+
+[[controls.duplicate-ticket.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/ticket-disjoint-next-472180-1791890290681389814.execution.toml"
+sha256 = "c8c27d6cf8aa3f9c9d0962d6ddce082e6ad2c4be9117736ea5284b50efe08849"
+
+[[controls.duplicate-ticket.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/ticket-disjoint-next-473922-1791890590587450545.execution.toml"
+sha256 = "80090a9e91300b543bbff2402bdac725f43f771d3887cff1dc4b561fa7f8ca31"
+
+[[controls.duplicate-ticket.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/ticket-disjoint-next-475214-1791890635044268226.execution.toml"
+sha256 = "1e796cbbcf3f1ad1d72896fe91a48c1fb0497bda3e7118043081a574578a7223"
+
+[[controls.duplicate-ticket.observations]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/scope-ticket-disjoint.toml"
+sha256 = "215a565c391fcb87c9832999e9c7c8aa710e2e93b8567cbb67bef8a4e240c98a"
+
+[[controls.duplicate-ticket.observations]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/ticket-disjoint-holder.toml"
+sha256 = "ae131c04aa172ce1015b69456cdf3aeaee90163ce5e766ecb613b49f77394b6e"
+
+[controls.independent-sessions]
+observations = []
+
+[[controls.independent-sessions.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/next-drill-a-466540-1791888336872662788.execution.toml"
+sha256 = "28a5d536278c184f31d9c5e2670574cf19fcac18a59c5a79b9016e9d5fd35658"
+
+[[controls.independent-sessions.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/next-drill-b-466545-1791888338687506023.execution.toml"
+sha256 = "1bd8a100f28b4cfa41f56e0385759801cd207a697be34e16d5929375203fcaba"
+
+[controls.integration-success]
+observations = []
+
+[[controls.integration-success.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/prepare-465419-1791888246311631150.execution.toml"
+sha256 = "62a65255748ac846522d32dc0b0b7e1221b5534beba707a2e6ef107339adbb1a"
+
+[[controls.integration-success.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/register-465419-1791888248120820430.execution.toml"
+sha256 = "c0d31e29c5b69bf99874200f6bb65a28b0b702ba9d6ff35fcee3f1cacedc0d05"
+
+[[controls.integration-success.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/register-465419-1791888249940259430.execution.toml"
+sha256 = "96f487e2a836fb64ffb4617d38db73ac84068bc90dfd98bca542a3b9f35dd075"
+
+[[controls.integration-success.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/transfer-469475-1791888652877672142.execution.toml"
+sha256 = "ced726a79b0a075df50dad3df06b795b70bc3ccd7cb96fd907fc29d7a0a5190b"
+
+[[controls.integration-success.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/transfer-478134-1791890800696001172.execution.toml"
+sha256 = "357f92f243c883d7ef748967b0ebbe30537f9ed9b17e9c6079e801c195d21df8"
+
+[[controls.integration-success.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/integrated-480589-1791891001115562153.execution.toml"
+sha256 = "d247164801d65f436f56a0fdb4d0e484faaff1b42db6adcb69005645680fc449"
+
+[[controls.integration-success.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/integrated-481532-1791891095258616752.execution.toml"
+sha256 = "fc918566a31d15ceaa3cbac5fc86bd5ad741382ee4f2c00e99a7c1decc5af8af"
+
+[[controls.integration-success.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/integrated-exact-retry-482343-1791891179651521531.execution.toml"
+sha256 = "eba7ef59a3b132f75abbbf2028dd474d509634cf3007b532c40a0ea2fa45651b"
+
+[controls.same-attempt-retry]
+observations = []
+
+[[controls.same-attempt-retry.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/finish-471384-1791890221285982078.execution.toml"
+sha256 = "77a49a1bcd7143c7d5f3a99a800d18853ee959409e5bf9696f383b5f1cb0c67b"
+
+[[controls.same-attempt-retry.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/exact-retry-471522-1791890233427338922.execution.toml"
+sha256 = "0edccf07a1eaaadcc76c7b155f88e2c3ecef54dfd61afc7d616b92a49ab0e637"
+
+[[controls.same-attempt-retry.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/finish-471543-1791890243857763213.execution.toml"
+sha256 = "edfc27f20db7fa38c366df0b60e696dd8665332034380dce6409d360a01a45af"
+
+[[controls.same-attempt-retry.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/exact-retry-471674-1791890254724576961.execution.toml"
+sha256 = "80b1228a578a929318c337f285060ee04dd4afafa0d8133bee60f6865ff968a8"
+
+[controls.shared-capacity]
+observations = []
+
+[[controls.shared-capacity.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/next-drill-b-469324-1791888543046523678.execution.toml"
+sha256 = "f3f1454960057618f5817eb365143bf2a6c438ca1a02ae0e19d6ddd942666997"
+
+[controls.stale-authority]
+observations = []
+
+[[controls.stale-authority.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/next-drill-a-469981-1791888689226663444.execution.toml"
+sha256 = "f8f198d103728457da2f0b2b28b8e2f8c274f2fbfa80fcd18dd4da10fc867e12"
+
+[[controls.stale-authority.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/resume-470022-1791888704521191739.execution.toml"
+sha256 = "4b0f0eccfed7b278785771394524b6c7fa3042531a18388e3e8cc8d20233679e"
+
+[[controls.stale-authority.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/next-drill-integrator-478850-1791890883076135008.execution.toml"
+sha256 = "61bb5e0decf2884554c1aa0d96f4b28f3f6eece43bce89d806ed8d8d27c649e8"
+
+[[controls.stale-authority.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/resume-479063-1791890893199668612.execution.toml"
+sha256 = "7d9846ba1f476a75ee4c050189cd27bdb4833fd1569f174211ce1b23b4ff9273"
+
+[controls.stopped-transfer]
+observations = []
+
+[[controls.stopped-transfer.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/transfer-469475-1791888652877672142.execution.toml"
+sha256 = "ced726a79b0a075df50dad3df06b795b70bc3ccd7cb96fd907fc29d7a0a5190b"
+
+[[controls.stopped-transfer.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/transfer-478134-1791890800696001172.execution.toml"
+sha256 = "357f92f243c883d7ef748967b0ebbe30537f9ed9b17e9c6079e801c195d21df8"
+
+[[controls.surviving-child.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/survival-inspect-469406-1791888611604725397.execution.toml"
+sha256 = "f85d72a00a080af4f2a7ba1f2ca7008a3caf8a1d877230c88d31f30fb7013d05"
+
+[[controls.surviving-child.observations]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/surviving-child.toml"
+sha256 = "6621ef6d9048cdd46b002ea8be00433911317b369a2e197e99231fc70e37fa19"
+
+[controls.writable-overlap]
+observations = []
+
+[[controls.writable-overlap.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/ticket-disjoint-next-471704-1791890267872384462.execution.toml"
+sha256 = "dfc43c054d374b8eb14c72ef879c5e8f041159ffb81d2ba7a4c68fee0dc96665"
+
+[[controls.writable-overlap.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/ticket-disjoint-next-472180-1791890290681389814.execution.toml"
+sha256 = "c8c27d6cf8aa3f9c9d0962d6ddce082e6ad2c4be9117736ea5284b50efe08849"
+
+[[controls.writable-overlap.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/ticket-disjoint-next-473922-1791890590587450545.execution.toml"
+sha256 = "80090a9e91300b543bbff2402bdac725f43f771d3887cff1dc4b561fa7f8ca31"
+
+[[controls.writable-overlap.commands]]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/receipts/ticket-disjoint-next-475214-1791890635044268226.execution.toml"
+sha256 = "1e796cbbcf3f1ad1d72896fe91a48c1fb0497bda3e7118043081a574578a7223"
+
+[frozen_input]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/frozen-input.toml"
+sha256 = "3185d840a10814821d26e90b99784923efec6abe5bd50b7c0fa180a677ef97b7"
+
+[[integrations]]
+
+[integrations.authentication]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/concurrency-drill-final/receipts/integrate-lane-a-1-infrastructure-authentication.toml"
+sha256 = "ac9da2e6796f38aa68a13a67b2c99899f8d961bbdbb2fcbff5427ef67d72129a"
+
+[integrations.cleanup]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/integrate-lane-a-cleanup.toml"
+sha256 = "339d3815807bd4dd5ad6d8155efc4f805e2ba847b65ee33ce8e36bb81eba88f8"
+
+[integrations.result]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/concurrency-drill-final/receipts/integrate-lane-a-1-infrastructure-result.toml"
+sha256 = "f23a4388db4a85ed21670521ec490d19b6d303e133fd6bcd7f1b44ee8348c6ff"
+
+[[integrations]]
+
+[integrations.authentication]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/concurrency-drill-final/receipts/integrate-lane-b-1-infrastructure-authentication.toml"
+sha256 = "3113eef2d450c13403525eae28f09a3bd9c214ef8f731d00bc700168e659af1f"
+
+[integrations.cleanup]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/integrate-lane-b-cleanup.toml"
+sha256 = "1e1fa90e1a411df7452b40bb69fa3352440f7ef1a5f3a9f03460d2a15001fbfe"
+
+[integrations.result]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/concurrency-drill-final/receipts/integrate-lane-b-1-infrastructure-result.toml"
+sha256 = "7d4ef059c63b76f175b45c6b49b1802ff15b531237c8c64f044ad09d5dbd916e"
+
+[isolated_bridge]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/bridge.toml"
+sha256 = "42b981fe2a30ca6aa7a1c044b10c2987aedc3861e8e62ccdc0edc6d454f6fad2"
+
+[[sessions]]
+
+[sessions.launch]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/a-launch-1791888223.toml"
+sha256 = "49d3063499c6b3184618b597ec523023c5d1bb9c5c0d1fb50f73009a26ee8c69"
+
+[sessions.log]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/a-1791888222.jsonl"
+sha256 = "73684c0bfd04f9917efd4f74852adfda84a73dacd22f62632232c919c3fff4a1"
+
+[sessions.stderr]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/a-1791888222.stderr"
+sha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+[[sessions]]
+
+[sessions.launch]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/a-launch-1791888317.toml"
+sha256 = "860d62902492f10dee77ede87d3c034e02095ca8743043e2e2bccb079e5b4c0a"
+
+[sessions.log]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/a-1791888316.jsonl"
+sha256 = "4daaca0c1516714ef3616c67609952d8092be70c0115d467ecc7e48ce9785099"
+
+[sessions.stderr]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/a-1791888316.stderr"
+sha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+[[sessions]]
+
+[sessions.launch]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/a-launch-1791888518.toml"
+sha256 = "46f7e027db3aab6417e5b4ad4835a4cb5f4f3179bfbfe31361d56558cefbe6a1"
+
+[sessions.log]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/a-1791888518.jsonl"
+sha256 = "2f6034d02283608be2567c0829bde707356887e65a3cd2a8c9f6d3cc67b7f437"
+
+[sessions.stderr]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/a-1791888518.stderr"
+sha256 = "3141acc38bc2e537b5cdbd883d96d942771587739ab7819f5f2d0f9462327ce1"
+
+[[sessions]]
+
+[sessions.launch]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/a-launch-1791888683.toml"
+sha256 = "f9392b15c5912a10ce965ff7b26d980c4e17fdd3411bf686a5c92ba63149b3d5"
+
+[sessions.log]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/a-1791888683.jsonl"
+sha256 = "bdaf724354d4c3d36a6efa40d50c90e0d0b88b46575d32da6e5c7c605f8f990c"
+
+[sessions.stderr]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/a-1791888683.stderr"
+sha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+[[sessions]]
+
+[sessions.launch]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/a-launch-1791888854.toml"
+sha256 = "95d0b9f9706247f424a2a1e582edee13f7be0c2732456af758d8298690d63752"
+
+[sessions.log]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/a-1791888853.jsonl"
+sha256 = "83bb836d0e154e4e6f0f0af9425da9d9198c6f4460341836593b425d30028125"
+
+[sessions.stderr]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/a-1791888853.stderr"
+sha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+[[sessions]]
+
+[sessions.launch]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/a-launch-1791890273.toml"
+sha256 = "d25b584ab5cbc56edfa0bdd3eb5acff19005c45441a1621615f053881c81cc0c"
+
+[sessions.log]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/a-1791890273.jsonl"
+sha256 = "3263a212f6823e6bc81053092c910dc83483c2c883ee181ca47bda9b7fab77a5"
+
+[sessions.stderr]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/a-1791890273.stderr"
+sha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+[[sessions]]
+
+[sessions.launch]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/a-launch-1791890629.toml"
+sha256 = "9445d75607bdfb2a9efe318edb647a01be33904136a58629060a5469563d35e7"
+
+[sessions.log]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/a-1791890628.jsonl"
+sha256 = "b2871215b98b2fa2a3c72ad332aa81af57a48f2956b2f9bb38c7b5cfd640f6fb"
+
+[sessions.stderr]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/a-1791890628.stderr"
+sha256 = "141ac89711c64af2d9161dfdc71e758329dc5cff11cf4cd863b0a28d19f6845f"
+
+[[sessions]]
+
+[sessions.launch]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/a-launch-1791890876.toml"
+sha256 = "7fa24f1c5cd527c1509f2581d6de2fb57ae27e4c15f4ae9b1320c9916abee376"
+
+[sessions.log]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/a-1791890875.jsonl"
+sha256 = "33e610a83c953fa12ed108bccb3fcb54ba1f32ba540c22ac14cd16b6fef79ca1"
+
+[sessions.stderr]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/a-1791890875.stderr"
+sha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+[[sessions]]
+
+[sessions.launch]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/b-launch-1791888223.toml"
+sha256 = "5402dc079616011e27194e2912489f269c963f930df3f5980edd5ac3b7f40222"
+
+[sessions.log]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/b-1791888222.jsonl"
+sha256 = "413de4436cd72311078a32c936e124d9feac25d10fd11f8f87fb145a17f80e4e"
+
+[sessions.stderr]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/b-1791888222.stderr"
+sha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+[[sessions]]
+
+[sessions.launch]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/b-launch-1791888317.toml"
+sha256 = "b3e07a706518f0c9c88b7a739e1f5a4a3d819ebe2e764fd71c4f0efc00890339"
+
+[sessions.log]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/b-1791888316.jsonl"
+sha256 = "3268ac3d9d956ecb640397248be29ef31020328fe2354f92e3dde7a95f2ad3db"
+
+[sessions.stderr]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/b-1791888316.stderr"
+sha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+[[sessions]]
+
+[sessions.launch]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/b-launch-1791888501.toml"
+sha256 = "b44473804b2dd2e3633c419d34ea84d9eb13e37a83787c77cb821504ff726180"
+
+[sessions.log]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/b-1791888500.jsonl"
+sha256 = "d69fa5ab032a811314f9f32c46d9cfb155c14a5ae6ca8008c4ee8dc39c9d06fa"
+
+[sessions.stderr]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/b-1791888500.stderr"
+sha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+[[sessions]]
+
+[sessions.launch]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/b-launch-1791890356.toml"
+sha256 = "bb945d6d7c2c7aba3cb2e2d4ab6cd36b3714acda4f287af9fe34aebe6284183c"
+
+[sessions.log]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/b-1791890355.jsonl"
+sha256 = "3f3b4cc8c496beeb5776cfb9d4f9ee3ec840dded50141b4b27c811292c67be93"
+
+[sessions.stderr]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/b-1791890355.stderr"
+sha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+[[sessions]]
+
+[sessions.launch]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/b-launch-1791890785.toml"
+sha256 = "6e94147c27603862dc242fd24fb729dc34e0ad736a79201d8a2c6ac5a3eadcc3"
+
+[sessions.log]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/b-1791890784.jsonl"
+sha256 = "a0c5f7f19542123b342a6e27e30562a3f7d523949106db82e4d920dd4baac2fa"
+
+[sessions.stderr]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/b-1791890784.stderr"
+sha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+[[sessions]]
+
+[sessions.launch]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/b-launch-1791891172.toml"
+sha256 = "d535e6e930a21b70c8d9ae5a5b385d5b702ae671bc174912c4cc4b44424c9bfa"
+
+[sessions.log]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/b-1791891172.jsonl"
+sha256 = "654a007414a3a3bd5f577af4d1f50678d06555d934e0d2b6833a30d78be7a99d"
+
+[sessions.stderr]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/b-1791891172.stderr"
+sha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+[[sessions]]
+
+[sessions.launch]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/integration-worker-launch-1791890318.toml"
+sha256 = "aca1472a704160b6bfcacf7573551641a7952bed1cfb3ffe0f2ffe0ab5514fba"
+
+[sessions.log]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/integration-worker-1791890318.jsonl"
+sha256 = "a204c8c1c3b051da9b3f33dc8a10993b274b2a14f561646ee2abb0e7f113cc46"
+
+[sessions.stderr]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/integration-worker-1791890318.stderr"
+sha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+[[sessions]]
+
+[sessions.launch]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/worker-a-launch-1791888339.toml"
+sha256 = "0408da9249e764eb1920f2f872139012260a971f7e693f7da34f181ef71b42f5"
+
+[sessions.log]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/worker-a-1791888338.jsonl"
+sha256 = "c3ae9b1734246bb7d0a7b47175df00bda2160ef1e753072f92df654978a8838d"
+
+[sessions.stderr]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/worker-a-1791888338.stderr"
+sha256 = "618d6427198a0e3b8295b1b3eff8433be6ae2ac217e9e4337f05b9fd2f75643a"
+
+[[sessions]]
+
+[sessions.launch]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/worker-a-replacement-launch-1791888745.toml"
+sha256 = "b5a7552477df09763ec85b337cf410f247677cc84877f4e3e89d7991702e5844"
+
+[sessions.log]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/worker-a-replacement-1791888745.jsonl"
+sha256 = "ea18d925057dd6af095285e59bf207037ecadd6af301612cce9bfdde34d6b847"
+
+[sessions.stderr]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/worker-a-replacement-1791888745.stderr"
+sha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+[[sessions]]
+
+[sessions.launch]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/worker-b-launch-1791888342.toml"
+sha256 = "b2cea942ff1614abf2d0042d6d72842007690aecb266f72424054907cef1c755"
+
+[sessions.log]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/worker-b-1791888341.jsonl"
+sha256 = "af000d87a1b1530318651a9fd9b7594bba6378d4da2af20996cc1afe26e97295"
+
+[sessions.stderr]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/sessions/worker-b-1791888341.stderr"
+sha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+[worker_budget]
+path = "/tmp/sm-decomp-concurrency-drill-final-20261013/.scratch/drill-control/worker-budget.toml"
+sha256 = "b137c6b110cec90c183b376dc9aab4730d19ce8be8a6f6d6d57840b00b408102"

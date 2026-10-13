@@ -1,0 +1,14 @@
+schema = "decomp-drill-request-helper-build-v1"
+source_path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-final/evidence-tools-v2/src/main.rs"
+source_sha256 = "98452b6e283dd3236b480114c23f98ed89c5a64066a483ed609e019feaf6585e"
+source_snapshot = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/final-helper-provenance/source/main.rs"
+binary_path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/final-helper-provenance/bin/decomp-drill-evidence"
+binary_sha256 = "914133c2ede422b5969b3fe79a1b6818762a2495701236456b5c5aaace62fb9c"
+binary_bytes = 23345064
+compiler = "rustc 1.101.0-nightly (c1070d693 2026-09-28)"
+build_argv = ["cargo", "build", "--locked", "--offline", "--manifest-path", ".scratch/decomp-parallel/drill-final/evidence-tools-v2/Cargo.toml", "--target-dir", "/tmp/sm-decomp-preparation-helper-provenance-target-20261013"]
+build_exit_code = 0
+build_elapsed_seconds = 8.42
+original_build_target = "/tmp/sm-decomp-drill-final-evidence-v2-build"
+rebuild_binary_matches_original = true
+limitations = ["Local source/compiler/hash provenance; no platform attestation", "Retains the exact helper used in actual session requests; independent locked/offline rebuild produced identical executable bytes", "Original harness and frozen-input remain unchanged; versioned helper corrects typed Start request metadata and recovers the published handoff pointer"]

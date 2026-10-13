@@ -1,0 +1,8 @@
+schema = "decomp-readiness-successor-v1"
+previous_owner_thread = "01a134cd-dafb-7e50-8284-f285a905e05b"
+current_owner_thread = "01a13500-1ef8-73d3-9a0d-3446b6050eba"
+production_generation_preexisting = false
+predecessor_immutable = true
+[predecessor]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-final/artifacts.sha256"
+sha256 = "95aade447633122ad0b5e8b721887430fc3ab1dd43c1e7aebc94fb5221b884b5"

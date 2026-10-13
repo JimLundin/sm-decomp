@@ -1,0 +1,20 @@
+schema = "decomp-readiness-helper-build-v1"
+compiler = "rustc 1.101.0-nightly (c1070d693 2026-09-28)"
+source_path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-recovery-20261013/main.rs"
+source_sha256 = "1692855f219ed2cd3a2b283f9555c50b48bb8f56557373b17bb273fc8fa949b3"
+manifest_path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-recovery-20261013/Cargo.toml"
+manifest_sha256 = "1e4524a1b1f2cd6a3346eb527b2ac68011bc2c9afedbf0eaabd02fc5696083f7"
+lock_path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-recovery-20261013/Cargo.lock"
+lock_sha256 = "dfa74425b81b8ec77a73c4c60e2f388ded5cd4b6cba71fb5ce02cc054fe4d6b7"
+binary_path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-recovery-20261013/bin/decomp-readiness"
+binary_sha256 = "ef83a6405f647d8ec73ea82e5e6cd1d353bca4e3a3492e767a468cc0bab299a2"
+binary_bytes = 6738864
+build_argv = ["cargo", "build", "--locked", "--offline", "--manifest-path", "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-recovery-20261013/Cargo.toml", "--target-dir", "/tmp/sm-readiness-recovery-20261013-target"]
+process_inspector_source_path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-recovery-20261013/process-inspect.rs"
+process_inspector_source_sha256 = "430d34bb94ab62af4febe431a2f76b0ed1180936482bd27fe4925a1968857510"
+process_inspector_binary_sha256 = "47f5203f61ebe7e2c31a5c16018408bcc1f4ed4a679d51654835c7b4c228759a"
+process_inspector_binary_bytes = 5822584
+prospective_subject = "/tmp/sm-decomp-preparation-final-source-20261013"
+actual_caller_required = "01a13500-1ef8-73d3-9a0d-3446b6050eba"
+limitations = ["local compiler/source/hash provenance; no platform attestation", "source changes only bind current caller and successor output; frozen production engine/validator unchanged", "compiled helper has not run actual production readiness", "helper binary retained outside disposable target until root validation; remove after successful cleanup if no longer required as a reader"]
+

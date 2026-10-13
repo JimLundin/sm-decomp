@@ -1,0 +1,48 @@
+--- .scratch/decomp-parallel/drill-final/evidence-tools/src/main.rs	2026-10-13 12:39:21.268812846 +0200
++++ .scratch/decomp-parallel/drill-final/evidence-tools-v2/src/main.rs	2026-10-13 13:23:29.256618118 +0200
+@@ -135,6 +135,36 @@
+     result.sort_by(|a, b| a.1["observed_at"].as_str().cmp(&b.1["observed_at"].as_str()).then(a.0.cmp(&b.0)));
+     Ok(result)
+ }
++fn start_request(claim: &str) -> Result<J> {
++    let mut requests = fs::read_dir(state().join("receipts"))?
++        .filter_map(|entry| entry.ok()).map(|entry| entry.path())
++        .filter(|path| path.file_name().is_some_and(|name| name.to_string_lossy().starts_with("start-"))
++            && path.file_name().is_some_and(|name| name.to_string_lossy().ends_with(".request.toml")))
++        .collect::<Vec<_>>();
++    requests.sort();
++    let mut req = requests.iter().rev().find_map(|path| {
++        let value = read(path).ok()?;
++        (value["handoff"]["claim"]["id"] == claim).then_some(value)
++    }).context("exact original integration Start request missing")?;
++    let ledger = read(&Path::new(ROOT).join(".scratch/concurrency-drill-final/ledger.toml"))?;
++    let id = req["handoff"]["job"]["inputs"]["submission-id"].as_str().context("submission id missing")?;
++    req["handoff"]["submitted_commit"] = ledger["jobs"][id]["result"]["commit"].clone();
++    ensure!(req["handoff"]["submitted_commit"].as_str().is_some_and(|commit| commit.len() == 40), "full submitted commit required");
++    req["queue"]["authority"]["session_id"] = json!(identity()?);
++    let path = state().join(format!("{claim}-corrected-start.request.toml"));
++    ensure!(!path.exists(), "corrected Start request already sealed");
++    write(&path, &req)?;
++    Ok(json!({"request":seal(&path)?}))
++}
++fn remember(claim: &str) -> Result<J> {
++    let mut receipts = commands()?.into_iter().filter(|(_, receipt, request, _)| {
++        receipt["exit_code"] == 0 && request["operation"] == "start" && request["handoff"]["claim"]["id"] == claim
++    }).collect::<Vec<_>>();
++    receipts.sort_by_key(|(_, receipt, _, _)| receipt["observed_at"].as_str().unwrap_or("").to_owned());
++    let (_, _, _, result) = receipts.last().context("successful corrected Start missing")?;
++    write(&state().join(format!("handoff-{claim}.toml")), result)?;
++    Ok(result.clone())
++}
+ fn manifest() -> Result<J> {
+     let mut sessions = Vec::new();
+     for entry in fs::read_dir(state())? {
+@@ -316,6 +346,8 @@
+         Some("pure-next") => pure_next(&args[2], args[3].parse()?, args.get(4).is_some())?,
+         Some("manifest") => manifest()?,
+         Some("authenticate") => authenticate()?,
++        Some("start-request") => start_request(&args[2])?,
++        Some("remember") => remember(&args[2])?,
+         _ => anyhow::bail!("usage: prepare-ticket | pure-next TOKEN GENERATION | manifest"),
+     };
+     println!("{}", toml::to_string_pretty(&toml::Value::try_from(value)?)?);

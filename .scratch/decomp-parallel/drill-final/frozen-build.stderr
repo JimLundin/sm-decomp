@@ -1,0 +1,5 @@
+   Compiling pipeline-model v0.1.0 (/tmp/sm-decomp-preparation-final-source-20261013/crates/pipeline-model)
+   Compiling movie v0.1.0 (/tmp/sm-decomp-preparation-final-source-20261013/crates/movie)
+   Compiling evidence v0.1.0 (/tmp/sm-decomp-preparation-final-source-20261013/crates/evidence)
+   Compiling pipeline v0.1.0 (/tmp/sm-decomp-preparation-final-source-20261013/crates/pipeline)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 45.57s
