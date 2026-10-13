@@ -2847,6 +2847,12 @@ fn authenticate_publication_inner(
     let (_, migration, _) = managed_migration(installed)?;
     let _lock = assignment::mutation_lock(&migration.checkout)?;
     current_role(&migration)?;
+    ensure!(
+        publication.accepted.path
+            == publication_root(&migration, &installed.policy, completion.attempt)?.join("accepted.json"),
+        "managed retained acceptance belongs to another publication root"
+    );
+    retention::authenticate_reference(&publication.accepted, MAX_BYTES)?;
     let accepted: AcceptedAdmission = object(&publication.accepted.path)?;
     ensure!(
         accepted.completion == *completion
@@ -2872,11 +2878,32 @@ fn resume_publication_inner(
     let (_, migration, _) = managed_migration(installed)?;
     let _lock = assignment::mutation_lock(&migration.checkout)?;
     current_role(&migration)?;
-    let accepted: AcceptedAdmission = object(&publication.accepted.path)?;
+    ensure!(
+        publication.accepted.path
+            == publication_root(&migration, &installed.policy, completion.attempt)?.join("accepted.json"),
+        "managed retained acceptance belongs to another publication root"
+    );
+    // A lost rename can leave the original accepted bytes at the pending name.
+    // Bind those actual bytes to the retained publication before interpreting
+    // them; neither a changed record nor an absent acceptance authorizes repair.
+    let reference = match publication.accepted.path.symlink_metadata() {
+        Ok(_) => publication.accepted.clone(),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            Reference { path: publication.accepted.path.with_extension("pending"), ..publication.accepted.clone() }
+        }
+        Err(error) => return Err(error.into()),
+    };
+    retention::authenticate_reference(&reference, MAX_BYTES)?;
+    let accepted: AcceptedAdmission = json_record(&reference.path)?;
     ensure!(
         accepted.completion == *completion
             && publication_value(&publication.accepted.path, &accepted, &installed.policy)? == *publication,
         "managed retained publication retry differs"
+    );
+    authenticate_accepted(installed, &migration, &accepted, false)?;
+    ensure!(
+        write(&publication.accepted.path, &accepted)? == publication.accepted,
+        "managed accepted pending promotion changed retained identity"
     );
     repair_accepted(installed, &migration, &accepted)?;
     authenticate_accepted(installed, &migration, &accepted, true)

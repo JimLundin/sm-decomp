@@ -2410,3 +2410,7 @@ pub(crate) fn cli(args: &[String]) -> Result<()> {
 #[cfg(test)]
 #[path = "translation_execution_tests.rs"]
 pub(crate) mod tests;
+
+#[cfg(test)]
+#[path = "translation_managed_tests.rs"]
+mod managed_tests;
