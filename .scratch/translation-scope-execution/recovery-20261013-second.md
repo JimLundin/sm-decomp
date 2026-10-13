@@ -75,6 +75,43 @@ Next action: observe the proof09 result, preserve concrete failures, finish only
 affected verification, both final cleanup passes, measured disposal and retained
 authentication, then checkpoint exact source/docs/tickets/compact receipts.
 
+### Original queue correction and current proof10
+
+Source checkpoint `bcf3de30865e117bfa520e481df6a6b5a718490d` retains exact pending
+recovery and the locked/offline managed fixture. Proof09 passed all four actual-C
+gates and retired producer checkouts, but retained `Publishing` without an
+accepted result. Its finalization retained 27,249,762 bytes and reclaimed
+7,666,307 checkout bytes. Original host source/queue remained unchanged.
+
+The new ignored read-only test
+`translation_migration::tests::retained_managed_intent_and_controller_projection_authenticate_without_mutation`
+isolated the real refusal in 7.71 seconds: `managed queue schema or integration
+owner changed`. A legacy Running implementation can have no integration owner
+before the normal Submitted transition sets it. The production check now retains
+that exact absence while Running, accepts only the current fenced owner after
+submission, and rejects missing/foreign or prematurely changed owners. The same
+unchanged retained09 graph passes the correction and foreign-owner refusal in
+7.93 seconds; red/green logs are
+`verification/managed-publication-diagnostic-09{,-green}.{stdout,stderr}.log`.
+
+Build12 passed. One necessary fresh complete proof of this corrected source is
+running at `managed-gates/actual-c-managed-10`, with
+`verification/managed-native-proof-10.{stdout,stderr}.log`. Its command is the
+same exact managed test above, replacing only the proof root with10. The test
+records loop and recovery time separately and derives gate producer/reuse counts
+from authenticated receipts. Root owns the current production check and test
+source. Original09 and08 Installation/readers and diagnostics remain immutable.
+
+After observing proof10, finish affected migration/progress/Clippy checks,
+scoped cleanup and measured disposal. The task-specific Rust retirement helper
+is `/tmp/sm-translation-retirement{.rs,}`; it has a closed list of disposable
+targets, authenticates retained controller readers, rejects process references
+and path aliases, and measures logical/allocated/reclaimable bytes. Run `plan`
+before `apply`, retain compact receipts, then retire the helper itself. Do not
+delete `/tmp/sm-complete-supervisor-976030-0`'s sealed state, source or referenced
+installed tools, and do not delete any managed Installation/readers/private
+source graph. Production activation remains outside this completion.
+
 ## Recovered checkpoint and current next action
 
 The latest root continuation retained the existing `/root/bounded_git`,

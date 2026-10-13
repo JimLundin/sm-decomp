@@ -2022,11 +2022,21 @@ fn check_intent_queue(
 ) -> Result<()> {
     let original_ledger: LedgerView = object(&intent.original_ledger.path)?;
     ensure!(ledger.capacity == original_ledger.capacity, "managed queue capacity changed");
-    ensure!(
-        ledger.schema == original_ledger.schema && ledger.integration_owner.as_deref() == Some(&migration.coordinator),
-        "managed queue schema or integration owner changed"
-    );
+    ensure!(ledger.schema == original_ledger.schema, "managed queue schema changed");
     let original = ledger.jobs.get(&intent.original.claim.id).context("managed original current claim missing")?;
+    // A legacy Running implementation can precede the first normal Submitted
+    // transition that installs the integrator. Keep that absence exact until
+    // submission; an existing or subsequently installed owner must be current.
+    let owner_matches = match (original_ledger.integration_owner.as_deref(), ledger.integration_owner.as_deref()) {
+        (Some(frozen), Some(current)) => frozen == migration.coordinator && current == frozen,
+        (None, None) => original.state == assignment::State::Running,
+        (None, Some(current)) => {
+            current == migration.coordinator
+                && matches!(original.state, assignment::State::Submitted | assignment::State::Complete)
+        }
+        _ => false,
+    };
+    ensure!(owner_matches, "managed queue integration owner changed outside the original submission transition");
     let frozen =
         original_ledger.jobs.get(&intent.original.claim.id).context("managed original snapshot entry missing")?;
     ensure!(
@@ -2928,6 +2938,40 @@ mod tests {
     };
 
     static NEXT: AtomicU64 = AtomicU64::new(0);
+
+    #[test]
+    #[ignore = "read-only diagnosis of a retained managed publication intent; no source or queue mutation"]
+    fn retained_managed_intent_and_controller_projection_authenticate_without_mutation() -> Result<()> {
+        let root = PathBuf::from(std::env::var("SM_MANAGED_NATIVE_PROOF_ROOT")?);
+        let installed: supervisor::Installation = object(&root.join("installation.json"))?;
+        let run_id = sha256(format!("translation-execution-run-v1:{}", sealed(&installed.policy)?));
+        let completion: Completion =
+            object(&installed.state_root.join(run_id).join("attempt-0001/publication/completion.json"))?;
+        let before = supervisor::tests::records(&installed.integration_repository)?;
+        let result = crate::inputs::bounded::limited(|| {
+            let authenticated = supervisor::authenticate_managed_completion(&installed, &completion)
+                .context("retained completion authentication")?;
+            let (_, migration, _) = managed_migration(&installed)?;
+            let root = publication_root(&migration, &installed.policy, completion.attempt)?;
+            let intent: AdmissionIntent = object(&root.join("intent.json"))?;
+            authenticate_intent(&installed, &migration, &intent, &authenticated)
+                .context("retained original publication intent")?;
+            controller_projection(&installed, &migration, &intent, None)
+                .context("retained controller projection before source mutation")?;
+            let mut foreign = current_ledger(&migration)?;
+            foreign.integration_owner = Some("foreign-integrator".into());
+            ensure!(
+                check_intent_queue(&installed, &migration, &intent, &foreign).is_err(),
+                "managed projection admitted a foreign integration owner"
+            );
+            Ok(())
+        });
+        ensure!(
+            supervisor::tests::records(&installed.integration_repository)? == before,
+            "read-only managed intent diagnosis mutated its host"
+        );
+        result
+    }
 
     struct Fixture {
         root: PathBuf,

@@ -602,6 +602,7 @@ fn run_managed_proof(root: &Path) -> Result<()> {
     let started = Instant::now();
     let mut supervisor = project.open()?;
     let completed = supervisor.run_with_rewrite(|adapter, context, capsule| adapter.rewrite(context, capsule, None))?;
+    let loop_elapsed_seconds = started.elapsed().as_secs_f64();
     write_once(&root.join("first-view.json"), &completed)?;
     let State::Complete { completion, publication } = &completed.state else {
         bail!("managed diagnostic did not complete: {:?}", completed.state);
@@ -619,6 +620,8 @@ fn run_managed_proof(root: &Path) -> Result<()> {
     );
     let authenticated = authenticate_managed_completion(&project.installation, completion)?;
     ensure!(authenticated.native_gates.len() == 4, "managed actual-C receipts missing");
+    let mut gate_producers = BTreeSet::new();
+    let mut gate_producer_references = 0;
     for gate in &authenticated.native_gates {
         ensure!(
             gate.verdict.verified_routines == 2
@@ -628,6 +631,10 @@ fn run_managed_proof(root: &Path) -> Result<()> {
                 && !gate.verdict.live_exercised,
             "managed diagnostic fixture domain differs"
         );
+        for operation in &gate.receipt.operations {
+            gate_producer_references += 1;
+            gate_producers.insert(operation.context.operation_key.clone());
+        }
     }
     let host_head = git(&project.host, &["rev-parse", "HEAD"])?;
     ensure!(
@@ -781,7 +788,10 @@ fn run_managed_proof(root: &Path) -> Result<()> {
             "schema": "translation-managed-native-diagnostic-proof-v1", "installation": root.join("installation.json"),
             "completion": root.join("completion.json"), "original_claim": root.join("original-claim.json"),
             "elapsed_seconds": started.elapsed().as_secs_f64(), "gates": completion.gates.len(),
+            "loop_elapsed_seconds": loop_elapsed_seconds,
             "fixture_pairs_per_gate": 2, "routines": 2, "operation_receipts": operations,
+            "unique_gate_producers": gate_producers.len(), "gate_producer_references": gate_producer_references,
+            "reused_gate_references": gate_producer_references - gate_producers.len(),
             "run_logical_bytes": logical_bytes, "retained_finalization_bytes": completion.finalization.retained_bytes,
             "retained_publication_bytes": publication.retained_bytes,
             "reclaimed_checkout_bytes": completion.finalization.reclaimed_bytes,
