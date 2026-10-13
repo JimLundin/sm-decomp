@@ -3,7 +3,7 @@
 Status: claimed
 Blocked by: 01
 Triage: ready-for-agent
-Owner: /root/loop_authority
+Owner: /root (recovered supervisor integration)
 
 Own the Translation scope execution module's durable state, immutable identity,
 intent/result publication and small trusted supervisor surface. Resolve policy

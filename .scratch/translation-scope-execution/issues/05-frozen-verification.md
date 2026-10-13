@@ -1,8 +1,9 @@
 # Prepare frozen source and prescribed verification adapters
 
-Status: open
+Status: claimed
 Blocked by: 02, 04
 Triage: ready-for-agent
+Owner: /root with /root/bounded_git
 
 Own native/infrastructure preparation, registered verification/coverage contracts,
 declared dependency input identity and authenticatable reuse. Freeze all gate

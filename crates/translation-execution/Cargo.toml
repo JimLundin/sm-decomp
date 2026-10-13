@@ -17,3 +17,7 @@ libc = "0.2"
 [[bin]]
 name = "sm-translation-sandbox"
 path = "src/bin/sandbox_helper.rs"
+
+[[bin]]
+name = "sm-translation-recorded-rewrite"
+path = "src/bin/recorded_rewrite.rs"

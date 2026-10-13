@@ -81,6 +81,14 @@ struct Observed {
     incomplete_cleanup: bool,
     interrupted_finalization: bool,
     retained_tampered: bool,
+    tampered_finalization: Option<String>,
+    authenticated_finalizations: BTreeMap<String, usize>,
+    projected_journal_bytes: u64,
+    finalization_inputs: Vec<(OperationContext, FinalizationRequest)>,
+    finalization_projection: Option<(OperationContext, FinalizationRequest, Finalization, u64)>,
+    interrupt_finalization_once: bool,
+    interrupt_publication_once: bool,
+    publication_projection: Option<(OperationContext, Completion, Publication, u64)>,
 }
 #[derive(Clone)]
 struct Adapter(Arc<Mutex<Observed>>);
@@ -164,6 +172,17 @@ impl ExecutionAdapter for Adapter {
         }
         Ok(outcome)
     }
+    fn authenticate_gate(
+        &self,
+        _: &FrozenPolicy,
+        _: &SourceSnapshot,
+        _: VerificationStage,
+        outcome: &GateOutcome,
+    ) -> Result<()> {
+        let observed = self.0.lock().unwrap();
+        ensure!(observed.produced.get(&outcome.seal.operation_key) == Some(outcome), "retained gate changed");
+        Ok(())
+    }
     fn integrate(
         &mut self,
         _: &OperationContext,
@@ -181,30 +200,69 @@ impl ExecutionAdapter for Adapter {
         ctx: &OperationContext,
         _: &FrozenPolicy,
         request: &FinalizationRequest,
+        journal: &FinalizationJournal<'_>,
     ) -> Result<Finalization> {
         self.call("finalize");
         let mut observed = self.0.lock().unwrap();
+        observed.finalization_inputs.push((ctx.clone(), request.clone()));
         observed.interrupted_finalization = request.interrupted_operation.is_some();
         ensure!(!observed.incomplete_cleanup, "selected cleanup pending");
         let source = request.source.as_ref().map(|source| source.sha256.as_str()).unwrap_or(&ctx.policy_sha256);
-        Ok(Finalization {
+        let finalization = Finalization {
             seal: seal(ctx, source),
             cleanup_complete: true,
             retained_authenticatable: true,
             worker_retired: true,
             retained_bytes: 128,
             reclaimed_bytes: 1024,
-        })
+        };
+        ensure!(
+            journal.additional_bytes(&finalization)? <= journal.max_additional_bytes()?,
+            "actual finalization event exceeded its reserved maximum decimal widths"
+        );
+        observed.finalization_projection =
+            Some((ctx.clone(), request.clone(), finalization.clone(), journal.additional_bytes(&finalization)?));
+        if observed.interrupt_finalization_once {
+            observed.interrupt_finalization_once = false;
+            return Err(ExecutionPending { reason: "lost response after retained finalization".into() }.into());
+        }
+        Ok(finalization)
     }
-    fn publish(&mut self, ctx: &OperationContext, _: &FrozenPolicy, completion: &Completion) -> Result<Publication> {
+    fn publish(
+        &mut self,
+        ctx: &OperationContext,
+        _: &FrozenPolicy,
+        completion: &Completion,
+        journal: &PublicationJournal<'_>,
+    ) -> Result<Publication> {
         self.call("publish");
-        Ok(Publication {
+        let publication = Publication {
             seal: seal(ctx, &completion.integrated.sha256),
             observation_ids: vec![format!("{}-integrated", ctx.operation_key)],
-        })
+            retained_bytes: 64,
+        };
+        let mut observed = self.0.lock().unwrap();
+        let bytes = journal.retained_bytes(&publication)?;
+        observed.projected_journal_bytes = bytes;
+        observed.publication_projection = Some((ctx.clone(), completion.clone(), publication.clone(), bytes));
+        if observed.interrupt_publication_once {
+            observed.interrupt_publication_once = false;
+            return Err(ExecutionPending { reason: "lost response after sealed publication".into() }.into());
+        }
+        Ok(publication)
     }
-    fn authenticate(&self, _: &FrozenPolicy, _: &FinalizationRequest, _: &Finalization) -> Result<()> {
-        ensure!(!self.0.lock().unwrap().retained_tampered, "retained evidence changed");
+    fn authenticate(&self, _: &FrozenPolicy, _: &FinalizationRequest, finalization: &Finalization) -> Result<()> {
+        let mut observed = self.0.lock().unwrap();
+        *observed.authenticated_finalizations.entry(finalization.seal.operation_key.clone()).or_default() += 1;
+        ensure!(
+            !observed.retained_tampered
+                && observed.tampered_finalization.as_ref() != Some(&finalization.seal.operation_key),
+            "retained evidence changed"
+        );
+        Ok(())
+    }
+    fn authenticate_publication(&self, _: &FrozenPolicy, _: &Completion, _: &Publication) -> Result<()> {
+        ensure!(!self.0.lock().unwrap().retained_tampered, "retained publication changed");
         Ok(())
     }
 }
@@ -233,12 +291,166 @@ fn successful_submission_and_lost_response_are_one_evaluation() {
     assert!(matches!(run.submit(edits.clone()).unwrap().state, State::Complete { .. }));
     assert_eq!(adapter.count("verify"), 2);
     assert_eq!(adapter.count("apply"), 1);
+    let journal_bytes = fs::read_dir(&project.0)
+        .unwrap()
+        .map(|entry| entry.unwrap().metadata().unwrap())
+        .filter(|metadata| metadata.is_file())
+        .map(|metadata| metadata.len())
+        .sum::<u64>();
+    assert_eq!(
+        adapter.0.lock().unwrap().projected_journal_bytes,
+        journal_bytes,
+        "publication must reserve the exact eventual terminal journal extent"
+    );
     drop(run);
     let mut resumed = supervisor(&project.0, adapter.clone());
     assert!(matches!(resumed.submit(edits).unwrap().state, State::Complete { .. }));
     assert!(matches!(resumed.advance().unwrap().state, State::Complete { .. }));
     assert_eq!(adapter.count("verify"), 2);
     assert_eq!(adapter.count("publish"), 1);
+}
+
+#[test]
+fn publication_extent_recovers_lost_terminal_and_rejects_completed_journal_tamper() {
+    let project = Project::new();
+    let adapter = Adapter::new();
+    adapter.0.lock().unwrap().interrupt_publication_once = true;
+    let mut run = supervisor(&project.0, adapter.clone());
+    let view = run.advance().unwrap();
+    assert_eq!(run.submit(replacement(&view, "new")).unwrap().state, State::Publishing);
+    let (context, completion, publication, projected_bytes) =
+        adapter.0.lock().unwrap().publication_projection.clone().unwrap();
+    let before: BTreeMap<_, _> = fs::read_dir(&project.0)
+        .unwrap()
+        .map(|entry| {
+            let entry = entry.unwrap();
+            (entry.file_name(), fs::read(entry.path()).unwrap())
+        })
+        .collect();
+    assert_eq!(
+        authenticate_publication_extent(&project.0, &policy(), &context, &completion, &publication).unwrap(),
+        projected_bytes
+    );
+    let after: BTreeMap<_, _> = fs::read_dir(&project.0)
+        .unwrap()
+        .map(|entry| {
+            let entry = entry.unwrap();
+            (entry.file_name(), fs::read(entry.path()).unwrap())
+        })
+        .collect();
+    assert_eq!(after, before, "missing terminal authentication must allocate no replacement result or journal event");
+    let mut wrong_completion = completion.clone();
+    wrong_completion.integrated.commit = "c".repeat(40);
+    assert!(authenticate_publication_extent(&project.0, &policy(), &context, &wrong_completion, &publication).is_err());
+    drop(run);
+    let mut run = supervisor(&project.0, adapter.clone());
+    assert!(matches!(
+        run.cancel("operator cancellation during publication recovery").unwrap().state,
+        State::Complete { .. }
+    ));
+    assert_eq!(
+        authenticate_publication_extent(&project.0, &policy(), &context, &completion, &publication).unwrap(),
+        projected_bytes,
+        "sealed publication must keep the same journal extent after missing terminal recovery"
+    );
+    let actual_bytes = fs::read_dir(&project.0)
+        .unwrap()
+        .map(|entry| entry.unwrap().metadata().unwrap())
+        .filter(|metadata| metadata.is_file())
+        .map(|metadata| metadata.len())
+        .sum::<u64>();
+    assert_eq!(actual_bytes, projected_bytes);
+    let terminal_path = events(&project.0).pop().unwrap();
+    let original = fs::read(&terminal_path).unwrap();
+    let mut whitespace = original.clone();
+    whitespace.push(b'\n');
+    fs::write(&terminal_path, &whitespace).unwrap();
+    assert!(
+        authenticate_publication_extent(&project.0, &policy(), &context, &completion, &publication).is_err(),
+        "byte-changed but semantically identical final event must reject"
+    );
+    fs::write(&terminal_path, &original).unwrap();
+    let mut altered: serde_json::Value = serde_json::from_slice(&original).unwrap();
+    altered["state"]["publication"]["retained_bytes"] = serde_json::json!(publication.retained_bytes + 1);
+    fs::write(&terminal_path, serde_json::to_vec(&altered).unwrap()).unwrap();
+    assert!(authenticate_publication_extent(&project.0, &policy(), &context, &completion, &publication).is_err());
+    fs::write(&terminal_path, &original).unwrap();
+    let extra_path = project.0.join("foreign-output.bin");
+    fs::write(&extra_path, b"unsealed extra output").unwrap();
+    assert_ne!(
+        authenticate_publication_extent(&project.0, &policy(), &context, &completion, &publication).unwrap(),
+        projected_bytes,
+        "unexpected regular journal bytes must change the authenticated total"
+    );
+    fs::remove_file(extra_path).unwrap();
+    assert_eq!(
+        authenticate_publication_extent(&project.0, &policy(), &context, &completion, &publication).unwrap(),
+        projected_bytes
+    );
+    assert_eq!(adapter.count("verify"), 2);
+    assert_eq!(adapter.count("apply"), 1);
+    assert_eq!(adapter.count("finalize"), 1);
+    assert_eq!(adapter.count("publish"), 2);
+}
+
+#[test]
+fn restricted_rewrite_lost_response_recovers_original_intent_and_terminal_runs_no_worker() {
+    let project = Project::new();
+    let adapter = Adapter::new();
+    let mut run = supervisor(&project.0, adapter.clone());
+    let mut original = None;
+    let pending = run
+        .run_with_rewrite(|_, context, capsule| {
+            original = Some((context.clone(), capsule.clone()));
+            Err(ExecutionPending { reason: "restricted transport response was lost".into() }.into())
+        })
+        .unwrap();
+    assert!(matches!(pending.state, State::Rewrite { .. }));
+    assert_eq!(adapter.count("apply"), 0);
+    drop(run);
+    let mut run = supervisor(&project.0, adapter.clone());
+    let complete = run
+        .run_with_rewrite(|_, context, capsule| {
+            assert_eq!(original.as_ref(), Some(&(context.clone(), capsule.clone())));
+            Ok(SourceReplacements {
+                capsule_id: capsule.id.clone(),
+                files: vec![Replacement {
+                    path: capsule.files[0].path.clone(),
+                    base_sha256: capsule.files[0].sha256.clone(),
+                    content: "new".into(),
+                }],
+            })
+        })
+        .unwrap();
+    assert!(matches!(complete.state, State::Complete { .. }));
+    assert_eq!(run.run_with_rewrite(|_, _, _| panic!("completed run launched a worker")).unwrap(), complete);
+    assert_eq!(adapter.count("apply"), 1);
+    assert_eq!(adapter.count("verify"), 2);
+}
+
+#[test]
+fn restricted_rewrite_refusal_finalizes_without_applying_or_launching_gates() {
+    let project = Project::new();
+    let adapter = Adapter::new();
+    let mut run = supervisor(&project.0, adapter.clone());
+    let stopped = run
+        .run_with_rewrite(|_, _, capsule| {
+            Ok(SourceReplacements {
+                capsule_id: capsule.id.clone(),
+                files: vec![Replacement {
+                    path: "../foreign.rs".into(),
+                    base_sha256: capsule.files[0].sha256.clone(),
+                    content: "new".into(),
+                }],
+            })
+        })
+        .unwrap();
+    assert!(matches!(stopped.state, State::Stopped { disposition: Disposition::Failed, .. }));
+    assert_eq!(adapter.count("apply"), 0);
+    assert_eq!(adapter.count("verify"), 0);
+    assert!(adapter.0.lock().unwrap().interrupted_finalization);
+    assert_eq!(run.run_with_rewrite(|_, _, _| panic!("stopped run launched a worker")).unwrap(), stopped);
+    assert_eq!(adapter.count("finalize"), 1);
 }
 
 #[test]
@@ -350,8 +562,147 @@ fn cancellation_reconciles_an_ambiguous_writer_and_never_evaluates_again() {
         State::Stopped { disposition: Disposition::Cancelled, .. }
     ));
     assert!(adapter.0.lock().unwrap().interrupted_finalization);
+    let (context, request, result, projected_bytes) =
+        adapter.0.lock().unwrap().finalization_projection.clone().unwrap();
+    assert_eq!(request.disposition, Disposition::Cancelled);
+    assert_eq!(
+        authenticate_finalization_tail(&project.0, &policy(), &context, &request, &result).unwrap(),
+        projected_bytes,
+        "cancelled attempts authenticate the same prescribed exact terminal tail"
+    );
     run.advance().unwrap();
     assert_eq!(adapter.count("verify"), 1);
+}
+
+#[test]
+fn cancellation_preserves_partial_finalization_identity_and_original_failure() {
+    for failed in [false, true] {
+        let project = Project::new();
+        let adapter = Adapter::new();
+        {
+            let mut observed = adapter.0.lock().unwrap();
+            observed.fail_gate = failed;
+            observed.incomplete_cleanup = true;
+        }
+        let mut run = supervisor(&project.0, adapter.clone());
+        let view = run.advance().unwrap();
+        let original = run.submit(replacement(&view, "new")).unwrap();
+        let disposition = if failed { Disposition::Failed } else { Disposition::Complete };
+        assert_eq!(original.state, State::Finalizing { disposition });
+        let before: BTreeMap<_, _> = fs::read_dir(&project.0)
+            .unwrap()
+            .map(|entry| {
+                let entry = entry.unwrap();
+                (entry.file_name(), fs::read(entry.path()).unwrap())
+            })
+            .collect();
+        let producer_count = adapter.count("verify");
+        drop(run);
+        let mut run = supervisor(&project.0, adapter.clone());
+        assert_eq!(run.cancel("operator cancellation after partial cleanup").unwrap(), original);
+        let after: BTreeMap<_, _> = fs::read_dir(&project.0)
+            .unwrap()
+            .map(|entry| {
+                let entry = entry.unwrap();
+                (entry.file_name(), fs::read(entry.path()).unwrap())
+            })
+            .collect();
+        assert_eq!(after, before, "partial finalization reconciliation must allocate no duplicate metadata");
+        adapter.0.lock().unwrap().incomplete_cleanup = false;
+        let finished = run.cancel("operator cancellation while finalization resumes").unwrap();
+        let finalization = match &finished.state {
+            State::Stopped { disposition: Disposition::Failed, reason, finalization: Some(finalization) } => {
+                assert!(failed);
+                assert_eq!(reason, "first mismatch", "cleanup failure must preserve the original gate diagnosis");
+                finalization
+            }
+            State::Complete { completion, .. } => {
+                assert!(!failed);
+                &completion.finalization
+            }
+            _ => panic!("partial finalization changed its original disposition"),
+        };
+        let observed = adapter.0.lock().unwrap();
+        let first = observed.finalization_inputs.first().unwrap();
+        assert_eq!(finalization.seal.operation_key, first.0.operation_key);
+        assert_eq!(first.1.disposition, disposition);
+        assert!(observed.finalization_inputs.iter().all(|input| input == first));
+        drop(observed);
+        assert_eq!(adapter.count("verify"), producer_count);
+        assert_eq!(run.cancel("operator cancellation after completion").unwrap(), finished);
+    }
+}
+
+#[test]
+fn stopped_finalization_tail_recovers_lost_response_and_authenticates_historical_extent() {
+    let project = Project::new();
+    let adapter = Adapter::new();
+    {
+        let mut observed = adapter.0.lock().unwrap();
+        observed.fail_gate = true;
+        observed.interrupt_finalization_once = true;
+    }
+    let mut run = supervisor(&project.0, adapter.clone());
+    let view = run.advance().unwrap();
+    assert_eq!(
+        run.submit(replacement(&view, "new")).unwrap().state,
+        State::Finalizing { disposition: Disposition::Failed }
+    );
+    let (context, request, result, projected_bytes) =
+        adapter.0.lock().unwrap().finalization_projection.clone().unwrap();
+    let before: BTreeMap<_, _> = fs::read_dir(&project.0)
+        .unwrap()
+        .map(|entry| {
+            let entry = entry.unwrap();
+            (entry.file_name(), fs::read(entry.path()).unwrap())
+        })
+        .collect();
+    assert_eq!(
+        authenticate_finalization_tail(&project.0, &policy(), &context, &request, &result).unwrap(),
+        projected_bytes
+    );
+    let after: BTreeMap<_, _> = fs::read_dir(&project.0)
+        .unwrap()
+        .map(|entry| {
+            let entry = entry.unwrap();
+            (entry.file_name(), fs::read(entry.path()).unwrap())
+        })
+        .collect();
+    assert_eq!(after, before, "lost-response tail authentication must create no journal state");
+    drop(run);
+    let mut run = supervisor(&project.0, adapter.clone());
+    assert!(matches!(run.advance().unwrap().state, State::Stopped { disposition: Disposition::Failed, .. }));
+    let actual_bytes = fs::read_dir(&project.0)
+        .unwrap()
+        .map(|entry| entry.unwrap().path())
+        .filter(|path| path.file_name().unwrap().to_str().unwrap().starts_with("event-"))
+        .max()
+        .unwrap()
+        .metadata()
+        .unwrap()
+        .len();
+    assert_eq!(projected_bytes, actual_bytes, "finalization reservation must exactly match its terminal result event");
+    assert_eq!(
+        authenticate_finalization_tail(&project.0, &policy(), &context, &request, &result).unwrap(),
+        actual_bytes
+    );
+    adapter.0.lock().unwrap().fail_gate = false;
+    assert!(matches!(
+        run.retry("reevaluate after external prerequisite recovery").unwrap().state,
+        State::Complete { .. }
+    ));
+    assert_eq!(
+        authenticate_finalization_tail(&project.0, &policy(), &context, &request, &result).unwrap(),
+        actual_bytes,
+        "later journal growth must preserve the first stopped attempt's exact extent"
+    );
+    let mut foreign = context.clone();
+    foreign.attempt = 2;
+    assert!(authenticate_finalization_tail(&project.0, &policy(), &foreign, &request, &result).is_err());
+    let mut altered = result.clone();
+    altered.retained_bytes += 1;
+    assert!(authenticate_finalization_tail(&project.0, &policy(), &context, &request, &altered).is_err());
+    assert_eq!(adapter.count("verify"), 3);
 }
 
 #[test]
@@ -400,4 +751,103 @@ fn terminal_resume_reauthenticates_retained_evidence_without_recapture() {
     assert!(run.advance().is_err());
     assert!(run.inspect().is_err());
     assert_eq!(adapter.count("verify"), 2);
+}
+
+fn events(path: &Path) -> Vec<PathBuf> {
+    let mut events = fs::read_dir(path)
+        .unwrap()
+        .map(|entry| entry.unwrap().path())
+        .filter(|path| {
+            path.file_name().unwrap().to_string_lossy().starts_with("event-")
+                && path.extension().is_some_and(|extension| extension == "json")
+        })
+        .collect::<Vec<_>>();
+    events.sort();
+    events
+}
+
+#[test]
+fn failed_terminal_tail_cannot_authorize_an_unexecuted_gate() {
+    let project = Project::new();
+    let adapter = Adapter::new();
+    adapter.0.lock().unwrap().fail_gate = true;
+    let mut frozen = policy();
+    frozen.verification_stages = vec![VerificationStage::Focused, VerificationStage::Offline];
+    let mut run = Supervisor::open(&project.0, frozen.clone(), adapter.clone()).unwrap();
+    let rewrite = run.advance().unwrap();
+    let stopped = run.submit(replacement(&rewrite, "new")).unwrap();
+    assert!(matches!(stopped.state, State::Stopped { .. }));
+    let captures = adapter.0.lock().unwrap().produced.len();
+    let tail = events(&project.0).pop().unwrap();
+    let original = fs::read(&tail).unwrap();
+    let mut event: serde_json::Value = serde_json::from_slice(&original).unwrap();
+    event["state"]["cursor"] = serde_json::json!({"CandidateGate": 1});
+    event["state"]["intent"] = serde_json::Value::Null;
+    // Preserve the predecessor hash: this was previously a valid hash chain.
+    fs::write(&tail, serde_json::to_vec(&event).unwrap()).unwrap();
+    assert!(run.advance().is_err());
+    assert!(Supervisor::inspect_retained(&project.0, frozen.clone(), adapter.clone()).is_err());
+    assert!(Supervisor::open(&project.0, frozen.clone(), adapter.clone()).is_err());
+    assert_eq!(adapter.0.lock().unwrap().produced.len(), captures);
+    assert_eq!(adapter.count("verify"), 1);
+    fs::write(tail, original).unwrap();
+    assert_eq!(run.advance().unwrap(), stopped);
+    assert_eq!(adapter.count("verify"), 1);
+}
+
+#[test]
+fn forged_successful_gate_tail_rejects_before_the_next_producer() {
+    let project = Project::new();
+    let adapter = Adapter::new();
+    adapter.0.lock().unwrap().fail_gate = true;
+    let mut frozen = policy();
+    frozen.verification_stages = vec![VerificationStage::Focused, VerificationStage::Offline];
+    let mut run = Supervisor::open(&project.0, frozen.clone(), adapter.clone()).unwrap();
+    let rewrite = run.advance().unwrap();
+    assert!(matches!(run.submit(replacement(&rewrite, "new")).unwrap().state, State::Stopped { .. }));
+    let paths = events(&project.0);
+    let failed = paths
+        .iter()
+        .find(|path| {
+            let event: serde_json::Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+            event["state"]["cursor"] == "Finalize"
+                && event["state"]["gates"].as_array().is_some_and(|gates| !gates.is_empty())
+                && event["state"]["intent"].is_null()
+        })
+        .unwrap();
+    let mut event: serde_json::Value = serde_json::from_slice(&fs::read(failed).unwrap()).unwrap();
+    event["state"]["cursor"] = serde_json::json!({"CandidateGate": 1});
+    event["state"]["disposition"] = "complete".into();
+    event["state"]["reason"] = "".into();
+    event["state"]["gates"][0]["passed"] = true.into();
+    event["state"]["gates"][0]["diagnostic"] = "".into();
+    // Make the accepted gate result the tail, as if its response was lost.
+    for path in paths.iter().filter(|path| *path > failed) {
+        fs::remove_file(path).unwrap();
+    }
+    fs::write(failed, serde_json::to_vec(&event).unwrap()).unwrap();
+    assert!(run.advance().is_err());
+    assert_eq!(adapter.count("verify"), 1);
+    assert_eq!(adapter.0.lock().unwrap().produced.len(), 1);
+}
+
+#[test]
+fn later_complete_attempt_authenticates_the_prior_failed_evidence() {
+    let project = Project::new();
+    let adapter = Adapter::new();
+    adapter.0.lock().unwrap().fail_gate = true;
+    let mut run = supervisor(&project.0, adapter.clone());
+    let rewrite = run.advance().unwrap();
+    let stopped = run.submit(replacement(&rewrite, "new")).unwrap();
+    let State::Stopped { finalization: Some(first), .. } = stopped.state else { panic!("failed result missing") };
+    adapter.0.lock().unwrap().fail_gate = false;
+    assert!(matches!(run.retry("operator reevaluates exact candidate").unwrap().state, State::Complete { .. }));
+    let captures = adapter.0.lock().unwrap().produced.len();
+    adapter.0.lock().unwrap().tampered_finalization = Some(first.seal.operation_key.clone());
+    assert!(run.inspect().is_err());
+    assert!(run.advance().is_err());
+    assert!(authenticate_finalized_history(&project.0, &policy(), &adapter).is_err());
+    assert_eq!(adapter.0.lock().unwrap().produced.len(), captures);
+    adapter.0.lock().unwrap().tampered_finalization = None;
+    assert!(matches!(run.advance().unwrap().state, State::Complete { .. }));
 }

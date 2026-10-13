@@ -25,7 +25,9 @@ impl Fixture {
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+#include <sys/mman.h>
 #include <sys/mount.h>
+#include <sys/prctl.h>
 #include <sys/wait.h>
 #include <sched.h>
 #include <fcntl.h>
@@ -51,6 +53,10 @@ int main(int argc, char **argv) {
   if (!strcmp(argv[1], "ignore-stdout")) {char b[4096];memset(b,'x',sizeof(b));for(int i=0;i<4;i++){ssize_t ignored=write(1,b,sizeof(b));(void)ignored;}int ignored=ftruncate(1,0);(void)ignored;return 0;}
   if (!strcmp(argv[1], "quota")) {char b[4096];memset(b,'q',sizeof(b));for(int i=0;i<256;i++){char p[64];snprintf(p,sizeof(p),"tmp/%d",i);int f=open(p,O_WRONLY|O_CREAT,0600);if(f<0)return 20;if(write(f,b,sizeof(b))!=sizeof(b))return 21;close(f);}return 0;}
   if (!strcmp(argv[1], "ignore-quota")) {char b[4096];memset(b,'q',sizeof(b));int f=open("tmp/transient",O_WRONLY|O_CREAT,0600);while(write(f,b,sizeof(b))>0){}close(f);unlink("tmp/transient");return 0;}
+  if (!strcmp(argv[1], "sparse-quota")) {for(int i=0;i<3;i++){char p[64];snprintf(p,sizeof(p),"tmp/sparse%d",i);int f=open(p,O_WRONLY|O_CREAT,0600);if(f<0||ftruncate(f,65536)<0)return 23;close(f);}for(int i=0;i<3;i++){char p[64];snprintf(p,sizeof(p),"tmp/sparse%d",i);unlink(p);}return 0;}
+  if (!strcmp(argv[1], "unlinked-sparse-quota")) {int f[3];for(int i=0;i<3;i++){char p[64];snprintf(p,sizeof(p),"tmp/sparse%d",i);f[i]=open(p,O_WRONLY|O_CREAT,0600);if(f[i]<0)return 24;unlink(p);if(ftruncate(f[i],65536)<0)return 25;}for(int i=0;i<3;i++)close(f[i]);return 0;}
+  if (!strcmp(argv[1], "anonymous-file-denied")) {int f=memfd_create("unbounded-output",0);return f<0&&errno==EPERM?0:26;}
+  if (!strcmp(argv[1], "private-descriptors")) {if(prctl(PR_SET_DUMPABLE,0,0,0,0)<0)return 27;int f=open("tmp/private",O_WRONLY|O_CREAT,0600);if(f<0)return 28;unlink("tmp/private");if(ftruncate(f,argc>2?65536:4096)<0)return 29;if(argc>2){int second=open("tmp/private-two",O_WRONLY|O_CREAT,0600);if(second<0)return 30;unlink("tmp/private-two");if(ftruncate(second,70000)<0)return 31;}return 0;}
   if (!strcmp(argv[1], "descendant")) {pid_t p=fork();if(p<0)return 8;if(!p){sleep(1);puts("survived");fflush(stdout);return 0;}puts("parent");return 0;}
   if (!strcmp(argv[1], "sleep")) {if(!fork()){setsid();sleep(30);return 0;}sleep(30);return 0;}
   return 1;
@@ -137,8 +143,30 @@ fn aggregate_tmpfs_quota_and_undeclared_output_refuse_completion() {
     assert!(error.contains("quota"), "{error}");
     let error = fixture.call("ignore-quota", &limits()).unwrap_err().to_string();
     assert!(error.contains("quota"), "{error}");
+    let error = fixture.call("sparse-quota", &limits()).unwrap_err().to_string();
+    assert!(error.contains("budget"), "{error}");
+    let error = fixture.call("unlinked-sparse-quota", &limits()).unwrap_err().to_string();
+    assert!(error.contains("budget"), "{error}");
+    assert!(fixture.call("anonymous-file-denied", &limits()).unwrap().status.success());
     let error = fixture.call("undeclared", &limits()).unwrap_err().to_string();
     assert!(error.contains("undeclared"), "{error}");
+}
+
+#[test]
+fn private_descriptor_metadata_refuses_acceptance_and_unlinked_quota_bypass() {
+    let fixture = Fixture::new();
+    let error = fixture.call("private-descriptors", &limits()).unwrap_err().to_string();
+    assert!(
+        error.contains("descriptor") && error.contains("Permission denied"),
+        "private descriptor observer was not refused: {error}"
+    );
+    let mut program = fixture.program.clone();
+    program.arguments = vec!["private-descriptors".into(), "overflow".into()];
+    let error = run(&program, &limits(), b"").unwrap_err().to_string();
+    assert!(
+        error.contains("descriptor") && error.contains("Permission denied"),
+        "unlinked private extents escaped quota: {error}"
+    );
 }
 
 #[test]
@@ -210,4 +238,51 @@ fn actual_rust_compiler_cannot_include_undeclared_host_file() {
         String::from_utf8_lossy(&output.stderr)
     );
     assert_eq!(fs::read(secret).unwrap(), b"protected");
+}
+
+#[test]
+fn readonly_rust_test_inputs_compile_through_linker_descendants() {
+    let fixture = Fixture::new();
+    let source = fixture.root.join("frozen.rs");
+    fs::write(&source, "#[test] fn doubles(){assert_eq!(7u32.wrapping_mul(2),14);}\n").unwrap();
+    let compiler = Command::new("rustup").args(["which", "rustc"]).output().unwrap();
+    assert!(compiler.status.success());
+    let compiler = PathBuf::from(String::from_utf8(compiler.stdout).unwrap().trim());
+    let runtime = compiler_runtime(&compiler).unwrap();
+    let program = Program {
+        executable: compiler.clone(),
+        arguments: vec![
+            "--edition=2024".into(),
+            "--test".into(),
+            "--crate-name=confined_linker_probe".into(),
+            "/inputs/frozen.rs".into(),
+            "--sysroot".into(),
+            "/toolchain".into(),
+            "-C".into(),
+            "linker=/usr/bin/x86_64-linux-gnu-gcc-9".into(),
+            "-C".into(),
+            "linker-features=-lld".into(),
+            "-C".into(),
+            "link-arg=-B/usr/lib/gcc/x86_64-linux-gnu/9/".into(),
+            "-C".into(),
+            "link-arg=-B/usr/bin/".into(),
+            "--emit=link,dep-info=/work/compiler.d".into(),
+            "-o".into(),
+            "/work/tests".into(),
+        ],
+        inputs: vec![ReadOnlyBind { source, destination: "/inputs/frozen.rs".into() }],
+        runtime,
+        helper: fixture.program.helper.clone(),
+        outputs: vec!["tests".into(), "compiler.d".into()],
+    };
+    let mut bounds = limits();
+    bounds.timeout = Duration::from_secs(30);
+    bounds.writable_bytes = 32 * 1024 * 1024;
+    bounds.stderr_bytes = 65536;
+    for attempt in 0..6 {
+        let output = run(&program, &bounds, b"")
+            .unwrap_or_else(|error| panic!("standalone test compilation {attempt} lost confinement: {error:#}"));
+        assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+        assert!(!output.outputs[&PathBuf::from("tests")].is_empty());
+    }
 }

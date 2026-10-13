@@ -636,6 +636,96 @@ fn contention_is_bounded_and_lock_releases_after_owner_exit() {
 }
 
 #[test]
+fn admitted_progress_preserves_exact_stages_and_repairs_only_accepted_observations() {
+    let scratch = Scratch::new();
+    inventory_root(&scratch.0);
+    fs::create_dir_all(scratch.0.join(".scratch/decomp-progress")).unwrap();
+    let options = admitted_options(&scratch.0);
+    let registry = refresh(&options).unwrap();
+    let evidence = scratch.0.join("completion.json");
+    fs::write(&evidence, b"{\"accepted_fixture_domain\":true}").unwrap();
+    let pointers = [(evidence.clone(), crate::digest(&evidence).unwrap())];
+    let publication = prepare_admitted(
+        &scratch.0,
+        "original-claim-attempt-one",
+        "coherent frame",
+        "original-owner",
+        &["First".into()],
+        &registry.source.revision,
+        &registry.source.inventory_sha256,
+        &"d".repeat(40),
+        &"e".repeat(40),
+        &pointers,
+        &["actual-C fixture domain; Live replay not tested".into()],
+    )
+    .unwrap();
+    let mut publication = publication;
+    for (index, update) in publication.updates.iter_mut().enumerate() {
+        update.updated_at = 1_000_000 + index as u64;
+    }
+    let baseline = scratch.0.join("original-progress.json");
+    fs::copy(&options.registry, &baseline).unwrap();
+    validate_admitted_plan(
+        &publication,
+        "original-claim-attempt-one",
+        "coherent frame",
+        "original-owner",
+        &["First".into()],
+        &registry.source.revision,
+        &registry.source.inventory_sha256,
+        &"d".repeat(40),
+        &"e".repeat(40),
+        &pointers,
+        &["actual-C fixture domain; Live replay not tested".into()],
+    )
+    .unwrap();
+    validate_admitted_projection(&scratch.0, &publication, &baseline).unwrap();
+    assert!(read_registry(&options).unwrap().updates.is_empty());
+    let ids = publish_admitted(&scratch.0, &publication).unwrap();
+    authenticate_admitted(&scratch.0, &publication).unwrap();
+    validate_admitted_projection(&scratch.0, &publication, &baseline).unwrap();
+    let before = fs::read(&options.registry).unwrap();
+    assert_eq!(publish_admitted(&scratch.0, &publication).unwrap(), ids);
+    assert_eq!(fs::read(&options.registry).unwrap(), before);
+    let saved = read_registry(&options).unwrap();
+    assert_eq!(saved.summary.stages["translated"].definitions, 1);
+    assert_eq!(saved.summary.stages["verified"].definitions, 1);
+    assert_eq!(saved.summary.stages["integrated"].definitions, 1);
+    assert_eq!(saved.summary.stages["live-exercised"].definitions, 0);
+    fs::remove_file(&options.html).unwrap();
+    assert!(authenticate_admitted(&scratch.0, &publication).is_err());
+    validate_admitted_projection(&scratch.0, &publication, &baseline).unwrap();
+    assert_eq!(publish_admitted(&scratch.0, &publication).unwrap(), ids);
+    authenticate_admitted(&scratch.0, &publication).unwrap();
+    let mut lost_projection = read_registry(&options).unwrap();
+    lost_projection.updates.retain(|update| update.stage != Stage::Verified);
+    observe_evidence(&scratch.0, &mut lost_projection).unwrap();
+    persist(&options, &lost_projection).unwrap();
+    assert!(authenticate_admitted(&scratch.0, &publication).is_err());
+    validate_admitted_projection(&scratch.0, &publication, &baseline).unwrap();
+    publish_admitted(&scratch.0, &publication).unwrap();
+    authenticate_admitted(&scratch.0, &publication).unwrap();
+    validate_admitted_projection(&scratch.0, &publication, &baseline).unwrap();
+    let exact_registry = fs::read(&options.registry).unwrap();
+    let mut unrelated = read_registry(&options).unwrap();
+    unrelated.notices.push("unrelated mutable controller text".into());
+    persist(&options, &unrelated).unwrap();
+    assert!(validate_admitted_projection(&scratch.0, &publication, &baseline).is_err());
+    fs::write(&options.registry, exact_registry).unwrap();
+    let restored = read_registry(&options).unwrap();
+    persist(&options, &restored).unwrap();
+    let mut conflict = publication.clone();
+    conflict.updates[0].routines = vec!["Second".into()];
+    let before = fs::read(&options.registry).unwrap();
+    assert!(publish_admitted(&scratch.0, &conflict).is_err());
+    assert_eq!(fs::read(&options.registry).unwrap(), before);
+    fs::write(&evidence, b"tampered completion").unwrap();
+    assert!(publish_admitted(&scratch.0, &publication).is_err());
+    assert!(authenticate_admitted(&scratch.0, &publication).is_err());
+    assert_eq!(fs::read(&options.registry).unwrap(), before);
+}
+
+#[test]
 fn malformed_updates_and_unsafe_embedding_are_handled() {
     let scratch = Scratch::new();
     let mut registry = registry(&scratch.0);

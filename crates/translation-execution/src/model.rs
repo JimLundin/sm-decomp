@@ -276,6 +276,7 @@ pub struct Completion {
 pub struct Publication {
     pub seal: OutcomeSeal,
     pub observation_ids: Vec<String>,
+    pub retained_bytes: u64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]

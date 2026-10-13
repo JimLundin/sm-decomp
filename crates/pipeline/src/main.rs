@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::fs::{self, File, OpenOptions};
 use std::io::{BufRead, Read, Write};
+use std::os::unix::fs::OpenOptionsExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{Duration, Instant};
@@ -72,6 +73,12 @@ mod session;
 mod source_inventory;
 mod storage_studies;
 mod translation;
+mod translation_execution;
+mod translation_infrastructure;
+mod translation_migration;
+mod translation_migration_builder;
+mod translation_migration_guard;
+mod translation_native;
 
 static BINARY_SHA256: std::sync::OnceLock<String> = std::sync::OnceLock::new();
 
@@ -146,11 +153,33 @@ fn line() -> Result<String> {
 }
 
 fn acquire_lease(root: &Path, requested: usize) -> Result<(File, f64)> {
+    let now = u64::try_from(std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_millis())?;
+    acquire_lease_until(root, requested, now.checked_add(3_600_000).context("worker deadline overflow")?)
+}
+
+fn acquire_lease_until(root: &Path, requested: usize, deadline_unix_ms: u64) -> Result<(File, f64)> {
     ensure!((1..=64).contains(&requested), "worker count must be 1..64");
     let started = Instant::now();
+    let now = u64::try_from(std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_millis())?;
+    ensure!(now < deadline_unix_ms, "shared worker time budget exhausted before reservation");
+    let deadline = started + Duration::from_millis(deadline_unix_ms - now).min(Duration::from_secs(3600));
     let root = root.join("workers");
     fs::create_dir_all(&root)?;
-    let guard = lock(&root.join("config.lock"))?;
+    let guard = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK)
+        .open(root.join("config.lock"))?;
+    ensure!(guard.metadata()?.is_file(), "worker configuration lock is not regular");
+    loop {
+        metrics::check_cancelled()?;
+        ensure!(Instant::now() < deadline, "shared worker time budget exhausted waiting for configuration");
+        match guard.try_lock() {
+            Ok(()) => break,
+            Err(std::fs::TryLockError::WouldBlock) => std::thread::sleep(Duration::from_millis(10)),
+            Err(std::fs::TryLockError::Error(error)) => return Err(error.into()),
+        }
+    }
     let config = root.join("capacity.toml");
     #[derive(serde::Serialize, serde::Deserialize)]
     struct Capacity {
@@ -166,19 +195,28 @@ fn acquire_lease(root: &Path, requested: usize) -> Result<(File, f64)> {
     drop(guard);
     let held = loop {
         metrics::check_cancelled()?;
+        ensure!(Instant::now() < deadline, "shared worker time budget exhausted waiting for a slot");
         let mut selected = None;
         for slot in 0..capacity {
-            let file = OpenOptions::new().create(true).append(true).open(root.join(format!("{slot}.lock")))?;
-            if file.try_lock().is_ok() {
-                selected = Some(file);
-                break;
+            let file = OpenOptions::new()
+                .create(true)
+                .append(true)
+                .custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK)
+                .open(root.join(format!("{slot}.lock")))?;
+            ensure!(file.metadata()?.is_file(), "worker slot lock is not regular");
+            match file.try_lock() {
+                Ok(()) => {
+                    selected = Some(file);
+                    break;
+                }
+                Err(std::fs::TryLockError::WouldBlock) => {}
+                Err(std::fs::TryLockError::Error(error)) => return Err(error.into()),
             }
         }
         if let Some(file) = selected {
             break file;
         }
-        ensure!(started.elapsed() < Duration::from_secs(3600), "worker wait exceeded one hour");
-        std::thread::sleep(Duration::from_millis(50));
+        std::thread::sleep(Duration::from_millis(10));
     };
     Ok((held, started.elapsed().as_secs_f64()))
 }
@@ -444,6 +482,15 @@ fn main() -> Result<()> {
         .map_err(|_| anyhow::anyhow!("binary identity already initialized"))?;
     let args: Vec<_> = std::env::args().skip(1).collect();
     match args.first().map(String::as_str) {
+        Some("translation-execute") => translation_execution::cli(&args[1..]),
+        Some("translation-migration") if args.get(1).is_some_and(|value| value == "build-preparation") => {
+            ensure!(
+                args.len() == 4 && args[2] == "--request",
+                "usage: translation-migration build-preparation --request REQUEST.json"
+            );
+            emit(&translation_migration_builder::build_from_request(Path::new(&args[3]))?)
+        }
+        Some("translation-migration") => translation_migration::cli(&args[1..]),
         Some("progress") => progress::cli(&args[1..]),
         Some("storage-study") => storage_studies::run(&args[1..]),
         Some("decomp-prefix") => decomp_prefix::run(&args[1..]),
@@ -1409,14 +1456,20 @@ fn main() -> Result<()> {
         Some("family-authenticate") if args.len() == 1 => emit(&family::authenticate(request()?)?),
         Some("decomp-session") if args.len() == 1 => emit(&session::operate(request()?)?),
         Some("decomp-session") => {
-            ensure!(args.len() == 4 && args[2] == "--request", "usage: sm-pipeline decomp-session OP --request REQUEST.toml");
+            ensure!(
+                args.len() == 4 && args[2] == "--request",
+                "usage: sm-pipeline decomp-session OP --request REQUEST.toml"
+            );
             let request: session::Request = toml::from_str(&fs::read_to_string(&args[3])?)?;
             ensure!(request.operation() == args[1], "session operation differs from typed request");
             emit(&session::operate(request)?)
         }
         Some("decomp-authority") if args.len() == 1 => emit(&assignment::authority::operate(request()?)?),
         Some("decomp-authority") => {
-            ensure!(args.len() == 3 && args[1] == "--request", "usage: sm-pipeline decomp-authority --request REQUEST.toml");
+            ensure!(
+                args.len() == 3 && args[1] == "--request",
+                "usage: sm-pipeline decomp-authority --request REQUEST.toml"
+            );
             emit(&assignment::authority::operate(toml::from_str(&fs::read_to_string(&args[2])?)?)?)
         }
         Some("assign") if args.len() == 1 => emit(&coordination::operate(request()?)?),

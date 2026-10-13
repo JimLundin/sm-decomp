@@ -1,8 +1,9 @@
 # Prove one complete restricted Translation scope execution
 
-Status: open
+Status: claimed
 Blocked by: 03, 04, 05, 06
 Triage: ready-for-agent
+Owner: /root
 
 Own complete interface proof using a real supported existing Translation scope
 against actual C, deterministic rewrite replay and the restricted production

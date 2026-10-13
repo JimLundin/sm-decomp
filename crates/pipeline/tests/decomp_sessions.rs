@@ -3,8 +3,20 @@
 #[path = "../src/assignment.rs"]
 mod assignment;
 #[allow(dead_code)]
+#[path = "../src/bounded_inputs.rs"]
+pub(crate) mod bounded_inputs;
+#[allow(dead_code)]
+#[path = "../src/family_model.rs"]
+mod family_model;
+#[allow(dead_code)]
 #[path = "../src/session.rs"]
 mod session;
+mod inputs {
+    pub(crate) use crate::bounded_inputs as bounded;
+}
+#[allow(dead_code)]
+#[path = "../src/translation_migration_guard.rs"]
+mod translation_migration_guard;
 use assignment::{Artifact, Job, Kind, SessionAuthority, Update, WorkResult};
 use session::{Cleanup, Handoff, NextCommand};
 use sha2::{Digest, Sha256};

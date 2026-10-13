@@ -3,7 +3,7 @@
 Status: claimed
 Blocked by: 01
 Triage: ready-for-agent
-Owner: /root/evidence_ownership
+Owner: /root (recovered bounded operation and retention integration)
 
 Own hard aggregate time/output budgets, admitted observation extent, process
 teardown, bounded failed evidence, exact-closure publication and run finalization.

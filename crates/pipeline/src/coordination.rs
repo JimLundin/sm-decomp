@@ -301,6 +301,7 @@ fn gates(
     checkout: &Path,
     integration: bool,
 ) -> Result<Vec<Artifact>> {
+    crate::translation_migration_guard::fence_session_locked(&request.checkout, &queue(request, "record"))?;
     let scope = approved_scope(job)?;
     let before = source_fingerprint(checkout)?;
     let run = status.ledger.parent().context("ledger parent missing")?.join("receipts").join(format!(
@@ -556,10 +557,19 @@ pub(crate) fn operate(mut request: Request) -> Result<toml::Value> {
     }
     ensure!((1..=64).contains(&request.workers), "assignment worker capacity must be 1..64");
     ensure!(["plan", "next", "record", "status"].contains(&request.operation.as_str()), "unsupported assign operation");
+    if matches!(request.operation.as_str(), "next" | "record") {
+        let _lock = assignment::mutation_lock(&request.checkout)?;
+        crate::translation_migration_guard::fence_legacy_locked(
+            &request.checkout,
+            &queue(&request, &request.operation),
+        )?;
+    }
     if request.operation == "status" {
         return Ok(toml::Value::try_from(assignment::operate(queue(&request, "status"))?)?);
     }
     if request.operation == "record" {
+        let producer_lock = assignment::mutation_lock(&request.checkout)?;
+        crate::translation_migration_guard::fence_session_locked(&request.checkout, &queue(&request, "record"))?;
         let status = assignment::operate(queue(&request, "status"))?;
         let mut update = request.update.take().context("record requires a typed update")?;
         assignment::authority::validate(
@@ -572,6 +582,7 @@ pub(crate) fn operate(mut request: Request) -> Result<toml::Value> {
         validate_update(&request, &status, &mut update)?;
         let mut queued = queue(&request, "record");
         queued.update = Some(update);
+        drop(producer_lock); // Assignment repeats fencing while reacquiring this lock.
         return Ok(toml::Value::try_from(assignment::operate(queued)?)?);
     }
     ensure!(request.update.is_none(), "updates require record");

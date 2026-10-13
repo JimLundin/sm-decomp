@@ -119,6 +119,7 @@ pub(crate) enum State {
     Failed,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub(crate) struct Entry {
     pub job: Job,
     pub state: State,
@@ -142,6 +143,7 @@ pub(crate) struct Entry {
     projection_pending: bool,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub(crate) struct AttemptRecord {
     pub job: Job,
     pub claim: Option<Claim>,
@@ -469,6 +471,81 @@ fn inputs_current(checkout: &Path, job: &Job) -> Result<bool> {
         }
     }
     Ok(true)
+}
+
+/// Immutable planning inputs retained by the trusted managed publisher before
+/// controller projections or approved source publication change the checkout.
+/// This is internal admission metadata, never an assignment request field.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct FrozenJobInputs {
+    pub schema: String,
+    pub checkout: PathBuf,
+    pub job: Job,
+    pub files: BTreeMap<String, ::translation_execution::retention::Reference>,
+}
+
+/// Match the maintained queue's explicit and legacy file-key interpretation.
+/// Managed native scopes use explicit file inputs. Legacy full-tree source
+/// fingerprints need a separate frozen manifest adapter and fail before launch.
+pub(crate) fn admitted_input_files(checkout: &Path, job: &Job) -> Result<BTreeMap<String, PathBuf>> {
+    ensure!(
+        job.kind == Kind::Implement && !job.inputs.contains_key("source-fingerprint"),
+        "managed original inputs require a native implementation without an unsupported full-tree fingerprint"
+    );
+    ensure!(job.inputs.len() <= 4096, "managed original input count exceeded");
+    let mut files = BTreeMap::new();
+    for (key, expected) in &job.inputs {
+        crate::inputs::bounded::check()?;
+        let name = key.strip_prefix("file:").unwrap_or(key);
+        let path = Path::new(name);
+        if !(expected.len() == 64 && expected.bytes().all(|b| b.is_ascii_hexdigit()))
+            || (!relative(path) && !path.is_absolute())
+            || (!key.starts_with("file:") && !name.contains('/'))
+        {
+            continue;
+        }
+        let path = if path.is_absolute() { path.to_path_buf() } else { checkout.join(path) };
+        crate::inputs::bounded::safe(&path)?;
+        let owned = path
+            .strip_prefix(checkout)
+            .ok()
+            .is_some_and(|relative| job.writable_paths.iter().any(|owned| relative.starts_with(owned)));
+        if !owned {
+            files.insert(key.clone(), path);
+        }
+    }
+    Ok(files)
+}
+
+pub(crate) fn authenticate_frozen_job_inputs(checkout: &Path, job: &Job, frozen: &FrozenJobInputs) -> Result<()> {
+    ensure!(
+        frozen.schema == "translation-original-job-inputs-v1" && frozen.checkout == checkout && frozen.job == *job,
+        "managed frozen inputs name another original checkout or job"
+    );
+    let files = admitted_input_files(checkout, job)?;
+    ensure!(files.keys().eq(frozen.files.keys()), "managed frozen original input closure changed");
+    let mut total = 0u64;
+    for (key, reference) in &frozen.files {
+        ensure!(
+            job.inputs.get(key) == Some(&reference.sha256) && reference.bytes <= 4 * 1024 * 1024,
+            "managed frozen original input seal changed"
+        );
+        total = total.checked_add(reference.bytes).context("managed original input extent overflow")?;
+        ensure!(total <= 96 * 1024 * 1024, "managed frozen input aggregate budget exhausted");
+        crate::inputs::bounded::account(reference.bytes)?;
+        ::translation_execution::retention::authenticate_reference(reference, 4 * 1024 * 1024)?;
+    }
+    Ok(())
+}
+
+fn record_inputs_current(checkout: &Path, job: &Job, frozen: Option<&FrozenJobInputs>) -> Result<bool> {
+    if let Some(frozen) = frozen {
+        authenticate_frozen_job_inputs(checkout, job, frozen)?;
+        Ok(true)
+    } else {
+        inputs_current(checkout, job)
+    }
 }
 
 /// Namespace and source contents used by conservative verification planning.
@@ -849,6 +926,7 @@ fn record(
     coordinator: &str,
     update: &Update,
     managed: bool,
+    frozen_inputs: Option<&FrozenJobInputs>,
 ) -> Result<()> {
     let claim = match update {
         Update::Started { claim, .. }
@@ -867,7 +945,10 @@ fn record(
         && !entry.stale
     {
         if let Update::Finished { result, .. } = update {
-            ensure!(inputs_current(checkout, &entry.job)?, "stale source revision cannot retry recorded completion");
+            ensure!(
+                record_inputs_current(checkout, &entry.job, frozen_inputs)?,
+                "stale source revision cannot retry recorded completion"
+            );
             for artifact in result_artifacts(result) {
                 check_artifact(artifact)?;
             }
@@ -881,7 +962,10 @@ fn record(
         && !entry.stale
         && matches!(entry.state, State::Complete | State::Submitted | State::Failed)
     {
-        ensure!(inputs_current(checkout, &entry.job)?, "stale source revision cannot retry recorded completion");
+        ensure!(
+            record_inputs_current(checkout, &entry.job, frozen_inputs)?,
+            "stale source revision cannot retry recorded completion"
+        );
         for artifact in result_artifacts(result) {
             check_artifact(artifact)?;
         }
@@ -939,7 +1023,9 @@ fn record(
         Update::Finished { result, .. } => {
             ensure!(entry.state == State::Running, "only a started assignment can finish");
             ensure!(
-                entry.pending_job.is_none() && !entry.stale && inputs_current(checkout, &entry.job)?,
+                entry.pending_job.is_none()
+                    && !entry.stale
+                    && record_inputs_current(checkout, &entry.job, frozen_inputs)?,
                 "stale source revision cannot complete current work"
             );
             for artifact in result_artifacts(result) {
@@ -1037,33 +1123,8 @@ fn record(
             let entry = ledger.jobs.get_mut(&claim.id).unwrap();
             entry.state = state;
             entry.result = Some(result.clone());
-            if matches!(result, WorkResult::Submitted { .. }) {
-                let submission = entry.job.clone();
-                let integration = Job {
-                    id: format!("integrate-{}", submission.id),
-                    revision: format!("{}-{}", claim.revision, claim.attempt),
-                    kind: Kind::Integrate,
-                    subject: format!("Integrate {}", submission.subject),
-                    writable_paths: submission.writable_paths,
-                    blockers: Vec::new(),
-                    inputs: BTreeMap::from([
-                        (
-                            "base-head".into(),
-                            submission.inputs.get("base-head").cloned().unwrap_or_else(|| {
-                                let WorkResult::Submitted { commit, .. } = &result else { unreachable!() };
-                                commit.clone()
-                            }),
-                        ),
-                        ("submission-id".into(), claim.id.clone()),
-                        ("submission-revision".into(), claim.revision.clone()),
-                        ("submission-attempt".into(), claim.attempt.to_string()),
-                    ]),
-                    instructions: format!(
-                        "Integrate submitted Translation scope {} from its isolated worktree. Freeze merged source, run required verification, authenticate evidence and finish scoped cleanup before recording integrated completion.",
-                        submission.subject
-                    ),
-                    ticket: None,
-                };
+            if let WorkResult::Submitted { commit, .. } = &result {
+                let integration = admitted_integration_job(&entry.job, claim, commit)?;
                 ledger.integration_owner.get_or_insert_with(|| coordinator.to_owned());
                 refresh(ledger, &[integration])?;
             }
@@ -1075,6 +1136,34 @@ fn record(
     }
     let _ = root;
     Ok(())
+}
+
+/// The normal Submitted transition and managed recovery share this exact job
+/// derivation; callers cannot choose another integration scope or ticket.
+pub(crate) fn admitted_integration_job(submission: &Job, claim: &Claim, commit: &str) -> Result<Job> {
+    ensure!(
+        submission.kind == Kind::Implement && submission.id == claim.id && submission.revision == claim.revision,
+        "derived integration requires its exact original implementation"
+    );
+    Ok(Job {
+        id: format!("integrate-{}", submission.id),
+        revision: format!("{}-{}", claim.revision, claim.attempt),
+        kind: Kind::Integrate,
+        subject: format!("Integrate {}", submission.subject),
+        writable_paths: submission.writable_paths.clone(),
+        blockers: Vec::new(),
+        inputs: BTreeMap::from([
+            ("base-head".into(), submission.inputs.get("base-head").cloned().unwrap_or_else(|| commit.into())),
+            ("submission-id".into(), claim.id.clone()),
+            ("submission-revision".into(), claim.revision.clone()),
+            ("submission-attempt".into(), claim.attempt.to_string()),
+        ]),
+        instructions: format!(
+            "Integrate submitted Translation scope {} from its isolated worktree. Freeze merged source, run required verification, authenticate evidence and finish scoped cleanup before recording integrated completion.",
+            submission.subject
+        ),
+        ticket: None,
+    })
 }
 
 fn workspace(root: &Path, effort: &str, claim: &Claim, kind: &Kind) -> Workspace {
@@ -1124,6 +1213,7 @@ pub(crate) fn operate(request: Request) -> Result<Receipt> {
     let parent = path.parent().unwrap();
     ensure!(!parent.is_symlink(), "assignment effort cannot be a symlink");
     let _lock = if readonly { None } else { Some(mutation_lock(&root)?) };
+    crate::translation_migration_guard::fence_legacy_locked(&root, &request)?;
     let policy = if readonly {
         authority::read(&root)?
     } else {
@@ -1185,7 +1275,7 @@ pub(crate) fn operate(request: Request) -> Result<Receipt> {
         if integration {
             authority::validate_locked(&root, &request.effort, &request.coordinator, request.authority.as_ref(), true)?;
         }
-        record(&root, &request.checkout, &mut ledger, &request.coordinator, update, policy.is_some())?;
+        record(&root, &request.checkout, &mut ledger, &request.coordinator, update, policy.is_some(), None)?;
         for entry in ledger.jobs.values_mut() {
             retire_empty_verification(entry);
         }
@@ -1289,4 +1379,259 @@ pub(crate) fn operate(request: Request) -> Result<Receipt> {
         recovery,
         deferred,
     })
+}
+
+/// A trusted admission adapter calls this only while holding the shared
+/// mutation lock and after authenticating the prescribed evidence itself. The
+/// normal record transitions, ownership checks, authority bridge and ticket
+/// projections remain the queue contract. There is no public command accepting
+/// an arbitrary caller-supplied result through this route.
+pub(crate) fn record_admitted_locked(
+    request: &Request,
+    expected: &Claim,
+    frozen_inputs: Option<&FrozenJobInputs>,
+) -> Result<Receipt> {
+    ensure!(request.operation == "record" && request.jobs.is_empty(), "admitted queue operation must be one record");
+    let root = main_checkout(&request.checkout)?;
+    ensure!(root == request.checkout, "admitted result requires the canonical checkout");
+    let policy =
+        authority::validate_locked(&root, &request.effort, &request.coordinator, request.authority.as_ref(), true)?
+            .context("admitted result requires active fenced authority")?;
+    ensure!(
+        policy.state == "active" && request.capacity == policy.preparation.capacity,
+        "admitted result authority is inactive or capacity changed"
+    );
+    let bridge = authority::bridge(&policy, &root, true)?;
+    let path = root.join(format!(".scratch/{}/ledger.toml", request.effort));
+    let mut ledger = read_ledger(&path, request.capacity)?;
+    ledger.integration_owner = Some(authority::integrator(&policy).into());
+    let update = request.update.as_ref().context("admitted result update missing")?;
+    let actual = match update {
+        Update::Finished { claim, .. } | Update::Started { claim, .. } => claim,
+        _ => bail!("admitted record may only start derived integration or finish authenticated work"),
+    };
+    ensure!(actual == expected, "admitted record names another claim");
+    let entry = ledger.jobs.get(&actual.id).context("admitted result claim missing")?;
+    if let Some(frozen) = frozen_inputs {
+        ensure!(
+            matches!(update, Update::Finished { result: WorkResult::Submitted { .. }, .. }),
+            "frozen original inputs only authorize exact native submission recording"
+        );
+        authenticate_frozen_job_inputs(&root, &entry.job, frozen)?;
+    }
+    validate_resources(&root, &root, &entry.job)?;
+    authority::validate_mutation(&policy, &bridge, &request.effort, request, &ledger)?;
+    record(&root, &root, &mut ledger, &request.coordinator, update, true, frozen_inputs)?;
+    save(&path, &ledger)?;
+    let mut affected = BTreeSet::from([actual.id.clone()]);
+    if let Update::Finished { result: WorkResult::Submitted { .. }, .. } = update {
+        affected.insert(format!("integrate-{}", actual.id));
+    }
+    if let Update::Finished { result: WorkResult::Integrated { submissions, .. }, .. } = update {
+        affected.extend(submissions.iter().map(|submission| submission.id.clone()));
+    }
+    for id in affected {
+        let entry = ledger.jobs.get_mut(&id).context("admitted projection claim missing")?;
+        publish_ticket(&root, &request.effort, entry)?;
+        entry.projection_pending = false;
+    }
+    save(&path, &ledger)?;
+    Ok(Receipt {
+        status: "recorded".into(),
+        ledger: path,
+        jobs: ledger.jobs.into_values().collect(),
+        assignment: None,
+        recovery: vec![],
+        deferred: BTreeMap::new(),
+    })
+}
+
+/// Reserve only the integration job derived by the normal Submitted transition.
+/// The original implementation attempt stays intact; a generic queue selection
+/// cannot capture unrelated mutable work during deterministic publication.
+pub(crate) fn reserve_admitted_integration_locked(request: &Request, submission: &Claim) -> Result<Claim> {
+    let root = main_checkout(&request.checkout)?;
+    ensure!(
+        root == request.checkout && submission.coordinator == request.coordinator,
+        "admitted integration requires exact original integrator lineage"
+    );
+    let policy =
+        authority::validate_locked(&root, &request.effort, &request.coordinator, request.authority.as_ref(), true)?
+            .context("admitted integration requires managed authority")?;
+    ensure!(
+        policy.state == "active" && request.capacity == policy.preparation.capacity,
+        "admitted integration authority is inactive or capacity changed"
+    );
+    let bridge = authority::bridge(&policy, &root, true)?;
+    let path = root.join(format!(".scratch/{}/ledger.toml", request.effort));
+    let mut ledger = read_ledger(&path, request.capacity)?;
+    ledger.integration_owner = Some(authority::integrator(&policy).into());
+    let submitted = ledger.jobs.get(&submission.id).context("original admitted submission missing")?;
+    ensure!(
+        submitted.claim.as_ref() == Some(submission)
+            && submitted.pending_job.is_none()
+            && !submitted.stale
+            && matches!(submitted.state, State::Submitted | State::Complete)
+            && matches!(submitted.result, Some(WorkResult::Submitted { .. })),
+        "original admitted submission changed"
+    );
+    let id = format!("integrate-{}", submission.id);
+    let entry = ledger.jobs.get(&id).context("standard derived integration job missing")?;
+    ensure!(
+        entry.job.kind == Kind::Integrate
+            && entry.job.revision == format!("{}-{}", submission.revision, submission.attempt)
+            && entry.job.inputs.get("submission-id") == Some(&submission.id)
+            && entry.job.inputs.get("submission-revision") == Some(&submission.revision)
+            && entry.job.inputs.get("submission-attempt") == Some(&submission.attempt.to_string())
+            && entry.pending_job.is_none()
+            && !entry.stale,
+        "derived integration job no longer matches original submission"
+    );
+    if matches!(entry.state, State::Reserved | State::Running | State::Complete) {
+        let claim = entry.claim.as_ref().context("held derived integration lacks its claim")?;
+        ensure!(
+            claim.coordinator == request.coordinator
+                && claim.revision == entry.job.revision
+                && claim.attempt == entry.attempts,
+            "derived integration has another owner"
+        );
+        return Ok(claim.clone());
+    }
+    ensure!(entry.state == State::Ready && entry.claim.is_none(), "derived integration cannot be reserved");
+    let ledgers = read_ledgers(&root)?;
+    ensure!(
+        ledgers.values().flat_map(|ledger| ledger.jobs.values()).filter(|entry| active(&entry.state)).count()
+            < policy.preparation.capacity,
+        "shared assignment capacity is exhausted before derived integration"
+    );
+    ensure!(
+        repository_blocker(&request.effort, &entry.job, &ledgers).is_none()
+            && authority::held_reason(&policy, &bridge, &request.effort, &entry.job, request.authority.as_ref())
+                .is_none()
+            && blocker_reason(&root, &ledger, entry)?.is_none(),
+        "derived integration ownership is blocked"
+    );
+    let entry = ledger.jobs.get_mut(&id).unwrap();
+    entry.attempts += 1;
+    let claim = Claim {
+        id,
+        revision: entry.job.revision.clone(),
+        attempt: entry.attempts,
+        coordinator: request.coordinator.clone(),
+    };
+    entry.claim = Some(claim.clone());
+    entry.state = State::Reserved;
+    entry.projection_pending = true;
+    save(&path, &ledger)?;
+    publish_ticket(&root, &request.effort, &ledger.jobs[&claim.id])?;
+    ledger.jobs.get_mut(&claim.id).unwrap().projection_pending = false;
+    save(&path, &ledger)?;
+    Ok(claim)
+}
+
+pub(crate) fn repair_admitted_tickets_locked(request: &Request, claims: &[Claim]) -> Result<Vec<PathBuf>> {
+    let root = main_checkout(&request.checkout)?;
+    authority::validate_locked(&root, &request.effort, &request.coordinator, request.authority.as_ref(), true)?;
+    let path = root.join(format!(".scratch/{}/ledger.toml", request.effort));
+    let mut ledger = read_ledger(&path, request.capacity)?;
+    let mut tickets = vec![];
+    let mut changed = false;
+    for claim in claims {
+        let entry = ledger.jobs.get_mut(&claim.id).context("accepted ticket claim missing")?;
+        ensure!(
+            entry.claim.as_ref() == Some(claim) && entry.state == State::Complete,
+            "accepted ticket lineage changed"
+        );
+        if authenticate_admitted_ticket(&root, &request.effort, entry).is_err() {
+            entry.projection_pending = true;
+            publish_ticket(&root, &request.effort, entry)?;
+            entry.projection_pending = false;
+            changed = true;
+        }
+        tickets.push(root.join(ticket_path(&request.effort, &entry.job)));
+    }
+    if changed {
+        save(&path, &ledger)?;
+    }
+    Ok(tickets)
+}
+
+pub(crate) fn admitted_ticket_path(root: &Path, effort: &str, job: &Job) -> PathBuf {
+    root.join(ticket_path(effort, job))
+}
+
+pub(crate) fn authenticate_admitted_ticket(root: &Path, effort: &str, entry: &Entry) -> Result<()> {
+    validate_resources(root, root, &entry.job)?;
+    let text = ticket_text(root, &ticket_path(effort, &entry.job))?.context("accepted ticket projection missing")?;
+    ensure!(
+        field(&text, "Status:") == Some(published_status(entry))
+            && text.contains(&marker(&entry.job))
+            && text.contains(&publication_details(entry)?),
+        "accepted ticket projection changed"
+    );
+    Ok(())
+}
+
+/// Controller dirt is restricted to the normal rendered ticket for a known
+/// lifecycle. An existing original ticket keeps its exact human prose; a new
+/// derived ticket must match the normal generated content byte for byte.
+pub(crate) fn validate_admitted_ticket_projection(
+    root: &Path,
+    effort: &str,
+    entry: &Entry,
+    original: Option<&str>,
+) -> Result<()> {
+    let Some(current) = ticket_text(root, &ticket_path(effort, &entry.job))? else {
+        return Ok(());
+    };
+    ensure!(
+        current == admitted_ticket_text(entry, original)?,
+        "controller ticket projection contains unrelated or changed bytes"
+    );
+    Ok(())
+}
+
+fn admitted_ticket_text(entry: &Entry, original: Option<&str>) -> Result<String> {
+    let mark = marker(&entry.job);
+    let status = published_status(entry);
+    let details = publication_details(entry)?;
+    let expected = if let Some(original) = original {
+        if original.contains(&mark) {
+            with_details(&replace_status(original, status), &details)
+        } else {
+            with_details(&format!("{}\n{mark}\n", replace_status(original, status)), &details)
+        }
+    } else {
+        let text = format!(
+            "# {}\n\nStatus: {status}\nBlocked by: None\nTriage: ready-for-agent\nType: task\n\n{mark}\n\nStable work: `{}`\nInput revision: `{}`\n\n## Assignment\n\n{}\n\n## Completion evidence\n\nLifecycle and sealed result pointers are authoritative in `../ledger.toml`.\n",
+            entry.job.subject, entry.job.id, entry.job.revision, entry.job.instructions
+        );
+        with_details(&text, &details)
+    };
+    Ok(expected)
+}
+
+/// A crash may leave any earlier exact normal ticket rendering while the
+/// authoritative queue has advanced. Accept only renderings from the sealed
+/// original and the controller's known publication lifecycle.
+pub(crate) fn validate_admitted_ticket_lifecycle(
+    root: &Path,
+    effort: &str,
+    entries: &[Entry],
+    original: Option<&str>,
+) -> Result<()> {
+    let entry = entries.first().context("managed ticket lifecycle missing")?;
+    ensure!(entries.iter().all(|candidate| candidate.job == entry.job), "managed ticket lifecycle job changed");
+    let Some(current) = ticket_text(root, &ticket_path(effort, &entry.job))? else {
+        return Ok(());
+    };
+    if original == Some(&current) {
+        return Ok(());
+    }
+    for entry in entries {
+        if current == admitted_ticket_text(entry, original)? {
+            return Ok(());
+        }
+    }
+    bail!("controller ticket differs from every exact authenticated lifecycle rendering")
 }

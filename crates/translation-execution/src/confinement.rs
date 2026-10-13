@@ -18,14 +18,16 @@ use std::{
     time::{Duration, Instant},
 };
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
 pub struct ReadOnlyBind {
     pub source: PathBuf,
     pub destination: PathBuf,
 }
 
 /// Constructed by installed execution adapters, never by rewrite responses.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
 pub struct Program {
     pub executable: PathBuf,
     pub arguments: Vec<String>,
@@ -36,7 +38,8 @@ pub struct Program {
     pub outputs: Vec<PathBuf>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
 pub struct RunLimits {
     pub timeout: Duration,
     pub writable_bytes: u64,
@@ -62,6 +65,14 @@ struct HelperLimits {
 }
 
 const MAGIC: &[u8; 8] = b"SMTX0001";
+
+fn bounded_text(value: &str, maximum: usize) -> &str {
+    let mut end = value.len().min(maximum);
+    while !value.is_char_boundary(end) {
+        end -= 1;
+    }
+    &value[..end]
+}
 
 fn relative(path: &Path) -> bool {
     !path.as_os_str().is_empty() && path.components().all(|c| matches!(c, Component::Normal(_)))
@@ -94,7 +105,7 @@ fn validate(program: &Program, limits: &RunLimits, input: &[u8]) -> Result<()> {
             "unsafe sandbox bind destination"
         );
         ensure!(
-            !["/work", "/tmp", "/proc", "/dev", "/program", "/trusted-helper"]
+            !["/work", "/tmp", "/proc", "/dev", "/program", "/trusted-helper", "/quota-proc"]
                 .iter()
                 .any(|p| bind.destination.starts_with(p)),
             "reserved sandbox destination"
@@ -162,6 +173,18 @@ pub fn compiler_runtime(rustc: &Path) -> Result<Vec<ReadOnlyBind>> {
 
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
 pub fn run(program: &Program, limits: &RunLimits, input: &[u8]) -> Result<RunOutput> {
+    run_observed(program, limits, input, |_| Ok(()))
+}
+
+/// The durable host runner records the exact namespace owner before waiting
+/// for its result. Candidate code never receives this callback or host state.
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+pub(crate) fn run_observed(
+    program: &Program,
+    limits: &RunLimits,
+    input: &[u8],
+    observed: impl FnOnce(u32) -> Result<()>,
+) -> Result<RunOutput> {
     use std::os::unix::process::CommandExt;
     validate(program, limits, input)?;
     let quota = limits.writable_bytes / 4096 * 4096;
@@ -186,7 +209,7 @@ pub fn run(program: &Program, limits: &RunLimits, input: &[u8]) -> Result<RunOut
             "CAP_SETPCAP",
             "--die-with-parent",
         ])
-        .args(["--dir", "/work", "--dir", "/dev"])
+        .args(["--dir", "/work", "--dir", "/dev", "--dir", "/quota-proc"])
         .args(["--ro-bind", "/dev/null", "/dev/null", "--ro-bind", "/dev/urandom", "/dev/urandom"])
         .arg("--ro-bind")
         .arg(&program.helper)
@@ -208,11 +231,14 @@ pub fn run(program: &Program, limits: &RunLimits, input: &[u8]) -> Result<RunOut
             "PATH",
             "/nonexistent",
             "--setenv",
+            "CARGO_HOME",
+            "/work/tmp/cargo-home",
+            "--setenv",
             "TMPDIR",
             "/work/tmp",
             "--setenv",
             "HOME",
-            "/nonexistent",
+            "/work/tmp/home",
             "--chdir",
             "/work",
             "--",
@@ -235,6 +261,14 @@ pub fn run(program: &Program, limits: &RunLimits, input: &[u8]) -> Result<RunOut
     }
     let mut child = command.spawn().context("cannot establish sandbox namespaces")?;
     let pid = child.id();
+    if let Err(error) = observed(pid) {
+        unsafe {
+            libc::kill(-(pid as i32), libc::SIGKILL);
+        }
+        let _ = child.kill();
+        let _ = child.wait();
+        return Err(error);
+    }
     let mut input_pipe = child.stdin.take().context("sandbox stdin missing")?;
     let output_pipe = child.stdout.take().context("sandbox stdout missing")?;
     let error_pipe = child.stderr.take().context("sandbox stderr missing")?;
@@ -244,7 +278,13 @@ pub fn run(program: &Program, limits: &RunLimits, input: &[u8]) -> Result<RunOut
         .context("sandbox wire budget overflow")?;
     let started = Instant::now();
     let result = std::thread::scope(|scope| -> Result<RunOutput> {
-        let send = scope.spawn(move || input_pipe.write_all(input));
+        let send = scope.spawn(move || {
+            // No candidate can begin before the durable namespace identity
+            // callback succeeds. The helper consumes this trusted launch byte;
+            // candidate stdin receives only the original bounded request.
+            input_pipe.write_all(b"S")?;
+            input_pipe.write_all(input)
+        });
         let read = |mut pipe: Box<dyn Read + Send>, limit: usize, exceeded: Arc<AtomicBool>| {
             let mut out = Vec::new();
             let mut buffer = [0u8; 8192];
@@ -359,6 +399,12 @@ fn errno(result: i32, operation: &str) -> Result<()> {
 
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
 fn restrict_child(writable_bytes: u64) -> Result<()> {
+    // The helper already has its executable mapped. Remove its host controller
+    // image from the namespace before candidate exec and capability dropping.
+    errno(unsafe { libc::umount2(c"/trusted-helper".as_ptr(), libc::MNT_DETACH) }, "hide trusted controller helper")?;
+    // The trusted observer retains its own detached proc directory descriptor.
+    // The candidate namespace cannot see proc, including observer descriptors.
+    errno(unsafe { libc::umount2(c"/quota-proc".as_ptr(), libc::MNT_DETACH) }, "hide trusted quota observation")?;
     // The trusted helper observes quota errors, including errors a producer
     // deliberately ignores before deleting temporary files and returning zero.
     errno(unsafe { libc::ptrace(libc::PTRACE_TRACEME, 0, 0, 0) as i32 }, "establish quota-error observation")?;
@@ -447,6 +493,18 @@ fn restrict_child(writable_bytes: u64) -> Result<()> {
         libc::SYS_move_mount,
         libc::SYS_open_tree,
         libc::SYS_mount_setattr,
+        // Asynchronous IO hides write/quota results from syscall-exit tracing.
+        // Installed compilers use ordinary traced IO; candidates cannot create
+        // an alternative, unobserved output producer.
+        libc::SYS_io_uring_setup,
+        libc::SYS_io_uring_enter,
+        libc::SYS_io_uring_register,
+        libc::SYS_io_setup,
+        libc::SYS_io_submit,
+        // Anonymous file-backed output would use a different tmpfs superblock
+        // and escape both this mount's quota and its inode extent observer.
+        libc::SYS_memfd_create,
+        libc::SYS_shmget,
     ];
     for syscall in forbidden {
         filter.push(jump(syscall as u32, 0, 1));
@@ -460,8 +518,94 @@ fn restrict_child(writable_bytes: u64) -> Result<()> {
 }
 
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
-fn wait_traced(pid: u32) -> Result<ExitStatus> {
+fn wait_traced(pid: u32, writable_bytes: u64, proc: &File, logs: &[File]) -> Result<ExitStatus> {
     use std::os::unix::process::ExitStatusExt;
+    use std::os::unix::{
+        fs::MetadataExt,
+        io::{AsRawFd, FromRawFd},
+    };
+    // Directories and regular file extents are observed before any mutating
+    // syscall resumes. Inodes deduplicate hard links and unlinked open files;
+    // the trusted log files count even though they have no directory entry.
+    let work_device = fs::metadata("/work")?.dev();
+    let mut observed = BTreeSet::from([pid as i32]);
+    fn extent(path: &Path, device: u64, files: &mut BTreeMap<(u64, u64), u64>, count: &mut usize) -> Result<()> {
+        for entry in fs::read_dir(path)? {
+            let entry = entry?;
+            *count += 1;
+            ensure!(*count <= 65536, "sandbox output inode budget exceeded");
+            let metadata = entry.path().symlink_metadata()?;
+            if metadata.is_file() && metadata.dev() == device {
+                files.insert((metadata.dev(), metadata.ino()), metadata.len());
+            } else if metadata.is_dir() {
+                extent(&entry.path(), device, files, count)?;
+            }
+        }
+        Ok(())
+    }
+    let inspect = |observed: &BTreeSet<i32>| -> Result<()> {
+        let mut files = BTreeMap::new();
+        extent(Path::new("/work"), work_device, &mut files, &mut 0)?;
+        for log in logs {
+            let metadata = log.metadata()?;
+            files.insert((metadata.dev(), metadata.ino()), metadata.len());
+        }
+        for pid in observed {
+            let directory = std::ffi::CString::new(format!("{pid}/fd"))?;
+            let descriptor = unsafe {
+                libc::openat(proc.as_raw_fd(), directory.as_ptr(), libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC)
+            };
+            if descriptor < 0 {
+                let error = std::io::Error::last_os_error();
+                if error.raw_os_error() == Some(libc::ENOENT) {
+                    continue;
+                }
+                return Err(error).with_context(|| format!("observe candidate descriptor directory for pid {pid}"));
+            }
+            let owned = unsafe { File::from_raw_fd(descriptor) };
+            let stream = unsafe { libc::fdopendir(libc::dup(owned.as_raw_fd())) };
+            ensure!(!stream.is_null(), "cannot inspect owned candidate file descriptors");
+            loop {
+                let entry = unsafe { libc::readdir(stream) };
+                if entry.is_null() {
+                    break;
+                }
+                let name = unsafe { std::ffi::CStr::from_ptr((*entry).d_name.as_ptr()) };
+                if name.to_bytes() == b"." || name.to_bytes() == b".." {
+                    continue;
+                }
+                let mut metadata = std::mem::MaybeUninit::<libc::stat>::uninit();
+                if unsafe { libc::fstatat(owned.as_raw_fd(), name.as_ptr(), metadata.as_mut_ptr(), 0) } == 0 {
+                    let metadata = unsafe { metadata.assume_init() };
+                    if metadata.st_dev == work_device && metadata.st_mode & libc::S_IFMT == libc::S_IFREG {
+                        files.insert((metadata.st_dev, metadata.st_ino), u64::try_from(metadata.st_size)?);
+                    }
+                } else {
+                    let error = std::io::Error::last_os_error();
+                    // A disappearing descriptor is a normal close/exit race.
+                    // Denied metadata cannot establish its output extent.
+                    if !matches!(error.raw_os_error(), Some(libc::ENOENT | libc::ESRCH)) {
+                        unsafe {
+                            libc::closedir(stream);
+                        }
+                        return Err(error)
+                            .with_context(|| format!("observe candidate descriptor extent for pid {pid}"));
+                    }
+                }
+            }
+            unsafe {
+                libc::closedir(stream);
+            }
+        }
+        let bytes = files
+            .values()
+            .try_fold(0u64, |sum, value| sum.checked_add(*value).context("sandbox logical extent overflow"))?;
+        ensure!(bytes <= writable_bytes, "aggregate sandbox logical output extent budget exhausted");
+        Ok(())
+    };
+    // Only syscalls that can grow output trigger the namespace inode walk.
+    // The kernel tmpfs quota independently enforces all allocated data pages.
+    let mut mutations = BTreeMap::<i32, bool>::new();
     let mut status = 0;
     loop {
         let result = unsafe { libc::waitpid(pid as i32, &mut status, libc::__WALL) };
@@ -488,6 +632,8 @@ fn wait_traced(pid: u32) -> Result<ExitStatus> {
             bail!("candidate quota observer lost process ownership");
         }
         if libc::WIFEXITED(status) || libc::WIFSIGNALED(status) {
+            observed.remove(&stopped);
+            mutations.remove(&stopped);
             if stopped == pid as i32 {
                 return Ok(ExitStatus::from_raw(status));
             }
@@ -515,9 +661,48 @@ fn wait_traced(pid: u32) -> Result<ExitStatus> {
                     "aggregate sandbox quota exhausted during production"
                 );
             }
+            if info[0] == 1 {
+                let syscall = u64::from_ne_bytes(info[24..32].try_into()?);
+                let mutating = [
+                    libc::SYS_write,
+                    libc::SYS_writev,
+                    libc::SYS_pwrite64,
+                    libc::SYS_pwritev,
+                    libc::SYS_pwritev2,
+                    libc::SYS_truncate,
+                    libc::SYS_ftruncate,
+                    libc::SYS_fallocate,
+                    libc::SYS_copy_file_range,
+                    libc::SYS_splice,
+                    libc::SYS_sendfile,
+                    libc::SYS_open,
+                    libc::SYS_openat,
+                    libc::SYS_openat2,
+                    libc::SYS_mkdir,
+                    libc::SYS_mkdirat,
+                ]
+                .iter()
+                .any(|number| *number as u64 == syscall);
+                mutations.insert(stopped, mutating);
+                if mutating {
+                    inspect(&observed)?;
+                }
+            } else if info[0] == 2 && mutations.remove(&stopped).unwrap_or(false) {
+                inspect(&observed)?;
+            }
         } else if signal != libc::SIGTRAP && signal != libc::SIGSTOP {
             ensure!(signal != libc::SIGXFSZ, "sandbox file extent budget exhausted during production");
             deliver = signal;
+        }
+        let event = status >> 16;
+        if [libc::PTRACE_EVENT_FORK, libc::PTRACE_EVENT_VFORK, libc::PTRACE_EVENT_CLONE].contains(&event) {
+            let mut child = 0u64;
+            errno(
+                unsafe { libc::ptrace(libc::PTRACE_GETEVENTMSG, stopped, 0, &mut child) as i32 },
+                "observe candidate descendant",
+            )?;
+            observed.insert(i32::try_from(child)?);
+            ensure!(observed.len() <= 512, "sandbox descendant count budget exhausted");
         }
         let resumed = unsafe { libc::ptrace(libc::PTRACE_SYSCALL, stopped, 0, deliver) };
         if resumed < 0 && std::io::Error::last_os_error().raw_os_error() != Some(libc::ESRCH) {
@@ -535,6 +720,18 @@ pub fn helper_main() -> Result<()> {
     let args = std::env::args().skip(1).collect::<Vec<_>>();
     ensure!(args.len() >= 2 && args[1] == "--", "invalid trusted sandbox helper request");
     let config: HelperLimits = serde_json::from_str(&args[0])?;
+    let mut launch = [0u8; 1];
+    // Use an unbuffered one-byte read: a Stdin buffer could consume capsule
+    // bytes that the child must inherit on the original descriptor.
+    loop {
+        let count = unsafe { libc::read(libc::STDIN_FILENO, launch.as_mut_ptr().cast(), 1) };
+        if count < 0 && std::io::Error::last_os_error().raw_os_error() == Some(libc::EINTR) {
+            continue;
+        }
+        ensure!(count == 1, "trusted launch identity handshake incomplete");
+        break;
+    }
+    ensure!(launch == *b"S", "invalid trusted launch identity handshake");
     ensure!(
         config.writable_bytes >= 4096 && config.writable_bytes.is_multiple_of(4096),
         "invalid aggregate sandbox quota"
@@ -564,6 +761,21 @@ pub fn helper_main() -> Result<()> {
         "establish aggregate tmpfs quota",
     )?;
     fs::create_dir("/work/tmp")?;
+    fs::create_dir("/work/tmp/home")?;
+    fs::create_dir("/work/tmp/cargo-home")?;
+    errno(
+        unsafe {
+            libc::mount(
+                c"proc".as_ptr(),
+                c"/quota-proc".as_ptr(),
+                c"proc".as_ptr(),
+                libc::MS_NOSUID | libc::MS_NODEV | libc::MS_NOEXEC,
+                std::ptr::null(),
+            )
+        },
+        "establish trusted logical output observation",
+    )?;
+    let quota_proc = File::open("/quota-proc")?;
     std::env::set_current_dir("/work")?;
     let log = |name: &str| -> Result<File> {
         let file = OpenOptions::new().read(true).write(true).create_new(true).open(name)?;
@@ -587,7 +799,8 @@ pub fn helper_main() -> Result<()> {
         .env_clear()
         .env("PATH", "/nonexistent")
         .env("TMPDIR", "/work/tmp")
-        .env("HOME", "/nonexistent")
+        .env("HOME", "/work/tmp/home")
+        .env("CARGO_HOME", "/work/tmp/cargo-home")
         .env("LD_LIBRARY_PATH", "/toolchain/lib")
         .stdin(Stdio::inherit())
         .stdout(stdout_write)
@@ -619,10 +832,11 @@ pub fn helper_main() -> Result<()> {
     };
     let stdout_log = stdout.try_clone()?;
     let stderr_log = stderr.try_clone()?;
+    let quota_logs = [stdout.try_clone()?, stderr.try_clone()?];
     let (observed, stdout_result, stderr_result) = std::thread::scope(|scope| {
         let stdout = scope.spawn(|| drain(stdout_read, stdout_log, config.stdout_bytes));
         let stderr = scope.spawn(|| drain(stderr_read, stderr_log, config.stderr_bytes));
-        let result = wait_traced(child.id());
+        let result = wait_traced(child.id(), config.writable_bytes, &quota_proc, &quota_logs);
         // pid1 and self are excluded. Kill before joining output pipes so a
         // detached writer cannot keep a drain or the controller alive.
         unsafe {
@@ -660,7 +874,6 @@ pub fn helper_main() -> Result<()> {
     };
     let stdout = read(&mut stdout, config.stdout_bytes as u64)?;
     let stderr = read(&mut stderr, config.stderr_bytes as u64)?;
-    let mut outputs = Vec::new();
     let allowed = config.outputs.iter().cloned().collect::<BTreeSet<_>>();
     fn validate_tree(path: &Path, allowed: &BTreeSet<PathBuf>) -> Result<()> {
         for entry in fs::read_dir(path)? {
@@ -674,35 +887,54 @@ pub fn helper_main() -> Result<()> {
                 ensure!(
                     m.is_file() && allowed.contains(p.strip_prefix("/work")?),
                     "undeclared sandbox output: {}",
-                    p.display()
+                    bounded_text(&p.to_string_lossy(), 512)
                 );
             }
         }
         Ok(())
     }
-    for entry in fs::read_dir("/work")? {
-        let p = entry?.path();
-        if p == Path::new("/work/tmp") {
-            continue;
+    let outputs = (|| -> Result<Vec<Vec<u8>>> {
+        for entry in fs::read_dir("/work")? {
+            let p = entry?.path();
+            if p == Path::new("/work/tmp") {
+                continue;
+            }
+            let m = p.symlink_metadata()?;
+            if m.is_dir() {
+                validate_tree(&p, &allowed)?;
+            } else {
+                ensure!(
+                    m.is_file() && allowed.contains(p.strip_prefix("/work")?),
+                    "undeclared sandbox output: {}",
+                    bounded_text(&p.to_string_lossy(), 512)
+                );
+            }
         }
-        let m = p.symlink_metadata()?;
-        if m.is_dir() {
-            validate_tree(&p, &allowed)?;
-        } else {
-            ensure!(m.is_file() && allowed.contains(p.strip_prefix("/work")?), "undeclared sandbox output");
+        let mut outputs = Vec::new();
+        for relative in &config.outputs {
+            let path = Path::new("/work").join(relative);
+            let meta = path.symlink_metadata().with_context(|| {
+                format!("cannot inspect declared sandbox output: {}", bounded_text(&path.to_string_lossy(), 512))
+            })?;
+            ensure!(
+                meta.is_file() && !meta.file_type().is_symlink(),
+                "declared sandbox output is not regular: {}",
+                bounded_text(&path.to_string_lossy(), 512)
+            );
+            let mut file = File::open(&path)?;
+            outputs.push(read(&mut file, config.writable_bytes)?);
         }
-    }
-    for path in &config.outputs {
-        let path = Path::new("/work").join(path);
-        let meta = path.symlink_metadata()?;
-        ensure!(meta.is_file() && !meta.file_type().is_symlink(), "declared sandbox output is not regular");
-        let mut file = File::open(&path)?;
-        outputs.push(read(&mut file, config.writable_bytes)?);
-    }
-    let mut stat = std::mem::MaybeUninit::<libc::statfs>::uninit();
-    errno(unsafe { libc::statfs(c"/work".as_ptr(), stat.as_mut_ptr()) }, "inspect sandbox quota")?;
-    let stat = unsafe { stat.assume_init() };
-    ensure!(stat.f_bavail > 0, "aggregate sandbox quota exhausted");
+        let mut stat = std::mem::MaybeUninit::<libc::statfs>::uninit();
+        errno(unsafe { libc::statfs(c"/work".as_ptr(), stat.as_mut_ptr()) }, "inspect sandbox quota")?;
+        let stat = unsafe { stat.assume_init() };
+        ensure!(stat.f_bavail > 0, "aggregate sandbox quota exhausted");
+        Ok(outputs)
+    })()
+    .map_err(|error| {
+        let detail = format!("{error:#}");
+        let stderr = String::from_utf8_lossy(&stderr[..stderr.len().min(2048)]);
+        anyhow::anyhow!("{}; candidate stderr: {}", bounded_text(&detail, 2048), bounded_text(&stderr, 1536))
+    })?;
     let mut out = std::io::stdout().lock();
     out.write_all(MAGIC)?;
     out.write_all(&status.into_raw().to_le_bytes())?;

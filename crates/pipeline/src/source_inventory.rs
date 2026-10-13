@@ -1,6 +1,7 @@
 //! Lexical C definition/dependency discovery; this never grants translation admission.
-use crate::{digest, family};
-use anyhow::{Result, ensure};
+use crate::{family, inputs::bounded};
+use anyhow::{Context, Result, ensure};
+use bounded::digest;
 use serde::Serialize;
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -24,10 +25,25 @@ struct Routine {
     translation_status: String,
 }
 pub(crate) fn clean(text: &str) -> Vec<u8> {
+    clean_with(text, &mut || Ok(())).expect("unbounded lexical cleanup is infallible")
+}
+
+pub(crate) fn clean_bounded(text: &str) -> Result<Vec<u8>> {
+    ensure!(text.len() as u64 <= bounded::MAX_DOCUMENT_BYTES, "lexical C source extent exceeded");
+    clean_with(text, &mut bounded::check)
+}
+
+fn clean_with(text: &str, check: &mut impl FnMut() -> Result<()>) -> Result<Vec<u8>> {
+    check()?;
     let bytes = text.as_bytes();
     let mut result = bytes.to_vec();
     let mut i = 0;
+    let mut next_check = 0;
     while i < bytes.len() {
+        if i >= next_check {
+            check()?;
+            next_check = i + 64 * 1024;
+        }
         let end = if bytes[i..].starts_with(b"/*") {
             bytes[i + 2..].windows(2).position(|v| v == b"*/").map(|p| i + 4 + p).unwrap_or(bytes.len())
         } else if bytes[i..].starts_with(b"//") {
@@ -36,6 +52,9 @@ pub(crate) fn clean(text: &str) -> Vec<u8> {
             let quote = bytes[i];
             let mut j = i + 1;
             while j < bytes.len() {
+                if j.is_multiple_of(64 * 1024) {
+                    check()?;
+                }
                 if bytes[j] == b'\\' {
                     j += 2;
                 } else if bytes[j] == quote {
@@ -61,19 +80,40 @@ pub(crate) fn clean(text: &str) -> Vec<u8> {
     // must not supply the name of the first function body later in the file.
     let mut continuation = false;
     for line in result.split_mut(|value| *value == b'\n') {
+        check()?;
         let directive = continuation || line.iter().find(|value| !value.is_ascii_whitespace()) == Some(&b'#');
         continuation = directive && line.iter().rfind(|value| !value.is_ascii_whitespace()) == Some(&b'\\');
         if directive {
             line.fill(b' ');
         }
     }
-    result
+    check()?;
+    Ok(result)
 }
 pub(crate) fn names(bytes: &[u8]) -> (Vec<String>, Vec<String>) {
+    names_with(bytes, usize::MAX, &mut || Ok(())).expect("unbounded lexical name discovery is infallible")
+}
+
+pub(crate) fn names_bounded(bytes: &[u8]) -> Result<(Vec<String>, Vec<String>)> {
+    ensure!(bytes.len() as u64 <= bounded::MAX_DOCUMENT_BYTES, "lexical C definition extent exceeded");
+    names_with(bytes, 65536, &mut bounded::check)
+}
+
+fn names_with(
+    bytes: &[u8],
+    maximum: usize,
+    check: &mut impl FnMut() -> Result<()>,
+) -> Result<(Vec<String>, Vec<String>)> {
+    check()?;
     let mut calls = BTreeSet::new();
     let mut indexed = BTreeSet::new();
     let mut i = 0;
+    let mut next_check = 0;
     while i < bytes.len() {
+        if i >= next_check {
+            check()?;
+            next_check = i + 64 * 1024;
+        }
         if !(bytes[i].is_ascii_alphabetic() || bytes[i] == b'_') {
             i += 1;
             continue;
@@ -81,11 +121,17 @@ pub(crate) fn names(bytes: &[u8]) -> (Vec<String>, Vec<String>) {
         let start = i;
         i += 1;
         while i < bytes.len() && (bytes[i].is_ascii_alphanumeric() || bytes[i] == b'_') {
+            if i.is_multiple_of(64 * 1024) {
+                check()?;
+            }
             i += 1;
         }
         let name = String::from_utf8_lossy(&bytes[start..i]).into_owned();
         let mut after = i;
         while after < bytes.len() && bytes[after].is_ascii_whitespace() {
+            if after.is_multiple_of(64 * 1024) {
+                check()?;
+            }
             after += 1;
         }
         if bytes.get(after) == Some(&b'(')
@@ -94,11 +140,17 @@ pub(crate) fn names(bytes: &[u8]) -> (Vec<String>, Vec<String>) {
             calls.insert(name);
         } else if bytes.get(after) == Some(&b'[') {
             while after < bytes.len() && !b";{}]".contains(&bytes[after]) {
+                if after.is_multiple_of(64 * 1024) {
+                    check()?;
+                }
                 after += 1;
             }
             if bytes.get(after) == Some(&b']') {
                 after += 1;
                 while after < bytes.len() && bytes[after].is_ascii_whitespace() {
+                    if after.is_multiple_of(64 * 1024) {
+                        check()?;
+                    }
                     after += 1;
                 }
                 if bytes.get(after) == Some(&b'(') {
@@ -106,25 +158,37 @@ pub(crate) fn names(bytes: &[u8]) -> (Vec<String>, Vec<String>) {
                 }
             }
         }
+        ensure!(calls.len() + indexed.len() <= maximum, "lexical C dependency inventory exceeded");
     }
-    (calls.into_iter().collect(), indexed.into_iter().collect())
+    check()?;
+    Ok((calls.into_iter().collect(), indexed.into_iter().collect()))
 }
 pub(crate) fn run(root: &Path, source: &Path, output: &Path) -> Result<()> {
+    bounded::limited(|| run_bounded(root, source, output))
+}
+
+pub(crate) fn run_until(root: &Path, source: &Path, output: &Path, deadline: u64, max_bytes: u64) -> Result<()> {
+    bounded::until(deadline, max_bytes, || run_bounded(root, source, output))
+}
+
+fn run_bounded(root: &Path, source: &Path, output: &Path) -> Result<()> {
     let identity = family::verify_source(root, source)?;
     let mut routines = Vec::new();
-    let mut paths = fs::read_dir(source.join("src"))?.map(|e| Ok(e?.path())).collect::<Result<Vec<_>>>()?;
-    paths.sort();
+    let paths = bounded::entries(&source.join("src"))?;
     for path in paths {
+        bounded::check()?;
         if path.extension().is_none_or(|e| e != "c")
             || path.file_stem().is_none_or(|n| !n.to_string_lossy().starts_with("sm_"))
         {
             continue;
         }
-        let text = fs::read_to_string(&path)?;
+        let text = bounded::text(&path)?;
         routines.extend(definitions(&text, &path.strip_prefix(source)?.to_string_lossy())?);
+        ensure!(routines.len() <= 65536, "source definition inventory exceeded");
     }
     let symbols = routines.iter().map(|r| r.symbol.clone()).collect::<BTreeSet<_>>();
     for routine in &mut routines {
+        bounded::check()?;
         routine.defined_dependencies = routine.calls.iter().filter(|c| symbols.contains(*c)).cloned().collect();
         routine.external_or_macro_calls = routine.calls.iter().filter(|c| !symbols.contains(*c)).cloned().collect();
     }
@@ -135,6 +199,7 @@ pub(crate) fn run(root: &Path, source: &Path, output: &Path) -> Result<()> {
     }
     let mut banks = BTreeMap::new();
     for routine in &routines {
+        bounded::check()?;
         let bank = banks.entry(routine.source.clone()).or_insert(Bank { definitions: 0, body_lines: 0 });
         bank.definitions += 1;
         bank.body_lines += routine.body_lines;
@@ -149,19 +214,24 @@ pub(crate) fn run(root: &Path, source: &Path, output: &Path) -> Result<()> {
         banks: BTreeMap<String, Bank>,
         routines: Vec<Routine>,
     }
-    fs::create_dir_all(output.parent().unwrap())?;
+    bounded::safe(output)?;
+    fs::create_dir_all(output.parent().context("source inventory output parent missing")?)?;
     let report=Inventory{schema_version:1,scope:"actual sm_*.c lexical definitions/calls; macros, externals and indirect calls require review; no acceptance inferred".into(),
         source_identity:identity,source_identity_sha256:digest(&root.join("tools/dependencies.toml"))?,definition_count:routines.len(),banks,routines};
-    pipeline_model::write(output, &report)?;
+    ensure!(output.extension().is_some_and(|extension| extension == "toml"), "new pipeline metadata must use .toml");
+    bounded::write(output, toml::to_string_pretty(&report)?.as_bytes())?;
     println!("Indexed {} definitions: {}", report.definition_count, output.display());
     Ok(())
 }
 fn definitions(text: &str, source: &str) -> Result<Vec<Routine>> {
+    bounded::check()?;
+    ensure!(text.len() as u64 <= bounded::MAX_DOCUMENT_BYTES, "C definition source extent exceeded");
     let mut routines = Vec::new();
-    let bytes = clean(text);
+    let bytes = clean_bounded(text)?;
     let mut offset = 0;
     let mut body_end = 0;
     for line in text.split_inclusive('\n') {
+        bounded::check()?;
         let end = offset + line.len();
         if offset < body_end || bytes[offset..end].iter().all(|value| value.is_ascii_whitespace()) {
             offset = end;
@@ -192,6 +262,9 @@ fn definitions(text: &str, source: &str) -> Result<Vec<Routine>> {
                 let mut cursor = start + 1;
                 let mut depth = 1;
                 while cursor < bytes.len() && depth > 0 {
+                    if cursor.is_multiple_of(64 * 1024) {
+                        bounded::check()?;
+                    }
                     if bytes[cursor] == b'{' {
                         depth += 1;
                     } else if bytes[cursor] == b'}' {
@@ -201,7 +274,7 @@ fn definitions(text: &str, source: &str) -> Result<Vec<Routine>> {
                 }
                 ensure!(depth == 0, "unbalanced C definition {source}:{symbol}");
                 body_end = cursor;
-                let (calls, indirect) = names(&bytes[start..cursor]);
+                let (calls, indirect) = names_bounded(&bytes[start..cursor])?;
                 let opening_line = text[start..].split('\n').next().unwrap_or("");
                 let address = opening_line
                     .find("//")
@@ -227,6 +300,7 @@ fn definitions(text: &str, source: &str) -> Result<Vec<Routine>> {
                     external_or_macro_calls: vec![],
                     translation_status: "unverified".into(),
                 });
+                ensure!(routines.len() <= 65536, "C definition inventory exceeded");
             }
         }
         offset = end;
@@ -236,6 +310,36 @@ fn definitions(text: &str, source: &str) -> Result<Vec<Routine>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn fallible_lexical_readers_preserve_facts_and_honor_inherited_deadline() -> Result<()> {
+        let text = "Actual(); array[index](0); /* Hidden(); */ \"String();\";\n";
+        assert_eq!(clean_bounded(text)?, clean(text));
+        assert_eq!(names_bounded(&clean_bounded(text)?)?, names(&clean(text)));
+        let error = bounded::until(0, 1024, || clean_bounded(text)).unwrap_err();
+        assert!(error.to_string().contains("deadline"));
+        let adversarial = "a[".repeat(100_000);
+        let entered = std::time::Instant::now();
+        let error = bounded::until(bounded::now_unix_ms()? + 20, bounded::DEFAULT_BYTES, || {
+            names_bounded(adversarial.as_bytes())
+        })
+        .unwrap_err();
+        assert!(error.to_string().contains("deadline"));
+        assert!(entered.elapsed() < std::time::Duration::from_secs(1));
+        Ok(())
+    }
+
+    #[test]
+    fn inventory_generation_inherits_expired_budget_before_any_output() -> Result<()> {
+        let directory = bounded::tests::Directory::new()?;
+        let output = directory.0.join("out/inventory.toml");
+        let error =
+            run_until(&directory.0.join("absent"), &directory.0.join("absent-source"), &output, 0, 1024).unwrap_err();
+        assert!(error.to_string().contains("deadline"));
+        assert!(!output.parent().unwrap().exists());
+        Ok(())
+    }
+
     #[test]
     fn parenthesized_return_dependency_facts_match_definition_inventory() {
         let text = "uint8 CheckBossBitForCurArea(uint16 a) { // 0x8081DC\n return (a & boss_bits_for_area[area_index]) != 0;\n}\n";
@@ -280,12 +384,12 @@ mod tests {
 
     #[test]
     fn pinned_ridley_callbacks_and_first_bank_function_are_indexed_exactly() {
-        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().parent().unwrap();
         let bank = root.join("deps/snesrev-sm/src/sm_a6.c");
         if !bank.is_file() {
             return;
         }
-        let text = fs::read_to_string(bank).unwrap();
+        let text = bounded::text(bank).unwrap();
         let rows = definitions(&text, "src/sm_a6.c").unwrap();
         for symbol in ["Ridley_E90C", "Ridley_Func_40_Carry", "Ridley_Func_40_Sign"]
             .into_iter()
@@ -295,7 +399,7 @@ mod tests {
             let row = rows.iter().find(|row| row.symbol == symbol).unwrap_or_else(|| panic!("missing {symbol}"));
             assert!(text.lines().nth(row.line - 1).unwrap().contains(&symbol));
         }
-        let text = fs::read_to_string(root.join("deps/snesrev-sm/src/sm_80.c")).unwrap();
+        let text = bounded::text(root.join("deps/snesrev-sm/src/sm_80.c")).unwrap();
         let rows = definitions(&text, "src/sm_80.c").unwrap();
         assert_eq!(rows[0].symbol, "APU_UploadBank");
         assert_eq!(rows[0].line, 16);

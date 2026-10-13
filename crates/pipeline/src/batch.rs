@@ -1,4 +1,5 @@
 //! Per-batch ownership and authenticated native family reuse across worktrees.
+use crate::inputs::bounded;
 use crate::{atomic_toml, cleanup, digest, family, family_model, live, live_model, plm_fixtures};
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
@@ -59,6 +60,7 @@ fn discovery_projection(text: &str) -> Result<Option<String>> {
     let mut root = true;
     let mut start = 0;
     while start < text.len() {
+        bounded::check()?;
         let end = discovery_statement_end(text.as_bytes(), start)?;
         let statement = text[start..end].trim();
         start = end;
@@ -192,6 +194,9 @@ fn discovery_extent(bytes: &[u8], start: usize, delimiters: &[u8]) -> Result<usi
     let mut multiline = false;
     let mut brackets = Vec::new();
     while index < bytes.len() {
+        if index.is_multiple_of(64 * 1024) {
+            bounded::check()?;
+        }
         let byte = bytes[index];
         if quote != 0 {
             if quote == b'"' && byte == b'\\' {
@@ -245,10 +250,23 @@ fn discovery_extent(bytes: &[u8], start: usize, delimiters: &[u8]) -> Result<usi
     Ok(bytes.len())
 }
 pub fn catalog(checkout: &Path) -> Result<Catalog> {
-    let mut config: Catalog = pipeline_model::read(&checkout.join("tools/port/batch.toml"))?;
-    let mut paths = fs::read_dir(checkout.join("tools/port"))?.map(|e| Ok(e?.path())).collect::<Result<Vec<_>>>()?;
-    paths.sort();
+    bounded::limited(|| catalog_using(checkout, |path| bounded::text(path)))
+}
+
+pub(crate) fn catalog_until(checkout: &Path, deadline: u64, max_bytes: u64) -> Result<Catalog> {
+    bounded::until(deadline, max_bytes, || catalog_using(checkout, |path| bounded::text(path)))
+}
+
+/// Keep catalog discovery identical for the supervisor's bounded source reader.
+pub(crate) fn catalog_using(checkout: &Path, mut read: impl FnMut(&Path) -> Result<String>) -> Result<Catalog> {
+    let mut config: Catalog = toml::from_str(&read(&checkout.join("tools/port/batch.toml"))?)?;
+    let paths = bounded::entries(&checkout.join("tools/port"))?;
+    ensure!(
+        paths.len() <= 4096 && config.families.len() <= 4096 && config.profiles.len() <= 1024,
+        "native catalog discovery inventory exceeded"
+    );
     for path in paths {
+        bounded::check()?;
         if path.extension().is_none_or(|v| v != "toml") {
             continue;
         }
@@ -256,8 +274,8 @@ pub fn catalog(checkout: &Path) -> Result<Catalog> {
         if config.families.contains_key(name.as_ref()) {
             continue;
         }
-        let manifest = discovery(&fs::read_to_string(&path)?)
-            .with_context(|| format!("invalid discovery manifest {}", path.display()))?;
+        let manifest =
+            discovery(&read(&path)?).with_context(|| format!("invalid discovery manifest {}", path.display()))?;
         if manifest.rust_module.is_none() || manifest.routines.is_none() {
             continue;
         }
@@ -277,6 +295,7 @@ pub fn catalog(checkout: &Path) -> Result<Catalog> {
                 prepare: None,
             }),
         );
+        ensure!(config.families.len() <= 4096, "native catalog family inventory exceeded");
     }
     config.profiles.insert("offline-all".into(), config.families.keys().cloned().collect());
     Ok(config)
@@ -728,6 +747,31 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn catalog_refuses_expired_budget_and_excessive_inventory_before_manifest_reads() -> Result<()> {
+        let directory = bounded::tests::Directory::new()?;
+        let port = directory.0.join("tools/port");
+        fs::create_dir_all(&port)?;
+        let config = "[families]\n[profiles]\n";
+        fs::write(port.join("batch.toml"), config)?;
+        fs::write(port.join("one.toml"), "rust_module='one.rs'\n[[routines]]\nsymbol='One'\n")?;
+        assert!(catalog_until(&directory.0, 0, 1024).unwrap_err().to_string().contains("deadline"));
+        assert!(catalog_until(&directory.0, bounded::now_unix_ms()? + 1000, config.len() as u64).is_err());
+        for number in 0..4096 {
+            fs::write(port.join(format!("extra-{number}.toml")), b"")?;
+        }
+        let mut reads = 0usize;
+        let error = catalog_using(&directory.0, |path| {
+            reads += 1;
+            bounded::text(path)
+        })
+        .unwrap_err();
+        assert!(error.to_string().contains("inventory"));
+        assert_eq!(reads, 1);
+        Ok(())
+    }
+
     #[test]
     fn discovery_matches_full_decode_across_strings_tables_and_inline_layouts() {
         let manifests = [

@@ -394,6 +394,7 @@ fn run_gates(
     checkout: &Path,
     integration: bool,
 ) -> Result<Vec<Artifact>> {
+    crate::translation_migration_guard::fence_session_locked(root, queue)?;
     let before = assignment::source_fingerprint(checkout)?;
     let before_commit = git(checkout, &["rev-parse", "HEAD"])?;
     let run = root.join(format!(
@@ -1061,6 +1062,7 @@ fn checkpoint(root: &Path, queue: &assignment::Request, mut handoff: Handoff, me
         "checkpoint needs a bounded commit message"
     );
     let _lock = worker_lock(root)?;
+    crate::translation_migration_guard::fence_session_locked(root, queue)?;
     let current_authority = credential(queue, false)?;
     ensure!(
         handoff.session_id == current_authority.session_id
@@ -1209,6 +1211,7 @@ fn current_handoff_authority(queue: &assignment::Request, handoff: &Handoff) -> 
 
 fn adopt(root: &Path, queue: &assignment::Request, path: &Path, transfer: &Artifact) -> Result<toml::Value> {
     let _lock = worker_lock(root)?;
+    crate::translation_migration_guard::fence_session_locked(root, queue)?;
     let current = credential(queue, false)?;
     let saved = read_handoff(root, path)?;
     validate_handoff(root, queue, &saved, false, true)?;
@@ -1288,6 +1291,9 @@ pub(crate) fn operate(request: Request) -> Result<toml::Value> {
             );
             let root = assignment::main_checkout(&queue.checkout)?;
             let lock = if queue.operation == "plan" { None } else { Some(worker_lock(&root)?) };
+            if queue.operation != "plan" {
+                crate::translation_migration_guard::fence_session_locked(&root, &queue)?;
+            }
             match admission {
                 Admission::Legacy { original_request } => legacy(&queue, &original_request)?,
                 Admission::Infrastructure { scopes } => {
@@ -1339,6 +1345,7 @@ pub(crate) fn operate(request: Request) -> Result<toml::Value> {
                 Some(Update::Started { claim: handoff.claim.clone(), agent: handoff.worker_session_id.clone() });
             assignment::operate(queue.clone())?;
             let _lock = worker_lock(&root)?;
+            crate::translation_migration_guard::fence_session_locked(&root, &queue)?;
             current_handoff_authority(&queue, &handoff)?;
             validate_handoff(&root, &queue, &handoff, true, true)?;
             let path = publish(&root, &handoff)?;
@@ -1352,6 +1359,7 @@ pub(crate) fn operate(request: Request) -> Result<toml::Value> {
         Request::Resume { queue, handoff } => {
             let root = assignment::main_checkout(&queue.checkout)?;
             let _lock = worker_lock(&root)?;
+            crate::translation_migration_guard::fence_session_locked(&root, &queue)?;
             let saved = read_handoff(&root, &handoff)?;
             current_handoff_authority(&queue, &saved)?;
             validate_handoff(&root, &queue, &saved, false, true)?;

@@ -3,7 +3,7 @@
 Status: claimed
 Blocked by: 01
 Triage: ready-for-agent
-Owner: /root/stalled_translation
+Owner: /root (recovered restricted rewrite integration)
 
 Own bounded Rewrite capsules and Source replacements, path/hash validation and
 the production rewrite adapter. The supervisor applies/commits exact source.

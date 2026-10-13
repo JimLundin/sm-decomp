@@ -1,8 +1,9 @@
 # Own integration, progress publication and recovery
 
-Status: open
+Status: claimed
 Blocked by: 02, 05
 Triage: ready-for-agent
+Owner: /root with /root/bounded_git (managed diagnostic proof)
 
 Own fenced integration of exact submitted source, clean merged verification source,
 stable queue/ticket/progress publication, source retention, implementer retirement

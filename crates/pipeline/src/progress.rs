@@ -855,6 +855,234 @@ fn update(options: &Options) -> Result<Registry> {
     Ok(registry)
 }
 
+/// Structured observations derived by trusted result admission. They use the
+/// same inventory, routine membership, evidence and stable-id rules as the
+/// maintained update command; no worker can supply an acceptance label here.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct AdmittedProgress {
+    updates: Vec<Update>,
+}
+
+pub(crate) fn admitted_observation_ids(publication: &AdmittedProgress) -> Vec<String> {
+    publication.updates.iter().map(|update| update.id.clone()).collect()
+}
+
+fn admitted_options(root: &Path) -> Options {
+    Options {
+        root: root.into(),
+        registry: root.join(REGISTRY),
+        html: root.join(HTML),
+        source: None,
+        update: None,
+        bind: "127.0.0.1:0".parse().unwrap(),
+    }
+}
+
+pub(crate) fn prepare_admitted(
+    root: &Path,
+    identity: &str,
+    scope: &str,
+    owner: &str,
+    routines: &[String],
+    source_revision: &str,
+    inventory_sha256: &str,
+    candidate: &str,
+    integrated: &str,
+    evidence: &[(PathBuf, String)],
+    limitations: &[String],
+) -> Result<AdmittedProgress> {
+    let options = admitted_options(root);
+    let _lock = registry_lock(&options.registry, Duration::from_secs(10))?;
+    let mut registry = read_registry(&options)?;
+    check_current(root, &registry.source)?;
+    let mut updates = vec![];
+    for stage in [Stage::Translated, Stage::Verified, Stage::Integrated] {
+        let id = format!("translation-{identity}-{}", stage.name());
+        let timestamp =
+            registry.updates.iter().find(|update| update.id == id).map(|update| update.updated_at).unwrap_or(now()?);
+        let update = Update {
+            id,
+            scope: scope.into(),
+            agent: owner.into(),
+            stage: stage.clone(),
+            evidence_context: EvidenceContext::HistoricalFrozen,
+            supersedes: vec![],
+            routines: routines.to_vec(),
+            source_revision: source_revision.into(),
+            inventory_sha256: inventory_sha256.into(),
+            commit: Some(if stage == Stage::Integrated { integrated } else { candidate }.into()),
+            evidence: evidence
+                .iter()
+                .map(|(path, sha256)| Evidence { path: path.display().to_string(), sha256: sha256.clone() })
+                .collect(),
+            limitations: limitations.to_vec(),
+            updated_at: timestamp,
+        };
+        for pointer in &update.evidence {
+            ensure!(
+                crate::digest(&evidence_path(root, &pointer.path)?)? == pointer.sha256,
+                "admitted progress evidence changed"
+            );
+        }
+        insert_update(&mut registry, update.clone())?;
+        updates.push(update);
+    }
+    observe_evidence(root, &mut registry)?;
+    Ok(AdmittedProgress { updates })
+}
+
+/// Replays exact accepted observations and repairs the HTML projection. The
+/// canonical registry preserves all other observations; a missing authoritative
+/// registry requires its own recovery and is never replaced with a partial one.
+pub(crate) fn publish_admitted(root: &Path, publication: &AdmittedProgress) -> Result<Vec<String>> {
+    let options = admitted_options(root);
+    let _lock = registry_lock(&options.registry, Duration::from_secs(10))?;
+    let registry = read_registry(&options)?;
+    check_current(root, &registry.source)?;
+    ensure!(publication.updates.len() == 3, "admitted progress stages incomplete");
+    let admitted_ids = publication.updates.iter().map(|update| update.id.as_str()).collect::<BTreeSet<_>>();
+    for update in &registry.updates {
+        if let Some(expected) = publication.updates.iter().find(|expected| expected.id == update.id) {
+            ensure!(update == expected, "accepted progress observation changed before repair");
+        }
+    }
+    let mut expected = registry.clone();
+    expected.updates.retain(|update| !admitted_ids.contains(update.id.as_str()));
+    for update in &publication.updates {
+        for pointer in &update.evidence {
+            ensure!(
+                crate::digest(&evidence_path(root, &pointer.path)?)? == pointer.sha256,
+                "admitted progress evidence changed before publication"
+            );
+        }
+        insert_update(&mut expected, update.clone())?;
+    }
+    observe_evidence(root, &mut expected)?;
+    persist(&options, &expected)?;
+    Ok(publication.updates.iter().map(|update| update.id.clone()).collect())
+}
+
+pub(crate) fn authenticate_admitted(root: &Path, publication: &AdmittedProgress) -> Result<()> {
+    let options = admitted_options(root);
+    let _lock = registry_lock(&options.registry, Duration::from_secs(10))?;
+    let registry = read_registry(&options)?;
+    ensure!(publication.updates.len() == 3, "admitted progress stage identity changed");
+    for update in &publication.updates {
+        ensure!(
+            registry.updates.iter().find(|current| current.id == update.id) == Some(update),
+            "accepted progress observation changed or disappeared"
+        );
+        for pointer in &update.evidence {
+            ensure!(
+                crate::digest(&evidence_path(root, &pointer.path)?)? == pointer.sha256,
+                "accepted progress evidence changed"
+            );
+        }
+    }
+    ensure!(
+        bounded_text(&options.html, MAX_METADATA)? == render(&registry)?,
+        "accepted progress dashboard projection is missing or differs"
+    );
+    Ok(())
+}
+
+/// Rebind a retained intent to the same original source, stages, owner and
+/// evidence. Only immutable timestamps from that intent may be reused.
+pub(crate) fn validate_admitted_plan(
+    publication: &AdmittedProgress,
+    identity: &str,
+    scope: &str,
+    owner: &str,
+    routines: &[String],
+    source_revision: &str,
+    inventory_sha256: &str,
+    candidate: &str,
+    integrated: &str,
+    evidence: &[(PathBuf, String)],
+    limitations: &[String],
+) -> Result<()> {
+    ensure!(publication.updates.len() == 3, "managed progress stages changed");
+    for (update, stage) in publication.updates.iter().zip([Stage::Translated, Stage::Verified, Stage::Integrated]) {
+        validate_update_shape(update)?;
+        ensure!(
+            update.id == format!("translation-{identity}-{}", stage.name())
+                && update.stage == stage
+                && update.scope == scope
+                && update.agent == owner
+                && update.routines == routines
+                && update.source_revision == source_revision
+                && update.inventory_sha256 == inventory_sha256
+                && update.commit.as_deref() == Some(if stage == Stage::Integrated { integrated } else { candidate })
+                && update.evidence_context == EvidenceContext::HistoricalFrozen
+                && update.supersedes.is_empty()
+                && update.limitations == limitations
+                && update.evidence
+                    == evidence
+                        .iter()
+                        .map(|(path, sha256)| Evidence { path: path.display().to_string(), sha256: sha256.clone() })
+                        .collect::<Vec<_>>(),
+            "managed progress intent differs from exact admitted completion"
+        );
+    }
+    Ok(())
+}
+
+/// Validate pristine, partially published or repaired projections against a
+/// sealed prepublication registry. Missing accepted observations are repairable;
+/// unrelated registry/HTML changes are never controller authority.
+pub(crate) fn validate_admitted_projection(root: &Path, publication: &AdmittedProgress, baseline: &Path) -> Result<()> {
+    let options = admitted_options(root);
+    let _lock = registry_lock(&options.registry, Duration::from_secs(10))?;
+    let original_text = bounded_text(baseline, MAX_METADATA)?;
+    let original: Registry = serde_json::from_str(&original_text)?;
+    let current = read_registry(&options)?;
+    check_current(root, &current.source)?;
+    ensure!(publication.updates.len() == 3, "managed progress projection stages missing");
+    let original_value = serde_json::to_value(&original)?;
+    let current_value = serde_json::to_value(&current)?;
+    let mut complete = original.clone();
+    for update in &publication.updates {
+        insert_update(&mut complete, update.clone())?;
+    }
+    observe_evidence(root, &mut complete)?;
+    let mut expected = original.clone();
+    if original_value != current_value {
+        let admitted_ids = publication.updates.iter().map(|update| &update.id).collect::<BTreeSet<_>>();
+        let unrelated = current.updates.iter().filter(|update| !admitted_ids.contains(&update.id)).collect::<Vec<_>>();
+        ensure!(
+            unrelated == original.updates.iter().collect::<Vec<_>>()
+                && !original.updates.iter().any(|update| admitted_ids.contains(&update.id)),
+            "managed publication changed unrelated progress history"
+        );
+        for update in &publication.updates {
+            if let Some(found) = current.updates.iter().find(|current| current.id == update.id) {
+                ensure!(found == update, "managed accepted progress identity changed");
+                insert_update(&mut expected, update.clone())?;
+            }
+        }
+        observe_evidence(root, &mut expected)?;
+        // Removing one accepted observation preserves the registry's prior
+        // complete publication timestamp. Restoring it canonicalizes the order
+        // and timestamp; no unrelated timestamp is granted controller authority.
+        if current.updated_at == complete.updated_at {
+            expected.updated_at = complete.updated_at;
+        }
+        ensure!(
+            serde_json::to_value(&expected)? == current_value,
+            "managed registry contains unrelated projection changes"
+        );
+    }
+    if options.html.exists() {
+        let html = bounded_text(&options.html, MAX_METADATA)?;
+        ensure!(
+            html == render(&original)? || html == render(&current)? || html == render(&complete)?,
+            "managed HTML projection contains unrelated changes"
+        );
+    }
+    Ok(())
+}
+
 fn observe_evidence(root: &Path, registry: &mut Registry) -> Result<()> {
     let superseded = superseded_updates(&registry.updates)?;
     registry.notices.retain(|v| !v.starts_with("Stale update ") && !v.starts_with("Superseded update "));

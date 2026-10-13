@@ -1,13 +1,145 @@
 //! Read-only affected Offline family selection. Planning never admits retained evidence.
-use crate::{batch, digest, family_model};
+use crate::{batch, family_model};
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::{
+    cell::Cell,
     collections::{BTreeMap, BTreeSet},
-    fs,
+    fs::{self, OpenOptions},
+    io::Read,
+    os::unix::fs::{MetadataExt, OpenOptionsExt},
     path::{Component, Path, PathBuf},
-    process::Command,
+    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
+use translation_execution::checkout;
+
+const DEFAULT_PLANNING_BYTES: u64 = 256 * 1024 * 1024;
+const MAX_PLANNING_ENTRIES: u64 = 65536;
+
+/// Source discovery belongs to the whole stage budget, including rereads that
+/// check stability. Resource exhaustion cannot become ordinary uncertainty.
+struct PlanningBudget {
+    deadline_unix_ms: u64,
+    deadline: Instant,
+    maximum: u64,
+    bytes: Cell<u64>,
+    entries: Cell<u64>,
+    exhausted: Cell<bool>,
+}
+
+impl PlanningBudget {
+    fn new(deadline_unix_ms: u64, maximum: u64) -> Result<Self> {
+        let now = u64::try_from(SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis())?;
+        ensure!(now < deadline_unix_ms && maximum > 0, "affected planning budget exhausted before discovery");
+        Ok(Self {
+            deadline_unix_ms,
+            deadline: Instant::now() + Duration::from_millis(deadline_unix_ms - now).min(Duration::from_secs(120)),
+            maximum,
+            bytes: Cell::new(0),
+            entries: Cell::new(0),
+            exhausted: Cell::new(false),
+        })
+    }
+
+    fn check(&self) -> Result<()> {
+        ensure!(
+            !self.exhausted.get() && Instant::now() < self.deadline,
+            "affected planning aggregate byte, inode or time budget exhausted"
+        );
+        Ok(())
+    }
+
+    fn charge(&self, bytes: u64) -> Result<()> {
+        self.check()?;
+        let total = self.bytes.get().checked_add(bytes).context("affected planning extent overflow")?;
+        if total > self.maximum {
+            self.exhausted.set(true);
+        }
+        self.bytes.set(total);
+        self.check()
+    }
+
+    fn entry(&self) -> Result<()> {
+        self.check()?;
+        let count = self.entries.get() + 1;
+        if count > MAX_PLANNING_ENTRIES {
+            self.exhausted.set(true);
+        }
+        self.entries.set(count);
+        self.check()
+    }
+
+    fn read(&self, path: &Path, capture: bool) -> Result<(Vec<u8>, String)> {
+        self.check()?;
+        ensure!(!path.is_symlink(), "planning input is a symlink: {}", path.display());
+        let mut file = OpenOptions::new().read(true).custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK).open(path)?;
+        let before = file.metadata()?;
+        ensure!(before.is_file(), "planning input is not regular: {}", path.display());
+        if before.len() > self.maximum.saturating_sub(self.bytes.get()) {
+            self.exhausted.set(true);
+        }
+        self.check()?;
+        let mut bytes = Vec::new();
+        let mut hash = Sha256::new();
+        let mut length = 0u64;
+        let mut buffer = [0u8; 65536];
+        loop {
+            self.check()?;
+            let count = file.read(&mut buffer)?;
+            if count == 0 {
+                break;
+            }
+            self.charge(count as u64)?;
+            length += count as u64;
+            hash.update(&buffer[..count]);
+            if capture {
+                bytes.extend_from_slice(&buffer[..count]);
+            }
+        }
+        let after = file.metadata()?;
+        ensure!(
+            length == before.len()
+                && after.len() == before.len()
+                && after.mtime() == before.mtime()
+                && after.mtime_nsec() == before.mtime_nsec()
+                && after.ctime() == before.ctime()
+                && after.ctime_nsec() == before.ctime_nsec(),
+            "planning input changed while reading: {}",
+            path.display()
+        );
+        self.check()?;
+        Ok((bytes, format!("{:x}", hash.finalize())))
+    }
+
+    fn text(&self, path: &Path) -> Result<(String, String)> {
+        let (bytes, hash) = self.read(path, true)?;
+        Ok((String::from_utf8(bytes)?, hash))
+    }
+
+    fn hash(&self, path: &Path) -> Result<String> {
+        Ok(self.read(path, false)?.1)
+    }
+
+    fn paths(&self, checkout: &Path, argv: &[&str]) -> Result<Vec<u8>> {
+        self.check()?;
+        let output = checkout::read_only_paths_until(
+            checkout,
+            argv,
+            self.maximum.saturating_sub(self.bytes.get()),
+            self.deadline_unix_ms,
+        );
+        let output = match output {
+            Ok(output) => output,
+            Err(error) => {
+                self.exhausted.set(true);
+                return Err(error.context("bounded affected planning Git query failed"));
+            }
+        };
+        self.charge(output.len() as u64)?;
+        Ok(output)
+    }
+}
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub(crate) struct Reason {
@@ -46,20 +178,13 @@ fn reason(code: &str, detail: impl Into<String>, paths: Vec<PathBuf>) -> Reason 
 
 // NUL records preserve whitespace/newlines. Disabling rename inference deliberately
 // retains both the removed and added paths, including staged and unstaged changes.
-fn changed_paths(checkout: &Path, revision: &str) -> Result<BTreeSet<PathBuf>> {
-    let output = Command::new("git")
-        .args(["diff", "--name-only", "--no-renames", "-z", revision, "--"])
-        .current_dir(checkout)
-        .output()?;
-    ensure!(output.status.success(), "changed-since revision cannot be resolved");
-    let untracked = Command::new("git")
-        .args(["ls-files", "--others", "--exclude-standard", "-z"])
-        .current_dir(checkout)
-        .output()?;
-    ensure!(untracked.status.success(), "cannot inspect untracked changed paths");
+fn changed_paths(checkout: &Path, revision: &str, budget: &PlanningBudget) -> Result<BTreeSet<PathBuf>> {
+    let output = budget.paths(checkout, &["diff", "--name-only", "--no-renames", "-z", revision, "--"])?;
+    let untracked = budget.paths(checkout, &["ls-files", "--others", "--exclude-standard", "-z"])?;
     let mut result = BTreeSet::new();
-    for bytes in [output.stdout, untracked.stdout] {
+    for bytes in [output, untracked] {
         for name in bytes.split(|byte| *byte == 0).filter(|name| !name.is_empty()) {
+            budget.entry()?;
             #[cfg(unix)]
             let path = {
                 use std::os::unix::ffi::OsStrExt;
@@ -74,17 +199,13 @@ fn changed_paths(checkout: &Path, revision: &str) -> Result<BTreeSet<PathBuf>> {
     Ok(result)
 }
 
-fn history_paths(checkout: &Path) -> Result<BTreeSet<PathBuf>> {
-    let output = Command::new("git")
-        .args(["ls-files", "--cached", "--others", "--exclude-standard", "-z"])
-        .current_dir(checkout)
-        .output()?;
-    ensure!(output.status.success(), "cannot inspect source history paths");
+fn history_paths(checkout: &Path, budget: &PlanningBudget) -> Result<BTreeSet<PathBuf>> {
+    let output = budget.paths(checkout, &["ls-files", "--cached", "--others", "--exclude-standard", "-z"])?;
     output
-        .stdout
         .split(|byte| *byte == 0)
         .filter(|name| !name.is_empty())
         .map(|name| {
+            budget.entry()?;
             #[cfg(unix)]
             {
                 use std::os::unix::ffi::OsStrExt;
@@ -129,6 +250,7 @@ fn shared(path: &Path) -> bool {
 
 struct Discovery<'a> {
     checkout: &'a Path,
+    budget: &'a PlanningBudget,
     available: BTreeMap<String, PathBuf>,
     namespace: BTreeMap<String, PathBuf>,
     history: BTreeSet<PathBuf>,
@@ -137,9 +259,10 @@ struct Discovery<'a> {
 }
 
 impl<'a> Discovery<'a> {
-    fn new(checkout: &'a Path) -> Result<Self> {
+    fn new(checkout: &'a Path, budget: &'a PlanningBudget) -> Result<Self> {
         let mut available = BTreeMap::new();
         for entry in fs::read_dir(checkout.join("crates/port/src"))? {
+            budget.entry()?;
             let path = entry?.path();
             if path.extension().is_some_and(|extension| extension == "rs") {
                 let name = path.file_stem().context("source stem missing")?.to_str().context("non-UTF8 module name")?;
@@ -150,9 +273,10 @@ impl<'a> Discovery<'a> {
         }
         Ok(Self {
             checkout,
+            budget,
             namespace: available.clone(),
             available,
-            history: history_paths(checkout)?,
+            history: history_paths(checkout, budget)?,
             sources: BTreeMap::new(),
             hashes: BTreeMap::new(),
         })
@@ -167,15 +291,13 @@ impl<'a> Discovery<'a> {
         if let Some(source) = self.sources.get(path) {
             return Ok(source.clone());
         }
-        let before = digest(path)?;
-        let source = fs::read_to_string(path)?;
-        ensure!(before == digest(path)?, "Rust discovery source changed while reading: {}", path.display());
+        let (source, before) = self.budget.text(path)?;
+        ensure!(before == self.budget.hash(path)?, "Rust discovery source changed while reading: {}", path.display());
         self.hashes.insert(normalize(self.checkout, path), before);
         // Unsupported file inputs cannot be excluded by top-level discovery.
         // This conservative check may also match comments, which only adds work.
-        let words = source.split(|c: char| !(c.is_ascii_alphanumeric() || c == '_')).collect::<Vec<_>>();
         ensure!(
-            !words.iter().any(|word| [
+            !source.split(|c: char| !(c.is_ascii_alphanumeric() || c == '_')).any(|word| [
                 "mod",
                 "include",
                 "include_str",
@@ -186,7 +308,7 @@ impl<'a> Discovery<'a> {
                 "File",
                 "macro_rules"
             ]
-            .contains(word)),
+            .contains(&word)),
             "Rust source has inputs beyond supported module discovery: {}",
             path.display()
         );
@@ -226,6 +348,7 @@ impl<'a> Discovery<'a> {
         }
         let mut visited = BTreeSet::new();
         while let Some(path) = pending.pop() {
+            self.budget.entry()?;
             ensure!(!path.is_symlink(), "Rust discovery module is a symlink");
             let lexical = normalize(self.checkout, &path);
             let path = fs::canonicalize(&path)?;
@@ -252,7 +375,7 @@ impl<'a> Discovery<'a> {
                 "declared dependency has a filesystem alias"
             );
             ensure!(self.checkout.join(&path).is_file(), "declared dependency is missing: {}", path.display());
-            self.hashes.insert(path.clone(), digest(&self.checkout.join(&path))?);
+            self.hashes.insert(path.clone(), self.budget.hash(&self.checkout.join(&path))?);
             result.insert(path);
         }
         if let Some(rom) = &manifest.rom {
@@ -276,7 +399,7 @@ impl<'a> Discovery<'a> {
     fn asset(&mut self, path: &Path, expected: Option<&str>) -> Result<()> {
         let actual = self.checkout.join(path);
         ensure!(!actual.is_symlink(), "family asset is a symlink");
-        let hash = digest(&actual)?;
+        let hash = self.budget.hash(&actual)?;
         ensure!(
             expected == Some(hash.as_str()),
             "family asset is missing a matching declared digest: {}",
@@ -288,14 +411,33 @@ impl<'a> Discovery<'a> {
 }
 
 pub(crate) fn select(checkout: &Path, names: &[String], revision: Option<&str>) -> Result<Report> {
+    let now = u64::try_from(SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis())?;
+    select_until(checkout, names, revision, now + 120_000, DEFAULT_PLANNING_BYTES)
+}
+
+pub(crate) fn select_until(
+    checkout: &Path,
+    names: &[String],
+    revision: Option<&str>,
+    deadline_unix_ms: u64,
+    maximum: u64,
+) -> Result<Report> {
+    let budget = PlanningBudget::new(deadline_unix_ms, maximum)?;
     let checkout = fs::canonicalize(checkout)?;
-    let changed = revision.map(|revision| changed_paths(&checkout, revision)).transpose()?.unwrap_or_default();
+    let changed = revision.map(|revision| changed_paths(&checkout, revision, &budget)).transpose()?.unwrap_or_default();
     let global = changed.iter().filter(|path| shared(path)).cloned().collect::<Vec<_>>();
     let catalog_path = checkout.join("tools/port/batch.toml");
-    let catalog_hash = digest(&catalog_path)?;
-    let config = batch::catalog(&checkout)?;
-    ensure!(catalog_hash == digest(&catalog_path)?, "Offline family catalog changed during selection");
-    let mut discovery = Discovery::new(&checkout).ok();
+    let catalog_hash = budget.hash(&catalog_path)?;
+    let mut catalog_inputs = BTreeMap::new();
+    let config = batch::catalog_using(&checkout, |path| {
+        budget.entry()?;
+        let (text, hash) = budget.text(path)?;
+        catalog_inputs.insert(normalize(&checkout, path), hash);
+        Ok(text)
+    })?;
+    ensure!(catalog_hash == budget.hash(&catalog_path)?, "Offline family catalog changed during selection");
+    let mut discovery = Discovery::new(&checkout, &budget).ok();
+    budget.check()?;
     if let Some(discovery) = &mut discovery {
         // Include removed names when traversing source words. A surviving source
         // that still mentions a deleted module remains affected, rather than
@@ -321,9 +463,11 @@ pub(crate) fn select(checkout: &Path, names: &[String], revision: Option<&str>) 
         excluded: vec![],
         planning_inputs: BTreeMap::new(),
     };
+    report.planning_inputs = catalog_inputs;
     report.planning_inputs.insert("tools/port/batch.toml".into(), catalog_hash);
     let mut seen = BTreeSet::new();
     for name in names.iter().filter(|name| seen.insert((*name).clone())) {
+        budget.entry()?;
         let mut decision = FamilyDecision { family: name.clone(), reasons: vec![], dependencies: vec![] };
         let examined = (|| -> Result<BTreeSet<PathBuf>> {
             let item = batch::entry(&config, name)?;
@@ -331,9 +475,9 @@ pub(crate) fn select(checkout: &Path, names: &[String], revision: Option<&str>) 
             let manifest_path = normalize(&checkout, &item.manifest);
             let path = checkout.join(&manifest_path);
             ensure!(!path.is_symlink(), "manifest is a symlink");
-            let manifest_hash = digest(&path)?;
-            let manifest: family_model::Manifest = pipeline_model::read(&path)?;
-            ensure!(manifest_hash == digest(&path)?, "Offline family manifest changed during selection");
+            let (text, manifest_hash) = budget.text(&path)?;
+            let manifest: family_model::Manifest = toml::from_str(&text)?;
+            ensure!(manifest_hash == budget.hash(&path)?, "Offline family manifest changed during selection");
             report.planning_inputs.insert(manifest_path.clone(), manifest_hash);
             let mut dependencies = discovery
                 .as_mut()
@@ -342,6 +486,7 @@ pub(crate) fn select(checkout: &Path, names: &[String], revision: Option<&str>) 
             dependencies.insert(manifest_path);
             Ok(dependencies)
         })();
+        budget.check()?;
         match examined {
             Ok(dependencies) => {
                 decision.dependencies = dependencies.iter().cloned().collect();
@@ -379,12 +524,13 @@ pub(crate) fn select(checkout: &Path, names: &[String], revision: Option<&str>) 
     }
     if let Some(discovery) = discovery {
         report.planning_inputs.extend(discovery.hashes);
-        let namespace = Discovery::new(&checkout).map(|current| current.available);
-        let stable = namespace.is_ok_and(|namespace| namespace == discovery.namespace)
-            && report
-                .planning_inputs
-                .iter()
-                .all(|(path, expected)| digest(&checkout.join(path)).is_ok_and(|actual| actual == *expected));
+        let namespace = Discovery::new(&checkout, &budget).map(|current| current.available);
+        budget.check()?;
+        let mut stable = namespace.is_ok_and(|namespace| namespace == discovery.namespace);
+        for (path, expected) in &report.planning_inputs {
+            stable &= budget.hash(&checkout.join(path)).is_ok_and(|actual| actual == *expected);
+            budget.check()?;
+        }
         if !stable {
             for mut decision in std::mem::take(&mut report.excluded) {
                 decision.reasons = vec![reason(
@@ -396,5 +542,30 @@ pub(crate) fn select(checkout: &Path, names: &[String], revision: Option<&str>) 
             }
         }
     }
+    budget.check()?;
     Ok(report)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn expired_or_exhausted_planning_stops_without_output_or_family_exclusion() -> Result<()> {
+        let root = std::env::temp_dir().join(format!("sm-bounded-planning-{}", std::process::id()));
+        ensure!(!root.exists(), "planning fixture already exists");
+        fs::create_dir_all(root.join("tools/port"))?;
+        fs::write(root.join("tools/port/batch.toml"), "[families]\na='family'\n[profiles]\n")?;
+        fs::write(
+            root.join("tools/port/a.toml"),
+            format!("family='a'\nrust_module='crates/port/src/a.rs'\nroutines=[]\n#{}", "x".repeat(8192)),
+        )?;
+        let now = u64::try_from(SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis())?;
+        ensure!(select_until(&root, &["a".into()], None, 1, 65536).is_err(), "expired planning touched source");
+        let error = select_until(&root, &["a".into()], None, now + 10_000, 1024).unwrap_err();
+        ensure!(error.to_string().contains("budget exhausted"), "planning exhaustion was swallowed: {error:#}");
+        ensure!(!root.join("out").exists() && !root.join(".git").exists(), "read-only planning created outputs");
+        fs::remove_dir_all(root)?;
+        Ok(())
+    }
 }

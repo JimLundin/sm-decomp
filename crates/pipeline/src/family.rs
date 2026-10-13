@@ -1,14 +1,14 @@
 //! Native offline family verification. Acceptance is limited to declared fixtures.
 use crate::family_model::*;
-use crate::{atomic_toml, builds, callback, digest, inputs};
+use crate::{atomic_toml, builds, callback, inputs};
 use anyhow::{Context, Result, bail, ensure};
+use inputs::bounded::{self, digest};
 use serde::{Deserialize, de::DeserializeOwned};
 use sha2::{Digest, Sha256};
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
     path::{Component, Path, PathBuf},
-    process::Command,
     sync::atomic::{AtomicUsize, Ordering},
     time::{SystemTime, UNIX_EPOCH},
 };
@@ -29,7 +29,7 @@ const WRAM: usize = 0x20000;
 static NEXT: AtomicUsize = AtomicUsize::new(0);
 
 pub(crate) fn object<T: DeserializeOwned>(path: &Path) -> Result<T> {
-    Ok(toml::from_str(&fs::read_to_string(path)?)?)
+    bounded::limited(|| Ok(toml::from_str(&bounded::text(path)?)?))
 }
 pub(crate) fn unique_id() -> usize {
     NEXT.fetch_add(1, Ordering::Relaxed)
@@ -92,8 +92,11 @@ fn host_bytes(case: &Case, run: &Path) -> Result<Vec<u8>> {
     if case.continue_from.is_some() {
         ensure!(case.host_words.is_none(), "continuation must inherit all external host words");
         let previous = continuation_directory(case, run)?;
-        let c = fs::read(previous.join("c-host-after.bin"))?;
-        ensure!(c.len() == 16 && c == fs::read(previous.join("rust-host-after.bin"))?, "continuation host differs");
+        let c = bounded::read(previous.join("c-host-after.bin"))?;
+        ensure!(
+            c.len() == 16 && c == bounded::read(previous.join("rust-host-after.bin"))?,
+            "continuation host differs"
+        );
         return Ok(c);
     }
     let words = case.host_words.as_ref().context("host words missing")?;
@@ -101,9 +104,9 @@ fn host_bytes(case: &Case, run: &Path) -> Result<Vec<u8>> {
     Ok(words.iter().flat_map(|v| v.to_le_bytes()).collect())
 }
 fn authenticate_host(directory: &Path, fixture: &Case) -> Result<()> {
-    let before = fs::read(directory.join("host-before.bin"))?;
-    let c = fs::read(directory.join("c-host-after.bin"))?;
-    let rust = fs::read(directory.join("rust-host-after.bin"))?;
+    let before = bounded::read(directory.join("host-before.bin"))?;
+    let c = bounded::read(directory.join("c-host-after.bin"))?;
+    let rust = bounded::read(directory.join("rust-host-after.bin"))?;
     ensure!(
         before == host_bytes(fixture, directory.parent().context("case parent missing")?)?
             && c.len() == 16
@@ -113,79 +116,62 @@ fn authenticate_host(directory: &Path, fixture: &Case) -> Result<()> {
     Ok(())
 }
 
-fn tar(archive: &Path, member: Option<&str>) -> Result<Vec<u8>> {
-    let mut command = Command::new("tar");
-    if let Some(member) = member {
-        command.arg("-xOzf").arg(archive).arg("--").arg(member);
-    } else {
-        command.arg("-tzf").arg(archive);
-    }
-    let output = command.output()?;
-    ensure!(output.status.success(), "read pinned source archive failed");
-    Ok(output.stdout)
-}
-
-struct Extracted(PathBuf);
-impl Drop for Extracted {
-    fn drop(&mut self) {
-        let _ = fs::remove_dir_all(&self.0);
-    }
-}
-
 pub(crate) fn verify_source(checkout: &Path, source: &Path) -> Result<Source> {
+    bounded::limited(|| verify_source_bounded(checkout, source))
+}
+
+pub(crate) fn verify_source_until(checkout: &Path, source: &Path, deadline: u64, max_bytes: u64) -> Result<Source> {
+    bounded::until(deadline, max_bytes, || verify_source_bounded(checkout, source))
+}
+
+fn verify_source_bounded(checkout: &Path, source: &Path) -> Result<Source> {
+    bounded::safe(checkout)?;
+    bounded::safe(source)?;
+    let checkout = fs::canonicalize(checkout)?;
+    let source = fs::canonicalize(source)?;
+    bounded::safe(&checkout)?;
+    bounded::safe(&source)?;
     let pins: DependencyPins = object(&checkout.join("tools/dependencies.toml"))?;
+    ensure!(pins.dependencies.len() <= 1024, "dependency pin count exceeded");
     let pin = pins.dependencies.iter().find(|v| v.name == "snesrev-sm").context("snesrev pin missing")?;
+    ensure!(
+        safe_relative(&pin.archive) && !pin.archive.contains('/') && pin.sha256.len() == 64,
+        "pinned archive name or digest invalid"
+    );
     let archive = source.parent().context("source parent missing")?.join("downloads").join(&pin.archive);
-    ensure!(digest(&archive)? == pin.sha256, "pinned archive identity changed");
-    let listing = String::from_utf8(tar(&archive, None)?)?;
-    for member in listing.lines().filter(|v| !v.ends_with('/')) {
-        ensure!(
-            member.split_once('/').is_some_and(|(_, relative)| safe_relative(relative)),
-            "unsafe source archive member"
-        );
+    let key =
+        (checkout, source.clone(), translation_execution::model::sealed(&(&pin.archive, &pin.revision, &pin.sha256))?);
+    if let Some(cached) = bounded::cached_source(&key) {
+        ensure!(digest(&archive)? == pin.sha256, "pinned archive identity changed");
+        for (name, expected) in &cached.files {
+            ensure!(digest(&source.join(name))? == *expected, "pinned source changed: {name}");
+        }
+        return Ok(cached);
     }
-    let temporary = std::env::temp_dir().join(format!(
-        "sm-pinned-source-{}-{}-{}",
-        std::process::id(),
-        NEXT.fetch_add(1, Ordering::Relaxed),
-        SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos()
-    ));
-    fs::create_dir(&temporary)?;
-    let extracted = Extracted(temporary);
-    let status = Command::new("tar")
-        .arg("-xzf")
-        .arg(&archive)
-        .args(["--strip-components=1", "-C"])
-        .arg(&extracted.0)
-        .status()?;
-    ensure!(status.success(), "extract pinned source archive failed");
-    let mut files = BTreeMap::new();
-    for member in listing.lines().filter(|v| !v.ends_with('/')) {
-        let (_, relative) = member.split_once('/').context("invalid source archive member")?;
-        ensure!(safe_relative(relative), "unsafe source archive member");
-        let path = source.join(relative);
-        let expected = fs::read(extracted.0.join(relative))?;
-        ensure!(!path.is_symlink() && fs::read(&path)? == expected, "pinned source changed: {relative}");
-        files.insert(relative.to_owned(), digest(&path)?);
-    }
-    ensure!(!files.is_empty(), "empty pinned source archive");
-    Ok(Source {
+    let files = bounded::authenticate_tar_source(&archive, &source, &pin.sha256)?;
+    let result = Source {
         revision: pin.revision.clone(),
         archive_sha256: pin.sha256.clone(),
         files,
         freshness: "exact pinned archive; no latest-upstream assertion".into(),
-    })
+    };
+    bounded::cache_source(key, result.clone());
+    Ok(result)
 }
 
 fn asset(path: &Path, expected: &str, extent: Option<usize>) -> Result<Vec<u8>> {
     ensure!(digest(path)? == expected, "asset identity mismatch: {}", path.display());
-    let bytes = fs::read(path)?;
+    let bytes = bounded::read(path)?;
     if let Some(n) = extent {
         ensure!(bytes.len() == n, "asset extent mismatch");
     }
     Ok(bytes)
 }
 pub(crate) fn prepare_case(case: &Case, directory: &Path, arg_types: &[String]) -> Result<()> {
+    prepare_case_with(case, directory, arg_types, false)
+}
+
+fn prepare_case_with(case: &Case, directory: &Path, arg_types: &[String], resume: bool) -> Result<()> {
     let name = &case.name;
     ensure!(
         !name.is_empty() && name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-'),
@@ -194,9 +180,9 @@ pub(crate) fn prepare_case(case: &Case, directory: &Path, arg_types: &[String]) 
     let mut bytes = if case.continue_from.is_some() {
         ensure!(case.before_file.is_none() && case.fill.is_none(), "continuation cannot replace inherited state");
         let previous = continuation_directory(case, directory.parent().context("case parent missing")?)?;
-        let c = fs::read(previous.join("c-after.wram"))?;
+        let c = bounded::read(previous.join("c-after.wram"))?;
         ensure!(
-            c.len() == WRAM && c == fs::read(previous.join("rust-after.wram"))?,
+            c.len() == WRAM && c == bounded::read(previous.join("rust-after.wram"))?,
             "continuation requires matching previous WRAM"
         );
         c
@@ -228,15 +214,28 @@ pub(crate) fn prepare_case(case: &Case, directory: &Path, arg_types: &[String]) 
             "argument outside {kind}"
         );
     }
-    fs::create_dir(directory)?;
-    fs::write(directory.join("before.wram"), bytes)?;
+    if !resume || !directory.exists() {
+        fs::create_dir(directory)?;
+    }
+    ensure!(!directory.is_symlink(), "case directory alias");
+    write_build_input(&directory.join("before.wram"), &bytes, resume)?;
     if let Some(path) = &case.expected_after_file {
-        fs::write(
-            directory.join("expected-after.wram"),
-            asset(path, case.expected_after_sha256.as_deref().context("expected digest missing")?, Some(WRAM))?,
+        write_build_input(
+            &directory.join("expected-after.wram"),
+            &asset(path, case.expected_after_sha256.as_deref().context("expected digest missing")?, Some(WRAM))?,
+            resume,
         )?;
     }
-    atomic_toml(&directory.join("case.toml"), case)
+    if resume && directory.join("case.toml").exists() {
+        ensure!(object::<Case>(&directory.join("case.toml"))? == *case, "resumed fixture declaration changed");
+        Ok(())
+    } else {
+        atomic_toml(&directory.join("case.toml"), case)
+    }
+}
+
+fn write_build_input(path: &Path, bytes: &[u8], immutable: bool) -> Result<()> {
+    if immutable { inputs::immutable_bytes(path, bytes) } else { Ok(fs::write(path, bytes)?) }
 }
 
 pub(crate) fn c_type(kind: &str) -> Result<&str> {
@@ -252,7 +251,11 @@ pub(crate) fn c_type(kind: &str) -> Result<&str> {
 }
 
 pub(crate) fn c_units(source: &Path) -> Result<Vec<PathBuf>> {
-    let mut units = fs::read_dir(source.join("src"))?.map(|entry| Ok(entry?.path())).collect::<Result<Vec<_>>>()?;
+    bounded::limited(|| c_units_bounded(source))
+}
+
+fn c_units_bounded(source: &Path) -> Result<Vec<PathBuf>> {
+    let mut units = bounded::entries(&source.join("src"))?;
     units.retain(|path| {
         path.extension().is_some_and(|v| v == "c")
             && path.file_stem().is_some_and(|v| {
@@ -260,11 +263,16 @@ pub(crate) fn c_units(source: &Path) -> Result<Vec<PathBuf>> {
                     || ["spc_player", "tracing", "util"].contains(&v.to_string_lossy().as_ref())
             })
     });
-    for entry in fs::read_dir(source.join("src/snes"))? {
-        let path = entry?.path();
+    for path in bounded::entries(&source.join("src/snes"))? {
+        bounded::check()?;
         if path.extension().is_some_and(|v| v == "c") {
             units.push(path);
         }
+    }
+    ensure!(units.len() <= 4096, "pinned C unit inventory exceeded");
+    for path in &units {
+        bounded::safe(path)?;
+        ensure!(path.symlink_metadata()?.is_file(), "pinned C unit is not a regular file");
     }
     units.sort();
     Ok(units)
@@ -277,7 +285,30 @@ fn build(
     source: &Path,
     run: &Path,
 ) -> Result<Implementation> {
+    build_with(request, manifest, checkout, source, run, None)
+}
+
+pub(crate) fn build_confined(
+    request: &VerifyRequest,
+    manifest: &Manifest,
+    checkout: &Path,
+    source: &Path,
+    run: &Path,
+    execution: &builds::StrictExecution,
+) -> Result<Implementation> {
+    build_with(request, manifest, checkout, source, run, Some(execution))
+}
+
+fn build_with(
+    request: &VerifyRequest,
+    manifest: &Manifest,
+    checkout: &Path,
+    source: &Path,
+    run: &Path,
+    execution: Option<&builds::StrictExecution>,
+) -> Result<Implementation> {
     let fork = fork_execution(request)?;
+    ensure!(execution.is_none() || (!fork && !dispatcher(manifest)), "confined plain adapter requires fresh fixtures");
     let dispatcher = dispatcher(manifest);
     let eproj = manifest.projectile_host
         || manifest.projectile_rendering
@@ -399,7 +430,7 @@ fn build(
         oracle.push_str(rom_setup);
         oracle.push_str("return PortFixtureInvoke(argc,argv);}\n");
     }
-    fs::write(run.join("oracle.c"), oracle)?;
+    write_build_input(&run.join("oracle.c"), oracle.as_bytes(), execution.is_some())?;
     let module = fs::canonicalize(source_path(checkout, &manifest.rust_module))?;
     let imports = &manifest.rust_imports;
     for name in imports {
@@ -418,12 +449,16 @@ fn build(
             wrapper_imports.push(name);
         }
     }
-    let memory = inputs::wrapper(inputs::WrapperRequest {
-        checkout: checkout.into(),
-        run: run.into(),
-        modules: vec![module.clone()],
-        imports: wrapper_imports,
-    })?;
+    let memory = if let Some(execution) = execution {
+        inputs::canonical_wrapper(checkout, run, &execution.rust_inputs)?
+    } else {
+        inputs::wrapper(inputs::WrapperRequest {
+            checkout: checkout.into(),
+            run: run.into(),
+            modules: vec![module.clone()],
+            imports: wrapper_imports,
+        })?
+    };
     let signed = manifest.routines.iter().any(|r| r.arg_types.is_some());
     let (setup, call) = if manifest.rom.as_ref().is_some() {
         (
@@ -446,7 +481,18 @@ fn build(
         "#[path={:?}] mod memory;\nuse memory::*;\n{root_imports}#[path={module:?}] mod family;\nfn main(){{\n let args:Vec<String>=std::env::args().collect(); assert!(args.len()==6 || args.len()==7);\n let mut bytes=std::fs::read(&args[4]).unwrap(); {setup}\n let result={call}.unwrap();\n std::fs::write(&args[5],bytes).unwrap(); println!(\"{{}}\",result);\n}}\n",
         memory.path
     );
-    if alias_module {
+    if execution.is_some() {
+        wrapper = wrapper.replace(
+            &format!(
+                "#[path={:?}] mod memory;\nuse memory::*;\n{root_imports}#[path={module:?}] mod family;",
+                memory.path
+            ),
+            &format!(
+                "include!(\"/inputs/generated/memory.rs\");\nuse {} as family;",
+                module.file_stem().unwrap().to_string_lossy()
+            ),
+        );
+    } else if alias_module {
         wrapper = wrapper.replace(
             &format!("#[path={module:?}] mod family;"),
             &format!("use memory::{} as family;", module.file_stem().unwrap().to_string_lossy()),
@@ -483,7 +529,7 @@ fn build(
             request.workers,
         )?;
     }
-    fs::write(run.join("wrapper.rs"), wrapper)?;
+    write_build_input(&run.join("wrapper.rs"), wrapper.as_bytes(), execution.is_some())?;
     let root = &request.root;
     let workers = request.workers;
     let mut command = vec![
@@ -507,22 +553,8 @@ fn build(
     }
     if dispatcher {
         command.truncate(7);
-        let mut units = fs::read_dir(source.join("src"))?.map(|v| Ok(v?.path())).collect::<Result<Vec<_>>>()?;
-        units.retain(|p| {
-            p.extension().is_some_and(|v| v == "c")
-                && p.file_stem().is_some_and(|v| {
-                    v.to_string_lossy().starts_with("sm_")
-                        || ["spc_player", "tracing", "util"].contains(&v.to_string_lossy().as_ref())
-                })
-                && (!eproj || p.file_name().is_none_or(|v| v != "sm_86.c"))
-        });
-        for entry in fs::read_dir(source.join("src/snes"))? {
-            let p = entry?.path();
-            if p.extension().is_some_and(|v| v == "c") {
-                units.push(p);
-            }
-        }
-        units.sort();
+        let mut units = c_units(source)?;
+        units.retain(|p| !eproj || p.file_name().is_none_or(|v| v != "sm_86.c"));
         command.extend(units.iter().map(|p| p.to_string_lossy().into_owned()));
         let mut shim = if eproj {
             format!("#include {:?}\n{}", source.join("src/sm_86.c"), include_str!("dispatcher_eproj.c"))
@@ -563,13 +595,17 @@ fn build(
             [run.join("libfixture_worker.a").display().to_string(), "-ldl".into(), "-lpthread".into(), "-lm".into()],
         );
     }
-    builds::c_build(builds::CBuildRequest {
-        command,
-        run: run.into(),
-        checkout: checkout.into(),
-        root: root.clone(),
-        workers,
-    })?;
+    if let Some(execution) = execution {
+        execution.compile(&command, run, "c-build", checkout, source)?;
+    } else {
+        builds::c_build(builds::CBuildRequest {
+            command,
+            run: run.into(),
+            checkout: checkout.into(),
+            root: root.clone(),
+            workers,
+        })?;
+    }
     let command = vec![
         "rustc".into(),
         "--edition=2024".into(),
@@ -579,16 +615,26 @@ fn build(
         "-o".into(),
         run.join("rust").to_string_lossy().into_owned(),
     ];
-    builds::execute(&command, run, "rust-build", root, workers)?;
-    fs::copy(&module, run.join("candidate.rs"))?;
-    let dependencies = inputs::dependencies(inputs::DependenciesRequest {
+    if let Some(execution) = execution {
+        execution.compile(&command, run, "rust-build", checkout, source)?;
+    } else {
+        builds::execute(&command, run, "rust-build", root, workers)?;
+    }
+    write_build_input(&run.join("candidate.rs"), &bounded::read(&module)?, execution.is_some())?;
+    let dependency_request = inputs::DependenciesRequest {
         checkout: checkout.into(),
         run: run.into(),
         extra: manifest.rust_dependencies.clone(),
-    })?;
+    };
+    let dependencies = if execution.is_some() {
+        inputs::confined_dependencies(dependency_request)?
+    } else {
+        inputs::dependencies(dependency_request)?
+    };
     let mut harness = BTreeMap::new();
     for (name, compiled) in [
         ("family.rs", include_str!("family.rs")),
+        ("bounded_inputs.rs", include_str!("bounded_inputs.rs")),
         ("batch.rs", include_str!("batch.rs")),
         ("family_header.c", include_str!("family_header.c")),
         ("family_pointer.c", include_str!("family_pointer.c")),
@@ -607,7 +653,11 @@ fn build(
         let hash = digest(&checkout.join(&path))?;
         ensure!(hash == format!("{:x}", Sha256::digest(compiled)), "stale family executable: {name}");
         harness.insert(path, hash);
-        fs::copy(checkout.join(format!("crates/pipeline/src/{name}")), run.join(format!("pipeline-{name}")))?;
+        write_build_input(
+            &run.join(format!("pipeline-{name}")),
+            &bounded::read(checkout.join(format!("crates/pipeline/src/{name}")))?,
+            execution.is_some(),
+        )?;
     }
     if dispatcher {
         let name = "tools/decomp/headless.c";
@@ -636,7 +686,7 @@ fn build(
 }
 
 fn numeric(path: &Path) -> Result<u64> {
-    let data = fs::read_to_string(path)?;
+    let data = bounded::text(path)?;
     let final_line = data.lines().last().context("missing final numeric routine return")?;
     ensure!(
         !final_line.is_empty() && final_line.bytes().all(|v| v.is_ascii_digit()),
@@ -644,7 +694,7 @@ fn numeric(path: &Path) -> Result<u64> {
     );
     Ok(final_line.parse()?)
 }
-fn ordered_tasks(manifest: &Manifest) -> Result<Vec<(&Routine, &Case, usize)>> {
+pub(crate) fn ordered_tasks(manifest: &Manifest) -> Result<Vec<(&Routine, &Case, usize)>> {
     let mut tasks = Vec::new();
     let mut names = BTreeSet::new();
     for (index, routine) in manifest.routines.iter().enumerate() {
@@ -679,9 +729,9 @@ fn authenticate_continuation(case: &Case, run: &Path, before: &[u8]) -> Result<(
         return Ok(());
     }
     let previous = continuation_directory(case, run)?;
-    let mut expected = fs::read(previous.join("c-after.wram"))?;
+    let mut expected = bounded::read(previous.join("c-after.wram"))?;
     ensure!(
-        expected.len() == WRAM && expected == fs::read(previous.join("rust-after.wram"))?,
+        expected.len() == WRAM && expected == bounded::read(previous.join("rust-after.wram"))?,
         "continuation previous WRAM differs"
     );
     for write in &case.writes {
@@ -695,6 +745,110 @@ fn authenticate_continuation(case: &Case, run: &Path, before: &[u8]) -> Result<(
     Ok(())
 }
 
+pub(crate) fn authenticate_inventory(checkout: &Path, source: &Path, path: &Path) -> Result<Source> {
+    bounded::limited(|| authenticate_inventory_bounded(checkout, source, path))
+}
+
+pub(crate) fn authenticate_inventory_until(
+    checkout: &Path,
+    source: &Path,
+    path: &Path,
+    deadline: u64,
+    max_bytes: u64,
+) -> Result<Source> {
+    bounded::until(deadline, max_bytes, || authenticate_inventory_bounded(checkout, source, path))
+}
+
+fn authenticate_inventory_bounded(checkout: &Path, source: &Path, path: &Path) -> Result<Source> {
+    #[derive(Deserialize)]
+    struct DeclaredInventory {
+        schema_version: u32,
+        source_identity: Source,
+        source_identity_sha256: String,
+        routines: Vec<DeclaredRoutine>,
+    }
+    #[derive(Deserialize)]
+    struct DeclaredRoutine {
+        symbol: String,
+        source: String,
+        line: usize,
+        definition_sha256: String,
+        #[serde(default)]
+        defined_dependencies: Vec<String>,
+        #[serde(default)]
+        external_or_macro_calls: Vec<String>,
+        #[serde(default)]
+        indirect_indexed_calls: Vec<String>,
+    }
+    let inventory: DeclaredInventory = object(path)?;
+    ensure!(
+        inventory.schema_version == 1 && !inventory.routines.is_empty() && inventory.routines.len() <= 65536,
+        "unsupported native source inventory"
+    );
+    let identity = verify_source(checkout, source)?;
+    ensure!(
+        inventory.source_identity == identity
+            && inventory.source_identity_sha256 == digest(&checkout.join("tools/dependencies.toml"))?,
+        "native source inventory identity differs"
+    );
+    let symbols = inventory.routines.iter().map(|routine| routine.symbol.as_str()).collect::<BTreeSet<_>>();
+    ensure!(symbols.len() == inventory.routines.len(), "duplicate inventory symbol");
+    let mut files = BTreeMap::new();
+    for routine in &inventory.routines {
+        bounded::check()?;
+        ensure!(identifier(&routine.symbol) && safe_relative(&routine.source), "unsafe inventory routine");
+        ensure!(
+            identity.files.contains_key(&routine.source) && routine.line > 0,
+            "inventory definition provenance missing"
+        );
+        if !files.contains_key(&routine.source) {
+            let text = bounded::text(source.join(&routine.source))?;
+            let code = crate::source_inventory::clean_bounded(&text)?;
+            files.insert(routine.source.clone(), (text, code));
+        }
+        let (text, code) = &files[&routine.source];
+        let offset = text.split_inclusive('\n').take(routine.line - 1).map(str::len).sum::<usize>();
+        let original = text.get(offset..).context("inventory line exceeds source")?;
+        let code = code.get(offset..).context("inventory code exceeds source")?;
+        let open = code.iter().position(|value| *value == b'{').context("inventory definition body missing")?;
+        let signature = &code[..open];
+        ensure!(!signature.contains(&b';'), "inventory definition absorbed prototype");
+        let paren = signature.iter().position(|value| *value == b'(').context("inventory signature missing")?;
+        let prefix = std::str::from_utf8(&signature[..paren])?.trim();
+        let name = prefix
+            .split(|value: char| !(value.is_ascii_alphanumeric() || value == '_'))
+            .rfind(|value| !value.is_empty());
+        ensure!(name == Some(routine.symbol.as_str()), "inventory symbol disagrees with pinned definition");
+        let mut end = open + 1;
+        let mut depth = 1;
+        while end < code.len() && depth > 0 {
+            if end.is_multiple_of(64 * 1024) {
+                bounded::check()?;
+            }
+            match code[end] {
+                b'{' => depth += 1,
+                b'}' => depth -= 1,
+                _ => {}
+            }
+            end += 1;
+        }
+        ensure!(
+            depth == 0 && format!("{:x}", Sha256::digest(&original.as_bytes()[..end])) == routine.definition_sha256,
+            "inventory definition hash differs"
+        );
+        let (calls, indexed) = crate::source_inventory::names_bounded(&code[open..end])?;
+        let defined = calls.iter().filter(|name| symbols.contains(name.as_str())).cloned().collect::<Vec<_>>();
+        let external = calls.iter().filter(|name| !symbols.contains(name.as_str())).cloned().collect::<Vec<_>>();
+        ensure!(
+            defined == routine.defined_dependencies
+                && external == routine.external_or_macro_calls
+                && indexed == routine.indirect_indexed_calls,
+            "inventory lexical dependency agreement missing"
+        );
+    }
+    Ok(identity)
+}
+
 fn case(
     _request: &VerifyRequest,
     manifest: &Manifest,
@@ -703,10 +857,35 @@ fn case(
     run: &Path,
     worker: &mut crate::fixture_execution::Worker,
 ) -> Result<CaseRecord> {
+    case_with(manifest, routine, case, run, false, |command, directory, subject| {
+        worker.execute(command, directory, subject)
+    })
+}
+
+pub(crate) fn confined_case(
+    manifest: &Manifest,
+    routine: &Routine,
+    case: &Case,
+    run: &Path,
+    execution: &builds::StrictExecution,
+) -> Result<CaseRecord> {
+    case_with(manifest, routine, case, run, true, |command, directory, subject| {
+        execution.fixture(command, directory, subject).map(|_| ())
+    })
+}
+
+fn case_with(
+    manifest: &Manifest,
+    routine: &Routine,
+    case: &Case,
+    run: &Path,
+    resume: bool,
+    mut execute: impl FnMut(&[String], &Path, &str) -> Result<()>,
+) -> Result<CaseRecord> {
     let name = &case.name;
     let symbol = &routine.symbol;
     let directory = run.join(name);
-    prepare_case(case, &directory, &types(routine)?)?;
+    prepare_case_with(case, &directory, &types(routine)?, resume)?;
     if manifest.projectile_host {
         fs::write(directory.join("host-before.bin"), host_bytes(case, run)?)?;
     }
@@ -730,7 +909,7 @@ fn case(
                 directory.join(format!("{subject}-host-after.bin")).to_string_lossy().into_owned(),
             ]);
         }
-        worker.execute(&command, &directory, subject)?;
+        execute(&command, &directory, subject)?;
         returns.insert(subject.into(), numeric(&directory.join(format!("{subject}.stdout")))?);
         hashes.insert(subject.into(), digest(&directory.join(format!("{subject}-after.wram")))?);
     }
@@ -746,8 +925,8 @@ fn case(
     if let Some(expected) = case.expected_return {
         ensure!(expected == record.returns["c"], "independent expected return mismatch: {name}");
     }
-    let c = fs::read(directory.join("c-after.wram"))?;
-    let rust = fs::read(directory.join("rust-after.wram"))?;
+    let c = bounded::read(directory.join("c-after.wram"))?;
+    let rust = bounded::read(directory.join("rust-after.wram"))?;
     ensure!(c.len() == WRAM && rust.len() == WRAM, "subject did not retain full WRAM extent");
     if c != rust {
         let offset = c.iter().zip(&rust).position(|(a, b)| a != b).unwrap();
@@ -756,7 +935,7 @@ fn case(
         bail!("WRAM mismatch at {offset:#x}: {symbol}/{name}");
     }
     if case.expected_after_file.is_some() {
-        ensure!(c == fs::read(directory.join("expected-after.wram"))?, "captured expected WRAM mismatch: {name}");
+        ensure!(c == bounded::read(directory.join("expected-after.wram"))?, "captured expected WRAM mismatch: {name}");
         record.capture_after_sha256 = Some(digest(&directory.join("expected-after.wram"))?);
     }
     if manifest.projectile_host {
@@ -765,17 +944,23 @@ fn case(
     Ok(record)
 }
 
-fn inventory(run: &Path, base: &Path, result: &mut BTreeMap<String, String>) -> Result<()> {
-    let mut paths = fs::read_dir(base)?.map(|v| Ok(v?.path())).collect::<Result<Vec<_>>>()?;
-    paths.sort();
+pub(crate) fn inventory(run: &Path, base: &Path, result: &mut BTreeMap<String, String>) -> Result<()> {
+    bounded::limited(|| inventory_bounded(run, base, result, 0))
+}
+
+fn inventory_bounded(run: &Path, base: &Path, result: &mut BTreeMap<String, String>, depth: usize) -> Result<()> {
+    ensure!(depth <= 32, "family artifact inventory depth exceeded");
+    let paths = bounded::entries(base)?;
     for path in paths {
+        bounded::check()?;
         ensure!(!path.is_symlink(), "run artifact symlink");
         if path.is_dir() {
-            inventory(run, &path, result)?;
+            inventory_bounded(run, &path, result, depth + 1)?;
         } else if path != run.join("verdict.toml")
             && !path.file_name().is_some_and(|name| name.to_string_lossy().ends_with(".metrics.toml"))
         {
             result.insert(path.strip_prefix(run)?.to_string_lossy().into_owned(), digest(&path)?);
+            ensure!(result.len() <= 65536, "family artifact inventory count exceeded");
         }
     }
     Ok(())
@@ -801,7 +986,7 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
     };
     let result = (|| -> Result<()> {
         let manifest_path = source_path(&checkout, request.manifest.to_str().context("non-UTF8 manifest")?);
-        let manifest_bytes = fs::read(&manifest_path)?;
+        let manifest_bytes = bounded::read(&manifest_path)?;
         fs::write(run.join("manifest.toml"), &manifest_bytes)?;
         let mut manifest: Manifest = toml::from_str(std::str::from_utf8(&manifest_bytes)?)?;
         let callbacks = request.adapter == "callback" || request.adapter == "power-bomb";
@@ -924,6 +1109,24 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
 }
 
 pub fn authenticate(request: AuthenticateRequest) -> Result<Verdict> {
+    let source = request.checkout.join("deps/snesrev-sm");
+    authenticate_with_source(request, &source)
+}
+
+pub(crate) fn authenticate_with_source(request: AuthenticateRequest, source: &Path) -> Result<Verdict> {
+    bounded::limited(|| authenticate_with_source_bounded(request, source))
+}
+
+pub(crate) fn authenticate_with_source_until(
+    request: AuthenticateRequest,
+    source: &Path,
+    deadline: u64,
+    max_bytes: u64,
+) -> Result<Verdict> {
+    bounded::until(deadline, max_bytes, || authenticate_with_source_bounded(request, source))
+}
+
+fn authenticate_with_source_bounded(request: AuthenticateRequest, source: &Path) -> Result<Verdict> {
     let checkout = fs::canonicalize(&request.checkout)?;
     let path = &request.verdict;
     let run = fs::canonicalize(path.parent().context("verdict parent missing")?)?;
@@ -991,8 +1194,13 @@ pub fn authenticate(request: AuthenticateRequest) -> Result<Verdict> {
     ensure!(actual.contains_key("manifest-input.toml"), "current source inputs manifest seal missing");
     let input_manifest: Asset = object(&run.join("manifest-input.toml"))?;
     ensure!(input_manifest == *manifest_identity, "family manifest source input differs");
+    let manifest_source = manifest_identity
+        .file
+        .strip_prefix(&implementation.source_root)
+        .map(|relative| checkout.join(relative))
+        .unwrap_or_else(|_| manifest_identity.file.clone());
     ensure!(
-        digest(&manifest_identity.file)? == manifest_identity.sha256
+        digest(&manifest_source)? == manifest_identity.sha256
             && digest(&run.join("manifest.toml"))? == manifest_identity.sha256,
         "family manifest changed"
     );
@@ -1019,7 +1227,7 @@ pub fn authenticate(request: AuthenticateRequest) -> Result<Verdict> {
     for name in &binaries {
         ensure!(actual.contains_key(*name), "family binary artifact missing: {name}");
     }
-    let source = verify_source(&checkout, &checkout.join("deps/snesrev-sm"))?;
+    let source = verify_source(&checkout, source)?;
     ensure!(Some(source) == verdict.source, "family pinned source differs");
     for map in [&implementation.rust_dependencies, &implementation.harness_sources] {
         for (name, expected) in map {
@@ -1091,7 +1299,7 @@ pub fn authenticate(request: AuthenticateRequest) -> Result<Verdict> {
         ensure!(verdict.gameplay_translation == Some(true), "Ridley translation scope missing");
         ensure!(
             verdict.rejected_abi_inputs == 7
-                && fs::read_to_string(run.join("abi-controls.stdout"))?.lines().last() == Some("7 rejected ABI inputs"),
+                && bounded::text(run.join("abi-controls.stdout"))?.lines().last() == Some("7 rejected ABI inputs"),
             "Ridley ABI controls missing"
         );
         ensure!(
@@ -1107,7 +1315,7 @@ pub fn authenticate(request: AuthenticateRequest) -> Result<Verdict> {
         );
         ensure!(
             verdict.rejected_abi_inputs == 5
-                && fs::read_to_string(run.join("abi-controls.stdout"))?.lines().last() == Some("5 rejected ABI inputs"),
+                && bounded::text(run.join("abi-controls.stdout"))?.lines().last() == Some("5 rejected ABI inputs"),
             "PLM ABI rejection evidence incomplete"
         );
         let counts = manifest.routines.iter().map(|r| (r.symbol.clone(), r.cases.len())).collect();
@@ -1119,11 +1327,11 @@ pub fn authenticate(request: AuthenticateRequest) -> Result<Verdict> {
             "callback host input missing"
         );
         if matches!(implementation.callback_adapter.as_deref(), Some("power-bomb" | "game-host")) {
-            let original = fs::read_to_string(checkout.join("deps/snesrev-sm/src/sm_88.c"))?;
+            let original = bounded::text(checkout.join("deps/snesrev-sm/src/sm_88.c"))?;
             let token = "uint16 SpawnHdmaObject(uint8 db, const void *p)";
             ensure!(
                 original.matches(token).count() == 1
-                    && fs::read_to_string(run.join("sm_88-allocation-seam.c"))?
+                    && bounded::text(run.join("sm_88-allocation-seam.c"))?
                         == original.replace(token, "uint16 PortActualSpawnHdmaObject(uint8 db, const void *p)"),
                 "power bomb allocation seam changed"
             );
@@ -1135,11 +1343,11 @@ pub fn authenticate(request: AuthenticateRequest) -> Result<Verdict> {
                     "shared host input missing: {required}"
                 );
             }
-            let original = fs::read_to_string(checkout.join("deps/snesrev-sm/src/sm_80.c"))?;
+            let original = bounded::text(checkout.join("deps/snesrev-sm/src/sm_80.c"))?;
             let token = "void NMI_ProcessVramWriteQueue(void)";
             ensure!(
                 original.matches(token).count() == 1
-                    && fs::read_to_string(run.join("sm_80-vram-seam.c"))?
+                    && bounded::text(run.join("sm_80-vram-seam.c"))?
                         == original.replace(token, "void PortActualNmiProcessVramWriteQueue(void)"),
                 "shared host VRAM seam changed"
             );
@@ -1223,10 +1431,10 @@ pub fn authenticate(request: AuthenticateRequest) -> Result<Verdict> {
             );
             continue;
         }
-        let before = fs::read(directory.join("before.wram"))?;
+        let before = bounded::read(directory.join("before.wram"))?;
         authenticate_continuation(fixture, &run, &before)?;
-        let c = fs::read(directory.join("c-after.wram"))?;
-        let rust = fs::read(directory.join("rust-after.wram"))?;
+        let c = bounded::read(directory.join("c-after.wram"))?;
+        let rust = bounded::read(directory.join("rust-after.wram"))?;
         ensure!(
             before.len() == WRAM && c.len() == WRAM && rust.len() == WRAM && c == rust,
             "family actual full WRAM outputs differ"
@@ -1247,7 +1455,10 @@ pub fn authenticate(request: AuthenticateRequest) -> Result<Verdict> {
             ensure!(value == a, "family expected return differs");
         }
         if fixture.expected_after_file.as_ref().is_some() {
-            ensure!(c == fs::read(directory.join("expected-after.wram"))?, "family actual captured output differs");
+            ensure!(
+                c == bounded::read(directory.join("expected-after.wram"))?,
+                "family actual captured output differs"
+            );
         }
         if manifest.projectile_host {
             authenticate_host(&directory, fixture)?;
@@ -1261,6 +1472,72 @@ pub fn authenticate(request: AuthenticateRequest) -> Result<Verdict> {
         "family coverage incomplete"
     );
     Ok(verdict)
+}
+
+#[cfg(test)]
+mod source_tests {
+    use super::*;
+
+    #[test]
+    fn pinned_source_cache_rechecks_files_and_binds_changed_revision() -> Result<()> {
+        let directory = bounded::tests::Directory::new()?;
+        let source = directory.0.join("deps/snesrev-sm");
+        let downloads = directory.0.join("deps/downloads");
+        fs::create_dir_all(source.join("src"))?;
+        fs::create_dir_all(&downloads)?;
+        fs::create_dir(directory.0.join("tools"))?;
+        let material = source.join("src/sm_80.c");
+        fs::write(&material, b"void Step(void) {}\n")?;
+        fs::write(source.join("LICENSE.txt"), b"test source\n")?;
+        let mut tar = Vec::new();
+        bounded::tests::append_tar(&mut tar, "root/src/sm_80.c", b'0', b"void Step(void) {}\n");
+        bounded::tests::append_tar(&mut tar, "root/LICENSE.txt", b'0', b"test source\n");
+        tar.extend_from_slice(&[0u8; 1024]);
+        let hash = bounded::tests::gzip_archive(&downloads.join("source.tar.gz"), &tar)?;
+        let pins = directory.0.join("tools/dependencies.toml");
+        let pin = |revision: &str| {
+            format!(
+                "[[dependencies]]\nname=\"snesrev-sm\"\narchive=\"source.tar.gz\"\nrevision={revision:?}\nsha256={hash:?}\n"
+            )
+        };
+        fs::write(&pins, pin("first"))?;
+        bounded::until(bounded::now_unix_ms()? + 10_000, 1024 * 1024, || {
+            let first = verify_source(&directory.0, &source)?;
+            assert_eq!(first.revision, "first");
+            assert_eq!(first, verify_source(&directory.0, &source)?);
+            fs::write(&material, b"void Evil(void) {}\n")?;
+            assert!(verify_source(&directory.0, &source).is_err());
+            fs::write(&material, b"void Step(void) {}\n")?;
+            fs::write(&pins, pin("second"))?;
+            let second = verify_source(&directory.0, &source)?;
+            assert_eq!(second.revision, "second");
+            assert_eq!(first.files, second.files);
+            fs::write(downloads.join("source.tar.gz"), b"changed archive")?;
+            assert!(verify_source(&directory.0, &source).is_err());
+            Ok(())
+        })?;
+        Ok(())
+    }
+
+    #[test]
+    fn rust_archive_reader_authenticates_actual_pinned_source() -> Result<()> {
+        let checkout = Path::new("/home/jim/sm-decomp");
+        if !checkout.join("deps/downloads/snesrev-sm.tar.gz").is_file() {
+            return Ok(());
+        }
+        let source = verify_source_until(
+            checkout,
+            &checkout.join("deps/snesrev-sm"),
+            bounded::now_unix_ms()? + 10_000,
+            64 * 1024 * 1024,
+        )?;
+        assert_eq!(source.revision, "578f90b3cc49557bb70060ad033bb90b8cf8ac50");
+        assert_eq!(source.archive_sha256, "69c78831351112887575f852dadf0281dd5c23cef890b07a268ae6cf60aa9193");
+        assert!(source.files.contains_key("src/sm_80.c"));
+        assert!(source.files.contains_key("LICENSE.txt"));
+        assert_eq!(source.files["src/sm_80.c"], digest(&checkout.join("deps/snesrev-sm/src/sm_80.c"))?);
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -1319,7 +1596,7 @@ mod host_tests {
             ..Default::default()
         };
         prepare_case(&fixture, &directory.join("next"), &[]).unwrap();
-        let inherited = fs::read(directory.join("next/before.wram")).unwrap();
+        let inherited = bounded::read(directory.join("next/before.wram")).unwrap();
         assert_eq!(inherited[42], 99);
         assert_eq!(inherited[41], 3);
         authenticate_continuation(&fixture, &directory, &inherited).unwrap();
