@@ -163,10 +163,65 @@ and existing integration jobs can still be selected.
    **unrun and unproven**. The planned tooling and owner reconciliation must
    precede that drill. Documentation and temporary-repository tests must not
    be presented as proof of independent-session operation.
-7. The plan/spec/map were not yet saved at this review checkpoint. The runbook
-   can be checkpointed independently, but its plan links need the delegated
-   plan files before final task completion. A subsequent review note will
-   record plan/ticket checks once those files are stable.
+7. At the initial review checkpoint, the plan/spec/map were not yet saved.
+   The runbook and this initial review were committed independently at
+   `2b53f68`. The final plan/ticket review below supersedes that temporary
+   documentation gap.
+
+## Passed: final plan, map and ten tickets
+
+The stable spec, map, session runbook and all ten numbered tickets were read
+and independently checked after delegated authors saved them. All **57 local
+relative links resolve** across those 13 documents, covering 20 unique targets.
+In particular, `../../../docs` from an issue resolves to the repository's
+`docs`, and `../../decomp-strategy` resolves to the sibling scratch effort.
+
+Every ticket has `Status: open`, `Triage: ready-for-agent`, a valid `Type:`,
+`Blocked by:`, acceptance requirements and completion/cleanup evidence fields.
+Research tickets 05 and 10 have `## Answer` sections. All map rows match their
+ticket's type, status and blockers; every blocker refers to an earlier existing
+ticket, with no missing reference or dependency cycle.
+
+| Ticket | Blocked by | Reviewed sequencing |
+| --- | --- | --- |
+| 01 Legacy reconciliation | None | The sole currently ready task; existing claims stay authoritative. |
+| 02 Global/session fencing | 01 | Extends existing Rust engine; retains bridged ownership. |
+| 03 Maintained commands/handoffs | 01 | Disjoint interface work can parallelize with 02; final acceptance requires its validated authority contract. |
+| 04 Two-session recovery drill | 02, 03 | Uses an isolated disposable checkout/effort before production activation. |
+| 05 Subsystem catalog | 01 | Read-only whole-lane research can parallelize with tooling. |
+| 06 Ordinary-reset Ceres escape | 04, 05 | Resumes existing controller/ticket 78 with approved child scopes. |
+| 07 Vanilla progression | 06 | Adds route-required subsystem children as blockers; ready children can run independently. |
+| 08 Save/load and credits | 07 | Persistence and route children retain exact state/input/evidence gates. |
+| 09 Full Rust gameplay ownership | 08 | Requires supported behavior with zero gameplay C/CPU fallback. |
+| 10 Map Rando research | 09 | Pins later seed/custom behavior and generates implementation children. |
+
+The final spec, map and runbook agree: `.scratch/decomp-parallel/ledger.toml`
+is **unactivated and absent**. The current Ceres ledger/token remains in force.
+Ticket 04 requires two actual sessions, shared worker capacity, surviving-child
+ownership, checked replacement, rejected stale/old authority writes and serial
+fenced integration. Production activation additionally requires retained
+passing drill receipts and the validated legacy ownership bridge. No production
+claims are created to conduct its preactivation drill. Gameplay launches also
+require approved catalog scopes and each child's actual dependencies.
+
+Candidate modules are explicitly research starting points; they grant no
+writable ownership or acceptance. Whole subsystem envelopes reuse existing Rust
+and retain held broad gates, including tickets 78 and 141. Composed milestone
+order does not serialize dependency-ready child implementation. Unknown inputs,
+remaining C ownership and bounded evidence stay visible throughout.
+
+Final startup/read-only commands and mutable claim/recovery examples agree with
+the current schemas reviewed above. Existing capability limitations remain
+explicit; this documentation review ran no new mutable queue command, gameplay
+gate or real-session drill. New-file trailing-whitespace inspection and scoped
+`git diff --check` pass. The separate active report's template/registry/index
+changes were excluded from the plan's source and whitespace assertions.
+
+Final documentation-only cleanup: no runs or build outputs were created, so
+additional run cleanup is not applicable. Prior verification cleanup below
+remains completed with its measured evidence. The plan deliverable is approved
+for a scoped local commit; implementation, gameplay milestones and the actual
+two-session drill remain open and **unproven**.
 
 ## Completion evidence: scoped cleanup
 
