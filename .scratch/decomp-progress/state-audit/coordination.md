@@ -1,10 +1,33 @@
 # Reporting work coordination
 
-Status: reporting finished; main Git/index released after the final reporting evidence commit
+Status: reporting finished; stored on local main; final Git/index handoff below
 Owner: report session /root
 Updated: 2026-10-13
 
 ## Current ownership and scope
+
+2026-10-13 10:02 UTC: the user requested saving the completed report on local
+`main` and ending this reporting session. `main` was fast-forwarded from
+`243a414ec7ba1b78d85f8f0318230104c310da98` to the final report/evidence commit
+`b4eea5b09640b96c60d4569d9a829a4e2f21d399`, preserving source commit
+`263ad5acb096e66ae5d272c6f94534ae50c4b963` and its committed history.
+The checkout remains on `affected-family-assignment` so preparation's dirty
+files stay in place. Its preparation diff hash, untracked path list and empty
+index were verified unchanged. No remote push or preparation merge was made.
+
+This documentation-only handoff is the final reporting commit. Reporting retains
+Git/index ownership only until both `main` and `affected-family-assignment`
+point at the commit containing this entry; their exact final HEAD is then
+available through `git rev-parse main affected-family-assignment`. Once those
+refs agree, all main Git/index ownership is released to preparation recovery
+session `01a13460-4aa9-7fe0-865e-a8f54ffca310`, with no further reporting writes.
+Preparation's frozen `c8799f3` and other worktrees remain untouched; its drill and
+gameplay integration remain the preparation session's responsibility.
+
+Prior reporting verification and both cleanup passes remain complete. This Git
+save produced no run outputs or temporary worktrees and required no additional
+cleanup. The Windows-browser report server remains available at
+`http://localhost:4185/index.html` (PID 420446).
 
 2026-10-13 09:54 UTC: tickets 04, 05 and 06 are resolved after final reporting
 checks and cleanup. Reporting source remains frozen at `263ad5a`. The intended
