@@ -1,0 +1,4 @@
+schema = "preparation-worker-identity-v1"
+worker_display = "/root/serial_integration_fix"
+worker_session_id = "01a134d1-d160-7aa3-8bde-d8732af50412"
+source_commit = "2d59536c059a1ca9c31d9278bff2d9222eafa56c"
