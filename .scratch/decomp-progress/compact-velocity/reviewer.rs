@@ -13,6 +13,7 @@ use std::{
 };
 use tungstenite::{Message, WebSocket, stream::MaybeTlsStream};
 mod layout_checks { include!("checks.rs"); }
+mod history;
 
 struct Process(Child);
 impl Drop for Process {
@@ -253,6 +254,39 @@ fn main() -> Result<()> {
             Ok(())
         }
         Some("inspect") if args.len()==3 => inspect(&args[1], Path::new(&args[2]), Some(layout_checks::BROWSER_CHECKS)),
+        Some("history-check") if args.len()==4 => {
+            let output=Path::new(&args[3]);
+            ensure!(!output.exists(),"history inspection output already exists");
+            fs::create_dir_all(output)?;
+            let output=output.canonicalize()?;
+            let data:Value=serde_json::from_str(&fs::read_to_string(&args[2])?)?;
+            let data=history::fixture(data);
+            fs::write(output.join("fixture.json"),serde_json::to_vec_pretty(&data)?)?;
+            let html=render(&fs::read_to_string(&args[1])?,&serde_json::to_string(&data)?)?;
+            let page=output.join("fixture.html");
+            fs::write(&page,html)?;
+            let mut browser=Browser::launch(&output)?;
+            browser.navigate(&format!("file://{}",page.display()))?;
+            let checks=browser.eval(history::CHECKS)?;
+            fs::write(output.join("checks.json"),serde_json::to_vec_pretty(&checks)?)?;
+            browser.screenshot(&output.join("empty-stage.png"))?;
+            println!("{}",serde_json::to_string_pretty(&checks)?);
+            Ok(())
+        }
+        Some("served-consistency") if args.len()==2 => {
+            let address=&args[1];
+            let raw=http(address,"/registry.json")?;
+            let served:Value=serde_json::from_str(&raw)?;
+            let stored:Value=serde_json::from_str(&fs::read_to_string(".scratch/decomp-progress/registry.json")?)?;
+            ensure!(served==stored,"served JSON differs from stored registry");
+            let html=http(address,"/index.html")?;
+            ensure!(html.contains("Progress velocity"),"served template lacks chart");
+            let raw=html.split_once("<script id=\"progress-data\" type=\"application/json\">").context("embedded data missing")?.1.split_once("</script>").context("embedded data end missing")?.0;
+            let embedded:Value=serde_json::from_str(raw)?;
+            ensure!(embedded==stored,"served embedded snapshot differs");
+            println!("Stored registry, served JSON and served embedded snapshot agree; {} observations",served["updates"].as_array().unwrap().len());
+            Ok(())
+        }
         Some("file-check") if args.len() == 3 => {
             let output = Path::new(&args[2]);
             fs::create_dir_all(output)?;

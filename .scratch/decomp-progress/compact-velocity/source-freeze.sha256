@@ -1,0 +1,6 @@
+ff828f5d4112a8356de5dfc0abcc07f52c0afcefef73825589aa0a2e63b3417f  crates/pipeline/src/progress.html.in
+a922d3219cd403b2425ceae689f9594ac2d9a76bedff9e615a2fe0ea90ad9609  .scratch/decomp-progress/index.html
+053cc0b90657774814f8dc306d2f4f58e5be9db983ca27d11db687a57bb60708  .scratch/decomp-progress/registry.json
+2c41b2e720486f2c0962679797fa578379eaa5e7c110fa487aff57f47a095f2d  .scratch/decomp-progress/compact-velocity/reviewer.rs
+0017a32c4d805e4a2b5cb81ef74af96955037c0b615b912fb827bd1209aee2a6  .scratch/decomp-progress/compact-velocity/history.rs
+962a3ab704883954ba6ae4d4b2096c8562e2756facaf11a188780103848293c8  .scratch/decomp-progress/compact-velocity/checks.rs

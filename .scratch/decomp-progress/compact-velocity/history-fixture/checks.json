@@ -1,0 +1,12 @@
+{
+  "duplicates": true,
+  "empty_stage": true,
+  "exact_stages": true,
+  "line_weighting": true,
+  "missing_and_invalid_dates": true,
+  "old_baseline": true,
+  "overlapping_reports": true,
+  "permanent_replacement_exclusions": true,
+  "stale_exclusions": true,
+  "start_boundary": true
+}

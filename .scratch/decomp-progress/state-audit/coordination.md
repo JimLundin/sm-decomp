@@ -37,6 +37,20 @@ the checkpoint owner's files.
 
 ## WIP checkpoint boundary
 
+Final authored source freeze is stable now; `compact-velocity/source-freeze.sha256`
+records exact template, HTML, registry, reviewer, history/check sources. Synthetic
+browser history checks passed all exclusions, repeated/overlapping records,
+old cumulative baseline, exact period boundary, missing/invalid dates, weighting
+and empty stages in `compact-velocity/history-fixture/checks.json`.
+All 19 maintained reporting tests pass after running the local-socket test
+outside the sandbox. No further tracked-source changes are planned; final
+served browser verification and cleanup will write distinct outputs. Checkpoint
+owner may commit reviewer/index/source-freeze and finished synthetic
+`fixture.json`, `fixture.html`, `checks.json`, `empty-stage.png`, log and
+`rust-tests-final.stdout` (exclude disposable profile). I am holding these
+source files/coordination at this boundary for the requested commit, then await
+the explicit main Git/index handoff.
+
 `history.rs`, `wip-sources.sha256`, `publication-consistency.json` and the new
 `state-audit/report.md` are stable authored inputs/observations and may be
 checkpointed now. WIP commit `d462fac` is read and its archive/member hashes
