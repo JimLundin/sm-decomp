@@ -43,7 +43,7 @@ fn fork_execution(request: &VerifyRequest) -> Result<bool> {
     let supported = cfg!(all(target_os = "linux", target_arch = "x86_64")) && ordinary;
     ensure!(
         request.execution != "fork" || supported,
-        "fork execution is supported only for ordinary Linux x86_64 families"
+        "fork execution is supported only for Linux x86_64 family and Ridley subsystem adapters"
     );
     Ok(supported && request.execution != "fresh")
 }
@@ -287,10 +287,12 @@ fn build(
         !host
             || (eproj
                 && manifest.rom.as_ref().is_some()
-                && Path::new(&manifest.rust_module)
-                    .file_name()
-                    .is_some_and(|n| n == "enemy_projectiles.rs" || n == "observed_projectile_ownership.rs")),
-        "projectile host requires ROM and bank86 allocator dispatcher"
+                && Path::new(&manifest.rust_module).file_name().is_some_and(|n| {
+                    n == "enemy_projectiles.rs"
+                        || n == "observed_projectile_ownership.rs"
+                        || n == "ridley_enemy_instructions.rs"
+                })),
+        "projectile host requires ROM and an admitted host dispatcher"
     );
     let mut prototypes = Vec::new();
     let mut branches = Vec::new();
@@ -349,7 +351,7 @@ fn build(
         if kind == "rom_ptr" {
             let bank = if dispatcher {
                 let bank = routine.pointer_bank.unwrap_or(if eproj { 0x86 } else { 0x84 });
-                ensure!([0x84, 0x86, 0xb2].contains(&bank), "invalid pointer bank");
+                ensure!([0x84, 0x86, 0xa6, 0xb2].contains(&bank), "invalid pointer bank");
                 bank.to_string()
             } else {
                 "(uint16_t)a".to_owned()
@@ -404,7 +406,11 @@ fn build(
         ensure!(identifier(name), "invalid Rust module import");
     }
     let alias_module = dispatcher
-        && module.file_name().is_some_and(|n| n == "enemy_projectiles.rs" || n == "observed_projectile_ownership.rs");
+        && module.file_name().is_some_and(|n| {
+            n == "enemy_projectiles.rs"
+                || n == "observed_projectile_ownership.rs"
+                || n == "ridley_enemy_instructions.rs"
+        });
     let mut wrapper_imports = imports.clone();
     if alias_module {
         let name = module.file_stem().unwrap().to_string_lossy().into_owned();
@@ -800,6 +806,18 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
         let mut manifest: Manifest = toml::from_str(std::str::from_utf8(&manifest_bytes)?)?;
         let callbacks = request.adapter == "callback" || request.adapter == "power-bomb";
         let plm = request.adapter == "plm";
+        let ridley = request.adapter == "ridley-subsystem";
+        if ridley {
+            ensure!(
+                manifest.callback_adapter.as_deref() == Some("ridley-subsystem"),
+                "Ridley adapter declaration differs"
+            );
+        } else {
+            ensure!(
+                manifest.callback_adapter.as_deref() != Some("ridley-subsystem"),
+                "Ridley manifest requires its native adapter"
+            );
+        }
         if plm {
             manifest = crate::plm_spawn::normalize(&manifest)?;
         }
@@ -817,7 +835,9 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
             fs::write(run.join("rom.bin"), &bytes)?;
             verdict.rom = Some(RomIdentity { sha256: digest(&run.join("rom.bin"))?, bytes: bytes.len() });
         }
-        verdict.implementation = Some(if plm {
+        verdict.implementation = Some(if ridley {
+            crate::ridley_subsystem_adapter::build(&request, &manifest, &checkout, &source, &run)?
+        } else if plm {
             crate::plm_spawn::build(&request, &manifest, &checkout, &source, &run)?
         } else if callbacks {
             callback::build(&request, &manifest, &checkout, &source, &run)?
@@ -830,7 +850,7 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
             &run.join("manifest-input.toml"),
             verdict.implementation.as_ref().unwrap().manifest.as_ref().unwrap(),
         )?;
-        if callbacks {
+        if callbacks || ridley {
             verdict.gameplay_translation = Some(!manifest.infrastructure_probe);
         }
         let outcomes = crate::fixture_execution::run(
@@ -841,7 +861,9 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
             request.workers,
             fork,
             |(routine, fixture, routine_index), worker| {
-                if plm {
+                if ridley {
+                    crate::ridley_subsystem_adapter::case(&request, &manifest, routine, fixture, &run, worker)
+                } else if plm {
                     crate::plm_spawn::case(&request, routine, fixture, &run, worker)
                 } else if callbacks {
                     callback::case(&request, &manifest, routine, fixture, routine_index, &run, worker)
@@ -871,6 +893,11 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
         verdict.status = "offline-verified".into();
         verdict.verified_cases = tasks.len();
         verdict.verified_routines = manifest.routines.len();
+        if ridley {
+            verdict.rejected_abi_inputs = 7;
+            verdict.remaining_c_gameplay_callbacks =
+                usize::try_from(verdict.cases.iter().map(|case| case.callbacks).sum::<u64>())?;
+        }
         if plm {
             verdict.rejected_abi_inputs = 5;
             verdict.native_rust_spawn_calls = tasks.len();
@@ -922,15 +949,18 @@ pub fn authenticate(request: AuthenticateRequest) -> Result<Verdict> {
         }
         if execution == "dependency-v1-fork" {
             ensure!(
-                implementation.dependency_contract == "rust-family-v2",
-                "fork adapter not admitted for callbacks/PLM"
+                ["rust-family-v2", crate::ridley_subsystem_adapter::CONTRACT]
+                    .contains(&implementation.dependency_contract.as_str()),
+                "fork adapter dependency contract is not admitted"
             );
             ensure!(
                 implementation.harness_sources.contains_key("crates/pipeline/src/fixture_worker.rs"),
                 "fixture worker source seal missing"
             );
             ensure!(
-                actual.contains_key("fixture-worker.rs") && actual.contains_key("libfixture_worker.a"),
+                actual.contains_key("fixture-worker.rs")
+                    && (implementation.callback_adapter.as_deref() == Some("ridley-subsystem")
+                        || actual.contains_key("libfixture_worker.a")),
                 "fixture worker artifact missing"
             );
             ensure!(
@@ -939,7 +969,9 @@ pub fn authenticate(request: AuthenticateRequest) -> Result<Verdict> {
                 "fixture worker generated source differs"
             );
             ensure!(
-                implementation.binaries.get("libfixture_worker.a") == Some(&digest(&run.join("libfixture_worker.a"))?),
+                implementation.callback_adapter.as_deref() == Some("ridley-subsystem")
+                    || implementation.binaries.get("libfixture_worker.a")
+                        == Some(&digest(&run.join("libfixture_worker.a"))?),
                 "fixture worker library seal differs"
             );
         }
@@ -957,15 +989,18 @@ pub fn authenticate(request: AuthenticateRequest) -> Result<Verdict> {
     );
     let callbacks = implementation.dependency_contract == "rust-callback-v2";
     let plm = implementation.dependency_contract == "rust-plm-v2";
+    let ridley = implementation.dependency_contract == crate::ridley_subsystem_adapter::CONTRACT;
     if plm {
         manifest = crate::plm_spawn::normalize(&manifest)?;
     }
     ordered_tasks(&manifest)?;
     ensure!(
-        callbacks || plm || implementation.dependency_contract == "rust-family-v2",
+        ridley || callbacks || plm || implementation.dependency_contract == "rust-family-v2",
         "unsupported family dependency contract"
     );
-    let binaries = if plm {
+    let binaries = if ridley {
+        vec!["ridley", "c", "rust", "libridley.a"]
+    } else if plm {
         vec!["spawn", "libplm.a"]
     } else if callbacks {
         vec!["collision", "libcollision.a"]
@@ -988,7 +1023,18 @@ pub fn authenticate(request: AuthenticateRequest) -> Result<Verdict> {
             "pipeline input missing: {required}"
         );
     }
-    let required_harness = if plm {
+    let required_harness = if ridley {
+        vec![
+            "family.rs",
+            "batch.rs",
+            "cleanup.rs",
+            "ridley_subsystem_adapter.rs",
+            "ridley_subsystem_fixtures.rs",
+            "ridley_subsystem_abi.rs.in",
+            "ridley_subsystem_host.c.in",
+            "fixture_worker.rs",
+        ]
+    } else if plm {
         vec!["family.rs", "batch.rs", "cleanup.rs", "plm_spawn.rs", "plm_spawn_abi.rs.in", "plm_spawn_host.c.in"]
     } else if callbacks {
         vec![
@@ -1021,7 +1067,30 @@ pub fn authenticate(request: AuthenticateRequest) -> Result<Verdict> {
             "family input missing: {required}"
         );
     }
-    if plm {
+    if ridley {
+        ensure!(
+            implementation.callback_adapter.as_deref() == Some("ridley-subsystem")
+                && manifest.callback_adapter.as_deref() == Some("ridley-subsystem"),
+            "Ridley adapter seal differs"
+        );
+        ensure!(
+            actual.contains_key("pipeline-headless.c")
+                && implementation.harness_sources.contains_key("tools/decomp/headless.c"),
+            "Ridley host input missing"
+        );
+        crate::ridley_subsystem_adapter::check_instrumented_units(&checkout.join("deps/snesrev-sm"), &run)?;
+        ensure!(verdict.gameplay_translation == Some(true), "Ridley translation scope missing");
+        ensure!(
+            verdict.rejected_abi_inputs == 7
+                && fs::read_to_string(run.join("abi-controls.stdout"))?.lines().last() == Some("7 rejected ABI inputs"),
+            "Ridley ABI controls missing"
+        );
+        ensure!(
+            verdict.remaining_c_gameplay_callbacks
+                == usize::try_from(verdict.cases.iter().map(|case| case.callbacks).sum::<u64>())?,
+            "Ridley C service count differs"
+        );
+    } else if plm {
         ensure!(
             actual.contains_key("pipeline-headless.c")
                 && implementation.harness_sources.contains_key("tools/decomp/headless.c"),
@@ -1095,6 +1164,19 @@ pub fn authenticate(request: AuthenticateRequest) -> Result<Verdict> {
         let fixture = expected.get(&key).context("unexpected family coverage")?;
         ensure!(observed.insert(key), "duplicate observed case");
         let directory = run.join(key.1);
+        if ridley {
+            let checked = crate::ridley_subsystem_adapter::check(&directory, fixture)?;
+            ensure!(
+                checked.results == record.results
+                    && checked.returns == record.returns
+                    && checked.callbacks == record.callbacks
+                    && checked.before_sha256 == record.before_sha256
+                    && checked.after_sha256 == record.after_sha256
+                    && checked.capture_after_sha256 == record.capture_after_sha256,
+                "Ridley retained case differs"
+            );
+            continue;
+        }
         if plm {
             ensure!(
                 crate::plm_spawn::check(&directory, fixture)?.spawn_results == record.spawn_results,

@@ -1,0 +1,180 @@
+#[path=__MODULE__]
+mod family;
+use std::ffi::{CStr, c_char};
+unsafe extern "C" {
+    fn sm_ridley_service(ram: *mut u8, length: usize, words: *mut u16, count: usize, kind: u32, a: u16, b: u16) -> i64;
+    fn sm_ridley_mode7(sine: i16, factor: u8) -> i64;
+    fn sm_ridley_ordered(kind: u32, a: u16, b: u16, c: u16) -> i32;
+}
+struct RidleyCallbacks;
+static RIDLEY_GAMEPLAY_CALLS: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+
+fn disjoint(start: usize, end: usize, other_start: usize, other_end: usize) -> bool {
+    end <= other_start || other_end <= start
+}
+
+fn valid_buffers(ram: *const u8, len: usize, rom: *const u8, rom_len: usize, host: *const u16, count: usize) -> bool {
+    if ram.is_null()
+        || len != WRAM_SIZE
+        || rom.is_null()
+        || rom_len == 0
+        || rom_len > 0x400000
+        || host.is_null()
+        || host as usize % std::mem::align_of::<u16>() != 0
+        || count != 8
+    {
+        return false;
+    }
+    let Some(ram_end) = (ram as usize).checked_add(len) else { return false };
+    let Some(rom_end) = (rom as usize).checked_add(rom_len) else { return false };
+    let Some(host_end) = (host as usize).checked_add(16) else { return false };
+    disjoint(ram as usize, ram_end, rom as usize, rom_end)
+        && disjoint(ram as usize, ram_end, host as usize, host_end)
+        && disjoint(rom as usize, rom_end, host as usize, host_end)
+}
+impl family::Host for RidleyCallbacks {
+    fn service(
+        &mut self,
+        ram: &mut Wram<'_>,
+        _: &[u8],
+        projectile: &mut family::ProjectileHost,
+        service: family::Service,
+    ) -> family::Result<u32> {
+        let (kind, a, b) = match service {
+            family::Service::SpawnEnemy { bank, population } => (0, u16::from(bank), population),
+            family::Service::EnemyDeath { slot, animation } => (1, slot, animation),
+            family::Service::EnemyItemDrop { slot } => (2, slot, 0),
+            family::Service::NormalTouch => (3, 0, 0),
+            family::Service::NormalShot => (4, 0, 0),
+            family::Service::NormalPowerbomb => (5, 0, 0),
+            family::Service::SamusCode { code } => (6, code, 0),
+        };
+        let mut state = (0..WRAM_SIZE).map(|i| ram.byte(i)).collect::<Vec<_>>();
+        let mut words = projectile.words();
+        let result =
+            unsafe { sm_ridley_service(state.as_mut_ptr(), state.len(), words.as_mut_ptr(), words.len(), kind, a, b) };
+        let result = u32::try_from(result).map_err(|_| "actual C Ridley service failed")?;
+        for (i, value) in state.into_iter().enumerate() {
+            ram.set_byte(i, value);
+        }
+        *projectile = family::ProjectileHost::from_words(words);
+        Ok(result)
+    }
+    fn mode7_multiply(&mut self, sine: i16, factor: u8) -> family::Result<u16> {
+        u16::try_from(unsafe { sm_ridley_mode7(sine, factor) }).map_err(|_| "actual Mode7 transaction failed")
+    }
+    fn ordered_audio(&mut self, channel: u8, sound: u16, maximum: u8) -> family::Result<()> {
+        if unsafe { sm_ridley_ordered(0, u16::from(channel), sound, u16::from(maximum)) } == 0 {
+            Ok(())
+        } else {
+            Err("ordered Ridley audio failed")
+        }
+    }
+    fn ordered_music(&mut self, track: u16, delay: u16) -> family::Result<()> {
+        if unsafe { sm_ridley_ordered(1, track, delay, 0) } == 0 { Ok(()) } else { Err("ordered Ridley music failed") }
+    }
+    fn ordered_projectile(&mut self, definition: u16, parameter: u16, _: Option<u16>) -> family::Result<()> {
+        if unsafe { sm_ridley_ordered(2, definition, parameter, 0) } == 0 {
+            Ok(())
+        } else {
+            Err("ordered Ridley projectile failed")
+        }
+    }
+}
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn port_ridley_subsystem_call(
+    ram: *mut u8,
+    len: usize,
+    rom: *const u8,
+    rom_len: usize,
+    host: *mut u16,
+    count: usize,
+    symbol: *const c_char,
+    a: i32,
+    b: i32,
+) -> i64 {
+    if !valid_buffers(ram, len, rom, rom_len, host, count) || symbol.is_null() {
+        return -1;
+    }
+    let Ok(symbol) = unsafe { CStr::from_ptr(symbol) }.to_str() else {
+        return -1;
+    };
+    let rom = unsafe { std::slice::from_raw_parts(rom, rom_len) };
+    let mut state = unsafe { std::slice::from_raw_parts(ram, len) }.to_vec();
+    let words = unsafe { std::slice::from_raw_parts(host, 8) }.try_into().unwrap();
+    let mut projectile = family::ProjectileHost::from_words(words);
+    RIDLEY_GAMEPLAY_CALLS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        family::dispatch_fixture(
+            &mut Wram::new(&mut state).unwrap(),
+            rom,
+            &mut projectile,
+            &mut RidleyCallbacks,
+            symbol,
+            a,
+            b,
+        )
+    }));
+    match result {
+        Ok(Ok(value)) => {
+            unsafe {
+                std::ptr::copy_nonoverlapping(state.as_ptr(), ram, len);
+                std::ptr::copy_nonoverlapping(projectile.words().as_ptr(), host, 8);
+            }
+            i64::from(value)
+        }
+        _ => -1,
+    }
+}
+
+/// ABI controls require rejection before any gameplay or host service executes.
+#[unsafe(no_mangle)]
+pub extern "C" fn port_ridley_subsystem_abi_controls() -> u32 {
+    let mut ram = vec![0x5a; WRAM_SIZE];
+    let rom = vec![0xa5; 0x100];
+    let mut host = [0x1234u16; 8];
+    let before = ram.clone();
+    // This supported native boundary changes WRAM without reading ROM or
+    // invoking C services for this area. Invalid inputs must fail before it.
+    let symbol = c"Ridley_Shot";
+    let positive = unsafe {
+        port_ridley_subsystem_call(
+            ram.as_mut_ptr(), WRAM_SIZE, rom.as_ptr(), rom.len(),
+            host.as_mut_ptr(), 8, symbol.as_ptr(), 0, 0,
+        )
+    };
+    if positive != 0 || ram == before || host != [0x1234; 8] {
+        return 0;
+    }
+    ram.copy_from_slice(&before);
+    let mut rejected = 0;
+    for (pointer, length, rom_pointer, rom_length, host_pointer, count) in [
+        (std::ptr::null_mut(), WRAM_SIZE, rom.as_ptr(), rom.len(), host.as_mut_ptr(), 8),
+        (ram.as_mut_ptr(), WRAM_SIZE - 1, rom.as_ptr(), rom.len(), host.as_mut_ptr(), 8),
+        (ram.as_mut_ptr(), WRAM_SIZE, std::ptr::null(), rom.len(), host.as_mut_ptr(), 8),
+        (ram.as_mut_ptr(), WRAM_SIZE, rom.as_ptr(), rom.len(), host.as_mut_ptr(), 7),
+        (ram.as_mut_ptr(), WRAM_SIZE, ram.as_ptr(), 0x100, host.as_mut_ptr(), 8),
+        (ram.as_mut_ptr(), WRAM_SIZE, rom.as_ptr(), rom.len(), ram.as_mut_ptr().cast::<u16>(), 8),
+        (ram.as_mut_ptr(), WRAM_SIZE, rom.as_ptr(), rom.len(), ram.as_mut_ptr().wrapping_add(1).cast::<u16>(), 8),
+    ] {
+        let result = unsafe {
+            port_ridley_subsystem_call(
+                pointer,
+                length,
+                rom_pointer,
+                rom_length,
+                host_pointer,
+                count,
+                symbol.as_ptr(),
+                0,
+                0,
+            )
+        };
+        if result != -1 || ram != before || host != [0x1234; 8]
+            || RIDLEY_GAMEPLAY_CALLS.load(std::sync::atomic::Ordering::Relaxed) != 1 {
+            return 0;
+        }
+        rejected += 1;
+    }
+    rejected
+}

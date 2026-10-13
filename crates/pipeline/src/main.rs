@@ -25,6 +25,7 @@ mod decomp_job;
 mod decomp_model;
 mod decomp_prefix;
 mod diagnostics;
+mod enemy_instruction_inventory;
 mod family;
 mod family_model;
 mod fixture_execution;
@@ -62,6 +63,9 @@ mod readiness_run;
 mod readiness_sync;
 mod replay;
 mod resource_sampler;
+mod ridley_subsystem_adapter;
+mod ridley_subsystem_fixtures;
+mod ridley_subsystem_inventory;
 mod rng_job;
 mod routine_live;
 mod source_inventory;
@@ -503,6 +507,111 @@ fn main() -> Result<()> {
             } else {
                 2
             });
+        }
+        Some("ridley-subsystem-authenticate") if args.len() == 2 => {
+            emit(&ridley_subsystem_inventory::authenticate(&std::env::current_dir()?, Path::new(&args[1]))?)
+        }
+        Some("ridley-subsystem-fixtures") => {
+            let mut checkout = std::env::current_dir()?;
+            let mut rom = checkout.join("rom/sm.sfc");
+            let mut output = checkout.join("tools/port/ridley-subsystem.toml");
+            for pair in args[1..].chunks(2) {
+                ensure!(pair.len() == 2, "Ridley fixture option value missing");
+                match pair[0].as_str() {
+                    "--root" => checkout = PathBuf::from(&pair[1]),
+                    "--rom" => rom = PathBuf::from(&pair[1]),
+                    "--output" => output = PathBuf::from(&pair[1]),
+                    other => bail!("unknown Ridley fixture option {other}"),
+                }
+            }
+            let manifest = ridley_subsystem_fixtures::generate(&checkout, &rom, &output)?;
+            emit(&family_model::Generation {
+                manifest: output,
+                family: manifest.family,
+                cases: manifest.routines.iter().map(|routine| routine.cases.len()).sum(),
+            })
+        }
+        Some("ridley-subsystem-inventory") if args.len() == 1 => {
+            emit(&ridley_subsystem_inventory::operate(request()?)?)
+        }
+        Some("ridley-subsystem-inventory") => {
+            let mut request = crate::report!({});
+            let mut index = 1;
+            while index < args.len() {
+                if ["--prepare-only", "--observation-control"].contains(&args[index].as_str()) {
+                    let key = if args[index] == "--prepare-only" { "prepare_only" } else { "observation_control" };
+                    set_option(&mut request, key, true)?;
+                    index += 1;
+                    continue;
+                }
+                let key = match args[index].as_str() {
+                    "--root" => "checkout",
+                    "--source" => "source",
+                    "--asset-root" => "asset_root",
+                    "--frames" => "frames",
+                    "--output" => "output",
+                    "--timeout" => "timeout",
+                    "--capture-limit" => "capture_limit",
+                    "--captures-per-key" => "captures_per_key",
+                    "--pipeline-root" => "pipeline_root",
+                    "--workers" => "workers",
+                    other => bail!("unknown Ridley inventory option {other}"),
+                };
+                let value = args.get(index + 1).context("Ridley inventory option value missing")?;
+                set_option(
+                    &mut request,
+                    key,
+                    if ["frames", "timeout", "capture_limit", "captures_per_key", "workers"].contains(&key) {
+                        crate::report!(value.parse::<u64>()?)
+                    } else {
+                        crate::report!(value)
+                    },
+                )?;
+                index += 2;
+            }
+            let verdict = ridley_subsystem_inventory::operate(request)?;
+            emit(&verdict)?;
+            ensure!(
+                matches!(
+                    verdict.get("status").and_then(Value::as_str),
+                    Some("diagnostic-complete" | "diagnostic-prepared")
+                ),
+                "Ridley inventory failed"
+            );
+            Ok(())
+        }
+        Some("enemy-instruction-inventory") => {
+            let mut request = crate::report!({});
+            let mut index = 1;
+            while index < args.len() {
+                let key = match args[index].as_str() {
+                    "--root" => "checkout",
+                    "--source" => "source",
+                    "--asset-root" => "asset_root",
+                    "--frames" => "frames",
+                    "--output" => "output",
+                    "--timeout" => "timeout",
+                    other => bail!("unknown enemy inventory option {other}"),
+                };
+                let value = args.get(index + 1).context("enemy inventory option value missing")?;
+                set_option(
+                    &mut request,
+                    key,
+                    if ["frames", "timeout"].contains(&key) {
+                        crate::report!(value.parse::<u64>()?)
+                    } else {
+                        crate::report!(value)
+                    },
+                )?;
+                index += 2;
+            }
+            let verdict = enemy_instruction_inventory::operate(request)?;
+            emit(&verdict)?;
+            ensure!(
+                verdict.get("status").and_then(Value::as_str) == Some("diagnostic-complete"),
+                "enemy instruction inventory failed"
+            );
+            Ok(())
         }
         Some("projectile-inventory") => {
             let mut request = crate::report!({});

@@ -1,0 +1,246 @@
+// Passive whole-Ridley observations. No Rust admission or oracle substitution.
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <inttypes.h>
+#include "sm_cpu_infra.h"
+#include "snes/ppu.h"
+
+#ifndef RIDLEY_SUBSYSTEM_CAPTURE_LIMIT
+#define RIDLEY_SUBSYSTEM_CAPTURE_LIMIT 2048
+#endif
+#ifndef RIDLEY_SUBSYSTEM_CAPTURES_PER_KEY
+#define RIDLEY_SUBSYSTEM_CAPTURES_PER_KEY 2
+#endif
+
+extern void InventoryProjectileHostSave(uint16 *);
+enum {
+  kRidleyInventoryAi, kRidleyInventoryTouch, kRidleyInventoryShot,
+  kRidleyInventoryDirect, kRidleyInventoryState, kRidleyInventoryBabyState,
+  kRidleyInventoryBaby, kRidleyInventoryScript, kRidleyInventoryOpcode, kRidleyInventoryHelper,
+  kRidleyInventoryTail,
+  kRidleyInventoryKindCount
+};
+static const char *const ridley_inventory_kinds[] = {
+  "ai", "touch", "shot", "direct", "state", "baby-state", "baby", "script", "opcode", "helper", "tail"
+};
+typedef struct RidleyInventoryKey {
+  uint32 address;
+  uint16 header, slot, state, pc, orientation, area, lifecycle;
+  uint8 kind, window;
+} RidleyInventoryKey;
+typedef struct RidleyInventoryCounter {
+  RidleyInventoryKey key;
+  uint64_t hits, first, last;
+  unsigned captures;
+} RidleyInventoryCounter;
+typedef struct RidleyInventoryBoundary {
+  uint64_t id, parent, capture;
+  uint32 address, argument;
+  uint16 slot, entry_header, entry_pc, entry_state, entry_current;
+  unsigned kind, window, counter;
+  FILE *effects, *services;
+} RidleyInventoryBoundary;
+static RidleyInventoryCounter ridley_inventory_counters[8192];
+static RidleyInventoryBoundary ridley_inventory_stack[64];
+static unsigned ridley_inventory_depth;
+static uint64_t ridley_inventory_sequence, ridley_inventory_boundaries, ridley_inventory_captures;
+static FILE *ridley_inventory_events, *ridley_inventory_effects;
+static uint64_t ridley_inventory_service_hits[7], ridley_inventory_service_first[7], ridley_inventory_service_last[7];
+
+static void RidleyInventoryFail(const char *reason) {
+  fprintf(stderr, "Ridley subsystem inventory: %s\n", reason);
+  exit(2);
+}
+static unsigned RidleyInventoryWindow(void) {
+  return snes_frame_counter < 36000 ? 0 : snes_frame_counter < 50000 ? 1 : 2;
+}
+int RidleySubsystemNativeHeader(uint16 slot) {
+  if (slot >= 2048 || (slot & 63)) return 0;
+  EnemyData *enemy = gEnemyData(slot);
+  return enemy->bank == 0xa6 &&
+      (enemy->enemy_ptr == 0xe13f || enemy->enemy_ptr == 0xe17f || enemy->enemy_ptr == 0xe1bf);
+}
+static void RidleyInventoryWord(uint8 *bytes, uint16 value) {
+  bytes[0] = value; bytes[1] = value >> 8;
+}
+static void RidleyInventoryPpu(uint8 *bytes) {
+  const Ppu *ppu = g_snes->my_ppu;
+  for (unsigned i = 0; i < 8; i++) RidleyInventoryWord(bytes + 2 * i, ppu->m7matrix[i]);
+  bytes[16] = ppu->m7prev; bytes[17] = ppu->ppu1openBus;
+  bytes[18] = ppu->ppu2openBus; bytes[19] = g_snes->openBus;
+}
+static void RidleyInventoryWriteFile(const char *path, const void *data, size_t size) {
+  FILE *file = fopen(path, "wb");
+  if (!file || fwrite(data, 1, size, file) != size || fclose(file))
+    RidleyInventoryFail("cannot preserve complete capture");
+}
+static void RidleyInventoryCapture(const RidleyInventoryBoundary *boundary, const char *phase) {
+  char path[192]; uint16 words[8]; uint8 host[16], ppu[20];
+  InventoryProjectileHostSave(words); RidleyInventoryPpu(ppu);
+  for (unsigned i = 0; i < 8; i++) RidleyInventoryWord(host + 2 * i, words[i]);
+  snprintf(path, sizeof(path), "fixtures/ridley-%010" PRIu64 "-%s.wram", boundary->capture, phase);
+  RidleyInventoryWriteFile(path, g_ram, sizeof(g_ram));
+  snprintf(path, sizeof(path), "fixtures/ridley-%010" PRIu64 "-%s.host", boundary->capture, phase);
+  RidleyInventoryWriteFile(path, host, sizeof(host));
+  snprintf(path, sizeof(path), "fixtures/ridley-%010" PRIu64 "-%s.ppu", boundary->capture, phase);
+  RidleyInventoryWriteFile(path, ppu, sizeof(ppu));
+}
+static unsigned RidleyInventoryCounterIndex(const RidleyInventoryKey *key) {
+  uint32 hash = 2166136261u;
+  // Hash fields explicitly; padding bytes are never part of the identity.
+  uint32 fields[] = {key->address, key->header, key->slot, key->state, key->pc,
+                    key->orientation, key->area, key->kind, key->window, key->lifecycle};
+  for (unsigned i = 0; i < sizeof(fields) / sizeof(fields[0]); i++)
+    hash = (hash ^ fields[i]) * 16777619u;
+  for (unsigned probe = 0; probe < 8192; probe++) {
+    unsigned index = (hash + probe) & 8191;
+    RidleyInventoryCounter *counter = &ridley_inventory_counters[index];
+    const RidleyInventoryKey *old = &counter->key;
+    if (!counter->hits) { counter->key = *key; return index; }
+    if (old->address == key->address && old->header == key->header && old->slot == key->slot &&
+        old->state == key->state && old->pc == key->pc && old->orientation == key->orientation &&
+        old->area == key->area && old->kind == key->kind && old->window == key->window &&
+        old->lifecycle == key->lifecycle) return index;
+  }
+  RidleyInventoryFail("counter capacity exhausted"); return 0;
+}
+static void RidleyInventoryEvent(const RidleyInventoryBoundary *boundary, const char *phase,
+                                uint32 returned, unsigned return_kind) {
+  if (!ridley_inventory_events) {
+    ridley_inventory_events = fopen("ridley-subsystem-events.jsonl", "w");
+    if (!ridley_inventory_events) RidleyInventoryFail("cannot create boundary events");
+  }
+  EnemyData *enemy = gEnemyData(boundary->slot); uint16 host[8]; uint8 ppu[20];
+  InventoryProjectileHostSave(host); RidleyInventoryPpu(ppu);
+  fprintf(ridley_inventory_events,
+    "{\"sequence\":%" PRIu64 ",\"boundary_id\":%" PRIu64 ",\"parent_id\":%" PRIu64
+    ",\"capture\":%" PRIu64 ",\"frame\":%u,\"window\":%u,\"kind\":\"%s\",\"phase\":\"%s\","
+    "\"depth\":%u,\"address\":%u,\"argument\":%u,\"returned\":%u,\"return_kind\":%u,"
+    "\"slot\":%u,\"current_slot\":%u,\"entry_current_slot\":%u,\"entry_header\":%u,"
+    "\"entry_pc\":%u,\"entry_state\":%u,\"header\":%u,\"bank\":%u,\"pc\":%u,\"timer\":%u,"
+    "\"state_zero\":%u,\"state_slot\":%u,\"tail_state\":%u,\"baby_state\":%u,\"orientation\":%u,\"area\":%u,"
+    "\"health_zero\":%u,\"health_slot\":%u,\"ai_bits\":%u,\"extra\":%u,\"spritemap\":%u,\"host\":[",
+    ++ridley_inventory_sequence, boundary->id, boundary->parent, boundary->capture,
+    snes_frame_counter, boundary->window, ridley_inventory_kinds[boundary->kind], phase,
+    ridley_inventory_depth, boundary->address, boundary->argument, returned, return_kind,
+    boundary->slot, cur_enemy_index, boundary->entry_current, boundary->entry_header,
+    boundary->entry_pc, boundary->entry_state, enemy->enemy_ptr, enemy->bank,
+    enemy->current_instruction, enemy->instruction_timer,
+    GET_WORD(g_ram + 0xfa8), GET_WORD(g_ram + 0xfa8 + boundary->slot),
+    GET_WORD(g_ram + 0x2000), GET_WORD(g_ram + 0x8800), GET_WORD(g_ram + 0x7820), area_index,
+    gEnemyData(0)->health, enemy->health, enemy->ai_handler_bits,
+    enemy->extra_properties, enemy->spritemap_pointer);
+  for (unsigned i = 0; i < 8; i++) fprintf(ridley_inventory_events, "%s%u", i ? "," : "", host[i]);
+  fprintf(ridley_inventory_events, "],\"ppu\":[");
+  for (unsigned i = 0; i < 20; i++) fprintf(ridley_inventory_events, "%s%u", i ? "," : "", ppu[i]);
+  fprintf(ridley_inventory_events, "]}\n");
+  if (ferror(ridley_inventory_events)) RidleyInventoryFail("cannot write boundary event");
+}
+void RidleySubsystemBoundaryBegin(unsigned kind, uint32 address, uint16 slot, uint32 argument) {
+  if (kind >= kRidleyInventoryKindCount || ridley_inventory_depth == 64 || slot >= 2048 || (slot & 63))
+    RidleyInventoryFail("invalid boundary identity or recursion depth");
+  EnemyData *enemy = gEnemyData(slot); unsigned window = RidleyInventoryWindow();
+  RidleyInventoryKey key = {.address = address, .header = enemy->enemy_ptr, .slot = slot,
+    .state = GET_WORD(g_ram + (kind == kRidleyInventoryTail ? 0x2000 : kind == kRidleyInventoryBabyState ? 0x8800 : 0xfa8)),
+    .pc = kind == kRidleyInventoryScript ? enemy->current_instruction : 0,
+    .orientation = GET_WORD(g_ram + 0x7820), .area = area_index, .kind = kind, .window = window,
+    .lifecycle = GET_WORD(g_ram + 0xfa8)};
+  unsigned index = RidleyInventoryCounterIndex(&key); RidleyInventoryCounter *counter = &ridley_inventory_counters[index];
+  if (!counter->hits) counter->first = snes_frame_counter;
+  counter->hits++; counter->last = snes_frame_counter;
+  RidleyInventoryBoundary boundary = {.id = ++ridley_inventory_boundaries,
+    .parent = ridley_inventory_depth ? ridley_inventory_stack[ridley_inventory_depth - 1].id : 0,
+    .address = address, .argument = argument, .slot = slot, .entry_header = enemy->enemy_ptr,
+    .entry_pc = enemy->current_instruction, .entry_state = GET_WORD(g_ram + 0xfa8), .entry_current = cur_enemy_index,
+    .kind = kind, .window = window, .counter = index};
+  if (counter->captures < RIDLEY_SUBSYSTEM_CAPTURES_PER_KEY &&
+      ridley_inventory_captures < RIDLEY_SUBSYSTEM_CAPTURE_LIMIT) {
+    char path[192]; counter->captures++; boundary.capture = ++ridley_inventory_captures;
+    snprintf(path, sizeof(path), "fixtures/ridley-%010" PRIu64 "-effects.log", boundary.capture);
+    boundary.effects = fopen(path, "w");
+    snprintf(path, sizeof(path), "fixtures/ridley-%010" PRIu64 "-services.bin", boundary.capture);
+    boundary.services = fopen(path, "wb");
+    if (!boundary.effects || !boundary.services) RidleyInventoryFail("cannot create ordered capture streams");
+  }
+  ridley_inventory_stack[ridley_inventory_depth++] = boundary;
+  if (boundary.capture) RidleyInventoryCapture(&boundary, "before");
+  RidleyInventoryEvent(&boundary, "before", 0, 0);
+}
+void RidleySubsystemBoundaryEnd(uint32 returned, unsigned return_kind) {
+  if (!ridley_inventory_depth || return_kind > 2) RidleyInventoryFail("unbalanced boundary return");
+  RidleyInventoryBoundary *boundary = &ridley_inventory_stack[ridley_inventory_depth - 1];
+  if (boundary->capture) RidleyInventoryCapture(boundary, "after");
+  RidleyInventoryEvent(boundary, "after", returned, return_kind);
+  if (boundary->effects && fclose(boundary->effects)) RidleyInventoryFail("cannot close ordered effects");
+  if (boundary->services && fclose(boundary->services)) RidleyInventoryFail("cannot close service snapshots");
+  ridley_inventory_depth--;
+}
+void RidleySubsystemEffect(const char *kind, uint32 address, uint16 a, uint16 b, uint16 c, uint32 value) {
+  if (!ridley_inventory_depth) return;
+  if (!ridley_inventory_effects) {
+    ridley_inventory_effects = fopen("ridley-subsystem-effects.jsonl", "w");
+    if (!ridley_inventory_effects) RidleyInventoryFail("cannot create effect events");
+  }
+  const RidleyInventoryBoundary *boundary = &ridley_inventory_stack[ridley_inventory_depth - 1];
+  fprintf(ridley_inventory_effects,
+    "{\"sequence\":%" PRIu64 ",\"boundary_id\":%" PRIu64 ",\"root_boundary_id\":%" PRIu64
+    ",\"frame\":%u,\"kind\":\"%s\",\"address\":%u,\"a\":%u,\"b\":%u,\"c\":%u,\"value\":%u}\n",
+    ++ridley_inventory_sequence, boundary->id, ridley_inventory_stack[0].id,
+    snes_frame_counter, kind, address, a, b, c, value);
+  for (unsigned i = 0; i < ridley_inventory_depth; i++) {
+    FILE *file = ridley_inventory_stack[i].effects; if (!file) continue;
+    if (!strcmp(kind, "write") || !strcmp(kind, "read")) fprintf(file, "%s %u %u\n", kind, address, value);
+    else if (!strcmp(kind, "sound")) fprintf(file, "sound %u %u %u\n", a, b, c);
+    else if (!strcmp(kind, "music")) fprintf(file, "music %u %u\n", a, b);
+    else if (!strcmp(kind, "projectile")) fprintf(file, "projectile %u %u\n", a, b);
+    else if (!strcmp(kind, "service")) fprintf(file, "service %u %u %u\n", address, a, b);
+    if (ferror(file)) RidleyInventoryFail("cannot write captured effect");
+  }
+  if (ferror(ridley_inventory_effects)) RidleyInventoryFail("cannot write global effect");
+}
+static void RidleyInventoryServiceRecord(unsigned phase, unsigned kind, uint16 a, uint16 b, uint32 result) {
+  uint8 fields[20], host[16]; uint32 values[] = {phase, kind, a, b, result}; uint16 words[8];
+  InventoryProjectileHostSave(words);
+  for (unsigned i = 0; i < 5; i++) for (unsigned byte = 0; byte < 4; byte++) fields[4 * i + byte] = values[i] >> (8 * byte);
+  for (unsigned i = 0; i < 8; i++) RidleyInventoryWord(host + 2 * i, words[i]);
+  for (unsigned i = 0; i < ridley_inventory_depth; i++) {
+    FILE *file = ridley_inventory_stack[i].services; if (!file) continue;
+    if (fwrite(fields, 1, sizeof(fields), file) != sizeof(fields) ||
+        fwrite(g_ram, 1, sizeof(g_ram), file) != sizeof(g_ram) || fwrite(host, 1, sizeof(host), file) != sizeof(host))
+      RidleyInventoryFail("cannot preserve actual C service transaction");
+  }
+}
+void RidleySubsystemServiceBegin(unsigned kind, uint16 a, uint16 b) {
+  if (!ridley_inventory_depth) return;
+  if (kind >= 7) RidleyInventoryFail("unknown C service");
+  if (!ridley_inventory_service_hits[kind]) ridley_inventory_service_first[kind] = snes_frame_counter;
+  ridley_inventory_service_hits[kind]++; ridley_inventory_service_last[kind] = snes_frame_counter;
+  RidleyInventoryServiceRecord(0, kind, a, b, 0);
+  RidleySubsystemEffect("service", kind, a, b, 0, 0);
+}
+void RidleySubsystemServiceEnd(unsigned kind, uint16 a, uint16 b, uint32 result) {
+  if (!ridley_inventory_depth) return;
+  RidleyInventoryServiceRecord(1, kind, a, b, result);
+  RidleySubsystemEffect("service-return", kind, a, b, 0, result);
+}
+void RidleySubsystemInventorySave(void) {
+  if (ridley_inventory_depth) RidleyInventoryFail("unfinished native boundary");
+  FILE *file = fopen("ridley-subsystem.tsv", "w"); if (!file) RidleyInventoryFail("cannot write counter table");
+  fprintf(file, "kind\taddress\theader\tslot\tstate\tpc\torientation\tarea\twindow\tlifecycle\thits\tfirst_frame\tlast_frame\tcaptures\n");
+  for (unsigned i = 0; i < 8192; i++) {
+    const RidleyInventoryCounter *counter = &ridley_inventory_counters[i]; if (!counter->hits) continue;
+    const RidleyInventoryKey *key = &counter->key;
+    fprintf(file, "%s\t%06x\t%04x\t%04x\t%04x\t%04x\t%04x\t%u\t%u\t%04x\t%" PRIu64 "\t%" PRIu64 "\t%" PRIu64 "\t%u\n",
+      ridley_inventory_kinds[key->kind], key->address, key->header, key->slot, key->state, key->pc,
+      key->orientation, key->area, key->window, key->lifecycle, counter->hits, counter->first, counter->last, counter->captures);
+  }
+  if (fclose(file)) RidleyInventoryFail("cannot close counter table");
+  file = fopen("ridley-subsystem-services.tsv", "w"); if (!file) RidleyInventoryFail("cannot write service counters");
+  fprintf(file, "kind\thits\tfirst_frame\tlast_frame\n");
+  for (unsigned i = 0; i < 7; i++) if (ridley_inventory_service_hits[i])
+    fprintf(file, "%u\t%" PRIu64 "\t%" PRIu64 "\t%" PRIu64 "\n", i, ridley_inventory_service_hits[i],
+      ridley_inventory_service_first[i], ridley_inventory_service_last[i]);
+  if (fclose(file) || (ridley_inventory_events && fclose(ridley_inventory_events)) ||
+      (ridley_inventory_effects && fclose(ridley_inventory_effects))) RidleyInventoryFail("cannot close observations");
+}
