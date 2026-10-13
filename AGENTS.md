@@ -30,3 +30,8 @@ After verification runs and before closing work or handing it back, follow
 For gameplay translation, assignment or integration, follow
 `docs/agents/translation-progress.md`. Assign whole subsystems and publish each
 stage to the shared inventory before handing work back.
+
+### Parallel sessions
+
+For decomp session startup, concurrent sessions or crash recovery, follow
+`docs/agents/decomp-sessions.md`.
