@@ -37,6 +37,13 @@ the checkpoint owner's files.
 
 ## WIP checkpoint boundary
 
+`history.rs`, `wip-sources.sha256`, `publication-consistency.json` and the new
+`state-audit/report.md` are stable authored inputs/observations and may be
+checkpointed now. WIP commit `d462fac` is read and its archive/member hashes
+pass. The report owner will continue synthetic and served checks and final
+cleanup. An explicit later Git/index ownership handoff is understood; current
+ownership remains with the checkpoint session until that handoff arrives.
+
 As of this entry, it is safe for the checkpoint owner to commit these coherent
 WIP files while remaining browser evidence is written:
 
