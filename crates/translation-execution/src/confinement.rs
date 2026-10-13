@@ -1,0 +1,721 @@
+//! Linux producer confinement. No writable host directory enters the sandbox.
+//!
+//! The trusted helper mounts one size-limited tmpfs, captures all material output
+//! there, drops privileges before exec, and returns only declared bounded bytes.
+use crate::budget::ByteBudget;
+use anyhow::{Context, Result, bail, ensure};
+use serde::{Deserialize, Serialize};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    fs::{self, File, OpenOptions},
+    io::{Read, Seek, SeekFrom, Write},
+    path::{Component, Path, PathBuf},
+    process::{Command, ExitStatus, Stdio},
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
+    time::{Duration, Instant},
+};
+
+#[derive(Clone, Debug)]
+pub struct ReadOnlyBind {
+    pub source: PathBuf,
+    pub destination: PathBuf,
+}
+
+/// Constructed by installed execution adapters, never by rewrite responses.
+#[derive(Clone, Debug)]
+pub struct Program {
+    pub executable: PathBuf,
+    pub arguments: Vec<String>,
+    pub inputs: Vec<ReadOnlyBind>,
+    pub runtime: Vec<ReadOnlyBind>,
+    pub helper: PathBuf,
+    /// Regular files relative to /work. Other persistent outputs are rejected.
+    pub outputs: Vec<PathBuf>,
+}
+
+#[derive(Clone, Debug)]
+pub struct RunLimits {
+    pub timeout: Duration,
+    pub writable_bytes: u64,
+    pub stdout_bytes: usize,
+    pub stderr_bytes: usize,
+    pub stdin_bytes: usize,
+}
+
+#[derive(Debug)]
+pub struct RunOutput {
+    pub stdout: Vec<u8>,
+    pub stderr: Vec<u8>,
+    pub status: ExitStatus,
+    pub outputs: BTreeMap<PathBuf, Vec<u8>>,
+}
+
+#[derive(Serialize, Deserialize)]
+struct HelperLimits {
+    writable_bytes: u64,
+    stdout_bytes: usize,
+    stderr_bytes: usize,
+    outputs: Vec<PathBuf>,
+}
+
+const MAGIC: &[u8; 8] = b"SMTX0001";
+
+fn relative(path: &Path) -> bool {
+    !path.as_os_str().is_empty() && path.components().all(|c| matches!(c, Component::Normal(_)))
+}
+
+fn real_path(path: &Path) -> Result<()> {
+    ensure!(path.is_absolute(), "sandbox source must be absolute");
+    let mut part = PathBuf::new();
+    for component in path.components() {
+        ensure!(!matches!(component, Component::ParentDir | Component::CurDir), "sandbox source alias");
+        part.push(component);
+        ensure!(!part.symlink_metadata()?.file_type().is_symlink(), "sandbox source symlink: {}", part.display());
+    }
+    Ok(())
+}
+
+fn validate(program: &Program, limits: &RunLimits, input: &[u8]) -> Result<()> {
+    ensure!(cfg!(all(target_os = "linux", target_arch = "x86_64")), "strict confinement requires Linux x86_64");
+    ensure!(!limits.timeout.is_zero(), "sandbox timeout must be positive");
+    ensure!(limits.writable_bytes >= 4096, "sandbox writable quota is below one page");
+    ensure!(input.len() <= limits.stdin_bytes, "sandbox stdin budget exceeded");
+    real_path(&program.executable)?;
+    real_path(&program.helper)?;
+    ensure!(program.executable.is_file() && program.helper.is_file(), "sandbox executable/helper is not a file");
+    let mut destinations = BTreeSet::new();
+    for bind in program.inputs.iter().chain(&program.runtime) {
+        real_path(&bind.source)?;
+        ensure!(
+            bind.destination.is_absolute() && relative(bind.destination.strip_prefix("/")?),
+            "unsafe sandbox bind destination"
+        );
+        ensure!(
+            !["/work", "/tmp", "/proc", "/dev", "/program", "/trusted-helper"]
+                .iter()
+                .any(|p| bind.destination.starts_with(p)),
+            "reserved sandbox destination"
+        );
+        ensure!(
+            bind.destination != Path::new("/home") && bind.destination != Path::new("/root"),
+            "broad sandbox runtime/input mount refused"
+        );
+        if program.inputs.iter().any(|input| std::ptr::eq(input, bind)) {
+            ensure!(
+                !["/usr", "/lib", "/lib64"].iter().any(|path| bind.destination.starts_with(path)),
+                "input overlaps executable runtime"
+            );
+        }
+        ensure!(destinations.insert(bind.destination.clone()), "duplicate sandbox destination");
+    }
+    ensure!(program.outputs.len() <= 1024, "too many sandbox outputs");
+    let mut outputs = BTreeSet::new();
+    for path in &program.outputs {
+        ensure!(relative(path) && !path.starts_with("tmp"), "unsafe sandbox output declaration");
+        ensure!(outputs.insert(path.clone()), "duplicate sandbox output declaration");
+    }
+    ensure!(
+        program.arguments.iter().map(String::len).sum::<usize>() <= 1024 * 1024,
+        "sandbox argument extent exceeded"
+    );
+    Ok(())
+}
+
+/// Minimal dynamic runtime for the installed Rust helper on this Linux host.
+/// Bind canonical files individually, so this does not expose host programs.
+pub fn helper_runtime() -> Result<Vec<ReadOnlyBind>> {
+    [
+        ("/lib/x86_64-linux-gnu/libc.so.6", "/lib/x86_64-linux-gnu/libc.so.6"),
+        ("/lib/x86_64-linux-gnu/libgcc_s.so.1", "/lib/x86_64-linux-gnu/libgcc_s.so.1"),
+        ("/lib/x86_64-linux-gnu/libpthread.so.0", "/lib/x86_64-linux-gnu/libpthread.so.0"),
+        ("/lib/x86_64-linux-gnu/libm.so.6", "/lib/x86_64-linux-gnu/libm.so.6"),
+        ("/lib/x86_64-linux-gnu/libdl.so.2", "/lib/x86_64-linux-gnu/libdl.so.2"),
+        ("/lib64/ld-linux-x86-64.so.2", "/lib64/ld-linux-x86-64.so.2"),
+    ]
+    .into_iter()
+    .map(|(source, destination)| {
+        Ok(ReadOnlyBind { source: fs::canonicalize(source)?, destination: destination.into() })
+    })
+    .collect()
+}
+
+/// Installed compiler adapter runtime. The toolchain mount contains no HOME,
+/// package cache, credentials, checkout or controller state.
+pub fn compiler_runtime(rustc: &Path) -> Result<Vec<ReadOnlyBind>> {
+    let rustc = fs::canonicalize(rustc)?;
+    real_path(&rustc)?;
+    let toolchain = rustc.parent().and_then(Path::parent).context("rustc toolchain root missing")?;
+    ensure!(
+        toolchain.join("bin/rustc") == rustc && toolchain.join("lib/rustlib").is_dir(),
+        "rustc must be an installed compiler, not a rustup shim"
+    );
+    let mut binds = vec![ReadOnlyBind { source: fs::canonicalize("/usr")?, destination: "/usr".into() }];
+    for path in ["/lib", "/lib64"] {
+        binds.push(ReadOnlyBind { source: fs::canonicalize(path)?, destination: path.into() });
+    }
+    binds.push(ReadOnlyBind { source: toolchain.to_path_buf(), destination: "/toolchain".into() });
+    Ok(binds)
+}
+
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+pub fn run(program: &Program, limits: &RunLimits, input: &[u8]) -> Result<RunOutput> {
+    use std::os::unix::process::CommandExt;
+    validate(program, limits, input)?;
+    let quota = limits.writable_bytes / 4096 * 4096;
+    let config = HelperLimits {
+        writable_bytes: quota,
+        stdout_bytes: limits.stdout_bytes,
+        stderr_bytes: limits.stderr_bytes,
+        outputs: program.outputs.clone(),
+    };
+    let mut command = Command::new("/usr/bin/bwrap");
+    command
+        .env_clear()
+        .args([
+            "--unshare-all",
+            "--uid",
+            "0",
+            "--gid",
+            "0",
+            "--cap-add",
+            "CAP_SYS_ADMIN",
+            "--cap-add",
+            "CAP_SETPCAP",
+            "--die-with-parent",
+        ])
+        .args(["--dir", "/work", "--dir", "/dev"])
+        .args(["--ro-bind", "/dev/null", "/dev/null", "--ro-bind", "/dev/urandom", "/dev/urandom"])
+        .arg("--ro-bind")
+        .arg(&program.helper)
+        .arg("/trusted-helper")
+        .arg("--ro-bind")
+        .arg(&program.executable)
+        .arg("/program");
+    for bind in program.runtime.iter().chain(&program.inputs) {
+        command.arg("--ro-bind").arg(&bind.source).arg(&bind.destination);
+    }
+    command
+        .args([
+            "--symlink",
+            "/work/tmp",
+            "/tmp",
+            "--remount-ro",
+            "/",
+            "--setenv",
+            "PATH",
+            "/nonexistent",
+            "--setenv",
+            "TMPDIR",
+            "/work/tmp",
+            "--setenv",
+            "HOME",
+            "/nonexistent",
+            "--chdir",
+            "/work",
+            "--",
+            "/trusted-helper",
+        ])
+        .arg(serde_json::to_string(&config)?)
+        .arg("--")
+        .args(&program.arguments)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    // A separate host process group belongs only to this bounded invocation.
+    unsafe {
+        command.pre_exec(|| {
+            if libc::setpgid(0, 0) < 0 {
+                return Err(std::io::Error::last_os_error());
+            }
+            Ok(())
+        });
+    }
+    let mut child = command.spawn().context("cannot establish sandbox namespaces")?;
+    let pid = child.id();
+    let mut input_pipe = child.stdin.take().context("sandbox stdin missing")?;
+    let output_pipe = child.stdout.take().context("sandbox stdout missing")?;
+    let error_pipe = child.stderr.take().context("sandbox stderr missing")?;
+    let exceeded = Arc::new(AtomicBool::new(false));
+    let wire_limit = usize::try_from(quota)?
+        .checked_add(64 + program.outputs.len() * 4096)
+        .context("sandbox wire budget overflow")?;
+    let started = Instant::now();
+    let result = std::thread::scope(|scope| -> Result<RunOutput> {
+        let send = scope.spawn(move || input_pipe.write_all(input));
+        let read = |mut pipe: Box<dyn Read + Send>, limit: usize, exceeded: Arc<AtomicBool>| {
+            let mut out = Vec::new();
+            let mut buffer = [0u8; 8192];
+            loop {
+                let count = pipe.read(&mut buffer)?;
+                if count == 0 {
+                    break;
+                }
+                if out.len().checked_add(count).is_none_or(|n| n > limit) {
+                    exceeded.store(true, Ordering::SeqCst);
+                    bail!("sandbox response budget exceeded");
+                }
+                out.extend_from_slice(&buffer[..count]);
+            }
+            Ok::<_, anyhow::Error>(out)
+        };
+        let output = scope.spawn({
+            let exceeded = exceeded.clone();
+            move || read(Box::new(output_pipe), wire_limit, exceeded)
+        });
+        let error = scope.spawn({
+            let exceeded = exceeded.clone();
+            move || read(Box::new(error_pipe), limits.stderr_bytes.min(65536), exceeded)
+        });
+        let mut interrupted = None;
+        let status = loop {
+            if let Some(status) = child.try_wait()? {
+                break status;
+            }
+            if exceeded.load(Ordering::SeqCst) || started.elapsed() >= limits.timeout {
+                interrupted = Some(if exceeded.load(Ordering::SeqCst) {
+                    "sandbox response budget exceeded"
+                } else {
+                    "sandbox timeout"
+                });
+                unsafe {
+                    libc::kill(-(pid as i32), libc::SIGKILL);
+                }
+                let _ = child.kill();
+                break child.wait()?;
+            }
+            std::thread::sleep(Duration::from_millis(5));
+        };
+        // Namespace pid 1 exits with the helper. Explicitly reap the host group
+        // before joining pipes, including failed/bootstrap paths.
+        unsafe {
+            libc::kill(-(pid as i32), libc::SIGKILL);
+        }
+        let send_result = send.join().map_err(|_| anyhow::anyhow!("sandbox stdin thread panicked"))?;
+        let output = output.join().map_err(|_| anyhow::anyhow!("sandbox stdout thread panicked"))??;
+        let error = error.join().map_err(|_| anyhow::anyhow!("sandbox stderr thread panicked"))??;
+        if let Some(reason) = interrupted {
+            bail!("{reason}");
+        }
+        ensure!(status.success(), "sandbox setup/finalization failed: {}", String::from_utf8_lossy(&error));
+        send_result.context("sandbox stdin transfer failed")?;
+        decode(&output, &config)
+    });
+    if result.is_err() {
+        unsafe {
+            libc::kill(-(pid as i32), libc::SIGKILL);
+        }
+        let _ = child.kill();
+        let _ = child.wait();
+    }
+    result
+}
+
+#[cfg(not(all(target_os = "linux", target_arch = "x86_64")))]
+pub fn run(_: &Program, _: &RunLimits, _: &[u8]) -> Result<RunOutput> {
+    bail!("strict confinement requires Linux x86_64")
+}
+
+fn put_bytes(out: &mut dyn Write, bytes: &[u8]) -> Result<()> {
+    out.write_all(&(bytes.len() as u64).to_le_bytes())?;
+    out.write_all(bytes)?;
+    Ok(())
+}
+fn get_bytes(input: &mut &[u8], maximum: usize) -> Result<Vec<u8>> {
+    ensure!(input.len() >= 8, "truncated sandbox result");
+    let count = usize::try_from(u64::from_le_bytes(input[..8].try_into()?))?;
+    *input = &input[8..];
+    ensure!(count <= maximum && count <= input.len(), "sandbox member extent exceeded");
+    let bytes = input[..count].to_vec();
+    *input = &input[count..];
+    Ok(bytes)
+}
+fn decode(mut input: &[u8], config: &HelperLimits) -> Result<RunOutput> {
+    use std::os::unix::process::ExitStatusExt;
+    ensure!(input.len() >= 12 && &input[..8] == MAGIC, "sandbox result lacks trusted completion");
+    let status = ExitStatus::from_raw(i32::from_le_bytes(input[8..12].try_into()?));
+    input = &input[12..];
+    let stdout = get_bytes(&mut input, config.stdout_bytes)?;
+    let stderr = get_bytes(&mut input, config.stderr_bytes)?;
+    let mut budget = ByteBudget::new(config.writable_bytes);
+    budget.reserve((stdout.len() + stderr.len()) as u64)?;
+    let mut outputs = BTreeMap::new();
+    for path in &config.outputs {
+        let bytes = get_bytes(&mut input, usize::try_from(budget.remaining())?)?;
+        budget.reserve(bytes.len() as u64)?;
+        outputs.insert(path.clone(), bytes);
+    }
+    ensure!(input.is_empty(), "sandbox result has trailing bytes");
+    Ok(RunOutput { stdout, stderr, status, outputs })
+}
+
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+fn errno(result: i32, operation: &str) -> Result<()> {
+    ensure!(result >= 0, "{operation}: {}", std::io::Error::last_os_error());
+    Ok(())
+}
+
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+fn restrict_child(writable_bytes: u64) -> Result<()> {
+    // The trusted helper observes quota errors, including errors a producer
+    // deliberately ignores before deleting temporary files and returning zero.
+    errno(unsafe { libc::ptrace(libc::PTRACE_TRACEME, 0, 0, 0) as i32 }, "establish quota-error observation")?;
+    let file_limit = libc::rlimit { rlim_cur: writable_bytes, rlim_max: writable_bytes };
+    errno(unsafe { libc::setrlimit(libc::RLIMIT_FSIZE, &file_limit) }, "bound sparse file extents")?;
+    let core_limit = libc::rlimit { rlim_cur: 0, rlim_max: 0 };
+    errno(unsafe { libc::setrlimit(libc::RLIMIT_CORE, &core_limit) }, "disable core output")?;
+    // Preserve locked capability semantics through future execs even though uid
+    // is namespace root; no exec can recover the parent's mount capability.
+    const SECBITS: libc::c_ulong = 1 | 2 | 4 | 8;
+    errno(unsafe { libc::prctl(libc::PR_SET_SECUREBITS, SECBITS, 0, 0, 0) }, "lock securebits")?;
+    for cap in 0..=40 {
+        errno(unsafe { libc::prctl(libc::PR_CAPBSET_DROP, cap, 0, 0, 0) }, "drop capability bounding set")?;
+    }
+    #[repr(C)]
+    struct Header {
+        version: u32,
+        pid: i32,
+    }
+    #[repr(C)]
+    struct Caps {
+        effective: u32,
+        permitted: u32,
+        inheritable: u32,
+    }
+    let header = Header { version: 0x20080522, pid: 0 };
+    let caps =
+        [Caps { effective: 0, permitted: 0, inheritable: 0 }, Caps { effective: 0, permitted: 0, inheritable: 0 }];
+    errno(unsafe { libc::syscall(libc::SYS_capset, &header, caps.as_ptr()) as i32 }, "drop effective capabilities")?;
+    errno(unsafe { libc::prctl(libc::PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) }, "set no-new-privileges")?;
+    // Architecture check also rejects compat/x32 syscalls that could bypass the
+    // numeric deny list. Namespace setup belongs solely to the trusted helper.
+    let statement = |code, k| libc::sock_filter { code, jt: 0, jf: 0, k };
+    let jump = |k, jt, jf| libc::sock_filter { code: 0x15, jt, jf, k };
+    let mut filter = vec![
+        statement(0x20, 4),
+        jump(0xc000003e, 1, 0),
+        statement(0x06, 0x80000000),
+        statement(0x20, 0),
+        libc::sock_filter { code: 0x35, jt: 0, jf: 1, k: 0x40000000 },
+        statement(0x06, 0x80000000),
+    ];
+    // clone3 is deliberately unavailable; libc falls back to clone. Permit
+    // ordinary forks/threads but refuse every namespace flag in clone.
+    filter.push(jump(libc::SYS_clone3 as u32, 0, 1));
+    filter.push(statement(0x06, 0x00050000 | libc::ENOSYS as u32));
+    filter.push(jump(libc::SYS_clone as u32, 0, 4));
+    filter.push(statement(0x20, 16));
+    filter.push(libc::sock_filter {
+        code: 0x45,
+        jt: 0,
+        jf: 1,
+        k: (libc::CLONE_NEWNS
+            | libc::CLONE_NEWTIME
+            | libc::CLONE_NEWUTS
+            | libc::CLONE_NEWIPC
+            | libc::CLONE_NEWUSER
+            | libc::CLONE_NEWPID
+            | libc::CLONE_NEWNET
+            | libc::CLONE_NEWCGROUP) as u32,
+    });
+    filter.push(statement(0x06, 0x00050000 | libc::EPERM as u32));
+    filter.push(statement(0x20, 0));
+    let forbidden = [
+        libc::SYS_mount,
+        libc::SYS_umount2,
+        libc::SYS_pivot_root,
+        libc::SYS_chroot,
+        libc::SYS_unshare,
+        libc::SYS_setns,
+        libc::SYS_socket,
+        libc::SYS_socketpair,
+        libc::SYS_ptrace,
+        libc::SYS_process_vm_readv,
+        libc::SYS_process_vm_writev,
+        libc::SYS_open_by_handle_at,
+        libc::SYS_bpf,
+        libc::SYS_userfaultfd,
+        libc::SYS_perf_event_open,
+        libc::SYS_keyctl,
+        libc::SYS_add_key,
+        libc::SYS_request_key,
+        libc::SYS_fsopen,
+        libc::SYS_fsconfig,
+        libc::SYS_fsmount,
+        libc::SYS_move_mount,
+        libc::SYS_open_tree,
+        libc::SYS_mount_setattr,
+    ];
+    for syscall in forbidden {
+        filter.push(jump(syscall as u32, 0, 1));
+        filter.push(statement(0x06, 0x00050000 | libc::EPERM as u32));
+    }
+    filter.push(statement(0x06, 0x7fff0000));
+    let program = libc::sock_fprog { len: filter.len().try_into()?, filter: filter.as_mut_ptr() };
+    errno(unsafe { libc::prctl(libc::PR_SET_SECCOMP, 2, &program, 0, 0) }, "install sandbox syscall restrictions")?;
+    errno(unsafe { libc::syscall(libc::SYS_close_range, 3u32, u32::MAX, 0u32) as i32 }, "close inherited descriptors")?;
+    Ok(())
+}
+
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+fn wait_traced(pid: u32) -> Result<ExitStatus> {
+    use std::os::unix::process::ExitStatusExt;
+    let mut status = 0;
+    loop {
+        let result = unsafe { libc::waitpid(pid as i32, &mut status, libc::__WALL) };
+        if result < 0 && std::io::Error::last_os_error().raw_os_error() == Some(libc::EINTR) {
+            continue;
+        }
+        ensure!(result == pid as i32 && libc::WIFSTOPPED(status), "candidate quota observer failed before exec");
+        break;
+    }
+    let options = libc::PTRACE_O_TRACESYSGOOD
+        | libc::PTRACE_O_TRACEFORK
+        | libc::PTRACE_O_TRACEVFORK
+        | libc::PTRACE_O_TRACECLONE
+        | libc::PTRACE_O_TRACEEXEC
+        | libc::PTRACE_O_EXITKILL;
+    errno(unsafe { libc::ptrace(libc::PTRACE_SETOPTIONS, pid, 0, options) as i32 }, "set inherited quota observer")?;
+    errno(unsafe { libc::ptrace(libc::PTRACE_SYSCALL, pid, 0, 0) as i32 }, "start quota observer")?;
+    loop {
+        let stopped = unsafe { libc::waitpid(-1, &mut status, libc::__WALL) };
+        if stopped < 0 {
+            if std::io::Error::last_os_error().raw_os_error() == Some(libc::EINTR) {
+                continue;
+            }
+            bail!("candidate quota observer lost process ownership");
+        }
+        if libc::WIFEXITED(status) || libc::WIFSIGNALED(status) {
+            if stopped == pid as i32 {
+                return Ok(ExitStatus::from_raw(status));
+            }
+            continue;
+        }
+        if !libc::WIFSTOPPED(status) {
+            continue;
+        }
+        let signal = libc::WSTOPSIG(status);
+        let mut deliver = 0;
+        if signal == (libc::SIGTRAP | 0x80) {
+            // ptrace_syscall_info: common header24 + union exit {i64 rval,
+            // u8 is_error}. Kernel handles entry/exit tracking across exec and
+            // signal interruptions; no fragile toggled syscall bookkeeping.
+            let mut info = [0u8; 128];
+            let size = unsafe { libc::ptrace(libc::PTRACE_GET_SYSCALL_INFO, stopped, info.len(), info.as_mut_ptr()) };
+            ensure!(size >= 24, "kernel lacks required quota-error observation");
+            if info[0] == 2 {
+                ensure!(size >= 33, "kernel quota-error observation is incomplete");
+            }
+            if info[0] == 2 && info[32] != 0 {
+                let result = i64::from_ne_bytes(info[24..32].try_into()?);
+                ensure!(
+                    ![-(libc::ENOSPC as i64), -(libc::EDQUOT as i64), -(libc::EFBIG as i64)].contains(&result),
+                    "aggregate sandbox quota exhausted during production"
+                );
+            }
+        } else if signal != libc::SIGTRAP && signal != libc::SIGSTOP {
+            ensure!(signal != libc::SIGXFSZ, "sandbox file extent budget exhausted during production");
+            deliver = signal;
+        }
+        let resumed = unsafe { libc::ptrace(libc::PTRACE_SYSCALL, stopped, 0, deliver) };
+        if resumed < 0 && std::io::Error::last_os_error().raw_os_error() != Some(libc::ESRCH) {
+            bail!("candidate quota observer cannot resume owned process");
+        }
+    }
+}
+
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+pub fn helper_main() -> Result<()> {
+    use std::os::unix::{
+        io::FromRawFd,
+        process::{CommandExt, ExitStatusExt},
+    };
+    let args = std::env::args().skip(1).collect::<Vec<_>>();
+    ensure!(args.len() >= 2 && args[1] == "--", "invalid trusted sandbox helper request");
+    let config: HelperLimits = serde_json::from_str(&args[0])?;
+    ensure!(
+        config.writable_bytes >= 4096 && config.writable_bytes.is_multiple_of(4096),
+        "invalid aggregate sandbox quota"
+    );
+    let mut seen = BTreeSet::new();
+    for output in &config.outputs {
+        ensure!(
+            relative(output) && !output.starts_with("tmp") && seen.insert(output.clone()),
+            "invalid declared sandbox output"
+        );
+    }
+    let options = std::ffi::CString::new(format!(
+        "size={},nr_inodes={},mode=0700",
+        config.writable_bytes,
+        (config.writable_bytes / 4096).clamp(64, 65536)
+    ))?;
+    errno(
+        unsafe {
+            libc::mount(
+                c"tmpfs".as_ptr(),
+                c"/work".as_ptr(),
+                c"tmpfs".as_ptr(),
+                libc::MS_NOSUID | libc::MS_NODEV,
+                options.as_ptr().cast(),
+            )
+        },
+        "establish aggregate tmpfs quota",
+    )?;
+    fs::create_dir("/work/tmp")?;
+    std::env::set_current_dir("/work")?;
+    let log = |name: &str| -> Result<File> {
+        let file = OpenOptions::new().read(true).write(true).create_new(true).open(name)?;
+        fs::remove_file(name)?;
+        Ok(file)
+    };
+    let mut stdout = log(".stdout")?;
+    let mut stderr = log(".stderr")?;
+    let pipe = || -> Result<(File, File)> {
+        let mut fds = [0; 2];
+        errno(unsafe { libc::pipe2(fds.as_mut_ptr(), libc::O_CLOEXEC) }, "establish bounded output pipe")?;
+        // SAFETY: pipe2 returned two independent owned descriptors.
+        Ok(unsafe { (File::from_raw_fd(fds[0]), File::from_raw_fd(fds[1])) })
+    };
+    let (stdout_read, stdout_write) = pipe()?;
+    let (stderr_read, stderr_write) = pipe()?;
+    errno(unsafe { libc::prctl(libc::PR_SET_CHILD_SUBREAPER, 1, 0, 0, 0) }, "establish descendant ownership")?;
+    let mut command = Command::new("/program");
+    command
+        .args(&args[2..])
+        .env_clear()
+        .env("PATH", "/nonexistent")
+        .env("TMPDIR", "/work/tmp")
+        .env("HOME", "/nonexistent")
+        .env("LD_LIBRARY_PATH", "/toolchain/lib")
+        .stdin(Stdio::inherit())
+        .stdout(stdout_write)
+        .stderr(stderr_write);
+    unsafe {
+        command.pre_exec(move || restrict_child(config.writable_bytes).map_err(std::io::Error::other));
+    }
+    let child = command.spawn().context("sandbox restriction setup refused candidate launch")?;
+    drop(command);
+    let drain = |mut input: File, mut output: File, limit: usize| -> Result<()> {
+        let mut budget = ByteBudget::new(limit as u64);
+        let mut buffer = [0u8; 8192];
+        let result = (|| {
+            loop {
+                let count = input.read(&mut buffer)?;
+                if count == 0 {
+                    return Ok(());
+                }
+                budget.reserve(count as u64)?;
+                output.write_all(&buffer[..count])?;
+            }
+        })();
+        if result.is_err() {
+            unsafe {
+                libc::kill(-1, libc::SIGKILL);
+            }
+        }
+        result
+    };
+    let stdout_log = stdout.try_clone()?;
+    let stderr_log = stderr.try_clone()?;
+    let (observed, stdout_result, stderr_result) = std::thread::scope(|scope| {
+        let stdout = scope.spawn(|| drain(stdout_read, stdout_log, config.stdout_bytes));
+        let stderr = scope.spawn(|| drain(stderr_read, stderr_log, config.stderr_bytes));
+        let result = wait_traced(child.id());
+        // pid1 and self are excluded. Kill before joining output pipes so a
+        // detached writer cannot keep a drain or the controller alive.
+        unsafe {
+            libc::kill(-1, libc::SIGKILL);
+        }
+        (result, stdout.join(), stderr.join())
+    });
+    // kill(-1) is confined to this PID namespace; pid 1 and the helper itself
+    // are excluded by Linux. Reap all adopted descendants before reading bytes.
+    unsafe {
+        libc::kill(-1, libc::SIGKILL);
+    }
+    loop {
+        let result = unsafe { libc::waitpid(-1, std::ptr::null_mut(), libc::__WALL) };
+        if result < 0 {
+            if std::io::Error::last_os_error().raw_os_error() == Some(libc::EINTR) {
+                continue;
+            }
+            break;
+        }
+    }
+    stdout_result.map_err(|_| anyhow::anyhow!("sandbox stdout collector panicked"))??;
+    stderr_result.map_err(|_| anyhow::anyhow!("sandbox stderr collector panicked"))??;
+    let status = observed?;
+    let mut budget = ByteBudget::new(config.writable_bytes);
+    let mut read = |file: &mut File, limit: u64| -> Result<Vec<u8>> {
+        let len = file.metadata()?.len();
+        ensure!(len <= limit, "sandbox material output byte budget exceeded");
+        budget.reserve(len)?;
+        file.seek(SeekFrom::Start(0))?;
+        let mut bytes = Vec::new();
+        file.take(len).read_to_end(&mut bytes)?;
+        ensure!(bytes.len() as u64 == len, "sandbox output changed");
+        Ok(bytes)
+    };
+    let stdout = read(&mut stdout, config.stdout_bytes as u64)?;
+    let stderr = read(&mut stderr, config.stderr_bytes as u64)?;
+    let mut outputs = Vec::new();
+    let allowed = config.outputs.iter().cloned().collect::<BTreeSet<_>>();
+    fn validate_tree(path: &Path, allowed: &BTreeSet<PathBuf>) -> Result<()> {
+        for entry in fs::read_dir(path)? {
+            let entry = entry?;
+            let p = entry.path();
+            let m = entry.metadata()?;
+            ensure!(!entry.file_type()?.is_symlink(), "sandbox output symlink rejected");
+            if m.is_dir() {
+                validate_tree(&p, allowed)?;
+            } else {
+                ensure!(
+                    m.is_file() && allowed.contains(p.strip_prefix("/work")?),
+                    "undeclared sandbox output: {}",
+                    p.display()
+                );
+            }
+        }
+        Ok(())
+    }
+    for entry in fs::read_dir("/work")? {
+        let p = entry?.path();
+        if p == Path::new("/work/tmp") {
+            continue;
+        }
+        let m = p.symlink_metadata()?;
+        if m.is_dir() {
+            validate_tree(&p, &allowed)?;
+        } else {
+            ensure!(m.is_file() && allowed.contains(p.strip_prefix("/work")?), "undeclared sandbox output");
+        }
+    }
+    for path in &config.outputs {
+        let path = Path::new("/work").join(path);
+        let meta = path.symlink_metadata()?;
+        ensure!(meta.is_file() && !meta.file_type().is_symlink(), "declared sandbox output is not regular");
+        let mut file = File::open(&path)?;
+        outputs.push(read(&mut file, config.writable_bytes)?);
+    }
+    let mut stat = std::mem::MaybeUninit::<libc::statfs>::uninit();
+    errno(unsafe { libc::statfs(c"/work".as_ptr(), stat.as_mut_ptr()) }, "inspect sandbox quota")?;
+    let stat = unsafe { stat.assume_init() };
+    ensure!(stat.f_bavail > 0, "aggregate sandbox quota exhausted");
+    let mut out = std::io::stdout().lock();
+    out.write_all(MAGIC)?;
+    out.write_all(&status.into_raw().to_le_bytes())?;
+    put_bytes(&mut out, &stdout)?;
+    put_bytes(&mut out, &stderr)?;
+    for bytes in outputs {
+        put_bytes(&mut out, &bytes)?;
+    }
+    out.flush()?;
+    Ok(())
+}
+
+#[cfg(not(all(target_os = "linux", target_arch = "x86_64")))]
+pub fn helper_main() -> Result<()> {
+    bail!("strict confinement requires Linux x86_64")
+}

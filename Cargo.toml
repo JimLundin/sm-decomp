@@ -4,6 +4,7 @@ exclude = ["deps/rustysnes", "tools/bootstrap"]
 members = [
     "crates/pipeline",
     "crates/pipeline-model",
+    "crates/translation-execution",
     "crates/evidence",
     "crates/port",
     "crates/decomp",

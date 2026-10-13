@@ -27,3 +27,17 @@ until it can be ruled out.
 **Translation scope**:
 A coherent set of gameplay behavior selected for translation, together with its
 required dependencies, writable source ownership and verification requirements.
+
+**Translation attempt**:
+One candidate translation of an approved Translation scope, evaluated against
+fixed source dependencies and verification requirements. A resumed attempt keeps
+its identity; changed candidate source or an authorized new evaluation creates
+another attempt.
+
+**Rewrite capsule**:
+The approved source, recovered C, dependency context and bounded diagnostic
+provided for rewriting within a Translation scope.
+
+**Source replacement**:
+Replacement contents for an approved source file in a Rewrite capsule, bound to
+that capsule's identity and original file contents.

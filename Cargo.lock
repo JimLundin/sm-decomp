@@ -310,6 +310,7 @@ dependencies = [
  "sha2",
  "toml",
  "toml_edit",
+ "translation-execution",
  "zip 2.4.2",
  "zstd",
 ]
@@ -598,6 +599,18 @@ dependencies = [
  "anyhow",
  "recomp",
  "serde",
+ "toml",
+]
+
+[[package]]
+name = "translation-execution"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "libc",
+ "serde",
+ "serde_json",
+ "sha2",
  "toml",
 ]
 

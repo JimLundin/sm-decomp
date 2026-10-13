@@ -17,6 +17,7 @@ toml_edit = "0.22"
 pipeline-model.workspace = true
 movie = { path = "../movie" }
 evidence = { path = "../evidence" }
+translation-execution = { path = "../translation-execution" }
 flate2 = "1"
 zstd = { version = "=0.13.3", default-features = false }
 

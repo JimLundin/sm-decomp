@@ -23,7 +23,7 @@ struct Routine {
     external_or_macro_calls: Vec<String>,
     translation_status: String,
 }
-fn clean(text: &str) -> Vec<u8> {
+pub(crate) fn clean(text: &str) -> Vec<u8> {
     let bytes = text.as_bytes();
     let mut result = bytes.to_vec();
     let mut i = 0;
@@ -69,7 +69,7 @@ fn clean(text: &str) -> Vec<u8> {
     }
     result
 }
-fn names(bytes: &[u8]) -> (Vec<String>, Vec<String>) {
+pub(crate) fn names(bytes: &[u8]) -> (Vec<String>, Vec<String>) {
     let mut calls = BTreeSet::new();
     let mut indexed = BTreeSet::new();
     let mut i = 0;
@@ -236,6 +236,19 @@ fn definitions(text: &str, source: &str) -> Result<Vec<Routine>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn parenthesized_return_dependency_facts_match_definition_inventory() {
+        let text = "uint8 CheckBossBitForCurArea(uint16 a) { // 0x8081DC\n return (a & boss_bits_for_area[area_index]) != 0;\n}\n";
+        let rows = definitions(text, "src/sm_80.c").unwrap();
+        assert_eq!(rows.len(), 1);
+        let masked = clean(text);
+        let start = masked.iter().position(|b| *b == b'{').unwrap();
+        let (admitted_calls, admitted_indirect) = names(&masked[start..]);
+        assert_eq!(rows[0].calls, admitted_calls);
+        assert_eq!(rows[0].indirect_indexed_calls, admitted_indirect);
+        assert!(admitted_calls.is_empty());
+    }
+
     #[test]
     fn comments_strings_and_nested_bodies_do_not_create_dependencies() {
         let text = "Real(); /* Fake(); } */ array[index](0); \"Ghost(); {\"; // Hidden();\nif (x) { Other(); }";

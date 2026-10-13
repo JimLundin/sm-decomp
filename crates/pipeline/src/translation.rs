@@ -239,80 +239,7 @@ fn hash(text: &str) -> String {
     format!("{:x}", Sha256::digest(text.as_bytes()))
 }
 fn c_code(text: &str) -> Vec<u8> {
-    let bytes = text.as_bytes();
-    let mut result = bytes.to_vec();
-    let mut index = 0;
-    while index < bytes.len() {
-        let end = if bytes[index..].starts_with(b"/*") {
-            bytes[index + 2..].windows(2).position(|v| v == b"*/").map(|p| index + p + 4).unwrap_or(bytes.len())
-        } else if bytes[index..].starts_with(b"//") {
-            bytes[index..].iter().position(|v| *v == b'\n').map(|p| index + p).unwrap_or(bytes.len())
-        } else if b"\"'".contains(&bytes[index]) {
-            let quote = bytes[index];
-            let mut cursor = index + 1;
-            while cursor < bytes.len() {
-                if bytes[cursor] == b'\\' {
-                    cursor += 2;
-                } else if bytes[cursor] == quote {
-                    cursor += 1;
-                    break;
-                } else {
-                    cursor += 1;
-                }
-            }
-            cursor.min(bytes.len())
-        } else {
-            index += 1;
-            continue;
-        };
-        for byte in &mut result[index..end] {
-            if *byte != b'\n' {
-                *byte = b' ';
-            }
-        }
-        index = end;
-    }
-    result
-}
-fn c_calls(bytes: &[u8]) -> (BTreeSet<String>, BTreeSet<String>) {
-    let mut calls = BTreeSet::new();
-    let mut indexed = BTreeSet::new();
-    let mut index = 0;
-    while index < bytes.len() {
-        if !(bytes[index].is_ascii_alphabetic() || bytes[index] == b'_') {
-            index += 1;
-            continue;
-        }
-        let start = index;
-        index += 1;
-        while index < bytes.len() && (bytes[index].is_ascii_alphanumeric() || bytes[index] == b'_') {
-            index += 1;
-        }
-        let name = String::from_utf8_lossy(&bytes[start..index]).into_owned();
-        let mut after = index;
-        while after < bytes.len() && bytes[after].is_ascii_whitespace() {
-            after += 1;
-        }
-        if bytes.get(after) == Some(&b'(')
-            && !["if", "for", "while", "switch", "sizeof", "_Alignof"].contains(&name.as_str())
-        {
-            calls.insert(name);
-        } else if bytes.get(after) == Some(&b'[') {
-            while after < bytes.len() && !b";{}]".contains(&bytes[after]) {
-                after += 1;
-            }
-            if bytes.get(after) == Some(&b']') {
-                after += 1;
-                while after < bytes.len() && bytes[after].is_ascii_whitespace() {
-                    after += 1;
-                }
-                if bytes.get(after) == Some(&b'(') {
-                    indexed.insert(name);
-                }
-            }
-        }
-    }
-    (calls, indexed)
+    crate::source_inventory::clean(text)
 }
 fn inventory(checkout: &Path, path: &Path) -> Result<Inventory> {
     let value: Inventory = document(path)?;
@@ -336,7 +263,7 @@ fn inventory(checkout: &Path, path: &Path) -> Result<Inventory> {
         ensure!(identity.files.contains_key(&routine.source), "routine source missing from pinned inventory");
         if !source_text.contains_key(&routine.source) {
             let text = fs::read_to_string(checkout.join("deps/snesrev-sm").join(&routine.source))?;
-            let code = c_code(&text);
+            let code = crate::source_inventory::clean(&text);
             source_text.insert(routine.source.clone(), (text, code));
         }
         let (text, code) = &source_text[&routine.source];
@@ -362,13 +289,13 @@ fn inventory(checkout: &Path, path: &Path) -> Result<Inventory> {
             end += 1;
         }
         ensure!(depth == 0 && hash(&start[..end]) == routine.definition_sha256, "routine definition identity differs");
-        let (calls, indexed) = c_calls(&clean[open..end]);
+        let (calls, indexed) = crate::source_inventory::names(&clean[open..end]);
         let defined: Vec<_> = calls.iter().filter(|s| all_symbols.contains(s.as_str())).cloned().collect();
         let external: Vec<_> = calls.iter().filter(|s| !all_symbols.contains(s.as_str())).cloned().collect();
         ensure!(
             defined == routine.defined_dependencies
                 && external == routine.external_or_macro_calls
-                && indexed.into_iter().collect::<Vec<_>>() == routine.indirect_indexed_calls,
+                && indexed == routine.indirect_indexed_calls,
             "routine lexical dependency inventory differs from pinned source"
         );
         if let Some(address) = address(routine) {
