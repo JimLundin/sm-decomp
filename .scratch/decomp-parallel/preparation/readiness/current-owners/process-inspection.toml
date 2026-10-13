@@ -1,0 +1,234 @@
+schema = "decomp-readiness-process-inspection-v1"
+observed_at = "2026-10-13T10:17:59Z"
+observer_thread = "01a134b4-14c4-7db3-963f-fca5f6b5359b"
+boot_id = "7119fcce-5593-4526-aa9b-07127767c4ef"
+checked_path_prefixes = ["/tmp/sm-ceres-continuation-compact-controller-1", "/tmp/sm-ceres-continuation-shared-game-host-1", "/home/jim/sm-decomp/out/port/ceres-continuation", "/home/jim/sm-decomp/.scratch/ceres-continuation", "/tmp/sm-ceres-coordinator-target", "/tmp/sm-prefix-native-"]
+limitations = ["A transient /proc disappearance is retained as a race. Generic shared app/REA processes do not prove original-owner liveness. Read-only reporting server may remain after reporting Git handoff."]
+
+[[processes]]
+pid = 427
+argv = ["-zsh"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+cwd = "/home/jim/sm-decomp"
+start_ticks = 1184
+ppid = 425
+
+[[processes]]
+pid = 3355
+argv = ["codex"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+cwd = "/home/jim/sm-decomp"
+start_ticks = 8094
+ppid = 427
+
+[[processes]]
+pid = 3389
+argv = ["/home/jim/.codex/packages/app-server-daemon/releases/0.162.1-x86_64-unknown-linux-musl/bin/codex", "app-server", "--listen", "unix://", "--analytics-default-enabled", "--managed-daemon"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+cwd = "/home/jim/sm-decomp"
+start_ticks = 8168
+ppid = 3355
+
+[[processes]]
+pid = 3441
+argv = ["/home/jim/.codex/packages/app-server-daemon/releases/0.162.1-x86_64-unknown-linux-musl/bin/codex", "app-server", "daemon", "pid-update-loop"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+cwd = "/home/jim/sm-decomp"
+start_ticks = 8217
+ppid = 3355
+
+[[processes]]
+pid = 3981
+argv = ["/home/jim/.codex/packages/app-server-daemon/releases/0.162.1-x86_64-unknown-linux-musl/bin/codex-code-mode-host"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+cwd = "/home/jim/sm-decomp"
+start_ticks = 10623
+ppid = 3389
+
+[[processes]]
+pid = 22341
+argv = ["node", "/home/jim/.nvm/versions/node/v24.16.0/bin/rea", "mcp"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+cwd = "/home/jim/sm-decomp"
+start_ticks = 89037
+ppid = 3389
+
+[[processes]]
+pid = 144602
+argv = ["node", "/home/jim/.nvm/versions/node/v24.16.0/bin/rea", "mcp"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+cwd = "/home/jim/sm-decomp"
+start_ticks = 454365
+ppid = 3389
+
+[[processes]]
+pid = 182019
+argv = ["node", "/home/jim/.nvm/versions/node/v24.16.0/bin/rea", "mcp"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+cwd = "/home/jim/sm-decomp"
+start_ticks = 635618
+ppid = 3389
+
+[[processes]]
+pid = 188864
+argv = ["node", "/home/jim/.nvm/versions/node/v24.16.0/bin/rea", "mcp"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+cwd = "/home/jim/sm-decomp"
+start_ticks = 703753
+ppid = 3389
+
+[[processes]]
+pid = 270377
+argv = ["node", "/home/jim/.nvm/versions/node/v24.16.0/bin/rea", "mcp"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+cwd = "/home/jim/sm-decomp"
+start_ticks = 1195852
+ppid = 3389
+
+[[processes]]
+pid = 298555
+argv = ["node", "/home/jim/.nvm/versions/node/v24.16.0/bin/rea", "mcp"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+cwd = "/home/jim/sm-decomp"
+start_ticks = 1377417
+ppid = 3389
+
+[[processes]]
+pid = 325103
+argv = ["node", "/home/jim/.nvm/versions/node/v24.16.0/bin/rea", "mcp"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+cwd = "/home/jim/sm-decomp"
+start_ticks = 1599169
+ppid = 3389
+
+[[processes]]
+pid = 344454
+argv = ["node", "/home/jim/.nvm/versions/node/v24.16.0/bin/rea", "mcp"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+cwd = "/home/jim/sm-decomp"
+start_ticks = 1787961
+ppid = 3389
+
+[[processes]]
+pid = 344627
+argv = ["node", "/home/jim/.nvm/versions/node/v24.16.0/bin/rea", "mcp"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+cwd = "/home/jim/sm-decomp"
+start_ticks = 1792094
+ppid = 3389
+
+[[processes]]
+pid = 357697
+argv = ["node", "/home/jim/.nvm/versions/node/v24.16.0/bin/rea", "mcp"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+cwd = "/home/jim/sm-decomp"
+start_ticks = 1972613
+ppid = 3389
+
+[[processes]]
+pid = 395944
+argv = ["node", "/home/jim/.nvm/versions/node/v24.16.0/bin/rea", "mcp"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+cwd = "/home/jim/sm-decomp"
+start_ticks = 2153466
+ppid = 3389
+
+[[processes]]
+pid = 420446
+argv = ["target/release/sm-pipeline", "progress", "serve", "--root", "/home/jim/sm-decomp", "--bind", "127.0.0.1:4185"]
+main_checkout_cwd = true
+reporting_server = true
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+cwd = "/home/jim/sm-decomp"
+start_ticks = 2249195
+ppid = 3389
+
+[[processes]]
+pid = 433147
+argv = ["node", "/home/jim/.nvm/versions/node/v24.16.0/bin/rea", "mcp"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+cwd = "/home/jim/sm-decomp"
+start_ticks = 2341221
+ppid = 3389
+
+[[processes]]
+pid = 448106
+argv = ["/usr/bin/zsh", "-c", "rustfmt .scratch/decomp-parallel/preparation/readiness/current-owners/process-inspect.rs; rustc --edition 2024 .scratch/decomp-parallel/preparation/readiness/current-owners/process-inspect.rs -o /tmp/sm-production-owner-inspect-20261013; /tmp/sm-production-owner-inspect-20261013 > .scratch/decomp-parallel/preparation/readiness/current-owners/process-inspection.toml; rg -n '^pid|^claim_path_match = true|^reporting_server = true|^match_details = \\[[^]]+' .scratch/decomp-parallel/preparation/readiness/current-owners/process-inspection.toml"]
+main_checkout_cwd = true
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+cwd = "/home/jim/sm-decomp"
+start_ticks = 2451134
+ppid = 3389

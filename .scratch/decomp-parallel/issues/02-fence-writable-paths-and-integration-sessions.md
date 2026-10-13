@@ -1,9 +1,11 @@
 # Fence writable paths and integration sessions
 
-Status: open
+Status: resolved
 Blocked by: 01
 Triage: ready-for-agent
 Type: task
+Owner: `/root/ownership_engine`, thread `01a13453-b599-79c1-84d5-713e6d1e3f57`
+Recovery coordinator: `01a13460-4aa9-7fe0-865e-a8f54ffca310`
 
 The Rust queue takes a global mutation lock, but writable overlap and active
 integration checks inspect only the chosen effort. Its persistent integrator
@@ -40,7 +42,42 @@ preserved. Passing tests prepare the real drill; they do not activate the queue.
 
 ## Completion evidence
 
-Append full commits, ownership/role schemas, legacy bridge hashes, rejection and
-retry results, focused test receipts and remaining limitations. Complete scoped
-[run cleanup](../../../docs/agents/run-cleanup.md) and record measured bytes/free
-space and retained evidence before resolving.
+Original engine commits through `6d23fdab55213f6101c337d12f163550817364d8`
+and reviewed corrections `0b46487`, `c2fbc17`, `2714b57`, `c88c7a1` are integrated
+on `decomp-preparation-20261013`, frozen source
+`c8799f326ffe198b652301f08866f1b7a7bd9ebc`. See
+[engine handoff](../preparation/02-owner-handoff.md),
+[authority API](../preparation/02-authority-api.md) and
+[validator recovery](../preparation/activation-recovery-handoff.md).
+
+Final combined locked/offline verification passed **23 queue, 15 session and
+10 authority controls** at the frozen source, including cross-effort/path alias
+and duplicate-ticket fences, shared capacity, real caller generation binding,
+explicit integrator transfer, surviving-child retention, stale result/authority
+rejection, exact retries and submitted-only historical integrator checks.
+Typed activation requires real launch/command/claim/process/budget/integration
+receipts; boolean/text-only manifests reject. Read-only `validate-activation`
+performs identical acceptance checks without activating canonical authority.
+Bounded final logs are in `preparation/integration-evidence/frozen-final.*`;
+format and locked/offline build passed. Reporting source commit `263ad5a` is
+included in the frozen baseline. Ticket 04 owns actual-session acceptance.
+
+Both cleanup passes succeeded, 0 run bytes; private original engine target
+1,260,555,955 bytes and validator target 1,481,441,788 bytes were removed.
+Clean implementer worktrees were removed after exact source/receipt retention;
+all main evidence hashes reauthenticated. Root combined target 1,806,295,023
+bytes was removed after retaining the frozen executable separately from Git.
+Final free space observation: 223,381,778,432 bytes. Exact source commits,
+small retained source/log snapshots, the frozen reader and immutable legacy
+bridge/ledger remain dependencies; original gameplay holdings remain intact.
+
+## Comments
+
+2026-10-13: owner reconciliation 01 resolved through retained legacy ownership.
+The checked exact-path maintenance approval preserves this surviving worker in
+`/tmp/sm-decomp-preparation-ownership-20261013`, baseline
+`deceefdb568990fe273cc3f6cdf849726d8380bb`. Implementation and scoped WIP commits
+are authorized only for the approval's engine/test files. The original claims,
+native admission, main Git ownership and pending production authority remain
+recorded in the legacy bridge. See `../preparation/02-owner-handoff.md` and
+`../preparation/02-authority-api.md` for implementation recovery.

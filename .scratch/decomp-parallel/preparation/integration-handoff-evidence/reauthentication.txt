@@ -1,0 +1,6 @@
+out/integration-handoff-verification/baseline-test.stdout: OK
+out/integration-handoff-verification/fixed-test.stdout: OK
+out/integration-handoff-verification/baseline-test.stderr: OK
+out/integration-handoff-verification/fixed-test.stderr: OK
+out/integration-handoff-verification/cleanup1.toml: OK
+out/integration-handoff-verification/cleanup2.toml: OK

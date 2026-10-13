@@ -1,0 +1,17 @@
+schema = "decomp-child-observation-v1"
+effort = "ceres-continuation"
+agent = "/root"
+session_id = "01a133eb-76e2-7073-9aef-d97c03a812e4"
+status = "failed"
+observed_at = "2026-10-13T09:22:40Z"
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/cutover/thread-inspection.json"
+sha256 = "f4dc1656fd7076ccc968a3ff33a53b0bdf2b676f23b4e528fe1569e364270686"
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/cutover/process-assessment.toml"
+sha256 = "792de899aa56b3e3cc0da2b67687b6616c5358635275a9489c248bd05ff837c7"
+[claim]
+id = "integrate-shared-game-host"
+revision = "48656a2-host-v1-1"
+attempt = 1
+coordinator = "ceres-20261013"

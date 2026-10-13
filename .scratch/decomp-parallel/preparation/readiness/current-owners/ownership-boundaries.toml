@@ -1,0 +1,27 @@
+schema = "decomp-readiness-ownership-boundaries-v1"
+observed_at = "2026-10-13T10:17:59Z"
+observer_thread = "01a134b4-14c4-7db3-963f-fca5f6b5359b"
+legacy_integrator_thread = "01a133eb-76e2-7073-9aef-d97c03a812e4"
+legacy_integrator_status = "failed"
+replacement_integrator_thread = "01a13460-4aa9-7fe0-865e-a8f54ffca310"
+replacement_integrator_status = "running"
+replacement_integrator_generation = 1
+reporting_thread = "01a13394-29b8-76a3-aab7-5ab8eff60694"
+reporting_status = "completed"
+main_git_owner_thread = "01a13460-4aa9-7fe0-865e-a8f54ffca310"
+reporting_handoff_commit = "9ed933daa151f52e3cf922e6559c7681330e0f85"
+reporting_server_retained_pid = 420446
+reporting_server_start_ticks = 2249195
+claim_processes_observed = []
+claim_states_unchanged = true
+original_claims_released = false
+gameplay_launched = false
+authority_present = false
+canonical_ledger_present = false
+limitations = ["Process scan matches exact retained Ceres prefixes in cwd, argv and open descriptors; none found. Generic shared Codex/app/REA main-cwd processes are retained infrastructure, not original-owner identification.", "One extra incorrectly guessed reviewer thread lookup failed; the actual host reviewer 01a133f4-de2d-71e3-82ce-ead915ca3017 was directly inspected idle/completed. This lookup failure releases no ownership.", "Historical bridge main owner fields remain immutable; this successor records the later reporting Git handoff separately.", "All platform/thread/process status interpretation relies on actual read-only tools, not cryptographic platform attestation."]
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness/current-owners/thread-inspection.json"
+sha256 = "b41557f96c6bb16534b0c34a86f045aa799421b6763f9021fe1bdbd9ff09eb71"
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness/current-owners/process-inspection.toml"
+sha256 = "e05d879b6d1ee47d9a2c8e93695bf60113f35015cf198c0c493cfc7884e2c542"

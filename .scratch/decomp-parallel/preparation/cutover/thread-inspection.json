@@ -1,0 +1,207 @@
+{
+  "schema": "decomp-cutover-thread-inspection-v1",
+  "observed_at": "2026-10-13T09:22:12Z",
+  "observer_thread": "01a13474-5fcc-7861-84f8-5c353938bdd2",
+  "threads": [
+    {
+      "thread_id": "01a133eb-76e2-7073-9aef-d97c03a812e4",
+      "thread": {
+        "id": "01a133eb-76e2-7073-9aef-d97c03a812e4",
+        "kind": "codex",
+        "title": "Continue the decomp",
+        "preview": "continue the decomp",
+        "status": {
+          "type": "systemError"
+        },
+        "cwd": "/home/jim/sm-decomp",
+        "createdAt": 1791872431,
+        "updatedAt": 1791874657
+      },
+      "turns": [
+        {
+          "id": "01a1340d-2d5a-7ab1-a076-a7d92a822632",
+          "status": "failed",
+          "error": {
+            "message": "stream disconnected before completion: Encrypted function output content could not be decrypted or decoded.",
+            "additionalDetails": null
+          },
+          "startedAt": 1791874641,
+          "completedAt": 1791874657,
+          "final_messages": [
+            {
+              "type": "functionCallOutput",
+              "id": "fco_01a1340d-2d60-7152-8f4d-7d55b2952c0b",
+              "name": "send_message_to_thread",
+              "namespace": "codex_tui",
+              "codexDelegation": {
+                "sourceThreadId": "01a13402-afaa-7501-b97b-15d3b08434be",
+                "input": "The user stop instruction still applies; current check finished and controller branch now 223f8a1, clean. Your child 01a133ec-4ef9-78b2-a8d7-248726023ce5 remains active; direct send is rejected for v2 subagents. Please use collaboration.send_message/interrupt_agent from YOUR tree to stop it and host_review after existing cleanup, get handoff and mark no further writes. No new experiments/merges/main commits. Your earlier decoding error is retained. I will checkpoint all main durable files and source snapshots; send me proof children are idle. Keep this turn short and avoid reading large prior tool output."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "thread_id": "01a133ec-4ef9-78b2-a8d7-248726023ce5",
+      "thread": {
+        "id": "01a133ec-4ef9-78b2-a8d7-248726023ce5",
+        "kind": "codex",
+        "title": null,
+        "preview": "",
+        "status": {
+          "type": "idle"
+        },
+        "cwd": "/home/jim/sm-decomp",
+        "createdAt": 1791872487,
+        "updatedAt": 1791874597
+      },
+      "turns": [
+        {
+          "id": "01a133f1-7407-7541-8651-a2601c49769e",
+          "status": "completed",
+          "error": null,
+          "startedAt": 1791872824,
+          "completedAt": 1791874597,
+          "final_messages": [
+            {
+              "type": "agentMessage",
+              "id": "msg_0716b2e07844e794016acdd617f874819392985878edd0707f",
+              "text": "Compact diagnostic submitted on clean branch `ceres-continuation-compact-controller-1`, HEAD **223f8a1b0c7382817b1290d13c7a41f4e722d5e1**, worktree `/tmp/sm-ceres-continuation-compact-controller-1`.\n\nImplemented `--profile compact`, preserving default full behavior. Compact retains controller/dispatch ordering, permits20000frames, enforces one60second execution deadline including worker waits, runs two causal subjects, records omissions/frontier/divergence, and safely reuses completed native captures from failed subjects. Authentication recomputes frontier claims and validates snapshot extent; legacy full observer identities remain compatible.\n\nActual results:\n\n- **2240frames:** all1736 completed updates and1887 samples match; independent RNG control rejects.46.71seconds. Verdict remains nonaccepting.\n- **8600frames:** first provenance divergence is ordinal7741, originalframe8508/event63799: **7960 C polls versus7959 native polls**. Matching diagnostic prefix ends at7740updates/frame8317. Candidate reaches Ceres but rejects EOF; Ceres escape remains unfinished.\n\nEvidence beneath `/home/jim/sm-decomp/out/port/ceres-continuation/controller`:\n\n- Successful2240: `1791873256094852042-256891/verdict.toml`, SHA256 `79c00cb7bb32a120f981b1c14f99b639e773d88f5f544bdb41e964409ce7a916`.\n- Complete native8600/subject timeout: `1791873514143170077-260799/verdict.toml`, SHA256 `7c8c04d2f53d3f7a247a715a807d2dcf0e2d0004be13facd780c3d74a717fe88`.\n- Final8600 diagnosis: `1791874177761738742-271877/verdict.toml`, SHA256 `051a7195bf0ed3461eae81a9789f052a01f5c616d0d7ed716a37848c2a59d07e`.\n\nEight unit tests and two public tests pass; final read-only review found no blocker. Both scoped cleanup passes completed with zero bytes reclaimed; successful2240 evidence authenticates afterward. All child processes finished. Worktree removal and durable submission/integration remain with the root integration owner.\n\nNext investigate setup’s **extra continuation poll** before changing scheduler behavior. Existing NMI wrapper polls unconditionally; native setup temporarily disables NMI. No corrective scheduler change was made.",
+              "phase": "final_answer"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "thread_id": "01a133ec-68e2-7033-9ee7-dba26d4db746",
+      "thread": {
+        "id": "01a133ec-68e2-7033-9ee7-dba26d4db746",
+        "kind": "codex",
+        "title": null,
+        "preview": "",
+        "status": {
+          "type": "notLoaded"
+        },
+        "cwd": "/home/jim/sm-decomp",
+        "createdAt": 1791872493,
+        "updatedAt": 1791873541
+      },
+      "turns": [
+        {
+          "id": "01a133ec-68fb-7883-bd3d-17ed72715e5a",
+          "status": "completed",
+          "error": null,
+          "startedAt": 1791872493,
+          "completedAt": 1791873541,
+          "final_messages": [
+            {
+              "type": "agentMessage",
+              "id": "msg_0c97fa4578f65f15016acdd1ff61b481949c195aee4585679d",
+              "text": "Submitted and merged commit `73547105d870f8b05f8c6bcf55b768c223889fdb`.\n\nShared host executes unchanged Samus/room modules through typed PLM/HDMA/VRAM requests, preserving refusal and fatal ownership semantics. Compact manifests provide seven projectile and three room actual-C comparisons.\n\n31 Rust tests pass. Cleanup removed 129,084,860 bytes; worktree is clean.\n\nEvidence: `.scratch/ceres-continuation/host-implementation.toml`, SHA-256 `7b4f118b21b969bd02abc16192cbc3caccb1c118d5cef6a5d39e3751afeaffeb`.\n\nCoordinator retains actual-C verification, progress publication, source snapshot and worktree retirement.",
+              "phase": "final_answer"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "thread_id": "01a133f4-de2d-71e3-82ce-ead915ca3017",
+      "thread": {
+        "id": "01a133f4-de2d-71e3-82ce-ead915ca3017",
+        "kind": "codex",
+        "title": null,
+        "preview": "",
+        "status": {
+          "type": "idle"
+        },
+        "cwd": "/home/jim/sm-decomp",
+        "createdAt": 1791873048,
+        "updatedAt": 1791874474
+      },
+      "turns": [
+        {
+          "id": "01a13408-c221-71e3-884f-a7b8e4089f01",
+          "status": "completed",
+          "error": null,
+          "startedAt": 1791874351,
+          "completedAt": 1791874474,
+          "final_messages": [
+            {
+              "type": "agentMessage",
+              "id": "msg_0444dfdacd89dfad016acdd5a6e8fc8190a342b2235649724d",
+              "text": "Final review found no remaining blocker for compact diagnostics or native reuse. Deadline handling, capture origin, frontier validation, required snapshots, and truncated-tail preservation now look correct.\n\nCompatibility caveat: historical reused full-profile receipts lack the new capture-origin field and may reject authentication.\n\nNo edits or tests performed.",
+              "phase": "final_answer"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "thread_id": "01a13460-4aa9-7fe0-865e-a8f54ffca310",
+      "thread": {
+        "id": "01a13460-4aa9-7fe0-865e-a8f54ffca310",
+        "kind": "codex",
+        "title": "Resume agent swarm preparation",
+        "preview": "the previous session getting everything ready for the agent swarm crashed. can you please pick it up and continue",
+        "status": {
+          "type": "active",
+          "activeFlags": []
+        },
+        "cwd": "/home/jim/sm-decomp",
+        "createdAt": 1791880088,
+        "updatedAt": 1791883333
+      },
+      "turns": [
+        {
+          "id": "01a13460-abf2-7fb1-9103-f2e19ac8a99e",
+          "status": "inProgress",
+          "error": null,
+          "startedAt": 1791880113,
+          "completedAt": null,
+          "final_messages": []
+        }
+      ]
+    },
+    {
+      "thread_id": "01a13394-29b8-76a3-aab7-5ab8eff60694",
+      "thread": {
+        "id": "01a13394-29b8-76a3-aab7-5ab8eff60694",
+        "kind": "codex",
+        "title": "Open progress report viewer",
+        "preview": "can you please open the progress report viewer in my windows browser",
+        "status": {
+          "type": "active",
+          "activeFlags": []
+        },
+        "cwd": "/home/jim/sm-decomp",
+        "createdAt": 1791866710,
+        "updatedAt": 1791883335
+      },
+      "turns": [
+        {
+          "id": "01a13413-b18c-7f02-8f17-988f0e351589",
+          "status": "inProgress",
+          "error": null,
+          "startedAt": 1791875068,
+          "completedAt": null,
+          "final_messages": [
+            {
+              "type": "agentMessage",
+              "id": "msg_07b46b35332fb4b8016acdf6d6892c819687ccf9e2338ed5c9",
+              "text": "The burndown and velocity checks pass for the real registry, including bank filtering and preserved evidence. The synthetic checks also handle zero progress, removed coverage, stale source and incomplete windows without inventing a completion date. I’m finishing the layout comparison and validating the retained timing data before reopening the report.",
+              "phase": "commentary"
+            },
+            {
+              "type": "agentMessage",
+              "id": "msg_07b46b35332fb4b8016acdf8346d7c81969a8a72b82bfc5880",
+              "text": "The report now answers the coverage question directly: 22% of native body lines are mapped to Rust, with 58,702 lines remaining. It compares recent pace with the preceding window and makes the projection conditional on that pace continuing. I’m keeping verification gaps and measured pipeline costs alongside it so they can inform the decision to improve the pipeline.",
+              "phase": "commentary"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

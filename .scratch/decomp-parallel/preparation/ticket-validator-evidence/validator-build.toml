@@ -1,0 +1,17 @@
+schema = "decomp-drill-validator-build-v1"
+source_checkout = "/tmp/sm-decomp-ticket-validator-20261013"
+source_commit = "f54fbed0f30f2c84e2c6aba171dcc54e96099c9a"
+source_fingerprint = "cde89f07dcf1a897abc81938581d893a3b037257bf23ec7939b5f9c11de0d352"
+binary_path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/ticket-validator-evidence/bin/sm-pipeline-validator"
+binary_sha256 = "becfd038af486b51e94f454eca84cfd05fcaf96ae77875a1185275ddfe9978d3"
+build_command = "cargo build -p pipeline --bin sm-pipeline --locked --offline"
+build_configuration = 'patch."https://github.com/doublegate/RustySNES".rustysnes-core.path="/home/jim/sm-decomp/deps/rustysnes/crates/rustysnes-core"'
+limitations = ["local retained source/build/hash provenance; no platform attestation", "validator build differs from executed drill engine; subject was not replayed or relabeled"]
+
+[executed_subject]
+source_checkout = "/tmp/sm-decomp-preparation-integration-20261013"
+source_commit = "c8799f326ffe198b652301f08866f1b7a7bd9ebc"
+source_fingerprint = "4d87e457e895a03f82f5a7ccdd891f7769b83d25d48caf2fd3a55432e5929338"
+binary_path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill/bin/sm-pipeline"
+binary_sha256 = "89e3c46596ea556011cfcbb679cace5b96277bbf56abb8a7a2a61db7048268d9"
+harness_source_sha256 = "fabe7ff02289fee04e23707b80bb592daef6523802c12d226a11650a47237e15"

@@ -1,0 +1,162 @@
+   Compiling pipeline v0.1.0 (/tmp/sm-decomp-preparation-ownership-20261013/crates/pipeline)
+warning: struct `Request` is never constructed
+  --> crates/pipeline/src/authority.rs:71:19
+   |
+71 | pub(crate) struct Request {
+   |                   ^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: struct `Receipt` is never constructed
+  --> crates/pipeline/src/authority.rs:97:19
+   |
+97 | pub(crate) struct Receipt {
+   |                   ^^^^^^^
+
+warning: struct `SessionObservation` is never constructed
+   --> crates/pipeline/src/authority.rs:121:19
+    |
+121 | pub(crate) struct SessionObservation {
+    |                   ^^^^^^^^^^^^^^^^^^
+
+warning: struct `ChildObservation` is never constructed
+   --> crates/pipeline/src/authority.rs:131:19
+    |
+131 | pub(crate) struct ChildObservation {
+    |                   ^^^^^^^^^^^^^^^^
+
+warning: struct `TransferObservation` is never constructed
+   --> crates/pipeline/src/authority.rs:152:19
+    |
+152 | pub(crate) struct TransferObservation {
+    |                   ^^^^^^^^^^^^^^^^^^^
+
+warning: field `submission_hold` is never read
+   --> crates/pipeline/src/authority.rs:194:9
+    |
+184 | pub(super) struct Holding {
+    |                   ------- field in this struct
+...
+194 |     pub submission_hold: Option<String>,
+    |         ^^^^^^^^^^^^^^^
+    |
+    = note: `Holding` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+
+warning: function `stopped` is never used
+   --> crates/pipeline/src/authority.rs:234:15
+    |
+234 | pub(super) fn stopped(status: &str) -> bool {
+    |               ^^^^^^^
+
+warning: function `live` is never used
+   --> crates/pipeline/src/authority.rs:237:4
+    |
+237 | fn live(status: &str) -> bool {
+    |    ^^^^
+
+warning: function `known_status` is never used
+   --> crates/pipeline/src/authority.rs:240:4
+    |
+240 | fn known_status(status: &str) -> bool {
+    |    ^^^^^^^^^^^^
+
+warning: function `artifacts` is never used
+   --> crates/pipeline/src/authority.rs:244:4
+    |
+244 | fn artifacts(artifacts: &[Artifact]) -> Result<()> {
+    |    ^^^^^^^^^
+
+warning: function `session_observation` is never used
+   --> crates/pipeline/src/authority.rs:252:4
+    |
+252 | fn session_observation(artifact: &Artifact, id: &str) -> Result<()> {
+    |    ^^^^^^^^^^^^^^^^^^^
+
+warning: function `registration` is never used
+   --> crates/pipeline/src/authority.rs:675:4
+    |
+675 | fn registration(registration: &RoleRegistration) -> Result<Role> {
+    |    ^^^^^^^^^^^^
+
+warning: function `checked_transfer` is never used
+   --> crates/pipeline/src/authority.rs:689:4
+    |
+689 | fn checked_transfer(root: &Path, policy: &Policy, transfer: &RoleTransfer, old: &Role) -> Result<()> {
+    |    ^^^^^^^^^^^^^^^^
+
+warning: struct `DrillObservation` is never constructed
+   --> crates/pipeline/src/authority.rs:815:19
+    |
+815 | pub(crate) struct DrillObservation {
+    |                   ^^^^^^^^^^^^^^^^
+
+warning: function `checked_drill` is never used
+   --> crates/pipeline/src/authority.rs:827:4
+    |
+827 | fn checked_drill(root: &Path, checkout: &Path, policy: &Policy, artifact: &Artifact) -> Result<()> {
+    |    ^^^^^^^^^^^^^
+
+warning: function `operate` is never used
+   --> crates/pipeline/src/authority.rs:865:15
+    |
+865 | pub(crate) fn operate(request: Request) -> Result<Receipt> {
+    |               ^^^^^^^
+
+warning: `pipeline` (bin "sm-pipeline") generated 16 warnings
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 14.34s
+     Running tests/assignment_queue.rs (/tmp/sm-decomp-preparation-ownership-target-20261013/debug/build/pipeline/61d97b4e74205b3f/out/assignment_queue-61d97b4e74205b3f)
+
+running 22 tests
+test canonical_mutation_cannot_start_without_prepared_authority ... ok
+test input_changes_and_missing_file_inputs_remain_uncertainty ... ok
+test existing_tickets_and_blockers_are_authoritative ... ok
+test interrupted_ticket_publication_keeps_claim_for_reconciliation ... ok
+test empty_affected_frontier_retires_unclaimed_work_without_granting_verification ... ok
+test concurrent_efforts_in_main_and_worktree_cannot_overlap_ancestor_paths ... ok
+test incomplete_scope_research_never_resolves_originating_task ... ok
+test no_work_frontier_does_not_satisfy_a_verification_blocker ... ok
+test plan_is_read_only_and_reservation_survives_restart ... ok
+test empty_frontier_preserves_active_old_claim_until_checked_recovery ... ok
+test completion_retry_rechecks_the_same_attempt_sealed_evidence ... ok
+test saved_verification_checks_discovery_namespace_even_without_new_seeds ... ok
+test no_slots_do_not_claim_and_exact_launch_failure_is_idempotent ... ok
+test owned_source_edits_do_not_invalidate_submission_but_immutable_inputs_do ... ok
+test pull_order_honors_local_ticket_numbers_and_observed_candidate_ranking ... ok
+test recovery_requires_matching_stopped_observation_and_new_attempt ... ok
+test revised_completed_work_retains_old_evidence_and_rejects_replayed_completion ... ok
+test two_coordinators_and_worktree_share_exclusive_reservation ... ok
+test stale_completion_cannot_expand_ownership_or_complete_revised_work ... ok
+test separate_efforts_keep_submitted_paths_and_duplicate_ticket_identity_held ... ok
+test researching_existing_task_transfers_claim_and_resolves_only_after_integration ... ok
+test promotion_path_conflicts_and_integration_preserve_submission_lifecycle ... ok
+
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.68s
+
+     Running tests/session_authority.rs (/tmp/sm-decomp-preparation-ownership-target-20261013/debug/build/pipeline/1af6da5c442e56d8/out/session_authority-1af6da5c442e56d8)
+
+running 9 tests
+test session_process ... ignored
+test prepared_policy_requires_real_sessions_and_blocks_production_and_arbitrary_efforts ... ok
+test bridge_hash_source_verification_and_markdown_fences_are_enforced ... ok
+test checked_maintenance_exception_is_exact_and_retains_original_legacy_fence ... FAILED
+test activation_checks_drill_source_controls_and_keeps_arbitrary_efforts_fenced ... ok
+test managed_capacity_is_shared_between_admitted_efforts ... ok
+test managed_owner_stop_requires_exact_child_thread_and_preserves_old_attempt_history ... ok
+test stopped_parent_transfer_preserves_live_child_claim_and_rejects_omissions ... ok
+test explicit_integrator_keeps_first_submitter_out_and_fences_old_integrator_retries ... ok
+
+failures:
+
+---- checked_maintenance_exception_is_exact_and_retains_original_legacy_fence stdout ----
+
+thread 'checked_maintenance_exception_is_exact_and_retains_original_legacy_fence' (366700) panicked at crates/pipeline/tests/session_authority.rs:581:5:
+assertion failed: expanded.assignment.is_none()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    checked_maintenance_exception_is_exact_and_retains_original_legacy_fence
+
+test result: FAILED. 7 passed; 1 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.42s
+
+error: test failed, to rerun pass `-p pipeline --test session_authority`

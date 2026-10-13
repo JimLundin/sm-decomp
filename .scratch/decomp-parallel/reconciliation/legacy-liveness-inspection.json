@@ -1,0 +1,660 @@
+{
+  "schema": "decomp-owner-liveness-inspection-v1",
+  "observed_at": "2026-10-13T08:36:30Z",
+  "observer_thread_id": "01a13462-702f-74f0-8a9a-a2a08dd1cb7f",
+  "coordinator_thread_id": "01a13460-4aa9-7fe0-865e-a8f54ffca310",
+  "source": "mcp__codex_tui__read_thread; local session_meta and SubAgentActivity; read-only ps/git worktree/status",
+  "limitations": [
+    "read_thread turn items are truncated by provider; process absence does not release ownership",
+    "notLoaded alone is not stopped evidence; completed/failed terminal turns and original source/process observations are recorded separately",
+    "submitted gameplay holdings remain held; no owner-stopped update has been admitted"
+  ],
+  "process_snapshot": {
+    "observed_at": "2026-10-13T08:35:25Z",
+    "processes": [
+      {
+        "pid": 330613,
+        "ppid": 3389,
+        "start": "Tue Oct 13 10:03:43 2026",
+        "state": "Ss",
+        "argv": [
+          "target/release/sm-pipeline",
+          "progress",
+          "serve",
+          "--root",
+          "/home/jim/sm-decomp",
+          "--bind",
+          "127.0.0.1:4185"
+        ],
+        "purpose": "intentional reporting server; preserve"
+      }
+    ],
+    "no_observed_gameplay_or_tooling_build_writers": true
+  },
+  "snapshots": [
+    {
+      "requested_thread_id": "01a13402-afaa-7501-b97b-15d3b08434be",
+      "response": {
+        "schemaVersion": 1,
+        "thread": {
+          "id": "01a13402-afaa-7501-b97b-15d3b08434be",
+          "status": {
+            "type": "systemError"
+          }
+        },
+        "page": {
+          "order": "newest_first",
+          "limit": 2,
+          "hasMore": true,
+          "nextCursor": "{\"requestedThreadId\":\"01a13402-afaa-7501-b97b-15d3b08434be\",\"rolloutOrdinal\":1636,\"includeAnchor\":false,\"scope\":{\"kind\":\"turns\"}}"
+        },
+        "turns": [
+          {
+            "id": "01a1344d-993e-7741-b64a-8f81cf243cee",
+            "status": "failed",
+            "error": {
+              "message": "stream disconnected before completion: Encrypted function output content could not be decrypted or decoded."
+            },
+            "items": [],
+            "truncated": true
+          },
+          {
+            "id": "01a13449-64c8-7ef2-bc90-f21ce5d52dde",
+            "status": "completed",
+            "error": null,
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "msg_05e0261e5c2d74e4016acde5e395648196b01a7ead1ec51404",
+                "text": "**The plan is ready; the full independent-session decomp swarm still needs preparation.**\n\nThe remaining gates are existing-claim reconciliation, ownership/recovery tooling, the two-session crash drill, and approved subsystem assignments. Subagents can begin that preparation now.\n\nI haven’t started any agents.",
+                "phase": "final_answer"
+              }
+            ],
+            "truncated": true
+          }
+        ],
+        "truncated": true
+      }
+    },
+    {
+      "requested_thread_id": "01a13453-b599-79c1-84d5-713e6d1e3f57",
+      "response": {
+        "schemaVersion": 1,
+        "thread": {
+          "id": "01a13453-b599-79c1-84d5-713e6d1e3f57",
+          "status": {
+            "type": "active",
+            "activeFlags": []
+          }
+        },
+        "page": {
+          "order": "newest_first",
+          "limit": 2,
+          "hasMore": false,
+          "nextCursor": null
+        },
+        "turns": [
+          {
+            "id": "01a13453-b5da-7962-ba98-08e8cb649c9c",
+            "status": "inProgress",
+            "error": null,
+            "items": [],
+            "truncated": true
+          }
+        ],
+        "truncated": true
+      }
+    },
+    {
+      "requested_thread_id": "01a1342e-6cad-7cb1-80d7-6a484c469bbf",
+      "response": {
+        "schemaVersion": 1,
+        "thread": {
+          "id": "01a1342e-6cad-7cb1-80d7-6a484c469bbf",
+          "status": {
+            "type": "idle"
+          }
+        },
+        "page": {
+          "order": "newest_first",
+          "limit": 2,
+          "hasMore": true,
+          "nextCursor": "{\"requestedThreadId\":\"01a1342e-6cad-7cb1-80d7-6a484c469bbf\",\"rolloutOrdinal\":212,\"includeAnchor\":false,\"scope\":{\"kind\":\"turns\"}}"
+        },
+        "turns": [
+          {
+            "id": "01a13457-050b-7ad0-9e26-80b0b4ee9ab7",
+            "status": "completed",
+            "error": null,
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "msg_0ab9c1f99a18a11a016acdebf06c348194a08e77f97ee2590e",
+                "text": "Ticket 03 is ready to implement, but checked ticket 01 adoption is still pending. The coordinator/reconciliation agents crashed; surviving workers retain ownership.\n\nSaved the agreed API and restart boundary in [03-session-handoff.md](/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/03-session-handoff.md). No code, queue or build changes.",
+                "phase": "final_answer"
+              }
+            ],
+            "truncated": true
+          },
+          {
+            "id": "01a13451-0cf9-7f33-9112-7578530d855c",
+            "status": "completed",
+            "error": null,
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "msg_0ab9c1f99a18a11a016acde86c148c8194aae0232d6fa21ac2",
+                "text": "Saved [contracts.md](/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/contracts.md) with the minimal Rust API seam and disjoint file ownership for tickets 02/03.\n\nPreserves legacy claims/seals and native admission; production remains pending. Whitespace check passed. No runtime changes or cleanup needed.",
+                "phase": "final_answer"
+              }
+            ],
+            "truncated": true
+          }
+        ],
+        "truncated": true
+      }
+    },
+    {
+      "requested_thread_id": "01a13421-0483-7072-adba-413a21cb343c",
+      "response": {
+        "schemaVersion": 1,
+        "thread": {
+          "id": "01a13421-0483-7072-adba-413a21cb343c",
+          "kind": "codex",
+          "title": null,
+          "preview": "",
+          "status": {
+            "type": "systemError"
+          },
+          "cwd": "/home/jim/sm-decomp",
+          "createdAt": 1791875941,
+          "updatedAt": 1791880089
+        },
+        "page": {
+          "order": "newest_first",
+          "limit": 2,
+          "hasMore": true,
+          "nextCursor": "{\"requestedThreadId\":\"01a13421-0483-7072-adba-413a21cb343c\",\"rolloutOrdinal\":1096,\"includeAnchor\":false,\"scope\":{\"kind\":\"turns\"}}"
+        },
+        "turns": [
+          {
+            "id": "01a13460-1b45-7181-9651-10660439fe82",
+            "status": "failed",
+            "error": {
+              "message": "stream disconnected before completion: Encrypted function output content could not be decrypted or decoded.",
+              "additionalDetails": null
+            },
+            "startedAt": 1791880076,
+            "completedAt": 1791880089,
+            "durationMs": 12884,
+            "items": []
+          },
+          {
+            "id": "01a13457-aa0c-7351-9fd4-df43cfdfcd3b",
+            "status": "failed",
+            "error": {
+              "message": "stream disconnected before completion: Encrypted function output content could not be decrypted or decoded.",
+              "additionalDetails": null
+            },
+            "startedAt": 1791879522,
+            "completedAt": 1791879569,
+            "durationMs": 46510,
+            "items": [
+              {
+                "type": "reasoning",
+                "id": "rs_0290c7c1bf0523dd016acde96abe008195a65e809dd77e1701",
+                "summary": [],
+                "content": []
+              },
+              {
+                "type": "subAgentActivity",
+                "id": "call_x9K32hxEYPzcZoHyfoQrnIqu",
+                "kind": "interacted",
+                "agentThreadId": "01a13402-afaa-7501-b97b-15d3b08434be",
+                "agentPath": "/root"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "requested_thread_id": "01a133eb-76e2-7073-9aef-d97c03a812e4",
+      "response": {
+        "schemaVersion": 1,
+        "thread": {
+          "id": "01a133eb-76e2-7073-9aef-d97c03a812e4",
+          "status": {
+            "type": "systemError"
+          }
+        },
+        "page": {
+          "order": "newest_first",
+          "limit": 3,
+          "hasMore": false,
+          "nextCursor": null
+        },
+        "turns": [
+          {
+            "id": "01a1340d-2d5a-7ab1-a076-a7d92a822632",
+            "status": "failed",
+            "error": {
+              "message": "stream disconnected before completion: Encrypted function output content could not be decrypted or decoded."
+            },
+            "items": [],
+            "truncated": true
+          },
+          {
+            "id": "01a13407-8756-7d91-adcd-c668c3526c08",
+            "status": "failed",
+            "error": {
+              "message": "stream disconnected before completion: Encrypted function output content could not be decrypted or decoded."
+            },
+            "items": [],
+            "truncated": true
+          },
+          {
+            "id": "01a133eb-e06e-7622-896b-530bad2f1121",
+            "status": "failed",
+            "error": {
+              "message": "stream disconnected before completion: Encrypted function output content could not be decrypted or decoded."
+            },
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "msg_0744e841481c3c10016acdd26adc908197adbd5cb006ecd22d",
+                "text": "The shared host passed ten actual-C fixture pairs, including HDMA allocation, PLM terrain mutation and all 17 room-display flushes. The 8,600-frame prefix probe completed its native capture but hit the 60-second limit during candidate replay. I’m preserving that failure and reusing the authenticated capture for the next attempt.",
+                "phase": "commentary"
+              }
+            ],
+            "truncated": true
+          }
+        ],
+        "truncated": true
+      }
+    },
+    {
+      "requested_thread_id": "01a133ec-4ef9-78b2-a8d7-248726023ce5",
+      "response": {
+        "schemaVersion": 1,
+        "thread": {
+          "id": "01a133ec-4ef9-78b2-a8d7-248726023ce5",
+          "status": {
+            "type": "idle"
+          }
+        },
+        "page": {
+          "order": "newest_first",
+          "limit": 2,
+          "hasMore": false,
+          "nextCursor": null
+        },
+        "turns": [
+          {
+            "id": "01a133f1-7407-7541-8651-a2601c49769e",
+            "status": "completed",
+            "error": null,
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "msg_0716b2e07844e794016acdd617f874819392985878edd0707f",
+                "text": "Compact diagnostic submitted on clean branch `ceres-continuation-compact-controller-1`, HEAD **223f8a1b0c7382817b1290d13c7a41f4e722d5e1**, worktree `/tmp/sm-ceres-continuation-compact-controller-1`.\n\nImplemented `--profile compact`, preserving default full behavior. Compact retains controller/dispatch ordering, permits20000frames, enforces one60second execution deadline including worker waits, runs two causal subjects, records omissions/frontier/divergence, and safely reuses completed native captures from failed subjects. Authentication recomputes frontier claims and validates snapshot extent; legacy full observer identities remain compatible.\n\nActual results:\n\n- **2240frames:** all1736 completed updates and1887 samples match; independent RNG control rejects.46.71seconds. Verdict remains nonaccepting.\n- **8600frames:** first provenance divergence is ordinal7741, originalframe8508/event63799: **7960 C polls versus7959 native polls**. Matching diagnostic prefix ends at7740updates/frame8317. Candidate reaches Ceres but rejects EOF; Ceres escape remains unfinished.\n\nEvidence beneath `/home/jim/sm-decomp/out/port/ceres-continuation/controller`:\n\n- Successful2240: `1791873256094852042-256891/verdict.toml`, SHA256 `79c00cb7bb32a120f981b1c14f99b639e773d88f5f544bdb41e964409ce7a916`.\n- Complete native8600/subject timeout: `1791873514143170077-260799/verdict.toml`, SHA256 `7c8c04d2f53d3f7a247a715a807d2dcf0e2d0004be13facd780c3d74a717fe88`.\n- Final8600 diagnosis: `1791874177761738742-271877/verdict.toml`, SHA256 `051a7195bf0ed3461eae81a9789f052a01f5c616d0d7ed716a37848c2a59d07e`.\n\nEight unit tests and two public tests pass; final read-only review found no blocker. Both scoped cleanup passes completed with zero bytes reclaimed; successful2240 evidence authenticates afterward. All child processes finished. Worktree removal and durable submission/integration remain with the root integration owner.\n\nNext investigate setup’s **extra continuation poll** before changing scheduler behavior. Existing NMI wrapper polls unconditionally; native setup temporarily disables NMI. No corrective scheduler change was made.",
+                "phase": "final_answer"
+              }
+            ],
+            "truncated": true
+          },
+          {
+            "id": "01a133ec-4f16-7e62-b439-7e174a892d1b",
+            "status": "completed",
+            "error": null,
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "msg_0716b2e07844e794016acdceee5f948193a5ab2c8a501bcb06",
+                "text": "The scheduler/input scope can stay independent:\n\n- Writable Rust driver: `crates/pipeline/src/decomp_prefix.rs`.\n- Observer template: `crates/pipeline/src/prefix_observer.lua.in`.\n- Rust regression tests: `crates/pipeline/tests/prefix.rs`, plus driver inline tests.\n- Existing C adapter: `tools/decomp/prefix_host.c`; changes are unnecessary for an initial compact capture. `main.rs` and `headless*.c/h` need no ownership.\n\nThe first useful extension is a separately identified compact diagnostic through original frame **2240**, comparing every completed boundary beyond1600. The first authored input edge after1600 is frame2218; the current2000-frame cap prevents reaching it. Historical native1600 capture took approximately129.7seconds and retained66.3MB of CSV with roughly781,000 events. Simply specifying `--timeout60` cannot satisfy the initial experiment budget: that timeout is per process, and C compilation has a separate limit.\n\nFor the compact diagnostic, preserve the existing full capture contract and add an explicit profile that retains source-ordered controller/dispatch/wait records, actual controller register values, primitive WRAM fixtures through320, and material lifecycle snapshots. The largest avoidable cost is recording full semantic fields and flushing CSV for every APU-register read, alongside131072 individual Lua writes per WRAM snapshot. Keep compact APU capture limitations explicit; do not convert the diagnostic into acceptance.\n\nThe named escape milestone is the observed lifecycle **32→33→34**:\n\n- `RoomCode_CeresElevatorShaft` `$89ACC3` sets32 at the escape elevator.\n- `GameState_32_MadeItToCeresElevator` `$828367` advances32→33.\n- `GameState_33_BlackoutFromCeres` `$828388` advances33→34, sets `loading_game_state=0x22`, clears Ceres/timer status, and saves SRAM.\n\nThe unsealed legacy reference suggests planning bounds8508/8539 for Ceres entry, about9000 for its first room transition, and13238–13315 for elevator/escape. These are research hints, not authenticated checkpoints. Extend subsequent captures only after measured cost and the first observed mismatch justify them.\n\nTwo maintained-contract gaps matter:\n\n1. Historical1600 evidence uses `verdict.json`; current Rust `--reuse-native` requires `verdict.toml`. It cannot currently reuse that historical capture.\n2. Maintained Rust tests have only two driver unit tests and one missing-movie test. Historical actual-engine terminal controls were not migrated. Restore Rust coverage for149-poll EOF refusal,150/151-poll single completion, and160-poll ten completions.\n\nUseful initial scope gates:\n\n```sh\ncargo test -p pipeline --locked --offline --bin sm-pipeline decomp_prefix::tests\ncargo test -p pipeline --locked --offline --test prefix\n```\n\n`translation::verification_command` currently rejects `decomp-prefix` as a native assignment gate. Cargo test gates work without expanding shared registration. A future compact capture command must remain separately nonaccepting, retain failures, and receive cleanup/authentication.\n\nNo source, claims, inventory, or verification runs were changed.",
+                "phase": "final_answer"
+              }
+            ],
+            "truncated": true
+          }
+        ],
+        "truncated": true
+      }
+    },
+    {
+      "requested_thread_id": "01a133ec-68e2-7033-9ee7-dba26d4db746",
+      "response": {
+        "schemaVersion": 1,
+        "thread": {
+          "id": "01a133ec-68e2-7033-9ee7-dba26d4db746",
+          "status": {
+            "type": "notLoaded"
+          }
+        },
+        "page": {
+          "order": "newest_first",
+          "limit": 3,
+          "hasMore": false,
+          "nextCursor": null
+        },
+        "turns": [
+          {
+            "id": "01a133ec-68fb-7883-bd3d-17ed72715e5a",
+            "status": "completed",
+            "error": null,
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "msg_0c97fa4578f65f15016acdd1ff61b481949c195aee4585679d",
+                "text": "Submitted and merged commit `73547105d870f8b05f8c6bcf55b768c223889fdb`.\n\nShared host executes unchanged Samus/room modules through typed PLM/HDMA/VRAM requests, preserving refusal and fatal ownership semantics. Compact manifests provide seven projectile and three room actual-C comparisons.\n\n31 Rust tests pass. Cleanup removed 129,084,860 bytes; worktree is clean.\n\nEvidence: `.scratch/ceres-continuation/host-implementation.toml`, SHA-256 `7b4f118b21b969bd02abc16192cbc3caccb1c118d5cef6a5d39e3751afeaffeb`.\n\nCoordinator retains actual-C verification, progress publication, source snapshot and worktree retirement.",
+                "phase": "final_answer"
+              }
+            ],
+            "truncated": true
+          }
+        ],
+        "truncated": true
+      }
+    },
+    {
+      "requested_thread_id": "01a13151-b3ec-72e0-8912-f95c230f9e18",
+      "response": {
+        "schemaVersion": 1,
+        "thread": {
+          "id": "01a13151-b3ec-72e0-8912-f95c230f9e18",
+          "status": {
+            "type": "notLoaded"
+          }
+        },
+        "page": {
+          "order": "newest_first",
+          "limit": 2,
+          "hasMore": true,
+          "nextCursor": "{\"requestedThreadId\":\"01a13151-b3ec-72e0-8912-f95c230f9e18\",\"rolloutOrdinal\":328,\"includeAnchor\":false,\"scope\":{\"kind\":\"turns\"}}"
+        },
+        "turns": [
+          {
+            "id": "01a13170-fba1-7321-8ea3-0b7af1dc3c8a",
+            "status": "failed",
+            "error": {
+              "message": "stream disconnected before completion: Encrypted function output content could not be decrypted or decoded."
+            },
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "msg_0fa5ae5da7b2fecb016acd339615388193a317ccc232a31f14",
+                "text": "Implementation submissions will run their bounded verification commands in the assigned worktree. Integration will run the required merged-source gates, authenticate the affected family evidence, and finish cleanup before resolving the task. Research completion keeps the original task linked through that lifecycle.",
+                "phase": "commentary"
+              }
+            ],
+            "truncated": true
+          },
+          {
+            "id": "01a1315f-6a89-70d1-8596-17ed9a4e7ec6",
+            "status": "completed",
+            "error": null,
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "msg_0b3434bd7a1ecf32016acd2a178c3c8190ba5976a4c53f3329",
+                "text": "The design and implementation tickets are ready in the [spec](/home/jim/sm-decomp/.scratch/affected-family-assignment/spec.md).\n\nThe agreed scope includes:\n\n- Dependency-aware family selection with clear explanations and conservative fallback.\n- A pull queue that assigns verification, diagnosis and translation research through existing subagent tools.\n- Automatic promotion of established translation scopes to implementation.\n- Exclusive claims, isolated worktrees, serialized overlapping edits and checked recovery.\n- Focused actual-C/Rust controls, bounded measurements and required cleanup.\n\nDoes this capture our shared understanding so I can implement it?\n\nThe [grilling skill](/home/jim/.agents/skills/grilling/SKILL.md) requires: “Do not act on it until the user confirms you have reached a shared understanding.” This is the final design confirmation; implementation has not started.",
+                "phase": "final_answer"
+              }
+            ],
+            "truncated": true
+          }
+        ],
+        "truncated": true
+      }
+    },
+    {
+      "requested_thread_id": "01a13152-ffec-7000-93c8-a992c6d5ea12",
+      "response": {
+        "schemaVersion": 1,
+        "thread": {
+          "id": "01a13152-ffec-7000-93c8-a992c6d5ea12",
+          "status": {
+            "type": "notLoaded"
+          }
+        },
+        "page": {
+          "order": "newest_first",
+          "limit": 2,
+          "hasMore": true,
+          "nextCursor": "{\"requestedThreadId\":\"01a13152-ffec-7000-93c8-a992c6d5ea12\",\"rolloutOrdinal\":291,\"includeAnchor\":false,\"scope\":{\"kind\":\"turns\"}}"
+        },
+        "turns": [
+          {
+            "id": "01a13188-5a7a-7083-ad22-c412edaec0f5",
+            "status": "completed",
+            "error": null,
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "msg_0501c75e84b7ebca016acd362193608193871038b910ddc1a2",
+                "text": "Ready commits: `35d4a69`, `72a016c`, `0b5d02e`.\n\nThey bind native exercise sources to deterministic instrumentation and pinned C units, reject redirected or incomplete verification commands, and strengthen routine identity checks.\n\nEarlier seven production tests passed. The updated eight-test suite needs a rerun after merging these commits. Child worktree is clean; root owns final cleanup, including the disposable 246 MB harness target.",
+                "phase": "final_answer"
+              }
+            ],
+            "truncated": true
+          },
+          {
+            "id": "01a13172-301d-7b01-9764-d122434ecc3c",
+            "status": "completed",
+            "error": null,
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "msg_03de0bafcbb7ebd4016acd2eedb9c48190bbb847735d471642",
+                "text": "Implemented `translation.rs` on `assignment-candidates`; ready through commit `4b0be4e`.\n\nIt discovers up to eight deterministic research proposals, prioritizes ready local tickets, honors claims/blockers/triage, and validates native complete Translation scopes before implementation promotion. Validation binds observed projectile receipts, pinned definitions/dependencies, writable source inputs, resolved dependencies and bounded verification commands.\n\nCompile checks and strict Clippy passed in an isolated harness; four focused filesystem controls passed. Root must run all five production tests after registering the module.\n\nCurrent default exercise evidence is historical JSON, so candidate discovery correctly requests research establishing native receipts.\n\nOnly `translation.rs` changed. Temporary disposable build output: `/tmp/sm-translation-check/target`, approximately 213 MB. No retained evidence depends on it; root owns final cleanup and worktree removal.\n\nOne integration detail remains: successful scope research for an existing implementation task must preserve that task until implementation, integration and cleanup finish.",
+                "phase": "final_answer"
+              }
+            ],
+            "truncated": true
+          }
+        ],
+        "truncated": true
+      }
+    },
+    {
+      "requested_thread_id": "01a133b1-ec57-7a81-92e0-106d26e60b0d",
+      "response": {
+        "schemaVersion": 1,
+        "thread": {
+          "id": "01a133b1-ec57-7a81-92e0-106d26e60b0d",
+          "status": {
+            "type": "idle"
+          }
+        },
+        "page": {
+          "order": "newest_first",
+          "limit": 2,
+          "hasMore": false,
+          "nextCursor": null
+        },
+        "turns": [
+          {
+            "id": "01a133f0-e4fb-7d32-a98a-6b90a98b3df2",
+            "status": "completed",
+            "error": null,
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "msg_00ac89a31af50a4d016acdcf3fabf08194b8428ce92d0a0675",
+                "text": "The layout owner has resumed its presentation follow-up. I’ve confirmed its ownership and asked it to preserve the reconciled counts and evidence, then provide a commit and cleanup handoff. Recovery commits `de669bd` and `48656a2` are complete.",
+                "phase": "final_answer"
+              }
+            ],
+            "truncated": true
+          },
+          {
+            "id": "01a133b2-84a0-7902-aebe-7548140da411",
+            "status": "completed",
+            "error": null,
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "msg_00ac89a31af50a4d016acdc7807ba08194ad9eb20937d30c2d",
+                "text": "Recovered the session, checked its subagents and completed the remaining commits: `de669bd` and `48656a2`.\n\nThe [progress viewer](http://localhost:4185/index.html) now reports **1,460 translated, 924 verified, 38 integrated and 121 live-exercised routines**, with stale and corrected observations excluded.\n\nThe [revised strategy](/home/jim/sm-decomp/.scratch/decomp-strategy/revised-strategy.md) targets Ceres escape from ordinary reset using the existing causal input driver. Whole-Ridley admission and full-game completion remain future work.\n\nAll 19 progress tests and browser checks passed. Cleanup is complete, evidence is preserved and the viewer remains running.",
+                "phase": "final_answer"
+              }
+            ],
+            "truncated": true
+          }
+        ],
+        "truncated": true
+      }
+    },
+    {
+      "requested_thread_id": "01a13317-fa0e-7052-8c5a-8e665cf86f23",
+      "response": {
+        "schemaVersion": 1,
+        "thread": {
+          "id": "01a13317-fa0e-7052-8c5a-8e665cf86f23",
+          "status": {
+            "type": "idle"
+          }
+        },
+        "page": {
+          "order": "newest_first",
+          "limit": 2,
+          "hasMore": false,
+          "nextCursor": null
+        },
+        "turns": [
+          {
+            "id": "01a13318-712e-7571-b0e8-0d723576366d",
+            "status": "failed",
+            "error": {
+              "message": "stream disconnected before completion: Encrypted function output content could not be decrypted or decoded."
+            },
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "msg_0dde0656520c0e36016acdbb68909081979000fa1b32e26f9d",
+                "text": "The report was missing historical coverage: its recent observations did not account for all maintained Rust modules. The audit now covers all 44 port source files and 141 tickets, with historical evidence shown separately from checks against the checkout.\n\nWe also found that the 129,712-input replay still ends in Ceres. It establishes C/Rust agreement over that run, not progress to credits. The revised strategy will use playable checkpoints and correctly consumed controller inputs as milestones.",
+                "phase": "commentary"
+              }
+            ],
+            "truncated": true
+          }
+        ],
+        "truncated": true
+      }
+    },
+    {
+      "requested_thread_id": "01a13153-18fd-7a22-951e-427b7cde2146",
+      "response": {
+        "schemaVersion": 1,
+        "thread": {
+          "id": "01a13153-18fd-7a22-951e-427b7cde2146",
+          "status": {
+            "type": "notLoaded"
+          }
+        },
+        "page": {
+          "order": "newest_first",
+          "limit": 3,
+          "hasMore": true,
+          "nextCursor": "{\"requestedThreadId\":\"01a13153-18fd-7a22-951e-427b7cde2146\",\"rolloutOrdinal\":200,\"includeAnchor\":false,\"scope\":{\"kind\":\"turns\"}}"
+        },
+        "turns": [
+          {
+            "id": "01a13188-7643-7152-ba55-73bab1ac1e97",
+            "status": "completed",
+            "error": null,
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "msg_0240205c427b2b30016acd323111948197bb611742906b1477",
+                "text": "Ready commits:\n\n- `e41f07a`: actual-C selected/skipped/reuse/rejection control.\n- `eeb45e5`: catalog/manifest read race checks.\n- `3915585`: rejects changed catalog membership during selection.\n\nAdded `/tmp/sm-selection-measure` for frozen disposable-checkout measurements; not run yet.\n\nCoordinator review identified fixes needed: current batch schema is `2`; validate stored source fingerprint before/after completion; bind fingerprint and catalog membership around selection. Skipped families still receive batch cleanup traversal, so measurements should claim avoided authentication/verification work, not all artifact IO.",
+                "phase": "final_answer"
+              }
+            ],
+            "truncated": true
+          },
+          {
+            "id": "01a13171-d6f8-7982-ad63-e1d02471eab4",
+            "status": "completed",
+            "error": null,
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "msg_0240205c427b2b30016acd2dc98dc08197b97f9e0a9ac2c431",
+                "text": "Implemented on `affected-selection`:\n\n- `0798326`: typed read-only `batch plan` and identical changed-since selection.\n- `d64a295`: ignored/aliased input safeguards.\n\nNine focused tests pass, covering narrow/transitive edits, untracked manifests/modules, renames/deletions, captured assets, ignored inputs and uncertainty. Formatting and diff checks pass. Clippy passed with existing unrelated lint categories allowed.\n\nRoot needs `mod affected;` and frozen actual-C integration. Existing execution/authentication formats remain unchanged. No evidence directories were created; temporary fixtures were removed. Shared target and implementer worktree remain for root cleanup.",
+                "phase": "final_answer"
+              }
+            ],
+            "truncated": true
+          },
+          {
+            "id": "01a13166-6a13-7b51-95e4-f17fb5a26780",
+            "status": "completed",
+            "error": null,
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "msg_0240205c427b2b30016acd28f2bee481978940cd00b3596638",
+                "text": "Alternative A gives the Translation scope module two entry points: **produce an immutable plan, then advance one coordinator through that plan**. The coordinating agent keeps using existing subagent tools; Rust owns selection, durable assignment decisions, promotion gates and recovery evidence.\n\n```rust\npub fn plan(request: PlanRequest) -> Result<Plan>;\n\npub fn advance(\n    plan: PlanId,\n    reports: &[AgentReport],\n    policy: &CoordinationPolicy,\n) -> Result<DispatchReceipt>;\n```\n\nThe interface could contain these principal types:\n\n```rust\nstruct PlanRequest {\n    checkout: PathBuf,\n    effort: PathBuf,              // existing .scratch/<effort>\n    intent: Intent,\n}\n\nenum Intent {\n    Verify {\n        families: FamilySelection,\n        changed_since: Option<String>,\n    },\n    Progress {\n        goal: TranslationGoal,\n        changed_since: Option<String>,\n    },\n}\n\nstruct Plan {\n    id: PlanId,\n    source: SourceSnapshot,\n    affected: Vec<FamilyDecision>,\n    work: Vec<PlannedWork>,\n    dependencies: Vec<Dependency>,\n    exclusions: Vec<Exclusion>,\n}\n\nenum PlannedWork {\n    Verify(VerificationScope),\n    Diagnose(DiagnosisScope),\n    Research(CandidateResearch),\n    Translate(TranslationScope),\n}\n\nstruct DispatchReceipt {\n    successor: PlanId,\n    assignments: Vec<Assignment>,\n    waiting: Vec<WaitReason>,\n    stopped: Option<StopReason>,\n}\n\nstruct Assignment {\n    id: AssignmentId,\n    claim: ClaimToken,\n    ticket: PathBuf,\n    brief: String,\n}\n\nstruct AgentReport {\n    assignment: AssignmentId,\n    claim: ClaimToken,\n    outcome: AgentOutcome,        // started, finished, or spawn failed\n    evidence: Vec<PathBuf>,\n}\n```\n\n`CoordinationPolicy` carries unresolved choices: authoritative claim location, recovery rules, research limits, active implementation limits and how the coordinator identifies externally running agents. Their semantics must be settled before implementation. Existing shared verification worker capacity remains a separate established input; the new module does not introduce another scheduler for compiler or Fixture execution.\n\nThe invariant is that **a plan expresses what should happen; a claim authorizes one assignment to happen**. Reading a plan, possessing lexical dependency information, or appearing in a candidate inventory grants no write ownership. Plans remain immutable; new research, merged source or changed dependencies produce a successor plan.\n\n`plan` is read-only. It inspects changed paths—including untracked files and both sides of renames—the current Offline family catalog, available compiler closures, family assets, observed exercise and local tickets. It returns reasons for selection, exclusion and uncertainty. Unknown dependency knowledge remains affected. It also detects current Rust module filename changes that make previous wrapper discovery assumptions incomplete.\n\nFor `Intent::Verify`, the work contains only relevant verification or diagnosis. `Intent::Progress` additionally proposes bounded candidate research and complete Translation scopes. This prevents existing changed-since callers from accidentally publishing or assigning translation jobs.\n\n`advance` is the single mutation entry point. It serializes the coordinating decision, checks the plan’s source assumptions, reads authoritative claims, records reports, publishes local tickets and claims ready work before returning assignment briefs. Research results pass the established promotion requirements before implementation becomes dispatchable. Existing claims or overlapping writable paths cause a wait; they never trigger a speculative second assignment.\n\nA typical coordinating agent loop is:\n\n```rust\nlet mut current = plan(request)?;\nlet mut reports = Vec::new();\n\nloop {\n    let turn = advance(current.id, &reports, &policy)?;\n    current = load_plan(turn.successor)?;\n    reports.clear();\n\n    // The coordinating agent uses its existing subagent tools here.\n    // Each returned assignment already has a durable ticket and claim.\n    dispatch_existing_subagent_tools(&turn.assignments, &mut reports)?;\n\n    if turn.assignments.is_empty() {\n        break;\n    }\n\n    collect_existing_agent_reports(&mut reports)?;\n}\n```\n\nThe sketch’s dispatch and collection operations are actions by the coordinating agent, not a new Rust launcher. Existing `sm-pipeline batch` consumes the verification portion of the same plan; its current-source authentication, Fixture pair execution and Live replay gates stay in place.\n\nWhat sits behind the seam:\n\n- Catalog expansion, changed-path collection, compiler closure interpretation, fixture/ROM asset association and conservative fallback.\n- Source snapshot identity and plan lineage.\n- Classification of observed candidates into bounded research or implementation-ready Translation scopes.\n- Dependency readiness, writable-path conflicts, local ticket numbering and triage labels.\n- Durable claims, report idempotence, promotion validation and recovery decisions.\n- Derivation of isolated worktree and independent batch requirements.\n- Integration ordering and completion gates, including merged-source verification, cleanup and retained authentication.\n\nResearch promotion needs substantive evidence, not just a populated form: observed exercise provenance, required dependencies, coherent Translation scope, explicit writable paths and appropriate verification commands. An unrecognized evidence contract or unsupported ownership assumption remains research or `needs-info`. An agent’s “done” report never sub",
+                "phase": "final_answer",
+                "truncated": true
+              }
+            ],
+            "truncated": true
+          }
+        ],
+        "truncated": true
+      }
+    },
+    {
+      "requested_thread_id": "01a13153-2eef-7070-b421-0db591d3ee60",
+      "response": {
+        "schemaVersion": 1,
+        "thread": {
+          "id": "01a13153-2eef-7070-b421-0db591d3ee60",
+          "status": {
+            "type": "notLoaded"
+          }
+        },
+        "page": {
+          "order": "newest_first",
+          "limit": 2,
+          "hasMore": true,
+          "nextCursor": "{\"requestedThreadId\":\"01a13153-2eef-7070-b421-0db591d3ee60\",\"rolloutOrdinal\":501,\"includeAnchor\":false,\"scope\":{\"kind\":\"turns\"}}"
+        },
+        "turns": [
+          {
+            "id": "01a13191-acc8-7ce3-b8fa-9afe1c614e7f",
+            "status": "completed",
+            "error": null,
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "msg_021ea599d89eb59e016acd33f3a62481948a97826a1cebd66c",
+                "text": "Committed `6f1dde0`.\n\nEmpty affected-family selections retire unclaimed verification as `NotRequired`, without granting acceptance or satisfying verification blockers. Active claims still require checked recovery.\n\nSaved jobs now recheck the shared source fingerprint before reservation. Seventeen queue tests and strict targeted Clippy pass.",
+                "phase": "final_answer"
+              }
+            ],
+            "truncated": true
+          },
+          {
+            "id": "01a13188-4649-7183-a3e3-b6890a937575",
+            "status": "completed",
+            "error": null,
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "msg_021ea599d89eb59e016acd31e64bf881949671c27a1dd70257",
+                "text": "Committed followup `1b4e107`.\n\nTask research now preserves the originating translation ticket until implementation integrates with authenticated evidence and cleanup. Incomplete research leaves the task open. Ownership transfers only through a validated research followup.\n\nThirteen queue tests and strict targeted Clippy pass, including expected writable edits and immutable-input drift rejection.",
+                "phase": "final_answer"
+              }
+            ],
+            "truncated": true
+          }
+        ],
+        "truncated": true
+      }
+    }
+  ]
+}

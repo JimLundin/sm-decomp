@@ -1,7 +1,7 @@
 # Establish playable vanilla progression
 
 Status: open
-Blocked by: 06
+Blocked by: 06, 13, 14, 15, 16, 17, 18
 Triage: ready-for-agent
 Type: task
 

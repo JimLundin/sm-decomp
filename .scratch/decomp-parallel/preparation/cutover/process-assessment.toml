@@ -1,0 +1,15 @@
+schema = "decomp-cutover-process-inspection-v1"
+observed_at = "2026-10-13T09:22:40Z"
+observer_thread = "01a13474-5fcc-7861-84f8-5c353938bdd2"
+boot_id = "7119fcce-5593-4526-aa9b-07127767c4ef"
+checked_claim_paths = ["/tmp/sm-ceres-continuation-compact-controller-1", "/tmp/sm-ceres-continuation-shared-game-host-1", "/home/jim/sm-decomp/out/port/ceres-continuation", "/home/jim/sm-decomp/.scratch/ceres-continuation/ledger.toml"]
+claim_processes_observed = []
+assessment = "No live process cwd, argv or open file descriptor names a Ceres claim worktree, run or ledger. Generic Codex/app/REA processes are shared infrastructure; their presence does not identify a surviving original owner."
+remaining_reporting_processes = [388762, 388981, 391441, 391453]
+reporting_process_scope = "Intended progress viewer, prototype review and reporting Rust release build belong to main Git owner 01a13394-29b8-76a3-aab7-5ab8eff60694; they are observed alive and retained. They do not release original gameplay holdings and prevent treating main source as a frozen snapshot."
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/cutover/process-inventory.txt"
+sha256 = "a47ae1b1f988d58ac8917aa95b55b95972c4ea8fa0005736423b9c4d8c4e34bf"
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/cutover/claim-process-paths.txt"
+sha256 = "658d44662c1571387f8e2095ba4ed606d107dcc84e655af203ad433b9e48c5bf"

@@ -7,7 +7,9 @@ the session launches subagents and records their results.
 Read the [parallel plan](../../.scratch/decomp-parallel/spec.md) and
 [ticket map](../../.scratch/decomp-parallel/map.md) for the next dependency-ready
 work. Read the [checkpoint](../../.scratch/decomp-parallel/checkpoint-20261013.md)
-for recovered source and retained evidence. Follow [assignments](assignments.md)
+for recovered source and retained evidence and the
+[preparation status](../../.scratch/decomp-parallel/preparation/status.md)
+for the current launch boundary and final validation subject. Follow [assignments](assignments.md)
 for claim/result schemas, [translation progress](translation-progress.md) for
 stage publication, and [run cleanup](run-cleanup.md) before handing work back.
 
@@ -51,9 +53,19 @@ stage publication, and [run cleanup](run-cleanup.md) before handing work back.
 
 Inspection is complete when every active claim has an identified surviving
 owner or an observed stopped owner, and every intended writable path has one
-owner. A new `.scratch/` effort is not an independent ownership boundary:
-today's overlap checks only inspect that effort's ledger despite the global
-mutation lock.
+owner. A new `.scratch/` effort shares the repository ownership boundary.
+The maintained engine checks held paths, ticket identity and linked submissions
+across existing efforts, including path aliases, under the shared mutation lock.
+
+Preparation and gameplay launch are separate. Before the user's later swarm
+launch instruction, keep production authority pending and inspect existing
+claims read-only. At launch, follow the readiness package, recheck exact real
+owners and source identities, and prepare/activate only the reviewed policy.
+`decomp-authority validate-activation --request REQUEST.toml` checks the same
+drill and legacy bridge as activation while returning `state = "prepared"`.
+It requires a prepared policy; the preparation readiness namespace supplies a
+private policy view while the host production authority and canonical ledger
+remain absent.
 
 ## Claim and dispatch
 
@@ -72,8 +84,10 @@ cargo run -p pipeline --locked --offline --bin sm-pipeline -- assign plan --chec
 ```
 
 The mutable examples below are for the observed owner admitted by the current
-coordination policy. Another live session joins through a delegated claim until
-distinct-session coordinator allocation is established. `--no-translations`
+coordination policy. Managed mutations additionally require that real caller's
+registered role and current generation. Register distinct dispatcher roles
+through `decomp-authority` after reviewed preparation; give each launched child
+the exact returned claim. `--no-translations`
 controls new research discovery; existing queued work can still be selected.
 
 `plan` is read-only. After reviewing that selection and confirming a free
@@ -97,19 +111,32 @@ within that contract. Use [assignments](assignments.md) for scope promotion and
 result admission.
 
 Existing Ceres infrastructure jobs were published through the Rust
-`.scratch/ceres-continuation/assignment_driver.rs` wrapper around the maintained
-assignment engine. Native `assign` does not accept those custom `jobs` requests
-or admit them as native gameplay scopes. For a reviewed legacy request file:
+`.scratch/ceres-continuation/assignment_driver.rs` wrapper. The maintained
+`decomp-session` adapter replays only exact original requests listed as requests
+in the authority policy's sealed legacy bridge. Its typed envelope names the
+matching operation (`infrastructure-plan`, `infrastructure-next` or
+`infrastructure-record`), the original `queue` request plus current optional
+authority, and `admission = { domain = "legacy", original_request = { path,
+sha256 } }`. Original Job/Claim/Update/result bytes remain unchanged; receipt
+artifacts and arbitrary bridge evidence cannot authorize a request. Native
+gameplay uses `assign` and its existing scope/result validation.
+
+Run a reviewed envelope with the matching operation:
 
 ```sh
-cargo run --manifest-path .scratch/ceres-continuation/Cargo.toml --target-dir .scratch/ceres-continuation/build --locked --offline --bin ceres-assignment-driver < REQUEST.toml
+cargo run -p pipeline --locked --offline --bin sm-pipeline -- decomp-session infrastructure-record --request REQUEST.toml
 ```
 
-Its typed request names `operation`, `checkout`, `effort`, `coordinator`,
-`capacity`, and either `available_slots` or `update`. Keep current legacy
-requests and receipts in their original effort. This wrapper records ownership;
-its result is not native coordinator verification or gameplay acceptance.
-The plan tracks replacing it with a maintained Rust command.
+New infrastructure admission uses `domain = "infrastructure"` with sealed
+`scopes`. A `decomp-infrastructure-scope-v1` artifact declares full baseline
+commit, an implementation Job with exact pipeline source/test or docs files,
+submission and integration `cargo test --locked --offline` argv/timeouts, and
+limitations. Jobs derive from those seals; raw caller jobs are rejected.
+Submission gates have at most 60 seconds, integration gates at most 3600.
+The adapter requires an exact scoped source commit, runs nonzero tests,
+seals stdout/stderr and source identity, and rechecks cached publication on
+retry. Integration also requires complete sealed cleanup and retired
+implementer worktree. These receipts describe infrastructure acceptance.
 
 For an implementation receipt, use exactly its returned workspace and baseline:
 
@@ -130,10 +157,23 @@ the worker has a durable handoff. A definitely failed launch uses
 
 ## Checkpoint each worker
 
-Write the worker's handoff in the main checkout at
-`.scratch/decomp-parallel/sessions/SESSION/JOB-ATTEMPT.md`. Use a unique real
-session id and one writer per handoff. Update it before a long gate, after each
-completed gate, and before a handoff. The ledger remains claim authority.
+Write a `decomp-worker-handoff-v1` typed TOML in a reviewed `start` request.
+`decomp-session start --request REQUEST.toml` records the actual launched child
+UUID in the existing claim, then atomically publishes authoritative TOML and
+rendered Markdown at `.scratch/decomp-parallel/sessions/SESSION/JOB-ATTEMPT`.
+The handoff's `agent` is a display name; `worker_session_id` is the actual queue
+owner. `session_id` and `authority_generation` name the current dispatch role.
+If publication stops after `started`, retry the identical request against the
+durable running child. Inspect the child before any launch. The ledger remains
+claim authority.
+
+Use `decomp-session checkpoint --request REQUEST.toml` before a long gate,
+after each completed gate, and before handing work back. The request contains
+the next sequence handoff and bounded commit `message`. Checkpoint validates
+every dirty/staged and baseline-to-HEAD file before staging only exact approved
+files in the assigned isolated worktree. A retained checkpoint intent recovers
+an interrupted Git commit without creating another commit. Identical handoff
+retries repair rendered Markdown; changed same-sequence retries fail.
 
 Each handoff records:
 
@@ -157,9 +197,39 @@ commit preserves source; publish `translated`, `verified`, `integrated` and
 Git owner checkpoints queue changes, tickets and handoffs in scoped commits.
 
 A checkpoint is complete when another session can locate the claim, its exact
-source, retained evidence dependencies and next command from disk. These handoff
-files are a manual convention today; automated handoff/restart tooling remains
-plan work.
+source, retained evidence dependencies and next command from disk.
+
+Inspect from any assigned worktree using a typed `inspect` request with `queue`
+and optional absolute `handoff` path. `resume` requires the same exact current
+credential, source commit, claim attempt/revision and sealed evidence, and
+returns reviewed argv/cwd/environment plus liveness prerequisites. It executes
+no saved command. The caller inspects actual owners/process start identities,
+then delegates or runs that command. Reviewed commands use locked/offline cargo
+tests and the shared workers4 budget. Replies retain compact durable pointers.
+
+A read-only inspection request has this minimal form; set `checkout` to the
+main checkout or assigned worktree and `effort` to the current ledger:
+
+```toml
+operation = "inspect"
+[queue]
+operation = "status"
+checkout = "/home/jim/sm-decomp"
+effort = "ceres-continuation"
+coordinator = "ceres-20261013"
+capacity = 3
+```
+
+Run it with `sm-pipeline decomp-session inspect --request INSPECT.toml`.
+Mutation request files additionally carry `[queue.authority]` with the calling
+real `session_id` and current `generation` from `decomp-authority` status.
+
+After a checked role transfer, a surviving child retains its original claim.
+Use `adopt` with current `queue` authority, the old absolute `handoff` and the
+sealed `transfer` artifact recorded by the current role. The adapter checks
+the exact old role generation and observed surviving child, then writes a new
+session handoff whose dependencies retain the old handoff/transfer/child proof.
+The original handoff remains immutable. Resume from the returned new pointer.
 
 ## Recover a crash
 
@@ -192,13 +262,14 @@ attempts require reconciliation before accepting old results.
 
 ## Integrate and finish
 
-One observed live session owns integration and the main Git/index. Record that
-session's real identity in its handoff. The ledger's integration coordinator is
-currently set by the first submission and persists; it is not a lock on real
-sessions that reuse the same token. Keep `ceres-20261013` for current Ceres
-recovery, and establish the previous integrator's stop before another session
-uses that authority. The plan gates distinct-session coordinator allocation and
-authority migration on explicit ownership/fencing work and a recovery drill.
+One observed live session owns each integration role, and one session owns the
+main Git/index. Record both ownership boundaries in the handoff. Managed
+integration uses an explicitly registered integrator token, real session id and
+generation; dispatcher submission cannot acquire it. Keep `ceres-20261013` for
+existing Ceres lineage. A checked integrator transfer accounts for every held
+claim, child and writer, retains live/submitted ownership, and fences old
+generations on every mutation and result retry. Adopt an existing typed handoff
+before resuming its exact source and reviewed command.
 
 The integrator admits the exact scoped submission, freezes merged source,
 verifies all affected Offline families and required gates, publishes achieved

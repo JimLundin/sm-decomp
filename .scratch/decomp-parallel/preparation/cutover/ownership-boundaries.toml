@@ -1,0 +1,17 @@
+schema = "decomp-cutover-ownership-boundaries-v1"
+status = "requests-prepared-no-authority-mutation"
+observer_thread = "01a13474-5fcc-7861-84f8-5c353938bdd2"
+observed_at = "2026-10-13T09:22:40Z"
+legacy_token = "ceres-20261013"
+legacy_integrator_thread = "01a133eb-76e2-7073-9aef-d97c03a812e4"
+legacy_integrator_observed_status = "failed"
+replacement_integrator_thread = "01a13460-4aa9-7fe0-865e-a8f54ffca310"
+replacement_integrator_generation = 1
+main_git_owner_thread = "01a13394-29b8-76a3-aab7-5ab8eff60694"
+main_git_owner_observed_status = "running"
+main_git_owner_scope = "Reporting source, registry/view and main index; preparation root owns isolated integration Git only. Proposed assignment integrator role does not transfer main Git ownership."
+preparation_git_worktree = "/tmp/sm-decomp-preparation-integration-20261013"
+legacy_claims_retained = true
+canonical_production_authority = "inactive-unprepared"
+production_or_gameplay_mutation_performed = false
+limits = ["Reinspect all real owners and claim-path processes immediately before using prepared request.", "No source freeze is inferred from the active reporting main checkout.", "Activation source HEAD/fingerprint and actual drill evidence remain root bindings.", "Generation0 transfer accounts for submitted implementers and failed running integrator without releasing any claim."]

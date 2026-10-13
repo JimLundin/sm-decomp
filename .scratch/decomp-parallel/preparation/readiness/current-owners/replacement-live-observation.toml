@@ -1,0 +1,10 @@
+schema = "decomp-session-observation-v1"
+session_id = "01a13460-4aa9-7fe0-865e-a8f54ffca310"
+status = "running"
+observed_at = "2026-10-13T10:17:59Z"
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness/current-owners/thread-inspection.json"
+sha256 = "b41557f96c6bb16534b0c34a86f045aa799421b6763f9021fe1bdbd9ff09eb71"
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness/current-owners/process-inspection.toml"
+sha256 = "e05d879b6d1ee47d9a2c8e93695bf60113f35015cf198c0c493cfc7884e2c542"

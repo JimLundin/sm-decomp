@@ -1,0 +1,22 @@
+# TEMPLATE ONLY. Control booleans remain false until linked actual receipts pass.
+schema = "decomp-concurrency-drill-v1"
+checkout = "/home/jim/sm-decomp"
+source_checkout = "/tmp/sm-decomp-preparation-integration-20261013"
+isolated_checkout = "/tmp/sm-decomp-concurrency-drill-20261013"
+head = "ROOT-MUST-BIND-FROZEN-FULL-HEAD"
+source_fingerprint = "ROOT-MUST-BIND-FROZEN-SOURCE-FINGERPRINT"
+evidence = []
+[bridge]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/reconciliation/legacy-owner-bridge-v2.toml"
+sha256 = "cb537f195b4f83529f2ea7a61bd65c6e77ad215366275e8d60a7a604c4eb0ba9"
+[controls]
+independent-sessions = false
+writable-overlap = false
+duplicate-ticket = false
+crash-restart = false
+surviving-child = false
+stopped-transfer = false
+stale-authority = false
+same-attempt-retry = false
+shared-capacity = false
+cleanup = false

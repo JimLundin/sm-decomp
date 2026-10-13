@@ -1,0 +1,17 @@
+37dde400777167c41b616ecf934a5c4877a410b81bd81a9eab1ddc45414cc864  .scratch/decomp-parallel/catalog/subsystem-catalog.md
+476b3ebe6eae97233eb98ae6d1cdabded07cdd04d2ab284e31ba66bfb5563b2c  .scratch/decomp-parallel/catalog/ceres-continuation-holding.toml
+b63d042c1b85dfbf5b0d86f01ae85794b81a0b0e2b15367a2b4f3e2a3dd79f88  .scratch/decomp-parallel/catalog/later-lanes.md
+0baf5061cad9a232928a61a0330f607543bb9c078ff4ea8344c798cb1a63a6d0  .scratch/decomp-parallel/catalog/inventory-observations.json
+60a8c6154b6febbc55f01455b6c881b008d6084bfe29171ef8ac75583d043f8f  .scratch/decomp-parallel/catalog/evidence-sha256.txt
+cebce700d8a739117ee1294684360f97f4fb47502c1753048a15e7e81f3152af  .scratch/decomp-parallel/catalog/source-sha256.txt
+21f781dea52d2549145e858ba54f43991b060a04b148adf3a6c4e66de63fd272  .scratch/decomp-parallel/catalog/milestone-map-proposal.md
+73ee6304e0f71c8f6ea278dfa1dbc0d5582019f4308e3ce1ac083ee8f05a1f0b  .scratch/decomp-parallel/issues/11-finish-held-ceres-integration.md
+9241219cb81f414f95ca1bd2eff4e7f2d7cfac544f0fec8d63144c89c747dc5b  .scratch/decomp-parallel/issues/12-ceres-nmi-poll-continuation.md
+35fa75100a91ee0d562a76b9e47085196c484d2d67f52f2026c8580d4002a7a7  .scratch/decomp-parallel/issues/13-host-hardware-lifecycle-scope.md
+3a51af2dfce509f18a20048f84bc6aaa10c160ad04caecc95b53058c74227733  .scratch/decomp-parallel/issues/14-samus-frame-scope.md
+331812e2c356ed63372c5b0cce2e62f9ab6ad426182b7605b99c9a32d2389828  .scratch/decomp-parallel/issues/15-door-room-plm-scope.md
+9a6a0c5326de0b7eb169b5fe7033b424ae3b06ec5cbc6fc886f8674a4402c472  .scratch/decomp-parallel/issues/16-continue-held-whole-ridley.md
+6bb0bc92479df738d24375c6cd5463b1c0284a3df7a8a77ff9abb2a409a4a0b4  .scratch/decomp-parallel/issues/17-other-enemy-lifecycle-scope.md
+9a3462ab660ef173cd1caaab3bdd78f5c274ffce46a563d5ec944bcb0fc10513  .scratch/decomp-parallel/issues/18-audio-ui-menu-scope.md
+fd2c821642dcaf785f919e0f5e2acec2dd9c752fb9cdbbb450d5dd0e76c3e207  .scratch/decomp-parallel/issues/19-sram-save-load-scope.md
+d9f8900e4f5904693aa595f83db8bb30be7c83595d37368c993fe371dde5b60b  .scratch/decomp-parallel/issues/20-credits-cinematic-scope.md

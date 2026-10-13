@@ -1,0 +1,526 @@
+"schema" = "decomp-legacy-owner-bridge-v1"
+"status" = "retained-holdings-and-checked-preparation-adoption"
+"observed_at" = "2026-10-13T08:39:00Z"
+"observer_thread" = "01a13462-702f-74f0-8a9a-a2a08dd1cb7f"
+"coordinator_thread" = "01a13460-4aa9-7fe0-865e-a8f54ffca310"
+"production_authority" = "pending"
+"canonical_ledger_present" = false
+"gameplay_launch_authorized" = false
+"legacy_claims_released" = false
+"queue_mutation_performed" = false
+"source_baseline" = "deceefdb568990fe273cc3f6cdf849726d8380bb"
+
+["ledger"]
+"path" = "/home/jim/sm-decomp/.scratch/ceres-continuation/ledger.toml"
+"sha256" = "77fdba066af4f4c045e8e8f419997563d569ac0bd8045cef0a68ac916a126b89"
+
+["budget"]
+"coordinator" = "ceres-20261013"
+"assignment_capacity" = 3
+"process_root" = "/home/jim/sm-decomp/out/pipeline"
+"process_workers" = 4
+
+[["liveness_inspections"]]
+"path" = "/home/jim/sm-decomp/.scratch/decomp-parallel/reconciliation/legacy-liveness-inspection.json"
+"sha256" = "fe863b9a8b0929a46692667fb7ae4087a4225cede0f6812d7d284581122bde40"
+
+[["liveness_inspections"]]
+"path" = "/home/jim/sm-decomp/.scratch/decomp-parallel/reconciliation/gameplay-liveness-inspection.json"
+"sha256" = "b8104278aed8f9e72b43cb6e31eb8f78472d4078899b1cec420208d8dd9d50c1"
+
+["maintenance_recommendation"]
+"path" = "/home/jim/sm-decomp/.scratch/decomp-parallel/reconciliation/preparation-recovery.toml"
+"sha256" = "1338edb2e6d648d293aba30bc5b0b4d3f0f30c6170f0ca1aa8542b88a6a8bb39"
+
+["maintenance_approval"]
+"path" = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/approved-maintenance.toml"
+"sha256" = "c223a2b40b399d9ca9b1047e3f54bd59ab215c07b80528cbf8f1ce118385cce3"
+
+["ownership"]
+"main_git_owner_thread" = "01a13394-29b8-76a3-aab7-5ab8eff60694"
+"preparation_git_owner_thread" = "01a13460-4aa9-7fe0-865e-a8f54ffca310"
+"preparation_worktree" = "/tmp/sm-decomp-preparation-integration-20261013"
+"active_engine_thread" = "01a13453-b599-79c1-84d5-713e6d1e3f57"
+"former_session_worker_thread" = "01a1342e-6cad-7cb1-80d7-6a484c469bbf"
+"replacement_session_worker_thread" = "01a13464-cb24-77c2-aa7b-ac2aaacd5359"
+"restriction" = "Immutable approval names exact isolated maintenance paths only. Original gameplay/acceptance holds remain fenced; duplicate related submission/integration paths are linked continuation, not independent ownership."
+
+[["holdings"]]
+"retained" = true
+"next_action_owner_thread" = "01a13460-4aa9-7fe0-865e-a8f54ffca310"
+"acceptance_preserved" = true
+"id" = "ceres-compact-controller"
+"kind" = "durable-claim"
+"state" = "submitted"
+"ticket" = ".scratch/ceres-continuation/issues/01-compact-controller-diagnostic.md"
+"registered_agent" = "/root/ceres_scope"
+"owner_thread" = "01a133ec-4ef9-78b2-a8d7-248726023ce5"
+"parent_thread" = "01a133eb-76e2-7073-9aef-d97c03a812e4"
+"owner_observed_state" = "idle-completed"
+"writable_paths" = ["crates/pipeline/src/decomp_prefix.rs", "crates/pipeline/src/prefix_observer.lua.in", "crates/pipeline/src/prefix_compact_observer.lua.in", "crates/pipeline/tests/prefix.rs", "docs/DECOMP_PREFIX.md"]
+"held_paths" = [".scratch/ceres-continuation/issues/01-compact-controller-diagnostic.md", "/tmp/sm-ceres-continuation-compact-controller-1", "out/port/ceres-continuation/controller"]
+"baseline" = "48656a284329d432291eca23a2ae0d1d7c0a3e48"
+"submitted_commit" = "223f8a1b0c7382817b1290d13c7a41f4e722d5e1"
+"worktree" = "/tmp/sm-ceres-continuation-compact-controller-1"
+"branch" = "ceres-continuation-compact-controller-1"
+"worktree_state" = "clean-retained-unintegrated"
+"next_action" = "Preserve submission and retained reader; after checked host-integrator reconciliation, integrate the existing ready compact-controller job under original coordinator, freeze merged source, check legacy capture compatibility, run original merged-source gates, cleanup/authenticate and retire integrated worktree. Preparation performs none of these gates."
+"next_cwd" = "/home/jim/sm-decomp"
+"next_argv" = ["cargo", "run", "-p", "pipeline", "--locked", "--offline", "--bin", "sm-pipeline", "--", "assign", "status", "--checkout", "/home/jim/sm-decomp", "--effort", "ceres-continuation", "--coordinator", "ceres-20261013", "--capacity", "3"]
+"required_runtime_dependencies" = ["/tmp/sm-ceres-continuation-compact-controller-1/target/debug/sm-pipeline", "rom/sm.sfc", "movies/super-metroid-any-3653.lsmv", "deps/lsnes/source/src/util/lsnes-dumpavi.util"]
+"cleanup_state" = "Completed diagnostic cleanup/authentication retained; submission worktree retirement and merged-source cleanup remain owned."
+
+["holdings"."claim"]
+"id" = "compact-controller"
+"revision" = "48656a2-compact-v1"
+"attempt" = 1
+"coordinator" = "ceres-20261013"
+
+[["holdings"."evidence"]]
+"path" = "/home/jim/sm-decomp/.scratch/ceres-continuation/controller-submission-evidence.toml"
+"sha256" = "8da107cdff9c14182a0ffae1d24ce1d3acbadfccd742fccf4e31c0896bd3634e"
+
+[["holdings"."evidence"]]
+"path" = "/home/jim/sm-decomp/out/port/ceres-continuation/controller/1791873256094852042-256891/verdict.toml"
+"sha256" = "79c00cb7bb32a120f981b1c14f99b639e773d88f5f544bdb41e964409ce7a916"
+
+[["holdings"."evidence"]]
+"path" = "/home/jim/sm-decomp/out/port/ceres-continuation/controller/1791873514143170077-260799/verdict.toml"
+"sha256" = "7c8c04d2f53d3f7a247a715a807d2dcf0e2d0004be13facd780c3d74a717fe88"
+
+[["holdings"."evidence"]]
+"path" = "/home/jim/sm-decomp/out/port/ceres-continuation/controller/1791874177761738742-271877/verdict.toml"
+"sha256" = "051a7195bf0ed3461eae81a9789f052a01f5c616d0d7ed716a37848c2a59d07e"
+
+[["holdings"]]
+"retained" = true
+"next_action_owner_thread" = "01a13460-4aa9-7fe0-865e-a8f54ffca310"
+"acceptance_preserved" = true
+"id" = "ceres-integrate-compact-controller"
+"kind" = "ready-unclaimed-job"
+"state" = "ready"
+"job_id" = "integrate-compact-controller"
+"revision" = "48656a2-compact-v1-1"
+"claim_present" = false
+"submission_hold" = "ceres-compact-controller"
+"writable_paths" = ["crates/pipeline/src/decomp_prefix.rs", "crates/pipeline/src/prefix_observer.lua.in", "crates/pipeline/src/prefix_compact_observer.lua.in", "crates/pipeline/tests/prefix.rs", "docs/DECOMP_PREFIX.md"]
+"held_paths" = [".scratch/ceres-continuation/assignments/integrate-compact-controller.md"]
+"next_action" = "Keep ready integration linked to original submitted tuple; do not fabricate a claim or reserve until original host integration is reconciled and later gameplay integration is authorized."
+"next_cwd" = "/home/jim/sm-decomp"
+"next_argv" = ["read", ".scratch/ceres-continuation/assignments/integrate-compact-controller.md"]
+
+[["holdings"]]
+"retained" = true
+"next_action_owner_thread" = "01a13460-4aa9-7fe0-865e-a8f54ffca310"
+"acceptance_preserved" = true
+"id" = "ceres-shared-game-host"
+"kind" = "durable-claim"
+"state" = "submitted"
+"ticket" = ".scratch/ceres-continuation/issues/02-shared-game-host.md"
+"registered_agent" = "/root/host_scope"
+"owner_thread" = "01a133ec-68e2-7033-9ee7-dba26d4db746"
+"parent_thread" = "01a133eb-76e2-7073-9aef-d97c03a812e4"
+"owner_observed_state" = "notLoaded-terminal-completed"
+"writable_paths" = ["crates/port/src/game_host.rs", "crates/port/src/lib.rs", "crates/port/tests/game_host.rs", "tools/port/game-host-projectile.toml", "tools/port/game-host-room-scroll.toml"]
+"held_paths" = [".scratch/ceres-continuation/issues/02-shared-game-host.md", "out/port/ceres-continuation/game-host-projectile", "out/port/ceres-continuation/game-host-room-scroll"]
+"baseline" = "48656a284329d432291eca23a2ae0d1d7c0a3e48"
+"submitted_commit" = "73547105d870f8b05f8c6bcf55b768c223889fdb"
+"merge_commit" = "e8c9c3e10ac71bf0377dc00d7de5764a4263b445"
+"former_worktree" = "/tmp/sm-ceres-continuation-shared-game-host-1"
+"worktree_state" = "removed-after-source-retention"
+"next_action" = "Preserve submitted ownership and source/evidence lineage; finish its existing integration through original admission only after checked integrator recovery. Ten actual-C pairs and merge do not complete durable lifecycle."
+"next_cwd" = "/home/jim/sm-decomp"
+"next_argv" = ["read", ".scratch/ceres-continuation/assignments/integrate-shared-game-host.md"]
+"cleanup_state" = "Implementer cleanup and worktree removal already complete; exact merged-source admission remains unfinished."
+
+["holdings"."claim"]
+"id" = "shared-game-host"
+"revision" = "48656a2-host-v1"
+"attempt" = 1
+"coordinator" = "ceres-20261013"
+
+[["holdings"."evidence"]]
+"path" = "/home/jim/sm-decomp/.scratch/ceres-continuation/host-implementation.toml"
+"sha256" = "7b4f118b21b969bd02abc16192cbc3caccb1c118d5cef6a5d39e3751afeaffeb"
+
+[["holdings"."evidence"]]
+"path" = "/home/jim/sm-decomp/out/port/ceres-continuation/game-host-projectile/1791873394532541-258459-0/verdict.toml"
+"sha256" = "18f355479a34ef10be6196e2c1507f6ded34d522693f068feb1313078492abad"
+
+[["holdings"."evidence"]]
+"path" = "/home/jim/sm-decomp/out/port/ceres-continuation/game-host-room-scroll/1791873418836128-259326-0/verdict.toml"
+"sha256" = "ddb49cbd79a7249b45745044f9f6c95a7e98671fa74e0b313a7f81bf8c869d1d"
+
+[["holdings"]]
+"retained" = true
+"next_action_owner_thread" = "01a13460-4aa9-7fe0-865e-a8f54ffca310"
+"acceptance_preserved" = true
+"id" = "ceres-integrate-shared-game-host"
+"kind" = "durable-claim"
+"state" = "running"
+"ticket" = ".scratch/ceres-continuation/assignments/integrate-shared-game-host.md"
+"registered_agent" = "/root"
+"owner_thread" = "01a133eb-76e2-7073-9aef-d97c03a812e4"
+"owner_observed_state" = "systemError-terminal-failed"
+"writable_paths" = ["crates/port/src/game_host.rs", "crates/port/src/lib.rs", "crates/port/tests/game_host.rs", "tools/port/game-host-projectile.toml", "tools/port/game-host-room-scroll.toml"]
+"held_paths" = [".scratch/ceres-continuation/assignments/integrate-shared-game-host.md", ".scratch/ceres-continuation/ledger.toml"]
+"merge_commit" = "e8c9c3e10ac71bf0377dc00d7de5764a4263b445"
+"stopped_observation_admitted" = false
+"known_children" = ["01a133ec-4ef9-78b2-a8d7-248726023ce5", "01a133ec-68e2-7033-9ee7-dba26d4db746", "01a133f4-de2d-71e3-82ce-ead915ca3017"]
+"next_action" = "Replacement coordinator owns review of sealed exact original owner-stop observation and input/source validity. Keep claim running meanwhile; original-token typed recovery/admission occurs later under fenced integration authority. Do not repeat merge or execute gameplay during preparation."
+"next_cwd" = "/home/jim/sm-decomp"
+"next_argv" = ["read", ".scratch/decomp-parallel/reconciliation/host-integrator-stopped.toml"]
+
+["holdings"."claim"]
+"id" = "integrate-shared-game-host"
+"revision" = "48656a2-host-v1-1"
+"attempt" = 1
+"coordinator" = "ceres-20261013"
+
+[["holdings"."evidence"]]
+"path" = "/home/jim/sm-decomp/.scratch/ceres-continuation/host-implementation.toml"
+"sha256" = "7b4f118b21b969bd02abc16192cbc3caccb1c118d5cef6a5d39e3751afeaffeb"
+
+[["holdings"."evidence"]]
+"path" = "/home/jim/sm-decomp/out/port/ceres-continuation/game-host-projectile/1791873394532541-258459-0/verdict.toml"
+"sha256" = "18f355479a34ef10be6196e2c1507f6ded34d522693f068feb1313078492abad"
+
+[["holdings"."evidence"]]
+"path" = "/home/jim/sm-decomp/out/port/ceres-continuation/game-host-room-scroll/1791873418836128-259326-0/verdict.toml"
+"sha256" = "ddb49cbd79a7249b45745044f9f6c95a7e98671fa74e0b313a7f81bf8c869d1d"
+
+["holdings"."stopped_observation"]
+"path" = "/home/jim/sm-decomp/.scratch/decomp-parallel/reconciliation/host-integrator-stopped.toml"
+"sha256" = "2df802bd699e159fd9109a6d8d25762696dc5dc9067b3e89be9905bcf5a22446"
+
+[["holdings"]]
+"retained" = true
+"next_action_owner_thread" = "01a13460-4aa9-7fe0-865e-a8f54ffca310"
+"acceptance_preserved" = true
+"id" = "ceres-host-adapter-03"
+"kind" = "markdown-hold"
+"state" = "claimed"
+"claim_present" = false
+"ticket" = ".scratch/ceres-continuation/issues/03-host-adapter-integration.md"
+"registered_agent" = "/root"
+"owner_thread" = "01a133eb-76e2-7073-9aef-d97c03a812e4"
+"owner_observed_state" = "systemError-terminal-failed"
+"writable_paths" = ["crates/pipeline/src/callback.rs", "crates/pipeline/src/family.rs", "crates/pipeline/src/game_host_abi.rs.in", "crates/pipeline/src/game_host_dependency.c.in", "crates/pipeline/src/main.rs", "tools/port/batch.toml"]
+"path_precision" = "Conservative shared adapter/catalog envelope; original submitted host tuple retains exact five gameplay paths separately."
+"held_paths" = [".scratch/ceres-continuation/issues/03-host-adapter-integration.md", "out/port/ceres-continuation/game-host-projectile", "out/port/ceres-continuation/game-host-room-scroll"]
+"source_lineage" = ["3fcc7fd4cbd185d6e922d3b7eec0afd760ead0bf", "e8c9c3e10ac71bf0377dc00d7de5764a4263b445"]
+"next_action" = "Reconcile original adapter registration and final actual-C evidence/cleanup through existing host integration; do not mark ticket resolved from source merge alone. Preparation main.rs maintenance is isolated and additive only."
+"next_cwd" = "/home/jim/sm-decomp"
+"next_argv" = ["read", ".scratch/ceres-continuation/issues/03-host-adapter-integration.md"]
+
+[["holdings"."evidence"]]
+"path" = "/home/jim/sm-decomp/.scratch/ceres-continuation/host-implementation.toml"
+"sha256" = "7b4f118b21b969bd02abc16192cbc3caccb1c118d5cef6a5d39e3751afeaffeb"
+
+[["holdings"."evidence"]]
+"path" = "/home/jim/sm-decomp/out/port/ceres-continuation/game-host-projectile/1791873394532541-258459-0/verdict.toml"
+"sha256" = "18f355479a34ef10be6196e2c1507f6ded34d522693f068feb1313078492abad"
+
+[["holdings"."evidence"]]
+"path" = "/home/jim/sm-decomp/out/port/ceres-continuation/game-host-room-scroll/1791873418836128-259326-0/verdict.toml"
+"sha256" = "ddb49cbd79a7249b45745044f9f6c95a7e98671fa74e0b313a7f81bf8c869d1d"
+
+[["holdings"]]
+"retained" = true
+"next_action_owner_thread" = "01a13460-4aa9-7fe0-865e-a8f54ffca310"
+"acceptance_preserved" = true
+"id" = "affected-family-assignment-03"
+"kind" = "markdown-hold"
+"state" = "claimed"
+"claim_present" = false
+"ticket" = ".scratch/affected-family-assignment/issues/03-affected-family-selection.md"
+"registered_agent" = "/root/parallel_work"
+"owner_thread" = "01a13153-18fd-7a22-951e-427b7cde2146"
+"owner_observed_state" = "notLoaded-terminal-completed"
+"original_coordinator_thread" = "01a13151-b3ec-72e0-8912-f95c230f9e18"
+"later_recovery_threads" = ["01a13317-fa0e-7052-8c5a-8e665cf86f23", "01a133b1-ec57-7a81-92e0-106d26e60b0d"]
+"writable_paths" = ["crates/pipeline/src/affected.rs", "crates/pipeline/src/batch.rs", "crates/pipeline/tests/affected.rs", "crates/pipeline/tests/family.rs"]
+"held_paths" = [".scratch/affected-family-assignment/issues/03-affected-family-selection.md"]
+"baseline" = "f2ffe4a208097771ad6fc231f6f56c4cd683667b"
+"source_commits" = ["0798326e97bd41a41fca4df34eaac51a0689fe7b", "d64a295ec9d2925f72e0f8b9f08f58a22efbfeb8", "3ad2c3ea793cc4fd70741391f3cb6ea00e3e2e22"]
+"former_worktree" = "/tmp/sm-affected-selection"
+"source_state" = "merged-source-retained-original-acceptance-unresolved"
+"source_snapshot" = "deceefdb568990fe273cc3f6cdf849726d8380bb"
+"evidence_dependencies" = [".scratch/decomp-parallel/review.md", ".scratch/decomp-parallel/checkpoint/raw-receipts-20261013.tar.gz", ".scratch/decomp-parallel/checkpoint/generated-receipts-20261013.tar.gz"]
+"limitations" = ["Original tickets have no ledger claim tuple; do not invent ids/revisions/attempts/coordinator tokens.", "b6f30bd title does not establish completion: its actual ticket edits leave gates/cleanup pending.", "Original test-only targets/worktrees absent; checkpoint evidence retained; no preparation gameplay gate."]
+"next_action" = "Reconcile exact merged source and retained selected/skipped/reuse controls, then frozen actual-C integration and original final cleanup/admission."
+"next_cwd" = "/home/jim/sm-decomp"
+"next_argv" = ["read", ".scratch/affected-family-assignment/issues/03-affected-family-selection.md"]
+"cleanup_state" = "Prior reviewer cleanup complete and retained in review.md; original required measurement/admission cleanup must be reconciled by next-action owner."
+
+[["holdings"]]
+"retained" = true
+"next_action_owner_thread" = "01a13460-4aa9-7fe0-865e-a8f54ffca310"
+"acceptance_preserved" = true
+"id" = "affected-family-assignment-04"
+"kind" = "markdown-hold"
+"state" = "claimed"
+"claim_present" = false
+"ticket" = ".scratch/affected-family-assignment/issues/04-assignment-ledger-and-queue.md"
+"registered_agent" = "/root/live_feedback"
+"owner_thread" = "01a13153-2eef-7070-b421-0db591d3ee60"
+"owner_observed_state" = "notLoaded-terminal-completed"
+"original_coordinator_thread" = "01a13151-b3ec-72e0-8912-f95c230f9e18"
+"later_recovery_threads" = ["01a13317-fa0e-7052-8c5a-8e665cf86f23", "01a133b1-ec57-7a81-92e0-106d26e60b0d"]
+"writable_paths" = ["crates/pipeline/src/assignment.rs", "crates/pipeline/tests/assignment_queue.rs"]
+"held_paths" = [".scratch/affected-family-assignment/issues/04-assignment-ledger-and-queue.md"]
+"baseline" = "f2ffe4a208097771ad6fc231f6f56c4cd683667b"
+"source_commits" = ["7a5f76c2408be1dd36ff70b12095857d330166e4", "6319b4146fa2bec3771b00508d51bb087c8652b6", "1b4e107e29a85d8179afbce698ca62572503efe3", "6f1dde06d4e04ed4b2e45e40b48c2113b83cae11"]
+"former_worktree" = "/tmp/sm-assignment-queue"
+"source_state" = "merged-source-retained-original-acceptance-unresolved"
+"source_snapshot" = "deceefdb568990fe273cc3f6cdf849726d8380bb"
+"evidence_dependencies" = [".scratch/decomp-parallel/review.md", ".scratch/decomp-parallel/checkpoint/raw-receipts-20261013.tar.gz", ".scratch/decomp-parallel/checkpoint/generated-receipts-20261013.tar.gz"]
+"limitations" = ["Original tickets have no ledger claim tuple; do not invent ids/revisions/attempts/coordinator tokens.", "b6f30bd title does not establish completion: its actual ticket edits leave gates/cleanup pending.", "Original test-only targets/worktrees absent; checkpoint evidence retained; no preparation gameplay gate."]
+"next_action" = "Reconcile final coordinator admission/result controls, source identity and original queue lifecycle before original ticket resolution; narrow preparation maintenance separately approved."
+"next_cwd" = "/home/jim/sm-decomp"
+"next_argv" = ["read", ".scratch/affected-family-assignment/issues/04-assignment-ledger-and-queue.md"]
+"cleanup_state" = "Prior reviewer cleanup complete and retained in review.md; original required measurement/admission cleanup must be reconciled by next-action owner."
+
+[["holdings"]]
+"retained" = true
+"next_action_owner_thread" = "01a13460-4aa9-7fe0-865e-a8f54ffca310"
+"acceptance_preserved" = true
+"id" = "affected-family-assignment-05"
+"kind" = "markdown-hold"
+"state" = "claimed"
+"claim_present" = false
+"ticket" = ".scratch/affected-family-assignment/issues/05-translation-scope-promotion.md"
+"registered_agent" = "/root/fixture_iteration"
+"owner_thread" = "01a13152-ffec-7000-93c8-a992c6d5ea12"
+"owner_observed_state" = "notLoaded-terminal-completed"
+"original_coordinator_thread" = "01a13151-b3ec-72e0-8912-f95c230f9e18"
+"later_recovery_threads" = ["01a13317-fa0e-7052-8c5a-8e665cf86f23", "01a133b1-ec57-7a81-92e0-106d26e60b0d"]
+"writable_paths" = ["crates/pipeline/src/translation.rs", "crates/pipeline/src/coordination.rs", "crates/pipeline/tests/family.rs"]
+"held_paths" = [".scratch/affected-family-assignment/issues/05-translation-scope-promotion.md"]
+"baseline" = "f2ffe4a208097771ad6fc231f6f56c4cd683667b"
+"source_commits" = ["4b0be4e7f0fadfb7ebfb43e4bc861fc2f63bff68", "35d4a697374ea3b6f007c3e9b379e6e0b933ddb5", "72a016cc5b9325682f33469b0d0d881d931f4b2b", "0b5d02e689e1c46a5894f6d53204d78b6710365b"]
+"former_worktree" = "/tmp/sm-assignment-candidates"
+"source_state" = "merged-source-retained-original-acceptance-unresolved"
+"source_snapshot" = "deceefdb568990fe273cc3f6cdf849726d8380bb"
+"evidence_dependencies" = [".scratch/decomp-parallel/review.md", ".scratch/decomp-parallel/checkpoint/raw-receipts-20261013.tar.gz", ".scratch/decomp-parallel/checkpoint/generated-receipts-20261013.tar.gz"]
+"limitations" = ["Original tickets have no ledger claim tuple; do not invent ids/revisions/attempts/coordinator tokens.", "b6f30bd title does not establish completion: its actual ticket edits leave gates/cleanup pending.", "Original test-only targets/worktrees absent; checkpoint evidence retained; no preparation gameplay gate."]
+"next_action" = "Reconcile complete-scope/promotion controls and provenance on frozen integrated source; retain native admission and claimed ticket through original cleanup."
+"next_cwd" = "/home/jim/sm-decomp"
+"next_argv" = ["read", ".scratch/affected-family-assignment/issues/05-translation-scope-promotion.md"]
+"cleanup_state" = "Prior reviewer cleanup complete and retained in review.md; original required measurement/admission cleanup must be reconciled by next-action owner."
+
+[["holdings"]]
+"retained" = true
+"next_action_owner_thread" = "01a13460-4aa9-7fe0-865e-a8f54ffca310"
+"acceptance_preserved" = true
+"id" = "affected-family-assignment-06"
+"kind" = "markdown-hold"
+"state" = "claimed"
+"claim_present" = false
+"ticket" = ".scratch/affected-family-assignment/issues/06-batch-and-coordinator-integration.md"
+"registered_agent" = "/root"
+"owner_thread" = "01a13151-b3ec-72e0-8912-f95c230f9e18"
+"owner_observed_state" = "notLoaded-terminal-failed"
+"original_coordinator_thread" = "01a13151-b3ec-72e0-8912-f95c230f9e18"
+"later_recovery_threads" = ["01a13317-fa0e-7052-8c5a-8e665cf86f23", "01a133b1-ec57-7a81-92e0-106d26e60b0d"]
+"writable_paths" = ["crates/pipeline/src/coordination.rs", "crates/pipeline/src/main.rs", "crates/pipeline/src/batch.rs", "crates/pipeline/README.md", "docs/DECOMP_BATCH.md", "docs/agents/assignments.md"]
+"held_paths" = [".scratch/affected-family-assignment/issues/06-batch-and-coordinator-integration.md"]
+"baseline" = "f2ffe4a208097771ad6fc231f6f56c4cd683667b"
+"source_commits" = ["b6f30bd3bab4a0bae4fc5329f6f3e38e4b55164c"]
+"former_worktree" = ""
+"source_state" = "merged-source-retained-original-acceptance-unresolved"
+"source_snapshot" = "deceefdb568990fe273cc3f6cdf849726d8380bb"
+"evidence_dependencies" = [".scratch/decomp-parallel/review.md", ".scratch/decomp-parallel/checkpoint/raw-receipts-20261013.tar.gz", ".scratch/decomp-parallel/checkpoint/generated-receipts-20261013.tar.gz"]
+"limitations" = ["Original tickets have no ledger claim tuple; do not invent ids/revisions/attempts/coordinator tokens.", "b6f30bd title does not establish completion: its actual ticket edits leave gates/cleanup pending.", "Original test-only targets/worktrees absent; checkpoint evidence retained; no preparation gameplay gate."]
+"next_action" = "Reconcile existing queue-cycle/invocation receipts, native result validation and workflow docs before original integration acceptance; session maintenance is isolated additive registration only."
+"next_cwd" = "/home/jim/sm-decomp"
+"next_argv" = ["read", ".scratch/affected-family-assignment/issues/06-batch-and-coordinator-integration.md"]
+"cleanup_state" = "Prior reviewer cleanup complete and retained in review.md; original required measurement/admission cleanup must be reconciled by next-action owner."
+
+[["holdings"]]
+"retained" = true
+"next_action_owner_thread" = "01a13460-4aa9-7fe0-865e-a8f54ffca310"
+"acceptance_preserved" = true
+"id" = "affected-family-assignment-07"
+"kind" = "markdown-hold"
+"state" = "claimed"
+"claim_present" = false
+"ticket" = ".scratch/affected-family-assignment/issues/07-verification-measurement-and-cleanup.md"
+"registered_agent" = "/root"
+"owner_thread" = "01a13151-b3ec-72e0-8912-f95c230f9e18"
+"owner_observed_state" = "notLoaded-terminal-failed"
+"original_coordinator_thread" = "01a13151-b3ec-72e0-8912-f95c230f9e18"
+"later_recovery_threads" = ["01a13317-fa0e-7052-8c5a-8e665cf86f23", "01a133b1-ec57-7a81-92e0-106d26e60b0d"]
+"writable_paths" = ["crates/pipeline/tests/family.rs", "crates/pipeline/tests/assignment_queue.rs", "crates/pipeline/tests/affected.rs", ".scratch/affected-family-assignment"]
+"held_paths" = [".scratch/affected-family-assignment/issues/07-verification-measurement-and-cleanup.md"]
+"baseline" = "f2ffe4a208097771ad6fc231f6f56c4cd683667b"
+"source_commits" = ["b6f30bd3bab4a0bae4fc5329f6f3e38e4b55164c"]
+"former_worktree" = ""
+"source_state" = "merged-source-retained-original-acceptance-unresolved"
+"source_snapshot" = "deceefdb568990fe273cc3f6cdf849726d8380bb"
+"evidence_dependencies" = [".scratch/decomp-parallel/review.md", ".scratch/decomp-parallel/checkpoint/raw-receipts-20261013.tar.gz", ".scratch/decomp-parallel/checkpoint/generated-receipts-20261013.tar.gz"]
+"limitations" = ["Original tickets have no ledger claim tuple; do not invent ids/revisions/attempts/coordinator tokens.", "b6f30bd title does not establish completion: its actual ticket edits leave gates/cleanup pending.", "Original test-only targets/worktrees absent; checkpoint evidence retained; no preparation gameplay gate."]
+"next_action" = "Recover bounded before/after measurements, frozen-source check logs and cleanup receipts; original tickets remain claimed until their gates and measured cleanup are reconciled."
+"next_cwd" = "/home/jim/sm-decomp"
+"next_argv" = ["read", ".scratch/affected-family-assignment/issues/07-verification-measurement-and-cleanup.md"]
+"cleanup_state" = "Prior reviewer cleanup complete and retained in review.md; original required measurement/admission cleanup must be reconciled by next-action owner."
+
+[["holdings"]]
+"retained" = true
+"next_action_owner_thread" = "01a13460-4aa9-7fe0-865e-a8f54ffca310"
+"acceptance_preserved" = true
+"id" = "decomp-port-78"
+"kind" = "markdown-hold"
+"state" = "claimed"
+"claim_present" = false
+"ticket" = ".scratch/decomp-port/issues/78-original-movie-controller-boundary.md"
+"registered_agent" = "/root/controller_adapter"
+"owner_thread" = "01a129ac-6d9c-7bd2-be35-6bd00236aa32"
+"parent_thread" = "01a12904-b217-78d0-9a5c-fb94a65fd401"
+"owner_observed_state" = "notLoaded-terminal-completed"
+"writable_paths" = ["crates/pipeline/src/decomp_prefix.rs", "crates/pipeline/src/prefix_observer.lua.in", "crates/pipeline/src/prefix_compact_observer.lua.in", "crates/pipeline/tests/prefix.rs", "docs/DECOMP_PREFIX.md", "tools/decomp/prefix_host.c"]
+"held_paths" = [".scratch/decomp-port/issues/78-original-movie-controller-boundary.md", "out/port/controller-terminal-seam", "out/port/controller-1600-frontier"]
+"source_commits" = ["c9b11150678edbb45abaa0986bb85e5eba6956d3", "c89db9bcf824a3c4f973550d390a95c3f5d05f97"]
+"related_submission_hold" = "ceres-compact-controller"
+"required_runtime_dependencies" = ["rom/sm.sfc", "movies/super-metroid-any-3653.lsmv", "deps/lsnes/source/src/util/lsnes-dumpavi.util", "historical run-local prefix-host/prefix_host.c/headless.c/headless_frame.h/driver.py/native/events/WRAM/subjects/inputs/timeline"]
+"next_action" = "After original host/controller integration, continue existing extra-poll diagnosis at update 7741/original frame 8508: C 7960 polls versus native 7959. Full hardware/full-WRAM timing and ordinary-reset Ceres escape remain unproved. No preparation replay authorized."
+"next_cwd" = "/home/jim/sm-decomp"
+"next_argv" = ["read", ".scratch/ceres-continuation/controller-handoff-20261013.md"]
+"limitations" = ["Older terminal evidence verifies only 1097 causal updates/frame1600 and is nonaccepting.", "Sealed historical Python is an evidence dependency only; new tooling and runtime implementations remain Rust.", "Descendant compact durable tuple belongs to its own claim, not ticket78."]
+
+[["holdings"."evidence"]]
+"path" = "/home/jim/sm-decomp/out/port/controller-terminal-seam/20261011T072946.717098Z/verdict.json"
+"sha256" = "764d9e92fbd0fe572a2ba595a016ec6d6fa4c273ab6bfe56540cfc0c3e708983"
+
+[["holdings"."evidence"]]
+"path" = "/home/jim/sm-decomp/out/port/controller-1600-frontier/20261011T072145.761041Z/verdict.json"
+"sha256" = "cfda18ec67d62ee947b1d94363096a9482284c10a906637cd7497356296d021e"
+
+[["holdings"]]
+"retained" = true
+"next_action_owner_thread" = "01a13460-4aa9-7fe0-865e-a8f54ffca310"
+"acceptance_preserved" = true
+"id" = "decomp-port-141"
+"kind" = "markdown-hold"
+"state" = "claimed"
+"claim_present" = false
+"ticket" = ".scratch/decomp-port/issues/141-ridley-whole-lifecycle-live.md"
+"registered_agent" = "/root/ridley_live_finish"
+"owner_thread" = "01a1334a-6c95-73f3-97db-08beb2f6ef20"
+"original_owner_thread" = "01a1331b-1cb4-7591-90fa-dbeae531d484"
+"supporting_owner_threads" = ["01a13329-0853-7321-9b84-962aaf18a841"]
+"owner_observed_state" = "idle-terminal-completed"
+"original_owner_observed_state" = "notLoaded-terminal-failed"
+"writable_paths" = ["crates/port/src/ridley_subsystem.rs", "crates/port/src/ridley_subsystem_admission.rs", "crates/port/src/ridley_subsystem_instructions.rs", "crates/port/src/ridley_movement.rs", "crates/port/src/ridley_rendering.rs", "crates/port/src/ridley_cutscene.rs", "crates/port/tests/ridley_subsystem.rs", "crates/pipeline/src/inputs.rs", "crates/pipeline/src/live.rs", "crates/pipeline/src/live_model.rs", "crates/pipeline/src/main.rs", "crates/pipeline/src/observations.rs", "crates/pipeline/src/live_ridley_subsystem.rs.in", "crates/pipeline/src/live_ridley_subsystem_host.c.in", "crates/pipeline/src/live_ridley_subsystem_bank.c.in", "crates/pipeline/src/ridley_ppu_contract.h", "crates/pipeline/src/ridley_subsystem_adapter.rs", "crates/pipeline/src/ridley_subsystem_host.c.in", "crates/pipeline/src/ridley_subsystem_inventory.rs", "crates/pipeline/src/ridley_subsystem_inventory.c.in", "crates/pipeline/src/ridley_subsystem_inventory_hooks.c.in", "crates/pipeline/src/ridley_subsystem_captured.rs", "crates/pipeline/src/family.rs", "crates/pipeline/tests/live_ridley_whole.rs", "tools/port/ridley-subsystem.toml", "tools/port/ridley-subsystem-captured.toml"]
+"path_precision" = "Conservative focused integration hold only. Shared main/live/family/inputs changes are hunks; frozen older progress/main must not replace current source wholesale."
+"held_paths" = [".scratch/decomp-port/issues/141-ridley-whole-lifecycle-live.md", "/tmp/sm-ridley-whole-live-source", ".scratch/decomp-port/ridley-hardware-recovery", ".scratch/decomp-port/ridley-natural-recovery", "/tmp/sm-ridley-whole-live-probe-38000-r7", "out/recovery-session/ridley-whole-final-offline", "out/recovery-session/ridley-native137-final-offline"]
+"source_state" = "frozen-source-only-retained-no-Git-or-build"
+"dependencies" = [".scratch/decomp-port/issues/137-observed-projectile-allocator-scheduler.md", ".scratch/decomp-port/issues/138-observed-ridley-instruction-frame-ownership.md"]
+"dependency_precision" = "Exact original ticket137/138 paths; both broad dependency gates remain held."
+"required_runtime_dependencies" = ["/tmp/sm-ridley-whole-live-source/frozen-tools-decomp", "deps/snesrev-sm", "rom/sm.sfc", "native-runtime-ROM-view", "movies/super-metroid-any-3653.inputs", ".scratch/decomp-port/ridley-hardware-recovery/bin/sm-pipeline-hardware-v2"]
+"next_action" = "Preserve original broad gates; review material/context admission schema, integrate only focused frozen candidate differences, freeze and refresh affected Offline families, then original four-subject 129712-input/native137 nine-ID/allocation/original identity/material/fallback gates with cleanup/authentication and separate stage publication. Preparation performs no gameplay or merge."
+"next_cwd" = "/home/jim/sm-decomp"
+"next_argv" = ["read", ".scratch/decomp-port/ridley-live-finish-handoff-20261013.md"]
+"cleanup_state" = "Completed lane diagnostic/family cleanup and authentication retained; formal full gate never started."
+"limitations" = ["38000-input r7 diagnostic and predecessor offline gates do not satisfy formal 129712 admission.", "Seven of eighteen supported opcode counters naturally zero in r7; absent domains remain unproved.", "Do not fabricate formal whole-live subject evidence.toml pointers; retain observed evidence plus generic shared store dependencies."]
+
+[["holdings"."evidence"]]
+"path" = "/home/jim/sm-decomp/.scratch/decomp-port/ridley-live-final-source.sha256"
+"sha256" = "a3db236fb2acb6228ad90f298217e3f07cfc18f94c442550bfa6baf5569a6b52"
+
+[["holdings"."evidence"]]
+"path" = "/home/jim/sm-decomp/.scratch/decomp-port/ridley-live-finish/bin/sm-pipeline-whole-live"
+"sha256" = "876f5e29775a1daae6b91e6ec94b3341c083270e44dc18fb6999006e9b58a20d"
+
+[["holdings"."evidence"]]
+"path" = "/home/jim/sm-decomp/out/recovery-session/ridley-whole-final-offline/1791866846960194-145753-0/verdict.toml"
+"sha256" = "def8416e90f8e39d6974f4d4afdc3778af2978061737833c8e5bd18a9e82ec69"
+
+[["holdings"."evidence"]]
+"path" = "/home/jim/sm-decomp/out/recovery-session/ridley-native137-final-offline/1791866852674692-145775-0/verdict.toml"
+"sha256" = "a5faf27ff2ebe02a8ed7a82bc1636849148f55645991889643af28e187eb589e"
+
+[["holdings"."evidence"]]
+"path" = "/home/jim/sm-decomp/.scratch/decomp-port/ridley-hardware-recovery/source-evidence.sha256"
+"sha256" = "e9fb909616843bfb3068b20fbff0850458d8dc17df31574b3f59f39f15f5daf8"
+
+[["holdings"."evidence"]]
+"path" = "/home/jim/sm-decomp/.scratch/decomp-port/ridley-hardware-recovery/verdicts.sha256"
+"sha256" = "c38e602d9490e32839e4c4385fd0855c635297b945f401c14bbc3e406e455f5d"
+
+[["holdings"."evidence"]]
+"path" = "/home/jim/sm-decomp/.scratch/decomp-port/ridley-live-probe-cleanup-auth.sha256"
+"sha256" = "3fec5fc421e34ef9cef265882b4280be25070217a666510e93e89f4dd87aa87f"
+
+["retention"]
+"generic_dependencies" = ["out/evidence", "retained sm-evidence readers", "observed subject evidence.toml pointers where present", "private ROM/movie/native-source inputs", "checkpoint source/raw/generated archives"]
+"archive_manifests" = [".scratch/decomp-parallel/checkpoint/archive-sha256.txt", ".scratch/decomp-parallel/checkpoint/frozen-sources-files.sha256", ".scratch/decomp-parallel/checkpoint/raw-receipts-files.sha256", ".scratch/decomp-parallel/checkpoint/generated-receipts-files.sha256"]
+"authentication" = "All checkpoint archive/original manifests, Ceres submitted artifacts, primary verdict hashes and Ridley retained source/reader/hardware verdict manifests rechecked. No gameplay replay or verdict execution."
+"cleanup" = "Documentation/read-only hash inspection only; no run/build output created, 0 bytes reclaimed; retained submissions/source/readers intentionally preserved."
+"remaining_free_bytes" = 223283175424
+
+[[legacy_request_receipt_artifacts]]
+path = "/home/jim/sm-decomp/.scratch/ceres-continuation/plan.toml"
+sha256 = "fa3aebbf1b9c900eca7e284aa01739b34b54782cb63dfa0e3eebf91a677b3456"
+domain = "legacy-infrastructure-plan-request"
+accepted_as_native_gameplay = false
+
+[[legacy_request_receipt_artifacts]]
+path = "/home/jim/sm-decomp/.scratch/ceres-continuation/start-host.toml"
+sha256 = "0425074bd2255e107bff1439de3876a7b42886738dcc5194a9c315d185c8c739"
+domain = "legacy-start-request"
+accepted_as_native_gameplay = false
+
+[[legacy_request_receipt_artifacts]]
+path = "/home/jim/sm-decomp/.scratch/ceres-continuation/start-host-integration.toml"
+sha256 = "8c2e1c6e78ebb90d701bd61c0c9ab0cac8be1517d9cbcac22f3608f81c9b3f3a"
+domain = "legacy-start-request"
+accepted_as_native_gameplay = false
+
+[[legacy_request_receipt_artifacts]]
+path = "/home/jim/sm-decomp/.scratch/ceres-continuation/start-controller.toml"
+sha256 = "1bbd129d7661efdfd52c5f7bc54b5f38ed29cbcf7026e165033db1c14ddd9470"
+domain = "legacy-start-request"
+accepted_as_native_gameplay = false
+
+[[legacy_request_receipt_artifacts]]
+path = "/home/jim/sm-decomp/.scratch/ceres-continuation/submit-host.toml"
+sha256 = "b987d12488cf0afdf6af5432104011d16a8f8e7ce76ce7349717948cfa829ff6"
+domain = "legacy-submit-request"
+accepted_as_native_gameplay = false
+
+[[legacy_request_receipt_artifacts]]
+path = "/home/jim/sm-decomp/.scratch/ceres-continuation/record-controller-submission.toml"
+sha256 = "89f56d7ba78cac4cd65d426a624c909adff8da7e02bea5ba9bc3b9916a1ce178"
+domain = "legacy-submit-request"
+accepted_as_native_gameplay = false
+
+[[legacy_request_receipt_artifacts]]
+path = "/home/jim/sm-decomp/.scratch/ceres-continuation/recorded-controller-submission.toml"
+sha256 = "95d22eee54b1df5a43e6637bda8d02d764f9d3ca6a15d140d3c88133607e8cf9"
+domain = "legacy-record-receipt"
+accepted_as_native_gameplay = false
+
+[[legacy_request_receipt_artifacts]]
+path = "/home/jim/sm-decomp/.scratch/ceres-continuation/started-host.toml"
+sha256 = "8030edeef641cc5fe3b56a83b3c7144437a028e9125b7029cdc2cce93dcaec92"
+domain = "legacy-start-receipt"
+accepted_as_native_gameplay = false
+
+[[legacy_request_receipt_artifacts]]
+path = "/home/jim/sm-decomp/.scratch/ceres-continuation/started-host-integration.toml"
+sha256 = "b3b96b77a106cac22ec3c8a1710c0c1504dddece55eb87abb93d5ad5db9c2a22"
+domain = "legacy-start-receipt"
+accepted_as_native_gameplay = false
+
+[[legacy_request_receipt_artifacts]]
+path = "/home/jim/sm-decomp/.scratch/ceres-continuation/started-controller.toml"
+sha256 = "2207d88259dcb7f1cacc6d93032cd1acd9d8e43489c9842e3b1a0cdfef569800"
+domain = "legacy-start-receipt"
+accepted_as_native_gameplay = false
+
+[[legacy_request_receipt_artifacts]]
+path = "/home/jim/sm-decomp/.scratch/ceres-continuation/submitted-host.toml"
+sha256 = "8199732bc7537b09f416ea431a5b50112d00ff0b4496daf8c445cecff4c06bf8"
+domain = "legacy-submit-receipt"
+accepted_as_native_gameplay = false

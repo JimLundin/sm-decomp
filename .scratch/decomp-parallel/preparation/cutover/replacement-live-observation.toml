@@ -1,0 +1,7 @@
+schema = "decomp-session-observation-v1"
+session_id = "01a13460-4aa9-7fe0-865e-a8f54ffca310"
+status = "running"
+observed_at = "2026-10-13T09:22:40Z"
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/cutover/thread-inspection.json"
+sha256 = "f4dc1656fd7076ccc968a3ff33a53b0bdf2b676f23b4e528fe1569e364270686"

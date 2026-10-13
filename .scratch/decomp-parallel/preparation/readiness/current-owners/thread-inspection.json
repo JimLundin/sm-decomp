@@ -1,0 +1,320 @@
+{
+  "schema": "decomp-readiness-thread-inspection-v1",
+  "observed_at": "2026-10-13 10:17:06 UTC",
+  "observer_thread": "01a134b4-14c4-7db3-963f-fca5f6b5359b",
+  "selection": "Exact thread metadata and latest terminal/in-progress turn identities/status/error plus final messages extracted from returned read_thread JSON. Full tool histories were not retained.",
+  "threads": [
+    {
+      "requested_thread_id": "01a133eb-76e2-7073-9aef-d97c03a812e4",
+      "tool": "mcp__codex_tui__read_thread",
+      "request": {
+        "threadId": "01a133eb-76e2-7073-9aef-d97c03a812e4",
+        "turnLimit": 1,
+        "includeOutputs": false,
+        "maxOutputCharsPerItem": 1200
+      },
+      "is_error": false,
+      "observations": [
+        {
+          "schemaVersion": 1,
+          "thread": {
+            "id": "01a133eb-76e2-7073-9aef-d97c03a812e4",
+            "kind": "codex",
+            "title": "Continue the decomp",
+            "preview": "continue the decomp",
+            "status": {
+              "type": "systemError"
+            },
+            "cwd": "/home/jim/sm-decomp",
+            "createdAt": 1791872431,
+            "updatedAt": 1791874657
+          },
+          "page": {
+            "order": "newest_first",
+            "limit": 1,
+            "hasMore": true,
+            "nextCursor": "{\"requestedThreadId\":\"01a133eb-76e2-7073-9aef-d97c03a812e4\",\"rolloutOrdinal\":642,\"includeAnchor\":false,\"scope\":{\"kind\":\"turns\"}}"
+          },
+          "turns": [
+            {
+              "id": "01a1340d-2d5a-7ab1-a076-a7d92a822632",
+              "status": "failed",
+              "error": {
+                "message": "stream disconnected before completion: Encrypted function output content could not be decrypted or decoded.",
+                "additionalDetails": null
+              },
+              "startedAt": 1791874641,
+              "completedAt": 1791874657,
+              "final_messages": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "requested_thread_id": "01a133ec-4ef9-78b2-a8d7-248726023ce5",
+      "tool": "mcp__codex_tui__read_thread",
+      "request": {
+        "threadId": "01a133ec-4ef9-78b2-a8d7-248726023ce5",
+        "turnLimit": 1,
+        "includeOutputs": false,
+        "maxOutputCharsPerItem": 1200
+      },
+      "is_error": false,
+      "observations": [
+        {
+          "schemaVersion": 1,
+          "thread": {
+            "id": "01a133ec-4ef9-78b2-a8d7-248726023ce5",
+            "kind": "codex",
+            "title": null,
+            "preview": "",
+            "status": {
+              "type": "idle"
+            },
+            "cwd": "/home/jim/sm-decomp",
+            "createdAt": 1791872487,
+            "updatedAt": 1791874597
+          },
+          "page": {
+            "order": "newest_first",
+            "limit": 1,
+            "hasMore": true,
+            "nextCursor": "{\"requestedThreadId\":\"01a133ec-4ef9-78b2-a8d7-248726023ce5\",\"rolloutOrdinal\":168,\"includeAnchor\":false,\"scope\":{\"kind\":\"turns\"}}"
+          },
+          "turns": [
+            {
+              "id": "01a133f1-7407-7541-8651-a2601c49769e",
+              "status": "completed",
+              "error": null,
+              "startedAt": 1791872824,
+              "completedAt": 1791874597,
+              "final_messages": [
+                {
+                  "type": "agentMessage",
+                  "id": "msg_0716b2e07844e794016acdd617f874819392985878edd0707f",
+                  "text": "Compact diagnostic submitted on clean branch `ceres-continuation-compact-controller-1`, HEAD **223f8a1b0c7382817b1290d13c7a41f4e722d5e1**, worktree `/tmp/sm-ceres-continuation-compact-controller-1`.\n\nImplemented `--profile compact`, preserving default full behavior. Compact retains controller/dispatch ordering, permits20000frames, enforces one60second execution deadline including worker waits, runs two causal subjects, records omissions/frontier/divergence, and safely reuses completed native captures from failed subjects. Authentication recomputes frontier claims and validates snapshot extent; legacy full observer identities remain compatible.\n\nActual results:\n\n- **2240frames:** all1736 completed updates and1887 samples match; independent RNG control rejects.46.71seconds. Verdict remains nonaccepting.\n- **8600frames:** first provenance divergence is ordinal7741, originalframe8508/event63799: **7960 C polls versus7959 native polls**. Matching diagnostic prefix ends at7740updates/frame8317. Candidate reaches Ceres but rejects EOF; Ceres escape remains unfinished.\n\nEvidence beneath `/home/jim/sm-decomp/out/port/ceres-continuation/controller`:\n\n- Successful2240: `1791873256094852042-256891/verdict.toml`, SHA256 `79c00cb7bb32a120f981b1c14f99b639e773d88f5f544bdb41e964409ce7a916`.\n- Complete native8600/subject timeout: `1791873514143170077-260799/verdict.toml`, SHA256 `7c8c04d2f53d3f7a247a715a807d2dcf0e2d0004be13facd780c3d74a717fe88`.\n- Final8600 diagnosis: `1791874177761738742-271877/verdict.toml`, SHA256 `051a7195bf0ed3461eae81a9789f052a01f5c616d0d7ed716a37848c2a59d07e`.\n\nEight unit tests and two public tests pass; final read-only review found no blocker. Both scoped cleanup passes completed with zero bytes reclaimed; successful2240 evidence authenticates afterward. All child processes finished. Worktree removal and durable submission/integration remain with the root integration owner.\n\nNext investigate setup’s **extra continuation poll** before changing scheduler behavior. Existing NMI wrapper polls unconditionally; native setup temporarily disables NMI. No corrective scheduler change was made.",
+                  "phase": "final_answer"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "requested_thread_id": "01a133ec-68e2-7033-9ee7-dba26d4db746",
+      "tool": "mcp__codex_tui__read_thread",
+      "request": {
+        "threadId": "01a133ec-68e2-7033-9ee7-dba26d4db746",
+        "turnLimit": 1,
+        "includeOutputs": false,
+        "maxOutputCharsPerItem": 1200
+      },
+      "is_error": false,
+      "observations": [
+        {
+          "schemaVersion": 1,
+          "thread": {
+            "id": "01a133ec-68e2-7033-9ee7-dba26d4db746",
+            "kind": "codex",
+            "title": null,
+            "preview": "",
+            "status": {
+              "type": "notLoaded"
+            },
+            "cwd": "/home/jim/sm-decomp",
+            "createdAt": 1791872493,
+            "updatedAt": 1791873541
+          },
+          "page": {
+            "order": "newest_first",
+            "limit": 1,
+            "hasMore": false,
+            "nextCursor": null
+          },
+          "turns": [
+            {
+              "id": "01a133ec-68fb-7883-bd3d-17ed72715e5a",
+              "status": "completed",
+              "error": null,
+              "startedAt": 1791872493,
+              "completedAt": 1791873541,
+              "final_messages": [
+                {
+                  "type": "agentMessage",
+                  "id": "msg_0c97fa4578f65f15016acdd1ff61b481949c195aee4585679d",
+                  "text": "Submitted and merged commit `73547105d870f8b05f8c6bcf55b768c223889fdb`.\n\nShared host executes unchanged Samus/room modules through typed PLM/HDMA/VRAM requests, preserving refusal and fatal ownership semantics. Compact manifests provide seven projectile and three room actual-C comparisons.\n\n31 Rust tests pass. Cleanup removed 129,084,860 bytes; worktree is clean.\n\nEvidence: `.scratch/ceres-continuation/host-implementation.toml`, SHA-256 `7b4f118b21b969bd02abc16192cbc3caccb1c118d5cef6a5d39e3751afeaffeb`.\n\nCoordinator retains actual-C verification, progress publication, source snapshot and worktree retirement.",
+                  "phase": "final_answer"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "requested_thread_id": "01a13394-29b8-76a3-aab7-5ab8eff60694",
+      "tool": "mcp__codex_tui__read_thread",
+      "request": {
+        "threadId": "01a13394-29b8-76a3-aab7-5ab8eff60694",
+        "turnLimit": 1,
+        "includeOutputs": false,
+        "maxOutputCharsPerItem": 1200
+      },
+      "is_error": false,
+      "observations": [
+        {
+          "schemaVersion": 1,
+          "thread": {
+            "id": "01a13394-29b8-76a3-aab7-5ab8eff60694",
+            "kind": "codex",
+            "title": "Open progress report viewer",
+            "preview": "can you please open the progress report viewer in my windows browser",
+            "status": {
+              "type": "idle"
+            },
+            "cwd": "/home/jim/sm-decomp",
+            "createdAt": 1791866710,
+            "updatedAt": 1791885886
+          },
+          "page": {
+            "order": "newest_first",
+            "limit": 1,
+            "hasMore": true,
+            "nextCursor": "{\"requestedThreadId\":\"01a13394-29b8-76a3-aab7-5ab8eff60694\",\"rolloutOrdinal\":2734,\"includeAnchor\":false,\"scope\":{\"kind\":\"turns\"}}"
+          },
+          "turns": [
+            {
+              "id": "01a134b2-aea9-7663-831b-5b49364c7f5e",
+              "status": "completed",
+              "error": null,
+              "startedAt": 1791885487,
+              "completedAt": 1791885886,
+              "final_messages": [
+                {
+                  "type": "agentMessage",
+                  "id": "msg_0ba83da273a6ee42016ace023b31fc8193ac798cac2f568c96",
+                  "text": "Saved on local `main` at `9ed933d`, including the report, verification evidence, and handoff.\n\nCleanup is complete. The Windows viewer remains running. Session complete.",
+                  "phase": "final_answer"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "requested_thread_id": "01a13460-4aa9-7fe0-865e-a8f54ffca310",
+      "tool": "mcp__codex_tui__read_thread",
+      "request": {
+        "threadId": "01a13460-4aa9-7fe0-865e-a8f54ffca310",
+        "turnLimit": 1,
+        "includeOutputs": false,
+        "maxOutputCharsPerItem": 1200
+      },
+      "is_error": false,
+      "observations": [
+        {
+          "schemaVersion": 1,
+          "thread": {
+            "id": "01a13460-4aa9-7fe0-865e-a8f54ffca310",
+            "kind": "codex",
+            "title": "Resume agent swarm preparation",
+            "preview": "the previous session getting everything ready for the agent swarm crashed. can you please pick it up and continue",
+            "status": {
+              "type": "active",
+              "activeFlags": []
+            },
+            "cwd": "/home/jim/sm-decomp",
+            "createdAt": 1791880088,
+            "updatedAt": 1791886591
+          },
+          "page": {
+            "order": "newest_first",
+            "limit": 1,
+            "hasMore": false,
+            "nextCursor": null
+          },
+          "turns": [
+            {
+              "id": "01a13460-abf2-7fb1-9103-f2e19ac8a99e",
+              "status": "inProgress",
+              "error": null,
+              "startedAt": 1791880113,
+              "completedAt": null,
+              "final_messages": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "requested_thread_id": "01a133ee-b69a-71b2-a05d-c4a3892bd199",
+      "tool": "mcp__codex_tui__read_thread",
+      "request": {
+        "threadId": "01a133ee-b69a-71b2-a05d-c4a3892bd199",
+        "turnLimit": 1,
+        "includeOutputs": false,
+        "maxOutputCharsPerItem": 1200
+      },
+      "is_error": true,
+      "observations": [
+        {
+          "diagnostic": "thread/read failed: thread not loaded: 01a133ee-b69a-71b2-a05d-c4a3892bd199 (code -32600)"
+        }
+      ]
+    },
+    {
+      "requested_thread_id": "01a133f4-de2d-71e3-82ce-ead915ca3017",
+      "tool": "mcp__codex_tui__read_thread",
+      "request": {
+        "threadId": "01a133f4-de2d-71e3-82ce-ead915ca3017",
+        "turnLimit": 1,
+        "includeOutputs": false,
+        "maxOutputCharsPerItem": 1200
+      },
+      "is_error": false,
+      "observations": [
+        {
+          "schemaVersion": 1,
+          "thread": {
+            "id": "01a133f4-de2d-71e3-82ce-ead915ca3017",
+            "kind": "codex",
+            "title": null,
+            "preview": "",
+            "status": {
+              "type": "idle"
+            },
+            "cwd": "/home/jim/sm-decomp",
+            "createdAt": 1791873048,
+            "updatedAt": 1791874474
+          },
+          "page": {
+            "order": "newest_first",
+            "limit": 1,
+            "hasMore": true,
+            "nextCursor": "{\"requestedThreadId\":\"01a133f4-de2d-71e3-82ce-ead915ca3017\",\"rolloutOrdinal\":277,\"includeAnchor\":false,\"scope\":{\"kind\":\"turns\"}}"
+          },
+          "turns": [
+            {
+              "id": "01a13408-c221-71e3-884f-a7b8e4089f01",
+              "status": "completed",
+              "error": null,
+              "startedAt": 1791874351,
+              "completedAt": 1791874474,
+              "final_messages": [
+                {
+                  "type": "agentMessage",
+                  "id": "msg_0444dfdacd89dfad016acdd5a6e8fc8190a342b2235649724d",
+                  "text": "Final review found no remaining blocker for compact diagnostics or native reuse. Deadline handling, capture origin, frontier validation, required snapshots, and truncated-tail preservation now look correct.\n\nCompatibility caveat: historical reused full-profile receipts lack the new capture-origin field and may reject authentication.\n\nNo edits or tests performed.",
+                  "phase": "final_answer"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

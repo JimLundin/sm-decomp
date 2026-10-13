@@ -1,0 +1,1638 @@
+{
+  "schema_version": 1,
+  "captured_source": {
+    "revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+    "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+    "identity_sha256": "e74864c229949fc6f1a6bd7528f339bdb3f9364f1e4f9544f08693881d10f111",
+    "definition_count": 6053,
+    "body_lines": 75229,
+    "scope": "actual sm_*.c lexical definitions/calls; macros, externals and indirect calls require review; no acceptance inferred"
+  },
+  "captured_updated_at": 1791881031,
+  "summary": {
+    "definitions": 6053,
+    "body_lines": 75229,
+    "declared_definitions": 835,
+    "declared_body_lines": 9108,
+    "updates": 261,
+    "stale_updates": 16,
+    "stages": {
+      "integrated": {
+        "definitions": 38,
+        "body_lines": 775
+      },
+      "live-exercised": {
+        "definitions": 121,
+        "body_lines": 1642
+      },
+      "translated": {
+        "definitions": 1461,
+        "body_lines": 16527
+      },
+      "translating": {
+        "definitions": 222,
+        "body_lines": 3170
+      },
+      "verified": {
+        "definitions": 925,
+        "body_lines": 10103
+      }
+    },
+    "context_stages": {
+      "current-checkout": {
+        "integrated": {
+          "definitions": 38,
+          "body_lines": 775
+        },
+        "live-exercised": {
+          "definitions": 26,
+          "body_lines": 487
+        },
+        "translated": {
+          "definitions": 1461,
+          "body_lines": 16527
+        },
+        "translating": {
+          "definitions": 0,
+          "body_lines": 0
+        },
+        "verified": {
+          "definitions": 39,
+          "body_lines": 804
+        }
+      },
+      "historical-frozen": {
+        "integrated": {
+          "definitions": 0,
+          "body_lines": 0
+        },
+        "live-exercised": {
+          "definitions": 106,
+          "body_lines": 1247
+        },
+        "translated": {
+          "definitions": 911,
+          "body_lines": 9737
+        },
+        "translating": {
+          "definitions": 0,
+          "body_lines": 0
+        },
+        "verified": {
+          "definitions": 911,
+          "body_lines": 9737
+        }
+      },
+      "unspecified": {
+        "integrated": {
+          "definitions": 34,
+          "body_lines": 719
+        },
+        "live-exercised": {
+          "definitions": 0,
+          "body_lines": 0
+        },
+        "translated": {
+          "definitions": 34,
+          "body_lines": 719
+        },
+        "translating": {
+          "definitions": 222,
+          "body_lines": 3170
+        },
+        "verified": {
+          "definitions": 34,
+          "body_lines": 719
+        }
+      }
+    }
+  },
+  "updates": [
+    {
+      "id": "camera-scroll-6053-current-translated-20261013",
+      "scope": "Complete camera scrolling frame and directional helpers",
+      "stage": "translated",
+      "commit": "7512b6479afe55da270931a9f3ae26c9d558e5a5",
+      "evidence_context": null,
+      "routines": [
+        "MainScrollingRoutine",
+        "Samus_HandleScroll_X",
+        "Samus_HandleScroll_Y",
+        "Samus_ScrollFinishedHook_SporeSpawnFight"
+      ],
+      "limitations": [
+        "Current frozen merged-source family authenticates 467 fixture pairs for the whole camera frame, directional helpers and Spore Spawn hook.",
+        "Admitted table indices, room extent and hook domains remain bounded; room and Samus dependencies remain explicit. Independent live ownership remains pending.",
+        "Installed gameplay commit is integrated into main baseline c711faea56f20d42113eb63393cc4a76d4940557; shared verifier/live wiring remains uncommitted at the authenticated exact frozen source. Final wiring commit remains coordinator work.",
+        "Both run cleanup passes and stale implementer worktree retirement completed before retained authentication. Stage observations remain distinct; original-ROM parity is not tested."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-camera-scroll-post-cleanup-authentication.toml",
+          "sha256": "dda85bda679c84dc2fea9bef73a1d553901fc6efbcc2c39db2d4b70db466f3bf"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/progress-current-integrated-stage-evidence-20261013.md",
+          "sha256": "8683cc19d673cc11110a7a810581e3914486b4d71abe61bbd10adf02223b2c1e"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-final-authentication-summary.toml",
+          "sha256": "c2e8126e2257489f5c1d9a32ab2795b56c59c0cdc7e0ae3fa685b3cae889a077"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-worktree-retirement-20261013.toml",
+          "sha256": "b2c55fbdf31506bc6b01076de5e4b09734962fb91ac7f119ea17a7fa46d52961"
+        }
+      ]
+    },
+    {
+      "id": "camera-scroll-6053-current-verified-20261013",
+      "scope": "Complete camera scrolling frame and directional helpers",
+      "stage": "verified",
+      "commit": "7512b6479afe55da270931a9f3ae26c9d558e5a5",
+      "evidence_context": null,
+      "routines": [
+        "MainScrollingRoutine",
+        "Samus_HandleScroll_X",
+        "Samus_HandleScroll_Y",
+        "Samus_ScrollFinishedHook_SporeSpawnFight"
+      ],
+      "limitations": [
+        "Current frozen merged-source family authenticates 467 fixture pairs for the whole camera frame, directional helpers and Spore Spawn hook.",
+        "Admitted table indices, room extent and hook domains remain bounded; room and Samus dependencies remain explicit. Independent live ownership remains pending.",
+        "Installed gameplay commit is integrated into main baseline c711faea56f20d42113eb63393cc4a76d4940557; shared verifier/live wiring remains uncommitted at the authenticated exact frozen source. Final wiring commit remains coordinator work.",
+        "Both run cleanup passes and stale implementer worktree retirement completed before retained authentication. Stage observations remain distinct; original-ROM parity is not tested."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-camera-scroll-post-cleanup-authentication.toml",
+          "sha256": "dda85bda679c84dc2fea9bef73a1d553901fc6efbcc2c39db2d4b70db466f3bf"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/progress-current-integrated-stage-evidence-20261013.md",
+          "sha256": "8683cc19d673cc11110a7a810581e3914486b4d71abe61bbd10adf02223b2c1e"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-final-authentication-summary.toml",
+          "sha256": "c2e8126e2257489f5c1d9a32ab2795b56c59c0cdc7e0ae3fa685b3cae889a077"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-worktree-retirement-20261013.toml",
+          "sha256": "b2c55fbdf31506bc6b01076de5e4b09734962fb91ac7f119ea17a7fa46d52961"
+        }
+      ]
+    },
+    {
+      "id": "camera-scroll-6053-current-integrated-20261013",
+      "scope": "Complete camera scrolling frame and directional helpers",
+      "stage": "integrated",
+      "commit": "7512b6479afe55da270931a9f3ae26c9d558e5a5",
+      "evidence_context": null,
+      "routines": [
+        "MainScrollingRoutine",
+        "Samus_HandleScroll_X",
+        "Samus_HandleScroll_Y",
+        "Samus_ScrollFinishedHook_SporeSpawnFight"
+      ],
+      "limitations": [
+        "Current frozen merged-source family authenticates 467 fixture pairs for the whole camera frame, directional helpers and Spore Spawn hook.",
+        "Admitted table indices, room extent and hook domains remain bounded; room and Samus dependencies remain explicit. Independent live ownership remains pending.",
+        "Installed gameplay commit is integrated into main baseline c711faea56f20d42113eb63393cc4a76d4940557; shared verifier/live wiring remains uncommitted at the authenticated exact frozen source. Final wiring commit remains coordinator work.",
+        "Both run cleanup passes and stale implementer worktree retirement completed before retained authentication. Stage observations remain distinct; original-ROM parity is not tested."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-camera-scroll-post-cleanup-authentication.toml",
+          "sha256": "dda85bda679c84dc2fea9bef73a1d553901fc6efbcc2c39db2d4b70db466f3bf"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/progress-current-integrated-stage-evidence-20261013.md",
+          "sha256": "8683cc19d673cc11110a7a810581e3914486b4d71abe61bbd10adf02223b2c1e"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-final-authentication-summary.toml",
+          "sha256": "c2e8126e2257489f5c1d9a32ab2795b56c59c0cdc7e0ae3fa685b3cae889a077"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-worktree-retirement-20261013.toml",
+          "sha256": "b2c55fbdf31506bc6b01076de5e4b09734962fb91ac7f119ea17a7fa46d52961"
+        }
+      ]
+    },
+    {
+      "id": "projectile-trails-root-6053-live-20261013",
+      "scope": "Complete native projectile trail script and render frame: live scheduled root",
+      "stage": "live-exercised",
+      "commit": "2b62134bfbee7c5dcd4c81616edc5d91e781d44f",
+      "evidence_context": null,
+      "routines": [
+        "HandleProjectileTrails"
+      ],
+      "limitations": [
+        "Four fresh C/mixed subjects over 9,000 inputs; each mixed subject records 3,824 exclusive Rust whole-frame calls, 167 active calls and zero refusals; state/effects match with zero CPU fallback.",
+        "Three direct movement opcodes are offline verified and had no natural hits in this prefix; this live observation reports the complete scheduled root only.",
+        "This independent trail replay does not install native137 projectile admission. The full composed acceptance gate supplies that separate preservation evidence.",
+        "Installed gameplay commit is integrated at baseline c711faea56f20d42113eb63393cc4a76d4940557; shared live wiring is authenticated at its exact frozen uncommitted source. Original-ROM parity is not tested."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/out/recovery-session/trails-live/1791860457650339558-98848/verdict.toml",
+          "sha256": "312036af96f789c07af1ff370800a69fbaa28fcba2a26dc3d4c3507f2e240508"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-trails-live-final-cleanup.toml",
+          "sha256": "7aef7007ae03b4f96149adea2ce5c7da13a9c93d0157ca78d16496afcd4ddf0c"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-trails-live-final-dedup.toml",
+          "sha256": "2624524f0fb2f448e1351f8dad525947deffaa761537e3f3206162e1f18829b7"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-trails-live-post-cleanup-authentication.toml",
+          "sha256": "ccb12000b2cd50cd9ac02957b8643edbcf496f66f0ff62e5090883c89e0806ef"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-progress/recovery-live-ticket-audit-20261013.md",
+          "sha256": "ea6f058fd61871ce27be2699291c2f7b7ed5363bbf269ad522196adc24cb3658"
+        }
+      ]
+    },
+    {
+      "id": "camera-scroll-root-6053-live-20261013",
+      "scope": "Complete camera scrolling frame",
+      "stage": "live-exercised",
+      "commit": "3ce28ba58aba319b60bbc949153baafd4433132e",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "MainScrollingRoutine"
+      ],
+      "limitations": [
+        "94,425 exclusive Rust calls; 35,580 active; zero refusals per mixed subject.",
+        "Four fresh independent C/mixed subjects over 129,712 raw inputs; periodic/terminal WRAM/SRAM, ordered PPU/APU effects and full captures match with zero CPU fallback.",
+        "The raw-input route ends in Ceres room DF8D/game state 8, not credits; original-ROM movie parity and causal controller scheduling remain separate.",
+        "This observation reports installed and measured roots only. Other enemy scripts, whole Ridley AI, real boss/explosion and unmeasured internal helpers do not inherit live coverage.",
+        "Gameplay source at observation matches integrated commit 3ce28ba. Exact verification CLI/source is retained at /tmp/sm-recovery-bounded-source; later source edits require their own relevant checks."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/out/recovery-session/composed-live-release/1791861180321696848-129445/verdict.toml",
+          "sha256": "5e224bda08b3f597b07dd3a03c59bf8cf136b288993459c62e453ef3fac400c2"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-composed-post-cleanup-authentication.toml",
+          "sha256": "9251ee29114c3ac5ea7da19279050ac7e83227cb790e624c5b6a0900372f3845"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-composed-final-cleanup.toml",
+          "sha256": "ab5bd4e31ce9f753baee7e2cb6f7160f57308a9e7250d132343301f9bd104360"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-composed-final-dedup.toml",
+          "sha256": "2624524f0fb2f448e1351f8dad525947deffaa761537e3f3206162e1f18829b7"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-live-completion-20261013.md",
+          "sha256": "8a6861456d4fbd813337aeb1ba0cd7971ce136743dce03807edba410dc7bac1d"
+        }
+      ]
+    },
+    {
+      "id": "room-scroll-roots-6053-live-20261013",
+      "scope": "Complete scheduled room scrolling roots",
+      "stage": "live-exercised",
+      "commit": "3ce28ba58aba319b60bbc949153baafd4433132e",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "UpdateScrollVarsUpdateMap",
+        "CalculateLayer2PosAndScrollsWhenScrolling"
+      ],
+      "limitations": [
+        "3,875/3,875 and 94,608/94,608 total/active exclusive Rust calls; zero refusals per mixed subject.",
+        "Four fresh independent C/mixed subjects over 129,712 raw inputs; periodic/terminal WRAM/SRAM, ordered PPU/APU effects and full captures match with zero CPU fallback.",
+        "The raw-input route ends in Ceres room DF8D/game state 8, not credits; original-ROM movie parity and causal controller scheduling remain separate.",
+        "This observation reports installed and measured roots only. Other enemy scripts, whole Ridley AI, real boss/explosion and unmeasured internal helpers do not inherit live coverage.",
+        "Gameplay source at observation matches integrated commit 3ce28ba. Exact verification CLI/source is retained at /tmp/sm-recovery-bounded-source; later source edits require their own relevant checks."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/out/recovery-session/composed-live-release/1791861180321696848-129445/verdict.toml",
+          "sha256": "5e224bda08b3f597b07dd3a03c59bf8cf136b288993459c62e453ef3fac400c2"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-composed-post-cleanup-authentication.toml",
+          "sha256": "9251ee29114c3ac5ea7da19279050ac7e83227cb790e624c5b6a0900372f3845"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-composed-final-cleanup.toml",
+          "sha256": "ab5bd4e31ce9f753baee7e2cb6f7160f57308a9e7250d132343301f9bd104360"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-composed-final-dedup.toml",
+          "sha256": "2624524f0fb2f448e1351f8dad525947deffaa761537e3f3206162e1f18829b7"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-live-completion-20261013.md",
+          "sha256": "8a6861456d4fbd813337aeb1ba0cd7971ce136743dce03807edba410dc7bac1d"
+        }
+      ]
+    },
+    {
+      "id": "samus-projectile-frame-roots-6053-live-20261013",
+      "scope": "Complete scheduled Samus projectile update and render roots",
+      "stage": "live-exercised",
+      "commit": "3ce28ba58aba319b60bbc949153baafd4433132e",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "HandleProjectile",
+        "DrawPlayerExplosions2",
+        "DrawBombAndProjectileExplosions"
+      ],
+      "limitations": [
+        "97,049/21,746, 102,632/21,558 and 96,336/20,998 total/active exclusive Rust calls; zero refusals per mixed subject.",
+        "Four fresh independent C/mixed subjects over 129,712 raw inputs; periodic/terminal WRAM/SRAM, ordered PPU/APU effects and full captures match with zero CPU fallback.",
+        "The raw-input route ends in Ceres room DF8D/game state 8, not credits; original-ROM movie parity and causal controller scheduling remain separate.",
+        "This observation reports installed and measured roots only. Other enemy scripts, whole Ridley AI, real boss/explosion and unmeasured internal helpers do not inherit live coverage.",
+        "Gameplay source at observation matches integrated commit 3ce28ba. Exact verification CLI/source is retained at /tmp/sm-recovery-bounded-source; later source edits require their own relevant checks."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/out/recovery-session/composed-live-release/1791861180321696848-129445/verdict.toml",
+          "sha256": "5e224bda08b3f597b07dd3a03c59bf8cf136b288993459c62e453ef3fac400c2"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-composed-post-cleanup-authentication.toml",
+          "sha256": "9251ee29114c3ac5ea7da19279050ac7e83227cb790e624c5b6a0900372f3845"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-composed-final-cleanup.toml",
+          "sha256": "ab5bd4e31ce9f753baee7e2cb6f7160f57308a9e7250d132343301f9bd104360"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-composed-final-dedup.toml",
+          "sha256": "2624524f0fb2f448e1351f8dad525947deffaa761537e3f3206162e1f18829b7"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-live-completion-20261013.md",
+          "sha256": "8a6861456d4fbd813337aeb1ba0cd7971ce136743dce03807edba410dc7bac1d"
+        }
+      ]
+    },
+    {
+      "id": "observed-ridley-instructions-root-6053-live-20261013",
+      "scope": "Complete bounded Ridley attack interpreter",
+      "stage": "live-exercised",
+      "commit": "3ce28ba58aba319b60bbc949153baafd4433132e",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "ProcessEnemyInstructions"
+      ],
+      "limitations": [
+        "2,393 exclusive Rust frames, 36 timer-due calls, 48 matching opcodes and sixteen 9642 allocations per mixed subject; 209,673 other frames remain explicitly C-owned.",
+        "Four fresh independent C/mixed subjects over 129,712 raw inputs; periodic/terminal WRAM/SRAM, ordered PPU/APU effects and full captures match with zero CPU fallback.",
+        "The raw-input route ends in Ceres room DF8D/game state 8, not credits; original-ROM movie parity and causal controller scheduling remain separate.",
+        "This observation reports installed and measured roots only. Other enemy scripts, whole Ridley AI, real boss/explosion and unmeasured internal helpers do not inherit live coverage.",
+        "Gameplay source at observation matches integrated commit 3ce28ba. Exact verification CLI/source is retained at /tmp/sm-recovery-bounded-source; later source edits require their own relevant checks."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/out/recovery-session/composed-live-release/1791861180321696848-129445/verdict.toml",
+          "sha256": "5e224bda08b3f597b07dd3a03c59bf8cf136b288993459c62e453ef3fac400c2"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-composed-post-cleanup-authentication.toml",
+          "sha256": "9251ee29114c3ac5ea7da19279050ac7e83227cb790e624c5b6a0900372f3845"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-composed-final-cleanup.toml",
+          "sha256": "ab5bd4e31ce9f753baee7e2cb6f7160f57308a9e7250d132343301f9bd104360"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-composed-final-dedup.toml",
+          "sha256": "2624524f0fb2f448e1351f8dad525947deffaa761537e3f3206162e1f18829b7"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-live-completion-20261013.md",
+          "sha256": "8a6861456d4fbd813337aeb1ba0cd7971ce136743dce03807edba410dc7bac1d"
+        }
+      ]
+    },
+    {
+      "id": "observed-projectile-ownership-roots-6053-live-20261013",
+      "scope": "Complete admitted native projectile allocator and scheduler",
+      "stage": "live-exercised",
+      "commit": "3ce28ba58aba319b60bbc949153baafd4433132e",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "SpawnEprojWithRoomGfx",
+        "SpawnEprojWithGfx",
+        "EprojRunAll"
+      ],
+      "limitations": [
+        "16, 8 and 95,325 exclusive Rust calls; 866 active scheduler calls, 617 9642 calls and all sixteen 9642 births; zero native137 refusals per mixed subject.",
+        "Four fresh independent C/mixed subjects over 129,712 raw inputs; periodic/terminal WRAM/SRAM, ordered PPU/APU effects and full captures match with zero CPU fallback.",
+        "The raw-input route ends in Ceres room DF8D/game state 8, not credits; original-ROM movie parity and causal controller scheduling remain separate.",
+        "This observation reports installed and measured roots only. Other enemy scripts, whole Ridley AI, real boss/explosion and unmeasured internal helpers do not inherit live coverage.",
+        "Gameplay source at observation matches integrated commit 3ce28ba. Exact verification CLI/source is retained at /tmp/sm-recovery-bounded-source; later source edits require their own relevant checks."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/out/recovery-session/composed-live-release/1791861180321696848-129445/verdict.toml",
+          "sha256": "5e224bda08b3f597b07dd3a03c59bf8cf136b288993459c62e453ef3fac400c2"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-composed-post-cleanup-authentication.toml",
+          "sha256": "9251ee29114c3ac5ea7da19279050ac7e83227cb790e624c5b6a0900372f3845"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-composed-final-cleanup.toml",
+          "sha256": "ab5bd4e31ce9f753baee7e2cb6f7160f57308a9e7250d132343301f9bd104360"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-composed-final-dedup.toml",
+          "sha256": "2624524f0fb2f448e1351f8dad525947deffaa761537e3f3206162e1f18829b7"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-live-completion-20261013.md",
+          "sha256": "8a6861456d4fbd813337aeb1ba0cd7971ce136743dce03807edba410dc7bac1d"
+        }
+      ]
+    },
+    {
+      "id": "enemy-projectile-rendering-roots-6053-live-20261013",
+      "scope": "Both complete scheduled enemy projectile OAM render passes",
+      "stage": "live-exercised",
+      "commit": "3ce28ba58aba319b60bbc949153baafd4433132e",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "DrawLowPriorityEprojs",
+        "DrawHighPriorityEprojs"
+      ],
+      "limitations": [
+        "96,336 exclusive Rust calls per root and mixed subject; native C traversal and ordered output match.",
+        "Four fresh independent C/mixed subjects over 129,712 raw inputs; periodic/terminal WRAM/SRAM, ordered PPU/APU effects and full captures match with zero CPU fallback.",
+        "The raw-input route ends in Ceres room DF8D/game state 8, not credits; original-ROM movie parity and causal controller scheduling remain separate.",
+        "This observation reports installed and measured roots only. Other enemy scripts, whole Ridley AI, real boss/explosion and unmeasured internal helpers do not inherit live coverage.",
+        "Gameplay source at observation matches integrated commit 3ce28ba. Exact verification CLI/source is retained at /tmp/sm-recovery-bounded-source; later source edits require their own relevant checks."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/out/recovery-session/composed-live-release/1791861180321696848-129445/verdict.toml",
+          "sha256": "5e224bda08b3f597b07dd3a03c59bf8cf136b288993459c62e453ef3fac400c2"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-composed-post-cleanup-authentication.toml",
+          "sha256": "9251ee29114c3ac5ea7da19279050ac7e83227cb790e624c5b6a0900372f3845"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-composed-final-cleanup.toml",
+          "sha256": "ab5bd4e31ce9f753baee7e2cb6f7160f57308a9e7250d132343301f9bd104360"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-composed-final-dedup.toml",
+          "sha256": "2624524f0fb2f448e1351f8dad525947deffaa761537e3f3206162e1f18829b7"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-live-completion-20261013.md",
+          "sha256": "8a6861456d4fbd813337aeb1ba0cd7971ce136743dce03807edba410dc7bac1d"
+        }
+      ]
+    },
+    {
+      "id": "enemy-projectile-contact-roots-6053-live-20261013",
+      "scope": "Complete enemy projectile Samus and projectile contact passes",
+      "stage": "live-exercised",
+      "commit": "3ce28ba58aba319b60bbc949153baafd4433132e",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "EprojSamusCollDetect",
+        "EprojProjCollDet"
+      ],
+      "limitations": [
+        "94,425 exclusive Rust calls per root and mixed subject; native C traversal and complete output match.",
+        "Four fresh independent C/mixed subjects over 129,712 raw inputs; periodic/terminal WRAM/SRAM, ordered PPU/APU effects and full captures match with zero CPU fallback.",
+        "The raw-input route ends in Ceres room DF8D/game state 8, not credits; original-ROM movie parity and causal controller scheduling remain separate.",
+        "This observation reports installed and measured roots only. Other enemy scripts, whole Ridley AI, real boss/explosion and unmeasured internal helpers do not inherit live coverage.",
+        "Gameplay source at observation matches integrated commit 3ce28ba. Exact verification CLI/source is retained at /tmp/sm-recovery-bounded-source; later source edits require their own relevant checks."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/out/recovery-session/composed-live-release/1791861180321696848-129445/verdict.toml",
+          "sha256": "5e224bda08b3f597b07dd3a03c59bf8cf136b288993459c62e453ef3fac400c2"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-composed-post-cleanup-authentication.toml",
+          "sha256": "9251ee29114c3ac5ea7da19279050ac7e83227cb790e624c5b6a0900372f3845"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-composed-final-cleanup.toml",
+          "sha256": "ab5bd4e31ce9f753baee7e2cb6f7160f57308a9e7250d132343301f9bd104360"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-composed-final-dedup.toml",
+          "sha256": "2624524f0fb2f448e1351f8dad525947deffaa761537e3f3206162e1f18829b7"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-live-completion-20261013.md",
+          "sha256": "8a6861456d4fbd813337aeb1ba0cd7971ce136743dce03807edba410dc7bac1d"
+        }
+      ]
+    },
+    {
+      "id": "projectile-trails-6053-current-translated-20261013-context",
+      "scope": "Complete native projectile trail script and render frame",
+      "stage": "translated",
+      "commit": "2b62134bfbee7c5dcd4c81616edc5d91e781d44f",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "HandleProjectileTrails",
+        "ProjInstr_MoveLeftProjectileTrailDown",
+        "ProjInstr_MoveLeftProjectileTrailUp",
+        "ProjInstr_MoveRightProjectileTrailDown"
+      ],
+      "limitations": [
+        "Current frozen merged-source family authenticates all 3,316 controlled fixture pairs; earlier fourteen natural frozen-context captures remain separately retained.",
+        "Direct movement opcodes had no hits in the recorded 9,000-input natural prefix. Creation/placement reuse projectile_flight; independent live parity remains pending.",
+        "Installed gameplay commit is integrated into main baseline c711faea56f20d42113eb63393cc4a76d4940557; shared verifier/live wiring remains uncommitted at the authenticated exact frozen source. Final wiring commit remains coordinator work.",
+        "Both run cleanup passes and stale implementer worktree retirement completed before retained authentication. Stage observations remain distinct; original-ROM parity is not tested.",
+        "Checkout at observation refers to the integrated gameplay source checked on 2026-10-13. Retained verification harness is frozen at /tmp/sm-recovery-bounded-source; later changes require their own checks. Older limitations about pending live/final wiring are superseded by composed live observations, without granting additional roots."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-projectile-trails-post-cleanup-authentication.toml",
+          "sha256": "3eb817d9b18f5988eef9462214f44adc041bdc714a635fcdbb623d7ec10cc22c"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/progress-current-integrated-stage-evidence-20261013.md",
+          "sha256": "8683cc19d673cc11110a7a810581e3914486b4d71abe61bbd10adf02223b2c1e"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-final-authentication-summary.toml",
+          "sha256": "c2e8126e2257489f5c1d9a32ab2795b56c59c0cdc7e0ae3fa685b3cae889a077"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-worktree-retirement-20261013.toml",
+          "sha256": "b2c55fbdf31506bc6b01076de5e4b09734962fb91ac7f119ea17a7fa46d52961"
+        }
+      ]
+    },
+    {
+      "id": "projectile-trails-6053-current-verified-20261013-context",
+      "scope": "Complete native projectile trail script and render frame",
+      "stage": "verified",
+      "commit": "2b62134bfbee7c5dcd4c81616edc5d91e781d44f",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "HandleProjectileTrails",
+        "ProjInstr_MoveLeftProjectileTrailDown",
+        "ProjInstr_MoveLeftProjectileTrailUp",
+        "ProjInstr_MoveRightProjectileTrailDown"
+      ],
+      "limitations": [
+        "Current frozen merged-source family authenticates all 3,316 controlled fixture pairs; earlier fourteen natural frozen-context captures remain separately retained.",
+        "Direct movement opcodes had no hits in the recorded 9,000-input natural prefix. Creation/placement reuse projectile_flight; independent live parity remains pending.",
+        "Installed gameplay commit is integrated into main baseline c711faea56f20d42113eb63393cc4a76d4940557; shared verifier/live wiring remains uncommitted at the authenticated exact frozen source. Final wiring commit remains coordinator work.",
+        "Both run cleanup passes and stale implementer worktree retirement completed before retained authentication. Stage observations remain distinct; original-ROM parity is not tested.",
+        "Checkout at observation refers to the integrated gameplay source checked on 2026-10-13. Retained verification harness is frozen at /tmp/sm-recovery-bounded-source; later changes require their own checks. Older limitations about pending live/final wiring are superseded by composed live observations, without granting additional roots."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-projectile-trails-post-cleanup-authentication.toml",
+          "sha256": "3eb817d9b18f5988eef9462214f44adc041bdc714a635fcdbb623d7ec10cc22c"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/progress-current-integrated-stage-evidence-20261013.md",
+          "sha256": "8683cc19d673cc11110a7a810581e3914486b4d71abe61bbd10adf02223b2c1e"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-final-authentication-summary.toml",
+          "sha256": "c2e8126e2257489f5c1d9a32ab2795b56c59c0cdc7e0ae3fa685b3cae889a077"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-worktree-retirement-20261013.toml",
+          "sha256": "b2c55fbdf31506bc6b01076de5e4b09734962fb91ac7f119ea17a7fa46d52961"
+        }
+      ]
+    },
+    {
+      "id": "projectile-trails-6053-current-integrated-20261013-context",
+      "scope": "Complete native projectile trail script and render frame",
+      "stage": "integrated",
+      "commit": "2b62134bfbee7c5dcd4c81616edc5d91e781d44f",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "HandleProjectileTrails",
+        "ProjInstr_MoveLeftProjectileTrailDown",
+        "ProjInstr_MoveLeftProjectileTrailUp",
+        "ProjInstr_MoveRightProjectileTrailDown"
+      ],
+      "limitations": [
+        "Current frozen merged-source family authenticates all 3,316 controlled fixture pairs; earlier fourteen natural frozen-context captures remain separately retained.",
+        "Direct movement opcodes had no hits in the recorded 9,000-input natural prefix. Creation/placement reuse projectile_flight; independent live parity remains pending.",
+        "Installed gameplay commit is integrated into main baseline c711faea56f20d42113eb63393cc4a76d4940557; shared verifier/live wiring remains uncommitted at the authenticated exact frozen source. Final wiring commit remains coordinator work.",
+        "Both run cleanup passes and stale implementer worktree retirement completed before retained authentication. Stage observations remain distinct; original-ROM parity is not tested.",
+        "Checkout at observation refers to the integrated gameplay source checked on 2026-10-13. Retained verification harness is frozen at /tmp/sm-recovery-bounded-source; later changes require their own checks. Older limitations about pending live/final wiring are superseded by composed live observations, without granting additional roots."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-projectile-trails-post-cleanup-authentication.toml",
+          "sha256": "3eb817d9b18f5988eef9462214f44adc041bdc714a635fcdbb623d7ec10cc22c"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/progress-current-integrated-stage-evidence-20261013.md",
+          "sha256": "8683cc19d673cc11110a7a810581e3914486b4d71abe61bbd10adf02223b2c1e"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-final-authentication-summary.toml",
+          "sha256": "c2e8126e2257489f5c1d9a32ab2795b56c59c0cdc7e0ae3fa685b3cae889a077"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-worktree-retirement-20261013.toml",
+          "sha256": "b2c55fbdf31506bc6b01076de5e4b09734962fb91ac7f119ea17a7fa46d52961"
+        }
+      ]
+    },
+    {
+      "id": "samus-projectile-frame-6053-current-translated-20261013-context",
+      "scope": "Complete scheduled Samus projectile update and render passes",
+      "stage": "translated",
+      "commit": "c711faea56f20d42113eb63393cc4a76d4940557",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "DrawBombAndProjectileExplosions",
+        "DrawPlayerExplosions2",
+        "HandleProjectile",
+        "sub_9382FD"
+      ],
+      "limitations": [
+        "Current frozen merged-source family authenticates 476 whole-frame fixture pairs across all four scheduled boundaries.",
+        "PLM/HDMA services remain explicit C dependencies; pinned C uninitialized-local Ceres drawing branches refuse. Independent live ownership remains pending.",
+        "Installed gameplay commit is integrated into main baseline c711faea56f20d42113eb63393cc4a76d4940557; shared verifier/live wiring remains uncommitted at the authenticated exact frozen source. Final wiring commit remains coordinator work.",
+        "Both run cleanup passes and stale implementer worktree retirement completed before retained authentication. Stage observations remain distinct; original-ROM parity is not tested.",
+        "Checkout at observation refers to the integrated gameplay source checked on 2026-10-13. Retained verification harness is frozen at /tmp/sm-recovery-bounded-source; later changes require their own checks. Older limitations about pending live/final wiring are superseded by composed live observations, without granting additional roots."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-samus-projectile-frame-post-cleanup-authentication.toml",
+          "sha256": "65050116e7f0cca5b253f2985138fef23ea7b571b358565246c1b48b501401b9"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/progress-current-integrated-stage-evidence-20261013.md",
+          "sha256": "8683cc19d673cc11110a7a810581e3914486b4d71abe61bbd10adf02223b2c1e"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-final-authentication-summary.toml",
+          "sha256": "c2e8126e2257489f5c1d9a32ab2795b56c59c0cdc7e0ae3fa685b3cae889a077"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-worktree-retirement-20261013.toml",
+          "sha256": "b2c55fbdf31506bc6b01076de5e4b09734962fb91ac7f119ea17a7fa46d52961"
+        }
+      ]
+    },
+    {
+      "id": "samus-projectile-frame-6053-current-verified-20261013-context",
+      "scope": "Complete scheduled Samus projectile update and render passes",
+      "stage": "verified",
+      "commit": "c711faea56f20d42113eb63393cc4a76d4940557",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "DrawBombAndProjectileExplosions",
+        "DrawPlayerExplosions2",
+        "HandleProjectile",
+        "sub_9382FD"
+      ],
+      "limitations": [
+        "Current frozen merged-source family authenticates 476 whole-frame fixture pairs across all four scheduled boundaries.",
+        "PLM/HDMA services remain explicit C dependencies; pinned C uninitialized-local Ceres drawing branches refuse. Independent live ownership remains pending.",
+        "Installed gameplay commit is integrated into main baseline c711faea56f20d42113eb63393cc4a76d4940557; shared verifier/live wiring remains uncommitted at the authenticated exact frozen source. Final wiring commit remains coordinator work.",
+        "Both run cleanup passes and stale implementer worktree retirement completed before retained authentication. Stage observations remain distinct; original-ROM parity is not tested.",
+        "Checkout at observation refers to the integrated gameplay source checked on 2026-10-13. Retained verification harness is frozen at /tmp/sm-recovery-bounded-source; later changes require their own checks. Older limitations about pending live/final wiring are superseded by composed live observations, without granting additional roots."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-samus-projectile-frame-post-cleanup-authentication.toml",
+          "sha256": "65050116e7f0cca5b253f2985138fef23ea7b571b358565246c1b48b501401b9"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/progress-current-integrated-stage-evidence-20261013.md",
+          "sha256": "8683cc19d673cc11110a7a810581e3914486b4d71abe61bbd10adf02223b2c1e"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-final-authentication-summary.toml",
+          "sha256": "c2e8126e2257489f5c1d9a32ab2795b56c59c0cdc7e0ae3fa685b3cae889a077"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-worktree-retirement-20261013.toml",
+          "sha256": "b2c55fbdf31506bc6b01076de5e4b09734962fb91ac7f119ea17a7fa46d52961"
+        }
+      ]
+    },
+    {
+      "id": "samus-projectile-frame-6053-current-integrated-20261013-context",
+      "scope": "Complete scheduled Samus projectile update and render passes",
+      "stage": "integrated",
+      "commit": "c711faea56f20d42113eb63393cc4a76d4940557",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "DrawBombAndProjectileExplosions",
+        "DrawPlayerExplosions2",
+        "HandleProjectile",
+        "sub_9382FD"
+      ],
+      "limitations": [
+        "Current frozen merged-source family authenticates 476 whole-frame fixture pairs across all four scheduled boundaries.",
+        "PLM/HDMA services remain explicit C dependencies; pinned C uninitialized-local Ceres drawing branches refuse. Independent live ownership remains pending.",
+        "Installed gameplay commit is integrated into main baseline c711faea56f20d42113eb63393cc4a76d4940557; shared verifier/live wiring remains uncommitted at the authenticated exact frozen source. Final wiring commit remains coordinator work.",
+        "Both run cleanup passes and stale implementer worktree retirement completed before retained authentication. Stage observations remain distinct; original-ROM parity is not tested.",
+        "Checkout at observation refers to the integrated gameplay source checked on 2026-10-13. Retained verification harness is frozen at /tmp/sm-recovery-bounded-source; later changes require their own checks. Older limitations about pending live/final wiring are superseded by composed live observations, without granting additional roots."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-samus-projectile-frame-post-cleanup-authentication.toml",
+          "sha256": "65050116e7f0cca5b253f2985138fef23ea7b571b358565246c1b48b501401b9"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/progress-current-integrated-stage-evidence-20261013.md",
+          "sha256": "8683cc19d673cc11110a7a810581e3914486b4d71abe61bbd10adf02223b2c1e"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-final-authentication-summary.toml",
+          "sha256": "c2e8126e2257489f5c1d9a32ab2795b56c59c0cdc7e0ae3fa685b3cae889a077"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-worktree-retirement-20261013.toml",
+          "sha256": "b2c55fbdf31506bc6b01076de5e4b09734962fb91ac7f119ea17a7fa46d52961"
+        }
+      ]
+    },
+    {
+      "id": "camera-scroll-6053-current-translated-20261013-context",
+      "scope": "Complete camera scrolling frame and directional helpers",
+      "stage": "translated",
+      "commit": "7512b6479afe55da270931a9f3ae26c9d558e5a5",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "MainScrollingRoutine",
+        "Samus_HandleScroll_X",
+        "Samus_HandleScroll_Y",
+        "Samus_ScrollFinishedHook_SporeSpawnFight"
+      ],
+      "limitations": [
+        "Current frozen merged-source family authenticates 467 fixture pairs for the whole camera frame, directional helpers and Spore Spawn hook.",
+        "Admitted table indices, room extent and hook domains remain bounded; room and Samus dependencies remain explicit. Independent live ownership remains pending.",
+        "Installed gameplay commit is integrated into main baseline c711faea56f20d42113eb63393cc4a76d4940557; shared verifier/live wiring remains uncommitted at the authenticated exact frozen source. Final wiring commit remains coordinator work.",
+        "Both run cleanup passes and stale implementer worktree retirement completed before retained authentication. Stage observations remain distinct; original-ROM parity is not tested.",
+        "Checkout at observation refers to the integrated gameplay source checked on 2026-10-13. Retained verification harness is frozen at /tmp/sm-recovery-bounded-source; later changes require their own checks. Older limitations about pending live/final wiring are superseded by composed live observations, without granting additional roots."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-camera-scroll-post-cleanup-authentication.toml",
+          "sha256": "dda85bda679c84dc2fea9bef73a1d553901fc6efbcc2c39db2d4b70db466f3bf"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/progress-current-integrated-stage-evidence-20261013.md",
+          "sha256": "8683cc19d673cc11110a7a810581e3914486b4d71abe61bbd10adf02223b2c1e"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-final-authentication-summary.toml",
+          "sha256": "c2e8126e2257489f5c1d9a32ab2795b56c59c0cdc7e0ae3fa685b3cae889a077"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-worktree-retirement-20261013.toml",
+          "sha256": "b2c55fbdf31506bc6b01076de5e4b09734962fb91ac7f119ea17a7fa46d52961"
+        }
+      ]
+    },
+    {
+      "id": "camera-scroll-6053-current-verified-20261013-context",
+      "scope": "Complete camera scrolling frame and directional helpers",
+      "stage": "verified",
+      "commit": "7512b6479afe55da270931a9f3ae26c9d558e5a5",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "MainScrollingRoutine",
+        "Samus_HandleScroll_X",
+        "Samus_HandleScroll_Y",
+        "Samus_ScrollFinishedHook_SporeSpawnFight"
+      ],
+      "limitations": [
+        "Current frozen merged-source family authenticates 467 fixture pairs for the whole camera frame, directional helpers and Spore Spawn hook.",
+        "Admitted table indices, room extent and hook domains remain bounded; room and Samus dependencies remain explicit. Independent live ownership remains pending.",
+        "Installed gameplay commit is integrated into main baseline c711faea56f20d42113eb63393cc4a76d4940557; shared verifier/live wiring remains uncommitted at the authenticated exact frozen source. Final wiring commit remains coordinator work.",
+        "Both run cleanup passes and stale implementer worktree retirement completed before retained authentication. Stage observations remain distinct; original-ROM parity is not tested.",
+        "Checkout at observation refers to the integrated gameplay source checked on 2026-10-13. Retained verification harness is frozen at /tmp/sm-recovery-bounded-source; later changes require their own checks. Older limitations about pending live/final wiring are superseded by composed live observations, without granting additional roots."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-camera-scroll-post-cleanup-authentication.toml",
+          "sha256": "dda85bda679c84dc2fea9bef73a1d553901fc6efbcc2c39db2d4b70db466f3bf"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/progress-current-integrated-stage-evidence-20261013.md",
+          "sha256": "8683cc19d673cc11110a7a810581e3914486b4d71abe61bbd10adf02223b2c1e"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-final-authentication-summary.toml",
+          "sha256": "c2e8126e2257489f5c1d9a32ab2795b56c59c0cdc7e0ae3fa685b3cae889a077"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-worktree-retirement-20261013.toml",
+          "sha256": "b2c55fbdf31506bc6b01076de5e4b09734962fb91ac7f119ea17a7fa46d52961"
+        }
+      ]
+    },
+    {
+      "id": "camera-scroll-6053-current-integrated-20261013-context",
+      "scope": "Complete camera scrolling frame and directional helpers",
+      "stage": "integrated",
+      "commit": "7512b6479afe55da270931a9f3ae26c9d558e5a5",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "MainScrollingRoutine",
+        "Samus_HandleScroll_X",
+        "Samus_HandleScroll_Y",
+        "Samus_ScrollFinishedHook_SporeSpawnFight"
+      ],
+      "limitations": [
+        "Current frozen merged-source family authenticates 467 fixture pairs for the whole camera frame, directional helpers and Spore Spawn hook.",
+        "Admitted table indices, room extent and hook domains remain bounded; room and Samus dependencies remain explicit. Independent live ownership remains pending.",
+        "Installed gameplay commit is integrated into main baseline c711faea56f20d42113eb63393cc4a76d4940557; shared verifier/live wiring remains uncommitted at the authenticated exact frozen source. Final wiring commit remains coordinator work.",
+        "Both run cleanup passes and stale implementer worktree retirement completed before retained authentication. Stage observations remain distinct; original-ROM parity is not tested.",
+        "Checkout at observation refers to the integrated gameplay source checked on 2026-10-13. Retained verification harness is frozen at /tmp/sm-recovery-bounded-source; later changes require their own checks. Older limitations about pending live/final wiring are superseded by composed live observations, without granting additional roots."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-camera-scroll-post-cleanup-authentication.toml",
+          "sha256": "dda85bda679c84dc2fea9bef73a1d553901fc6efbcc2c39db2d4b70db466f3bf"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/progress-current-integrated-stage-evidence-20261013.md",
+          "sha256": "8683cc19d673cc11110a7a810581e3914486b4d71abe61bbd10adf02223b2c1e"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-final-authentication-summary.toml",
+          "sha256": "c2e8126e2257489f5c1d9a32ab2795b56c59c0cdc7e0ae3fa685b3cae889a077"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-worktree-retirement-20261013.toml",
+          "sha256": "b2c55fbdf31506bc6b01076de5e4b09734962fb91ac7f119ea17a7fa46d52961"
+        }
+      ]
+    },
+    {
+      "id": "room-scroll-6053-current-translated-20261013-context",
+      "scope": "Complete normal room scrolling and tilemap queue subsystem",
+      "stage": "translated",
+      "commit": "97afab2f1dc712a2433a1ef35bb9dd8901ca6011",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "CalculateLayer2PosAndScrollsWhenScrolling",
+        "UpdateBackgroundDataRow",
+        "UpdateBgGraphicsWhenScrolling",
+        "UpdateBgScrollOffsets",
+        "UpdateLevelDataRow",
+        "UpdateLevelOrBackgroundDataColumn",
+        "UpdateLevelOrBackgroundDataRow",
+        "UpdatePreviousLayerBlocks",
+        "UpdateScrollVarsUpdateMap",
+        "UploadBackgroundDataColumn",
+        "UploadLevelDataColumn"
+      ],
+      "limitations": [
+        "Current frozen merged-source family authenticates 1,166 fixture pairs across eleven normal scrolling, background and level tilemap queue routines.",
+        "The declared valid input/ROM/queue domain and dependencies bound verification. Independent live state and ordered-effect ownership remain pending.",
+        "Installed gameplay commit is integrated into main baseline c711faea56f20d42113eb63393cc4a76d4940557; shared verifier/live wiring remains uncommitted at the authenticated exact frozen source. Final wiring commit remains coordinator work.",
+        "Both run cleanup passes and stale implementer worktree retirement completed before retained authentication. Stage observations remain distinct; original-ROM parity is not tested.",
+        "Checkout at observation refers to the integrated gameplay source checked on 2026-10-13. Retained verification harness is frozen at /tmp/sm-recovery-bounded-source; later changes require their own checks. Older limitations about pending live/final wiring are superseded by composed live observations, without granting additional roots."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-room-scroll-post-cleanup-authentication.toml",
+          "sha256": "81c27394c658ea079315a6f7a7bdd1e5ab820140b8db968e8d44edcc7b5988fb"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/progress-current-integrated-stage-evidence-20261013.md",
+          "sha256": "8683cc19d673cc11110a7a810581e3914486b4d71abe61bbd10adf02223b2c1e"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-final-authentication-summary.toml",
+          "sha256": "c2e8126e2257489f5c1d9a32ab2795b56c59c0cdc7e0ae3fa685b3cae889a077"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-worktree-retirement-20261013.toml",
+          "sha256": "b2c55fbdf31506bc6b01076de5e4b09734962fb91ac7f119ea17a7fa46d52961"
+        }
+      ]
+    },
+    {
+      "id": "room-scroll-6053-current-verified-20261013-context",
+      "scope": "Complete normal room scrolling and tilemap queue subsystem",
+      "stage": "verified",
+      "commit": "97afab2f1dc712a2433a1ef35bb9dd8901ca6011",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "CalculateLayer2PosAndScrollsWhenScrolling",
+        "UpdateBackgroundDataRow",
+        "UpdateBgGraphicsWhenScrolling",
+        "UpdateBgScrollOffsets",
+        "UpdateLevelDataRow",
+        "UpdateLevelOrBackgroundDataColumn",
+        "UpdateLevelOrBackgroundDataRow",
+        "UpdatePreviousLayerBlocks",
+        "UpdateScrollVarsUpdateMap",
+        "UploadBackgroundDataColumn",
+        "UploadLevelDataColumn"
+      ],
+      "limitations": [
+        "Current frozen merged-source family authenticates 1,166 fixture pairs across eleven normal scrolling, background and level tilemap queue routines.",
+        "The declared valid input/ROM/queue domain and dependencies bound verification. Independent live state and ordered-effect ownership remain pending.",
+        "Installed gameplay commit is integrated into main baseline c711faea56f20d42113eb63393cc4a76d4940557; shared verifier/live wiring remains uncommitted at the authenticated exact frozen source. Final wiring commit remains coordinator work.",
+        "Both run cleanup passes and stale implementer worktree retirement completed before retained authentication. Stage observations remain distinct; original-ROM parity is not tested.",
+        "Checkout at observation refers to the integrated gameplay source checked on 2026-10-13. Retained verification harness is frozen at /tmp/sm-recovery-bounded-source; later changes require their own checks. Older limitations about pending live/final wiring are superseded by composed live observations, without granting additional roots."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-room-scroll-post-cleanup-authentication.toml",
+          "sha256": "81c27394c658ea079315a6f7a7bdd1e5ab820140b8db968e8d44edcc7b5988fb"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/progress-current-integrated-stage-evidence-20261013.md",
+          "sha256": "8683cc19d673cc11110a7a810581e3914486b4d71abe61bbd10adf02223b2c1e"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-final-authentication-summary.toml",
+          "sha256": "c2e8126e2257489f5c1d9a32ab2795b56c59c0cdc7e0ae3fa685b3cae889a077"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-worktree-retirement-20261013.toml",
+          "sha256": "b2c55fbdf31506bc6b01076de5e4b09734962fb91ac7f119ea17a7fa46d52961"
+        }
+      ]
+    },
+    {
+      "id": "room-scroll-6053-current-integrated-20261013-context",
+      "scope": "Complete normal room scrolling and tilemap queue subsystem",
+      "stage": "integrated",
+      "commit": "97afab2f1dc712a2433a1ef35bb9dd8901ca6011",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "CalculateLayer2PosAndScrollsWhenScrolling",
+        "UpdateBackgroundDataRow",
+        "UpdateBgGraphicsWhenScrolling",
+        "UpdateBgScrollOffsets",
+        "UpdateLevelDataRow",
+        "UpdateLevelOrBackgroundDataColumn",
+        "UpdateLevelOrBackgroundDataRow",
+        "UpdatePreviousLayerBlocks",
+        "UpdateScrollVarsUpdateMap",
+        "UploadBackgroundDataColumn",
+        "UploadLevelDataColumn"
+      ],
+      "limitations": [
+        "Current frozen merged-source family authenticates 1,166 fixture pairs across eleven normal scrolling, background and level tilemap queue routines.",
+        "The declared valid input/ROM/queue domain and dependencies bound verification. Independent live state and ordered-effect ownership remain pending.",
+        "Installed gameplay commit is integrated into main baseline c711faea56f20d42113eb63393cc4a76d4940557; shared verifier/live wiring remains uncommitted at the authenticated exact frozen source. Final wiring commit remains coordinator work.",
+        "Both run cleanup passes and stale implementer worktree retirement completed before retained authentication. Stage observations remain distinct; original-ROM parity is not tested.",
+        "Checkout at observation refers to the integrated gameplay source checked on 2026-10-13. Retained verification harness is frozen at /tmp/sm-recovery-bounded-source; later changes require their own checks. Older limitations about pending live/final wiring are superseded by composed live observations, without granting additional roots."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-room-scroll-post-cleanup-authentication.toml",
+          "sha256": "81c27394c658ea079315a6f7a7bdd1e5ab820140b8db968e8d44edcc7b5988fb"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/progress-current-integrated-stage-evidence-20261013.md",
+          "sha256": "8683cc19d673cc11110a7a810581e3914486b4d71abe61bbd10adf02223b2c1e"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-final-authentication-summary.toml",
+          "sha256": "c2e8126e2257489f5c1d9a32ab2795b56c59c0cdc7e0ae3fa685b3cae889a077"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-worktree-retirement-20261013.toml",
+          "sha256": "b2c55fbdf31506bc6b01076de5e4b09734962fb91ac7f119ea17a7fa46d52961"
+        }
+      ]
+    },
+    {
+      "id": "observed-ridley-instructions-6053-current-translated-20261013-context",
+      "scope": "Complete bounded native Ridley attack instruction frames",
+      "stage": "translated",
+      "commit": "e947e968086a15c170f58472764bf9244b403a2a",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "ProcessEnemyInstructions",
+        "Ridley_Instr_1",
+        "Ridley_Instr_10",
+        "Ridley_Instr_11",
+        "Ridley_Instr_12",
+        "Ridley_Instr_13",
+        "Ridley_Instr_5",
+        "Ridley_Instr_6"
+      ],
+      "limitations": [
+        "Current frozen merged-source family authenticates 1,804 controlled fixture pairs plus ninety retained natural complete-frame/callback captures.",
+        "ProcessEnemyInstructions coverage is limited to the admitted native Ridley attack script. Other banks/scripts, enemy AI and the broader 220-definition lifecycle remain separate; typed C services and refused scripts remain explicit.",
+        "Full attack live ownership, opcode/effect sequence parity and original-ROM parity remain pending.",
+        "Installed gameplay commit is integrated into main baseline c711faea56f20d42113eb63393cc4a76d4940557; shared verifier/live wiring remains uncommitted at the authenticated exact frozen source. Final wiring commit remains coordinator work.",
+        "Both run cleanup passes and stale implementer worktree retirement completed before retained authentication. Stage observations remain distinct; original-ROM parity is not tested.",
+        "Checkout at observation refers to the integrated gameplay source checked on 2026-10-13. Retained verification harness is frozen at /tmp/sm-recovery-bounded-source; later changes require their own checks. Older limitations about pending live/final wiring are superseded by composed live observations, without granting additional roots."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-observed-ridley-instructions-post-cleanup-authentication.toml",
+          "sha256": "368007a9710230a424643b552cb36162c99539ba04ff6a62e9df2417f430538f"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/progress-current-integrated-stage-evidence-20261013.md",
+          "sha256": "8683cc19d673cc11110a7a810581e3914486b4d71abe61bbd10adf02223b2c1e"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-final-authentication-summary.toml",
+          "sha256": "c2e8126e2257489f5c1d9a32ab2795b56c59c0cdc7e0ae3fa685b3cae889a077"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-worktree-retirement-20261013.toml",
+          "sha256": "b2c55fbdf31506bc6b01076de5e4b09734962fb91ac7f119ea17a7fa46d52961"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-observed-ridley-instructions-captured-post-cleanup-authentication.toml",
+          "sha256": "45816dd7d31d3227797192153860b5b459b1c4e1e5390c706e4f550e8b672a37"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/parallel-138-scope-ridley-subsystem.md",
+          "sha256": "f210b0355350b3e89af96bcd507b26be1c401fe4ddc74b8d049a84391b21c8cd"
+        }
+      ]
+    },
+    {
+      "id": "observed-ridley-instructions-6053-current-verified-20261013-context",
+      "scope": "Complete bounded native Ridley attack instruction frames",
+      "stage": "verified",
+      "commit": "e947e968086a15c170f58472764bf9244b403a2a",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "ProcessEnemyInstructions",
+        "Ridley_Instr_1",
+        "Ridley_Instr_10",
+        "Ridley_Instr_11",
+        "Ridley_Instr_12",
+        "Ridley_Instr_13",
+        "Ridley_Instr_5",
+        "Ridley_Instr_6"
+      ],
+      "limitations": [
+        "Current frozen merged-source family authenticates 1,804 controlled fixture pairs plus ninety retained natural complete-frame/callback captures.",
+        "ProcessEnemyInstructions coverage is limited to the admitted native Ridley attack script. Other banks/scripts, enemy AI and the broader 220-definition lifecycle remain separate; typed C services and refused scripts remain explicit.",
+        "Full attack live ownership, opcode/effect sequence parity and original-ROM parity remain pending.",
+        "Installed gameplay commit is integrated into main baseline c711faea56f20d42113eb63393cc4a76d4940557; shared verifier/live wiring remains uncommitted at the authenticated exact frozen source. Final wiring commit remains coordinator work.",
+        "Both run cleanup passes and stale implementer worktree retirement completed before retained authentication. Stage observations remain distinct; original-ROM parity is not tested.",
+        "Checkout at observation refers to the integrated gameplay source checked on 2026-10-13. Retained verification harness is frozen at /tmp/sm-recovery-bounded-source; later changes require their own checks. Older limitations about pending live/final wiring are superseded by composed live observations, without granting additional roots."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-observed-ridley-instructions-post-cleanup-authentication.toml",
+          "sha256": "368007a9710230a424643b552cb36162c99539ba04ff6a62e9df2417f430538f"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/progress-current-integrated-stage-evidence-20261013.md",
+          "sha256": "8683cc19d673cc11110a7a810581e3914486b4d71abe61bbd10adf02223b2c1e"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-final-authentication-summary.toml",
+          "sha256": "c2e8126e2257489f5c1d9a32ab2795b56c59c0cdc7e0ae3fa685b3cae889a077"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-worktree-retirement-20261013.toml",
+          "sha256": "b2c55fbdf31506bc6b01076de5e4b09734962fb91ac7f119ea17a7fa46d52961"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-observed-ridley-instructions-captured-post-cleanup-authentication.toml",
+          "sha256": "45816dd7d31d3227797192153860b5b459b1c4e1e5390c706e4f550e8b672a37"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/parallel-138-scope-ridley-subsystem.md",
+          "sha256": "f210b0355350b3e89af96bcd507b26be1c401fe4ddc74b8d049a84391b21c8cd"
+        }
+      ]
+    },
+    {
+      "id": "observed-ridley-instructions-6053-current-integrated-20261013-context",
+      "scope": "Complete bounded native Ridley attack instruction frames",
+      "stage": "integrated",
+      "commit": "e947e968086a15c170f58472764bf9244b403a2a",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "ProcessEnemyInstructions",
+        "Ridley_Instr_1",
+        "Ridley_Instr_10",
+        "Ridley_Instr_11",
+        "Ridley_Instr_12",
+        "Ridley_Instr_13",
+        "Ridley_Instr_5",
+        "Ridley_Instr_6"
+      ],
+      "limitations": [
+        "Current frozen merged-source family authenticates 1,804 controlled fixture pairs plus ninety retained natural complete-frame/callback captures.",
+        "ProcessEnemyInstructions coverage is limited to the admitted native Ridley attack script. Other banks/scripts, enemy AI and the broader 220-definition lifecycle remain separate; typed C services and refused scripts remain explicit.",
+        "Full attack live ownership, opcode/effect sequence parity and original-ROM parity remain pending.",
+        "Installed gameplay commit is integrated into main baseline c711faea56f20d42113eb63393cc4a76d4940557; shared verifier/live wiring remains uncommitted at the authenticated exact frozen source. Final wiring commit remains coordinator work.",
+        "Both run cleanup passes and stale implementer worktree retirement completed before retained authentication. Stage observations remain distinct; original-ROM parity is not tested.",
+        "Checkout at observation refers to the integrated gameplay source checked on 2026-10-13. Retained verification harness is frozen at /tmp/sm-recovery-bounded-source; later changes require their own checks. Older limitations about pending live/final wiring are superseded by composed live observations, without granting additional roots."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-observed-ridley-instructions-post-cleanup-authentication.toml",
+          "sha256": "368007a9710230a424643b552cb36162c99539ba04ff6a62e9df2417f430538f"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/progress-current-integrated-stage-evidence-20261013.md",
+          "sha256": "8683cc19d673cc11110a7a810581e3914486b4d71abe61bbd10adf02223b2c1e"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-final-authentication-summary.toml",
+          "sha256": "c2e8126e2257489f5c1d9a32ab2795b56c59c0cdc7e0ae3fa685b3cae889a077"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-worktree-retirement-20261013.toml",
+          "sha256": "b2c55fbdf31506bc6b01076de5e4b09734962fb91ac7f119ea17a7fa46d52961"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-observed-ridley-instructions-captured-post-cleanup-authentication.toml",
+          "sha256": "45816dd7d31d3227797192153860b5b459b1c4e1e5390c706e4f550e8b672a37"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/parallel-138-scope-ridley-subsystem.md",
+          "sha256": "f210b0355350b3e89af96bcd507b26be1c401fe4ddc74b8d049a84391b21c8cd"
+        }
+      ]
+    },
+    {
+      "id": "observed-projectile-ownership-6053-current-translated-20261013-context",
+      "scope": "Complete native projectile allocation and scheduling boundaries",
+      "stage": "translated",
+      "commit": "692805ce76eb73763a36cdf24082f829b98248cd",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "EprojRunAll",
+        "SpawnEprojWithGfx",
+        "SpawnEprojWithRoomGfx"
+      ],
+      "limitations": [
+        "Current frozen merged-source ownership family authenticates 1,840 fixture pairs plus the separately authenticated initializer, frame, rendering and contact prerequisites.",
+        "The fourth declared entry EprojInstruction is a synthetic adapter control outside the C inventory and contributes no C-definition coverage; three actual native definitions are reported.",
+        "Admitted nine-ID projectile trajectory and typed callback/host closure remain bounded. Historical resolved native137 evidence is preserved; fresh full composed live evidence remains pending.",
+        "Installed gameplay commit is integrated into main baseline c711faea56f20d42113eb63393cc4a76d4940557; shared verifier/live wiring remains uncommitted at the authenticated exact frozen source. Final wiring commit remains coordinator work.",
+        "Both run cleanup passes and stale implementer worktree retirement completed before retained authentication. Stage observations remain distinct; original-ROM parity is not tested.",
+        "Checkout at observation refers to the integrated gameplay source checked on 2026-10-13. Retained verification harness is frozen at /tmp/sm-recovery-bounded-source; later changes require their own checks. Older limitations about pending live/final wiring are superseded by composed live observations, without granting additional roots."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/progress-integrated-observed-projectile-ownership-authentication.toml",
+          "sha256": "da5c6089fb8919d4f4483cddafa05c5537e50d560f1bc8be1655bbd27474de2f"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/progress-current-integrated-stage-evidence-20261013.md",
+          "sha256": "8683cc19d673cc11110a7a810581e3914486b4d71abe61bbd10adf02223b2c1e"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-final-authentication-summary.toml",
+          "sha256": "c2e8126e2257489f5c1d9a32ab2795b56c59c0cdc7e0ae3fa685b3cae889a077"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-worktree-retirement-20261013.toml",
+          "sha256": "b2c55fbdf31506bc6b01076de5e4b09734962fb91ac7f119ea17a7fa46d52961"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/progress-integrated-first-six-authentication-20261013.md",
+          "sha256": "00c621ee4ee0dea3fe37c6a5d01e958f019016ec0ecbfe31087d6229bd03904c"
+        }
+      ]
+    },
+    {
+      "id": "observed-projectile-ownership-6053-current-verified-20261013-context",
+      "scope": "Complete native projectile allocation and scheduling boundaries",
+      "stage": "verified",
+      "commit": "692805ce76eb73763a36cdf24082f829b98248cd",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "EprojRunAll",
+        "SpawnEprojWithGfx",
+        "SpawnEprojWithRoomGfx"
+      ],
+      "limitations": [
+        "Current frozen merged-source ownership family authenticates 1,840 fixture pairs plus the separately authenticated initializer, frame, rendering and contact prerequisites.",
+        "The fourth declared entry EprojInstruction is a synthetic adapter control outside the C inventory and contributes no C-definition coverage; three actual native definitions are reported.",
+        "Admitted nine-ID projectile trajectory and typed callback/host closure remain bounded. Historical resolved native137 evidence is preserved; fresh full composed live evidence remains pending.",
+        "Installed gameplay commit is integrated into main baseline c711faea56f20d42113eb63393cc4a76d4940557; shared verifier/live wiring remains uncommitted at the authenticated exact frozen source. Final wiring commit remains coordinator work.",
+        "Both run cleanup passes and stale implementer worktree retirement completed before retained authentication. Stage observations remain distinct; original-ROM parity is not tested.",
+        "Checkout at observation refers to the integrated gameplay source checked on 2026-10-13. Retained verification harness is frozen at /tmp/sm-recovery-bounded-source; later changes require their own checks. Older limitations about pending live/final wiring are superseded by composed live observations, without granting additional roots."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/progress-integrated-observed-projectile-ownership-authentication.toml",
+          "sha256": "da5c6089fb8919d4f4483cddafa05c5537e50d560f1bc8be1655bbd27474de2f"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/progress-current-integrated-stage-evidence-20261013.md",
+          "sha256": "8683cc19d673cc11110a7a810581e3914486b4d71abe61bbd10adf02223b2c1e"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-final-authentication-summary.toml",
+          "sha256": "c2e8126e2257489f5c1d9a32ab2795b56c59c0cdc7e0ae3fa685b3cae889a077"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-worktree-retirement-20261013.toml",
+          "sha256": "b2c55fbdf31506bc6b01076de5e4b09734962fb91ac7f119ea17a7fa46d52961"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/progress-integrated-first-six-authentication-20261013.md",
+          "sha256": "00c621ee4ee0dea3fe37c6a5d01e958f019016ec0ecbfe31087d6229bd03904c"
+        }
+      ]
+    },
+    {
+      "id": "observed-projectile-ownership-6053-current-integrated-20261013-context",
+      "scope": "Complete native projectile allocation and scheduling boundaries",
+      "stage": "integrated",
+      "commit": "692805ce76eb73763a36cdf24082f829b98248cd",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "EprojRunAll",
+        "SpawnEprojWithGfx",
+        "SpawnEprojWithRoomGfx"
+      ],
+      "limitations": [
+        "Current frozen merged-source ownership family authenticates 1,840 fixture pairs plus the separately authenticated initializer, frame, rendering and contact prerequisites.",
+        "The fourth declared entry EprojInstruction is a synthetic adapter control outside the C inventory and contributes no C-definition coverage; three actual native definitions are reported.",
+        "Admitted nine-ID projectile trajectory and typed callback/host closure remain bounded. Historical resolved native137 evidence is preserved; fresh full composed live evidence remains pending.",
+        "Installed gameplay commit is integrated into main baseline c711faea56f20d42113eb63393cc4a76d4940557; shared verifier/live wiring remains uncommitted at the authenticated exact frozen source. Final wiring commit remains coordinator work.",
+        "Both run cleanup passes and stale implementer worktree retirement completed before retained authentication. Stage observations remain distinct; original-ROM parity is not tested.",
+        "Checkout at observation refers to the integrated gameplay source checked on 2026-10-13. Retained verification harness is frozen at /tmp/sm-recovery-bounded-source; later changes require their own checks. Older limitations about pending live/final wiring are superseded by composed live observations, without granting additional roots."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/progress-integrated-observed-projectile-ownership-authentication.toml",
+          "sha256": "da5c6089fb8919d4f4483cddafa05c5537e50d560f1bc8be1655bbd27474de2f"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/progress-current-integrated-stage-evidence-20261013.md",
+          "sha256": "8683cc19d673cc11110a7a810581e3914486b4d71abe61bbd10adf02223b2c1e"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-final-authentication-summary.toml",
+          "sha256": "c2e8126e2257489f5c1d9a32ab2795b56c59c0cdc7e0ae3fa685b3cae889a077"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-worktree-retirement-20261013.toml",
+          "sha256": "b2c55fbdf31506bc6b01076de5e4b09734962fb91ac7f119ea17a7fa46d52961"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/progress-integrated-first-six-authentication-20261013.md",
+          "sha256": "00c621ee4ee0dea3fe37c6a5d01e958f019016ec0ecbfe31087d6229bd03904c"
+        }
+      ]
+    },
+    {
+      "id": "projectile-trails-root-6053-live-context-20261013",
+      "scope": "Complete native projectile trail script and render frame: scheduled root",
+      "stage": "live-exercised",
+      "commit": "3ce28ba58aba319b60bbc949153baafd4433132e",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "HandleProjectileTrails"
+      ],
+      "limitations": [
+        "Four fresh C/mixed subjects over 9,000 inputs; each mixed subject records 3,824 Rust whole-frame calls, 167 active calls and zero refusals, with matching state/effects and zero CPU fallback. Movement opcodes had no natural hits; native137 is not installed in this separate trail replay. Original-ROM parity and credits completion are not tested.",
+        "Gameplay source was integrated at observation; verification harness and CLI remain sealed at their retained frozen source. This sibling records context without altering the legacy ID or relying on its later-edited audit report."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/out/recovery-session/trails-live/1791860457650339558-98848/verdict.toml",
+          "sha256": "312036af96f789c07af1ff370800a69fbaa28fcba2a26dc3d4c3507f2e240508"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-trails-live-post-cleanup-authentication.toml",
+          "sha256": "ccb12000b2cd50cd9ac02957b8643edbcf496f66f0ff62e5090883c89e0806ef"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-trails-live-final-cleanup.toml",
+          "sha256": "7aef7007ae03b4f96149adea2ce5c7da13a9c93d0157ca78d16496afcd4ddf0c"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/recovery-trails-live-final-dedup.toml",
+          "sha256": "2624524f0fb2f448e1351f8dad525947deffaa761537e3f3206162e1f18829b7"
+        }
+      ]
+    },
+    {
+      "id": "source-audio-6053-translated-accuracy-20261013",
+      "scope": "Maintained audio implementation mapping",
+      "stage": "translated",
+      "commit": "3ce28ba58aba319b60bbc949153baafd4433132e",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "HasQueuedMusic",
+        "QueueMusic_Delayed8",
+        "QueueMusic_DelayedY",
+        "QueueSfx1_Internal",
+        "QueueSfx1_Max1",
+        "QueueSfx1_Max15",
+        "QueueSfx1_Max3",
+        "QueueSfx1_Max6",
+        "QueueSfx1_Max9",
+        "QueueSfx2_Internal",
+        "QueueSfx2_Max1",
+        "QueueSfx2_Max15",
+        "QueueSfx2_Max3",
+        "QueueSfx2_Max6",
+        "QueueSfx2_Max9",
+        "QueueSfx3_Internal",
+        "QueueSfx3_Max1",
+        "QueueSfx3_Max15",
+        "QueueSfx3_Max3",
+        "QueueSfx3_Max6",
+        "QueueSfx3_Max9"
+      ],
+      "limitations": [
+        "Maintained executable Rust implementations mapped through explicit dispatch branches, numeric selectors or reviewed private aliases to exact pinned C definitions. Source correspondence establishes translated coverage only; bounded branches, delegated C/host effects and per-module limitations are retained in source-coverage-map.json.",
+        "This observation does not grant verification, integration or live exercise. Missing routine reports and source-only mappings remain distinct from missing implementations; documentation literals and forwarding references are excluded unless their implementation owner was mapped separately."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/crates/port/src/audio.rs",
+          "sha256": "4308e496267857ca869db45f4127e505bec4ad29c4c9ede8f08d6e9769ccf69d"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-strategy/source-coverage-map.json",
+          "sha256": "a6c1f07e6519ce53b9c38045585b9c4f332b5945391541a60c9938da335544b5"
+        }
+      ]
+    },
+    {
+      "id": "source-system-6053-translated-accuracy-20261013",
+      "scope": "Maintained system implementation mapping",
+      "stage": "translated",
+      "commit": "3ce28ba58aba319b60bbc949153baafd4433132e",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "CheckBossBitForCurArea",
+        "CheckEventHappened",
+        "ClearBossBitForCurArea",
+        "ClearEventHappened",
+        "ClearOamExt",
+        "ClearUnusedOam",
+        "HandleFadeIn",
+        "HandleFadeOut",
+        "Multiply16x16",
+        "PrepareBitAccess",
+        "ReleaseButtonsFilter",
+        "SetBossBitForCurArea",
+        "SetEventHappened",
+        "WriteLotsOf0x1c2f",
+        "sub_8088EB",
+        "sub_8088FE",
+        "sub_808911"
+      ],
+      "limitations": [
+        "Maintained executable Rust implementations mapped through explicit dispatch branches, numeric selectors or reviewed private aliases to exact pinned C definitions. Source correspondence establishes translated coverage only; bounded branches, delegated C/host effects and per-module limitations are retained in source-coverage-map.json.",
+        "This observation does not grant verification, integration or live exercise. Missing routine reports and source-only mappings remain distinct from missing implementations; documentation literals and forwarding references are excluded unless their implementation owner was mapped separately."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/crates/port/src/system.rs",
+          "sha256": "bedc7662f4c1c435c968a6c07c73331a76f6c58621b4ca885f73f6be33ccbf16"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-strategy/source-coverage-map.json",
+          "sha256": "a6c1f07e6519ce53b9c38045585b9c4f332b5945391541a60c9938da335544b5"
+        }
+      ]
+    },
+    {
+      "id": "shared-game-host-6053-current-verified-audit-20261013",
+      "scope": "Shared Samus projectile and room display host · retained actual-C checks",
+      "stage": "verified",
+      "commit": "73547105d870f8b05f8c6bcf55b768c223889fdb",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "HandleProjectile",
+        "DrawPlayerExplosions2",
+        "sub_9382FD",
+        "DrawBombAndProjectileExplosions",
+        "DisplayViewablePartOfRoom"
+      ],
+      "limitations": [
+        "Retained observation-time source matches the current shared host, Rust dependencies and host harness; this audit rehashed all 490 sealed artifacts without executing gameplay.",
+        "Seven projectile fixtures across four native roots and three room-display fixtures for one root passed full WRAM, returns and ordered callbacks; this is only the declared fixture domain.",
+        "PLM, HDMA allocation and VRAM flush dependencies remain actual-C Host services; host forwarding contributes no second native body.",
+        "Source commit 73547105d870f8b05f8c6bcf55b768c223889fdb was merged by e8c9c3e10ac71bf0377dc00d7de5764a4263b445; durable integrate-shared-game-host completion is still running, so this record grants no integrated stage.",
+        "Both retained verdicts have live_exercised=false and original-ROM parity not tested. No new live exercise or ordinary-reset Ceres escape acceptance is established.",
+        "Published by reporting audit; report time is not the implementation or fixture execution date."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-progress/state-audit/evidence-findings.md",
+          "sha256": "15b227c180ff654ec021e67022ad0a2ffb60d7e5671faccff76f8da0bc62b49b"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/ceres-continuation/host-implementation.toml",
+          "sha256": "7b4f118b21b969bd02abc16192cbc3caccb1c118d5cef6a5d39e3751afeaffeb"
+        },
+        {
+          "path": "/home/jim/sm-decomp/out/port/ceres-continuation/game-host-projectile/1791873394532541-258459-0/verdict.toml",
+          "sha256": "18f355479a34ef10be6196e2c1507f6ded34d522693f068feb1313078492abad"
+        },
+        {
+          "path": "/home/jim/sm-decomp/out/port/ceres-continuation/game-host-room-scroll/1791873418836128-259326-0/verdict.toml",
+          "sha256": "ddb49cbd79a7249b45745044f9f6c95a7e98671fa74e0b313a7f81bf8c869d1d"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/ceres-continuation/projectile-after-cleanup.stdout",
+          "sha256": "18f355479a34ef10be6196e2c1507f6ded34d522693f068feb1313078492abad"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/ceres-continuation/room-after-cleanup.stdout",
+          "sha256": "ddb49cbd79a7249b45745044f9f6c95a7e98671fa74e0b313a7f81bf8c869d1d"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/ceres-continuation/projectile-cleanup-final.toml",
+          "sha256": "db5bac8a65aebadf59f0fdf35212019050be91606a9165b298d3f3d192ecacdc"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/ceres-continuation/projectile-dedup-final.toml",
+          "sha256": "8289a641627e9cb5f34ef590eb2b7486a7be5ab6cb77ff5cceb28b982cb79141"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/ceres-continuation/room-cleanup.toml",
+          "sha256": "db5bac8a65aebadf59f0fdf35212019050be91606a9165b298d3f3d192ecacdc"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/ceres-continuation/room-dedup.toml",
+          "sha256": "1975e26b0b408912e186ad592a709e23c415207dde8446dfd342e4754b1f8dc9"
+        }
+      ]
+    },
+    {
+      "id": "room-display-6053-current-translated-audit-20261013",
+      "scope": "Room display · reviewed guarded native entry",
+      "stage": "translated",
+      "commit": "e8c9c3e10ac71bf0377dc00d7de5764a4263b445",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "DisplayViewablePartOfRoom"
+      ],
+      "limitations": [
+        "Reviewed display() implements C80:A176's 17 foreground/conditional-background columns and ordered synchronous VRAM flushes; the original lexical Rust extractor missed dispatch_host's if guard.",
+        "Only admitted viewport, layer2, tile/queue and transactional refusal domains are translated. Hardware VRAM processing remains Host-owned.",
+        "The separate shared-host verified record names retained actual-C fixtures; integration completion and live acceptance remain pending.",
+        "Source correspondence is a qualified implementation inventory, not full-game completion or original-ROM parity; report time is an audit publication date."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-progress/state-audit/evidence-findings.md",
+          "sha256": "15b227c180ff654ec021e67022ad0a2ffb60d7e5671faccff76f8da0bc62b49b"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-progress/state-audit/source-coverage-map.json",
+          "sha256": "707b7fe9c242d5ffbd34239078dbfff07cfbdb855966997c06aee0a3bcd8e212"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-progress/state-audit/source-aliases.tsv",
+          "sha256": "469581f69f2b3b2e0c5099b32e2734887bf30de614342a906a413655b28fbcf6"
+        },
+        {
+          "path": "/home/jim/sm-decomp/crates/port/src/room_scroll.rs",
+          "sha256": "cc2c7ee9138a1c781321045e28246c083fca6a53ce284ac626d9abf5bdb5bdf0"
+        },
+        {
+          "path": "/home/jim/sm-decomp/out/port/ceres-continuation/game-host-room-scroll/1791873418836128-259326-0/verdict.toml",
+          "sha256": "ddb49cbd79a7249b45745044f9f6c95a7e98671fa74e0b313a7f81bf8c869d1d"
+        }
+      ]
+    },
+    {
+      "id": "ridley-v2-controlled-6053-frozen-verified-audit-20261013",
+      "scope": "Ridley hardware v2 · controlled frozen fixture domain",
+      "stage": "verified",
+      "commit": null,
+      "evidence_context": "historical-frozen",
+      "routines": [
+        "CallRidleyFunc",
+        "CeresRidley_Hurt",
+        "CeresRidley_Init",
+        "CeresRidley_Main",
+        "HandleCeresRidleyGetawayCutscene",
+        "ProcessEnemyInstructions",
+        "Ridley_A2F2",
+        "Ridley_Func_2",
+        "Ridley_Func_70",
+        "Ridley_Hurt",
+        "Ridley_Instr_1",
+        "Ridley_Instr_2",
+        "Ridley_Instr_3",
+        "Ridley_Instr_4",
+        "Ridley_Instr_5",
+        "Ridley_Instr_6",
+        "Ridley_Instr_7",
+        "Ridley_Instr_8",
+        "Ridley_Instr_9",
+        "Ridley_Instr_10",
+        "Ridley_Instr_11",
+        "Ridley_Instr_12",
+        "Ridley_Instr_13",
+        "Ridley_Instr_14",
+        "Ridley_Instr_15",
+        "Ridley_Instr_16",
+        "Ridley_Main",
+        "Ridley_Powerbomb",
+        "Ridley_Shot",
+        "RidleysExplosion_Init",
+        "RidleysExplosion_Main",
+        "sub_A6DF59",
+        "sub_A6DF60"
+      ],
+      "limitations": [
+        "6,457 controlled fixture pairs over 33 native roots, seven rejected ABI controls and 305 actual-C callbacks; frozen hardware-v2/candidate source and evidence readers own these gates.",
+        "Both PPU views, active PPU discriminator and open-bus contracts are retained; this record does not authenticate current main-checkout Ridley inputs.",
+        "Original verdicts and retained post-cleanup authentication receipts match; audit did not rerun fixtures or every bulky Ridley artifact reader.",
+        "All native roots already had a verified observation; this adds later bounded provenance with no increase in unique verified coverage.",
+        "Whole 220-definition Ridley lifecycle integration/live acceptance, boss/explosion inputs, full replay and original-ROM parity remain pending.",
+        "Report time is this audit publication, not the controlled fixture run date."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-progress/state-audit/evidence-findings.md",
+          "sha256": "15b227c180ff654ec021e67022ad0a2ffb60d7e5671faccff76f8da0bc62b49b"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/ridley-hardware-recovery/controlled/1791860698541096-105766-0/verdict.toml",
+          "sha256": "78b129866e34ab71834a10e9563bd6541ededaaeff9234b563996eb6ffbd4c58"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/ridley-hardware-recovery/controlled-after-cleanup-authentication.toml",
+          "sha256": "78b129866e34ab71834a10e9563bd6541ededaaeff9234b563996eb6ffbd4c58"
+        },
+        {
+          "path": "/home/jim/sm-decomp/out/recovery-session/ridley-whole-final-offline/1791866846960194-145753-0/verdict.toml",
+          "sha256": "def8416e90f8e39d6974f4d4afdc3778af2978061737833c8e5bd18a9e82ec69"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/ridley-live-whole-final-post-cleanup-auth.toml",
+          "sha256": "def8416e90f8e39d6974f4d4afdc3778af2978061737833c8e5bd18a9e82ec69"
+        }
+      ]
+    },
+    {
+      "id": "ridley-v2-natural-6053-frozen-verified-audit-20261013",
+      "scope": "Ridley hardware v2 · natural Ceres fixture domain",
+      "stage": "verified",
+      "commit": null,
+      "evidence_context": "historical-frozen",
+      "routines": [
+        "CallRidleyFunc",
+        "CeresRidley_Init",
+        "CeresRidley_Main",
+        "EnemyInstr_Sleep",
+        "HandleCeresRidleyGetawayCutscene",
+        "ProcessEnemyInstructions",
+        "Ridley_A2F2",
+        "Ridley_Func_70",
+        "Ridley_Instr_1",
+        "Ridley_Instr_2",
+        "Ridley_Instr_5",
+        "Ridley_Instr_6",
+        "Ridley_Instr_10",
+        "Ridley_Instr_11",
+        "Ridley_Instr_12",
+        "Ridley_Instr_13",
+        "Ridley_Instr_14",
+        "Ridley_Instr_15",
+        "Ridley_Shot",
+        "sub_A6DF59"
+      ],
+      "limitations": [
+        "670 genuine unpatched fixture pairs over 20 native roots and eight actual-C callbacks; all are Ceres header E13F and area 6 in frozen isolated source.",
+        "Only 574 of 670 fixture calls are admitted by public original-ROM selection; 92 direct fixture-only states and four getaway boundaries refuse.",
+        "Offline fixtures establish their exact tested inputs only; this is neither accepted live replay coverage nor whole-Ridley original-ROM parity.",
+        "Original verdict and retained post-cleanup authentication match; audit reread receipts without new gameplay/fixture execution.",
+        "All 20 roots already count as verified. This historical provenance record changes no unique total and must not be called integrated/current main acceptance.",
+        "Report time is an audit publication date."
+      ],
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-progress/state-audit/evidence-findings.md",
+          "sha256": "15b227c180ff654ec021e67022ad0a2ffb60d7e5671faccff76f8da0bc62b49b"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/ridley-hardware-recovery/natural/1791861212110218-129925-0/verdict.toml",
+          "sha256": "addb9a189d44f1066dbe6ad723bacd193548bcdc240e34eaf022d167a8b5b9aa"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/ridley-hardware-recovery/natural-after-cleanup-authentication.toml",
+          "sha256": "addb9a189d44f1066dbe6ad723bacd193548bcdc240e34eaf022d167a8b5b9aa"
+        }
+      ]
+    }
+  ]
+}

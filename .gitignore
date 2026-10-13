@@ -34,6 +34,9 @@ __pycache__/
 /.scratch/decomp-port/ridley-natural-recovery/family/
 /.scratch/decomp-port/ridley-natural-recovery/snapshots/
 
+# Swarm preparation retains frozen executables locally with build/hash receipts.
+/.scratch/decomp-parallel/**/bin/
+
 # Preserve raw command receipts locally and in checkpoint receipt archives.
 /.scratch/**/*.stdout
 /.scratch/**/*.stderr

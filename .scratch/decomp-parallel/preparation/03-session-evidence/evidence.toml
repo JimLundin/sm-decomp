@@ -1,0 +1,17 @@
+schema = "decomp-session-tools-verification-v1"
+worker_session_id = "01a13474-5fcc-7861-84f8-5c353938bdd2"
+source_commit = "9a5516c2f1a930b7e960daf60694694c410d3990"
+tested_source_commit = "599d2b8305bd237d847502c4ce6109897a52848e"
+engine_commit = "80e3d78"
+engine_assignment_sha256 = "d5adc77526e7f803d166a0e50fdef0f2135b4ea7723e9beb97526df8f0975e94"
+engine_authority_sha256 = "a4b685955f6f234c767290dbd1bed4f98f7569f48fe201f095e9d23a92e30f16"
+logs_manifest = "out/session-preparation-verification/logs.sha256"
+logs_manifest_sha256 = "4cbb1261696a2cb8e794109a2cdb2b9cf451abaf8df6bc9d3e250583009fc330"
+session_tests = 15
+queue_regression_tests = 18
+native_scope_mandatory_fact_tests = 1
+cleanup_utility_bytes = 0
+private_target_removed_bytes = 1884150932
+compile_source_copy_removed_bytes = 807098
+remaining_free_bytes = 221289979904
+limits = ["Root integration and actual two-session drill remain required.", "Production authority remains pending; no gameplay executed or accepted.", "Final commit adds only a documented read-only request example after the final source gate.", "Original implementer worktree remains until root preserves logs and integrates source; root owns removal."]

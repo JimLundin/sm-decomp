@@ -1,7 +1,7 @@
 # Reach ordinary-reset Ceres escape
 
 Status: open
-Blocked by: 04, 05
+Blocked by: 04, 05, 11, 12, 13
 Triage: ready-for-agent
 Type: task
 

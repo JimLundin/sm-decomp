@@ -1,0 +1,4 @@
+# These sealed process/test observations preserve their original whitespace.
+.scratch/decomp-parallel/drill/*-final-process.toml -whitespace
+.scratch/decomp-parallel/preparation/02-ownership-evidence/final-focused.txt -whitespace
+.scratch/decomp-parallel/preparation/cutover/claim-process-paths.txt -whitespace

@@ -1,0 +1,118 @@
+format = "decomp-subsystem-research-holding-v1"
+subject = "Ordinary-reset Ceres controller and NMI setup continuation"
+readiness = "held-existing-infrastructure-integration-then-research"
+accepted = false
+assign_scope_supported = false
+gameplay_launch_authorized = false
+source_baseline = "deceefdb568990fe273cc3f6cdf849726d8380bb"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+source_inventory = "tools/port/source-inventory.toml"
+source_inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+registry = ".scratch/decomp-progress/registry.json"
+registry_sha256 = "b00d386b0a1f9d03343703c5e4768f339752bdb95da785434e68ba13a03bb40d"
+legacy_bridge = ".scratch/decomp-parallel/reconciliation/legacy-owner-bridge.toml"
+legacy_bridge_sha256 = "b4046304db39ed5d70501d0b7b29a24abe75b17c03fd0c20ead702857161b4c5"
+origin_ticket = ".scratch/decomp-port/issues/78-original-movie-controller-boundary.md"
+tracking_children = [".scratch/decomp-parallel/issues/11-finish-held-ceres-integration.md", ".scratch/decomp-parallel/issues/12-ceres-nmi-poll-continuation.md"]
+routine_context = ["Vector_RESET_Async", "ReadJoypadInputs", "Vector_NMI", "EnableNMI", "DisableNMI", "RunOneFrameOfGameInner", "RunOneFrameOfGame", "WaitUntilEndOfVblankAndClearHdma", "GameState_32_MadeItToCeresElevator", "GameState_33_BlackoutFromCeres"]
+routine_context_is_approved_native_scope = false
+dependencies = [".scratch/ceres-continuation/issues/02-shared-game-host.md", ".scratch/ceres-continuation/issues/03-host-adapter-integration.md", ".scratch/ceres-continuation/issues/01-compact-controller-diagnostic.md", ".scratch/decomp-parallel/issues/04-concurrency-and-crash-recovery-drill.md"]
+missing_facts = ["Old host integration completion and checked serial integrator authority", "Merged compact controller gates and legacy/full capture compatibility", "Exact cause and native original semantics of first extra setup-continuation poll", "Reviewed extra-poll writable revision/receipt including the existing prefix C host observation template", "Complete scheduler/hardware/original-ROM acceptance and Rust routine ownership through observed 32 -> 33 -> 34", "Generic non-bank86 exercise schema is unsupported; this file is not translation-scope-v1"]
+
+[budget]
+process_root = "/home/jim/sm-decomp/out/pipeline"
+workers = 4
+assignment_capacity = 3
+initial_experiment_seconds = 60
+integration_maximum_seconds = 3600
+
+[controller_hold]
+id = "compact-controller"
+revision = "48656a2-compact-v1"
+attempt = 1
+coordinator = "ceres-20261013"
+state = "submitted"
+agent = "/root/ceres_scope"
+agent_thread = "01a133ec-4ef9-78b2-a8d7-248726023ce5"
+submitted_commit = "223f8a1b0c7382817b1290d13c7a41f4e722d5e1"
+baseline = "48656a284329d432291eca23a2ae0d1d7c0a3e48"
+worktree = "/tmp/sm-ceres-continuation-compact-controller-1"
+branch = "ceres-continuation-compact-controller-1"
+writable_paths = ["crates/pipeline/src/decomp_prefix.rs", "crates/pipeline/src/prefix_observer.lua.in", "crates/pipeline/src/prefix_compact_observer.lua.in", "crates/pipeline/tests/prefix.rs", "docs/DECOMP_PREFIX.md"]
+integration_id = "integrate-compact-controller"
+integration_revision = "48656a2-compact-v1-1"
+integration_state = "ready-unclaimed-linked-to-submission"
+
+[host_hold]
+id = "integrate-shared-game-host"
+revision = "48656a2-host-v1-1"
+attempt = 1
+coordinator = "ceres-20261013"
+state = "running-retained-integration"
+submitted_commit = "73547105d870f8b05f8c6bcf55b768c223889fdb"
+merged_commit = "e8c9c3e10ac71bf0377dc00d7de5764a4263b445"
+completion_missing = true
+
+[continuation_proposal]
+current_writable_paths_remain_held = true
+additional_reviewed_path = "tools/decomp/prefix_host.c"
+reason = "Existing __wrap_Vector_NMI unconditionally PresentsCausalPoll after every C Vector_NMI; native enable/disable/setup semantics must decide whether a poll exists. Source inspection is a hypothesis, not a corrective patch."
+exact_first_failure = "ordinal7741/frame8508/event63799: C7960/native7959 polls; prefix7740/frame8317"
+retained_native_reuse = "/home/jim/sm-decomp/out/port/ceres-continuation/controller/1791873514143170077-260799"
+retained_native_reuse_is_failed_overall_subject_report = true
+controls = ["Independent changed-RNG subject must reject additional gameplay discrepancy", "Required original full-profile omitted-HDMA/omitted-screen wait controls stay independent", "Unfinished continuation rejects EOF without repeated/invented poll", "NMI-disabled/enabled/setup scheduling control uses observed actual controller entry/read-pair/return counts", "Default full observer contract and legacy reader reuse remain unchanged"]
+acceptance = "Actual causal order/count plus compared material state/effects on reviewed integrated source; no state injection. Extra-poll repair alone is diagnostic. Milestone06 additionally requires ordinary reset observed 32 -> 33 -> 34, original-ROM/gameplay hardware contract, exclusive Rust ownership and visible C/CPU fallback."
+
+[[next_commands]]
+phase = "read-only-authority-inspection"
+cwd = "/home/jim/sm-decomp"
+argv = ["cargo", "run", "-p", "pipeline", "--locked", "--offline", "--bin", "sm-pipeline", "--", "assign", "status", "--checkout", "/home/jim/sm-decomp", "--effort", "ceres-continuation", "--coordinator", "ceres-20261013", "--capacity", "3"]
+executed_by_catalog = false
+
+[[next_commands]]
+phase = "original-host-integration-gates-after-checked-authority"
+cwd = "/home/jim/sm-decomp"
+argv = ["cargo", "test", "-p", "port", "--locked", "--offline", "--test", "game_host"]
+executed_by_catalog = false
+
+[[next_commands]]
+phase = "original-controller-focused-tests-after-integration"
+cwd = "/home/jim/sm-decomp"
+argv = ["cargo", "test", "-p", "pipeline", "--locked", "--offline", "--bin", "sm-pipeline", "decomp_prefix::tests"]
+executed_by_catalog = false
+
+[[next_commands]]
+phase = "original-controller-public-tests-after-integration"
+cwd = "/home/jim/sm-decomp"
+argv = ["cargo", "test", "-p", "pipeline", "--locked", "--offline", "--test", "prefix"]
+executed_by_catalog = false
+
+[[next_commands]]
+phase = "bounded-2240-merged-regression-after-integration"
+cwd = "/home/jim/sm-decomp"
+argv = ["cargo", "run", "-p", "pipeline", "--locked", "--offline", "--bin", "sm-pipeline", "--", "decomp-prefix", "--profile", "compact", "--frames", "2240", "--timeout", "60", "--output", "/home/jim/sm-decomp/out/port/ceres-continuation/controller-integrated-2240"]
+expected_semantics = "exit2 nonaccepting diagnostic; matching known causal frontier and rejecting RNG control, no escape acceptance"
+executed_by_catalog = false
+
+[[next_commands]]
+phase = "bounded-reuse-diagnosis-after-reviewed-source-freeze"
+cwd = "/home/jim/sm-decomp"
+argv = ["cargo", "run", "-p", "pipeline", "--locked", "--offline", "--bin", "sm-pipeline", "--", "decomp-prefix", "--profile", "compact", "--frames", "8600", "--timeout", "60", "--reuse-native", "/home/jim/sm-decomp/out/port/ceres-continuation/controller/1791873514143170077-260799", "--output", "/home/jim/sm-decomp/out/port/ceres-continuation/controller-nmi-8600-reviewed"]
+expected_semantics = "Requires unchanged compact native observer identity. Reuses authenticated complete native capture from failed subject report. A timeout remains failure and cannot advance frontier."
+executed_by_catalog = false
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/ceres-continuation/controller-submission-evidence.toml"
+sha256 = "8da107cdff9c14182a0ffae1d24ce1d3acbadfccd742fccf4e31c0896bd3634e"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/ceres-continuation/controller/1791873256094852042-256891/verdict.toml"
+sha256 = "79c00cb7bb32a120f981b1c14f99b639e773d88f5f544bdb41e964409ce7a916"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/ceres-continuation/controller/1791873514143170077-260799/verdict.toml"
+sha256 = "7c8c04d2f53d3f7a247a715a807d2dcf0e2d0004be13facd780c3d74a717fe88"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/ceres-continuation/controller/1791874177761738742-271877/verdict.toml"
+sha256 = "051a7195bf0ed3461eae81a9789f052a01f5c616d0d7ed716a37848c2a59d07e"

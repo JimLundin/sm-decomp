@@ -1,0 +1,14 @@
+schema = "decomp-integration-handoff-regression-v1"
+source_commit = "a3384094c1e5259b9f789e3afb3334c918d44877"
+tested_source_commit = "05a165a326fa7e58ba84e7e0b3cec633d9804c9c"
+source_baseline = "11f13b4"
+worker_session_id = "01a13474-5fcc-7861-84f8-5c353938bdd2"
+assignment_dependency_sha256 = "922aae9fc20ab8467e3267bbdbe03f049467a72cda580946e4e53dc9bdd49e4e"
+assignment_dependency_owner = "/root/subsystem_catalog"
+passing_tests = 15
+baseline_failure = "generated integration retains the exact source baseline"
+artifacts_manifest_sha256 = "a3c474c2f3b08817dfd96a4bb8b30e5246145ba20554293209c459eba2a587aa"
+cleanup_bytes = 0
+removed_target_bytes = 1218133244
+remaining_free_bytes = 220778647552
+limitations = ["Final comment-only commit follows code gate.", "Narrow foreign assignment dependency restored unstaged; root integrates owning worker's exact source separately.", "Root owns evidence relocation and integrated worktree removal.", "No production or gameplay mutation."]

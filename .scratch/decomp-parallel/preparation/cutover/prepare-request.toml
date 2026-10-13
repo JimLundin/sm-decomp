@@ -1,0 +1,22 @@
+# Reviewed planned request only: not executed. Preparation leaves production inactive.
+operation = "prepare"
+checkout = "/home/jim/sm-decomp"
+coordinator = "ceres-20261013"
+[authority]
+session_id = "01a13460-4aa9-7fe0-865e-a8f54ffca310"
+generation = 1
+[preparation]
+canonical_effort = "decomp-parallel"
+capacity = 3
+admitted_efforts = ["ceres-continuation", "decomp-preparation-ownership-20261013", "decomp-preparation-session-tools-20261013"]
+drill_efforts = ["concurrency-drill"]
+[preparation.bridge]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/reconciliation/legacy-owner-bridge-v2.toml"
+sha256 = "cb537f195b4f83529f2ea7a61bd65c6e77ad215366275e8d60a7a604c4eb0ba9"
+[preparation.integrator]
+token = "ceres-20261013"
+kind = "integrator"
+session_id = "01a13460-4aa9-7fe0-865e-a8f54ffca310"
+[preparation.integrator.observation]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/cutover/integrator-registration-observation.toml"
+sha256 = "6af8fe0a89dfce9c222287357f03ba135fa294ade0169b5d3966af6f2fa5f06f"

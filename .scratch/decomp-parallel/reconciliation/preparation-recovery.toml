@@ -1,0 +1,59 @@
+schema = "decomp-preparation-recovery-v1"
+status = "checked-maintenance-adoption-recommendation"
+observed_at = "2026-10-13T08:36:30Z"
+original_preparation_thread = "01a13402-afaa-7501-b97b-15d3b08434be"
+replacement_coordinator_thread = "01a13460-4aa9-7fe0-865e-a8f54ffca310"
+observer_thread = "01a13462-702f-74f0-8a9a-a2a08dd1cb7f"
+baseline = "deceefdb568990fe273cc3f6cdf849726d8380bb"
+production_authority = "pending"
+gameplay_launch_authorized = false
+legacy_claims_released = false
+legacy_tickets_resolved = false
+queue_mutation_performed = false
+
+[inspection]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/reconciliation/legacy-liveness-inspection.json"
+sha256 = "fe863b9a8b0929a46692667fb7ae4087a4225cede0f6812d7d284581122bde40"
+checked_originals = ["01a13151-b3ec-72e0-8912-f95c230f9e18", "01a13153-18fd-7a22-951e-427b7cde2146", "01a13153-2eef-7070-b421-0db591d3ee60", "01a13152-ffec-7000-93c8-a992c6d5ea12", "01a13317-fa0e-7052-8c5a-8e665cf86f23", "01a133b1-ec57-7a81-92e0-106d26e60b0d"]
+finding = "Original affected-family implementers have terminal completed turns and no extant source worktrees or observed writers. Original coordinator has failed final implementation turn. Later recovery roots have idle terminal turns. Historical admission remains claimed and owned by replacement coordinator for later evidence reconciliation."
+limitations = ["notLoaded alone does not prove stopped; terminal turn evidence, original session identity, source retention and process inspection support this maintenance recommendation", "Ridley held integration includes shared main.rs; maintenance may edit only session CLI registration on isolated preparation source and must retain focused Ridley candidate changes for later sequential integration", "Reporting session retains main Git/index and changing report source; preparation freezes its own isolated baseline"]
+
+[[adoptions]]
+id = "preparation-02-ownership-maintenance"
+effort = "decomp-preparation-ownership"
+preparation_ticket = ".scratch/decomp-parallel/issues/02-fence-writable-paths-and-integration-sessions.md"
+original_hold_ids = ["affected-family-assignment-04", "affected-family-assignment-06", "affected-family-assignment-07"]
+coordinator_thread = "01a13460-4aa9-7fe0-865e-a8f54ffca310"
+worker_thread = "01a13453-b599-79c1-84d5-713e6d1e3f57"
+registered_agent = "/root/ownership_engine"
+worker_state = "active-existing-assignment-preserved"
+branch = "decomp-preparation-ownership-20261013"
+worktree = "/tmp/sm-decomp-preparation-ownership-20261013"
+writable_paths = ["crates/pipeline/src/assignment.rs", "crates/pipeline/src/authority.rs", "crates/pipeline/tests/assignment_queue.rs", "crates/pipeline/tests/session_authority.rs"]
+observation = { path = "/home/jim/sm-decomp/.scratch/decomp-parallel/reconciliation/legacy-liveness-inspection.json", sha256 = "fe863b9a8b0929a46692667fb7ae4087a4225cede0f6812d7d284581122bde40" }
+next_action_owner = "01a13460-4aa9-7fe0-865e-a8f54ffca310"
+next_action = "Review this exact-path adoption, then preserve/reconnect the active worker. Existing worker reads stable bridge/hash before source edits, writes its own preparation/02-owner-handoff.md with real identity/status and this replacement coordinator, and implements scoped Rust maintenance on this worktree only. No duplicate worker."
+
+[[adoptions]]
+id = "preparation-03-session-maintenance"
+effort = "decomp-preparation-session-tools"
+preparation_ticket = ".scratch/decomp-parallel/issues/03-maintained-rust-commands-and-handoffs.md"
+original_hold_ids = ["affected-family-assignment-05", "affected-family-assignment-06", "affected-family-assignment-07", "decomp-port-141-focused-shared-registration"]
+coordinator_thread = "01a13460-4aa9-7fe0-865e-a8f54ffca310"
+former_worker_thread = "01a1342e-6cad-7cb1-80d7-6a484c469bbf"
+registered_agent = "/root/spec_finish"
+worker_state = "idle-completed-before-implementation"
+replacement_worker_requires_explicit_identity = true
+branch = "decomp-preparation-session-tools-20261013"
+worktree = "/tmp/sm-decomp-preparation-session-tools-20261013"
+writable_paths = ["crates/pipeline/src/session.rs", "crates/pipeline/src/main.rs", "crates/pipeline/src/coordination.rs", "crates/pipeline/tests/decomp_sessions.rs", "docs/agents/decomp-sessions.md"]
+observation = { path = "/home/jim/sm-decomp/.scratch/decomp-parallel/reconciliation/legacy-liveness-inspection.json", sha256 = "fe863b9a8b0929a46692667fb7ae4087a4225cede0f6812d7d284581122bde40" }
+next_action_owner = "01a13460-4aa9-7fe0-865e-a8f54ffca310"
+next_action = "Review narrow maintenance adoption and bind actual replacement worker identity before dispatch. Preserve former idle worker lineage and handoff; implement only additive session/CLI/native adapter work on isolated preparation baseline. Legacy native admission and Ridley shared registration remain held for later sequential integration."
+
+[ownership_boundaries]
+main_git_owner_thread = "01a13394-29b8-76a3-aab7-5ab8eff60694"
+preparation_git_owner_thread = "01a13460-4aa9-7fe0-865e-a8f54ffca310"
+legacy_gate_and_cleanup_owner_thread = "01a13460-4aa9-7fe0-865e-a8f54ffca310"
+held_runtime_paths = [".scratch/ceres-continuation", ".scratch/decomp-port", "out/port/ceres-continuation/controller", "out/recovery-session", "/tmp/sm-ceres-continuation-compact-controller-1", "/tmp/sm-ridley-whole-live-source"]
+restriction = "Adoption permits preparation maintenance on exact isolated source paths only. It neither releases original claims nor completes prior admission. All gameplay, old ledgers, source snapshots, evidence readers and private inputs remain held."

@@ -1,0 +1,189 @@
+{
+  "schema": "decomp-additional-owner-liveness-v1",
+  "observed_at": "2026-10-13T08:38:00Z",
+  "observer_thread_id": "01a13462-702f-74f0-8a9a-a2a08dd1cb7f",
+  "limitations": [
+    "submitted and Markdown gameplay ownership remains held despite terminal owner turns",
+    "later reporting/reconciliation completion does not establish historical gameplay acceptance"
+  ],
+  "snapshots": [
+    {
+      "requested_thread_id": "01a129ac-6d9c-7bd2-be35-6bd00236aa32",
+      "response": {
+        "schemaVersion": 1,
+        "thread": {
+          "id": "01a129ac-6d9c-7bd2-be35-6bd00236aa32",
+          "status": {
+            "type": "notLoaded"
+          }
+        },
+        "page": {
+          "order": "newest_first",
+          "limit": 1,
+          "hasMore": true,
+          "nextCursor": "{\"requestedThreadId\":\"01a129ac-6d9c-7bd2-be35-6bd00236aa32\",\"rolloutOrdinal\":1341,\"includeAnchor\":false,\"scope\":{\"kind\":\"turns\"}}"
+        },
+        "turns": [
+          {
+            "id": "01a129d6-a45b-7053-a876-094bea72c1cb",
+            "status": "completed",
+            "error": null,
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "msg_0cdf0218161766e8016acb3bc453b88196b1c4808bb29ce2ce",
+                "text": "Terminal handling now verifies all 1,097 causal updates through frame 1600 without inventing another poll.\n\nTests pass; evidence authenticates. Cleanup and immutable file sharing reclaimed 3.67 GB. Prefix changes and ticket 78 are ready for review, uncommitted.",
+                "phase": "final_answer"
+              }
+            ],
+            "truncated": true
+          }
+        ],
+        "truncated": true
+      }
+    },
+    {
+      "requested_thread_id": "01a1334a-6c95-73f3-97db-08beb2f6ef20",
+      "response": {
+        "schemaVersion": 1,
+        "thread": {
+          "id": "01a1334a-6c95-73f3-97db-08beb2f6ef20",
+          "status": {
+            "type": "idle"
+          }
+        },
+        "page": {
+          "order": "newest_first",
+          "limit": 1,
+          "hasMore": true,
+          "nextCursor": "{\"requestedThreadId\":\"01a1334a-6c95-73f3-97db-08beb2f6ef20\",\"rolloutOrdinal\":1880,\"includeAnchor\":false,\"scope\":{\"kind\":\"turns\"}}"
+        },
+        "turns": [
+          {
+            "id": "01a133c1-2061-77c1-9b0e-81658365dc6e",
+            "status": "completed",
+            "error": null,
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "msg_0729660936e009c9016acdc3a23da481959382c9bf2deb8465",
+                "text": "[Reconciliation note](/home/jim/sm-decomp/.scratch/decomp-strategy/live-internal-reconciliation.md) recommends publishing eleven missing live symbols: eight measured Ridley opcode paths and three initializers with successful allocation counts 16/4/4.\n\nBoth mixed subjects match. Publication should retain the bounded composed domains and frozen-source limits. Immutable audits remained untouched; no gameplay runs or builds.",
+                "phase": "final_answer"
+              }
+            ],
+            "truncated": true
+          }
+        ],
+        "truncated": true
+      }
+    },
+    {
+      "requested_thread_id": "01a13329-0853-7321-9b84-962aaf18a841",
+      "response": {
+        "schemaVersion": 1,
+        "thread": {
+          "id": "01a13329-0853-7321-9b84-962aaf18a841",
+          "status": {
+            "type": "idle"
+          }
+        },
+        "page": {
+          "order": "newest_first",
+          "limit": 1,
+          "hasMore": true,
+          "nextCursor": "{\"requestedThreadId\":\"01a13329-0853-7321-9b84-962aaf18a841\",\"rolloutOrdinal\":2136,\"includeAnchor\":false,\"scope\":{\"kind\":\"turns\"}}"
+        },
+        "turns": [
+          {
+            "id": "01a133bd-a30d-7950-9149-2309b36b1537",
+            "status": "completed",
+            "error": null,
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "msg_0f62f6ebf69f670b016acdc34bac548194ae42b2288393c94f",
+                "text": "Completed [layout-comparison.md](/home/jim/sm-decomp/.scratch/decomp-progress/layout-comparison.md) and three switchable [prototypes](/home/jim/sm-decomp/.scratch/decomp-progress/layout-comparison/prototype.html).\n\nRecommend progress first with collapsed Report details. All three layouts passed desktop/phone checks without horizontal overflow.\n\nRetained branch: `throwaway/progress-layout-comparison-20261013`  \nCommit: `e574fef4fc1c5ee006cfc02d550dd815199adc00`\n\nCleanup reclaimed 28,094,108 identified bytes. Maintained template and ticket remain untouched.",
+                "phase": "final_answer"
+              }
+            ],
+            "truncated": true
+          }
+        ],
+        "truncated": true
+      }
+    },
+    {
+      "requested_thread_id": "01a1331b-1cb4-7591-90fa-dbeae531d484",
+      "response": {
+        "schemaVersion": 1,
+        "thread": {
+          "id": "01a1331b-1cb4-7591-90fa-dbeae531d484",
+          "kind": "codex",
+          "title": null,
+          "preview": "",
+          "status": {
+            "type": "notLoaded"
+          },
+          "cwd": "/home/jim/sm-decomp",
+          "createdAt": 1791858777,
+          "updatedAt": 1791861848
+        },
+        "page": {
+          "order": "newest_first",
+          "limit": 1,
+          "hasMore": true,
+          "nextCursor": "{\"requestedThreadId\":\"01a1331b-1cb4-7591-90fa-dbeae531d484\",\"rolloutOrdinal\":1289,\"includeAnchor\":false,\"scope\":{\"kind\":\"turns\"}}"
+        },
+        "turns": [
+          {
+            "id": "01a13349-c2ab-7e91-9f7c-a9bcb5f4bbc4",
+            "status": "failed",
+            "error": {
+              "message": "stream disconnected before completion: Encrypted function output content could not be decrypted or decoded.",
+              "additionalDetails": null
+            },
+            "startedAt": 1791861834,
+            "completedAt": 1791861848,
+            "durationMs": 14305,
+            "items": []
+          }
+        ]
+      }
+    },
+    {
+      "requested_thread_id": "01a133f4-de2d-71e3-82ce-ead915ca3017",
+      "response": {
+        "schemaVersion": 1,
+        "thread": {
+          "id": "01a133f4-de2d-71e3-82ce-ead915ca3017",
+          "status": {
+            "type": "idle"
+          }
+        },
+        "page": {
+          "order": "newest_first",
+          "limit": 1,
+          "hasMore": true,
+          "nextCursor": "{\"requestedThreadId\":\"01a133f4-de2d-71e3-82ce-ead915ca3017\",\"rolloutOrdinal\":277,\"includeAnchor\":false,\"scope\":{\"kind\":\"turns\"}}"
+        },
+        "turns": [
+          {
+            "id": "01a13408-c221-71e3-884f-a7b8e4089f01",
+            "status": "completed",
+            "error": null,
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "msg_0444dfdacd89dfad016acdd5a6e8fc8190a342b2235649724d",
+                "text": "Final review found no remaining blocker for compact diagnostics or native reuse. Deadline handling, capture origin, frontier validation, required snapshots, and truncated-tail preservation now look correct.\n\nCompatibility caveat: historical reused full-profile receipts lack the new capture-origin field and may reject authentication.\n\nNo edits or tests performed.",
+                "phase": "final_answer"
+              }
+            ],
+            "truncated": true
+          }
+        ],
+        "truncated": true
+      }
+    }
+  ]
+}

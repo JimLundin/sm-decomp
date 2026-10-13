@@ -1,0 +1,42 @@
+schema = "decomp-preparation-maintenance-approval-v1"
+status = "approved"
+approved_at = "2026-10-13T08:52:00Z"
+coordinator_thread = "01a13460-4aa9-7fe0-865e-a8f54ffca310"
+baseline = "deceefdb568990fe273cc3f6cdf849726d8380bb"
+production_authority = "pending"
+gameplay_launch_authorized = false
+legacy_claims_released = false
+
+[previous_approval]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/approved-maintenance.toml"
+sha256 = "c223a2b40b399d9ca9b1047e3f54bd59ab215c07b80528cbf8f1ce118385cce3"
+
+[recommendation]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/reconciliation/preparation-recovery.toml"
+sha256 = "1338edb2e6d648d293aba30bc5b0b4d3f0f30c6170f0ca1aa8542b88a6a8bb39"
+
+[observation]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/reconciliation/legacy-liveness-inspection.json"
+sha256 = "fe863b9a8b0929a46692667fb7ae4087a4225cede0f6812d7d284581122bde40"
+
+[[workers]]
+adoption = "preparation-02-ownership-maintenance"
+ticket = ".scratch/decomp-parallel/issues/02-fence-writable-paths-and-integration-sessions.md"
+session_id = "01a13453-b599-79c1-84d5-713e6d1e3f57"
+agent = "/root/ownership_engine"
+state = "active-existing-assignment-preserved"
+worktree = "/tmp/sm-decomp-preparation-ownership-20261013"
+writable_paths = ["crates/pipeline/src/assignment.rs", "crates/pipeline/src/authority.rs", "crates/pipeline/tests/assignment_queue.rs", "crates/pipeline/tests/session_authority.rs"]
+
+[[workers]]
+adoption = "preparation-03-session-maintenance"
+ticket = ".scratch/decomp-parallel/issues/03-maintained-rust-commands-and-handoffs.md"
+session_id = "01a13474-5fcc-7861-84f8-5c353938bdd2"
+agent = "/root/session_tools_finish"
+former_session_id = "01a13464-cb24-77c2-aa7b-ac2aaacd5359"
+state = "replacement-of-observed-failed-preparation-worker-with-preserved-source"
+worktree = "/tmp/sm-decomp-preparation-session-tools-20261013"
+writable_paths = ["crates/pipeline/src/session.rs", "crates/pipeline/src/main.rs", "crates/pipeline/src/coordination.rs", "crates/pipeline/tests/decomp_sessions.rs", "docs/agents/decomp-sessions.md"]
+
+[restriction]
+text = "Exact-path isolated tooling maintenance only. Original acceptance, submitted source, historical claim tuples, held gameplay/runtime paths, readers and private inputs stay preserved. Main Git/index remains with reporting. Preparation coordinator owns the isolated integration worktree."

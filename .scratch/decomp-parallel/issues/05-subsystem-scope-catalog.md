@@ -1,9 +1,12 @@
 # Catalog dependency-ready subsystem scopes
 
-Status: open
+Status: resolved
 Blocked by: 01
 Triage: ready-for-agent
 Type: research
+
+Owner: `/root/subsystem_catalog`, preparation coordinator thread `01a13460-4aa9-7fe0-865e-a8f54ffca310`
+Claimed: 2026-10-13; read-only catalog and child-ticket authoring only. Ticket 01 is resolved; legacy gameplay holdings stay retained.
 
 Build a catalog of coherent Translation scopes so several sessions can select
 independent work without splitting shared state or duplicating recovered Rust.
@@ -68,12 +71,80 @@ ready scopes after 04; it does not establish gameplay acceptance.
 
 ## Answer
 
-Pending research.
+Researched catalog: [subsystem-catalog.md](../catalog/subsystem-catalog.md).
+It lists reused stages/evidence, exact proposed ownership, dependencies, gates
+and readiness for every lane. [Later lanes](../catalog/later-lanes.md) supplies
+eight concrete new-module boundary triplets and primary C definitions; all
+missing caller/host/APU/SRAM/credits domains remain research holdings.
+
+The concrete next Ceres continuation is sealed in
+[ceres-continuation-holding.toml](../catalog/ceres-continuation-holding.toml):
+finish the original running host integration, then the original submitted
+controller integration, then research the first extra poll at ordinal7741,
+frame8508/event63799. Existing78/controller/host claims and141broader Ridley
+acceptance stay held. Concrete future tests/2240regression/8600capture-reuse argv
+and controls are provided; no scheduler correction or gameplay gate ran.
+
+Current native1–32-routine `translation-scope-v1` consumes only schema2bank86
+projectile exercise. Non-bank86 caller contexts cannot be promoted from existing
+live/callee counters; reviewed Rust exercise-contract extension is actionable
+research work. No unsupported native scope or fabricated readiness is published.
+All source/receipt facts use inspected baseline
+`deceefdb568990fe273cc3f6cdf849726d8380bb`, recovered-C revision578f90b3 and
+inventory SHA7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25.
+Both initial and republished final reporting registry digests are recorded.
+
+Children [11](11-finish-held-ceres-integration.md) and
+[16](16-continue-held-whole-ridley.md) explicitly track held original work,
+without duplicate implementation authority. Research children
+[12](12-ceres-nmi-poll-continuation.md),
+[13](13-host-hardware-lifecycle-scope.md),
+[14](14-samus-frame-scope.md), [15](15-door-room-plm-scope.md),
+[17](17-other-enemy-lifecycle-scope.md), [18](18-audio-ui-menu-scope.md),
+[19](19-sram-save-load-scope.md) and [20](20-credits-cinematic-scope.md)
+are actionable complete boundary research. The required generated exact
+implementation/extension scopes become milestone blockers before route claim.
+
+[Milestone/map edits](../catalog/milestone-map-proposal.md) are prepared for the
+plan owner to apply; this worker owns no shared map/spec/milestone files.
+Broad141real-boss integration is not a default Ceres06blocker. Research Answer
+is complete; set this ticket resolved after the plan owner integrates that
+proposal and Answer pointer. Root applied that integration before this resolution.
+Catalog resolution grants no gameplay acceptance
+or user launch authorization.
 
 ## Completion evidence
 
-Append catalog/scope and dependency receipt hashes, source revisions, linked
-child tickets and reviewed ownership boundaries. Follow scoped
-[run cleanup](../../../docs/agents/run-cleanup.md) for any investigation runs,
-record measured bytes/free space and retained dependencies, or record that no
-runs were created before resolving the research.
+- [artifacts-sha256.txt](../catalog/artifacts-sha256.txt) seals all catalog
+  artifacts and child11–20 tickets; SHA-256
+  `88a412d0b161e2d1da977696156b6ced13ba29723b3a233dec4e75f275548fd4`.
+- [evidence-sha256.txt](../catalog/evidence-sha256.txt) and
+  [source-sha256.txt](../catalog/source-sha256.txt) rehash inspected primary
+  receipts and exact current source. Both `sha256sum -c` checks pass. This is
+  identity inspection, not fresh replay or full recursive verdict admission.
+- `git diff --check` for owned catalog/ticket paths passes; retained extracted
+  reporting snapshot is valid JSON and matches its recorded inventory digest.
+  Existing CLI gates were checked against baseline main.rs1533and1495: native
+  family-verify argv and batch--case-jobs are supported; embedded native scope
+  gates retain their stricter reviewed context restrictions.
+- No fixtures/replays/build/tests, gameplay source, registry publication,
+  readers, queues, Git/index or held worktree changes occurred. Read-only
+  research and documentation created no run/build directory. Scoped cleanup
+  utility is unnecessary for this no-run step; reclaimed0bytes. Final measured
+  available filesystem space219,766,968,320bytes. Held source snapshots,
+  submitted worktrees, private ROM/movie/SRAM inputs, subject pointers, readers
+  and shared immutable `out/evidence` remain preserved.
+
+## Comments
+
+Preparation worker `/root/subsystem_catalog` completed researched Answer and
+child artifacts. Parent owns final plan/map integration and status transition;
+source schemas may evolve in isolated preparation tooling, requiring new scope
+input hashes at actual gameplay dispatch. No gameplay milestone is resolved.
+
+Root confirmed plan/map integration:06blockers04,05,11,12,13;
+07blockers06,13–18;08blockers07,13,18–20;09blockers08,14–20.
+Ticket05 resolves researched catalog acceptance. No further catalog run or
+artifact mutation accompanied the status transition; cleanup remains the
+documented no-run0-byte result. Ticket05 is not included in the sealed
+catalog/child artifact manifest, so its update changes no existing seal.
