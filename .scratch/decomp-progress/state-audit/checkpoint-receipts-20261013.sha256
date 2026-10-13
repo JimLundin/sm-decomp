@@ -1,0 +1,14 @@
+12e4a070c49e394d1f37f9411d9ef61729bebbc13d6d7d047ec60059857d8270  .scratch/decomp-progress/state-audit/checkpoint-receipts-20261013.tar.gz
+6366271725fe08bae3d9e1d57fbe9e3a1a61d4fd6cb03e3c230e77087a77bd14  .scratch/decomp-progress/compact-velocity/offline/chromium.log
+2be4d4eeb47afc174dbb9e258eef24bf23b6a067a3da6b5d9ecb206d7f136ba5  .scratch/decomp-progress/state-audit/published-status.stdout
+b7a6edb01972e8e8f117df8f82da5af5edcb72a1b0ff5f603a9c637c4e0b3664  .scratch/decomp-progress/state-audit/refresh.stdout
+9cc3745a21041cffa15739446ef7df1bf70c4cd77d7235af607a5086543c54b8  .scratch/decomp-progress/state-audit/registry-before.json
+b095475a3fbf890c77f152377d5666e20d5177cf4e3f1258b260a9639b9084bc  .scratch/decomp-progress/state-audit/ridley-v2-controlled-6053-frozen-verified-audit-20261013.stdout
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  .scratch/decomp-progress/state-audit/ridley-v2-natural-6053-frozen-verified-audit-20261013.stdout
+2be4d4eeb47afc174dbb9e258eef24bf23b6a067a3da6b5d9ecb206d7f136ba5  .scratch/decomp-progress/state-audit/ridley-v2-natural-retry.stdout
+b5fea0251809939184f655f590f92c7be518f95ef9dfc4b7080270e1f32da06e  .scratch/decomp-progress/state-audit/room-display-6053-current-translated-audit-20261013.stdout
+a2dba3a60de4f91dc0a600f99fba33d320c826bdab99ac3c136444c88c7c1a20  .scratch/decomp-progress/state-audit/shared-game-host-6053-current-verified-audit-20261013.stdout
+17d5e35e352fc000877b709ab967d51f034c9c3eca70fb4ffcac5bf4f2963d59  .scratch/decomp-progress/state-audit/source-audit-final.stdout
+aca10b469a59369d643dda9307d3c33085cfbb9787bba4b9d6f88690d7ce1b8b  .scratch/decomp-progress/state-audit/source-audit-review.txt
+17d5e35e352fc000877b709ab967d51f034c9c3eca70fb4ffcac5bf4f2963d59  .scratch/decomp-progress/state-audit/source-audit.stdout
+707b7fe9c242d5ffbd34239078dbfff07cfbdb855966997c06aee0a3bcd8e212  .scratch/decomp-progress/state-audit/source-coverage-map.json

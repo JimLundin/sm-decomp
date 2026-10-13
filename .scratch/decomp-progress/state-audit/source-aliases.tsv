@@ -1,0 +1,361 @@
+# module function exact native symbol reviewed correspondence
+ridley_subsystem	animation	Ridley_Func_99	A6 D467 current instruction, timer1 and zero animation timer	Specialization is timer argument1; helper also serves a separate timer2 caller.
+ridley_cutscene	ceres_main	CeresRidley_Func_1	A6 A2BD randomFF00 threshold and tilemap15 random delay writes
+ridley_cutscene	ceres_state	CeresRidley_A994	A6 A994 next-stateA9A0, timer64 and immediate state invocation
+ridley_cutscene	ceres_state	CeresRidley_Func_25	A6 AA20 two ordered enemy population host requests	SpawnEnemy implementation remains a foreign Host service; this wrapper owns only request order and arguments.
+ridley_subsystem_instructions	callback	Ridley_E90C	A6 E90C eproj scratch0/14 and fireball allocation wrapper	Operands admitted for two native instruction wrappers E904/E909; allocator delegates to enemy_projectiles.
+enemy	block_probe	EnemyFunc_BBBF	A0 BBBF horizontal fixed-point edge/block solid probe	Checked aligned enemy records and canonical level allocation; native byte index wrapping preserved.
+enemy	block_probe	EnemyFunc_BC76	A0 BC76 vertical fixed-point edge/block solid probe	Checked aligned enemy records and canonical level allocation; native int loop index preserved.
+enemy_projectiles	pirate_instruction	SpacePirates_Instr_15	B2 pirate claw three operands, rectangle scratch and ordered graphics spawn	Checked operands and enemy record; host scratch globals carried in ProjectileHost.
+enemy_projectiles	pirate_instruction	SpacePirates_Instr_FireLaserL	B2 left laser properties scratch, position and ordered spawn	Checked enemy definition; host position and direction scratch carried in ProjectileHost.
+enemy_projectiles	pirate_instruction	SpacePirates_Instr_FireLaserR	B2 right laser position and ordered spawn	Checked enemy record; host position and direction scratch carried in ProjectileHost.
+animated_tiles	spawn	SpawnAnimtiles	bank87 8027 descending allocation and seven field initialization
+animated_tiles	process	ProcessAnimtilesObject	bank87 8085 timer, opcode loop and frame publication	Only implemented opcodes and finite65536 instruction budget.
+animated_tiles	handle	AnimtilesHandler	bank87 8064 descending enabled slot scheduler	Only implemented script closure; checked canonical six slots.
+animated_tiles	spawn_palette_effect	SpawnPalfxObject	bank8D C4E9 descending palette allocation and selected initializer closure	Only implemented initializer branches and checked canonical eight slots.
+animated_tiles	process_palette	PalFx_ProcessOne	bank8D C54A preinstruction, control and color streams	Only implemented preinstructions and opcodes; finite script budget.
+animated_tiles	handle_palette	PaletteFxHandler	bank8D C527 descending enabled palette scheduler	Only implemented palette script closure; checked canonical eight slots.
+ridley_subsystem	run_state	CallRidleyFunc	private A6 Ridley numeric state dispatcher with nested Ceres/death dispatch	Only admitted A6 states; native unchecked dispatch errors become Result errors.
+ridley_rendering	baby_position	CallRidleyFunc_var40	private A6 baby position numeric state dispatcher	Only admitted states and native empty branch BF19.
+ridley_rendering	baby_position	Ridley_Func_49	A6 BE93 baby position state dispatch wrapper
+ridley_rendering	baby_instruction	CallBabyMetroidInstr	private A6 baby instruction numeric dispatcher	Only admitted callbacks and checked operands; errors replace native Unreachable.
+enemy_projectile_contacts	damage	SuitDamageDivision	contact helper inlines native suit-dependent quarter/half divisor	Damage amount masks to0FFF in contact caller.
+enemy_projectile_contacts	damage	Samus_DealDamage	contact helper inlines frozen/damage300 guards and health subtraction/clamp	Specialization to contact amount0 through0FFF; signed-invalid interrupt path is unreachable.
+collision	solid	BlockColl_Horiz_SolidShootGrappleBlock	bank94 8F49 horizontal displacement clamp and subposition writes
+collision	solid	BlockColl_Vert_SolidShootGrappleBlock	bank94 8F82 vertical displacement clamp and subposition writes
+collision	slope	BlockColl_Horiz_Slope	bank94 8FBB slope family selection
+collision	slope	BlockColl_Vert_Slope	bank94 8FDA slope family selection
+collision	slope	BlockColl_Horiz_Slope_NonSquare	bank94 84D6 grounded slope speed product
+collision	slope	BlockColl_Vert_Slope_NonSquare	bank94 86FE reflected slope height and displacement clamp
+collision	slope	BlockColl_Horiz_Slope_Square	bank94 8D2B square occupancy table and horizontal solid clamp
+collision	slope	BlockColl_Vert_Slope_Square	bank94 8DBD square occupancy table and vertical solid clamp
+collision	spike	BlockColl_SpikeBlock_BTS0	bank94 8E83 area/boss guard and sixty damage
+collision	spike	BlockColl_SpikeBlock_BTS1	bank94 8ECF sixteen damage and invincibility writes
+collision	spike	BlockColl_SpikeBlock_BTS3	bank94 8F0A sixteen damage and invincibility writes
+collision	spike	SetCarry_Spikeblk	bank94 empty spike table callbacks 2 and 4 through 15
+collision	reaction	BlockColl_Horiz_CheckColl	bank94 private horizontal type/extension dispatcher	256 extension budget and canonical tile extent; PLM effects delegate to Host.
+collision	reaction	BlockColl_Vert_CheckColl	bank94 952C vertical type/extension dispatcher	256 extension budget and canonical tile extent; PLM effects delegate to Host.
+collision	reaction	BlockReact_HorizExt	bank94 9411 signed horizontal BTS extension
+collision	reaction	BlockReact_VertExt	bank94 9447 signed room-width BTS extension
+collision	reaction	BlockColl_Horiz_SpikeBlock	bank94 private spike effect followed by solid collision
+collision	reaction	BlockColl_Vert_SpikeBlock	bank94 905D spike effect followed by solid collision
+collision	reaction	BlockColl_Horiz_SpecialAir	bank94 906F regional and common PLM tables
+collision	reaction	BlockColl_Vert_SpecialAir	bank94 909D regional and common PLM tables
+collision	reaction	BlockColl_Horiz_SpecialBlock	bank94 90CB conditional PLM/solid collision
+collision	reaction	BlockColl_Vert_SpecialBlock	bank94 9102 conditional PLM/solid collision
+collision	reaction	BlockColl_Horiz_BombableAir	bank94 92F9 bombable PLM and no collision
+collision	reaction	BlockColl_Vert_BombableAir	bank94 9313 bombable PLM and no collision
+collision	reaction	BlockColl_Horiz_BombBlock	bank94 932D bombable PLM and conditional solid collision
+collision	reaction	BlockColl_Vert_BombBlock	bank94 934C bombable PLM and conditional solid collision
+collision	reaction	BlockColl_Horiz_Door	bank94 938B door header and transition selection
+collision	reaction	BlockColl_Vert_Door	bank94 93CE door header and transition selection
+collision	span	Samus_GetYposSpan	bank94 9495 vertical radius block span
+collision	span	Samus_GetXposSpan	bank94 94B5 horizontal radius block span
+collision	traverse	BlockColl_Handle_Horiz	bank94 9543 horizontal ordered span scan	Room width 1 through 255; span at most31; checked terrain closure.
+collision	traverse	BlockColl_Handle_Vert_LeftToRight	bank94 959E forward vertical ordered span scan	Room width 1 through 255; span at most31; checked terrain closure.
+collision	traverse	BlockColl_Handle_Vert_RightToLeft	bank94 95F5 reverse vertical ordered span scan	Room width 1 through 255; span at most31; checked terrain closure.
+collision	calculate_block	CalculateBlockAt	bank94 9C1D checked pixel coordinate and byte-product branch	Specialized to zero native r30/r32 offsets; callers supply already adjusted coordinates.
+collision	align_slope	Samus_AlignYPosSlope	bank94 87F4 ceiling/floor slope alignment
+enemy_ai	terrain	EnemyBlockCollReact_Spike	bankA0 C2C0 spike PLM header branch
+enemy_ai	terrain	EnemyBlockCollHorizReact_Slope	bankA0 C2FA square/non-square horizontal selection
+enemy_ai	terrain	EnemyBlockCollVertReact_Slope	bankA0 C319 square/non-square vertical selection
+enemy_ai	terrain	EnemyBlockCollHorizReact_Slope_Square	bankA0 private horizontal square lane and radius mask
+enemy_ai	terrain	EnemyBlockCollVertReact_Slope_Square	bankA0 C3B2 vertical square lane and radius mask
+enemy_ai	terrain	EnemyBlockCollHorizReact_Slope_NonSquare	bankA0 C449 process-slopes optional speed product
+enemy_ai	terrain	EnemyBlockCollVertReact_Slope_NonSquare	bankA0 C51F vertical reflected height correction
+enemy_ai	terrain	EnemyBlockCollReact_HorizExt	bankA0 C619 signed horizontal extension
+enemy_ai	terrain	EnemyBlockCollReact_VertExt	bankA0 C64F signed width-scaled extension
+enemy_ai	terrain	EnemyBlockCollReact_Horiz	bankA0 private horizontal type/extension dispatcher	Finite visited-set rejection of cyclic or out-of-range chains; PLM delegates to Host.
+enemy_ai	terrain	EnemyBlockCollReact_Vert	bankA0 private vertical type/extension dispatcher	Finite visited-set rejection of cyclic or out-of-range chains; PLM delegates to Host.
+projectile_flight	square	BlockShotReactVert_Slope_Square	bank94 A66A horizontal shot square test despite native Vert name
+projectile_flight	square	BlockShotReactHoriz_Slope_Square	bank94 A71A vertical shot square test despite native Horiz name
+projectile_flight	slope	BlockShotReactHoriz_Slope	bank94 A147 horizontal selection calling native Vert helpers
+projectile_flight	slope	BlockShotReactVert_Slope	bank94 A15E vertical selection calling native Horiz helpers
+projectile_flight	slope	BlockShotReactVert_Slope_NonSquare	bank94 A543 horizontal traversal row-alignment gate
+projectile_flight	slope	BlockShotReactHoriz_Slope_NonSquare	bank94 A569 vertical traversal column-alignment gate
+projectile_flight	slope	BlockShotReact_Slope_NonSquare	bank94 A58F reflected height and shot span reset
+projectile_flight	reaction	BlockShotReactHoriz	bank94 A1B5 horizontal tile dispatcher with hit decrement	256 extension budget; canonical backing extent; PLM effects delegate to Host.
+projectile_flight	reaction	BlockShotReactVert	bank94 A1D6 vertical tile dispatcher with hit decrement	256 extension budget; canonical backing extent; PLM effects delegate to Host.
+projectile_flight	reaction	BlockReact_ShootableAir	bank94 9E55 common shootable PLM and special B974 span writes
+projectile_flight	reaction	BlockReact_Shootable	bank94 9E73 regional/common shootable PLM and collision
+projectile_flight	reaction	BlockReact_BombableAir	bank94 9FD6 bombable PLM and no collision
+projectile_flight	reaction	BlockReact_BombableBlock	bank94 9FF4 bombable PLM and collision
+projectile_special	calculate	CalculateBlockAt	bank94 9C1D checked coordinates and byte product	Specialized to zero native r30/r32 offsets; callers supply already adjusted coordinates.
+projectile_special	bomb_reaction	BlockBombedReact	bank94 private bomb tile reaction and extension closure	Return-only carry and shot span scratch effects are unused by bomb callers; PLM writes retained. 256 extension budget.
+projectile_special	bomb_reaction	BlockBombedReact_Special	bank94 9D71 regional/common special bomb PLM	Native carry return is unused by bomb caller and represented by successful Result.
+enemy_crawler	block	CalculateBlockContainingPixelPos	bankA0 private pixel block calculation through enemy dispatch
+audio	has_queued_music	HasQueuedMusic	music ring occupancy test
+audio	queue_music	QueueMusic_Delayed8	fixed eight frame queue mode
+audio	queue_music	QueueMusic_DelayedY	caller supplied queue delay mode
+camera_scroll	main_scrolling	MainScrollingRoutine	same scheduled camera closure and subcalls
+camera_scroll	handle_x	Samus_HandleScroll_X	horizontal camera displacement and trigger paths
+camera_scroll	handle_y	Samus_HandleScroll_Y	vertical camera displacement and trigger paths
+camera_scroll	spore_spawn_hook	Samus_ScrollFinishedHook_SporeSpawnFight	finished hook state writes
+enemy_projectile_sparks	initialize	EprojInit_Sparks	bank86 F391 initializer body
+enemy_projectile_sparks	update	EprojPreInstr_Sparks	bank86 F3F0 spark motion and lifecycle
+glass_shattering	initialize	EprojInit_MotherBrainGlassShatteringShard	CDC5 branch and validated array parameters
+glass_shattering	initialize	EprojInit_MotherBrainGlassShatteringSparkle	CE6D branch and bounded source slots
+glass_shattering	update	EprojPreInstr_MotherBrainGlassShatteringShard	CE9B shard movement and sparkle lifecycle
+glass_shattering	spawn_shard	SpawnMotherBrainGlassShatteringShard	bank84 D331 allocator wrapper
+glass_shattering	instruction	PlmInstr_SpawnFourMotherBrainGlass	bank84 D30B operand read and four ordered allocations
+mother_brain_bomb	initialize	EprojInit_MotherBrainBomb	bank86 C482 initializer body
+mother_brain_bomb	update	EprojPreInstr_MotherBrainBomb	bank86 C4C8 damped bounce lifecycle
+mother_brain_bomb	collide_bombs	MotherBrainBomb_Bomb_CollDetect_DoubleRet	bank86 C564 collision effects and allocation order
+mother_brain_bomb	overlaps_bomb	Eproj_CheckForBombCollisionWithRect	bank86 C1B8 overlap predicate specialized to bomb rectangle
+mother_brain_bomb	move_bomb	MoveMotherBrainBomb	bank86 C5C2 acceleration and boundary bounce
+plm_render	calculate_block_coords	CalculatePlmBlockCoords	bank84 8290 quotient and remainder
+plm_render	draw	DrawPlm	bank84 8DAA vertical and horizontal clipping queue and tile expansion
+plm_instructions	process_draw_data	ProcessPlmDrawInstruction	bank84 861E draw-data writes to level data
+ridley_movement	seek	Ridley_Func_104	D526 seek with braking table D61F
+ridley_movement	seek	Ridley_Func_104_0	D523 zero braking wrapper
+ridley_movement	force_axis	Ridley_Func_105	D5A9 horizontal acceleration with braking
+ridley_movement	seek	Ridley_Func_106	D62F seek without braking table D712
+ridley_movement	force_axis	Ridley_Func_107	D6A6 horizontal acceleration without braking
+ridley_movement	arc	Ridley_Func_111	D800 angle and speed interpolation
+ridley_movement	integrate	Ridley_Func_112	D86B bounded X/Y fixed point integration
+ridley_movement	integrate	Ridley_Func_113	D914 boundary earthquake condition in bounded integration
+ridley_movement	update_wing_animation	Ridley_Func_115	D97D wing timer and frame advance
+ridley_movement	update_wing_animation	Ridley_Func_116	D9A8 velocity derived wing rate
+ridley_movement	tail_copy	Ridley_Func_93	D3B4 seven strided tail table copies
+ridley_movement	initialize_tail	Ridley_Func_92	D2D6 complete tail initialization
+ridley_movement	tail_flags	Ridley_Func_D3DC	D3DC all seven segment flags
+ridley_movement	tail_flags	Ridley_Func_94	D3D4 zero flags wrapper
+ridley_movement	tail_flags	Ridley_Func_95	D3D9 high bit flags wrapper
+ridley_movement	flip_tail	Ridley_Func_96	D3F9 reverse angles and reset direction flags
+ridley_movement	all_tail	Ridley_Func_78	CC1E all segment bit test
+ridley_movement	all_tail	Ridley_Func_97	D431 duplicate all segment bit test
+ridley_movement	tail_speed	Ridley_Func_77	CBFE orientation bounds table
+ridley_movement	tail_aim_target	Ridley_Func_90	D242 missile rectangle target selection
+ridley_movement	tail_aim	Ridley_Func_89	D19D target angle and tail speed
+ridley_movement	tail_turn	Ridley_Func_80_DoubleRet	CC7D random or armed tail turn
+ridley_movement	tail_turn	Ridley_Func_82_DoubleRet	forced armed tail turn predicate
+ridley_movement	tail_phase	Ridley_Func_71	CB33 state 2 entry
+ridley_movement	tail_phase	Ridley_Func_72	CB45 state 3
+ridley_movement	tail_phase	Ridley_Func_73	CB4E state 6 entry
+ridley_movement	tail_phase	Ridley_Func_74	CB60 state 7 entry
+ridley_movement	tail_phase	Ridley_Func_75	CB72 shared orientation limit setup
+ridley_movement	tail_phase	Ridley_CBC0	CBC0 state 1 plus segment updates
+ridley_movement	tail_phase	Ridley_CBC7	CBC7 state 4 plus segment updates
+ridley_movement	tail_phase	Ridley_CBCE	CBCE state 5 plus segment updates
+ridley_movement	tail_phase	Ridley_CBD5	CBD5 state 8 plus segment updates
+ridley_movement	tail_phase	Ridley_Func_79	CC39 state 1 logic
+ridley_movement	tail_phase	Ridley_Func_81	CCBD state 8 logic
+ridley_movement	tail_phase	Ridley_Func_83	CD24 state 4 logic
+ridley_movement	tail_phase	Ridley_Func_84	CDAA state 5 logic
+ridley_movement	tail_phase	Ridley_Func_85	CE65 tail angle reset in delay expiry branch
+ridley_movement	tail_segments	Ridley_CBDC	CBDC ordered seven segment updates
+ridley_movement	tail_segment	Ridley_Func_88	D09F segment angle integration
+ridley_movement	tail_positions	Ridley_Func_86	CEBA tail position chain
+ridley_movement	tail_lengths	Ridley_Func_87	CF5A segment lengths and resting contraction
+ridley_movement	tail_main	Ridley_Func_70	CAF5 scheduled tail closure
+ridley_movement	tail_main	Ridley_Func_91	D2AA tail sound timer in scheduled closure
+ridley_rendering	graphics_timer	Ridley_Func_118	DA0C graphics script and VRAM pair queue
+ridley_rendering	carry_graphics	Ridley_Func_119	DA8B carried sprite graphics pair
+ridley_rendering	draw_ridley	sub_A6DC13	DC13 native clipped OAM renderer
+ridley_rendering	draw_body	Ridley_Func_120	DAD8 orientation wing spritemap selection
+ridley_rendering	draw_tail	sub_A6DB2A	DB2A seven tail maps
+ridley_rendering	draw_tail	sub_A6DBC2	DBC2 Ridley palette renderer wrapper
+ridley_rendering	baby_frame	BabyMetroid_DBCB_DoubleRetEx	native private baby execution state and double return semantics
+ridley_rendering	draw_baby	DrawBabyMetroid_0	BF1A baby frame renderer
+ridley_rendering	ceres_draw_hook	Ridley_A2DC	A2DC baby position and draw hook selection
+ridley_rendering	ceres_draw	Ridley_A2F2	A2F2 baby and Ceres secondary map drawing
+ridley_rendering	update_palette_index	Ridley_Func_102	D4DA flash palette index
+ridley_rendering	health_palette	Ridley_Func_100	D474 health tier palette selection
+ridley_rendering	health_palette	Ridley_D495	D495 palette write with active change guard
+ridley_rendering	shot_palette	Ridley_Func_101	D4B5 shot palette selection
+ridley_cutscene	initialize	CeresRidley_Init	A0F5 Ceres and Zebes initialization branch
+ridley_cutscene	ceres_main	CeresRidley_Main	A288 Ceres scheduled frame
+ridley_cutscene	setup_getaway	CeresRidley_Func_27	AA54 mode7 getaway initialization
+ridley_cutscene	getaway	CeresRidley_Func_28	AABD getaway affine parameters
+ridley_cutscene	getaway	HandleCeresRidleyGetawayCutscene	AAAF scheduled wrapper
+ridley_cutscene	ceres_palette	Ridley_Func_61	C19C Ceres escape palette frame
+ridley_cutscene	getaway	CeresRidley_Func_29	AB5F affine matrix component updates
+ridley_cutscene	getaway	CeresMult	private signed magnitude affine product via host Mode7 multiply
+ridley_cutscene	getaway	CeresRidley_AC30	AC30 signed sine component for affine matrix
+ridley_cutscene	getaway	CeresRidley_Func_33	ACBC four way Mode7 transfer selection
+ridley_cutscene	getaway	CeresRidley_Func_34	AD27 two way Mode7 transfer selection
+ridley_cutscene	getaway	CeresRidley_Func_35	B0EF angle indexed palette
+ridley_cutscene	ceres_state	CeresRidley_Func_8	A4D6 palette entry lookup in A478 state
+ridley_cutscene	ceres_state	CeresRidley_Func_12	A763 seek and arrival predicate in A6E8 state
+ridley_cutscene	escape_state	Ridley_Func_54	C04E escape substate dispatcher
+ridley_cutscene	escape_state	Ridley_Func_55	C062 initial palette and transfer state
+ridley_cutscene	escape_state	Ridley_C08E	C08E first transfer state
+ridley_cutscene	escape_state	Ridley_C09F	C09F second transfer state
+ridley_cutscene	escape_state	Ridley_Func_56	C0BB wait and typewriter setup
+ridley_cutscene	escape_state	Ridley_Func_57	C0F5 text delay and transfer setup
+ridley_cutscene	escape_state	Ridley_C104	C104 typewriter continuation
+ridley_cutscene	escape_state	Ridley_Func_58	C117 escape completion status
+ridley_cutscene	escape_state	Ridley_Func_59	C136 single queued escape transfer
+ridley_cutscene	escape_state	Ridley_Func_62	C383 transfer list queued at text delay completion
+ridley_cutscene	death_state	Ridley_Func_68	C601 seek and arrival predicate in C538 state
+ridley_cutscene	explosion_main	RidleysExplosion_Func_1	C913 alternating visibility flags
+ridley_cutscene	death_state	RidleysExplosion_Func_2	C932 twelve ordered SpawnEnemy host calls
+ridley_subsystem	choose_state	Ridley_Func_4	B335 weighted state table choice
+ridley_subsystem	choose_state	Ridley_Func_3b	B321 RNG selection and immediate state call
+ridley_subsystem	post_attack_choice	Ridley_Func_32	BA85 death or powerbomb next state
+ridley_subsystem	grab_rect	Ridley_Func_26	B865 Samus capture overlap rectangle
+ridley_subsystem	grab	Ridley_Func_31	BA54 grab offset calculation
+ridley_subsystem	grab	Ridley_Func_37	BC68 tangible capture and SamusCode host request
+ridley_subsystem	release	Ridley_Func_38	BC84 release and SamusCode host request
+ridley_subsystem	drag_samus	Ridley_Func_30	B9E1 converge grab offsets and update Samus position
+ridley_subsystem	reflect_horizontal	Ridley_Func_28	B8A9 boundary and random horizontal reflection
+ridley_subsystem	bounce_velocity	Ridley_Func_29	B90F bounce tier velocities
+ridley_subsystem	block_solid	Ridley_Func_103	D4F9 native block type probe
+ridley_subsystem	landing_tail	Ridley_Func_23	B7E7 tail landing probes
+ridley_subsystem	contact_projectile	Ridley_Func_122	DEA6 missile contact and canonical projectile position writes
+ridley_subsystem	projectile_contact	Ridley_Func_129	E088 two tail contact rectangles and ordered effects
+ridley_subsystem	samus_rect	Ridley_Func_124	DF29 Samus rectangle overlap
+ridley_subsystem	outside_rect	Shitroid_Func_2	arrival rectangle predicate reused from native Shitroid
+ridley_subsystem	initialize_death	Ridley_Func_126	DFB7 health zero enters death state
+ridley_subsystem	offscreen	Ridley_Func_121	DE7A screen visibility rectangle
+ridley_subsystem	update_tangible	Ridley_Func_39	BCB4 invulnerability timer and offscreen property updates
+ridley_cutscene	initialize	Ridley_Func_117	D9FD graphics script setup writes during initialization
+ridley_subsystem	handle_powerbomb_state	Ridley_Func_42	BD2C powerbomb reaction state
+ridley_subsystem	flip_animation	Ridley_Func_114	D955 orientation animation switching
+ridley_subsystem	damage	SuitDamageDivision	suit dependent quarter/half damage branch
+ridley_subsystem	damage	Samus_DealDamage	canonical health subtraction, clamp and frozen/damage300 guards	Invalid signed damage returns an error instead of invoking native InvalidInterrupt_Crash.
+ridley_subsystem	damage	Ridley_Func_98	D453 damage amount caller through entry DF60	Damage amount is obtained in execute; this helper performs the resulting damage writes.
+ridley_subsystem	execute	Ridley_Func_125	DF66 enemy damage and knockback in DF60 entry
+ridley_movement	can_carry	Ridley_Func_40_Carry	private native movement flag carry test
+ridley_movement	morph_carry	Ridley_Func_40_Sign	private native movement flag sign test
+ridley_movement	speed_profile	Ridley_Func_7	B42E four speed tiers
+samus_projectile_frame	handle	HandleProjectile	scheduled descending slot update closure
+samus_projectile_frame	pre_instruction	ProjPreInstr_Wave_Shared	B103 shared directional wave body
+samus_control	animation_command	Samus_AnimDelayFunc_0to5	8344 command numbers zero through five
+samus_control	animation_command	Samus_AnimDelayFunc_6_GotoStartIfLittleHealth	8346 command six
+samus_control	animation_command	Samus_AnimDelayFunc_7	8360 command seven
+samus_control	animation_command	Samus_AnimDelayFunc_8_AutoJumpHack	8370 command eight
+samus_control	animation_command	Samus_AnimDelayFunc_9_TransToPose	839A command nine
+samus_control	animation_command	UNUSED_Samus_AnimDelayFunc_10	83F6 command ten
+samus_control	animation_command	Samus_AnimDelayFunc_11_SelectDelaySequenceWalljump	841D command eleven
+samus_control	animation_command	Samus_AnimDelayFunc_12_TransToPose	848B command twelve
+samus_control	animation_command	Samus_AnimDelayFunc_13_TransToPose	84B6 command thirteen
+samus_control	animation_command	Samus_AnimDelayFunc_14_Goto	84C7 command fourteen
+samus_control	animation_command	Samus_AnimDelayFunc_15_GotoStart	84DB command fifteen
+samus_control	speed_booster_delay	Samus_HandleSpeedBoosterAnimDelay	852C animation speed boosting sequence
+samus_control	handle_anim_delay	Samus_HandleAnimDelay	private native delay/environment dispatch
+samus_control	bubbles	Samus_SpawnAirBubbles	813E bubble atmospheric slot and timing
+samus_control	splash	Samus_SpawnWaterSplash	80E6 movement type splash table and bubble dependency
+samus_control	no_fx	Samus_Animate_NoFx	8078 liquid transition out of water
+samus_control	water_fx	Samus_Animate_WaterFx	80B8 water delay and splash transition
+samus_control	lava_fx	Samus_Animate_LavaFx	lava damage and atmospheric graphics branch
+samus_control	lava_fx	Samus_Animate_AcidFx	acid damage and atmospheric graphics branch
+samus_control	animate	Samus_Animate	8000 frame delay decrement and environment effects
+enemy_projectile_collision	check	EprojBlockCollisition_CheckHorizontal	868890 repeated horizontal extension traversal
+enemy_projectile_collision	check	EprojBlockCollisition_CheckVertical	86889E repeated vertical extension traversal
+enemy_projectile_collision	check	EprojColl_8506	8506 signed horizontal extension
+enemy_projectile_collision	check	EprojColl_Unknown8536	853C signed vertical extension
+enemy_projectile_collision	check	EprojColl_ClearCarry	858A empty terrain
+enemy_projectile_collision	check	EprojColl_SetCarry	858C solid terrain
+enemy_projectile_collision	check	EprojColl_858E	858E horizontal slope dispatch
+enemy_projectile_collision	check	EprojColl_85AD	85AD vertical slope dispatch
+enemy_projectile_collision	square	EprojColl_85C2	private horizontal square slope collision
+enemy_projectile_collision	square	EprojColl_8676	8676 vertical square slope collision
+enemy_projectile_collision	slope	EprojColl_874E	874E non square vertical slope collision
+enemy_projectile_collision	check	EprojColl_873D	873D horizontal non square slope returns clear
+enemy_projectile_rendering	screen_shake	GetValuesForScreenShaking	8427 quake capture values
+enemy_projectile_rendering	draw_projectile	DrawEprojs	83D6 slot rendering and offscreen bounds
+enemy_projectile_rendering	draw_spritemap	DrawEprojSpritemapWithBaseTile	81 8C0A visible base tile OAM body
+enemy_projectile_rendering	draw_spritemap	DrawEprojSpritemapWithBaseTileOffscreen	81 8C7F offscreen base tile OAM body
+sprite_objects	draw_map	DrawSpritemapWithBaseTile	bank81 base tile and palette emission specialized to bankB4 maps
+ridley_rendering	draw_spritemap	DrawSpritemap	generic map renderer specialized to bankA6 maps	BankA6 ROM specialization with explicit extent checks; OAM cursor capacity and hidden sprite behavior correspond to the native loop.
+ridley_rendering	palette	WriteColorsToPalette	palette buffer branch specialized to bankA6	BankA6 specialization; positive count and palette extent are required, rejecting native unchecked/zero-count paths.
+ridley_rendering	palette	WriteColorsToTargetPalette	target palette buffer branch specialized to bankA6	BankA6 specialization; positive count and palette extent are required, rejecting native unchecked/zero-count paths.
+ridley_rendering	queue_mode7	QueueMode7Transfers	flag selected seven or nine byte bankA6 descriptor copy
+ridley_subsystem_instructions	callback	EnemyInstr_Goto	A6 callback uses shared native opcode 80ED branch semantics
+ridley_subsystem_instructions	callback	EnemyInstr_Sleep	A6 callback uses shared native opcode 812F stop semantics
+ridley_subsystem_instructions	instructions	ProcessEnemyInstructions	A0 C26A scheduled script processing specialized to admitted Ridley scripts	Only admitted pinned bankA6 script graphs and opcodes are covered.
+ridley_enemy_instructions	process_instructions	ProcessEnemyInstructions	A0 C26A alternate bounded Ridley attack script pass	Only selected attack script entry points and admitted callbacks are covered.
+ridley_enemy_instructions	aim	Ridley_Instr_11	E84D private angle and mouth fireball setup helper
+enemy_instructions	process_generic_instructions	ProcessEnemyInstructions	A0 C26A generic opcode-only bounded enemy pass	Only generic opcodes and caller supplied budget are covered; enemy specific script closure remains external.
+enemy_projectile_instructions	run_all_context	EprojRunAll	scheduled descending projectile slots and script timer semantics	Only implemented initializer preinstruction and instruction branches are covered; unhandled opcodes are errors.
+enemy_projectiles	spawn_room	SpawnEprojWithRoomGfx	room graphics wrapper passes zero base graphics to common allocator
+enemy_projectiles	spawn_with_gfx	SpawnEprojWithGfx	current enemy tile/palette graphics wrapper
+enemy_projectiles	spawn_enemy_drops	SpawnEnemyDrops	native A0920E header scratch assignment and pickup allocation wrapper	Native eproj_spawn_varE24 is carried in ProjectileHost.enemy_header; allocation and initializer closure are separately mapped.
+enemy_projectiles	random	NextRandom	native 16 bit random recurrence
+enemy_projectiles	ceres_common	sub_86A301	A301 Ceres platform/pad shared initializer
+enemy_projectile_instructions	blue_ring_outside	CheckForBlueRingCollisionWithRoom	C3C9 room bounds checks
+enemy_projectile_instructions	blue_ring_enemy_collision	CheckForCollisionWithShitroid_DoubleRet	C3A9 linked enemy collision and dead target double return
+enemy_projectile_instructions	blue_ring_explosion	BlueRingContactExplosion	C410 explosion ordered spawn and audio
+enemy_projectile_instructions	lavaquake_arc	Eproj_NorfairLavaquakeRocks_Func1	BC16 rising quadratic pair movement
+enemy_projectile_instructions	lavaquake_arc	Eproj_NorfairLavaquakeRocks_Func2	BC8F falling quadratic pair movement
+enemy_projectile_instructions	lavaquake_outside	EprojPreInstr_NorfairLavaquakeRocks_Inner2	BD2A inclusive boundary predicate
+enemy_projectile_instructions	preinstruction_context	EprojPreInstr_NorfairLavaquakeRocks_Inner	BD1E out of bounds deletion caller
+enemy_projectile_instructions	pickup	Eproj_Pickup_SmallHealth	F0BB five health branch
+enemy_projectile_instructions	pickup	Eproj_Pickup_BigHealth	F0CA twenty health branch
+enemy_projectile_instructions	pickup	Eproj_Pickup_PowerBombs	F0D9 power bomb ammo clamp
+enemy_projectile_instructions	pickup	Eproj_Pickup_Missiles	F0E8 missiles ammo clamp
+enemy_projectile_instructions	pickup	Eproj_Pickup_SuperMissiles	F0F7 super missile ammo clamp
+enemy_projectile_instructions	pickup	Samus_RestoreHealth	pickup health and reserve tank clamp specialized branch
+enemy_projectile_instructions	pickup	Samus_RestoreMissiles	pickup missile and max clamp specialized branch
+enemy_projectile_instructions	pickup	Samus_RestoreSuperMissiles	pickup super missile and max clamp specialized branch
+enemy_projectile_instructions	pickup	Samus_RestorePowerBombs	pickup power bomb and max clamp specialized branch
+plm	spawn	SpawnPLM	84E7 current block allocator with supported setup callback
+plm	spawn_room	SpawnRoomPLM	846A room entry allocation with room argument
+plm	spawn_hardcoded	SpawnHardcodedPlm	83D7 positioned allocation with hardcoded argument
+plm_instructions	process_frame_inner	PlmHandler_Async	85B4 selected PLM scheduler and draw data closure	Bounded synchronous frame adapter covers supported preinstructions and opcodes; asynchronous continuation and full PLM engine are not claimed.
+room	select_room	HandleRoomDefStateSelect	room definition selection with actual selector dispatch
+room	select_room	RoomDefStateSelect_Finish	E5E6 room header final selector
+room	random_explosion	RoomCode_GenRandomExplodes	C1A9 original random explosion sprite and SFX tables
+collision	check_solid_enemy	Samus_CheckSolidEnemyColl	A0 A8F0 full interactive enemy collision scan with bounded list
+collision	handler	Samus_Movement_00_Standing	movement selector zero
+collision	handler	Samus_Movement_01_Running	movement selector one
+collision	handler	Samus_Movement_02_NormalJumping	movement selector two
+collision	handler	Samus_Movement_03_SpinJumping	movement selector three
+collision	handler	Samus_Movement_04_MorphBallOnGround	movement selector four
+collision	handler	Samus_Movement_05_Crouching	movement selector five
+collision	handler	Samus_Movement_06_Falling	movement selector six
+collision	handler	Samus_Movement_07_Unused	movement selector seven
+collision	handler	Samus_Movement_08_MorphBallFalling	movement selector eight
+collision	handler	Samus_Movement_09_Unused	movement selector nine
+collision	handler	Samus_Movement_0A_KnockbackOrCrystalFlashEnding	movement selector ten
+collision	handler	Samus_Movement_0B_Unused	movement selector eleven
+collision	handler	Samus_Movement_0C_Unused	movement selector twelve
+collision	handler	Samus_Movement_0D_Unused	movement selector thirteen
+collision	handler	Samus_Movement_0E_TurningAroundOnGround	movement selector fourteen
+collision	handler	Samus_Movement_0F_CrouchingEtcTransition	movement selector fifteen
+collision	handler	Samus_Movement_10_Moonwalking	movement selector sixteen
+collision	handler	Samus_Movement_11_SpringBallOnGround	movement selector seventeen
+collision	handler	Samus_Movement_12_SpringBallInAir	movement selector eighteen
+collision	handler	Samus_Movement_13_SpringBallFalling	movement selector nineteen
+collision	handler	Samus_Movement_14_WallJumping	movement selector twenty
+collision	handler	Samus_Movement_15_RanIntoWall	movement selector twenty one
+collision	handler	Samus_Movement_16_Grappling	movement selector twenty two
+collision	handler	Samus_Movement_17_TurningAroundJumping	movement selector twenty three
+collision	handler	Samus_Movement_18_TurningAroundFalling	movement selector twenty four
+collision	handler	Samus_Movement_19_DamageBoost	movement selector twenty five
+collision	handler	Samus_Movement_1A_GrabbedByDraygon	movement selector twenty six
+collision	handler	Samus_Movement_1B_ShinesparkEtc	movement selector twenty seven
+projectile_special	spazer_phase	ProjPreInstr_SpazerSba_FuncB_0	spazer phase zero
+projectile_special	spazer_phase	ProjPreInstr_SpazerSba_FuncB_1	spazer phase one
+projectile_special	spazer_phase	ProjPreInstr_SpazerSba_FuncB_2	spazer phase two
+projectile_special	dispatch_host	ProjPreInstr_SpazerSba_FuncA_0	spazer pair clear index zero
+projectile_special	dispatch_host	ProjPreInstr_SpazerSba_FuncA_1	spazer pair clear index one
+projectile_special	dispatch_host	ProjPreInstr_SpazerSba_FuncA_2	spazer pair clear index two
+projectile_special	dispatch_host	ProjPreInstr_SpazerSba_FuncA_3	spazer pair clear index three
+ridley_cutscene	escape_transfers	ProcessEscapeTimerTileTransfers	C26E queue scan and transfer termination
+ridley_cutscene	escape_text	HandleTypewriterText_Ext	C2A7 text opcode branches
+ridley_cutscene	explosion_init	RidleysExplosion_Init	C696 scheduled explosion init variants
+ridley_cutscene	explosion_main	RidleysExplosion_Main	C8D4 scheduled explosion frame
+ridley_cutscene	death_dust	Ridley_Func_69	C623 dust timer allocator
+enemy_jump	state	Sidehopper_Func_3	state number 3
+enemy_jump	state	Sidehopper_Func_4	state number 4
+enemy_jump	state	Sidehopper_Func_5	state number 5
+enemy_jump	state	Sidehopper_Func_6	state number 6
+enemy_jump	state	Sidehopper_Func_7	state number 7
+enemy_jump	state	Sidehopper_Func_8	state number 8
+enemy_jump	state	Sidehopper_Func_9	state number 9
+enemy_jump	state	Sidehopper_Func_10	state number 10
+enemy_jump	state	Sidehopper_Func_11	state number 11
+enemy_jump	state	Sidehopper_Func_12	state number 12
+enemy_jump	state	Sidehopper_Func_13	state number 13
+enemy_jump	state	Sidehopper_Func_14	state number 14
+enemy_jump	state	Sidehopper_Func_15	state number 15
+enemy_jump	state	Sidehopper_Func_16	state number 16
+enemy_jump	state	Sidehopper_Func_17	state number 17
+enemy_jump	state	Sidehopper_Func_18	state number 18
+enemy_jump	state	Sidehopper_Func_19	state number 19
+enemy_jump	state	Sidehopper_Func_20	state number 20
+enemy_jump	state	Sidehopper_Func_21	state number 21
+enemy_jump	state	Sidehopper_Func_22	state number 22
+room_scroll	display	DisplayViewablePartOfRoom	full initial17-column tilemap pass behind dispatch_host equality guard; matched pinned sm_80.c:1657	Synchronous VRAM flush remains Host-owned; foreground/background viewport and queue bounds plus preflight refusal remain binding; no PPU ownership.

@@ -135,3 +135,8 @@ __pycache__/
 /.scratch/decomp-strategy/browser-correction-fixture.json
 /.scratch/decomp-strategy/progress-served-final.json
 /.scratch/decomp-strategy/source-audit-review.txt
+
+# Exact reporting WIP receipts backed up by state-audit/checkpoint-receipts-20261013.
+/.scratch/decomp-progress/state-audit/registry-before.json
+/.scratch/decomp-progress/state-audit/source-coverage-map.json
+/.scratch/decomp-progress/state-audit/source-audit-review.txt

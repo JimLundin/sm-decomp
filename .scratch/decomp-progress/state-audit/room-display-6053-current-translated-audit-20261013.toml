@@ -1,0 +1,30 @@
+id = "room-display-6053-current-translated-audit-20261013"
+scope = "Room display · reviewed guarded native entry"
+agent = "/root"
+stage = "translated"
+evidence_context = "current-checkout"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+routines = ["DisplayViewablePartOfRoom"]
+commit = "e8c9c3e10ac71bf0377dc00d7de5764a4263b445"
+limitations = ["Reviewed display() implements C80:A176's 17 foreground/conditional-background columns and ordered synchronous VRAM flushes; the original lexical Rust extractor missed dispatch_host's if guard.","Only admitted viewport, layer2, tile/queue and transactional refusal domains are translated. Hardware VRAM processing remains Host-owned.","The separate shared-host verified record names retained actual-C fixtures; integration completion and live acceptance remain pending.","Source correspondence is a qualified implementation inventory, not full-game completion or original-ROM parity; report time is an audit publication date."]
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-progress/state-audit/evidence-findings.md"
+sha256 = "15b227c180ff654ec021e67022ad0a2ffb60d7e5671faccff76f8da0bc62b49b"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-progress/state-audit/source-coverage-map.json"
+sha256 = "707b7fe9c242d5ffbd34239078dbfff07cfbdb855966997c06aee0a3bcd8e212"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-progress/state-audit/source-aliases.tsv"
+sha256 = "469581f69f2b3b2e0c5099b32e2734887bf30de614342a906a413655b28fbcf6"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/crates/port/src/room_scroll.rs"
+sha256 = "cc2c7ee9138a1c781321045e28246c083fca6a53ce284ac626d9abf5bdb5bdf0"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/ceres-continuation/game-host-room-scroll/1791873418836128-259326-0/verdict.toml"
+sha256 = "ddb49cbd79a7249b45745044f9f6c95a7e98671fa74e0b313a7f81bf8c869d1d"

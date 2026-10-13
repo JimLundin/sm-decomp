@@ -1,0 +1,20 @@
+id = "ridley-v2-natural-6053-frozen-verified-audit-20261013"
+scope = "Ridley hardware v2 · natural Ceres fixture domain"
+agent = "/root"
+stage = "verified"
+evidence_context = "historical-frozen"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+routines = ["CallRidleyFunc","CeresRidley_Init","CeresRidley_Main","EnemyInstr_Sleep","HandleCeresRidleyGetawayCutscene","ProcessEnemyInstructions","Ridley_A2F2","Ridley_Func_70","Ridley_Instr_1","Ridley_Instr_2","Ridley_Instr_5","Ridley_Instr_6","Ridley_Instr_10","Ridley_Instr_11","Ridley_Instr_12","Ridley_Instr_13","Ridley_Instr_14","Ridley_Instr_15","Ridley_Shot","sub_A6DF59"]
+limitations = ["670 genuine unpatched fixture pairs over 20 native roots and eight actual-C callbacks; all are Ceres header E13F and area 6 in frozen isolated source.","Only 574 of 670 fixture calls are admitted by public original-ROM selection; 92 direct fixture-only states and four getaway boundaries refuse.","Offline fixtures establish their exact tested inputs only; this is neither accepted live replay coverage nor whole-Ridley original-ROM parity.","Original verdict and retained post-cleanup authentication match; audit reread receipts without new gameplay/fixture execution.","All 20 roots already count as verified. This historical provenance record changes no unique total and must not be called integrated/current main acceptance.","Report time is an audit publication date."]
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-progress/state-audit/evidence-findings.md"
+sha256 = "15b227c180ff654ec021e67022ad0a2ffb60d7e5671faccff76f8da0bc62b49b"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/ridley-hardware-recovery/natural/1791861212110218-129925-0/verdict.toml"
+sha256 = "addb9a189d44f1066dbe6ad723bacd193548bcdc240e34eaf022d167a8b5b9aa"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/ridley-hardware-recovery/natural-after-cleanup-authentication.toml"

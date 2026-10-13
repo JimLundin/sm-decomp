@@ -1,0 +1,27 @@
+id = "ridley-v2-controlled-6053-frozen-verified-audit-20261013"
+scope = "Ridley hardware v2 · controlled frozen fixture domain"
+agent = "/root"
+stage = "verified"
+evidence_context = "historical-frozen"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+routines = ["CallRidleyFunc","CeresRidley_Hurt","CeresRidley_Init","CeresRidley_Main","HandleCeresRidleyGetawayCutscene","ProcessEnemyInstructions","Ridley_A2F2","Ridley_Func_2","Ridley_Func_70","Ridley_Hurt","Ridley_Instr_1","Ridley_Instr_2","Ridley_Instr_3","Ridley_Instr_4","Ridley_Instr_5","Ridley_Instr_6","Ridley_Instr_7","Ridley_Instr_8","Ridley_Instr_9","Ridley_Instr_10","Ridley_Instr_11","Ridley_Instr_12","Ridley_Instr_13","Ridley_Instr_14","Ridley_Instr_15","Ridley_Instr_16","Ridley_Main","Ridley_Powerbomb","Ridley_Shot","RidleysExplosion_Init","RidleysExplosion_Main","sub_A6DF59","sub_A6DF60"]
+limitations = ["6,457 controlled fixture pairs over 33 native roots, seven rejected ABI controls and 305 actual-C callbacks; frozen hardware-v2/candidate source and evidence readers own these gates.","Both PPU views, active PPU discriminator and open-bus contracts are retained; this record does not authenticate current main-checkout Ridley inputs.","Original verdicts and retained post-cleanup authentication receipts match; audit did not rerun fixtures or every bulky Ridley artifact reader.","All native roots already had a verified observation; this adds later bounded provenance with no increase in unique verified coverage.","Whole 220-definition Ridley lifecycle integration/live acceptance, boss/explosion inputs, full replay and original-ROM parity remain pending.","Report time is this audit publication, not the controlled fixture run date."]
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-progress/state-audit/evidence-findings.md"
+sha256 = "15b227c180ff654ec021e67022ad0a2ffb60d7e5671faccff76f8da0bc62b49b"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/ridley-hardware-recovery/controlled/1791860698541096-105766-0/verdict.toml"
+sha256 = "78b129866e34ab71834a10e9563bd6541ededaaeff9234b563996eb6ffbd4c58"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/ridley-hardware-recovery/controlled-after-cleanup-authentication.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/recovery-session/ridley-whole-final-offline/1791866846960194-145753-0/verdict.toml"
+sha256 = "def8416e90f8e39d6974f4d4afdc3778af2978061737833c8e5bd18a9e82ec69"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/ridley-live-whole-final-post-cleanup-auth.toml"

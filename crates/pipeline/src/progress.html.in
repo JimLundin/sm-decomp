@@ -10,65 +10,62 @@
     :root[data-theme="light"] { color-scheme:light; --bg:#f0f3f3; --panel:#fff; --raised:#f6f8f8; --ink:#182931; --muted:#536774; --line:#d3dfe1; --accent:#176c58; --accent-bg:#e1f2ec; --warning:#765316; --warning-bg:#fff3d9; --unreported:#b2c0c5; --translating:#b38228; --translated:#3b916f; --verified:#397f9e; --integrated:#6975be; --live:#8c64b4; --shadow:0 8px 32px #24404a09; }
     @media(prefers-color-scheme:light) { :root:not([data-theme="dark"]) { color-scheme:light; --bg:#f0f3f3; --panel:#fff; --raised:#f6f8f8; --ink:#182931; --muted:#536774; --line:#d3dfe1; --accent:#176c58; --accent-bg:#e1f2ec; --warning:#765316; --warning-bg:#fff3d9; --unreported:#b2c0c5; --translating:#b38228; --translated:#3b916f; --verified:#397f9e; --integrated:#6975be; --live:#8c64b4; --shadow:0 8px 32px #24404a09; } }
     * { box-sizing:border-box; }
-    body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    body { margin:0; background:var(--bg); color:var(--ink); font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
     button,input,select { font:inherit; }
-    button,select,input[type="search"] { color:var(--ink); background:var(--panel); border:1px solid var(--line); border-radius:7px; min-height:39px; }
-    button { cursor:pointer; padding:8px 13px; }
+    button,select,input[type="search"] { color:var(--ink); background:var(--panel); border:1px solid var(--line); border-radius:6px; min-height:34px; }
+    button { cursor:pointer; padding:6px 11px; }
     button:hover { background:var(--raised); border-color:var(--muted); }
     button:disabled { opacity:.45; cursor:default; }
     a { color:var(--accent); text-underline-offset:3px; overflow-wrap:anywhere; }
     :focus-visible { outline:3px solid var(--accent); outline-offset:3px; }
-    .shell { max-width:1500px; margin:auto; padding:28px 40px 44px; }
-    .topbar { display:flex; justify-content:space-between; align-items:center; gap:20px; margin-bottom:26px; }
+    .shell { max-width:1500px; margin:auto; padding:20px 26px 30px; }
+    .topbar { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:16px; }
     .identity { display:flex; align-items:center; gap:13px; }
-    .mark { display:grid; place-items:center; height:39px; width:39px; border:1px solid var(--accent); border-radius:9px; font:700 12px/1 ui-monospace,monospace; letter-spacing:-.5px; color:var(--accent); }
+    .mark { display:grid; place-items:center; height:34px; width:34px; border:1px solid var(--accent); border-radius:7px; font:700 12px/1 ui-monospace,monospace; letter-spacing:-.5px; color:var(--accent); flex:none; }
     .eyebrow { font-size:11px; font-weight:700; letter-spacing:1.6px; text-transform:uppercase; color:var(--muted); }
-    .top-title { font-size:14px; font-weight:650; }
     .actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
     .primary { background:var(--accent-bg); color:var(--accent); border-color:var(--accent); }
-    .intro { display:flex; justify-content:space-between; gap:30px; align-items:flex-start; margin-bottom:22px; }
-    h1 { font-size:clamp(28px,3.2vw,43px); line-height:1.15; letter-spacing:-1.5px; margin:8px 0 13px; font-weight:680; }
-    .description { max-width:760px; color:var(--muted); margin:0; font-size:15px; }
-    .sync { text-align:right; padding-top:12px; min-width:190px; font-size:12px; color:var(--muted); }
-    .sync strong { color:var(--ink); font-weight:550; display:block; margin-bottom:3px; }
+    h1 { font-size:23px; line-height:1.2; letter-spacing:-.6px; margin:2px 0 0; font-weight:650; }
+    .sync { text-align:right; min-width:165px; font-size:10px; color:var(--muted); margin-right:8px; }
+    .sync strong { color:var(--ink); font-weight:550; display:block; }
     .dot { width:6px; height:6px; display:inline-block; border-radius:50%; background:var(--accent); margin-right:6px; }
     .notice { border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:8px; padding:12px 16px; margin:20px 0; background:var(--panel); color:var(--muted); font-size:13px; }
     .notice strong { color:var(--ink); }
     .warning { border-left-color:var(--warning); background:var(--warning-bg); color:var(--warning); }
     .error { border-left-color:#da7777; }
     [hidden] { display:none !important; }
-    .metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin:24px 0 18px; }
-    .metric { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:20px; box-shadow:var(--shadow); }
-    .metric-label { color:var(--muted); font-size:12px; font-weight:600; }
-    .metric-number { font-size:34px; font-weight:650; line-height:1.25; letter-spacing:-1px; margin:7px 0 3px; font-variant-numeric:tabular-nums; }
-    .metric small { color:var(--muted); font-size:12px; }
+    .metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:0 0 12px; }
+    .metric { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:12px 15px; }
+    .metric-label { color:var(--muted); font-size:11px; font-weight:600; }
+    .metric-number { font-size:27px; font-weight:650; line-height:1.2; letter-spacing:-.7px; margin:4px 0 2px; font-variant-numeric:tabular-nums; }
+    .metric small { color:var(--muted); font-size:10px; }
     .metric.emphasis .metric-number { color:var(--accent); }
-    .panel { background:var(--panel); border:1px solid var(--line); border-radius:10px; overflow:hidden; margin-top:18px; }
-    .panel-head { padding:20px 22px 14px; display:flex; align-items:flex-start; justify-content:space-between; gap:20px; }
-    h2 { font-size:17px; letter-spacing:-.25px; margin:0; font-weight:650; }
+    .panel { background:var(--panel); border:1px solid var(--line); border-radius:8px; overflow:hidden; margin-top:14px; min-width:0; }
+    .panel-head { padding:14px 16px 11px; display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+    h2 { font-size:15px; letter-spacing:-.2px; margin:0; font-weight:650; }
     .subtext { color:var(--muted); font-size:12px; margin:5px 0 0; }
     .selectors { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
     label { color:var(--muted); font-size:12px; display:block; }
     select { padding:7px 29px 7px 10px; max-width:100%; }
     .selectors label { display:flex; gap:7px; align-items:center; }
-    .overview { padding:4px 22px 20px; }
+    .overview { padding:0 16px 12px; }
     .stack { height:12px; display:flex; overflow:hidden; border-radius:4px; background:var(--unreported); }
     .segment { min-width:0; height:100%; }
-    .legend { display:flex; gap:17px; flex-wrap:wrap; margin-top:12px; font-size:11px; color:var(--muted); }
+    .legend { display:flex; gap:8px 13px; flex-wrap:wrap; margin-top:9px; font-size:11px; color:var(--muted); }
     .legend-item { display:flex; align-items:center; gap:6px; }
     .swatch { width:8px; height:8px; border-radius:2px; flex:none; }
     .legend-item strong { font-weight:550; color:var(--ink); font-variant-numeric:tabular-nums; }
-    .bank-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(155px,1fr)); gap:10px; padding:4px 22px 22px; }
-    .bank { text-align:left; padding:12px; background:var(--raised); min-height:97px; position:relative; }
+    .bank-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:7px; padding:0 16px 14px; }
+    .bank { text-align:left; padding:9px; background:var(--raised); min-height:65px; position:relative; }
     .bank[aria-pressed="true"] { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent); }
-    .bank-label { display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:12px; margin-bottom:12px; }
+    .bank-label { display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:11px; margin-bottom:7px; }
     .bank-label strong { font:600 13px/1.4 ui-monospace,monospace; }
     .bank-percent { color:var(--accent); font-variant-numeric:tabular-nums; }
     .bank-bar { background:var(--line); height:5px; border-radius:3px; overflow:hidden; }
     .bank-fill { height:100%; background:var(--accent); }
-    .bank-count { color:var(--muted); font-size:10px; margin-top:8px; }
+    .bank-count { color:var(--muted); font-size:10px; margin-top:5px; }
     .bank-empty .bank-percent { color:var(--muted); }
-    .filters { padding:0 22px 18px; display:grid; grid-template-columns:minmax(210px,2fr) repeat(5,minmax(100px,1fr)); gap:10px; }
+    .filters { padding:0 16px 12px; display:grid; grid-template-columns:minmax(190px,2fr) repeat(5,minmax(100px,1fr)); gap:8px; }
     .filters label span { display:block; margin-bottom:5px; }
     .filters select,.filters input { width:100%; }
     input[type="search"] { padding:7px 11px; }
@@ -79,7 +76,7 @@
     .list-header { padding:11px 22px; color:var(--muted); border-bottom:1px solid var(--line); font-size:10px; letter-spacing:.7px; text-transform:uppercase; }
     .routine { border-bottom:1px solid var(--line); }
     .routine:last-child { border-bottom:0; }
-    .routine-summary { padding:13px 22px; cursor:pointer; list-style:none; font-size:12px; }
+    .routine-summary { padding:8px 16px; cursor:pointer; list-style:none; font-size:12px; }
     .routine-summary::-webkit-details-marker { display:none; }
     .routine-summary:hover { background:var(--raised); }
     .routine[open] .routine-summary { background:var(--raised); }
@@ -120,8 +117,8 @@
     .pagination { border-top:1px solid var(--line); padding:14px 22px; display:flex; justify-content:space-between; align-items:center; gap:15px; font-size:12px; color:var(--muted); }
     .pagination-actions { display:flex; align-items:center; gap:12px; }
     .pagination button { min-height:33px; font-size:12px; padding:5px 11px; }
-    .report-notes { border:1px solid var(--line); border-radius:9px; background:var(--panel); margin:18px 0; font-size:12px; }
-    .report-summary { display:flex; align-items:center; gap:10px; padding:13px 18px; cursor:pointer; list-style:none; }
+    .report-notes { border:1px solid var(--line); border-radius:7px; background:var(--panel); margin:0 0 12px; font-size:11px; }
+    .report-summary { display:flex; align-items:center; gap:10px; padding:9px 14px; cursor:pointer; list-style:none; }
     .report-summary::-webkit-details-marker { display:none; }
     .report-summary::before { content:"›"; font-size:18px; line-height:1; color:var(--muted); }
     .report-notes[open] > .report-summary::before { transform:rotate(90deg); }
@@ -145,10 +142,43 @@
     .provenance-content { padding:4px 0 0; font-size:12px; max-width:950px; }
     .footer { display:flex; justify-content:space-between; gap:20px; color:var(--muted); font-size:11px; padding-top:20px; }
     .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
-    @media(min-width:1100px) { .bank-grid { grid-template-columns:repeat(8,1fr); } }
+    .dashboard-grid { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,1fr); gap:14px; align-items:start; }
+    .dashboard-grid > .panel { margin-top:0; }
+    .coverage-panel .panel-head { flex-wrap:wrap; }
+    .coverage-panel .selectors { gap:10px; font-size:12px; }
+    .context-control { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .context-control select { font-size:11px; }
+    #context-counts { margin:8px 0; font-size:10px; }
+    .bank-details { border-top:1px solid var(--line); }
+    .bank-details > summary { cursor:pointer; padding:10px 16px; color:var(--muted); font-size:11px; }
+    .velocity-head { align-items:center; flex-wrap:wrap; }
+    .velocity-head .selectors { gap:6px; }
+    .velocity-head select { font-size:11px; min-height:30px; padding:5px 24px 5px 8px; }
+    .velocity-stats { display:flex; gap:22px; padding:0 16px 8px; font-size:10px; color:var(--muted); flex-wrap:wrap; }
+    .velocity-stats strong { display:block; font-size:18px; color:var(--ink); font-weight:600; font-variant-numeric:tabular-nums; }
+    .chart { display:block; width:100%; height:172px; overflow:visible; }
+    .chart .grid-line { stroke:var(--line); stroke-width:1; }
+    .chart text { fill:var(--muted); font:10px system-ui,sans-serif; }
+    .chart .bucket-hit { fill:transparent; cursor:crosshair; }
+    .chart .bucket-hit:hover,.chart .bucket-hit:focus { fill:var(--ink); fill-opacity:.05; outline:none; stroke:var(--accent); stroke-width:1; }
+    .chart-readout { padding:2px 16px 8px; font-size:10px; color:var(--muted); min-height:32px; }
+    .chart-readout strong { color:var(--ink); font-weight:550; }
+    .chart-legend { display:flex; flex-wrap:wrap; gap:7px 14px; padding:0 16px 8px; font-size:10px; color:var(--muted); }
+    .history-swatch { background:repeating-linear-gradient(135deg,var(--muted) 0 1px,transparent 1px 3px); border:1px solid var(--muted); }
+    .legacy-swatch { background:var(--muted); opacity:.4; }
+    .chart-caption { color:var(--muted); font-size:10px; padding:0 16px 10px; margin:0; }
+    .chart-data { border-top:1px solid var(--line); font-size:11px; }
+    .chart-data > summary { cursor:pointer; padding:9px 16px; color:var(--muted); }
+    .chart-data-content { padding:0 16px 12px; }
+    .chart-data-content p { margin:0 0 10px; color:var(--muted); }
+    .chart-table-scroll { overflow:auto; max-height:230px; }
+    .chart-data table { border-collapse:collapse; width:100%; font-size:10px; font-variant-numeric:tabular-nums; }
+    .chart-data th,.chart-data td { border-bottom:1px solid var(--line); padding:5px 7px; text-align:right; white-space:nowrap; }
+    .chart-data th:first-child,.chart-data td:first-child { text-align:left; }
+    @media(max-width:1000px) { .dashboard-grid { grid-template-columns:minmax(0,1fr); } }
     @media(max-width:1050px) { .shell { padding:24px; } .filters { grid-template-columns:repeat(3,1fr); } .list-header,.routine-summary { grid-template-columns:minmax(180px,2fr) 90px 80px 60px 120px; gap:10px; } .panel-head { flex-wrap:wrap; } }
     @media(max-width:720px) { .shell { padding:20px 14px 30px; } .topbar { align-items:flex-start; margin-bottom:24px; } .top-title { max-width:140px; } .actions { justify-content:flex-end; } .actions button { font-size:12px; padding:6px 9px; min-height:34px; } .intro { display:block; } .sync { text-align:left; padding-top:16px; } .sync strong { display:inline; margin-right:8px; } h1 { letter-spacing:-.8px; } .metrics { grid-template-columns:repeat(2,1fr); gap:10px; } .metric { padding:15px; } .metric-number { font-size:28px; } .panel-head { padding:17px 15px 14px; } .selectors { gap:8px; } .selectors label { font-size:11px; } .selectors select { font-size:11px; min-height:33px; } .overview { padding:2px 15px 17px; } .legend { gap:10px; } .bank-grid { padding:0 15px 17px; grid-template-columns:repeat(3,1fr); gap:7px; } .bank { padding:10px; min-height:88px; } .bank-label { font-size:10px; } .bank-label strong { font-size:11px; } .bank-count { font-size:9px; } .filters { grid-template-columns:repeat(2,minmax(0,1fr)); padding:0 15px 15px; } .filter-search { grid-column:1 / -1; } .list-toolbar { padding:11px 15px; } .list-header { display:none; } .routine-summary { grid-template-columns:1fr auto; gap:8px; padding:14px 15px; } .routine-name { grid-column:1 / -1; } .routine-source { grid-column:1; font-size:10px; } .routine-address { grid-column:1; grid-row:3; font-size:10px; } .routine-lines { display:none; } .routine-stage { grid-column:2; grid-row:2 / 4; } .routine-detail { padding:19px 20px; grid-template-columns:minmax(0,1fr); gap:10px; } .pagination { padding:14px 15px; } .footer { display:block; } .footer span { display:block; margin-bottom:7px; } }
-    @media(max-width:720px) { .report-summary { align-items:flex-start; flex-wrap:wrap; padding:12px 15px; gap:6px 9px; } .report-summary .muted { flex-basis:100%; margin-left:18px; text-align:left; } .report-content { padding:0 15px 15px; } }
+    @media(max-width:720px) { .shell { padding:14px 12px 22px; } .topbar { flex-wrap:wrap; gap:10px; margin-bottom:12px; } h1 { font-size:21px; letter-spacing:-.5px; } .topbar > .actions { width:100%; justify-content:space-between; } .sync { text-align:left; margin-right:auto; min-width:0; } .sync strong { display:block; margin:0; } #checked { display:none; } .metrics { gap:8px; } .metric { padding:10px 12px; } .metric-number { font-size:25px; } .panel-head { padding:12px 14px 10px; } .bank { min-height:65px; padding:8px; } .bank-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .routine-summary { padding:9px 14px; } .report-summary { align-items:flex-start; flex-wrap:wrap; padding:9px 13px; gap:5px 8px; } .report-summary .muted { flex-basis:100%; margin-left:18px; text-align:left; } .report-content { padding:0 13px 13px; } .velocity-stats { gap:18px; } .chart { height:164px; } .velocity-head .selectors { margin-top:2px; } }
     @media(prefers-reduced-motion:no-preference) { .bank-fill { transition:width .25s ease; } }
     @media print { .actions,.filters,.pagination,.sync { display:none; } .shell { padding:0; } .panel,.metric { break-inside:avoid; } }
   </style>
@@ -156,13 +186,9 @@
 <body>
   <main class="shell">
     <header class="topbar">
-      <div class="identity"><div class="mark" aria-hidden="true">SM</div><div><div class="eyebrow">Decompilation</div><div class="top-title">Translation progress</div></div></div>
-      <div class="actions"><button id="theme" type="button" aria-label="Change color theme">Theme</button><button id="load" class="primary" type="button">Open registry JSON</button><input id="file" type="file" accept="application/json,.json" hidden></div>
+      <div class="identity"><div class="mark" aria-hidden="true">SM</div><div><div class="eyebrow">Super Metroid</div><h1 id="title">Translation progress</h1></div></div>
+      <div class="actions"><div class="sync"><strong id="sync-mode"><span class="dot" aria-hidden="true"></span>Embedded snapshot</strong><span id="updated"></span><br><span id="checked"></span></div><button id="theme" type="button" aria-label="Change color theme">Theme</button><button id="load" class="primary" type="button">Open JSON</button><input id="file" type="file" accept="application/json,.json" hidden></div>
     </header>
-    <section class="intro" aria-labelledby="title">
-      <div><div class="eyebrow">Shared routine inventory</div><h1 id="title">Translation progress</h1><p class="description">Explore original C routines, reported stages, and the evidence behind each report.</p></div>
-      <div class="sync"><strong id="sync-mode"><span class="dot" aria-hidden="true"></span>Embedded snapshot</strong><span id="updated"></span><br><span id="checked"></span></div>
-    </section>
     <div id="error" class="notice error" role="alert" hidden></div>
     <section class="metrics" aria-label="Inventory overview">
       <div class="metric"><div class="metric-label">Original C definitions</div><div class="metric-number" id="total">—</div><small id="total-lines">Inventory body lines</small></div>
@@ -178,11 +204,22 @@
         <details class="source-details"><summary>Source provenance and interpretation</summary><div id="provenance" class="provenance-content"></div></details>
       </div>
     </details>
-    <section class="panel" aria-labelledby="banks-title">
-      <div class="panel-head"><div><h2 id="banks-title">Progress across source banks</h2><p class="subtext">Exact reported stage · stages do not imply one another. Select a bank to explore its routines.</p></div><div class="selectors"><label for="milestone">Reported stage <select id="milestone"><option value="translated">Translated</option><option value="verified">Verified</option><option value="integrated">Integrated</option><option value="live-exercised">Live exercised</option><option value="translating">Translating</option></select></label><label for="weight">Weight by <select id="weight"><option value="routines">Definitions</option><option value="lines">Body lines</option></select></label></div></div>
-      <div class="overview"><label for="context">Evidence context <select id="context"><option value="">All reported contexts</option><option value="current-checkout">Checkout at observation</option><option value="historical-frozen">Retained historical source</option><option value="unspecified">Unspecified / legacy</option></select></label><p id="context-counts" class="subtext"></p><div id="stack" class="stack" role="img" aria-label="Selected stage observation coverage"></div><div id="legend" class="legend"></div><p class="subtext">Legend counts each stage independently. A definition may have reports in several stages and evidence contexts. Inventory coverage does not establish full-game completion.</p></div>
-      <div id="banks" class="bank-grid"></div>
-    </section>
+    <div class="dashboard-grid">
+      <section class="panel velocity-panel" aria-labelledby="velocity-title">
+        <div class="panel-head velocity-head"><div><h2 id="velocity-title">Progress velocity</h2><p class="subtext" id="velocity-stage">First stage reports over time</p></div><div class="selectors"><label for="velocity-window" class="sr-only">Chart period</label><select id="velocity-window"><option value="24h">Last 24 hours</option><option value="7d">Last 7 days</option><option value="all">All history</option></select><label for="velocity-mode" class="sr-only">Chart measure</label><select id="velocity-mode"><option value="additions">New reports</option><option value="cumulative">Cumulative</option></select></div></div>
+        <div class="velocity-stats"><div><span>New in period</span><strong id="velocity-gains">—</strong></div><div><span id="velocity-rate-label">Per hour</span><strong id="velocity-rate">—</strong></div><div><span id="velocity-latest-label">Latest hour</span><strong id="velocity-latest">—</strong></div></div>
+        <svg id="velocity-chart" class="chart" role="img" aria-labelledby="velocity-chart-title velocity-chart-description"></svg>
+        <div id="velocity-readout" class="chart-readout" aria-live="polite"></div>
+        <div id="velocity-legend" class="chart-legend"><span class="legend-item"><span id="velocity-current-swatch" class="swatch"></span>Checkout reports</span><span class="legend-item"><span class="swatch history-swatch"></span>Historical evidence</span><span class="legend-item"><span class="swatch legacy-swatch"></span>Legacy reports</span></div>
+        <p class="chart-caption" id="velocity-caption">Report dates include evidence imports. Implementation dates are not recorded.</p>
+        <details class="chart-data"><summary>Chart data and counting</summary><div class="chart-data-content"><p>Each definition counts once at its first valid report for the selected stage and evidence context. Stale and replaced observations are excluded. Report dates include imported source and evidence audits; they do not establish implementation speed. Stage and evidence selectors apply to this chart. The last bucket is partial. Times use UTC.</p><div class="chart-table-scroll" tabindex="0" aria-label="Progress history data"><table><caption class="sr-only">Progress history by report date</caption><thead><tr><th scope="col">Period (UTC)</th><th scope="col" id="velocity-new-column">New definitions</th><th scope="col">Cumulative</th></tr></thead><tbody id="velocity-table"></tbody></table></div></div></details>
+      </section>
+      <section class="panel coverage-panel" aria-labelledby="banks-title">
+        <div class="panel-head"><div><h2 id="banks-title">Coverage</h2><p class="subtext">Select a stage for the overview and velocity chart.</p></div><div class="selectors"><label for="milestone">Stage <select id="milestone"><option value="translated">Translated</option><option value="verified">Verified</option><option value="integrated">Integrated</option><option value="live-exercised">Live exercised</option><option value="translating">Translating</option></select></label><label for="weight">Count <select id="weight"><option value="routines">Definitions</option><option value="lines">Body lines</option></select></label></div></div>
+        <div class="overview"><label for="context" class="context-control">Evidence <select id="context"><option value="">All reported contexts</option><option value="current-checkout">Checkout at observation</option><option value="historical-frozen">Retained historical source</option><option value="unspecified">Unspecified / legacy</option></select></label><p id="context-counts" class="subtext"></p><div id="stack" class="stack" role="img" aria-label="Selected stage observation coverage"></div><div id="legend" class="legend"></div><p class="subtext">Stages are counted independently and can overlap.</p></div>
+        <details id="bank-details" class="bank-details"><summary id="bank-summary">Browse source banks</summary><div id="banks" class="bank-grid"></div></details>
+      </section>
+    </div>
     <section class="panel" aria-labelledby="routines-title">
       <div class="panel-head"><div><h2 id="routines-title">Routine explorer</h2><p class="subtext">Expand a definition for dependencies, declarations, scopes, and every reported update.</p></div></div>
       <div class="filters">
@@ -209,7 +246,7 @@
     const LABELS = { unreported:'No matching report', translating:'Translating', translated:'Translated', verified:'Verified', integrated:'Integrated', 'live-exercised':'Live exercised' };
     const COLORS = { unreported:'--unreported', translating:'--translating', translated:'--translated', verified:'--verified', integrated:'--integrated', 'live-exercised':'--live' };
     const PAGE_SIZE = 60;
-    const state = { data:null, rows:[], symbols:new Map(), page:0, expanded:new Set(), raw:'', file:false, checked:null };
+    const state = { data:null, rows:[], symbols:new Map(), page:0, expanded:new Set(), raw:'', file:false, checked:null, velocityIndex:null };
     const fmt = n => Number(n || 0).toLocaleString();
     const percent = (part,total) => total ? (part / total * 100).toFixed(part && part / total < .01 ? 2 : 1) + '%' : '0%';
     const time = value => { const date = new Date(Number(value) * 1000); return Number.isFinite(date.getTime()) ? date.toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}) : 'Unknown'; };
@@ -345,6 +382,128 @@
         button.append(header,bar,el('div','bank-count',fmt(done.length)+' / '+fmt(rows.length)+' definitions'+($('weight').value==='lines' ? ' · line weighted' : '')));
         button.addEventListener('click',() => { $('bank').value=$('bank').value===bank ? '' : bank; state.page=0; renderOverview(); renderList(); }); $('banks').append(button);
       }
+      text('bank-summary',$('bank').value ? 'Source banks · selected '+$('bank').value : 'Browse '+fmt(banks.size)+' source banks');
+      renderVelocity();
+    }
+    function renderVelocity() {
+      if(!state.data) return;
+      const HOUR=3600000, DAY=24*HOUR, target=$('milestone').value, context=$('context').value, weighted=$('weight').value==='lines', unit=weighted ? 'body lines' : 'definitions';
+      const timestamp=value => { const at=Number(value)*1000; return at>0 && Number.isFinite(new Date(at).getTime()) ? at : null; };
+      const events=[], undated=[];
+      for(const row of state.rows) {
+        const reports=selectedUpdates(row).filter(update => update.stage===target), dated=reports.filter(update => timestamp(update.updated_at)!==null).sort((a,b) => timestamp(a.updated_at)-timestamp(b.updated_at) || String(a.id).localeCompare(String(b.id)));
+        const report=dated[0];
+        if(report) events.push({at:timestamp(report.updated_at),value:weighted ? lines(row) : 1,context:contextOf(report),symbol:row.symbol});
+        else if(reports.length) undated.push(row);
+      }
+      events.sort((a,b) => a.at-b.at || a.symbol.localeCompare(b.symbol));
+      const latest=events.length ? events[events.length-1].at : 0, snapshot=timestamp(state.data.updated_at);
+      const end=Math.max(snapshot || latest,latest) || Date.now(), period=$('velocity-window').value, cumulative=$('velocity-mode').value==='cumulative';
+      let step=period==='7d' ? DAY : HOUR, start=end-(period==='7d' ? 7*DAY : 24*HOUR);
+      if(period==='all' && events.length) {
+        start=events[0].at;
+        step=[HOUR,DAY,7*DAY,30*DAY,365*DAY].find(size => (end-start)/size<=120) || 365*DAY;
+      }
+      const first=Math.floor(start/step)*step, count=Math.max(1,Math.floor(end/step)-Math.floor(start/step)+1);
+      const buckets=Array.from({length:count},(_,i) => ({start:Math.max(start,first+i*step),end:Math.min(end,first+(i+1)*step),current:0,historical:0,legacy:0,total:0,cumulative:0}));
+      const category=context => context==='current-checkout' ? 'current' : context==='historical-frozen' ? 'historical' : 'legacy';
+      const running={current:0,historical:0,legacy:0};
+      for(const event of events) {
+        if(event.at<start) { running[category(event.context)]+=event.value; continue; }
+        if(event.at>end) continue;
+        const bucket=buckets[Math.min(count-1,Math.floor((event.at-first)/step))];
+        bucket[category(event.context)]+=event.value;
+      }
+      const baseline=running.current+running.historical+running.legacy;
+      for(const bucket of buckets) {
+        bucket.total=bucket.current+bucket.historical+bucket.legacy;
+        for(const key of ['current','historical','legacy']) { running[key]+=bucket[key]; bucket['cumulative_'+key]=running[key]; }
+        bucket.cumulative=running.current+running.historical+running.legacy;
+      }
+      const additions=buckets.reduce((sum,bucket) => sum+bucket.total,0), hourly=step===HOUR, rateUnit=hourly ? HOUR : DAY, elapsed=(end-start)/rateUnit;
+      text('velocity-stage',LABELS[target]+' · '+(cumulative ? 'cumulative reported '+unit : 'new reported '+unit));
+      text('velocity-gains',fmt(additions));
+      text('velocity-rate-label','Average per '+(hourly ? 'hour' : 'day'));
+      text('velocity-rate',elapsed>=1 ? (additions/elapsed).toLocaleString(undefined,{maximumFractionDigits:1}) : '—');
+      text('velocity-latest-label','Latest '+(step===HOUR ? 'hour' : step===DAY ? 'day' : 'period')+' · partial');
+      text('velocity-latest',fmt(buckets[buckets.length-1].total));
+      const dateFormat=new Intl.DateTimeFormat(undefined,{timeZone:'UTC',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false});
+      const date=value => dateFormat.format(new Date(value));
+      const shortFormat=new Intl.DateTimeFormat(undefined,hourly ? {timeZone:'UTC',hour:'2-digit',minute:'2-digit',hour12:false} : {timeZone:'UTC',month:'short',day:'numeric'});
+      const range=bucket => date(bucket.start)+' – '+date(bucket.end)+' UTC';
+      const known=events.reduce((sum,event) => sum+event.value,0), missing=undated.reduce((sum,row) => sum+(weighted ? lines(row) : 1),0);
+      text('velocity-caption',(events.length ? 'Recorded since '+date(events[0].at)+' UTC. ' : 'No dated reports for this selection. ')+(missing ? fmt(missing)+' '+unit+' have no report date. ' : '')+'Report dates include evidence imports; implementation dates are not recorded.');
+      text('velocity-new-column','New '+unit);
+      const table=document.createDocumentFragment();
+      for(const bucket of buckets) {
+        const row=el('tr'); row.dataset.total=String(bucket.total); row.dataset.cumulative=String(bucket.cumulative);
+        row.append(el('td','',range(bucket)),el('td','',fmt(bucket.total)),el('td','',fmt(bucket.cumulative))); table.append(row);
+      }
+      $('velocity-table').replaceChildren(table);
+      const chart=$('velocity-chart'), width=Math.max(300,chart.getBoundingClientRect().width), height=chart.getBoundingClientRect().height || 172;
+      const left=48, right=14, top=13, bottom=height-30, plotWidth=width-left-right, plotHeight=bottom-top;
+      const values=buckets.map(bucket => cumulative ? bucket.cumulative : bucket.total), maximum=Math.max(1,...values,cumulative ? baseline : 0);
+      const magnitude=10**Math.floor(Math.log10(Math.max(1,maximum/4))), rough=maximum/4/magnitude;
+      const tickStep=([1,2,5,10].find(value => value>=rough) || 10)*magnitude, ceiling=tickStep*4;
+      const y=value => bottom-value/ceiling*plotHeight, color='var('+COLORS[target]+')', keys=['legacy','historical','current'];
+      const svg=(tag,attributes={},value) => { const node=document.createElementNS('http://www.w3.org/2000/svg',tag); for(const [key,item] of Object.entries(attributes)) node.setAttribute(key,String(item)); if(value!==undefined) node.textContent=value; return node; };
+      const hadFocus=chart.contains(document.activeElement), selected=Math.min(count-1,state.velocityIndex===null ? count-1 : state.velocityIndex);
+      chart.replaceChildren(); chart.setAttribute('viewBox','0 0 '+width+' '+height);
+      chart.dataset.known=String(known); chart.dataset.additions=String(additions); chart.dataset.baseline=String(baseline); chart.dataset.undated=String(missing);
+      chart.append(svg('title',{id:'velocity-chart-title'},LABELS[target]+' progress velocity'),svg('desc',{id:'velocity-chart-description'},(cumulative ? 'Cumulative first reports' : 'First reports per time period')+' of '+unit+'. '+fmt(additions)+' new in period; '+fmt(known)+' with known dates. Report dates include imported evidence. Each definition counts once. UTC.'));
+      const defs=svg('defs'), pattern=svg('pattern',{id:'velocity-hatch',width:5,height:5,patternUnits:'userSpaceOnUse'});
+      pattern.append(svg('path',{d:'M-1 1 L1 -1 M0 5 L5 0 M4 6 L6 4',stroke:'var(--muted)','stroke-width':1})); defs.append(pattern); chart.append(defs);
+      const tickFormat=new Intl.NumberFormat(undefined,{notation:'compact',maximumFractionDigits:1});
+      for(let tick=0;tick<=4;tick++) {
+        const value=tick*tickStep, position=y(value);
+        chart.append(svg('line',{x1:left,y1:position,x2:width-right,y2:position,class:'grid-line'}),svg('text',{x:left-8,y:position+3,'text-anchor':'end'},tickFormat.format(value)));
+      }
+      const colors={current:color,historical:'url(#velocity-hatch)',legacy:'var(--muted)'}, opacity={current:1,historical:.85,legacy:.4};
+      const bucketWidth=plotWidth/count;
+      if(cumulative) {
+        const initial={current:0,historical:0,legacy:0};
+        for(const event of events) if(event.at<start) initial[category(event.context)]+=event.value;
+        let lower=Array(count+1).fill(0);
+        for(const key of keys) {
+          const upper=lower.map((value,i) => value+(i===0 ? initial[key] : buckets[i-1]['cumulative_'+key]));
+          const points=upper.map((value,i) => (left+plotWidth*i/count)+','+y(value)).concat(lower.map((value,i) => (left+plotWidth*i/count)+','+y(value)).reverse());
+          chart.append(svg('polygon',{points:points.join(' '),fill:colors[key],opacity:key==='current' ? .2 : opacity[key]})); lower=upper;
+        }
+        const points=[baseline,...buckets.map(bucket => bucket.cumulative)].map((value,i) => (left+plotWidth*i/count)+','+y(value)).join(' ');
+        chart.append(svg('polyline',{points,fill:'none',stroke:color,'stroke-width':2.2,'stroke-linejoin':'round'}));
+      } else {
+        buckets.forEach((bucket,i) => {
+          let base=0;
+          for(const key of keys) {
+            if(bucket[key]) chart.append(svg('rect',{x:left+i*bucketWidth+Math.max(1,bucketWidth*.13),y:y(base+bucket[key]),width:Math.max(1,bucketWidth*.74),height:bucket[key]/ceiling*plotHeight,fill:colors[key],opacity:opacity[key],rx:1}));
+            base+=bucket[key];
+          }
+        });
+      }
+      const labelCount=width<420 ? 3 : 5, labels=new Set([0,count-1]);
+      for(let i=1;i<labelCount-1;i++) labels.add(Math.round((count-1)*i/(labelCount-1)));
+      for(const i of [...labels].sort((a,b) => a-b)) {
+        const firstLabel=i===0, lastLabel=i===count-1, x=firstLabel ? left : lastLabel ? width-right : left+(i+.5)*bucketWidth;
+        chart.append(svg('text',{x,y:height-10,'text-anchor':firstLabel ? 'start' : lastLabel ? 'end' : 'middle'},shortFormat.format(new Date(firstLabel ? buckets[i].start : lastLabel ? buckets[i].end : buckets[i].start))));
+      }
+      const describe=i => {
+        state.velocityIndex=i; const bucket=buckets[i], readout=$('velocity-readout');
+        readout.replaceChildren(el('strong','',range(bucket)),document.createTextNode(' · +'+fmt(bucket.total)+' '+unit+' · '+fmt(bucket.cumulative)+' cumulative'));
+        if(!context) readout.append(document.createTextNode(' · checkout '+fmt(bucket.current)+' / historical '+fmt(bucket.historical)+' / legacy '+fmt(bucket.legacy)));
+      };
+      buckets.forEach((bucket,i) => {
+        const hit=svg('rect',{x:left+i*bucketWidth,y:top,width:bucketWidth,height:plotHeight,class:'bucket-hit',tabindex:0,role:'button','aria-label':range(bucket)+': '+fmt(bucket.total)+' new '+unit+', '+fmt(bucket.cumulative)+' cumulative'});
+        hit.addEventListener('pointerenter',() => describe(i)); hit.addEventListener('focus',() => describe(i)); hit.addEventListener('click',() => describe(i));
+        hit.addEventListener('keydown',event => {
+          if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) {
+            event.preventDefault(); const next=event.key==='Home' ? 0 : event.key==='End' ? count-1 : Math.max(0,Math.min(count-1,i+(event.key==='ArrowLeft' ? -1 : 1)));
+            chart.querySelectorAll('.bucket-hit')[next].focus();
+          } else if(event.key==='Enter' || event.key===' ') { event.preventDefault(); describe(i); }
+        });
+        chart.append(hit);
+      });
+      describe(selected); if(hadFocus) chart.querySelectorAll('.bucket-hit')[selected].focus();
+      $('velocity-current-swatch').style.background=color;
     }
     function matches(row) {
       const query=$('search').value.trim().toLowerCase(), stage=$('stage').value;
@@ -407,6 +566,10 @@
     function reset() { for(const id of ['search','bank','subsystem','stage','agent','scope','context']) $(id).value=''; state.page=0; renderOverview(); renderList(); }
     for(const id of ['search','bank','subsystem','stage','agent','scope']) $(id).addEventListener(id==='search' ? 'input' : 'change',() => { state.page=0; if(id==='bank') renderOverview(); renderList(); });
     for(const id of ['milestone','weight','context']) $(id).addEventListener('change',() => { state.page=0; renderOverview(); renderList(); });
+    for(const id of ['velocity-window','velocity-mode']) $(id).addEventListener('change',() => { state.velocityIndex=null; renderVelocity(); });
+    if(typeof ResizeObserver!=='undefined') {
+      let lastWidth=0; new ResizeObserver(entries => { const width=entries[0].contentRect.width; if(Math.abs(width-lastWidth)>1) { lastWidth=width; renderVelocity(); } }).observe($('velocity-chart'));
+    }
     $('reset').addEventListener('click',reset); $('show-remaining').addEventListener('click',() => { $('stage').value='remaining'; state.page=0; renderList(); });
     $('previous').addEventListener('click',() => { state.page=Math.max(0,state.page-1); renderList(); }); $('next').addEventListener('click',() => { state.page++; renderList(); });
     $('load').addEventListener('click',() => $('file').click());

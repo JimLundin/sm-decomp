@@ -1,0 +1,9 @@
+3c93d0604aa8aba58a6149458bad1b650522bd5164c9b28267887584a822a5fa  .scratch/decomp-strategy/source_audit.rs
+a6c1f07e6519ce53b9c38045585b9c4f332b5945391541a60c9938da335544b5  .scratch/decomp-strategy/source-coverage-map.json
+205a1f1c1e6dc5dd0026f38da2cd03761bd26f213efbccf844191aeffa91f8a0  .scratch/decomp-strategy/note.md
+da9eabc476fff2d676c9ececfa0233b91eca96c02f47424b364ca573c794e2a4  .scratch/decomp-strategy/source-aliases.tsv
+4656ce62f0144fbec088aa2a7f63bc7b82516779bf5c146a90e97578b887f68f  .scratch/decomp-strategy/source-numeric-scopes.tsv
+48523d7080a0017a668709217aa1318596e67d04572d4aff9e3642ecfba16a3e  .scratch/decomp-strategy/source-forwarders.tsv
+a09a9295efcfdff405f7ec3799f64c6ed2bcf5f4eb715cdcf009dee196542521  .scratch/decomp-strategy/source-module-roles.tsv
+7e1fb26f4dad0afc6d4074ff36441fb25953e85768491366c755d9e9b161a35c  .scratch/decomp-progress/ridley-inline-translation-audit.md
+7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25  tools/port/source-inventory.toml

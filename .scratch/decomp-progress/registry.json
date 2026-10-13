@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "root": "/home/jim/sm-decomp",
-  "updated_at": 1791873323,
+  "updated_at": 1791877292,
   "source": {
     "revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
     "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
@@ -1618,7 +1618,9 @@
         "UploadBackgroundDataColumn",
         "UploadLevelDataColumn"
       ],
-      "declared_in": []
+      "declared_in": [
+        "tools/port/game-host-room-scroll.toml"
+      ]
     },
     {
       "symbol": "QueueClearingOfFxTilemap",
@@ -32623,6 +32625,7 @@
         "RunProjectileInstructions"
       ],
       "declared_in": [
+        "tools/port/game-host-projectile.toml",
         "tools/port/samus-projectile-frame.toml"
       ]
     },
@@ -40249,6 +40252,7 @@
         "sign16"
       ],
       "declared_in": [
+        "tools/port/game-host-projectile.toml",
         "tools/port/samus-projectile-frame.toml"
       ]
     },
@@ -40264,6 +40268,7 @@
         "HandleProjectileTrails"
       ],
       "declared_in": [
+        "tools/port/game-host-projectile.toml",
         "tools/port/samus-projectile-frame.toml"
       ]
     },
@@ -40280,6 +40285,7 @@
         "sign16"
       ],
       "declared_in": [
+        "tools/port/game-host-projectile.toml",
         "tools/port/samus-projectile-frame.toml"
       ]
     },
@@ -98456,6 +98462,245 @@
         "Focused actual-C checks and integration are pending; live admission is unchanged."
       ],
       "updated_at": 1791873323
+    },
+    {
+      "id": "shared-game-host-6053-current-verified-audit-20261013",
+      "scope": "Shared Samus projectile and room display host · retained actual-C checks",
+      "agent": "/root",
+      "stage": "verified",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "HandleProjectile",
+        "DrawPlayerExplosions2",
+        "sub_9382FD",
+        "DrawBombAndProjectileExplosions",
+        "DisplayViewablePartOfRoom"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "73547105d870f8b05f8c6bcf55b768c223889fdb",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-progress/state-audit/evidence-findings.md",
+          "sha256": "15b227c180ff654ec021e67022ad0a2ffb60d7e5671faccff76f8da0bc62b49b"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/ceres-continuation/host-implementation.toml",
+          "sha256": "7b4f118b21b969bd02abc16192cbc3caccb1c118d5cef6a5d39e3751afeaffeb"
+        },
+        {
+          "path": "/home/jim/sm-decomp/out/port/ceres-continuation/game-host-projectile/1791873394532541-258459-0/verdict.toml",
+          "sha256": "18f355479a34ef10be6196e2c1507f6ded34d522693f068feb1313078492abad"
+        },
+        {
+          "path": "/home/jim/sm-decomp/out/port/ceres-continuation/game-host-room-scroll/1791873418836128-259326-0/verdict.toml",
+          "sha256": "ddb49cbd79a7249b45745044f9f6c95a7e98671fa74e0b313a7f81bf8c869d1d"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/ceres-continuation/projectile-after-cleanup.stdout",
+          "sha256": "18f355479a34ef10be6196e2c1507f6ded34d522693f068feb1313078492abad"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/ceres-continuation/room-after-cleanup.stdout",
+          "sha256": "ddb49cbd79a7249b45745044f9f6c95a7e98671fa74e0b313a7f81bf8c869d1d"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/ceres-continuation/projectile-cleanup-final.toml",
+          "sha256": "db5bac8a65aebadf59f0fdf35212019050be91606a9165b298d3f3d192ecacdc"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/ceres-continuation/projectile-dedup-final.toml",
+          "sha256": "8289a641627e9cb5f34ef590eb2b7486a7be5ab6cb77ff5cceb28b982cb79141"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/ceres-continuation/room-cleanup.toml",
+          "sha256": "db5bac8a65aebadf59f0fdf35212019050be91606a9165b298d3f3d192ecacdc"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/ceres-continuation/room-dedup.toml",
+          "sha256": "1975e26b0b408912e186ad592a709e23c415207dde8446dfd342e4754b1f8dc9"
+        }
+      ],
+      "limitations": [
+        "Retained observation-time source matches the current shared host, Rust dependencies and host harness; this audit rehashed all 490 sealed artifacts without executing gameplay.",
+        "Seven projectile fixtures across four native roots and three room-display fixtures for one root passed full WRAM, returns and ordered callbacks; this is only the declared fixture domain.",
+        "PLM, HDMA allocation and VRAM flush dependencies remain actual-C Host services; host forwarding contributes no second native body.",
+        "Source commit 73547105d870f8b05f8c6bcf55b768c223889fdb was merged by e8c9c3e10ac71bf0377dc00d7de5764a4263b445; durable integrate-shared-game-host completion is still running, so this record grants no integrated stage.",
+        "Both retained verdicts have live_exercised=false and original-ROM parity not tested. No new live exercise or ordinary-reset Ceres escape acceptance is established.",
+        "Published by reporting audit; report time is not the implementation or fixture execution date."
+      ],
+      "updated_at": 1791877219
+    },
+    {
+      "id": "room-display-6053-current-translated-audit-20261013",
+      "scope": "Room display · reviewed guarded native entry",
+      "agent": "/root",
+      "stage": "translated",
+      "evidence_context": "current-checkout",
+      "routines": [
+        "DisplayViewablePartOfRoom"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "e8c9c3e10ac71bf0377dc00d7de5764a4263b445",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-progress/state-audit/evidence-findings.md",
+          "sha256": "15b227c180ff654ec021e67022ad0a2ffb60d7e5671faccff76f8da0bc62b49b"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-progress/state-audit/source-coverage-map.json",
+          "sha256": "707b7fe9c242d5ffbd34239078dbfff07cfbdb855966997c06aee0a3bcd8e212"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-progress/state-audit/source-aliases.tsv",
+          "sha256": "469581f69f2b3b2e0c5099b32e2734887bf30de614342a906a413655b28fbcf6"
+        },
+        {
+          "path": "/home/jim/sm-decomp/crates/port/src/room_scroll.rs",
+          "sha256": "cc2c7ee9138a1c781321045e28246c083fca6a53ce284ac626d9abf5bdb5bdf0"
+        },
+        {
+          "path": "/home/jim/sm-decomp/out/port/ceres-continuation/game-host-room-scroll/1791873418836128-259326-0/verdict.toml",
+          "sha256": "ddb49cbd79a7249b45745044f9f6c95a7e98671fa74e0b313a7f81bf8c869d1d"
+        }
+      ],
+      "limitations": [
+        "Reviewed display() implements C80:A176's 17 foreground/conditional-background columns and ordered synchronous VRAM flushes; the original lexical Rust extractor missed dispatch_host's if guard.",
+        "Only admitted viewport, layer2, tile/queue and transactional refusal domains are translated. Hardware VRAM processing remains Host-owned.",
+        "The separate shared-host verified record names retained actual-C fixtures; integration completion and live acceptance remain pending.",
+        "Source correspondence is a qualified implementation inventory, not full-game completion or original-ROM parity; report time is an audit publication date."
+      ],
+      "updated_at": 1791877220
+    },
+    {
+      "id": "ridley-v2-controlled-6053-frozen-verified-audit-20261013",
+      "scope": "Ridley hardware v2 · controlled frozen fixture domain",
+      "agent": "/root",
+      "stage": "verified",
+      "evidence_context": "historical-frozen",
+      "routines": [
+        "CallRidleyFunc",
+        "CeresRidley_Hurt",
+        "CeresRidley_Init",
+        "CeresRidley_Main",
+        "HandleCeresRidleyGetawayCutscene",
+        "ProcessEnemyInstructions",
+        "Ridley_A2F2",
+        "Ridley_Func_2",
+        "Ridley_Func_70",
+        "Ridley_Hurt",
+        "Ridley_Instr_1",
+        "Ridley_Instr_2",
+        "Ridley_Instr_3",
+        "Ridley_Instr_4",
+        "Ridley_Instr_5",
+        "Ridley_Instr_6",
+        "Ridley_Instr_7",
+        "Ridley_Instr_8",
+        "Ridley_Instr_9",
+        "Ridley_Instr_10",
+        "Ridley_Instr_11",
+        "Ridley_Instr_12",
+        "Ridley_Instr_13",
+        "Ridley_Instr_14",
+        "Ridley_Instr_15",
+        "Ridley_Instr_16",
+        "Ridley_Main",
+        "Ridley_Powerbomb",
+        "Ridley_Shot",
+        "RidleysExplosion_Init",
+        "RidleysExplosion_Main",
+        "sub_A6DF59",
+        "sub_A6DF60"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-progress/state-audit/evidence-findings.md",
+          "sha256": "15b227c180ff654ec021e67022ad0a2ffb60d7e5671faccff76f8da0bc62b49b"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/ridley-hardware-recovery/controlled/1791860698541096-105766-0/verdict.toml",
+          "sha256": "78b129866e34ab71834a10e9563bd6541ededaaeff9234b563996eb6ffbd4c58"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/ridley-hardware-recovery/controlled-after-cleanup-authentication.toml",
+          "sha256": "78b129866e34ab71834a10e9563bd6541ededaaeff9234b563996eb6ffbd4c58"
+        },
+        {
+          "path": "/home/jim/sm-decomp/out/recovery-session/ridley-whole-final-offline/1791866846960194-145753-0/verdict.toml",
+          "sha256": "def8416e90f8e39d6974f4d4afdc3778af2978061737833c8e5bd18a9e82ec69"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/ridley-live-whole-final-post-cleanup-auth.toml",
+          "sha256": "def8416e90f8e39d6974f4d4afdc3778af2978061737833c8e5bd18a9e82ec69"
+        }
+      ],
+      "limitations": [
+        "6,457 controlled fixture pairs over 33 native roots, seven rejected ABI controls and 305 actual-C callbacks; frozen hardware-v2/candidate source and evidence readers own these gates.",
+        "Both PPU views, active PPU discriminator and open-bus contracts are retained; this record does not authenticate current main-checkout Ridley inputs.",
+        "Original verdicts and retained post-cleanup authentication receipts match; audit did not rerun fixtures or every bulky Ridley artifact reader.",
+        "All native roots already had a verified observation; this adds later bounded provenance with no increase in unique verified coverage.",
+        "Whole 220-definition Ridley lifecycle integration/live acceptance, boss/explosion inputs, full replay and original-ROM parity remain pending.",
+        "Report time is this audit publication, not the controlled fixture run date."
+      ],
+      "updated_at": 1791877223
+    },
+    {
+      "id": "ridley-v2-natural-6053-frozen-verified-audit-20261013",
+      "scope": "Ridley hardware v2 · natural Ceres fixture domain",
+      "agent": "/root",
+      "stage": "verified",
+      "evidence_context": "historical-frozen",
+      "routines": [
+        "CallRidleyFunc",
+        "CeresRidley_Init",
+        "CeresRidley_Main",
+        "EnemyInstr_Sleep",
+        "HandleCeresRidleyGetawayCutscene",
+        "ProcessEnemyInstructions",
+        "Ridley_A2F2",
+        "Ridley_Func_70",
+        "Ridley_Instr_1",
+        "Ridley_Instr_2",
+        "Ridley_Instr_5",
+        "Ridley_Instr_6",
+        "Ridley_Instr_10",
+        "Ridley_Instr_11",
+        "Ridley_Instr_12",
+        "Ridley_Instr_13",
+        "Ridley_Instr_14",
+        "Ridley_Instr_15",
+        "Ridley_Shot",
+        "sub_A6DF59"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-progress/state-audit/evidence-findings.md",
+          "sha256": "15b227c180ff654ec021e67022ad0a2ffb60d7e5671faccff76f8da0bc62b49b"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/ridley-hardware-recovery/natural/1791861212110218-129925-0/verdict.toml",
+          "sha256": "addb9a189d44f1066dbe6ad723bacd193548bcdc240e34eaf022d167a8b5b9aa"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-port/ridley-hardware-recovery/natural-after-cleanup-authentication.toml",
+          "sha256": "addb9a189d44f1066dbe6ad723bacd193548bcdc240e34eaf022d167a8b5b9aa"
+        }
+      ],
+      "limitations": [
+        "670 genuine unpatched fixture pairs over 20 native roots and eight actual-C callbacks; all are Ceres header E13F and area 6 in frozen isolated source.",
+        "Only 574 of 670 fixture calls are admitted by public original-ROM selection; 92 direct fixture-only states and four getaway boundaries refuse.",
+        "Offline fixtures establish their exact tested inputs only; this is neither accepted live replay coverage nor whole-Ridley original-ROM parity.",
+        "Original verdict and retained post-cleanup authentication match; audit reread receipts without new gameplay/fixture execution.",
+        "All 20 roots already count as verified. This historical provenance record changes no unique total and must not be called integrated/current main acceptance.",
+        "Report time is an audit publication date."
+      ],
+      "updated_at": 1791877292
     }
   ],
   "notices": [
@@ -98649,9 +98894,9 @@
   "summary": {
     "definitions": 6053,
     "body_lines": 75229,
-    "declared_definitions": 834,
-    "declared_body_lines": 9079,
-    "updates": 257,
+    "declared_definitions": 835,
+    "declared_body_lines": 9108,
+    "updates": 261,
     "stale_updates": 16,
     "stages": {
       "integrated": {
@@ -98663,16 +98908,16 @@
         "body_lines": 1642
       },
       "translated": {
-        "definitions": 1460,
-        "body_lines": 16498
+        "definitions": 1461,
+        "body_lines": 16527
       },
       "translating": {
         "definitions": 222,
         "body_lines": 3170
       },
       "verified": {
-        "definitions": 924,
-        "body_lines": 10074
+        "definitions": 925,
+        "body_lines": 10103
       }
     },
     "context_stages": {
@@ -98686,16 +98931,16 @@
           "body_lines": 487
         },
         "translated": {
-          "definitions": 1460,
-          "body_lines": 16498
+          "definitions": 1461,
+          "body_lines": 16527
         },
         "translating": {
           "definitions": 0,
           "body_lines": 0
         },
         "verified": {
-          "definitions": 38,
-          "body_lines": 775
+          "definitions": 39,
+          "body_lines": 804
         }
       },
       "historical-frozen": {

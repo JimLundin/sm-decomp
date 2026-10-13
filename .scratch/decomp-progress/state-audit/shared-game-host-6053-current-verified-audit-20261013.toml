@@ -1,0 +1,43 @@
+id = "shared-game-host-6053-current-verified-audit-20261013"
+scope = "Shared Samus projectile and room display host · retained actual-C checks"
+agent = "/root"
+stage = "verified"
+evidence_context = "current-checkout"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+routines = ["HandleProjectile","DrawPlayerExplosions2","sub_9382FD","DrawBombAndProjectileExplosions","DisplayViewablePartOfRoom"]
+commit = "73547105d870f8b05f8c6bcf55b768c223889fdb"
+limitations = ["Retained observation-time source matches the current shared host, Rust dependencies and host harness; this audit rehashed all 490 sealed artifacts without executing gameplay.","Seven projectile fixtures across four native roots and three room-display fixtures for one root passed full WRAM, returns and ordered callbacks; this is only the declared fixture domain.","PLM, HDMA allocation and VRAM flush dependencies remain actual-C Host services; host forwarding contributes no second native body.","Source commit 73547105d870f8b05f8c6bcf55b768c223889fdb was merged by e8c9c3e10ac71bf0377dc00d7de5764a4263b445; durable integrate-shared-game-host completion is still running, so this record grants no integrated stage.","Both retained verdicts have live_exercised=false and original-ROM parity not tested. No new live exercise or ordinary-reset Ceres escape acceptance is established.","Published by reporting audit; report time is not the implementation or fixture execution date."]
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-progress/state-audit/evidence-findings.md"
+sha256 = "15b227c180ff654ec021e67022ad0a2ffb60d7e5671faccff76f8da0bc62b49b"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/ceres-continuation/host-implementation.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/ceres-continuation/game-host-projectile/1791873394532541-258459-0/verdict.toml"
+sha256 = "18f355479a34ef10be6196e2c1507f6ded34d522693f068feb1313078492abad"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/ceres-continuation/game-host-room-scroll/1791873418836128-259326-0/verdict.toml"
+sha256 = "ddb49cbd79a7249b45745044f9f6c95a7e98671fa74e0b313a7f81bf8c869d1d"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/ceres-continuation/projectile-after-cleanup.stdout"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/ceres-continuation/room-after-cleanup.stdout"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/ceres-continuation/projectile-cleanup-final.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/ceres-continuation/projectile-dedup-final.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/ceres-continuation/room-cleanup.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/ceres-continuation/room-dedup.toml"
