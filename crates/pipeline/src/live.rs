@@ -16,6 +16,55 @@ const SUBJECTS: [&str; 4] = ["c-0", "c-1", "mixed-0", "mixed-1"];
 const PROJECTILE_ENTRIES: [&str; 3] = ["SpawnEprojWithRoomGfx", "EprojRunAll", "SpawnEprojWithGfx"];
 const PROJECTILE_IDS: [u16; 9] = [0x9642, 0x9650, 0x965e, 0x966c, 0x967a, 0x9688, 0x9696, 0xa387, 0xa395];
 const ROM_SHA256: &str = "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72";
+const RIDLEY_OPCODES: [u32; 8] = [0xa6e517, 0xa6e4d2, 0xa6e4be, 0xa6e4ca, 0xa6e84d, 0xa6e904, 0xa6e909, 0xa6812f];
+
+fn bounded_module(module: &Path, checkout: &Path) -> Option<&'static str> {
+    ["projectile_trails", "camera_scroll", "room_scroll", "samus_projectile_frame", "ridley_enemy_instructions"]
+        .into_iter()
+        .find(|name| module == checkout.join(format!("crates/port/src/{name}.rs")))
+}
+fn bounded_root(module: &str, symbol: &str) -> bool {
+    match module {
+        "projectile_trails" => symbol == "HandleProjectileTrails",
+        "camera_scroll" => symbol == "MainScrollingRoutine",
+        "room_scroll" => matches!(symbol, "UpdateScrollVarsUpdateMap" | "CalculateLayer2PosAndScrollsWhenScrolling"),
+        "samus_projectile_frame" => matches!(
+            symbol,
+            "HandleProjectile" | "DrawPlayerExplosions2" | "DrawBombAndProjectileExplosions"
+        ),
+        "ridley_enemy_instructions" => symbol == "ProcessEnemyInstructions",
+        _ => false,
+    }
+}
+fn bounded_contract(manifest: &Manifest, module: &str) -> Result<()> {
+    ensure!(manifest.rom.is_some(), "bounded frame requires native ROM evidence");
+    ensure!(manifest.projectile_host == (module == "ridley_enemy_instructions"), "bounded frame host contract differs");
+    let mut roots = BTreeSet::new();
+    for routine in &manifest.routines {
+        if !bounded_root(module, &routine.symbol) {
+            continue;
+        }
+        ensure!(
+            family::types(routine)?.is_empty() && routine.returns == "void",
+            "bounded frame native signature differs"
+        );
+        ensure!(routine.live_eligible != Some(false), "bounded native frame marked offline-only");
+        ensure!(roots.insert(routine.symbol.as_str()), "duplicate bounded native frame");
+    }
+    ensure!(!roots.is_empty(), "no verified bounded native frame");
+    let expected = match module {
+        "projectile_trails" => vec!["HandleProjectileTrails"],
+        "camera_scroll" => vec!["MainScrollingRoutine"],
+        "room_scroll" => vec!["UpdateScrollVarsUpdateMap", "CalculateLayer2PosAndScrollsWhenScrolling"],
+        "ridley_enemy_instructions" => vec!["ProcessEnemyInstructions"],
+        "samus_projectile_frame" => {
+            vec!["HandleProjectile", "DrawPlayerExplosions2", "DrawBombAndProjectileExplosions"]
+        }
+        _ => anyhow::bail!("unknown bounded module"),
+    };
+    ensure!(roots == expected.into_iter().collect(), "bounded frame predecessor does not cover complete native roots");
+    Ok(())
+}
 
 fn document<T: DeserializeOwned>(path: &Path) -> Result<T> {
     Ok(toml::from_str(&fs::read_to_string(path)?)?)
@@ -182,11 +231,20 @@ pub fn generate(request: Request) -> Result<Generated> {
                 );
             }
             if kind == "family" {
+                let implementation = evidence.implementation.as_ref().context("missing implementation")?;
                 ensure!(
-                    evidence.implementation.as_ref().context("missing implementation")?.dependency_contract
-                        == "rust-family-v2",
-                    "family evidence must seal an ordinary family adapter"
+                    implementation.dependency_contract == "rust-family-v2"
+                        || (bounded_module(&module, &checkout) == Some("samus_projectile_frame")
+                            && implementation.dependency_contract == "rust-callback-v2"
+                            && implementation.callback_adapter.as_deref() == Some("power-bomb")
+                            && manifest.plm_amount_context.as_deref() == Some("none")
+                            && evidence.gameplay_translation == Some(true)),
+                    "family evidence must seal the admitted family adapter"
                 );
+            }
+            if let Some(bounded) = bounded_module(&module, &checkout) {
+                ensure!(kind == "family", "bounded frame requires ordinary family evidence");
+                bounded_contract(&manifest, bounded)?;
             }
             families.push((manifest, module, kind));
             predecessors.push(Predecessor {
@@ -207,6 +265,9 @@ pub fn generate(request: Request) -> Result<Generated> {
         predecessors.push(Predecessor { path: path.clone(), sha256: digest(path)?, kind: "projectile".into() });
     }
     ensure!(!families.is_empty() || projectile.is_some(), "no family contracts");
+    let ridley =
+        families.iter().any(|(_, module, _)| bounded_module(module, &checkout) == Some("ridley_enemy_instructions"));
+    ensure!(!ridley || projectile.is_some(), "Ridley attack frame requires native projectile predecessor");
     let positioned = request.room_plm;
     let plm = request.plm_verdict.as_ref();
     ensure!(!positioned || plm.is_some(), "room PLM requires allocation evidence");
@@ -242,6 +303,9 @@ pub fn generate(request: Request) -> Result<Generated> {
         modules.push(checkout.join("crates/port/src/observed_projectile_ownership.rs"));
         imports.extend(["enemy_projectiles", "observed_projectile_ownership"].map(str::to_owned));
     }
+    if ridley {
+        imports.insert("ridley_enemy_instructions".into());
+    }
     let memory = inputs::wrapper(inputs::WrapperRequest {
         checkout: checkout.clone(),
         run: run.clone(),
@@ -255,6 +319,9 @@ pub fn generate(request: Request) -> Result<Generated> {
     if projectile.is_some() {
         rust.push_str(include_str!("live_projectile.rs.in"));
     }
+    if ridley {
+        rust.push_str(include_str!("live_ridley.rs.in"));
+    }
     let mut units = family::c_units(&source)?;
     let banks = units
         .iter()
@@ -267,7 +334,13 @@ pub fn generate(request: Request) -> Result<Generated> {
     let mut wrappers = String::new();
     let mut symbols = Vec::new();
     let mut dispatcher_symbols = BTreeSet::new();
+    let mut bounded_symbols = BTreeSet::new();
     for (family_index, (manifest, module, kind)) in families.iter().enumerate() {
+        let bounded = bounded_module(module, &checkout);
+        if bounded == Some("ridley_enemy_instructions") {
+            bounded_symbols.insert("ProcessEnemyInstructions".into());
+            continue;
+        }
         let names = manifest.routines.iter().map(|r| r.symbol.as_str()).collect::<Vec<_>>();
         let abi_symbol = if *kind == "callback" {
             format!("port_collision_{family_index}")
@@ -287,12 +360,25 @@ pub fn generate(request: Request) -> Result<Generated> {
             } else {
                 format!("family{family_index}::dispatch(&mut Wram::new(bytes).unwrap(),name,a as u16,b as u16)")
             };
+            let support = match bounded {
+                Some("projectile_trails" | "samus_projectile_frame") => format!(
+                    "family{family_index}::supports_call(&Wram::new(bytes).unwrap(),rom,name,a,b).unwrap_or(false)"
+                ),
+                Some("camera_scroll") => format!("family{family_index}::supports(&Wram::new(bytes).unwrap(),name)"),
+                Some("room_scroll") => format!("family{family_index}::supports(&Wram::new(bytes).unwrap(),name,a)"),
+                _ => String::new(),
+            };
             rust.push_str(
-                &include_str!("live_family.rs.in")
-                    .replace("__MODULE__", &format!("{module:?}"))
-                    .replace("__INDEX__", &family_index.to_string())
-                    .replace("__NAMES__", &format!("{names:?}"))
-                    .replace("__CALL__", &call),
+                &if bounded.is_some() {
+                    include_str!("live_bounded_family.rs.in")
+                } else {
+                    include_str!("live_family.rs.in")
+                }
+                .replace("__MODULE__", &format!("{module:?}"))
+                .replace("__INDEX__", &family_index.to_string())
+                .replace("__NAMES__", &format!("{names:?}"))
+                .replace("__CALL__", &call)
+                .replace("__SUPPORT__", &support),
             );
         }
         wrappers.push_str(&format!(
@@ -303,6 +389,9 @@ pub fn generate(request: Request) -> Result<Generated> {
                 continue;
             }
             let symbol = routine.symbol.as_str();
+            if bounded.is_some_and(|module| !bounded_root(module, symbol)) {
+                continue;
+            }
             ensure!(!manifest.projectile_host, "projectile host requires explicit projectile verdict ABI");
             ensure!(
                 projectile.is_none() || !PROJECTILE_ENTRIES.contains(&symbol),
@@ -389,7 +478,25 @@ pub fn generate(request: Request) -> Result<Generated> {
             }
             let index = symbols.len();
             symbols.push(symbol.to_owned());
-            let mut wrapper = include_str!("live_wrapper.c.in").to_owned();
+            let mut wrapper = if bounded.is_some() {
+                include_str!("live_bounded_wrapper.c.in")
+            } else {
+                include_str!("live_wrapper.c.in")
+            }
+            .to_owned();
+            if let Some(module) = bounded {
+                bounded_symbols.insert(symbol.into());
+                let active = match module {
+                    "projectile_trails" => "PortTrailsActive()",
+                    "camera_scroll" => {
+                        "GET_WORD(g_ram+0xaf6)!=GET_WORD(g_ram+0xb10)||GET_WORD(g_ram+0xafa)!=GET_WORD(g_ram+0xb14)||GET_WORD(g_ram+0xaf8)!=GET_WORD(g_ram+0xb12)||GET_WORD(g_ram+0xafc)!=GET_WORD(g_ram+0xb16)"
+                    }
+                    "room_scroll" => "!GET_WORD(g_ram+0xa78)",
+                    "samus_projectile_frame" => "PortSamusProjectilesActive()",
+                    _ => unreachable!(),
+                };
+                wrapper = wrapper.replace("__ACTIVE__", active);
+            }
             for (key, value) in [
                 ("__CTYPE__", ctype),
                 ("__SYMBOL__", symbol.into()),
@@ -429,6 +536,15 @@ pub fn generate(request: Request) -> Result<Generated> {
         text.push_str(include_str!("live_projectile_bank.c.in"));
         transformed.insert(bank, text);
     }
+    if ridley {
+        let bank = source.join("src/sm_a0.c");
+        let mut text = transformed.get(&bank).unwrap_or(&originals[&bank]).clone();
+        for symbol in ["ProcessEnemyInstructions", "CallEnemyInstr"] {
+            text = rename(&text, symbol, &format!("PortC_{symbol}"), false)?;
+        }
+        text.push_str(include_str!("live_ridley_bank.c.in"));
+        transformed.insert(bank, text);
+    }
     let bank = source.join("src/sm_80.c");
     let text = transformed.get(&bank).unwrap_or(&originals[&bank]);
     transformed.insert(bank.clone(), rename(text, "NextRandom", "C_NextRandom", false)?);
@@ -458,6 +574,14 @@ pub fn generate(request: Request) -> Result<Generated> {
             symbols.len().max(1)
         ),
     );
+    if !bounded_symbols.is_empty() {
+        let ordinary_bounded = symbols
+            .iter()
+            .map(|symbol| if bounded_symbols.contains(symbol) { format!("\"{symbol}\"") } else { "NULL".into() })
+            .collect::<Vec<_>>()
+            .join(",");
+        wrappers.insert_str(0, &format!("static unsigned long port_frame_refused[{size}],port_frame_active_c[{size}],port_frame_active_rust[{size}];\nstatic unsigned port_frame_captures[{size}];\nstatic const char *port_bounded[{size}]={{{flags}}};\nstatic int PortTrailsActive(void){{for(unsigned k=0;k<36;k+=2)if(GET_WORD(g_ram+0xd658+k)||GET_WORD(g_ram+0xd67c+k))return 1;return 0;}}\nstatic int PortSamusProjectilesActive(void){{for(unsigned k=0;k<20;k+=2)if(GET_WORD(g_ram+0xc40+k))return 1;return 0;}}\nstatic void PortFrameCapture(const char *routine,unsigned sequence,const char *phase){{char name[160];snprintf(name,sizeof(name),\"fixtures/frame-%s-%03u-%s.wram\",routine,sequence,phase);FILE *f=fopen(name,\"wb\");if(!f||fwrite(g_ram,1,sizeof(g_ram),f)!=sizeof(g_ram)||fclose(f))exit(2);}}\n", size=symbols.len().max(1), flags=if ordinary_bounded.is_empty(){"NULL"}else{&ordinary_bounded}));
+    }
     if request.capture_active_eprojs {
         wrappers = format!(
             "static unsigned port_active_captures[{}];\nstatic unsigned PortActiveSequence(unsigned routine) {{ if(port_active_captures[routine]>=8)return 0; for(unsigned offset=0x1997;offset<0x1997+36;offset+=2)if(g_ram[offset] || g_ram[offset+1])return ++port_active_captures[routine];return 0;}}\nstatic void PortActiveCapture(unsigned routine,unsigned sequence,const char *phase) {{char name[120];snprintf(name,sizeof(name),\"fixtures/active-port-%03u-%03u-%s.wram\",routine,sequence,phase);FILE *f=fopen(name,\"wb\");if(!f||fwrite(g_ram,1,sizeof(g_ram),f)!=sizeof(g_ram)||fclose(f))exit(2);}}\n{wrappers}",
@@ -469,6 +593,17 @@ pub fn generate(request: Request) -> Result<Generated> {
         host = host.replace("static unsigned port_frame;", &format!("{}\nstatic unsigned port_frame;", include_str!("live_projectile_host.c.in")))
             .replace("  if(fclose(f))exit(2);", "  if(fclose(f))exit(2);\n  snprintf(name,sizeof(name),\"frame-%06u.host\",port_frame);PortProjectileState(name);")
             .replace(" if(PortEffectsClose())", " PortProjectileState(\"projectile-terminal.host\");PortProjectileCounters();\n if(PortEffectsClose())");
+    }
+    if ridley {
+        host = host
+            .replace(
+                "static unsigned port_frame;",
+                &format!("{}\nstatic unsigned port_frame;", include_str!("live_ridley_host.c.in")),
+            )
+            .replace(" if(PortEffectsClose())", " PortRidleyCounters();\n if(PortEffectsClose())");
+    }
+    if !bounded_symbols.is_empty() {
+        host = host.replace(" printf(\"predecessor-hit", " for(unsigned i=0;i<sizeof(port_c_hits)/sizeof(*port_c_hits);i++)if(port_bounded[i])printf(\"frame-hit %s %lu %lu %lu %lu %lu %lu\\n\",port_bounded[i],port_c_hits[i]+port_rust_hits[i],port_c_hits[i],port_rust_hits[i],port_frame_refused[i],port_frame_active_c[i],port_frame_active_rust[i]);\n printf(\"predecessor-hit");
     }
     if symbols.is_empty() {
         host = host.replace("i<sizeof(port_c_hits)/sizeof(*port_c_hits)", "i<0");
@@ -485,6 +620,8 @@ pub fn generate(request: Request) -> Result<Generated> {
         predecessors,
         room_plm_installed: positioned,
         projectile_native_installed: projectile.is_some(),
+        bounded_symbols,
+        ridley_native_installed: ridley,
     })
 }
 
@@ -513,9 +650,54 @@ pub(crate) fn counters(directory: &Path, symbols: &[String], mode: &str) -> Resu
     let mut projectile_hits = BTreeMap::new();
     let mut projectile_id_hits = BTreeMap::new();
     let mut projectile_allocation_hits = BTreeMap::new();
+    let mut frame_hits = BTreeMap::new();
+    let mut ridley_opcode_hits = BTreeMap::new();
     for line in text.lines() {
         let words = line.split_whitespace().collect::<Vec<_>>();
         match words.first().copied() {
+            Some("frame-hit") => {
+                ensure!(words.len() == 8, "invalid bounded frame counter extent");
+                let symbol = if words[1].bytes().any(|byte| !byte.is_ascii_digit()) {
+                    ensure!(
+                        words[1] == "ProcessEnemyInstructions" || symbols.iter().any(|symbol| symbol == words[1]),
+                        "unknown bounded frame symbol"
+                    );
+                    words[1].to_owned()
+                } else {
+                    symbols.get(words[1].parse::<usize>()?).context("invalid frame symbol index")?.clone()
+                };
+                let hit = FrameHit {
+                    total: words[2].parse()?,
+                    c: words[3].parse()?,
+                    rust: words[4].parse()?,
+                    refused: words[5].parse()?,
+                    active_c: words[6].parse()?,
+                    active_rust: words[7].parse()?,
+                };
+                ensure!(
+                    hit.total == hit.c + hit.rust
+                        && hit.refused == if mode == "mixed" { hit.c } else { 0 }
+                        && hit.active_c <= hit.c
+                        && hit.active_rust <= hit.rust
+                        && (mode != "c" || hit.rust == 0),
+                    "invalid bounded frame ownership counts"
+                );
+                ensure!(frame_hits.insert(symbol, hit).is_none(), "duplicate bounded frame counter");
+            }
+            Some("ridley-opcode-hit") => {
+                ensure!(words.len() == 4, "invalid Ridley opcode counter extent");
+                let opcode = words[1].parse::<u32>()?;
+                ensure!(RIDLEY_OPCODES.contains(&opcode), "unknown Ridley opcode counter");
+                let hit = Hit { c: words[2].parse()?, rust: words[3].parse()? };
+                ensure!(
+                    (mode != "c" || hit.rust == 0) && (mode != "mixed" || hit.c == 0),
+                    "Ridley opcode execution not exclusive"
+                );
+                ensure!(
+                    ridley_opcode_hits.insert(opcode.to_string(), hit).is_none(),
+                    "duplicate Ridley opcode counter"
+                );
+            }
             Some("projectile-hit") => {
                 ensure!(words.len() == 10, "invalid projectile counter extent");
                 let v = words[1..].iter().map(|n| n.parse::<u64>()).collect::<std::result::Result<Vec<_>, _>>()?;
@@ -584,10 +766,7 @@ pub(crate) fn counters(directory: &Path, symbols: &[String], mode: &str) -> Resu
                 let symbol = symbols.get(index).context("invalid routine hit index")?;
                 let c = words[2].parse::<u64>()?;
                 let rust = words[3].parse::<u64>()?;
-                ensure!(
-                    (mode == "c" && rust == 0) || (mode == "mixed" && c == 0),
-                    "replacement execution was not exclusive"
-                );
+                ensure!(mode != "c" || rust == 0, "C baseline executed Rust family");
                 ensure!(hits.insert(symbol.clone(), Hit { c, rust }).is_none(), "duplicate routine hit counter");
             }
             Some("predecessor-hit") => {
@@ -638,6 +817,13 @@ pub(crate) fn counters(directory: &Path, symbols: &[String], mode: &str) -> Resu
         hits.len() == symbols.len() && !progress.is_empty() && room.len() == 2,
         "missing execution counters or progress"
     );
+    for (symbol, hit) in &hits {
+        if let Some(frame) = frame_hits.get(symbol) {
+            ensure!(frame.c == hit.c && frame.rust == hit.rust, "frame and routine counters differ");
+        } else {
+            ensure!(mode != "mixed" || hit.c == 0, "replacement execution was not exclusive");
+        }
+    }
     Ok(Counters {
         hits,
         progress,
@@ -647,6 +833,8 @@ pub(crate) fn counters(directory: &Path, symbols: &[String], mode: &str) -> Resu
         projectile_hits,
         projectile_id_hits,
         projectile_allocation_hits,
+        frame_hits,
+        ridley_opcode_hits,
     })
 }
 
@@ -733,6 +921,79 @@ pub(crate) fn projectile_admission(
     Ok(())
 }
 
+pub(crate) fn frame_admission(
+    counts: &BTreeMap<String, Counters>,
+    artifacts: &BTreeMap<String, String>,
+    symbols: &BTreeSet<String>,
+    frames: u64,
+) -> Result<()> {
+    ensure!(SUBJECTS.iter().all(|name| counts.contains_key(*name)), "missing frame subjects");
+    let baseline = &counts["c-0"];
+    let mixed = &counts["mixed-0"];
+    for names in [["c-0", "c-1"], ["mixed-0", "mixed-1"]] {
+        ensure!(
+            counts[names[0]].frame_hits == counts[names[1]].frame_hits
+                && counts[names[0]].ridley_opcode_hits == counts[names[1]].ridley_opcode_hits,
+            "bounded ownership differs across independent replays"
+        );
+    }
+    ensure!(
+        mixed.progress.last().context("missing frame progress")?.fallback_calls == 0,
+        "bounded frame requires zero CPU fallback"
+    );
+    for symbol in symbols {
+        let c = baseline.frame_hits.get(symbol).context("missing bounded frame counters")?;
+        let r = mixed.frame_hits.get(symbol).context("missing bounded frame counters")?;
+        ensure!(
+            c.total == r.total && c.active_c == r.active_c + r.active_rust,
+            "bounded native traversal counts diverged"
+        );
+        ensure!(r.rust > 0 && r.active_rust > 0, "bounded native frame lacks material Rust execution: {symbol}");
+        if symbol == "ProcessEnemyInstructions" {
+            let captured = artifacts
+                .keys()
+                .filter(|name| name.starts_with("fixtures/ridley-frame-") && name.ends_with("-after.host"))
+                .collect::<Vec<_>>();
+            ensure!(!captured.is_empty(), "missing Ridley full-WRAM/host captures");
+            for name in captured {
+                let prefix = name.strip_suffix("-after.host").unwrap();
+                for phase in ["before", "after"] {
+                    for suffix in ["wram", "host"] {
+                        ensure!(
+                            artifacts.contains_key(&format!("{prefix}-{phase}.{suffix}")),
+                            "incomplete Ridley WRAM/eight-word capture pair"
+                        );
+                    }
+                }
+            }
+            ensure!(
+                baseline.ridley_opcode_hits.len() == 8 && mixed.ridley_opcode_hits.len() == 8,
+                "Ridley opcode counters incomplete"
+            );
+            for (opcode, expected) in RIDLEY_OPCODES.into_iter().zip([2, 4, 4, 2, 18, 4, 12, 2]) {
+                let key = opcode.to_string();
+                let a = &baseline.ridley_opcode_hits[&key];
+                let b = &mixed.ridley_opcode_hits[&key];
+                ensure!(a.c == b.rust && a.rust == 0 && b.c == 0, "Ridley opcode counts diverged");
+                if frames == 129712 {
+                    ensure!(b.rust == expected, "full-route Ridley opcode counts differ");
+                }
+            }
+            if frames == 129712 {
+                ensure!(r.rust == 2393 && r.active_rust == 36, "full-route supported Ridley frame counts differ");
+            }
+        } else {
+            for phase in ["before", "after"] {
+                ensure!(
+                    artifacts.contains_key(&format!("fixtures/frame-{symbol}-001-{phase}.wram")),
+                    "missing active bounded frame capture: {symbol}"
+                );
+            }
+        }
+    }
+    Ok(())
+}
+
 pub fn verify(request: Request) -> Result<Verdict> {
     let checkout = fs::canonicalize(&request.checkout)?;
     let output = &request.output;
@@ -778,8 +1039,11 @@ pub fn verify(request: Request) -> Result<Verdict> {
         verdict.transformations = generated.transformations.clone();
         verdict.host_dependencies = generated.host_dependencies.clone();
         verdict.dispatcher_symbols = generated.dispatcher_symbols.clone();
+        verdict.routine_symbols = generated.symbols.clone();
         verdict.room_plm_installed = generated.room_plm_installed;
         verdict.projectile_native_installed = generated.projectile_native_installed;
+        verdict.bounded_symbols = generated.bounded_symbols.clone();
+        verdict.ridley_native_installed = generated.ridley_native_installed;
         verdict.active_eproj_captures = request.capture_active_eprojs;
         if generated.projectile_native_installed {
             verdict.projectile_abi = Some("synchronous-eight-word-host-v2-with-gfx".into());
@@ -833,6 +1097,11 @@ pub fn verify(request: Request) -> Result<Verdict> {
                 "crates/pipeline/src/live_projectile.rs.in",
                 "crates/pipeline/src/live_projectile_host.c.in",
                 "crates/pipeline/src/live_projectile_bank.c.in",
+                "crates/pipeline/src/live_bounded_family.rs.in",
+                "crates/pipeline/src/live_bounded_wrapper.c.in",
+                "crates/pipeline/src/live_ridley.rs.in",
+                "crates/pipeline/src/live_ridley_host.c.in",
+                "crates/pipeline/src/live_ridley_bank.c.in",
             ]
             .into_iter()
             .map(PathBuf::from)
@@ -1035,11 +1304,16 @@ pub fn verify(request: Request) -> Result<Verdict> {
             );
         }
         ensure!(
-            counts["mixed-0"].hits.values().any(|v| v.rust > 0) || generated.projectile_native_installed,
+            counts["mixed-0"].hits.values().any(|v| v.rust > 0)
+                || generated.projectile_native_installed
+                || generated.ridley_native_installed,
             "no Rust gameplay family executed"
         );
         if generated.projectile_native_installed {
             projectile_admission(&counts, &inventories["c-0"], frames)?;
+        }
+        if !generated.bounded_symbols.is_empty() {
+            frame_admission(&counts, &inventories["c-0"], &generated.bounded_symbols, frames)?;
         }
         if generated.room_plm_installed {
             ensure!(
@@ -1142,6 +1416,73 @@ pub fn verify(request: Request) -> Result<Verdict> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn bounded_contract_installs_whole_verified_roots_and_rejects_wrong_host_or_signature() {
+        let mut manifest = Manifest {
+            rom: Some(Default::default()),
+            routines: vec![
+                crate::family_model::Routine {
+                    symbol: "MainScrollingRoutine".into(),
+                    returns: "void".into(),
+                    ..Default::default()
+                },
+                crate::family_model::Routine {
+                    symbol: "Samus_HandleScroll_X".into(),
+                    args: 1,
+                    returns: "void".into(),
+                    ..Default::default()
+                },
+            ],
+            ..Default::default()
+        };
+        bounded_contract(&manifest, "camera_scroll").unwrap();
+        assert!(!bounded_root("camera_scroll", "Samus_HandleScroll_X"));
+        manifest.projectile_host = true;
+        assert!(bounded_contract(&manifest, "camera_scroll").is_err());
+        manifest.projectile_host = false;
+        manifest.routines[0].args = 1;
+        assert!(bounded_contract(&manifest, "camera_scroll").is_err());
+        manifest.routines[0].args = 0;
+        manifest.routines[0].live_eligible = Some(false);
+        assert!(bounded_contract(&manifest, "camera_scroll").is_err());
+    }
+    #[test]
+    fn bounded_counter_admission_keeps_explicit_c_scope_and_rejects_missing_material() {
+        let symbol = "ProcessEnemyInstructions".to_owned();
+        let mut baseline = Counters { progress: vec![Progress::default()], ..Default::default() };
+        let mut mixed = baseline.clone();
+        baseline
+            .frame_hits
+            .insert(symbol.clone(), FrameHit { total: 10000, c: 10000, active_c: 36, ..Default::default() });
+        mixed.frame_hits.insert(
+            symbol.clone(),
+            FrameHit { total: 10000, c: 7607, rust: 2393, refused: 7607, active_rust: 36, ..Default::default() },
+        );
+        for (opcode, amount) in RIDLEY_OPCODES.into_iter().zip([2, 4, 4, 2, 18, 4, 12, 2]) {
+            baseline.ridley_opcode_hits.insert(opcode.to_string(), Hit { c: amount, rust: 0 });
+            mixed.ridley_opcode_hits.insert(opcode.to_string(), Hit { c: 0, rust: amount });
+        }
+        let counts = BTreeMap::from([
+            ("c-0".into(), baseline.clone()),
+            ("c-1".into(), baseline),
+            ("mixed-0".into(), mixed.clone()),
+            ("mixed-1".into(), mixed),
+        ]);
+        let artifacts = ["before", "after"]
+            .into_iter()
+            .flat_map(|phase| {
+                ["wram", "host"].into_iter().map(move |suffix| {
+                    (format!("fixtures/ridley-frame-e752-window0-001-{phase}.{suffix}"), "sealed".into())
+                })
+            })
+            .collect();
+        let roots = BTreeSet::from([symbol]);
+        frame_admission(&counts, &artifacts, &roots, 129712).unwrap();
+        assert!(frame_admission(&counts, &BTreeMap::new(), &roots, 129712).is_err());
+        let mut wrong = counts.clone();
+        wrong.get_mut("mixed-1").unwrap().frame_hits.get_mut("ProcessEnemyInstructions").unwrap().rust -= 1;
+        assert!(frame_admission(&wrong, &artifacts, &roots, 129712).is_err());
+    }
     #[test]
     fn native_projectile_contract_requires_owned_host_and_packed_gfx_signature() {
         let root = Path::new("/checkout");

@@ -1,0 +1,13 @@
+void PortRidleyInstructions(void (*)(void));
+void PortRidleyOpcode(uint32,uint32,uint32,uint32,uint32);
+void ProcessEnemyInstructions(void){PortRidleyInstructions(PortC_ProcessEnemyInstructions);}
+const uint16 *CallEnemyInstr(uint32 address,uint16 slot,const uint16 *argument){
+ const uint16 *result=PortC_CallEnemyInstr(address,slot,argument);
+ if((address>>16)==0xa6){
+  uintptr_t base=(uintptr_t)RomBankBase(0xa6),a=(uintptr_t)argument,r=(uintptr_t)result;
+  uint32 canonical_argument=a<0x10000?0xa60000|(uint16)a:0xa60000|(uint16)(a-base);
+  uint32 canonical_result=!result?0:r<0x10000?0xa60000|(uint16)r:0xa60000|(uint16)(r-base);
+  PortRidleyOpcode(address,canonical_argument,canonical_result,!result?0:r<0x10000?1:2,0);
+ }
+ return result;
+}

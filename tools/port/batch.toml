@@ -33,7 +33,37 @@ kind = "dispatcher"
 live = "dispatcher"
 manifest = "tools/port/projectile-script-leaves.toml"
 
+[families.projectile-trails]
+kind = "family"
+live = "family"
+manifest = "tools/port/projectile-trails.toml"
+
+[families.camera-scroll]
+kind = "family"
+live = "family"
+manifest = "tools/port/camera-scroll.toml"
+
+[families.room-scroll]
+kind = "family"
+live = "family"
+manifest = "tools/port/room-scroll.toml"
+
+[families.observed-ridley-instructions]
+kind = "family"
+live = "family"
+manifest = "tools/port/observed-ridley-instructions.toml"
+
+[families.samus-projectile-frame]
+kind = "power-bomb"
+live = "family"
+manifest = "tools/port/samus-projectile-frame.toml"
+
+[families.ridley-subsystem]
+kind = "ridley-subsystem"
+manifest = "tools/port/ridley-subsystem.toml"
+
 [profiles]
+translated-subsystems = ["projectile-trails", "camera-scroll", "room-scroll", "observed-ridley-instructions", "samus-projectile-frame"]
 all = [
     "system",
     "audio",

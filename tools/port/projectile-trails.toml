@@ -1,5 +1,5 @@
 family = "projectile-trails"
-rust_module = "/tmp/sm-projectile-trails/crates/port/src/projectile_trails.rs"
+rust_module = "crates/port/src/projectile_trails.rs"
 bank = "sm_90.c"
 c_support = ["sm_rtl.c"]
 domain = "Native18-slot reverse trail frames, actual ROM scripts, full WRAM/raw return; odd direct opcode slots floor. All timer and camera widths, frozen frames, native partial OAM word writes and WRAM aliases. Invalid or unsupported bytecode refuses before mutation."

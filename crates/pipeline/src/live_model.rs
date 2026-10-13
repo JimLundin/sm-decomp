@@ -73,6 +73,8 @@ pub struct Generated {
     pub predecessors: Vec<Predecessor>,
     pub room_plm_installed: bool,
     pub projectile_native_installed: bool,
+    pub bounded_symbols: BTreeSet<String>,
+    pub ridley_native_installed: bool,
 }
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct Hit {
@@ -118,6 +120,15 @@ pub struct ProjectileAllocationHit {
     pub refused: u64,
 }
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+pub struct FrameHit {
+    pub total: u64,
+    pub c: u64,
+    pub rust: u64,
+    pub refused: u64,
+    pub active_c: u64,
+    pub active_rust: u64,
+}
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct Progress {
     pub frame: u64,
     pub game_state: u64,
@@ -142,6 +153,10 @@ pub struct Counters {
     pub projectile_id_hits: BTreeMap<String, ProjectileIdHit>,
     #[serde(default)]
     pub projectile_allocation_hits: BTreeMap<String, ProjectileAllocationHit>,
+    #[serde(default)]
+    pub frame_hits: BTreeMap<String, FrameHit>,
+    #[serde(default)]
+    pub ridley_opcode_hits: BTreeMap<String, Hit>,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct StorageSubject {
@@ -167,8 +182,14 @@ pub struct Verdict {
     pub transformations: BTreeMap<String, Transformation>,
     pub host_dependencies: BTreeMap<String, String>,
     pub dispatcher_symbols: BTreeSet<String>,
+    #[serde(default)]
+    pub routine_symbols: Vec<String>,
     pub room_plm_installed: bool,
     pub projectile_native_installed: bool,
+    #[serde(default)]
+    pub bounded_symbols: BTreeSet<String>,
+    #[serde(default)]
+    pub ridley_native_installed: bool,
     pub projectile_abi: Option<String>,
     pub active_eproj_captures: bool,
     pub rom_sha256: String,

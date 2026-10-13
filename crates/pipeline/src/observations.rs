@@ -44,9 +44,15 @@ struct Verdict {
     frames: u64,
     #[serde(default)]
     counters: BTreeMap<String, crate::live_model::Counters>,
+    #[serde(default)]
+    routine_symbols: Vec<String>,
+    #[serde(default)]
+    bounded_symbols: BTreeSet<String>,
+    #[serde(default)]
+    ridley_native_installed: bool,
 }
 use std::{
-    collections::BTreeMap,
+    collections::{BTreeMap, BTreeSet},
     fs::{self},
     path::Path,
     process::Command,
@@ -151,17 +157,32 @@ pub fn authenticate(request: AuthenticateRequest) -> Result<AuthenticationReceip
             "packed producer provenance differs"
         );
     }
-    if verdict.projectile_native_installed {
+    if verdict.projectile_native_installed || !verdict.bounded_symbols.is_empty() {
+        let has_bounded = !verdict.bounded_symbols.is_empty();
         ensure!(
-            verdict.projectile_abi.as_deref() == Some("synchronous-eight-word-host-v2-with-gfx"),
-            "unknown native projectile ABI"
+            !verdict.ridley_native_installed
+                || (verdict.projectile_native_installed
+                    && verdict.bounded_symbols.contains("ProcessEnemyInstructions")),
+            "Ridley frame dependencies incomplete"
         );
+        if has_bounded {
+            ensure!(
+                verdict.routine_symbols.iter().collect::<BTreeSet<_>>().len() == verdict.routine_symbols.len(),
+                "duplicate retained generation symbols"
+            );
+        }
         for name in SUBJECTS {
-            let recorded = verdict.counters.get(name).context("missing native projectile subject counters")?;
-            let symbols = recorded.hits.keys().cloned().collect::<Vec<_>>();
-            // port-hit rows retain generation order, while map keys are sorted.
-            // Projectile admission compares its typed counters and progress.
-            let actual = crate::live::counters(&run.join(name), &symbols, name.split('-').next().unwrap())?;
+            let recorded = verdict.counters.get(name).context("missing native subject counters")?;
+            let historical_symbols;
+            let symbols = if has_bounded || !verdict.routine_symbols.is_empty() {
+                &verdict.routine_symbols
+            } else {
+                // Historical projectile verdicts did not retain generation order.
+                // Only their named projectile counters and progress are compared.
+                historical_symbols = recorded.hits.keys().cloned().collect::<Vec<_>>();
+                &historical_symbols
+            };
+            let actual = crate::live::counters(&run.join(name), symbols, name.split('-').next().unwrap())?;
             ensure!(
                 actual.projectile_hits == recorded.projectile_hits
                     && actual.projectile_id_hits == recorded.projectile_id_hits
@@ -169,8 +190,20 @@ pub fn authenticate(request: AuthenticateRequest) -> Result<AuthenticationReceip
                     && actual.progress == recorded.progress,
                 "native projectile counters differ from retained stdout"
             );
+            if has_bounded {
+                ensure!(actual == *recorded, "bounded frame counters differ from retained stdout");
+            }
         }
+    }
+    if verdict.projectile_native_installed {
+        ensure!(
+            verdict.projectile_abi.as_deref() == Some("synchronous-eight-word-host-v2-with-gfx"),
+            "unknown native projectile ABI"
+        );
         crate::live::projectile_admission(&verdict.counters, &verdict.artifacts, verdict.frames)?;
+    }
+    if !verdict.bounded_symbols.is_empty() {
+        crate::live::frame_admission(&verdict.counters, &verdict.artifacts, &verdict.bounded_symbols, verdict.frames)?;
     }
     Ok(AuthenticationReceipt {
         status: "authenticated".into(),

@@ -1,6 +1,6 @@
 family = "samus-projectile-frame"
 domain = "Whole ten-slot Samus projectile scheduling and both player/explosion render passes, existing Rust flight/bomb/SBA composition, native ROM script chains, full WRAM/return and ordered explicit PLM/HDMA callbacks. Pinned-C Ceres player draw uses an uninitialized Y local and Ceres explosion draw discards its Mode7 point; selected paths refuse before mutation."
-rust_module = "/tmp/sm-samus-projectile-frame/crates/port/src/samus_projectile_frame.rs"
+rust_module = "crates/port/src/samus_projectile_frame.rs"
 bank = "sm_90.c"
 c_support = []
 rust_imports = ["power_bomb", "projectile_flight", "projectile_special", "projectile_trails", "projectiles"]
