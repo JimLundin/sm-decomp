@@ -3,7 +3,7 @@
 Status: open
 Blocked by: 11
 Triage: ready-for-agent
-Type: research
+Type: task
 
 Consumers: 23 and milestones06–08.
 Origin: [NMI child proposals](../launch-20261013/research-13/children.toml).
@@ -21,3 +21,10 @@ Publish exact baseline, approved files, source-bound state/order/DMA/latch/read/
 ## Completion evidence
 
 Pending reviewed infrastructure scope; no adapter implementation or gameplay stage yet.
+
+## Comments
+
+2026-10-13: user classifies this adapter and its integration tests as a task.
+Use the finished source/state contract for implementation, with checked exact
+ownership; speculative research and broad refactoring are deferred. Its live
+hardware requirements do not block independent reference-C offline families.

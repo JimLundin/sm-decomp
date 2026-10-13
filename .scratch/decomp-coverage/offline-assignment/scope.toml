@@ -1,0 +1,26 @@
+schema = "decomp-infrastructure-scope-v1"
+baseline = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+limitations = ["Assignment infrastructure only; no gameplay stage or live acceptance.", "Only the essential offline assignment unblocker is authorized; broad refactors are deferred."]
+
+[job]
+id = "offline-translation-assignment"
+revision = "reviewed-20261013-v1"
+kind = "implement"
+subject = "Admit coherent actual-C offline translation tasks"
+writable_paths = ["crates/pipeline/src/translation.rs"]
+blockers = []
+ticket = ".scratch/decomp-coverage/issues/01-offline-translation-assignment.md"
+instructions = "Implement the explicit offline translation scope mode with exact source/dependency/writable ownership and actual-C gates. Preserve observed-live admission and authority. Fix the lexical return-token disagreement required to validate the existing pinned inventory. Work only in the returned isolated worktree; keep other workers' edits. Require nonzero translation tests and scoped source commit. No speculative research or broad refactor."
+
+[job.inputs]
+base-head = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+
+[[gates]]
+argv = ["cargo", "test", "-p", "pipeline", "--locked", "--offline", "--bin", "sm-pipeline", "translation::tests"]
+timeout_seconds = 60
+integration = false
+
+[[gates]]
+argv = ["cargo", "test", "-p", "pipeline", "--locked", "--offline", "--bin", "sm-pipeline", "translation::tests"]
+timeout_seconds = 3600
+integration = true

@@ -1,7 +1,7 @@
 # Verify save/load and credits
 
 Status: open
-Blocked by: 07, 13, 18, 19, 20, 21, 22, 23
+Blocked by: 07, 13, 18, 19, 20, 21, 22, 23, 26, 29, 33, 34, 35, 39, 40, 41, 42, 43, 44
 Triage: ready-for-agent
 Type: task
 

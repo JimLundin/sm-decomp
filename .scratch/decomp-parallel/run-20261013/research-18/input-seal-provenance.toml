@@ -1,0 +1,131 @@
+format = "decomp-research-input-seal-provenance-v1"
+status = "coordinator-store-sealing-required"
+worker_session_id = "01a135ca-3b5d-75a2-b717-23d486d7b6ec"
+source_baseline = "7ed3d383d6d3e28d21d1bb960acc5576ce82f5e9"
+continuation_source_observation = "52f44a1a7599f540397dfbd24a31ff8b3ef5f19e"
+authoritative_assignment_base_head_available = false
+current_store_authenticated = false
+input_capture_run_id_available = false
+artifact_capture_run_id_available = false
+fresh_input_hash_list_available = false
+artifact_hash_list_available = false
+hashing_engine = "existing crates/evidence sm-evidence ingest and authenticated inventory"
+input_paths = "inputs.paths"
+inherited_hashes = "inherited-input-seals.toml"
+declared_hash_provenance = "Existing pinned source-inventory/retained research input lists/retained coverage audit. Declared hashes are not current sm-evidence authentication."
+shared_store_writer = "coordinator only; serialize with other evidence writers"
+source_writes = false
+scope_admission = false
+gameplay_acceptance = false
+input_path_count = 112
+inherited_declaration_count = 63
+missing_inherited_seal_count = 49
+commands_executed_by_worker = []
+prohibited_worker_actions = [
+  "No additional sha256sum or new hashing utility",
+  "No uncoordinated writes to out/evidence",
+  "No invented run id, artifact hash, input hash or Native exercise pointer",
+  "No use of research storage receipts as gameplay/REA/original-ROM execution evidence",
+]
+limitations = [
+  "New outputs remain mutable until the final ready-to-seal handoff. Store ingestion must happen after validation and package completion.",
+  "Inputs include mutable local tickets/registry and previous research outputs. Coordinator must snapshot observed/current bytes separately and compare inherited declarations where relevant.",
+  "Any changed input is a current source or tracker observation, not permission to rewrite this historical claim.",
+  "No inputs.sha256 or artifacts.sha256 claiming current authentication was fabricated. Derive such lists from authenticated inventory artifacts if required by result publication.",
+  "The source identity includes the pinned archive but does not establish latest upstream or direct-root execution.",
+]
+next_action = "Freeze this finished directory; snapshot exact listed inputs in a coordinator-owned UTF-8 regular-file capture with a stable path map; ingest input/package captures with existing sm-evidence; authenticate inventory and verify; retain run ids, reader/source/store and receipts; derive result hashes from inventory; publish child tickets/inventory and exact researched result."
+
+[[coordinator_steps]]
+step = 1
+action = "Retain exact regular-file input snapshots under a coordinator-owned capture, preserving a mapping from each absolute inputs.paths entry to its stable capture member. Never ingest the whole checkout, raw build trees or shared store as the input capture."
+executed = false
+
+[[coordinator_steps]]
+step = 2
+action = "Use an existing retained sm-evidence reader, or build the Rust workspace reader under the shared workers4 budget if necessary. Retain exact reader/source identity. The example below assumes the existing target/debug reader, whose seal must be captured by the coordinator."
+argv = ["/home/jim/sm-decomp/target/debug/sm-evidence", "ingest", "/home/jim/sm-decomp/out/evidence", "COORDINATOR_INPUT_CAPTURE_DIRECTORY"]
+executed = false
+
+[[coordinator_steps]]
+step = 3
+action = "After the final package is immutable, ingest it. Keep returned run externally as the trusted pointer; arbitrary custom provenance files are not the typed evidence Provenance schema and must not be passed as one."
+argv = ["/home/jim/sm-decomp/target/debug/sm-evidence", "ingest", "/home/jim/sm-decomp/out/evidence", "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-18"]
+executed = false
+
+[[coordinator_steps]]
+step = 4
+action = "Use the actual emitted input/package run ids. Inventory authenticates logical closure and exact artifact hashes. Replace RUN_ID below from receipt, never with a fabricated digest."
+argv = ["/home/jim/sm-decomp/target/debug/sm-evidence", "inventory", "/home/jim/sm-decomp/out/evidence", "RUN_ID_FROM_INGEST_RECEIPT"]
+executed = false
+
+[[coordinator_steps]]
+step = 5
+action = "Verify physical seals and exact capture membership/bytes while the frozen capture still exists; retain the resulting receipt and trusted run pointer outside the captured directory."
+argv = ["/home/jim/sm-decomp/target/debug/sm-evidence", "verify", "/home/jim/sm-decomp/out/evidence", "RUN_ID_FROM_INGEST_RECEIPT", "FROZEN_CAPTURE_DIRECTORY"]
+executed = false
+
+[[coordinator_steps]]
+step = 6
+action = "Read current-input/artifact hashes from authenticated inventory, publish child tickets and provenance/holding links to07/08/21/22/19, and submit exact claim event=finished result=researched with absolute evidence path/sha256 fields. No gameplay stage."
+executed = false
+
+[claim]
+id = "ticket-2966e528f4696d00eed786e3a895d9034fd217c5ad6db59153329ef23da35b6d"
+revision = "2b5be5ee42e86f922e679effe3968f60fc7d94afffa98e078f88a1c6107fa81d"
+attempt = 1
+coordinator = "decomp-run-20261013"
+
+[gaps]
+missing_inherited_seals = [
+  "/home/jim/sm-decomp/docs/agents/issue-tracker.md",
+  "/home/jim/sm-decomp/docs/agents/triage-labels.md",
+  "/home/jim/sm-decomp/docs/DECOMP_PORT.md",
+  "/home/jim/sm-decomp/docs/DECOMP_BATCH.md",
+  "/home/jim/sm-decomp/docs/DECOMP_PIVOT.md",
+  "/home/jim/sm-decomp/tools/port/audio.toml",
+  "/home/jim/sm-decomp/tools/port/system.toml",
+  "/home/jim/sm-decomp/crates/port/src/system.rs",
+  "/home/jim/sm-decomp/crates/port/src/memory.rs",
+  "/home/jim/sm-decomp/crates/port/src/lib.rs",
+  "/home/jim/sm-decomp/crates/port/tests/audio.rs",
+  "/home/jim/sm-decomp/crates/port/tests/system.rs",
+  "/home/jim/sm-decomp/crates/port/tests/game_host.rs",
+  "/home/jim/sm-decomp/crates/pipeline/src/family.rs",
+  "/home/jim/sm-decomp/crates/pipeline/src/main.rs",
+  "/home/jim/sm-decomp/crates/pipeline/src/live_host.c.in",
+  "/home/jim/sm-decomp/crates/evidence/src/main.rs",
+  "/home/jim/sm-decomp/tools/decomp/headless.c",
+  "/home/jim/sm-decomp/tools/decomp/prefix_host.c",
+  "/home/jim/sm-decomp/.scratch/decomp-parallel/issues/18-audio-ui-menu-scope.md",
+  "/home/jim/sm-decomp/.scratch/decomp-parallel/issues/21-native-root-exercise-provenance.md",
+  "/home/jim/sm-decomp/.scratch/decomp-parallel/issues/22-nmi-hardware-service-adapter.md",
+  "/home/jim/sm-decomp/.scratch/decomp-parallel/issues/23-complete-nmi-body-scope.md",
+  "/home/jim/sm-decomp/.scratch/decomp-parallel/issues/19-sram-save-load-scope.md",
+  "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/requests/start-research-18.toml",
+  "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-15/Answer.md",
+  "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-15/children.toml",
+  "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-15/rom-ranges.json",
+  "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/Answer.md",
+  "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/children.toml",
+  "/home/jim/sm-decomp/.scratch/decomp-port/issues/02-system-state.md",
+  "/home/jim/sm-decomp/.scratch/decomp-port/issues/03-audio-queues.md",
+  "/home/jim/sm-decomp/.scratch/decomp-port/issues/78-original-movie-controller-boundary.md",
+  "/home/jim/sm-decomp/.scratch/decomp-port/issues/109-room-pause-hooks-and-shaktool.md",
+  "/home/jim/sm-decomp/.scratch/ceres-continuation/controller-handoff-20261013.md",
+  "/home/jim/sm-decomp/.scratch/decomp-progress/historical-audio-6053-verified-accuracy-20261013.toml",
+  "/home/jim/sm-decomp/crates/evidence/README.md",
+  "/home/jim/sm-decomp/crates/evidence/src/run.rs",
+  "/home/jim/sm-decomp/crates/evidence/src/tree.rs",
+  "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/receipts/start-research-18-retry.stdout.toml",
+  "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/receipts/start-research-18-retry.stderr.txt",
+  "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-15/inputs.sha256",
+  "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/inputs.sha256",
+  "/home/jim/.agents/skills/research/SKILL.md",
+  "/home/jim/.agents/skills/reverse-engineer-anything/SKILL.md",
+  "/home/jim/sm-decomp/.scratch/decomp-parallel/issues/11-finish-held-ceres-integration.md",
+  "/home/jim/sm-decomp/.scratch/decomp-parallel/issues/12-ceres-nmi-poll-continuation.md",
+  "/home/jim/sm-decomp/.scratch/decomp-parallel/issues/14-samus-frame-scope.md",
+  "/home/jim/.agents/skills/reverse-engineer-anything/references/connection-and-recovery.md",
+]
+

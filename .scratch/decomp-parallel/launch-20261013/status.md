@@ -1,8 +1,15 @@
 # Decomp swarm launch status
 
-Status: activated; handoff ready
-Blocked by: setup turn completion for integrator transfer; gameplay milestones retain their gates
+Status: activated; background coordinator owns integration
+Blocked by: Ceres host/controller gates and gameplay milestone dependencies
 Updated: 2026-10-13
+
+The checked generation2 transfer is complete. Current main Git/index and
+integrator owner is `01a13592-d02b-7143-8489-a15b03f19da2` under
+`ceres-20261013`; dispatcher `decomp-run-20261013` is generation1. See
+[continuation status](../run-20261013/status.md) and
+[transfer receipt](../run-20261013/receipts/transfer-integrator.stdout.toml).
+Setup checkpoint and the launch observations below remain historical evidence.
 
 Production authority is active at [authority.toml](../authority.toml), with the
 canonical durable [queue](../ledger.toml). The legacy Ceres ledger retains its

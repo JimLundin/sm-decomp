@@ -28,13 +28,24 @@ sha256 = "0414e68f8e0d7ba64698511565bcc7749172ac7300bdae7b2bcaaed38f078956"
 [roles.ceres-20261013]
 token = "ceres-20261013"
 kind = "integrator"
-session_id = "01a1356e-a8dd-7a80-88b0-1239a6a9b876"
-generation = 1
-transfers = []
+session_id = "01a13592-d02b-7143-8489-a15b03f19da2"
+generation = 2
 
 [roles.ceres-20261013.registration]
 path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/inspections/integrator-registration.toml"
 sha256 = "0414e68f8e0d7ba64698511565bcc7749172ac7300bdae7b2bcaaed38f078956"
+
+[[roles.ceres-20261013.transfers]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/inspections/integrator-transfer.toml"
+sha256 = "c03ffa4046de6d4a126eb516e79f70e61e6db7d618a5a87ed72efdf037e87542"
+
+[roles.ceres-20261013.last_transfer]
+token = "ceres-20261013"
+session_id = "01a13592-d02b-7143-8489-a15b03f19da2"
+
+[roles.ceres-20261013.last_transfer.observation]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/inspections/integrator-transfer.toml"
+sha256 = "c03ffa4046de6d4a126eb516e79f70e61e6db7d618a5a87ed72efdf037e87542"
 
 [roles.decomp-launch-20261013]
 token = "decomp-launch-20261013"

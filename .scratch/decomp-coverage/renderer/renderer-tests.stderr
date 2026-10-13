@@ -1,0 +1,3 @@
+   Compiling port v0.1.0 (/tmp/sm-decomp-parallel-pause-equipment-render-offline-1/crates/port)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.11s
+     Running tests/pause_equipment_render.rs (target/debug/build/port/ccff5ffe07c509ff/out/pause_equipment_render-ccff5ffe07c509ff)

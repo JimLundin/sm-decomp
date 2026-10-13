@@ -1,6 +1,6 @@
 # Research a complete non-Ridley enemy lifecycle boundary
 
-Status: open
+Status: resolved
 Blocked by: 05
 Triage: ready-for-agent
 Type: research
@@ -40,5 +40,81 @@ gates. Add generated implementation children to07/09 before composed completion.
 
 ## Completion evidence
 
-Pending Answer/child/scope hashes and no-run or completed scoped cleanup,
-retained source/store/readers/private-input dependencies and authentication.
+Research result admitted through Rust assign at
+`run-20261013/receipts/finish-research-17.stdout.toml` under the original claim
+and real worker UUID01a135a5-c8f0-7c42-a3d7-8454dac4fb0e. The exact Answer and
+four proposals are stored by the evidence crate in shared `out/evidence`, run
+`6ebd3637b5984438ab276489ee703d5132b522e01f701a3549694f53c45d49a1`.
+Authenticated inventory covers12 files/113,800 bytes and matches the worker
+seals. Retain the shared store, package and sm-evidence reader. Research ran no
+verification/extraction/build processes, had no worker-owned writers and reclaimed
+0 bytes; its no-run cleanup is sealed in the admitted result.
+
+Published children30 transaction adapter review,31 death/pickup/respawn scope
+review and32 whole Waver lifecycle; shared21 receives the enemy-root supplement.
+Milestones07/09 and the map retain these blockers. Complete Waver A0:D63F is a
+prospective32-routine boundary; natural direct-root provenance and transaction/
+service closure remain missing. Reuse72/75/77/79/82, preserve native137 and
+held141. Research completion earns no gameplay stage.
+
+## Answer
+
+See [the sealed lifecycle Answer](../run-20261013/research-17/Answer.md) and
+[child manifest](../run-20261013/research-17/children.toml) for exact source,
+ROM extents, dependency gaps, gates and ownership. No bank86 callee counter
+establishes a Waver caller. Publication completed2026-10-13 after native researched
+result admission; implementation remains held on the numbered children.
+
+<!-- decomp-assignment:ticket-cf844dcf0283917c8b1718f9eabb058af9a18ed0d72c0de3621ac999c7e646f2 -->
+
+<!-- decomp-assignment-record:start -->
+
+## Current assignment
+
+Stable work: `ticket-cf844dcf0283917c8b1718f9eabb058af9a18ed0d72c0de3621ac999c7e646f2`
+Input revision: `bd78c1ca6d3487b6cd3adafd57452f7f26a27f54635cb57b947eab8ac0221a63`
+Lifecycle: `complete`
+
+Honor existing local ticket .scratch/decomp-parallel/issues/17-other-enemy-lifecycle-scope.md. It is open, unclaimed and dependency-ready. Read its requirements and establish a complete Translation scope before implementation: observed exercise provenance, required dependencies, exact writable paths and concrete verification argv. Include a bounded pre-integration test and an integration gate. Use native translation-scope-v1 TOML; limit each initial experiment to approximately 60 seconds. Research facts do not grant acceptance. Preserve task-origin ownership until its implementation is integrated, verified and cleaned.
+
+Writable ownership:
+
+No maintained source writes.
+
+Claim owner: `decomp-run-20261013`; attempt: `1`.
+
+## Completion evidence for this assignment
+
+```toml
+result = "researched"
+followups = []
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/Answer.md"
+sha256 = "0ee118454ef5c93d40d7e0239776c07ca464f8e64fbb4ec7d3b003623b8e7a39"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/children.toml"
+sha256 = "c1189da5f9754eefb34aed297311091fb475c991a1f44a72a0385cb29ae60254"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/manual-handoff.toml"
+sha256 = "3bd0c55ac6db79455db713b7639f9d15332c959e9f41ffb40f4c19343a33e3cb"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/artifacts.sha256"
+sha256 = "24af872ffb5f8e4771e4afb4c4126d527a7466c3c2f466649eb9ffeaec67a98f"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/cleanup.toml"
+sha256 = "a5a0e191b4d5ca2fb93c6c1935f07eed85fff0a809463f9cbc1741dd162b57f4"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/receipts/ticket-cf844dcf0283917c8b1718f9eabb058af9a18ed0d72c0de3621ac999c7e646f2-1-request-e5cd0eb4f84aa25de02d989d8c76b0b301671b345302b0c847469dcba17631b6.toml"
+sha256 = "132329b7d99084522739a9453dbc7021a830066daba88f83bcd36668c3ded44b"
+
+```
+
+<!-- decomp-assignment-record:end -->
+
+

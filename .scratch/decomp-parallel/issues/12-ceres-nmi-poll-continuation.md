@@ -3,7 +3,7 @@
 Status: open
 Blocked by: 11
 Triage: ready-for-agent
-Type: research
+Type: task
 
 Tracking origin: retained decomp-port ticket78
 Consumer: milestone06

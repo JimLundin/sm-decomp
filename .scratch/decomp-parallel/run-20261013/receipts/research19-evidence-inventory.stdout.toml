@@ -1,0 +1,28 @@
+observations = "4ff1f2dccf252b64b3e818fe75d8a938171075105ae538bf07b4cdbd25d624c2"
+files = 20
+bytes = 91802
+
+[artifacts]
+"Answer.md" = "edfc9f46fd3d132a14ca95280048c9a03d99dfcedd501f41ecc4584112d11c5c"
+"artifacts.paths" = "809fc30ae56aeb66d77d16800242084f2f98d5777dc1e4ee7a127010b0ec5314"
+"children.toml" = "0ddbaa28749663eeacbb8cec00490f178dca253ffaf74ae2278ec082bd6d67d8"
+"cleanup.toml" = "f76870d58a117c7c03480cbbc5eb913cc3ced3027c898d37bb21bb27f1d08572"
+"dependency-review.toml" = "31d72004f6c3748f519a2194f6afe10afd347f3ab03dfba51e0406517d041216"
+"document-validation.toml" = "c2a58854c0bf90333400ae07a0d26e990cca3f0c33e19b483be637215d5f42c9"
+"inherited-input-seals.toml" = "bcd23e1ddcff1a50082b2d6f5ecb4c7149870d8d0ab05b6438d4065bde1a26d1"
+"input-seal-provenance.toml" = "d06d2b88a3aedb4704bc656661bba6884e5c5b089790f6c7971db8236b9d4484"
+"inputs.paths" = "be039f468c15e15ad63e6a8427dba24c7260671f487ae9db9b1bb82e7b55f916"
+"manual-handoff-sequence-1.toml" = "4ff8550a1c02dd5d2e809289c5c386dd57b4e0b4c43e7ac6f4a3fb24b22dccab"
+"manual-handoff.toml" = "5890ca656dc9c8a9529aff40d8aaf21a1c4f66d59bee522d58670091f88ce091"
+"proposed-children/01-shared-exercise-supplement.md" = "89034a806503ac86205945e9004cf02fdff94ddfc5a84ed9d72018f8b0b65de4"
+"proposed-children/02-persistence-adapter.md" = "b2d879f37748c2bd0c20ebecb7ac534197d348cb10c3344ce5b525c4e6de84ff"
+"proposed-children/03-complete-codec.md" = "766e6a6728e7385b31ed03228f19a4153200bac71fe9d0975848eb5af30c04b4"
+"proposed-children/04-canonical-companions.md" = "901a22cc52c609c0842f7edaaac0896c35432b51c0b932e52987b1a284c3425e"
+"proposed-children/05-composed-save-and-fresh-process.md" = "6b8285120cae3d70648f73c422121d2a7667ac0c4142e3b734795beef53647e7"
+"rom-observations.toml" = "f759e3325c583052f45091b6eea1b7cb6f5f894d4c4ef2901f8d214131786be1"
+"routine-observations.toml" = "10c41f06ce813b3dd613f6331acfc9963374744118ab9f3b18abad67a474b3a6"
+"scope-holding.toml" = "4b0b7a47eb3091e372635a5926cd9b18e14d74d71645f72d0278b98fabb69164"
+"state-contract.toml" = "50eb5f35ec79244b29957b5bd32fa236c1e127f53315712a4d6f336de2ba2987"
+
+[provenance]
+schema_version = 2

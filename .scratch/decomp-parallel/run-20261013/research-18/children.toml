@@ -1,0 +1,884 @@
+format = "decomp-research-child-proposals-v1"
+status = "review-required"
+native_scope_admitted = false
+gameplay_acceptance = false
+origin_ticket = ".scratch/decomp-parallel/issues/18-audio-ui-menu-scope.md"
+source_baseline = "7ed3d383d6d3e28d21d1bb960acc5576ce82f5e9"
+continuation_source_observation = "52f44a1a7599f540397dfbd24a31ff8b3ef5f19e"
+worker_session_id = "01a135ca-3b5d-75a2-b717-23d486d7b6ec"
+parent_session_id = "01a13592-d02b-7143-8489-a15b03f19da2"
+source_inventory = "tools/port/source-inventory.toml"
+source_inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+exercise_receipt_available = false
+exercise_gap = "Maintained schema2 exercise admits bank86 projectile diagnostics; no supported direct-root audio/menu receipt. HandleSoundEffects indexed dispatch is omitted from current lexical inventory; addressless root and source-bound dynamic edge review are required."
+coordinator_action = "Review and publish children to consumers07/08; supplement single shared ticket21, reconcile shared ownership with11/12/19/22/23, seal current inputs using sm-evidence ingest/inventory, obtain genuine exercise and adapter receipts, then publish native scopes. This manifest grants no ownership."
+
+[[children]]
+key = "18-exercise-contract-supplement"
+type = "task"
+subject = "Extend shared native-root provenance to audio and UI dispatch/state/assets"
+proposal = "proposed-children/01-audio-ui-exercise-contract.md"
+admission = "reviewed-infrastructure-scope-required"
+role = "integrator-owned-infrastructure"
+reuse_ticket = ".scratch/decomp-parallel/issues/21-native-root-exercise-provenance.md"
+depends_on = [
+  "21-shared-producer-review",
+  "11-held-source-completion-and-frozen-source-gates",
+  "current-inventory-producer-reader-equivalence",
+]
+writable_paths = [
+  "crates/pipeline/src/native_exercise.rs",
+  "crates/pipeline/src/native_exercise_model.rs",
+  "crates/pipeline/src/native_exercise_host.c.in",
+  "crates/pipeline/src/translation.rs",
+  "crates/pipeline/src/main.rs",
+  "crates/pipeline/tests/native_exercise.rs",
+]
+supplemental_paths_for_shared_owner_review = [
+  "crates/pipeline/src/source_inventory.rs",
+  "crates/pipeline/tests/assignment_queue.rs",
+]
+submission_argv = [
+  "cargo",
+  "test",
+  "-p",
+  "pipeline",
+  "--locked",
+  "--offline",
+  "--test",
+  "native_exercise",
+]
+submission_timeout_seconds = 60
+integration_argv = [
+  "cargo",
+  "test",
+  "-p",
+  "pipeline",
+  "--locked",
+  "--offline",
+  "--test",
+  "native_exercise",
+  "--test",
+  "assignment_queue",
+  "--bin",
+  "sm-pipeline",
+]
+integration_timeout_seconds = 3600
+acceptance = [
+  "Reuse one additive tagged Rust producer/reader through21; retain historical bank86 schema2 diagnostic behavior and seals.",
+  "Direct actual-C root entry/return/yield/resume with full address or exact addressless symbol/source/definition; no leaf/callee-to-caller promotion.",
+  "Authenticate audio channel/state/downtime/music entry/upload selectors and UI screen/category/item/object/preinstruction/opcode/persistence/poll selections.",
+  "Review missing HandleSoundEffects indexed edge and source-bound table-handler reachability additively; retain original lexical inventory provenance.",
+  "Seal complete original/generated source, host/templates, producer/readers/build/binary/argv, ROM/native-patch/movie and nonzero observations.",
+  "Reject forged roots, zero/truncated execution, wrong selectors/definitions/inventory/source/build/binary/ROM/movie/backend and stale receipts.",
+]
+limitations = [
+  "Supplement to21 only; no second engine or authority initialization.",
+  "Proposed new module/test/manifest/adapter is unimplemented; all new gate argv are unrun and require separately reviewed adapter registration.",
+  "No current supported exercise, native Scope admission, verified gameplay or original-ROM verdict is asserted.",
+]
+
+[[children]]
+key = "18-audio-transaction-adapter"
+type = "research"
+subject = "Specify full APU transaction, audio fixture/live adapter and original acknowledgment domain"
+proposal = "proposed-children/02-audio-transaction-and-original-ack.md"
+admission = "reviewed-infrastructure-scope-after-host-closure"
+role = "separate-infrastructure-research-then-integrator-owned-adapter"
+depends_on = [
+  "11-held-host-completion",
+  "18-exercise-contract-supplement",
+  "22-hardware-full-state-and-service-failure-contract",
+  "19-reset-and-load-state-contract",
+  "12-controller-and-original-ROM-timing",
+]
+candidate_new_paths = [
+  "crates/pipeline/src/audio_frame_adapter.rs",
+  "crates/pipeline/src/audio_frame_model.rs",
+  "crates/pipeline/src/audio_frame_host.c.in",
+  "crates/pipeline/src/audio_frame_abi.rs.in",
+  "crates/pipeline/tests/audio_frame_adapter.rs",
+]
+candidate_shared_hook_paths = [
+  "crates/pipeline/src/hardware_lifecycle_adapter.rs",
+  "crates/pipeline/src/hardware_lifecycle_model.rs",
+  "crates/pipeline/src/family.rs",
+  "crates/pipeline/src/family_model.rs",
+  "crates/pipeline/src/callback.rs",
+  "crates/pipeline/src/live.rs",
+  "crates/pipeline/src/live_model.rs",
+  "crates/pipeline/src/main.rs",
+  "tools/port/batch.toml",
+]
+submission_argv = [
+  "cargo",
+  "test",
+  "-p",
+  "pipeline",
+  "--locked",
+  "--offline",
+  "--test",
+  "audio_frame_adapter",
+]
+submission_timeout_seconds = 60
+integration_argv = [
+  "cargo",
+  "test",
+  "-p",
+  "pipeline",
+  "--locked",
+  "--offline",
+  "--test",
+  "audio_frame_adapter",
+  "--test",
+  "callback",
+  "--test",
+  "family",
+  "--test",
+  "live",
+]
+integration_timeout_seconds = 3600
+acceptance = [
+  "Exact nine real C signatures; independent HandleMusicQueue and HandleSoundEffects scheduling, no adjacent synthetic replacement.",
+  "Complete WRAM and selected APU/SPC/DSP/backend/pending16-entry queue/cycle/sample state; ordered reads/writes/uploads plus coalescing/suppression/reset effects.",
+  "Preflight entire selected pointer/chunk stream through sentinel and64KiB wrap before effects; synchronous service copyback and first/late failure no retry.",
+  "Explicit pinned-C domain and separate original-ROM ack domain with read-compare/rewrite, delay2, clear-port and state3 wait semantics; no unreviewed oracle change.",
+  "Review native APU read assertion, clock/sample driver, original upload sentinel/waits, reset/SRAM-load restoration and backend support without editing owned vendored source in this scope.",
+  "Publish exact supported family adapter registration and material Live/original-ROM argv, natural root windows, nonzero ownership and independent semantic controls before gameplay promotion.",
+]
+limitations = [
+  "Research must freeze exact files/ABI/backend domain after22/19 review; these candidates grant no source writes.",
+  "Proposed new module/test/manifest/adapter is unimplemented; all new gate argv are unrun and require separately reviewed adapter registration.",
+  "No current supported exercise, native Scope admission, verified gameplay or original-ROM verdict is asserted.",
+]
+
+[[children]]
+key = "18-ui-transaction-adapter"
+type = "research"
+subject = "Specify complete equipment/options UI actual-C and exclusive live adapters"
+proposal = "proposed-children/03-ui-transaction-adapter.md"
+admission = "reviewed-infrastructure-scope-after-hardware-and-provenance"
+role = "separate-infrastructure-research-then-integrator-owned-adapter"
+depends_on = [
+  "11-held-host-completion",
+  "18-exercise-contract-supplement",
+  "22-full-state-MMIO-DMA-service",
+  "12-controller-poll-contract",
+  "19-SRAM-services",
+  "18-audio-transaction-adapter",
+]
+candidate_new_paths = [
+  "crates/pipeline/src/menu_adapter.rs",
+  "crates/pipeline/src/menu_model.rs",
+  "crates/pipeline/src/menu_host.c.in",
+  "crates/pipeline/src/menu_abi.rs.in",
+  "crates/pipeline/tests/menu_adapter.rs",
+]
+candidate_shared_hook_paths = [
+  "crates/pipeline/src/hardware_lifecycle_adapter.rs",
+  "crates/pipeline/src/hardware_lifecycle_model.rs",
+  "crates/pipeline/src/family.rs",
+  "crates/pipeline/src/family_model.rs",
+  "crates/pipeline/src/callback.rs",
+  "crates/pipeline/src/live.rs",
+  "crates/pipeline/src/live_model.rs",
+  "crates/pipeline/src/main.rs",
+  "tools/port/batch.toml",
+]
+adapter_names = [
+  "pause-equipment-render",
+  "pause-equipment",
+  "options-menu-objects",
+  "options-menu",
+]
+submission_argv = [
+  "cargo",
+  "test",
+  "-p",
+  "pipeline",
+  "--locked",
+  "--offline",
+  "--test",
+  "menu_adapter",
+]
+submission_timeout_seconds = 60
+integration_argv = [
+  "cargo",
+  "test",
+  "-p",
+  "pipeline",
+  "--locked",
+  "--offline",
+  "--test",
+  "menu_adapter",
+  "--test",
+  "callback",
+  "--test",
+  "family",
+  "--test",
+  "live",
+]
+integration_timeout_seconds = 3600
+acceptance = [
+  "Invoke actual category/root/object/screen/draw signatures with full canonical128KiB WRAM, PPU/DMA/OAM/VRAM/CGRAM/SRAM/audio and coroutine/host state.",
+  "Preflight every selected descriptor/script/prehandler/opcode/sprite/palette/wireframe/decompressed range and queue/continuation before effects.",
+  "Real DrawSpritemap and DrawMenuSpritemap effects preserve respective clipping versus OAM wrapping; no canned draw service substitutes them.",
+  "Preserve actual controller polls, word player bindings/bitsets/reserve modes, SRAM transactions and upload/NMI scheduling.",
+  "Exclusive complete root ownership/refusal before effects, nonretrying service failure and four independent material subjects with visible fallback.",
+  "Publish exact supported adapters and Live/original-ROM argv plus semantic selector/asset/state/poll/save/refusal/failure controls before native scope admission.",
+]
+limitations = [
+  "Exact new/shared files and any controller/persistence ABI extensions need separately reviewed ownership; file/map successors are excluded.",
+  "Proposed new module/test/manifest/adapter is unimplemented; all new gate argv are unrun and require separately reviewed adapter registration.",
+  "No current supported exercise, native Scope admission, verified gameplay or original-ROM verdict is asserted.",
+]
+
+[[children]]
+key = "18-audio-frame-implementation"
+type = "task"
+subject = "Own complete pinned-C music queue and three-channel SFX service invocation"
+proposal = "proposed-children/04-complete-audio-frame.md"
+admission = "translation-scope-v1-after-supported-exercise-and-adapter"
+role = "isolated-gameplay-implementer"
+depends_on = [
+  "18-exercise-contract-supplement",
+  "18-audio-transaction-adapter",
+  "current-source-verified-audio03-system02",
+  "13-hardware-reset-inputs",
+  "19-load-state-if-route-loads",
+]
+writable_paths = [
+  "crates/port/src/audio_frame.rs",
+  "crates/port/tests/audio_frame.rs",
+  "tools/port/audio-frame.toml",
+]
+routines = [
+  "APU_UploadBank",
+  "HandleMusicQueue",
+  "HandleSoundEffects",
+  "ResetSoundQueues",
+  "SfxHandlers_0_SendToApu",
+  "SfxHandlers_1_WaitForAck",
+  "SfxHandlers_2_ClearRequest",
+  "SfxHandlers_3_WaitForAck",
+  "SfxHandlers_4_Reset",
+]
+reuse_modules = [
+  "audio",
+  "system",
+]
+submission_argv = [
+  "cargo",
+  "test",
+  "-p",
+  "port",
+  "--locked",
+  "--offline",
+  "--test",
+  "audio_frame",
+  "--test",
+  "audio",
+  "--test",
+  "system",
+]
+submission_timeout_seconds = 60
+integration_argv = [
+  "cargo",
+  "run",
+  "-p",
+  "pipeline",
+  "--locked",
+  "--offline",
+  "--bin",
+  "sm-pipeline",
+  "--",
+  "family-verify",
+  "--manifest",
+  "tools/port/audio-frame.toml",
+  "--adapter",
+  "audio-frame",
+  "--output",
+  "out/port/audio-frame",
+  "--case-jobs",
+  "4",
+]
+integration_timeout_seconds = 3600
+acceptance = [
+  "Nine exact routines and separate real caller schedules preserve music16-bit postdecrement, byte-offset pointer selection, bank-upload early return and regular track writes.",
+  "Three ascending channels, exact five states, ring cursor widths, byte delays, low-byte downtime writes and nine-byte ResetSoundQueues footprint.",
+  "Full selected bank upload service and g_use_my_apu_code gate are explicit; pinned-C handlers1/2/3 preserve modified semantics.",
+  "Exact current-source actual-C full WRAM/raw return/ordered effect parity; independent semantic negative controls.",
+  "Supported directly observed complete root/selected-handler/assets provenance with source/build/binary/ROM/movie/readers sealed.",
+  "Whole-request preflight and canonical-state commit; unsupported domain refuses unchanged and fallback is visible; first/late service failure never retries native root.",
+  "Four independent material C0/C1/mixed0/mixed1 subjects, actual playback/menu resources and separate original-ROM route evidence.",
+  "Integrator alone wires shared lib/state/ROM/callback/ABI/catalog, freezes merged source, verifies all affected families and publishes independent stages.",
+  "Both scoped cleanup passes, retained source/readers/store/private inputs, retired implementer worktree and post-cleanup authentication before completion.",
+]
+limitations = [
+  "Original acknowledgment remains a separate reviewed domain, not a silent change inside pinned-C oracle.",
+  "Proposed new module/test/manifest/adapter is unimplemented; all new gate argv are unrun and require separately reviewed adapter registration.",
+  "No current supported exercise, native Scope admission, verified gameplay or original-ROM verdict is asserted.",
+]
+
+[[children]]
+key = "18-pause-equipment-render"
+type = "task"
+subject = "Own complete equipment rendering, wireframe queue and menu spritemap effects"
+proposal = "proposed-children/05-equipment-rendering.md"
+admission = "translation-scope-v1-after-supported-exercise-and-adapter"
+role = "isolated-gameplay-implementer"
+depends_on = [
+  "18-exercise-contract-supplement",
+  "18-ui-transaction-adapter",
+  "22-23-full-render-NMI-state",
+  "current-canonical-player-memory",
+]
+writable_paths = [
+  "crates/port/src/pause_equipment_render.rs",
+  "crates/port/tests/pause_equipment_render.rs",
+  "tools/port/pause-equipment-render.toml",
+]
+routines = [
+  "DrawMenuSpritemap",
+  "DrawPauseScreenSpriteAnim",
+  "EquipmentScreenDisplayReserveTankAmount",
+  "EquipmentScreenDisplayReserveTankAmount_",
+  "EquipmentScreenDisplayReserves_PaletteSetup",
+  "EquipmentScreenDrawItemSelector",
+  "WriteSamusWireframeTilemap",
+  "WriteSamusWireframeTilemapAndQueue",
+]
+reuse_modules = [
+
+]
+submission_argv = [
+  "cargo",
+  "test",
+  "-p",
+  "port",
+  "--locked",
+  "--offline",
+  "--test",
+  "pause_equipment_render",
+]
+submission_timeout_seconds = 60
+integration_argv = [
+  "cargo",
+  "run",
+  "-p",
+  "pipeline",
+  "--locked",
+  "--offline",
+  "--bin",
+  "sm-pipeline",
+  "--",
+  "family-verify",
+  "--manifest",
+  "tools/port/pause-equipment-render.toml",
+  "--adapter",
+  "pause-equipment-render",
+  "--output",
+  "out/port/pause-equipment-render",
+  "--case-jobs",
+  "4",
+]
+integration_timeout_seconds = 3600
+acceptance = [
+  "All8routines own selector animation, reserve whole/partial digits and palettes, wireframe tilemap and ordered VRAM queue entries.",
+  "Actual DrawMenuSpritemap processes all selected records and wraps OAM pointer at0x1ff, preserving extension bits and coordinates; no new clipping rule.",
+  "Full asset/queue preflight binds naturally selected animation/sprite/wireframe/palette extents and canonical reserve/equipment state.",
+  "Exact current-source actual-C full WRAM/raw return/ordered effect parity; independent semantic negative controls.",
+  "Supported directly observed complete root/selected-handler/assets provenance with source/build/binary/ROM/movie/readers sealed.",
+  "Whole-request preflight and canonical-state commit; unsupported domain refuses unchanged and fallback is visible; first/late service failure never retries native root.",
+  "Four independent material C0/C1/mixed0/mixed1 subjects, actual playback/menu resources and separate original-ROM route evidence.",
+  "Integrator alone wires shared lib/state/ROM/callback/ABI/catalog, freezes merged source, verifies all affected families and publishes independent stages.",
+  "Both scoped cleanup passes, retained source/readers/store/private inputs, retired implementer worktree and post-cleanup authentication before completion.",
+]
+limitations = [
+  "Equipment category interaction, map rendering and MainPause orchestration belong to separate scopes.",
+  "Proposed new module/test/manifest/adapter is unimplemented; all new gate argv are unrun and require separately reviewed adapter registration.",
+  "No current supported exercise, native Scope admission, verified gameplay or original-ROM verdict is asserted.",
+]
+
+[[children]]
+key = "18-pause-equipment-interaction"
+type = "task"
+subject = "Own complete equipment categories, reserve transfers and EquipmentScreenMain root"
+proposal = "proposed-children/06-equipment-interaction.md"
+admission = "translation-scope-v1-after-supported-exercise-and-adapter"
+role = "isolated-gameplay-implementer"
+depends_on = [
+  "18-exercise-contract-supplement",
+  "18-ui-transaction-adapter",
+  "18-pause-equipment-render",
+  "current-source-verified-audio03",
+  "14-canonical-player-state",
+  "12-controller-polls",
+]
+writable_paths = [
+  "crates/port/src/pause_equipment.rs",
+  "crates/port/tests/pause_equipment.rs",
+  "tools/port/pause-equipment.toml",
+]
+routines = [
+  "ChangePaletteValues",
+  "EquipmentScreenCategory_Boots",
+  "EquipmentScreenCategory_Boots_MoveResponse",
+  "EquipmentScreenCategory_Boots_MoveUpInBoots",
+  "EquipmentScreenCategory_ButtonResponse",
+  "EquipmentScreenCategory_Suit",
+  "EquipmentScreenCategory_Suit_MoveResponse",
+  "EquipmentScreenCategory_Tanks",
+  "EquipmentScreenCategory_Tanks_0",
+  "EquipmentScreenCategory_Tanks_1",
+  "EquipmentScreenCategory_Weapons",
+  "EquipmentScreenCategory_Weapons_MoveButtons",
+  "EquipmentScreenCategory_Weapons_PlazmaSpazerCheck",
+  "EquipmentScreenEnergyArrowGlow_Off",
+  "EquipmentScreenEnergyArrowGlow_On",
+  "EquipmentScreenGlowingArrow",
+  "EquipmentScreenGlowingArrowAnimated",
+  "EquipmentScreenGlowingArrowSolidOff",
+  "EquipmentScreenGlowingArrowSolidOn",
+  "EquipmentScreenHandleDpad",
+  "EquipmentScreenHudReserveAutoTilemap_Off",
+  "EquipmentScreenHudReserveAutoTilemap_On_BUGGY",
+  "EquipmentScreenMain",
+  "EquipmentScreenMoveLowerOnSuitsMisc",
+  "EquipmentScreenMoveToBeams",
+  "EquipmentScreenMoveToBottomOfBeams",
+  "EquipmentScreenMoveToHighJumpOrLowerInBoots",
+  "EquipmentScreenMoveToReserveTanks",
+  "EquipmentScreenMoveToScrewOrHigherOnSuits",
+]
+reuse_modules = [
+  "pause_equipment_render",
+  "audio",
+]
+submission_argv = [
+  "cargo",
+  "test",
+  "-p",
+  "port",
+  "--locked",
+  "--offline",
+  "--test",
+  "pause_equipment",
+  "--test",
+  "pause_equipment_render",
+  "--test",
+  "audio",
+]
+submission_timeout_seconds = 60
+integration_argv = [
+  "cargo",
+  "run",
+  "-p",
+  "pipeline",
+  "--locked",
+  "--offline",
+  "--bin",
+  "sm-pipeline",
+  "--",
+  "family-verify",
+  "--manifest",
+  "tools/port/pause-equipment.toml",
+  "--adapter",
+  "pause-equipment",
+  "--output",
+  "out/port/pause-equipment",
+  "--case-jobs",
+  "4",
+]
+integration_timeout_seconds = 3600
+acceptance = [
+  "29routines own whole four-category EquipmentScreenMain invocation plus reserve mode/transfer/navigation/timer/palette interaction.",
+  "Canonical category/item word0755, delay0757, equipped/collected bits09A2..09A8 and health/reserves09C2/4/09D4/6; preserve plasma/spazer exclusion.",
+  "Pinned AUTO HUD garbage ROM reads82998B/829997 remain source-bound; original comparison is declared separately.",
+  "Root executes the rendering dependency in exact selector/reserve/wireframe order and synchronous audio leaf effects.",
+  "Exact current-source actual-C full WRAM/raw return/ordered effect parity; independent semantic negative controls.",
+  "Supported directly observed complete root/selected-handler/assets provenance with source/build/binary/ROM/movie/readers sealed.",
+  "Whole-request preflight and canonical-state commit; unsupported domain refuses unchanged and fallback is visible; first/late service failure never retries native root.",
+  "Four independent material C0/C1/mixed0/mixed1 subjects, actual playback/menu resources and separate original-ROM route evidence.",
+  "Integrator alone wires shared lib/state/ROM/callback/ABI/catalog, freezes merged source, verifies all affected families and publishes independent stages.",
+  "Both scoped cleanup passes, retained source/readers/store/private inputs, retired implementer worktree and post-cleanup authentication before completion.",
+]
+limitations = [
+  "Pause map switching/backups/unpause/hooks are successor research; no implicit MainPause ownership.",
+  "Proposed new module/test/manifest/adapter is unimplemented; all new gate argv are unrun and require separately reviewed adapter registration.",
+  "No current supported exercise, native Scope admission, verified gameplay or original-ROM verdict is asserted.",
+]
+
+[[children]]
+key = "18-options-menu-objects"
+type = "task"
+subject = "Own complete admitted options-object interpreter, allocation and real drawing"
+proposal = "proposed-children/07-options-menu-objects.md"
+admission = "translation-scope-v1-after-supported-exercise-and-continuation-review"
+role = "isolated-gameplay-implementer"
+depends_on = [
+  "18-exercise-contract-supplement",
+  "18-ui-transaction-adapter",
+  "reviewed8C81-F404-continuation-domain",
+  "current-canonical-WRAM-ROM-render-state",
+]
+writable_paths = [
+  "crates/port/src/options_menu_objects.rs",
+  "crates/port/tests/options_menu_objects.rs",
+  "tools/port/options-menu-objects.toml",
+]
+routines = [
+  "CallOptionsEntryFunc",
+  "CallOptionsInstr",
+  "CallOptionsPreInstr",
+  "CreateOptionsMenuObject_",
+  "DeleteAllOptionsMenuObjects_",
+  "DrawOptionsMenuSpritemaps",
+  "DrawSpritemap",
+  "OptionsInstr_8C64",
+  "OptionsInstr_8C79",
+  "OptionsInstr_8C89",
+  "OptionsInstr_8C93",
+  "OptionsInstr_Destroy",
+  "OptionsInstr_Goto",
+  "OptionsInstr_SetPreInstr",
+  "OptionsMenuFunc1",
+  "OptionsMenuFunc2",
+  "OptionsPreInstr_F2A9",
+  "OptionsPreInstr_F376",
+  "OptionsPreInstr_F3A0",
+  "OptionsPreInstr_F3E2",
+  "OptionsPreInstr_F42C",
+  "OptionsPreInstr_nullsub_57",
+  "sub_82F296",
+  "sub_82F34B",
+  "sub_82F353",
+  "sub_82F35B",
+  "sub_82F363",
+  "sub_82F369",
+  "sub_82F419",
+]
+reuse_modules = [
+
+]
+submission_argv = [
+  "cargo",
+  "test",
+  "-p",
+  "port",
+  "--locked",
+  "--offline",
+  "--test",
+  "options_menu_objects",
+]
+submission_timeout_seconds = 60
+integration_argv = [
+  "cargo",
+  "run",
+  "-p",
+  "pipeline",
+  "--locked",
+  "--offline",
+  "--bin",
+  "sm-pipeline",
+  "--",
+  "family-verify",
+  "--manifest",
+  "tools/port/options-menu-objects.toml",
+  "--adapter",
+  "options-menu-objects",
+  "--output",
+  "out/port/options-menu-objects",
+  "--case-jobs",
+  "4",
+]
+integration_timeout_seconds = 3600
+acceptance = [
+  "29routines own highest-free even-slot allocation, descending eight-slot iteration,6entries/6prehandlers/7opcodes and DrawSpritemap.",
+  "Use actual options aliases1A8F..1B3D overlapping eproj state, global optionsmenu_index mutation and timer/byte-pointer/deletion continuation.",
+  "Seal descriptor/script154bytes at82F442..F4DB plus complete naturally selected drawing/prehandler assets before effects.",
+  "Explicit refusal of unsupported8C81/F404 continuation before effects until reviewed source/ROM contract; do not silently install guessed no-op.",
+  "Exact current-source actual-C full WRAM/raw return/ordered effect parity; independent semantic negative controls.",
+  "Supported directly observed complete root/selected-handler/assets provenance with source/build/binary/ROM/movie/readers sealed.",
+  "Whole-request preflight and canonical-state commit; unsupported domain refuses unchanged and fallback is visible; first/late service failure never retries native root.",
+  "Four independent material C0/C1/mixed0/mixed1 subjects, actual playback/menu resources and separate original-ROM route evidence.",
+  "Integrator alone wires shared lib/state/ROM/callback/ABI/catalog, freezes merged source, verifies all affected families and publishes independent stages.",
+  "Both scoped cleanup passes, retained source/readers/store/private inputs, retired implementer worktree and post-cleanup authentication before completion.",
+]
+limitations = [
+  "Admitted whole invocation may be bounded by genuine observed scripts; unsupported slot refuses entire root, never skips that slot.",
+  "Proposed new module/test/manifest/adapter is unimplemented; all new gate argv are unrun and require separately reviewed adapter registration.",
+  "No current supported exercise, native Scope admission, verified gameplay or original-ROM verdict is asserted.",
+]
+
+[[children]]
+key = "18-options-menu-orchestration"
+type = "task"
+subject = "Own complete options-screen root and controller/special settings transitions"
+proposal = "proposed-children/08-options-menu-orchestration.md"
+admission = "translation-scope-v1-after-supported-exercise-and-adapter"
+role = "isolated-gameplay-implementer"
+depends_on = [
+  "18-exercise-contract-supplement",
+  "18-ui-transaction-adapter",
+  "18-options-menu-objects",
+  "18-audio-service-and-audio03",
+  "12-controller-binding-poll-contract",
+  "19-save-options-transaction",
+  "22-23-NMI-DMA-decompression-contract",
+]
+writable_paths = [
+  "crates/port/src/options_menu.rs",
+  "crates/port/tests/options_menu.rs",
+  "tools/port/options-menu.toml",
+]
+routines = [
+  "GameOptionsMenuFunc_0",
+  "GameOptionsMenuItemFunc_0",
+  "GameOptionsMenuItemFunc_2_ToggleJapanese",
+  "GameOptionsMenuItemFunc_4",
+  "GameOptionsMenuSpecialSettings_0",
+  "GameOptionsMenuSpecialSettings_2",
+  "GameOptionsMenu_1_LoadingOptionsScreen",
+  "GameOptionsMenu_2_FadeInOptionsScreen",
+  "GameOptionsMenu_3_OptionsScreen",
+  "GameOptionsMenu_4_StartGame",
+  "GameOptionsMenu_5_DissolveOutScreen",
+  "GameOptionsMenu_6_DissolveInScreen",
+  "GameOptionsMenu_7_ControllerSettings",
+  "GameOptionsMenu_8_SpecialSettings",
+  "GameOptionsMenu_9_ScrollControllerSettingsDown",
+  "GameOptionsMenu_A_ScrollControllerSettingsUp",
+  "GameOptionsMenu_B_TransitionBackToFileSelect",
+  "GameOptionsMenu_C_FadeOutOptionsScreenToStart",
+  "GameState_2_GameOptionsMenu",
+  "LoadControllerOptionsFromControllerBindings",
+  "OptionsMenuControllerFunc_0",
+  "OptionsMenuControllerFunc_7",
+  "OptionsMenuControllerFunc_8",
+  "OptionsMenuFunc4",
+  "OptionsMenuFunc5",
+  "OptionsMenuFunc6",
+  "OptionsMenuFunc7",
+  "OptionsMenuFunc8",
+  "OptionsMenu_AddToVramQueue",
+]
+reuse_modules = [
+  "options_menu_objects",
+  "audio",
+  "system",
+]
+submission_argv = [
+  "cargo",
+  "test",
+  "-p",
+  "port",
+  "--locked",
+  "--offline",
+  "--test",
+  "options_menu",
+  "--test",
+  "options_menu_objects",
+  "--test",
+  "audio",
+]
+submission_timeout_seconds = 60
+integration_argv = [
+  "cargo",
+  "run",
+  "-p",
+  "pipeline",
+  "--locked",
+  "--offline",
+  "--bin",
+  "sm-pipeline",
+  "--",
+  "family-verify",
+  "--manifest",
+  "tools/port/options-menu.toml",
+  "--adapter",
+  "options-menu",
+  "--output",
+  "out/port/options-menu",
+  "--case-jobs",
+  "4",
+]
+integration_timeout_seconds = 3600
+acceptance = [
+  "29routines own real GameState2 root and all13screen states, item/special/controller selections and object-update/draw/VRAM queue order.",
+  "Seven canonical eproj_F binding slots, uniqueness swap/default mapping, Japanese/special toggles, scroll/dissolve and file/start state changes.",
+  "Actual MMIO/DMA/decompression/NMI/SRAM/audio/controller services preserve effects and failures; EnableNMI is external hardware ownership.",
+  "Pinned zero placeholders/initializer defects are explicitly reviewed domains and original differences; avoid undefined-behavior fixtures.",
+  "Exact current-source actual-C full WRAM/raw return/ordered effect parity; independent semantic negative controls.",
+  "Supported directly observed complete root/selected-handler/assets provenance with source/build/binary/ROM/movie/readers sealed.",
+  "Whole-request preflight and canonical-state commit; unsupported domain refuses unchanged and fallback is visible; first/late service failure never retries native root.",
+  "Four independent material C0/C1/mixed0/mixed1 subjects, actual playback/menu resources and separate original-ROM route evidence.",
+  "Integrator alone wires shared lib/state/ROM/callback/ABI/catalog, freezes merged source, verifies all affected families and publishes independent stages.",
+  "Both scoped cleanup passes, retained source/readers/store/private inputs, retired implementer worktree and post-cleanup authentication before completion.",
+]
+limitations = [
+  "File/file-map game-state roots and full pause orchestration remain successor scopes; shared ABI writes belong to integrator.",
+  "Proposed new module/test/manifest/adapter is unimplemented; all new gate argv are unrun and require separately reviewed adapter registration.",
+  "No current supported exercise, native Scope admission, verified gameplay or original-ROM verdict is asserted.",
+]
+
+[[children]]
+key = "18-pause-map-successor"
+type = "research"
+subject = "Close complete pause/map/unpause subsystem and dependency partition"
+proposal = "proposed-children/09-complete-pause-map-successor.md"
+admission = "research-before-native-implementation-scope"
+role = "read-only-whole-subsystem-researcher"
+depends_on = [
+  "18-pause-equipment-interaction",
+  "18-pause-equipment-render",
+  "22-23-hardware-and-NMI-contract",
+  "14-player-pose-beam-state",
+  "109-accepted-room-pause-hooks",
+  "18-audio-service",
+  "12-controller-polls",
+]
+provisional_gameplay_paths = [
+  "crates/port/src/pause_menu.rs",
+  "crates/port/tests/pause_menu.rs",
+  "tools/port/pause-menu.toml",
+]
+reviewed_main_pause_closure_lower_bound = 79
+actual_root = "MainPauseRoutine"
+root_definition_sha256 = "b45e02cf9343fd0e71893c93ecfb543e3cd2e804b0e16a11322d61a16b60864a"
+prospective_submission_argv = [
+  "cargo",
+  "test",
+  "-p",
+  "port",
+  "--locked",
+  "--offline",
+  "--test",
+  "pause_menu",
+]
+submission_timeout_seconds = 60
+prospective_integration_argv = [
+  "cargo",
+  "run",
+  "-p",
+  "pipeline",
+  "--locked",
+  "--offline",
+  "--bin",
+  "sm-pipeline",
+  "--",
+  "family-verify",
+  "--manifest",
+  "tools/port/pause-menu.toml",
+  "--adapter",
+  "pause-menu",
+  "--output",
+  "out/port/pause-menu",
+  "--case-jobs",
+  "4",
+]
+integration_timeout_seconds = 3600
+acceptance = [
+  "Finish8way MainPause and states12→13→14→15/16→17→18→8 closure, including true unpause-hook coroutine and GameState15HUD/filter/palette work.",
+  "Partition actual map/sprite/tile/backups/restoration and all owned dependencies into coherent1–32 routine scopes with exact files.",
+  "Bind reverse-DMA VRAM backup/restore, palette/register/PPU state, Samus pose/beam, HDMA/animtile, map scroll/assets and room hooks.",
+  "Obtain direct material roots/selector/yield/resume and original-ROM route/timing evidence, define exact adapters and gates before native promotion.",
+]
+limitations = [
+  "79is a reviewed lower bound with excluded existing services, not a complete inventory closure or approved scope.",
+  "Proposed new module/test/manifest/adapter is unimplemented; all new gate argv are unrun and require separately reviewed adapter registration.",
+  "No current supported exercise, native Scope admission, verified gameplay or original-ROM verdict is asserted.",
+]
+
+[[children]]
+key = "18-file-menu-successor"
+type = "research"
+subject = "Close separate file selection/copy-clear and file-map subsystems with SRAM/controller ownership"
+proposal = "proposed-children/10-complete-file-file-map-successor.md"
+admission = "research-before-native-implementation-scopes"
+role = "read-only-whole-subsystem-researcher"
+depends_on = [
+  "19-full-SRAM-save-load-new-save-contract",
+  "12-held-controller-VBlank-ScreenOn-polls",
+  "22-23-full-map-render-NMI-state",
+  "18-audio-service",
+  "18-pause-equipment-render-for-shared-draw-leaf",
+]
+provisional_gameplay_paths = [
+  "crates/port/src/file_menu.rs",
+  "crates/port/tests/file_menu.rs",
+  "tools/port/file-menu.toml",
+  "crates/port/src/file_map_menu.rs",
+  "crates/port/tests/file_map_menu.rs",
+  "tools/port/file-map-menu.toml",
+]
+file_menu_table_entries = 34
+file_menu_unique_handlers = 29
+file_map_table_entries = 23
+file_map_unique_handlers = 20
+prospective_submission_argv = [
+  "cargo",
+  "test",
+  "-p",
+  "port",
+  "--locked",
+  "--offline",
+  "--test",
+  "file_menu",
+  "--test",
+  "file_map_menu",
+]
+submission_timeout_seconds = 60
+prospective_integration_argv = [
+  "cargo",
+  "run",
+  "-p",
+  "pipeline",
+  "--locked",
+  "--offline",
+  "--bin",
+  "sm-pipeline",
+  "--",
+  "family-verify",
+  "--manifest",
+  "tools/port/file-menu.toml",
+  "--adapter",
+  "file-menu",
+  "--output",
+  "out/port/file-menu",
+  "--case-jobs",
+  "4",
+]
+prospective_file_map_integration_argv = [
+  "cargo",
+  "run",
+  "-p",
+  "pipeline",
+  "--locked",
+  "--offline",
+  "--bin",
+  "sm-pipeline",
+  "--",
+  "family-verify",
+  "--manifest",
+  "tools/port/file-map-menu.toml",
+  "--adapter",
+  "file-map-menu",
+  "--output",
+  "out/port/file-map-menu",
+  "--case-jobs",
+  "4",
+]
+integration_timeout_seconds = 3600
+acceptance = [
+  "Follow full FileSelectMenu/FileSelectMap roots and every selected handler/draw/persistence/map/new-save dependency; partition coherent1–32 routines.",
+  "Preserve1628byte copy/clear, four checksum locations, selected slot/inverse, draw/persist order, new-save player/controller/map reset and two B-branch SFX writes.",
+  "Bind exact menu/sprite/tile/map/decompressed resources and original VBlank/ScreenOn poll count/position already owned by12/78.",
+  "Publish direct-root/material/coroutine input evidence, exact shared adapters/files, real60s/3600s gates and separate original-ROM route argv before implementation.",
+]
+limitations = [
+  "Full closures exceed unique-handler counts; these provisional triplets and gate names grant no ownership or existing adapter support.",
+  "Proposed new module/test/manifest/adapter is unimplemented; all new gate argv are unrun and require separately reviewed adapter registration.",
+  "No current supported exercise, native Scope admission, verified gameplay or original-ROM verdict is asserted.",
+]
+

@@ -1,0 +1,11 @@
+argv = [
+    "/home/jim/sm-decomp/.scratch/decomp-coverage/renderer/bin/direct-animation",
+    "verify",
+    "/home/jim/sm-decomp/.scratch/decomp-coverage/renderer/direct-animation.toml",
+    "/home/jim/sm-decomp/out/port/decomp-coverage-20261013/direct-animation/verdict.toml",
+    "/home/jim/sm-decomp/out/port/decomp-coverage-20261013/direct-animation-build/c",
+    "/tmp/sm-decomp-parallel-pause-equipment-render-offline-1/crates/port/src/pause_equipment_render.rs",
+]
+seconds = 31.190669534
+worker_wait_seconds = 0.000250328
+exit_code = 0

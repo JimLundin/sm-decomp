@@ -1,0 +1,1886 @@
+actual_c_roots = [
+    "Abs16",
+    "AnimtilesHandler",
+    "AnimtilesInstr_Clear3PaletteColors",
+    "AnimtilesInstr_DecrementTimerAndGoto",
+    "AnimtilesInstr_DecrementTimerAndGotoRel",
+    "AnimtilesInstr_Delete",
+    "AnimtilesInstr_Goto",
+    "AnimtilesInstr_GotoIfBossBitSet",
+    "AnimtilesInstr_GotoIfBossBitSetInArea",
+    "AnimtilesInstr_GotoIfEventHappened",
+    "AnimtilesInstr_GotoIfTourianStatueBusy",
+    "AnimtilesInstr_GotoRel",
+    "AnimtilesInstr_QueueMusic",
+    "AnimtilesInstr_QueueSfx1",
+    "AnimtilesInstr_QueueSfx2",
+    "AnimtilesInstr_QueueSfx3",
+    "AnimtilesInstr_SetBossBit",
+    "AnimtilesInstr_SetEventHappened",
+    "AnimtilesInstr_SetTimer",
+    "AnimtilesInstr_TourianStatueClearState",
+    "AnimtilesInstr_TourianStatueSetState",
+    "AnimtilesInstr_WaitUntilAreaBossDead_DoubleRet",
+    "AnimtilesInstr_Write8PaletteColors",
+    "BigEyeBugs_Init",
+    "BlueRingContactExplosion",
+    "BombOrPowerBomb_Func1",
+    "CalculateAngleFromXY",
+    "CalculateAngleOfEnemyXfromEnemyY",
+    "CalculateAngleOfSamusFromEnemy",
+    "CalculateAngleOfSamusFromEproj",
+    "CalculateBlockContainingPixelPos",
+    "CalculatePlmBlockCoords",
+    "CheckForBlueRingCollisionWithRoom",
+    "CheckForCollisionWithShitroid_DoubleRet",
+    "CheckIfEnemyIsOnScreen",
+    "CheckIfEnemyTouchesSamus",
+    "ClearAnimtiles",
+    "ClearPaletteFXObjects",
+    "CompareDistToSamus_X",
+    "CompareDistToSamus_Y",
+    "CopyToSamusSuitPalette",
+    "CopyToSamusSuitTargetPalette",
+    "CosineMult8bit",
+    "CosineMult8bitFull",
+    "DecrementSamusTimers",
+    "DetermineDirectionOfSamusFromEnemy",
+    "DisableAnimtiles",
+    "DisablePaletteFx",
+    "DisplayViewablePartOfRoom",
+    "DoorCode_Scroll0_Blue",
+    "DoorCode_Scroll13_Blue",
+    "DoorCode_Scroll6_Green",
+    "DoorCode_Scroll_17_Blue",
+    "DoorCode_Scroll_1_4_Green",
+    "DoorCode_Scroll_2_Blue",
+    "DoorCode_Scroll_3_Green",
+    "DoorCode_Scroll_4Blue_8Green",
+    "DoorCode_Scroll_4_Blue",
+    "DoorCode_Scroll_6_Green",
+    "DoorCode_Scroll_8toB_Red",
+    "DoorCode_Scroll_LotsRed",
+    "DoorCode_SetScroll_0",
+    "DoorCode_SetScroll_1",
+    "DoorCode_SetScroll_10",
+    "DoorCode_SetScroll_11",
+    "DoorCode_SetScroll_12",
+    "DoorCode_SetScroll_13",
+    "DoorCode_SetScroll_14",
+    "DoorCode_SetScroll_15",
+    "DoorCode_SetScroll_16",
+    "DoorCode_SetScroll_17",
+    "DoorCode_SetScroll_18",
+    "DoorCode_SetScroll_19",
+    "DoorCode_SetScroll_2",
+    "DoorCode_SetScroll_20",
+    "DoorCode_SetScroll_21",
+    "DoorCode_SetScroll_22",
+    "DoorCode_SetScroll_23",
+    "DoorCode_SetScroll_24",
+    "DoorCode_SetScroll_25",
+    "DoorCode_SetScroll_26",
+    "DoorCode_SetScroll_27",
+    "DoorCode_SetScroll_28",
+    "DoorCode_SetScroll_29",
+    "DoorCode_SetScroll_3",
+    "DoorCode_SetScroll_30",
+    "DoorCode_SetScroll_31",
+    "DoorCode_SetScroll_32",
+    "DoorCode_SetScroll_33",
+    "DoorCode_SetScroll_34",
+    "DoorCode_SetScroll_35",
+    "DoorCode_SetScroll_36",
+    "DoorCode_SetScroll_37",
+    "DoorCode_SetScroll_38",
+    "DoorCode_SetScroll_39",
+    "DoorCode_SetScroll_4",
+    "DoorCode_SetScroll_40",
+    "DoorCode_SetScroll_41",
+    "DoorCode_SetScroll_42",
+    "DoorCode_SetScroll_43",
+    "DoorCode_SetScroll_44",
+    "DoorCode_SetScroll_45",
+    "DoorCode_SetScroll_46",
+    "DoorCode_SetScroll_47",
+    "DoorCode_SetScroll_48",
+    "DoorCode_SetScroll_49",
+    "DoorCode_SetScroll_5",
+    "DoorCode_SetScroll_50",
+    "DoorCode_SetScroll_53",
+    "DoorCode_SetScroll_54",
+    "DoorCode_SetScroll_55",
+    "DoorCode_SetScroll_56",
+    "DoorCode_SetScroll_57",
+    "DoorCode_SetScroll_58",
+    "DoorCode_SetScroll_59",
+    "DoorCode_SetScroll_6",
+    "DoorCode_SetScroll_60",
+    "DoorCode_SetScroll_61",
+    "DoorCode_SetScroll_62",
+    "DoorCode_SetScroll_63",
+    "DoorCode_SetScroll_64",
+    "DoorCode_SetScroll_65",
+    "DoorCode_SetScroll_7",
+    "DoorCode_SetScroll_8",
+    "DoorCode_SetScroll_9",
+    "DrawBombAndProjectileExplosions",
+    "DrawHighPriorityEprojs",
+    "DrawLowPriorityEprojs",
+    "DrawPlayerExplosions2",
+    "DrawPlm",
+    "EnableAnimtiles",
+    "EnablePaletteFx",
+    "EnemyFunc_AC67",
+    "EnemyFunc_ADA3",
+    "EnemyFunc_B7A1",
+    "EnemyFunc_BBBF",
+    "EnemyFunc_BC76",
+    "EnemyFunc_C8AD",
+    "EnemyInstr_ClearAiPreInstr",
+    "EnemyInstr_CopyToVram",
+    "EnemyInstr_DecTimerAndGoto",
+    "EnemyInstr_DecTimerAndGotoRel",
+    "EnemyInstr_DisableOffScreenProcessing",
+    "EnemyInstr_EnableOffScreenProcessing",
+    "EnemyInstr_Goto",
+    "EnemyInstr_GotoRel",
+    "EnemyInstr_SetAiPreInstr",
+    "EnemyInstr_SetTimer",
+    "EnemyInstr_Skip2bytes",
+    "EnemyInstr_Sleep",
+    "EnemyInstr_StopScript",
+    "EnemyInstr_WaitNframes",
+    "EnemyWithNormalSpritesIsOffScreen",
+    "Enemy_MoveDown",
+    "Enemy_MoveRight_IgnoreSlopes",
+    "EprojBlockCollisition_Horiz",
+    "EprojBlockCollisition_Vertical",
+    "EprojInstr_GotoIfFunc1",
+    "EprojInstr_MotherBrainPurpleBreathIsActive",
+    "EprojPowerBombCollision",
+    "EprojPreInit_MotherBrainsDeathExplosion_0",
+    "EprojPreInstr_C84D",
+    "EprojPreInstr_CeresElevatorPlatform",
+    "EprojPreInstr_MotherBrainBomb",
+    "EprojPreInstr_MotherBrainGlassShatteringShard",
+    "EprojPreInstr_MotherBrainRainbowBeam",
+    "EprojPreInstr_MotherBrainsRainbowBeamExplosion",
+    "EprojProjCollDet",
+    "EprojRunAll",
+    "EprojSamusCollDetect",
+    "Eproj_Earthqhake5",
+    "Eproj_FuncE722",
+    "Eproj_FuncE73E_MoveXY",
+    "Eproj_MotherBrainRoomTurretBullets_Func2",
+    "Eproj_MoveToBlueRingSpawnPosition",
+    "Eproj_SetXvelRandom",
+    "Eproj_SetYvelRandom",
+    "FireZoomer_E8A5",
+    "FireZoomer_Func_1",
+    "FireZoomer_Func_2",
+    "FireZoomer_Func_3",
+    "FireZoomer_Init",
+    "GetSamusEnemyDelta_X",
+    "GetSamusEnemyDelta_Y",
+    "HandleEprojCollWithProj",
+    "HandleEprojCollWithSamus",
+    "HandleProjectile",
+    "HasQueuedMusic",
+    "IsEnemyLeavingScreen",
+    "IsSamusWithinEnemy_X",
+    "IsSamusWithinEnemy_Y",
+    "JetPowerRipper_Init",
+    "JetPowerRipper_Main",
+    "LowerNorfairRio_Func_1",
+    "LowerNorfairRio_Func_2",
+    "LowerNorfairRio_Func_3",
+    "LowerNorfairRio_Func_4",
+    "LowerNorfairRio_Func_5",
+    "LowerNorfairRio_Func_6",
+    "LowerNorfairRio_Func_7",
+    "LowerNorfairRio_Init",
+    "LowerNorfairRio_Main",
+    "MainScrollingRoutine",
+    "MotherBrainBomb_Bomb_CollDetect_DoubleRet",
+    "MoveEprojWithVelocity",
+    "MoveEprojWithVelocityX",
+    "MoveEprojWithVelocityY",
+    "MoveMotherBrainBomb",
+    "Mult32",
+    "NorfairRio_Func_1",
+    "NorfairRio_Func_2",
+    "NorfairRio_Func_3",
+    "NorfairRio_Func_4",
+    "NorfairRio_Func_5",
+    "NorfairRio_Func_6",
+    "NorfairRio_Func_7",
+    "NorfairRio_Init",
+    "NorfairRio_Main",
+    "NormalEnemyFrozenAI",
+    "PalFx_ProcessOne",
+    "PalInstr_ClearPreInstr",
+    "PalInstr_ColorPlus15",
+    "PalInstr_ColorPlus2",
+    "PalInstr_ColorPlus3",
+    "PalInstr_ColorPlus4",
+    "PalInstr_ColorPlus8",
+    "PalInstr_ColorPlus9",
+    "PalInstr_DecTimerGoto",
+    "PalInstr_Delete",
+    "PalInstr_Goto",
+    "PalInstr_QueueMusic",
+    "PalInstr_QueueSfx1",
+    "PalInstr_QueueSfx2",
+    "PalInstr_QueueSfx3",
+    "PalInstr_SetColorIndex",
+    "PalInstr_SetPalfxIndex",
+    "PalInstr_SetPreInstr",
+    "PalInstr_SetTimer",
+    "PalInstr_Wait",
+    "PalPreInstr_CheckEnemy0Health",
+    "PalPreInstr_DeletePalfxIfMinibossDead",
+    "PalPreInstr_E1BC",
+    "PalPreInstr_F621",
+    "PalPreInstr_SamusInHeat",
+    "PalPreInstr_SwitchIfYpos",
+    "PalPreInstr_SwitchIfYpos2",
+    "PalPreInstr_nullsub_129",
+    "PaletteFxHandler",
+    "PlmInstr_SpawnFourMotherBrainGlass",
+    "PlmPreInstr_AdvanceLavaSamusMovesLeft",
+    "PlmPreInstr_B7EB_DecTimerEnableSoundsDeletePlm",
+    "PlmPreInstr_DeletePlmAndSpawnTriggerIfBlockDestroyed",
+    "PlmPreInstr_EscapeRoomBeforeOldTourianEscapeShaft",
+    "PlmPreInstr_GoToLinkInstrIfShot",
+    "PlmPreInstr_GoToLinkInstrIfShotWithAnyMissile",
+    "PlmPreInstr_GoToLinkInstrIfShotWithPowerBomb",
+    "PlmPreInstr_GoToLinkInstrIfShotWithSuperMissile",
+    "PlmPreInstr_GoToLinkInstruction",
+    "PlmPreInstr_GotoLinkIfBoss1Dead",
+    "PlmPreInstr_GotoLinkIfCrittersEscaped",
+    "PlmPreInstr_GotoLinkIfEnemyDeathQuotaOk",
+    "PlmPreInstr_GotoLinkIfMiniBossDead",
+    "PlmPreInstr_GotoLinkIfShotWithSuperMissile",
+    "PlmPreInstr_GotoLinkIfTorizoDead",
+    "PlmPreInstr_GotoLinkIfTourianStatueFinishedProcessing",
+    "PlmPreInstr_GotoLinkIfTriggered",
+    "PlmPreInstr_IncrementRoomArgIfShotBySuperMissile",
+    "PlmPreInstr_PlayDudSound",
+    "PlmPreInstr_PositionSamusAndInvincible",
+    "PlmPreInstr_SetMetroidsClearState_Ev0x10",
+    "PlmPreInstr_SetMetroidsClearState_Ev0x11",
+    "PlmPreInstr_SetMetroidsClearState_Ev0x12",
+    "PlmPreInstr_SetMetroidsClearState_Ev0x13",
+    "PlmPreInstr_ShaktoolsRoom",
+    "PlmPreInstr_WakeAndLavaIfBoosterCollected",
+    "PlmPreInstr_WakeIfTriggered",
+    "PlmPreInstr_WakeOnKeyPress",
+    "PlmPreInstr_WakePLMAndStartFxMotionSamusFarLeft",
+    "PlmPreInstr_WakePlmIfRoomArgumentDoorIsSet",
+    "PlmPreInstr_WakePlmIfSamusHasBombs",
+    "PlmPreInstr_WakePlmIfTriggered",
+    "PlmPreInstr_WakePlmIfTriggeredOrSamusAbovePlm",
+    "PlmPreInstr_WakePlmIfTriggeredOrSamusBelowPlm",
+    "PlmSetup_B638_Rightwards_Extension",
+    "PlmSetup_B63F_Leftwards_Extension",
+    "PlmSetup_B643_Downwards_Extension",
+    "PlmSetup_B647_Upwards_Extension",
+    "PlmSetup_B6FF_ScrollBlockTouch",
+    "PlmSetup_B703_ScrollPLM",
+    "PlmSetup_B707_SolidScrollPLM",
+    "PlmSetup_B70F_IcePhysics",
+    "PlmSetup_B71F_SubmergingQuicksand",
+    "PlmSetup_B723_SandfallsSlow",
+    "PlmSetup_B727_SandFallsFast",
+    "PlmSetup_B737_SubmergingQuicksand",
+    "PlmSetup_B73B_B73F_SandFalls",
+    "PlmSetup_B767_ClearShitroidInvisibleWall",
+    "PlmSetup_B76F_SaveStation",
+    "PlmSetup_B974",
+    "PlmSetup_B9ED_CrittersEscapeBlock",
+    "PlmSetup_BTS_Brinstar_0x80_Floorplant",
+    "PlmSetup_BTS_Brinstar_0x81_Ceilingplant",
+    "PlmSetup_C794_GreyDoor",
+    "PlmSetup_C806_LeftGreenGateTrigger",
+    "PlmSetup_C80A_RightGreenGateTrigger",
+    "PlmSetup_C80E_LeftRedGateTrigger",
+    "PlmSetup_C812_RightRedGateTrigger",
+    "PlmSetup_C816_LeftBlueGateTrigger",
+    "PlmSetup_C81A_RightBlueGateTrigger",
+    "PlmSetup_C81E_LeftYellowGateTrigger",
+    "PlmSetup_C822_RightYellowGateTrigger",
+    "PlmSetup_C826_DownwardsOpenGate",
+    "PlmSetup_C82E_UpwardsOpenGate",
+    "PlmSetup_ClearShitroidInvisibleWall",
+    "PlmSetup_CrumbleBotwoonWall",
+    "PlmSetup_D08C_CrumbleBlock",
+    "PlmSetup_D08C_SuperMissileBlockRespawning",
+    "PlmSetup_D094_EnemyBreakableBlock",
+    "PlmSetup_D0D8_ClearVflag",
+    "PlmSetup_D0D8_SetVFlag",
+    "PlmSetup_D0DC_BreakableGrappleBlock",
+    "PlmSetup_D0E8_GiveSamusDamage",
+    "PlmSetup_D113_LowerNorfairChozoRoomPlug",
+    "PlmSetup_D127",
+    "PlmSetup_D138",
+    "PlmSetup_D700_MakePlmAirBlock_Unused",
+    "PlmSetup_D704_AlteranateLowerNorfairChozoHand_Unused",
+    "PlmSetup_DeactivatePlm",
+    "PlmSetup_Door_Blue",
+    "PlmSetup_Door_Colored",
+    "PlmSetup_MakeBllockChozoHandTrigger",
+    "PlmSetup_MotherBrainGlass",
+    "PlmSetup_MotherBrainRoomEscapeDoor",
+    "PlmSetup_QuicksandSurface",
+    "PlmSetup_RespawningBombBlock",
+    "PlmSetup_RespawningBombBlock2",
+    "PlmSetup_RespawningCrumbleBlock",
+    "PlmSetup_RespawningPowerBombBlock",
+    "PlmSetup_RespawningShotBlock",
+    "PlmSetup_RespawningSpeedBoostBlock",
+    "PlmSetup_ReturnCarryClear",
+    "PlmSetup_ReturnCarrySet",
+    "PlmSetup_SetrupWreckedShipEntrance",
+    "PlmSetup_ShaktoolsRoom",
+    "PowerBomb_Func3",
+    "ProcessAnimtilesObject",
+    "ProcessEnemyInstructions",
+    "ProcessPlmDrawInstruction",
+    "ProjPreInstr_PowerBomb",
+    "QueueMusic_Delayed8",
+    "QueueMusic_DelayedY",
+    "QueueSfx1_Internal",
+    "QueueSfx1_Max1",
+    "QueueSfx1_Max15",
+    "QueueSfx1_Max3",
+    "QueueSfx1_Max6",
+    "QueueSfx1_Max9",
+    "QueueSfx2_Internal",
+    "QueueSfx2_Max1",
+    "QueueSfx2_Max15",
+    "QueueSfx2_Max3",
+    "QueueSfx2_Max6",
+    "QueueSfx2_Max9",
+    "QueueSfx3_Internal",
+    "QueueSfx3_Max1",
+    "QueueSfx3_Max15",
+    "QueueSfx3_Max3",
+    "QueueSfx3_Max6",
+    "QueueSfx3_Max9",
+    "RandomDropRoutine",
+    "Ridley_Instr_1",
+    "Ridley_Instr_10",
+    "Ridley_Instr_11",
+    "Ridley_Instr_12",
+    "Ridley_Instr_13",
+    "Ridley_Instr_5",
+    "Ridley_Instr_6",
+    "Rio_1",
+    "Rio_2",
+    "Rio_3",
+    "Rio_4",
+    "Rio_5",
+    "Rio_6",
+    "Rio_Init",
+    "Rio_Main",
+    "Ripper_Init",
+    "Ripper_Main",
+    "RoomCode_8FC8C8",
+    "RoomCode_CrocomireShaking",
+    "RoomCode_RidleyRoomShaking",
+    "RoomCode_ScrollRightDachora",
+    "RoomSetup_AfterSavingAnimals",
+    "RoomSetup_AutoDestroyWallAfterEscape",
+    "RoomSetup_TurnWallIntoShotblocks",
+    "SamusCrouchingEtcFunc",
+    "Samus_AlignYPosSlope",
+    "Samus_Animate",
+    "Samus_Animate_AcidFx",
+    "Samus_Animate_LavaFx",
+    "Samus_Animate_NoFx",
+    "Samus_Animate_SubmergedLavaAcid",
+    "Samus_Animate_WaterFx",
+    "Samus_BombJumpFallingXMovement_",
+    "Samus_BombJumpFallingYMovement_",
+    "Samus_BombJumpRisingXMovement_",
+    "Samus_BombJumpRisingYMovement_",
+    "Samus_CancelSpeedBoost",
+    "Samus_CheckAndMoveY",
+    "Samus_ClearXSpeedIfColl",
+    "Samus_CollDetectChangedPose",
+    "Samus_FallingMovement",
+    "Samus_FootstepGraphics",
+    "Samus_FootstepGraphics_1",
+    "Samus_FootstepGraphics_Crateria",
+    "Samus_FootstepGraphics_Maridia",
+    "Samus_GrappleWallJumpCheck",
+    "Samus_HandleMovement_DrainedCrouching",
+    "Samus_HandleMovement_X",
+    "Samus_HandleScroll_X",
+    "Samus_HandleScroll_Y",
+    "Samus_Input_00_Standing",
+    "Samus_Input_01_Running",
+    "Samus_Input_02_NormalJumping",
+    "Samus_Input_03_SpinJumping",
+    "Samus_Input_04_MorphBallOnGround",
+    "Samus_Input_06_Falling",
+    "Samus_Input_07_Unused",
+    "Samus_Input_08_MorphBallFalling",
+    "Samus_Input_09_Unused",
+    "Samus_Input_0A_KnockbackOrCrystalFlashEnding",
+    "Samus_Input_0B_Unused",
+    "Samus_Input_0C_Unused",
+    "Samus_Input_0D_Unused",
+    "Samus_Input_0E_TurningAroundOnGround",
+    "Samus_Input_0F_CrouchingEtcTransition",
+    "Samus_Input_10_Moonwalking",
+    "Samus_Input_11_SpringBallOnGround",
+    "Samus_Input_12_SpringBallInAir",
+    "Samus_Input_13_SpringBallFalling",
+    "Samus_Input_14_WallJumping",
+    "Samus_Input_16_Grappling",
+    "Samus_Input_17_TurningAroundJumping",
+    "Samus_Input_18_TurningAroundFalling",
+    "Samus_Input_19_DamageBoost",
+    "Samus_Input_1A_GrabbedByDraygon",
+    "Samus_Input_1B_ShinesparkEtc",
+    "Samus_JumpingMovement",
+    "Samus_LoadSuitPalette",
+    "Samus_LoadSuitTargetPalette",
+    "Samus_LookupTransitionTable",
+    "Samus_MorphedBouncingMovement",
+    "Samus_MorphedFallingMovement",
+    "Samus_MoveDown",
+    "Samus_MoveDown_NoSolidColl",
+    "Samus_MoveDown_SetPoseCalcInput",
+    "Samus_MoveExtraY",
+    "Samus_MoveHandler_ReleaseFromGrapple",
+    "Samus_MoveLeft",
+    "Samus_MoveRight",
+    "Samus_MoveRight_NoSolidColl",
+    "Samus_MoveUp",
+    "Samus_MoveUp_SetPoseCalcInput",
+    "Samus_MoveX",
+    "Samus_MoveY_Simple_",
+    "Samus_MoveY_WithSpeedCalc",
+    "Samus_Move_NoBaseSpeed_X",
+    "Samus_Move_NoSpeedCalc_Y",
+    "Samus_MovementHandler_Normal",
+    "Samus_Movement_00_Standing",
+    "Samus_Movement_01_Running",
+    "Samus_Movement_02_NormalJumping",
+    "Samus_Movement_03_SpinJumping",
+    "Samus_Movement_04_MorphBallOnGround",
+    "Samus_Movement_05_Crouching",
+    "Samus_Movement_06_Falling",
+    "Samus_Movement_07_Unused",
+    "Samus_Movement_08_MorphBallFalling",
+    "Samus_Movement_09_Unused",
+    "Samus_Movement_0A_KnockbackOrCrystalFlashEnding",
+    "Samus_Movement_0B_Unused",
+    "Samus_Movement_0C_Unused",
+    "Samus_Movement_0D_Unused",
+    "Samus_Movement_0E_TurningAroundOnGround",
+    "Samus_Movement_0F_CrouchingEtcTransition",
+    "Samus_Movement_10_Moonwalking",
+    "Samus_Movement_11_SpringBallOnGround",
+    "Samus_Movement_12_SpringBallInAir",
+    "Samus_Movement_13_SpringBallFalling",
+    "Samus_Movement_14_WallJumping",
+    "Samus_Movement_15_RanIntoWall",
+    "Samus_Movement_16_Grappling",
+    "Samus_Movement_17_TurningAroundJumping",
+    "Samus_Movement_18_TurningAroundFalling",
+    "Samus_Movement_19_DamageBoost",
+    "Samus_Movement_1A_GrabbedByDraygon",
+    "Samus_Movement_1B_ShinesparkEtc",
+    "Samus_Pose_CancelGrapple",
+    "Samus_Pose_Func2",
+    "Samus_ScrollFinishedHook_SporeSpawnFight",
+    "Samus_SpawnAirBubbles",
+    "Samus_SpawnWaterSplash",
+    "Samus_SpinJumpMovement",
+    "Samus_WallJumpCheck",
+    "Sidehopper_Func_1",
+    "Sidehopper_Func_10",
+    "Sidehopper_Func_11",
+    "Sidehopper_Func_12",
+    "Sidehopper_Func_13",
+    "Sidehopper_Func_14",
+    "Sidehopper_Func_15",
+    "Sidehopper_Func_16",
+    "Sidehopper_Func_17",
+    "Sidehopper_Func_18",
+    "Sidehopper_Func_19",
+    "Sidehopper_Func_2",
+    "Sidehopper_Func_20",
+    "Sidehopper_Func_21",
+    "Sidehopper_Func_22",
+    "Sidehopper_Func_3",
+    "Sidehopper_Func_4",
+    "Sidehopper_Func_5",
+    "Sidehopper_Func_6",
+    "Sidehopper_Func_7",
+    "Sidehopper_Func_8",
+    "Sidehopper_Func_9",
+    "Sidehopper_Init",
+    "Sidehopper_Instr_1",
+    "Sidehopper_Main",
+    "SignExtend8",
+    "SineMult8bit",
+    "SineMult8bitFull",
+    "SpacePirates_Instr_15",
+    "SpacePirates_Instr_FireLaserL",
+    "SpacePirates_Instr_FireLaserR",
+    "SpawnAnimtiles",
+    "SpawnEprojWithGfx",
+    "SpawnEprojWithRoomGfx",
+    "SpawnMotherBrainDeathBeam",
+    "SpawnMotherBrainGlassShatteringShard",
+    "SpawnPalfxObject",
+    "SpawnPowerBombExplosion",
+    "StoneZoomer_E67A",
+    "StoneZoomer_Init",
+    "StoneZoomer_Main",
+    "SubtractThenAbs16",
+    "SwitchEnemyAiToMainAi",
+    "UNUSED_DoorCode_SetScroll_51",
+    "UNUSED_DoorCode_SetScroll_52",
+    "WallJumpBlockCollDetect",
+    "Waver_Func_1",
+    "Waver_Init",
+    "Waver_Main",
+    "WreckedShipOrangeZoomer_Func_1",
+    "WreckedShipOrangeZoomer_Func_2",
+    "WreckedShipOrangeZoomer_Init",
+    "WreckedShipOrangeZoomer_Main",
+    "Zoomer_Instr_SetPreinstr",
+    "sub_84B9F1",
+    "sub_86A301",
+    "sub_86C320",
+    "sub_86C42E",
+    "sub_86CFD5",
+    "sub_86CFE6",
+    "sub_86CFF8",
+    "sub_9382FD",
+    "sub_A3E168",
+]
+schema = "decomp-stopped-batch-audit-v1"
+
+[counts]
+offline-verified = 106
+rejected = 24
+
+[[passed]]
+family = "animated-tile-audio"
+routines = [
+    "AnimtilesInstr_QueueMusic",
+    "AnimtilesInstr_QueueSfx1",
+    "AnimtilesInstr_QueueSfx2",
+    "AnimtilesInstr_QueueSfx3",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/animated-tile-audio/evidence/1791901908349965-546014-0/verdict.toml"
+verified_cases = 144
+
+[[passed]]
+family = "animated-tile-combined"
+routines = [
+    "AnimtilesInstr_Clear3PaletteColors",
+    "AnimtilesInstr_DecrementTimerAndGoto",
+    "AnimtilesInstr_DecrementTimerAndGotoRel",
+    "AnimtilesInstr_Delete",
+    "AnimtilesInstr_Goto",
+    "AnimtilesInstr_GotoIfBossBitSet",
+    "AnimtilesInstr_GotoIfBossBitSetInArea",
+    "AnimtilesInstr_GotoIfEventHappened",
+    "AnimtilesInstr_GotoIfTourianStatueBusy",
+    "AnimtilesInstr_GotoRel",
+    "AnimtilesInstr_QueueMusic",
+    "AnimtilesInstr_QueueSfx1",
+    "AnimtilesInstr_QueueSfx2",
+    "AnimtilesInstr_QueueSfx3",
+    "AnimtilesInstr_SetBossBit",
+    "AnimtilesInstr_SetEventHappened",
+    "AnimtilesInstr_SetTimer",
+    "AnimtilesInstr_TourianStatueClearState",
+    "AnimtilesInstr_TourianStatueSetState",
+    "AnimtilesInstr_WaitUntilAreaBossDead_DoubleRet",
+    "AnimtilesInstr_Write8PaletteColors",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/animated-tile-combined/evidence/1791901908356670-546014-2/verdict.toml"
+verified_cases = 1872
+
+[[passed]]
+family = "animated-tile-events"
+routines = [
+    "AnimtilesInstr_GotoIfBossBitSet",
+    "AnimtilesInstr_GotoIfBossBitSetInArea",
+    "AnimtilesInstr_GotoIfEventHappened",
+    "AnimtilesInstr_SetBossBit",
+    "AnimtilesInstr_SetEventHappened",
+    "AnimtilesInstr_WaitUntilAreaBossDead_DoubleRet",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/animated-tile-events/evidence/1791901908354563-546014-1/verdict.toml"
+verified_cases = 648
+
+[[passed]]
+family = "animated-tile-frame-live"
+routines = [
+    "AnimtilesHandler",
+    "ProcessAnimtilesObject",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/animated-tile-frame-live/evidence/1791901924248790-546014-23/verdict.toml"
+verified_cases = 192
+
+[[passed]]
+family = "animated-tile-instructions"
+routines = [
+    "AnimtilesInstr_DecrementTimerAndGoto",
+    "AnimtilesInstr_DecrementTimerAndGotoRel",
+    "AnimtilesInstr_Delete",
+    "AnimtilesInstr_Goto",
+    "AnimtilesInstr_GotoRel",
+    "AnimtilesInstr_SetTimer",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/animated-tile-instructions/evidence/1791901960644996-546014-41/verdict.toml"
+verified_cases = 720
+
+[[passed]]
+family = "animated-tile-palette"
+routines = [
+    "AnimtilesInstr_Clear3PaletteColors",
+    "AnimtilesInstr_GotoIfTourianStatueBusy",
+    "AnimtilesInstr_TourianStatueClearState",
+    "AnimtilesInstr_TourianStatueSetState",
+    "AnimtilesInstr_Write8PaletteColors",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/animated-tile-palette/evidence/1791901960858086-546014-42/verdict.toml"
+verified_cases = 360
+
+[[passed]]
+family = "animated-tiles"
+routines = [
+    "ClearAnimtiles",
+    "DisableAnimtiles",
+    "EnableAnimtiles",
+    "SpawnAnimtiles",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/animated-tiles/evidence/1791901987776633-546014-66/verdict.toml"
+verified_cases = 43
+
+[[passed]]
+family = "audio"
+routines = [
+    "HasQueuedMusic",
+    "QueueMusic_Delayed8",
+    "QueueMusic_DelayedY",
+    "QueueSfx1_Internal",
+    "QueueSfx1_Max1",
+    "QueueSfx1_Max15",
+    "QueueSfx1_Max3",
+    "QueueSfx1_Max6",
+    "QueueSfx1_Max9",
+    "QueueSfx2_Internal",
+    "QueueSfx2_Max1",
+    "QueueSfx2_Max15",
+    "QueueSfx2_Max3",
+    "QueueSfx2_Max6",
+    "QueueSfx2_Max9",
+    "QueueSfx3_Internal",
+    "QueueSfx3_Max1",
+    "QueueSfx3_Max15",
+    "QueueSfx3_Max3",
+    "QueueSfx3_Max6",
+    "QueueSfx3_Max9",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/audio/evidence/1791901989488481-546014-68/verdict.toml"
+verified_cases = 1147
+
+[[passed]]
+family = "boss-projectile-transitions"
+routines = [
+    "EprojRunAll",
+    "SpawnEprojWithRoomGfx",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/boss-projectile-transitions/evidence/1791901991373074-546014-70/verdict.toml"
+verified_cases = 354
+
+[[passed]]
+family = "boss-room-shaking"
+routines = [
+    "RoomCode_CrocomireShaking",
+    "RoomCode_RidleyRoomShaking",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/boss-room-shaking/evidence/1791901996652310-546014-89/verdict.toml"
+verified_cases = 148
+
+[[passed]]
+family = "botwoon-body-allocation"
+routines = ["SpawnEprojWithRoomGfx"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/botwoon-body-allocation/evidence/1791902053501959-546014-106/verdict.toml"
+verified_cases = 193
+
+[[passed]]
+family = "botwoon-body-lifecycle"
+routines = [
+    "EprojRunAll",
+    "SpawnEprojWithRoomGfx",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/botwoon-body-lifecycle/evidence/1791902069360789-546014-109/verdict.toml"
+verified_cases = 833
+
+[[passed]]
+family = "botwoon-spit-allocation"
+routines = ["SpawnEprojWithRoomGfx"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/botwoon-spit-allocation/evidence/1791902073352734-546014-120/verdict.toml"
+verified_cases = 257
+
+[[passed]]
+family = "botwoon-spit-scheduling"
+routines = [
+    "EprojRunAll",
+    "Eproj_FuncE722",
+    "Eproj_FuncE73E_MoveXY",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/botwoon-spit-scheduling/evidence/1791902085885758-546014-123/verdict.toml"
+verified_cases = 833
+
+[[passed]]
+family = "camera-scroll"
+routines = [
+    "MainScrollingRoutine",
+    "Samus_HandleScroll_X",
+    "Samus_HandleScroll_Y",
+    "Samus_ScrollFinishedHook_SporeSpawnFight",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/camera-scroll/evidence/1791902119819861-546014-150/verdict.toml"
+verified_cases = 467
+
+[[passed]]
+family = "ceres-platform"
+routines = ["EprojPreInstr_CeresElevatorPlatform"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/ceres-platform/evidence/1791902150088445-546014-163/verdict.toml"
+verified_cases = 378
+
+[[passed]]
+family = "collision"
+routines = [
+    "Samus_AlignYPosSlope",
+    "Samus_BombJumpFallingXMovement_",
+    "Samus_BombJumpFallingYMovement_",
+    "Samus_BombJumpRisingXMovement_",
+    "Samus_BombJumpRisingYMovement_",
+    "Samus_CheckAndMoveY",
+    "Samus_CollDetectChangedPose",
+    "Samus_FallingMovement",
+    "Samus_FootstepGraphics",
+    "Samus_FootstepGraphics_1",
+    "Samus_FootstepGraphics_Crateria",
+    "Samus_FootstepGraphics_Maridia",
+    "Samus_GrappleWallJumpCheck",
+    "Samus_HandleMovement_DrainedCrouching",
+    "Samus_HandleMovement_X",
+    "Samus_JumpingMovement",
+    "Samus_MorphedBouncingMovement",
+    "Samus_MorphedFallingMovement",
+    "Samus_MoveDown",
+    "Samus_MoveDown_NoSolidColl",
+    "Samus_MoveExtraY",
+    "Samus_MoveHandler_ReleaseFromGrapple",
+    "Samus_MoveLeft",
+    "Samus_MoveRight",
+    "Samus_MoveRight_NoSolidColl",
+    "Samus_MoveUp",
+    "Samus_MoveX",
+    "Samus_MoveY_Simple_",
+    "Samus_MoveY_WithSpeedCalc",
+    "Samus_Move_NoBaseSpeed_X",
+    "Samus_Move_NoSpeedCalc_Y",
+    "Samus_MovementHandler_Normal",
+    "Samus_Movement_00_Standing",
+    "Samus_Movement_01_Running",
+    "Samus_Movement_02_NormalJumping",
+    "Samus_Movement_03_SpinJumping",
+    "Samus_Movement_04_MorphBallOnGround",
+    "Samus_Movement_05_Crouching",
+    "Samus_Movement_06_Falling",
+    "Samus_Movement_07_Unused",
+    "Samus_Movement_08_MorphBallFalling",
+    "Samus_Movement_09_Unused",
+    "Samus_Movement_0A_KnockbackOrCrystalFlashEnding",
+    "Samus_Movement_0B_Unused",
+    "Samus_Movement_0C_Unused",
+    "Samus_Movement_0D_Unused",
+    "Samus_Movement_0E_TurningAroundOnGround",
+    "Samus_Movement_0F_CrouchingEtcTransition",
+    "Samus_Movement_10_Moonwalking",
+    "Samus_Movement_11_SpringBallOnGround",
+    "Samus_Movement_12_SpringBallInAir",
+    "Samus_Movement_13_SpringBallFalling",
+    "Samus_Movement_14_WallJumping",
+    "Samus_Movement_15_RanIntoWall",
+    "Samus_Movement_16_Grappling",
+    "Samus_Movement_17_TurningAroundJumping",
+    "Samus_Movement_18_TurningAroundFalling",
+    "Samus_Movement_19_DamageBoost",
+    "Samus_Movement_1A_GrabbedByDraygon",
+    "Samus_Movement_1B_ShinesparkEtc",
+    "Samus_SpinJumpMovement",
+    "Samus_WallJumpCheck",
+    "WallJumpBlockCollDetect",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/collision/evidence/1791902166822084-546014-175/verdict.toml"
+verified_cases = 1752
+
+[[passed]]
+family = "control"
+routines = [
+    "CopyToSamusSuitPalette",
+    "CopyToSamusSuitTargetPalette",
+    "SamusCrouchingEtcFunc",
+    "Samus_Animate",
+    "Samus_Animate_AcidFx",
+    "Samus_Animate_LavaFx",
+    "Samus_Animate_NoFx",
+    "Samus_Animate_SubmergedLavaAcid",
+    "Samus_Animate_WaterFx",
+    "Samus_CancelSpeedBoost",
+    "Samus_ClearXSpeedIfColl",
+    "Samus_Input_00_Standing",
+    "Samus_Input_01_Running",
+    "Samus_Input_02_NormalJumping",
+    "Samus_Input_03_SpinJumping",
+    "Samus_Input_04_MorphBallOnGround",
+    "Samus_Input_06_Falling",
+    "Samus_Input_07_Unused",
+    "Samus_Input_08_MorphBallFalling",
+    "Samus_Input_09_Unused",
+    "Samus_Input_0A_KnockbackOrCrystalFlashEnding",
+    "Samus_Input_0B_Unused",
+    "Samus_Input_0C_Unused",
+    "Samus_Input_0D_Unused",
+    "Samus_Input_0E_TurningAroundOnGround",
+    "Samus_Input_0F_CrouchingEtcTransition",
+    "Samus_Input_10_Moonwalking",
+    "Samus_Input_11_SpringBallOnGround",
+    "Samus_Input_12_SpringBallInAir",
+    "Samus_Input_13_SpringBallFalling",
+    "Samus_Input_14_WallJumping",
+    "Samus_Input_16_Grappling",
+    "Samus_Input_17_TurningAroundJumping",
+    "Samus_Input_18_TurningAroundFalling",
+    "Samus_Input_19_DamageBoost",
+    "Samus_Input_1A_GrabbedByDraygon",
+    "Samus_Input_1B_ShinesparkEtc",
+    "Samus_LoadSuitPalette",
+    "Samus_LoadSuitTargetPalette",
+    "Samus_LookupTransitionTable",
+    "Samus_MoveDown_SetPoseCalcInput",
+    "Samus_MoveUp_SetPoseCalcInput",
+    "Samus_Pose_CancelGrapple",
+    "Samus_Pose_Func2",
+    "Samus_SpawnAirBubbles",
+    "Samus_SpawnWaterSplash",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/control/evidence/1791902170628054-546014-176/verdict.toml"
+verified_cases = 4528
+
+[[passed]]
+family = "dachora-room-scroll"
+routines = ["RoomCode_ScrollRightDachora"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/dachora-room-scroll/evidence/1791902175923183-546014-178/verdict.toml"
+verified_cases = 96
+
+[[passed]]
+family = "door-scroll-callbacks"
+routines = [
+    "DoorCode_Scroll0_Blue",
+    "DoorCode_Scroll13_Blue",
+    "DoorCode_Scroll6_Green",
+    "DoorCode_Scroll_17_Blue",
+    "DoorCode_Scroll_1_4_Green",
+    "DoorCode_Scroll_2_Blue",
+    "DoorCode_Scroll_3_Green",
+    "DoorCode_Scroll_4Blue_8Green",
+    "DoorCode_Scroll_4_Blue",
+    "DoorCode_Scroll_6_Green",
+    "DoorCode_Scroll_8toB_Red",
+    "DoorCode_Scroll_LotsRed",
+    "DoorCode_SetScroll_0",
+    "DoorCode_SetScroll_1",
+    "DoorCode_SetScroll_10",
+    "DoorCode_SetScroll_11",
+    "DoorCode_SetScroll_12",
+    "DoorCode_SetScroll_13",
+    "DoorCode_SetScroll_14",
+    "DoorCode_SetScroll_15",
+    "DoorCode_SetScroll_16",
+    "DoorCode_SetScroll_17",
+    "DoorCode_SetScroll_18",
+    "DoorCode_SetScroll_19",
+    "DoorCode_SetScroll_2",
+    "DoorCode_SetScroll_20",
+    "DoorCode_SetScroll_21",
+    "DoorCode_SetScroll_22",
+    "DoorCode_SetScroll_23",
+    "DoorCode_SetScroll_24",
+    "DoorCode_SetScroll_25",
+    "DoorCode_SetScroll_26",
+    "DoorCode_SetScroll_27",
+    "DoorCode_SetScroll_28",
+    "DoorCode_SetScroll_29",
+    "DoorCode_SetScroll_3",
+    "DoorCode_SetScroll_30",
+    "DoorCode_SetScroll_31",
+    "DoorCode_SetScroll_32",
+    "DoorCode_SetScroll_33",
+    "DoorCode_SetScroll_34",
+    "DoorCode_SetScroll_35",
+    "DoorCode_SetScroll_36",
+    "DoorCode_SetScroll_37",
+    "DoorCode_SetScroll_38",
+    "DoorCode_SetScroll_39",
+    "DoorCode_SetScroll_4",
+    "DoorCode_SetScroll_40",
+    "DoorCode_SetScroll_41",
+    "DoorCode_SetScroll_42",
+    "DoorCode_SetScroll_43",
+    "DoorCode_SetScroll_44",
+    "DoorCode_SetScroll_45",
+    "DoorCode_SetScroll_46",
+    "DoorCode_SetScroll_47",
+    "DoorCode_SetScroll_48",
+    "DoorCode_SetScroll_49",
+    "DoorCode_SetScroll_5",
+    "DoorCode_SetScroll_50",
+    "DoorCode_SetScroll_53",
+    "DoorCode_SetScroll_54",
+    "DoorCode_SetScroll_55",
+    "DoorCode_SetScroll_56",
+    "DoorCode_SetScroll_57",
+    "DoorCode_SetScroll_58",
+    "DoorCode_SetScroll_59",
+    "DoorCode_SetScroll_6",
+    "DoorCode_SetScroll_60",
+    "DoorCode_SetScroll_61",
+    "DoorCode_SetScroll_62",
+    "DoorCode_SetScroll_63",
+    "DoorCode_SetScroll_64",
+    "DoorCode_SetScroll_65",
+    "DoorCode_SetScroll_7",
+    "DoorCode_SetScroll_8",
+    "DoorCode_SetScroll_9",
+    "UNUSED_DoorCode_SetScroll_51",
+    "UNUSED_DoorCode_SetScroll_52",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/door-scroll-callbacks/evidence/1791902194577656-546014-189/verdict.toml"
+verified_cases = 312
+
+[[passed]]
+family = "draygon-attached-gunk"
+routines = [
+    "EprojPowerBombCollision",
+    "EprojRunAll",
+    "Eproj_FuncE722",
+    "Eproj_FuncE73E_MoveXY",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/draygon-attached-gunk/evidence/1791902229637962-546014-210/verdict.toml"
+verified_cases = 1281
+
+[[passed]]
+family = "draygon-projectile-scheduling"
+routines = [
+    "EprojPowerBombCollision",
+    "EprojRunAll",
+    "Eproj_FuncE722",
+    "Eproj_FuncE73E_MoveXY",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/draygon-projectile-scheduling/evidence/1791902409013132-546014-221/verdict.toml"
+verified_cases = 897
+
+[[passed]]
+family = "enemy"
+routines = [
+    "Abs16",
+    "CalculateAngleFromXY",
+    "CalculateAngleOfEnemyXfromEnemyY",
+    "CalculateAngleOfSamusFromEnemy",
+    "CalculateAngleOfSamusFromEproj",
+    "CalculateBlockContainingPixelPos",
+    "CheckIfEnemyIsOnScreen",
+    "CheckIfEnemyTouchesSamus",
+    "CompareDistToSamus_X",
+    "CompareDistToSamus_Y",
+    "CosineMult8bit",
+    "CosineMult8bitFull",
+    "DecrementSamusTimers",
+    "DetermineDirectionOfSamusFromEnemy",
+    "EnemyFunc_AC67",
+    "EnemyFunc_ADA3",
+    "EnemyFunc_B7A1",
+    "EnemyFunc_BBBF",
+    "EnemyFunc_BC76",
+    "EnemyWithNormalSpritesIsOffScreen",
+    "GetSamusEnemyDelta_X",
+    "GetSamusEnemyDelta_Y",
+    "IsEnemyLeavingScreen",
+    "IsSamusWithinEnemy_X",
+    "IsSamusWithinEnemy_Y",
+    "Mult32",
+    "NormalEnemyFrozenAI",
+    "SignExtend8",
+    "SineMult8bit",
+    "SineMult8bitFull",
+    "SubtractThenAbs16",
+    "SwitchEnemyAiToMainAi",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/enemy/evidence/1791902422086540-546014-224/verdict.toml"
+verified_cases = 2452
+
+[[passed]]
+family = "enemy-ai"
+routines = [
+    "Enemy_MoveDown",
+    "Enemy_MoveRight_IgnoreSlopes",
+    "JetPowerRipper_Init",
+    "JetPowerRipper_Main",
+    "Rio_1",
+    "Rio_2",
+    "Rio_3",
+    "Rio_4",
+    "Rio_5",
+    "Rio_6",
+    "Rio_Init",
+    "Rio_Main",
+    "Ripper_Init",
+    "Ripper_Main",
+    "Waver_Func_1",
+    "Waver_Init",
+    "Waver_Main",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/enemy-ai/evidence/1791902478878374-546014-244/verdict.toml"
+verified_cases = 454
+
+[[passed]]
+family = "enemy-crawler"
+routines = [
+    "BigEyeBugs_Init",
+    "EnemyFunc_C8AD",
+    "FireZoomer_E8A5",
+    "FireZoomer_Func_1",
+    "FireZoomer_Func_2",
+    "FireZoomer_Func_3",
+    "FireZoomer_Init",
+    "StoneZoomer_E67A",
+    "StoneZoomer_Init",
+    "StoneZoomer_Main",
+    "WreckedShipOrangeZoomer_Func_1",
+    "WreckedShipOrangeZoomer_Func_2",
+    "WreckedShipOrangeZoomer_Init",
+    "WreckedShipOrangeZoomer_Main",
+    "Zoomer_Instr_SetPreinstr",
+    "sub_A3E168",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/enemy-crawler/evidence/1791902493426159-546014-246/verdict.toml"
+verified_cases = 800
+
+[[passed]]
+family = "enemy-death-explosion"
+routines = ["SpawnEprojWithRoomGfx"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/enemy-death-explosion/evidence/1791902522830886-546014-249/verdict.toml"
+verified_cases = 961
+
+[[passed]]
+family = "enemy-drop-selection"
+routines = ["RandomDropRoutine"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/enemy-drop-selection/evidence/1791902550106583-546014-261/verdict.toml"
+verified_cases = 1794
+
+[[passed]]
+family = "enemy-drop-transition"
+routines = ["EprojRunAll"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/enemy-drop-transition/evidence/1791902567844264-546014-263/verdict.toml"
+verified_cases = 2434
+
+[[passed]]
+family = "enemy-falling-particles"
+routines = [
+    "EprojRunAll",
+    "SpawnEprojWithRoomGfx",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/enemy-falling-particles/evidence/1791902593462942-546014-274/verdict.toml"
+verified_cases = 305
+
+[[passed]]
+family = "enemy-jump"
+routines = [
+    "Sidehopper_Func_10",
+    "Sidehopper_Func_11",
+    "Sidehopper_Func_12",
+    "Sidehopper_Func_13",
+    "Sidehopper_Func_14",
+    "Sidehopper_Func_15",
+    "Sidehopper_Func_16",
+    "Sidehopper_Func_17",
+    "Sidehopper_Func_18",
+    "Sidehopper_Func_19",
+    "Sidehopper_Func_2",
+    "Sidehopper_Func_20",
+    "Sidehopper_Func_21",
+    "Sidehopper_Func_22",
+    "Sidehopper_Func_3",
+    "Sidehopper_Func_4",
+    "Sidehopper_Func_5",
+    "Sidehopper_Func_6",
+    "Sidehopper_Func_7",
+    "Sidehopper_Func_8",
+    "Sidehopper_Func_9",
+    "Sidehopper_Init",
+    "Sidehopper_Main",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/enemy-jump/evidence/1791902643044598-546014-287/verdict.toml"
+verified_cases = 192
+
+[[passed]]
+family = "enemy-jump-instructions"
+routines = [
+    "Sidehopper_Func_1",
+    "Sidehopper_Instr_1",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/enemy-jump-instructions/evidence/1791902651665897-546014-290/verdict.toml"
+verified_cases = 16
+
+[[passed]]
+family = "enemy-linked-projectile-allocation"
+routines = ["SpawnEprojWithRoomGfx"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/enemy-linked-projectile-allocation/evidence/1791902662992953-546014-301/verdict.toml"
+verified_cases = 385
+
+[[passed]]
+family = "enemy-projectile-collision"
+routines = [
+    "EprojBlockCollisition_Horiz",
+    "EprojBlockCollisition_Vertical",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/enemy-projectile-collision/evidence/1791902663983983-546014-303/verdict.toml"
+verified_cases = 1232
+
+[[passed]]
+family = "enemy-projectile-detect-projectiles"
+routines = ["EprojProjCollDet"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/enemy-projectile-detect-projectiles/evidence/1791902699515745-546014-324/verdict.toml"
+verified_cases = 2040
+
+[[passed]]
+family = "enemy-projectile-detect-samus"
+routines = ["EprojSamusCollDetect"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/enemy-projectile-detect-samus/evidence/1791902709843192-546014-326/verdict.toml"
+verified_cases = 2310
+
+[[passed]]
+family = "enemy-projectile-hit-projectile"
+routines = ["HandleEprojCollWithProj"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/enemy-projectile-hit-projectile/evidence/1791902775696989-546014-345/verdict.toml"
+verified_cases = 1992
+
+[[passed]]
+family = "enemy-projectile-hit-samus"
+routines = ["HandleEprojCollWithSamus"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/enemy-projectile-hit-samus/evidence/1791902814227422-546014-356/verdict.toml"
+verified_cases = 1728
+
+[[passed]]
+family = "enemy-projectile-instructions"
+routines = [
+    "EprojRunAll",
+    "MoveEprojWithVelocity",
+    "MoveEprojWithVelocityX",
+    "MoveEprojWithVelocityY",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/enemy-projectile-instructions/evidence/1791902854403860-546014-367/verdict.toml"
+verified_cases = 940
+
+[[passed]]
+family = "enemy-projectile-rendering"
+routines = [
+    "DrawHighPriorityEprojs",
+    "DrawLowPriorityEprojs",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/enemy-projectile-rendering/evidence/1791902890872335-546014-379/verdict.toml"
+verified_cases = 1448
+
+[[passed]]
+family = "enemy-projectile-rendering-direct"
+routines = []
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/enemy-projectile-rendering-direct/evidence/1791902900130738-546014-380/verdict.toml"
+verified_cases = 2468
+
+[[passed]]
+family = "enemy-rio"
+routines = [
+    "LowerNorfairRio_Func_1",
+    "LowerNorfairRio_Func_2",
+    "LowerNorfairRio_Func_3",
+    "LowerNorfairRio_Func_4",
+    "LowerNorfairRio_Func_5",
+    "LowerNorfairRio_Func_6",
+    "LowerNorfairRio_Func_7",
+    "LowerNorfairRio_Init",
+    "LowerNorfairRio_Main",
+    "NorfairRio_Func_1",
+    "NorfairRio_Func_2",
+    "NorfairRio_Func_3",
+    "NorfairRio_Func_4",
+    "NorfairRio_Func_5",
+    "NorfairRio_Func_6",
+    "NorfairRio_Func_7",
+    "NorfairRio_Init",
+    "NorfairRio_Main",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/enemy-rio/evidence/1791902926249786-546014-394/verdict.toml"
+verified_cases = 162
+
+[[passed]]
+family = "escape-room-setups"
+routines = [
+    "RoomSetup_AfterSavingAnimals",
+    "RoomSetup_AutoDestroyWallAfterEscape",
+    "RoomSetup_TurnWallIntoShotblocks",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/escape-room-setups/evidence/1791902976780830-546014-406/verdict.toml"
+verified_cases = 54
+
+[[passed]]
+family = "fireball-split-chain"
+routines = [
+    "EprojRunAll",
+    "SpawnEprojWithRoomGfx",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/fireball-split-chain/evidence/1791902981602791-546014-408/verdict.toml"
+verified_cases = 528
+
+[[passed]]
+family = "floater-spike-motion"
+routines = []
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/floater-spike-motion/evidence/1791903001360727-546014-429/verdict.toml"
+verified_cases = 4929
+
+[[passed]]
+family = "game-host-projectile"
+routines = [
+    "DrawBombAndProjectileExplosions",
+    "DrawPlayerExplosions2",
+    "HandleProjectile",
+    "sub_9382FD",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/game-host-projectile/evidence/1791903033265948-546014-431/verdict.toml"
+verified_cases = 7
+
+[[passed]]
+family = "game-host-room-scroll"
+routines = ["DisplayViewablePartOfRoom"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/game-host-room-scroll/evidence/1791903054424032-546014-434/verdict.toml"
+verified_cases = 3
+
+[[passed]]
+family = "host-spore-spawning"
+routines = ["EprojRunAll"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/host-spore-spawning/evidence/1791903069488499-546014-437/verdict.toml"
+verified_cases = 768
+
+[[passed]]
+family = "instructions"
+routines = [
+    "EnemyInstr_ClearAiPreInstr",
+    "EnemyInstr_CopyToVram",
+    "EnemyInstr_DecTimerAndGoto",
+    "EnemyInstr_DecTimerAndGotoRel",
+    "EnemyInstr_DisableOffScreenProcessing",
+    "EnemyInstr_EnableOffScreenProcessing",
+    "EnemyInstr_Goto",
+    "EnemyInstr_GotoRel",
+    "EnemyInstr_SetAiPreInstr",
+    "EnemyInstr_SetTimer",
+    "EnemyInstr_Skip2bytes",
+    "EnemyInstr_Sleep",
+    "EnemyInstr_StopScript",
+    "EnemyInstr_WaitNframes",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/instructions/evidence/1791903074511379-546014-440/verdict.toml"
+verified_cases = 1344
+
+[[passed]]
+family = "kago-bug-callbacks"
+routines = []
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/kago-bug-callbacks/evidence/1791903136031953-546014-471/verdict.toml"
+verified_cases = 1737
+
+[[passed]]
+family = "kago-bug-launch"
+routines = []
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/kago-bug-launch/evidence/1791903194766345-546014-473/verdict.toml"
+verified_cases = 90
+
+[[passed]]
+family = "ki-hunter-acid-callbacks"
+routines = [
+    "sub_86CFD5",
+    "sub_86CFE6",
+    "sub_86CFF8",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/ki-hunter-acid-callbacks/evidence/1791903300367689-546014-494/verdict.toml"
+verified_cases = 1340
+
+[[passed]]
+family = "ki-hunter-acid-gravity"
+routines = ["sub_86CFF8"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/ki-hunter-acid-gravity/evidence/1791903370633529-546014-505/verdict.toml"
+verified_cases = 10
+
+[[passed]]
+family = "kraid-rocks"
+routines = [
+    "EprojRunAll",
+    "SpawnEprojWithRoomGfx",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/kraid-rocks/evidence/1791903385783336-546014-516/verdict.toml"
+verified_cases = 513
+
+[[passed]]
+family = "lava-seahorse-arc"
+routines = [
+    "EprojRunAll",
+    "SpawnEprojWithRoomGfx",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/lava-seahorse-arc/evidence/1791903442626031-546014-528/verdict.toml"
+verified_cases = 241
+
+[[passed]]
+family = "lavaman-thrown-lava"
+routines = [
+    "EprojRunAll",
+    "SpawnEprojWithRoomGfx",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/lavaman-thrown-lava/evidence/1791903444201403-546014-530/verdict.toml"
+verified_cases = 385
+
+[[passed]]
+family = "lavaquake-rocks"
+routines = [
+    "EprojRunAll",
+    "SpawnEprojWithRoomGfx",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/lavaquake-rocks/evidence/1791903474556407-546014-549/verdict.toml"
+verified_cases = 437
+
+[[passed]]
+family = "mini-kraid-projectiles"
+routines = [
+    "EprojRunAll",
+    "SpawnEprojWithRoomGfx",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/mini-kraid-projectiles/evidence/1791903482838926-546014-552/verdict.toml"
+verified_cases = 401
+
+[[passed]]
+family = "mother-brain-blue-ring-allocation"
+routines = ["SpawnEprojWithRoomGfx"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/mother-brain-blue-ring-allocation/evidence/1791903511037506-546014-571/verdict.toml"
+verified_cases = 1044
+
+[[passed]]
+family = "mother-brain-blue-ring-frames"
+routines = ["EprojRunAll"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/mother-brain-blue-ring-frames/evidence/1791903534670117-546014-583/verdict.toml"
+verified_cases = 253
+
+[[passed]]
+family = "mother-brain-blue-ring-lifecycle"
+routines = [
+    "BlueRingContactExplosion",
+    "CheckForBlueRingCollisionWithRoom",
+    "CheckForCollisionWithShitroid_DoubleRet",
+    "Eproj_Earthqhake5",
+    "Eproj_MoveToBlueRingSpawnPosition",
+    "sub_86C320",
+    "sub_86C42E",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/mother-brain-blue-ring-lifecycle/evidence/1791903576281737-546014-595/verdict.toml"
+verified_cases = 4663
+
+[[passed]]
+family = "mother-brain-bomb-allocation"
+routines = ["SpawnEprojWithRoomGfx"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/mother-brain-bomb-allocation/evidence/1791903578184386-546014-596/verdict.toml"
+verified_cases = 556
+
+[[passed]]
+family = "mother-brain-bomb-collision"
+routines = ["MotherBrainBomb_Bomb_CollDetect_DoubleRet"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/mother-brain-bomb-collision/evidence/1791903581885471-546014-598/verdict.toml"
+verified_cases = 2341
+
+[[passed]]
+family = "mother-brain-bomb-frames"
+routines = ["EprojRunAll"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/mother-brain-bomb-frames/evidence/1791903644839461-546014-618/verdict.toml"
+verified_cases = 325
+
+[[passed]]
+family = "mother-brain-bomb-movement"
+routines = ["MoveMotherBrainBomb"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/mother-brain-bomb-movement/evidence/1791903765080868-546014-637/verdict.toml"
+verified_cases = 721
+
+[[passed]]
+family = "mother-brain-bomb-update"
+routines = ["EprojPreInstr_MotherBrainBomb"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/mother-brain-bomb-update/evidence/1791903769276926-546014-640/verdict.toml"
+verified_cases = 3187
+
+[[passed]]
+family = "mother-brain-breath-text-tube-allocation"
+routines = ["SpawnEprojWithRoomGfx"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/mother-brain-breath-text-tube-allocation/evidence/1791903815559906-546014-659/verdict.toml"
+verified_cases = 64
+
+[[passed]]
+family = "mother-brain-door-particle-motion"
+routines = []
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/mother-brain-door-particle-motion/evidence/1791903927093497-546014-673/verdict.toml"
+verified_cases = 487
+
+[[passed]]
+family = "mother-brain-drool-tracking"
+routines = ["EprojPreInstr_C84D"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/mother-brain-drool-tracking/evidence/1791903986209745-546014-686/verdict.toml"
+verified_cases = 475
+
+[[passed]]
+family = "mother-brain-explosion-allocation"
+routines = ["SpawnEprojWithRoomGfx"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/mother-brain-explosion-allocation/evidence/1791903991360584-546014-688/verdict.toml"
+verified_cases = 55
+
+[[passed]]
+family = "mother-brain-explosion-tracking"
+routines = [
+    "EprojPreInit_MotherBrainsDeathExplosion_0",
+    "EprojPreInstr_MotherBrainsRainbowBeamExplosion",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/mother-brain-explosion-tracking/evidence/1791904021845835-546014-708/verdict.toml"
+verified_cases = 324
+
+[[passed]]
+family = "mother-brain-glass-allocation"
+routines = ["SpawnEprojWithRoomGfx"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/mother-brain-glass-allocation/evidence/1791904035001915-546014-711/verdict.toml"
+verified_cases = 1643
+
+[[passed]]
+family = "mother-brain-glass-callers"
+routines = [
+    "PlmInstr_SpawnFourMotherBrainGlass",
+    "SpawnMotherBrainGlassShatteringShard",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/mother-brain-glass-callers/evidence/1791904057157234-546014-722/verdict.toml"
+verified_cases = 379
+
+[[passed]]
+family = "mother-brain-glass-frames"
+routines = ["EprojRunAll"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/mother-brain-glass-frames/evidence/1791904057392298-546014-723/verdict.toml"
+verified_cases = 1069
+
+[[passed]]
+family = "mother-brain-glass-motion"
+routines = ["EprojPreInstr_MotherBrainGlassShatteringShard"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/mother-brain-glass-motion/evidence/1791904121799501-546014-751/verdict.toml"
+verified_cases = 649
+
+[[passed]]
+family = "mother-brain-glass-sequence"
+routines = ["EprojRunAll"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/mother-brain-glass-sequence/evidence/1791904161623202-546014-763/verdict.toml"
+verified_cases = 129
+
+[[passed]]
+family = "mother-brain-rainbow-tracking"
+routines = ["EprojPreInstr_MotherBrainRainbowBeam"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/mother-brain-rainbow-tracking/evidence/1791904181230450-546014-776/verdict.toml"
+verified_cases = 54
+
+[[passed]]
+family = "mother-brain-tube-motion"
+routines = []
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/mother-brain-tube-motion/evidence/1791904187415591-546014-779/verdict.toml"
+verified_cases = 433
+
+[[passed]]
+family = "mother-brain-turret-host-lifecycle"
+routines = ["EprojRunAll"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/mother-brain-turret-host-lifecycle/evidence/1791904188667591-546014-780/verdict.toml"
+verified_cases = 577
+
+[[passed]]
+family = "mother-brain-turret-projectiles"
+routines = [
+    "EprojRunAll",
+    "Eproj_MotherBrainRoomTurretBullets_Func2",
+    "Eproj_SetXvelRandom",
+    "Eproj_SetYvelRandom",
+    "SpawnEprojWithRoomGfx",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/mother-brain-turret-projectiles/evidence/1791904201561909-546014-792/verdict.toml"
+verified_cases = 1281
+
+[[passed]]
+family = "n00b-tube"
+routines = [
+    "EprojRunAll",
+    "SpawnEprojWithRoomGfx",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/n00b-tube/evidence/1791904239557976-546014-811/verdict.toml"
+verified_cases = 1477
+
+[[passed]]
+family = "n00b-tube-callers"
+routines = []
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/n00b-tube-callers/evidence/1791904254437097-546014-822/verdict.toml"
+verified_cases = 152
+
+[[passed]]
+family = "n00b-tube-sequence"
+routines = ["EprojRunAll"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/n00b-tube-sequence/evidence/1791904311316685-546014-841/verdict.toml"
+verified_cases = 97
+
+[[passed]]
+family = "nami-fune-horizontal-projectiles"
+routines = [
+    "EprojRunAll",
+    "SpawnEprojWithRoomGfx",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/nami-fune-horizontal-projectiles/evidence/1791904322592042-546014-844/verdict.toml"
+verified_cases = 769
+
+[[passed]]
+family = "observed-projectile-frame-boundaries"
+routines = ["EprojRunAll"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/observed-projectile-frame-boundaries/evidence/1791904334345826-546014-855/verdict.toml"
+verified_cases = 577
+
+[[passed]]
+family = "observed-projectile-initializers"
+routines = [
+    "EprojRunAll",
+    "SpawnEprojWithGfx",
+    "SpawnEprojWithRoomGfx",
+    "sub_86A301",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/observed-projectile-initializers/evidence/1791904354410906-546014-866/verdict.toml"
+verified_cases = 5409
+
+[[passed]]
+family = "observed-projectile-ownership"
+routines = [
+    "EprojRunAll",
+    "SpawnEprojWithGfx",
+    "SpawnEprojWithRoomGfx",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/observed-projectile-ownership/evidence/1791904381123487-546014-876/verdict.toml"
+verified_cases = 1840
+
+[[passed]]
+family = "observed-ridley-instructions"
+routines = [
+    "ProcessEnemyInstructions",
+    "Ridley_Instr_1",
+    "Ridley_Instr_10",
+    "Ridley_Instr_11",
+    "Ridley_Instr_12",
+    "Ridley_Instr_13",
+    "Ridley_Instr_5",
+    "Ridley_Instr_6",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/observed-ridley-instructions/evidence/1791904390377891-546014-879/verdict.toml"
+verified_cases = 1804
+
+[[passed]]
+family = "observed-ridley-instructions-captured"
+routines = [
+    "ProcessEnemyInstructions",
+    "Ridley_Instr_10",
+    "Ridley_Instr_11",
+    "Ridley_Instr_12",
+    "Ridley_Instr_13",
+    "Ridley_Instr_5",
+    "Ridley_Instr_6",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/observed-ridley-instructions-captured/evidence/1791904491798472-546014-907/verdict.toml"
+verified_cases = 90
+
+[[passed]]
+family = "palette-effect-allocation"
+routines = ["SpawnPalfxObject"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/palette-effect-allocation/evidence/1791904551963467-546014-910/verdict.toml"
+verified_cases = 288
+
+[[passed]]
+family = "palette-effect-frames"
+routines = [
+    "ClearPaletteFXObjects",
+    "DisablePaletteFx",
+    "EnablePaletteFx",
+    "PalFx_ProcessOne",
+    "PaletteFxHandler",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/palette-effect-frames/evidence/1791904587866575-546014-921/verdict.toml"
+verified_cases = 396
+
+[[passed]]
+family = "palette-effect-heat"
+routines = ["PalPreInstr_SamusInHeat"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/palette-effect-heat/evidence/1791904596493858-546014-932/verdict.toml"
+verified_cases = 512
+
+[[passed]]
+family = "palette-effect-preinstructions"
+routines = [
+    "PalPreInstr_CheckEnemy0Health",
+    "PalPreInstr_DeletePalfxIfMinibossDead",
+    "PalPreInstr_E1BC",
+    "PalPreInstr_F621",
+    "PalPreInstr_SwitchIfYpos",
+    "PalPreInstr_SwitchIfYpos2",
+    "PalPreInstr_nullsub_129",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/palette-effect-preinstructions/evidence/1791904627127789-546014-951/verdict.toml"
+verified_cases = 392
+
+[[passed]]
+family = "palette-instructions"
+routines = [
+    "PalInstr_ClearPreInstr",
+    "PalInstr_ColorPlus15",
+    "PalInstr_ColorPlus2",
+    "PalInstr_ColorPlus3",
+    "PalInstr_ColorPlus4",
+    "PalInstr_ColorPlus8",
+    "PalInstr_ColorPlus9",
+    "PalInstr_DecTimerGoto",
+    "PalInstr_Delete",
+    "PalInstr_Goto",
+    "PalInstr_QueueMusic",
+    "PalInstr_QueueSfx1",
+    "PalInstr_QueueSfx2",
+    "PalInstr_QueueSfx3",
+    "PalInstr_SetColorIndex",
+    "PalInstr_SetPalfxIndex",
+    "PalInstr_SetPreInstr",
+    "PalInstr_SetTimer",
+    "PalInstr_Wait",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/palette-instructions/evidence/1791904640436244-546014-962/verdict.toml"
+verified_cases = 1368
+
+[[passed]]
+family = "phantoon-orbits"
+routines = [
+    "EprojRunAll",
+    "SpawnEprojWithRoomGfx",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/phantoon-orbits/evidence/1791904654845563-546014-973/verdict.toml"
+verified_cases = 809
+
+[[passed]]
+family = "phantoon-starting-fireballs"
+routines = [
+    "EprojRunAll",
+    "SpawnEprojWithRoomGfx",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/phantoon-starting-fireballs/evidence/1791904701348635-546014-984/verdict.toml"
+verified_cases = 449
+
+[[passed]]
+family = "pirate-host-callers"
+routines = [
+    "SpacePirates_Instr_15",
+    "SpacePirates_Instr_FireLaserL",
+    "SpacePirates_Instr_FireLaserR",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/pirate-host-callers/evidence/1791904736094037-546014-995/verdict.toml"
+verified_cases = 577
+
+[[passed]]
+family = "pirate-host-context"
+routines = [
+    "EprojRunAll",
+    "SpawnEprojWithRoomGfx",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/pirate-host-context/evidence/1791904776501111-546014-1006/verdict.toml"
+verified_cases = 549
+
+[[passed]]
+family = "pirate-projectile-flight"
+routines = ["EprojRunAll"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/pirate-projectile-flight/evidence/1791904805902262-546014-1018/verdict.toml"
+verified_cases = 644
+
+[[passed]]
+family = "plant-spike-motion"
+routines = []
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/plant-spike-motion/evidence/1791904853268000-546014-1031/verdict.toml"
+verified_cases = 1441
+
+[[passed]]
+family = "plm"
+routines = [
+    "PlmPreInstr_AdvanceLavaSamusMovesLeft",
+    "PlmPreInstr_B7EB_DecTimerEnableSoundsDeletePlm",
+    "PlmPreInstr_DeletePlmAndSpawnTriggerIfBlockDestroyed",
+    "PlmPreInstr_EscapeRoomBeforeOldTourianEscapeShaft",
+    "PlmPreInstr_GoToLinkInstrIfShot",
+    "PlmPreInstr_GoToLinkInstrIfShotWithAnyMissile",
+    "PlmPreInstr_GoToLinkInstrIfShotWithPowerBomb",
+    "PlmPreInstr_GoToLinkInstrIfShotWithSuperMissile",
+    "PlmPreInstr_GoToLinkInstruction",
+    "PlmPreInstr_GotoLinkIfBoss1Dead",
+    "PlmPreInstr_GotoLinkIfCrittersEscaped",
+    "PlmPreInstr_GotoLinkIfEnemyDeathQuotaOk",
+    "PlmPreInstr_GotoLinkIfMiniBossDead",
+    "PlmPreInstr_GotoLinkIfShotWithSuperMissile",
+    "PlmPreInstr_GotoLinkIfTorizoDead",
+    "PlmPreInstr_GotoLinkIfTourianStatueFinishedProcessing",
+    "PlmPreInstr_GotoLinkIfTriggered",
+    "PlmPreInstr_IncrementRoomArgIfShotBySuperMissile",
+    "PlmPreInstr_PlayDudSound",
+    "PlmPreInstr_PositionSamusAndInvincible",
+    "PlmPreInstr_SetMetroidsClearState_Ev0x10",
+    "PlmPreInstr_SetMetroidsClearState_Ev0x11",
+    "PlmPreInstr_SetMetroidsClearState_Ev0x12",
+    "PlmPreInstr_SetMetroidsClearState_Ev0x13",
+    "PlmPreInstr_ShaktoolsRoom",
+    "PlmPreInstr_WakeAndLavaIfBoosterCollected",
+    "PlmPreInstr_WakeIfTriggered",
+    "PlmPreInstr_WakeOnKeyPress",
+    "PlmPreInstr_WakePLMAndStartFxMotionSamusFarLeft",
+    "PlmPreInstr_WakePlmIfRoomArgumentDoorIsSet",
+    "PlmPreInstr_WakePlmIfSamusHasBombs",
+    "PlmPreInstr_WakePlmIfTriggered",
+    "PlmPreInstr_WakePlmIfTriggeredOrSamusAbovePlm",
+    "PlmPreInstr_WakePlmIfTriggeredOrSamusBelowPlm",
+    "PlmSetup_B638_Rightwards_Extension",
+    "PlmSetup_B63F_Leftwards_Extension",
+    "PlmSetup_B643_Downwards_Extension",
+    "PlmSetup_B647_Upwards_Extension",
+    "PlmSetup_B6FF_ScrollBlockTouch",
+    "PlmSetup_B703_ScrollPLM",
+    "PlmSetup_B707_SolidScrollPLM",
+    "PlmSetup_B70F_IcePhysics",
+    "PlmSetup_B71F_SubmergingQuicksand",
+    "PlmSetup_B723_SandfallsSlow",
+    "PlmSetup_B727_SandFallsFast",
+    "PlmSetup_B737_SubmergingQuicksand",
+    "PlmSetup_B73B_B73F_SandFalls",
+    "PlmSetup_B767_ClearShitroidInvisibleWall",
+    "PlmSetup_B76F_SaveStation",
+    "PlmSetup_B974",
+    "PlmSetup_B9ED_CrittersEscapeBlock",
+    "PlmSetup_BTS_Brinstar_0x80_Floorplant",
+    "PlmSetup_BTS_Brinstar_0x81_Ceilingplant",
+    "PlmSetup_C794_GreyDoor",
+    "PlmSetup_C806_LeftGreenGateTrigger",
+    "PlmSetup_C80A_RightGreenGateTrigger",
+    "PlmSetup_C80E_LeftRedGateTrigger",
+    "PlmSetup_C812_RightRedGateTrigger",
+    "PlmSetup_C816_LeftBlueGateTrigger",
+    "PlmSetup_C81A_RightBlueGateTrigger",
+    "PlmSetup_C81E_LeftYellowGateTrigger",
+    "PlmSetup_C822_RightYellowGateTrigger",
+    "PlmSetup_C826_DownwardsOpenGate",
+    "PlmSetup_C82E_UpwardsOpenGate",
+    "PlmSetup_ClearShitroidInvisibleWall",
+    "PlmSetup_CrumbleBotwoonWall",
+    "PlmSetup_D08C_CrumbleBlock",
+    "PlmSetup_D08C_SuperMissileBlockRespawning",
+    "PlmSetup_D094_EnemyBreakableBlock",
+    "PlmSetup_D0D8_ClearVflag",
+    "PlmSetup_D0D8_SetVFlag",
+    "PlmSetup_D0DC_BreakableGrappleBlock",
+    "PlmSetup_D0E8_GiveSamusDamage",
+    "PlmSetup_D113_LowerNorfairChozoRoomPlug",
+    "PlmSetup_D127",
+    "PlmSetup_D138",
+    "PlmSetup_D700_MakePlmAirBlock_Unused",
+    "PlmSetup_D704_AlteranateLowerNorfairChozoHand_Unused",
+    "PlmSetup_DeactivatePlm",
+    "PlmSetup_Door_Blue",
+    "PlmSetup_Door_Colored",
+    "PlmSetup_MakeBllockChozoHandTrigger",
+    "PlmSetup_MotherBrainGlass",
+    "PlmSetup_MotherBrainRoomEscapeDoor",
+    "PlmSetup_QuicksandSurface",
+    "PlmSetup_RespawningBombBlock",
+    "PlmSetup_RespawningBombBlock2",
+    "PlmSetup_RespawningCrumbleBlock",
+    "PlmSetup_RespawningPowerBombBlock",
+    "PlmSetup_RespawningShotBlock",
+    "PlmSetup_RespawningSpeedBoostBlock",
+    "PlmSetup_ReturnCarryClear",
+    "PlmSetup_ReturnCarrySet",
+    "PlmSetup_SetrupWreckedShipEntrance",
+    "PlmSetup_ShaktoolsRoom",
+    "sub_84B9F1",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/plm/evidence/1791904864009696-546014-1034/verdict.toml"
+verified_cases = 1184
+
+[[passed]]
+family = "plm-instructions"
+routines = [
+    "CalculatePlmBlockCoords",
+    "DrawPlm",
+    "ProcessPlmDrawInstruction",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/plm-instructions/evidence/1791904868552632-546014-1036/verdict.toml"
+verified_cases = 1444
+
+[[passed]]
+family = "plm-spawn"
+routines = []
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/plm-spawn/evidence/1791904953586438-546014-1064/verdict.toml"
+verified_cases = 1969
+
+[[passed]]
+family = "power_bomb"
+routines = [
+    "BombOrPowerBomb_Func1",
+    "PowerBomb_Func3",
+    "ProjPreInstr_PowerBomb",
+    "SpawnPowerBombExplosion",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/power_bomb/evidence/1791904960610903-546014-1066/verdict.toml"
+verified_cases = 88
+
+[[passed]]
+family = "pre-phantoon-room-projectile"
+routines = ["RoomCode_8FC8C8"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/pre-phantoon-room-projectile/evidence/1791905005327321-546014-1069/verdict.toml"
+verified_cases = 57
+
+[[passed]]
+family = "projectile-boss-state-instructions"
+routines = [
+    "EprojInstr_GotoIfFunc1",
+    "EprojInstr_MotherBrainPurpleBreathIsActive",
+]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/projectile-boss-state-instructions/evidence/1791905010019789-546014-1072/verdict.toml"
+verified_cases = 72
+
+[[passed]]
+family = "projectile-death-beam"
+routines = ["SpawnMotherBrainDeathBeam"]
+verdict = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/projectile-death-beam/evidence/1791905024753376-546014-1091/verdict.toml"
+verified_cases = 48

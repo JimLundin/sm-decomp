@@ -1,0 +1,38 @@
+schema = "decomp-manual-research-handoff-v1"
+sequence = 1
+phase = "research-source-and-ownership-inspection"
+parent_session_id = "01a13592-d02b-7143-8489-a15b03f19da2"
+worker_session_id = "01a135ca-3b5d-75a2-b717-23d486d7b6ec"
+worker_identity_observation = "Read real CODEX_THREAD_ID from this launched worker environment; sent UUID to parent before research."
+agent = "/root/research18"
+effort = "decomp-parallel"
+baseline = "7ed3d383d6d3e28d21d1bb960acc5576ce82f5e9"
+baseline_observation = "Read git rev-parse HEAD at 2026-10-13 15:05 UTC. The exact native research Job has no base-head; this is an observed source baseline, not an assignment input."
+ticket = ".scratch/decomp-parallel/issues/18-audio-ui-menu-scope.md"
+assignment_receipt = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/receipts/next-research-4.stdout.toml"
+assignment_receipt_sha256 = "3698140d4c507dac4f26a8d15adf96367da4249e70140fe2fb3b8d646f284c51"
+worktree = "/home/jim/sm-decomp"
+source_writes_authorized = false
+scratch_output = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-18"
+latest_wip_or_submitted_commit = "none; parent owns main Git/index and shared publication"
+processes = []
+runs = []
+achieved_stages = []
+results = ["Exact reserved receipt matches the supplied claim; writable_paths and workspace are empty", "Pinned recovered C changes SFX acknowledgment handlers1/2/3; existing Rust audio module covers queues only"]
+limitations = ["Read-only research with no builds, verification experiments, claims or shared source edits", "Native research Job omits base-head; standard decomp-session start handoff cannot be synthesized", "Full audio hardware and menu boundaries are not implemented or accepted"]
+next_action = "Read pinned C/Rust and original/native evidence; record full audio and distinct UI closures, dependency ownership, exact proposed files and bounded verification commands; parent publishes and admits result."
+cleanup_status = "no run created; final complete-no-run measurement pending"
+
+[claim]
+id = "ticket-2966e528f4696d00eed786e3a895d9034fd217c5ad6db59153329ef23da35b6d"
+revision = "2b5be5ee42e86f922e679effe3968f60fc7d94afffa98e078f88a1c6107fa81d"
+attempt = 1
+coordinator = "decomp-run-20261013"
+
+[shared]
+pipeline_root = "/home/jim/sm-decomp/out/pipeline"
+workers = 4
+assignment_capacity = 3
+dispatcher_generation = 1
+integrator = "ceres-20261013"
+integrator_generation = 2

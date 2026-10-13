@@ -1,0 +1,94 @@
+format = "decomp-research-child-proposals-v1"
+status = "review-required"
+origin_ticket = ".scratch/decomp-parallel/issues/19-sram-save-load-scope.md"
+source_baseline = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+worker_session_id = "01a135f8-3634-7043-be4f-a5c4d96c15e5"
+parent_session_id = "01a13592-d02b-7143-8489-a15b03f19da2"
+source_inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+native_scope_admitted = false
+gameplay_acceptance = false
+exercise_receipt_available = false
+all_new_targets_unimplemented = true
+all_gate_argv_unrun = true
+coordinator_action = "Publish only reviewed exact follow-ups, supplement shared21, reuse research18 UI and20credits, link06/08/09 blockers, seal inputs/artifacts through sm-evidence, retain ownership and admit exact researched result. These proposals grant no writable ownership."
+
+[[children]]
+key = "19-shared-exercise-supplement"
+type = "task"
+subject = "Add direct bank81 persistence roots to the single native-exercise producer"
+proposal = "proposed-children/01-shared-exercise-supplement.md"
+reuse_ticket = ".scratch/decomp-parallel/issues/21-native-root-exercise-provenance.md"
+role = "reviewed-integrator-owned-Rust-extension"
+candidate_writable_paths = ["crates/pipeline/src/native_exercise.rs", "crates/pipeline/src/native_exercise_model.rs", "crates/pipeline/src/native_exercise_host.c.in", "crates/pipeline/src/translation.rs", "crates/pipeline/src/main.rs", "crates/pipeline/tests/native_exercise.rs"]
+depends_on = ["21-single-producer-review", "current-source-epoch-and-ownership"]
+submission_argv = ["cargo", "test", "-p", "pipeline", "--locked", "--offline", "--test", "native_exercise"]
+submission_timeout_seconds = 60
+integration_argv = ["cargo", "test", "-p", "pipeline", "--locked", "--offline", "--test", "native_exercise", "--test", "assignment_queue", "--bin", "sm-pipeline"]
+integration_timeout_seconds = 3600
+acceptance = ["Separate genuine direct SaveToSram and LoadFromSram entry/return and selected slot/table/state windows", "Full original/generated source/build/binary/reader/ROM/movie identities and nonzero counts", "Independent wrong-root/callee/zero/truncated/stale/hash/slot/selector rejection", "Preserve bank86 schema2 and current producer/reader equivalence; no second engine"]
+
+[[children]]
+key = "19-persistence-adapter"
+type = "research"
+subject = "Freeze the full WRAM/SRAM service ABI for a reviewed Rust persistence adapter task"
+proposal = "proposed-children/02-persistence-adapter.md"
+role = "integrator-owned-infrastructure-review-then-implementation"
+candidate_new_paths = ["crates/pipeline/src/persistence_adapter.rs", "crates/pipeline/src/persistence_model.rs", "crates/pipeline/src/persistence_host.c.in", "crates/pipeline/src/persistence_abi.rs.in", "crates/pipeline/tests/persistence_adapter.rs", "crates/pipeline/tests/persistence_live.rs"]
+candidate_shared_hook_paths = ["crates/port/src/memory.rs", "crates/port/src/lib.rs", "crates/port/src/game_host.rs", "crates/pipeline/src/family.rs", "crates/pipeline/src/family_model.rs", "crates/pipeline/src/live.rs", "crates/pipeline/src/live_model.rs", "crates/pipeline/src/main.rs", "tools/port/batch.toml"]
+depends_on = ["19-shared-exercise-supplement", "13host-reset-and-service-contract", "current-source-epoch-and-ownership"]
+submission_argv = ["cargo", "test", "-p", "pipeline", "--locked", "--offline", "--test", "persistence_adapter"]
+submission_timeout_seconds = 60
+integration_argv = ["cargo", "test", "-p", "pipeline", "--locked", "--offline", "--test", "persistence_adapter", "--test", "persistence_live", "--test", "family", "--test", "live"]
+integration_timeout_seconds = 3600
+acceptance = ["Full131072byte WRAM/8192byte SRAM, raw return and ordered memory/filesystem requests/results", "Whole-transaction preflight and refusal unchanged; execution-once service failure without C retry", "Memory parity distinguished from pinned unchecked void disk-service durability", "Supported actual-C adapter/manifests and material independent fresh-process/original-ROM argv before native scope admission"]
+
+[[children]]
+key = "19-complete-codec"
+type = "task"
+subject = "Implement and verify all four bank81 save/load codec routines"
+proposal = "proposed-children/03-complete-codec.md"
+role = "one-native-gameplay-owner-after-supported-admission"
+holding_scope = "scope-holding.toml"
+routines = ["SaveToSram", "LoadFromSram", "PackMapToSave", "UnpackMapFromSave"]
+routine_count = 4
+candidate_writable_paths = ["crates/port/src/persistence.rs", "crates/port/tests/persistence.rs", "tools/port/persistence.toml"]
+depends_on = ["19-shared-exercise-supplement", "19-persistence-adapter", "integrator-canonical-SRAM-wiring"]
+submission_argv = ["cargo", "test", "-p", "port", "--locked", "--offline", "--test", "persistence"]
+submission_timeout_seconds = 60
+integration_argv = ["cargo", "run", "-p", "pipeline", "--locked", "--offline", "--bin", "sm-pipeline", "--", "family-verify", "--manifest", "tools/port/persistence.toml", "--output", "out/port/persistence", "--case-jobs", "4"]
+integration_timeout_seconds = 3600
+acceptance = ["Actual-C full-state/return/order parity in defined domain", "Three-slot alias/checksum-pair/invalid-load/unchanged-surrounding/map-hole/tail/extra-clear controls", "Malformed/zero-count/unsafe-slot refusal without unsafe oracle execution", "Exactly one post-save persistence call and none for invalid load; complete source/evidence cleanup"]
+
+[[children]]
+key = "19-canonical-companions"
+type = "research"
+subject = "Freeze canonical new-file, explored-map and load-station companion ownership"
+proposal = "proposed-children/04-canonical-companions.md"
+role = "bounded-four-routine-review-then-same-canonical-state-owner"
+routines = ["NewSaveFile", "LoadMirrorOfExploredMapTiles", "SaveExploredMapTilesToSaved", "LoadFromLoadStation"]
+routine_count = 4
+candidate_writable_paths = ["crates/port/src/persistence.rs", "crates/port/tests/persistence.rs", "tools/port/persistence.toml"]
+candidate_writable_paths_note = "Sequential continuation of the same codec owner; no parallel claim on this triplet. Integrator decides exact room/public hooks separately."
+depends_on = ["19-persistence-adapter", "19-complete-codec", "accepted-room-initialization-ownership"]
+acceptance = ["Exact source/ROM extents already recorded; no broad room/UI/gunship inventory expansion", "Preserve NewSaveFile partial clears/defaults, full-area map mirror and overlapping word OR", "Preserve14byte station/room-header/low-byte/position semantics with whole-call preflight", "Freeze same-owner four-routine native scope only after genuine exercise and dependencies"]
+conditional_submission_argv = ["cargo", "test", "-p", "port", "--locked", "--offline", "--test", "persistence"]
+submission_timeout_seconds = 60
+conditional_integration_argv = ["cargo", "run", "-p", "pipeline", "--locked", "--offline", "--bin", "sm-pipeline", "--", "family-verify", "--manifest", "tools/port/persistence.toml", "--output", "out/port/persistence", "--case-jobs", "4"]
+integration_timeout_seconds = 3600
+
+[[children]]
+key = "19-composed-save-and-fresh-process"
+type = "task"
+subject = "Verify real Ceres save and ordinary-reset file reopen/load/continue"
+proposal = "proposed-children/05-composed-save-and-fresh-process.md"
+role = "integration-verification-after-implementation"
+new_gameplay_writable_paths = []
+reuse_owners = ["06-Ceres-GameState33", "13host", "22/23NMI", "research18-options-and-file-file-map-successor", "20cinematic-credits", "held-reset76"]
+depends_on = ["19-complete-codec", "19-canonical-companions", "19-persistence-adapter", "accepted-Ceres-and-start-player-room-host", "research18-file-file-map-successor", "12controller-and-original-APU-NMI-domain"]
+conditional_submission_argv = ["cargo", "test", "-p", "pipeline", "--locked", "--offline", "--test", "persistence_live"]
+submission_timeout_seconds = 60
+conditional_integration_argv = ["cargo", "test", "-p", "pipeline", "--locked", "--offline", "--test", "persistence_live", "--test", "live"]
+integration_timeout_seconds = 3600
+material_subjectchain_argv_available = false
+original_rom_argv_available = false
+acceptance = ["Direct GameState33 saved loading22/station/area before cinematic/flag/queue clears", "Independent C0/C1/mixed0/mixed1 RM_MINE chains: real file save/process exit/new process imports only file/ordinary reset/menu/load/continue", "Canonical resources/items/maps/room/state including reviewed22->Crateria0/18 route and health refill", "No candidate WRAM/full snapshot injection, hidden fallback or RM_COMPARE restoration as reopen evidence", "Separate original-ROM scratch/carry/controller/NMI/APU evidence; published exact argv/captures/nonzero ownership"]

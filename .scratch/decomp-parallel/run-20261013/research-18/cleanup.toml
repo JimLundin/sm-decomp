@@ -1,0 +1,42 @@
+format = "decomp-research-cleanup-v1"
+status = "complete-no-run"
+observed_at = "2026-10-13 15:52:12 UTC"
+worker_session_id = "01a135ca-3b5d-75a2-b717-23d486d7b6ec"
+root = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-18"
+source_baseline = "7ed3d383d6d3e28d21d1bb960acc5576ce82f5e9"
+source_head_observed = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+source_writes = false
+experiment_created = false
+run_directories_created = []
+build_outputs_created = []
+implementer_worktrees_created = []
+active_run_processes = []
+bytes_reclaimed = 0
+disk_available_bytes = 187136430080
+disk_available_command = ["df", "-B1", "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-18"]
+writer_observation_command = ["lsof", "+D", "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-18"]
+writer_observation_exit_code = 1
+writer_observation_stdout = ""
+writer_observation = "No matching open files/writers at inspection. The worker only used bounded synchronous static reads and scratch note writes; no persistent experimental process."
+finished_run_cleanup_commands = []
+deduplication_commands = []
+cleanup_reason = "This worker created no verification run, experiment, build tree or implementer worktree. There is no finished run root on which project cleanup/deduplication can operate. Required final no-run liveness/space observation completed."
+retained_dependencies = [
+  "All authored research output and manual handoffs under this assigned directory",
+  "inputs.paths regular-file source/evidence snapshots and inherited-input-seals.toml declarations",
+  "Pinned recovered C archive/source-inventory and existing Rust dependency source",
+  "Original ROM, patched native image, recorded movie and historical actual-C verdicts at their listed paths",
+  "REA capability observation only; no native session or runtime artifact",
+]
+current_store_authenticated = false
+remaining_run_cleanup_action = "none for this worker"
+coordinator_remaining_action = "Freeze/authenticate this read-only package and exact listed inputs with existing sm-evidence ingest/inventory/verify; retain external trusted run pointers, reader/source/store and receipts; publish tickets and exact research result."
+
+[future_implementation_cleanup]
+required = true
+commands = [
+  "cargo run -p pipeline --locked --offline --bin sm-pipeline -- cleanup --root <finished-run-root> --apply",
+  "cargo run -p pipeline --locked --offline --bin sm-pipeline -- cleanup --root <finished-run-root> --deduplicate --apply",
+]
+note = "These documented commands were not run because no experiment root exists here. Future implementation must wait for writers, complete both passes, remove integrated worktrees, retain sealed dependencies and reauthenticate."
+

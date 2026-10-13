@@ -1,0 +1,146 @@
+format = "decomp-inherited-input-seals-v1"
+current_store_authenticated_by_worker = false
+fresh_hashes_computed_by_worker = false
+source_archive_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+source_archive_sha256 = "69c78831351112887575f852dadf0281dd5c23cef890b07a268ae6cf60aa9193"
+source_identity_sha256 = "e74864c229949fc6f1a6bd7528f339bdb3f9364f1e4f9544f08693881d10f111"
+source_inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+limitations = ["Hashes are inherited declarations, not new authentication of current mutable inputs.", "Coordinator owns serialized sm-evidence ingest/inventory/verify for frozen package and captured inputs.", "No manual hashes, new hash utility or Python runtime used."]
+
+[[entries]]
+path = "/home/jim/sm-decomp/tools/port/source-inventory.toml"
+sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+origin = "research13-18 retained inventory declarations"
+current_authentication_by_worker = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_80.c"
+sha256 = "ab9abc1042ea876c51de90d00632d1af13e9a765c77cf371950ddcdc783130c7"
+origin = "tools/port/source-inventory.toml source_identity.files at pinned archive revision"
+current_authentication_by_worker = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_81.c"
+sha256 = "bd05747f344ac18d4f5230e10fd4678b087048c24e8aeb5f685691b36badb1a0"
+origin = "tools/port/source-inventory.toml source_identity.files at pinned archive revision"
+current_authentication_by_worker = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_82.c"
+sha256 = "afa8b6fb9e9e5ad378db4779c1c39574856a57d50d25c4536aa2bafeeb79e3ad"
+origin = "tools/port/source-inventory.toml source_identity.files at pinned archive revision"
+current_authentication_by_worker = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_84.c"
+sha256 = "6497c1ea38669812a8d69476349f11b6ecd196ac58b605eca49d77d978febb3a"
+origin = "tools/port/source-inventory.toml source_identity.files at pinned archive revision"
+current_authentication_by_worker = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_8b.c"
+sha256 = "b77fe217eb0e74b82d92acd4d32f44141a095da8264c15fb5f703067b0496ba3"
+origin = "tools/port/source-inventory.toml source_identity.files at pinned archive revision"
+current_authentication_by_worker = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_a2.c"
+sha256 = "d62422845f0fee20c929ed7a635a0eb397d376a6b2d62b9c0aab21e3c18a315e"
+origin = "tools/port/source-inventory.toml source_identity.files at pinned archive revision"
+current_authentication_by_worker = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_rtl.c"
+sha256 = "cafcd12cd98e5797680a1928af23ceaf244a20afea927bf600c122effd899614"
+origin = "tools/port/source-inventory.toml source_identity.files at pinned archive revision"
+current_authentication_by_worker = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_rtl.h"
+sha256 = "0347707a3b7cbdfb3563866ee7574a67afdc53d1a0907427b157bf49c3f9afac"
+origin = "tools/port/source-inventory.toml source_identity.files at pinned archive revision"
+current_authentication_by_worker = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/variables.h"
+sha256 = "e2ce28d07ceff91129e93417099f33f20f161c37e95e745c575d0e30b3fd5585"
+origin = "tools/port/source-inventory.toml source_identity.files at pinned archive revision"
+current_authentication_by_worker = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/variables_extra.h"
+sha256 = "b0bcbd066690205160fad3e625820d4c51d82ac63853cae37a0fe25b0bd3844d"
+origin = "tools/port/source-inventory.toml source_identity.files at pinned archive revision"
+current_authentication_by_worker = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/funcs.h"
+sha256 = "b34fcb4451210e086845163bbfb5a9ca1ef5a2e2cb8022b8a7d7fab4fe6cb52e"
+origin = "tools/port/source-inventory.toml source_identity.files at pinned archive revision"
+current_authentication_by_worker = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/ida_types.h"
+sha256 = "12974c5708740164692dac151104020b53e8316e7378521c974ddf602d1f28ff"
+origin = "tools/port/source-inventory.toml source_identity.files at pinned archive revision"
+current_authentication_by_worker = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/types.h"
+sha256 = "02d6acb15eb207f36fa03ebab65bf622521657f2168db0a415a55c7f9598a0c0"
+origin = "tools/port/source-inventory.toml source_identity.files at pinned archive revision"
+current_authentication_by_worker = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/snes/cart.c"
+sha256 = "a8405dfe8a5de222d674022b90b3c96783130872113f2e5083481aa73ede2109"
+origin = "tools/port/source-inventory.toml source_identity.files at pinned archive revision"
+current_authentication_by_worker = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/snes/snes.c"
+sha256 = "0a2594280c3931c2e2271111c685a535a3d620fa55b5eb6f92db1a0b4c1c0259"
+origin = "tools/port/source-inventory.toml source_identity.files at pinned archive revision"
+current_authentication_by_worker = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/rom/sm.sfc"
+sha256 = "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72"
+origin = "research18 authenticated retained ROM input declaration"
+current_authentication_by_worker = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/out/port/room-plm-current-live/20261010T224032.887967Z/c-0/rom-view.bin"
+sha256 = "40aaebb25b9646bea2dffdc5e1ae680768a39dd122de9353885e1c7456ceae27"
+origin = "research18 authenticated retained native ROM input declaration"
+current_authentication_by_worker = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/movies/super-metroid-any-3653.inputs"
+sha256 = "cc643d751554ad6d30b5d7e3a41a4259525517ca7614cf73abec9fac30176c0e"
+origin = "research18 authenticated retained movie input declaration"
+current_authentication_by_worker = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-18/Answer.md"
+sha256 = "45bd7e4152b6167a585ecd3805b1597c8ab6704a678aa8980f374668d463b366"
+origin = "coordinator sm-evidence research18 run2156e965ec6cd98bd54b381c5d490784d34af141ee1a8ddb4cebc729583f3062"
+current_authentication_by_worker = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-18/children.toml"
+sha256 = "18017dca2f6ea977fa25f298b0967c9179bdaf117cbc2454db420861a3c124f6"
+origin = "same research18 authenticated evidence run"
+current_authentication_by_worker = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-18/inherited-input-seals.toml"
+sha256 = "30a16c8cf6f419e5cd69eff43e3f65349728ab91d7275c46e19086c099f4b089"
+origin = "same research18 authenticated evidence run"
+current_authentication_by_worker = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-18/rom-observations.json"
+sha256 = "a8f8896d1d11a3dfa34c8744e298630a15b9951c8937d7884d86092da20e16cc"
+origin = "same research18 authenticated evidence run"
+current_authentication_by_worker = false

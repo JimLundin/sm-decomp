@@ -1,0 +1,16 @@
+id = "pause-equipment-render-offline-translating-20261013"
+scope = "Complete pause equipment renderer: sprites, selector animation, reserve tanks and wireframe queue"
+agent = "/root/coverage_renderer (01a13623-3b41-7822-b0b3-a99f73df84ac)"
+stage = "translating"
+evidence_context = "current-checkout"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+routines = ["DrawMenuSpritemap", "DrawPauseScreenSpriteAnim", "EquipmentScreenDrawItemSelector", "EquipmentScreenDisplayReserveTankAmount", "EquipmentScreenDisplayReserveTankAmount_", "EquipmentScreenDisplayReserves_PaletteSetup", "WriteSamusWireframeTilemap", "WriteSamusWireframeTilemapAndQueue"]
+commit = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+limitations = ["Assigned offline implementation; no translated or verified coverage earned yet.", "Seven direct roots fit the maintained generic family ABI; the exact three-argument animation interface gets a separate actual-C gate.", "Lib/catalog wiring and live gameplay acceptance remain with the original integration owner."]
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-coverage/pause-equipment-render-scope.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-coverage/pause-equipment-render-next.stdout.toml"

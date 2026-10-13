@@ -1,0 +1,8 @@
+argv = [
+    "/home/jim/sm-decomp/.scratch/decomp-coverage/renderer/bin/direct-animation",
+    "authenticate",
+    "/home/jim/sm-decomp/out/port/decomp-coverage-20261013/direct-animation/verdict.toml",
+]
+seconds = 77.467995599
+worker_wait_seconds = 0.00063574
+exit_code = 0

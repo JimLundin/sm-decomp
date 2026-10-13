@@ -1,0 +1,61 @@
+format = "decomp-subsystem-research-holding-v1"
+subject = "Complete bank81 SRAM save/load codec"
+source_baseline = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+worker_session_id = "01a135f8-3634-7043-be4f-a5c4d96c15e5"
+accepted = false
+assign_scope_supported = false
+readiness = "awaiting-supported-direct-save-and-load-exercise-and-canonical-SRAM-adapter"
+source_inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+source_observations = "routine-observations.toml"
+state_observations = "state-contract.toml"
+asset_observations = "rom-observations.toml"
+child_proposals = "children.toml"
+exercise_receipt_available = false
+exercise_sha256_available = false
+achieved_stages = []
+limitations = [
+  "Custom holding is not a translation-scope-v1 and cannot authorize assign --scope.",
+  "No supported bank81 direct-root receipt; no invented exercise path/hash.",
+  "All proposed new tests/modules/manifests are unimplemented and gates unrun.",
+  "Original-ROM parity, caller exercise and fresh-process continuation remain separate.",
+]
+protected_shared_paths = [
+  "crates/port/src/memory.rs",
+  "crates/port/src/lib.rs",
+  "crates/port/src/game_host.rs",
+  "crates/pipeline/src/family.rs",
+  "crates/pipeline/src/family_model.rs",
+  "crates/pipeline/src/live.rs",
+  "crates/pipeline/src/live_model.rs",
+  "crates/pipeline/src/translation.rs",
+  "crates/pipeline/src/main.rs",
+  "tools/port/batch.toml",
+  ".scratch/decomp-progress/registry.json",
+  ".scratch/decomp-parallel/ledger.toml",
+]
+
+[[scopes]]
+key = "19-complete-SRAM-codec"
+routines = ["SaveToSram", "LoadFromSram", "PackMapToSave", "UnpackMapFromSave"]
+count = 4
+direct_roots = ["SaveToSram", "LoadFromSram"]
+lexical_closures = ["SaveToSram -> PackMapToSave", "LoadFromSram -> UnpackMapFromSave"]
+proposed_writable_paths = [
+  "crates/port/src/persistence.rs",
+  "crates/port/tests/persistence.rs",
+  "tools/port/persistence.toml",
+]
+dependencies = [
+  "21-single-shared-direct-root-producer-and-reader",
+  "19-reviewed-canonical-WRAM-SRAM-persistence-adapter",
+  "integrator-owned-SRAM-accessor-and-service-wiring",
+  "ROM81-slot-map-tables-and-full-transaction-preflight",
+]
+submission_argv = ["cargo", "test", "-p", "port", "--locked", "--offline", "--test", "persistence"]
+submission_timeout_seconds = 60
+integration_argv = ["cargo", "run", "-p", "pipeline", "--locked", "--offline", "--bin", "sm-pipeline", "--", "family-verify", "--manifest", "tools/port/persistence.toml", "--output", "out/port/persistence", "--case-jobs", "4"]
+integration_timeout_seconds = 3600
+integration_prerequisite = "Register and authenticate actual persistence fixture/ABI support; current generic family has no SRAM contract."
+original_rom_argv_available = false
+fresh_process_argv_available = false
+next_action = "Coordinator seals inputs, publishes reviewed adapter/provenance dependencies, obtains genuine direct-save/direct-load receipts, then writes the supported exact native scope."

@@ -1,0 +1,9 @@
+observations = "cc96a49db3b8d011c2d68d5b345f4c9f30bc1821953e381444e300a6341435b0"
+files = 1
+bytes = 1448
+
+[artifacts]
+"scope.toml" = "5dc14ed1ec5fa6028583d3c6c10d31a1d12b46015032fc1ae827517c795ce160"
+
+[provenance]
+schema_version = 2

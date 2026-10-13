@@ -1,0 +1,34 @@
+schema = "decomp-offline-coverage-scope-v1"
+baseline = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+subject = "Complete pause equipment rendering, selector, reserve tanks and wireframe queue"
+routines = [
+    "DrawMenuSpritemap",
+    "DrawPauseScreenSpriteAnim",
+    "EquipmentScreenDrawItemSelector",
+    "EquipmentScreenDisplayReserveTankAmount",
+    "EquipmentScreenDisplayReserveTankAmount_",
+    "EquipmentScreenDisplayReserves_PaletteSetup",
+    "WriteSamusWireframeTilemap",
+    "WriteSamusWireframeTilemapAndQueue",
+]
+roots = [
+    "EquipmentScreenDrawItemSelector",
+    "EquipmentScreenDisplayReserveTankAmount",
+    "WriteSamusWireframeTilemapAndQueue",
+]
+writable_paths = [
+    "crates/port/src/pause_equipment_render.rs",
+    "crates/port/tests/pause_equipment_render.rs",
+    "tools/port/pause-equipment-render.toml",
+]
+limitations = [
+    "Actual-C offline fixtures only. Live pause input, scheduling and hardware acceptance remain pending.",
+    "Lib/catalog wiring stays owned by the original integrator.",
+]
+
+[inputs]
+"crates/port/src/memory.rs" = "7c0df2e77ed2d05dda05bd6d9e98fef3f7ec5f1c76426da504229af698bfecc5"
+"deps/snesrev-sm/src/sm_81.c" = "bd05747f344ac18d4f5230e10fd4678b087048c24e8aeb5f685691b36badb1a0"
+"deps/snesrev-sm/src/sm_82.c" = "afa8b6fb9e9e5ad378db4779c1c39574856a57d50d25c4536aa2bafeeb79e3ad"
+"tools/dependencies.toml" = "e74864c229949fc6f1a6bd7528f339bdb3f9364f1e4f9544f08693881d10f111"
+"tools/port/source-inventory.toml" = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"

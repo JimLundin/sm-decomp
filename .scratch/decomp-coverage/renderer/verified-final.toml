@@ -1,0 +1,29 @@
+id = "pause-equipment-render-main-verified-final-20261013"
+scope = "Delivered pause equipment renderer: eight new routines, 607 passing actual-C pairs"
+agent = "/root (01a13592-d02b-7143-8489-a15b03f19da2)"
+stage = "verified"
+evidence_context = "current-checkout"
+supersedes = ["pause-equipment-render-offline-verified-20261013"]
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+routines = ["DrawMenuSpritemap", "DrawPauseScreenSpriteAnim", "EquipmentScreenDrawItemSelector", "EquipmentScreenDisplayReserveTankAmount", "EquipmentScreenDisplayReserveTankAmount_", "EquipmentScreenDisplayReserves_PaletteSetup", "WriteSamusWireframeTilemap", "WriteSamusWireframeTilemapAndQueue"]
+commit = "fa6e9cd747acabcb4568ccd2c0fbf532a9525c18"
+limitations = ["Eight new committed routines; 247 generic actual-C pairs plus 360 exact-three-argument animation pairs compare complete128KiB WRAM/raw returns. Ten Rust tests pass.", "Both cleanup passes and both verdict authentications pass after worker retirement. Passing family and direct images/inputs are retained through the shared evidence store.", "Bounded original-ROM fixtures. Public lib/catalog/live pause integration remains queued behind original Ceres host admission; no integrated/live stage is claimed."]
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-coverage/renderer/final-handoff.md"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-coverage/renderer/family-authenticate-retired.stdout.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/decomp-coverage-20261013/direct-animation-authenticate-retired.stdout"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-coverage/renderer/retirement.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-coverage/renderer/family-evidence-ingest.stdout.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-coverage/renderer/family-evidence-verify.stdout.toml"

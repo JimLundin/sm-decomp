@@ -1,0 +1,17 @@
+argv = [
+    "cargo",
+    "test",
+    "--manifest-path",
+    "/tmp/sm-decomp-parallel-pause-equipment-render-offline-1/Cargo.toml",
+    "-p",
+    "port",
+    "--locked",
+    "--offline",
+    "--test",
+    "pause_equipment_render",
+    "--config",
+    'patch."https://github.com/doublegate/RustySNES".rustysnes-core.path="/home/jim/sm-decomp/deps/rustysnes/crates/rustysnes-core"',
+]
+seconds = 1.393338806
+worker_wait_seconds = 0.000251356
+exit_code = 0

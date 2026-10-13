@@ -1,0 +1,8 @@
+schema = "decomp-direct-animation-cases-v1"
+routine = "DrawPauseScreenSpriteAnim"
+animation_ids = [2, 3, 6, 7, 8, 9]
+timers = [0, 1, 2, 32768, 65535]
+frames = [0, 255]
+coordinates = [[0, 0], [255, 224], [65535, 65535]]
+oam_cursors = [0, 508]
+limitations = ["Valid ROM animation frames are derived from the real sentinel sequence; 255 selects its last frame.", "Actual-C full-WRAM comparison; no live pause schedule or hardware acceptance."]

@@ -1,0 +1,47 @@
+format = "decomp-research-handoff-v1"
+sequence = 1
+status = "researching"
+observed_at = "2026-10-13 15:58:00 UTC"
+worker_session_id = "01a135f8-3634-7043-be4f-a5c4d96c15e5"
+agent = "/root/research19"
+root_session_id = "01a13592-d02b-7143-8489-a15b03f19da2"
+source_baseline = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+started_receipt = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/receipts/start-research-19.stdout.toml"
+reservation_receipt = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/receipts/next-host-failures.stdout.toml"
+scratch_output = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-19"
+worktree = "/home/jim/sm-decomp"
+assigned_isolated_workspace_available = false
+source_writes_authorized = false
+source_write_paths = []
+processes = []
+runs = []
+achieved_stages = []
+artifact_hashing_owner = "coordinator uses existing crates/evidence sm-evidence ingest/inventory/verify after ready-to-seal"
+results = [
+  "Read root domain and relevant agent runbooks before source exploration",
+  "Inspected four bank81 codec roots, canonical save/player/map aliases, boot VerifySRAM and Ceres GameState33 caller",
+  "Load writes complete save buffer before checksum validation; invalid load clears only payload and live station/area, without persistence callback",
+  "Current fixture schema has no SRAM input/output transaction; headless reset zeroes SRAM and does not call RtlReadSram",
+]
+limitations = [
+  "Unsupported non-bank86 direct-root exercise remains shared21 reviewed Rust extension work",
+  "No build, runtime, extraction or verification experiment was created",
+  "Inherited hashes have not been freshly authenticated; no manual hash commands used",
+  "Original ROM code and table bytes are static observations only",
+]
+next_working_directory = "/home/jim/sm-decomp"
+next_action = "Complete static map/slot/code/caller extent review; reuse research13–18 and legacy acceptance boundaries; write Answer.md, neutral child proposals, source/input paths and no-run cleanup; notify coordinator ready-to-seal."
+
+[claim]
+id = "ticket-e76fb87d41d3e1e6cab6286936a985d5b5c9d12bc1c0f99806ad86738940ba66"
+revision = "3a80add9c71186647255feadd5855a494d6859612ea56cc4c4ee5cd5ae5829cd"
+attempt = 1
+coordinator = "decomp-run-20261013"
+
+[shared]
+pipeline_root = "/home/jim/sm-decomp/out/pipeline"
+workers = 4
+assignment_capacity = 3
+dispatcher_generation = 1
+integrator = "ceres-20261013"
+integrator_generation = 2

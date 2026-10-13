@@ -1,0 +1,11 @@
+argv = [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-diagnosis/floater-alias/wrapper.rs",
+    "-o",
+    "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-diagnosis/floater-alias/rust",
+]
+seconds = 5.662389888
+worker_wait_seconds = 0.003674138
+exit_code = 0

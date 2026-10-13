@@ -1,0 +1,171 @@
+format = "pipeline-metrics-v1"
+run_id = "817711-45210827463811-0"
+scope_id = "817711-45210827463811-0"
+role = "exec"
+enabled = false
+start_ns = 19728
+end_ns = 1414942114
+elapsed_ns = 1414922386
+outcome = "success"
+stages = []
+
+[clock]
+name = "CLOCK_MONOTONIC"
+domain = "7119fcce-5593-4526-aa9b-07127767c4ef:time:[4026531834]"
+origin_ns = 45210827463811
+
+[[processes]]
+scope = "817711-45210827463811-0-1"
+pid = 817713
+parent_pid = 817711
+role = "renderer-tests"
+argv = [
+    "cargo",
+    "test",
+    "--manifest-path",
+    "/tmp/sm-decomp-parallel-pause-equipment-render-offline-1/Cargo.toml",
+    "-p",
+    "port",
+    "--locked",
+    "--offline",
+    "--test",
+    "pause_equipment_render",
+    "--config",
+    'patch."https://github.com/doublegate/RustySNES".rustysnes-core.path="/home/jim/sm-decomp/deps/rustysnes/crates/rustysnes-core"',
+]
+start_ns = 11866314
+end_ns = 1404817742
+exit_code = 0
+outcome = "success"
+reap_count = 1
+accounting = "Linux wait4 for owned direct child; may include descendants that child reaped"
+
+[processes.start_ticks]
+state = "measured"
+value = 4521083
+
+[processes.user_cpu_ns]
+state = "measured"
+value = 336252000
+
+[processes.system_cpu_ns]
+state = "measured"
+value = 1169732000
+
+[processes.peak_rss_bytes]
+state = "measured"
+value = 155566080
+
+[resources]
+rss_samples = 0
+disk_samples = 0
+incomplete_samples = 0
+rss_interval_ms = 100
+disk_interval_ms = 500
+rss_peak_at_ns = 0
+disk_peak_at_ns = 0
+semantics = "wait4 child accounting; aggregate concurrent /proc RSS sampled at 100ms; shared pages may count twice; short-lived/between-sample peaks may be missed"
+
+[resources.aggregate_sampled_rss_bytes]
+state = "unavailable"
+reason = "not collected"
+
+[resources.staging_allocated_bytes]
+state = "unavailable"
+reason = "not collected"
+
+[resources.private_store_allocated_bytes]
+state = "unavailable"
+reason = "not collected"
+
+[resources.combined_allocated_bytes]
+state = "unavailable"
+reason = "not collected"
+
+[resources.minimum_free_bytes]
+state = "unavailable"
+reason = "not collected"
+
+[transport.logical_bytes]
+state = "unavailable"
+reason = "not collected"
+
+[transport.transport_bytes]
+state = "unavailable"
+reason = "not collected"
+
+[transport.pack_bytes]
+state = "unavailable"
+reason = "not collected"
+
+[transport.flush_count]
+state = "unavailable"
+reason = "not collected"
+
+[transport.write_calls]
+state = "unavailable"
+reason = "not collected"
+
+[transport.write_elapsed_ns]
+state = "unavailable"
+reason = "not collected"
+
+[transport.max_flush_ns]
+state = "unavailable"
+reason = "not collected"
+
+[transport.short_writes]
+state = "unavailable"
+reason = "not collected"
+
+[transport.interruptions]
+state = "unavailable"
+reason = "not collected"
+
+[configuration]
+
+[[scopes]]
+id = "817711-45210827463811-0-1"
+parent = "817711-45210827463811-0"
+role = "renderer-tests"
+start_ns = 6406397
+end_ns = 1410140742
+outcome = "success"
+
+[scopes.transport.logical_bytes]
+state = "unavailable"
+reason = "not collected"
+
+[scopes.transport.transport_bytes]
+state = "unavailable"
+reason = "not collected"
+
+[scopes.transport.pack_bytes]
+state = "unavailable"
+reason = "not collected"
+
+[scopes.transport.flush_count]
+state = "unavailable"
+reason = "not collected"
+
+[scopes.transport.write_calls]
+state = "unavailable"
+reason = "not collected"
+
+[scopes.transport.write_elapsed_ns]
+state = "unavailable"
+reason = "not collected"
+
+[scopes.transport.max_flush_ns]
+state = "unavailable"
+reason = "not collected"
+
+[scopes.transport.short_writes]
+state = "unavailable"
+reason = "not collected"
+
+[scopes.transport.interruptions]
+state = "unavailable"
+reason = "not collected"
+
+[scopes.configuration]

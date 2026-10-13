@@ -1,0 +1,17 @@
+operation = "infrastructure-next"
+
+[queue]
+operation = "next"
+checkout = "/home/jim/sm-decomp"
+effort = "decomp-parallel"
+coordinator = "decomp-run-20261013"
+capacity = 3
+available_slots = 1
+
+[queue.authority]
+session_id = "01a13592-d02b-7143-8489-a15b03f19da2"
+generation = 1
+
+[admission]
+domain = "infrastructure"
+scopes = [{ path = "/home/jim/sm-decomp/.scratch/decomp-coverage/offline-assignment/scope.toml", sha256 = "5dc14ed1ec5fa6028583d3c6c10d31a1d12b46015032fc1ae827517c795ce160" }]

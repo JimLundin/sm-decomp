@@ -1,0 +1,82 @@
+format = "decomp-persistence-state-observations-v1"
+kind = "static-pinned-C-contract"
+runtime_evidence = false
+wram_bytes = 131072
+sram_bytes = 8192
+player_source_start = "09A2"
+player_source_end_inclusive = "0A01"
+player_copy_words = 48
+player_copy_bytes = 96
+payload_start_wram = "D7C0"
+payload_end_wram_inclusive = "DE1B"
+payload_bytes = 1628
+payload_words = 814
+next_unowned_alias = "plm_instruction_timer=DE1C"
+active_map_start = "07F7"
+active_map_bytes = 256
+saved_map_start = "CD52"
+saved_map_area_bytes = 256
+compressed_map_start = "D91C"
+compressed_map_bytes = 1280
+packed_written_bytes = 327
+packed_written_end_inclusive = "DA62"
+packed_preserved_start = "DA63"
+packed_preserved_bytes = 953
+unpack_clear_bytes = 1794
+unpack_clear_end_inclusive = "D453"
+live_area = "079F"
+live_station = "078B"
+selected_slot = "0952"
+has_area_map = "0789"
+loading_game_state = "D914"
+saved_station = "D916"
+saved_area = "D918"
+saved_item_counter = "D91A"
+slot_mask = 3
+slot_offsets = ["0010", "066C", "0CC8"]
+slot_payload_extents = ["0010..066B", "066C..0CC7", "0CC8..1323"]
+safe_alias_controls = ["4->0", "5->1", "6->2"]
+unsafe_slot_controls = ["3", "7", "FFFF"]
+unsafe_slot_observation = "Missing fourth table entry decodes484A outside8192 SRAM; refuse unchanged, do not execute C UB."
+checksum_lower = "2*s"
+checksum_upper = "1FF0+2*s"
+checksum_inverse_lower = "8+2*s"
+checksum_inverse_upper = "1FF8+2*s"
+completion_signature = "1FE0..1FEB"
+selected_slot_metadata = "1FEC"
+selected_slot_inverse_metadata = "1FEE"
+
+[save]
+order = [
+  "backwards48word player copy",
+  "active256byte map copy using full area*256",
+  "pack six map areas",
+  "write saved station and area",
+  "copy814word payload to SRAM with wrapping16bit sum",
+  "lower checksum",
+  "upper checksum",
+  "lower inverse",
+  "upper inverse",
+  "exactly one synchronous RtlWriteSram",
+]
+changes_selected_slot_metadata = false
+changes_has_area_map = false
+ceres_area6_packed = false
+
+[load]
+order = ["copy entire payload into WRAM save buffer", "validate complete lower OR complete upper checksum pair", "success player copy/unpack/station/area or failure payload-only SRAM clear and live station/area zero"]
+success_return_uint8 = 0
+failure_return_uint8 = 1
+failure_clears_checksum_metadata = false
+failure_persists_sram = false
+failure_keeps_loaded_save_buffer = true
+failure_keeps_live_player_and_map = true
+valid_zero_payload_requires_inverse = "FFFF"
+zero_metadata_valid = false
+checksum_validity_proves_continuation_domain = false
+
+[preflight]
+required = true
+malformed_controls = ["missing-slot3", "full-area mirror out of canonical bounds", "zero map count", "pointer/count table extent", "packed offset extent", "unsupported continuation area/station/loading"]
+on_refusal = "All public state and services unchanged; no execution of unsafe/nonterminating C."
+service_failure = "After accepted effects, owned fatal result with no retry into C; gameplay memory outcome separate from disk durability."

@@ -1,0 +1,27 @@
+[package]
+name = "decomp-offline-coverage"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[[bin]]
+name = "decomp-offline-coverage"
+path = "src/main.rs"
+
+[[bin]]
+name = "direct-animation"
+path = "src/direct_animation.rs"
+
+[workspace]
+
+[dependencies]
+anyhow = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+toml = "0.8"
+evidence = { path = "/home/jim/sm-decomp/crates/evidence" }
+
+[[bin]]
+name = "finish-coverage"
+path = "src/finish_coverage.rs"
