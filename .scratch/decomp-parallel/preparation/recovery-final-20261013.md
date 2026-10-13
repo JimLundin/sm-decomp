@@ -51,3 +51,40 @@ controls, post-retirement seal authentication, passing maintained validation,
 private production-readiness validation with unchanged host ledgers, and both
 cleanup passes. Preparation creates no gameplay acceptance or production launch.
 The user will request the gameplay swarm separately.
+
+## Completed-result retry regression
+
+The surviving worker completed both serial integrations and cleanup, retaining
+299 authenticated artifacts in `../drill-final/`. Its old A result replay after
+B advanced shared HEAD failed twice with `cached infrastructure source changed`.
+Newest B result replay succeeded. This is a remaining preparation blocker:
+completed historical result recovery must survive subsequent legitimate merges.
+The old worker's outcome calls A's refusal correct under the current strict
+source check; this recovery records the stricter required preparation contract
+in [the retry ticket](../../decomp-integration-retry/issues/01-authenticate-completed-integration-retries.md).
+The old manifest remains evidence of its own source and cannot establish this
+missing behavior or readiness of corrected source.
+
+`/root/drill_review` owns only `crates/pipeline/src/session.rs` and
+`crates/pipeline/tests/decomp_sessions.rs` in
+`/tmp/sm-decomp-completed-integration-retry-20261013`, baseline
+`2d59536c059a1ca9c31d9278bff2d9222eafa56c`. It reproduced the failure twice
+in the maintained Rust serial integration seam, then corrects only cached
+completed integration lineage. Source/gates for new admission remain strict.
+Root integrates its scoped commit and freezes a new source epoch before running
+fresh actual drill evidence.
+
+`/root/readiness_audit` prepares Rust-only `../drill-retry/`, isolated fixture
+`/tmp/sm-decomp-concurrency-drill-retry-20261013`, effort
+`concurrency-drill-retry`, with explicit setup tickets, exact submitted commit
+handoffs, bounded continuation waits and compact durable receipt pointers.
+`/root/launch_docs` prepares `readiness-retry-20261013/` for frozen subject
+`/tmp/sm-decomp-preparation-retry-source-20261013`. No new setup/launch or
+readiness validation runs until root supplies exact corrected engine identity.
+
+Versioned old request-helper provenance is retained in
+`final-helper-provenance/`: a locked/offline rebuild matched actual helper
+bytes exactly. Both utility cleanup passes reclaimed zero bytes; the independent
+rebuild target measured 120,944,630 logical bytes and `cargo clean` removed
+447 files (137.0 MiB reported). Retained helper/source/seals remain required
+evidence. The old completed drill cleaned its own targets separately.
