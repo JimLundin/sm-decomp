@@ -701,6 +701,231 @@ fn infrastructure_cycle_integrates_frozen_source_after_retiring_worker() {
 }
 
 #[test]
+fn implementation_start_rejects_committed_foreign_path() {
+    let mut f = Fixture::new();
+    let mut handoff = f.reserve();
+    fs::write(handoff.worktree.join("other.txt"), "foreign committed source\n").unwrap();
+    git(&handoff.worktree, &["add", "other.txt"]);
+    git(&handoff.worktree, &["commit", "-qm", "foreign implementation change"]);
+    handoff.source_commit = git(&handoff.worktree, &["rev-parse", "HEAD"]);
+    let index = git(&handoff.worktree, &["write-tree"]);
+    let error =
+        session::operate(session::Request::Start { queue: f.queue("record"), handoff: Box::new(handoff.clone()) })
+            .unwrap_err();
+    assert!(error.to_string().contains("change exceeds approved files: other.txt"));
+    assert_eq!(git(&handoff.worktree, &["write-tree"]), index);
+    assert_eq!(git(&handoff.worktree, &["rev-parse", "HEAD"]), handoff.source_commit);
+}
+
+#[test]
+fn serial_integration_start_accepts_prior_disjoint_merge_and_keeps_source_frozen() {
+    let mut f = Fixture::new();
+    fs::write(
+        f.root.join("crates/pipeline/src/owned.rs"),
+        "pub fn value() -> u8 { 1 }\n#[test] fn baseline_gate() { assert_eq!(value(), 1); }\n",
+    )
+    .unwrap();
+    f.git(&["add", "crates/pipeline/src/owned.rs"]);
+    f.git(&["commit", "-qm", "shared test baseline"]);
+    let baseline = f.git(&["rev-parse", "HEAD"]);
+    let mut scopes = Vec::new();
+    for lane in ["a", "b"] {
+        let (mut scope, _) = reviewed(&f);
+        scope.job.id = format!("lane-{lane}");
+        scope.job.writable_paths = vec![format!("docs/drill-{lane}.md").into()];
+        scopes.push(f.seal(&format!("scope-{lane}.toml"), &toml::to_string_pretty(&scope).unwrap()));
+    }
+    prepare_authority(&f);
+    let mut first_commit: Option<String> = None;
+    for (lane, scope) in ["a", "b"].into_iter().zip(scopes.iter()) {
+        session::operate(session::Request::InfrastructureNext {
+            queue: f.queue("next"),
+            admission: session::Admission::Infrastructure { scopes: scopes.clone() },
+        })
+        .unwrap();
+        let status = assignment::operate(f.queue("status")).unwrap();
+        let entry = status.jobs.iter().find(|entry| entry.job.id == format!("lane-{lane}")).unwrap();
+        let submission = entry.claim.clone().unwrap();
+        let branch = format!("{}-{}-{}", f.effort, submission.id, submission.attempt);
+        let worktree = std::env::temp_dir().join(format!("sm-{branch}"));
+        f.git(&["worktree", "add", "-q", "-b", &branch, worktree.to_str().unwrap(), &baseline]);
+        f.worktree = Some(worktree.clone());
+        infrastructure_record(&f, scope, Update::Started { claim: submission.clone(), agent: WORKER.into() }).unwrap();
+        fs::create_dir_all(worktree.join("docs")).unwrap();
+        let owned = format!("docs/drill-{lane}.md");
+        fs::write(worktree.join(&owned), format!("# Lane {lane}\n")).unwrap();
+        git(&worktree, &["add", &owned]);
+        git(&worktree, &["commit", "-qm", "disjoint lane implementation"]);
+        let commit = git(&worktree, &["rev-parse", "HEAD"]);
+        infrastructure_record(
+            &f,
+            scope,
+            Update::Finished {
+                claim: submission.clone(),
+                result: WorkResult::Submitted {
+                    commit: commit.clone(),
+                    evidence: vec![f.seal(&format!("submission-{lane}.toml"), "status='source-only'\n")],
+                },
+            },
+        )
+        .unwrap();
+        let assigned = assignment::operate(f.queue("next")).unwrap().assignment.unwrap();
+        if lane == "b" {
+            fs::write(f.root.join("other.txt"), "independent committed shared source\n").unwrap();
+            f.git(&["add", "other.txt"]);
+            f.git(&["commit", "-qm", "independent shared commit"]);
+        }
+        let mut handoff = Handoff {
+            schema: "decomp-worker-handoff-v1".into(),
+            sequence: 1,
+            session_id: caller(),
+            worker_session_id: WORKER.into(),
+            agent: "/root/serial-integrator".into(),
+            authority_generation: 1,
+            effort: f.effort.clone(),
+            claim: assigned.claim.clone(),
+            job: assigned.job,
+            baseline: baseline.clone(),
+            source_commit: f.git(&["rev-parse", "HEAD"]),
+            branch: None,
+            worktree: f.root.clone(),
+            submitted_commit: Some(commit.clone()),
+            runs: vec![],
+            processes: vec![],
+            evidence: vec![],
+            dependencies: vec![scope.clone()],
+            stages: vec![],
+            limitations: vec!["Disposable serial integration regression; no gameplay acceptance.".into()],
+            cleanup: Cleanup {
+                status: "pending".into(),
+                reclaimed_bytes: 0,
+                receipts: vec![],
+                retained_dependencies: vec![],
+                remaining_action: Some("retire worker and authenticate integration".into()),
+            },
+            next: NextCommand {
+                cwd: f.root.clone(),
+                argv: vec!["cargo".into(), "test".into(), "--locked".into(), "--offline".into()],
+                env: BTreeMap::from([("SM_PIPELINE_WORKERS".into(), "4".into())]),
+                timeout_seconds: 60,
+            },
+        };
+        if let Some(first) = &first_commit {
+            assert_ne!(handoff.source_commit, baseline);
+            assert!(f.root.join("docs/drill-a.md").exists());
+            let mut wrong_submission = handoff.clone();
+            wrong_submission.submitted_commit = Some(first.clone());
+            assert!(
+                session::operate(session::Request::Start {
+                    queue: f.queue("record"),
+                    handoff: Box::new(wrong_submission),
+                })
+                .unwrap_err()
+                .to_string()
+                .contains("submitted commit differs from exact submission")
+            );
+            let mut missing_submission = handoff.clone();
+            missing_submission.submitted_commit = None;
+            assert!(
+                session::operate(session::Request::Start {
+                    queue: f.queue("record"),
+                    handoff: Box::new(missing_submission),
+                })
+                .unwrap_err()
+                .to_string()
+                .contains("submitted commit differs from exact submission")
+            );
+            for staged in [false, true] {
+                fs::write(f.root.join("other.txt"), "foreign dirty shared source\n").unwrap();
+                if staged {
+                    f.git(&["add", "other.txt"]);
+                }
+                assert!(
+                    session::operate(session::Request::Start {
+                        queue: f.queue("record"),
+                        handoff: Box::new(handoff.clone()),
+                    })
+                    .unwrap_err()
+                    .to_string()
+                    .contains("frozen and clean")
+                );
+                f.git(&["restore", "--source=HEAD", "--staged", "--worktree", "other.txt"]);
+                assert_eq!(f.git(&["status", "--porcelain"]), "", "dirty shared source restored after staged={staged}");
+            }
+            fs::write(f.root.join("docs/foreign.md"), "untracked foreign source\n").unwrap();
+            assert!(
+                session::operate(session::Request::Start {
+                    queue: f.queue("record"),
+                    handoff: Box::new(handoff.clone()),
+                })
+                .unwrap_err()
+                .to_string()
+                .contains("frozen and clean")
+            );
+            fs::remove_file(f.root.join("docs/foreign.md")).unwrap();
+            assert_eq!(f.git(&["rev-parse", "HEAD"]), handoff.source_commit);
+            assert_eq!(f.git(&["status", "--porcelain"]), "", "shared source controls restored clean source");
+        }
+        let started =
+            session::operate(session::Request::Start { queue: f.queue("record"), handoff: Box::new(handoff.clone()) })
+                .unwrap_or_else(|error| {
+                    panic!("lane {lane} integration Start must admit clean shared source: {error}")
+                });
+        assert_eq!(f.start(&handoff), started);
+        session::operate(session::Request::Resume { queue: f.queue("status"), handoff: path(&started) }).unwrap();
+        if lane == "a" {
+            first_commit = Some(commit.clone());
+        }
+        f.git(&["merge", "--no-edit", &commit]);
+        if lane == "b" {
+            assert!(
+                session::operate(session::Request::Resume { queue: f.queue("status"), handoff: path(&started) })
+                    .unwrap_err()
+                    .to_string()
+                    .contains("source commit is stale")
+            );
+            handoff.sequence = 2;
+            handoff.source_commit = f.git(&["rev-parse", "HEAD"]);
+            let merged = f.start(&handoff);
+            let resumed =
+                session::operate(session::Request::Resume { queue: f.queue("status"), handoff: path(&merged) })
+                    .unwrap();
+            assert_eq!(resumed["source_commit"].as_str(), Some(handoff.source_commit.as_str()));
+        }
+        f.git(&["worktree", "remove", worktree.to_str().unwrap()]);
+        f.worktree = None;
+        let cleanup = f.seal(
+            &format!("cleanup-{lane}.toml"),
+            &toml::to_string_pretty(&Cleanup {
+                status: "complete".into(),
+                reclaimed_bytes: 0,
+                receipts: vec![],
+                retained_dependencies: vec![],
+                remaining_action: None,
+            })
+            .unwrap(),
+        );
+        infrastructure_record(
+            &f,
+            scope,
+            Update::Finished {
+                claim: assigned.claim,
+                result: WorkResult::Integrated {
+                    submissions: vec![submission],
+                    evidence: vec![f.seal(&format!("merged-{lane}.toml"), "status='frozen'\n")],
+                    authentication: f.seal(&format!("auth-{lane}.toml"), "status='native-admission'\n"),
+                    cleanup,
+                },
+            },
+        )
+        .unwrap();
+    }
+    let status = assignment::operate(f.queue("status")).unwrap();
+    assert_eq!(status.jobs.len(), 4);
+    assert!(status.jobs.iter().all(|entry| entry.state == assignment::State::Complete));
+}
+
+#[test]
 fn adopted_handoff_retains_exact_surviving_child_and_original_authority_history() {
     let mut f = Fixture::new();
     let mut handoff = f.reserve();

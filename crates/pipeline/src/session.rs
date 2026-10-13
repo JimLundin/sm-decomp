@@ -842,11 +842,44 @@ fn validate_handoff(
         );
     }
     git(&handoff.worktree, &["merge-base", "--is-ancestor", &handoff.baseline, &handoff.source_commit])?;
-    scoped(
-        &handoff.worktree,
-        &handoff.job,
-        &paths(&handoff.worktree, &["diff", "--name-only", "--no-renames", "-z", &handoff.baseline, "HEAD", "--"])?,
-    )?;
+    if handoff.job.kind == Kind::Integrate {
+        ensure!(handoff.worktree == root, "integration handoff must use shared source");
+        let id = handoff.job.inputs.get("submission-id").context("integration submission missing")?;
+        let submitted = entry_status.jobs.iter().find(|entry| &entry.job.id == id).context("submitted claim absent")?;
+        let claim = submitted.claim.as_ref().context("submitted claim missing")?;
+        let submitted = current(&entry_status, claim)?;
+        ensure!(
+            handoff.job.inputs.get("submission-revision") == Some(&claim.revision)
+                && handoff.job.inputs.get("submission-attempt") == Some(&claim.attempt.to_string())
+                && submitted.state == State::Submitted
+                && submitted.job.inputs.get("base-head") == Some(&handoff.baseline)
+                && submitted.job.writable_paths == handoff.job.writable_paths,
+            "integration must name its exact submitted claim"
+        );
+        let Some(WorkResult::Submitted { commit, .. }) = &submitted.result else {
+            bail!("integration submitted source missing")
+        };
+        ensure!(
+            handoff.submitted_commit.as_ref() == Some(commit),
+            "handoff submitted commit differs from exact submission"
+        );
+        git(root, &["merge-base", "--is-ancestor", &handoff.baseline, commit])?;
+        // Shared source may already contain other accepted scopes. Ownership
+        // belongs to this exact submission, while the integration source stays
+        // frozen at its separately checked shared commit.
+        scoped(
+            root,
+            &submitted.job,
+            &paths(root, &["diff", "--name-only", "--no-renames", "-z", &handoff.baseline, commit, "--"])?,
+        )?;
+        ensure!(source_dirty(root)?.is_empty(), "integration source must be frozen and clean");
+    } else {
+        scoped(
+            &handoff.worktree,
+            &handoff.job,
+            &paths(&handoff.worktree, &["diff", "--name-only", "--no-renames", "-z", &handoff.baseline, "HEAD", "--"])?,
+        )?;
+    }
     if check_source {
         ensure!(
             git(&handoff.worktree, &["rev-parse", "HEAD"])? == handoff.source_commit,
