@@ -50,6 +50,7 @@ mod patterns;
 mod plm_fixtures;
 mod plm_spawn;
 mod preflight;
+mod progress;
 mod projectile_inventory;
 mod readiness;
 mod readiness_contract;
@@ -438,6 +439,7 @@ fn main() -> Result<()> {
         .map_err(|_| anyhow::anyhow!("binary identity already initialized"))?;
     let args: Vec<_> = std::env::args().skip(1).collect();
     match args.first().map(String::as_str) {
+        Some("progress") => progress::cli(&args[1..]),
         Some("storage-study") => storage_studies::run(&args[1..]),
         Some("decomp-prefix") => decomp_prefix::run(&args[1..]),
         Some("decomp-prefix-authenticate") => {

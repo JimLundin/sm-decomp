@@ -24,3 +24,9 @@ Before codebase exploration, follow the single-context reading rules in
 
 After verification runs and before closing work or handing it back, follow
 `docs/agents/run-cleanup.md`. Cleanup is part of completion.
+
+### Translation progress
+
+For gameplay translation, assignment or integration, follow
+`docs/agents/translation-progress.md`. Assign whole subsystems and publish each
+stage to the shared inventory before handing work back.
