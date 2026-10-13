@@ -30,7 +30,7 @@ pub(crate) struct Catalog {
     pub families: BTreeMap<String, CatalogEntry>,
     pub profiles: BTreeMap<String, Vec<String>>,
 }
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize, PartialEq)]
 struct Discovery {
     rust_module: Option<PathBuf>,
     routines: Option<Vec<DiscoveryRoutine>>,
@@ -39,11 +39,210 @@ struct Discovery {
     #[serde(default)]
     projectile_rendering: bool,
 }
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize, PartialEq)]
 struct DiscoveryRoutine {
     #[serde(default)]
     symbol: String,
     pointer_bank: Option<u16>,
+}
+// Catalog discovery is metadata, not fixture admission. Project table-form
+// manifests before TOML decoding so ignored multi-megabyte cases never become
+// an AST. The family verifier still parses and validates the complete manifest.
+// Unusual dotted discovery layouts use the original complete decoder.
+fn discovery(text: &str) -> Result<Discovery> {
+    let projected = discovery_projection(text)?;
+    Ok(toml::from_str(projected.as_deref().unwrap_or(text))?)
+}
+fn discovery_projection(text: &str) -> Result<Option<String>> {
+    let mut projected = String::new();
+    let mut routine = false;
+    let mut root = true;
+    let mut start = 0;
+    while start < text.len() {
+        let end = discovery_statement_end(text.as_bytes(), start)?;
+        let statement = text[start..end].trim();
+        start = end;
+        if statement.is_empty() || statement.starts_with('#') {
+            continue;
+        }
+        if statement.starts_with('[') {
+            let header = statement[..discovery_delimiter(statement, b'#').unwrap_or(statement.len())].trim_end();
+            let array = statement.starts_with("[[");
+            let closing = if array { "]]" } else { "]" };
+            let Some(key) = header.strip_suffix(closing) else { return Ok(None) };
+            let key = toml_edit::Key::parse(&key[if array { 2 } else { 1 }..])?;
+            routine = array && key.len() == 1 && key[0].get() == "routines";
+            root = false;
+            if key
+                .first()
+                .is_some_and(|key| ["rust_module", "projectile_host", "projectile_rendering"].contains(&key.get()))
+                || (!array && key.len() == 1 && key[0].get() == "routines")
+                || (key.len() > 1 && key[0].get() == "routines" && ["symbol", "pointer_bank"].contains(&key[1].get()))
+            {
+                return Ok(None);
+            }
+            if routine {
+                projected.push_str("[[routines]]\n");
+            }
+            continue;
+        }
+        if !root && !routine {
+            continue;
+        }
+        let equal = discovery_delimiter(statement, b'=');
+        let Some(equal) = equal else { return Ok(None) };
+        let key = toml_edit::Key::parse(&statement[..equal])?;
+        let Some(first) = key.first() else { return Ok(None) };
+        let wanted = if root {
+            if first.get() == "routines" {
+                if key.len() != 1 {
+                    return Ok(None);
+                }
+                let Some(value) = discovery_inline_routines(&statement[equal + 1..])? else { return Ok(None) };
+                projected.push_str("routines = ");
+                projected.push_str(&value);
+                projected.push('\n');
+                continue;
+            }
+            ["rust_module", "projectile_host", "projectile_rendering"].contains(&first.get())
+        } else {
+            ["symbol", "pointer_bank"].contains(&first.get())
+        };
+        if wanted {
+            if key.len() != 1 {
+                return Ok(None);
+            }
+            projected.push_str(statement);
+            projected.push('\n');
+        }
+    }
+    Ok(Some(projected))
+}
+fn discovery_inline_routines(value: &str) -> Result<Option<String>> {
+    let end = discovery_extent(value.as_bytes(), 0, b"#")?;
+    let value = value[..end].trim();
+    let Some(values) = value.strip_prefix('[').and_then(|value| value.strip_suffix(']')) else {
+        return Ok(None);
+    };
+    let mut projected = String::from("[");
+    let mut start = 0;
+    while start < values.len() {
+        let end = discovery_extent(values.as_bytes(), start, b",")?;
+        let value = values[start..end].trim();
+        start = (end + 1).min(values.len());
+        if value.is_empty() {
+            continue;
+        }
+        let Some(fields) = value.strip_prefix('{').and_then(|value| value.strip_suffix('}')) else {
+            return Ok(None);
+        };
+        projected.push('{');
+        let mut start = 0;
+        while start < fields.len() {
+            let end = discovery_extent(fields.as_bytes(), start, b",")?;
+            let field = fields[start..end].trim();
+            start = (end + 1).min(fields.len());
+            let Some(equal) = discovery_delimiter(field, b'=') else { return Ok(None) };
+            let key = toml_edit::Key::parse(&field[..equal])?;
+            if key.first().is_some_and(|key| ["symbol", "pointer_bank"].contains(&key.get())) {
+                if key.len() != 1 {
+                    return Ok(None);
+                }
+                if !projected.ends_with('{') {
+                    projected.push(',');
+                }
+                projected.push_str(field);
+            }
+        }
+        projected.push_str("},");
+    }
+    projected.push(']');
+    Ok(Some(projected))
+}
+fn discovery_delimiter(text: &str, delimiter: u8) -> Option<usize> {
+    let mut quote = 0;
+    let mut escaped = false;
+    text.bytes().position(|byte| {
+        if escaped {
+            escaped = false;
+        } else if quote == b'"' && byte == b'\\' {
+            escaped = true;
+        } else if quote != 0 {
+            if byte == quote {
+                quote = 0;
+            }
+        } else if byte == b'\'' || byte == b'"' {
+            quote = byte;
+        } else if byte == delimiter {
+            return true;
+        }
+        false
+    })
+}
+// Newlines inside arrays, inline tables and multiline strings are not new
+// statements. Track them even in ignored fixture payloads; apparent headers
+// inside comments/strings must never change the discovery context.
+fn discovery_statement_end(bytes: &[u8], start: usize) -> Result<usize> {
+    let end = discovery_extent(bytes, start, b"\n")?;
+    Ok((end + 1).min(bytes.len()))
+}
+fn discovery_extent(bytes: &[u8], start: usize, delimiters: &[u8]) -> Result<usize> {
+    let mut index = start;
+    let mut quote = 0;
+    let mut multiline = false;
+    let mut brackets = Vec::new();
+    while index < bytes.len() {
+        let byte = bytes[index];
+        if quote != 0 {
+            if quote == b'"' && byte == b'\\' {
+                index += 2;
+                continue;
+            }
+            if byte == quote {
+                if multiline {
+                    let run = bytes[index..].iter().take_while(|byte| **byte == quote).count();
+                    if run >= 3 {
+                        index += run;
+                        quote = 0;
+                        continue;
+                    }
+                } else {
+                    quote = 0;
+                }
+            } else {
+                ensure!(multiline || byte != b'\n', "unterminated discovery string");
+            }
+        } else {
+            if brackets.is_empty() && delimiters.contains(&byte) {
+                return Ok(index);
+            }
+            match byte {
+                b'\'' | b'"' => {
+                    quote = byte;
+                    multiline = bytes.get(index..index + 3).is_some_and(|run| run == [byte; 3]);
+                    if multiline {
+                        index += 3;
+                        continue;
+                    }
+                }
+                b'[' | b'{' => brackets.push(byte),
+                b']' | b'}' => {
+                    ensure!(
+                        brackets.pop() == Some(if byte == b']' { b'[' } else { b'{' }),
+                        "unbalanced discovery brackets"
+                    );
+                }
+                b'#' => {
+                    index += bytes[index..].iter().position(|byte| *byte == b'\n').unwrap_or(bytes.len() - index);
+                    continue;
+                }
+                _ => {}
+            }
+        }
+        index += 1;
+    }
+    ensure!(quote == 0 && brackets.is_empty(), "unterminated discovery value");
+    Ok(bytes.len())
 }
 pub fn catalog(checkout: &Path) -> Result<Catalog> {
     let mut config: Catalog = pipeline_model::read(&checkout.join("tools/port/batch.toml"))?;
@@ -57,7 +256,8 @@ pub fn catalog(checkout: &Path) -> Result<Catalog> {
         if config.families.contains_key(name.as_ref()) {
             continue;
         }
-        let manifest: Discovery = pipeline_model::read(&path)?;
+        let manifest = discovery(&fs::read_to_string(&path)?)
+            .with_context(|| format!("invalid discovery manifest {}", path.display()))?;
         if manifest.rust_module.is_none() || manifest.routines.is_none() {
             continue;
         }
@@ -248,7 +448,8 @@ fn verify_one(
             "offline-projectile",
             "callback",
             "plm",
-            "power-bomb"
+            "power-bomb",
+            "ridley-subsystem"
         ]
         .contains(&kind.as_str()),
         "{name}: unsupported native adapter {kind}"
@@ -527,6 +728,100 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn discovery_matches_full_decode_across_strings_tables_and_inline_layouts() {
+        let manifests = [
+            r#"
+                "rust_module" = 'crates/port/src/pure.rs'
+                projectile_rendering = false
+                notes = """Quoted \"value\", # comment, and fake header:
+[[routines]]
+symbol = 'EprojInstruction'
+"""
+                [["routines"]] # actual routine, not fake ]]
+                'symbol' = "Pure"
+                [[routines.cases]]
+                text = '''Literal fake header:
+[[routines]]
+pointer_bank = 134
+'''
+                writes = [
+                    { offset = 1, data = [0, 1, 2] }, # ] " '''
+                    { offset = 2, data = [3, 4, 5] },
+                ]
+                [[routines]]
+                symbol = "Later"
+                pointer_bank = 134
+            "#,
+            "rust_module = 'pure.rs'\nprojectile_host = true\n[[routines]]\n",
+            "rust_module = 'pure.rs'\nroutines = [{symbol = 'Pure'}, {pointer_bank = 134}]\n",
+            "rust_module = 'pure.rs'\nroutines = [{cases = [{text = '}, symbol = fake', data = [0, 1]}], symbol = 'Pure'}, {pointer_bank = 134}] # ]\n",
+            "rust_module = 'pure.rs'\n[[routines]]\nsymbol = \"\"\"Pure\"\"\"\n",
+            "rust_module = 'pure.rs'\n[rom]\nfile = 'rootless'\n",
+        ];
+        for manifest in manifests {
+            assert_eq!(discovery(manifest).unwrap(), toml::from_str::<Discovery>(manifest).unwrap());
+        }
+        for invalid in [
+            "rust_module = 12\n",
+            "rust_module = 'one'\nrust_module = 'two'\n",
+            "projectile_host = 'yes'\n",
+            "[[routines]]\npointer_bank = 65536\n",
+            "[[routines]]\nsymbol = 'unterminated\n",
+            "rust_module = 'pure.rs'\nroutines.symbol = 'Pure'\n",
+            "[[routines]]\n[routines.symbol]\nvalue = 1\n",
+            "[[routines.cases]]\nvalue = [0, 1\n",
+            "[[routines.cases]]\nvalue = [0, 1}\n",
+            "[[routines.cases]]\nvalue = '''unterminated\n",
+        ] {
+            assert!(discovery(invalid).is_err(), "invalid discovery accepted: {invalid}");
+        }
+    }
+    #[test]
+    fn catalog_discovers_signatures_without_parsing_fixture_payloads() {
+        let checkout = std::env::temp_dir().join(format!(
+            "sm-batch-catalog-{}-{}",
+            std::process::id(),
+            SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+        ));
+        fs::create_dir_all(checkout.join("tools/port")).unwrap();
+        fs::write(checkout.join("tools/port/batch.toml"), "[families]\n[profiles]\n").unwrap();
+        let mut manifest = String::from(
+            "rust_module = 'crates/port/src/heavy.rs'\n[[routines]]\nsymbol = 'Pure'\n[[routines.cases]]\nname = 'large'\ndata = [\n",
+        );
+        for _ in 0..2_000_000 {
+            manifest.push_str("0,");
+        }
+        manifest.push_str("\n]\n[[routines]]\nsymbol = 'EprojInstruction'\npointer_bank = 134\n");
+        fs::write(checkout.join("tools/port/heavy.toml"), manifest).unwrap();
+        let mut manifest = String::from("rust_module = 'crates/port/src/inline.rs'\nroutines = [{cases = [{data = [");
+        for _ in 0..2_000_000 {
+            manifest.push_str("0,");
+        }
+        manifest.push_str("]}], symbol = 'Pure'}, {symbol = 'Later', pointer_bank = 134}]\n");
+        fs::write(checkout.join("tools/port/inline.toml"), manifest).unwrap();
+        let started = Instant::now();
+        let catalog = catalog(&checkout).unwrap();
+        let elapsed = started.elapsed();
+        fs::remove_dir_all(&checkout).unwrap();
+        assert_eq!(entry(&catalog, "heavy").unwrap().kind, "dispatcher");
+        assert_eq!(entry(&catalog, "inline").unwrap().kind, "dispatcher");
+        assert_eq!(catalog.profiles["offline-all"], ["heavy", "inline"]);
+        eprintln!("fixture-heavy catalog discovery: {elapsed:?}");
+        assert!(elapsed < std::time::Duration::from_secs(2), "catalog parsed fixture payloads: {elapsed:?}");
+    }
+    #[test]
+    #[ignore = "reads the checkout's complete manifest inventory"]
+    fn catalog_discovers_retained_checkout_manifests() {
+        let checkout = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().parent().unwrap();
+        let started = Instant::now();
+        let catalog = catalog(checkout).unwrap();
+        let elapsed = started.elapsed();
+        assert_eq!(entry(&catalog, "observed-ridley-instructions-captured").unwrap().kind, "dispatcher");
+        assert!(catalog.profiles["offline-all"].contains(&"observed-ridley-instructions-captured".into()));
+        eprintln!("retained manifest catalog discovery: {} families, {elapsed:?}", catalog.families.len());
+        assert!(elapsed < std::time::Duration::from_secs(10), "retained catalog remained slow: {elapsed:?}");
+    }
     #[test]
     fn replay_selection_authenticates_manifests_and_optional_plm() {
         let checkout = std::env::temp_dir().join(format!(
