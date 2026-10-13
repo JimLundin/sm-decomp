@@ -1,0 +1,21 @@
+{
+  "checks": [
+    "ten newest submissions",
+    "exact UTC time",
+    "scope and stage",
+    "concrete description",
+    "zero unique coverage evidence update",
+    "top placement",
+    "existing report retained",
+    "phone layout",
+    "live refresh",
+    "empty JSON replacement",
+    "unordered submissions",
+    "equal-time append order",
+    "literal HTML",
+    "stale labels",
+    "single submission"
+  ],
+  "status": "passed",
+  "url": "http://127.0.0.1:4185/index.html"
+}

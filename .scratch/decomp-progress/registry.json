@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "root": "/home/jim/sm-decomp",
-  "updated_at": 1791884657,
+  "updated_at": 1791903684,
   "source": {
     "revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
     "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
@@ -98701,6 +98701,66 @@
         "Report time is an audit publication date."
       ],
       "updated_at": 1791877292
+    },
+    {
+      "id": "shared-game-host-current-verified-launch-20261013",
+      "scope": "Shared Samus projectile and room display host: current-source actual-C fixtures",
+      "agent": "/root",
+      "stage": "verified",
+      "evidence_context": "current-checkout",
+      "supersedes": [
+        "shared-game-host-6053-current-verified-audit-20261013"
+      ],
+      "routines": [
+        "HandleProjectile",
+        "DrawPlayerExplosions2",
+        "sub_9382FD",
+        "DrawBombAndProjectileExplosions",
+        "DisplayViewablePartOfRoom"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "7ed3d383d6d3e28d21d1bb960acc5576ce82f5e9",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/out/port/decomp-launch-20261013/host-matrices/batch.toml",
+          "sha256": "e325304e6199ab58bf6b4b29b6e9b81dab1434cbcece2aa2ba98ec9b69be3fc8"
+        },
+        {
+          "path": "/home/jim/sm-decomp/out/port/decomp-launch-20261013/host-matrices/families/game-host-projectile/evidence/1791899338036897-540899-0/verdict.toml",
+          "sha256": "d501755385b67a44db37fb29eff127c4647040efe98f473a939764bda7b37797"
+        },
+        {
+          "path": "/home/jim/sm-decomp/out/port/decomp-launch-20261013/host-matrices/families/game-host-room-scroll/evidence/1791899338037087-540899-1/verdict.toml",
+          "sha256": "0257ca5cc296eafcee38724dabd27745a6d69b9ec8efeac0c0961276cc9e9980"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/host/publication-projectile-authentication.stdout.toml",
+          "sha256": "d501755385b67a44db37fb29eff127c4647040efe98f473a939764bda7b37797"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/host/publication-room-authentication.stdout.toml",
+          "sha256": "0257ca5cc296eafcee38724dabd27745a6d69b9ec8efeac0c0961276cc9e9980"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/host-continuation/host-matrices-cleanup1.toml",
+          "sha256": "db5bac8a65aebadf59f0fdf35212019050be91606a9165b298d3f3d192ecacdc"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/host-continuation/host-matrices-cleanup2.toml",
+          "sha256": "439ed79276a11636606dfcfa02c7e87ae4deea01ca5f028cc309c7e6cb107a3e"
+        }
+      ],
+      "limitations": [
+        "Seven projectile fixture pairs across four native roots and three room-display fixture pairs for one root passed actual-C full WRAM, returns and ordered callbacks in the declared valid domains.",
+        "Both completed matrix cleanup passes succeeded. Both verdicts authenticated after cleanup and were authenticated against current source again immediately before this publication.",
+        "PLM, HDMA allocation and VRAM flush remain actual-C Host services: five projectile callbacks and 51 room callbacks remain C-owned. Host forwarding adds no second translated native body.",
+        "Supersedes the earlier current-source audit observation: those older receipts no longer authenticate the current main.rs seal. The new receipts retain the exact current source and harness identities.",
+        "These five roots already had verified observations, so this adds current evidence without increasing the unique verified routine count.",
+        "The original shared-game-host submission 73547105d870f8b05f8c6bcf55b768c223889fdb is already merged. Its all-affected Offline batch and durable integration admission remain pending; this observation grants only verified stage.",
+        "Live exercise and original-ROM parity are not tested. Whole gameplay milestones and Ceres escape remain pending."
+      ],
+      "updated_at": 1791903684
     }
   ],
   "notices": [
@@ -98868,7 +98928,8 @@
     "Stale update historical-dispatch-5-6053-translated-accuracy-20261013: evidence changed: /home/jim/sm-decomp/.scratch/decomp-strategy/ticket-authenticated-internal-mappings.json; excluded from stage totals.",
     "Stale update historical-dispatch-5-6053-verified-accuracy-20261013: evidence changed: /home/jim/sm-decomp/.scratch/decomp-strategy/ticket-authenticated-internal-mappings.json; excluded from stage totals.",
     "Stale update historical-dispatch-6-6053-translated-accuracy-20261013: evidence changed: /home/jim/sm-decomp/.scratch/decomp-strategy/ticket-authenticated-internal-mappings.json; excluded from stage totals.",
-    "Superseded update ridley-whole-6053-recovered-translated-20261013: replaced by ridley-whole-owned-6053-reviewed-translated-20261013, ridley-whole-reviewed-translated-20261013; excluded from stage totals even if replacement evidence becomes stale."
+    "Superseded update ridley-whole-6053-recovered-translated-20261013: replaced by ridley-whole-owned-6053-reviewed-translated-20261013, ridley-whole-reviewed-translated-20261013; excluded from stage totals even if replacement evidence becomes stale.",
+    "Superseded update shared-game-host-6053-current-verified-audit-20261013: replaced by shared-game-host-current-verified-launch-20261013; excluded from stage totals even if replacement evidence becomes stale."
   ],
   "stale_update_ids": [
     "historical-dispatch-1-6053-translated-accuracy-20261013",
@@ -98889,14 +98950,15 @@
     "samus-projectile-frame-0f59de1-verified"
   ],
   "superseded_update_ids": [
-    "ridley-whole-6053-recovered-translated-20261013"
+    "ridley-whole-6053-recovered-translated-20261013",
+    "shared-game-host-6053-current-verified-audit-20261013"
   ],
   "summary": {
     "definitions": 6053,
     "body_lines": 75229,
     "declared_definitions": 835,
     "declared_body_lines": 9108,
-    "updates": 261,
+    "updates": 262,
     "stale_updates": 16,
     "stages": {
       "integrated": {

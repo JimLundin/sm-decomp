@@ -1,0 +1,8 @@
+{
+  "checks": [
+    "live refresh prepends latest submission",
+    "real registry restores table"
+  ],
+  "status": "passed",
+  "synthetic_published": false
+}

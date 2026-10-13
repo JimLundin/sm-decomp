@@ -1,0 +1,8 @@
+schema_version = 2
+subject = "Latest ten progress submissions: additive report table, Rust progress controls and actual served browser checks; no gameplay stage"
+
+[source]
+revision = "52f44a1a7599f540397dfbd24a31ff8b3ef5f19e"
+archive_sha256 = "69c78831351112887575f852dadf0281dd5c23cef890b07a268ae6cf60aa9193"
+freshness = "Exact integrated report template retained after isolated worktree retirement; source commit and current registry/HTML snapshots retained with successful and failed verification diagnostics"
+files = {}

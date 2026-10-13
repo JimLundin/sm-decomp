@@ -1,0 +1,62 @@
+[
+  {
+    "added": "Evidence update · no new definitions at this stage",
+    "id": "shared-game-host-current-verified-launch-20261013",
+    "scope": "Shared Samus projectile and room display host: current-source actual-C fixtures",
+    "time": "2026-10-13T15:01:24.000Z"
+  },
+  {
+    "added": "Evidence update · no new definitions at this stage",
+    "id": "ridley-v2-natural-6053-frozen-verified-audit-20261013",
+    "scope": "Ridley hardware v2 · natural Ceres fixture domain",
+    "time": "2026-10-13T07:41:32.000Z"
+  },
+  {
+    "added": "Evidence update · no new definitions at this stage",
+    "id": "ridley-v2-controlled-6053-frozen-verified-audit-20261013",
+    "scope": "Ridley hardware v2 · controlled frozen fixture domain",
+    "time": "2026-10-13T07:40:23.000Z"
+  },
+  {
+    "added": "+1 definition / 29 body lines at this stage",
+    "id": "room-display-6053-current-translated-audit-20261013",
+    "scope": "Room display · reviewed guarded native entry",
+    "time": "2026-10-13T07:40:20.000Z"
+  },
+  {
+    "added": "+1 definition / 29 body lines at this stage",
+    "id": "shared-game-host-6053-current-verified-audit-20261013",
+    "scope": "Shared Samus projectile and room display host · retained actual-C checks",
+    "time": "2026-10-13T07:40:19.000Z"
+  },
+  {
+    "added": "+2 definitions / 41 body lines at this stage",
+    "id": "shared-game-host-ceres-20261013-translating",
+    "scope": "Shared host for complete Samus projectile and room display calls",
+    "time": "2026-10-13T06:35:23.000Z"
+  },
+  {
+    "added": "Evidence update · no new definitions at this stage",
+    "id": "composed-projectile-initializers-6053-live-internal-accuracy-20261013",
+    "scope": "Authenticated composed internal projectile-initializers",
+    "time": "2026-10-13T05:40:05.000Z"
+  },
+  {
+    "added": "Evidence update · no new definitions at this stage",
+    "id": "composed-ridley-opcodes-6053-live-internal-accuracy-20261013",
+    "scope": "Authenticated composed internal ridley-opcodes",
+    "time": "2026-10-13T05:39:57.000Z"
+  },
+  {
+    "added": "+11 definitions / 92 body lines at this stage",
+    "id": "composed-internal-live-reviewed-20261013",
+    "scope": "Measured native opcode and initializer execution inside accepted composed gameplay frames",
+    "time": "2026-10-13T05:39:50.000Z"
+  },
+  {
+    "added": "Evidence update · no new definitions at this stage",
+    "id": "ridley-whole-owned-6053-reviewed-translated-20261013",
+    "scope": "Reviewed maintained Ridley/Ceres implementation correspondence",
+    "time": "2026-10-13T05:39:50.000Z"
+  }
+]
