@@ -110,7 +110,8 @@ and the original owner's final coverage audit. Browser cleanup is recorded
 independently; the final filesystem has more than 231 billion available bytes.
 
 Final owner handoff: `../decomp-progress/coverage-finish-handoff.md`. All source,
-ticket and coverage handoffs were checked; the latter's thread still reports an
-active turn, but its completed publication, validation and cleanup are recorded
-in that handoff. Final registry has 256 observations, 16 stale exclusions and
-one superseded observation. Required strategy tickets are resolved.
+ticket and coverage handoffs were checked. The coverage agent's final task log
+now confirms a completed turn and idle status; publication, validation and cleanup
+are recorded in its handoff. Final registry has 256 observations, 16 stale
+exclusions and one superseded observation. Required strategy tickets are resolved.
+Reconciled report, strategy and review evidence are committed at `de669bd`.

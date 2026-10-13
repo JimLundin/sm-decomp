@@ -7,9 +7,9 @@ Branch: `affected-family-assignment`
 
 The crashed session's source, ticket and coverage agents were checked through
 their retained task logs and final handoffs. Both independent recovery reviewers
-completed their checks. The original coverage thread still reports an active
-turn, but `../decomp-progress/coverage-finish-handoff.md` records completed
-publication, validation and cleanup. The older viewer thread remains stalled
+completed their checks. The original coverage thread's final log confirms a
+completed turn and idle status; `../decomp-progress/coverage-finish-handoff.md`
+records completed publication, validation and cleanup. The older viewer thread remains stalled
 on its preview approval; the maintained layout and separate three-layout review
 are already complete and progress ticket 02 is resolved.
 
@@ -34,6 +34,7 @@ TOMLs, exact referenced local authentication receipts and recovered ticket
 completion records. Large gameplay run artifacts, source-only snapshots, shared
 packed stores, pointers and frozen readers remain at their authenticated paths.
 Unrelated captured Ridley source and bulk run trees are preserved locally.
+The reconciliation/evidence commit is `de669bd`.
 
 Raw test/browser outputs contain captured whitespace and are kept byte-for-byte
 in `raw-verification-receipts.tar.gz`; their original local files are unchanged.
