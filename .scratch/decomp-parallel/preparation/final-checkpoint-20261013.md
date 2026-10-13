@@ -1,8 +1,15 @@
 # Completed swarm update checkpoint
 
-Status: source and evidence closure verified; commit recorded below after publication
+Status: complete; source, evidence and resolved tracker checkpointed
 Owner: `01a13559-e517-72d1-88b5-e554fed61da4`
 Branch: `affected-family-assignment`
+
+Closure commit: `c09f299020b2886bd9ee54d6c32c2c95a7b0b9ad`.
+It includes final actual drill/readiness receipts, raw text/fixture archives,
+resolved preparation/retry tickets, cleanup and launch documentation.
+Raw sealed receipts preserve their exact whitespace, including historical draft
+patch output; authored completion and operational document diffs pass whitespace
+validation. Cargo/crates/tools match the frozen verified engine source.
 
 [Completion](completion-20261013.md) resolves preparation01–05 and retry01.
 [Launch handoff](launch-handoff.md) identifies the next held Ceres integration.

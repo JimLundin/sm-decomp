@@ -1,6 +1,12 @@
 # Final preparation recovery
 
-Status: actual drill interruption control and replacement readiness in progress
+Status: complete; recovered work is checkpointed and preparation is resolved
+
+Current completion owner is `01a13559-e517-72d1-88b5-e554fed61da4`.
+Read [final completion](../completion-20261013.md),
+[final checkpoint](../final-checkpoint-20261013.md) and
+[launch handoff](../launch-handoff.md). The chronology below records the prior
+crashed owner and delegated work; it leaves no pending swarm preparation.
 Owner: `01a13554-bc0d-7662-9378-28eecfa6122f`
 Main Git/index: this owner; branch `affected-family-assignment`
 Starting checkpoint: `b05b46f8930dc9c34c7414da2d1b901ef3cd6e70`
