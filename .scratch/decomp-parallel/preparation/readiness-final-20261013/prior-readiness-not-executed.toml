@@ -1,0 +1,22 @@
+schema = "decomp-readiness-prior-execution-inspection-v1"
+previous_root = "01a13500-1ef8-73d3-9a0d-3446b6050eba"
+previous_root_status = "failed"
+previous_root_tool_status = "systemError"
+observed_at = "2026-10-13T13:01:19Z"
+original_package_manifest_path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-retry-20261013/artifacts.sha256"
+original_package_manifest_sha256 = "76e5c8541c32af2c1cd0f00bf43d9ec8f2f92b05bb6d53692a369228b0b8cd6b"
+previous_validation_output_absent = true
+previous_validation_executed = false
+limitations = ["Exact documented output is absent and sealed package remains pending; no claim or generation release inferred"]
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-final-20261013/thread-inspection-current.json"
+sha256 = "6ba3567ab54835f100242511705eaca448bfe973b76d0d363df26fd1ac98c496"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-final-20261013/process-inspection-current.toml"
+sha256 = "5a33b6bc814843282f0087076bce9409c72de1ef4598abe495f34c109fdf4b40"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/final-recovery-20261013/root-and-legacy-thread-inspection.json"
+sha256 = "7ff4382cb529d7c3bca3a2a0260e101c1d7314312de3b65d5e76392797ee7969"

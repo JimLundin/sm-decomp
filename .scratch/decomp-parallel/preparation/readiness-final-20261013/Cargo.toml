@@ -1,0 +1,19 @@
+[package]
+name = "decomp-readiness-recovery"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[[bin]]
+name = "decomp-readiness"
+path = "main.rs"
+
+[[bin]]
+name = "decomp-readiness-process-inspect"
+path = "process-inspect.rs"
+
+[[bin]]
+name = "package-readiness"
+path = "package-readiness.rs"

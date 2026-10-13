@@ -1,11 +1,11 @@
 # Authenticate completed integration retries after later merges
 
-Status: claimed
+Status: resolved
 Blocked by: None
 Triage: ready-for-agent
 Type: task
 Owner: `/root/drill_review`
-Coordinator: `01a13500-1ef8-73d3-9a0d-3446b6050eba`
+Coordinator: `01a13559-e517-72d1-88b5-e554fed61da4`
 Observed source: `2d59536c059a1ca9c31d9278bff2d9222eafa56c`
 
 An exact completed infrastructure integration retry should return its existing
@@ -85,12 +85,28 @@ Preparation remains pending until these required gates pass.
 
 ## Completion evidence
 
-Pending: scoped worker commit, red/green logs and evidence manifests, focused
-verification, new frozen build identity, fresh actual drill session/claim/gate/
-retry receipts, current-root readiness/host-preservation receipt, both cleanup
-passes, measured reclamation/free space, retired implementer worktrees and
-post-cleanup authentication. Follow
-[run cleanup](../../../docs/agents/run-cleanup.md) before resolution.
+Scoped Rust commit `57f93c5ce4e6adac2dfe181b852d4aad6e0776bd`, integrated as
+`0d042e0`, retains red/probe failures and green/tamper/dirty/stale/ancestry controls
+in [worker handoff](../handoff.toml) and worker source/evidence manifests.
+Assignment 23, session 17 and authority 11 controls passed; formatting was clean.
+Frozen source/build identity is in
+[engine-build.toml](../../decomp-parallel/drill-retry/engine-build.toml), SHA-256
+`cdf1295fdc8ad86b574866636f68966205e5c46bf2fd19649fa9a4dd2f5bdbb9`.
+
+Fresh actual [drill](../../decomp-parallel/drill-retry/concurrency-drill.toml),
+SHA-256 `63912c67e38680fd163d09126ba285f8ce26da8a2445c801f489f8971b74751f`, passed both serial integrations and exact completed
+A/B replays after final B HEAD/worktree retirement with unchanged original
+publications/gates and zero reruns. Retry proof `.scratch/decomp-parallel/drill-retry/post-b-retry.toml`, SHA-256
+`f8ab8db23c0e795f574b4c59be8cadfc5b3349c5300a77070152cd249030a954`. Current-root private readiness passed and preserved
+host authority/ledger absence; [ticket04](../../decomp-parallel/issues/04-concurrency-and-crash-recovery-drill.md)
+retains final role/manifest/host-preservation evidence.
+
+Both cleanup passes and worker worktree/target retirement completed; source,
+binary/readers and sealed red/green/drill evidence remain retained/authenticatable.
+Cleanup `.scratch/decomp-integration-retry/integrator-cleanup.md`, reclaimed `1,909,161,087`
+bytes; final free space `221,230,100,480` bytes. Post-cleanup
+authentication `.scratch/decomp-parallel/drill-retry/metadata-closure-20261013/independent-authentication.json`; root checkpoint
+`.scratch/decomp-parallel/preparation/final-checkpoint-20261013.md`.
 
 ## Comments
 

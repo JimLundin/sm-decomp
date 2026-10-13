@@ -1,0 +1,24 @@
+worktree /home/jim/sm-decomp
+HEAD b05b46f8930dc9c34c7414da2d1b901ef3cd6e70
+branch refs/heads/affected-family-assignment
+
+worktree /tmp/sm-ceres-continuation-compact-controller-1
+HEAD 223f8a1b0c7382817b1290d13c7a41f4e722d5e1
+branch refs/heads/ceres-continuation-compact-controller-1
+
+worktree /tmp/sm-decomp-preparation-final-source-20261013
+HEAD 2d59536c059a1ca9c31d9278bff2d9222eafa56c
+branch refs/heads/decomp-preparation-final-source-20261013
+
+worktree /tmp/sm-decomp-preparation-integration-20261013
+HEAD c8799f326ffe198b652301f08866f1b7a7bd9ebc
+branch refs/heads/decomp-preparation-20261013
+
+worktree /tmp/sm-decomp-preparation-retry-source-20261013
+HEAD 57f93c5ce4e6adac2dfe181b852d4aad6e0776bd
+branch refs/heads/decomp-preparation-retry-source-20261013
+
+worktree /tmp/sm-decomp-ticket-validator-20261013
+HEAD f54fbed0f30f2c84e2c6aba171dcc54e96099c9a
+branch refs/heads/decomp-ticket-validator-20261013
+

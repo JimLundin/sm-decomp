@@ -1,0 +1,26 @@
+schema = "decomp-drill-independent-review-cleanup-v1"
+status = "complete"
+utility_reclaimed_bytes = 0
+private_target = "/tmp/sm-decomp-drill-independent-review-20261013"
+private_target_logical_bytes_before = 114797978
+private_target_reported_reclaimed = "129.9MiB"
+private_target_removed_files = 437
+private_target_exists_after = false
+available_space_after_bytes = 221352206336
+retained_dependencies = ["Rust reviewer source/manifest/lockfile", "retained reviewer executable", "build and cleanup receipts", "read-only inspection reports", "fresh drill retained dependency closure", "immutable descendant excerpt/provenance"]
+
+[cargo_clean_log]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/review/cargo-clean.log"
+sha256 = "6062cce1f2e9291a1dd279286b7c258bdf2f50295dbbbdd6a6767bb80f857224"
+
+[cleanup_pass_1]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/review/cleanup1.toml"
+sha256 = "db5bac8a65aebadf59f0fdf35212019050be91606a9165b298d3f3d192ecacdc"
+
+[cleanup_pass_2]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/review/cleanup2.toml"
+sha256 = "2624524f0fb2f448e1351f8dad525947deffaa761537e3f3206162e1f18829b7"
+
+[post_cleanup_authentication]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/review/post-cleanup-authentication.json"
+sha256 = "4f0963aaec421eb6025310f2761f8821f8d891cad1ee6b405ecd8c4e90eccf16"

@@ -1,0 +1,17 @@
+argv = [
+    "codex",
+    "exec",
+    "-s",
+    "danger-full-access",
+    "-C",
+    "/tmp/sm-decomp-concurrency-drill-retry-20261013",
+    "--json",
+    "-",
+]
+boot_id = "7119fcce-5593-4526-aa9b-07127767c4ef"
+cwd = "/tmp/sm-decomp-concurrency-drill-retry-20261013"
+kernel_state = "S"
+observed_at = "1791893603"
+pid = 503091
+start_ticks = 2834405
+status = "running"

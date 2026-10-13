@@ -1,0 +1,119 @@
+exact_a_retry_passed = true
+exact_b_retry_passed = true
+gate_reruns = 0
+limitations = [
+    "Local source/build/hash identity is not platform attestation.",
+    "The interrupted held log ends during its bounded wait; exact stopped process observation establishes termination.",
+    "Infrastructure drill acceptance does not grant production activation or gameplay verification.",
+]
+maintained_receipt_count = 18
+observed_at = "1791896859"
+observer_thread = "01a1355a-da16-7c71-931f-a0cb8702cde8"
+post_publication_controller_interrupted = true
+publication_and_gate_bytes_unchanged = true
+registered_implementer_worktrees = 0
+same_uuid_resumed = true
+schema = "decomp-drill-post-publication-interruption-v1"
+session_id = "01a13515-9a51-7af3-bc9f-a144afb06090"
+source_commit = "2b1400ef758907c9aee50f997bb9bca05216ec52"
+status = "pass"
+
+[[cleanup_receipts]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/closure-final-20261013/fixture-cleanup1.toml"
+sha256 = "db5bac8a65aebadf59f0fdf35212019050be91606a9165b298d3f3d192ecacdc"
+
+[[cleanup_receipts]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/closure-final-20261013/fixture-cleanup2.toml"
+sha256 = "2624524f0fb2f448e1351f8dad525947deffaa761537e3f3206162e1f18829b7"
+
+[closure_reader.binary]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/closure-final-20261013/bin/decomp-drill-closure"
+sha256 = "b9e9dfdc6c02b93a9fa223364c7aa71e02907dd2c6a974f85071ec61a5d23370"
+
+[closure_reader.lock]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/closure-final-20261013/Cargo.lock"
+sha256 = "520fdfd92f0b6d28e3a5be8be8c7f53cfc3d1d54c1dda3c5141d4476b9f9f920"
+
+[closure_reader.manifest]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/closure-final-20261013/Cargo.toml"
+sha256 = "9c3acef4b0beb6bf497ba285baa93538a948032a6b113b0419285bfeb75eb39c"
+
+[closure_reader.source]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/closure-final-20261013/src/main.rs"
+sha256 = "07ce926c730eb44540cfb5db08a0e90b13645460647c3d79564e26ee7962d869"
+
+[held_launch]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/b-launch-1791896345.toml"
+sha256 = "7eef8d65ffbc41c16a0c612657565593e75c86bcb2af519d5d428c3ce90dee4f"
+
+[held_log]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/sessions/b-1791896345.jsonl"
+sha256 = "07fe3c548188ae32900727b094f3d1aeeccd9c1a62015fa534f6bac82968b709"
+
+[held_stderr]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/sessions/b-1791896345.stderr"
+sha256 = "503f93837a2836c48a016d104bec7f506d00c0c50fddcb2f5542a75da4ee79f1"
+
+[ledger_after]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/concurrency-drill-retry/ledger.toml"
+sha256 = "c04ab32cb7006c7f0cf5f9b050bcd420aea7efc36e581b2c743d87f2e3eb0aa1"
+
+[live_observation]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/b-process-1791896361.toml"
+sha256 = "3a7c307404d78037a2d8e972acab1f4e1f60fbc9c0825b5615d555ba8d09c59e"
+
+[receipt_snapshot]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/post-b-retry-receipts-before.toml"
+sha256 = "b20659fd2157ff268a87d1daa19ebcefebb81ba40b0cb4aca7d8ea1334b6c3a0"
+
+[replay_launch]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/b-launch-1791896413.toml"
+sha256 = "aecf4895c32ad1eea5c96e0d4d9512d245a860b94f2bd17e8573f6081b2639cb"
+
+[replay_log]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/sessions/b-1791896412.jsonl"
+sha256 = "d1fb3effd4184a86ec89acd613c513a327e1f4e38814d9b2d6d21bdc511c6653"
+
+[replay_stderr]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/sessions/b-1791896412.stderr"
+sha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+[[retry_pairs]]
+claim_id = "integrate-lane-a"
+request_bytes_identical = true
+
+[retry_pairs.original_command]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/receipts/integrated-512471-1791893655590713716.execution.toml"
+sha256 = "0929d16a73b85591cf6d84007c7b523aa963db0c120d578f9eb2668805e130e8"
+
+[retry_pairs.replay_command]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/receipts/integrated-exact-retry-517916-1791896425217207597.execution.toml"
+sha256 = "62d9469be7dab4ee431d45524a661835927ffd74d69d2d75154569f4bcaf2520"
+
+[[retry_pairs]]
+claim_id = "integrate-lane-b"
+request_bytes_identical = true
+
+[retry_pairs.original_command]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/receipts/integrated-512471-1791893667278215825.execution.toml"
+sha256 = "51380dd1bc23f559be0d540a71e1709ef6e0ddf484cd7d0fb09481b1f9299b53"
+
+[retry_pairs.replay_command]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/receipts/integrated-exact-retry-519119-1791896457302036951.execution.toml"
+sha256 = "494fe1aa96307fa3abb39e8d0e3875807255714a6db4d777e8dd805a4ea6a0cd"
+
+[signal_result]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/command-results/517253-1791896386941824499.toml"
+sha256 = "fb1077aeda3b6519eb9c28216bb55efcc13c25e2cf4fb2624d511734704ef6dd"
+
+[signal_tool_event]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/closure-final-20261013/signal-controller-event.jsonl"
+sha256 = "911041efe2b467a25ad97adaedb7b24caeb49e7e1152f8506bf6d5acb82ef842"
+
+[stopped_observation]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/b-process-1791896409.toml"
+sha256 = "05384b9ab224124695dee1e6fb651aa48d1cffeeb0fd811a241ee5975d6b28db"
+
+[terminal_observation]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/b-process-1791896527.toml"
+sha256 = "506a2fa13227e6ea6586a59bb2b9fd32b1418885eae3620a236bfd90ca20f197"

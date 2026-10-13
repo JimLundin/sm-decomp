@@ -1,0 +1,20 @@
+schema = "decomp-readiness-process-inspection-v1"
+observed_at = "2026-10-13T13:05:35Z"
+observer_thread = "01a1355a-fa91-77d3-940b-f32d89630850"
+boot_id = "7119fcce-5593-4526-aa9b-07127767c4ef"
+checked_path_prefixes = ["/tmp/sm-ceres-continuation-compact-controller-1", "/tmp/sm-ceres-continuation-shared-game-host-1", "/home/jim/sm-decomp/out/port/ceres-continuation", "/home/jim/sm-decomp/.scratch/ceres-continuation", "/tmp/sm-ceres-coordinator-target", "/tmp/sm-prefix-native-"]
+limitations = ["A transient /proc disappearance is retained as a race. Generic shared app/REA processes do not prove original-owner liveness. Read-only reporting server may remain after reporting Git handoff."]
+
+[[processes]]
+pid = 420446
+argv = ["target/release/sm-pipeline", "progress", "serve", "--root", "/home/jim/sm-decomp", "--bind", "127.0.0.1:4185"]
+main_checkout_cwd = true
+reporting_server = true
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = false
+fresh_drill_match_details = []
+cwd = "/home/jim/sm-decomp"
+start_ticks = 2249195
+ppid = 3389

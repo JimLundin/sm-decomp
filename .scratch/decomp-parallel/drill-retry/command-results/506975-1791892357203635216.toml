@@ -1,0 +1,4 @@
+rejected = true
+stderr = """
+Error: stale session authority generation or owner
+"""

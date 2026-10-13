@@ -1,0 +1,6 @@
+schema = "decomp-readiness-namespace-v1"
+status = "complete"
+policy_unchanged_by_validation = true
+policy_state = "prepared"
+canonical_ledger_present = false
+activation_performed = false

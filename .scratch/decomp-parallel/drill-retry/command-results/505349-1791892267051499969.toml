@@ -1,0 +1,28 @@
+observed_at = "1791892267"
+schema = "decomp-drill-surviving-child-v1"
+
+[claim]
+attempt = 1
+coordinator = "drill-a"
+id = "lane-a"
+revision = "e0ca4a38af1c6ba76aa26bc85ff2e61afe6d37f5da2198ac4bac86df33894322"
+
+[parent]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/a-survival-launch.toml"
+sha256 = "748ec7c2c9cb213e2fdedfcf43b1f7e38f5cae92593089e426e935c07bb76cde"
+
+[parent_observation]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/a-survival-observation.toml"
+sha256 = "0cada6ec58f49a2de4398a00924714bd1fe0d913f3cdf33e5cead8b0e6658223"
+
+[queue]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/receipts/survival-inspect-505349-1791892265203712892.stdout"
+sha256 = "dfc1615eec6fd5bf3c3d79304199752ddd0da6bdc38a6848f735d963e5e9f5a7"
+
+[worker]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/worker-a-survival-launch.toml"
+sha256 = "ba9f9c2eaab7dd4a4a86135ced3bab1deea49cc9e4b54c2d667323c709a55ee1"
+
+[worker_observation]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/worker-a-survival-observation.toml"
+sha256 = "81d7372a05e297ad4300edbd7b0c9814d10b34d67963d13b3c957e3a16999d26"

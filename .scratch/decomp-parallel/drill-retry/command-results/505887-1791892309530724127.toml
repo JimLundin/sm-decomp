@@ -1,0 +1,30 @@
+handoff = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/decomp-parallel/sessions/01a13515-9a51-7af3-bc9f-a144afb06090/lane-a-1.toml"
+liveness_prerequisites = [
+    "Inspect the stored real worker session and surviving children before launching.",
+    "Recheck every stored process by boot id, start ticks, argv and cwd; ambiguous or surviving writers retain ownership.",
+    "Resume returns argv only; agent launch and execution belong to the caller.",
+]
+markdown = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/decomp-parallel/sessions/01a13515-9a51-7af3-bc9f-a144afb06090/lane-a-1.md"
+sequence = 3
+source_commit = "c92f401ce232fbfcc412021df14c9adedbedc057"
+status = "reviewed-resume"
+
+[claim]
+attempt = 1
+coordinator = "drill-a"
+id = "lane-a"
+revision = "e0ca4a38af1c6ba76aa26bc85ff2e61afe6d37f5da2198ac4bac86df33894322"
+
+[next]
+argv = [
+    "cargo",
+    "test",
+    "--locked",
+    "--offline",
+]
+cwd = "/tmp/sm-concurrency-drill-retry-lane-a-1"
+timeout_seconds = 60
+
+[next.env]
+SM_PIPELINE_ROOT = "/tmp/sm-decomp-concurrency-drill-retry-20261013/out/pipeline"
+SM_PIPELINE_WORKERS = "4"

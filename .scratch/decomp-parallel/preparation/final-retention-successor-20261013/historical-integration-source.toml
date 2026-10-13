@@ -1,0 +1,5 @@
+checkout = "/tmp/sm-decomp-preparation-integration-20261013"
+head = "c8799f326ffe198b652301f08866f1b7a7bd9ebc"
+fingerprint = "4d87e457e895a03f82f5a7ccdd891f7769b83d25d48caf2fd3a55432e5929338"
+source_files = 435
+authenticated = true

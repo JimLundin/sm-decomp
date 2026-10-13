@@ -1,0 +1,12 @@
+both_integrations_complete = true
+exact_a_retry_passed = true
+exact_b_retry_passed = true
+gate_reruns = 0
+observed_at = "1791893672"
+publication_and_gate_bytes_unchanged = true
+schema = "decomp-drill-post-b-retry-v1"
+source_commit = "2b1400ef758907c9aee50f997bb9bca05216ec52"
+
+[receipt_snapshot]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/post-b-retry-receipts-before.toml"
+sha256 = "b20659fd2157ff268a87d1daa19ebcefebb81ba40b0cb4aca7d8ea1334b6c3a0"

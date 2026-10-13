@@ -1,0 +1,9 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"schemaVersion\":1,\"thread\":{\"id\":\"01a13515-9a51-7af3-bc9f-a144afb06090\",\"status\":{\"type\":\"notLoaded\"}},\"page\":{\"order\":\"newest_first\",\"limit\":1,\"hasMore\":true,\"nextCursor\":\"{\\\"requestedThreadId\\\":\\\"01a13515-9a51-7af3-bc9f-a144afb06090\\\",\\\"rolloutOrdinal\\\":277,\\\"includeAnchor\\\":false,\\\"scope\\\":{\\\"kind\\\":\\\"turns\\\"}}\"},\"turns\":[{\"id\":\"01a1352c-fb99-7c31-b23a-fc5b6d48d1b3\",\"status\":\"completed\",\"error\":null,\"items\":[{\"type\":\"agentMessage\",\"id\":\"msg_07ea190c71cfc3dc016ace212c63908196b5c6523905c73e6d\",\"text\":\"Integration recovery completed in the same B session. Both integrations and exact A/B retries passed; publication/gate bytes remained unchanged, with zero gate reruns. Both readiness markers are ready.\\n\\n- [Sealed post-B retry evidence](/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/command-results/512471-1791893672728169692.toml)\\n- [Authenticated budget evidence](/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/worker-budget.toml)\\n- [Retained rejected snapshot repeat](/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/session-b-budget-snapshot-rejection.toml)\\n\\nSource commit: `2b1400ef758907c9aee50f997bb9bca05216ec52`.\",\"phase\":\"final_answer\"}],\"truncated\":true}],\"truncated\":true}"
+    }
+  ],
+  "isError": false
+}

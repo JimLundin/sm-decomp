@@ -1,0 +1,9 @@
+schema = "decomp-readiness-host-preservation-v1"
+status = "complete"
+authority_present = false
+canonical_ledger_present = false
+all_existing_ledger_hashes_unchanged = true
+legacy_bridge_unchanged = true
+frozen_engine_head_unchanged = true
+namespace_exit_code = 0
+activation_performed = false

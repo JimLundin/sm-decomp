@@ -1,0 +1,8 @@
+schema = "decomp-readiness-predecessor-failure-v1"
+actual_caller = "01a13559-e517-72d1-88b5-e554fed61da4"
+exit_code = 1
+stderr = "Not a directory (os error 20)"
+output_directory_absent = true
+namespace_created = false
+observation_source = "Root reported actual tool command failure; no matching documented output exists"
+predecessor_manifest_sha256 = "f83d696c5cadd898dce86c9f24ad5eda1e89db166c432d392a013f52ce695ec1"

@@ -1,0 +1,62 @@
+schema = "decomp-readiness-process-inspection-v1"
+observed_at = "2026-10-13T13:01:19Z"
+observer_thread = "01a13555-fca7-7893-9b16-c9355ad3f516"
+boot_id = "7119fcce-5593-4526-aa9b-07127767c4ef"
+checked_path_prefixes = ["/tmp/sm-ceres-continuation-compact-controller-1", "/tmp/sm-ceres-continuation-shared-game-host-1", "/home/jim/sm-decomp/out/port/ceres-continuation", "/home/jim/sm-decomp/.scratch/ceres-continuation", "/tmp/sm-ceres-coordinator-target", "/tmp/sm-prefix-native-"]
+limitations = ["A transient /proc disappearance is retained as a race. Generic shared app/REA processes do not prove original-owner liveness. Read-only reporting server may remain after reporting Git handoff."]
+
+[[processes]]
+pid = 420446
+argv = ["target/release/sm-pipeline", "progress", "serve", "--root", "/home/jim/sm-decomp", "--bind", "127.0.0.1:4185"]
+main_checkout_cwd = true
+reporting_server = true
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = false
+fresh_drill_match_details = []
+cwd = "/home/jim/sm-decomp"
+start_ticks = 2249195
+ppid = 3389
+
+[[processes]]
+pid = 517456
+argv = ["codex", "exec", "-s", "danger-full-access", "-C", "/tmp/sm-decomp-concurrency-drill-retry-20261013", "resume", "01a13515-9a51-7af3-bc9f-a144afb06090", "--json", "-"]
+main_checkout_cwd = false
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = true
+fresh_drill_match_details = ["cwd:/tmp/sm-decomp-concurrency-drill-retry-20261013", "argv:/tmp/sm-decomp-concurrency-drill-retry-20261013", "fd0:/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/prompts/b-post-publication-exact-replay.md", "fd1:/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/sessions/b-1791896412.jsonl", "fd2:/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/sessions/b-1791896412.stderr"]
+cwd = "/tmp/sm-decomp-concurrency-drill-retry-20261013"
+start_ticks = 3133121
+ppid = 425
+
+[[processes]]
+pid = 517509
+argv = ["node", "/home/jim/.nvm/versions/node/v24.16.0/bin/rea", "mcp"]
+main_checkout_cwd = false
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = true
+fresh_drill_match_details = ["cwd:/tmp/sm-decomp-concurrency-drill-retry-20261013"]
+cwd = "/tmp/sm-decomp-concurrency-drill-retry-20261013"
+start_ticks = 3133160
+ppid = 517456
+
+[[processes]]
+pid = 517901
+argv = ["/home/jim/.codex/packages/standalone/releases/0.162.1-x86_64-unknown-linux-musl/bin/codex-code-mode-host"]
+main_checkout_cwd = false
+reporting_server = false
+claim_path_match = false
+match_details = []
+kernel_state = "S"
+fresh_drill_path_match = true
+fresh_drill_match_details = ["cwd:/tmp/sm-decomp-concurrency-drill-retry-20261013"]
+cwd = "/tmp/sm-decomp-concurrency-drill-retry-20261013"
+start_ticks = 3133861
+ppid = 517456

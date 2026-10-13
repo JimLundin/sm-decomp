@@ -1,0 +1,5 @@
+schema = "decomp-readiness-command-correction-v1"
+package_manifest_sha256 = "f83d696c5cadd898dce86c9f24ad5eda1e89db166c432d392a013f52ce695ec1"
+package_manifest_unchanged = true
+namespace_validation_run = false
+limitations = ["The generated sealed run-command.sh has literal plus characters preceding option lines. Use separately sealed run-command-corrected.sh. Binary and prepare request are unchanged; exact reviewed main.rs changes remain caller and owned output root constants only."]

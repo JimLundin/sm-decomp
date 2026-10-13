@@ -1,0 +1,19 @@
+[[scopes]]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/scope-a.toml"
+sha256 = "e6c70bd582b67ca024d20e362c9a44efb8f40f103a3aa20dc6f0a735d7ab5738"
+
+[[scopes]]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/scope-b.toml"
+sha256 = "65dbcf5b08c54f81dd0e322a3c00d3d3857d02de32286a3d9060d4bfc1760ebc"
+
+[[scopes]]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/scope-c.toml"
+sha256 = "3e710c452b6c0a60290d6292c5556bd7287c80f932d7d9e542fb6c820e20d318"
+
+[[scopes]]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/scope-overlap.toml"
+sha256 = "d167bbdcbb729e8d63143c8273eb6511188bf2394e803b4b9ba8ff884e3da70b"
+
+[[scopes]]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/scope-duplicate-ticket.toml"
+sha256 = "07e407867c48fb863a288637f2338dff9c97efd423536853ebe33e461fe6a308"

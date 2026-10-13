@@ -1,0 +1,9 @@
+./artifacts.sha256: OK
+./baseline-test.stderr: OK
+./baseline-test.stdout: OK
+./cleanup1.toml: OK
+./cleanup2.toml: OK
+./evidence.toml: OK
+./fixed-test.stderr: OK
+./fixed-test.stdout: OK
+./reauthentication.txt: OK

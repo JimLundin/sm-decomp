@@ -1,0 +1,9 @@
+operation = "validate-activation"
+checkout = "/tmp/sm-decomp-preparation-retry-source-20261013"
+coordinator = "ceres-20261013"
+[authority]
+session_id = "01a13559-e517-72d1-88b5-e554fed61da4"
+generation = 1
+[drill]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/concurrency-drill.toml"
+sha256 = "c9fdf0ef1204e7a84df6241ebb08dc96066af4e10992857b57467d46b620f820"

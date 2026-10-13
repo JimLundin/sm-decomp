@@ -1,0 +1,13 @@
+{
+  "drill": {
+    "path": "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/concurrency-drill.toml",
+    "sha256": "c9fdf0ef1204e7a84df6241ebb08dc96066af4e10992857b57467d46b620f820"
+  },
+  "gate_reruns": 0,
+  "maintained_receipts": 18,
+  "proof": {
+    "path": "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/post-publication-interruption.toml",
+    "sha256": "6735bb4c95e4ec1581ec5b13fb61b96ed2e5621b261f181decff49c68eb6b451"
+  },
+  "status": "pass"
+}

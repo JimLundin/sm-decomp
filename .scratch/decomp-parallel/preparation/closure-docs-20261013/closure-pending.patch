@@ -1,0 +1,335 @@
+--- a/.scratch/decomp-parallel/preparation/status.md
++++ b/.scratch/decomp-parallel/preparation/status.md
+@@ -1,7 +1,7 @@
+ # Parallel-session preparation readiness
+ 
+-Status: tooling and catalog complete; corrected actual drill active, final readiness pending
+-Blocked by: 04
++Status: ready for separately requested gameplay swarm launch
++Blocked by: None
+ Triage: ready-for-agent
+ Updated: 2026-10-13
+ Coordinator: `01a13500-1ef8-73d3-9a0d-3446b6050eba`
+@@ -16,7 +16,7 @@
+ | [01 Legacy reconciliation](../issues/01-reconcile-legacy-ownership.md) | resolved | Twelve retained holdings, immutable original/successor bridges and checked maintenance adoption |
+ | [02 Ownership and integration fencing](../issues/02-fence-writable-paths-and-integration-sessions.md) | resolved | Cross-effort path/ticket/submission fencing, capacity and real-session generations; focused verification/cleanup complete |
+ | [03 Rust commands and handoffs](../issues/03-maintained-rust-commands-and-handoffs.md) | resolved | Typed infrastructure admission, Start/Checkpoint/Resume/Adopt and exact retries; focused verification/cleanup complete |
+-| [04 Actual concurrency/recovery drill](../issues/04-concurrency-and-crash-recovery-drill.md) | claimed | Fresh execution at corrected source; final eleven controls, two serial authenticated integrations, maintained validation/readiness and cleanup receipts pending |
++| [04 Actual concurrency/recovery drill](../issues/04-concurrency-and-crash-recovery-drill.md) | resolved | Eleven actual controls, two serial integrations and completed exact replays after final HEAD; private readiness, cleanup and authentication complete |
+ | [05 Subsystem catalog](../issues/05-subsystem-scope-catalog.md) | resolved | Whole-subsystem catalog and children 11–20; later implementation readiness remains research |
+ 
+ ## Current validation subject
+@@ -42,23 +42,24 @@
+ `/tmp/sm-decomp-concurrency-drill-retry-20261013`, effort
+ `concurrency-drill-retry`. Actual independent sessions A
+ `01a13515-9a51-7c73-9913-1deb499ba15c` and B
+-`01a13515-9a51-7af3-bc9f-a144afb06090` are active. Recover exact surviving owners
+-and sealed state before issuing replacement work.
++`01a13515-9a51-7af3-bc9f-a144afb06090` completed the isolated drill.
++Final owner/process observations are retained with its cleanup evidence.
+ 
+-Root must add these actual final receipts before setting preparation ready or
+-resolving 04:
+-
+-- **PENDING:** final `drill-retry/concurrency-drill.toml`, sealed execution
+-  manifest, both sequential integrations and both completed exact retries at
+-  final merged HEAD, plus passing maintained validation.
+-- **PENDING:** current-root readiness successor at
+-  [readiness-retry-20261013](readiness-retry-20261013/README.md), actual
+-  `production-validation-1` private verdict with state `prepared`, host
+-  authority/ledger preservation and unchanged legacy seals.
+-- **PENDING:** both scoped cleanup passes, measured reclamation/free space,
+-  required source/readers retained, integrated worktrees retired and passing
+-  post-cleanup authentication.
+-- **PENDING:** durable final documentation/source checkpoint owned by root.
++Final [ticket04 evidence](../issues/04-concurrency-and-crash-recovery-drill.md)
++identifies [actual drill](../drill-retry/concurrency-drill.toml), SHA-256
++`{{DRILL_SHA256}}`; two serial authenticated integrations and both exact completed
++replays at final merged HEAD preserve all original publications/gates.
++[Readiness completion](readiness-retry-20261013/completion.md) records successful
++private validation with state `prepared`, unchanged host authority/ledger and
++legacy seals. Its retained output manifest is `{{READINESS_OUTPUT_MANIFEST}}`,
++SHA-256 `{{READINESS_OUTPUT_SHA256}}`.
++
++Both cleanup passes succeeded, all implementer worktrees were retired and
++post-cleanup authentication passed. Total measured reclamation:
++`{{TOTAL_RECLAIMED_BYTES}}` bytes; final available space:
++`{{FINAL_AVAILABLE_BYTES}}` bytes. Required frozen source, executables/readers,
++small fixture Git history, sealed evidence and dependencies remain retained.
++Root checkpoint: `{{FINAL_DOC_CHECKPOINT}}`.
+ 
+ Original `drill/`, `drill-final/` A replay failure, prior source/validator epochs,
+ recovery records and old readiness/cutover packages remain historical evidence.
+--- a/.scratch/decomp-parallel/preparation/launch-handoff.md
++++ b/.scratch/decomp-parallel/preparation/launch-handoff.md
+@@ -1,7 +1,7 @@
+ # Gameplay swarm launch handoff
+ 
+-Status: current launch handoff; corrected actual drill/readiness receipts pending
+-Blocked by: 04 and the user's separate gameplay swarm launch instruction
++Status: ready for separately requested gameplay swarm launch
++Blocked by: the user's separate gameplay swarm launch instruction
+ Preparation coordinator: `01a13500-1ef8-73d3-9a0d-3446b6050eba`
+ 
+ For a fresh or replacement session, read [AGENTS.md](../../../AGENTS.md),
+@@ -27,17 +27,16 @@
+ `cdf1295fdc8ad86b574866636f68966205e5c46bf2fd19649fa9a4dd2f5bdbb9`
+ and checkpoint `9acff17`. Main integration is `0d042e0`.
+ 
+-**PENDING:** root attaches the final actual drill/eleven-control manifest and
+-passing maintained validation, both sequential integration/completed-retry
+-receipts at final merged HEAD, current-root
+-`readiness-retry-20261013/production-validation-1` verdict/host-preservation seals,
+-both cleanup passes and
+-post-retirement authentication. Preparation remains claimed until these receipts
+-are present. Old `drill/`, frozen subjects, readiness packages and their failures
+-remain immutable historical evidence. `drill-final` A exact replay failed after
+-later B integration; the current Rust correction preserves sealed historical
+-acceptance and passes maintained regression controls. Only the new actual drill
+-establishes corrected independent-session behavior.
++[Actual drill](../drill-retry/concurrency-drill.toml), SHA-256 `{{DRILL_SHA256}}`,
++passed all eleven controls, both serial integrations and both completed replays
++at final merged HEAD. [Readiness completion](readiness-retry-20261013/completion.md)
++links private `prepared` validation and host-preservation receipts; output
++manifest SHA-256 is `{{READINESS_OUTPUT_SHA256}}`. Both cleanup passes and
++post-retirement authentication passed; exact measurements/dependencies are in
++[ticket04](../issues/04-concurrency-and-crash-recovery-drill.md). Production
++authority/ledger remain absent. Old drill/frozen/readiness packages and failures
++remain immutable historical evidence; the prior A-after-B replay defect is
++fixed and exercised by this retained corrected-source drill.
+ 
+ ## Launch steps
+ 
+--- a/.scratch/decomp-parallel/spec.md
++++ b/.scratch/decomp-parallel/spec.md
+@@ -1,11 +1,11 @@
+ # Restartable parallel decomp sessions
+ 
+ Status: open
+-Blocked by: 01, 02, 03, 04, 05
++Blocked by: 06, 07, 08, 09, 10
+ Owner: integration coordinator
+ Plan deliverable: complete; implementation and gameplay milestones remain open
+ 
+-Preparation: tickets 01–03 and 05 resolved; corrected actual drill 04 active, readiness pending
++Preparation: tickets 01–05 resolved; ready for separately requested gameplay swarm launch
+ Preparation coordinator: `01a13500-1ef8-73d3-9a0d-3446b6050eba`
+ 
+ Read [preparation status](preparation/status.md) for the current frozen source,
+@@ -86,11 +86,11 @@
+ source and the exact legacy bridge. Preparation validates a private prepared
+ policy view with maintained `validate-activation`; production prepare,
+ registration/checked transfer, validation and activation occur at launch.
+-Ticket 04's actual final receipts remain pending. This document changes no claims.
+-Ticket 04 runs its independent-session drill in a disposable isolated checkout
+-and effort before production activation. Read-only catalog research in ticket
+-05 starts after 01 and can run beside 02–04; mutable gameplay additionally
+-requires the catalog's approved scopes and reconciled legacy ownership.
++Ticket 04's [final evidence](issues/04-concurrency-and-crash-recovery-drill.md)
++records passing actual independent-session drill, private readiness and cleanup.
++Production activation remains the later launch step; this document changes no
++claims. Mutable gameplay requires the catalog's approved scopes, reconciled
++legacy ownership and the user's separate launch instruction.
+ 
+ Use durable role registrations: one explicit persistent integrator token and
+ one allocated persistent dispatcher token per admitted session. Record their
+--- a/.scratch/decomp-parallel/map.md
++++ b/.scratch/decomp-parallel/map.md
+@@ -1,10 +1,10 @@
+ # Restartable parallel decomp work
+ 
+ Status: open
+-Blocked by: 01, 02, 03, 04, 05, 06, 07, 08, 09, 10
++Blocked by: 06, 07, 08, 09, 10
+ Plan deliverable: complete; implementation remains open
+ 
+-Preparation: tickets 01–03 and 05 resolved; corrected actual drill 04 active, readiness pending
++Preparation: tickets 01–05 resolved; ready for separately requested gameplay swarm launch
+ Preparation coordinator: `01a13500-1ef8-73d3-9a0d-3446b6050eba`
+ 
+ The [spec](spec.md) defines the outcome and authority transition. The
+@@ -14,7 +14,7 @@
+ and evidence. The [preparation status](preparation/status.md) records the current
+ tooling, actual-session drill and launch boundary.
+ The [launch handoff](preparation/launch-handoff.md) records the current retained
+-subject and later launch procedure; its actual final receipts remain pending.
++subject, passing final receipts and later launch procedure.
+ 
+ ## Decisions so far
+ 
+@@ -45,11 +45,11 @@
+   use the same engine; [preparation status](preparation/status.md) owns its
+   exact fingerprint/build/seals. `drill-final` A replay failure after B's merge
+   remains historical; the Rust fix/test is integrated as `0d042e0`.
+-- **PENDING:** ticket 04's final eleven-control manifest, both sequential
+-  authenticated integrations and completed A/B replays at final HEAD, maintained
+-  validation, current-root private readiness validation/host preservation,
+-  measured cleanup and reauthentication.
+-  Gameplay launch and production activation remain the user's separate request.
++- [Ticket04](issues/04-concurrency-and-crash-recovery-drill.md) resolved with eleven
++  actual controls, two sequential authenticated integrations and both completed
++  A/B replays at final HEAD, private readiness/host preservation, measured cleanup
++  and reauthentication. Gameplay launch and production activation remain the
++  user's separate request.
+ - Ticket 05's [catalog](catalog/subsystem-catalog.md) identifies reused acceptance,
+   exact held Ceres continuation and child research 11–20. Native promotion still
+   accepts bank86 projectile exercise provenance; other observed callers need a
+@@ -63,7 +63,7 @@
+ | [01 Reconcile legacy ownership](issues/01-reconcile-legacy-ownership.md) | task | resolved | None | Retained legacy bridge and checked isolated tooling adoption |
+ | [02 Fence writable paths and integration sessions](issues/02-fence-writable-paths-and-integration-sessions.md) | task | resolved | 01 | Integrated Rust ownership engine; focused controls and cleanup complete |
+ | [03 Maintain Rust commands and durable handoffs](issues/03-maintained-rust-commands-and-handoffs.md) | task | resolved | 01 | Integrated typed Rust session commands; focused controls and cleanup complete |
+-| [04 Prove concurrent sessions and crash recovery](issues/04-concurrency-and-crash-recovery-drill.md) | task | claimed | 02, 03 | Corrected retry-source actual drill active; final validation/readiness/cleanup pending |
++| [04 Prove concurrent sessions and crash recovery](issues/04-concurrency-and-crash-recovery-drill.md) | task | resolved | 02, 03 | Corrected actual drill/readiness/cleanup passed; production launch remains separate |
+ | [05 Catalog dependency-ready subsystem scopes](issues/05-subsystem-scope-catalog.md) | research | resolved | 01 | Published catalog and children 11–20; honest research/held readiness |
+ | [06 Ordinary-reset Ceres escape](issues/06-ordinary-reset-ceres-escape.md) | task | open | 04, 05, 11, 12, 13 | Existing controller/host continuation and required scheduler/hardware contract |
+ | [07 Playable vanilla progression](issues/07-playable-vanilla-progression.md) | task | open | 06, 13, 14, 15, 16, 17, 18 | Parallel subsystem children; composed route gate |
+@@ -83,8 +83,8 @@
+ 
+ On the separately requested gameplay launch, choose the first open, unblocked,
+ unclaimed ticket by number. Readiness never reopens an existing claim.
+-Tickets 01–03 and 05 are complete. Ticket 04 runs in an isolated disposable
+-checkout/effort. Private readiness validation keeps production authority/ledger
++Tickets 01–05 are complete. Ticket 04's retained isolated drill and passing
++private readiness validation keep production authority/ledger
+ absent; production activation later requires the user's launch instruction,
+ passing exact drill receipts and fresh role/legacy bridge validation. Gameplay
+ mutation through that workflow starts after 04 and 05. Ticket 05's lane table produces concrete
+--- a/.scratch/decomp-parallel/issues/04-concurrency-and-crash-recovery-drill.md
++++ b/.scratch/decomp-parallel/issues/04-concurrency-and-crash-recovery-drill.md
+@@ -1,6 +1,6 @@
+ # Prove concurrent sessions and crash recovery
+ 
+-Status: claimed
++Status: resolved
+ Blocked by: 02, 03
+ Triage: ready-for-agent
+ Type: task
+@@ -75,21 +75,38 @@
+ `/tmp/sm-decomp-concurrency-drill-retry-20261013`; follow its
+ [recipe](../drill-retry/recipe.md) and exact surviving session/claim state.
+ 
+-**PENDING before resolution:** append actual fresh A/B session/worker/claim and
+-generation identities, final `drill-retry/concurrency-drill.toml` eleven-control
+-manifest, two sequential authenticated integrations, both completed A/B exact
+-retries after final HEAD and retirement, stale/budget receipts, passing
+-maintained drill validation, current-root
+-[readiness successor](../preparation/readiness-retry-20261013/README.md)
+-`production-validation-1` verdict/host-preservation seals, both cleanup passes,
+-measured bytes/free space, retired implementer worktrees, post-cleanup authentication and the
+-final root Git checkpoint. A helper build or earlier drill control passes do not
+-replace those actual receipts.
++Actual sessions A `01a13515-9a51-7c73-9913-1deb499ba15c` and B
++`01a13515-9a51-7af3-bc9f-a144afb06090` completed the drill. Exact worker/claim/
++generation/process identities are retained in `{{EXECUTION_MANIFEST}}`, SHA-256
++`{{EXECUTION_SHA256}}`. [Outer manifest](../drill-retry/concurrency-drill.toml)
++SHA-256 `{{DRILL_SHA256}}` records all eleven controls. A integration source:
++`{{A_INTEGRATED_SOURCE}}`; final B merged source: `{{B_INTEGRATED_SOURCE}}`.
++Both completed exact replays at final HEAD reused byte-identical publications,
++authentication and gates, with zero gate reruns; proof `{{POST_B_RETRY_PROOF}}`,
++SHA-256 `{{POST_B_RETRY_SHA256}}`.
++
++Root's maintained validation and
++[readiness completion](../preparation/readiness-retry-20261013/completion.md)
++record passing private `prepared` validation, unchanged host authority/canonical
++ledger absence and unchanged legacy bridge/Ceres ledger seals. Output manifest
++`{{READINESS_OUTPUT_MANIFEST}}`, SHA-256 `{{READINESS_OUTPUT_SHA256}}`.
++The original readiness package manifest remains unchanged; completion is a new
++receipt document beside it.
++
++Both cleanup passes succeeded for drill/validation/worker scope; all integrated
++implementer worktrees were removed after retained source snapshots. Cleanup
++receipts `{{CLEANUP_RECEIPTS}}`; reclaimed `{{TOTAL_RECLAIMED_BYTES}}` bytes,
++available `{{FINAL_AVAILABLE_BYTES}}` bytes. Post-cleanup authentication
++`{{POST_CLEANUP_AUTHENTICATION}}` passed. Retain exact frozen source/path,
++engine/readers, small fixture Git history, sealed requests/gates/source snapshots
++and shared evidence/private-input dependencies. Root checkpoint:
++`{{FINAL_DOC_CHECKPOINT}}`.
+ 
+ The historical section below records unchanged `c8799f3` execution and its
+ separate validator epoch. Its second-integration failure is preserved as the
+ originating diagnosis for the earlier serial fix; `drill-final` replay failure
+-is retained separately. Fresh actual corrected-source receipts remain pending.
++is retained separately. Fresh actual corrected-source receipts above resolve
++this preparation gate.
+ Production authority/canonical ledger remain absent, legacy Ceres
+ claims/seals unchanged, and gameplay launch remains separately requested.
+ 
+--- a/.scratch/decomp-integration-retry/spec.md
++++ b/.scratch/decomp-integration-retry/spec.md
+@@ -1,6 +1,6 @@
+ # Authenticate completed infrastructure integration retries
+ 
+-Status: claimed
++Status: resolved
+ Blocked by: None
+ Owner: `/root/drill_review`
+ Coordinator: `01a13500-1ef8-73d3-9a0d-3446b6050eba`
+@@ -12,8 +12,9 @@
+ 
+ Implement in Rust under the worker's isolated approved scope. Preserve old drill
+ source, requests, gate receipts, authentication, cleanup and failure evidence.
+-Preparation ticket04 stays claimed until the behavioral correction receives a
+-fresh actual independent-session drill and production readiness/cleanup receipts.
++The behavioral correction passed the fresh actual independent-session drill
++and private readiness/cleanup; [preparation ticket04](../decomp-parallel/issues/04-concurrency-and-crash-recovery-drill.md)
++retains its final evidence.
+ The gameplay spec/map remain open; production authority/ledger stay absent.
+ 
+ The implementation ticket is
+@@ -21,3 +22,11 @@
+ [the reproducibility audit](reproducibility-audit.md) before preparing the new
+ drill successor. Root freezes the new exact engine source/binary and owns actual
+ drill/readiness integration, historical evidence retention and final cleanup.
++
++## Completion evidence
++
++Rust source `57f93c5ce4e6adac2dfe181b852d4aad6e0776bd` is integrated as
++`0d042e0`. [Ticket01](issues/01-authenticate-completed-integration-retries.md)
++records retained red/green controls, exact corrected frozen build, both completed
++replays after later merge/retirement, no gate reruns and final cleanup/authentication.
++Final root checkpoint: `{{FINAL_DOC_CHECKPOINT}}`.
+--- a/.scratch/decomp-integration-retry/issues/01-authenticate-completed-integration-retries.md
++++ b/.scratch/decomp-integration-retry/issues/01-authenticate-completed-integration-retries.md
+@@ -1,6 +1,6 @@
+ # Authenticate completed integration retries after later merges
+ 
+-Status: claimed
++Status: resolved
+ Blocked by: None
+ Triage: ready-for-agent
+ Type: task
+@@ -85,12 +85,28 @@
+ 
+ ## Completion evidence
+ 
+-Pending: scoped worker commit, red/green logs and evidence manifests, focused
+-verification, new frozen build identity, fresh actual drill session/claim/gate/
+-retry receipts, current-root readiness/host-preservation receipt, both cleanup
+-passes, measured reclamation/free space, retired implementer worktrees and
+-post-cleanup authentication. Follow
+-[run cleanup](../../../docs/agents/run-cleanup.md) before resolution.
++Scoped Rust commit `57f93c5ce4e6adac2dfe181b852d4aad6e0776bd`, integrated as
++`0d042e0`, retains red/probe failures and green/tamper/dirty/stale/ancestry controls
++in [worker handoff](../handoff.toml) and worker source/evidence manifests.
++Assignment 23, session 17 and authority 11 controls passed; formatting was clean.
++Frozen source/build identity is in
++[engine-build.toml](../../decomp-parallel/drill-retry/engine-build.toml), SHA-256
++`cdf1295fdc8ad86b574866636f68966205e5c46bf2fd19649fa9a4dd2f5bdbb9`.
++
++Fresh actual [drill](../../decomp-parallel/drill-retry/concurrency-drill.toml),
++SHA-256 `{{DRILL_SHA256}}`, passed both serial integrations and exact completed
++A/B replays after final B HEAD/worktree retirement with unchanged original
++publications/gates and zero reruns. Retry proof `{{POST_B_RETRY_PROOF}}`, SHA-256
++`{{POST_B_RETRY_SHA256}}`. Current-root private readiness passed and preserved
++host authority/ledger absence; [ticket04](../../decomp-parallel/issues/04-concurrency-and-crash-recovery-drill.md)
++retains final role/manifest/host-preservation evidence.
++
++Both cleanup passes and worker worktree/target retirement completed; source,
++binary/readers and sealed red/green/drill evidence remain retained/authenticatable.
++Cleanup `{{RETRY_WORKER_CLEANUP}}`, reclaimed `{{RETRY_WORKER_RECLAIMED_BYTES}}`
++bytes; final free space `{{FINAL_AVAILABLE_BYTES}}` bytes. Post-cleanup
++authentication `{{POST_CLEANUP_AUTHENTICATION}}`; root checkpoint
++`{{FINAL_DOC_CHECKPOINT}}`.
+ 
+ ## Comments
+ 

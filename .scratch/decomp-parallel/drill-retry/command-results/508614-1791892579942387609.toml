@@ -1,0 +1,24 @@
+exit_code = 0
+name = "lease-3"
+observed_at = "1791892579"
+schema = "decomp-drill-lease-finished-v1"
+session_id = "01a13515-9a51-7af3-bc9f-a144afb06090"
+
+[lease_receipt]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/leases/lease-3-acquired.toml"
+sha256 = "74a88c9723340e4d059c7d4d1aa8af690384ce358b69e6563acf52819165e2c7"
+
+[process]
+argv = [
+    "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/bin/sm-pipeline",
+    "lease",
+    "/tmp/sm-decomp-concurrency-drill-retry-20261013/out/pipeline",
+    "4",
+]
+boot_id = "7119fcce-5593-4526-aa9b-07127767c4ef"
+cwd = "/tmp/sm-decomp-concurrency-drill-retry-20261013"
+kernel_state = "R"
+observed_at = "1791892528"
+pid = 508617
+start_ticks = 2885833
+status = "running"

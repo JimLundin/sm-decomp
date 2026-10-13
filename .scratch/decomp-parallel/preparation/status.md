@@ -1,10 +1,10 @@
 # Parallel-session preparation readiness
 
-Status: tooling and catalog complete; corrected actual drill active, final readiness pending
-Blocked by: 04
+Status: ready for separately requested gameplay swarm launch
+Blocked by: None
 Triage: ready-for-agent
 Updated: 2026-10-13
-Coordinator: `01a13500-1ef8-73d3-9a0d-3446b6050eba`
+Coordinator: `01a13559-e517-72d1-88b5-e554fed61da4`
 
 The [spec](../spec.md), [ticket map](../map.md) and
 [session runbook](../../../docs/agents/decomp-sessions.md) define the workflow.
@@ -16,7 +16,7 @@ The user's separate gameplay swarm launch instruction is still required.
 | [01 Legacy reconciliation](../issues/01-reconcile-legacy-ownership.md) | resolved | Twelve retained holdings, immutable original/successor bridges and checked maintenance adoption |
 | [02 Ownership and integration fencing](../issues/02-fence-writable-paths-and-integration-sessions.md) | resolved | Cross-effort path/ticket/submission fencing, capacity and real-session generations; focused verification/cleanup complete |
 | [03 Rust commands and handoffs](../issues/03-maintained-rust-commands-and-handoffs.md) | resolved | Typed infrastructure admission, Start/Checkpoint/Resume/Adopt and exact retries; focused verification/cleanup complete |
-| [04 Actual concurrency/recovery drill](../issues/04-concurrency-and-crash-recovery-drill.md) | claimed | Fresh execution at corrected source; final eleven controls, two serial authenticated integrations, maintained validation/readiness and cleanup receipts pending |
+| [04 Actual concurrency/recovery drill](../issues/04-concurrency-and-crash-recovery-drill.md) | resolved | Eleven actual controls, two serial integrations and completed exact replays after final HEAD; private readiness, cleanup and authentication complete |
 | [05 Subsystem catalog](../issues/05-subsystem-scope-catalog.md) | resolved | Whole-subsystem catalog and children 11–20; later implementation readiness remains research |
 
 ## Current validation subject
@@ -42,27 +42,28 @@ The new [drill recipe](../drill-retry/recipe.md) uses isolated fixture
 `/tmp/sm-decomp-concurrency-drill-retry-20261013`, effort
 `concurrency-drill-retry`. Actual independent sessions A
 `01a13515-9a51-7c73-9913-1deb499ba15c` and B
-`01a13515-9a51-7af3-bc9f-a144afb06090` are active. Recover exact surviving owners
-and sealed state before issuing replacement work.
+`01a13515-9a51-7af3-bc9f-a144afb06090` completed the isolated drill.
+Final owner/process observations are retained with its cleanup evidence.
 
-Root must add these actual final receipts before setting preparation ready or
-resolving 04:
+Final [ticket04 evidence](../issues/04-concurrency-and-crash-recovery-drill.md)
+identifies [actual drill](../drill-retry/concurrency-drill.toml), SHA-256
+`63912c67e38680fd163d09126ba285f8ce26da8a2445c801f489f8971b74751f`; two serial authenticated integrations and both exact completed
+replays at final merged HEAD preserve all original publications/gates.
+[Readiness completion](completion-20261013.md) records successful
+private validation with state `prepared`, unchanged host authority/ledger and
+legacy seals. Its retained output manifest is `.scratch/decomp-parallel/preparation/readiness-final-20261013/current-root-20261013/ledger-directory-fix-20261013/private-dev-fix-20261013/production-validation-1/artifacts.sha256`,
+SHA-256 `241018cd062ef561c5650c90bce7840bec5e0749e9ebc4d2b220203fa1e4269d`.
 
-- **PENDING:** final `drill-retry/concurrency-drill.toml`, sealed execution
-  manifest, both sequential integrations and both completed exact retries at
-  final merged HEAD, plus passing maintained validation.
-- **PENDING:** current-root readiness successor at
-  [readiness-retry-20261013](readiness-retry-20261013/README.md), actual
-  `production-validation-1` private verdict with state `prepared`, host
-  authority/ledger preservation and unchanged legacy seals.
-- **PENDING:** both scoped cleanup passes, measured reclamation/free space,
-  required source/readers retained, integrated worktrees retired and passing
-  post-cleanup authentication.
-- **PENDING:** durable final documentation/source checkpoint owned by root.
+Both cleanup passes succeeded, all implementer worktrees were retired and
+post-cleanup authentication passed. Total measured reclamation:
+`2,481,607,746` logical bytes across the retry worker and recorded helper targets; final available space:
+`221,230,100,480` bytes. Required frozen source, executables/readers,
+small fixture Git history, sealed evidence and dependencies remain retained.
+Root checkpoint: `.scratch/decomp-parallel/preparation/final-checkpoint-20261013.md`.
 
 Original `drill/`, `drill-final/` A replay failure, prior source/validator epochs,
 recovery records and old readiness/cutover packages remain historical evidence.
-Current root is `01a13500-1ef8-73d3-9a0d-3446b6050eba`;
+Current root is `01a13559-e517-72d1-88b5-e554fed61da4`;
 prior preparation roots `01a13460-4aa9-7fe0-865e-a8f54ffca310` and
 `01a134cd-dafb-7e50-8284-f285a905e05b` retain their historical observations.
 Current main Git/index and process owners require direct observation by root;

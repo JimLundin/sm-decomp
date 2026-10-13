@@ -1,0 +1,7 @@
+schema = "decomp-readiness-package-cleanup-v1"
+status = "complete"
+private_target_logical_bytes_before_clean = 15781913
+available_filesystem_bytes = 221174435840
+helper_binary_retained = true
+namespace_validation_run = false
+limitations = ["Scoped utility cleanup and deduplication succeeded; cargo target removed after builder/compiler children exited; all predecessor and retained evidence dependencies remain"]

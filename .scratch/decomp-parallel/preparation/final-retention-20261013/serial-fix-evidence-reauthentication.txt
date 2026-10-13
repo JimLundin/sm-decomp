@@ -1,0 +1,13 @@
+red.log: OK
+red-repeat.log: OK
+initial-build-type-error.log: OK
+initial-green-control-diagnosis.log: OK
+control-diagnosis.log: OK
+control-diagnosis-2.log: OK
+green.log: OK
+session-suite.log: OK
+adjacent-suite.log: OK
+format-check.log: OK
+cleanup-pass1.toml: OK
+cleanup-pass2.toml: OK
+worker-identity.toml: OK

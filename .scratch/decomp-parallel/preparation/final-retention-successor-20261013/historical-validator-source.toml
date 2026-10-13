@@ -1,0 +1,5 @@
+checkout = "/tmp/sm-decomp-ticket-validator-20261013"
+head = "f54fbed0f30f2c84e2c6aba171dcc54e96099c9a"
+fingerprint = "cde89f07dcf1a897abc81938581d893a3b037257bf23ec7939b5f9c11de0d352"
+source_files = 435
+authenticated = true

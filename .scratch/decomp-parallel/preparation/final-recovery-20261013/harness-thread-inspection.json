@@ -1,0 +1,9 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"schemaVersion\":1,\"thread\":{\"id\":\"01a13501-0242-71b0-820d-fdea3808f4c9\",\"kind\":\"codex\",\"title\":null,\"preview\":\"\",\"status\":{\"type\":\"systemError\"},\"cwd\":\"/home/jim/sm-decomp\",\"createdAt\":1791890620,\"updatedAt\":1791894290},\"page\":{\"order\":\"newest_first\",\"limit\":1,\"hasMore\":true,\"nextCursor\":\"{\\\"requestedThreadId\\\":\\\"01a13501-0242-71b0-820d-fdea3808f4c9\\\",\\\"rolloutOrdinal\\\":1207,\\\"includeAnchor\\\":false,\\\"scope\\\":{\\\"kind\\\":\\\"turns\\\"}}\"},\"turns\":[{\"id\":\"01a13538-8be3-7d53-9f0d-7c0401230a88\",\"status\":\"failed\",\"error\":{\"message\":\"stream disconnected before completion: Encrypted function output content could not be decrypted or decoded.\",\"additionalDetails\":null},\"startedAt\":1791894260,\"completedAt\":1791894290,\"durationMs\":29324,\"items\":[]}]}"
+    }
+  ],
+  "isError": false
+}

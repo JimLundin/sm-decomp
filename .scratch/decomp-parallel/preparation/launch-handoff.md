@@ -1,15 +1,15 @@
 # Gameplay swarm launch handoff
 
-Status: current launch handoff; corrected actual drill/readiness receipts pending
-Blocked by: 04 and the user's separate gameplay swarm launch instruction
-Preparation coordinator: `01a13500-1ef8-73d3-9a0d-3446b6050eba`
+Status: ready for separately requested gameplay swarm launch
+Blocked by: the user's separate gameplay swarm launch instruction
+Preparation coordinator: `01a13559-e517-72d1-88b5-e554fed61da4`
 
 For a fresh or replacement session, read [AGENTS.md](../../../AGENTS.md),
 [domain rules](../../../docs/agents/domain.md), [GLOSSARY.md](../../../GLOSSARY.md)
 and relevant ADRs, then [the session runbook](../../../docs/agents/decomp-sessions.md),
 [spec](../spec.md), [map](../map.md), [preparation status](status.md),
 [checkpoint](../checkpoint-20261013.md), [fresh drill recipe](../drill-retry/recipe.md),
-[current-root readiness successor](readiness-retry-20261013/README.md),
+[current-root readiness successor](completion-20261013.md),
 [catalog](../catalog/subsystem-catalog.md) and [later lanes](../catalog/later-lanes.md).
 Use [assignments](../../../docs/agents/assignments.md),
 [translation progress](../../../docs/agents/translation-progress.md) and
@@ -27,17 +27,16 @@ Retained engine [sm-pipeline](../drill-retry/bin/sm-pipeline) has SHA-256
 `cdf1295fdc8ad86b574866636f68966205e5c46bf2fd19649fa9a4dd2f5bdbb9`
 and checkpoint `9acff17`. Main integration is `0d042e0`.
 
-**PENDING:** root attaches the final actual drill/eleven-control manifest and
-passing maintained validation, both sequential integration/completed-retry
-receipts at final merged HEAD, current-root
-`readiness-retry-20261013/production-validation-1` verdict/host-preservation seals,
-both cleanup passes and
-post-retirement authentication. Preparation remains claimed until these receipts
-are present. Old `drill/`, frozen subjects, readiness packages and their failures
-remain immutable historical evidence. `drill-final` A exact replay failed after
-later B integration; the current Rust correction preserves sealed historical
-acceptance and passes maintained regression controls. Only the new actual drill
-establishes corrected independent-session behavior.
+[Actual drill](../drill-retry/concurrency-drill.toml), SHA-256 `63912c67e38680fd163d09126ba285f8ce26da8a2445c801f489f8971b74751f`,
+passed all eleven controls, both serial integrations and both completed replays
+at final merged HEAD. [Readiness completion](completion-20261013.md)
+links private `prepared` validation and host-preservation receipts; output
+manifest SHA-256 is `241018cd062ef561c5650c90bce7840bec5e0749e9ebc4d2b220203fa1e4269d`. Both cleanup passes and
+post-retirement authentication passed; exact measurements/dependencies are in
+[ticket04](../issues/04-concurrency-and-crash-recovery-drill.md). Production
+authority/ledger remain absent. Old drill/frozen/readiness packages and failures
+remain immutable historical evidence; the prior A-after-B replay defect is
+fixed and exercised by this retained corrected-source drill.
 
 ## Launch steps
 
@@ -52,8 +51,10 @@ establishes corrected independent-session behavior.
    Record main Git/index and integration owners. The preparation coordinator UUID
    is a historical observation for later sessions; names and elapsed time cannot
    establish current liveness. Replacement roles use checked transfers/adoption.
-3. Derive fresh typed production requests from the reviewed current-root readiness
-   policy, exact legacy bridge and passing retained drill. Observed integrator
+3. Use the policy and exact receipts linked from
+   [final completion](completion-20261013.md). Derive fresh typed production
+   requests from the reviewed readiness policy, exact legacy bridge and passing
+   retained drill. Observed integrator
    calls maintained `decomp-authority prepare`, registers actual dispatcher and
    integrator roles/checked transfers, then `validate-activation` and `activate`
    with current real session id/generation. Preserve inherited `CODEX_THREAD_ID`.

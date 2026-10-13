@@ -1,0 +1,17 @@
+531281 execve("/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/bin/sm-pipeline", ["/home/jim/sm-decomp/.scratch/dec"..., "decomp-authority", "--request", "/home/jim/sm-decomp/.scratch/dec"...], 0x7ffecddea7d0 /* 72 vars */) = 0
+531281 access("/etc/ld.so.preload", R_OK) = -1 ENOENT (No such file or directory)
+531281 openat(AT_FDCWD, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+531281 openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libgcc_s.so.1", O_RDONLY|O_CLOEXEC) = 3
+531281 openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libpthread.so.0", O_RDONLY|O_CLOEXEC) = 3
+531281 openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libm.so.6", O_RDONLY|O_CLOEXEC) = 3
+531281 openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libdl.so.2", O_RDONLY|O_CLOEXEC) = 3
+531281 openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+531281 openat(AT_FDCWD, "/proc/self/maps", O_RDONLY|O_CLOEXEC) = 3
+531281 readlink("/proc/self/exe", "/home/jim/sm-decomp/.scratch/dec"..., 256) = 72
+531281 openat(AT_FDCWD, "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/bin/sm-pipeline", O_RDONLY|O_CLOEXEC) = 3
+531281 openat(AT_FDCWD, "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-final-20261013/current-root-20261013/ledger-directory-fix-20261013/prepare-request.toml", O_RDONLY|O_CLOEXEC) = 3
+531281 statx(3, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_ALL, {stx_mask=STATX_ALL|0x1000, stx_attributes=0, stx_mode=S_IFREG|0644, stx_size=1121, ...}) = 0
+531281 lstat("/tmp", {st_mode=S_IFDIR|S_ISVTX|0777, st_size=311296, ...}) = 0
+531281 lstat("/tmp/sm-decomp-preparation-retry-source-20261013", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+531281 openat(AT_FDCWD, "/dev/null", O_RDONLY|O_CLOEXEC) = -1 EACCES (Permission denied)
+531281 +++ exited with 1 +++

@@ -1,12 +1,12 @@
 # Restartable parallel decomp sessions
 
 Status: open
-Blocked by: 01, 02, 03, 04, 05
+Blocked by: 06, 07, 08, 09, 10
 Owner: integration coordinator
 Plan deliverable: complete; implementation and gameplay milestones remain open
 
-Preparation: tickets 01–03 and 05 resolved; corrected actual drill 04 active, readiness pending
-Preparation coordinator: `01a13500-1ef8-73d3-9a0d-3446b6050eba`
+Preparation: tickets 01–05 resolved; ready for separately requested gameplay swarm launch
+Preparation coordinator: `01a13559-e517-72d1-88b5-e554fed61da4`
 
 Read [preparation status](preparation/status.md) for the current frozen source,
 actual final receipts and production boundary. Follow
@@ -86,11 +86,11 @@ requests launch and an actual cutover records admitted roles/generations, curren
 source and the exact legacy bridge. Preparation validates a private prepared
 policy view with maintained `validate-activation`; production prepare,
 registration/checked transfer, validation and activation occur at launch.
-Ticket 04's actual final receipts remain pending. This document changes no claims.
-Ticket 04 runs its independent-session drill in a disposable isolated checkout
-and effort before production activation. Read-only catalog research in ticket
-05 starts after 01 and can run beside 02–04; mutable gameplay additionally
-requires the catalog's approved scopes and reconciled legacy ownership.
+Ticket 04's [final evidence](issues/04-concurrency-and-crash-recovery-drill.md)
+records passing actual independent-session drill, private readiness and cleanup.
+Production activation remains the later launch step; this document changes no
+claims. Mutable gameplay requires the catalog's approved scopes, reconciled
+legacy ownership and the user's separate launch instruction.
 
 Use durable role registrations: one explicit persistent integrator token and
 one allocated persistent dispatcher token per admitted session. Record their

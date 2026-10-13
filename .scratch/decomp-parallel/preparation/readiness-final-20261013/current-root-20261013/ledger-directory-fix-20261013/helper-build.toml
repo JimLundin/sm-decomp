@@ -1,0 +1,8 @@
+schema = "decomp-readiness-helper-build-v1"
+source_sha256 = "9cf69d21f0e08130be393306ffd80cf0e489b9dd7b242d05eb29e06eaee31414"
+manifest_sha256 = "1ab2999a30e86fc0c38192a807d52e26bc8d2da81e5ecf8aec8dac7e45953e52"
+lock_sha256 = "3536c9f5bf4b1984f5fa99b9cdaff66f7edcb063025c8027bb75dd6333b0c9e3"
+binary_sha256 = "740e70af61828abcd70c5d62aaa879702cb8c7a978f453d42b5dd3f09df8b847"
+actual_caller_required = "01a13559-e517-72d1-88b5-e554fed61da4"
+namespace_validation_run = false
+limitations = ["Predecessor actual root invocation returned os20 before output/namespace creation because assignment.lock is a regular file", "This helper skips nondirectory entries, rejects symlink effort roots and retains regular nonsymlink ledger enforcement", "Same real caller and prepared request observation evidence; frozen source/engine/drill stay unchanged"]

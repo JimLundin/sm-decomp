@@ -1,0 +1,44 @@
+schema = "decomp-readiness-ownership-boundaries-v1"
+observed_at = "2026-10-13T13:01:19Z"
+observer_thread = "01a13555-fca7-7893-9b16-c9355ad3f516"
+legacy_integrator_thread = "01a133eb-76e2-7073-9aef-d97c03a812e4"
+legacy_integrator_status = "failed"
+previous_preparation_thread = "01a13500-1ef8-73d3-9a0d-3446b6050eba"
+previous_preparation_status = "failed"
+replacement_integrator_thread = "01a13554-bc0d-7662-9378-28eecfa6122f"
+replacement_integrator_status = "running"
+replacement_integrator_generation = 1
+main_git_owner_thread = "01a13554-bc0d-7662-9378-28eecfa6122f"
+reporting_thread = "01a13394-29b8-76a3-aab7-5ab8eff60694"
+reporting_status = "completed"
+reporting_handoff_commit = "9ed933daa151f52e3cf922e6559c7681330e0f85"
+reporting_server_retained_pid = 420446
+reporting_server_start_ticks = 2249195
+reporting_server_boot_id = "7119fcce-5593-4526-aa9b-07127767c4ef"
+claim_processes_observed = []
+claim_states_unchanged = true
+original_claims_released = false
+gameplay_launched = false
+authority_present = false
+canonical_ledger_present = false
+limitations = ["Fresh process inspection found no retained Ceres path writer; submitted jobs and running integration remain held.", "Prospective generation1 transfer occurs only inside the private namespace; host production has never acquired it.", "Real thread/process observations remain a tool trust boundary, not platform attestation.", "Prior isolated-drill coordinator and crashed retry harness are terminal; supplemental drill is monitored separately. No claim release is inferred."]
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-final-20261013/thread-inspection-current.json"
+sha256 = "6ba3567ab54835f100242511705eaca448bfe973b76d0d363df26fd1ac98c496"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-final-20261013/process-inspection-current.toml"
+sha256 = "5a33b6bc814843282f0087076bce9409c72de1ef4598abe495f34c109fdf4b40"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/final-recovery-20261013/root-and-legacy-thread-inspection.json"
+sha256 = "7ff4382cb529d7c3bca3a2a0260e101c1d7314312de3b65d5e76392797ee7969"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-retry-20261013/artifacts.sha256"
+sha256 = "76e5c8541c32af2c1cd0f00bf43d9ec8f2f92b05bb6d53692a369228b0b8cd6b"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-final-20261013/prior-readiness-not-executed.toml"
+sha256 = "1e39e96a340b61723dc75a8f58c12b37c483333db8ecbf94204043fe9e0f3700"

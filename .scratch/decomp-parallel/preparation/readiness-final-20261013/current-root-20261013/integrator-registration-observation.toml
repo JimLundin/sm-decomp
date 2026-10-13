@@ -1,0 +1,20 @@
+schema = "decomp-session-observation-v1"
+session_id = "01a13559-e517-72d1-88b5-e554fed61da4"
+status = "running"
+observed_at = "2026-10-13T13:05:35Z"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-final-20261013/current-root-20261013/current-root-inspection.json"
+sha256 = "188fb05a2661374d92ea3ccf7dc701ace362e653d4c63d1d7e1ecb81b95795f5"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-final-20261013/current-root-20261013/process-inspection-current.toml"
+sha256 = "066cfc77ec3341a4476bc828e7dd1ed495e8c7dbc8aa42d11ba1c6b9d2313b11"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-final-20261013/artifacts.sha256"
+sha256 = "8dc634efb7b35ba6f5de9d4eb39252f3e75b22ff9c64ac273133a29e9df45b97"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-final-20261013/current-root-20261013/legacy-generation-zero-transfer.toml"
+sha256 = "8809ebfbcc0e63d0a7302682c69cf6e4f9d105e078a1c6e8c29188c8a204d1e5"

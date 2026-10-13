@@ -1,0 +1,6 @@
+schema = "decomp-readiness-final-drill-binding-v1"
+drill = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/concurrency-drill.toml"
+drill_sha256 = "63912c67e38680fd163d09126ba285f8ce26da8a2445c801f489f8971b74751f"
+post_publication_proof = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/post-publication-interruption.toml"
+post_publication_proof_sha256 = "6735bb4c95e4ec1581ec5b13fb61b96ed2e5621b261f181decff49c68eb6b451"
+bound_at_actual_root_execution = true

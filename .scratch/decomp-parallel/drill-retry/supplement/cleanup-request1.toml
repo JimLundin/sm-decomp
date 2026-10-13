@@ -1,0 +1,3 @@
+root = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry"
+apply = true
+deduplicate = false

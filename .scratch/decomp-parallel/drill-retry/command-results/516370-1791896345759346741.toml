@@ -1,0 +1,32 @@
+log = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/sessions/b-1791896345.jsonl"
+name = "b"
+observed_at = "1791896345"
+pid = 516393
+schema = "decomp-drill-session-launch-v1"
+session_id = "01a13515-9a51-7af3-bc9f-a144afb06090"
+stderr = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/sessions/b-1791896345.stderr"
+
+[process]
+argv = [
+    "codex",
+    "exec",
+    "-s",
+    "danger-full-access",
+    "-C",
+    "/tmp/sm-decomp-concurrency-drill-retry-20261013",
+    "resume",
+    "01a13515-9a51-7af3-bc9f-a144afb06090",
+    "--json",
+    "-",
+]
+boot_id = "7119fcce-5593-4526-aa9b-07127767c4ef"
+cwd = "/tmp/sm-decomp-concurrency-drill-retry-20261013"
+kernel_state = "S"
+observed_at = "1791896345"
+pid = 516393
+start_ticks = 3126349
+status = "running"
+
+[prompt]
+path = ".scratch/decomp-parallel/drill-retry/prompts/b-post-publication-hold.md"
+sha256 = "b11be7c74f4cc30195076ef8dad3e8fe8f4bec8c987ed6ee86d60d45d3598410"

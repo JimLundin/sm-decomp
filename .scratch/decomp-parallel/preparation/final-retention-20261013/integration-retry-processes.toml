@@ -1,0 +1,5 @@
+[summary]
+checkout = "/home/jim/sm-decomp/.scratch/decomp-integration-retry"
+referencing_processes = 0
+inaccessible_fd_directories = 39
+inspection = "cwd and open fd references; inaccessible unrelated processes remain a stated observation limit"

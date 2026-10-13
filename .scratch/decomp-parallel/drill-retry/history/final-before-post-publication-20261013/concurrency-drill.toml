@@ -1,0 +1,35 @@
+checkout = "/home/jim/sm-decomp"
+head = "57f93c5ce4e6adac2dfe181b852d4aad6e0776bd"
+isolated_checkout = "/tmp/sm-decomp-concurrency-drill-retry-20261013"
+schema = "decomp-concurrency-drill-v1"
+source_checkout = "/tmp/sm-decomp-preparation-retry-source-20261013"
+source_fingerprint = "bd103af4b5d563904a3cbdbe62e971c46c6b4a4e907b60bbbb8575a2373355ec"
+
+[bridge]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/reconciliation/legacy-owner-bridge-v2.toml"
+sha256 = "cb537f195b4f83529f2ea7a61bd65c6e77ad215366275e8d60a7a604c4eb0ba9"
+
+[controls]
+cleanup = true
+crash-restart = true
+duplicate-ticket = true
+independent-sessions = true
+integration-success = true
+same-attempt-retry = true
+shared-capacity = true
+stale-authority = true
+stopped-transfer = true
+surviving-child = true
+writable-overlap = true
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/execution.toml"
+sha256 = "f8777dd49d7eabaea28e83e17885392c1214d4c320504df2631cd97b09a25a9a"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/post-b-retry.toml"
+sha256 = "f8ab8db23c0e795f574b4c59be8cadfc5b3349c5300a77070152cd249030a954"
+
+[execution]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/execution.toml"
+sha256 = "f8777dd49d7eabaea28e83e17885392c1214d4c320504df2631cd97b09a25a9a"

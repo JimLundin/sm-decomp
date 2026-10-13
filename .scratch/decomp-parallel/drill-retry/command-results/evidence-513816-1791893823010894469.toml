@@ -1,0 +1,7 @@
+[drill]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/concurrency-drill.toml"
+sha256 = "9fed37700156b7251579d999ed7f0d04846cb13fb156de7c2541e7f862ff604c"
+
+[execution]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/execution.toml"
+sha256 = "f8777dd49d7eabaea28e83e17885392c1214d4c320504df2631cd97b09a25a9a"

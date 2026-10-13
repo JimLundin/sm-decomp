@@ -1,0 +1,28 @@
+contended = true
+held = 4
+limit = 4
+schema = "decomp-drill-worker-budget-v1"
+
+[[evidence]]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/worker-budget-snapshot.toml"
+sha256 = "3c136cd97d2d8e57c2877e57ac30c5921d3c0b27f06fcaa98806daeefd678449"
+
+[[evidence]]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/leases/lease-3-finished.toml"
+sha256 = "dc1592255c9821c0a81640065fab56375099a1d9c5e2b533b8d503a9b7cca19a"
+
+[[evidence]]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/leases/lease-4-finished.toml"
+sha256 = "5ada59f3cb2c62f4c9813ea20ecd8a037eb35ee2414d6789eecb91a26c86ded2"
+
+[[evidence]]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/leases/lease-1-finished.toml"
+sha256 = "410aa222ad618c61037c9d12ffa79793b42ed9ae1590d53d28920693f9b6d794"
+
+[[evidence]]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/leases/lease-5-finished.toml"
+sha256 = "05630499055938898d88ca2cd9fcf2cfc02f0a90cf17d42ca66ba2f372a4d23a"
+
+[[evidence]]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/leases/lease-2-finished.toml"
+sha256 = "d2239e351d7f1d37ea8257486f02e2a5fb9de80036dbf9399b110ce7450d6278"

@@ -1,0 +1,2 @@
+Supplement assembler initial run rejected exact retry response changed before publishing supplemental proof.
+Corrected comparison: original request bytes remain identical; final retry stdout matches previous post-B exact retry, because original publication stdout includes then-current queue state.

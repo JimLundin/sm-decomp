@@ -1,0 +1,106 @@
+limit = 4
+observed_at = "1791892579"
+root = "/tmp/sm-decomp-concurrency-drill-retry-20261013/out/pipeline"
+schema = "decomp-drill-worker-budget-snapshot-v1"
+
+[[held]]
+
+[held.lease_receipt]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/leases/lease-2-acquired.toml"
+sha256 = "86700ac23c83cb95942d451d3db637bb424f7789c90cf8c297c82a266248a617"
+
+[held.process]
+argv = [
+    "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/bin/sm-pipeline",
+    "lease",
+    "/tmp/sm-decomp-concurrency-drill-retry-20261013/out/pipeline",
+    "4",
+]
+boot_id = "7119fcce-5593-4526-aa9b-07127767c4ef"
+cwd = "/tmp/sm-decomp-concurrency-drill-retry-20261013"
+kernel_state = "S"
+observed_at = "1791892579"
+pid = 508620
+start_ticks = 2885834
+status = "running"
+
+[[held]]
+
+[held.lease_receipt]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/leases/lease-5-acquired.toml"
+sha256 = "08d272df5edc3d41dc30ab4123a9167cb1228b39c2ee9e1aafd10b466d3d5c43"
+
+[held.process]
+argv = [
+    "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/bin/sm-pipeline",
+    "lease",
+    "/tmp/sm-decomp-concurrency-drill-retry-20261013/out/pipeline",
+    "4",
+]
+boot_id = "7119fcce-5593-4526-aa9b-07127767c4ef"
+cwd = "/tmp/sm-decomp-concurrency-drill-retry-20261013"
+kernel_state = "S"
+observed_at = "1791892579"
+pid = 508621
+start_ticks = 2885835
+status = "running"
+
+[[held]]
+
+[held.lease_receipt]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/leases/lease-4-acquired.toml"
+sha256 = "a521d92ac83fb285cd882ad44c5ce2de6baf7e32c2b8057f398e0f13328d4494"
+
+[held.process]
+argv = [
+    "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/bin/sm-pipeline",
+    "lease",
+    "/tmp/sm-decomp-concurrency-drill-retry-20261013/out/pipeline",
+    "4",
+]
+boot_id = "7119fcce-5593-4526-aa9b-07127767c4ef"
+cwd = "/tmp/sm-decomp-concurrency-drill-retry-20261013"
+kernel_state = "S"
+observed_at = "1791892579"
+pid = 508619
+start_ticks = 2885834
+status = "running"
+
+[[held]]
+
+[held.lease_receipt]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/leases/lease-1-acquired.toml"
+sha256 = "9df66b4ac28793a2f7d8a99f026b47caefe2775790d464d83a37f44bd2f65d6e"
+
+[held.process]
+argv = [
+    "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/bin/sm-pipeline",
+    "lease",
+    "/tmp/sm-decomp-concurrency-drill-retry-20261013/out/pipeline",
+    "4",
+]
+boot_id = "7119fcce-5593-4526-aa9b-07127767c4ef"
+cwd = "/tmp/sm-decomp-concurrency-drill-retry-20261013"
+kernel_state = "S"
+observed_at = "1791892579"
+pid = 508618
+start_ticks = 2885833
+status = "running"
+
+[waiter]
+acquired = false
+
+[waiter.process]
+argv = [
+    "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/bin/sm-pipeline",
+    "lease",
+    "/tmp/sm-decomp-concurrency-drill-retry-20261013/out/pipeline",
+    "4",
+]
+boot_id = "7119fcce-5593-4526-aa9b-07127767c4ef"
+cwd = "/tmp/sm-decomp-concurrency-drill-retry-20261013"
+kernel_state = "S"
+observed_at = "1791892579"
+pid = 508617
+start_ticks = 2885833
+status = "running"

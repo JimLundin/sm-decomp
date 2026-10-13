@@ -1,0 +1,16 @@
+schema = "decomp-drill-descendant-excerpt-v1"
+observer = "/root/drill_review"
+parent_session_id = "01a1351b-56be-7150-b777-9a2be1424502"
+child_session_id = "01a1351c-5913-7cb0-8bb9-f326660aacbc"
+child_task = "/root/lane_scoped_append"
+child_status = "completed"
+source_path = "/home/jim/.codex/sessions/2026/10/13/rollout-2026-10-13T13-52-26-01a1351b-56be-7150-b777-9a2be1424502.jsonl"
+source_lines = [38, 52, 57]
+observed_source_bytes = 257348
+observed_source_sha256 = "5490cfedd9810597217d654fc11d277c877c9012d74e1595790f8c0972ae6ef3"
+extraction_command = "sed -n '38p;52p;57p' SOURCE > replacement-descendant-events.jsonl"
+limitations = ["Local durable session event evidence; no platform attestation", "Source rollout was still appendable when observed; only immutable selected lines are retained", "Excerpt preserves started/completed identity and exact document result; other session data is not a dependency"]
+
+[excerpt]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/review/replacement-descendant-events.jsonl"
+sha256 = "81654959b50ff2cf23595ff1a22e99eababf0c4a1b6c8724670f3b802eaa37f9"

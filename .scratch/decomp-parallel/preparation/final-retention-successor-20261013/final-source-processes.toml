@@ -1,0 +1,5 @@
+[summary]
+checkout = "/tmp/sm-decomp-preparation-final-source-20261013"
+referencing_processes = 0
+inaccessible_fd_directories = 40
+inspection = "cwd and open fd references; inaccessible unrelated processes remain a stated observation limit"

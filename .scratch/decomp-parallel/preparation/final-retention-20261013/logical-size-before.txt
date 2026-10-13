@@ -1,0 +1,11 @@
+611263737	/tmp/sm-decomp-preparation-integration-20261013
+412354940	/tmp/sm-decomp-preparation-final-source-20261013
+412356657	/tmp/sm-decomp-ticket-validator-20261013
+412364765	/tmp/sm-decomp-preparation-retry-source-20261013
+43833	.scratch/decomp-parallel/preparation/integration-evidence
+40494	.scratch/decomp-parallel/preparation/03-session-evidence
+12754	.scratch/decomp-parallel/preparation/integration-handoff-evidence
+199168307	.scratch/decomp-parallel/preparation/ticket-validator-evidence
+19888	.scratch/decomp-parallel/preparation/serial-fix-evidence
+177495	.scratch/decomp-integration-retry
+5063863	.scratch/decomp-parallel/preparation/final-retention-20261013

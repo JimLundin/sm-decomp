@@ -1,0 +1,15 @@
+schema = "decomp-readiness-helper-build-v1"
+source_path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-final-20261013/current-root-20261013/main.rs"
+source_sha256 = "a7192267b58c6006b3e0ddd7aa75ac6066e26d4e4497e4b42a09ee968dbe7458"
+manifest_sha256 = "1ab2999a30e86fc0c38192a807d52e26bc8d2da81e5ecf8aec8dac7e45953e52"
+lock_sha256 = "3536c9f5bf4b1984f5fa99b9cdaff66f7edcb063025c8027bb75dd6333b0c9e3"
+binary_path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-final-20261013/current-root-20261013/bin/decomp-readiness"
+binary_sha256 = "e8c34b1eedf8717a36284577b01eed22365f7a9e321e8b2ae135ba5ef46d28fa"
+actual_caller_required = "01a13559-e517-72d1-88b5-e554fed61da4"
+predecessor_controls_retained = true
+namespace_validation_run = false
+limitations = ["Only required caller and owned output root constants differ from predecessor main.rs; completed controls were not rerun", "Frozen source/engine and direct sealed post-publication proof requirements remain identical"]
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-final-20261013/helper-controls.toml"
+sha256 = "3ad48784eb32ca4255ee80c4be8bd6a80c7aac61d61f4ec545a41b1525f22874"

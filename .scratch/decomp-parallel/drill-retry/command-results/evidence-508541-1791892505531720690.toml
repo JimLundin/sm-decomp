@@ -1,0 +1,53 @@
+[command]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/receipts/ticket-disjoint-next-508541-1791892503632669284.execution.toml"
+sha256 = "73e24408c18a14128d2396960934dadbee90b5e5612fc39c41daadab3dc34a87"
+
+[output]
+ledger = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/concurrency-drill-retry/ledger.toml"
+status = "waiting"
+
+[output.deferred]
+control-duplicate-ticket = "ticket is claimed"
+control-overlap = "writable ownership held by lane-a"
+
+[[output.jobs]]
+stale = false
+state = "ready"
+
+[[output.jobs]]
+stale = false
+state = "ready"
+
+[[output.jobs]]
+stale = false
+state = "ready"
+
+[[output.jobs]]
+stale = false
+state = "ready"
+
+[[output.jobs]]
+agent = "01a1351b-56be-7150-b777-9a2be1424502"
+stale = false
+state = "submitted"
+
+[output.jobs.claim]
+attempt = 2
+coordinator = "drill-a"
+id = "lane-a"
+revision = "e0ca4a38af1c6ba76aa26bc85ff2e61afe6d37f5da2198ac4bac86df33894322"
+
+[[output.jobs]]
+agent = "01a13516-463c-7942-bc88-4e9eab370a24"
+stale = false
+state = "submitted"
+
+[output.jobs.claim]
+attempt = 1
+coordinator = "drill-b"
+id = "lane-b"
+revision = "e08202001b94375c94167dcbe5893274609eda30aade6c91afc4dcdc0d07acc6"
+
+[[output.jobs]]
+stale = false
+state = "ready"

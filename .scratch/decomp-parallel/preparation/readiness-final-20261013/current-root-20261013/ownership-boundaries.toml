@@ -1,0 +1,35 @@
+schema = "decomp-readiness-ownership-boundaries-v1"
+observed_at = "2026-10-13T13:05:35Z"
+observer_thread = "01a1355a-fa91-77d3-940b-f32d89630850"
+previous_preparation_thread = "01a13554-bc0d-7662-9378-28eecfa6122f"
+previous_preparation_status = "failed"
+replacement_integrator_thread = "01a13559-e517-72d1-88b5-e554fed61da4"
+replacement_integrator_status = "running"
+replacement_integrator_generation = 1
+main_git_owner_thread = "01a13559-e517-72d1-88b5-e554fed61da4"
+claim_processes_observed = []
+original_claims_released = false
+gameplay_launched = false
+authority_present = false
+canonical_ledger_present = false
+limitations = ["Generation one is prospective and only acquired in the private namespace", "Retained legacy child observations remain unchanged; submitted jobs and running integration stay held", "No matching Ceres process was observed; absence does not release ownership", "Exact thread/process observations are a tool trust boundary, not platform attestation"]
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-final-20261013/current-root-20261013/current-root-inspection.json"
+sha256 = "188fb05a2661374d92ea3ccf7dc701ace362e653d4c63d1d7e1ecb81b95795f5"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-final-20261013/current-root-20261013/process-inspection-current.toml"
+sha256 = "066cfc77ec3341a4476bc828e7dd1ed495e8c7dbc8aa42d11ba1c6b9d2313b11"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-final-20261013/artifacts.sha256"
+sha256 = "8dc634efb7b35ba6f5de9d4eb39252f3e75b22ff9c64ac273133a29e9df45b97"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/reconciliation/legacy-owner-bridge-v2.toml"
+sha256 = "cb537f195b4f83529f2ea7a61bd65c6e77ad215366275e8d60a7a604c4eb0ba9"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/ceres-continuation/ledger.toml"
+sha256 = "77fdba066af4f4c045e8e8f419997563d569ac0bd8045cef0a68ac916a126b89"

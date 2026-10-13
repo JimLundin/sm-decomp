@@ -1,0 +1,201 @@
+ledger = "/home/jim/sm-decomp/.scratch/ceres-continuation/ledger.toml"
+recovery = []
+status = "status"
+
+[deferred]
+integrate-compact-controller = "integration owner is already running"
+
+[[jobs]]
+adopted_ticket = false
+agent = "/root/ceres_scope"
+attempts = 1
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "submitted"
+
+[jobs.claim]
+attempt = 1
+coordinator = "ceres-20261013"
+id = "compact-controller"
+revision = "48656a2-compact-v1"
+
+[jobs.job]
+blockers = []
+id = "compact-controller"
+instructions = "Implement explicit compact profile preserving full contract. Execute Rust focused tests and bounded60s frame2240 diagnostic, retain evidence and failures. Shared root /home/jim/sm-decomp/out/pipeline workers4. No live acceptance. Root integrates and cleans."
+kind = "implement"
+revision = "48656a2-compact-v1"
+subject = "Compact original-ROM causal controller diagnostic"
+ticket = ".scratch/ceres-continuation/issues/01-compact-controller-diagnostic.md"
+writable_paths = [
+    "crates/pipeline/src/decomp_prefix.rs",
+    "crates/pipeline/src/prefix_observer.lua.in",
+    "crates/pipeline/src/prefix_compact_observer.lua.in",
+    "crates/pipeline/tests/prefix.rs",
+    "docs/DECOMP_PREFIX.md",
+]
+
+[jobs.job.inputs]
+base-head = "48656a2"
+
+[jobs.last_update]
+event = "finished"
+
+[jobs.last_update.claim]
+attempt = 1
+coordinator = "ceres-20261013"
+id = "compact-controller"
+revision = "48656a2-compact-v1"
+
+[jobs.last_update.result]
+commit = "223f8a1b0c7382817b1290d13c7a41f4e722d5e1"
+result = "submitted"
+
+[[jobs.last_update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/ceres-continuation/controller-submission-evidence.toml"
+sha256 = "8da107cdff9c14182a0ffae1d24ce1d3acbadfccd742fccf4e31c0896bd3634e"
+
+[jobs.result]
+commit = "223f8a1b0c7382817b1290d13c7a41f4e722d5e1"
+result = "submitted"
+
+[[jobs.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/ceres-continuation/controller-submission-evidence.toml"
+sha256 = "8da107cdff9c14182a0ffae1d24ce1d3acbadfccd742fccf4e31c0896bd3634e"
+
+[[jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[jobs.job]
+blockers = []
+id = "integrate-compact-controller"
+instructions = "Integrate submitted Translation scope Compact original-ROM causal controller diagnostic from its isolated worktree. Freeze merged source, run required verification, authenticate evidence and finish scoped cleanup before recording integrated completion."
+kind = "integrate"
+revision = "48656a2-compact-v1-1"
+subject = "Integrate Compact original-ROM causal controller diagnostic"
+writable_paths = [
+    "crates/pipeline/src/decomp_prefix.rs",
+    "crates/pipeline/src/prefix_observer.lua.in",
+    "crates/pipeline/src/prefix_compact_observer.lua.in",
+    "crates/pipeline/tests/prefix.rs",
+    "docs/DECOMP_PREFIX.md",
+]
+
+[jobs.job.inputs]
+submission-attempt = "1"
+submission-id = "compact-controller"
+submission-revision = "48656a2-compact-v1"
+
+[[jobs]]
+adopted_ticket = false
+agent = "/root"
+attempts = 1
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "running"
+
+[jobs.claim]
+attempt = 1
+coordinator = "ceres-20261013"
+id = "integrate-shared-game-host"
+revision = "48656a2-host-v1-1"
+
+[jobs.job]
+blockers = []
+id = "integrate-shared-game-host"
+instructions = "Integrate submitted Translation scope Shared synchronous game host and material callback fixtures from its isolated worktree. Freeze merged source, run required verification, authenticate evidence and finish scoped cleanup before recording integrated completion."
+kind = "integrate"
+revision = "48656a2-host-v1-1"
+subject = "Integrate Shared synchronous game host and material callback fixtures"
+writable_paths = [
+    "crates/port/src/game_host.rs",
+    "crates/port/src/lib.rs",
+    "crates/port/tests/game_host.rs",
+    "tools/port/game-host-projectile.toml",
+    "tools/port/game-host-room-scroll.toml",
+]
+
+[jobs.job.inputs]
+submission-attempt = "1"
+submission-id = "shared-game-host"
+submission-revision = "48656a2-host-v1"
+
+[jobs.last_update]
+agent = "/root"
+event = "started"
+
+[jobs.last_update.claim]
+attempt = 1
+coordinator = "ceres-20261013"
+id = "integrate-shared-game-host"
+revision = "48656a2-host-v1-1"
+
+[[jobs]]
+adopted_ticket = false
+agent = "/root/host_scope"
+attempts = 1
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "submitted"
+
+[jobs.claim]
+attempt = 1
+coordinator = "ceres-20261013"
+id = "shared-game-host"
+revision = "48656a2-host-v1"
+
+[jobs.job]
+blockers = []
+id = "shared-game-host"
+instructions = "Implement typed shared Host Request Response and execute unchanged Samus projectile and room-scroll roots once, preserving refusal versus owned fatal errors. Add recording adapter tests and actual-C fixture matrices with PLM HDMA and17VRAM effects. Root owns callback/catalog integration. Shared pipeline root /home/jim/sm-decomp/out/pipeline workers4."
+kind = "implement"
+revision = "48656a2-host-v1"
+subject = "Shared synchronous game host and material callback fixtures"
+ticket = ".scratch/ceres-continuation/issues/02-shared-game-host.md"
+writable_paths = [
+    "crates/port/src/game_host.rs",
+    "crates/port/src/lib.rs",
+    "crates/port/tests/game_host.rs",
+    "tools/port/game-host-projectile.toml",
+    "tools/port/game-host-room-scroll.toml",
+]
+
+[jobs.job.inputs]
+base-head = "48656a2"
+
+[jobs.last_update]
+event = "finished"
+
+[jobs.last_update.claim]
+attempt = 1
+coordinator = "ceres-20261013"
+id = "shared-game-host"
+revision = "48656a2-host-v1"
+
+[jobs.last_update.result]
+commit = "73547105d870f8b05f8c6bcf55b768c223889fdb"
+result = "submitted"
+
+[[jobs.last_update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/ceres-continuation/host-implementation.toml"
+sha256 = "7b4f118b21b969bd02abc16192cbc3caccb1c118d5cef6a5d39e3751afeaffeb"
+
+[jobs.result]
+commit = "73547105d870f8b05f8c6bcf55b768c223889fdb"
+result = "submitted"
+
+[[jobs.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/ceres-continuation/host-implementation.toml"
+sha256 = "7b4f118b21b969bd02abc16192cbc3caccb1c118d5cef6a5d39e3751afeaffeb"

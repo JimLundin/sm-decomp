@@ -1,10 +1,10 @@
 # Prove concurrent sessions and crash recovery
 
-Status: claimed
+Status: resolved
 Blocked by: 02, 03
 Triage: ready-for-agent
 Type: task
-Owner: recovered preparation coordinator `01a13500-1ef8-73d3-9a0d-3446b6050eba`
+Owner: recovered preparation coordinator `01a13559-e517-72d1-88b5-e554fed61da4`
 Source: `57f93c5ce4e6adac2dfe181b852d4aad6e0776bd`
 
 Existing queue tests and the runbook do not prove that independent live
@@ -55,7 +55,7 @@ resolution. Keep production source, claims and retained evidence intact.
 
 ### Recovered corrected-source validation subject
 
-Current root is `01a13500-1ef8-73d3-9a0d-3446b6050eba`. Execution and validator
+Current root is `01a13559-e517-72d1-88b5-e554fed61da4`. Execution and validator
 use clean frozen `/tmp/sm-decomp-preparation-retry-source-20261013`, full commit
 `57f93c5ce4e6adac2dfe181b852d4aad6e0776bd`, fingerprint
 `bd103af4b5d563904a3cbdbe62e971c46c6b4a4e907b60bbbb8575a2373355ec`.
@@ -75,21 +75,46 @@ source. Original failure receipts remain unchanged. New actual drill
 `/tmp/sm-decomp-concurrency-drill-retry-20261013`; follow its
 [recipe](../drill-retry/recipe.md) and exact surviving session/claim state.
 
-**PENDING before resolution:** append actual fresh A/B session/worker/claim and
-generation identities, final `drill-retry/concurrency-drill.toml` eleven-control
-manifest, two sequential authenticated integrations, both completed A/B exact
-retries after final HEAD and retirement, stale/budget receipts, passing
-maintained drill validation, current-root
-[readiness successor](../preparation/readiness-retry-20261013/README.md)
-`production-validation-1` verdict/host-preservation seals, both cleanup passes,
-measured bytes/free space, retired implementer worktrees, post-cleanup authentication and the
-final root Git checkpoint. A helper build or earlier drill control passes do not
-replace those actual receipts.
+Actual sessions A `01a13515-9a51-7c73-9913-1deb499ba15c` and B
+`01a13515-9a51-7af3-bc9f-a144afb06090` completed the drill. Exact worker/claim/
+generation/process identities are retained in `.scratch/decomp-parallel/drill-retry/execution.toml`, SHA-256
+`805dde33a142cc10dc9d9c3c2d6791d1589639aebaebb9feaba7a71dbbccb67a`. [Outer manifest](../drill-retry/concurrency-drill.toml)
+SHA-256 `63912c67e38680fd163d09126ba285f8ce26da8a2445c801f489f8971b74751f` records all eleven controls. A integration source:
+`0812fbcd0857b6845f2ef966f6b2f601c0b4a949`; final B merged source: `2b1400ef758907c9aee50f997bb9bca05216ec52`.
+Both completed exact replays at final HEAD reused byte-identical publications,
+authentication and gates, with zero gate reruns; proof `.scratch/decomp-parallel/drill-retry/post-b-retry.toml`,
+SHA-256 `f8ab8db23c0e795f574b4c59be8cadfc5b3349c5300a77070152cd249030a954`.
+
+Root's maintained validation and
+[readiness completion](../preparation/completion-20261013.md)
+record passing private `prepared` validation, unchanged host authority/canonical
+ledger absence and unchanged legacy bridge/Ceres ledger seals. Output manifest
+`.scratch/decomp-parallel/preparation/readiness-final-20261013/current-root-20261013/ledger-directory-fix-20261013/private-dev-fix-20261013/production-validation-1/artifacts.sha256`, SHA-256 `241018cd062ef561c5650c90bce7840bec5e0749e9ebc4d2b220203fa1e4269d`.
+The original readiness package manifest remains unchanged; completion is a new
+receipt document beside it.
+
+Both cleanup passes succeeded for drill/validation/worker scope; all integrated
+implementer worktrees were removed after retained source snapshots. Cleanup
+receipts `.scratch/decomp-parallel/preparation/completion-20261013.md`; reclaimed `2,481,607,746` logical bytes across the retry worker and recorded helper targets,
+available `221,230,100,480` bytes. Post-cleanup authentication
+`.scratch/decomp-parallel/drill-retry/metadata-closure-20261013/independent-authentication.json` passed. Retain exact frozen source/path,
+engine/readers, small fixture Git history, sealed requests/gates/source snapshots
+and shared evidence/private-input dependencies. Root checkpoint:
+`.scratch/decomp-parallel/preparation/final-checkpoint-20261013.md`.
+
+The explicit post-publication interruption also passed: the same B controller
+was observed live, interrupted after durable publication, observed stopped,
+and resumed under generation 2. Both exact updates succeeded with all 18 receipt
+files unchanged. [Supplemental proof](../drill-retry/post-publication-interruption.toml)
+SHA-256 `6735bb4c95e4ec1581ec5b13fb61b96ed2e5621b261f181decff49c68eb6b451`.
+The final launch metadata uses sealed absolute prompt paths and authenticates
+318 artifacts after cleanup; original launch metadata remains retained.
 
 The historical section below records unchanged `c8799f3` execution and its
 separate validator epoch. Its second-integration failure is preserved as the
 originating diagnosis for the earlier serial fix; `drill-final` replay failure
-is retained separately. Fresh actual corrected-source receipts remain pending.
+is retained separately. Fresh actual corrected-source receipts above resolve
+this preparation gate.
 Production authority/canonical ledger remain absent, legacy Ceres
 claims/seals unchanged, and gameplay launch remains separately requested.
 

@@ -61,6 +61,12 @@ owner. A new `.scratch/` effort shares the repository ownership boundary.
 The maintained engine checks held paths, ticket identity and linked submissions
 across existing efforts, including path aliases, under the shared mutation lock.
 
+Preparation tickets 01–05 are resolved. Read the
+[final completion](../../.scratch/decomp-parallel/preparation/completion-20261013.md)
+and [source checkpoint](../../.scratch/decomp-parallel/preparation/final-checkpoint-20261013.md)
+for the passing actual drill, private readiness validation and cleanup. Use these
+final receipts instead of rerunning completed preparation or historical failures.
+
 Preparation and gameplay launch are separate. Before the user's later swarm
 launch instruction, keep production authority pending and inspect existing
 claims read-only. At launch, follow the readiness package, recheck exact real

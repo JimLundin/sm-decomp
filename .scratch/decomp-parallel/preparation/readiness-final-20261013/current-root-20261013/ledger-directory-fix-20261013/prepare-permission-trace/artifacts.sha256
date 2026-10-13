@@ -1,0 +1,7 @@
+db5bac8a65aebadf59f0fdf35212019050be91606a9165b298d3f3d192ecacdc  .scratch/decomp-parallel/preparation/readiness-final-20261013/current-root-20261013/ledger-directory-fix-20261013/prepare-permission-trace/cleanup1.toml
+2624524f0fb2f448e1351f8dad525947deffaa761537e3f3206162e1f18829b7  .scratch/decomp-parallel/preparation/readiness-final-20261013/current-root-20261013/ledger-directory-fix-20261013/prepare-permission-trace/cleanup2.toml
+4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865  .scratch/decomp-parallel/preparation/readiness-final-20261013/current-root-20261013/ledger-directory-fix-20261013/prepare-permission-trace/exit.txt
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  .scratch/decomp-parallel/preparation/readiness-final-20261013/current-root-20261013/ledger-directory-fix-20261013/prepare-permission-trace/namespace-assignment.lock
+cc0427c025f3903b5a10b0d2ff8be322e894b10a7d04fd912900bdf66f9360c4  .scratch/decomp-parallel/preparation/readiness-final-20261013/current-root-20261013/ledger-directory-fix-20261013/prepare-permission-trace/stderr.txt
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  .scratch/decomp-parallel/preparation/readiness-final-20261013/current-root-20261013/ledger-directory-fix-20261013/prepare-permission-trace/stdout.txt
+86f3c7d1bbcf6d7114fad0baa5f694a723c2c8abfb3044ef1f5a1d9f65f192d5  .scratch/decomp-parallel/preparation/readiness-final-20261013/current-root-20261013/ledger-directory-fix-20261013/prepare-permission-trace/strace.txt

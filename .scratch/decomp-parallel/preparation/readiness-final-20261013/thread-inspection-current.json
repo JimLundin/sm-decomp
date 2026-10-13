@@ -1,0 +1,318 @@
+{
+  "schema": "decomp-readiness-thread-inspection-v1",
+  "observed_at": "2026-10-13 12:58:12 UTC",
+  "observer_thread": "01a13555-fca7-7893-9b16-c9355ad3f516",
+  "limitations": [
+    "Exact real threads and latest terminal turns inspected through read-only app tool; observations are a tool trust boundary, not platform attestation.",
+    "Stopped parent/submitter does not release original held claim or submitted ownership.",
+    "Prior isolated drill coordinators are terminal; recovered supplemental drill is a separate observed process/session."
+  ],
+  "observations": [
+    {
+      "threadId": "01a13554-bc0d-7662-9378-28eecfa6122f",
+      "thread": {
+        "id": "01a13554-bc0d-7662-9378-28eecfa6122f",
+        "kind": "codex",
+        "title": "Finish agent swarm improvements",
+        "preview": "please finish the agent swarm improvement session that crashed",
+        "status": {
+          "type": "active",
+          "activeFlags": []
+        },
+        "cwd": "/home/jim/sm-decomp",
+        "createdAt": 1791896108,
+        "updatedAt": 1791896241
+      },
+      "turns": [
+        {
+          "id": "01a13555-0ce9-7d23-9b11-1714b24a88f0",
+          "status": "inProgress",
+          "error": null,
+          "startedAt": 1791896128,
+          "completedAt": null
+        }
+      ],
+      "inspection": {
+        "tool": "mcp__codex_tui__read_thread",
+        "turnLimit": 1,
+        "includeOutputs": false
+      }
+    },
+    {
+      "threadId": "01a13500-1ef8-73d3-9a0d-3446b6050eba",
+      "thread": {
+        "id": "01a13500-1ef8-73d3-9a0d-3446b6050eba",
+        "kind": "codex",
+        "title": "Finish agent swarm preparation",
+        "preview": "we need to pickup and finish the agent swarm preparation from the previous session that crashed",
+        "status": {
+          "type": "systemError"
+        },
+        "cwd": "/home/jim/sm-decomp",
+        "createdAt": 1791890562,
+        "updatedAt": 1791894435
+      },
+      "turns": [
+        {
+          "id": "01a13534-c9a9-7932-bcbd-232a9416273a",
+          "status": "failed",
+          "error": {
+            "message": "stream disconnected before completion: Encrypted function output content could not be decrypted or decoded.",
+            "additionalDetails": null
+          },
+          "startedAt": 1791894014,
+          "completedAt": 1791894030
+        }
+      ],
+      "inspection": {
+        "tool": "mcp__codex_tui__read_thread",
+        "turnLimit": 1,
+        "includeOutputs": false
+      }
+    },
+    {
+      "threadId": "01a134cd-dafb-7e50-8284-f285a905e05b",
+      "thread": {
+        "id": "01a134cd-dafb-7e50-8284-f285a905e05b",
+        "kind": "codex",
+        "title": "Finish agent swarm preparation",
+        "preview": "please finish the preparation for our agent swarm from the session that crashed",
+        "status": {
+          "type": "idle"
+        },
+        "cwd": "/home/jim/sm-decomp",
+        "createdAt": 1791887268,
+        "updatedAt": 1791891554
+      },
+      "turns": [
+        {
+          "id": "01a134ce-e4b6-7010-8560-2cc270bcde73",
+          "status": "failed",
+          "error": {
+            "message": "stream disconnected before completion: Encrypted function output content could not be decrypted or decoded.",
+            "additionalDetails": null
+          },
+          "startedAt": 1791887336,
+          "completedAt": 1791888484
+        }
+      ],
+      "inspection": {
+        "tool": "mcp__codex_tui__read_thread",
+        "turnLimit": 1,
+        "includeOutputs": false
+      }
+    },
+    {
+      "threadId": "01a13460-4aa9-7fe0-865e-a8f54ffca310",
+      "thread": {
+        "id": "01a13460-4aa9-7fe0-865e-a8f54ffca310",
+        "kind": "codex",
+        "title": "Resume agent swarm preparation",
+        "preview": "the previous session getting everything ready for the agent swarm crashed. can you please pick it up and continue",
+        "status": {
+          "type": "systemError"
+        },
+        "cwd": "/home/jim/sm-decomp",
+        "createdAt": 1791880088,
+        "updatedAt": 1791887074
+      },
+      "turns": [
+        {
+          "id": "01a13460-abf2-7fb1-9103-f2e19ac8a99e",
+          "status": "failed",
+          "error": {
+            "message": "stream disconnected before completion: Encrypted function output content could not be decrypted or decoded.",
+            "additionalDetails": null
+          },
+          "startedAt": 1791880113,
+          "completedAt": 1791886706
+        }
+      ],
+      "inspection": {
+        "tool": "mcp__codex_tui__read_thread",
+        "turnLimit": 1,
+        "includeOutputs": false
+      }
+    },
+    {
+      "threadId": "01a133eb-76e2-7073-9aef-d97c03a812e4",
+      "thread": {
+        "id": "01a133eb-76e2-7073-9aef-d97c03a812e4",
+        "kind": "codex",
+        "title": "Continue the decomp",
+        "preview": "continue the decomp",
+        "status": {
+          "type": "systemError"
+        },
+        "cwd": "/home/jim/sm-decomp",
+        "createdAt": 1791872431,
+        "updatedAt": 1791874657
+      },
+      "turns": [
+        {
+          "id": "01a1340d-2d5a-7ab1-a076-a7d92a822632",
+          "status": "failed",
+          "error": {
+            "message": "stream disconnected before completion: Encrypted function output content could not be decrypted or decoded.",
+            "additionalDetails": null
+          },
+          "startedAt": 1791874641,
+          "completedAt": 1791874657
+        }
+      ],
+      "inspection": {
+        "tool": "mcp__codex_tui__read_thread",
+        "turnLimit": 1,
+        "includeOutputs": false
+      }
+    },
+    {
+      "threadId": "01a133ec-4ef9-78b2-a8d7-248726023ce5",
+      "thread": {
+        "id": "01a133ec-4ef9-78b2-a8d7-248726023ce5",
+        "kind": "codex",
+        "title": null,
+        "preview": "",
+        "status": {
+          "type": "idle"
+        },
+        "cwd": "/home/jim/sm-decomp",
+        "createdAt": 1791872487,
+        "updatedAt": 1791874597
+      },
+      "turns": [
+        {
+          "id": "01a133f1-7407-7541-8651-a2601c49769e",
+          "status": "completed",
+          "error": null,
+          "startedAt": 1791872824,
+          "completedAt": 1791874597
+        }
+      ],
+      "inspection": {
+        "tool": "mcp__codex_tui__read_thread",
+        "turnLimit": 1,
+        "includeOutputs": false
+      }
+    },
+    {
+      "threadId": "01a133ec-68e2-7033-9ee7-dba26d4db746",
+      "thread": {
+        "id": "01a133ec-68e2-7033-9ee7-dba26d4db746",
+        "kind": "codex",
+        "title": null,
+        "preview": "",
+        "status": {
+          "type": "notLoaded"
+        },
+        "cwd": "/home/jim/sm-decomp",
+        "createdAt": 1791872493,
+        "updatedAt": 1791873541
+      },
+      "turns": [
+        {
+          "id": "01a133ec-68fb-7883-bd3d-17ed72715e5a",
+          "status": "completed",
+          "error": null,
+          "startedAt": 1791872493,
+          "completedAt": 1791873541
+        }
+      ],
+      "inspection": {
+        "tool": "mcp__codex_tui__read_thread",
+        "turnLimit": 1,
+        "includeOutputs": false
+      }
+    },
+    {
+      "threadId": "01a13394-29b8-76a3-aab7-5ab8eff60694",
+      "thread": {
+        "id": "01a13394-29b8-76a3-aab7-5ab8eff60694",
+        "kind": "codex",
+        "title": "Open progress report viewer",
+        "preview": "can you please open the progress report viewer in my windows browser",
+        "status": {
+          "type": "idle"
+        },
+        "cwd": "/home/jim/sm-decomp",
+        "createdAt": 1791866710,
+        "updatedAt": 1791885886
+      },
+      "turns": [
+        {
+          "id": "01a134b2-aea9-7663-831b-5b49364c7f5e",
+          "status": "completed",
+          "error": null,
+          "startedAt": 1791885487,
+          "completedAt": 1791885886
+        }
+      ],
+      "inspection": {
+        "tool": "mcp__codex_tui__read_thread",
+        "turnLimit": 1,
+        "includeOutputs": false
+      }
+    },
+    {
+      "threadId": "01a134d2-0902-7c81-8ab6-4f98937db3ea",
+      "thread": {
+        "id": "01a134d2-0902-7c81-8ab6-4f98937db3ea",
+        "kind": "codex",
+        "title": null,
+        "preview": "",
+        "status": {
+          "type": "idle"
+        },
+        "cwd": "/home/jim/sm-decomp",
+        "createdAt": 1791887542,
+        "updatedAt": 1791891554
+      },
+      "turns": [
+        {
+          "id": "01a134d2-0926-7163-850e-6c487d5cd2ea",
+          "status": "completed",
+          "error": null,
+          "startedAt": 1791887542,
+          "completedAt": 1791891554
+        }
+      ],
+      "inspection": {
+        "tool": "mcp__codex_tui__read_thread",
+        "turnLimit": 1,
+        "includeOutputs": false
+      }
+    },
+    {
+      "threadId": "01a13501-0242-71b0-820d-fdea3808f4c9",
+      "thread": {
+        "id": "01a13501-0242-71b0-820d-fdea3808f4c9",
+        "kind": "codex",
+        "title": null,
+        "preview": "",
+        "status": {
+          "type": "systemError"
+        },
+        "cwd": "/home/jim/sm-decomp",
+        "createdAt": 1791890620,
+        "updatedAt": 1791894290
+      },
+      "turns": [
+        {
+          "id": "01a13538-8be3-7d53-9f0d-7c0401230a88",
+          "status": "failed",
+          "error": {
+            "message": "stream disconnected before completion: Encrypted function output content could not be decrypted or decoded.",
+            "additionalDetails": null
+          },
+          "startedAt": 1791894260,
+          "completedAt": 1791894290
+        }
+      ],
+      "inspection": {
+        "tool": "mcp__codex_tui__read_thread",
+        "turnLimit": 1,
+        "includeOutputs": false
+      }
+    }
+  ]
+}

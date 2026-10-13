@@ -1,0 +1,11 @@
+schema = "decomp-drill-final-cleanup-v1"
+status = "complete"
+utility_reclaimed_bytes = 0
+helper_target_files_removed = 748
+helper_target_reported_reclaimed = "263.9MiB"
+helper_target_logical_bytes_before = 230633386
+available_space_after_bytes = 221352177664
+registered_implementer_worktrees = 0
+final_fixture_head = "2b1400ef758907c9aee50f997bb9bca05216ec52"
+remaining_dependencies = ["tiny fixture Git history", "immutable maintained publication/authentication/gate receipts", "frozen corrected source and retained sm-pipeline reader", "Rust helper sources/builds and exact helper executables at retained and prescribed paths", "source snapshots and exact session/command logs", "reviewers' retained source/bin/receipts", "historical failure evidence"]
+limitations = ["First Cargo clean safely refused missing CACHEDIR.TAG; recognized isolated target tag restored and successful cleanup retained.", "Actual parents and children observed stopped before final cleanup. Maintained publication receipt map remained unchanged.", "Two identical helper copies are retained until root final validation; private build intermediates removed.", "Source/Git clone alone is insufficient to recover sealed absolute evidence/reader paths."]

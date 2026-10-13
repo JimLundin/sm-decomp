@@ -1,0 +1,11 @@
+schema = "decomp-readiness-helper-tests-v1"
+status = "pass"
+test_argv = ["cargo", "test", "--locked", "--offline", "--manifest-path", "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-final-20261013/Cargo.toml", "--target-dir", "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-final-20261013/target"]
+tests_passed = 1
+test_name = "tests::final_proof_must_be_the_same_sealed_evidence_entry"
+test_finished_seconds = 0.34
+build_finished_seconds = 0.32
+controls_argv = ["/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-final-20261013/bin/package-readiness", "controls"]
+controls_exit = 0
+namespace_validation_run = false
+limitations = ["Local observed cargo test result; source and binary provenance sealed in helper-build.toml", "Subsequent packager-only change adds wrong-caller/direct-inner control orchestration; final helper source unchanged"]

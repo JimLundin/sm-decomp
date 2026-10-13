@@ -1,0 +1,11 @@
+schema = "decomp-readiness-helper-controls-v1"
+status = "pass"
+observer_thread = "01a13555-fca7-7893-9b16-c9355ad3f516"
+wrong_caller_exit = 1
+wrong_caller_output_absent = true
+direct_inner_exit = 1
+namespace_executed = false
+identity_override_performed = false
+final_proof_binding_unit_test_passed = true
+final_proof_binding_test_argv = ["cargo", "test", "--locked", "--offline", "--manifest-path", "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-final-20261013/Cargo.toml", "--target-dir", "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-final-20261013/target"]
+limitations = ["Unit regression rejects proof path/hash split across different evidence entries", "Actual readiness execution belongs to the root and remains pending"]

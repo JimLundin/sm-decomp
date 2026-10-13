@@ -1,0 +1,154 @@
+[capacity]
+
+[checkpoint]
+handoff = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/decomp-parallel/sessions/01a13515-9a51-7c73-9913-1deb499ba15c/lane-a-1.toml"
+liveness_prerequisites = [
+    "Inspect the stored real worker session and surviving children before launching.",
+    "Recheck every stored process by boot id, start ticks, argv and cwd; ambiguous or surviving writers retain ownership.",
+    "Resume returns argv only; agent launch and execution belong to the caller.",
+]
+markdown = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/decomp-parallel/sessions/01a13515-9a51-7c73-9913-1deb499ba15c/lane-a-1.md"
+sequence = 2
+source_commit = "c92f401ce232fbfcc412021df14c9adedbedc057"
+status = "checkpointed"
+
+[checkpoint.claim]
+attempt = 1
+coordinator = "drill-a"
+id = "lane-a"
+revision = "e0ca4a38af1c6ba76aa26bc85ff2e61afe6d37f5da2198ac4bac86df33894322"
+
+[checkpoint.next]
+argv = [
+    "cargo",
+    "test",
+    "--locked",
+    "--offline",
+]
+cwd = "/tmp/sm-concurrency-drill-retry-lane-a-1"
+timeout_seconds = 60
+
+[checkpoint.next.env]
+SM_PIPELINE_ROOT = "/tmp/sm-decomp-concurrency-drill-retry-20261013/out/pipeline"
+SM_PIPELINE_WORKERS = "4"
+
+[dispatch.handoff]
+handoff = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/decomp-parallel/sessions/01a13515-9a51-7c73-9913-1deb499ba15c/lane-a-1.toml"
+liveness_prerequisites = [
+    "Inspect the stored real worker session and surviving children before launching.",
+    "Recheck every stored process by boot id, start ticks, argv and cwd; ambiguous or surviving writers retain ownership.",
+    "Resume returns argv only; agent launch and execution belong to the caller.",
+]
+markdown = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/decomp-parallel/sessions/01a13515-9a51-7c73-9913-1deb499ba15c/lane-a-1.md"
+sequence = 1
+source_commit = "2087370d8c7c0b8d8e0b2c613a2681d34f490e9d"
+status = "checkpointed"
+
+[dispatch.handoff.claim]
+attempt = 1
+coordinator = "drill-a"
+id = "lane-a"
+revision = "e0ca4a38af1c6ba76aa26bc85ff2e61afe6d37f5da2198ac4bac86df33894322"
+
+[dispatch.handoff.next]
+argv = [
+    "cargo",
+    "test",
+    "--locked",
+    "--offline",
+]
+cwd = "/tmp/sm-concurrency-drill-retry-lane-a-1"
+timeout_seconds = 60
+
+[dispatch.handoff.next.env]
+SM_PIPELINE_ROOT = "/tmp/sm-decomp-concurrency-drill-retry-20261013/out/pipeline"
+SM_PIPELINE_WORKERS = "4"
+
+[dispatch.worker_launch]
+log = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/sessions/worker-a-1791892022.jsonl"
+name = "worker-a"
+observed_at = "1791892022"
+pid = 503608
+schema = "decomp-drill-session-launch-v1"
+session_id = "01a13516-6585-7ec0-b595-9497da55323f"
+stderr = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/sessions/worker-a-1791892022.stderr"
+
+[dispatch.worker_launch.process]
+argv = [
+    "codex",
+    "exec",
+    "-s",
+    "danger-full-access",
+    "-C",
+    "/tmp/sm-decomp-concurrency-drill-retry-20261013",
+    "--json",
+    "-",
+]
+boot_id = "7119fcce-5593-4526-aa9b-07127767c4ef"
+cwd = "/tmp/sm-decomp-concurrency-drill-retry-20261013"
+kernel_state = "S"
+observed_at = "1791892022"
+pid = 503608
+start_ticks = 2835204
+status = "running"
+
+[dispatch.worker_launch.prompt]
+path = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/worker-a-prompt.md"
+sha256 = "bd4fa26036a3a42a28f39b5e48ce3e72516cccece73f50e1012c64fa4510d7c0"
+
+[reservation]
+ledger = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/concurrency-drill-retry/ledger.toml"
+status = "ready"
+
+[reservation.assignment]
+ticket = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/concurrency-drill-retry/issues/a.md"
+
+[reservation.assignment.claim]
+attempt = 1
+coordinator = "drill-a"
+id = "lane-a"
+revision = "e0ca4a38af1c6ba76aa26bc85ff2e61afe6d37f5da2198ac4bac86df33894322"
+
+[reservation.assignment.job]
+blockers = []
+id = "lane-a"
+instructions = "Append one scoped WIP lane statement; retain source and handoff; infrastructure-only drill."
+kind = "implement"
+revision = "e0ca4a38af1c6ba76aa26bc85ff2e61afe6d37f5da2198ac4bac86df33894322"
+subject = "Disposable lane a"
+ticket = ".scratch/concurrency-drill-retry/issues/a.md"
+writable_paths = ["docs/drill-a.md"]
+
+[reservation.assignment.job.inputs]
+admission-domain = "infrastructure-v1"
+base-head = "2087370d8c7c0b8d8e0b2c613a2681d34f490e9d"
+infrastructure-scope-file = "/tmp/sm-decomp-concurrency-drill-retry-20261013/.scratch/drill-control/scope-a.toml"
+infrastructure-scope-sha256 = "e6c70bd582b67ca024d20e362c9a44efb8f40f103a3aa20dc6f0a735d7ab5738"
+
+[reservation.assignment.workspace]
+batch = "out/port/batches/concurrency-drill-retry-lane-a-1/batch.toml"
+branch = "concurrency-drill-retry-lane-a-1"
+worktree = "/tmp/sm-concurrency-drill-retry-lane-a-1"
+
+[reservation.deferred]
+
+[[reservation.jobs]]
+stale = false
+state = "reserved"
+
+[reservation.jobs.claim]
+attempt = 1
+coordinator = "drill-a"
+id = "lane-a"
+revision = "e0ca4a38af1c6ba76aa26bc85ff2e61afe6d37f5da2198ac4bac86df33894322"
+
+[[reservation.jobs]]
+agent = "01a13516-463c-7942-bc88-4e9eab370a24"
+stale = false
+state = "running"
+
+[reservation.jobs.claim]
+attempt = 1
+coordinator = "drill-b"
+id = "lane-b"
+revision = "e08202001b94375c94167dcbe5893274609eda30aade6c91afc4dcdc0d07acc6"

@@ -1,0 +1,28 @@
+schema = "decomp-drill-independent-review-build-v1"
+status = "passed"
+commands = [
+  "cargo generate-lockfile --offline --manifest-path .scratch/decomp-parallel/drill-retry/review/Cargo.toml",
+  "cargo fmt --manifest-path .scratch/decomp-parallel/drill-retry/review/Cargo.toml",
+  "cargo build --locked --offline --manifest-path .scratch/decomp-parallel/drill-retry/review/Cargo.toml --target-dir /tmp/sm-decomp-drill-independent-review-20261013",
+]
+limitations = ["Independent supplemental evidence reader; stdout is the sole runtime output", "Initial --locked build rejected missing lockfile before offline lockfile generation", "Local build identity; no platform attestation"]
+
+[source]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/review/src/main.rs"
+sha256 = "859062e83ee2e1d0c0bdf004e9fea3b0400f97fcc4072f4955f7ecac60677f94"
+
+[manifest]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/review/Cargo.toml"
+sha256 = "3ae9090825788ced8f8b3b9186c63a78c9edc212f486443bd807e25d3115d4e8"
+
+[lockfile]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/review/Cargo.lock"
+sha256 = "b84e72dcb9faea37b0d1de631807cbe3125d4eb8d9cd8285a11ccb9867e5e26e"
+
+[executable]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/review/bin/decomp-drill-independent-review"
+sha256 = "5528698732056707753d5a3fd9fcfe25a95df7c418c990e7cb1aebbc7be4ff89"
+
+[final_build_log]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/review/build.log"
+sha256 = "d978d6cfe98e597930d8ad779c648609617c00a1b8029461711a597ff9588e3a"
