@@ -1,0 +1,11 @@
+status = "accepted"
+requested_count = 1
+remaining_C_routines = "untranslated; no complete routine census"
+remaining_CPU_fallback = 0
+
+[[accepted_jobs]]
+job = "next-random"
+exercised = true
+calls = 8783
+evidence = "/home/jim/sm-decomp/out/recovery-session/prerequisites/next-random/1791858692092144850-2"
+verdict_sha256 = "47f845601ad0e8609c535153115da67126fc949799a09a5443bfbc354a4d4b19"

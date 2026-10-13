@@ -1,0 +1,13 @@
+[package]
+name = "sm-progress-browser"
+version = "0.1.0"
+edition = "2024"
+
+[workspace]
+
+[dependencies]
+anyhow = "1"
+serde_json = "1"
+toml = "0.8"
+tungstenite = "0.30"
+base64 = "0.22"

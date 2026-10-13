@@ -1,0 +1,27 @@
+id = "observed-ridley-instructions-6053-current-integrated-20261013"
+scope = "Complete bounded native Ridley attack instruction frames"
+agent = "/root/ridley_instructions"
+stage = "integrated"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+commit = "e947e968086a15c170f58472764bf9244b403a2a"
+routines = ["ProcessEnemyInstructions", "Ridley_Instr_1", "Ridley_Instr_10", "Ridley_Instr_11", "Ridley_Instr_12", "Ridley_Instr_13", "Ridley_Instr_5", "Ridley_Instr_6"]
+limitations = ["Current frozen merged-source family authenticates 1,804 controlled fixture pairs plus ninety retained natural complete-frame/callback captures.", "ProcessEnemyInstructions coverage is limited to the admitted native Ridley attack script. Other banks/scripts, enemy AI and the broader 220-definition lifecycle remain separate; typed C services and refused scripts remain explicit.", "Full attack live ownership, opcode/effect sequence parity and original-ROM parity remain pending.", "Installed gameplay commit is integrated into main baseline c711faea56f20d42113eb63393cc4a76d4940557; shared verifier/live wiring remains uncommitted at the authenticated exact frozen source. Final wiring commit remains coordinator work.", "Both run cleanup passes and stale implementer worktree retirement completed before retained authentication. Stage observations remain distinct; original-ROM parity is not tested."]
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-observed-ridley-instructions-post-cleanup-authentication.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/progress-current-integrated-stage-evidence-20261013.md"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-final-authentication-summary.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-worktree-retirement-20261013.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-observed-ridley-instructions-captured-post-cleanup-authentication.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/parallel-138-scope-ridley-subsystem.md"

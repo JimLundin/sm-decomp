@@ -1,0 +1,200 @@
+{
+  "revisions": {
+    "/tmp/ridley-recovery-helpers/sm-ridley-checks/port_wrapper.rs": {
+      "event": "exec-1cfd2461-6c10-490f-b3a6-5fb465319df3",
+      "time": "2026-10-12T20:46:31.875Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T22-32-14-01a131d0-dde1-76e2-8193-81b6effbc5c8.jsonl"
+    },
+    "/tmp/ridley-recovery-helpers/sm-ridley-checks/fixture_generator.rs": {
+      "event": "exec-cbed2103-e202-4b22-9360-2cbf20c26412",
+      "time": "2026-10-12T20:50:08.969Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T22-32-14-01a131d0-dde1-76e2-8193-81b6effbc5c8.jsonl"
+    },
+    "/tmp/ridley-recovery-helpers/sm-ridley-generator-check/Cargo.toml": {
+      "event": "exec-eeb5eac8-2830-42c4-8de5-9c7be04e9680",
+      "time": "2026-10-12T21:03:35.433Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T22-32-14-01a131d0-dde1-76e2-8193-81b6effbc5c8.jsonl"
+    },
+    "/tmp/ridley-recovery-helpers/sm-ridley-generator-check/src/main.rs": {
+      "event": "exec-eeb5eac8-2830-42c4-8de5-9c7be04e9680",
+      "time": "2026-10-12T21:03:35.433Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T22-32-14-01a131d0-dde1-76e2-8193-81b6effbc5c8.jsonl"
+    },
+    "/tmp/ridley-recovery-helpers/sm-ridley-source-clippy/Cargo.toml": {
+      "event": "exec-dfbfae1e-1ce9-4bc0-ad54-217ac77d7b2b",
+      "time": "2026-10-12T22:08:11.515Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T23-21-01-01a131fd-8684-7230-96ae-1726d7c074d5.jsonl"
+    },
+    "/tmp/ridley-recovery-helpers/sm-ridley-source-clippy/src/lib.rs": {
+      "event": "exec-0de25821-1fda-4868-bff0-55d762f4258d",
+      "time": "2026-10-12T21:17:06.788Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T22-32-14-01a131d0-dde1-76e2-8193-81b6effbc5c8.jsonl"
+    },
+    "/tmp/ridley-recovery-helpers/sm-ridley-source-scope.rs": {
+      "event": "exec-302db4f1-b61e-465c-8836-4eef7a8165f3",
+      "time": "2026-10-12T21:07:10.312Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T22-32-14-01a131d0-dde1-76e2-8193-81b6effbc5c8.jsonl"
+    },
+    "/tmp/sm-ridley-recovery/crates/port/src/ridley_rendering.rs": {
+      "event": "exec-60f8cac4-591e-43ce-af56-b3c26c670c66",
+      "time": "2026-10-12T21:51:39.570Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T22-32-14-01a131d0-dde1-76e2-8193-81b6effbc5c8.jsonl"
+    },
+    "/tmp/sm-ridley-recovery/crates/port/src/ridley_subsystem.rs": {
+      "event": "exec-046b2738-30f6-46cc-9a52-e403dec6a102",
+      "time": "2026-10-12T22:16:11.799Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T23-21-01-01a131fd-8684-7230-96ae-1726d7c074d5.jsonl"
+    },
+    "/tmp/sm-ridley-recovery/crates/port/src/ridley_movement.rs": {
+      "event": "exec-440c0f8d-b06f-4a03-a9dc-6892760978b4",
+      "time": "2026-10-12T21:35:26.892Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T22-32-14-01a131d0-dde1-76e2-8193-81b6effbc5c8.jsonl"
+    },
+    "/tmp/sm-ridley-recovery/crates/port/src/ridley_cutscene.rs": {
+      "event": "exec-60f8cac4-591e-43ce-af56-b3c26c670c66",
+      "time": "2026-10-12T21:51:39.570Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T22-32-14-01a131d0-dde1-76e2-8193-81b6effbc5c8.jsonl"
+    },
+    "/tmp/ridley-recovery-helpers/sm-ridley-source-adjust.rs": {
+      "event": "exec-2d7a621a-e05a-499d-b8b4-35d715a1d322",
+      "time": "2026-10-12T21:17:47.185Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T22-32-14-01a131d0-dde1-76e2-8193-81b6effbc5c8.jsonl"
+    },
+    "/tmp/sm-ridley-recovery/crates/pipeline/src/ridley_subsystem_host.c.in": {
+      "event": "exec-84697ca0-bfea-401f-91c0-df8eb6164a42",
+      "time": "2026-10-12T22:26:05.727Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T22-32-14-01a131d0-dde1-76e2-8193-81b6effbc5c8.jsonl"
+    },
+    "/tmp/sm-ridley-recovery/crates/pipeline/src/ridley_subsystem_abi.rs.in": {
+      "event": "exec-7d62b43e-a4f5-42f4-bb6b-cc88b81555dc",
+      "time": "2026-10-12T22:26:05.688Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T22-32-14-01a131d0-dde1-76e2-8193-81b6effbc5c8.jsonl"
+    },
+    "/tmp/sm-ridley-recovery/crates/port/src/ridley_subsystem_instructions.rs": {
+      "event": "exec-3de68c35-edcf-4b2b-8060-fc783b39123a",
+      "time": "2026-10-12T22:02:40.353Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T23-21-01-01a131fd-8684-7230-96ae-1726d7c074d5.jsonl"
+    },
+    "/tmp/sm-ridley-recovery/crates/pipeline/src/ridley_subsystem_fixtures.rs": {
+      "event": "exec-8f2f25cb-9300-4ec9-9445-0a20778b03ae",
+      "time": "2026-10-12T22:13:08.393Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T22-32-14-01a131d0-dde1-76e2-8193-81b6effbc5c8.jsonl"
+    },
+    "/tmp/ridley-recovery-helpers/sm-ridley-subsystem-check/src/main.rs": {
+      "event": "exec-64faad93-8756-4888-9559-4ba414771c08",
+      "time": "2026-10-12T21:39:18.861Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T22-32-14-01a131d0-dde1-76e2-8193-81b6effbc5c8.jsonl"
+    },
+    "/tmp/ridley-recovery-helpers/sm-ridley-subsystem-check/Cargo.toml": {
+      "event": "exec-f1f42cef-47eb-441a-9c61-6b73e7879b3c",
+      "time": "2026-10-12T21:34:03.173Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T22-32-14-01a131d0-dde1-76e2-8193-81b6effbc5c8.jsonl"
+    },
+    "/tmp/ridley-recovery-helpers/sm-ridley-batch-diagnose.rs": {
+      "event": "exec-0eef30cd-b7f0-446f-840c-f6f7aec53199",
+      "time": "2026-10-12T21:37:35.132Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T22-32-14-01a131d0-dde1-76e2-8193-81b6effbc5c8.jsonl"
+    },
+    "/tmp/ridley-recovery-helpers/sm-ridley-native-layout.rs": {
+      "event": "exec-97ab7c07-8942-49e5-ae93-dc8b0da57cd0",
+      "time": "2026-10-12T21:39:49.016Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T22-32-14-01a131d0-dde1-76e2-8193-81b6effbc5c8.jsonl"
+    },
+    "/tmp/sm-ridley-recovery/crates/pipeline/src/ridley_subsystem_adapter.rs": {
+      "event": "exec-c2f5ff64-8364-4196-a0bb-011e6ba3839c",
+      "time": "2026-10-12T22:25:21.523Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T22-32-14-01a131d0-dde1-76e2-8193-81b6effbc5c8.jsonl"
+    },
+    "/tmp/ridley-recovery-helpers/sm-ridley-adapter-bootstrap.rs": {
+      "event": "exec-b6ca4e03-b1ae-448a-bed5-5bbd5e40f74b",
+      "time": "2026-10-12T22:26:14.690Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T22-32-14-01a131d0-dde1-76e2-8193-81b6effbc5c8.jsonl"
+    },
+    "/tmp/ridley-recovery-helpers/sm-ridley-publish-progress.rs": {
+      "event": "exec-6ee2ee09-efd0-49ab-b96f-fb0d6e0ffd90",
+      "time": "2026-10-12T21:58:42.202Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T22-32-14-01a131d0-dde1-76e2-8193-81b6effbc5c8.jsonl"
+    },
+    "/tmp/sm-ridley-recovery/tools/port/ridley-subsystem-harness.md": {
+      "event": "exec-e87b8156-7667-400d-8d51-011e1af1394b",
+      "time": "2026-10-12T22:27:06.381Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T22-32-14-01a131d0-dde1-76e2-8193-81b6effbc5c8.jsonl"
+    },
+    "/tmp/ridley-recovery-helpers/sm-ridley-admission-pins.rs": {
+      "event": "exec-11622ff8-19cc-41e7-b6f8-a2a38541c995",
+      "time": "2026-10-12T21:57:55.901Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T23-21-01-01a131fd-8684-7230-96ae-1726d7c074d5.jsonl"
+    },
+    "/tmp/sm-ridley-recovery/.scratch/decomp-port/ridley-subsystem-resume.md": {
+      "event": "exec-3bae226e-e80b-4f68-81ee-f67b07271279",
+      "time": "2026-10-12T22:01:51.399Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T22-32-14-01a131d0-dde1-76e2-8193-81b6effbc5c8.jsonl"
+    },
+    "/tmp/sm-ridley-recovery/crates/port/src/ridley_subsystem_admission.rs": {
+      "event": "exec-046b2738-30f6-46cc-9a52-e403dec6a102",
+      "time": "2026-10-12T22:16:11.799Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T23-21-01-01a131fd-8684-7230-96ae-1726d7c074d5.jsonl"
+    },
+    "/tmp/sm-ridley-recovery/crates/port/tests/ridley_subsystem.rs": {
+      "event": "exec-03223e87-5de3-4a1f-83c0-6269d64d7d02",
+      "time": "2026-10-12T22:13:25.766Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T23-21-01-01a131fd-8684-7230-96ae-1726d7c074d5.jsonl"
+    },
+    "/tmp/sm-ridley-recovery/crates/pipeline/src/ridley_subsystem_inventory.c.in": {
+      "event": "exec-6c9e88e6-0e49-4924-937b-fb1c079f9dd8",
+      "time": "2026-10-12T22:27:30.220Z",
+      "session": "/home/jim/.codex/sessions/2026/10/13/rollout-2026-10-13T00-04-22-01a13225-36e8-72c0-a4ab-a98a2691ebfe.jsonl"
+    },
+    "/tmp/sm-ridley-recovery/crates/pipeline/src/ridley_subsystem_inventory_hooks.c.in": {
+      "event": "exec-1ff55a98-20c5-41fa-b080-24e1447735e8",
+      "time": "2026-10-12T22:16:12.604Z",
+      "session": "/home/jim/.codex/sessions/2026/10/13/rollout-2026-10-13T00-04-22-01a13225-36e8-72c0-a4ab-a98a2691ebfe.jsonl"
+    },
+    "/tmp/sm-ridley-recovery/.scratch/decomp-port/ridley-admission-final-tests.log": {
+      "event": "exec-f4b668dc-652c-4154-a043-aaf6f6170882",
+      "time": "2026-10-12T22:17:22.926Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T23-21-01-01a131fd-8684-7230-96ae-1726d7c074d5.jsonl"
+    },
+    "/tmp/sm-ridley-recovery/.scratch/decomp-port/ridley-admission-final-format.log": {
+      "event": "exec-f4b668dc-652c-4154-a043-aaf6f6170882",
+      "time": "2026-10-12T22:17:22.926Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T23-21-01-01a131fd-8684-7230-96ae-1726d7c074d5.jsonl"
+    },
+    "/tmp/sm-ridley-recovery/.scratch/decomp-port/ridley-admission-final-clippy.log": {
+      "event": "exec-f4b668dc-652c-4154-a043-aaf6f6170882",
+      "time": "2026-10-12T22:17:22.926Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T23-21-01-01a131fd-8684-7230-96ae-1726d7c074d5.jsonl"
+    },
+    "/tmp/sm-ridley-recovery/.scratch/decomp-port/ridley-admission-freeze-20261013.md": {
+      "event": "exec-cd15cfaf-9f4d-48e6-b1f8-c77d0a3dd7e2",
+      "time": "2026-10-12T22:17:56.076Z",
+      "session": "/home/jim/.codex/sessions/2026/10/12/rollout-2026-10-12T23-21-01-01a131fd-8684-7230-96ae-1726d7c074d5.jsonl"
+    },
+    "/tmp/sm-ridley-recovery/crates/pipeline/src/ridley_subsystem_inventory.rs": {
+      "event": "exec-f5449f29-545d-4b85-a46b-b8592da38184",
+      "time": "2026-10-13T01:35:32.797Z",
+      "session": "/home/jim/.codex/sessions/2026/10/13/rollout-2026-10-13T00-04-22-01a13225-36e8-72c0-a4ab-a98a2691ebfe.jsonl"
+    },
+    "/tmp/ridley-recovery-helpers/sm-ridley-inventory-check/src/main.rs": {
+      "event": "exec-d506b55e-0016-4688-8422-c00b5c813e50",
+      "time": "2026-10-12T22:22:05.541Z",
+      "session": "/home/jim/.codex/sessions/2026/10/13/rollout-2026-10-13T00-04-22-01a13225-36e8-72c0-a4ab-a98a2691ebfe.jsonl"
+    },
+    "/tmp/ridley-recovery-helpers/sm-ridley-inventory-check/Cargo.toml": {
+      "event": "exec-7bac6d0e-e94c-43d0-89bb-c24b82c61ccb",
+      "time": "2026-10-12T22:20:58.403Z",
+      "session": "/home/jim/.codex/sessions/2026/10/13/rollout-2026-10-13T00-04-22-01a13225-36e8-72c0-a4ab-a98a2691ebfe.jsonl"
+    },
+    "/tmp/ridley-recovery-helpers/sm-ridley-inventory-check/prepare.toml": {
+      "event": "exec-c4cc062e-29cb-4079-b670-d413d870ef21",
+      "time": "2026-10-12T22:21:10.962Z",
+      "session": "/home/jim/.codex/sessions/2026/10/13/rollout-2026-10-13T00-04-22-01a13225-36e8-72c0-a4ab-a98a2691ebfe.jsonl"
+    },
+    "/tmp/ridley-recovery-helpers/sm-ridley-inventory-check/smoke.toml": {
+      "event": "exec-c4cc062e-29cb-4079-b670-d413d870ef21",
+      "time": "2026-10-12T22:21:10.962Z",
+      "session": "/home/jim/.codex/sessions/2026/10/13/rollout-2026-10-13T00-04-22-01a13225-36e8-72c0-a4ab-a98a2691ebfe.jsonl"
+    }
+  },
+  "errors": []
+}

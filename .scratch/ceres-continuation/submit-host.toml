@@ -1,0 +1,18 @@
+operation = "record"
+checkout = "/home/jim/sm-decomp"
+effort = "ceres-continuation"
+coordinator = "ceres-20261013"
+capacity = 3
+[update]
+event = "finished"
+[update.claim]
+id = "shared-game-host"
+revision = "48656a2-host-v1"
+attempt = 1
+coordinator = "ceres-20261013"
+[update.result]
+result = "submitted"
+commit = "73547105d870f8b05f8c6bcf55b768c223889fdb"
+[[update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/ceres-continuation/host-implementation.toml"
+sha256 = "7b4f118b21b969bd02abc16192cbc3caccb1c118d5cef6a5d39e3751afeaffeb"

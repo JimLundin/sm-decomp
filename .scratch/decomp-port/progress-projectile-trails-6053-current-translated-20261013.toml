@@ -1,0 +1,21 @@
+id = "projectile-trails-6053-current-translated-20261013"
+scope = "Complete native projectile trail script and render frame"
+agent = "/root/independent_gameplay"
+stage = "translated"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+commit = "2b62134bfbee7c5dcd4c81616edc5d91e781d44f"
+routines = ["HandleProjectileTrails", "ProjInstr_MoveLeftProjectileTrailDown", "ProjInstr_MoveLeftProjectileTrailUp", "ProjInstr_MoveRightProjectileTrailDown"]
+limitations = ["Current frozen merged-source family authenticates all 3,316 controlled fixture pairs; earlier fourteen natural frozen-context captures remain separately retained.", "Direct movement opcodes had no hits in the recorded 9,000-input natural prefix. Creation/placement reuse projectile_flight; independent live parity remains pending.", "Installed gameplay commit is integrated into main baseline c711faea56f20d42113eb63393cc4a76d4940557; shared verifier/live wiring remains uncommitted at the authenticated exact frozen source. Final wiring commit remains coordinator work.", "Both run cleanup passes and stale implementer worktree retirement completed before retained authentication. Stage observations remain distinct; original-ROM parity is not tested."]
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-projectile-trails-post-cleanup-authentication.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/progress-current-integrated-stage-evidence-20261013.md"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-final-authentication-summary.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-worktree-retirement-20261013.toml"

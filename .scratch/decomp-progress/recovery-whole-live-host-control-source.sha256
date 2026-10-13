@@ -1,0 +1,3 @@
+4f662af7be417ba1b7b1c120a22b8daf97489d20fcc5cdaddd8e62507d01aed8  /tmp/sm-ridley-whole-live-source/crates/pipeline/src/live_ridley_subsystem.rs.in
+eb42dc2e7dd9ced101205518555527b7cb2f88b95c12c643746718e64eabab33  /tmp/sm-ridley-whole-live-source/crates/pipeline/src/live_ridley_subsystem_host.c.in
+3ba82085dba8268532f1b25c394382d7ed8c109399bd62b1f2e4c022a6cd23d8  /tmp/sm-ridley-whole-live-source/crates/pipeline/tests/live_ridley_whole.rs

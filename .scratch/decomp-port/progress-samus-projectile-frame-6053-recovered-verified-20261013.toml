@@ -1,0 +1,18 @@
+id = "samus-projectile-frame-6053-recovered-verified-20261013"
+scope = "Complete scheduled Samus projectile update and render passes"
+agent = "/root/independent_gameplay"
+stage = "verified"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+routines = ["HandleProjectile", "DrawPlayerExplosions2", "sub_9382FD", "DrawBombAndProjectileExplosions"]
+limitations = ["Reissued after source inventory expansion; prior observations remain historical. Main commit has the same candidate SHA-256 as the recovered frozen actual-C context.", "Frozen-context verification authenticates 476 whole-frame cases across four scheduled boundaries after cleanup; it does not reseal all current checkout dependencies.", "PLM/HDMA services remain explicit C dependencies; the pinned C uninitialized-local Ceres drawing branches conservatively refuse. Diagnostic failures remain retained.", "Current merged admission, combined four-process live evidence and integrated worktree cleanup remain pending coordinator receipts. No integrated/live stage is claimed here."]
+commit = "c711faea56f20d42113eb63393cc4a76d4940557"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/progress-recovered-stage-evidence-20261013.md"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/samus-projectile-frame/offline/1791841155185563-2-0/verdict.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-samus-after-cleanup-authentication.toml"

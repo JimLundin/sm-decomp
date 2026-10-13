@@ -1,0 +1,9 @@
+a1201f0267837c680df85c773f01b682617b1e780d8c1bcaebbb391f9fb73282  .scratch/decomp-port/ridley-hardware-recovery/bin/sm-pipeline-hardware-v2
+e6d3e4088036779ec5ef128e3e534d7a39f96b6c5d3227d1c20f657236f36c91  .scratch/decomp-port/ridley-hardware-recovery/source/crates/pipeline/src/ridley_ppu_contract.h
+034985d1f6da46feb33e4aa5a5721d1238ebf59ad41a6b03c9d3d86db8c147af  .scratch/decomp-port/ridley-hardware-recovery/source/crates/pipeline/src/ridley_subsystem_adapter.rs
+d298598cf8ba71084069c94fade7dc0b0d20501b68f8df85fca96758ee6d5d9f  .scratch/decomp-port/ridley-hardware-recovery/source/crates/pipeline/src/ridley_subsystem_host.c.in
+10db17df2cfd26102584148121391ae118cd9fbc3961d87f7620093460eceee9  .scratch/decomp-port/ridley-hardware-recovery/source/crates/pipeline/src/ridley_subsystem_inventory.rs
+93c5dbe4a484d5bb28a0e545f584e88c1425ae43567080e5ee1118b18ef6037c  .scratch/decomp-port/ridley-hardware-recovery/source/crates/pipeline/src/ridley_subsystem_inventory.c.in
+4429b260fcd66bd29e33d6785e4f532711872b9ea045dd479b036399f6ed9eba  .scratch/decomp-port/ridley-hardware-recovery/source/crates/pipeline/src/ridley_subsystem_captured.rs
+01e25c1198f23a86aa0292c1893180766147c7d456ff2a7a7c44640d98d95f9b  .scratch/decomp-port/ridley-hardware-recovery/source/crates/pipeline/src/family.rs
+9f562e33bdf244dc76eccfc97e0fa9855e73a5e5481d3375dc93887813e36e2f  .scratch/decomp-port/ridley-hardware-recovery/checker.rs

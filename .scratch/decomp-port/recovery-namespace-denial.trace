@@ -1,0 +1,1 @@
+121302 openat(AT_FDCWD, "/dev/null", O_RDONLY|O_CLOEXEC) = -1 EACCES (Permission denied)

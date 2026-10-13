@@ -1,0 +1,7 @@
+use std::{collections::BTreeMap,fs,path::{Path,PathBuf},process::Command,os::unix::fs::MetadataExt};
+fn files(path:&Path,out:&mut Vec<PathBuf>){for e in fs::read_dir(path).unwrap(){let p=e.unwrap().path();if p.is_dir(){files(&p,out);}else if p.is_file(){out.push(p);}}}
+fn main(){let roots=std::env::args().skip(1).map(PathBuf::from).collect::<Vec<_>>();let mut hashes=BTreeMap::<String,PathBuf>::new();let mut reclaimed=0;let mut intermediates=0;
+ for root in roots {let mut paths=vec![];files(&root,&mut paths);paths.sort();for path in paths{let name=path.file_name().unwrap().to_str().unwrap();if ["libfamilies.a","librng.a"].contains(&name){let n=fs::metadata(&path).unwrap().len();fs::remove_file(&path).unwrap();intermediates+=n;println!("removed-unsealed {} bytes={n}",path.display());continue;}
+ let output=Command::new("sha256sum").arg(&path).output().unwrap();assert!(output.status.success());let hash=String::from_utf8(output.stdout).unwrap()[..64].to_string();println!("sha256 {hash} {}",path.display());
+ if let Some(first)=hashes.get(&hash){let a=fs::metadata(first).unwrap();let b=fs::metadata(&path).unwrap();assert_eq!(a.len(),b.len());if (a.dev(),a.ino())!=(b.dev(),b.ino()){let temporary=path.with_extension(format!("ridley-dedup-{}",std::process::id()));fs::hard_link(first,&temporary).unwrap();fs::rename(temporary,&path).unwrap();if b.nlink()==1{reclaimed+=b.len();}}}else{hashes.insert(hash,path);}
+ }}println!("identified_intermediates_bytes={intermediates} dedup_reclaimed_bytes={reclaimed}");}

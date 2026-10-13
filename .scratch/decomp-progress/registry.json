@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "root": "/home/jim/sm-decomp",
-  "updated_at": 1791870005,
+  "updated_at": 1791873323,
   "source": {
     "revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
     "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
@@ -98431,6 +98431,31 @@
         "Frozen composed native replay domain only. Eight script opcodes have 48 total events inside 2,393 accepted attack interpreter calls; 209,673 other interpreter calls stay C-owned/refused. Initializer counts16/4/4include only successful fireball/Ceres allocations. General scripts/initializers, whole Ridley lifecycle, original-ROM parity and credits progression are not inferred. Matching maintained gameplay files alone does not reauthenticate every current shared dependency, so this internal import retains historical-frozen context."
       ],
       "updated_at": 1791870005
+    },
+    {
+      "id": "shared-game-host-ceres-20261013-translating",
+      "scope": "Shared host for complete Samus projectile and room display calls",
+      "agent": "/root/host_scope",
+      "stage": "translating",
+      "routines": [
+        "HandleProjectile",
+        "DisplayViewablePartOfRoom"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "48656a2",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp/.scratch/ceres-continuation/started-host.toml",
+          "sha256": "8030edeef641cc5fe3b56a83b3c7144437a028e9125b7029cdc2cce93dcaec92"
+        }
+      ],
+      "limitations": [
+        "Reuses existing Rust translations; this observation assigns a shared synchronous host interface and material callback fixtures.",
+        "PLM, HDMA and VRAM dependency behavior remains delegated to actual C.",
+        "Focused actual-C checks and integration are pending; live admission is unchanged."
+      ],
+      "updated_at": 1791873323
     }
   ],
   "notices": [
@@ -98626,7 +98651,7 @@
     "body_lines": 75229,
     "declared_definitions": 834,
     "declared_body_lines": 9079,
-    "updates": 256,
+    "updates": 257,
     "stale_updates": 16,
     "stages": {
       "integrated": {
@@ -98642,8 +98667,8 @@
         "body_lines": 16498
       },
       "translating": {
-        "definitions": 220,
-        "body_lines": 3129
+        "definitions": 222,
+        "body_lines": 3170
       },
       "verified": {
         "definitions": 924,
@@ -98709,8 +98734,8 @@
           "body_lines": 719
         },
         "translating": {
-          "definitions": 220,
-          "body_lines": 3129
+          "definitions": 222,
+          "body_lines": 3170
         },
         "verified": {
           "definitions": 34,

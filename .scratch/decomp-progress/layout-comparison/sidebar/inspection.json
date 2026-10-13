@@ -1,0 +1,17 @@
+{
+  "checks": true,
+  "desktop": {
+    "metrics_top": 336.4375,
+    "notices": 22395,
+    "scroll_width": 1345,
+    "title": "Super Metroid · Translation progress",
+    "total": "6,053",
+    "viewport": 1360
+  },
+  "phone": {
+    "metrics_top": 506.375,
+    "scroll_width": 390,
+    "width": 390
+  },
+  "url": "file:///home/jim/sm-decomp/.scratch/decomp-progress/layout-comparison/prototype.html?variant=sidebar"
+}

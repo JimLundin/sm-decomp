@@ -1,0 +1,4 @@
+876f5e29775a1daae6b91e6ec94b3341c083270e44dc18fb6999006e9b58a20d  .scratch/decomp-port/ridley-live-finish/bin/sm-pipeline-whole-live
+a3db236fb2acb6228ad90f298217e3f07cfc18f94c442550bfa6baf5569a6b52  .scratch/decomp-port/ridley-live-final-source.sha256
+def8416e90f8e39d6974f4d4afdc3778af2978061737833c8e5bd18a9e82ec69  out/recovery-session/ridley-whole-final-offline/1791866846960194-145753-0/verdict.toml
+a5faf27ff2ebe02a8ed7a82bc1636849148f55645991889643af28e187eb589e  out/recovery-session/ridley-native137-final-offline/1791866852674692-145775-0/verdict.toml

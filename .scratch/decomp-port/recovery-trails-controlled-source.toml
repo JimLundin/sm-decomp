@@ -1,0 +1,209 @@
+status = "recovered-from-sealed-artifacts"
+verdict = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/verdict.toml"
+verdict_sha256 = "7bea1abd88aaa6f7854d481dd71c634a74a9fb7a29c6fb43528ba87e11f063c1"
+source_snapshot = "/tmp/sm-projectile-trails"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/pipeline/src/batch.rs"
+sha256 = "882779c50e27cac4add62847d8651739e2ac6ed70d04073cfac35e4e95da0f3a"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/pipeline-batch.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/pipeline/src/builds.rs"
+sha256 = "1141b9ed89baeb8c7e64562564488832998a7ae1e951f5e40c06bcb516f8164f"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/pipeline-builds.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/pipeline/src/cleanup.rs"
+sha256 = "fc282127e388eec71dc3fc2354b6f641c1e357ac1ecf570ee57ed6bd82774204"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/pipeline-cleanup.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/pipeline/src/dispatcher_eproj.c"
+sha256 = "0fca153504ff09350fa0d1c8044a427ac8c57a60cb23a622b4b0488fc9d9db68"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/pipeline-dispatcher_eproj.c"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/pipeline/src/dispatcher_host.c"
+sha256 = "378daeb483f5e8561327ac18f916cb7af46b2e7b2711eb27cc2983f888a93f45"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/pipeline-dispatcher_host.c"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/pipeline/src/dispatcher_plm.c"
+sha256 = "19702340d8d6d0e71fe3b59d303e2606c9f956e37b3796d8aa7075f6017584e7"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/pipeline-dispatcher_plm.c"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/pipeline/src/dispatcher_pointer.c"
+sha256 = "3f4d49cb9862a39fbeb4404129a5d88f77ddd6b5d8ac834a8708d8d1cab832b0"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/pipeline-dispatcher_pointer.c"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/pipeline/src/family.rs"
+sha256 = "27e40c4ef2900210123b05200c4791734d302ea300d135b7109b48a465830f51"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/pipeline-family.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/pipeline/src/family_header.c"
+sha256 = "df3c1f8cd5eaa51987fe78fd477e1e676b5939c6f0f0be063e094524ab74fbd8"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/pipeline-family_header.c"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/pipeline/src/family_pointer.c"
+sha256 = "247c58ad5e2660fa8003139f9ff1f552f5464c92268b94f0ce08d923208427e5"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/pipeline-family_pointer.c"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/pipeline/src/fixture_execution.rs"
+sha256 = "2d091dda80e70ac0bd726f8bfe17932adf54938dafe992da1516867c8fc129fb"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/pipeline-fixture_execution.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/pipeline/src/fixture_worker.rs"
+sha256 = "b4badc6fd554ee91dbdb82fdeb781ca937e64e10c4e2ce28b91e25061edd2679"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/dependency-002.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/pipeline/src/inputs.rs"
+sha256 = "a308f23c7febd841a60a22e1734320421691bffd82a610ff7b944420add5742f"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/pipeline-inputs.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/pipeline/src/main.rs"
+sha256 = "506091df417477a63b8a9583964be97f53faca62219d5394a95569dcb2429208"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/pipeline-main.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/pipeline/src/metrics.rs"
+sha256 = "30c14f63a9c8bb85f764609b5207cbc68f92c8332e54bf5ab4fd9594bfc24063"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/pipeline-metrics.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/pipeline/src/plm_fixtures.rs"
+sha256 = "915e1a47b8deb6c4d1cfff2a73172b25ef461a4e9ee4a0833742b7ad44380220"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/pipeline-plm_fixtures.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/pipeline/src/resource_sampler.rs"
+sha256 = "d40db3a810b33251afbf76efc1d16c19ad1b0809a6dea69473d20d6d852f266c"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/pipeline-resource_sampler.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/port/src/animated_tiles.rs"
+sha256 = "6381e3d9caf01f3b1ca42ae56b75f3784c5b4de40f795a25b3194fd601351c57"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/dependency-003.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/port/src/audio.rs"
+sha256 = "4308e496267857ca869db45f4127e505bec4ad29c4c9ede8f08d6e9769ccf69d"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/dependency-004.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/port/src/collision.rs"
+sha256 = "881431d92845006509d2956eae0b3736459961762f5b4a021577f130c530d4f1"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/dependency-005.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/port/src/enemy.rs"
+sha256 = "4faac9ac72d3b5caf206678980d915a2cb1ac03e492fd7fdb6aa59c4beb48367"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/dependency-006.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/port/src/enemy_projectile_collision.rs"
+sha256 = "f117da8bf86a387b0e5693fb19a84c938486fc089a10abf3155365e6627b837e"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/dependency-007.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/port/src/enemy_projectile_instructions.rs"
+sha256 = "d1ee84dda96d514fba6fb76982aaabac76d1f6d9e324c5d8d2babf5e4fbf10c2"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/dependency-008.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/port/src/enemy_projectile_sparks.rs"
+sha256 = "5f4649f745a2f772c32fc30231fbb2b1c0c5624ee693e6d3efaf5e15dc3557f1"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/dependency-009.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/port/src/enemy_projectiles.rs"
+sha256 = "4c99175b8eb0be86554e46f7424e6ee7aa43510afebe2d555ea2dcb890e7f0de"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/dependency-010.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/port/src/glass_shattering.rs"
+sha256 = "373bcf4c49058b7583e66f2a3f5a54d92ea4481d065e89729794871d56304dd9"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/dependency-011.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/port/src/memory.rs"
+sha256 = "7c0df2e77ed2d05dda05bd6d9e98fef3f7ec5f1c76426da504229af698bfecc5"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/dependency-012.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/port/src/mother_brain_bomb.rs"
+sha256 = "43a11bc33a270533be56203c81cd451556cf9e3473609f9b0cc192e3ecdc25e1"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/dependency-013.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/port/src/n00b_tube.rs"
+sha256 = "801431d3325bb23672bd0f6b5aff7ea86506440c2c8c887893599386c3c00a41"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/dependency-014.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/port/src/plm.rs"
+sha256 = "151a849a2a9f366b3a3175915cbd861e1f8865b5451883b67a6d4fd584e846d3"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/dependency-015.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/port/src/plm_render.rs"
+sha256 = "70b2739565075c44e5e5094bca1e3ccc05380140ad380a8aab4608a73488c160"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/dependency-016.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/port/src/projectile_flight.rs"
+sha256 = "824dcf6c79385c02dd3c12a9347c8a7c417a2366dbf03d89c26e1526e47e76ab"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/dependency-017.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/port/src/projectile_trails.rs"
+sha256 = "9b4fcd099ced710581da54fac03b3478aa81daee21b90c194bd1b7c53181108f"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/candidate.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/port/src/projectiles.rs"
+sha256 = "10fcb32c76cb46d8e0ee1b477901bdb0fbbc8eb58fc2e2a704a038be6d3b0656"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/dependency-019.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/port/src/room.rs"
+sha256 = "e7b13c17ac668f8aba50a21aedfcd4d4dcf93f5e1cd2d4c610557cb56774ba72"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/dependency-020.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/port/src/samus.rs"
+sha256 = "4f7e14ecbdf724305094d5924ec931b04dca422e8bcc3108fd5ff13531271234"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/dependency-021.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/port/src/samus_control.rs"
+sha256 = "d0d592bdbfad2b0bb1b845ec3fc2523cb4a6ff15c0dd07015c9736d3efb4ed60"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/dependency-022.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/port/src/sprite_objects.rs"
+sha256 = "dfe844396edea8efd787923ab506dc3b910c70d8a67e21bf7c27ddfba90475af"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/dependency-023.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/crates/port/src/system.rs"
+sha256 = "bedc7662f4c1c435c968a6c07c73331a76f6c58621b4ca885f73f6be33ccbf16"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/dependency-024.rs"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/tools/dependencies.toml"
+sha256 = "e74864c229949fc6f1a6bd7528f339bdb3f9364f1e4f9544f08693881d10f111"
+sealed_source = "/home/jim/sm-decomp/tools/dependencies.toml"
+
+[[files]]
+path = "/tmp/sm-projectile-trails/tools/port/projectile-trails.toml"
+sha256 = "4a40dabba34a4494f36c8f68cffeb12ccacd91257eaf0a4f590697ef143c6a81"
+sealed_source = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/manifest.toml"

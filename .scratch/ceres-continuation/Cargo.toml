@@ -1,0 +1,17 @@
+[package]
+name = "ceres-assignment-driver"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[[bin]]
+name = "ceres-assignment-driver"
+path = "assignment_driver.rs"
+
+[dependencies]
+anyhow = "1"
+serde = { version = "1", features = ["derive"] }
+sha2 = "0.10"
+toml = "0.8"

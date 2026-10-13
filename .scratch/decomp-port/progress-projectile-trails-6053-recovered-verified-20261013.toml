@@ -1,0 +1,24 @@
+id = "projectile-trails-6053-recovered-verified-20261013"
+scope = "Complete native projectile trail script and render frame"
+agent = "/root/independent_gameplay"
+stage = "verified"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+routines = ["HandleProjectileTrails", "ProjInstr_MoveLeftProjectileTrailDown", "ProjInstr_MoveRightProjectileTrailDown", "ProjInstr_MoveLeftProjectileTrailUp"]
+limitations = ["Reissued after source inventory expansion; prior observations remain historical. Main commit has the same candidate SHA-256 as the recovered frozen actual-C contexts.", "Frozen-context verification authenticates 3,316 controlled cases across four routines and 14 naturally active whole-frame cases after cleanup; it does not reseal all current checkout dependencies.", "Movement opcodes were verified offline and had no hits in the 9,000-input natural prefix. Creation/placement reuse projectile_flight.", "Current merged admission, combined four-process live evidence and integrated worktree cleanup remain pending coordinator receipts. No integrated/live stage is claimed here."]
+commit = "2b62134bfbee7c5dcd4c81616edc5d91e781d44f"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/progress-recovered-stage-evidence-20261013.md"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/verdict.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/projectile-trails/natural-offline/1791838495334191-2-0/verdict.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-trails-controlled-after-cleanup-authentication.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-trails-natural-after-cleanup-authentication.toml"

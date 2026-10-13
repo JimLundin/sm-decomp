@@ -1,0 +1,21 @@
+id = "projectile-trails-cf5f2d8-translated"
+scope = "Complete native projectile trail script and render frame"
+agent = "/root/independent_gameplay"
+stage = "translated"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+inventory_sha256 = "02ee5cb223f80eadd7393317ad9bf18360a66f61207432ecce94e31abd7f1ca0"
+routines = ["HandleProjectileTrails", "ProjInstr_MoveLeftProjectileTrailDown", "ProjInstr_MoveRightProjectileTrailDown", "ProjInstr_MoveLeftProjectileTrailUp"]
+commit = "cf5f2d8"
+limitations = ["3316 controlled actual-C cases and14 naturally active capture fixtures pass; live whole-frame ownership remains pending.", "Movement opcodes were covered offline and did not occur in the9000-input natural prefix.", "Creation and placement reuse existing projectile_flight ownership.", "Integrated worktree removal and fresh combined live replay remain the coordinator responsibility."]
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/projectile-trails/offline/1791838049353069-2-0/verdict.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/projectile-trails/natural-offline/1791838495334191-2-0/verdict.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/projectile-trails-offline-authentication.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/projectile-trails-natural-authentication.toml"

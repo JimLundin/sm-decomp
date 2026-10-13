@@ -1,0 +1,1 @@
+const EXECUTION:&[u8]=include_bytes!("/tmp/sm-ridley-whole-live-probe-9000-r5/ridley-execution.rom");fn main(){let actual=std::fs::read("/tmp/sm-ridley-whole-live-probe-9000-r5/mixed-0/ridley-error-runtime.rom").unwrap();let status=if actual.as_slice()!=EXECUTION{-1}else{0};assert_eq!(status,0,"pristine exact retained native patch falsely rejected before gameplay support");}

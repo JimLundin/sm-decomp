@@ -1,0 +1,34 @@
+{
+  "atomic_reads": 51,
+  "changed_evidence_excluded": true,
+  "checks": [
+    "symbol and combined filters",
+    "exact independent milestones",
+    "remaining",
+    "detail evidence",
+    "theme",
+    "filter-preserving refresh",
+    "stale detail",
+    "mobile layout"
+  ],
+  "concurrent_cli_writers": 6,
+  "concurrent_publication_ms": 5645,
+  "definitions": 6053,
+  "desktop_and_phone": true,
+  "file_loading": true,
+  "live_refresh": true,
+  "malformed_file_error": true,
+  "observations_after_retry": 6,
+  "offline_embed": true,
+  "output_root": "/tmp/sm-progress-validation-browser-v3",
+  "ridley_scope_symbols": 220,
+  "success": true,
+  "writer_completion_ms": [
+    5634,
+    5044,
+    4774,
+    4198,
+    4507,
+    5345
+  ]
+}

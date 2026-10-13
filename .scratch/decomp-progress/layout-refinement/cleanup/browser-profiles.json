@@ -1,0 +1,38 @@
+{
+  "identified_unsealed_bytes_reclaimed": 30937964,
+  "removed": [
+    {
+      "bytes": 4135210,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/layout-refinement/offline/chromium-profile"
+    },
+    {
+      "bytes": 4131187,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/layout-refinement/offline-final/chromium-profile"
+    },
+    {
+      "bytes": 4463615,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/layout-refinement/served/chromium-profile"
+    },
+    {
+      "bytes": 4467861,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/layout-refinement/served-final/chromium-profile"
+    },
+    {
+      "bytes": 4478795,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/layout-refinement/file-picker/chromium-profile"
+    },
+    {
+      "bytes": 2399356,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/layout-refinement/file-picker/opened.json"
+    },
+    {
+      "bytes": 4462584,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/layout-refinement/file-picker-final/chromium-profile"
+    },
+    {
+      "bytes": 2399356,
+      "path": "/home/jim/sm-decomp/.scratch/decomp-progress/layout-refinement/file-picker-final/opened.json"
+    }
+  ],
+  "retained": "Rust source, locked dependencies, embedded snapshot, screenshots, assertions, logs and malformed-file diagnostic fixtures"
+}

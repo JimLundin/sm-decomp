@@ -1,0 +1,5 @@
+accepted = false
+evidence = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-inventory/1791858734336387661-2"
+frames = 129712
+live_exercised = false
+status = "authenticated"

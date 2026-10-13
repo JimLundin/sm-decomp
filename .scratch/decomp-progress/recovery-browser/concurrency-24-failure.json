@@ -1,0 +1,61 @@
+{
+  "source": {
+    "revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+    "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+    "identity_sha256": "e74864c229949fc6f1a6bd7528f339bdb3f9364f1e4f9544f08693881d10f111",
+    "definition_count": 6053,
+    "body_lines": 75229,
+    "scope": "actual sm_*.c lexical definitions/calls; macros, externals and indirect calls require review; no acceptance inferred"
+  },
+  "summary": {
+    "definitions": 6053,
+    "body_lines": 75229,
+    "declared_definitions": 17,
+    "declared_body_lines": 92,
+    "updates": 19,
+    "stale_updates": 0,
+    "stages": {
+      "integrated": {
+        "definitions": 0,
+        "body_lines": 0
+      },
+      "live-exercised": {
+        "definitions": 0,
+        "body_lines": 0
+      },
+      "translated": {
+        "definitions": 1,
+        "body_lines": 5
+      },
+      "translating": {
+        "definitions": 0,
+        "body_lines": 0
+      },
+      "verified": {
+        "definitions": 1,
+        "body_lines": 5
+      }
+    }
+  },
+  "ids": [
+    "concurrent-1",
+    "concurrent-3",
+    "concurrent-12",
+    "concurrent-22",
+    "concurrent-5",
+    "concurrent-4",
+    "concurrent-2",
+    "concurrent-8",
+    "concurrent-23",
+    "concurrent-15",
+    "concurrent-9",
+    "concurrent-21",
+    "concurrent-10",
+    "concurrent-14",
+    "concurrent-19",
+    "concurrent-13",
+    "concurrent-7",
+    "concurrent-0",
+    "concurrent-20"
+  ]
+}

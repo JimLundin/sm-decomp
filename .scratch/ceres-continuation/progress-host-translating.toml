@@ -1,0 +1,12 @@
+id = "shared-game-host-ceres-20261013-translating"
+scope = "Shared host for complete Samus projectile and room display calls"
+agent = "/root/host_scope"
+stage = "translating"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+routines = ["HandleProjectile", "DisplayViewablePartOfRoom"]
+commit = "48656a2"
+limitations = ["Reuses existing Rust translations; this observation assigns a shared synchronous host interface and material callback fixtures.", "PLM, HDMA and VRAM dependency behavior remains delegated to actual C.", "Focused actual-C checks and integration are pending; live admission is unchanged."]
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/ceres-continuation/started-host.toml"

@@ -1,0 +1,60 @@
+schema = "shared-game-host-implementation-v1"
+status = "submitted-and-merged"
+accepted = false
+agent = "/root/host_scope"
+coordinator = "ceres-20261013"
+claim = "shared-game-host"
+claim_revision = "48656a2-host-v1"
+attempt = 1
+baseline = "48656a2"
+commit = "73547105d870f8b05f8c6bcf55b768c223889fdb"
+worktree = "/tmp/sm-ceres-continuation-shared-game-host-1"
+clean_worktree = true
+scope = "Shared typed synchronous Host Request/Response, execution-once ownership outcomes, unchanged complete Samus projectile and room scrolling modules, compact actual-C fixture declarations."
+native_routines = ["HandleProjectile", "DrawPlayerExplosions2", "sub_9382FD", "DrawBombAndProjectileExplosions", "DisplayViewablePartOfRoom"]
+tests_executed = 31
+tests_passed = 31
+initial_compile_seconds = 3.9
+final_focused_seconds = 0.75
+logged_focused_seconds = 0.29
+verification_argv = ["cargo", "test", "-p", "port", "--locked", "--offline", "--test", "game_host", "--test", "samus_projectile_frame", "--test", "room_scroll"]
+verification_timeout_seconds = 60
+limitations = [
+  "Actual-C fixture execution, authentication, shared inventory stages and integrated worktree retirement belong to the coordinator.",
+  "The existing native gameplay modules are unchanged. PLM, HDMA and VRAM hardware remain explicit C ownership.",
+  "No live admission, Ceres completion or original-ROM parity is established by these source and Rust controls.",
+  "Outcome OwnedFailure is fatal even when caller WRAM is unchanged; external host effects can already exist and native fallback is forbidden.",
+  "Existing conservative samus_projectile_frame support selection remains unchanged.",
+]
+
+[source_sha256]
+"crates/port/src/game_host.rs" = "baaae6c0dbc60b9c384c37088806648e96669c3714d7864bb58b5b5d93972527"
+"crates/port/src/lib.rs" = "e402f0c73149a8e02dd085c3696f96f5854a9009a66d790bf4c9114e69c0596a"
+"crates/port/tests/game_host.rs" = "8344b06526df479147b48110e514a8aecc9183baba089ef2c7d3223c9a9db32b"
+"tools/port/game-host-projectile.toml" = "97db12ceeb95b8fefd6482e26275d9d659de681b4ce8f9489b1fedb6a8b7488f"
+"tools/port/game-host-room-scroll.toml" = "8bde6b1baaebeaf975650ed0b7e1eb4f93c325b32c58f76632bf2cccba60fc64"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/ceres-continuation/host-implementation-tests.log"
+sha256 = "1b19ae9288ce755537e765674bfc9e73a6b5a1799ed3c55edf367d0eed9e473f"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/ceres-continuation/host-implementation-cleanup.toml"
+sha256 = "db5bac8a65aebadf59f0fdf35212019050be91606a9165b298d3f3d192ecacdc"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/ceres-continuation/host-implementation-deduplicate.toml"
+sha256 = "2624524f0fb2f448e1351f8dad525947deffaa761537e3f3206162e1f18829b7"
+
+[cleanup]
+utility = "/home/jim/sm-decomp/target/debug/sm-pipeline"
+commands = [
+  ["cleanup", "--root", "/tmp/sm-ceres-continuation-shared-game-host-1", "--apply"],
+  ["cleanup", "--root", "/tmp/sm-ceres-continuation-shared-game-host-1", "--deduplicate", "--apply"],
+]
+utility_reclaimed_bytes = 0
+manual_unsealed_target_reclaimed_bytes = 129084860
+manual_reason = "The utility requires a finished parent verdict.toml even for target/. Cargo-only tests have no native acceptance verdict. Removed only identified unsealed, stopped Cargo target per docs/agents/run-cleanup.md unsupported-format fallback."
+dependency_symlink_removed = true
+remaining_free_bytes = 228353114112
+retained = ["Git commit and source files pending coordinator snapshot/worktree retirement", "Test stdout/stderr log", "Both cleanup receipts", "This implementation observation"]

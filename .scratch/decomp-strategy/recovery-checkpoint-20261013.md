@@ -29,11 +29,13 @@ and translation assignments remain the next work defined by the revised strategy
   and one superseded old Ridley claim. The new root published a reviewed
   caller-domain sibling and the eleven measured internal live routines;
   overlapping observations are deduplicated per stage and context.
-- The older viewer task in thread `01a13394-29b8-76a3-aab7-5ab8eff60694` remains
-  stalled on its preview approval. The maintained progress-first layout and
-  separate comparison were completed through the coverage owner's handoff;
-  progress ticket 02 is resolved. Accuracy correction, strategy and independent
-  consistency/reporting reviews are complete.
+- The viewer task in thread `01a13394-29b8-76a3-aab7-5ab8eff60694` resumed and
+  completed its presentation refinement. Metrics precede a collapsed summary
+  with grouped, bounded notes; desktop/phone, offline/file loading and live
+  refresh checks pass. Progress tickets 02 and 03 are resolved. The temporary
+  browser/build data was cleaned and the revised report opened in the Windows
+  browser; see `../decomp-progress/layout-refinement/report.md`. Accuracy
+  correction, strategy and independent consistency/reporting reviews are complete.
 
 ## Completed gameplay evidence
 

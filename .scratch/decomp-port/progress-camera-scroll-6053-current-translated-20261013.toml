@@ -1,0 +1,21 @@
+id = "camera-scroll-6053-current-translated-20261013"
+scope = "Complete camera scrolling frame and directional helpers"
+agent = "/root/projectile_admission"
+stage = "translated"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+commit = "7512b6479afe55da270931a9f3ae26c9d558e5a5"
+routines = ["MainScrollingRoutine", "Samus_HandleScroll_X", "Samus_HandleScroll_Y", "Samus_ScrollFinishedHook_SporeSpawnFight"]
+limitations = ["Current frozen merged-source family authenticates 467 fixture pairs for the whole camera frame, directional helpers and Spore Spawn hook.", "Admitted table indices, room extent and hook domains remain bounded; room and Samus dependencies remain explicit. Independent live ownership remains pending.", "Installed gameplay commit is integrated into main baseline c711faea56f20d42113eb63393cc4a76d4940557; shared verifier/live wiring remains uncommitted at the authenticated exact frozen source. Final wiring commit remains coordinator work.", "Both run cleanup passes and stale implementer worktree retirement completed before retained authentication. Stage observations remain distinct; original-ROM parity is not tested."]
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-camera-scroll-post-cleanup-authentication.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/progress-current-integrated-stage-evidence-20261013.md"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-final-authentication-summary.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-worktree-retirement-20261013.toml"

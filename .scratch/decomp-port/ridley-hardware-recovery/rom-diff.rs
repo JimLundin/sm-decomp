@@ -1,0 +1,2 @@
+use std::{fs,path::Path};
+fn main(){let args=std::env::args().collect::<Vec<_>>();let a=fs::read(Path::new(&args[1])).unwrap();let b=fs::read(Path::new(&args[2])).unwrap();println!("lengths {} {}",a.len(),b.len());for (i,(a,b)) in a.iter().zip(&b).enumerate().filter(|(_, (a,b))|a!=b).take(50){println!("{i:06x} {a:02x} {b:02x}");}println!("differences {}",a.iter().zip(&b).filter(|(a,b)|a!=b).count());}

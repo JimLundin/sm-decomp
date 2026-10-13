@@ -1,0 +1,13 @@
+operation = "record"
+checkout = "/home/jim/sm-decomp"
+effort = "ceres-continuation"
+coordinator = "ceres-20261013"
+capacity = 3
+[update]
+event = "started"
+agent = "/root/ceres_scope"
+[update.claim]
+id = "compact-controller"
+revision = "48656a2-compact-v1"
+attempt = 1
+coordinator = "ceres-20261013"

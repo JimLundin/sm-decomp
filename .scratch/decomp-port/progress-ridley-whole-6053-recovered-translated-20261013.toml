@@ -1,0 +1,32 @@
+id = "ridley-whole-6053-recovered-translated-20261013"
+scope = "Whole Ridley and Ceres lifecycle, AI, tail, rendering, cutscene and native scripts"
+agent = "/root/ridley_recovery"
+stage = "translated"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+routines = ["BabyMetroid_DBCB_DoubleRetEx", "BabyMetroid_Goto", "BabyMetroid_Instr_1", "BabyMetroid_Instr_2", "BabyMetroid_Instr_3", "CallBabyMetroidInstr", "CallRidleyFunc", "CallRidleyFunc_var40", "CeresMult", "CeresRidley_A377", "CeresRidley_A7F9", "CeresRidley_A994", "CeresRidley_AC30", "CeresRidley_Func_1", "CeresRidley_Func_10", "CeresRidley_Func_11", "CeresRidley_Func_12", "CeresRidley_Func_13", "CeresRidley_Func_14", "CeresRidley_Func_15", "CeresRidley_Func_16", "CeresRidley_Func_17", "CeresRidley_Func_18", "CeresRidley_Func_19", "CeresRidley_Func_2", "CeresRidley_Func_20", "CeresRidley_Func_21", "CeresRidley_Func_22", "CeresRidley_Func_23", "CeresRidley_Func_24", "CeresRidley_Func_25", "CeresRidley_Func_26", "CeresRidley_Func_27", "CeresRidley_Func_28", "CeresRidley_Func_29", "CeresRidley_Func_3", "CeresRidley_Func_33", "CeresRidley_Func_34", "CeresRidley_Func_35", "CeresRidley_Func_4", "CeresRidley_Func_5", "CeresRidley_Func_6", "CeresRidley_Func_7", "CeresRidley_Func_8", "CeresRidley_Func_9", "CeresRidley_Hurt", "CeresRidley_Init", "CeresRidley_Main", "DrawBabyMetroid_0", "HandleCeresRidleyGetawayCutscene", "HandleTypewriterText_Ext", "ProcessEscapeTimerTileTransfers", "Ridley_A2DC", "Ridley_A2F2", "Ridley_B455", "Ridley_C08E", "Ridley_C09F", "Ridley_C104", "Ridley_C53E", "Ridley_C551", "Ridley_CBC0", "Ridley_CBC7", "Ridley_CBCE", "Ridley_CBD5", "Ridley_CBDC", "Ridley_D495", "Ridley_E90C", "Ridley_Func_10", "Ridley_Func_100", "Ridley_Func_101", "Ridley_Func_102", "Ridley_Func_103", "Ridley_Func_104", "Ridley_Func_104_0", "Ridley_Func_105", "Ridley_Func_106", "Ridley_Func_107", "Ridley_Func_11", "Ridley_Func_111", "Ridley_Func_112", "Ridley_Func_113", "Ridley_Func_114", "Ridley_Func_115", "Ridley_Func_116", "Ridley_Func_117", "Ridley_Func_118", "Ridley_Func_119", "Ridley_Func_12", "Ridley_Func_120", "Ridley_Func_121", "Ridley_Func_122", "Ridley_Func_124", "Ridley_Func_125", "Ridley_Func_126", "Ridley_Func_127", "Ridley_Func_129", "Ridley_Func_13", "Ridley_Func_14", "Ridley_Func_15", "Ridley_Func_16", "Ridley_Func_17", "Ridley_Func_18", "Ridley_Func_19", "Ridley_Func_2", "Ridley_Func_20", "Ridley_Func_21", "Ridley_Func_22", "Ridley_Func_23", "Ridley_Func_24", "Ridley_Func_25", "Ridley_Func_26", "Ridley_Func_27", "Ridley_Func_28", "Ridley_Func_29", "Ridley_Func_3", "Ridley_Func_30", "Ridley_Func_31", "Ridley_Func_32", "Ridley_Func_33", "Ridley_Func_33b", "Ridley_Func_34", "Ridley_Func_35", "Ridley_Func_36", "Ridley_Func_37", "Ridley_Func_38", "Ridley_Func_39", "Ridley_Func_3b", "Ridley_Func_4", "Ridley_Func_40_Carry", "Ridley_Func_40_Sign", "Ridley_Func_41", "Ridley_Func_42", "Ridley_Func_43", "Ridley_Func_44", "Ridley_Func_45", "Ridley_Func_46", "Ridley_Func_47", "Ridley_Func_48", "Ridley_Func_49", "Ridley_Func_5", "Ridley_Func_50", "Ridley_Func_51", "Ridley_Func_52", "Ridley_Func_53", "Ridley_Func_54", "Ridley_Func_55", "Ridley_Func_56", "Ridley_Func_57", "Ridley_Func_58", "Ridley_Func_59", "Ridley_Func_6", "Ridley_Func_61", "Ridley_Func_62", "Ridley_Func_63", "Ridley_Func_64", "Ridley_Func_65", "Ridley_Func_66", "Ridley_Func_67", "Ridley_Func_68", "Ridley_Func_69", "Ridley_Func_7", "Ridley_Func_70", "Ridley_Func_71", "Ridley_Func_72", "Ridley_Func_73", "Ridley_Func_74", "Ridley_Func_75", "Ridley_Func_77", "Ridley_Func_78", "Ridley_Func_79", "Ridley_Func_8", "Ridley_Func_80_DoubleRet", "Ridley_Func_81", "Ridley_Func_82_DoubleRet", "Ridley_Func_83", "Ridley_Func_84", "Ridley_Func_85", "Ridley_Func_86", "Ridley_Func_87", "Ridley_Func_88", "Ridley_Func_89", "Ridley_Func_9", "Ridley_Func_90", "Ridley_Func_91", "Ridley_Func_92", "Ridley_Func_93", "Ridley_Func_95", "Ridley_Func_96", "Ridley_Func_98", "Ridley_Func_99", "Ridley_Func_D3DC", "Ridley_Hurt", "Ridley_Instr_1", "Ridley_Instr_10", "Ridley_Instr_11", "Ridley_Instr_12", "Ridley_Instr_13", "Ridley_Instr_14", "Ridley_Instr_15", "Ridley_Instr_16", "Ridley_Instr_2", "Ridley_Instr_3", "Ridley_Instr_4", "Ridley_Instr_5", "Ridley_Instr_6", "Ridley_Instr_7", "Ridley_Instr_8", "Ridley_Instr_9", "Ridley_Main", "Ridley_Powerbomb", "Ridley_Shot", "RidleysExplosion_Func_1", "RidleysExplosion_Func_2", "RidleysExplosion_Init", "RidleysExplosion_Main", "sub_A6DB2A", "sub_A6DBC2", "sub_A6DC13", "sub_A6DF59", "sub_A6DF60"]
+limitations = ["Recovered source covers the complete 220-definition Ridley/Ceres closure but is uncommitted; exact pending source hashes and baseline are retained.", "The authenticated actual-C inventory is diagnostic provenance with no Rust live acceptance. Controlled 6,457 pairs cover 33 native entries and do not establish verified status for all 220 definitions.", "Natural captured supplement, merged current-source family gates, the whole lifecycle live seam and final commit/cleanup remain the integration coordinator's work.", "External C services remain explicit dependencies; public admission refuses SpawnEnemy/EnemyItemDrop lifecycle continuations pending modeled footprints. Original-ROM parity is not tested."]
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/ridley-whole-source-closure.txt"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/progress-recovered-stage-evidence-20261013.md"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/progress-ridley-recovery-completion-20261013.md"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/progress-ridley-recovered-source-20261013.sha256"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-inventory/1791858734336387661-2/verdict.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/ridley-recovery-inventory-final-authentication.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/verdict.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/ridley-recovery-controlled-authentication.toml"

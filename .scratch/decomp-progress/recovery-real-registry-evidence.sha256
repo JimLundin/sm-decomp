@@ -1,0 +1,5 @@
+b3543187182967568a748e0e672ba73b09fed94b4010b7fbd9890a26a4087bb8  .scratch/decomp-progress/recovery-real-registry-concurrency.rs
+90d18968d6237caad69b338d2aa3fd2432ad4ceb07a8916964dd4258c3bffa0d  .scratch/decomp-progress/recovery-real-registry-concurrency/verification.json
+90d18968d6237caad69b338d2aa3fd2432ad4ceb07a8916964dd4258c3bffa0d  .scratch/decomp-progress/recovery-real-registry-concurrency.stdout
+db5bac8a65aebadf59f0fdf35212019050be91606a9165b298d3f3d192ecacdc  .scratch/decomp-progress/recovery-real-registry-cleanup.toml
+2624524f0fb2f448e1351f8dad525947deffaa761537e3f3206162e1f18829b7  .scratch/decomp-progress/recovery-real-registry-deduplicate.toml

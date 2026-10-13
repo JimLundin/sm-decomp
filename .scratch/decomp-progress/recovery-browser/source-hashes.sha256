@@ -1,0 +1,6 @@
+b1666f19eb1e9e526c60e81104bcf2c709c091f2686e847f4123b8eb4a059374  /tmp/sm-progress-browser/src/main.rs
+dd3ef63871c76ae1375c07c0a76ac1a2fff52e023c2cbccedbc04fbc2b839b99  target/debug/sm-pipeline
+d799e1ec6eb2e09af51f723181b508733ac765c414b919414ce25043fd1b41e5  crates/pipeline/src/progress.rs
+e65fb057090bc9fbf1ba91110356db1582a30a3c7adc6919ce24c8eae8cb9c19  crates/pipeline/src/progress.html.in
+470499b0a1cb2d2274cfc61a77796ae004154f90a39d659dff28acb492715ae6  crates/pipeline/src/source_inventory.rs
+7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25  /tmp/sm-progress-current-inventory.toml

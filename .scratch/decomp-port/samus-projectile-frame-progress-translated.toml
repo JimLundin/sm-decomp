@@ -1,0 +1,15 @@
+id = "samus-projectile-frame-0f59de1-translated"
+scope = "Complete scheduled Samus projectile update and render passes"
+agent = "/root/independent_gameplay"
+stage = "translated"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+inventory_sha256 = "02ee5cb223f80eadd7393317ad9bf18360a66f61207432ecce94e31abd7f1ca0"
+routines = ["HandleProjectile", "DrawPlayerExplosions2", "sub_9382FD", "DrawBombAndProjectileExplosions"]
+commit = "0f59de1c6d8b6fa1bb50b2f66b954424406d0f62"
+limitations = ["476 declared whole-frame fixtures pass actual C; live ownership and merged-source integration remain pending.", "PLM and HDMA requests use explicit existing C host dependencies; host-free selection conservatively retains C ownership for callback frames.", "Selected Ceres player and explosion drawing branches refuse because pinned C reads uninitialized locals.", "Failed diagnostic evidence is retained. Integrated worktree removal remains the coordinator responsibility."]
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/samus-projectile-frame/offline/1791841155185563-2-0/verdict.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/samus-projectile-frame-476-after-cleanup-authentication.toml"

@@ -1,0 +1,2 @@
+use std::{fs,process::Command};
+fn main(){let log=fs::read_to_string(std::env::args().nth(1).unwrap()).unwrap();let mut n=0;for line in log.lines(){let Some(rest)=line.strip_prefix("sha256 ")else{continue};let(hash,path)=rest.split_once(' ').unwrap();let result=Command::new("sha256sum").arg(path).output().unwrap();assert!(result.status.success());let actual=String::from_utf8(result.stdout).unwrap();assert_eq!(&actual[..64],hash,"retained diagnostic changed: {path}");n+=1;}println!("authenticated_diagnostic_files={n}");}

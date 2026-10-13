@@ -1,0 +1,23 @@
+operation = "record"
+checkout = "/home/jim/sm-decomp"
+effort = "ceres-continuation"
+coordinator = "ceres-20261013"
+capacity = 3
+available_slots = 0
+
+[update]
+event = "finished"
+
+[update.claim]
+id = "compact-controller"
+revision = "48656a2-compact-v1"
+attempt = 1
+coordinator = "ceres-20261013"
+
+[update.result]
+result = "submitted"
+commit = "223f8a1b0c7382817b1290d13c7a41f4e722d5e1"
+
+[[update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/ceres-continuation/controller-submission-evidence.toml"
+sha256 = "8da107cdff9c14182a0ffae1d24ce1d3acbadfccd742fccf4e31c0896bd3634e"

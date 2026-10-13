@@ -9,9 +9,12 @@ The crashed session's source, ticket and coverage agents were checked through
 their retained task logs and final handoffs. Both independent recovery reviewers
 completed their checks. The original coverage thread's final log confirms a
 completed turn and idle status; `../decomp-progress/coverage-finish-handoff.md`
-records completed publication, validation and cleanup. The older viewer thread remains stalled
-on its preview approval; the maintained layout and separate three-layout review
-are already complete and progress ticket 02 is resolved.
+records completed publication, validation and cleanup. The viewer thread resumed
+and completed its progress-first presentation refinement, including grouped
+collapsed details, desktop/phone checks, live refresh and scoped cleanup. Progress
+tickets 02 and 03 are resolved; the revised report was opened in the Windows
+browser. Its separate completion record is
+`../decomp-progress/layout-refinement/report.md`.
 
 The served and standalone report snapshot contains 256 observations, 16 stale
 exclusions and one superseded observation. It reports 1,460 translated, 924
@@ -54,3 +57,9 @@ passes `git diff --cached --check`; raw receipt archival preserves all original
 hash contracts. Cleanup measurements and retained dependencies are recorded in
 `coverage-audit.md`, `progress-report-completion.md`,
 `recovery-browser-cleanup.md` and `../decomp-port/recovery-live-completion-20261013.md`.
+
+The later presentation refinement refreshes the generated HTML hash and records
+the shared 257-observation registry as found at its completion. The earlier CLI
+and recovery receipts remain byte-for-byte records of the 256-observation snapshot.
+The new layout reports, browser receipts and cleanup are in
+`../decomp-progress/layout-refinement/`; no gameplay stage was published by it.

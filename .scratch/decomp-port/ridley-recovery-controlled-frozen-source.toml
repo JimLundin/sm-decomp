@@ -1,0 +1,234 @@
+status = "recovered-from-sealed-artifacts"
+verdict = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/verdict.toml"
+verdict_sha256 = "02517722e3fc07bdef1b97e5922a9d203766e7d92e5da984fd823d1ad02a9e09"
+source_snapshot = "/tmp/sm-ridley-controlled-source"
+
+[[files]]
+path = "/home/jim/sm-decomp/crates/port/src/ridley_subsystem.rs"
+sha256 = "e7f47917cbdcdd04e9ffd33556c8e4d18a13827d76b3b3b1faa2d5635f26d6f3"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/candidate.rs"
+
+[[files]]
+path = "/home/jim/sm-decomp/tools/port/ridley-subsystem.toml"
+sha256 = "7bd4dc11ffadb06ad4805d3f80875fe4cb782d44ec809033b730da5c4fcaf8c6"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/manifest.toml"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/pipeline/src/batch.rs"
+sha256 = "c35d808ab379df15d72a262c3781da85cf8936bf1a6ebc9deec3067953c05be5"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/pipeline-batch.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/pipeline/src/builds.rs"
+sha256 = "1141b9ed89baeb8c7e64562564488832998a7ae1e951f5e40c06bcb516f8164f"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/pipeline-builds.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/pipeline/src/cleanup.rs"
+sha256 = "fc282127e388eec71dc3fc2354b6f641c1e357ac1ecf570ee57ed6bd82774204"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/pipeline-cleanup.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/pipeline/src/family.rs"
+sha256 = "33657d5038c6b771594dcf685c01e2d71259af769772f972ddc2771b6f87ac7e"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/pipeline-family.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/pipeline/src/fixture_execution.rs"
+sha256 = "2d091dda80e70ac0bd726f8bfe17932adf54938dafe992da1516867c8fc129fb"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/pipeline-fixture_execution.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/pipeline/src/fixture_worker.rs"
+sha256 = "b4badc6fd554ee91dbdb82fdeb781ca937e64e10c4e2ce28b91e25061edd2679"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/dependency-000.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/pipeline/src/inputs.rs"
+sha256 = "a308f23c7febd841a60a22e1734320421691bffd82a610ff7b944420add5742f"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/pipeline-inputs.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/pipeline/src/main.rs"
+sha256 = "1c2076de53340f6fd0af0489db696da299134f11d9a07bfd997fc9f10e47b3f4"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/pipeline-main.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/pipeline/src/metrics.rs"
+sha256 = "30c14f63a9c8bb85f764609b5207cbc68f92c8332e54bf5ab4fd9594bfc24063"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/pipeline-metrics.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/pipeline/src/resource_sampler.rs"
+sha256 = "d40db3a810b33251afbf76efc1d16c19ad1b0809a6dea69473d20d6d852f266c"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/pipeline-resource_sampler.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/pipeline/src/ridley_subsystem_abi.rs.in"
+sha256 = "48f241b2338344041ccb272b0b9e7fa16c035c0e3b0374a024bd6712e3959d2e"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/pipeline-ridley_subsystem_abi.rs.in"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/pipeline/src/ridley_subsystem_adapter.rs"
+sha256 = "9336699a11873c070f2d8636940590e8aaf2cb0d2c0e4194f532bfa92769506a"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/pipeline-ridley_subsystem_adapter.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/pipeline/src/ridley_subsystem_fixtures.rs"
+sha256 = "cd89755e4a3ce92cdbeda809efc18917159732b51754f8a53bb007b605eb0d0b"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/pipeline-ridley_subsystem_fixtures.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/pipeline/src/ridley_subsystem_host.c.in"
+sha256 = "51779d5769951b4fea51797c835b2ac59829810056a620c5456894f7c812f3e6"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/pipeline-ridley_subsystem_host.c.in"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/port/src/animated_tiles.rs"
+sha256 = "6381e3d9caf01f3b1ca42ae56b75f3784c5b4de40f795a25b3194fd601351c57"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/dependency-001.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/port/src/audio.rs"
+sha256 = "4308e496267857ca869db45f4127e505bec4ad29c4c9ede8f08d6e9769ccf69d"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/dependency-002.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/port/src/collision.rs"
+sha256 = "881431d92845006509d2956eae0b3736459961762f5b4a021577f130c530d4f1"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/dependency-003.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/port/src/enemy.rs"
+sha256 = "4faac9ac72d3b5caf206678980d915a2cb1ac03e492fd7fdb6aa59c4beb48367"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/dependency-004.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/port/src/enemy_instructions.rs"
+sha256 = "f2349c89d4e1c825fe269807e9e1fe35f45084f2f739537e75229302101b2645"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/dependency-005.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/port/src/enemy_projectile_collision.rs"
+sha256 = "f117da8bf86a387b0e5693fb19a84c938486fc089a10abf3155365e6627b837e"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/dependency-006.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/port/src/enemy_projectile_instructions.rs"
+sha256 = "d1ee84dda96d514fba6fb76982aaabac76d1f6d9e324c5d8d2babf5e4fbf10c2"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/dependency-007.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/port/src/enemy_projectile_sparks.rs"
+sha256 = "5f4649f745a2f772c32fc30231fbb2b1c0c5624ee693e6d3efaf5e15dc3557f1"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/dependency-008.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/port/src/enemy_projectiles.rs"
+sha256 = "4c99175b8eb0be86554e46f7424e6ee7aa43510afebe2d555ea2dcb890e7f0de"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/dependency-009.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/port/src/glass_shattering.rs"
+sha256 = "373bcf4c49058b7583e66f2a3f5a54d92ea4481d065e89729794871d56304dd9"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/dependency-010.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/port/src/memory.rs"
+sha256 = "7c0df2e77ed2d05dda05bd6d9e98fef3f7ec5f1c76426da504229af698bfecc5"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/dependency-011.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/port/src/mother_brain_bomb.rs"
+sha256 = "43a11bc33a270533be56203c81cd451556cf9e3473609f9b0cc192e3ecdc25e1"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/dependency-012.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/port/src/n00b_tube.rs"
+sha256 = "801431d3325bb23672bd0f6b5aff7ea86506440c2c8c887893599386c3c00a41"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/dependency-013.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/port/src/observed_projectile_ownership.rs"
+sha256 = "b8e77711094a2de4e0222c587d81a104f48af25fde7b60335ba409063fc54b56"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/dependency-014.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/port/src/plm.rs"
+sha256 = "151a849a2a9f366b3a3175915cbd861e1f8865b5451883b67a6d4fd584e846d3"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/dependency-015.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/port/src/plm_render.rs"
+sha256 = "70b2739565075c44e5e5094bca1e3ccc05380140ad380a8aab4608a73488c160"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/dependency-016.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/port/src/ridley_cutscene.rs"
+sha256 = "bcc41338df39aa05592dbc046318bf758553d0c6c42125e5016186e2d930a908"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/dependency-017.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/port/src/ridley_enemy_instructions.rs"
+sha256 = "e393dc2d8e53d709e15262a9d52bf27c600d955de5a5447c62381db0e1c6ab10"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/dependency-018.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/port/src/ridley_movement.rs"
+sha256 = "34a23fdd1dbe21a5f7ec52048a554529908c0dc5cb156630def2edaf5a9d1972"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/dependency-019.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/port/src/ridley_rendering.rs"
+sha256 = "541c42189b7940d5942d246ea6978ab6b9450472b71ba59cdd9054b0cd97f684"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/dependency-020.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/port/src/ridley_subsystem.rs"
+sha256 = "e7f47917cbdcdd04e9ffd33556c8e4d18a13827d76b3b3b1faa2d5635f26d6f3"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/candidate.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/port/src/ridley_subsystem_admission.rs"
+sha256 = "a49c1587e0e3b03f0bf8f5b75cae422dac8b558912621eb6db9afa3442a0b7aa"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/dependency-022.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/port/src/ridley_subsystem_instructions.rs"
+sha256 = "e4838c137ec5448cf8db064fd1d8372ba19b191f1fb89616a7ed6601537bcccd"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/dependency-023.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/port/src/room.rs"
+sha256 = "e7b13c17ac668f8aba50a21aedfcd4d4dcf93f5e1cd2d4c610557cb56774ba72"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/dependency-024.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/port/src/samus.rs"
+sha256 = "4f7e14ecbdf724305094d5924ec931b04dca422e8bcc3108fd5ff13531271234"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/dependency-025.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/port/src/samus_control.rs"
+sha256 = "d0d592bdbfad2b0bb1b845ec3fc2523cb4a6ff15c0dd07015c9736d3efb4ed60"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/dependency-026.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/port/src/sprite_objects.rs"
+sha256 = "dfe844396edea8efd787923ab506dc3b910c70d8a67e21bf7c27ddfba90475af"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/dependency-027.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/crates/port/src/system.rs"
+sha256 = "bedc7662f4c1c435c968a6c07c73331a76f6c58621b4ca885f73f6be33ccbf16"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/dependency-028.rs"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/tools/decomp/headless.c"
+sha256 = "ff9a5d75e007b18b231126273e8b8b69473fca71436a63476ae20f64d92f06ff"
+sealed_source = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0/pipeline-headless.c"
+
+[[files]]
+path = "/tmp/sm-ridley-controlled-source/tools/dependencies.toml"
+sha256 = "e74864c229949fc6f1a6bd7528f339bdb3f9364f1e4f9544f08693881d10f111"
+sealed_source = "/home/jim/sm-decomp/tools/dependencies.toml"

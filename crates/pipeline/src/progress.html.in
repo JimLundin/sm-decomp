@@ -19,7 +19,7 @@
     a { color:var(--accent); text-underline-offset:3px; overflow-wrap:anywhere; }
     :focus-visible { outline:3px solid var(--accent); outline-offset:3px; }
     .shell { max-width:1500px; margin:auto; padding:28px 40px 44px; }
-    .topbar { display:flex; justify-content:space-between; align-items:center; gap:20px; margin-bottom:34px; }
+    .topbar { display:flex; justify-content:space-between; align-items:center; gap:20px; margin-bottom:26px; }
     .identity { display:flex; align-items:center; gap:13px; }
     .mark { display:grid; place-items:center; height:39px; width:39px; border:1px solid var(--accent); border-radius:9px; font:700 12px/1 ui-monospace,monospace; letter-spacing:-.5px; color:var(--accent); }
     .eyebrow { font-size:11px; font-weight:700; letter-spacing:1.6px; text-transform:uppercase; color:var(--muted); }
@@ -120,14 +120,35 @@
     .pagination { border-top:1px solid var(--line); padding:14px 22px; display:flex; justify-content:space-between; align-items:center; gap:15px; font-size:12px; color:var(--muted); }
     .pagination-actions { display:flex; align-items:center; gap:12px; }
     .pagination button { min-height:33px; font-size:12px; padding:5px 11px; }
-    .provenance { margin-top:23px; border:1px solid var(--line); border-radius:8px; }
-    .provenance summary { cursor:pointer; padding:13px 16px; font-size:12px; font-weight:600; color:var(--muted); }
-    .provenance-content { padding:0 16px 16px; font-size:12px; max-width:950px; }
+    .report-notes { border:1px solid var(--line); border-radius:9px; background:var(--panel); margin:18px 0; font-size:12px; }
+    .report-summary { display:flex; align-items:center; gap:10px; padding:13px 18px; cursor:pointer; list-style:none; }
+    .report-summary::-webkit-details-marker { display:none; }
+    .report-summary::before { content:"›"; font-size:18px; line-height:1; color:var(--muted); }
+    .report-notes[open] > .report-summary::before { transform:rotate(90deg); }
+    .report-summary:hover { background:var(--raised); }
+    .report-summary strong { font-weight:600; white-space:nowrap; }
+    .report-summary .muted { margin-left:auto; text-align:right; overflow-wrap:anywhere; }
+    .report-status { color:var(--warning); }
+    .report-content { padding:0 18px 18px; border-top:1px solid var(--line); }
+    .report-content > p { margin:15px 0; color:var(--muted); max-width:950px; }
+    .note-group { border-top:1px solid var(--line); padding:11px 0; }
+    .note-group > summary { display:flex; align-items:center; gap:8px; cursor:pointer; list-style:none; color:var(--ink); font-weight:550; }
+    .note-group > summary::-webkit-details-marker { display:none; }
+    .note-group > summary::before { content:"›"; color:var(--muted); }
+    .note-group[open] > summary::before { transform:rotate(90deg); }
+    .note-count { color:var(--muted); font-weight:400; font-variant-numeric:tabular-nums; }
+    .note-list { margin:11px 0 0; padding-left:20px; max-height:300px; overflow:auto; overscroll-behavior:contain; color:var(--muted); }
+    .note-list li { padding:4px 0; overflow-wrap:anywhere; }
+    .note-group[data-kind="stale"] > summary { color:var(--warning); }
+    .source-details { margin-top:6px; }
+    .source-details > summary { padding:11px 0; cursor:pointer; color:var(--muted); }
+    .provenance-content { padding:4px 0 0; font-size:12px; max-width:950px; }
     .footer { display:flex; justify-content:space-between; gap:20px; color:var(--muted); font-size:11px; padding-top:20px; }
     .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
     @media(min-width:1100px) { .bank-grid { grid-template-columns:repeat(8,1fr); } }
     @media(max-width:1050px) { .shell { padding:24px; } .filters { grid-template-columns:repeat(3,1fr); } .list-header,.routine-summary { grid-template-columns:minmax(180px,2fr) 90px 80px 60px 120px; gap:10px; } .panel-head { flex-wrap:wrap; } }
     @media(max-width:720px) { .shell { padding:20px 14px 30px; } .topbar { align-items:flex-start; margin-bottom:24px; } .top-title { max-width:140px; } .actions { justify-content:flex-end; } .actions button { font-size:12px; padding:6px 9px; min-height:34px; } .intro { display:block; } .sync { text-align:left; padding-top:16px; } .sync strong { display:inline; margin-right:8px; } h1 { letter-spacing:-.8px; } .metrics { grid-template-columns:repeat(2,1fr); gap:10px; } .metric { padding:15px; } .metric-number { font-size:28px; } .panel-head { padding:17px 15px 14px; } .selectors { gap:8px; } .selectors label { font-size:11px; } .selectors select { font-size:11px; min-height:33px; } .overview { padding:2px 15px 17px; } .legend { gap:10px; } .bank-grid { padding:0 15px 17px; grid-template-columns:repeat(3,1fr); gap:7px; } .bank { padding:10px; min-height:88px; } .bank-label { font-size:10px; } .bank-label strong { font-size:11px; } .bank-count { font-size:9px; } .filters { grid-template-columns:repeat(2,minmax(0,1fr)); padding:0 15px 15px; } .filter-search { grid-column:1 / -1; } .list-toolbar { padding:11px 15px; } .list-header { display:none; } .routine-summary { grid-template-columns:1fr auto; gap:8px; padding:14px 15px; } .routine-name { grid-column:1 / -1; } .routine-source { grid-column:1; font-size:10px; } .routine-address { grid-column:1; grid-row:3; font-size:10px; } .routine-lines { display:none; } .routine-stage { grid-column:2; grid-row:2 / 4; } .routine-detail { padding:19px 20px; grid-template-columns:minmax(0,1fr); gap:10px; } .pagination { padding:14px 15px; } .footer { display:block; } .footer span { display:block; margin-bottom:7px; } }
+    @media(max-width:720px) { .report-summary { align-items:flex-start; flex-wrap:wrap; padding:12px 15px; gap:6px 9px; } .report-summary .muted { flex-basis:100%; margin-left:18px; text-align:left; } .report-content { padding:0 15px 15px; } }
     @media(prefers-reduced-motion:no-preference) { .bank-fill { transition:width .25s ease; } }
     @media print { .actions,.filters,.pagination,.sync { display:none; } .shell { padding:0; } .panel,.metric { break-inside:avoid; } }
   </style>
@@ -139,7 +160,7 @@
       <div class="actions"><button id="theme" type="button" aria-label="Change color theme">Theme</button><button id="load" class="primary" type="button">Open registry JSON</button><input id="file" type="file" accept="application/json,.json" hidden></div>
     </header>
     <section class="intro" aria-labelledby="title">
-      <div><div class="eyebrow">Shared routine inventory</div><h1 id="title">Every routine. A visible next step.</h1><p class="description">An inventory of the original C definitions, with agent reports attached to the work they describe. Explore the source banks, see what remains, and inspect the evidence behind each observation.</p></div>
+      <div><div class="eyebrow">Shared routine inventory</div><h1 id="title">Translation progress</h1><p class="description">Explore original C routines, reported stages, and the evidence behind each report.</p></div>
       <div class="sync"><strong id="sync-mode"><span class="dot" aria-hidden="true"></span>Embedded snapshot</strong><span id="updated"></span><br><span id="checked"></span></div>
     </section>
     <div id="error" class="notice error" role="alert" hidden></div>
@@ -149,6 +170,14 @@
       <div class="metric"><div class="metric-label" id="remaining-label">Remaining before translation report</div><div class="metric-number" id="remaining">—</div><small id="remaining-lines">Definitions without that observation</small></div>
       <div class="metric"><div class="metric-label">Declared in fixtures</div><div class="metric-number" id="declared">—</div><small id="declared-lines">Declarations only · no verification inferred</small></div>
     </section>
+    <details id="report-details" class="report-notes">
+      <summary class="report-summary"><strong>Report details</strong><span id="report-detail-count" class="muted"></span></summary>
+      <div class="report-content">
+        <p>Stages describe separate agent observations. Fixture declarations do not establish verification, and inventory coverage does not measure full-game completion. Evidence can describe retained historical source or the checkout at observation; use the evidence context filter to explore each.</p>
+        <div id="notices" hidden></div>
+        <details class="source-details"><summary>Source provenance and interpretation</summary><div id="provenance" class="provenance-content"></div></details>
+      </div>
+    </details>
     <section class="panel" aria-labelledby="banks-title">
       <div class="panel-head"><div><h2 id="banks-title">Progress across source banks</h2><p class="subtext">Exact reported stage · stages do not imply one another. Select a bank to explore its routines.</p></div><div class="selectors"><label for="milestone">Reported stage <select id="milestone"><option value="translated">Translated</option><option value="verified">Verified</option><option value="integrated">Integrated</option><option value="live-exercised">Live exercised</option><option value="translating">Translating</option></select></label><label for="weight">Weight by <select id="weight"><option value="routines">Definitions</option><option value="lines">Body lines</option></select></label></div></div>
       <div class="overview"><label for="context">Evidence context <select id="context"><option value="">All reported contexts</option><option value="current-checkout">Checkout at observation</option><option value="historical-frozen">Retained historical source</option><option value="unspecified">Unspecified / legacy</option></select></label><p id="context-counts" class="subtext"></p><div id="stack" class="stack" role="img" aria-label="Selected stage observation coverage"></div><div id="legend" class="legend"></div><p class="subtext">Legend counts each stage independently. A definition may have reports in several stages and evidence contexts. Inventory coverage does not establish full-game completion.</p></div>
@@ -169,7 +198,6 @@
       <div id="routines"></div>
       <div class="pagination"><span id="page-info"></span><div class="pagination-actions"><button id="previous" type="button">← Previous</button><span id="page"></span><button id="next" type="button">Next →</button></div></div>
     </section>
-    <details id="report-details" class="provenance"><summary>Report details <span id="report-detail-count" class="muted"></span></summary><div class="provenance-content"><p><strong>Reported progress, with its limits.</strong> Stages describe agent observations against the current C inventory. Evidence may describe retained historical Rust source or the checkout at observation; select its context above. Fixture declarations do not establish verification. Counts and body lines measure inventory coverage; they do not establish full-game completion.</p><div id="notices" class="notice warning" hidden></div><div id="provenance"></div></div></details>
     <footer class="footer"><span>* Subsystems are navigation hints derived from routine names; source banks and reported scopes remain explicit.</span><span>Standalone HTML · embedded data works offline · served reports check registry.json every 7 seconds</span></footer>
   </main>
   <script id="progress-data" type="application/json">__PROGRESS_JSON__</script>
@@ -260,11 +288,33 @@
       text('updated','Snapshot: ' + time(data.updated_at));
       const mode=file ? 'Opened JSON snapshot' : /^https?:$/.test(location.protocol) ? 'Live registry · 7s checks' : 'Embedded snapshot · offline';
       $('sync-mode').replaceChildren(el('span','dot'),document.createTextNode(mode));
-      const warnings=list(data.notices).map(String); const staleCount=data.updates.filter(stale).length;
-      if(staleCount) warnings.push(fmt(staleCount) + ' update(s) have stale source, inventory, or evidence. They remain visible in routine details and are excluded from current coverage.');
-      $('notices').hidden=!warnings.length; $('notices').replaceChildren();
-      text('report-detail-count',warnings.length ? '· '+fmt(warnings.length)+' notices' : '');
-      if(warnings.length) { const ul=el('ul'); ul.style.margin='0'; ul.style.paddingLeft='18px'; for(const warning of warnings) ul.append(el('li','',warning)); $('notices').append(ul); }
+      renderNotices();
+    }
+    function renderNotices() {
+      const notices=list(state.data.notices).map(String), staleCount=state.data.updates.filter(stale).length, correctedCount=state.data.updates.filter(superseded).length;
+      const groups=[
+        {key:'interpretation',label:'Coverage and interpretation',notes:[]},
+        {key:'declarations',label:'Fixture declaration notes',notes:[]},
+        {key:'stale',label:'Excluded stale reports',notes:[],description:staleCount ? fmt(staleCount)+' reports have stale source, inventory, or evidence. They remain in routine details and are excluded from progress counts.' : ''},
+        {key:'corrected',label:'Replaced reports',notes:[],description:correctedCount ? fmt(correctedCount)+' reports were replaced by corrections. Their original observations and replacement reasons remain in routine details; the originals are excluded from progress counts.' : ''}
+      ];
+      for(const note of notices) groups[note.startsWith('Declaration ') ? 1 : note.startsWith('Stale update ') ? 2 : note.startsWith('Superseded update ') ? 3 : 0].notes.push(note);
+      const summary=$('report-detail-count'); summary.replaceChildren(el('span','',fmt(notices.length)+' notes'));
+      if(staleCount) summary.append(document.createTextNode(' · '),el('span','report-status',fmt(staleCount)+' stale reports excluded'));
+      if(correctedCount) summary.append(document.createTextNode(' · '+fmt(correctedCount)+' replaced'));
+      if(!notices.length && !staleCount && !correctedCount) summary.textContent='Source and interpretation';
+      $('notices').hidden=!groups.some(group => group.notes.length || group.description);
+      const previous=new Set([...$('notices').querySelectorAll('details[open]')].map(group => group.dataset.kind));
+      const fragment=document.createDocumentFragment();
+      for(const group of groups) {
+        if(!group.notes.length && !group.description) continue;
+        const details=el('details','note-group'); details.dataset.kind=group.key; details.open=previous.has(group.key);
+        const heading=el('summary'); heading.append(document.createTextNode(group.label),el('span','note-count','('+fmt(group.notes.length)+(group.notes.length===1 ? ' note)' : ' notes)')));
+        const ul=el('ul','note-list'); ul.tabIndex=0; ul.setAttribute('aria-label',group.label);
+        for(const note of group.notes) ul.append(el('li','',note));
+        details.append(heading); if(group.description) details.append(el('p','muted',group.description)); details.append(ul); fragment.append(details);
+      }
+      $('notices').replaceChildren(fragment);
     }
     function renderOverview() {
       if(!state.data) return;

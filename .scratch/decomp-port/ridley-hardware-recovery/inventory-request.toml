@@ -1,0 +1,11 @@
+checkout = "/home/jim/sm-decomp/.scratch/decomp-port/ridley-hardware-recovery/source"
+source = "/home/jim/sm-decomp/deps/snesrev-sm"
+asset_root = "/home/jim/sm-decomp"
+output = "/home/jim/sm-decomp/.scratch/decomp-port/ridley-hardware-recovery/inventory"
+frames = 129712
+timeout = 300
+capture_limit = 2048
+captures_per_key = 2
+observation_control = true
+pipeline_root = "/home/jim/sm-decomp/out/pipeline"
+workers = 4

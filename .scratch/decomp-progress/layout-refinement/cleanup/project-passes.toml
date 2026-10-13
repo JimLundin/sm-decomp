@@ -1,0 +1,40 @@
+[[passes]]
+command = "target/debug/sm-pipeline cleanup --root .scratch/decomp-progress/layout-refinement --apply"
+exit_code = 0
+apply = true
+bytes = 0
+targets = []
+
+[[passes]]
+command = "target/debug/sm-pipeline cleanup --root .scratch/decomp-progress/layout-refinement --deduplicate --apply"
+exit_code = 0
+apply = true
+bytes = 0
+snapshots_checked = 0
+targets = []
+
+[[passes]]
+command = "target/debug/sm-pipeline cleanup --root /tmp/sm-progress-layout-refinement-target --apply"
+exit_code = 0
+apply = true
+bytes = 0
+targets = []
+
+[[passes]]
+command = "target/debug/sm-pipeline cleanup --root /tmp/sm-progress-layout-refinement-target --deduplicate --apply"
+exit_code = 0
+apply = true
+bytes = 0
+snapshots_checked = 0
+targets = []
+
+[review_build]
+command = "cargo clean --manifest-path .scratch/decomp-progress/layout-refinement/Cargo.toml --target-dir /tmp/sm-progress-layout-refinement-target"
+exit_code = 0
+reported_files_removed = 571
+reported_mebibytes_removed = 146.9
+measured_pre_clean_apparent_bytes = 139404875
+
+[remaining]
+available_filesystem_bytes = 224959778816
+retained = ["Rust source and lockfile", "embedded snapshot", "screenshots", "assertion and inspection JSON", "browser logs", "malformed-file diagnostic fixtures", "intentional main progress server"]

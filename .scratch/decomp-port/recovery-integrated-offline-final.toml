@@ -1,0 +1,119 @@
+batch = "/home/jim/sm-decomp/out/recovery-session/integrated/batch.toml"
+replays = []
+selected = [
+    "observed-projectile-initializers",
+    "observed-projectile-frame-boundaries",
+    "observed-projectile-ownership",
+    "enemy-projectile-rendering",
+    "enemy-projectile-detect-samus",
+    "enemy-projectile-detect-projectiles",
+    "projectile-trails",
+    "camera-scroll",
+    "room-scroll",
+    "samus-projectile-frame",
+    "observed-ridley-instructions",
+    "observed-ridley-instructions-captured",
+]
+status = "complete"
+
+[cleanup]
+apply = true
+bytes = 4522901504
+snapshots_checked = 64952
+targets = []
+
+[families.camera-scroll]
+exit_code = 0
+kind = "family"
+manifest_sha256 = "fc86700d19d53fabd118d87f41c2617671b32dfa6ec5837c94f177c46936f8fe"
+seconds = 57.911776121
+status = "offline-verified"
+verdict = "/home/jim/sm-decomp/out/recovery-session/integrated/families/camera-scroll/evidence/1791860292776643-47409-76/verdict.toml"
+
+[families.enemy-projectile-detect-projectiles]
+exit_code = 0
+kind = "family"
+manifest_sha256 = "985ccd43e225ab8d037d17dd9d742f5c501139f975cf220a0cdd6f0f509aa322"
+seconds = 141.263872364
+status = "offline-verified"
+verdict = "/home/jim/sm-decomp/out/recovery-session/integrated/families/enemy-projectile-detect-projectiles/evidence/1791860151469038-47409-46/verdict.toml"
+
+[families.enemy-projectile-detect-samus]
+exit_code = 0
+kind = "family"
+manifest_sha256 = "d781d3aadb2595949e0a11b4c9aba321e7b49b8023cbd38ca3c5f22fed3327a6"
+seconds = 133.442538154
+status = "offline-verified"
+verdict = "/home/jim/sm-decomp/out/recovery-session/integrated/families/enemy-projectile-detect-samus/evidence/1791860142497262-47409-44/verdict.toml"
+
+[families.enemy-projectile-rendering]
+exit_code = 0
+kind = "family"
+manifest_sha256 = "39d0da5a786a4df7e8ee5084065921afbf205921ae6e130c9b724f307a5de020"
+seconds = 92.104213264
+status = "offline-verified"
+verdict = "/home/jim/sm-decomp/out/recovery-session/integrated/families/enemy-projectile-rendering/evidence/1791860050298419-47409-32/verdict.toml"
+
+[families.observed-projectile-frame-boundaries]
+exit_code = 0
+kind = "offline-projectile"
+manifest_sha256 = "c65ad6f047e4e7398a55605315e79b1ece49473199ed7aa1891ec456f1b17018"
+seconds = 36.738085752
+status = "offline-verified"
+verdict = "/home/jim/sm-decomp/out/recovery-session/integrated/families/observed-projectile-frame-boundaries/evidence/1791859836190066-47409-0/verdict.toml"
+
+[families.observed-projectile-initializers]
+exit_code = 0
+kind = "offline-projectile"
+manifest_sha256 = "9812d69dbfcb5c11856a4f749cf4df18cb65ce2b325f3f530590426a5dd91eda"
+seconds = 314.854394396
+status = "offline-verified"
+verdict = "/home/jim/sm-decomp/out/recovery-session/integrated/families/observed-projectile-initializers/evidence/1791859836373846-47409-1/verdict.toml"
+
+[families.observed-projectile-ownership]
+exit_code = 0
+kind = "projectile"
+manifest_sha256 = "82bfdf14d2eac1a5ff06a3a4889dea1bf83cd3c7373c5a754e5da18559fc0b2b"
+seconds = 177.068684179
+status = "offline-verified"
+verdict = "/home/jim/sm-decomp/out/recovery-session/integrated/families/observed-projectile-ownership/evidence/1791859872949004-47409-21/verdict.toml"
+
+[families.observed-ridley-instructions]
+exit_code = 0
+kind = "family"
+manifest_sha256 = "7576621fe3b3433b39ec96201fff901be301eaf77cf8481d7224641ed7ef01e5"
+seconds = 111.89762301
+status = "offline-verified"
+verdict = "/home/jim/sm-decomp/out/recovery-session/integrated/families/observed-ridley-instructions/evidence/1791860412408415-47409-101/verdict.toml"
+
+[families.observed-ridley-instructions-captured]
+exit_code = 0
+kind = "dispatcher"
+manifest_sha256 = "bc9383a6cad1407b89fcb514d7d93911e0802f7875496ab0a7ec79866c8f1a61"
+seconds = 41.405403471
+status = "offline-verified"
+verdict = "/home/jim/sm-decomp/out/recovery-session/integrated/families/observed-ridley-instructions-captured/evidence/1791860472523604-47409-112/verdict.toml"
+
+[families.projectile-trails]
+exit_code = 0
+kind = "family"
+manifest_sha256 = "cf358ba003e4d634b829bbc26be6c893e7140736fc6a032f1cdde225b1bac2ee"
+seconds = 131.720714096
+status = "offline-verified"
+verdict = "/home/jim/sm-decomp/out/recovery-session/integrated/families/projectile-trails/evidence/1791860275994273-47409-65/verdict.toml"
+
+[families.room-scroll]
+exit_code = 0
+kind = "family"
+manifest_sha256 = "8d72a4cb5972410fabd4ddd7f61c9513c56ae7fa27a84107fd98dde8b5d46e40"
+seconds = 61.60702515
+status = "offline-verified"
+verdict = "/home/jim/sm-decomp/out/recovery-session/integrated/families/room-scroll/evidence/1791860350762402-47409-87/verdict.toml"
+
+[families.samus-projectile-frame]
+exit_code = 0
+kind = "power-bomb"
+manifest_sha256 = "c92c96e57d0886510b79e311b7fd7e02ea66bca3ca326b4f5d55cc96c8e14632"
+seconds = 64.75561058
+status = "offline-verified"
+verdict = "/home/jim/sm-decomp/out/recovery-session/integrated/families/samus-projectile-frame/evidence/1791860407757103-47409-99/verdict.toml"

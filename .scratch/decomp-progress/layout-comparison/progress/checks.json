@@ -1,0 +1,12 @@
+{
+  "all_notices_retained": true,
+  "definitions": 6053,
+  "errors_outside_collapsed_content": true,
+  "filters_and_evidence": true,
+  "independent_stage_context_counts": true,
+  "notices": 164,
+  "observations": 217,
+  "offline_snapshot": true,
+  "stale": 16,
+  "variant": "progress"
+}

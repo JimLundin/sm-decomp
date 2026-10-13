@@ -1,0 +1,1112 @@
+contract = "decomp-c-baseline-v2"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+requested_frames = 9000
+rust_routines = 0
+original_rom_parity = "not-tested"
+input_adaptation = "bit-reversal-only; no lag compensation"
+status = "replay-completed"
+evidence = "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2"
+source_archive_sha256 = "69c78831351112887575f852dadf0281dd5c23cef890b07a268ae6cf60aa9193"
+rom_sha256 = "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72"
+inputs_sha256 = "cc643d751554ad6d30b5d7e3a41a4259525517ca7614cf73abec9fac30176c0e"
+license_sha256 = "d7b321b1d1009b9d5d0dc1334b0a941def8f15f36ce2396fabd409e9327e2787"
+compiler = "cc (Ubuntu 9.4.0-1ubuntu1~20.04.2) 9.4.0"
+build_command = [
+    "cc",
+    "-std=gnu11",
+    "-O2",
+    "-fno-strict-aliasing",
+    "-ffunction-sections",
+    "-fdata-sections",
+    "-iquote",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_80.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_81.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_82.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_84.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_85.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_86.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_87.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_88.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_89.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_8b.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_8d.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_8f.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_90.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_91.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_92.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_93.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_94.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_9b.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_a0.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_a2.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_a3.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_a4.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_a5.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_a6.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_a7.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_a8.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_a9.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_aa.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_ad.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_b2.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_b3.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_b4.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_cpu_infra.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_rtl.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/snes/apu.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/snes/cart.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/snes/cpu.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/snes/dma.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/snes/dsp.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/snes/input.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/snes/ppu.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/snes/snes.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/snes/snes_other.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/snes/spc.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/spc_player.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/tracing.c",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src/util.c",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/host.c",
+    "-Wl,--gc-sections",
+    "-Wl,--wrap=Call",
+    "-Wl,--wrap=cpu_runOpcode",
+    "-Wl,--wrap=DecompressToMem",
+    "-lm",
+    "-o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/headless",
+]
+binary_sha256 = "8c3385b43ae92911895e356c4eb3291d2ec7a3460f5a769c171cae2c08d402cf"
+replay_commands = [
+    [
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/headless",
+    "/home/jim/sm-decomp/rom/sm.sfc",
+    "/home/jim/sm-decomp/movies/super-metroid-any-3653.inputs",
+    "9000",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/replay.state.bin",
+],
+    [
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/headless",
+    "/home/jim/sm-decomp/rom/sm.sfc",
+    "/home/jim/sm-decomp/movies/super-metroid-any-3653.inputs",
+    "9000",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/repeat.state.bin",
+],
+]
+state_sha256 = "7053a3b0004b1c1d4222651c4dd74364f7ec85e47ebc38857a9a55e50f26b7f4"
+determinism = "two fresh processes; progress, fallback/decompression log, WRAM and SRAM match"
+
+[source]
+revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+archive_sha256 = "69c78831351112887575f852dadf0281dd5c23cef890b07a268ae6cf60aa9193"
+freshness = "exact pinned archive; no latest-upstream assertion"
+
+[source.files]
+".gitattributes" = "57eb57db3e31225086b3a2e95153a0086ba0eb588af259ae3ec519d5abe191a0"
+".github/ISSUE_TEMPLATE/bugs.yml" = "e1b76268b36f107ad7c38467d829f3e78879857a01b83c10446c189fa0f2836d"
+".github/ISSUE_TEMPLATE/config.yml" = "fa3b762a0030e97dc09063620974623437eee4b650fbf9bc3f48272b85875535"
+".github/ISSUE_TEMPLATE/feature-request.yml" = "3eeb78a527e647412ef1ff6779b3f26c821d535416c05652c4052dcdda315b37"
+".github/PULL_REQUEST_TEMPLATE.md" = "076d7bdee27cd19843f733c67271dc89d9f4e5f7c57d3a7266721ee4baa94fa4"
+".gitignore" = "5e7686aa1ae36c9ee0425d1619c677303d971470fdbdb92f7e58a3c38d001216"
+"BUILDING.md" = "cedb482754718d71ac1e3e6393cf13bd031191c2fa0a24b71682b2588f0ba973"
+"LICENSE.txt" = "d7b321b1d1009b9d5d0dc1334b0a941def8f15f36ce2396fabd409e9327e2787"
+Makefile = "5c7844d78b04510f6d6d48c188689afe8c05f4adfb798f9fb1ff75e650d2b98c"
+"README.md" = "01f1c98c43eacb6c53b2b73a46f4987d24bb0a579304514e0085db3c6297c51b"
+"assets/.gitignore" = "f19f9b2590f52c2b773fe5200939db3988348a01d5cd6c08caba6c47e9affc44"
+"assets/animtiles_decode.py" = "b57d91da55f584dd4d69c1df6b00926065a55e3c51710a0c49d653701def082e"
+"assets/consts.py" = "a4ae5fcf1723284c2282fc0989a5010dd2642e3bfc2309d945f27bc90d466352"
+"assets/decode_common.py" = "d9a693e451dd1fbdc2454ff0f375f302d13b3f83951baaed92cdc0f13f7b20bf"
+"assets/enemy_instr_decode.py" = "9b8af4bc64ed8ab75a1c4b3f547ab798c18df0b8bbabe1857f18ea00eb621baf"
+"assets/eproj_decode.py" = "8e3a8244005f7ac15a8d4e766f6e4691a49492aa1873a3b62872e01cc2abeb9c"
+"assets/names.txt" = "904f25a85a3118820eb54ec4ee154e6f5bab6ef284883fd68e5c749dd2035940"
+"assets/palfx_decode.py" = "2e629623ed514feeba16e58141dd02eead10dcb7b34bae77b8a25452e59b5879"
+"assets/plm_decode.py" = "1fdf39dfd3eb0f8a10c45ade45ff0f5c1a6b9a1ebb88ad9e5b5c510e1ffba0d0"
+"assets/projectile_decode.py" = "ba217ce35e1164db273cfe2a8e9bf35fb40bf1e900dd2193ec39ac07251a698b"
+"assets/restool.py" = "8f86a3c56e123cb985831dd1fc6c01b303132d66bf76a6718d4650ed0da8a832"
+"assets/text_lexer.py" = "6c885c9ec56a12d1697d2dcc9cf5cbe26e2460c4606ce8ac164398e10542d478"
+"other/annotate_funcs.py" = "4c7fee70bbcb79020d416dcb26d33049b0034cdda52724d6530c846dbea70089"
+"other/strip_some.py" = "1513f70490852d0e453a978577c78919c3a4b4607dd7c339deb619cb9c446e8a"
+"other/useful_regexps.txt" = "7f5a13dbb9fcf9d5cc27d765cd32d3ddb6d2f3caf4f4c75e15c6d2d980f49f51"
+"run_with_tcc.bat" = "09c52640a5e70b19fcacdecc4add5fa081dcf61b378f6f5c4f631767a165f301"
+"sm.ini" = "d2318423e953f496623cdecffec2753aa11bd9d1723c367527f09df66baf71e6"
+"sm.sln" = "1c261e017e86a9a7c00dbad8084b6ab0340a01dcb25bdc33106dadf91a77e322"
+"src/.gitignore" = "84cf6ca549d4c05622325c3d0d9caaca9efdaf9ec0f92d2ce1e189a8cb06e803"
+"src/config.c" = "2ac227f88e5cef03ab781b47ea511b573f89300302cde7fb306f22be5005cc0e"
+"src/config.h" = "a2e6b153cae10f31422b2e5c4b493e60c3e1aa1e0cb325bdcc03bfc45c6392f0"
+"src/enemy_types.h" = "251af063d550e9e9ade1de9840df7617c8cb3648bbe241587a654b3ea3085f2d"
+"src/features.h" = "99e1d93c333e96476ae3cd27eced06e1cdcf161a1fb3db240bc094431a1ed19e"
+"src/funcs.h" = "b34fcb4451210e086845163bbfb5a9ca1ef5a2e2cb8022b8a7d7fab4fe6cb52e"
+"src/glsl_shader.c" = "392463ad44e8b73c42314f435ab0f7e5acd838fb34cc5d1233cd0488a7934214"
+"src/glsl_shader.h" = "121df5306db169979a25552f1b2e805de9747b0a3b25a39947c460f6cabab9e5"
+"src/ida_types.h" = "12974c5708740164692dac151104020b53e8316e7378521c974ddf602d1f28ff"
+"src/main.c" = "e090462d21e517d6d63e35068ac0a27f7b4a7085bf2197a354edb0b1ae965181"
+"src/move_defines.py" = "641aa63ba1de472ee1285c72c7a42bfb17862fafc5d8b48c02c38ffe5dd0454e"
+"src/opengl.c" = "d9481ecfdd5934000cf8a624324705859c1be65ba93f60ea9b6c25ef79d14b06"
+"src/packages.config" = "52d9a3f8658ed50443839112813b82908c7b046bfbe1962bf0e0e0dcd25c07c8"
+"src/platform/switch/.gitignore" = "19eaba877090bf5e5bea77d56ea5dbfa9bae4810411c5e97a4f8b82e59155e5e"
+"src/platform/switch/Makefile" = "220720e72937fd10763c995c496be730d06ffe85d4368214d3e1962ec0fc8892"
+"src/platform/switch/icon.jpg" = "d22d21acc55bdd3241ed1e272931c38bb38fc18f35a5e1e78b7567b478b69fa7"
+"src/platform/switch/sm.ini" = "e18a2b0d6334717c97cb6c96409490a2a34fd1ee0bc3f4ba3ff375af1b95b02b"
+"src/platform/switch/src/switch_impl.c" = "58f4deb903e981cb9c412118064136532b1080c04d030f8a9282e6e11e7c628c"
+"src/platform/switch/src/switch_impl.h" = "421f308e662017bda2a4df37e04893251fca2476fbdc2a66d4862690807900cf"
+"src/platform/win32/resource.h" = "b99a0006883f0211f8765df5f760d6c6988d231229a6093c87debcdb4d1f0b58"
+"src/platform/win32/sm.rc" = "cafbc80db29c4a626d2d0b3d34cfd6d96fbca338a22eea99315548e7f33be2a4"
+"src/platform/win32/volume_control.c" = "82c9525991c15629e9ebcdf7f2c48f807945ec77643c86318bc04fe14c5010d3"
+"src/platform/win32/volume_control.h" = "836ca2f7cb836a4c793493905a348a3baca4dcdf4873d9e22a683979bdd3be24"
+"src/sm.vcxproj" = "b8e70e9eca017bacea37a9bb880eb852893f1023f041beb44dc296003ebc79fe"
+"src/sm.vcxproj.filters" = "6fe688c88d42d9d06d546ce79cf6a2c5cf2d20ac66ab8c064569e6262c66671b"
+"src/sm_80.c" = "ab9abc1042ea876c51de90d00632d1af13e9a765c77cf371950ddcdc783130c7"
+"src/sm_81.c" = "bd05747f344ac18d4f5230e10fd4678b087048c24e8aeb5f685691b36badb1a0"
+"src/sm_82.c" = "afa8b6fb9e9e5ad378db4779c1c39574856a57d50d25c4536aa2bafeeb79e3ad"
+"src/sm_84.c" = "6497c1ea38669812a8d69476349f11b6ecd196ac58b605eca49d77d978febb3a"
+"src/sm_85.c" = "01035a449979bdb7c50d26f4733b2cda9d04f86a5d3d2596446216a3a096d2c2"
+"src/sm_86.c" = "8268f45c3df230de54c99d833e166802d59bd942ea4ac58e75f4acf134e48cf1"
+"src/sm_87.c" = "931192fe55ad4f5ba661f16b4314b221311e74f261ca30223152a0fe8639960a"
+"src/sm_88.c" = "aaa369946309a7ea8e4c8f4374dc4f9f771f2b4855ed7439cff71dd234d50be0"
+"src/sm_89.c" = "38987685948f42e4cc1a649d2ae22bba5a316761f181ed83a695f6a0229d3e4f"
+"src/sm_8b.c" = "b77fe217eb0e74b82d92acd4d32f44141a095da8264c15fb5f703067b0496ba3"
+"src/sm_8d.c" = "7a89da29f287ebdb717044fec90612c40309f2dba23940a0a4f3f17212a83c33"
+"src/sm_8f.c" = "e57e3dbc64f202dac3ebea1a0589b25a71a6d09a35368b31e062474955a24dff"
+"src/sm_90.c" = "ad9f103509160abd8a9e0f85f3c3c96187c89f31dd770cf533fa32a97925247a"
+"src/sm_91.c" = "8a087a687e9611d1272797522f1b5fd20f9e344d851e0a6701af8b9052b5070f"
+"src/sm_92.c" = "a5d1261dd44abd623a064850e0f500630a382cf03f18e82ffb1bda2ae5051061"
+"src/sm_93.c" = "886d3503d26ab29bf712f185e359f9fcb732c42d24f5ccdfddc53b7563a7aa79"
+"src/sm_94.c" = "fee1e46c9cd18a576766fa401840176c8e4c120a57527b8929010134919860c0"
+"src/sm_9b.c" = "987e7bb885b7496b5d5dc768ec7cf0b8b2fd793a8104daf403848a9539ba8aa0"
+"src/sm_a0.c" = "a2cee5c286304e7d606357ac4960413e5fe3dfe585d468d0f41a654aa093e8d3"
+"src/sm_a2.c" = "d62422845f0fee20c929ed7a635a0eb397d376a6b2d62b9c0aab21e3c18a315e"
+"src/sm_a3.c" = "fb8a23edb3353a970e343ced1b449b269979182b2267bae43d4ae5157ec871f6"
+"src/sm_a4.c" = "0debb63e48c8f1b3911dd680bae72496d178f127c1f7cd1110c32863ba2289d0"
+"src/sm_a5.c" = "5010db2a99d4947ef170964cf5043f4e7038112530e6af1d7decba809a0c8faa"
+"src/sm_a6.c" = "36ce5f36896e6a28555fba833be68fc189bf1a35b17a64cab04cd3a4e34e6b96"
+"src/sm_a7.c" = "d7012727ba3fd803b307b5d5db8a6eb0df7476c80019c1d206d8ac5630826cdc"
+"src/sm_a8.c" = "c2a0b15844752c61d56daa61093781339bd796edeb2c9fc3460b3c173ffada4f"
+"src/sm_a9.c" = "82b84aaa333cebca6f6913684fd41b86bfa36a4968aea8ec60b5d6dc9ecc074f"
+"src/sm_aa.c" = "0abae86d85ccda04b2dcb10e3fa032039e2991e3955e0089da25f8c2407ddb3e"
+"src/sm_ad.c" = "4a18b62599a19bab2caba7ed474df1aed64550e0c0aa949019b1a441284af8d9"
+"src/sm_b2.c" = "455f3aa8a1c59e404d84f096bbdda324b2ea3f90c3b76dae36e246dc1ded415b"
+"src/sm_b3.c" = "c92eef4fce491e23545bb593f5d08665c730d1f7b312039c133f6eaa7a6902b6"
+"src/sm_b4.c" = "b65805b13b3cfcae06cd3c772f07a7bbe694cce6bcff9bd280eae7ca473d9b66"
+"src/sm_cpu_infra.c" = "fe066c3f2a2e0a86b6b659ba651e8c2879dd723e2393718124d946575b43bed6"
+"src/sm_cpu_infra.h" = "2dfe6d82e6d138ca030543eaa43438eb710647fcd684b6a19337d201b0e88877"
+"src/sm_rtl.c" = "cafcd12cd98e5797680a1928af23ceaf244a20afea927bf600c122effd899614"
+"src/sm_rtl.h" = "0347707a3b7cbdfb3563866ee7574a67afdc53d1a0907427b157bf49c3f9afac"
+"src/snes/apu.c" = "4111477d945203b66371e605d59167d7d21c6c278afe4bb86c0f61fdf18cf105"
+"src/snes/apu.h" = "03ea8b93a31d8d4471d0a586f35a3d7578d6ad25ed27f806f026c3622b91377d"
+"src/snes/cart.c" = "a8405dfe8a5de222d674022b90b3c96783130872113f2e5083481aa73ede2109"
+"src/snes/cart.h" = "f5d9578b1bacb08b781e51b6e5c090d9339dee34ee69dd200cbbcd682fe5be8c"
+"src/snes/cpu.c" = "b0267b0993cfd2808d6466a9ac573a86eef5335df540c7c58130fff9799832b2"
+"src/snes/cpu.h" = "f2f6a5a1ac57cb074e6d32825c17867e9f16025c26b69a705f2fe49971e945f3"
+"src/snes/dma.c" = "38721c80beaa2bd2980a52483fefe29e0b5e146b389fd9c718fc375dd69d735d"
+"src/snes/dma.h" = "0df39b234f17f2b176c43f67f65b8b9e16e42f929a0d877ae0c0cb85963d0cd4"
+"src/snes/dsp.c" = "9a517e197b5a819d26637f7fcf449494e9b26bd766e17cee795312c37b249dd5"
+"src/snes/dsp.h" = "f610f532fecf9505b0bfdb9431693f834ee1ec2229c6d695c916e566b6357801"
+"src/snes/dsp_regs.h" = "a36c0ffe148ffad822873c3fac9ae326183a831ea9ed81827ef08270817617be"
+"src/snes/input.c" = "3057cce80fad613e4abc8995e3959f62ca2090616d22c5452306a96e451d3d0c"
+"src/snes/input.h" = "eaedc5b53098a3190ee53daaa70b25d1ef02ae7e9281a3c58b47d7e33d553775"
+"src/snes/ppu.c" = "0c67078083d3bc41869ce24b4325b46fcc93af9abfd4e76594e0f91fdf187428"
+"src/snes/ppu.h" = "a7a295332513d25c8ddde839cee3099d690c3d36a8cbff273ec9a6bcedaf4ab5"
+"src/snes/saveload.h" = "990c773c0b8a8be37cb4cddaf84afc69cc3d9df8db07090ff597f1896d71ef5b"
+"src/snes/snes.c" = "0a2594280c3931c2e2271111c685a535a3d620fa55b5eb6f92db1a0b4c1c0259"
+"src/snes/snes.h" = "e45095b995f555f4b07e593a38b8b50d04fca54d3070fee22f67ecb45cb0e824"
+"src/snes/snes_other.c" = "4b5440f76123a879d18ae67d8d92792379c66130d0421d22fcadfb9f5f9a9c14"
+"src/snes/spc.c" = "e4cca0afabe45a55992aad55218510c94f78b3597cd0b28203974c731520680d"
+"src/snes/spc.h" = "f4a6ceb15953c14f42e4aa5c014b3203b357fe455d256a2158f765c5d7f8abcd"
+"src/spc_player.c" = "5aae391e888d5128612bda90edb5a8be372fa8e2b58de42b4b66210a9f68c187"
+"src/spc_player.h" = "1bd4310ba756d27a225d4a3eea346447c74d8f9823fc469b244df7134e32eb4d"
+"src/spc_variables.h" = "e824d5c04637930c5c6c07654c7fbc78a9f6095fd661209d36f3d816b04ab8cb"
+"src/tracing.c" = "07b5242423a64c49da8bcc9f1e5c2c354fa61f9f0cbec863853d46938dc98154"
+"src/tracing.h" = "40884ac985183d1ebdbbc0bd39294cce78cea591ae3a3840854ce08b58abaeb5"
+"src/types.h" = "02d6acb15eb207f36fa03ebab65bf622521657f2168db0a415a55c7f9598a0c0"
+"src/util.c" = "a6b5a84245fe770e0e51984ec234cdaeb771136e76b61929c524079a3f765eb5"
+"src/util.h" = "4f852185fa0c6a4372d9caa0f0afa6c6dc5d016218401d2558bb8ec290376102"
+"src/variables.h" = "e2ce28d07ceff91129e93417099f33f20f161c37e95e745c575d0e30b3fd5585"
+"src/variables_extra.h" = "b0bcbd066690205160fad3e625820d4c51d82ac63853cae37a0fe25b0bd3844d"
+"third_party/.gitignore" = "a369c3b31faca9485a1a53169d522a21b89c8db0f3cdf23db412b715ca032b35"
+"third_party/gl_core/gl_core_3_1.c" = "31cb5ce7e4205dddac06dbbebb69e667927e98f4493ba7e8666534b06b07a5e9"
+"third_party/gl_core/gl_core_3_1.h" = "a6167bef6c8a1a096fd03d24ba5f748b80bbcfae501bbeea81f85ff386767b63"
+"third_party/stb/stb_image.h" = "91f435e0fc6a620018b878b9859c74dff60d28046f87e649191ad6f35a98c722"
+
+[build_cache]
+argv = [
+    "cc",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-000.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-001.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-002.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-003.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-004.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-005.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-006.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-007.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-008.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-009.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-010.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-011.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-012.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-013.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-014.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-015.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-016.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-017.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-018.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-019.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-020.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-021.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-022.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-023.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-024.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-025.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-026.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-027.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-028.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-029.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-030.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-031.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-032.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-033.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-034.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-035.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-036.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-037.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-038.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-039.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-040.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-041.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-042.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-043.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-044.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-045.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-046.o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/c-object-047.o",
+    "-std=gnu11",
+    "-O2",
+    "-fno-strict-aliasing",
+    "-ffunction-sections",
+    "-fdata-sections",
+    "-iquote",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src",
+    "-Wl,--gc-sections",
+    "-Wl,--wrap=Call",
+    "-Wl,--wrap=cpu_runOpcode",
+    "-Wl,--wrap=DecompressToMem",
+    "-lm",
+    "-o",
+    "/home/jim/sm-decomp/out/recovery-session/prerequisites/baseline/1791858402896633736-2/headless",
+]
+seconds = 0.404759989
+worker_wait_seconds = 0.000291493
+exit_code = 0
+
+[sources]
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_80.c" = "ab9abc1042ea876c51de90d00632d1af13e9a765c77cf371950ddcdc783130c7"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_81.c" = "bd05747f344ac18d4f5230e10fd4678b087048c24e8aeb5f685691b36badb1a0"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_82.c" = "afa8b6fb9e9e5ad378db4779c1c39574856a57d50d25c4536aa2bafeeb79e3ad"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_84.c" = "6497c1ea38669812a8d69476349f11b6ecd196ac58b605eca49d77d978febb3a"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_85.c" = "01035a449979bdb7c50d26f4733b2cda9d04f86a5d3d2596446216a3a096d2c2"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_86.c" = "8268f45c3df230de54c99d833e166802d59bd942ea4ac58e75f4acf134e48cf1"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_87.c" = "931192fe55ad4f5ba661f16b4314b221311e74f261ca30223152a0fe8639960a"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_88.c" = "aaa369946309a7ea8e4c8f4374dc4f9f771f2b4855ed7439cff71dd234d50be0"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_89.c" = "38987685948f42e4cc1a649d2ae22bba5a316761f181ed83a695f6a0229d3e4f"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_8b.c" = "b77fe217eb0e74b82d92acd4d32f44141a095da8264c15fb5f703067b0496ba3"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_8d.c" = "7a89da29f287ebdb717044fec90612c40309f2dba23940a0a4f3f17212a83c33"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_8f.c" = "e57e3dbc64f202dac3ebea1a0589b25a71a6d09a35368b31e062474955a24dff"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_90.c" = "ad9f103509160abd8a9e0f85f3c3c96187c89f31dd770cf533fa32a97925247a"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_91.c" = "8a087a687e9611d1272797522f1b5fd20f9e344d851e0a6701af8b9052b5070f"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_92.c" = "a5d1261dd44abd623a064850e0f500630a382cf03f18e82ffb1bda2ae5051061"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_93.c" = "886d3503d26ab29bf712f185e359f9fcb732c42d24f5ccdfddc53b7563a7aa79"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_94.c" = "fee1e46c9cd18a576766fa401840176c8e4c120a57527b8929010134919860c0"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_9b.c" = "987e7bb885b7496b5d5dc768ec7cf0b8b2fd793a8104daf403848a9539ba8aa0"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_a0.c" = "a2cee5c286304e7d606357ac4960413e5fe3dfe585d468d0f41a654aa093e8d3"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_a2.c" = "d62422845f0fee20c929ed7a635a0eb397d376a6b2d62b9c0aab21e3c18a315e"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_a3.c" = "fb8a23edb3353a970e343ced1b449b269979182b2267bae43d4ae5157ec871f6"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_a4.c" = "0debb63e48c8f1b3911dd680bae72496d178f127c1f7cd1110c32863ba2289d0"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_a5.c" = "5010db2a99d4947ef170964cf5043f4e7038112530e6af1d7decba809a0c8faa"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_a6.c" = "36ce5f36896e6a28555fba833be68fc189bf1a35b17a64cab04cd3a4e34e6b96"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_a7.c" = "d7012727ba3fd803b307b5d5db8a6eb0df7476c80019c1d206d8ac5630826cdc"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_a8.c" = "c2a0b15844752c61d56daa61093781339bd796edeb2c9fc3460b3c173ffada4f"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_a9.c" = "82b84aaa333cebca6f6913684fd41b86bfa36a4968aea8ec60b5d6dc9ecc074f"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_aa.c" = "0abae86d85ccda04b2dcb10e3fa032039e2991e3955e0089da25f8c2407ddb3e"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_ad.c" = "4a18b62599a19bab2caba7ed474df1aed64550e0c0aa949019b1a441284af8d9"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_b2.c" = "455f3aa8a1c59e404d84f096bbdda324b2ea3f90c3b76dae36e246dc1ded415b"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_b3.c" = "c92eef4fce491e23545bb593f5d08665c730d1f7b312039c133f6eaa7a6902b6"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_b4.c" = "b65805b13b3cfcae06cd3c772f07a7bbe694cce6bcff9bd280eae7ca473d9b66"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_cpu_infra.c" = "fe066c3f2a2e0a86b6b659ba651e8c2879dd723e2393718124d946575b43bed6"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/sm_rtl.c" = "cafcd12cd98e5797680a1928af23ceaf244a20afea927bf600c122effd899614"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/snes/apu.c" = "4111477d945203b66371e605d59167d7d21c6c278afe4bb86c0f61fdf18cf105"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/snes/cart.c" = "a8405dfe8a5de222d674022b90b3c96783130872113f2e5083481aa73ede2109"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/snes/cpu.c" = "b0267b0993cfd2808d6466a9ac573a86eef5335df540c7c58130fff9799832b2"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/snes/dma.c" = "38721c80beaa2bd2980a52483fefe29e0b5e146b389fd9c718fc375dd69d735d"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/snes/dsp.c" = "9a517e197b5a819d26637f7fcf449494e9b26bd766e17cee795312c37b249dd5"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/snes/input.c" = "3057cce80fad613e4abc8995e3959f62ca2090616d22c5452306a96e451d3d0c"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/snes/ppu.c" = "0c67078083d3bc41869ce24b4325b46fcc93af9abfd4e76594e0f91fdf187428"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/snes/snes.c" = "0a2594280c3931c2e2271111c685a535a3d620fa55b5eb6f92db1a0b4c1c0259"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/snes/snes_other.c" = "4b5440f76123a879d18ae67d8d92792379c66130d0421d22fcadfb9f5f9a9c14"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/snes/spc.c" = "e4cca0afabe45a55992aad55218510c94f78b3597cd0b28203974c731520680d"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/spc_player.c" = "5aae391e888d5128612bda90edb5a8be372fa8e2b58de42b4b66210a9f68c187"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/tracing.c" = "07b5242423a64c49da8bcc9f1e5c2c354fa61f9f0cbec863853d46938dc98154"
+"/home/jim/sm-decomp/deps/snesrev-sm/src/util.c" = "a6b5a84245fe770e0e51984ec234cdaeb771136e76b61929c524079a3f765eb5"
+"/home/jim/sm-decomp/tools/decomp/headless.c" = "ff9a5d75e007b18b231126273e8b8b69473fca71436a63476ae20f64d92f06ff"
+"/home/jim/sm-decomp/tools/decomp/headless_frame.h" = "8f1aae766f4fb2a669a68da544e6dc57bd93639a88c45bc43db71b8202fba5a3"
+
+[observation_controls]
+fallback_calls = 1
+fallback_instructions = 3
+decompression_calls = 1
+
+[in_memory_rom_patches]
+changed_bytes = 690
+file_offsets = [
+    40,
+    79,
+    891,
+    892,
+    893,
+    894,
+    910,
+    911,
+    912,
+    913,
+    1084,
+    1085,
+    1086,
+    1087,
+    1088,
+    1089,
+    1090,
+    1091,
+    1092,
+    1093,
+    1141,
+    1142,
+    1143,
+    1144,
+    1145,
+    1146,
+    1147,
+    1148,
+    1149,
+    1150,
+    1317,
+    1318,
+    1319,
+    1320,
+    1321,
+    1322,
+    1323,
+    1324,
+    1325,
+    1326,
+    1526,
+    5212,
+    5213,
+    5214,
+    5215,
+    5216,
+    5217,
+    5218,
+    5601,
+    5602,
+    5603,
+    5604,
+    6899,
+    6900,
+    6901,
+    6902,
+    9618,
+    9715,
+    9898,
+    10016,
+    10198,
+    10309,
+    10533,
+    10651,
+    10858,
+    11101,
+    11597,
+    11639,
+    11684,
+    11737,
+    20480,
+    20481,
+    20482,
+    20483,
+    20484,
+    20485,
+    20486,
+    20487,
+    20488,
+    20489,
+    20490,
+    20491,
+    20492,
+    20493,
+    35261,
+    35495,
+    35512,
+    35685,
+    35691,
+    35751,
+    35801,
+    35807,
+    36904,
+    36905,
+    36906,
+    37139,
+    37140,
+    37141,
+    38122,
+    38123,
+    38124,
+    61440,
+    61443,
+    61444,
+    61445,
+    61446,
+    66335,
+    66867,
+    66868,
+    66869,
+    66870,
+    67908,
+    67909,
+    67910,
+    67911,
+    67947,
+    67948,
+    67949,
+    67962,
+    67963,
+    68185,
+    68186,
+    68187,
+    68188,
+    68199,
+    68210,
+    68211,
+    68212,
+    68224,
+    68225,
+    68226,
+    68227,
+    68454,
+    68455,
+    68456,
+    68950,
+    70437,
+    77779,
+    78029,
+    78171,
+    89964,
+    89965,
+    89966,
+    89967,
+    90156,
+    90157,
+    90158,
+    90159,
+    90160,
+    90219,
+    90220,
+    90221,
+    90222,
+    90223,
+    91405,
+    91406,
+    91407,
+    91408,
+    91409,
+    91430,
+    91431,
+    91432,
+    91433,
+    91434,
+    91456,
+    91457,
+    91458,
+    91459,
+    91657,
+    91658,
+    91659,
+    91660,
+    91661,
+    92432,
+    96015,
+    96016,
+    96017,
+    96019,
+    96020,
+    96021,
+    96022,
+    96023,
+    96024,
+    96025,
+    96026,
+    96027,
+    96028,
+    96029,
+    96030,
+    96031,
+    96032,
+    96033,
+    96034,
+    131651,
+    131652,
+    132600,
+    132601,
+    132700,
+    133837,
+    134390,
+    134391,
+    134392,
+    134393,
+    134544,
+    142176,
+    144743,
+    144776,
+    144902,
+    144917,
+    144932,
+    145875,
+    145890,
+    145927,
+    145950,
+    145973,
+    153262,
+    153279,
+    153547,
+    153570,
+    153588,
+    153603,
+    153618,
+    154286,
+    154538,
+    154593,
+    154656,
+    154706,
+    154761,
+    154824,
+    155310,
+    155357,
+    155402,
+    155449,
+    159699,
+    159700,
+    159701,
+    159702,
+    159703,
+    159704,
+    159705,
+    159706,
+    159707,
+    159708,
+    159709,
+    159710,
+    159711,
+    159712,
+    159713,
+    159714,
+    159715,
+    159716,
+    159717,
+    159718,
+    159719,
+    159720,
+    159721,
+    159722,
+    159723,
+    159724,
+    159725,
+    159726,
+    159727,
+    159728,
+    159729,
+    159730,
+    159731,
+    159732,
+    159744,
+    159745,
+    159746,
+    159747,
+    159748,
+    159751,
+    159752,
+    159753,
+    159754,
+    159755,
+    159756,
+    159757,
+    159758,
+    159759,
+    159760,
+    159761,
+    163968,
+    163969,
+    163970,
+    163971,
+    163990,
+    163991,
+    163992,
+    164020,
+    164021,
+    164022,
+    164060,
+    164061,
+    164062,
+    164070,
+    164071,
+    164082,
+    164083,
+    164084,
+    164168,
+    164169,
+    164170,
+    164274,
+    164275,
+    164276,
+    164330,
+    164331,
+    164332,
+    164333,
+    164334,
+    164335,
+    164336,
+    164337,
+    164355,
+    164356,
+    164357,
+    164406,
+    164407,
+    164408,
+    164409,
+    164410,
+    164411,
+    164412,
+    164413,
+    164536,
+    164537,
+    164538,
+    164539,
+    164540,
+    164541,
+    164542,
+    164543,
+    164544,
+    164545,
+    164546,
+    164641,
+    164642,
+    164643,
+    164698,
+    164699,
+    164700,
+    164701,
+    164702,
+    164703,
+    164704,
+    164705,
+    164795,
+    164796,
+    165027,
+    165028,
+    165029,
+    165030,
+    165042,
+    165043,
+    165068,
+    165069,
+    165170,
+    165171,
+    165172,
+    165227,
+    165228,
+    165229,
+    165230,
+    165231,
+    165232,
+    165233,
+    165234,
+    165404,
+    165405,
+    165406,
+    165457,
+    165458,
+    165459,
+    165522,
+    165523,
+    165524,
+    165525,
+    165526,
+    165527,
+    165528,
+    165529,
+    169552,
+    169553,
+    169554,
+    169555,
+    169556,
+    169557,
+    169558,
+    169559,
+    169560,
+    169561,
+    169562,
+    169563,
+    169564,
+    169565,
+    169568,
+    169569,
+    169570,
+    169571,
+    169572,
+    169573,
+    169584,
+    169585,
+    169586,
+    169587,
+    169588,
+    169591,
+    169592,
+    169593,
+    169594,
+    169595,
+    169596,
+    169597,
+    169598,
+    169599,
+    169600,
+    169601,
+    169602,
+    169603,
+    169604,
+    169605,
+    169606,
+    169607,
+    169608,
+    169609,
+    169610,
+    169611,
+    169612,
+    169614,
+    169615,
+    169616,
+    169617,
+    169620,
+    169621,
+    169622,
+    169623,
+    169624,
+    169625,
+    169626,
+    169627,
+    169628,
+    169632,
+    169633,
+    169634,
+    169635,
+    169636,
+    169637,
+    169638,
+    169639,
+    169640,
+    169641,
+    169642,
+    169643,
+    169644,
+    169645,
+    169646,
+    169647,
+    169648,
+    169664,
+    169665,
+    169666,
+    169667,
+    169668,
+    169669,
+    169670,
+    169671,
+    169672,
+    169673,
+    198077,
+    198078,
+    198970,
+    206449,
+    206464,
+    206505,
+    206522,
+    210689,
+    225077,
+    225093,
+    225678,
+    226470,
+    226471,
+    226472,
+    226473,
+    226474,
+    226475,
+    262817,
+    262818,
+    262819,
+    262820,
+    264397,
+    264419,
+    264432,
+    265398,
+    266154,
+    271491,
+    274383,
+    274418,
+    275013,
+    275590,
+    279928,
+    369506,
+    369507,
+    377118,
+    377119,
+    377120,
+    377121,
+    382087,
+    382088,
+    382089,
+    382090,
+    391008,
+    391009,
+    391010,
+    391011,
+    391012,
+    508336,
+    524968,
+    524974,
+    525738,
+    533704,
+    539765,
+    539795,
+    542489,
+    574005,
+    576511,
+    576565,
+    576836,
+    577636,
+    577658,
+    580233,
+    623067,
+    656295,
+    656389,
+    658836,
+    658981,
+    660882,
+    663871,
+    664242,
+    664536,
+    665691,
+    667990,
+    668022,
+    1050991,
+    1054017,
+    1054034,
+    1057563,
+    1057628,
+    1063987,
+    1064364,
+    1064773,
+    1066789,
+    1118276,
+    1118283,
+    1118284,
+    1118285,
+    1118286,
+    1118287,
+    1118288,
+    1118289,
+    1118301,
+    1118309,
+    1118310,
+    1118311,
+    1118312,
+    1118313,
+    1118314,
+    1118952,
+    1121217,
+    1125154,
+    1125155,
+    1125156,
+    1135500,
+    1182881,
+    1182884,
+    1183854,
+    1183857,
+    1185480,
+    1185504,
+    1185551,
+    1186536,
+    1217308,
+    1220632,
+    1255438,
+    1255446,
+    1262231,
+    1262509,
+    1265407,
+    1267045,
+    1267047,
+    1267097,
+    1267099,
+    1267163,
+    1267165,
+    1267215,
+    1267217,
+    1267301,
+    1267303,
+    1267305,
+    1267348,
+    1267350,
+    1267352,
+    1267409,
+    1267411,
+    1267413,
+    1267456,
+    1267458,
+    1267460,
+    1283258,
+    1289267,
+    1289270,
+    1289273,
+    1289282,
+    1289285,
+    1290299,
+    1290300,
+    1290301,
+    1290313,
+    1292643,
+    1292648,
+    1298098,
+    1310594,
+    1310595,
+    1310596,
+    1310597,
+    1310598,
+    1310599,
+    1310600,
+    1310601,
+    1310602,
+    1310603,
+    1310604,
+    1310605,
+    1310606,
+    1310607,
+    1310608,
+    1310609,
+    1310610,
+    1310611,
+    1310612,
+    1310613,
+    1310614,
+    1310615,
+    1310616,
+    1320025,
+    1320031,
+    1320037,
+    1320043,
+    1320055,
+    1320061,
+    1320067,
+    1320073,
+    1320259,
+    1320271,
+    1320283,
+    1320295,
+    1320307,
+    1320319,
+    1320331,
+    1323575,
+    1323576,
+    1323577,
+    1323578,
+    1323579,
+    1323580,
+    1323581,
+    1323582,
+    1346578,
+    1346579,
+    1346580,
+    1348627,
+    1351520,
+    1361388,
+    1365248,
+    1365303,
+    1367259,
+    1372749,
+    1373349,
+    1373351,
+    1373398,
+    1373400,
+    1373465,
+    1373471,
+    1373473,
+    1373524,
+    1373530,
+    1373532,
+    1678811,
+    1678867,
+]
+rom_view_sha256 = "40aaebb25b9646bea2dffdc5e1ae680768a39dd122de9353885e1c7456ceae27"
+original_size = 3145728
+rom_view_size = 4194304
+expansion = "3 MiB to 4 MiB: mirror final MiB before patches"
+
+[terminal]
+frame = 9000
+game_state = 8
+room = 57157
+samus_x = 211
+samus_y = 171
+rng = 52931
+fallback_calls = 0
+fallback_instructions = 0
+decompression_calls = 23
+
+[fixtures]
+"decompress-0001-after.wram" = "9bd49dcb3969920a404a0eb288359848b8cac3e9689905f873feb58fd54222e0"
+"decompress-0001-before.wram" = "35d853b81ec4ee4569f55f945403d5c4409230ab88975880f2068ec8bda8cce2"
+"decompress-0002-after.wram" = "e20da241cfd4287af50d094d6ddd0026bf79928f1b025a423c7022562f259d61"
+"decompress-0002-before.wram" = "44ffb30d06ae642e1440b8babf6bc1dde6b4769972d682a288b12cb1b2c752d9"
+"decompress-0003-after.wram" = "4763a98eac757943ecdf56d377911f4532a49120c796823fca28320de01ed39e"
+"decompress-0003-before.wram" = "e20da241cfd4287af50d094d6ddd0026bf79928f1b025a423c7022562f259d61"
+"decompress-0004-after.wram" = "4763a98eac757943ecdf56d377911f4532a49120c796823fca28320de01ed39e"
+"decompress-0004-before.wram" = "4763a98eac757943ecdf56d377911f4532a49120c796823fca28320de01ed39e"
+"decompress-0005-after.wram" = "8a068b6bd9af87f9baabde149329fee900d395d811a3d938364c9663a3185833"
+"decompress-0005-before.wram" = "4763a98eac757943ecdf56d377911f4532a49120c796823fca28320de01ed39e"
+"decompress-0006-after.wram" = "1792942f89ee25fc1fe786123351be973f6f87259e0c5573de47c32e37ac421d"
+"decompress-0006-before.wram" = "f8be67bc95315ba172d1afb0509f253e177b421cbb729278311ab9d1d420ce6f"
+"decompress-0007-after.wram" = "4295753ae3f395b070bb25758b162425a9f0596b4898fa54a7ee6d1f60451d52"
+"decompress-0007-before.wram" = "1792942f89ee25fc1fe786123351be973f6f87259e0c5573de47c32e37ac421d"
+"decompress-0008-after.wram" = "a1b61c016895a76042ed38993d7e26f668bf5fb9991d9c8bb7eb0db297037c1c"
+"decompress-0008-before.wram" = "4295753ae3f395b070bb25758b162425a9f0596b4898fa54a7ee6d1f60451d52"
+"decompress-0009-after.wram" = "8686b436df0cf494247430d1a8835216864ffda6f1efa3e0474e0393dba72c7d"
+"decompress-0009-before.wram" = "a1b61c016895a76042ed38993d7e26f668bf5fb9991d9c8bb7eb0db297037c1c"
+"decompress-0010-after.wram" = "e264d5f76c139a56e25bc60f27e9ab1edef3e1362febddf27e9566e603142ec5"
+"decompress-0010-before.wram" = "8686b436df0cf494247430d1a8835216864ffda6f1efa3e0474e0393dba72c7d"
+"decompress-0011-after.wram" = "f9d351266d763b9432abb388fcdf4b5c127c9b1ffaec222527aaba8e578820a9"
+"decompress-0011-before.wram" = "e8fb1474cd6fe5a0fc9c1e2bc885779a3cef758d85876f398a60a1ffb1f9b367"
+"decompress-0012-after.wram" = "aa2031710928bdd3670a825e36df5217878065ecad574e3b2d09fd432fbac073"
+"decompress-0012-before.wram" = "f9d351266d763b9432abb388fcdf4b5c127c9b1ffaec222527aaba8e578820a9"
+"decompress-0013-after.wram" = "1f50bbc3ae02b5ead3f987e0e4c6aa3ab4ea5a083607cfe8eec22848c4ac9819"
+"decompress-0013-before.wram" = "aa2031710928bdd3670a825e36df5217878065ecad574e3b2d09fd432fbac073"
+"decompress-0014-after.wram" = "b96413c5b9ba5db5a9d0828867c3d3804ce960139998f0a88858bf22bb475298"
+"decompress-0014-before.wram" = "1f50bbc3ae02b5ead3f987e0e4c6aa3ab4ea5a083607cfe8eec22848c4ac9819"
+"decompress-0015-after.wram" = "a8c029aac28988b16b9db546f0b65b50f11edef33c5bafba20568bd6754de70c"
+"decompress-0015-before.wram" = "b96413c5b9ba5db5a9d0828867c3d3804ce960139998f0a88858bf22bb475298"
+"decompress-0016-after.wram" = "49eb549f53767b6271718fe1914b857f9ebdca3cad3fd689f509b2c51ce14fa9"
+"decompress-0016-before.wram" = "a8c029aac28988b16b9db546f0b65b50f11edef33c5bafba20568bd6754de70c"
+"decompress-0017-after.wram" = "8edc4f4ec2640d655b0196c10e416f1a9556b209bf8b67119f7f08bfd6af5500"
+"decompress-0017-before.wram" = "49eb549f53767b6271718fe1914b857f9ebdca3cad3fd689f509b2c51ce14fa9"
+"decompress-0018-after.wram" = "ce262b53be5757c57c38591f57157f764cbf25dbae658e13a3085ced7617b54a"
+"decompress-0018-before.wram" = "780b14836899bcc75a4a319f7043c8f5f11d44a1d259f215205f5627ea5b720f"
+"decompress-0019-after.wram" = "bbed3ade5e4f61997827041e5dee643048579335b91c68fe9fe6db5659ceba13"
+"decompress-0019-before.wram" = "ce262b53be5757c57c38591f57157f764cbf25dbae658e13a3085ced7617b54a"
+"decompress-0020-after.wram" = "a543640084afc5deedaef9d9ba8070eb221b638adef5c731aedc04d95b43881a"
+"decompress-0020-before.wram" = "bbed3ade5e4f61997827041e5dee643048579335b91c68fe9fe6db5659ceba13"
+"decompress-0021-after.wram" = "91beac49485329d93a532b477abf7cc6b464d03c32967aa3045cd783e4b61249"
+"decompress-0021-before.wram" = "79dfe5f10f626a84d6b7571eb07adb37db93f83ee7811eb2479b1afb0cdf378e"
+"decompress-0022-after.wram" = "b98ae612146a94f6f9810f74b8cb39c320d8812bd1a2a5949be8c30435481b31"
+"decompress-0022-before.wram" = "7ccb8823d2b5d23d268c95510bb43c34e8c889211066d996cf0b5928c39911fa"
+"decompress-0023-after.wram" = "f5425774d496467939be535eca9af4cd8b1372efd1514eae2f91ac7201f40ade"
+"decompress-0023-before.wram" = "1cf8abebc4345affcc76c1178ca57568278e2c221aac0856b0253ec69437b906"

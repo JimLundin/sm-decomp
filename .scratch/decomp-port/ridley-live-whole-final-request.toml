@@ -1,0 +1,9 @@
+checkout = "/tmp/sm-ridley-whole-live-source"
+source = "/home/jim/sm-decomp/deps/snesrev-sm"
+root = "/home/jim/sm-decomp/out/pipeline"
+workers = 4
+case_jobs = 4
+manifest = "/tmp/sm-ridley-whole-live-source/tools/port/ridley-subsystem.toml"
+output = "/home/jim/sm-decomp/out/recovery-session/ridley-whole-final-offline"
+adapter = "ridley-subsystem"
+execution = "fork"

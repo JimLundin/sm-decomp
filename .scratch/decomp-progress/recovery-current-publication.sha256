@@ -1,0 +1,7 @@
+06aefc6c5b598bff9cfc659cfc814b8fbc83837bff724761a99dca1f2f9e87b3  crates/pipeline/src/progress.rs
+35181a610e5ee9e37edb00841bdd058bd90c04116650067dab5d07e88d42fb81  crates/pipeline/src/progress/declarations.rs
+204dcc0ab93f060ccc7a10bcde978997689eb224f5a58ce3e59af1d1f3630e4c  crates/pipeline/src/progress/tests.rs
+5e7006c28ec405fce9268dec47ce040473a6a76d6b4dae24e308bae87ee80f25  .scratch/decomp-progress/registry.json
+447d0d88e9479ba4f203c71ad599797c311d8789c4323fb3410e96eb864ddcf2  .scratch/decomp-progress/index.html
+25cdea804b7b7a12e6f5c02738d27f30c5e9085e58412e80102cdbd476c4489c  .scratch/decomp-progress/recovery-refresh-checkpoint-20261013.md
+8683cc19d673cc11110a7a810581e3914486b4d71abe61bbd10adf02223b2c1e  .scratch/decomp-port/progress-current-integrated-stage-evidence-20261013.md
