@@ -1,0 +1,12 @@
+schema = "decomp-readiness-helper-build-v1"
+compiler = "rustc 1.101.0-nightly (c1070d693 2026-09-28)"
+source_path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-final/main.rs"
+source_sha256 = "33a06a8477f471ccfdada58cd1634f3596f375c3ba474011d08675f411c9c856"
+binary_path = "/tmp/sm-production-readiness-final-helper-20261013"
+binary_sha256 = "771d3b7afe255e7a30f4f8f0cd06424a9df2077bce7c64696d0537d16ac13d26"
+binary_bytes = 5019608
+build_argv = ["rustc", "--edition", "2024", "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-final/main.rs", "-o", "/tmp/sm-production-readiness-final-helper-20261013"]
+prospective_subject = "/tmp/sm-decomp-preparation-final-source-20261013"
+actual_caller_required = "01a134cd-dafb-7e50-8284-f285a905e05b"
+limitations = ["local compiler/source/hash provenance; no platform attestation", "compiled helper has not run actual production readiness", "helper binary is disposable after root execution; retained operation receipts and source remain"]
+

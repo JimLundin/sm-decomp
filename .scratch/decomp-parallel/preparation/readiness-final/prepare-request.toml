@@ -1,0 +1,23 @@
+# Root executes inside the private readiness namespace; host authority and canonical ledger remain absent.
+operation = "prepare"
+checkout = "/tmp/sm-decomp-preparation-final-source-20261013"
+coordinator = "ceres-20261013"
+[authority]
+session_id = "01a134cd-dafb-7e50-8284-f285a905e05b"
+generation = 1
+[preparation]
+canonical_effort = "decomp-parallel"
+capacity = 3
+admitted_efforts = ["ceres-continuation", "decomp-preparation-ownership-20261013", "decomp-preparation-session-tools-20261013"]
+drill_efforts = ["concurrency-drill-final"]
+[preparation.bridge]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/reconciliation/legacy-owner-bridge-v2.toml"
+sha256 = "cb537f195b4f83529f2ea7a61bd65c6e77ad215366275e8d60a7a604c4eb0ba9"
+[preparation.integrator]
+token = "ceres-20261013"
+kind = "integrator"
+session_id = "01a134cd-dafb-7e50-8284-f285a905e05b"
+[preparation.integrator.observation]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-final/integrator-registration-observation.toml"
+sha256 = "bf887b4893c3b5efc1c0446ecb819a86ef4c36b93887d17bfcb218f6f8e06c6d"
+

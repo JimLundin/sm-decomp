@@ -1,0 +1,41 @@
+schema = "decomp-readiness-ownership-boundaries-v1"
+observed_at = "2026-10-13T10:34:54Z"
+observer_thread = "01a134cf-a6ce-7523-9067-d8c00988129e"
+legacy_integrator_thread = "01a133eb-76e2-7073-9aef-d97c03a812e4"
+legacy_integrator_status = "failed"
+previous_preparation_thread = "01a13460-4aa9-7fe0-865e-a8f54ffca310"
+previous_preparation_status = "failed"
+replacement_integrator_thread = "01a134cd-dafb-7e50-8284-f285a905e05b"
+replacement_integrator_status = "running"
+replacement_integrator_generation = 1
+reporting_thread = "01a13394-29b8-76a3-aab7-5ab8eff60694"
+reporting_status = "completed"
+main_git_owner_thread = "01a134cd-dafb-7e50-8284-f285a905e05b"
+reporting_handoff_commit = "9ed933daa151f52e3cf922e6559c7681330e0f85"
+reporting_server_retained_pid = 420446
+reporting_server_start_ticks = 2249195
+reporting_server_boot_id = "7119fcce-5593-4526-aa9b-07127767c4ef"
+claim_processes_observed = []
+claim_states_unchanged = true
+original_claims_released = false
+gameplay_launched = false
+authority_present = false
+canonical_ledger_present = false
+limitations = ["Fresh process scan matches retained Ceres path prefixes in cwd, argv and open descriptors; none found. Generic main-cwd app/REA processes and the retained reporting server do not establish original Ceres ownership.", "Production never acquired generation 1: old preparation's policy was only prospective. This package performs a generation-zero historical transfer to the current real root inside the private readiness namespace.", "Historical bridge and prior readiness packages remain immutable; replacement main Git ownership comes from recovered preparation and the retained reporting handoff.", "Actual thread/process interpretation is a read-only tool trust boundary, not cryptographic platform attestation."]
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-final/thread-inspection.json"
+sha256 = "d6243ce78cacb622ad185779e382808dc3b2a3e74d3508e84993bae7a5939925"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-final/process-inspection.toml"
+sha256 = "36729011384789a93e6a94fd1e17c5a704dc97849968e5a5c9ba507b0b9f0b5b"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness-final/source/recovery-serial-20261013.md"
+sha256 = "11ae49e04a016ad13ed41a33fd764edf3a6c46ed76ddc324047cb956228b5a63"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/preparation/readiness/current-owners/artifacts.sha256"
+sha256 = "40e4a7df4f4389ce9b2930e2768220a592c36839f9c9224e3ef413c1c742c5af"
+

@@ -2,3 +2,4 @@
 .scratch/decomp-parallel/drill/*-final-process.toml -whitespace
 .scratch/decomp-parallel/preparation/02-ownership-evidence/final-focused.txt -whitespace
 .scratch/decomp-parallel/preparation/cutover/claim-process-paths.txt -whitespace
+.scratch/decomp-parallel/preparation/readiness-final/** -whitespace
