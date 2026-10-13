@@ -2956,8 +2956,15 @@ mod tests {
             let intent: AdmissionIntent = object(&root.join("intent.json"))?;
             authenticate_intent(&installed, &migration, &intent, &authenticated)
                 .context("retained original publication intent")?;
-            controller_projection(&installed, &migration, &intent, None)
-                .context("retained controller projection before source mutation")?;
+            let accepted_path = root.join("accepted.json");
+            if accepted_path.exists() {
+                let accepted: AcceptedAdmission = object(&accepted_path)?;
+                authenticate_accepted(&installed, &migration, &accepted, true)
+                    .context("retained accepted managed source and queue publication")?;
+            } else {
+                controller_projection(&installed, &migration, &intent, None)
+                    .context("retained controller projection before source mutation")?;
+            }
             let mut foreign = current_ledger(&migration)?;
             foreign.integration_owner = Some("foreign-integrator".into());
             ensure!(
@@ -2966,10 +2973,13 @@ mod tests {
             );
             Ok(())
         });
-        ensure!(
-            supervisor::tests::records(&installed.integration_repository)? == before,
-            "read-only managed intent diagnosis mutated its host"
-        );
+        let after = supervisor::tests::records(&installed.integration_repository)?;
+        let changed = before
+            .keys()
+            .chain(after.keys())
+            .filter(|path| before.get(*path) != after.get(*path))
+            .collect::<BTreeSet<_>>();
+        ensure!(changed.is_empty(), "read-only managed intent diagnosis changed {changed:?}; outcome: {result:?}");
         result
     }
 

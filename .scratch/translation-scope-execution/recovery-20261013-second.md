@@ -4,7 +4,72 @@ Status: implementing
 Owner: `01a136a0-49bb-7690-a360-48def3c2c09b`
 Worktree: `/home/jim/sm-decomp-translation-execution`
 Branch: `architecture/translation-scope-execution-20261013`
-Checkpoint: `27b8b0ac78080d9ccc953956e1829bf0571efbe2`
+Parent checkpoint: `fe0de9ac8ed44971ce5ea57b72f1cbc892e2ee98`
+
+## Current next action — ticket lifecycle recovery checkpoint
+
+The current continuation has inspected the same three children through
+collaboration: `bounded_git` and `managed_admission` errored with encrypted-output
+transport failures; `supervisor_audit` completed. No replacement was launched.
+No Cargo, native gate, validator or supervisor writer remains in the selected
+run directories. Root owns the returned source and this worktree's Git/index.
+The production integrator thread is observed completed; its held production
+claims and registered generation remain untouched.
+
+Proof10 finished with a real managed acceptance, both standard queue completions
+and three progress observations, but its outer supervisor stayed `Publishing`.
+Ticket authentication reconstructed only one rendering while normal publishing
+preserves the preceding generated ticket bytes through successive transitions.
+The unchanged retained graph now authenticates after the bounded lifecycle
+correction. The normal ticket producer and original human prose are unchanged.
+Known lifecycle stages are limited to four; skipped projections after an
+interruption are admitted only as exact normal renderings, and foreign prose
+still rejects.
+
+The read-only proof10 diagnostic passed in 16.07 seconds at
+`verification/managed-accepted-diagnostic-10-green.{stdout,stderr}.log`.
+Its stdout SHA-256 is
+`08abdcfa58dea1928e28dd3fbdb7fd9934839540eb339dffef08ce9453b8d75a`;
+stderr is empty. Two real ticket-publishing regressions passed in 0.06 seconds
+at `verification/managed-ticket-projection-green-02.{stdout,stderr}.log`;
+stdout SHA-256 is
+`80dfe5ae31c69ed6712147307b1f54ec5b364dc7597965c043a20929c1dd8158`.
+The affected migration suite passed 11 tests with two ignored diagnostics;
+admitted-progress regression passed. Pipeline Clippy's one cloned-slice finding
+has been corrected and its final rerun is pending.
+
+Next, run one fresh complete managed proof at `managed-gates/actual-c-managed-11`
+using the already built test executable below. Do not rebuild this executable
+while the proof runs or overwrite any historical Installation/reader. Preserve
+any failure and diagnose the retained graph read-only before another producer.
+
+```sh
+cd /home/jim/sm-decomp-translation-execution
+SM_PIPELINE_ROOT=/home/jim/sm-decomp/out/pipeline SM_PIPELINE_WORKERS=4 \
+SM_MANAGED_NATIVE_PROOF_ROOT=/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/managed-gates/actual-c-managed-11 \
+/tmp/sm-translation-execution-target/debug/build/pipeline/7fa9a98880d37858/out/sm_pipeline-7fa9a98880d37858 \
+  --exact translation_execution::managed_tests::managed_native_publication_preserves_original_claim_and_recovers_exact_pending_once \
+  --ignored --nocapture --test-threads=1 \
+  > .scratch/translation-scope-execution/verification/managed-native-proof-11.stdout.log \
+  2> .scratch/translation-scope-execution/verification/managed-native-proof-11.stderr.log
+```
+
+This executable is 240,702,016 bytes, SHA-256
+`cde6329250ae3657385aa9a887ccdb6fc881a3329f4495757449e37c9bd4ecb8`.
+After a complete proof, authenticate through its exact `installed/controller`,
+finish affected Clippy/format/current CLI checks, both scoped cleanup passes and
+measured disposal. Extend `/tmp/sm-translation-retirement.rs`'s managed root and
+reader arrays through11 before `plan`/`apply`; retain all sealed readers, source
+and private input graphs. Authenticate actual-c02 through its immutable reader
+after retirement. Do not repeat the passing broad/native/linker matrices.
+
+Main HEAD and the authority/Ceres/canonical/progress hashes still match the
+recorded production baseline. Tickets02–07 remain claimed until proof and
+cleanup finish; ticket08 remains open with real per-original preparation and
+sequencing blockers. Production activation requires its separate explicit
+decision after a concrete reviewable package; no approval is requested here.
+
+## Recovery history
 
 The user asked this replacement to continue the separate deterministic Rust
 pipeline, not the gameplay swarm. The previous root
@@ -51,7 +116,7 @@ Installation, journal, source and diagnostics are preserved. Source cap is now
 1 GiB, inside the unchanged 8-GiB total attempt budget. This changes only the
 diagnostic fixture's reviewed installation, not production enforcement.
 
-Build09 passed. The single fresh proof is running at
+Build09 passed. The single fresh proof finished at
 `managed-gates/actual-c-managed-09`, with logs
 `verification/managed-native-proof-09.{stdout,stderr}.log`. Its exact command is
 the built test executable's `--exact
@@ -71,11 +136,11 @@ solely for measurement. Inspect the current writer before resuming any action.
 
 Read-only authority status04 still matches the saved production identities and
 all four main hashes. Main HEAD remains `c2cae9ac145f9343cd345e6f978bff0774510b56`.
-Next action: observe the proof09 result, preserve concrete failures, finish only
-affected verification, both final cleanup passes, measured disposal and retained
-authentication, then checkpoint exact source/docs/tickets/compact receipts.
+Proof09's completed failure and correction are retained below. Final cleanup,
+measured disposal and retained authentication remain part of the current next
+action above.
 
-### Original queue correction and current proof10
+### Original queue correction and completed proof10
 
 Source checkpoint `bcf3de30865e117bfa520e481df6a6b5a718490d` retains exact pending
 recovery and the locked/offline managed fixture. Proof09 passed all four actual-C
@@ -94,13 +159,16 @@ unchanged retained09 graph passes the correction and foreign-owner refusal in
 7.93 seconds; red/green logs are
 `verification/managed-publication-diagnostic-09{,-green}.{stdout,stderr}.log`.
 
-Build12 passed. One necessary fresh complete proof of this corrected source is
-running at `managed-gates/actual-c-managed-10`, with
+Build12 passed. One necessary fresh complete proof of this corrected source
+finished at `managed-gates/actual-c-managed-10`, with
 `verification/managed-native-proof-10.{stdout,stderr}.log`. Its command is the
 same exact managed test above, replacing only the proof root with10. The test
 records loop and recovery time separately and derives gate producer/reuse counts
-from authenticated receipts. Root owns the current production check and test
-source. Original09 and08 Installation/readers and diagnostics remain immutable.
+from authenticated receipts when complete. Proof10 failed after 97.34 seconds
+because the outer supervisor remained `Publishing`; the real acceptance graph
+and corrected read-only diagnosis are described in the current checkpoint above.
+Root owns the current production check and test source. Original10/09/08
+Installation/readers and diagnostics remain immutable.
 
 After observing proof10, finish affected migration/progress/Clippy checks,
 scoped cleanup and measured disposal. The task-specific Rust retirement helper
@@ -112,11 +180,11 @@ delete `/tmp/sm-complete-supervisor-976030-0`'s sealed state, source or referenc
 installed tools, and do not delete any managed Installation/readers/private
 source graph. Production activation remains outside this completion.
 
-## Recovered checkpoint and current next action
+## Historical checkpoint27b8 and its then-current next action
 
 The latest root continuation retained the existing `/root/bounded_git`,
 `/root/managed_admission` and `/root/supervisor_audit` children. Direct
-collaboration inspection reports bounded Git running, managed admission errored
+collaboration inspection then reported bounded Git running, managed admission errored
 with the encrypted-output transport failure, and supervisor audit completed.
 The new diagnostic managed proof was reassigned to the existing bounded Git
 child; no replacement was launched. Its ownership is only
@@ -148,9 +216,9 @@ The remaining managed recovery gap is fixed in Root's current source:
 completed resume binds actual `accepted.pending` bytes to the retained exact
 acceptance, authenticates the full original graph, then promotes and repairs only
 accepted projections. Read-only inspection still requires `accepted.json`.
-The new managed actual-C test is being authored against this fix. Wait for its
-stable-source message before wiring and rebuilding. Retain concrete failures;
-do not repeat the already passing broad/linker matrix.
+At checkpoint27b8 the new managed actual-C test was being authored against this
+fix. Its source and the subsequent proof results are now retained above. Retain
+concrete failures; do not repeat the already passing broad/linker matrix.
 
 Read-only startup inspection on this continuation observed no build, gate or
 validator writers in the selected run directories. Current authority status is

@@ -1613,7 +1613,9 @@ fn admitted_ticket_text(entry: &Entry, original: Option<&str>) -> Result<String>
 
 /// A crash may leave any earlier exact normal ticket rendering while the
 /// authoritative queue has advanced. Accept only renderings from the sealed
-/// original and the controller's known publication lifecycle.
+/// original and the controller's known publication lifecycle. Normal publishing
+/// preserves the preceding ticket bytes, including generated delimiters. A
+/// missed projection may skip a rendering without skipping its queue transition.
 pub(crate) fn validate_admitted_ticket_lifecycle(
     root: &Path,
     effort: &str,
@@ -1621,6 +1623,7 @@ pub(crate) fn validate_admitted_ticket_lifecycle(
     original: Option<&str>,
 ) -> Result<()> {
     let entry = entries.first().context("managed ticket lifecycle missing")?;
+    ensure!(entries.len() <= 4, "managed ticket lifecycle exceeds the supported normal publication stages");
     ensure!(entries.iter().all(|candidate| candidate.job == entry.job), "managed ticket lifecycle job changed");
     let Some(current) = ticket_text(root, &ticket_path(effort, &entry.job))? else {
         return Ok(());
@@ -1628,10 +1631,166 @@ pub(crate) fn validate_admitted_ticket_lifecycle(
     if original == Some(&current) {
         return Ok(());
     }
+    let mut predecessors = BTreeSet::<String>::new();
     for entry in entries {
-        if current == admitted_ticket_text(entry, original)? {
-            return Ok(());
+        let mut rendered = vec![admitted_ticket_text(entry, original)?];
+        for previous in &predecessors {
+            rendered.push(admitted_ticket_text(entry, Some(previous))?);
+        }
+        for candidate in rendered {
+            if current == candidate {
+                return Ok(());
+            }
+            predecessors.insert(candidate);
         }
     }
     bail!("controller ticket differs from every exact authenticated lifecycle rendering")
+}
+
+#[cfg(test)]
+mod ticket_projection_tests {
+    use super::*;
+
+    static NEXT: AtomicU64 = AtomicU64::new(0);
+    struct Fixture(PathBuf);
+    impl Fixture {
+        fn new() -> Result<Self> {
+            let root = std::env::temp_dir().join(format!(
+                "sm-ticket-projection-{}-{}",
+                std::process::id(),
+                NEXT.fetch_add(1, Ordering::Relaxed)
+            ));
+            fs::create_dir_all(&root)?;
+            Ok(Self(root))
+        }
+        fn entry(&self, original: bool) -> Entry {
+            let id = if original { "original-implementation" } else { "derived-integration" };
+            Entry {
+                job: Job {
+                    id: id.into(),
+                    revision: "sealed-revision".into(),
+                    kind: if original { Kind::Implement } else { Kind::Integrate },
+                    subject: "Exact native scope".into(),
+                    writable_paths: vec!["src/domain.rs".into()],
+                    blockers: vec![],
+                    inputs: BTreeMap::new(),
+                    instructions: "Retain exact source and claim.".into(),
+                    ticket: original.then(|| ".scratch/owned/issues/01-work.md".into()),
+                },
+                state: State::Ready,
+                claim: None,
+                agent: None,
+                pending_job: None,
+                stale: false,
+                result: None,
+                attempts: 0,
+                observations: vec![],
+                last_update: None,
+                history: vec![],
+                adopted_ticket: false,
+                projection_pending: true,
+            }
+        }
+        fn artifact(&self) -> Artifact {
+            Artifact { path: self.0.join("retained-diagnostic.toml"), sha256: "a".repeat(64) }
+        }
+    }
+    impl Drop for Fixture {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
+    fn hold(entry: &mut Entry) {
+        entry.claim = Some(Claim {
+            id: entry.job.id.clone(),
+            revision: entry.job.revision.clone(),
+            attempt: 1,
+            coordinator: "integrator".into(),
+        });
+        entry.attempts = 1;
+    }
+
+    #[test]
+    fn original_ticket_accepts_actual_submission_and_completion_without_changing_prose() -> Result<()> {
+        for publish_submitted in [true, false] {
+            let fixture = Fixture::new()?;
+            let mut entry = fixture.entry(true);
+            let path = admitted_ticket_path(&fixture.0, "proof", &entry.job);
+            fs::create_dir_all(path.parent().context("ticket fixture parent missing")?)?;
+            fs::write(&path, "# Original work\nStatus: open\n\nKeep the original human prose.\n")?;
+            hold(&mut entry);
+            entry.agent = Some("original-worker".into());
+            entry.state = State::Running;
+            publish_ticket(&fixture.0, "proof", &entry)?;
+            let suffix = "\n## Human suffix\n\nPreserve these exact bytes.\n";
+            let original = fs::read_to_string(&path)? + suffix;
+            fs::write(&path, &original)?;
+            let mut states = vec![entry.clone()];
+            entry.state = State::Submitted;
+            entry.result = Some(WorkResult::Submitted { commit: "b".repeat(40), evidence: vec![fixture.artifact()] });
+            states.push(entry.clone());
+            if publish_submitted {
+                publish_ticket(&fixture.0, "proof", &entry)?;
+            }
+            entry.state = State::Complete;
+            states.push(entry.clone());
+            publish_ticket(&fixture.0, "proof", &entry)?;
+            validate_admitted_ticket_lifecycle(&fixture.0, "proof", &states, Some(&original))?;
+            let current = fs::read_to_string(&path)?;
+            ensure!(
+                current.contains("Keep the original human prose.") && current.ends_with(suffix),
+                "original prose changed"
+            );
+            fs::write(&path, current + "unrelated bytes\n")?;
+            ensure!(
+                validate_admitted_ticket_lifecycle(&fixture.0, "proof", &states, Some(&original)).is_err(),
+                "foreign prose admitted"
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn derived_ticket_accepts_exact_normal_and_interrupted_publication_sequences() -> Result<()> {
+        for (publish_reserved, publish_running) in [(true, true), (true, false), (false, true), (false, false)] {
+            let fixture = Fixture::new()?;
+            let mut entry = fixture.entry(false);
+            let mut states = vec![entry.clone()];
+            publish_ticket(&fixture.0, "proof", &entry)?;
+            hold(&mut entry);
+            entry.state = State::Reserved;
+            states.push(entry.clone());
+            if publish_reserved {
+                publish_ticket(&fixture.0, "proof", &entry)?;
+            }
+            entry.state = State::Running;
+            entry.agent = Some("integrator".into());
+            states.push(entry.clone());
+            if publish_running {
+                publish_ticket(&fixture.0, "proof", &entry)?;
+            }
+            entry.state = State::Complete;
+            entry.result = Some(WorkResult::Integrated {
+                submissions: vec![Claim {
+                    id: "original-implementation".into(),
+                    revision: "sealed-revision".into(),
+                    attempt: 1,
+                    coordinator: "integrator".into(),
+                }],
+                evidence: vec![fixture.artifact()],
+                authentication: fixture.artifact(),
+                cleanup: fixture.artifact(),
+            });
+            states.push(entry.clone());
+            publish_ticket(&fixture.0, "proof", &entry)?;
+            validate_admitted_ticket_lifecycle(&fixture.0, "proof", &states, None)?;
+            let path = admitted_ticket_path(&fixture.0, "proof", &entry.job);
+            fs::write(&path, fs::read_to_string(&path)? + "unrelated bytes\n")?;
+            ensure!(
+                validate_admitted_ticket_lifecycle(&fixture.0, "proof", &states, None).is_err(),
+                "foreign generated ticket admitted"
+            );
+        }
+        Ok(())
+    }
 }

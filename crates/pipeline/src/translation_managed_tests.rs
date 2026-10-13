@@ -672,7 +672,7 @@ fn run_managed_proof(root: &Path) -> Result<()> {
     );
     ensure!(queue.jobs.len() == 2 && queue.jobs.iter().any(|entry| entry.job.kind == assignment::Kind::Integrate
         && entry.state == assignment::State::Complete && entry.attempts == 1
-        && matches!(&entry.result, Some(assignment::WorkResult::Integrated { submissions, .. }) if submissions == &[project.original.claim.clone()])),
+        && matches!(&entry.result, Some(assignment::WorkResult::Integrated { submissions, .. }) if submissions == std::slice::from_ref(&project.original.claim))),
         "managed standard derived integration transition missing or duplicated");
     let ticket = project.host.join(project.original.job.ticket.as_ref().unwrap());
     ensure!(fs::read_to_string(&ticket)?.contains("Status: resolved"), "managed origin ticket unresolved");
