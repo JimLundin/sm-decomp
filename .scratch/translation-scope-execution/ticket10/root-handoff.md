@@ -34,11 +34,28 @@ Current independent workers are `confinement_performance` (sandbox accounting),
 `equipment_implementation` (the full private 29-routine equipment interaction
 source scope). Gameplay setup and ownership are recorded in
 `../../equipment-interaction-concurrent-20261014/bootstrap-handoff.md`.
-Its `translated` observation is published at main commit `ddb80ae`: private
-source commit `847d76f` implements all 29 routines, declares 427 Fixture pairs,
-and passes all 13 independent Rust controls. Fresh actual-C execution and
-review remain pending; no production claim is asserted. No JSON format
-migration is part of this work.
+Its `translated` and `verified` observations are published: private source
+commit `847d76f` implements all 29 routines, passes all 13 independent Rust
+controls and all 427 declared actual-C Fixture pairs. The complete Native
+proof, replay and post-cleanup authentication took 97.78 seconds with two
+fixture workers. Review and main integration remain pending; no production
+claim is asserted. No JSON format migration is part of this work.
+
+Native performance source is checkpointed at `5cda6a0`. Adjacent complete
+control runs fell from 43.11 to 33.54 seconds; their positive proof/authentication/
+replay portions fell from 17.662 to 13.317 seconds. Compiler totals stayed
+essentially equal (10.748/10.834 seconds); fixture wall time fell from 5.480
+to 1.120 seconds, combining input reuse and four workers. Updated Native
+1/2/4-worker fixture spans were 3.103/1.805/1.212 seconds. All 31 focused
+pipeline and 12 operation controls pass. Final integration/review and one
+combined run with the corrected sandbox helper remain pending.
+
+Confinement source is provisionally committed at `14c5cd5`. V6 passes 16
+runtime controls, eight original guards and 32 concurrent stress repetitions.
+It includes complete-snapshot retry for the existing directory-unlink race
+and exact FD-table tracking for shared, unshared and exec-remapped descriptors.
+Final V7/V6 timing and cleanup are pending; earlier microbenchmarks are not
+whole-catalog performance claims.
 
 The installed production `status` still authenticates the unchanged original
 registry/request/activation identities. No Original Installation or new attempt

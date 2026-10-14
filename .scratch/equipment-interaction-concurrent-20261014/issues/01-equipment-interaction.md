@@ -45,3 +45,11 @@ build. See [the handoff](../bootstrap-handoff.md). Two-axis review and fresh
 actual-C execution remain pending under
 [the verification contract](../verification-requirements.md); this ticket is
 not resolved.
+
+2026-10-14 actual-C verification: all 427 declared Fixture pairs pass on the
+exact private source with the improved Native runner. The test includes unchanged
+replay, both cleanup passes and post-cleanup authentication, and finished in
+97.78 seconds using two fixture workers alongside the other performance work.
+Cleanup reclaimed 91,488,256 bytes. See
+[verification handoff](../verification-handoff.md). Main integration, Live
+exercise and original-ROM parity remain separate; this ticket stays claimed.

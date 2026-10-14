@@ -1,0 +1,62 @@
+id = "equipment-interaction-private-verified-20261014"
+scope = "Complete equipment interaction Offline fixture domain (29 routines)"
+agent = "/root"
+stage = "verified"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+commit = "847d76f60d8a373b7b051f0be5c441f6be2342f4"
+routines = [
+  "ChangePaletteValues",
+  "EquipmentScreenMain",
+  "EquipmentScreenCategory_Tanks",
+  "EquipmentScreenHandleDpad",
+  "EquipmentScreenGlowingArrow",
+  "EquipmentScreenGlowingArrowAnimated",
+  "EquipmentScreenGlowingArrowSolidOn",
+  "EquipmentScreenGlowingArrowSolidOff",
+  "EquipmentScreenEnergyArrowGlow_On",
+  "EquipmentScreenEnergyArrowGlow_Off",
+  "EquipmentScreenCategory_Tanks_0",
+  "EquipmentScreenHudReserveAutoTilemap_On_BUGGY",
+  "EquipmentScreenHudReserveAutoTilemap_Off",
+  "EquipmentScreenCategory_Tanks_1",
+  "EquipmentScreenCategory_Weapons",
+  "EquipmentScreenCategory_Weapons_MoveButtons",
+  "EquipmentScreenCategory_Weapons_PlazmaSpazerCheck",
+  "EquipmentScreenCategory_Suit",
+  "EquipmentScreenCategory_Suit_MoveResponse",
+  "EquipmentScreenCategory_Boots",
+  "EquipmentScreenCategory_Boots_MoveResponse",
+  "EquipmentScreenMoveToReserveTanks",
+  "EquipmentScreenMoveToBeams",
+  "EquipmentScreenMoveToBottomOfBeams",
+  "EquipmentScreenMoveLowerOnSuitsMisc",
+  "EquipmentScreenMoveToScrewOrHigherOnSuits",
+  "EquipmentScreenMoveToHighJumpOrLowerInBoots",
+  "EquipmentScreenCategory_Boots_MoveUpInBoots",
+  "EquipmentScreenCategory_ButtonResponse",
+]
+limitations = [
+  "All 427 declared actual-C pairs pass with full WRAM and raw-return comparison; 28 direct entries and static ChangePaletteValues exercised through callers.",
+  "Includes 181 complete-root cases, 411 independent roots and 16 continuation nodes; 13 independent Rust controls passed separately.",
+  "Private source bootstrap and confined Native verification; no confined rewrite, production claim or managed integration is asserted.",
+  "Two-axis source review and main integration remain pending. Live replay, hardware effect order and original-ROM parity are not established.",
+]
+
+[[evidence]]
+path = "/home/jim/sm-decomp-equipment-interaction-20261014/native-v1/pause-equipment/run/native-receipt.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp-equipment-interaction-20261014/native-v1/pause-equipment/run/family/verdict.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp-equipment-interaction-20261014/native-v1/summary.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp-equipment-interaction-20261014/checks/native-v1.log"
+
+[[evidence]]
+path = "/home/jim/sm-decomp-equipment-interaction-20261014/native-v1/pause-equipment/cleanup.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp-equipment-interaction-20261014/native-v1/pause-equipment/cleanup-deduplicated.toml"

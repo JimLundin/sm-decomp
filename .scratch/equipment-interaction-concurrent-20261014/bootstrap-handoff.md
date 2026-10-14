@@ -48,8 +48,11 @@ Both scoped cleanup utility passes on checks succeeded with zero bytes
 reclaimed; the disposable target was removed after measuring 54,501,376
 allocated bytes. Source and logs remain, with no active producer.
 
-The published stage is `translated`. Actual-C comparison, two-axis review,
-main integration, Live replay and original-ROM parity remain pending. The
-next step is review from private scaffold baseline to this exact commit and
-fresh actual-C execution using the existing Native runner after performance
-validation. No held main claim or production source was changed.
+The published stages are `translated` and `verified`. All 427 actual-C pairs
+passed with the improved Native runner in 97.78 seconds using two fixture
+workers, including unchanged replay and post-cleanup authentication. Native
+cleanup reclaimed another 91,488,256 bytes. See
+[the verification handoff](verification-handoff.md) for the exact source,
+reader, helper and retained result closure. Two-axis review, main integration,
+Live replay and original-ROM parity remain pending. No held main claim or
+production source was changed.
