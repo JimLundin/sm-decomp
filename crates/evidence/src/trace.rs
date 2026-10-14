@@ -1,6 +1,6 @@
 use crate::canonical::{MAX_OBJECT, Reader, varint};
 use crate::tree::HashWriter;
-use crate::{BLOB, Id, SEGMENT, STREAM, Store};
+use crate::{BLOB, Id, MemberInfo, SEGMENT, STREAM, Store};
 use anyhow::{Context, Result, bail, ensure};
 use sha2::{Digest, Sha256};
 use std::io::{BufRead, BufWriter, Write};
@@ -384,6 +384,12 @@ impl Write for CheckedWriter<'_> {
 }
 /// Reconstruct and authenticate the full legacy stream (including literal bytes).
 pub fn write_stream(store: &Store, id: &Id, out: &mut dyn Write) -> Result<()> {
+    restore_stream(store, id, out).map(|_| ())
+}
+
+/// The accounting comes from the restored bytes and is available only after
+/// every stream seal has been checked. Inventory uses it in the same traversal.
+pub(crate) fn restore_stream(store: &Store, id: &Id, out: &mut dyn Write) -> Result<MemberInfo> {
     let info = read_stream(store, id)?;
     let mut checked = CheckedWriter { out, hash: HashWriter::default(), lines: 0 };
     let mut events = 0;
@@ -394,15 +400,15 @@ pub fn write_stream(store: &Store, id: &Id, out: &mut dyn Write) -> Result<()> {
         }
         buffered.flush()?;
     }
-    let hash: Id = checked.hash.0.finalize().into();
+    let member = checked.hash.finish();
     ensure!(
-        checked.hash.1 == info.bytes
+        member.bytes == info.bytes
             && checked.lines == info.lines
             && events == info.events
-            && hash == info.legacy_sha256,
+            && member.sha256 == info.legacy_sha256,
         "stream restoration seal differs"
     );
-    Ok(())
+    Ok(member)
 }
 /// Read all segments associated with a frame, in observed order. Unassigned
 /// literal bytes are available through the full stream only.

@@ -121,9 +121,7 @@ pub fn tree_inventory(store: &Store, id: &Id) -> Result<std::collections::BTreeM
             if entry.kind == EntryKind::Tree {
                 walk(store, &entry.id, &format!("{path}/"), depth + 1, result)?;
             } else {
-                let mut hash = HashWriter::default();
-                write_entry(store, entry.kind, &entry.id, &mut hash)?;
-                result.insert(path, MemberInfo { bytes: hash.1, sha256: hash.0.finalize().into() });
+                result.insert(path, authenticate_entry(store, entry.kind, &entry.id)?);
             }
         }
         Ok(())
@@ -207,7 +205,25 @@ pub fn write_entry(store: &Store, kind: EntryKind, id: &Id, out: &mut dyn Write)
     }
 }
 
-pub(crate) struct HashWriter(pub Sha256, pub u64);
+// Full stream restoration already computes the exact-byte digest to check its
+// seal. Reuse that computed result within this traversal, never the declared
+// digest or a result cached from an earlier authentication.
+fn authenticate_entry(store: &Store, kind: EntryKind, id: &Id) -> Result<MemberInfo> {
+    if kind == EntryKind::Stream {
+        crate::trace::restore_stream(store, id, &mut std::io::sink())
+    } else {
+        let mut hash = HashWriter::default();
+        write_entry(store, kind, id, &mut hash)?;
+        Ok(hash.finish())
+    }
+}
+
+pub(crate) struct HashWriter(Sha256, u64);
+impl HashWriter {
+    pub(crate) fn finish(self) -> MemberInfo {
+        MemberInfo { bytes: self.1, sha256: self.0.finalize().into() }
+    }
+}
 impl Default for HashWriter {
     fn default() -> Self {
         Self(Sha256::new(), 0)
@@ -248,20 +264,20 @@ pub fn verify_tree(store: &Store, id: &Id, source: Option<&Path>) -> Result<(u64
                 totals.0 += n.0;
                 totals.1 += n.1;
             } else {
-                let mut hash = HashWriter::default();
-                write_entry(store, entry.kind, &entry.id, &mut hash)?;
+                let member = authenticate_entry(store, entry.kind, &entry.id)?;
                 if let Some(path) = path {
                     ensure!(fs::symlink_metadata(&path)?.is_file(), "source is not regular file");
                     let mut original = HashWriter::default();
                     std::io::copy(&mut File::open(path)?, &mut original)?;
+                    let original = original.finish();
                     ensure!(
-                        hash.1 == original.1 && hash.0.clone().finalize() == original.0.finalize(),
+                        member.bytes == original.bytes && member.sha256 == original.sha256,
                         "source bytes differ: {}",
                         entry.name
                     );
                 }
                 totals.0 += 1;
-                totals.1 += hash.1;
+                totals.1 += member.bytes;
             }
         }
         Ok(totals)

@@ -128,3 +128,17 @@ only the run's logical closure, so an unrelated interrupted pending write does
 not invalidate existing evidence. `verify` additionally checks physical seals
 of all committed packs in the store. Do not delete shared packs when deleting a
 run directory: other runs can reference them.
+
+Within one restoration, inventory and tree verification reuse the exact-byte
+digest and byte count computed while checking a stream's seals. Every invocation
+still restores its referenced bytes and verifies byte, newline, event and digest
+seals; this accounting is never reused across authentication stages or read from
+an unverified declared digest. File and image members each use one digest pass.
+
+`cargo run -p evidence --release --example authenticate -- prepare NEW_ROOT`
+prepares bounded synthetic typed, literal and mixed stores. The corresponding
+`measure ROOT REPETITIONS` command (1–25 repetitions) reports warm-store inventory
+and tree-verification timings with exact run roots and member hashes. For revision
+comparisons, compile the same probe source with the same compiler/profile against
+both revisions, reuse the prepared stores, and control or record competing load.
+These timings exclude preparation and opening and do not measure a Live replay.

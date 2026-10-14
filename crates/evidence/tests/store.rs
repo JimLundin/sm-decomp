@@ -90,6 +90,125 @@ fn independent_stores_import_with_remapped_ordinals_and_verified_inventory() -> 
 }
 
 #[test]
+fn authenticated_inventory_matches_exact_bytes_for_every_member_kind() -> anyhow::Result<()> {
+    use sha2::{Digest, Sha256};
+    use std::io::Write;
+
+    let temp = Temp::new();
+    let source = temp.path().join("source");
+    fs::create_dir_all(source.join("nested"))?;
+    let mut trace = Vec::new();
+    // Cross both typed-segment and restoration-buffer limits, then preserve
+    // noncanonical text, a frame reset and an incomplete binary literal tail.
+    for i in 0..35000 {
+        writeln!(trace, "ppu 7 0 24 {}", i % 256)?;
+    }
+    trace.extend_from_slice(b"ppu 000 0 4 3\napu 0 1 9\n\xff\x00tail");
+    let members = [
+        ("hardware.log", trace),
+        ("nested/frame.bin", (0..65537).map(|i| (i % 251) as u8).collect()),
+        ("large.dat", vec![17u8; (1 << 20) + 13]),
+        ("nested/routine-calls.log", vec![]),
+        ("empty.bin", vec![]),
+        ("empty.txt", vec![]),
+    ];
+    for (path, bytes) in &members {
+        fs::write(source.join(path), bytes)?;
+    }
+    let root = temp.path().join("store");
+    let mut store = Store::create(&root)?;
+    let tree = ingest_tree(&mut store, &source, &mut |_| {})?;
+    let run = put_run(&mut store, tree, &Provenance::default())?;
+    let check = |store: &Store| -> anyhow::Result<()> {
+        let (verified, inventory) = verified_inventory(store, &run)?;
+        assert_eq!(verified.observations, tree);
+        assert_eq!(verified.files, members.len() as u64);
+        assert_eq!(verified.bytes, members.iter().map(|(_, bytes)| bytes.len() as u64).sum::<u64>());
+        assert_eq!(inventory.len(), members.len());
+        for (path, bytes) in &members {
+            assert_eq!(inventory[*path].bytes, bytes.len() as u64, "{path}");
+            assert_eq!(inventory[*path].sha256, <Id>::from(Sha256::digest(bytes)), "{path}");
+        }
+        let counts = verify_tree(store, &tree, Some(&source))?;
+        assert_eq!(counts, (verified.files, verified.bytes));
+        Ok(())
+    };
+    check(&store)?;
+    store.commit()?;
+    check(&Store::open(&root)?)?;
+    Ok(())
+}
+
+#[test]
+fn inventory_rejects_declared_stream_seals_and_run_counts_without_trusting_ids() -> anyhow::Result<()> {
+    let temp = Temp::new();
+    let mut store = Store::create(temp.path())?;
+    let stream = ingest_trace(&mut store, &mut Cursor::new(b"apu 0 1 2\n"))?;
+    let tree = put_tree(&mut store, vec![Entry { name: "hardware.log".into(), kind: EntryKind::Stream, id: stream }])?;
+    let run = put_run(&mut store, tree, &Provenance::default())?;
+    let (_, original_stream) = store.get(&stream)?;
+    let (_, original_run) = store.get(&run)?;
+    // This one-line stream uses single-byte count varints. Store::put assigns
+    // valid object identities to deliberately inconsistent semantic seals.
+    assert_eq!(&original_stream[..3], &[10, 1, 1]);
+    assert_eq!(original_run.len(), 67);
+    let mut invalid = Vec::new();
+    for (label, offset) in [("bytes", 0), ("lines", 1), ("events", 2), ("sha256", 3)] {
+        let mut bad = original_stream.clone();
+        bad[offset] ^= 1;
+        let bad_stream = store.put(b'S', &bad)?;
+        let bad_tree =
+            put_tree(&mut store, vec![Entry { name: "hardware.log".into(), kind: EntryKind::Stream, id: bad_stream }])?;
+        let mut bad_run = original_run.clone();
+        bad_run[1..33].copy_from_slice(&bad_tree);
+        let bad_run = store.put(b'R', &bad_run)?;
+        assert!(put_run(&mut store, bad_tree, &Provenance::default()).is_err(), "{label}");
+        invalid.push((label, bad_stream, bad_tree, bad_run));
+    }
+    let mut invalid_counts = Vec::new();
+    for offset in [65, 66] {
+        let mut bad = original_run.clone();
+        bad[offset] ^= 1;
+        invalid_counts.push(store.put(b'R', &bad)?);
+    }
+    store.commit()?;
+    let store = Store::open(temp.path())?;
+    verified_inventory(&store, &run)?;
+    for (label, stream, tree, run) in invalid {
+        assert!(write_stream(&store, &stream, &mut Vec::new()).is_err(), "{label}");
+        assert!(tree_inventory(&store, &tree).is_err(), "{label}");
+        assert!(verify_tree(&store, &tree, None).is_err(), "{label}");
+        assert!(verified_inventory(&store, &run).is_err(), "{label}");
+        assert!(verify_run(&store, &run, None).is_err(), "{label}");
+    }
+    for run in invalid_counts {
+        assert!(verified_inventory(&store, &run).unwrap_err().to_string().contains("run closure counts differ"));
+        assert!(verify_run(&store, &run, None).is_err());
+    }
+    Ok(())
+}
+
+#[test]
+fn reopened_inventory_reauthenticates_previously_verified_bytes() -> anyhow::Result<()> {
+    let temp = Temp::new();
+    let mut store = Store::create(temp.path())?;
+    let stream = ingest_trace(&mut store, &mut Cursor::new(b"apu 0 1 2\n"))?;
+    let tree = put_tree(&mut store, vec![Entry { name: "hardware.log".into(), kind: EntryKind::Stream, id: stream }])?;
+    let run = put_run(&mut store, tree, &Provenance::default())?;
+    store.commit()?;
+    verified_inventory(&Store::open(temp.path())?, &run)?;
+
+    let pack = fs::read_dir(temp.path())?.next().unwrap()?.path();
+    let mut bytes = fs::read(&pack)?;
+    bytes[9] ^= 1;
+    fs::write(&pack, &bytes)?;
+    let reopened = Store::open(temp.path())?;
+    assert!(tree_inventory(&reopened, &tree).is_err());
+    assert!(verified_inventory(&reopened, &run).is_err());
+    Ok(())
+}
+
+#[test]
 fn images_roundtrip_diff_and_survive_reopen() -> anyhow::Result<()> {
     let temp = Temp::new();
     let mut store = Store::create(temp.path())?;
