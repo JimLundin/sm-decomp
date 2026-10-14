@@ -1030,7 +1030,7 @@ mod tests {
     }
     #[test]
     fn one_native_command_replaces_only_owned_units_and_sets_capture_budget() {
-        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let root = fs::canonicalize(Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")).unwrap();
         let source = root.join("deps/snesrev-sm");
         let run = Path::new("/tmp/ridley-inventory-command-test");
         let command = build_command(&source, run, 2048, 2).unwrap();
