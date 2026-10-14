@@ -23,8 +23,8 @@ Initial API proposed to root: `CargoKind`, `CargoContract`, `PreparedCargo`,
 `StrictRuntime`, `CargoReceipt`, `CargoVerdict`; `prepare`, `run`, `authenticate`,
 `references`, `producer_cli`. Legacy readiness contracts remain untouched.
 
-Next: finish the shared-host compiler-concurrency comparison and the compact
-proof after the measured descriptor-observation race correction. Use private target/run roots with
+Next: finish compact's single-job dependency preparation and original acceptance
+commands. Use private target/run roots with
 `SM_PIPELINE_WORKERS=4` and `SM_PIPELINE_ROOT=/home/jim/sm-decomp/out/pipeline`.
 
 Preparation red/green: the first public-seam control-inventory test failed on
@@ -250,7 +250,41 @@ credited. This failure also authenticated and replayed unchanged.
 and successful post-cleanup authentication with the retained reader. The
 proof-only `SM_CARGO_JOBS` selector permits a fresh single-job versus multi-job
 comparison while retaining the same sealed compiler, supervisor, original argv,
-source closure and deadlines. Its compiled reader is
+original port source and deadlines. Its compiled reader is
 `/tmp/sm-ticket10-cargo-proof/bin/cargo-proof-reader-jobs-select-01`, SHA-256
 `33a35b1dff9cd0ada176125af7e6c289eeacfdc0b85e0a79647344b93a758e9e`;
 `reader-build-11.stderr` records successful compilation.
+
+`real-09` is the successful complete host proof, using the v3 supervisor,
+`sm-pipeline-e071c3c`, the paired Cargo/rustc 1.97.1 toolchain, and one Cargo
+compiler job within shared capacity four. It passes the exact 31 original
+controls on candidate source (Cargo reports 41.80 seconds) and integrated source
+(48.10 seconds). The latter inserts a runtime denial assertion into
+`Bridge::request` for an undeclared host file. A distinct third identity attempts
+`include_str!` of that file and retains the required compiler refusal with no
+test acceptance. Every success and refusal authenticates and identically replays.
+The complete proof passed in 131.26 seconds. Both cleanup passes reclaimed zero
+bytes, and the retained independent reader authenticated all receipts afterward
+in 2.50 seconds. Logs and snapshots remain under
+`/tmp/sm-ticket10-cargo-proof/real-09` and the corresponding sibling `.stdout`
+and cleanup/authentication logs.
+
+The single-job result and the quiet four-job timeout show that additional Cargo
+compiler concurrency increases the current observer cost for this workload.
+The integration owner will use one Cargo job with shared capacity four. No
+original argv, test selection, compiler profile, project-artifact cache or
+deadline was changed to obtain the passing host proof.
+
+`compact-03` attempted the separately bounded v3/single-job dependency
+prerequisite. It reached the unchanged 600-second timeout, with 605.22 seconds
+total proof time. Its failure authenticated and identically replayed; no cache
+was published and no original compact Cargo command was launched. Both cleanup
+passes reclaimed zero bytes and post-cleanup authentication passed. The
+native owner measured progression at 2m18s: 159 writable files, 1m34s supervisor
+CPU and 2 seconds Cargo CPU. The supervisor's conservative `O_TMPFILE` mask also
+classifies ordinary read-only `O_DIRECTORY` opens as mutating; a focused
+regression/fix is in progress independently. A later sample at 7m57s producer
+time showed 79.1% supervisor CPU and 0.5% Cargo CPU, while linking ring's build
+script. A future helper uses a fresh proof root; this stopped identity remains
+unchanged. After the validated next helper, the compact diagnostic owner takes
+its original experiment window first, followed by the next Cargo prerequisite.
