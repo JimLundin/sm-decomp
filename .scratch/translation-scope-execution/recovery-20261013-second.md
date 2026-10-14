@@ -1,23 +1,25 @@
 # Deterministic executor continuation
 
-Status: implementing
+Status: implementation proved; production preparation pending
 Owner: `01a136a0-49bb-7690-a360-48def3c2c09b`
 Worktree: `/home/jim/sm-decomp-translation-execution`
 Branch: `architecture/translation-scope-execution-20261013`
-Checkpoint: `f845516` (ticket lifecycle authentication and recovery handoff)
+Verified source: `f845516b975c3bfc413800c6bed9e329696a79e6`
+Proof/documentation checkpoint: `9dd4361`
+Completion: [completion-20261014.md](completion-20261014.md)
 
-## Current next action — managed proof passed; final cleanup
+## Completed executor — production preparation is next
 
 The current continuation has inspected the same three children through
 collaboration: `bounded_git` and `managed_admission` errored with encrypted-output
 transport failures; `supervisor_audit` completed. No replacement was launched.
 At startup no Cargo, native gate, validator or supervisor writer remained in the
-selected run directories; proof11's later writer is recorded below. Root owns
+selected run directories; proof 11's later writer is recorded below. Root owns
 the returned source and this worktree's Git/index.
 The production integrator thread is observed completed; its held production
 claims and registered generation remain untouched.
 
-Proof10 finished with a real managed acceptance, both standard queue completions
+Proof 10 finished with a real managed acceptance, both standard queue completions
 and three progress observations, but its outer supervisor stayed `Publishing`.
 Ticket authentication reconstructed only one rendering while normal publishing
 preserves the preceding generated ticket bytes through successive transitions.
@@ -27,7 +29,7 @@ Known lifecycle stages are limited to four; skipped projections after an
 interruption are admitted only as exact normal renderings, and foreign prose
 still rejects.
 
-The read-only proof10 diagnostic passed in 16.07 seconds at
+The read-only proof 10 diagnostic passed in 16.07 seconds at
 `verification/managed-accepted-diagnostic-10-green.{stdout,stderr}.log`.
 Its stdout SHA-256 is
 `08abdcfa58dea1928e28dd3fbdb7fd9934839540eb339dffef08ce9453b8d75a`;
@@ -37,21 +39,21 @@ stdout SHA-256 is
 `80dfe5ae31c69ed6712147307b1f54ec5b364dc7597965c043a20929c1dd8158`.
 The affected migration suite passed 11 tests with two ignored diagnostics;
 admitted-progress regression passed. Pipeline Clippy's one cloned-slice finding
-has been corrected and its final rerun is pending.
+was corrected and the final Clippy run passed with the established exceptions.
 
 The fresh managed proof at `managed-gates/actual-c-managed-11` was launched once
 at 2026-10-13 22:35:37 UTC with the command below and completed successfully.
-Its former writer PID1098911 (parent3389, start ticks6514166, boot
-`7119fcce-5593-4526-aa9b-07127767c4ef`) is observed stopped. Exec session39653
-returned exit0. Do not rerun this or the earlier passing producer matrices.
+Its former writer PID 1098911 (parent 3389, start ticks 6514166, boot
+`7119fcce-5593-4526-aa9b-07127767c4ef`) is observed stopped. Exec session 39653
+returned exit 0. Do not rerun this or the earlier passing producer matrices.
 
 The full managed interface test passed in 601.65 seconds. Its loop took
-103.420 seconds; all recovery checks together took 587.984 seconds excluding
-fixture construction. Four actual-C gates contain two Fixture pairs each;
-six unique gate producers supply24 references with18 reuses. Fourteen operation
-receipts are retained. Finalization retained27,249,752 bytes; publication
-retained1,203,738 bytes. Run logical bytes are27,480,037; retired checkouts
-reclaimed7,666,300 logical bytes. Exact pending recovery allocated zero new
+103.420 seconds; execution and recovery took 587.984 seconds excluding fixture
+construction. Four actual-C gates contain two Fixture pairs each;
+six unique gate producers supply 24 references with 18 reuses. Fourteen operation
+receipts are retained. Finalization retained 27,249,752 bytes; publication
+retained 1,203,738 bytes. Run logical bytes are 27,480,037; retired checkouts
+reclaimed 7,666,300 logical bytes. Exact pending recovery allocated zero new
 producer evidence. Original job/claim/worker/attempt and original owner source
 are unchanged; both normal queue entries complete and three distinct stages
 publish. Partial/changed/symlink/hardlink pending and host/acceptance tampering
@@ -59,30 +61,44 @@ all refuse. This is a disposable Observed/Helper diagnostic with synthetic
 stopped-owner observation; it establishes no production liveness, shipped
 gameplay, original-ROM parity or Live replay acceptance.
 
-Both cleanup passes for09/10/11 passed with zero eligible bytes and12 source
-snapshots each. Managed11's exact installed controller passed read-only
-authentication in36.63 seconds (session50837, exit0). Final pipeline Clippy with
-the documented shared exceptions passed in34.65 seconds (session48294, exit0);
-the current locked/offline CLI build passed in15.12 seconds (session85450, exit0).
-The affected source remains byte-identical to checkpointf845516.
+Both cleanup passes for 09/10/11 passed with zero eligible bytes and 12 source
+snapshots each. Managed 11's exact installed controller passed read-only
+authentication in 36.63 seconds (session 50837, exit 0). Final pipeline Clippy with
+the documented shared exceptions passed in 34.65 seconds (session 48294, exit 0);
+the current locked/offline CLI build passed in 15.12 seconds (session 85450, exit 0).
+The affected source remains byte-identical to checkpoint f845516.
 
 Both final verification-directory cleanup passes passed with zero eligible
 bytes. The Rust disposal plan passed reader authentication, process-reference
-and alias checks. Its23 closed targets measure5,195,113,120 logical bytes and
-4,825,128,960 reclaimable allocated bytes; available space is186,285,498,368 bytes.
+and alias checks. Its 23 closed targets measure 5,195,113,120 logical bytes and
+4,825,128,960 reclaimable allocated bytes; available space is 186,285,498,368 bytes.
 Receipt: `verification/disposable-retirement-plan-final-01.jsonl`. It contains
-only disposable Cargo/protocol targets, unreferenced helper copies in failed06/07
+only disposable Cargo/protocol targets, unreferenced helper copies in failed 06/07
 and six ignored C copies in this worktree. It excludes every sealed reader,
 private original source/input graph and `/tmp/sm-complete-supervisor-976030-0`.
 
-Next apply that unchanged Rust disposal helper, retaining
-`verification/disposable-retirement-apply-final-01.jsonl`, then authenticate
-actual-c02 and managed11 through their exact retained readers. After those
-read-only checks finish, run both verification-directory cleanup passes again
-with `verification-cleanup-{ordinary,deduplicate}-final-02` receipts. Build/run
-the prepared compact-receipt helper only after all of its referenced logs exist;
-retire both final helpers and their source afterward. Tickets02–07 stay claimed
-until these completion steps pass; ticket08 remains open.
+The unchanged Rust disposal helper applied successfully. Its receipt is
+`verification/disposable-retirement-apply-final-01.jsonl`; all 23 selected paths
+are absent, 5,195,113,120 logical bytes and 4,825,128,960 allocated bytes were
+retired. Remaining space is 191,102,251,008 bytes. The protected
+`/tmp/sm-complete-supervisor-976030-0` and all sealed readers remain intact.
+
+Read-only actual-c-02 authentication passed in 27.31 seconds (session 54720, exit 0)
+through `supervisor-native/tools/sm-supervisor-retained-reader-02`; managed 11
+authentication passed in 41.98 seconds (session 97359, exit 0) through its exact
+`managed-gates/actual-c-managed-11/installed/controller`. Retained output stems
+are `verification/{native-02,managed-11}-authenticate-after-retirement-final-01`.
+Both verification-directory cleanup passes then passed with zero eligible bytes
+and `verification-cleanup-{ordinary,deduplicate}-final-02` receipts. The compact
+receipt helper published 47 exact references and the managed checkpoint.
+
+Both final helper binaries and their source are retired. The four helper paths
+measured 9,656,336 logical bytes and 9,666,560 allocated bytes; their plan/apply
+receipts are `verification/helper-retirement-{plan,apply}-final-01.jsonl`.
+Combined allocated reclamation is 4,834,795,520 bytes. Final observed available
+space is 191,088,582,656 bytes. No verification process remains. The disposable
+Cargo targets are absent and must not be recreated only for inspection.
+Tickets 02–07 are resolved; ticket 08 remains open.
 
 ```sh
 cd /home/jim/sm-decomp-translation-execution
@@ -97,22 +113,21 @@ SM_MANAGED_NATIVE_PROOF_ROOT=/home/jim/sm-decomp-translation-execution/.scratch/
 
 This executable is 240,702,016 bytes, SHA-256
 `cde6329250ae3657385aa9a887ccdb6fc881a3329f4495757449e37c9bd4ecb8`.
-After the completed proof, authenticate through its exact `installed/controller`,
-finish affected Clippy/current CLI checks, both scoped cleanup passes and
-measured disposal. Formatting of all three affected Rust files already passes.
-`/tmp/sm-translation-retirement.rs`'s managed root and reader arrays now include11,
-and its executable is rebuilt. Run `plan` before `apply`; retain all sealed readers, source
-and private input graphs. Authenticate actual-c02 through its immutable reader
-after retirement. The Rust compact-receipt helper is
-`/tmp/sm-translation-final-checkpoint.rs`; build/run it only after its required
-final logs exist and retire both helper source/binary afterward. Do not repeat
-the passing broad/native/linker matrices.
+The producer command above is historical. Inspection uses the retained exact
+readers, and all affected checks/cleanup are complete. Formatting of all three
+affected Rust files passes. The disposable retirement and compact-receipt helpers
+are removed; their receipts remain. Preserve all sealed readers, source and
+private input graphs. Do not repeat the passing broad/native/linker matrices.
 
-Main HEAD and the authority/Ceres/canonical/progress hashes still match the
-recorded production baseline. Tickets02–07 remain claimed until proof and
-cleanup finish; ticket08 remains open with real per-original preparation and
-sequencing blockers. Production activation requires its separate explicit
-decision after a concrete reviewable package; no approval is requested here.
+Final read-only authority status 06 and main status are byte-identical to 05.
+Main HEAD and all four authority/Ceres/canonical/progress hashes match the
+recorded production baseline. Next work is ticket 08's exact retained original
+package and concrete per-original preparation, sequencing, catalog/canonical
+work and fresh owner reconciliation. Production activation requires its
+separate explicit decision after that package is reviewable; no approval is
+requested here. [Final completion](completion-20261014.md) and
+[47 retained references](verification/completion-f845516.references.json)
+record the exact completed source, results and cleanup.
 
 ## Recovery history
 
@@ -130,7 +145,7 @@ thread state. Their source edits are preserved.
 Root owns `crates/pipeline/src/translation_execution.rs`, its combined interface
 tests, shared wiring, and worktree Git/index checkpoints. Existing children own
 their native adapter/build/input files, migration/queue fencing, and revision
-archive files respectively. All use the shared pipeline root and workers4,
+archive files respectively. All use the shared pipeline root and workers 4,
 with independent build targets. Main production queue/authority/progress and
 gameplay submissions remain outside this effort.
 
@@ -179,16 +194,16 @@ tool copies still require measured retirement after the final affected checks.
 Do not overwrite retained Installation/readers or run another producer proof
 solely for measurement. Inspect the current writer before resuming any action.
 
-Read-only authority status04 still matches the saved production identities and
+Read-only authority status 04 still matches the saved production identities and
 all four main hashes. Main HEAD remains `c2cae9ac145f9343cd345e6f978bff0774510b56`.
-Proof09's completed failure and correction are retained below. Final cleanup,
+Proof 09's completed failure and correction are retained below. Final cleanup,
 measured disposal and retained authentication remain part of the current next
 action above.
 
-### Original queue correction and completed proof10
+### Original queue correction and completed proof 10
 
 Source checkpoint `bcf3de30865e117bfa520e481df6a6b5a718490d` retains exact pending
-recovery and the locked/offline managed fixture. Proof09 passed all four actual-C
+recovery and the locked/offline managed fixture. Proof 09 passed all four actual-C
 gates and retired producer checkouts, but retained `Publishing` without an
 accepted result. Its finalization retained 27,249,762 bytes and reclaimed
 7,666,307 checkout bytes. Original host source/queue remained unchanged.
@@ -200,22 +215,22 @@ owner changed`. A legacy Running implementation can have no integration owner
 before the normal Submitted transition sets it. The production check now retains
 that exact absence while Running, accepts only the current fenced owner after
 submission, and rejects missing/foreign or prematurely changed owners. The same
-unchanged retained09 graph passes the correction and foreign-owner refusal in
+unchanged retained 09 graph passes the correction and foreign-owner refusal in
 7.93 seconds; red/green logs are
 `verification/managed-publication-diagnostic-09{,-green}.{stdout,stderr}.log`.
 
 Build12 passed. One necessary fresh complete proof of this corrected source
 finished at `managed-gates/actual-c-managed-10`, with
 `verification/managed-native-proof-10.{stdout,stderr}.log`. Its command is the
-same exact managed test above, replacing only the proof root with10. The test
+same exact managed test above, replacing only the proof root with 10. The test
 records loop and recovery time separately and derives gate producer/reuse counts
-from authenticated receipts when complete. Proof10 failed after 97.34 seconds
+from authenticated receipts when complete. Proof 10 failed after 97.34 seconds
 because the outer supervisor remained `Publishing`; the real acceptance graph
 and corrected read-only diagnosis are described in the current checkpoint above.
 Root owns the current production check and test source. Original10/09/08
 Installation/readers and diagnostics remain immutable.
 
-After observing proof10, finish affected migration/progress/Clippy checks,
+After observing proof 10, finish affected migration/progress/Clippy checks,
 scoped cleanup and measured disposal. The task-specific Rust retirement helper
 is `/tmp/sm-translation-retirement{.rs,}`; it has a closed list of disposable
 targets, authenticates retained controller readers, rejects process references
@@ -225,7 +240,7 @@ delete `/tmp/sm-complete-supervisor-976030-0`'s sealed state, source or referenc
 installed tools, and do not delete any managed Installation/readers/private
 source graph. Production activation remains outside this completion.
 
-## Historical checkpoint27b8 and its then-current next action
+## Historical checkpoint 27b8 and its then-current next action
 
 The latest root continuation retained the existing `/root/bounded_git`,
 `/root/managed_admission` and `/root/supervisor_audit` children. Direct
@@ -261,7 +276,7 @@ The remaining managed recovery gap is fixed in Root's current source:
 completed resume binds actual `accepted.pending` bytes to the retained exact
 acceptance, authenticates the full original graph, then promotes and repairs only
 accepted projections. Read-only inspection still requires `accepted.json`.
-At checkpoint27b8 the new managed actual-C test was being authored against this
+At checkpoint 27b8 the new managed actual-C test was being authored against this
 fix. Its source and the subsequent proof results are now retained above. Retain
 concrete failures; do not repeat the already passing broad/linker matrix.
 
@@ -283,5 +298,5 @@ After the single managed proof and affected focused gates pass, finish both
 scoped cleanup passes, retire disposable targets/diagnostics/scripts and ignored
 fixture copies, reauthenticate the retained native proof, and checkpoint exact
 Rust/docs/tickets/compact evidence. Do not stage binaries, ROMs, bulk evidence or
-build trees. Tickets 02–07 remain claimed until those completion steps; ticket08
+build trees. Tickets 02–07 remain claimed until those completion steps; ticket 08
 and the production switch remain pending with the documented real blockers.

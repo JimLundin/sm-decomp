@@ -1,7 +1,7 @@
 # Deterministic Translation scope execution
 
 Status: implementing
-Blocked by: 02, 03, 04, 05, 06, 07, 08
+Blocked by: 08
 
 Implement candidate 01 from the architecture review in this isolated worktree.
 The Translation scope execution module owns the complete decomp loop. Its only
@@ -179,7 +179,25 @@ failed runs, before resolving tickets or handing implementation back.
 ## Completion evidence
 
 The user confirmed the complete contract and requested implementation on 2026-10-13.
-Implementation, complete restricted-path verification and final production-switch
-decision remain pending. Worktree creation used direct Git after the
+The deterministic supervisor implementation and complete isolated actual-C,
+infrastructure and recovery proofs are checkpointed at
+`27b8b0ac78080d9ccc953956e1829bf0571efbe2`; exact results are in
+[native checkpoint](supervisor-native/actual-c-02-checkpoint.json) and
+[compact references](verification/checkpoint-27b8b0a.references.json).
+The complete managed diagnostic proof, exact original queue/ticket publication,
+accepted pending recovery and final scoped cleanup pass on verified source
+`f845516b975c3bfc413800c6bed9e329696a79e6`. Both exact retained proofs authenticate
+after measured target retirement; temporary helpers are removed. Tickets 02–07
+are resolved. [Final completion](completion-20261014.md),
+[managed checkpoint](managed-gates/actual-c-managed-11-checkpoint.json) and
+[47 retained references](verification/completion-f845516.references.json)
+bind the complete results and cleanup. The managed fixture's synthetic
+stopped-owner observation grants no production liveness or shipped acceptance.
+The real original-Ceres preparation separately validates with explicit switch
+blockers; ticket 08 remains open for concrete per-original preparation,
+current-owner reconciliation, the separate user decision and activation. Final
+read-only inspection matches main HEAD, authority, both ledgers and progress;
+this deterministic migration remains unactivated.
+Worktree creation used direct Git after the
 managed worktree operation failed to populate and inspection found no registered
 managed checkout. No legacy source, claim, evidence or writer was changed.

@@ -1,0 +1,12 @@
+{
+  "schema":"translation-supervisor-checkpoint-v1",
+  "source_commit":"27b8b0ac78080d9ccc953956e1829bf0571efbe2",
+  "installation":{"path":"/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/supervisor-native/actual-c-02/installation.json","sha256":"c3aca31f22901b6ed84edc3493a182f0fd242f0f3e614ef74abdbffb3eb9a488","bytes":9472},
+  "completion":{"path":"/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/supervisor-native/actual-c-02/state/4e1f518243e1c8f32e312ebcd924cfe89eaaea446ff6743bbc481d49f7d7d83c/attempt-0001/publication/completion.json","sha256":"185e6ae508a25ca1a816d958d8e54fa71c6077fc2362789e3fa5d8435315b820","bytes":2819},
+  "measurement":{"path":"/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/supervisor-native/actual-c-02/proof.json","sha256":"c0ffa40fc4f4741acd9a2e702341bc1f7d608611df3acf1e59a27db09f16d269","bytes":880},
+  "retained_reader":{"path":"/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/supervisor-native/tools/sm-supervisor-retained-reader-02","sha256":"494e790a810e28ade5db9999fee438b43deb641bb53020e8f1a4c2f8133f3d2f","bytes":236919608},
+  "cleanup_ordinary":{"path":"/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/verification/native-02-cleanup-ordinary.toml","sha256":"db5bac8a65aebadf59f0fdf35212019050be91606a9165b298d3f3d192ecacdc","bytes":36},
+  "cleanup_deduplicate":{"path":"/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/verification/native-02-cleanup-deduplicate.toml","sha256":"e7ac873108dbb58726b07e2c43cb74f24ee1e4ded17a8b876eae86d237671675","bytes":59},
+  "post_cleanup_authentication":{"path":"/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/verification/native-02-authenticate-after-cleanup.stdout.log","sha256":"7b8d6f5d132688c24462d756e23915dd5b31038708e04832e5a196cbb3b4acd7","bytes":225},
+  "limitations":["Closed enemy-jump-instructions scope;16 actual-C Fixture pairs over2 routines.","Original-ROM parity and Live replay were not tested.","No production claim installation or activation is authorized."]
+}

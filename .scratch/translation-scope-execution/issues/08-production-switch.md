@@ -18,4 +18,26 @@ rollback/recovery steps and completed cleanup have durable evidence.
 
 ## Completion evidence
 
-Pending validated switch preparation, user switch decision, integration and cleanup.
+[Read-only original Ceres preparation](../production-preparation/preparation-checkpoint-27b8b0a.md)
+was built and separately revalidated against the complete retained native proof
+and unchanged main authority/source/ledgers/progress. Original Submitted source
+commits, Running linked integration source, claim tuples, owners, results,
+observations and abbreviated `base-head` bytes are preserved. Identical builder
+retries return the original receipt and run no new validator. Historical initial
+read-budget refusal remains immutable; the same package's later bounded read-only
+report passes as `validated-with-blockers` and `activated = false`.
+
+Actual blockers remain: exact per-original reviewed installations and policies;
+unsupported Submitted/linked Integrate admission and overlapping held sequencing;
+specialized native catalog recipes and families outside the proved scope; canonical
+queue work outside the Ceres package; fresh real-owner/process reconciliation;
+and the user's separate explicit switch decision. Main authority, queue, source/
+index and progress were not changed. Do not ask for activation approval until the
+exact supported production preparation is concrete and reviewable.
+
+Implementation and complete managed proof cleanup are now complete; ticket 07
+is resolved. [Final completion](../completion-20261014.md) records passing
+post-retirement authentication and an unchanged final production inspection.
+This ticket remains open until its real per-original preparation, decision,
+integration/activation and cleanup contracts are fulfilled. The retained package
+is `validated-with-blockers`; it is not a ready activation request.

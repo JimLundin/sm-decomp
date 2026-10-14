@@ -1,0 +1,5 @@
+{"schema":"translation-disposable-retirement-item-v1","action":"plan","path":"/tmp/sm-translation-retirement","logical_bytes":4847880,"allocated_bytes":4849664,"reclaimable_allocated_bytes":4849664,"files":1}
+{"schema":"translation-disposable-retirement-item-v1","action":"plan","path":"/tmp/sm-translation-retirement.rs","logical_bytes":8363,"allocated_bytes":12288,"reclaimable_allocated_bytes":12288,"files":1}
+{"schema":"translation-disposable-retirement-item-v1","action":"plan","path":"/tmp/sm-translation-final-checkpoint","logical_bytes":4793136,"allocated_bytes":4796416,"reclaimable_allocated_bytes":4796416,"files":1}
+{"schema":"translation-disposable-retirement-item-v1","action":"plan","path":"/tmp/sm-translation-final-checkpoint.rs","logical_bytes":6957,"allocated_bytes":8192,"reclaimable_allocated_bytes":8192,"files":1}
+{"schema":"translation-disposable-retirement-summary-v1","action":"plan","targets":4,"logical_bytes":9656336,"allocated_bytes":9666560,"reclaimable_allocated_bytes":9666560,"available_bytes":191078965248}

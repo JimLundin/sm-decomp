@@ -1,0 +1,3 @@
+operation = "status"
+checkout = "/home/jim/sm-decomp"
+coordinator = "ceres-20261013"

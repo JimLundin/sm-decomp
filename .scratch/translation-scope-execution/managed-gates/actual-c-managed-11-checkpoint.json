@@ -1,0 +1,15 @@
+{
+  "schema":"translation-managed-supervisor-checkpoint-v1",
+  "source_commit":"f845516b975c3bfc413800c6bed9e329696a79e6",
+  "installation":{"path":"/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/managed-gates/actual-c-managed-11/installation.json","sha256":"a0b6b1b50b71696e43a11183dbcefe85d8f6d85c317f0df35daab8c35084b699","bytes":7661},
+  "completion":{"path":"/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/managed-gates/actual-c-managed-11/completion.json","sha256":"977f4f31650ee0088fba2201291c304779dc1a135e039b571bf7a15938a1bcb6","bytes":2813},
+  "accepted_view":{"path":"/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/managed-gates/actual-c-managed-11/first-view.json","sha256":"784ee2542695c0182bc8376126bff818b4979c7bbbd41e7154c6eea1a4430060","bytes":3700},
+  "measurement":{"path":"/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/managed-gates/actual-c-managed-11/proof.json","sha256":"fe4e383ea39f8510b3af96de7dc1a50c4cff3fc1935eb6205a08c1a686fbabbb","bytes":1490},
+  "original_claim":{"path":"/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/managed-gates/actual-c-managed-11/original-claim.json","sha256":"8f1b48327a90622ec5eb36884faf3f3f60d8ae73e9dc64ea902efde42694977f","bytes":3626},
+  "retained_reader":{"path":"/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/managed-gates/actual-c-managed-11/installed/controller","sha256":"cde6329250ae3657385aa9a887ccdb6fc881a3329f4495757449e37c9bd4ecb8","bytes":240702016},
+  "cleanup_ordinary":{"path":"/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/verification/managed-11-cleanup-ordinary-final-01.toml","sha256":"db5bac8a65aebadf59f0fdf35212019050be91606a9165b298d3f3d192ecacdc","bytes":36},
+  "cleanup_deduplicate":{"path":"/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/verification/managed-11-cleanup-deduplicate-final-01.toml","sha256":"24d07b30f4aefa11fb163dd6e2befdd8909e2ad9111966a31715c8f079116fe8","bytes":59},
+  "post_cleanup_authentication":{"path":"/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/verification/managed-11-authenticate-after-retirement-final-01.stdout.log","sha256":"2c8a9140f4d6e0af3f82d6cae77050b70386ddb3cb5bd9f425e1142c8e475a40","bytes":233},
+  "disposable_retirement":{"path":"/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/verification/disposable-retirement-apply-final-01.jsonl","sha256":"8ec56bdc2f852aa84bc25a72c9331db3f72f9be1fa2e03999d8b17bafb34ae2d","bytes":6185},
+  "limitations":["Disposable Observed/Helper native diagnostic with synthetic stopped original worker observation.","No production liveness, shipped gameplay, original-ROM parity or Live replay acceptance.","Production activation remains separate and unprepared original claims remain blockers."]
+}

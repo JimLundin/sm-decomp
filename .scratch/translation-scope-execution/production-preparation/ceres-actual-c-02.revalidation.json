@@ -1,0 +1,10 @@
+{
+  "schema":"translation-migration-read-only-revalidation-v1",
+  "activated":false,
+  "activation_ready":false,
+  "migration":{"path":"/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-preparation/ceres-actual-c-02/package/migration.json","sha256":"6d3ac32b2cc01df1dce223ec234fcb004b745a710094c77427d0971b41cd4718","bytes":10271},
+  "historical_builder_decision":{"path":"/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-preparation/ceres-actual-c-02/package/validation.json","sha256":"d24f8828684fe4c8e8263fe67afc31f8b9430d5001e1b20072a58ff6d3a1615c","bytes":520},
+  "report":{"path":"/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-preparation/ceres-actual-c-02.validation-final-02.stdout.toml","sha256":"19f118b688cbfb1284e90758f1612de5b0951215f9340e936e9535cea9ecdca0","bytes":28346},
+  "validation_source_commit":"27b8b0ac78080d9ccc953956e1829bf0571efbe2",
+  "note":"Later read-only validation passes with explicit blockers. The original builder refusal and receipt remain immutable; no production installation, policy or switch is authorized."
+}

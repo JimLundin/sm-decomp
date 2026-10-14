@@ -153,3 +153,12 @@ binds the complete native attempt, measured run, cleanup and retained reader.
 The [original Ceres preparation](../.scratch/translation-scope-execution/production-preparation/preparation-checkpoint-27b8b0a.md)
 records the actual three-claim package and its current switch blockers. Retained
 proofs remain authenticatable independently of disposable build targets.
+
+The complete [managed checkpoint](../.scratch/translation-scope-execution/managed-gates/actual-c-managed-11-checkpoint.json)
+separately proves original claim preservation, standard submission/integration,
+exact ticket/progress publication, pending recovery and tamper refusal through
+an installed Rust protocol worker. It is a disposable diagnostic with synthetic
+stopped-owner observation. [Final completion](../.scratch/translation-scope-execution/completion-20261014.md)
+records affected checks, measured disposal and both retained proofs'
+post-retirement authentication. Production preparation and the agreed separate
+switch remain open.
