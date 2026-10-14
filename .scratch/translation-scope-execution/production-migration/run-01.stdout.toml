@@ -1,0 +1,33 @@
+schema = "translation-launch-report-v1"
+plan_sha256 = "bdc8f26dc11bc1389306445f8a8bd040e5bf4722c7b4cd990f68c99ee14bec7c"
+state = "stopped"
+completed_scopes = []
+current_scope = "ceres-continuation-shared-game-host"
+
+[current]
+run_id = "a41caf059f04b355a6e84c45e70617153cef1fbf7405ad2da9954adb468e74df"
+attempt = 1
+policy_sha256 = "eacc0190d85e8d9daeff7d931c0535fab6d44310a7290fadc6924e586ef9ca36"
+
+[current.state]
+state = "stopped"
+disposition = "failed"
+reason = "shared-game-host preserves its original submission but cannot run acceptance: A confined Cargo adapter with sealed dependency/toolchain closure, hard output/time limits and nonzero original test-count authentication is not installed. The specialized material PLM/HDMA/VRAM callback matrices and complete affected Offline acceptance (176 families in this production preparation) do not yet have complete confined execution recipes."
+
+[current.state.finalization]
+cleanup_complete = true
+retained_authenticatable = true
+worker_retired = true
+retained_bytes = 102220
+reclaimed_bytes = 0
+
+[current.state.finalization.seal]
+operation_key = "347228b93dbfc6201a4e98e87e8f2916c9525dce078032600d54809d77b47521"
+policy_sha256 = "eacc0190d85e8d9daeff7d931c0535fab6d44310a7290fadc6924e586ef9ca36"
+source_sha256 = "eacc0190d85e8d9daeff7d931c0535fab6d44310a7290fadc6924e586ef9ca36"
+evidence_sha256 = "002b4a1e05c0e5ad21d863de070386128cf180d5d6ee107cb2968f4fc648f014"
+
+[prepared]
+path = "/home/jim/sm-decomp-production-execution/launch-state/prepared.json"
+sha256 = "6abf2a03c6a849132e63add8aa084f8f3cc84033da9aaa80fe31bb158746c433"
+bytes = 705

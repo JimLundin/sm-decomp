@@ -1,7 +1,7 @@
 # Deterministic Translation scope execution
 
 Status: implementing
-Blocked by: 08
+Blocked by: 10
 
 Implement candidate 01 from the architecture review in this isolated worktree.
 The Translation scope execution module owns the complete decomp loop. Its only
@@ -11,6 +11,17 @@ Worktree: `/home/jim/sm-decomp-translation-execution`
 Branch: `architecture/translation-scope-execution-20261013`
 Baseline: `3a8b9ea28b716d90df55f798941bba68e1df6531`
 Architecture review: `/tmp/architecture-review-20261013T162355Z.html`
+
+Production ownership migration is complete and active as of 2026-10-14 following
+the user's explicit instruction and checked owner transfers.
+[Ticket 08](issues/08-production-switch.md)
+binds the activation request, original claim/result snapshots, installed command
+and remaining acceptance requirements. The current legacy adapters stop at
+missing original verification producers; uninterrupted completion of those
+submissions is still pending under [ticket 10](issues/10-original-acceptance-adapters.md).
+Both production commands returned the same typed shared-host prerequisite stop;
+replay authentication and final cleanup are complete. Migration completion does
+not establish productive original-work execution or gameplay readiness.
 
 ## Confirmed requirements
 
@@ -54,6 +65,8 @@ invoke them.
 2. Prepare isolated source and declared inputs. Check inventory agreement,
    dependencies, prescribed fixture coverage, exercise provenance and bounded
    harness readiness. A missing prerequisite records a bounded stop result.
+   An imported existing submission retains its exact source commit and original
+   result. It skips rewriting, and its linked held integration has one executor.
 3. Produce the Rewrite capsule. Invoke a restricted rewrite adapter with source
    text and a bounded response channel. The adapter has no host repository tool
    access. Failed restriction checks refuse the launch.
@@ -167,10 +180,11 @@ cleanup reclamation and wall time. Do not run another long exploratory matrix.
 
 ## Ownership and integration
 
-All authored work for this effort stays in this worktree until review. Main Git,
-active queue and current integration role belong to the existing background
-coordinator. Do not mutate them while designing or implementing this branch.
-Any integration/cutover uses current checked authority and reconciled ownership.
+Authored implementation remains in this isolated worktree. During the authorized
+2026-10-14 migration, root owns Main Git and the checked current integrator and
+dispatcher roles recorded in ticket 08. Original claim tuples and submitted
+results remain immutable. Every production mutation still requires current
+authority; no worker or rewrite response can acquire that authority.
 
 Tests and tools are Rust. Use exact scoped commits and isolated verification
 outputs. Apply `docs/agents/run-cleanup.md` to every verification run, including
@@ -193,11 +207,37 @@ are resolved. [Final completion](completion-20261014.md),
 [47 retained references](verification/completion-f845516.references.json)
 bind the complete results and cleanup. The managed fixture's synthetic
 stopped-owner observation grants no production liveness or shipped acceptance.
-The real original-Ceres preparation separately validates with explicit switch
-blockers; ticket 08 remains open for concrete per-original preparation,
-current-owner reconciliation, the separate user decision and activation. Final
-read-only inspection matches main HEAD, authority, both ledgers and progress;
-this deterministic migration remains unactivated.
+The original Ceres preparation was separately validated with switch blockers;
+its reports remain historical. The user authorized the switch on 2026-10-14.
+Fresh original-claim packages and checked owner transfers support the now-active
+[production activation](production-migration/activation.stdout.toml). Existing
+Submitted source and Running integration identities were imported without
+creating replacement claims or rewriting their results. Both migrated efforts
+reject unrestricted producer entrypoints, including older binaries through the
+historical fence path.
+
+The installed legacy readiness path cannot complete acceptance. Shared host still
+requires its complete Rust tests, material callbacks and affected catalog;
+compact controller requires its original causal experiment and controls; pause
+equipment requires a distinct adapter for all 607 actual-C Fixture pairs and
+10 Rust tests. Successful sequential publication must also authenticate prior
+queue/source mutations before freezing a successor policy.
+[Ticket 10](issues/10-original-acceptance-adapters.md) tracks these remaining
+acceptance adapters and ordered continuation. The historical 176-family shared
+host preparation is evidence of its then-current batch; later acceptance must
+freeze the current conservative Affected Offline catalog.
+
+[Ticket 08](issues/08-production-switch.md) is resolved with identical production
+replay, successful post-cleanup authentication, both utility cleanup passes and
+measured disposable-target/helper retirement. The
+[production checkpoint](production-migration/checkpoint.md) records 45 unchanged
+production-file hashes after repeat execution and 58 passing historical
+model-launch hashes after cleanup. No original scope completed and no new
+gameplay acceptance was published. The overall spec remains implementing until
+ticket 10 demonstrates productive execution of the original jobs.
+
 Worktree creation used direct Git after the
 managed worktree operation failed to populate and inspection found no registered
-managed checkout. No legacy source, claim, evidence or writer was changed.
+managed checkout. That historical preparation changed no legacy source, claim,
+evidence or writer; the later authorized authority/registry changes are recorded
+in ticket 08.

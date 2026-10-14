@@ -1,0 +1,3 @@
+   Compiling sm-production-migration-tools v0.1.0 (/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-migration/tools)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.43s
+     Running `/tmp/sm-production-migration-target-20261014/debug/prepare-config`

@@ -14,8 +14,8 @@ are in [.scratch/translation-scope-execution](../.scratch/translation-scope-exec
 
 ## Production command
 
-After the checked migration is activated, run the installed controller from a
-normal shell. No active Codex session is required:
+The checked production migration is active. Run the installed controller from
+a normal shell. No active Codex session is required:
 
 ```sh
 cd /home/jim/sm-decomp
@@ -68,7 +68,7 @@ This configuration runs the approved closed `enemy-jump-instructions` scope:
 two routines and 16 actual-C Fixture pairs, with candidate and merged focused
 and Offline gates. Its source, ROM, recovered C, complete closed catalog,
 coverage, provenance and budgets are frozen. It retains acceptance under
-`model-launch/operator-run-01`. Production queue migration remains the separate
+`model-launch/operator-run-01`. The production queue migration is recorded in the
 [switch ticket](../.scratch/translation-scope-execution/issues/08-production-switch.md).
 Original-ROM parity and Live replay retain their separate gates.
 
@@ -142,19 +142,21 @@ SM_PIPELINE_ROOT=/home/jim/sm-decomp/out/pipeline SM_PIPELINE_WORKERS=4 \
 ```
 
 A production installation uses the exact current original queue owner and
-fenced managed admission. New execution currently supports original Running
+fenced managed admission. New rewriting currently supports original Running
 native Implement claims with complete plain `family-verify` declarations,
 original NativeScope exercise provenance, prescribed coverage and conservative
-catalog preparation. It refuses Submitted/Integrate rewrites, unsupported
+catalog preparation. Imported submissions retain their original source and
+bypass rewriting; linked integration retains its original claim. The launcher
+refuses Submitted/Integrate rewrites, unsupported
 legacy source fingerprints, Live replay, batch and specialized native recipes.
 Infrastructure evidence uses the explicitly authenticated
 `reviewed-in-process-rust-tests` acceptance model and is not accepted as gameplay
 or original-ROM parity.
 
-Production must not be activated by copying a proof policy. Prepare original
-lineage, review exact supported per-claim installations, reconcile real owners
-and current authority, then obtain the separate explicit switch decision in the
-agreed spec. This feature branch has activated no production migration.
+Production uses the original-lineage installations and checked ownership
+recorded in the [migration checkpoint](../.scratch/translation-scope-execution/production-migration/checkpoint.md).
+The user authorized that switch on 2026-10-14. Future scope admission or adapter
+changes require their own frozen policies and exact verification contracts.
 
 ## Recovery and deliberate evaluation
 
@@ -274,5 +276,5 @@ exact ticket/progress publication, pending recovery and tamper refusal through
 an installed Rust protocol worker. It is a disposable diagnostic with synthetic
 stopped-owner observation. [Final completion](../.scratch/translation-scope-execution/completion-20261014.md)
 records affected checks, measured disposal and both retained proofs'
-post-retirement authentication. Production preparation and the agreed separate
-switch remain open.
+post-retirement authentication. The later production activation and its retained
+acceptance blockers are recorded in the migration checkpoint above.

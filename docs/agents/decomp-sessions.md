@@ -4,13 +4,23 @@ Use this runbook when starting a decomp session, resuming after a crash,
 or handing a worker to a replacement coordinator. The durable queue owns work;
 the session launches subagents and records their results.
 
-Production was activated on 2026-10-13 at the user's launch instruction. Read
-[current launch status](../../.scratch/decomp-parallel/launch-20261013/status.md)
-and actual `decomp-authority` status before the historical preparation below.
-The canonical queue is active; retained Ceres work continues under its original
-ledger/token. Resume current roles through checked transfer, inspect surviving
-claims/processes, and follow the saved next command. Completed preparation and
-activation need no repeated drill or fresh authority initialization.
+The deterministic production migration was activated on 2026-10-14 at the user's
+instruction. For startup, recovery or dispatch, read the
+[production command](../TRANSLATION_EXECUTION.md#production-command) and
+[migration checkpoint](../../.scratch/translation-scope-execution/production-migration/checkpoint.md)
+first. The installed Rust supervisor now owns both original efforts; retained
+claims and submissions keep their lineage. Use its `status` and `run` commands
+to inspect and resume. Its authenticated prerequisite stop preserves missing
+verification adapters and grants no completed gameplay stage.
+
+The manual dispatch procedures below are historical references for original
+lineage and checked ownership recovery. The production registry and legacy fence
+control current admission. Preserve both markers and use the documented exact
+recovery command after an interrupted activation. A new acceptance adapter or
+scope requires a fresh frozen policy; an unrestricted dispatcher cannot resume
+the migrated work. The original
+[2026-10-13 launch status](../../.scratch/decomp-parallel/launch-20261013/status.md)
+records the predecessor orchestration.
 
 Read the [parallel plan](../../.scratch/decomp-parallel/spec.md) and
 [ticket map](../../.scratch/decomp-parallel/map.md) for the next dependency-ready

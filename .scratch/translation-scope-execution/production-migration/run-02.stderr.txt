@@ -1,0 +1,2 @@
+Error: launch stopped at ceres-continuation-shared-game-host; retained original attempt; inspect or deliberately repair
+Error: installed production launch exited with exit status: 1

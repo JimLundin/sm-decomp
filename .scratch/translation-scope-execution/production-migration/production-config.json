@@ -1,0 +1,76 @@
+{
+  "blocked": [
+    {
+      "claim_id": "pause-equipment-render-offline",
+      "effort": "decomp-parallel",
+      "reason": "Original submitted source and 607 actual-C fixture pairs plus 10 Rust tests are preserved. A confined composite adapter for the full original acceptance, including auxiliary direct animation, is required before deterministic execution. Existing held Ceres integration remains a dependency."
+    }
+  ],
+  "executable": [
+    {
+      "acceptance_inputs": [
+        {
+          "bytes": 5815,
+          "path": "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/host/diagnosis/findings.md",
+          "sha256": "12e1e4b88419322f64064b0c63d68c28d8c957ccfa3e966f3b7893ee3f15775a"
+        },
+        {
+          "bytes": 38599,
+          "path": "/home/jim/sm-decomp/.scratch/decomp-parallel/reconciliation/legacy-owner-bridge-v2.toml",
+          "sha256": "cb537f195b4f83529f2ea7a61bd65c6e77ad215366275e8d60a7a604c4eb0ba9"
+        }
+      ],
+      "claim_id": "shared-game-host",
+      "effort": "ceres-continuation",
+      "kind": "shared-game-host",
+      "submission": {
+        "bytes": 3577,
+        "path": "/home/jim/sm-decomp/.scratch/ceres-continuation/host-implementation.toml",
+        "sha256": "7b4f118b21b969bd02abc16192cbc3caccb1c118d5cef6a5d39e3751afeaffeb"
+      }
+    },
+    {
+      "acceptance_inputs": [
+        {
+          "bytes": 38599,
+          "path": "/home/jim/sm-decomp/.scratch/decomp-parallel/reconciliation/legacy-owner-bridge-v2.toml",
+          "sha256": "cb537f195b4f83529f2ea7a61bd65c6e77ad215366275e8d60a7a604c4eb0ba9"
+        }
+      ],
+      "claim_id": "compact-controller",
+      "effort": "ceres-continuation",
+      "kind": "compact-controller",
+      "submission": {
+        "bytes": 1284,
+        "path": "/home/jim/sm-decomp/.scratch/ceres-continuation/controller-submission-evidence.toml",
+        "sha256": "8da107cdff9c14182a0ffae1d24ce1d3acbadfccd742fccf4e31c0896bd3634e"
+      }
+    }
+  ],
+  "helper": {
+    "bytes": 69641336,
+    "path": "/home/jim/sm-decomp/out/translation-production/sm-translation-sandbox",
+    "sha256": "00a9853ea1668145c99972ad3c62c01ffd25b6ec5ea109b6792eb7d5b629132e"
+  },
+  "integration_baseline": "a50a13e3d870d5994c9af7cd4f869c863ac3c4a2",
+  "output_root": "/home/jim/sm-decomp-production-execution",
+  "packages": [
+    {
+      "bytes": 9667,
+      "path": "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-preparation/ceres-production-01/package/migration.json",
+      "sha256": "aa320a1462d9b808e8d58174b02c4ee6a7687b4579b674c26f4a0ea75889cc1f"
+    },
+    {
+      "bytes": 9462,
+      "path": "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-preparation/canonical-production-01/package/migration.json",
+      "sha256": "fd93c965d42cd4642f166a03460ff8a18930a6b9464ef773e15498fd4e092814"
+    }
+  ],
+  "pinned_source": "/home/jim/sm-decomp-production-inputs/snesrev-sm",
+  "schema": "translation-production-prepare-v1",
+  "template": {
+    "bytes": 9826,
+    "path": "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/model-launch/native-02/execution/scopes/enemy-jump-instructions/installation.json",
+    "sha256": "8c6626eee7ef962d0ebab5ba60c2ab0e1cd694f6f26ad93873ccd00f049ca11a"
+  }
+}
