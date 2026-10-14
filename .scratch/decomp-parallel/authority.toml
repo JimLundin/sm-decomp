@@ -28,8 +28,8 @@ sha256 = "0414e68f8e0d7ba64698511565bcc7749172ac7300bdae7b2bcaaed38f078956"
 [roles.ceres-20261013]
 token = "ceres-20261013"
 kind = "integrator"
-session_id = "01a13592-d02b-7143-8489-a15b03f19da2"
-generation = 2
+session_id = "01a136a0-49bb-7690-a360-48def3c2c09b"
+generation = 3
 
 [roles.ceres-20261013.registration]
 path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/inspections/integrator-registration.toml"
@@ -39,13 +39,17 @@ sha256 = "0414e68f8e0d7ba64698511565bcc7749172ac7300bdae7b2bcaaed38f078956"
 path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/inspections/integrator-transfer.toml"
 sha256 = "c03ffa4046de6d4a126eb516e79f70e61e6db7d618a5a87ed72efdf037e87542"
 
+[[roles.ceres-20261013.transfers]]
+path = "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-migration/inspections/ceres-20261013-transfer.toml"
+sha256 = "1b20b5f95cad7b0dd13eb3ea89641a38aef63f7c513689c906f9c9c502da6cea"
+
 [roles.ceres-20261013.last_transfer]
 token = "ceres-20261013"
-session_id = "01a13592-d02b-7143-8489-a15b03f19da2"
+session_id = "01a136a0-49bb-7690-a360-48def3c2c09b"
 
 [roles.ceres-20261013.last_transfer.observation]
-path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/inspections/integrator-transfer.toml"
-sha256 = "c03ffa4046de6d4a126eb516e79f70e61e6db7d618a5a87ed72efdf037e87542"
+path = "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-migration/inspections/ceres-20261013-transfer.toml"
+sha256 = "1b20b5f95cad7b0dd13eb3ea89641a38aef63f7c513689c906f9c9c502da6cea"
 
 [roles.decomp-launch-20261013]
 token = "decomp-launch-20261013"
@@ -61,13 +65,24 @@ sha256 = "1aa27efd9818767ea831d6742d31563525467da8ccbab632fb5d2a1e627d221e"
 [roles.decomp-run-20261013]
 token = "decomp-run-20261013"
 kind = "dispatcher"
-session_id = "01a13592-d02b-7143-8489-a15b03f19da2"
-generation = 1
-transfers = []
+session_id = "01a136a0-49bb-7690-a360-48def3c2c09b"
+generation = 2
 
 [roles.decomp-run-20261013.registration]
 path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/inspections/background-live.toml"
 sha256 = "7b43a73cabb08d153796b674603aab81a5f04bed39f44457ebb2b8b3dc65657a"
+
+[[roles.decomp-run-20261013.transfers]]
+path = "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-migration/inspections/decomp-run-20261013-transfer.toml"
+sha256 = "ea4bc6b481a524309e0c55b53fc64cb045c3cc4b3e7cab6d1f2765f7f72e877e"
+
+[roles.decomp-run-20261013.last_transfer]
+token = "decomp-run-20261013"
+session_id = "01a136a0-49bb-7690-a360-48def3c2c09b"
+
+[roles.decomp-run-20261013.last_transfer.observation]
+path = "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-migration/inspections/decomp-run-20261013-transfer.toml"
+sha256 = "ea4bc6b481a524309e0c55b53fc64cb045c3cc4b3e7cab6d1f2765f7f72e877e"
 
 [drill]
 path = "/home/jim/sm-decomp/.scratch/decomp-parallel/drill-retry/concurrency-drill.toml"
