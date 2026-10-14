@@ -474,3 +474,39 @@ correction and finite finalization fixes.
 Current free space at this checkpoint: 163,850,432,512 bytes. Final integrated
 worktree and disposable build-output retirement remains with the integration
 owner after exact source retention and post-retirement authentication.
+
+## Finite discovery passes authenticate all retained captured-Ridley producers
+
+Native inventory, extent and authentication tree passes now each use the
+unchanged 65,536-path discovery ceiling. They continue sharing every logical
+byte charge and the earliest enclosing deadline. Ordinary nested preparation
+still shares its original counter. This isolates repeated discovery of the
+same completed tree without extending any compiler/Fixture or whole-gate limit.
+It does not yet support one tree larger than the ceiling; complete 6,457-case
+family artifact partitioning and compact operation indexes remain separate work.
+
+Reader `/tmp/sm-ticket10-native-proofs/readers/native-tests-discovery-v1`
+and the exact source overlay under `discovery-v1/source/` passed all 11 bounded
+input tests, eight native tests and two callback tests. One earlier filter
+matched zero tests and is retained as such; `bounded-tests-complete.log` records
+the actual eleven-test run. The new regression checks that repeated discovery
+passes each keep their limit while all passes share byte and deadline failures.
+
+The read-only captured-Ridley finalization audit passed in 27.15 seconds after
+cleanup. It authenticated all 670 original Fixture pairs and all 1,343 existing
+producer results, including the exact candidate and pinned C source, artifact
+inventory and repeated evidence extent. Producer-result modification times
+were unchanged. It deliberately published no native receipt for the expired
+failed run. Its audit record and log remain beside that proof; the original
+failure and original family verdict remain unchanged and separately retained.
+
+All four earlier failed host-v1/host-v2 receipts also authenticated with reader
+`a817f07` after their cleanup, preserving their failure status. Host-v1 projectile
+retains two producers/212 references, host-v2 projectile two/213, and both
+room-scroll failures one/113. These checks did not launch compilers or Fixtures.
+
+The pure callback and PLM command builders now own their argument mapping and
+are shared by producer construction and the separate authenticator. The new
+reader reauthenticated unchanged room-scroll and projectile material receipts
+(8 producers/581 references and 16 producers/545 references respectively).
+No broader native matrix was started for this refactor.

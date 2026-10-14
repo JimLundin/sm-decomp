@@ -1052,7 +1052,7 @@ fn run_bounded(
         verdict.error = Some(diagnostic[..end].into());
     }
     bounded::reconcile(8 * bounded::DEFAULT_BYTES, || {
-        family::inventory(&run, &run, &mut verdict.artifacts)?;
+        bounded::discovery(|| family::inventory(&run, &run, &mut verdict.artifacts))?;
         atomic_toml(&run.join("verdict.toml"), &verdict)?;
         let operations = collect_operations(prepared, &run, &runtime.operation_root, context)?;
         let mut receipt = NativeReceipt {
@@ -1196,14 +1196,16 @@ fn authenticate_bounded(prepared: &PreparedNative, checkout: &Path, receipt: &Na
             "native failure receipt differs"
         );
         let mut actual = BTreeMap::new();
-        family::inventory(&verdict.run, &verdict.run, &mut actual)?;
+        bounded::discovery(|| family::inventory(&verdict.run, &verdict.run, &mut actual))?;
         ensure!(actual == verdict.artifacts, "native failed artifact inventory differs");
         return Ok(verdict);
     }
-    let verdict = family::authenticate_with_source(
-        crate::family_model::AuthenticateRequest { checkout, verdict: path },
-        &prepared.pinned_source,
-    )?;
+    let verdict = bounded::discovery(|| {
+        family::authenticate_with_source(
+            crate::family_model::AuthenticateRequest { checkout, verdict: path },
+            &prepared.pinned_source,
+        )
+    })?;
     ensure!(
         verdict.family == prepared.contract.family && verdict.source.as_ref() == Some(&prepared.source),
         "native family source identity differs"
@@ -1491,7 +1493,7 @@ fn references_bounded(receipt: &NativeReceipt) -> Result<Vec<Reference>> {
         }
         Ok(())
     }
-    files(run, run, &mut result, 0)?;
+    bounded::discovery(|| files(run, run, &mut result, 0))?;
     for name in ["native-intent.toml", "native-receipt.toml"] {
         let path = output.join(name);
         if path.exists() {
@@ -1579,7 +1581,7 @@ fn parent_reservation(prepared: &PreparedNative, checkout: &Path) -> Result<u64>
 }
 
 fn tree_bytes(path: &Path) -> Result<u64> {
-    Ok(bounded::tree(path, 65536, 8 * bounded::DEFAULT_BYTES)?.1)
+    bounded::discovery(|| Ok(bounded::tree(path, 65536, 8 * bounded::DEFAULT_BYTES)?.1))
 }
 
 #[cfg(test)]
@@ -2627,6 +2629,62 @@ mod tests {
         }
         ensure!(!retained.is_empty(), "native proof has no completed receipt");
         immutable(&root.join("retained-references.toml"), toml::to_string(&retained)?.as_bytes())?;
+        Ok(())
+    }
+
+    #[test]
+    #[ignore = "audits a retained finalization failure; never publishes native acceptance or launches a producer"]
+    fn retained_complete_family_finalization_authenticates_without_acceptance() -> Result<()> {
+        let proof = PathBuf::from(std::env::var("SM_NATIVE_PROOF_ROOT")?);
+        let root = proof.join(std::env::var("SM_NATIVE_PROOF_NAME")?);
+        let checkout = PathBuf::from(std::env::var("SM_NATIVE_PROOF_SOURCE")?);
+        let prepared: PreparedNative = family::object(&root.join("prepared.toml"))?;
+        let output = root.join("run");
+        ensure!(!output.join("native-receipt.toml").exists(), "audit requires the retained finalization failure");
+        let intent: NativeIntent = family::object(&output.join("native-intent.toml"))?;
+        ensure!(now_unix_ms()? >= intent.deadline_unix_ms, "original failed family deadline is not expired");
+        let run = output.join("family");
+        let (pairs, producers, bytes) = bounded::reconcile(8 * bounded::DEFAULT_BYTES, || {
+            check_candidate(&prepared, &checkout)?;
+            ensure!(candidate_digest(&prepared, &checkout)? == intent.candidate_sha256, "retained candidate differs");
+            let verdict: Verdict = family::object(&run.join("verdict.toml"))?;
+            let mut inventory = BTreeMap::new();
+            bounded::discovery(|| family::inventory(&run, &run, &mut inventory))?;
+            ensure!(inventory == verdict.artifacts, "retained artifact inventory differs");
+            let operations = collect_operations(&prepared, &run, &intent.operation_root, &intent.context)?;
+            ensure!(operations.len() == operation_slots(&prepared, &run)?.len(), "retained producer is missing");
+            let identities = operations
+                .iter()
+                .map(|operation| Ok((operation.result.path.clone(), fs::metadata(&operation.result.path)?.modified()?)))
+                .collect::<Result<Vec<_>>>()?;
+            let bytes = evidence_bytes(&run, &operations)?;
+            ensure!(evidence_bytes(&run, &operations)? == bytes, "retained evidence extent changed");
+            let checked = bounded::discovery(|| {
+                family::authenticate_with_source(
+                    crate::family_model::AuthenticateRequest { checkout, verdict: run.join("verdict.toml") },
+                    &prepared.pinned_source,
+                )
+            })?;
+            ensure!(
+                checked.verified_cases == prepared.contract.coverage.values().map(Vec::len).sum::<usize>(),
+                "retained complete family extent differs"
+            );
+            for (path, modified) in identities {
+                ensure!(fs::metadata(path)?.modified()? == modified, "audit changed a producer result");
+            }
+            Ok((checked.verified_cases, operations.len(), bytes))
+        })?;
+        ensure!(!output.join("native-receipt.toml").exists(), "audit published native acceptance");
+        let report = BTreeMap::from([
+            ("verified_family_pairs", pairs as u64),
+            ("authenticated_producers", producers as u64),
+            ("retained_evidence_bytes", bytes),
+            ("native_acceptance_published", 0),
+        ]);
+        immutable(&root.join("retained-finalization-audit.toml"), toml::to_string(&report)?.as_bytes())?;
+        println!(
+            "Authenticated {pairs} retained Fixture pairs and {producers} producers; no native acceptance published"
+        );
         Ok(())
     }
 
