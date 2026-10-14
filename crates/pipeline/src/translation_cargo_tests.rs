@@ -75,6 +75,37 @@ fn preparation_prescribes_all_original_controls_before_accepting_a_source_closur
     assert!(error.to_string().contains("original Cargo control is missing"), "{error:#}");
 }
 
+#[test]
+fn dependency_cache_accepts_installed_layouts_without_admitting_project_artifacts() {
+    let scratch = Scratch::new();
+    let mut contract = host_contract(&scratch.0);
+    let root = scratch.0.join("dependencies");
+    let external = "debug/deps/libunicode_ident-0123456789abcdef.rlib";
+    let path = root.join(external);
+    fs::create_dir_all(path.parent().unwrap()).unwrap();
+    fs::write(path, "external dependency").unwrap();
+    contract.dependency_cache = Some(CargoClosure {
+        root: root.clone(),
+        files: BTreeMap::from([(external.into(), sha256("external dependency"))]),
+    });
+    prepare(&scratch.0, &contract).expect("installed Cargo's external library layout is admissible");
+    for project in [
+        "debug/deps/libport-0123456789abcdef.rlib",
+        "debug/.fingerprint/port-0123456789abcdef/lib-port",
+        "debug/build/port-0123456789abcdef/out/generated.rs",
+        "debug/build/port/0123456789abcdef/out/libport.rlib",
+    ] {
+        let path = root.join(project);
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(&path, "project artifact").unwrap();
+        contract.dependency_cache.as_mut().unwrap().files.insert(project.into(), sha256("project artifact"));
+        let error = prepare(&scratch.0, &contract).unwrap_err();
+        assert!(error.to_string().contains("Cargo dependency cache contains"), "{error:#}");
+        contract.dependency_cache.as_mut().unwrap().files.remove(project);
+        fs::remove_file(path).unwrap();
+    }
+}
+
 fn collect_fixture(source: &Path, destination: Option<&Path>, names: &mut BTreeMap<String, String>, prefix: &Path) {
     let mut entries = fs::read_dir(source).unwrap().map(|entry| entry.unwrap().path()).collect::<Vec<_>>();
     entries.sort();
@@ -261,21 +292,33 @@ fn real_controls(kind: CargoKind) {
         kind == CargoKind::CompactController,
     )
     .unwrap();
-    assert!(environment.passed, "{}", environment.diagnostic);
     authenticate_environment(&prerequisite, &checkout, &environment).unwrap();
+    assert_eq!(
+        prepare_environment(
+            &prerequisite,
+            &checkout,
+            &root.join("environment"),
+            &runtime,
+            &environment_context,
+            if kind == CargoKind::CompactController { 600 } else { 180 },
+            kind == CargoKind::CompactController,
+        )
+        .unwrap(),
+        environment
+    );
+    assert!(environment.passed, "{}", environment.diagnostic);
     contract.dependency_cache = environment.cache.clone();
     let prepared = prepare(&checkout, &contract).unwrap();
     fs::write(root.join("prepared.json"), serde_json::to_vec_pretty(&prepared).unwrap()).unwrap();
     let receipt = run(&prepared, &checkout, &output, &runtime, &context).unwrap();
-    assert!(receipt.passed, "{}", receipt.diagnostic);
     let verdict = authenticate(&prepared, &checkout, &receipt).unwrap();
-    let expected = if kind == CargoKind::SharedGameHost { 31 } else { 10 };
-    assert_eq!(verdict.test_count, expected);
-    assert_eq!(verdict.operations.len(), if kind == CargoKind::CompactController { 2 } else { 1 });
     let replay = run(&prepared, &checkout, &output, &runtime, &context).unwrap();
     assert_eq!(replay, receipt);
     assert_eq!(authenticate(&prepared, &checkout, &replay).unwrap(), verdict);
-
+    assert!(receipt.passed, "{}", receipt.diagnostic);
+    let expected = if kind == CargoKind::SharedGameHost { 31 } else { 10 };
+    assert_eq!(verdict.test_count, expected);
+    assert_eq!(verdict.operations.len(), if kind == CargoKind::CompactController { 2 } else { 1 });
     let protected = root.join("undeclared-input.txt");
     fs::write(&protected, "outside-the-cargo-input-closure").unwrap();
     let approved = match kind {
@@ -296,10 +339,11 @@ fn real_controls(kind: CargoKind) {
     integrated_context.operation_key = sha256("ticket10-original-cargo-integrated");
     integrated_context.phase = translation_execution::model::ExecutionPhase::Integration;
     let integrated = run(&prepared, &checkout, &root.join("integrated"), &runtime, &integrated_context).unwrap();
+    assert_eq!(run(&prepared, &checkout, &root.join("integrated"), &runtime, &integrated_context).unwrap(), integrated);
+    let integrated_verdict = authenticate(&prepared, &checkout, &integrated).unwrap();
     assert!(integrated.passed, "{}", integrated.diagnostic);
     assert_ne!(integrated.candidate_sha256, receipt.candidate_sha256);
-    assert_eq!(authenticate(&prepared, &checkout, &integrated).unwrap().test_count, expected);
-    assert_eq!(run(&prepared, &checkout, &root.join("integrated"), &runtime, &integrated_context).unwrap(), integrated);
+    assert_eq!(integrated_verdict.test_count, expected);
     authenticate(&prepared, &output.join("source"), &receipt).unwrap();
 
     if kind == CargoKind::SharedGameHost {

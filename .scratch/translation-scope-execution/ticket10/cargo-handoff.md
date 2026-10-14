@@ -104,6 +104,46 @@ including the latest full durable-intent/reference checks. Trusted authoring
 builds used `--config 'profile.dev.package.sha2.opt-level=3'` to reduce input
 hashing cost; original producer argv and command deadlines are unchanged.
 
+The sealed original compact claim confirms ownership is exactly those five
+overlaid files; it does not own `main.rs`. The installed startup fallback is
+therefore preserved without changing Submitted source. Shared-host ownership
+also includes `tools/port/game-host-projectile.toml` and
+`tools/port/game-host-room-scroll.toml`; pause ownership includes
+`tools/port/pause-equipment-render.toml`. The production builder must retain the
+complete OriginalClaim ownership even for files Cargo does not read.
+
+Cargo source closure: tracked `crates/**`, root `Cargo.toml`/`Cargo.lock`, and
+`deps/rustysnes/Cargo.toml` plus `deps/rustysnes/crates/**` for path resolution.
+Compact's `cfg(test)` includes additionally require the six pinned C files
+`deps/snesrev-sm/src/{sm_a0.c,sm_a6.c,sm_86.c,sm_80.c,sm_90.c,snes/snes.c}` and
+`tools/decomp/headless.c`. Copy actual files into the verifier snapshot, never
+mount the authoring dependency symlink.
+
+An immutable stripped copy of the current installed producer is retained as
+`/tmp/sm-ticket10-cargo-proof/bin/sm-pipeline-e6acc1e` (60,236,912 bytes). Stripping
+changes only the reviewed runtime artifact identity and reduces repeated input
+hashing; it does not prebuild candidate code or alter the original commands.
+
+The next real run, `real-05`, passed and identically replayed the installed
+compiler prerequisite, then genuinely launched the original host Cargo argv.
+Cargo's compiler launch stopped with `EPERM` before executing rustc. The isolated
+Rust 1.97 comparison in `spawn-diagnostic-01.stdout` proves an ordinary spawn
+works and adding only a no-op `pre_exec` hook fails. The corresponding host
+kernel trace `spawn-diagnostic-host-02.strace` identifies precisely
+`socketpair(AF_UNIX, SOCK_SEQPACKET|SOCK_CLOEXEC, 0)` as the spawn handshake.
+The confinement owner has a passing focused regression for that exact call;
+other socket domains/types/protocols remain denied. The failed original Cargo
+receipt and its unchanged `run` replay both authenticate.
+
+Actual installed Cargo 1.97 uses `debug/deps`, `.fingerprint` and
+`build/<package>-<hash>` paths; the authoring nightly uses
+`debug/build/<package>/<hash>`. The cache adapter now supports both and excludes
+all source package names and explicit library/binary aliases after Cargo name
+normalization. The generator admits only vendor packages/aliases. Its public
+preparation test reached red on the original layout rejection, then green;
+`cache-layout-red.stdout` and `cache-layout-green-02.stdout` retain the boundary
+proof, including refusal of project artifacts in both layouts.
+
 Offline `cargo vendor --locked --offline --versioned-dirs` succeeded at
 `/tmp/sm-ticket10-cargo-proof/vendor`: 189,236,115 logical bytes. Its exact file
 hash map is persisted in each `prepared.json`. Compiler/proof target:
@@ -113,3 +153,14 @@ Cleanup: pending completed proof runs and both utility passes; root owns final
 worktree retirement after preserving referenced source snapshots. The local
 untracked ignored `deps` symlink points to the original read-only dependencies;
 it is for authoring builds and is never mounted in a Cargo producer namespace.
+
+The completed `real-01` through `real-04` and `diagnostic-01` failures have now
+had both utility passes; all returned zero reclaimed bytes. Exact commands use
+the retained producer above with `cleanup --root <proof-root> --apply`, then
+`cleanup --root <proof-root> --deduplicate --apply`. Receipts are
+`<name>-cleanup.stdout.toml` and `<name>-deduplicate.stdout.toml` in the proof
+directory. Read-only authentication passed on all five retained roots after
+cleanup; `<name>-authenticate-after-cleanup.stdout` records each check. At this
+boundary the disposable authoring target used 3,144,560,640 allocated bytes and
+remaining filesystem space was 173,531,971,584 bytes. The target is still needed
+for remaining real proofs; final target/worktree cleanup remains pending.

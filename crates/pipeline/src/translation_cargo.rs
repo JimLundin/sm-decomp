@@ -1639,19 +1639,56 @@ fn project_packages(checkout: &Path, files: &BTreeMap<String, String>) -> Result
         {
             names.insert(name.into());
         }
+        if let Some(name) = document.get("lib").and_then(|library| library.get("name")).and_then(toml::Value::as_str) {
+            names.insert(name.into());
+        }
+        for target in document.get("bin").and_then(toml::Value::as_array).into_iter().flatten() {
+            if let Some(name) = target.get("name").and_then(toml::Value::as_str) {
+                names.insert(name.into());
+            }
+        }
     }
     Ok(names)
 }
 
 fn external_cache_path(name: &str, projects: &BTreeSet<String>) -> bool {
+    cache_package(name).is_some_and(|package| projects.iter().all(|project| project.replace('-', "_") != package))
+}
+
+fn cargo_hash(value: &str) -> bool {
+    (8..=64).contains(&value.len()) && value.bytes().all(|byte| byte.is_ascii_hexdigit())
+}
+
+fn hashed_package(value: &str) -> Option<&str> {
+    let (package, hash) = value.rsplit_once('-')?;
+    cargo_hash(hash).then_some(package)
+}
+
+fn cache_package(name: &str) -> Option<String> {
+    if !relative(name) {
+        return None;
+    }
     let parts = name.split('/').collect::<Vec<_>>();
-    relative(name)
-        && parts.len() >= 5
-        && parts[0] == "debug"
-        && parts[1] == "build"
-        && !projects.contains(parts[2])
-        && parts[3].bytes().all(|byte| byte.is_ascii_hexdigit())
-        && !parts[3].is_empty()
+    let package = match parts.as_slice() {
+        // Recent Cargo target layout groups all artifacts by package/hash.
+        ["debug", "build", package, hash, ..] if parts.len() >= 5 && cargo_hash(hash) => *package,
+        // Installed Cargo 1.97 uses the conventional fingerprint/build/deps layout.
+        ["debug", "build" | ".fingerprint", package, ..] if parts.len() >= 4 => hashed_package(package)?,
+        ["debug", "deps", artifact] => {
+            let (stem, extension) = artifact.split_once('.')?;
+            let stem = match extension {
+                "rlib" | "rmeta" | "so" | "a" => stem.strip_prefix("lib")?,
+                "d" => stem,
+                _ => return None,
+            };
+            hashed_package(stem)?
+        }
+        _ => return None,
+    };
+    if package.is_empty() || !package.bytes().all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_')) {
+        return None;
+    }
+    Some(package.replace('-', "_"))
 }
 
 fn archive_cache_files(bytes: &[u8], projects: &BTreeSet<String>) -> Result<BTreeMap<String, String>> {
@@ -1833,7 +1870,10 @@ pub(crate) fn environment_producer_cli(args: &[String]) -> Result<()> {
         if let Some(name) =
             manifest.get("package").and_then(|package| package.get("name")).and_then(toml::Value::as_str)
         {
-            vendor_names.insert(name.to_owned());
+            vendor_names.insert(name.replace('-', "_"));
+        }
+        if let Some(name) = manifest.get("lib").and_then(|library| library.get("name")).and_then(toml::Value::as_str) {
+            vendor_names.insert(name.replace('-', "_"));
         }
     }
     let mut archive = zip::ZipWriter::new(fs::File::create("/work/dependencies.zip")?);
@@ -1845,7 +1885,7 @@ pub(crate) fn environment_producer_cli(args: &[String]) -> Result<()> {
     let mut total = 0u64;
     for name in tree_files(root)? {
         if !external_cache_path(&name, &projects)
-            || !vendor_names.contains(name.split('/').nth(2).context("Cargo target package missing")?)
+            || !cache_package(&name).is_some_and(|package| vendor_names.contains(&package))
         {
             continue;
         }
