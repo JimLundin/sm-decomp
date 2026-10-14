@@ -266,7 +266,7 @@ impl References {
     }
 }
 
-fn git_bytes(checkout: &Path, arguments: &[&str]) -> Result<Vec<u8>> {
+pub(crate) fn git_bytes(checkout: &Path, arguments: &[&str]) -> Result<Vec<u8>> {
     safe(checkout)?;
     let mut command = Command::new("/usr/bin/git");
     command
@@ -360,8 +360,81 @@ fn drain_git(reader: &mut impl Read, output: &mut Vec<u8>, finished: &mut bool, 
     }
 }
 
-fn git(checkout: &Path, arguments: &[&str]) -> Result<String> {
+pub(crate) fn git(checkout: &Path, arguments: &[&str]) -> Result<String> {
     Ok(String::from_utf8(git_bytes(checkout, arguments)?)?.trim().into())
+}
+
+/// Read a prior controller's journal using that exact retained executable and
+/// its original logical role. This has bounded pipes and no producer action.
+pub(crate) fn controller_inspect(
+    executable: &Path,
+    path: &Path,
+    installed: &supervisor::Installation,
+) -> Result<::translation_execution::model::View> {
+    let mut command = Command::new(executable);
+    command
+        .args(["translation-execute", "--installation"])
+        .arg(path)
+        .arg("inspect")
+        .env_clear()
+        .env("PATH", "/usr/bin:/bin")
+        .env("SM_PIPELINE_ROOT", &installed.pipeline_root)
+        .env("SM_PIPELINE_WORKERS", "4")
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .current_dir(&installed.source_repository);
+    if let supervisor::Admission::Managed { session_id, .. } = &installed.admission {
+        command.env("CODEX_THREAD_ID", session_id);
+    }
+    unsafe {
+        command.pre_exec(|| {
+            if libc::setpgid(0, 0) != 0 {
+                return Err(std::io::Error::last_os_error());
+            }
+            Ok(())
+        });
+    }
+    let mut child = command.spawn()?;
+    let mut reaped = false;
+    let result = (|| {
+        let mut stdout = child.stdout.take().context("prior controller stdout missing")?;
+        let mut stderr = child.stderr.take().context("prior controller stderr missing")?;
+        for fd in [stdout.as_raw_fd(), stderr.as_raw_fd()] {
+            let flags = unsafe { libc::fcntl(fd, libc::F_GETFL) };
+            ensure!(
+                flags >= 0 && unsafe { libc::fcntl(fd, libc::F_SETFL, flags | libc::O_NONBLOCK) } == 0,
+                "prior controller pipe setup failed"
+            );
+        }
+        let deadline = Instant::now() + Duration::from_secs(120);
+        let (mut output, mut diagnostic) = (Vec::new(), Vec::new());
+        let (mut out_done, mut err_done) = (false, false);
+        loop {
+            drain_git(&mut stdout, &mut output, &mut out_done, MAX_BYTES as usize)?;
+            drain_git(&mut stderr, &mut diagnostic, &mut err_done, 64 * 1024)?;
+            if out_done
+                && err_done
+                && let Some(status) = child.try_wait()?
+            {
+                reaped = true;
+                ensure!(
+                    status.success(),
+                    "prior controller inspection failed: {}",
+                    String::from_utf8_lossy(&diagnostic)
+                );
+                return toml::from_str(&String::from_utf8(output)?).context("invalid prior controller view");
+            }
+            ensure!(Instant::now() < deadline, "prior controller inspection deadline exhausted");
+            std::thread::sleep(Duration::from_millis(5));
+        }
+    })();
+    if !reaped {
+        unsafe { libc::kill(-(child.id() as i32), libc::SIGKILL) };
+        let _ = child.kill();
+        let _ = child.wait();
+    }
+    result
 }
 
 fn current_authority(migration: &Migration, references: &mut References) -> Result<AuthorityView> {
@@ -774,7 +847,11 @@ fn native_admission(
                     if commit == &original.source_commit)))
             && original.job.kind == assignment::Kind::Implement
             && original.agent.is_some()
-            && original.claim.coordinator == migration.coordinator,
+            && (original.claim.coordinator == migration.coordinator
+                || (matches!(&installed.contract, supervisor::Contract::Original { contract }
+                    if contract.original_claim == migrated.original_claim)
+                    && migrated.execution == Some(MigrationExecution::ImportedSubmission)
+                    && same_claim(&migrated.claim, &original.claim))),
         "managed execution requires an original running implementation or exact imported submission"
     );
     installed_binding(migration, migrated, installed)?;
@@ -797,6 +874,72 @@ fn native_admission(
             families: vec![],
             limitations: admitted.limitations,
             additional_references: admitted.references,
+        });
+    }
+    if let supervisor::Contract::Original { contract } = &installed.contract {
+        if validate_scope {
+            validate_projection_records_before_intent(migration, installed)?;
+            validate_imported_linkage(migration, original)?;
+        }
+        let prepared = crate::translation_original::prepare(contract, &installed.pinned_source)?;
+        ensure!(
+            prepared.original == *original
+                && prepared.dependencies_sha256 == installed.policy.dependencies_sha256
+                && prepared.verification_sha256 == installed.policy.verification_sha256
+                && prepared.pinned_c_sha256 == installed.policy.pinned_c_sha256
+                && contract.kind.stages() == installed.policy.verification_stages,
+            "original acceptance differs from its exact frozen policy"
+        );
+        let gameplay = contract.kind == crate::translation_original::OriginalKind::PauseEquipment;
+        let (inventory, source_revision, routines) = if gameplay {
+            let declared: native::NativeContract =
+                crate::translation_original::read(&contract.families["pause-equipment-render"])?;
+            let inventory_path = if declared.source_inventory.file.is_absolute() {
+                declared.source_inventory.file.clone()
+            } else {
+                contract.verification_source.root.join(&declared.source_inventory.file)
+            };
+            let inventory = retention::seal_file(&inventory_path, MAX_BYTES)?;
+            ensure!(inventory.sha256 == declared.source_inventory.sha256, "original pause inventory changed");
+            let value: toml::Value = object(&inventory_path)?;
+            let revision = value["source_identity"]["revision"]
+                .as_str()
+                .context("original pause source revision missing")?
+                .to_owned();
+            let routines = contract
+                .families
+                .values()
+                .map(|reference| {
+                    Ok(crate::translation_original::read::<native::NativeContract>(reference)?
+                        .coverage
+                        .into_keys()
+                        .collect::<Vec<_>>())
+                })
+                .collect::<Result<Vec<_>>>()?
+                .into_iter()
+                .flatten()
+                .collect::<BTreeSet<_>>()
+                .into_iter()
+                .collect();
+            (Some(inventory), Some(revision), routines)
+        } else {
+            (None, None, vec![])
+        };
+        return Ok(NativeAdmission {
+            domain: Some(if gameplay { "original-pause-equipment-v1" } else { "legacy-infrastructure-v1" }.into()),
+            scope: contract.original_claim.clone(),
+            inventory,
+            source_revision,
+            routines,
+            families: contract.families.keys().cloned().collect(),
+            limitations: contract.kind.limitations(),
+            additional_references: contract
+                .families
+                .values()
+                .cloned()
+                .chain(std::iter::once(contract.cargo.clone()))
+                .chain(contract.compact.iter().cloned())
+                .collect(),
         });
     }
     if validate_scope {
@@ -899,6 +1042,9 @@ fn native_admission(
                 contract.family != *focused_family,
                 "reviewed historical Offline proof cannot replace the original focused native Scope admission"
             ),
+            native::NativeProvenance::ReviewedCatalog { .. } => {
+                bail!("reviewed catalog recipes require a distinct original composite contract")
+            }
         }
         ensure!(!contract.coverage.is_empty(), "managed native provenance omits an original family routine");
         if validate_scope {
@@ -1283,11 +1429,12 @@ fn managed_migration(installed: &supervisor::Installation) -> Result<(PathBuf, M
     let registered = registry.as_ref().is_some_and(|registry| {
         registry.migrations.iter().any(|reference| reference.path == path && reference.sha256 == asset.sha256)
     });
+    let successor = crate::translation_continuation::registered(installed, &path, &asset.sha256)?;
     ensure!(
         migration.state == "active"
             && migration.checkout == *checkout
             && digest(&path)? == asset.sha256
-            && (registered || digest(&checkout.join(FENCE)).is_ok_and(|digest| digest == asset.sha256)),
+            && (registered || successor || digest(&checkout.join(FENCE)).is_ok_and(|digest| digest == asset.sha256)),
         "reviewed deterministic migration is inactive, stale or not installed"
     );
     let migrated = migration
@@ -1297,10 +1444,11 @@ fn managed_migration(installed: &supervisor::Installation) -> Result<(PathBuf, M
         .context("policy is absent from imported original lineage")?
         .clone();
     ensure!(
-        !registry.as_ref().is_some_and(|registry| registry
-            .blocked
-            .iter()
-            .any(|claim| claim.effort == migration.effort && claim.claim == migrated.claim)),
+        successor
+            || !registry.as_ref().is_some_and(|registry| registry
+                .blocked
+                .iter()
+                .any(|claim| claim.effort == migration.effort && claim.claim == migrated.claim)),
         "this migrated claim is explicitly stopped at its preserved acceptance prerequisite"
     );
     installed_binding(&migration, &migrated, installed)?;
@@ -1381,6 +1529,9 @@ pub(crate) fn admit_installation(installed: &supervisor::Installation) -> Result
 
 fn admit_installation_inner(installed: &supervisor::Installation) -> Result<()> {
     let (_path, migration, migrated) = managed_migration(installed)?;
+    if crate::translation_continuation::historical(installed)?.is_some() {
+        return Ok(());
+    }
     let _lock = assignment::mutation_lock(&migration.checkout)?;
     current_role(&migration)?;
     let ledger = current_ledger(&migration)?;
@@ -1645,6 +1796,37 @@ fn completion_gates(
             && completion.gates.iter().all(|gate| gate.passed),
         "managed completion is not the exact authenticated successful finalization"
     );
+    if let supervisor::Contract::Original { contract: original } = &installed.contract {
+        ensure!(
+            authenticated.original_gates.len() == original.kind.stages().len() * 2,
+            "original composite completion omitted a source stage"
+        );
+        for phase in [ExecutionPhase::Candidate, ExecutionPhase::Integration] {
+            let source =
+                if phase == ExecutionPhase::Candidate { &completion.candidate } else { &completion.integrated };
+            for stage in original.kind.stages() {
+                let gates = authenticated
+                    .original_gates
+                    .iter()
+                    .filter(|gate| gate.phase == phase && gate.stage == stage)
+                    .collect::<Vec<_>>();
+                ensure!(gates.len() == 1, "original completion duplicated or omitted a required source gate");
+                let gate = gates[0];
+                ensure!(
+                    gate.source == *source
+                        && gate.receipt.source == *source
+                        && gate.receipt.passed
+                        && gate.verdict.passed
+                        && sealed(&gate.prepared.contract)? == sealed(original)?
+                        && gate.prepared.dependencies_sha256 == installed.policy.dependencies_sha256
+                        && gate.prepared.verification_sha256 == installed.policy.verification_sha256,
+                    "original composite evidence changed its requirements or source identity"
+                );
+                crate::translation_original::authenticate(&gate.prepared, &gate.receipt)?;
+            }
+        }
+        return Ok(());
+    }
     let supervisor::Contract::Native { contracts, focused_family, .. } = &installed.contract else {
         bail!("managed completion requires native gameplay evidence")
     };
@@ -1903,17 +2085,30 @@ fn validate_projection_records_before_intent(
     migration: &Migration,
     installed: &supervisor::Installation,
 ) -> Result<()> {
+    let preserved = crate::translation_continuation::preserved(installed)?;
+    let mut allowed = preserved.iter().map(|reference| reference.path.clone()).collect::<BTreeSet<_>>();
+    for reference in &preserved {
+        retention::authenticate_reference(reference, 1024 * 1024 * 1024)?;
+    }
     ensure!(
         installed.integration_baseline == git(&migration.checkout, &["rev-parse", "HEAD"])?
-            && git(&migration.checkout, &["diff", "--name-only", "HEAD"])?.is_empty(),
-        "managed fresh publication requires clean unchanged tracked host source"
+            && git(&migration.checkout, &["diff", "--cached", "--name-only"])?.is_empty(),
+        "managed fresh publication requires unchanged tracked host source and index"
     );
+    for name in git_bytes(&migration.checkout, &["diff", "--name-only", "--no-renames", "-z", "HEAD", "--"])?
+        .split(|byte| *byte == 0)
+        .filter(|name| !name.is_empty())
+    {
+        ensure!(
+            allowed.contains(&migration.checkout.join(std::str::from_utf8(name)?)),
+            "managed fresh publication found an unreviewed tracked modification"
+        );
+    }
     let roots = migration.checkout.join(format!(
         ".scratch/{}/receipts/deterministic/{}",
         migration.effort,
         sealed(&installed.policy)?
     ));
-    let mut allowed = BTreeSet::new();
     for attempt in 1..=installed.policy.budgets.max_attempts {
         let root = roots.join(format!("attempt-{attempt:04}"));
         let mut draft_path = root.join("draft.json");
@@ -2084,7 +2279,9 @@ fn validate_projection_records_before_intent(
     {
         let path = migration.checkout.join(std::str::from_utf8(name)?);
         ensure!(allowed.contains(&path), "unrelated dirty host file before managed publication intent");
-        bytes(&path, MAX_BYTES)?;
+        if !preserved.iter().any(|reference| reference.path == path) {
+            bytes(&path, MAX_BYTES)?;
+        }
     }
     Ok(())
 }
@@ -2669,7 +2866,11 @@ fn controller_projection(
         Ok(())
     }
     inspect(&root, &paths, &mut 0)?;
-    Ok(ControllerProjection { paths: paths.into_iter().collect(), references })
+    let preserved = crate::translation_continuation::preserved(installed)?
+        .into_iter()
+        .filter(|reference| !paths.contains(&reference.path))
+        .collect();
+    Ok(ControllerProjection { paths: paths.into_iter().collect(), references, preserved })
 }
 
 pub(crate) fn publish(
@@ -3042,6 +3243,16 @@ fn authenticate_accepted(
     accepted: &AcceptedAdmission,
     projections: bool,
 ) -> Result<()> {
+    authenticate_accepted_with_history(installed, migration, accepted, projections, None)
+}
+
+fn authenticate_accepted_with_history(
+    installed: &supervisor::Installation,
+    migration: &Migration,
+    accepted: &AcceptedAdmission,
+    projections: bool,
+    history: Option<(&Reference, &str)>,
+) -> Result<()> {
     ensure!(
         accepted.schema == "translation-managed-publication-v1"
             && accepted.domain_sha256 == domain_identity(migration)?
@@ -3165,7 +3376,16 @@ fn authenticate_accepted(
             && intent.existing_references == accepted.existing_references,
         "managed existing finalization closure identity changed"
     );
-    let ledger = current_ledger(migration)?;
+    let ledger = if let Some((reference, head)) = history {
+        retention::authenticate_reference(reference, MAX_BYTES)?;
+        ensure!(
+            head == accepted.completion.integrated.commit,
+            "historical publication source differs from its accepted integration"
+        );
+        object(&reference.path)?
+    } else {
+        current_ledger(migration)?
+    };
     check_intent_queue(installed, migration, &intent, &ledger)?;
     for update in [&accepted.submission, &accepted.integration] {
         let assignment::Update::Finished { claim, result } = update else {
@@ -3196,7 +3416,6 @@ fn authenticate_accepted(
             assignment::authenticate_admitted_ticket(&migration.checkout, &migration.effort, entry)?;
         }
     }
-    let controller = controller_projection(installed, migration, &intent, Some(accepted))?;
     let accepted_path =
         publication_root(migration, &installed.policy, accepted.completion.attempt)?.join("accepted.json");
     let accepted_path = if accepted_path.exists() { accepted_path } else { accepted_path.with_extension("pending") };
@@ -3204,13 +3423,59 @@ fn authenticate_accepted(
         json_record::<AcceptedAdmission>(&accepted_path)? == *accepted,
         "managed accepted controller projection changed"
     );
-    supervisor::authenticate_managed_source(installed, &accepted.completion, &authenticated, &controller)?;
+    if history.is_none() {
+        let controller = controller_projection(installed, migration, &intent, Some(accepted))?;
+        supervisor::authenticate_managed_source(installed, &accepted.completion, &authenticated, &controller)?;
+    }
     if projections {
         if let Some(plan) = &intent.progress {
             progress::authenticate_admitted(&migration.checkout, plan)?;
         }
     }
-    current_role(migration)
+    if history.is_none() {
+        current_role(migration)?;
+    }
+    Ok(())
+}
+
+pub(crate) fn capture_publication(
+    installed: &supervisor::Installation,
+    completion: &Completion,
+) -> Result<(Reference, ControllerProjection)> {
+    let (_, migration, _) = managed_migration(installed)?;
+    let _lock = assignment::mutation_lock(&migration.checkout)?;
+    let path = publication_root(&migration, &installed.policy, completion.attempt)?.join("accepted.json");
+    let reference = retention::seal_file(&path, MAX_BYTES)?;
+    let accepted: AcceptedAdmission = object(&path)?;
+    ensure!(accepted.completion == *completion, "terminal capture changed accepted completion");
+    authenticate_accepted(installed, &migration, &accepted, true)?;
+    let intent: AdmissionIntent = object(&accepted.intent.path)?;
+    Ok((reference, controller_projection(installed, &migration, &intent, Some(&accepted))?))
+}
+
+/// This authenticates a sealed past terminal queue, not the current queue. It
+/// cannot admit source publication or repair mutable projections after a later
+/// original job has advanced them.
+pub(crate) fn authenticate_frozen_publication(
+    installed: &supervisor::Installation,
+    accepted: &Reference,
+    ledger: &Reference,
+    head: &str,
+) -> Result<()> {
+    let supervisor::Admission::Managed { checkout, migration: asset, .. } = &installed.admission else {
+        bail!("historical original publication requires managed lineage");
+    };
+    let path = if asset.file.is_absolute() { asset.file.clone() } else { checkout.join(&asset.file) };
+    ensure!(digest(&path)? == asset.sha256, "historical migration changed");
+    let migration: Migration = read(&path)?;
+    retention::authenticate_reference(accepted, MAX_BYTES)?;
+    let value: AcceptedAdmission = object(&accepted.path)?;
+    ensure!(
+        accepted.path
+            == publication_root(&migration, &installed.policy, value.completion.attempt)?.join("accepted.json"),
+        "historical accepted publication location changed"
+    );
+    authenticate_accepted_with_history(installed, &migration, &value, false, Some((ledger, head)))
 }
 
 fn repair_accepted(
@@ -3254,6 +3519,19 @@ fn authenticate_publication_inner(
     completion: &Completion,
     publication: &ManagedPublication,
 ) -> Result<()> {
+    if let Some(terminal) = crate::translation_continuation::historical(installed)? {
+        ensure!(
+            terminal.accepted == publication.accepted
+                && matches!(&terminal.view.state, ::translation_execution::model::State::Complete { completion: saved, .. } if **saved == *completion),
+            "historical publication changed its exact accepted completion"
+        );
+        let accepted: AcceptedAdmission = object(&terminal.accepted.path)?;
+        ensure!(
+            publication_value(&terminal.accepted.path, &accepted, &installed.policy)? == *publication,
+            "historical retained publication identity changed"
+        );
+        return Ok(());
+    }
     let (_, migration, _) = managed_migration(installed)?;
     let _lock = assignment::mutation_lock(&migration.checkout)?;
     current_role(&migration)?;
@@ -3285,6 +3563,9 @@ fn resume_publication_inner(
     completion: &Completion,
     publication: &ManagedPublication,
 ) -> Result<()> {
+    if crate::translation_continuation::historical(installed)?.is_some() {
+        return authenticate_publication_inner(installed, completion, publication);
+    }
     let (_, migration, _) = managed_migration(installed)?;
     let _lock = assignment::mutation_lock(&migration.checkout)?;
     current_role(&migration)?;

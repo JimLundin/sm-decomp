@@ -393,6 +393,7 @@ fn tracked_controller_projection_changes_only_declared_paths_and_preserves_commi
     let mut controller = checkout::ControllerProjection {
         paths: vec![ledger.clone(), future.clone()],
         references: vec![translation_execution::retention::seal_file(&ledger, 4096).unwrap()],
+        ..Default::default()
     };
     let root = project.root.join("host-publication");
     let publish_current = |controller: &checkout::ControllerProjection| {
@@ -466,6 +467,52 @@ fn tracked_controller_projection_changes_only_declared_paths_and_preserves_commi
     );
     assert_eq!(fs::read_to_string(&ledger).unwrap(), "managed claim integrated\n");
     assert_eq!(git(&repository, &["diff", "--cached", "--name-only"]), "");
+}
+
+#[test]
+fn source_publication_preserves_frozen_preexisting_metadata_and_rejects_changed_history() {
+    let project = Project::new();
+    let repository = project.root.join("repository");
+    let (candidate, integrated) = publication_archives(&project);
+    let history = repository.join(".scratch/retained-original.bin");
+    fs::create_dir_all(history.parent().unwrap()).unwrap();
+    fs::write(&history, "preexisting historical evidence").unwrap();
+    let reference = translation_execution::retention::seal_file(&history, 4096).unwrap();
+    let controller: checkout::ControllerProjection = serde_json::from_value(serde_json::json!({
+        "paths": [], "references": [], "preserved": [reference]
+    }))
+    .unwrap();
+    let root = project.root.join("publication-with-history");
+    let publish = |controller: &checkout::ControllerProjection| {
+        checkout::publish_revisions_with_controller_until(
+            &repository,
+            &candidate,
+            &integrated,
+            &publication_context(),
+            &project.paths,
+            &root,
+            controller,
+            now_ms() + 120_000,
+        )
+    };
+    publish(&controller).unwrap();
+    checkout::authenticate_shared_revision_until(
+        &repository,
+        &integrated,
+        &project.paths,
+        &controller,
+        now_ms() + 120_000,
+    )
+    .unwrap();
+    assert_eq!(fs::read_to_string(&history).unwrap(), "preexisting historical evidence");
+    fs::write(&history, "changed historical evidence").unwrap();
+    assert!(publish(&controller).is_err());
+    let changed = translation_execution::retention::seal_file(&history, 4096).unwrap();
+    let changed: checkout::ControllerProjection = serde_json::from_value(serde_json::json!({
+        "paths": [], "references": [], "preserved": [changed]
+    }))
+    .unwrap();
+    assert!(publish(&changed).is_err(), "a retry cannot adopt newly sealed historical bytes");
 }
 
 #[test]

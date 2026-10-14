@@ -1747,6 +1747,10 @@ pub fn publish_revisions(
 pub struct ControllerProjection {
     pub paths: Vec<PathBuf>,
     pub references: Vec<retention::Reference>,
+    /// Pre-existing retained metadata frozen by an explicit continuation.
+    /// These hashes cannot change during source publication or its recovery.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub preserved: Vec<retention::Reference>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -2050,6 +2054,8 @@ struct SourcePublicationIntent {
     index_marker: retention::Reference,
     controller_paths: Vec<PathBuf>,
     initial_controller_references: Vec<retention::Reference>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    preserved: Vec<retention::Reference>,
 }
 
 fn authenticate_controller_projection(
@@ -2107,6 +2113,28 @@ fn authenticate_controller_projection(
         } else {
             ensure!(!references.contains_key(&path), "controller projection reference lacks current material");
         }
+    }
+    ensure!(controller.preserved.len() <= 4096, "preserved historical metadata inventory exceeded");
+    let mut preserved_bytes = 0u64;
+    for reference in &controller.preserved {
+        let path = &reference.path;
+        protected(path)?;
+        let name = path.strip_prefix(repository)?.to_str().context("preserved metadata path is not UTF8")?;
+        ensure!(
+            relative_file(name)
+                && Path::new(name).starts_with(".scratch")
+                && !path.starts_with(metadata)
+                && !metadata.starts_with(path)
+                && approved.iter().all(|source| {
+                    let source = repository.join(source);
+                    !path.starts_with(&source) && !source.starts_with(path)
+                })
+                && paths.insert(name.into()),
+            "preserved metadata overlaps mutable or source ownership"
+        );
+        preserved_bytes = preserved_bytes.checked_add(reference.bytes).context("preserved metadata extent overflow")?;
+        ensure!(preserved_bytes <= MAX_SHARED_SOURCE_BYTES, "preserved metadata byte budget exceeded");
+        authenticate_reference(reference, MAX_SHARED_SOURCE_BYTES)?;
     }
     Ok(paths)
 }
@@ -2422,7 +2450,7 @@ fn publish_revisions_inner(
         "source publication state overlaps shared Git metadata"
     );
     let mut controller_names = authenticate_controller_projection(repository, &metadata, &approved, controller)?;
-    for path in &controller.paths {
+    for path in controller.paths.iter().chain(controller.preserved.iter().map(|reference| &reference.path)) {
         ensure!(
             !path.starts_with(publication_root) && !publication_root.starts_with(path),
             "caller controller projection overlaps publisher-owned metadata"
@@ -2469,6 +2497,7 @@ fn publish_revisions_inner(
                 index_marker: marker,
                 controller_paths,
                 initial_controller_references: controller.references.clone(),
+                preserved: controller.preserved.clone(),
             };
             same_pending(&pending_intent, &serde_json::to_vec(&prospective)?)?;
             if let Ok(relative) = pending_intent.strip_prefix(repository) {
@@ -2517,6 +2546,7 @@ fn publish_revisions_inner(
         index_marker: marker,
         controller_paths,
         initial_controller_references,
+        preserved: controller.preserved.clone(),
     };
     if let Some(saved) = existing {
         ensure!(saved == intent, "source publication retry changed its sealed intent");

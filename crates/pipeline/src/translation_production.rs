@@ -652,6 +652,9 @@ pub(crate) fn cli(args: &[String]) -> Result<()> {
         ensure!(matches!(args[2].as_str(), "status" | "recover" | "run"), "activation requires an exact --request");
         let root = Path::new(&args[1]);
         bounded::safe(root)?;
+        if crate::translation_continuation::launch(root, &args[2])? {
+            return Ok(());
+        }
         read_registry(root)?
             .context("production registry is absent; use --request to activate or recover")?
             .request

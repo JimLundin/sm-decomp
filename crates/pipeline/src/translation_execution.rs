@@ -3,7 +3,7 @@
 //! worker interface carries only the immutable capsule and source replacements.
 use crate::{
     affected, cleanup, digest, emit, family, family_model::Asset, translation_infrastructure as infrastructure,
-    translation_native as native,
+    translation_native as native, translation_original as original,
 };
 use ::translation_execution::{
     self as execution, ExecutionAdapter, FinalizationJournal, PublicationJournal, Supervisor, checkout,
@@ -54,6 +54,7 @@ pub(crate) enum Contract {
     Native { contracts: Vec<native::NativeContract>, catalog_sha256: String, focused_family: String },
     Infrastructure { contract: infrastructure::InfrastructureContract },
     Legacy { contract: crate::translation_legacy::LegacyContract },
+    Original { contract: original::OriginalContract },
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -104,6 +105,7 @@ pub(crate) struct Installation {
 enum Prepared {
     Native { families: Vec<native::PreparedNative> },
     Infrastructure { prepared: infrastructure::PreparedInfrastructure },
+    Original { prepared: original::PreparedOriginal },
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -118,6 +120,15 @@ enum Receipt {
         prepared: infrastructure::PreparedInfrastructure,
         source: PathBuf,
         receipt: infrastructure::InfrastructureReceipt,
+    },
+    Original {
+        prepared: original::PreparedOriginal,
+        receipt: original::OriginalReceipt,
+    },
+    OriginalEnvironment {
+        prepared: crate::translation_cargo::PreparedCargo,
+        source: PathBuf,
+        receipt: crate::translation_cargo::CargoEnvironmentReceipt,
     },
 }
 
@@ -147,7 +158,17 @@ pub(crate) struct AuthenticatedCompletion {
     pub candidate_revision: checkout::RevisionArchive,
     pub integrated_revision: checkout::RevisionArchive,
     pub native_gates: Vec<AuthenticatedNativeGate>,
+    pub original_gates: Vec<AuthenticatedOriginalGate>,
     pub references: Vec<Reference>,
+}
+
+pub(crate) struct AuthenticatedOriginalGate {
+    pub phase: ExecutionPhase,
+    pub stage: VerificationStage,
+    pub source: SourceSnapshot,
+    pub prepared: original::PreparedOriginal,
+    pub receipt: original::OriginalReceipt,
+    pub verdict: original::OriginalVerdict,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -332,6 +353,21 @@ pub(crate) fn installation_identity(installation: &Installation) -> Result<Strin
         let domain: crate::translation_migration::Migration = read(&path)?;
         migration.sha256 = crate::translation_migration::domain_identity(&domain)?;
     }
+    sealed(&("installed-translation-supervisor-v1", canonical))
+}
+
+/// Preparation can bind the semantic domain before publishing its derived
+/// policy seal. The deployed bytes are still checked at every admission.
+pub(crate) fn installation_identity_in_domain(
+    installation: &Installation,
+    domain: &crate::translation_migration::Migration,
+) -> Result<String> {
+    let mut canonical = installation.clone();
+    canonical.policy.adapter_sha256 = "0".repeat(64);
+    let Admission::Managed { migration, .. } = &mut canonical.admission else {
+        bail!("original successor requires managed original lineage");
+    };
+    migration.sha256 = crate::translation_migration::domain_identity(domain)?;
     sealed(&("installed-translation-supervisor-v1", canonical))
 }
 
@@ -696,6 +732,9 @@ impl Adapter {
                 (Prepared::Infrastructure { prepared }, Receipt::Infrastructure { prepared: prior, receipt, .. }) => {
                     receipt.passed && sealed(prepared)? == sealed(prior)?
                 }
+                (Prepared::Original { prepared }, Receipt::OriginalEnvironment { prepared: prior, receipt, .. }) => {
+                    receipt.passed && prepared.cargo == *prior
+                }
                 _ => false,
             };
             ensure!(matches, "repair baseline readiness differs from frozen preparation");
@@ -704,6 +743,7 @@ impl Adapter {
         let expected = match prepared {
             Prepared::Native { families } => families.len(),
             Prepared::Infrastructure { .. } => 1,
+            Prepared::Original { .. } => 1,
         };
         ensure!(receipts.len() == expected, "repair baseline readiness is incomplete");
         Ok(receipts)
@@ -795,6 +835,40 @@ impl Adapter {
             max_output_bytes: self.installed.max_gate_bytes,
         }
     }
+    fn original_runtime(&self, deadline: u64) -> Result<original::StrictRuntime> {
+        let Contract::Original { contract } = &self.installed.contract else {
+            bail!("original runtime requires a composite contract");
+        };
+        retention::authenticate_reference(&contract.cargo_executable, original::MAX_SOURCE)?;
+        let cargo = contract.cargo_executable.path.clone();
+        let mut native = self.native_runtime();
+        native.deadline_unix_ms = Some(deadline);
+        Ok(original::StrictRuntime {
+            native,
+            cargo: crate::translation_cargo::StrictRuntime {
+                helper: self.installed.helper.path.clone(),
+                rustc: self.installed.rustc.path.clone(),
+                cargo,
+                producer: self.installed.controller.path.clone(),
+                operation_root: self.operations(),
+                pipeline_root: self.installed.pipeline_root.clone(),
+                workers: self.installed.workers,
+                gate_timeout_seconds: self.installed.policy.budgets.gate_timeout_seconds,
+                max_output_bytes: self.installed.max_gate_bytes,
+                deadline_unix_ms: Some(deadline),
+            },
+            compact: crate::translation_compact::StrictRuntime {
+                helper: self.installed.helper.path.clone(),
+                producer: self.installed.controller.path.clone(),
+                operation_root: self.operations(),
+                pipeline_root: self.installed.pipeline_root.clone(),
+                workers: self.installed.workers,
+                gate_timeout_seconds: self.installed.policy.budgets.gate_timeout_seconds,
+                deadline_unix_ms: Some(deadline),
+                max_output_bytes: self.installed.max_gate_bytes,
+            },
+        })
+    }
     fn authenticate_receipt(&self, receipt: &Receipt) -> Result<()> {
         match receipt {
             Receipt::Native { prepared, source, receipt } => {
@@ -803,6 +877,12 @@ impl Adapter {
             Receipt::Infrastructure { prepared, source, receipt } => {
                 infrastructure::authenticate(prepared, source, receipt)?;
             }
+            Receipt::Original { prepared, receipt } => {
+                original::authenticate(prepared, receipt)?;
+            }
+            Receipt::OriginalEnvironment { prepared, source, receipt } => {
+                crate::translation_cargo::authenticate_environment(prepared, source, receipt)?;
+            }
         }
         Ok(())
     }
@@ -810,6 +890,8 @@ impl Adapter {
         match receipt {
             Receipt::Native { receipt, .. } => native::references(receipt),
             Receipt::Infrastructure { receipt, .. } => infrastructure::references(receipt),
+            Receipt::Original { prepared, receipt } => original::references(prepared, receipt),
+            Receipt::OriginalEnvironment { receipt, .. } => crate::translation_cargo::environment_references(receipt),
         }
     }
     fn reusable_receipt(
@@ -862,8 +944,15 @@ impl Adapter {
         Ok(None)
     }
     fn preserve_receipt(&self, receipt: &mut Receipt) -> Result<()> {
+        if matches!(receipt, Receipt::Original { .. } | Receipt::OriginalEnvironment { .. }) {
+            // Composite producers consumed an immutable source overlay which
+            // already survives retirement of both Git verification checkouts.
+            return self.authenticate_receipt(receipt);
+        }
         let source = match receipt {
             Receipt::Native { source, .. } | Receipt::Infrastructure { source, .. } => source.clone(),
+            Receipt::Original { .. } => unreachable!(),
+            Receipt::OriginalEnvironment { .. } => unreachable!(),
         };
         self.authenticate_receipt(receipt)?;
         if source.join(".git").is_dir() {
@@ -873,6 +962,8 @@ impl Adapter {
             checkout::retain_source(&source, &retained, &paths)?;
             match receipt {
                 Receipt::Native { source, .. } | Receipt::Infrastructure { source, .. } => *source = retained,
+                Receipt::Original { .. } => unreachable!(),
+                Receipt::OriginalEnvironment { .. } => unreachable!(),
             }
         }
         self.authenticate_receipt(receipt)
@@ -901,8 +992,14 @@ impl Adapter {
         self.verify_record_seal(record)?;
         let mut receipts = record.receipts.clone();
         for receipt in &mut receipts {
+            if matches!(receipt, Receipt::Original { .. } | Receipt::OriginalEnvironment { .. }) {
+                self.authenticate_receipt(receipt)?;
+                continue;
+            }
             let source = match receipt {
                 Receipt::Native { source, .. } | Receipt::Infrastructure { source, .. } => source.clone(),
+                Receipt::Original { .. } => unreachable!(),
+                Receipt::OriginalEnvironment { .. } => unreachable!(),
             };
             if !source.exists() {
                 let intent: FinalIntent = read(&self.attempt(record.context.attempt).join("finalization-intent.json"))?;
@@ -966,6 +1063,7 @@ impl Adapter {
                 paths.into_iter().collect::<Vec<_>>()
             }
             Prepared::Infrastructure { prepared } => prepared.contract.source_files.keys().cloned().collect(),
+            Prepared::Original { prepared } => prepared.original.source_files.keys().cloned().collect(),
         };
         names.into_iter().map(|name| Ok((name.clone(), digest(&root.join(name))?))).collect()
     }
@@ -1056,6 +1154,11 @@ impl Adapter {
             Contract::Native { .. } => vec!["translated", "verified", "integrated"],
             Contract::Infrastructure { .. } => vec!["infrastructure-tested", "infrastructure-integrated"],
             Contract::Legacy { .. } => vec![],
+            Contract::Original { contract } => match contract.kind {
+                original::OriginalKind::SharedGameHost => vec!["infrastructure-tested", "infrastructure-integrated"],
+                original::OriginalKind::CompactController => vec!["diagnostic-tested", "infrastructure-integrated"],
+                original::OriginalKind::PauseEquipment => vec!["translated", "verified", "integrated"],
+            },
         };
         let limitations = match &self.installed.admission {
             Admission::IsolatedProof { limitations } => limitations.clone(),
@@ -1130,9 +1233,7 @@ impl Adapter {
         Ok(record)
     }
     fn finalized_journal_bytes(&self, final_record: &FinalRecord) -> Result<u64> {
-        let manifest: serde_json::Value = read(&final_record.retention.manifest.path)?;
-        let retained: Vec<Retained> =
-            serde_json::from_value(manifest.get("retained").context("retention closure missing")?.clone())?;
+        let retained = retention::retained_entries(&final_record.retention)?;
         let root = self.run_root.join("journal");
         retained.iter().filter(|item| item.reference.path.starts_with(&root)).try_fold(0u64, |bytes, item| {
             bytes.checked_add(item.reference.bytes).context("journal retained extent overflow")
@@ -1294,6 +1395,16 @@ impl Adapter {
                             )?,
                         }
                     }
+                    Contract::Original { contract } => {
+                        let prepared = original::prepare(contract, &self.installed.pinned_source)?;
+                        ensure!(
+                            prepared.original.source_commit == policy.baseline_commit
+                                && prepared.original.source_files == policy.approved_files
+                                && contract.kind.stages() == policy.verification_stages,
+                            "original composite differs from the imported submission policy"
+                        );
+                        Prepared::Original { prepared }
+                    }
                 };
                 write_once(&prepared_path, &prepared)?;
                 prepared
@@ -1308,6 +1419,11 @@ impl Adapter {
                     prepared.dependencies_sha256.clone(),
                     prepared.verification_sha256.clone(),
                     sha256("infrastructure-no-actual-c-v1"),
+                ),
+                Prepared::Original { prepared } => (
+                    prepared.dependencies_sha256.clone(),
+                    prepared.verification_sha256.clone(),
+                    prepared.pinned_c_sha256.clone(),
                 ),
             };
             ensure!(
@@ -1363,6 +1479,38 @@ impl Adapter {
                     ready_receipts.push(Receipt::Infrastructure {
                         prepared: prepared.clone(),
                         source: candidate.clone(),
+                        receipt,
+                    });
+                }
+                Prepared::Original { prepared } => {
+                    // Import the exact installed runtime before the original
+                    // 60-second control deadline. This executes no test and
+                    // does not grant candidate or integrated acceptance.
+                    self.reserve(
+                        &context.operation_key,
+                        "original-runtime-preparation",
+                        original::ENVIRONMENT_CAPACITY,
+                    )?;
+                    let overlay = original::overlay(prepared, &candidate, &source, &ready.join("input"))?;
+                    let mut child = context.clone();
+                    child.operation_key = sealed(&(&context.operation_key, "original-runtime-preparation"))?;
+                    let mut runtime = self.original_runtime(stage_deadline)?;
+                    runtime.cargo.max_output_bytes = original::CARGO_CAPACITY;
+                    let receipt = crate::translation_cargo::prepare_environment(
+                        &prepared.cargo,
+                        &overlay.root,
+                        &ready.join("environment"),
+                        &runtime.cargo,
+                        &child,
+                        600,
+                        false,
+                    )?;
+                    if !receipt.passed {
+                        failed = Some(format!("original Cargo runtime preparation stopped: {}", receipt.diagnostic));
+                    }
+                    ready_receipts.push(Receipt::OriginalEnvironment {
+                        prepared: prepared.cargo.clone(),
+                        source: overlay.root,
                         receipt,
                     });
                 }
@@ -1520,6 +1668,10 @@ impl ExecutionAdapter for Adapter {
         capsule: &RewriteCapsule,
         replacements: &SourceReplacements,
     ) -> Result<SourceSnapshot> {
+        ensure!(
+            !matches!(self.installed.contract, Contract::Original { .. }),
+            "original Submitted source cannot enter a rewrite step"
+        );
         self.check_admission()?;
         for file in &replacements.files {
             let compact = file.content.chars().filter(|c| !c.is_whitespace()).collect::<String>();
@@ -1621,16 +1773,38 @@ impl ExecutionAdapter for Adapter {
                     });
                 }
             }
+            Prepared::Original { prepared } => {
+                self.reserve(
+                    &context.operation_key,
+                    "original-prescribed-verification",
+                    original::gate_capacity(prepared, stage, self.installed.max_gate_bytes)?,
+                )?;
+                let runtime = self.original_runtime(stage_deadline)?;
+                let receipt = original::run(
+                    prepared,
+                    &self.installed.pinned_source,
+                    &checkout,
+                    source,
+                    &output,
+                    stage,
+                    &runtime,
+                    context,
+                )?;
+                receipts.push(Receipt::Original { prepared: prepared.clone(), receipt });
+            }
         }
         let passed = receipts.iter().all(|receipt| match receipt {
             Receipt::Native { receipt, .. } => receipt.passed,
             Receipt::Infrastructure { receipt, .. } => receipt.passed,
+            Receipt::Original { receipt, .. } => receipt.passed,
+            Receipt::OriginalEnvironment { .. } => false,
         });
         let diagnostic = receipts
             .iter()
             .find_map(|receipt| match receipt {
                 Receipt::Native { receipt, .. } if !receipt.passed => Some(receipt.diagnostic.clone()),
                 Receipt::Infrastructure { receipt, .. } if !receipt.passed => Some(receipt.diagnostic.clone()),
+                Receipt::Original { receipt, .. } if !receipt.passed => Some(receipt.diagnostic.clone()),
                 _ => None,
             })
             .unwrap_or_default();
@@ -1638,6 +1812,8 @@ impl ExecutionAdapter for Adapter {
             n.checked_add(match receipt {
                 Receipt::Native { receipt, .. } => receipt.evidence_bytes,
                 Receipt::Infrastructure { receipt, .. } => receipt.evidence_bytes,
+                Receipt::Original { receipt, .. } => receipt.evidence_bytes,
+                Receipt::OriginalEnvironment { receipt, .. } => receipt.evidence_bytes,
             })
             .context("gate evidence overflow")
         })?;
@@ -2350,10 +2526,16 @@ pub(crate) fn authenticate_completion(
         "submitted and integrated source archive identities differ"
     );
     let mut native_gates = Vec::new();
+    let mut original_gates = Vec::new();
     let mut references = BTreeMap::new();
-    let manifest: serde_json::Value = read(&final_record.retention.manifest.path)?;
-    let retained: Vec<Retained> =
-        serde_json::from_value(manifest.get("retained").context("retention closure missing")?.clone())?;
+    // Composite completion authenticates the full paged closure above and
+    // publishes its immutable root. Repeating every fixture reference inside
+    // queue metadata would exceed the existing bounded record format.
+    let retained = if matches!(installed.contract, Contract::Original { .. }) {
+        vec![]
+    } else {
+        retention::retained_entries(&final_record.retention)?
+    };
     for reference in retained.into_iter().map(|item| item.reference).chain([
         final_record.retention.manifest.clone(),
         final_record.retention.cleanup_records[0].clone(),
@@ -2384,6 +2566,31 @@ pub(crate) fn authenticate_completion(
             "completion gate source-stage identity changed"
         );
         for receipt in adapter.authenticated_record_receipts(&record)? {
+            if let Receipt::Original { prepared, receipt } = receipt {
+                let verdict = original::authenticate(&prepared, &receipt)?;
+                let overlay: original::SourceOverlay = original::read(&verdict.overlay)?;
+                for reference in verdict.families.values() {
+                    let family = original::read_family(reference)?;
+                    let native_verdict = native::authenticate(&family.prepared, &overlay.root, &family.receipt)?;
+                    native_gates.push(AuthenticatedNativeGate {
+                        phase,
+                        stage,
+                        source: source.clone(),
+                        prepared: family.prepared,
+                        receipt: family.receipt,
+                        verdict: native_verdict,
+                    });
+                }
+                original_gates.push(AuthenticatedOriginalGate {
+                    phase,
+                    stage,
+                    source: source.clone(),
+                    prepared,
+                    receipt,
+                    verdict,
+                });
+                continue;
+            }
             let Receipt::Native { prepared, source: path, receipt } = receipt else {
                 continue;
             };
@@ -2403,6 +2610,7 @@ pub(crate) fn authenticate_completion(
         candidate_revision,
         integrated_revision,
         native_gates,
+        original_gates,
         references: references.into_values().collect(),
     })
 }
@@ -2416,6 +2624,32 @@ pub(crate) fn authenticate_managed_completion(
         "managed completion requires installed original lineage"
     );
     authenticate_completion(installed, completion)
+}
+
+/// Bind a continuation checkpoint to the actual terminal journal and immutable
+/// publication record without consulting or repairing a successor's live queue.
+pub(crate) fn authenticate_managed_terminal(installed: &Installation, view: &View, accepted: &Reference) -> Result<()> {
+    let State::Complete { completion, publication } = &view.state else {
+        bail!("original continuation requires a complete supervisor journal");
+    };
+    let adapter = Adapter {
+        installed: installed.clone(),
+        identity: installed.policy.adapter_sha256.clone(),
+        run_root: installed.state_root.join(&completion.run_id),
+    };
+    let record = adapter.publication_record(completion, publication)?;
+    ensure!(
+        record.managed.as_ref().is_some_and(|managed| managed.accepted == *accepted),
+        "terminal journal names another managed publication"
+    );
+    adapter.authenticate_journal_extent(completion, &record)?;
+    execution::authenticate_finalized_history(&adapter.run_root.join("journal"), &installed.policy, &adapter)?;
+    execution::authenticate_completion_history(
+        &adapter.run_root.join("journal"),
+        &installed.policy,
+        completion,
+        publication,
+    )
 }
 
 /// Called only while the managed publisher holds original assignment ownership

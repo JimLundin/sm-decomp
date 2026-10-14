@@ -132,3 +132,26 @@ fn cleanup_record_tampering_and_recreated_intermediate_rejects() {
     fs::write(&result.cleanup_records[1].path, b"{}").unwrap();
     assert!(retention::authenticate_finalization(&result, 64 * 1024).is_err());
 }
+
+#[test]
+fn complete_catalog_retention_pages_preserve_exact_extent_and_recovery() {
+    let f = Fixture::new();
+    let retained = (0..4097)
+        .map(|index| Retained {
+            kind: RetainedKind::Accepted,
+            reference: f.file(&format!("fixture-{index:05}.bin"), b"pair"),
+        })
+        .collect::<Vec<_>>();
+    let limit = 8 * 1024 * 1024;
+    let result = retention::finalize(&f.0, &context(), &retained, &[], limit).unwrap();
+    assert!(result.manifest.bytes < 4 * 1024 * 1024);
+    assert!(result.retained_bytes > 4097 * 4);
+    retention::authenticate_finalization(&result, limit).unwrap();
+    fs::remove_file(&result.cleanup_records[1].path).unwrap();
+    let recovered = retention::finalize(&f.0, &context(), &retained, &[], limit).unwrap();
+    assert_eq!(result, recovered);
+    retention::authenticate_finalization(&recovered, limit).unwrap();
+    assert!(retention::finalize(&f.0, &context(), &retained[..4096], &[], limit).is_err());
+    fs::write(&retained[4096].reference.path, b"fail").unwrap();
+    assert!(retention::authenticate_finalization(&recovered, limit).is_err());
+}

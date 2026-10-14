@@ -153,7 +153,7 @@ fn write<T: Serialize>(path: &Path, value: &T) -> Result<Reference> {
     retention::seal_file(path, MAX_RECORD)
 }
 
-fn install(reference: &Reference, path: &Path) -> Result<Reference> {
+pub(crate) fn install(reference: &Reference, path: &Path) -> Result<Reference> {
     authenticate(reference, MAX_TOOL)?;
     let metadata = reference.path.symlink_metadata()?;
     ensure!(metadata.is_file() && metadata.mode() & 0o111 != 0, "production tool is not executable");

@@ -1,6 +1,6 @@
 # Execute the original production acceptance contracts
 
-Status: open
+Status: claimed
 Blocked by: None
 Triage: ready-for-agent
 Type: task
@@ -64,3 +64,19 @@ historical readers and private input closures recorded in ticket 08.
 Resolve this ticket only when the command can make verified progress through the
 original jobs and its ordered continuation/recovery is demonstrated. The overall
 spec remains implementing until this work is complete.
+
+## Comments
+
+2026-10-14: Claimed by session `01a139b9-f1a2-7d30-b65f-f0741bb5d555`
+on `affected-family-assignment`, starting at
+`808efe2ee473e633a42bbf330f3872f5a0499df9`. The previous production owner is
+observed `notLoaded` with completed turns; no verification producer is running.
+The installed production status authenticates the existing active registry and
+held original claims. The pre-existing assignment edit and unrelated retained
+outputs are outside this ticket's writable scope.
+
+Implementation and review use the parent spec's agreed public test surface:
+the supervisor/installed deterministic command for original acceptance,
+bounded failed-run recovery and ordered continuation. These checks cover claim,
+source and evidence preservation; Live and original-ROM parity remain separate
+acceptance contracts. The review baseline is the starting commit above.

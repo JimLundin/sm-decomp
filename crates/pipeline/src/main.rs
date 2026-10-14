@@ -73,6 +73,9 @@ mod session;
 mod source_inventory;
 mod storage_studies;
 mod translation;
+mod translation_cargo;
+mod translation_compact;
+mod translation_continuation;
 mod translation_execution;
 mod translation_infrastructure;
 mod translation_launch;
@@ -82,6 +85,8 @@ mod translation_migration;
 mod translation_migration_builder;
 mod translation_migration_guard;
 mod translation_native;
+mod translation_original;
+mod translation_original_prepare;
 mod translation_production;
 mod translation_production_prepare;
 
@@ -482,14 +487,62 @@ fn cache(request: CacheRequest) -> Result<()> {
 }
 
 fn main() -> Result<()> {
-    BINARY_SHA256
-        .set(digest(&std::env::current_exe()?)?)
-        .map_err(|_| anyhow::anyhow!("binary identity already initialized"))?;
     let args: Vec<_> = std::env::args().skip(1).collect();
+    // The controller already sealed this binary before confinement. Producers
+    // have no proc filesystem and never initialize the controller's ambient
+    // executable identity or enter its broader command dispatcher.
+    match args.first().map(String::as_str) {
+        Some("translation-cargo-producer") => return translation_cargo::producer_cli(&args[1..]),
+        Some("translation-cargo-environment-producer") => {
+            return translation_cargo::environment_producer_cli(&args[1..]);
+        }
+        Some("translation-compact-producer") => return translation_compact::producer(&args[1..]),
+        _ => {}
+    }
+    let executable = match std::env::current_exe() {
+        Ok(path) => path,
+        Err(error) if std::env::var_os("SM_PIPELINE_CONFINED_CARGO").as_deref() == Some(std::ffi::OsStr::new("1")) => {
+            let path = PathBuf::from(std::env::args_os().next().context("confined Cargo executable path missing")?);
+            inputs::bounded::safe(&path)?;
+            ensure!(
+                path.is_absolute()
+                    && path.starts_with("/work/tmp/target")
+                    && path.symlink_metadata()?.is_file()
+                    && fs::canonicalize(&path)? == path,
+                "confined Cargo executable is outside its exact build directory: {error}"
+            );
+            path
+        }
+        Err(error) => return Err(error.into()),
+    };
+    BINARY_SHA256.set(digest(&executable)?).map_err(|_| anyhow::anyhow!("binary identity already initialized"))?;
     match args.first().map(String::as_str) {
         Some("translation-execute") => translation_execution::cli(&args[1..]),
         Some("translation-launch") => translation_launch::cli(&args[1..]),
         Some("translation-production") => translation_production::cli(&args[1..]),
+        Some("translation-original") => {
+            ensure!(
+                args.len() == 4 && args[1] == "--checkout",
+                "usage: translation-original --checkout CHECKOUT run|status|recover"
+            );
+            let report = translation_continuation::run(Path::new(&args[2]), &args[3])?
+                .context("reviewed original production installation is absent")?;
+            emit(&report)
+        }
+        Some("translation-original-install") => {
+            ensure!(
+                args.len() == 3 && args[1] == "--config",
+                "usage: translation-original-install --config CONFIG.json"
+            );
+            emit(&translation_continuation::install(Path::new(&args[2]))?)
+        }
+        Some("translation-original-prepare") => {
+            ensure!(
+                args.len() == 3 && args[1] == "--config",
+                "usage: translation-original-prepare --config CONFIG.json"
+            );
+            emit(&translation_original_prepare::prepare(Path::new(&args[2]))?)
+        }
         Some("translation-production-prepare") => {
             ensure!(
                 args.len() == 3 && args[1] == "--config",
