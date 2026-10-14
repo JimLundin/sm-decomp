@@ -1052,7 +1052,7 @@ fn run_bounded(
         verdict.error = Some(diagnostic[..end].into());
     }
     bounded::reconcile(8 * bounded::DEFAULT_BYTES, || {
-        bounded::discovery(|| family::inventory(&run, &run, &mut verdict.artifacts))?;
+        family::inventory_with_limits(&run, &run, &mut verdict.artifacts, retained_tree_limits(&run)?)?;
         atomic_toml(&run.join("verdict.toml"), &verdict)?;
         let operations = collect_operations(prepared, &run, &runtime.operation_root, context)?;
         let mut receipt = NativeReceipt {
@@ -1196,16 +1196,16 @@ fn authenticate_bounded(prepared: &PreparedNative, checkout: &Path, receipt: &Na
             "native failure receipt differs"
         );
         let mut actual = BTreeMap::new();
-        bounded::discovery(|| family::inventory(&verdict.run, &verdict.run, &mut actual))?;
+        family::inventory_with_limits(&verdict.run, &verdict.run, &mut actual, retained_tree_limits(&verdict.run)?)?;
         ensure!(actual == verdict.artifacts, "native failed artifact inventory differs");
         return Ok(verdict);
     }
-    let verdict = bounded::discovery(|| {
-        family::authenticate_with_source(
-            crate::family_model::AuthenticateRequest { checkout, verdict: path },
-            &prepared.pinned_source,
-        )
-    })?;
+    let limits = retained_tree_limits(run)?;
+    let verdict = family::authenticate_with_source_limits(
+        crate::family_model::AuthenticateRequest { checkout, verdict: path },
+        &prepared.pinned_source,
+        limits,
+    )?;
     ensure!(
         verdict.family == prepared.contract.family && verdict.source.as_ref() == Some(&prepared.source),
         "native family source identity differs"
@@ -1493,7 +1493,7 @@ fn references_bounded(receipt: &NativeReceipt) -> Result<Vec<Reference>> {
         }
         Ok(())
     }
-    bounded::discovery(|| files(run, run, &mut result, 0))?;
+    bounded::discovery_with_limit(retained_tree_limits(run)?.paths, || files(run, run, &mut result, 0))?;
     for name in ["native-intent.toml", "native-receipt.toml"] {
         let path = output.join(name);
         if path.exists() {
@@ -1581,7 +1581,39 @@ fn parent_reservation(prepared: &PreparedNative, checkout: &Path) -> Result<u64>
 }
 
 fn tree_bytes(path: &Path) -> Result<u64> {
-    bounded::discovery(|| Ok(bounded::tree(path, 65536, 8 * bounded::DEFAULT_BYTES)?.1))
+    let limits = retained_tree_limits(path)?;
+    bounded::discovery_with_limit(limits.paths, || Ok(bounded::tree(path, limits.files, 8 * bounded::DEFAULT_BYTES)?.1))
+}
+
+fn declared_tree_limits(manifest: &Manifest, max_output_bytes: u64) -> Result<family::ArtifactLimits> {
+    let coverage = coverage(manifest)?;
+    let fixtures = coverage.values().map(Vec::len).sum::<usize>();
+    // Preserve the ordinary root/compiler allowance. Each declared fixture
+    // needs fewer than 64 fixed parent/producer records across all recipes;
+    // extra unpacked callback images each consume one full WRAM from the
+    // original aggregate output budget. Do not count deduplication as relief.
+    let snapshots = usize::try_from(max_output_bytes / 0x20000)?;
+    let files = 65536usize
+        .checked_add(fixtures.checked_mul(64).context("native fixture artifact ceiling overflow")?)
+        .and_then(|files| files.checked_add(snapshots))
+        .context("native retained artifact ceiling overflow")?;
+    let limits =
+        family::ArtifactLimits { files, paths: files.checked_mul(2).context("native retained path ceiling overflow")? };
+    limits.validate()?;
+    Ok(limits)
+}
+
+pub(crate) fn retained_tree_limits(run: &Path) -> Result<family::ArtifactLimits> {
+    let manifest_path = run.join("manifest.toml");
+    // An expired producer can fail before publishing its declaration. Such a
+    // partial run gains no declared-workload allowance.
+    if !manifest_path.exists() {
+        return Ok(family::ArtifactLimits::default());
+    }
+    let manifest: Manifest = family::object(&manifest_path)?;
+    let intent: NativeIntent =
+        family::object(&run.parent().context("native artifact parent missing")?.join("native-intent.toml"))?;
+    declared_tree_limits(&manifest, intent.max_output_bytes)
 }
 
 #[cfg(test)]
@@ -1663,6 +1695,70 @@ mod tests {
             "indexed attribution omitted from aggregate evidence extent"
         );
         println!("Retained all {} operations in a {}-byte controller receipt", expected.len(), encoded.len());
+        Ok(())
+    }
+
+    #[test]
+    fn declared_tree_budget_rejects_inflated_extent_and_coverage() -> Result<()> {
+        let checkout = current_checkout();
+        let mut manifest = recipes::manifest(
+            &checkout,
+            &checkout.join("tools/port/ridley-subsystem.toml"),
+            Some(&NativeRecipe::Ridley),
+        )?;
+        let limits = declared_tree_limits(&manifest, 64 * 1024 * 1024 * 1024)?;
+        assert_eq!((limits.files, limits.paths), (1_003_072, 2_006_144));
+        assert!(declared_tree_limits(&manifest, u64::MAX).is_err());
+        let mut fixture = manifest.routines[0].cases[0].clone();
+        manifest.routines[0].cases.clear();
+        for index in 0..16385 {
+            fixture.name = format!("case-{index}");
+            manifest.routines[0].cases.push(fixture.clone());
+        }
+        assert!(declared_tree_limits(&manifest, 64 * 1024 * 1024 * 1024).is_err());
+        Ok(())
+    }
+
+    #[test]
+    #[ignore = "audits the complete retained Original artifact tree without launching any producer"]
+    fn retained_original_whole_family_uses_finite_declared_tree_limits() -> Result<()> {
+        let run = PathBuf::from(std::env::var("SM_NATIVE_ORIGINAL_TREE")?);
+        let proof = PathBuf::from(std::env::var("SM_NATIVE_ORIGINAL_TREE_PROOF")?);
+        fs::create_dir_all(&proof)?;
+        let manifest: Manifest = family::object(&run.join("manifest.toml"))?;
+        let verdict: Verdict = family::object(&run.join("verdict.toml"))?;
+        let fixtures = coverage(&manifest)?.values().map(Vec::len).sum::<usize>();
+        let limits = declared_tree_limits(&manifest, 64 * 1024 * 1024 * 1024)?;
+        let error =
+            bounded::reconcile(8 * bounded::DEFAULT_BYTES, || family::inventory(&run, &run, &mut BTreeMap::new()))
+                .unwrap_err();
+        ensure!(error.to_string().contains("discovery path budget"), "unexpected generic inventory refusal: {error:#}");
+        let (files, bytes, snapshots) = bounded::reconcile(8 * bounded::DEFAULT_BYTES, || {
+            let mut actual = BTreeMap::new();
+            family::inventory_with_limits(&run, &run, &mut actual, limits)?;
+            ensure!(actual == verdict.artifacts, "Original artifact inventory differs");
+            let snapshots = actual.keys().filter(|path| path.ends_with(".wram")).count();
+            let (files, bytes) = bounded::discovery_with_limit(limits.paths, || {
+                bounded::tree(&run, limits.files, 8 * bounded::DEFAULT_BYTES)
+            })?;
+            Ok((files, bytes, snapshots))
+        })?;
+        let report = BTreeMap::from([
+            ("declared_fixture_pairs", fixtures as u64),
+            ("retained_files", files as u64),
+            ("logical_file_bytes", bytes),
+            ("wram_snapshots", snapshots as u64),
+            ("file_ceiling", limits.files as u64),
+            ("path_ceiling", limits.paths as u64),
+        ]);
+        immutable(&proof.join("summary.toml"), toml::to_string(&report)?.as_bytes())?;
+        immutable(
+            &proof.join("original-verdict.sha256"),
+            format!("{}  {}\n", digest(&run.join("verdict.toml"))?, run.join("verdict.toml").display()).as_bytes(),
+        )?;
+        println!(
+            "Authenticated {files} Original files for {fixtures} Fixture pairs: {bytes} logical bytes, {snapshots} WRAM snapshots"
+        );
         Ok(())
     }
 
@@ -1770,6 +1866,82 @@ mod tests {
         fs::write(&index.path, &index_bytes)?;
         fs::write(&chunk, &chunk_bytes)?;
         references(&receipt)?;
+        Ok(())
+    }
+
+    #[test]
+    #[ignore = "authenticates all retained Original cases against sealed source without launching producers"]
+    fn retained_original_whole_family_authentication_fits_trusted_scope() -> Result<()> {
+        let run = PathBuf::from(std::env::var("SM_NATIVE_ORIGINAL_TREE")?);
+        let proof = PathBuf::from(std::env::var("SM_NATIVE_ORIGINAL_TREE_PROOF")?);
+        let declaration_source = PathBuf::from(std::env::var("SM_NATIVE_ORIGINAL_DECLARATION_SOURCE")?);
+        let pinned_source = PathBuf::from(std::env::var("SM_NATIVE_ORIGINAL_PINNED_SOURCE")?);
+        let snapshot = proof.join("original-source");
+        let prior: Verdict = family::object(&run.join("verdict.toml"))?;
+        let implementation = prior.implementation.as_ref().context("Original implementation missing")?;
+        let retained = prior
+            .artifacts
+            .iter()
+            .filter(|(name, _)| Path::new(name).components().count() == 1)
+            .map(|(name, hash)| (hash, run.join(name)))
+            .collect::<BTreeMap<_, _>>();
+        for map in [&implementation.rust_dependencies, &implementation.harness_sources] {
+            for (name, expected) in map {
+                ensure!(relative(Path::new(name)), "Original source ownership is not relative");
+                let source =
+                    retained.get(expected).with_context(|| format!("sealed Original source missing: {name}"))?;
+                let destination = snapshot.join(name);
+                fs::create_dir_all(destination.parent().unwrap())?;
+                ensure!(digest(source)? == *expected, "sealed Original source differs: {name}");
+                immutable(&destination, &bounded::read(source)?)?;
+            }
+        }
+        let manifest = implementation.manifest.as_ref().context("Original manifest missing")?;
+        let destination = snapshot.join(manifest.file.strip_prefix(&implementation.source_root)?);
+        fs::create_dir_all(destination.parent().unwrap())?;
+        immutable(&destination, &bounded::read(run.join("manifest.toml"))?)?;
+        ensure!(digest(&destination)? == manifest.sha256, "Original manifest snapshot differs");
+        fs::create_dir_all(snapshot.join("tools"))?;
+        immutable(
+            &snapshot.join("tools/dependencies.toml"),
+            &bounded::read(declaration_source.join("tools/dependencies.toml"))?,
+        )?;
+        let declaration: Manifest = family::object(&run.join("manifest.toml"))?;
+        let limits = declared_tree_limits(&declaration, 64 * 1024 * 1024 * 1024)?;
+        let start = std::time::Instant::now();
+        let mut charged_bytes = 0;
+        let result = bounded::reconcile(8 * bounded::DEFAULT_BYTES, || {
+            let result = family::authenticate_with_source_limits(
+                crate::family_model::AuthenticateRequest {
+                    checkout: snapshot.clone(),
+                    verdict: run.join("verdict.toml"),
+                },
+                &pinned_source,
+                limits,
+            );
+            charged_bytes = bounded::charged_bytes();
+            result
+        });
+        let elapsed_ms = u64::try_from(start.elapsed().as_millis())?;
+        #[derive(Serialize)]
+        struct Audit {
+            verified_fixture_pairs: usize,
+            charged_bytes: u64,
+            elapsed_ms: u64,
+            error: Option<String>,
+        }
+        let audit = Audit {
+            verified_fixture_pairs: result.as_ref().map_or(0, |verdict| verdict.verified_cases),
+            charged_bytes,
+            elapsed_ms,
+            error: result.as_ref().err().map(|error| format!("{error:#}")),
+        };
+        immutable(&proof.join("authentication.toml"), toml::to_string(&audit)?.as_bytes())?;
+        println!(
+            "Complete Original authentication: {charged_bytes} charged bytes in {elapsed_ms} ms; {:?}",
+            audit.error
+        );
+        ensure!(result? == prior, "Original authentication changed verdict");
         Ok(())
     }
 

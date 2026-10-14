@@ -980,22 +980,63 @@ fn case_with(
 }
 
 pub(crate) fn inventory(run: &Path, base: &Path, result: &mut BTreeMap<String, String>) -> Result<()> {
-    bounded::limited(|| inventory_bounded(run, base, result, 0))
+    bounded::limited(|| inventory_bounded(run, base, result, 0, ArtifactLimits::default()))
 }
 
-fn inventory_bounded(run: &Path, base: &Path, result: &mut BTreeMap<String, String>, depth: usize) -> Result<()> {
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct ArtifactLimits {
+    pub files: usize,
+    pub paths: usize,
+}
+impl Default for ArtifactLimits {
+    fn default() -> Self {
+        Self { files: 65536, paths: 65536 }
+    }
+}
+impl ArtifactLimits {
+    pub(crate) const MAX_FILES: usize = 2 * 1024 * 1024;
+
+    pub(crate) fn validate(self) -> Result<()> {
+        ensure!(
+            self.files > 0
+                && self.files <= Self::MAX_FILES
+                && self.paths >= self.files
+                && self.paths <= bounded::MAX_DECLARED_PATHS,
+            "declared family artifact ceiling exceeded"
+        );
+        Ok(())
+    }
+}
+
+pub(crate) fn inventory_with_limits(
+    run: &Path,
+    base: &Path,
+    result: &mut BTreeMap<String, String>,
+    limits: ArtifactLimits,
+) -> Result<()> {
+    limits.validate()?;
+    bounded::discovery_with_limit(limits.paths, || inventory_bounded(run, base, result, 0, limits))
+}
+
+fn inventory_bounded(
+    run: &Path,
+    base: &Path,
+    result: &mut BTreeMap<String, String>,
+    depth: usize,
+    limits: ArtifactLimits,
+) -> Result<()> {
     ensure!(depth <= 32, "family artifact inventory depth exceeded");
     let paths = bounded::entries(base)?;
     for path in paths {
         bounded::check()?;
         ensure!(!path.is_symlink(), "run artifact symlink");
         if path.is_dir() {
-            inventory_bounded(run, &path, result, depth + 1)?;
+            inventory_bounded(run, &path, result, depth + 1, limits)?;
         } else if path != run.join("verdict.toml")
             && !path.file_name().is_some_and(|name| name.to_string_lossy().ends_with(".metrics.toml"))
         {
             result.insert(path.strip_prefix(run)?.to_string_lossy().into_owned(), inputs::artifact_digest(run, &path)?);
-            ensure!(result.len() <= 65536, "family artifact inventory count exceeded");
+            ensure!(result.len() <= limits.files, "family artifact inventory count exceeded");
         }
     }
     Ok(())
@@ -1149,7 +1190,16 @@ pub fn authenticate(request: AuthenticateRequest) -> Result<Verdict> {
 }
 
 pub(crate) fn authenticate_with_source(request: AuthenticateRequest, source: &Path) -> Result<Verdict> {
-    bounded::limited(|| authenticate_with_source_bounded(request, source))
+    bounded::limited(|| authenticate_with_source_bounded(request, source, ArtifactLimits::default()))
+}
+
+pub(crate) fn authenticate_with_source_limits(
+    request: AuthenticateRequest,
+    source: &Path,
+    limits: ArtifactLimits,
+) -> Result<Verdict> {
+    limits.validate()?;
+    bounded::discovery_with_limit(limits.paths, || authenticate_with_source_bounded(request, source, limits))
 }
 
 pub(crate) fn authenticate_with_source_until(
@@ -1158,17 +1208,21 @@ pub(crate) fn authenticate_with_source_until(
     deadline: u64,
     max_bytes: u64,
 ) -> Result<Verdict> {
-    bounded::until(deadline, max_bytes, || authenticate_with_source_bounded(request, source))
+    bounded::until(deadline, max_bytes, || authenticate_with_source_bounded(request, source, ArtifactLimits::default()))
 }
 
-fn authenticate_with_source_bounded(request: AuthenticateRequest, source: &Path) -> Result<Verdict> {
+fn authenticate_with_source_bounded(
+    request: AuthenticateRequest,
+    source: &Path,
+    limits: ArtifactLimits,
+) -> Result<Verdict> {
     let checkout = fs::canonicalize(&request.checkout)?;
     let path = &request.verdict;
     let run = fs::canonicalize(path.parent().context("verdict parent missing")?)?;
     let verdict: Verdict = object(path)?;
     ensure!(verdict.status == "offline-verified", "family evidence is not offline verification");
     let mut actual = BTreeMap::new();
-    inventory(&run, &run, &mut actual)?;
+    inventory_bounded(&run, &run, &mut actual, 0, limits)?;
     ensure!(actual == verdict.artifacts, "family artifact inventory differs");
     for required in
         ["manifest.toml", "candidate.rs", "memory.rs", "oracle.c", "wrapper.rs", "compiler.d", "pipeline-inputs.toml"]
@@ -1519,6 +1573,29 @@ fn authenticate_with_source_bounded(request: AuthenticateRequest, source: &Path)
 #[cfg(test)]
 mod source_tests {
     use super::*;
+
+    #[test]
+    fn explicit_artifact_profile_keeps_a_finite_file_count() -> Result<()> {
+        let directory = bounded::tests::Directory::new()?;
+        fs::write(directory.0.join("first"), b"one")?;
+        fs::write(directory.0.join("second"), b"two")?;
+        let mut inventory = BTreeMap::new();
+        let error =
+            inventory_with_limits(&directory.0, &directory.0, &mut inventory, ArtifactLimits { files: 1, paths: 4 })
+                .unwrap_err();
+        assert!(error.to_string().contains("inventory count"));
+        inventory.clear();
+        inventory_with_limits(&directory.0, &directory.0, &mut inventory, ArtifactLimits { files: 2, paths: 4 })?;
+        assert_eq!(inventory.len(), 2);
+        assert!(
+            ArtifactLimits { files: ArtifactLimits::MAX_FILES + 1, paths: bounded::MAX_DECLARED_PATHS }
+                .validate()
+                .is_err()
+        );
+        assert_eq!(ArtifactLimits::default().files, 65536);
+        assert_eq!(ArtifactLimits::default().paths, 65536);
+        Ok(())
+    }
 
     #[test]
     fn pinned_source_cache_rechecks_files_and_binds_changed_revision() -> Result<()> {

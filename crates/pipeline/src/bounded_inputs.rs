@@ -21,6 +21,7 @@ pub(crate) const MAX_FILE_BYTES: u64 = 64 * 1024 * 1024;
 pub(crate) const MAX_DOCUMENT_BYTES: u64 = 32 * 1024 * 1024;
 pub(crate) const DEFAULT_BYTES: u64 = 1024 * 1024 * 1024;
 const MAX_PATHS: usize = 65536;
+pub(crate) const MAX_DECLARED_PATHS: usize = 4 * 1024 * 1024;
 const DEFAULT_SECONDS: u64 = 3600;
 
 #[derive(Default)]
@@ -34,6 +35,7 @@ struct Scope {
     max_bytes: u64,
     usage: Rc<RefCell<Usage>>,
     paths: Rc<Cell<usize>>,
+    max_paths: usize,
 }
 thread_local! {
     static CURRENT: RefCell<Option<Scope>> = const { RefCell::new(None) };
@@ -53,13 +55,13 @@ pub(crate) fn until<T>(deadline_unix_ms: u64, max_bytes: u64, action: impl FnOnc
     let mut deadline = entered + remaining.min(Duration::from_secs(DEFAULT_SECONDS));
     let previous = CURRENT.with(|current| {
         let previous = current.borrow().clone();
-        let (max_bytes, usage, paths) = if let Some(inherited) = &previous {
+        let (max_bytes, usage, paths, max_paths) = if let Some(inherited) = &previous {
             deadline = deadline.min(inherited.deadline);
-            (max_bytes.min(inherited.max_bytes), inherited.usage.clone(), inherited.paths.clone())
+            (max_bytes.min(inherited.max_bytes), inherited.usage.clone(), inherited.paths.clone(), inherited.max_paths)
         } else {
-            (max_bytes, Rc::new(RefCell::new(Usage::default())), Rc::new(Cell::new(0)))
+            (max_bytes, Rc::new(RefCell::new(Usage::default())), Rc::new(Cell::new(0)), MAX_PATHS)
         };
-        *current.borrow_mut() = Some(Scope { deadline, max_bytes, usage, paths });
+        *current.borrow_mut() = Some(Scope { deadline, max_bytes, usage, paths, max_paths });
         previous
     });
     let _restore = Restore(previous);
@@ -89,11 +91,19 @@ pub(crate) fn limited<T>(action: impl FnOnce() -> Result<T>) -> Result<T> {
 /// charge and the earliest enclosing deadline. Nested helpers within this
 /// pass still share its path counter; this never authorizes a producer.
 pub(crate) fn discovery<T>(action: impl FnOnce() -> Result<T>) -> Result<T> {
+    discovery_with_limit(MAX_PATHS, action)
+}
+
+/// A reviewed, finite declared workload can set an explicit discovery ceiling.
+/// Generic callers keep MAX_PATHS; byte accounting and deadlines remain shared.
+pub(crate) fn discovery_with_limit<T>(max_paths: usize, action: impl FnOnce() -> Result<T>) -> Result<T> {
+    ensure!(max_paths > 0 && max_paths <= MAX_DECLARED_PATHS, "declared discovery path ceiling exceeded");
     limited(|| {
         let previous = CURRENT.with(|current| {
             let previous = current.borrow().clone().expect("limited discovery scope");
             let mut pass = previous.clone();
             pass.paths = Rc::new(Cell::new(0));
+            pass.max_paths = max_paths;
             *current.borrow_mut() = Some(pass);
             previous
         });
@@ -130,6 +140,11 @@ pub(crate) fn check() -> Result<()> {
     })
 }
 
+#[cfg(test)]
+pub(crate) fn charged_bytes() -> u64 {
+    CURRENT.with(|current| current.borrow().as_ref().map_or(0, |scope| scope.usage.borrow().bytes))
+}
+
 pub(crate) fn account(bytes: u64) -> Result<()> {
     check()?;
     CURRENT.with(|current| {
@@ -150,7 +165,7 @@ pub(crate) fn count(amount: usize) -> Result<()> {
         if let Some(scope) = &*current.borrow() {
             let paths = scope.paths.get().checked_add(amount).context("trusted input path budget overflow")?;
             scope.paths.set(paths);
-            ensure!(paths <= MAX_PATHS, "trusted input discovery path budget exhausted");
+            ensure!(paths <= scope.max_paths, "trusted input discovery path budget exhausted");
         } else {
             ensure!(amount <= MAX_PATHS, "trusted input local path budget exceeded");
         }
@@ -781,6 +796,25 @@ pub(crate) mod tests {
             until(now_unix_ms()? + 1000, 4, || discovery(|| until(now_unix_ms()?.saturating_sub(1), 4, || Ok(()))))
                 .unwrap_err();
         assert!(error.to_string().contains("deadline"));
+        Ok(())
+    }
+
+    #[test]
+    fn declared_discovery_limits_keep_global_ceiling_and_outer_resource_guards() -> Result<()> {
+        assert!(discovery_with_limit(MAX_DECLARED_PATHS + 1, || Ok(())).is_err());
+        until(now_unix_ms()? + 1000, 8, || discovery_with_limit(MAX_PATHS + 1, || limited(|| count(MAX_PATHS + 1))))?;
+        let error = until(now_unix_ms()? + 1000, 8, || {
+            account(7)?;
+            discovery_with_limit(MAX_PATHS + 1, || account(2))
+        })
+        .unwrap_err();
+        assert!(error.to_string().contains("byte budget"));
+        let error = until(now_unix_ms()? + 1000, 8, || {
+            discovery_with_limit(MAX_PATHS + 1, || until(now_unix_ms()?.saturating_sub(1), 8, || Ok(())))
+        })
+        .unwrap_err();
+        assert!(error.to_string().contains("deadline"));
+        assert!(until(now_unix_ms()? + 1000, 8, || count(MAX_PATHS + 1)).is_err());
         Ok(())
     }
 
