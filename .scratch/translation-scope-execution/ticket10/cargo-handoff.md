@@ -1,6 +1,7 @@
 # Ticket 10 Cargo adapter handoff
 
-Status: implementing
+Status: source implemented; host and pause controls passed; compact prerequisite
+unresolved; cleaned and ready for integration review.
 
 Owner: `/root/cargo_acceptance`; integration owner `/root`.
 Worktree: `/tmp/sm-ticket10-cargo-20261014`; branch `ticket10-cargo`.
@@ -23,8 +24,10 @@ Initial API proposed to root: `CargoKind`, `CargoContract`, `PreparedCargo`,
 `StrictRuntime`, `CargoReceipt`, `CargoVerdict`; `prepare`, `run`, `authenticate`,
 `references`, `producer_cli`. Legacy readiness contracts remain untouched.
 
-Next: finish compact's single-job dependency preparation and original acceptance
-commands. Use private target/run roots with
+Next: the integration owner completes Standards/Spec review and worktree
+retirement, then reauthenticates the retained receipts. A new compact proof
+requires a concrete validated supervisor correction and a fresh proof identity.
+There is no successful compact dependency cache to publish. Continue using
 `SM_PIPELINE_WORKERS=4` and `SM_PIPELINE_ROOT=/home/jim/sm-decomp/out/pipeline`.
 
 Preparation red/green: the first public-seam control-inventory test failed on
@@ -291,8 +294,8 @@ its original experiment window first, followed by the next Cargo prerequisite.
 
 `compact-04` started at approximately 2026-10-14 12:34:29 UTC after the compact
 and native owners confirmed their producer windows were closed. The retained
-selector reader runs in unified command session `82885`, host PID `1251183`
-(observed live at 12:34:49 UTC). It uses one Cargo job, capacity four, the paired
+selector reader ran in unified command session `82885`, host PID `1251183`
+(observed live at 12:34:49 UTC). It used one Cargo job, capacity four, the paired
 1.97.1 toolchain and `sm-pipeline-e071c3c`. Its helper is
 `/tmp/sm-ticket10-native-proofs/confinement-v4/tools/sm-translation-sandbox`,
 SHA-256 `1ec74e0bcc1024ae460d74b47148114526bf6743e2cc4a87302f9ecf551ab6d9`.
@@ -302,6 +305,69 @@ profile, original argv, control identity or deadline changes accompany this run.
 The proof root is `/tmp/sm-ticket10-cargo-proof/compact-04`, with sibling
 `compact-04.stdout` and `compact-04.stderr` logs. Dependency preparation remains
 bounded to 600 seconds and each original acceptance command to 60 seconds.
-Next: await this exact process, publish a successful external dependency cache
-immediately if produced, then complete both cleanup passes and retained receipt
-authentication. Never restart or overwrite this proof identity.
+The exact session was awaited to exit 101 at approximately 12:44:42 UTC. It
+reached the unchanged prerequisite timeout; the complete proof took 613.62
+seconds. Failure authentication and identical `prepare_environment` replay
+passed before the proof assertion. No cache or original compact acceptance
+command was produced. Never restart or overwrite this proof identity.
+
+## Completion evidence
+
+The v4 failure remains at
+`/tmp/sm-ticket10-cargo-proof/compact-04/environment/cargo-environment-receipt.toml`,
+SHA-256 `ad45d57dbb16d9e79888d1a93569797716af58323be6acfe7b36a569e1e26ee4`.
+The full proof log `compact-04.stdout` has SHA-256
+`4c22e602aae4d08f1233fccc90c46125b397f45099a75cf3f2dfa3686200aa7d`.
+At producer 440 seconds the helper consumed 78.5% CPU and Cargo 0.7%, while
+compilation had reached `tinystr`; at 530 seconds it was building ICU data.
+`compact-04-process-observation.txt` retains a process identity and CPU snapshot,
+SHA-256 `3aec14cf6cde038b5ff9146b0fb4576665da0678a59c32653c63cf5e3990a3f2`.
+These measurements show remaining observer cost, but do not isolate another
+validated optimization. The integration owner requested no unchanged retry.
+
+After all producer processes stopped, both required utility commands completed:
+
+```sh
+env SM_PIPELINE_WORKERS=4 SM_PIPELINE_ROOT=/home/jim/sm-decomp/out/pipeline /tmp/sm-ticket10-cargo-proof/bin/sm-pipeline-e071c3c cleanup --root /tmp/sm-ticket10-cargo-proof/compact-04 --apply
+env SM_PIPELINE_WORKERS=4 SM_PIPELINE_ROOT=/home/jim/sm-decomp/out/pipeline /tmp/sm-ticket10-cargo-proof/bin/sm-pipeline-e071c3c cleanup --root /tmp/sm-ticket10-cargo-proof/compact-04 --deduplicate --apply
+```
+
+Their retained sibling logs are `compact-04-cleanup.stdout.toml` and
+`compact-04-deduplicate.stdout.toml`; both report zero reclaimed bytes.
+Post-cleanup read-only authentication passed in 1.09 seconds, recorded in
+`compact-04-authenticate-after-cleanup.stdout`.
+
+Temporary `main.rs` and `confinement.rs` edits were restored from backups whose
+Git blob identities exactly matched this worktree's HEAD. The local ignored
+`deps` symlink was removed. After confirming no writer remained, the disposable
+authoring target was measured at 3,150,139,392 allocated bytes and removed with
+`rm -r -- /tmp/sm-ticket10-cargo-target`. Remaining filesystem space measured
+166,715,719,680 bytes after cleanup and authentication. No owned process remains.
+The integration owner still owns final Git worktree retirement.
+
+All sixteen retained roots (`real-01` through `real-09`, `pause-01`, `compact-01`
+through `compact-04`, `diagnostic-01`, and `spawn-diagnostic-01`) authenticated
+again after target removal, using the retained independent reader from outside
+the worktree. Each `<name>-authenticate-after-target-removal.stdout` records its
+passing result. Preserve these roots, their exact source snapshots, the vendor
+closure, immutable readers/producers, each referenced supervisor version, and
+sealed toolchain/runtime inputs. The latest compact authentication log has
+SHA-256 `9bf3771e6660ae9f32411c9e367f6efd68ef499112f2bb6976ce1e8e6bb22366`.
+No retained TOML/JSON evidence names the implementer worktree. Older runtime
+records retain the historical authoring-target executable name, but their
+sealed identity records are outside that target; all affected receipts passed
+authentication with the target already absent. Exact source dependencies are
+copied under the retained proof roots, outside the implementer worktree.
+
+The exact next read-only command, also suitable after worktree retirement, is:
+
+```sh
+cd /tmp/sm-ticket10-cargo-proof
+env SM_PIPELINE_WORKERS=4 SM_PIPELINE_ROOT=/home/jim/sm-decomp/out/pipeline SM_CARGO_PROOF_ROOT=/tmp/sm-ticket10-cargo-proof/compact-04 /tmp/sm-ticket10-cargo-proof/bin/cargo-proof-reader-e071c3c --exact translation_cargo::tests::retained_original_cargo_proofs_authenticate_after_cleanup --ignored
+```
+
+A later production retry needs a fresh reviewed source snapshot and validated
+changed helper. The retained proof selector's real-run fixture names this
+authoring worktree at compile time, so rebuild that fixture against the new
+verification checkout for any later real-run proof. Its read-only
+authentication command does not depend on the authoring worktree or target.
