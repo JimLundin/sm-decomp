@@ -508,6 +508,232 @@ ram.set_byte(17,a as u8);Ok(a as u32+1)}"#,
     }
 }
 
+fn scheduling_project(project: &Project, bounded_delay: bool) {
+    write(
+        &project.0,
+        "peer.rs",
+        r#"fn main(){std::fs::write("admitted",b"ready").unwrap();
+let deadline=std::time::Instant::now()+std::time::Duration::from_secs(10);
+while !std::path::Path::new("release").exists(){assert!(std::time::Instant::now()<deadline,"peer release timeout");std::thread::sleep(std::time::Duration::from_millis(1));}}"#,
+    );
+    assert!(
+        Command::new("rustc")
+            .arg(project.0.join("peer.rs"))
+            .arg("-o")
+            .arg(project.0.join("peer"))
+            .status()
+            .unwrap()
+            .success()
+    );
+    write(
+        &project.0,
+        "crates/port/src/fixture.rs",
+        r#"use crate::memory::Wram;
+pub fn dispatch(ram:&mut Wram<'_>,name:&str,a:u16,_b:u16)->Result<u32,&'static str>{
+if name!="Touch"{return Err("routine");}
+if a==1||a==4{
+let deadline=std::time::Instant::now()+std::time::Duration::from_secs(3);
+while !std::path::Path::new("../short/c-after.wram").exists(){
+if std::time::Instant::now()>deadline{return Err("short root did not finish");}
+std::thread::sleep(std::time::Duration::from_millis(1));}
+std::fs::write("../waiting",b"ready").unwrap();
+if a==4{std::thread::sleep(std::time::Duration::from_millis(600));}
+else{let directory=std::env::current_dir().unwrap();let family=directory.parent().unwrap();
+let peer=family.with_file_name(format!("{}-peer",family.file_name().unwrap().to_str().unwrap()));
+while !peer.join("admitted").exists(){
+if std::time::Instant::now()>deadline{return Err("idle worker stranded shared capacity");}
+std::thread::sleep(std::time::Duration::from_millis(1));}}
+}
+ram.set_byte(17,a as u8);Ok(a as u32+1)}"#,
+    );
+    let a = if bounded_delay { 4 } else { 1 };
+    project.manifest(
+        toml::from_str::<Value>(&format!(
+            "cases=[{{name='long',a={a}}},{{name='short',a=2}},{{name='continuation',a=3,continue_from='long'}}]"
+        ))
+        .unwrap()["cases"]
+            .clone(),
+    );
+}
+
+// Cross the family and process-execution interfaces: both worker threads first run
+// real Fixture pairs, then an unrelated caller needs the idle thread's slot.
+fn family_with_lease_peer(project: &Project, binary: &Path, mode: &str) -> (Value, Value, f64) {
+    let request = toml::to_string(&toml::Table::from_iter([
+        ("checkout".into(), Value::try_from(&project.0).unwrap()),
+        ("source".into(), Value::try_from(project.0.join("deps/snesrev-sm")).unwrap()),
+        ("manifest".into(), "tools/port/fixture.toml".into()),
+        ("output".into(), Value::try_from(project.0.join("out")).unwrap()),
+        ("root".into(), Value::try_from(project.0.join("cache")).unwrap()),
+        ("workers".into(), 2.into()),
+        ("case_jobs".into(), 2.into()),
+        ("execution".into(), mode.into()),
+    ]))
+    .unwrap();
+    let previous: Vec<_> =
+        fs::read_dir(project.0.join("out")).into_iter().flatten().map(|entry| entry.unwrap().path()).collect();
+    // Initialize executable identity before submitting the peer's execution
+    // request. Hashing a debug controller at the rendezvous would measure its
+    // startup cost instead of shared-capacity contention.
+    let mut peer = Command::new(binary)
+        .arg("exec")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    let started = std::time::Instant::now();
+    let mut family = Command::new(binary)
+        .arg("family-verify")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    family.stdin.take().unwrap().write_all(request.as_bytes()).unwrap();
+    let run = loop {
+        if let Ok(entries) = fs::read_dir(project.0.join("out"))
+            && let Some(run) = entries
+                .map(|entry| entry.unwrap().path())
+                .find(|path| !previous.contains(path) && path.join("waiting").is_file())
+        {
+            break run;
+        }
+        if family.try_wait().unwrap().is_some() || started.elapsed().as_secs() >= 30 {
+            let _ = family.kill();
+            let _ = peer.kill();
+            let _ = peer.wait();
+            let output = family.wait_with_output().unwrap();
+            panic!("Fixture rendezvous failed: {}", String::from_utf8_lossy(&output.stderr));
+        }
+        std::thread::sleep(std::time::Duration::from_millis(1));
+    };
+    let peer_run = run.with_file_name(format!("{}-peer", run.file_name().unwrap().to_str().unwrap()));
+    fs::create_dir(&peer_run).unwrap();
+    let peer_request = toml::to_string(&toml::Table::from_iter([
+        ("command".into(), Value::try_from(vec![project.0.join("peer")]).unwrap()),
+        ("run".into(), Value::try_from(&peer_run).unwrap()),
+        ("label".into(), "peer".into()),
+        ("root".into(), Value::try_from(project.0.join("cache")).unwrap()),
+        ("workers".into(), 2.into()),
+        ("timeout".into(), 10.into()),
+    ]))
+    .unwrap();
+    peer.stdin.take().unwrap().write_all(peer_request.as_bytes()).unwrap();
+    // Retain the peer's lease through the continuation. Actual execution must
+    // still fit in the single remaining slot while helpers may remain alive.
+    let output = family.wait_with_output().unwrap();
+    write(&peer_run, "release", b"ready");
+    let peer_output = peer.wait_with_output().unwrap();
+    assert!(peer_output.status.success(), "{}", String::from_utf8_lossy(&peer_output.stderr));
+    let receipt: Value = toml::from_str(std::str::from_utf8(&peer_output.stdout).unwrap()).unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let verdict: Value = toml::from_str(std::str::from_utf8(&output.stdout).unwrap()).unwrap();
+    assert_eq!(verdict["cases"][0]["case"].as_str(), Some("long"));
+    assert_eq!(verdict["cases"][1]["case"].as_str(), Some("short"));
+    assert_eq!(verdict["cases"][2]["case"].as_str(), Some("continuation"));
+    project.authenticate(&verdict, true);
+    (verdict, receipt, started.elapsed().as_secs_f64())
+}
+
+#[test]
+fn idle_fixture_chain_workers_release_shared_execution_capacity_in_both_modes() {
+    let project = match std::env::var_os("SM_SCHEDULING_REGRESSION_OUTPUT") {
+        Some(path) => Project::at(PathBuf::from(path), true),
+        None => Project::new(),
+    };
+    scheduling_project(&project, false);
+    if let Some(source) = std::env::var_os("SM_SCHEDULING_BASELINE_SOURCE") {
+        write(&project.0, "crates/pipeline/src/fixture_execution.rs", fs::read(source).unwrap());
+    }
+    let binary = std::env::var_os("SM_SCHEDULING_REGRESSION_BINARY")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from(env!("CARGO_BIN_EXE_sm-pipeline")));
+    for mode in ["fresh", "fork"] {
+        family_with_lease_peer(&project, &binary, mode);
+    }
+}
+
+#[test]
+#[ignore = "bounded comparison retains actual-C evidence and requires an explicit baseline binary"]
+fn measure_fixture_chain_shared_capacity() {
+    let output = PathBuf::from(std::env::var_os("SM_SCHEDULING_MEASUREMENT_OUTPUT").expect("output required"));
+    let baseline = PathBuf::from(std::env::var_os("SM_SCHEDULING_BASELINE_BINARY").expect("baseline required"));
+    let baseline_source =
+        PathBuf::from(std::env::var_os("SM_SCHEDULING_BASELINE_SOURCE").expect("baseline source required"));
+    assert!(output.is_absolute() && !output.exists(), "use a new absolute measurement directory");
+    assert!(baseline.is_absolute() && baseline.is_file());
+    fs::create_dir(&output).unwrap();
+    let baseline_project = Project::at(output.join("baseline"), true);
+    let candidate_project = Project::at(output.join("candidate"), true);
+    scheduling_project(&baseline_project, true);
+    scheduling_project(&candidate_project, true);
+    write(&baseline_project.0, "crates/pipeline/src/fixture_execution.rs", fs::read(&baseline_source).unwrap());
+    for input in ["crates/port/src/fixture.rs", "tools/port/fixture.toml", "deps/snesrev-sm/src/sm_80.c", "peer.rs"] {
+        assert_eq!(
+            fs::read(baseline_project.0.join(input)).unwrap(),
+            fs::read(candidate_project.0.join(input)).unwrap()
+        );
+    }
+    let candidate = std::env::var_os("SM_SCHEDULING_CANDIDATE_BINARY")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from(env!("CARGO_BIN_EXE_sm-pipeline")));
+    // Preserve exact source snapshots for both binaries. Warm each private
+    // build cache once with identical Fixture input and generated peer source.
+    let variants =
+        [("baseline", &baseline_project, baseline.as_path()), ("candidate", &candidate_project, candidate.as_path())];
+    let mut rows = Vec::new();
+    let mut verdicts = Vec::new();
+    for (_, project, binary) in variants {
+        let (verdict, _, _) = family_with_lease_peer(project, binary, "fork");
+        verdicts.push((project.0.clone(), verdict));
+    }
+    for mode in ["fresh", "fork"] {
+        for (label, project, binary) in variants {
+            let (verdict, receipt, seconds) = family_with_lease_peer(project, binary, mode);
+            let run = Path::new(verdict["run"].as_str().unwrap());
+            rows.push(Value::Table(toml::Table::from_iter([
+                ("scheduler".into(), label.into()),
+                ("execution".into(), mode.into()),
+                ("harness_seconds".into(), seconds.into()),
+                ("peer_wait_seconds".into(), receipt["worker_wait_seconds"].clone()),
+                (
+                    "peer_receipt".into(),
+                    sealed(
+                        &run.with_file_name(format!("{}-peer", run.file_name().unwrap().to_str().unwrap()))
+                            .join("peer.timing.toml"),
+                    ),
+                ),
+                (
+                    "verdict".into(),
+                    Value::try_from(Path::new(verdict["run"].as_str().unwrap()).join("verdict.toml")).unwrap(),
+                ),
+            ])));
+            verdicts.push((project.0.clone(), verdict));
+        }
+    }
+    let report = toml::Table::from_iter([
+        ("schema".into(), "fixture-scheduling-measurement-v1".into()),
+        ("baseline_binary".into(), sealed(&baseline)),
+        ("baseline_source".into(), sealed(&baseline_source)),
+        ("candidate_binary".into(), sealed(&candidate)),
+        ("fixture_source".into(), sealed(&candidate_project.0.join("crates/port/src/fixture.rs"))),
+        ("peer_source".into(), sealed(&candidate_project.0.join("peer.rs"))),
+        ("rows".into(), Value::Array(rows)),
+        ("limitations".into(), "bounded synthetic contention, three actual-C Fixture pairs per family, two shared slots, one external Rust process caller, 600 ms root delay, warm build cache, one sample per binary/mode; harness_seconds includes family execution, peer shutdown and authentication; measures stranded capacity rather than full-route throughput".into()),
+    ]);
+    write(&output, "measurement.toml", toml::to_string_pretty(&report).unwrap());
+    eprintln!("{}", toml::to_string_pretty(&report).unwrap());
+    drop(baseline_project);
+    drop(candidate_project);
+    // Cleanup retains exact source paths. Authenticate through the public
+    // interface again after both cleanup passes and cache removal.
+    for (checkout, verdict) in &verdicts {
+        let retained = std::mem::ManuallyDrop::new(Project(checkout.clone(), false));
+        retained.authenticate(verdict, true);
+    }
+}
+
 #[test]
 fn fork_parent_is_pristine_and_execution_seals_cannot_be_stripped() {
     let project = Project::new();
@@ -557,21 +783,28 @@ fn cancelling_family_reaps_helper_fixture_and_descendant() {
         "crates/port/src/fixture.rs",
         r#"use crate::memory::Wram;
 unsafe extern "C"{fn fork()->i32;fn getppid()->i32;}
-pub fn dispatch(_ram:&mut Wram<'_>,_name:&str,_a:u16,_b:u16)->Result<u32,&'static str>{
+pub fn dispatch(ram:&mut Wram<'_>,_name:&str,a:u16,_b:u16)->Result<u32,&'static str>{
+if a==2{std::fs::write("../idle-helper.pid",unsafe{getppid()}.to_string()).unwrap();ram.set_byte(17,2);return Ok(3);}
 std::fs::write("helper.pid",unsafe{getppid()}.to_string()).unwrap();
 std::fs::write("child.pid",std::process::id().to_string()).unwrap();
 let pid=unsafe{fork()};assert!(pid>=0);if pid==0{std::fs::write("descendant.pid",std::process::id().to_string()).unwrap();}
 std::thread::sleep(std::time::Duration::from_secs(30));Ok(0)}"#,
     );
-    project.manifest(toml::from_str::<Value>("cases=[{name='sleep',a=1}]").unwrap()["cases"].clone());
+    project.manifest(
+        toml::from_str::<Value>(
+            "cases=[{name='sleep',a=1},{name='short',a=2},{name='blocked',a=3,continue_from='sleep'}]",
+        )
+        .unwrap()["cases"]
+            .clone(),
+    );
     let request = toml::to_string(&toml::Table::from_iter([
         ("checkout".into(), Value::try_from(&project.0).unwrap()),
         ("source".into(), Value::try_from(project.0.join("deps/snesrev-sm")).unwrap()),
         ("manifest".into(), "tools/port/fixture.toml".into()),
         ("output".into(), Value::try_from(project.0.join("out")).unwrap()),
         ("root".into(), Value::try_from(project.0.join("cache")).unwrap()),
-        ("workers".into(), 1.into()),
-        ("case_jobs".into(), 1.into()),
+        ("workers".into(), 2.into()),
+        ("case_jobs".into(), 2.into()),
         ("execution".into(), "fork".into()),
     ]))
     .unwrap();
@@ -586,10 +819,9 @@ std::thread::sleep(std::time::Duration::from_secs(30));Ok(0)}"#,
     let deadline = std::time::Instant::now() + std::time::Duration::from_secs(20);
     let dir = loop {
         if let Ok(entries) = fs::read_dir(project.0.join("out"))
-            && let Some(dir) = entries
-                .filter_map(Result::ok)
-                .map(|e| e.path().join("sleep"))
-                .find(|p| p.join("descendant.pid").is_file())
+            && let Some(dir) = entries.filter_map(Result::ok).map(|e| e.path().join("sleep")).find(|p| {
+                p.join("descendant.pid").is_file() && p.parent().unwrap().join("short/c-after.wram").is_file()
+            })
         {
             break dir;
         }
@@ -605,7 +837,10 @@ std::thread::sleep(std::time::Duration::from_secs(30));Ok(0)}"#,
         let pid: i32 = fs::read_to_string(dir.join(name)).unwrap().parse().unwrap();
         assert_eq!(unsafe { libc::kill(pid, 0) }, -1, "{name} survived cancellation");
     }
+    let idle_helper: i32 = fs::read_to_string(dir.parent().unwrap().join("idle-helper.pid")).unwrap().parse().unwrap();
+    assert_eq!(unsafe { libc::kill(idle_helper, 0) }, -1, "idle helper survived cancellation");
     assert!(!dir.join("c.stdout").exists());
+    assert!(dir.parent().unwrap().join("blocked/blocked.toml").is_file());
     let verdict: Value =
         toml::from_str(&fs::read_to_string(dir.parent().unwrap().join("verdict.toml")).unwrap()).unwrap();
     assert!(verdict["error"].as_str().unwrap().contains("interrupted by signal"));

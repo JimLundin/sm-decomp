@@ -126,15 +126,9 @@ pub(crate) fn run_waves<T: Send>(
     Ok(outcomes)
 }
 
-#[derive(Clone, Copy, PartialEq)]
-enum State {
-    Pending,
-    Running,
-    Passed,
-    Failed,
-}
 struct Queue {
-    states: Vec<State>,
+    // Lowest declared index wins admission, including blocked descendants.
+    ready: BTreeMap<usize, bool>,
     remaining: usize,
 }
 pub(crate) fn run<T: Send>(
@@ -149,7 +143,16 @@ pub(crate) fn run<T: Send>(
     ensure!((1..=64).contains(&jobs), "case jobs must be 1..64");
     ensure!((1..=64).contains(&capacity), "worker capacity must be 1..64");
     let predecessors = predecessors(tasks)?;
-    let queue = Mutex::new(Queue { states: vec![State::Pending; tasks.len()], remaining: tasks.len() });
+    let mut dependents = vec![Vec::new(); tasks.len()];
+    let mut ready = BTreeMap::new();
+    for (index, predecessor) in predecessors.iter().enumerate() {
+        if let Some(predecessor) = predecessor {
+            dependents[*predecessor].push(index);
+        } else {
+            ready.insert(index, false);
+        }
+    }
+    let queue = Mutex::new(Queue { ready, remaining: tasks.len() });
     let changed = Condvar::new();
     let outcomes = Mutex::new(Vec::new());
     let context = metrics::active().context("missing fixture metrics scope")?;
@@ -159,7 +162,7 @@ pub(crate) fn run<T: Send>(
         for _ in 0..jobs.min(tasks.len()).min(capacity) {
             scope.spawn(|| {
                 let _entered = context.enter();
-                let mut worker = Worker::new(root, capacity, run, fork, &context);
+                let mut worker = Worker::new(run, fork, &context);
                 loop {
                     let selected = {
                         let mut q = queue.lock().unwrap();
@@ -167,20 +170,8 @@ pub(crate) fn run<T: Send>(
                             if q.remaining == 0 {
                                 break None;
                             }
-                            let mut selected = None;
-                            for i in 0..tasks.len() {
-                                if q.states[i] != State::Pending {
-                                    continue;
-                                }
-                                let blocked = predecessors[i].is_some_and(|p| q.states[p] == State::Failed);
-                                if blocked || predecessors[i].is_none_or(|p| q.states[p] == State::Passed) {
-                                    q.states[i] = State::Running;
-                                    selected = Some((i, blocked));
-                                    break;
-                                }
-                            }
-                            if selected.is_some() {
-                                break selected;
+                            if let Some(selected) = q.ready.pop_first() {
+                                break Some(selected);
                             }
                             q = changed.wait(q).unwrap();
                         }
@@ -201,21 +192,23 @@ pub(crate) fn run<T: Send>(
                             bail!("fixture {} blocked by {previous}", tasks[index].1.name);
                         }
                         metrics::check_cancelled()?;
-                        adapter(
-                            tasks[index],
-                            worker.as_mut().map_err(|e| anyhow::anyhow!("fixture worker startup: {e:#}"))?,
-                        )
+                        // A lease covers one ready Fixture pair, including
+                        // Rust admission and C execution. Idle pristine helpers
+                        // remain reusable without reserving execution capacity.
+                        let (_lease, wait) = crate::acquire_lease(root, capacity).context("fixture worker startup")?;
+                        worker.wait = wait;
+                        adapter(tasks[index], &mut worker)
                     })();
                     let mut q = queue.lock().unwrap();
-                    q.states[index] = if outcome.is_ok() { State::Passed } else { State::Failed };
+                    for &dependent in &dependents[index] {
+                        q.ready.insert(dependent, outcome.is_err());
+                    }
                     q.remaining -= 1;
                     outcomes.lock().unwrap().push((index, outcome));
                     changed.notify_all();
                 }
-                if let Ok(worker) = &mut worker {
-                    if let Err(error) = worker.finish() {
-                        outcomes.lock().unwrap().push((tasks.len(), Err(error)));
-                    }
+                if let Err(error) = worker.finish() {
+                    outcomes.lock().unwrap().push((tasks.len(), Err(error)));
                 }
             });
         }
@@ -226,7 +219,6 @@ pub(crate) fn run<T: Send>(
 }
 
 pub(crate) struct Worker {
-    _lease: File,
     wait: f64,
     context: Context,
     helpers: BTreeMap<String, Helper>,
@@ -234,9 +226,8 @@ pub(crate) struct Worker {
     run: PathBuf,
 }
 impl Worker {
-    fn new(root: &Path, capacity: usize, run: &Path, fork: bool, context: &Context) -> Result<Self> {
-        let (lease, wait) = crate::acquire_lease(root, capacity)?;
-        Ok(Self { _lease: lease, wait, context: context.clone(), helpers: BTreeMap::new(), fork, run: run.into() })
+    fn new(run: &Path, fork: bool, context: &Context) -> Self {
+        Self { wait: 0., context: context.clone(), helpers: BTreeMap::new(), fork, run: run.into() }
     }
     pub fn execute(&mut self, args: &[String], dir: &Path, label: &str) -> Result<()> {
         self.execute_timeout(args, dir, label, Duration::from_secs(240))
@@ -572,7 +563,8 @@ match a[1].as_str(){{
             .unwrap();
         assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
         let mut metrics = metrics::Run::start(root.join("test.metrics.toml"), "fixture-test").unwrap();
-        let mut worker = Worker::new(&root.join("budget"), 1, &root, true, &metrics.context).unwrap();
+        let (_lease, _) = crate::acquire_lease(&root.join("budget"), 1).unwrap();
+        let mut worker = Worker::new(&root, true, &metrics.context);
         for (i, action) in ["mutate", "check", "crash", "check", "descendant", "check"].into_iter().enumerate() {
             let dir = root.join(format!("case-{i}"));
             fs::create_dir(&dir).unwrap();
