@@ -1,0 +1,21 @@
+
+running 16 tests
+test translation_migration::tests::imported_ready_integration_reserves_one_attempt_and_recovers_exact_completion_without_writes ... ok
+test translation_migration::tests::managed_original_commands_require_exact_confined_equivalence ... ok
+test translation_migration::tests::imported_running_integration_preserves_paused_original_worker_and_refuses_restart ... ok
+test translation_migration::tests::managed_domain_binds_original_identity_without_derived_seal_cycles ... ok
+test translation_migration::tests::original_pause_coverage_refuses_reduced_native_acceptance_before_producers ... ok
+test translation_migration::tests::fence_symlinks_and_directory_aliases_fail_closed_but_preparation_is_not_activation ... ok
+test translation_migration::tests::retained_managed_intent_and_controller_projection_authenticate_without_mutation ... ignored, read-only diagnosis of a retained managed publication intent; no source or queue mutation
+test translation_migration::tests::retained_original_package_validates_read_only_after_complete_proof ... ignored, read-only actual retained supervisor proof and original claim package; no producers
+test translation_migration::tests::managed_immutable_write_recovers_exact_pending_and_preserves_partial_failure ... ok
+test translation_migration::tests::active_fence_preserves_status_but_denies_assign_and_session_producers_before_writes ... ok
+test translation_migration::tests::frozen_original_inputs_fail_before_retention_on_stale_hash_fingerprint_and_alias ... ok
+test translation_migration::tests::nominal_proof_hash_is_never_accepted_as_completed_supervisor_evidence ... ok
+test translation_migration::tests::stopped_observation_must_name_exact_owner_and_no_current_kernel_writer ... ok
+test translation_migration::tests::preparation_preserves_only_exact_legacy_linked_ownership_and_abbreviated_baseline ... ok
+test translation_migration::tests::migration_lineage_rejects_changed_revision_writable_paths_and_checkpoint_bytes ... ok
+test translation_migration::tests::admitted_queue_keeps_original_attempt_and_standard_submission_integration_contract ... ok
+
+test result: ok. 14 passed; 0 failed; 2 ignored; 0 measured; 189 filtered out; finished in 0.33s
+

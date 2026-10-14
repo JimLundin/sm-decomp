@@ -399,6 +399,7 @@ impl ManagedProject {
                 writable_files: scope.writable_paths.clone(),
                 original_claim: reference(&original_path)?,
                 installation: None,
+                execution: None,
             }],
             historical: vec![],
             stopped_owners: vec![reference(&stopped_path)?],

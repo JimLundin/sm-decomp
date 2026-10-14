@@ -1,0 +1,65 @@
+schema = "decomp-session-transfer-v1"
+token = "ceres-20261013"
+session_id = "01a13592-d02b-7143-8489-a15b03f19da2"
+generation = 2
+status = "completed"
+observed_at = "2026-10-14T08:34:47Z"
+processes = []
+
+[[evidence]]
+path = "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-migration/inspections/01a13592-d02b-7143-8489-a15b03f19da2.json"
+sha256 = "a9b6090f2c4b14df2793392586a669f69a072e08278e3f6a0f9c61c0ac99d60d"
+
+[[evidence]]
+path = "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-migration/inspections/processes.txt"
+sha256 = "785a5eb4948276a15cc7674a0f438f15ed2847586475fc433a8769a0365cf534"
+
+[[evidence]]
+path = "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-migration/inspections/authority-before.toml"
+sha256 = "832bce6368c9b156b6776364e1356a659f6c46f34760c520e0568e7c94da2bbd"
+
+[replacement]
+path = "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-migration/inspections/replacement.toml"
+sha256 = "e202520bfea569371764857acf9c0cddb8e0e8c1f3016bf5c40a2a49d5dd139d"
+
+[[children]]
+effort = "ceres-continuation"
+agent = "/root/ceres_scope"
+status = "completed"
+[children.claim]
+id = "compact-controller"
+revision = "48656a2-compact-v1"
+attempt = 1
+coordinator = "ceres-20261013"
+
+[children.observation]
+path = "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-migration/inspections/compact-controller-child.toml"
+sha256 = "b8329696a5c7c1ac34b45852b5fa1aecb8642812c2e0022cc5fb0077f8ed957f"
+
+[[children]]
+effort = "ceres-continuation"
+agent = "/root/host_scope"
+status = "completed"
+[children.claim]
+id = "shared-game-host"
+revision = "48656a2-host-v1"
+attempt = 1
+coordinator = "ceres-20261013"
+
+[children.observation]
+path = "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-migration/inspections/shared-game-host-child.toml"
+sha256 = "9bf343012bcfac4fe37c26939d0fde208aad36cfaba8f17da72a161fa0898818"
+
+[[children]]
+effort = "ceres-continuation"
+agent = "/root"
+status = "failed"
+[children.claim]
+id = "integrate-shared-game-host"
+revision = "48656a2-host-v1-1"
+attempt = 1
+coordinator = "ceres-20261013"
+
+[children.observation]
+path = "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-migration/inspections/integrate-shared-game-host-child.toml"
+sha256 = "4f2c5a26ec25700f1a425e6884a14d9a7ba37bdfe0cd57fef846527f5bc879ad"

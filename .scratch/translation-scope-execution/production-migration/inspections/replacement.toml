@@ -1,0 +1,8 @@
+schema = "decomp-session-observation-v1"
+session_id = "01a136a0-49bb-7690-a360-48def3c2c09b"
+status = "active"
+observed_at = "2026-10-14T08:34:47Z"
+
+[[evidence]]
+path = "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-migration/inspections/01a136a0-49bb-7690-a360-48def3c2c09b.json"
+sha256 = "be36b7b29087c993a8c382982cbf55dc2c9b69b6a299cf8791c47becb2e81b02"

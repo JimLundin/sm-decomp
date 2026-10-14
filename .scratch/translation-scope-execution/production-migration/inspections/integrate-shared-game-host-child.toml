@@ -1,0 +1,20 @@
+schema = "decomp-child-observation-v1"
+effort = "ceres-continuation"
+session_id = "01a133eb-76e2-7073-9aef-d97c03a812e4"
+agent = "/root"
+status = "failed"
+observed_at = "2026-10-14T08:34:47Z"
+
+[claim]
+id = "integrate-shared-game-host"
+revision = "48656a2-host-v1-1"
+attempt = 1
+coordinator = "ceres-20261013"
+
+[[evidence]]
+path = "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-migration/inspections/01a133eb-76e2-7073-9aef-d97c03a812e4.json"
+sha256 = "3bf78a21f212e1527ecc9fca00e2fac81d14a6a91406c9b8e734985a8f1335ac"
+
+[[evidence]]
+path = "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-migration/inspections/processes.txt"
+sha256 = "785a5eb4948276a15cc7674a0f438f15ed2847586475fc433a8769a0365cf534"

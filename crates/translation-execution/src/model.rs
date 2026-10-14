@@ -183,6 +183,16 @@ pub struct SourceSnapshot {
     pub clean: bool,
 }
 
+/// An existing submitted revision admitted by the trusted installation. Its
+/// admission seal identifies the original claim/source evidence, not a model
+/// response. The adapter authenticates both fields on every history replay.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct ImportedSubmission {
+    pub source: SourceSnapshot,
+    pub admission_sha256: String,
+}
+
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
 pub enum ExecutionPhase {

@@ -1,7 +1,7 @@
 # Switch reviewed production scopes to deterministic execution
 
-Status: open
-Blocked by: 07
+Status: claimed
+Blocked by: None
 Triage: ready-for-agent
 
 Prepare the concrete production-switch result after the complete restricted-path
@@ -17,6 +17,11 @@ Original lineage and historical inspection/authentication remain valid. Activati
 rollback/recovery steps and completed cleanup have durable evidence.
 
 ## Completion evidence
+
+The user explicitly authorized production migration on 2026-10-14 and paused
+other work for the switch. The separate switch decision is satisfied. Root owns
+the migration implementation, checked authority recovery and production activation.
+Existing submissions and held integrations retain their original lineage.
 
 [Read-only original Ceres preparation](../production-preparation/preparation-checkpoint-27b8b0a.md)
 was built and separately revalidated against the complete retained native proof

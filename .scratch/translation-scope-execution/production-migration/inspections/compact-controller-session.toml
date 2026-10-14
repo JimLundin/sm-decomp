@@ -1,0 +1,12 @@
+schema = "decomp-session-observation-v1"
+session_id = "01a133ec-4ef9-78b2-a8d7-248726023ce5"
+status = "completed"
+observed_at = "2026-10-14T08:34:47Z"
+
+[[evidence]]
+path = "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-migration/inspections/01a133ec-4ef9-78b2-a8d7-248726023ce5.json"
+sha256 = "a935e8c0d8c2522ebf5291ed584630ba9929671533044dc03b8a4ad358075673"
+
+[[evidence]]
+path = "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-migration/inspections/processes.txt"
+sha256 = "785a5eb4948276a15cc7674a0f438f15ed2847586475fc433a8769a0365cf534"

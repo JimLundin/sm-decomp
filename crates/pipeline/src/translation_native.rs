@@ -84,6 +84,10 @@ pub(crate) struct PreparedNative {
     pub source: Source,
     pub pinned_source: PathBuf,
     pub candidate_path: String,
+    /// Writable members of this family's Rust closure approved by the whole
+    /// translation scope. Omitted for historical single-module installations.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub approved_candidate_paths: Option<BTreeSet<String>>,
     pub rust_inputs: Vec<String>,
     pub c_inputs: Vec<String>,
     pub dependencies_sha256: String,
@@ -406,6 +410,52 @@ pub(crate) fn prepare_until(
     bounded::until(deadline, max_bytes, || prepare_bounded(checkout, pinned_source, contract))
 }
 
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn prepare_scope_until(
+    checkout: &Path,
+    pinned_source: &Path,
+    contract: &NativeContract,
+    approved_paths: &[String],
+    deadline: u64,
+    max_bytes: u64,
+) -> Result<PreparedNative> {
+    bounded::until(deadline, max_bytes, || {
+        let mut prepared = prepare_bounded(checkout, pinned_source, contract)?;
+        bind_scope_candidates(&mut prepared, approved_paths)?;
+        Ok(prepared)
+    })
+}
+
+fn bind_scope_candidates(prepared: &mut PreparedNative, approved_paths: &[String]) -> Result<()> {
+    ensure!(!approved_paths.is_empty() && approved_paths.len() <= 4096, "native scope ownership is empty or excessive");
+    let mut approved = BTreeSet::new();
+    for name in approved_paths {
+        bounded::check()?;
+        let path = Path::new(name);
+        ensure!(
+            relative(path)
+                && path.parent() == Some(Path::new("crates/port/src"))
+                && path.extension().is_some_and(|extension| extension == "rs")
+                && !["memory.rs", "lib.rs"].iter().any(|name| path.file_name().is_some_and(|file| file == *name)),
+            "native scope ownership is not an approved gameplay module: {name}"
+        );
+        ensure!(approved.insert(name.clone()), "duplicate native scope ownership");
+    }
+    // An affected family may have a read-only root and a writable dependency.
+    // Inputs outside its compilation closure remain irrelevant to its receipt.
+    let candidates = approved.into_iter().filter(|path| prepared.rust_inputs.contains(path)).collect::<BTreeSet<_>>();
+    // Preserve the exact historical identity for a single-root scope. Every
+    // other scope binds the complete permitted closure into the frozen policy.
+    if candidates == BTreeSet::from([prepared.candidate_path.clone()]) {
+        prepared.approved_candidate_paths = None;
+    } else {
+        prepared.approved_candidate_paths = Some(candidates);
+        prepared.dependencies_sha256 =
+            sealed(&("scope-native-inputs-v1", &prepared.dependencies_sha256, &prepared.approved_candidate_paths))?;
+    }
+    Ok(())
+}
+
 fn prepare_bounded(checkout: &Path, pinned_source: &Path, contract: &NativeContract) -> Result<PreparedNative> {
     bounded::safe(checkout)?;
     bounded::safe(pinned_source)?;
@@ -497,6 +547,7 @@ fn prepare_bounded(checkout: &Path, pinned_source: &Path, contract: &NativeContr
         source,
         pinned_source,
         candidate_path,
+        approved_candidate_paths: None,
         rust_inputs: rust_names,
         c_inputs: c_names,
         dependencies_sha256,
@@ -511,7 +562,7 @@ fn check_candidate(prepared: &PreparedNative, checkout: &Path) -> Result<()> {
     );
     for (path, expected) in &prepared.contract.frozen_inputs {
         bounded::check()?;
-        if path != &prepared.candidate_path {
+        if !mutable_candidate(prepared, path) {
             ensure!(digest(&file(&checkout.join(path))?)? == *expected, "frozen native dependency changed: {path}");
         }
     }
@@ -526,6 +577,22 @@ fn check_candidate(prepared: &PreparedNative, checkout: &Path) -> Result<()> {
     }
     file(&checkout.join(&prepared.candidate_path))?;
     Ok(())
+}
+
+fn mutable_candidate(prepared: &PreparedNative, path: &str) -> bool {
+    prepared.approved_candidate_paths.as_ref().map_or(path == prepared.candidate_path, |paths| paths.contains(path))
+}
+
+fn candidate_digest(prepared: &PreparedNative, checkout: &Path) -> Result<String> {
+    let Some(paths) = &prepared.approved_candidate_paths else {
+        return digest(&file(&checkout.join(&prepared.candidate_path))?);
+    };
+    let mut inputs = BTreeMap::new();
+    for path in paths {
+        bounded::check()?;
+        inputs.insert(path, digest(&file(&checkout.join(path))?)?);
+    }
+    sealed(&inputs)
 }
 
 /// Before rewrite dispatch, the supervisor runs this same prescribed path on
@@ -598,7 +665,7 @@ fn run_bounded(
         let run = output.join("family");
         fs::create_dir_all(&run)?;
         let prepared_sha256 = sealed(prepared)?;
-        let candidate_sha256 = digest(&checkout.join(&prepared.candidate_path))?;
+        let candidate_sha256 = candidate_digest(prepared, &checkout)?;
         let helper = file(&fs::canonicalize(&runtime.helper)?)?;
         let rustc = file(&fs::canonicalize(&runtime.rustc)?)?;
         let c_compiler = file(&fs::canonicalize(&runtime.c_compiler)?)?;
@@ -813,7 +880,7 @@ fn authenticate_bounded(prepared: &PreparedNative, checkout: &Path, receipt: &Na
     let checkout = fs::canonicalize(checkout)?;
     ensure!(receipt.prepared_sha256 == sealed(prepared)?, "native prepared identity differs");
     check_candidate(prepared, &checkout)?;
-    ensure!(receipt.candidate_sha256 == digest(&checkout.join(&prepared.candidate_path))?, "native candidate changed");
+    ensure!(receipt.candidate_sha256 == candidate_digest(prepared, &checkout)?, "native candidate changed");
     let path = check_asset(&checkout, &receipt.verdict)?;
     let run = path.parent().context("native verdict has no run parent")?;
     let output = run.parent().context("native run has no output parent")?;
@@ -1198,6 +1265,72 @@ mod tests {
     use super::*;
 
     #[test]
+    fn scope_candidate_dependencies_are_mutable_and_bound_to_receipt_identity() -> Result<()> {
+        let directory = bounded::tests::Directory::new()?;
+        let checkout = &directory.0;
+        fs::create_dir_all(checkout.join("crates/port/src"))?;
+        let names = ["root", "helper", "fixed"].map(|name| format!("crates/port/src/{name}.rs"));
+        let mut frozen_inputs = BTreeMap::new();
+        for name in &names {
+            fs::write(checkout.join(name), format!("// original {name}"))?;
+            frozen_inputs.insert(name.clone(), digest(&checkout.join(name))?);
+        }
+        fs::write(checkout.join("manifest.toml"), b"family='test'")?;
+        let limits =
+            NativeLimits { timeout_seconds: 1, writable_bytes: 4096, stdout_bytes: 0, stderr_bytes: 0, stdin_bytes: 0 };
+        let baseline = PreparedNative {
+            contract: NativeContract {
+                family: "test".into(),
+                manifest: Asset { file: "manifest.toml".into(), sha256: digest(&checkout.join("manifest.toml"))? },
+                source_inventory: Asset::default(),
+                coverage: BTreeMap::new(),
+                provenance: NativeProvenance::NativeScope { scope: Asset::default(), checkout: checkout.clone() },
+                frozen_inputs,
+                compiler_limits: limits.clone(),
+                fixture_limits: limits,
+            },
+            manifest: Manifest::default(),
+            source: Source::default(),
+            pinned_source: checkout.clone(),
+            candidate_path: names[0].clone(),
+            approved_candidate_paths: None,
+            rust_inputs: names.to_vec(),
+            c_inputs: Vec::new(),
+            dependencies_sha256: sha256("dependencies"),
+            verification_sha256: sha256("verification"),
+        };
+        let mut single = baseline.clone();
+        bind_scope_candidates(&mut single, &[names[0].clone()])?;
+        assert_eq!(sealed(&single)?, sealed(&baseline)?);
+        assert!(!toml::to_string(&single)?.contains("approved_candidate_paths"));
+        let mut scoped = baseline.clone();
+        bind_scope_candidates(&mut scoped, &names[..2])?;
+        assert_ne!(scoped.dependencies_sha256, baseline.dependencies_sha256);
+        let original = candidate_digest(&scoped, checkout)?;
+        fs::write(checkout.join(&names[1]), b"// changed approved helper")?;
+        check_candidate(&scoped, checkout)?;
+        assert_ne!(candidate_digest(&scoped, checkout)?, original);
+        assert!(check_candidate(&baseline, checkout).is_err());
+        fs::write(checkout.join(&names[2]), b"// changed frozen helper")?;
+        assert!(check_candidate(&scoped, checkout).is_err());
+        for name in &names {
+            fs::write(checkout.join(name), format!("// original {name}"))?;
+        }
+        let mut dependency_only = baseline.clone();
+        bind_scope_candidates(&mut dependency_only, &[names[1].clone()])?;
+        fs::write(checkout.join(&names[0]), b"// unauthorized root change")?;
+        assert!(check_candidate(&dependency_only, checkout).is_err());
+        let mut uncertain = baseline.clone();
+        bind_scope_candidates(&mut uncertain, &["crates/port/src/unrelated.rs".into()])?;
+        assert_eq!(uncertain.approved_candidate_paths, Some(BTreeSet::new()));
+        assert!(check_candidate(&uncertain, checkout).is_err());
+        for invalid in ["crates/port/src/memory.rs", "crates/port/src/../helper.rs", "tools/port/family.toml"] {
+            assert!(bind_scope_candidates(&mut baseline.clone(), &[invalid.into()]).is_err());
+        }
+        Ok(())
+    }
+
+    #[test]
     fn coverage_rejects_empty_duplicate_and_incomplete_registered_domain() {
         let fixture = crate::family_model::Case { name: "step".into(), ..Default::default() };
         let routine =
@@ -1239,6 +1372,7 @@ mod tests {
             source: Source::default(),
             pinned_source: absent.clone(),
             candidate_path: "candidate.rs".into(),
+            approved_candidate_paths: None,
             rust_inputs: Vec::new(),
             c_inputs: Vec::new(),
             dependencies_sha256: sha256("dependencies"),
@@ -1303,6 +1437,7 @@ mod tests {
             source: Source::default(),
             pinned_source: directory.0.join("unavailable-source"),
             candidate_path: "candidate.rs".into(),
+            approved_candidate_paths: None,
             rust_inputs: Vec::new(),
             c_inputs: Vec::new(),
             dependencies_sha256: sha256("deps"),

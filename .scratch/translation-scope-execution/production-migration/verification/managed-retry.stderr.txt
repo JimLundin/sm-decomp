@@ -1,0 +1,42 @@
+   Compiling pipeline v0.1.0 (/home/jim/sm-decomp-translation-execution/crates/pipeline)
+warning: function `validate_duplicate_ticket_receipts` is never used
+   --> crates/pipeline/src/drill_evidence.rs:251:15
+    |
+251 | pub(crate) fn validate_duplicate_ticket_receipts(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `authenticate_inventory_until` is never used
+   --> crates/pipeline/src/family.rs:760:15
+    |
+760 | pub(crate) fn authenticate_inventory_until(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `authenticate_with_source_until` is never used
+    --> crates/pipeline/src/family.rs:1128:15
+     |
+1128 | pub(crate) fn authenticate_with_source_until(
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `build_preparation` is never used
+    --> crates/pipeline/src/translation_migration_builder.rs:1173:15
+     |
+1173 | pub(crate) fn build_preparation(request: BuildRequest) -> Result<BuildReceipt> {
+     |               ^^^^^^^^^^^^^^^^^
+
+warning: function `contract_for_family_until` is never used
+   --> crates/pipeline/src/translation_native.rs:294:15
+    |
+294 | pub(crate) fn contract_for_family_until(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `prepare_until` is never used
+   --> crates/pipeline/src/translation_native.rs:403:15
+    |
+403 | pub(crate) fn prepare_until(
+    |               ^^^^^^^^^^^^^
+
+warning: `pipeline` (bin "sm-pipeline" test) generated 6 warnings
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 32s
+     Running unittests src/main.rs (/tmp/sm-production-migration-target-20261014/debug/build/pipeline/6d1ace37123956b8/out/sm_pipeline-6d1ace37123956b8)

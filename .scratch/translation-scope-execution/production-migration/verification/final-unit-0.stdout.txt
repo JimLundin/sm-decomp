@@ -1,0 +1,10 @@
+
+running 5 tests
+test translation_legacy::tests::host_contract_retains_complete_callback_and_catalog_requirements ... ok
+test translation_legacy::tests::readiness_and_prepared_fingerprint_tamper_cannot_claim_acceptance ... ok
+test translation_legacy::tests::source_tamper_and_aliased_or_oversized_references_fail_closed ... ok
+test translation_legacy::tests::original_lineage_ownership_and_sealed_evidence_cannot_be_replaced ... ok
+test translation_legacy::tests::legacy_readiness_is_repeatable_nonaccepting_and_read_only ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 200 filtered out; finished in 0.02s
+

@@ -1481,6 +1481,7 @@ fn build_inner(
             writable_files: entry.job.writable_paths.clone(),
             original_claim: reference,
             installation: None,
+            execution: None,
         });
         blockers.push(format!("Original claim {} has no reviewed production installation or policy; its source, inputs and held lineage are preserved.", plan.id));
     }

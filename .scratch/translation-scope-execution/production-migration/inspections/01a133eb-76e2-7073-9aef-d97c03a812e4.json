@@ -1,0 +1,9 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"schemaVersion\":1,\"thread\":{\"id\":\"01a133eb-76e2-7073-9aef-d97c03a812e4\",\"kind\":\"codex\",\"title\":\"Continue the decomp\",\"preview\":\"continue the decomp\",\"status\":{\"type\":\"notLoaded\"},\"cwd\":\"/home/jim/sm-decomp\",\"createdAt\":1791872431,\"updatedAt\":1791874657},\"page\":{\"order\":\"newest_first\",\"limit\":1,\"hasMore\":true,\"nextCursor\":\"{\\\"requestedThreadId\\\":\\\"01a133eb-76e2-7073-9aef-d97c03a812e4\\\",\\\"rolloutOrdinal\\\":642,\\\"includeAnchor\\\":false,\\\"scope\\\":{\\\"kind\\\":\\\"turns\\\"}}\"},\"turns\":[{\"id\":\"01a1340d-2d5a-7ab1-a076-a7d92a822632\",\"status\":\"failed\",\"error\":{\"message\":\"stream disconnected before completion: Encrypted function output content could not be decrypted or decoded.\",\"additionalDetails\":null},\"startedAt\":1791874641,\"completedAt\":1791874657,\"durationMs\":15989,\"items\":[{\"type\":\"functionCallOutput\",\"id\":\"fco_01a1340d-2d60-7152-8f4d-7d55b2952c0b\",\"name\":\"send_message_to_thread\",\"namespace\":\"codex_tui\",\"codexDelegation\":{\"sourceThreadId\":\"01a13402-afaa-7501-b97b-15d3b08434be\",\"input\":\"The user stop instruction still applies; current check finished and controller branch now 223f8a1, clean. Your child 01a133ec-4ef9-78b2-a8d7-248726023ce5 remains active; direct send is rejected for v2 subagents. Please use collaboration.send_message/interrupt_agent from YOUR tree to stop it and host_review after existing cleanup, get handoff and mark no further writes. No new experiments/merges/main commits. Your earlier decoding error is retained. I will checkpoint all main durable files and source snapshots; send me proof children are idle. Keep this turn short and avoid reading large prior tool output.\"}}]}]}"
+    }
+  ],
+  "isError": false
+}

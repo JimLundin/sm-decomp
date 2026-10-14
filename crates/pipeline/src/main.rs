@@ -77,10 +77,13 @@ mod translation_execution;
 mod translation_infrastructure;
 mod translation_launch;
 mod translation_launch_prepare;
+mod translation_legacy;
 mod translation_migration;
 mod translation_migration_builder;
 mod translation_migration_guard;
 mod translation_native;
+mod translation_production;
+mod translation_production_prepare;
 
 static BINARY_SHA256: std::sync::OnceLock<String> = std::sync::OnceLock::new();
 
@@ -486,6 +489,14 @@ fn main() -> Result<()> {
     match args.first().map(String::as_str) {
         Some("translation-execute") => translation_execution::cli(&args[1..]),
         Some("translation-launch") => translation_launch::cli(&args[1..]),
+        Some("translation-production") => translation_production::cli(&args[1..]),
+        Some("translation-production-prepare") => {
+            ensure!(
+                args.len() == 3 && args[1] == "--config",
+                "usage: translation-production-prepare --config CONFIG.json"
+            );
+            emit(&translation_production_prepare::prepare(Path::new(&args[2]))?)
+        }
         Some("translation-migration") if args.get(1).is_some_and(|value| value == "build-preparation") => {
             ensure!(
                 args.len() == 4 && args[2] == "--request",

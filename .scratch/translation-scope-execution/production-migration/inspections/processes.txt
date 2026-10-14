@@ -1,0 +1,86 @@
+    PID    PPID STAT                  STARTED COMMAND
+      1       0 Ss   Tue Oct 13 12:22:43 2026 systemd
+      2       1 Sl+  Tue Oct 13 12:22:43 2026 init-systemd(Ub
+      3       2 S+   Tue Oct 13 12:22:43 2026 init-watcher
+      7       2 Sl+  Tue Oct 13 12:22:43 2026 init
+     59       1 S<s  Tue Oct 13 12:22:43 2026 systemd-journal
+     82       1 Ss   Tue Oct 13 12:22:44 2026 systemd-udevd
+     92       1 Ss   Tue Oct 13 12:22:44 2026 systemd-network
+    273       1 Ssl  Tue Oct 13 12:22:44 2026 snapfuse
+    274       1 Ssl  Tue Oct 13 12:22:44 2026 snapfuse
+    278       1 Ssl  Tue Oct 13 12:22:44 2026 snapfuse
+    285       1 Ssl  Tue Oct 13 12:22:44 2026 snapfuse
+    286       1 Ssl  Tue Oct 13 12:22:44 2026 snapfuse
+    291       1 Ssl  Tue Oct 13 12:22:44 2026 snapfuse
+    423       2 Ss   Tue Oct 13 12:22:53 2026 login
+    589     423 S+   Tue Oct 13 12:22:54 2026 zsh
+   1264       1 S    Tue Oct 13 12:22:55 2026 zsh
+   1265       1 S    Tue Oct 13 12:22:55 2026 zsh
+   1268       1 S    Tue Oct 13 12:22:55 2026 zsh
+   1273    1268 Sl   Tue Oct 13 12:22:55 2026 gitstatusd-linu
+   2775       1 Ss   Tue Oct 13 12:23:38 2026 systemd-resolve
+   2779       1 Ssl  Tue Oct 13 12:23:38 2026 accounts-daemon
+   2780       1 Ss   Tue Oct 13 12:23:38 2026 dbus-daemon
+   2785       1 Ss   Tue Oct 13 12:23:38 2026 networkd-dispat
+   2786       1 Ssl  Tue Oct 13 12:23:38 2026 polkitd
+   2787       1 Ssl  Tue Oct 13 12:23:38 2026 rsyslogd
+   2792       1 Ssl  Tue Oct 13 12:23:38 2026 snapd
+   2793       1 Ss   Tue Oct 13 12:23:38 2026 systemd-logind
+   2798       1 Ssl  Tue Oct 13 12:23:38 2026 udisksd
+   2830       1 Ssl  Tue Oct 13 12:23:38 2026 ModemManager
+   2847       1 Ss   Tue Oct 13 12:23:38 2026 cron
+   2859       1 Ssl  Tue Oct 13 12:23:38 2026 unattended-upgr
+   2862       1 Ssl  Tue Oct 13 12:23:38 2026 containerd
+   2866       1 Ss   Tue Oct 13 12:23:38 2026 atd
+   2879       1 Ss+  Tue Oct 13 12:23:38 2026 agetty
+   2890       1 Ss   Tue Oct 13 12:23:39 2026 sshd
+   2894       1 Ssl  Tue Oct 13 12:23:39 2026 dockerd
+   3389       1 Ssl  Tue Oct 13 12:24:03 2026 codex
+   3441       1 Ssl  Tue Oct 13 12:24:04 2026 codex
+   3981    3389 Sl   Tue Oct 13 12:24:28 2026 codex-code-mode
+ 329130       1 Ssl  Tue Oct 13 16:54:14 2026 snapfuse
+ 808919       2 Ss   Wed Oct 14 00:18:12 2026 SessionLeader
+ 808921  808919 S    Wed Oct 14 00:18:12 2026 Relay(808925)
+ 808925  808921 Ss   Wed Oct 14 00:18:12 2026 zsh
+ 808930  808921 S    Wed Oct 14 00:18:12 2026 zsh
+ 809598  808921 S    Wed Oct 14 00:18:13 2026 zsh
+ 809599  808921 S    Wed Oct 14 00:18:13 2026 zsh
+ 809601  808930 Sl   Wed Oct 14 00:18:13 2026 gitstatusd-linu
+ 809700  808925 Sl+  Wed Oct 14 00:18:17 2026 codex
+ 815234    3389 Sl   Wed Oct 14 00:48:26 2026 MainThread
+ 861116    3389 Sl   Wed Oct 14 02:19:46 2026 MainThread
+ 887836    3389 Sl   Wed Oct 14 02:50:02 2026 MainThread
+ 903119    3389 Sl   Wed Oct 14 02:59:03 2026 MainThread
+ 910477    3389 Sl   Wed Oct 14 03:14:28 2026 MainThread
+1018884    3389 Sl   Wed Oct 14 04:16:30 2026 MainThread
+1069678       2 Ss   Wed Oct 14 05:00:14 2026 SessionLeader
+1069679 1069678 S    Wed Oct 14 05:00:14 2026 Relay(1069682)
+1069682 1069679 Ss   Wed Oct 14 05:00:14 2026 zsh
+1069687 1069679 S    Wed Oct 14 05:00:14 2026 zsh
+1070363 1069679 S    Wed Oct 14 05:00:16 2026 zsh
+1070364 1069679 S    Wed Oct 14 05:00:16 2026 zsh
+1070366 1069687 Sl   Wed Oct 14 05:00:16 2026 gitstatusd-linu
+1070497 1069682 Sl+  Wed Oct 14 05:00:20 2026 codex
+1083118    3389 Sl   Wed Oct 14 05:17:33 2026 MainThread
+1084502    3389 Sl   Wed Oct 14 05:19:20 2026 MainThread
+1107050    3389 Sl   Wed Oct 14 06:55:18 2026 MainThread
+1108579    3389 Sl   Wed Oct 14 08:03:07 2026 MainThread
+1109385       2 Ss   Wed Oct 14 08:14:18 2026 SessionLeader
+1109387 1109385 S    Wed Oct 14 08:14:18 2026 Relay(1109391)
+1109391 1109387 Ss   Wed Oct 14 08:14:18 2026 zsh
+1109396 1109387 S    Wed Oct 14 08:14:18 2026 zsh
+1110064 1109387 S    Wed Oct 14 08:14:19 2026 zsh
+1110065 1109387 S    Wed Oct 14 08:14:19 2026 zsh
+1110067 1109396 Sl   Wed Oct 14 08:14:19 2026 gitstatusd-linu
+1110166 1109391 Sl+  Wed Oct 14 08:14:24 2026 codex
+1110283    3389 Sl   Wed Oct 14 08:14:26 2026 MainThread
+1110956    3389 Ssl  Wed Oct 14 08:23:03 2026 npm exec vite -
+1110969 1110956 S    Wed Oct 14 08:23:04 2026 sh
+1110970 1110969 Sl   Wed Oct 14 08:23:04 2026 MainThread
+1122523       1 Sl   Wed Oct 14 09:06:17 2026 MainThread
+1131418 1110166 Z+   Wed Oct 14 09:26:43 2026 cmd.exe <defunct>
+1139401 1110166 Z+   Wed Oct 14 09:39:13 2026 cmd.exe <defunct>
+1148403 1110166 Z+   Wed Oct 14 10:09:14 2026 cmd.exe <defunct>
+1150768 1070497 Z+   Wed Oct 14 10:23:39 2026 cmd.exe <defunct>
+1152035    3389 Ss   Wed Oct 14 10:32:54 2026 zsh
+1152036 1152035 R    Wed Oct 14 10:32:54 2026 ps

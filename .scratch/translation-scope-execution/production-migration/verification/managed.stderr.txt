@@ -1,0 +1,73 @@
+   Compiling jobserver v0.1.35
+   Compiling toml_edit v0.22.27
+   Compiling simd-adler32 v0.3.10
+   Compiling crc32fast v1.5.2
+   Compiling cc v1.6.0
+   Compiling adler2 v2.0.1
+   Compiling miniz_oxide v0.9.1
+   Compiling bumpalo v3.20.3
+   Compiling zopfli v0.8.3
+   Compiling flate2 v1.1.10
+   Compiling thiserror v2.0.21
+   Compiling zip v2.4.2
+   Compiling ring v0.17.14
+   Compiling zstd-sys v2.1.0+zstd.1.5.7
+   Compiling toml v0.8.23
+   Compiling pipeline-model v0.1.0 (/home/jim/sm-decomp-translation-execution/crates/pipeline-model)
+   Compiling movie v0.1.0 (/home/jim/sm-decomp-translation-execution/crates/movie)
+   Compiling rustls v0.23.45
+   Compiling rustls-webpki v0.103.15
+   Compiling zstd-safe v7.3.0
+   Compiling zstd v0.13.3
+   Compiling evidence v0.1.0 (/home/jim/sm-decomp-translation-execution/crates/evidence)
+   Compiling tokio-rustls v0.26.6
+   Compiling hyper-rustls v0.27.10
+   Compiling reqwest v0.12.12
+   Compiling translation-execution v0.1.0 (/home/jim/sm-decomp-translation-execution/crates/translation-execution)
+   Compiling pipeline v0.1.0 (/home/jim/sm-decomp-translation-execution/crates/pipeline)
+error: couldn't read `crates/pipeline/src/../../../deps/snesrev-sm/src/sm_a0.c`: No such file or directory (os error 2)
+    --> crates/pipeline/src/ridley_subsystem_inventory.rs:1045:32
+     |
+1045 |             ("sm_a0.c".into(), include_str!("../../../deps/snesrev-sm/src/sm_a0.c").into()),
+     |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: couldn't read `crates/pipeline/src/../../../deps/snesrev-sm/src/sm_a6.c`: No such file or directory (os error 2)
+    --> crates/pipeline/src/ridley_subsystem_inventory.rs:1046:32
+     |
+1046 |             ("sm_a6.c".into(), include_str!("../../../deps/snesrev-sm/src/sm_a6.c").into()),
+     |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: couldn't read `crates/pipeline/src/../../../deps/snesrev-sm/src/sm_86.c`: No such file or directory (os error 2)
+    --> crates/pipeline/src/ridley_subsystem_inventory.rs:1047:32
+     |
+1047 |             ("sm_86.c".into(), include_str!("../../../deps/snesrev-sm/src/sm_86.c").into()),
+     |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: couldn't read `crates/pipeline/src/../../../deps/snesrev-sm/src/sm_80.c`: No such file or directory (os error 2)
+    --> crates/pipeline/src/ridley_subsystem_inventory.rs:1048:32
+     |
+1048 |             ("sm_80.c".into(), include_str!("../../../deps/snesrev-sm/src/sm_80.c").into()),
+     |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: couldn't read `crates/pipeline/src/../../../deps/snesrev-sm/src/sm_90.c`: No such file or directory (os error 2)
+    --> crates/pipeline/src/ridley_subsystem_inventory.rs:1049:32
+     |
+1049 |             ("sm_90.c".into(), include_str!("../../../deps/snesrev-sm/src/sm_90.c").into()),
+     |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: couldn't read `crates/pipeline/src/../../../deps/snesrev-sm/src/snes/snes.c`: No such file or directory (os error 2)
+    --> crates/pipeline/src/ridley_subsystem_inventory.rs:1050:36
+     |
+1050 |             ("snes/snes.c".into(), include_str!("../../../deps/snesrev-sm/src/snes/snes.c").into()),
+     |                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0308]: mismatched types
+    --> crates/pipeline/src/translation_migration.rs:3933:32
+     |
+3933 |         integration.attempts = u32::from(running);
+     |         --------------------   ^^^^^^^^^^^^^^^^^^ expected `u64`, found `u32`
+     |         |
+     |         expected due to the type of this binding
+
+For more information about this error, try `rustc --explain E0308`.
+error: could not compile `pipeline` (bin "sm-pipeline" test) due to 7 previous errors

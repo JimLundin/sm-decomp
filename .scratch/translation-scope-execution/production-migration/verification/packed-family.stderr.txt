@@ -1,0 +1,102 @@
+   Compiling pipeline v0.1.0 (/home/jim/sm-decomp-translation-execution/crates/pipeline)
+warning: function `validate_admitted_ticket_projection` is never used
+    --> crates/pipeline/src/assignment.rs:1578:15
+     |
+1578 | pub(crate) fn validate_admitted_ticket_projection(
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `catalog_until` is never used
+   --> crates/pipeline/src/batch.rs:256:15
+    |
+256 | pub(crate) fn catalog_until(checkout: &Path, deadline: u64, max_bytes: u64) -> Result<Catalog> {
+    |               ^^^^^^^^^^^^^
+
+warning: function `verify_source_until` is never used
+   --> crates/pipeline/src/family.rs:123:15
+    |
+123 | pub(crate) fn verify_source_until(checkout: &Path, source: &Path, deadline: u64, max_bytes: u64) -> Result<Source> {
+    |               ^^^^^^^^^^^^^^^^^^^
+
+warning: function `authenticate_inventory_until` is never used
+   --> crates/pipeline/src/family.rs:760:15
+    |
+760 | pub(crate) fn authenticate_inventory_until(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `authenticate_with_source_until` is never used
+    --> crates/pipeline/src/family.rs:1128:15
+     |
+1128 | pub(crate) fn authenticate_with_source_until(
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `canonical_sources_until` is never used
+  --> crates/pipeline/src/inputs.rs:41:15
+   |
+41 | pub(crate) fn canonical_sources_until(
+   |               ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `clean` is never used
+  --> crates/pipeline/src/source_inventory.rs:27:15
+   |
+27 | pub(crate) fn clean(text: &str) -> Vec<u8> {
+   |               ^^^^^
+
+warning: function `names` is never used
+  --> crates/pipeline/src/source_inventory.rs:93:15
+   |
+93 | pub(crate) fn names(bytes: &[u8]) -> (Vec<String>, Vec<String>) {
+   |               ^^^^^
+
+warning: function `run_until` is never used
+   --> crates/pipeline/src/source_inventory.rs:170:15
+    |
+170 | pub(crate) fn run_until(root: &Path, source: &Path, output: &Path, deadline: u64, max_bytes: u64) -> Result<()> {
+    |               ^^^^^^^^^
+
+warning: function `c_code` is never used
+   --> crates/pipeline/src/translation.rs:240:4
+    |
+240 | fn c_code(text: &str) -> Vec<u8> {
+    |    ^^^^^^
+
+warning: function `prepare` is never used
+   --> crates/pipeline/src/translation_infrastructure.rs:346:15
+    |
+346 | pub(crate) fn prepare(checkout: &Path, contract: &InfrastructureContract) -> Result<PreparedInfrastructure> {
+    |               ^^^^^^^
+
+warning: function `build_preparation` is never used
+    --> crates/pipeline/src/translation_migration_builder.rs:1173:15
+     |
+1173 | pub(crate) fn build_preparation(request: BuildRequest) -> Result<BuildReceipt> {
+     |               ^^^^^^^^^^^^^^^^^
+
+warning: function `contract_for_family` is never used
+   --> crates/pipeline/src/translation_native.rs:280:15
+    |
+280 | pub(crate) fn contract_for_family(
+    |               ^^^^^^^^^^^^^^^^^^^
+
+warning: function `contract_for_family_until` is never used
+   --> crates/pipeline/src/translation_native.rs:294:15
+    |
+294 | pub(crate) fn contract_for_family_until(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `contract_for_family_bounded` is never used
+   --> crates/pipeline/src/translation_native.rs:309:4
+    |
+309 | fn contract_for_family_bounded(
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `prepare_until` is never used
+   --> crates/pipeline/src/translation_native.rs:403:15
+    |
+403 | pub(crate) fn prepare_until(
+    |               ^^^^^^^^^^^^^
+
+warning: `pipeline` (bin "sm-pipeline") generated 16 warnings
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 19s
+     Running tests/family.rs (/tmp/sm-production-migration-target-20261014/debug/build/pipeline/7619b8835ae7ee92/out/family-7619b8835ae7ee92)

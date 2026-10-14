@@ -1,0 +1,51 @@
+{
+  "checkout": "/home/jim/sm-decomp",
+  "claims": [
+    {
+      "id": "compact-controller"
+    },
+    {
+      "id": "shared-game-host"
+    },
+    {
+      "id": "integrate-shared-game-host",
+      "source_commit": "c2cae9ac145f9343cd345e6f978bff0774510b56"
+    }
+  ],
+  "effort": "ceres-continuation",
+  "limits": {
+    "max_bytes": 268435456,
+    "max_files": 4096,
+    "max_source_file_bytes": 4194304,
+    "timeout_seconds": 300
+  },
+  "output_root": "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-preparation/ceres-production-01",
+  "proof_completion": {
+    "bytes": 2819,
+    "path": "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/supervisor-native/actual-c-02/state/4e1f518243e1c8f32e312ebcd924cfe89eaaea446ff6743bbc481d49f7d7d83c/attempt-0001/publication/completion.json",
+    "sha256": "185e6ae508a25ca1a816d958d8e54fa71c6077fc2362789e3fa5d8435315b820"
+  },
+  "proof_installation": {
+    "bytes": 9472,
+    "path": "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/supervisor-native/actual-c-02/installation.json",
+    "sha256": "c3aca31f22901b6ed84edc3493a182f0fd242f0f3e614ef74abdbffb3eb9a488"
+  },
+  "schema": "translation-migration-build-v1",
+  "stopped_owners": [
+    {
+      "bytes": 1068,
+      "path": "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-migration/inspections/compact-controller-stop.json",
+      "sha256": "74463b466e75266d1de47cea50ebfe636ecfb5d0a13a8a4633e1d0243c5e756b"
+    },
+    {
+      "bytes": 1060,
+      "path": "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-migration/inspections/shared-game-host-stop.json",
+      "sha256": "962d6edf1ce5dd64159ae76bc9dd3ef275358e3fbad50878603f02a981e1a0d8"
+    },
+    {
+      "bytes": 1068,
+      "path": "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-migration/inspections/integrate-shared-game-host-stop.json",
+      "sha256": "8940a0d043f7b5ad5b321efb5e7d7305e2cf3ac43e620ffcc1eab05e8210a1f7"
+    }
+  ]
+}

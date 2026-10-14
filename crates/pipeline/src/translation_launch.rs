@@ -90,7 +90,7 @@ fn immutable<T: Serialize>(path: &Path, value: &T) -> Result<()> {
 }
 
 impl Plan {
-    fn validate(&self, path: &Path) -> Result<Vec<Installation>> {
+    pub(crate) fn validate(&self, path: &Path) -> Result<Vec<Installation>> {
         ensure!(
             self.schema == "translation-launch-plan-v1"
                 && name(&self.id)

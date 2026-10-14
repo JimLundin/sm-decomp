@@ -1,0 +1,29 @@
+schema = "translation-migration-build-receipt-v1"
+status = "prepared-with-blockers"
+activated = false
+request_sha256 = "bb82e0e8517fcffa1b7d2665ef3514f223877cc01b121ca296d09771fd60dbcf"
+validation_status = "validated-with-blockers"
+retained_bytes = 4889373
+referenced_files = 49
+blockers = [
+    "Original claim pause-equipment-render-offline has no reviewed production installation or policy; its source, inputs and held lineage are preserved.",
+    "Original claim pause-equipment-render-offline lacks an exact supported native installation; its held lineage is preserved.",
+    "Production activation requires the user's separate reviewed switch decision and current real owner/process reconciliation.",
+    "Production catalog contains specialized native families without a confined execution recipe.",
+    "The representative proof does not prepare every production Offline family.",
+]
+
+[migration]
+path = "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-preparation/canonical-production-01/package/migration.json"
+sha256 = "fd93c965d42cd4642f166a03460ff8a18930a6b9464ef773e15498fd4e092814"
+bytes = 9462
+
+[inventory]
+path = "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-preparation/canonical-production-01/package/inventory.json"
+sha256 = "a9484d443c516cf6d61bf14a038384eb9d14fbd143b1cf307eea6a061928243c"
+bytes = 16617
+
+[preparation_report]
+path = "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-preparation/canonical-production-01/package/preparation-report.toml"
+sha256 = "0f245c0d0039350899b4917d3a8b571ce7863cfb48fdeaeca30d8f9171484fc2"
+bytes = 27020

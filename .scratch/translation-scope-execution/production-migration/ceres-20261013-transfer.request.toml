@@ -1,0 +1,15 @@
+operation = "transfer"
+checkout = "/home/jim/sm-decomp"
+coordinator = "ceres-20261013"
+
+[authority]
+session_id = "01a136a0-49bb-7690-a360-48def3c2c09b"
+generation = 3
+
+[transfer]
+token = "ceres-20261013"
+session_id = "01a136a0-49bb-7690-a360-48def3c2c09b"
+
+[transfer.observation]
+path = "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-migration/inspections/ceres-20261013-transfer.toml"
+sha256 = "1b20b5f95cad7b0dd13eb3ea89641a38aef63f7c513689c906f9c9c502da6cea"

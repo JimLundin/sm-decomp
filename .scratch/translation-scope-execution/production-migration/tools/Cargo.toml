@@ -1,0 +1,19 @@
+[package]
+name = "sm-production-migration-tools"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[dependencies]
+serde_json = "=1.0.151"
+toml = "=0.8.23"
+
+[[bin]]
+name = "prepare-requests"
+path = "../prepare_requests.rs"
+
+[[bin]]
+name = "prepare-config"
+path = "../prepare_config.rs"

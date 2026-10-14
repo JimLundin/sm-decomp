@@ -26,6 +26,21 @@ impl std::error::Error for ExecutionPending {}
 /// a hash-shaped outcome alone is not evidence authentication.
 pub trait ExecutionAdapter {
     fn identity(&self) -> String;
+    /// Resume an exact existing submission from the frozen installation. The
+    /// default keeps the ordinary preparation/rewrite lifecycle unchanged.
+    /// Like prepare, this callback must reconcile its original operation key.
+    fn import_submission(
+        &mut self,
+        _context: &OperationContext,
+        _policy: &FrozenPolicy,
+    ) -> Result<Option<ImportedSubmission>> {
+        Ok(None)
+    }
+    /// Authenticate the original submitted claim and source without executing
+    /// a producer. A journal field alone never authorizes skipping a rewrite.
+    fn authenticate_submission(&self, _policy: &FrozenPolicy, _imported: &ImportedSubmission) -> Result<()> {
+        anyhow::bail!("installed adapter does not admit imported submissions")
+    }
     fn prepare(
         &mut self,
         context: &OperationContext,
@@ -128,6 +143,8 @@ struct Attempt {
     intent: Option<OperationContext>,
     prior_source: Option<SourceSnapshot>,
     preparation: Option<Preparation>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    imported_submission: Option<ImportedSubmission>,
     replacements: Option<SourceReplacements>,
     replacements_sha256: Option<String>,
     candidate: Option<SourceSnapshot>,
@@ -149,6 +166,7 @@ impl Attempt {
             intent: None,
             prior_source: None,
             preparation: None,
+            imported_submission: None,
             replacements: None,
             replacements_sha256: None,
             candidate: None,
@@ -285,6 +303,10 @@ fn checked_transition(
         );
         match next.cursor {
             Cursor::Prepare => {
+                ensure!(
+                    previous.imported_submission.is_none(),
+                    "an imported submission requires a new approved installation to repair"
+                );
                 expected.prior_source = previous
                     .candidate
                     .clone()
@@ -292,6 +314,7 @@ fn checked_transition(
             }
             Cursor::CandidateGate(0) => {
                 expected.candidate = Some(previous.candidate.clone().context("retry requires a candidate")?);
+                expected.imported_submission = previous.imported_submission.clone();
                 expected.cursor = Cursor::CandidateGate(0);
             }
             _ => anyhow::bail!("new evaluation skipped its approved starting state"),
@@ -385,6 +408,18 @@ fn checked_transition(
     expected.intent = None;
     match previous.cursor {
         Cursor::Prepare => {
+            if let Some(imported) = &next.imported_submission {
+                checked_snapshot(policy, &imported.source)?;
+                ensure!(
+                    previous.prior_source.is_none() && digest_valid(&imported.admission_sha256),
+                    "submission import requires its exact sealed original admission"
+                );
+                expected.imported_submission = Some(imported.clone());
+                expected.candidate = Some(imported.source.clone());
+                expected.cursor = Cursor::CandidateGate(0);
+                ensure!(expected == *next, "submission import changed unrelated accepted state");
+                return Ok(());
+            }
             let prepared = next.preparation.as_ref().context("preparation result missing")?;
             checked_snapshot(policy, &prepared.source)?;
             ensure!(
@@ -546,7 +581,13 @@ fn authenticated_history<A: ExecutionAdapter>(
 ) -> Result<Option<Attempt>> {
     let mut gates = BTreeSet::new();
     let mut finalizations = BTreeSet::new();
+    let mut imports = BTreeSet::new();
     replay_history(journal, policy, |attempt| {
+        if let Some(imported) = &attempt.imported_submission
+            && imports.insert(sealed(imported)?)
+        {
+            adapter.authenticate_submission(policy, imported)?;
+        }
         for (index, gate) in attempt.gates.iter().enumerate() {
             if gates.insert(gate.seal.operation_key.clone()) {
                 let count = policy.verification_stages.len();
@@ -980,6 +1021,10 @@ impl<A: ExecutionAdapter> Supervisor<A> {
         let previous = self.load()?;
         self.authenticate_terminal(&previous)?;
         ensure!(
+            !rewrite || previous.imported_submission.is_none(),
+            "an imported submission requires a new approved installation to repair"
+        );
+        ensure!(
             previous.cursor == Cursor::Terminal && previous.disposition == Disposition::Failed,
             "retry or repair requires a finalized failed attempt"
         );
@@ -998,6 +1043,7 @@ impl<A: ExecutionAdapter> Supervisor<A> {
             attempt.prior_source = previous.candidate.or_else(|| previous.preparation.map(|prepared| prepared.source));
         } else {
             attempt.candidate = Some(previous.candidate.context("explicit retry requires an existing candidate")?);
+            attempt.imported_submission = previous.imported_submission;
             attempt.cursor = Cursor::CandidateGate(0);
         }
         self.record(&mut attempt)?;
@@ -1177,6 +1223,32 @@ impl<A: ExecutionAdapter> Supervisor<A> {
                 Cursor::Rewrite | Cursor::Terminal => return self.view(attempt),
                 Cursor::Prepare => {
                     let context = self.intent(attempt, "prepare", ExecutionPhase::Preparation)?;
+                    match self.adapter.import_submission(&context, &self.policy).and_then(|imported| {
+                        if let Some(imported) = &imported {
+                            self.snapshot(&imported.source)?;
+                            ensure!(
+                                attempt.prior_source.is_none() && digest_valid(&imported.admission_sha256),
+                                "submission import requires its exact sealed original admission"
+                            );
+                            self.adapter.authenticate_submission(&self.policy, imported)?;
+                        }
+                        Ok(imported)
+                    }) {
+                        Ok(Some(imported)) => {
+                            attempt.candidate = Some(imported.source.clone());
+                            attempt.imported_submission = Some(imported);
+                            self.completed(attempt, Cursor::CandidateGate(0))?;
+                            continue;
+                        }
+                        Ok(None) => {}
+                        Err(error) => {
+                            if self.pending(attempt, &error)? {
+                                return self.view(attempt);
+                            }
+                            self.stop(attempt, error)?;
+                            continue;
+                        }
+                    }
                     let result = self.adapter.prepare(&context, &self.policy, attempt.prior_source.as_ref()).and_then(
                         |prepared| {
                             self.snapshot(&prepared.source)?;

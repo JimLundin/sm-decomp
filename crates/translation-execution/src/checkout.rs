@@ -684,6 +684,8 @@ struct SourceIntent {
     base_source_sha256: String,
     expected_files: BTreeMap<String, String>,
     original_files: BTreeMap<String, String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    imported_submission: Option<ImportedSubmission>,
 }
 
 fn atomic(path: &Path, bytes: &[u8]) -> Result<()> {
@@ -805,7 +807,9 @@ fn apply_commit_inner(
     }
     let intent = if let Some(saved) = recorded_intent(checkout, &context.operation_key)? {
         ensure!(
-            saved.expected_files == expected && saved.base_source_sha256 == capsule.source_sha256,
+            saved.expected_files == expected
+                && saved.base_source_sha256 == capsule.source_sha256
+                && saved.imported_submission.is_none(),
             "replacement retry differs"
         );
         saved
@@ -823,6 +827,7 @@ fn apply_commit_inner(
             base_source_sha256: before.sha256,
             expected_files: expected,
             original_files: before.files_sha256,
+            imported_submission: None,
         };
         source_intent(checkout, &intent)?;
         intent
@@ -854,7 +859,15 @@ pub fn integrate(
     approved_paths: &[String],
 ) -> Result<SourceSnapshot> {
     with_deadline(None, || {
-        integrate_inner(candidate_checkout, integration_checkout, context, candidate, expected_head, approved_paths)
+        integrate_inner(
+            candidate_checkout,
+            integration_checkout,
+            context,
+            candidate,
+            expected_head,
+            approved_paths,
+            None,
+        )
     })
 }
 
@@ -868,7 +881,62 @@ pub fn integrate_until(
     deadline_unix_ms: u64,
 ) -> Result<SourceSnapshot> {
     with_deadline(Some(deadline_unix_ms), || {
-        integrate_inner(candidate_checkout, integration_checkout, context, candidate, expected_head, approved_paths)
+        integrate_inner(
+            candidate_checkout,
+            integration_checkout,
+            context,
+            candidate,
+            expected_head,
+            approved_paths,
+            None,
+        )
+    })
+}
+
+/// Integrate an authenticated existing submission. A frozen baseline already
+/// containing its exact owned files is retained without inventing a new commit.
+/// The caller must authenticate the admission against its frozen installation;
+/// this layer binds that admission and source to the durable Git operation.
+pub fn integrate_submitted(
+    candidate_checkout: &Path,
+    integration_checkout: &Path,
+    context: &OperationContext,
+    imported: &ImportedSubmission,
+    expected_head: &str,
+    approved_paths: &[String],
+) -> Result<SourceSnapshot> {
+    with_deadline(None, || {
+        integrate_inner(
+            candidate_checkout,
+            integration_checkout,
+            context,
+            &imported.source,
+            expected_head,
+            approved_paths,
+            Some(imported),
+        )
+    })
+}
+
+pub fn integrate_submitted_until(
+    candidate_checkout: &Path,
+    integration_checkout: &Path,
+    context: &OperationContext,
+    imported: &ImportedSubmission,
+    expected_head: &str,
+    approved_paths: &[String],
+    deadline_unix_ms: u64,
+) -> Result<SourceSnapshot> {
+    with_deadline(Some(deadline_unix_ms), || {
+        integrate_inner(
+            candidate_checkout,
+            integration_checkout,
+            context,
+            &imported.source,
+            expected_head,
+            approved_paths,
+            Some(imported),
+        )
     })
 }
 
@@ -879,6 +947,7 @@ fn integrate_inner(
     candidate: &SourceSnapshot,
     expected_head: &str,
     approved_paths: &[String],
+    imported: Option<&ImportedSubmission>,
 ) -> Result<SourceSnapshot> {
     ensure!(
         candidate_checkout != integration_checkout
@@ -886,13 +955,19 @@ fn integrate_inner(
             && digest_valid(&context.operation_key),
         "integration needs distinct checkouts and exact identities"
     );
+    ensure!(
+        imported.is_none_or(|imported| digest_valid(&imported.admission_sha256) && imported.source == *candidate),
+        "submitted integration requires its exact sealed admission and source"
+    );
     let candidate_now = snapshot(candidate_checkout, approved_paths)?;
     ensure!(candidate_now == *candidate, "candidate source changed before integration");
     let deadline = deadline();
     let lease = lock(integration_checkout)?;
     let original = if let Some(saved) = recorded_intent(integration_checkout, &context.operation_key)? {
         ensure!(
-            saved.base_commit == expected_head && saved.expected_files == candidate.files_sha256,
+            saved.base_commit == expected_head
+                && saved.expected_files == candidate.files_sha256
+                && saved.imported_submission.as_ref() == imported,
             "integration retry source differs"
         );
         saved
@@ -905,12 +980,23 @@ fn integrate_inner(
             base_source_sha256: before.sha256,
             expected_files: candidate.files_sha256.clone(),
             original_files: before.files_sha256,
+            imported_submission: imported.cloned(),
         };
         source_intent(integration_checkout, &intent)?;
         intent
     };
     if keyed_commit(integration_checkout, &context.operation_key)? {
         return completed_source(integration_checkout, &original, approved_paths);
+    }
+    if imported.is_some() && original.original_files == original.expected_files {
+        let source = snapshot(integration_checkout, approved_paths)?;
+        ensure!(
+            source.commit == original.base_commit
+                && source.sha256 == original.base_source_sha256
+                && source.files_sha256 == original.expected_files,
+            "already integrated submission differs from its exact frozen baseline"
+        );
+        return Ok(source);
     }
     intended_dirty(integration_checkout, &original)?;
     for (path, expected) in &original.expected_files {

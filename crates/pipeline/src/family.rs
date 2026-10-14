@@ -364,14 +364,22 @@ fn build_with(
             *prototypes.last_mut().unwrap() = "extern void SpawnEprojWithGfx(uint16_t,uint16_t,uint16_t);".into();
             call = "SpawnEprojWithGfx((uint16_t)a,(uint16_t)b,(uint16_t)((uint32_t)b>>16))".into();
         }
-        if routine.packed_u16_args.is_some() {
-            ensure!(
-                routine.packed_u16_args == Some(4) && args == ["uint32", "uint32"],
-                "invalid packed four-word signature"
-            );
-            *prototypes.last_mut().unwrap() =
-                format!("extern {} {symbol}(uint16_t,uint16_t,uint16_t,uint16_t);", c_type(kind)?);
-            call = format!("{symbol}((uint16_t)a,(uint16_t)((uint32_t)a>>16),(uint16_t)b,(uint16_t)((uint32_t)b>>16))");
+        if let Some(words) = routine.packed_u16_args {
+            match words {
+                3 if args == ["uint16", "uint32"] => {
+                    *prototypes.last_mut().unwrap() =
+                        format!("extern {} {symbol}(uint16_t,uint16_t,uint16_t);", c_type(kind)?);
+                    call = format!("{symbol}((uint16_t)a,(uint16_t)b,(uint16_t)((uint32_t)b>>16))");
+                }
+                4 if args == ["uint32", "uint32"] => {
+                    *prototypes.last_mut().unwrap() =
+                        format!("extern {} {symbol}(uint16_t,uint16_t,uint16_t,uint16_t);", c_type(kind)?);
+                    call = format!(
+                        "{symbol}((uint16_t)a,(uint16_t)((uint32_t)a>>16),(uint16_t)b,(uint16_t)((uint32_t)b>>16))"
+                    );
+                }
+                _ => anyhow::bail!("invalid packed three- or four-word signature"),
+            }
         }
         let mut result = if kind == "void" { format!("{call}; result=0;") } else { format!("result={call};") };
         if routine.pair_u16_return {

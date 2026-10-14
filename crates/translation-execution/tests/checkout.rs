@@ -116,6 +116,90 @@ fn real_scoped_commit_integrates_and_exact_retries_make_no_new_commit() {
 }
 
 #[test]
+fn already_integrated_submission_keeps_exact_frozen_baseline_and_original_commit() {
+    let p = Project::new();
+    let candidate = p.clone_at("candidate");
+    let (ctx, capsule, replacements) = edits(&p, &candidate);
+    let source = checkout::apply_commit(&candidate, &ctx, &capsule, &replacements, limits()).unwrap();
+    let integration = p.root.join("integration");
+    checkout::create(&candidate, &integration, &source.commit).unwrap();
+    fs::write(integration.join("frozen-test.rs"), "later independently approved fixture").unwrap();
+    git(&integration, &["add", "frozen-test.rs"]);
+    git(&integration, &["commit", "-qm", "later unrelated integration"]);
+    let baseline = checkout::snapshot(&integration, &p.paths).unwrap();
+    assert_ne!(baseline.commit, source.commit);
+    assert_eq!(baseline.files_sha256, source.files_sha256);
+    let commit_count = git(&integration, &["rev-list", "--count", "HEAD"]);
+    // Ordinary rewrite integration still rejects a no-op at this same freeze.
+    assert!(
+        checkout::integrate(
+            &candidate,
+            &integration,
+            &context("ordinary-no-op", ExecutionPhase::Integration),
+            &source,
+            &baseline.commit,
+            &p.paths,
+        )
+        .is_err()
+    );
+    let imported = ImportedSubmission { source: source.clone(), admission_sha256: sha256("original submission") };
+    let merge = context("imported-integration", ExecutionPhase::Integration);
+    assert_eq!(
+        checkout::integrate_submitted(&candidate, &integration, &merge, &imported, &baseline.commit, &p.paths,)
+            .unwrap(),
+        baseline
+    );
+    let intent_path = integration.join(format!(".git/translation-{}.json", merge.operation_key));
+    let intent_bytes = fs::read(&intent_path).unwrap();
+    assert_eq!(
+        checkout::integrate_submitted(&candidate, &integration, &merge, &imported, &baseline.commit, &p.paths,)
+            .unwrap(),
+        baseline
+    );
+    assert_eq!(fs::read(intent_path).unwrap(), intent_bytes);
+    assert_eq!(git(&integration, &["rev-list", "--count", "HEAD"]), commit_count);
+    assert_eq!(git(&candidate, &["rev-parse", "HEAD"]), source.commit);
+    let mut changed = imported.clone();
+    changed.admission_sha256 = sha256("another claim");
+    assert!(
+        checkout::integrate_submitted(&candidate, &integration, &merge, &changed, &baseline.commit, &p.paths,).is_err()
+    );
+    assert!(
+        checkout::integrate(&candidate, &integration, &merge, &source, &baseline.commit, &p.paths,).is_err(),
+        "an imported operation cannot be reopened as an ordinary rewrite"
+    );
+    fs::write(integration.join("frozen-test.rs"), "tampered frozen dependency").unwrap();
+    assert!(
+        checkout::integrate_submitted(&candidate, &integration, &merge, &imported, &baseline.commit, &p.paths,)
+            .is_err(),
+        "unchanged owned files cannot hide dirty frozen dependencies"
+    );
+}
+
+#[test]
+fn unmerged_imported_submission_recovers_one_scoped_integration_commit() {
+    let p = Project::new();
+    let candidate = p.clone_at("candidate");
+    let integration = p.clone_at("integration");
+    let (ctx, capsule, replacements) = edits(&p, &candidate);
+    let submitted = checkout::apply_commit(&candidate, &ctx, &capsule, &replacements, limits()).unwrap();
+    let imported = ImportedSubmission { source: submitted.clone(), admission_sha256: sha256("original submission") };
+    let merge = context("imported-integration", ExecutionPhase::Integration);
+    let integrated =
+        checkout::integrate_submitted(&candidate, &integration, &merge, &imported, &p.base, &p.paths).unwrap();
+    assert_ne!(integrated.commit, p.base);
+    assert_eq!(integrated.files_sha256, submitted.files_sha256);
+    git(&integration, &["reset", "--mixed", &p.base]);
+    fs::write(integration.join(&p.paths[1]), "second original").unwrap();
+    assert_eq!(
+        checkout::integrate_submitted(&candidate, &integration, &merge, &imported, &p.base, &p.paths,).unwrap(),
+        integrated
+    );
+    assert_eq!(git(&integration, &["rev-list", "--count", "HEAD"]), "2");
+    assert_eq!(git(&candidate, &["rev-parse", "HEAD"]), submitted.commit);
+}
+
+#[test]
 fn interrupted_partial_replacement_is_completed_from_the_durable_intent() {
     let p = Project::new();
     let candidate = p.clone_at("candidate");

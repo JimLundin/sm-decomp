@@ -2,7 +2,7 @@
 //! gates, integration, source retention, cleanup and stable publication. The
 //! worker interface carries only the immutable capsule and source replacements.
 use crate::{
-    affected, batch, cleanup, digest, emit, family, family_model::Asset, translation_infrastructure as infrastructure,
+    affected, cleanup, digest, emit, family, family_model::Asset, translation_infrastructure as infrastructure,
     translation_native as native,
 };
 use ::translation_execution::{
@@ -53,6 +53,7 @@ pub(crate) struct RewriteInstallation {
 pub(crate) enum Contract {
     Native { contracts: Vec<native::NativeContract>, catalog_sha256: String, focused_family: String },
     Infrastructure { contract: infrastructure::InfrastructureContract },
+    Legacy { contract: crate::translation_legacy::LegacyContract },
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -1054,6 +1055,7 @@ impl Adapter {
         let meanings = match &self.installed.contract {
             Contract::Native { .. } => vec!["translated", "verified", "integrated"],
             Contract::Infrastructure { .. } => vec!["infrastructure-tested", "infrastructure-integrated"],
+            Contract::Legacy { .. } => vec![],
         };
         let limitations = match &self.installed.admission {
             Admission::IsolatedProof { limitations } => limitations.clone(),
@@ -1170,42 +1172,39 @@ fn collect(root: &Path, files: &mut Vec<Reference>, directories: &mut Vec<PathBu
     Ok(())
 }
 
-impl ExecutionAdapter for Adapter {
-    fn identity(&self) -> String {
-        self.identity.clone()
-    }
-    fn authenticate_gate(
-        &self,
-        policy: &FrozenPolicy,
-        source: &SourceSnapshot,
-        stage: VerificationStage,
-        outcome: &GateOutcome,
-    ) -> Result<()> {
-        ensure!(*policy == self.installed.policy, "gate authentication frozen policy differs");
-        let record: GateRecord = read(&self.gate_record(&outcome.seal.operation_key))?;
-        ensure!(
-            record.source == *source && record.stage == stage && record.outcome == *outcome,
-            "journal gate differs from trusted immutable result"
-        );
-        self.authenticated_record_receipts(&record)?;
-        Ok(())
-    }
-    fn prepare(
+impl Adapter {
+    fn prepare_source(
         &mut self,
         context: &OperationContext,
         policy: &FrozenPolicy,
         previous: Option<&SourceSnapshot>,
-    ) -> Result<Preparation> {
+    ) -> Result<(PathBuf, SourceSnapshot, Prepared)> {
         self.check_admission()?;
         self.reserve_attempt(context.attempt)?;
         let stage_deadline = self.deadline(context)?;
-        self.bootstrap(context, stage_deadline)?;
         let input_budget = self
             .installed
             .max_checkout_bytes
             .checked_mul(8)
             .context("preparation input budget overflow")?
             .min(8 * crate::inputs::bounded::DEFAULT_BYTES);
+        if let Contract::Legacy { contract } = &self.installed.contract {
+            return crate::inputs::bounded::until(stage_deadline, input_budget, || {
+                let prepared = crate::translation_legacy::prepare(contract)?;
+                ensure!(
+                    prepared.source_commit == policy.baseline_commit
+                        && prepared.source_files == policy.approved_files
+                        && prepared.dependencies_sha256 == policy.dependencies_sha256
+                        && prepared.verification_sha256 == policy.verification_sha256,
+                    "legacy original requirements differ from the frozen policy"
+                );
+                let readiness = crate::translation_legacy::readiness(&prepared);
+                crate::translation_legacy::authenticate(contract, &prepared, &readiness)?;
+                write_once(&self.attempt(context.attempt).join("legacy-readiness.json"), &(&prepared, &readiness))?;
+                bail!("{}", readiness.diagnostic);
+            });
+        }
+        self.bootstrap(context, stage_deadline)?;
         let (candidate, source, prepared) = crate::inputs::bounded::until(stage_deadline, input_budget, || {
             let candidate = self.candidate(context.attempt);
             if !candidate.join(".git").is_dir() {
@@ -1235,13 +1234,16 @@ impl ExecutionAdapter for Adapter {
                 self.prepared()?
             } else {
                 let prepared = match &self.installed.contract {
+                    Contract::Legacy { .. } => unreachable!("legacy readiness stops before checkout preparation"),
                     Contract::Native { contracts, catalog_sha256, focused_family } => {
                         ensure!(
                             crate::inputs::bounded::digest(&candidate.join("tools/port/batch.toml"))?
                                 == *catalog_sha256,
                             "frozen full catalog changed"
                         );
-                        let catalog = batch::catalog_until(&candidate, stage_deadline, input_budget)?;
+                        let planned =
+                            affected::select_paths_until(&candidate, &self.paths(), stage_deadline, input_budget)?;
+                        write_once(&self.run_root.join("prepared-affected.json"), &planned)?;
                         let declared =
                             contracts.iter().map(|contract| contract.family.clone()).collect::<BTreeSet<_>>();
                         ensure!(
@@ -1250,29 +1252,30 @@ impl ExecutionAdapter for Adapter {
                                 && declared.contains(focused_family),
                             "native frozen gate declarations missing"
                         );
-                        // With no changed source yet, every potentially unknown
-                        // dependency remains affected. A closed installation must
-                        // support the complete catalog before dispatching a worker.
+                        // Freeze all families potentially affected by approved
+                        // ownership, including conservative unknown dependencies.
                         ensure!(
-                            catalog.families.keys().cloned().collect::<BTreeSet<_>>() == declared,
+                            planned.families().into_iter().collect::<BTreeSet<_>>() == declared,
                             "preparation lacks confined adapters/provenance for the complete affected catalog"
                         );
                         let families = contracts
                             .iter()
                             .map(|contract| {
-                                native::prepare_until(
+                                native::prepare_scope_until(
                                     &candidate,
                                     &self.installed.pinned_source,
                                     contract,
+                                    &self.paths(),
                                     stage_deadline,
                                     input_budget,
                                 )
                             })
                             .collect::<Result<Vec<_>>>()?;
+                        let compiled =
+                            families.iter().flat_map(|family| family.rust_inputs.iter()).collect::<BTreeSet<_>>();
                         ensure!(
-                            families.iter().flat_map(|family| [family.candidate_path.clone()]).collect::<BTreeSet<_>>()
-                                == self.paths().into_iter().collect(),
-                            "native writable ownership differs from complete family sources"
+                            self.paths().iter().all(|path| compiled.contains(path)),
+                            "approved source has no prescribed compiled family coverage"
                         );
                         Prepared::Native { families }
                     }
@@ -1379,6 +1382,97 @@ impl ExecutionAdapter for Adapter {
         if let Some(reason) = failed {
             bail!("{reason}");
         }
+        Ok((candidate, source, prepared))
+    }
+
+    fn legacy_readiness_references(&self, attempt: u32) -> Result<Vec<Reference>> {
+        let path = self.attempt(attempt).join("legacy-readiness.json");
+        if !path.exists() {
+            return Ok(vec![]);
+        }
+        let Contract::Legacy { contract } = &self.installed.contract else {
+            bail!("legacy readiness record belongs to another installed contract")
+        };
+        let (prepared, readiness): (
+            crate::translation_legacy::PreparedLegacy,
+            crate::translation_legacy::LegacyReadiness,
+        ) = read(&path)?;
+        crate::translation_legacy::authenticate(contract, &prepared, &readiness)?;
+        Ok(prepared.references)
+    }
+}
+
+impl ExecutionAdapter for Adapter {
+    fn identity(&self) -> String {
+        self.identity.clone()
+    }
+    fn import_submission(
+        &mut self,
+        context: &OperationContext,
+        policy: &FrozenPolicy,
+    ) -> Result<Option<ImportedSubmission>> {
+        if !matches!(self.installed.admission, Admission::Managed { .. }) {
+            return Ok(None);
+        }
+        let Some((_, admission_sha256)) = crate::translation_migration::imported_original(&self.installed)? else {
+            return Ok(None);
+        };
+        // Preparation still authenticates the complete frozen contract and runs
+        // confined harness readiness. The existing source bypasses only rewrite.
+        let (_, source, _) = self.prepare_source(context, policy, None)?;
+        let imported = ImportedSubmission { source, admission_sha256 };
+        self.authenticate_submission(policy, &imported)?;
+        Ok(Some(imported))
+    }
+    fn authenticate_submission(&self, policy: &FrozenPolicy, imported: &ImportedSubmission) -> Result<()> {
+        ensure!(*policy == self.installed.policy, "imported frozen policy differs");
+        let (original, admission_sha256) = crate::translation_migration::imported_original(&self.installed)?
+            .context("original submission admission is missing")?;
+        ensure!(
+            imported.admission_sha256 == admission_sha256
+                && imported.source.clean
+                && imported.source.commit == original.source_commit
+                && imported.source.files_sha256 == original.source_files,
+            "imported source differs from immutable original submission"
+        );
+        // Both live checkout and retired archive authenticate the complete Git
+        // tree, not only the owned files carried by original queue admission.
+        let deadline = crate::inputs::bounded::now_unix_ms()?.saturating_add(60_000);
+        if self.source_path(&imported.source, deadline).is_err() {
+            self.source_archive(&imported.source)?;
+        }
+        Ok(())
+    }
+    fn authenticate_gate(
+        &self,
+        policy: &FrozenPolicy,
+        source: &SourceSnapshot,
+        stage: VerificationStage,
+        outcome: &GateOutcome,
+    ) -> Result<()> {
+        ensure!(*policy == self.installed.policy, "gate authentication frozen policy differs");
+        let record: GateRecord = read(&self.gate_record(&outcome.seal.operation_key))?;
+        ensure!(
+            record.source == *source && record.stage == stage && record.outcome == *outcome,
+            "journal gate differs from trusted immutable result"
+        );
+        self.authenticated_record_receipts(&record)?;
+        Ok(())
+    }
+    fn prepare(
+        &mut self,
+        context: &OperationContext,
+        policy: &FrozenPolicy,
+        previous: Option<&SourceSnapshot>,
+    ) -> Result<Preparation> {
+        let (candidate, source, prepared) = self.prepare_source(context, policy, previous)?;
+        let stage_deadline = self.deadline(context)?;
+        let input_budget = self
+            .installed
+            .max_checkout_bytes
+            .checked_mul(8)
+            .context("preparation input budget overflow")?
+            .min(8 * crate::inputs::bounded::DEFAULT_BYTES);
         crate::inputs::bounded::until(stage_deadline, input_budget, || {
             let mut context_text = format!(
                 "Approved scope: {}. Frozen dependencies: {}. Prescribed coverage: {}.\n",
@@ -1446,7 +1540,7 @@ impl ExecutionAdapter for Adapter {
     fn verify(
         &mut self,
         context: &OperationContext,
-        policy: &FrozenPolicy,
+        _policy: &FrozenPolicy,
         source: &SourceSnapshot,
         stage: VerificationStage,
     ) -> Result<GateOutcome> {
@@ -1472,15 +1566,9 @@ impl ExecutionAdapter for Adapter {
         let prepared_contract = self.prepared()?;
         match &prepared_contract {
             Prepared::Native { families } => {
-                let names = batch::catalog_until(&checkout, stage_deadline, self.installed.max_checkout_bytes)?
-                    .families
-                    .keys()
-                    .cloned()
-                    .collect::<Vec<_>>();
-                let plan = affected::select_until(
+                let plan = affected::select_paths_until(
                     &checkout,
-                    &names,
-                    Some(&policy.baseline_commit),
+                    &self.paths(),
                     stage_deadline,
                     self.installed.max_checkout_bytes,
                 )?;
@@ -1586,6 +1674,23 @@ impl ExecutionAdapter for Adapter {
                 &self.installed.integration_baseline,
                 stage_deadline,
             )?;
+        }
+        if let Some((_, admission_sha256)) = if matches!(self.installed.admission, Admission::Managed { .. }) {
+            crate::translation_migration::imported_original(&self.installed)?
+        } else {
+            None
+        } {
+            let imported = ImportedSubmission { source: candidate.clone(), admission_sha256 };
+            self.authenticate_submission(_policy, &imported)?;
+            return checkout::integrate_submitted_until(
+                &self.source_path(candidate, stage_deadline)?,
+                &integration,
+                context,
+                &imported,
+                &self.installed.integration_baseline,
+                &self.paths(),
+                stage_deadline,
+            );
         }
         checkout::integrate_until(
             &self.source_path(candidate, stage_deadline)?,
@@ -1802,13 +1907,16 @@ impl ExecutionAdapter for Adapter {
         for archive in intent.revisions.values() {
             files.extend(checkout::revision_references(archive)?);
         }
+        files.extend(self.legacy_readiness_references(context.attempt)?);
         files.extend(intent.prior_finalizations.iter().cloned());
         let journal_root = self.run_root.join("journal");
         if journal_root.is_dir() {
             collect(&journal_root, &mut files, &mut directories, request.remaining_evidence_bytes)?;
         }
-        if self.run_root.join("prepared.json").is_file() {
-            files.push(retention::seal_file(&self.run_root.join("prepared.json"), MAX_RECORD)?);
+        for name in ["prepared.json", "prepared-affected.json"] {
+            if self.run_root.join(name).is_file() {
+                files.push(retention::seal_file(&self.run_root.join(name), MAX_RECORD)?);
+            }
         }
         for root in [self.run_root.join("deadlines"), self.run_root.join("allocations")] {
             if root.is_dir() {
@@ -2029,6 +2137,7 @@ impl ExecutionAdapter for Adapter {
         }
         let record = matching.context("retained finalization is missing")?;
         ensure!(record.request == *request, "retained finalization request changed");
+        self.legacy_readiness_references(record.context.attempt)?;
         let retention_limit = request
             .remaining_evidence_bytes
             .checked_sub(MAX_RECORD)

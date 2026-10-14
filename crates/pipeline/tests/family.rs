@@ -315,6 +315,77 @@ fn invalid_dispatcher_pointer_bank_is_rejected_before_compilation() {
 }
 
 #[test]
+fn packed_word_calls_preserve_argument_order_high_bits_and_manifest_acceptance() {
+    let project = Project::new();
+    write(
+        &project.0,
+        "deps/snesrev-sm/src/sm_80.c",
+        r#"#include <stdint.h>
+extern uint8_t g_ram[0x20000];
+static void word(unsigned at,uint16_t value){g_ram[at]=value;g_ram[at+1]=value>>8;}
+uint32_t Touch3(uint16_t a,uint16_t b,uint16_t c){word(16,a);word(18,b);word(20,c);return (uint32_t)a+b+c;}
+uint32_t Touch4(uint16_t a,uint16_t b,uint16_t c,uint16_t d){word(16,a);word(18,b);word(20,c);word(22,d);return (uint32_t)a+b+c+d;}
+"#,
+    );
+    let archive = project.0.join("deps/downloads/oracle.tar.gz");
+    assert!(
+        Command::new("tar")
+            .arg("-czf")
+            .arg(&archive)
+            .arg("-C")
+            .arg(project.0.join("deps"))
+            .arg("snesrev-sm")
+            .status()
+            .unwrap()
+            .success()
+    );
+    let pins = project.0.join("tools/dependencies.toml");
+    let mut pin: Value = toml::from_str(&fs::read_to_string(&pins).unwrap()).unwrap();
+    pin["dependencies"][0]["sha256"] = format!("{:x}", Sha256::digest(fs::read(archive).unwrap())).into();
+    fs::write(pins, toml::to_string(&pin).unwrap()).unwrap();
+    write(
+        &project.0,
+        "crates/port/src/fixture.rs",
+        r#"use crate::memory::Wram;
+pub fn dispatch_i32(ram:&mut Wram<'_>,name:&str,a:i32,b:i32)->Result<u32,&'static str>{
+let words=match name {"Touch3"=>vec![a as u16,b as u16,((b as u32)>>16) as u16],"Touch4"=>vec![a as u16,((a as u32)>>16) as u16,b as u16,((b as u32)>>16) as u16],_=>return Err("routine")};
+for (i,value) in words.iter().enumerate(){ram.set_word(16+2*i,*value);}
+Ok(words.iter().map(|word|*word as u32).sum())}
+"#,
+    );
+    let manifest = r#"family='fixture'
+bank='sm_80.c'
+rust_module='crates/port/src/fixture.rs'
+[[routines]]
+symbol='Touch3'
+arg_types=['uint16','uint32']
+packed_u16_args=3
+return='uint32'
+cases=[{name='three',a=43981,b=4294840884,expected_return=114175}]
+[[routines]]
+symbol='Touch4'
+arg_types=['uint32','uint32']
+packed_u16_args=4
+return='uint32'
+cases=[{name='four',a=2147527629,b=4294840884,expected_return=146943}]
+"#;
+    write(&project.0, "tools/port/fixture.toml", manifest);
+    let verdict = project.verify_mode(true, "fresh");
+    assert_eq!(verdict["verified_cases"].as_integer(), Some(2));
+    assert_eq!(fs::read_to_string(project.0.join("tools/port/fixture.toml")).unwrap(), manifest);
+    project.authenticate(&verdict, true);
+    let run = PathBuf::from(verdict["run"].as_str().unwrap());
+    let three = fs::read(run.join("three/c-after.wram")).unwrap();
+    assert_eq!(&three[16..22], &[0xcd, 0xab, 0x34, 0x12, 0xfe, 0xff]);
+    let four = fs::read(run.join("four/c-after.wram")).unwrap();
+    assert_eq!(&four[16..24], &[0xcd, 0xab, 0x00, 0x80, 0x34, 0x12, 0xfe, 0xff]);
+    write(&project.0, "tools/port/fixture.toml", manifest.replacen("['uint16','uint32']", "['uint32','uint32']", 1));
+    let rejected = project.verify_mode(false, "fresh");
+    assert!(rejected["error"].as_str().unwrap().contains("invalid packed"));
+    assert!(!Path::new(rejected["run"].as_str().unwrap()).join("c").exists());
+}
+
+#[test]
 fn valid_cases_authenticate_and_tampering_is_rejected_even_with_rebound_inventory() {
     let project = Project::new();
     project.manifest(Value::Array(vec![

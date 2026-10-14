@@ -425,24 +425,63 @@ pub(crate) fn select_until(
     let budget = PlanningBudget::new(deadline_unix_ms, maximum)?;
     let checkout = fs::canonicalize(checkout)?;
     let changed = revision.map(|revision| changed_paths(&checkout, revision, &budget)).transpose()?.unwrap_or_default();
+    select_changed(&checkout, Some(names), revision, &changed, revision.is_none(), &budget)
+}
+
+/// Plan against every catalog family before a rewrite can touch any approved
+/// source. This retains the same conservative discovery and exclusion reasons
+/// as changed-since planning, without substituting an empty current Git diff
+/// for the full future writable ownership.
+pub(crate) fn select_paths_until(
+    checkout: &Path,
+    approved_paths: &[String],
+    deadline_unix_ms: u64,
+    maximum: u64,
+) -> Result<Report> {
+    let budget = PlanningBudget::new(deadline_unix_ms, maximum)?;
+    let checkout = fs::canonicalize(checkout)?;
+    let mut changed = BTreeSet::new();
+    for name in approved_paths {
+        budget.entry()?;
+        let path = PathBuf::from(name);
+        ensure!(
+            !name.is_empty() && path.components().all(|part| matches!(part, Component::Normal(_))),
+            "approved affected-planning path is not relative"
+        );
+        ensure!(changed.insert(path), "duplicate approved affected-planning path");
+    }
+    ensure!(!changed.is_empty(), "approved affected-planning ownership is empty");
+    let mut report = select_changed(&checkout, None, None, &changed, false, &budget)?;
+    report.scope = "potentially affected full catalog for approved writable paths; no verification, evidence reuse or Live replay admission".into();
+    Ok(report)
+}
+
+fn select_changed(
+    checkout: &Path,
+    names: Option<&[String]>,
+    revision: Option<&str>,
+    changed: &BTreeSet<PathBuf>,
+    requested: bool,
+    budget: &PlanningBudget,
+) -> Result<Report> {
     let global = changed.iter().filter(|path| shared(path)).cloned().collect::<Vec<_>>();
     let catalog_path = checkout.join("tools/port/batch.toml");
     let catalog_hash = budget.hash(&catalog_path)?;
     let mut catalog_inputs = BTreeMap::new();
-    let config = batch::catalog_using(&checkout, |path| {
+    let config = batch::catalog_using(checkout, |path| {
         budget.entry()?;
         let (text, hash) = budget.text(path)?;
-        catalog_inputs.insert(normalize(&checkout, path), hash);
+        catalog_inputs.insert(normalize(checkout, path), hash);
         Ok(text)
     })?;
     ensure!(catalog_hash == budget.hash(&catalog_path)?, "Offline family catalog changed during selection");
-    let mut discovery = Discovery::new(&checkout, &budget).ok();
+    let mut discovery = Discovery::new(checkout, budget).ok();
     budget.check()?;
     if let Some(discovery) = &mut discovery {
         // Include removed names when traversing source words. A surviving source
         // that still mentions a deleted module remains affected, rather than
         // appearing independent because the current namespace lost that name.
-        for path in &changed {
+        for path in changed {
             if path.parent() == Some(Path::new("crates/port/src"))
                 && path.extension().is_some_and(|extension| extension == "rs")
                 && let Some(name) = path.file_stem().and_then(|name| name.to_str())
@@ -456,7 +495,7 @@ pub(crate) fn select_until(
         schema_version: 1,
         status: "planned".into(),
         scope: "selection only; no verification, evidence reuse or Live replay admission".into(),
-        checkout: checkout.clone(),
+        checkout: checkout.into(),
         changed_since: revision.map(str::to_owned),
         changed_paths: changed.iter().cloned().collect(),
         selected: vec![],
@@ -465,6 +504,8 @@ pub(crate) fn select_until(
     };
     report.planning_inputs = catalog_inputs;
     report.planning_inputs.insert("tools/port/batch.toml".into(), catalog_hash);
+    let catalog_names = config.families.keys().cloned().collect::<Vec<_>>();
+    let names = names.unwrap_or(&catalog_names);
     let mut seen = BTreeSet::new();
     for name in names.iter().filter(|name| seen.insert((*name).clone())) {
         budget.entry()?;
@@ -472,7 +513,7 @@ pub(crate) fn select_until(
         let examined = (|| -> Result<BTreeSet<PathBuf>> {
             let item = batch::entry(&config, name)?;
             ensure!(item.prepare.is_none(), "unknown fixture preparation inputs");
-            let manifest_path = normalize(&checkout, &item.manifest);
+            let manifest_path = normalize(checkout, &item.manifest);
             let path = checkout.join(&manifest_path);
             ensure!(!path.is_symlink(), "manifest is a symlink");
             let (text, manifest_hash) = budget.text(&path)?;
@@ -501,7 +542,7 @@ pub(crate) fn select_until(
             }
             Err(error) => decision.reasons.push(reason("uncertain-inputs", format!("{error:#}"), vec![])),
         }
-        if revision.is_none() {
+        if requested {
             decision.reasons.push(reason("requested", "No changed-since filter was requested", vec![]));
         }
         if !global.is_empty() {
@@ -524,7 +565,7 @@ pub(crate) fn select_until(
     }
     if let Some(discovery) = discovery {
         report.planning_inputs.extend(discovery.hashes);
-        let namespace = Discovery::new(&checkout, &budget).map(|current| current.available);
+        let namespace = Discovery::new(checkout, budget).map(|current| current.available);
         budget.check()?;
         let mut stable = namespace.is_ok_and(|namespace| namespace == discovery.namespace);
         for (path, expected) in &report.planning_inputs {
@@ -549,6 +590,51 @@ pub(crate) fn select_until(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn approved_paths_plan_the_full_catalog_and_keep_unknown_inputs() -> Result<()> {
+        let directory = crate::inputs::bounded::tests::Directory::new()?;
+        let root = &directory.0;
+        fs::create_dir_all(root.join("tools/port"))?;
+        fs::create_dir_all(root.join("crates/port/src"))?;
+        ensure!(
+            std::process::Command::new("git").args(["init", "-q"]).arg(root).status()?.success(),
+            "test Git initialization failed"
+        );
+        fs::write(
+            root.join("tools/port/batch.toml"),
+            "[families]\na='family'\nb='family'\nunknown='family'\n[profiles]\ngameplay=['a']\n",
+        )?;
+        for (name, source) in [
+            ("memory", "pub struct Wram;"),
+            ("a", "pub fn a() {}"),
+            ("b", "pub fn b() { helper::run(); }"),
+            ("helper", "pub fn run() {}"),
+            ("unknown", "include!(\"dynamic.rs\");"),
+        ] {
+            fs::write(root.join(format!("crates/port/src/{name}.rs")), source)?;
+        }
+        for name in ["a", "b", "unknown"] {
+            fs::write(
+                root.join(format!("tools/port/{name}.toml")),
+                format!("family='{name}'\nbank='sm_80.c'\nrust_module='crates/port/src/{name}.rs'\nroutines=[]\n"),
+            )?;
+        }
+        let now = u64::try_from(SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis())?;
+        let report =
+            select_paths_until(root, &["crates/port/src/helper.rs".into()], now + 10_000, DEFAULT_PLANNING_BYTES)?;
+        assert_eq!(report.families(), ["b", "unknown"]);
+        assert_eq!(report.excluded.len(), 1);
+        assert_eq!(report.excluded[0].family, "a");
+        assert_eq!(report.excluded[0].reasons[0].code, "unaffected");
+        assert_eq!(report.selected[1].reasons[0].code, "uncertain-inputs");
+        assert!(report.planning_inputs.contains_key(Path::new("tools/port/a.toml")));
+        assert_eq!(report.changed_paths, [PathBuf::from("crates/port/src/helper.rs")]);
+        assert!(report.changed_since.is_none());
+        assert!(!root.join("out").exists());
+        assert!(select_paths_until(root, &["../escape".into()], now + 10_000, DEFAULT_PLANNING_BYTES).is_err());
+        Ok(())
+    }
 
     #[test]
     fn expired_or_exhausted_planning_stops_without_output_or_family_exclusion() -> Result<()> {

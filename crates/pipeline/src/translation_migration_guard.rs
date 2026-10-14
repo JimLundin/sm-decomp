@@ -32,6 +32,17 @@ pub(crate) struct MigratedClaim {
     /// seals and rechecks its actual bytes in the preparation reference closure.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub installation: Option<PathBuf>,
+    /// Existing submissions execute once under their implementation lineage;
+    /// their linked held integration claim is retained without another runner.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub execution: Option<MigrationExecution>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(tag = "mode", rename_all = "kebab-case", deny_unknown_fields)]
+pub(crate) enum MigrationExecution {
+    ImportedSubmission,
+    HeldIntegration { submission: ClaimLineage },
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -182,6 +193,31 @@ fn read_inner(path: &Path) -> Result<Migration> {
         if let Some(installation) = &claim.installation {
             safe(installation)?;
         }
+        if let Some(execution) = &claim.execution {
+            retention::authenticate_reference(&claim.original_claim, MAX_BYTES)?;
+            let original: OriginalClaim = object(&claim.original_claim.path)?;
+            match execution {
+                MigrationExecution::ImportedSubmission => ensure!(
+                    original.job.kind == assignment::Kind::Implement
+                        && original.state == assignment::State::Submitted
+                        && same_claim(&claim.claim, &original.claim)
+                        && matches!(&original.result, Some(assignment::WorkResult::Submitted { commit, .. })
+                            if commit == &claim.source_commit && commit == &original.source_commit),
+                    "import mode requires its exact original submitted source"
+                ),
+                MigrationExecution::HeldIntegration { submission } => {
+                    let owner = migration
+                        .claims
+                        .iter()
+                        .find(|item| &item.claim == submission)
+                        .ok_or_else(|| anyhow::anyhow!("held integration lacks its imported submission owner"))?;
+                    ensure!(
+                        executable_linked_pair(owner, claim) && prepared_linked_pair(&migration, owner, claim)?,
+                        "held integration does not belong to one exact imported executor"
+                    );
+                }
+            }
+        }
     }
     for left in &migration.claims {
         for right in &migration.claims {
@@ -194,7 +230,9 @@ fn read_inner(path: &Path) -> Result<Migration> {
                 .iter()
                 .all(|a| right.writable_files.iter().all(|b| !a.starts_with(b) && !b.starts_with(a)));
             ensure!(
-                disjoint || (migration.state == "prepared" && prepared_linked_pair(&migration, left, right)?),
+                disjoint
+                    || (prepared_linked_pair(&migration, left, right)?
+                        && (migration.state == "prepared" || executable_linked_pair(left, right))),
                 "migration claims overlap writable ownership outside an exact prepared submission/integration pair"
             );
         }
@@ -206,10 +244,19 @@ fn read_inner(path: &Path) -> Result<Migration> {
     Ok(migration)
 }
 
+pub(crate) fn executable_linked_pair(left: &MigratedClaim, right: &MigratedClaim) -> bool {
+    matches!((&left.execution, &right.execution),
+        (Some(MigrationExecution::ImportedSubmission), Some(MigrationExecution::HeldIntegration { submission }))
+            if submission == &left.claim && right.installation.is_none())
+        || matches!((&right.execution, &left.execution),
+            (Some(MigrationExecution::ImportedSubmission), Some(MigrationExecution::HeldIntegration { submission }))
+                if submission == &right.claim && left.installation.is_none())
+}
+
 /// Preparation records the existing standard queue lineage without granting
 /// either held claim new writable execution. The historical legacy derivation
 /// omitted base-head; accept only that exact older standard representation.
-fn prepared_linked_pair(migration: &Migration, left: &MigratedClaim, right: &MigratedClaim) -> Result<bool> {
+pub(crate) fn prepared_linked_pair(migration: &Migration, left: &MigratedClaim, right: &MigratedClaim) -> Result<bool> {
     retention::authenticate_reference(&left.original_claim, MAX_BYTES)?;
     retention::authenticate_reference(&right.original_claim, MAX_BYTES)?;
     let left_original: OriginalClaim = object(&left.original_claim.path)?;
@@ -270,6 +317,20 @@ fn fence_effort(root: &Path, effort: &str) -> Result<()> {
 }
 
 fn fence_effort_inner(root: &Path, effort: &str) -> Result<()> {
+    if let Some(registry) = crate::translation_production::read_registry(root)? {
+        for reference in &registry.migrations {
+            if read(&reference.path)?.effort == effort {
+                bail!(
+                    "unrestricted dispatch and evidence producers are retired for the migrated effort; use the installed translation supervisor"
+                )
+            }
+        }
+        ensure!(
+            !registry.blocked.iter().any(|claim| claim.effort == effort),
+            "unrestricted dispatch is retired for this explicitly stopped production effort"
+        );
+        return Ok(());
+    }
     let path = root.join(FENCE);
     match path.symlink_metadata() {
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),

@@ -89,6 +89,9 @@ struct Observed {
     interrupt_finalization_once: bool,
     interrupt_publication_once: bool,
     publication_projection: Option<(OperationContext, Completion, Publication, u64)>,
+    imported: Option<ImportedSubmission>,
+    interrupt_import_once: bool,
+    import_contexts: Vec<OperationContext>,
 }
 #[derive(Clone)]
 struct Adapter(Arc<Mutex<Observed>>);
@@ -106,6 +109,22 @@ impl Adapter {
 impl ExecutionAdapter for Adapter {
     fn identity(&self) -> String {
         sha256("recorded-adapter")
+    }
+    fn import_submission(&mut self, ctx: &OperationContext, _: &FrozenPolicy) -> Result<Option<ImportedSubmission>> {
+        let mut observed = self.0.lock().unwrap();
+        if observed.imported.is_none() {
+            return Ok(None);
+        }
+        observed.import_contexts.push(ctx.clone());
+        if observed.interrupt_import_once {
+            observed.interrupt_import_once = false;
+            return Err(ExecutionPending { reason: "lost imported preparation response".into() }.into());
+        }
+        Ok(observed.imported.clone())
+    }
+    fn authenticate_submission(&self, _: &FrozenPolicy, imported: &ImportedSubmission) -> Result<()> {
+        ensure!(self.0.lock().unwrap().imported.as_ref() == Some(imported), "imported admission or source changed");
+        Ok(())
     }
     fn prepare(
         &mut self,
@@ -279,6 +298,117 @@ fn replacement(view: &View, content: &str) -> SourceReplacements {
             content: content.into(),
         }],
     }
+}
+
+fn imported_adapter() -> (Adapter, ImportedSubmission) {
+    let adapter = Adapter::new();
+    let mut submitted = source("already submitted");
+    submitted.commit = "c".repeat(40);
+    let imported = ImportedSubmission { source: submitted, admission_sha256: sha256("original submitted claim") };
+    adapter.0.lock().unwrap().imported = Some(imported.clone());
+    (adapter, imported)
+}
+
+#[test]
+fn imported_submission_recovers_exact_intent_and_runs_every_gate_without_rewrite() {
+    let project = Project::new();
+    let (adapter, imported) = imported_adapter();
+    adapter.0.lock().unwrap().interrupt_import_once = true;
+    let mut frozen = policy();
+    frozen.verification_stages = vec![VerificationStage::Focused, VerificationStage::Offline];
+    let mut run = Supervisor::open(&project.0, frozen.clone(), adapter.clone()).unwrap();
+    assert_eq!(run.run_with_rewrite(|_, _, _| panic!("import launched rewrite")).unwrap().state, State::Preparing);
+    assert_eq!(adapter.count("verify"), 0);
+    drop(run);
+    let mut run = Supervisor::open(&project.0, frozen.clone(), adapter.clone()).unwrap();
+    let complete = run.run_with_rewrite(|_, _, _| panic!("import launched rewrite")).unwrap();
+    let State::Complete { completion, .. } = &complete.state else { panic!("imported submission did not complete") };
+    assert_eq!(completion.candidate, imported.source);
+    assert_eq!(completion.integrated.files_sha256, imported.source.files_sha256);
+    assert_eq!(completion.gates.len(), 4);
+    let contexts = adapter.0.lock().unwrap().import_contexts.clone();
+    assert_eq!(contexts.len(), 2);
+    assert_eq!(contexts[0], contexts[1], "lost import response must retain its operation key");
+    drop(run);
+    assert_eq!(adapter.count("prepare"), 0);
+    assert_eq!(adapter.count("apply"), 0);
+    assert_eq!(adapter.count("verify"), 4);
+    let mut run = Supervisor::open(&project.0, frozen, adapter.clone()).unwrap();
+    assert_eq!(run.run_with_rewrite(|_, _, _| panic!("completed import launched rewrite")).unwrap(), complete);
+    assert_eq!(adapter.count("verify"), 4);
+    assert_eq!(adapter.count("publish"), 1);
+}
+
+#[test]
+fn imported_failure_retries_same_candidate_but_requires_new_admission_to_repair() {
+    let project = Project::new();
+    let (adapter, imported) = imported_adapter();
+    adapter.0.lock().unwrap().fail_gate = true;
+    let mut run = supervisor(&project.0, adapter.clone());
+    assert!(matches!(run.advance().unwrap().state, State::Stopped { disposition: Disposition::Failed, .. }));
+    assert!(run.repair("change existing submission").is_err());
+    adapter.0.lock().unwrap().fail_gate = false;
+    let retried = run.retry("retry fixed verification prerequisite").unwrap();
+    let State::Complete { completion, .. } = retried.state else { panic!("import retry did not complete") };
+    assert_eq!(completion.attempt, 2);
+    assert_eq!(completion.candidate, imported.source);
+    assert_eq!(adapter.0.lock().unwrap().import_contexts.len(), 1);
+    assert_eq!(adapter.count("prepare"), 0);
+    assert_eq!(adapter.count("apply"), 0);
+    assert_eq!(adapter.count("verify"), 3);
+}
+
+#[test]
+fn imported_journal_tamper_is_authenticated_before_any_recovery_producer() {
+    for field in ["admission", "source", "missing"] {
+        let project = Project::new();
+        let (adapter, _) = imported_adapter();
+        adapter.0.lock().unwrap().interrupt_once = true;
+        let mut run = supervisor(&project.0, adapter.clone());
+        assert!(matches!(run.advance().unwrap().state, State::Verifying { .. }));
+        let paths = events(&project.0);
+        let imported_path = paths
+            .iter()
+            .find(|path| {
+                let event: serde_json::Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+                event["state"]["imported_submission"].is_object() && event["state"]["intent"].is_null()
+            })
+            .unwrap();
+        let mut event: serde_json::Value = serde_json::from_slice(&fs::read(imported_path).unwrap()).unwrap();
+        match field {
+            "admission" => event["state"]["imported_submission"]["admission_sha256"] = sha256("forged claim").into(),
+            "source" => {
+                event["state"]["imported_submission"]["source"]["commit"] = "d".repeat(40).into();
+                event["state"]["candidate"]["commit"] = "d".repeat(40).into();
+            }
+            "missing" => {
+                event["state"].as_object_mut().unwrap().remove("imported_submission");
+            }
+            _ => unreachable!(),
+        }
+        for path in paths.iter().filter(|path| *path > imported_path) {
+            fs::remove_file(path).unwrap();
+        }
+        fs::write(imported_path, serde_json::to_vec(&event).unwrap()).unwrap();
+        assert!(run.advance().is_err(), "forged {field} import authorized another producer");
+        assert!(Supervisor::inspect_retained(&project.0, policy(), adapter.clone()).is_err());
+        assert_eq!(adapter.count("verify"), 1);
+        assert_eq!(adapter.count("prepare"), 0);
+        assert_eq!(adapter.count("apply"), 0);
+    }
+}
+
+#[test]
+fn completed_import_reauthenticates_the_frozen_admission() {
+    let project = Project::new();
+    let (adapter, _) = imported_adapter();
+    let mut run = supervisor(&project.0, adapter.clone());
+    assert!(matches!(run.advance().unwrap().state, State::Complete { .. }));
+    adapter.0.lock().unwrap().imported = None;
+    assert!(run.inspect().is_err());
+    assert!(run.advance().is_err());
+    assert!(Supervisor::open(&project.0, policy(), adapter.clone()).is_err());
+    assert_eq!(adapter.count("verify"), 2);
 }
 
 #[test]

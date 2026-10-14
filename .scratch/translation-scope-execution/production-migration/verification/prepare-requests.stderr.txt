@@ -1,0 +1,13 @@
+     Locking 2 packages to highest Rust 1.101.0-nightly compatible versions
+    Updating serde_json v1.0.145 -> v1.0.151
+      Adding zmij v1.0.23
+   Compiling serde v1.0.229
+   Compiling memchr v2.8.3
+   Compiling serde_json v1.0.151
+   Compiling toml_datetime v0.6.11
+   Compiling serde_spanned v0.6.9
+   Compiling toml_edit v0.22.27
+   Compiling toml v0.8.23
+   Compiling sm-production-migration-tools v0.1.0 (/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-migration/tools)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 7.63s
+     Running `/tmp/sm-production-migration-target-20261014/debug/prepare-requests`

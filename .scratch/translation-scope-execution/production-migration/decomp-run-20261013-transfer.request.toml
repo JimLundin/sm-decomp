@@ -1,0 +1,15 @@
+operation = "transfer"
+checkout = "/home/jim/sm-decomp"
+coordinator = "decomp-run-20261013"
+
+[authority]
+session_id = "01a136a0-49bb-7690-a360-48def3c2c09b"
+generation = 2
+
+[transfer]
+token = "decomp-run-20261013"
+session_id = "01a136a0-49bb-7690-a360-48def3c2c09b"
+
+[transfer.observation]
+path = "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-migration/inspections/decomp-run-20261013-transfer.toml"
+sha256 = "ea4bc6b481a524309e0c55b53fc64cb045c3cc4b3e7cab6d1f2765f7f72e877e"

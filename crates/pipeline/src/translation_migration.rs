@@ -25,7 +25,7 @@ use std::{
     },
     path::{Component, Path, PathBuf},
     process::{Command, Stdio},
-    time::{Duration, Instant},
+    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 
 const FENCE: &str = ".scratch/decomp-parallel/deterministic-execution.json";
@@ -43,7 +43,7 @@ const PREPARATION_TIMEOUT_MS: u64 = 300_000;
 #[cfg(test)]
 use crate::translation_migration_guard::fence_legacy_locked;
 use crate::translation_migration_guard::read;
-pub(crate) use crate::translation_migration_guard::{MigratedClaim, Migration, OriginalClaim};
+pub(crate) use crate::translation_migration_guard::{MigratedClaim, Migration, MigrationExecution, OriginalClaim};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -102,7 +102,7 @@ pub(crate) fn domain_identity(migration: &Migration) -> Result<String> {
             (&claim.claim, &claim.scope_id, &claim.source_commit, &claim.writable_files, &claim.original_claim)
         })
         .collect::<Vec<_>>();
-    sealed(&(
+    let historical = sealed(&(
         "translation-managed-domain-v1",
         &migration.schema,
         &migration.checkout,
@@ -117,7 +117,12 @@ pub(crate) fn domain_identity(migration: &Migration) -> Result<String> {
         &migration.stopped_owners,
         &migration.proof,
         &migration.limitations,
-    ))
+    ))?;
+    if migration.claims.iter().all(|claim| claim.execution.is_none()) {
+        Ok(historical)
+    } else {
+        sealed(&(historical, migration.claims.iter().map(|claim| (&claim.claim, &claim.execution)).collect::<Vec<_>>()))
+    }
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -661,12 +666,25 @@ fn coverage(checkout: &Path, proof: &supervisor::Installation) -> Result<Catalog
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 struct NativeAdmission {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    domain: Option<String>,
     scope: Reference,
-    inventory: Reference,
-    source_revision: String,
+    inventory: Option<Reference>,
+    source_revision: Option<String>,
     routines: Vec<String>,
     families: Vec<String>,
     limitations: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    additional_references: Vec<Reference>,
+}
+
+impl NativeAdmission {
+    fn inventory(&self) -> Result<&Reference> {
+        self.inventory.as_ref().context("this acceptance domain has no native inventory")
+    }
+    fn source_revision(&self) -> Result<&str> {
+        self.source_revision.as_deref().context("this acceptance domain has no native source revision")
+    }
 }
 
 fn installed_binding(
@@ -749,28 +767,53 @@ fn native_admission(
     validate_scope: bool,
 ) -> Result<NativeAdmission> {
     ensure!(
-        original.state == assignment::State::Running
+        ((original.state == assignment::State::Running && original.result.is_none() && migrated.execution.is_none())
+            || (original.state == assignment::State::Submitted
+                && migrated.execution == Some(MigrationExecution::ImportedSubmission)
+                && matches!(&original.result, Some(assignment::WorkResult::Submitted { commit, .. })
+                    if commit == &original.source_commit)))
             && original.job.kind == assignment::Kind::Implement
-            && original.result.is_none()
             && original.agent.is_some()
             && original.claim.coordinator == migration.coordinator,
-        "only an original running native implementation owned by the current integrator can migrate to rewriting; submitted, reserved and integration claims remain held"
+        "managed execution requires an original running implementation or exact imported submission"
     );
     installed_binding(migration, migrated, installed)?;
     ensure!(installed.integration_repository == migration.checkout, "managed integration source authority differs");
-    if validate_scope {
-        validate_projection_records_before_intent(migration, installed)?;
-        for (key, path) in assignment::admitted_input_files(&migration.checkout, &original.job)? {
-            ensure!(digest(&path)? == original.job.inputs[&key], "original native planned input changed: {key}");
-        }
-    }
     ensure!(
         original.source_files == installed.policy.approved_files,
         "installed rewrite does not begin at the exact retained original checkpoint"
     );
+    if let supervisor::Contract::Legacy { contract } = &installed.contract {
+        // Legacy readiness authenticates the preserved original lineage but
+        // cannot publish source or pass completion. Its missing-adapter report
+        // therefore does not require an otherwise clean host projection.
+        let admitted = crate::translation_legacy::validate_original(contract, original)?;
+        return Ok(NativeAdmission {
+            domain: Some("legacy-infrastructure-v1".into()),
+            scope: admitted.scope,
+            inventory: None,
+            source_revision: None,
+            routines: vec![],
+            families: vec![],
+            limitations: admitted.limitations,
+            additional_references: admitted.references,
+        });
+    }
+    if validate_scope {
+        validate_projection_records_before_intent(migration, installed)?;
+        if migrated.execution == Some(MigrationExecution::ImportedSubmission) {
+            validate_imported_linkage(migration, original)?;
+        }
+        for (key, path) in assignment::admitted_input_files(&migration.checkout, &original.job)? {
+            ensure!(digest(&path)? == original.job.inputs[&key], "original native planned input changed: {key}");
+        }
+    }
     let supervisor::Contract::Native { contracts, catalog_sha256, focused_family } = &installed.contract else {
-        bail!("managed infrastructure result acceptance needs its distinct original infrastructure contract")
+        bail!("managed original requires its distinct declared acceptance contract")
     };
+    if original.job.inputs.get("admission-domain").map(String::as_str) == Some("offline-coverage-v1") {
+        return require_offline_composite_adapter(&original.job.id);
+    }
     let scope_path =
         PathBuf::from(original.job.inputs.get("scope-file").context("original job lacks native Scope declaration")?);
     let scope_path = if scope_path.is_absolute() { scope_path } else { migration.checkout.join(scope_path) };
@@ -814,12 +857,11 @@ fn native_admission(
         "managed native installation lacks the complete conservative affected catalog"
     );
     if validate_scope {
-        let catalog = batch::catalog(&installed.source_repository)?;
         ensure!(
             digest(&installed.source_repository.join("tools/port/batch.toml"))? == *catalog_sha256
                 && digest(&migration.checkout.join("tools/port/batch.toml"))? == *catalog_sha256
-                && catalog.families.keys().cloned().collect::<BTreeSet<_>>() == declared,
-            "managed installation changed or omitted the production Offline catalog"
+                && affected_families(installed)? == declared,
+            "managed installation changed the catalog or omitted an affected Offline family"
         );
     }
     let inventory_path = if scope.source_inventory.is_absolute() {
@@ -853,14 +895,12 @@ fn native_admission(
                     "managed native family provenance names another original Scope owner or declaration"
                 );
             }
-            native::NativeProvenance::ReviewedOfflineFamily { .. } => bail!(
-                "reviewed historical Offline proof cannot replace the original native Scope exercise/dependency admission"
+            native::NativeProvenance::ReviewedOfflineFamily { .. } => ensure!(
+                contract.family != *focused_family,
+                "reviewed historical Offline proof cannot replace the original focused native Scope admission"
             ),
         }
-        ensure!(
-            !contract.coverage.is_empty() && contract.coverage.keys().all(|routine| scope.routines.contains(routine)),
-            "managed native provenance omits an original family routine"
-        );
+        ensure!(!contract.coverage.is_empty(), "managed native provenance omits an original family routine");
         if validate_scope {
             let prepared = native::prepare(&installed.source_repository, &installed.pinned_source, contract)?;
             ensure!(prepared.source.revision == revision, "prepared native original source identity differs");
@@ -908,16 +948,92 @@ fn native_admission(
         }
     }
     Ok(NativeAdmission {
+        domain: None,
         scope: scope_reference,
-        inventory,
-        source_revision: revision,
+        inventory: Some(inventory),
+        source_revision: Some(revision),
         routines: scope.routines,
         families: declared.into_iter().collect(),
         limitations: vec![
             "Actual-C acceptance covers the original frozen fixture and dependency domain.".into(),
             "Original-ROM parity and Live replay were not tested.".into(),
         ],
+        additional_references: vec![],
     })
+}
+
+fn validate_imported_linkage(migration: &Migration, original: &OriginalClaim) -> Result<()> {
+    let ledger = current_ledger(migration)?;
+    let expected = assignment::admitted_integration_job(&original.job, &original.claim, &original.source_commit)?;
+    let integration = ledger.jobs.get(&expected.id).context("imported submission has no linked integration")?;
+    let mut historical = expected.clone();
+    historical.inputs.remove("base-head");
+    ensure!(
+        (integration.job == expected || integration.job == historical)
+            && !integration.stale
+            && integration.pending_job.is_none()
+            && integration.result.is_none(),
+        "imported submission integration no longer has its exact original requirements"
+    );
+    if integration.state == assignment::State::Ready {
+        ensure!(integration.claim.is_none() && integration.agent.is_none(), "ready imported integration is owned");
+    } else {
+        ensure!(
+            matches!(integration.state, assignment::State::Reserved | assignment::State::Running),
+            "imported linked integration cannot execute"
+        );
+        let claim = integration.claim.as_ref().context("held imported integration has no claim")?;
+        let held = migration
+            .claims
+            .iter()
+            .find(|migrated| same_claim(&migrated.claim, claim))
+            .context("existing integration is missing from preserved migrated lineage")?;
+        ensure!(
+            matches!(&held.execution, Some(MigrationExecution::HeldIntegration { submission })
+            if same_claim(submission, &original.claim)),
+            "existing integration is not held by its imported submission"
+        );
+        let mut references = References::new();
+        let held_original = original_lineage(migration, held, integration, &mut references)?;
+        let stops = migration
+            .stopped_owners
+            .iter()
+            .map(|reference| {
+                references.add(reference, MAX_BYTES)?;
+                object::<OriginalOwnerStop>(&reference.path)
+            })
+            .collect::<Result<Vec<_>>>()?;
+        stopped_owner(migration, &held_original, &stops, &mut references)?;
+        references.all()?;
+    }
+    Ok(())
+}
+
+fn affected_families(installed: &supervisor::Installation) -> Result<BTreeSet<String>> {
+    let now = u64::try_from(SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis())?;
+    let paths = installed.policy.approved_files.keys().cloned().collect::<Vec<_>>();
+    let report = crate::affected::select_paths_until(
+        &installed.source_repository,
+        &paths,
+        now.checked_add(PREPARATION_TIMEOUT_MS).context("affected admission deadline overflow")?,
+        PREPARATION_IO_BYTES,
+    )?;
+    Ok(report.families().into_iter().collect())
+}
+
+/// The original coverage driver admitted composite family and Rust-test
+/// evidence. A plain Native installation cannot express every one of those
+/// gates, even when its family coverage is complete. Fail before producers until
+/// a distinct frozen composite contract has an implemented confined adapter.
+fn require_offline_composite_adapter(original_job_id: &str) -> Result<NativeAdmission> {
+    if original_job_id == "pause-equipment-render-offline" {
+        bail!(
+            "original pause equipment coverage requires a confined composite contract for all 607 actual-C fixture pairs, including auxiliary direct-animation, and all 10 Rust tests; a plain Native contract cannot preserve that acceptance"
+        )
+    }
+    bail!(
+        "original offline coverage requires a distinct confined composite contract preserving every original family and Rust-test gate"
+    )
 }
 
 /// Validates immutable lineage, current recorded authority and actual retained
@@ -973,6 +1089,7 @@ fn validate_preparation_inner(path: &Path) -> Result<PreparationReport> {
                 .writable_files
                 .iter()
                 .any(|a| right.writable_files.iter().any(|b| a.starts_with(b) || b.starts_with(a)))
+                && !crate::translation_migration_guard::executable_linked_pair(left, right)
             {
                 scope_blockers.push(format!(
                     "Original linked submission/integration claims {} and {} retain overlapping held ownership; managed execution for this sequencing remains unsupported.",
@@ -987,14 +1104,18 @@ fn validate_preparation_inner(path: &Path) -> Result<PreparationReport> {
         let original = original_lineage(&migration, migrated, entry, &mut references)?;
         stopped_owner(&migration, &original, &stops, &mut references)?;
         let mut blockers = Vec::new();
-        let prepared = if let Some(path) = &migrated.installation {
+        let prepared = if matches!(migrated.execution, Some(MigrationExecution::HeldIntegration { .. })) {
+            true
+        } else if let Some(path) = &migrated.installation {
             let reference = retention::seal_file(path, MAX_BYTES)?;
             references.add(&reference, MAX_BYTES)?;
             let installed: supervisor::Installation = object(path)?;
             match native_admission(&migration, migrated, &original, &installed, true) {
                 Ok(contract) => {
                     references.add(&contract.scope, MAX_BYTES)?;
-                    references.add(&contract.inventory, MAX_BYTES)?;
+                    for reference in contract.inventory.iter().chain(&contract.additional_references) {
+                        references.add(reference, MAX_BYTES)?;
+                    }
                     true
                 }
                 Err(error) => {
@@ -1099,12 +1220,14 @@ struct AdmissionIntent {
     original_sources: BTreeMap<String, Reference>,
     original_inputs: assignment::FrozenJobInputs,
     original_ticket: Option<Reference>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    original_integration_ticket: Option<Reference>,
     original_progress: Reference,
     contract: NativeAdmission,
     references: Vec<Reference>,
     existing_references: Vec<Reference>,
     submitted: assignment::Update,
-    progress: progress::AdmittedProgress,
+    progress: Option<progress::AdmittedProgress>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -1119,6 +1242,8 @@ struct AdmissionDraft {
     original_sources: BTreeMap<String, Reference>,
     original_inputs: assignment::FrozenJobInputs,
     original_ticket: Option<Reference>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    original_integration_ticket: Option<Reference>,
     original_progress: Reference,
     contract: NativeAdmission,
     existing_references: Vec<Reference>,
@@ -1154,11 +1279,15 @@ fn managed_migration(installed: &supervisor::Installation) -> Result<(PathBuf, M
     };
     let path = if asset.file.is_absolute() { asset.file.clone() } else { checkout.join(&asset.file) };
     let migration = read(&path)?;
+    let registry = crate::translation_production::read_registry(checkout)?;
+    let registered = registry.as_ref().is_some_and(|registry| {
+        registry.migrations.iter().any(|reference| reference.path == path && reference.sha256 == asset.sha256)
+    });
     ensure!(
         migration.state == "active"
             && migration.checkout == *checkout
             && digest(&path)? == asset.sha256
-            && digest(&checkout.join(FENCE))? == asset.sha256,
+            && (registered || digest(&checkout.join(FENCE)).is_ok_and(|digest| digest == asset.sha256)),
         "reviewed deterministic migration is inactive, stale or not installed"
     );
     let migrated = migration
@@ -1167,8 +1296,41 @@ fn managed_migration(installed: &supervisor::Installation) -> Result<(PathBuf, M
         .find(|claim| claim.claim == installed.policy.claim)
         .context("policy is absent from imported original lineage")?
         .clone();
+    ensure!(
+        !registry.as_ref().is_some_and(|registry| registry
+            .blocked
+            .iter()
+            .any(|claim| claim.effort == migration.effort && claim.claim == migrated.claim)),
+        "this migrated claim is explicitly stopped at its preserved acceptance prerequisite"
+    );
     installed_binding(&migration, &migrated, installed)?;
+    ensure!(
+        !matches!(migrated.execution, Some(MigrationExecution::HeldIntegration { .. })),
+        "held integration is executed only through its exact imported submission"
+    );
     Ok((path, migration, migrated))
+}
+
+/// Imported source is read from the immutable original claim and never inferred
+/// from a mutable current queue state. Every adapter import binds this seal.
+pub(crate) fn imported_original(installed: &supervisor::Installation) -> Result<Option<(OriginalClaim, String)>> {
+    let (_, migration, migrated) = managed_migration(installed)?;
+    if migrated.execution != Some(MigrationExecution::ImportedSubmission) {
+        return Ok(None);
+    }
+    retention::authenticate_reference(&migrated.original_claim, MAX_BYTES)?;
+    let original: OriginalClaim = object(&migrated.original_claim.path)?;
+    ensure!(
+        original.state == assignment::State::Submitted
+            && original.job.kind == assignment::Kind::Implement
+            && same_claim(&migrated.claim, &original.claim)
+            && original.source_commit == installed.policy.baseline_commit
+            && original.source_files == installed.policy.approved_files
+            && matches!(&original.result, Some(assignment::WorkResult::Submitted { commit, .. })
+                if commit == &original.source_commit),
+        "imported submission differs from original immutable source"
+    );
+    Ok(Some((original, sealed(&(domain_identity(&migration)?, migrated.original_claim))?)))
 }
 
 fn request(migration: &Migration, capacity: usize) -> assignment::Request {
@@ -1295,10 +1457,15 @@ fn admit_installation_inner(installed: &supervisor::Installation) -> Result<()> 
             migration.effort,
             sealed(&installed.policy)?
         ));
-        safe(&roots)?;
         let mut retained = false;
         let mut count = 0;
-        for directory in std::fs::read_dir(&roots)? {
+        let directories = if roots.exists() {
+            safe(&roots)?;
+            Some(std::fs::read_dir(&roots)?)
+        } else {
+            None
+        };
+        for directory in directories.into_iter().flatten() {
             crate::inputs::bounded::check()?;
             count += 1;
             ensure!(count <= installed.policy.budgets.max_attempts, "managed recovery attempts exceed frozen bound");
@@ -1312,8 +1479,13 @@ fn admit_installation_inner(installed: &supervisor::Installation) -> Result<()> 
             check_intent_queue(installed, &migration, &intent, &ledger)?;
             retained = true;
         }
-        ensure!(retained, "submitted managed claim cannot be freshly rewritten under its original identity");
-        return Ok(());
+        if retained {
+            return Ok(());
+        }
+        ensure!(
+            migrated.execution == Some(MigrationExecution::ImportedSubmission),
+            "submitted managed claim cannot be freshly rewritten under its original identity"
+        );
     }
     let mut references = References::new();
     current_authority(&migration, &mut references)?;
@@ -1458,6 +1630,9 @@ fn completion_gates(
     authenticated: &supervisor::AuthenticatedCompletion,
     contract: &NativeAdmission,
 ) -> Result<()> {
+    if let supervisor::Contract::Legacy { contract } = &installed.contract {
+        return crate::translation_legacy::authenticate_completion(contract);
+    }
     use ::translation_execution::{ExecutionPhase, VerificationStage};
     ensure!(
         authenticated.policy == installed.policy
@@ -1497,7 +1672,7 @@ fn completion_gates(
                 );
                 ensure!(
                     gate.verdict.source.as_ref() == Some(&gate.prepared.source)
-                        && gate.prepared.source.revision == contract.source_revision,
+                        && gate.prepared.source.revision == contract.source_revision()?,
                     "managed actual-C evidence changed original pinned source identity"
                 );
             }
@@ -1513,14 +1688,77 @@ fn authentication_value(
     contract: &NativeAdmission,
     reference: &Reference,
 ) -> serde_json::Value {
-    serde_json::json!({
+    if contract.domain.as_deref() == Some("legacy-infrastructure-v1") {
+        return serde_json::json!({
+            "schema":"translation-managed-infrastructure-authentication-v1", "claim":original.claim,
+            "policy_sha256":completion.policy_sha256, "candidate":completion.candidate,
+            "integrated":completion.integrated, "completion":reference, "original_scope":contract.scope,
+            "admission_domain":"legacy-infrastructure-v1", "limitations":contract.limitations
+        });
+    }
+    let mut value = serde_json::json!({
         "schema":"translation-managed-native-authentication-v1", "claim":original.claim,
         "policy_sha256":completion.policy_sha256, "candidate":completion.candidate,
         "integrated":completion.integrated, "completion":reference,
         "original_scope":contract.scope, "source_revision":contract.source_revision,
         "families":contract.families, "actual_c_verified":true,
         "original_rom_parity":"not-tested", "live_replay":"not-tested"
-    })
+    });
+    if let Some(domain) = &contract.domain {
+        value["admission_domain"] = domain.clone().into();
+    }
+    value
+}
+
+fn submission_update(
+    original: &OriginalClaim,
+    completion: &Completion,
+    completion_reference: &Reference,
+    authentication: &Reference,
+) -> Result<assignment::Update> {
+    let result = if original.state == assignment::State::Submitted {
+        ensure!(
+            matches!(&original.result, Some(assignment::WorkResult::Submitted { commit, .. })
+                if commit == &original.source_commit && commit == &completion.candidate.commit),
+            "imported candidate changed its original submitted commit"
+        );
+        original.result.clone().unwrap()
+    } else {
+        assignment::WorkResult::Submitted {
+            commit: completion.candidate.commit.clone(),
+            evidence: vec![artifact(completion_reference), artifact(authentication)],
+        }
+    };
+    Ok(assignment::Update::Finished { claim: original.claim.clone(), result })
+}
+
+/// Old standard integration jobs omitted base-head. Preserve those exact bytes
+/// while still rejecting arbitrary jobs with superficially matching links.
+fn derived_job(intent: &AdmissionIntent) -> Result<assignment::Job> {
+    let expected = assignment::admitted_integration_job(
+        &intent.original.job,
+        &intent.original.claim,
+        &intent.completion.candidate.commit,
+    )?;
+    let ledger: LedgerView = object(&intent.original_ledger.path)?;
+    if let Some(entry) = ledger.jobs.get(&expected.id) {
+        let mut historical = expected.clone();
+        historical.inputs.remove("base-head");
+        ensure!(entry.job == expected || entry.job == historical, "original linked integration job changed");
+        Ok(entry.job.clone())
+    } else {
+        ensure!(intent.original.state != assignment::State::Submitted, "original submission lacks linked integration");
+        Ok(expected)
+    }
+}
+
+fn original_integration_ticket(migration: &Migration, original: &OriginalClaim) -> Result<Option<PathBuf>> {
+    if original.state != assignment::State::Submitted {
+        return Ok(None);
+    }
+    let job = assignment::admitted_integration_job(&original.job, &original.claim, &original.source_commit)?;
+    let path = assignment::admitted_ticket_path(&migration.checkout, &migration.effort, &job);
+    Ok(path.exists().then_some(path))
 }
 
 fn cleanup_value(
@@ -1550,9 +1788,15 @@ fn check_original_intent(migration: &Migration, migrated: &MigratedClaim, intent
             && original.checkout == migration.checkout
             && original.effort == migration.effort
             && same_claim(&migrated.claim, &original.claim)
-            && original.state == assignment::State::Running
+            && matches!(original.state, assignment::State::Running | assignment::State::Submitted)
             && original.job.kind == assignment::Kind::Implement
-            && original.result.is_none()
+            && ((original.state == assignment::State::Running
+                && original.result.is_none()
+                && migrated.execution.is_none())
+                || (original.state == assignment::State::Submitted
+                    && migrated.execution == Some(MigrationExecution::ImportedSubmission)
+                    && matches!(&original.result, Some(assignment::WorkResult::Submitted { commit, .. })
+                        if commit == &intent.completion.candidate.commit && commit == &original.source_commit)))
             && original.agent.is_some()
             && original.source_commit == migrated.source_commit
             && original.job.writable_paths.iter().collect::<BTreeSet<_>>() == migrated.writable_files.iter().collect()
@@ -1726,6 +1970,10 @@ fn validate_projection_records_before_intent(
         let ticket_reference =
             ticket.exists().then(|| projected_reference(root.join("original-ticket.md"), &ticket)).transpose()?;
         ensure!(draft.original_ticket == ticket_reference, "managed draft original ticket changed");
+        let integration_ticket = original_integration_ticket(migration, &draft.original)?
+            .map(|path| projected_reference(root.join("original-integration-ticket.md"), &path))
+            .transpose()?;
+        ensure!(draft.original_integration_ticket == integration_ticket, "original integration ticket changed");
         ensure!(
             draft.original_ledger == Reference { path: root.join("original-ledger.toml"), ..migration.ledger.clone() }
                 && draft.original_sources.keys().collect::<BTreeSet<_>>()
@@ -1746,6 +1994,7 @@ fn validate_projection_records_before_intent(
             .into_iter()
             .chain(draft.original_sources.values())
             .chain(draft.original_ticket.iter())
+            .chain(draft.original_integration_ticket.iter())
             .chain(draft.original_inputs.files.values())
         {
             if reference.path.exists() {
@@ -1821,6 +2070,7 @@ fn validate_projection_records_before_intent(
             root.join("original-ledger.toml"),
             root.join("original-progress.json"),
             root.join("original-ticket.md"),
+            root.join("original-integration-ticket.md"),
             root.join("completion.json"),
             root.join("authentication.json"),
             root.join("cleanup.json"),
@@ -1876,6 +2126,7 @@ fn authenticate_intent(
             && draft.original_sources == intent.original_sources
             && draft.original_inputs == intent.original_inputs
             && draft.original_ticket == intent.original_ticket
+            && draft.original_integration_ticket == intent.original_integration_ticket
             && draft.original_progress == intent.original_progress
             && draft.contract == intent.contract
             && draft.existing_references == intent.existing_references,
@@ -1889,6 +2140,10 @@ fn authenticate_intent(
                 .original_ticket
                 .as_ref()
                 .is_none_or(|reference| reference.path == root.join("original-ticket.md"))
+            && intent
+                .original_integration_ticket
+                .as_ref()
+                .is_none_or(|reference| reference.path == root.join("original-integration-ticket.md"))
             && intent
                 .original_sources
                 .iter()
@@ -1917,13 +2172,7 @@ fn authenticate_intent(
     );
     ensure!(
         intent.submitted
-            == assignment::Update::Finished {
-                claim: intent.original.claim.clone(),
-                result: assignment::WorkResult::Submitted {
-                    commit: intent.completion.candidate.commit.clone(),
-                    evidence: vec![artifact(&completion_reference), artifact(&authentication)],
-                },
-            },
+            == submission_update(&intent.original, &intent.completion, &completion_reference, &authentication)?,
         "managed intent changed exact original submission"
     );
     let evidence = [
@@ -1931,19 +2180,26 @@ fn authenticate_intent(
         (authentication.path.clone(), authentication.sha256.clone()),
         (cleanup.path.clone(), cleanup.sha256.clone()),
     ];
-    progress::validate_admitted_plan(
-        &intent.progress,
-        &sealed(&(intent.completion.run_id.clone(), intent.completion.attempt))?,
-        &migrated.scope_id,
-        intent.original.agent.as_deref().context("managed original worker missing")?,
-        &contract.routines,
-        &contract.source_revision,
-        &contract.inventory.sha256,
-        &intent.completion.candidate.commit,
-        &intent.completion.integrated.commit,
-        &evidence,
-        &contract.limitations,
-    )?;
+    if let Some(plan) = &intent.progress {
+        progress::validate_admitted_plan(
+            plan,
+            &sealed(&(intent.completion.run_id.clone(), intent.completion.attempt))?,
+            &migrated.scope_id,
+            intent.original.agent.as_deref().context("managed original worker missing")?,
+            &contract.routines,
+            contract.source_revision()?,
+            &contract.inventory()?.sha256,
+            &intent.completion.candidate.commit,
+            &intent.completion.integrated.commit,
+            &evidence,
+            &contract.limitations,
+        )?;
+    } else {
+        ensure!(
+            contract.domain.as_deref() == Some("legacy-infrastructure-v1") && contract.routines.is_empty(),
+            "native managed acceptance omitted gameplay progress"
+        );
+    }
     let mut references = References::new();
     for reference in &intent.references {
         references.add(reference, MAX_RETAINED_BYTES)?;
@@ -1958,14 +2214,16 @@ fn authenticate_intent(
         &intent.original_ledger,
         &intent.original_progress,
         &contract.scope,
-        &contract.inventory,
         &completion_reference,
         &authentication,
         &cleanup,
     ]
     .into_iter()
     .chain(intent.original_sources.values())
+    .chain(contract.inventory.iter())
+    .chain(&contract.additional_references)
     .chain(intent.original_ticket.iter())
+    .chain(intent.original_integration_ticket.iter())
     .chain(intent.original_inputs.files.values())
     .chain(&intent.existing_references)
     {
@@ -1976,6 +2234,9 @@ fn authenticate_intent(
     }
     retention::authenticate_reference(&intent.original_progress, MAX_BYTES)?;
     if let Some(reference) = &intent.original_ticket {
+        retention::authenticate_reference(reference, MAX_BYTES)?;
+    }
+    if let Some(reference) = &intent.original_integration_ticket {
         retention::authenticate_reference(reference, MAX_BYTES)?;
     }
     let incremental = references
@@ -2051,11 +2312,7 @@ fn check_intent_queue(
             && sealed(&original.history)? == sealed(&frozen.history)?,
         "managed publication changed original current queue identity"
     );
-    let derived = assignment::admitted_integration_job(
-        &intent.original.job,
-        &intent.original.claim,
-        &intent.completion.candidate.commit,
-    )?;
+    let derived = derived_job(intent)?;
     ensure!(
         ledger.jobs.keys().all(|id| original_ledger.jobs.contains_key(id) || id == &derived.id)
             && original_ledger.jobs.keys().all(|id| ledger.jobs.contains_key(id)),
@@ -2084,6 +2341,25 @@ fn check_intent_queue(
     );
     let integration =
         ledger.jobs.get(&derived.id).context("managed submission lacks its standard derived integration")?;
+    if intent.original.state == assignment::State::Submitted {
+        ensure!(
+            original.result == frozen.result && original.last_update == frozen.last_update,
+            "imported publication changed the existing submitted result or update"
+        );
+        let frozen_integration =
+            original_ledger.jobs.get(&derived.id).context("imported submission lacks original linked integration")?;
+        let expected = if integration.state == assignment::State::Complete {
+            Some(exact_integration_update(
+                migration,
+                &installed.policy,
+                intent,
+                integration.claim.clone().context("completed imported integration claim missing")?,
+            )?)
+        } else {
+            None
+        };
+        return check_imported_integration(migration, original, frozen_integration, integration, expected.as_ref());
+    }
     ensure!(
         integration.job == derived
             && integration.pending_job.is_none()
@@ -2155,6 +2431,95 @@ fn check_intent_queue(
     Ok(())
 }
 
+fn check_imported_integration(
+    migration: &Migration,
+    submission: &assignment::Entry,
+    frozen: &assignment::Entry,
+    current: &assignment::Entry,
+    completed: Option<&assignment::Update>,
+) -> Result<()> {
+    ensure!(
+        current.job == frozen.job
+            && current.pending_job.is_none()
+            && !current.stale
+            && current.observations == frozen.observations
+            && sealed(&current.history)? == sealed(&frozen.history)?
+            && current.adopted_ticket == frozen.adopted_ticket
+            && frozen.result.is_none()
+            && matches!(
+                frozen.state,
+                assignment::State::Ready | assignment::State::Reserved | assignment::State::Running
+            ),
+        "imported linked integration changed original job, history or observations"
+    );
+    if current.state == frozen.state {
+        ensure!(
+            submission.state == assignment::State::Submitted
+                && current.claim == frozen.claim
+                && current.agent == frozen.agent
+                && current.result == frozen.result
+                && current.last_update == frozen.last_update
+                && current.attempts == frozen.attempts,
+            "imported held integration was replaced or restarted"
+        );
+        return Ok(());
+    }
+    ensure!(
+        matches!(current.state, assignment::State::Reserved | assignment::State::Running | assignment::State::Complete)
+            && (frozen.state != assignment::State::Running || current.state == assignment::State::Complete)
+            && (frozen.state != assignment::State::Reserved || current.state != assignment::State::Reserved),
+        "imported integration made a non-forward transition"
+    );
+    let claim = current.claim.as_ref().context("imported integration claim missing")?;
+    ensure!(
+        claim.id == frozen.job.id
+            && claim.revision == frozen.job.revision
+            && claim.coordinator == migration.coordinator
+            && claim.attempt == current.attempts
+            && if let Some(original) = &frozen.claim {
+                claim == original
+            } else {
+                claim.attempt == frozen.attempts + 1
+            },
+        "imported integration replaced its original attempt"
+    );
+    if current.state == assignment::State::Reserved {
+        ensure!(
+            frozen.state == assignment::State::Ready
+                && current.agent.is_none()
+                && current.result.is_none()
+                && current.last_update.is_none()
+                && submission.state == assignment::State::Submitted,
+            "newly reserved imported integration acquired unexpected state"
+        );
+    } else {
+        let agent = frozen.agent.as_deref().unwrap_or(&migration.session_id);
+        ensure!(current.agent.as_deref() == Some(agent), "imported integration changed its original worker");
+        let update = if current.state == assignment::State::Running {
+            ensure!(
+                current.result.is_none() && submission.state == assignment::State::Submitted,
+                "imported running integration has a foreign result"
+            );
+            assignment::Update::Started { claim: claim.clone(), agent: agent.into() }
+        } else {
+            ensure!(
+                submission.state == assignment::State::Complete,
+                "imported integration did not complete submission"
+            );
+            let update = completed.context("imported integration lacks authenticated completion")?.clone();
+            ensure!(
+                matches!(&update, assignment::Update::Finished { claim: expected, .. } if expected == claim),
+                "imported completion belongs to another integration claim"
+            );
+            let assignment::Update::Finished { result, .. } = &update else { unreachable!() };
+            ensure!(current.result.as_ref() == Some(result), "imported integration result differs");
+            update
+        };
+        ensure!(current.last_update.as_ref() == Some(&update), "imported integration last update differs");
+    }
+    Ok(())
+}
+
 fn controller_projection(
     installed: &supervisor::Installation,
     migration: &Migration,
@@ -2163,13 +2528,11 @@ fn controller_projection(
 ) -> Result<ControllerProjection> {
     let ledger = current_ledger(migration)?;
     check_intent_queue(installed, migration, intent, &ledger)?;
-    progress::validate_admitted_projection(&migration.checkout, &intent.progress, &intent.original_progress.path)?;
+    if let Some(plan) = &intent.progress {
+        progress::validate_admitted_projection(&migration.checkout, plan, &intent.original_progress.path)?;
+    }
     let root = publication_root(migration, &installed.policy, intent.completion.attempt)?;
-    let derived = assignment::admitted_integration_job(
-        &intent.original.job,
-        &intent.original.claim,
-        &intent.completion.candidate.commit,
-    )?;
+    let derived = derived_job(intent)?;
     let original_ticket = intent
         .original_ticket
         .as_ref()
@@ -2220,7 +2583,20 @@ fn controller_projection(
             lifecycle.push(running);
         }
         lifecycle.push(entry.clone());
-        assignment::validate_admitted_ticket_lifecycle(&migration.checkout, &migration.effort, &lifecycle, None)?;
+        let original_integration_text = intent
+            .original_integration_ticket
+            .as_ref()
+            .map(|reference| {
+                retention::authenticate_reference(reference, MAX_BYTES)?;
+                Ok::<_, anyhow::Error>(String::from_utf8(bytes(&reference.path, MAX_BYTES)?)?)
+            })
+            .transpose()?;
+        assignment::validate_admitted_ticket_lifecycle(
+            &migration.checkout,
+            &migration.effort,
+            &lifecycle,
+            original_integration_text.as_deref(),
+        )?;
     }
     let mut paths = BTreeSet::from([
         migration.checkout.join(format!(".scratch/{}/ledger.toml", migration.effort)),
@@ -2231,6 +2607,7 @@ fn controller_projection(
         root.join("original-ledger.toml"),
         root.join("original-progress.json"),
         root.join("original-ticket.md"),
+        root.join("original-integration-ticket.md"),
         root.join("completion.json"),
         root.join("authentication.json"),
         root.join("cleanup.json"),
@@ -2267,7 +2644,7 @@ fn controller_projection(
                         "managed accepted pending is partial or changed"
                     );
                 }
-            } else if path == &root.join("original-ticket.md") {
+            } else if path == &root.join("original-ticket.md") || path == &root.join("original-integration-ticket.md") {
                 bail!("unexpected original ticket snapshot");
             }
             references.push(reference);
@@ -2404,6 +2781,9 @@ fn publish_inner(
                 .exists()
                 .then(|| projected_reference(root.join("original-ticket.md"), &original_ticket_path))
                 .transpose()?,
+            original_integration_ticket: original_integration_ticket(&migration, &original)?
+                .map(|path| projected_reference(root.join("original-integration-ticket.md"), &path))
+                .transpose()?,
             original_progress: projected_reference(
                 root.join("original-progress.json"),
                 &migration.checkout.join(".scratch/decomp-progress/registry.json"),
@@ -2450,6 +2830,13 @@ fn publish_inner(
         } else {
             None
         };
+        let original_integration_ticket = original_integration_ticket(&migration, &original)?
+            .map(|path| {
+                let reference = write_bytes(&root.join("original-integration-ticket.md"), &bytes(&path, MAX_BYTES)?)?;
+                references.add(&reference, MAX_BYTES)?;
+                Ok::<_, anyhow::Error>(reference)
+            })
+            .transpose()?;
         let original_progress = write_bytes(
             &root.join("original-progress.json"),
             &bytes(&migration.checkout.join(".scratch/decomp-progress/registry.json"), MAX_BYTES)?,
@@ -2457,7 +2844,9 @@ fn publish_inner(
         references.add(&original_progress, MAX_BYTES)?;
         references.add(&retention::seal_file(&migration_path, MAX_BYTES)?, MAX_BYTES)?;
         references.add(&contract.scope, MAX_BYTES)?;
-        references.add(&contract.inventory, MAX_BYTES)?;
+        for reference in contract.inventory.iter().chain(&contract.additional_references) {
+            references.add(reference, MAX_BYTES)?;
+        }
         for reference in &authenticated.references {
             references.add(reference, MAX_RETAINED_BYTES)?;
         }
@@ -2473,31 +2862,29 @@ fn publish_inner(
             &cleanup_value(&original, completion, &authenticated, &completion_reference),
         )?;
         references.add(&cleanup, MAX_BYTES)?;
-        let submitted = assignment::Update::Finished {
-            claim: original.claim.clone(),
-            result: assignment::WorkResult::Submitted {
-                commit: completion.candidate.commit.clone(),
-                evidence: vec![artifact(&completion_reference), artifact(&authentication)],
-            },
-        };
+        let submitted = submission_update(&original, completion, &completion_reference, &authentication)?;
         let evidence = [
             (completion_reference.path.clone(), completion_reference.sha256.clone()),
             (authentication.path.clone(), authentication.sha256.clone()),
             (cleanup.path.clone(), cleanup.sha256.clone()),
         ];
-        let progress = progress::prepare_admitted(
-            &migration.checkout,
-            &sealed(&(completion.run_id.clone(), completion.attempt))?,
-            &migrated.scope_id,
-            &original.agent.clone().unwrap(),
-            &contract.routines,
-            &contract.source_revision,
-            &contract.inventory.sha256,
-            &completion.candidate.commit,
-            &completion.integrated.commit,
-            &evidence,
-            &contract.limitations,
-        )?;
+        let progress = if contract.domain.as_deref() == Some("legacy-infrastructure-v1") {
+            None
+        } else {
+            Some(progress::prepare_admitted(
+                &migration.checkout,
+                &sealed(&(completion.run_id.clone(), completion.attempt))?,
+                &migrated.scope_id,
+                &original.agent.clone().unwrap(),
+                &contract.routines,
+                contract.source_revision()?,
+                &contract.inventory()?.sha256,
+                &completion.candidate.commit,
+                &completion.integrated.commit,
+                &evidence,
+                &contract.limitations,
+            )?)
+        };
         references.all()?;
         let intent = AdmissionIntent {
             schema: "translation-managed-publication-intent-v1".into(),
@@ -2509,6 +2896,7 @@ fn publish_inner(
             original_sources,
             original_inputs: draft.original_inputs,
             original_ticket,
+            original_integration_ticket,
             original_progress,
             contract,
             references: references.values.into_values().collect(),
@@ -2537,8 +2925,10 @@ fn publish_inner(
     let projections = controller_projection(installed, &migration, &intent, None)?;
     let source_publication = supervisor::publish_managed_source(installed, completion, &authenticated, &projections)?;
     current_role(&migration)?;
-    request.update = Some(intent.submitted.clone());
-    assignment::record_admitted_locked(&request, &intent.original.claim, Some(&intent.original_inputs))?;
+    if intent.original.state != assignment::State::Submitted {
+        request.update = Some(intent.submitted.clone());
+        assignment::record_admitted_locked(&request, &intent.original.claim, Some(&intent.original_inputs))?;
+    }
     let integration_claim = assignment::reserve_admitted_integration_locked(&request, &intent.original.claim)?;
     let ledger = current_ledger(&migration)?;
     let integration_entry = ledger.jobs.get(&integration_claim.id).context("derived integration missing")?;
@@ -2561,7 +2951,12 @@ fn publish_inner(
     };
     request.update = Some(integration.clone());
     assignment::record_admitted_locked(&request, &integration_claim, None)?;
-    let observation_ids = progress::publish_admitted(&migration.checkout, &intent.progress)?;
+    let observation_ids = intent
+        .progress
+        .as_ref()
+        .map(|plan| progress::publish_admitted(&migration.checkout, plan))
+        .transpose()?
+        .unwrap_or_default();
     let intent_reference = retention::seal_file(&intent_path, MAX_BYTES)?;
     let mut references = intent.references.clone();
     references.push(intent_reference.clone());
@@ -2719,7 +3114,8 @@ fn authenticate_accepted(
             && source_result.get("intent") == Some(&serde_json::to_value(source_intent_reference)?)
             && source_result.get("candidate") == Some(&serde_json::to_value(&accepted.completion.candidate)?)
             && source_result.get("integrated") == Some(&serde_json::to_value(&accepted.completion.integrated)?)
-            && accepted.observation_ids == progress::admitted_observation_ids(&intent.progress),
+            && accepted.observation_ids
+                == intent.progress.as_ref().map(progress::admitted_observation_ids).unwrap_or_default(),
         "managed accepted source publication or observation graph changed"
     );
     let migrated = migration
@@ -2810,7 +3206,9 @@ fn authenticate_accepted(
     );
     supervisor::authenticate_managed_source(installed, &accepted.completion, &authenticated, &controller)?;
     if projections {
-        progress::authenticate_admitted(&migration.checkout, &intent.progress)?;
+        if let Some(plan) = &intent.progress {
+            progress::authenticate_admitted(&migration.checkout, plan)?;
+        }
     }
     current_role(migration)
 }
@@ -2832,9 +3230,11 @@ fn repair_accepted(
         })
         .collect::<Vec<_>>();
     assignment::repair_admitted_tickets_locked(&request, &claims)?;
-    if progress::authenticate_admitted(&migration.checkout, &intent.progress).is_err() {
+    if let Some(plan) = &intent.progress
+        && progress::authenticate_admitted(&migration.checkout, plan).is_err()
+    {
         ensure!(
-            progress::publish_admitted(&migration.checkout, &intent.progress)? == accepted.observation_ids,
+            progress::publish_admitted(&migration.checkout, plan)? == accepted.observation_ids,
             "managed accepted progress identity changed during repair"
         );
     }
@@ -3072,6 +3472,7 @@ mod tests {
                     writable_files: job.writable_paths.clone(),
                     original_claim: retention::seal_file(&original_path, MAX_BYTES).unwrap(),
                     installation: None,
+                    execution: None,
                 }],
                 historical: vec![],
                 stopped_owners: vec![],
@@ -3350,6 +3751,7 @@ mod tests {
             writable_files: integration.job.writable_paths.clone(),
             original_claim: retention::seal_file(&integrated_path, MAX_BYTES).unwrap(),
             installation: None,
+            execution: None,
         });
         let prepared = fixture.fence("prepared");
         let imported = read(&prepared).unwrap();
@@ -3363,11 +3765,129 @@ mod tests {
         .unwrap();
         assert_eq!(fixture.original.job.inputs["base-head"], abbreviated);
         assert!(read(&fixture.fence("active")).is_err());
+        let historical_domain = domain_identity(&fixture.migration).unwrap();
+        fixture.migration.claims[0].execution = Some(MigrationExecution::ImportedSubmission);
+        fixture.migration.claims[1].execution =
+            Some(MigrationExecution::HeldIntegration { submission: fixture.migration.claims[0].claim.clone() });
+        assert_ne!(domain_identity(&fixture.migration).unwrap(), historical_domain);
+        assert_eq!(read(&fixture.fence("active")).unwrap().claims.len(), 2);
+        fixture.migration.claims[1].execution = Some(MigrationExecution::ImportedSubmission);
+        assert!(read(&fixture.fence("active")).is_err());
+        fixture.migration.claims[1].execution =
+            Some(MigrationExecution::HeldIntegration { submission: fixture.migration.claims[0].claim.clone() });
         let mut foreign = integration;
         foreign.job.inputs.insert("submission-attempt".into(), "2".into());
         fs::write(&integrated_path, serde_json::to_vec(&foreign).unwrap()).unwrap();
         fixture.migration.claims[1].original_claim = retention::seal_file(&integrated_path, MAX_BYTES).unwrap();
         assert!(read(&fixture.fence("prepared")).is_err());
+    }
+
+    fn imported_integration_fixture(fixture: &Fixture, running: bool) -> (assignment::Entry, assignment::Entry) {
+        let mut submission = fixture.entry.clone();
+        submission.state = assignment::State::Submitted;
+        let result = assignment::WorkResult::Submitted {
+            commit: fixture.original.source_commit.clone(),
+            evidence: vec![artifact(&fixture.migration.proof)],
+        };
+        submission.result = Some(result.clone());
+        submission.last_update = Some(assignment::Update::Finished { claim: fixture.original.claim.clone(), result });
+        let mut integration = fixture.entry.clone();
+        integration.job = assignment::admitted_integration_job(
+            &submission.job,
+            submission.claim.as_ref().unwrap(),
+            &fixture.original.source_commit,
+        )
+        .unwrap();
+        integration.job.inputs.remove("base-head");
+        integration.result = None;
+        integration.state = if running { assignment::State::Running } else { assignment::State::Ready };
+        integration.agent = running.then(|| "11111111-2222-3333-4444-555555555555".into());
+        integration.attempts = u64::from(running);
+        integration.claim = running.then(|| assignment::Claim {
+            id: integration.job.id.clone(),
+            revision: integration.job.revision.clone(),
+            attempt: 1,
+            coordinator: fixture.migration.coordinator.clone(),
+        });
+        integration.last_update = integration.claim.as_ref().map(|claim| assignment::Update::Started {
+            claim: claim.clone(),
+            agent: integration.agent.clone().unwrap(),
+        });
+        (submission, integration)
+    }
+
+    #[test]
+    fn imported_ready_integration_reserves_one_attempt_and_recovers_exact_completion_without_writes() {
+        let fixture = Fixture::new();
+        let (mut submission, frozen) = imported_integration_fixture(&fixture, false);
+        let original_submission = submission.clone();
+        let before = supervisor::tests::records(&fixture.root).unwrap();
+        check_imported_integration(&fixture.migration, &submission, &frozen, &frozen, None).unwrap();
+        let mut current = frozen.clone();
+        current.state = assignment::State::Reserved;
+        current.attempts = 1;
+        let claim = assignment::Claim {
+            id: frozen.job.id.clone(),
+            revision: frozen.job.revision.clone(),
+            attempt: 1,
+            coordinator: fixture.migration.coordinator.clone(),
+        };
+        current.claim = Some(claim.clone());
+        check_imported_integration(&fixture.migration, &submission, &frozen, &current, None).unwrap();
+        current.state = assignment::State::Running;
+        current.agent = Some(fixture.migration.session_id.clone());
+        current.last_update =
+            Some(assignment::Update::Started { claim: claim.clone(), agent: fixture.migration.session_id.clone() });
+        check_imported_integration(&fixture.migration, &submission, &frozen, &current, None).unwrap();
+        current.state = assignment::State::Complete;
+        submission.state = assignment::State::Complete;
+        let result = assignment::WorkResult::Integrated {
+            submissions: vec![fixture.original.claim.clone()],
+            evidence: vec![artifact(&fixture.migration.proof)],
+            authentication: artifact(&fixture.migration.proof),
+            cleanup: artifact(&fixture.migration.proof),
+        };
+        let update = assignment::Update::Finished { claim, result: result.clone() };
+        current.result = Some(result);
+        current.last_update = Some(update.clone());
+        for _ in 0..2 {
+            check_imported_integration(&fixture.migration, &submission, &frozen, &current, Some(&update)).unwrap();
+        }
+        assert_eq!(submission.result, original_submission.result);
+        assert_eq!(submission.last_update, original_submission.last_update);
+        assert_eq!(supervisor::tests::records(&fixture.root).unwrap(), before);
+        let mut foreign = current;
+        foreign.attempts = 2;
+        assert!(check_imported_integration(&fixture.migration, &submission, &frozen, &foreign, Some(&update)).is_err());
+    }
+
+    #[test]
+    fn imported_running_integration_preserves_paused_original_worker_and_refuses_restart() {
+        let fixture = Fixture::new();
+        let (submission, frozen) = imported_integration_fixture(&fixture, true);
+        let before = supervisor::tests::records(&fixture.root).unwrap();
+        for _ in 0..2 {
+            check_imported_integration(&fixture.migration, &submission, &frozen, &frozen, None).unwrap();
+        }
+        let mut changed = frozen.clone();
+        changed.agent = Some(fixture.migration.session_id.clone());
+        assert!(check_imported_integration(&fixture.migration, &submission, &frozen, &changed, None).is_err());
+        changed = frozen.clone();
+        changed.state = assignment::State::Reserved;
+        assert!(check_imported_integration(&fixture.migration, &submission, &frozen, &changed, None).is_err());
+        changed = frozen.clone();
+        changed.job.inputs.insert("base-head".into(), fixture.original.source_commit.clone());
+        assert!(check_imported_integration(&fixture.migration, &submission, &frozen, &changed, None).is_err());
+        assert_eq!(supervisor::tests::records(&fixture.root).unwrap(), before);
+    }
+
+    #[test]
+    fn original_pause_coverage_refuses_reduced_native_acceptance_before_producers() {
+        let error = require_offline_composite_adapter("pause-equipment-render-offline").unwrap_err().to_string();
+        assert!(error.contains("607 actual-C fixture pairs"));
+        assert!(error.contains("auxiliary direct-animation"));
+        assert!(error.contains("10 Rust tests"));
+        assert!(require_offline_composite_adapter("another-original-coverage-scope").is_err());
     }
 
     #[test]

@@ -12,6 +12,43 @@ The implementation lives in `crates/translation-execution` and the pipeline's
 `translation_migration` modules. The local implementation contract and evidence
 are in [.scratch/translation-scope-execution](../.scratch/translation-scope-execution/spec.md).
 
+## Production command
+
+After the checked migration is activated, run the installed controller from a
+normal shell. No active Codex session is required:
+
+```sh
+cd /home/jim/sm-decomp
+/home/jim/sm-decomp-production-execution/bin/sm-pipeline \
+  translation-production --checkout "$PWD" run
+```
+
+Replace `run` with `status` to inspect the sealed production registry. Repeating
+`run` recovers the same attempt. It does not repeat a failed gate or request
+another model response. `FOUNDRY_TOKEN` is needed only when an approved attempt
+reaches its model-backed rewrite. Existing submissions bypass rewriting.
+
+The migrated Ceres host and controller keep their original submitted commits,
+claim attempts and linked integration. Host precedes controller. Their original
+Cargo, material callback and diagnostic acceptance still requires confined
+adapters; the current contracts retain an authenticated prerequisite stop and
+publish no successful stage. Pause equipment rendering remains explicitly held
+until its complete 607 actual-C pairs and 10 Rust tests have a composite adapter.
+Its already-merged source is preserved. Activation does not complete these gates.
+
+The registry at `.scratch/translation-execution/production.json` binds both
+original ledgers, installed policies and the ordered plan. The marker at
+`.scratch/decomp-parallel/deterministic-execution.json` fences older unrestricted
+dispatchers. A crash after the marker but before registry publication requires
+`translation-production --request REQUEST.json recover`; both paths stay fenced
+until the exact checked activation finishes. Do not delete the marker to resume
+an old dispatcher. Restoring an older orchestration policy requires a separately
+checked ownership transfer with stopped supervisors and preserved evidence.
+
+New acceptance adapters and successor scopes require fresh reviewed policies.
+The current migration does not authorize reducing original verification or
+rebasing a successor silently after another scope completes.
+
 ## One-command Foundry launch
 
 The maintained `translation-launch` command owns an ordered plan of approved

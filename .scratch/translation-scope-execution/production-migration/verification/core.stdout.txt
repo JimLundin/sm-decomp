@@ -1,0 +1,40 @@
+
+running 22 tests
+test foreign_or_unchanged_rewrite_is_rejected_before_source_effect ... ok
+test failed_terminal_tail_cannot_authorize_an_unexecuted_gate ... ok
+test cancellation_reconciles_an_ambiguous_writer_and_never_evaluates_again ... ok
+test completed_import_reauthenticates_the_frozen_admission ... ok
+test forged_successful_gate_tail_rejects_before_the_next_producer ... ok
+test ambiguous_finished_gate_recovers_its_existing_effect ... ok
+test dirty_integration_or_tampered_gate_never_publishes_acceptance ... ok
+test failed_gate_resume_does_no_work_and_explicit_retry_has_new_identity ... ok
+test imported_journal_tamper_is_authenticated_before_any_recovery_producer ... ok
+test imported_failure_retries_same_candidate_but_requires_new_admission_to_repair ... ok
+test cancellation_preserves_partial_finalization_identity_and_original_failure ... ok
+test imported_submission_recovers_exact_intent_and_runs_every_gate_without_rewrite ... ok
+test incomplete_cleanup_resumes_only_finalization_and_then_publishes ... ok
+test repair_opens_new_capsule_and_policy_changes_cannot_resume ... ok
+test restricted_rewrite_refusal_finalizes_without_applying_or_launching_gates ... ok
+test later_complete_attempt_authenticates_the_prior_failed_evidence ... ok
+test repeated_failed_attempts_consume_one_shared_retained_budget ... ok
+test publication_extent_recovers_lost_terminal_and_rejects_completed_journal_tamper ... ok
+test restricted_rewrite_lost_response_recovers_original_intent_and_terminal_runs_no_worker ... ok
+test successful_submission_and_lost_response_are_one_evaluation ... ok
+test terminal_resume_reauthenticates_retained_evidence_without_recapture ... ok
+test stopped_finalization_tail_recovers_lost_response_and_authenticates_historical_extent ... ok
+
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.40s
+
+
+running 8 tests
+test changed_candidate_and_source_aliases_fail_snapshot_admission ... ok
+test interrupted_partial_replacement_is_completed_from_the_durable_intent ... ok
+test foreign_dirty_source_and_unexpected_integration_head_are_rejected ... ok
+test protected_publication_reuses_original_bytes_and_rejects_changed_acceptance ... ok
+test interrupted_integration_copy_recovers_the_same_scoped_commit ... ok
+test unmerged_imported_submission_recovers_one_scoped_integration_commit ... ok
+test real_scoped_commit_integrates_and_exact_retries_make_no_new_commit ... ok
+test already_integrated_submission_keeps_exact_frozen_baseline_and_original_commit ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.12s
+

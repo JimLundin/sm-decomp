@@ -1,0 +1,35 @@
+schema = "translation-migration-build-receipt-v1"
+status = "prepared-with-blockers"
+activated = false
+request_sha256 = "b5e211d65b43a3eed195336e8ef6771603b6ad7dd0fbbe1e3bbffc556ffc4a3a"
+validation_status = "validated-with-blockers"
+retained_bytes = 309697
+referenced_files = 50
+blockers = [
+    "Original claim compact-controller has no reviewed production installation or policy; its source, inputs and held lineage are preserved.",
+    "Original claim compact-controller lacks an exact supported native installation; its held lineage is preserved.",
+    "Original claim integrate-shared-game-host has no reviewed production installation or policy; its source, inputs and held lineage are preserved.",
+    "Original claim integrate-shared-game-host lacks an exact supported native installation; its held lineage is preserved.",
+    "Original claim shared-game-host has no reviewed production installation or policy; its source, inputs and held lineage are preserved.",
+    "Original claim shared-game-host lacks an exact supported native installation; its held lineage is preserved.",
+    "Original held claims integrate-shared-game-host and shared-game-host share writable ownership; preparation preserves both and grants no concurrent dispatch.",
+    "Original linked submission/integration claims integrate-shared-game-host and shared-game-host retain overlapping held ownership; managed execution for this sequencing remains unsupported.",
+    "Production activation requires the user's separate reviewed switch decision and current real owner/process reconciliation.",
+    "Production catalog contains specialized native families without a confined execution recipe.",
+    "The representative proof does not prepare every production Offline family.",
+]
+
+[migration]
+path = "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-preparation/ceres-production-01/package/migration.json"
+sha256 = "aa320a1462d9b808e8d58174b02c4ee6a7687b4579b674c26f4a0ea75889cc1f"
+bytes = 9667
+
+[inventory]
+path = "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-preparation/ceres-production-01/package/inventory.json"
+sha256 = "0b5782712d4d3a9cd94e4da2222be97e1c8b17e4ec92552cf2b601f852f3ee84"
+bytes = 14668
+
+[preparation_report]
+path = "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/production-preparation/ceres-production-01/package/preparation-report.toml"
+sha256 = "d9ea6df7e43389f1f6315e89a8e145feb3dbf6ec1d8c847fe16bd76a65400861"
+bytes = 28346
