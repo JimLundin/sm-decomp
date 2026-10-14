@@ -583,18 +583,57 @@ fn terminated_owned_task(pid: i32) -> Result<bool> {
     }
 }
 
+/// Exit can destroy the descriptor table just before the non-consuming wait
+/// reports termination. Retry that short transition without resuming a pending
+/// mutation. Time alone never permits access: the exact still-owned task must
+/// expose its descriptors or have a kernel-authenticated unreaped exit result.
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+fn candidate_descriptors(proc: &File, pid: i32) -> Result<Option<File>> {
+    use std::os::unix::io::{AsRawFd, FromRawFd};
+    let directory = std::ffi::CString::new(format!("{pid}/fd"))?;
+    let mut retry_until = None;
+    loop {
+        let descriptor = unsafe {
+            libc::openat(proc.as_raw_fd(), directory.as_ptr(), libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC)
+        };
+        if descriptor >= 0 {
+            return Ok(Some(unsafe { File::from_raw_fd(descriptor) }));
+        }
+        let error = std::io::Error::last_os_error();
+        if error.raw_os_error() == Some(libc::ENOENT) {
+            return Ok(None);
+        }
+        if error.raw_os_error() == Some(libc::EACCES) {
+            if terminated_owned_task(pid)? {
+                return Ok(None);
+            }
+            let deadline = *retry_until.get_or_insert_with(|| Instant::now() + Duration::from_millis(10));
+            if Instant::now() < deadline {
+                std::thread::sleep(Duration::from_micros(100));
+                continue;
+            }
+        }
+        return Err(error).with_context(|| format!("observe candidate descriptor directory for pid {pid}"));
+    }
+}
+
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
 fn wait_traced(pid: u32, writable_bytes: u64, proc: &File, logs: &[File]) -> Result<ExitStatus> {
     use std::os::unix::process::ExitStatusExt;
     use std::os::unix::{
         fs::MetadataExt,
-        io::{AsRawFd, FromRawFd},
+        io::AsRawFd,
     };
     // Directories and regular file extents are observed before any mutating
     // syscall resumes. Inodes deduplicate hard links and unlinked open files;
     // the trusted log files count even though they have no directory entry.
     let work_device = fs::metadata("/work")?.dev();
     let mut observed = BTreeSet::from([pid as i32]);
+    // A child's initial stop may arrive before its parent's fork/clone event.
+    // Keep that status stopped until the parent authenticates the child PID.
+    // Resuming it early could miss live descriptors and later reinsert a PID
+    // already reaped before its delayed parent event.
+    let mut deferred = BTreeMap::<i32, i32>::new();
     fn extent(path: &Path, device: u64, files: &mut BTreeMap<(u64, u64), u64>, count: &mut usize) -> Result<()> {
         for entry in fs::read_dir(path)? {
             let entry = entry?;
@@ -617,24 +656,7 @@ fn wait_traced(pid: u32, writable_bytes: u64, proc: &File, logs: &[File]) -> Res
             files.insert((metadata.dev(), metadata.ino()), metadata.len());
         }
         for pid in observed {
-            let directory = std::ffi::CString::new(format!("{pid}/fd"))?;
-            let descriptor = unsafe {
-                libc::openat(proc.as_raw_fd(), directory.as_ptr(), libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC)
-            };
-            if descriptor < 0 {
-                let error = std::io::Error::last_os_error();
-                if error.raw_os_error() == Some(libc::ENOENT) {
-                    continue;
-                }
-                // Linux can deny access after exit has destroyed the task's
-                // descriptor table but before its ptrace wait result is reaped.
-                // The kernel must prove termination of this exact owned PID.
-                if error.raw_os_error() == Some(libc::EACCES) && terminated_owned_task(*pid)? {
-                    continue;
-                }
-                return Err(error).with_context(|| format!("observe candidate descriptor directory for pid {pid}"));
-            }
-            let owned = unsafe { File::from_raw_fd(descriptor) };
+            let Some(owned) = candidate_descriptors(proc, *pid)? else { continue };
             let stream = unsafe { libc::fdopendir(libc::dup(owned.as_raw_fd())) };
             ensure!(!stream.is_null(), "cannot inspect owned candidate file descriptors");
             loop {
@@ -696,12 +718,29 @@ fn wait_traced(pid: u32, writable_bytes: u64, proc: &File, logs: &[File]) -> Res
     errno(unsafe { libc::ptrace(libc::PTRACE_SETOPTIONS, pid, 0, options) as i32 }, "set inherited quota observer")?;
     errno(unsafe { libc::ptrace(libc::PTRACE_SYSCALL, pid, 0, 0) as i32 }, "start quota observer")?;
     loop {
-        let stopped = unsafe { libc::waitpid(-1, &mut status, libc::__WALL) };
+        let ready = deferred.keys().find(|child| observed.contains(child)).copied();
+        let stopped = if let Some(ready) = ready {
+            status = deferred.remove(&ready).expect("ready owned wait status");
+            ready
+        } else {
+            unsafe { libc::waitpid(-1, &mut status, libc::__WALL) }
+        };
         if stopped < 0 {
             if std::io::Error::last_os_error().raw_os_error() == Some(libc::EINTR) {
                 continue;
             }
             bail!("candidate quota observer lost process ownership");
+        }
+        if !observed.contains(&stopped) {
+            ensure!(
+                libc::WIFSTOPPED(status) || libc::WIFEXITED(status) || libc::WIFSIGNALED(status),
+                "unregistered candidate has an unexpected wait status"
+            );
+            // SIGKILL can replace an initial stop with termination while the
+            // child is held. Neither status authorizes it to resume early.
+            deferred.insert(stopped, status);
+            ensure!(observed.len() + deferred.len() <= 512, "sandbox descendant count budget exhausted");
+            continue;
         }
         if libc::WIFEXITED(status) || libc::WIFSIGNALED(status) {
             observed.remove(&stopped);
@@ -791,7 +830,8 @@ fn wait_traced(pid: u32, writable_bytes: u64, proc: &File, logs: &[File]) -> Res
                 "observe candidate descendant",
             )?;
             observed.insert(i32::try_from(child)?);
-            ensure!(observed.len() <= 512, "sandbox descendant count budget exhausted");
+            let unregistered = deferred.keys().filter(|child| !observed.contains(child)).count();
+            ensure!(observed.len() + unregistered <= 512, "sandbox descendant count budget exhausted");
         }
         let resumed = unsafe { libc::ptrace(libc::PTRACE_SYSCALL, stopped, 0, deliver) };
         if resumed < 0 && std::io::Error::last_os_error().raw_os_error() != Some(libc::ESRCH) {

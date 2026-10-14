@@ -96,6 +96,25 @@ fn exited_threads_do_not_refuse_live_writer_observation() {
 }
 
 #[test]
+fn concurrent_execs_do_not_refuse_live_writer_observation() {
+    let parameter = |name: &str, default: usize| {
+        std::env::var(name).map(|value| value.parse::<usize>().unwrap()).unwrap_or(default)
+    };
+    let payload = format!(
+        "{} {} {}",
+        parameter("SM_CONFINEMENT_EXEC_THREADS", 2),
+        parameter("SM_CONFINEMENT_EXEC_CHILDREN", 8),
+        parameter("SM_CONFINEMENT_EXEC_WRITES", 512),
+    );
+    let limits = RunLimits { stdin_bytes: 64, ..limits() };
+    for attempt in 0..16 {
+        let output = run(&probe("probe_parallel_exec_and_writes"), &limits, payload.as_bytes())
+            .unwrap_or_else(|error| panic!("concurrent exec attempt {attempt}: {error:#}"));
+        assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    }
+}
+
+#[test]
 fn synthetic_self_exe_is_explicit_and_exposes_only_the_program() {
     let mut program = probe("probe_self_exe");
     let output = run(&program, &limits(), b"").unwrap();
@@ -231,6 +250,38 @@ fn probe_threaded_writes_and_exits() {
 #[ignore = "candidate probe, invoked only by confined parent test"]
 fn probe_many_threaded_writes_and_exits() {
     threaded_writes_and_exits(32, 512, 8);
+}
+
+#[test]
+#[ignore = "candidate probe, invoked only by confined parent test"]
+fn probe_parallel_exec_and_writes() {
+    let mut parameters = String::new();
+    std::io::stdin().read_to_string(&mut parameters).unwrap();
+    let values = parameters.split_whitespace().map(|value| value.parse::<usize>().unwrap()).collect::<Vec<_>>();
+    assert_eq!(values.len(), 3);
+    let [threads, children, writes] = values[..] else { unreachable!() };
+    assert!(threads <= 32 && children <= 64 && writes <= 4096);
+    std::thread::scope(|scope| {
+        for _ in 0..threads {
+            scope.spawn(|| {
+                for _ in 0..children {
+                    assert!(
+                        Command::new("/program")
+                            .args(["--ignored", "--exact", "probe_empty_child"])
+                            .stdin(Stdio::null())
+                            .stdout(Stdio::null())
+                            .stderr(Stdio::null())
+                            .status()
+                            .unwrap()
+                            .success()
+                    );
+                }
+            });
+        }
+        for _ in 0..writes {
+            fs::write("/work/tmp/exec-progress", b"x").unwrap();
+        }
+    });
 }
 
 fn threaded_writes_and_exits(threads: usize, writes: usize, worker_writes: usize) {

@@ -3,6 +3,7 @@ use std::{
     fs,
     path::PathBuf,
     process::Command,
+    sync::atomic::{AtomicU64, Ordering},
     time::{Duration, Instant},
 };
 use translation_execution::confinement::{Program, ReadOnlyBind, RunLimits, compiler_runtime, helper_runtime, run};
@@ -19,10 +20,12 @@ struct Fixture {
 }
 impl Fixture {
     fn new() -> Self {
+        static NEXT_FIXTURE: AtomicU64 = AtomicU64::new(0);
         let root = std::env::temp_dir().join(format!(
-            "sm-confinement-{}-{}",
+            "sm-confinement-{}-{}-{}",
             std::process::id(),
-            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos(),
+            NEXT_FIXTURE.fetch_add(1, Ordering::Relaxed)
         ));
         fs::create_dir(&root).unwrap();
         let source = root.join("probe.c");
