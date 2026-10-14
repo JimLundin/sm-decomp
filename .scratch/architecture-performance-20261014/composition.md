@@ -1,5 +1,9 @@
 # Combined source check
 
+Historical checkpoint: the later [main integration](integration.md) combines
+this source with Native reservations/waves and retires the five worktrees.
+Statements below describe the earlier composition check and its retained proof.
+
 Status: resolved
 Owner: session `01a13b35-079e-7151-8e5a-f759fee6bcf3`, `/root`
 Branch: `architecture/perf-composition-20261014`

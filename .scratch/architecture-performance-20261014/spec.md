@@ -14,11 +14,12 @@ Coordinator session: 01a13b35-079e-7151-8e5a-f759fee6bcf3.
 
 - All project tools and measurements are Rust. Preserve exact actual-C Fixture
   pairs, Fixture chains, Live replay ownership and ordered-effect contracts.
-- No original production claim, installed controller, policy, gameplay stage or
-  main Git/index mutation belongs to this effort. Ticket 10 has a live owner.
-- Existing confinement owner in /home/jim/sm-decomp-ticket10-work/confinement
-  remains authoritative for candidate 01 implementation. Our 01 worktree is
-  reserved for review/adoption of its completed commit, not competing edits.
+- No original production claim, installed controller, policy or gameplay stage
+  mutation belongs to this effort. The later workspace-integration request
+  authorized main promotion; the existing owner transferred Git/index ownership.
+  Ticket 10 retains its separate acceptance work.
+- Candidate 01 adopts the existing confinement owner's completed implementation
+  and evidence; its original and review worktrees are now retired.
 - Worktrees live under /home/jim/sm-decomp-architecture-20261014 and share only
   read-only dependency inputs via the main deps directory. Never write there.
 - Use SM_PIPELINE_ROOT=/home/jim/sm-decomp/out/pipeline and
@@ -36,17 +37,25 @@ Coordinator session: 01a13b35-079e-7151-8e5a-f759fee6bcf3.
 
 Each ticket has a scoped commit, tests through the module interface, bounded
 performance evidence or an explicit measurement limit, and cleanup evidence.
-The five branches stay separate as requested; a combined integration check may
-use a separate checkout without mutating the active main checkout. No automatic
-production activation is part of this optimization task.
+The five branches preserve each candidate's source. The user's later request to
+put everything together authorizes integration into main and retirement of the
+completed worktrees after evidence retention. No automatic production activation
+is part of this optimization task.
 
-All five tickets are resolved. Source composes without conflicts on
+All five implementation tickets are resolved. The earlier source composed without conflicts on
 `architecture/perf-composition-20261014` at
 `bc5c1cf9ba2965ef6513273deb4880a93d770cc9`; 32 combined controls passed.
 Both retained actual-C verdicts authenticate after cleanup and retirement of
-the temporary composition checkout and Cargo target. The five requested
-worktrees and their commits remain available. Exact source mappings, staged
+the temporary composition checkout and Cargo target. The five candidate
+commits remain available. Exact historical source mappings, staged
 controller/helper binaries, evidence dependencies, cleanup measurements and
 validation limits are in [composition.md](composition.md) and [map.md](map.md).
 No full-pipeline optimum, authenticated complete native Live replay or
-production activation is claimed.
+production activation is claimed. The latest combined Native integration is
+tracked in [ticket 06](issues/06-main-integration.md) and [integration.md](integration.md).
+
+All six tickets are resolved. Main contains all five candidates composed with
+the latest Native changes; 47 merged-source controls passed. Both development
+tools are rebuilt, all six integration/implementer worktrees are retired, and
+retained evidence authenticates after cleanup. The unrelated workspace edits
+and production state are preserved.

@@ -5,7 +5,7 @@ Triage: ready-for-agent
 Blocked by: None
 Type: task
 Owner: /root/implement_live
-Worktree: /home/jim/sm-decomp-architecture-20261014/05-live
+Worktree (retired after main integration; six source files retained): /home/jim/sm-decomp-architecture-20261014/05-live
 Branch: architecture/perf-05-live-20261014
 Baseline: 1ce6494d7e0fdc9b8623faf3f9d9f507f4a8abb0
 

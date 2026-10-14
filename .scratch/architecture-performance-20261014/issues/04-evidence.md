@@ -5,7 +5,7 @@ Triage: ready-for-agent
 Blocked by: None
 Type: task
 Owner: /root/implement_evidence
-Worktree: /home/jim/sm-decomp-architecture-20261014/04-evidence
+Worktree (retired after main integration): /home/jim/sm-decomp-architecture-20261014/04-evidence
 Branch: architecture/perf-04-evidence-20261014
 Baseline: 1ce6494d7e0fdc9b8623faf3f9d9f507f4a8abb0
 

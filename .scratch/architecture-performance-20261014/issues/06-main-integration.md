@@ -1,6 +1,6 @@
 # 06 — Integrate performance improvements and prepare main workspace
 
-Status: claimed
+Status: resolved
 Triage: ready-for-agent
 Blocked by: None
 Type: task
@@ -32,8 +32,27 @@ Candidates 02–05 are imported as `09cf01b`, `f0b47bc`, `16e708a`, `1cf27db`,
 input scope. Ordinary Fixture queues use indexed dependencies and per-pair
 leases; Native continues through its separate confined execution adapter.
 
-## Verification and completion evidence
+## Completion evidence
 
-Pending frozen-source gates, main promotion, scoped cleanup and retained
-authentication. Existing candidate and prior-composition evidence remains
-historical and does not substitute for these merged-source checks.
+Verified source `c0bd9061572ce56e4ef5218c8f60dd05aa25bd82` passed 47 controls,
+including the complete Native 16-pair proof, its refusal checks and unchanged
+replay. Scope-specific formatting/diff checks passed. Both development binaries
+were rebuilt from main. Literal main was fast-forwarded and the primary checkout
+is on main; existing assignment bytes, published review, untracked evidence and
+production registry/fence/controller are preserved.
+
+Both scoped cleanup passes succeeded (0 normal bytes; 10,485,760 deduplicated
+bytes). Automatic Fixture cleanup additionally deduplicated 1,835,008 bytes and
+removed 23,700,637 bytes of private Git/cache data. Five implementer worktrees,
+the integration checkout and its disposable Cargo target were removed; their
+net apparent path sizes were 6,710,370,869 bytes after retaining the small Live
+source directory. Main's development target is retained. Final observed free
+space was 186,727,673,856 bytes on the shared filesystem.
+
+After retirement, all 11 candidate02 and two historical composition verdicts,
+three candidate04 stores and both new ordinary actual-C verdicts authenticate.
+The new Native reader authenticates all four positive/diagnostic receipts,
+70 producers and 1,508 references. Candidate01/03 source/tool/evidence hashes,
+six retained Live files, new readers, main tools and protected workspace hashes
+pass. Exact commands, limitations, dependencies and byte accounting are in
+[integration.md](../integration.md) and the proof root's `completion.toml`.

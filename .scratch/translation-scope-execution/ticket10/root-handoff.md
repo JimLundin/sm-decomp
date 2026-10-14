@@ -67,14 +67,18 @@ Rebuilding pipeline alone does not select or install it. The existing production
 Installation, registry, fence, claims and stopped attempt remain unchanged.
 No full catalog run or new Original attempt was started.
 
-The separate architecture-performance session retains five completed candidate
-worktrees and its combined source `bc5c1cf9ba2965ef6513273deb4880a93d770cc9`.
-Its [composition handoff](/home/jim/sm-decomp-architecture-20261014/03-builds/.scratch/architecture-performance-20261014/composition.md)
-records 32 passing controls and two actual-C results authenticated after cleanup.
-Those candidates have not been composed with this Native implementation.
-Preserve our strict reservations/waves and their `build_cache.rs` source-list
-registrations during later composition. The five requested worktrees belong
-to that session and remain separate.
+The architecture-performance session integrated all five candidates with this
+Native implementation on verified source `c0bd9061572ce56e4ef5218c8f60dd05aa25bd82`
+after the user requested a ready main workspace and this session transferred
+Git/index ownership. Local main is promoted and the primary checkout is on main.
+All 47 merged-source controls passed, including complete 16-pair Native proof,
+refusals and unchanged replay. Strict reservations/waves, shared bounds and the
+new `build_cache.rs` source registrations are preserved. The five implementer
+worktrees and temporary integration checkout/target are retired, with retained
+evidence authenticated again. Development controller and sandbox are rebuilt;
+production Installation, claims and prerequisites are unchanged. The latest
+[integration handoff](../../architecture-performance-20261014/integration.md)
+records exact source, tools, commands, cleanup and limitations.
 
 Ticket 10 remains claimed. The next performance work is largest-family
 reference/finalization scaling, shared scheduling and build reuse, with finite

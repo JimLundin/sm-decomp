@@ -5,7 +5,7 @@ Triage: ready-for-agent
 Blocked by: None
 Type: task
 Owner: Existing ticket-10 confinement_performance owner; this session tracks review and adoption only until it finishes
-Worktree: /home/jim/sm-decomp-architecture-20261014/01-accounting
+Worktree (retired after main integration): /home/jim/sm-decomp-architecture-20261014/01-accounting
 Branch: architecture/perf-01-accounting-20261014
 Baseline: 1ce6494d7e0fdc9b8623faf3f9d9f507f4a8abb0
 
@@ -94,7 +94,7 @@ Final evidence is under
   created by these focused controls.
 
 The adopted full handoff is
-`/home/jim/sm-decomp-architecture-20261014/01-accounting/.scratch/translation-scope-execution/ticket10/confinement-performance-handoff.md`.
+`/home/jim/sm-decomp/.scratch/translation-scope-execution/ticket10/confinement-performance-handoff.md`.
 The helper is a separate `sm-translation-sandbox` binary selected by an explicit
 installed path/hash; a pipeline rebuild does not replace that installed helper.
 The composition check stages both binaries and tests the new helper without

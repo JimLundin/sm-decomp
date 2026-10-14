@@ -5,7 +5,7 @@ Triage: ready-for-agent
 Blocked by: None
 Type: task
 Owner: /root/implement_builds under session 01a13b35-079e-7151-8e5a-f759fee6bcf3
-Worktree: /home/jim/sm-decomp-architecture-20261014/03-builds
+Worktree (retired after main integration): /home/jim/sm-decomp-architecture-20261014/03-builds
 Branch: architecture/perf-03-builds-20261014
 Baseline: 1ce6494d7e0fdc9b8623faf3f9d9f507f4a8abb0
 
