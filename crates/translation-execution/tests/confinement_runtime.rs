@@ -179,6 +179,18 @@ fn exec_separates_previously_shared_descriptor_numbers() {
 }
 
 #[test]
+fn nonleader_exec_preserves_aggregate_quota_observation() {
+    let bounds = RunLimits { writable_bytes: 128 * 1024, stdin_bytes: 16, ..limits() };
+    let program = probe("probe_nonleader_exec");
+    let output = run(&program, &bounds, b"bounded").unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    for _ in 0..4 {
+        let error = run(&program, &bounds, b"overflow").unwrap_err().to_string();
+        assert!(error.contains("logical output extent budget"), "{error}");
+    }
+}
+
+#[test]
 #[ignore = "explicit repeated concurrent-observer regression"]
 fn many_threaded_writes_and_exits_stress() {
     let attempts: usize =
@@ -461,6 +473,21 @@ fn temporary_descriptor_cycles(descriptor: i32) -> i32 {
 fn probe_independent_descriptor_cycles() {
     let descriptor: i32 = std::env::var("SM_CONFINEMENT_CYCLE_DESCRIPTOR").unwrap().parse().unwrap();
     assert_eq!(temporary_descriptor_cycles(descriptor), 0);
+}
+
+#[test]
+#[ignore = "candidate probe, invoked only by confined parent test"]
+fn probe_nonleader_exec() {
+    use std::os::unix::process::CommandExt;
+    std::thread::spawn(|| {
+        assert_ne!(unsafe { libc::syscall(libc::SYS_gettid) }, unsafe { libc::getpid() } as libc::c_long);
+        let error = Command::new("/program")
+            .args(["--ignored", "--exact", "probe_overlapping_unlinked_writes", "--nocapture"])
+            .exec();
+        panic!("nonleader exec failed: {error}");
+    })
+    .join()
+    .unwrap();
 }
 
 #[test]

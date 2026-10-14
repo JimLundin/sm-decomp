@@ -1,6 +1,6 @@
 # Confinement accounting performance
 
-Status: claimed; provisional v6 checkpoint, final guards and cleanup pending
+Status: claimed; final v6 guards passed, final measurements and cleanup pending
 Owner: `/root/confinement_performance`; parent `/root` owns integration
 Worktree: `/home/jim/sm-decomp-ticket10-work/confinement`
 Branch: `ticket10-confinement-scale-20261014`
@@ -25,6 +25,10 @@ Current helper relative to artifact root:
 Exact source: `source-fd-table-v6/confinement.rs`, SHA-256
 `06b569915b4fb69260322c500f1e10f8c5e4d835b51ed95e6cdf1e38f0d599d4`.
 Reader: `tools/confinement-runtime-fd-table-v6-opt1`.
+Final readers including the nonleader-exec control are
+`tools/confinement-runtime-final-v6-opt1` and
+`tools/confinement-original-final-v6-opt1`; their source snapshots are in
+`source-final-v6/`. The helper source and bytes are unchanged.
 
 The helper caches exact logical inode totals and observes current/in-flight
 write targets and trusted logs at every growing syscall entry and exit.
@@ -49,6 +53,15 @@ are never counted as zero.
 
 All paths below are relative to the artifact root.
 
+- Final v6 runtime controls passed 16/16 in 18.95 s, original guards 8/8 in
+  32.36 s, and stress repetitions 32/32 in 10.99 s:
+  `logs/fd-table-v6-runtime-guards.log`, `logs/fd-table-v6-original-guards.log`,
+  `logs/fd-table-v6-concurrent-stress.log`. All ran serially with the unchanged
+  budgets. The combined tool session 68422 exited successfully.
+- Nonleader exec passed a bounded case and four post-exec aggregate-overflow
+  refusals in 0.22 s: `logs/fd-table-v6-nonleader-exec.log`. The runtime reader
+  was rebuilt in 2.10 s (`logs/fd-table-v6-exec-control-build.log`); the helper
+  stayed frozen.
 - Five descriptor controls passed v6 in 1.11 s:
   `logs/fd-table-v6-descriptor-controls.log`. Independent fork, thread
   close_range(UNSHARE), shared-table child exec, shared-thread swap, and
@@ -71,7 +84,7 @@ All paths below are relative to the artifact root.
   controls in 27.17 s, and all eight original guards in 47.70 s:
   `logs/complete-concurrent-stress.log`, `logs/complete-runtime-guards.log`,
   `logs/complete-original-guards.log`. These are historical V5 checks;
-  final V6 checks remain pending.
+  final V6 checks are recorded above.
 
 ## Performance before final lifecycle fixes
 
@@ -109,19 +122,20 @@ Measured v3 helper SHA-256:
 ## Next commands and completion evidence
 
 No confinement writer remains at this checkpoint. Build
-`logs/fd-table-v6-control-build.log` passed in 39.22 s. Set
-`SM_CONFINEMENT_TEST_HELPER` to v6 and run the retained runtime reader with
-`--test-threads=1 --nocapture`, followed by its ignored
+`logs/fd-table-v6-control-build.log` passed in 39.22 s. Final checks above used
+`SM_CONFINEMENT_TEST_HELPER` set to v6, the retained runtime reader with
+`--test-threads=1 --nocapture`, and its ignored
 `many_threaded_writes_and_exits_stress` with `SM_CONFINEMENT_THREAD_STRESS=32`.
-Run all eight original controls with `TMPDIR` set to artifact `temporary/`.
+The original reader used `TMPDIR` set to artifact `temporary/`.
 
 Build with one Cargo job and the shared environment above:
 `cargo --config 'profile.dev.package.translation-execution.opt-level=1' test -p translation-execution --locked --offline --test confinement --test confinement_runtime --test confinement_performance --no-run`.
 Use the stated Cargo target. Coordinate final quiet measurements through root;
-the current equipment correctness proof has just completed.
+the architecture comparison currently holds the producer window. Root will
+relay its end before final V7/v6 and 1/2/4-worker measurements begin.
 
-Final exact-source guards, measurements, source/reader manifest and cleanup are
-pending. Run `/home/jim/sm-decomp-production-execution/bin/sm-pipeline cleanup
+Final measurements, source/reader manifest and cleanup are pending.
+Run `/home/jim/sm-decomp-production-execution/bin/sm-pipeline cleanup
 --root ROOT --apply`, then the same with `--deduplicate --apply`. Retain failed
 diagnostics, readers and source snapshots; remove only identified disposable
 Cargo outputs. Record reclaimed bytes, free disk and retained dependencies here.
