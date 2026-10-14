@@ -286,6 +286,26 @@ pub(crate) fn confined_case(
     })
 }
 
+pub(crate) fn fixture_command(routine: &Routine, fixture: &Case, run: &Path, subject: &str) -> Result<Vec<String>> {
+    let directory = run.join(&fixture.name);
+    Ok(vec![
+        run.join("spawn").to_string_lossy().into_owned(),
+        subject.into(),
+        fixture.a.to_string(),
+        fixture.b.to_string(),
+        directory.join("before.wram").to_string_lossy().into_owned(),
+        directory.join(format!("{subject}-after.wram")).to_string_lossy().into_owned(),
+        run.join("rom.bin").to_string_lossy().into_owned(),
+        match routine.symbol.as_str() {
+            "terrain" => "0",
+            "room" => "1",
+            "hardcoded" => "2",
+            _ => anyhow::bail!("invalid allocator"),
+        }
+        .into(),
+    ])
+}
+
 fn case_with(
     routine: &Routine,
     fixture: &Case,
@@ -298,26 +318,7 @@ fn case_with(
     let directory = run.join(name);
     family::prepare_case_with(fixture, &directory, &["uint16".into(), "int32".into()], resume)?;
     for subject in ["rust", "c"] {
-        execute(
-            &[
-                run.join("spawn").to_string_lossy().into_owned(),
-                subject.into(),
-                fixture.a.to_string(),
-                fixture.b.to_string(),
-                directory.join("before.wram").to_string_lossy().into_owned(),
-                directory.join(format!("{subject}-after.wram")).to_string_lossy().into_owned(),
-                run.join("rom.bin").to_string_lossy().into_owned(),
-                match kind {
-                    "terrain" => "0",
-                    "room" => "1",
-                    "hardcoded" => "2",
-                    _ => anyhow::bail!("invalid allocator"),
-                }
-                .into(),
-            ],
-            &directory,
-            subject,
-        )?;
+        execute(&fixture_command(routine, fixture, run, subject)?, &directory, subject)?;
     }
     let mut record = check(&directory, fixture)?;
     record.name = name.into();

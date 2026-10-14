@@ -455,40 +455,10 @@ pub(super) fn fixture_program(
     let a = fixture.a.to_string();
     let b = fixture.b.to_string();
     let (command, kind) = match recipe {
-        Some(NativeRecipe::Callback | NativeRecipe::PowerBomb | NativeRecipe::GameHost) => (
-            vec![
-                text(run.join("collision")),
-                label.into(),
-                routine.symbol.clone(),
-                a,
-                b,
-                before,
-                after,
-                index.to_string(),
-                rom,
-                text(directory.join(label)),
-            ],
-            K::Callback,
-        ),
-        Some(NativeRecipe::Plm) => (
-            vec![
-                text(run.join("spawn")),
-                label.into(),
-                a,
-                b,
-                before,
-                after,
-                rom,
-                match routine.symbol.as_str() {
-                    "terrain" => "0",
-                    "room" => "1",
-                    "hardcoded" => "2",
-                    _ => anyhow::bail!("unknown native allocator"),
-                }
-                .into(),
-            ],
-            K::Plm,
-        ),
+        Some(NativeRecipe::Callback | NativeRecipe::PowerBomb | NativeRecipe::GameHost) => {
+            (crate::callback::fixture_command(routine, fixture, index, run, label), K::Callback)
+        }
+        Some(NativeRecipe::Plm) => (crate::plm_spawn::fixture_command(routine, fixture, run, label)?, K::Plm),
         Some(NativeRecipe::Ridley) => (
             vec![
                 text(run.join(label)),

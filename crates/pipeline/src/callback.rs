@@ -464,6 +464,28 @@ pub(crate) fn confined_case(
     })
 }
 
+pub(crate) fn fixture_command(
+    routine: &Routine,
+    fixture: &Case,
+    index: usize,
+    run: &Path,
+    subject: &str,
+) -> Vec<String> {
+    let directory = run.join(&fixture.name);
+    vec![
+        run.join("collision").to_string_lossy().into_owned(),
+        subject.into(),
+        routine.symbol.clone(),
+        fixture.a.to_string(),
+        fixture.b.to_string(),
+        directory.join("before.wram").to_string_lossy().into_owned(),
+        directory.join(format!("{subject}-after.wram")).to_string_lossy().into_owned(),
+        index.to_string(),
+        run.join("rom.bin").to_string_lossy().into_owned(),
+        directory.join(subject).to_string_lossy().into_owned(),
+    ]
+}
+
 fn case_with(
     manifest: &Manifest,
     routine: &Routine,
@@ -479,22 +501,7 @@ fn case_with(
     family::prepare_case_with(fixture, &directory, &family::types(routine)?, resume)?;
     for subject in ["rust", "c"] {
         fs::create_dir_all(directory.join(subject))?;
-        execute(
-            &[
-                run.join("collision").to_string_lossy().into_owned(),
-                subject.into(),
-                symbol.into(),
-                fixture.a.to_string(),
-                fixture.b.to_string(),
-                directory.join("before.wram").to_string_lossy().into_owned(),
-                directory.join(format!("{subject}-after.wram")).to_string_lossy().into_owned(),
-                index.to_string(),
-                run.join("rom.bin").to_string_lossy().into_owned(),
-                directory.join(subject).to_string_lossy().into_owned(),
-            ],
-            &directory,
-            subject,
-        )?;
+        execute(&fixture_command(routine, fixture, index, run, subject), &directory, subject)?;
     }
     let mut record = check(&directory, fixture, manifest.callback_adapter.as_deref() == Some("game-host"))?;
     record.routine = symbol.into();
