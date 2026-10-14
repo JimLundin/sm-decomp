@@ -1,4 +1,6 @@
 //! Actual allocation amounts and retained identities are independently checked.
+#[path = "support/binary_fixture.rs"]
+mod binary_fixture;
 use sha2::{Digest, Sha256};
 use std::{
     fs,
@@ -55,9 +57,9 @@ fn actual_quicksand_allocation_rejects_wrong_amount_and_retained_tampering() {
     let module = root.0.join("candidate.rs");
     let original = fs::read_to_string(checkout.join("crates/port/src/plm.rs")).unwrap();
     fs::write(&module, &original).unwrap();
-    let manifest = root.0.join("manifest.toml");
+    let manifest = root.0.join("manifest.smf");
     let rom_hash = format!("{:x}", Sha256::digest(fs::read(&rom).unwrap()));
-    fs::write(
+    binary_fixture::write(
         &manifest,
         format!(
             r#"family = "native-test"

@@ -1,6 +1,6 @@
 //! Deterministic actual-ROM direct callbacks and complete native attack-frame chains.
 use crate::family_model::{Asset, Case, Manifest, Routine, Write};
-use crate::{atomic_toml, digest};
+use crate::digest;
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -128,7 +128,7 @@ fn callback_cases(routines: &mut [Routine], rom: &[u8], expected: &Path) -> Resu
                 name,
                 a: 64,
                 b: 0xa6e755,
-                writes,
+                writes: writes.into(),
                 host_words: Some(host()),
                 expected_return: Some(0xa6e755),
                 expected_after_file: Some(after.file),
@@ -155,7 +155,7 @@ fn callback_cases(routines: &mut [Routine], rom: &[u8], expected: &Path) -> Resu
                     name: format!("aim-wrap-o{orientation}-d{i}-x{x}"),
                     a: 64,
                     b: 0xa6e755,
-                    writes,
+                    writes: writes.into(),
                     host_words: Some(host()),
                     expected_return: Some(0xa6e755),
                     ..Default::default()
@@ -180,7 +180,7 @@ fn callback_cases(routines: &mut [Routine], rom: &[u8], expected: &Path) -> Resu
                     ),
                     a: 64,
                     b: 0xa6e755,
-                    writes,
+                    writes: writes.into(),
                     host_words: Some(host()),
                     expected_return: Some(0xa6e755),
                     ..Default::default()
@@ -204,7 +204,7 @@ fn callback_cases(routines: &mut [Routine], rom: &[u8], expected: &Path) -> Resu
                         name: format!("{name}-o{orientation}-h{health}-a{area}"),
                         a: 64,
                         b: 0xa6e73c,
-                        writes,
+                        writes: writes.into(),
                         host_words: Some(host()),
                         expected_return: Some(return_value),
                         ..Default::default()
@@ -228,7 +228,7 @@ fn callback_cases(routines: &mut [Routine], rom: &[u8], expected: &Path) -> Resu
                 name: format!("sound-r{read}-w{writepos}-d{debug}-s{state}-p{powerbomb}"),
                 a: 64,
                 b: 0xa6e755,
-                writes,
+                writes: writes.into(),
                 host_words: Some(host()),
                 expected_return: Some(0xa6e755),
                 ..Default::default()
@@ -241,7 +241,7 @@ fn callback_cases(routines: &mut [Routine], rom: &[u8], expected: &Path) -> Resu
             name: format!("sound-clear-p{pointer}"),
             a: 64,
             b: pointer,
-            writes: base(64, 0, 99, 0),
+            writes: base(64, 0, 99, 0).into(),
             host_words: Some(host()),
             expected_return: Some(pointer as u64),
             ..Default::default()
@@ -259,7 +259,7 @@ fn frame_cases(routines: &mut [Routine], order: &mut Vec<String>) -> usize {
                 let name = format!("entry-o{orientation}-h{health}-a{area}");
                 native.cases.push(Case {
                     name: name.clone(),
-                    writes: base(64, orientation, health, area),
+                    writes: base(64, orientation, health, area).into(),
                     host_words: Some(host()),
                     expected_return: Some(0),
                     ..Default::default()
@@ -276,7 +276,7 @@ fn frame_cases(routines: &mut [Routine], order: &mut Vec<String>) -> usize {
             writes.extend([write(0xfd4, timer), write(0xfca, if frozen { 4 } else { 0 }), write(0xfc8, 0x8007)]);
             native.cases.push(Case {
                 name: name.clone(),
-                writes,
+                writes: writes.into(),
                 host_words: Some(host()),
                 expected_return: Some(0),
                 ..Default::default()
@@ -299,7 +299,7 @@ fn frame_cases(routines: &mut [Routine], order: &mut Vec<String>) -> usize {
                 }
                 native.cases.push(Case {
                     name: name.clone(),
-                    writes,
+                    writes: writes.into(),
                     host_words: (step == 0).then(host),
                     continue_from: previous.clone(),
                     expected_return: Some(0),
@@ -341,7 +341,7 @@ pub fn generate(checkout: &Path, rom_path: &Path, output: &Path, expected: &Path
     if let Some(parent) = output.parent() {
         fs::create_dir_all(parent)?;
     }
-    atomic_toml(output, &manifest)?;
+    crate::fixture_format::write(output, &manifest)?;
     Ok(direct_count + frame_count)
 }
 
@@ -599,7 +599,7 @@ pub fn generate_captured(
     if let Some(parent) = output.parent() {
         fs::create_dir_all(parent)?;
     }
-    atomic_toml(output, &manifest)?;
+    crate::fixture_format::write(output, &manifest)?;
     Ok(CapturedGeneration {
         inventory_verdict_sha256: digest(&inventory.join("verdict.toml"))?,
         inventory,

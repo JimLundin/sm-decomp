@@ -5,7 +5,6 @@ use crate::{
     live_model::*,
 };
 use anyhow::{Context, Result, ensure};
-use serde::de::DeserializeOwned;
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
@@ -65,9 +64,6 @@ fn bounded_contract(manifest: &Manifest, module: &str) -> Result<()> {
     Ok(())
 }
 
-fn document<T: DeserializeOwned>(path: &Path) -> Result<T> {
-    Ok(toml::from_str(&fs::read_to_string(path)?)?)
-}
 // Match only a complete definition at the beginning of a source line. This
 // preserves call sites and prototypes, including bank-local helper declarations.
 fn definition(text: &str, symbol: &str) -> Result<std::ops::Range<usize>> {
@@ -215,8 +211,9 @@ pub fn generate(request: Request) -> Result<Generated> {
                 verdict: verdict_path.clone(),
             })?;
             ensure!(evidence.source.as_ref() == Some(&source_identity), "family source identity differs");
-            let mut manifest: Manifest =
-                document(&verdict_path.parent().context("predecessor parent missing")?.join("manifest.toml"))?;
+            let mut manifest: Manifest = crate::fixture_format::read(
+                &verdict_path.parent().context("predecessor parent missing")?.join("manifest.smf"),
+            )?;
             let module = fs::canonicalize(family::source_path(&checkout, &manifest.rust_module))?;
             if kind == "dispatcher" {
                 dispatcher_contract(&mut manifest, &module, &checkout)?;
@@ -257,8 +254,9 @@ pub fn generate(request: Request) -> Result<Generated> {
     if let Some(path) = projectile {
         let evidence = family::authenticate(AuthenticateRequest { checkout: checkout.clone(), verdict: path.clone() })?;
         ensure!(evidence.source.as_ref() == Some(&source_identity), "projectile source identity differs");
-        let manifest: Manifest =
-            document(&path.parent().context("projectile predecessor parent missing")?.join("manifest.toml"))?;
+        let manifest: Manifest = crate::fixture_format::read(
+            &path.parent().context("projectile predecessor parent missing")?.join("manifest.smf"),
+        )?;
         let module = fs::canonicalize(family::source_path(&checkout, &manifest.rust_module))?;
         projectile_contract(&manifest, &module, &checkout)?;
         predecessors.push(Predecessor { path: path.clone(), sha256: digest(path)?, kind: "projectile".into() });
@@ -278,8 +276,9 @@ pub fn generate(request: Request) -> Result<Generated> {
                     == "rust-plm-v2",
             "native PLM source identity differs"
         );
-        let manifest: Manifest =
-            document(&Path::new(plm).parent().context("PLM predecessor parent missing")?.join("manifest.toml"))?;
+        let manifest: Manifest = crate::fixture_format::read(
+            &Path::new(plm).parent().context("PLM predecessor parent missing")?.join("manifest.smf"),
+        )?;
         ensure!(
             fs::canonicalize(family::source_path(&checkout, &manifest.rust_module))?
                 == checkout.join("crates/port/src/plm.rs"),

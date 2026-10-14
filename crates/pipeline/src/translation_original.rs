@@ -2,7 +2,7 @@
 //! The original candidate remains a Git identity. Reviewed verification source
 //! is a separate, immutable input; each tested source is overlaid on that input.
 use crate::{
-    assignment, batch, family, inputs::bounded, translation_cargo as cargo, translation_compact as compact,
+    assignment, batch, inputs::bounded, translation_cargo as cargo, translation_compact as compact,
     translation_legacy as legacy, translation_migration::OriginalClaim, translation_native as native,
 };
 use anyhow::{Context, Result, bail, ensure};
@@ -230,7 +230,7 @@ fn lineage(contract: &OriginalContract) -> Result<OriginalClaim> {
                         == BTreeSet::from([
                             "crates/port/src/pause_equipment_render.rs",
                             "crates/port/tests/pause_equipment_render.rs",
-                            "tools/port/pause-equipment-render.toml",
+                            "tools/port/pause-equipment-render.smf",
                         ]),
                 "pause composite differs from the original eight-routine scope"
             );
@@ -292,8 +292,8 @@ fn required_families(
             let mut pairs = 0;
             for name in ["game-host-projectile", "game-host-room-scroll"] {
                 let declared = declarations.get(name).context("original material shared-host matrix missing")?;
-                let manifest: crate::family_model::Manifest =
-                    family::object(&contract.verification_source.root.join(&declared.manifest.file))?;
+                let manifest =
+                    crate::fixture_format::read(&contract.verification_source.root.join(&declared.manifest.file))?;
                 ensure!(
                     manifest.callback_adapter.as_deref() == Some("game-host"),
                     "material shared-host recipe changed"

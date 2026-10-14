@@ -3,7 +3,7 @@
 //! managed production, Live replay or original-ROM acceptance.
 use super::*;
 use crate::{
-    family_model::{Asset, Manifest},
+    family_model::Asset,
     translation_execution::{self as supervisor, Contract, InstalledFile, tests::Project},
 };
 use std::{
@@ -15,7 +15,7 @@ use translation_execution::model::{ClaimLineage, Disposition, State, View};
 const OWNED: [&str; 3] = [
     "crates/port/src/pause_equipment_render.rs",
     "crates/port/tests/pause_equipment_render.rs",
-    "tools/port/pause-equipment-render.toml",
+    "tools/port/pause-equipment-render.smf",
 ];
 const MISSING_AUXILIARY: &str =
     "pause equipment requires auxiliary direct animation; plain Native-family acceptance is insufficient";
@@ -53,7 +53,7 @@ fn fixture() -> Result<Project> {
     let contents: [(&str, &[u8]); 6] = [
         (OWNED[0], include_bytes!("../../port/src/pause_equipment_render.rs")),
         (OWNED[1], include_bytes!("../../port/tests/pause_equipment_render.rs")),
-        (OWNED[2], include_bytes!("../../../tools/port/pause-equipment-render.toml")),
+        (OWNED[2], include_bytes!("../../../tools/port/pause-equipment-render.smf")),
         ("Cargo.toml", include_bytes!("../../../Cargo.toml")),
         ("Cargo.lock", include_bytes!("../../../Cargo.lock")),
         ("crates/port/Cargo.toml", include_bytes!("../../port/Cargo.toml")),
@@ -119,7 +119,7 @@ fn fixture() -> Result<Project> {
     let requirement = write(&project.root.join("original-requirements.json"), &LIMITATION)?;
     let catalog = project.root.join("catalog.toml");
     fs::write(&catalog, "[families]\npause-equipment-render = \"family\"\n[profiles]\n")?;
-    let manifest: Manifest = toml::from_str(std::str::from_utf8(contents[2].1)?)?;
+    let manifest = crate::fixture_format::decode(contents[2].1.to_vec())?;
     let coverage: BTreeMap<String, Vec<String>> = manifest
         .routines
         .iter()

@@ -702,7 +702,7 @@ fn coverage(checkout: &Path, proof: &supervisor::Installation) -> Result<Catalog
         let reason = if entry.kind != "family" || entry.prepare.is_some() {
             Some("The confined plain-family recipe does not support this registered dispatcher/preparation contract.")
         } else {
-            let manifest: crate::family_model::Manifest = crate::family::object(&checkout.join(&entry.manifest))?;
+            let manifest = crate::fixture_format::read(&checkout.join(&entry.manifest))?;
             if crate::family::dispatcher(&manifest)
                 || manifest.projectile_host
                 || manifest.projectile_rendering

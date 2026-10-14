@@ -1,6 +1,6 @@
 //! Deterministic PLM scripts and valid canonical-WRAM fixture domains.
+use crate::digest;
 use crate::family_model::{Asset, Case, Manifest, PlmGeneration, Routine, Write};
-use crate::{atomic_toml, digest};
 use anyhow::{Context, Result, ensure};
 use std::{fs, path::Path};
 
@@ -21,10 +21,10 @@ fn slot(seed: usize) -> usize {
     [0, 2, 38, 78][seed % 4]
 }
 fn fixture(name: String, a: usize, b: usize, writes: Vec<Write>) -> Case {
-    Case { name: (name).to_owned(), a: (a) as i64, b: (b) as i64, writes, ..Default::default() }
+    Case { name: (name).to_owned(), a: (a) as i64, b: (b) as i64, writes: writes.into(), ..Default::default() }
 }
 fn returning(name: String, a: Option<usize>, writes: Vec<Write>) -> Case {
-    let mut v = Case { name: (name).to_owned(), writes, expected_return: Some(0), ..Default::default() };
+    let mut v = Case { name: (name).to_owned(), writes: writes.into(), expected_return: Some(0), ..Default::default() };
     if let Some(a) = a {
         v.a = a as i64;
     }
@@ -40,9 +40,9 @@ pub fn generate(checkout: &Path, output: &Path, manifest_path: Option<&Path>) ->
     let path = output.join("plm-instructions-synthetic.sfc");
     let (manifest, rom) = generated_contents(checkout, &path)?;
     fs::write(&path, rom)?;
-    let destination = manifest_path.map(Path::to_path_buf).unwrap_or(output.join("plm-instructions.toml"));
+    let destination = manifest_path.map(Path::to_path_buf).unwrap_or(output.join("plm-instructions.smf"));
     fs::create_dir_all(destination.parent().context("manifest parent missing")?)?;
-    atomic_toml(&destination, &manifest)?;
+    crate::fixture_format::write(&destination, &manifest)?;
     Ok(PlmGeneration { manifest: fs::canonicalize(destination)?, rom: path, rom_sha256: manifest.rom.unwrap().sha256 })
 }
 
@@ -420,7 +420,7 @@ mod tests {
             .join(format!("sm-plm-fixtures-test-{}", SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()));
         let generated = generate(checkout, &temporary, None).unwrap();
         assert_eq!(generated.rom_sha256, "66891cd1701badac52f5f1ac65a5e71c9b6c33c5c0497fa8b166111f8e69c457");
-        let manifest: Manifest = toml::from_str(&fs::read_to_string(generated.manifest).unwrap()).unwrap();
+        let manifest = crate::fixture_format::read(&generated.manifest).unwrap();
         assert_eq!(manifest.routines.iter().map(|r| r.cases.len()).sum::<usize>(), 1444);
         assert_eq!(manifest.routines.len(), 6);
         for routine in &manifest.routines {

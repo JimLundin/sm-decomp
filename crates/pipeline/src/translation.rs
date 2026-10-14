@@ -665,7 +665,7 @@ fn validate_scope_bounded(checkout: &Path, path: &Path) -> Result<Job> {
             "translation writes must name gameplay source, tests or family matrices"
         );
         ensure!(
-            target.extension().is_some_and(|e| e == "rs" || e == "toml"),
+            target.extension().is_some_and(|e| e == "rs" || e == "smf"),
             "writable ownership requires exact source/test/manifest files"
         );
         for ancestor in checkout.join(target).ancestors().take_while(|p| *p != checkout) {

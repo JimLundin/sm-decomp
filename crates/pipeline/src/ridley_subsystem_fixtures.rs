@@ -1,7 +1,7 @@
 //! One deterministic subsystem batch: lifecycle, scripts, tail and frame chains.
 use crate::digest;
 use crate::family_model::{Asset, Case, Manifest, Routine, Write};
-use anyhow::{Context, Result, ensure};
+use anyhow::{Result, ensure};
 use std::path::Path;
 
 const ROM_SHA256: &str = "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72";
@@ -86,36 +86,10 @@ fn routine(symbol: &str, args: &[&str], returns: &str) -> Routine {
 fn case(name: String, area: u16, orientation: u16, updates: &[Write]) -> Case {
     let mut writes = base(area, orientation);
     writes.extend_from_slice(updates);
-    Case { name, writes, host_words: Some(host()), ..Default::default() }
+    Case { name, writes: writes.into(), host_words: Some(host()), ..Default::default() }
 }
 fn add(routines: &mut [Routine], symbol: &str, case: Case) {
     routines.iter_mut().find(|r| r.symbol == symbol).expect("registered subsystem entry").cases.push(case);
-}
-
-fn manifest_toml(manifest: &Manifest) -> Result<String> {
-    let mut document = toml::to_string_pretty(manifest)?.parse::<toml_edit::DocumentMut>()?;
-    for routine in document["routines"].as_array_of_tables_mut().expect("serialized routines").iter_mut() {
-        for case in routine["cases"].as_array_of_tables_mut().expect("serialized cases").iter_mut() {
-            let Some(writes) = case.get("writes").and_then(toml_edit::Item::as_array_of_tables) else { continue };
-            let mut array = toml_edit::Array::new();
-            for write in writes {
-                let mut record = toml_edit::InlineTable::new();
-                for (key, item) in write {
-                    let mut value = item.as_value().expect("scalar fixture write").clone();
-                    value.decor_mut().clear();
-                    if let Some(data) = value.as_array_mut() {
-                        data.fmt();
-                    }
-                    record.insert(key, value);
-                }
-                record.fmt();
-                array.push(record);
-            }
-            array.fmt();
-            case["writes"] = toml_edit::value(array);
-        }
-    }
-    Ok(document.to_string())
 }
 
 pub fn generate(checkout: &Path, rom: &Path, output: &Path) -> Result<Manifest> {
@@ -345,24 +319,7 @@ pub fn generate(checkout: &Path, rom: &Path, output: &Path) -> Result<Manifest> 
         )),
         ..Default::default()
     };
-    // Keep fixture writes reviewable without a million repetitive table lines.
-    // The typed round trip must match before this manifest is published.
-    let text = manifest_toml(&manifest)?;
-    ensure!(toml::from_str::<Manifest>(&text)? == manifest, "compact Ridley manifest round trip differs");
-    let pending = output.with_extension(format!("pending-{}", std::process::id()));
-    let result = (|| -> Result<()> {
-        use std::io::Write;
-        let mut file = std::fs::OpenOptions::new().create_new(true).write(true).open(&pending)?;
-        file.write_all(text.as_bytes())?;
-        file.sync_all()?;
-        std::fs::rename(&pending, output)?;
-        std::fs::File::open(output.parent().context("Ridley manifest parent missing")?)?.sync_all()?;
-        Ok(())
-    })();
-    if result.is_err() {
-        let _ = std::fs::remove_file(&pending);
-    }
-    result?;
+    crate::fixture_format::write(output, &manifest)?;
     ensure!(checkout.join(&manifest.rust_module).is_file(), "whole Ridley maintained module missing");
     Ok(manifest)
 }
@@ -379,13 +336,20 @@ mod tests {
     }
 
     #[test]
-    fn compact_writes_preserve_typed_fixture_contract() {
+    fn binary_spans_preserve_ridley_input_state() {
         let mut entry = routine("Ridley_Main", &[], "void");
         entry.cases.push(case("main".into(), 2, 2, &[write(0x330, 0xffff)]));
         let manifest = Manifest { routines: vec![entry], ..Default::default() };
-        let text = manifest_toml(&manifest).unwrap();
-        assert!(!text.contains("[[routines.cases.writes]]"));
-        assert!(text.contains("offset = 816"));
-        assert_eq!(toml::from_str::<Manifest>(&text).unwrap(), manifest);
+        let binary = crate::fixture_format::encode(&manifest).unwrap();
+        let decoded = crate::fixture_format::decode(binary.clone()).unwrap();
+        let state = |m: &Manifest| {
+            let mut bytes = vec![0; 0x20000];
+            for write in &m.routines[0].cases[0].writes {
+                bytes[write.offset..write.offset + write.data.len()].copy_from_slice(write.data);
+            }
+            bytes
+        };
+        assert_eq!(state(&decoded), state(&manifest));
+        assert_eq!(crate::fixture_format::encode(&decoded).unwrap(), binary);
     }
 }

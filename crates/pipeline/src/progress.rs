@@ -243,18 +243,6 @@ struct Pin {
     revision: String,
     sha256: String,
 }
-#[derive(Deserialize)]
-struct Declaration {
-    family: Option<String>,
-    #[serde(default)]
-    routines: Vec<DeclaredRoutine>,
-}
-#[derive(Deserialize)]
-struct DeclaredRoutine {
-    symbol: String,
-}
-
-mod declarations;
 mod history;
 mod source;
 
@@ -575,12 +563,12 @@ fn add_declarations(root: &Path, routines: &mut [Routine], notices: &mut Vec<Str
     let known = routines.iter().map(|r| r.symbol.clone()).collect::<BTreeSet<_>>();
     let mut declarations: BTreeMap<String, Vec<String>> = BTreeMap::new();
     for path in paths {
-        if path.extension().is_none_or(|v| v != "toml") || path == root.join(INVENTORY) {
+        if path.extension().is_none_or(|v| v != crate::fixture_format::EXTENSION) {
             continue;
         }
-        let declaration = declarations::parse(&bounded_text(&path, MAX_METADATA)?)
+        let declaration = crate::fixture_format::read(&path)
             .with_context(|| format!("invalid declaration manifest {}", path.display()))?;
-        if declaration.family.is_none() {
+        if declaration.family.is_empty() {
             continue;
         }
         let name = path.strip_prefix(root)?.to_string_lossy().into_owned();

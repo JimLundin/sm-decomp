@@ -199,7 +199,7 @@ fn authenticate_batches(checkout: &Path, evidence: &[Artifact], required: Option
                 verdict: verdict.clone(),
             })?;
             ensure!(authenticated.status == "offline-verified", "family evidence did not authenticate");
-            let declared: family_model::Manifest = pipeline_model::read(&manifest)?;
+            let declared = crate::fixture_format::read(&manifest)?;
             ensure!(authenticated.family == declared.family, "batch verdict verifies a different Offline family");
             if entry.kind != "plm-instructions" {
                 let identity = authenticated

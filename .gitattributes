@@ -10,3 +10,5 @@
 .scratch/decomp-parallel/preparation/recovery-docs-20261013/proposed-docs.patch -whitespace
 .scratch/decomp-integration-retry/evidence/*.stdout -whitespace
 .scratch/decomp-integration-retry/handoff.toml -whitespace
+
+*.smf -text diff=smfixture

@@ -235,7 +235,9 @@ fn normalize(checkout: &Path, path: &Path) -> PathBuf {
 }
 
 fn shared(path: &Path) -> bool {
-    if path.starts_with("tools/port") && path.extension().is_some_and(|extension| extension == "toml") {
+    if path.starts_with("tools/port")
+        && path.extension().is_some_and(|extension| extension == "toml" || extension == "smf")
+    {
         return path == Path::new("tools/port/batch.toml");
     }
     path.starts_with("tools")
@@ -470,9 +472,9 @@ fn select_changed(
     let mut catalog_inputs = BTreeMap::new();
     let config = batch::catalog_using(checkout, |path| {
         budget.entry()?;
-        let (text, hash) = budget.text(path)?;
+        let (bytes, hash) = budget.read(path, true)?;
         catalog_inputs.insert(normalize(checkout, path), hash);
-        Ok(text)
+        Ok(bytes)
     })?;
     ensure!(catalog_hash == budget.hash(&catalog_path)?, "Offline family catalog changed during selection");
     let mut discovery = Discovery::new(checkout, budget).ok();
@@ -516,8 +518,8 @@ fn select_changed(
             let manifest_path = normalize(checkout, &item.manifest);
             let path = checkout.join(&manifest_path);
             ensure!(!path.is_symlink(), "manifest is a symlink");
-            let (text, manifest_hash) = budget.text(&path)?;
-            let manifest: family_model::Manifest = toml::from_str(&text)?;
+            let (bytes, manifest_hash) = budget.read(&path, true)?;
+            let manifest = crate::fixture_format::decode(bytes)?;
             ensure!(manifest_hash == budget.hash(&path)?, "Offline family manifest changed during selection");
             report.planning_inputs.insert(manifest_path.clone(), manifest_hash);
             let mut dependencies = discovery
@@ -616,8 +618,13 @@ mod tests {
         }
         for name in ["a", "b", "unknown"] {
             fs::write(
-                root.join(format!("tools/port/{name}.toml")),
-                format!("family='{name}'\nbank='sm_80.c'\nrust_module='crates/port/src/{name}.rs'\nroutines=[]\n"),
+                root.join(format!("tools/port/{name}.smf")),
+                crate::fixture_format::encode(&family_model::Manifest {
+                    family: name.into(),
+                    bank: "sm_80.c".into(),
+                    rust_module: format!("crates/port/src/{name}.rs"),
+                    ..Default::default()
+                })?,
             )?;
         }
         let now = u64::try_from(SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis())?;
@@ -628,7 +635,7 @@ mod tests {
         assert_eq!(report.excluded[0].family, "a");
         assert_eq!(report.excluded[0].reasons[0].code, "unaffected");
         assert_eq!(report.selected[1].reasons[0].code, "uncertain-inputs");
-        assert!(report.planning_inputs.contains_key(Path::new("tools/port/a.toml")));
+        assert!(report.planning_inputs.contains_key(Path::new("tools/port/a.smf")));
         assert_eq!(report.changed_paths, [PathBuf::from("crates/port/src/helper.rs")]);
         assert!(report.changed_since.is_none());
         assert!(!root.join("out").exists());
@@ -643,7 +650,7 @@ mod tests {
         fs::create_dir_all(root.join("tools/port"))?;
         fs::write(root.join("tools/port/batch.toml"), "[families]\na='family'\n[profiles]\n")?;
         fs::write(
-            root.join("tools/port/a.toml"),
+            root.join("tools/port/a.smf"),
             format!("family='a'\nrust_module='crates/port/src/a.rs'\nroutines=[]\n#{}", "x".repeat(8192)),
         )?;
         let now = u64::try_from(SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis())?;

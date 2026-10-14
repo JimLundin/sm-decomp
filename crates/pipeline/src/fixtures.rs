@@ -1,6 +1,6 @@
 //! Deterministic whole-WRAM fixture domains for actual C/Rust comparison.
-use crate::family_model::{Case, Generation, Manifest, Routine, Write};
-use crate::{atomic_toml, family};
+use crate::family;
+use crate::family_model::{Case, Generation, Manifest, Routine, Write, Writes};
 use anyhow::{Result, ensure};
 use std::{fs, path::Path};
 #[path = "fixtures/host.rs"]
@@ -11,7 +11,7 @@ mod projectiles;
 mod sequences;
 pub use sequences::{SequenceRequest, generate_sequence};
 fn load(checkout: &Path, name: &str) -> Result<Manifest> {
-    Ok(toml::from_str(&fs::read_to_string(checkout.join(format!("tools/port/{name}.toml")))?)?)
+    crate::fixture_format::read(&checkout.join(format!("tools/port/{name}.smf")))
 }
 
 // These bounded domains are maintained directly as typed case matrices. Keeping
@@ -87,7 +87,7 @@ fn declared(checkout: &Path, name: &str) -> Result<Manifest> {
     }
     Ok(manifest)
 }
-fn words(values: impl IntoIterator<Item = (usize, i64)>) -> Vec<Write> {
+fn words(values: impl IntoIterator<Item = (usize, i64)>) -> Writes {
     values
         .into_iter()
         .map(|(offset, value)| Write {
@@ -1018,7 +1018,7 @@ fn crawler(checkout: &Path) -> Result<Manifest> {
                 name: (format!("{name}-{i}")).to_owned(),
                 a: (i * 64) as i64,
                 b: (0xa3e600 + 2 * i) as i64,
-                writes: vec![Write { offset: 0xf78 + i * 64 + 0x2e, data: vec![0xa3, 0] }],
+                writes: vec![Write { offset: 0xf78 + i * 64 + 0x2e, data: vec![0xa3, 0] }].into(),
                 ..Default::default()
             })
             .collect::<Vec<_>>();
@@ -1081,7 +1081,7 @@ pub fn generate(checkout: &Path, name: &str, output: &Path) -> Result<Generation
         _ => anyhow::bail!("unknown native fixture generator: {name}"),
     };
     ensure!(manifest.family == name, "fixture family identity differs");
-    atomic_toml(output, &manifest)?;
+    crate::fixture_format::write(output, &manifest)?;
     Ok(Generation {
         manifest: output.into(),
         family: (name).to_owned(),
@@ -1098,13 +1098,10 @@ mod tests {
         let mut count = 0;
         for entry in fs::read_dir(checkout.join("tools/port")).unwrap() {
             let path = entry.unwrap().path();
-            if path.extension().and_then(|s| s.to_str()) != Some("toml")
-                || matches!(path.file_stem().and_then(|s| s.to_str()), Some("batch" | "source-inventory"))
-            {
+            if path.extension().and_then(|s| s.to_str()) != Some("smf") {
                 continue;
             }
-            let manifest: Manifest = toml::from_str(&fs::read_to_string(&path).unwrap())
-                .unwrap_or_else(|e| panic!("{}: {e}", path.display()));
+            let manifest = crate::fixture_format::read(&path).unwrap_or_else(|e| panic!("{}: {e}", path.display()));
             assert!(!manifest.family.is_empty(), "{}: missing family", path.display());
             assert!(!manifest.routines.is_empty() || !manifest.cases.is_empty(), "{}: empty cases", path.display());
             for routine in &manifest.routines {
@@ -1169,9 +1166,9 @@ mod tests {
             "projectile-pickup-collection",
             "enemy-crawler",
         ] {
-            let output = directory.join(format!("{name}.toml"));
+            let output = directory.join(format!("{name}.smf"));
             generate(checkout, name, &output).unwrap();
-            let actual: Manifest = toml::from_str(&fs::read_to_string(output).unwrap()).unwrap();
+            let actual = crate::fixture_format::read(&output).unwrap();
             let mut expected = load(checkout, name).unwrap();
             if name == "ceres-pad" {
                 // Compare case declarations by name; the legacy pad loop ordered timer first.

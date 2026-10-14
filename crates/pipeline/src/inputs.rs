@@ -33,7 +33,7 @@ pub(crate) fn captured_ridley_event_digest(path: &Path) -> Result<String> {
 /// captured declaration, and its bytes must equal the reviewed event asset.
 pub(crate) fn artifact_digest(run: &Path, path: &Path) -> Result<String> {
     if path == run.join(CAPTURED_RIDLEY_SNAPSHOT) {
-        let manifest = crate::family::object(&run.join("manifest.toml"))?;
+        let manifest = crate::fixture_format::read(&run.join("manifest.smf"))?;
         ensure!(captured_ridley_manifest(&manifest), "large Ridley snapshot has no reviewed declaration");
         captured_ridley_event_digest(path)
     } else {

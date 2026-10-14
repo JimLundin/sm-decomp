@@ -12,7 +12,7 @@ const EFFORT: &str = "managed-native-diagnostic";
 const COORDINATOR: &str = "managed-diagnostic-integrator";
 const ORIGINAL_AGENT: &str = "01234567-89ab-cdef-0123-456789abcdef";
 const FAMILY: &str = "managed-diagnostic";
-const MANIFEST: &str = "tools/port/managed-diagnostic.toml";
+const MANIFEST: &str = "tools/port/managed-diagnostic.smf";
 const CANDIDATE: &str = "crates/port/src/example.rs";
 const FENCE: &str = ".scratch/decomp-parallel/deterministic-execution.json";
 const LIMITATION: &str = "Disposable diagnostic Observed/Helper scope only. Synthetic stopped original worker observation; no production liveness, shipped gameplay, original-ROM parity or Live replay acceptance.";
@@ -208,7 +208,7 @@ impl ManagedProject {
                 .collect(),
             ..Default::default()
         };
-        put(&owner.join(MANIFEST), toml::to_string(&manifest)?)?;
+        put(&owner.join(MANIFEST), crate::fixture_format::encode(&manifest)?)?;
         put(&owner.join("tools/port/batch.toml"), format!("[families]\n{FAMILY} = \"family\"\n[profiles]\n"))?;
         let reviewed_inventory: toml::Value = toml::from_str(&fs::read_to_string(owner.join("inventory.toml"))?)?;
         crate::source_inventory::run(&owner, &owner.join("deps/snesrev-sm"), &owner.join("inventory.toml"))?;

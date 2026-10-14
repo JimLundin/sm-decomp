@@ -861,7 +861,7 @@ fn pickups(checkout: &Path) -> Result<Manifest> {
                 writes: w
                     .into_iter()
                     .chain([Write { offset: 0x198d_usize, data: vec![0, 128].into_iter().map(|v| v as u8).collect() }])
-                    .collect::<Vec<_>>(),
+                    .collect(),
                 ..Default::default()
             });
         }

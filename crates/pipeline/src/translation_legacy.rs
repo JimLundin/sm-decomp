@@ -54,8 +54,8 @@ impl LegacyKind {
                 "crates/port/src/game_host.rs",
                 "crates/port/src/lib.rs",
                 "crates/port/tests/game_host.rs",
-                "tools/port/game-host-projectile.toml",
-                "tools/port/game-host-room-scroll.toml",
+                "tools/port/game-host-projectile.smf",
+                "tools/port/game-host-room-scroll.smf",
             ],
         }
         .into_iter()

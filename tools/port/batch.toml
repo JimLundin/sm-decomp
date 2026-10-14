@@ -31,44 +31,44 @@ system = "family"
 [families.projectile-script-leaves]
 kind = "dispatcher"
 live = "dispatcher"
-manifest = "tools/port/projectile-script-leaves.toml"
+manifest = "tools/port/projectile-script-leaves.smf"
 
 [families.projectile-trails]
 kind = "family"
 live = "family"
-manifest = "tools/port/projectile-trails.toml"
+manifest = "tools/port/projectile-trails.smf"
 
 [families.camera-scroll]
 kind = "family"
 live = "family"
-manifest = "tools/port/camera-scroll.toml"
+manifest = "tools/port/camera-scroll.smf"
 
 [families.room-scroll]
 kind = "family"
 live = "family"
-manifest = "tools/port/room-scroll.toml"
+manifest = "tools/port/room-scroll.smf"
 
 [families.observed-ridley-instructions]
 kind = "family"
 live = "family"
-manifest = "tools/port/observed-ridley-instructions.toml"
+manifest = "tools/port/observed-ridley-instructions.smf"
 
 [families.samus-projectile-frame]
 kind = "power-bomb"
 live = "family"
-manifest = "tools/port/samus-projectile-frame.toml"
+manifest = "tools/port/samus-projectile-frame.smf"
 
 [families.ridley-subsystem]
 kind = "ridley-subsystem"
-manifest = "tools/port/ridley-subsystem.toml"
+manifest = "tools/port/ridley-subsystem.smf"
 
 [families.game-host-projectile]
 kind = "callback"
-manifest = "tools/port/game-host-projectile.toml"
+manifest = "tools/port/game-host-projectile.smf"
 
 [families.game-host-room-scroll]
 kind = "callback"
-manifest = "tools/port/game-host-room-scroll.toml"
+manifest = "tools/port/game-host-room-scroll.smf"
 
 [profiles]
 translated-subsystems = ["projectile-trails", "camera-scroll", "room-scroll", "observed-ridley-instructions", "samus-projectile-frame"]

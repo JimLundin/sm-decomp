@@ -32,6 +32,7 @@ mod enemy_instruction_inventory;
 mod family;
 mod family_model;
 mod fixture_execution;
+mod fixture_format;
 mod fixtures;
 mod hdma_probe;
 mod inputs;
@@ -325,6 +326,7 @@ fn main() -> Result<()> {
     // have no proc filesystem and never initialize the controller's ambient
     // executable identity or enter its broader command dispatcher.
     match args.first().map(String::as_str) {
+        Some("fixture") => return fixture_format::cli(&args[1..]),
         Some("translation-cargo-producer") => return translation_cargo::producer_cli(&args[1..]),
         Some("translation-cargo-environment-producer") => {
             return translation_cargo::environment_producer_cli(&args[1..]);
@@ -462,7 +464,7 @@ fn main() -> Result<()> {
         Some("ridley-subsystem-fixtures") => {
             let mut checkout = std::env::current_dir()?;
             let mut rom = checkout.join("rom/sm.sfc");
-            let mut output = checkout.join("tools/port/ridley-subsystem.toml");
+            let mut output = checkout.join("tools/port/ridley-subsystem.smf");
             for pair in args[1..].chunks(2) {
                 ensure!(pair.len() == 2, "Ridley fixture option value missing");
                 match pair[0].as_str() {

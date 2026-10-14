@@ -226,12 +226,7 @@ pub(crate) fn prepare_case_with(case: &Case, directory: &Path, arg_types: &[Stri
             resume,
         )?;
     }
-    if resume && directory.join("case.toml").exists() {
-        ensure!(object::<Case>(&directory.join("case.toml"))? == *case, "resumed fixture declaration changed");
-        Ok(())
-    } else {
-        atomic_toml(&directory.join("case.toml"), case)
-    }
+    write_build_input(&directory.join("case.sha256"), crate::fixture_format::case_identity(case)?.as_bytes(), resume)
 }
 
 pub(crate) fn write_build_input(path: &Path, bytes: &[u8], immutable: bool) -> Result<()> {
@@ -665,6 +660,9 @@ fn build_with(
     let mut harness = BTreeMap::new();
     for (name, compiled) in [
         ("family.rs", include_str!("family.rs")),
+        ("family_model.rs", include_str!("family_model.rs")),
+        ("fixture_format.rs", include_str!("fixture_format.rs")),
+        ("fixture_writes.rs", include_str!("fixture_writes.rs")),
         ("bounded_inputs.rs", include_str!("bounded_inputs.rs")),
         ("batch.rs", include_str!("batch.rs")),
         ("family_header.c", include_str!("family_header.c")),
@@ -737,11 +735,11 @@ pub(crate) fn ordered_tasks(manifest: &Manifest) -> Result<Vec<(&Routine, &Case,
     }
     if let Some(order) = &manifest.case_order {
         ensure!(order.len() == tasks.len(), "case order must include every unique case exactly once");
-        let original = tasks;
-        tasks = Vec::new();
+        let original: BTreeMap<_, _> = tasks.into_iter().map(|task| (task.1.name.as_str(), task)).collect();
+        tasks = Vec::with_capacity(order.len());
         let mut seen = BTreeSet::new();
         for name in order {
-            let task = original.iter().find(|(_, case, _)| &case.name == name).context("unknown ordered case")?;
+            let task = original.get(name.as_str()).context("unknown ordered case")?;
             ensure!(seen.insert(name.as_str()), "duplicate ordered case");
             tasks.push(*task);
         }
@@ -1059,8 +1057,8 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
     let result = (|| -> Result<()> {
         let manifest_path = source_path(&checkout, request.manifest.to_str().context("non-UTF8 manifest")?);
         let manifest_bytes = bounded::read(&manifest_path)?;
-        fs::write(run.join("manifest.toml"), &manifest_bytes)?;
-        let mut manifest: Manifest = toml::from_str(std::str::from_utf8(&manifest_bytes)?)?;
+        fs::write(run.join(crate::fixture_format::RUN_MANIFEST), &manifest_bytes)?;
+        let mut manifest = crate::fixture_format::decode(manifest_bytes)?;
         let callbacks = request.adapter == "callback" || request.adapter == "power-bomb";
         let plm = request.adapter == "plm";
         let ridley = request.adapter == "ridley-subsystem";
@@ -1102,7 +1100,7 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
             build(&request, &manifest, &checkout, &source, &run)?
         });
         verdict.implementation.as_mut().unwrap().manifest =
-            Some(Asset { file: fs::canonicalize(&manifest_path)?, sha256: digest(&run.join("manifest.toml"))? });
+            Some(Asset { file: fs::canonicalize(&manifest_path)?, sha256: digest(&run.join("manifest.smf"))? });
         atomic_toml(
             &run.join("manifest-input.toml"),
             verdict.implementation.as_ref().unwrap().manifest.as_ref().unwrap(),
@@ -1144,7 +1142,7 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
         }
         ensure!(errors.is_empty(), "{}", errors.join("; "));
         ensure!(
-            digest(&manifest_path)? == digest(&run.join("manifest.toml"))?,
+            digest(&manifest_path)? == digest(&run.join("manifest.smf"))?,
             "family manifest changed during verification"
         );
         verdict.status = "offline-verified".into();
@@ -1221,11 +1219,11 @@ fn authenticate_with_source_bounded(
     inventory_bounded(&run, &run, &mut actual, 0, limits)?;
     ensure!(actual == verdict.artifacts, "family artifact inventory differs");
     for required in
-        ["manifest.toml", "candidate.rs", "memory.rs", "oracle.c", "wrapper.rs", "compiler.d", "pipeline-inputs.toml"]
+        ["manifest.smf", "candidate.rs", "memory.rs", "oracle.c", "wrapper.rs", "compiler.d", "pipeline-inputs.toml"]
     {
         ensure!(actual.contains_key(required), "family artifact missing: {required}");
     }
-    let mut manifest: Manifest = object(&run.join("manifest.toml"))?;
+    let mut manifest = crate::fixture_format::read(&run.join(crate::fixture_format::RUN_MANIFEST))?;
     ensure!(manifest.family == verdict.family, "family identity differs");
     let implementation = verdict.implementation.as_ref().context("missing family implementation")?;
     ensure!(
@@ -1286,7 +1284,7 @@ fn authenticate_with_source_bounded(
         .unwrap_or_else(|_| manifest_identity.file.clone());
     ensure!(
         digest(&manifest_source)? == manifest_identity.sha256
-            && digest(&run.join("manifest.toml"))? == manifest_identity.sha256,
+            && digest(&run.join("manifest.smf"))? == manifest_identity.sha256,
         "family manifest changed"
     );
     let callbacks = implementation.dependency_contract == "rust-callback-v2";
@@ -1370,7 +1368,7 @@ fn authenticate_with_source_bounded(
             "plm_fixtures.rs",
         ]
     };
-    for required in required_harness {
+    for required in required_harness.into_iter().chain(["family_model.rs", "fixture_format.rs", "fixture_writes.rs"]) {
         ensure!(
             implementation.harness_sources.contains_key(&format!("crates/pipeline/src/{required}")),
             "family input missing: {required}"
@@ -1494,6 +1492,10 @@ fn authenticate_with_source_bounded(
         let fixture = expected.get(&key).context("unexpected family coverage")?;
         ensure!(observed.insert(key), "duplicate observed case");
         let directory = run.join(key.1);
+        ensure!(
+            bounded::text(directory.join("case.sha256"))? == crate::fixture_format::case_identity(fixture)?,
+            "retained fixture declaration identity differs"
+        );
         if ridley {
             let checked = crate::ridley_subsystem_adapter::check(&directory, fixture)?;
             ensure!(
@@ -1707,7 +1709,7 @@ mod host_tests {
         let fixture = Case {
             name: "next".into(),
             continue_from: Some("first".into()),
-            writes: vec![Write { offset: 42, data: vec![99] }],
+            writes: vec![Write { offset: 42, data: vec![99] }].into(),
             ..Default::default()
         };
         prepare_case(&fixture, &directory.join("next"), &[]).unwrap();

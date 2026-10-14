@@ -1631,9 +1631,9 @@ impl ExecutionAdapter for Adapter {
             if let Prepared::Native { families } = &prepared {
                 for family in families {
                     crate::inputs::bounded::check()?;
-                    let bank =
-                        crate::inputs::bounded::text(family.pinned_source.join("src").join(&family.manifest.bank))?;
-                    for routine in &family.manifest.routines {
+                    let manifest = family.fixture_manifest(&candidate)?;
+                    let bank = crate::inputs::bounded::text(family.pinned_source.join("src").join(&manifest.bank))?;
+                    for routine in &manifest.routines {
                         crate::inputs::bounded::check()?;
                         let remaining = self.installed.max_context_bytes.saturating_sub(context_text.len() as u64);
                         let definition =

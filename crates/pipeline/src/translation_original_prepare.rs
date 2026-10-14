@@ -152,7 +152,7 @@ fn snapshot(config: &Config, claim: &OriginalClaim, output: &Path) -> Result<ori
     let reference = continuation::copy(&config.direct_animation.path, &output.join(plan), MAX_RECORD)?;
     ensure!(reference.sha256 == config.direct_animation.sha256, "direct animation review changed");
     files.insert(plan.into(), reference.sha256);
-    if !output.join(".scratch/translation-native/plm-instructions/manifest.toml").exists() {
+    if !output.join(".scratch/translation-native/plm-instructions/manifest.smf").exists() {
         native::prepare_generated_plm(output, &output.join(".scratch/translation-native/plm-instructions"))?;
     }
     let mut generated = BTreeSet::new();

@@ -5,7 +5,7 @@ const SLOTS: [usize; 4] = [0, 2, 16, 34];
 fn pool() -> Vec<(usize, i64)> {
     (0..36).step_by(2).map(|s| (0x1997 + s, 1)).collect()
 }
-fn host_case(name: String, a: usize, b: usize, writes: Vec<Write>, h: &[i64]) -> Case {
+fn host_case(name: String, a: usize, b: usize, writes: Writes, h: &[i64]) -> Case {
     Case {
         name: (name).to_owned(),
         a: (a) as i64,
@@ -15,7 +15,7 @@ fn host_case(name: String, a: usize, b: usize, writes: Vec<Write>, h: &[i64]) ->
         ..Default::default()
     }
 }
-fn frame(name: String, writes: Vec<Write>, h: &[i64]) -> Case {
+fn frame(name: String, writes: Writes, h: &[i64]) -> Case {
     Case {
         name: (name).to_owned(),
         writes,
@@ -409,7 +409,7 @@ fn ridley(checkout: &Path) -> Result<Manifest> {
         frames.push(frame(format!("frame-{i}"), words(v), &h));
     }
     // Keep targeted controls distinct from the broad matrix.
-    let mut append = |name: String, k: usize, w: Vec<Write>| {
+    let mut append = |name: String, k: usize, w: Writes| {
         pre.push(host_case(name.clone(), k, 0x940e, w.clone(), &h));
         frames.push(frame(format!("frame-{name}"), w, &h));
     };
@@ -525,7 +525,7 @@ fn drops(checkout: &Path) -> Result<Manifest> {
             ));
         }
     }
-    let mut append = |name: String, k: usize, pointer: usize, w: Vec<Write>| {
+    let mut append = |name: String, k: usize, pointer: usize, w: Writes| {
         direct.push(host_case(name.clone(), k, 0x860000 | pointer, w.clone(), &h));
         frames.push(frame(
             format!("frame-{name}"),

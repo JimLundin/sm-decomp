@@ -1,6 +1,9 @@
 //! Typed fixture and offline family evidence contracts.
 use serde::{Deserialize, Serialize};
 use std::{collections::BTreeMap, path::PathBuf};
+#[path = "fixture_writes.rs"]
+mod writes;
+pub(crate) use writes::Writes;
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Write {
@@ -14,7 +17,7 @@ pub struct Case {
     pub a: i64,
     pub b: i64,
     pub fill: Option<u8>,
-    pub writes: Vec<Write>,
+    pub writes: Writes,
     pub host_words: Option<Vec<u16>>,
     pub continue_from: Option<String>,
     pub expected_return: Option<u64>,

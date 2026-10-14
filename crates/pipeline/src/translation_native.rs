@@ -89,7 +89,10 @@ pub(crate) struct NativeContract {
 #[serde(deny_unknown_fields)]
 pub(crate) struct PreparedNative {
     pub contract: NativeContract,
-    pub manifest: Manifest,
+    /// Reopened from the contract's authenticated binary input for each operation.
+    /// Persisting this cache would expand shared fixture payloads back into text.
+    #[serde(skip)]
+    manifest: Manifest,
     pub source: Source,
     pub pinned_source: PathBuf,
     pub candidate_path: String,
@@ -381,6 +384,9 @@ const HARNESS: &[&str] = &[
     "build_cache.rs",
     "family.rs",
     "family_model.rs",
+    "fixture_format.rs",
+    "fixture_writes.rs",
+    "fixture_cli.rs",
     "translation_native.rs",
     "source_inventory.rs",
     "batch.rs",
@@ -441,7 +447,7 @@ fn contract_for_family_bounded(
     let checkout = fs::canonicalize(checkout)?;
     ensure!(relative(manifest), "registered native manifest must be relative");
     let path = file(&checkout.join(manifest))?;
-    let declared: Manifest = family::object(&path)?;
+    let declared = crate::fixture_format::read(&path)?;
     let recipe = recipes::for_family(&checkout, manifest, &declared)?;
     contract_for_declared(
         &checkout,
@@ -569,7 +575,7 @@ fn provenance(
                 prior.family == contract.family && prior.source.as_ref() == Some(source),
                 "offline provenance family/source differs"
             );
-            let prior_manifest: Manifest = family::object(&prior.run.join("manifest.toml"))?;
+            let prior_manifest = crate::fixture_format::read(&prior.run.join("manifest.smf"))?;
             ensure!(
                 coverage(&prior_manifest)? == contract.coverage && prior_manifest == *manifest,
                 "offline provenance verification declarations differ"
@@ -660,7 +666,7 @@ fn prepare_bounded_with_catalog(
     let pinned_source = fs::canonicalize(pinned_source)?;
     ensure!(relative(&contract.manifest.file), "native manifest is not registered relative input");
     let manifest_path = check_asset(&checkout, &contract.manifest)?;
-    let original = family::object(&manifest_path)?;
+    let original = crate::fixture_format::read(&manifest_path)?;
     let registration = recipes::registration(&checkout, contract, &original)?;
     let manifest = recipes::normalize_manifest(&checkout, original, contract.recipe.as_ref())?;
     ensure!(
@@ -766,7 +772,7 @@ fn prepare_bounded_with_catalog(
     let candidate_path = manifest.rust_module.clone();
     ensure!(relative(Path::new(&candidate_path)), "native candidate ownership path alias");
     let dependencies_sha256 = sealed(&(&source, &contract.frozen_inputs, &c_names, &rust_names))?;
-    let verification_sha256 = sealed(&(contract, &manifest))?;
+    let verification_sha256 = sealed(&(contract, crate::fixture_format::identity(&manifest)?))?;
     Ok(PreparedNative {
         contract: contract.clone(),
         manifest,
@@ -779,6 +785,25 @@ fn prepare_bounded_with_catalog(
         dependencies_sha256,
         verification_sha256,
     })
+}
+
+impl PreparedNative {
+    pub(crate) fn fixture_manifest(&self, checkout: &Path) -> Result<Manifest> {
+        let manifest_path = check_asset(checkout, &self.contract.manifest)?;
+        let manifest = recipes::manifest(checkout, &manifest_path, self.contract.recipe.as_ref())?;
+        ensure!(
+            self.verification_sha256 == sealed(&(&self.contract, crate::fixture_format::identity(&manifest)?))?,
+            "prepared binary fixture identity differs"
+        );
+        Ok(manifest)
+    }
+}
+
+fn open_prepared(prepared: &PreparedNative, checkout: &Path) -> Result<PreparedNative> {
+    let manifest = prepared.fixture_manifest(checkout)?;
+    let mut opened = prepared.clone();
+    opened.manifest = manifest;
+    Ok(opened)
 }
 
 fn check_candidate(prepared: &PreparedNative, checkout: &Path) -> Result<()> {
@@ -891,6 +916,8 @@ fn run_bounded(
     let saved_intent =
         if intent_exists { Some(family::object::<NativeIntent>(&output.join("native-intent.toml"))?) } else { None };
     let deadline = saved_intent.as_ref().map_or(new_deadline(entered, runtime)?, |intent| intent.deadline_unix_ms);
+    let opened = execute_or_reconcile(intent_exists, deadline, || open_prepared(prepared, checkout))?;
+    let prepared = &opened;
     let setup = || -> Result<_> {
         bounded::safe(checkout)?;
         bounded::safe(output)?;
@@ -1016,7 +1043,7 @@ fn run_bounded(
     };
     let produce = || -> Result<()> {
         let manifest_bytes = recipes::manifest_bytes(prepared, &checkout)?;
-        immutable(&run.join("manifest.toml"), &manifest_bytes)?;
+        immutable(&run.join("manifest.smf"), &manifest_bytes)?;
         immutable(&run.join("LICENSE.txt"), &bounded::read(prepared.pinned_source.join("LICENSE.txt"))?)?;
         if let Some(rom) = &prepared.manifest.rom {
             let bytes = bounded::read(check_asset(&checkout, rom)?)?;
@@ -1027,7 +1054,7 @@ fn run_bounded(
         let mut implementation = recipes::build(&request, prepared, &checkout, &run, &execution)?;
         implementation.manifest = Some(Asset {
             file: if recipes::generated(prepared.contract.recipe.as_ref()) {
-                run.join("manifest.toml")
+                run.join("manifest.smf")
             } else {
                 checkout.join(&prepared.contract.manifest.file)
             },
@@ -1165,6 +1192,8 @@ pub(crate) fn authenticate(prepared: &PreparedNative, checkout: &Path, receipt: 
 fn authenticate_bounded(prepared: &PreparedNative, checkout: &Path, receipt: &NativeReceipt) -> Result<Verdict> {
     bounded::safe(checkout)?;
     let checkout = fs::canonicalize(checkout)?;
+    let opened = open_prepared(prepared, &checkout)?;
+    let prepared = &opened;
     ensure!(receipt.prepared_sha256 == sealed(prepared)?, "native prepared identity differs");
     check_candidate(prepared, &checkout)?;
     ensure!(receipt.candidate_sha256 == candidate_digest(prepared, &checkout)?, "native candidate changed");
@@ -1197,6 +1226,7 @@ fn authenticate_bounded(prepared: &PreparedNative, checkout: &Path, receipt: &Na
     }
     let mut observed = BTreeSet::new();
     let mut reservations = Vec::new();
+    let tasks = task_lookup(&prepared.manifest)?;
     receipt.visit_operations(|operation| {
         bounded::check()?;
         ensure!(
@@ -1205,7 +1235,7 @@ fn authenticate_bounded(prepared: &PreparedNative, checkout: &Path, receipt: &Na
             "native producer receipt is unexpected or duplicated"
         );
         let (passed, reservation) =
-            authenticate_operation(prepared, &receipt.operation_root, &receipt.context, operation)?;
+            authenticate_operation(prepared, &tasks, &receipt.operation_root, &receipt.context, operation)?;
         ensure!(!receipt.passed || passed, "accepted native family contains a rejected producer");
         reservations.extend(reservation);
         Ok(())
@@ -1254,7 +1284,7 @@ fn authenticate_bounded(prepared: &PreparedNative, checkout: &Path, receipt: &Na
         verdict.family == prepared.contract.family && verdict.source.as_ref() == Some(&prepared.source),
         "native family source identity differs"
     );
-    let declared: Manifest = family::object(&verdict.run.join("manifest.toml"))?;
+    let declared = crate::fixture_format::read(&verdict.run.join("manifest.smf"))?;
     let declared = if matches!(prepared.contract.recipe, Some(NativeRecipe::Plm)) {
         crate::plm_spawn::normalize(&declared)?
     } else {
@@ -1284,6 +1314,7 @@ fn collect_operations(
     context: &OperationContext,
 ) -> Result<Vec<NativeOperation>> {
     let mut operations = Vec::new();
+    let tasks = task_lookup(&prepared.manifest)?;
     for (directory, label) in operation_slots(prepared, run)? {
         bounded::check()?;
         let invocation_path = directory.join(format!("{label}.invocation.toml"));
@@ -1310,14 +1341,21 @@ fn collect_operations(
             result_sha256: result.result_sha256,
             references: translation_execution::operation::references(root, &invocation.context)?,
         };
-        authenticate_operation(prepared, root, context, &operation)?;
+        authenticate_operation(prepared, &tasks, root, context, &operation)?;
         operations.push(operation);
     }
     Ok(operations)
 }
 
+type TaskLookup<'a> = BTreeMap<&'a str, (&'a crate::family_model::Routine, &'a crate::family_model::Case, usize)>;
+
+fn task_lookup(manifest: &Manifest) -> Result<TaskLookup<'_>> {
+    Ok(family::ordered_tasks(manifest)?.into_iter().map(|task| (task.1.name.as_str(), task)).collect())
+}
+
 fn authenticate_operation(
     prepared: &PreparedNative,
+    tasks: &TaskLookup<'_>,
     root: &Path,
     context: &OperationContext,
     operation: &NativeOperation,
@@ -1431,8 +1469,14 @@ fn authenticate_operation(
             "native compiler outputs changed"
         );
     } else {
-        let expected =
-            recipes::fixture_program(prepared, &family_run, &operation.directory, &operation.label, &intent.helper)?;
+        let expected = recipes::fixture_program(
+            prepared,
+            tasks,
+            &family_run,
+            &operation.directory,
+            &operation.label,
+            &intent.helper,
+        )?;
         ensure!(invocation.program == expected, "native fixture arguments, outputs or capabilities changed");
         expected_inputs.extend(expected.inputs.into_iter().map(|i| (i.source, i.destination)));
     }
@@ -1648,13 +1692,13 @@ fn declared_tree_limits(manifest: &Manifest, max_output_bytes: u64) -> Result<fa
 }
 
 pub(crate) fn retained_tree_limits(run: &Path) -> Result<family::ArtifactLimits> {
-    let manifest_path = run.join("manifest.toml");
+    let manifest_path = run.join("manifest.smf");
     // An expired producer can fail before publishing its declaration. Such a
     // partial run gains no declared-workload allowance.
     if !manifest_path.exists() {
         return Ok(family::ArtifactLimits::default());
     }
-    let manifest: Manifest = family::object(&manifest_path)?;
+    let manifest = crate::fixture_format::read(&manifest_path)?;
     let intent: NativeIntent =
         family::object(&run.parent().context("native artifact parent missing")?.join("native-intent.toml"))?;
     declared_tree_limits(&manifest, intent.max_output_bytes)
@@ -1747,7 +1791,7 @@ mod tests {
         let checkout = current_checkout();
         let mut manifest = recipes::manifest(
             &checkout,
-            &checkout.join("tools/port/ridley-subsystem.toml"),
+            &checkout.join("tools/port/ridley-subsystem.smf"),
             Some(&NativeRecipe::Ridley),
         )?;
         let limits = declared_tree_limits(&manifest, 64 * 1024 * 1024 * 1024)?;
@@ -1769,7 +1813,7 @@ mod tests {
         let run = PathBuf::from(std::env::var("SM_NATIVE_ORIGINAL_TREE")?);
         let proof = PathBuf::from(std::env::var("SM_NATIVE_ORIGINAL_TREE_PROOF")?);
         fs::create_dir_all(&proof)?;
-        let manifest: Manifest = family::object(&run.join("manifest.toml"))?;
+        let manifest = crate::fixture_format::read(&run.join("manifest.smf"))?;
         let verdict: Verdict = family::object(&run.join("verdict.toml"))?;
         let fixtures = coverage(&manifest)?.values().map(Vec::len).sum::<usize>();
         let limits = declared_tree_limits(&manifest, 64 * 1024 * 1024 * 1024)?;
@@ -1943,14 +1987,14 @@ mod tests {
         let manifest = implementation.manifest.as_ref().context("Original manifest missing")?;
         let destination = snapshot.join(manifest.file.strip_prefix(&implementation.source_root)?);
         fs::create_dir_all(destination.parent().unwrap())?;
-        immutable(&destination, &bounded::read(run.join("manifest.toml"))?)?;
+        immutable(&destination, &bounded::read(run.join("manifest.smf"))?)?;
         ensure!(digest(&destination)? == manifest.sha256, "Original manifest snapshot differs");
         fs::create_dir_all(snapshot.join("tools"))?;
         immutable(
             &snapshot.join("tools/dependencies.toml"),
             &bounded::read(declaration_source.join("tools/dependencies.toml"))?,
         )?;
-        let declaration: Manifest = family::object(&run.join("manifest.toml"))?;
+        let declaration = crate::fixture_format::read(&run.join("manifest.smf"))?;
         let limits = declared_tree_limits(&declaration, 64 * 1024 * 1024 * 1024)?;
         let start = std::time::Instant::now();
         let mut charged_bytes = 0;
@@ -2003,7 +2047,7 @@ mod tests {
         for name in ["game-host-projectile", "game-host-room-scroll"] {
             let contract = contract_for_family(
                 &checkout,
-                &PathBuf::from(format!("tools/port/{name}.toml")),
+                &PathBuf::from(format!("tools/port/{name}.smf")),
                 Asset::default(),
                 NativeProvenance::NativeScope { scope: Asset::default(), checkout: checkout.clone() },
                 limits.clone(),
@@ -2022,7 +2066,7 @@ mod tests {
         fs::create_dir_all(checkout.join("tools/port"))?;
         fs::write(checkout.join("tools/port/batch.toml"), "[families]\n[profiles]\n")?;
         let manifest = Manifest { family: "registered".into(), ..Default::default() };
-        fs::write(checkout.join("tools/port/alias.toml"), toml::to_string(&manifest)?)?;
+        crate::fixture_format::write(&checkout.join("tools/port/alias.smf"), &manifest)?;
         let limits = NativeLimits {
             timeout_seconds: 1,
             writable_bytes: 1024 * 1024,
@@ -2032,7 +2076,7 @@ mod tests {
         };
         let error = contract_for_family(
             checkout,
-            Path::new("tools/port/alias.toml"),
+            Path::new("tools/port/alias.smf"),
             Asset::default(),
             NativeProvenance::NativeScope { scope: Asset::default(), checkout: checkout.clone() },
             limits.clone(),
@@ -2046,8 +2090,8 @@ mod tests {
     #[test]
     fn registered_catalog_alias_preserves_declared_family_and_coverage() -> Result<()> {
         let checkout = current_checkout();
-        let path = Path::new("tools/port/instructions.toml");
-        let declared: Manifest = family::object(&checkout.join(path))?;
+        let path = Path::new("tools/port/instructions.smf");
+        let declared = crate::fixture_format::read(&checkout.join(path))?;
         let limits = NativeLimits {
             timeout_seconds: 60,
             writable_bytes: 128 * 1024 * 1024,
@@ -2074,8 +2118,8 @@ mod tests {
     #[test]
     fn discovered_captured_ridley_keeps_its_original_callback_recipe() -> Result<()> {
         let checkout = current_checkout();
-        let path = Path::new("tools/port/ridley-subsystem-captured.toml");
-        let original: Manifest = family::object(&checkout.join(path))?;
+        let path = Path::new("tools/port/ridley-subsystem-captured.smf");
+        let original = crate::fixture_format::read(&checkout.join(path))?;
         let recipe = recipes::for_family(&checkout, path, &original)?;
         assert_eq!(recipe, Some(NativeRecipe::Ridley));
         let normalized = recipes::normalize_manifest(&checkout, original.clone(), recipe.as_ref())?;
@@ -2143,11 +2187,11 @@ mod tests {
         for name in &names {
             if *name == "pause-direct-animation" {
                 paths.extend([
-                    "tools/port/pause-equipment-render.toml".into(),
+                    "tools/port/pause-equipment-render.smf".into(),
                     ".scratch/decomp-coverage/renderer/direct-animation.toml".into(),
                 ]);
             } else {
-                paths.insert(format!("tools/port/{name}.toml"));
+                paths.insert(format!("tools/port/{name}.smf"));
             }
         }
         if names.contains(&"plm-instructions") {
@@ -2222,7 +2266,7 @@ mod tests {
             } else {
                 contract_for_family(
                     &checkout,
-                    Path::new(&format!("tools/port/{name}.toml")),
+                    Path::new(&format!("tools/port/{name}.smf")),
                     inventory.clone(),
                     provenance.clone(),
                     compiler.clone(),
@@ -2433,13 +2477,16 @@ mod tests {
             fs::write(checkout.join(name), format!("// original {name}"))?;
             frozen_inputs.insert(name.clone(), digest(&checkout.join(name))?);
         }
-        fs::write(checkout.join("manifest.toml"), b"family='test'")?;
+        crate::fixture_format::write(
+            &checkout.join("manifest.smf"),
+            &Manifest { family: "test".into(), ..Default::default() },
+        )?;
         let limits =
             NativeLimits { timeout_seconds: 1, writable_bytes: 4096, stdout_bytes: 0, stderr_bytes: 0, stdin_bytes: 0 };
         let baseline = PreparedNative {
             contract: NativeContract {
                 family: "test".into(),
-                manifest: Asset { file: "manifest.toml".into(), sha256: digest(&checkout.join("manifest.toml"))? },
+                manifest: Asset { file: "manifest.smf".into(), sha256: digest(&checkout.join("manifest.smf"))? },
                 source_inventory: Asset::default(),
                 coverage: BTreeMap::new(),
                 provenance: NativeProvenance::NativeScope { scope: Asset::default(), checkout: checkout.clone() },
@@ -2516,7 +2563,7 @@ mod tests {
         let prepared = PreparedNative {
             contract: NativeContract {
                 family: "expired".into(),
-                manifest: Asset { file: "manifest.toml".into(), sha256: sha256("manifest") },
+                manifest: Asset { file: "manifest.smf".into(), sha256: sha256("manifest") },
                 source_inventory: Asset { file: "inventory.toml".into(), sha256: sha256("inventory") },
                 coverage: BTreeMap::new(),
                 provenance: NativeProvenance::NativeScope {
@@ -2579,13 +2626,13 @@ mod tests {
         fs::create_dir_all(&run_path)?;
         fs::write(checkout.join("candidate.rs"), b"pub fn Step() {}")?;
         let manifest = Manifest { family: "failure".into(), rust_module: "candidate.rs".into(), ..Default::default() };
-        fs::write(checkout.join("manifest.toml"), toml::to_string(&manifest)?)?;
+        crate::fixture_format::write(&checkout.join("manifest.smf"), &manifest)?;
         let limits =
             NativeLimits { timeout_seconds: 1, writable_bytes: 4096, stdout_bytes: 0, stderr_bytes: 0, stdin_bytes: 0 };
-        let prepared = PreparedNative {
+        let mut prepared = PreparedNative {
             contract: NativeContract {
                 family: "failure".into(),
-                manifest: Asset { file: "manifest.toml".into(), sha256: digest(&checkout.join("manifest.toml"))? },
+                manifest: Asset { file: "manifest.smf".into(), sha256: digest(&checkout.join("manifest.smf"))? },
                 source_inventory: Asset::default(),
                 coverage: BTreeMap::new(),
                 provenance: NativeProvenance::NativeScope { scope: Asset::default(), checkout: checkout.clone() },
@@ -2604,6 +2651,13 @@ mod tests {
             dependencies_sha256: sha256("deps"),
             verification_sha256: sha256("verification"),
         };
+        prepared.verification_sha256 =
+            sealed(&(&prepared.contract, crate::fixture_format::identity(&prepared.manifest)?))?;
+        let serialized = serde_json::to_value(&prepared)?;
+        assert!(serialized.get("manifest").is_none(), "prepared records must not repeat fixture payloads");
+        let prepared: PreparedNative = serde_json::from_value(serialized)?;
+        assert!(prepared.manifest.family.is_empty(), "decoded cache should start empty");
+        assert_eq!(prepared.fixture_manifest(&checkout)?.family, "failure");
         let context = OperationContext {
             run_id: sha256("failed-replay"),
             attempt: 1,
@@ -2687,6 +2741,9 @@ mod tests {
             ("build_cache.rs", include_str!("build_cache.rs")),
             ("family.rs", include_str!("family.rs")),
             ("family_model.rs", include_str!("family_model.rs")),
+            ("fixture_format.rs", include_str!("fixture_format.rs")),
+            ("fixture_writes.rs", include_str!("fixture_writes.rs")),
+            ("fixture_cli.rs", include_str!("fixture_cli.rs")),
             ("translation_native.rs", include_str!("translation_native.rs")),
             ("source_inventory.rs", include_str!("source_inventory.rs")),
             ("batch.rs", include_str!("batch.rs")),
@@ -2729,8 +2786,8 @@ mod tests {
         fs::create_dir_all(checkout.join("crates/pipeline/src"))?;
         fs::create_dir_all(checkout.join("crates/port/src"))?;
         fs::create_dir_all(checkout.join("tools/port"))?;
-        let manifest_path = Path::new("tools/port/enemy-jump-instructions.toml");
-        let manifest: Manifest = family::object(&current.join(manifest_path))?;
+        let manifest_path = Path::new("tools/port/enemy-jump-instructions.smf");
+        let manifest = crate::fixture_format::read(&current.join(manifest_path))?;
         immutable(&checkout.join(manifest_path), &bounded::read(current.join(manifest_path))?)?;
         for path in inputs::canonical_sources(&current, &[current.join(&manifest.rust_module)], &manifest.rust_imports)?
         {
@@ -3187,7 +3244,7 @@ mod tests {
         let relative_manifest = declared.file.strip_prefix(&implementation.source_root)?;
         let destination = snapshot.join(relative_manifest);
         fs::create_dir_all(destination.parent().unwrap())?;
-        immutable(&destination, &bounded::read(prior.run.join("manifest.toml"))?)?;
+        immutable(&destination, &bounded::read(prior.run.join("manifest.smf"))?)?;
         ensure!(digest(&destination)? == declared.sha256, "historical manifest snapshot differs");
         fs::create_dir_all(snapshot.join("tools"))?;
         immutable(&snapshot.join("tools/dependencies.toml"), &bounded::read(current.join("tools/dependencies.toml"))?)?;

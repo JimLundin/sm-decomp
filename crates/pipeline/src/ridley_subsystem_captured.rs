@@ -1,6 +1,6 @@
 //! Unpatched whole-Ridley fixtures from an authenticated actual-C inventory.
 use crate::family_model::{Case, Manifest, Routine};
-use crate::{atomic_toml, digest, ridley_subsystem_inventory};
+use crate::{digest, ridley_subsystem_inventory};
 use anyhow::{Context, Result, bail, ensure};
 use serde::Deserialize;
 use std::{
@@ -179,8 +179,8 @@ pub fn generate(checkout: &Path, inventory_verdict: &Path, output: &Path) -> Res
         "native supplement requires the authenticated complete pinned replay"
     );
     let artifacts = verdict["artifacts"].as_table().context("native artifact seal missing")?;
-    let controlled_path = checkout.join("tools/port/ridley-subsystem.toml");
-    let mut manifest: Manifest = toml::from_str(&fs::read_to_string(&controlled_path)?)?;
+    let controlled_path = checkout.join("tools/port/ridley-subsystem.smf");
+    let mut manifest = crate::fixture_format::read(&controlled_path)?;
     ensure!(
         manifest.callback_adapter.as_deref() == Some("ridley-subsystem")
             && manifest.routines.len() == 33
@@ -319,7 +319,7 @@ pub fn generate(checkout: &Path, inventory_verdict: &Path, output: &Path) -> Res
     if let Some(parent) = output.parent() {
         fs::create_dir_all(parent)?;
     }
-    atomic_toml(output, &manifest)?;
+    crate::fixture_format::write(output, &manifest)?;
     Ok(manifest)
 }
 

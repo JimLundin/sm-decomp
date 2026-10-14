@@ -1,4 +1,6 @@
 //! A real C callback must match amounts, ordering and full memory independently.
+#[path = "support/binary_fixture.rs"]
+mod binary_fixture;
 use sha2::{Digest, Sha256};
 use std::{
     fs,
@@ -60,10 +62,10 @@ fn quicksand_amount_and_ordered_actual_callback_snapshots_authenticate_and_wrong
     let module = root.0.join("candidate.rs");
     let original = "use crate::Wram;pub trait Host{fn spawn_plm(&mut self,ram:&mut Wram<'_>,header:u16,amount:&mut i32)->Result<u8,&'static str>;}pub fn dispatch_host(ram:&mut Wram,_:&[u8],host:&mut impl Host,_:&str,a:i32,b:i32)->Result<u32,&'static str>{let mut amount=a;host.spawn_plm(ram,b as u16,&mut amount)?;Ok(amount as u32)}";
     fs::write(&module, original).unwrap();
-    let manifest = root.0.join("manifest.toml");
+    let manifest = root.0.join("manifest.smf");
     let rom = checkout.join("rom/sm.sfc");
     let rom_hash = format!("{:x}", Sha256::digest(fs::read(&rom).unwrap()));
-    fs::write(
+    binary_fixture::write(
         &manifest,
         toml::to_string(&Value::Table(toml::Table::from_iter([
             ("family".to_owned(), Value::String(("callback-probe").to_owned())),

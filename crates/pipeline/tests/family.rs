@@ -1,4 +1,6 @@
 //! Native evidence must reject wrong results, incomplete coverage and unchecked C.
+#[path = "support/binary_fixture.rs"]
+mod binary_fixture;
 use sha2::{Digest, Sha256};
 use std::{
     fs,
@@ -123,7 +125,11 @@ fn finish(claim: &Value, result: Value) -> Value {
 fn write(root: &Path, name: &str, bytes: impl AsRef<[u8]>) {
     let p = root.join(name);
     fs::create_dir_all(p.parent().unwrap()).unwrap();
-    fs::write(p, bytes).unwrap();
+    if p.extension().is_some_and(|e| e == "smf") {
+        binary_fixture::write(&p, bytes).unwrap();
+    } else {
+        fs::write(p, bytes).unwrap();
+    }
 }
 impl Project {
     fn new() -> Self {
@@ -196,7 +202,7 @@ impl Project {
                 ]))]),
             ),
         ]));
-        write(&self.0, "tools/port/fixture.toml", toml::to_string(&manifest).unwrap());
+        write(&self.0, "tools/port/fixture.smf", toml::to_string(&manifest).unwrap());
     }
     fn invoke(&self, operation: &str, request: Value, success: bool) -> Value {
         let mut child = Command::new(env!("CARGO_BIN_EXE_sm-pipeline"))
@@ -230,7 +236,7 @@ impl Project {
             Value::Table(toml::Table::from_iter([
                 ("checkout".to_owned(), Value::try_from(&(self.0)).unwrap()),
                 ("source".to_owned(), Value::try_from(self.0.join("deps/snesrev-sm")).unwrap()),
-                ("manifest".to_owned(), Value::String(("tools/port/fixture.toml").to_owned())),
+                ("manifest".to_owned(), Value::String(("tools/port/fixture.smf").to_owned())),
                 ("output".to_owned(), Value::try_from(self.0.join("out")).unwrap()),
                 ("root".to_owned(), Value::try_from(self.0.join("cache")).unwrap()),
                 ("workers".to_owned(), Value::Integer(2_i64)),
@@ -304,11 +310,11 @@ fn invalid_dispatcher_pointer_bank_is_rejected_before_compilation() {
         ("name".to_owned(), Value::String(("one").to_owned())),
         ("a".to_owned(), Value::Integer(1_i64)),
     ]))]));
-    let path = project.0.join("tools/port/fixture.toml");
-    let mut manifest: Value = toml::from_str(&fs::read_to_string(&path).unwrap()).unwrap();
+    let path = project.0.join("tools/port/fixture.smf");
+    let mut manifest: Value = toml::from_str(&binary_fixture::read(&path).unwrap()).unwrap();
     manifest["routines"][0]["return"] = "rom_ptr".into();
     manifest["routines"][0].as_table_mut().unwrap().insert("pointer_bank".into(), 0x100.into());
-    write(&project.0, "tools/port/fixture.toml", toml::to_string(&manifest).unwrap());
+    write(&project.0, "tools/port/fixture.smf", toml::to_string(&manifest).unwrap());
     let verdict = project.verify(false);
     assert!(verdict["error"].as_str().unwrap().contains("invalid pointer bank"));
     assert!(!Path::new(verdict["run"].as_str().unwrap()).join("c").exists());
@@ -369,20 +375,85 @@ packed_u16_args=4
 return='uint32'
 cases=[{name='four',a=2147527629,b=4294840884,expected_return=146943}]
 "#;
-    write(&project.0, "tools/port/fixture.toml", manifest);
+    write(&project.0, "tools/port/fixture.smf", manifest);
+    let binary = fs::read(project.0.join("tools/port/fixture.smf")).unwrap();
     let verdict = project.verify_mode(true, "fresh");
     assert_eq!(verdict["verified_cases"].as_integer(), Some(2));
-    assert_eq!(fs::read_to_string(project.0.join("tools/port/fixture.toml")).unwrap(), manifest);
+    assert_eq!(fs::read(project.0.join("tools/port/fixture.smf")).unwrap(), binary);
     project.authenticate(&verdict, true);
     let run = PathBuf::from(verdict["run"].as_str().unwrap());
     let three = fs::read(run.join("three/c-after.wram")).unwrap();
     assert_eq!(&three[16..22], &[0xcd, 0xab, 0x34, 0x12, 0xfe, 0xff]);
     let four = fs::read(run.join("four/c-after.wram")).unwrap();
     assert_eq!(&four[16..24], &[0xcd, 0xab, 0x00, 0x80, 0x34, 0x12, 0xfe, 0xff]);
-    write(&project.0, "tools/port/fixture.toml", manifest.replacen("['uint16','uint32']", "['uint32','uint32']", 1));
+    write(&project.0, "tools/port/fixture.smf", manifest.replacen("['uint16','uint32']", "['uint32','uint32']", 1));
     let rejected = project.verify_mode(false, "fresh");
     assert!(rejected["error"].as_str().unwrap().contains("invalid packed"));
     assert!(!Path::new(rejected["run"].as_str().unwrap()).join("c").exists());
+}
+
+#[test]
+fn binary_roots_and_continuations_preserve_full_state_and_compact_evidence() {
+    let project = match std::env::var_os("SM_BINARY_FIXTURE_OUTPUT") {
+        Some(path) => Project::at(PathBuf::from(path), true),
+        None => Project::new(),
+    };
+    let declarations: Value = toml::from_str(
+        r#"
+cases = [
+    { name = "root", a = 1, fill = 165, expected_return = 2, writes = [
+        { offset = 10, data = [4, 5, 6] },
+        { offset = 11, data = [0] },
+        { offset = 30, data = [9] },
+        { offset = 131071, data = [77] },
+    ] },
+    { name = "child", a = 2, continue_from = "root", expected_return = 3, writes = [
+        { offset = 12, data = [0] },
+        { offset = 24, data = [0, 3] },
+        { offset = 25, data = [0] },
+    ] },
+]
+"#,
+    )
+    .unwrap();
+    project.manifest(declarations["cases"].clone());
+    let mut root_before = vec![165; 131072];
+    root_before[10..13].copy_from_slice(&[4, 0, 6]);
+    root_before[30] = 9;
+    root_before[131071] = 77;
+    let mut root_after = root_before.clone();
+    root_after[17] = 1;
+    let mut child_before = root_after.clone();
+    child_before[12] = 0;
+    child_before[24..26].fill(0);
+    let mut child_after = child_before.clone();
+    child_after[17] = 2;
+    let mut verdicts = Vec::new();
+    for mode in ["fresh", "fork"] {
+        let verdict = project.verify_mode(true, mode);
+        assert_eq!(verdict["verified_cases"].as_integer(), Some(2));
+        let run = Path::new(verdict["run"].as_str().unwrap());
+        assert!(fs::read(run.join("manifest.smf")).unwrap().starts_with(b"SMFIXT01"));
+        for (name, before, after) in [("root", &root_before, &root_after), ("child", &child_before, &child_after)] {
+            let case = run.join(name);
+            assert_eq!(fs::read(case.join("before.wram")).unwrap(), *before);
+            for producer in ["c", "rust"] {
+                assert_eq!(fs::read(case.join(format!("{producer}-after.wram"))).unwrap(), *after);
+            }
+            assert_eq!(fs::read(case.join("case.sha256")).unwrap().len(), 64);
+            assert!(!case.join("case.toml").exists());
+        }
+        project.authenticate(&verdict, true);
+        verdicts.push(verdict);
+    }
+    if project.1 {
+        let checkout = project.0.clone();
+        drop(project);
+        let retained = std::mem::ManuallyDrop::new(Project(checkout, false));
+        for verdict in &verdicts {
+            retained.authenticate(verdict, true);
+        }
+    }
 }
 
 #[test]
@@ -562,7 +633,7 @@ fn family_with_lease_peer(project: &Project, binary: &Path, mode: &str) -> (Valu
     let request = toml::to_string(&toml::Table::from_iter([
         ("checkout".into(), Value::try_from(&project.0).unwrap()),
         ("source".into(), Value::try_from(project.0.join("deps/snesrev-sm")).unwrap()),
-        ("manifest".into(), "tools/port/fixture.toml".into()),
+        ("manifest".into(), "tools/port/fixture.smf".into()),
         ("output".into(), Value::try_from(project.0.join("out")).unwrap()),
         ("root".into(), Value::try_from(project.0.join("cache")).unwrap()),
         ("workers".into(), 2.into()),
@@ -669,7 +740,7 @@ fn measure_fixture_chain_shared_capacity() {
     scheduling_project(&baseline_project, true);
     scheduling_project(&candidate_project, true);
     write(&baseline_project.0, "crates/pipeline/src/fixture_execution.rs", fs::read(&baseline_source).unwrap());
-    for input in ["crates/port/src/fixture.rs", "tools/port/fixture.toml", "deps/snesrev-sm/src/sm_80.c", "peer.rs"] {
+    for input in ["crates/port/src/fixture.rs", "tools/port/fixture.smf", "deps/snesrev-sm/src/sm_80.c", "peer.rs"] {
         assert_eq!(
             fs::read(baseline_project.0.join(input)).unwrap(),
             fs::read(candidate_project.0.join(input)).unwrap()
@@ -800,7 +871,7 @@ std::thread::sleep(std::time::Duration::from_secs(30));Ok(0)}"#,
     let request = toml::to_string(&toml::Table::from_iter([
         ("checkout".into(), Value::try_from(&project.0).unwrap()),
         ("source".into(), Value::try_from(project.0.join("deps/snesrev-sm")).unwrap()),
-        ("manifest".into(), "tools/port/fixture.toml".into()),
+        ("manifest".into(), "tools/port/fixture.smf".into()),
         ("output".into(), Value::try_from(project.0.join("out")).unwrap()),
         ("root".into(), Value::try_from(project.0.join("cache")).unwrap()),
         ("workers".into(), 2.into()),
@@ -855,20 +926,18 @@ fn empty_duplicate_and_out_of_bounds_cases_cannot_pass() {
             Value::Table(toml::Table::from_iter([("name".to_owned(), Value::String(("same").to_owned()))])),
             Value::Table(toml::Table::from_iter([("name".to_owned(), Value::String(("same").to_owned()))])),
         ]),
-        Value::Array(vec![Value::Table(toml::Table::from_iter([
-            ("name".to_owned(), Value::String(("overflow").to_owned())),
-            (
-                "writes".to_owned(),
-                Value::Array(vec![Value::Table(toml::Table::from_iter([
-                    ("offset".into(), 131071.into()),
-                    ("data".into(), Value::Array(vec![1.into(), 2.into()])),
-                ]))]),
-            ),
-        ]))]),
     ] {
         project.manifest(cases);
         assert_eq!(project.verify(false)["status"].as_str(), Some("rejected"));
     }
+    let overflow = project.0.join("tools/port/overflow.smf");
+    let error = binary_fixture::write(
+        &overflow,
+        "family='overflow'\ncases=[{name='overflow',writes=[{offset=131071,data=[1,2]}]}]",
+    )
+    .unwrap_err();
+    assert!(error.to_string().contains("outside WRAM"));
+    assert!(!overflow.exists(), "invalid state must fail before publication or execution");
 }
 
 #[test]
@@ -878,18 +947,19 @@ fn native_projectile_candidate_is_available_to_the_compiled_host_wrapper() {
     if !checkout.join("rom/sm.sfc").exists() {
         return;
     }
-    let mut manifest: Value =
-        toml::from_str(&fs::read_to_string(checkout.join("tools/port/observed-projectile-initializers.toml")).unwrap())
-            .unwrap();
+    let mut manifest: Value = toml::from_str(
+        &binary_fixture::read(&checkout.join("tools/port/observed-projectile-initializers.smf")).unwrap(),
+    )
+    .unwrap();
     manifest["routines"].as_array_mut().unwrap().truncate(1);
     manifest["routines"][0]["cases"].as_array_mut().unwrap().truncate(1);
-    write(&project.0, "one-native.toml", toml::to_string(&manifest).unwrap());
+    write(&project.0, "one-native.smf", toml::to_string(&manifest).unwrap());
     let verdict = project.invoke(
         "family-verify",
         Value::Table(toml::Table::from_iter([
             ("checkout".into(), Value::try_from(checkout).unwrap()),
             ("source".into(), Value::try_from(checkout.join("deps/snesrev-sm")).unwrap()),
-            ("manifest".into(), Value::try_from(project.0.join("one-native.toml")).unwrap()),
+            ("manifest".into(), Value::try_from(project.0.join("one-native.smf")).unwrap()),
             ("output".into(), Value::try_from(project.0.join("out")).unwrap()),
             ("root".into(), Value::try_from(project.0.join("workers")).unwrap()),
             ("workers".into(), 2.into()),
@@ -909,11 +979,11 @@ fn changed_current_manifest_cannot_authenticate_prior_family_admission() {
     ]))]));
     let verdict = project.verify(true);
     project.authenticate(&verdict, true);
-    let path = project.0.join("tools/port/fixture.toml");
+    let path = project.0.join("tools/port/fixture.smf");
     let original = fs::read(&path).unwrap();
-    let mut manifest: Value = toml::from_str(&String::from_utf8(original.clone()).unwrap()).unwrap();
+    let mut manifest: Value = toml::from_str(&binary_fixture::read(&path).unwrap()).unwrap();
     manifest["routines"][0]["cases"][0]["a"] = 2.into();
-    write(&project.0, "tools/port/fixture.toml", toml::to_string(&manifest).unwrap());
+    write(&project.0, "tools/port/fixture.smf", toml::to_string(&manifest).unwrap());
     project.authenticate(&verdict, false);
     let mut stripped = verdict.clone();
     stripped["implementation"].as_table_mut().unwrap().remove("manifest");
@@ -922,7 +992,7 @@ fn changed_current_manifest_cannot_authenticate_prior_family_admission() {
     project.authenticate(&stripped, false);
     let mut rebound = verdict.clone();
     rebound["implementation"]["manifest"]["file"] =
-        Value::try_from(Path::new(verdict["run"].as_str().unwrap()).join("manifest.toml")).unwrap();
+        Value::try_from(Path::new(verdict["run"].as_str().unwrap()).join("manifest.smf")).unwrap();
     fs::write(&verdict_path, toml::to_string(&rebound).unwrap()).unwrap();
     project.authenticate(&rebound, false);
     fs::write(verdict_path, toml::to_string(&verdict).unwrap()).unwrap();
@@ -938,11 +1008,11 @@ fn changed_since_verifies_one_actual_c_family_without_visiting_unrelated_history
         ("a".into(), 1.into()),
         ("expected_return".into(), 2.into()),
     ]))]));
-    let first_manifest = project.0.join("tools/port/fixture.toml");
-    let mut other: Value = toml::from_str(&fs::read_to_string(&first_manifest).unwrap()).unwrap();
+    let first_manifest = project.0.join("tools/port/fixture.smf");
+    let mut other: Value = toml::from_str(&binary_fixture::read(&first_manifest).unwrap()).unwrap();
     other["family"] = "other".into();
     other["rust_module"] = "crates/port/src/other.rs".into();
-    write(&project.0, "tools/port/other.toml", toml::to_string(&other).unwrap());
+    write(&project.0, "tools/port/other.smf", toml::to_string(&other).unwrap());
     write(&project.0, "crates/port/src/other.rs", fs::read(project.0.join("crates/port/src/fixture.rs")).unwrap());
     write(
         &project.0,
@@ -1461,11 +1531,12 @@ fn measure_affected_family_work_with_retained_evidence() {
         ("a".into(), 1.into()),
         ("expected_return".into(), 2.into()),
     ]))]));
-    let manifest: Value = toml::from_str(&fs::read_to_string(output.join("tools/port/fixture.toml")).unwrap()).unwrap();
+    let manifest: Value =
+        toml::from_str(&binary_fixture::read(&output.join("tools/port/fixture.smf")).unwrap()).unwrap();
     let mut other = manifest.clone();
     other["family"] = "other".into();
     other["rust_module"] = "crates/port/src/other.rs".into();
-    write(&output, "tools/port/other.toml", toml::to_string(&other).unwrap());
+    write(&output, "tools/port/other.smf", toml::to_string(&other).unwrap());
     write(&output, "crates/port/src/other.rs", fs::read(output.join("crates/port/src/fixture.rs")).unwrap());
     write(
         &output,

@@ -53,7 +53,7 @@ fn registry(root: &Path) -> Registry {
                 body_lines: (index + 1) * 10,
                 definition_sha256: "d".repeat(64),
                 calls: Vec::new(),
-                declared_in: vec!["tools/port/declared.toml".into()],
+                declared_in: vec!["tools/port/declared.smf".into()],
             })
             .collect(),
         updates: Vec::new(),
@@ -207,103 +207,53 @@ fn inventory_root(root: &Path) {
     )
     .unwrap();
     fs::write(
-        root.join("tools/port/declared.toml"),
-        "family = 'declaration'\n[[routines]]\nsymbol = 'First'\n[[routines]]\nsymbol = 'HostWrapper'\n",
+        root.join("tools/port/declared.smf"),
+        crate::fixture_format::encode(&crate::family_model::Manifest {
+            family: "declaration".into(),
+            routines: ["First", "HostWrapper"]
+                .into_iter()
+                .map(|symbol| crate::family_model::Routine { symbol: symbol.into(), ..Default::default() })
+                .collect(),
+            ..Default::default()
+        })
+        .unwrap(),
     )
     .unwrap();
 }
 
 #[test]
-fn declarations_skip_large_fixture_payloads_and_preserve_symbols() {
+fn binary_declarations_preserve_symbols_and_reject_corruption() {
     let scratch = Scratch::new();
     fs::create_dir_all(scratch.0.join("tools/port")).unwrap();
-    let mut manifest = String::from("family = 'large'\n[[routines]]\nsymbol = 'First'\n[[routines.cases]]\ndata = [\n");
-    for _ in 0..2_000_000 {
-        manifest.push_str("0,");
-    }
-    manifest.push_str("\n]\n[[routines]]\nsymbol = 'First'\n[[routines]]\nsymbol = 'Unknown'\n");
-    fs::write(scratch.0.join("tools/port/large.toml"), manifest).unwrap();
+    let path = scratch.0.join("tools/port/large.smf");
+    let manifest = crate::family_model::Manifest {
+        family: "large".into(),
+        routines: ["First", "First", "Unknown"]
+            .into_iter()
+            .map(|symbol| crate::family_model::Routine {
+                symbol: symbol.into(),
+                cases: vec![crate::family_model::Case {
+                    name: "payload".into(),
+                    writes: vec![crate::family_model::Write { offset: 0, data: vec![12; 0x20000] }].into(),
+                    ..Default::default()
+                }],
+                ..Default::default()
+            })
+            .collect(),
+        ..Default::default()
+    };
+    crate::fixture_format::write(&path, &manifest).unwrap();
     let mut routines = registry(&scratch.0).routines;
     let mut notices = Vec::new();
-    let started = Instant::now();
     add_declarations(&scratch.0, &mut routines, &mut notices).unwrap();
-    let elapsed = started.elapsed();
-    assert_eq!(routines[0].declared_in, ["tools/port/large.toml"]);
+    assert_eq!(routines[0].declared_in, ["tools/port/large.smf"]);
     assert!(routines[1].declared_in.is_empty());
     assert_eq!(
         notices,
-        ["Declaration tools/port/large.toml names Unknown outside the C inventory; it contributes no C coverage."]
+        ["Declaration tools/port/large.smf names Unknown outside the C inventory; it contributes no C coverage."]
     );
-    eprintln!("four-megabyte progress declaration scan: {elapsed:?}");
-    assert!(elapsed < Duration::from_secs(2), "progress decoded fixture payloads: {elapsed:?}");
-}
-
-#[test]
-fn declaration_projection_preserves_toml_metadata_layouts_and_validation() {
-    let manifests = [
-        "family = 'frame'\n[[routines]]\nsymbol = 'First'\n[[routines]]\nsymbol = 'Second'\n",
-        "'family' = 'frame' # comment\n[[\"routines\"]] # header\n'symbol' = 'First'\n[[routines.cases]]\nstate = [1, 2]\n[[routines]]\nsymbol = 'Second'\n",
-        "family = 'frame'\nroutines = [{symbol = 'First', cases = [{state = [1, 2]}]}, {'symbol' = 'Second', note = 'a,=#[x]'}]\n",
-        "family = 'frame'\n[[routines]]\nsymbol = 'First'\n[routines.symbol]\nvalue = 'invalid symbol table'\n",
-        "family.value = 'invalid family table'\n[[routines]]\nsymbol = 'First'\n",
-        "[family]\nname = 'invalid family table'\n",
-        "[routines]\nsymbol = 'invalid routine table'\n",
-        "family = 7\n[[routines]]\nsymbol = 'First'\n",
-        "family = 'frame'\nroutines = [1]\n",
-        "family = 'frame'\n[[routines]]\nsymbol = 7\n",
-        "family = 'frame'\n[[routines]]\n",
-        "family = 'frame'\nfamily = 'duplicate'\n",
-        "family = 'frame'\n[[routines]]\nsymbol = 'First'\nsymbol = 'Second'\n",
-        "family = 'frame'\nroutines = [{symbol = 'First', symbol = 'Second'}]\n",
-        "family = 'frame'\nroutines = []\n[[routines]]\nsymbol = 'First'\n",
-        "[unrelated]\nfamily = 7\n[[unrelated.routines]]\nsymbol = 7\n",
-    ];
-    for manifest in manifests {
-        let complete = toml::from_str::<Declaration>(manifest);
-        let projected = declarations::parse(manifest);
-        assert_eq!(complete.is_ok(), projected.is_ok(), "metadata validation differs for {manifest:?}");
-        if let (Ok(complete), Ok(projected)) = (complete, projected) {
-            assert_eq!(complete.family, projected.family, "family differs for {manifest:?}");
-            let symbols = |declaration: Declaration| {
-                declaration.routines.into_iter().map(|routine| routine.symbol).collect::<Vec<_>>()
-            };
-            assert_eq!(symbols(complete), symbols(projected), "symbols differ for {manifest:?}");
-        }
-    }
-}
-
-#[test]
-fn ignored_fixture_strings_comments_and_arrays_cannot_declare_routines() {
-    let manifest = r#"
-family = "frame"
-[[routines]]
-symbol = "First"
-[[routines.cases]]
-note = '''
-[[routines]]
-symbol = 'Unknown'
-'''
-other = """
-[[routines]]
-symbol = "Other"
-"""
-state = [
-    1, # [[routines]]
-    {note = 'symbol = "Other"', nested = [2, 3]},
-]
-# [[routines]]
-[[routines]]
-symbol = "Second"
-"#;
-    let projected = declarations::parse(manifest).unwrap();
-    assert_eq!(projected.family.as_deref(), Some("frame"));
-    assert_eq!(projected.routines.into_iter().map(|routine| routine.symbol).collect::<Vec<_>>(), ["First", "Second"]);
-    for malformed in [
-        "family = 'frame'\n[[routines]]\nsymbol = 'First'\nstate = [1, 2\n",
-        "family = 'frame'\n[[routines]]\nsymbol = 'First'\nstate = 'unterminated\n",
-    ] {
-        assert!(declarations::parse(malformed).is_err());
-    }
+    fs::write(path, b"SMFIXT01truncated").unwrap();
+    assert!(add_declarations(&scratch.0, &mut routines, &mut notices).is_err());
 }
 
 #[test]

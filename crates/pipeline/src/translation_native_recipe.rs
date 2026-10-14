@@ -17,7 +17,7 @@ pub(crate) enum NativeRecipe {
     SupplementedC { support: Vec<String> },
 }
 
-const GENERATED_PLM: &str = ".scratch/translation-native/plm-instructions/manifest.toml";
+const GENERATED_PLM: &str = ".scratch/translation-native/plm-instructions/manifest.smf";
 
 pub(super) fn input_inventory_limit(recipe: Option<&NativeRecipe>) -> usize {
     // The original captured Ridley declaration has 5,371 dependency files.
@@ -110,7 +110,7 @@ fn registered_entry(checkout: &Path, path: &Path, declared: &Manifest) -> Result
             catalog_family: declared.family.clone(),
             entry: batch::FamilyEntry {
                 kind: if family::dispatcher(declared) { "dispatcher" } else { "family" }.into(),
-                manifest: PathBuf::from(format!("tools/port/{}.toml", declared.family)),
+                manifest: PathBuf::from(format!("tools/port/{}.smf", declared.family)),
                 live: None,
                 prepare: None,
             },
@@ -123,7 +123,7 @@ fn registered_entry(checkout: &Path, path: &Path, declared: &Manifest) -> Result
 }
 
 pub(super) fn manifest(checkout: &Path, path: &Path, recipe: Option<&NativeRecipe>) -> Result<Manifest> {
-    let declared: Manifest = family::object(path)?;
+    let declared = crate::fixture_format::read(path)?;
     normalize_manifest(checkout, declared, recipe)
 }
 
@@ -135,16 +135,19 @@ pub(super) fn normalize_manifest(
     Ok(match recipe {
         Some(NativeRecipe::Plm) => crate::plm_spawn::normalize(&declared)?,
         Some(NativeRecipe::GeneratedPlm { manifest }) => {
-            let generated: Manifest = family::object(&check_asset(checkout, manifest)?)?;
+            let generated = crate::fixture_format::read(&check_asset(checkout, manifest)?)?;
             let rom = generated.rom.as_ref().context("generated PLM ROM missing")?;
             let (expected, bytes) = crate::plm_fixtures::generated_contents(checkout, &rom.file)?;
             ensure!(
-                generated == expected && digest(&check_asset(checkout, rom)?)? == sha256(&bytes),
+                generated == crate::fixture_format::decode(crate::fixture_format::encode(&expected)?)?
+                    && digest(&check_asset(checkout, rom)?)? == sha256(&bytes),
                 "generated PLM coverage or ROM differs from complete generator"
             );
             generated
         }
-        Some(NativeRecipe::DirectAnimation { plan }) => direct_manifest(checkout, &declared, plan)?,
+        Some(NativeRecipe::DirectAnimation { plan }) => {
+            crate::fixture_format::decode(crate::fixture_format::encode(&direct_manifest(checkout, &declared, plan)?)?)?
+        }
         Some(NativeRecipe::SupplementedC { support }) => {
             let mut supplemented = declared;
             for provider in support {
@@ -275,7 +278,7 @@ pub(super) fn adapter(recipe: Option<&NativeRecipe>) -> &'static str {
 }
 pub(super) fn manifest_bytes(prepared: &PreparedNative, checkout: &Path) -> Result<Vec<u8>> {
     if generated(prepared.contract.recipe.as_ref()) {
-        Ok(toml::to_string(&prepared.manifest)?.into_bytes())
+        crate::fixture_format::encode(&prepared.manifest)
     } else {
         bounded::read(checkout.join(&prepared.contract.manifest.file))
     }
@@ -415,6 +418,7 @@ pub(super) fn abi(recipe: Option<&NativeRecipe>) -> bool {
 
 pub(super) fn fixture_program(
     prepared: &PreparedNative,
+    tasks: &super::TaskLookup<'_>,
     run: &Path,
     directory: &Path,
     label: &str,
@@ -444,10 +448,9 @@ pub(super) fn fixture_program(
         };
         return builds::strict_fixture_program(helper, &command, kind);
     }
-    let (routine, fixture, index) = family::ordered_tasks(&prepared.manifest)?
-        .into_iter()
-        .find(|(_, fixture, _)| run.join(&fixture.name) == directory)
-        .context("undeclared native fixture")?;
+    let name = directory.file_name().and_then(|name| name.to_str()).context("native fixture name missing")?;
+    let &(routine, fixture, index) = tasks.get(name).context("undeclared native fixture")?;
+    ensure!(run.join(&fixture.name) == directory, "native fixture directory differs");
     let text = |path: PathBuf| path.display().to_string();
     let before = text(directory.join("before.wram"));
     let after = text(directory.join(format!("{label}-after.wram")));
@@ -521,8 +524,8 @@ pub(crate) fn contract_for_direct_animation(
         let recipe = NativeRecipe::DirectAnimation {
             plan: Asset { file: plan.into(), sha256: digest(&file(&checkout.join(plan))?)? },
         };
-        let manifest = Path::new("tools/port/pause-equipment-render.toml");
-        let declared = family::object(&file(&checkout.join(manifest))?)?;
+        let manifest = Path::new("tools/port/pause-equipment-render.smf");
+        let declared = crate::fixture_format::read(&file(&checkout.join(manifest))?)?;
         contract_for_declared(
             checkout,
             manifest,
@@ -581,7 +584,7 @@ fn direct_manifest(checkout: &Path, original: &Manifest, plan: &Asset) -> Result
                             a: i64::from(u32::from(animation) | (u32::from(*x) << 16)),
                             b: i64::from(*y),
                             fill: Some(0xa5),
-                            writes,
+                            writes: writes.into(),
                             expected_return: Some(0),
                             ..Default::default()
                         });

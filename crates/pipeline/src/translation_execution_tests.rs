@@ -598,6 +598,9 @@ pub(crate) fn native_harness_sources() -> Vec<(&'static str, &'static str)> {
         ("build_cache.rs", include_str!("build_cache.rs")),
         ("family.rs", include_str!("family.rs")),
         ("family_model.rs", include_str!("family_model.rs")),
+        ("fixture_format.rs", include_str!("fixture_format.rs")),
+        ("fixture_writes.rs", include_str!("fixture_writes.rs")),
+        ("fixture_cli.rs", include_str!("fixture_cli.rs")),
         ("translation_native.rs", include_str!("translation_native.rs")),
         ("source_inventory.rs", include_str!("source_inventory.rs")),
         ("batch.rs", include_str!("batch.rs")),
@@ -628,8 +631,8 @@ pub(crate) fn native_installation(root: &Path) -> Result<Installation> {
     fs::create_dir_all(repository.join("crates/pipeline/src"))?;
     fs::create_dir_all(repository.join("crates/port/src"))?;
     fs::create_dir_all(repository.join("tools/port"))?;
-    let manifest_path = Path::new("tools/port/enemy-jump-instructions.toml");
-    let manifest: crate::family_model::Manifest = family::object(&current.join(manifest_path))?;
+    let manifest_path = Path::new("tools/port/enemy-jump-instructions.smf");
+    let manifest = crate::fixture_format::read(&current.join(manifest_path))?;
     fs::copy(current.join(manifest_path), repository.join(manifest_path))?;
     for source in
         crate::inputs::canonical_sources(&current, &[current.join(&manifest.rust_module)], &manifest.rust_imports)?

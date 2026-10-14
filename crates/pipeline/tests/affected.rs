@@ -1,4 +1,6 @@
 //! Selection must reduce work while retaining unknown family inputs.
+#[path = "support/binary_fixture.rs"]
+mod binary_fixture;
 use sha2::{Digest, Sha256};
 use std::{
     fs,
@@ -38,11 +40,15 @@ impl Project {
     fn write(&self, name: &str, text: &str) {
         let path = self.0.join(name);
         fs::create_dir_all(path.parent().unwrap()).unwrap();
-        fs::write(path, text).unwrap();
+        if path.extension().is_some_and(|e| e == "smf") {
+            binary_fixture::write(&path, text).unwrap();
+        } else {
+            fs::write(path, text).unwrap();
+        }
     }
     fn manifest(&self, name: &str, module: &str, extra: &str) {
         self.write(
-            &format!("tools/port/{name}.toml"),
+            &format!("tools/port/{name}.smf"),
             &format!(
                 "family='{name}'\nbank='sm_80.c'\nrust_module='crates/port/src/{module}.rs'\nroutines=[]\n{extra}"
             ),

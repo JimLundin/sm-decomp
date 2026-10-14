@@ -177,7 +177,7 @@ pub fn generate_sequence(request: SequenceRequest) -> Result<Generation> {
     manifest.family = family.into();
     manifest.routines = routines;
     manifest.case_order = None;
-    atomic_toml(&output, &manifest)?;
+    crate::fixture_format::write(&output, &manifest)?;
     Ok(Generation {
         family: family.into(),
         manifest: output,
