@@ -734,8 +734,21 @@ fn wait_traced(pid: u32, writable_bytes: u64, proc: &File, logs: &[File]) -> Res
                 );
             }
             if info[0] == 1 {
+                ensure!(size >= 80, "kernel syscall-entry observation is incomplete");
                 let syscall = u64::from_ne_bytes(info[24..32].try_into()?);
-                let mutating = [
+                // Linkers reopen many read-only inputs after producing a large
+                // object tree. Only explicit nonmutating open/openat flags can
+                // skip the full extent walk. openat2 keeps the conservative
+                // walk because its flags reside in candidate memory.
+                let open_flags = match syscall as libc::c_long {
+                    libc::SYS_open => Some(u64::from_ne_bytes(info[40..48].try_into()?)),
+                    libc::SYS_openat => Some(u64::from_ne_bytes(info[48..56].try_into()?)),
+                    _ => None,
+                };
+                let readonly_open = open_flags.is_some_and(|flags| {
+                    flags & (libc::O_ACCMODE | libc::O_CREAT | libc::O_TRUNC | libc::O_TMPFILE) as u64 == 0
+                });
+                let mutating = !readonly_open && [
                     libc::SYS_write,
                     libc::SYS_writev,
                     libc::SYS_pwrite64,

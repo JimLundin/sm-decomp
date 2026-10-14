@@ -33,6 +33,18 @@ fn limits() -> RunLimits {
 }
 
 #[test]
+fn read_only_input_opens_scale_with_existing_outputs() {
+    let limits = RunLimits { writable_bytes: 8 * 1024 * 1024, ..limits() };
+    let output = run(&probe("probe_read_only_input_opens"), &limits, b"").unwrap();
+    assert!(
+        output.status.success(),
+        "{}\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+#[test]
 fn reviewed_devices_allow_null_child_stdio() {
     let output = run(&probe("probe_null_stdio"), &limits(), b"").unwrap();
     assert!(
@@ -106,6 +118,24 @@ fn synthetic_self_exe_rejects_aliases_and_other_sources() {
 #[test]
 #[ignore = "candidate probe, invoked only by confined parent test"]
 fn probe_empty_child() {}
+
+#[test]
+#[ignore = "candidate probe, invoked only by confined parent test"]
+fn probe_read_only_input_opens() {
+    // Linkers repeatedly open read-only inputs after earlier compiler outputs
+    // have populated the writable tree. These opens cannot grow that tree.
+    for index in 0..256 {
+        fs::File::create(format!("/work/tmp/object-{index}")).unwrap();
+    }
+    println!("created 256 compiler-output placeholders");
+    for _ in 0..4096 {
+        drop(fs::File::open("/program").unwrap());
+        let descriptor = unsafe { libc::open(c"/program".as_ptr(), libc::O_RDONLY | libc::O_CLOEXEC) };
+        assert!(descriptor >= 0);
+        assert_eq!(unsafe { libc::close(descriptor) }, 0);
+    }
+    println!("completed 8192 read-only input opens");
+}
 
 #[test]
 #[ignore = "candidate probe, invoked only by confined parent test"]
