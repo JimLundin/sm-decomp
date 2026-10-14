@@ -185,8 +185,24 @@ fn offset(base: usize, count: usize, stride: usize) -> Result<usize> {
 }
 
 pub(crate) fn read(path: &Path) -> Result<Manifest> {
+    open(path, None)
+}
+
+pub(crate) fn read_authenticated(path: &Path, expected: &str) -> Result<Manifest> {
+    open(path, Some(expected))
+}
+
+fn open(path: &Path, expected: Option<&str>) -> Result<Manifest> {
     let path = if path.is_absolute() { path.to_path_buf() } else { std::env::current_dir()?.join(path) };
-    bounded::limited(|| decode(bounded::read(&path)?)).with_context(|| format!("binary fixture {}", path.display()))
+    bounded::limited(|| {
+        let bytes = bounded::read(&path)?;
+        if let Some(expected) = expected {
+            use sha2::{Digest, Sha256};
+            ensure!(format!("{:x}", Sha256::digest(&bytes)) == expected, "binary fixture identity differs");
+        }
+        decode(bytes)
+    })
+    .with_context(|| format!("binary fixture {}", path.display()))
 }
 
 pub(crate) fn decode(bytes: Vec<u8>) -> Result<Manifest> {
@@ -389,6 +405,29 @@ pub(crate) fn identity(manifest: &Manifest) -> Result<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn authenticated_reads_bind_decoded_bytes_with_one_input_budget() -> Result<()> {
+        use sha2::{Digest, Sha256};
+        let directory = bounded::tests::Directory::new()?;
+        let path = directory.0.join("family.smf");
+        let mut original =
+            Manifest { cases: vec![Case { name: "root".into(), a: 5, ..Default::default() }], ..Default::default() };
+        let bytes = encode(&original)?;
+        let hash = format!("{:x}", Sha256::digest(&bytes));
+        fs::write(&path, &bytes)?;
+        bounded::until(bounded::now_unix_ms()? + 10_000, bytes.len() as u64, || {
+            assert_eq!(read_authenticated(&path, &hash)?, original);
+            assert_eq!(bounded::charged_bytes(), bytes.len() as u64);
+            Ok(())
+        })?;
+        assert!(read_authenticated(&path, &"0".repeat(64)).is_err());
+        original.cases[0].a = 9;
+        write(&path, &original)?;
+        assert!(read_authenticated(&path, &hash).is_err(), "a later operation must reopen the current input");
+        assert_eq!(read(&path)?, original);
+        Ok(())
+    }
 
     fn prepared(case: &Case, inherited: u8) -> Vec<u8> {
         let mut state = vec![if case.continue_from.is_some() { inherited } else { case.fill.unwrap_or(0) }; WRAM];

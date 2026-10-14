@@ -160,8 +160,8 @@ fn verify_source_bounded(checkout: &Path, source: &Path) -> Result<Source> {
 }
 
 fn asset(path: &Path, expected: &str, extent: Option<usize>) -> Result<Vec<u8>> {
-    ensure!(digest(path)? == expected, "asset identity mismatch: {}", path.display());
-    let bytes = bounded::read(path)?;
+    let (bytes, hash) = bounded::read_with_digest(path)?;
+    ensure!(hash == expected, "asset identity mismatch: {}", path.display());
     if let Some(n) = extent {
         ensure!(bytes.len() == n, "asset extent mismatch");
     }
@@ -920,7 +920,8 @@ fn case_with(
     }
     let mut returns = BTreeMap::new();
     let mut hashes = BTreeMap::new();
-    for subject in ["rust", "c"] {
+    let mut states = [Vec::new(), Vec::new()];
+    for (subject, state) in ["rust", "c"].into_iter().zip(&mut states) {
         let mut command = vec![
             run.join(subject).to_string_lossy().into_owned(),
             symbol.clone(),
@@ -940,7 +941,9 @@ fn case_with(
         }
         execute(&command, &directory, subject)?;
         returns.insert(subject.into(), numeric(&directory.join(format!("{subject}.stdout")))?);
-        hashes.insert(subject.into(), digest(&directory.join(format!("{subject}-after.wram")))?);
+        let (bytes, hash) = bounded::read_with_digest(directory.join(format!("{subject}-after.wram")))?;
+        *state = bytes;
+        hashes.insert(subject.into(), hash);
     }
     let mut record = CaseRecord {
         routine: symbol.clone(),
@@ -954,18 +957,18 @@ fn case_with(
     if let Some(expected) = case.expected_return {
         ensure!(expected == record.returns["c"], "independent expected return mismatch: {name}");
     }
-    let c = bounded::read(directory.join("c-after.wram"))?;
-    let rust = bounded::read(directory.join("rust-after.wram"))?;
+    let [rust, c] = &states;
     ensure!(c.len() == WRAM && rust.len() == WRAM, "subject did not retain full WRAM extent");
     if c != rust {
-        let offset = c.iter().zip(&rust).position(|(a, b)| a != b).unwrap();
+        let offset = c.iter().zip(rust).position(|(a, b)| a != b).unwrap();
         record.first_mismatch = Some(Mismatch { offset, c: c[offset], rust: rust[offset] });
         atomic_toml(&directory.join("rejection.toml"), &record)?;
         bail!("WRAM mismatch at {offset:#x}: {symbol}/{name}");
     }
     if case.expected_after_file.is_some() {
-        ensure!(c == bounded::read(directory.join("expected-after.wram"))?, "captured expected WRAM mismatch: {name}");
-        record.capture_after_sha256 = Some(digest(&directory.join("expected-after.wram"))?);
+        let (expected, hash) = bounded::read_with_digest(directory.join("expected-after.wram"))?;
+        ensure!(*c == expected, "captured expected WRAM mismatch: {name}");
+        record.capture_after_sha256 = Some(hash);
     }
     if manifest.projectile_host {
         authenticate_host(&directory, case)?;
@@ -1056,7 +1059,7 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
     };
     let result = (|| -> Result<()> {
         let manifest_path = source_path(&checkout, request.manifest.to_str().context("non-UTF8 manifest")?);
-        let manifest_bytes = bounded::read(&manifest_path)?;
+        let (manifest_bytes, manifest_sha256) = bounded::read_with_digest(&manifest_path)?;
         fs::write(run.join(crate::fixture_format::RUN_MANIFEST), &manifest_bytes)?;
         let mut manifest = crate::fixture_format::decode(manifest_bytes)?;
         let callbacks = request.adapter == "callback" || request.adapter == "power-bomb";
@@ -1088,7 +1091,7 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
             let bytes = asset(&rom.file, &rom.sha256, None)?;
             ensure!(!bytes.is_empty() && bytes.len() <= 0x400000, "ROM extent outside LoROM view");
             fs::write(run.join("rom.bin"), &bytes)?;
-            verdict.rom = Some(RomIdentity { sha256: digest(&run.join("rom.bin"))?, bytes: bytes.len() });
+            verdict.rom = Some(RomIdentity { sha256: rom.sha256.clone(), bytes: bytes.len() });
         }
         verdict.implementation = Some(if ridley {
             crate::ridley_subsystem_adapter::build(&request, &manifest, &checkout, &source, &run)?
@@ -1100,7 +1103,7 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
             build(&request, &manifest, &checkout, &source, &run)?
         });
         verdict.implementation.as_mut().unwrap().manifest =
-            Some(Asset { file: fs::canonicalize(&manifest_path)?, sha256: digest(&run.join("manifest.smf"))? });
+            Some(Asset { file: fs::canonicalize(&manifest_path)?, sha256: manifest_sha256.clone() });
         atomic_toml(
             &run.join("manifest-input.toml"),
             verdict.implementation.as_ref().unwrap().manifest.as_ref().unwrap(),
@@ -1142,7 +1145,7 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
         }
         ensure!(errors.is_empty(), "{}", errors.join("; "));
         ensure!(
-            digest(&manifest_path)? == digest(&run.join("manifest.smf"))?,
+            digest(&manifest_path)? == manifest_sha256 && digest(&run.join("manifest.smf"))? == manifest_sha256,
             "family manifest changed during verification"
         );
         verdict.status = "offline-verified".into();
@@ -1223,7 +1226,10 @@ fn authenticate_with_source_bounded(
     {
         ensure!(actual.contains_key(required), "family artifact missing: {required}");
     }
-    let mut manifest = crate::fixture_format::read(&run.join(crate::fixture_format::RUN_MANIFEST))?;
+    let mut manifest = crate::fixture_format::read_authenticated(
+        &run.join(crate::fixture_format::RUN_MANIFEST),
+        &actual[crate::fixture_format::RUN_MANIFEST],
+    )?;
     ensure!(manifest.family == verdict.family, "family identity differs");
     let implementation = verdict.implementation.as_ref().context("missing family implementation")?;
     ensure!(
@@ -1259,14 +1265,13 @@ fn authenticate_with_source_bounded(
                 "fixture worker artifact missing"
             );
             ensure!(
-                digest(&run.join("fixture-worker.rs"))?
-                    == implementation.harness_sources["crates/pipeline/src/fixture_worker.rs"],
+                actual.get("fixture-worker.rs")
+                    == implementation.harness_sources.get("crates/pipeline/src/fixture_worker.rs"),
                 "fixture worker generated source differs"
             );
             ensure!(
                 implementation.callback_adapter.as_deref() == Some("ridley-subsystem")
-                    || implementation.binaries.get("libfixture_worker.a")
-                        == Some(&digest(&run.join("libfixture_worker.a"))?),
+                    || implementation.binaries.get("libfixture_worker.a") == actual.get("libfixture_worker.a"),
                 "fixture worker library seal differs"
             );
         }
@@ -1284,7 +1289,7 @@ fn authenticate_with_source_bounded(
         .unwrap_or_else(|_| manifest_identity.file.clone());
     ensure!(
         digest(&manifest_source)? == manifest_identity.sha256
-            && digest(&run.join("manifest.smf"))? == manifest_identity.sha256,
+            && actual[crate::fixture_format::RUN_MANIFEST] == manifest_identity.sha256,
         "family manifest changed"
     );
     let callbacks = implementation.dependency_contract == "rust-callback-v2";
@@ -1474,7 +1479,7 @@ fn authenticate_with_source_bounded(
         "family implementation identity differs"
     );
     for binary in binaries {
-        ensure!(digest(&run.join(binary))? == implementation.binaries[binary], "family binary changed");
+        ensure!(actual.get(binary) == implementation.binaries.get(binary), "family binary changed");
     }
     let mut expected = BTreeMap::new();
     for routine in &manifest.routines {
@@ -1525,18 +1530,18 @@ fn authenticate_with_source_bounded(
             );
             continue;
         }
-        let before = bounded::read(directory.join("before.wram"))?;
+        let (before, before_sha256) = bounded::read_with_digest(directory.join("before.wram"))?;
         authenticate_continuation(fixture, &run, &before)?;
-        let c = bounded::read(directory.join("c-after.wram"))?;
-        let rust = bounded::read(directory.join("rust-after.wram"))?;
+        let (c, c_sha256) = bounded::read_with_digest(directory.join("c-after.wram"))?;
+        let (rust, rust_sha256) = bounded::read_with_digest(directory.join("rust-after.wram"))?;
         ensure!(
             before.len() == WRAM && c.len() == WRAM && rust.len() == WRAM && c == rust,
             "family actual full WRAM outputs differ"
         );
         ensure!(
-            digest(&directory.join("before.wram"))? == record.before_sha256
-                && digest(&directory.join("c-after.wram"))? == record.after_sha256["c"]
-                && digest(&directory.join("rust-after.wram"))? == record.after_sha256["rust"],
+            before_sha256 == record.before_sha256
+                && c_sha256 == record.after_sha256["c"]
+                && rust_sha256 == record.after_sha256["rust"],
             "family case hashes differ"
         );
         let a = numeric(&directory.join("c.stdout"))?;

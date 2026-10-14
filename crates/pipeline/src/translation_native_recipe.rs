@@ -135,7 +135,7 @@ pub(super) fn normalize_manifest(
     Ok(match recipe {
         Some(NativeRecipe::Plm) => crate::plm_spawn::normalize(&declared)?,
         Some(NativeRecipe::GeneratedPlm { manifest }) => {
-            let generated = crate::fixture_format::read(&check_asset(checkout, manifest)?)?;
+            let generated = read_fixture(checkout, manifest)?;
             let rom = generated.rom.as_ref().context("generated PLM ROM missing")?;
             let (expected, bytes) = crate::plm_fixtures::generated_contents(checkout, &rom.file)?;
             ensure!(

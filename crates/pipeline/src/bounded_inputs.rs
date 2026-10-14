@@ -246,18 +246,33 @@ pub(crate) fn entries(path: &Path) -> Result<Vec<PathBuf>> {
 pub(crate) fn read(path: impl AsRef<Path>) -> Result<Vec<u8>> {
     read_limit(path.as_ref(), MAX_FILE_BYTES)
 }
+
+/// Return the exact bytes and their SHA-256 from one bounded file read.
+/// The identity belongs to this snapshot; each call opens the current file.
+pub(crate) fn read_with_digest(path: impl AsRef<Path>) -> Result<(Vec<u8>, String)> {
+    limited(|| {
+        let mut hash = Sha256::new();
+        let bytes = read_chunks(path.as_ref(), MAX_FILE_BYTES, |chunk| hash.update(chunk))?;
+        Ok((bytes, format!("{:x}", hash.finalize())))
+    })
+}
+
 pub(crate) fn text(path: impl AsRef<Path>) -> Result<String> {
     Ok(String::from_utf8(read_limit(path.as_ref(), MAX_DOCUMENT_BYTES)?)?)
 }
 
 pub(crate) fn read_limit(path: &Path, maximum: u64) -> Result<Vec<u8>> {
+    read_chunks(path, maximum, |_| {})
+}
+
+fn read_chunks(path: &Path, maximum: u64, mut observe: impl FnMut(&[u8])) -> Result<Vec<u8>> {
     limited(|| {
         safe(path)?;
         let mut file = OpenOptions::new().read(true).custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK).open(path)?;
         let before = file.metadata()?;
         ensure!(before.is_file() && before.len() <= maximum.min(MAX_FILE_BYTES), "trusted input file extent exceeded");
         account(before.len())?;
-        let mut bytes = Vec::new();
+        let mut bytes = Vec::with_capacity(usize::try_from(before.len())?);
         let mut buffer = [0u8; 64 * 1024];
         loop {
             check()?;
@@ -266,6 +281,7 @@ pub(crate) fn read_limit(path: &Path, maximum: u64) -> Result<Vec<u8>> {
                 break;
             }
             ensure!((bytes.len() as u64).saturating_add(n as u64) <= before.len(), "trusted input grew during read");
+            observe(&buffer[..n]);
             bytes.extend_from_slice(&buffer[..n]);
         }
         let after = file.metadata()?;
@@ -836,6 +852,28 @@ pub(crate) mod tests {
         })
         .unwrap_err();
         assert!(error.to_string().contains("budget"));
+        Ok(())
+    }
+
+    #[test]
+    fn digest_reads_share_one_snapshot_and_budget_without_caching_files() -> Result<()> {
+        let directory = Directory::new()?;
+        let path = directory.0.join("state.wram");
+        let mut previous_hash = String::new();
+        for value in [17, 39] {
+            let expected = vec![value; 2 * 64 * 1024 + 37];
+            fs::write(&path, &expected)?;
+            until(now_unix_ms()? + 10_000, expected.len() as u64, || {
+                let (bytes, hash) = read_with_digest(&path)?;
+                assert_eq!(bytes, expected);
+                assert_eq!(hash, format!("{:x}", Sha256::digest(&expected)));
+                assert_ne!(hash, previous_hash, "each call must authenticate the current file");
+                assert_eq!(charged_bytes(), expected.len() as u64);
+                previous_hash = hash;
+                Ok(())
+            })?;
+            assert!(until(now_unix_ms()? + 10_000, expected.len() as u64 - 1, || read_with_digest(&path)).is_err());
+        }
         Ok(())
     }
 

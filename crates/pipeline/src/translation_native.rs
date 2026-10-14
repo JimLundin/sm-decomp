@@ -301,16 +301,22 @@ fn file(path: &Path) -> Result<PathBuf> {
 fn immutable(path: &Path, bytes: &[u8]) -> Result<()> {
     inputs::immutable_bytes(path, bytes)
 }
-fn check_asset(checkout: &Path, asset: &Asset) -> Result<PathBuf> {
+fn asset_path(checkout: &Path, asset: &Asset) -> Result<PathBuf> {
     let path = if asset.file.is_absolute() {
         asset.file.clone()
     } else {
         ensure!(relative(&asset.file), "native asset relative path alias");
         checkout.join(&asset.file)
     };
-    let path = file(&path)?;
+    file(&path)
+}
+fn check_asset(checkout: &Path, asset: &Asset) -> Result<PathBuf> {
+    let path = asset_path(checkout, asset)?;
     ensure!(digest(&path)? == asset.sha256, "native asset changed: {}", path.display());
     Ok(path)
+}
+fn read_fixture(checkout: &Path, asset: &Asset) -> Result<Manifest> {
+    crate::fixture_format::read_authenticated(&asset_path(checkout, asset)?, &asset.sha256)
 }
 fn coverage(manifest: &Manifest) -> Result<BTreeMap<String, Vec<String>>> {
     ensure!(
@@ -665,8 +671,7 @@ fn prepare_bounded_with_catalog(
     let checkout = fs::canonicalize(checkout)?;
     let pinned_source = fs::canonicalize(pinned_source)?;
     ensure!(relative(&contract.manifest.file), "native manifest is not registered relative input");
-    let manifest_path = check_asset(&checkout, &contract.manifest)?;
-    let original = crate::fixture_format::read(&manifest_path)?;
+    let original = read_fixture(&checkout, &contract.manifest)?;
     let registration = recipes::registration(&checkout, contract, &original)?;
     let manifest = recipes::normalize_manifest(&checkout, original, contract.recipe.as_ref())?;
     ensure!(
@@ -789,8 +794,8 @@ fn prepare_bounded_with_catalog(
 
 impl PreparedNative {
     pub(crate) fn fixture_manifest(&self, checkout: &Path) -> Result<Manifest> {
-        let manifest_path = check_asset(checkout, &self.contract.manifest)?;
-        let manifest = recipes::manifest(checkout, &manifest_path, self.contract.recipe.as_ref())?;
+        let original = read_fixture(checkout, &self.contract.manifest)?;
+        let manifest = recipes::normalize_manifest(checkout, original, self.contract.recipe.as_ref())?;
         ensure!(
             self.verification_sha256 == sealed(&(&self.contract, crate::fixture_format::identity(&manifest)?))?,
             "prepared binary fixture identity differs"

@@ -482,6 +482,13 @@ fn valid_cases_authenticate_and_tampering_is_rejected_even_with_rebound_inventor
     verdict["artifacts"]["one/c-after.wram"] = Value::try_from(format!("{:x}", Sha256::digest(&state))).unwrap();
     write(&run, "verdict.toml", toml::to_string(&verdict).unwrap());
     project.authenticate(&verdict, false);
+
+    // Equal full-state outputs still have to match their retained case hashes,
+    // even when the artifact inventory has been rebound to both altered files.
+    fs::write(run.join("one/rust-after.wram"), &state).unwrap();
+    verdict["artifacts"]["one/rust-after.wram"] = verdict["artifacts"]["one/c-after.wram"].clone();
+    write(&run, "verdict.toml", toml::to_string(&verdict).unwrap());
+    project.authenticate(&verdict, false);
 }
 
 #[test]
