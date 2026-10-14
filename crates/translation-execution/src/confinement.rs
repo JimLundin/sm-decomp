@@ -89,6 +89,10 @@ fn real_path(path: &Path) -> Result<()> {
     Ok(())
 }
 
+fn self_executable_marker(bind: &ReadOnlyBind) -> bool {
+    bind.destination.as_os_str() == std::ffi::OsStr::new("/proc/self/exe")
+}
+
 fn validate(program: &Program, limits: &RunLimits, input: &[u8]) -> Result<()> {
     ensure!(cfg!(all(target_os = "linux", target_arch = "x86_64")), "strict confinement requires Linux x86_64");
     ensure!(!limits.timeout.is_zero(), "sandbox timeout must be positive");
@@ -104,10 +108,19 @@ fn validate(program: &Program, limits: &RunLimits, input: &[u8]) -> Result<()> {
             bind.destination.is_absolute() && relative(bind.destination.strip_prefix("/")?),
             "unsafe sandbox bind destination"
         );
+        let self_executable = self_executable_marker(bind);
+        if self_executable {
+            ensure!(
+                bind.source.as_os_str() == program.executable.as_os_str()
+                    && bind.source.as_os_str() == fs::canonicalize(&program.executable)?.as_os_str(),
+                "synthetic self executable source differs or is aliased"
+            );
+        }
         ensure!(
-            !["/work", "/tmp", "/proc", "/dev", "/program", "/trusted-helper", "/quota-proc"]
-                .iter()
-                .any(|p| bind.destination.starts_with(p)),
+            self_executable
+                || !["/work", "/tmp", "/proc", "/dev", "/program", "/trusted-helper", "/quota-proc"]
+                    .iter()
+                    .any(|p| bind.destination.starts_with(p)),
             "reserved sandbox destination"
         );
         ensure!(
@@ -210,7 +223,9 @@ pub(crate) fn run_observed(
             "--die-with-parent",
         ])
         .args(["--dir", "/work", "--dir", "/dev", "--dir", "/quota-proc"])
-        .args(["--ro-bind", "/dev/null", "/dev/null", "--ro-bind", "/dev/urandom", "/dev/urandom"])
+        // A normal bind is nodev in bubblewrap. Only these two reviewed device
+        // nodes may retain device semantics; no host /dev directory is exposed.
+        .args(["--dev-bind", "/dev/null", "/dev/null", "--dev-bind", "/dev/urandom", "/dev/urandom"])
         .arg("--ro-bind")
         .arg(&program.helper)
         .arg("/trusted-helper")
@@ -218,7 +233,13 @@ pub(crate) fn run_observed(
         .arg(&program.executable)
         .arg("/program");
     for bind in program.runtime.iter().chain(&program.inputs) {
-        command.arg("--ro-bind").arg(&bind.source).arg(&bind.destination);
+        if self_executable_marker(bind) {
+            // This explicit marker names the already staged executable. It
+            // never binds procfs, a host proc path, or a second executable.
+            command.args(["--dir", "/proc", "--dir", "/proc/self", "--symlink", "/program", "/proc/self/exe"]);
+        } else {
+            command.arg("--ro-bind").arg(&bind.source).arg(&bind.destination);
+        }
     }
     command
         .args([
@@ -517,6 +538,33 @@ fn restrict_child(writable_bytes: u64) -> Result<()> {
     Ok(())
 }
 
+/// Peek only at a PID still owned by this tracer and never reaped by another
+/// caller. WNOWAIT preserves that identity and the main loop's exit result;
+/// stopped, running, or inaccessible live tasks are never treated as exited.
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+fn terminated_owned_task(pid: i32) -> Result<bool> {
+    let mut info = unsafe { std::mem::zeroed::<libc::siginfo_t>() };
+    loop {
+        let result = unsafe {
+            libc::waitid(
+                libc::P_PID,
+                pid as u32,
+                &mut info,
+                libc::WEXITED | libc::WNOHANG | libc::WNOWAIT | libc::__WALL,
+            )
+        };
+        if result == 0 {
+            return Ok(info.si_signo == libc::SIGCHLD
+                && unsafe { info.si_pid() } == pid
+                && [libc::CLD_EXITED, libc::CLD_KILLED, libc::CLD_DUMPED].contains(&info.si_code));
+        }
+        let error = std::io::Error::last_os_error();
+        if error.raw_os_error() != Some(libc::EINTR) {
+            return Err(error).context("authenticate owned task termination");
+        }
+    }
+}
+
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
 fn wait_traced(pid: u32, writable_bytes: u64, proc: &File, logs: &[File]) -> Result<ExitStatus> {
     use std::os::unix::process::ExitStatusExt;
@@ -558,6 +606,12 @@ fn wait_traced(pid: u32, writable_bytes: u64, proc: &File, logs: &[File]) -> Res
             if descriptor < 0 {
                 let error = std::io::Error::last_os_error();
                 if error.raw_os_error() == Some(libc::ENOENT) {
+                    continue;
+                }
+                // Linux can deny access after exit has destroyed the task's
+                // descriptor table but before its ptrace wait result is reaped.
+                // The kernel must prove termination of this exact owned PID.
+                if error.raw_os_error() == Some(libc::EACCES) && terminated_owned_task(*pid)? {
                     continue;
                 }
                 return Err(error).with_context(|| format!("observe candidate descriptor directory for pid {pid}"));

@@ -138,3 +138,50 @@ ignored), including the ten original shared-host fixture pairs and a focused
 test rejecting an aliased discovery path. The real proof now accepts an optional
 `SM_NATIVE_RECIPE_HELPER` path for a separately retained new helper; its default
 still names the original installed helper.
+
+## Confined runtime diagnosis and fix
+
+The Rust runtime probe reproduced the exact native descriptor error on three
+consecutive runs in 0.08–0.11 seconds. Minimization reduced it to one worker
+thread writing an unlinked file while another thread continued writing. Removing
+the concurrent writes made all 16 trial repetitions pass on the old helper.
+
+Ranked hypotheses were pending task exit, a live exec transition, and genuine
+live descriptor inaccessibility. Targeted diagnostics recorded PID 7 as zombie,
+Tgid 3, PPid/TracerPid 2, UID/GID 0. A non-consuming
+`waitid(P_PID, 7, WEXITED | WNOHANG | WNOWAIT | __WALL)` returned that exact PID,
+`CLD_EXITED`, status 0. Raw red and instrumented output are retained under
+`/tmp/sm-ticket10-native-proofs/confinement-diagnosis`.
+
+The fix permits an EACCES descriptor-directory observation to end only when the
+kernel confirms termination of that still-owned, unreaped PID. The main observer
+retains and reaps its exact exit result. Live private descriptor denial and its
+unlinked-file quota bypass test still pass. Temporary instrumentation is removed.
+
+The Cargo worker's separate differential established that inherited stdin worked
+and null stdin failed despite readable request/source files and UID 0. The Rust
+regression isolated EACCES at `/dev/null` open. Bubblewrap's normal binds are
+nodev; only the two reviewed device nodes, `/dev/null` and `/dev/urandom`, now use
+device binds. The regression opens both nodes and starts a child with null stdin,
+stdout and stderr; it also asserts that no other device entries exist.
+
+The explicit exact-reader marker is a ReadOnlyBind with source lexically equal to
+the canonical Program.executable and destination exactly `/proc/self/exe`.
+Launcher-generated empty `/proc/self` directories contain only a symlink to the
+already staged `/program`. There is no procfs or host proc bind. Tests verify
+the staged device/inode identity and reject path aliases, differing sources,
+PID/status/fd paths, and sibling data. Ordinary producers still have no proc path.
+
+All four focused runtime tests pass (including 16 minimized interleavings and
+the original 32-thread scenario). The eight existing confinement tests are also
+running; their standalone live-private-descriptor regression already passed.
+New immutable helper:
+`/tmp/sm-ticket10-native-proofs/confinement-v1/tools/sm-translation-sandbox`.
+The original installed helpers were not modified. Host clients must rebuild
+with the new confinement library as device/self-exe setup happens in the host
+launcher; changing the helper path alone is insufficient.
+
+The second same-budget preparation audit finished after 617.57 seconds: 56
+families prepared, 119 stopped at the deadline, and `instructions` exposed one
+original registered catalog alias that still needs explicit native support.
+Neither audit is original actual-C acceptance.
