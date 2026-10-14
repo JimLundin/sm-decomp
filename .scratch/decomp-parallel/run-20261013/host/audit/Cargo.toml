@@ -1,0 +1,15 @@
+[package]
+name = "decomp-coordinator-audit"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[[bin]]
+name = "decomp-coordinator-audit"
+path = "coordinator.rs"
+
+[dependencies]
+toml = "0.8"
+serde_json = "1"

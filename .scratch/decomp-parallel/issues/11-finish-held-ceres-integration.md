@@ -53,6 +53,25 @@ commit/hashes and first divergence to child12.
 Pending original claim results, source commits, exact argv, verdict hashes,
 cleanup measurements and retained dependencies. Append achieved stages only.
 
+2026-10-13 continuation: all31 retained focused Rust host controls, two callback
+controls and three family-host controls pass. The completed setup host matrices
+pass seven projectile and three room-display actual-C pairs, both cleanup passes
+and current-source authentication. Their verified observation is now published
+in the [shared viewer](http://127.0.0.1:4185/) as
+`shared-game-host-current-verified-launch-20261013`; exact source/evidence hashes
+and Rust publication receipt are in [continuation host evidence](../run-20261013/host/).
+These five routines were already counted as verified, so this supplies fresh
+evidence without increasing unique coverage.
+
+The complete all-affected batch from original baseline48656a2 reached its
+3600-second gate limit and was stopped with retained partial results and concrete
+C-link/Rust-build failures. It remains incomplete and cannot grant integrated
+stage or original claim admission. Source stayed frozen; the original submitted
+host commit is already merged. Next is scoped cleanup, bounded compiler diagnosis,
+reviewed dependency repair and completing the required family set with source-
+authenticated reuse. [Status](../run-20261013/status.md) owns exact process,
+receipt and next-action details. The controller submission remains held.
+
 ## Comments
 
 Created by preparation ticket05 as tracking work; original ownership and

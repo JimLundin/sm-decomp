@@ -1,0 +1,19 @@
+argv = [
+    "cc",
+    "/home/jim/sm-decomp/out/port/decomp-coverage-20261013/direct-animation-build/c-object-000.o",
+    "/home/jim/sm-decomp/out/port/decomp-coverage-20261013/direct-animation-build/c-object-001.o",
+    "/home/jim/sm-decomp/out/port/decomp-coverage-20261013/direct-animation-build/c-object-002.o",
+    "/home/jim/sm-decomp/out/port/decomp-coverage-20261013/direct-animation-build/c-object-003.o",
+    "-O2",
+    "-fno-strict-aliasing",
+    "-ffunction-sections",
+    "-fdata-sections",
+    "-iquote",
+    "/home/jim/sm-decomp/deps/snesrev-sm/src",
+    "-Wl,--gc-sections",
+    "-o",
+    "/home/jim/sm-decomp/out/port/decomp-coverage-20261013/direct-animation-build/c",
+]
+seconds = 0.061255828
+worker_wait_seconds = 0.000162129
+exit_code = 0

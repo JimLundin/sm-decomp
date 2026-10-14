@@ -1,0 +1,18 @@
+operation = "record"
+checkout = "/home/jim/sm-decomp"
+effort = "decomp-parallel"
+coordinator = "decomp-run-20261013"
+capacity = 3
+pipeline_root = "/home/jim/sm-decomp/out/pipeline"
+workers = 4
+[authority]
+session_id = "01a13592-d02b-7143-8489-a15b03f19da2"
+generation = 1
+[update]
+event = "launch-failed"
+reason = "Queue selected an existing speculative credits research task while the requested shared-tool scope was ownership-blocked. No child was launched. User directs coverage work and defers speculative research; release this unlaunched reservation."
+[update.claim]
+id = "ticket-d38d7ff4d47345a6e625b547c2a83dc6c02b260f9edfd4988f19c491b4cb888d"
+revision = "0c93011aecea372a7d459410bf90e48218efe4ab8b1c1c025c58294ff48f4eb1"
+attempt = 1
+coordinator = "decomp-run-20261013"

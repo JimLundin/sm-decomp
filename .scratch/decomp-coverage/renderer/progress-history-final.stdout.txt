@@ -1,0 +1,3 @@
+Source coverage history: 109 checkpoints / 1469 current definitions / 0 undated uncommitted definitions
+Registry: /home/jim/sm-decomp/.scratch/decomp-progress/registry.json
+Dashboard: /home/jim/sm-decomp/.scratch/decomp-progress/index.html

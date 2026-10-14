@@ -1,0 +1,18 @@
+format = "decomp-research-document-validation-v1"
+status = "static-review-complete-awaiting-coordinator-TOML-and-evidence-authentication"
+observed_at = "2026-10-13 16:32:30 UTC"
+maintained_source_changed = false
+documents_created_only_in_assigned_scratch = true
+hash_commands_run = false
+machine_TOML_parser_run = false
+tests_run = []
+experiments_run = []
+static_review = [
+  "Native claim/real worker UUID/baseline/no-writable-source facts checked against returned receipts.",
+  "Four-routine codec holding, five proposed follow-ups and inherited22 routine identities reviewed for ownership and unsupported provenance.",
+  "TOML/Markdown authored syntax reviewed; no machine parser or implementation test run asserted.",
+  "Input regular-file existence check found one guessed projectile.rs path; removed it before freeze. All remaining input paths passed that check.",
+  "No invented exercise hash/live CLI/fresh-process/original-ROM evidence or gameplay stage.",
+  "Final HEAD unchanged from observed baseline; final lsof found no persistent writer and df measured available bytes.",
+]
+next_validation = "Coordinator parses/authenticates frozen package and exact input capture with existing Rust evidence/queue tools; worker does not manufacture parser/test results."

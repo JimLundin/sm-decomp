@@ -1,0 +1,67 @@
+bank = "sm_87.c"
+c_support = [
+    "sm_rtl.c",
+    "sm_80.c",
+    "sm_8d.c",
+    "sm_86.c",
+    "sm_84.c",
+    "sm_94.c",
+    "sm_a0.c",
+]
+family = "animated-tile-frames"
+rust_imports = [
+    "audio",
+    "system",
+    "enemy_projectiles",
+    "enemy_projectile_instructions",
+    "enemy_projectile_collision",
+    "enemy",
+]
+rust_module = "crates/port/src/animated_tiles.rs"
+
+[rom]
+file = "/home/jim/sm-decomp/rom/sm.sfc"
+sha256 = "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72"
+
+[[routines]]
+args = 0
+return = "void"
+symbol = "ProcessAnimtilesObject"
+
+[[routines.cases]]
+name = "ProcessAnimtilesObject-0-33457-0"
+
+[[routines.cases.writes]]
+data = [
+    0,
+    0,
+]
+offset = 7923
+
+[[routines.cases.writes]]
+data = [
+    0,
+    128,
+]
+offset = 7921
+
+[[routines.cases.writes]]
+data = [
+    171,
+    130,
+]
+offset = 7925
+
+[[routines.cases.writes]]
+data = [
+    147,
+    130,
+]
+offset = 7949
+
+[[routines.cases.writes]]
+data = [
+    0,
+    0,
+]
+offset = 7961

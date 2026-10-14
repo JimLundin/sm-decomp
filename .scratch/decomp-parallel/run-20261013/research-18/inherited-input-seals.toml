@@ -1,0 +1,452 @@
+format = "decomp-inherited-input-seals-v1"
+current_store_authenticated = false
+fresh_hashes_computed_by_worker = false
+source_archive_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+source_identity_sha256 = "e74864c229949fc6f1a6bd7528f339bdb3f9364f1e4f9544f08693881d10f111"
+limitations = [
+  "These hashes were read from existing inventory/retained handoff declarations. No new hash utility or additional sha256sum invocation was used.",
+  "Historical declarations cannot prove current mutable ticket/progress bytes. Parent must seal current capture with existing sm-evidence ingest plus authenticated inventory/verify.",
+  "Missing seal entries are explicit gaps in input-seal-provenance.toml; no fake placeholder hash is supplied.",
+]
+
+[[entries]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/catalog/later-lanes.md"
+sha256 = "b63d042c1b85dfbf5b0d86f01ae85794b81a0b0e2b15367a2b4f3e2a3dd79f88"
+origin = "research15/research17 retained inputs.sha256; historical handoff declaration read without rehashing"
+current_authentication = false
+mutable_current_input = true
+
+[[entries]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/research-13/answer.md"
+sha256 = "46e394a53e870358a793fdc2b18858c63310df2f7f94646436468efad9bd862d"
+origin = "research15/research17 retained inputs.sha256; historical handoff declaration read without rehashing"
+current_authentication = false
+mutable_current_input = true
+
+[[entries]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/research-13/children.toml"
+sha256 = "187c439f4518c8d7dccc62d9a6b36fe854841dde16f90a6641a0c3b3b55c0da1"
+origin = "research15/research17 retained inputs.sha256; historical handoff declaration read without rehashing"
+current_authentication = false
+mutable_current_input = true
+
+[[entries]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/research-14/Answer.md"
+sha256 = "bbd540b7f792dfbf60e492a61dfc665994fc274fb826cc3583f767683ffb9e50"
+origin = "research15/research17 retained inputs.sha256; historical handoff declaration read without rehashing"
+current_authentication = false
+mutable_current_input = true
+
+[[entries]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/receipts/next-research-4.stdout.toml"
+sha256 = "3698140d4c507dac4f26a8d15adf96367da4249e70140fe2fb3b8d646f284c51"
+origin = "manual-handoff-sequence-1.toml observed initial receipt seal; no current store authentication"
+current_authentication = false
+mutable_current_input = true
+
+[[entries]]
+path = "/home/jim/sm-decomp/.scratch/decomp-progress/registry.json"
+sha256 = "3d1ff19653582d933328635e12dc57c3bb16ab01a85d48ce180b28d9bfff8465"
+origin = "research15/research17 retained inputs.sha256; historical handoff declaration read without rehashing"
+current_authentication = false
+mutable_current_input = true
+
+[[entries]]
+path = "/home/jim/sm-decomp/.scratch/decomp-strategy/retained-coverage-authentication.json"
+sha256 = "0f4936067b72325c7a9b6d848ae3b19dc6bfa28f58fa4d28735d6db14cf60e01"
+origin = "research15/research17 retained inputs.sha256; historical handoff declaration read without rehashing"
+current_authentication = false
+mutable_current_input = true
+
+[[entries]]
+path = "/home/jim/sm-decomp/AGENTS.md"
+sha256 = "ceda2ab3e8918f3a50cfc1475078a9cdfe3455fd883f4591b9a0710d32d23286"
+origin = "research15/research17 retained inputs.sha256; historical handoff declaration read without rehashing"
+current_authentication = false
+mutable_current_input = true
+
+[[entries]]
+path = "/home/jim/sm-decomp/crates/pipeline/src/callback_host.c.in"
+sha256 = "bf561abcf5167b55060ae04ea3994f168a20a1dd3953a079f66aec42568222b3"
+origin = "research15/research17 retained inputs.sha256; historical handoff declaration read without rehashing"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/crates/pipeline/src/family_model.rs"
+sha256 = "e5157a2758bd688518a385320faa766bd9421f12a3dcb0e874b05472a2449eee"
+origin = "research15/research17 retained inputs.sha256; historical handoff declaration read without rehashing"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/crates/pipeline/src/live_model.rs"
+sha256 = "0573e2dc6f5cbebda6baea7e2839165ddc8dcbf0830a985a9105febd1efea9bc"
+origin = "research15/research17 retained inputs.sha256; historical handoff declaration read without rehashing"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/crates/pipeline/src/live.rs"
+sha256 = "ccaa161b4bcfc655a0195f10cb2ea7271e9454edd8de4c255df8bc2214aea258"
+origin = "research15/research17 retained inputs.sha256; historical handoff declaration read without rehashing"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/crates/pipeline/src/source_inventory.rs"
+sha256 = "470499b0a1cb2d2274cfc61a77796ae004154f90a39d659dff28acb492715ae6"
+origin = "research15/research17 retained inputs.sha256; historical handoff declaration read without rehashing"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/crates/pipeline/src/translation.rs"
+sha256 = "7d581d67f3bda1526ad0815c7f6c149ddf7874e9749d75ac13fc428b3e6f85cd"
+origin = "research15/research17 retained inputs.sha256; historical handoff declaration read without rehashing"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/crates/port/src/audio.rs"
+sha256 = "4308e496267857ca869db45f4127e505bec4ad29c4c9ede8f08d6e9769ccf69d"
+origin = "research15/research17 retained inputs.sha256; historical handoff declaration read without rehashing"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/crates/port/src/game_host.rs"
+sha256 = "baaae6c0dbc60b9c384c37088806648e96669c3714d7864bb58b5b5d93972527"
+origin = "research15/research17 retained inputs.sha256; historical handoff declaration read without rehashing"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/crates/port/src/room_scroll.rs"
+sha256 = "cc2c7ee9138a1c781321045e28246c083fca6a53ce284ac626d9abf5bdb5bdf0"
+origin = "research15/research17 retained inputs.sha256; historical handoff declaration read without rehashing"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/crates/port/src/room.rs"
+sha256 = "e7b13c17ac668f8aba50a21aedfcd4d4dcf93f5e1cd2d4c610557cb56774ba72"
+origin = "research15/research17 retained inputs.sha256; historical handoff declaration read without rehashing"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/assets/names.txt"
+sha256 = "904f25a85a3118820eb54ec4ee154e6f5bab6ef284883fd68e5c749dd2035940"
+origin = "tools/port/source-inventory.toml [source_identity.files]; inherited pinned archive declaration"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/funcs.h"
+sha256 = "b34fcb4451210e086845163bbfb5a9ca1ef5a2e2cb8022b8a7d7fab4fe6cb52e"
+origin = "tools/port/source-inventory.toml [source_identity.files]; inherited pinned archive declaration"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/ida_types.h"
+sha256 = "12974c5708740164692dac151104020b53e8316e7378521c974ddf602d1f28ff"
+origin = "tools/port/source-inventory.toml [source_identity.files]; inherited pinned archive declaration"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_80.c"
+sha256 = "ab9abc1042ea876c51de90d00632d1af13e9a765c77cf371950ddcdc783130c7"
+origin = "tools/port/source-inventory.toml [source_identity.files]; inherited pinned archive declaration"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_81.c"
+sha256 = "bd05747f344ac18d4f5230e10fd4678b087048c24e8aeb5f685691b36badb1a0"
+origin = "tools/port/source-inventory.toml [source_identity.files]; inherited pinned archive declaration"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_82.c"
+sha256 = "afa8b6fb9e9e5ad378db4779c1c39574856a57d50d25c4536aa2bafeeb79e3ad"
+origin = "tools/port/source-inventory.toml [source_identity.files]; inherited pinned archive declaration"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_85.c"
+sha256 = "01035a449979bdb7c50d26f4733b2cda9d04f86a5d3d2596446216a3a096d2c2"
+origin = "tools/port/source-inventory.toml [source_identity.files]; inherited pinned archive declaration"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_88.c"
+sha256 = "aaa369946309a7ea8e4c8f4374dc4f9f771f2b4855ed7439cff71dd234d50be0"
+origin = "tools/port/source-inventory.toml [source_identity.files]; inherited pinned archive declaration"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_90.c"
+sha256 = "ad9f103509160abd8a9e0f85f3c3c96187c89f31dd770cf533fa32a97925247a"
+origin = "tools/port/source-inventory.toml [source_identity.files]; inherited pinned archive declaration"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_91.c"
+sha256 = "8a087a687e9611d1272797522f1b5fd20f9e344d851e0a6701af8b9052b5070f"
+origin = "tools/port/source-inventory.toml [source_identity.files]; inherited pinned archive declaration"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_cpu_infra.c"
+sha256 = "fe066c3f2a2e0a86b6b659ba651e8c2879dd723e2393718124d946575b43bed6"
+origin = "tools/port/source-inventory.toml [source_identity.files]; inherited pinned archive declaration"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_cpu_infra.h"
+sha256 = "2dfe6d82e6d138ca030543eaa43438eb710647fcd684b6a19337d201b0e88877"
+origin = "tools/port/source-inventory.toml [source_identity.files]; inherited pinned archive declaration"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_rtl.c"
+sha256 = "cafcd12cd98e5797680a1928af23ceaf244a20afea927bf600c122effd899614"
+origin = "tools/port/source-inventory.toml [source_identity.files]; inherited pinned archive declaration"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_rtl.h"
+sha256 = "0347707a3b7cbdfb3563866ee7574a67afdc53d1a0907427b157bf49c3f9afac"
+origin = "tools/port/source-inventory.toml [source_identity.files]; inherited pinned archive declaration"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/snes/apu.c"
+sha256 = "4111477d945203b66371e605d59167d7d21c6c278afe4bb86c0f61fdf18cf105"
+origin = "tools/port/source-inventory.toml [source_identity.files]; inherited pinned archive declaration"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/snes/apu.h"
+sha256 = "03ea8b93a31d8d4471d0a586f35a3d7578d6ad25ed27f806f026c3622b91377d"
+origin = "tools/port/source-inventory.toml [source_identity.files]; inherited pinned archive declaration"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/snes/cpu.c"
+sha256 = "b0267b0993cfd2808d6466a9ac573a86eef5335df540c7c58130fff9799832b2"
+origin = "tools/port/source-inventory.toml [source_identity.files]; inherited pinned archive declaration"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/snes/cpu.h"
+sha256 = "f2f6a5a1ac57cb074e6d32825c17867e9f16025c26b69a705f2fe49971e945f3"
+origin = "tools/port/source-inventory.toml [source_identity.files]; inherited pinned archive declaration"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/snes/dma.c"
+sha256 = "38721c80beaa2bd2980a52483fefe29e0b5e146b389fd9c718fc375dd69d735d"
+origin = "tools/port/source-inventory.toml [source_identity.files]; inherited pinned archive declaration"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/snes/dma.h"
+sha256 = "0df39b234f17f2b176c43f67f65b8b9e16e42f929a0d877ae0c0cb85963d0cd4"
+origin = "tools/port/source-inventory.toml [source_identity.files]; inherited pinned archive declaration"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/snes/dsp.c"
+sha256 = "9a517e197b5a819d26637f7fcf449494e9b26bd766e17cee795312c37b249dd5"
+origin = "tools/port/source-inventory.toml [source_identity.files]; inherited pinned archive declaration"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/snes/dsp.h"
+sha256 = "f610f532fecf9505b0bfdb9431693f834ee1ec2229c6d695c916e566b6357801"
+origin = "tools/port/source-inventory.toml [source_identity.files]; inherited pinned archive declaration"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/snes/snes.c"
+sha256 = "0a2594280c3931c2e2271111c685a535a3d620fa55b5eb6f92db1a0b4c1c0259"
+origin = "tools/port/source-inventory.toml [source_identity.files]; inherited pinned archive declaration"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/snes/snes.h"
+sha256 = "e45095b995f555f4b07e593a38b8b50d04fca54d3070fee22f67ecb45cb0e824"
+origin = "tools/port/source-inventory.toml [source_identity.files]; inherited pinned archive declaration"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/snes/spc.c"
+sha256 = "e4cca0afabe45a55992aad55218510c94f78b3597cd0b28203974c731520680d"
+origin = "tools/port/source-inventory.toml [source_identity.files]; inherited pinned archive declaration"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/snes/spc.h"
+sha256 = "f4a6ceb15953c14f42e4aa5c014b3203b357fe455d256a2158f765c5d7f8abcd"
+origin = "tools/port/source-inventory.toml [source_identity.files]; inherited pinned archive declaration"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/spc_player.c"
+sha256 = "5aae391e888d5128612bda90edb5a8be372fa8e2b58de42b4b66210a9f68c187"
+origin = "tools/port/source-inventory.toml [source_identity.files]; inherited pinned archive declaration"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/spc_player.h"
+sha256 = "1bd4310ba756d27a225d4a3eea346447c74d8f9823fc469b244df7134e32eb4d"
+origin = "tools/port/source-inventory.toml [source_identity.files]; inherited pinned archive declaration"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/types.h"
+sha256 = "02d6acb15eb207f36fa03ebab65bf622521657f2168db0a415a55c7f9598a0c0"
+origin = "tools/port/source-inventory.toml [source_identity.files]; inherited pinned archive declaration"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/variables_extra.h"
+sha256 = "b0bcbd066690205160fad3e625820d4c51d82ac63853cae37a0fe25b0bd3844d"
+origin = "tools/port/source-inventory.toml [source_identity.files]; inherited pinned archive declaration"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/deps/snesrev-sm/src/variables.h"
+sha256 = "e2ce28d07ceff91129e93417099f33f20f161c37e95e745c575d0e30b3fd5585"
+origin = "tools/port/source-inventory.toml [source_identity.files]; inherited pinned archive declaration"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/docs/agents/assignments.md"
+sha256 = "b9d3ebb928395dedcb0f9645e9b8acba8e013698deabc68e81648eb0bca0bd09"
+origin = "research15/research17 retained inputs.sha256; historical handoff declaration read without rehashing"
+current_authentication = false
+mutable_current_input = true
+
+[[entries]]
+path = "/home/jim/sm-decomp/docs/agents/decomp-sessions.md"
+sha256 = "fa17b39d14614e811d3362bc51fd1b79d881e3bddc6eac5e5d56aeabf805f8eb"
+origin = "research15/research17 retained inputs.sha256; historical handoff declaration read without rehashing"
+current_authentication = false
+mutable_current_input = true
+
+[[entries]]
+path = "/home/jim/sm-decomp/docs/agents/domain.md"
+sha256 = "003b85c858b75a46a07e559afa957b7a9c175d60e7f82cc2f45e4619719fb7f4"
+origin = "research15/research17 retained inputs.sha256; historical handoff declaration read without rehashing"
+current_authentication = false
+mutable_current_input = true
+
+[[entries]]
+path = "/home/jim/sm-decomp/docs/agents/run-cleanup.md"
+sha256 = "a5d18a5911ac71e48673321c49b54cf9d0cc14810b6e3be1372d6285acbfee1f"
+origin = "research15/research17 retained inputs.sha256; historical handoff declaration read without rehashing"
+current_authentication = false
+mutable_current_input = true
+
+[[entries]]
+path = "/home/jim/sm-decomp/docs/agents/translation-progress.md"
+sha256 = "6fe96fc41056882f77f2ea8c1a2c7439601894d3220a82a09467be79ea8450f9"
+origin = "research15/research17 retained inputs.sha256; historical handoff declaration read without rehashing"
+current_authentication = false
+mutable_current_input = true
+
+[[entries]]
+path = "/home/jim/sm-decomp/GLOSSARY.md"
+sha256 = "1b7b97350049dc3e636fb07fa2ae7ec2e300fa4fbc51e676408a77edaf33aec1"
+origin = "research15/research17 retained inputs.sha256; historical handoff declaration read without rehashing"
+current_authentication = false
+mutable_current_input = true
+
+[[entries]]
+path = "/home/jim/sm-decomp/movies/super-metroid-any-3653.inputs"
+sha256 = "cc643d751554ad6d30b5d7e3a41a4259525517ca7614cf73abec9fac30176c0e"
+origin = "research15 retained movie identity"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/out/port/batches/20261010T211506.367424Z/audio/20261010T212150.237926Z/evidence/20261010T212150.283741Z/verdict.json"
+sha256 = "d8944be07479cd5bb535108b3ea4a73fdd31a66cc1f5617c045ecfa8b9f46e14"
+origin = "retained-coverage-authentication.json historical audio verdict"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/out/port/batches/20261010T211506.367424Z/system/20261010T211506.370023Z/evidence/20261010T211506.396264Z/verdict.json"
+sha256 = "71a515f9853c74c2753246fe7fe96a837ff581da482d44e1e6f15485e32dab96"
+origin = "retained-coverage-authentication.json historical system verdict"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/out/port/room-plm-current-live/20261010T224032.887967Z/c-0/rom-view.bin"
+sha256 = "40aaebb25b9646bea2dffdc5e1ae680768a39dd122de9353885e1c7456ceae27"
+origin = "research15 rom-ranges.json retained patched image identity"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/rom/sm.sfc"
+sha256 = "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72"
+origin = "research15 rom-ranges.json retained original image identity"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/tools/dependencies.toml"
+sha256 = "e74864c229949fc6f1a6bd7528f339bdb3f9364f1e4f9544f08693881d10f111"
+origin = "research15/research17 retained inputs.sha256; historical handoff declaration read without rehashing"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/tools/port/batch.toml"
+sha256 = "8290b49963e805528e2ffb3fabe5e9e9db083cbf2a33d4a3e6b24856cef9cd2f"
+origin = "research15/research17 retained inputs.sha256; historical handoff declaration read without rehashing"
+current_authentication = false
+mutable_current_input = false
+
+[[entries]]
+path = "/home/jim/sm-decomp/tools/port/source-inventory.toml"
+sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+origin = "routine-observations.json inherited inventory pin"
+current_authentication = false
+mutable_current_input = false
+

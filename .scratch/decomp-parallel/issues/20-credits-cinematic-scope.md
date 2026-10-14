@@ -38,3 +38,23 @@ initial/3600s merged gates; add exact generated tasks to08/09 before completion.
 
 Pending Answer/task/scope/hash pointers and scoped cleanup/authentication or
 no-run result with bytes/free space and retained dependencies.
+
+<!-- decomp-assignment:ticket-d38d7ff4d47345a6e625b547c2a83dc6c02b260f9edfd4988f19c491b4cb888d -->
+
+<!-- decomp-assignment-record:start -->
+
+## Current assignment
+
+Stable work: `ticket-d38d7ff4d47345a6e625b547c2a83dc6c02b260f9edfd4988f19c491b4cb888d`
+Input revision: `0c93011aecea372a7d459410bf90e48218efe4ab8b1c1c025c58294ff48f4eb1`
+Lifecycle: `ready`
+
+Honor existing local ticket .scratch/decomp-parallel/issues/20-credits-cinematic-scope.md. It is open, unclaimed and dependency-ready. Read its requirements and establish a complete Translation scope before implementation: observed exercise provenance, required dependencies, exact writable paths and concrete verification argv. Include a bounded pre-integration test and an integration gate. Use native translation-scope-v1 TOML; limit each initial experiment to approximately 60 seconds. Research facts do not grant acceptance. Preserve task-origin ownership until its implementation is integrated, verified and cleaned.
+
+Writable ownership:
+
+No maintained source writes.
+
+
+<!-- decomp-assignment-record:end -->
+

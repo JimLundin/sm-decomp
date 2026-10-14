@@ -1,0 +1,1288 @@
+ledger = "/home/jim/sm-decomp/.scratch/decomp-parallel/ledger.toml"
+recovery = []
+status = "waiting"
+
+[deferred]
+ticket-81d3d6691a3ab143a2034f57896e0dc7262a2ff8cc9b3b5c66d339e47f208832 = "ticket blocked by 11"
+
+[[jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[jobs.job]
+blockers = []
+id = "diagnose-12ff526742252da3"
+instructions = "Read the retained projectile-native-state-leaves failure in /home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml. Establish the first failing fixture and a bounded reproduction using existing Rust commands; cap initial experiments at 60 seconds. Report evidence and a local follow-up scope. Preserve diagnostic artifacts and complete cleanup."
+kind = "diagnose"
+revision = "0db82461c57d23d34020ae27f620ca92d3d9f4f9d87600e0a62a4a14d686c17c"
+subject = "Diagnose projectile-native-state-leaves: rejected"
+writable_paths = []
+
+[jobs.job.inputs]
+base-head = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml" = "727a4526fac849f37066ef282c6c5e1263faee12cb3b95d86315fdaeb1a5c788"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/projectile-native-state-leaves/evidence/1791905067082053-546014-1115/verdict.toml" = "f054b518edeaa6c96581ad75913aaa466c22428f3708cbee2ea1717a9eb0aaea"
+
+[[jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[jobs.job]
+blockers = []
+id = "diagnose-1434d465a8e8c775"
+instructions = "Read the retained mother-brain-door-particle-allocation failure in /home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml. Establish the first failing fixture and a bounded reproduction using existing Rust commands; cap initial experiments at 60 seconds. Report evidence and a local follow-up scope. Preserve diagnostic artifacts and complete cleanup."
+kind = "diagnose"
+revision = "8c90d4f15b0cc0135491aaf765792148f66d2efa487fec1f7316d50b2f285716"
+subject = "Diagnose mother-brain-door-particle-allocation: rejected"
+writable_paths = []
+
+[jobs.job.inputs]
+base-head = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml" = "727a4526fac849f37066ef282c6c5e1263faee12cb3b95d86315fdaeb1a5c788"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/mother-brain-door-particle-allocation/evidence/1791903912482716-546014-671/verdict.toml" = "ddb82d9e9e774bb40ad0870ec483d52b6ee9daea1424d7799ee2972c09525bfc"
+
+[[jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[jobs.job]
+blockers = []
+id = "diagnose-1a2ad6bc9fb564eb"
+instructions = "Read the retained projectile-host-context failure in /home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml. Establish the first failing fixture and a bounded reproduction using existing Rust commands; cap initial experiments at 60 seconds. Report evidence and a local follow-up scope. Preserve diagnostic artifacts and complete cleanup."
+kind = "diagnose"
+revision = "70e87b59508aafb05855df13831178ab3435e1d924eacc8091be6ebeb4bcc408"
+subject = "Diagnose projectile-host-context: rejected"
+writable_paths = []
+
+[jobs.job.inputs]
+base-head = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml" = "727a4526fac849f37066ef282c6c5e1263faee12cb3b95d86315fdaeb1a5c788"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/projectile-host-context/evidence/1791905063300639-546014-1109/verdict.toml" = "825be0cd2e23ffcddcb134f5c3a66be303617ec71f50077e720b1bf92cdeefd7"
+
+[[jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[jobs.job]
+blockers = []
+id = "diagnose-1b1d7558e3b5c1fc"
+instructions = "Read the retained projectile-movement-live-leaves failure in /home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml. Establish the first failing fixture and a bounded reproduction using existing Rust commands; cap initial experiments at 60 seconds. Report evidence and a local follow-up scope. Preserve diagnostic artifacts and complete cleanup."
+kind = "diagnose"
+revision = "e55ed6dbb9c6db8cc90cfa8a9a99795bb3675076485b596e665fd8e767e675ce"
+subject = "Diagnose projectile-movement-live-leaves: rejected"
+writable_paths = []
+
+[jobs.job.inputs]
+base-head = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml" = "727a4526fac849f37066ef282c6c5e1263faee12cb3b95d86315fdaeb1a5c788"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/projectile-movement-live-leaves/evidence/1791905066073851-546014-1112/verdict.toml" = "d4c6cfad2f85105d5cb0ac0b2927edf7511f0f0ff7790ef4241b9847a2c05322"
+
+[[jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[jobs.job]
+blockers = []
+id = "diagnose-21c490d10d56182c"
+instructions = "Read the retained projectile-death-beam-call failure in /home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml. Establish the first failing fixture and a bounded reproduction using existing Rust commands; cap initial experiments at 60 seconds. Report evidence and a local follow-up scope. Preserve diagnostic artifacts and complete cleanup."
+kind = "diagnose"
+revision = "4fe12541f5758d4b11db8fc868c2ec795ac7259b19fc200619beda3ed3690f43"
+subject = "Diagnose projectile-death-beam-call: rejected"
+writable_paths = []
+
+[jobs.job.inputs]
+base-head = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml" = "727a4526fac849f37066ef282c6c5e1263faee12cb3b95d86315fdaeb1a5c788"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/projectile-death-beam-call/evidence/1791905029024742-546014-1094/verdict.toml" = "45dc01e827fdf24121f8492586a8959d0a14c964631487bff8318ab8e3e7cc14"
+
+[[jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[jobs.job]
+blockers = []
+id = "diagnose-2a53584ccc5e8289"
+instructions = "Read the retained projectile-random-motion failure in /home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml. Establish the first failing fixture and a bounded reproduction using existing Rust commands; cap initial experiments at 60 seconds. Report evidence and a local follow-up scope. Preserve diagnostic artifacts and complete cleanup."
+kind = "diagnose"
+revision = "7d7e901ab957faedb8f4e72d45c650f55b629c69944a8edd920dbf422bba8080"
+subject = "Diagnose projectile-random-motion: rejected"
+writable_paths = []
+
+[jobs.job.inputs]
+base-head = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml" = "727a4526fac849f37066ef282c6c5e1263faee12cb3b95d86315fdaeb1a5c788"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/projectile-random-motion/evidence/1791905069314108-546014-1122/verdict.toml" = "e49dcac787d4eebc0d17f2a4e3cf3407b4b8c5d36fc4480d4de2ed87dc817857"
+
+[[jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[jobs.job]
+blockers = []
+id = "diagnose-322e27410032b4bb"
+instructions = "Read the retained ki-hunter-acid-allocation failure in /home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml. Establish the first failing fixture and a bounded reproduction using existing Rust commands; cap initial experiments at 60 seconds. Report evidence and a local follow-up scope. Preserve diagnostic artifacts and complete cleanup."
+kind = "diagnose"
+revision = "79bd2552e5ef1d5f69b0de4047fd9fbb6a1ed884210e12c0f5da1477565968ad"
+subject = "Diagnose ki-hunter-acid-allocation: rejected"
+writable_paths = []
+
+[jobs.job.inputs]
+base-head = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml" = "727a4526fac849f37066ef282c6c5e1263faee12cb3b95d86315fdaeb1a5c788"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/ki-hunter-acid-allocation/evidence/1791903287588267-546014-492/verdict.toml" = "aa2bf261d128e5fd9556b68befca03340abe35ad66a43fada8b84042dc9eb9a0"
+
+[[jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[jobs.job]
+blockers = []
+id = "diagnose-49c62fbcb8896d24"
+instructions = "Read the retained plant-spike-allocation failure in /home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml. Establish the first failing fixture and a bounded reproduction using existing Rust commands; cap initial experiments at 60 seconds. Report evidence and a local follow-up scope. Preserve diagnostic artifacts and complete cleanup."
+kind = "diagnose"
+revision = "736672d7afb58c12c58ed132bfef9ab14d025e3c13470aa2edaf04aa81eb18ed"
+subject = "Diagnose plant-spike-allocation: rejected"
+writable_paths = []
+
+[jobs.job.inputs]
+base-head = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml" = "727a4526fac849f37066ef282c6c5e1263faee12cb3b95d86315fdaeb1a5c788"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/plant-spike-allocation/evidence/1791904836839256-546014-1029/verdict.toml" = "acf017f36b433b666843a389800c1db500b8a0d739ab57717a661028d7cab26b"
+
+[[jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[jobs.job]
+blockers = []
+id = "diagnose-4d6447233612547c"
+instructions = "Read the retained animated-tile-frames failure in /home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml. Establish the first failing fixture and a bounded reproduction using existing Rust commands; cap initial experiments at 60 seconds. Report evidence and a local follow-up scope. Preserve diagnostic artifacts and complete cleanup."
+kind = "diagnose"
+revision = "09a9d2b060cdebbac269cd8edb02482c33da3ad98c5675c4ad97917f696afb54"
+subject = "Diagnose animated-tile-frames: rejected"
+writable_paths = []
+
+[jobs.job.inputs]
+base-head = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml" = "727a4526fac849f37066ef282c6c5e1263faee12cb3b95d86315fdaeb1a5c788"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/animated-tile-frames/evidence/1791901958726864-546014-39/verdict.toml" = "a262bf066d2d441de65e501b2db4c1a953dfbbc174028c88764705092560c418"
+
+[[jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[jobs.job]
+blockers = []
+id = "diagnose-6268d6dc8533601a"
+instructions = "Read the retained projectile-sprite-spawns failure in /home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml. Establish the first failing fixture and a bounded reproduction using existing Rust commands; cap initial experiments at 60 seconds. Report evidence and a local follow-up scope. Preserve diagnostic artifacts and complete cleanup."
+kind = "diagnose"
+revision = "79382c90f1f95277e671184e4b46e61113ac210fde61721be9cd0300e1dc6773"
+subject = "Diagnose projectile-sprite-spawns: rejected"
+writable_paths = []
+
+[jobs.job.inputs]
+base-head = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml" = "727a4526fac849f37066ef282c6c5e1263faee12cb3b95d86315fdaeb1a5c788"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/projectile-sprite-spawns/evidence/1791905070520110-546014-1126/verdict.toml" = "0463b0d3b2c8c046f994b59f8f12077af0aabeb8497ccdbdf83df16a1d1ace66"
+
+[[jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[jobs.job]
+blockers = []
+id = "diagnose-67a03d58e277b56e"
+instructions = "Read the retained kago-bug-allocation failure in /home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml. Establish the first failing fixture and a bounded reproduction using existing Rust commands; cap initial experiments at 60 seconds. Report evidence and a local follow-up scope. Preserve diagnostic artifacts and complete cleanup."
+kind = "diagnose"
+revision = "4680bf914d564ee835aebdfd511f8d13d5d216fc94caf095c4e2dca1e0d9072f"
+subject = "Diagnose kago-bug-allocation: rejected"
+writable_paths = []
+
+[jobs.job.inputs]
+base-head = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml" = "727a4526fac849f37066ef282c6c5e1263faee12cb3b95d86315fdaeb1a5c788"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/kago-bug-allocation/evidence/1791903132172324-546014-469/verdict.toml" = "2098915d1689009b25448532e7f4f731d9d7ab3b2b8e7b15c5bc386cdc22b7bb"
+
+[[jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[jobs.job]
+blockers = []
+id = "diagnose-6b2a3e9730a3d033"
+instructions = "Read the retained projectile-paired-live-leaves failure in /home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml. Establish the first failing fixture and a bounded reproduction using existing Rust commands; cap initial experiments at 60 seconds. Report evidence and a local follow-up scope. Preserve diagnostic artifacts and complete cleanup."
+kind = "diagnose"
+revision = "e52b4c22b0d4eb10071987892f5bb9528996685e249eced43defa82360edd766"
+subject = "Diagnose projectile-paired-live-leaves: rejected"
+writable_paths = []
+
+[jobs.job.inputs]
+base-head = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml" = "727a4526fac849f37066ef282c6c5e1263faee12cb3b95d86315fdaeb1a5c788"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/projectile-paired-live-leaves/evidence/1791905067203156-546014-1116/verdict.toml" = "e8ba85581b0248ca31cac5e4d4083d946dc198cf1fef8326489b88aa9a68c57c"
+
+[[jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[jobs.job]
+blockers = []
+id = "diagnose-6f6680fc4e101a8c"
+instructions = "Read the retained floater-spike-allocation failure in /home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml. Establish the first failing fixture and a bounded reproduction using existing Rust commands; cap initial experiments at 60 seconds. Report evidence and a local follow-up scope. Preserve diagnostic artifacts and complete cleanup."
+kind = "diagnose"
+revision = "cc812231931965a038d02e58609f313d9d0e4e7ed3d20bc2ecdbb733653a913f"
+subject = "Diagnose floater-spike-allocation: rejected"
+writable_paths = []
+
+[jobs.job.inputs]
+base-head = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml" = "727a4526fac849f37066ef282c6c5e1263faee12cb3b95d86315fdaeb1a5c788"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/floater-spike-allocation/evidence/1791902991088273-546014-419/verdict.toml" = "660bd77ac49e4004320b7115f7bf6bb05120a3dd2120ab299869d7f8fa62e336"
+
+[[jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[jobs.job]
+blockers = []
+id = "diagnose-77de90935b8d4c8d"
+instructions = "Read the retained projectile-state-instruction-gaps failure in /home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml. Establish the first failing fixture and a bounded reproduction using existing Rust commands; cap initial experiments at 60 seconds. Report evidence and a local follow-up scope. Preserve diagnostic artifacts and complete cleanup."
+kind = "diagnose"
+revision = "13d1c973f69bd42874a1f26c2b720864cac6e3b5f1ca54141f34cffad684acff"
+subject = "Diagnose projectile-state-instruction-gaps: rejected"
+writable_paths = []
+
+[jobs.job.inputs]
+base-head = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml" = "727a4526fac849f37066ef282c6c5e1263faee12cb3b95d86315fdaeb1a5c788"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/projectile-state-instruction-gaps/evidence/1791905071320854-546014-1129/verdict.toml" = "702213850504c57a4cba04da381798f6748a2880f48c9c0d7fe40671fd047b7e"
+
+[[jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[jobs.job]
+blockers = []
+id = "diagnose-8b3e4a0b9abecdea"
+instructions = "Read the retained animated-tile-spawns failure in /home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml. Establish the first failing fixture and a bounded reproduction using existing Rust commands; cap initial experiments at 60 seconds. Report evidence and a local follow-up scope. Preserve diagnostic artifacts and complete cleanup."
+kind = "diagnose"
+revision = "812e35de99f140afdc4216079a10e04e61b52a9212b77060de1bbff98be9d99b"
+subject = "Diagnose animated-tile-spawns: rejected"
+writable_paths = []
+
+[jobs.job.inputs]
+base-head = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml" = "727a4526fac849f37066ef282c6c5e1263faee12cb3b95d86315fdaeb1a5c788"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/animated-tile-spawns/evidence/1791901987177766-546014-64/verdict.toml" = "d9f22e0f163873c35ab3e7366b2985952afc5b697af32c7399886d0e6d222a3a"
+
+[[jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[jobs.job]
+blockers = []
+id = "diagnose-8d39618a181508cf"
+instructions = "Read the retained projectile-direction-samus failure in /home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml. Establish the first failing fixture and a bounded reproduction using existing Rust commands; cap initial experiments at 60 seconds. Report evidence and a local follow-up scope. Preserve diagnostic artifacts and complete cleanup."
+kind = "diagnose"
+revision = "d4e3c6b3db3eb09d60b704643c91a74c2181f8ce3c67bfe467a43a208c75a9f2"
+subject = "Diagnose projectile-direction-samus: rejected"
+writable_paths = []
+
+[jobs.job.inputs]
+base-head = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml" = "727a4526fac849f37066ef282c6c5e1263faee12cb3b95d86315fdaeb1a5c788"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/projectile-direction-samus/evidence/1791905039767839-546014-1105/verdict.toml" = "fb64dc02f5e53c3a07292467eb7737a5085a40589a1442f609545a33093cbba7"
+
+[[jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[jobs.job]
+blockers = []
+id = "diagnose-9cc71a52dee02d55"
+instructions = "Read the retained projectile-host-drop-instructions failure in /home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml. Establish the first failing fixture and a bounded reproduction using existing Rust commands; cap initial experiments at 60 seconds. Report evidence and a local follow-up scope. Preserve diagnostic artifacts and complete cleanup."
+kind = "diagnose"
+revision = "44040c2e25ca647a40ea08e1ae5a0a1987d58961241c96feff2b15cddf0705d5"
+subject = "Diagnose projectile-host-drop-instructions: rejected"
+writable_paths = []
+
+[jobs.job.inputs]
+base-head = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml" = "727a4526fac849f37066ef282c6c5e1263faee12cb3b95d86315fdaeb1a5c788"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/projectile-host-drop-instructions/evidence/1791905063411857-546014-1110/verdict.toml" = "f8c4430b6b72ee474da5b10c3ec8867d2858329dc5b874879c94416106a0f992"
+
+[[jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[jobs.job]
+blockers = []
+id = "diagnose-a46ffb1b412e3ad5"
+instructions = "Read the retained projectile-fixed-sounds failure in /home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml. Establish the first failing fixture and a bounded reproduction using existing Rust commands; cap initial experiments at 60 seconds. Report evidence and a local follow-up scope. Preserve diagnostic artifacts and complete cleanup."
+kind = "diagnose"
+revision = "215d4a0be78f0780147313f391ebd4dc7ecd397be692e8cd2d048ea0eb09f410"
+subject = "Diagnose projectile-fixed-sounds: rejected"
+writable_paths = []
+
+[jobs.job.inputs]
+base-head = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml" = "727a4526fac849f37066ef282c6c5e1263faee12cb3b95d86315fdaeb1a5c788"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/projectile-fixed-sounds/evidence/1791905062585895-546014-1107/verdict.toml" = "58a9858f39e18f4cf61cc58b8caa4ff08b8b7953db49eed2549cd1c0fd4c6810"
+
+[[jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[jobs.job]
+blockers = []
+id = "diagnose-af0857a3fdb1961b"
+instructions = "Read the retained mother-brain-rainbow-allocation failure in /home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml. Establish the first failing fixture and a bounded reproduction using existing Rust commands; cap initial experiments at 60 seconds. Report evidence and a local follow-up scope. Preserve diagnostic artifacts and complete cleanup."
+kind = "diagnose"
+revision = "8435ef6a5a7d79ff1814c9da649baf9a833f97a68a7c77b9aaaa2263cd22d981"
+subject = "Diagnose mother-brain-rainbow-allocation: rejected"
+writable_paths = []
+
+[jobs.job.inputs]
+base-head = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml" = "727a4526fac849f37066ef282c6c5e1263faee12cb3b95d86315fdaeb1a5c788"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/mother-brain-rainbow-allocation/evidence/1791904169180484-546014-765/verdict.toml" = "654165c89c0cd04f4f2f86b45c407f5f4795dc0c6ac0184b658872e719618b88"
+
+[[jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[jobs.job]
+blockers = []
+id = "diagnose-b3f712c017677def"
+instructions = "Read the retained ceres-pad failure in /home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml. Establish the first failing fixture and a bounded reproduction using existing Rust commands; cap initial experiments at 60 seconds. Report evidence and a local follow-up scope. Preserve diagnostic artifacts and complete cleanup."
+kind = "diagnose"
+revision = "9733d11b54fe75d3056084d3103b5c5e13d3be47e4aa02321f96d0acb69b50c6"
+subject = "Diagnose ceres-pad: rejected"
+writable_paths = []
+
+[jobs.job.inputs]
+base-head = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml" = "727a4526fac849f37066ef282c6c5e1263faee12cb3b95d86315fdaeb1a5c788"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/ceres-pad/evidence/1791902137413095-546014-153/verdict.toml" = "1fcef6d5cb0dbd772ca5224ea87a8a870d3856678cebe9b85812e0dbc4555ff7"
+
+[[jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[jobs.job]
+blockers = []
+id = "diagnose-c52578c91aa8a3b2"
+instructions = "Read the retained enemy-projectiles failure in /home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml. Establish the first failing fixture and a bounded reproduction using existing Rust commands; cap initial experiments at 60 seconds. Report evidence and a local follow-up scope. Preserve diagnostic artifacts and complete cleanup."
+kind = "diagnose"
+revision = "55f55c89285e4167d43d53a8f3bf150491fa55df1f4203b33152f81fe6096a47"
+subject = "Diagnose enemy-projectiles: rejected"
+writable_paths = []
+
+[jobs.job.inputs]
+base-head = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml" = "727a4526fac849f37066ef282c6c5e1263faee12cb3b95d86315fdaeb1a5c788"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/enemy-projectiles/evidence/1791902915262664-546014-392/verdict.toml" = "25f864b9625f014785963760854d2046a700140714d517bd552eccdce67563cd"
+
+[[jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[jobs.job]
+blockers = []
+id = "diagnose-d09797ecc1c3c4b2"
+instructions = "Read the retained mother-brain-drool-allocation failure in /home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml. Establish the first failing fixture and a bounded reproduction using existing Rust commands; cap initial experiments at 60 seconds. Report evidence and a local follow-up scope. Preserve diagnostic artifacts and complete cleanup."
+kind = "diagnose"
+revision = "2eaeb4bd2cee4844d458c539f91f4a6661c15c1a08dc4ec1950da8acd14214ec"
+subject = "Diagnose mother-brain-drool-allocation: rejected"
+writable_paths = []
+
+[jobs.job.inputs]
+base-head = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml" = "727a4526fac849f37066ef282c6c5e1263faee12cb3b95d86315fdaeb1a5c788"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/mother-brain-drool-allocation/evidence/1791903972090229-546014-683/verdict.toml" = "b125272d19659e4701e1405dcbcc521b7ce2fd04bfca3b3b7cc53841ab44a9d6"
+
+[[jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[jobs.job]
+blockers = []
+id = "diagnose-db991495e1b275bd"
+instructions = "Read the retained projectile-paired-motion failure in /home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml. Establish the first failing fixture and a bounded reproduction using existing Rust commands; cap initial experiments at 60 seconds. Report evidence and a local follow-up scope. Preserve diagnostic artifacts and complete cleanup."
+kind = "diagnose"
+revision = "3470830e137940a48b146ba21000013e0e5163b6a5ba16e9b0b43ff46ee9f222"
+subject = "Diagnose projectile-paired-motion: rejected"
+writable_paths = []
+
+[jobs.job.inputs]
+base-head = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml" = "727a4526fac849f37066ef282c6c5e1263faee12cb3b95d86315fdaeb1a5c788"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/projectile-paired-motion/evidence/1791905068072126-546014-1119/verdict.toml" = "c41687265a7634f7490493ac6393ad1fe6d172715ff05ea02e209d42e0db86fa"
+
+[[jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[jobs.job]
+blockers = []
+id = "diagnose-e0758ce8da968fbc"
+instructions = "Read the retained projectile-script-leaves failure in /home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml. Establish the first failing fixture and a bounded reproduction using existing Rust commands; cap initial experiments at 60 seconds. Report evidence and a local follow-up scope. Preserve diagnostic artifacts and complete cleanup."
+kind = "diagnose"
+revision = "594940d53566796891234514a4bce4572841c418d32916b77311f89763980943"
+subject = "Diagnose projectile-script-leaves: rejected"
+writable_paths = []
+
+[jobs.job.inputs]
+base-head = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml" = "727a4526fac849f37066ef282c6c5e1263faee12cb3b95d86315fdaeb1a5c788"
+"file:/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/projectile-script-leaves/evidence/1791905070478778-546014-1125/verdict.toml" = "967fbf18a22a3c224661b58b379cb572f63f3a87017756649ed3a626ca853ee7"
+
+[[jobs]]
+adopted_ticket = false
+agent = "01a135ca-3b5d-75a2-b717-23d486d7b6ec"
+attempts = 1
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "complete"
+
+[jobs.claim]
+attempt = 1
+coordinator = "decomp-run-20261013"
+id = "ticket-2966e528f4696d00eed786e3a895d9034fd217c5ad6db59153329ef23da35b6d"
+revision = "2b5be5ee42e86f922e679effe3968f60fc7d94afffa98e078f88a1c6107fa81d"
+
+[jobs.job]
+blockers = []
+id = "ticket-2966e528f4696d00eed786e3a895d9034fd217c5ad6db59153329ef23da35b6d"
+instructions = "Honor existing local ticket .scratch/decomp-parallel/issues/18-audio-ui-menu-scope.md. It is open, unclaimed and dependency-ready. Read its requirements and establish a complete Translation scope before implementation: observed exercise provenance, required dependencies, exact writable paths and concrete verification argv. Include a bounded pre-integration test and an integration gate. Use native translation-scope-v1 TOML; limit each initial experiment to approximately 60 seconds. Research facts do not grant acceptance. Preserve task-origin ownership until its implementation is integrated, verified and cleaned."
+kind = "research"
+revision = "2b5be5ee42e86f922e679effe3968f60fc7d94afffa98e078f88a1c6107fa81d"
+subject = "Research complete audio acknowledgment and UI/menu boundaries"
+ticket = ".scratch/decomp-parallel/issues/18-audio-ui-menu-scope.md"
+writable_paths = []
+
+[jobs.job.inputs]
+origin-ticket = ".scratch/decomp-parallel/issues/18-audio-ui-menu-scope.md"
+origin-ticket-type = "research"
+ticket-semantic-sha256 = "22608bb4c0e69ad3a3e3cb8f83e2b2ebcd3cbdda92b30f8f32d9a0ee1a63ed7e"
+
+[jobs.last_update]
+event = "finished"
+
+[jobs.last_update.claim]
+attempt = 1
+coordinator = "decomp-run-20261013"
+id = "ticket-2966e528f4696d00eed786e3a895d9034fd217c5ad6db59153329ef23da35b6d"
+revision = "2b5be5ee42e86f922e679effe3968f60fc7d94afffa98e078f88a1c6107fa81d"
+
+[jobs.last_update.result]
+followups = []
+result = "researched"
+
+[[jobs.last_update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-18/Answer.md"
+sha256 = "45bd7e4152b6167a585ecd3805b1597c8ab6704a678aa8980f374668d463b366"
+
+[[jobs.last_update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-18/children.toml"
+sha256 = "18017dca2f6ea977fa25f298b0967c9179bdaf117cbc2454db420861a3c124f6"
+
+[[jobs.last_update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-18/scope-holding.toml"
+sha256 = "e7683c0fbfce9be67b2297e5028158debbe84c04c9888d51c50684dc4588353c"
+
+[[jobs.last_update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-18/manual-handoff.toml"
+sha256 = "d7e65579992f52c851aea212624df198e53867695a9babc8b4c54b484577f2b3"
+
+[[jobs.last_update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-18/cleanup.toml"
+sha256 = "8d2b99f0cd2314efcef478de9ae4d76e89b580b7211098522af8409cf4a9c4ec"
+
+[[jobs.last_update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/receipts/ticket-2966e528f4696d00eed786e3a895d9034fd217c5ad6db59153329ef23da35b6d-1-request-b09ba461a44b7d1b7ab9609ef143a90a099c145801206d87fbed68d75d99f11f.toml"
+sha256 = "6c47797fa39341b16d25d90970b543edb93ac4a1df75caf6010a0feb6c71ae93"
+
+[jobs.result]
+followups = []
+result = "researched"
+
+[[jobs.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-18/Answer.md"
+sha256 = "45bd7e4152b6167a585ecd3805b1597c8ab6704a678aa8980f374668d463b366"
+
+[[jobs.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-18/children.toml"
+sha256 = "18017dca2f6ea977fa25f298b0967c9179bdaf117cbc2454db420861a3c124f6"
+
+[[jobs.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-18/scope-holding.toml"
+sha256 = "e7683c0fbfce9be67b2297e5028158debbe84c04c9888d51c50684dc4588353c"
+
+[[jobs.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-18/manual-handoff.toml"
+sha256 = "d7e65579992f52c851aea212624df198e53867695a9babc8b4c54b484577f2b3"
+
+[[jobs.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-18/cleanup.toml"
+sha256 = "8d2b99f0cd2314efcef478de9ae4d76e89b580b7211098522af8409cf4a9c4ec"
+
+[[jobs.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/receipts/ticket-2966e528f4696d00eed786e3a895d9034fd217c5ad6db59153329ef23da35b6d-1-request-b09ba461a44b7d1b7ab9609ef143a90a099c145801206d87fbed68d75d99f11f.toml"
+sha256 = "6c47797fa39341b16d25d90970b543edb93ac4a1df75caf6010a0feb6c71ae93"
+
+[[jobs]]
+adopted_ticket = false
+agent = "01a13571-7282-7660-99e1-227a72a2c4ff"
+attempts = 1
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "complete"
+
+[jobs.claim]
+attempt = 1
+coordinator = "decomp-launch-20261013"
+id = "ticket-5b357039d4b20673c7d62a43260abada8f7f4f65d7c26999c08138037691dc12"
+revision = "785e3c24a0e08cd0ab9815084aade2973c955bfcdbf96b48d00a1862d3771771"
+
+[jobs.job]
+blockers = []
+id = "ticket-5b357039d4b20673c7d62a43260abada8f7f4f65d7c26999c08138037691dc12"
+instructions = "Honor existing local ticket .scratch/decomp-parallel/issues/13-host-hardware-lifecycle-scope.md. It is open, unclaimed and dependency-ready. Read its requirements and establish a complete Translation scope before implementation: observed exercise provenance, required dependencies, exact writable paths and concrete verification argv. Include a bounded pre-integration test and an integration gate. Use native translation-scope-v1 TOML; limit each initial experiment to approximately 60 seconds. Research facts do not grant acceptance. Preserve task-origin ownership until its implementation is integrated, verified and cleaned."
+kind = "research"
+revision = "785e3c24a0e08cd0ab9815084aade2973c955bfcdbf96b48d00a1862d3771771"
+subject = "Research one complete host/hardware lifecycle boundary"
+ticket = ".scratch/decomp-parallel/issues/13-host-hardware-lifecycle-scope.md"
+writable_paths = []
+
+[jobs.job.inputs]
+origin-ticket = ".scratch/decomp-parallel/issues/13-host-hardware-lifecycle-scope.md"
+origin-ticket-type = "research"
+ticket-semantic-sha256 = "ffb21a5b30288c4a74a27b01e400404f298e1efbb575519fbf0c6df0d3e4bc2e"
+
+[jobs.last_update]
+event = "finished"
+
+[jobs.last_update.claim]
+attempt = 1
+coordinator = "decomp-launch-20261013"
+id = "ticket-5b357039d4b20673c7d62a43260abada8f7f4f65d7c26999c08138037691dc12"
+revision = "785e3c24a0e08cd0ab9815084aade2973c955bfcdbf96b48d00a1862d3771771"
+
+[jobs.last_update.result]
+followups = []
+result = "researched"
+
+[[jobs.last_update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/research-13/answer.md"
+sha256 = "46e394a53e870358a793fdc2b18858c63310df2f7f94646436468efad9bd862d"
+
+[[jobs.last_update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/research-13/children.toml"
+sha256 = "187c439f4518c8d7dccc62d9a6b36fe854841dde16f90a6641a0c3b3b55c0da1"
+
+[[jobs.last_update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/research-13/handoff.md"
+sha256 = "28f331698cc21cf25fd407f668edae613866a9dae189168da650204dc4a2bdcb"
+
+[[jobs.last_update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/research-13/artifacts.sha256"
+sha256 = "40fbada100102956b6e510d74b4da36b32237db4ec2488fac0dfecb4a17eb799"
+
+[[jobs.last_update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/receipts/ticket-5b357039d4b20673c7d62a43260abada8f7f4f65d7c26999c08138037691dc12-1-request-504928e558451b942a29f1a489a3fc14e2a502ea9ef24260f4c6024d9768f019.toml"
+sha256 = "d566a9918798bae1e01e4e4259be3dac7a9423430c3fd8aac7b1a97758a97343"
+
+[jobs.result]
+followups = []
+result = "researched"
+
+[[jobs.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/research-13/answer.md"
+sha256 = "46e394a53e870358a793fdc2b18858c63310df2f7f94646436468efad9bd862d"
+
+[[jobs.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/research-13/children.toml"
+sha256 = "187c439f4518c8d7dccc62d9a6b36fe854841dde16f90a6641a0c3b3b55c0da1"
+
+[[jobs.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/research-13/handoff.md"
+sha256 = "28f331698cc21cf25fd407f668edae613866a9dae189168da650204dc4a2bdcb"
+
+[[jobs.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/research-13/artifacts.sha256"
+sha256 = "40fbada100102956b6e510d74b4da36b32237db4ec2488fac0dfecb4a17eb799"
+
+[[jobs.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/receipts/ticket-5b357039d4b20673c7d62a43260abada8f7f4f65d7c26999c08138037691dc12-1-request-504928e558451b942a29f1a489a3fc14e2a502ea9ef24260f4c6024d9768f019.toml"
+sha256 = "d566a9918798bae1e01e4e4259be3dac7a9423430c3fd8aac7b1a97758a97343"
+
+[[jobs]]
+adopted_ticket = false
+agent = "01a13571-e61e-7e31-8e29-d8f82488f33f"
+attempts = 1
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "complete"
+
+[jobs.claim]
+attempt = 1
+coordinator = "decomp-launch-20261013"
+id = "ticket-6e51e2d92fc5cf720229a4033777377810617f068f09b01ef80339e23a6f8df7"
+revision = "838efcfad1e05746363aa40f54971b62333e35c0874ffd2639f841929bc2e7b3"
+
+[jobs.job]
+blockers = []
+id = "ticket-6e51e2d92fc5cf720229a4033777377810617f068f09b01ef80339e23a6f8df7"
+instructions = "Honor existing local ticket .scratch/decomp-parallel/issues/14-samus-frame-scope.md. It is open, unclaimed and dependency-ready. Read its requirements and establish a complete Translation scope before implementation: observed exercise provenance, required dependencies, exact writable paths and concrete verification argv. Include a bounded pre-integration test and an integration gate. Use native translation-scope-v1 TOML; limit each initial experiment to approximately 60 seconds. Research facts do not grant acceptance. Preserve task-origin ownership until its implementation is integrated, verified and cleaned."
+kind = "research"
+revision = "838efcfad1e05746363aa40f54971b62333e35c0874ffd2639f841929bc2e7b3"
+subject = "Research complete Samus movement/contact frame continuation"
+ticket = ".scratch/decomp-parallel/issues/14-samus-frame-scope.md"
+writable_paths = []
+
+[jobs.job.inputs]
+origin-ticket = ".scratch/decomp-parallel/issues/14-samus-frame-scope.md"
+origin-ticket-type = "research"
+ticket-semantic-sha256 = "915f95ba17002cd72b27705c6d2492856cccf47ccf2ad74bd39de5ed6776746f"
+
+[jobs.last_update]
+event = "finished"
+
+[jobs.last_update.claim]
+attempt = 1
+coordinator = "decomp-launch-20261013"
+id = "ticket-6e51e2d92fc5cf720229a4033777377810617f068f09b01ef80339e23a6f8df7"
+revision = "838efcfad1e05746363aa40f54971b62333e35c0874ffd2639f841929bc2e7b3"
+
+[jobs.last_update.result]
+followups = []
+result = "researched"
+
+[[jobs.last_update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/research-14/Answer.md"
+sha256 = "bbd540b7f792dfbf60e492a61dfc665994fc274fb826cc3583f767683ffb9e50"
+
+[[jobs.last_update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/research-14/artifacts.sha256"
+sha256 = "ea0d0d92ad4f5cdeea9b74470b7d635ec3e366fe8e79aba7669bf71f6f0114a3"
+
+[[jobs.last_update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/research-14/cleanup.toml"
+sha256 = "2660332ae9ec040b8dff34805b3291937d1e8f39367f243941a4dd0d1eea13d7"
+
+[[jobs.last_update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/receipts/ticket-6e51e2d92fc5cf720229a4033777377810617f068f09b01ef80339e23a6f8df7-1-request-14b6b8a1806d5fd7622a07cbc71fb0a4428b04918cf7b8c06a28782d0cc83f21.toml"
+sha256 = "89e1ad81ce574a807c71052b38d80fba178524b08533679679ace46e7fc9a192"
+
+[jobs.result]
+followups = []
+result = "researched"
+
+[[jobs.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/research-14/Answer.md"
+sha256 = "bbd540b7f792dfbf60e492a61dfc665994fc274fb826cc3583f767683ffb9e50"
+
+[[jobs.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/research-14/artifacts.sha256"
+sha256 = "ea0d0d92ad4f5cdeea9b74470b7d635ec3e366fe8e79aba7669bf71f6f0114a3"
+
+[[jobs.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/launch-20261013/research-14/cleanup.toml"
+sha256 = "2660332ae9ec040b8dff34805b3291937d1e8f39367f243941a4dd0d1eea13d7"
+
+[[jobs.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/receipts/ticket-6e51e2d92fc5cf720229a4033777377810617f068f09b01ef80339e23a6f8df7-1-request-14b6b8a1806d5fd7622a07cbc71fb0a4428b04918cf7b8c06a28782d0cc83f21.toml"
+sha256 = "89e1ad81ce574a807c71052b38d80fba178524b08533679679ace46e7fc9a192"
+
+[[jobs]]
+adopted_ticket = false
+attempts = 1
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[[jobs.history]]
+observations = []
+
+[jobs.history.claim]
+attempt = 1
+coordinator = "decomp-run-20261013"
+id = "ticket-81d3d6691a3ab143a2034f57896e0dc7262a2ff8cc9b3b5c66d339e47f208832"
+revision = "6e979f3b6e84360f6098e4863fb8a7c7f45629f8d0a3f5315a38bb3eb8312e93"
+
+[jobs.history.job]
+blockers = []
+id = "ticket-81d3d6691a3ab143a2034f57896e0dc7262a2ff8cc9b3b5c66d339e47f208832"
+instructions = "Honor existing local ticket .scratch/decomp-parallel/issues/16-continue-held-whole-ridley.md. It is open, unclaimed and dependency-ready. Read its requirements and establish a complete Translation scope before implementation: observed exercise provenance, required dependencies, exact writable paths and concrete verification argv. Include a bounded pre-integration test and an integration gate. Use native translation-scope-v1 TOML; limit each initial experiment to approximately 60 seconds. Research facts do not grant acceptance. Preserve task-origin ownership until its implementation is integrated, verified and cleaned."
+kind = "research"
+revision = "6e979f3b6e84360f6098e4863fb8a7c7f45629f8d0a3f5315a38bb3eb8312e93"
+subject = "Continue the held whole Ridley lifecycle admission"
+ticket = ".scratch/decomp-parallel/issues/16-continue-held-whole-ridley.md"
+writable_paths = []
+
+[jobs.history.job.inputs]
+origin-ticket = ".scratch/decomp-parallel/issues/16-continue-held-whole-ridley.md"
+origin-ticket-type = "task"
+ticket-semantic-sha256 = "c3bd9366330dc0a37aa3fd5658406e41e57a41a36f539620ba31b9dae020b3f7"
+
+[jobs.job]
+blockers = []
+id = "ticket-81d3d6691a3ab143a2034f57896e0dc7262a2ff8cc9b3b5c66d339e47f208832"
+instructions = "Honor existing local ticket .scratch/decomp-parallel/issues/16-continue-held-whole-ridley.md. It is open, unclaimed and dependency-ready. Read its requirements and establish a complete Translation scope before implementation: observed exercise provenance, required dependencies, exact writable paths and concrete verification argv. Include a bounded pre-integration test and an integration gate. Use native translation-scope-v1 TOML; limit each initial experiment to approximately 60 seconds. Research facts do not grant acceptance. Preserve task-origin ownership until its implementation is integrated, verified and cleaned."
+kind = "research"
+revision = "6e979f3b6e84360f6098e4863fb8a7c7f45629f8d0a3f5315a38bb3eb8312e93"
+subject = "Continue the held whole Ridley lifecycle admission"
+ticket = ".scratch/decomp-parallel/issues/16-continue-held-whole-ridley.md"
+writable_paths = []
+
+[jobs.job.inputs]
+origin-ticket = ".scratch/decomp-parallel/issues/16-continue-held-whole-ridley.md"
+origin-ticket-type = "task"
+ticket-semantic-sha256 = "c3bd9366330dc0a37aa3fd5658406e41e57a41a36f539620ba31b9dae020b3f7"
+
+[jobs.last_update]
+event = "launch-failed"
+reason = "No subagent was launched for this reservation. Ticket16 tracks held original Ridley141 work; coordinator-start explicitly selects Ceres11 then read-only15/17. Preserve original Ridley ownership and defer this tracker until Ceres11 completes."
+
+[jobs.last_update.claim]
+attempt = 1
+coordinator = "decomp-run-20261013"
+id = "ticket-81d3d6691a3ab143a2034f57896e0dc7262a2ff8cc9b3b5c66d339e47f208832"
+revision = "6e979f3b6e84360f6098e4863fb8a7c7f45629f8d0a3f5315a38bb3eb8312e93"
+
+[[jobs]]
+adopted_ticket = false
+agent = "01a135a5-c8f0-7c42-a3d7-8454dac4fb0e"
+attempts = 1
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "complete"
+
+[jobs.claim]
+attempt = 1
+coordinator = "decomp-run-20261013"
+id = "ticket-cf844dcf0283917c8b1718f9eabb058af9a18ed0d72c0de3621ac999c7e646f2"
+revision = "bd78c1ca6d3487b6cd3adafd57452f7f26a27f54635cb57b947eab8ac0221a63"
+
+[jobs.job]
+blockers = []
+id = "ticket-cf844dcf0283917c8b1718f9eabb058af9a18ed0d72c0de3621ac999c7e646f2"
+instructions = "Honor existing local ticket .scratch/decomp-parallel/issues/17-other-enemy-lifecycle-scope.md. It is open, unclaimed and dependency-ready. Read its requirements and establish a complete Translation scope before implementation: observed exercise provenance, required dependencies, exact writable paths and concrete verification argv. Include a bounded pre-integration test and an integration gate. Use native translation-scope-v1 TOML; limit each initial experiment to approximately 60 seconds. Research facts do not grant acceptance. Preserve task-origin ownership until its implementation is integrated, verified and cleaned."
+kind = "research"
+revision = "bd78c1ca6d3487b6cd3adafd57452f7f26a27f54635cb57b947eab8ac0221a63"
+subject = "Research a complete non-Ridley enemy lifecycle boundary"
+ticket = ".scratch/decomp-parallel/issues/17-other-enemy-lifecycle-scope.md"
+writable_paths = []
+
+[jobs.job.inputs]
+origin-ticket = ".scratch/decomp-parallel/issues/17-other-enemy-lifecycle-scope.md"
+origin-ticket-type = "research"
+ticket-semantic-sha256 = "56951200dbb3d9dd592fe6d8ce02dd160c87eb29d04ed6951b719b698c02a128"
+
+[jobs.last_update]
+event = "finished"
+
+[jobs.last_update.claim]
+attempt = 1
+coordinator = "decomp-run-20261013"
+id = "ticket-cf844dcf0283917c8b1718f9eabb058af9a18ed0d72c0de3621ac999c7e646f2"
+revision = "bd78c1ca6d3487b6cd3adafd57452f7f26a27f54635cb57b947eab8ac0221a63"
+
+[jobs.last_update.result]
+followups = []
+result = "researched"
+
+[[jobs.last_update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/Answer.md"
+sha256 = "0ee118454ef5c93d40d7e0239776c07ca464f8e64fbb4ec7d3b003623b8e7a39"
+
+[[jobs.last_update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/children.toml"
+sha256 = "c1189da5f9754eefb34aed297311091fb475c991a1f44a72a0385cb29ae60254"
+
+[[jobs.last_update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/manual-handoff.toml"
+sha256 = "3bd0c55ac6db79455db713b7639f9d15332c959e9f41ffb40f4c19343a33e3cb"
+
+[[jobs.last_update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/artifacts.sha256"
+sha256 = "24af872ffb5f8e4771e4afb4c4126d527a7466c3c2f466649eb9ffeaec67a98f"
+
+[[jobs.last_update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/cleanup.toml"
+sha256 = "a5a0e191b4d5ca2fb93c6c1935f07eed85fff0a809463f9cbc1741dd162b57f4"
+
+[[jobs.last_update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/receipts/ticket-cf844dcf0283917c8b1718f9eabb058af9a18ed0d72c0de3621ac999c7e646f2-1-request-e5cd0eb4f84aa25de02d989d8c76b0b301671b345302b0c847469dcba17631b6.toml"
+sha256 = "132329b7d99084522739a9453dbc7021a830066daba88f83bcd36668c3ded44b"
+
+[jobs.result]
+followups = []
+result = "researched"
+
+[[jobs.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/Answer.md"
+sha256 = "0ee118454ef5c93d40d7e0239776c07ca464f8e64fbb4ec7d3b003623b8e7a39"
+
+[[jobs.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/children.toml"
+sha256 = "c1189da5f9754eefb34aed297311091fb475c991a1f44a72a0385cb29ae60254"
+
+[[jobs.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/manual-handoff.toml"
+sha256 = "3bd0c55ac6db79455db713b7639f9d15332c959e9f41ffb40f4c19343a33e3cb"
+
+[[jobs.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/artifacts.sha256"
+sha256 = "24af872ffb5f8e4771e4afb4c4126d527a7466c3c2f466649eb9ffeaec67a98f"
+
+[[jobs.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/cleanup.toml"
+sha256 = "a5a0e191b4d5ca2fb93c6c1935f07eed85fff0a809463f9cbc1741dd162b57f4"
+
+[[jobs.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/receipts/ticket-cf844dcf0283917c8b1718f9eabb058af9a18ed0d72c0de3621ac999c7e646f2-1-request-e5cd0eb4f84aa25de02d989d8c76b0b301671b345302b0c847469dcba17631b6.toml"
+sha256 = "132329b7d99084522739a9453dbc7021a830066daba88f83bcd36668c3ded44b"
+
+[[jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[jobs.job]
+blockers = []
+id = "ticket-d38d7ff4d47345a6e625b547c2a83dc6c02b260f9edfd4988f19c491b4cb888d"
+instructions = "Honor existing local ticket .scratch/decomp-parallel/issues/20-credits-cinematic-scope.md. It is open, unclaimed and dependency-ready. Read its requirements and establish a complete Translation scope before implementation: observed exercise provenance, required dependencies, exact writable paths and concrete verification argv. Include a bounded pre-integration test and an integration gate. Use native translation-scope-v1 TOML; limit each initial experiment to approximately 60 seconds. Research facts do not grant acceptance. Preserve task-origin ownership until its implementation is integrated, verified and cleaned."
+kind = "research"
+revision = "0c93011aecea372a7d459410bf90e48218efe4ab8b1c1c025c58294ff48f4eb1"
+subject = "Research complete credits cinematic ownership"
+ticket = ".scratch/decomp-parallel/issues/20-credits-cinematic-scope.md"
+writable_paths = []
+
+[jobs.job.inputs]
+origin-ticket = ".scratch/decomp-parallel/issues/20-credits-cinematic-scope.md"
+origin-ticket-type = "research"
+ticket-semantic-sha256 = "1e30aab44b775a01f7f27cee61d4e1be2fb0d8e2c298d12d145b47675bda9c7e"
+
+[[jobs]]
+adopted_ticket = false
+agent = "01a135f8-3634-7043-be4f-a5c4d96c15e5"
+attempts = 1
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "running"
+
+[jobs.claim]
+attempt = 1
+coordinator = "decomp-run-20261013"
+id = "ticket-e76fb87d41d3e1e6cab6286936a985d5b5c9d12bc1c0f99806ad86738940ba66"
+revision = "3a80add9c71186647255feadd5855a494d6859612ea56cc4c4ee5cd5ae5829cd"
+
+[jobs.job]
+blockers = []
+id = "ticket-e76fb87d41d3e1e6cab6286936a985d5b5c9d12bc1c0f99806ad86738940ba66"
+instructions = "Honor existing local ticket .scratch/decomp-parallel/issues/19-sram-save-load-scope.md. It is open, unclaimed and dependency-ready. Read its requirements and establish a complete Translation scope before implementation: observed exercise provenance, required dependencies, exact writable paths and concrete verification argv. Include a bounded pre-integration test and an integration gate. Use native translation-scope-v1 TOML; limit each initial experiment to approximately 60 seconds. Research facts do not grant acceptance. Preserve task-origin ownership until its implementation is integrated, verified and cleaned."
+kind = "research"
+revision = "3a80add9c71186647255feadd5855a494d6859612ea56cc4c4ee5cd5ae5829cd"
+subject = "Research the native SRAM save/load transaction"
+ticket = ".scratch/decomp-parallel/issues/19-sram-save-load-scope.md"
+writable_paths = []
+
+[jobs.job.inputs]
+origin-ticket = ".scratch/decomp-parallel/issues/19-sram-save-load-scope.md"
+origin-ticket-type = "research"
+ticket-semantic-sha256 = "5c507f18692a2b800590d639d178639e5f51951cca85d590d692318a083a44aa"
+
+[jobs.last_update]
+agent = "01a135f8-3634-7043-be4f-a5c4d96c15e5"
+event = "started"
+
+[jobs.last_update.claim]
+attempt = 1
+coordinator = "decomp-run-20261013"
+id = "ticket-e76fb87d41d3e1e6cab6286936a985d5b5c9d12bc1c0f99806ad86738940ba66"
+revision = "3a80add9c71186647255feadd5855a494d6859612ea56cc4c4ee5cd5ae5829cd"
+
+[[jobs]]
+adopted_ticket = false
+agent = "01a135a1-959f-7e80-b593-21a91052e0dc"
+attempts = 1
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "complete"
+
+[jobs.claim]
+attempt = 1
+coordinator = "decomp-run-20261013"
+id = "ticket-fd25bf762e6e92ca542277cba01e52aaaaeb05c209485978d2511a2413b31c0e"
+revision = "8957b66f91dcad619098905199286c7fef94bd8581e60455273128817ba33aa4"
+
+[jobs.job]
+blockers = []
+id = "ticket-fd25bf762e6e92ca542277cba01e52aaaaeb05c209485978d2511a2413b31c0e"
+instructions = "Honor existing local ticket .scratch/decomp-parallel/issues/15-door-room-plm-scope.md. It is open, unclaimed and dependency-ready. Read its requirements and establish a complete Translation scope before implementation: observed exercise provenance, required dependencies, exact writable paths and concrete verification argv. Include a bounded pre-integration test and an integration gate. Use native translation-scope-v1 TOML; limit each initial experiment to approximately 60 seconds. Research facts do not grant acceptance. Preserve task-origin ownership until its implementation is integrated, verified and cleaned."
+kind = "research"
+revision = "8957b66f91dcad619098905199286c7fef94bd8581e60455273128817ba33aa4"
+subject = "Research one complete door/room/PLM scheduled boundary"
+ticket = ".scratch/decomp-parallel/issues/15-door-room-plm-scope.md"
+writable_paths = []
+
+[jobs.job.inputs]
+origin-ticket = ".scratch/decomp-parallel/issues/15-door-room-plm-scope.md"
+origin-ticket-type = "research"
+ticket-semantic-sha256 = "fc4714f57b7ae8ba6d5e81a015bb27b3bdc3b9c312818a54484eee4c49a55ec0"
+
+[jobs.last_update]
+event = "finished"
+
+[jobs.last_update.claim]
+attempt = 1
+coordinator = "decomp-run-20261013"
+id = "ticket-fd25bf762e6e92ca542277cba01e52aaaaeb05c209485978d2511a2413b31c0e"
+revision = "8957b66f91dcad619098905199286c7fef94bd8581e60455273128817ba33aa4"
+
+[jobs.last_update.result]
+followups = []
+result = "researched"
+
+[[jobs.last_update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-15/Answer.md"
+sha256 = "805a3367c010d1dc3ca4b71fee721e950c0852672265bce2f108f476f8a47891"
+
+[[jobs.last_update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-15/children.toml"
+sha256 = "67777b93b6a7d2656e3542667b77b278da3365b27d757f62d2ee6fd51f6392be"
+
+[[jobs.last_update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-15/manual-handoff.toml"
+sha256 = "be0ccd3ac3016f948d89b1f569e390f54c45658d453cf53891fe943fe0189213"
+
+[[jobs.last_update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-15/artifacts.sha256"
+sha256 = "570eed1605434f1984224c2022bb44325f83fb6759253a955de64e85df52e904"
+
+[[jobs.last_update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-15/cleanup.toml"
+sha256 = "52557a629d0bac8a920d8a72e097f046befeeee8c3c890af2a996e7b89d41be1"
+
+[[jobs.last_update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/receipts/ticket-fd25bf762e6e92ca542277cba01e52aaaaeb05c209485978d2511a2413b31c0e-1-request-fc910cd93a6442d51dedd95dd6f44161c0000c21e6590c1beea860721b999c1e.toml"
+sha256 = "c3b5ab3c4ffb1de5e8ef240700ca429f56daa753b7989766e9912265aabc83f8"
+
+[jobs.result]
+followups = []
+result = "researched"
+
+[[jobs.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-15/Answer.md"
+sha256 = "805a3367c010d1dc3ca4b71fee721e950c0852672265bce2f108f476f8a47891"
+
+[[jobs.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-15/children.toml"
+sha256 = "67777b93b6a7d2656e3542667b77b278da3365b27d757f62d2ee6fd51f6392be"
+
+[[jobs.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-15/manual-handoff.toml"
+sha256 = "be0ccd3ac3016f948d89b1f569e390f54c45658d453cf53891fe943fe0189213"
+
+[[jobs.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-15/artifacts.sha256"
+sha256 = "570eed1605434f1984224c2022bb44325f83fb6759253a955de64e85df52e904"
+
+[[jobs.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-15/cleanup.toml"
+sha256 = "52557a629d0bac8a920d8a72e097f046befeeee8c3c890af2a996e7b89d41be1"
+
+[[jobs.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/receipts/ticket-fd25bf762e6e92ca542277cba01e52aaaaeb05c209485978d2511a2413b31c0e-1-request-fc910cd93a6442d51dedd95dd6f44161c0000c21e6590c1beea860721b999c1e.toml"
+sha256 = "c3b5ab3c4ffb1de5e8ef240700ca429f56daa753b7989766e9912265aabc83f8"
+
+[[jobs]]
+adopted_ticket = false
+attempts = 0
+history = []
+observations = []
+projection_pending = false
+stale = false
+state = "ready"
+
+[jobs.job]
+blockers = []
+id = "translation-research-establish-inputs"
+instructions = "Source inventory unavailable or stale: routine lexical dependency inventory differs from pinned source. Establish pinned source inventory and naturally exercised coherent gameplay candidates. Existing claimed/resolved tickets remain authoritative; preserve historical evidence. Use existing Rust source-inventory and projectile-inventory commands as appropriate; start with bounded approximately 60-second experiments. Missing observations remain research, never implementation readiness."
+kind = "research"
+revision = "0d8150ec33fefb0af750dd6bc5dc312fb07bcef1f288ebeadf7c2d09932b11c1"
+subject = "Establish translation exercise and scope inputs"
+writable_paths = []
+
+[jobs.job.inputs]
+"file:tools/dependencies.toml" = "e74864c229949fc6f1a6bd7528f339bdb3f9364f1e4f9544f08693881d10f111"
+
+[[jobs]]
+adopted_ticket = false
+attempts = 0
+observations = []
+projection_pending = false
+stale = false
+state = "not-required"
+
+[[jobs.history]]
+observations = []
+
+[jobs.history.job]
+blockers = []
+id = "verify-e3b0c44298fc1c14"
+instructions = "Run one `sm-pipeline batch verify --families  --batch ASSIGNMENT_BATCH` using the shared SM_PIPELINE_ROOT/SM_PIPELINE_WORKERS. Keep batch jobs within shared worker capacity. Record the batch.toml artifact; current-source authentication is required before completion. Selection rationale is available through batch plan. Preserve failed verdicts for diagnosis and complete run cleanup."
+kind = "verify"
+revision = "2448e12bbd23a17643143a27be2f5098153e0cb15e1695185473fdece56f87c2"
+subject = "Verify 0 affected Offline families"
+writable_paths = []
+
+[jobs.history.job.inputs]
+families = ""
+"file:tools/port/batch.toml" = "8290b49963e805528e2ffb3fabe5e9e9db083cbf2a33d4a3e6b24856cef9cd2f"
+selection = "9e791cd3bbdbda88868877dd0252c29cbfc0a50a1fa3d89422d91faa921efbda"
+source-fingerprint = "bd103af4b5d563904a3cbdbe62e971c46c6b4a4e907b60bbbb8575a2373355ec"
+
+[[jobs.history]]
+observations = []
+
+[jobs.history.job]
+blockers = []
+id = "verify-e3b0c44298fc1c14"
+instructions = "Run one `sm-pipeline batch verify --families  --batch ASSIGNMENT_BATCH` using the shared SM_PIPELINE_ROOT/SM_PIPELINE_WORKERS. Keep batch jobs within shared worker capacity. Record the batch.toml artifact; current-source authentication is required before completion. Selection rationale is available through batch plan. Preserve failed verdicts for diagnosis and complete run cleanup."
+kind = "verify"
+revision = "e0c77695155f91732fb093cf40d26485e6d8ae3c65dcee1bb280e870c1ba9f54"
+subject = "Verify 0 affected Offline families"
+writable_paths = []
+
+[jobs.history.job.inputs]
+families = ""
+"file:tools/port/batch.toml" = "8290b49963e805528e2ffb3fabe5e9e9db083cbf2a33d4a3e6b24856cef9cd2f"
+selection = "30653df95844a64b89e3deade9d5e892b5964e0c6010f62bd75ccb5cb16c5c98"
+source-fingerprint = "bd103af4b5d563904a3cbdbe62e971c46c6b4a4e907b60bbbb8575a2373355ec"
+
+[[jobs.history]]
+observations = []
+
+[jobs.history.job]
+blockers = []
+id = "verify-e3b0c44298fc1c14"
+instructions = "Run one `sm-pipeline batch verify --families  --batch ASSIGNMENT_BATCH` using the shared SM_PIPELINE_ROOT/SM_PIPELINE_WORKERS. Keep batch jobs within shared worker capacity. Record the batch.toml artifact; current-source authentication is required before completion. Selection rationale is available through batch plan. Preserve failed verdicts for diagnosis and complete run cleanup."
+kind = "verify"
+revision = "51d83229aac577a11596b1a8f7ed3d3afe30bfa77348f3220867aadd25b8aa0b"
+subject = "Verify 0 affected Offline families"
+writable_paths = []
+
+[jobs.history.job.inputs]
+families = ""
+"file:tools/port/batch.toml" = "8290b49963e805528e2ffb3fabe5e9e9db083cbf2a33d4a3e6b24856cef9cd2f"
+selection = "fd7d145726fdba74c63104f2fa41bc03f431667e0805601db7540a547318bb53"
+source-fingerprint = "bd103af4b5d563904a3cbdbe62e971c46c6b4a4e907b60bbbb8575a2373355ec"
+
+[[jobs.history]]
+observations = []
+
+[jobs.history.job]
+blockers = []
+id = "verify-e3b0c44298fc1c14"
+instructions = "Run one `sm-pipeline batch verify --families  --batch ASSIGNMENT_BATCH` using the shared SM_PIPELINE_ROOT/SM_PIPELINE_WORKERS. Keep batch jobs within shared worker capacity. Record the batch.toml artifact; current-source authentication is required before completion. Selection rationale is available through batch plan. Preserve failed verdicts for diagnosis and complete run cleanup."
+kind = "verify"
+revision = "fb95d891a254fee326a1d99c8cf0e4c76496af074a1fc400bc22220ea86e7ad6"
+subject = "Verify 0 affected Offline families"
+writable_paths = []
+
+[jobs.history.job.inputs]
+families = ""
+"file:tools/port/batch.toml" = "8290b49963e805528e2ffb3fabe5e9e9db083cbf2a33d4a3e6b24856cef9cd2f"
+selection = "58664b52d2be14ea0fceac7378ee7bce18598c433550482083f226cc4675d19a"
+source-fingerprint = "bd103af4b5d563904a3cbdbe62e971c46c6b4a4e907b60bbbb8575a2373355ec"
+
+[[jobs.history]]
+observations = []
+
+[jobs.history.job]
+blockers = []
+id = "verify-e3b0c44298fc1c14"
+instructions = "Run one `sm-pipeline batch verify --families  --batch ASSIGNMENT_BATCH` using the shared SM_PIPELINE_ROOT/SM_PIPELINE_WORKERS. Keep batch jobs within shared worker capacity. Record the batch.toml artifact; current-source authentication is required before completion. Selection rationale is available through batch plan. Preserve failed verdicts for diagnosis and complete run cleanup."
+kind = "verify"
+revision = "272a1ed1253a9b63711c333a787f023014af217b1955e43be474876c7b82aabe"
+subject = "Verify 0 affected Offline families"
+writable_paths = []
+
+[jobs.history.job.inputs]
+families = ""
+"file:tools/port/batch.toml" = "8290b49963e805528e2ffb3fabe5e9e9db083cbf2a33d4a3e6b24856cef9cd2f"
+selection = "9d7a0ac4b8227e20ef255b622c1ef7f3205561c28528383e97c012791be07d31"
+source-fingerprint = "bd103af4b5d563904a3cbdbe62e971c46c6b4a4e907b60bbbb8575a2373355ec"
+
+[[jobs.history]]
+observations = []
+
+[jobs.history.job]
+blockers = []
+id = "verify-e3b0c44298fc1c14"
+instructions = "Run one `sm-pipeline batch verify --families  --batch ASSIGNMENT_BATCH` using the shared SM_PIPELINE_ROOT/SM_PIPELINE_WORKERS. Keep batch jobs within shared worker capacity. Record the batch.toml artifact; current-source authentication is required before completion. Selection rationale is available through batch plan. Preserve failed verdicts for diagnosis and complete run cleanup."
+kind = "verify"
+revision = "00c1c6679c12e333a37a062a75e5576085b3796b6c7a8137d5a58d4f6c470057"
+subject = "Verify 0 affected Offline families"
+writable_paths = []
+
+[jobs.history.job.inputs]
+families = ""
+"file:tools/port/batch.toml" = "8290b49963e805528e2ffb3fabe5e9e9db083cbf2a33d4a3e6b24856cef9cd2f"
+selection = "9ae56f96db4c8f99f981b253df689f7f9cfd287bb432a9809aa3a4134c32be4e"
+source-fingerprint = "bd103af4b5d563904a3cbdbe62e971c46c6b4a4e907b60bbbb8575a2373355ec"
+
+[jobs.job]
+blockers = []
+id = "verify-e3b0c44298fc1c14"
+instructions = "Run one `sm-pipeline batch verify --families  --batch ASSIGNMENT_BATCH` using the shared SM_PIPELINE_ROOT/SM_PIPELINE_WORKERS. Keep batch jobs within shared worker capacity. Record the batch.toml artifact; current-source authentication is required before completion. Selection rationale is available through batch plan. Preserve failed verdicts for diagnosis and complete run cleanup."
+kind = "verify"
+revision = "50d3c2c073f99d522f683b20d0a24093ddca273427bd638d6fabdbdde8c1a1e3"
+subject = "Verify 0 affected Offline families"
+writable_paths = []
+
+[jobs.job.inputs]
+families = ""
+"file:tools/port/batch.toml" = "8290b49963e805528e2ffb3fabe5e9e9db083cbf2a33d4a3e6b24856cef9cd2f"
+selection = "de21c976b07a32549100beb12a97c1dfdf98a87eabcfa6b3526508a077922fdc"
+source-fingerprint = "092794a20f9551b90be53d897715fb861b644eebf75ca0e3dade7d01cafe727e"

@@ -1,0 +1,6 @@
+command = ["/home/jim/sm-decomp/.scratch/decomp-coverage/renderer/bin/direct-animation", "authenticate", "/home/jim/sm-decomp/out/port/decomp-coverage-20261013/direct-animation/verdict.toml"]
+run = "/home/jim/sm-decomp/out/port/decomp-coverage-20261013"
+label = "direct-animation-authenticate"
+root = "/home/jim/sm-decomp/out/pipeline"
+workers = 4
+timeout = 60

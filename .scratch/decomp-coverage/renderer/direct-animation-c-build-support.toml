@@ -1,0 +1,5 @@
+command = ["cc", "-O2", "-fno-strict-aliasing", "-ffunction-sections", "-fdata-sections", "-iquote", "/home/jim/sm-decomp/deps/snesrev-sm/src", "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_81.c", "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_82.c", "/home/jim/sm-decomp/deps/snesrev-sm/src/sm_rtl.c", "/home/jim/sm-decomp/.scratch/decomp-coverage/renderer/direct-animation-oracle.c", "-Wl,--gc-sections", "-o", "/home/jim/sm-decomp/out/port/decomp-coverage-20261013/direct-animation-build/c"]
+run = "/home/jim/sm-decomp/out/port/decomp-coverage-20261013/direct-animation-build"
+checkout = "/home/jim/sm-decomp"
+root = "/home/jim/sm-decomp/out/pipeline"
+workers = 4

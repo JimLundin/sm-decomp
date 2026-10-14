@@ -1,0 +1,23 @@
+format = "decomp-input-seal-provenance-v1"
+status = "ready-for-coordinator-current-capture"
+worker_hashes_computed = false
+current_input_capture_authenticated_by_worker = false
+input_paths = "inputs.paths"
+inherited_seals = "inherited-input-seals.toml"
+coordinator_method = "Freeze authored package; snapshot current listed inputs separately; serialized existing sm-evidence ingest/inventory/verify; retain run/source/reader/store receipts."
+new_artifact_hashes_available = false
+mutable_input_seal_gaps = [
+  "Current AGENTS/runbooks/tickets/catalog/registry/claims require exact snapshot and evidence-store seal.",
+  "Current Rust/pipeline/headless/input-source bytes require capture at coordinator frozen source; inherited old source seals cannot prove current bytes.",
+  "Reservation and started receipt paths are exact returned claim evidence, but no worker current hash is fabricated.",
+]
+historical_evidence_gaps = [
+  "Ticket76 soft-reset retained verdict is a pointer only, without fresh authentication by this worker.",
+  "Research13-18 context is retained evidence, not gameplay acceptance of persistence.",
+  "Native/ROM static cmp proves selected bytes equal; no runtime/verdict or full original-WRAM parity.",
+]
+retained_research18_run = "2156e965ec6cd98bd54b381c5d490784d34af141ee1a8ddb4cebc729583f3062"
+retained_research17_run = "6ebd3637b5984438ab276489ee703d5132b522e01f701a3549694f53c45d49a1"
+source_baseline = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+source_baseline_origin = "Observed main checkout HEAD; research Job has no base-head."
+retention = ["Pinned C archive/inventory", "All input snapshots and their stable path/hash records", "sm-evidence reader/source and out/evidence store run/objects", "Original/native ROM and movie inputs", "Current claim/started receipts and authored package", "No copy/delete of other owners' runs or shared store"]

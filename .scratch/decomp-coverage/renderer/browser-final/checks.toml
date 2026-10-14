@@ -1,0 +1,17 @@
+schema = "decomp-coverage-browser-report-check-v1"
+status = "passed"
+url = "http://127.0.0.1:4185/"
+latest = "pause-equipment-render-main-verified-final-20261013"
+rows = 10
+latest_excluded = false
+added_definitions = 8
+added_c_body_lines = 138
+translated_total = 1469
+verified_total = 933
+stale_observations = 16
+superseded_observations = 4
+existing_report_retained = true
+source_history_refreshed = true
+chromium_exited = true
+profile_removed = true
+profile_logical_bytes = 4515631

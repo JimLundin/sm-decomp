@@ -1,0 +1,69 @@
+format = "decomp-persistence-dependency-review-v1"
+runtime_observation = false
+registry_observation = "No inspected stage updates/fixture declaration for codec, NewSaveFile, VerifySRAM, map mirrors or LoadFromLoadStation. Historical PLM setup and electricity mapping do not establish save caller."
+shared21 = "Current schema2 exercise is bank86-projectile-only; supplement one existing producer/reader with separate direct-save and direct-load roots."
+required_abi = ["full128KiB canonical WRAM", "8192byte canonical cartridge SRAM", "raw uint8 load result", "ordered buffer/payload/checksum changes", "ordered synchronous persistence-service requests/results", "preflight refusal and execution-once failure"]
+protected_lineage = ["legacy87", "legacy94", "legacy96", "legacy97", "native137", "held141"]
+integrator_owned = ["memory.rs SRAM accessors", "lib.rs", "game_host.rs", "family/family_model ABI registration", "live/live_model and headless file-load support", "main.rs", "tools/port/batch.toml", "tickets/ledger/progress", "main Git/index", "evidence-store writes"]
+
+[[dependencies]]
+key = "codec"
+owner = "proposed19-complete-codec"
+routines = ["SaveToSram", "LoadFromSram", "PackMapToSave", "UnpackMapFromSave"]
+implementation_ready = false
+blockers = ["shared21 direct-root exercise", "reviewed SRAM/persistence adapter", "canonical SRAM integrator wiring"]
+
+[[dependencies]]
+key = "canonical-memory-companions"
+owner = "proposed19-companion-research, with13room/system ownership review"
+routines = ["NewSaveFile", "LoadMirrorOfExploredMapTiles", "SaveExploredMapTilesToSaved", "LoadFromLoadStation"]
+implementation_ready = false
+blockers = ["direct-root exercise", "adapter/import/export/ROM preflight", "exact accepted room initialization/decompression ownership"]
+
+[[dependencies]]
+key = "boot-and-ending-signatures"
+owner = "13host boot;20credits"
+routines = ["VerifySRAM", "CopySuperMetroidString"]
+implementation_ready = false
+notes = ["VerifySRAM short-circuit Load0&&Load1&&Load2 side effects", "ending supermetroid signature; all-invalid madadameyohn signature", "No duplicate worker ownership proposed"]
+
+[[dependencies]]
+key = "file-options-gameover-callers"
+owner = "research18 options and file/file-map successor;held reset76"
+routines = ["FileSelectMenu_4_Main", "FileSelectMenu_13_FileCopyDoIt", "FileSelectMenu_25_FileClearDoClear", "LoadFromSram_", "GameOptionsMenu_4_StartGame"]
+implementation_ready = false
+notes = ["Selected slot metadata persistence precedes load", "Copy/clear UI includes payload and all four metadata fields", "No UI root acceptance from codec"]
+
+[[dependencies]]
+key = "Ceres-save-and-start"
+owner = "06Ceres;13host;22/23NMI;20cinematic;accepted player/room"
+routines = ["GameState_33_BlackoutFromCeres", "CinematicFunction_Intro_Func73"]
+implementation_ready = false
+notes = ["Save includes loading22 before cinematic/flags/queue mutations", "Later22->Crateria0/18 routing and cinematic health refill are canonical initialization, not snapshot restoration", "InitAndLoadGameData_Async and Intro_Func95 remain composed root dependencies"]
+
+[[dependencies]]
+key = "save-station"
+owner = "27whole PLM;29message;allocator/player"
+routines = ["PlmInstr_ActivateSaveStationAndGotoIfNo"]
+implementation_ready = false
+notes = ["Prompt23 natural poll/resume/cancel/yes", "Spawn electricity precedes used station bit and save", "Station derives global plm_id room argument&7, not parameter k", "Historical B76F setup/electricity initializer mappings are insufficient"]
+
+[[dependencies]]
+key = "gunship"
+owner = "later whole gunship lifecycle successor"
+routines = ["GunshipTop_7", "GunshipTop_13"]
+implementation_ready = false
+notes = ["Enemy top/bottom/init/main/21handler/player/palette/message closure not accepted", "No whole ship inventory expansion or ownership claim"]
+
+[[dependencies]]
+key = "host-filesystem"
+owner = "integrator-reviewed19persistence-adapter"
+routines = ["RtlReadSram", "RtlWriteSram"]
+implementation_ready = false
+notes = ["RtlWriteSram void; rename/open/write8192/close, unchecked fwrite/fclose", "RtlReadSram may publish partial short read and missing file keeps initialized memory", "Separate memory parity from stronger reviewed Rust disk durability policy"]
+
+[[dependencies]]
+key = "fresh-process-live-original"
+owner = "integrator and06/08/09 milestones"
+implementation_ready = false
+notes = ["headless RtlReset0 clears SRAM and never RtlReadSram", "Movie recorder can inject SRAM/full snapshot; unsuitable as ordinary reopen proof", "RM_COMPARE restores snapshots; independent RM_MINE C0/C1/mixed0/mixed1 chains required", "SoftReset76 differs from fresh process/power cycle", "Research18 original APU acknowledgment/loading and12controller/NMI timing remain gates"]

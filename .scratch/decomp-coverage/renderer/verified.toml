@@ -1,0 +1,25 @@
+id = "pause-equipment-render-offline-verified-20261013"
+scope = "Pause equipment renderer: eight new routines and 607 passing actual-C fixture pairs"
+agent = "/root (01a13592-d02b-7143-8489-a15b03f19da2)"
+stage = "verified"
+evidence_context = "current-checkout"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+routines = ["DrawMenuSpritemap", "DrawPauseScreenSpriteAnim", "EquipmentScreenDrawItemSelector", "EquipmentScreenDisplayReserveTankAmount", "EquipmentScreenDisplayReserveTankAmount_", "EquipmentScreenDisplayReserves_PaletteSetup", "WriteSamusWireframeTilemap", "WriteSamusWireframeTilemapAndQueue"]
+commit = "fa6e9cd747acabcb4568ccd2c0fbf532a9525c18"
+limitations = ["247 generic fixture pairs over seven direct roots plus 360 exact-three-argument animation pairs; complete 128 KiB WRAM and raw returns, with generic continuations. Ten Rust tests pass.", "Both cleanup passes completed and both actual-C verdicts authenticated; generic source also authenticated against merged main bytes. Direct source is unchanged from its a026c88 frozen commit.", "Bounded original-ROM input domain only. Public lib/catalog registration and live pause scheduling/hardware acceptance remain pending. Durable integration is queued behind held Ceres host admission."]
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-coverage/renderer/coverage-result.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-coverage/renderer/family-authenticate-main.stdout.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/decomp-coverage-20261013/direct-animation/verdict.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/out/port/decomp-coverage-20261013/direct-animation-authenticate-retry.stdout"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-coverage/renderer/submitted.stdout.toml"

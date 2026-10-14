@@ -1,0 +1,20 @@
+id = "pause-equipment-render-main-translated-20261013"
+scope = "Committed pause equipment renderer: eight new Rust routines on main"
+agent = "/root (01a13592-d02b-7143-8489-a15b03f19da2)"
+stage = "translated"
+evidence_context = "current-checkout"
+supersedes = ["pause-equipment-render-offline-translated-20261013"]
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+routines = ["DrawMenuSpritemap", "DrawPauseScreenSpriteAnim", "EquipmentScreenDrawItemSelector", "EquipmentScreenDisplayReserveTankAmount", "EquipmentScreenDisplayReserveTankAmount_", "EquipmentScreenDisplayReserves_PaletteSetup", "WriteSamusWireframeTilemap", "WriteSamusWireframeTilemapAndQueue"]
+commit = "fa6e9cd747acabcb4568ccd2c0fbf532a9525c18"
+limitations = ["Eight readable translations committed on main; records current-checkout source provenance after the worker observation. No additional routines are added by this provenance correction.", "Ten Rust tests and 607 actual-C fixture pairs pass. Offline verification is recorded separately. Public lib/catalog and live pause acceptance remain pending."]
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-coverage/renderer/family-authenticate-main.stdout.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-coverage/renderer/coverage-result.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-coverage/renderer/submitted.stdout.toml"

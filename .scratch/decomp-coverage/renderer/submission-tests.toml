@@ -1,0 +1,6 @@
+command = ["cargo", "test", "--manifest-path", "/tmp/sm-decomp-parallel-pause-equipment-render-offline-1/Cargo.toml", "-p", "port", "--locked", "--offline", "--test", "pause_equipment_render", "--config", 'patch."https://github.com/doublegate/RustySNES".rustysnes-core.path="/home/jim/sm-decomp/deps/rustysnes/crates/rustysnes-core"']
+run = "/home/jim/sm-decomp/out/port/decomp-coverage-20261013/submission-tests"
+label = "renderer-submission-tests"
+root = "/home/jim/sm-decomp/out/pipeline"
+workers = 4
+timeout = 60

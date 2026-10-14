@@ -1,0 +1,79 @@
+format = "decomp-manual-research-handoff-v1"
+sequence = 2
+status = "ready-to-seal"
+phase = "research-complete-awaiting-coordinator-seal-and-publication"
+observed_at = "2026-10-13 16:32:30 UTC"
+worker_session_id = "01a135f8-3634-7043-be4f-a5c4d96c15e5"
+parent_session_id = "01a13592-d02b-7143-8489-a15b03f19da2"
+agent = "/root/research19"
+effort = "decomp-parallel"
+ticket = ".scratch/decomp-parallel/issues/19-sram-save-load-scope.md"
+source_baseline = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+source_baseline_origin = "Observed main HEAD; exact native research Job supplies no base-head. No standard implementation workspace/baseline is fabricated."
+source_head_observed = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+source_drift_observation = "Final committed HEAD equals observed research baseline. Coordinator must separately capture any mutable current source/ticket/registry input at its frozen verification source."
+reservation_receipt = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/receipts/next-host-failures.stdout.toml"
+started_receipt = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/receipts/start-research-19.stdout.toml"
+working_directory = "/home/jim/sm-decomp"
+scratch_output = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-19"
+assigned_isolated_workspace_available = false
+assigned_source_writable_paths = []
+source_writes_authorized = false
+branch_created = false
+worktree_created = false
+latest_wip_or_submitted_commit = "None; coordinator owns main Git/index and publication."
+processes = []
+runs = []
+active_run_processes = []
+latest_process_state = "Final scoped lsof +D returned1 with empty output; synchronous helpers exited. No build/runtime/verification experiment or persistent child."
+achieved_stages = []
+result_kind = "researched"
+answer = "Answer.md"
+artifacts = "artifacts.paths"
+children = "children.toml"
+holding_scope = "scope-holding.toml"
+artifact_hashes_available = false
+current_input_capture_authenticated_by_worker = false
+artifact_hashing_owner = "Coordinator serialized existing crates/evidence sm-evidence ingest/inventory/verify after package freeze."
+results = [
+  "Smallest complete codec: SaveToSram, LoadFromSram, PackMapToSave, UnpackMapFromSave; separate direct-save/direct-load exercise needed.",
+  "Canonical96-byte player and1628-byte payload, checksum pairs/order, three slots/aliases and unsafe fourth-slot refusal.",
+  "Sparse327-byte map pack, preserved953-byte tail, six consumed areas and inclusive1794-byte unpack clear.",
+  "Exact Ceres GameState33 and save/menu/boot/station/gunship caller ownership; canonical loading22 route/refill rather than arbitrary snapshot restore.",
+  "Missing full WRAM/SRAM fixture and file-reopen adapter; execution-once persistence failure and memory/durability split.",
+  "Five bounded existing-facts follow-ups, reused shared21 and research18 UI/20credits, exact proposed files and conditional60s/3600s gates.",
+  "Static927-byte original/native codec/table comparison equal; no runtime parity.",
+  "No-run cleanup complete; zero bytes reclaimed.",
+]
+limitations = [
+  "No supported bank81 exercise, native Scope admission or gameplay stage earned.",
+  "No new source implementation, build/runtime/extraction/verification experiment or machine TOML-parser result.",
+  "All new modules/tests/manifests/gates are proposed, unimplemented and unrun.",
+  "Exact supported material fresh-process and original-ROM argv remains adapter deliverable; no invented live flags.",
+  "Original direct-page scratch/carry mapping and research18 APU/controller/NMI/load domain remain separate evidence gaps.",
+  "Canonical companions/start/room/UI/gunship/ending lifecycle owners remain unresolved dependencies; no blanket ownership.",
+  "Inherited hashes are declarations; coordinator must authenticate current exact captures with existing evidence store.",
+]
+next_working_directory = "/home/jim/sm-decomp"
+next_action = "Coordinator freezes/validates this exact package, captures inputs.paths, uses sm-evidence ingest/inventory/verify to obtain real seals, publishes reviewed child blockers to06/08/09 and shared21 while reusing research18/20 ownership, and admits exact event=finished result=researched. Then prioritize reviewed Rust implementation and fixture verification; no additional speculative research or inventory expansion."
+next_command = ["/home/jim/sm-decomp/target/debug/sm-evidence", "ingest", "/home/jim/sm-decomp/out/evidence", "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-19"]
+next_command_prerequisites = ["Package bytes frozen", "Coordinator serialized evidence-store ownership", "Retain exact sm-evidence reader/source and separate exact inputs capture", "Review TOML and scope limitations; holding cannot authorize native assignment"]
+cleanup_status = "complete-no-run"
+cleanup = "cleanup.toml"
+bytes_reclaimed = 0
+disk_available_bytes = 193980620800
+remaining_cleanup = "None for worker."
+
+[claim]
+id = "ticket-e76fb87d41d3e1e6cab6286936a985d5b5c9d12bc1c0f99806ad86738940ba66"
+revision = "3a80add9c71186647255feadd5855a494d6859612ea56cc4c4ee5cd5ae5829cd"
+attempt = 1
+coordinator = "decomp-run-20261013"
+
+[shared]
+pipeline_root = "/home/jim/sm-decomp/out/pipeline"
+workers = 4
+assignment_capacity = 3
+dispatcher_generation = 1
+integrator = "ceres-20261013"
+integrator_generation = 2

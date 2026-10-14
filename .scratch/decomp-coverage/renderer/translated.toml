@@ -1,0 +1,18 @@
+id = "pause-equipment-render-offline-translated-20261013"
+scope = "Complete pause equipment renderer: menu sprites, selector animation, reserves and wireframe queue"
+agent = "/root/coverage_renderer"
+stage = "translated"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+routines = ["DrawMenuSpritemap", "DrawPauseScreenSpriteAnim", "EquipmentScreenDrawItemSelector", "EquipmentScreenDisplayReserveTankAmount", "EquipmentScreenDisplayReserveTankAmount_", "EquipmentScreenDisplayReserves_PaletteSetup", "WriteSamusWireframeTilemap", "WriteSamusWireframeTilemapAndQueue"]
+commit = "a026c883cbd651663c0945155fe409886306e384"
+limitations = ["Ten Rust tests passed on the source commit. Actual-C verification is running and receives its own stage observation.", "Public lib/catalog registration, live pause scheduling and hardware acceptance remain pending."]
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-coverage/renderer/handoff.md"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-coverage/renderer/tests.stdout.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-coverage/renderer/renderer-tests.stdout"

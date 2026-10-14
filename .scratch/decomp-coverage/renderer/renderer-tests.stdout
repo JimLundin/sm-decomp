@@ -1,0 +1,15 @@
+
+running 10 tests
+test dispatch_requires_a_known_routine_and_keeps_packed_sprite_words_intact ... ok
+test empty_selector_and_empty_palette_need_no_rom_and_preserve_state ... ok
+test reserve_rounding_flickers_only_below_the_four_step_cutoff ... ok
+test reserve_full_tanks_end_cap_and_palette_wrap_use_exact_outputs ... ok
+test menu_unaligned_cursor_preserves_the_extension_alias_write_order ... ok
+test failed_preflight_leaves_full_wram_unchanged_even_after_late_selected_assets ... ok
+test selector_uses_low_category_byte_even_when_item_row_is_nonzero ... ok
+test sprite_timer_signed_boundary_and_terminator_reset_match_sequential_frames ... ok
+test wireframe_writes_only_seventeen_eight_word_rows_and_exact_seven_byte_queue ... ok
+test menu_wrap_and_extension_bits_preserve_unsigned_coordinates_and_tile_mask ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

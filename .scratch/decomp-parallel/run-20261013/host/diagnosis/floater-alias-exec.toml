@@ -1,0 +1,13 @@
+command = [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-diagnosis/floater-alias/wrapper.rs",
+    "-o",
+    "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-diagnosis/floater-alias/rust",
+]
+label = "rust-alias-probe"
+root = "/home/jim/sm-decomp/out/pipeline"
+run = "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-diagnosis/floater-alias"
+timeout = 60
+workers = 4

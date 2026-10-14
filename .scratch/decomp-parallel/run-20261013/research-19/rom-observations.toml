@@ -1,0 +1,33 @@
+format = "decomp-persistence-ROM-observations-v1"
+method = "bounded synchronous od slices and static cmp; no extraction/build/runtime"
+runtime_parity = false
+original_rom = "/home/jim/sm-decomp/rom/sm.sfc"
+original_rom_bytes = 3145728
+original_rom_inherited_sha256 = "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72"
+native_rom = "/home/jim/sm-decomp/out/port/room-plm-current-live/20261010T224032.887967Z/c-0/rom-view.bin"
+native_rom_bytes = 4194304
+native_rom_inherited_sha256 = "40aaebb25b9646bea2dffdc5e1ae680768a39dd122de9353885e1c7456ceae27"
+mapping = "LoROM: (bank&0x7f)*0x8000+(address&0x7fff)"
+compare_argv = ["cmp", "-s", "-i", "32768:32768", "-n", "927", "rom/sm.sfc", "out/port/room-plm-current-live/20261010T224032.887967Z/c-0/rom-view.bin"]
+compare_exit_code = 0
+compare_extent = "818000..81839E"
+code_extents = ["SaveToSram818000..818084=133", "LoadFromSram818085..81812A=166", "UnpackMapFromSave8182E4..81834A=103", "PackMapToSave81834B..81839E=84"]
+new_save_file_static_only = "81B2CB..81B3C4=250; not included in cmp"
+slot_table = "81812B..818130;0010,066C,0CC8"
+consumed_counts = "818131..818136;4A,48,4C,12,42,15"
+consumed_offsets = "818138..818143;0000,004A,0092,00DE,00F0,0132"
+consumed_pointers = "8182D6..8182E1;8146,8196,81E6,8236,8256,82A6"
+list_extents = ["818146..81818F=74", "818196..8181DD=72", "8181E6..818231=76", "818236..818247=18", "818256..818297=66", "8182A6..8182BA=21"]
+ceres_unconsumed_entries = ["818137=08", "818144..818145=0147", "8182E2..8182E3=82C6", "8182C6..8182CD=8"]
+original_direct_page_scratch = ["0012", "0014", "0016", "0018", "001A"]
+load_status_mapping = "Original carry clear/pass, set/fail; recovered C uint8 0/1. Needs reviewed mapping."
+original_wram_comparison_limitation = "Recovered locals omit direct-page scratch; raw full-WRAM equality is unsupported without register/scratch contract."
+loadstation_pointer_table = "80C4B5;C4C5,C5CF,C6D9,C81B,C917,CA2F,CB2B"
+loadstation_record_bytes = 14
+ceres_station_6_0 = "80CB2B:45df58ab00000000000048000000"
+crateria_station_0_18 = "80C5C1:f891fe8800000004000080000000"
+save_station_header = "84B76F:eeb5e8af; setupB5EE,scriptAFE8"
+save_station_trigger_header = "84B76B:90b5e3aa;setupB590,scriptAAE3"
+save_station_script_extent = "84AFE8..84B00D=38; static only, no composed caller exercise"
+save_station_no_target = "B008; duration tupleB008..B00B then DeleteB00C"
+save_station_unowned_followups = ["PlaceSamus/MakeSamusFaceForwardB00E", "saved-messageB024", "enable-movementB030", "message27/29 and electricity allocator/player services"]

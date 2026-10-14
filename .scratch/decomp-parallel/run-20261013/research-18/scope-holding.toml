@@ -1,0 +1,1255 @@
+format = "decomp-subsystem-research-holding-v1"
+subject = "Pinned-C audio and distinct equipment/options complete routine boundaries"
+source_baseline = "7ed3d383d6d3e28d21d1bb960acc5576ce82f5e9"
+worker_session_id = "01a135ca-3b5d-75a2-b717-23d486d7b6ec"
+accepted = false
+assign_scope_supported = false
+readiness = "review-awaiting-supported-direct-root-provenance-and-full-state-adapters"
+source_observations = "routine-observations.json"
+asset_observations = "rom-observations.json"
+child_proposals = "children.toml"
+source_inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+exercise = "missing; current schema2 is bank86-only"
+exercise_sha256_available = false
+limitations = [
+  "Custom holdings are not native translation-scope-v1 documents and cannot authorize assign --scope.",
+  "No fabricated exercise pointer/hash, completed dependency, input seal or source baseline is supplied.",
+  "All adapter names, new target files and commands are proposed and unimplemented/unrun.",
+  "Actual-C parity and separate original-ROM behavior need distinct evidence; no gameplay stage was earned.",
+]
+protected_shared_paths = [
+  "crates/port/src/lib.rs",
+  "crates/port/src/memory.rs",
+  "crates/port/src/game_host.rs",
+  "crates/pipeline/src/main.rs",
+  "crates/pipeline/src/translation.rs",
+  "crates/pipeline/src/family.rs",
+  "crates/pipeline/src/callback.rs",
+  "crates/pipeline/src/live.rs",
+  "tools/port/batch.toml",
+  ".scratch/decomp-progress/registry.json",
+]
+
+[[scopes]]
+key = "18-audio-frame-implementation"
+subject = "Own complete pinned-C music queue and three-channel SFX service invocation"
+routines = [
+  "APU_UploadBank",
+  "HandleMusicQueue",
+  "HandleSoundEffects",
+  "ResetSoundQueues",
+  "SfxHandlers_0_SendToApu",
+  "SfxHandlers_1_WaitForAck",
+  "SfxHandlers_2_ClearRequest",
+  "SfxHandlers_3_WaitForAck",
+  "SfxHandlers_4_Reset",
+]
+count = 9
+proposed_writable_paths = [
+  "crates/port/src/audio_frame.rs",
+  "crates/port/tests/audio_frame.rs",
+  "tools/port/audio-frame.toml",
+]
+reused_modules = [
+  "audio",
+  "system",
+]
+unready_dependencies = [
+  "18-exercise-contract-supplement",
+  "18-audio-transaction-adapter",
+  "current-source-verified-audio03-system02",
+  "13-hardware-reset-inputs",
+  "19-load-state-if-route-loads",
+]
+submission_argv = [
+  "cargo",
+  "test",
+  "-p",
+  "port",
+  "--locked",
+  "--offline",
+  "--test",
+  "audio_frame",
+  "--test",
+  "audio",
+  "--test",
+  "system",
+]
+submission_timeout_seconds = 60
+integration_argv = [
+  "cargo",
+  "run",
+  "-p",
+  "pipeline",
+  "--locked",
+  "--offline",
+  "--bin",
+  "sm-pipeline",
+  "--",
+  "family-verify",
+  "--manifest",
+  "tools/port/audio-frame.toml",
+  "--adapter",
+  "audio-frame",
+  "--output",
+  "out/port/audio-frame",
+  "--case-jobs",
+  "4",
+]
+integration_timeout_seconds = 3600
+
+[[scopes.routine_identity]]
+symbol = "APU_UploadBank"
+source = "src/sm_80.c"
+line = 16
+definition_sha256 = "32aec38ebfa1bf4b44005479c7527547a5d64adebdaa22b149af89caa7b8f47b"
+original_address_available = true
+original_address = "0x808028"
+
+[[scopes.routine_identity]]
+symbol = "HandleMusicQueue"
+source = "src/sm_80.c"
+line = 646
+definition_sha256 = "f635d911c2c92f687fc62c3eee96617f10f92fadb01d8e9700101980ebeaab2f"
+original_address_available = true
+original_address = "0x808F0C"
+
+[[scopes.routine_identity]]
+symbol = "HandleSoundEffects"
+source = "src/sm_82.c"
+line = 738
+definition_sha256 = "455dfd8579639a95fe3e4e08833b94813f64576dfdfd57df11d0cd418783fc6d"
+original_address_available = false
+addressless_binding = "exact symbol/source/definition; native entry is not granted by lexical inventory"
+
+[[scopes.routine_identity]]
+symbol = "ResetSoundQueues"
+source = "src/sm_82.c"
+line = 791
+definition_sha256 = "53a4c43e98176d230cb1a163909992d28ccb5f96d511573b49a9fbe432503f2b"
+original_address_available = true
+original_address = "0x828A9A"
+
+[[scopes.routine_identity]]
+symbol = "SfxHandlers_0_SendToApu"
+source = "src/sm_82.c"
+line = 753
+definition_sha256 = "4965c0cb4c9cd1ca226aca43f4a88f8f071e8e7e4533a9f4c149d2630027a8bb"
+original_address_available = true
+original_address = "0x828A2C"
+
+[[scopes.routine_identity]]
+symbol = "SfxHandlers_1_WaitForAck"
+source = "src/sm_82.c"
+line = 764
+definition_sha256 = "4198f7478a20df511fdca15887ba96e3f073b00af5855b8a8b634fe51d680316"
+original_address_available = true
+original_address = "0x828A55"
+
+[[scopes.routine_identity]]
+symbol = "SfxHandlers_2_ClearRequest"
+source = "src/sm_82.c"
+line = 771
+definition_sha256 = "e1ae710260a7e16bc486bfb4985a311b01b4a10147225c0e19f335909db90574"
+original_address_available = true
+original_address = "0x828A6C"
+
+[[scopes.routine_identity]]
+symbol = "SfxHandlers_3_WaitForAck"
+source = "src/sm_82.c"
+line = 779
+definition_sha256 = "6df227d31f1218c16d6790cf04f6cd98d61f38ca437d7798a013e47643fb9195"
+original_address_available = true
+original_address = "0x828A7C"
+
+[[scopes.routine_identity]]
+symbol = "SfxHandlers_4_Reset"
+source = "src/sm_82.c"
+line = 786
+definition_sha256 = "37a4f8f7d6f1d4debe9e1242d93d79fba378d4a19c7f1b7ac10753d0a49bb45a"
+original_address_available = true
+original_address = "0x828A90"
+
+[[scopes]]
+key = "18-pause-equipment-render"
+subject = "Own complete equipment rendering, wireframe queue and menu spritemap effects"
+routines = [
+  "DrawMenuSpritemap",
+  "DrawPauseScreenSpriteAnim",
+  "EquipmentScreenDisplayReserveTankAmount",
+  "EquipmentScreenDisplayReserveTankAmount_",
+  "EquipmentScreenDisplayReserves_PaletteSetup",
+  "EquipmentScreenDrawItemSelector",
+  "WriteSamusWireframeTilemap",
+  "WriteSamusWireframeTilemapAndQueue",
+]
+count = 8
+proposed_writable_paths = [
+  "crates/port/src/pause_equipment_render.rs",
+  "crates/port/tests/pause_equipment_render.rs",
+  "tools/port/pause-equipment-render.toml",
+]
+reused_modules = [
+
+]
+unready_dependencies = [
+  "18-exercise-contract-supplement",
+  "18-ui-transaction-adapter",
+  "22-23-full-render-NMI-state",
+  "current-canonical-player-memory",
+]
+submission_argv = [
+  "cargo",
+  "test",
+  "-p",
+  "port",
+  "--locked",
+  "--offline",
+  "--test",
+  "pause_equipment_render",
+]
+submission_timeout_seconds = 60
+integration_argv = [
+  "cargo",
+  "run",
+  "-p",
+  "pipeline",
+  "--locked",
+  "--offline",
+  "--bin",
+  "sm-pipeline",
+  "--",
+  "family-verify",
+  "--manifest",
+  "tools/port/pause-equipment-render.toml",
+  "--adapter",
+  "pause-equipment-render",
+  "--output",
+  "out/port/pause-equipment-render",
+  "--case-jobs",
+  "4",
+]
+integration_timeout_seconds = 3600
+
+[[scopes.routine_identity]]
+symbol = "DrawMenuSpritemap"
+source = "src/sm_81.c"
+line = 188
+definition_sha256 = "754fc667937e9382a0a8522d5a224f834ed5abb4515b9d1ab418d2d8f3abf7df"
+original_address_available = true
+original_address = "0x81891F"
+
+[[scopes.routine_identity]]
+symbol = "DrawPauseScreenSpriteAnim"
+source = "src/sm_82.c"
+line = 2292
+definition_sha256 = "fe0e660f06d02949ddda673743eddfa655ac102e290db4fcaa98ff7de8aadaab"
+original_address_available = true
+original_address = "0x82A881"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenDisplayReserveTankAmount"
+source = "src/sm_82.c"
+line = 2778
+definition_sha256 = "8d5290754c96a335f0871dbe6511973db886e755a6587ca7249e9376d6916a1c"
+original_address_available = true
+original_address = "0x82B2A2"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenDisplayReserveTankAmount_"
+source = "src/sm_82.c"
+line = 2789
+definition_sha256 = "1253d62dab82a6d448a57ed89d61c9c406a94c0cf254bcf27338389f3fcafab6"
+original_address_available = false
+addressless_binding = "exact symbol/source/definition; native entry is not granted by lexical inventory"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenDisplayReserves_PaletteSetup"
+source = "src/sm_82.c"
+line = 2834
+definition_sha256 = "c4b9ffff23f65c8d3c7f053f0276a9565b17d1444a672d8d6890e0e793517316"
+original_address_available = true
+original_address = "0x82B3F9"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenDrawItemSelector"
+source = "src/sm_82.c"
+line = 2770
+definition_sha256 = "19633dc1379fba36dec4b635247b7afee6aee4a0011dd08468f210ac91887da1"
+original_address_available = true
+original_address = "0x82B267"
+
+[[scopes.routine_identity]]
+symbol = "WriteSamusWireframeTilemap"
+source = "src/sm_82.c"
+line = 2748
+definition_sha256 = "8b544e4a5a90e02fbcb2ee1583b25da2f282b09b3a5ff5865b110783990377be"
+original_address_available = true
+original_address = "0x82B20C"
+
+[[scopes.routine_identity]]
+symbol = "WriteSamusWireframeTilemapAndQueue"
+source = "src/sm_82.c"
+line = 2735
+definition_sha256 = "26ead83d2a6d4a895d0960c575a63cbb21679cd990744d0068cb120768f9bc29"
+original_address_available = true
+original_address = "0x82B1E0"
+
+[[scopes]]
+key = "18-pause-equipment-interaction"
+subject = "Own complete equipment categories, reserve transfers and EquipmentScreenMain root"
+routines = [
+  "ChangePaletteValues",
+  "EquipmentScreenCategory_Boots",
+  "EquipmentScreenCategory_Boots_MoveResponse",
+  "EquipmentScreenCategory_Boots_MoveUpInBoots",
+  "EquipmentScreenCategory_ButtonResponse",
+  "EquipmentScreenCategory_Suit",
+  "EquipmentScreenCategory_Suit_MoveResponse",
+  "EquipmentScreenCategory_Tanks",
+  "EquipmentScreenCategory_Tanks_0",
+  "EquipmentScreenCategory_Tanks_1",
+  "EquipmentScreenCategory_Weapons",
+  "EquipmentScreenCategory_Weapons_MoveButtons",
+  "EquipmentScreenCategory_Weapons_PlazmaSpazerCheck",
+  "EquipmentScreenEnergyArrowGlow_Off",
+  "EquipmentScreenEnergyArrowGlow_On",
+  "EquipmentScreenGlowingArrow",
+  "EquipmentScreenGlowingArrowAnimated",
+  "EquipmentScreenGlowingArrowSolidOff",
+  "EquipmentScreenGlowingArrowSolidOn",
+  "EquipmentScreenHandleDpad",
+  "EquipmentScreenHudReserveAutoTilemap_Off",
+  "EquipmentScreenHudReserveAutoTilemap_On_BUGGY",
+  "EquipmentScreenMain",
+  "EquipmentScreenMoveLowerOnSuitsMisc",
+  "EquipmentScreenMoveToBeams",
+  "EquipmentScreenMoveToBottomOfBeams",
+  "EquipmentScreenMoveToHighJumpOrLowerInBoots",
+  "EquipmentScreenMoveToReserveTanks",
+  "EquipmentScreenMoveToScrewOrHigherOnSuits",
+]
+count = 29
+proposed_writable_paths = [
+  "crates/port/src/pause_equipment.rs",
+  "crates/port/tests/pause_equipment.rs",
+  "tools/port/pause-equipment.toml",
+]
+reused_modules = [
+  "pause_equipment_render",
+  "audio",
+]
+unready_dependencies = [
+  "18-exercise-contract-supplement",
+  "18-ui-transaction-adapter",
+  "18-pause-equipment-render",
+  "current-source-verified-audio03",
+  "14-canonical-player-state",
+  "12-controller-polls",
+]
+submission_argv = [
+  "cargo",
+  "test",
+  "-p",
+  "port",
+  "--locked",
+  "--offline",
+  "--test",
+  "pause_equipment",
+  "--test",
+  "pause_equipment_render",
+  "--test",
+  "audio",
+]
+submission_timeout_seconds = 60
+integration_argv = [
+  "cargo",
+  "run",
+  "-p",
+  "pipeline",
+  "--locked",
+  "--offline",
+  "--bin",
+  "sm-pipeline",
+  "--",
+  "family-verify",
+  "--manifest",
+  "tools/port/pause-equipment.toml",
+  "--adapter",
+  "pause-equipment",
+  "--output",
+  "out/port/pause-equipment",
+  "--case-jobs",
+  "4",
+]
+integration_timeout_seconds = 3600
+
+[[scopes.routine_identity]]
+symbol = "ChangePaletteValues"
+source = "src/sm_82.c"
+line = 1863
+definition_sha256 = "744b9adeeee9594df1646a8a2702f1aa292498a68899517d54c51514646279c7"
+original_address_available = true
+original_address = "0x82A29D"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenCategory_Boots"
+source = "src/sm_82.c"
+line = 2707
+definition_sha256 = "93ef38ad4ea25d1eaa8662fc243e6675538cf920346505a5793fc61bb9b6dfc3"
+original_address_available = true
+original_address = "0x82B150"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenCategory_Boots_MoveResponse"
+source = "src/sm_82.c"
+line = 2714
+definition_sha256 = "2e3288606e0be0d6ce7d65a9c5cdcd19b5e956f79463f1afd23bdf3f3d37583e"
+original_address_available = true
+original_address = "0x82B160"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenCategory_Boots_MoveUpInBoots"
+source = "src/sm_82.c"
+line = 2934
+definition_sha256 = "e5b66ab6289f25b0354409f5637708580d98dc0df49a30ceb63247afbf501489"
+original_address_available = true
+original_address = "0x82B53F"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenCategory_ButtonResponse"
+source = "src/sm_82.c"
+line = 2946
+definition_sha256 = "1aff67797b988cc0f5c84f0226bea16a92f1de0f7fd96c991e709f9178b454f9"
+original_address_available = true
+original_address = "0x82B568"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenCategory_Suit"
+source = "src/sm_82.c"
+line = 2677
+definition_sha256 = "f9da861517064a1767656feff663145161a5154d72ec28c5fed20157632f9acb"
+original_address_available = true
+original_address = "0x82B0C2"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenCategory_Suit_MoveResponse"
+source = "src/sm_82.c"
+line = 2684
+definition_sha256 = "a080aa83e3a1a03166d3f7c4de205247a91bb8c7cd3a7bafa73a22f4c28336eb"
+original_address_available = true
+original_address = "0x82B0D2"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenCategory_Tanks"
+source = "src/sm_82.c"
+line = 2420
+definition_sha256 = "a160a3b3b85552519d7769634c89560cecbe9c9135f33438bfb39b4029598b52"
+original_address_available = false
+addressless_binding = "exact symbol/source/definition; native entry is not granted by lexical inventory"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenCategory_Tanks_0"
+source = "src/sm_82.c"
+line = 2553
+definition_sha256 = "7978f90e86634549d3b1827a9a0e894576cf5589c32955f47a3fe2bdb081bcff"
+original_address_available = false
+addressless_binding = "exact symbol/source/definition; native entry is not granted by lexical inventory"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenCategory_Tanks_1"
+source = "src/sm_82.c"
+line = 2606
+definition_sha256 = "dab2a84e73db8d153bf41ad9c08952658ecc02b168653792b7073dfe07a8ecda"
+original_address_available = true
+original_address = "0x82AF4F"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenCategory_Weapons"
+source = "src/sm_82.c"
+line = 2629
+definition_sha256 = "7169c2c0c897b7e3b54c0de7b80b3421e3184347077fff2500d1012202969bdb"
+original_address_available = true
+original_address = "0x82AFBE"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenCategory_Weapons_MoveButtons"
+source = "src/sm_82.c"
+line = 2641
+definition_sha256 = "5ebee69d0a3bbedb011d5c9f6324c7604dcf4779d484ec71f038546e76b21749"
+original_address_available = true
+original_address = "0x82AFDB"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenCategory_Weapons_PlazmaSpazerCheck"
+source = "src/sm_82.c"
+line = 2664
+definition_sha256 = "e11dd9bd9181175062f877388d576e7b361ba52028dcbcf3ffe0d2bbb917dae3"
+original_address_available = true
+original_address = "0x82B068"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenEnergyArrowGlow_Off"
+source = "src/sm_82.c"
+line = 2493
+definition_sha256 = "4f5ee4dce66d7c15ecda4af8cf78460e8793a918fcbdf35ae735d823fbeff601"
+original_address_available = true
+original_address = "0x82AE46"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenEnergyArrowGlow_On"
+source = "src/sm_82.c"
+line = 2486
+definition_sha256 = "62525d082b259d325411ffe6113104636d04b594c3301e8fe287bafef82a6caf"
+original_address_available = true
+original_address = "0x82AE01"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenGlowingArrow"
+source = "src/sm_82.c"
+line = 2451
+definition_sha256 = "5647003c2ad5275b34f29c01d6f093cb995d4e14f9386d039a6fcd805441bb98"
+original_address_available = false
+addressless_binding = "exact symbol/source/definition; native entry is not granted by lexical inventory"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenGlowingArrowAnimated"
+source = "src/sm_82.c"
+line = 2461
+definition_sha256 = "abcd11884278f99b19f459b12b118922b02724b7ad1858f16862ecb0ddf54bbb"
+original_address_available = true
+original_address = "0x82AD29"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenGlowingArrowSolidOff"
+source = "src/sm_82.c"
+line = 2480
+definition_sha256 = "b332ecdffdfc263e303bde297c5e17c46369f5dc6eb8b303b8bc32845db427ee"
+original_address_available = true
+original_address = "0x82ADEF"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenGlowingArrowSolidOn"
+source = "src/sm_82.c"
+line = 2474
+definition_sha256 = "b573b75d37c7f37cd7b016f2c988c439212700fd8c6241c81bfb1d114f37729c"
+original_address_available = true
+original_address = "0x82ADDD"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenHandleDpad"
+source = "src/sm_82.c"
+line = 2426
+definition_sha256 = "c8e0bf589610fe7ac5a0b515b9655cb8cb7f3f9bb84a41dc168cb091e55b8799"
+original_address_available = true
+original_address = "0x82AC8B"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenHudReserveAutoTilemap_Off"
+source = "src/sm_82.c"
+line = 2597
+definition_sha256 = "ace801e86db443dd290e1558e28b88e3b4df47287d985dbd0b913a7cd9ef0160"
+original_address_available = true
+original_address = "0x82AF33"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenHudReserveAutoTilemap_On_BUGGY"
+source = "src/sm_82.c"
+line = 2583
+definition_sha256 = "302b1aea0e2990d4669ad17633243e16418b39d1c0793beec14c829e063a4e3a"
+original_address_available = true
+original_address = "0x82AEFD"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenMain"
+source = "src/sm_82.c"
+line = 2410
+definition_sha256 = "10ae5793f50b6d1d99dbae019549a9ab085582908f1b25f0668ce617b796dece"
+original_address_available = false
+addressless_binding = "exact symbol/source/definition; native entry is not granted by lexical inventory"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenMoveLowerOnSuitsMisc"
+source = "src/sm_82.c"
+line = 2895
+definition_sha256 = "48d455efb8f1b60ce06134d1d07e8f2b1d5e85f9d0d172c6a165e320af816e2a"
+original_address_available = true
+original_address = "0x82B4B7"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenMoveToBeams"
+source = "src/sm_82.c"
+line = 2862
+definition_sha256 = "9e9f13f115f092e0cb11d1e687de2b949b177fad07c2c1e18db0532c6326072b"
+original_address_available = true
+original_address = "0x82B456"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenMoveToBottomOfBeams"
+source = "src/sm_82.c"
+line = 2881
+definition_sha256 = "ade0e6e0ab8f31885682aa170023c39ad3b7eec9f0c6248f405589e3d67c1d0c"
+original_address_available = true
+original_address = "0x82B489"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenMoveToHighJumpOrLowerInBoots"
+source = "src/sm_82.c"
+line = 2922
+definition_sha256 = "8dcd1a4d7851bf7d60a08185f2297bd23512adbcd921b257171da408a82d6904"
+original_address_available = true
+original_address = "0x82B511"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenMoveToReserveTanks"
+source = "src/sm_82.c"
+line = 2852
+definition_sha256 = "59188ec56c635a5de2293fb9733b82ca9a85d8e92fbd4adbc593d9e4318fd99d"
+original_address_available = true
+original_address = "0x82B43F"
+
+[[scopes.routine_identity]]
+symbol = "EquipmentScreenMoveToScrewOrHigherOnSuits"
+source = "src/sm_82.c"
+line = 2910
+definition_sha256 = "8db19cc05b56d7425e3e64113c297eb08e64f1f079f7fba2f4bc992e4a7e570b"
+original_address_available = true
+original_address = "0x82B4E6"
+
+[[scopes]]
+key = "18-options-menu-objects"
+subject = "Own complete admitted options-object interpreter, allocation and real drawing"
+routines = [
+  "CallOptionsEntryFunc",
+  "CallOptionsInstr",
+  "CallOptionsPreInstr",
+  "CreateOptionsMenuObject_",
+  "DeleteAllOptionsMenuObjects_",
+  "DrawOptionsMenuSpritemaps",
+  "DrawSpritemap",
+  "OptionsInstr_8C64",
+  "OptionsInstr_8C79",
+  "OptionsInstr_8C89",
+  "OptionsInstr_8C93",
+  "OptionsInstr_Destroy",
+  "OptionsInstr_Goto",
+  "OptionsInstr_SetPreInstr",
+  "OptionsMenuFunc1",
+  "OptionsMenuFunc2",
+  "OptionsPreInstr_F2A9",
+  "OptionsPreInstr_F376",
+  "OptionsPreInstr_F3A0",
+  "OptionsPreInstr_F3E2",
+  "OptionsPreInstr_F42C",
+  "OptionsPreInstr_nullsub_57",
+  "sub_82F296",
+  "sub_82F34B",
+  "sub_82F353",
+  "sub_82F35B",
+  "sub_82F363",
+  "sub_82F369",
+  "sub_82F419",
+]
+count = 29
+proposed_writable_paths = [
+  "crates/port/src/options_menu_objects.rs",
+  "crates/port/tests/options_menu_objects.rs",
+  "tools/port/options-menu-objects.toml",
+]
+reused_modules = [
+
+]
+unready_dependencies = [
+  "18-exercise-contract-supplement",
+  "18-ui-transaction-adapter",
+  "reviewed8C81-F404-continuation-domain",
+  "current-canonical-WRAM-ROM-render-state",
+]
+submission_argv = [
+  "cargo",
+  "test",
+  "-p",
+  "port",
+  "--locked",
+  "--offline",
+  "--test",
+  "options_menu_objects",
+]
+submission_timeout_seconds = 60
+integration_argv = [
+  "cargo",
+  "run",
+  "-p",
+  "pipeline",
+  "--locked",
+  "--offline",
+  "--bin",
+  "sm-pipeline",
+  "--",
+  "family-verify",
+  "--manifest",
+  "tools/port/options-menu-objects.toml",
+  "--adapter",
+  "options-menu-objects",
+  "--output",
+  "out/port/options-menu-objects",
+  "--case-jobs",
+  "4",
+]
+integration_timeout_seconds = 3600
+
+[[scopes.routine_identity]]
+symbol = "CallOptionsEntryFunc"
+source = "src/sm_82.c"
+line = 897
+definition_sha256 = "d5a40ddc34c97c49cbf5092b0db0af5c29643788fa07289d4ca5654828c7a5fe"
+original_address_available = false
+addressless_binding = "exact symbol/source/definition; native entry is not granted by lexical inventory"
+
+[[scopes.routine_identity]]
+symbol = "CallOptionsInstr"
+source = "src/sm_82.c"
+line = 956
+definition_sha256 = "0f813ad4fd61b8b0dd182b131574d146c798c172e7877ef24b1229a44c539fc6"
+original_address_available = false
+addressless_binding = "exact symbol/source/definition; native entry is not granted by lexical inventory"
+
+[[scopes.routine_identity]]
+symbol = "CallOptionsPreInstr"
+source = "src/sm_82.c"
+line = 944
+definition_sha256 = "93d941ba476cc3b0b3cda73b2eaa608ef38572dc048f7983335d4f62a40c113b"
+original_address_available = false
+addressless_binding = "exact symbol/source/definition; native entry is not granted by lexical inventory"
+
+[[scopes.routine_identity]]
+symbol = "CreateOptionsMenuObject_"
+source = "src/sm_82.c"
+line = 909
+definition_sha256 = "9a88ebe9e28f179e091dde8c2811c545b0dc6f8c324fd5d7f0721ea8e8382a9a"
+original_address_available = false
+addressless_binding = "exact symbol/source/definition; native entry is not granted by lexical inventory"
+
+[[scopes.routine_identity]]
+symbol = "DeleteAllOptionsMenuObjects_"
+source = "src/sm_82.c"
+line = 889
+definition_sha256 = "cd6d7641f038d2eaf07d29f1ebc1d4ca7e695cfdea7162257f530b5a18017833"
+original_address_available = false
+addressless_binding = "exact symbol/source/definition; native entry is not granted by lexical inventory"
+
+[[scopes.routine_identity]]
+symbol = "DrawOptionsMenuSpritemaps"
+source = "src/sm_82.c"
+line = 1030
+definition_sha256 = "d82b7785c4d6071f0573949d75ac6e3bed0a4f9e941bb71e2e2acfe94e277888"
+original_address_available = true
+original_address = "0x828CA1"
+
+[[scopes.routine_identity]]
+symbol = "DrawSpritemap"
+source = "src/sm_81.c"
+line = 144
+definition_sha256 = "037f27ace841ed04fca1dbf849a969b7a9b74aeee74a9b27aa37b029d8d64c2e"
+original_address_available = true
+original_address = "0x81879F"
+
+[[scopes.routine_identity]]
+symbol = "OptionsInstr_8C64"
+source = "src/sm_82.c"
+line = 998
+definition_sha256 = "424ae4a0c65f4ae633ddb235b178c15c9c900c37a8317278d6a5f580f51fbf9e"
+original_address_available = true
+original_address = "0x828C64"
+
+[[scopes.routine_identity]]
+symbol = "OptionsInstr_8C79"
+source = "src/sm_82.c"
+line = 1008
+definition_sha256 = "e1949ebc97a7dde824000f1014dcfaaa92150fc3e1282fc2aafa71cfea231c85"
+original_address_available = true
+original_address = "0x828C79"
+
+[[scopes.routine_identity]]
+symbol = "OptionsInstr_8C89"
+source = "src/sm_82.c"
+line = 1017
+definition_sha256 = "475eea1381547904eadbc3a4d7a95ce8a58bc20a705b8c3be5c7e41ef2f09521"
+original_address_available = true
+original_address = "0x828C89"
+
+[[scopes.routine_identity]]
+symbol = "OptionsInstr_8C93"
+source = "src/sm_82.c"
+line = 1025
+definition_sha256 = "cdbbaad2463c652842ef69e7a1800c9fad9fc282cbfa73470360677066d00229"
+original_address_available = true
+original_address = "0x828C93"
+
+[[scopes.routine_identity]]
+symbol = "OptionsInstr_Destroy"
+source = "src/sm_82.c"
+line = 991
+definition_sha256 = "3dbb689ab7c0e9a6201ec670febe3037624e2a3bf7a90c36c36af019f8c7f06d"
+original_address_available = true
+original_address = "0x828C5A"
+
+[[scopes.routine_identity]]
+symbol = "OptionsInstr_Goto"
+source = "src/sm_82.c"
+line = 1013
+definition_sha256 = "b98a55f1dd23940d044e3788b36bf1dff8994e2b816918388f8381ee7a54066d"
+original_address_available = true
+original_address = "0x828C82"
+
+[[scopes.routine_identity]]
+symbol = "OptionsInstr_SetPreInstr"
+source = "src/sm_82.c"
+line = 1003
+definition_sha256 = "f7079de2f7e5b5e72c8f48a740bdd2794ac6059f03eae30f84713d57ec3d54f6"
+original_address_available = true
+original_address = "0x828C6E"
+
+[[scopes.routine_identity]]
+symbol = "OptionsMenuFunc1"
+source = "src/sm_82.c"
+line = 934
+definition_sha256 = "3fb0b5a653b81c205ded3c99338be668e9290fd8d716dff021a883426733483b"
+original_address_available = true
+original_address = "0x828C11"
+
+[[scopes.routine_identity]]
+symbol = "OptionsMenuFunc2"
+source = "src/sm_82.c"
+line = 969
+definition_sha256 = "8dc27887d2bd41c1a8ac293dc8cef28518a52473088641d8bbfdb1ec717bedad"
+original_address_available = true
+original_address = "0x828C2B"
+
+[[scopes.routine_identity]]
+symbol = "OptionsPreInstr_F2A9"
+source = "src/sm_82.c"
+line = 4894
+definition_sha256 = "85be7472b64dcc3f3a0e92f43e8a5bba7cf5c63ca6065091b8a3595e450d83ad"
+original_address_available = true
+original_address = "0x82F2A9"
+
+[[scopes.routine_identity]]
+symbol = "OptionsPreInstr_F376"
+source = "src/sm_82.c"
+line = 4939
+definition_sha256 = "3bcba3a6d47a5c5f3c3b3ae4d2edfdf35fdaa54e07ed9eeaa0bd04f2858e4a8c"
+original_address_available = true
+original_address = "0x82F376"
+
+[[scopes.routine_identity]]
+symbol = "OptionsPreInstr_F3A0"
+source = "src/sm_82.c"
+line = 4947
+definition_sha256 = "3c2625ff4c2004d3d86842c524bd57a9e20799ed400f7efa934067d7b21e4897"
+original_address_available = true
+original_address = "0x82F3A0"
+
+[[scopes.routine_identity]]
+symbol = "OptionsPreInstr_F3E2"
+source = "src/sm_82.c"
+line = 4965
+definition_sha256 = "e1ff0fbac6196467d18543d47acfc67211b62e019f298fa925c5b190f73a0848"
+original_address_available = true
+original_address = "0x82F3E2"
+
+[[scopes.routine_identity]]
+symbol = "OptionsPreInstr_F42C"
+source = "src/sm_82.c"
+line = 4988
+definition_sha256 = "b4b03a42efdcaf90d333f2b9165d16e155c109a3a794a998c3881ab912eb0c00"
+original_address_available = true
+original_address = "0x82F42C"
+
+[[scopes.routine_identity]]
+symbol = "OptionsPreInstr_nullsub_57"
+source = "src/sm_82.c"
+line = 930
+definition_sha256 = "bb2bddbe296ed61204fdc11266da81fd1df4d4ca3c521262c3fb12605dc760ab"
+original_address_available = true
+original_address = "0x828C10"
+
+[[scopes.routine_identity]]
+symbol = "sub_82F296"
+source = "src/sm_82.c"
+line = 4888
+definition_sha256 = "f7240c8d376ed45555295bb46fdd6e4b4d84c95fbb24b2033f7e92ea819ee0b7"
+original_address_available = true
+original_address = "0x82F296"
+
+[[scopes.routine_identity]]
+symbol = "sub_82F34B"
+source = "src/sm_82.c"
+line = 4915
+definition_sha256 = "ec043723997060f09fc1b7f5bd3d7154683e7006f718c0cfdd02373305913ee8"
+original_address_available = true
+original_address = "0x82F34B"
+
+[[scopes.routine_identity]]
+symbol = "sub_82F353"
+source = "src/sm_82.c"
+line = 4919
+definition_sha256 = "7b3e2322f52c25a7a7fee99af2a653f153638b0093650684ab183e2aacb2f09f"
+original_address_available = true
+original_address = "0x82F353"
+
+[[scopes.routine_identity]]
+symbol = "sub_82F35B"
+source = "src/sm_82.c"
+line = 4923
+definition_sha256 = "efcafd362088f42a8d6054d1c2b8b26052de5c44d769f4ee822bb7b8463a4428"
+original_address_available = true
+original_address = "0x82F35B"
+
+[[scopes.routine_identity]]
+symbol = "sub_82F363"
+source = "src/sm_82.c"
+line = 4927
+definition_sha256 = "62e06e1fad30cd0f6a65b004d8e17b90be6a18aeeb0f6a3bfe5faeacd40f7055"
+original_address_available = true
+original_address = "0x82F363"
+
+[[scopes.routine_identity]]
+symbol = "sub_82F369"
+source = "src/sm_82.c"
+line = 4932
+definition_sha256 = "b08631594dba74333317398f38bd956ee727520a8c16c7532b6bfdb3b5b92f54"
+original_address_available = true
+original_address = "0x82F369"
+
+[[scopes.routine_identity]]
+symbol = "sub_82F419"
+source = "src/sm_82.c"
+line = 4981
+definition_sha256 = "634e804349c8891dbe9ff8aa5fb3f08b6af77ef84ff9dfddb0ce0d71c3a14f6e"
+original_address_available = true
+original_address = "0x82F419"
+
+[[scopes]]
+key = "18-options-menu-orchestration"
+subject = "Own complete options-screen root and controller/special settings transitions"
+routines = [
+  "GameOptionsMenuFunc_0",
+  "GameOptionsMenuItemFunc_0",
+  "GameOptionsMenuItemFunc_2_ToggleJapanese",
+  "GameOptionsMenuItemFunc_4",
+  "GameOptionsMenuSpecialSettings_0",
+  "GameOptionsMenuSpecialSettings_2",
+  "GameOptionsMenu_1_LoadingOptionsScreen",
+  "GameOptionsMenu_2_FadeInOptionsScreen",
+  "GameOptionsMenu_3_OptionsScreen",
+  "GameOptionsMenu_4_StartGame",
+  "GameOptionsMenu_5_DissolveOutScreen",
+  "GameOptionsMenu_6_DissolveInScreen",
+  "GameOptionsMenu_7_ControllerSettings",
+  "GameOptionsMenu_8_SpecialSettings",
+  "GameOptionsMenu_9_ScrollControllerSettingsDown",
+  "GameOptionsMenu_A_ScrollControllerSettingsUp",
+  "GameOptionsMenu_B_TransitionBackToFileSelect",
+  "GameOptionsMenu_C_FadeOutOptionsScreenToStart",
+  "GameState_2_GameOptionsMenu",
+  "LoadControllerOptionsFromControllerBindings",
+  "OptionsMenuControllerFunc_0",
+  "OptionsMenuControllerFunc_7",
+  "OptionsMenuControllerFunc_8",
+  "OptionsMenuFunc4",
+  "OptionsMenuFunc5",
+  "OptionsMenuFunc6",
+  "OptionsMenuFunc7",
+  "OptionsMenuFunc8",
+  "OptionsMenu_AddToVramQueue",
+]
+count = 29
+proposed_writable_paths = [
+  "crates/port/src/options_menu.rs",
+  "crates/port/tests/options_menu.rs",
+  "tools/port/options-menu.toml",
+]
+reused_modules = [
+  "options_menu_objects",
+  "audio",
+  "system",
+]
+unready_dependencies = [
+  "18-exercise-contract-supplement",
+  "18-ui-transaction-adapter",
+  "18-options-menu-objects",
+  "18-audio-service-and-audio03",
+  "12-controller-binding-poll-contract",
+  "19-save-options-transaction",
+  "22-23-NMI-DMA-decompression-contract",
+]
+submission_argv = [
+  "cargo",
+  "test",
+  "-p",
+  "port",
+  "--locked",
+  "--offline",
+  "--test",
+  "options_menu",
+  "--test",
+  "options_menu_objects",
+  "--test",
+  "audio",
+]
+submission_timeout_seconds = 60
+integration_argv = [
+  "cargo",
+  "run",
+  "-p",
+  "pipeline",
+  "--locked",
+  "--offline",
+  "--bin",
+  "sm-pipeline",
+  "--",
+  "family-verify",
+  "--manifest",
+  "tools/port/options-menu.toml",
+  "--adapter",
+  "options-menu",
+  "--output",
+  "out/port/options-menu",
+  "--case-jobs",
+  "4",
+]
+integration_timeout_seconds = 3600
+
+[[scopes.routine_identity]]
+symbol = "GameOptionsMenuFunc_0"
+source = "src/sm_82.c"
+line = 4471
+definition_sha256 = "7a8466bddacf9c32834622bb763c821459fd3abb53c377a4f62e87c964990f08"
+original_address_available = true
+original_address = "0x82EBDB"
+
+[[scopes.routine_identity]]
+symbol = "GameOptionsMenuItemFunc_0"
+source = "src/sm_82.c"
+line = 4576
+definition_sha256 = "11167f1e3ec19fb31ddc7b0ff6e8a899474d598f9d26464b770c866321b689b7"
+original_address_available = true
+original_address = "0x82EDB1"
+
+[[scopes.routine_identity]]
+symbol = "GameOptionsMenuItemFunc_2_ToggleJapanese"
+source = "src/sm_82.c"
+line = 4586
+definition_sha256 = "da4ef06a2654fa2008fed3a6aa9471ee42e300ef013562f73fc6c4aa5503bca5"
+original_address_available = true
+original_address = "0x82EDDA"
+
+[[scopes.routine_identity]]
+symbol = "GameOptionsMenuItemFunc_4"
+source = "src/sm_82.c"
+line = 4606
+definition_sha256 = "68a22ad5ab6d83ef326653c2a772797c3066cca63bbba929cc1e9b63d31cadee"
+original_address_available = true
+original_address = "0x82EE55"
+
+[[scopes.routine_identity]]
+symbol = "GameOptionsMenuSpecialSettings_0"
+source = "src/sm_82.c"
+line = 4760
+definition_sha256 = "0fdfc05ee67b8c6f103f3da2b1cb153563c1b07fa94c3dbc7f5e8075d2faad1f"
+original_address_available = true
+original_address = "0x82F08E"
+
+[[scopes.routine_identity]]
+symbol = "GameOptionsMenuSpecialSettings_2"
+source = "src/sm_82.c"
+line = 4769
+definition_sha256 = "3ad22e6438642b16ae75f3811de0f3e808af2ba6999c56ee7d129f397e00cb34"
+original_address_available = true
+original_address = "0x82F0B2"
+
+[[scopes.routine_identity]]
+symbol = "GameOptionsMenu_1_LoadingOptionsScreen"
+source = "src/sm_82.c"
+line = 4485
+definition_sha256 = "f93f3e763e15237b0799859f115b019e89de4d86a679605d369ffb4edf4f582f"
+original_address_available = true
+original_address = "0x82EC11"
+
+[[scopes.routine_identity]]
+symbol = "GameOptionsMenu_2_FadeInOptionsScreen"
+source = "src/sm_82.c"
+line = 4524
+definition_sha256 = "8ef75ab8cbe694569a78ba118007ec5d615324edd545444ef715d13991961f9d"
+original_address_available = true
+original_address = "0x82ECE4"
+
+[[scopes.routine_identity]]
+symbol = "GameOptionsMenu_3_OptionsScreen"
+source = "src/sm_82.c"
+line = 4558
+definition_sha256 = "cf910c9452cd7bfc4d5b7abde22144548789d9d1d1cdead69c40ef90a1b00eac"
+original_address_available = false
+addressless_binding = "exact symbol/source/definition; native entry is not granted by lexical inventory"
+
+[[scopes.routine_identity]]
+symbol = "GameOptionsMenu_4_StartGame"
+source = "src/sm_82.c"
+line = 4635
+definition_sha256 = "38b511d98016b0cb5515a0dc658a3f4d0d85e675e77b2605037633768b7fc431"
+original_address_available = true
+original_address = "0x82EEB4"
+
+[[scopes.routine_identity]]
+symbol = "GameOptionsMenu_5_DissolveOutScreen"
+source = "src/sm_82.c"
+line = 4658
+definition_sha256 = "59f8706c60427923b5dcda65337466391027ada3b4a58617d294fc24369e0fef"
+original_address_available = true
+original_address = "0x82EF18"
+
+[[scopes.routine_identity]]
+symbol = "GameOptionsMenu_6_DissolveInScreen"
+source = "src/sm_82.c"
+line = 4715
+definition_sha256 = "17ccb9e7f411605f85037b10854504879276f92e854f2f99d39e37937a7fda41"
+original_address_available = true
+original_address = "0x82EFDB"
+
+[[scopes.routine_identity]]
+symbol = "GameOptionsMenu_7_ControllerSettings"
+source = "src/sm_82.c"
+line = 4805
+definition_sha256 = "b1163900ddc8a71ae7aeb43e65dfff069b5218711f2c095e680ae1272a34e54c"
+original_address_available = false
+addressless_binding = "exact symbol/source/definition; native entry is not granted by lexical inventory"
+
+[[scopes.routine_identity]]
+symbol = "GameOptionsMenu_8_SpecialSettings"
+source = "src/sm_82.c"
+line = 4739
+definition_sha256 = "af898063a8f6bf11204d7edbe5437ea2ddc66762a095743237635ea4c118632d"
+original_address_available = false
+addressless_binding = "exact symbol/source/definition; native entry is not granted by lexical inventory"
+
+[[scopes.routine_identity]]
+symbol = "GameOptionsMenu_9_ScrollControllerSettingsDown"
+source = "src/sm_82.c"
+line = 4876
+definition_sha256 = "4fd3ff15740f634f425ed0f6910941efcbf3d0ebdc9d880da1bd6860a5024661"
+original_address_available = true
+original_address = "0x82F271"
+
+[[scopes.routine_identity]]
+symbol = "GameOptionsMenu_A_ScrollControllerSettingsUp"
+source = "src/sm_82.c"
+line = 4882
+definition_sha256 = "7d4a5d56d7a5863bb1947581b974bafdbcfe8063e2f2b0fe1bc7d1f0d2411a0c"
+original_address_available = true
+original_address = "0x82F285"
+
+[[scopes.routine_identity]]
+symbol = "GameOptionsMenu_B_TransitionBackToFileSelect"
+source = "src/sm_82.c"
+line = 4613
+definition_sha256 = "814967f1d0a9d48cb691bb301f1f798e578ae8b4e10bcdcb005b5695e2ca7b97"
+original_address_available = true
+original_address = "0x82EE6A"
+
+[[scopes.routine_identity]]
+symbol = "GameOptionsMenu_C_FadeOutOptionsScreenToStart"
+source = "src/sm_82.c"
+line = 4625
+definition_sha256 = "a5189f860ef9df6c06b62aafef18e7c4fb424b9c9dc746b3286fd61ce6e30035"
+original_address_available = true
+original_address = "0x82EE92"
+
+[[scopes.routine_identity]]
+symbol = "GameState_2_GameOptionsMenu"
+source = "src/sm_82.c"
+line = 4462
+definition_sha256 = "6ed50e575a5fdbd3df2f97744733e510e9556b45db9c927470441541e90b7b16"
+original_address_available = false
+addressless_binding = "exact symbol/source/definition; native entry is not granted by lexical inventory"
+
+[[scopes.routine_identity]]
+symbol = "LoadControllerOptionsFromControllerBindings"
+source = "src/sm_82.c"
+line = 4995
+definition_sha256 = "416089dfc835e6432fd791dd5509142315fe3cf63e057750c88c110b0f37a778"
+original_address_available = true
+original_address = "0x82F4DC"
+
+[[scopes.routine_identity]]
+symbol = "OptionsMenuControllerFunc_0"
+source = "src/sm_82.c"
+line = 5084
+definition_sha256 = "36a365502e89008afae217bd0722346356455d7692b43ea4c06179243fbe4ff7"
+original_address_available = true
+original_address = "0x82F6B9"
+
+[[scopes.routine_identity]]
+symbol = "OptionsMenuControllerFunc_7"
+source = "src/sm_82.c"
+line = 4869
+definition_sha256 = "aa4094eadab606376affb01a026b66bd4c5da7c195cdfce46984ef85f97208ad"
+original_address_available = true
+original_address = "0x82F25D"
+
+[[scopes.routine_identity]]
+symbol = "OptionsMenuControllerFunc_8"
+source = "src/sm_82.c"
+line = 4855
+definition_sha256 = "42d04ec27161dac11807ed0420fa895edfbe61fc9e6a15d8f6e61fa3eb35a7e3"
+original_address_available = true
+original_address = "0x82F224"
+
+[[scopes.routine_identity]]
+symbol = "OptionsMenuFunc4"
+source = "src/sm_82.c"
+line = 4592
+definition_sha256 = "8251af105a482482d3da4bd89cfec012704e6f86f7ead1d563ad090105e39529"
+original_address_available = true
+original_address = "0x82EDED"
+
+[[scopes.routine_identity]]
+symbol = "OptionsMenuFunc5"
+source = "src/sm_82.c"
+line = 4544
+definition_sha256 = "1a190d1a6756aeb2b5b4d9fe97957c2f3d0c916ed5c2317f02bbcc1deed04675"
+original_address_available = true
+original_address = "0x82ED28"
+
+[[scopes.routine_identity]]
+symbol = "OptionsMenuFunc6"
+source = "src/sm_82.c"
+line = 5055
+definition_sha256 = "cf8514d733223abe2b5d6ef11c039c085735c5bfebe2ca08756f9c798d229f0e"
+original_address_available = false
+addressless_binding = "exact symbol/source/definition; native entry is not granted by lexical inventory"
+
+[[scopes.routine_identity]]
+symbol = "OptionsMenuFunc7"
+source = "src/sm_82.c"
+line = 4782
+definition_sha256 = "693397718c688d2baaa13d52195b1d835288a7efdf97a8b1432797124dd8463f"
+original_address_available = false
+addressless_binding = "exact symbol/source/definition; native entry is not granted by lexical inventory"
+
+[[scopes.routine_identity]]
+symbol = "OptionsMenuFunc8"
+source = "src/sm_82.c"
+line = 5037
+definition_sha256 = "f6a7b1c29a65aa59f583f0e085bba1b4aa6f84fedac1f280597114614b736f21"
+original_address_available = false
+addressless_binding = "exact symbol/source/definition; native entry is not granted by lexical inventory"
+
+[[scopes.routine_identity]]
+symbol = "OptionsMenu_AddToVramQueue"
+source = "src/sm_82.c"
+line = 4533
+definition_sha256 = "1a0d4a4d514d71070bcbbd2a2cbc3947c2e3d9e21c9038d7ae3d54110c110d88"
+original_address_available = true
+original_address = "0x82ECFF"
+

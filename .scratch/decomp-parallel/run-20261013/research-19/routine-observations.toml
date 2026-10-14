@@ -1,0 +1,509 @@
+format = "decomp-persistence-routine-observations-v1"
+source_inventory = "tools/port/source-inventory.toml"
+source_inventory_inherited_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+method = "inherited lexical definitions; static C review; no gameplay acceptance"
+
+[[routines]]
+symbol = "CopySuperMetroidString"
+source = "src/sm_80.c"
+line = 85
+original_address = "0x80824F"
+signature = "void CopySuperMetroidString(void)"
+body_lines = 4
+definition_sha256 = "96ecfd8dbdccb265e969cb89d68c81bb96693b980ac729e8a5afa87db2042ab0"
+calls = [
+    "RtlWriteSram",
+    "memcpy",
+]
+indirect_indexed_calls = []
+defined_dependencies = ["RtlWriteSram"]
+external_or_macro_calls = ["memcpy"]
+translation_status = "unverified"
+
+
+[[routines]]
+symbol = "VerifySRAM"
+source = "src/sm_80.c"
+line = 90
+original_address = "0x808261"
+signature = "void VerifySRAM(void)"
+body_lines = 10
+definition_sha256 = "b266fecf473ce9ed808d2fc3b2ac1230004f1f22583c65f0afb79880dd876022"
+calls = [
+    "LoadFromSram",
+    "RtlWriteSram",
+    "memcmp",
+    "memcpy",
+]
+indirect_indexed_calls = []
+defined_dependencies = [
+    "LoadFromSram",
+    "RtlWriteSram",
+]
+external_or_macro_calls = [
+    "memcmp",
+    "memcpy",
+]
+translation_status = "unverified"
+
+
+[[routines]]
+symbol = "LoadMirrorOfExploredMapTiles"
+source = "src/sm_80.c"
+line = 227
+original_address = "0x80858C"
+signature = "void LoadMirrorOfExploredMapTiles(void)"
+body_lines = 10
+definition_sha256 = "3c56478c2002f2de8ac78120b4963939c09c9fe4d442d7bc9d9718b2dbde5a7d"
+calls = ["swap16"]
+indirect_indexed_calls = []
+defined_dependencies = []
+external_or_macro_calls = ["swap16"]
+translation_status = "unverified"
+
+
+[[routines]]
+symbol = "SaveExploredMapTilesToSaved"
+source = "src/sm_80.c"
+line = 238
+original_address = "0x8085C6"
+signature = "void SaveExploredMapTilesToSaved(void)"
+body_lines = 11
+definition_sha256 = "68e0c6b83e13ca00f0cda01612ef25c678fdf4f2da1166df14096d5da5cd0e5a"
+calls = ["swap16"]
+indirect_indexed_calls = []
+defined_dependencies = []
+external_or_macro_calls = ["swap16"]
+translation_status = "unverified"
+
+
+[[routines]]
+symbol = "LoadFromLoadStation"
+source = "src/sm_80.c"
+line = 2626
+original_address = "0x80C437"
+signature = "void LoadFromLoadStation(void)"
+body_lines = 18
+definition_sha256 = "10a91fd02845f675a78abc2f2178a075e471fdb203a791233eb1821a7084c78f"
+calls = [
+    "LOBYTE",
+    "RomPtr_80",
+    "get_RoomDefHeader",
+]
+indirect_indexed_calls = []
+defined_dependencies = []
+external_or_macro_calls = [
+    "LOBYTE",
+    "RomPtr_80",
+    "get_RoomDefHeader",
+]
+translation_status = "unverified"
+
+
+[[routines]]
+symbol = "SaveToSram"
+source = "src/sm_81.c"
+line = 40
+original_address = "0x818000"
+signature = "void SaveToSram(uint16 a)"
+body_lines = 37
+definition_sha256 = "35e57fa261b8a1c8b91cd6635be693bb144444ac44ecbe18fb32971923b6d285"
+calls = [
+    "PackMapToSave",
+    "RtlWriteSram",
+]
+indirect_indexed_calls = []
+defined_dependencies = [
+    "PackMapToSave",
+    "RtlWriteSram",
+]
+external_or_macro_calls = []
+translation_status = "unverified"
+
+
+[[routines]]
+symbol = "LoadFromSram"
+source = "src/sm_81.c"
+line = 78
+original_address = "0x818085"
+signature = "uint8 LoadFromSram(uint16 a)"
+body_lines = 37
+definition_sha256 = "d0fc4010592bdb2b8656246bf1a7835acdbe248a70cc34c4b5568d8db9e92c78"
+calls = [
+    "ADDR16_OF_RAM",
+    "UnpackMapFromSave",
+]
+indirect_indexed_calls = []
+defined_dependencies = ["UnpackMapFromSave"]
+external_or_macro_calls = ["ADDR16_OF_RAM"]
+translation_status = "unverified"
+
+
+[[routines]]
+symbol = "UnpackMapFromSave"
+source = "src/sm_81.c"
+line = 116
+original_address = "0x8182E4"
+signature = "void UnpackMapFromSave(void)"
+body_lines = 14
+definition_sha256 = "a5a32497796b2bfd5a6b3c7c0e623ab2df1affa6205908559e804ccc068adbeb"
+calls = ["RomPtr_81"]
+indirect_indexed_calls = []
+defined_dependencies = []
+external_or_macro_calls = ["RomPtr_81"]
+translation_status = "unverified"
+
+
+[[routines]]
+symbol = "PackMapToSave"
+source = "src/sm_81.c"
+line = 131
+original_address = "0x81834B"
+signature = "void PackMapToSave(void)"
+body_lines = 12
+definition_sha256 = "815678707874c59a7ee7aeae3d9b43d4e41a9dd7c5da40cef21340242d9b465e"
+calls = ["RomPtr_81"]
+indirect_indexed_calls = []
+defined_dependencies = []
+external_or_macro_calls = ["RomPtr_81"]
+translation_status = "unverified"
+
+
+[[routines]]
+symbol = "FileSelectMenu_13_FileCopyDoIt"
+source = "src/sm_81.c"
+line = 1073
+original_address = "0x819A2C"
+signature = "void FileSelectMenu_13_FileCopyDoIt(void)"
+body_lines = 39
+definition_sha256 = "5838cef6957c377eff7ae24766cc3d1ef6b3717e682d8e5ce37aae28e5e07b00"
+calls = [
+    "DrawBorderAroundDataCopyMode",
+    "DrawFileCopyArrow",
+    "DrawFileCopyConfirmationSaveFileInfo",
+    "DrawMenuSelectionMissile",
+    "HandleFileCopyArrowPalette",
+    "LoadMenuTilemap",
+    "RtlWriteSram",
+    "memcpy",
+]
+indirect_indexed_calls = []
+defined_dependencies = [
+    "DrawBorderAroundDataCopyMode",
+    "DrawFileCopyArrow",
+    "DrawFileCopyConfirmationSaveFileInfo",
+    "DrawMenuSelectionMissile",
+    "HandleFileCopyArrowPalette",
+    "LoadMenuTilemap",
+    "RtlWriteSram",
+]
+external_or_macro_calls = ["memcpy"]
+translation_status = "unverified"
+
+
+[[routines]]
+symbol = "FileSelectMenu_25_FileClearDoClear"
+source = "src/sm_81.c"
+line = 1241
+original_address = "0x819C9E"
+signature = "void FileSelectMenu_25_FileClearDoClear(void)"
+body_lines = 29
+definition_sha256 = "a88d8d65d3428ad939b50c3d2ad25b1690184bcef04ec2cd79b8aae067ad7287"
+calls = [
+    "DrawBorderAroundDataClearMode",
+    "DrawFileCopyConfirmationSaveFileInfo",
+    "LoadFromSram",
+    "LoadMenuTilemap",
+    "LoadMirrorOfExploredMapTiles",
+    "NewSaveFile",
+    "RtlWriteSram",
+    "memset",
+]
+indirect_indexed_calls = []
+defined_dependencies = [
+    "DrawBorderAroundDataClearMode",
+    "DrawFileCopyConfirmationSaveFileInfo",
+    "LoadFromSram",
+    "LoadMenuTilemap",
+    "LoadMirrorOfExploredMapTiles",
+    "NewSaveFile",
+    "RtlWriteSram",
+]
+external_or_macro_calls = ["memset"]
+translation_status = "unverified"
+
+
+[[routines]]
+symbol = "LoadFromSram_"
+source = "src/sm_81.c"
+line = 1475
+original_address = "0x81A053"
+signature = "uint8 LoadFromSram_(uint16 a)"
+body_lines = 3
+definition_sha256 = "d370a2b0eab83022fd34d74ac3ca9957b0459241741e18a6b911ba318b382340"
+calls = ["LoadFromSram"]
+indirect_indexed_calls = []
+defined_dependencies = ["LoadFromSram"]
+external_or_macro_calls = []
+translation_status = "unverified"
+
+
+[[routines]]
+symbol = "FileSelectMenu_4_Main"
+source = "src/sm_81.c"
+line = 1547
+original_address = "0x81A1C2"
+signature = "void FileSelectMenu_4_Main(void)"
+body_lines = 88
+definition_sha256 = "ff3bc809ede95a880e774bcf939e4919e229aa92c8cc6d809cf86ca6c289e76e"
+calls = [
+    "DrawBorderAroundSamusData",
+    "DrawFileSelectSlotSamusHelmet",
+    "DrawMenuSelectionMissile",
+    "LoadFromSram",
+    "LoadMirrorOfExploredMapTiles",
+    "NewSaveFile",
+    "QueueSfx1_Max6",
+    "RtlWriteSram",
+    "sign16",
+]
+indirect_indexed_calls = []
+defined_dependencies = [
+    "DrawBorderAroundSamusData",
+    "DrawFileSelectSlotSamusHelmet",
+    "DrawMenuSelectionMissile",
+    "LoadFromSram",
+    "LoadMirrorOfExploredMapTiles",
+    "NewSaveFile",
+    "QueueSfx1_Max6",
+    "RtlWriteSram",
+]
+external_or_macro_calls = ["sign16"]
+translation_status = "unverified"
+
+
+[[routines]]
+symbol = "NewSaveFile"
+source = "src/sm_81.c"
+line = 2435
+original_address = "0x81B2CB"
+signature = "void NewSaveFile(void)"
+body_lines = 65
+definition_sha256 = "5fcf5fe03ff7b08a05ca49aea74bd46b7f30d63646cba308fd7695ad8a9f0d85"
+calls = ["WORD"]
+indirect_indexed_calls = []
+defined_dependencies = []
+external_or_macro_calls = ["WORD"]
+translation_status = "unverified"
+
+
+[[routines]]
+symbol = "GameState_33_BlackoutFromCeres"
+source = "src/sm_82.c"
+line = 334
+original_address = "0x828388"
+signature = "CoroutineRet GameState_33_BlackoutFromCeres(void)"
+body_lines = 33
+definition_sha256 = "655a9f821dea857b2ef6c4a0d79e759e34978c53049b26afca8f05463a3a862c"
+calls = [
+    "COROUTINE_AWAIT_ONLY",
+    "DisableIrqInterrupts",
+    "DrawTimer",
+    "EnableNMI",
+    "FUNC16",
+    "GameState_8_MainGameplay",
+    "HandleFadeOut",
+    "QueueMusic_Delayed8",
+    "QueueSfx1_Max15",
+    "QueueSfx2_Max15",
+    "QueueSfx3_Max15",
+    "SaveToSram",
+    "WaitUntilEndOfVblankAndClearHdma",
+]
+indirect_indexed_calls = []
+defined_dependencies = [
+    "DisableIrqInterrupts",
+    "DrawTimer",
+    "EnableNMI",
+    "GameState_8_MainGameplay",
+    "HandleFadeOut",
+    "QueueMusic_Delayed8",
+    "QueueSfx1_Max15",
+    "QueueSfx2_Max15",
+    "QueueSfx3_Max15",
+    "SaveToSram",
+    "WaitUntilEndOfVblankAndClearHdma",
+]
+external_or_macro_calls = [
+    "COROUTINE_AWAIT_ONLY",
+    "FUNC16",
+]
+translation_status = "unverified"
+
+
+[[routines]]
+symbol = "GameOptionsMenu_4_StartGame"
+source = "src/sm_82.c"
+line = 4635
+original_address = "0x82EEB4"
+signature = "void GameOptionsMenu_4_StartGame(void)"
+body_lines = 22
+definition_sha256 = "38b511d98016b0cb5515a0dc658a3f4d0d85e675e77b2605037633768b7fc431"
+calls = [
+    "FUNC16",
+    "SaveToSram",
+]
+indirect_indexed_calls = []
+defined_dependencies = ["SaveToSram"]
+external_or_macro_calls = ["FUNC16"]
+translation_status = "unverified"
+
+
+[[routines]]
+symbol = "PlmInstr_ActivateSaveStationAndGotoIfNo"
+source = "src/sm_84.c"
+line = 742
+original_address = "0x848CF1"
+signature = "const uint8 *PlmInstr_ActivateSaveStationAndGotoIfNo(const uint8 *plmp, uint16 k)"
+body_lines = 13
+definition_sha256 = "ea02eaaadcb1763f1ac8d5ed7f6b4801209f882121409a7e891f50aff2c5505d"
+calls = [
+    "DisplayMessageBox_Poll",
+    "GET_WORD",
+    "INSTRB_RETURN_ADDR",
+    "PrepareBitAccess",
+    "SaveToSram",
+    "SpawnEprojWithRoomGfx",
+]
+indirect_indexed_calls = []
+defined_dependencies = [
+    "DisplayMessageBox_Poll",
+    "PrepareBitAccess",
+    "SaveToSram",
+    "SpawnEprojWithRoomGfx",
+]
+external_or_macro_calls = [
+    "GET_WORD",
+    "INSTRB_RETURN_ADDR",
+]
+translation_status = "unverified"
+
+
+[[routines]]
+symbol = "CinematicFunction_Intro_Func73"
+source = "src/sm_8b.c"
+line = 3746
+original_address = "0x8BC100"
+signature = "void CinematicFunction_Intro_Func73(void)"
+body_lines = 7
+definition_sha256 = "0026ef455ec27550aefaa0b4f47ddec9e0f5895600dd0e2493423006bc963768"
+calls = ["SaveToSram"]
+indirect_indexed_calls = []
+defined_dependencies = ["SaveToSram"]
+external_or_macro_calls = []
+translation_status = "unverified"
+
+
+[[routines]]
+symbol = "GunshipTop_7"
+source = "src/sm_a2.c"
+line = 1487
+original_address = "0xA2A987"
+signature = "void GunshipTop_7(uint16 k)"
+body_lines = 14
+definition_sha256 = "ed1ce7f35377499479067ec1a2bdbbbde9f1813030aa7c84c14eb31888319cd9"
+calls = [
+    "FUNC16",
+    "Get_GunshipTop",
+    "SaveToSram",
+]
+indirect_indexed_calls = []
+defined_dependencies = ["SaveToSram"]
+external_or_macro_calls = [
+    "FUNC16",
+    "Get_GunshipTop",
+]
+translation_status = "unverified"
+
+
+[[routines]]
+symbol = "GunshipTop_13"
+source = "src/sm_a2.c"
+line = 1586
+original_address = "0xA2AB1F"
+signature = "void GunshipTop_13(uint16 k)"
+body_lines = 18
+definition_sha256 = "3238412674ca919ca2e7c85e35bd4251a452f03bd176dce6546daed118030474"
+calls = [
+    "DisplayMessageBox_Poll",
+    "FUNC16",
+    "Get_GunshipTop",
+    "QueueSfx3_Max6",
+    "SaveToSram",
+]
+indirect_indexed_calls = []
+defined_dependencies = [
+    "DisplayMessageBox_Poll",
+    "QueueSfx3_Max6",
+    "SaveToSram",
+]
+external_or_macro_calls = [
+    "FUNC16",
+    "Get_GunshipTop",
+]
+translation_status = "unverified"
+
+
+[[routines]]
+symbol = "RtlReadSram"
+source = "src/sm_rtl.c"
+line = 714
+signature = "void RtlReadSram(void)"
+body_lines = 11
+definition_sha256 = "f97c7bc41d306e8f1ff60dcf7f50649fd68a9fcf441b072549110680ae9c669a"
+calls = [
+    "ByteArray_Resize",
+    "RtlSynchronizeWholeState",
+    "fclose",
+    "fopen",
+    "fprintf",
+    "fread",
+    "memcpy",
+]
+indirect_indexed_calls = []
+defined_dependencies = ["RtlSynchronizeWholeState"]
+external_or_macro_calls = [
+    "ByteArray_Resize",
+    "fclose",
+    "fopen",
+    "fprintf",
+    "fread",
+    "memcpy",
+]
+translation_status = "unverified"
+
+
+[[routines]]
+symbol = "RtlWriteSram"
+source = "src/sm_rtl.c"
+line = 726
+signature = "void RtlWriteSram(void)"
+body_lines = 10
+definition_sha256 = "1abe641026d2615793389dd2063dfc2f1556800d95882e21f027dfe0b1c88165"
+calls = [
+    "fclose",
+    "fopen",
+    "fprintf",
+    "fwrite",
+    "rename",
+]
+indirect_indexed_calls = []
+defined_dependencies = []
+external_or_macro_calls = [
+    "fclose",
+    "fopen",
+    "fprintf",
+    "fwrite",
+    "rename",
+]
+translation_status = "unverified"

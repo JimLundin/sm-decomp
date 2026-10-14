@@ -1,0 +1,23 @@
+build_bytes_removed = 752100601
+free_bytes = 193325199360
+retained = "/home/jim/sm-decomp/.scratch/decomp-coverage/renderer/retained-source"
+schema = "decomp-coverage-retirement-v1"
+source_files = 22
+status = "source-retained-worker-retired"
+worktree = "/tmp/sm-decomp-parallel-pause-equipment-render-offline-1"
+
+[[removed]]
+bytes = 108164234
+path = "/tmp/sm-decomp-parallel-pause-equipment-render-offline-1/target"
+
+[[removed]]
+bytes = 522117971
+path = "/tmp/sm-decomp-offline-coverage-build-20261013"
+
+[[removed]]
+bytes = 117667270
+path = "/tmp/sm-decomp-coordinator-audit-build-20261013"
+
+[[removed]]
+bytes = 4151126
+path = "/home/jim/sm-decomp/.scratch/decomp-coverage/renderer/browser-report/chromium-profile"
