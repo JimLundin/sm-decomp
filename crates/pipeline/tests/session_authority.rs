@@ -14,6 +14,9 @@ mod inputs {
 #[allow(dead_code)]
 #[path = "../src/translation_migration_guard.rs"]
 mod translation_migration_guard;
+#[allow(dead_code)]
+#[path = "../src/translation_production_registry.rs"]
+mod translation_production_registry;
 use assignment::{
     authority::{self, RoleKind, RoleRegistration, SessionAuthority},
     *,

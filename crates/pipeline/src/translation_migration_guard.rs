@@ -317,7 +317,7 @@ fn fence_effort(root: &Path, effort: &str) -> Result<()> {
 }
 
 fn fence_effort_inner(root: &Path, effort: &str) -> Result<()> {
-    if let Some(registry) = crate::translation_production::read_registry(root)? {
+    if let Some(registry) = crate::translation_production_registry::read_registry(root)? {
         for reference in &registry.migrations {
             if read(&reference.path)?.effort == effort {
                 bail!(

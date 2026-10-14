@@ -17,6 +17,9 @@ mod inputs {
 #[allow(dead_code)]
 #[path = "../src/translation_migration_guard.rs"]
 mod translation_migration_guard;
+#[allow(dead_code)]
+#[path = "../src/translation_production_registry.rs"]
+mod translation_production_registry;
 use assignment::{Artifact, Job, Kind, SessionAuthority, Update, WorkResult};
 use session::{Cleanup, Handoff, NextCommand};
 use sha2::{Digest, Sha256};

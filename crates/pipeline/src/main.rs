@@ -89,6 +89,7 @@ mod translation_original;
 mod translation_original_prepare;
 mod translation_production;
 mod translation_production_prepare;
+mod translation_production_registry;
 
 static BINARY_SHA256: std::sync::OnceLock<String> = std::sync::OnceLock::new();
 
