@@ -8,10 +8,10 @@ pub unsafe extern "C" fn port_native_plm(ram:*mut u8,len:usize,rom:*const u8,rom
  let rom=unsafe {std::slice::from_raw_parts(rom,rom_len)};
  let supported=std::panic::catch_unwind(||memory::plm::supports_header(rom,header));
  match supported {Ok(Ok(false))=>return -2,Ok(Ok(true))=>{},_=>return -1}
- let mut owned=unsafe {std::slice::from_raw_parts(ram,len)}.to_vec();
+ match unsafe{live_transaction::inspect(ram,|state|Ok((0..40).all(|i|state.word(0x1c37+i*2)!=0)))}{Ok(true)=>return 0,Ok(false)=>{},Err(_)=>return -1}
  let mut displacement=unsafe {*amount};
- let result=std::panic::catch_unwind(std::panic::AssertUnwindSafe(||memory::plm::spawn(&mut Wram::new(&mut owned).unwrap(),rom,header,&mut displacement)));
- match result {Ok(Ok(flags))=>{unsafe {std::ptr::copy_nonoverlapping(owned.as_ptr(),ram,len);*amount=displacement;}flags.into()},_=>-1}
+ let result=unsafe{live_transaction::run(ram,|bytes|memory::plm::spawn(&mut Wram::new(bytes)?,rom,header,&mut displacement))};
+ match result {Ok(flags)=>{unsafe {*amount=displacement;}flags.into()},Err(_)=>-1}
 }
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn port_native_positioned_plm(ram:*mut u8,len:usize,rom:*const u8,rom_len:usize,kind:u16,a:u16,b:u16)->i32 {
@@ -19,13 +19,16 @@ pub unsafe extern "C" fn port_native_positioned_plm(ram:*mut u8,len:usize,rom:*c
  let Some(rend)=(ram as usize).checked_add(len)else{return -1;};let Some(oend)=(rom as usize).checked_add(rom_len)else{return -1;};
  if (ram as usize)<oend&&(rom as usize)<rend{return -1;}
  let rom=unsafe{std::slice::from_raw_parts(rom,rom_len)};
- let mut owned=unsafe{std::slice::from_raw_parts(ram,len)}.to_vec();
- let result=std::panic::catch_unwind(std::panic::AssertUnwindSafe(||{
-  let mut r=Wram::new(&mut owned).unwrap();
+ let supported=unsafe{live_transaction::inspect(ram,|r|{
   if !(0..40).any(|i|r.word(0x1c37+i*2)==0){return Ok(0);}
   let header=match kind{1=>memory::plm::room_entry(&r,rom,a)?.0,2=>a,_=>return Err("allocation kind")};
   if !memory::plm::supports_positioned_header(rom,header)?{return Ok(-2);}
+  Ok(1)
+ })};
+ match supported{Ok(1)=>{},Ok(value)=>return value,Err(_)=>return -1}
+ let result=unsafe{live_transaction::run(ram,|bytes|{
+  let mut r=Wram::new(bytes)?;
   match kind{1=>memory::plm::spawn_room(&mut r,rom,a)?,2=>memory::plm::spawn_hardcoded(&mut r,rom,b as u8,(b>>8) as u8,a)?,_=>unreachable!()};Ok(1)
- }));
- match result{Ok(Ok(value))=>{if value>=0{unsafe{std::ptr::copy_nonoverlapping(owned.as_ptr(),ram,len);}}value},_=>-1}
+ })};
+ match result{Ok(value)=>value,Err(_)=>-1}
 }

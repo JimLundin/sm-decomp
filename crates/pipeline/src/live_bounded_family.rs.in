@@ -6,11 +6,9 @@ pub unsafe extern "C" fn port_family___INDEX__(ram:*mut u8,len:usize,rom:*const 
  if (ram as usize)<(rom as usize)+rom_len && (rom as usize)<(ram as usize)+len {return -1;}
  let names=__NAMES__;
  let Some(name)=names.get(id as usize) else {return -1;};
- let mut owned=unsafe {std::slice::from_raw_parts(ram,len)}.to_vec();
- let bytes=owned.as_mut_slice();
  let rom=unsafe {std::slice::from_raw_parts(rom,rom_len)};
- let support=std::panic::catch_unwind(std::panic::AssertUnwindSafe(||__SUPPORT__));
+ let support=unsafe {live_transaction::inspect(ram,|state|Ok(__SUPPORT__))};
  match support {Ok(true)=>{},Ok(false)=>return -2,Err(_)=>return -1}
- let result=std::panic::catch_unwind(std::panic::AssertUnwindSafe(||__CALL__));
- match result {Ok(Ok(value))=>{unsafe{std::ptr::copy_nonoverlapping(owned.as_ptr(),ram,len);}i64::from(value)},_=>-1}
+ let result=unsafe {live_transaction::run(ram,|bytes|__CALL__)};
+ match result {Ok(value)=>i64::from(value),Err(_)=>-1}
 }

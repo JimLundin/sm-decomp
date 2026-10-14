@@ -312,6 +312,7 @@ pub fn generate(request: Request) -> Result<Generated> {
         imports: imports.into_iter().collect(),
     })?;
     let mut rust = format!("#[path={:?}] mod memory;use memory::*;\n", memory.path);
+    rust.push_str(include_str!("live_transaction.rs.in"));
     if plm.is_some() {
         rust.push_str(include_str!("live_plm.rs.in"));
     }
@@ -360,11 +361,11 @@ pub fn generate(request: Request) -> Result<Generated> {
                 format!("family{family_index}::dispatch(&mut Wram::new(bytes).unwrap(),name,a as u16,b as u16)")
             };
             let support = match bounded {
-                Some("projectile_trails" | "samus_projectile_frame") => format!(
-                    "family{family_index}::supports_call(&Wram::new(bytes).unwrap(),rom,name,a,b).unwrap_or(false)"
-                ),
-                Some("camera_scroll") => format!("family{family_index}::supports(&Wram::new(bytes).unwrap(),name)"),
-                Some("room_scroll") => format!("family{family_index}::supports(&Wram::new(bytes).unwrap(),name,a)"),
+                Some("projectile_trails" | "samus_projectile_frame") => {
+                    format!("family{family_index}::supports_call(state,rom,name,a,b).unwrap_or(false)")
+                }
+                Some("camera_scroll") => format!("family{family_index}::supports(state,name)"),
+                Some("room_scroll") => format!("family{family_index}::supports(state,name,a)"),
                 _ => String::new(),
             };
             rust.push_str(
@@ -1085,6 +1086,7 @@ pub fn verify(request: Request) -> Result<Verdict> {
                 "crates/pipeline/src/live.rs",
                 "crates/pipeline/src/live_host.c.in",
                 "crates/pipeline/src/live_family.rs.in",
+                "crates/pipeline/src/live_transaction.rs.in",
                 "crates/pipeline/src/live_wrapper.c.in",
                 "crates/pipeline/src/live_plm.rs.in",
                 "crates/pipeline/src/live_positioned.c.in",

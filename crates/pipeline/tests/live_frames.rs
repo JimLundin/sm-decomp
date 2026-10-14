@@ -19,7 +19,7 @@ fn bounded_and_ridley_abis_preserve_refusal_and_match_whole_attack_frame() {
         .replace("__MODULE__", &format!("{:?}", root.join("crates/port/src/camera_scroll.rs")))
         .replace("__INDEX__", "0")
         .replace("__NAMES__", "[\"MainScrollingRoutine\"]")
-        .replace("__SUPPORT__", "family0::supports(&Wram::new(bytes).unwrap(),name)")
+        .replace("__SUPPORT__", "family0::supports(state,name)")
         .replace("__CALL__", "family0::dispatch_rom(&mut Wram::new(bytes).unwrap(),rom,name,a,b)");
     let controls = format!(
         r#"
@@ -31,6 +31,8 @@ static mut ALLOCATIONS:usize=0;
 fn initial()->Vec<u8>{{let mut bytes=vec![0;WRAM_SIZE];let mut r=Wram::new(&mut bytes).unwrap();r.set_word(0xf78,0xe13f);r.set_byte(0xfa6,0xa6);r.set_word(0xf92,0xe73a);r.set_word(0xf94,1);r.set_word(0x9c2,99);r.set_word(0xf7a,180);r.set_word(0xf7e,111);r.set_word(0xaf6,80);r.set_word(0xafa,180);bytes}}
 fn main(){{let rom=std::fs::read({rom:?}).unwrap();let mut bytes=initial();let mut host=[11u16,22,33,44,55,66,77,88];
  let before=bytes.clone();let original_host=host;unsafe{{assert_eq!(port_ridley_frame(bytes.as_mut_ptr(),WRAM_SIZE,rom.as_ptr(),rom.len(),host.as_mut_ptr(),8,0),0);}}assert_eq!(bytes,before);assert_eq!(host,original_host);
+ let mut frozen=initial();Wram::new(&mut frozen).unwrap().set_word(0xf8a,4);let saved=frozen.clone();unsafe{{assert_eq!(port_ridley_frame(frozen.as_mut_ptr(),WRAM_SIZE,rom.as_ptr(),rom.len(),host.as_mut_ptr(),8,1),0);}}assert_eq!(frozen,saved);assert_eq!(host,original_host);
+ unsafe{{assert_eq!(port_ridley_frame(bytes.as_mut_ptr(),WRAM_SIZE,rom.as_ptr(),rom.len(),bytes.as_mut_ptr().cast(),8,0),-1);assert_eq!(port_ridley_frame(bytes.as_mut_ptr(),WRAM_SIZE,rom.as_ptr(),rom.len(),(usize::MAX-1)as *mut u16,8,0),-1);}}assert_eq!(bytes,before);assert_eq!(host,original_host);
  for fault in 0..4{{let mut invalid=initial();let mut r=Wram::new(&mut invalid).unwrap();match fault{{0=>r.set_byte(0xfa6,0xa5),1=>r.set_word(0xf92,0xe74a),2=>r.set_word(0xf78,0xdead),_=>r.set_word(0xe54,1)}}let saved=invalid.clone();unsafe{{assert_eq!(port_ridley_frame(invalid.as_mut_ptr(),WRAM_SIZE,rom.as_ptr(),rom.len(),host.as_mut_ptr(),8,1),if fault==3{{-1}}else{{-2}});}}assert_eq!(invalid,saved);assert_eq!(host,original_host);}}
  let mut expected=initial();let mut context=memory::enemy_projectiles::ProjectileHost::from_words(host);let mut opcode_count=0;let mut allocation_count=0;
  for _ in 0..240{{let report=memory::ridley_enemy_instructions::process_instructions(&mut Wram::new(&mut expected).unwrap(),&rom,&mut context,4096).unwrap();opcode_count+=report.opcodes.len();allocation_count+=report.effects.iter().filter(|e|matches!(e,memory::ridley_enemy_instructions::InstructionEffect::RoomProjectile{{..}})).count();unsafe{{assert_eq!(port_ridley_frame(bytes.as_mut_ptr(),WRAM_SIZE,rom.as_ptr(),rom.len(),host.as_mut_ptr(),8,1),0);}}assert_eq!(bytes,expected);assert_eq!(host,context.words());}}
@@ -43,8 +45,9 @@ fn main(){{let rom=std::fs::read({rom:?}).unwrap();let mut bytes=initial();let m
     fs::write(
         directory.join("control.rs"),
         format!(
-            "#[path={:?}]mod memory;use memory::*;\n{bounded}\nmod ridley_abi{{use super::*;{}}}use ridley_abi::port_ridley_frame;\n{controls}",
+            "#[path={:?}]mod memory;use memory::*;\n{}\n{bounded}\nmod ridley_abi{{use super::*;{}}}use ridley_abi::port_ridley_frame;\n{controls}",
             root.join("crates/port/src/lib.rs"),
+            include_str!("../src/live_transaction.rs.in"),
             include_str!("../src/live_ridley.rs.in")
         ),
     )
