@@ -64,7 +64,7 @@ pub(super) fn for_family(checkout: &Path, declared: &Manifest) -> Result<Option<
     })
 }
 
-fn registered_entry(checkout: &Path, declared: &Manifest) -> Result<batch::FamilyEntry> {
+pub(super) fn registered_entry(checkout: &Path, declared: &Manifest) -> Result<batch::FamilyEntry> {
     let catalog: batch::Catalog = family::object(&checkout.join("tools/port/batch.toml"))?;
     if catalog.families.contains_key(&declared.family) {
         return batch::entry(&catalog, &declared.family);

@@ -101,6 +101,73 @@ pub(crate) struct PreparedNative {
     pub verification_sha256: String,
 }
 
+/// Trusted one-catalog preparation context. Construction authenticates actual
+/// source and the complete inventory once. It is not a deserializable artifact;
+/// every produced PreparedNative still seals that exact Source and inventory.
+pub(crate) struct NativeCatalogInputs {
+    checkout: PathBuf,
+    pinned_source: PathBuf,
+    inventory_path: PathBuf,
+    inventory_sha256: String,
+    source: Source,
+    symbols: BTreeSet<String>,
+}
+
+pub(crate) fn prepare_catalog_inputs_until(
+    checkout: &Path,
+    pinned_source: &Path,
+    inventory: &Asset,
+    deadline: u64,
+    max_bytes: u64,
+) -> Result<NativeCatalogInputs> {
+    bounded::until(deadline, max_bytes, || catalog_inputs(checkout, pinned_source, inventory))
+}
+
+fn catalog_inputs(checkout: &Path, pinned_source: &Path, inventory: &Asset) -> Result<NativeCatalogInputs> {
+    bounded::safe(checkout)?;
+    bounded::safe(pinned_source)?;
+    let checkout = fs::canonicalize(checkout)?;
+    let pinned_source = fs::canonicalize(pinned_source)?;
+    let inventory_path = check_asset(&checkout, inventory)?;
+    let source = family::authenticate_inventory(&checkout, &pinned_source, &inventory_path)?;
+    let declared: toml::Value = family::object(&inventory_path)?;
+    let routines = declared["routines"].as_array().context("native routine inventory missing")?;
+    ensure!(routines.len() <= 65536, "native routine source inventory exceeded");
+    let symbols = routines
+        .iter()
+        .map(|r| Ok(r["symbol"].as_str().context("native inventory symbol missing")?.to_owned()))
+        .collect::<Result<_>>()?;
+    Ok(NativeCatalogInputs {
+        checkout,
+        pinned_source,
+        inventory_path,
+        inventory_sha256: inventory.sha256.clone(),
+        source,
+        symbols,
+    })
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn prepare_scope_in_catalog_until(
+    checkout: &Path,
+    pinned_source: &Path,
+    contract: &NativeContract,
+    approved_paths: &[String],
+    catalog: &NativeCatalogInputs,
+    deadline: u64,
+    max_bytes: u64,
+) -> Result<PreparedNative> {
+    bounded::until(deadline, max_bytes, || {
+        ensure!(
+            matches!(contract.provenance, NativeProvenance::ReviewedCatalog { .. }),
+            "catalog input context requires reviewed catalog provenance"
+        );
+        let mut prepared = prepare_bounded_with_catalog(checkout, pinned_source, contract, Some(catalog))?;
+        bind_scope_candidates(&mut prepared, approved_paths)?;
+        Ok(prepared)
+    })
+}
+
 /// Installed paths/resources provided by the trusted supervisor configuration.
 pub(crate) struct StrictRuntime {
     pub helper: PathBuf,
@@ -228,7 +295,7 @@ fn plain(manifest: &Manifest) -> Result<()> {
     Ok(())
 }
 
-fn c_inputs(source: &Path, manifest: &Manifest) -> Result<Vec<PathBuf>> {
+fn c_inputs(source: &Path, manifest: &Manifest, full: bool) -> Result<Vec<PathBuf>> {
     ensure!(manifest.c_support.len() <= 4096, "native C support inventory exceeded");
     fn headers(path: &Path, result: &mut BTreeSet<PathBuf>, depth: usize) -> Result<()> {
         ensure!(depth <= 32, "pinned C header tree depth exceeded");
@@ -248,6 +315,9 @@ fn c_inputs(source: &Path, manifest: &Manifest) -> Result<Vec<PathBuf>> {
     headers(&source.join("src"), &mut result, 0)?;
     for name in std::iter::once(&manifest.bank).chain(&manifest.c_support) {
         bounded::check()?;
+        if full && name.is_empty() {
+            continue;
+        }
         ensure!(
             relative(Path::new(name)) && !name.contains('/') && name.starts_with("sm_") && name.ends_with(".c"),
             "unsafe native C unit"
@@ -359,7 +429,9 @@ fn contract_for_declared(
     for path in &declared.rust_dependencies {
         bounded::check()?;
         ensure!(
-            relative(path) || recipe.is_some() && path.is_absolute(),
+            relative(path)
+                || (recipe.is_some() || matches!(provenance, NativeProvenance::ReviewedCatalog { .. }))
+                    && path.is_absolute(),
             "native declared dependency must be relative"
         );
         frozen_inputs.insert(
@@ -369,7 +441,22 @@ fn contract_for_declared(
     }
     frozen_inputs.insert("tools/dependencies.toml".into(), digest(&file(&checkout.join("tools/dependencies.toml"))?)?);
     frozen_inputs.insert(manifest.display().to_string(), digest(&path)?);
+    if matches!(provenance, NativeProvenance::ReviewedCatalog { .. }) {
+        frozen_inputs.insert("tools/port/batch.toml".into(), digest(&checkout.join("tools/port/batch.toml"))?);
+    }
     recipes::freeze_assets(checkout, recipe.as_ref(), &mut frozen_inputs)?;
+    for fixture in declared.routines.iter().flat_map(|routine| &routine.cases) {
+        for (path, expected) in [
+            (fixture.before_file.as_ref(), fixture.before_sha256.as_ref()),
+            (fixture.expected_after_file.as_ref(), fixture.expected_after_sha256.as_ref()),
+        ] {
+            if let Some(path) = path {
+                let expected = expected.context("native captured fixture digest missing")?;
+                ensure!(digest(&file(&checkout.join(path))?)? == *expected, "native captured fixture changed");
+                frozen_inputs.insert(path.to_str().context("native captured path UTF-8")?.into(), expected.clone());
+            }
+        }
+    }
     Ok(NativeContract {
         family: declared.family.clone(),
         manifest: Asset { file: manifest.into(), sha256: digest(&path)? },
@@ -396,9 +483,11 @@ fn provenance(
             check_asset(owner, requirements)?;
             let reviewed = check_asset(owner, catalog)?;
             let inventory: batch::Catalog = family::object(&reviewed)?;
+            let original: Manifest = family::object(&check_asset(checkout, &contract.manifest)?)?;
             ensure!(
-                sealed(&inventory)? == sealed(&batch::catalog(checkout)?)?,
-                "reviewed conservative catalog differs"
+                sealed(&batch::entry(&inventory, &original.family)?)?
+                    == sealed(&recipes::registered_entry(checkout, &original)?)?,
+                "reviewed catalog entry differs"
             );
             recipes::registration(checkout, contract, manifest)?;
         }
@@ -497,6 +586,15 @@ fn bind_scope_candidates(prepared: &mut PreparedNative, approved_paths: &[String
 }
 
 fn prepare_bounded(checkout: &Path, pinned_source: &Path, contract: &NativeContract) -> Result<PreparedNative> {
+    prepare_bounded_with_catalog(checkout, pinned_source, contract, None)
+}
+
+fn prepare_bounded_with_catalog(
+    checkout: &Path,
+    pinned_source: &Path,
+    contract: &NativeContract,
+    catalog: Option<&NativeCatalogInputs>,
+) -> Result<PreparedNative> {
     bounded::safe(checkout)?;
     bounded::safe(pinned_source)?;
     let checkout = fs::canonicalize(checkout)?;
@@ -520,24 +618,35 @@ fn prepare_bounded(checkout: &Path, pinned_source: &Path, contract: &NativeContr
     contract.compiler_limits.run_limits()?;
     let fixture_limits = contract.fixture_limits.run_limits()?;
     ensure!(fixture_limits.writable_bytes > 0x20000, "native fixture quota cannot retain full WRAM");
-    let inventory = check_asset(&checkout, &contract.source_inventory)?;
-    let source = family::authenticate_inventory(&checkout, &pinned_source, &inventory)?;
-    let declared_inventory: toml::Value = family::object(&inventory)?;
-    let inventory_routines = declared_inventory["routines"].as_array().context("native routine inventory missing")?;
-    ensure!(inventory_routines.len() <= 65536, "native routine source inventory exceeded");
-    let symbols = inventory_routines
-        .iter()
-        .map(|routine| routine["symbol"].as_str().context("native inventory symbol missing"))
-        .collect::<Result<BTreeSet<_>>>()?;
+    let owned;
+    let catalog = if let Some(catalog) = catalog {
+        ensure!(
+            catalog.checkout == checkout
+                && catalog.pinned_source == pinned_source
+                && checkout.join(&contract.source_inventory.file) == catalog.inventory_path
+                && contract.source_inventory.sha256 == catalog.inventory_sha256,
+            "reused native source/inventory context differs"
+        );
+        catalog
+    } else {
+        owned = catalog_inputs(&checkout, &pinned_source, &contract.source_inventory)?;
+        &owned
+    };
+    let source = catalog.source.clone();
     ensure!(
-        recipes::source_symbols(&manifest, contract.recipe.as_ref()).iter().all(|symbol| symbols.contains(*symbol)),
+        recipes::source_symbols(&manifest, contract.recipe.as_ref())
+            .iter()
+            .all(|symbol| catalog.symbols.contains(*symbol)),
         "required native routine is absent from agreed source inventory"
     );
     provenance(&checkout, &pinned_source, contract, &manifest, &source)?;
     for (name, expected) in &contract.frozen_inputs {
         bounded::check()?;
         ensure!(
-            (relative(Path::new(name)) || contract.recipe.is_some() && Path::new(name).is_absolute())
+            (relative(Path::new(name))
+                || (contract.recipe.is_some()
+                    || matches!(contract.provenance, NativeProvenance::ReviewedCatalog { .. }))
+                    && Path::new(name).is_absolute())
                 && digest(&file(&checkout.join(name))?)? == *expected,
             "native frozen input changed: {name}"
         );
@@ -565,7 +674,10 @@ fn prepare_bounded(checkout: &Path, pinned_source: &Path, contract: &NativeContr
     }
     for dependency in &manifest.rust_dependencies {
         ensure!(
-            relative(dependency) || contract.recipe.is_some() && dependency.is_absolute(),
+            relative(dependency)
+                || (contract.recipe.is_some()
+                    || matches!(contract.provenance, NativeProvenance::ReviewedCatalog { .. }))
+                    && dependency.is_absolute(),
             "native declared dependency must be relative"
         );
         let name = dependency.to_str().context("native dependency path UTF-8")?;
@@ -577,7 +689,7 @@ fn prepare_bounded(checkout: &Path, pinned_source: &Path, contract: &NativeContr
     if let Some(rom) = &manifest.rom {
         check_asset(&checkout, rom)?;
     }
-    let mut c = c_inputs(&pinned_source, &manifest)?;
+    let mut c = c_inputs(&pinned_source, &manifest, recipes::full_c(contract.recipe.as_ref()))?;
     if recipes::full_c(contract.recipe.as_ref()) {
         c.extend(family::c_units(&pinned_source)?);
         c.sort();
@@ -1140,7 +1252,9 @@ fn authenticate_operation(
             for name in ["headless.c", "headless_frame.h"] {
                 // The first retained recipe stop predates the complete header
                 // closure. It remains a valid failed receipt, never readiness.
-                if name == "headless_frame.h" && !prepared.contract.frozen_inputs.contains_key("tools/decomp/headless_frame.h") {
+                if name == "headless_frame.h"
+                    && !prepared.contract.frozen_inputs.contains_key("tools/decomp/headless_frame.h")
+                {
                     continue;
                 }
                 let destination = Path::new("/inputs/rust/tools/decomp").join(name);
@@ -1421,7 +1535,11 @@ mod tests {
                 .into(),
         };
         let compiler = NativeLimits {
-            timeout_seconds: 60,
+            timeout_seconds: std::env::var("SM_NATIVE_RECIPE_COMPILER_SECONDS")
+                .ok()
+                .map(|s| s.parse())
+                .transpose()?
+                .unwrap_or(180),
             writable_bytes: 128 * 1024 * 1024,
             stdout_bytes: 4096,
             stderr_bytes: 256 * 1024,
@@ -1436,6 +1554,14 @@ mod tests {
         };
         let mut completed = Vec::new();
         let mut failures = Vec::new();
+        let pinned = Path::new("/home/jim/sm-decomp/deps/snesrev-sm");
+        let inputs = prepare_catalog_inputs_until(
+            &checkout,
+            pinned,
+            &inventory,
+            now_unix_ms()? + 600_000,
+            8 * bounded::DEFAULT_BYTES,
+        )?;
         for name in names {
             let output = root.join(name);
             fs::create_dir_all(&output)?;
@@ -1458,7 +1584,17 @@ mod tests {
                     fixture.clone(),
                 )?
             };
-            let prepared = prepare(&checkout, Path::new("/home/jim/sm-decomp/deps/snesrev-sm"), &contract)?;
+            let declared =
+                recipes::manifest(&checkout, &checkout.join(&contract.manifest.file), contract.recipe.as_ref())?;
+            let prepared = prepare_scope_in_catalog_until(
+                &checkout,
+                pinned,
+                &contract,
+                &[declared.rust_module],
+                &inputs,
+                now_unix_ms()? + 600_000,
+                8 * bounded::DEFAULT_BYTES,
+            )?;
             immutable(&output.join("prepared.toml"), toml::to_string(&prepared)?.as_bytes())?;
             let runtime = StrictRuntime {
                 helper: "/home/jim/sm-decomp/out/translation-production/sm-translation-sandbox".into(),
@@ -1529,6 +1665,87 @@ mod tests {
             completed.push((name.to_string(), receipt.passed, verdict.verified_cases, receipt.diagnostic));
         }
         atomic_toml(&root.join("summary.toml"), &BTreeMap::from([("families", completed)]))?;
+        ensure!(failures.is_empty(), "{}", failures.join("; "));
+        Ok(())
+    }
+
+    #[test]
+    #[ignore = "freezes every current catalog declaration with real pinned source; no producer is launched"]
+    fn complete_current_catalog_has_a_frozen_native_recipe() -> Result<()> {
+        let root = PathBuf::from(std::env::var("SM_NATIVE_CATALOG_PROOF")?);
+        fs::create_dir_all(&root)?;
+        let checkout = current_checkout();
+        prepare_generated_plm(&checkout, &checkout.join(".scratch/translation-native/plm-instructions"))?;
+        let catalog = batch::catalog(&checkout)?;
+        let catalog_path = root.join("catalog.toml");
+        immutable(&catalog_path, toml::to_string(&catalog)?.as_bytes())?;
+        let requirements =
+            checkout.join(".scratch/translation-scope-execution/issues/10-original-acceptance-adapters.md");
+        let provenance = NativeProvenance::ReviewedCatalog { catalog: Asset { file: catalog_path.clone(), sha256: digest(&catalog_path)? },
+            requirements: Asset { file: requirements.clone(), sha256: digest(&requirements)? }, checkout: checkout.clone(),
+            rationale: "Current conservative catalog: every registered declaration, all generated cases, exact original requirements".into() };
+        let inventory = Asset {
+            file: "tools/port/source-inventory.toml".into(),
+            sha256: digest(&checkout.join("tools/port/source-inventory.toml"))?,
+        };
+        let pinned = Path::new("/home/jim/sm-decomp/deps/snesrev-sm");
+        let deadline = now_unix_ms()? + 600_000;
+        let inputs = prepare_catalog_inputs_until(&checkout, pinned, &inventory, deadline, 8 * bounded::DEFAULT_BYTES)?;
+        let limits = NativeLimits {
+            timeout_seconds: 180,
+            writable_bytes: 128 * 1024 * 1024,
+            stdout_bytes: 4096,
+            stderr_bytes: 256 * 1024,
+            stdin_bytes: 0,
+        };
+        let fixture = NativeLimits {
+            timeout_seconds: 5,
+            writable_bytes: 16 * 1024 * 1024,
+            stdout_bytes: 4096,
+            stderr_bytes: 4096,
+            stdin_bytes: 0,
+        };
+        let mut summary = BTreeMap::new();
+        let mut failures = Vec::new();
+        for name in catalog.families.keys() {
+            let result = (|| -> Result<usize> {
+                let entry = batch::entry(&catalog, name)?;
+                let contract = contract_for_family_until(
+                    &checkout,
+                    &entry.manifest,
+                    inventory.clone(),
+                    provenance.clone(),
+                    limits.clone(),
+                    fixture.clone(),
+                    deadline,
+                    8 * bounded::DEFAULT_BYTES,
+                )?;
+                let declared = recipes::manifest(&checkout, &checkout.join(&entry.manifest), contract.recipe.as_ref())?;
+                let prepared = prepare_scope_in_catalog_until(
+                    &checkout,
+                    pinned,
+                    &contract,
+                    &[declared.rust_module],
+                    &inputs,
+                    deadline,
+                    8 * bounded::DEFAULT_BYTES,
+                )?;
+                let output = root.join(format!("{name}.toml"));
+                immutable(&output, toml::to_string(&prepared)?.as_bytes())?;
+                Ok(contract.coverage.values().map(Vec::len).sum())
+            })();
+            match result {
+                Ok(cases) => {
+                    summary.insert(name.clone(), format!("prepared {cases} fixture pairs"));
+                }
+                Err(error) => {
+                    summary.insert(name.clone(), format!("rejected: {error:#}"));
+                    failures.push(format!("{name}: {error:#}"));
+                }
+            }
+            atomic_toml(&root.join("summary.toml"), &summary)?;
+        }
+        ensure!(summary.len() == catalog.families.len(), "catalog entry omitted");
         ensure!(failures.is_empty(), "{}", failures.join("; "));
         Ok(())
     }
