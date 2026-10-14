@@ -158,6 +158,38 @@ recorded in the [migration checkpoint](../.scratch/translation-scope-execution/p
 The user authorized that switch on 2026-10-14. Future scope admission or adapter
 changes require their own frozen policies and exact verification contracts.
 
+Original production acceptance has a separate reviewed preparation path:
+
+```sh
+sm-pipeline translation-original-prepare --config /absolute/PREPARATION.json
+/absolute/OUTPUT/bin/sm-pipeline translation-original-install --config /absolute/OUTPUT/original-production.json
+/absolute/OUTPUT/bin/sm-pipeline translation-production --checkout /home/jim/sm-decomp run
+```
+
+The preparation config seals the original registry and stopped installation,
+reviewed source HEAD, helper, native compiler, matching Cargo/rustc pair, vendor
+closure, optional external-dependency cache, original requirements and auxiliary
+pause animation plan. The Rust builder installs a new controller outside the
+checkout and freezes the complete current conservative Offline catalog. Keep
+the old installed executable: its prerequisite stop requires that exact reader.
+Preparation itself establishes no acceptance.
+
+The separate `.scratch/translation-execution/original-production.json` marker
+binds the reviewed continuation. Each successor installation is created only
+after the previous scope's completed source and queue publication authenticate.
+Original Submitted source bypasses rewriting; a held Running integration keeps
+its owner and attempt. A different original submitter remains on the Submitted
+claim while the current fenced integrator owns the derived integration.
+
+Use `status` for read-only inspection and `recover` for interrupted execution.
+An unchanged stopped or completed result reuses its retained journal without a
+new attempt, gate or capture. A changed installation is refused; it cannot
+silently replace an existing reviewed marker or retry a frozen stopped attempt.
+After preparation, keep new logs outside the checkout: the continuation seals
+the exact pre-existing modified and untracked `.scratch` inventory as well as
+every original ledger. Infrastructure controls, compact diagnostics, gameplay
+Offline verification, Live replay and original-ROM parity remain distinct.
+
 ## Recovery and deliberate evaluation
 
 ```sh

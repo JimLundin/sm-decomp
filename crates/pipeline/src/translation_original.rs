@@ -76,6 +76,7 @@ pub(crate) struct OriginalContract {
     pub verification_source: VerificationSource,
     pub cargo: Reference,
     pub cargo_executable: Reference,
+    pub cargo_rustc: Reference,
     pub families: BTreeMap<String, Reference>,
     pub compact: Option<Reference>,
     pub catalog_sha256: Option<String>,
@@ -370,8 +371,14 @@ pub(crate) fn prepare(contract: &OriginalContract, pinned_source: &Path) -> Resu
         }
         references.push(contract.original_claim.clone());
         references.push(contract.cargo.clone());
-        retention::authenticate_reference(&contract.cargo_executable, MAX_SOURCE)?;
-        references.push(contract.cargo_executable.clone());
+        for executable in [&contract.cargo_executable, &contract.cargo_rustc] {
+            retention::authenticate_reference(executable, MAX_SOURCE)?;
+            references.push(executable.clone());
+        }
+        ensure!(
+            contract.cargo_executable.path.parent() == contract.cargo_rustc.path.parent(),
+            "original Cargo and rustc must be the reviewed matching toolchain"
+        );
         let cargo_contract: cargo::CargoContract = read(&contract.cargo)?;
         let cargo_kind = match contract.kind {
             OriginalKind::SharedGameHost => cargo::CargoKind::SharedGameHost,

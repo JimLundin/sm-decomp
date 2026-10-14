@@ -3130,7 +3130,20 @@ fn publish_inner(
         request.update = Some(intent.submitted.clone());
         assignment::record_admitted_locked(&request, &intent.original.claim, Some(&intent.original_inputs))?;
     }
-    let integration_claim = assignment::reserve_admitted_integration_locked(&request, &intent.original.claim)?;
+    let integration_claim = if matches!(&installed.contract, supervisor::Contract::Original { contract }
+        if contract.original_claim == migrated.original_claim)
+        && migrated.execution == Some(MigrationExecution::ImportedSubmission)
+        && same_claim(&migrated.claim, &intent.original.claim)
+    {
+        assignment::reserve_imported_integration_locked(
+            &request,
+            &intent.original.claim,
+            &intent.original.job,
+            intent.original.result.as_ref().context("imported original Submitted result missing")?,
+        )?
+    } else {
+        assignment::reserve_admitted_integration_locked(&request, &intent.original.claim)?
+    };
     let ledger = current_ledger(&migration)?;
     let integration_entry = ledger.jobs.get(&integration_claim.id).context("derived integration missing")?;
     if integration_entry.state == assignment::State::Reserved {

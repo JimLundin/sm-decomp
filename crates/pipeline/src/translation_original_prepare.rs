@@ -38,6 +38,7 @@ pub(crate) struct Config {
     pub helper: Reference,
     pub rustc: Reference,
     pub cargo: Reference,
+    pub cargo_rustc: Reference,
     pub c_compiler: Reference,
     pub vendor: cargo::CargoClosure,
     pub compact_dependency_cache: Option<cargo::CargoClosure>,
@@ -66,8 +67,15 @@ pub(crate) struct Report {
     pub config: Reference,
     pub installation: Reference,
     pub controller: Reference,
-    pub scopes: Vec<(String, usize)>,
+    pub scopes: Vec<ScopeReport>,
     pub limitation: String,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct ScopeReport {
+    pub id: String,
+    pub native_families: usize,
 }
 
 fn installed(reference: &Reference) -> Result<InstalledFile> {
@@ -221,7 +229,7 @@ pub(crate) fn prepare(path: &Path) -> Result<Report> {
             && (600..=3600).contains(&config.gate_timeout_seconds)
             && config.max_gate_bytes >= 16 * 1024 * 1024 * 1024
             && config.max_checkout_bytes >= 2 * 1024 * 1024 * 1024
-            && config.max_evidence_bytes > config.max_gate_bytes * 2
+            && config.max_gate_bytes.checked_mul(2).is_some_and(|bytes| config.max_evidence_bytes > bytes)
             && !config.reason.trim().is_empty(),
         "original preparation roots, limits or review are invalid"
     );
@@ -261,6 +269,7 @@ pub(crate) fn prepare(path: &Path) -> Result<Report> {
     template.rustc = installed(&config.rustc)?;
     template.c_compiler = installed(&config.c_compiler)?;
     installed(&config.cargo)?;
+    installed(&config.cargo_rustc)?;
     template.policy.budgets.max_attempts = 1;
     template.policy.budgets.gate_timeout_seconds = config.gate_timeout_seconds;
     template.policy.budgets.max_evidence_bytes = config.max_evidence_bytes;
@@ -387,13 +396,14 @@ pub(crate) fn prepare(path: &Path) -> Result<Report> {
             verification_source: source,
             cargo,
             cargo_executable: config.cargo.clone(),
+            cargo_rustc: config.cargo_rustc.clone(),
             families,
             compact,
             catalog_sha256: (kind == original::OriginalKind::SharedGameHost).then(|| sealed(&catalog)).transpose()?,
         };
         let prepared = original::prepare(&contract, &template.pinned_source)?;
         let contract = original::write(&scope_root.join("contract.json"), &contract)?;
-        report.push((id.to_owned(), prepared.native.len()));
+        report.push(ScopeReport { id: id.into(), native_families: prepared.native.len() });
         scopes.push(continuation::Scope {
             id: id.into(),
             migration: domain,

@@ -109,6 +109,7 @@ impl Fixture {
                 },
                 cargo: cargo_reference.clone(),
                 cargo_executable: evidence.clone(),
+                cargo_rustc: evidence.clone(),
                 families: BTreeMap::new(),
                 compact: None,
                 catalog_sha256: None,

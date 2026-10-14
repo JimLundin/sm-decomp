@@ -1450,11 +1450,39 @@ pub(crate) fn record_admitted_locked(
 /// The original implementation attempt stays intact; a generic queue selection
 /// cannot capture unrelated mutable work during deterministic publication.
 pub(crate) fn reserve_admitted_integration_locked(request: &Request, submission: &Claim) -> Result<Claim> {
-    let root = main_checkout(&request.checkout)?;
     ensure!(
-        root == request.checkout && submission.coordinator == request.coordinator,
+        submission.coordinator == request.coordinator,
         "admitted integration requires exact original integrator lineage"
     );
+    reserve_integration_locked(request, submission, None)
+}
+
+/// An authenticated original-production adapter may retain a Submitted claim
+/// made by an earlier coordinator while the current fenced integrator owns its
+/// derived integration. This does not transfer or rewrite the submission.
+pub(crate) fn reserve_imported_integration_locked(
+    request: &Request,
+    submission: &Claim,
+    original_job: &Job,
+    original_result: &WorkResult,
+) -> Result<Claim> {
+    ensure!(
+        original_job.kind == Kind::Implement
+            && original_job.id == submission.id
+            && original_job.revision == submission.revision
+            && matches!(original_result, WorkResult::Submitted { .. }),
+        "imported integration requires an exact original Submitted result"
+    );
+    reserve_integration_locked(request, submission, Some((original_job, original_result)))
+}
+
+fn reserve_integration_locked(
+    request: &Request,
+    submission: &Claim,
+    imported: Option<(&Job, &WorkResult)>,
+) -> Result<Claim> {
+    let root = main_checkout(&request.checkout)?;
+    ensure!(root == request.checkout, "admitted integration requires the canonical checkout");
     let policy =
         authority::validate_locked(&root, &request.effort, &request.coordinator, request.authority.as_ref(), true)?
             .context("admitted integration requires managed authority")?;
@@ -1475,6 +1503,12 @@ pub(crate) fn reserve_admitted_integration_locked(request: &Request, submission:
             && matches!(submitted.result, Some(WorkResult::Submitted { .. })),
         "original admitted submission changed"
     );
+    if let Some((job, result)) = imported {
+        ensure!(
+            submitted.job == *job && submitted.result.as_ref() == Some(result),
+            "imported integration changed its original job or Submitted result"
+        );
+    }
     let id = format!("integrate-{}", submission.id);
     let entry = ledger.jobs.get(&id).context("standard derived integration job missing")?;
     ensure!(

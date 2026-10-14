@@ -840,6 +840,7 @@ impl Adapter {
             bail!("original runtime requires a composite contract");
         };
         retention::authenticate_reference(&contract.cargo_executable, original::MAX_SOURCE)?;
+        retention::authenticate_reference(&contract.cargo_rustc, original::MAX_SOURCE)?;
         let cargo = contract.cargo_executable.path.clone();
         let mut native = self.native_runtime();
         native.deadline_unix_ms = Some(deadline);
@@ -847,7 +848,7 @@ impl Adapter {
             native,
             cargo: crate::translation_cargo::StrictRuntime {
                 helper: self.installed.helper.path.clone(),
-                rustc: self.installed.rustc.path.clone(),
+                rustc: contract.cargo_rustc.path.clone(),
                 cargo,
                 producer: self.installed.controller.path.clone(),
                 operation_root: self.operations(),
@@ -2632,6 +2633,12 @@ pub(crate) fn authenticate_managed_terminal(installed: &Installation, view: &Vie
     let State::Complete { completion, publication } = &view.state else {
         bail!("original continuation requires a complete supervisor journal");
     };
+    ensure!(
+        view.run_id == completion.run_id
+            && view.attempt == completion.attempt
+            && view.policy_sha256 == completion.policy_sha256,
+        "terminal view envelope differs from its completed journal"
+    );
     let adapter = Adapter {
         installed: installed.clone(),
         identity: installed.policy.adapter_sha256.clone(),
