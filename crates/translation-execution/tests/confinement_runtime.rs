@@ -115,6 +115,82 @@ fn concurrent_execs_do_not_refuse_live_writer_observation() {
 }
 
 #[test]
+fn shared_descriptor_swap_and_restore_keeps_aggregate_quota_enforced() {
+    let bounds = RunLimits { writable_bytes: 128 * 1024, stdin_bytes: 16, ..limits() };
+    let program = probe("probe_shared_descriptor_swap_and_restore");
+    let output = run(&program, &bounds, b"bounded").unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    for _ in 0..4 {
+        let error = run(&program, &bounds, b"overflow").unwrap_err().to_string();
+        assert!(error.contains("logical output extent budget"), "{error}");
+    }
+}
+
+#[test]
+fn clone_files_shares_descriptors_across_process_groups() {
+    let bounds = RunLimits { writable_bytes: 128 * 1024, stdin_bytes: 16, ..limits() };
+    let program = probe("probe_shared_descriptor_swap_and_restore");
+    let output = run(&program, &bounds, b"clone-bounded").unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    for _ in 0..4 {
+        let error = run(&program, &bounds, b"clone-overflow").unwrap_err().to_string();
+        assert!(error.contains("logical output extent budget"), "{error}");
+    }
+}
+
+#[test]
+fn overlapping_unlinked_writes_deduplicate_aliases_and_enforce_the_sum() {
+    let bounds = RunLimits { writable_bytes: 128 * 1024, stdin_bytes: 16, ..limits() };
+    let program = probe("probe_overlapping_unlinked_writes");
+    let output = run(&program, &bounds, b"bounded").unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    for _ in 0..4 {
+        let error = run(&program, &bounds, b"overflow").unwrap_err().to_string();
+        assert!(error.contains("logical output extent budget"), "{error}");
+    }
+}
+
+#[test]
+fn blocked_pipe_does_not_retain_unrelated_deleted_output() {
+    let bounds = RunLimits { writable_bytes: 128 * 1024, ..limits() };
+    let output = run(&probe("probe_blocked_pipe_and_temporary_cycles"), &bounds, b"").unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+}
+
+#[test]
+fn independent_fork_descriptor_numbers_do_not_retain_other_process_files() {
+    let bounds = RunLimits { writable_bytes: 128 * 1024, stdin_bytes: 16, ..limits() };
+    let output = run(&probe("probe_blocked_pipe_and_temporary_cycles"), &bounds, b"independent").unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+}
+
+#[test]
+fn close_range_unshare_separates_descriptor_numbers_within_a_thread_group() {
+    let bounds = RunLimits { writable_bytes: 128 * 1024, stdin_bytes: 16, ..limits() };
+    let output = run(&probe("probe_blocked_pipe_and_temporary_cycles"), &bounds, b"unshare").unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+}
+
+#[test]
+fn exec_separates_previously_shared_descriptor_numbers() {
+    let bounds = RunLimits { writable_bytes: 128 * 1024, stdin_bytes: 16, ..limits() };
+    let output = run(&probe("probe_blocked_pipe_and_temporary_cycles"), &bounds, b"shared-exec").unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+}
+
+#[test]
+#[ignore = "explicit repeated concurrent-observer regression"]
+fn many_threaded_writes_and_exits_stress() {
+    let attempts: usize =
+        std::env::var("SM_CONFINEMENT_THREAD_STRESS").map(|value| value.parse().unwrap()).unwrap_or(32);
+    for attempt in 0..attempts {
+        let output = run(&probe("probe_many_threaded_writes_and_exits"), &limits(), b"")
+            .unwrap_or_else(|error| panic!("concurrent observation attempt {attempt}: {error:#}"));
+        assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    }
+}
+
+#[test]
 fn synthetic_self_exe_is_explicit_and_exposes_only_the_program() {
     let mut program = probe("probe_self_exe");
     let output = run(&program, &limits(), b"").unwrap();
@@ -179,10 +255,7 @@ fn probe_read_only_directory_opens() {
     for _ in 0..4096 {
         assert_eq!(fs::read_dir("/work/tmp/existing-directory").unwrap().count(), 0);
         let descriptor = unsafe {
-            libc::open(
-                c"/work/tmp/existing-directory".as_ptr(),
-                libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC,
-            )
+            libc::open(c"/work/tmp/existing-directory".as_ptr(), libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC)
         };
         assert!(descriptor >= 0);
         assert_eq!(unsafe { libc::close(descriptor) }, 0);
@@ -280,6 +353,230 @@ fn probe_parallel_exec_and_writes() {
         }
         for _ in 0..writes {
             fs::write("/work/tmp/exec-progress", b"x").unwrap();
+        }
+    });
+}
+
+#[test]
+#[ignore = "candidate probe, invoked only by confined parent test"]
+fn probe_shared_descriptor_swap_and_restore() {
+    use std::{
+        os::fd::{AsRawFd, FromRawFd, IntoRawFd},
+        sync::atomic::{AtomicBool, Ordering},
+    };
+    let mut mode = String::new();
+    std::io::stdin().read_to_string(&mut mode).unwrap();
+    let base = fs::File::create("/work/tmp/base").unwrap();
+    let transient = fs::File::create("/work/tmp/transient").unwrap();
+    base.set_len(32 * 1024).unwrap();
+    transient.set_len(32 * 1024).unwrap();
+    fs::remove_file("/work/tmp/base").unwrap();
+    fs::remove_file("/work/tmp/transient").unwrap();
+    let transient = transient.into_raw_fd();
+    let mut pipe = [-1; 2];
+    assert_eq!(unsafe { libc::pipe2(pipe.as_mut_ptr(), libc::O_CLOEXEC) }, 0);
+    let mut reader = unsafe { fs::File::from_raw_fd(pipe[0]) };
+    let mut writer = unsafe { fs::File::from_raw_fd(pipe[1]) };
+    let saved = writer.try_clone().unwrap();
+    let descriptor = writer.as_raw_fd();
+    let capacity = unsafe { libc::fcntl(descriptor, libc::F_GETPIPE_SZ) };
+    assert!(capacity > 0);
+    writer.write_all(&vec![0; capacity as usize]).unwrap();
+    let started = AtomicBool::new(false);
+    std::thread::scope(|scope| {
+        let blocked = scope.spawn(|| {
+            started.store(true, Ordering::Release);
+            // A full pipe keeps this write in flight while its shared FD is
+            // replaced and restored. Both endpoint snapshots name the pipe.
+            let count = unsafe { libc::write(descriptor, [1u8; 4096].as_ptr().cast(), 4096) };
+            assert_eq!(count, 4096);
+        });
+        while !started.load(Ordering::Acquire) {
+            std::thread::yield_now();
+        }
+        std::thread::sleep(Duration::from_millis(20));
+        let extent = if mode.ends_with("overflow") { 112 * 1024 } else { 48 * 1024 };
+        if mode.starts_with("clone-") {
+            // CLONE_FILES without CLONE_VM shares descriptors across separate
+            // processes. SIGCHLD makes ptrace report FORK, not CLONE.
+            let child = unsafe { libc::syscall(libc::SYS_clone, libc::CLONE_FILES | libc::SIGCHLD, 0, 0, 0, 0) };
+            assert!(child >= 0);
+            if child == 0 {
+                unsafe { libc::_exit(swap_descriptor_extent(transient, descriptor, saved.as_raw_fd(), extent)) };
+            }
+            let mut status = 0;
+            assert_eq!(unsafe { libc::waitpid(child as i32, &mut status, 0) }, child as i32);
+            assert_eq!(status, 0);
+        } else {
+            assert_eq!(swap_descriptor_extent(transient, descriptor, saved.as_raw_fd(), extent), 0);
+        }
+        let mut drained = vec![0; capacity as usize + 4096];
+        reader.read_exact(&mut drained).unwrap();
+        assert!(drained[capacity as usize..].iter().all(|byte| *byte == 1));
+        blocked.join().unwrap();
+    });
+}
+
+fn swap_descriptor_extent(source: i32, destination: i32, saved: i32, extent: i64) -> i32 {
+    // Only async-signal-safe calls: also used after a multithreaded clone.
+    // Immediately close the unlinked source and restore the pipe descriptor.
+    if unsafe { libc::dup2(source, destination) } != destination
+        || unsafe { libc::ftruncate(destination, extent) } != 0
+        || unsafe { libc::close(source) } != 0
+        || unsafe { libc::dup2(saved, destination) } != destination
+    {
+        return 7;
+    }
+    0
+}
+
+fn temporary_descriptor_cycles(descriptor: i32) -> i32 {
+    // Only async-signal-safe calls after a multithreaded fork. Cumulative
+    // allocation is 512 KiB; live output is one 16 KiB file under a 128 KiB cap.
+    for _ in 0..32 {
+        let temporary = unsafe {
+            libc::open(
+                c"/work/tmp/independent".as_ptr(),
+                libc::O_WRONLY | libc::O_CREAT | libc::O_TRUNC | libc::O_CLOEXEC,
+                0o600,
+            )
+        };
+        if temporary < 0
+            || unsafe { libc::dup2(temporary, descriptor) } != descriptor
+            || unsafe { libc::write(descriptor, [0u8; 16 * 1024].as_ptr().cast(), 16 * 1024) } != 16 * 1024
+            || unsafe { libc::unlink(c"/work/tmp/independent".as_ptr()) } != 0
+        {
+            return 7;
+        }
+        if temporary != descriptor {
+            unsafe { libc::close(temporary) };
+        }
+        unsafe { libc::close(descriptor) };
+    }
+    0
+}
+
+#[test]
+#[ignore = "candidate probe, invoked only by confined parent test"]
+fn probe_independent_descriptor_cycles() {
+    let descriptor: i32 = std::env::var("SM_CONFINEMENT_CYCLE_DESCRIPTOR").unwrap().parse().unwrap();
+    assert_eq!(temporary_descriptor_cycles(descriptor), 0);
+}
+
+#[test]
+#[ignore = "candidate probe, invoked only by confined parent test"]
+fn probe_blocked_pipe_and_temporary_cycles() {
+    use std::{
+        os::fd::{AsRawFd, FromRawFd},
+        sync::atomic::{AtomicBool, Ordering},
+    };
+    let mut mode = String::new();
+    std::io::stdin().read_to_string(&mut mode).unwrap();
+    let mut pipe = [-1; 2];
+    assert_eq!(unsafe { libc::pipe2(pipe.as_mut_ptr(), libc::O_CLOEXEC) }, 0);
+    let mut reader = unsafe { fs::File::from_raw_fd(pipe[0]) };
+    let mut writer = unsafe { fs::File::from_raw_fd(pipe[1]) };
+    let descriptor = writer.as_raw_fd();
+    let capacity = unsafe { libc::fcntl(descriptor, libc::F_GETPIPE_SZ) };
+    assert!(capacity > 0);
+    writer.write_all(&vec![0; capacity as usize]).unwrap();
+    let started = AtomicBool::new(false);
+    std::thread::scope(|scope| {
+        let blocked = scope.spawn(|| {
+            started.store(true, Ordering::Release);
+            assert_eq!(unsafe { libc::write(descriptor, [1u8; 4096].as_ptr().cast(), 4096) }, 4096);
+        });
+        while !started.load(Ordering::Acquire) {
+            std::thread::yield_now();
+        }
+        std::thread::sleep(Duration::from_millis(20));
+        if mode == "independent" || mode == "shared-exec" {
+            let setting = std::ffi::CString::new(format!("SM_CONFINEMENT_CYCLE_DESCRIPTOR={descriptor}")).unwrap();
+            let arguments = [
+                c"/program".as_ptr(),
+                c"--ignored".as_ptr(),
+                c"--exact".as_ptr(),
+                c"probe_independent_descriptor_cycles".as_ptr(),
+                c"--nocapture".as_ptr(),
+                std::ptr::null(),
+            ];
+            let environment = [setting.as_ptr(), std::ptr::null()];
+            let child = if mode == "shared-exec" {
+                unsafe { libc::syscall(libc::SYS_clone, libc::CLONE_FILES | libc::SIGCHLD, 0, 0, 0, 0) as i32 }
+            } else {
+                unsafe { libc::fork() }
+            };
+            assert!(child >= 0);
+            if child == 0 {
+                if mode == "shared-exec" {
+                    unsafe { libc::execve(c"/program".as_ptr(), arguments.as_ptr(), environment.as_ptr()) };
+                    unsafe { libc::_exit(8) };
+                }
+                unsafe { libc::_exit(temporary_descriptor_cycles(descriptor)) };
+            }
+            let mut status = 0;
+            assert_eq!(unsafe { libc::waitpid(child, &mut status, 0) }, child);
+            assert_eq!(status, 0);
+        } else if mode == "unshare" {
+            scope
+                .spawn(|| {
+                    // Privatize this thread's table without closing a live FD.
+                    assert_eq!(
+                        unsafe { libc::syscall(libc::SYS_close_range, u32::MAX, u32::MAX, libc::CLOSE_RANGE_UNSHARE) },
+                        0
+                    );
+                    assert_eq!(temporary_descriptor_cycles(descriptor), 0);
+                })
+                .join()
+                .unwrap();
+        } else {
+            // Cumulative allocation is 512 KiB, but only one 16 KiB temporary
+            // is live at a time under the unchanged 128 KiB tmpfs limit.
+            for index in 0..32 {
+                let path = format!("/work/tmp/cycle-{index}");
+                let mut temporary = fs::File::create(&path).unwrap();
+                temporary.write_all(&[0u8; 16 * 1024]).unwrap();
+                fs::remove_file(path).unwrap();
+                drop(temporary);
+            }
+        }
+        reader.read_exact(&mut vec![0; capacity as usize + 4096]).unwrap();
+        blocked.join().unwrap();
+    });
+}
+
+#[test]
+#[ignore = "candidate probe, invoked only by confined parent test"]
+fn probe_overlapping_unlinked_writes() {
+    use std::sync::Barrier;
+    let mut mode = String::new();
+    std::io::stdin().read_to_string(&mut mode).unwrap();
+    let mut files = Vec::new();
+    for index in 0..2 {
+        let path = format!("/work/tmp/unlinked-{index}");
+        let alias = format!("/work/tmp/alias-{index}");
+        let file = fs::File::create(&path).unwrap();
+        fs::hard_link(&path, &alias).unwrap();
+        file.set_len(16 * 1024).unwrap();
+        // Keep both the inode alias and the descriptor alias during one
+        // observation, then remove both names without closing either FD.
+        let descriptor_alias = file.try_clone().unwrap();
+        fs::remove_file(path).unwrap();
+        fs::remove_file(alias).unwrap();
+        files.push((file, descriptor_alias));
+    }
+    let barrier = Barrier::new(2);
+    let extent = if mode == "overflow" { 72 * 1024 } else { 48 * 1024 };
+    std::thread::scope(|scope| {
+        for (file, alias) in &files {
+            scope.spawn(|| {
+                barrier.wait();
+                file.set_len(extent).unwrap();
+                assert_eq!(alias.metadata().unwrap().len(), extent);
+                // Hold each unlinked extent until both writes completed so
+                // per-file limits cannot masquerade as aggregate enforcement.
+                barrier.wait();
+            });
         }
     });
 }

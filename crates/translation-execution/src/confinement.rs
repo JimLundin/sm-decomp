@@ -618,15 +618,215 @@ fn candidate_descriptors(proc: &File, pid: i32) -> Result<Option<File>> {
 }
 
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+fn candidate_target(proc: &File, pid: i32, descriptor: i32) -> Result<Option<File>> {
+    use std::os::fd::{AsRawFd, FromRawFd};
+    let path = std::ffi::CString::new(format!("{pid}/fd/{descriptor}"))?;
+    let target = unsafe { libc::openat(proc.as_raw_fd(), path.as_ptr(), libc::O_PATH | libc::O_CLOEXEC) };
+    if target >= 0 {
+        // O_PATH pins the inode without opening it for IO or changing a pipe's
+        // reader/writer count. A concurrent close cannot hide its final extent.
+        return Ok(Some(unsafe { File::from_raw_fd(target) }));
+    }
+    let error = std::io::Error::last_os_error();
+    if matches!(error.raw_os_error(), Some(libc::ENOENT | libc::ESRCH)) {
+        return Ok(None);
+    }
+    if error.raw_os_error() == Some(libc::EACCES) && candidate_descriptors(proc, pid)?.is_none() {
+        return Ok(None);
+    }
+    Err(error).with_context(|| format!("observe candidate descriptor target for pid {pid}"))
+}
+
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+#[derive(Default)]
+struct LogicalExtents {
+    files: BTreeMap<(u64, u64), u64>,
+    bytes: u64,
+}
+
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+impl LogicalExtents {
+    fn record(&mut self, device: u64, inode: u64, bytes: u64) -> Result<()> {
+        let previous = self.files.insert((device, inode), bytes).unwrap_or(0);
+        self.bytes = self
+            .bytes
+            .checked_sub(previous)
+            .and_then(|sum| sum.checked_add(bytes))
+            .context("sandbox logical extent overflow")?;
+        Ok(())
+    }
+
+    fn observe(&mut self, file: &File, device: u64) -> Result<()> {
+        use std::os::unix::fs::MetadataExt;
+        let metadata = file.metadata()?;
+        if metadata.is_file() && metadata.dev() == device {
+            self.record(metadata.dev(), metadata.ino(), metadata.len())?;
+        }
+        Ok(())
+    }
+
+    fn check(&self, limit: u64) -> Result<()> {
+        ensure!(self.bytes <= limit, "aggregate sandbox logical output extent budget exhausted");
+        Ok(())
+    }
+}
+
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+struct PendingAccounting {
+    growing: bool,
+    rebinding: bool,
+    full: bool,
+    target: Option<File>,
+    descriptor: Option<i32>,
+    duplicate_source: Option<File>,
+    duplicate_destination: Option<i32>,
+    possible_targets: BTreeMap<(u64, u64), File>,
+    descriptor_table: u64,
+    child_shares_descriptors: Option<bool>,
+    unshares_descriptors: bool,
+    generation: u64,
+}
+
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+impl PendingAccounting {
+    fn pins(&self) -> impl Iterator<Item = &File> {
+        self.target.iter().chain(self.duplicate_source.iter()).chain(self.possible_targets.values())
+    }
+
+    fn retain(&mut self, target: File, device: u64) -> Result<()> {
+        use std::os::unix::fs::MetadataExt;
+        let metadata = target.metadata()?;
+        if metadata.is_file() && metadata.dev() == device {
+            self.possible_targets.entry((metadata.dev(), metadata.ino())).or_insert(target);
+        }
+        Ok(())
+    }
+}
+
+/// Retain only the descriptors an in-flight write can actually dereference.
+/// A blocked pipe must not retain unrelated create/write/unlink/close cycles.
+/// Explicit duplication sources are pinned before dup runs as well, so a
+/// concurrent swap-and-restore cannot hide the source behind two pipe snapshots.
+/// Descriptor numbers in independent tables cannot replace an in-flight target.
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+fn retain_possible_targets(
+    proc: &File,
+    pending: &mut BTreeMap<i32, PendingAccounting>,
+    duplicate: Option<(&File, i32, u64)>,
+    device: u64,
+) -> Result<()> {
+    for (pid, operation) in pending {
+        let Some(descriptor) = operation.descriptor else { continue };
+        if let Some(target) = candidate_target(proc, *pid, descriptor)? {
+            operation.retain(target, device)?;
+        }
+        if let Some((source, _, _)) = duplicate
+            .filter(|(_, destination, table)| *destination == descriptor && *table == operation.descriptor_table)
+        {
+            operation.retain(source.try_clone()?, device)?;
+        }
+    }
+    Ok(())
+}
+
+/// Unknown syscalls conservatively invalidate descriptor assumptions. The fast
+/// set contains only calls that cannot create, close, replace, or privatize an
+/// FD table. In particular clone/exec, open (even read-only), close_range,
+/// dup/fcntl, descriptor receipt via recvmsg, and prctl remain conservative.
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+fn stable_descriptors(syscall: libc::c_long) -> bool {
+    matches!(
+        syscall,
+        libc::SYS_read
+            | libc::SYS_readv
+            | libc::SYS_pread64
+            | libc::SYS_preadv
+            | libc::SYS_preadv2
+            | libc::SYS_write
+            | libc::SYS_writev
+            | libc::SYS_pwrite64
+            | libc::SYS_pwritev
+            | libc::SYS_pwritev2
+            | libc::SYS_ftruncate
+            | libc::SYS_fallocate
+            | libc::SYS_copy_file_range
+            | libc::SYS_splice
+            | libc::SYS_sendfile
+            | libc::SYS_lseek
+            | libc::SYS_fsync
+            | libc::SYS_fdatasync
+            | libc::SYS_stat
+            | libc::SYS_lstat
+            | libc::SYS_fstat
+            | libc::SYS_newfstatat
+            | libc::SYS_statx
+            | libc::SYS_access
+            | libc::SYS_faccessat
+            | libc::SYS_faccessat2
+            | libc::SYS_readlink
+            | libc::SYS_readlinkat
+            | libc::SYS_getdents
+            | libc::SYS_getdents64
+            | libc::SYS_getcwd
+            | libc::SYS_statfs
+            | libc::SYS_fstatfs
+            | libc::SYS_mmap
+            | libc::SYS_mprotect
+            | libc::SYS_munmap
+            | libc::SYS_mremap
+            | libc::SYS_brk
+            | libc::SYS_madvise
+            | libc::SYS_msync
+            | libc::SYS_mincore
+            | libc::SYS_futex
+            | libc::SYS_sched_yield
+            | libc::SYS_sched_getaffinity
+            | libc::SYS_poll
+            | libc::SYS_ppoll
+            | libc::SYS_select
+            | libc::SYS_pselect6
+            | libc::SYS_epoll_wait
+            | libc::SYS_epoll_pwait
+            | libc::SYS_epoll_ctl
+            | libc::SYS_rt_sigaction
+            | libc::SYS_rt_sigprocmask
+            | libc::SYS_rt_sigreturn
+            | libc::SYS_sigaltstack
+            | libc::SYS_nanosleep
+            | libc::SYS_clock_nanosleep
+            | libc::SYS_clock_gettime
+            | libc::SYS_clock_getres
+            | libc::SYS_gettimeofday
+            | libc::SYS_time
+            | libc::SYS_getrusage
+            | libc::SYS_times
+            | libc::SYS_getpid
+            | libc::SYS_getppid
+            | libc::SYS_gettid
+            | libc::SYS_getuid
+            | libc::SYS_geteuid
+            | libc::SYS_getgid
+            | libc::SYS_getegid
+            | libc::SYS_uname
+            | libc::SYS_sysinfo
+            | libc::SYS_getrandom
+            | libc::SYS_arch_prctl
+            | libc::SYS_set_tid_address
+            | libc::SYS_set_robust_list
+            | libc::SYS_rseq
+            | libc::SYS_getrlimit
+            | libc::SYS_prlimit64
+    )
+}
+
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
 fn wait_traced(pid: u32, writable_bytes: u64, proc: &File, logs: &[File]) -> Result<ExitStatus> {
     use std::os::unix::process::ExitStatusExt;
-    use std::os::unix::{
-        fs::MetadataExt,
-        io::AsRawFd,
-    };
-    // Directories and regular file extents are observed before any mutating
-    // syscall resumes. Inodes deduplicate hard links and unlinked open files;
-    // the trusted log files count even though they have no directory entry.
+    use std::os::unix::{fs::MetadataExt, io::AsRawFd};
+    // Keep an exact inode inventory between namespace/descriptor changes.
+    // Every growing syscall observes the pinned target, all in-flight targets
+    // and the trusted logs. Ambiguous descriptor generations use the complete
+    // tree/FD observer. No elapsed-time sampling authorizes a mutation.
     let work_device = fs::metadata("/work")?.dev();
     let mut observed = BTreeSet::from([pid as i32]);
     // A child's initial stop may arrive before its parent's fork/clone event.
@@ -634,26 +834,49 @@ fn wait_traced(pid: u32, writable_bytes: u64, proc: &File, logs: &[File]) -> Res
     // Resuming it early could miss live descriptors and later reinsert a PID
     // already reaped before its delayed parent event.
     let mut deferred = BTreeMap::<i32, i32>::new();
-    fn extent(path: &Path, device: u64, files: &mut BTreeMap<(u64, u64), u64>, count: &mut usize) -> Result<()> {
-        for entry in fs::read_dir(path)? {
-            let entry = entry?;
+    fn extent(path: &Path, device: u64, files: &mut LogicalExtents, count: &mut usize) -> Result<()> {
+        for entry in fs::read_dir(path).with_context(|| {
+            format!("observe sandbox output directory {}", bounded_text(&path.to_string_lossy(), 512))
+        })? {
+            let entry = entry.context("read sandbox output directory entry")?;
+            let path = entry.path();
             *count += 1;
             ensure!(*count <= 65536, "sandbox output inode budget exceeded");
-            let metadata = entry.path().symlink_metadata()?;
+            let metadata = path.symlink_metadata().with_context(|| {
+                format!("observe sandbox tree entry {}", bounded_text(&path.to_string_lossy(), 512))
+            })?;
             if metadata.is_file() && metadata.dev() == device {
-                files.insert((metadata.dev(), metadata.ino()), metadata.len());
+                files.record(metadata.dev(), metadata.ino(), metadata.len())?;
             } else if metadata.is_dir() {
-                extent(&entry.path(), device, files, count)?;
+                extent(&path, device, files, count)?;
             }
         }
         Ok(())
     }
-    let inspect = |observed: &BTreeSet<i32>| -> Result<()> {
-        let mut files = BTreeMap::new();
-        extent(Path::new("/work"), work_device, &mut files, &mut 0)?;
+    let inspect = |observed: &BTreeSet<i32>| -> Result<LogicalExtents> {
+        // A syscall already in flight may unlink a directory entry between
+        // read_dir and lstat. Discard that incomplete snapshot, never count the
+        // missing entry as zero. No candidate resumes during these retries;
+        // each owned task can finish at most its current syscall. If a complete
+        // tree still cannot be observed, retain the path and refuse the run.
+        let mut retries = observed.len();
+        let mut files = loop {
+            let mut snapshot = LogicalExtents::default();
+            match extent(Path::new("/work"), work_device, &mut snapshot, &mut 0) {
+                Ok(()) => break snapshot,
+                Err(error)
+                    if retries > 0
+                        && error
+                            .downcast_ref::<std::io::Error>()
+                            .is_some_and(|error| error.kind() == std::io::ErrorKind::NotFound) =>
+                {
+                    retries -= 1;
+                }
+                Err(error) => return Err(error).context("cannot obtain complete sandbox namespace snapshot"),
+            }
+        };
         for log in logs {
-            let metadata = log.metadata()?;
-            files.insert((metadata.dev(), metadata.ino()), metadata.len());
+            files.observe(log, work_device)?;
         }
         for pid in observed {
             let Some(owned) = candidate_descriptors(proc, *pid)? else { continue };
@@ -672,7 +895,7 @@ fn wait_traced(pid: u32, writable_bytes: u64, proc: &File, logs: &[File]) -> Res
                 if unsafe { libc::fstatat(owned.as_raw_fd(), name.as_ptr(), metadata.as_mut_ptr(), 0) } == 0 {
                     let metadata = unsafe { metadata.assume_init() };
                     if metadata.st_dev == work_device && metadata.st_mode & libc::S_IFMT == libc::S_IFREG {
-                        files.insert((metadata.st_dev, metadata.st_ino), u64::try_from(metadata.st_size)?);
+                        files.record(metadata.st_dev, metadata.st_ino, u64::try_from(metadata.st_size)?)?;
                     }
                 } else {
                     let error = std::io::Error::last_os_error();
@@ -691,15 +914,31 @@ fn wait_traced(pid: u32, writable_bytes: u64, proc: &File, logs: &[File]) -> Res
                 libc::closedir(stream);
             }
         }
-        let bytes = files
-            .values()
-            .try_fold(0u64, |sum, value| sum.checked_add(*value).context("sandbox logical extent overflow"))?;
-        ensure!(bytes <= writable_bytes, "aggregate sandbox logical output extent budget exhausted");
-        Ok(())
+        files.check(writable_bytes)?;
+        Ok(files)
     };
-    // Only syscalls that can grow output trigger the namespace inode walk.
-    // The kernel tmpfs quota independently enforces all allocated data pages.
-    let mut mutations = BTreeMap::<i32, bool>::new();
+    let observe_targets = |files: &mut LogicalExtents,
+                           pending: &BTreeMap<i32, PendingAccounting>,
+                           current: &PendingAccounting|
+     -> Result<()> {
+        for target in pending.values().chain([current]).flat_map(PendingAccounting::pins) {
+            files.observe(target, work_device)?;
+        }
+        for log in logs {
+            files.observe(log, work_device)?;
+        }
+        files.check(writable_bytes)
+    };
+    // tmpfs independently enforces allocated bytes and inodes. The inventory
+    // adds exact aggregate sparse extents, including hard links and unlinked
+    // open files, and is rebuilt whenever those references may have changed.
+    let mut mutations = BTreeMap::<i32, PendingAccounting>::new();
+    let mut inventory: Option<LogicalExtents> = None;
+    let mut binding_generation = 0u64;
+    // A generation is also a unique table identity whenever a task receives
+    // private descriptors. Thread groups are insufficient: clone can share
+    // files across processes, and close_range can privatize one thread's table.
+    let mut descriptor_tables = BTreeMap::from([(pid as i32, binding_generation)]);
     let mut status = 0;
     loop {
         let result = unsafe { libc::waitpid(pid as i32, &mut status, libc::__WALL) };
@@ -731,6 +970,29 @@ fn wait_traced(pid: u32, writable_bytes: u64, proc: &File, logs: &[File]) -> Res
             }
             bail!("candidate quota observer lost process ownership");
         }
+        let event = if libc::WIFSTOPPED(status) { status >> 16 } else { 0 };
+        if event == libc::PTRACE_EVENT_EXEC {
+            // A nonleader exec adopts its thread-group leader's TID. The
+            // kernel names the former TID; move only that authenticated task's
+            // pending observation before replacing its descriptor table below.
+            let mut former = 0u64;
+            errno(
+                unsafe { libc::ptrace(libc::PTRACE_GETEVENTMSG, stopped, 0, &mut former) as i32 },
+                "observe candidate exec identity",
+            )?;
+            let former = i32::try_from(former)?;
+            ensure!(observed.contains(&former), "candidate exec lost its owned task identity");
+            if former != stopped {
+                observed.remove(&former);
+                observed.insert(stopped);
+                descriptor_tables.remove(&former);
+                mutations.remove(&stopped);
+                if let Some(pending) = mutations.remove(&former) {
+                    mutations.insert(stopped, pending);
+                }
+                deferred.remove(&former);
+            }
+        }
         if !observed.contains(&stopped) {
             ensure!(
                 libc::WIFSTOPPED(status) || libc::WIFEXITED(status) || libc::WIFSIGNALED(status),
@@ -745,6 +1007,9 @@ fn wait_traced(pid: u32, writable_bytes: u64, proc: &File, logs: &[File]) -> Res
         if libc::WIFEXITED(status) || libc::WIFSIGNALED(status) {
             observed.remove(&stopped);
             mutations.remove(&stopped);
+            descriptor_tables.remove(&stopped);
+            inventory = None;
+            binding_generation = binding_generation.checked_add(1).context("sandbox descriptor generation overflow")?;
             if stopped == pid as i32 {
                 return Ok(ExitStatus::from_raw(status));
             }
@@ -774,12 +1039,12 @@ fn wait_traced(pid: u32, writable_bytes: u64, proc: &File, logs: &[File]) -> Res
             }
             if info[0] == 1 {
                 ensure!(size >= 80, "kernel syscall-entry observation is incomplete");
-                let syscall = u64::from_ne_bytes(info[24..32].try_into()?);
+                let syscall = u64::from_ne_bytes(info[24..32].try_into()?) as libc::c_long;
                 // Linkers reopen many read-only inputs after producing a large
                 // object tree. Only explicit nonmutating open/openat flags can
                 // skip the full extent walk. openat2 keeps the conservative
                 // walk because its flags reside in candidate memory.
-                let open_flags = match syscall as libc::c_long {
+                let open_flags = match syscall {
                     libc::SYS_open => Some(u64::from_ne_bytes(info[40..48].try_into()?)),
                     libc::SYS_openat => Some(u64::from_ne_bytes(info[48..56].try_into()?)),
                     _ => None,
@@ -791,45 +1056,175 @@ fn wait_traced(pid: u32, writable_bytes: u64, proc: &File, logs: &[File]) -> Res
                     flags & (libc::O_ACCMODE | libc::O_CREAT | libc::O_TRUNC) as u64 == 0
                         && flags & libc::O_TMPFILE as u64 != libc::O_TMPFILE as u64
                 });
-                let mutating = !readonly_open && [
-                    libc::SYS_write,
-                    libc::SYS_writev,
-                    libc::SYS_pwrite64,
-                    libc::SYS_pwritev,
-                    libc::SYS_pwritev2,
-                    libc::SYS_truncate,
-                    libc::SYS_ftruncate,
-                    libc::SYS_fallocate,
-                    libc::SYS_copy_file_range,
-                    libc::SYS_splice,
-                    libc::SYS_sendfile,
-                    libc::SYS_open,
-                    libc::SYS_openat,
-                    libc::SYS_openat2,
-                    libc::SYS_mkdir,
-                    libc::SYS_mkdirat,
-                ]
-                .iter()
-                .any(|number| *number as u64 == syscall);
-                mutations.insert(stopped, mutating);
-                if mutating {
-                    inspect(&observed)?;
+                let growing = !readonly_open
+                    && [
+                        libc::SYS_write,
+                        libc::SYS_writev,
+                        libc::SYS_pwrite64,
+                        libc::SYS_pwritev,
+                        libc::SYS_pwritev2,
+                        libc::SYS_truncate,
+                        libc::SYS_ftruncate,
+                        libc::SYS_fallocate,
+                        libc::SYS_copy_file_range,
+                        libc::SYS_splice,
+                        libc::SYS_sendfile,
+                        libc::SYS_open,
+                        libc::SYS_openat,
+                        libc::SYS_openat2,
+                        libc::SYS_creat,
+                        libc::SYS_mkdir,
+                        libc::SYS_mkdirat,
+                    ]
+                    .iter()
+                    .any(|number| *number == syscall);
+                let rebinding = !stable_descriptors(syscall);
+                let descriptor_argument = match syscall {
+                    libc::SYS_write
+                    | libc::SYS_writev
+                    | libc::SYS_pwrite64
+                    | libc::SYS_pwritev
+                    | libc::SYS_pwritev2
+                    | libc::SYS_ftruncate
+                    | libc::SYS_fallocate
+                    | libc::SYS_sendfile => Some(0),
+                    libc::SYS_copy_file_range | libc::SYS_splice => Some(2),
+                    _ => None,
+                };
+                let descriptor = if let Some(argument) = descriptor_argument {
+                    let offset = 32 + argument * 8;
+                    Some(u64::from_ne_bytes(info[offset..offset + 8].try_into()?) as i32)
+                } else {
+                    None
+                };
+                let target =
+                    if let Some(descriptor) = descriptor { candidate_target(proc, stopped, descriptor)? } else { None };
+                let duplicate = matches!(syscall, libc::SYS_dup | libc::SYS_dup2 | libc::SYS_dup3)
+                    || syscall == libc::SYS_fcntl
+                        && matches!(
+                            u64::from_ne_bytes(info[40..48].try_into()?) as i32,
+                            libc::F_DUPFD | libc::F_DUPFD_CLOEXEC
+                        );
+                let duplicate_source = if duplicate {
+                    candidate_target(proc, stopped, u64::from_ne_bytes(info[32..40].try_into()?) as i32)?
+                } else {
+                    None
+                };
+                let duplicate_destination = matches!(syscall, libc::SYS_dup2 | libc::SYS_dup3)
+                    .then(|| u64::from_ne_bytes(info[40..48].try_into().expect("complete syscall arguments")) as i32);
+                let child_shares_descriptors = match syscall {
+                    libc::SYS_clone => {
+                        Some(u64::from_ne_bytes(info[32..40].try_into()?) & libc::CLONE_FILES as u64 != 0)
+                    }
+                    libc::SYS_fork | libc::SYS_vfork => Some(false),
+                    _ => None,
+                };
+                let unshares_descriptors = syscall == libc::SYS_close_range
+                    && u64::from_ne_bytes(info[48..56].try_into()?) & libc::CLOSE_RANGE_UNSHARE as u64 != 0;
+                if rebinding {
+                    binding_generation =
+                        binding_generation.checked_add(1).context("sandbox descriptor generation overflow")?;
+                    inventory = None;
                 }
-            } else if info[0] == 2 && mutations.remove(&stopped).unwrap_or(false) {
-                inspect(&observed)?;
+                let full = growing && target.is_none();
+                let current = PendingAccounting {
+                    growing,
+                    rebinding,
+                    full,
+                    target,
+                    descriptor,
+                    duplicate_source,
+                    duplicate_destination,
+                    possible_targets: BTreeMap::new(),
+                    descriptor_table: *descriptor_tables
+                        .get(&stopped)
+                        .context("candidate descriptor table is unknown")?,
+                    child_shares_descriptors,
+                    unshares_descriptors,
+                    generation: binding_generation,
+                };
+                let active_growth = mutations.values().any(|pending| pending.growing);
+                if growing || (rebinding && active_growth) {
+                    if inventory.is_none()
+                        || full
+                        || mutations.values().any(|pending| pending.rebinding || pending.full)
+                    {
+                        let duplicate = current
+                            .duplicate_source
+                            .as_ref()
+                            .zip(current.duplicate_destination)
+                            .map(|(source, destination)| (source, destination, current.descriptor_table));
+                        retain_possible_targets(proc, &mut mutations, duplicate, work_device)?;
+                        inventory = Some(inspect(&observed)?);
+                    }
+                    observe_targets(inventory.as_mut().expect("observed inventory"), &mutations, &current)?;
+                }
+                if growing || rebinding {
+                    mutations.insert(stopped, current);
+                }
+            } else if info[0] == 2 {
+                if let Some(completed) = mutations.remove(&stopped) {
+                    let result = i64::from_ne_bytes(info[24..32].try_into()?);
+                    if completed.rebinding {
+                        binding_generation =
+                            binding_generation.checked_add(1).context("sandbox descriptor generation overflow")?;
+                        inventory = None;
+                    }
+                    if completed.unshares_descriptors && result >= 0 {
+                        descriptor_tables.insert(stopped, binding_generation);
+                    }
+                    let active_growth = mutations.values().any(|pending| pending.growing);
+                    if completed.growing || (completed.rebinding && active_growth) {
+                        if inventory.is_none()
+                            || completed.full
+                            || completed.generation != binding_generation
+                            || mutations.values().any(|pending| pending.rebinding || pending.full)
+                        {
+                            let destination =
+                                completed.duplicate_destination.or_else(|| (result >= 0).then_some(result as i32));
+                            let duplicate = completed
+                                .duplicate_source
+                                .as_ref()
+                                .zip(destination)
+                                .map(|(source, destination)| (source, destination, completed.descriptor_table));
+                            retain_possible_targets(proc, &mut mutations, duplicate, work_device)?;
+                            inventory = Some(inspect(&observed)?);
+                        }
+                        observe_targets(inventory.as_mut().expect("observed inventory"), &mutations, &completed)?;
+                    }
+                    // A concurrently closed unlinked target stays pinned until
+                    // its syscall exit has been checked. Rebuild after dropping
+                    // that pin, rather than charging a released inode forever.
+                    if completed.generation != binding_generation
+                        && completed.pins().any(|file| file.metadata().is_ok_and(|metadata| metadata.nlink() == 0))
+                    {
+                        inventory = None;
+                    }
+                }
             }
         } else if signal != libc::SIGTRAP && signal != libc::SIGSTOP {
             ensure!(signal != libc::SIGXFSZ, "sandbox file extent budget exhausted during production");
             deliver = signal;
         }
-        let event = status >> 16;
+        if event != 0 {
+            binding_generation = binding_generation.checked_add(1).context("sandbox descriptor generation overflow")?;
+            inventory = None;
+        }
+        if event == libc::PTRACE_EVENT_EXEC {
+            descriptor_tables.insert(stopped, binding_generation);
+        }
         if [libc::PTRACE_EVENT_FORK, libc::PTRACE_EVENT_VFORK, libc::PTRACE_EVENT_CLONE].contains(&event) {
             let mut child = 0u64;
             errno(
                 unsafe { libc::ptrace(libc::PTRACE_GETEVENTMSG, stopped, 0, &mut child) as i32 },
                 "observe candidate descendant",
             )?;
-            observed.insert(i32::try_from(child)?);
+            let child = i32::try_from(child)?;
+            let parent = mutations.get(&stopped).context("candidate descendant has no observed creation syscall")?;
+            let shared =
+                parent.child_shares_descriptors.context("candidate descendant has unknown descriptor sharing")?;
+            descriptor_tables.insert(child, if shared { parent.descriptor_table } else { binding_generation });
+            observed.insert(child);
             let unregistered = deferred.keys().filter(|child| !observed.contains(child)).count();
             ensure!(observed.len() + unregistered <= 512, "sandbox descendant count budget exhausted");
         }
