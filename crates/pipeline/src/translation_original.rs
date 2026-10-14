@@ -903,3 +903,7 @@ pub(crate) fn references(prepared: &PreparedOriginal, receipt: &OriginalReceipt)
     }
     Ok(unique.into_values().collect())
 }
+
+#[cfg(test)]
+#[path = "translation_original_tests.rs"]
+mod tests;
