@@ -35,6 +35,18 @@ at the expected schema assertion: the baseline emitted
 its temporary fixture was removed by the test's scoped destructor. No producer
 test or production command ran.
 
+Initial green verification passed all six existing retention tests (3.51s) and
+the 65,537-reference hierarchy/replay regression (70.05s), after a 9.94s
+incremental build. Logs are `green.stdout.log` and `green.stderr.log`.
+
+The implementation adds a fixed grouped schema, keeps persisted paged records
+on their historical format, plans all raw/metadata/cleanup bytes before
+publication, and authenticates only group-to-page-to-leaf edges. Child manifest
+paths are also checked during `retained_entries`; composite leaf cleanup paths
+and extents are checked against their canonical zero-removal records.
+Additional corruption, historical replay and metadata reservation controls are
+in progress. This checkpoint is not final verification or production approval.
+
 ## Completion evidence
 
 Pending implementation, verification and run cleanup. Disposable Cargo output

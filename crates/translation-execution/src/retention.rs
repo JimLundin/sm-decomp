@@ -2,7 +2,7 @@
 //! cleanup observations survive checkout retirement; unknown files are never
 //! inferred to be disposable from directory contents.
 use crate::model::{OperationContext, digest_valid, sha256};
-use anyhow::{Context, Result, ensure};
+use anyhow::{Context, Result, bail, ensure};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::{
@@ -19,6 +19,9 @@ use std::{
 pub(crate) const MAX_METADATA_BYTES: u64 = 4 * 1024 * 1024;
 const MAX_REFERENCES: usize = 4096;
 const MAX_PAGES: usize = 256;
+const MAX_GROUP_PAGES: usize = 16;
+const MAX_GROUP_REFERENCES: usize = MAX_REFERENCES * MAX_GROUP_PAGES;
+const MAX_GROUPS: usize = 256;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
@@ -84,6 +87,23 @@ struct PagedManifest {
     byte_limit: u64,
     reference_count: usize,
     pages: Vec<RetentionResult>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+struct GroupedManifest {
+    schema: String,
+    context: OperationContext,
+    byte_limit: u64,
+    reference_count: usize,
+    groups: Vec<RetentionResult>,
+}
+
+// Only these two child formats are admitted under a group. In particular, a
+// group can never point to another grouped manifest or create recursive graphs.
+enum GroupManifest {
+    Leaf(Manifest),
+    Paged(PagedManifest),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -249,7 +269,7 @@ pub fn finalize(
     ensure!(digest_valid(&context.operation_key) && context.attempt > 0, "invalid retention operation identity");
     if retained.len() > MAX_REFERENCES {
         ensure!(disposable.is_empty(), "paged retention requires separately completed explicit retirement");
-        return finalize_paged(root, context, retained, byte_limit);
+        return finalize_partitioned(root, context, retained, byte_limit);
     }
     directory(root)?;
     let record_root = root.join(format!("retention-{}", context.operation_key));
@@ -388,10 +408,18 @@ pub fn finalize(
 pub fn authenticate_finalization(result: &RetentionResult, byte_limit: u64) -> Result<()> {
     authenticate_reference(&result.manifest, MAX_METADATA_BYTES)?;
     let value: serde_json::Value = serde_json::from_slice(&read_bounded(&result.manifest.path, MAX_METADATA_BYTES)?)?;
-    if value.get("schema").and_then(serde_json::Value::as_str) == Some("translation-retention-pages-v1") {
-        return authenticate_paged(result, byte_limit, serde_json::from_value(value)?);
+    match value.get("schema").and_then(serde_json::Value::as_str) {
+        Some("translation-retention-pages-v1") => {
+            authenticate_paged(result, byte_limit, serde_json::from_value(value)?)
+        }
+        Some("translation-retention-groups-v1") => {
+            authenticate_grouped(result, byte_limit, serde_json::from_value(value)?)
+        }
+        _ => authenticate_leaf(result, byte_limit, serde_json::from_value(value)?).map(|_| ()),
     }
-    let manifest: Manifest = serde_json::from_slice(&read_bounded(&result.manifest.path, MAX_METADATA_BYTES)?)?;
+}
+
+fn authenticate_leaf(result: &RetentionResult, byte_limit: u64, manifest: Manifest) -> Result<u64> {
     ensure!(
         manifest.schema == "translation-retention-v1" && manifest.byte_limit == byte_limit,
         "retention policy changed"
@@ -413,14 +441,23 @@ pub fn authenticate_finalization(result: &RetentionResult, byte_limit: u64) -> R
     }
     ensure!(manifest.removed.iter().all(|r| !r.reference.path.exists()), "retired intermediate was recreated");
     ensure!(reclaimed == result.reclaimed_bytes, "cleanup measured extent changed");
-    let measured = bytes + result.manifest.bytes + result.cleanup_records.iter().map(|r| r.bytes).sum::<u64>();
+    let measured = bytes
+        .checked_add(result.manifest.bytes)
+        .and_then(|bytes| bytes.checked_add(result.cleanup_records.iter().map(|r| r.bytes).sum::<u64>()))
+        .context("retained measured extent overflow")?;
     ensure!(measured == result.retained_bytes && measured <= byte_limit, "retained measured extent changed");
-    Ok(())
+    Ok(bytes)
 }
 
 fn page_context(context: &OperationContext, index: usize) -> OperationContext {
     let mut child = context.clone();
     child.operation_key = sha256(format!("retention-page-v1:{}:{index}", context.operation_key));
+    child
+}
+
+fn group_context(context: &OperationContext, index: usize) -> OperationContext {
+    let mut child = context.clone();
+    child.operation_key = sha256(format!("retention-group-v1:{}:{index}", context.operation_key));
     child
 }
 
@@ -447,11 +484,9 @@ fn cleanup_records(manifest: &Reference, bytes: u64) -> Result<[(Reference, Vec<
     Ok([record(1)?, record(2)?])
 }
 
-fn plan_result<T: Serialize>(
-    path: PathBuf,
-    manifest: &T,
-    bytes: u64,
-) -> Result<(RetentionResult, Vec<u8>, [Vec<u8>; 2])> {
+type PlannedResult = (RetentionResult, Vec<u8>, [Vec<u8>; 2]);
+
+fn plan_result<T: Serialize>(path: PathBuf, manifest: &T, bytes: u64) -> Result<PlannedResult> {
     let encoded = serde_json::to_vec(manifest)?;
     ensure!(encoded.len() as u64 <= MAX_METADATA_BYTES, "paged retention metadata exceeds hard bound");
     let reference = Reference { path, sha256: sha256(&encoded), bytes: encoded.len() as u64 };
@@ -468,64 +503,115 @@ fn plan_result<T: Serialize>(
     ))
 }
 
-/// Each page retains the existing per-record limits. The parent freezes the
-/// exact ordered pages and reserves their complete raw and metadata extent
-/// before publishing any page; a retry cannot replace a surviving prefix.
-fn finalize_paged(
+fn finalize_partitioned(
     root: &Path,
     context: &OperationContext,
     retained: &[Retained],
     byte_limit: u64,
 ) -> Result<RetentionResult> {
-    ensure!(retained.len() <= MAX_REFERENCES * MAX_PAGES, "paged retention reference count exceeded");
+    ensure!(retained.len() <= MAX_GROUP_REFERENCES * MAX_GROUPS, "grouped retention reference count exceeded");
     let mut unique = BTreeMap::new();
     for item in retained {
-        if let Some(prior) = unique.insert(item.reference.path.clone(), item.clone()) {
-            ensure!(prior == *item, "paged retention contains conflicting references");
+        if let Some(prior) = unique.insert(&item.reference.path, item) {
+            ensure!(prior == item, "partitioned retention contains conflicting references");
         }
     }
-    let retained = unique.into_values().collect::<Vec<_>>();
+    let retained = unique.into_values().cloned().collect::<Vec<_>>();
     ensure!(retained.len() > MAX_REFERENCES, "paged retention duplicate inventory is excessive");
     let record_root = root.join(format!("retention-{}", context.operation_key));
     directory(&record_root)?;
     let _lock = lock(&record_root.join("lock"))?;
-    let mut plans = Vec::new();
+    let path = record_root.join("manifest.json");
+    // Historical paged records may exceed the new group threshold. Their
+    // surviving schema owns replay; never upgrade their immutable identity.
+    let grouped = if path.try_exists()? {
+        let value: serde_json::Value = serde_json::from_slice(&read_bounded(&path, MAX_METADATA_BYTES)?)?;
+        match value.get("schema").and_then(serde_json::Value::as_str) {
+            Some("translation-retention-pages-v1") => false,
+            Some("translation-retention-groups-v1") => true,
+            _ => bail!("retention closure format changed on retry"),
+        }
+    } else {
+        retained.len() > MAX_GROUP_REFERENCES
+    };
+    if grouped {
+        finalize_grouped(&record_root, context, &retained, byte_limit)
+    } else {
+        finalize_paged(&record_root, context, &retained, byte_limit)
+    }
+}
+
+fn plan_leaf(
+    root: &Path,
+    context: &OperationContext,
+    retained: &[Retained],
+    byte_limit: u64,
+) -> Result<RetentionResult> {
+    let manifest = Manifest {
+        schema: "translation-retention-v1".into(),
+        context: context.clone(),
+        byte_limit,
+        retained: retained.to_vec(),
+        removed: vec![],
+    };
+    Ok(plan_result(
+        root.join(format!("retention-{}/manifest.json", context.operation_key)),
+        &manifest,
+        authenticate(retained, byte_limit)?,
+    )?
+    .0)
+}
+
+fn plan_pages(
+    record_root: &Path,
+    context: &OperationContext,
+    retained: &[Retained],
+    byte_limit: u64,
+) -> Result<(PagedManifest, PlannedResult)> {
+    ensure!(
+        retained.len() > MAX_REFERENCES && retained.len() <= MAX_REFERENCES * MAX_PAGES,
+        "paged retention reference count exceeded"
+    );
+    let mut pages = Vec::new();
     let mut bytes = 0u64;
     for (index, page) in retained.chunks(MAX_REFERENCES).enumerate() {
         let page_context = page_context(context, index);
         let page_root = record_root.join("pages").join(format!("{index:04}"));
-        let manifest = Manifest {
-            schema: "translation-retention-v1".into(),
-            context: page_context.clone(),
-            byte_limit,
-            retained: page.to_vec(),
-            removed: vec![],
-        };
-        let page_bytes = authenticate(page, byte_limit)?;
-        let result = plan_result(
-            page_root.join(format!("retention-{}/manifest.json", page_context.operation_key)),
-            &manifest,
-            page_bytes,
-        )?
-        .0;
+        let result = plan_leaf(&page_root, &page_context, page, byte_limit)?;
         bytes = bytes.checked_add(result.retained_bytes).context("paged retention extent overflow")?;
         ensure!(bytes <= byte_limit, "aggregate paged retention budget exceeded");
-        plans.push((page_context, page_root, result));
+        pages.push(result);
     }
     let manifest = PagedManifest {
         schema: "translation-retention-pages-v1".into(),
         context: context.clone(),
         byte_limit,
         reference_count: retained.len(),
-        pages: plans.iter().map(|(_, _, result)| result.clone()).collect(),
+        pages,
     };
-    let (result, manifest_bytes, cleanup) = plan_result(record_root.join("manifest.json"), &manifest, bytes)?;
+    let result = plan_result(record_root.join("manifest.json"), &manifest, bytes)?;
+    ensure!(result.0.retained_bytes <= byte_limit, "aggregate paged retention plus metadata exceeds budget");
+    Ok((manifest, result))
+}
+
+/// Each page retains the existing per-record limits. The parent freezes the
+/// exact ordered pages and reserves their complete raw and metadata extent
+/// before publishing any page; a retry cannot replace a surviving prefix.
+fn finalize_paged(
+    record_root: &Path,
+    context: &OperationContext,
+    retained: &[Retained],
+    byte_limit: u64,
+) -> Result<RetentionResult> {
+    let (manifest, (result, manifest_bytes, cleanup)) = plan_pages(record_root, context, retained, byte_limit)?;
     ensure!(result.retained_bytes <= byte_limit, "aggregate paged retention plus metadata exceeds budget");
     // The parent is the durable identity even if no page completed before a crash.
     write_once(&result.manifest.path, &manifest_bytes, MAX_METADATA_BYTES)?;
-    for ((context, root, expected), page) in plans.iter().zip(retained.chunks(MAX_REFERENCES)) {
+    for (index, (expected, page)) in manifest.pages.iter().zip(retained.chunks(MAX_REFERENCES)).enumerate() {
+        let context = page_context(context, index);
+        let root = record_root.join("pages").join(format!("{index:04}"));
         ensure!(
-            finalize(root, context, page, &[], byte_limit)? == *expected,
+            finalize(&root, &context, page, &[], byte_limit)? == *expected,
             "retention page differs from reserved closure"
         );
     }
@@ -539,7 +625,69 @@ fn finalize_paged(
     Ok(result)
 }
 
-fn read_page(parent: &PagedManifest, index: usize, page: &RetentionResult) -> Result<Manifest> {
+fn finalize_grouped(
+    record_root: &Path,
+    context: &OperationContext,
+    retained: &[Retained],
+    byte_limit: u64,
+) -> Result<RetentionResult> {
+    ensure!(
+        retained.len() > MAX_GROUP_REFERENCES && retained.len() <= MAX_GROUP_REFERENCES * MAX_GROUPS,
+        "grouped retention reference count exceeded"
+    );
+    let mut groups = Vec::new();
+    let mut bytes = 0u64;
+    for (index, group) in retained.chunks(MAX_GROUP_REFERENCES).enumerate() {
+        let context = group_context(context, index);
+        let root = record_root.join("groups").join(format!("{index:04}"));
+        let result = if group.len() <= MAX_REFERENCES {
+            plan_leaf(&root, &context, group, byte_limit)?
+        } else {
+            plan_pages(&root.join(format!("retention-{}", context.operation_key)), &context, group, byte_limit)?.1.0
+        };
+        bytes = bytes.checked_add(result.retained_bytes).context("grouped retention extent overflow")?;
+        ensure!(bytes <= byte_limit, "aggregate grouped retention budget exceeded");
+        groups.push(result);
+    }
+    let manifest = GroupedManifest {
+        schema: "translation-retention-groups-v1".into(),
+        context: context.clone(),
+        byte_limit,
+        reference_count: retained.len(),
+        groups,
+    };
+    let (result, manifest_bytes, cleanup) = plan_result(record_root.join("manifest.json"), &manifest, bytes)?;
+    ensure!(result.retained_bytes <= byte_limit, "aggregate grouped retention plus metadata exceeds budget");
+    // Reserve every group's data, leaf metadata and cleanup records before
+    // publishing the parent or any child. A crash keeps the same complete plan.
+    write_once(&result.manifest.path, &manifest_bytes, MAX_METADATA_BYTES)?;
+    for (index, (expected, group)) in manifest.groups.iter().zip(retained.chunks(MAX_GROUP_REFERENCES)).enumerate() {
+        let context = group_context(context, index);
+        let root = record_root.join("groups").join(format!("{index:04}"));
+        ensure!(
+            finalize(&root, &context, group, &[], byte_limit)? == *expected,
+            "retention group differs from reserved closure"
+        );
+    }
+    for (reference, bytes) in result.cleanup_records.iter().zip(cleanup) {
+        for group in &manifest.groups {
+            authenticate_finalization(group, byte_limit)?;
+        }
+        write_once(&reference.path, &bytes, MAX_METADATA_BYTES)?;
+    }
+    authenticate_grouped(&result, byte_limit, manifest)?;
+    Ok(result)
+}
+
+fn read_page(parent: &PagedManifest, record_root: &Path, index: usize, page: &RetentionResult) -> Result<Manifest> {
+    ensure!(
+        page.manifest.path
+            == record_root.join("pages").join(format!(
+                "{index:04}/retention-{}/manifest.json",
+                page_context(&parent.context, index).operation_key
+            )),
+        "retention page location differs from original operation"
+    );
     authenticate_reference(&page.manifest, MAX_METADATA_BYTES)?;
     // Pages are leaves, so corrupt input cannot create cycles or recursive graphs.
     let manifest: Manifest = serde_json::from_slice(&read_bounded(&page.manifest.path, MAX_METADATA_BYTES)?)?;
@@ -555,7 +703,7 @@ fn read_page(parent: &PagedManifest, index: usize, page: &RetentionResult) -> Re
     Ok(manifest)
 }
 
-fn paged_entries(parent: &PagedManifest) -> Result<Vec<Retained>> {
+fn paged_entries(parent: &PagedManifest, record_root: &Path) -> Result<Vec<Retained>> {
     ensure!(
         parent.schema == "translation-retention-pages-v1"
             && !parent.pages.is_empty()
@@ -566,7 +714,7 @@ fn paged_entries(parent: &PagedManifest) -> Result<Vec<Retained>> {
     );
     let mut entries = Vec::new();
     for (index, page) in parent.pages.iter().enumerate() {
-        let manifest = read_page(parent, index, page)?;
+        let manifest = read_page(parent, record_root, index, page)?;
         ensure!(
             index + 1 == parent.pages.len() || manifest.retained.len() == MAX_REFERENCES,
             "retention page prefix is incomplete"
@@ -586,23 +734,123 @@ fn authenticate_paged(result: &RetentionResult, byte_limit: u64, parent: PagedMa
         parent.byte_limit == byte_limit && result.reclaimed_bytes == 0,
         "paged retention budget or cleanup changed"
     );
-    paged_entries(&parent)?;
-    let mut bytes = 0u64;
     let record_root = result.manifest.path.parent().context("retention root missing")?;
+    paged_entries(&parent, record_root)?;
+    let mut bytes = 0u64;
     for (index, page) in parent.pages.iter().enumerate() {
-        ensure!(
-            page.manifest.path
-                == record_root.join("pages").join(format!(
-                    "{index:04}/retention-{}/manifest.json",
-                    page_context(&parent.context, index).operation_key
-                )),
-            "retention page location differs from original operation"
-        );
-        authenticate_finalization(page, byte_limit)?;
+        let leaf = read_page(&parent, record_root, index, page)?;
+        authenticate_child_leaf(page, byte_limit, leaf)?;
         bytes = bytes.checked_add(page.retained_bytes).context("paged retention extent overflow")?;
     }
     let expected = plan_result(result.manifest.path.clone(), &parent, bytes)?;
     ensure!(expected.0 == *result && result.retained_bytes <= byte_limit, "paged retention measured extent changed");
+    for reference in &result.cleanup_records {
+        authenticate_reference(reference, MAX_METADATA_BYTES)?;
+    }
+    Ok(())
+}
+
+fn authenticate_child_leaf(result: &RetentionResult, byte_limit: u64, leaf: Manifest) -> Result<()> {
+    let bytes = authenticate_leaf(result, byte_limit, leaf.clone())?;
+    ensure!(
+        plan_result(result.manifest.path.clone(), &leaf, bytes)?.0 == *result,
+        "retention leaf cleanup location or extent changed"
+    );
+    Ok(())
+}
+
+fn read_group(
+    parent: &GroupedManifest,
+    record_root: &Path,
+    index: usize,
+    group: &RetentionResult,
+) -> Result<GroupManifest> {
+    let context = group_context(&parent.context, index);
+    ensure!(
+        group.manifest.path
+            == record_root.join("groups").join(format!("{index:04}/retention-{}/manifest.json", context.operation_key)),
+        "retention group location differs from original operation"
+    );
+    authenticate_reference(&group.manifest, MAX_METADATA_BYTES)?;
+    let value: serde_json::Value = serde_json::from_slice(&read_bounded(&group.manifest.path, MAX_METADATA_BYTES)?)?;
+    match value.get("schema").and_then(serde_json::Value::as_str) {
+        Some("translation-retention-v1") => {
+            let leaf: Manifest = serde_json::from_value(value)?;
+            ensure!(
+                leaf.context == context
+                    && leaf.byte_limit == parent.byte_limit
+                    && leaf.removed.is_empty()
+                    && !leaf.retained.is_empty()
+                    && leaf.retained.len() <= MAX_REFERENCES,
+                "retention group leaf identity changed"
+            );
+            Ok(GroupManifest::Leaf(leaf))
+        }
+        Some("translation-retention-pages-v1") => {
+            let paged: PagedManifest = serde_json::from_value(value)?;
+            ensure!(
+                paged.context == context
+                    && paged.byte_limit == parent.byte_limit
+                    && paged.reference_count <= MAX_GROUP_REFERENCES
+                    && paged.pages.len() <= MAX_GROUP_PAGES,
+                "retention group page identity or bound changed"
+            );
+            Ok(GroupManifest::Paged(paged))
+        }
+        _ => bail!("retention groups must contain only leaf or paged records"),
+    }
+}
+
+fn grouped_entries(parent: &GroupedManifest, record_root: &Path) -> Result<Vec<Retained>> {
+    ensure!(
+        parent.schema == "translation-retention-groups-v1"
+            && !parent.groups.is_empty()
+            && parent.groups.len() <= MAX_GROUPS
+            && parent.reference_count > MAX_GROUP_REFERENCES
+            && parent.reference_count <= MAX_GROUP_REFERENCES * MAX_GROUPS,
+        "grouped retention inventory exceeds hard bounds"
+    );
+    let mut entries = Vec::new();
+    for (index, group) in parent.groups.iter().enumerate() {
+        let retained = match read_group(parent, record_root, index, group)? {
+            GroupManifest::Leaf(leaf) => leaf.retained,
+            GroupManifest::Paged(paged) => {
+                paged_entries(&paged, group.manifest.path.parent().context("retention group root missing")?)?
+            }
+        };
+        ensure!(
+            index + 1 == parent.groups.len() || retained.len() == MAX_GROUP_REFERENCES,
+            "retention group prefix is incomplete"
+        );
+        entries.extend(retained);
+    }
+    ensure!(
+        entries.len() == parent.reference_count
+            && entries.windows(2).all(|pair| pair[0].reference.path < pair[1].reference.path),
+        "retention groups duplicated, reordered or omitted a reference"
+    );
+    Ok(entries)
+}
+
+fn authenticate_grouped(result: &RetentionResult, byte_limit: u64, parent: GroupedManifest) -> Result<()> {
+    ensure!(
+        parent.byte_limit == byte_limit && result.reclaimed_bytes == 0,
+        "grouped retention budget or cleanup changed"
+    );
+    let record_root = result.manifest.path.parent().context("retention root missing")?;
+    grouped_entries(&parent, record_root)?;
+    let mut bytes = 0u64;
+    for (index, group) in parent.groups.iter().enumerate() {
+        match read_group(&parent, record_root, index, group)? {
+            GroupManifest::Leaf(leaf) => authenticate_child_leaf(group, byte_limit, leaf)?,
+            GroupManifest::Paged(paged) => authenticate_paged(group, byte_limit, paged)?,
+        }
+        bytes = bytes.checked_add(group.retained_bytes).context("grouped retention extent overflow")?;
+    }
+    ensure!(
+        plan_result(result.manifest.path.clone(), &parent, bytes)?.0 == *result && result.retained_bytes <= byte_limit,
+        "grouped retention measured extent changed"
+    );
     for reference in &result.cleanup_records {
         authenticate_reference(reference, MAX_METADATA_BYTES)?;
     }
@@ -614,14 +862,17 @@ fn authenticate_paged(result: &RetentionResult, byte_limit: u64, parent: PagedMa
 pub fn retained_entries(result: &RetentionResult) -> Result<Vec<Retained>> {
     authenticate_reference(&result.manifest, MAX_METADATA_BYTES)?;
     let value: serde_json::Value = serde_json::from_slice(&read_bounded(&result.manifest.path, MAX_METADATA_BYTES)?)?;
-    if value.get("schema").and_then(serde_json::Value::as_str) == Some("translation-retention-pages-v1") {
-        paged_entries(&serde_json::from_value(value)?)
-    } else {
-        let manifest: Manifest = serde_json::from_value(value)?;
-        ensure!(
-            manifest.schema == "translation-retention-v1" && manifest.retained.len() <= MAX_REFERENCES,
-            "retention inventory changed"
-        );
-        Ok(manifest.retained)
+    let record_root = result.manifest.path.parent().context("retention root missing")?;
+    match value.get("schema").and_then(serde_json::Value::as_str) {
+        Some("translation-retention-pages-v1") => paged_entries(&serde_json::from_value(value)?, record_root),
+        Some("translation-retention-groups-v1") => grouped_entries(&serde_json::from_value(value)?, record_root),
+        _ => {
+            let manifest: Manifest = serde_json::from_value(value)?;
+            ensure!(
+                manifest.schema == "translation-retention-v1" && manifest.retained.len() <= MAX_REFERENCES,
+                "retention inventory changed"
+            );
+            Ok(manifest.retained)
+        }
     }
 }
