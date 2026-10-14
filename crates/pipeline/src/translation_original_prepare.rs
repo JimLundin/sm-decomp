@@ -341,7 +341,8 @@ pub(crate) fn prepare(path: &Path) -> Result<Report> {
                 provenance.clone(),
                 compiler.clone(),
                 fixture(callback),
-            )?;
+            )
+            .with_context(|| format!("preparing original {id} Offline family {name}"))?;
             families.insert(
                 name.clone(),
                 original::write(&scope_root.join("families").join(format!("{name}.json")), &contract)?,
@@ -401,7 +402,8 @@ pub(crate) fn prepare(path: &Path) -> Result<Report> {
             compact,
             catalog_sha256: (kind == original::OriginalKind::SharedGameHost).then(|| sealed(&catalog)).transpose()?,
         };
-        let prepared = original::prepare(&contract, &template.pinned_source)?;
+        let prepared = original::prepare(&contract, &template.pinned_source)
+            .with_context(|| format!("authenticating complete original {id} preparation"))?;
         let contract = original::write(&scope_root.join("contract.json"), &contract)?;
         report.push(ScopeReport { id: id.into(), native_families: prepared.native.len() });
         scopes.push(continuation::Scope {

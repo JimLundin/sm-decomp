@@ -441,7 +441,8 @@ pub(crate) fn prepare(contract: &OriginalContract, pinned_source: &Path) -> Resu
                 catalog.as_ref().context("original catalog inputs missing")?,
                 deadline,
                 8 * bounded::DEFAULT_BYTES,
-            )?;
+            )
+            .with_context(|| format!("preparing original Offline family {name}"))?;
             source.insert(sealed(&prepared.source)?);
             native.insert(name, sealed(&prepared)?);
         }
