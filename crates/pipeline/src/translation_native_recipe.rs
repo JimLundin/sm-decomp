@@ -45,6 +45,14 @@ fn recipe_for_entry(checkout: &Path, declared: &Manifest, entry: &batch::FamilyE
         } else {
             NativeRecipe::Callback
         }),
+        "family" | "offline-family" | "dispatcher" | "projectile" | "offline-projectile"
+            if declared.callback_adapter.as_deref() == Some("ridley-subsystem") =>
+        {
+            // Captured Ridley is discovered through its projectile-host fields.
+            // Its explicit original callback metadata selects the same reviewed
+            // adapter, including all declared natural-capture dependencies.
+            Some(NativeRecipe::Ridley)
+        }
         "family" | "offline-family" | "dispatcher" | "projectile" | "offline-projectile" => {
             ensure!(declared.callback_adapter.is_none(), "unregistered native callback adapter");
             if family::dispatcher(declared) {

@@ -1535,6 +1535,22 @@ mod tests {
     }
 
     #[test]
+    fn discovered_captured_ridley_keeps_its_original_callback_recipe() -> Result<()> {
+        let checkout = current_checkout();
+        let path = Path::new("tools/port/ridley-subsystem-captured.toml");
+        let original: Manifest = family::object(&checkout.join(path))?;
+        let recipe = recipes::for_family(&checkout, path, &original)?;
+        assert_eq!(recipe, Some(NativeRecipe::Ridley));
+        let normalized = recipes::normalize_manifest(&checkout, original.clone(), recipe.as_ref())?;
+        assert_eq!(normalized, original);
+        assert!(normalized.routines.iter().flat_map(|routine| &routine.cases).any(|case| case.before_file.is_some()));
+        let mut unknown = original;
+        unknown.callback_adapter = Some("unknown-captured-adapter".into());
+        assert!(recipes::for_family(&checkout, path, &unknown).is_err());
+        Ok(())
+    }
+
+    #[test]
     #[ignore = "real separately confined actual-C controls; retains source, replay and cleanup evidence"]
     fn real_reviewed_recipes_replay_and_authenticate() -> Result<()> {
         let _ = crate::BINARY_SHA256.set(crate::digest(&std::env::current_exe()?)?);
