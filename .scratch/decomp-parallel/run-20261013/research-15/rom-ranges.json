@@ -1,0 +1,297 @@
+{
+  "schema": "decomp-research-rom-range-observations-v1",
+  "accepted": false,
+  "baseline": "7ed3d383d6d3e28d21d1bb960acc5576ce82f5e9",
+  "reading_method": "Read-only dd range stream to sha256sum; no copied ROM assets, fixture, emulator or verification run",
+  "offset_rule": "(bank & 0x7f) * 0x8000 + (address & 0x7fff)",
+  "original": {
+    "path": "/home/jim/sm-decomp/rom/sm.sfc",
+    "bytes": 3145728,
+    "sha256": "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72"
+  },
+  "native": {
+    "path": "/home/jim/sm-decomp/out/port/room-plm-current-live/20261010T224032.887967Z/c-0/rom-view.bin",
+    "bytes": 4194304,
+    "sha256": "40aaebb25b9646bea2dffdc5e1ae680768a39dd122de9353885e1c7456ceae27",
+    "limitations": [
+      "Runtime padded/patched native ROM view differs in whole-image identity; equal selected data ranges do not establish original-ROM behavioral parity."
+    ]
+  },
+  "ranges": [
+    {
+      "key": "closing-door-header-selector",
+      "bank": "8F",
+      "address": 59018,
+      "length": 16,
+      "offset": 517770,
+      "original_sha256": "43c2f9b610c35c6cdee42ce94be11c079d56357cc1291df663166bd7a44d8ee4",
+      "native_sha256": "43c2f9b610c35c6cdee42ce94be11c079d56357cc1291df663166bd7a44d8ee4",
+      "ranges_equal": true
+    },
+    {
+      "key": "closing-door-headers",
+      "bank": "84",
+      "address": 51386,
+      "length": 16,
+      "offset": 149690,
+      "original_sha256": "e017b8c435689eb14ea4568a5a02ba46ae2b613d0b55b57adc978c9da40f79e6",
+      "native_sha256": "e017b8c435689eb14ea4568a5a02ba46ae2b613d0b55b57adc978c9da40f79e6",
+      "ranges_equal": true
+    },
+    {
+      "key": "close-C49E",
+      "bank": "84",
+      "address": 50334,
+      "length": 28,
+      "offset": 148638,
+      "original_sha256": "3b6975cbc96bf06d091b2e1f7063711e92361840da1d437505fd4b692bcb1c46",
+      "native_sha256": "3b6975cbc96bf06d091b2e1f7063711e92361840da1d437505fd4b692bcb1c46",
+      "ranges_equal": true
+    },
+    {
+      "key": "close-C4CF",
+      "bank": "84",
+      "address": 50383,
+      "length": 28,
+      "offset": 148687,
+      "original_sha256": "e61a7d46c4abd4b73a857aa1055ec0dd62753b45c7e07c6b0ddc29be85723667",
+      "native_sha256": "e61a7d46c4abd4b73a857aa1055ec0dd62753b45c7e07c6b0ddc29be85723667",
+      "ranges_equal": true
+    },
+    {
+      "key": "close-C500",
+      "bank": "84",
+      "address": 50432,
+      "length": 28,
+      "offset": 148736,
+      "original_sha256": "ac601eac112bade8201846a21bd8d73e29c526d943172578d389a4e780a9b95f",
+      "native_sha256": "ac601eac112bade8201846a21bd8d73e29c526d943172578d389a4e780a9b95f",
+      "ranges_equal": true
+    },
+    {
+      "key": "close-C531",
+      "bank": "84",
+      "address": 50481,
+      "length": 28,
+      "offset": 148785,
+      "original_sha256": "bf7ab13b5da0d1203c4c37fc8923730474c38b75d5f1855fe1a9199e4c1c7ffa",
+      "native_sha256": "bf7ab13b5da0d1203c4c37fc8923730474c38b75d5f1855fe1a9199e4c1c7ffa",
+      "ranges_equal": true
+    },
+    {
+      "key": "boot-sleep-and-header",
+      "bank": "84",
+      "address": 47081,
+      "length": 6,
+      "offset": 145385,
+      "original_sha256": "f32b6acc1aec9e14a60b455b06428234a2070438ff9b54f81dad6d9f8b68612d",
+      "native_sha256": "f32b6acc1aec9e14a60b455b06428234a2070438ff9b54f81dad6d9f8b68612d",
+      "ranges_equal": true
+    },
+    {
+      "key": "draw-A677",
+      "bank": "84",
+      "address": 42615,
+      "length": 12,
+      "offset": 140919,
+      "original_sha256": "a1ac481472781059d970440161644cde0e33db25f635f8d4db28996de6d1a284",
+      "native_sha256": "a1ac481472781059d970440161644cde0e33db25f635f8d4db28996de6d1a284",
+      "ranges_equal": true
+    },
+    {
+      "key": "draw-A683",
+      "bank": "84",
+      "address": 42627,
+      "length": 12,
+      "offset": 140931,
+      "original_sha256": "ea246e495711b6d436f1b985032cb25e76b6a5e2801109ef8f7390e48aa5a675",
+      "native_sha256": "ea246e495711b6d436f1b985032cb25e76b6a5e2801109ef8f7390e48aa5a675",
+      "ranges_equal": true
+    },
+    {
+      "key": "draw-A68F",
+      "bank": "84",
+      "address": 42639,
+      "length": 12,
+      "offset": 140943,
+      "original_sha256": "9a260fac682a8608d81be63928cae743ed61693c4d248bc8c6eb9fba9eef9b29",
+      "native_sha256": "9a260fac682a8608d81be63928cae743ed61693c4d248bc8c6eb9fba9eef9b29",
+      "ranges_equal": true
+    },
+    {
+      "key": "draw-A69B",
+      "bank": "84",
+      "address": 42651,
+      "length": 12,
+      "offset": 140955,
+      "original_sha256": "7e954e13b353d9fb5d2272e8dceb7ee978f49eda05e5a6d4751604e2cf94e41b",
+      "native_sha256": "7e954e13b353d9fb5d2272e8dceb7ee978f49eda05e5a6d4751604e2cf94e41b",
+      "ranges_equal": true
+    },
+    {
+      "key": "draw-A9B3",
+      "bank": "84",
+      "address": 43443,
+      "length": 12,
+      "offset": 141747,
+      "original_sha256": "616c81ebb123bc670d0f2cdfe29915d9561da434538227344b8dcd67a0be3c12",
+      "native_sha256": "616c81ebb123bc670d0f2cdfe29915d9561da434538227344b8dcd67a0be3c12",
+      "ranges_equal": true
+    },
+    {
+      "key": "draw-A9BF",
+      "bank": "84",
+      "address": 43455,
+      "length": 12,
+      "offset": 141759,
+      "original_sha256": "06cfb43e2d9a4242043e922f8169e65df97233b716cede5c71c35ee68bfac14f",
+      "native_sha256": "06cfb43e2d9a4242043e922f8169e65df97233b716cede5c71c35ee68bfac14f",
+      "ranges_equal": true
+    },
+    {
+      "key": "draw-A9CB",
+      "bank": "84",
+      "address": 43467,
+      "length": 12,
+      "offset": 141771,
+      "original_sha256": "4037c068ae3bfd6cd3c9d1d7511e424b24f30b03cec73337b6b0bde6d43c0f26",
+      "native_sha256": "4037c068ae3bfd6cd3c9d1d7511e424b24f30b03cec73337b6b0bde6d43c0f26",
+      "ranges_equal": true
+    },
+    {
+      "key": "draw-A9D7",
+      "bank": "84",
+      "address": 43479,
+      "length": 12,
+      "offset": 141783,
+      "original_sha256": "06c76cac8335a932fd1c0b644bb8fd3afae0f08c1b50d034ff090c471fc5005c",
+      "native_sha256": "06c76cac8335a932fd1c0b644bb8fd3afae0f08c1b50d034ff090c471fc5005c",
+      "ranges_equal": true
+    },
+    {
+      "key": "draw-A9EF",
+      "bank": "84",
+      "address": 43503,
+      "length": 12,
+      "offset": 141807,
+      "original_sha256": "f074239324e87e3550b100cfddbda55437a2ce8559173062279986c40e9e7c20",
+      "native_sha256": "f074239324e87e3550b100cfddbda55437a2ce8559173062279986c40e9e7c20",
+      "ranges_equal": true
+    },
+    {
+      "key": "draw-A9FB",
+      "bank": "84",
+      "address": 43515,
+      "length": 12,
+      "offset": 141819,
+      "original_sha256": "63d9b31c633aa3d6383cba9d80eaf80900a7383137f75d7cb721b6efc6ca5f46",
+      "native_sha256": "63d9b31c633aa3d6383cba9d80eaf80900a7383137f75d7cb721b6efc6ca5f46",
+      "ranges_equal": true
+    },
+    {
+      "key": "draw-AA07",
+      "bank": "84",
+      "address": 43527,
+      "length": 12,
+      "offset": 141831,
+      "original_sha256": "64d1e065d61f2d8ccb4dbb535afcdd823d23c50c15f1148bff5334ee4252a646",
+      "native_sha256": "64d1e065d61f2d8ccb4dbb535afcdd823d23c50c15f1148bff5334ee4252a646",
+      "ranges_equal": true
+    },
+    {
+      "key": "draw-AA13",
+      "bank": "84",
+      "address": 43539,
+      "length": 12,
+      "offset": 141843,
+      "original_sha256": "fbc0d0a16adaf874a70eb2fa3e59b4ab3aab1261978692da66001066d97f2280",
+      "native_sha256": "fbc0d0a16adaf874a70eb2fa3e59b4ab3aab1261978692da66001066d97f2280",
+      "ranges_equal": true
+    },
+    {
+      "key": "draw-AA2B",
+      "bank": "84",
+      "address": 43563,
+      "length": 12,
+      "offset": 141867,
+      "original_sha256": "bd74644768763868f653602024102d0092e019055c2477b16e9249c25e60cf65",
+      "native_sha256": "bd74644768763868f653602024102d0092e019055c2477b16e9249c25e60cf65",
+      "ranges_equal": true
+    },
+    {
+      "key": "draw-AA37",
+      "bank": "84",
+      "address": 43575,
+      "length": 12,
+      "offset": 141879,
+      "original_sha256": "f74f16d16075912b4384ecfb093481e43ff7a28669eb0058e4c53d973c9e399a",
+      "native_sha256": "f74f16d16075912b4384ecfb093481e43ff7a28669eb0058e4c53d973c9e399a",
+      "ranges_equal": true
+    },
+    {
+      "key": "draw-AA43",
+      "bank": "84",
+      "address": 43587,
+      "length": 12,
+      "offset": 141891,
+      "original_sha256": "2fd878f61b65522f054ed2ae9324f6c02874671b1fe0a5c5059d84b6c1996c49",
+      "native_sha256": "2fd878f61b65522f054ed2ae9324f6c02874671b1fe0a5c5059d84b6c1996c49",
+      "ranges_equal": true
+    },
+    {
+      "key": "draw-AA4F",
+      "bank": "84",
+      "address": 43599,
+      "length": 12,
+      "offset": 141903,
+      "original_sha256": "748478ab4fc59404dcb230a45ac33156dc0945e132ea324a17f2963c867bc410",
+      "native_sha256": "748478ab4fc59404dcb230a45ac33156dc0945e132ea324a17f2963c867bc410",
+      "ranges_equal": true
+    },
+    {
+      "key": "draw-AA67",
+      "bank": "84",
+      "address": 43623,
+      "length": 12,
+      "offset": 141927,
+      "original_sha256": "ef054b64424fd6518e8a1c8b3d350138ba532331f36e759d336a73b8bc986f18",
+      "native_sha256": "ef054b64424fd6518e8a1c8b3d350138ba532331f36e759d336a73b8bc986f18",
+      "ranges_equal": true
+    },
+    {
+      "key": "draw-AA73",
+      "bank": "84",
+      "address": 43635,
+      "length": 12,
+      "offset": 141939,
+      "original_sha256": "f99f76d0cbe886a698c19b4fd664a6a8f661c594665a069186724dcef513cad9",
+      "native_sha256": "f99f76d0cbe886a698c19b4fd664a6a8f661c594665a069186724dcef513cad9",
+      "ranges_equal": true
+    },
+    {
+      "key": "draw-AA7F",
+      "bank": "84",
+      "address": 43647,
+      "length": 12,
+      "offset": 141951,
+      "original_sha256": "5b5b2adccfecd27f8543024bcfa21b449df6f8ce129d708a34be31a7c7117e27",
+      "native_sha256": "5b5b2adccfecd27f8543024bcfa21b449df6f8ce129d708a34be31a7c7117e27",
+      "ranges_equal": true
+    },
+    {
+      "key": "draw-AA8B",
+      "bank": "84",
+      "address": 43659,
+      "length": 12,
+      "offset": 141963,
+      "original_sha256": "349b2003710c68e0831855644220c7475d26fd87ef263a79f14c54e39b09d0e2",
+      "native_sha256": "349b2003710c68e0831855644220c7475d26fd87ef263a79f14c54e39b09d0e2",
+      "ranges_equal": true
+    }
+  ],
+  "limitations": [
+    "Closing script extent is 28 bytes through Delete; 49-byte address spacing includes unrelated opening data and after the fourth close, code.",
+    "All twenty draw ranges are selected by closing scripts, five per direction; some are also reused by adjacent opening scripts, which remain a separate domain.",
+    "Door/room compressed asset consumption remains unresolved; no compressed source lengths inferred from decompressed destination sizes."
+  ]
+}

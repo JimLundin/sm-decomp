@@ -1,0 +1,8 @@
+schema_version = 2
+subject = "Research18 listed input snapshot with absolute-path map; current bytes observed after research and before child/result publication"
+
+[source]
+revision = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+archive_sha256 = "69c78831351112887575f852dadf0281dd5c23cef890b07a268ae6cf60aa9193"
+freshness = "112 explicit regular-file inputs copied with source-byte readback; historical declarations are compared separately and do not claim current identity"
+files = {}

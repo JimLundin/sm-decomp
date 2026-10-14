@@ -1,0 +1,8 @@
+schema_version = 2
+subject = "Research18 audio acknowledgment and UI/menu scopes: frozen research package only; no gameplay acceptance"
+
+[source]
+revision = "3a8b9ea28b716d90df55f798941bba68e1df6531"
+archive_sha256 = "69c78831351112887575f852dadf0281dd5c23cef890b07a268ae6cf60aa9193"
+freshness = "Pinned recovered C; source observations and explicit inherited-seal gaps retained in worker's frozen no-run research package"
+files = {}

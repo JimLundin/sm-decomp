@@ -1,0 +1,80 @@
+{
+  "format": "decomp-research-rea-capability-observation-v1",
+  "target_opened": false,
+  "analysis_run": false,
+  "source_of_observation": "Actual REA binary_session response",
+  "open": false,
+  "providers": [
+    {
+      "id": "ghidra",
+      "availability": "unavailable",
+      "code": "not_configured",
+      "reason": "Set GHIDRA_INSTALL_DIR to an extracted Ghidra 12.1.x release directory.",
+      "checks": [
+        {
+          "name": "configuration",
+          "ok": false,
+          "code": "not_configured",
+          "detail": "GHIDRA_INSTALL_DIR is not set"
+        },
+        {
+          "name": "platform",
+          "ok": true,
+          "code": null,
+          "detail": "linux"
+        },
+        {
+          "name": "architecture",
+          "ok": true,
+          "code": null,
+          "detail": "x64"
+        },
+        {
+          "name": "installation",
+          "ok": false,
+          "code": "executable_missing",
+          "detail": "Ghidra application properties unavailable"
+        },
+        {
+          "name": "version",
+          "ok": false,
+          "code": "version_unresolved",
+          "detail": "unknown"
+        },
+        {
+          "name": "headless",
+          "ok": false,
+          "code": "executable_missing",
+          "detail": "analyzeHeadless unavailable"
+        },
+        {
+          "name": "native_decompiler",
+          "ok": false,
+          "code": "executable_missing",
+          "detail": "Matching native decompiler for linux/x64 was not found"
+        },
+        {
+          "name": "java",
+          "ok": false,
+          "code": "unsupported_version",
+          "detail": "17.0.15; 64-bit; JDK; /usr/lib/jvm/java-17-openjdk-amd64; accepted a 64-bit full JDK 21 or newer"
+        }
+      ]
+    },
+    {
+      "id": "hopper",
+      "availability": "unavailable",
+      "code": "executable_missing",
+      "reason": "Hopper launcher is missing or not executable: /opt/hopper/bin/Hopper"
+    },
+    {
+      "id": "ida",
+      "availability": "unavailable",
+      "code": "not_configured",
+      "reason": "Set REA_IDA_MCP_CONFIG to an upstream IDA MCP JSON registration; see docs/ida-provider.md."
+    }
+  ],
+  "limitations": [
+    "Capability response supplies no ROM analysis or REA binary Evidence. Native provider was not configured; no setup, installation, target lifecycle, runtime or database was created. ROM slice reads are ordinary shell static observations."
+  ]
+}

@@ -1,0 +1,8 @@
+schema_version = 2
+subject = "Research17 Waver lifecycle: sealed research artifacts only; no gameplay acceptance"
+
+[source]
+revision = "7ed3d383d6d3e28d21d1bb960acc5576ce82f5e9"
+archive_sha256 = "69c78831351112887575f852dadf0281dd5c23cef890b07a268ae6cf60aa9193"
+freshness = "Main baseline and pinned recovered-C archive; research package preserves exact input seals"
+files = {}

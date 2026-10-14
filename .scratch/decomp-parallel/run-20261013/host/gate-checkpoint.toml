@@ -1,0 +1,45 @@
+schema = "decomp-launch-checkpoint-v1"
+parent_session_id = "01a13592-d02b-7143-8489-a15b03f19da2"
+effort = "ceres-continuation"
+coordinator = "ceres-20261013"
+authority_generation = 2
+phase = "all-affected-batch-incomplete-at-integration-limit-build-failures-retained"
+baseline = "48656a284329d432291eca23a2ae0d1d7c0a3e48"
+source_commit = "7ed3d383d6d3e28d21d1bb960acc5576ce82f5e9"
+worktree = "/home/jim/sm-decomp"
+source_implementation_already_merged = true
+run_roots = ["/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated"]
+active_processes = []
+process_observed_at = "2026-10-13T15:24:00Z"
+process_started_at = "Tue Oct 13 16:23:48 2026"
+process_status = "stopped-after-3600-second-gate-limit-exit137"
+process_argv = ["target/debug/sm-pipeline", "batch", "verify", "--profile", "offline-all", "--changed-since", "48656a284329d432291eca23a2ae0d1d7c0a3e48", "--batch", "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml", "--jobs", "3", "--case-jobs", "4", "--fresh"]
+source_writes_during_freeze = false
+remaining = ["both scoped cleanup passes for stopped batch", "bounded compiler failure diagnosis", "review exact dependency repair scope", "complete missing affected families with authenticated reusable passes", "authenticate each selected verdict", "original Rust wrapper host integrated result", "controller integration"]
+
+[claim]
+id = "integrate-shared-game-host"
+revision = "48656a2-host-v1-1"
+attempt = 1
+coordinator = "ceres-20261013"
+
+[next]
+cwd = "/home/jim/sm-decomp"
+argv = ["cat", "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml"]
+purpose = "Inspect retained incomplete batch/failures and preserve passing receipts before bounded diagnosis; no duplicate whole-batch launch"
+
+[next.env]
+SM_PIPELINE_ROOT = "/home/jim/sm-decomp/out/pipeline"
+SM_PIPELINE_WORKERS = "4"
+
+[cleanup]
+status = "pending"
+remaining_action = "Confirmed batch parent stopped. Check every run writer, apply and deduplicate stopped batch, retain source/store/readers/diagnostics then authenticate passing receipts again"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/host/callback.stdout.txt"
+sha256 = "f03c118a1f1e53196725fa78bed715c6f92b54fd8c7f0e8844d623b4169553ce"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/host/family-host.stdout.txt"
+sha256 = "e03d77f38da930b109dd12985f6fb2366a468438f85eb4a05bf0c8208ad0b564"

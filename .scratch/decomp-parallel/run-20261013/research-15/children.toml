@@ -1,0 +1,139 @@
+format = "decomp-research-child-proposals-v1"
+status = "review-required"
+native_scope_admitted = false
+gameplay_acceptance = false
+origin_ticket = ".scratch/decomp-parallel/issues/15-door-room-plm-scope.md"
+source_baseline = "7ed3d383d6d3e28d21d1bb960acc5576ce82f5e9"
+worker_session_id = "01a135a1-959f-7e80-b593-21a91052e0dc"
+parent_session_id = "01a13592-d02b-7143-8489-a15b03f19da2"
+source_inventory = "tools/port/source-inventory.toml"
+source_inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+exercise_receipt_available = false
+exercise_gap = "Maintained schema2 exercise admits bank86 projectile diagnostics only; no supported complete bank84 PLM or bank82 door root receipt was located."
+coordinator_action = "Review and publish exact local task children to consumers07/09; reconcile shared infrastructure ownership and held Ceres source epoch before admission. No official ticket numbers or stage updates are authored by this worker."
+
+[[children]]
+key = "15-exercise-contract-supplement"
+type = "task"
+subject = "Extend shared native-root exercise contract to PLM and door dispatch/assets"
+proposal = "proposed-children/01-plm-door-exercise-contract.md"
+admission = "reviewed-infrastructure-scope-required"
+role = "integrator-owned-infrastructure"
+reuse_child = "research13:13-exercise-contract"
+depends_on = ["coordinator-review-of-research13-and-this-Answer", "11-finish-held-ceres-integration-and-frozen-source-gates", "current-source-inventory-producer-reader-equivalence"]
+writable_paths = ["crates/pipeline/src/native_exercise.rs", "crates/pipeline/src/native_exercise_model.rs", "crates/pipeline/src/native_exercise_host.c.in", "crates/pipeline/src/translation.rs", "crates/pipeline/src/main.rs", "crates/pipeline/tests/native_exercise.rs"]
+supplemental_paths_for_shared_owner_review = ["crates/pipeline/src/source_inventory.rs", "crates/pipeline/tests/assignment_queue.rs"]
+submission_argv = ["cargo", "test", "-p", "pipeline", "--locked", "--offline", "--test", "native_exercise"]
+submission_timeout_seconds = 60
+integration_argv = ["cargo", "test", "-p", "pipeline", "--locked", "--offline", "--test", "native_exercise", "--test", "assignment_queue", "--bin", "sm-pipeline"]
+integration_timeout_seconds = 3600
+acceptance = [
+  "Reuse one additive tagged Rust producer/reader contract; preserve schema2 bank86 diagnostics and historical seals.",
+  "Direct full24-bit root entry/completion/yield/resume observations for PlmHandler_Async and bank82 door roots, not synthetic wrapper/callee/allocator/camera inference.",
+  "Authenticate every active-slot header/preinstruction/list/opcode/continuation/draw selection, selected door function/direction and consumed asset ranges on naturally obtained input.",
+  "Bind pinned original/generated sources, host/templates, producer/binary/build/replay argv, ROM/native-patch/movie identities and complete nonzero diagnostic accepted=false status.",
+  "Correct source inventory producer-reader equivalence with semantic positive/negative controls; preserve old inventory and addressless source-definition identities.",
+  "Reject altered roots/counters/banks/definitions/dispatch assets/source/binary/build/ROM/movie/argv, partial/zero execution and stale or fabricated address provenance.",
+]
+limitations = ["This supplements research13, not a second competing pipeline owner.", "Proposed new modules/test targets do not exist yet; exact file hashes and source epoch must be sealed by coordinator review.", "No gameplay or original-ROM timing acceptance."]
+
+[[children]]
+key = "15-plm-frame-adapter"
+type = "task"
+subject = "Add complete-root PLM actual-C fixture and exclusive live adapter"
+proposal = "proposed-children/02-plm-frame-adapter.md"
+admission = "reviewed-infrastructure-scope-required"
+role = "integrator-owned-infrastructure"
+depends_on = ["11-finish-held-ceres-integration-and-frozen-source-gates", "15-exercise-contract-supplement", "13-hardware-adapter-for-material-live-effects", "coordinator-reviewed-full-WRAM-and-execution-once-service-contract"]
+writable_paths = ["crates/pipeline/src/plm_frame_adapter.rs", "crates/pipeline/src/plm_frame_model.rs", "crates/pipeline/src/plm_frame_host.c.in", "crates/pipeline/src/plm_frame_abi.rs.in", "crates/pipeline/src/family.rs", "crates/pipeline/src/family_model.rs", "crates/pipeline/src/callback.rs", "crates/pipeline/src/live.rs", "crates/pipeline/src/live_model.rs", "crates/pipeline/src/main.rs", "crates/pipeline/tests/plm_frame_adapter.rs", "tools/port/batch.toml"]
+submission_argv = ["cargo", "test", "-p", "pipeline", "--locked", "--offline", "--test", "plm_frame_adapter"]
+submission_timeout_seconds = 60
+integration_argv = ["cargo", "test", "-p", "pipeline", "--locked", "--offline", "--test", "plm_frame_adapter", "--test", "family", "--test", "live"]
+integration_timeout_seconds = 3600
+acceptance = [
+  "Invoke real compiled-C PlmHandler_Async with complete WRAM/uint8 return and ordered draw/VRAM/SFX effect observations; retain synthetic wrapper identity separately.",
+  "Use original28-byte closing scripts and27 sealed ranges with independent mutated extent/terminator/opcode/direction controls; observe complete forty-slot invocation.",
+  "Whole-invocation preflight/private-state commit; refused request leaves public state unchanged and every fallback is counted.",
+  "Exclusive live root entry ownership; first service attempt/failure or late failure is fatal and never executes C again.",
+  "Source-stable four-subject material root replay with exact game/hardware/terminal state and ordered effect seals; later real coroutine adapter adds nested message state and global image.",
+  "Define and retain exact supported live and independent original-ROM route argv before gameplay scope promotion; no invented current CLI flags.",
+]
+limitations = ["Selected shared files require reconciled ownership and hunk review; proposal grants no path ownership.", "Initial admitted closing domain rejects all message resumes, unsupported slots/scripts and external callbacks before publication.", "Existing allocation live adapter and bounded whitelist are insufficient; current adapter target does not exist."]
+
+[[children]]
+key = "15-plm-frame-implementation"
+type = "task"
+subject = "Own complete admitted PlmHandler_Async invocation over closing-door scripts"
+proposal = "proposed-children/03-plm-frame-implementation.md"
+admission = "translation-scope-v1-after-supported-exercise"
+role = "isolated-gameplay-implementer"
+depends_on = ["15-exercise-contract-supplement", "15-plm-frame-adapter", "current-source-verified-plm-allocation-instruction-render-audio-leaves", "coordinator-published-origin-task-and-exact-input-dependency-writable-hashes"]
+writable_paths = ["crates/port/src/plm_frame.rs", "crates/port/tests/plm_frame.rs", "tools/port/plm-frame.toml"]
+routines = ["PlmHandler_Async"]
+reuse_modules = ["plm", "plm_instructions", "plm_render", "audio"]
+submission_argv = ["cargo", "test", "-p", "port", "--locked", "--offline", "--test", "plm_frame", "--test", "plm_instructions", "--test", "plm_render", "--test", "plm"]
+submission_timeout_seconds = 60
+integration_argv = ["cargo", "run", "-p", "pipeline", "--locked", "--offline", "--bin", "sm-pipeline", "--", "family-verify", "--manifest", "tools/port/plm-frame.toml", "--output", "out/port/plm-frame", "--case-jobs", "4"]
+integration_timeout_seconds = 3600
+acceptance = [
+  "Whole root visits every active slot in global-id order, preserving disable/empty/timer wrap/deletion/byte continuation and duration-draw geometry order; never skips an unsupported slot.",
+  "Bind full active-slot/script domain, all required leaf evidence and exact original asset ranges; complete fixture chain through all closing tuples and final Delete.",
+  "Full canonical WRAM/returns/ordered effects match actual C and independent malformed/refusal/private-publication/failure controls.",
+  "Integrator alone registers state/ROM/lib/host/catalog and verifies every affected family plus separate material live/original-ROM gates.",
+  "Both cleanup passes, source/readers/shared-store/private-input retention, implementer worktree retirement and post-cleanup authentication precede completion.",
+]
+limitations = ["Proposed routine ownership is one complete bounded-domain invocation, not all bank84 scripts or a door transition.", "No earned gameplay stage; no direct-root receipt, new public caller, fixture adapter or live/original gate currently exists.", "Wider callback/global-id and real message domains require the successor child and fresh scope admission."]
+
+[[children]]
+key = "15-message-coroutine"
+type = "task"
+subject = "Own actual message coroutine dependency and PLM continuation adapter"
+proposal = "proposed-children/04-message-coroutine.md"
+admission = "reviewed-infrastructure-and-gameplay-scopes-required"
+role = "separate-message-gameplay-owner-with-integrator-adapter-owner"
+depends_on = ["15-plm-frame-adapter", "15-plm-frame-implementation", "13-hardware-adapter-and-nmi-boundary", "12-controller-poll-and-original-ROM-timing", "18-audio-service-lifecycle", "direct-message-root-and-table-asset-exercise"]
+writable_paths = ["crates/port/src/message_box.rs", "crates/port/tests/message_box.rs", "tools/port/message-box.toml"]
+infrastructure_paths_for_separate_review = ["crates/pipeline/src/message_box_adapter.rs", "crates/pipeline/src/message_box_model.rs", "crates/pipeline/src/message_box_host.c.in", "crates/pipeline/src/message_box_abi.rs.in", "crates/pipeline/tests/message_box_adapter.rs", "crates/pipeline/src/plm_frame_adapter.rs", "crates/pipeline/src/plm_frame_model.rs"]
+routines = ["DisplayMessageBox_Async", "InitializePpuForMessageBoxes", "ClearMessageBoxBg3Tilemap", "WriteMessageTilemap", "WriteLargeMessageBoxTilemap", "WriteSmallMessageBoxTilemap", "CallMsgBoxDraw", "MsgBoxMakeHdmaTable", "SetupMessageBoxBg3YscrollHdma", "SetupPpuForActiveMessageBox", "DrawSpecialButtonAndSetupPpuForLargeMessageBox", "DrawShootButtonAndSetupPpuForLargeMessageBox", "DrawRunButtonAndSetupPpuForLargeMessageBox", "SetupPpuForSmallMessageBox", "SetupPpuForLargeMessageBox", "CallMsgBoxModify", "InitializeMessageBox", "ToggleSaveConfirmationSelection", "RestorePpuForMessageBox", "OpenMessageBox_Async", "HandleMessageBoxInteraction_Async", "CloseMessageBox_Async"]
+submission_argv = ["cargo", "test", "-p", "port", "--locked", "--offline", "--test", "message_box"]
+submission_timeout_seconds = 60
+integration_argv = ["cargo", "run", "-p", "pipeline", "--locked", "--offline", "--bin", "sm-pipeline", "--", "family-verify", "--manifest", "tools/port/message-box.toml", "--output", "out/port/message-box", "--case-jobs", "4"]
+integration_timeout_seconds = 3600
+acceptance = [
+  "Actual complete bank85 coroutine with nested states0614/0615, returns, selection/timers and global message_box_das0l_value outside WRAM.",
+  "Synchronous byte MMIO/full PPU-DMA image and audio/controller/NMI effects preserve actual C order; no canned host return.",
+  "PLM state0613 resume does not repeat preceding opcode/preinstruction/timer, clears queued message only on completion, restores continuation and completes remaining slots.",
+  "All message table/tile/HDMA asset extents, direct root/yield/resume material counters and independent refusal/no-retry controls are sealed.",
+  "Native C behavior and independent original-ROM delay/controller parity remain separately evidenced; cleanup/retention/authentication required.",
+]
+limitations = ["Twenty-two bank85 routines are a proposed coherent dependency scope; actual provenance and hardware/audio/controller acceptance remain blockers.", "Pipeline files and future plm_frame.rs resume changes require separate exact reviewed ownership, not this gameplay file list."]
+
+[[children]]
+key = "15-door-transition-successor"
+type = "task"
+subject = "Own complete measured door transition orchestration after dependency closure"
+proposal = "proposed-children/05-door-transition-successor.md"
+admission = "translation-scope-v1-after-supported-exercise-and-owned-dependencies"
+role = "isolated-door-gameplay-implementer"
+depends_on = ["15-exercise-contract-supplement", "15-plm-frame-implementation", "15-message-coroutine-if-observed-route-queues-message", "13-hardware-nmi-irq-dma-and-vblank-contract", "12-controller-original-ROM-timing", "18-audio-lifecycle", "whole-room-load-header-state-map-FX-background-setup-dependencies", "whole-enemy-init-main-eproj-draw-dependencies", "whole-player-transition-palette-draw-dependencies", "animated-tiles-palette-FX-HDMA-dependencies", "observed-route-compressed-asset-consumption-and-digests", "dedicated-door-actual-C-live-original-ROM-adapter"]
+writable_paths = ["crates/port/src/door_transition.rs", "crates/port/tests/door_transition.rs", "tools/port/door-transition.toml"]
+routines = ["GameState_9_HitDoorBlock", "GameState_10_LoadingNextRoom_Async", "GameState_11_LoadingNextRoom_Async", "CallDoorTransitionFunction_Async", "DoorTransitionFunction_HandleElevator", "DoorTransitionFunction_Wait48frames", "DoorTransitionFunction_WaitForSoundsToFinish", "DoorTransitionFunction_FadeOutScreen", "DoorTransitionFunction_LoadDoorHeaderEtc", "DoorTransitionFunction_ScrollScreenToAlignment", "DoorTransitionFunction_FixDoorsMovingUp", "DoorTransitionFunction_SetupNewRoom", "DoorTransitionFunction_SetupScrolling", "DoorTransitionFunction_PlaceSamusLoadTiles", "DoorTransitionFunction_LoadMoreThings_Async", "DoorTransition_C_HandleAnimTiles", "DoorTransition_WaitForMusicToClear", "DoorTransition_HandleTransition", "DoorTransition_FadeInScreenAndFinish"]
+submission_argv = ["cargo", "test", "-p", "port", "--locked", "--offline", "--test", "door_transition", "--test", "plm_frame", "--test", "camera_scroll", "--test", "room_scroll"]
+submission_timeout_seconds = 60
+integration_argv = ["cargo", "run", "-p", "pipeline", "--locked", "--offline", "--bin", "sm-pipeline", "--", "family-verify", "--manifest", "tools/port/door-transition.toml", "--output", "out/port/door-transition", "--case-jobs", "4"]
+integration_timeout_seconds = 3600
+acceptance = [
+  "Direct observed complete transition and admitted selector/background/setup/PLM closure;19 orchestrators depend on explicit owned gameplay rather than whole-root host delegation.",
+  "State9/10/11 and0612 await1/2, sounds/fades/room load/graphics DMA/NMI-IRQ flag/PLM/final state8 order match complete actual-C state/returns/effects.",
+  "Preserve camera X-before-Y, accepted eleven room-scrolling routines and existing17 ordered room-host flushes as separate dependency contracts.",
+  "Colored-door second-script/header, original4..7 closing selector,6-byte room PLM entries and all route-consumed compressed assets have exact bounds/digests and malformed controls.",
+  "Four material live subjects plus independent original-ROM transition/timing comparison, explicit fallback/refusal/no-retry controls, cleanup/authentication and source/worktree retention required.",
+]
+limitations = ["No direct-root receipt, selected full transition or compressed source extents are available now.", "Nineteen orchestrators are an ownership anchor; full helper closure can exceed32 and must be admitted as successive complete dependency scopes.", "New proposed test/manifest/live adapter targets are not implemented; root review must seal concrete live/original argv before assignment."]
+
+[budget]
+SM_PIPELINE_ROOT = "/home/jim/sm-decomp/out/pipeline"
+SM_PIPELINE_WORKERS = 4
+assignment_capacity = 3
+initial_seconds = 60
+integration_seconds = 3600

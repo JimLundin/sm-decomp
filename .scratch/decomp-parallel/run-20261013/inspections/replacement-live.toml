@@ -1,0 +1,8 @@
+schema = "decomp-session-observation-v1"
+session_id = "01a13592-d02b-7143-8489-a15b03f19da2"
+status = "active"
+observed_at = "2026-10-13T14:15:58Z"
+
+[[evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/inspections/self.json"
+sha256 = "8a2e98ca1ca1eaa9cfe0d89b1933277a47451dfde6a2ccc2e18be0b396e7847b"

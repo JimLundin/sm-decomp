@@ -1,0 +1,34 @@
+schema = "assignment-result-request-v1"
+
+[update]
+event = "finished"
+
+[update.claim]
+id = "ticket-cf844dcf0283917c8b1718f9eabb058af9a18ed0d72c0de3621ac999c7e646f2"
+revision = "bd78c1ca6d3487b6cd3adafd57452f7f26a27f54635cb57b947eab8ac0221a63"
+attempt = 1
+coordinator = "decomp-run-20261013"
+
+[update.result]
+result = "researched"
+followups = []
+
+[[update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/Answer.md"
+sha256 = "0ee118454ef5c93d40d7e0239776c07ca464f8e64fbb4ec7d3b003623b8e7a39"
+
+[[update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/children.toml"
+sha256 = "c1189da5f9754eefb34aed297311091fb475c991a1f44a72a0385cb29ae60254"
+
+[[update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/manual-handoff.toml"
+sha256 = "3bd0c55ac6db79455db713b7639f9d15332c959e9f41ffb40f4c19343a33e3cb"
+
+[[update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/artifacts.sha256"
+sha256 = "24af872ffb5f8e4771e4afb4c4126d527a7466c3c2f466649eb9ffeaec67a98f"
+
+[[update.result.evidence]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/cleanup.toml"
+sha256 = "a5a0e191b4d5ca2fb93c6c1935f07eed85fff0a809463f9cbc1741dd162b57f4"

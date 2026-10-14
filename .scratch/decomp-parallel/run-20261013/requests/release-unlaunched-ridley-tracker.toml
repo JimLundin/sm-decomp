@@ -1,0 +1,21 @@
+operation = "record"
+checkout = "/home/jim/sm-decomp"
+effort = "decomp-parallel"
+coordinator = "decomp-run-20261013"
+capacity = 3
+pipeline_root = "/home/jim/sm-decomp/out/pipeline"
+workers = 4
+
+[authority]
+session_id = "01a13592-d02b-7143-8489-a15b03f19da2"
+generation = 1
+
+[update]
+event = "launch-failed"
+reason = "No subagent was launched for this reservation. Ticket16 tracks held original Ridley141 work; coordinator-start explicitly selects Ceres11 then read-only15/17. Preserve original Ridley ownership and defer this tracker until Ceres11 completes."
+
+[update.claim]
+id = "ticket-81d3d6691a3ab143a2034f57896e0dc7262a2ff8cc9b3b5c66d339e47f208832"
+revision = "6e979f3b6e84360f6098e4863fb8a7c7f45629f8d0a3f5315a38bb3eb8312e93"
+attempt = 1
+coordinator = "decomp-run-20261013"

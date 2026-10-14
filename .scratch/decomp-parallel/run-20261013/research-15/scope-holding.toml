@@ -1,0 +1,33 @@
+format = "decomp-subsystem-research-holding-v1"
+subject = "Complete admitted PlmHandler_Async invocation over original closing-door scripts"
+source_baseline = "7ed3d383d6d3e28d21d1bb960acc5576ce82f5e9"
+accepted = false
+assign_scope_supported = false
+readiness = "research-awaiting-supported-direct-root-provenance-and-adapter"
+routines = ["PlmHandler_Async"]
+routine_address = "0x8485B4"
+definition_sha256 = "09bef2ad6e96bcb3b92f08b33b6376353051317e77fd2384151f94bbe5abd666"
+proposed_writable_paths = ["crates/port/src/plm_frame.rs", "crates/port/tests/plm_frame.rs", "tools/port/plm-frame.toml"]
+reused_modules = ["plm", "plm_instructions", "plm_render", "audio"]
+selected_preinstructions = ["PlmPreInstr_Empty2:0x8484E6"]
+selected_opcodes = ["PlmInstr_Delete:0x8486BC", "PlmInstr_SetBTS:0x848AF1", "PlmInstr_QueueSfx3_Max6:0x848C19"]
+selected_headers = ["0x84C8BA", "0x84C8BE", "0x84C8C2", "0x84C8C6"]
+selected_scripts = ["0x84C49E:28", "0x84C4CF:28", "0x84C500:28", "0x84C531:28"]
+asset_observations = "rom-ranges.json"
+source_observations = "source-observations.json"
+unready_dependencies = ["Supported direct-root bank84 invocation and naturally obtained active-slot/script evidence", "Current lexical source inventory producer-reader equivalence", "Reviewed full-root actual-C fixture and exclusive live adapter", "Current-source actual-C leaf evidence and exact dependency hashes", "Transactional public caller with whole-invocation admission", "Reviewed hardware image/material live and independent original-ROM route argv", "Coordinator-published exact task origin and writable-input seals"]
+protected_shared_paths = ["crates/port/src/lib.rs", "crates/port/src/memory.rs", "crates/port/src/game_host.rs", "crates/pipeline/src/main.rs", "crates/pipeline/src/callback.rs", "tools/port/batch.toml", ".scratch/decomp-progress/registry.json"]
+limitations = ["Custom holding is not a native translation-scope-v1 and cannot authorize assign --scope", "No existing exercise proves this root; bank86 counters cannot be relabeled", "One complete bounded invocation only, not all PLM scripts or full door transition", "All active slots must be admitted; unsupported slot/message/callback refuses whole root before publication", "No achieved gameplay stage, source write or verification run"]
+
+[gates]
+submission_argv = ["cargo", "test", "-p", "port", "--locked", "--offline", "--test", "plm_frame", "--test", "plm_instructions", "--test", "plm_render", "--test", "plm"]
+submission_seconds = 60
+integration_argv = ["cargo", "run", "-p", "pipeline", "--locked", "--offline", "--bin", "sm-pipeline", "--", "family-verify", "--manifest", "tools/port/plm-frame.toml", "--output", "out/port/plm-frame", "--case-jobs", "4"]
+integration_seconds = 3600
+executed = false
+limitations = ["Proposed new test/manifest targets do not yet exist", "Concrete live/original-ROM argv must be implemented, reviewed and sealed before native scope promotion"]
+
+[budget]
+root = "/home/jim/sm-decomp/out/pipeline"
+workers = 4
+assignment_capacity = 3

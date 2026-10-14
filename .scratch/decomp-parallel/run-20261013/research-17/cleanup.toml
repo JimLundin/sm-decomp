@@ -1,0 +1,47 @@
+format = "decomp-research-cleanup-v1"
+status = "complete-no-run"
+worker_session_id = "01a135a5-c8f0-7c42-a3d7-8454dac4fb0e"
+source_baseline = "7ed3d383d6d3e28d21d1bb960acc5576ce82f5e9"
+scope = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17"
+observed_at_utc = "2026-10-13T14:58:24Z"
+experiments = 0
+compilations = 0
+verification_runs = 0
+live_replays = 0
+capture_extractions = 0
+run_directories = []
+worker_owned_long_lived_processes = []
+implemented_worktrees = []
+removed_worktrees = []
+removed_paths = []
+reclaimed_bytes = 0
+available_bytes_observed = 195133591552
+process_inspection = "lsof -nP +D /home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17"
+process_inspection_exit_code = 1
+process_inspection_output = "No listed open file or writer under selected output at inspection; no worker-owned run/build process was launched."
+disk_inspection = "df -B1 --output=avail /home/jim/sm-decomp"
+cleanup_commands_run = []
+cleanup_reason = "Read-only primary-source research created no run directory, disposable build output or implementer worktree. No sm-pipeline cleanup/authentication command was needed or executed; parent owns its independent frozen host batch."
+remaining_action = "None for research17. Parent retains publication authority and handles cleanup of its own host batch."
+retained_dependencies = [
+  "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/inputs.sha256",
+  "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/receipts/next-research-3.stdout.toml",
+  "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/receipts/start-research-17.stdout.toml",
+  "/home/jim/sm-decomp/deps/snesrev-sm",
+  "/home/jim/sm-decomp/tools/dependencies.toml",
+  "/home/jim/sm-decomp/tools/port/source-inventory.toml",
+  "/home/jim/sm-decomp/rom/sm.sfc",
+  "/home/jim/sm-decomp/movies/super-metroid-any-3653.inputs",
+  "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-inventory/1791858734336387661-2/verdict.toml",
+  "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-inventory/1791858734336387661-2/enemy-instructions.tsv",
+  "/home/jim/sm-decomp/out/recovery-session/composed-live-release/1791861180321696848-129445/verdict.toml",
+  "/home/jim/sm-decomp/.scratch/decomp-port/recovery-composed-post-cleanup-authentication.toml",
+  "/home/jim/sm-decomp/.scratch/decomp-port/parallel-137-admission-native-live-authentication.toml",
+  "/home/jim/sm-decomp/out/evidence",
+]
+retention_limitations = [
+  "All historical family verdict/source hashes are in inputs.sha256; preserve their referenced source snapshots, manifests, oracles, evidence.toml subject pointers, readers and private artifacts.",
+  "This research rehashed primary retained verdicts and inspected source only; it did not execute fresh authentication of every referenced artifact against current source.",
+  "The old native137 /tmp/sm-pipeline-upgrade-integration verdict pointer is absent on this host. Preserve its historical pointer and present composed lineage; do not fabricate or rebind it.",
+  "No existing shared store object, reader, ROM, movie, source snapshot, claim, submission or evidence file was removed or rewritten.",
+]

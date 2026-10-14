@@ -1,0 +1,522 @@
+{
+  "format": "decomp-research-routine-observations-v1",
+  "source": {
+    "revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+    "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+    "identity_sha256": "e74864c229949fc6f1a6bd7528f339bdb3f9364f1e4f9544f08693881d10f111",
+    "definition_count": 6053,
+    "body_lines": 75229,
+    "scope": "actual sm_*.c lexical definitions/calls; macros, externals and indirect calls require review; no acceptance inferred"
+  },
+  "scope_status": "prospective-blocked-no-direct-non-Ridley-exercise",
+  "routines": [
+    {
+      "symbol": "DrawSpritemapWithBaseTile",
+      "source": "src/sm_81.c",
+      "line": 251,
+      "original_address": "0x818AB8",
+      "body_lines": 19,
+      "definition_sha256": "8efae435b19cd5e46214ff36c185ab25a044c9f4e59a2944702fe5ae479137fb",
+      "calls": [
+        "GET_WORD",
+        "RomPtrWithBank",
+        "gOamEnt"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "RecordEnemySpawnData",
+      "source": "src/sm_a0.c",
+      "line": 315,
+      "original_address": "0xA088D0",
+      "body_lines": 33,
+      "definition_sha256": "48855798c4ca45ad7ed31a2aac23f5f390bb520a39d9db07c7cc7fc2daf418d6",
+      "calls": [
+        "RomPtr_B4",
+        "gEnemyData",
+        "gEnemySpawnData",
+        "get_EnemyDef_A2"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "InitializeEnemies",
+      "source": "src/sm_a0.c",
+      "line": 370,
+      "original_address": "0xA08A9E",
+      "body_lines": 55,
+      "definition_sha256": "387b797fe58cff245218dd793efea99d02ba45f66c904dd376e33e49a1449485",
+      "calls": [
+        "CallEnemyAi",
+        "LoadEnemyGfxIndexes",
+        "RecordEnemySpawnData",
+        "RomPtr_A1",
+        "gEnemyData",
+        "get_EnemyDef_A2",
+        "get_EnemyPopulation",
+        "memset"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "LoadEnemyGfxIndexes",
+      "source": "src/sm_a0.c",
+      "line": 426,
+      "original_address": "0xA08BF3",
+      "body_lines": 21,
+      "definition_sha256": "205e2f25dc344c470a42397f41cc3100d7584aa9a1dc6bfa1256a16e1a6a5fac",
+      "calls": [
+        "gEnemyData",
+        "gEnemySpawnData",
+        "get_EnemyDef_A2",
+        "get_EnemyPopulation",
+        "get_EnemyTileset"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "DetermineWhichEnemiesToProcess",
+      "source": "src/sm_a0.c",
+      "line": 541,
+      "original_address": "0xA08EB6",
+      "body_lines": 59,
+      "definition_sha256": "6b877298ea2c7a75dffec10e710e9e18477b97007b878c73af856926fa3aa851",
+      "calls": [
+        "gEnemyData",
+        "sign16"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "EnemyMain",
+      "source": "src/sm_a0.c",
+      "line": 1724,
+      "original_address": "0xA08FD4",
+      "body_lines": 79,
+      "definition_sha256": "32829b558e473248db01179cf138a728945abdf69259b9ee9cc0d2c44856a63e",
+      "calls": [
+        "CallEnemyAi",
+        "DrawOneEnemy",
+        "EnemyCollisionHandler",
+        "EnemyDeathAnimation",
+        "EnemyWithNormalSpritesIsOffScreen",
+        "HandleSpriteObjects",
+        "ProcessEnemyInstructions",
+        "gEnemyData",
+        "gEnemySpawnData",
+        "get_EnemyDef_A2",
+        "sign16"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "SpawnEnemy",
+      "source": "src/sm_a0.c",
+      "line": 1833,
+      "original_address": "0xA09275",
+      "body_lines": 77,
+      "definition_sha256": "39ba9c330e619a910d3d6ba9718e1aabc198da48a7936b08653c1c8fd6bb94a8",
+      "calls": [
+        "CallEnemyAi",
+        "RecordEnemySpawnData",
+        "gEnemyData",
+        "get_EnemyDef_A2",
+        "get_EnemyPopulation",
+        "sign16",
+        "swap16"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "DrawOneEnemy",
+      "source": "src/sm_a0.c",
+      "line": 1911,
+      "original_address": "0xA09423",
+      "body_lines": 5,
+      "definition_sha256": "6887eb0404f9342c49343d9a774a1d691129e5d7e40149b86705115544dd4a41",
+      "calls": [
+        "RomPtr_RAM",
+        "gEnemyData"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "WriteEnemyOams",
+      "source": "src/sm_a0.c",
+      "line": 1917,
+      "original_address": "0xA0944A",
+      "body_lines": 51,
+      "definition_sha256": "6327174dce7beec9b64572c7f744a536a7994aeead9cb60aa37cca18d0af776b",
+      "calls": [
+        "DrawSpritemapWithBaseTile",
+        "DrawSpritemapWithBaseTile2",
+        "DrawSpritemapWithBaseTileOffscreen",
+        "HIBYTE",
+        "ProcessExtendedTilemap",
+        "RomPtrWithBank",
+        "Unreachable",
+        "gEnemyData",
+        "gEnemySpawnData",
+        "get_ExtendedSpriteMap"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "EnemyCollisionHandler",
+      "source": "src/sm_a0.c",
+      "line": 2007,
+      "original_address": "0xA09758",
+      "body_lines": 11,
+      "definition_sha256": "011e2553b6f90774a65112b7818d0ce316b0df505c7521578548336110ab48cf",
+      "calls": [
+        "EnemyBombCollHandler",
+        "EnemyBombCollHandler_Multibox",
+        "EnemySamusCollHandler",
+        "EnemySamusCollHandler_Multibox",
+        "EprojCollHandler",
+        "EprojCollHandler_Multibox",
+        "gEnemyData"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "EnemyGrappleDeath",
+      "source": "src/sm_a0.c",
+      "line": 2389,
+      "original_address": "0xA09FC4",
+      "body_lines": 5,
+      "definition_sha256": "25b89c0c57e77cdcc3d63c5487188059b6d46d815215c3c6682d72406c699091",
+      "calls": [
+        "EnemyDeathAnimation",
+        "gEnemyData",
+        "gEnemySpawnData"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "EnemySamusCollHandler",
+      "source": "src/sm_a0.c",
+      "line": 2423,
+      "original_address": "0xA0A07A",
+      "body_lines": 24,
+      "definition_sha256": "490a946697c02703e2d4982362d1f522c0b00db1e609443271c02d7229791035",
+      "calls": [
+        "CallEnemyAi",
+        "FUNC16",
+        "abs16",
+        "gEnemyData",
+        "gEnemySpawnData",
+        "get_EnemyDef_A2"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "EprojCollHandler",
+      "source": "src/sm_a0.c",
+      "line": 2448,
+      "original_address": "0xA0A143",
+      "body_lines": 29,
+      "definition_sha256": "db0a27f39ca25217affc0c1b3771e4eaaedc0a626258ffcdae17d9df2bb39362",
+      "calls": [
+        "CallEnemyAi",
+        "abs16",
+        "gEnemyData",
+        "get_EnemyDef_A2",
+        "sign16"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "EnemyBombCollHandler",
+      "source": "src/sm_a0.c",
+      "line": 2478,
+      "original_address": "0xA0A236",
+      "body_lines": 19,
+      "definition_sha256": "dd61ea541da5d9b683a0a0b9760d5e2ad8088e250ccd0952b6008870a0844167",
+      "calls": [
+        "CallEnemyAi",
+        "abs16",
+        "gEnemyData",
+        "get_EnemyDef_A2"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "ProcessEnemyPowerBombInteraction",
+      "source": "src/sm_a0.c",
+      "line": 2498,
+      "original_address": "0xA0A306",
+      "body_lines": 19,
+      "definition_sha256": "1c9422594e8583107a48c2561d98cbf158e4eee4bcff2dd95b7b154dc2b45af7",
+      "calls": [
+        "CallEnemyAi",
+        "FUNC16",
+        "HIBYTE",
+        "abs16",
+        "gEnemyData",
+        "get_EnemyDef_A2",
+        "get_Vulnerability"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "EnemyDeathAnimation",
+      "source": "src/sm_a0.c",
+      "line": 2518,
+      "original_address": "0xA0A3AF",
+      "body_lines": 16,
+      "definition_sha256": "8d57cfeaed1af6216483d81796a19d2d65955fdb3201620ed9f9aa5ea6725cac",
+      "calls": [
+        "FUNC16",
+        "SpawnEprojWithGfx",
+        "gEnemyData",
+        "memset",
+        "sign16"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "NormalEnemyTouchAi",
+      "source": "src/sm_a0.c",
+      "line": 2557,
+      "original_address": "0xA0A477",
+      "body_lines": 7,
+      "definition_sha256": "07bbcc5f9b8e8a7c96fdada33a69c00c505127d362b165b80509ae07946db5b3",
+      "calls": [
+        "EnemyDeathAnimation",
+        "NormalEnemyTouchAiSkipDeathAnim",
+        "gEnemyData",
+        "gEnemySpawnData"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "NormalEnemyTouchAiSkipDeathAnim",
+      "source": "src/sm_a0.c",
+      "line": 2569,
+      "original_address": "0xA0A4A1",
+      "body_lines": 39,
+      "definition_sha256": "679dc95ef923456962cdf08872a1e2550fb886054d29d91caef67a6cde36cff3",
+      "calls": [
+        "CallSomeSamusCode",
+        "QueueSfx2_Max1",
+        "Samus_DealDamage",
+        "SuitDamageDivision",
+        "gEnemyData",
+        "get_EnemyDef_A2",
+        "get_Vulnerability"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "NormalEnemyPowerBombAi",
+      "source": "src/sm_a0.c",
+      "line": 2609,
+      "original_address": "0xA0A597",
+      "body_lines": 7,
+      "definition_sha256": "21623c5a390223bd4e78c67913a6560e67f1987d7d8bbbd81b96848aa1072bb6",
+      "calls": [
+        "EnemyDeathAnimation",
+        "NormalEnemyPowerBombAiSkipDeathAnim",
+        "gEnemyData",
+        "gEnemySpawnData"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "NormalEnemyPowerBombAiSkipDeathAnim",
+      "source": "src/sm_a0.c",
+      "line": 2621,
+      "original_address": "0xA0A5C1",
+      "body_lines": 34,
+      "definition_sha256": "91d55f9f657580eec15cb7885d7092b94de750672d2de553cdf70b043c6a267e",
+      "calls": [
+        "gEnemyData",
+        "get_EnemyDef_A2",
+        "get_Vulnerability"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "NormalEnemyShotAi",
+      "source": "src/sm_a0.c",
+      "line": 2656,
+      "original_address": "0xA0A63D",
+      "body_lines": 20,
+      "definition_sha256": "eca2355c5f0d699ce5eaa00e74c6f86face07b68c660d40eb7af87f33358e4a7",
+      "calls": [
+        "CreateSpriteAtPos",
+        "EnemyDeathAnimation",
+        "HIBYTE",
+        "NormalEnemyShotAiSkipDeathAnim",
+        "gEnemyData",
+        "gEnemySpawnData",
+        "get_EnemyDef_A2",
+        "sign16"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "NormalEnemyShotAiSkipDeathAnim",
+      "source": "src/sm_a0.c",
+      "line": 2689,
+      "original_address": "0xA0A6DE",
+      "body_lines": 107,
+      "definition_sha256": "e05434688adb5b193891deb73a821d4b71544e4fb1336727d659d2ec71d941b4",
+      "calls": [
+        "CreateSpriteAtPos",
+        "QueueSfx1_Max3",
+        "QueueSfx2_Max3",
+        "QueueSfx3_Max3",
+        "gEnemyData",
+        "get_EnemyDef_A2",
+        "get_Vulnerability"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "ProcessEnemyInstructions",
+      "source": "src/sm_a0.c",
+      "line": 3395,
+      "original_address": "0xA0C26A",
+      "body_lines": 23,
+      "definition_sha256": "cb5b6404db3aed407ef1171023569b04c290924be1072c7ce5cd43edd409ca85",
+      "calls": [
+        "CallEnemyInstr",
+        "RomBankBase",
+        "assert",
+        "gEnemyData"
+      ],
+      "declared_in": [
+        "tools/port/observed-ridley-instructions-captured.toml",
+        "tools/port/observed-ridley-instructions.toml",
+        "tools/port/ridley-subsystem-captured.toml",
+        "tools/port/ridley-subsystem.toml"
+      ]
+    },
+    {
+      "symbol": "Enemy_GrappleReact_KillEnemy_A3",
+      "source": "src/sm_a3.c",
+      "line": 70,
+      "original_address": "0xA3800A",
+      "body_lines": 3,
+      "definition_sha256": "91ff6c7e33b495f5ff79e77157f9138c7bd582772d5b280d3c15a5a3c01e653b",
+      "calls": [
+        "EnemyGrappleDeath"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "Enemy_NormalTouchAI_A3",
+      "source": "src/sm_a3.c",
+      "line": 78,
+      "original_address": "0xA38023",
+      "body_lines": 3,
+      "definition_sha256": "0f68c3f50ee6bc25f0954819a77b98aec9328a817289ae567c108ecc9be05e0b",
+      "calls": [
+        "NormalEnemyTouchAi"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "Enemy_NormalShotAI_A3",
+      "source": "src/sm_a3.c",
+      "line": 82,
+      "original_address": "0xA3802D",
+      "body_lines": 3,
+      "definition_sha256": "f34e13b9d153ba107b30441257cbca4dec90e3e0542cc6a39f05f812666efd16",
+      "calls": [
+        "NormalEnemyShotAi"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "Enemy_NormalPowerBombAI_A3",
+      "source": "src/sm_a3.c",
+      "line": 90,
+      "original_address": "0xA38037",
+      "body_lines": 3,
+      "definition_sha256": "535f41b0e2cfadaa05acc466381cbfb88edbc66ef51d779385dbe3444d22aac7",
+      "calls": [
+        "NormalEnemyPowerBombAi"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "Enemy_NormalFrozenAI_A3",
+      "source": "src/sm_a3.c",
+      "line": 94,
+      "original_address": "0xA38041",
+      "body_lines": 3,
+      "definition_sha256": "81515935c1dd2b9b8ce5f0bf67a812e49ab55bb66ba81f1455a4f3540155db9c",
+      "calls": [
+        "NormalEnemyFrozenAI"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "Waver_Instr_1",
+      "source": "src/sm_a3.c",
+      "line": 98,
+      "original_address": "0xA386E3",
+      "body_lines": 4,
+      "definition_sha256": "0c34307f1a9b683c780419ba7add2c3ec78d33115bcd7ab0f8d608dcb4ab3674",
+      "calls": [
+        "Get_Waver"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "Waver_Init",
+      "source": "src/sm_a3.c",
+      "line": 103,
+      "original_address": "0xA386ED",
+      "body_lines": 15,
+      "definition_sha256": "b69241b4243d0279a203c8d2a9878c2b94660a8f5d8a8479fc481e641b2bb0ea",
+      "calls": [
+        "Get_Waver",
+        "SignExtend8",
+        "Waver_Func_1"
+      ],
+      "declared_in": [
+        "tools/port/enemy-ai.toml"
+      ]
+    },
+    {
+      "symbol": "Waver_Main",
+      "source": "src/sm_a3.c",
+      "line": 119,
+      "original_address": "0xA3874C",
+      "body_lines": 25,
+      "definition_sha256": "fffebc3f1fdf9582cba7e3e8c6148a532e048c09caaaf9b85269970a5138f792",
+      "calls": [
+        "Enemy_MoveDown",
+        "Enemy_MoveRight_IgnoreSlopes",
+        "Get_Waver",
+        "INT16_SHL16",
+        "LOBYTE",
+        "SignExtend8",
+        "SineMult8bit",
+        "Waver_Func_1",
+        "__PAIR32__"
+      ],
+      "declared_in": [
+        "tools/port/enemy-ai.toml"
+      ]
+    },
+    {
+      "symbol": "Waver_Func_1",
+      "source": "src/sm_a3.c",
+      "line": 145,
+      "original_address": "0xA387FE",
+      "body_lines": 10,
+      "definition_sha256": "c2eb0fc3ddcb4728a55d901ced827f626df03cc187ba901db5c5aa100b54ecb5",
+      "calls": [
+        "Get_Waver"
+      ],
+      "declared_in": [
+        "tools/port/enemy-ai.toml"
+      ]
+    }
+  ]
+}

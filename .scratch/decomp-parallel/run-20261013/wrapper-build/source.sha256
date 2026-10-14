@@ -1,0 +1,7 @@
+c048edcbfcf9aa3c865b712ce0104d4ede8742f2a361b58e1a2b04ee36850e80  .scratch/decomp-parallel/run-20261013/wrapper-build/source/assignment_driver.rs
+922aae9fc20ab8467e3267bbdbe03f049467a72cda580946e4e53dc9bdd49e4e  .scratch/decomp-parallel/run-20261013/wrapper-build/source/assignment.rs
+7ff652b1624008debe9c071a9d62f3a002d97f449a711877aecd8300791fd33c  .scratch/decomp-parallel/run-20261013/wrapper-build/source/authority.rs
+9cb4c39f042c18456b3b7907953ba2664d9feb01469060328f368dc94496280f  .scratch/decomp-parallel/run-20261013/wrapper-build/source/drill_evidence.rs
+fb23ee81000d524f118d9a455da9934f54b8b0795a6701e3664d08b4593c736d  .scratch/decomp-parallel/run-20261013/wrapper-build/Cargo.toml
+1613ef5193f3596425b7cb6ab6ef86da4ef67c18bda0fee648a73194b231f4fa  .scratch/decomp-parallel/run-20261013/wrapper-build/Cargo.lock
+dcb26ac047a0ebfa5b043e5740c406b422606dd532de9253068647e406c7ac1a  .scratch/decomp-parallel/run-20261013/bin/ceres-assignment-driver

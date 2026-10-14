@@ -1,0 +1,94 @@
+{
+  "format": "decomp-research-output-validation-v1",
+  "worker_session_id": "01a135ca-3b5d-75a2-b717-23d486d7b6ec",
+  "accepted_as_gameplay": false,
+  "verification_run_created": false,
+  "checks": [
+    {
+      "check": "TOML syntax",
+      "command": [
+        "taplo",
+        "check",
+        "*.toml"
+      ],
+      "exit_code": 0,
+      "documents": 7
+    },
+    {
+      "check": "JSON syntax",
+      "command": [
+        "jq",
+        "empty",
+        "*.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "check": "112 listed input paths exist as regular files",
+      "exit_code": 0,
+      "missing": []
+    },
+    {
+      "check": "182 local Markdown links resolve",
+      "links": 182,
+      "unique": 31,
+      "exit_code": 0,
+      "missing": []
+    },
+    {
+      "check": "104 exact routine tables match preserved pinned source inventory",
+      "tables": 104,
+      "errors": [],
+      "malformedDigests": []
+    },
+    {
+      "check": "Five proposed 1–32 routine sets agree across child manifest and holding identities",
+      "findings": [
+        {
+          "scope": "18-audio-frame-implementation",
+          "count": 9,
+          "identity_matches": true,
+          "scope_gate_argv_valid": true
+        },
+        {
+          "scope": "18-pause-equipment-render",
+          "count": 8,
+          "identity_matches": true,
+          "scope_gate_argv_valid": true
+        },
+        {
+          "scope": "18-pause-equipment-interaction",
+          "count": 29,
+          "identity_matches": true,
+          "scope_gate_argv_valid": true
+        },
+        {
+          "scope": "18-options-menu-objects",
+          "count": 29,
+          "identity_matches": true,
+          "scope_gate_argv_valid": true
+        },
+        {
+          "scope": "18-options-menu-orchestration",
+          "count": 29,
+          "identity_matches": true,
+          "scope_gate_argv_valid": true
+        }
+      ]
+    },
+    {
+      "check": "63 inherited declared SHA-256 fields contain exactly 64 hexadecimal characters",
+      "valid": true,
+      "current_authentication": false
+    },
+    {
+      "check": "native scope argv has no source/checkout/root/changed-since override",
+      "valid": true
+    }
+  ],
+  "limitations": [
+    "These are document consistency checks, not actual-C/native/gameplay or original-ROM verification.",
+    "All new target/adapter/manifest gate commands remain unimplemented/unrun.",
+    "Parent must authenticate final exact capture bytes using sm-evidence ingest/inventory/verify."
+  ]
+}

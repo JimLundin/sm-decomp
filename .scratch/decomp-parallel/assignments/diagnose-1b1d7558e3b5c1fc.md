@@ -1,0 +1,36 @@
+# Diagnose projectile-movement-live-leaves: rejected
+
+Status: open
+Blocked by: None
+Triage: ready-for-agent
+Type: task
+
+<!-- decomp-assignment:diagnose-1b1d7558e3b5c1fc -->
+
+Stable work: `diagnose-1b1d7558e3b5c1fc`
+Input revision: `e55ed6dbb9c6db8cc90cfa8a9a99795bb3675076485b596e665fd8e767e675ce`
+
+## Assignment
+
+Read the retained projectile-movement-live-leaves failure in /home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml. Establish the first failing fixture and a bounded reproduction using existing Rust commands; cap initial experiments at 60 seconds. Report evidence and a local follow-up scope. Preserve diagnostic artifacts and complete cleanup.
+
+## Completion evidence
+
+Lifecycle and sealed result pointers are authoritative in `../ledger.toml`.
+
+<!-- decomp-assignment-record:start -->
+
+## Current assignment
+
+Stable work: `diagnose-1b1d7558e3b5c1fc`
+Input revision: `e55ed6dbb9c6db8cc90cfa8a9a99795bb3675076485b596e665fd8e767e675ce`
+Lifecycle: `ready`
+
+Read the retained projectile-movement-live-leaves failure in /home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/batch.toml. Establish the first failing fixture and a bounded reproduction using existing Rust commands; cap initial experiments at 60 seconds. Report evidence and a local follow-up scope. Preserve diagnostic artifacts and complete cleanup.
+
+Writable ownership:
+
+No maintained source writes.
+
+
+<!-- decomp-assignment-record:end -->

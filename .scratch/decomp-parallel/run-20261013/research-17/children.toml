@@ -1,0 +1,226 @@
+format = "decomp-research-child-proposals-v1"
+status = "review-required-gameplay-blocked"
+proposal_only = true
+native_scope_admitted = false
+gameplay_acceptance = false
+source_baseline = "7ed3d383d6d3e28d21d1bb960acc5576ce82f5e9"
+root_session_id = "01a13592-d02b-7143-8489-a15b03f19da2"
+worker_session_id = "01a135a5-c8f0-7c42-a3d7-8454dac4fb0e"
+origin_ticket = ".scratch/decomp-parallel/issues/17-other-enemy-lifecycle-scope.md"
+answer = ".scratch/decomp-parallel/run-20261013/research-17/Answer.md"
+input_manifest = ".scratch/decomp-parallel/run-20261013/research-17/inputs.sha256"
+input_manifest_sha256 = "6313fad3880191e8cf27be892e102bab791384fbd0b078026e8a57ef011b8c21"
+routine_observations = ".scratch/decomp-parallel/run-20261013/research-17/routine-observations.json"
+rom_observations = ".scratch/decomp-parallel/run-20261013/research-17/rom-observations.toml"
+source_inventory = "tools/port/source-inventory.toml"
+source_inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+recovered_c_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+dependency_identity_sha256 = "e74864c229949fc6f1a6bd7528f339bdb3f9364f1e4f9544f08693881d10f111"
+candidate_header = "0xA0D63F"
+candidate_routine_count = 32
+exercise_receipt_available = false
+exercise_gap = "Current translation::exercise authenticates schema2 bank86 projectile diagnostics only. Inspected retained enemy inventory observes A6 frame-bank calls and supplies no Waver direct-root provenance."
+publication_owner = "parent integrator ceres-20261013 generation2; parent dispatcher decomp-run-20261013 generation1"
+publication_action = "Review and allocate final ticket numbers/dependencies under milestones07/09; merge the provenance proposal into the shared research13/14 extension; admit no gameplay scope before supported exercise."
+
+[claim]
+id = "ticket-cf844dcf0283917c8b1718f9eabb058af9a18ed0d72c0de3621ac999c7e646f2"
+revision = "bd78c1ca6d3487b6cd3adafd57452f7f26a27f54635cb57b947eab8ac0221a63"
+attempt = 1
+coordinator = "decomp-run-20261013"
+
+[[children]]
+key = "17-exercise-contract"
+type = "task"
+admission = "reviewed-infrastructure-scope-required"
+subject = "Add authenticated complete native enemy-root exercise provenance"
+proposal = "proposed-children/01-enemy-root-exercise-contract.md"
+depends_on = ["review-of-this-Answer", "11-finish-held-ceres-integration"]
+reuse_shared_proposal = ["13-exercise-contract", "14-samus-frame-exercise-contract"]
+role = "integrator-owned-infrastructure"
+writable_paths = [
+  "crates/pipeline/src/native_exercise.rs",
+  "crates/pipeline/src/native_exercise_model.rs",
+  "crates/pipeline/src/native_exercise_host.c.in",
+  "crates/pipeline/src/translation.rs",
+  "crates/pipeline/src/main.rs",
+  "crates/pipeline/tests/native_exercise.rs",
+]
+submission_argv = ["cargo", "test", "-p", "pipeline", "--locked", "--offline", "--test", "native_exercise"]
+submission_timeout_seconds = 60
+integration_argv = ["cargo", "test", "-p", "pipeline", "--locked", "--offline", "--test", "native_exercise", "--test", "assignment_queue", "--test", "no_python"]
+integration_timeout_seconds = 3600
+acceptance = [
+  "Extend research13/14's one native-root contract additively while preserving bank86 schema2 parsing, producer authentication and legacy acceptance lineage.",
+  "Record real24-bit root/AI/opcode/allocation/contact/render addresses or exact source-definition identities for addressless dispatchers, entry/return/nesting/frame-window counters and material captures.",
+  "Bind original C inventory, selected indirect edges, generated units/host/build/binary/reader, original ROM/native-image/input/movie and completed diagnostic seals; accepted=false.",
+  "Full128KiB WRAM, actual eight host words and ordered synchronous service effects remain available for source-bound fixture generation in Rust.",
+  "Positive compiled actual-C root/selector controls and independent wrong-bank/callee-count/definition/source/generated-unit/binary/ROM/input/stale-inventory/zero/incomplete/material-state rejection controls pass.",
+  "Normal-play Waver root observation must be retained before scope promotion; controlled room/WRAM edits validate rejection/semantics only.",
+]
+limitations = [
+  "Unsupported provenance is a reviewed Rust extension task; this proposal supplies neither exercise receipt nor Translation scope.",
+  "Natural Waver route/window remains unavailable in inspected evidence; original controller/room/hardware prerequisites13–15 remain explicit.",
+  "Shared authority/translation engine source changes need the coordinator's fresh reviewed source epoch and checked admission after the frozen host gates.",
+  "All proposed targets and files require implementation; no command was executed by research17.",
+]
+
+[[children]]
+key = "17-enemy-transaction-adapter"
+type = "task"
+admission = "reviewed-infrastructure-scope-required"
+subject = "Add synchronous complete-state enemy lifecycle transaction adapter"
+proposal = "proposed-children/02-enemy-lifecycle-transaction-adapter.md"
+depends_on = ["review-of-this-Answer", "11-finish-held-ceres-integration", "17-exercise-contract", "14-reviewed-player-services", "15-reviewed-room-and-PLM-services"]
+role = "integrator-owned-infrastructure"
+new_paths = [
+  "crates/pipeline/src/enemy_lifecycle_adapter.rs",
+  "crates/pipeline/src/enemy_lifecycle_model.rs",
+  "crates/pipeline/src/enemy_lifecycle_host.c.in",
+  "crates/pipeline/src/enemy_lifecycle_abi.rs.in",
+  "crates/pipeline/tests/enemy_lifecycle_adapter.rs",
+]
+integrator_hook_paths = [
+  "crates/pipeline/src/family_model.rs",
+  "crates/pipeline/src/family.rs",
+  "crates/pipeline/src/inputs.rs",
+  "crates/pipeline/src/live.rs",
+  "crates/pipeline/src/live_model.rs",
+  "crates/pipeline/src/main.rs",
+  "tools/port/batch.toml",
+]
+submission_argv = ["cargo", "test", "-p", "pipeline", "--locked", "--offline", "--test", "enemy_lifecycle_adapter"]
+submission_timeout_seconds = 60
+integration_argv = ["cargo", "test", "-p", "pipeline", "--locked", "--offline", "--test", "enemy_lifecycle_adapter", "--test", "callback", "--test", "family", "--test", "live"]
+integration_timeout_seconds = 3600
+acceptance = [
+  "Versioned pre/post full128KiB WRAM and actual eight-word host state preserve enemy/SpawnData/extended overlay aliases, all nested service inputs, raw returns and ROM-pointer normalization.",
+  "Actual SpawnEnemy/death-projectile/Samus_DealDamage/CallSomeSamusCode(4)/PLM/audio/sprite callbacks execute synchronously on the latest state with complete ordered effects and copyback.",
+  "Immutable whole-call continuation/domain validation happens before the first effect, including full allocation/recursive-init/RNG/queue/result footprints; missing continuation is refused unchanged.",
+  "Independent first-service/mid-service error controls terminate accepted execution without C retry; refusal and partial writes remain distinguishable.",
+  "Dedicated enemy-lifecycle fixture/live adapter and source-bound compiled actual-C controls preserve native137 host/selector and held141 callback lineage.",
+  "Shared hooks are assigned and merged by the integrator; existing producer/reader/receipt and player/PLM consumers pass the affected regression.",
+]
+limitations = [
+  "Ridley's foreign allocator/item-drop preflight intentionally refuses nested continuations and cannot prove the generic enemy contract.",
+  "Waver uses normal EnemyDeathAnimation/F345; boss-specific Enemy_ItemDrop_* continuations remain outside selected domain with explicit zero counts.",
+  "Main source is frozen during current host verification; this proposal grants no shared-file mutation authority.",
+  "Adapter implementation alone earns infrastructure acceptance only.",
+]
+
+[[children]]
+key = "17-death-pickup-admission"
+type = "task"
+admission = "translation-scope-v1-after-supported-exercise"
+subject = "Compose complete ordinary enemy death/drop/pickup/respawn admission"
+proposal = "proposed-children/03-enemy-death-pickup-admission.md"
+depends_on = ["11-finish-held-ceres-integration", "17-exercise-contract", "17-enemy-transaction-adapter", "14-reviewed-player-services", "15-reviewed-room-and-PLM-services", "natural-death-pickup-root-observation"]
+role = "isolated-gameplay-implementer"
+reuse_completed_tickets = ["72-enemy-death-explosion", "75-enemy-drop-selection", "77-enemy-drop-transition", "79-projectile-pickup-collection", "82-projectile-host-drop-instructions"]
+new_paths = [
+  "crates/port/src/enemy_pickup_ownership.rs",
+  "crates/port/tests/enemy_pickup_ownership.rs",
+  "tools/port/enemy-death-pickup-lifecycle.toml",
+]
+reviewed_existing_seams = [
+  "crates/port/src/enemy_projectile_instructions.rs",
+  "crates/port/tests/enemy_projectile_instructions.rs",
+  "crates/port/src/enemy_projectiles.rs",
+  "crates/port/tests/enemy_projectiles.rs",
+]
+existing_seam_limit = "Missing EF10/RespawnEnemy and narrowly required public composition seams only; exact hunks must be reviewed before ownership is assigned."
+routines = [
+  "EprojInit_EnemyDeathExplosion",
+  "EprojInit_F337",
+  "EprojInstr_EEAF",
+  "EprojInstr_HandleRespawningEnemy",
+  "EprojPreInstr_Pickup",
+  "Eproj_Pickup_SmallHealth",
+  "Eproj_Pickup_BigHealth",
+  "Eproj_Pickup_PowerBombs",
+  "Eproj_Pickup_Missiles",
+  "Eproj_Pickup_SuperMissiles",
+  "RespawnEnemy",
+]
+submission_argv = ["cargo", "test", "-p", "port", "--locked", "--offline", "--test", "enemy_pickup_ownership", "--test", "enemy_projectiles", "--test", "enemy_projectile_instructions", "--test", "observed_projectile_ownership"]
+submission_timeout_seconds = 60
+integration_argv = ["cargo", "run", "-p", "pipeline", "--locked", "--offline", "--bin", "sm-pipeline", "--", "family-verify", "--manifest", "tools/port/enemy-death-pickup-lifecycle.toml", "--adapter", "enemy-lifecycle", "--output", "out/port/enemy-death-pickup-lifecycle", "--case-jobs", "4"]
+integration_timeout_seconds = 3600
+acceptance = [
+  "Use existing72/75/77/79/82 semantics and frozen verdicts; EFE0 pickup and host drop instructions are implemented, superseding the old ticket77 unsupported note.",
+  "Seal F345/F337 headers, scripts/maps/EF04/EFD5 tables, full newborn closure, highest-free slot allocation, native weighted RNG and all admitted pickup/respawn continuations before live dispatch.",
+  "Implement missing EF10/RespawnEnemy with A1 population, SpawnData graphics, partial resets, slot/current aliases and the exact already translated initializer dependency.",
+  "Actual-C full state/returns/eight host words/transient/ordered effects controls cover pool failure, EF89-before-clear, death argument/current aliases, RNG zero-slot ordering, expiry/grapple/radius/restore/audio and respawn reset order.",
+  "Independent natural direct exercise and four-subject complete-call ownership/parity are required before live credit; missing branches remain unexercised.",
+  "Native137's exact nine-ID selector remains independently admitted; integrator composes separately proven selectors and reruns all affected families plus native137 contact/render/allocation material regression.",
+]
+limitations = [
+  "No observed Waver/drop/respawn native scope is supplied; promotion is blocked until supported non-bank86 root provenance exists.",
+  "Proposed adapter/target/manifest commands are future requirements and were not run.",
+  "observed_projectile_ownership.rs, Ridley, shared registration/memory/ROM paths remain outside implementer ownership.",
+]
+
+[[children]]
+key = "17-waver-lifecycle"
+type = "task"
+admission = "translation-scope-v1-after-supported-exercise"
+subject = "Implement complete admitted Waver population/scheduler/script/contact/render/death lifecycle"
+proposal = "proposed-children/04-waver-whole-lifecycle.md"
+depends_on = ["11-finish-held-ceres-integration", "17-exercise-contract", "17-enemy-transaction-adapter", "17-death-pickup-admission", "13-reviewed-hardware-consumer", "14-reviewed-player-services", "15-reviewed-room-and-PLM-services", "natural-Waver-root-observation"]
+role = "isolated-gameplay-implementer"
+writable_paths = [
+  "crates/port/src/enemy_waver_lifecycle.rs",
+  "crates/port/src/enemy_waver_instructions.rs",
+  "crates/port/src/enemy_waver_admission.rs",
+  "crates/port/tests/enemy_waver_lifecycle.rs",
+  "tools/port/enemy-waver-lifecycle.toml",
+]
+routines = [
+  "InitializeEnemies", "LoadEnemyGfxIndexes", "RecordEnemySpawnData",
+  "DetermineWhichEnemiesToProcess", "SpawnEnemy", "EnemyMain",
+  "EnemyCollisionHandler", "EprojCollHandler", "EnemyBombCollHandler",
+  "EnemySamusCollHandler", "ProcessEnemyPowerBombInteraction",
+  "Enemy_NormalTouchAI_A3", "NormalEnemyTouchAi", "NormalEnemyTouchAiSkipDeathAnim",
+  "Enemy_NormalShotAI_A3", "NormalEnemyShotAi", "NormalEnemyShotAiSkipDeathAnim",
+  "Enemy_NormalPowerBombAI_A3", "NormalEnemyPowerBombAi", "NormalEnemyPowerBombAiSkipDeathAnim",
+  "Enemy_NormalFrozenAI_A3", "Waver_Init", "Waver_Main", "Waver_Func_1", "Waver_Instr_1",
+  "ProcessEnemyInstructions", "DrawOneEnemy", "WriteEnemyOams", "DrawSpritemapWithBaseTile",
+  "EnemyDeathAnimation", "Enemy_GrappleReact_KillEnemy_A3", "EnemyGrappleDeath",
+]
+readonly_dependencies = [
+  "crates/port/src/enemy.rs",
+  "crates/port/src/enemy_ai.rs",
+  "crates/port/src/enemy_instructions.rs",
+  "crates/port/src/enemy_pickup_ownership.rs",
+  "crates/port/src/sprite_objects.rs",
+  "crates/port/src/audio.rs",
+  "reviewed player, room/PLM, game host and hardware contracts",
+]
+submission_argv = ["cargo", "test", "-p", "port", "--locked", "--offline", "--test", "enemy_waver_lifecycle", "--test", "enemy_ai", "--test", "enemy_instructions"]
+submission_timeout_seconds = 60
+integration_argv = ["cargo", "run", "-p", "pipeline", "--locked", "--offline", "--bin", "sm-pipeline", "--", "family-verify", "--manifest", "tools/port/enemy-waver-lifecycle.toml", "--adapter", "enemy-lifecycle", "--output", "out/port/enemy-waver-lifecycle", "--case-jobs", "4"]
+integration_timeout_seconds = 3600
+acceptance = [
+  "Promote only source/exercise/dependency-authenticated complete roots; the maximum32 boundary remains prospective until normal-play creation/scheduling/contact/script/render observations exist.",
+  "Compose existing Waver Init/Main/Func1 and mechanics instead of replacing their semantics; add exact A386E3 current-enemy-index signal and bounded bankA3 interpreter admission.",
+  "Admit complete active lists, global finalizers and selected ordinary-spritemap domain before any mutation; exclusive EnemyMain attribution requires every supported active slot rather than a filtered iteration.",
+  "Full actual-C state/returns/host/transient/wrap/alias/order controls include terminated/mixed populations, failed contiguous allocation, unaligned A/B sign handling, D word/byte phase, frozen/Sleep PC/timers, slot-list tail aliases and all ordinary contact/death continuations.",
+  "Native bank81 drawing preserves base tile/palette/shake/native Y cast, OAM cursor/extension-bit wrap and queue order; selected ROM/header/script/map/room/data extents are sealed.",
+  "Four independent C0/C1/mixed0/mixed1 processes traverse a genuine Waver window and record material init/AI/due-opcode/contact/death/drop/pickup/OAM counters with complete parity and zero CPU fallback; preserve native137 independently.",
+  "All affected Offline families and caller consumers pass frozen integration; both cleanup passes, source/store/readers/private-input retention, worktree retirement and post-cleanup authentication precede completion.",
+]
+limitations = [
+  "Unobserved SpawnEnemy cannot inherit InitializeEnemies or Waver_Init counts; retain it as a separately reviewed allocator dependency until direct-root/reachability evidence supports inclusion.",
+  "Unrelated/extended/multibox/update-tilemap domains are refused before effects; composite room initialization and global drawing callers remain external until whole-call review.",
+  "Held141/Ridley220-definition candidate, Rio/jump/crawler/contact/render files and shared lib/memory/ROM/catalog/ABI registration remain outside this gameplay writer.",
+  "Current Ceres replay proves no Zebes Waver original-ROM progression; missing natural lethal/drop/respawn/contact branches earn no live credit.",
+]
+
+[budget]
+process_root = "/home/jim/sm-decomp/out/pipeline"
+process_workers = 4
+submission_cwd = "exact future claim's returned isolated implementer worktree"
+integration_cwd = "/home/jim/sm-decomp at exact frozen reviewed merged source"
+submission_timeout_seconds = 60
+integration_timeout_seconds = 3600
+experiments_run_by_research17 = 0

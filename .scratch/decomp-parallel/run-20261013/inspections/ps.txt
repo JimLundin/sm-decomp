@@ -1,0 +1,72 @@
+    PID    PPID                  STARTED STAT COMMAND
+      1       0 Tue Oct 13 06:18:02 2026 Ss   /sbin/init
+      2       1 Tue Oct 13 06:18:02 2026 Sl+  /init
+      3       2 Tue Oct 13 06:18:02 2026 S+   init-watcher
+      7       2 Tue Oct 13 06:18:02 2026 Sl+  plan9 --control-socket 7 --log-level 4 --server-fd 8 --pipe-fd 10 --log-truncate
+     59       1 Tue Oct 13 06:18:02 2026 S<s  /lib/systemd/systemd-journald
+     82       1 Tue Oct 13 06:18:03 2026 Ss   /lib/systemd/systemd-udevd
+     92       1 Tue Oct 13 06:18:03 2026 Ss   /lib/systemd/systemd-networkd
+    273       1 Tue Oct 13 06:18:03 2026 Ssl  snapfuse /var/lib/snapd/snaps/core26_462.snap /snap/core26/462 -o ro,nodev,allow_other,suid
+    274       1 Tue Oct 13 06:18:03 2026 Ssl  snapfuse /var/lib/snapd/snaps/core18_1705.snap /snap/core18/1705 -o ro,nodev,allow_other,suid
+    278       1 Tue Oct 13 06:18:03 2026 Ssl  snapfuse /var/lib/snapd/snaps/core18_3084.snap /snap/core18/3084 -o ro,nodev,allow_other,suid
+    285       1 Tue Oct 13 06:18:03 2026 Ssl  snapfuse /var/lib/snapd/snaps/lxd_40916.snap /snap/lxd/40916 -o ro,nodev,allow_other,suid
+    286       1 Tue Oct 13 06:18:03 2026 Ssl  snapfuse /var/lib/snapd/snaps/lxd_14804.snap /snap/lxd/14804 -o ro,nodev,allow_other,suid
+    291       1 Tue Oct 13 06:18:03 2026 Ssl  snapfuse /var/lib/snapd/snaps/snapd_28254.snap /snap/snapd/28254 -o ro,nodev,allow_other,suid
+    422       2 Tue Oct 13 06:18:12 2026 Ss   /init
+    423       2 Tue Oct 13 06:18:12 2026 Ss   /bin/login -f
+    425     422 Tue Oct 13 06:18:12 2026 S    /init
+    427     425 Tue Oct 13 06:18:12 2026 Ss   -zsh
+    589     423 Tue Oct 13 06:18:13 2026 S+   -zsh
+   1264       1 Tue Oct 13 06:18:14 2026 S    -zsh
+   1265       1 Tue Oct 13 06:18:14 2026 S    -zsh
+   1268       1 Tue Oct 13 06:18:14 2026 S    -zsh
+   1273    1268 Tue Oct 13 06:18:14 2026 Sl   /home/jim/.cache/gitstatus/gitstatusd-linux-x86_64 -G v1.5.4 -s -1 -u -1 -d -1 -c -1 -m -1 -v FATAL -t 16
+   2723     425 Tue Oct 13 06:18:24 2026 S    -zsh
+   2724     425 Tue Oct 13 06:18:24 2026 S    -zsh
+   2727     425 Tue Oct 13 06:18:24 2026 S    -zsh
+   2732    2727 Tue Oct 13 06:18:24 2026 Sl   /home/jim/.cache/gitstatus/gitstatusd-linux-x86_64 -G v1.5.4 -s -1 -u -1 -d -1 -c -1 -m -1 -v FATAL -t 16
+   2775       1 Tue Oct 13 06:18:57 2026 Ss   /lib/systemd/systemd-resolved
+   2779       1 Tue Oct 13 06:18:57 2026 Ssl  /usr/lib/accountsservice/accounts-daemon
+   2780       1 Tue Oct 13 06:18:57 2026 Ss   /usr/bin/dbus-daemon --system --address=systemd: --nofork --nopidfile --systemd-activation --syslog-only
+   2785       1 Tue Oct 13 06:18:57 2026 Ss   /usr/bin/python3 /usr/bin/networkd-dispatcher --run-startup-triggers
+   2786       1 Tue Oct 13 06:18:57 2026 Ssl  /usr/lib/policykit-1/polkitd --no-debug
+   2787       1 Tue Oct 13 06:18:57 2026 Ssl  /usr/sbin/rsyslogd -n -iNONE
+   2792       1 Tue Oct 13 06:18:57 2026 Ssl  /usr/lib/snapd/snapd
+   2793       1 Tue Oct 13 06:18:57 2026 Ss   /lib/systemd/systemd-logind
+   2798       1 Tue Oct 13 06:18:57 2026 Ssl  /usr/lib/udisks2/udisksd
+   2830       1 Tue Oct 13 06:18:57 2026 Ssl  /usr/sbin/ModemManager
+   2847       1 Tue Oct 13 06:18:57 2026 Ss   /usr/sbin/cron -f
+   2859       1 Tue Oct 13 06:18:57 2026 Ssl  /usr/bin/python3 /usr/share/unattended-upgrades/unattended-upgrade-shutdown --wait-for-signal
+   2862       1 Tue Oct 13 06:18:57 2026 Ssl  /usr/bin/containerd
+   2866       1 Tue Oct 13 06:18:57 2026 Ss   /usr/sbin/atd -f
+   2879       1 Tue Oct 13 06:18:57 2026 Ss+  /sbin/agetty -o -p -- \u --noclear tty1 linux
+   2890       1 Tue Oct 13 06:18:58 2026 Ss   sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups
+   2894       1 Tue Oct 13 06:18:58 2026 Ssl  /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
+   3355     427 Tue Oct 13 06:19:21 2026 Sl+  codex
+   3389    3355 Tue Oct 13 06:19:22 2026 Ssl  /home/jim/.codex/packages/app-server-daemon/releases/0.162.1-x86_64-unknown-linux-musl/bin/codex app-server --listen unix:// --analytics-default-enabled --managed-daemon
+   3441    3355 Tue Oct 13 06:19:23 2026 Ssl  /home/jim/.codex/packages/app-server-daemon/releases/0.162.1-x86_64-unknown-linux-musl/bin/codex app-server daemon pid-update-loop
+   3981    3389 Tue Oct 13 06:19:47 2026 Sl   /home/jim/.codex/packages/app-server-daemon/releases/0.162.1-x86_64-unknown-linux-musl/bin/codex-code-mode-host
+  22341    3389 Tue Oct 13 06:32:51 2026 Sl   node /home/jim/.nvm/versions/node/v24.16.0/bin/rea mcp
+ 144602    3389 Tue Oct 13 07:33:44 2026 Sl   node /home/jim/.nvm/versions/node/v24.16.0/bin/rea mcp
+ 182019    3389 Tue Oct 13 08:03:57 2026 Sl   node /home/jim/.nvm/versions/node/v24.16.0/bin/rea mcp
+ 188864    3389 Tue Oct 13 08:15:18 2026 Sl   node /home/jim/.nvm/versions/node/v24.16.0/bin/rea mcp
+ 270377    3389 Tue Oct 13 09:37:19 2026 Sl   node /home/jim/.nvm/versions/node/v24.16.0/bin/rea mcp
+ 285700    3389 Tue Oct 13 09:55:59 2026 Sl   node /home/jim/.nvm/versions/node/v24.16.0/bin/rea mcp
+ 312211    3389 Tue Oct 13 10:26:09 2026 Sl   node /home/jim/.nvm/versions/node/v24.16.0/bin/rea mcp
+ 325103    3389 Tue Oct 13 10:44:32 2026 Sl   node /home/jim/.nvm/versions/node/v24.16.0/bin/rea mcp
+ 329130       1 Tue Oct 13 10:49:33 2026 Ssl  snapfuse /var/lib/snapd/snaps/core26_646.snap /snap/core26/646 -o ro,nodev,allow_other,suid
+ 332832    3389 Tue Oct 13 11:00:34 2026 Sl   node /home/jim/.nvm/versions/node/v24.16.0/bin/rea mcp
+ 332847    3389 Tue Oct 13 11:00:36 2026 Sl   node /home/jim/.nvm/versions/node/v24.16.0/bin/rea mcp
+ 344454    3389 Tue Oct 13 11:16:00 2026 Sl   node /home/jim/.nvm/versions/node/v24.16.0/bin/rea mcp
+ 344627    3389 Tue Oct 13 11:16:41 2026 Sl   node /home/jim/.nvm/versions/node/v24.16.0/bin/rea mcp
+ 420446    3389 Tue Oct 13 12:32:52 2026 Ss+  target/release/sm-pipeline progress serve --root /home/jim/sm-decomp --bind 127.0.0.1:4185
+ 473212    3389 Tue Oct 13 13:46:35 2026 Sl   node /home/jim/.nvm/versions/node/v24.16.0/bin/rea mcp
+ 473459    3389 Tue Oct 13 13:47:02 2026 Sl   node /home/jim/.nvm/versions/node/v24.16.0/bin/rea mcp
+ 475290    3389 Tue Oct 13 13:48:21 2026 Sl   node /home/jim/.nvm/versions/node/v24.16.0/bin/rea mcp
+ 518295    3389 Tue Oct 13 15:00:45 2026 Sl   node /home/jim/.nvm/versions/node/v24.16.0/bin/rea mcp
+ 521324    3389 Tue Oct 13 15:03:07 2026 Sl   node /home/jim/.nvm/versions/node/v24.16.0/bin/rea mcp
+ 534512    3389 Tue Oct 13 15:23:26 2026 Sl   node /home/jim/.nvm/versions/node/v24.16.0/bin/rea mcp
+ 542661    3389 Tue Oct 13 15:53:38 2026 Sl   node /home/jim/.nvm/versions/node/v24.16.0/bin/rea mcp
+ 542975    3389 Tue Oct 13 16:02:55 2026 Sl   node /home/jim/.nvm/versions/node/v24.16.0/bin/rea mcp
+ 544336    3389 Tue Oct 13 16:15:58 2026 Ss   /usr/bin/zsh -c .scratch/decomp-parallel/preparation/readiness-final-20261013/bin/decomp-readiness-process-inspect > .scratch/decomp-parallel/run-20261013/inspections/processes.toml; ps -eo pid,ppid,lstart,stat,args > .scratch/decomp-parallel/run-20261013/inspections/ps.txt; sha256sum .scratch/decomp-parallel/run-20261013/inspections/processes.toml .scratch/decomp-parallel/run-20261013/inspections/ps.txt .scratch/decomp-parallel/launch-20261013/checkpoint.md .scratch/decomp-parallel/launch-20261013/status.md; cat .scratch/decomp-parallel/run-20261013/inspections/processes.toml
+ 544339  544336 Tue Oct 13 16:15:58 2026 R    ps -eo pid,ppid,lstart,stat,args

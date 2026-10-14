@@ -1,0 +1,21 @@
+operation = "record"
+checkout = "/home/jim/sm-decomp"
+effort = "decomp-parallel"
+coordinator = "decomp-run-20261013"
+capacity = 3
+pipeline_root = "/home/jim/sm-decomp/out/pipeline"
+workers = 4
+
+[authority]
+session_id = "01a13592-d02b-7143-8489-a15b03f19da2"
+generation = 1
+
+[update]
+event = "started"
+agent = "01a135a1-959f-7e80-b593-21a91052e0dc"
+
+[update.claim]
+id = "ticket-fd25bf762e6e92ca542277cba01e52aaaaeb05c209485978d2511a2413b31c0e"
+revision = "8957b66f91dcad619098905199286c7fef94bd8581e60455273128817ba33aa4"
+attempt = 1
+coordinator = "decomp-run-20261013"

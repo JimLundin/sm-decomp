@@ -1,0 +1,186 @@
+schema = "decomp-manual-research-handoff-v1"
+sequence = 2
+phase = "research-complete-awaiting-coordinator-publication"
+parent_session_id = "01a13592-d02b-7143-8489-a15b03f19da2"
+worker_session_id = "01a135a1-959f-7e80-b593-21a91052e0dc"
+worker_identity_observation = "Coordinator observed UUID in actual subAgentActivity launch receipt, delivered it on2026-10-13 and recorded started."
+agent = "/root/research15"
+effort = "decomp-parallel"
+baseline = "7ed3d383d6d3e28d21d1bb960acc5576ce82f5e9"
+baseline_observation = "git rev-parse HEAD read at2026-10-13 14:46:38 UTC; native research Job omits base-head and is unchanged."
+ticket = ".scratch/decomp-parallel/issues/15-door-room-plm-scope.md"
+assignment_receipt = ".scratch/decomp-parallel/run-20261013/receipts/next-research-1.stdout.toml"
+assignment_receipt_sha256 = "23355a8432d6b55041a898af6271ffefaa46948037f88ef62f1e5be633d33d58"
+previous_handoff = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-15/manual-handoff-sequence-1.toml"
+worktree = "/home/jim/sm-decomp"
+source_writes_authorized = false
+scratch_output = ".scratch/decomp-parallel/run-20261013/research-15"
+latest_wip_or_submitted_commit = "none; parent owns main Git/index and only scratch research output is authored"
+processes = []
+runs = []
+achieved_stages = []
+research_results = ["Complete scheduled PLM root semantics and reusable dependency ownership reviewed", "Twenty-two-function message coroutine and nineteen-symbol door orchestrator successor closures identified", "Twenty-seven original/native ROM ranges hashed and matched; exact four closing scripts corrected to28 bytes", "Five actionable proposed local children with explicit blockers/files/argv and unaccepted scope holding written"]
+limitations = ["Read-only research; no compilation, fixture, emulator, replay, recursive authentication or verification runs", "Native bank86 exercise does not prove PLM/door direct roots; reviewed additive Rust contract is required", "Current source inventory producer/reader reports lexical dependency disagreement", "No supported complete PLM/door live/original-ROM adapter or directly observed route", "Room/CRE/FX/enemy/background compressed input extents remain unresolved", "Initial closing-script domain refuses any unsupported active slot/callback/message before publication", "Parent publishes official tickets/lifecycle/inventory and owns canonical state/ROM/lib/catalog/ABI; no gameplay stage is earned", "Historical evidence hashes are retained-input observations, not current-source reacceptance"]
+
+[claim]
+id = "ticket-fd25bf762e6e92ca542277cba01e52aaaaeb05c209485978d2511a2413b31c0e"
+revision = "8957b66f91dcad619098905199286c7fef94bd8581e60455273128817ba33aa4"
+attempt = 1
+coordinator = "decomp-run-20261013"
+
+[authority]
+dispatcher_session_id = "01a13592-d02b-7143-8489-a15b03f19da2"
+dispatcher_generation = 1
+integrator_token = "ceres-20261013"
+integrator_generation = 2
+worker_has_mutation_authority = false
+
+[source]
+revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+archive_sha256 = "69c78831351112887575f852dadf0281dd5c23cef890b07a268ae6cf60aa9193"
+dependency_identity_path = "/home/jim/sm-decomp/tools/dependencies.toml"
+dependency_identity_sha256 = "e74864c229949fc6f1a6bd7528f339bdb3f9364f1e4f9544f08693881d10f111"
+inventory_path = "/home/jim/sm-decomp/tools/port/source-inventory.toml"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+input_digests = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-15/inputs.sha256"
+retained_source_note = "Preserve pinned recovered source and frozen snapshots already named by retained verdicts; do not remove parent runs/worktrees/store objects."
+
+[budget]
+SM_PIPELINE_ROOT = "/home/jim/sm-decomp/out/pipeline"
+SM_PIPELINE_WORKERS = 4
+assignment_capacity = 3
+initial_seconds = 60
+integration_seconds = 3600
+
+[next]
+cwd = "/home/jim/sm-decomp"
+argv = ["cat", "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-15/Answer.md"]
+purpose = "Coordinator reviews Answer/children/held scope, records researched result under exact claim, publishes numbered extension/gameplay dependency children to07/09, then admits supported source/exercise/dependency/writable/gate seals before implementation."
+
+[cleanup]
+status = "complete-no-run"
+receipt = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-15/cleanup.toml"
+reclaimed_bytes = 0
+available_bytes_observed = 205090639872
+measured_at_utc = "2026-10-13 14:46:38 UTC"
+remaining_action = "None for owned run/build/worktree cleanup; parent publication and later implementation gates remain."
+
+[evidence_store]
+root = "/home/jim/sm-decomp/out/evidence"
+format = "sm-evidence-v2"
+reader_path = "/home/jim/sm-decomp/out/recovery-session/composed-live-release/1791861180321696848-129445/sm-evidence"
+reader_sha256 = "408b5aa21ba2240568df73cec822c14e13a4f72769245b504c1e62361cdf5ba7"
+subjects = ["c-0", "c-1", "mixed-0", "mixed-1"]
+note = "Retain all four evidence.toml subject pointers and their shared immutable objects. No materialization, store cleanup or recursive reader authentication performed."
+
+[[results]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-15/Answer.md"
+sha256 = "805a3367c010d1dc3ca4b71fee721e950c0852672265bce2f108f476f8a47891"
+
+[[results]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-15/children.toml"
+sha256 = "67777b93b6a7d2656e3542667b77b278da3365b27d757f62d2ee6fd51f6392be"
+
+[[results]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-15/scope-holding.toml"
+sha256 = "5bcc2053df891da7a5b3211d8503a3cb0e3774ccec74d46f5a0986775f9f5d52"
+
+[[results]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-15/source-observations.json"
+sha256 = "c2ef355df77c1c9f31f08949acfe468b7df2a67c88793142411ae4ab6ab04959"
+
+[[results]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-15/rom-ranges.json"
+sha256 = "816405d2266b3ae62aabba7efe3bb2191938df291e2b52dddb159fa33b3faca1"
+
+[[results]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-15/inputs.sha256"
+sha256 = "303155c17c454258e12f3d395d93d1923675733819db759f847a9ac9d837f078"
+
+[[results]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-15/cleanup.toml"
+sha256 = "52557a629d0bac8a920d8a72e097f046befeeee8c3c890af2a996e7b89d41be1"
+
+[[results]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-15/proposed-children/01-plm-door-exercise-contract.md"
+sha256 = "00be17f2c989ae2e167d6ec849631f4f78fce321ffadf501cd8e28e93a5d4222"
+
+[[results]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-15/proposed-children/02-plm-frame-adapter.md"
+sha256 = "cd0e1931d2fbafe145f2ae2541db2a49812b1d5a64bebca89ac5545bb76c45ee"
+
+[[results]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-15/proposed-children/03-plm-frame-implementation.md"
+sha256 = "b7f23904903f20d1530c055deb89830182e16927065fdb85a04b68a66b1fb7ed"
+
+[[results]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-15/proposed-children/04-message-coroutine.md"
+sha256 = "1db799872bf932003e58b50da7c58b5938488572cb102a0c931ef207b94d8d43"
+
+[[results]]
+path = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-15/proposed-children/05-door-transition-successor.md"
+sha256 = "3308c7cc0d0271e38a5e0cd46a17f27116ccb855012a47409aba466c073a6b88"
+
+[[retained_dependencies]]
+path = "/home/jim/sm-decomp/rom/sm.sfc"
+sha256 = "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72"
+
+[[retained_dependencies]]
+path = "/home/jim/sm-decomp/movies/super-metroid-any-3653.inputs"
+sha256 = "cc643d751554ad6d30b5d7e3a41a4259525517ca7614cf73abec9fac30176c0e"
+
+[[retained_dependencies]]
+path = "/home/jim/sm-decomp/out/port/room-plm-current-live/20261010T224032.887967Z/c-0/rom-view.bin"
+sha256 = "40aaebb25b9646bea2dffdc5e1ae680768a39dd122de9353885e1c7456ceae27"
+
+[[retained_dependencies]]
+path = "/home/jim/sm-decomp/out/port/room-plm-final/20261010T223633.137790Z/verdict.json"
+sha256 = "3b8e49aa750a4ee629bb6adb43d61b9dfcadf7762783232b5352e66f2556e916"
+
+[[retained_dependencies]]
+path = "/home/jim/sm-decomp/out/port/plm-rendering/20261010T225759.092054Z/verdict.json"
+sha256 = "4b168e02d73fc424649b010c2b4091503dae4f6320634ec968214732c48bf1fc"
+
+[[retained_dependencies]]
+path = "/home/jim/sm-decomp/out/port/room-plm-current-live/20261010T224032.887967Z/verdict.json"
+sha256 = "a3c23353ba8fa110e50cc4ba5d45957f86046d4019885527bd43b553f507eb8a"
+
+[[retained_dependencies]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-integrated-camera-scroll-post-cleanup-authentication.toml"
+sha256 = "dda85bda679c84dc2fea9bef73a1d553901fc6efbcc2c39db2d4b70db466f3bf"
+
+[[retained_dependencies]]
+path = "/home/jim/sm-decomp/out/recovery-session/composed-live-release/1791861180321696848-129445/verdict.toml"
+sha256 = "5e224bda08b3f597b07dd3a03c59bf8cf136b288993459c62e453ef3fac400c2"
+
+[[retained_dependencies]]
+path = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-composed-post-cleanup-authentication.toml"
+sha256 = "9251ee29114c3ac5ea7da19279050ac7e83227cb790e624c5b6a0900372f3845"
+
+[[retained_dependencies]]
+path = "/home/jim/sm-decomp/out/port/ceres-continuation/game-host-projectile/1791873394532541-258459-0/verdict.toml"
+sha256 = "18f355479a34ef10be6196e2c1507f6ded34d522693f068feb1313078492abad"
+
+[[retained_dependencies]]
+path = "/home/jim/sm-decomp/out/port/ceres-continuation/game-host-room-scroll/1791873418836128-259326-0/verdict.toml"
+sha256 = "ddb49cbd79a7249b45745044f9f6c95a7e98671fa74e0b313a7f81bf8c869d1d"
+
+[[retained_dependencies]]
+path = "/home/jim/sm-decomp/out/recovery-session/composed-live-release/1791861180321696848-129445/sm-evidence"
+sha256 = "408b5aa21ba2240568df73cec822c14e13a4f72769245b504c1e62361cdf5ba7"
+
+[[retained_dependencies]]
+path = "/home/jim/sm-decomp/out/recovery-session/composed-live-release/1791861180321696848-129445/c-0/evidence.toml"
+sha256 = "0baa431dda057863b1591e6cd59cbb7ddd6c8c964e55ffea2835c2118e0cef54"
+
+[[retained_dependencies]]
+path = "/home/jim/sm-decomp/out/recovery-session/composed-live-release/1791861180321696848-129445/c-1/evidence.toml"
+sha256 = "eabdc04d4f45c68be33283a91070816ab86984c00a034d62ea363b4c4e64e24c"
+
+[[retained_dependencies]]
+path = "/home/jim/sm-decomp/out/recovery-session/composed-live-release/1791861180321696848-129445/mixed-0/evidence.toml"
+sha256 = "b85e4945e85cbf3490ed56342c3d9fb30080d7ef13bd96b9f7455855a77fc41a"
+
+[[retained_dependencies]]
+path = "/home/jim/sm-decomp/out/recovery-session/composed-live-release/1791861180321696848-129445/mixed-1/evidence.toml"
+sha256 = "85d21f33bf8c1a1d73aed2c434c0a7f4a7c29c039892684570b2c7c1b5cea618"

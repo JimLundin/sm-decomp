@@ -42,7 +42,35 @@ __pycache__/
 /.scratch/**/*.stdout
 /.scratch/**/*.stderr
 /.scratch/**/*.log
+/.scratch/**/*.stdout.*
+/.scratch/**/*.stderr.*
+/.scratch/**/*.log.*
 /.scratch/**/*.tsv
+
+# Retained renderer/report artifacts; authored source and handoffs stay visible.
+/.scratch/decomp-coverage/renderer/bin/
+/.scratch/decomp-coverage/renderer/browser-*/
+/.scratch/decomp-coverage/renderer/retained-source/
+/.scratch/decomp-progress/latest-submissions/bin/
+/.scratch/decomp-progress/latest-submissions/artifacts/
+/.scratch/decomp-progress/latest-submissions/browser-*/
+
+# Frozen input closure includes private ROM views and upstream/source copies.
+# Preserve its original paths for the recorded hashes and evidence readers.
+/.scratch/decomp-parallel/run-20261013/research18-input-capture/
+/.scratch/decomp-parallel/run-20261013/research-17/rom-observations.toml
+/.scratch/decomp-parallel/run-20261013/research-18/rom-observations.json
+/.scratch/decomp-parallel/run-20261013/wrapper-build/source/
+
+# Raw diagnostics from the completed run; retain authored requests and handoffs.
+/.scratch/decomp-parallel/run-20261013/receipts/*.txt
+/.scratch/decomp-parallel/run-20261013/host/batch-observation.json
+/.scratch/decomp-parallel/run-20261013/host/catalog-observation.json
+/.scratch/decomp-parallel/run-20261013/host/current-catalog.toml
+/.scratch/decomp-parallel/run-20261013/host/checked-descendants-*.txt
+/.scratch/decomp-parallel/run-20261013/host/processes-before-gate-stop.txt
+/.scratch/decomp-parallel/run-20261013/host/stopped-parent-descendants.txt
+/.scratch/decomp-parallel/run-20261013/host/writers-after-stop.txt
 
 # Exact generated receipts backed up in decomp-parallel/checkpoint; originals stay local.
 /.scratch/ceres-continuation/claim-controller.toml

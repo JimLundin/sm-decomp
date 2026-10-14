@@ -1,0 +1,50 @@
+schema = "decomp-manual-research-handoff-v1"
+sequence = 1
+phase = "source-and-evidence-research-active"
+parent_session_id = "01a13592-d02b-7143-8489-a15b03f19da2"
+worker_session_id = "01a135a1-959f-7e80-b593-21a91052e0dc"
+worker_identity_observation = "Coordinator observed UUID in subAgentActivity launch receipt and delivered it on 2026-10-13."
+agent = "/root/research15"
+effort = "decomp-parallel"
+baseline = "7ed3d383d6d3e28d21d1bb960acc5576ce82f5e9"
+ticket = ".scratch/decomp-parallel/issues/15-door-room-plm-scope.md"
+assignment_receipt = ".scratch/decomp-parallel/run-20261013/receipts/next-research-1.stdout.toml"
+worktree = "/home/jim/sm-decomp"
+source_writes_authorized = false
+scratch_output = ".scratch/decomp-parallel/run-20261013/research-15"
+processes = []
+runs = []
+achieved_stages = []
+limitations = ["Read-only research; no compilation, fixture, emulator or verification runs", "Returned native research Job omits base-head; manually inspected baseline is recorded without modifying the Job", "Parent owns main Git/index, shared tickets, lifecycle, stage inventory, canonical state/ROM and registration", "Bank86 projectile exercise reader currently provides no door/room/PLM direct-root provenance"]
+
+[claim]
+id = "ticket-fd25bf762e6e92ca542277cba01e52aaaaeb05c209485978d2511a2413b31c0e"
+revision = "8957b66f91dcad619098905199286c7fef94bd8581e60455273128817ba33aa4"
+attempt = 1
+coordinator = "decomp-run-20261013"
+
+[authority]
+dispatcher_session_id = "01a13592-d02b-7143-8489-a15b03f19da2"
+dispatcher_generation = 1
+integrator_token = "ceres-20261013"
+integrator_generation = 2
+worker_has_mutation_authority = false
+
+[budget]
+SM_PIPELINE_ROOT = "/home/jim/sm-decomp/out/pipeline"
+SM_PIPELINE_WORKERS = 4
+assignment_capacity = 3
+initial_seconds = 60
+integration_seconds = 3600
+
+[next]
+cwd = "/home/jim/sm-decomp"
+argv = ["sed", "-n", "3768,4185p", "deps/snesrev-sm/src/sm_82.c"]
+purpose = "Complete boundary/dependency/ROM/evidence research and write Answer plus actionable proposed extension and gameplay children in the assigned scratch directory."
+
+[cleanup]
+status = "no-run"
+reclaimed_bytes = 0
+available_bytes_observed = 221081411584
+measured_at_utc = "2026-10-13 14:21:02 UTC"
+remaining_action = "Recheck scoped process state and free space before final handoff; there are no owned run directories, build outputs or worktrees to remove."

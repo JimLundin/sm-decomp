@@ -1,0 +1,98 @@
+schema = "decomp-manual-research-handoff-v1"
+sequence = 3
+phase = "research-complete-gameplay-blocked-ready-for-parent-publication"
+parent_session_id = "01a13592-d02b-7143-8489-a15b03f19da2"
+worker_session_id = "01a135a5-c8f0-7c42-a3d7-8454dac4fb0e"
+agent = "/root/research17"
+effort = "decomp-parallel"
+baseline = "7ed3d383d6d3e28d21d1bb960acc5576ce82f5e9"
+ticket = ".scratch/decomp-parallel/issues/17-other-enemy-lifecycle-scope.md"
+assignment_receipt = ".scratch/decomp-parallel/run-20261013/receipts/next-research-3.stdout.toml"
+worktree = "/home/jim/sm-decomp"
+source_writes_authorized = false
+scratch_output = ".scratch/decomp-parallel/run-20261013/research-17"
+processes = []
+runs = []
+achieved_stages = []
+research_status = "complete"
+native_scope_admitted = false
+gameplay_acceptance = false
+source_changes = []
+queue_mutations = []
+proposed_child_count = 4
+finished_process_state = "No worker-owned build, test, verification, replay, extraction or long-lived writer was launched. All transient read/write/hash commands finish before handoff."
+limitations = [
+  "Read-only research; no compilation, verification, replay, extraction or gameplay stage publication.",
+  "Native research Job omits base-head; this manual handoff preserves the returned tuple without inventing a maintained Job or typed worker handoff.",
+  "Parent owns tickets, inventory, source, registration, main Git/index and every shared ledger.",
+  "Retained full-route enemy instruction inventory records only bank A6 frames; non-Ridley Waver provenance requires a reviewed Rust extension.",
+  "Selected prospective Waver native header A0:D63F, four A3 AI/instruction definitions, native scripts/maps and 32-routine lifecycle boundary; no naturally observed Waver root has been located in the retained inspected route.",
+  "Tickets79/82 supersede ticket77's old unsupported-pickup note: pickup collection and host-aware drop instructions are implemented and have retained Offline evidence. Complete live admission beyond native137 and native respawn remain missing.",
+  "Four proposal files/children.toml identify reviewed infrastructure and later gameplay tasks, not authorized claims, admitted scopes or executed gates. Parent allocates final numbers and reviewed scopes.",
+  "Historical primary verdicts were rehashed, not fully reauthenticated against every current-source member. Old native137 /tmp verdict pointer is absent; present composed source/evidence lineage is retained honestly.",
+  "Natural room population/tileset/runtime SpawnEnemy/contact/death/respawn inputs and direct-root observations remain unavailable in inspected evidence. Controlled fixture patches supply no natural provenance.",
+]
+
+[claim]
+id = "ticket-cf844dcf0283917c8b1718f9eabb058af9a18ed0d72c0de3621ac999c7e646f2"
+revision = "bd78c1ca6d3487b6cd3adafd57452f7f26a27f54635cb57b947eab8ac0221a63"
+attempt = 1
+coordinator = "decomp-run-20261013"
+
+[authority]
+parent_integrator = "ceres-20261013"
+parent_integrator_generation = 2
+dispatcher = "decomp-run-20261013"
+dispatcher_generation = 1
+
+[environment]
+SM_PIPELINE_ROOT = "/home/jim/sm-decomp/out/pipeline"
+SM_PIPELINE_WORKERS = "4"
+
+[results]
+candidate = "Waver, native enemy header A0:D63F"
+candidate_routines = 32
+rom_block_observations = 10
+answer = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/Answer.md"
+answer_sha256 = "0ee118454ef5c93d40d7e0239776c07ca464f8e64fbb4ec7d3b003623b8e7a39"
+children = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/children.toml"
+children_sha256 = "c1189da5f9754eefb34aed297311091fb475c991a1f44a72a0385cb29ae60254"
+routine_observations = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/routine-observations.json"
+routine_observations_sha256 = "d3f79db0e1b90d71ccec907c42a0187a4b8b37615066120eb59fa17813a57db6"
+rom_observations = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/rom-observations.toml"
+rom_observations_sha256 = "3f0f5f7583c376c7d778573d43e1dde612dbcdc644f52102898f4d239a441ff8"
+input_manifest = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/inputs.sha256"
+input_manifest_sha256 = "6313fad3880191e8cf27be892e102bab791384fbd0b078026e8a57ef011b8c21"
+artifact_manifest = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/artifacts.sha256"
+proposed_child_keys = ["17-exercise-contract", "17-enemy-transaction-adapter", "17-death-pickup-admission", "17-waver-lifecycle"]
+reused_completed_tickets = [72, 75, 77, 79, 82]
+preserved_acceptance = "Native137 exact nine-ID allocation/scheduler/contact/render original/native/composed contract; held141/Ridley220-definition claims and submissions untouched."
+review_result = "Direct/indirect/external/ROM/alias/host/ownership dependencies, exact proposed source/test/manifest files and60s/3600s future gates recorded. Missing provenance is a reviewed Rust extension."
+
+[retained]
+recovered_c_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+dependency_identity_sha256 = "e74864c229949fc6f1a6bd7528f339bdb3f9364f1e4f9544f08693881d10f111"
+source_inventory = "/home/jim/sm-decomp/tools/port/source-inventory.toml"
+source_inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+direct_enemy_inventory = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-inventory/1791858734336387661-2/enemy-instructions.tsv"
+direct_enemy_inventory_sha256 = "3dfe96c43a1e7a3c88ff6cf1425f1857e8854d967e21c4325b1e85ea45165d35"
+present_composed_verdict = "/home/jim/sm-decomp/out/recovery-session/composed-live-release/1791861180321696848-129445/verdict.toml"
+present_composed_verdict_sha256 = "5e224bda08b3f597b07dd3a03c59bf8cf136b288993459c62e453ef3fac400c2"
+post_cleanup_authentication = "/home/jim/sm-decomp/.scratch/decomp-port/recovery-composed-post-cleanup-authentication.toml"
+post_cleanup_authentication_sha256 = "9251ee29114c3ac5ea7da19279050ac7e83227cb790e624c5b6a0900372f3845"
+dependency_record = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/cleanup.toml"
+dependency_limit = "Input manifest and cleanup record retain primary pointers/hashes and required linked source/store/readers/private inputs; this read-only research supplies no new per-member authentication."
+
+[next]
+cwd = "/home/jim/sm-decomp"
+argv = ["cat", ".scratch/decomp-parallel/run-20261013/research-17/Answer.md"]
+purpose = "Parent reviews completed Answer and children.toml, publishes numbered07/09 dependencies, merges shared13/14 native-root provenance work and records research-complete with gameplay blocked. Obtain natural Waver inputs only after reviewed infrastructure admission and held host/controller gates; preserve existing engine/drill and legacy tuples."
+
+[cleanup]
+status = "complete-no-run"
+record = "/home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17/cleanup.toml"
+reclaimed_bytes = 0
+available_bytes_observed = 195133591552
+observed_at_utc = "2026-10-13T14:58:24Z"
+process_inspection = "lsof -nP +D /home/jim/sm-decomp/.scratch/decomp-parallel/run-20261013/research-17 returned1 with no output/open files."
+remaining_action = "None for this worker; no run directories/build intermediates/implementer worktrees were created. Parent owns cleanup of its independent host batch."

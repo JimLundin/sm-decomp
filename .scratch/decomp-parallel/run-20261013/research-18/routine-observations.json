@@ -1,0 +1,2574 @@
+{
+  "schema": "decomp-research-routine-observations-v1",
+  "accepted": false,
+  "gameplay_stages": [],
+  "worker_session_id": "01a135ca-3b5d-75a2-b717-23d486d7b6ec",
+  "baseline": "7ed3d383d6d3e28d21d1bb960acc5576ce82f5e9",
+  "source": {
+    "revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+    "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+    "identity_sha256": "e74864c229949fc6f1a6bd7528f339bdb3f9364f1e4f9544f08693881d10f111"
+  },
+  "method": "Read existing pinned source-inventory.toml through taplo; extract exact records and review explicit C dispatch tables. Digests below are existing declared inventory seals, not a new sm-evidence inventory.",
+  "prospective_scopes": [
+    {
+      "key": "audio-frame",
+      "routines": [
+        "APU_UploadBank",
+        "HandleMusicQueue",
+        "HandleSoundEffects",
+        "ResetSoundQueues",
+        "SfxHandlers_0_SendToApu",
+        "SfxHandlers_1_WaitForAck",
+        "SfxHandlers_2_ClearRequest",
+        "SfxHandlers_3_WaitForAck",
+        "SfxHandlers_4_Reset"
+      ],
+      "count": 9
+    },
+    {
+      "key": "pause-equipment-interaction",
+      "routines": [
+        "ChangePaletteValues",
+        "EquipmentScreenCategory_Boots",
+        "EquipmentScreenCategory_Boots_MoveResponse",
+        "EquipmentScreenCategory_Boots_MoveUpInBoots",
+        "EquipmentScreenCategory_ButtonResponse",
+        "EquipmentScreenCategory_Suit",
+        "EquipmentScreenCategory_Suit_MoveResponse",
+        "EquipmentScreenCategory_Tanks",
+        "EquipmentScreenCategory_Tanks_0",
+        "EquipmentScreenCategory_Tanks_1",
+        "EquipmentScreenCategory_Weapons",
+        "EquipmentScreenCategory_Weapons_MoveButtons",
+        "EquipmentScreenCategory_Weapons_PlazmaSpazerCheck",
+        "EquipmentScreenEnergyArrowGlow_Off",
+        "EquipmentScreenEnergyArrowGlow_On",
+        "EquipmentScreenGlowingArrow",
+        "EquipmentScreenGlowingArrowAnimated",
+        "EquipmentScreenGlowingArrowSolidOff",
+        "EquipmentScreenGlowingArrowSolidOn",
+        "EquipmentScreenHandleDpad",
+        "EquipmentScreenHudReserveAutoTilemap_Off",
+        "EquipmentScreenHudReserveAutoTilemap_On_BUGGY",
+        "EquipmentScreenMain",
+        "EquipmentScreenMoveLowerOnSuitsMisc",
+        "EquipmentScreenMoveToBeams",
+        "EquipmentScreenMoveToBottomOfBeams",
+        "EquipmentScreenMoveToHighJumpOrLowerInBoots",
+        "EquipmentScreenMoveToReserveTanks",
+        "EquipmentScreenMoveToScrewOrHigherOnSuits"
+      ],
+      "count": 29
+    },
+    {
+      "key": "pause-equipment-render",
+      "routines": [
+        "DrawMenuSpritemap",
+        "DrawPauseScreenSpriteAnim",
+        "EquipmentScreenDisplayReserveTankAmount",
+        "EquipmentScreenDisplayReserveTankAmount_",
+        "EquipmentScreenDisplayReserves_PaletteSetup",
+        "EquipmentScreenDrawItemSelector",
+        "WriteSamusWireframeTilemap",
+        "WriteSamusWireframeTilemapAndQueue"
+      ],
+      "count": 8
+    },
+    {
+      "key": "options-menu-objects",
+      "routines": [
+        "CallOptionsEntryFunc",
+        "CallOptionsInstr",
+        "CallOptionsPreInstr",
+        "CreateOptionsMenuObject_",
+        "DeleteAllOptionsMenuObjects_",
+        "DrawOptionsMenuSpritemaps",
+        "DrawSpritemap",
+        "OptionsInstr_8C64",
+        "OptionsInstr_8C79",
+        "OptionsInstr_8C89",
+        "OptionsInstr_8C93",
+        "OptionsInstr_Destroy",
+        "OptionsInstr_Goto",
+        "OptionsInstr_SetPreInstr",
+        "OptionsMenuFunc1",
+        "OptionsMenuFunc2",
+        "OptionsPreInstr_F2A9",
+        "OptionsPreInstr_F376",
+        "OptionsPreInstr_F3A0",
+        "OptionsPreInstr_F3E2",
+        "OptionsPreInstr_F42C",
+        "OptionsPreInstr_nullsub_57",
+        "sub_82F296",
+        "sub_82F34B",
+        "sub_82F353",
+        "sub_82F35B",
+        "sub_82F363",
+        "sub_82F369",
+        "sub_82F419"
+      ],
+      "count": 29
+    },
+    {
+      "key": "options-menu-orchestrator",
+      "routines": [
+        "GameOptionsMenuFunc_0",
+        "GameOptionsMenuItemFunc_0",
+        "GameOptionsMenuItemFunc_2_ToggleJapanese",
+        "GameOptionsMenuItemFunc_4",
+        "GameOptionsMenuSpecialSettings_0",
+        "GameOptionsMenuSpecialSettings_2",
+        "GameOptionsMenu_1_LoadingOptionsScreen",
+        "GameOptionsMenu_2_FadeInOptionsScreen",
+        "GameOptionsMenu_3_OptionsScreen",
+        "GameOptionsMenu_4_StartGame",
+        "GameOptionsMenu_5_DissolveOutScreen",
+        "GameOptionsMenu_6_DissolveInScreen",
+        "GameOptionsMenu_7_ControllerSettings",
+        "GameOptionsMenu_8_SpecialSettings",
+        "GameOptionsMenu_9_ScrollControllerSettingsDown",
+        "GameOptionsMenu_A_ScrollControllerSettingsUp",
+        "GameOptionsMenu_B_TransitionBackToFileSelect",
+        "GameOptionsMenu_C_FadeOutOptionsScreenToStart",
+        "GameState_2_GameOptionsMenu",
+        "LoadControllerOptionsFromControllerBindings",
+        "OptionsMenuControllerFunc_0",
+        "OptionsMenuControllerFunc_7",
+        "OptionsMenuControllerFunc_8",
+        "OptionsMenuFunc4",
+        "OptionsMenuFunc5",
+        "OptionsMenuFunc6",
+        "OptionsMenuFunc7",
+        "OptionsMenuFunc8",
+        "OptionsMenu_AddToVramQueue"
+      ],
+      "count": 29
+    }
+  ],
+  "dynamic_dispatch": {
+    "HandleSoundEffects": [
+      "SfxHandlers_0_SendToApu",
+      "SfxHandlers_1_WaitForAck",
+      "SfxHandlers_2_ClearRequest",
+      "SfxHandlers_3_WaitForAck",
+      "SfxHandlers_4_Reset"
+    ],
+    "MainPauseRoutine": [
+      "PauseMenu_0_MapScreen",
+      "PauseMenu_1_EquipmentScreen",
+      "PauseMenu_2",
+      "PauseMenu_3_MapToEquipment_Load",
+      "PauseMenu_4_MapToEquipment_FadeIn",
+      "PauseMenu_5",
+      "PauseMenu_6_EquipmentToMap_Load",
+      "PauseMenu_7_EquipmentToMap_FadeIn"
+    ],
+    "EquipmentScreenMain": [
+      "EquipmentScreenCategory_Tanks",
+      "EquipmentScreenCategory_Weapons",
+      "EquipmentScreenCategory_Suit",
+      "EquipmentScreenCategory_Boots"
+    ],
+    "EquipmentScreenCategory_Tanks": [
+      "EquipmentScreenCategory_Tanks_0",
+      "EquipmentScreenCategory_Tanks_1"
+    ],
+    "EquipmentScreenGlowingArrow": [
+      "EquipmentScreenGlowingArrowAnimated",
+      "EquipmentScreenGlowingArrowSolidOn"
+    ],
+    "SetPauseScreenButtonLabelPalettes": [
+      "SetPauseScreenButtonLabelPalettes_0",
+      "SetPauseScreenButtonLabelPalettes_1",
+      "SetPauseScreenButtonLabelPalettes_2"
+    ],
+    "MapScrolling": [
+      "MapScrolling_0_None",
+      "MapScrolling_1_Left",
+      "MapScrolling_2_Right",
+      "MapScrolling_3_Up",
+      "MapScrolling_4_Down"
+    ],
+    "GameState_2_GameOptionsMenu": [
+      "GameOptionsMenuFunc_0",
+      "GameOptionsMenu_1_LoadingOptionsScreen",
+      "GameOptionsMenu_2_FadeInOptionsScreen",
+      "GameOptionsMenu_3_OptionsScreen",
+      "GameOptionsMenu_4_StartGame",
+      "GameOptionsMenu_5_DissolveOutScreen",
+      "GameOptionsMenu_6_DissolveInScreen",
+      "GameOptionsMenu_7_ControllerSettings",
+      "GameOptionsMenu_8_SpecialSettings",
+      "GameOptionsMenu_9_ScrollControllerSettingsDown",
+      "GameOptionsMenu_A_ScrollControllerSettingsUp",
+      "GameOptionsMenu_B_TransitionBackToFileSelect",
+      "GameOptionsMenu_C_FadeOutOptionsScreenToStart"
+    ],
+    "GameOptionsMenu_3_OptionsScreen": [
+      "GameOptionsMenuItemFunc_0",
+      "GameOptionsMenuItemFunc_2_ToggleJapanese",
+      "GameOptionsMenuItemFunc_4"
+    ],
+    "GameOptionsMenu_7_ControllerSettings": [
+      "OptionsMenuControllerFunc_0",
+      "OptionsMenuControllerFunc_7",
+      "OptionsMenuControllerFunc_8"
+    ],
+    "GameOptionsMenu_8_SpecialSettings": [
+      "GameOptionsMenuSpecialSettings_0",
+      "GameOptionsMenuSpecialSettings_2"
+    ]
+  },
+  "definitions": [
+    {
+      "symbol": "APU_UploadBank",
+      "source": "src/sm_80.c",
+      "line": 16,
+      "original_address": "0x808028",
+      "definition_sha256": "32aec38ebfa1bf4b44005479c7527547a5d64adebdaa22b149af89caa7b8f47b",
+      "calls": [
+        "RomPtr",
+        "RtlApuUpload"
+      ],
+      "defined_dependencies": [
+        "RomPtr",
+        "RtlApuUpload"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "HandleMusicQueue",
+      "source": "src/sm_80.c",
+      "line": 646,
+      "original_address": "0x808F0C",
+      "definition_sha256": "f635d911c2c92f687fc62c3eee96617f10f92fadb01d8e9700101980ebeaab2f",
+      "calls": [
+        "APU_UploadBank",
+        "Load24",
+        "RtlApuWrite"
+      ],
+      "defined_dependencies": [
+        "APU_UploadBank",
+        "Load24",
+        "RtlApuWrite"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "DrawSpritemap",
+      "source": "src/sm_81.c",
+      "line": 144,
+      "original_address": "0x81879F",
+      "definition_sha256": "037f27ace841ed04fca1dbf849a969b7a9b74aeee74a9b27aa37b029d8d64c2e",
+      "calls": [
+        "GET_WORD",
+        "RomPtrWithBank",
+        "gOamEnt",
+        "sign8"
+      ],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [
+        "GET_WORD",
+        "RomPtrWithBank",
+        "gOamEnt",
+        "sign8"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "DrawMenuSpritemap",
+      "source": "src/sm_81.c",
+      "line": 188,
+      "original_address": "0x81891F",
+      "definition_sha256": "754fc667937e9382a0a8522d5a224f834ed5abb4515b9d1ab418d2d8f3abf7df",
+      "calls": [
+        "GET_WORD",
+        "RomPtr_82",
+        "gOamEnt"
+      ],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [
+        "GET_WORD",
+        "RomPtr_82",
+        "gOamEnt"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "FileSelectMenu",
+      "source": "src/sm_81.c",
+      "line": 646,
+      "original_address": null,
+      "definition_sha256": "d1b2d8067df6a14ca2ad63bb2d8eb869b411700de81324f1959a0e745d0ef3b8",
+      "calls": [],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": [
+        "kFileSelectMenuFuncs"
+      ]
+    },
+    {
+      "symbol": "FileSelectMenu_0_FadeOutConfigGfx",
+      "source": "src/sm_81.c",
+      "line": 650,
+      "original_address": "0x81944E",
+      "definition_sha256": "ca2dd0a015d8b3a43dbf2c2c5517768224a425242e98a5deac7103ff0c0cedf1",
+      "calls": [
+        "DisableHdmaObjects",
+        "HandleFadeOut",
+        "LoadFileSelectPalettes",
+        "LoadInitialMenuTiles",
+        "MapVramForMenu",
+        "QueueSfx3_Max6",
+        "ScreenOff",
+        "WaitUntilEndOfVblankAndClearHdma"
+      ],
+      "defined_dependencies": [
+        "DisableHdmaObjects",
+        "HandleFadeOut",
+        "LoadFileSelectPalettes",
+        "LoadInitialMenuTiles",
+        "MapVramForMenu",
+        "QueueSfx3_Max6",
+        "ScreenOff",
+        "WaitUntilEndOfVblankAndClearHdma"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "FileSelectMenu_13_FileCopyDoIt",
+      "source": "src/sm_81.c",
+      "line": 1073,
+      "original_address": "0x819A2C",
+      "definition_sha256": "5838cef6957c377eff7ae24766cc3d1ef6b3717e682d8e5ce37aae28e5e07b00",
+      "calls": [
+        "DrawBorderAroundDataCopyMode",
+        "DrawFileCopyArrow",
+        "DrawFileCopyConfirmationSaveFileInfo",
+        "DrawMenuSelectionMissile",
+        "HandleFileCopyArrowPalette",
+        "LoadMenuTilemap",
+        "RtlWriteSram",
+        "memcpy"
+      ],
+      "defined_dependencies": [
+        "DrawBorderAroundDataCopyMode",
+        "DrawFileCopyArrow",
+        "DrawFileCopyConfirmationSaveFileInfo",
+        "DrawMenuSelectionMissile",
+        "HandleFileCopyArrowPalette",
+        "LoadMenuTilemap",
+        "RtlWriteSram"
+      ],
+      "external_or_macro_calls": [
+        "memcpy"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "FileSelectMenu_25_FileClearDoClear",
+      "source": "src/sm_81.c",
+      "line": 1241,
+      "original_address": "0x819C9E",
+      "definition_sha256": "a88d8d65d3428ad939b50c3d2ad25b1690184bcef04ec2cd79b8aae067ad7287",
+      "calls": [
+        "DrawBorderAroundDataClearMode",
+        "DrawFileCopyConfirmationSaveFileInfo",
+        "LoadFromSram",
+        "LoadMenuTilemap",
+        "LoadMirrorOfExploredMapTiles",
+        "NewSaveFile",
+        "RtlWriteSram",
+        "memset"
+      ],
+      "defined_dependencies": [
+        "DrawBorderAroundDataClearMode",
+        "DrawFileCopyConfirmationSaveFileInfo",
+        "LoadFromSram",
+        "LoadMenuTilemap",
+        "LoadMirrorOfExploredMapTiles",
+        "NewSaveFile",
+        "RtlWriteSram"
+      ],
+      "external_or_macro_calls": [
+        "memset"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "FileSelectMap",
+      "source": "src/sm_81.c",
+      "line": 1368,
+      "original_address": null,
+      "definition_sha256": "818579175aafa889c0aa1c979481db6ede929f6a7842c745fffd09f527d42d23",
+      "calls": [],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": [
+        "kFileSelectMapFuncs"
+      ]
+    },
+    {
+      "symbol": "FileSelectMenu_2_InitMain",
+      "source": "src/sm_81.c",
+      "line": 1398,
+      "original_address": "0x819ED6",
+      "definition_sha256": "9617a248e05fdb8b24729b1eadee693aa9653a3352d3f5a39639aa498489aa90",
+      "calls": [
+        "FileSelectMenu_16",
+        "sign16"
+      ],
+      "defined_dependencies": [
+        "FileSelectMenu_16"
+      ],
+      "external_or_macro_calls": [
+        "sign16"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "FileSelectMenu_16",
+      "source": "src/sm_81.c",
+      "line": 1410,
+      "original_address": "0x819EF3",
+      "definition_sha256": "28a024f22dd8cd32f7da7fd3772714ecd9bbbddcc08ad6f49620fd7ca7e72f04",
+      "calls": [
+        "DrawFileSelectionHealth",
+        "DrawFileSelectionTime",
+        "LoadFromSram_",
+        "LoadMenuTilemap",
+        "QueueTransferOfMenuTilemapToVramBG1",
+        "ScreenOn",
+        "swap16"
+      ],
+      "defined_dependencies": [
+        "DrawFileSelectionHealth",
+        "DrawFileSelectionTime",
+        "LoadFromSram_",
+        "LoadMenuTilemap",
+        "QueueTransferOfMenuTilemapToVramBG1",
+        "ScreenOn"
+      ],
+      "external_or_macro_calls": [
+        "swap16"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "FileSelectMenu_4_Main",
+      "source": "src/sm_81.c",
+      "line": 1547,
+      "original_address": "0x81A1C2",
+      "definition_sha256": "ff3bc809ede95a880e774bcf939e4919e229aa92c8cc6d809cf86ca6c289e76e",
+      "calls": [
+        "DrawBorderAroundSamusData",
+        "DrawFileSelectSlotSamusHelmet",
+        "DrawMenuSelectionMissile",
+        "LoadFromSram",
+        "LoadMirrorOfExploredMapTiles",
+        "NewSaveFile",
+        "QueueSfx1_Max6",
+        "RtlWriteSram",
+        "sign16"
+      ],
+      "defined_dependencies": [
+        "DrawBorderAroundSamusData",
+        "DrawFileSelectSlotSamusHelmet",
+        "DrawMenuSelectionMissile",
+        "LoadFromSram",
+        "LoadMirrorOfExploredMapTiles",
+        "NewSaveFile",
+        "QueueSfx1_Max6",
+        "RtlWriteSram"
+      ],
+      "external_or_macro_calls": [
+        "sign16"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "NewSaveFile",
+      "source": "src/sm_81.c",
+      "line": 2435,
+      "original_address": "0x81B2CB",
+      "definition_sha256": "5fcf5fe03ff7b08a05ca49aea74bd46b7f30d63646cba308fd7695ad8a9f0d85",
+      "calls": [
+        "WORD"
+      ],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [
+        "WORD"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "HandleSoundEffects",
+      "source": "src/sm_82.c",
+      "line": 738,
+      "original_address": null,
+      "definition_sha256": "455dfd8579639a95fe3e4e08833b94813f64576dfdfd57df11d0cd418783fc6d",
+      "calls": [
+        "LOBYTE",
+        "RtlApuWrite"
+      ],
+      "defined_dependencies": [
+        "RtlApuWrite"
+      ],
+      "external_or_macro_calls": [
+        "LOBYTE"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "SfxHandlers_0_SendToApu",
+      "source": "src/sm_82.c",
+      "line": 753,
+      "original_address": "0x828A2C",
+      "definition_sha256": "4965c0cb4c9cd1ca226aca43f4a88f8f071e8e7e4533a9f4c149d2630027a8bb",
+      "calls": [
+        "RtlApuWrite"
+      ],
+      "defined_dependencies": [
+        "RtlApuWrite"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "SfxHandlers_1_WaitForAck",
+      "source": "src/sm_82.c",
+      "line": 764,
+      "original_address": "0x828A55",
+      "definition_sha256": "4198f7478a20df511fdca15887ba96e3f073b00af5855b8a8b634fe51d680316",
+      "calls": [],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "SfxHandlers_2_ClearRequest",
+      "source": "src/sm_82.c",
+      "line": 771,
+      "original_address": "0x828A6C",
+      "definition_sha256": "e1ae710260a7e16bc486bfb4985a311b01b4a10147225c0e19f335909db90574",
+      "calls": [],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "SfxHandlers_3_WaitForAck",
+      "source": "src/sm_82.c",
+      "line": 779,
+      "original_address": "0x828A7C",
+      "definition_sha256": "6df227d31f1218c16d6790cf04f6cd98d61f38ca437d7798a013e47643fb9195",
+      "calls": [
+        "SfxHandlers_0_SendToApu"
+      ],
+      "defined_dependencies": [
+        "SfxHandlers_0_SendToApu"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "SfxHandlers_4_Reset",
+      "source": "src/sm_82.c",
+      "line": 786,
+      "original_address": "0x828A90",
+      "definition_sha256": "37a4f8f7d6f1d4debe9e1242d93d79fba378d4a19c7f1b7ac10753d0a49bb45a",
+      "calls": [],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "ResetSoundQueues",
+      "source": "src/sm_82.c",
+      "line": 791,
+      "original_address": "0x828A9A",
+      "definition_sha256": "53a4c43e98176d230cb1a163909992d28ccb5f96d511573b49a9fbe432503f2b",
+      "calls": [],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "DeleteAllOptionsMenuObjects_",
+      "source": "src/sm_82.c",
+      "line": 889,
+      "original_address": null,
+      "definition_sha256": "cd6d7641f038d2eaf07d29f1ebc1d4ca7e695cfdea7162257f530b5a18017833",
+      "calls": [],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "CallOptionsEntryFunc",
+      "source": "src/sm_82.c",
+      "line": 897,
+      "original_address": null,
+      "definition_sha256": "d5a40ddc34c97c49cbf5092b0db0af5c29643788fa07289d4ca5654828c7a5fe",
+      "calls": [
+        "Unreachable",
+        "sub_82F296",
+        "sub_82F34B",
+        "sub_82F353",
+        "sub_82F35B",
+        "sub_82F363",
+        "sub_82F419"
+      ],
+      "defined_dependencies": [
+        "Unreachable",
+        "sub_82F296",
+        "sub_82F34B",
+        "sub_82F353",
+        "sub_82F35B",
+        "sub_82F363",
+        "sub_82F419"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "CreateOptionsMenuObject_",
+      "source": "src/sm_82.c",
+      "line": 909,
+      "original_address": null,
+      "definition_sha256": "9a88ebe9e28f179e091dde8c2811c545b0dc6f8c324fd5d7f0721ea8e8382a9a",
+      "calls": [
+        "CallOptionsEntryFunc",
+        "GET_WORD",
+        "RomPtr_82"
+      ],
+      "defined_dependencies": [
+        "CallOptionsEntryFunc"
+      ],
+      "external_or_macro_calls": [
+        "GET_WORD",
+        "RomPtr_82"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "OptionsPreInstr_nullsub_57",
+      "source": "src/sm_82.c",
+      "line": 930,
+      "original_address": "0x828C10",
+      "definition_sha256": "bb2bddbe296ed61204fdc11266da81fd1df4d4ca3c521262c3fb12605dc760ab",
+      "calls": [],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "OptionsMenuFunc1",
+      "source": "src/sm_82.c",
+      "line": 934,
+      "original_address": "0x828C11",
+      "definition_sha256": "3fb0b5a653b81c205ded3c99338be668e9290fd8d716dff021a883426733483b",
+      "calls": [
+        "OptionsMenuFunc2"
+      ],
+      "defined_dependencies": [
+        "OptionsMenuFunc2"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "CallOptionsPreInstr",
+      "source": "src/sm_82.c",
+      "line": 944,
+      "original_address": null,
+      "definition_sha256": "93d941ba476cc3b0b3cda73b2eaa608ef38572dc048f7983335d4f62a40c113b",
+      "calls": [
+        "OptionsPreInstr_F2A9",
+        "OptionsPreInstr_F376",
+        "OptionsPreInstr_F3A0",
+        "OptionsPreInstr_F3E2",
+        "OptionsPreInstr_F42C",
+        "OptionsPreInstr_nullsub_57",
+        "Unreachable"
+      ],
+      "defined_dependencies": [
+        "OptionsPreInstr_F2A9",
+        "OptionsPreInstr_F376",
+        "OptionsPreInstr_F3A0",
+        "OptionsPreInstr_F3E2",
+        "OptionsPreInstr_F42C",
+        "OptionsPreInstr_nullsub_57",
+        "Unreachable"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "CallOptionsInstr",
+      "source": "src/sm_82.c",
+      "line": 956,
+      "original_address": null,
+      "definition_sha256": "0f813ad4fd61b8b0dd182b131574d146c798c172e7877ef24b1229a44c539fc6",
+      "calls": [
+        "OptionsInstr_8C64",
+        "OptionsInstr_8C79",
+        "OptionsInstr_8C89",
+        "OptionsInstr_8C93",
+        "OptionsInstr_Destroy",
+        "OptionsInstr_Goto",
+        "OptionsInstr_SetPreInstr",
+        "Unreachable"
+      ],
+      "defined_dependencies": [
+        "OptionsInstr_8C64",
+        "OptionsInstr_8C79",
+        "OptionsInstr_8C89",
+        "OptionsInstr_8C93",
+        "OptionsInstr_Destroy",
+        "OptionsInstr_Goto",
+        "OptionsInstr_SetPreInstr",
+        "Unreachable"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "OptionsMenuFunc2",
+      "source": "src/sm_82.c",
+      "line": 969,
+      "original_address": "0x828C2B",
+      "definition_sha256": "8dc27887d2bd41c1a8ac293dc8cef28518a52473088641d8bbfdb1ec717bedad",
+      "calls": [
+        "CallOptionsInstr",
+        "CallOptionsPreInstr",
+        "RomPtr_82"
+      ],
+      "defined_dependencies": [
+        "CallOptionsInstr",
+        "CallOptionsPreInstr"
+      ],
+      "external_or_macro_calls": [
+        "RomPtr_82"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "OptionsInstr_Destroy",
+      "source": "src/sm_82.c",
+      "line": 991,
+      "original_address": "0x828C5A",
+      "definition_sha256": "3dbb689ab7c0e9a6201ec670febe3037624e2a3bf7a90c36c36af019f8c7f06d",
+      "calls": [],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "OptionsInstr_8C64",
+      "source": "src/sm_82.c",
+      "line": 998,
+      "original_address": "0x828C64",
+      "definition_sha256": "424ae4a0c65f4ae633ddb235b178c15c9c900c37a8317278d6a5f580f51fbf9e",
+      "calls": [],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "OptionsInstr_SetPreInstr",
+      "source": "src/sm_82.c",
+      "line": 1003,
+      "original_address": "0x828C6E",
+      "definition_sha256": "f7079de2f7e5b5e72c8f48a740bdd2794ac6059f03eae30f84713d57ec3d54f6",
+      "calls": [
+        "RomPtr_82"
+      ],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [
+        "RomPtr_82"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "OptionsInstr_8C79",
+      "source": "src/sm_82.c",
+      "line": 1008,
+      "original_address": "0x828C79",
+      "definition_sha256": "e1949ebc97a7dde824000f1014dcfaaa92150fc3e1282fc2aafa71cfea231c85",
+      "calls": [
+        "FUNC16"
+      ],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [
+        "FUNC16"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "OptionsInstr_Goto",
+      "source": "src/sm_82.c",
+      "line": 1013,
+      "original_address": "0x828C82",
+      "definition_sha256": "b98a55f1dd23940d044e3788b36bf1dff8994e2b816918388f8381ee7a54066d",
+      "calls": [
+        "RomPtr_82"
+      ],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [
+        "RomPtr_82"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "OptionsInstr_8C89",
+      "source": "src/sm_82.c",
+      "line": 1017,
+      "original_address": "0x828C89",
+      "definition_sha256": "475eea1381547904eadbc3a4d7a95ce8a58bc20a705b8c3be5c7e41ef2f09521",
+      "calls": [
+        "OptionsInstr_Goto"
+      ],
+      "defined_dependencies": [
+        "OptionsInstr_Goto"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "OptionsInstr_8C93",
+      "source": "src/sm_82.c",
+      "line": 1025,
+      "original_address": "0x828C93",
+      "definition_sha256": "cdbbaad2463c652842ef69e7a1800c9fad9fc282cbfa73470360677066d00229",
+      "calls": [
+        "RomPtr_82"
+      ],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [
+        "RomPtr_82"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "DrawOptionsMenuSpritemaps",
+      "source": "src/sm_82.c",
+      "line": 1030,
+      "original_address": "0x828CA1",
+      "definition_sha256": "d82b7785c4d6071f0573949d75ac6e3bed0a4f9e941bb71e2e2acfe94e277888",
+      "calls": [
+        "DrawSpritemap"
+      ],
+      "defined_dependencies": [
+        "DrawSpritemap"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "GameState_12_Pausing_Darkening_Async",
+      "source": "src/sm_82.c",
+      "line": 1040,
+      "original_address": "0x828CCF",
+      "definition_sha256": "5ae03d037fccba1c74baf746bd068729313b5a28e638b14eefcd0dfc715e6f93",
+      "calls": [
+        "COROUTINE_AWAIT_ONLY",
+        "EnableNMI",
+        "GameState_8_MainGameplay",
+        "HandleFadeOut"
+      ],
+      "defined_dependencies": [
+        "EnableNMI",
+        "GameState_8_MainGameplay",
+        "HandleFadeOut"
+      ],
+      "external_or_macro_calls": [
+        "COROUTINE_AWAIT_ONLY"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "CallPauseHook",
+      "source": "src/sm_82.c",
+      "line": 1052,
+      "original_address": null,
+      "definition_sha256": "617e0e003ba0113f2588e6baad27c0c96d24e86ba7d4cf0a2e56e3ac987dd33d",
+      "calls": [
+        "PauseHook_DraygonRoom",
+        "PauseHook_Kraid",
+        "Unreachable"
+      ],
+      "defined_dependencies": [
+        "PauseHook_DraygonRoom",
+        "PauseHook_Kraid",
+        "Unreachable"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "CallUnpauseHook_Async",
+      "source": "src/sm_82.c",
+      "line": 1061,
+      "original_address": null,
+      "definition_sha256": "9b7630df683ca0ce1bde7c30c9c7f4c8ae0e4c3f8071c56ce7622a753c8ff2a4",
+      "calls": [
+        "Kraid_UnpauseHook_IsSinking",
+        "MotherBrainsBody_UnpauseHook",
+        "UnpauseHook_DraygonRoom",
+        "UnpauseHook_Kraid_IsAlive",
+        "UnpauseHook_Kraid_IsDead",
+        "Unreachable"
+      ],
+      "defined_dependencies": [
+        "Kraid_UnpauseHook_IsSinking",
+        "MotherBrainsBody_UnpauseHook",
+        "UnpauseHook_DraygonRoom",
+        "UnpauseHook_Kraid_IsAlive",
+        "UnpauseHook_Kraid_IsDead",
+        "Unreachable"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "GameState_13_Pausing_Async",
+      "source": "src/sm_82.c",
+      "line": 1073,
+      "original_address": "0x828CEF",
+      "definition_sha256": "95410e1e49f2234f3e6b21578cf385f859f06ff7694980dd2d51834775d3905c",
+      "calls": [
+        "BackupBG2TilemapForPauseMenu",
+        "BackupGameplayPalettesAndLoadForPause",
+        "BackupSomeGfxStateForPause",
+        "CallPauseHook",
+        "CancelSoundEffects",
+        "ContinueInitPauseMenu",
+        "DisableAnimtiles",
+        "DisableHdmaObjects",
+        "Load24",
+        "LoadPauseMenuMapTilemapAndAreaLabel",
+        "LoadPauseMenuTilesAndClearBG2",
+        "LoadPauseScreenBaseTilemaps",
+        "QueueClearingOfFxTilemap",
+        "WriteReg"
+      ],
+      "defined_dependencies": [
+        "BackupBG2TilemapForPauseMenu",
+        "BackupGameplayPalettesAndLoadForPause",
+        "BackupSomeGfxStateForPause",
+        "CallPauseHook",
+        "CancelSoundEffects",
+        "ContinueInitPauseMenu",
+        "DisableAnimtiles",
+        "DisableHdmaObjects",
+        "Load24",
+        "LoadPauseMenuMapTilemapAndAreaLabel",
+        "LoadPauseMenuTilesAndClearBG2",
+        "LoadPauseScreenBaseTilemaps",
+        "QueueClearingOfFxTilemap",
+        "WriteReg"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "GameState_14_Paused_Async",
+      "source": "src/sm_82.c",
+      "line": 1285,
+      "original_address": "0x8290C8",
+      "definition_sha256": "970ecb71e3a4aa45cb8806b58beeb13958bd7623dac4ded340ff11718a2c767c",
+      "calls": [
+        "DrawPauseMenuDuringFadeIn",
+        "HandleFadeIn"
+      ],
+      "defined_dependencies": [
+        "DrawPauseMenuDuringFadeIn",
+        "HandleFadeIn"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "GameState_15_Paused_Async",
+      "source": "src/sm_82.c",
+      "line": 1296,
+      "original_address": "0x8290E8",
+      "definition_sha256": "4287d39d7862e1f9e491d42d45736eeed1a7795f485171c6c6a39a258e2ca02b",
+      "calls": [
+        "HandleHudTilemap",
+        "HandlePauseScreenPaletteAnimation",
+        "MainPauseRoutine",
+        "ReleaseButtonsFilter"
+      ],
+      "defined_dependencies": [
+        "HandleHudTilemap",
+        "HandlePauseScreenPaletteAnimation",
+        "MainPauseRoutine",
+        "ReleaseButtonsFilter"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "MainPauseRoutine",
+      "source": "src/sm_82.c",
+      "line": 1314,
+      "original_address": null,
+      "definition_sha256": "b45e02cf9343fd0e71893c93ecfb543e3cd2e804b0e16a11322d61a16b60864a",
+      "calls": [],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": [
+        "kPauseMenuFuncs"
+      ]
+    },
+    {
+      "symbol": "PauseMenu_0_MapScreen",
+      "source": "src/sm_82.c",
+      "line": 1318,
+      "original_address": "0x829120",
+      "definition_sha256": "f9886515716cc50c688287f3ecd516691accf9fe69491ce6e372dea1a140c89b",
+      "calls": [
+        "DisplayMapElevatorDestinations",
+        "DrawMapIcons",
+        "HandleMapScrollArrows",
+        "HandlePauseScreenLR",
+        "HandlePauseScreenStart",
+        "MapScreenDrawSamusPositionIndicator",
+        "MapScrolling"
+      ],
+      "defined_dependencies": [
+        "DisplayMapElevatorDestinations",
+        "DrawMapIcons",
+        "HandleMapScrollArrows",
+        "HandlePauseScreenLR",
+        "HandlePauseScreenStart",
+        "MapScreenDrawSamusPositionIndicator",
+        "MapScrolling"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "PauseMenu_1_EquipmentScreen",
+      "source": "src/sm_82.c",
+      "line": 1329,
+      "original_address": "0x829142",
+      "definition_sha256": "1da8737c2e9815ba562c3d03bf73b51cb707ae9c63f2f6c3604b8677a0dcccb2",
+      "calls": [
+        "EquipmentScreenMain",
+        "HandlePauseScreenLR",
+        "HandlePauseScreenStart"
+      ],
+      "defined_dependencies": [
+        "EquipmentScreenMain",
+        "HandlePauseScreenLR",
+        "HandlePauseScreenStart"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "PauseMenu_2",
+      "source": "src/sm_82.c",
+      "line": 1338,
+      "original_address": "0x829156",
+      "definition_sha256": "37ac292e9a87a0ae3bdb55ccaec7b9ea903043a119b08d8930a2aa8073eec2d0",
+      "calls": [
+        "DisplayMapElevatorDestinations",
+        "DrawMapIcons",
+        "EnableNMI",
+        "HandleFadeOut",
+        "HandlePauseMenuLRPressHighlight",
+        "MapScreenDrawSamusPositionIndicator"
+      ],
+      "defined_dependencies": [
+        "DisplayMapElevatorDestinations",
+        "DrawMapIcons",
+        "EnableNMI",
+        "HandleFadeOut",
+        "HandlePauseMenuLRPressHighlight",
+        "MapScreenDrawSamusPositionIndicator"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "PauseMenu_5",
+      "source": "src/sm_82.c",
+      "line": 1353,
+      "original_address": "0x829186",
+      "definition_sha256": "dc75ee56d048f5096607690a7d36670b0d0b3c34aafc6694c72e852c2afc2381",
+      "calls": [
+        "EnableNMI",
+        "EquipmentScreenDisplayReserveTankAmount",
+        "EquipmentScreenDrawItemSelector",
+        "HandleFadeOut",
+        "HandlePauseMenuLRPressHighlight"
+      ],
+      "defined_dependencies": [
+        "EnableNMI",
+        "EquipmentScreenDisplayReserveTankAmount",
+        "EquipmentScreenDrawItemSelector",
+        "HandleFadeOut",
+        "HandlePauseMenuLRPressHighlight"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "PauseMenu_3_MapToEquipment_Load",
+      "source": "src/sm_82.c",
+      "line": 1365,
+      "original_address": "0x8291AB",
+      "definition_sha256": "4a2d52689c67692f41d06af4a50958394f10a3e5f91563cdb63fd423d8408e84",
+      "calls": [
+        "DisplayMapElevatorDestinations",
+        "EquipmentScreenSetupReserveMode",
+        "EquipmentScreenTransferBG1Tilemap",
+        "SetPauseScreenButtonLabelPalettes"
+      ],
+      "defined_dependencies": [
+        "DisplayMapElevatorDestinations",
+        "EquipmentScreenSetupReserveMode",
+        "EquipmentScreenTransferBG1Tilemap",
+        "SetPauseScreenButtonLabelPalettes"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "PauseMenu_6_EquipmentToMap_Load",
+      "source": "src/sm_82.c",
+      "line": 1378,
+      "original_address": "0x8291D7",
+      "definition_sha256": "6eace8b396e2889063eb546dc7275b2bcaa4c1267aafe9816a6ebc60c77e6f87",
+      "calls": [
+        "DisplayMapElevatorDestinations",
+        "LoadPauseMenuMapTilemapAndAreaLabel",
+        "SetPauseScreenButtonLabelPalettes"
+      ],
+      "defined_dependencies": [
+        "DisplayMapElevatorDestinations",
+        "LoadPauseMenuMapTilemapAndAreaLabel",
+        "SetPauseScreenButtonLabelPalettes"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "PauseMenu_7_EquipmentToMap_FadeIn",
+      "source": "src/sm_82.c",
+      "line": 1390,
+      "original_address": "0x829200",
+      "definition_sha256": "4a46ab62b95643f08359098ea53a8fbd2b060067d56ce0cc787f5819d99f35ef",
+      "calls": [
+        "DisplayMapElevatorDestinations",
+        "DrawMapIcons",
+        "HandleFadeIn",
+        "MapScreenDrawSamusPositionIndicator"
+      ],
+      "defined_dependencies": [
+        "DisplayMapElevatorDestinations",
+        "DrawMapIcons",
+        "HandleFadeIn",
+        "MapScreenDrawSamusPositionIndicator"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "PauseMenu_4_MapToEquipment_FadeIn",
+      "source": "src/sm_82.c",
+      "line": 1406,
+      "original_address": "0x829231",
+      "definition_sha256": "724a0ada7060594a4ce5fea51cd0d8f68fea27595cec9362392d66d616d232fb",
+      "calls": [
+        "EquipmentScreenDisplayReserveTankAmount",
+        "EquipmentScreenDrawItemSelector",
+        "HandleFadeIn"
+      ],
+      "defined_dependencies": [
+        "EquipmentScreenDisplayReserveTankAmount",
+        "EquipmentScreenDrawItemSelector",
+        "HandleFadeIn"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "GameState_16_Unpausing_Async",
+      "source": "src/sm_82.c",
+      "line": 1485,
+      "original_address": "0x829324",
+      "definition_sha256": "1abfc949378e72f9cc6289b096f55728f1da4746b0e669ca2bdaa67090377739",
+      "calls": [
+        "DrawPauseMenuDuringFadeout",
+        "EnableNMI",
+        "HandleFadeOut",
+        "HighlightPauseScreenButton"
+      ],
+      "defined_dependencies": [
+        "DrawPauseMenuDuringFadeout",
+        "EnableNMI",
+        "HandleFadeOut",
+        "HighlightPauseScreenButton"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "GameState_17_Unpausing_Async",
+      "source": "src/sm_82.c",
+      "line": 1510,
+      "original_address": "0x829367",
+      "definition_sha256": "74a9088ee1e7308f79e535087769f68e1aa32cd61f145d78811fadc0e5885581",
+      "calls": [
+        "COROUTINE_AWAIT",
+        "COROUTINE_BEGIN",
+        "COROUTINE_END",
+        "CallUnpauseHook_Async",
+        "ClearSamusBeamTiles",
+        "ContinueInitGameplayResume",
+        "EnableAnimtiles",
+        "EnableHdmaObjects",
+        "Load24",
+        "QueueSamusMovementSfx",
+        "RestoreBG2TilemapFromPauseScreen",
+        "RestoreSomeGfxStateForPause",
+        "ResumeGameplay"
+      ],
+      "defined_dependencies": [
+        "CallUnpauseHook_Async",
+        "ClearSamusBeamTiles",
+        "ContinueInitGameplayResume",
+        "EnableAnimtiles",
+        "EnableHdmaObjects",
+        "Load24",
+        "QueueSamusMovementSfx",
+        "RestoreBG2TilemapFromPauseScreen",
+        "RestoreSomeGfxStateForPause",
+        "ResumeGameplay"
+      ],
+      "external_or_macro_calls": [
+        "COROUTINE_AWAIT",
+        "COROUTINE_BEGIN",
+        "COROUTINE_END"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "GameState_18_Unpausing",
+      "source": "src/sm_82.c",
+      "line": 1527,
+      "original_address": "0x8293A1",
+      "definition_sha256": "f8a7b075557bc30846ba58b1283df6116e4b076ece3a3ff02a2abf90a3baee0b",
+      "calls": [
+        "COROUTINE_AWAIT_ONLY",
+        "GameState_8_MainGameplay",
+        "HandleFadeIn"
+      ],
+      "defined_dependencies": [
+        "GameState_8_MainGameplay",
+        "HandleFadeIn"
+      ],
+      "external_or_macro_calls": [
+        "COROUTINE_AWAIT_ONLY"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "ChangePaletteValues",
+      "source": "src/sm_82.c",
+      "line": 1863,
+      "original_address": "0x82A29D",
+      "definition_sha256": "744b9adeeee9594df1646a8a2702f1aa292498a68899517d54c51514646279c7",
+      "calls": [],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "DrawPauseScreenSpriteAnim",
+      "source": "src/sm_82.c",
+      "line": 2292,
+      "original_address": "0x82A881",
+      "definition_sha256": "fe0e660f06d02949ddda673743eddfa655ac102e290db4fcaa98ff7de8aadaab",
+      "calls": [
+        "DrawMenuSpritemap",
+        "GET_WORD",
+        "RomPtr_82",
+        "RomPtr_RAM"
+      ],
+      "defined_dependencies": [
+        "DrawMenuSpritemap"
+      ],
+      "external_or_macro_calls": [
+        "GET_WORD",
+        "RomPtr_82",
+        "RomPtr_RAM"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "EquipmentScreenMain",
+      "source": "src/sm_82.c",
+      "line": 2410,
+      "original_address": null,
+      "definition_sha256": "10ae5793f50b6d1d99dbae019549a9ab085582908f1b25f0668ce617b796dece",
+      "calls": [
+        "EquipmentScreenDisplayReserveTankAmount",
+        "EquipmentScreenDrawItemSelector",
+        "WriteSamusWireframeTilemapAndQueue"
+      ],
+      "defined_dependencies": [
+        "EquipmentScreenDisplayReserveTankAmount",
+        "EquipmentScreenDrawItemSelector",
+        "WriteSamusWireframeTilemapAndQueue"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": [
+        "kEquipmentScreenCategories"
+      ]
+    },
+    {
+      "symbol": "EquipmentScreenCategory_Tanks",
+      "source": "src/sm_82.c",
+      "line": 2420,
+      "original_address": null,
+      "definition_sha256": "a160a3b3b85552519d7769634c89560cecbe9c9135f33438bfb39b4029598b52",
+      "calls": [
+        "EquipmentScreenGlowingArrow",
+        "EquipmentScreenHandleDpad",
+        "HIBYTE"
+      ],
+      "defined_dependencies": [
+        "EquipmentScreenGlowingArrow",
+        "EquipmentScreenHandleDpad"
+      ],
+      "external_or_macro_calls": [
+        "HIBYTE"
+      ],
+      "indirect_indexed_calls": [
+        "kEquipmentScreenCategory_TanksFuncs"
+      ]
+    },
+    {
+      "symbol": "EquipmentScreenHandleDpad",
+      "source": "src/sm_82.c",
+      "line": 2426,
+      "original_address": "0x82AC8B",
+      "definition_sha256": "c8e0bf589610fe7ac5a0b515b9655cb8cb7f3f9bb84a41dc168cb091e55b8799",
+      "calls": [
+        "EquipmentScreenMoveLowerOnSuitsMisc",
+        "EquipmentScreenMoveToBeams",
+        "EquipmentScreenMoveToHighJumpOrLowerInBoots",
+        "QueueSfx1_Max6"
+      ],
+      "defined_dependencies": [
+        "EquipmentScreenMoveLowerOnSuitsMisc",
+        "EquipmentScreenMoveToBeams",
+        "EquipmentScreenMoveToHighJumpOrLowerInBoots",
+        "QueueSfx1_Max6"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "EquipmentScreenGlowingArrow",
+      "source": "src/sm_82.c",
+      "line": 2451,
+      "original_address": null,
+      "definition_sha256": "5647003c2ad5275b34f29c01d6f093cb995d4e14f9386d039a6fcd805441bb98",
+      "calls": [
+        "EquipmentScreenGlowingArrowSolidOff",
+        "HIBYTE"
+      ],
+      "defined_dependencies": [
+        "EquipmentScreenGlowingArrowSolidOff"
+      ],
+      "external_or_macro_calls": [
+        "HIBYTE"
+      ],
+      "indirect_indexed_calls": [
+        "kEquipmentScreenGlowingArrowFuncs"
+      ]
+    },
+    {
+      "symbol": "EquipmentScreenGlowingArrowAnimated",
+      "source": "src/sm_82.c",
+      "line": 2461,
+      "original_address": "0x82AD29",
+      "definition_sha256": "abcd11884278f99b19f459b12b118922b02724b7ad1858f16862ecb0ddf54bbb",
+      "calls": [
+        "EquipmentScreenEnergyArrowGlow_Off",
+        "EquipmentScreenEnergyArrowGlow_On"
+      ],
+      "defined_dependencies": [
+        "EquipmentScreenEnergyArrowGlow_Off",
+        "EquipmentScreenEnergyArrowGlow_On"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "EquipmentScreenGlowingArrowSolidOn",
+      "source": "src/sm_82.c",
+      "line": 2474,
+      "original_address": "0x82ADDD",
+      "definition_sha256": "b573b75d37c7f37cd7b016f2c988c439212700fd8c6241c81bfb1d114f37729c",
+      "calls": [
+        "EquipmentScreenEnergyArrowGlow_On"
+      ],
+      "defined_dependencies": [
+        "EquipmentScreenEnergyArrowGlow_On"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "EquipmentScreenGlowingArrowSolidOff",
+      "source": "src/sm_82.c",
+      "line": 2480,
+      "original_address": "0x82ADEF",
+      "definition_sha256": "b332ecdffdfc263e303bde297c5e17c46369f5dc6eb8b303b8bc32845db427ee",
+      "calls": [
+        "EquipmentScreenEnergyArrowGlow_Off"
+      ],
+      "defined_dependencies": [
+        "EquipmentScreenEnergyArrowGlow_Off"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "EquipmentScreenEnergyArrowGlow_On",
+      "source": "src/sm_82.c",
+      "line": 2486,
+      "original_address": "0x82AE01",
+      "definition_sha256": "62525d082b259d325411ffe6113104636d04b594c3301e8fe287bafef82a6caf",
+      "calls": [],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "EquipmentScreenEnergyArrowGlow_Off",
+      "source": "src/sm_82.c",
+      "line": 2493,
+      "original_address": "0x82AE46",
+      "definition_sha256": "4f5ee4dce66d7c15ecda4af8cf78460e8793a918fcbdf35ae735d823fbeff601",
+      "calls": [],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "EquipmentScreenCategory_Tanks_0",
+      "source": "src/sm_82.c",
+      "line": 2553,
+      "original_address": null,
+      "definition_sha256": "7978f90e86634549d3b1827a9a0e894576cf5589c32955f47a3fe2bdb081bcff",
+      "calls": [
+        "EquipmentScreenHudReserveAutoTilemap_Off",
+        "EquipmentScreenHudReserveAutoTilemap_On_BUGGY",
+        "QueueSfx1_Max6"
+      ],
+      "defined_dependencies": [
+        "EquipmentScreenHudReserveAutoTilemap_Off",
+        "EquipmentScreenHudReserveAutoTilemap_On_BUGGY",
+        "QueueSfx1_Max6"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "EquipmentScreenHudReserveAutoTilemap_On_BUGGY",
+      "source": "src/sm_82.c",
+      "line": 2583,
+      "original_address": "0x82AEFD",
+      "definition_sha256": "302b1aea0e2990d4669ad17633243e16418b39d1c0793beec14c829e063a4e3a",
+      "calls": [
+        "RomPtr_82"
+      ],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [
+        "RomPtr_82"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "EquipmentScreenHudReserveAutoTilemap_Off",
+      "source": "src/sm_82.c",
+      "line": 2597,
+      "original_address": "0x82AF33",
+      "definition_sha256": "ace801e86db443dd290e1558e28b88e3b4df47287d985dbd0b913a7cd9ef0160",
+      "calls": [],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "EquipmentScreenCategory_Tanks_1",
+      "source": "src/sm_82.c",
+      "line": 2606,
+      "original_address": "0x82AF4F",
+      "definition_sha256": "dab2a84e73db8d153bf41ad9c08952658ecc02b168653792b7073dfe07a8ecda",
+      "calls": [
+        "EquipmentScreenEnergyArrowGlow_Off",
+        "QueueSfx3_Max6"
+      ],
+      "defined_dependencies": [
+        "EquipmentScreenEnergyArrowGlow_Off",
+        "QueueSfx3_Max6"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "EquipmentScreenCategory_Weapons",
+      "source": "src/sm_82.c",
+      "line": 2629,
+      "original_address": "0x82AFBE",
+      "definition_sha256": "7169c2c0c897b7e3b54c0de7b80b3421e3184347077fff2500d1012202969bdb",
+      "calls": [
+        "EquipmentScreenCategory_ButtonResponse",
+        "EquipmentScreenCategory_Weapons_MoveButtons",
+        "EquipmentScreenCategory_Weapons_PlazmaSpazerCheck"
+      ],
+      "defined_dependencies": [
+        "EquipmentScreenCategory_ButtonResponse",
+        "EquipmentScreenCategory_Weapons_MoveButtons",
+        "EquipmentScreenCategory_Weapons_PlazmaSpazerCheck"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "EquipmentScreenCategory_Weapons_MoveButtons",
+      "source": "src/sm_82.c",
+      "line": 2641,
+      "original_address": "0x82AFDB",
+      "definition_sha256": "5ebee69d0a3bbedb011d5c9f6324c7604dcf4779d484ec71f038546e76b21749",
+      "calls": [
+        "EquipmentScreenMoveLowerOnSuitsMisc",
+        "EquipmentScreenMoveToBeams",
+        "EquipmentScreenMoveToBottomOfBeams",
+        "EquipmentScreenMoveToHighJumpOrLowerInBoots",
+        "EquipmentScreenMoveToReserveTanks",
+        "HIBYTE"
+      ],
+      "defined_dependencies": [
+        "EquipmentScreenMoveLowerOnSuitsMisc",
+        "EquipmentScreenMoveToBeams",
+        "EquipmentScreenMoveToBottomOfBeams",
+        "EquipmentScreenMoveToHighJumpOrLowerInBoots",
+        "EquipmentScreenMoveToReserveTanks"
+      ],
+      "external_or_macro_calls": [
+        "HIBYTE"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "EquipmentScreenCategory_Weapons_PlazmaSpazerCheck",
+      "source": "src/sm_82.c",
+      "line": 2664,
+      "original_address": "0x82B068",
+      "definition_sha256": "e11dd9bd9181175062f877388d576e7b361ba52028dcbcf3ffe0d2bbb917dae3",
+      "calls": [
+        "ChangePaletteValues"
+      ],
+      "defined_dependencies": [
+        "ChangePaletteValues"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "EquipmentScreenCategory_Suit",
+      "source": "src/sm_82.c",
+      "line": 2677,
+      "original_address": "0x82B0C2",
+      "definition_sha256": "f9da861517064a1767656feff663145161a5154d72ec28c5fed20157632f9acb",
+      "calls": [
+        "EquipmentScreenCategory_ButtonResponse",
+        "EquipmentScreenCategory_Suit_MoveResponse"
+      ],
+      "defined_dependencies": [
+        "EquipmentScreenCategory_ButtonResponse",
+        "EquipmentScreenCategory_Suit_MoveResponse"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "EquipmentScreenCategory_Suit_MoveResponse",
+      "source": "src/sm_82.c",
+      "line": 2684,
+      "original_address": "0x82B0D2",
+      "definition_sha256": "a080aa83e3a1a03166d3f7c4de205247a91bb8c7cd3a7bafa73a22f4c28336eb",
+      "calls": [
+        "EquipmentScreenMoveLowerOnSuitsMisc",
+        "EquipmentScreenMoveToBeams",
+        "EquipmentScreenMoveToHighJumpOrLowerInBoots",
+        "EquipmentScreenMoveToReserveTanks",
+        "EquipmentScreenMoveToScrewOrHigherOnSuits",
+        "HIBYTE"
+      ],
+      "defined_dependencies": [
+        "EquipmentScreenMoveLowerOnSuitsMisc",
+        "EquipmentScreenMoveToBeams",
+        "EquipmentScreenMoveToHighJumpOrLowerInBoots",
+        "EquipmentScreenMoveToReserveTanks",
+        "EquipmentScreenMoveToScrewOrHigherOnSuits"
+      ],
+      "external_or_macro_calls": [
+        "HIBYTE"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "EquipmentScreenCategory_Boots",
+      "source": "src/sm_82.c",
+      "line": 2707,
+      "original_address": "0x82B150",
+      "definition_sha256": "93ef38ad4ea25d1eaa8662fc243e6675538cf920346505a5793fc61bb9b6dfc3",
+      "calls": [
+        "EquipmentScreenCategory_Boots_MoveResponse",
+        "EquipmentScreenCategory_ButtonResponse"
+      ],
+      "defined_dependencies": [
+        "EquipmentScreenCategory_Boots_MoveResponse",
+        "EquipmentScreenCategory_ButtonResponse"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "EquipmentScreenCategory_Boots_MoveResponse",
+      "source": "src/sm_82.c",
+      "line": 2714,
+      "original_address": "0x82B160",
+      "definition_sha256": "2e3288606e0be0d6ce7d65a9c5cdcd19b5e956f79463f1afd23bdf3f3d37583e",
+      "calls": [
+        "EquipmentScreenCategory_Boots_MoveUpInBoots",
+        "EquipmentScreenMoveToBottomOfBeams",
+        "EquipmentScreenMoveToHighJumpOrLowerInBoots",
+        "EquipmentScreenMoveToReserveTanks",
+        "EquipmentScreenMoveToScrewOrHigherOnSuits",
+        "HIBYTE"
+      ],
+      "defined_dependencies": [
+        "EquipmentScreenCategory_Boots_MoveUpInBoots",
+        "EquipmentScreenMoveToBottomOfBeams",
+        "EquipmentScreenMoveToHighJumpOrLowerInBoots",
+        "EquipmentScreenMoveToReserveTanks",
+        "EquipmentScreenMoveToScrewOrHigherOnSuits"
+      ],
+      "external_or_macro_calls": [
+        "HIBYTE"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "WriteSamusWireframeTilemapAndQueue",
+      "source": "src/sm_82.c",
+      "line": 2735,
+      "original_address": "0x82B1E0",
+      "definition_sha256": "26ead83d2a6d4a895d0960c575a63cbb21679cd990744d0068cb120768f9bc29",
+      "calls": [
+        "ADDR16_OF_RAM",
+        "LOBYTE",
+        "WriteSamusWireframeTilemap",
+        "gVramWriteEntry"
+      ],
+      "defined_dependencies": [
+        "WriteSamusWireframeTilemap"
+      ],
+      "external_or_macro_calls": [
+        "ADDR16_OF_RAM",
+        "LOBYTE",
+        "gVramWriteEntry"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "WriteSamusWireframeTilemap",
+      "source": "src/sm_82.c",
+      "line": 2748,
+      "original_address": "0x82B20C",
+      "definition_sha256": "8b544e4a5a90e02fbcb2ee1583b25da2f282b09b3a5ff5865b110783990377be",
+      "calls": [
+        "RomPtr_82"
+      ],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [
+        "RomPtr_82"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "EquipmentScreenDrawItemSelector",
+      "source": "src/sm_82.c",
+      "line": 2770,
+      "original_address": "0x82B267",
+      "definition_sha256": "19633dc1379fba36dec4b635247b7afee6aee4a0011dd08468f210ac91887da1",
+      "calls": [
+        "DrawPauseScreenSpriteAnim",
+        "HIBYTE",
+        "RomPtr_82"
+      ],
+      "defined_dependencies": [
+        "DrawPauseScreenSpriteAnim"
+      ],
+      "external_or_macro_calls": [
+        "HIBYTE",
+        "RomPtr_82"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "EquipmentScreenDisplayReserveTankAmount",
+      "source": "src/sm_82.c",
+      "line": 2778,
+      "original_address": "0x82B2A2",
+      "definition_sha256": "8d5290754c96a335f0871dbe6511973db886e755a6587ca7249e9376d6916a1c",
+      "calls": [
+        "EquipmentScreenDisplayReserveTankAmount_"
+      ],
+      "defined_dependencies": [
+        "EquipmentScreenDisplayReserveTankAmount_"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "EquipmentScreenDisplayReserveTankAmount_",
+      "source": "src/sm_82.c",
+      "line": 2789,
+      "original_address": null,
+      "definition_sha256": "1253d62dab82a6d448a57ed89d61c9c406a94c0cf254bcf27338389f3fcafab6",
+      "calls": [
+        "DrawMenuSpritemap",
+        "EquipmentScreenDisplayReserves_PaletteSetup",
+        "sign16"
+      ],
+      "defined_dependencies": [
+        "DrawMenuSpritemap",
+        "EquipmentScreenDisplayReserves_PaletteSetup"
+      ],
+      "external_or_macro_calls": [
+        "sign16"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "EquipmentScreenDisplayReserves_PaletteSetup",
+      "source": "src/sm_82.c",
+      "line": 2834,
+      "original_address": "0x82B3F9",
+      "definition_sha256": "c4b9ffff23f65c8d3c7f053f0276a9565b17d1444a672d8d6890e0e793517316",
+      "calls": [],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "EquipmentScreenMoveToReserveTanks",
+      "source": "src/sm_82.c",
+      "line": 2852,
+      "original_address": "0x82B43F",
+      "definition_sha256": "59188ec56c635a5de2293fb9733b82ca9a85d8e92fbd4adbc593d9e4318fd99d",
+      "calls": [
+        "QueueSfx1_Max6"
+      ],
+      "defined_dependencies": [
+        "QueueSfx1_Max6"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "EquipmentScreenMoveToBeams",
+      "source": "src/sm_82.c",
+      "line": 2862,
+      "original_address": "0x82B456",
+      "definition_sha256": "9e9f13f115f092e0cb11d1e687de2b949b177fad07c2c1e18db0532c6326072b",
+      "calls": [
+        "HIBYTE",
+        "LOBYTE",
+        "QueueSfx1_Max6"
+      ],
+      "defined_dependencies": [
+        "QueueSfx1_Max6"
+      ],
+      "external_or_macro_calls": [
+        "HIBYTE",
+        "LOBYTE"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "EquipmentScreenMoveToBottomOfBeams",
+      "source": "src/sm_82.c",
+      "line": 2881,
+      "original_address": "0x82B489",
+      "definition_sha256": "ade0e6e0ab8f31885682aa170023c39ad3b7eec9f0c6248f405589e3d67c1d0c",
+      "calls": [
+        "QueueSfx1_Max6"
+      ],
+      "defined_dependencies": [
+        "QueueSfx1_Max6"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "EquipmentScreenMoveLowerOnSuitsMisc",
+      "source": "src/sm_82.c",
+      "line": 2895,
+      "original_address": "0x82B4B7",
+      "definition_sha256": "48d455efb8f1b60ce06134d1d07e8f2b1d5e85f9d0d172c6a165e320af816e2a",
+      "calls": [
+        "HIBYTE",
+        "LOBYTE",
+        "QueueSfx1_Max6"
+      ],
+      "defined_dependencies": [
+        "QueueSfx1_Max6"
+      ],
+      "external_or_macro_calls": [
+        "HIBYTE",
+        "LOBYTE"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "EquipmentScreenMoveToScrewOrHigherOnSuits",
+      "source": "src/sm_82.c",
+      "line": 2910,
+      "original_address": "0x82B4E6",
+      "definition_sha256": "8db19cc05b56d7425e3e64113c297eb08e64f1f079f7fba2f4bc992e4a7e570b",
+      "calls": [
+        "QueueSfx1_Max6"
+      ],
+      "defined_dependencies": [
+        "QueueSfx1_Max6"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "EquipmentScreenMoveToHighJumpOrLowerInBoots",
+      "source": "src/sm_82.c",
+      "line": 2922,
+      "original_address": "0x82B511",
+      "definition_sha256": "8dcd1a4d7851bf7d60a08185f2297bd23512adbcd921b257171da408a82d6904",
+      "calls": [
+        "QueueSfx1_Max6"
+      ],
+      "defined_dependencies": [
+        "QueueSfx1_Max6"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "EquipmentScreenCategory_Boots_MoveUpInBoots",
+      "source": "src/sm_82.c",
+      "line": 2934,
+      "original_address": "0x82B53F",
+      "definition_sha256": "e5b66ab6289f25b0354409f5637708580d98dc0df49a30ceb63247afbf501489",
+      "calls": [
+        "QueueSfx1_Max6"
+      ],
+      "defined_dependencies": [
+        "QueueSfx1_Max6"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "EquipmentScreenCategory_ButtonResponse",
+      "source": "src/sm_82.c",
+      "line": 2946,
+      "original_address": "0x82B568",
+      "definition_sha256": "1aff67797b988cc0f5c84f0226bea16a92f1de0f7fd96c991e709f9178b454f9",
+      "calls": [
+        "ChangePaletteValues",
+        "HIBYTE",
+        "QueueSfx1_Max6",
+        "RomPtr_82",
+        "RomPtr_RAM",
+        "memcpy"
+      ],
+      "defined_dependencies": [
+        "ChangePaletteValues",
+        "QueueSfx1_Max6"
+      ],
+      "external_or_macro_calls": [
+        "HIBYTE",
+        "RomPtr_82",
+        "RomPtr_RAM",
+        "memcpy"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "GameState_2_GameOptionsMenu",
+      "source": "src/sm_82.c",
+      "line": 4462,
+      "original_address": null,
+      "definition_sha256": "6ed50e575a5fdbd3df2f97744733e510e9556b45db9c927470441541e90b7b16",
+      "calls": [
+        "DrawOptionsMenuSpritemaps",
+        "OptionsMenuFunc1",
+        "OptionsMenu_AddToVramQueue",
+        "sign16"
+      ],
+      "defined_dependencies": [
+        "DrawOptionsMenuSpritemaps",
+        "OptionsMenuFunc1",
+        "OptionsMenu_AddToVramQueue"
+      ],
+      "external_or_macro_calls": [
+        "sign16"
+      ],
+      "indirect_indexed_calls": [
+        "kGameOptionsMenuFuncs"
+      ]
+    },
+    {
+      "symbol": "GameOptionsMenuFunc_0",
+      "source": "src/sm_82.c",
+      "line": 4471,
+      "original_address": "0x82EBDB",
+      "definition_sha256": "7a8466bddacf9c32834622bb763c821459fd3abb53c377a4f62e87c964990f08",
+      "calls": [
+        "CreateOptionsMenuObject_",
+        "EnableNMI",
+        "HandleFadeOut"
+      ],
+      "defined_dependencies": [
+        "CreateOptionsMenuObject_",
+        "EnableNMI",
+        "HandleFadeOut"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "GameOptionsMenu_1_LoadingOptionsScreen",
+      "source": "src/sm_82.c",
+      "line": 4485,
+      "original_address": "0x82EC11",
+      "definition_sha256": "f93f3e763e15237b0799859f115b019e89de4d86a679605d369ffb4edf4f582f",
+      "calls": [
+        "CreateOptionsMenuObject_",
+        "DecompressToMem",
+        "DeleteAllOptionsMenuObjects_",
+        "LONGPTR",
+        "OptionsMenuFunc4",
+        "SetupDmaTransfer",
+        "WriteReg"
+      ],
+      "defined_dependencies": [
+        "CreateOptionsMenuObject_",
+        "DecompressToMem",
+        "DeleteAllOptionsMenuObjects_",
+        "OptionsMenuFunc4",
+        "SetupDmaTransfer",
+        "WriteReg"
+      ],
+      "external_or_macro_calls": [
+        "LONGPTR"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "GameOptionsMenu_2_FadeInOptionsScreen",
+      "source": "src/sm_82.c",
+      "line": 4524,
+      "original_address": "0x82ECE4",
+      "definition_sha256": "8ef75ab8cbe694569a78ba118007ec5d615324edd545444ef715d13991961f9d",
+      "calls": [
+        "HandleFadeIn"
+      ],
+      "defined_dependencies": [
+        "HandleFadeIn"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "OptionsMenu_AddToVramQueue",
+      "source": "src/sm_82.c",
+      "line": 4533,
+      "original_address": "0x82ECFF",
+      "definition_sha256": "1a0d4a4d514d71070bcbbd2a2cbc3947c2e3d9e21c9038d7ae3d54110c110d88",
+      "calls": [
+        "LOBYTE",
+        "gVramWriteEntry"
+      ],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [
+        "LOBYTE",
+        "gVramWriteEntry"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "OptionsMenuFunc5",
+      "source": "src/sm_82.c",
+      "line": 4544,
+      "original_address": "0x82ED28",
+      "definition_sha256": "1a190d1a6756aeb2b5b4d9fe97957c2f3d0c916ed5c2317f02bbcc1deed04675",
+      "calls": [],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "GameOptionsMenu_3_OptionsScreen",
+      "source": "src/sm_82.c",
+      "line": 4558,
+      "original_address": null,
+      "definition_sha256": "cf910c9452cd7bfc4d5b7abde22144548789d9d1d1cdead69c40ef90a1b00eac",
+      "calls": [
+        "QueueSfx1_Max6"
+      ],
+      "defined_dependencies": [
+        "QueueSfx1_Max6"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": [
+        "kGameOptionsMenuItemFuncs"
+      ]
+    },
+    {
+      "symbol": "GameOptionsMenuItemFunc_0",
+      "source": "src/sm_82.c",
+      "line": 4576,
+      "original_address": "0x82EDB1",
+      "definition_sha256": "11167f1e3ec19fb31ddc7b0ff6e8a899474d598f9d26464b770c866321b689b7",
+      "calls": [],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "GameOptionsMenuItemFunc_2_ToggleJapanese",
+      "source": "src/sm_82.c",
+      "line": 4586,
+      "original_address": "0x82EDDA",
+      "definition_sha256": "da4ef06a2654fa2008fed3a6aa9471ee42e300ef013562f73fc6c4aa5503bca5",
+      "calls": [
+        "OptionsMenuFunc4"
+      ],
+      "defined_dependencies": [
+        "OptionsMenuFunc4"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "OptionsMenuFunc4",
+      "source": "src/sm_82.c",
+      "line": 4592,
+      "original_address": "0x82EDED",
+      "definition_sha256": "8251af105a482482d3da4bd89cfec012704e6f86f7ead1d563ad090105e39529",
+      "calls": [
+        "OptionsMenuFunc5"
+      ],
+      "defined_dependencies": [
+        "OptionsMenuFunc5"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "GameOptionsMenuItemFunc_4",
+      "source": "src/sm_82.c",
+      "line": 4606,
+      "original_address": "0x82EE55",
+      "definition_sha256": "68a22ad5ab6d83ef326653c2a772797c3066cca63bbba929cc1e9b63d31cadee",
+      "calls": [],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "GameOptionsMenu_B_TransitionBackToFileSelect",
+      "source": "src/sm_82.c",
+      "line": 4613,
+      "original_address": "0x82EE6A",
+      "definition_sha256": "814967f1d0a9d48cb691bb301f1f798e578ae8b4e10bcdcb005b5695e2ca7b97",
+      "calls": [
+        "EnableNMI",
+        "HandleFadeOut"
+      ],
+      "defined_dependencies": [
+        "EnableNMI",
+        "HandleFadeOut"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "GameOptionsMenu_C_FadeOutOptionsScreenToStart",
+      "source": "src/sm_82.c",
+      "line": 4625,
+      "original_address": "0x82EE92",
+      "definition_sha256": "a5189f860ef9df6c06b62aafef18e7c4fb424b9c9dc746b3286fd61ce6e30035",
+      "calls": [
+        "EnableNMI",
+        "HandleFadeOut"
+      ],
+      "defined_dependencies": [
+        "EnableNMI",
+        "HandleFadeOut"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "GameOptionsMenu_4_StartGame",
+      "source": "src/sm_82.c",
+      "line": 4635,
+      "original_address": "0x82EEB4",
+      "definition_sha256": "38b511d98016b0cb5515a0dc658a3f4d0d85e675e77b2605037633768b7fc431",
+      "calls": [
+        "FUNC16",
+        "SaveToSram"
+      ],
+      "defined_dependencies": [
+        "SaveToSram"
+      ],
+      "external_or_macro_calls": [
+        "FUNC16"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "GameOptionsMenu_5_DissolveOutScreen",
+      "source": "src/sm_82.c",
+      "line": 4658,
+      "original_address": "0x82EF18",
+      "definition_sha256": "59f8706c60427923b5dcda65337466391027ada3b4a58617d294fc24369e0fef",
+      "calls": [
+        "CreateOptionsMenuObject_",
+        "EnableNMI",
+        "HandleFadeOut",
+        "LoadControllerOptionsFromControllerBindings",
+        "OptionsMenuFunc4",
+        "OptionsMenuFunc6",
+        "OptionsMenuFunc7"
+      ],
+      "defined_dependencies": [
+        "CreateOptionsMenuObject_",
+        "EnableNMI",
+        "HandleFadeOut",
+        "LoadControllerOptionsFromControllerBindings",
+        "OptionsMenuFunc4",
+        "OptionsMenuFunc6",
+        "OptionsMenuFunc7"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "GameOptionsMenu_6_DissolveInScreen",
+      "source": "src/sm_82.c",
+      "line": 4715,
+      "original_address": "0x82EFDB",
+      "definition_sha256": "17ccb9e7f411605f85037b10854504879276f92e854f2f99d39e37937a7fda41",
+      "calls": [
+        "HandleFadeIn"
+      ],
+      "defined_dependencies": [
+        "HandleFadeIn"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "GameOptionsMenu_8_SpecialSettings",
+      "source": "src/sm_82.c",
+      "line": 4739,
+      "original_address": null,
+      "definition_sha256": "af898063a8f6bf11204d7edbe5437ea2ddc66762a095743237635ea4c118632d",
+      "calls": [
+        "GameOptionsMenuItemFunc_4",
+        "QueueSfx1_Max6"
+      ],
+      "defined_dependencies": [
+        "GameOptionsMenuItemFunc_4",
+        "QueueSfx1_Max6"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": [
+        "kGameOptionsMenuSpecialSettings"
+      ]
+    },
+    {
+      "symbol": "GameOptionsMenuSpecialSettings_0",
+      "source": "src/sm_82.c",
+      "line": 4760,
+      "original_address": "0x82F08E",
+      "definition_sha256": "0fdfc05ee67b8c6f103f3da2b1cb153563c1b07fa94c3dbc7f5e8075d2faad1f",
+      "calls": [
+        "GET_WORD",
+        "OptionsMenuFunc7",
+        "RomPtr_RAM"
+      ],
+      "defined_dependencies": [
+        "OptionsMenuFunc7"
+      ],
+      "external_or_macro_calls": [
+        "GET_WORD",
+        "RomPtr_RAM"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "GameOptionsMenuSpecialSettings_2",
+      "source": "src/sm_82.c",
+      "line": 4769,
+      "original_address": "0x82F0B2",
+      "definition_sha256": "3ad22e6438642b16ae75f3811de0f3e808af2ba6999c56ee7d129f397e00cb34",
+      "calls": [
+        "GameOptionsMenuItemFunc_4"
+      ],
+      "defined_dependencies": [
+        "GameOptionsMenuItemFunc_4"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "OptionsMenuFunc7",
+      "source": "src/sm_82.c",
+      "line": 4782,
+      "original_address": null,
+      "definition_sha256": "693397718c688d2baaa13d52195b1d835288a7efdf97a8b1432797124dd8463f",
+      "calls": [
+        "OptionsMenuFunc5",
+        "RomPtr_RAM"
+      ],
+      "defined_dependencies": [
+        "OptionsMenuFunc5"
+      ],
+      "external_or_macro_calls": [
+        "RomPtr_RAM"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "GameOptionsMenu_7_ControllerSettings",
+      "source": "src/sm_82.c",
+      "line": 4805,
+      "original_address": null,
+      "definition_sha256": "b1163900ddc8a71ae7aeb43e65dfff069b5218711f2c095e680ae1272a34e54c",
+      "calls": [
+        "QueueSfx1_Max6",
+        "sign16"
+      ],
+      "defined_dependencies": [
+        "QueueSfx1_Max6"
+      ],
+      "external_or_macro_calls": [
+        "sign16"
+      ],
+      "indirect_indexed_calls": [
+        "kOptionsMenuControllerFuncs"
+      ]
+    },
+    {
+      "symbol": "OptionsMenuControllerFunc_8",
+      "source": "src/sm_82.c",
+      "line": 4855,
+      "original_address": "0x82F224",
+      "definition_sha256": "42d04ec27161dac11807ed0420fa895edfbe61fc9e6a15d8f6e61fa3eb35a7e3",
+      "calls": [
+        "LoadControllerOptionsFromControllerBindings",
+        "OptionsMenuFunc6"
+      ],
+      "defined_dependencies": [
+        "LoadControllerOptionsFromControllerBindings",
+        "OptionsMenuFunc6"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "OptionsMenuControllerFunc_7",
+      "source": "src/sm_82.c",
+      "line": 4869,
+      "original_address": "0x82F25D",
+      "definition_sha256": "aa4094eadab606376affb01a026b66bd4c5da7c195cdfce46984ef85f97208ad",
+      "calls": [
+        "GameOptionsMenuItemFunc_4",
+        "OptionsMenuFunc8"
+      ],
+      "defined_dependencies": [
+        "GameOptionsMenuItemFunc_4",
+        "OptionsMenuFunc8"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "GameOptionsMenu_9_ScrollControllerSettingsDown",
+      "source": "src/sm_82.c",
+      "line": 4876,
+      "original_address": "0x82F271",
+      "definition_sha256": "4fd3ff15740f634f425ed0f6910941efcbf3d0ebdc9d880da1bd6860a5024661",
+      "calls": [],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "GameOptionsMenu_A_ScrollControllerSettingsUp",
+      "source": "src/sm_82.c",
+      "line": 4882,
+      "original_address": "0x82F285",
+      "definition_sha256": "7d4a5d56d7a5863bb1947581b974bafdbcfe8063e2f2b0fe1bc7d1f0d2411a0c",
+      "calls": [],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "sub_82F296",
+      "source": "src/sm_82.c",
+      "line": 4888,
+      "original_address": "0x82F296",
+      "definition_sha256": "f7240c8d376ed45555295bb46fdd6e4b4d84c95fbb24b2033f7e92ea819ee0b7",
+      "calls": [],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "OptionsPreInstr_F2A9",
+      "source": "src/sm_82.c",
+      "line": 4894,
+      "original_address": "0x82F2A9",
+      "definition_sha256": "85be7472b64dcc3f3a0e92f43e8a5bba7cf5c63ca6065091b8a3595e450d83ad",
+      "calls": [
+        "RomPtr_82"
+      ],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [
+        "RomPtr_82"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "sub_82F34B",
+      "source": "src/sm_82.c",
+      "line": 4915,
+      "original_address": "0x82F34B",
+      "definition_sha256": "ec043723997060f09fc1b7f5bd3d7154683e7006f718c0cfdd02373305913ee8",
+      "calls": [
+        "sub_82F369"
+      ],
+      "defined_dependencies": [
+        "sub_82F369"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "sub_82F353",
+      "source": "src/sm_82.c",
+      "line": 4919,
+      "original_address": "0x82F353",
+      "definition_sha256": "7b3e2322f52c25a7a7fee99af2a653f153638b0093650684ab183e2aacb2f09f",
+      "calls": [
+        "sub_82F369"
+      ],
+      "defined_dependencies": [
+        "sub_82F369"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "sub_82F35B",
+      "source": "src/sm_82.c",
+      "line": 4923,
+      "original_address": "0x82F35B",
+      "definition_sha256": "efcafd362088f42a8d6054d1c2b8b26052de5c44d769f4ee822bb7b8463a4428",
+      "calls": [
+        "sub_82F369"
+      ],
+      "defined_dependencies": [
+        "sub_82F369"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "sub_82F363",
+      "source": "src/sm_82.c",
+      "line": 4927,
+      "original_address": "0x82F363",
+      "definition_sha256": "62e06e1fad30cd0f6a65b004d8e17b90be6a18aeeb0f6a3bfe5faeacd40f7055",
+      "calls": [
+        "sub_82F369"
+      ],
+      "defined_dependencies": [
+        "sub_82F369"
+      ],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "sub_82F369",
+      "source": "src/sm_82.c",
+      "line": 4932,
+      "original_address": "0x82F369",
+      "definition_sha256": "b08631594dba74333317398f38bd956ee727520a8c16c7532b6bfdb3b5b92f54",
+      "calls": [],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "OptionsPreInstr_F376",
+      "source": "src/sm_82.c",
+      "line": 4939,
+      "original_address": "0x82F376",
+      "definition_sha256": "3bcba3a6d47a5c5f3c3b3ae4d2edfdf35fdaa54e07ed9eeaa0bd04f2858e4a8c",
+      "calls": [],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "OptionsPreInstr_F3A0",
+      "source": "src/sm_82.c",
+      "line": 4947,
+      "original_address": "0x82F3A0",
+      "definition_sha256": "3c2625ff4c2004d3d86842c524bd57a9e20799ed400f7efa934067d7b21e4897",
+      "calls": [],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "OptionsPreInstr_F3E2",
+      "source": "src/sm_82.c",
+      "line": 4965,
+      "original_address": "0x82F3E2",
+      "definition_sha256": "e1ff0fbac6196467d18543d47acfc67211b62e019f298fa925c5b190f73a0848",
+      "calls": [],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "sub_82F404",
+      "source": "src/sm_82.c",
+      "line": 4973,
+      "original_address": "0x82F404",
+      "definition_sha256": "16acb115490f651eaa763eb74da56e81f22ec194c4155fb0ffdf5d956ce8768f",
+      "calls": [],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "sub_82F419",
+      "source": "src/sm_82.c",
+      "line": 4981,
+      "original_address": "0x82F419",
+      "definition_sha256": "634e804349c8891dbe9ff8aa5fb3f08b6af77ef84ff9dfddb0ce0d71c3a14f6e",
+      "calls": [],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "OptionsPreInstr_F42C",
+      "source": "src/sm_82.c",
+      "line": 4988,
+      "original_address": "0x82F42C",
+      "definition_sha256": "b4b03a42efdcaf90d333f2b9165d16e155c109a3a794a998c3881ab912eb0c00",
+      "calls": [],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "LoadControllerOptionsFromControllerBindings",
+      "source": "src/sm_82.c",
+      "line": 4995,
+      "original_address": "0x82F4DC",
+      "definition_sha256": "416089dfc835e6432fd791dd5509142315fe3cf63e057750c88c110b0f37a778",
+      "calls": [],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "OptionsMenuFunc8",
+      "source": "src/sm_82.c",
+      "line": 5037,
+      "original_address": null,
+      "definition_sha256": "f6a7b1c29a65aa59f583f0e085bba1b4aa6f84fedac1f280597114614b736f21",
+      "calls": [],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "OptionsMenuFunc6",
+      "source": "src/sm_82.c",
+      "line": 5055,
+      "original_address": null,
+      "definition_sha256": "cf8514d733223abe2b5d6ef11c039c085735c5bfebe2ca08756f9c798d229f0e",
+      "calls": [
+        "RomPtr_82"
+      ],
+      "defined_dependencies": [],
+      "external_or_macro_calls": [
+        "RomPtr_82"
+      ],
+      "indirect_indexed_calls": []
+    },
+    {
+      "symbol": "OptionsMenuControllerFunc_0",
+      "source": "src/sm_82.c",
+      "line": 5084,
+      "original_address": "0x82F6B9",
+      "definition_sha256": "36a365502e89008afae217bd0722346356455d7692b43ea4c06179243fbe4ff7",
+      "calls": [
+        "OptionsMenuFunc6",
+        "sign16"
+      ],
+      "defined_dependencies": [
+        "OptionsMenuFunc6"
+      ],
+      "external_or_macro_calls": [
+        "sign16"
+      ],
+      "indirect_indexed_calls": []
+    }
+  ],
+  "limitations": [
+    "Static definitions/edges do not establish directly observed execution.",
+    "HandleSoundEffects's indexed kSfxHandlers call is absent from its current lexical indirect_indexed_calls. The supplement must authenticate selected indirect edges and scope reachability from source-bound dynamic observations.",
+    "Null original_address fields are retained; no native address has been invented to satisfy existing validator.",
+    "All proposed modules/manifests/adapters are unimplemented and all proposed verification commands are unrun.",
+    "Final scopes include real DrawSpritemap, DrawMenuSpritemap and EquipmentScreenMain instead of an unowned drawing service or an omitted category root. Source-inventory lexical/dynamic provenance gaps still prevent native scope admission."
+  ]
+}

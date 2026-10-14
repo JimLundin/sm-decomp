@@ -1,0 +1,1460 @@
+{
+  "schema": "decomp-door-room-plm-source-observations-v1",
+  "accepted": false,
+  "baseline": "7ed3d383d6d3e28d21d1bb960acc5576ce82f5e9",
+  "worker_session_id": "01a135a1-959f-7e80-b593-21a91052e0dc",
+  "source": {
+    "revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+    "archive_sha256": "69c78831351112887575f852dadf0281dd5c23cef890b07a268ae6cf60aa9193",
+    "identity_path": "/home/jim/sm-decomp/tools/dependencies.toml",
+    "identity_sha256": "e74864c229949fc6f1a6bd7528f339bdb3f9364f1e4f9544f08693881d10f111",
+    "inventory_path": "/home/jim/sm-decomp/tools/port/source-inventory.toml",
+    "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+    "registry_sha256": "3d1ff19653582d933328635e12dc57c3bb16ab01a85d48ce180b28d9bfff8465"
+  },
+  "method": "Selected retained lexical inventory records via jq, with focused recovered C/Rust reads; no new parser, source producer or recursive authentication executed",
+  "routines": [
+    {
+      "symbol": "WaitForNMI_Async",
+      "source": "src/sm_80.c",
+      "line": 106,
+      "original_address": "0x808338",
+      "body_lines": 10,
+      "definition_sha256": "3770ea761966761cef248b80995f623502db50219c4c7a980c92844372911725",
+      "calls": [],
+      "declared_in": []
+    },
+    {
+      "symbol": "WaitForNMI_NoUpdate_Async",
+      "source": "src/sm_80.c",
+      "line": 117,
+      "original_address": null,
+      "body_lines": 9,
+      "definition_sha256": "748615d45f79d39662a71da2320ff5cda60000b8e87f86e785992a1304c7a13a",
+      "calls": [],
+      "declared_in": []
+    },
+    {
+      "symbol": "QueueSfx3_Max6",
+      "source": "src/sm_80.c",
+      "line": 804,
+      "original_address": "0x80914D",
+      "body_lines": 3,
+      "definition_sha256": "f49a028333b8ef3fa914d8009d65c996659cfaa02a1fba0401739539ac770431",
+      "calls": [
+        "QueueSfx3_Internal"
+      ],
+      "declared_in": [
+        "tools/port/audio.toml"
+      ]
+    },
+    {
+      "symbol": "QueueSfx3_Internal",
+      "source": "src/sm_80.c",
+      "line": 808,
+      "original_address": "0x809155",
+      "body_lines": 20,
+      "definition_sha256": "884949c3f2ae329af55439dad7652af17696ec7cce57b035f74c733cf775f4da",
+      "calls": [
+        "GET_HIBYTE"
+      ],
+      "declared_in": [
+        "tools/port/audio.toml"
+      ]
+    },
+    {
+      "symbol": "CopyToVramNow",
+      "source": "src/sm_80.c",
+      "line": 1077,
+      "original_address": null,
+      "body_lines": 12,
+      "definition_sha256": "198ad08ddb4b03f32581e8f7e376253a779fb5ad09cefcf721ca6ee4645bdbd9",
+      "calls": [
+        "WriteReg",
+        "WriteRegWord"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "DoorTransitionScrollingSetup",
+      "source": "src/sm_80.c",
+      "line": 2281,
+      "original_address": null,
+      "body_lines": 5,
+      "definition_sha256": "f21e3c78fa5b66daf1ecc06bb202622b9daaaa97e2ba46d6391c51020a127429",
+      "calls": [],
+      "declared_in": []
+    },
+    {
+      "symbol": "DoorTransitionScrollingSetup_Right",
+      "source": "src/sm_80.c",
+      "line": 2287,
+      "original_address": "0x80AD4A",
+      "body_lines": 12,
+      "definition_sha256": "8a26d66dfb46b58541d783185af9aa8f606c2de7e7d273efb0ccc5659d0b345b",
+      "calls": [
+        "CalculateBgScrollAndLayerPositionBlocks",
+        "CalculateLayer2Xpos",
+        "CalculateLayer2Ypos",
+        "DoorTransition_Right",
+        "UpdateBgScrollOffsets",
+        "UpdatePreviousLayerBlocks"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "DoorTransitionScrollingSetup_Left",
+      "source": "src/sm_80.c",
+      "line": 2300,
+      "original_address": "0x80AD74",
+      "body_lines": 12,
+      "definition_sha256": "3201abf1493f53b3669bb3491a926f11aae1da066995d9a70b33d7c2e1a0fbf1",
+      "calls": [
+        "CalculateBgScrollAndLayerPositionBlocks",
+        "CalculateLayer2Xpos",
+        "CalculateLayer2Ypos",
+        "DoorTransition_Left",
+        "UpdateBgScrollOffsets",
+        "UpdatePreviousLayerBlocks"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "DoorTransitionScrollingSetup_Down",
+      "source": "src/sm_80.c",
+      "line": 2313,
+      "original_address": "0x80AD9E",
+      "body_lines": 12,
+      "definition_sha256": "82f219264de8e6730fc4862f9f60cbb63b1e1ec5dc44a40f6f39a10b63956dea",
+      "calls": [
+        "CalculateBgScrollAndLayerPositionBlocks",
+        "CalculateLayer2Xpos",
+        "CalculateLayer2Ypos",
+        "DoorTransition_Down",
+        "UpdateBgScrollOffsets",
+        "UpdatePreviousLayerBlocks"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "DoorTransitionScrollingSetup_Up",
+      "source": "src/sm_80.c",
+      "line": 2326,
+      "original_address": "0x80ADC8",
+      "body_lines": 16,
+      "definition_sha256": "3aa90ee3eaa23f4b7c7dd4d4260051e34c9fc078d6ece38ae9f12076ea627572",
+      "calls": [
+        "CalculateBgScrollAndLayerPositionBlocks",
+        "CalculateLayer2Xpos",
+        "CalculateLayer2Ypos",
+        "DoorTransition_Up",
+        "UpdateBgScrollOffsets",
+        "UpdatePreviousLayerBlocks"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "Irq_FollowDoorTransition",
+      "source": "src/sm_80.c",
+      "line": 2364,
+      "original_address": null,
+      "body_lines": 7,
+      "definition_sha256": "a57f7715d2f7532fa086ab623fba9f86314400722e8c7e2a1c39e12637126eb0",
+      "calls": [],
+      "declared_in": []
+    },
+    {
+      "symbol": "DoorTransition_Right",
+      "source": "src/sm_80.c",
+      "line": 2372,
+      "original_address": "0x80AE7E",
+      "body_lines": 13,
+      "definition_sha256": "3fad0a6223a6e3dd6cb7d528f9f10f04805d2fe3ae325f2e26f39240ece88308",
+      "calls": [
+        "AddToHiLo",
+        "UpdateScrollVarsUpdateMap",
+        "__PAIR32__"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "DoorTransition_Left",
+      "source": "src/sm_80.c",
+      "line": 2386,
+      "original_address": "0x80AEC2",
+      "body_lines": 10,
+      "definition_sha256": "18ae10d14249d9630763dc964ddf17ddd0709ba2145e649c581a6b2f53e5289e",
+      "calls": [
+        "AddToHiLo",
+        "IPAIR32",
+        "UpdateScrollVarsUpdateMap"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "DoorTransition_Down",
+      "source": "src/sm_80.c",
+      "line": 2397,
+      "original_address": "0x80AF02",
+      "body_lines": 33,
+      "definition_sha256": "56b057434560f22b41a437a139010d13bbab353b0186378bab211b22dd94bfc4",
+      "calls": [
+        "AddToHiLo",
+        "CalculateBgScrollAndLayerPositionBlocks",
+        "UpdatePreviousLayerBlocks",
+        "UpdateScrollVarsUpdateMap",
+        "__PAIR32__"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "DoorTransition_Up",
+      "source": "src/sm_80.c",
+      "line": 2431,
+      "original_address": "0x80AF89",
+      "body_lines": 35,
+      "definition_sha256": "6500d64e30320e9cc1b031bdf7dfc425b21c73c40b1e80f77c3b128632685076",
+      "calls": [
+        "AddToHiLo",
+        "CalculateBgScrollAndLayerPositionBlocks",
+        "IPAIR32",
+        "UpdatePreviousLayerBlocks",
+        "UpdateScrollVarsUpdateMap"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "CallDoorTransitionFunction_Async",
+      "source": "src/sm_82.c",
+      "line": 3768,
+      "original_address": null,
+      "body_lines": 20,
+      "definition_sha256": "cb26cd61da417081d9ce6d69581d8f5a367cf5650752dd0445917284b560cb5e",
+      "calls": [
+        "DoorTransitionFunction_FadeOutScreen",
+        "DoorTransitionFunction_FixDoorsMovingUp",
+        "DoorTransitionFunction_HandleElevator",
+        "DoorTransitionFunction_LoadDoorHeaderEtc",
+        "DoorTransitionFunction_LoadMoreThings_Async",
+        "DoorTransitionFunction_PlaceSamusLoadTiles",
+        "DoorTransitionFunction_ScrollScreenToAlignment",
+        "DoorTransitionFunction_SetupNewRoom",
+        "DoorTransitionFunction_SetupScrolling",
+        "DoorTransitionFunction_Wait48frames",
+        "DoorTransitionFunction_WaitForSoundsToFinish",
+        "DoorTransition_C_HandleAnimTiles",
+        "DoorTransition_FadeInScreenAndFinish",
+        "DoorTransition_HandleTransition",
+        "DoorTransition_WaitForMusicToClear",
+        "Unreachable"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "GameState_9_HitDoorBlock",
+      "source": "src/sm_82.c",
+      "line": 3789,
+      "original_address": "0x82E169",
+      "body_lines": 3,
+      "definition_sha256": "92a5c26b9763dc01d4419454bcca4e4733f3c1076e93199f6276effc3d2c40c5",
+      "calls": [
+        "CallDoorTransitionFunction_Async"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "DoorTransitionFunction_HandleElevator",
+      "source": "src/sm_82.c",
+      "line": 3793,
+      "original_address": "0x82E17D",
+      "body_lines": 14,
+      "definition_sha256": "2fceb42eac915d20fd5dc54189bb3b23a60c9c2b4fd3daefc4d1511f7394e9bc",
+      "calls": [
+        "CallSomeSamusCode",
+        "DoorTransitionFunction_Wait48frames",
+        "FUNC16",
+        "GameState_10_LoadingNextRoom_Async"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "DoorTransitionFunction_Wait48frames",
+      "source": "src/sm_82.c",
+      "line": 3808,
+      "original_address": "0x82E19F",
+      "body_lines": 12,
+      "definition_sha256": "15e33a564e037a1ea6fe60de9f35d659b45464e2da21876b5486d0b696c82e97",
+      "calls": [
+        "DetermineWhichEnemiesToProcess",
+        "DrawSamusEnemiesAndProjectiles",
+        "EnemyMain",
+        "EnsureSamusDrawnEachFrame",
+        "GameState_10_LoadingNextRoom_Async"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "GameState_10_LoadingNextRoom_Async",
+      "source": "src/sm_82.c",
+      "line": 3821,
+      "original_address": "0x82E1B7",
+      "body_lines": 44,
+      "definition_sha256": "0c6b8a1a3890750b0cc6f3fe39ee690bd8cd59e6d125b65b05e4e8e316efc940",
+      "calls": [
+        "ClearSoundsWhenGoingThroughDoor",
+        "DetermineWhichEnemiesToProcess",
+        "DrawSamusEnemiesAndProjectiles",
+        "DrawTimer",
+        "EnemyMain",
+        "EnsureSamusDrawnEachFrame",
+        "FUNC16",
+        "LoaadDesinationRoomCreBitset",
+        "QueueSfx2_Max15"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "GameState_11_LoadingNextRoom_Async",
+      "source": "src/sm_82.c",
+      "line": 3866,
+      "original_address": "0x82E288",
+      "body_lines": 6,
+      "definition_sha256": "354602cada8651bd9f039876b489eff261eca9a0206c2dc6ca77567ec1d4d3a8",
+      "calls": [
+        "COROUTINE_AWAIT_ONLY",
+        "CallDoorTransitionFunction_Async",
+        "DrawTimer"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "DoorTransitionFunction_WaitForSoundsToFinish",
+      "source": "src/sm_82.c",
+      "line": 3873,
+      "original_address": "0x82E29E",
+      "body_lines": 12,
+      "definition_sha256": "47b9a18bc9c34b9e70e69acd042ec4f37a9589775f5b71187650dd558ac80bbd",
+      "calls": [
+        "DetermineWhichEnemiesToProcess",
+        "DrawSamusEnemiesAndProjectiles",
+        "EnemyMain",
+        "EnsureSamusDrawnEachFrame",
+        "FUNC16"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "DoorTransitionFunction_FadeOutScreen",
+      "source": "src/sm_82.c",
+      "line": 3886,
+      "original_address": "0x82E2DB",
+      "body_lines": 11,
+      "definition_sha256": "1a86c73f2668906ac62116343e46c35edee3ff0b409350a67ede471a24691c6e",
+      "calls": [
+        "AdvancePaletteFadeForAllPalettes_0xc",
+        "DetermineWhichEnemiesToProcess",
+        "DrawSamusEnemiesAndProjectiles",
+        "EnemyMain",
+        "EnsureSamusDrawnEachFrame",
+        "FUNC16"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "DoorTransitionFunction_LoadDoorHeaderEtc",
+      "source": "src/sm_82.c",
+      "line": 3898,
+      "original_address": "0x82E2F7",
+      "body_lines": 8,
+      "definition_sha256": "1bb9995987ddddaa737b2eecc84d8af558d15f1989565301542cadb260c348ed",
+      "calls": [
+        "FUNC16",
+        "LoadDoorHeader",
+        "sub_8882AC"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "DoorTransitionFunction_ScrollScreenToAlignment",
+      "source": "src/sm_82.c",
+      "line": 3907,
+      "original_address": "0x82E310",
+      "body_lines": 22,
+      "definition_sha256": "a3e8e1bc5d6ad1618b7feaaa7756de7b11f15093159e52fcabb2e235dd593be9",
+      "calls": [
+        "CalculateLayer2PosAndScrollsWhenScrolling",
+        "FUNC16"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "DoorTransitionFunction_FixDoorsMovingUp",
+      "source": "src/sm_82.c",
+      "line": 3930,
+      "original_address": "0x82E353",
+      "body_lines": 6,
+      "definition_sha256": "043e9cbdb42a8bd90ffd9e635f392fee869ec6a63b6d12eea192df0d0a71efbe",
+      "calls": [
+        "FUNC16",
+        "FixDoorsMovingUp"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "DoorTransitionFunction_SetupNewRoom",
+      "source": "src/sm_82.c",
+      "line": 3937,
+      "original_address": "0x82E36E",
+      "body_lines": 10,
+      "definition_sha256": "d3d6ba03438a7158fcd625027460f891ce3e0c0d0683d12822e18fd477a7b4fe",
+      "calls": [
+        "FUNC16",
+        "InitializeSpecialEffectsForNewRoom",
+        "LoadLevelScrollAndCre",
+        "LoadMapExploredIfElevator",
+        "LoadRoomHeader",
+        "LoadStateHeader",
+        "SaveMapExploredifElevator"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "DoorTransitionFunction_SetupScrolling",
+      "source": "src/sm_82.c",
+      "line": 3948,
+      "original_address": "0x82E38E",
+      "body_lines": 12,
+      "definition_sha256": "5a8defa916c3c851dc9c7b8d5983076d073085c7bb360851b931443a4c5957a6",
+      "calls": [
+        "DoorTransitionScrollingSetup",
+        "FUNC16"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "DoorTransitionFunction_PlaceSamusLoadTiles",
+      "source": "src/sm_82.c",
+      "line": 3961,
+      "original_address": "0x82E3C0",
+      "body_lines": 32,
+      "definition_sha256": "80817b67606791ba1828fdf3209327e5c5fffe226afbb734bac7826372caf75e",
+      "calls": [
+        "CopyToVramNow",
+        "DecompressToMem",
+        "FUNC16",
+        "Load24",
+        "WaitUntilEndOfVblankAndEnableIrq"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "DoorTransitionFunction_LoadMoreThings_Async",
+      "source": "src/sm_82.c",
+      "line": 4005,
+      "original_address": null,
+      "body_lines": 48,
+      "definition_sha256": "ccb4bcf071da38792ace03d55033f335800fa92b131039148922e42e4fe8c36c",
+      "calls": [
+        "COROUTINE_AWAIT",
+        "COROUTINE_BEGIN",
+        "COROUTINE_END",
+        "ClearAnimtiles",
+        "ClearEprojs",
+        "ClearFxTilemap",
+        "ClearPLMs",
+        "ClearPaletteFXObjects",
+        "CopyToVramNow",
+        "CreatePlmsExecuteDoorAsmRoomSetup",
+        "FUNC16",
+        "InitializeEnemies",
+        "LoadColorsForSpritesBeamsAndEnemies",
+        "LoadEnemies",
+        "LoadEnemyGfxToVram",
+        "LoadFXHeader",
+        "LoadRoomMusic",
+        "PlmHandler_Async",
+        "ResetProjectileData",
+        "RomPtr_8F",
+        "Samus_LoadSuitTargetPalette",
+        "SpawnBG3ScrollHdmaObject",
+        "SpawnDoorClosingPLM",
+        "UpdateBeamTilesAndPalette",
+        "WaitForNMI_Async",
+        "get_RoomDefRoomstate"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "ClearFxTilemap",
+      "source": "src/sm_82.c",
+      "line": 4054,
+      "original_address": "0x82E566",
+      "body_lines": 7,
+      "definition_sha256": "47f1871628fd3bcc54c4acdf74c79001ced03e42ecb51d975b8ee931db6b7237",
+      "calls": [
+        "CopyToVramNow"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "ClearBg2Tilemap",
+      "source": "src/sm_82.c",
+      "line": 4062,
+      "original_address": "0x82E583",
+      "body_lines": 7,
+      "definition_sha256": "e741b0f1a2f92b6ebdd0c1d9e12f104384185031fdef5df5dc6cde457954ec77",
+      "calls": [
+        "CopyToVramNow"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "ClearKraidBg2Tilemap",
+      "source": "src/sm_82.c",
+      "line": 4070,
+      "original_address": "0x82E5A0",
+      "body_lines": 8,
+      "definition_sha256": "897d92d113b89c2ba4b87794855f7aa751ee13ab9f8c07b2bd98523d9ba6949a",
+      "calls": [
+        "CopyToVramNow"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "UpdateBackgroundCommand_0_Finish",
+      "source": "src/sm_82.c",
+      "line": 4079,
+      "original_address": "0x82E5D7",
+      "body_lines": 3,
+      "definition_sha256": "35190d51b5e0f0aa42c45d2a586106a15b57877a33fdeae4da4fe9911061f0b3",
+      "calls": [],
+      "declared_in": []
+    },
+    {
+      "symbol": "UpdateBackgroundCommand_E_DoorDependentTransferToVRAM",
+      "source": "src/sm_82.c",
+      "line": 4083,
+      "original_address": "0x82E5D9",
+      "body_lines": 6,
+      "definition_sha256": "a1fc908263a6770d62fd0355dc56db36d6be2e2843444571fcf900943945e84b",
+      "calls": [
+        "RomPtr_8F",
+        "UpdateBackgroundCommand_2_TransferToVram"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "UpdateBackgroundCommand_2_TransferToVram",
+      "source": "src/sm_82.c",
+      "line": 4090,
+      "original_address": "0x82E5EB",
+      "body_lines": 5,
+      "definition_sha256": "cdd4d4ea369781cac18808e83b665cecfbb714a6dca0b29375d9e0415f63bf7d",
+      "calls": [
+        "CopyToVramNow",
+        "GET_WORD",
+        "Load24",
+        "RomPtr_8F"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "UpdateBackgroundCommand_4_Decompression",
+      "source": "src/sm_82.c",
+      "line": 4096,
+      "original_address": "0x82E616",
+      "body_lines": 5,
+      "definition_sha256": "4894597f8eedb78594b77bbfa503a6a8b23873e04f08ccc1d3d7caedecb38495",
+      "calls": [
+        "DecompressToMem",
+        "GET_WORD",
+        "Load24",
+        "RomPtr_8F"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "UpdateBackgroundCommand_6_ClearFxTilemap",
+      "source": "src/sm_82.c",
+      "line": 4102,
+      "original_address": "0x82E637",
+      "body_lines": 4,
+      "definition_sha256": "508a160fb99fc7954deea33a8d556b937e8bd1104e789795011cb632a078d0b1",
+      "calls": [
+        "ClearFxTilemap"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "UpdateBackgroundCommand_8_TransferToVramAndSetBg3",
+      "source": "src/sm_82.c",
+      "line": 4107,
+      "original_address": "0x82E63E",
+      "body_lines": 5,
+      "definition_sha256": "ae424241d0d07780231f17de78276c3361692033d9254e059e09a234e4a60240",
+      "calls": [
+        "UpdateBackgroundCommand_2_TransferToVram"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "UpdateBackgroundCommand_A_ClearBg2Tilemap",
+      "source": "src/sm_82.c",
+      "line": 4113,
+      "original_address": "0x82E64B",
+      "body_lines": 4,
+      "definition_sha256": "9d4123b6ec55bda29840ee98a7e5c30d032e6213523eda6cff5fbccb190598a5",
+      "calls": [
+        "ClearBg2Tilemap"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "UpdateBackgroundCommand_C_ClearKraidBg2Tilemap",
+      "source": "src/sm_82.c",
+      "line": 4118,
+      "original_address": "0x82E652",
+      "body_lines": 4,
+      "definition_sha256": "b67d2af5c2bf50d2bcff59319ded09a3f3ca8d541c15b8bd491d1a179c4196b1",
+      "calls": [
+        "ClearKraidBg2Tilemap"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "DoorTransition_C_HandleAnimTiles",
+      "source": "src/sm_82.c",
+      "line": 4123,
+      "original_address": "0x82E659",
+      "body_lines": 5,
+      "definition_sha256": "66c38a068ffe5cb0d58270d5ee96dc2d3865ef0b172f4b5fc60fa7e8c6b2a2b8",
+      "calls": [
+        "AnimtilesHandler",
+        "FUNC16"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "DoorTransition_WaitForMusicToClear",
+      "source": "src/sm_82.c",
+      "line": 4129,
+      "original_address": "0x82E664",
+      "body_lines": 7,
+      "definition_sha256": "316325991b03e136c990ac040fa789733810f0947713a2ec90d633b719fc5382",
+      "calls": [
+        "FUNC16",
+        "HasQueuedMusic",
+        "LoadNewMusicTrackIfChanged"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "DoorTransition_HandleTransition",
+      "source": "src/sm_82.c",
+      "line": 4137,
+      "original_address": "0x82E6A2",
+      "body_lines": 28,
+      "definition_sha256": "f55bd0f2afd25818fecb15c2c0203431df2299d19e4b04eb672fe9f45aa3f0dd",
+      "calls": [
+        "CallSomeSamusCode",
+        "FUNC16",
+        "PointlessFunctionStupidToo",
+        "SetLiquidPhysicsType"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "DoorTransition_FadeInScreenAndFinish",
+      "source": "src/sm_82.c",
+      "line": 4166,
+      "original_address": "0x82E737",
+      "body_lines": 17,
+      "definition_sha256": "628c63e062222040e400e51bce37980b8064f07c61b87eb679db56736f9b2d4e",
+      "calls": [
+        "AdvancePaletteFadeForAllPalettes_0xc",
+        "AnimtilesHandler",
+        "DetermineWhichEnemiesToProcess",
+        "DrawSamusEnemiesAndProjectiles",
+        "EnemyMain",
+        "EnsureSamusDrawnEachFrame",
+        "EprojRunAll",
+        "PlaySpinJumpSoundIfSpinJumping",
+        "QueueEnemyBG2TilemapTransfers"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "SpawnDoorClosingPLM",
+      "source": "src/sm_82.c",
+      "line": 4257,
+      "original_address": "0x82E8EB",
+      "body_lines": 12,
+      "definition_sha256": "1ec7c2d776599e2c97e07fdcb783fce76d10caf3c39daff78043684bf7102570",
+      "calls": [
+        "CheckIfColoredDoorCapSpawned",
+        "RomPtr_8F",
+        "SpawnRoomPLM",
+        "WORD",
+        "get_DoorDef"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "CheckIfColoredDoorCapSpawned",
+      "source": "src/sm_82.c",
+      "line": 4270,
+      "original_address": "0x82E91C",
+      "body_lines": 25,
+      "definition_sha256": "ac9cd5008e03bf17eb4be8f1eb86f7af82b1976c94157621097ff5dea3634d51",
+      "calls": [
+        "Mult8x8",
+        "PrepareBitAccess",
+        "get_DoorDef",
+        "get_PlmHeader_Size6"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "CreatePlmsExecuteDoorAsmRoomSetup",
+      "source": "src/sm_82.c",
+      "line": 4433,
+      "original_address": "0x82EB6C",
+      "body_lines": 12,
+      "definition_sha256": "c368e9104f5fe1e553b36b203afb73f2c43eb8ad0e046bf372325f94ce03de99",
+      "calls": [
+        "RunDoorSetupCode",
+        "RunRoomSetupCode",
+        "SpawnRoomPLM",
+        "get_RoomDefRoomstate",
+        "get_RoomPlmEntry"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "CalculatePlmBlockCoords",
+      "source": "src/sm_84.c",
+      "line": 75,
+      "original_address": "0x848290",
+      "body_lines": 5,
+      "definition_sha256": "c6099c79c56d11349532da74d8277161028eefdeca8977cd2f06881a312ee55f",
+      "calls": [
+        "SnesDivide",
+        "SnesModulus"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "SpawnHardcodedPlm",
+      "source": "src/sm_84.c",
+      "line": 133,
+      "original_address": "0x8483D7",
+      "body_lines": 26,
+      "definition_sha256": "df750cf0cf2dfb922a0e9681fa95a7cfa6a0a7767b8a88406babfa8cfb2de20a",
+      "calls": [
+        "CallPlmHeaderFunc",
+        "Mult8x8",
+        "get_PlmHeader_Size4"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "SpawnRoomPLM",
+      "source": "src/sm_84.c",
+      "line": 160,
+      "original_address": "0x84846A",
+      "body_lines": 29,
+      "definition_sha256": "dd7ae35dc4ae2bd01ec3c2cdce0ce9f24aadd0de1eaf88cccd59c944659f97e2",
+      "calls": [
+        "CallPlmHeaderFunc",
+        "FUNC16",
+        "Mult8x8",
+        "get_PlmHeader_Size4",
+        "get_RoomPlmEntry"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "PlmPreInstr_Empty2",
+      "source": "src/sm_84.c",
+      "line": 190,
+      "original_address": "0x8484E6",
+      "body_lines": 3,
+      "definition_sha256": "47a975e40685c9ea5670cd392a0c81998e48fb5c419230f7c304ddb67aed6578",
+      "calls": [],
+      "declared_in": []
+    },
+    {
+      "symbol": "PlmHandler_Async",
+      "source": "src/sm_84.c",
+      "line": 217,
+      "original_address": "0x8485B4",
+      "body_lines": 43,
+      "definition_sha256": "09bef2ad6e96bcb3b92f08b33b6376353051317e77fd2384151f94bbe5abd666",
+      "calls": [
+        "COROUTINE_AWAIT",
+        "COROUTINE_BEGIN",
+        "COROUTINE_END",
+        "CalculatePlmBlockCoords",
+        "CallPlmInstr",
+        "CallPlmPreInstr",
+        "DisplayMessageBox_Async",
+        "DrawPlm",
+        "GET_WORD",
+        "ProcessPlmDrawInstruction",
+        "RomBankBase"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "RomPtr_84orRAM",
+      "source": "src/sm_84.c",
+      "line": 261,
+      "original_address": null,
+      "body_lines": 8,
+      "definition_sha256": "a02cb066cf62517840467bc1c2254e444cabb185e6bcea99611b9bd334c6d190",
+      "calls": [
+        "RomPtr",
+        "RomPtr_RAM",
+        "assert"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "ProcessPlmDrawInstruction",
+      "source": "src/sm_84.c",
+      "line": 270,
+      "original_address": "0x84861E",
+      "body_lines": 19,
+      "definition_sha256": "e4e11c405e9b85487cfe927d2103bcc254bd62dcb6015c3df6646375f8c218ce",
+      "calls": [
+        "RomPtr_84orRAM"
+      ],
+      "declared_in": [
+        "tools/port/plm-instructions.toml"
+      ]
+    },
+    {
+      "symbol": "PlmInstr_Sleep",
+      "source": "src/sm_84.c",
+      "line": 290,
+      "original_address": "0x8486B4",
+      "body_lines": 4,
+      "definition_sha256": "57597693cd2ff54f6c057a829e37dc28e8fb4f8ee2bd9d4354e5973c5ad8f07d",
+      "calls": [
+        "RomBankBase"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "PlmInstr_Delete",
+      "source": "src/sm_84.c",
+      "line": 295,
+      "original_address": "0x8486BC",
+      "body_lines": 4,
+      "definition_sha256": "5ecaf651e53377c0bbae8fe343426b6d30360053c320c4c9f837e93fc2e2e5e5",
+      "calls": [],
+      "declared_in": []
+    },
+    {
+      "symbol": "PlmInstr_SetBTS",
+      "source": "src/sm_84.c",
+      "line": 574,
+      "original_address": "0x848AF1",
+      "body_lines": 4,
+      "definition_sha256": "296450cf9c25becf2e7577a2ce9a1c6005da3bc633dcb96b027dbd01a26defe5",
+      "calls": [],
+      "declared_in": []
+    },
+    {
+      "symbol": "PlmInstr_QueueSfx3_Max6",
+      "source": "src/sm_84.c",
+      "line": 652,
+      "original_address": "0x848C19",
+      "body_lines": 4,
+      "definition_sha256": "cd31e344c6ecdb93aa94de8de4b9bef2ff8c5d377a55d3ef37faa468525efad7",
+      "calls": [
+        "QueueSfx3_Max6"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "PartiallyQueueVramForSingleScreenPlm",
+      "source": "src/sm_84.c",
+      "line": 766,
+      "original_address": "0x849220",
+      "body_lines": 11,
+      "definition_sha256": "8832145c53b2260604ba0e17f16babc3a2964694ccfa1a2780cfedb7206b4bd6",
+      "calls": [
+        "gVramWriteEntry"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "CalculatePlmDrawTilemapVramDst",
+      "source": "src/sm_84.c",
+      "line": 778,
+      "original_address": "0x8491DC",
+      "body_lines": 15,
+      "definition_sha256": "363dd0069cf4ce73a13b035d707e3cde9a7df7f6914aadbcdc7aa04afcd86c97",
+      "calls": [
+        "PartiallyQueueVramForSingleScreenPlm"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "DrawPlm",
+      "source": "src/sm_84.c",
+      "line": 794,
+      "original_address": "0x848DAA",
+      "body_lines": 251,
+      "definition_sha256": "498bbcbd5f57b317e1e4bfcd4d87d00c3c4b9601b04f802edb5f66791054ef05",
+      "calls": [
+        "CalculatePlmDrawTilemapVramDst",
+        "PartiallyQueueVramForSingleScreenPlm",
+        "RomPtr_84orRAM",
+        "Unreachable",
+        "gVramWriteEntry",
+        "sign16"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "PlmSetup_DeactivatePlm",
+      "source": "src/sm_84.c",
+      "line": 1349,
+      "original_address": "0x84B3C1",
+      "body_lines": 5,
+      "definition_sha256": "10984e03b555f003225d6260aaf6e3b56e2a42cb937899e1c256a03774a1bc8d",
+      "calls": [],
+      "declared_in": [
+        "tools/port/plm.toml"
+      ]
+    },
+    {
+      "symbol": "PlmPreInstr_B7EB_DecTimerEnableSoundsDeletePlm",
+      "source": "src/sm_84.c",
+      "line": 1585,
+      "original_address": "0x84B7DD",
+      "body_lines": 7,
+      "definition_sha256": "f4ab408e8bf33df4a5dfa53ddb9ccb7369f81121adf27a7824587cda74eedef2",
+      "calls": [],
+      "declared_in": [
+        "tools/port/plm.toml"
+      ]
+    },
+    {
+      "symbol": "CallPlmPreInstr",
+      "source": "src/sm_84.c",
+      "line": 3022,
+      "original_address": null,
+      "body_lines": 62,
+      "definition_sha256": "6f30dbb5f5cf9735c2f805dbc9b61a2f68706db333a748ee71d6ce4eaefeb232",
+      "calls": [
+        "PlmPreInstr_AdvanceLavaSamusMovesLeft",
+        "PlmPreInstr_B7EB_DecTimerEnableSoundsDeletePlm",
+        "PlmPreInstr_DeletePlmAndSpawnTriggerIfBlockDestroyed",
+        "PlmPreInstr_EscapeRoomBeforeOldTourianEscapeShaft",
+        "PlmPreInstr_GoToLinkInstrIfShot",
+        "PlmPreInstr_GoToLinkInstrIfShotWithAnyMissile",
+        "PlmPreInstr_GoToLinkInstrIfShotWithPowerBomb",
+        "PlmPreInstr_GoToLinkInstrIfShotWithSuperMissile",
+        "PlmPreInstr_GoToLinkInstruction",
+        "PlmPreInstr_GotoLinkIfBoss1Dead",
+        "PlmPreInstr_GotoLinkIfCrittersEscaped",
+        "PlmPreInstr_GotoLinkIfEnemyDeathQuotaOk",
+        "PlmPreInstr_GotoLinkIfMiniBossDead",
+        "PlmPreInstr_GotoLinkIfShotWithSuperMissile",
+        "PlmPreInstr_GotoLinkIfTorizoDead",
+        "PlmPreInstr_GotoLinkIfTourianStatueFinishedProcessing",
+        "PlmPreInstr_GotoLinkIfTriggered",
+        "PlmPreInstr_IncrementRoomArgIfShotBySuperMissile",
+        "PlmPreInstr_OldTourianEscapeShaftEscape",
+        "PlmPreInstr_PlayDudSound",
+        "PlmPreInstr_PositionSamusAndInvincible",
+        "PlmPreInstr_SetMetroidsClearState_Ev0x10",
+        "PlmPreInstr_SetMetroidsClearState_Ev0x11",
+        "PlmPreInstr_SetMetroidsClearState_Ev0x12",
+        "PlmPreInstr_SetMetroidsClearState_Ev0x13",
+        "PlmPreInstr_ShaktoolsRoom",
+        "PlmPreInstr_WakeAndLavaIfBoosterCollected",
+        "PlmPreInstr_WakeIfTriggered",
+        "PlmPreInstr_WakeOnKeyPress",
+        "PlmPreInstr_WakePLMAndStartFxMotionSamusFarLeft",
+        "PlmPreInstr_WakePlmIfRoomArgumentDoorIsSet",
+        "PlmPreInstr_WakePlmIfSamusHasBombs",
+        "PlmPreInstr_WakePlmIfTriggered",
+        "PlmPreInstr_WakePlmIfTriggeredOrSamusAbovePlm",
+        "PlmPreInstr_WakePlmIfTriggeredOrSamusBelowPlm",
+        "PlmSetup_BTS_Brinstar_0x80_Floorplant",
+        "PlmSetup_BTS_Brinstar_0x81_Ceilingplant",
+        "Unreachable"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "CallPlmInstr",
+      "source": "src/sm_84.c",
+      "line": 3085,
+      "original_address": null,
+      "body_lines": 115,
+      "definition_sha256": "d334a2e47b087efe4ed296b99be2de2c4d5c542a302592c7b4c8651d83b20fe5",
+      "calls": [
+        "PlmInstr_ABD6",
+        "PlmInstr_ActivateEnergyStation",
+        "PlmInstr_ActivateMapStation",
+        "PlmInstr_ActivateMissileStation",
+        "PlmInstr_ActivateSaveStationAndGotoIfNo",
+        "PlmInstr_Call",
+        "PlmInstr_CallFunction",
+        "PlmInstr_ClearChargeBeamCounter",
+        "PlmInstr_ClearMusicQueueAndQueueTrack",
+        "PlmInstr_ClearPreInstr",
+        "PlmInstr_ClearTrigger",
+        "PlmInstr_CollectAmmoMissileTank",
+        "PlmInstr_CollectAmmoPowerBombTank",
+        "PlmInstr_CollectAmmoSuperMissileTank",
+        "PlmInstr_CollectHealthEnergyTank",
+        "PlmInstr_CollectHealthReserveTank",
+        "PlmInstr_CopyFromRamToVram",
+        "PlmInstr_DamageDraygonTurret",
+        "PlmInstr_DamageDraygonTurret2",
+        "PlmInstr_DamageDraygonTurretFacingDownLeft",
+        "PlmInstr_DamageDraygonTurretFacingDownRight",
+        "PlmInstr_DamageDraygonTurretFacingUpLeft",
+        "PlmInstr_DamageDraygonTurretFacingUpRight",
+        "PlmInstr_DealDamage_2",
+        "PlmInstr_DecrementAndBranchNonzero",
+        "PlmInstr_Delete",
+        "PlmInstr_DiagonalEarthquake",
+        "PlmInstr_DisableSamusControls",
+        "PlmInstr_DisplayGameSavedMessageBox",
+        "PlmInstr_Draw0x38FramesOfLeftTreadmill",
+        "PlmInstr_Draw0x38FramesOfRightTreadmill",
+        "PlmInstr_DrawItemFrame0",
+        "PlmInstr_DrawItemFrame1",
+        "PlmInstr_DrawItemFrame_Common",
+        "PlmInstr_DrawPlmBlock",
+        "PlmInstr_E63B",
+        "PlmInstr_EnableMovementAndSetSaveStationUsed",
+        "PlmInstr_EnableSamusControls",
+        "PlmInstr_EnableWaterPhysics",
+        "PlmInstr_FxBaseYPos_0x2D2",
+        "PlmInstr_GiveInvincibility",
+        "PlmInstr_Goto",
+        "PlmInstr_GotoIfBossBitSet",
+        "PlmInstr_GotoIfChozoSet",
+        "PlmInstr_GotoIfDoorBitSet",
+        "PlmInstr_GotoIfEventSet",
+        "PlmInstr_GotoIfItemBitSet",
+        "PlmInstr_GotoIfMissilesFull",
+        "PlmInstr_GotoIfRoomArgLess",
+        "PlmInstr_GotoIfSamusHealthFull",
+        "PlmInstr_GotoIfSamusNear",
+        "PlmInstr_IncrementArgumentAndJGE",
+        "PlmInstr_IncrementDoorHitCounterAndJGE",
+        "PlmInstr_JumpIfSamusHasNoBombs",
+        "PlmInstr_LoadItemPlmGfx",
+        "PlmInstr_MovePlmDownOneBlock",
+        "PlmInstr_MovePlmDownOneBlock_0",
+        "PlmInstr_MovePlmRight4Blocks",
+        "PlmInstr_MoveUpAndMakeBlueDoorFacingLeft",
+        "PlmInstr_MoveUpAndMakeBlueDoorFacingRight",
+        "PlmInstr_PickupBeamAndShowMessage",
+        "PlmInstr_PickupEquipmentAddGrappleShowMessage",
+        "PlmInstr_PickupEquipmentAddXrayShowMessage",
+        "PlmInstr_PickupEquipmentAndShowMessage",
+        "PlmInstr_PlaceSamusOnSaveStation",
+        "PlmInstr_PreInstr",
+        "PlmInstr_ProcessAirScrollUpdate",
+        "PlmInstr_ProcessSolidScrollUpdate",
+        "PlmInstr_QueueMusic",
+        "PlmInstr_QueueSfx1_Max1",
+        "PlmInstr_QueueSfx1_Max15",
+        "PlmInstr_QueueSfx1_Max3",
+        "PlmInstr_QueueSfx1_Max6",
+        "PlmInstr_QueueSfx1_Max9",
+        "PlmInstr_QueueSfx2_Max1",
+        "PlmInstr_QueueSfx2_Max15",
+        "PlmInstr_QueueSfx2_Max3",
+        "PlmInstr_QueueSfx2_Max6",
+        "PlmInstr_QueueSfx2_Max9",
+        "PlmInstr_QueueSfx3_Max1",
+        "PlmInstr_QueueSfx3_Max15",
+        "PlmInstr_QueueSfx3_Max6",
+        "PlmInstr_QueueSfx3_Max9",
+        "PlmInstr_QueueSfx_Max3",
+        "PlmInstr_QueueSong1MusicTrack",
+        "PlmInstr_Return",
+        "PlmInstr_Scroll_0_1_Blue",
+        "PlmInstr_SetBTS",
+        "PlmInstr_SetBtsTo1",
+        "PlmInstr_SetCrittersEscapedEvent",
+        "PlmInstr_SetEvent",
+        "PlmInstr_SetGreyDoorPreInstr",
+        "PlmInstr_SetItemBit",
+        "PlmInstr_SetLinkReg",
+        "PlmInstr_SetRoomChozoBit",
+        "PlmInstr_SetTimer",
+        "PlmInstr_ShootEyeDoorProjectileWithProjectileArg",
+        "PlmInstr_Sleep",
+        "PlmInstr_Spawn10shardsAnd6n00bs",
+        "PlmInstr_SpawnEproj",
+        "PlmInstr_SpawnEyeDoorSmokeProjectile",
+        "PlmInstr_SpawnEyeDoorSweatEproj",
+        "PlmInstr_SpawnFourMotherBrainGlass",
+        "PlmInstr_SpawnN00bTubeCrackEproj",
+        "PlmInstr_SpawnTorizoStatueBreaking",
+        "PlmInstr_SpawnTwoEyeDoorSmoke",
+        "PlmInstr_TransferWreckedShipChozoSpikesToSlopes",
+        "PlmInstr_TransferWreckedShipSlopesToChozoSpikes",
+        "PlmInstr_WakeEprojAtPlmPos",
+        "Unreachable"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "InitializePpuForMessageBoxes",
+      "source": "src/sm_85.c",
+      "line": 16,
+      "original_address": "0x858143",
+      "body_lines": 36,
+      "definition_sha256": "167e1ba6236a0144825da46a6528ebf4aa03efba762d62e3e0af90ba99c1f148",
+      "calls": [
+        "ADDR16_OF_RAM",
+        "ReadReg",
+        "ReadRegWord",
+        "WriteReg",
+        "WriteRegWord"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "ClearMessageBoxBg3Tilemap",
+      "source": "src/sm_85.c",
+      "line": 53,
+      "original_address": "0x8581F3",
+      "body_lines": 17,
+      "definition_sha256": "e181db06ba95de0af531a94208e178dd98f5cc43e54b4a94fce4fa4a2c0e92b8",
+      "calls": [
+        "ADDR16_OF_RAM",
+        "WriteReg",
+        "WriteRegWord"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "WriteMessageTilemap",
+      "source": "src/sm_85.c",
+      "line": 80,
+      "original_address": "0x8582B8",
+      "body_lines": 20,
+      "definition_sha256": "461730fd7c98581e396061a6df52a41cd62ad55f927423d5729cea35f05ee8db",
+      "calls": [
+        "RomPtr_85"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "WriteLargeMessageBoxTilemap",
+      "source": "src/sm_85.c",
+      "line": 101,
+      "original_address": null,
+      "body_lines": 12,
+      "definition_sha256": "eb061c4782d45a30fb1597f241da6dad1b96c0a20dad5e629df1822b7558a619",
+      "calls": [
+        "WriteMessageTilemap"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "WriteSmallMessageBoxTilemap",
+      "source": "src/sm_85.c",
+      "line": 114,
+      "original_address": "0x858289",
+      "body_lines": 12,
+      "definition_sha256": "3ec12a74fb5b33dddcee16f0f89c47643646b03df83b9d01d8879fcb845104b2",
+      "calls": [
+        "WriteMessageTilemap"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "CallMsgBoxDraw",
+      "source": "src/sm_85.c",
+      "line": 127,
+      "original_address": null,
+      "body_lines": 7,
+      "definition_sha256": "c63132e3e2b52c9d42a2a41f3411e35ade5be646e1d9983a8a3e881f8c108b7d",
+      "calls": [
+        "Unreachable",
+        "WriteLargeMessageBoxTilemap",
+        "WriteSmallMessageBoxTilemap"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "MsgBoxMakeHdmaTable",
+      "source": "src/sm_85.c",
+      "line": 135,
+      "original_address": null,
+      "body_lines": 24,
+      "definition_sha256": "b1a7f8becbf72d93cc37dad2ef8a2fd4a435c9c75ed2d99da03ea51a13f0e179",
+      "calls": [],
+      "declared_in": []
+    },
+    {
+      "symbol": "SetupMessageBoxBg3YscrollHdma",
+      "source": "src/sm_85.c",
+      "line": 160,
+      "original_address": "0x858363",
+      "body_lines": 18,
+      "definition_sha256": "214f03d5f803cc9737ec862fff0c703c23dcae7a41e69d0269abbbfe75193714",
+      "calls": [
+        "MsgBoxMakeHdmaTable",
+        "WriteReg"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "SetupPpuForActiveMessageBox",
+      "source": "src/sm_85.c",
+      "line": 179,
+      "original_address": "0x85831E",
+      "body_lines": 13,
+      "definition_sha256": "88345a525c75e7cad943f573f97b306b20e50ed48ff0a1e2e41ba6f60b6c96cb",
+      "calls": [
+        "ADDR16_OF_RAM",
+        "SetupMessageBoxBg3YscrollHdma",
+        "WriteReg",
+        "WriteRegWord"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "DrawSpecialButtonAndSetupPpuForLargeMessageBox",
+      "source": "src/sm_85.c",
+      "line": 193,
+      "original_address": null,
+      "body_lines": 25,
+      "definition_sha256": "fa44d74e808ee7b9b5a3dc7a65b9fabe303e15a766f7c065b72c67cb6f54eb9a",
+      "calls": [
+        "SetupPpuForActiveMessageBox"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "DrawShootButtonAndSetupPpuForLargeMessageBox",
+      "source": "src/sm_85.c",
+      "line": 219,
+      "original_address": "0x8583C5",
+      "body_lines": 3,
+      "definition_sha256": "502867554d02231d67dbe7426ccca488fa1d825543e9d86623ec6674149ab47c",
+      "calls": [
+        "DrawSpecialButtonAndSetupPpuForLargeMessageBox"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "DrawRunButtonAndSetupPpuForLargeMessageBox",
+      "source": "src/sm_85.c",
+      "line": 223,
+      "original_address": "0x8583CC",
+      "body_lines": 3,
+      "definition_sha256": "774d681fa70b436853102f46dd8c63fdf826cf7b9be13c42e35284ce89131ddb",
+      "calls": [
+        "DrawSpecialButtonAndSetupPpuForLargeMessageBox"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "SetupPpuForSmallMessageBox",
+      "source": "src/sm_85.c",
+      "line": 227,
+      "original_address": "0x858436",
+      "body_lines": 3,
+      "definition_sha256": "0bb27fc0d1cbe65ff2e684a7c4e274964373821165e1592e6fb7e97f48557701",
+      "calls": [
+        "SetupPpuForActiveMessageBox"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "SetupPpuForLargeMessageBox",
+      "source": "src/sm_85.c",
+      "line": 231,
+      "original_address": "0x858441",
+      "body_lines": 3,
+      "definition_sha256": "dc4c62ef78809fe97278a06bacf83f81cedcf001a94dcf7e076575b9c2c1c427",
+      "calls": [
+        "SetupPpuForActiveMessageBox"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "CallMsgBoxModify",
+      "source": "src/sm_85.c",
+      "line": 235,
+      "original_address": null,
+      "body_lines": 9,
+      "definition_sha256": "259178a94047723e894ff7cec3dffa4cad6a49dd60b9eaf53c2c38dd3e8603c5",
+      "calls": [
+        "DrawRunButtonAndSetupPpuForLargeMessageBox",
+        "DrawShootButtonAndSetupPpuForLargeMessageBox",
+        "SetupPpuForLargeMessageBox",
+        "SetupPpuForSmallMessageBox",
+        "Unreachable"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "InitializeMessageBox",
+      "source": "src/sm_85.c",
+      "line": 245,
+      "original_address": "0x858241",
+      "body_lines": 5,
+      "definition_sha256": "74013a97a1562e4db40d2e4cdaeae34611fd7037c4dc69480c7a00d0dc65bfab",
+      "calls": [
+        "CallMsgBoxDraw",
+        "CallMsgBoxModify"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "ToggleSaveConfirmationSelection",
+      "source": "src/sm_85.c",
+      "line": 261,
+      "original_address": null,
+      "body_lines": 22,
+      "definition_sha256": "c97c1bd0cc68e1089f3190b1757a54749f4ab92d31438e26b60a425fe2290e89",
+      "calls": [
+        "ADDR16_OF_RAM",
+        "WriteReg",
+        "WriteRegWord"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "RestorePpuForMessageBox",
+      "source": "src/sm_85.c",
+      "line": 284,
+      "original_address": "0x85861A",
+      "body_lines": 22,
+      "definition_sha256": "d46a277d583b9abf938064bef5f68bfe5cb2d51d882c881072db35a1e89fd737",
+      "calls": [
+        "ADDR16_OF_RAM",
+        "HIBYTE",
+        "WriteReg",
+        "WriteRegWord"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "OpenMessageBox_Async",
+      "source": "src/sm_85.c",
+      "line": 307,
+      "original_address": "0x85844C",
+      "body_lines": 12,
+      "definition_sha256": "d8f745632a467d22f30ccae54750c2f1b2583c859c071140810dceba0d33f64a",
+      "calls": [
+        "COROUTINE_AWAIT",
+        "COROUTINE_BEGIN",
+        "COROUTINE_END",
+        "HandleMusicQueue",
+        "HandleSoundEffects",
+        "MsgBoxMakeHdmaTable",
+        "WaitForNMI_NoUpdate_Async"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "HandleMessageBoxInteraction_Async",
+      "source": "src/sm_85.c",
+      "line": 320,
+      "original_address": "0x85846D",
+      "body_lines": 40,
+      "definition_sha256": "6af98ae05b267414ffa84c337f8b8fc29834e5412887d28f2f76fc3f0583b804",
+      "calls": [
+        "COROUTINE_AWAIT",
+        "COROUTINE_BEGIN",
+        "COROUTINE_END",
+        "HandleMusicQueue",
+        "HandleSoundEffects",
+        "QueueSfx1_Max6",
+        "ReadJoypadInputs",
+        "ToggleSaveConfirmationSelection",
+        "WaitForNMI_NoUpdate_Async"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "CloseMessageBox_Async",
+      "source": "src/sm_85.c",
+      "line": 361,
+      "original_address": "0x858589",
+      "body_lines": 11,
+      "definition_sha256": "163554bca313783fb57ffe009a7bb0e0231868c9e6739107c45d4a817a598d47",
+      "calls": [
+        "COROUTINE_AWAIT",
+        "COROUTINE_BEGIN",
+        "COROUTINE_END",
+        "HandleMusicQueue",
+        "HandleSoundEffects",
+        "MsgBoxMakeHdmaTable",
+        "WaitForNMI_NoUpdate_Async"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "DisplayMessageBox_Async",
+      "source": "src/sm_85.c",
+      "line": 373,
+      "original_address": "0x858080",
+      "body_lines": 42,
+      "definition_sha256": "dffb1142236e461fbb02efe5671b40714a9bb82caed5e109642edb0b331ac8d3",
+      "calls": [
+        "COROUTINE_AWAIT",
+        "COROUTINE_BEGIN",
+        "COROUTINE_END",
+        "CancelSoundEffects",
+        "ClearMessageBoxBg3Tilemap",
+        "CloseMessageBox_Async",
+        "HandleMessageBoxInteraction_Async",
+        "HandleMusicQueue",
+        "HandleSoundEffects",
+        "InitializeMessageBox",
+        "InitializePpuForMessageBoxes",
+        "OpenMessageBox_Async",
+        "QueueSamusMovementSfx",
+        "QueueSfx1_Max6",
+        "RestorePpuForMessageBox",
+        "WaitForNMI_NoUpdate_Async"
+      ],
+      "declared_in": []
+    },
+    {
+      "symbol": "DisplayMessageBox_Poll",
+      "source": "src/sm_85.c",
+      "line": 416,
+      "original_address": null,
+      "body_lines": 8,
+      "definition_sha256": "0c040231814e42cc414068e1898e413beca16028fe9ae232c263b4a0d41f5b0b",
+      "calls": [],
+      "declared_in": []
+    },
+    {
+      "symbol": "DisplayMessageBox",
+      "source": "src/sm_85.c",
+      "line": 425,
+      "original_address": "0x858080",
+      "body_lines": 3,
+      "definition_sha256": "3886414f0a3160f9c5703d99917f711d339cb1dcbb693090b7d6287f51d7e3c4",
+      "calls": [],
+      "declared_in": []
+    }
+  ],
+  "limitations": [
+    "Lexical calls omit data-selected dispatch; actual-C root/dispatch exercise is missing.",
+    "DoorTransitionFunction_LoadMoreThings_Async address 0x82E4A9 appears only in funcs.h; retain null lexical original_address and exact definition hash.",
+    "Pinned inventory reader currently reports lexical dependency disagreement; coordinator-owned extension must reconcile producer/reader rather than alter historical sealed inventory."
+  ]
+}
