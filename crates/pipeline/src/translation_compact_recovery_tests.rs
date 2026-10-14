@@ -83,8 +83,7 @@ impl Fixture {
             attempt: 1,
             phase: ExecutionPhase::Candidate,
         };
-        fs::write(output.join("experiment-deadline.toml"), "started_unix_ms = 1\ndeadline_unix_ms = 60001\n")
-            .unwrap();
+        fs::write(output.join("experiment-deadline.toml"), "started_unix_ms = 1\ndeadline_unix_ms = 60001\n").unwrap();
         for (name, value) in [
             ("prepared.toml", toml::to_string_pretty(&prepared).unwrap()),
             ("runtime.toml", toml::to_string_pretty(&runtime).unwrap()),

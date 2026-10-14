@@ -1428,14 +1428,27 @@ pub(crate) fn run(
 ) -> Result<CompactReceipt> {
     safe(output)?;
     let receipt_path = output.join("compact-receipt.toml");
-    if receipt_path.is_file() {
-        let receipt: CompactReceipt = toml::from_str(&String::from_utf8(read(&receipt_path, MAX_RECORD)?)?)?;
-        let verdict = authenticate(prepared, checkout, &receipt)?;
-        ensure!(
-            verdict.context == *context && verdict.runtime == *runtime,
-            "compact completed retry belongs to another runtime or operation"
-        );
-        return Ok(receipt);
+    let verdict_path = output.join("compact-verdict.toml");
+    if receipt_path.is_file() || verdict_path.is_file() {
+        // Finalization authenticates the stored production interval even after
+        // it has expired. This branch cannot set up or launch another producer.
+        return bounded::reconcile(MAX_HISTORY, || {
+            if receipt_path.is_file() {
+                let receipt: CompactReceipt = toml::from_str(&String::from_utf8(read(&receipt_path, MAX_RECORD)?)?)?;
+                let verdict = authenticate(prepared, checkout, &receipt)?;
+                ensure!(
+                    verdict.context == *context && verdict.runtime == *runtime,
+                    "compact completed retry belongs to another runtime or operation"
+                );
+                return Ok(receipt);
+            }
+            let verdict: CompactVerdict = toml::from_str(&String::from_utf8(read(&verdict_path, MAX_RECORD)?)?)?;
+            ensure!(
+                verdict.context == *context && verdict.runtime == *runtime,
+                "compact finalization recovery changed identity"
+            );
+            finish(prepared, checkout, &verdict_path, &verdict)
+        });
     }
     let candidate_sha256 = candidate(prepared, checkout)?;
     ensure!(
@@ -1634,15 +1647,23 @@ pub(crate) fn run(
     }
     verdict.operations = gate.invocations;
     verdict.reserved_bytes = gate.budget.used();
-    let verdict_path = output.join("compact-verdict.toml");
     let encoded = toml::to_string_pretty(&verdict)?;
     ensure!(encoded.len() as u64 <= MAX_RECORD, "compact verdict metadata extent exceeded");
     publish(&verdict_path, encoded.as_bytes(), false)?;
+    finish(prepared, checkout, &verdict_path, &verdict)
+}
+
+fn finish(
+    prepared: &PreparedCompact,
+    checkout: &Path,
+    verdict_path: &Path,
+    verdict: &CompactVerdict,
+) -> Result<CompactReceipt> {
     let mut receipt = CompactReceipt {
         prepared_sha256: verdict.prepared_sha256.clone(),
         candidate_sha256: verdict.candidate_sha256.clone(),
-        context: context.clone(),
-        verdict: Asset { file: verdict_path.clone(), sha256: retention::seal_file(&verdict_path, MAX_RECORD)?.sha256 },
+        context: verdict.context.clone(),
+        verdict: Asset { file: verdict_path.into(), sha256: retention::seal_file(verdict_path, MAX_RECORD)?.sha256 },
         passed: verdict.passed,
         diagnostic: verdict.diagnostic.clone(),
         evidence_bytes: 0,
@@ -1652,6 +1673,7 @@ pub(crate) fn run(
     })?;
     ensure!(receipt.evidence_bytes <= verdict.reserved_bytes, "compact evidence exceeded aggregate pre-reservation");
     authenticate(prepared, checkout, &receipt)?;
+    let receipt_path = verdict_path.parent().context("compact verdict parent missing")?.join("compact-receipt.toml");
     publish(&receipt_path, toml::to_string_pretty(&receipt)?.as_bytes(), false)?;
     Ok(receipt)
 }
