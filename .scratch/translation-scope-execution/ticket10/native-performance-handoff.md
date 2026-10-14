@@ -5,6 +5,10 @@ Blocked by: None
 Owner: `/root/native_performance`, delegated by `/root`.
 Worktree: `/home/jim/sm-decomp-ticket10-work/native-performance`.
 Branch: `ticket10-native-performance`; baseline: `528581b`.
+Implementation commit: `5cda6a02ada0434baae86c0ae1f9074158bbd8d4`.
+Worker state: implementation, measurements and run cleanup complete; root owns
+integration, independent review and worktree retirement. No native child process
+or build remains active.
 
 This scope measures and improves native Fixture execution overhead. Owned
 implementation paths are `crates/pipeline/src/translation_native.rs`,
@@ -35,7 +39,7 @@ control test are historical context, not fresh measurements. Prior `/tmp`
 proofs are unavailable. The committed ignored proof reconstructs provenance
 from the retained original 16-case family verdict and its sealed sources.
 
-## Current checkpoint
+## Initial checkpoint (historical)
 
 Read AGENTS, domain glossary, issue-tracker/session/cleanup instructions and the
 diagnosing-bugs skill. No ADR directory exists. An optimized unchanged native
@@ -48,8 +52,132 @@ paths. No native producer has run at this checkpoint.
 
 ## Completion evidence
 
-Pending measurements, focused regression checks, cleanup and scoped commits.
-Root owns final merged validation and worktree retirement.
+The adjacent measurements with the same V7 helper show a **4.89× native Fixture
+throughput improvement** and a **1.29× complete-control-test improvement**.
+Every positive proof retained 16 Fixture pairs, two routines and 34 durable
+producers; unchanged replay preserved all producer result timestamps.
+
+| Adjacent complete proofs | Unchanged reader | Updated reader, four Fixture jobs |
+| --- | ---: | ---: |
+| Proof directory | `baseline-quiet-v2` | `waves-controls-v1` |
+| Positive proof, authentication, replay and tampering control, seconds | 17.662 | 13.317 |
+| Whole test including all original negative controls, seconds | 43.11 | 33.54 |
+| Whole-test user / system CPU, seconds | 10.92 / 4.25 | 6.44 / 3.38 |
+| Two compiler producers, seconds | 10.748 | 10.834 |
+| Fixture wall span, seconds | 5.480 | 1.120 |
+| Finalization after the last producer, seconds | 0.512 | 0.499 |
+
+Compiler time in these adjacent runs differs by less than one percent. The
+earlier fresh baseline below is retained, but its slower compiler time is not
+the main before/after comparison. Times are observations on a shared host,
+not statistical confidence intervals. The coordinated measurement window was
+2026-10-14 17:16:48–17:21:00 UTC. Architecture builds were stopped for this
+window; unrelated host activity remained outside this session's ownership.
+
+The updated reader's fixed-helper one/two/four comparison isolates scheduling:
+
+| Fixture jobs | Positive proof, seconds | Compiler producers, seconds | Fixture wall span, seconds | Fixture throughput versus one job | Whole perf-only test user / system CPU, seconds |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | 19.881 | 15.263 | 3.103 | 1.00× | 4.69 / 4.22 |
+| 2 | 14.229 | 11.008 | 1.805 | 1.72× | 4.80 / 1.74 |
+| 4 | 16.882 | 14.266 | 1.212 | 2.56× | 5.36 / 2.28 |
+
+These runs are `waves-jobs1-v1`, `waves-jobs2-v1` and `waves-jobs4-v1`.
+Only Fixture job count changed; the shared process capacity remained four.
+Compiler variation prevents claiming monotonic end-to-end scaling from these
+three observations. Their perf-only mode keeps coverage, independent
+authentication, unchanged replay and invocation-tampering checks; the original
+negative-control families ran separately in `waves-controls-v1`.
+
+| Trusted-parent step, seconds | One job | Two jobs | Four jobs |
+| --- | ---: | ---: | ---: |
+| Preparation | 2.488 | 2.545 | 2.717 |
+| Independent authentication | 0.233 | 0.195 | 0.198 |
+| Unchanged replay | 0.203 | 0.214 | 0.210 |
+| Reference collection | 0.034 | 0.029 | 0.024 |
+
+Input identity reuse accounts for the serial improvement. Across the 32
+Fixture producers, identity import fell from 2.847 seconds in the quiet baseline
+to 0.341 seconds in the updated serial run (8.36× lower). Runner startup was
+0.427 versus 0.399 seconds; sandbox execution through result publication was
+1.318 versus 1.401 seconds; parent output publication was 0.590 versus 0.646
+seconds. These are summed file-timestamp spans, not gameplay CPU. With parallel
+workers the sums overlap; wall span is the throughput measure. The analyzer
+omits the compiler invocation timestamp modified by the tampering control.
+The new per-proof `performance.toml` retains its original timestamp and all
+producer timings explicitly.
+
+Validation completed:
+
+- Two release type-check passes and an optimized release reader build passed.
+  All reader dependencies, including sha2, use normal release opt-level 3.
+- Focused pipeline suite: 31 passed, zero failed, nine explicit real-proof tests
+  ignored; 5.31 seconds. This covers shared read limits/deadlines, summed wave
+  reservations, reconciliation, worker failure joins, continuation order and
+  existing native/worker controls. Log: `logs/focused-waves-v2.log`.
+- Operation integration suite: 12 passed, zero failed; 3.49 seconds after its
+  release build. The new cache test covers equal-length content changes with
+  restored mtime, symlink introduction and historical authentication. Existing
+  crash/recovery, deadline, retention and tampering controls passed.
+  Log: `logs/operation-waves-v2.log`.
+- The full original real-family controls passed on the updated reader:
+  preparation gaps, undeclared compiler inclusion, runtime parent/sibling
+  reads/writes, changed producer requests and aggregate reservation overflow.
+- The updated reader authenticated historical serial receipts with no
+  `fixture_jobs` field. All six finished proof sets authenticated after both
+  cleanup passes and again after private target retirement; no producer ran.
+
+The exact retained reader is `tools/native-tests-waves-v2`, SHA-256
+`78804b95e8a815f3b074910e85ec5b54f7e5d054ec9979b74192f15fe7b30bdb`.
+The read-only Rust phase analyzer is `tools/native-performance-analyze-v2`,
+SHA-256 `4a61cd9243f468cafd9036cba52a663110915ca044793d507713963e12422b4c`.
+Its source is beside this handoff. For every proof, `logs/NAME.log` contains the
+raw test and `/usr/bin/time -v` output, and `logs/NAME-phases-v2.toml` records
+every original producer's phases and post-producer finalization. All artifacts
+are under `/home/jim/sm-decomp-performance-20261014/native`.
+
+`retained-evidence-sha256.txt` binds the readers, helper, provenance, positive
+receipts, measurements, focused-test logs, cleanup logs and final authentication
+logs. Its SHA-256 is
+`a5777e0582f9dbaa0822c7423144f07d5c11e97dcd0fae4a728c208b379a3f5c`.
+Provenance remains `provenance/provenance.toml`, SHA-256
+`c6f972b1a9400971e870714e3b241e14e4c99ce767ca4da0315736bb5ec6b88a`.
+
+Cleanup used the unchanged retained utility
+`/home/jim/sm-decomp-production-execution/bin/sm-pipeline`, separately on
+`baseline-v1`, `baseline-quiet-v2`, `waves-jobs1-v1`, `waves-jobs2-v1`,
+`waves-jobs4-v1`, `waves-controls-v1` and `provenance`:
+
+```sh
+sm-pipeline cleanup --root PROOF --apply
+sm-pipeline cleanup --root PROOF --deduplicate --apply
+```
+
+Normal cleanup reclaimed zero bytes. Deduplication reclaimed 10,485,760 bytes
+for each complete-control proof and 4,194,304 bytes for each jobs comparison:
+44,040,192 bytes total. Provenance cleanup reclaimed zero bytes. Both passes
+succeeded; logs are `logs/NAME-cleanup.log` and `logs/NAME-deduplicate.log`.
+The utility did not identify the private Cargo target as a supported run
+intermediate (`logs/native-cleanup-plan.log`). After retaining the exact readers
+and observing all native builds stopped, the identified disposable target was
+removed with `rm -r -- /home/jim/sm-decomp-performance-20261014/native/target`.
+It occupied 387,956,736 bytes before removal
+(`logs/private-target-before-removal.log`). This removal completed before
+root's later message requesting target retention; the merged release check
+must use another target or rebuild. No tool or proof depends on that target.
+Observed remaining free space was 183,465,463,808 bytes
+(`logs/disk-after-cleanup.log`).
+
+Final authentication logs are `logs/NAME-after-target-retirement-auth.log`.
+Each positive receipt authenticated 34 producers and 670 references. Every
+complete-control proof also authenticated compile denial (two producers),
+runtime denial (34 producers) and reservation denial (zero producers).
+Retain all proof source snapshots, provenance, operation inputs/results and
+references, readers and fixed helper. Root owns integration and removal of this
+still-present worktree, followed by authentication after source retirement.
+Root also owns the separate complete equipment proof and any later comparison
+using the final improved confinement helper. None of these Native measurements
+uses that later helper.
 
 ## Fresh baseline and implementation checkpoint
 
@@ -108,18 +236,18 @@ Implemented after measurement:
 - Share trusted input bytes, paths and earliest deadline across worker threads.
   Focused tests cover aggregate exhaustion and wave failure/dependency behavior.
 
-Two release type-check passes succeeded. The current exact optimized reader
-build is in exec session `66887`, log `logs/build-waves-v2.log`. The first updated
-build was stopped after 83 seconds of pipeline code generation to incorporate
-root's late, narrow requirements override before a full rebuild completed.
-Source is frozen for the active build. No new producer is running.
+Two release type-check passes succeeded. The exact optimized reader build
+completed successfully in 12m23s, log `logs/build-waves-v2.log`; its source is
+the implementation commit above. The first updated build was stopped after
+83 seconds of pipeline code generation to incorporate root's late, narrow
+requirements override. All later measurements used the completed v2 reader.
 
 Existing ignored recipe proof now accepts `SM_NATIVE_RECIPE_SOURCE` and
 `SM_NATIVE_RECIPE_REQUIREMENTS`; its provenance rationale describes complete
 declarations against pinned C without a ticket-specific claim. Test-only
 `SM_NATIVE_FIXTURE_JOBS` permits one/two/four comparisons without changing the
-shared process capacity. Root owns the later complete `pause-equipment` proof;
-that proof is not started here.
+shared process capacity. Root owns the separate complete `pause-equipment`
+proof; no such producer was started by this worker.
 
 Concurrent architecture work has overlapping legacy scheduling/build-cache
 branches in a different worktree. Root coordinates their later composition;

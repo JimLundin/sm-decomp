@@ -46,6 +46,9 @@ fn main() -> Result<()> {
     let mut sums = BTreeMap::<String, f64>::new();
     let mut latest = SystemTime::UNIX_EPOCH;
     let mut earliest = None;
+    let mut fixture_first = None;
+    let mut fixture_last = None;
+    let mut fixture_count = 0;
     for path in paths {
         let invocation = fs::read_to_string(&path)?;
         let key = field(&invocation, "operation_key")?.trim_matches('"');
@@ -67,6 +70,15 @@ fn main() -> Result<()> {
         let publication = modified(&timing_path)?;
         latest = latest.max(publication);
         earliest = Some(earliest.map_or(intent, |previous: SystemTime| previous.min(intent)));
+        if kind == "fixture" {
+            if invocation_time > publication {
+                return Err("fixture invocation timestamp was modified after publication".into());
+            }
+            fixture_first =
+                Some(fixture_first.map_or(invocation_time, |previous: SystemTime| previous.min(invocation_time)));
+            fixture_last = Some(fixture_last.map_or(publication, |previous: SystemTime| previous.max(publication)));
+            fixture_count += 1;
+        }
         for (name, first, last) in [
             ("identity_import_seconds", invocation_time, intent),
             ("runner_startup_seconds", intent, sandbox),
@@ -88,6 +100,10 @@ fn main() -> Result<()> {
     );
     if let Some(first) = earliest {
         println!("producer_span_seconds = {}", span(first, latest).ok_or("reversed producer span")?);
+    }
+    if let (Some(first), Some(last)) = (fixture_first, fixture_last) {
+        println!("fixture_producer_count = {fixture_count}");
+        println!("fixture_span_seconds = {}", span(first, last).ok_or("reversed fixture span")?);
     }
     println!(
         "post_producer_finalization_seconds = {}",
