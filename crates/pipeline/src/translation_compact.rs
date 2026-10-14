@@ -2280,6 +2280,10 @@ pub(crate) fn authenticate(
 }
 
 #[cfg(test)]
+#[path = "translation_compact_recovery_tests.rs"]
+mod recovery_tests;
+
+#[cfg(test)]
 mod tests {
     use super::*;
 
