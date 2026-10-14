@@ -25,3 +25,31 @@ confinement/native benchmark windows. Persistent target:
 Next: implement and independently test the complete scope, commit the three
 owned files, publish the actual achieved stage, then run fresh actual-C checks
 when the benchmark window is free. Cleanup follows each verification run.
+
+## Source completion
+
+Private HEAD: `847d76f60d8a373b7b051f0be5c441f6be2342f4`, clean.
+The three owned files implement all 29 routines and declare 427 Fixture pairs
+across 28 direct entries, including 181 complete-root cases. There are 411
+independent roots and 16 continuation nodes across the two explicit chains.
+Manifest SHA-256: `b08cf0c2693d353f1662f45f26e211aebce446a14554304918e89010f5e0aed7`.
+
+Focused Cargo tests and the full private workspace suite each pass all 13
+independent semantic controls; tests take under 0.01 seconds. Main-config
+rustfmt and `git diff --check` also pass. Checks are under
+`/home/jim/sm-decomp-equipment-interaction-20261014/checks`:
+
+- `focused.log`: `2013c6206413ebb3aa7d40e02f6d92c7a9c3e0e5fa6f9abd69e2c4b1479a6f4b`.
+- `workspace.log`: `c522ed20bc253e9331952ad2604952c219a52f80e5745f36072cba7daf120ec3`.
+
+The exact source is retained without Git/build metadata at
+`/home/jim/sm-decomp-equipment-interaction-20261014/source-snapshots/847d76f`.
+Both scoped cleanup utility passes on checks succeeded with zero bytes
+reclaimed; the disposable target was removed after measuring 54,501,376
+allocated bytes. Source and logs remain, with no active producer.
+
+The published stage is `translated`. Actual-C comparison, two-axis review,
+main integration, Live replay and original-ROM parity remain pending. The
+next step is review from private scaffold baseline to this exact commit and
+fresh actual-C execution using the existing Native runner after performance
+validation. No held main claim or production source was changed.

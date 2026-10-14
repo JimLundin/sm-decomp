@@ -1,0 +1,52 @@
+id = "equipment-interaction-private-translated-20261014"
+scope = "Complete equipment interaction source bootstrap (29 routines)"
+agent = "/root/equipment_implementation"
+stage = "translated"
+source_revision = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+inventory_sha256 = "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25"
+commit = "847d76f60d8a373b7b051f0be5c441f6be2342f4"
+routines = [
+  "ChangePaletteValues",
+  "EquipmentScreenMain",
+  "EquipmentScreenCategory_Tanks",
+  "EquipmentScreenHandleDpad",
+  "EquipmentScreenGlowingArrow",
+  "EquipmentScreenGlowingArrowAnimated",
+  "EquipmentScreenGlowingArrowSolidOn",
+  "EquipmentScreenGlowingArrowSolidOff",
+  "EquipmentScreenEnergyArrowGlow_On",
+  "EquipmentScreenEnergyArrowGlow_Off",
+  "EquipmentScreenCategory_Tanks_0",
+  "EquipmentScreenHudReserveAutoTilemap_On_BUGGY",
+  "EquipmentScreenHudReserveAutoTilemap_Off",
+  "EquipmentScreenCategory_Tanks_1",
+  "EquipmentScreenCategory_Weapons",
+  "EquipmentScreenCategory_Weapons_MoveButtons",
+  "EquipmentScreenCategory_Weapons_PlazmaSpazerCheck",
+  "EquipmentScreenCategory_Suit",
+  "EquipmentScreenCategory_Suit_MoveResponse",
+  "EquipmentScreenCategory_Boots",
+  "EquipmentScreenCategory_Boots_MoveResponse",
+  "EquipmentScreenMoveToReserveTanks",
+  "EquipmentScreenMoveToBeams",
+  "EquipmentScreenMoveToBottomOfBeams",
+  "EquipmentScreenMoveLowerOnSuitsMisc",
+  "EquipmentScreenMoveToScrewOrHigherOnSuits",
+  "EquipmentScreenMoveToHighJumpOrLowerInBoots",
+  "EquipmentScreenCategory_Boots_MoveUpInBoots",
+  "EquipmentScreenCategory_ButtonResponse",
+]
+limitations = ["Complete private 29-routine source bootstrap; this is not a confined production rewrite or a production claim.", "Thirteen independent Rust controls pass. The 427 actual-C pairs are declarations and have not executed for this source.", "Fresh actual-C verification, two-axis review, managed integration, Live replay and original-ROM parity remain pending."]
+
+[[evidence]]
+path = "/home/jim/sm-decomp-equipment-interaction-20261014/source-snapshots/847d76f/crates/port/src/pause_equipment.rs"
+
+[[evidence]]
+path = "/home/jim/sm-decomp-equipment-interaction-20261014/source-snapshots/847d76f/tools/port/pause-equipment.toml"
+
+[[evidence]]
+path = "/home/jim/sm-decomp-equipment-interaction-20261014/checks/focused.log"
+
+[[evidence]]
+path = "/home/jim/sm-decomp-equipment-interaction-20261014/checks/workspace.log"
+

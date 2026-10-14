@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "root": "/home/jim/sm-decomp",
-  "updated_at": 1791995027,
+  "updated_at": 1791996736,
   "source": {
     "revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
     "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
@@ -99046,6 +99046,70 @@
         "Fresh actual-C verification, managed integration, Live replay and original-ROM parity remain pending."
       ],
       "updated_at": 1791995027
+    },
+    {
+      "id": "equipment-interaction-private-translated-20261014",
+      "scope": "Complete equipment interaction source bootstrap (29 routines)",
+      "agent": "/root/equipment_implementation",
+      "stage": "translated",
+      "routines": [
+        "ChangePaletteValues",
+        "EquipmentScreenMain",
+        "EquipmentScreenCategory_Tanks",
+        "EquipmentScreenHandleDpad",
+        "EquipmentScreenGlowingArrow",
+        "EquipmentScreenGlowingArrowAnimated",
+        "EquipmentScreenGlowingArrowSolidOn",
+        "EquipmentScreenGlowingArrowSolidOff",
+        "EquipmentScreenEnergyArrowGlow_On",
+        "EquipmentScreenEnergyArrowGlow_Off",
+        "EquipmentScreenCategory_Tanks_0",
+        "EquipmentScreenHudReserveAutoTilemap_On_BUGGY",
+        "EquipmentScreenHudReserveAutoTilemap_Off",
+        "EquipmentScreenCategory_Tanks_1",
+        "EquipmentScreenCategory_Weapons",
+        "EquipmentScreenCategory_Weapons_MoveButtons",
+        "EquipmentScreenCategory_Weapons_PlazmaSpazerCheck",
+        "EquipmentScreenCategory_Suit",
+        "EquipmentScreenCategory_Suit_MoveResponse",
+        "EquipmentScreenCategory_Boots",
+        "EquipmentScreenCategory_Boots_MoveResponse",
+        "EquipmentScreenMoveToReserveTanks",
+        "EquipmentScreenMoveToBeams",
+        "EquipmentScreenMoveToBottomOfBeams",
+        "EquipmentScreenMoveLowerOnSuitsMisc",
+        "EquipmentScreenMoveToScrewOrHigherOnSuits",
+        "EquipmentScreenMoveToHighJumpOrLowerInBoots",
+        "EquipmentScreenCategory_Boots_MoveUpInBoots",
+        "EquipmentScreenCategory_ButtonResponse"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "847d76f60d8a373b7b051f0be5c441f6be2342f4",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-equipment-interaction-20261014/source-snapshots/847d76f/crates/port/src/pause_equipment.rs",
+          "sha256": "c1d414963aa3edf176c71091885096d0e0924cb0fff69a664a55eb33fd9ec1f8"
+        },
+        {
+          "path": "/home/jim/sm-decomp-equipment-interaction-20261014/source-snapshots/847d76f/tools/port/pause-equipment.toml",
+          "sha256": "b08cf0c2693d353f1662f45f26e211aebce446a14554304918e89010f5e0aed7"
+        },
+        {
+          "path": "/home/jim/sm-decomp-equipment-interaction-20261014/checks/focused.log",
+          "sha256": "2013c6206413ebb3aa7d40e02f6d92c7a9c3e0e5fa6f9abd69e2c4b1479a6f4b"
+        },
+        {
+          "path": "/home/jim/sm-decomp-equipment-interaction-20261014/checks/workspace.log",
+          "sha256": "c522ed20bc253e9331952ad2604952c219a52f80e5745f36072cba7daf120ec3"
+        }
+      ],
+      "limitations": [
+        "Complete private 29-routine source bootstrap; this is not a confined production rewrite or a production claim.",
+        "Thirteen independent Rust controls pass. The 427 actual-C pairs are declarations and have not executed for this source.",
+        "Fresh actual-C verification, two-axis review, managed integration, Live replay and original-ROM parity remain pending."
+      ],
+      "updated_at": 1791996736
     }
   ],
   "notices": [
@@ -99247,7 +99311,7 @@
     "body_lines": 75229,
     "declared_definitions": 842,
     "declared_body_lines": 9227,
-    "updates": 268,
+    "updates": 269,
     "stale_updates": 16,
     "stages": {
       "integrated": {
@@ -99259,8 +99323,8 @@
         "body_lines": 1642
       },
       "translated": {
-        "definitions": 1469,
-        "body_lines": 16665
+        "definitions": 1498,
+        "body_lines": 17016
       },
       "translating": {
         "definitions": 259,
@@ -99326,8 +99390,8 @@
           "body_lines": 0
         },
         "translated": {
-          "definitions": 34,
-          "body_lines": 719
+          "definitions": 63,
+          "body_lines": 1070
         },
         "translating": {
           "definitions": 251,
