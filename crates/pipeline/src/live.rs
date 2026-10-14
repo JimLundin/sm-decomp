@@ -28,10 +28,9 @@ fn bounded_root(module: &str, symbol: &str) -> bool {
         "projectile_trails" => symbol == "HandleProjectileTrails",
         "camera_scroll" => symbol == "MainScrollingRoutine",
         "room_scroll" => matches!(symbol, "UpdateScrollVarsUpdateMap" | "CalculateLayer2PosAndScrollsWhenScrolling"),
-        "samus_projectile_frame" => matches!(
-            symbol,
-            "HandleProjectile" | "DrawPlayerExplosions2" | "DrawBombAndProjectileExplosions"
-        ),
+        "samus_projectile_frame" => {
+            matches!(symbol, "HandleProjectile" | "DrawPlayerExplosions2" | "DrawBombAndProjectileExplosions")
+        }
         "ridley_enemy_instructions" => symbol == "ProcessEnemyInstructions",
         _ => false,
     }
@@ -1123,37 +1122,14 @@ pub fn verify(request: Request) -> Result<Verdict> {
         })?;
         let rng = checkout.join("tools/decomp/next_random.rs");
         let rng_hash = digest(&rng)?;
-        builds::execute(
-            &[
-                "rustc".into(),
-                "--edition=2024".into(),
-                "-O".into(),
-                "--crate-type=staticlib".into(),
-                rng.to_string_lossy().into_owned(),
-                "-o".into(),
-                run.join("librng.a").to_string_lossy().into_owned(),
-            ],
-            &run,
-            "rng-build",
-            root,
+        builds::helper_builds(builds::HelperBuildRequest {
+            checkout: checkout.clone(),
+            root: root.clone(),
+            run: run.clone(),
             workers,
-        )?;
-        builds::execute(
-            &[
-                "rustc".into(),
-                "--edition=2024".into(),
-                "-O".into(),
-                "--cfg".into(),
-                "cli".into(),
-                rng.to_string_lossy().into_owned(),
-                "-o".into(),
-                run.join("rng-cli").to_string_lossy().into_owned(),
-            ],
-            &run,
-            "rng-cli-build",
-            root,
-            workers,
-        )?;
+            helpers: vec![builds::Helper::RandomLibrary, builds::Helper::RandomCli],
+        })?;
+        ensure!(digest(&rng)? == rng_hash, "RNG source changed during build");
         builds::execute(
             &[run.join("rng-cli").to_string_lossy().into_owned(), "exhaustive".into()],
             &run,

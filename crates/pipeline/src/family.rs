@@ -526,21 +526,17 @@ fn build_with(
         wrapper = wrapper.replace("let rom=std::fs::read(&args[6]).unwrap();", "");
         wrapper.push_str(&format!("\n#[path={:?}] mod fixture_worker;\nfn main(){{let args:Vec<String>=std::env::args().collect();let worker=args.get(1).is_some_and(|a|a==\"--fixture-worker\");let rom=if {}{{std::fs::read(if worker{{&args[2]}}else{{&args[6]}}).unwrap()}}else{{vec![]}};if worker{{fixture_worker::serve(|args|{{invoke(args,&rom);0}}).unwrap();}}else{{invoke(&args,&rom);}}}}\n",checkout.join("crates/pipeline/src/fixture_worker.rs"),manifest.rom.is_some()));
         fs::write(run.join("fixture-worker.rs"), include_str!("fixture_worker.rs"))?;
-        builds::execute(
-            &[
-                "rustc".into(),
-                "--edition=2024".into(),
-                "-O".into(),
-                "--crate-type=staticlib".into(),
-                run.join("fixture-worker.rs").display().to_string(),
-                "-o".into(),
-                run.join("libfixture_worker.a").display().to_string(),
-            ],
-            run,
-            "fixture-worker-build",
-            &request.root,
-            request.workers,
-        )?;
+        let worker_source = checkout.join("crates/pipeline/src/fixture_worker.rs");
+        let worker_hash = digest(&run.join("fixture-worker.rs"))?;
+        ensure!(digest(&worker_source)? == worker_hash, "fixture worker source differs from this pipeline");
+        builds::helper_builds(builds::HelperBuildRequest {
+            checkout: checkout.into(),
+            root: request.root.clone(),
+            run: run.into(),
+            workers: request.workers,
+            helpers: vec![builds::Helper::FixtureWorker],
+        })?;
+        ensure!(digest(&worker_source)? == worker_hash, "fixture worker source changed during build");
     }
     write_build_input(&run.join("wrapper.rs"), wrapper.as_bytes(), execution.is_some())?;
     let root = &request.root;

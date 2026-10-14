@@ -1,6 +1,7 @@
 //! Local process leases and authenticated cache publication for decomp workers.
 use anyhow::{Context, Result, bail, ensure};
-use serde::{Deserialize, Serialize};
+use build_cache::{CacheRequest, CacheResult, CacheSeal, cached_artifact};
+use serde::Serialize;
 use sha2::{Digest, Sha256};
 use std::fs::{self, File, OpenOptions};
 use std::io::{BufRead, Read, Write};
@@ -15,6 +16,7 @@ mod assignment;
 mod baseline;
 mod batch;
 mod benchmark;
+mod build_cache;
 mod builds;
 mod callback;
 mod checkpoints;
@@ -284,42 +286,6 @@ fn atomic_toml<T: Serialize>(path: &Path, value: &T) -> Result<()> {
     result
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-struct CacheRequest {
-    root: PathBuf,
-    checkout: PathBuf,
-    command: Vec<String>,
-    inputs: Vec<PathBuf>,
-    destination: PathBuf,
-}
-#[derive(Clone, Debug, Deserialize, Serialize)]
-struct CacheResult {
-    key: String,
-    hit: bool,
-}
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-struct CompilerIdentity {
-    sha256: String,
-    version: String,
-}
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-struct CacheIdentity {
-    version: u32,
-    command: Vec<String>,
-    sources: std::collections::BTreeMap<String, String>,
-    compiler: CompilerIdentity,
-    environment_sha256: String,
-    platform: [String; 2],
-    #[serde(skip_serializing_if = "Option::is_none")]
-    rustc: Option<String>,
-}
-#[derive(Deserialize, Serialize)]
-struct CacheSeal {
-    inputs: CacheIdentity,
-    sha256: String,
-}
-
 fn executable(name: &str) -> Result<PathBuf> {
     if name.contains('/') {
         return Ok(PathBuf::from(name));
@@ -331,162 +297,6 @@ fn executable(name: &str) -> Result<PathBuf> {
         }
     }
     bail!("compiler not found: {name}")
-}
-
-fn cached_artifact(request: &CacheRequest, build: impl FnOnce(&Path) -> Result<()>) -> Result<CacheResult> {
-    let context = metrics::active();
-    let lookup = context.as_ref().map(|context| context.stage("cache-lookup")).transpose()?;
-    let root = request.root.clone();
-    let checkout = request.checkout.clone();
-    let common = metrics::command_output(
-        Command::new("git").args(["rev-parse", "--git-common-dir"]).current_dir(&checkout),
-        "cache-repository-identity",
-    )?;
-    let repository = if common.status.success() {
-        let common = PathBuf::from(String::from_utf8(common.stdout)?.trim());
-        let common = fs::canonicalize(checkout.join(common))?;
-        common.parent().context("git common parent missing")?.to_path_buf()
-    } else {
-        checkout.clone()
-    };
-    let inputs = &request.inputs;
-    let command = &request.command;
-    let compiler_name = command.first().context("compiler missing")?;
-    let compiler = executable(compiler_name)?;
-    let version = metrics::command_output(
-        Command::new(&compiler).arg("--version").current_dir(&checkout),
-        "cache-compiler-identity",
-    )?;
-    ensure!(version.status.success(), "compiler version failed");
-    let mut sources = std::collections::BTreeMap::new();
-    let mut originals = Vec::new();
-    for name in inputs {
-        let path = fs::canonicalize(name)?;
-        let key = path
-            .strip_prefix(&checkout)
-            .or_else(|_| path.strip_prefix(&repository))
-            .unwrap_or(&path)
-            .to_string_lossy()
-            .into_owned();
-        let hash = digest(&path)?;
-        originals.push((path, hash.clone()));
-        sources.insert(key, hash);
-    }
-    let environment: std::collections::BTreeMap<_, _> = std::env::vars()
-        .filter(|(name, _)| {
-            name.starts_with("CARGO_")
-                || name.starts_with("RUST")
-                || name.starts_with("CC_")
-                || [
-                    "CC",
-                    "AR",
-                    "CFLAGS",
-                    "CPPFLAGS",
-                    "LDFLAGS",
-                    "PATH",
-                    "CPATH",
-                    "C_INCLUDE_PATH",
-                    "CPLUS_INCLUDE_PATH",
-                    "LIBRARY_PATH",
-                    "SOURCE_DATE_EPOCH",
-                    "GCC_EXEC_PREFIX",
-                    "COMPILER_PATH",
-                    "SDKROOT",
-                    "MACOSX_DEPLOYMENT_TARGET",
-                ]
-                .contains(&name.as_str())
-        })
-        .collect();
-    let env_hash = format!("{:x}", Sha256::digest(toml::to_string(&environment)?.as_bytes()));
-    let canonical_command: Vec<_> = command
-        .iter()
-        .map(|arg| {
-            arg.replace(checkout.to_string_lossy().as_ref(), "{checkout}")
-                .replace(repository.to_string_lossy().as_ref(), "{checkout}")
-        })
-        .collect();
-    let mut identity = CacheIdentity {
-        version: 4,
-        command: canonical_command,
-        sources,
-        compiler: CompilerIdentity { sha256: digest(&compiler)?, version: String::from_utf8(version.stdout)? },
-        environment_sha256: env_hash,
-        platform: [std::env::consts::ARCH.into(), std::env::consts::OS.into()],
-        rustc: None,
-    };
-    if ["cargo", "rustc"].contains(&Path::new(compiler_name).file_name().and_then(|v| v.to_str()).unwrap_or_default()) {
-        let info =
-            metrics::command_output(Command::new("rustc").arg("-vV").current_dir(&checkout), "cache-rustc-identity")?;
-        ensure!(info.status.success(), "rustc version failed");
-        identity.rustc = Some(String::from_utf8(info.stdout)?);
-    }
-    let key = format!("{:x}", Sha256::digest(toml::to_string(&identity)?.as_bytes()));
-    let root = root.join("build-cache");
-    fs::create_dir_all(&root)?;
-    let waiting = context.as_ref().map(|context| context.stage("cache-lock-wait")).transpose()?;
-    let _held = lock(&root.join(format!("{key}.lock")))?;
-    if let Some(waiting) = waiting {
-        waiting.finish("success")?;
-    }
-    let entry = root.join(&key);
-    for (path, expected) in &originals {
-        ensure!(digest(path)? == *expected, "compiler input changed while waiting for cache");
-    }
-    let hit = (|| -> Result<bool> {
-        ensure!(!entry.symlink_metadata()?.file_type().is_symlink(), "cache symlink");
-        let seal: CacheSeal = pipeline_model::read(&entry.join("seal.toml"))?;
-        ensure!(!entry.join("artifact").symlink_metadata()?.file_type().is_symlink(), "artifact symlink");
-        Ok(seal.inputs == identity && seal.sha256 == digest(&entry.join("artifact"))?)
-    })()
-    .unwrap_or(false);
-    if let Some(lookup) = lookup {
-        lookup.finish("success")?;
-    }
-    if let Some(context) = &context {
-        context.configuration(&format!("cache-{key}-hit"), hit);
-    }
-    let stage = root.join(format!("{key}-{}.pending", std::process::id()));
-    if !hit {
-        if stage.exists() {
-            fs::remove_dir_all(&stage)?;
-        }
-        fs::create_dir(&stage)?;
-    }
-    if !hit {
-        let result = (|| -> Result<()> {
-            let building = context.as_ref().map(|context| context.stage("cache-build")).transpose()?;
-            build(&stage.join("artifact"))?;
-            if let Some(building) = building {
-                building.finish("success")?;
-            }
-            for (path, expected) in originals {
-                ensure!(digest(&path)? == expected, "compiler input changed during build");
-            }
-            ensure!(!stage.join("artifact").symlink_metadata()?.file_type().is_symlink(), "build artifact symlink");
-            let hash = digest(&stage.join("artifact"))?;
-            File::open(stage.join("artifact"))?.sync_all()?;
-            atomic_toml(&stage.join("seal.toml"), &CacheSeal { inputs: identity, sha256: hash })?;
-            if entry.exists() {
-                fs::remove_dir_all(&entry)?;
-            }
-            fs::rename(&stage, &entry)?;
-            File::open(&root)?.sync_all()?;
-            Ok(())
-        })();
-        if result.is_err() {
-            let _ = fs::remove_dir_all(&stage);
-        }
-        result?;
-    }
-    let destination = request.destination.clone();
-    let restoring = context.as_ref().map(|context| context.stage("cache-restore-authenticate")).transpose()?;
-    fs::create_dir_all(destination.parent().context("destination parent missing")?)?;
-    fs::copy(entry.join("artifact"), &destination)?;
-    ensure!(digest(&destination)? == digest(&entry.join("artifact"))?, "copied artifact differs");
-    if let Some(restoring) = restoring {
-        restoring.finish("success")?;
-    }
-    Ok(CacheResult { key, hit })
 }
 
 fn cache(request: CacheRequest) -> Result<()> {
@@ -1521,6 +1331,7 @@ fn main() -> Result<()> {
         Some("c-build") if args.len() == 1 => emit(&builds::c_build(request()?)?),
         Some("exec") if args.len() == 1 => emit(&builds::exec(request()?)?),
         Some("cargo-build") if args.len() == 1 => emit(&builds::cargo_build(request()?)?),
+        Some("helper-build") if args.len() == 1 => emit(&builds::helper_builds(request()?)?),
         Some("live-authenticate") if args.len() == 1 => emit(&observations::authenticate(request()?)?),
         Some("live-authenticate") if args.len() == 2 => {
             let checkout = std::env::current_dir()?;
@@ -1752,7 +1563,7 @@ fn main() -> Result<()> {
             emit(&cleanup::cleanup(request.try_into()?)?)
         }
         _ => bail!(
-            "usage: sm-pipeline lease ROOT WORKERS | cache | wrapper | dependencies | exec | cargo-build | c-build | cleanup | family-verify | family-authenticate | batch | live-authenticate (TOML request on stdin); see crates/pipeline/README.md for command options"
+            "usage: sm-pipeline lease ROOT WORKERS | cache | wrapper | dependencies | exec | cargo-build | helper-build | c-build | cleanup | family-verify | family-authenticate | batch | live-authenticate (TOML request on stdin); see crates/pipeline/README.md for command options"
         ),
     }
 }

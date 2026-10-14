@@ -595,6 +595,7 @@ pub(crate) fn native_harness_sources() -> Vec<(&'static str, &'static str)> {
         ("inputs.rs", include_str!("inputs.rs")),
         ("bounded_inputs.rs", include_str!("bounded_inputs.rs")),
         ("builds.rs", include_str!("builds.rs")),
+        ("build_cache.rs", include_str!("build_cache.rs")),
         ("family.rs", include_str!("family.rs")),
         ("family_model.rs", include_str!("family_model.rs")),
         ("translation_native.rs", include_str!("translation_native.rs")),

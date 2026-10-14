@@ -1,4 +1,5 @@
 //! Translation-unit reuse; generated candidate units are always rebuilt.
+use crate::build_cache::Preparation;
 use crate::inputs::bounded;
 use crate::{CacheRequest, CacheResult, acquire_lease, atomic_toml, cached_artifact};
 use anyhow::{Context, Result, bail, ensure};
@@ -7,7 +8,10 @@ use std::{
     fs::{self, File},
     path::{Path, PathBuf},
     process::{Command, Stdio},
-    sync::Mutex,
+    sync::{
+        Mutex,
+        atomic::{AtomicBool, AtomicUsize, Ordering},
+    },
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 use translation_execution::{
@@ -1061,6 +1065,142 @@ pub(crate) struct CargoBuildRequest {
     pub destination: PathBuf,
     pub workers: usize,
 }
+/// Fixed standalone helper recipes. Generated Live replay families contain
+/// run-specific source paths and deliberately do not use this cache.
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub(crate) enum Helper {
+    FixtureWorker,
+    RandomLibrary,
+    RandomCli,
+}
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct HelperBuildRequest {
+    pub checkout: PathBuf,
+    pub root: PathBuf,
+    pub run: PathBuf,
+    pub workers: usize,
+    pub helpers: Vec<Helper>,
+}
+#[derive(Serialize, Deserialize)]
+pub(crate) struct HelperBuildResult {
+    pub artifacts: Vec<CacheResult>,
+}
+
+pub(crate) fn helper_builds(request: HelperBuildRequest) -> Result<HelperBuildResult> {
+    fs::create_dir_all(&request.run)?;
+    let mut metrics = crate::metrics::Run::start(request.run.join("helper-build.metrics.toml"), "helper-build")?;
+    let result = helper_builds_prepared(request);
+    let error = result.as_ref().err().map(|error| format!("{error:#}"));
+    let finished = metrics.finish(crate::metrics::outcome(error.as_deref()), error);
+    if result.is_ok() {
+        finished?;
+    }
+    result
+}
+
+fn helper_builds_prepared(request: HelperBuildRequest) -> Result<HelperBuildResult> {
+    let HelperBuildRequest { checkout, root, run, workers, helpers } = request;
+    ensure!(!helpers.is_empty() && helpers.len() <= 3, "invalid helper build extent");
+    fs::create_dir_all(&run)?;
+    let checkout = fs::canonicalize(checkout)?;
+    // Resolve the project's selected toolchain once. A run outside checkout
+    // must not silently choose a different rustup override for scan or build.
+    execute_at(
+        &["rustc".into(), "--print".into(), "sysroot".into()],
+        &run,
+        &checkout,
+        "helper-toolchain",
+        &root,
+        workers,
+        240,
+    )?;
+    let sysroot = fs::read_to_string(run.join("helper-toolchain.stdout"))?;
+    let compiler = fs::canonicalize(Path::new(sysroot.trim()).join("bin/rustc"))?;
+    let compiler = compiler.display().to_string();
+    let preparation = Preparation::new(&root, &checkout, &compiler)?;
+    let mut artifacts = Vec::new();
+    for helper in helpers {
+        let (source, name, label, flags): (_, _, _, &[&str]) = match helper {
+            Helper::FixtureWorker => (
+                "crates/pipeline/src/fixture_worker.rs",
+                "libfixture_worker.a",
+                "fixture-worker-build",
+                &["--crate-type=staticlib"],
+            ),
+            Helper::RandomLibrary => {
+                ("tools/decomp/next_random.rs", "librng.a", "rng-build", &["--crate-type=staticlib"])
+            }
+            Helper::RandomCli => ("tools/decomp/next_random.rs", "rng-cli", "rng-cli-build", &["--cfg", "cli"]),
+        };
+        let source = checkout.join(source);
+        preparation.freeze(std::slice::from_ref(&source))?;
+        let mut command = vec![compiler.clone(), "--edition=2024".into(), "-O".into()];
+        command.extend(flags.iter().map(|s| (*s).to_owned()));
+        command.push(source.display().to_string());
+        // Always rediscover the actual compiler closure, including include! and
+        // cfg-dependent modules. A cache hit must not hide a newly added input.
+        let dep_file = run.join(format!("{label}.compiler.d"));
+        let mut dependency = command.clone();
+        dependency.push(format!("--emit=dep-info={}", dep_file.display()));
+        execute(&dependency, &run, &format!("{label}-dependencies"), &root, workers)?;
+        let dependency_text = fs::read_to_string(&dep_file)?;
+        // These standalone recipes currently use no env!/option_env! input.
+        // Fail closed if that changes instead of hiding an arbitrary variable
+        // behind the cache's established compiler-environment allowlist.
+        ensure!(
+            !dependency_text.lines().any(|line| line.starts_with("# env-dep:")),
+            "standalone helper has an unsupported build-time environment dependency"
+        );
+        let mut inputs: Vec<_> = crate::inputs::dep_paths(&dependency_text)?
+            .into_iter()
+            .map(|path| {
+                let path = PathBuf::from(path);
+                if path.is_absolute() { path } else { run.join(path) }
+            })
+            .collect();
+        inputs.push(source);
+        command.extend(["-o".into(), "{artifact}".into()]);
+        let result = preparation.artifact(&command, &inputs, &run.join(name), |artifact| {
+            let mut actual = command.clone();
+            *actual.last_mut().unwrap() = artifact.display().to_string();
+            let actual_dependencies = artifact.with_extension("d");
+            actual.push(format!("--emit=link,dep-info={}", actual_dependencies.display()));
+            execute(&actual, &run, label, &root, workers)?;
+            let actual_text = fs::read_to_string(&actual_dependencies)?;
+            ensure!(
+                !actual_text.lines().any(|line| line.starts_with("# env-dep:")),
+                "standalone helper has an unsupported build-time environment dependency"
+            );
+            authenticate_dependency_closure(&inputs, &actual_text, &run)?;
+            fs::remove_file(actual_dependencies)?;
+            Ok(())
+        })?;
+        atomic_toml(&run.join(format!("{label}.cache.toml")), &result)?;
+        artifacts.push(result);
+    }
+    preparation.finish()?;
+    Ok(HelperBuildResult { artifacts })
+}
+
+fn dependency_paths(text: &str, run: &Path) -> Result<Vec<PathBuf>> {
+    crate::inputs::dep_paths(text)?
+        .into_iter()
+        .map(|name| {
+            let path = PathBuf::from(name);
+            Ok(fs::canonicalize(if path.is_absolute() { path } else { run.join(path) })?)
+        })
+        .collect()
+}
+
+fn authenticate_dependency_closure(expected: &[PathBuf], actual: &str, run: &Path) -> Result<()> {
+    let expected: std::collections::BTreeSet<_> =
+        expected.iter().map(fs::canonicalize).collect::<std::io::Result<_>>()?;
+    let actual: std::collections::BTreeSet<_> = dependency_paths(actual, run)?.into_iter().collect();
+    ensure!(expected == actual, "compiler dependency closure changed during build");
+    Ok(())
+}
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub(crate) struct ExecutionRecord {
     pub argv: Vec<String>,
@@ -1093,6 +1233,18 @@ pub(crate) fn execute_timeout(
     workers: usize,
     timeout: u64,
 ) -> Result<ExecutionRecord> {
+    execute_at(command, run, run, label, root, workers, timeout)
+}
+
+fn execute_at(
+    command: &[String],
+    run: &Path,
+    cwd: &Path,
+    label: &str,
+    root: &Path,
+    workers: usize,
+    timeout: u64,
+) -> Result<ExecutionRecord> {
     ensure!(!command.is_empty(), "empty process command");
     ensure!(label.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_'), "unsafe process label");
     fs::create_dir_all(run)?;
@@ -1107,7 +1259,7 @@ pub(crate) fn execute_timeout(
         let mut actual = Command::new(&command[0]);
         actual
             .args(&command[1..])
-            .current_dir(run)
+            .current_dir(cwd)
             .stdout(Stdio::from(File::create(run.join(format!("{label}.stdout")))?))
             .stderr(Stdio::from(File::create(run.join(format!("{label}.stderr")))?));
         let mut child = crate::metrics::OwnedChild::spawn(&mut actual, &metrics.context, label)?;
@@ -1294,8 +1446,24 @@ pub fn cargo_build(request: CargoBuildRequest) -> Result<CacheResult> {
 }
 
 pub fn c_build(request: CBuildRequest) -> Result<ExecutionRecord> {
+    fs::create_dir_all(&request.run)?;
+    // Install cancellation once on the parent. Thread-local child scopes then
+    // inherit this context rather than racing to replace signal handlers.
+    let mut metrics = crate::metrics::Run::start(request.run.join("c-build.metrics.toml"), "c-build")?;
+    metrics.context.configuration("workers", request.workers);
+    let result = c_build_prepared(request);
+    let error = result.as_ref().err().map(|error| format!("{error:#}"));
+    let finished = metrics.finish(crate::metrics::outcome(error.as_deref()), error);
+    if result.is_ok() {
+        finished?;
+    }
+    result
+}
+
+fn c_build_prepared(request: CBuildRequest) -> Result<ExecutionRecord> {
     let CBuildRequest { run, checkout, root, workers, command } = request;
     ensure!(!command.is_empty(), "empty C command");
+    ensure!((1..=64).contains(&workers), "invalid C worker count");
     let mut flags = Vec::new();
     let mut sources = Vec::new();
     let mut inputs = Vec::new();
@@ -1331,20 +1499,32 @@ pub fn c_build(request: CBuildRequest) -> Result<ExecutionRecord> {
     }
     ensure!(!sources.is_empty(), "C build has no translation units");
     let pinned = fs::canonicalize(checkout.join("deps"))?;
-    let mut records = Vec::new();
-    let mut objects = Vec::new();
-    for (index, source) in sources.iter().enumerate() {
+    let preparation = Preparation::new(&root, &checkout, &command[0])?;
+    preparation.freeze(&inputs)?;
+    let objects: Vec<_> = (0..sources.len()).map(|index| run.join(format!("c-object-{index:03}.o"))).collect();
+    let compile_unit = |index: usize| -> Result<Option<CacheResult>> {
+        let source = &sources[index];
         let source = fs::canonicalize(if source.is_absolute() { source.clone() } else { run.join(source) })?;
-        let destination = run.join(format!("c-object-{index:03}.o"));
+        let destination = &objects[index];
         let mut compile = vec![command[0].clone()];
         compile.extend(flags.clone());
         compile.extend(["-c".into(), source.to_string_lossy().into_owned(), "-o".into(), "{artifact}".into()]);
-        let build = |artifact: &Path| {
+        let build = |artifact: &Path, expected: Option<&[PathBuf]>| -> Result<()> {
             let mut actual = compile.clone();
             *actual.last_mut().unwrap() = artifact.to_string_lossy().into_owned();
-            execute(&actual, &run, &format!("c-object-{index:03}"), &root, workers).map(|_| ())
+            let dep_file = artifact.with_extension("d");
+            if expected.is_some() {
+                actual.extend(["-MD".into(), "-MF".into(), dep_file.display().to_string()]);
+            }
+            execute(&actual, &run, &format!("c-object-{index:03}"), &root, workers)?;
+            if let Some(expected) = expected {
+                authenticate_dependency_closure(expected, &fs::read_to_string(&dep_file)?, &run)?;
+                fs::remove_file(dep_file)?;
+            }
+            Ok(())
         };
         if source.starts_with(&pinned) {
+            preparation.freeze(std::slice::from_ref(&source))?;
             // Ask the compiler for its complete preprocessor closure, including
             // system headers and textually included sources. Header edits and
             // changed include search paths must invalidate even a warm object.
@@ -1359,31 +1539,67 @@ pub fn c_build(request: CBuildRequest) -> Result<ExecutionRecord> {
                 "C dependency scan failed: {}",
                 String::from_utf8_lossy(&dependencies.stderr)
             );
+            let discovered = dependency_paths(&String::from_utf8(dependencies.stdout)?, &run)?;
             let mut closure = inputs.clone();
-            for name in crate::inputs::dep_paths(&String::from_utf8(dependencies.stdout)?)? {
-                let p = PathBuf::from(name);
-                closure.push(if p.is_absolute() { p } else { run.join(p) });
-            }
+            closure.extend(discovered.clone());
             closure.push(source);
-            records.push(cached_artifact(
-                &CacheRequest {
-                    root: root.clone(),
-                    checkout: checkout.clone(),
-                    command: compile.clone(),
-                    inputs: closure,
-                    destination: destination.clone(),
-                },
-                build,
-            )?);
+            Ok(Some(
+                preparation.artifact(&compile, &closure, destination, |artifact| build(artifact, Some(&discovered)))?,
+            ))
         } else {
-            build(&destination)?;
+            build(destination, None)?;
+            Ok(None)
         }
-        objects.push(destination);
+    };
+    // A fixed number of local workers feed the same cross-process leases.
+    // Waiting on one cache key cannot prevent unrelated objects progressing.
+    let next = AtomicUsize::new(0);
+    let failed = AtomicBool::new(false);
+    let context = crate::metrics::active();
+    let mut completed = std::thread::scope(|scope| -> Result<Vec<_>> {
+        let handles: Vec<_> = (0..workers.min(sources.len()))
+            .map(|_| {
+                scope.spawn(|| {
+                    let _active = context.as_ref().map(|context| context.enter());
+                    let mut completed = Vec::new();
+                    while !failed.load(Ordering::Acquire) {
+                        let index = next.fetch_add(1, Ordering::Relaxed);
+                        if index >= sources.len() {
+                            break;
+                        }
+                        let result = compile_unit(index);
+                        if result.is_err() {
+                            preparation.abort();
+                            failed.store(true, Ordering::Release);
+                        }
+                        completed.push((index, result));
+                    }
+                    completed
+                })
+            })
+            .collect();
+        let mut completed = Vec::new();
+        for handle in handles {
+            completed.extend(handle.join().map_err(|_| anyhow::anyhow!("C build worker panicked"))?);
+        }
+        Ok(completed)
+    })?;
+    completed.sort_by_key(|(index, _)| *index);
+    // A lower-index sibling cancelled during a lock wait must not hide the
+    // compiler diagnostic that actually failed. Preserve source-order errors.
+    if let Some(index) = completed.iter().position(|(_, result)| {
+        result.as_ref().err().is_some_and(|error| !error.is::<crate::build_cache::PreparationAborted>())
+    }) {
+        return Err(completed.remove(index).1.unwrap_err());
     }
+    let records: Vec<_> =
+        completed.into_iter().map(|(_, result)| result).collect::<Result<Vec<_>>>()?.into_iter().flatten().collect();
+    preparation.finish()?;
     let source_names: Vec<_> = sources.iter().map(|p| p.to_string_lossy().into_owned()).collect();
     let mut linked: Vec<String> = command.into_iter().filter(|arg| !source_names.contains(arg)).collect();
     linked.splice(1..1, objects.iter().map(|p| p.to_string_lossy().into_owned()));
     let result = execute(&linked, &run, "c-link", &root, workers);
+    preparation.finish()?;
     if result.is_ok() {
         for p in objects {
             fs::remove_file(p)?;

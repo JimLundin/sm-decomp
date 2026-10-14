@@ -339,6 +339,7 @@ pub fn verify(request: Request) -> Result<Verdict> {
             "crates/pipeline/src/decomp_job.rs",
             "crates/pipeline/src/decomp_acceptance.rs",
             "crates/pipeline/src/builds.rs",
+            "crates/pipeline/src/build_cache.rs",
         ] {
             let path = checkout.join(name);
             if path.is_file() {

@@ -381,6 +381,7 @@ fn dependency_inventory_bounded(
         ("inputs.rs", include_str!("inputs.rs")),
         ("bounded_inputs.rs", include_str!("bounded_inputs.rs")),
         ("builds.rs", include_str!("builds.rs")),
+        ("build_cache.rs", include_str!("build_cache.rs")),
     ] {
         let key = format!("crates/pipeline/src/{name}");
         let hash = digest(&checkout.join(&key))?;
