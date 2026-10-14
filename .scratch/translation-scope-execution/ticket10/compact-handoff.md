@@ -71,6 +71,14 @@ owns confinement support and helper verification. The compact recipe requests
 that bind only for direct legacy-reader execution. New producers enter before
 the ordinary CLI's current_exe initialization. A new confined proof awaits that
 reviewed runtime change; no diagnostic producer is currently running. Initial
-proof cleanup is underway and final cleanup evidence remains pending. No
+proof cleanup completed with 0 bytes reclaimed on both standard and deduplicate
+passes; logs are `cleanup-pass1.log` and `cleanup-pass2.log`. This provisional
+format has no disposable files recognized by the cleanup utility. Its exact
+adapter reader source is retained as `reader-source-b82ce75.rs`; its receipt,
+verdict and reader-source hashes are in `after-cleanup.sha256`. The receipt SHA
+is `5be5e3f9118f868f0d8482d4c216061304dd5796712d7c777604cc122f0c8326` and
+verdict SHA is `da9ab25ce012b3dc3eaec06049254e1765d32e999226337a9bf1c4eaaa3bc21d`.
+Remaining space after these passes was 174504767488 bytes. Final proof and
+post-cleanup adapter authentication remain pending. No
 original controller files or production ledgers have been changed. The temporary
 local main.rs registration is excluded from commits.

@@ -2159,6 +2159,10 @@ pub(crate) fn authenticate(
                     == invocation.references,
             "compact retained producer evidence changed"
         );
+        ensure!(
+            !verdict.passed || result.passed && result.status_raw == Some(0),
+            "compact accepted a failed original operation"
+        );
         if invocation.label == "compile" {
             if let Some(reference) = verdict.projections.get("prefix-host") {
                 ensure!(
@@ -2172,7 +2176,8 @@ pub(crate) fn authenticate(
                     result.outputs.get(Path::new("capture.zst")).is_some_and(|bytes| sha256(bytes) == reference.sha256),
                     "compact raw capture is not the confined output"
                 );
-                if verdict.passed || invocation.label == "native" && fresh_order.len() > 1 {
+                if verdict.passed || verdict.summary.is_some() || invocation.label == "native" && fresh_order.len() > 1
+                {
                     let raw = phase_capture(&result, &invocation.label)?;
                     if invocation.label == "native" {
                         native = Some(validate_native(&raw)?);
@@ -2219,26 +2224,19 @@ pub(crate) fn authenticate(
             );
         }
     }
-    if verdict.passed {
-        ensure!(
-            verdict.historical.len() == prepared.contract.historical.len()
-                && fresh_order.len() == 4
-                && verdict.source_snapshots.len() == prepared.contract.source_files.len()
-                && verdict.input_snapshots.len() + 2 == prepared.contract.private_inputs.len()
-                && verdict.diagnostic.is_empty(),
-            "compact acceptance omits original coverage or contains a failure"
-        );
+    if verdict.passed || verdict.summary.is_some() {
         let native = native.context("compact accepted native capture missing")?;
         let candidate = subjects.get("candidate").context("compact accepted candidate missing")?;
         let control = subjects.get("control").context("compact independent changed-gameplay control missing")?;
         let summary = comparisons(&native, candidate, control)?;
+        ensure!(verdict.summary.as_ref() == Some(&summary), "compact retained completed-state comparison differs");
         ensure!(
-            verdict.summary.as_ref() == Some(&summary)
-                && summary.matching_prefix == summary.native_completed_updates
-                && summary.native_completed_updates == summary.candidate_completed_updates
-                && control.completed.len() == native.completed.len()
-                && summary.changed_rng_detected,
-            "compact retained completed-state comparison differs"
+            !verdict.passed
+                || (summary.matching_prefix == summary.native_completed_updates
+                    && summary.native_completed_updates == summary.candidate_completed_updates
+                    && control.completed.len() == native.completed.len()
+                    && summary.changed_rng_detected),
+            "compact accepted a divergent completed-state comparison or absent control"
         );
         let expected_inputs = native
             .polls
@@ -2248,6 +2246,16 @@ pub(crate) fn authenticate(
         ensure!(
             read(&output.join("causal.inputs"), MAX_RECORD)? == expected_inputs.as_bytes(),
             "compact retained ordered input derivation differs"
+        );
+    }
+    if verdict.passed {
+        ensure!(
+            verdict.historical.len() == prepared.contract.historical.len()
+                && fresh_order.len() == 4
+                && verdict.source_snapshots.len() == prepared.contract.source_files.len()
+                && verdict.input_snapshots.len() + 2 == prepared.contract.private_inputs.len()
+                && verdict.diagnostic.is_empty(),
+            "compact acceptance omits original coverage or contains a failure"
         );
         ensure!(
             verdict.experiment_deadline_unix_ms.is_some()
@@ -2336,6 +2344,14 @@ mod tests {
         let historical = historical_for_original(&assets).unwrap();
         let contract = contract_for_original(&checkout, &assets, &rustc, historical).unwrap();
         let prepared = prepare(&checkout, &contract).unwrap();
+        fs::create_dir_all(&output).unwrap();
+        let prepared_path = output.join("prepared.toml");
+        let encoded = toml::to_string_pretty(&prepared).unwrap();
+        if prepared_path.is_file() {
+            assert_eq!(fs::read_to_string(&prepared_path).unwrap(), encoded);
+        } else {
+            fs::write(&prepared_path, encoded).unwrap();
+        }
         let context = OperationContext {
             run_id: sha256(b"compact-original-confined-proof"),
             attempt: 1,
