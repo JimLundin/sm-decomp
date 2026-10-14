@@ -1,0 +1,34 @@
+{
+  "schema": "translation-model-disposal-helper-retirement-v1",
+  "date": "2026-10-14",
+  "archive": {
+    "path": "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/model-launch/tools/dispose.rs",
+    "sha256": "9f4f06958356ed6ccad1c976626434e26843cab1bbb0aed4f9458f1db65d1ff4",
+    "byte_comparison_passed": true
+  },
+  "files": [
+    {
+      "path": "/tmp/sm-model-launch-dispose-20261014.rs",
+      "sha256": "9f4f06958356ed6ccad1c976626434e26843cab1bbb0aed4f9458f1db65d1ff4",
+      "logical_bytes": 4293,
+      "allocated_bytes": 8192,
+      "links_before": 1,
+      "command": "unlink /tmp/sm-model-launch-dispose-20261014.rs",
+      "exit_code": 0,
+      "absent_after": true
+    },
+    {
+      "path": "/tmp/sm-model-launch-dispose-20261014",
+      "sha256": "352bbc0268fcfc303209ea3e67f174a873bfeb0c4ae4b07b20ac55299cfb58e2",
+      "logical_bytes": 4745464,
+      "allocated_bytes": 4747264,
+      "links_before": 1,
+      "command": "unlink /tmp/sm-model-launch-dispose-20261014",
+      "exit_code": 0,
+      "absent_after": true
+    }
+  ],
+  "logical_bytes_removed": 4749757,
+  "allocated_bytes_reclaimed": 4755456,
+  "available_bytes_after": 186937880576
+}

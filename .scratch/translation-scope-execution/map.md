@@ -14,6 +14,7 @@ Spec: [spec.md](spec.md). Selected candidate: Translation scope execution.
 | [06 — Integration, progress and recovery](issues/06-integration-recovery.md) | task | resolved | 02, 05 |
 | [07 — Complete restricted-path proof and cleanup](issues/07-restricted-path-proof.md) | task | resolved | 03, 04, 05, 06 |
 | [08 — Reviewed production switch](issues/08-production-switch.md) | task | open | 07 |
+| [09 — Model rewrite and one-command launch](issues/09-model-rewrite-launch.md) | task | resolved | None |
 
 ## Decisions so far
 
@@ -29,8 +30,22 @@ Spec: [spec.md](spec.md). Selected candidate: Translation scope execution.
   contract. Restrict the invocation itself and prove denial cases.
 - Existing active production ownership remains with the current background
   coordinator; this branch does not change it.
+- The direct model connection is the Foundry Responses endpoint using the
+  existing `FOUNDRY_TOKEN`. Rust owns the ordered launch and all supervisor steps;
+  immutable HTTP intents prevent silent reevaluation after a crash. See
+  [operator guide](../../docs/TRANSLATION_EXECUTION.md#one-command-foundry-launch)
+  and [model launch checkpoint](model-launch/checkpoint.md).
 
 ## Current checkpoint
+
+Model rewrite and the one-command ordered launcher are committed at
+`93e9d55b19630ac8fa2e3526ba963296385ea516`. Ticket 09 is resolved with a real
+Foundry/native lifecycle, one model call, four passing actual-C gates, ordered
+recovery tests, retained authentication and complete measured cleanup. The
+[model launch checkpoint](model-launch/checkpoint.md) binds exact source/readers,
+evidence and the prepared user command. That command reports `ready` for the
+approved isolated enemy-jump instructions. Ticket 08 and the production switch
+remain open; main authority, claims, source, ledgers and progress are preserved.
 
 Created `/home/jim/sm-decomp-translation-execution` at baseline
 `3a8b9ea28b716d90df55f798941bba68e1df6531` on
