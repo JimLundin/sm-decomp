@@ -301,7 +301,7 @@ fn real_controls(kind: CargoKind) {
         operation_root: root.join("operations"),
         pipeline_root: "/home/jim/sm-decomp/out/pipeline".into(),
         workers: 4,
-        jobs: 4,
+        jobs: std::env::var("SM_CARGO_JOBS").map_or(4, |value| value.parse().expect("SM_CARGO_JOBS")),
         gate_timeout_seconds: if kind == CargoKind::CompactController { 120 } else { 60 },
         max_output_bytes: if kind == CargoKind::CompactController {
             4 * 1024 * 1024 * 1024

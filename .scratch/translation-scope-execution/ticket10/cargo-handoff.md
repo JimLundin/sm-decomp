@@ -23,8 +23,8 @@ Initial API proposed to root: `CargoKind`, `CargoContract`, `PreparedCargo`,
 `StrictRuntime`, `CargoReceipt`, `CargoVerdict`; `prepare`, `run`, `authenticate`,
 `references`, `producer_cli`. Legacy readiness contracts remain untouched.
 
-Next: finish the shared-host and compact proofs after the measured supervisor
-read-only-open performance correction. Use private target/run roots with
+Next: finish the shared-host compiler-concurrency comparison and the compact
+proof after the measured descriptor-observation race correction. Use private target/run roots with
 `SM_PIPELINE_WORKERS=4` and `SM_PIPELINE_ROOT=/home/jim/sm-decomp/out/pipeline`.
 
 Preparation red/green: the first public-seam control-inventory test failed on
@@ -214,8 +214,43 @@ The original argv, control identities and 60-second deadlines are unchanged.
 
 The completed `real-05`, `spawn-diagnostic-01`, `real-06`, `pause-01` and `compact-01` now have
 both cleanup utility passes, each reclaiming zero bytes. Post-cleanup read-only
-authentication has passed for the first four. The new reader successfully
+authentication has passed for all five. The new reader successfully
 authenticates the original single-job host timeout and both successful pause
-commands after the jobs field was introduced. Compact post-cleanup
-authentication is finishing. Final target cleanup follows the remaining proofs;
+commands after the jobs field was introduced. Final target cleanup follows the remaining proofs;
 the integration owner handles worktree retirement.
+
+The sealed multi-job producer is
+`/tmp/sm-ticket10-cargo-proof/bin/sm-pipeline-e071c3c`, SHA-256
+`4a4c6b1abdada505d14753821d56e65455fe70940a57a560f1e110d54f54664f`.
+Normal producer compilation passed in `producer-build-10.stderr`.
+The retained independent reader is
+`/tmp/sm-ticket10-cargo-proof/bin/cargo-proof-reader-e071c3c`, SHA-256
+`49e98003decadb3125ca376650eb45e90af0d46986536f8c3d34f19e96f3aac6`.
+Both are immutable stripped images and survive disposable target retirement.
+
+Optimized v3 supervisor is
+`/tmp/sm-ticket10-native-proofs/confinement-v3/tools/sm-translation-sandbox`,
+SHA-256 `21f1bdb8d4bb10cbad2c5c23a24e7e146b2ed9a17fc4695b41d7813c3f2b66c5`.
+Its read-only-open regression and all original confinement controls passed.
+The v3 host proof `real-07` overlapped an already-running native fixture proof,
+waited for all four shared slots, then timed out with its original command
+deadline unchanged. After the native owner confirmed every producer was closed,
+`real-08` received a quiet worker window and still timed out, with 56.260 seconds
+left for the sandbox after preparation. Both failures authenticated, identically
+replayed and remain preserved. The quiet result shows queue overlap was not the
+sole cause of the host timeout.
+
+`compact-02` used that same v3/multi-job producer pair. Its prerequisite failed
+in 40.86 seconds because observing candidate descriptor directory PID 70 returned
+`Permission denied (os error 13)`. The native owner is reproducing the concurrent
+exec/exit observation race; no original compact controls were launched or
+credited. This failure also authenticated and replayed unchanged.
+
+`real-07`, `real-08` and `compact-02` have both cleanup passes (zero bytes reclaimed)
+and successful post-cleanup authentication with the retained reader. The
+proof-only `SM_CARGO_JOBS` selector permits a fresh single-job versus multi-job
+comparison while retaining the same sealed compiler, supervisor, original argv,
+source closure and deadlines. Its compiled reader is
+`/tmp/sm-ticket10-cargo-proof/bin/cargo-proof-reader-jobs-select-01`, SHA-256
+`33a35b1dff9cd0ada176125af7e6c289eeacfdc0b85e0a79647344b93a758e9e`;
+`reader-build-11.stderr` records successful compilation.
