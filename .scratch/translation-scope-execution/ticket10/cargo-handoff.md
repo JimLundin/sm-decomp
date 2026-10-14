@@ -23,8 +23,8 @@ Initial API proposed to root: `CargoKind`, `CargoContract`, `PreparedCargo`,
 `StrictRuntime`, `CargoReceipt`, `CargoVerdict`; `prepare`, `run`, `authenticate`,
 `references`, `producer_cli`. Legacy readiness contracts remain untouched.
 
-Next: finish real confined success, retained failure/replay and protected-input
-refusal after the reviewed-device confinement fix. Use private target/run roots with
+Next: finish the shared-host and compact proofs after the measured supervisor
+read-only-open performance correction. Use private target/run roots with
 `SM_PIPELINE_WORKERS=4` and `SM_PIPELINE_ROOT=/home/jim/sm-decomp/out/pipeline`.
 
 Preparation red/green: the first public-seam control-inventory test failed on
@@ -164,3 +164,58 @@ cleanup; `<name>-authenticate-after-cleanup.stdout` records each check. At this
 boundary the disposable authoring target used 3,144,560,640 allocated bytes and
 remaining filesystem space was 173,531,971,584 bytes. The target is still needed
 for remaining real proofs; final target/worktree cleanup remains pending.
+
+The exact installed Cargo and rustc are paired from the same 1.97.1 tree:
+`/home/jim/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/{cargo,rustc}`.
+Cargo SHA-256 is
+`828980723df339d62434390e9fb8ef8831036583343ae2316b7ab5646b5c1953`;
+rustc SHA-256 is
+`d3a664c970a9fd8361b64194861bebc1ae37b9054e5ee3400dc1c9e691797eea`.
+The Cargo cache must use this pair; native recipes may separately seal their
+nightly compiler. The root owner added a distinct `cargo_rustc` tool reference.
+
+`real-06` uses immutable producer
+`/tmp/sm-ticket10-cargo-proof/bin/sm-pipeline-309d8e1`
+(SHA-256 `78db8768c0852677c89298281b9692ceb6fc098c3e7d9a7442c4d00351abf2b3`)
+and optimized v2 supervisor
+`/tmp/sm-ticket10-native-proofs/confinement-v2/tools/sm-translation-sandbox`
+(SHA-256 `d334899b7f5cc7f64120636a803224d2f83e54c8d049e71e57a9d198a5fdf892`).
+Its compiler prerequisite passed and identically replayed. The actual original
+host Cargo command timed out after its remaining 47.729-second sandbox budget;
+the enclosing original command budget stayed 60 seconds. The failed receipt and
+unchanged replay both authenticated. It remains a failed original gate.
+
+`pause-01`, using that same pair of immutable artifacts, passes all ten original
+pause controls on both candidate and integrated source identities, including
+authenticated unchanged replay. Retained compiler output reports 27.92 seconds
+for the candidate and 26.59 seconds for the integrated Cargo command. The complete
+public-seam proof finished successfully in 105.84 seconds, including prerequisite,
+both distinct commands, replay and authentication. This credits only original
+Rust controls, not Actual-C or original-ROM evidence.
+
+The v2 supervisor's ptrace observer was then measured spending 3m56s CPU during a
+5m59s compact prerequisite. It was scanning the full writable inode tree and every
+owned file descriptor before and after read-only linker opens. The native owner
+is implementing a focused performance correction while retaining mutation and
+quota observation. `compact-01` reached its original 600-second prerequisite
+timeout; its failure authenticated and identically replayed before the public
+proof assertion. No original compact Cargo command was launched or credited.
+The proof completed in 609.67 seconds and is never restarted or rewritten.
+
+The adapter follow-up seals `StrictRuntime.jobs` and the corresponding producer
+request counts, validates `1 <= jobs <= workers`, and uses the integration
+owner's all-or-nothing shared lease reservation. Cargo receives that exact job
+count. Runtime-only prerequisites reserve one worker. Default single-job fields
+are omitted during serialization, so earlier sealed runtime and producer request
+hashes remain authenticatable. The capacity-refusal public-boundary test reached
+red in `jobs-capacity-red.stdout`: invalid job counts previously proceeded to
+source/runtime preparation. The test now passes in `jobs-capacity-green.stdout`.
+The original argv, control identities and 60-second deadlines are unchanged.
+
+The completed `real-05`, `spawn-diagnostic-01`, `real-06`, `pause-01` and `compact-01` now have
+both cleanup utility passes, each reclaiming zero bytes. Post-cleanup read-only
+authentication has passed for the first four. The new reader successfully
+authenticates the original single-job host timeout and both successful pause
+commands after the jobs field was introduced. Compact post-cleanup
+authentication is finishing. Final target cleanup follows the remaining proofs;
+the integration owner handles worktree retirement.

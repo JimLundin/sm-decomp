@@ -1,6 +1,6 @@
 //! Confined Cargo acceptance for the preserved original production jobs.
 use crate::{
-    acquire_lease_until, builds, family,
+    acquire_leases_until, builds, family,
     family_model::Asset,
     inputs::{self, bounded},
 };
@@ -84,6 +84,8 @@ pub(crate) struct StrictRuntime {
     pub operation_root: PathBuf,
     pub pipeline_root: PathBuf,
     pub workers: usize,
+    #[serde(default = "single_job", skip_serializing_if = "is_single_job")]
+    pub jobs: usize,
     pub gate_timeout_seconds: u64,
     pub max_output_bytes: u64,
     pub deadline_unix_ms: Option<u64>,
@@ -163,6 +165,8 @@ pub(crate) struct CargoEnvironmentReceipt {
 struct EnvironmentRequest {
     schema: String,
     build_dependencies: bool,
+    #[serde(default = "single_job", skip_serializing_if = "is_single_job")]
+    jobs: usize,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -193,6 +197,24 @@ struct ProducerRequest {
     kind: CargoKind,
     command_id: String,
     dependency_cache: bool,
+    #[serde(default = "single_job", skip_serializing_if = "is_single_job")]
+    jobs: usize,
+}
+
+fn single_job() -> usize {
+    1
+}
+
+fn is_single_job(value: &usize) -> bool {
+    *value == 1
+}
+
+fn validate_jobs(runtime: &StrictRuntime) -> Result<()> {
+    ensure!(
+        (1..=64).contains(&runtime.workers) && (1..=runtime.workers).contains(&runtime.jobs),
+        "Cargo compiler jobs exceed the shared worker capacity"
+    );
+    Ok(())
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -564,6 +586,7 @@ pub(crate) fn run(
     runtime: &StrictRuntime,
     context: &OperationContext,
 ) -> Result<CargoReceipt> {
+    validate_jobs(runtime)?;
     let entered = bounded::now_unix_ms()?;
     bounded::safe(output)?;
     fs::create_dir_all(output)?;
@@ -681,6 +704,7 @@ pub(crate) fn run(
                 kind: prepared.contract.kind,
                 command_id: command.id.clone(),
                 dependency_cache: prepared.contract.dependency_cache.is_some(),
+                jobs: runtime.jobs,
             };
             let request_path = output.join(format!("{}-request.json", command.id));
             let request_bytes = serde_json::to_vec(&request)?;
@@ -761,8 +785,13 @@ pub(crate) fn run(
                     &[],
                 )?
             } else {
-                let _lease =
-                    acquire_lease_until(&runtime.pipeline_root, runtime.workers, invocation.deadline_unix_ms)?.0;
+                let _leases = acquire_leases_until(
+                    &runtime.pipeline_root,
+                    runtime.workers,
+                    runtime.jobs,
+                    invocation.deadline_unix_ms,
+                )?
+                .0;
                 operation::run_until(
                     &runtime.operation_root,
                     &operation_context,
@@ -1087,6 +1116,7 @@ pub(crate) fn authenticate(prepared: &PreparedCargo, checkout: &Path, receipt: &
         );
         ensure!(bounded::digest(&receipt.verdict.file)? == receipt.verdict.sha256, "retained Cargo verdict changed");
         let verdict: CargoVerdict = family::object(&receipt.verdict.file)?;
+        validate_jobs(&verdict.runtime)?;
         ensure!(
             verdict.schema == "translation-cargo-verdict-v1"
                 && verdict.evidence_kind == "original-rust-controls"
@@ -1148,6 +1178,7 @@ pub(crate) fn authenticate(prepared: &PreparedCargo, checkout: &Path, receipt: &
                 kind: verdict.kind,
                 command_id: command.id.clone(),
                 dependency_cache: prepared.contract.dependency_cache.is_some(),
+                jobs: verdict.runtime.jobs,
             };
             let request_bytes = serde_json::to_vec(&request)?;
             ensure!(
@@ -1251,6 +1282,7 @@ pub(crate) fn prepare_environment(
     timeout_seconds: u64,
     build_dependencies: bool,
 ) -> Result<CargoEnvironmentReceipt> {
+    validate_jobs(runtime)?;
     ensure!(
         (1..=600).contains(&timeout_seconds),
         "Cargo environment preparation requires a reviewed bound of at most 600 seconds"
@@ -1261,8 +1293,11 @@ pub(crate) fn prepare_environment(
     let _lock = gate_lock(output)?;
     let record_path = output.join("cargo-environment.toml");
     let receipt_path = output.join("cargo-environment-receipt.toml");
-    let requested =
-        EnvironmentRequest { schema: "translation-cargo-environment-producer-v1".into(), build_dependencies };
+    let requested = EnvironmentRequest {
+        schema: "translation-cargo-environment-producer-v1".into(),
+        build_dependencies,
+        jobs: if build_dependencies { runtime.jobs } else { 1 },
+    };
     if receipt_path.is_file() {
         let receipt: CargoEnvironmentReceipt = family::object(&receipt_path)?;
         ensure!(
@@ -1300,8 +1335,11 @@ pub(crate) fn prepare_environment(
         });
     let setup = || -> Result<EnvironmentRecord> {
         let candidate = validate_prepared(prepared, checkout)?;
-        let expected_request =
-            EnvironmentRequest { schema: "translation-cargo-environment-producer-v1".into(), build_dependencies };
+        let expected_request = EnvironmentRequest {
+            schema: "translation-cargo-environment-producer-v1".into(),
+            build_dependencies,
+            jobs: if build_dependencies { runtime.jobs } else { 1 },
+        };
         let request_path = output.join("cargo-request.json");
         let bytes = serde_json::to_vec(&expected_request)?;
         publish_bytes(&request_path, &bytes, false)?;
@@ -1389,7 +1427,13 @@ pub(crate) fn prepare_environment(
             bounded::now_unix_ms()? < deadline,
             "Cargo environment prerequisite interrupted before durable launch; explicit reviewed retry required"
         );
-        let _lease = acquire_lease_until(&runtime.pipeline_root, runtime.workers, deadline)?.0;
+        let _leases = acquire_leases_until(
+            &runtime.pipeline_root,
+            runtime.workers,
+            if build_dependencies { runtime.jobs } else { 1 },
+            deadline,
+        )?
+        .0;
         operation::run_until(&runtime.operation_root, context, &record.program, &record.limits, &[], deadline)?
     };
     bounded::reconcile(4 * bounded::DEFAULT_BYTES, || {
@@ -1484,6 +1528,7 @@ pub(crate) fn authenticate_environment(
             "Cargo environment receipt differs from source or preparation"
         );
         let record: EnvironmentRecord = family::object(&receipt.record.file)?;
+        validate_jobs(&record.runtime)?;
         ensure!(
             record.schema == "translation-cargo-environment-v1"
                 && record.prepared_sha256 == receipt.prepared_sha256
@@ -1504,6 +1549,7 @@ pub(crate) fn authenticate_environment(
             serde_json::from_slice(&bounded::read_limit(&record.request.path, MAX_RECORD_BYTES)?)?;
         ensure!(
             request.schema == "translation-cargo-environment-producer-v1"
+                && request.jobs == (if request.build_dependencies { record.runtime.jobs } else { 1 })
                 && record.request.path == root.join("cargo-request.json")
                 && record.request.sha256 == sealed_json(&request)?,
             "Cargo environment producer request changed"
@@ -1773,7 +1819,10 @@ pub(crate) fn producer_cli(args: &[String]) -> Result<()> {
     if request.dependency_cache {
         copy_cache(Path::new("/inputs/cache"), Path::new("/work/tmp/target"))?;
     }
-    let status = configured_cargo()?.args(&command.argv[1..]).status().context("launch the installed offline Cargo")?;
+    let status = configured_cargo(request.jobs)?
+        .args(&command.argv[1..])
+        .status()
+        .context("launch the installed offline Cargo")?;
     ensure!(status.success(), "original Cargo command exited with {status}");
     if command.export_binary {
         let source = Path::new("/work/tmp/target/debug/sm-pipeline");
@@ -1784,7 +1833,8 @@ pub(crate) fn producer_cli(args: &[String]) -> Result<()> {
     Ok(())
 }
 
-fn configured_cargo() -> Result<Command> {
+fn configured_cargo(jobs: usize) -> Result<Command> {
+    ensure!((1..=64).contains(&jobs), "Cargo compiler jobs exceed the reviewed capacity");
     fs::create_dir_all("/work/tmp/target")?;
     fs::write(
         "/work/tmp/cargo-home/config.toml",
@@ -1799,7 +1849,7 @@ fn configured_cargo() -> Result<Command> {
         .env("TMPDIR", "/work/tmp")
         .env("CARGO_HOME", "/work/tmp/cargo-home")
         .env("CARGO_TARGET_DIR", "/work/tmp/target")
-        .env("CARGO_BUILD_JOBS", "1")
+        .env("CARGO_BUILD_JOBS", jobs.to_string())
         .env("CARGO_INCREMENTAL", "0")
         .env("CARGO_PROFILE_DEV_DEBUG", "0")
         .env("CARGO_PROFILE_TEST_DEBUG", "0")
@@ -1815,7 +1865,7 @@ fn configured_cargo() -> Result<Command> {
         .env("AR", "/usr/bin/ar")
         .env("LD_LIBRARY_PATH", "/toolchain/lib")
         .env("SM_PIPELINE_ROOT", "/work/tmp/pipeline")
-        .env("SM_PIPELINE_WORKERS", "1")
+        .env("SM_PIPELINE_WORKERS", jobs.to_string())
         .env("SM_PIPELINE_CONFINED_CARGO", "1")
         .stdin(Stdio::null())
         .stdout(Stdio::inherit())
@@ -1830,7 +1880,9 @@ pub(crate) fn environment_producer_cli(args: &[String]) -> Result<()> {
             .context("read the installed Cargo environment request")?,
     )?;
     ensure!(request.schema == "translation-cargo-environment-producer-v1", "unsupported Cargo prerequisite producer");
+    ensure!((1..=64).contains(&request.jobs), "Cargo compiler jobs exceed the reviewed capacity");
     if !request.build_dependencies {
+        ensure!(request.jobs == 1, "runtime-only Cargo preparation requires one worker");
         let status = Command::new("/toolchain/bin/rustc")
             .arg("--version")
             .env_clear()
@@ -1841,7 +1893,7 @@ pub(crate) fn environment_producer_cli(args: &[String]) -> Result<()> {
         ensure!(status.success(), "installed compiler prerequisite failed");
         return Ok(());
     }
-    let status = configured_cargo()?
+    let status = configured_cargo(request.jobs)?
         .args([
             "build",
             "--locked",

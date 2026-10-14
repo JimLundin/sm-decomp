@@ -106,6 +106,44 @@ fn dependency_cache_accepts_installed_layouts_without_admitting_project_artifact
     }
 }
 
+#[test]
+fn original_cargo_refuses_compiler_jobs_outside_the_shared_capacity_before_launch() {
+    let scratch = Scratch::new();
+    let contract = host_contract(&scratch.0);
+    let prepared = prepare(&scratch.0, &contract).unwrap();
+    let mut runtime = StrictRuntime {
+        helper: scratch.0.join("unused-helper"),
+        rustc: scratch.0.join("unused-rustc"),
+        cargo: scratch.0.join("unused-cargo"),
+        producer: scratch.0.join("unused-producer"),
+        operation_root: scratch.0.join("operations"),
+        pipeline_root: scratch.0.join("pipeline"),
+        workers: 4,
+        jobs: 5,
+        gate_timeout_seconds: 60,
+        max_output_bytes: 1024 * 1024 * 1024,
+        deadline_unix_ms: None,
+    };
+    let context = OperationContext {
+        run_id: sha256("cargo-capacity-proof"),
+        policy_sha256: sha256("cargo-capacity-policy"),
+        operation_key: sha256("cargo-capacity-operation"),
+        attempt: 1,
+        phase: translation_execution::model::ExecutionPhase::Candidate,
+    };
+    for jobs in [0, 5] {
+        runtime.jobs = jobs;
+        let error = run(&prepared, &scratch.0, &scratch.0.join("candidate"), &runtime, &context).unwrap_err();
+        assert!(error.to_string().contains("Cargo compiler jobs exceed the shared worker capacity"), "{error:#}");
+        let error =
+            prepare_environment(&prepared, &scratch.0, &scratch.0.join("environment"), &runtime, &context, 180, true)
+                .unwrap_err();
+        assert!(error.to_string().contains("Cargo compiler jobs exceed the shared worker capacity"), "{error:#}");
+    }
+    assert!(!runtime.operation_root.exists());
+    assert!(!runtime.pipeline_root.exists());
+}
+
 fn collect_fixture(source: &Path, destination: Option<&Path>, names: &mut BTreeMap<String, String>, prefix: &Path) {
     let mut entries = fs::read_dir(source).unwrap().map(|entry| entry.unwrap().path()).collect::<Vec<_>>();
     entries.sort();
@@ -263,6 +301,7 @@ fn real_controls(kind: CargoKind) {
         operation_root: root.join("operations"),
         pipeline_root: "/home/jim/sm-decomp/out/pipeline".into(),
         workers: 4,
+        jobs: 4,
         gate_timeout_seconds: if kind == CargoKind::CompactController { 120 } else { 60 },
         max_output_bytes: if kind == CargoKind::CompactController {
             4 * 1024 * 1024 * 1024
