@@ -1,6 +1,6 @@
 # Ticket 10 compact verdict-only recovery
 
-Status: exact regression observed red then green; supplementary refusal controls pending
+Status: exact regression observed red then green; all focused controls passed; cleanup pending
 Owner: `/root/compact_diagnostic`
 Worktree: `/tmp/sm-ticket10-compact-recovery-20261014`
 Branch: `ticket10-compact-recovery`
@@ -78,6 +78,32 @@ no operation/capture, and stable completed replay. Its first green reader is
 The initial green source/reader seals are in `green-initial-reader.sha256`, and
 the retained fixture is under `green-initial/`. Both red and green runs finished.
 Existing proofs 01–05 stay untouched; no large compact experiment will be run.
+
+The final focused reader passed seven controls in 0.25 seconds: the exact crash
+regression, three supplementary identity/evidence/operation-declaration refusal
+controls, and the three existing original preparation guards. The two large
+original-evidence tests and one read-only retained-fixture audit were ignored in
+that run. No original experiment or producer was launched. Caller/source and
+negative-control fixture changes are restored before returning, so all four
+final fixture receipts remain authenticatable.
+
+The final reader is `tools/compact-recovery-green-reader`, SHA-256
+`4d8f470ae59a021d59eef883a765ee68a7e9d54083528411836e74f6b57056a4`.
+Exact source/reader seals are in `green-reader.sha256`. Its production module
+matches the initial green source hash
+`e85a0e5a8f9919f4bc8d4540be1bd6216ec280ed046f0d1203771f711be77edb`.
+The final test source hash is
+`9bcfa4afc9753211a5823100543191c3bd936d4a28b91dedf16ec059763e0b65`.
+The code change is commit `7693752`, after the regression-only `0df92dc`.
+
+The control command was:
+
+```sh
+SM_PIPELINE_ROOT=/home/jim/sm-decomp/out/pipeline SM_PIPELINE_WORKERS=4 \
+SM_COMPACT_RECOVERY_PROOF_ROOT=/tmp/sm-ticket10-compact-recovery-proof-20261014/green \
+/tmp/sm-ticket10-compact-recovery-proof-20261014/tools/compact-recovery-green-reader \
+translation_compact:: --nocapture --test-threads=1
+```
 
 After the fix and focused controls, freeze a green reader and source, run both
 project cleanup passes on this new proof, authenticate retained fixtures, record
