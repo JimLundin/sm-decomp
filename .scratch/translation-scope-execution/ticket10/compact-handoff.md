@@ -1,6 +1,6 @@
 # Ticket 10 compact-controller adapter
 
-Status: source implemented; proof 04 authenticated after cleanup; final v4 proof preparation
+Status: source implemented; final v4 proof authenticated after cleanup; ready for root review
 Owner: `/root/compact_diagnostic`
 Worktree: `/tmp/sm-ticket10-compact-20261014`
 Branch: `ticket10-compact`
@@ -73,7 +73,7 @@ implementation, then green. Two real-evidence tests are ignored by default.
 
 The exact original compact ELF
 `2898c6a3f553e74051abbb00f47a429fd653522d0caa4a06be33161eb581e57a`
-successfully authenticated its original capture under each v1/v2/v3 helper.
+successfully authenticated its original capture under each v1/v2/v3/v4 helper.
 Its stdout is `Prefix diagnostic authenticated; acceptance remains false`,
 SHA `2bcde0bb1a6f2e3a0e4a31510e11f29d15a58a4ba8b7d6f30f4b88d5261b8cd1`.
 
@@ -92,17 +92,22 @@ The first two roots are under `out/port/`; the final three are under
 Independent changed-gameplay detection was recomputed for each nonaccepting
 historical comparison.
 
-The complete original experiment was attempted in three separately frozen
-runtimes. Each retained `confined compact native failed: sandbox timeout`.
-No compile/candidate/control phase was launched, so no fresh causal comparison
-or independent-control success is claimed. Each proof's passing test establishes
-the original target/deadline, authenticatable failure and unchanged resume.
+The complete original experiment was attempted in four separately frozen
+runtimes. Proofs 02–04 retained
+`confined compact native failed: sandbox timeout`, before compilation. Proof 05
+under v4 completed and retained the original frame-2240 native capture/packing,
+then retained `original compact C build failed: sandbox timeout` within the same
+whole-experiment deadline. No fresh causal candidate/control ran, and no fresh
+causal comparison or independent-control success is claimed. Each proof's passing
+test establishes the original target/deadline, authenticatable failure and
+unchanged resume.
 
 | Proof root suffix | Helper | Start / deadline / finish (Unix ms) | Unchanged-resume test |
 | --- | --- | --- | --- |
 | 02-20261014 | v1, unoptimized | 1791974982178 / 1791975042178 / 1791975042217 | 1 passed; 885.90 s |
 | 03-20261014 | v2, release | 1791977968659 / 1791978028659 / 1791978028752 | 1 passed; 1183.32 s |
 | 04-20261014 | v3, release; corrected read-only-open scan | 1791979359323 / 1791979419323 / 1791979419369 | 1 passed; 297.47 s |
+| 05-20261014 | v4, release; corrected read-only-directory-open scan | 1791980941491 / 1791981001491 / 1791981001529 | 1 passed; 181.30 s |
 
 Proof roots are `/tmp/sm-ticket10-compact-proof-<suffix>`.
 The small finish overruns are termination/retention after the original deadline,
@@ -119,8 +124,9 @@ In each proof, the receipt is `gate/compact-receipt.toml`, the verdict is
 | 02 | c88f4651afafc5e9561cfe523c1314dca4bcca698d55de93d94d87dd030e8cc6 | 9e42de4c9b0461b5e55e82c8bad42b739a4d5d0319cd9c73c8a901b23d963fb0 |
 | 03 | 326490ea5a1ee4e8af1844d5eb63268ddb18caa5d3a1bfa7132fdd9f4a4771f7 | 6c03b99f6d13a7d71c265fde41d650194541c495f6bc2075a0e18b75d99bcb52 |
 | 04 | 266baf756f3a1ec2825ff76d20658d46ce720a1465162dce22bb9f9edca635e7 | e44b9a2a16d54ad5119194e34429aaf385db4074cd65780c87a7a4e0c46c77bb |
+| 05 | 1224c2cb07c406ab4c67124c50849d312fa6ed2b26d5a8e3516bcd0ae4ca3d67 | 3ac1ebf94ffd2139c4d8eb23c9b8f60c10655a4fe8a6b8bd1e20c55efc0046af |
 
-All three prepared.toml files have SHA
+All four prepared.toml files have SHA
 `365e26f230ad0fc4ccc92db60c05ad141b532aba70da4cc9e72a58e0df19d21d`.
 Their typed prepared identity is
 `a9be2581e0d30b312e6d05411cb4746aa14758226894a68c29a01ca16657156b`,
@@ -136,7 +142,7 @@ Only debug sections were removed from the complete built CLI.
 | --- | --- |
 | proof02/tools/compact-proof-reader | 9b6c911fde7fb408a1d713b5bf8de0f44c4108d996308dd4264d99062804ccaa |
 | proof03/tools/compact-proof-reader | a5e46472ac191805ed8e264368df09772d71bd084c86eaefb1010d37400cd54b |
-| proof03/tools/compact-cleanup-reader and proof04/tools/compact-proof-reader | 2aec4791a902eca22d2a29a7a788d508f83e9f71f3770e9df6acfb5ebcb6cb4c |
+| proof03/tools/compact-cleanup-reader and proof04/proof05 tools/compact-proof-reader | 2aec4791a902eca22d2a29a7a788d508f83e9f71f3770e9df6acfb5ebcb6cb4c |
 
 The final reader uses unchanged adapter source from `409e1ca`, with only
 `profile.dev.package.sha2.opt-level=3` for its hash dependency. Its ordinary
@@ -153,8 +159,9 @@ Keep these native-owned immutable helper dependencies:
 | /tmp/sm-ticket10-native-proofs/confinement-v1/tools/sm-translation-sandbox | 05785a6 | d3bee79b2a711126d6e0de4405e578c1ab51d27b420fadce86515c0eef8f3338 |
 | /tmp/sm-ticket10-native-proofs/confinement-v2/tools/sm-translation-sandbox | e72bf5b | d334899b7f5cc7f64120636a803224d2f83e54c8d049e71e57a9d198a5fdf892 |
 | /tmp/sm-ticket10-native-proofs/confinement-v3/tools/sm-translation-sandbox | ec09afe | 21f1bdb8d4bb10cbad2c5c23a24e7e146b2ed9a17fc4695b41d7813c3f2b66c5 |
+| /tmp/sm-ticket10-native-proofs/confinement-v4/tools/sm-translation-sandbox | cd7ce99 | 1ec74e0bcc1024ae460d74b47148114526bf6743e2cc4a87302f9ecf551ab6d9 |
 
-The v1 client/decoder is compatible with all three guarded helpers.
+The v1 client/decoder is compatible with all four guarded helpers.
 Preserve the original capture directories, their original reader sources/ELF,
 ROM, movie, lsnes, pinned C archive/source and runtime dependencies named by the
 prepared contracts. These are required for future authentication.
@@ -168,7 +175,7 @@ tools/sm-pipeline-producer cleanup --root PROOF --apply
 tools/sm-pipeline-producer cleanup --root PROOF --deduplicate --apply
 ```
 
-Both passes reclaimed 0 bytes for proofs 02, 03 and 04; this format has no
+Both passes reclaimed 0 bytes for proofs 02, 03, 04 and 05; this format has no
 disposable files recognized by the utility. Logs are `cleanup-pass1.log` and
 `cleanup-pass2.log`. Receipt/verdict/prepared checksums remain unchanged in
 `after-cleanup-hash-check.log`.
@@ -178,6 +185,7 @@ disposable files recognized by the utility. Logs are `cleanup-pass1.log` and
 | 02 | 1 passed; 224.21 s | 170,271,776,768 |
 | 03 | 1 passed; 65.26 s | 166,270,836,736 |
 | 04 | 1 passed; 38.56 s | 166,130,987,008 |
+| 05 | 1 passed; 38.82 s | 164,748,988,416 |
 
 The read-only test calls `authenticate`, then checks unchanged references and
 operation inventory. It launches no producer. Its logs are
@@ -206,10 +214,11 @@ root. This handoff grants no gameplay Offline, Live or ROM-parity acceptance.
 
 ## Final v4 proof checkpoint
 
-Root authorized one final original experiment after native publishes a validated
-v4 helper. Cargo reports no active producer/build and reserves compact's producer
-window first; notify `/root/cargo_acceptance` when these producer phases close.
-No v4 producer has launched at this checkpoint.
+Root authorized one final original experiment after native published a validated
+v4 helper. Cargo reserved the producer window; no Cargo, rustc, sandbox or lsnes
+producer appeared in the prelaunch process inspection. After the reader exited
+successfully, native and Cargo were told the compact producer phases had closed.
+No further runtime tuning or producer run is requested.
 
 The new root is `/tmp/sm-ticket10-compact-proof-05-20261014`. Its reader, producer,
 three source-context snapshots and prepared contract are exact copies from proof
@@ -217,8 +226,12 @@ three source-context snapshots and prepared contract are exact copies from proof
 original Submitted checkout remains the source; original private inputs, frame
 2240 and the single whole-experiment 60-second bound remain unchanged.
 
-After native publishes the validated immutable helper and its passing regression
-evidence, seal that helper identity and run from the original Submitted checkout:
+Native's v3 directory-open regression timed out in 5.01 seconds; v4 passed all
+seven runtime tests in 4.72 seconds and all eight original confinement tests in
+42.69 seconds. The exact logs are retained under the native-owned v4 proof root
+and sealed in proof 05's `native-validation.sha256`. The helper and unchanged
+reader/producer/context were sealed in `reader-and-helper.sha256` before launch.
+The exact run command, from the original Submitted checkout, was:
 
 ```sh
 SM_PIPELINE_ROOT=/home/jim/sm-decomp/out/pipeline SM_PIPELINE_WORKERS=4 \
@@ -241,6 +254,47 @@ the native child exits. This makes the fix relevant to the workload, but there
 is no measured attribution of the previous timeout to that path. The original
 unconfined 2240 capture's 12.488-second timing is context only.
 
-After the final result, retain unchanged replay, both cleanup passes, read-only
-authentication, artifact checksums and remaining disk space. Preserve proofs
-02–04 and their helper dependencies regardless of this result.
+The reader ran as PID 1250733, start 2026-10-14 14:27:40 +0200, recorded in
+`process-start.txt`; tool session 20658 exited 0. The full test, including
+unchanged replay, passed in 181.30 seconds. The retained verdict is false:
+`original compact C build failed: sandbox timeout`. The deadline ended exactly
+60 seconds after the recorded experiment start; termination/retention finished
+38 ms after that deadline without accepting an extension.
+
+The successful native operation is
+`61b76338535eb19bbbd0457b722d2fbebd2f6b2a6428cd894699f6ca171be9ea`.
+Its complete packed capture remains both at `gate/native.zst` and the operation's
+`output/member-0000.bin`, 632,947 bytes, SHA-256
+`eafe2e7c7206cf51d23f7372c95e389f3ed1743f9740da6aea522052434e80bd`.
+Native validation completed before compilation was admitted. The failed compile
+operation is
+`158aeae3a81671f1d724a9e3ddd736678342a143d316a7e3f6cd1d9996d8f848`.
+There are no fresh candidate/control operations.
+
+Exact phase timing is preserved in the operation intents and process records,
+with a compact projection in `phase-intent-timing.json`. Both refer to boot
+`7119fcce-5593-4526-aa9b-07127767c4ef`; host `CLK_TCK` is 100.
+
+| Phase | Intent timeout | Boot deadline (ns) | Runner PID / start ticks | Sandbox PID / start ticks |
+| --- | ---: | ---: | --- | --- |
+| native | 59.989 s | 92285057262172 | 1250812 / 9222554 | 1250813 / 9222555 |
+| compile | 27.339 s | 92285057562935 | 1250855 / 9225859 | 1250856 / 9225868 |
+
+The operation schema has no per-phase process-exit timestamp. Observed
+publication mtimes are separately retained in `phase-publication-times.txt`:
+native result 2026-10-14 14:29:33.875741311 +0200; compile result
+2026-10-14 14:30:01.499706474 +0200. These are filesystem publication observations,
+not substitutes for unrecorded process-exit times or a measured capture/packing
+split. The whole-experiment timestamps above remain the accepted timing bound.
+
+Both proof 05 cleanup passes succeeded with 0 bytes reclaimed. The prepared
+contract, receipt, verdict, native capture, timing projections and frozen runtime
+hashes still match `before-cleanup.sha256` and `reader-and-helper.sha256`.
+Available space after cleanup is 164,748,988,416 bytes. Read-only retained
+authentication passed in 38.82 seconds; tool session 42879 exited 0. It checked
+unchanged references and operation inventory without launching a producer.
+Cgroup observations show `cpu.max = max 100000` and zero throttling counters
+before/after; no causal attribution of old timeouts is made. All compact reader,
+producer and cleanup sessions have finished. Proofs 02–04 and all helper
+dependencies remain retained. Root owns final retirement of this worker's
+disposable worktree/target and any authentication required after that retirement.
