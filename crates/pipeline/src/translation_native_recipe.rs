@@ -23,8 +23,12 @@ pub(crate) fn prepare_generated_plm(checkout: &Path, output: &Path) -> Result<cr
     bounded::limited(|| crate::plm_fixtures::generate(checkout, output, Some(&checkout.join(GENERATED_PLM))))
 }
 
-pub(super) fn for_family(checkout: &Path, declared: &Manifest) -> Result<Option<NativeRecipe>> {
-    let entry = registered_entry(checkout, declared)?;
+pub(super) fn for_family(checkout: &Path, path: &Path, declared: &Manifest) -> Result<Option<NativeRecipe>> {
+    let entry = registered_entry(checkout, path, declared)?;
+    recipe_for_entry(checkout, declared, &entry)
+}
+
+fn recipe_for_entry(checkout: &Path, declared: &Manifest, entry: &batch::FamilyEntry) -> Result<Option<NativeRecipe>> {
     ensure!(entry.prepare.is_none(), "unreviewed native preparation command");
     Ok(match entry.kind.as_str() {
         "plm-instructions" => {
@@ -64,25 +68,34 @@ pub(super) fn for_family(checkout: &Path, declared: &Manifest) -> Result<Option<
     })
 }
 
-pub(super) fn registered_entry(checkout: &Path, declared: &Manifest) -> Result<batch::FamilyEntry> {
+fn registered_entry(checkout: &Path, path: &Path, declared: &Manifest) -> Result<batch::FamilyEntry> {
     let catalog: batch::Catalog = family::object(&checkout.join("tools/port/batch.toml"))?;
-    if catalog.families.contains_key(&declared.family) {
-        return batch::entry(&catalog, &declared.family);
-    }
-    let path = PathBuf::from(format!("tools/port/{}.toml", declared.family));
-    ensure!(relative(&path), "native family path alias");
-    let registered: Manifest = family::object(&file(&checkout.join(&path))?)?;
-    ensure!(registered == *declared, "native discovery declaration differs");
-    Ok(batch::FamilyEntry {
-        kind: if family::dispatcher(declared) { "dispatcher" } else { "family" }.into(),
-        manifest: path,
-        live: None,
-        prepare: None,
-    })
+    let entry = if catalog.families.contains_key(&declared.family) {
+        batch::entry(&catalog, &declared.family)?
+    } else {
+        batch::FamilyEntry {
+            kind: if family::dispatcher(declared) { "dispatcher" } else { "family" }.into(),
+            manifest: PathBuf::from(format!("tools/port/{}.toml", declared.family)),
+            live: None,
+            prepare: None,
+        }
+    };
+    // Callers parsed this declaration from its authenticated asset. Bind that
+    // path here instead of decoding its complete fixture payload again.
+    ensure!(relative(path) && entry.manifest == path, "native family registration path differs");
+    Ok(entry)
 }
 
 pub(super) fn manifest(checkout: &Path, path: &Path, recipe: Option<&NativeRecipe>) -> Result<Manifest> {
     let declared: Manifest = family::object(path)?;
+    normalize_manifest(checkout, declared, recipe)
+}
+
+pub(super) fn normalize_manifest(
+    checkout: &Path,
+    declared: Manifest,
+    recipe: Option<&NativeRecipe>,
+) -> Result<Manifest> {
     Ok(match recipe {
         Some(NativeRecipe::Plm) => crate::plm_spawn::normalize(&declared)?,
         Some(NativeRecipe::GeneratedPlm { manifest }) => {
@@ -109,22 +122,26 @@ pub(super) fn manifest(checkout: &Path, path: &Path, recipe: Option<&NativeRecip
     })
 }
 
-pub(super) fn registration(checkout: &Path, contract: &NativeContract, declared: &Manifest) -> Result<()> {
-    let original: Manifest = family::object(&check_asset(checkout, &contract.manifest)?)?;
-    let entry = registered_entry(checkout, &original)?;
-    ensure!(entry.prepare.is_none() && entry.manifest == contract.manifest.file, "native family registration differs");
+pub(super) struct Registration {
+    pub family: String,
+    pub entry: batch::FamilyEntry,
+}
+
+pub(super) fn registration(checkout: &Path, contract: &NativeContract, original: &Manifest) -> Result<Registration> {
+    let entry = registered_entry(checkout, &contract.manifest.file, original)?;
+    ensure!(entry.prepare.is_none(), "native family registration differs");
     if let Some(NativeRecipe::DirectAnimation { .. }) = contract.recipe {
         ensure!(
-            original.family == "pause-equipment-render" && declared.family == "pause-direct-animation",
+            original.family == "pause-equipment-render" && contract.family == "pause-direct-animation",
             "auxiliary family identity differs"
         );
     } else {
         ensure!(
-            for_family(checkout, &original)? == contract.recipe && declared.family == original.family,
+            recipe_for_entry(checkout, original, &entry)? == contract.recipe && contract.family == original.family,
             "native registered recipe differs"
         );
     }
-    Ok(())
+    Ok(Registration { family: original.family.clone(), entry })
 }
 
 pub(super) fn harness(recipe: Option<&NativeRecipe>) -> Vec<&'static str> {
@@ -497,14 +514,17 @@ pub(crate) fn contract_for_direct_animation(
         let recipe = NativeRecipe::DirectAnimation {
             plan: Asset { file: plan.into(), sha256: digest(&file(&checkout.join(plan))?)? },
         };
+        let manifest = Path::new("tools/port/pause-equipment-render.toml");
+        let declared = family::object(&file(&checkout.join(manifest))?)?;
         contract_for_declared(
             checkout,
-            Path::new("tools/port/pause-equipment-render.toml"),
+            manifest,
             source_inventory,
             provenance,
             compiler_limits,
             fixture_limits,
             Some(recipe),
+            declared,
         )
     })
 }

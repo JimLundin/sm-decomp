@@ -396,10 +396,20 @@ fn contract_for_family_bounded(
     ensure!(relative(manifest), "registered native manifest must be relative");
     let path = file(&checkout.join(manifest))?;
     let declared: Manifest = family::object(&path)?;
-    let recipe = recipes::for_family(&checkout, &declared)?;
-    contract_for_declared(&checkout, manifest, source_inventory, provenance, compiler_limits, fixture_limits, recipe)
+    let recipe = recipes::for_family(&checkout, manifest, &declared)?;
+    contract_for_declared(
+        &checkout,
+        manifest,
+        source_inventory,
+        provenance,
+        compiler_limits,
+        fixture_limits,
+        recipe,
+        declared,
+    )
 }
 
+#[allow(clippy::too_many_arguments)]
 fn contract_for_declared(
     checkout: &Path,
     manifest: &Path,
@@ -408,9 +418,10 @@ fn contract_for_declared(
     compiler_limits: NativeLimits,
     fixture_limits: NativeLimits,
     recipe: Option<NativeRecipe>,
+    original: Manifest,
 ) -> Result<NativeContract> {
     let path = file(&checkout.join(manifest))?;
-    let declared = recipes::manifest(checkout, &path, recipe.as_ref())?;
+    let declared = recipes::normalize_manifest(checkout, original, recipe.as_ref())?;
     let candidate = file(&checkout.join(&declared.rust_module))?;
     ensure!(declared.rust_dependencies.len() <= 4096, "native declared dependency inventory exceeded");
     let sources = inputs::canonical_sources(&checkout, &[candidate], &declared.rust_imports)?;
@@ -476,6 +487,7 @@ fn provenance(
     contract: &NativeContract,
     manifest: &Manifest,
     source: &Source,
+    registration: &recipes::Registration,
 ) -> Result<()> {
     match &contract.provenance {
         NativeProvenance::ReviewedCatalog { catalog, requirements, checkout: owner, rationale } => {
@@ -483,13 +495,10 @@ fn provenance(
             check_asset(owner, requirements)?;
             let reviewed = check_asset(owner, catalog)?;
             let inventory: batch::Catalog = family::object(&reviewed)?;
-            let original: Manifest = family::object(&check_asset(checkout, &contract.manifest)?)?;
             ensure!(
-                sealed(&batch::entry(&inventory, &original.family)?)?
-                    == sealed(&recipes::registered_entry(checkout, &original)?)?,
+                sealed(&batch::entry(&inventory, &registration.family)?)? == sealed(&registration.entry)?,
                 "reviewed catalog entry differs"
             );
-            recipes::registration(checkout, contract, manifest)?;
         }
         NativeProvenance::NativeScope { scope, checkout: owner } => {
             let path = check_asset(owner, scope)?;
@@ -601,7 +610,9 @@ fn prepare_bounded_with_catalog(
     let pinned_source = fs::canonicalize(pinned_source)?;
     ensure!(relative(&contract.manifest.file), "native manifest is not registered relative input");
     let manifest_path = check_asset(&checkout, &contract.manifest)?;
-    let manifest = recipes::manifest(&checkout, &manifest_path, contract.recipe.as_ref())?;
+    let original = family::object(&manifest_path)?;
+    let registration = recipes::registration(&checkout, contract, &original)?;
+    let manifest = recipes::normalize_manifest(&checkout, original, contract.recipe.as_ref())?;
     ensure!(
         contract.frozen_inputs.len() <= 4096 && contract.coverage.len() <= 1024,
         "native frozen input or coverage inventory exceeded"
@@ -614,7 +625,6 @@ fn prepare_bounded_with_catalog(
         manifest.family == contract.family && coverage(&manifest)? == contract.coverage,
         "prescribed native fixture coverage missing or changed"
     );
-    recipes::registration(&checkout, contract, &manifest)?;
     contract.compiler_limits.run_limits()?;
     let fixture_limits = contract.fixture_limits.run_limits()?;
     ensure!(fixture_limits.writable_bytes > 0x20000, "native fixture quota cannot retain full WRAM");
@@ -639,7 +649,7 @@ fn prepare_bounded_with_catalog(
             .all(|symbol| catalog.symbols.contains(*symbol)),
         "required native routine is absent from agreed source inventory"
     );
-    provenance(&checkout, &pinned_source, contract, &manifest, &source)?;
+    provenance(&checkout, &pinned_source, contract, &manifest, &source, &registration)?;
     for (name, expected) in &contract.frozen_inputs {
         bounded::check()?;
         ensure!(
@@ -1469,6 +1479,34 @@ mod tests {
     }
 
     #[test]
+    fn discovered_recipe_rejects_a_declaration_from_an_alias_path() -> Result<()> {
+        let directory = bounded::tests::Directory::new()?;
+        let checkout = &directory.0;
+        fs::create_dir_all(checkout.join("tools/port"))?;
+        fs::write(checkout.join("tools/port/batch.toml"), "[families]\n[profiles]\n")?;
+        let manifest = Manifest { family: "registered".into(), ..Default::default() };
+        fs::write(checkout.join("tools/port/alias.toml"), toml::to_string(&manifest)?)?;
+        let limits = NativeLimits {
+            timeout_seconds: 1,
+            writable_bytes: 1024 * 1024,
+            stdout_bytes: 4096,
+            stderr_bytes: 4096,
+            stdin_bytes: 0,
+        };
+        let error = contract_for_family(
+            checkout,
+            Path::new("tools/port/alias.toml"),
+            Asset::default(),
+            NativeProvenance::NativeScope { scope: Asset::default(), checkout: checkout.clone() },
+            limits.clone(),
+            limits,
+        )
+        .unwrap_err();
+        ensure!(error.to_string().contains("registration path differs"), "unexpected rejection: {error:#}");
+        Ok(())
+    }
+
+    #[test]
     #[ignore = "real separately confined actual-C controls; retains source, replay and cleanup evidence"]
     fn real_reviewed_recipes_replay_and_authenticate() -> Result<()> {
         let _ = crate::BINARY_SHA256.set(crate::digest(&std::env::current_exe()?)?);
@@ -1597,7 +1635,9 @@ mod tests {
             )?;
             immutable(&output.join("prepared.toml"), toml::to_string(&prepared)?.as_bytes())?;
             let runtime = StrictRuntime {
-                helper: "/home/jim/sm-decomp/out/translation-production/sm-translation-sandbox".into(),
+                helper: std::env::var("SM_NATIVE_RECIPE_HELPER")
+                    .unwrap_or_else(|_| "/home/jim/sm-decomp/out/translation-production/sm-translation-sandbox".into())
+                    .into(),
                 rustc: "/home/jim/.rustup/toolchains/nightly-2026-09-29-x86_64-unknown-linux-gnu/bin/rustc".into(),
                 c_compiler: "/usr/bin/x86_64-linux-gnu-gcc-9".into(),
                 operation_root: output.join("operations"),
@@ -1720,16 +1760,9 @@ mod tests {
                     deadline,
                     8 * bounded::DEFAULT_BYTES,
                 )?;
-                let declared = recipes::manifest(&checkout, &checkout.join(&entry.manifest), contract.recipe.as_ref())?;
-                let prepared = prepare_scope_in_catalog_until(
-                    &checkout,
-                    pinned,
-                    &contract,
-                    &[declared.rust_module],
-                    &inputs,
-                    deadline,
-                    8 * bounded::DEFAULT_BYTES,
-                )?;
+                let prepared = bounded::until(deadline, 8 * bounded::DEFAULT_BYTES, || {
+                    prepare_bounded_with_catalog(&checkout, pinned, &contract, Some(&inputs))
+                })?;
                 let output = root.join(format!("{name}.toml"));
                 immutable(&output, toml::to_string(&prepared)?.as_bytes())?;
                 Ok(contract.coverage.values().map(Vec::len).sum())

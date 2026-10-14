@@ -117,3 +117,24 @@ three original room-scroll pairs with 17 callbacks each, then specialized
 controls; replay and clean every new proof.
 
 Remaining filesystem space at this checkpoint: 175,798,161,408 bytes.
+
+## Preparation audit result and parser follow-up
+
+`catalog-v1` finished after 655.77 seconds. Twenty original declarations through
+`collision` prepared. The remaining 156 entries are explicitly recorded as
+`trusted input whole-stage deadline exhausted`, beginning at `control`; these
+entries have no preparation acceptance. No compiler or fixture ran.
+
+The repeated discovery/registration/provenance path decoded a discovered
+declaration up to 13 times. The follow-up parses once during contract construction
+and once during preparation, then carries its authenticated registration through
+provenance. The expected manifest path, exact asset digest, registered recipe,
+and complete fixture coverage remain checked. The audit no longer performs an
+extra manifest decode just to obtain a candidate path. A fresh audit will use the
+same 600-second budget.
+
+All six active native unit tests pass (five real-proof tests remain explicitly
+ignored), including the ten original shared-host fixture pairs and a focused
+test rejecting an aliased discovery path. The real proof now accepts an optional
+`SM_NATIVE_RECIPE_HELPER` path for a separately retained new helper; its default
+still names the original installed helper.
