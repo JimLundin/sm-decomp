@@ -1,0 +1,6 @@
+[families.pause-equipment]
+kind = "family"
+manifest = "tools/port/pause-equipment.toml"
+
+[profiles]
+offline-all = ["pause-equipment"]

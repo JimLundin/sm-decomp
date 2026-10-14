@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "root": "/home/jim/sm-decomp",
-  "updated_at": 1791912173,
+  "updated_at": 1791995027,
   "source": {
     "revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
     "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
@@ -98994,6 +98994,58 @@
         "Bounded original-ROM fixtures. Public lib/catalog/live pause integration remains queued behind original Ceres host admission; no integrated/live stage is claimed."
       ],
       "updated_at": 1791912113
+    },
+    {
+      "id": "equipment-interaction-private-translating-20261014",
+      "scope": "Complete equipment interaction source bootstrap (29 routines)",
+      "agent": "/root/equipment_implementation",
+      "stage": "translating",
+      "routines": [
+        "ChangePaletteValues",
+        "EquipmentScreenMain",
+        "EquipmentScreenCategory_Tanks",
+        "EquipmentScreenHandleDpad",
+        "EquipmentScreenGlowingArrow",
+        "EquipmentScreenGlowingArrowAnimated",
+        "EquipmentScreenGlowingArrowSolidOn",
+        "EquipmentScreenGlowingArrowSolidOff",
+        "EquipmentScreenEnergyArrowGlow_On",
+        "EquipmentScreenEnergyArrowGlow_Off",
+        "EquipmentScreenCategory_Tanks_0",
+        "EquipmentScreenHudReserveAutoTilemap_On_BUGGY",
+        "EquipmentScreenHudReserveAutoTilemap_Off",
+        "EquipmentScreenCategory_Tanks_1",
+        "EquipmentScreenCategory_Weapons",
+        "EquipmentScreenCategory_Weapons_MoveButtons",
+        "EquipmentScreenCategory_Weapons_PlazmaSpazerCheck",
+        "EquipmentScreenCategory_Suit",
+        "EquipmentScreenCategory_Suit_MoveResponse",
+        "EquipmentScreenCategory_Boots",
+        "EquipmentScreenCategory_Boots_MoveResponse",
+        "EquipmentScreenMoveToReserveTanks",
+        "EquipmentScreenMoveToBeams",
+        "EquipmentScreenMoveToBottomOfBeams",
+        "EquipmentScreenMoveLowerOnSuitsMisc",
+        "EquipmentScreenMoveToScrewOrHigherOnSuits",
+        "EquipmentScreenMoveToHighJumpOrLowerInBoots",
+        "EquipmentScreenCategory_Boots_MoveUpInBoots",
+        "EquipmentScreenCategory_ButtonResponse"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "d0e35c3768a202cc997c777f9912d6817694b481",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-equipment-interaction-20261014/source/docs/bootstrap.md",
+          "sha256": "34e0428f07b8a1b133dea9aaf23e349475dd06663ba6555bf43f451230668dd8"
+        }
+      ],
+      "limitations": [
+        "Private source authoring in /home/jim/sm-decomp-equipment-interaction-20261014/source; this is not a confined production rewrite or claim.",
+        "Initial scaffold refuses all unimplemented behavior; no translated or verified stage is asserted.",
+        "Fresh actual-C verification, managed integration, Live replay and original-ROM parity remain pending."
+      ],
+      "updated_at": 1791995027
     }
   ],
   "notices": [
@@ -99195,7 +99247,7 @@
     "body_lines": 75229,
     "declared_definitions": 842,
     "declared_body_lines": 9227,
-    "updates": 267,
+    "updates": 268,
     "stale_updates": 16,
     "stages": {
       "integrated": {
@@ -99211,8 +99263,8 @@
         "body_lines": 16665
       },
       "translating": {
-        "definitions": 230,
-        "body_lines": 3308
+        "definitions": 259,
+        "body_lines": 3659
       },
       "verified": {
         "definitions": 933,
@@ -99278,8 +99330,8 @@
           "body_lines": 719
         },
         "translating": {
-          "definitions": 222,
-          "body_lines": 3170
+          "definitions": 251,
+          "body_lines": 3521
         },
         "verified": {
           "definitions": 34,

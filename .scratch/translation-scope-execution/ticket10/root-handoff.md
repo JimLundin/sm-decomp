@@ -13,6 +13,34 @@ completed through the new installed command at this checkpoint.
 
 ## Latest continuation checkpoint
 
+2026-10-14 performance priority: the user asked for serious speed improvements
+before further sealed evidence work, including measured parallel execution.
+Main was at `528581b246e6ace9748e711743482f72e83cf9e3` when this work began.
+The unfinished Original Offline reuse changes are preserved in isolated commit
+`20b0316f87fe31146e652d262c39b28a946dad33` on
+`ticket10-original-reuse-parked`; they are not integrated or tested. They still
+need the journal-bound candidate-gate helper. Main has been restored to its
+compiling committed implementation for performance integration.
+
+Prior `/tmp/sm-ticket10-*` proof, reader, target and worktree directories were
+absent after the environment resumed. The earlier records below are historical
+results, not currently authenticated evidence. Do not recreate those paths and
+pretend they contain the original results. New measurements and frozen tools
+use `/home/jim/sm-decomp-performance-20261014`; worktrees use
+`/home/jim/sm-decomp-ticket10-work`.
+
+Current independent workers are `confinement_performance` (sandbox accounting),
+`native_performance` (actual-C execution and bounded 1/2/4-worker scaling), and
+`equipment_implementation` (the full private 29-routine equipment interaction
+source scope). Gameplay setup and ownership are recorded in
+`../../equipment-interaction-concurrent-20261014/bootstrap-handoff.md`.
+Its `translating` observation is published; no translated/verified stage or
+production claim is asserted. No JSON format migration is part of this work.
+
+The installed production `status` still authenticates the unchanged original
+registry/request/activation identities. No Original Installation or new attempt
+has been activated. Full-catalog execution and completion remain pending.
+
 Integrated source through `e0b7303` includes the completed Original prerequisite
 regression, compact verdict-only recovery, native operation indexing, finite
 per-pass discovery and shared callback/PLM argument builders. Ticket 10 is still

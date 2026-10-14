@@ -80,3 +80,10 @@ the supervisor/installed deterministic command for original acceptance,
 bounded failed-run recovery and ordered continuation. These checks cover claim,
 source and evidence preservation; Live and original-ROM parity remain separate
 acceptance contracts. The review baseline is the starting commit above.
+
+2026-10-14 performance steering: prioritize measured sandbox/native throughput
+improvements and bounded 1/2/4-worker scaling before further finalization work
+or full-catalog runs. Keep the original verification contracts and timeouts.
+Independent private equipment interaction source work proceeds concurrently.
+The unfinished Original reuse source is parked in commit `20b0316` for later
+completion; it does not block the compiling performance baseline `528581b`.
