@@ -633,10 +633,11 @@ fn run_managed_proof(root: &Path) -> Result<()> {
                 && !gate.verdict.live_exercised,
             "managed diagnostic fixture domain differs"
         );
-        for operation in &gate.receipt.operations {
+        gate.receipt.visit_operations(|operation| {
             gate_producer_references += 1;
             gate_producers.insert(operation.context.operation_key.clone());
-        }
+            Ok(())
+        })?;
     }
     let host_head = git(&project.host, &["rev-parse", "HEAD"])?;
     ensure!(

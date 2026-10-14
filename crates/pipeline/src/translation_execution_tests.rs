@@ -787,10 +787,11 @@ fn complete_native_supervisor_rewrite_verify_integrate_retire_publish_and_recove
         let verdict = native::authenticate(prepared, source, receipt)?;
         ensure!(verdict.verified_cases == 16 && verdict.verified_routines == 2, "actual-C complete coverage differs");
         cases = verdict.verified_cases;
-        for operation in &receipt.operations {
+        receipt.visit_operations(|operation| {
             referenced_producers += 1;
             producers.insert(operation.context.operation_key.clone());
-        }
+            Ok(())
+        })?;
     }
     ensure!(
         producers.len() == 34 && referenced_producers == 136,
@@ -800,9 +801,11 @@ fn complete_native_supervisor_rewrite_verify_integrate_retire_publish_and_recove
     let readiness_producers = readiness
         .iter()
         .map(|receipt| match receipt {
-            Receipt::Native { receipt, .. } => receipt.operations.len(),
-            _ => 0,
+            Receipt::Native { receipt, .. } => receipt.operation_count(),
+            _ => Ok(0),
         })
+        .collect::<Result<Vec<_>>>()?
+        .into_iter()
         .sum::<usize>();
     ensure!(!adapter.candidate(1).exists() && !adapter.integration(1).exists(), "native producer checkout not retired");
     let completion_path = adapter.attempt(1).join("publication/completion.json");

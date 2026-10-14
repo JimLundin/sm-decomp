@@ -26,6 +26,8 @@ use translation_execution::{
 #[path = "translation_native_recipe.rs"]
 mod recipes;
 pub(crate) use recipes::{NativeRecipe, contract_for_direct_animation, prepare_generated_plm};
+#[path = "translation_native_operations.rs"]
+mod operation_storage;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
@@ -206,8 +208,41 @@ pub(crate) struct NativeReceipt {
     pub context: OperationContext,
     pub operation_root: PathBuf,
     pub operations: Vec<NativeOperation>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub operation_index: Option<Reference>,
     pub max_output_bytes: u64,
     pub reserved_bytes: u64,
+}
+
+impl NativeReceipt {
+    fn store_operations(&mut self, output: &Path) -> Result<()> {
+        let index = operation_storage::store(self, output)?;
+        self.operation_index = Some(index);
+        self.operations.clear();
+        Ok(())
+    }
+
+    pub(crate) fn visit_operations(&self, mut visit: impl FnMut(&NativeOperation) -> Result<()>) -> Result<()> {
+        if self.operation_index.is_some() {
+            return operation_storage::visit(self, visit);
+        }
+        ensure!(self.operations.len() <= 32770, "native operation receipt inventory exceeded");
+        for operation in &self.operations {
+            bounded::check()?;
+            visit(operation)?;
+        }
+        Ok(())
+    }
+
+    #[cfg(test)]
+    pub(crate) fn operation_count(&self) -> Result<usize> {
+        let mut count = 0;
+        self.visit_operations(|_| {
+            count += 1;
+            Ok(())
+        })?;
+        Ok(count)
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -223,6 +258,8 @@ struct NativeIntent {
     parent_reservation_bytes: u64,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     reconcile_producer_reservations: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    operation_metadata_bytes: Option<u64>,
     helper: PathBuf,
     rustc: PathBuf,
     c_compiler: PathBuf,
@@ -908,6 +945,7 @@ fn run_bounded(
                 operation_root: runtime.operation_root.clone(),
                 parent_reservation_bytes,
                 reconcile_producer_reservations: true,
+                operation_metadata_bytes: Some(operation_storage::capacity(operation_slots(prepared, &run)?.len())?),
                 helper: helper.clone(),
                 rustc: rustc.clone(),
                 c_compiler: c_compiler.clone(),
@@ -1017,27 +1055,34 @@ fn run_bounded(
         family::inventory(&run, &run, &mut verdict.artifacts)?;
         atomic_toml(&run.join("verdict.toml"), &verdict)?;
         let operations = collect_operations(prepared, &run, &runtime.operation_root, context)?;
-        let retained_bytes = evidence_bytes(&run, &operations)?;
-        ensure!(retained_bytes <= intent.max_output_bytes, "native evidence exceeded prelaunch aggregate reservation");
-        if intent.reconcile_producer_reservations {
-            ensure!(
-                retained_bytes <= *execution.reserved_bytes.borrow(),
-                "native evidence exceeded reconciled reservation"
-            );
-        }
         let mut receipt = NativeReceipt {
             prepared_sha256,
             candidate_sha256,
             verdict: Asset { file: run.join("verdict.toml"), sha256: digest(&run.join("verdict.toml"))? },
             passed: verdict.status == "offline-verified",
             diagnostic: verdict.error.clone().unwrap_or_default(),
-            evidence_bytes: retained_bytes,
+            evidence_bytes: 0,
             context: context.clone(),
             operation_root: runtime.operation_root.clone(),
             operations,
+            operation_index: None,
             max_output_bytes: intent.max_output_bytes,
             reserved_bytes: *execution.reserved_bytes.borrow(),
         };
+        if intent.operation_metadata_bytes.is_some() {
+            receipt.store_operations(&output)?;
+        }
+        receipt.evidence_bytes = evidence_bytes(&run, &receipt)?;
+        ensure!(
+            receipt.evidence_bytes <= intent.max_output_bytes,
+            "native evidence exceeded prelaunch aggregate reservation"
+        );
+        if intent.reconcile_producer_reservations {
+            ensure!(
+                receipt.evidence_bytes <= receipt.reserved_bytes,
+                "native evidence exceeded reconciled reservation"
+            );
+        }
         if receipt.passed {
             authenticate(prepared, &checkout, &receipt)?;
             if now_unix_ms()? >= intent.deadline_unix_ms {
@@ -1049,7 +1094,7 @@ fn run_bounded(
                 receipt.passed = false;
                 receipt.diagnostic = verdict.error.clone().unwrap();
                 receipt.verdict.sha256 = digest(&run.join("verdict.toml"))?;
-                receipt.evidence_bytes = evidence_bytes(&run, &receipt.operations)?;
+                receipt.evidence_bytes = evidence_bytes(&run, &receipt)?;
                 ensure!(
                     receipt.evidence_bytes <= intent.max_output_bytes,
                     "native failed evidence exceeded aggregate reservation"
@@ -1095,11 +1140,20 @@ fn authenticate_bounded(prepared: &PreparedNative, checkout: &Path, receipt: &Na
             && receipt.reserved_bytes <= receipt.max_output_bytes,
         "native receipt intent or aggregate budget differs"
     );
-    let expected = operation_slots(prepared, run)?;
-    ensure!(receipt.operations.len() <= 32770, "native operation receipt inventory exceeded");
+    let expected = operation_slots(prepared, run)?.into_iter().collect::<BTreeSet<_>>();
+    ensure!(
+        intent.operation_metadata_bytes.is_some() == receipt.operation_index.is_some(),
+        "native operation storage mode changed"
+    );
+    if let Some(maximum) = intent.operation_metadata_bytes {
+        ensure!(
+            maximum == operation_storage::capacity(expected.len())?,
+            "native operation metadata reservation changed"
+        );
+    }
     let mut observed = BTreeSet::new();
     let mut reservations = Vec::new();
-    for operation in &receipt.operations {
+    receipt.visit_operations(|operation| {
         bounded::check()?;
         ensure!(
             expected.contains(&(operation.directory.clone(), operation.label.clone()))
@@ -1110,9 +1164,10 @@ fn authenticate_bounded(prepared: &PreparedNative, checkout: &Path, receipt: &Na
             authenticate_operation(prepared, &receipt.operation_root, &receipt.context, operation)?;
         ensure!(!receipt.passed || passed, "accepted native family contains a rejected producer");
         reservations.extend(reservation);
-    }
+        Ok(())
+    })?;
     if intent.reconcile_producer_reservations {
-        ensure!(reservations.len() == receipt.operations.len(), "native producer reservation record missing");
+        ensure!(reservations.len() == observed.len(), "native producer reservation record missing");
         let retained = builds::authenticate_reservations(
             intent.parent_reservation_bytes,
             &mut reservations,
@@ -1131,8 +1186,7 @@ fn authenticate_bounded(prepared: &PreparedNative, checkout: &Path, receipt: &Na
         "native fixture pair compiler/execution receipts incomplete"
     );
     ensure!(
-        receipt.evidence_bytes == evidence_bytes(run, &receipt.operations)?
-            && receipt.evidence_bytes <= receipt.max_output_bytes,
+        receipt.evidence_bytes == evidence_bytes(run, receipt)? && receipt.evidence_bytes <= receipt.max_output_bytes,
         "native retained evidence extent differs"
     );
     if !receipt.passed {
@@ -1447,21 +1501,33 @@ fn references_bounded(receipt: &NativeReceipt) -> Result<Vec<Reference>> {
             );
         }
     }
-    for operation in &receipt.operations {
+    if receipt.operation_index.is_some() {
+        for reference in operation_storage::references(receipt)? {
+            result.insert(reference.path.clone(), reference);
+        }
+    }
+    receipt.visit_operations(|operation| {
         bounded::check()?;
         for reference in &operation.references {
             bounded::check()?;
             result.insert(reference.path.clone(), reference.clone());
             ensure!(result.len() <= 65536, "native reference inventory exceeded");
         }
-    }
+        Ok(())
+    })?;
     Ok(result.into_values().collect())
 }
 
-fn evidence_bytes(run: &Path, operations: &[NativeOperation]) -> Result<u64> {
+fn evidence_bytes(run: &Path, receipt: &NativeReceipt) -> Result<u64> {
     let mut seen = BTreeSet::new();
     let mut bytes = tree_bytes(run)?;
-    for operation in operations {
+    if receipt.operation_index.is_some() {
+        for reference in operation_storage::references(receipt)? {
+            bytes = bytes.checked_add(reference.bytes).context("native operation metadata extent overflow")?;
+            seen.insert(reference.path);
+        }
+    }
+    receipt.visit_operations(|operation| {
         bounded::check()?;
         for reference in &operation.references {
             bounded::check()?;
@@ -1469,12 +1535,17 @@ fn evidence_bytes(run: &Path, operations: &[NativeOperation]) -> Result<u64> {
                 bytes = bytes.checked_add(reference.bytes).context("native retained byte overflow")?;
             }
         }
-    }
+        Ok(())
+    })?;
     Ok(bytes)
 }
 
 fn parent_reservation(prepared: &PreparedNative, checkout: &Path) -> Result<u64> {
     let mut bytes = 2 * 1024 * 1024u64; // bounded verdict, native receipts and generated declarations
+    let operations = operation_slots(prepared, checkout)?.len();
+    bytes = bytes
+        .checked_add(operation_storage::capacity(operations)?)
+        .context("native operation metadata reservation overflow")?;
     for name in prepared.contract.frozen_inputs.keys() {
         bounded::check()?;
         let path = file(&checkout.join(name))?;
@@ -1514,6 +1585,73 @@ fn tree_bytes(path: &Path) -> Result<u64> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn native_receipt_storage_preserves_large_operation_sets_within_controller_record_bound() -> Result<()> {
+        let directory = bounded::tests::Directory::new()?;
+        let mut retained = directory.0.join("retained");
+        for level in 0..16 {
+            retained.push(format!("{level}-{}", "source".repeat(16)));
+        }
+        fs::create_dir_all(&retained)?;
+        let retained = retained.join("result.json");
+        fs::write(&retained, b"retained producer storage control")?;
+        let reference = translation_execution::retention::seal_file(&retained, 4096)?;
+        let context = OperationContext {
+            run_id: sha256("receipt-storage"),
+            attempt: 1,
+            policy_sha256: sha256("frozen-policy"),
+            operation_key: sha256("native-family"),
+            phase: translation_execution::model::ExecutionPhase::Candidate,
+        };
+        let operations = (0..2048)
+            .map(|index| {
+                let mut operation_context = context.clone();
+                operation_context.operation_key = sha256(format!("producer-{index}"));
+                NativeOperation {
+                    directory: directory.0.join(format!("family/pair-{index}")),
+                    label: "rust".into(),
+                    invocation: Asset { file: reference.path.clone(), sha256: reference.sha256.clone() },
+                    context: operation_context,
+                    result: reference.clone(),
+                    result_sha256: reference.sha256.clone(),
+                    references: vec![reference.clone()],
+                }
+            })
+            .collect::<Vec<_>>();
+        // This exercises storage only; these declarations grant no producer or
+        // Offline acceptance. Actual invocation authentication remains separate.
+        let expected = operations.iter().map(|operation| operation.context.operation_key.clone()).collect::<Vec<_>>();
+        let mut receipt = NativeReceipt {
+            prepared_sha256: sha256("prepared"),
+            candidate_sha256: sha256("candidate"),
+            verdict: Asset { file: directory.0.join("family/verdict.toml"), sha256: sha256("verdict") },
+            passed: false,
+            diagnostic: "storage control only".into(),
+            evidence_bytes: 0,
+            context,
+            operation_root: directory.0.join("operations"),
+            operations,
+            operation_index: None,
+            max_output_bytes: 64 * 1024 * 1024,
+            reserved_bytes: 64 * 1024 * 1024,
+        };
+        receipt.store_operations(&directory.0)?;
+        let encoded = serde_json::to_vec(&receipt)?;
+        ensure!(
+            encoded.len() <= crate::translation_original::MAX_RECORD as usize,
+            "complete native producer attribution exceeds the controller record bound: {} bytes",
+            encoded.len()
+        );
+        let restored: NativeReceipt = serde_json::from_slice(&encoded)?;
+        let mut actual = Vec::new();
+        restored.visit_operations(|operation| {
+            actual.push(operation.context.operation_key.clone());
+            Ok(())
+        })?;
+        assert_eq!(actual, expected);
+        Ok(())
+    }
 
     #[test]
     fn frozen_shared_host_contracts_preserve_both_original_matrices() -> Result<()> {
@@ -1789,11 +1927,11 @@ mod tests {
             };
             let receipt = run(&prepared, &checkout, &output.join("run"), &runtime, &context)?;
             let verdict = authenticate(&prepared, &checkout, &receipt)?;
-            let identities = receipt
-                .operations
-                .iter()
-                .map(|o| Ok((o.result.path.clone(), o.result.path.metadata()?.modified()?)))
-                .collect::<Result<Vec<_>>>()?;
+            let mut identities = Vec::new();
+            receipt.visit_operations(|operation| {
+                identities.push((operation.result.path.clone(), operation.result.path.metadata()?.modified()?));
+                Ok(())
+            })?;
             ensure!(
                 sealed(&run(&prepared, &checkout, &output.join("run"), &runtime, &context)?)? == sealed(&receipt)?,
                 "recipe replay changed receipt"
@@ -2153,6 +2291,7 @@ mod tests {
             operation_root: runtime.operation_root.clone(),
             parent_reservation_bytes: 4096,
             reconcile_producer_reservations: false,
+            operation_metadata_bytes: None,
             helper: runtime.helper.clone(),
             rustc: runtime.rustc.clone(),
             c_compiler: runtime.c_compiler.clone(),
@@ -2177,6 +2316,7 @@ mod tests {
             context: context.clone(),
             operation_root: runtime.operation_root.clone(),
             operations: Vec::new(),
+            operation_index: None,
             max_output_bytes: runtime.max_output_bytes,
             reserved_bytes: 4096,
         };
@@ -2325,14 +2465,16 @@ mod tests {
         ensure!(receipt.passed, "{}", receipt.diagnostic);
         let verdict = authenticate(&prepared, &checkout, &receipt)?;
         ensure!(
-            verdict.verified_cases == 16 && verdict.verified_routines == 2 && receipt.operations.len() == 34,
+            verdict.verified_cases == 16 && verdict.verified_routines == 2 && receipt.operation_count()? == 34,
             "real family coverage differs"
         );
-        let before = receipt
-            .operations
-            .iter()
-            .map(|op| Ok((op.result.path.clone(), fs::metadata(&op.result.path)?.modified()?)))
-            .collect::<Result<Vec<_>>>()?;
+        let mut before = Vec::new();
+        let mut operations = Vec::new();
+        receipt.visit_operations(|operation| {
+            before.push((operation.result.path.clone(), fs::metadata(&operation.result.path)?.modified()?));
+            operations.push(operation.clone());
+            Ok(())
+        })?;
         let retry = run(&prepared, &checkout, &root.join("run"), &runtime, &context)?;
         ensure!(sealed(&retry)? == sealed(&receipt)?, "lost response retry allocated another result");
         for (path, modified) in before {
@@ -2340,7 +2482,7 @@ mod tests {
         }
         // Hash-only family tampering cannot bypass the independent durable
         // producer authenticators, even if a forged receipt copies a new hash.
-        let operation = &receipt.operations[0];
+        let operation = &operations[0];
         let invocation_bytes = bounded::read(&operation.invocation.file)?;
         let original: builds::StrictInvocation = family::object(&operation.invocation.file)?;
         let mut changed = original.clone();
@@ -2411,7 +2553,7 @@ mod tests {
         let narrow = StrictRuntime { max_output_bytes: parent_reservation(&prepared, &checkout)? + 4096, ..runtime };
         let denied = run(&prepared, &checkout, &root.join("reservation-denial"), &narrow, &deny_context)?;
         ensure!(
-            !denied.passed && denied.operations.is_empty() && denied.diagnostic.contains("reservation exhausted"),
+            !denied.passed && denied.operation_count()? == 0 && denied.diagnostic.contains("reservation exhausted"),
             "aggregate reservation did not stop before compiler launch"
         );
         println!(
@@ -2463,11 +2605,11 @@ mod tests {
                 run(&prepared, &checkout, &root.join(output), &runtime, &receipt.context).is_err(),
                 "completed receipt admitted a changed outer deadline"
             );
-            let operations = receipt
-                .operations
-                .iter()
-                .map(|operation| Ok((operation.result.path.clone(), fs::metadata(&operation.result.path)?.modified()?)))
-                .collect::<Result<Vec<_>>>()?;
+            let mut operations = Vec::new();
+            receipt.visit_operations(|operation| {
+                operations.push((operation.result.path.clone(), fs::metadata(&operation.result.path)?.modified()?));
+                Ok(())
+            })?;
             let references = references(&receipt)?;
             for reference in &references {
                 translation_execution::retention::authenticate_reference(reference, receipt.max_output_bytes)?;
@@ -2478,7 +2620,7 @@ mod tests {
             }
             println!(
                 "Authenticated retained {output}: {} producers, {} references",
-                receipt.operations.len(),
+                receipt.operation_count()?,
                 references.len()
             );
             retained.insert(output, references);
