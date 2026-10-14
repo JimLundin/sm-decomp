@@ -82,3 +82,16 @@ Remaining space after these passes was 174504767488 bytes. Final proof and
 post-cleanup adapter authentication remain pending. No
 original controller files or production ledgers have been changed. The temporary
 local main.rs registration is excluded from commits.
+
+Proof 02 is running at `/tmp/sm-ticket10-compact-proof-02-20261014` with a
+frozen test reader (`9b6c911fde7fb408a1d713b5bf8de0f44c4108d996308dd4264d99062804ccaa`)
+and the native worker's verified helper from `05785a6`
+(`d3bee79b2a711126d6e0de4405e578c1ab51d27b420fadce86515c0eef8f3338`).
+The compact focused suite passed 3 ordinary controls after rebuilding the host
+client with that confinement revision. Historical-reader operations may use the
+persisted outer gate deadline (at most 3600 seconds); the fresh experiment still
+shares exactly 60 seconds. Compiler headers are mounted only for the compile
+phase. The frozen producer has debug sections removed, with its complete
+executable seal retained in `producer-stripped.sha256`; its producer behavior is
+unchanged. The proof reader and exact adapter source are retained independently
+of the disposable Cargo target.

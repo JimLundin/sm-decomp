@@ -1172,7 +1172,7 @@ fn limits(label: &str) -> RunLimits {
         _ => 8,
     };
     RunLimits {
-        timeout: Duration::from_secs(SECONDS),
+        timeout: Duration::from_secs(if label.starts_with("history-") { 3600 } else { SECONDS }),
         writable_bytes: mib * 1024 * 1024,
         stdout_bytes: 64 * 1024,
         stderr_bytes: 64 * 1024,
@@ -1194,6 +1194,11 @@ fn recipe(
             .contract
             .runtime
             .iter()
+            .filter(|binding| {
+                label == "compile"
+                    || binding.destination.starts_with("/lib")
+                    || binding.destination.starts_with("/lib64")
+            })
             .map(|binding| ReadOnlyBind { source: binding.source.clone(), destination: binding.destination.clone() })
             .collect(),
         inputs: vec![],
