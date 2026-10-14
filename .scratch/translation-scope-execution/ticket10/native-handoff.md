@@ -185,3 +185,20 @@ The second same-budget preparation audit finished after 617.57 seconds: 56
 families prepared, 119 stopped at the deadline, and `instructions` exposed one
 original registered catalog alias that still needs explicit native support.
 Neither audit is original actual-C acceptance.
+
+## Runtime and catalog alias follow-up
+
+All eight existing confinement tests passed in 59.34 seconds, including six
+real Rust linker-descendant compilations. The v1 runtime checkpoint has 12
+passing focused/existing tests.
+
+Current catalog metadata contains exactly one catalog-key/declaration mismatch:
+`instructions` selects `tools/port/instructions.toml`, whose original declared
+Offline family is `enemy-instructions`. Native registration now finds that
+explicit entry by its exact manifest path and authenticates provenance under
+the catalog key. NativeContract.family and every original coverage row retain
+the declared family identity. Unknown discovered path aliases still reject;
+configured keys cannot silently fall back to a different discovered declaration.
+All seven active native tests pass, including exact family/coverage preservation
+for this alias. Root must keep catalog leaf keys separate from declared native
+family names in its composite inventory.

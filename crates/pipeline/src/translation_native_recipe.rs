@@ -24,8 +24,8 @@ pub(crate) fn prepare_generated_plm(checkout: &Path, output: &Path) -> Result<cr
 }
 
 pub(super) fn for_family(checkout: &Path, path: &Path, declared: &Manifest) -> Result<Option<NativeRecipe>> {
-    let entry = registered_entry(checkout, path, declared)?;
-    recipe_for_entry(checkout, declared, &entry)
+    let registration = registered_entry(checkout, path, declared)?;
+    recipe_for_entry(checkout, declared, &registration.entry)
 }
 
 fn recipe_for_entry(checkout: &Path, declared: &Manifest, entry: &batch::FamilyEntry) -> Result<Option<NativeRecipe>> {
@@ -68,22 +68,35 @@ fn recipe_for_entry(checkout: &Path, declared: &Manifest, entry: &batch::FamilyE
     })
 }
 
-fn registered_entry(checkout: &Path, path: &Path, declared: &Manifest) -> Result<batch::FamilyEntry> {
+fn registered_entry(checkout: &Path, path: &Path, declared: &Manifest) -> Result<Registration> {
     let catalog: batch::Catalog = family::object(&checkout.join("tools/port/batch.toml"))?;
-    let entry = if catalog.families.contains_key(&declared.family) {
-        batch::entry(&catalog, &declared.family)?
+    ensure!(catalog.families.len() <= 4096, "native registered family inventory exceeded");
+    let mut registered = None;
+    for name in catalog.families.keys() {
+        let entry = batch::entry(&catalog, name)?;
+        if entry.manifest == path {
+            ensure!(registered.is_none(), "ambiguous native registered manifest path");
+            registered = Some(Registration { catalog_family: name.clone(), entry });
+        }
+    }
+    let registered = if let Some(registered) = registered {
+        registered
     } else {
-        batch::FamilyEntry {
-            kind: if family::dispatcher(declared) { "dispatcher" } else { "family" }.into(),
-            manifest: PathBuf::from(format!("tools/port/{}.toml", declared.family)),
-            live: None,
-            prepare: None,
+        ensure!(!catalog.families.contains_key(&declared.family), "native family registration path differs");
+        Registration {
+            catalog_family: declared.family.clone(),
+            entry: batch::FamilyEntry {
+                kind: if family::dispatcher(declared) { "dispatcher" } else { "family" }.into(),
+                manifest: PathBuf::from(format!("tools/port/{}.toml", declared.family)),
+                live: None,
+                prepare: None,
+            },
         }
     };
     // Callers parsed this declaration from its authenticated asset. Bind that
     // path here instead of decoding its complete fixture payload again.
-    ensure!(relative(path) && entry.manifest == path, "native family registration path differs");
-    Ok(entry)
+    ensure!(relative(path) && registered.entry.manifest == path, "native family registration path differs");
+    Ok(registered)
 }
 
 pub(super) fn manifest(checkout: &Path, path: &Path, recipe: Option<&NativeRecipe>) -> Result<Manifest> {
@@ -123,12 +136,13 @@ pub(super) fn normalize_manifest(
 }
 
 pub(super) struct Registration {
-    pub family: String,
+    pub catalog_family: String,
     pub entry: batch::FamilyEntry,
 }
 
 pub(super) fn registration(checkout: &Path, contract: &NativeContract, original: &Manifest) -> Result<Registration> {
-    let entry = registered_entry(checkout, &contract.manifest.file, original)?;
+    let registration = registered_entry(checkout, &contract.manifest.file, original)?;
+    let entry = &registration.entry;
     ensure!(entry.prepare.is_none(), "native family registration differs");
     if let Some(NativeRecipe::DirectAnimation { .. }) = contract.recipe {
         ensure!(
@@ -137,11 +151,11 @@ pub(super) fn registration(checkout: &Path, contract: &NativeContract, original:
         );
     } else {
         ensure!(
-            recipe_for_entry(checkout, original, &entry)? == contract.recipe && contract.family == original.family,
+            recipe_for_entry(checkout, original, entry)? == contract.recipe && contract.family == original.family,
             "native registered recipe differs"
         );
     }
-    Ok(Registration { family: original.family.clone(), entry })
+    Ok(registration)
 }
 
 pub(super) fn harness(recipe: Option<&NativeRecipe>) -> Vec<&'static str> {

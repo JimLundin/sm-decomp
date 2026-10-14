@@ -496,7 +496,7 @@ fn provenance(
             let reviewed = check_asset(owner, catalog)?;
             let inventory: batch::Catalog = family::object(&reviewed)?;
             ensure!(
-                sealed(&batch::entry(&inventory, &registration.family)?)? == sealed(&registration.entry)?,
+                sealed(&batch::entry(&inventory, &registration.catalog_family)?)? == sealed(&registration.entry)?,
                 "reviewed catalog entry differs"
             );
         }
@@ -1503,6 +1503,34 @@ mod tests {
         )
         .unwrap_err();
         ensure!(error.to_string().contains("registration path differs"), "unexpected rejection: {error:#}");
+        Ok(())
+    }
+
+    #[test]
+    fn registered_catalog_alias_preserves_declared_family_and_coverage() -> Result<()> {
+        let checkout = current_checkout();
+        let path = Path::new("tools/port/instructions.toml");
+        let declared: Manifest = family::object(&checkout.join(path))?;
+        let limits = NativeLimits {
+            timeout_seconds: 60,
+            writable_bytes: 128 * 1024 * 1024,
+            stdout_bytes: 4096,
+            stderr_bytes: 4096,
+            stdin_bytes: 0,
+        };
+        let contract = contract_for_family(
+            &checkout,
+            path,
+            Asset::default(),
+            NativeProvenance::NativeScope { scope: Asset::default(), checkout: checkout.clone() },
+            limits.clone(),
+            limits,
+        )?;
+        assert_eq!(contract.family, "enemy-instructions");
+        assert_eq!(contract.coverage, coverage(&declared)?);
+        let registration = recipes::registration(&checkout, &contract, &declared)?;
+        assert_eq!(registration.catalog_family, "instructions");
+        assert_eq!(registration.entry.manifest, path);
         Ok(())
     }
 
