@@ -350,7 +350,9 @@ pub(crate) fn build_with(
         run: run.into(),
         extra: manifest.rust_dependencies.clone(),
     };
-    let dependencies = if execution.is_some() {
+    let dependencies = if inputs::captured_ridley_manifest(manifest) {
+        inputs::captured_ridley_dependencies(dependency_request, manifest, execution.is_some())?
+    } else if execution.is_some() {
         inputs::confined_dependencies(dependency_request)?
     } else {
         inputs::dependencies(dependency_request)?

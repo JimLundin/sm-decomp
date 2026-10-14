@@ -10,6 +10,37 @@ use std::{
     path::{Path, PathBuf},
 };
 
+// This original captured Ridley log is 71,595,494 bytes. Its exact identity,
+// not an arbitrary family filename, selects the bounded streaming exception.
+pub(crate) const CAPTURED_RIDLEY_EVENT: &str = "/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-inventory/1791858734336387661-2/ridley-subsystem-events.jsonl";
+const CAPTURED_RIDLEY_EVENT_SHA256: &str = "f1f286cae8090e5f23f8e1e9b0a20fcc4de41d91766f349c9a0be7518eec1f35";
+const CAPTURED_RIDLEY_EVENT_BYTES: u64 = 128 * 1024 * 1024;
+const CAPTURED_RIDLEY_SNAPSHOT: &str = "dependency-ridley-subsystem-events.jsonl";
+
+pub(crate) fn captured_ridley_manifest(manifest: &crate::family_model::Manifest) -> bool {
+    manifest.family == "ridley-subsystem-captured"
+        && manifest.callback_adapter.as_deref() == Some("ridley-subsystem")
+        && manifest.rust_dependencies.iter().any(|path| path == Path::new(CAPTURED_RIDLEY_EVENT))
+}
+
+pub(crate) fn captured_ridley_event_digest(path: &Path) -> Result<String> {
+    let hash = bounded::digest_limit(path, CAPTURED_RIDLEY_EVENT_BYTES)?;
+    ensure!(hash == CAPTURED_RIDLEY_EVENT_SHA256, "original captured Ridley event input changed");
+    Ok(hash)
+}
+
+/// A family run may retain this one larger snapshot only for the exact original
+/// captured declaration, and its bytes must equal the reviewed event asset.
+pub(crate) fn artifact_digest(run: &Path, path: &Path) -> Result<String> {
+    if path == run.join(CAPTURED_RIDLEY_SNAPSHOT) {
+        let manifest = crate::family::object(&run.join("manifest.toml"))?;
+        ensure!(captured_ridley_manifest(&manifest), "large Ridley snapshot has no reviewed declaration");
+        captured_ridley_event_digest(path)
+    } else {
+        digest(path)
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct WrapperRequest {
@@ -256,19 +287,42 @@ pub(crate) fn dep_paths(text: &str) -> Result<Vec<String>> {
 }
 
 pub fn dependencies(request: DependenciesRequest) -> Result<BTreeMap<String, String>> {
-    dependency_inventory(request, false)
+    dependency_inventory(request, false, false)
 }
 
 pub(crate) fn confined_dependencies(request: DependenciesRequest) -> Result<BTreeMap<String, String>> {
-    dependency_inventory(request, true)
+    dependency_inventory(request, true, false)
 }
 
-fn dependency_inventory(request: DependenciesRequest, confined: bool) -> Result<BTreeMap<String, String>> {
-    bounded::limited(|| dependency_inventory_bounded(request, confined))
+pub(crate) fn captured_ridley_dependencies(
+    request: DependenciesRequest,
+    manifest: &crate::family_model::Manifest,
+    confined: bool,
+) -> Result<BTreeMap<String, String>> {
+    ensure!(
+        captured_ridley_manifest(manifest) && request.extra == manifest.rust_dependencies,
+        "captured Ridley dependency profile differs from its original declaration"
+    );
+    dependency_inventory(request, confined, true)
 }
 
-fn dependency_inventory_bounded(request: DependenciesRequest, confined: bool) -> Result<BTreeMap<String, String>> {
-    ensure!(request.extra.len() <= 4096, "compiler extra input inventory exceeded");
+fn dependency_inventory(
+    request: DependenciesRequest,
+    confined: bool,
+    captured_ridley: bool,
+) -> Result<BTreeMap<String, String>> {
+    bounded::limited(|| dependency_inventory_bounded(request, confined, captured_ridley))
+}
+
+fn dependency_inventory_bounded(
+    request: DependenciesRequest,
+    confined: bool,
+    captured_ridley: bool,
+) -> Result<BTreeMap<String, String>> {
+    ensure!(
+        request.extra.len() <= if captured_ridley { 8192 } else { 4096 },
+        "compiler extra input inventory exceeded"
+    );
     let checkout = fs::canonicalize(request.checkout)?;
     let run = fs::canonicalize(request.run)?;
     let mut paths = BTreeSet::new();
@@ -310,8 +364,14 @@ fn dependency_inventory_bounded(request: DependenciesRequest, confined: bool) ->
             continue;
         }
         let key = p.strip_prefix(&checkout).unwrap_or(&p).to_string_lossy().into_owned();
-        result.insert(key, digest(&p)?);
-        snapshot(&p, &run.join(format!("dependency-{index:03}.rs")), confined)?;
+        if captured_ridley && p == Path::new(CAPTURED_RIDLEY_EVENT) {
+            let hash = captured_ridley_event_digest(&p)?;
+            bounded::immutable_copy(&p, &run.join(CAPTURED_RIDLEY_SNAPSHOT), &hash, CAPTURED_RIDLEY_EVENT_BYTES)?;
+            result.insert(key, hash);
+        } else {
+            result.insert(key, digest(&p)?);
+            snapshot(&p, &run.join(format!("dependency-{index:03}.rs")), confined)?;
+        }
     }
     // Keep the tool identity alongside the source inventory, so changing the
     // discovery algorithm cannot silently admit an older dependency contract.

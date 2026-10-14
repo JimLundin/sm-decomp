@@ -340,3 +340,52 @@ retirement remain with the integration owner. Free space: 165,076,750,336 bytes.
 
 The separate transient descriptor EACCES observation from Cargo `compact-02`
 is still under diagnosis; v4 does not claim to fix a live exec transition.
+
+## Per-producer native reservations and complete captured-Ridley inputs
+
+New native intents record reconciliation mode. Every producer still reserves
+its full worst case before publishing an invocation or launching. A completed
+producer then releases only the unused part of that reservation; the charge
+retains its authenticated operation references, parent output/log copies,
+invocation/timing framing and any future callback snapshot expansion. Large
+Program/argv declarations receive a serialization-derived framing allowance.
+Successful and failed producers follow the same reconciliation. Incomplete
+producers keep their reservation. Authentication checks each original peak and
+the exact contiguous retained reservation chain. Historical intents and their
+unchanged replay keep cumulative mode.
+
+Real proof `/tmp/sm-ticket10-native-proofs/reservation-v2` passed in 0.54 seconds:
+two successful confined printf producers and one deliberate invalid-format
+failure. Worst-case producer reservation: 3,351,086 bytes; whole proof gate:
+3,449,390 bytes; completed retained charge: 32,989 bytes. Expired replay left
+producer results unchanged, an insufficient gate created no invocation, both
+cleanup passes reclaimed zero bytes, and post-cleanup replay authenticated.
+V1's failed test setup remains retained: GNU printf accepted the intended
+invalid-option text, so the assertion failed after three successful producers.
+Its finished output received both zero-byte cleanup passes; no failure was
+converted into acceptance.
+
+Captured Ridley's original declaration contains 5,371 dependency paths. The
+Ridley recipe now has a fixed 8,192-path ceiling at contract construction,
+preparation and candidate authentication; ordinary recipes retain 4,096.
+Its original `ridley-subsystem-events.jsonl` is 71,595,494 bytes, exposing the
+separate generic 64 MiB hash/snapshot bound. Only that exact original path and
+SHA-256 (`f1f286cae8090e5f23f8e1e9b0a20fcc4de41d91766f349c9a0be7518eec1f35`)
+select a fixed 128 MiB streaming profile. The original file is preserved whole
+as `dependency-ridley-subsystem-events.jsonl`; all other declared inputs keep
+their normal limits. Family artifact inventory and source authentication, native
+candidate checks, and native retention references recognize only this exact
+reviewed asset. Streaming copies authenticate identity, account reads/writes,
+recover their pending publication, and preserve immutable completed bytes.
+
+Core tests retained in `/tmp/sm-ticket10-native-proofs/core-tests-v1` passed:
+eight native tests, ten bounded-input tests, five dependency tests and three
+reservation tests. The full captured contract test preserves every coverage row
+and rejects the same large asset for plain/callback recipes. Generic tests keep
+the 64 MiB read/hash default and prove explicit streamed-copy budget, identity,
+pending-publication and unchanged-replay controls.
+
+Complete catalog preparation, whole pause 247/360 matrices, specialized native
+proofs and historical receipt reauthentication remain next. Exact core reader
+and pre-commit source overlay are retained with reservation-v2. The temporary
+translation_migration.rs compile-only edit remains unowned and uncommitted.

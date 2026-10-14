@@ -214,11 +214,18 @@ fn stable(before: &fs::Metadata, after: &fs::Metadata) -> bool {
 }
 
 pub(crate) fn digest(path: &Path) -> Result<String> {
+    digest_limit(path, MAX_FILE_BYTES)
+}
+
+/// A separately reviewed large retained input may be streamed without raising
+/// the default read, document, write, or hash limit for other callers.
+pub(crate) fn digest_limit(path: &Path, maximum: u64) -> Result<String> {
     limited(|| {
+        ensure!(maximum > 0 && maximum <= 128 * 1024 * 1024, "trusted streaming hash bound exceeded");
         safe(path)?;
         let mut file = OpenOptions::new().read(true).custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK).open(path)?;
         let before = file.metadata()?;
-        ensure!(before.is_file() && before.len() <= MAX_FILE_BYTES, "trusted input hash extent exceeded");
+        ensure!(before.is_file() && before.len() <= maximum, "trusted input hash extent exceeded");
         account(before.len())?;
         let mut hash = Sha256::new();
         let mut count = 0u64;
@@ -235,6 +242,71 @@ pub(crate) fn digest(path: &Path) -> Result<String> {
         }
         ensure!(stable(&before, &file.metadata()?) && count == before.len(), "trusted input changed during hash");
         Ok(format!("{:x}", hash.finalize()))
+    })
+}
+
+/// Publish an exact retained input through bounded buffers. Existing final
+/// bytes are immutable; a failed copy removes only its own unsealed pending
+/// file. A crash's identified pending file is recovered on an identical retry.
+pub(crate) fn immutable_copy(source: &Path, destination: &Path, expected_sha256: &str, maximum: u64) -> Result<()> {
+    limited(|| {
+        ensure!(maximum > 0 && maximum <= 128 * 1024 * 1024, "trusted streaming copy bound exceeded");
+        safe(source)?;
+        safe(destination)?;
+        if destination.exists() {
+            ensure!(digest_limit(destination, maximum)? == expected_sha256, "immutable streamed input changed");
+            return Ok(());
+        }
+        let pending = destination.with_file_name(format!(
+            "{}.pending",
+            destination.file_name().context("streamed input name missing")?.to_string_lossy()
+        ));
+        safe(&pending)?;
+        if pending.exists() {
+            let metadata = pending.symlink_metadata()?;
+            ensure!(metadata.is_file() && metadata.len() <= maximum, "streamed pending input extent changed");
+            fs::remove_file(&pending)?;
+        }
+        let mut input = OpenOptions::new().read(true).custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK).open(source)?;
+        let before = input.metadata()?;
+        ensure!(before.is_file() && before.len() <= maximum, "streamed input extent exceeded");
+        account(before.len().checked_mul(2).context("streamed input accounting overflow")?)?;
+        let mut output = OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK)
+            .open(&pending)?;
+        let copied = (|| -> Result<()> {
+            let mut hash = Sha256::new();
+            let mut count = 0u64;
+            let mut buffer = [0u8; 64 * 1024];
+            loop {
+                check()?;
+                let read = input.read(&mut buffer)?;
+                if read == 0 {
+                    break;
+                }
+                count = count.checked_add(read as u64).context("streamed input extent overflow")?;
+                ensure!(count <= before.len(), "streamed input grew during publication");
+                hash.update(&buffer[..read]);
+                output.write_all(&buffer[..read])?;
+            }
+            ensure!(
+                stable(&before, &input.metadata()?) && count == before.len(),
+                "streamed input changed during publication"
+            );
+            ensure!(format!("{:x}", hash.finalize()) == expected_sha256, "streamed input identity changed");
+            output.sync_all()?;
+            check()?;
+            fs::rename(&pending, destination)?;
+            fs::File::open(destination.parent().context("streamed input parent missing")?)?.sync_all()?;
+            Ok(())
+        })();
+        drop(output);
+        if copied.is_err() {
+            let _ = fs::remove_file(&pending);
+        }
+        copied
     })
 }
 
@@ -653,6 +725,45 @@ pub(crate) mod tests {
         })
         .unwrap_err();
         assert!(error.to_string().contains("budget"));
+        Ok(())
+    }
+
+    #[test]
+    fn explicit_streaming_hash_preserves_the_default_file_limit() -> Result<()> {
+        let directory = Directory::new()?;
+        let source = directory.0.join("large-input");
+        fs::File::create(&source)?.set_len(MAX_FILE_BYTES + 1)?;
+        assert!(digest(&source).unwrap_err().to_string().contains("hash extent"));
+        assert!(digest_limit(&source, 128 * 1024 * 1024 + 1).is_err());
+        assert!(read(&source).is_err());
+        assert_eq!(digest_limit(&source, 128 * 1024 * 1024)?.len(), 64);
+        Ok(())
+    }
+
+    #[test]
+    fn immutable_streamed_copy_preserves_budget_identity_and_replay() -> Result<()> {
+        let directory = Directory::new()?;
+        let source = directory.0.join("source");
+        let destination = directory.0.join("retained");
+        let expected = format!("{:x}", Sha256::digest(b"exact"));
+        fs::write(&source, b"exact")?;
+        let error =
+            until(now_unix_ms()? + 1000, 9, || immutable_copy(&source, &destination, &expected, 1024)).unwrap_err();
+        assert!(error.to_string().contains("budget"));
+        assert!(!destination.exists() && !directory.0.join("retained.pending").exists());
+        fs::write(directory.0.join("retained.pending"), b"par")?;
+        immutable_copy(&source, &destination, &expected, 1024)?;
+        let modified = fs::metadata(&destination)?.modified()?;
+        immutable_copy(&source, &destination, &expected, 1024)?;
+        assert_eq!(fs::metadata(&destination)?.modified()?, modified);
+        assert_eq!(fs::read(&destination)?, b"exact");
+        fs::write(&source, b"other")?;
+        let failed = directory.0.join("failed");
+        assert!(immutable_copy(&source, &failed, &expected, 1024).is_err());
+        assert!(!failed.exists() && !directory.0.join("failed.pending").exists());
+        fs::write(&destination, b"other")?;
+        assert!(immutable_copy(&source, &destination, &expected, 1024).is_err());
+        assert!(until(0, 1024, || immutable_copy(&source, &failed, &expected, 1024)).is_err());
         Ok(())
     }
 

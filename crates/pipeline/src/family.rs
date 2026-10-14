@@ -994,7 +994,7 @@ fn inventory_bounded(run: &Path, base: &Path, result: &mut BTreeMap<String, Stri
         } else if path != run.join("verdict.toml")
             && !path.file_name().is_some_and(|name| name.to_string_lossy().ends_with(".metrics.toml"))
         {
-            result.insert(path.strip_prefix(run)?.to_string_lossy().into_owned(), digest(&path)?);
+            result.insert(path.strip_prefix(run)?.to_string_lossy().into_owned(), inputs::artifact_digest(run, &path)?);
             ensure!(result.len() <= 65536, "family artifact inventory count exceeded");
         }
     }
@@ -1264,9 +1264,16 @@ fn authenticate_with_source_bounded(request: AuthenticateRequest, source: &Path)
     }
     let pinned = verify_source(&checkout, source)?;
     ensure!(Some(pinned) == verdict.source, "family pinned source differs");
+    let captured_ridley = ridley && inputs::captured_ridley_manifest(&manifest);
     for map in [&implementation.rust_dependencies, &implementation.harness_sources] {
         for (name, expected) in map {
-            ensure!(digest(&source_path(&checkout, name))? == *expected, "family implementation changed: {name}");
+            let path = source_path(&checkout, name);
+            let hash = if captured_ridley && path == Path::new(inputs::CAPTURED_RIDLEY_EVENT) {
+                inputs::captured_ridley_event_digest(&path)?
+            } else {
+                digest(&path)?
+            };
+            ensure!(hash == *expected, "family implementation changed: {name}");
         }
     }
     for required in ["main.rs", "inputs.rs", "builds.rs"] {

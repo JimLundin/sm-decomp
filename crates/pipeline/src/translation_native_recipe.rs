@@ -19,6 +19,21 @@ pub(crate) enum NativeRecipe {
 
 const GENERATED_PLM: &str = ".scratch/translation-native/plm-instructions/manifest.toml";
 
+pub(super) fn input_inventory_limit(recipe: Option<&NativeRecipe>) -> usize {
+    // The original captured Ridley declaration has 5,371 dependency files.
+    // Retain its whole input closure under a fixed ceiling; plain scopes keep
+    // their original smaller declaration bound.
+    if matches!(recipe, Some(NativeRecipe::Ridley)) { 8192 } else { 4096 }
+}
+
+pub(super) fn dependency_digest(recipe: Option<&NativeRecipe>, path: &Path) -> Result<String> {
+    if matches!(recipe, Some(NativeRecipe::Ridley)) && path == Path::new(inputs::CAPTURED_RIDLEY_EVENT) {
+        inputs::captured_ridley_event_digest(path)
+    } else {
+        bounded::digest(path)
+    }
+}
+
 pub(crate) fn prepare_generated_plm(checkout: &Path, output: &Path) -> Result<crate::family_model::PlmGeneration> {
     bounded::limited(|| crate::plm_fixtures::generate(checkout, output, Some(&checkout.join(GENERATED_PLM))))
 }

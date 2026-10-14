@@ -36,6 +36,9 @@ pub(crate) struct StrictExecution {
     /// parent copies. Reserving before launch bounds peak production bytes.
     pub max_output_bytes: u64,
     pub reserved_bytes: RefCell<u64>,
+    /// Historical intents keep cumulative worst-case charging. New native
+    /// intents reconcile each completed producer before admitting its successor.
+    pub reconcile_reservations: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -46,6 +49,8 @@ pub(crate) struct StrictInvocation {
     pub requested_limits: RunLimits,
     pub limits: RunLimits,
     pub reserved_bytes: u64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reservation_before_bytes: Option<u64>,
 }
 
 #[derive(Clone, Copy)]
@@ -116,6 +121,122 @@ pub(crate) fn strict_output_path(run: &Path, label: &str, name: &Path) -> PathBu
     } else {
         run.join(name)
     }
+}
+
+fn has_callback_snapshots(program: &Program) -> bool {
+    program.outputs.iter().any(|path| path == Path::new("callback-states.bin"))
+}
+
+fn producer_reservation_bytes(
+    program: &Program,
+    limits: &RunLimits,
+    deadline_unix_ms: u64,
+    reconcile_reservations: bool,
+) -> Result<u64> {
+    let operation = translation_execution::operation::reserve_bytes_until(program, limits, 0, deadline_unix_ms)?;
+    let framing = if reconcile_reservations {
+        // Invocation TOML contains the Program; timing TOML repeats its argv.
+        // Keep the fixed allowance for context, limits, diagnostic and table
+        // prefixes, and account for arbitrary admitted paths/arguments too.
+        u64::try_from(toml::to_string(program)?.len())?
+            .checked_mul(2)
+            .context("native producer framing reservation overflow")?
+    } else {
+        0
+    };
+    operation
+        .checked_add(limits.writable_bytes)
+        .and_then(|n| {
+            n.checked_add(if reconcile_reservations && has_callback_snapshots(program) {
+                limits.writable_bytes
+            } else {
+                0
+            })
+        })
+        .and_then(|n| n.checked_add(framing))
+        .and_then(|n| n.checked_add(64 * 1024))
+        .context("native producer reservation overflow")
+}
+
+pub(crate) fn reservation_total(before: u64, bytes: u64, maximum: u64) -> Result<u64> {
+    let next = before.checked_add(bytes).context("native gate reservation overflow")?;
+    ensure!(next <= maximum, "native gate aggregate output reservation exhausted ({next} > {maximum})");
+    Ok(next)
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct ProducerReservation {
+    pub before_bytes: u64,
+    pub reserved_bytes: u64,
+    pub retained_bytes: u64,
+}
+
+pub(crate) fn authenticate_reservations(
+    parent_bytes: u64,
+    reservations: &mut [ProducerReservation],
+    maximum: u64,
+) -> Result<u64> {
+    let mut held = reservation_total(0, parent_bytes, maximum)?;
+    reservations.sort_by_key(|reservation| reservation.before_bytes);
+    for reservation in reservations {
+        ensure!(reservation.before_bytes == held, "native completed reservation chain changed");
+        reservation_total(held, reservation.reserved_bytes, maximum)?;
+        ensure!(
+            reservation.retained_bytes <= reservation.reserved_bytes,
+            "native retained producer exceeded its prelaunch reservation"
+        );
+        held = reservation_total(held, reservation.retained_bytes, maximum)?;
+    }
+    Ok(held)
+}
+
+/// The caller first authenticates the exact operation request and references.
+/// Charge its retained closure, the immutable parent copies, and framing. A
+/// shared identity is conservatively charged in each producer's closure.
+pub(crate) fn retained_producer_bytes(
+    invocation: &StrictInvocation,
+    output: &translation_execution::operation::OperationResult,
+    references: &[translation_execution::retention::Reference],
+    run: &Path,
+    label: &str,
+) -> Result<u64> {
+    let mut unique = std::collections::BTreeMap::new();
+    for reference in references {
+        if let Some(previous) = unique.insert(&reference.path, reference) {
+            ensure!(previous == reference, "native retained producer reference changed");
+        }
+    }
+    let mut bytes = 0u64;
+    let mut add = |amount: u64| -> Result<()> {
+        bytes = bytes.checked_add(amount).context("native retained producer extent overflow")?;
+        Ok(())
+    };
+    for reference in unique.values() {
+        add(reference.bytes)?;
+    }
+    for amount in [output.stdout.len(), output.stderr.len(), output.diagnostic.len()] {
+        add(u64::try_from(amount)?)?;
+    }
+    for content in output.outputs.values() {
+        add(u64::try_from(content.len())?)?;
+    }
+    if has_callback_snapshots(&invocation.program)
+        && let Some(packed) = output.outputs.get(Path::new("callback-states.bin"))
+    {
+        // The callback adapter expands one full WRAM image per packed record
+        // before the next producer. Charge those future parent files now. An
+        // invalid stream cannot produce more images than this bounded count.
+        let count = u64::try_from(packed.len() / (9 + 0x20000))?;
+        add(count.checked_mul(0x20000).context("native callback expansion extent overflow")?)?;
+    }
+    for suffix in ["invocation.toml", "timing.toml"] {
+        let path = run.join(format!("{label}.{suffix}"));
+        bounded::safe(&path)?;
+        let metadata = fs::symlink_metadata(&path)?;
+        ensure!(metadata.is_file(), "native retained producer framing is not a regular file");
+        add(metadata.len())?;
+    }
+    Ok(bytes)
 }
 
 impl StrictExecution {
@@ -272,10 +393,7 @@ impl StrictExecution {
         } else {
             self.check_deadline()?;
             let reserved_bytes =
-                translation_execution::operation::reserve_bytes_until(program, limits, 0, self.deadline_unix_ms)?
-                    .checked_add(limits.writable_bytes)
-                    .and_then(|n| n.checked_add(64 * 1024))
-                    .context("native producer reservation overflow")?;
+                producer_reservation_bytes(program, limits, self.deadline_unix_ms, self.reconcile_reservations)?;
             let remaining = self
                 .deadline_unix_ms
                 .saturating_sub(u64::try_from(SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis())?);
@@ -289,17 +407,31 @@ impl StrictExecution {
                 requested_limits: limits.clone(),
                 limits: actual_limits,
                 reserved_bytes,
+                reservation_before_bytes: self.reconcile_reservations.then(|| *self.reserved_bytes.borrow()),
             };
             self.reserve(invocation.reserved_bytes)?;
             atomic_toml(&invocation_path, &invocation)?;
             invocation
         };
-        // Completed invocations consume the same reserved slot on recovery.
-        // They never launch again and never rewrite sealed input metadata.
-        if resumed {
-            self.reserve(invocation.reserved_bytes)?;
-        }
         let operation_directory = translation_execution::operation::directory(&self.operation_root, &context)?;
+        ensure!(
+            invocation.reservation_before_bytes.is_some() == self.reconcile_reservations,
+            "native reservation mode changed"
+        );
+        let completed = operation_directory.join("result.json").is_file();
+        let held_reservation = !resumed || !self.reconcile_reservations || !completed;
+        if resumed {
+            if let Some(before) = invocation.reservation_before_bytes {
+                ensure!(before == *self.reserved_bytes.borrow(), "native reservation prefix changed on replay");
+                reservation_total(before, invocation.reserved_bytes, self.max_output_bytes)?;
+            }
+            // Existing completed producers never launch again. Their original
+            // peak is checked above, and publication reconciles their exact
+            // retained charge before a later producer can be admitted.
+            if held_reservation {
+                self.reserve(invocation.reserved_bytes)?;
+            }
+        }
         if resumed && !operation_directory.join("intent.json").exists() {
             bail!("native invocation was interrupted before durable launch; explicit operator retry required");
         }
@@ -335,10 +467,10 @@ impl StrictExecution {
             if !output.diagnostic.is_empty() {
                 immutable_output(&run.join(format!("{label}.diagnostic.txt")), output.diagnostic.as_bytes())?;
             }
-            for (name, bytes) in output.outputs {
+            for (name, bytes) in &output.outputs {
                 let destination = strict_output_path(run, label, &name);
                 fs::create_dir_all(destination.parent().context("strict output parent missing")?)?;
-                immutable_output(&destination, &bytes)?;
+                immutable_output(&destination, bytes)?;
                 #[cfg(unix)]
                 if destination
                     .file_name()
@@ -372,14 +504,37 @@ impl StrictExecution {
             } else {
                 atomic_toml(&timing, &record)?;
             }
-            ensure!(output.passed, "confined {label} failed: {}", output.diagnostic);
             Ok(record)
         };
-        if u64::try_from(SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis())? >= self.deadline_unix_ms {
-            bounded::reconcile(8 * bounded::DEFAULT_BYTES, publish)
-        } else {
-            publish()
+        let record =
+            if u64::try_from(SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis())? >= self.deadline_unix_ms {
+                bounded::reconcile(8 * bounded::DEFAULT_BYTES, publish)?
+            } else {
+                publish()?
+            };
+        if let Some(before) = invocation.reservation_before_bytes {
+            let reconcile = || -> Result<()> {
+                let references = translation_execution::operation::references(&self.operation_root, &context)?;
+                let retained = retained_producer_bytes(&invocation, &output, &references, run, label)?;
+                ensure!(retained <= invocation.reserved_bytes, "native producer exceeded its prelaunch reservation");
+                let expected = if held_reservation {
+                    reservation_total(before, invocation.reserved_bytes, self.max_output_bytes)?
+                } else {
+                    before
+                };
+                let mut held = self.reserved_bytes.borrow_mut();
+                ensure!(*held == expected, "native producer reservation ownership changed");
+                *held = reservation_total(before, retained, self.max_output_bytes)?;
+                Ok(())
+            };
+            if u64::try_from(SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis())? >= self.deadline_unix_ms {
+                bounded::reconcile(8 * bounded::DEFAULT_BYTES, reconcile)?;
+            } else {
+                reconcile()?;
+            }
         }
+        ensure!(output.passed, "confined {label} failed: {}", output.diagnostic);
+        Ok(record)
     }
 
     fn check_deadline(&self) -> Result<()> {
@@ -392,13 +547,7 @@ impl StrictExecution {
 
     fn reserve(&self, bytes: u64) -> Result<()> {
         let mut used = self.reserved_bytes.borrow_mut();
-        let next = used.checked_add(bytes).context("native gate reservation overflow")?;
-        ensure!(
-            next <= self.max_output_bytes,
-            "native gate aggregate output reservation exhausted ({next} > {})",
-            self.max_output_bytes
-        );
-        *used = next;
+        *used = reservation_total(*used, bytes, self.max_output_bytes)?;
         Ok(())
     }
 
@@ -451,6 +600,135 @@ mod strict_tests {
     use super::*;
 
     #[test]
+    fn reconciled_producers_share_capacity_without_forgiving_retained_bytes() -> Result<()> {
+        let original = [
+            ProducerReservation { before_bytes: 20, reserved_bytes: 100, retained_bytes: 10 },
+            ProducerReservation { before_bytes: 30, reserved_bytes: 100, retained_bytes: 25 },
+        ];
+        let mut records = original.clone();
+        records.reverse();
+        assert_eq!(authenticate_reservations(20, &mut records, 130)?, 55);
+        assert!(reservation_total(120, 100, 130).is_err());
+        let mut forged = original.clone();
+        forged[1].before_bytes = 29;
+        assert!(authenticate_reservations(20, &mut forged, 130).is_err());
+        let mut excess = original.clone();
+        excess[0].retained_bytes = 101;
+        assert!(authenticate_reservations(20, &mut excess, 130).is_err());
+        let mut peak = original.clone();
+        peak[1].reserved_bytes = 101;
+        assert!(authenticate_reservations(20, &mut peak, 130).is_err());
+        assert!(reservation_total(u64::MAX, 1, u64::MAX).is_err());
+        Ok(())
+    }
+
+    #[test]
+    #[ignore = "real bounded native producer accounting and replay proof; retains every result"]
+    fn real_producers_reconcile_unused_reservations_and_replay() -> Result<()> {
+        let root = PathBuf::from(std::env::var("SM_NATIVE_RESERVATION_PROOF")?);
+        fs::create_dir_all(root.join("run"))?;
+        let helper = PathBuf::from(std::env::var("SM_NATIVE_RECIPE_HELPER")?);
+        let program = Program {
+            executable: fs::canonicalize("/usr/bin/printf")?,
+            arguments: vec!["native reservation proof\\n".into()],
+            inputs: vec![],
+            runtime: confinement::helper_runtime()?,
+            helper: helper.clone(),
+            outputs: vec![],
+        };
+        let limits = RunLimits {
+            timeout: Duration::from_secs(5),
+            writable_bytes: 1024 * 1024,
+            stdout_bytes: 4096,
+            stderr_bytes: 4096,
+            stdin_bytes: 0,
+        };
+        let worst = producer_reservation_bytes(&program, &limits, bounded::now_unix_ms()? + 60_000, true)?;
+        let maximum = worst.checked_add(96 * 1024).context("proof budget overflow")?;
+        let context = OperationContext {
+            run_id: translation_execution::model::sha256(root.display().to_string()),
+            attempt: 1,
+            policy_sha256: translation_execution::model::sha256("native producer reservation proof"),
+            operation_key: translation_execution::model::sha256("native producer reservation proof"),
+            phase: translation_execution::model::ExecutionPhase::Candidate,
+        };
+        let make = |deadline_unix_ms, max_output_bytes| StrictExecution {
+            helper: helper.clone(),
+            rustc: root.join("unused-rustc"),
+            c_compiler: root.join("unused-cc"),
+            compiler_runtime: vec![],
+            operation_root: root.join("operations"),
+            context: context.clone(),
+            root: "/home/jim/sm-decomp/out/pipeline".into(),
+            workers: 4,
+            compiler_limits: limits.clone(),
+            fixture_limits: limits.clone(),
+            rust_inputs: vec![],
+            c_inputs: vec![],
+            deadline_unix_ms,
+            max_output_bytes,
+            reserved_bytes: RefCell::new(0),
+            reconcile_reservations: true,
+        };
+        let execution = make(bounded::now_unix_ms()? + 60_000, maximum);
+        for label in ["first", "second"] {
+            execution.execute(&program, &limits, &root.join("run"), label)?;
+        }
+        let mut failed_program = program.clone();
+        failed_program.arguments = vec!["%".into()];
+        let before_failure = *execution.reserved_bytes.borrow();
+        let failure = execution.execute(&failed_program, &limits, &root.join("run"), "failed").unwrap_err();
+        ensure!(failure.to_string().contains("confined failed failed"), "unexpected producer failure: {failure}");
+        let retained = *execution.reserved_bytes.borrow();
+        ensure!(retained > before_failure && retained < worst, "completed failed producer was not charged precisely");
+        let mut results = Vec::new();
+        for label in ["first", "second", "failed"] {
+            let invocation: StrictInvocation =
+                crate::family::object(&root.join("run").join(format!("{label}.invocation.toml")))?;
+            let result = translation_execution::operation::reference(&root.join("operations"), &invocation.context)?;
+            results.push((result.path.clone(), fs::metadata(&result.path)?.modified()?));
+        }
+        let retry = make(0, maximum);
+        for label in ["first", "second"] {
+            retry.execute(&program, &limits, &root.join("run"), label)?;
+        }
+        assert!(retry.execute(&failed_program, &limits, &root.join("run"), "failed").is_err());
+        ensure!(*retry.reserved_bytes.borrow() == retained, "replay changed native retained reservation");
+        for (path, modified) in results {
+            ensure!(fs::metadata(path)?.modified()? == modified, "reservation replay rewrote a producer");
+        }
+        let denied = make(bounded::now_unix_ms()? + 60_000, worst - 1);
+        assert!(denied.execute(&program, &limits, &root.join("run"), "denied").is_err());
+        ensure!(!root.join("run/denied.invocation.toml").exists(), "over-budget producer was declared");
+        atomic_toml(
+            &root.join("summary.toml"),
+            &std::collections::BTreeMap::from([
+                ("producer_worst_case_bytes", worst),
+                ("gate_bytes", maximum),
+                ("retained_charge_bytes", retained),
+            ]),
+        )?;
+        for deduplicate in [false, true] {
+            let cleanup = crate::cleanup::cleanup(crate::cleanup::CleanupRequest {
+                root: root.clone(),
+                apply: true,
+                deduplicate,
+            })?;
+            atomic_toml(&root.join(if deduplicate { "cleanup-deduplicated.toml" } else { "cleanup.toml" }), &cleanup)?;
+        }
+        let after_cleanup = make(0, maximum);
+        for label in ["first", "second"] {
+            after_cleanup.execute(&program, &limits, &root.join("run"), label)?;
+        }
+        assert!(after_cleanup.execute(&failed_program, &limits, &root.join("run"), "failed").is_err());
+        ensure!(
+            *after_cleanup.reserved_bytes.borrow() == retained,
+            "cleanup changed native reservation authentication"
+        );
+        Ok(())
+    }
+
+    #[test]
     fn expired_gate_cannot_reserve_runtime_or_publish_a_producer_invocation() -> Result<()> {
         let root = std::env::temp_dir().join(format!(
             "sm-expired-producer-{}-{}",
@@ -486,6 +764,7 @@ mod strict_tests {
             deadline_unix_ms: 0,
             max_output_bytes: 4096,
             reserved_bytes: RefCell::new(0),
+            reconcile_reservations: true,
         };
         let program = Program {
             executable: root.join("program"),

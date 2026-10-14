@@ -221,6 +221,8 @@ struct NativeIntent {
     max_output_bytes: u64,
     operation_root: PathBuf,
     parent_reservation_bytes: u64,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    reconcile_producer_reservations: bool,
     helper: PathBuf,
     rustc: PathBuf,
     c_compiler: PathBuf,
@@ -423,7 +425,10 @@ fn contract_for_declared(
     let path = file(&checkout.join(manifest))?;
     let declared = recipes::normalize_manifest(checkout, original, recipe.as_ref())?;
     let candidate = file(&checkout.join(&declared.rust_module))?;
-    ensure!(declared.rust_dependencies.len() <= 4096, "native declared dependency inventory exceeded");
+    ensure!(
+        declared.rust_dependencies.len() <= recipes::input_inventory_limit(recipe.as_ref()),
+        "native declared dependency inventory exceeded"
+    );
     let sources = inputs::canonical_sources(&checkout, &[candidate], &declared.rust_imports)?;
     let mut frozen_inputs = BTreeMap::new();
     for path in sources {
@@ -447,7 +452,8 @@ fn contract_for_declared(
         );
         frozen_inputs.insert(
             path.to_str().context("native dependency path UTF-8")?.into(),
-            digest(&file(&checkout.join(path))?)?,
+            recipes::dependency_digest(recipe.as_ref(), &file(&checkout.join(path))?)
+                .with_context(|| format!("hash frozen native dependency {}", path.display()))?,
         );
     }
     frozen_inputs.insert("tools/dependencies.toml".into(), digest(&file(&checkout.join("tools/dependencies.toml"))?)?);
@@ -614,7 +620,8 @@ fn prepare_bounded_with_catalog(
     let registration = recipes::registration(&checkout, contract, &original)?;
     let manifest = recipes::normalize_manifest(&checkout, original, contract.recipe.as_ref())?;
     ensure!(
-        contract.frozen_inputs.len() <= 4096 && contract.coverage.len() <= 1024,
+        contract.frozen_inputs.len() <= recipes::input_inventory_limit(contract.recipe.as_ref())
+            && contract.coverage.len() <= 1024,
         "native frozen input or coverage inventory exceeded"
     );
     bounded::count(contract.frozen_inputs.len())?;
@@ -657,7 +664,7 @@ fn prepare_bounded_with_catalog(
                 || (contract.recipe.is_some()
                     || matches!(contract.provenance, NativeProvenance::ReviewedCatalog { .. }))
                     && Path::new(name).is_absolute())
-                && digest(&file(&checkout.join(name))?)? == *expected,
+                && recipes::dependency_digest(contract.recipe.as_ref(), &file(&checkout.join(name))?)? == *expected,
             "native frozen input changed: {name}"
         );
     }
@@ -692,7 +699,8 @@ fn prepare_bounded_with_catalog(
         );
         let name = dependency.to_str().context("native dependency path UTF-8")?;
         ensure!(
-            contract.frozen_inputs.get(name) == Some(&digest(&file(&checkout.join(dependency))?)?),
+            contract.frozen_inputs.get(name)
+                == Some(&recipes::dependency_digest(contract.recipe.as_ref(), &file(&checkout.join(dependency))?)?),
             "explicit native harness dependency missing: {name}"
         );
     }
@@ -731,13 +739,18 @@ fn prepare_bounded_with_catalog(
 
 fn check_candidate(prepared: &PreparedNative, checkout: &Path) -> Result<()> {
     ensure!(
-        prepared.contract.frozen_inputs.len() <= 4096 && prepared.source.files.len() <= 4096,
+        prepared.contract.frozen_inputs.len() <= recipes::input_inventory_limit(prepared.contract.recipe.as_ref())
+            && prepared.source.files.len() <= 4096,
         "native candidate authentication inventory exceeded"
     );
     for (path, expected) in &prepared.contract.frozen_inputs {
         bounded::check()?;
         if !mutable_candidate(prepared, path) {
-            ensure!(digest(&file(&checkout.join(path))?)? == *expected, "frozen native dependency changed: {path}");
+            ensure!(
+                recipes::dependency_digest(prepared.contract.recipe.as_ref(), &file(&checkout.join(path))?)?
+                    == *expected,
+                "frozen native dependency changed: {path}"
+            );
         }
     }
     check_asset(checkout, &prepared.contract.manifest)?;
@@ -894,6 +907,7 @@ fn run_bounded(
                 max_output_bytes: runtime.max_output_bytes,
                 operation_root: runtime.operation_root.clone(),
                 parent_reservation_bytes,
+                reconcile_producer_reservations: true,
                 helper: helper.clone(),
                 rustc: rustc.clone(),
                 c_compiler: c_compiler.clone(),
@@ -918,6 +932,7 @@ fn run_bounded(
             deadline_unix_ms: intent.deadline_unix_ms,
             max_output_bytes: intent.max_output_bytes,
             reserved_bytes: RefCell::new(intent.parent_reservation_bytes),
+            reconcile_reservations: intent.reconcile_producer_reservations,
         };
         Ok((checkout, output, run, intent, execution))
     };
@@ -1004,6 +1019,12 @@ fn run_bounded(
         let operations = collect_operations(prepared, &run, &runtime.operation_root, context)?;
         let retained_bytes = evidence_bytes(&run, &operations)?;
         ensure!(retained_bytes <= intent.max_output_bytes, "native evidence exceeded prelaunch aggregate reservation");
+        if intent.reconcile_producer_reservations {
+            ensure!(
+                retained_bytes <= *execution.reserved_bytes.borrow(),
+                "native evidence exceeded reconciled reservation"
+            );
+        }
         let mut receipt = NativeReceipt {
             prepared_sha256,
             candidate_sha256,
@@ -1077,6 +1098,7 @@ fn authenticate_bounded(prepared: &PreparedNative, checkout: &Path, receipt: &Na
     let expected = operation_slots(prepared, run)?;
     ensure!(receipt.operations.len() <= 32770, "native operation receipt inventory exceeded");
     let mut observed = BTreeSet::new();
+    let mut reservations = Vec::new();
     for operation in &receipt.operations {
         bounded::check()?;
         ensure!(
@@ -1084,8 +1106,25 @@ fn authenticate_bounded(prepared: &PreparedNative, checkout: &Path, receipt: &Na
                 && observed.insert((operation.directory.clone(), operation.label.clone())),
             "native producer receipt is unexpected or duplicated"
         );
-        let passed = authenticate_operation(prepared, &receipt.operation_root, &receipt.context, operation)?;
+        let (passed, reservation) =
+            authenticate_operation(prepared, &receipt.operation_root, &receipt.context, operation)?;
         ensure!(!receipt.passed || passed, "accepted native family contains a rejected producer");
+        reservations.extend(reservation);
+    }
+    if intent.reconcile_producer_reservations {
+        ensure!(reservations.len() == receipt.operations.len(), "native producer reservation record missing");
+        let retained = builds::authenticate_reservations(
+            intent.parent_reservation_bytes,
+            &mut reservations,
+            intent.max_output_bytes,
+        )?;
+        ensure!(
+            receipt.reserved_bytes >= retained && (!receipt.passed || receipt.reserved_bytes == retained),
+            "native completed reservation extent differs"
+        );
+        ensure!(receipt.evidence_bytes <= receipt.reserved_bytes, "native evidence exceeds retained reservation");
+    } else {
+        ensure!(reservations.is_empty(), "historical native reservation mode changed");
     }
     ensure!(
         !receipt.passed || observed.len() == expected.len(),
@@ -1182,7 +1221,7 @@ fn authenticate_operation(
     root: &Path,
     context: &OperationContext,
     operation: &NativeOperation,
-) -> Result<bool> {
+) -> Result<(bool, Option<builds::ProducerReservation>)> {
     let invocation_path = file(&operation.invocation.file)?;
     ensure!(
         invocation_path == operation.directory.join(format!("{}.invocation.toml", operation.label))
@@ -1221,6 +1260,10 @@ fn authenticate_operation(
     };
     let intent: NativeIntent =
         family::object(&family_run.parent().context("native output parent missing")?.join("native-intent.toml"))?;
+    ensure!(
+        invocation.reservation_before_bytes.is_some() == intent.reconcile_producer_reservations,
+        "native authenticated reservation mode changed"
+    );
     ensure!(invocation.program.helper == intent.helper, "native helper configuration changed");
     let candidate_root = if compiler && rust {
         let candidate = invocation
@@ -1344,7 +1387,23 @@ fn authenticate_operation(
     {
         crate::callback::authenticate_packed_snapshots(&operation.directory, &operation.label)?;
     }
-    Ok(result.passed)
+    let reservation = invocation
+        .reservation_before_bytes
+        .map(|before_bytes| -> Result<builds::ProducerReservation> {
+            Ok(builds::ProducerReservation {
+                before_bytes,
+                reserved_bytes: invocation.reserved_bytes,
+                retained_bytes: builds::retained_producer_bytes(
+                    &invocation,
+                    &result,
+                    &operation.references,
+                    &operation.directory,
+                    &operation.label,
+                )?,
+            })
+        })
+        .transpose()?;
+    Ok((result.passed, reservation))
 }
 
 /// Parent artifacts and all durable runner dependencies, including historical
@@ -1357,24 +1416,28 @@ fn references_bounded(receipt: &NativeReceipt) -> Result<Vec<Reference>> {
     let run = receipt.verdict.file.parent().context("native verdict parent missing")?;
     let output = run.parent().context("native output parent missing")?;
     let mut result = BTreeMap::new();
-    fn files(path: &Path, result: &mut BTreeMap<PathBuf, Reference>, depth: usize) -> Result<()> {
+    fn files(run: &Path, path: &Path, result: &mut BTreeMap<PathBuf, Reference>, depth: usize) -> Result<()> {
         ensure!(depth <= 32, "native retention tree depth exceeded");
         for path in bounded::entries(path)? {
             bounded::safe(&path)?;
             let metadata = path.symlink_metadata()?;
             if metadata.is_dir() {
-                files(&path, result, depth + 1)?;
+                files(run, &path, result, depth + 1)?;
             } else {
                 ensure!(metadata.is_file(), "native retention contains special file");
                 result.insert(
                     path.clone(),
-                    Reference { path: path.clone(), sha256: digest(&path)?, bytes: path.metadata()?.len() },
+                    Reference {
+                        path: path.clone(),
+                        sha256: inputs::artifact_digest(run, &path)?,
+                        bytes: path.metadata()?.len(),
+                    },
                 );
             }
         }
         Ok(())
     }
-    files(run, &mut result, 0)?;
+    files(run, run, &mut result, 0)?;
     for name in ["native-intent.toml", "native-receipt.toml"] {
         let path = output.join(name);
         if path.exists() {
@@ -1544,6 +1607,32 @@ mod tests {
         let normalized = recipes::normalize_manifest(&checkout, original.clone(), recipe.as_ref())?;
         assert_eq!(normalized, original);
         assert!(normalized.routines.iter().flat_map(|routine| &routine.cases).any(|case| case.before_file.is_some()));
+        let limits = NativeLimits {
+            timeout_seconds: 1,
+            writable_bytes: 1024 * 1024,
+            stdout_bytes: 4096,
+            stderr_bytes: 4096,
+            stdin_bytes: 0,
+        };
+        let contract = contract_for_family(
+            &checkout,
+            path,
+            Asset::default(),
+            NativeProvenance::NativeScope { scope: Asset::default(), checkout: checkout.clone() },
+            limits.clone(),
+            limits,
+        )?;
+        assert_eq!(contract.coverage, coverage(&original)?);
+        assert!(original.rust_dependencies.len() > 4096);
+        assert!(contract.frozen_inputs.len() > 4096 && contract.frozen_inputs.len() <= 8192);
+        let event = Path::new(inputs::CAPTURED_RIDLEY_EVENT);
+        assert!(event.metadata()?.len() > bounded::MAX_FILE_BYTES);
+        assert!(recipes::dependency_digest(None, event).is_err());
+        assert!(recipes::dependency_digest(Some(&NativeRecipe::Callback), event).is_err());
+        assert_eq!(
+            contract.frozen_inputs[inputs::CAPTURED_RIDLEY_EVENT],
+            recipes::dependency_digest(Some(&NativeRecipe::Ridley), event)?
+        );
         let mut unknown = original;
         unknown.callback_adapter = Some("unknown-captured-adapter".into());
         assert!(recipes::for_family(&checkout, path, &unknown).is_err());
@@ -2063,6 +2152,7 @@ mod tests {
             max_output_bytes: runtime.max_output_bytes,
             operation_root: runtime.operation_root.clone(),
             parent_reservation_bytes: 4096,
+            reconcile_producer_reservations: false,
             helper: runtime.helper.clone(),
             rustc: runtime.rustc.clone(),
             c_compiler: runtime.c_compiler.clone(),
@@ -2350,9 +2440,8 @@ mod tests {
             if !path.is_file() {
                 continue;
             }
-            let checkout = std::env::var_os("SM_NATIVE_PROOF_SOURCE")
-                .map(PathBuf::from)
-                .unwrap_or_else(|| root.join(source));
+            let checkout =
+                std::env::var_os("SM_NATIVE_PROOF_SOURCE").map(PathBuf::from).unwrap_or_else(|| root.join(source));
             let receipt: NativeReceipt = family::object(&path)?;
             authenticate(&prepared, &checkout, &receipt)?;
             let intent: NativeIntent = family::object(&root.join(output).join("native-intent.toml"))?;
