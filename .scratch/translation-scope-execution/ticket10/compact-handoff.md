@@ -40,18 +40,37 @@ aggregate private bytes and exact compiler-header directory bindings. Other
 runtime binds are individual regular files. The receipt records an experiment
 start/deadline pair and every invocation's start and remaining duration.
 
-Verification so far: initial `cargo check --bin sm-pipeline` passed before the
-last closure/timing tightening. The two public preparation controls passed in
-the preceding phase. The current targeted test build uses
+Verification: initial `cargo check --bin sm-pipeline` passed. All three current
+preparation controls pass. The complete-original-lineage control was observed
+failing before its implementation, then passing. The targeted test build uses
 `CARGO_TARGET_DIR=/tmp/sm-ticket10-compact-target-20261014`,
 `CARGO_BUILD_JOBS=2`, shared `SM_PIPELINE_ROOT=/home/jim/sm-decomp/out/pipeline`
 and `SM_PIPELINE_WORKERS=4`.
 
-Next: complete targeted tests, build a normal producer binary and run ignored
-`translation_compact::tests::original_experiment_retains_exact_target_and_unchanged_resume`
-with the sealed original source/assets/helper closure. Historical compatibility
-and the fresh frame-2240 diagnostic have not yet been exercised. Any failure
-remains retained and requires unchanged-resume authentication. No original
-controller files or production ledgers have been changed. The local temporary
-module/command registration in main.rs is excluded from commits. No diagnostic
-producer is currently running; verification cleanup remains pending.
+The initial adapter checkpoint is `b82ce75`. Preparation requires all five
+original bridge and submission verdicts plus their exact readers; the old compact
+ELF is `2898c6a3f553e74051abbb00f47a429fd653522d0caa4a06be33161eb581e57a`.
+Private/runtime reads honor the inherited preparation IO budget, and duplicate
+private references are authenticated once within that preparation. The verdict
+retains historical dependencies even if a later history fails authentication.
+
+Initial real proof `/tmp/sm-ticket10-compact-proof-01-20261014/test.log` completed
+in 644.79 seconds. It authenticated the two original full captures and recomputed
+matching prefixes 1097 and 1096. Its test fixture incorrectly supplied a readable
+run id instead of the operation engine's required digest. The retained failure
+is `gate/compact-receipt.toml`, diagnosis `durable operation requires exact context
+identities`, with no producer launched. The old broad proof control passed its
+unchanged-receipt checks; this does not establish a fresh compact diagnostic.
+The fixture is fixed and now also requires all five authenticated histories and
+an attempted native phase. The initial failed proof's source is `b82ce75`.
+
+The root approved a narrow compatibility bind for the exact original compact
+reader: source equal to Program.executable, destination `/proc/self/exe`, realized
+as a synthetic symlink to `/program`, without mounting procfs. The native worker
+owns confinement support and helper verification. The compact recipe requests
+that bind only for direct legacy-reader execution. New producers enter before
+the ordinary CLI's current_exe initialization. A new confined proof awaits that
+reviewed runtime change; no diagnostic producer is currently running. Initial
+proof cleanup is underway and final cleanup evidence remains pending. No
+original controller files or production ledgers have been changed. The temporary
+local main.rs registration is excluded from commits.
