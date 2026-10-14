@@ -15,7 +15,9 @@ fn probe(name: &str) -> Program {
         arguments: vec!["--ignored".into(), "--exact".into(), name.into(), "--nocapture".into()],
         inputs: vec![],
         runtime: helper_runtime().unwrap(),
-        helper: PathBuf::from(env!("CARGO_BIN_EXE_sm-translation-sandbox")),
+        helper: std::env::var_os("SM_CONFINEMENT_TEST_HELPER")
+            .map(PathBuf::from)
+            .unwrap_or_else(|| PathBuf::from(env!("CARGO_BIN_EXE_sm-translation-sandbox"))),
         outputs: vec![],
     }
 }
@@ -33,6 +35,17 @@ fn limits() -> RunLimits {
 #[test]
 fn reviewed_devices_allow_null_child_stdio() {
     let output = run(&probe("probe_null_stdio"), &limits(), b"").unwrap();
+    assert!(
+        output.status.success(),
+        "{}\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+#[test]
+fn rust_pre_exec_handshake_allows_only_its_local_unix_pair() {
+    let output = run(&probe("probe_pre_exec_handshake"), &limits(), b"").unwrap();
     assert!(
         output.status.success(),
         "{}\n{}",
@@ -96,6 +109,34 @@ fn probe_empty_child() {}
 
 #[test]
 #[ignore = "candidate probe, invoked only by confined parent test"]
+fn probe_pre_exec_handshake() {
+    use std::os::unix::process::CommandExt;
+    let mut child = Command::new("/program");
+    child
+        .args(["--ignored", "--exact", "probe_empty_child"])
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null());
+    // The empty hook forces Rust's fork/exec error-reporting handshake.
+    unsafe {
+        child.pre_exec(|| Ok(()));
+    }
+    assert!(child.status().unwrap().success());
+    for (domain, kind, protocol) in [
+        (libc::AF_INET, libc::SOCK_SEQPACKET | libc::SOCK_CLOEXEC, 0),
+        (libc::AF_INET6, libc::SOCK_SEQPACKET | libc::SOCK_CLOEXEC, 0),
+        (libc::AF_UNIX, libc::SOCK_STREAM | libc::SOCK_CLOEXEC, 0),
+        (libc::AF_UNIX, libc::SOCK_SEQPACKET, 0),
+        (libc::AF_UNIX, libc::SOCK_SEQPACKET | libc::SOCK_CLOEXEC, 1),
+    ] {
+        let mut descriptors = [-1; 2];
+        assert_eq!(unsafe { libc::socketpair(domain, kind, protocol, descriptors.as_mut_ptr()) }, -1);
+        assert_eq!(std::io::Error::last_os_error().raw_os_error(), Some(libc::EPERM));
+    }
+}
+
+#[test]
+#[ignore = "candidate probe, invoked only by confined parent test"]
 fn probe_null_stdio() {
     let mut null = fs::OpenOptions::new().read(true).write(true).open("/dev/null").unwrap();
     null.write_all(b"discarded").unwrap();
@@ -119,23 +160,25 @@ fn probe_null_stdio() {
 #[test]
 #[ignore = "candidate probe, invoked only by confined parent test"]
 fn probe_threaded_writes_and_exits() {
-    threaded_writes_and_exits(1, 32);
+    threaded_writes_and_exits(1, 32, 1);
 }
 
 #[test]
 #[ignore = "candidate probe, invoked only by confined parent test"]
 fn probe_many_threaded_writes_and_exits() {
-    threaded_writes_and_exits(32, 512);
+    threaded_writes_and_exits(32, 512, 8);
 }
 
-fn threaded_writes_and_exits(threads: usize, writes: usize) {
+fn threaded_writes_and_exits(threads: usize, writes: usize, worker_writes: usize) {
     std::thread::scope(|scope| {
         for index in 0..threads {
             scope.spawn(move || {
                 let path = format!("/work/tmp/thread-{index}");
                 let mut output = fs::File::create(&path).unwrap();
                 fs::remove_file(path).unwrap();
-                output.write_all(b"x").unwrap();
+                for _ in 0..worker_writes {
+                    output.write_all(b"x").unwrap();
+                }
             });
         }
         for _ in 0..writes {

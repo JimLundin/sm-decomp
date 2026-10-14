@@ -202,3 +202,32 @@ configured keys cannot silently fall back to a different discovered declaration.
 All seven active native tests pass, including exact family/coverage preservation
 for this alias. Root must keep catalog leaf keys separate from declared native
 family names in its composite inventory.
+
+## Optimized runtime v2
+
+The Cargo worker isolated a subsequent EPERM to Rust's `Command::pre_exec`
+handshake. Ordinary rustc/null-stdio spawn passed; adding a no-op pre_exec hook
+failed. Host strace of the same Rust 1.97 program identified exactly
+`socketpair(AF_UNIX, SOCK_SEQPACKET | SOCK_CLOEXEC, 0)`. The Rust confinement
+regression reproduced that failure in 0.14 seconds.
+
+The helper now permits only that connected local Unix pair, with exact complete
+domain/type/protocol arguments. General socket creation, network families,
+stream pairs, pairs without close-on-exec, and other protocols still reject.
+The real pre_exec call-site test and its five negative controls pass.
+
+`cargo build --release -p translation-execution --locked --offline --bin
+sm-translation-sandbox` produced the optimized helper in 83 seconds. Immutable
+path: `/tmp/sm-ticket10-native-proofs/confinement-v2/tools/sm-translation-sandbox`.
+SHA-256: `d334899b7f5cc7f64120636a803224d2f83e54c8d049e71e57a9d198a5fdf892`.
+Size: 5,667,640 bytes. The eight existing confinement tests pass with this exact
+helper (56.80 seconds), and all five focused runtime tests pass (1.96 seconds).
+The test harness supports `SM_CONFINEMENT_TEST_HELPER` to validate a retained
+helper without rebuilding or replacing it. V1 and original installed helpers
+remain intact; the v1 host launcher/wire protocol remains compatible with v2.
+
+Exact tracked input snapshots for both earlier preparation audits are now
+retained in `catalog-v1/source` (811b2f0) and `catalog-v2/source` (dc91352) under
+`/tmp/sm-ticket10-native-proofs`. Original absolute private inputs, pinned C and
+the original requirements path remain dependencies. The preparation audits have
+no compiler/fixture receipts and do not establish actual-C acceptance.

@@ -489,6 +489,25 @@ fn restrict_child(writable_bytes: u64) -> Result<()> {
     });
     filter.push(statement(0x06, 0x00050000 | libc::EPERM as u32));
     filter.push(statement(0x20, 0));
+    // Rust's pre_exec error handshake uses an already connected local Unix
+    // pair. Permit only that exact close-on-exec form; socket() and every other
+    // socketpair domain/type/protocol remain unavailable.
+    let socket_pair_arguments = [
+        (16, libc::AF_UNIX as u32),
+        (20, 0),
+        (24, (libc::SOCK_SEQPACKET | libc::SOCK_CLOEXEC) as u32),
+        (28, 0),
+        (32, 0),
+        (36, 0),
+    ];
+    filter.push(jump(libc::SYS_socketpair as u32, 0, u8::try_from(socket_pair_arguments.len() * 3 + 1)?));
+    for (offset, expected) in socket_pair_arguments {
+        filter.push(statement(0x20, offset));
+        filter.push(jump(expected, 1, 0));
+        filter.push(statement(0x06, 0x00050000 | libc::EPERM as u32));
+    }
+    filter.push(statement(0x06, 0x7fff0000));
+    filter.push(statement(0x20, 0));
     let forbidden = [
         libc::SYS_mount,
         libc::SYS_umount2,
@@ -497,7 +516,6 @@ fn restrict_child(writable_bytes: u64) -> Result<()> {
         libc::SYS_unshare,
         libc::SYS_setns,
         libc::SYS_socket,
-        libc::SYS_socketpair,
         libc::SYS_ptrace,
         libc::SYS_process_vm_readv,
         libc::SYS_process_vm_writev,

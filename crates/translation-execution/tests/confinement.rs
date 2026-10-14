@@ -7,6 +7,12 @@ use std::{
 };
 use translation_execution::confinement::{Program, ReadOnlyBind, RunLimits, compiler_runtime, helper_runtime, run};
 
+fn helper() -> PathBuf {
+    std::env::var_os("SM_CONFINEMENT_TEST_HELPER")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from(env!("CARGO_BIN_EXE_sm-translation-sandbox")))
+}
+
 struct Fixture {
     root: PathBuf,
     program: Program,
@@ -80,7 +86,7 @@ int main(int argc, char **argv) {
                 arguments: vec![],
                 inputs: vec![],
                 runtime: helper_runtime().unwrap(),
-                helper: PathBuf::from(env!("CARGO_BIN_EXE_sm-translation-sandbox")),
+                helper: helper(),
                 outputs: vec![],
             },
         }
@@ -189,7 +195,7 @@ fn unavailable_helper_and_aliased_sources_fail_before_launch() {
     let mut fixture = Fixture::new();
     fixture.program.helper = fixture.root.join("missing");
     assert!(run(&fixture.program, &limits(), b"").is_err());
-    fixture.program.helper = PathBuf::from(env!("CARGO_BIN_EXE_sm-translation-sandbox"));
+    fixture.program.helper = helper();
     let alias = fixture.root.join("alias");
     std::os::unix::fs::symlink(&fixture.program.executable, &alias).unwrap();
     fixture.program.executable = alias;
