@@ -7,7 +7,7 @@ use crate::{
 use anyhow::{Context as _, Result, bail, ensure};
 use serde::Serialize;
 use std::{
-    collections::BTreeMap,
+    collections::{BTreeMap, BTreeSet},
     fs::{self, File},
     io::{Read, Write},
     os::fd::AsRawFd,
@@ -18,6 +18,114 @@ use std::{
 };
 
 pub(crate) type Task<'a> = (&'a crate::family_model::Routine, &'a crate::family_model::Case, usize);
+
+fn predecessors(tasks: &[Task<'_>]) -> Result<Vec<Option<usize>>> {
+    let names: BTreeMap<_, _> = tasks.iter().enumerate().map(|(i, t)| (t.1.name.as_str(), i)).collect();
+    ensure!(names.len() == tasks.len(), "duplicate fixture task name");
+    tasks
+        .iter()
+        .enumerate()
+        .map(|(i, t)| {
+            t.1.continue_from
+                .as_deref()
+                .map(|name| {
+                    let p = *names.get(name).context("unknown predecessor")?;
+                    ensure!(p < i, "predecessor must occur first");
+                    Ok(p)
+                })
+                .transpose()
+        })
+        .collect()
+}
+
+/// Stable bounded waves for the separately confined native adapter. A whole
+/// wave joins before the caller checks its comparisons or admits the next one.
+pub(crate) fn waves(tasks: &[Task<'_>], jobs: usize) -> Result<Vec<Vec<usize>>> {
+    ensure!((1..=64).contains(&jobs), "case jobs must be 1..64");
+    let predecessors = predecessors(tasks)?;
+    let mut ready = BTreeSet::new();
+    let mut successors = vec![Vec::new(); tasks.len()];
+    for (index, predecessor) in predecessors.into_iter().enumerate() {
+        if let Some(predecessor) = predecessor {
+            successors[predecessor].push(index);
+        } else {
+            ready.insert(index);
+        }
+    }
+    let mut remaining = tasks.len();
+    let mut waves = Vec::new();
+    while remaining > 0 {
+        let mut wave = Vec::new();
+        for _ in 0..jobs {
+            let Some(index) = ready.pop_first() else {
+                break;
+            };
+            wave.push(index);
+        }
+        ensure!(!wave.is_empty(), "fixture dependency admission cannot progress");
+        for &index in &wave {
+            ready.extend(successors[index].iter().copied());
+        }
+        remaining -= wave.len();
+        waves.push(wave);
+    }
+    Ok(waves)
+}
+
+/// Run all admitted workers to completion, including a wave containing a
+/// failure. Results keep declaration order and no later wave starts on failure.
+pub(crate) fn run_waves<T: Send>(
+    tasks: &[Task<'_>],
+    jobs: usize,
+    begin: impl Fn() -> Result<()>,
+    finish: impl Fn() -> Result<()>,
+    adapter: impl Fn(Task<'_>) -> Result<T> + Sync,
+) -> Result<Vec<(usize, Result<T>)>> {
+    let shared = crate::inputs::bounded::shared_scope()?;
+    let mut outcomes = Vec::new();
+    for wave in waves(tasks, jobs)? {
+        if let Err(error) = begin() {
+            outcomes.push((tasks.len(), Err(error)));
+            break;
+        }
+        let completed = std::thread::scope(|scope| {
+            let handles = wave
+                .into_iter()
+                .map(|task| {
+                    let shared = &shared;
+                    let adapter = &adapter;
+                    (task, scope.spawn(move || shared.enter(|| adapter(tasks[task]))))
+                })
+                .collect::<Vec<_>>();
+            handles
+                .into_iter()
+                .map(|(task, handle)| {
+                    (
+                        task,
+                        handle.join().unwrap_or_else(|_| {
+                            Err(translation_execution::ExecutionPending {
+                                reason: "native fixture worker panicked; retain its operation ownership".into(),
+                            }
+                            .into())
+                        }),
+                    )
+                })
+                .collect::<Vec<_>>()
+        });
+        let failed = completed.iter().any(|(_, outcome)| outcome.is_err());
+        outcomes.extend(completed);
+        if let Err(error) = finish() {
+            outcomes.push((tasks.len(), Err(error)));
+            break;
+        }
+        if failed {
+            break;
+        }
+    }
+    outcomes.sort_by_key(|(task, _)| *task);
+    Ok(outcomes)
+}
+
 #[derive(Clone, Copy, PartialEq)]
 enum State {
     Pending,
@@ -40,21 +148,7 @@ pub(crate) fn run<T: Send>(
 ) -> Result<Vec<(usize, Result<T>)>> {
     ensure!((1..=64).contains(&jobs), "case jobs must be 1..64");
     ensure!((1..=64).contains(&capacity), "worker capacity must be 1..64");
-    let names: BTreeMap<_, _> = tasks.iter().enumerate().map(|(i, t)| (t.1.name.as_str(), i)).collect();
-    let predecessors = tasks
-        .iter()
-        .enumerate()
-        .map(|(i, t)| -> Result<_> {
-            t.1.continue_from
-                .as_deref()
-                .map(|name| {
-                    let p = *names.get(name).context("unknown predecessor")?;
-                    ensure!(p < i, "predecessor must occur first");
-                    Ok(p)
-                })
-                .transpose()
-        })
-        .collect::<Result<Vec<_>>>()?;
+    let predecessors = predecessors(tasks)?;
     let queue = Mutex::new(Queue { states: vec![State::Pending; tasks.len()], remaining: tasks.len() });
     let changed = Condvar::new();
     let outcomes = Mutex::new(Vec::new());
@@ -386,6 +480,66 @@ impl Drop for Helper {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn native_waves_join_failures_and_preserve_continuations_and_order() -> Result<()> {
+        use crate::{
+            family_model::{Case, Routine},
+            inputs::bounded,
+        };
+        use std::sync::{
+            Barrier,
+            atomic::{AtomicUsize, Ordering},
+        };
+        let routine = Routine::default();
+        let cases = [
+            Case { name: "bad".into(), ..Default::default() },
+            Case { name: "bad-child".into(), continue_from: Some("bad".into()), ..Default::default() },
+            Case { name: "good".into(), ..Default::default() },
+            Case { name: "good-child".into(), continue_from: Some("good".into()), ..Default::default() },
+            Case { name: "later".into(), ..Default::default() },
+        ];
+        let tasks = cases.iter().enumerate().map(|(index, case)| (&routine, case, index)).collect::<Vec<_>>();
+        assert_eq!(waves(&tasks, 2)?, vec![vec![0, 2], vec![1, 3], vec![4]]);
+        assert_eq!(waves(&tasks, 1)?, vec![vec![0], vec![1], vec![2], vec![3], vec![4]]);
+        assert_eq!(waves(&tasks, 4)?, vec![vec![0, 2, 4], vec![1, 3]]);
+        let joined = AtomicUsize::new(0);
+        let begins = AtomicUsize::new(0);
+        let finishes = AtomicUsize::new(0);
+        let barrier = Barrier::new(2);
+        bounded::until(bounded::now_unix_ms()? + 1000, 8, || {
+            let outcomes = run_waves(
+                &tasks,
+                2,
+                || {
+                    begins.fetch_add(1, Ordering::Relaxed);
+                    Ok(())
+                },
+                || {
+                    assert_eq!(joined.load(Ordering::Relaxed), 2, "wave reconciled before both workers finished");
+                    finishes.fetch_add(1, Ordering::Relaxed);
+                    Ok(())
+                },
+                |(_, case, index)| {
+                    bounded::account(1)?;
+                    barrier.wait();
+                    joined.fetch_add(1, Ordering::Relaxed);
+                    ensure!(case.name != "bad", "comparison refused");
+                    Ok(index)
+                },
+            )?;
+            assert_eq!(outcomes.len(), 2, "later waves ran after a comparison failure");
+            assert_eq!((outcomes[0].0, outcomes[1].0), (0, 2));
+            assert!(outcomes[0].1.is_err());
+            assert_eq!(*outcomes[1].1.as_ref().unwrap(), 2);
+            assert_eq!(bounded::charged_bytes(), 2);
+            Ok(())
+        })?;
+        assert_eq!(begins.load(Ordering::Relaxed), 1);
+        assert_eq!(finishes.load(Ordering::Relaxed), 1);
+        Ok(())
+    }
+
     #[test]
     fn real_worker_isolates_mutation_crash_timeout_and_reaps_descendants() {
         let root = std::env::temp_dir().join(format!(

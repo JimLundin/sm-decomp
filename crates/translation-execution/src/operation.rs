@@ -468,17 +468,29 @@ fn import_identities(
     sources.extend(program.runtime.iter().map(|b| (b.source.as_path(), true)));
     let cache = root.join("installed-runtime");
     retention::directory(&cache)?;
-    let _lock = lock(&cache)?;
+    // Concurrent fixtures may import the same immutable identity. This is a
+    // cache publication lock, not evidence of a surviving operation runner.
+    let _lock = loop {
+        check_discovery_deadline(deadline_boot_ns)?;
+        match lock(&cache) {
+            Ok(held) => break held,
+            Err(error) if error.downcast_ref::<ExecutionPending>().is_some() => continue,
+            Err(error) => return Err(error),
+        }
+    };
     for (source, runtime) in sources {
         check_discovery_deadline(deadline_boot_ns)?;
-        // Runtime stamps include inode/change time. A content change requires
-        // importing a new protected manifest; prior gates keep their own seal.
+        // Every declared input is read-only inside the producer. Reuse its
+        // protected manifest only after checking the full tree's device,
+        // inode, size, mode, modification and change-time stamps. Repeated
+        // Fixtures share helpers, binaries and ROMs as well as runtime files.
+        // A changed input gets a new manifest; prior gates keep their own seal.
         let (stamps, _) = collect_entries(source, runtime, false, deadline_boot_ns)?;
         let cache_key = sealed(&(source, runtime, &stamps))?;
         let path = cache.join(format!("{cache_key}.json"));
-        if path.try_exists()? && runtime {
+        if path.try_exists()? {
             let value: InputIdentity = serde_json::from_slice(&retention::read_bounded(&path, MAX_IDENTITY_METADATA)?)?;
-            ensure!(value.source == source && value.runtime, "installed runtime cache identity changed");
+            ensure!(value.source == source && value.runtime == runtime, "installed input cache identity changed");
             verify_identity(&value, deadline_boot_ns)?;
         } else {
             let value = identity(source, runtime, deadline_boot_ns)?;

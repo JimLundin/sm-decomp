@@ -4,10 +4,10 @@ use crate::{CacheRequest, CacheResult, acquire_lease, atomic_toml, cached_artifa
 use anyhow::{Context, Result, bail, ensure};
 use serde::{Deserialize, Serialize};
 use std::{
-    cell::RefCell,
     fs::{self, File},
     path::{Path, PathBuf},
     process::{Command, Stdio},
+    sync::Mutex,
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 use translation_execution::{
@@ -35,10 +35,20 @@ pub(crate) struct StrictExecution {
     /// Entire gate reservation includes live quotas, durable results and the
     /// parent copies. Reserving before launch bounds peak production bytes.
     pub max_output_bytes: u64,
-    pub reserved_bytes: RefCell<u64>,
+    pub reserved_bytes: Mutex<u64>,
+    pub reservation_group: Mutex<Option<ReservationGroup>>,
     /// Historical intents keep cumulative worst-case charging. New native
     /// intents reconcile each completed producer before admitting its successor.
     pub reconcile_reservations: bool,
+}
+
+/// Every producer in a parallel wave uses one admission anchor. Its full
+/// worst-case reservation remains held until every worker has joined.
+pub(crate) struct ReservationGroup {
+    before_bytes: u64,
+    reserved_bytes: u64,
+    completed_reserved_bytes: u64,
+    retained_bytes: u64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -178,14 +188,23 @@ pub(crate) fn authenticate_reservations(
 ) -> Result<u64> {
     let mut held = reservation_total(0, parent_bytes, maximum)?;
     reservations.sort_by_key(|reservation| reservation.before_bytes);
-    for reservation in reservations {
-        ensure!(reservation.before_bytes == held, "native completed reservation chain changed");
-        reservation_total(held, reservation.reserved_bytes, maximum)?;
-        ensure!(
-            reservation.retained_bytes <= reservation.reserved_bytes,
-            "native retained producer exceeded its prelaunch reservation"
-        );
-        held = reservation_total(held, reservation.retained_bytes, maximum)?;
+    let mut remaining = reservations;
+    while let Some(first) = remaining.first() {
+        ensure!(first.before_bytes == held, "native completed reservation chain changed");
+        let count = remaining.iter().take_while(|reservation| reservation.before_bytes == held).count();
+        let (group, rest) = remaining.split_at_mut(count);
+        let mut peak = held;
+        let mut retained = held;
+        for reservation in group {
+            peak = reservation_total(peak, reservation.reserved_bytes, maximum)?;
+            ensure!(
+                reservation.retained_bytes <= reservation.reserved_bytes,
+                "native retained producer exceeded its prelaunch reservation"
+            );
+            retained = reservation_total(retained, reservation.retained_bytes, maximum)?;
+        }
+        held = retained;
+        remaining = rest;
     }
     Ok(held)
 }
@@ -240,6 +259,46 @@ pub(crate) fn retained_producer_bytes(
 }
 
 impl StrictExecution {
+    pub(crate) fn begin_fixture_group(&self) -> Result<()> {
+        ensure!(self.reconcile_reservations, "historical reservation mode cannot admit parallel fixtures");
+        let mut group = self.reservation_group.lock().unwrap();
+        ensure!(group.is_none(), "native reservation group already active");
+        *group = Some(ReservationGroup {
+            before_bytes: *self.reserved_bytes.lock().unwrap(),
+            reserved_bytes: 0,
+            completed_reserved_bytes: 0,
+            retained_bytes: 0,
+        });
+        Ok(())
+    }
+
+    pub(crate) fn finish_fixture_group(&self) -> Result<()> {
+        let mut group = self.reservation_group.lock().unwrap();
+        let group = group.take().context("native reservation group missing")?;
+        let mut held = self.reserved_bytes.lock().unwrap();
+        ensure!(
+            *held == reservation_total(group.before_bytes, group.reserved_bytes, self.max_output_bytes)?,
+            "native reservation group ownership changed"
+        );
+        // Interrupted producers keep their original worst-case charge. A
+        // failed wave still accounts for every producer it actually launched.
+        let unresolved = group
+            .reserved_bytes
+            .checked_sub(group.completed_reserved_bytes)
+            .context("native reservation group completion overflow")?;
+        *held = reservation_total(
+            reservation_total(group.before_bytes, group.retained_bytes, self.max_output_bytes)?,
+            unresolved,
+            self.max_output_bytes,
+        )?;
+        Ok(())
+    }
+
+    fn reservation_before(&self) -> u64 {
+        let group = self.reservation_group.lock().unwrap();
+        group.as_ref().map_or_else(|| *self.reserved_bytes.lock().unwrap(), |group| group.before_bytes)
+    }
+
     pub(crate) fn compile(
         &self,
         command: &[String],
@@ -407,7 +466,7 @@ impl StrictExecution {
                 requested_limits: limits.clone(),
                 limits: actual_limits,
                 reserved_bytes,
-                reservation_before_bytes: self.reconcile_reservations.then(|| *self.reserved_bytes.borrow()),
+                reservation_before_bytes: self.reconcile_reservations.then(|| self.reservation_before()),
             };
             self.reserve(invocation.reserved_bytes)?;
             atomic_toml(&invocation_path, &invocation)?;
@@ -419,10 +478,11 @@ impl StrictExecution {
             "native reservation mode changed"
         );
         let completed = operation_directory.join("result.json").is_file();
-        let held_reservation = !resumed || !self.reconcile_reservations || !completed;
+        let in_group = self.reservation_group.lock().unwrap().is_some();
+        let held_reservation = !resumed || !self.reconcile_reservations || !completed || in_group;
         if resumed {
             if let Some(before) = invocation.reservation_before_bytes {
-                ensure!(before == *self.reserved_bytes.borrow(), "native reservation prefix changed on replay");
+                ensure!(before == self.reservation_before(), "native reservation prefix changed on replay");
                 reservation_total(before, invocation.reserved_bytes, self.max_output_bytes)?;
             }
             // Existing completed producers never launch again. Their original
@@ -517,12 +577,26 @@ impl StrictExecution {
                 let references = translation_execution::operation::references(&self.operation_root, &context)?;
                 let retained = retained_producer_bytes(&invocation, &output, &references, run, label)?;
                 ensure!(retained <= invocation.reserved_bytes, "native producer exceeded its prelaunch reservation");
+                let mut group = self.reservation_group.lock().unwrap();
+                if let Some(group) = group.as_mut() {
+                    ensure!(held_reservation && before == group.before_bytes, "native reservation group changed");
+                    group.completed_reserved_bytes = group
+                        .completed_reserved_bytes
+                        .checked_add(invocation.reserved_bytes)
+                        .context("native completed group reservation overflow")?;
+                    group.retained_bytes = group
+                        .retained_bytes
+                        .checked_add(retained)
+                        .context("native retained group reservation overflow")?;
+                    ensure!(group.completed_reserved_bytes <= group.reserved_bytes, "native group completed twice");
+                    return Ok(());
+                }
                 let expected = if held_reservation {
                     reservation_total(before, invocation.reserved_bytes, self.max_output_bytes)?
                 } else {
                     before
                 };
-                let mut held = self.reserved_bytes.borrow_mut();
+                let mut held = self.reserved_bytes.lock().unwrap();
                 ensure!(*held == expected, "native producer reservation ownership changed");
                 *held = reservation_total(before, retained, self.max_output_bytes)?;
                 Ok(())
@@ -546,8 +620,13 @@ impl StrictExecution {
     }
 
     fn reserve(&self, bytes: u64) -> Result<()> {
-        let mut used = self.reserved_bytes.borrow_mut();
+        let mut group = self.reservation_group.lock().unwrap();
+        let mut used = self.reserved_bytes.lock().unwrap();
         *used = reservation_total(*used, bytes, self.max_output_bytes)?;
+        if let Some(group) = group.as_mut() {
+            group.reserved_bytes =
+                group.reserved_bytes.checked_add(bytes).context("native group reservation overflow")?;
+        }
         Ok(())
     }
 
@@ -598,6 +677,27 @@ impl StrictExecution {
 #[cfg(test)]
 mod strict_tests {
     use super::*;
+
+    #[test]
+    fn parallel_wave_reserves_the_sum_and_reconciles_only_at_the_join() -> Result<()> {
+        let original = [
+            ProducerReservation { before_bytes: 20, reserved_bytes: 100, retained_bytes: 10 },
+            ProducerReservation { before_bytes: 20, reserved_bytes: 80, retained_bytes: 20 },
+            ProducerReservation { before_bytes: 50, reserved_bytes: 100, retained_bytes: 5 },
+        ];
+        let mut records = original.clone();
+        records.reverse();
+        assert_eq!(authenticate_reservations(20, &mut records, 200)?, 55);
+        // Both individual reservations fit 199; their simultaneous sum does not.
+        assert!(authenticate_reservations(20, &mut original.clone(), 199).is_err());
+        let mut early_reconciliation = original.clone();
+        early_reconciliation[2].before_bytes = 30;
+        assert!(authenticate_reservations(20, &mut early_reconciliation, 200).is_err());
+        let mut retained_overflow = original.clone();
+        retained_overflow[1].retained_bytes = 81;
+        assert!(authenticate_reservations(20, &mut retained_overflow, 200).is_err());
+        Ok(())
+    }
 
     #[test]
     fn reconciled_producers_share_capacity_without_forgiving_retained_bytes() -> Result<()> {
@@ -667,7 +767,8 @@ mod strict_tests {
             c_inputs: vec![],
             deadline_unix_ms,
             max_output_bytes,
-            reserved_bytes: RefCell::new(0),
+            reserved_bytes: Mutex::new(0),
+            reservation_group: Mutex::new(None),
             reconcile_reservations: true,
         };
         let execution = make(bounded::now_unix_ms()? + 60_000, maximum);
@@ -676,10 +777,10 @@ mod strict_tests {
         }
         let mut failed_program = program.clone();
         failed_program.arguments = vec!["%".into()];
-        let before_failure = *execution.reserved_bytes.borrow();
+        let before_failure = *execution.reserved_bytes.lock().unwrap();
         let failure = execution.execute(&failed_program, &limits, &root.join("run"), "failed").unwrap_err();
         ensure!(failure.to_string().contains("confined failed failed"), "unexpected producer failure: {failure}");
-        let retained = *execution.reserved_bytes.borrow();
+        let retained = *execution.reserved_bytes.lock().unwrap();
         ensure!(retained > before_failure && retained < worst, "completed failed producer was not charged precisely");
         let mut results = Vec::new();
         for label in ["first", "second", "failed"] {
@@ -693,7 +794,7 @@ mod strict_tests {
             retry.execute(&program, &limits, &root.join("run"), label)?;
         }
         assert!(retry.execute(&failed_program, &limits, &root.join("run"), "failed").is_err());
-        ensure!(*retry.reserved_bytes.borrow() == retained, "replay changed native retained reservation");
+        ensure!(*retry.reserved_bytes.lock().unwrap() == retained, "replay changed native retained reservation");
         for (path, modified) in results {
             ensure!(fs::metadata(path)?.modified()? == modified, "reservation replay rewrote a producer");
         }
@@ -722,7 +823,7 @@ mod strict_tests {
         }
         assert!(after_cleanup.execute(&failed_program, &limits, &root.join("run"), "failed").is_err());
         ensure!(
-            *after_cleanup.reserved_bytes.borrow() == retained,
+            *after_cleanup.reserved_bytes.lock().unwrap() == retained,
             "cleanup changed native reservation authentication"
         );
         Ok(())
@@ -763,7 +864,8 @@ mod strict_tests {
             c_inputs: Vec::new(),
             deadline_unix_ms: 0,
             max_output_bytes: 4096,
-            reserved_bytes: RefCell::new(0),
+            reserved_bytes: Mutex::new(0),
+            reservation_group: Mutex::new(None),
             reconcile_reservations: true,
         };
         let program = Program {
@@ -780,7 +882,7 @@ mod strict_tests {
             "expired gate attempted runtime reservation: {error}"
         );
         ensure!(
-            !root.exists() && *execution.reserved_bytes.borrow() == 0,
+            !root.exists() && *execution.reserved_bytes.lock().unwrap() == 0,
             "expired gate created a producer or resource reservation"
         );
         Ok(())

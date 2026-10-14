@@ -265,6 +265,59 @@ fn output_and_input_manifest_tampering_rejects_at_independent_authentication() {
     );
 }
 
+#[test]
+fn repeated_fixtures_reuse_inputs_but_same_size_mtime_edits_and_links_invalidate() {
+    let mut fixture = Fixture::new();
+    let shared = fixture.root.join("shared-input");
+    fs::create_dir(&shared).unwrap();
+    let payload = shared.join("payload");
+    fs::write(&payload, b"before").unwrap();
+    let modified = payload.metadata().unwrap().modified().unwrap();
+    fixture.program.inputs.push(translation_execution::confinement::ReadOnlyBind {
+        source: shared.clone(),
+        destination: "/inputs/shared".into(),
+    });
+    let first = fixture.context("cached-first");
+    assert!(fixture.run(&first).unwrap().passed);
+    let identity = |context: &OperationContext| {
+        operation::references(&fixture.operation_root(), context)
+            .unwrap()
+            .into_iter()
+            .find(|reference| {
+                if !reference.path.parent().unwrap().ends_with("installed-runtime") {
+                    return false;
+                }
+                let value: serde_json::Value = serde_json::from_slice(&fs::read(&reference.path).unwrap()).unwrap();
+                value["source"].as_str() == Some(shared.to_str().unwrap())
+            })
+            .unwrap()
+    };
+    let original = identity(&first);
+    let original_modified = original.path.metadata().unwrap().modified().unwrap();
+    let second = fixture.context("cached-second");
+    assert!(fixture.run(&second).unwrap().passed);
+    assert_eq!(identity(&second), original);
+    assert_eq!(original.path.metadata().unwrap().modified().unwrap(), original_modified);
+
+    fs::write(&payload, b"after!").unwrap();
+    fs::File::options()
+        .write(true)
+        .open(&payload)
+        .unwrap()
+        .set_times(fs::FileTimes::new().set_modified(modified))
+        .unwrap();
+    let changed = fixture.context("cached-changed");
+    assert!(fixture.run(&changed).unwrap().passed);
+    assert_ne!(identity(&changed), original, "content edit with restored mtime reused a stale identity");
+    assert!(operation::authenticate(&fixture.operation_root(), &first).unwrap().passed);
+
+    std::os::unix::fs::symlink("/etc/passwd", shared.join("alias")).unwrap();
+    let refused = fixture.context("cached-link");
+    let result = fixture.run(&refused).unwrap();
+    assert!(!result.passed && result.diagnostic.contains("symlink"), "{}", result.diagnostic);
+    assert!(!operation::directory(&fixture.operation_root(), &refused).unwrap().join("runner.json").exists());
+}
+
 // A real second controller process enters the public interface. Killing this
 // process after sandbox start simulates a lost parent while its runner lives.
 #[test]

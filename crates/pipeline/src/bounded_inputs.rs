@@ -4,7 +4,7 @@
 use anyhow::{Context, Result, ensure};
 use sha2::{Digest, Sha256};
 use std::{
-    cell::{Cell, RefCell},
+    cell::RefCell,
     collections::{BTreeMap, BTreeSet},
     fs::{self, OpenOptions},
     io::{Read, Write},
@@ -13,7 +13,10 @@ use std::{
         fs::{MetadataExt, OpenOptionsExt},
     },
     path::{Component, Path, PathBuf},
-    rc::Rc,
+    sync::{
+        Arc, Mutex,
+        atomic::{AtomicUsize, Ordering},
+    },
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 
@@ -33,8 +36,8 @@ struct Usage {
 struct Scope {
     deadline: Instant,
     max_bytes: u64,
-    usage: Rc<RefCell<Usage>>,
-    paths: Rc<Cell<usize>>,
+    usage: Arc<Mutex<Usage>>,
+    paths: Arc<AtomicUsize>,
     max_paths: usize,
 }
 thread_local! {
@@ -44,6 +47,31 @@ struct Restore(Option<Scope>);
 impl Drop for Restore {
     fn drop(&mut self) {
         CURRENT.with(|current| *current.borrow_mut() = self.0.take());
+    }
+}
+
+/// A worker inherits the exact active counters and deadline. It cannot turn
+/// one family's bounded input budget into an independent budget per thread.
+#[derive(Clone)]
+pub(crate) struct SharedScope(Scope);
+
+pub(crate) fn shared_scope() -> Result<SharedScope> {
+    CURRENT.with(|current| current.borrow().clone().map(SharedScope).context("missing shared input scope"))
+}
+
+impl SharedScope {
+    pub(crate) fn enter<T>(&self, action: impl FnOnce() -> Result<T>) -> Result<T> {
+        let previous = CURRENT.with(|current| -> Result<_> {
+            ensure!(current.borrow().is_none(), "input worker already has an active scope");
+            Ok(current.borrow_mut().replace(self.0.clone()))
+        })?;
+        let _restore = Restore(previous);
+        check()?;
+        let result = action();
+        if result.is_ok() {
+            check()?;
+        }
+        result
     }
 }
 
@@ -59,7 +87,7 @@ pub(crate) fn until<T>(deadline_unix_ms: u64, max_bytes: u64, action: impl FnOnc
             deadline = deadline.min(inherited.deadline);
             (max_bytes.min(inherited.max_bytes), inherited.usage.clone(), inherited.paths.clone(), inherited.max_paths)
         } else {
-            (max_bytes, Rc::new(RefCell::new(Usage::default())), Rc::new(Cell::new(0)), MAX_PATHS)
+            (max_bytes, Arc::new(Mutex::new(Usage::default())), Arc::new(AtomicUsize::new(0)), MAX_PATHS)
         };
         *current.borrow_mut() = Some(Scope { deadline, max_bytes, usage, paths, max_paths });
         previous
@@ -102,7 +130,7 @@ pub(crate) fn discovery_with_limit<T>(max_paths: usize, action: impl FnOnce() ->
         let previous = CURRENT.with(|current| {
             let previous = current.borrow().clone().expect("limited discovery scope");
             let mut pass = previous.clone();
-            pass.paths = Rc::new(Cell::new(0));
+            pass.paths = Arc::new(AtomicUsize::new(0));
             pass.max_paths = max_paths;
             *current.borrow_mut() = Some(pass);
             previous
@@ -134,7 +162,10 @@ pub(crate) fn check() -> Result<()> {
     CURRENT.with(|current| {
         if let Some(scope) = &*current.borrow() {
             ensure!(Instant::now() < scope.deadline, "trusted input whole-stage deadline exhausted");
-            ensure!(scope.usage.borrow().bytes <= scope.max_bytes, "trusted input aggregate byte budget exhausted");
+            ensure!(
+                scope.usage.lock().unwrap().bytes <= scope.max_bytes,
+                "trusted input aggregate byte budget exhausted"
+            );
         }
         Ok(())
     })
@@ -142,14 +173,14 @@ pub(crate) fn check() -> Result<()> {
 
 #[cfg(test)]
 pub(crate) fn charged_bytes() -> u64 {
-    CURRENT.with(|current| current.borrow().as_ref().map_or(0, |scope| scope.usage.borrow().bytes))
+    CURRENT.with(|current| current.borrow().as_ref().map_or(0, |scope| scope.usage.lock().unwrap().bytes))
 }
 
 pub(crate) fn account(bytes: u64) -> Result<()> {
     check()?;
     CURRENT.with(|current| {
         if let Some(scope) = &*current.borrow() {
-            let mut usage = scope.usage.borrow_mut();
+            let mut usage = scope.usage.lock().unwrap();
             usage.bytes = usage.bytes.checked_add(bytes).context("trusted input byte budget overflow")?;
             ensure!(usage.bytes <= scope.max_bytes, "trusted input aggregate byte budget exhausted");
         } else {
@@ -163,8 +194,11 @@ pub(crate) fn count(amount: usize) -> Result<()> {
     check()?;
     CURRENT.with(|current| {
         if let Some(scope) = &*current.borrow() {
-            let paths = scope.paths.get().checked_add(amount).context("trusted input path budget overflow")?;
-            scope.paths.set(paths);
+            let previous = scope
+                .paths
+                .try_update(Ordering::Relaxed, Ordering::Relaxed, |value| value.checked_add(amount))
+                .map_err(|_| anyhow::anyhow!("trusted input path budget overflow"))?;
+            let paths = previous + amount;
             ensure!(paths <= scope.max_paths, "trusted input discovery path budget exhausted");
         } else {
             ensure!(amount <= MAX_PATHS, "trusted input local path budget exceeded");
@@ -366,12 +400,14 @@ pub(crate) fn write(path: &Path, bytes: &[u8]) -> Result<()> {
 }
 
 pub(crate) fn cached_source(key: &(PathBuf, PathBuf, String)) -> Option<crate::family_model::Source> {
-    CURRENT.with(|current| current.borrow().as_ref().and_then(|scope| scope.usage.borrow().pinned.get(key).cloned()))
+    CURRENT.with(|current| {
+        current.borrow().as_ref().and_then(|scope| scope.usage.lock().unwrap().pinned.get(key).cloned())
+    })
 }
 pub(crate) fn cache_source(key: (PathBuf, PathBuf, String), source: crate::family_model::Source) {
     CURRENT.with(|current| {
         if let Some(scope) = &*current.borrow() {
-            scope.usage.borrow_mut().pinned.insert(key, source);
+            scope.usage.lock().unwrap().pinned.insert(key, source);
         }
     });
 }
@@ -654,6 +690,44 @@ pub(crate) mod tests {
     use std::sync::atomic::{AtomicU64, Ordering};
 
     static NEXT: AtomicU64 = AtomicU64::new(0);
+
+    #[test]
+    fn fixture_workers_share_byte_path_and_deadline_limits() -> Result<()> {
+        let bytes = until(now_unix_ms()? + 1000, 8, || {
+            let shared = shared_scope()?;
+            let results = std::thread::scope(|scope| {
+                let a = scope.spawn(|| shared.enter(|| account(5)));
+                let b = scope.spawn(|| shared.enter(|| account(5)));
+                [a.join().unwrap(), b.join().unwrap()]
+            });
+            ensure!(results.iter().any(Result::is_err), "workers allocated independent byte budgets");
+            ensure!(charged_bytes() == 10, "worker read charges did not reach the parent");
+            Ok(())
+        });
+        assert!(bytes.unwrap_err().to_string().contains("byte budget"));
+
+        until(now_unix_ms()? + 1000, 8, || {
+            discovery_with_limit(3, || {
+                let shared = shared_scope()?;
+                let results = std::thread::scope(|scope| {
+                    let a = scope.spawn(|| shared.enter(|| count(2)));
+                    let b = scope.spawn(|| shared.enter(|| count(2)));
+                    [a.join().unwrap(), b.join().unwrap()]
+                });
+                assert_eq!(results.iter().filter(|result| result.is_err()).count(), 1);
+                assert!(count(0).is_err(), "worker path charges did not reach the parent");
+                Ok(())
+            })
+        })?;
+
+        let mut shared = until(now_unix_ms()? + 1000, 8, shared_scope)?;
+        shared.0.deadline = Instant::now();
+        let result = std::thread::scope(|scope| {
+            scope.spawn(|| shared.enter(|| until(u64::MAX, 8, || account(1)))).join().unwrap()
+        });
+        assert!(result.unwrap_err().to_string().contains("deadline"));
+        Ok(())
+    }
 
     pub(crate) struct Directory(pub(crate) PathBuf);
     impl Directory {

@@ -10,10 +10,10 @@ use anyhow::{Context, Result, ensure};
 use inputs::bounded::{self, digest};
 use serde::{Deserialize, Serialize};
 use std::{
-    cell::RefCell,
     collections::{BTreeMap, BTreeSet},
     fs,
     path::{Component, Path, PathBuf},
+    sync::Mutex,
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 use translation_execution::{
@@ -260,10 +260,16 @@ struct NativeIntent {
     reconcile_producer_reservations: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     operation_metadata_bytes: Option<u64>,
+    #[serde(default = "serial_fixture_jobs")]
+    fixture_jobs: usize,
     helper: PathBuf,
     rustc: PathBuf,
     c_compiler: PathBuf,
     compiler_runtime_sha256: String,
+}
+
+fn serial_fixture_jobs() -> usize {
+    1
 }
 
 fn now_unix_ms() -> Result<u64> {
@@ -838,7 +844,7 @@ pub(crate) fn run(
     runtime: &StrictRuntime,
     context: &OperationContext,
 ) -> Result<NativeReceipt> {
-    run_bounded(prepared, checkout, output, runtime, context)
+    run_bounded(prepared, checkout, output, runtime, context, runtime.workers)
 }
 
 fn run_bounded(
@@ -847,10 +853,15 @@ fn run_bounded(
     output: &Path,
     runtime: &StrictRuntime,
     context: &OperationContext,
+    fixture_jobs: usize,
 ) -> Result<NativeReceipt> {
     let entered = now_unix_ms()?;
     let intent_exists = output.join("native-intent.toml").is_file();
     if !intent_exists {
+        ensure!(
+            (1..=64).contains(&fixture_jobs) && fixture_jobs <= runtime.workers,
+            "native fixture worker count exceeds shared capacity"
+        );
         ensure!(
             entered < new_deadline(entered, runtime)?,
             "native whole-stage time budget exhausted before preparation"
@@ -946,6 +957,7 @@ fn run_bounded(
                 parent_reservation_bytes,
                 reconcile_producer_reservations: true,
                 operation_metadata_bytes: Some(operation_storage::capacity(operation_slots(prepared, &run)?.len())?),
+                fixture_jobs,
                 helper: helper.clone(),
                 rustc: rustc.clone(),
                 c_compiler: c_compiler.clone(),
@@ -969,7 +981,8 @@ fn run_bounded(
             c_inputs: prepared.c_inputs.iter().map(|path| prepared.pinned_source.join(path)).collect(),
             deadline_unix_ms: intent.deadline_unix_ms,
             max_output_bytes: intent.max_output_bytes,
-            reserved_bytes: RefCell::new(intent.parent_reservation_bytes),
+            reserved_bytes: Mutex::new(intent.parent_reservation_bytes),
+            reservation_group: Mutex::new(None),
             reconcile_reservations: intent.reconcile_producer_reservations,
         };
         Ok((checkout, output, run, intent, execution))
@@ -989,7 +1002,7 @@ fn run_bounded(
         manifest: prepared.contract.manifest.file.clone(),
         root: runtime.pipeline_root.clone(),
         workers: runtime.workers,
-        case_jobs: 1,
+        case_jobs: intent.fixture_jobs,
         adapter: recipes::adapter(prepared.contract.recipe.as_ref()).into(),
     };
     let mut verdict = Verdict {
@@ -1024,8 +1037,36 @@ fn run_bounded(
             toml::to_string(implementation.manifest.as_ref().unwrap())?.as_bytes(),
         )?;
         verdict.implementation = Some(implementation);
-        for (routine, fixture, index) in family::ordered_tasks(&prepared.manifest)? {
-            verdict.cases.push(recipes::fixture(prepared, routine, fixture, index, &run, &execution)?);
+        let tasks = family::ordered_tasks(&prepared.manifest)?;
+        if intent.fixture_jobs == 1 {
+            // Historical interrupted runs retain their exact serial prefix.
+            for (routine, fixture, index) in tasks {
+                verdict.cases.push(recipes::fixture(prepared, routine, fixture, index, &run, &execution)?);
+            }
+        } else {
+            let outcomes = crate::fixture_execution::run_waves(
+                &tasks,
+                intent.fixture_jobs,
+                || execution.begin_fixture_group(),
+                || execution.finish_fixture_group(),
+                |(routine, fixture, index)| recipes::fixture(prepared, routine, fixture, index, &run, &execution),
+            )?;
+            let mut failure = None;
+            for (_, outcome) in outcomes {
+                match outcome {
+                    Ok(case) => verdict.cases.push(case),
+                    Err(error) => {
+                        if failure.is_none()
+                            || error.downcast_ref::<translation_execution::ExecutionPending>().is_some()
+                        {
+                            failure = Some(error);
+                        }
+                    }
+                }
+            }
+            if let Some(error) = failure {
+                return Err(error);
+            }
         }
         recipes::verdict_fields(prepared, &mut verdict)?;
         check_candidate(prepared, &checkout)?;
@@ -1067,7 +1108,7 @@ fn run_bounded(
             operations,
             operation_index: None,
             max_output_bytes: intent.max_output_bytes,
-            reserved_bytes: *execution.reserved_bytes.borrow(),
+            reserved_bytes: *execution.reserved_bytes.lock().unwrap(),
         };
         if intent.operation_metadata_bytes.is_some() {
             receipt.store_operations(&output)?;
@@ -1136,6 +1177,8 @@ fn authenticate_bounded(prepared: &PreparedNative, checkout: &Path, receipt: &Na
             && intent.candidate_sha256 == receipt.candidate_sha256
             && intent.operation_root == receipt.operation_root
             && intent.max_output_bytes == receipt.max_output_bytes
+            && (1..=64).contains(&intent.fixture_jobs)
+            && (intent.fixture_jobs == 1 || intent.reconcile_producer_reservations)
             && intent.outer_deadline_unix_ms.is_none_or(|outer| intent.deadline_unix_ms <= outer)
             && receipt.reserved_bytes <= receipt.max_output_bytes,
         "native receipt intent or aggregate budget differs"
@@ -2075,7 +2118,8 @@ mod tests {
         let _ = crate::BINARY_SHA256.set(crate::digest(&std::env::current_exe()?)?);
         let root = PathBuf::from(std::env::var("SM_NATIVE_RECIPE_PROOF")?);
         fs::create_dir_all(&root)?;
-        let current = current_checkout();
+        let current = std::env::var_os("SM_NATIVE_RECIPE_SOURCE").map(PathBuf::from).unwrap_or_else(current_checkout);
+        let current = fs::canonicalize(current)?;
         let checkout = root.join("source");
         let selection = std::env::var("SM_NATIVE_RECIPE_FAMILIES")
             .unwrap_or_else(|_| "game-host-projectile,game-host-room-scroll".into());
@@ -2118,12 +2162,11 @@ mod tests {
         let catalog = root.join("catalog.toml");
         immutable(&catalog, toml::to_string(&batch::catalog(&checkout)?)?.as_bytes())?;
         let requirements = root.join("requirements.md");
-        immutable(
-            &requirements,
-            &bounded::read(
-                current.join(".scratch/translation-scope-execution/issues/10-original-acceptance-adapters.md"),
-            )?,
-        )?;
+        let requirements_source =
+            std::env::var_os("SM_NATIVE_RECIPE_REQUIREMENTS").map(PathBuf::from).unwrap_or_else(|| {
+                current.join(".scratch/translation-scope-execution/issues/10-original-acceptance-adapters.md")
+            });
+        immutable(&requirements, &bounded::read(requirements_source)?)?;
         let inventory = Asset {
             file: "tools/port/source-inventory.toml".into(),
             sha256: digest(&checkout.join("tools/port/source-inventory.toml"))?,
@@ -2132,7 +2175,7 @@ mod tests {
             catalog: Asset { file: catalog.clone(), sha256: digest(&catalog)? },
             requirements: Asset { file: requirements.clone(), sha256: digest(&requirements)? },
             checkout: checkout.clone(),
-            rationale: "Ticket 10 public original recipe test with complete selected declarations and actual pinned C"
+            rationale: "Complete selected native declarations against actual pinned C, bound to the retained requirements artifact"
                 .into(),
         };
         let compiler = NativeLimits {
@@ -2217,7 +2260,12 @@ mod tests {
                 operation_key: sha256(name),
                 phase: translation_execution::model::ExecutionPhase::Candidate,
             };
-            let receipt = run(&prepared, &checkout, &output.join("run"), &runtime, &context)?;
+            let fixture_jobs = std::env::var("SM_NATIVE_FIXTURE_JOBS")
+                .ok()
+                .map(|value| value.parse::<usize>())
+                .transpose()?
+                .unwrap_or(runtime.workers);
+            let receipt = run_bounded(&prepared, &checkout, &output.join("run"), &runtime, &context, fixture_jobs)?;
             let verdict = authenticate(&prepared, &checkout, &receipt)?;
             let mut identities = Vec::new();
             receipt.visit_operations(|operation| {
@@ -2584,6 +2632,7 @@ mod tests {
             parent_reservation_bytes: 4096,
             reconcile_producer_reservations: false,
             operation_metadata_bytes: None,
+            fixture_jobs: 1,
             helper: runtime.helper.clone(),
             rustc: runtime.rustc.clone(),
             c_compiler: runtime.c_compiler.clone(),
@@ -2668,6 +2717,7 @@ mod tests {
     #[test]
     #[ignore = "bounded real compiler/actual-C proof; requires installed confinement and private ROM"]
     fn full_real_family_retains_authenticates_and_reuses_every_producer() -> Result<()> {
+        let preparation_started = std::time::Instant::now();
         let _ = crate::BINARY_SHA256.set(crate::digest(&std::env::current_exe()?)?);
         let proof = PathBuf::from(std::env::var("SM_NATIVE_PROOF_ROOT")?);
         let root = proof.join(std::env::var("SM_NATIVE_PROOF_NAME").unwrap_or_else(|_| "actual-c".into()));
@@ -2752,22 +2802,36 @@ mod tests {
             operation_key: sha256("native-real-family-first"),
             phase: translation_execution::model::ExecutionPhase::Candidate,
         };
+        let preparation_seconds = preparation_started.elapsed().as_secs_f64();
+        let fixture_jobs = std::env::var("SM_NATIVE_FIXTURE_JOBS")
+            .ok()
+            .map(|value| value.parse::<usize>())
+            .transpose()?
+            .unwrap_or(runtime.workers);
         let started = std::time::Instant::now();
-        let receipt = run(&prepared, &checkout, &root.join("run"), &runtime, &context)?;
+        let receipt = run_bounded(&prepared, &checkout, &root.join("run"), &runtime, &context, fixture_jobs)?;
+        let run_seconds = started.elapsed().as_secs_f64();
         ensure!(receipt.passed, "{}", receipt.diagnostic);
+        let authentication_started = std::time::Instant::now();
         let verdict = authenticate(&prepared, &checkout, &receipt)?;
+        let authentication_seconds = authentication_started.elapsed().as_secs_f64();
         ensure!(
             verdict.verified_cases == 16 && verdict.verified_routines == 2 && receipt.operation_count()? == 34,
             "real family coverage differs"
         );
         let mut before = Vec::new();
         let mut operations = Vec::new();
+        let mut invocation_times = BTreeMap::new();
         receipt.visit_operations(|operation| {
             before.push((operation.result.path.clone(), fs::metadata(&operation.result.path)?.modified()?));
+            invocation_times
+                .insert(operation.invocation.file.clone(), operation.invocation.file.metadata()?.modified()?);
             operations.push(operation.clone());
             Ok(())
         })?;
+        let replay_started = std::time::Instant::now();
         let retry = run(&prepared, &checkout, &root.join("run"), &runtime, &context)?;
+        let replay_seconds = replay_started.elapsed().as_secs_f64();
         ensure!(sealed(&retry)? == sealed(&receipt)?, "lost response retry allocated another result");
         for (path, modified) in before {
             ensure!(fs::metadata(path)?.modified()? == modified, "retry rewrote a producer result");
@@ -2790,6 +2854,95 @@ mod tests {
             receipt.evidence_bytes,
             receipt.reserved_bytes
         );
+        if std::env::var_os("SM_NATIVE_PERFORMANCE_ONLY").is_some() {
+            #[derive(Serialize)]
+            struct ProducerTiming {
+                label: String,
+                directory: PathBuf,
+                seconds: f64,
+                identity_import_seconds: f64,
+                runner_startup_seconds: f64,
+                sandbox_and_finalization_seconds: f64,
+                parent_publication_seconds: f64,
+            }
+            #[derive(Serialize)]
+            struct Performance {
+                fixture_pairs: usize,
+                routines: usize,
+                operation_count: usize,
+                fixture_jobs: usize,
+                evidence_bytes: u64,
+                preparation_seconds: f64,
+                run_seconds: f64,
+                authentication_seconds: f64,
+                replay_seconds: f64,
+                references_seconds: f64,
+                producer_seconds: f64,
+                compile_seconds: f64,
+                fixture_seconds: f64,
+                fixture_span_seconds: f64,
+                producers: Vec<ProducerTiming>,
+            }
+            let references_started = std::time::Instant::now();
+            references(&receipt)?;
+            let references_seconds = references_started.elapsed().as_secs_f64();
+            let mut producers = Vec::new();
+            let mut compile_seconds = 0.0;
+            let mut fixture_seconds = 0.0;
+            let mut fixture_first = None;
+            let mut fixture_last = None;
+            let elapsed = |first: &Path, last: &Path| -> Result<f64> {
+                let first = invocation_times.get(first).copied().map_or_else(|| first.metadata()?.modified(), Ok)?;
+                Ok(last.metadata()?.modified()?.duration_since(first)?.as_secs_f64())
+            };
+            for operation in &operations {
+                let timing_path = operation.directory.join(format!("{}.timing.toml", operation.label));
+                let timing: builds::ExecutionRecord = family::object(&timing_path)?;
+                let directory = operation.result.path.parent().context("operation result parent missing")?;
+                if operation.directory == verdict.run {
+                    compile_seconds += timing.seconds;
+                } else {
+                    fixture_seconds += timing.seconds;
+                    let first = invocation_times[&operation.invocation.file];
+                    let last = timing_path.metadata()?.modified()?;
+                    fixture_first = Some(fixture_first.map_or(first, |previous: SystemTime| previous.min(first)));
+                    fixture_last = Some(fixture_last.map_or(last, |previous: SystemTime| previous.max(last)));
+                }
+                producers.push(ProducerTiming {
+                    label: operation.label.clone(),
+                    directory: operation.directory.clone(),
+                    seconds: timing.seconds,
+                    identity_import_seconds: elapsed(&operation.invocation.file, &directory.join("intent.json"))?,
+                    runner_startup_seconds: elapsed(&directory.join("intent.json"), &directory.join("sandbox.json"))?,
+                    sandbox_and_finalization_seconds: elapsed(&directory.join("sandbox.json"), &operation.result.path)?,
+                    parent_publication_seconds: elapsed(&operation.result.path, &timing_path)?,
+                });
+            }
+            atomic_toml(
+                &root.join("performance.toml"),
+                &Performance {
+                    fixture_pairs: verdict.verified_cases,
+                    routines: verdict.verified_routines,
+                    operation_count: operations.len(),
+                    fixture_jobs,
+                    evidence_bytes: receipt.evidence_bytes,
+                    preparation_seconds,
+                    run_seconds,
+                    authentication_seconds,
+                    replay_seconds,
+                    references_seconds,
+                    producer_seconds: compile_seconds + fixture_seconds,
+                    compile_seconds,
+                    fixture_seconds,
+                    fixture_span_seconds: fixture_last
+                        .context("missing last fixture")?
+                        .duration_since(fixture_first.context("missing first fixture")?)?
+                        .as_secs_f64(),
+                    producers,
+                },
+            )?;
+            return Ok(());
+        }
         let compile_source = variant_source(&prepared, &checkout, &root.join("compile-denial-source"))?;
         let candidate = compile_source.join(&prepared.candidate_path);
         let candidate_bytes = bounded::read(&candidate)?;
