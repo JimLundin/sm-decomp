@@ -19,9 +19,9 @@ use translation_execution::{
     confinement::{self, Program, ReadOnlyBind, RunLimits},
 };
 
-/// Internal installed execution context. Legacy callers do not acquire this
-/// capability. Every compiler and fixture receives a separate bounded /work;
-/// no writable verifier directory is mounted into candidate execution.
+/// Internal installed execution context. Every compiler and fixture receives a
+/// separate bounded /work; no writable verifier directory is mounted into
+/// candidate execution.
 pub(crate) struct StrictExecution {
     pub helper: PathBuf,
     pub rustc: PathBuf,
@@ -41,9 +41,6 @@ pub(crate) struct StrictExecution {
     pub max_output_bytes: u64,
     pub reserved_bytes: Mutex<u64>,
     pub reservation_group: Mutex<Option<ReservationGroup>>,
-    /// Historical intents keep cumulative worst-case charging. New native
-    /// intents reconcile each completed producer before admitting its successor.
-    pub reconcile_reservations: bool,
 }
 
 /// Every producer in a parallel wave uses one admission anchor. Its full
@@ -56,6 +53,7 @@ pub(crate) struct ReservationGroup {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub(crate) struct StrictInvocation {
     pub context: OperationContext,
     pub request_sha256: String,
@@ -63,8 +61,7 @@ pub(crate) struct StrictInvocation {
     pub requested_limits: RunLimits,
     pub limits: RunLimits,
     pub reserved_bytes: u64,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub reservation_before_bytes: Option<u64>,
+    pub reservation_before_bytes: u64,
 }
 
 #[derive(Clone, Copy)]
@@ -141,32 +138,17 @@ fn has_callback_snapshots(program: &Program) -> bool {
     program.outputs.iter().any(|path| path == Path::new("callback-states.bin"))
 }
 
-fn producer_reservation_bytes(
-    program: &Program,
-    limits: &RunLimits,
-    deadline_unix_ms: u64,
-    reconcile_reservations: bool,
-) -> Result<u64> {
+fn producer_reservation_bytes(program: &Program, limits: &RunLimits, deadline_unix_ms: u64) -> Result<u64> {
     let operation = translation_execution::operation::reserve_bytes_until(program, limits, 0, deadline_unix_ms)?;
-    let framing = if reconcile_reservations {
-        // Invocation TOML contains the Program; timing TOML repeats its argv.
-        // Keep the fixed allowance for context, limits, diagnostic and table
-        // prefixes, and account for arbitrary admitted paths/arguments too.
-        u64::try_from(toml::to_string(program)?.len())?
-            .checked_mul(2)
-            .context("native producer framing reservation overflow")?
-    } else {
-        0
-    };
+    // Invocation TOML contains the Program; timing TOML repeats its argv.
+    // Keep the fixed allowance for context, limits, diagnostic and table
+    // prefixes, and account for arbitrary admitted paths/arguments too.
+    let framing = u64::try_from(toml::to_string(program)?.len())?
+        .checked_mul(2)
+        .context("native producer framing reservation overflow")?;
     operation
         .checked_add(limits.writable_bytes)
-        .and_then(|n| {
-            n.checked_add(if reconcile_reservations && has_callback_snapshots(program) {
-                limits.writable_bytes
-            } else {
-                0
-            })
-        })
+        .and_then(|n| n.checked_add(if has_callback_snapshots(program) { limits.writable_bytes } else { 0 }))
         .and_then(|n| n.checked_add(framing))
         .and_then(|n| n.checked_add(64 * 1024))
         .context("native producer reservation overflow")
@@ -264,7 +246,6 @@ pub(crate) fn retained_producer_bytes(
 
 impl StrictExecution {
     pub(crate) fn begin_fixture_group(&self) -> Result<()> {
-        ensure!(self.reconcile_reservations, "historical reservation mode cannot admit parallel fixtures");
         let mut group = self.reservation_group.lock().unwrap();
         ensure!(group.is_none(), "native reservation group already active");
         *group = Some(ReservationGroup {
@@ -455,8 +436,7 @@ impl StrictExecution {
             saved
         } else {
             self.check_deadline()?;
-            let reserved_bytes =
-                producer_reservation_bytes(program, limits, self.deadline_unix_ms, self.reconcile_reservations)?;
+            let reserved_bytes = producer_reservation_bytes(program, limits, self.deadline_unix_ms)?;
             let remaining = self
                 .deadline_unix_ms
                 .saturating_sub(u64::try_from(SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis())?);
@@ -470,25 +450,20 @@ impl StrictExecution {
                 requested_limits: limits.clone(),
                 limits: actual_limits,
                 reserved_bytes,
-                reservation_before_bytes: self.reconcile_reservations.then(|| self.reservation_before()),
+                reservation_before_bytes: self.reservation_before(),
             };
             self.reserve(invocation.reserved_bytes)?;
             atomic_toml(&invocation_path, &invocation)?;
             invocation
         };
         let operation_directory = translation_execution::operation::directory(&self.operation_root, &context)?;
-        ensure!(
-            invocation.reservation_before_bytes.is_some() == self.reconcile_reservations,
-            "native reservation mode changed"
-        );
         let completed = operation_directory.join("result.json").is_file();
         let in_group = self.reservation_group.lock().unwrap().is_some();
-        let held_reservation = !resumed || !self.reconcile_reservations || !completed || in_group;
+        let held_reservation = !resumed || !completed || in_group;
         if resumed {
-            if let Some(before) = invocation.reservation_before_bytes {
-                ensure!(before == self.reservation_before(), "native reservation prefix changed on replay");
-                reservation_total(before, invocation.reserved_bytes, self.max_output_bytes)?;
-            }
+            let before = invocation.reservation_before_bytes;
+            ensure!(before == self.reservation_before(), "native reservation prefix changed on replay");
+            reservation_total(before, invocation.reserved_bytes, self.max_output_bytes)?;
             // Existing completed producers never launch again. Their original
             // peak is checked above, and publication reconciles their exact
             // retained charge before a later producer can be admitted.
@@ -576,7 +551,8 @@ impl StrictExecution {
             } else {
                 publish()?
             };
-        if let Some(before) = invocation.reservation_before_bytes {
+        {
+            let before = invocation.reservation_before_bytes;
             let reconcile = || -> Result<()> {
                 let references = translation_execution::operation::references(&self.operation_root, &context)?;
                 let retained = retained_producer_bytes(&invocation, &output, &references, run, label)?;
@@ -747,7 +723,7 @@ mod strict_tests {
             stderr_bytes: 4096,
             stdin_bytes: 0,
         };
-        let worst = producer_reservation_bytes(&program, &limits, bounded::now_unix_ms()? + 60_000, true)?;
+        let worst = producer_reservation_bytes(&program, &limits, bounded::now_unix_ms()? + 60_000)?;
         let maximum = worst.checked_add(96 * 1024).context("proof budget overflow")?;
         let context = OperationContext {
             run_id: translation_execution::model::sha256(root.display().to_string()),
@@ -773,7 +749,6 @@ mod strict_tests {
             max_output_bytes,
             reserved_bytes: Mutex::new(0),
             reservation_group: Mutex::new(None),
-            reconcile_reservations: true,
         };
         let execution = make(bounded::now_unix_ms()? + 60_000, maximum);
         for label in ["first", "second"] {
@@ -870,7 +845,6 @@ mod strict_tests {
             max_output_bytes: 4096,
             reserved_bytes: Mutex::new(0),
             reservation_group: Mutex::new(None),
-            reconcile_reservations: true,
         };
         let program = Program {
             executable: root.join("program"),

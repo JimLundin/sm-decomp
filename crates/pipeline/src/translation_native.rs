@@ -97,9 +97,8 @@ pub(crate) struct PreparedNative {
     pub pinned_source: PathBuf,
     pub candidate_path: String,
     /// Writable members of this family's Rust closure approved by the whole
-    /// translation scope. Omitted for historical single-module installations.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub approved_candidate_paths: Option<BTreeSet<String>>,
+    /// translation scope, including the root when it is writable.
+    pub approved_candidate_paths: BTreeSet<String>,
     pub rust_inputs: Vec<String>,
     pub c_inputs: Vec<String>,
     pub dependencies_sha256: String,
@@ -210,31 +209,14 @@ pub(crate) struct NativeReceipt {
     pub evidence_bytes: u64,
     pub context: OperationContext,
     pub operation_root: PathBuf,
-    pub operations: Vec<NativeOperation>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub operation_index: Option<Reference>,
+    pub operation_index: Reference,
     pub max_output_bytes: u64,
     pub reserved_bytes: u64,
 }
 
 impl NativeReceipt {
-    fn store_operations(&mut self, output: &Path) -> Result<()> {
-        let index = operation_storage::store(self, output)?;
-        self.operation_index = Some(index);
-        self.operations.clear();
-        Ok(())
-    }
-
-    pub(crate) fn visit_operations(&self, mut visit: impl FnMut(&NativeOperation) -> Result<()>) -> Result<()> {
-        if self.operation_index.is_some() {
-            return operation_storage::visit(self, visit);
-        }
-        ensure!(self.operations.len() <= 32770, "native operation receipt inventory exceeded");
-        for operation in &self.operations {
-            bounded::check()?;
-            visit(operation)?;
-        }
-        Ok(())
+    pub(crate) fn visit_operations(&self, visit: impl FnMut(&NativeOperation) -> Result<()>) -> Result<()> {
+        operation_storage::visit(self, visit).map(|_| ())
     }
 
     #[cfg(test)]
@@ -249,30 +231,22 @@ impl NativeReceipt {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct NativeIntent {
     context: OperationContext,
     prepared_sha256: String,
     candidate_sha256: String,
     deadline_unix_ms: u64,
-    #[serde(default)]
     outer_deadline_unix_ms: Option<u64>,
     max_output_bytes: u64,
     operation_root: PathBuf,
     parent_reservation_bytes: u64,
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    reconcile_producer_reservations: bool,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    operation_metadata_bytes: Option<u64>,
-    #[serde(default = "serial_fixture_jobs")]
+    operation_metadata_bytes: u64,
     fixture_jobs: usize,
     helper: PathBuf,
     rustc: PathBuf,
     c_compiler: PathBuf,
     compiler_runtime_sha256: String,
-}
-
-fn serial_fixture_jobs() -> usize {
-    1
 }
 
 fn now_unix_ms() -> Result<u64> {
@@ -644,15 +618,9 @@ fn bind_scope_candidates(prepared: &mut PreparedNative, approved_paths: &[String
     // An affected family may have a read-only root and a writable dependency.
     // Inputs outside its compilation closure remain irrelevant to its receipt.
     let candidates = approved.into_iter().filter(|path| prepared.rust_inputs.contains(path)).collect::<BTreeSet<_>>();
-    // Preserve the exact historical identity for a single-root scope. Every
-    // other scope binds the complete permitted closure into the frozen policy.
-    if candidates == BTreeSet::from([prepared.candidate_path.clone()]) {
-        prepared.approved_candidate_paths = None;
-    } else {
-        prepared.approved_candidate_paths = Some(candidates);
-        prepared.dependencies_sha256 =
-            sealed(&("scope-native-inputs-v1", &prepared.dependencies_sha256, &prepared.approved_candidate_paths))?;
-    }
+    prepared.approved_candidate_paths = candidates;
+    prepared.dependencies_sha256 =
+        sealed(&("scope-native-inputs-v1", &prepared.dependencies_sha256, &prepared.approved_candidate_paths))?;
     Ok(())
 }
 
@@ -783,8 +751,8 @@ fn prepare_bounded_with_catalog(
         manifest,
         source,
         pinned_source,
+        approved_candidate_paths: BTreeSet::from([candidate_path.clone()]),
         candidate_path,
-        approved_candidate_paths: None,
         rust_inputs: rust_names,
         c_inputs: c_names,
         dependencies_sha256,
@@ -841,15 +809,12 @@ fn check_candidate(prepared: &PreparedNative, checkout: &Path) -> Result<()> {
 }
 
 fn mutable_candidate(prepared: &PreparedNative, path: &str) -> bool {
-    prepared.approved_candidate_paths.as_ref().map_or(path == prepared.candidate_path, |paths| paths.contains(path))
+    prepared.approved_candidate_paths.contains(path)
 }
 
 fn candidate_digest(prepared: &PreparedNative, checkout: &Path) -> Result<String> {
-    let Some(paths) = &prepared.approved_candidate_paths else {
-        return digest(&file(&checkout.join(&prepared.candidate_path))?);
-    };
     let mut inputs = BTreeMap::new();
-    for path in paths {
+    for path in &prepared.approved_candidate_paths {
         bounded::check()?;
         inputs.insert(path, digest(&file(&checkout.join(path))?)?);
     }
@@ -988,8 +953,7 @@ fn run_bounded(
                 max_output_bytes: runtime.max_output_bytes,
                 operation_root: runtime.operation_root.clone(),
                 parent_reservation_bytes,
-                reconcile_producer_reservations: true,
-                operation_metadata_bytes: Some(operation_storage::capacity(operation_slots(prepared, &run)?.len())?),
+                operation_metadata_bytes: operation_storage::capacity(operation_slots(prepared, &run)?.len())?,
                 fixture_jobs,
                 helper: helper.clone(),
                 rustc: rustc.clone(),
@@ -1016,7 +980,6 @@ fn run_bounded(
             max_output_bytes: intent.max_output_bytes,
             reserved_bytes: Mutex::new(intent.parent_reservation_bytes),
             reservation_group: Mutex::new(None),
-            reconcile_reservations: intent.reconcile_producer_reservations,
         };
         Ok((checkout, output, run, intent, execution))
     };
@@ -1072,7 +1035,7 @@ fn run_bounded(
         verdict.implementation = Some(implementation);
         let tasks = family::ordered_tasks(&prepared.manifest)?;
         if intent.fixture_jobs == 1 {
-            // Historical interrupted runs retain their exact serial prefix.
+            // A single worker executes directly without per-fixture thread startup.
             for (routine, fixture, index) in tasks {
                 verdict.cases.push(recipes::fixture(prepared, routine, fixture, index, &run, &execution)?);
             }
@@ -1128,7 +1091,9 @@ fn run_bounded(
     bounded::reconcile(8 * bounded::DEFAULT_BYTES, || {
         family::inventory_with_limits(&run, &run, &mut verdict.artifacts, retained_tree_limits(&run)?)?;
         atomic_toml(&run.join("verdict.toml"), &verdict)?;
-        let operations = collect_operations(prepared, &run, &runtime.operation_root, context)?;
+        let operations = collect_operations(prepared, &run, &intent)?;
+        let operation_index =
+            operation_storage::store(&output, &prepared_sha256, &candidate_sha256, context, &operations)?;
         let mut receipt = NativeReceipt {
             prepared_sha256,
             candidate_sha256,
@@ -1138,25 +1103,16 @@ fn run_bounded(
             evidence_bytes: 0,
             context: context.clone(),
             operation_root: runtime.operation_root.clone(),
-            operations,
-            operation_index: None,
+            operation_index,
             max_output_bytes: intent.max_output_bytes,
             reserved_bytes: *execution.reserved_bytes.lock().unwrap(),
         };
-        if intent.operation_metadata_bytes.is_some() {
-            receipt.store_operations(&output)?;
-        }
         receipt.evidence_bytes = evidence_bytes(&run, &receipt)?;
         ensure!(
             receipt.evidence_bytes <= intent.max_output_bytes,
             "native evidence exceeded prelaunch aggregate reservation"
         );
-        if intent.reconcile_producer_reservations {
-            ensure!(
-                receipt.evidence_bytes <= receipt.reserved_bytes,
-                "native evidence exceeded reconciled reservation"
-            );
-        }
+        ensure!(receipt.evidence_bytes <= receipt.reserved_bytes, "native evidence exceeded reconciled reservation");
         if receipt.passed {
             authenticate(prepared, &checkout, &receipt)?;
             if now_unix_ms()? >= intent.deadline_unix_ms {
@@ -1213,22 +1169,15 @@ fn authenticate_bounded(prepared: &PreparedNative, checkout: &Path, receipt: &Na
             && intent.operation_root == receipt.operation_root
             && intent.max_output_bytes == receipt.max_output_bytes
             && (1..=64).contains(&intent.fixture_jobs)
-            && (intent.fixture_jobs == 1 || intent.reconcile_producer_reservations)
             && intent.outer_deadline_unix_ms.is_none_or(|outer| intent.deadline_unix_ms <= outer)
             && receipt.reserved_bytes <= receipt.max_output_bytes,
         "native receipt intent or aggregate budget differs"
     );
     let expected = operation_slots(prepared, run)?.into_iter().collect::<BTreeSet<_>>();
     ensure!(
-        intent.operation_metadata_bytes.is_some() == receipt.operation_index.is_some(),
-        "native operation storage mode changed"
+        intent.operation_metadata_bytes == operation_storage::capacity(expected.len())?,
+        "native operation metadata reservation changed"
     );
-    if let Some(maximum) = intent.operation_metadata_bytes {
-        ensure!(
-            maximum == operation_storage::capacity(expected.len())?,
-            "native operation metadata reservation changed"
-        );
-    }
     let mut observed = BTreeSet::new();
     let mut reservations = Vec::new();
     let tasks = task_lookup(&prepared.manifest)?;
@@ -1239,27 +1188,18 @@ fn authenticate_bounded(prepared: &PreparedNative, checkout: &Path, receipt: &Na
                 && observed.insert((operation.directory.clone(), operation.label.clone())),
             "native producer receipt is unexpected or duplicated"
         );
-        let (passed, reservation) =
-            authenticate_operation(prepared, &tasks, &receipt.operation_root, &receipt.context, operation)?;
+        let (passed, reservation) = authenticate_operation(prepared, &tasks, &intent, operation)?;
         ensure!(!receipt.passed || passed, "accepted native family contains a rejected producer");
-        reservations.extend(reservation);
+        reservations.push(reservation);
         Ok(())
     })?;
-    if intent.reconcile_producer_reservations {
-        ensure!(reservations.len() == observed.len(), "native producer reservation record missing");
-        let retained = builds::authenticate_reservations(
-            intent.parent_reservation_bytes,
-            &mut reservations,
-            intent.max_output_bytes,
-        )?;
-        ensure!(
-            receipt.reserved_bytes >= retained && (!receipt.passed || receipt.reserved_bytes == retained),
-            "native completed reservation extent differs"
-        );
-        ensure!(receipt.evidence_bytes <= receipt.reserved_bytes, "native evidence exceeds retained reservation");
-    } else {
-        ensure!(reservations.is_empty(), "historical native reservation mode changed");
-    }
+    let retained =
+        builds::authenticate_reservations(intent.parent_reservation_bytes, &mut reservations, intent.max_output_bytes)?;
+    ensure!(
+        receipt.reserved_bytes >= retained && (!receipt.passed || receipt.reserved_bytes == retained),
+        "native completed reservation extent differs"
+    );
+    ensure!(receipt.evidence_bytes <= receipt.reserved_bytes, "native evidence exceeds retained reservation");
     ensure!(
         !receipt.passed || observed.len() == expected.len(),
         "native fixture pair compiler/execution receipts incomplete"
@@ -1312,12 +1252,8 @@ fn operation_slots(prepared: &PreparedNative, run: &Path) -> Result<Vec<(PathBuf
     Ok(result)
 }
 
-fn collect_operations(
-    prepared: &PreparedNative,
-    run: &Path,
-    root: &Path,
-    context: &OperationContext,
-) -> Result<Vec<NativeOperation>> {
+fn collect_operations(prepared: &PreparedNative, run: &Path, intent: &NativeIntent) -> Result<Vec<NativeOperation>> {
+    let root = &intent.operation_root;
     let mut operations = Vec::new();
     let tasks = task_lookup(&prepared.manifest)?;
     for (directory, label) in operation_slots(prepared, run)? {
@@ -1346,7 +1282,7 @@ fn collect_operations(
             result_sha256: result.result_sha256,
             references: translation_execution::operation::references(root, &invocation.context)?,
         };
-        authenticate_operation(prepared, &tasks, root, context, &operation)?;
+        authenticate_operation(prepared, &tasks, intent, &operation)?;
         operations.push(operation);
     }
     Ok(operations)
@@ -1361,10 +1297,11 @@ fn task_lookup(manifest: &Manifest) -> Result<TaskLookup<'_>> {
 fn authenticate_operation(
     prepared: &PreparedNative,
     tasks: &TaskLookup<'_>,
-    root: &Path,
-    context: &OperationContext,
+    intent: &NativeIntent,
     operation: &NativeOperation,
-) -> Result<(bool, Option<builds::ProducerReservation>)> {
+) -> Result<(bool, builds::ProducerReservation)> {
+    let root = &intent.operation_root;
+    let context = &intent.context;
     let invocation_path = file(&operation.invocation.file)?;
     ensure!(
         invocation_path == operation.directory.join(format!("{}.invocation.toml", operation.label))
@@ -1401,12 +1338,6 @@ fn authenticate_operation(
     } else {
         operation.directory.parent().context("native fixture family parent missing")?.to_path_buf()
     };
-    let intent: NativeIntent =
-        family::object(&family_run.parent().context("native output parent missing")?.join("native-intent.toml"))?;
-    ensure!(
-        invocation.reservation_before_bytes.is_some() == intent.reconcile_producer_reservations,
-        "native authenticated reservation mode changed"
-    );
     ensure!(invocation.program.helper == intent.helper, "native helper configuration changed");
     let candidate_root = if compiler && rust {
         let candidate = invocation
@@ -1426,7 +1357,7 @@ fn authenticate_operation(
     let mut expected_inputs = BTreeSet::new();
     if compiler {
         ensure!(
-            invocation.program.executable == if rust { intent.rustc } else { intent.c_compiler }
+            &invocation.program.executable == if rust { &intent.rustc } else { &intent.c_compiler }
                 && sealed(&invocation.program.runtime)? == intent.compiler_runtime_sha256,
             "native compiler installed capabilities changed"
         );
@@ -1446,13 +1377,6 @@ fn authenticate_operation(
         }
         if headless {
             for name in ["headless.c", "headless_frame.h"] {
-                // The first retained recipe stop predates the complete header
-                // closure. It remains a valid failed receipt, never readiness.
-                if name == "headless_frame.h"
-                    && !prepared.contract.frozen_inputs.contains_key("tools/decomp/headless_frame.h")
-                {
-                    continue;
-                }
                 let destination = Path::new("/inputs/rust/tools/decomp").join(name);
                 let input = invocation
                     .program
@@ -1536,27 +1460,22 @@ fn authenticate_operation(
     {
         crate::callback::authenticate_packed_snapshots(&operation.directory, &operation.label)?;
     }
-    let reservation = invocation
-        .reservation_before_bytes
-        .map(|before_bytes| -> Result<builds::ProducerReservation> {
-            Ok(builds::ProducerReservation {
-                before_bytes,
-                reserved_bytes: invocation.reserved_bytes,
-                retained_bytes: builds::retained_producer_bytes(
-                    &invocation,
-                    &result,
-                    &operation.references,
-                    &operation.directory,
-                    &operation.label,
-                )?,
-            })
-        })
-        .transpose()?;
+    let reservation = builds::ProducerReservation {
+        before_bytes: invocation.reservation_before_bytes,
+        reserved_bytes: invocation.reserved_bytes,
+        retained_bytes: builds::retained_producer_bytes(
+            &invocation,
+            &result,
+            &operation.references,
+            &operation.directory,
+            &operation.label,
+        )?,
+    };
     Ok((result.passed, reservation))
 }
 
-/// Parent artifacts and all durable runner dependencies, including historical
-/// installed input manifests, belong to the retention graph.
+/// Parent artifacts and durable runner dependencies required to authenticate
+/// the current verification result.
 pub(crate) fn references(receipt: &NativeReceipt) -> Result<Vec<Reference>> {
     bounded::until(now_unix_ms()?.saturating_add(60_000), 8 * bounded::DEFAULT_BYTES, || references_bounded(receipt))
 }
@@ -1596,12 +1515,7 @@ fn references_bounded(receipt: &NativeReceipt) -> Result<Vec<Reference>> {
             );
         }
     }
-    if receipt.operation_index.is_some() {
-        for reference in operation_storage::references(receipt)? {
-            result.insert(reference.path.clone(), reference);
-        }
-    }
-    receipt.visit_operations(|operation| {
+    let storage = operation_storage::visit(receipt, |operation| {
         bounded::check()?;
         for reference in &operation.references {
             bounded::check()?;
@@ -1610,19 +1524,17 @@ fn references_bounded(receipt: &NativeReceipt) -> Result<Vec<Reference>> {
         }
         Ok(())
     })?;
+    for reference in storage {
+        result.insert(reference.path.clone(), reference);
+        ensure!(result.len() <= 65536, "native reference inventory exceeded");
+    }
     Ok(result.into_values().collect())
 }
 
 fn evidence_bytes(run: &Path, receipt: &NativeReceipt) -> Result<u64> {
     let mut seen = BTreeSet::new();
     let mut bytes = tree_bytes(run)?;
-    if receipt.operation_index.is_some() {
-        for reference in operation_storage::references(receipt)? {
-            bytes = bytes.checked_add(reference.bytes).context("native operation metadata extent overflow")?;
-            seen.insert(reference.path);
-        }
-    }
-    receipt.visit_operations(|operation| {
+    let storage = operation_storage::visit(receipt, |operation| {
         bounded::check()?;
         for reference in &operation.references {
             bounded::check()?;
@@ -1632,6 +1544,11 @@ fn evidence_bytes(run: &Path, receipt: &NativeReceipt) -> Result<u64> {
         }
         Ok(())
     })?;
+    for reference in storage {
+        if seen.insert(reference.path) {
+            bytes = bytes.checked_add(reference.bytes).context("native operation metadata extent overflow")?;
+        }
+    }
     Ok(bytes)
 }
 
@@ -1648,8 +1565,8 @@ fn parent_reservation(prepared: &PreparedNative, checkout: &Path) -> Result<u64>
             .checked_add(path.metadata()?.len().checked_mul(2).context("native source extent overflow")?)
             .context("native source snapshot extent overflow")?;
     }
-    // Preserve the historical conservative reservation; authentication now
-    // compares the archive in bounded Rust buffers without temporary extraction.
+    // Reserve source archive bytes and framing. Authentication compares the
+    // archive in bounded Rust buffers without temporary extraction.
     for name in prepared.source.files.keys() {
         bounded::check()?;
         let path = file(&prepared.pinned_source.join(name))?;
@@ -1750,7 +1667,9 @@ mod tests {
         // This exercises storage only; these declarations grant no producer or
         // Offline acceptance. Actual invocation authentication remains separate.
         let expected = operations.iter().map(|operation| operation.context.operation_key.clone()).collect::<Vec<_>>();
-        let mut receipt = NativeReceipt {
+        let operation_index =
+            operation_storage::store(&directory.0, &sha256("prepared"), &sha256("candidate"), &context, &operations)?;
+        let receipt = NativeReceipt {
             prepared_sha256: sha256("prepared"),
             candidate_sha256: sha256("candidate"),
             verdict: Asset { file: directory.0.join("family/verdict.toml"), sha256: sha256("verdict") },
@@ -1759,12 +1678,10 @@ mod tests {
             evidence_bytes: 0,
             context,
             operation_root: directory.0.join("operations"),
-            operations,
-            operation_index: None,
+            operation_index,
             max_output_bytes: 64 * 1024 * 1024,
             reserved_bytes: 64 * 1024 * 1024,
         };
-        receipt.store_operations(&directory.0)?;
         let encoded = serde_json::to_vec(&receipt)?;
         ensure!(
             encoded.len() <= crate::translation_original::MAX_RECORD as usize,
@@ -1780,11 +1697,24 @@ mod tests {
         assert_eq!(actual, expected);
         let retained = references(&restored)?;
         ensure!(retained.iter().any(|item| item == &reference), "producer input missing from retention");
-        let index = restored.operation_index.as_ref().context("native receipt did not seal its attribution")?;
+        let index = &restored.operation_index;
         ensure!(retained.iter().any(|item| item == index), "operation index missing from retention");
+        let storage_bytes = retained
+            .iter()
+            .filter(|item| item.path.starts_with(directory.0.join("native-operations")))
+            .map(|item| item.bytes)
+            .sum::<u64>();
+        bounded::until(now_unix_ms()? + 60_000, storage_bytes, || {
+            assert_eq!(references_bounded(&restored)?, retained);
+            assert_eq!(bounded::charged_bytes(), storage_bytes, "attribution was read more than once");
+            Ok(())
+        })?;
         ensure!(
-            evidence_bytes(&directory.0.join("family"), &restored)?
-                == retained.iter().map(|item| item.bytes).sum::<u64>(),
+            bounded::until(now_unix_ms()? + 60_000, storage_bytes, || {
+                let bytes = evidence_bytes(&directory.0.join("family"), &restored)?;
+                assert_eq!(bounded::charged_bytes(), storage_bytes, "attribution accounting reread storage");
+                Ok(bytes)
+            })? == retained.iter().map(|item| item.bytes).sum::<u64>(),
             "indexed attribution omitted from aggregate evidence extent"
         );
         println!("Retained all {} operations in a {}-byte controller receipt", expected.len(), encoded.len());
@@ -1813,49 +1743,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "audits the complete retained Original artifact tree without launching any producer"]
-    fn retained_original_whole_family_uses_finite_declared_tree_limits() -> Result<()> {
-        let run = PathBuf::from(std::env::var("SM_NATIVE_ORIGINAL_TREE")?);
-        let proof = PathBuf::from(std::env::var("SM_NATIVE_ORIGINAL_TREE_PROOF")?);
-        fs::create_dir_all(&proof)?;
-        let manifest = crate::fixture_format::read(&run.join("manifest.smf"))?;
-        let verdict: Verdict = family::object(&run.join("verdict.toml"))?;
-        let fixtures = coverage(&manifest)?.values().map(Vec::len).sum::<usize>();
-        let limits = declared_tree_limits(&manifest, 64 * 1024 * 1024 * 1024)?;
-        let error =
-            bounded::reconcile(8 * bounded::DEFAULT_BYTES, || family::inventory(&run, &run, &mut BTreeMap::new()))
-                .unwrap_err();
-        ensure!(error.to_string().contains("discovery path budget"), "unexpected generic inventory refusal: {error:#}");
-        let (files, bytes, snapshots) = bounded::reconcile(8 * bounded::DEFAULT_BYTES, || {
-            let mut actual = BTreeMap::new();
-            family::inventory_with_limits(&run, &run, &mut actual, limits)?;
-            ensure!(actual == verdict.artifacts, "Original artifact inventory differs");
-            let snapshots = actual.keys().filter(|path| path.ends_with(".wram")).count();
-            let (files, bytes) = bounded::discovery_with_limit(limits.paths, || {
-                bounded::tree(&run, limits.files, 8 * bounded::DEFAULT_BYTES)
-            })?;
-            Ok((files, bytes, snapshots))
-        })?;
-        let report = BTreeMap::from([
-            ("declared_fixture_pairs", fixtures as u64),
-            ("retained_files", files as u64),
-            ("logical_file_bytes", bytes),
-            ("wram_snapshots", snapshots as u64),
-            ("file_ceiling", limits.files as u64),
-            ("path_ceiling", limits.paths as u64),
-        ]);
-        immutable(&proof.join("summary.toml"), toml::to_string(&report)?.as_bytes())?;
-        immutable(
-            &proof.join("original-verdict.sha256"),
-            format!("{}  {}\n", digest(&run.join("verdict.toml"))?, run.join("verdict.toml").display()).as_bytes(),
-        )?;
-        println!(
-            "Authenticated {files} Original files for {fixtures} Fixture pairs: {bytes} logical bytes, {snapshots} WRAM snapshots"
-        );
-        Ok(())
-    }
-
-    #[test]
     fn native_receipt_retention_rejects_changed_incomplete_or_redirected_attribution() -> Result<()> {
         use std::os::unix::fs::PermissionsExt;
         let directory = bounded::tests::Directory::new()?;
@@ -1876,7 +1763,14 @@ mod tests {
             result_sha256: sha256("result"),
             references: vec![],
         };
-        let mut receipt = NativeReceipt {
+        let operation_index = operation_storage::store(
+            &directory.0,
+            &sha256("prepared"),
+            &sha256("candidate"),
+            &context,
+            std::slice::from_ref(&operation),
+        )?;
+        let receipt = NativeReceipt {
             prepared_sha256: sha256("prepared"),
             candidate_sha256: sha256("candidate"),
             verdict: Asset { file: directory.0.join("family/verdict.toml"), sha256: sha256("verdict") },
@@ -1885,21 +1779,17 @@ mod tests {
             evidence_bytes: 0,
             context,
             operation_root: directory.0.join("operations"),
-            operations: vec![operation.clone()],
-            operation_index: None,
+            operation_index,
             max_output_bytes: 16 * 1024 * 1024,
             reserved_bytes: 16 * 1024 * 1024,
         };
-        // Legacy receipts remain byte-for-byte serializable with no index key.
-        let legacy = serde_json::to_vec(&receipt)?;
-        ensure!(!String::from_utf8(legacy.clone())?.contains("operation_index"), "legacy receipt encoding changed");
-        let historical: NativeReceipt = serde_json::from_slice(&legacy)?;
-        assert_eq!(serde_json::to_vec(&historical)?, legacy);
-        assert_eq!(historical.operation_count()?, 1);
-
-        receipt.store_operations(&directory.0)?;
+        let mut inline = serde_json::to_value(&receipt)?;
+        inline["operations"] = serde_json::json!([operation]);
+        assert!(serde_json::from_value::<NativeReceipt>(inline.clone()).is_err());
+        inline.as_object_mut().unwrap().remove("operation_index");
+        assert!(serde_json::from_value::<NativeReceipt>(inline).is_err());
         references(&receipt)?;
-        let index = receipt.operation_index.as_ref().unwrap().clone();
+        let index = receipt.operation_index.clone();
         let index_bytes = fs::read(&index.path)?;
         let chunk = directory.0.join("native-operations/00000.json");
         let chunk_bytes = fs::read(&chunk)?;
@@ -1907,8 +1797,8 @@ mod tests {
         fs::set_permissions(&chunk, fs::Permissions::from_mode(0o600))?;
 
         let mut changed = receipt.clone();
-        changed.operations.push(operation);
-        ensure!(references(&changed).is_err(), "conflicting inline attribution admitted");
+        changed.operation_index.path = directory.0.join("foreign-index.json");
+        ensure!(references(&changed).is_err(), "redirected index admitted");
         changed = receipt.clone();
         changed.candidate_sha256 = sha256("foreign candidate");
         ensure!(references(&changed).is_err(), "index admitted a different candidate");
@@ -1953,88 +1843,12 @@ mod tests {
             fs::write(&index.path, &bytes)?;
             changed = receipt.clone();
             changed.operation_index =
-                Some(Reference { path: index.path.clone(), sha256: sha256(&bytes), bytes: bytes.len() as u64 });
+                Reference { path: index.path.clone(), sha256: sha256(&bytes), bytes: bytes.len() as u64 };
             ensure!(references(&changed).is_err(), "{alteration} admitted by native retention");
         }
         fs::write(&index.path, &index_bytes)?;
         fs::write(&chunk, &chunk_bytes)?;
         references(&receipt)?;
-        Ok(())
-    }
-
-    #[test]
-    #[ignore = "authenticates all retained Original cases against sealed source without launching producers"]
-    fn retained_original_whole_family_authentication_fits_trusted_scope() -> Result<()> {
-        let run = PathBuf::from(std::env::var("SM_NATIVE_ORIGINAL_TREE")?);
-        let proof = PathBuf::from(std::env::var("SM_NATIVE_ORIGINAL_TREE_PROOF")?);
-        let declaration_source = PathBuf::from(std::env::var("SM_NATIVE_ORIGINAL_DECLARATION_SOURCE")?);
-        let pinned_source = PathBuf::from(std::env::var("SM_NATIVE_ORIGINAL_PINNED_SOURCE")?);
-        let snapshot = proof.join("original-source");
-        let prior: Verdict = family::object(&run.join("verdict.toml"))?;
-        let implementation = prior.implementation.as_ref().context("Original implementation missing")?;
-        let retained = prior
-            .artifacts
-            .iter()
-            .filter(|(name, _)| Path::new(name).components().count() == 1)
-            .map(|(name, hash)| (hash, run.join(name)))
-            .collect::<BTreeMap<_, _>>();
-        for map in [&implementation.rust_dependencies, &implementation.harness_sources] {
-            for (name, expected) in map {
-                ensure!(relative(Path::new(name)), "Original source ownership is not relative");
-                let source =
-                    retained.get(expected).with_context(|| format!("sealed Original source missing: {name}"))?;
-                let destination = snapshot.join(name);
-                fs::create_dir_all(destination.parent().unwrap())?;
-                ensure!(digest(source)? == *expected, "sealed Original source differs: {name}");
-                immutable(&destination, &bounded::read(source)?)?;
-            }
-        }
-        let manifest = implementation.manifest.as_ref().context("Original manifest missing")?;
-        let destination = snapshot.join(manifest.file.strip_prefix(&implementation.source_root)?);
-        fs::create_dir_all(destination.parent().unwrap())?;
-        immutable(&destination, &bounded::read(run.join("manifest.smf"))?)?;
-        ensure!(digest(&destination)? == manifest.sha256, "Original manifest snapshot differs");
-        fs::create_dir_all(snapshot.join("tools"))?;
-        immutable(
-            &snapshot.join("tools/dependencies.toml"),
-            &bounded::read(declaration_source.join("tools/dependencies.toml"))?,
-        )?;
-        let declaration = crate::fixture_format::read(&run.join("manifest.smf"))?;
-        let limits = declared_tree_limits(&declaration, 64 * 1024 * 1024 * 1024)?;
-        let start = std::time::Instant::now();
-        let mut charged_bytes = 0;
-        let result = bounded::reconcile(8 * bounded::DEFAULT_BYTES, || {
-            let result = family::authenticate_with_source_limits(
-                crate::family_model::AuthenticateRequest {
-                    checkout: snapshot.clone(),
-                    verdict: run.join("verdict.toml"),
-                },
-                &pinned_source,
-                limits,
-            );
-            charged_bytes = bounded::charged_bytes();
-            result
-        });
-        let elapsed_ms = u64::try_from(start.elapsed().as_millis())?;
-        #[derive(Serialize)]
-        struct Audit {
-            verified_fixture_pairs: usize,
-            charged_bytes: u64,
-            elapsed_ms: u64,
-            error: Option<String>,
-        }
-        let audit = Audit {
-            verified_fixture_pairs: result.as_ref().map_or(0, |verdict| verdict.verified_cases),
-            charged_bytes,
-            elapsed_ms,
-            error: result.as_ref().err().map(|error| format!("{error:#}")),
-        };
-        immutable(&proof.join("authentication.toml"), toml::to_string(&audit)?.as_bytes())?;
-        println!(
-            "Complete Original authentication: {charged_bytes} charged bytes in {elapsed_ms} ms; {:?}",
-            audit.error
-        );
-        ensure!(result? == prior, "Original authentication changed verdict");
         Ok(())
     }
 
@@ -2504,7 +2318,7 @@ mod tests {
             source: Source::default(),
             pinned_source: checkout.clone(),
             candidate_path: names[0].clone(),
-            approved_candidate_paths: None,
+            approved_candidate_paths: BTreeSet::from([names[0].clone()]),
             rust_inputs: names.to_vec(),
             c_inputs: Vec::new(),
             dependencies_sha256: sha256("dependencies"),
@@ -2512,8 +2326,13 @@ mod tests {
         };
         let mut single = baseline.clone();
         bind_scope_candidates(&mut single, &[names[0].clone()])?;
-        assert_eq!(sealed(&single)?, sealed(&baseline)?);
-        assert!(!toml::to_string(&single)?.contains("approved_candidate_paths"));
+        assert_ne!(single.dependencies_sha256, baseline.dependencies_sha256);
+        assert_eq!(single.approved_candidate_paths, BTreeSet::from([names[0].clone()]));
+        assert!(toml::to_string(&single)?.contains("approved_candidate_paths"));
+        assert_eq!(
+            candidate_digest(&single, checkout)?,
+            sealed(&BTreeMap::from([(&names[0], digest(&checkout.join(&names[0]))?)]))?
+        );
         let mut scoped = baseline.clone();
         bind_scope_candidates(&mut scoped, &names[..2])?;
         assert_ne!(scoped.dependencies_sha256, baseline.dependencies_sha256);
@@ -2533,7 +2352,7 @@ mod tests {
         assert!(check_candidate(&dependency_only, checkout).is_err());
         let mut uncertain = baseline.clone();
         bind_scope_candidates(&mut uncertain, &["crates/port/src/unrelated.rs".into()])?;
-        assert_eq!(uncertain.approved_candidate_paths, Some(BTreeSet::new()));
+        assert!(uncertain.approved_candidate_paths.is_empty());
         assert!(check_candidate(&uncertain, checkout).is_err());
         for invalid in ["crates/port/src/memory.rs", "crates/port/src/../helper.rs", "tools/port/family.toml"] {
             assert!(bind_scope_candidates(&mut baseline.clone(), &[invalid.into()]).is_err());
@@ -2584,7 +2403,7 @@ mod tests {
             source: Source::default(),
             pinned_source: absent.clone(),
             candidate_path: "candidate.rs".into(),
-            approved_candidate_paths: None,
+            approved_candidate_paths: BTreeSet::from(["candidate.rs".into()]),
             rust_inputs: Vec::new(),
             c_inputs: Vec::new(),
             dependencies_sha256: sha256("dependencies"),
@@ -2650,7 +2469,7 @@ mod tests {
             source: Source::default(),
             pinned_source: directory.0.join("unavailable-source"),
             candidate_path: "candidate.rs".into(),
-            approved_candidate_paths: None,
+            approved_candidate_paths: BTreeSet::from(["candidate.rs".into()]),
             rust_inputs: Vec::new(),
             c_inputs: Vec::new(),
             dependencies_sha256: sha256("deps"),
@@ -2679,19 +2498,18 @@ mod tests {
             workers: 4,
             gate_timeout_seconds: 1,
             deadline_unix_ms: Some(0),
-            max_output_bytes: 1024 * 1024,
+            max_output_bytes: 16 * 1024 * 1024,
         };
         let intent = NativeIntent {
             context: context.clone(),
             prepared_sha256: sealed(&prepared)?,
-            candidate_sha256: digest(&checkout.join("candidate.rs"))?,
+            candidate_sha256: candidate_digest(&prepared, &checkout)?,
             deadline_unix_ms: 0,
             outer_deadline_unix_ms: Some(0),
             max_output_bytes: runtime.max_output_bytes,
             operation_root: runtime.operation_root.clone(),
-            parent_reservation_bytes: 4096,
-            reconcile_producer_reservations: false,
-            operation_metadata_bytes: None,
+            parent_reservation_bytes: 16 * 1024 * 1024,
+            operation_metadata_bytes: operation_storage::capacity(2)?,
             fixture_jobs: 1,
             helper: runtime.helper.clone(),
             rustc: runtime.rustc.clone(),
@@ -2707,20 +2525,22 @@ mod tests {
             ..Default::default()
         };
         atomic_toml(&run_path.join("verdict.toml"), &verdict)?;
-        let receipt = NativeReceipt {
+        let operation_index =
+            operation_storage::store(&output, &intent.prepared_sha256, &intent.candidate_sha256, &context, &[])?;
+        let mut receipt = NativeReceipt {
             prepared_sha256: intent.prepared_sha256,
             candidate_sha256: intent.candidate_sha256,
             verdict: Asset { file: run_path.join("verdict.toml"), sha256: digest(&run_path.join("verdict.toml"))? },
             passed: false,
             diagnostic: "original bounded stop".into(),
-            evidence_bytes: tree_bytes(&run_path)?,
+            evidence_bytes: 0,
             context: context.clone(),
             operation_root: runtime.operation_root.clone(),
-            operations: Vec::new(),
-            operation_index: None,
+            operation_index,
             max_output_bytes: runtime.max_output_bytes,
-            reserved_bytes: 4096,
+            reserved_bytes: intent.parent_reservation_bytes,
         };
+        receipt.evidence_bytes = evidence_bytes(&run_path, &receipt)?;
         atomic_toml(&output.join("native-receipt.toml"), &receipt)?;
         let metadata = output.join("native-receipt.toml").metadata()?.modified()?;
         let replay = run(&prepared, &checkout, &output, &runtime, &context)?;
@@ -2812,7 +2632,19 @@ mod tests {
         if !inventory_path.exists() {
             crate::source_inventory::run(&checkout, pinned, &inventory_path)?;
         }
-        let provenance: NativeProvenance = family::object(&proof.join("provenance/provenance.toml"))?;
+        let catalog = root.join("catalog.toml");
+        immutable(&catalog, toml::to_string(&batch::catalog(&checkout)?)?.as_bytes())?;
+        let requirements = root.join("requirements.md");
+        immutable(
+            &requirements,
+            b"Verify every enemy-jump-instructions Fixture pair against pinned C, with current producer attribution, bounded execution and retry controls.\n",
+        )?;
+        let provenance = NativeProvenance::ReviewedCatalog {
+            catalog: Asset { file: catalog.clone(), sha256: digest(&catalog)? },
+            requirements: Asset { file: requirements.clone(), sha256: digest(&requirements)? },
+            checkout: checkout.clone(),
+            rationale: "Complete current native fixture domain and execution controls".into(),
+        };
         let limits = NativeLimits {
             timeout_seconds: 60,
             writable_bytes: 128 * 1024 * 1024,
@@ -2843,9 +2675,8 @@ mod tests {
         missing.frozen_inputs.remove("crates/port/src/memory.rs");
         ensure!(prepare(&checkout, pinned, &missing).is_err(), "missing canonical harness dependency admitted");
         let mut missing = contract.clone();
-        if let NativeProvenance::ReviewedOfflineFamily { verdict, .. } = &mut missing.provenance {
-            verdict.sha256 = "0".repeat(64);
-        }
+        let NativeProvenance::ReviewedCatalog { catalog, .. } = &mut missing.provenance else { unreachable!() };
+        catalog.sha256 = "0".repeat(64);
         ensure!(prepare(&checkout, pinned, &missing).is_err(), "changed exercise provenance admitted");
         atomic_toml(&root.join("prepared.toml"), &prepared)?;
         let runtime = StrictRuntime {
@@ -3067,214 +2898,6 @@ mod tests {
         );
         println!(
             "Preparation gaps, compiler undeclared inclusion, runtime parent/sibling read/write, tampered operation and aggregate prelaunch reservation checks passed"
-        );
-        Ok(())
-    }
-
-    /// Read-only authentication of completed producers needs neither their
-    /// retired compiler helper nor today's source. Preserve the original source
-    /// snapshots and every transitive durable reference through run cleanup.
-    #[test]
-    #[ignore = "requires retained real native proof; executes no compiler or fixture"]
-    fn retained_real_family_authenticates_without_executing_producers() -> Result<()> {
-        let proof = PathBuf::from(std::env::var("SM_NATIVE_PROOF_ROOT")?);
-        let root = proof.join(std::env::var("SM_NATIVE_PROOF_NAME")?);
-        let prepared: PreparedNative = family::object(&root.join("prepared.toml"))?;
-        let mut retained = BTreeMap::new();
-        for (output, source) in [
-            ("run", "source"),
-            ("compile-denial", "compile-denial-source"),
-            ("runtime-denial", "runtime-denial-source"),
-            ("reservation-denial", "source"),
-        ] {
-            let path = root.join(output).join("native-receipt.toml");
-            if !path.is_file() {
-                continue;
-            }
-            let checkout =
-                std::env::var_os("SM_NATIVE_PROOF_SOURCE").map(PathBuf::from).unwrap_or_else(|| root.join(source));
-            let receipt: NativeReceipt = family::object(&path)?;
-            authenticate(&prepared, &checkout, &receipt)?;
-            let intent: NativeIntent = family::object(&root.join(output).join("native-intent.toml"))?;
-            let mut runtime = StrictRuntime {
-                helper: root.join("retired-helper"),
-                rustc: root.join("retired-rustc"),
-                c_compiler: root.join("retired-cc"),
-                operation_root: receipt.operation_root.clone(),
-                pipeline_root: root.join("retired-pipeline"),
-                workers: 4,
-                gate_timeout_seconds: 180,
-                deadline_unix_ms: intent.outer_deadline_unix_ms,
-                max_output_bytes: receipt.max_output_bytes,
-            };
-            let retry = run(&prepared, &checkout, &root.join(output), &runtime, &receipt.context)?;
-            ensure!(sealed(&retry)? == sealed(&receipt)?, "expired deadline changed a completed receipt");
-            runtime.deadline_unix_ms = Some(intent.outer_deadline_unix_ms.unwrap_or(0).saturating_add(1));
-            ensure!(
-                run(&prepared, &checkout, &root.join(output), &runtime, &receipt.context).is_err(),
-                "completed receipt admitted a changed outer deadline"
-            );
-            let mut operations = Vec::new();
-            receipt.visit_operations(|operation| {
-                operations.push((operation.result.path.clone(), fs::metadata(&operation.result.path)?.modified()?));
-                Ok(())
-            })?;
-            let references = references(&receipt)?;
-            for reference in &references {
-                translation_execution::retention::authenticate_reference(reference, receipt.max_output_bytes)?;
-            }
-            authenticate(&prepared, &checkout, &receipt)?;
-            for (path, modified) in operations {
-                ensure!(fs::metadata(path)?.modified()? == modified, "authentication rewrote a producer result");
-            }
-            println!(
-                "Authenticated retained {output}: {} producers, {} references",
-                receipt.operation_count()?,
-                references.len()
-            );
-            retained.insert(output, references);
-        }
-        ensure!(!retained.is_empty(), "native proof has no completed receipt");
-        immutable(&root.join("retained-references.toml"), toml::to_string(&retained)?.as_bytes())?;
-        Ok(())
-    }
-
-    #[test]
-    #[ignore = "audits a retained finalization failure; never publishes native acceptance or launches a producer"]
-    fn retained_complete_family_finalization_authenticates_without_acceptance() -> Result<()> {
-        let proof = PathBuf::from(std::env::var("SM_NATIVE_PROOF_ROOT")?);
-        let root = proof.join(std::env::var("SM_NATIVE_PROOF_NAME")?);
-        let checkout = PathBuf::from(std::env::var("SM_NATIVE_PROOF_SOURCE")?);
-        let prepared: PreparedNative = family::object(&root.join("prepared.toml"))?;
-        let output = root.join("run");
-        ensure!(!output.join("native-receipt.toml").exists(), "audit requires the retained finalization failure");
-        let intent: NativeIntent = family::object(&output.join("native-intent.toml"))?;
-        ensure!(now_unix_ms()? >= intent.deadline_unix_ms, "original failed family deadline is not expired");
-        let run = output.join("family");
-        let (pairs, producers, bytes) = bounded::reconcile(8 * bounded::DEFAULT_BYTES, || {
-            check_candidate(&prepared, &checkout)?;
-            ensure!(candidate_digest(&prepared, &checkout)? == intent.candidate_sha256, "retained candidate differs");
-            let verdict: Verdict = family::object(&run.join("verdict.toml"))?;
-            let mut inventory = BTreeMap::new();
-            bounded::discovery(|| family::inventory(&run, &run, &mut inventory))?;
-            ensure!(inventory == verdict.artifacts, "retained artifact inventory differs");
-            let operations = collect_operations(&prepared, &run, &intent.operation_root, &intent.context)?;
-            ensure!(operations.len() == operation_slots(&prepared, &run)?.len(), "retained producer is missing");
-            let identities = operations
-                .iter()
-                .map(|operation| Ok((operation.result.path.clone(), fs::metadata(&operation.result.path)?.modified()?)))
-                .collect::<Result<Vec<_>>>()?;
-            let producer_count = operations.len();
-            // In-memory accounting view only. The failed original receipt is
-            // deliberately not created or upgraded by this read-only audit.
-            let accounting = NativeReceipt {
-                prepared_sha256: intent.prepared_sha256.clone(),
-                candidate_sha256: intent.candidate_sha256.clone(),
-                verdict: Asset { file: run.join("verdict.toml"), sha256: digest(&run.join("verdict.toml"))? },
-                passed: false,
-                diagnostic: "retained finalization audit only".into(),
-                evidence_bytes: 0,
-                context: intent.context.clone(),
-                operation_root: intent.operation_root.clone(),
-                operations,
-                operation_index: None,
-                max_output_bytes: intent.max_output_bytes,
-                reserved_bytes: intent.parent_reservation_bytes,
-            };
-            let bytes = evidence_bytes(&run, &accounting)?;
-            ensure!(evidence_bytes(&run, &accounting)? == bytes, "retained evidence extent changed");
-            let checked = bounded::discovery(|| {
-                family::authenticate_with_source(
-                    crate::family_model::AuthenticateRequest { checkout, verdict: run.join("verdict.toml") },
-                    &prepared.pinned_source,
-                )
-            })?;
-            ensure!(
-                checked.verified_cases == prepared.contract.coverage.values().map(Vec::len).sum::<usize>(),
-                "retained complete family extent differs"
-            );
-            for (path, modified) in identities {
-                ensure!(fs::metadata(path)?.modified()? == modified, "audit changed a producer result");
-            }
-            Ok((checked.verified_cases, producer_count, bytes))
-        })?;
-        ensure!(!output.join("native-receipt.toml").exists(), "audit published native acceptance");
-        let report = BTreeMap::from([
-            ("verified_family_pairs", pairs as u64),
-            ("authenticated_producers", producers as u64),
-            ("retained_evidence_bytes", bytes),
-            ("native_acceptance_published", 0),
-        ]);
-        immutable(&root.join("retained-finalization-audit.toml"), toml::to_string(&report)?.as_bytes())?;
-        println!(
-            "Authenticated {pairs} retained Fixture pairs and {producers} producers; no native acceptance published"
-        );
-        Ok(())
-    }
-
-    /// A real retained proof is never authenticated against today's edited
-    /// harness. Preserve the exact small sources already sealed by the verdict.
-    #[test]
-    #[ignore = "requires the retained actual-C run and private pinned source"]
-    fn historical_provenance_authenticates_retained_source() -> Result<()> {
-        let proof = PathBuf::from(std::env::var("SM_NATIVE_PROOF_ROOT")?);
-        let current = PathBuf::from(env!("CARGO_MANIFEST_DIR")).parent().unwrap().parent().unwrap().to_path_buf();
-        let verdict_path = PathBuf::from(
-            "/home/jim/sm-decomp/out/port/decomp-run-20261013/host-integrated/families/enemy-jump-instructions/evidence/1791902651665897-546014-290/verdict.toml",
-        );
-        let prior: Verdict = family::object(&verdict_path)?;
-        let implementation = prior.implementation.as_ref().context("prior implementation missing")?;
-        let snapshot = proof.join("provenance/source");
-        fs::create_dir_all(&snapshot)?;
-        let mut retained = BTreeMap::new();
-        for entry in fs::read_dir(&prior.run)? {
-            let path = entry?.path();
-            if path.is_file() && !path.is_symlink() {
-                retained.insert(digest(&path)?, path);
-            }
-        }
-        for map in [&implementation.rust_dependencies, &implementation.harness_sources] {
-            for (relative_name, hash) in map {
-                ensure!(relative(Path::new(relative_name)), "historical source ownership is not relative");
-                let source = retained
-                    .get(hash)
-                    .with_context(|| format!("sealed historical source unavailable: {relative_name}"))?;
-                let destination = snapshot.join(relative_name);
-                fs::create_dir_all(destination.parent().unwrap())?;
-                immutable(&destination, &bounded::read(source)?)?;
-                ensure!(digest(&destination)? == *hash, "historical source snapshot differs");
-            }
-        }
-        let declared = implementation.manifest.as_ref().context("historical manifest missing")?;
-        let relative_manifest = declared.file.strip_prefix(&implementation.source_root)?;
-        let destination = snapshot.join(relative_manifest);
-        fs::create_dir_all(destination.parent().unwrap())?;
-        immutable(&destination, &bounded::read(prior.run.join("manifest.smf"))?)?;
-        ensure!(digest(&destination)? == declared.sha256, "historical manifest snapshot differs");
-        fs::create_dir_all(snapshot.join("tools"))?;
-        immutable(&snapshot.join("tools/dependencies.toml"), &bounded::read(current.join("tools/dependencies.toml"))?)?;
-        let authenticated = family::authenticate_with_source(
-            crate::family_model::AuthenticateRequest { checkout: snapshot.clone(), verdict: verdict_path.clone() },
-            Path::new("/home/jim/sm-decomp/deps/snesrev-sm"),
-        )?;
-        ensure!(authenticated == prior, "historical authentication changed verdict");
-        let provenance = NativeProvenance::ReviewedOfflineFamily {
-            verdict: Asset { file: verdict_path, sha256: digest(&prior.run.join("verdict.toml"))? },
-            checkout: snapshot,
-        };
-        let asset_path = proof.join("provenance/provenance.toml");
-        if asset_path.exists() {
-            ensure!(
-                sealed(&family::object::<NativeProvenance>(&asset_path)?)? == sealed(&provenance)?,
-                "historical provenance changed"
-            );
-        } else {
-            atomic_toml(&asset_path, &provenance)?;
-        }
-        println!(
-            "Authenticated historical provenance: {} {} (16 cases, 2 routines)",
-            asset_path.display(),
-            digest(&asset_path)?
         );
         Ok(())
     }

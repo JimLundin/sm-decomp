@@ -1,4 +1,4 @@
-//! Compiler inputs and conservative module discovery for legacy family wrappers.
+//! Compiler inputs and conservative module discovery for Offline family wrappers.
 #[path = "bounded_inputs.rs"]
 pub(crate) mod bounded;
 use anyhow::{Context, Result, ensure};

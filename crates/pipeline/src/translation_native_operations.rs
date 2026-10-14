@@ -1,5 +1,4 @@
-//! Bounded storage for complete native producer attribution. Older receipts
-//! retain their inline operation list; new receipts seal a small ordered index.
+//! Bounded indexed storage for complete native producer attribution.
 use super::{NativeOperation, NativeReceipt};
 use crate::inputs::{self, bounded};
 use anyhow::{Context, Result, ensure};
@@ -54,12 +53,12 @@ fn output(receipt: &NativeReceipt) -> Result<&Path> {
     receipt.verdict.file.parent().and_then(Path::parent).context("native operation output parent missing")
 }
 
-fn index_path(receipt: &NativeReceipt) -> Result<PathBuf> {
-    Ok(output(receipt)?.join("native-operations/index.json"))
+fn index_path(directory: &Path) -> PathBuf {
+    directory.join("native-operations/index.json")
 }
 
-fn chunk_path(receipt: &NativeReceipt, number: usize) -> Result<PathBuf> {
-    Ok(output(receipt)?.join("native-operations").join(format!("{number:05}.json")))
+fn chunk_path(directory: &Path, number: usize) -> PathBuf {
+    directory.join("native-operations").join(format!("{number:05}.json"))
 }
 
 fn read<T: DeserializeOwned>(reference: &Reference, maximum: u64) -> Result<T> {
@@ -82,18 +81,22 @@ fn publish(path: &Path, bytes: &[u8], maximum: u64) -> Result<Reference> {
     Ok(Reference { path: path.into(), sha256: sha256(bytes), bytes: bytes.len() as u64 })
 }
 
-pub(super) fn store(receipt: &NativeReceipt, directory: &Path) -> Result<Reference> {
-    ensure!(directory == output(receipt)?, "native operation storage redirected outside its receipt");
-    ensure!(receipt.operation_index.is_none(), "native operation storage is already indexed");
-    ensure!(receipt.operations.len() <= MAX_OPERATIONS, "native operation receipt inventory exceeded");
+pub(super) fn store(
+    directory: &Path,
+    prepared_sha256: &str,
+    candidate_sha256: &str,
+    context: &OperationContext,
+    operations: &[NativeOperation],
+) -> Result<Reference> {
+    ensure!(operations.len() <= MAX_OPERATIONS, "native operation receipt inventory exceeded");
     let mut chunks = Vec::new();
     let mut first = 0;
     let mut total = 0u64;
-    let maximum = capacity(receipt.operations.len())?;
-    while first < receipt.operations.len() {
+    let maximum = capacity(operations.len())?;
+    while first < operations.len() {
         bounded::check()?;
         ensure!(chunks.len() < MAX_CHUNKS, "native operation chunk inventory exceeded");
-        let mut end = (first + CHUNK_OPERATIONS).min(receipt.operations.len());
+        let mut end = (first + CHUNK_OPERATIONS).min(operations.len());
         let bytes = loop {
             #[derive(Serialize)]
             struct PublishedChunk<'a> {
@@ -104,7 +107,7 @@ pub(super) fn store(receipt: &NativeReceipt, directory: &Path) -> Result<Referen
             let bytes = serde_json::to_vec(&PublishedChunk {
                 schema: "translation-native-operation-chunk-v1",
                 first,
-                operations: &receipt.operations[first..end],
+                operations: &operations[first..end],
             })?;
             if bytes.len() as u64 <= MAX_CHUNK_BYTES {
                 break bytes;
@@ -114,26 +117,24 @@ pub(super) fn store(receipt: &NativeReceipt, directory: &Path) -> Result<Referen
         };
         total = total.checked_add(bytes.len() as u64).context("native operation storage overflow")?;
         ensure!(total <= maximum - MAX_INDEX_BYTES, "native operation metadata aggregate exceeded");
-        chunks.push(publish(&chunk_path(receipt, chunks.len())?, &bytes, MAX_CHUNK_BYTES)?);
+        chunks.push(publish(&chunk_path(directory, chunks.len()), &bytes, MAX_CHUNK_BYTES)?);
         first = end;
     }
     let index = Index {
         schema: "translation-native-operation-index-v1".into(),
-        context: receipt.context.clone(),
-        prepared_sha256: receipt.prepared_sha256.clone(),
-        candidate_sha256: receipt.candidate_sha256.clone(),
-        operations: receipt.operations.len(),
+        context: context.clone(),
+        prepared_sha256: prepared_sha256.into(),
+        candidate_sha256: candidate_sha256.into(),
+        operations: operations.len(),
         chunks,
     };
-    publish(&index_path(receipt)?, &serde_json::to_vec(&index)?, MAX_INDEX_BYTES)
+    publish(&index_path(directory), &serde_json::to_vec(&index)?, MAX_INDEX_BYTES)
 }
 
 fn index(receipt: &NativeReceipt) -> Result<Index> {
-    let reference = receipt.operation_index.as_ref().context("native operation index missing")?;
-    ensure!(
-        receipt.operations.is_empty() && reference.path == index_path(receipt)?,
-        "native receipt has conflicting or redirected producer attribution"
-    );
+    let reference = &receipt.operation_index;
+    let directory = output(receipt)?;
+    ensure!(reference.path == index_path(directory), "native receipt has redirected producer attribution");
     let index: Index = read(reference, MAX_INDEX_BYTES)?;
     ensure!(
         index.schema == "translation-native-operation-index-v1"
@@ -150,7 +151,7 @@ fn index(receipt: &NativeReceipt) -> Result<Index> {
     let maximum = capacity(index.operations)?;
     for (number, chunk) in index.chunks.iter().enumerate() {
         ensure!(
-            chunk.path == chunk_path(receipt, number)? && chunk.bytes > 0 && chunk.bytes <= MAX_CHUNK_BYTES,
+            chunk.path == chunk_path(directory, number) && chunk.bytes > 0 && chunk.bytes <= MAX_CHUNK_BYTES,
             "native operation chunk redirected or oversized"
         );
         total = total.checked_add(chunk.bytes).context("native operation metadata extent overflow")?;
@@ -164,7 +165,13 @@ fn index(receipt: &NativeReceipt) -> Result<Index> {
     Ok(index)
 }
 
-pub(super) fn visit(receipt: &NativeReceipt, mut visit: impl FnMut(&NativeOperation) -> Result<()>) -> Result<()> {
+/// Authenticate attribution once, visiting producers and returning its storage
+/// references from the same index and chunks. Producer authentication remains
+/// the caller's responsibility.
+pub(super) fn visit(
+    receipt: &NativeReceipt,
+    mut visit: impl FnMut(&NativeOperation) -> Result<()>,
+) -> Result<Vec<Reference>> {
     let index = index(receipt)?;
     let mut observed = 0usize;
     for reference in &index.chunks {
@@ -184,15 +191,7 @@ pub(super) fn visit(receipt: &NativeReceipt, mut visit: impl FnMut(&NativeOperat
         }
     }
     ensure!(observed == index.operations, "native operation index is incomplete");
-    Ok(())
-}
-
-pub(super) fn references(receipt: &NativeReceipt) -> Result<Vec<Reference>> {
-    let index = index(receipt)?;
-    // Authenticate every chunk before handing storage dependencies to retention.
-    // Producer authentication remains the caller's separate responsibility.
-    visit(receipt, |_| Ok(()))?;
-    let mut references = vec![receipt.operation_index.as_ref().unwrap().clone()];
+    let mut references = vec![receipt.operation_index.clone()];
     references.extend(index.chunks);
     Ok(references)
 }
