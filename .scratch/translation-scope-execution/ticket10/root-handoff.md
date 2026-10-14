@@ -34,8 +34,11 @@ Current independent workers are `confinement_performance` (sandbox accounting),
 `equipment_implementation` (the full private 29-routine equipment interaction
 source scope). Gameplay setup and ownership are recorded in
 `../../equipment-interaction-concurrent-20261014/bootstrap-handoff.md`.
-Its `translating` observation is published; no translated/verified stage or
-production claim is asserted. No JSON format migration is part of this work.
+Its `translated` observation is published at main commit `ddb80ae`: private
+source commit `847d76f` implements all 29 routines, declares 427 Fixture pairs,
+and passes all 13 independent Rust controls. Fresh actual-C execution and
+review remain pending; no production claim is asserted. No JSON format
+migration is part of this work.
 
 The installed production `status` still authenticates the unchanged original
 registry/request/activation identities. No Original Installation or new attempt
