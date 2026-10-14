@@ -45,6 +45,18 @@ fn read_only_input_opens_scale_with_existing_outputs() {
 }
 
 #[test]
+fn read_only_directory_opens_scale_with_existing_outputs() {
+    let limits = RunLimits { writable_bytes: 8 * 1024 * 1024, ..limits() };
+    let output = run(&probe("probe_read_only_directory_opens"), &limits, b"").unwrap();
+    assert!(
+        output.status.success(),
+        "{}\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+#[test]
 fn reviewed_devices_allow_null_child_stdio() {
     let output = run(&probe("probe_null_stdio"), &limits(), b"").unwrap();
     assert!(
@@ -135,6 +147,28 @@ fn probe_read_only_input_opens() {
         assert_eq!(unsafe { libc::close(descriptor) }, 0);
     }
     println!("completed 8192 read-only input opens");
+}
+
+#[test]
+#[ignore = "candidate probe, invoked only by confined parent test"]
+fn probe_read_only_directory_opens() {
+    for index in 0..256 {
+        fs::File::create(format!("/work/tmp/object-{index}")).unwrap();
+    }
+    fs::create_dir("/work/tmp/existing-directory").unwrap();
+    println!("created 256 compiler-output placeholders and an empty directory");
+    for _ in 0..4096 {
+        assert_eq!(fs::read_dir("/work/tmp/existing-directory").unwrap().count(), 0);
+        let descriptor = unsafe {
+            libc::open(
+                c"/work/tmp/existing-directory".as_ptr(),
+                libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC,
+            )
+        };
+        assert!(descriptor >= 0);
+        assert_eq!(unsafe { libc::close(descriptor) }, 0);
+    }
+    println!("completed 8192 read-only directory opens");
 }
 
 #[test]

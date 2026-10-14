@@ -311,3 +311,32 @@ test sandboxes were torn down and descendants reaped by the confinement tests;
 their retained logs/source/readers have no unsealed run intermediates. Final
 build-tree and integrated-worktree retirement remains the integration owner's
 cleanup responsibility after the remaining tests and source retention.
+
+## Read-only directory correction: immutable v4
+
+The Rust directory probe retains 256 compiler-output placeholders, opens and
+enumerates an existing empty directory 4,096 times through `read_dir`, and opens
+it another 4,096 times through `open(O_RDONLY | O_DIRECTORY | O_CLOEXEC)`. With
+immutable v3 it timed out at the unchanged five-second bound (5.01 seconds).
+The complete `O_TMPFILE` bit combination includes `O_DIRECTORY`; the v3 mask
+therefore incorrectly requested full extent scans for ordinary directory reads.
+V4 tests that combination separately, while preserving access/create/truncate
+checks and the conservative `openat2` path.
+
+Retained root: `/tmp/sm-ticket10-native-proofs/confinement-v4`.
+The optimized helper is `tools/sm-translation-sandbox`, SHA-256
+`1ec74e0bcc1024ae460d74b47148114526bf6743e2cc4a87302f9ecf551ab6d9`.
+All seven runtime tests pass in 4.72 seconds; all eight original confinement
+tests pass in 42.69 seconds, including the live-private-descriptor refusal,
+unlinked quota controls and six actual Rust linker-descendant compilations.
+Exact source, helper, readers, build log and red/green logs remain retained.
+V4 changes only helper observer flags, so v1/v2/v3 host clients and the wire
+format remain compatible. Existing helpers are unchanged.
+
+No producer from these tests remains active. The test sandboxes and temporary
+fixture directories were removed by their existing teardown. Remaining proof
+files are retained evidence; final utility cleanup, build-tree and worktree
+retirement remain with the integration owner. Free space: 165,076,750,336 bytes.
+
+The separate transient descriptor EACCES observation from Cargo `compact-02`
+is still under diagnosis; v4 does not claim to fix a live exec transition.

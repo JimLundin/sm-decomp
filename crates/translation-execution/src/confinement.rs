@@ -746,7 +746,11 @@ fn wait_traced(pid: u32, writable_bytes: u64, proc: &File, logs: &[File]) -> Res
                     _ => None,
                 };
                 let readonly_open = open_flags.is_some_and(|flags| {
-                    flags & (libc::O_ACCMODE | libc::O_CREAT | libc::O_TRUNC | libc::O_TMPFILE) as u64 == 0
+                    // O_TMPFILE contains O_DIRECTORY. A read-only directory
+                    // open is harmless; only the complete tmpfile combination
+                    // can create an unnamed file and must stay conservative.
+                    flags & (libc::O_ACCMODE | libc::O_CREAT | libc::O_TRUNC) as u64 == 0
+                        && flags & libc::O_TMPFILE as u64 != libc::O_TMPFILE as u64
                 });
                 let mutating = !readonly_open && [
                     libc::SYS_write,
