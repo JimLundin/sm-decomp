@@ -11,6 +11,93 @@ continuation. The original production registry, old stopped attempt, four held
 claims and three Submitted source results are unchanged. No original scope has
 completed through the new installed command at this checkpoint.
 
+## Latest continuation checkpoint
+
+Integrated source through `e0b7303` includes the completed Original prerequisite
+regression, compact verdict-only recovery, native operation indexing, finite
+per-pass discovery and shared callback/PLM argument builders. Ticket 10 is still
+claimed. No Original production Installation or new production attempt has been
+created. The production claims, registry, source results and old stopped attempt
+remain unchanged. The sections below this checkpoint also retain earlier proof
+history; they are not a claim that the final production run has completed.
+
+The current catalog was fully prepared in preview 03: 177 families and 150,204
+Fixture pairs, plus the pause composite's separate 360 direct-animation pairs.
+The preview is `/tmp/sm-ticket10-preparation-preview03`; its continuation config
+SHA-256 is `09ca2142197bc866abdf0238d50ba17d4ab78a389b7d7e6c2e4bc60accf6beed`.
+It uses reviewed source `30bef71` and must not be installed after later fixes.
+The missing production C archive was copied from the already verified cache;
+its exact pin remains
+`69c78831351112887575f852dadf0281dd5c23cef890b07a268ae6cf60aa9193`.
+Both cleanup passes completed on all three preparation previews, reclaiming
+zero bytes. Source, config, failures and unchanged old production status remain
+retained under `/tmp/sm-ticket10-root-verification`.
+
+The retained `30bef71` controller is
+`/tmp/sm-ticket10-root-verification/bin/sm-pipeline-30bef71-opt1`, SHA-256
+`8a916402c9659b5f65cc39742744421fdce3755bfbf774948f62308a5bc7e07a`.
+It was built with pipeline optimization level 1 in 9m40s. Earlier installed and
+retained readers are preserved. No preview controller overwrites production.
+
+The native receipt size regression failed at 11,685,590 bytes for 2,048 storage
+declarations, then passed with sealed bounded chunks in 0.23 seconds. This is a
+storage test, not producer or Offline acceptance. Commit `17cfde1` introduces a
+small index bound to exact context, prepared identity and candidate identity;
+historical inline receipts retain their encoding and evidence-byte semantics.
+Metadata is reserved before launch, counted in evidence and included in retention.
+The first green reader and exact source are retained in `native-index-v1/`, reader
+SHA-256 `46072e59633c08ba334b59d5ab596c3c877feeb33e57617c6990bad10c4e0da7`.
+Supplementary retention/tamper controls are being checked. Larger declared tree,
+reference, trusted-read and aggregate catalog limits still require validation.
+
+The complete pause native proof passed all 247 primary and 360 direct-animation
+actual-C pairs, with replay and post-cleanup authentication. Captured Ridley
+completed 670 family pairs but native receipt finalization hit the old discovery
+counter ceiling. Its repaired read-only audit authenticates 1,343 producers in
+27.15 seconds and creates no native acceptance. Existing material callback proofs
+also authenticate after the shared argument-builder change. Full details and
+immutable source/readers remain in the native handoff and proof directories.
+
+The two-axis review against `808efe2…30bef71` is recorded in `review-30bef71.md`.
+The compact recovery defect is fixed in root commits `cb85b82`, `32b2082` and
+`fdc7053`; the final seven focused controls pass. Their five retained green
+fixtures authenticate after both cleanup passes and removal of the new recovery
+worktree/target. The exact regression first failed with `compact immutable output
+changed`, then recovered the same expired stopped verdict without a producer.
+Its proof root is `/tmp/sm-ticket10-compact-recovery-proof-20261014`.
+
+The public Original prerequisite regression is integrated as `094db08`. It keeps
+the real pause paths, 247-case primary declaration and all ten Rust declarations,
+omits auxiliary direct animation and observes that exact refusal through public
+run/inspect/resume. It preserves source, claim, Installation, evidence extents and
+file modification times. Its retained replay passed after worktree retirement in
+23.08 seconds. Keep `/tmp/sm-complete-supervisor-1300786-0`, the retained failed
+setup fixture, and the reader under
+`/tmp/sm-ticket10-original-regression-verification/bin/`.
+
+This continuation retired the integrated Original regression worktree
+(448,421,888 allocated bytes), the compact recovery target (3,021,004,800 bytes)
+and its worktree (448,434,176 bytes): 3,917,860,864 bytes reclaimed. The Original
+worker had separately retired its 1,856,675,840-byte target. Required proof roots,
+source snapshots and frozen readers remain. The post-retirement authentication
+logs are `original-authentication-after-retirement.*` and
+`compact-recovery-retired-{green,initial}.*`. Available space was
+166,723,866,624 bytes during the following guarded-index build.
+
+The native helper v4 remains the last validated helper. A later candidate needs
+validated ptrace birth-event and descriptor-exit handling before another compact
+Cargo prerequisite run. All original adversarial guards must pass. No replacement
+helper or dependency-cache success has been assumed.
+
+Current scale measurements do not establish the preview's 64 GiB / 3,600-second
+aggregate Offline budget as sufficient. The source/spec review distinguishes
+these ticket-10 aggregate choices from the original per-command obligations.
+Retain every original control and family; review a finite whole-catalog budget
+and authenticated native reuse between identical candidate/integrated closures.
+Original Cargo controls must execute on both identities. Final suite, review of
+repairs/storage/scale, real installed execution, ordered continuation/recovery,
+retained authentication and final cleanup remain outstanding.
+
 Worker checkpoints through the final compact proof and Cargo `e67aed2` are
 integrated. The separately sealed
 Cargo/rustc toolchain is independent of the native compiler. Imported original
