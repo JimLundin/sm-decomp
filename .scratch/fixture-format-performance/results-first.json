@@ -1,0 +1,980 @@
+{
+  "contract": "fixture-format-study-v1",
+  "baseline": "f39947c4a1e45c382deb5c842934c92bb28b1fe4",
+  "rustc": "rustc 1.101.0-nightly (c1070d693 2026-09-28)",
+  "repetitions": 3,
+  "environment": {
+    "/proc/loadavg": "1.98 2.32 2.57 2/643 182386",
+    "/proc/meminfo": "MemTotal:       12250812 kB\nMemFree:         1306840 kB\nMemAvailable:    8525936 kB\nBuffers:          584712 kB\nCached:          6538772 kB",
+    "/proc/version": "Linux version 6.18.54.1-microsoft-standard-WSL2 (root@9b80f41eb17c) (gcc (GCC) 13.2.0, GNU ld (GNU Binutils) 2.41) #1 SMP PREEMPT_DYNAMIC Tue Oct  6 19:13:07 UTC 2026"
+  },
+  "scope": [
+    "Same typed Manifest; every metadata field retained in a smaller JSON section.",
+    "Contiguous indexed binary patch records; shared immutable payloads; no Vec allocation per patch on read.",
+    "Every layout authenticated by SHA-256 before timed decode; compressed layout authenticates both physical and decoded bytes.",
+    "All full WRAM results compared before timing; continuations use three varied synthetic inherited states, not actual C executions.",
+    "Cache-eviction mode is a POSIX_FADV_DONTNEED hint on private copied files, not a cold-machine guarantee.",
+    "Materialization includes allocating a 128 KiB buffer per case, but excludes per-case file output, compilation, execution, and complete evidence authentication.",
+    "Other sessions may use this machine. CPU time and wall time are both retained.",
+    "No claim of fastest possible format; metadata JSON, mmap, output formats and end-to-end integration remain separate work."
+  ],
+  "families": [
+    {
+      "family": "floater-spike-motion",
+      "original_bytes": 22771777,
+      "original_sha256": "7dfe247a7b926435f53ce4c74fd51b628e57d32857ba76dd09170a78b2e00e1b",
+      "cases": 4929,
+      "continuations": 0,
+      "original_writes": 59136,
+      "encodings": [
+        {
+          "layout": "indexed-writes",
+          "bytes": 2673544,
+          "metadata_bytes": 1622901,
+          "cases": 4929,
+          "patch_records": 59136,
+          "unique_payload_bytes": 25536,
+          "compilation_ms": 97.44767399999999
+        },
+        {
+          "layout": "compiled-spans-zstd-1",
+          "bytes": 204695,
+          "metadata_bytes": 1622901,
+          "cases": 4929,
+          "patch_records": 1906552,
+          "unique_payload_bytes": 12458,
+          "compilation_ms": 0.0
+        },
+        {
+          "layout": "compiled-spans",
+          "bytes": 32219122,
+          "metadata_bytes": 1622901,
+          "cases": 4929,
+          "patch_records": 1906552,
+          "unique_payload_bytes": 12458,
+          "compilation_ms": 1524.99568
+        },
+        {
+          "layout": "root-images",
+          "bytes": 647834584,
+          "metadata_bytes": 1622901,
+          "cases": 4929,
+          "patch_records": 4929,
+          "unique_payload_bytes": 646053888,
+          "compilation_ms": 3543.5670489999998
+        }
+      ],
+      "state_identity": "085bd688232bece8869fb938775342f7a51935fc7db8f8bca752e49569147293",
+      "samples": [
+        {
+          "variant": "current.toml",
+          "cache": "warm",
+          "repetition": 0,
+          "read_hash_decode_ms": 3302.734997,
+          "read_hash_decode_cpu_ms": 3301.7889999999993,
+          "materialize_ms": 13.10426,
+          "materialize_cpu_ms": 13.107000000001534
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "warm",
+          "repetition": 0,
+          "read_hash_decode_ms": 6.048298,
+          "read_hash_decode_cpu_ms": 6.052999999997866,
+          "materialize_ms": 10.8159,
+          "materialize_cpu_ms": 10.81699999999941
+        },
+        {
+          "variant": "compiled-spans",
+          "cache": "warm",
+          "repetition": 0,
+          "read_hash_decode_ms": 54.517416,
+          "read_hash_decode_cpu_ms": 54.52500000000171,
+          "materialize_ms": 25.746291,
+          "materialize_cpu_ms": 25.752000000000663
+        },
+        {
+          "variant": "compiled-spans-zstd-1",
+          "cache": "warm",
+          "repetition": 0,
+          "read_hash_decode_ms": 66.771494,
+          "read_hash_decode_cpu_ms": 66.28500000000415,
+          "materialize_ms": 27.881304,
+          "materialize_cpu_ms": 27.885999999995192
+        },
+        {
+          "variant": "root-images",
+          "cache": "warm",
+          "repetition": 0,
+          "read_hash_decode_ms": 725.8676670000001,
+          "read_hash_decode_cpu_ms": 725.875000000002,
+          "materialize_ms": 39.587799,
+          "materialize_cpu_ms": 39.59099999999793
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "warm",
+          "repetition": 1,
+          "read_hash_decode_ms": 5.63509,
+          "read_hash_decode_cpu_ms": 5.642000000001701,
+          "materialize_ms": 12.412084,
+          "materialize_cpu_ms": 12.415000000000731
+        },
+        {
+          "variant": "compiled-spans",
+          "cache": "warm",
+          "repetition": 1,
+          "read_hash_decode_ms": 42.235822,
+          "read_hash_decode_cpu_ms": 42.240000000003164,
+          "materialize_ms": 18.76714,
+          "materialize_cpu_ms": 18.769000000002478
+        },
+        {
+          "variant": "compiled-spans-zstd-1",
+          "cache": "warm",
+          "repetition": 1,
+          "read_hash_decode_ms": 52.38134,
+          "read_hash_decode_cpu_ms": 52.2980000000004,
+          "materialize_ms": 18.753961,
+          "materialize_cpu_ms": 18.756999999997248
+        },
+        {
+          "variant": "root-images",
+          "cache": "warm",
+          "repetition": 1,
+          "read_hash_decode_ms": 731.3517,
+          "read_hash_decode_cpu_ms": 731.3470000000066,
+          "materialize_ms": 40.921272,
+          "materialize_cpu_ms": 40.92400000000396
+        },
+        {
+          "variant": "current.toml",
+          "cache": "warm",
+          "repetition": 1,
+          "read_hash_decode_ms": 2542.636506,
+          "read_hash_decode_cpu_ms": 2542.5460000000016,
+          "materialize_ms": 13.901554,
+          "materialize_cpu_ms": 13.904000000003691
+        },
+        {
+          "variant": "compiled-spans",
+          "cache": "warm",
+          "repetition": 2,
+          "read_hash_decode_ms": 56.001792,
+          "read_hash_decode_cpu_ms": 56.0079999999985,
+          "materialize_ms": 19.778278999999998,
+          "materialize_cpu_ms": 19.780999999998272
+        },
+        {
+          "variant": "compiled-spans-zstd-1",
+          "cache": "warm",
+          "repetition": 2,
+          "read_hash_decode_ms": 65.933701,
+          "read_hash_decode_cpu_ms": 65.93799999999916,
+          "materialize_ms": 22.541795,
+          "materialize_cpu_ms": 22.543999999996345
+        },
+        {
+          "variant": "root-images",
+          "cache": "warm",
+          "repetition": 2,
+          "read_hash_decode_ms": 816.013605,
+          "read_hash_decode_cpu_ms": 816.0100000000057,
+          "materialize_ms": 40.013211,
+          "materialize_cpu_ms": 40.01599999999783
+        },
+        {
+          "variant": "current.toml",
+          "cache": "warm",
+          "repetition": 2,
+          "read_hash_decode_ms": 2549.3903109999997,
+          "read_hash_decode_cpu_ms": 2549.2810000000004,
+          "materialize_ms": 12.748519,
+          "materialize_cpu_ms": 12.750999999997958
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "warm",
+          "repetition": 2,
+          "read_hash_decode_ms": 9.431781,
+          "read_hash_decode_cpu_ms": 9.438000000002944,
+          "materialize_ms": 12.532138,
+          "materialize_cpu_ms": 12.535000000003294
+        },
+        {
+          "variant": "current.toml",
+          "cache": "eviction-hint",
+          "repetition": 0,
+          "read_hash_decode_ms": 2561.827148,
+          "read_hash_decode_cpu_ms": 2557.988999999999,
+          "materialize_ms": 14.099568999999999,
+          "materialize_cpu_ms": 14.10200000000117
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "eviction-hint",
+          "repetition": 0,
+          "read_hash_decode_ms": 7.772671999999999,
+          "read_hash_decode_cpu_ms": 6.76700000000352,
+          "materialize_ms": 11.316364,
+          "materialize_cpu_ms": 11.317999999999273
+        },
+        {
+          "variant": "compiled-spans",
+          "cache": "eviction-hint",
+          "repetition": 0,
+          "read_hash_decode_ms": 61.903143,
+          "read_hash_decode_cpu_ms": 58.76299999999901,
+          "materialize_ms": 22.153935,
+          "materialize_cpu_ms": 22.14400000000083
+        },
+        {
+          "variant": "compiled-spans-zstd-1",
+          "cache": "eviction-hint",
+          "repetition": 0,
+          "read_hash_decode_ms": 51.820494000000004,
+          "read_hash_decode_cpu_ms": 50.81100000000305,
+          "materialize_ms": 20.210267,
+          "materialize_cpu_ms": 20.21299999999826
+        },
+        {
+          "variant": "root-images",
+          "cache": "eviction-hint",
+          "repetition": 0,
+          "read_hash_decode_ms": 1131.2671599999999,
+          "read_hash_decode_cpu_ms": 1124.178999999998,
+          "materialize_ms": 43.632943,
+          "materialize_cpu_ms": 39.79799999999756
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "eviction-hint",
+          "repetition": 1,
+          "read_hash_decode_ms": 7.063905,
+          "read_hash_decode_cpu_ms": 5.970999999998838,
+          "materialize_ms": 11.215233999999999,
+          "materialize_cpu_ms": 11.21999999999801
+        },
+        {
+          "variant": "compiled-spans",
+          "cache": "eviction-hint",
+          "repetition": 1,
+          "read_hash_decode_ms": 60.005708,
+          "read_hash_decode_cpu_ms": 55.45399999999745,
+          "materialize_ms": 23.415981,
+          "materialize_cpu_ms": 23.419000000000523
+        },
+        {
+          "variant": "compiled-spans-zstd-1",
+          "cache": "eviction-hint",
+          "repetition": 1,
+          "read_hash_decode_ms": 46.605751,
+          "read_hash_decode_cpu_ms": 45.62299999999908,
+          "materialize_ms": 18.886638,
+          "materialize_cpu_ms": 18.887999999996907
+        },
+        {
+          "variant": "root-images",
+          "cache": "eviction-hint",
+          "repetition": 1,
+          "read_hash_decode_ms": 891.79685,
+          "read_hash_decode_cpu_ms": 882.0429999999959,
+          "materialize_ms": 42.163672,
+          "materialize_cpu_ms": 42.16500000000423
+        },
+        {
+          "variant": "current.toml",
+          "cache": "eviction-hint",
+          "repetition": 1,
+          "read_hash_decode_ms": 2735.716427,
+          "read_hash_decode_cpu_ms": 2727.419999999995,
+          "materialize_ms": 14.841589,
+          "materialize_cpu_ms": 14.845999999998583
+        },
+        {
+          "variant": "compiled-spans",
+          "cache": "eviction-hint",
+          "repetition": 2,
+          "read_hash_decode_ms": 63.02015800000001,
+          "read_hash_decode_cpu_ms": 59.31300000000306,
+          "materialize_ms": 19.882368,
+          "materialize_cpu_ms": 19.884999999995046
+        },
+        {
+          "variant": "compiled-spans-zstd-1",
+          "cache": "eviction-hint",
+          "repetition": 2,
+          "read_hash_decode_ms": 60.875226,
+          "read_hash_decode_cpu_ms": 59.81800000000703,
+          "materialize_ms": 21.472218,
+          "materialize_cpu_ms": 21.47599999999983
+        },
+        {
+          "variant": "root-images",
+          "cache": "eviction-hint",
+          "repetition": 2,
+          "read_hash_decode_ms": 1587.470785,
+          "read_hash_decode_cpu_ms": 1575.851,
+          "materialize_ms": 42.265112,
+          "materialize_cpu_ms": 42.26899999999745
+        },
+        {
+          "variant": "current.toml",
+          "cache": "eviction-hint",
+          "repetition": 2,
+          "read_hash_decode_ms": 2781.941358,
+          "read_hash_decode_cpu_ms": 2778.8329999999987,
+          "materialize_ms": 16.458254,
+          "materialize_cpu_ms": 16.46199999999709
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "eviction-hint",
+          "repetition": 2,
+          "read_hash_decode_ms": 8.503316,
+          "read_hash_decode_cpu_ms": 7.266999999998802,
+          "materialize_ms": 11.703172,
+          "materialize_cpu_ms": 11.705999999996664
+        }
+      ]
+    },
+    {
+      "family": "mother-brain-bomb-update",
+      "original_bytes": 12126202,
+      "original_sha256": "b1dd189d4d471d4c03ffc41629cf40553890bec262c922bff1fd5a0e92718513",
+      "cases": 3187,
+      "continuations": 0,
+      "original_writes": 267840,
+      "encodings": [
+        {
+          "layout": "indexed-writes",
+          "bytes": 5403496,
+          "metadata_bytes": 1066884,
+          "cases": 3187,
+          "patch_records": 267840,
+          "unique_payload_bytes": 112,
+          "compilation_ms": 60.920754
+        },
+        {
+          "layout": "compiled-spans-zstd-1",
+          "bytes": 53191,
+          "metadata_bytes": 1066884,
+          "cases": 3187,
+          "patch_records": 93546,
+          "unique_payload_bytes": 430,
+          "compilation_ms": 0.0
+        },
+        {
+          "layout": "compiled-spans",
+          "bytes": 2615110,
+          "metadata_bytes": 1066884,
+          "cases": 3187,
+          "patch_records": 93546,
+          "unique_payload_bytes": 430,
+          "compilation_ms": 238.02271
+        },
+        {
+          "layout": "root-images",
+          "bytes": 409458216,
+          "metadata_bytes": 1066884,
+          "cases": 3187,
+          "patch_records": 3187,
+          "unique_payload_bytes": 408289280,
+          "compilation_ms": 1316.631219
+        }
+      ],
+      "state_identity": "e03f9ec7584e07fceb6df471adcf6fa3282d63cf1249310d4fa314537a195941",
+      "samples": [
+        {
+          "variant": "current.toml",
+          "cache": "warm",
+          "repetition": 0,
+          "read_hash_decode_ms": 710.6640570000001,
+          "read_hash_decode_cpu_ms": 710.6720000000024,
+          "materialize_ms": 10.664275,
+          "materialize_cpu_ms": 10.666999999997984
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "warm",
+          "repetition": 0,
+          "read_hash_decode_ms": 9.38128,
+          "read_hash_decode_cpu_ms": 9.387000000003809,
+          "materialize_ms": 7.502205,
+          "materialize_cpu_ms": 7.503999999997291
+        },
+        {
+          "variant": "compiled-spans",
+          "cache": "warm",
+          "repetition": 0,
+          "read_hash_decode_ms": 5.318795000000001,
+          "read_hash_decode_cpu_ms": 5.321999999999605,
+          "materialize_ms": 6.722293,
+          "materialize_cpu_ms": 6.723999999998398
+        },
+        {
+          "variant": "compiled-spans-zstd-1",
+          "cache": "warm",
+          "repetition": 0,
+          "read_hash_decode_ms": 5.660964999999999,
+          "read_hash_decode_cpu_ms": 5.664000000003,
+          "materialize_ms": 7.076817,
+          "materialize_cpu_ms": 7.078999999997393
+        },
+        {
+          "variant": "root-images",
+          "cache": "warm",
+          "repetition": 0,
+          "read_hash_decode_ms": 515.865453,
+          "read_hash_decode_cpu_ms": 515.8710000000042,
+          "materialize_ms": 27.629914,
+          "materialize_cpu_ms": 27.633000000001573
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "warm",
+          "repetition": 1,
+          "read_hash_decode_ms": 13.299732,
+          "read_hash_decode_cpu_ms": 13.305000000002565,
+          "materialize_ms": 8.87646,
+          "materialize_cpu_ms": 8.879000000000303
+        },
+        {
+          "variant": "compiled-spans",
+          "cache": "warm",
+          "repetition": 1,
+          "read_hash_decode_ms": 5.518529,
+          "read_hash_decode_cpu_ms": 5.5210000000016635,
+          "materialize_ms": 6.883919,
+          "materialize_cpu_ms": 6.884999999996921
+        },
+        {
+          "variant": "compiled-spans-zstd-1",
+          "cache": "warm",
+          "repetition": 1,
+          "read_hash_decode_ms": 5.730945999999999,
+          "read_hash_decode_cpu_ms": 5.732999999999322,
+          "materialize_ms": 7.192434,
+          "materialize_cpu_ms": 7.193999999998368
+        },
+        {
+          "variant": "root-images",
+          "cache": "warm",
+          "repetition": 1,
+          "read_hash_decode_ms": 450.192408,
+          "read_hash_decode_cpu_ms": 449.61400000000395,
+          "materialize_ms": 25.789946,
+          "materialize_cpu_ms": 25.7920000000027
+        },
+        {
+          "variant": "current.toml",
+          "cache": "warm",
+          "repetition": 1,
+          "read_hash_decode_ms": 634.451191,
+          "read_hash_decode_cpu_ms": 634.3980000000045,
+          "materialize_ms": 10.800148,
+          "materialize_cpu_ms": 10.804000000000258
+        },
+        {
+          "variant": "compiled-spans",
+          "cache": "warm",
+          "repetition": 2,
+          "read_hash_decode_ms": 6.04218,
+          "read_hash_decode_cpu_ms": 6.047000000002356,
+          "materialize_ms": 6.867286999999999,
+          "materialize_cpu_ms": 6.86900000000179
+        },
+        {
+          "variant": "compiled-spans-zstd-1",
+          "cache": "warm",
+          "repetition": 2,
+          "read_hash_decode_ms": 5.880997,
+          "read_hash_decode_cpu_ms": 5.882999999997196,
+          "materialize_ms": 6.817202,
+          "materialize_cpu_ms": 6.818000000002655
+        },
+        {
+          "variant": "root-images",
+          "cache": "warm",
+          "repetition": 2,
+          "read_hash_decode_ms": 470.304513,
+          "read_hash_decode_cpu_ms": 470.31100000000237,
+          "materialize_ms": 25.478523,
+          "materialize_cpu_ms": 25.480000000001723
+        },
+        {
+          "variant": "current.toml",
+          "cache": "warm",
+          "repetition": 2,
+          "read_hash_decode_ms": 647.0973759999999,
+          "read_hash_decode_cpu_ms": 647.0090000000041,
+          "materialize_ms": 10.452861,
+          "materialize_cpu_ms": 10.4559999999978
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "warm",
+          "repetition": 2,
+          "read_hash_decode_ms": 8.577174999999999,
+          "read_hash_decode_cpu_ms": 8.581000000006611,
+          "materialize_ms": 7.784854,
+          "materialize_cpu_ms": 7.7870000000004325
+        },
+        {
+          "variant": "current.toml",
+          "cache": "eviction-hint",
+          "repetition": 0,
+          "read_hash_decode_ms": 649.264631,
+          "read_hash_decode_cpu_ms": 641.3709999999994,
+          "materialize_ms": 10.649937999999999,
+          "materialize_cpu_ms": 10.653000000004909
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "eviction-hint",
+          "repetition": 0,
+          "read_hash_decode_ms": 11.771421,
+          "read_hash_decode_cpu_ms": 10.100999999998805,
+          "materialize_ms": 7.589478000000001,
+          "materialize_cpu_ms": 7.590999999997905
+        },
+        {
+          "variant": "compiled-spans",
+          "cache": "eviction-hint",
+          "repetition": 0,
+          "read_hash_decode_ms": 9.036237000000002,
+          "read_hash_decode_cpu_ms": 7.73099999999971,
+          "materialize_ms": 7.6249389999999995,
+          "materialize_cpu_ms": 7.6279999999968595
+        },
+        {
+          "variant": "compiled-spans-zstd-1",
+          "cache": "eviction-hint",
+          "repetition": 0,
+          "read_hash_decode_ms": 6.519348,
+          "read_hash_decode_cpu_ms": 6.00799999999424,
+          "materialize_ms": 6.920141,
+          "materialize_cpu_ms": 6.922000000002981
+        },
+        {
+          "variant": "root-images",
+          "cache": "eviction-hint",
+          "repetition": 0,
+          "read_hash_decode_ms": 643.2001710000001,
+          "read_hash_decode_cpu_ms": 639.8470000000032,
+          "materialize_ms": 26.0871,
+          "materialize_cpu_ms": 26.089999999996394
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "eviction-hint",
+          "repetition": 1,
+          "read_hash_decode_ms": 12.374768,
+          "read_hash_decode_cpu_ms": 10.364000000002704,
+          "materialize_ms": 7.721231,
+          "materialize_cpu_ms": 7.724000000003173
+        },
+        {
+          "variant": "compiled-spans",
+          "cache": "eviction-hint",
+          "repetition": 1,
+          "read_hash_decode_ms": 7.034011,
+          "read_hash_decode_cpu_ms": 5.794000000001631,
+          "materialize_ms": 6.725534,
+          "materialize_cpu_ms": 6.7270000000050345
+        },
+        {
+          "variant": "compiled-spans-zstd-1",
+          "cache": "eviction-hint",
+          "repetition": 1,
+          "read_hash_decode_ms": 6.270237,
+          "read_hash_decode_cpu_ms": 5.682000000000187,
+          "materialize_ms": 6.627274,
+          "materialize_cpu_ms": 6.62799999999919
+        },
+        {
+          "variant": "root-images",
+          "cache": "eviction-hint",
+          "repetition": 1,
+          "read_hash_decode_ms": 528.4824890000001,
+          "read_hash_decode_cpu_ms": 522.752000000004,
+          "materialize_ms": 25.704597,
+          "materialize_cpu_ms": 25.706999999997038
+        },
+        {
+          "variant": "current.toml",
+          "cache": "eviction-hint",
+          "repetition": 1,
+          "read_hash_decode_ms": 664.866611,
+          "read_hash_decode_cpu_ms": 660.9909999999957,
+          "materialize_ms": 11.553842999999999,
+          "materialize_cpu_ms": 11.558000000000845
+        },
+        {
+          "variant": "compiled-spans",
+          "cache": "eviction-hint",
+          "repetition": 2,
+          "read_hash_decode_ms": 11.934438,
+          "read_hash_decode_cpu_ms": 5.909000000002607,
+          "materialize_ms": 6.686198,
+          "materialize_cpu_ms": 6.688000000004024
+        },
+        {
+          "variant": "compiled-spans-zstd-1",
+          "cache": "eviction-hint",
+          "repetition": 2,
+          "read_hash_decode_ms": 6.104839,
+          "read_hash_decode_cpu_ms": 5.684999999999718,
+          "materialize_ms": 7.631597999999999,
+          "materialize_cpu_ms": 7.632999999998447
+        },
+        {
+          "variant": "root-images",
+          "cache": "eviction-hint",
+          "repetition": 2,
+          "read_hash_decode_ms": 504.20120499999996,
+          "read_hash_decode_cpu_ms": 501.8609999999981,
+          "materialize_ms": 25.069555,
+          "materialize_cpu_ms": 25.072999999999013
+        },
+        {
+          "variant": "current.toml",
+          "cache": "eviction-hint",
+          "repetition": 2,
+          "read_hash_decode_ms": 682.344254,
+          "read_hash_decode_cpu_ms": 674.5430000000069,
+          "materialize_ms": 13.074594,
+          "materialize_cpu_ms": 13.07599999999809
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "eviction-hint",
+          "repetition": 2,
+          "read_hash_decode_ms": 11.304703,
+          "read_hash_decode_cpu_ms": 9.310999999996739,
+          "materialize_ms": 7.28254,
+          "materialize_cpu_ms": 7.284999999995989
+        }
+      ]
+    },
+    {
+      "family": "ridley-subsystem",
+      "original_bytes": 6757132,
+      "original_sha256": "7bd4dc11ffadb06ad4805d3f80875fe4cb782d44ec809033b730da5c4fcaf8c6",
+      "cases": 6457,
+      "continuations": 4032,
+      "original_writes": 157288,
+      "encodings": [
+        {
+          "layout": "indexed-writes",
+          "bytes": 4923474,
+          "metadata_bytes": 2303252,
+          "cases": 6457,
+          "patch_records": 157288,
+          "unique_payload_bytes": 234,
+          "compilation_ms": 59.618598
+        },
+        {
+          "layout": "compiled-spans-zstd-1",
+          "bytes": 46118,
+          "metadata_bytes": 2303252,
+          "cases": 6457,
+          "patch_records": 107091,
+          "unique_payload_bytes": 216,
+          "compilation_ms": 0.0
+        },
+        {
+          "layout": "compiled-spans",
+          "bytes": 4120304,
+          "metadata_bytes": 2303252,
+          "cases": 6457,
+          "patch_records": 107091,
+          "unique_payload_bytes": 216,
+          "compilation_ms": 658.810105
+        },
+        {
+          "layout": "root-images",
+          "bytes": 166940792,
+          "metadata_bytes": 2303252,
+          "cases": 6457,
+          "patch_records": 2425,
+          "unique_payload_bytes": 164495360,
+          "compilation_ms": 967.2628669999999
+        }
+      ],
+      "state_identity": "c54194d24a1ade50078f44e58879d360cb95f48c602b69dfb553c1b77d3df236",
+      "samples": [
+        {
+          "variant": "current.toml",
+          "cache": "warm",
+          "repetition": 0,
+          "read_hash_decode_ms": 896.1246349999999,
+          "read_hash_decode_cpu_ms": 891.1059999999935,
+          "materialize_ms": 58.034528,
+          "materialize_cpu_ms": 58.038999999993734
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "warm",
+          "repetition": 0,
+          "read_hash_decode_ms": 16.936765,
+          "read_hash_decode_cpu_ms": 16.94299999999771,
+          "materialize_ms": 49.997214,
+          "materialize_cpu_ms": 50.00099999999463
+        },
+        {
+          "variant": "compiled-spans",
+          "cache": "warm",
+          "repetition": 0,
+          "read_hash_decode_ms": 18.719268,
+          "read_hash_decode_cpu_ms": 18.724999999989222,
+          "materialize_ms": 74.93904599999999,
+          "materialize_cpu_ms": 74.94299999999043
+        },
+        {
+          "variant": "compiled-spans-zstd-1",
+          "cache": "warm",
+          "repetition": 0,
+          "read_hash_decode_ms": 21.673447,
+          "read_hash_decode_cpu_ms": 21.679000000006,
+          "materialize_ms": 69.576491,
+          "materialize_cpu_ms": 69.58099999999945
+        },
+        {
+          "variant": "root-images",
+          "cache": "warm",
+          "repetition": 0,
+          "read_hash_decode_ms": 248.67193500000002,
+          "read_hash_decode_cpu_ms": 248.6820000000023,
+          "materialize_ms": 73.44243300000001,
+          "materialize_cpu_ms": 73.44599999998991
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "warm",
+          "repetition": 1,
+          "read_hash_decode_ms": 21.898173,
+          "read_hash_decode_cpu_ms": 21.893000000019924,
+          "materialize_ms": 53.60219,
+          "materialize_cpu_ms": 53.60599999998783
+        },
+        {
+          "variant": "compiled-spans",
+          "cache": "warm",
+          "repetition": 1,
+          "read_hash_decode_ms": 18.236544000000002,
+          "read_hash_decode_cpu_ms": 18.24200000001497,
+          "materialize_ms": 62.892092,
+          "materialize_cpu_ms": 62.89499999999748
+        },
+        {
+          "variant": "compiled-spans-zstd-1",
+          "cache": "warm",
+          "repetition": 1,
+          "read_hash_decode_ms": 12.999500000000001,
+          "read_hash_decode_cpu_ms": 13.00399999999513,
+          "materialize_ms": 58.4525,
+          "materialize_cpu_ms": 58.4570000000042
+        },
+        {
+          "variant": "root-images",
+          "cache": "warm",
+          "repetition": 1,
+          "read_hash_decode_ms": 189.136457,
+          "read_hash_decode_cpu_ms": 189.12699999999916,
+          "materialize_ms": 71.16299,
+          "materialize_cpu_ms": 71.16600000000517
+        },
+        {
+          "variant": "current.toml",
+          "cache": "warm",
+          "repetition": 1,
+          "read_hash_decode_ms": 831.728523,
+          "read_hash_decode_cpu_ms": 827.5289999999984,
+          "materialize_ms": 49.774391,
+          "materialize_cpu_ms": 49.777000000005955
+        },
+        {
+          "variant": "compiled-spans",
+          "cache": "warm",
+          "repetition": 2,
+          "read_hash_decode_ms": 19.929891,
+          "read_hash_decode_cpu_ms": 19.93500000000381,
+          "materialize_ms": 54.025923,
+          "materialize_cpu_ms": 54.03000000001157
+        },
+        {
+          "variant": "compiled-spans-zstd-1",
+          "cache": "warm",
+          "repetition": 2,
+          "read_hash_decode_ms": 23.08419,
+          "read_hash_decode_cpu_ms": 23.09199999999123,
+          "materialize_ms": 69.888794,
+          "materialize_cpu_ms": 69.93500000001518
+        },
+        {
+          "variant": "root-images",
+          "cache": "warm",
+          "repetition": 2,
+          "read_hash_decode_ms": 257.900902,
+          "read_hash_decode_cpu_ms": 257.8770000000077,
+          "materialize_ms": 81.213459,
+          "materialize_cpu_ms": 81.20200000000466
+        },
+        {
+          "variant": "current.toml",
+          "cache": "warm",
+          "repetition": 2,
+          "read_hash_decode_ms": 812.858796,
+          "read_hash_decode_cpu_ms": 812.847000000005,
+          "materialize_ms": 47.759473,
+          "materialize_cpu_ms": 47.76300000000333
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "warm",
+          "repetition": 2,
+          "read_hash_decode_ms": 13.08731,
+          "read_hash_decode_cpu_ms": 13.0929999999978,
+          "materialize_ms": 58.628483,
+          "materialize_cpu_ms": 58.63199999998869
+        },
+        {
+          "variant": "current.toml",
+          "cache": "eviction-hint",
+          "repetition": 0,
+          "read_hash_decode_ms": 864.8552139999999,
+          "read_hash_decode_cpu_ms": 856.1090000000178,
+          "materialize_ms": 59.632775,
+          "materialize_cpu_ms": 59.63599999999758
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "eviction-hint",
+          "repetition": 0,
+          "read_hash_decode_ms": 25.411465,
+          "read_hash_decode_cpu_ms": 23.058999999989283,
+          "materialize_ms": 52.942585,
+          "materialize_cpu_ms": 52.947000000003186
+        },
+        {
+          "variant": "compiled-spans",
+          "cache": "eviction-hint",
+          "repetition": 0,
+          "read_hash_decode_ms": 14.562324,
+          "read_hash_decode_cpu_ms": 12.215999999980909,
+          "materialize_ms": 50.214236,
+          "materialize_cpu_ms": 50.2169999999893
+        },
+        {
+          "variant": "compiled-spans-zstd-1",
+          "cache": "eviction-hint",
+          "repetition": 0,
+          "read_hash_decode_ms": 13.148757,
+          "read_hash_decode_cpu_ms": 12.632000000010635,
+          "materialize_ms": 57.496883,
+          "materialize_cpu_ms": 57.48199999999315
+        },
+        {
+          "variant": "root-images",
+          "cache": "eviction-hint",
+          "repetition": 0,
+          "read_hash_decode_ms": 219.50993899999997,
+          "read_hash_decode_cpu_ms": 211.69799999998418,
+          "materialize_ms": 69.72880400000001,
+          "materialize_cpu_ms": 69.7190000000063
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "eviction-hint",
+          "repetition": 1,
+          "read_hash_decode_ms": 15.906930999999998,
+          "read_hash_decode_cpu_ms": 13.474999999999682,
+          "materialize_ms": 39.386467,
+          "materialize_cpu_ms": 39.388999999999896
+        },
+        {
+          "variant": "compiled-spans",
+          "cache": "eviction-hint",
+          "repetition": 1,
+          "read_hash_decode_ms": 13.646792,
+          "read_hash_decode_cpu_ms": 11.676999999991722,
+          "materialize_ms": 46.945661,
+          "materialize_cpu_ms": 46.948000000014645
+        },
+        {
+          "variant": "compiled-spans-zstd-1",
+          "cache": "eviction-hint",
+          "repetition": 1,
+          "read_hash_decode_ms": 11.650667,
+          "read_hash_decode_cpu_ms": 11.209000000008018,
+          "materialize_ms": 44.189917,
+          "materialize_cpu_ms": 44.19300000000703
+        },
+        {
+          "variant": "root-images",
+          "cache": "eviction-hint",
+          "repetition": 1,
+          "read_hash_decode_ms": 209.389834,
+          "read_hash_decode_cpu_ms": 202.31599999998195,
+          "materialize_ms": 55.421974999999996,
+          "materialize_cpu_ms": 55.4260000000113
+        },
+        {
+          "variant": "current.toml",
+          "cache": "eviction-hint",
+          "repetition": 1,
+          "read_hash_decode_ms": 753.282134,
+          "read_hash_decode_cpu_ms": 750.425000000007,
+          "materialize_ms": 57.919429,
+          "materialize_cpu_ms": 57.923999999999864
+        },
+        {
+          "variant": "compiled-spans",
+          "cache": "eviction-hint",
+          "repetition": 2,
+          "read_hash_decode_ms": 22.325893,
+          "read_hash_decode_cpu_ms": 19.743000000005395,
+          "materialize_ms": 49.884982,
+          "materialize_cpu_ms": 49.88799999999571
+        },
+        {
+          "variant": "compiled-spans-zstd-1",
+          "cache": "eviction-hint",
+          "repetition": 2,
+          "read_hash_decode_ms": 15.393222,
+          "read_hash_decode_cpu_ms": 14.718000000002007,
+          "materialize_ms": 47.029432,
+          "materialize_cpu_ms": 47.03299999999899
+        },
+        {
+          "variant": "root-images",
+          "cache": "eviction-hint",
+          "repetition": 2,
+          "read_hash_decode_ms": 213.041748,
+          "read_hash_decode_cpu_ms": 203.43500000001313,
+          "materialize_ms": 69.03255899999999,
+          "materialize_cpu_ms": 69.02699999999129
+        },
+        {
+          "variant": "current.toml",
+          "cache": "eviction-hint",
+          "repetition": 2,
+          "read_hash_decode_ms": 643.740488,
+          "read_hash_decode_cpu_ms": 641.0329999999931,
+          "materialize_ms": 52.795218,
+          "materialize_cpu_ms": 52.79799999999568
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "eviction-hint",
+          "repetition": 2,
+          "read_hash_decode_ms": 21.563584,
+          "read_hash_decode_cpu_ms": 18.665999999996075,
+          "materialize_ms": 46.773514,
+          "materialize_cpu_ms": 46.776000000008366
+        }
+      ]
+    }
+  ]
+}

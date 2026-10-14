@@ -1,0 +1,909 @@
+{
+  "binary_bytes": 40045625,
+  "binary_spans": 1550905,
+  "captured": 1123,
+  "cases": 149120,
+  "continuations": 6956,
+  "families": 177,
+  "files": [
+    {
+      "bytes": 13639,
+      "file": "tools/port/animated-tile-audio.smf",
+      "sha256": "b9b5cbc23738ab191da8cdbe4cd0f76916e3c025be5ce0af949debc7647991c7"
+    },
+    {
+      "bytes": 212041,
+      "file": "tools/port/animated-tile-combined.smf",
+      "sha256": "64e13b8014f3ef4d30937372ec11836572ab0ac31cf47b793c3321506d7b1ee3"
+    },
+    {
+      "bytes": 79703,
+      "file": "tools/port/animated-tile-events.smf",
+      "sha256": "9d418c3e01f8542f72ffdf0fe390d7c16f174844d8df9e14f704f8cdfdfded75"
+    },
+    {
+      "bytes": 23590,
+      "file": "tools/port/animated-tile-frame-live.smf",
+      "sha256": "a55c6188535789bebd72a5946389d0bb9f6688a1bb6f384d5f7c8fcdffa387b4"
+    },
+    {
+      "bytes": 23260,
+      "file": "tools/port/animated-tile-frames.smf",
+      "sha256": "772c1e8b84c0aed442699b8796c8933161d2a217bbe74534c589ab910cddf8ba"
+    },
+    {
+      "bytes": 80971,
+      "file": "tools/port/animated-tile-instructions.smf",
+      "sha256": "de51b763fcc77a5c5863f23800414102d75c50f18feafe4c948e67737904cf91"
+    },
+    {
+      "bytes": 38544,
+      "file": "tools/port/animated-tile-palette.smf",
+      "sha256": "9055fc53ca0f27bc13c2eb06c0738bbbcb54ecc86f44c08ca2bdbf4596983d75"
+    },
+    {
+      "bytes": 4262,
+      "file": "tools/port/animated-tile-spawns.smf",
+      "sha256": "ad51fa13e478127aa54fe3b80ac428aa2b1388bcfa7e664191b3c092895be125"
+    },
+    {
+      "bytes": 4323,
+      "file": "tools/port/animated-tiles.smf",
+      "sha256": "81011e0f44e7fb03b3210b018221d647a1228790d499e1d7d5c757dca5426f34"
+    },
+    {
+      "bytes": 177658,
+      "file": "tools/port/audio.smf",
+      "sha256": "200bd85c508f25ad75615be146a371ff46bcfd593fb36a1e087072e4de34c2f2"
+    },
+    {
+      "bytes": 77956,
+      "file": "tools/port/boss-projectile-transitions.smf",
+      "sha256": "3b1ae5343e308de78c8e7a63a99d119dd55f58145f29801f5a75e631b569c570"
+    },
+    {
+      "bytes": 20554,
+      "file": "tools/port/boss-room-shaking.smf",
+      "sha256": "4bcbf9036a00278fe5e1b0507dd2d170ae730646a07c6e50321475ba91238ccb"
+    },
+    {
+      "bytes": 46681,
+      "file": "tools/port/botwoon-body-allocation.smf",
+      "sha256": "dcec76fb69f8339ef29a1935dc141778eea965d47bf84950e34f6b2261e1f62d"
+    },
+    {
+      "bytes": 218769,
+      "file": "tools/port/botwoon-body-lifecycle.smf",
+      "sha256": "4426fa9ca9084983c0428ab0d814419eb532cc0352d1f91d61112cd42f2a3328"
+    },
+    {
+      "bytes": 66806,
+      "file": "tools/port/botwoon-spit-allocation.smf",
+      "sha256": "d3e8c66f119828ee8fa16092ebafb7889134d9f63f23582e55663dcf9f7fb9e7"
+    },
+    {
+      "bytes": 208369,
+      "file": "tools/port/botwoon-spit-scheduling.smf",
+      "sha256": "cff5ae3353ba6867df460fb97738dae476440379e67906bdfcff1c409db87ab5"
+    },
+    {
+      "bytes": 134250,
+      "file": "tools/port/camera-scroll.smf",
+      "sha256": "98eb3e5098a91d773fb7a4935f08ef94249a932bee793a54a6e677fa84cd9b4b"
+    },
+    {
+      "bytes": 209847,
+      "file": "tools/port/ceres-pad.smf",
+      "sha256": "3ef3485756d68cd86b4772f4b3ba09e134b917c8b46b68f637f883a3a9674483"
+    },
+    {
+      "bytes": 45900,
+      "file": "tools/port/ceres-platform.smf",
+      "sha256": "14a4d922f5e9103f15391b22b04ab3e32b40bde14eddd0e6485592205d80431d"
+    },
+    {
+      "bytes": 510806,
+      "file": "tools/port/collision.smf",
+      "sha256": "2d4cd5b8165b58988e419fbb19115bb6d68acf62f12768e11895feb1d38b5a72"
+    },
+    {
+      "bytes": 1626268,
+      "file": "tools/port/control.smf",
+      "sha256": "80ae8f9b81ab1a66833300d5177381febaa1da7eb84aa49dfe70cc23ff923273"
+    },
+    {
+      "bytes": 9891,
+      "file": "tools/port/dachora-room-scroll.smf",
+      "sha256": "5bb9510120f0f55653ca8876b63804f868fbbd3854f3209f7c397b7fa6a0417f"
+    },
+    {
+      "bytes": 29676,
+      "file": "tools/port/door-scroll-callbacks.smf",
+      "sha256": "05c623d50ce0dff9dc8a246e4c28ec9fca7e723686528e88bb4da7edfd7f31ab"
+    },
+    {
+      "bytes": 311244,
+      "file": "tools/port/draygon-attached-gunk.smf",
+      "sha256": "6c4915fff663c1222a201bf7afa9d9ac3f62bfa205f1cc2d1f53b3b9b6446e4f"
+    },
+    {
+      "bytes": 221616,
+      "file": "tools/port/draygon-projectile-scheduling.smf",
+      "sha256": "e3834d675384a21f9e36f8c77963c3086f587fa83b0d12cb410b6736879ce11e"
+    },
+    {
+      "bytes": 111095,
+      "file": "tools/port/enemy-ai.smf",
+      "sha256": "f9899a44eab97eda88cfe909c8d55b61d7a42da85c1d2521204c0e6cf10a0d75"
+    },
+    {
+      "bytes": 200787,
+      "file": "tools/port/enemy-crawler.smf",
+      "sha256": "09637d7982d4b4acf6270773e16c4239eb85d9ab344b86d25a828b345fa94d7b"
+    },
+    {
+      "bytes": 161832,
+      "file": "tools/port/enemy-death-explosion.smf",
+      "sha256": "3c87df58ddf957586075b95a0dfbd8154972ae7546719942ad4fdc8b43ad6242"
+    },
+    {
+      "bytes": 220362,
+      "file": "tools/port/enemy-drop-selection.smf",
+      "sha256": "ddef8d7f0e3b4af73ba5dd95075d84672da606b39b69404299053449cdb5ca94"
+    },
+    {
+      "bytes": 562760,
+      "file": "tools/port/enemy-drop-transition.smf",
+      "sha256": "5ce3bf4eba7cde92ec33de88a255aae76df4944d1aeca93802a5ba5a9b92ebc4"
+    },
+    {
+      "bytes": 71064,
+      "file": "tools/port/enemy-falling-particles.smf",
+      "sha256": "1f95feacd9bf570153b5c592b488284efd81080a2d7abcab4fab132c4fac1946"
+    },
+    {
+      "bytes": 2426,
+      "file": "tools/port/enemy-jump-instructions.smf",
+      "sha256": "672b2db8e17e9b6247490506918f0a0cf8065d6fe7c9bc2da01e066e47c895cf"
+    },
+    {
+      "bytes": 49738,
+      "file": "tools/port/enemy-jump.smf",
+      "sha256": "869803b1678db5e5082ce282df0130fc2ee03ca5bea6faf80bfefdfc53bb64eb"
+    },
+    {
+      "bytes": 67960,
+      "file": "tools/port/enemy-linked-projectile-allocation.smf",
+      "sha256": "3fe61b6ba42170b534d9bd8eafd7b0ffaf195e27063175b9e513098cadf6c219"
+    },
+    {
+      "bytes": 325327,
+      "file": "tools/port/enemy-projectile-collision.smf",
+      "sha256": "952a042ab25ce15c23c1a91be1ff17856459b2795b0fc89dfff8d30b8a5411bb"
+    },
+    {
+      "bytes": 753479,
+      "file": "tools/port/enemy-projectile-detect-projectiles.smf",
+      "sha256": "dbda964ca2d6fb8d25686cca590424a8e5fe745503ebe2067676c7fbbc4505eb"
+    },
+    {
+      "bytes": 763917,
+      "file": "tools/port/enemy-projectile-detect-samus.smf",
+      "sha256": "1243cb7e05ec0958227bf92df551627e3fe9fdc1b95b7f1a7f2c772cf28299f4"
+    },
+    {
+      "bytes": 762346,
+      "file": "tools/port/enemy-projectile-hit-projectile.smf",
+      "sha256": "34df42169b284ee9a0adf940fe209f9a8963ec9f811ca7d4820bf080674f3095"
+    },
+    {
+      "bytes": 567822,
+      "file": "tools/port/enemy-projectile-hit-samus.smf",
+      "sha256": "c5ceaf811bf47873c09cf2b67cfe0169500c98def110a5be0c033fd1f51d1717"
+    },
+    {
+      "bytes": 254680,
+      "file": "tools/port/enemy-projectile-instructions.smf",
+      "sha256": "e8b7c5eb4e004b5625af523bd2de4ca2ffd5be0cd9727d71027c43908481aa4f"
+    },
+    {
+      "bytes": 371540,
+      "file": "tools/port/enemy-projectile-rendering-direct.smf",
+      "sha256": "298424dcd9a2b377d71014553dc4093b79da94c6b06b9717f15a3c4b0a2b8f11"
+    },
+    {
+      "bytes": 324362,
+      "file": "tools/port/enemy-projectile-rendering.smf",
+      "sha256": "e12454c0a768adaf2967539c660d71639b966869d7e8dcb06a248e28266a7f6b"
+    },
+    {
+      "bytes": 49417,
+      "file": "tools/port/enemy-projectiles.smf",
+      "sha256": "bbc91ed127fb2ad5b15cb7135e6e625a93f99df9c2a4ed3609e43351a921ef10"
+    },
+    {
+      "bytes": 44570,
+      "file": "tools/port/enemy-rio.smf",
+      "sha256": "e53ece4d5fddffcfe283f61ae0e35f98a928c3fbcc43f79e80675c9d3288d405"
+    },
+    {
+      "bytes": 629755,
+      "file": "tools/port/enemy.smf",
+      "sha256": "713febce7c2d5bea7d8f54f344cbac16360272685c6b2b49b804b23926bc1831"
+    },
+    {
+      "bytes": 8318,
+      "file": "tools/port/escape-room-setups.smf",
+      "sha256": "a7f00da163aae1d5a2adfcce788bc9b05ecff8e5dfad99761b72a2bed22eb397"
+    },
+    {
+      "bytes": 120273,
+      "file": "tools/port/fireball-split-chain.smf",
+      "sha256": "242aa3b7aa23c2424e0ff8aeaae98589e71a9ace89b2e240d00b86e7a5fafc27"
+    },
+    {
+      "bytes": 30862,
+      "file": "tools/port/floater-spike-allocation.smf",
+      "sha256": "b06ed9652c0be09cb08b882317c310592434d5ce1fd1c02e18fdd22e7440d183"
+    },
+    {
+      "bytes": 1298991,
+      "file": "tools/port/floater-spike-motion.smf",
+      "sha256": "0b5b9451c1ea4de2765f6204a4337326c0290d94922027424ec7f96f93ed7807"
+    },
+    {
+      "bytes": 2459,
+      "file": "tools/port/game-host-projectile.smf",
+      "sha256": "6fecdaf8131fa4fedb3d350ed4a197582fe85fb225ea4ff48aa09a3d73b64c9a"
+    },
+    {
+      "bytes": 1185,
+      "file": "tools/port/game-host-room-scroll.smf",
+      "sha256": "009894764e4f4df1c71aa1dd59cf8e1f6585fa355afdab2ac2b279935f90bed8"
+    },
+    {
+      "bytes": 152800,
+      "file": "tools/port/host-spore-spawning.smf",
+      "sha256": "fa717e47c44097cde204b5effefe029dd1f02463d44df32d9f155d11fe6559b3"
+    },
+    {
+      "bytes": 148035,
+      "file": "tools/port/instructions.smf",
+      "sha256": "92953aeeb6a96182be23904bc6e298e3ec0f08c254c9f59f0d66e6c1f2cccab9"
+    },
+    {
+      "bytes": 12042,
+      "file": "tools/port/kago-bug-allocation.smf",
+      "sha256": "5bf7ec227e85f1eecbf843c886b3df938aa1897be6982bd51cb608544c0f9e3a"
+    },
+    {
+      "bytes": 451976,
+      "file": "tools/port/kago-bug-callbacks.smf",
+      "sha256": "a6842ada57a9174a14029eeb4d02aa2e23fafe26dece5c9e5a80dea4bdb08851"
+    },
+    {
+      "bytes": 11917,
+      "file": "tools/port/kago-bug-launch.smf",
+      "sha256": "7aa24d9d52e3469ea561736e8b64f9442721f1183fe22da158a87886f81848eb"
+    },
+    {
+      "bytes": 7265,
+      "file": "tools/port/ki-hunter-acid-allocation.smf",
+      "sha256": "7920741d52578fe177d0a3aa0eeb690f3d1a13ac78331b2c8176c8b9879b4f01"
+    },
+    {
+      "bytes": 341402,
+      "file": "tools/port/ki-hunter-acid-callbacks.smf",
+      "sha256": "d0e85adbaed063a97c2e6d8e5c36600adac30129704ab8fb05b6339c018675f1"
+    },
+    {
+      "bytes": 2196,
+      "file": "tools/port/ki-hunter-acid-gravity.smf",
+      "sha256": "b51766cbf8f789861335f368186fa5ec9db45298d1787edb6d758f95ee7c0c89"
+    },
+    {
+      "bytes": 113108,
+      "file": "tools/port/kraid-rocks.smf",
+      "sha256": "222d70ad5a79be172ac003a9b52ce06a13f329df7b468f8b1a5fd5f557af03e4"
+    },
+    {
+      "bytes": 44461,
+      "file": "tools/port/lava-seahorse-arc.smf",
+      "sha256": "6a912a22d0325b0057415e4eda9a688fbd4ca815a06889956718b6f4071a5a2f"
+    },
+    {
+      "bytes": 82504,
+      "file": "tools/port/lavaman-thrown-lava.smf",
+      "sha256": "78ffedd34785870b88e37e44fec593bf4809559bc7238464583f434860d0d674"
+    },
+    {
+      "bytes": 110094,
+      "file": "tools/port/lavaquake-rocks.smf",
+      "sha256": "4de31d2f06db4286cc6a54d7cb4e4d5fb8c4e3c896db38b3d6aaddb44bda10d9"
+    },
+    {
+      "bytes": 82932,
+      "file": "tools/port/mini-kraid-projectiles.smf",
+      "sha256": "58bb584d9c7bbf479f212d735e1d65616dd8ce2023e04af8e39faabe1fb5270e"
+    },
+    {
+      "bytes": 125527,
+      "file": "tools/port/mother-brain-blue-ring-allocation.smf",
+      "sha256": "a406a1001557a52ec423e7caff88cabe898b4f69bd5215a06a49ef03e2fac7d7"
+    },
+    {
+      "bytes": 84643,
+      "file": "tools/port/mother-brain-blue-ring-frames.smf",
+      "sha256": "e3d2cb601d38b2392f26c0dfa0294f72643f3ea93e02407bd752dc8fdf6c19f3"
+    },
+    {
+      "bytes": 2077173,
+      "file": "tools/port/mother-brain-blue-ring-lifecycle.smf",
+      "sha256": "a7fa5eb0ca1b635ae996a1f72a7239dddbc26d7b9887aa787cba849eb495cf5a"
+    },
+    {
+      "bytes": 85232,
+      "file": "tools/port/mother-brain-bomb-allocation.smf",
+      "sha256": "b16f4d84312e2d28c48a8fdaba2d22c329862c3ac2a7428f27882afd1d3d09f2"
+    },
+    {
+      "bytes": 1121844,
+      "file": "tools/port/mother-brain-bomb-collision.smf",
+      "sha256": "820222d1b1292062cccd1b4761fdb953761b374cab6988dacefd70bbfa6cd74e"
+    },
+    {
+      "bytes": 135378,
+      "file": "tools/port/mother-brain-bomb-frames.smf",
+      "sha256": "f19210d58bfdcd23d5b50e727c33b362fb4964d9c579c04c6d5708f4f034f1c7"
+    },
+    {
+      "bytes": 348185,
+      "file": "tools/port/mother-brain-bomb-movement.smf",
+      "sha256": "fd9e7b9e7f0bc954bb4e97a895e6c4cf9462a1957b55b464bec019963e7be234"
+    },
+    {
+      "bytes": 1532824,
+      "file": "tools/port/mother-brain-bomb-update.smf",
+      "sha256": "2c1af9ac8fe770a1cbf9497a64fe1449354caebaddc2b0e1774735a7cc1a6efa"
+    },
+    {
+      "bytes": 8553,
+      "file": "tools/port/mother-brain-breath-text-tube-allocation.smf",
+      "sha256": "b9ceec65b613f278e80d078acd31f3525d857e35209b67e2ed2c41e8d6f70c0f"
+    },
+    {
+      "bytes": 2643,
+      "file": "tools/port/mother-brain-door-particle-allocation.smf",
+      "sha256": "1cab04053344fa23205d9173f87aeda33b1b9b58f95d96d92df069becec29775"
+    },
+    {
+      "bytes": 106450,
+      "file": "tools/port/mother-brain-door-particle-motion.smf",
+      "sha256": "62bb9a94b11186c2b172954cf7c2cdf87e01116245af7709eca9303625b9d7d2"
+    },
+    {
+      "bytes": 12249,
+      "file": "tools/port/mother-brain-drool-allocation.smf",
+      "sha256": "7b0eb67487e8221343d1f8c908abc1288fdc11bb1f3266a9ce30caa78895b309"
+    },
+    {
+      "bytes": 52447,
+      "file": "tools/port/mother-brain-drool-tracking.smf",
+      "sha256": "951d7ff2790089ed8993e175164d1328aa4cd9a0fbf9f00ad202c549ad953b15"
+    },
+    {
+      "bytes": 8441,
+      "file": "tools/port/mother-brain-explosion-allocation.smf",
+      "sha256": "117de3e6a504f0ef39005438e0096ddfa4e9bd5fc6d45b1bb5101178eb5c4fad"
+    },
+    {
+      "bytes": 57193,
+      "file": "tools/port/mother-brain-explosion-tracking.smf",
+      "sha256": "93fa3399c8ff77e4cbda69ad64d11f7001fa653890dbf630328002b705b3c375"
+    },
+    {
+      "bytes": 275259,
+      "file": "tools/port/mother-brain-glass-allocation.smf",
+      "sha256": "96d283e531e0b715ebff2ed303cc710cd84e710fe64e48f8335cc6eb715c0c01"
+    },
+    {
+      "bytes": 78869,
+      "file": "tools/port/mother-brain-glass-callers.smf",
+      "sha256": "33bbe150c4770d47f6bf86f939b0028b467ffc12c7f82d457ed146ae8abe4bed"
+    },
+    {
+      "bytes": 236488,
+      "file": "tools/port/mother-brain-glass-frames.smf",
+      "sha256": "2887375e82a38ed17d0b480a43129bb661bc96c98585f35132099e114ebd9455"
+    },
+    {
+      "bytes": 142544,
+      "file": "tools/port/mother-brain-glass-motion.smf",
+      "sha256": "2e47839c92e85371ed08ee1f9e82ba0880e83583306072dd41e90b51c0cab348"
+    },
+    {
+      "bytes": 51477,
+      "file": "tools/port/mother-brain-glass-sequence.smf",
+      "sha256": "2c137d9cf98de35bfcb2ff24effa4ddae5d8de36c65201d8bd2d69dc5a08b2a5"
+    },
+    {
+      "bytes": 1718,
+      "file": "tools/port/mother-brain-rainbow-allocation.smf",
+      "sha256": "3e84c8e2e4697f4a50ac60a233c05fe0a3062da1da371a9fe5a075118240a285"
+    },
+    {
+      "bytes": 5169,
+      "file": "tools/port/mother-brain-rainbow-tracking.smf",
+      "sha256": "98703a1f45fd3aa5d5cc3fd098546c8f289ebef8d3370bf9d325221b533ea183"
+    },
+    {
+      "bytes": 83586,
+      "file": "tools/port/mother-brain-tube-motion.smf",
+      "sha256": "e3a1b9069160d1480c1dd8264c818e883ff1bf416bc95412e7a0c86b13cb892b"
+    },
+    {
+      "bytes": 163042,
+      "file": "tools/port/mother-brain-turret-host-lifecycle.smf",
+      "sha256": "caa0bbe9273f070e5041950e1d56348369602d334abe26d1870f537228f04003"
+    },
+    {
+      "bytes": 197106,
+      "file": "tools/port/mother-brain-turret-projectiles.smf",
+      "sha256": "5107f378a7a119f42c4986897e973d1030dcc30d14101cb3901338646b62f31c"
+    },
+    {
+      "bytes": 26949,
+      "file": "tools/port/n00b-tube-callers.smf",
+      "sha256": "0df62e7716c4fac9de9f4875b95213c4bdd2b5915c7ddbcc4ceb448c5354b706"
+    },
+    {
+      "bytes": 37155,
+      "file": "tools/port/n00b-tube-sequence.smf",
+      "sha256": "ee677f759c40a3887568c74679b019917fe0b1c51dfdadca3ee3208e83b9298a"
+    },
+    {
+      "bytes": 313079,
+      "file": "tools/port/n00b-tube.smf",
+      "sha256": "f46b0224231806c4228cefb50172a7063a462a774573aaea9f678bf979dcd53b"
+    },
+    {
+      "bytes": 163153,
+      "file": "tools/port/nami-fune-horizontal-projectiles.smf",
+      "sha256": "e32229032f7f7c5681ee915eca153ac66ebb8e8c9ce6467397726e66ba9a48c6"
+    },
+    {
+      "bytes": 185758,
+      "file": "tools/port/observed-projectile-frame-boundaries.smf",
+      "sha256": "5fb3eb91ede648c15837640ceaad71d24b472d0efb86e265c5614d3ab8db3548"
+    },
+    {
+      "bytes": 2770009,
+      "file": "tools/port/observed-projectile-initializers.smf",
+      "sha256": "97fb955ee33b144ece01ae6d4ac693cd7515db8c789c4785ae946ba02caf434e"
+    },
+    {
+      "bytes": 238735,
+      "file": "tools/port/observed-projectile-ownership.smf",
+      "sha256": "b8cc059d1e4106dabe9d299e632976380fef6fca33f70c0697c42b0d8e9b4140"
+    },
+    {
+      "bytes": 50726,
+      "file": "tools/port/observed-ridley-instructions-captured.smf",
+      "sha256": "c508b32f2da7709459cd86da37899b4c1f81fd20427f6e278fc364b9d0679cbd"
+    },
+    {
+      "bytes": 445850,
+      "file": "tools/port/observed-ridley-instructions.smf",
+      "sha256": "02be6984eebd6a2f179ecd4a1443093dc74df82c79abf7f377befe353684f5ef"
+    },
+    {
+      "bytes": 36935,
+      "file": "tools/port/palette-effect-allocation.smf",
+      "sha256": "a3abbe7f7d83bcc228ac7a236d142dffed39f050e8feb27ee6ccbeb1ab453c7f"
+    },
+    {
+      "bytes": 47279,
+      "file": "tools/port/palette-effect-frames.smf",
+      "sha256": "0fc86aff73616e129ede45ad7ee61e9774aff62f021dc3391f71edacd9e58f66"
+    },
+    {
+      "bytes": 70453,
+      "file": "tools/port/palette-effect-heat.smf",
+      "sha256": "77c398643d39df4cb1643efae0f3406ce0304f53326581d2cae0d41a77fe6533"
+    },
+    {
+      "bytes": 72210,
+      "file": "tools/port/palette-effect-preinstructions.smf",
+      "sha256": "975eac066768cb8939e61b2f4717d977250cde55775ba8850a42e75c260cb159"
+    },
+    {
+      "bytes": 155040,
+      "file": "tools/port/palette-instructions.smf",
+      "sha256": "0ec672ed7762f4954d09436cc1ed25ce5a34a6ef0b7c685b857d940aadb52674"
+    },
+    {
+      "bytes": 37467,
+      "file": "tools/port/pause-equipment-render.smf",
+      "sha256": "eea06c69cb5b6f703ccd97ca13e329d5074da8c5510cb21df89cc2ca6ef4fe61"
+    },
+    {
+      "bytes": 189472,
+      "file": "tools/port/phantoon-orbits.smf",
+      "sha256": "94223568c1acd4b82e0f5e55de77640c68758d16541d8021f8b58aa6d8049c30"
+    },
+    {
+      "bytes": 121097,
+      "file": "tools/port/phantoon-starting-fireballs.smf",
+      "sha256": "fc0becbb6f446d6a9e6e8358f288f703889d9ce13740903f9ac0f6489395dd58"
+    },
+    {
+      "bytes": 107285,
+      "file": "tools/port/pirate-host-callers.smf",
+      "sha256": "46cd5aaa78c07c9393e983e851e592ea1ab41541c86d0f8e61151da8e8407e7d"
+    },
+    {
+      "bytes": 103796,
+      "file": "tools/port/pirate-host-context.smf",
+      "sha256": "83ec3fd06002abcf8a6e53a08d95d76eec54629cc16b9b357a69e08f4327bba7"
+    },
+    {
+      "bytes": 114028,
+      "file": "tools/port/pirate-projectile-flight.smf",
+      "sha256": "0a861ab8226a2aad84d6a07e5756a4a8f23e098786154de0128ffd098d2c8a4a"
+    },
+    {
+      "bytes": 14104,
+      "file": "tools/port/plant-spike-allocation.smf",
+      "sha256": "ad02ed557c28b7a1ef28c52876a0bd998f3ef0b1d73c2b7dbe5d95d307b20a7c"
+    },
+    {
+      "bytes": 289654,
+      "file": "tools/port/plant-spike-motion.smf",
+      "sha256": "7bbcd2a55188e3c9c33aa16e64c42eef46b9a294a5932221839ab88d450280ff"
+    },
+    {
+      "bytes": 105522,
+      "file": "tools/port/plm-instructions.smf",
+      "sha256": "97d0fef95ab697902d2c283df34d6e79d52c4222b3c4e99a8d3a1b43f76b37f7"
+    },
+    {
+      "bytes": 349507,
+      "file": "tools/port/plm-spawn.smf",
+      "sha256": "390bdc3114d3f88569609fb329779ee8880709c9ddfa969e6d282ae80f825faa"
+    },
+    {
+      "bytes": 335014,
+      "file": "tools/port/plm.smf",
+      "sha256": "f26fe944881f558fe6faae9baf54f34cb4cd9d379292e750bb2dba31e03dde28"
+    },
+    {
+      "bytes": 19535,
+      "file": "tools/port/power_bomb.smf",
+      "sha256": "6608ba038137f0ff08aa3d66c7e03da0c06d978c01725d55ae0f7be813f17d0c"
+    },
+    {
+      "bytes": 6671,
+      "file": "tools/port/pre-phantoon-room-projectile.smf",
+      "sha256": "10d683085d79e60aa1c86b1276c48d6483c00876522fb4cb230ef6d24553b630"
+    },
+    {
+      "bytes": 11055,
+      "file": "tools/port/projectile-boss-state-instructions.smf",
+      "sha256": "5394464b206aed44280605f02c341da4d9cf5e95bbc578cefadd6b6dea39b4c1"
+    },
+    {
+      "bytes": 21240,
+      "file": "tools/port/projectile-death-beam-call.smf",
+      "sha256": "246ae149eb86bda45e6fe3b4846432d95e3d7792ee5ae6fa2000f33fe65de3be"
+    },
+    {
+      "bytes": 7245,
+      "file": "tools/port/projectile-death-beam.smf",
+      "sha256": "1c2a78bb25713fc0a91722201c13d0610fd59f6b4cc5918b3a584d24bc9b983d"
+    },
+    {
+      "bytes": 10021,
+      "file": "tools/port/projectile-direction-samus.smf",
+      "sha256": "8826432739973c5909f9892af4884dcbc16900380de509553e8c562d5e152cd4"
+    },
+    {
+      "bytes": 13149,
+      "file": "tools/port/projectile-fixed-sounds.smf",
+      "sha256": "e1ee8e82a7dff99246f43df671f9c609096aecddaddfbf4d83f313fe9295c1ad"
+    },
+    {
+      "bytes": 105990,
+      "file": "tools/port/projectile-host-context.smf",
+      "sha256": "5e4b2ab3281ae432f14f970efd733a5b3bdb1a9d9711de13b9f77a13a00a0e3d"
+    },
+    {
+      "bytes": 133211,
+      "file": "tools/port/projectile-host-drop-instructions.smf",
+      "sha256": "5cac45c88fcde0d64c55be254b75d55b8596d6a7a11523f471fa9a0a361df4ba"
+    },
+    {
+      "bytes": 67028,
+      "file": "tools/port/projectile-movement-live-leaves.smf",
+      "sha256": "1959bcdbffebe0e29a15430142323d7343d5c91ca8ed8dc7b0fab6948971262d"
+    },
+    {
+      "bytes": 47266,
+      "file": "tools/port/projectile-native-state-leaves.smf",
+      "sha256": "fea08b4ebed8b6b9084e5bf275b9906fc8817782d0fdbebd7ed7242d7b478809"
+    },
+    {
+      "bytes": 63366,
+      "file": "tools/port/projectile-paired-live-leaves.smf",
+      "sha256": "fc8de7611dfc141da75a4882dab3aec3b8a59e3a7c1b1ba2ca84ad898d3b4a2e"
+    },
+    {
+      "bytes": 63358,
+      "file": "tools/port/projectile-paired-motion.smf",
+      "sha256": "80019eb19ddcea87251997966d1dc2d0c6332ba386cb8376f085c95fed875480"
+    },
+    {
+      "bytes": 852298,
+      "file": "tools/port/projectile-pickup-collection.smf",
+      "sha256": "c5d9bd161302c8bbb3e40309076f63a8607112e4cee6b56901b39c52cd481587"
+    },
+    {
+      "bytes": 56411,
+      "file": "tools/port/projectile-random-motion.smf",
+      "sha256": "d6e53223cf45e52e3fd8d9a9059fde25a931553463d7f1097c8d0d7765396ba8"
+    },
+    {
+      "bytes": 41210,
+      "file": "tools/port/projectile-script-leaves.smf",
+      "sha256": "b5fbf69766de703323d7b5b207acfaa8e8ad999314fbcedba6ba12b22493fe15"
+    },
+    {
+      "bytes": 24559,
+      "file": "tools/port/projectile-sprite-spawns.smf",
+      "sha256": "0f5808480afe8c0c69f0ef49424bce2dcde57b82b84784fbfe984130134694a1"
+    },
+    {
+      "bytes": 84580,
+      "file": "tools/port/projectile-state-instruction-gaps.smf",
+      "sha256": "459e8181724609840374793cb44ea3e6d11f3cc8937c6d37d02e0d7a8a497a2b"
+    },
+    {
+      "bytes": 706295,
+      "file": "tools/port/projectile-trails.smf",
+      "sha256": "195d2942481f89b0c94c39b724a17af3f8289625f14f16a2f670953ecd009d4b"
+    },
+    {
+      "bytes": 521285,
+      "file": "tools/port/projectile_flight.smf",
+      "sha256": "1d15501da233be14ce1b73a67fc42d21a56f58ee745afa88957faccfa5f87b62"
+    },
+    {
+      "bytes": 310945,
+      "file": "tools/port/projectile_special.smf",
+      "sha256": "6364efa2d9bb134a6f5fcca7f5be4ac5bf352c8bf7a033d72cc85ae1dff9a86b"
+    },
+    {
+      "bytes": 874454,
+      "file": "tools/port/projectiles.smf",
+      "sha256": "345cf76bb1acf2b9a29649dbcfd670f44c0aa1bf4dd2f826eed776f80573c9a1"
+    },
+    {
+      "bytes": 175284,
+      "file": "tools/port/ridley-fireball-host-impact.smf",
+      "sha256": "8c5c1375ac6f49e2150e5e0a67a3020ed7098c30cb187cb5e061c79983749a54"
+    },
+    {
+      "bytes": 1038290,
+      "file": "tools/port/ridley-subsystem-captured.smf",
+      "sha256": "b685523a9cd0985ff345c7a330c855e89e2dfcf827593d252fba89be201c5325"
+    },
+    {
+      "bytes": 1421007,
+      "file": "tools/port/ridley-subsystem.smf",
+      "sha256": "ad885b5e5509b25b04eabf4023a96e36cb0176de9e6cce31a11a13c2998c9359"
+    },
+    {
+      "bytes": 107690,
+      "file": "tools/port/robot-laser-allocation.smf",
+      "sha256": "b34fdd2350cd3bd6d1e68d6030444ff59cebf27a5fb3a095dd55210f3e6779f5"
+    },
+    {
+      "bytes": 178232,
+      "file": "tools/port/robot-laser-collision.smf",
+      "sha256": "68515b249924a95c7ae09347b7a502c4bdbf4aca9e683242efd714144e833870"
+    },
+    {
+      "bytes": 41837,
+      "file": "tools/port/room-diagonal-shake.smf",
+      "sha256": "c7d6792258874f1447dd876152b9420633bdda1d3677080a1b10532600a34bf3"
+    },
+    {
+      "bytes": 36915,
+      "file": "tools/port/room-map-quake-state.smf",
+      "sha256": "ad236f654e54f46ed93cb87c04be34e01f69f0cc94ed0e5b622ef4d3e6fcdcda"
+    },
+    {
+      "bytes": 7666,
+      "file": "tools/port/room-pause-hooks-shaktool.smf",
+      "sha256": "adedd6934a0724d4d51f105595d75497754450612687bf01a27773594ef4642f"
+    },
+    {
+      "bytes": 178276,
+      "file": "tools/port/room-random-explosions.smf",
+      "sha256": "ab73049f6bafb128eb0a3f169170b658f5088af17e8f1aaee6378c207984af52"
+    },
+    {
+      "bytes": 881296,
+      "file": "tools/port/room-scroll.smf",
+      "sha256": "d06a6cd4c9d3b9bc122252226d5b75721f70faf60200a92be35ef8053fe6a253"
+    },
+    {
+      "bytes": 93643,
+      "file": "tools/port/room.smf",
+      "sha256": "1b6649420e5c007db3a95cecd00b2d9602d8e2f763a96004ef2a03d0d06b27cf"
+    },
+    {
+      "bytes": 146505,
+      "file": "tools/port/samus-projectile-frame.smf",
+      "sha256": "a619bf8b0216ac7232c38262c890f9c4831000282f25d746b11073adec82667b"
+    },
+    {
+      "bytes": 1660402,
+      "file": "tools/port/samus.smf",
+      "sha256": "ee4d7166e8ebcae312566bef9dde417ed0b6a17425b9e98520bde38007890331"
+    },
+    {
+      "bytes": 52799,
+      "file": "tools/port/seahorse-fireball.smf",
+      "sha256": "986a0baf2301f4df4dd4b54c1a77ce9994b9c70587542b60ec30e44e3c7641e5"
+    },
+    {
+      "bytes": 278312,
+      "file": "tools/port/shaktool-attack-circles.smf",
+      "sha256": "221fa179475f081a420cc6e39754fb0293a32cb7969c268abdf1a8c9e453e06c"
+    },
+    {
+      "bytes": 83291,
+      "file": "tools/port/shot-gates-electricity.smf",
+      "sha256": "b94bdb8d44b430f8f33db29f13a13d0db0b2204db721bf7e2f39cad32bd8a4e4"
+    },
+    {
+      "bytes": 142510,
+      "file": "tools/port/skree-particles.smf",
+      "sha256": "ba6b7110cb7784407c7163572dd027a88f1d310e004f42e4b2d32f953a321b84"
+    },
+    {
+      "bytes": 163241,
+      "file": "tools/port/sparks-allocation.smf",
+      "sha256": "1584abf1a952a2ae6e2362d2dbfecad73c0507f8f0e23279178be2addd6d1113"
+    },
+    {
+      "bytes": 216308,
+      "file": "tools/port/sparks-frames.smf",
+      "sha256": "93564910ed4d22f302df519f70e375fb2a440432326cbd54c0f04e6f1252ea60"
+    },
+    {
+      "bytes": 38651,
+      "file": "tools/port/sparks-sequence.smf",
+      "sha256": "4d85f0d79c25c419b5d20c469a4ed4acd9e57ad9c315f1dcc3a7b520c2663cad"
+    },
+    {
+      "bytes": 634182,
+      "file": "tools/port/sparks-update.smf",
+      "sha256": "8cc8bb5122efed843b59b0d27ae4721eebff44db42b6d3b8decb66fb98f18ebe"
+    },
+    {
+      "bytes": 244176,
+      "file": "tools/port/spore-projectile-motion.smf",
+      "sha256": "536ca5f2a3a0a75f7393e44916cd9ee67433ce3598c576301e0a9f5510d0717e"
+    },
+    {
+      "bytes": 1722,
+      "file": "tools/port/spore-spawner-allocation.smf",
+      "sha256": "d0114cc5c11020c509b3e28bfb2a83cb981a351a68df9c809f47c854fb7e139a"
+    },
+    {
+      "bytes": 6575,
+      "file": "tools/port/spore-stalk-tracking.smf",
+      "sha256": "f887cfa16cad960ed3d80b3bf88fe869368fdb7e8dd98f1045925af165d86586"
+    },
+    {
+      "bytes": 130630,
+      "file": "tools/port/sprite-allocation.smf",
+      "sha256": "94a7d2bddb080566367b1244f125b8150ce599b30489252f5470a4b6d982f2f9"
+    },
+    {
+      "bytes": 143517,
+      "file": "tools/port/sprite-objects.smf",
+      "sha256": "56c19f46b1eb95c70076bca456e4dd7b341f398a23ec22000545f92d71a6fdd9"
+    },
+    {
+      "bytes": 78178,
+      "file": "tools/port/sprite-rendering.smf",
+      "sha256": "e42e7d3e9cab6397ad39f5c47598b001a7884d799a0e7944cd3f203f9e79a3ab"
+    },
+    {
+      "bytes": 6313,
+      "file": "tools/port/statue-animation-room-setup.smf",
+      "sha256": "98af40b7f1b8ca15609be6af30b2947357f6fd279f1aaf96d1dd303a049ad663"
+    },
+    {
+      "bytes": 44728,
+      "file": "tools/port/system.smf",
+      "sha256": "42fa433f2ec9cd1b56611f83deaafea37f4ec6b37e5ac1dab69144f1037293c9"
+    },
+    {
+      "bytes": 5155,
+      "file": "tools/port/time-bomb-text.smf",
+      "sha256": "b05eadb88cba9f6f4abfb8d601be816105c32f766ab6746ad4a42adb8a1b728d"
+    },
+    {
+      "bytes": 48486,
+      "file": "tools/port/torizo-drool.smf",
+      "sha256": "d8e5586d0a794c391d82a8e261a8bbdd82fbc7850fac592a3c49571f6c806ab9"
+    },
+    {
+      "bytes": 102866,
+      "file": "tools/port/torizo-eggs.smf",
+      "sha256": "66ea9d4dea209b0e2f7c73f7140fae986793c26f3bc7d584cdfeeca6134b33c1"
+    },
+    {
+      "bytes": 36367,
+      "file": "tools/port/torizo-eye-beam.smf",
+      "sha256": "e35deba1e1cd3eb8412e43c5031b8f4a37045468db4451172ce3f1129248579e"
+    },
+    {
+      "bytes": 53804,
+      "file": "tools/port/torizo-impact.smf",
+      "sha256": "e5aa41f9630148dcd01a2b211c122e5f7f66dd25440ebedc91defb8d1a6e072b"
+    },
+    {
+      "bytes": 72992,
+      "file": "tools/port/torizo-orbs.smf",
+      "sha256": "dd78c8ff302dc6cd3141c263d589e06604a1ba457f43bc6cd9899f9aeae71a4a"
+    },
+    {
+      "bytes": 35714,
+      "file": "tools/port/torizo-sonic-boom.smf",
+      "sha256": "ce3beb7e493163d5c9c5a17e550237edc4bf9f99addaf3ed3efd3a99c64ff367"
+    },
+    {
+      "bytes": 78336,
+      "file": "tools/port/torizo-super-missile.smf",
+      "sha256": "6ab80bfce2fd625377f0a516f96a9cbaf9b2a6c72b117b787817eaa7c2965ae9"
+    },
+    {
+      "bytes": 26000,
+      "file": "tools/port/tourian-statue-effects.smf",
+      "sha256": "8d9ccefb0dfecf1c2976e37105ff213ff435e4da9b25678585f671b6df5fef11"
+    },
+    {
+      "bytes": 152168,
+      "file": "tools/port/tourian-statue-scheduling.smf",
+      "sha256": "7644772bc81bbeeec5d34b30cfdc03a5cd5a90791287b79633754e4d273b7c15"
+    },
+    {
+      "bytes": 9053,
+      "file": "tools/port/treadmill-door-setup.smf",
+      "sha256": "2ab72bf7bf89344450738de494129b3e03541facb643729ae0f4218ea769c166"
+    },
+    {
+      "bytes": 62336,
+      "file": "tools/port/yapping-maw-body.smf",
+      "sha256": "0347599eaecc21588ae616ee6775d1786216e6fd348a6bedda5a1ca48c5d350e"
+    }
+  ],
+  "original_revision": "f39947c4a1e45c382deb5c842934c92bb28b1fe4",
+  "original_writes": 5016816,
+  "redirects": [
+    {
+      "after": "/home/jim/sm-decomp/tools/port/ridley-subsystem.smf",
+      "audited_sha256": "452db3c635eaa5c5253fb63e717d995abe96b7f0c8c5463275921efd107e009f",
+      "before": "/home/jim/sm-decomp/tools/port/ridley-subsystem.toml",
+      "file": "tools/port/ridley-subsystem-captured.smf",
+      "final_sha256": "b685523a9cd0985ff345c7a330c855e89e2dfcf827593d252fba89be201c5325",
+      "other_metadata_and_state_unchanged": true
+    }
+  ],
+  "schema": "fixture-final-corpus-audit-v1",
+  "source_bytes": 272739363
+}

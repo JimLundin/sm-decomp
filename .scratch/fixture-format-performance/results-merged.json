@@ -1,0 +1,800 @@
+{
+  "contract": "fixture-format-study-v2",
+  "baseline": "f39947c4a1e45c382deb5c842934c92bb28b1fe4",
+  "rustc": "rustc 1.101.0-nightly (c1070d693 2026-09-28)",
+  "repetitions": 3,
+  "environment": {
+    "/proc/loadavg": "11.83 6.45 4.08 2/647 190229",
+    "/proc/version": "Linux version 6.18.54.1-microsoft-standard-WSL2 (root@9b80f41eb17c) (gcc (GCC) 13.2.0, GNU ld (GNU Binutils) 2.41) #1 SMP PREEMPT_DYNAMIC Tue Oct  6 19:13:07 UTC 2026",
+    "/proc/meminfo": "MemTotal:       12250812 kB\nMemFree:         3434348 kB\nMemAvailable:    9744532 kB\nBuffers:          637536 kB\nCached:          5632264 kB"
+  },
+  "scope": [
+    "Same typed Manifest; every metadata field retained in a smaller JSON section.",
+    "Contiguous indexed binary patch records; shared immutable payloads; no Vec allocation per patch on read.",
+    "Every layout authenticated by SHA-256 before timed decode; compressed layout authenticates both physical and decoded bytes.",
+    "All full WRAM results compared before timing; continuations use three varied synthetic inherited states, not actual C executions.",
+    "Cache-eviction mode is a POSIX_FADV_DONTNEED hint on private copied files, not a cold-machine guarantee.",
+    "Materialization includes allocating a 128 KiB buffer per case, but excludes per-case file output, compilation, execution, and complete evidence authentication.",
+    "Other sessions may use this machine. CPU time and wall time are both retained.",
+    "No claim of fastest possible format; metadata JSON, mmap, output formats and end-to-end integration remain separate work."
+  ],
+  "families": [
+    {
+      "family": "floater-spike-motion",
+      "original_bytes": 22771777,
+      "original_sha256": "7dfe247a7b926435f53ce4c74fd51b628e57d32857ba76dd09170a78b2e00e1b",
+      "cases": 4929,
+      "continuations": 0,
+      "original_writes": 59136,
+      "encodings": [
+        {
+          "layout": "indexed-writes",
+          "bytes": 2673544,
+          "metadata_bytes": 1622901,
+          "cases": 4929,
+          "patch_records": 59136,
+          "unique_payload_bytes": 25536,
+          "compilation_ms": 31.412536999999997,
+          "encoded_sha256": "cbc902d89bd9a9edc77ecc0c4fe082a690919cab98d536de6966f8943af77a43"
+        },
+        {
+          "layout": "merged-spans-zstd-1",
+          "bytes": 33066,
+          "metadata_bytes": 1622901,
+          "cases": 4929,
+          "patch_records": 52056,
+          "unique_payload_bytes": 24309,
+          "compilation_ms": 477.44736,
+          "encoded_sha256": "f9e9dc9dcef9d750b9f828be1e33f57302b7205e2e4fdb17828950703231432a"
+        },
+        {
+          "layout": "merged-spans",
+          "bytes": 2559037,
+          "metadata_bytes": 1622901,
+          "cases": 4929,
+          "patch_records": 52056,
+          "unique_payload_bytes": 24309,
+          "compilation_ms": 476.440253,
+          "encoded_sha256": "0b025cb84f7b7b8b519fe9f112961768f9fa7f319ba8849aca59850793be8a23"
+        }
+      ],
+      "state_identity": "085bd688232bece8869fb938775342f7a51935fc7db8f8bca752e49569147293",
+      "samples": [
+        {
+          "variant": "current.toml",
+          "cache": "warm",
+          "repetition": 0,
+          "read_hash_decode_ms": 2924.57111,
+          "read_hash_decode_cpu_ms": 2924.5530000000003,
+          "materialize_ms": 13.305648,
+          "materialize_cpu_ms": 13.30800000000032
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "warm",
+          "repetition": 0,
+          "read_hash_decode_ms": 6.192461,
+          "read_hash_decode_cpu_ms": 6.197999999999482,
+          "materialize_ms": 10.754325,
+          "materialize_cpu_ms": 10.755999999998878
+        },
+        {
+          "variant": "merged-spans",
+          "cache": "warm",
+          "repetition": 0,
+          "read_hash_decode_ms": 6.297627,
+          "read_hash_decode_cpu_ms": 6.301999999999808,
+          "materialize_ms": 10.808907,
+          "materialize_cpu_ms": 10.811000000000348
+        },
+        {
+          "variant": "merged-spans-zstd-1",
+          "cache": "warm",
+          "repetition": 0,
+          "read_hash_decode_ms": 6.137601,
+          "read_hash_decode_cpu_ms": 6.140000000000256,
+          "materialize_ms": 10.779053000000001,
+          "materialize_cpu_ms": 10.77999999999868
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "warm",
+          "repetition": 1,
+          "read_hash_decode_ms": 6.496748,
+          "read_hash_decode_cpu_ms": 6.4989999999998105,
+          "materialize_ms": 10.73751,
+          "materialize_cpu_ms": 10.732000000000852
+        },
+        {
+          "variant": "merged-spans",
+          "cache": "warm",
+          "repetition": 1,
+          "read_hash_decode_ms": 6.08829,
+          "read_hash_decode_cpu_ms": 6.090000000000373,
+          "materialize_ms": 10.761602,
+          "materialize_cpu_ms": 10.761999999999716
+        },
+        {
+          "variant": "merged-spans-zstd-1",
+          "cache": "warm",
+          "repetition": 1,
+          "read_hash_decode_ms": 6.429211,
+          "read_hash_decode_cpu_ms": 6.434000000000495,
+          "materialize_ms": 10.411091,
+          "materialize_cpu_ms": 10.412999999999784
+        },
+        {
+          "variant": "current.toml",
+          "cache": "warm",
+          "repetition": 1,
+          "read_hash_decode_ms": 2642.833005,
+          "read_hash_decode_cpu_ms": 2642.807000000001,
+          "materialize_ms": 23.641467,
+          "materialize_cpu_ms": 23.64799999999967
+        },
+        {
+          "variant": "merged-spans",
+          "cache": "warm",
+          "repetition": 2,
+          "read_hash_decode_ms": 13.515721,
+          "read_hash_decode_cpu_ms": 13.523999999998537,
+          "materialize_ms": 21.26437,
+          "materialize_cpu_ms": 21.266999999999925
+        },
+        {
+          "variant": "merged-spans-zstd-1",
+          "cache": "warm",
+          "repetition": 2,
+          "read_hash_decode_ms": 16.449449,
+          "read_hash_decode_cpu_ms": 16.455000000000553,
+          "materialize_ms": 14.220536000000001,
+          "materialize_cpu_ms": 14.224000000000458
+        },
+        {
+          "variant": "current.toml",
+          "cache": "warm",
+          "repetition": 2,
+          "read_hash_decode_ms": 4711.269511,
+          "read_hash_decode_cpu_ms": 4710.6359999999995,
+          "materialize_ms": 19.215143,
+          "materialize_cpu_ms": 19.218999999999653
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "warm",
+          "repetition": 2,
+          "read_hash_decode_ms": 10.516795,
+          "read_hash_decode_cpu_ms": 10.5240000000002,
+          "materialize_ms": 15.270154,
+          "materialize_cpu_ms": 15.27299999999876
+        },
+        {
+          "variant": "current.toml",
+          "cache": "eviction-hint",
+          "repetition": 0,
+          "read_hash_decode_ms": 3650.135279,
+          "read_hash_decode_cpu_ms": 3646.5330000000017,
+          "materialize_ms": 18.993499,
+          "materialize_cpu_ms": 18.99799999999985
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "eviction-hint",
+          "repetition": 0,
+          "read_hash_decode_ms": 16.680694,
+          "read_hash_decode_cpu_ms": 12.021000000000726,
+          "materialize_ms": 15.665499999999998,
+          "materialize_cpu_ms": 15.668999999999045
+        },
+        {
+          "variant": "merged-spans",
+          "cache": "eviction-hint",
+          "repetition": 0,
+          "read_hash_decode_ms": 10.481076,
+          "read_hash_decode_cpu_ms": 9.382999999999697,
+          "materialize_ms": 14.664533,
+          "materialize_cpu_ms": 14.672000000000907
+        },
+        {
+          "variant": "merged-spans-zstd-1",
+          "cache": "eviction-hint",
+          "repetition": 0,
+          "read_hash_decode_ms": 12.731249,
+          "read_hash_decode_cpu_ms": 12.357999999998981,
+          "materialize_ms": 15.280877,
+          "materialize_cpu_ms": 15.284000000001186
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "eviction-hint",
+          "repetition": 1,
+          "read_hash_decode_ms": 13.099802,
+          "read_hash_decode_cpu_ms": 11.845999999998469,
+          "materialize_ms": 15.922603,
+          "materialize_cpu_ms": 15.926999999997804
+        },
+        {
+          "variant": "merged-spans",
+          "cache": "eviction-hint",
+          "repetition": 1,
+          "read_hash_decode_ms": 10.716434,
+          "read_hash_decode_cpu_ms": 9.463000000000221,
+          "materialize_ms": 14.530731999999999,
+          "materialize_cpu_ms": 14.535000000002185
+        },
+        {
+          "variant": "merged-spans-zstd-1",
+          "cache": "eviction-hint",
+          "repetition": 1,
+          "read_hash_decode_ms": 8.626439,
+          "read_hash_decode_cpu_ms": 8.159999999996614,
+          "materialize_ms": 14.545696,
+          "materialize_cpu_ms": 14.548999999998813
+        },
+        {
+          "variant": "current.toml",
+          "cache": "eviction-hint",
+          "repetition": 1,
+          "read_hash_decode_ms": 3753.442532,
+          "read_hash_decode_cpu_ms": 3749.0939999999996,
+          "materialize_ms": 16.387542,
+          "materialize_cpu_ms": 16.392000000003293
+        },
+        {
+          "variant": "merged-spans",
+          "cache": "eviction-hint",
+          "repetition": 2,
+          "read_hash_decode_ms": 13.834235,
+          "read_hash_decode_cpu_ms": 12.561999999995521,
+          "materialize_ms": 13.902681999999999,
+          "materialize_cpu_ms": 13.905999999998642
+        },
+        {
+          "variant": "merged-spans-zstd-1",
+          "cache": "eviction-hint",
+          "repetition": 2,
+          "read_hash_decode_ms": 13.963048,
+          "read_hash_decode_cpu_ms": 13.586000000000098,
+          "materialize_ms": 14.206985,
+          "materialize_cpu_ms": 14.202000000000936
+        },
+        {
+          "variant": "current.toml",
+          "cache": "eviction-hint",
+          "repetition": 2,
+          "read_hash_decode_ms": 3607.643208,
+          "read_hash_decode_cpu_ms": 3602.7249999999995,
+          "materialize_ms": 16.075381999999998,
+          "materialize_cpu_ms": 16.078999999997734
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "eviction-hint",
+          "repetition": 2,
+          "read_hash_decode_ms": 13.902972,
+          "read_hash_decode_cpu_ms": 12.418000000000262,
+          "materialize_ms": 12.472256,
+          "materialize_cpu_ms": 12.47499999999846
+        }
+      ]
+    },
+    {
+      "family": "mother-brain-bomb-update",
+      "original_bytes": 12126202,
+      "original_sha256": "b1dd189d4d471d4c03ffc41629cf40553890bec262c922bff1fd5a0e92718513",
+      "cases": 3187,
+      "continuations": 0,
+      "original_writes": 267840,
+      "encodings": [
+        {
+          "layout": "indexed-writes",
+          "bytes": 5403496,
+          "metadata_bytes": 1066884,
+          "cases": 3187,
+          "patch_records": 267840,
+          "unique_payload_bytes": 112,
+          "compilation_ms": 53.701084,
+          "encoded_sha256": "41bf4b73c733d461f4c5b3b1226c701ee865db21d4e5d25a41e622dcf019777d"
+        },
+        {
+          "layout": "merged-spans-zstd-1",
+          "bytes": 27470,
+          "metadata_bytes": 1066884,
+          "cases": 3187,
+          "patch_records": 76464,
+          "unique_payload_bytes": 3785,
+          "compilation_ms": 505.00641099999996,
+          "encoded_sha256": "94ed922d00943521b41d50b74de003af5689003cab0027ce071be2e32f88c298"
+        },
+        {
+          "layout": "merged-spans",
+          "bytes": 2345153,
+          "metadata_bytes": 1066884,
+          "cases": 3187,
+          "patch_records": 76464,
+          "unique_payload_bytes": 3785,
+          "compilation_ms": 503.47903299999996,
+          "encoded_sha256": "5bb6fa51ad6e33e6aed87c6b1c3d5341dad818da7dd2a45f265276c66e47837a"
+        }
+      ],
+      "state_identity": "e03f9ec7584e07fceb6df471adcf6fa3282d63cf1249310d4fa314537a195941",
+      "samples": [
+        {
+          "variant": "current.toml",
+          "cache": "warm",
+          "repetition": 0,
+          "read_hash_decode_ms": 1085.251247,
+          "read_hash_decode_cpu_ms": 1085.2269999999996,
+          "materialize_ms": 14.550818,
+          "materialize_cpu_ms": 14.556999999999931
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "warm",
+          "repetition": 0,
+          "read_hash_decode_ms": 15.294169,
+          "read_hash_decode_cpu_ms": 15.302000000001925,
+          "materialize_ms": 11.111894000000001,
+          "materialize_cpu_ms": 11.115999999997683
+        },
+        {
+          "variant": "merged-spans",
+          "cache": "warm",
+          "repetition": 0,
+          "read_hash_decode_ms": 8.144452999999999,
+          "read_hash_decode_cpu_ms": 8.151999999999049,
+          "materialize_ms": 10.122445,
+          "materialize_cpu_ms": 10.125999999999635
+        },
+        {
+          "variant": "merged-spans-zstd-1",
+          "cache": "warm",
+          "repetition": 0,
+          "read_hash_decode_ms": 7.9058589999999995,
+          "read_hash_decode_cpu_ms": 7.911000000000001,
+          "materialize_ms": 10.45245,
+          "materialize_cpu_ms": 10.456000000001353
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "warm",
+          "repetition": 1,
+          "read_hash_decode_ms": 15.944425000000003,
+          "read_hash_decode_cpu_ms": 15.95000000000013,
+          "materialize_ms": 13.747357,
+          "materialize_cpu_ms": 13.752000000000209
+        },
+        {
+          "variant": "merged-spans",
+          "cache": "warm",
+          "repetition": 1,
+          "read_hash_decode_ms": 12.36945,
+          "read_hash_decode_cpu_ms": 12.375000000002245,
+          "materialize_ms": 9.669116,
+          "materialize_cpu_ms": 9.672999999999377
+        },
+        {
+          "variant": "merged-spans-zstd-1",
+          "cache": "warm",
+          "repetition": 1,
+          "read_hash_decode_ms": 10.202210999999998,
+          "read_hash_decode_cpu_ms": 10.208000000002215,
+          "materialize_ms": 11.017753,
+          "materialize_cpu_ms": 11.02300000000156
+        },
+        {
+          "variant": "current.toml",
+          "cache": "warm",
+          "repetition": 1,
+          "read_hash_decode_ms": 1069.325745,
+          "read_hash_decode_cpu_ms": 1056.1929999999968,
+          "materialize_ms": 13.986915000000002,
+          "materialize_cpu_ms": 13.991000000004306
+        },
+        {
+          "variant": "merged-spans",
+          "cache": "warm",
+          "repetition": 2,
+          "read_hash_decode_ms": 11.502004999999999,
+          "read_hash_decode_cpu_ms": 11.509000000003766,
+          "materialize_ms": 9.67637,
+          "materialize_cpu_ms": 9.678000000000964
+        },
+        {
+          "variant": "merged-spans-zstd-1",
+          "cache": "warm",
+          "repetition": 2,
+          "read_hash_decode_ms": 11.191842000000001,
+          "read_hash_decode_cpu_ms": 11.194999999993627,
+          "materialize_ms": 8.381694,
+          "materialize_cpu_ms": 8.383999999999503
+        },
+        {
+          "variant": "current.toml",
+          "cache": "warm",
+          "repetition": 2,
+          "read_hash_decode_ms": 771.518914,
+          "read_hash_decode_cpu_ms": 771.5090000000018,
+          "materialize_ms": 12.243547000000001,
+          "materialize_cpu_ms": 12.247000000002117
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "warm",
+          "repetition": 2,
+          "read_hash_decode_ms": 10.833667,
+          "read_hash_decode_cpu_ms": 10.840000000001737,
+          "materialize_ms": 9.148228,
+          "materialize_cpu_ms": 9.152000000000271
+        },
+        {
+          "variant": "current.toml",
+          "cache": "eviction-hint",
+          "repetition": 0,
+          "read_hash_decode_ms": 815.998636,
+          "read_hash_decode_cpu_ms": 812.9309999999989,
+          "materialize_ms": 11.969639,
+          "materialize_cpu_ms": 11.97400000000215
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "eviction-hint",
+          "repetition": 0,
+          "read_hash_decode_ms": 16.541092,
+          "read_hash_decode_cpu_ms": 13.714999999997701,
+          "materialize_ms": 8.908103,
+          "materialize_cpu_ms": 8.910000000000196
+        },
+        {
+          "variant": "merged-spans",
+          "cache": "eviction-hint",
+          "repetition": 0,
+          "read_hash_decode_ms": 8.267903,
+          "read_hash_decode_cpu_ms": 7.061000000000206,
+          "materialize_ms": 7.7448120000000005,
+          "materialize_cpu_ms": 7.746999999994841
+        },
+        {
+          "variant": "merged-spans-zstd-1",
+          "cache": "eviction-hint",
+          "repetition": 0,
+          "read_hash_decode_ms": 7.471596,
+          "read_hash_decode_cpu_ms": 6.942999999999699,
+          "materialize_ms": 7.833066,
+          "materialize_cpu_ms": 7.835000000000036
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "eviction-hint",
+          "repetition": 1,
+          "read_hash_decode_ms": 20.290853000000002,
+          "read_hash_decode_cpu_ms": 18.216999999999928,
+          "materialize_ms": 9.317983,
+          "materialize_cpu_ms": 9.321999999997388
+        },
+        {
+          "variant": "merged-spans",
+          "cache": "eviction-hint",
+          "repetition": 1,
+          "read_hash_decode_ms": 8.538739999999999,
+          "read_hash_decode_cpu_ms": 7.313000000003456,
+          "materialize_ms": 8.388819,
+          "materialize_cpu_ms": 8.39099999999604
+        },
+        {
+          "variant": "merged-spans-zstd-1",
+          "cache": "eviction-hint",
+          "repetition": 1,
+          "read_hash_decode_ms": 7.4960510000000005,
+          "read_hash_decode_cpu_ms": 6.929999999996994,
+          "materialize_ms": 7.838430000000001,
+          "materialize_cpu_ms": 7.842000000003679
+        },
+        {
+          "variant": "current.toml",
+          "cache": "eviction-hint",
+          "repetition": 1,
+          "read_hash_decode_ms": 1040.6378220000001,
+          "read_hash_decode_cpu_ms": 1034.8749999999995,
+          "materialize_ms": 16.380595,
+          "materialize_cpu_ms": 16.38399999999507
+        },
+        {
+          "variant": "merged-spans",
+          "cache": "eviction-hint",
+          "repetition": 2,
+          "read_hash_decode_ms": 15.750468999999999,
+          "read_hash_decode_cpu_ms": 14.299000000001172,
+          "materialize_ms": 11.011199,
+          "materialize_cpu_ms": 11.012999999998385
+        },
+        {
+          "variant": "merged-spans-zstd-1",
+          "cache": "eviction-hint",
+          "repetition": 2,
+          "read_hash_decode_ms": 9.223303,
+          "read_hash_decode_cpu_ms": 8.743000000009715,
+          "materialize_ms": 11.147829,
+          "materialize_cpu_ms": 11.149999999993554
+        },
+        {
+          "variant": "current.toml",
+          "cache": "eviction-hint",
+          "repetition": 2,
+          "read_hash_decode_ms": 1289.079778,
+          "read_hash_decode_cpu_ms": 1285.8379999999984,
+          "materialize_ms": 18.376249,
+          "materialize_cpu_ms": 18.380999999997982
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "eviction-hint",
+          "repetition": 2,
+          "read_hash_decode_ms": 25.240395999999997,
+          "read_hash_decode_cpu_ms": 23.822000000002674,
+          "materialize_ms": 16.895205999999998,
+          "materialize_cpu_ms": 16.899000000002218
+        }
+      ]
+    },
+    {
+      "family": "ridley-subsystem",
+      "original_bytes": 6757132,
+      "original_sha256": "7bd4dc11ffadb06ad4805d3f80875fe4cb782d44ec809033b730da5c4fcaf8c6",
+      "cases": 6457,
+      "continuations": 4032,
+      "original_writes": 157288,
+      "encodings": [
+        {
+          "layout": "indexed-writes",
+          "bytes": 4923474,
+          "metadata_bytes": 2303252,
+          "cases": 6457,
+          "patch_records": 157288,
+          "unique_payload_bytes": 234,
+          "compilation_ms": 120.041645,
+          "encoded_sha256": "27a19c01c04f9315348be99aa99213befa168232fb99a5516b13abdc4d689d1b"
+        },
+        {
+          "layout": "merged-spans-zstd-1",
+          "bytes": 43440,
+          "metadata_bytes": 2303252,
+          "cases": 6457,
+          "patch_records": 37352,
+          "unique_payload_bytes": 38564,
+          "compilation_ms": 1311.99225,
+          "encoded_sha256": "e1de1682cff68d3f79b8c674c2644954f9d3b7e18287fb21fc574787500c2d48"
+        },
+        {
+          "layout": "merged-spans",
+          "bytes": 3042828,
+          "metadata_bytes": 2303252,
+          "cases": 6457,
+          "patch_records": 37352,
+          "unique_payload_bytes": 38564,
+          "compilation_ms": 1309.716445,
+          "encoded_sha256": "67a9b0f5a45bb6e22d3fb3a580306f15a847c1a71b233a7682cae941ce1e17c1"
+        }
+      ],
+      "state_identity": "c54194d24a1ade50078f44e58879d360cb95f48c602b69dfb553c1b77d3df236",
+      "samples": [
+        {
+          "variant": "current.toml",
+          "cache": "warm",
+          "repetition": 0,
+          "read_hash_decode_ms": 742.530251,
+          "read_hash_decode_cpu_ms": 742.5250000000005,
+          "materialize_ms": 60.857036,
+          "materialize_cpu_ms": 60.84500000000048
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "warm",
+          "repetition": 0,
+          "read_hash_decode_ms": 23.193026,
+          "read_hash_decode_cpu_ms": 23.19999999999567,
+          "materialize_ms": 52.405485,
+          "materialize_cpu_ms": 52.40899999999726
+        },
+        {
+          "variant": "merged-spans",
+          "cache": "warm",
+          "repetition": 0,
+          "read_hash_decode_ms": 18.035991000000003,
+          "read_hash_decode_cpu_ms": 18.042000000001224,
+          "materialize_ms": 48.041836999999994,
+          "materialize_cpu_ms": 48.04399999999731
+        },
+        {
+          "variant": "merged-spans-zstd-1",
+          "cache": "warm",
+          "repetition": 0,
+          "read_hash_decode_ms": 10.741086000000001,
+          "read_hash_decode_cpu_ms": 10.745000000000005,
+          "materialize_ms": 46.506291,
+          "materialize_cpu_ms": 46.509000000000356
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "warm",
+          "repetition": 1,
+          "read_hash_decode_ms": 18.851703,
+          "read_hash_decode_cpu_ms": 18.856999999997015,
+          "materialize_ms": 48.191002,
+          "materialize_cpu_ms": 48.194999999999766
+        },
+        {
+          "variant": "merged-spans",
+          "cache": "warm",
+          "repetition": 1,
+          "read_hash_decode_ms": 10.833751000000001,
+          "read_hash_decode_cpu_ms": 10.838999999997156,
+          "materialize_ms": 45.28273,
+          "materialize_cpu_ms": 45.28599999999727
+        },
+        {
+          "variant": "merged-spans-zstd-1",
+          "cache": "warm",
+          "repetition": 1,
+          "read_hash_decode_ms": 13.782286,
+          "read_hash_decode_cpu_ms": 13.787999999998135,
+          "materialize_ms": 48.028957,
+          "materialize_cpu_ms": 47.97299999999893
+        },
+        {
+          "variant": "current.toml",
+          "cache": "warm",
+          "repetition": 1,
+          "read_hash_decode_ms": 569.202228,
+          "read_hash_decode_cpu_ms": 569.1240000000022,
+          "materialize_ms": 39.002227,
+          "materialize_cpu_ms": 39.00600000000054
+        },
+        {
+          "variant": "merged-spans",
+          "cache": "warm",
+          "repetition": 2,
+          "read_hash_decode_ms": 9.064996,
+          "read_hash_decode_cpu_ms": 9.0720000000033,
+          "materialize_ms": 35.252434,
+          "materialize_cpu_ms": 35.25499999999937
+        },
+        {
+          "variant": "merged-spans-zstd-1",
+          "cache": "warm",
+          "repetition": 2,
+          "read_hash_decode_ms": 8.877816000000001,
+          "read_hash_decode_cpu_ms": 8.88100000000236,
+          "materialize_ms": 48.034012000000004,
+          "materialize_cpu_ms": 48.03700000000077
+        },
+        {
+          "variant": "current.toml",
+          "cache": "warm",
+          "repetition": 2,
+          "read_hash_decode_ms": 635.930376,
+          "read_hash_decode_cpu_ms": 635.8809999999977,
+          "materialize_ms": 57.916472,
+          "materialize_cpu_ms": 57.91099999999716
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "warm",
+          "repetition": 2,
+          "read_hash_decode_ms": 18.515158,
+          "read_hash_decode_cpu_ms": 18.520999999999788,
+          "materialize_ms": 49.363427,
+          "materialize_cpu_ms": 49.36699999999661
+        },
+        {
+          "variant": "current.toml",
+          "cache": "eviction-hint",
+          "repetition": 0,
+          "read_hash_decode_ms": 750.655967,
+          "read_hash_decode_cpu_ms": 747.9660000000052,
+          "materialize_ms": 61.819624,
+          "materialize_cpu_ms": 61.82299999999685
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "eviction-hint",
+          "repetition": 0,
+          "read_hash_decode_ms": 16.788091,
+          "read_hash_decode_cpu_ms": 14.892000000003236,
+          "materialize_ms": 49.599002000000006,
+          "materialize_cpu_ms": 49.60299999999762
+        },
+        {
+          "variant": "merged-spans",
+          "cache": "eviction-hint",
+          "repetition": 0,
+          "read_hash_decode_ms": 17.664611999999998,
+          "read_hash_decode_cpu_ms": 15.633999999998593,
+          "materialize_ms": 55.001241,
+          "materialize_cpu_ms": 55.00599999999878
+        },
+        {
+          "variant": "merged-spans-zstd-1",
+          "cache": "eviction-hint",
+          "repetition": 0,
+          "read_hash_decode_ms": 18.697392999999998,
+          "read_hash_decode_cpu_ms": 18.01900000000245,
+          "materialize_ms": 54.09982,
+          "materialize_cpu_ms": 54.1030000000049
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "eviction-hint",
+          "repetition": 1,
+          "read_hash_decode_ms": 21.325359,
+          "read_hash_decode_cpu_ms": 18.900999999999613,
+          "materialize_ms": 61.327425,
+          "materialize_cpu_ms": 61.330000000005214
+        },
+        {
+          "variant": "merged-spans",
+          "cache": "eviction-hint",
+          "repetition": 1,
+          "read_hash_decode_ms": 17.148049,
+          "read_hash_decode_cpu_ms": 14.85100000000017,
+          "materialize_ms": 48.013329,
+          "materialize_cpu_ms": 48.01700000000153
+        },
+        {
+          "variant": "merged-spans-zstd-1",
+          "cache": "eviction-hint",
+          "repetition": 1,
+          "read_hash_decode_ms": 11.791554,
+          "read_hash_decode_cpu_ms": 11.499000000000592,
+          "materialize_ms": 50.142421999999996,
+          "materialize_cpu_ms": 50.147000000002606
+        },
+        {
+          "variant": "current.toml",
+          "cache": "eviction-hint",
+          "repetition": 1,
+          "read_hash_decode_ms": 706.333955,
+          "read_hash_decode_cpu_ms": 704.228999999998,
+          "materialize_ms": 49.009501,
+          "materialize_cpu_ms": 49.013000000002194
+        },
+        {
+          "variant": "merged-spans",
+          "cache": "eviction-hint",
+          "repetition": 2,
+          "read_hash_decode_ms": 15.512026,
+          "read_hash_decode_cpu_ms": 13.625000000004661,
+          "materialize_ms": 51.409406999999995,
+          "materialize_cpu_ms": 51.43000000000342
+        },
+        {
+          "variant": "merged-spans-zstd-1",
+          "cache": "eviction-hint",
+          "repetition": 2,
+          "read_hash_decode_ms": 14.674829,
+          "read_hash_decode_cpu_ms": 13.590000000000657,
+          "materialize_ms": 44.092270000000006,
+          "materialize_cpu_ms": 44.09499999999866
+        },
+        {
+          "variant": "current.toml",
+          "cache": "eviction-hint",
+          "repetition": 2,
+          "read_hash_decode_ms": 837.090958,
+          "read_hash_decode_cpu_ms": 834.5059999999976,
+          "materialize_ms": 46.432327,
+          "materialize_cpu_ms": 46.43599999999992
+        },
+        {
+          "variant": "indexed-writes",
+          "cache": "eviction-hint",
+          "repetition": 2,
+          "read_hash_decode_ms": 21.823317,
+          "read_hash_decode_cpu_ms": 15.053999999999235,
+          "materialize_ms": 48.255962,
+          "materialize_cpu_ms": 48.257999999997025
+        }
+      ]
+    }
+  ]
+}

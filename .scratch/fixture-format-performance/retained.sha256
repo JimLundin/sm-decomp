@@ -1,0 +1,17 @@
+cbc902d89bd9a9edc77ecc0c4fe082a690919cab98d536de6966f8943af77a43  /home/jim/sm-decomp/out/fixture-format-performance/20261014T191818Z/fixtures/floater-spike-motion/indexed-writes
+f9e9dc9dcef9d750b9f828be1e33f57302b7205e2e4fdb17828950703231432a  /home/jim/sm-decomp/out/fixture-format-performance/20261014T191818Z/fixtures/floater-spike-motion/merged-spans-zstd-1
+0b025cb84f7b7b8b519fe9f112961768f9fa7f319ba8849aca59850793be8a23  /home/jim/sm-decomp/out/fixture-format-performance/20261014T191818Z/fixtures/floater-spike-motion/merged-spans
+41bf4b73c733d461f4c5b3b1226c701ee865db21d4e5d25a41e622dcf019777d  /home/jim/sm-decomp/out/fixture-format-performance/20261014T191818Z/fixtures/mother-brain-bomb-update/indexed-writes
+94ed922d00943521b41d50b74de003af5689003cab0027ce071be2e32f88c298  /home/jim/sm-decomp/out/fixture-format-performance/20261014T191818Z/fixtures/mother-brain-bomb-update/merged-spans-zstd-1
+5bb6fa51ad6e33e6aed87c6b1c3d5341dad818da7dd2a45f265276c66e47837a  /home/jim/sm-decomp/out/fixture-format-performance/20261014T191818Z/fixtures/mother-brain-bomb-update/merged-spans
+27a19c01c04f9315348be99aa99213befa168232fb99a5516b13abdc4d689d1b  /home/jim/sm-decomp/out/fixture-format-performance/20261014T191818Z/fixtures/ridley-subsystem/indexed-writes
+e1de1682cff68d3f79b8c674c2644954f9d3b7e18287fb21fc574787500c2d48  /home/jim/sm-decomp/out/fixture-format-performance/20261014T191818Z/fixtures/ridley-subsystem/merged-spans-zstd-1
+67a9b0f5a45bb6e22d3fb3a580306f15a847c1a71b233a7682cae941ce1e17c1  /home/jim/sm-decomp/out/fixture-format-performance/20261014T191818Z/fixtures/ridley-subsystem/merged-spans
+bae97b150c4ba8dc6cef6dd84f0252dba8b7796d6edee7bb6ba449c8e72c061c  /home/jim/sm-decomp/out/fixture-format-performance/20261014T191818Z/bin/fixture-format-study
+613bc010ed21685ee593877c7e8fe68e2697ed95937d63931915ba5a565dedd9  /home/jim/sm-decomp/.scratch/fixture-format-performance/benchmark/src/main.rs
+7d888c478f20ad84aa8eb54a45533d70d4f4117b4e07bdf72cf061478fea58a8  /home/jim/sm-decomp/.scratch/fixture-format-performance/benchmark/src/first_study.rs
+22809928134f2453a3a1d0b68a705469db5c108ab1c83afd401fe3a4485dd618  /home/jim/sm-decomp/.scratch/fixture-format-performance/benchmark/Cargo.toml
+0a93ae635caf23ad68793564d21c200923ff1fa02b9d64fc93bd96de36a2535a  /home/jim/sm-decomp/.scratch/fixture-format-performance/benchmark/Cargo.lock
+e5157a2758bd688518a385320faa766bd9421f12a3dcb0e874b05472a2449eee  /home/jim/sm-decomp/crates/pipeline/src/family_model.rs
+d99bc658c07e1bc1d45424de38403f8c4ab12e6e537864167959829e868ca73d  /home/jim/sm-decomp/.scratch/fixture-format-performance/results-merged.json
+e586813460a86553ee4f31d95e4a96085bdd71ac2280b3d8f85e06534bdcbfe2  /home/jim/sm-decomp/.scratch/fixture-format-performance/results-first.json
