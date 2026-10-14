@@ -13,11 +13,13 @@ predecessor evidence. New gameplay modules live in `crates/port`.
 Run a family against actual compiled upstream C:
 
 ```sh
-cargo run -p pipeline --locked --offline -- family-verify --manifest tools/port/system.toml --source deps/snesrev-sm --output /tmp/system-evidence
-cargo run -p pipeline --locked --offline -- family-verify --manifest tools/port/audio.toml --source deps/snesrev-sm --output /tmp/audio-evidence
+cargo run -p pipeline --locked --offline -- family-verify --manifest tools/port/system.smf --source deps/snesrev-sm --output /tmp/system-evidence
+cargo run -p pipeline --locked --offline -- family-verify --manifest tools/port/audio.smf --source deps/snesrev-sm --output /tmp/audio-evidence
 ```
 
-Each family has `tools/port/<family>.toml`:
+Each family has an authoritative `tools/port/<family>.smf` binary. Use the
+[Fixture tools](FIXTURE_FORMAT.md) to inspect, edit and compare it. An exported
+text view looks like this:
 
 ```toml
 family = "example"

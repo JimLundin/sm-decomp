@@ -1,6 +1,6 @@
 # Collision callback comparison
 
-`cargo run -p pipeline --locked --offline -- family-verify --adapter callback --manifest tools/port/collision.toml --output out/port/collision`
+`cargo run -p pipeline --locked --offline -- family-verify --adapter callback --manifest tools/port/collision.smf --output out/port/collision`
 compares the declared collision routine against the pinned actual C bank tree.
 This command requires the collision manifest supplied with the translation; the
 harness test uses an explicitly marked infrastructure probe instead.

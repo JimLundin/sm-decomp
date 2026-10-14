@@ -26,7 +26,7 @@ branches and scroll data without copying commercial ROM bytes.
 
 ```sh
 cargo run -p pipeline --locked --offline -- plm-fixtures --output-dir out/port/plm-fixtures
-cargo run -p pipeline --locked --offline -- family-verify --manifest out/port/plm-fixtures/plm-instructions.toml --source deps/snesrev-sm --output out/port/plm-instructions --case-jobs 4
+cargo run -p pipeline --locked --offline -- family-verify --manifest out/port/plm-fixtures/plm-instructions.smf --source deps/snesrev-sm --output out/port/plm-instructions --case-jobs 4
 ```
 
 The declared fixture domain covers 42 opcode handlers over 336 direct cases,

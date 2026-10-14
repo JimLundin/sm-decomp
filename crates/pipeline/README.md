@@ -34,10 +34,10 @@ sealed historical evidence is retained under its original contract.
 cargo run -p pipeline --locked --offline -- batch verify --families system audio --jobs 2 --case-jobs 4
 cargo run -p pipeline --locked --offline -- batch status
 cargo run -p pipeline --locked --offline -- batch catalog
-cargo run -p pipeline --locked --offline -- family-verify --manifest tools/port/system.toml --output out/port/system --case-jobs 4
+cargo run -p pipeline --locked --offline -- family-verify --manifest tools/port/system.smf --output out/port/system --case-jobs 4
 cargo run -p pipeline --locked --offline -- family-authenticate --verdict RUN/verdict.toml
 cargo run -p pipeline --locked --offline -- plm-fixtures --output-dir out/port/plm-fixtures
-cargo run -p pipeline --locked --offline -- fixtures skree-particles out/port/skree-fixtures.toml
+cargo run -p pipeline --locked --offline -- fixtures skree-particles out/port/skree-fixtures.smf
 cargo run -p pipeline --locked --offline -- batch replay --batch BATCH/batch.toml --frames 1000
 cargo run -p pipeline --locked --offline -- routine-live --accepted ACCEPTANCE/decomp-acceptance.toml --output out/decomp/live
 cargo run -p pipeline --locked --offline -- decomp-jobs --accepted ACCEPTANCE/decomp-acceptance.toml --output out/decomp/jobs
@@ -49,8 +49,8 @@ cargo run -p pipeline --locked --offline -- cleanup --root out/port --deduplicat
 ```
 
 Newer blue-ring, bomb, glass, spark, tube, projectile contact/rendering and
-observed-projectile domains use the checked-in TOML case matrices as their
-single declaration. `fixtures FAMILY OUTPUT.toml` validates and republishes
+observed-projectile domains use the checked-in binary case matrices as their
+single declaration. `fixtures FAMILY OUTPUT.smf` validates and republishes
 those matrices, preserving case order, continuations and actual-ROM inputs.
 
 `fixture-sequence` captures actual C output chains for glass (128 frames),
@@ -61,14 +61,14 @@ request on stdin, for example:
 checkout = "/home/jim/sm-decomp"
 kind = "sparks"
 source = "/home/jim/sm-decomp/out/port/SPARKS-FRAME-RUN"
-output = "out/port/sparks-recaptured.toml"
+output = "out/port/sparks-recaptured.smf"
 root = "/home/jim/sm-decomp/out/pipeline"
 workers = 4
 ```
 
 Glass and tube also require `caller_source` naming their completed PLM caller
 run. Capture uses a fresh output path and retains before/after WRAM, external
-host state, C execution logs and SHA-256 expectations beside the TOML manifest.
+host state, C execution logs and SHA-256 expectations beside the binary manifest.
 
 Native batch workers own distinct immutable run directories; atomic batch saves
 use a per-batch OS lock. Reuse authenticates current dependencies and full retained
@@ -77,7 +77,10 @@ WRAM and return values. Frozen live authentication verifies all four subjects
 through their retained reader and pointer seals.
 
 Readiness, bounded sessions, pattern proof/promotion, retained demonstrations,
-original-prefix diagnostics and storage studies also run natively. Small metadata and configuration use TOML; material states and ordered traces use versioned binary formats.
+original-prefix diagnostics and storage studies also run natively. Offline family
+fixtures use the indexed binary `.smf` format; see
+[inspection and editing](../../docs/FIXTURE_FORMAT.md). Small metadata and
+configuration use TOML; material states and ordered traces use versioned binary formats.
 
 Commands without options accept a complete TOML document on stdin, terminated
 by EOF, and print a TOML document. The interactive `cache` command reads a

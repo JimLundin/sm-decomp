@@ -30,8 +30,8 @@ C inputs are not correctness oracles.
 Verification commands:
 
 ```sh
-cargo run -p pipeline --locked --offline -- family-verify --manifest tools/port/plm.toml --output out/port/plm
-cargo run -p pipeline --locked --offline -- family-verify --adapter plm --manifest tools/port/plm-spawn.toml --output out/port/plm-spawn
+cargo run -p pipeline --locked --offline -- family-verify --manifest tools/port/plm.smf --output out/port/plm
+cargo run -p pipeline --locked --offline -- family-verify --adapter plm --manifest tools/port/plm-spawn.smf --output out/port/plm-spawn
 cargo test -p pipeline --test plm_spawn --locked --offline
 ```
 

@@ -4,7 +4,7 @@ Owned adapter: `crates/pipeline/src/ridley_subsystem_adapter.rs`, public
 `build`, `case`, `check` and crate-visible `check_instrumented_units`;
 dependency contract `rust-ridley-subsystem-v1`.
 Fixture generator: `ridley_subsystem_fixtures::generate(checkout, rom, output)`.
-Manifest: `tools/port/ridley-subsystem.toml`, callback adapter `ridley-subsystem`.
+Manifest: `tools/port/ridley-subsystem.smf`, callback adapter `ridley-subsystem`.
 
 The root coordinator owns `main.rs`, `family.rs`, batch catalog, public port
 exports and live registration. This handoff supplies the required routing while
