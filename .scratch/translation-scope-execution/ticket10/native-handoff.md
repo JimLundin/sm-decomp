@@ -389,3 +389,88 @@ Complete catalog preparation, whole pause 247/360 matrices, specialized native
 proofs and historical receipt reauthentication remain next. Exact core reader
 and pre-commit source overlay are retained with reservation-v2. The temporary
 translation_migration.rs compile-only edit remains unowned and uncommitted.
+
+## Complete catalog audit and whole pause matrices
+
+Frozen source `a817f07`, with the separately retained compile-only migration
+overlay, prepared every dynamically discovered catalog entry in
+`/tmp/sm-ticket10-native-proofs/catalog-v4`: 177 families and 150,204 declared
+Fixture pairs. The separate direct-animation declaration adds 360 pairs,
+for 150,564 when that Original constituent is included. The preparation-only
+audit finished in 264.95 seconds under the unchanged 600-second bound.
+No compiler or Fixture ran in this audit. All original captured-Ridley inputs
+and generated PLM inputs were retained whole.
+
+Catalog summary SHA-256:
+`c441fbc043d0002b0a9963813bab87c3f0de0d67453c407a4177dc61a4014124`.
+Auxiliary summary SHA-256:
+`c78f5b4b5f46e7ac73bf2e1716e64efdaaa20bcc3a9546896941c457c012b74a`.
+Both cleanup passes completed with zero bytes reclaimed. The external manifest
+`catalog-v4-retained.before.sha256` covers every pre-cleanup file; its complete
+post-cleanup SHA-256 check passed. Frozen source and preparation declarations
+remain dependencies, not disposable build output.
+
+Proof `/tmp/sm-ticket10-native-proofs/pause-v1` passed both complete pause
+constituents with immutable helper v4 in 305.69 seconds total:
+
+| Constituent | Fixture pairs | Confined producers | Evidence bytes | Retained reservation |
+| --- | ---: | ---: | ---: | ---: |
+| pause-equipment-render | 247 | 496 | 182,311,149 | 203,935,843 |
+| pause-direct-animation | 360 | 722 | 258,712,081 | 283,053,081 |
+
+Both unchanged replays preserved producer results. Both ordinary cleanup
+passes reclaimed zero bytes. Equipment-render deduplication reclaimed
+44,564,480 bytes across 741 snapshots; direct-animation deduplication reclaimed
+97,517,568 bytes across 1,080 snapshots. Both native receipts authenticated
+after cleanup. Receipt SHA-256 values are, respectively,
+`006655528c4d766fef701077ef8849337d7d0a942da11ec1d9b0f9f37233489b`
+and `33c9c60b69fae32f0dd37c88d56112ed10fb6a7f269243b8e323e82a5394edc2`.
+
+The retained optimized reader is
+`/tmp/sm-ticket10-native-proofs/readers/native-tests-a817f07`, SHA-256
+`e53642a52a14f15a57e0999cdb26ad481bd61ff413d5d7192c3b1c7b54c89b1d`.
+It also authenticated historical cumulative-reservation receipts without
+executing producers: host-v4 room-scroll (8 producers, 581 references) and
+host-v3 projectile (16 producers, 545 references). Expired replay and retired
+compiler/helper paths were exercised, with results unchanged. Their
+`a817f07-post-cleanup-authentication.log` files retain the exact results.
+
+Measured post-dedup allocation for the two pause proof directories is
+358,662,144 bytes. A deliberately rough projection of this 607-pair sample to
+the 150,204 catalog pairs is 109,132,542,404 logical evidence bytes,
+120,506,893,477 retained reservation bytes, and 88,752,040,655 allocated bytes.
+This is a scale estimate, not an upper bound: callback expansion and fixed
+source/compiler overhead differ by family. It does not establish that one
+aggregate 64 GiB gate can hold the catalog. The integration owner retains the
+original production limits and owns the full installed catalog run.
+
+## Captured-Ridley finalization failure retained
+
+Proof `/tmp/sm-ticket10-native-proofs/ridley-v1` stopped after 417.83 seconds
+with `trusted input discovery path budget exhausted`. The captured family
+verdict reports all 670 original Fixture pairs verified, but no native receipt
+was published, so this is not native acceptance. All 1,343 original confined
+producer results remain. The 6,457-pair subsystem recipe never started.
+
+The family tree contains 26,212 files and 670 case directories. Finalization
+inventories it, measures its evidence extent, then repeats that measurement
+inside nested native authentication before the later family inventory check.
+Those repeated walks cumulatively exceed the unchanged 65,536 discovery
+counter. The correction must bound each finite declared discovery workload
+without dropping any cases or relaxing compiler/Fixture limits. Large complete
+matrices also require review of receipt-document size: the measured direct
+animation receipt is 4,634,483 bytes for 360 pairs, implying about 83 MiB for
+6,457 pairs at that format, beyond the generic document bound.
+
+The original family verdict and intent are separately preserved under
+`initial-finalization/`. Ordinary cleanup reclaimed zero bytes; deduplication
+reclaimed 292,814,848 bytes across 3,350 snapshots. Every file in the external
+`ridley-v1-retained.before.sha256` manifest passed its post-cleanup check. Native
+receipt authentication remains incomplete because finalization failed. The
+integration owner requested no further
+broad native runs here; the priority is the concrete confinement exit-race
+correction and finite finalization fixes.
+
+Current free space at this checkpoint: 163,850,432,512 bytes. Final integrated
+worktree and disposable build-output retirement remains with the integration
+owner after exact source retention and post-retirement authentication.
