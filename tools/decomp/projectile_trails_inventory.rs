@@ -3,6 +3,7 @@
 //! Build with `rustc --edition=2024 -O tools/decomp/projectile_trails_inventory.rs
 //! -o /tmp/sm-projectile-trails-producer`. All compiler/replay processes use the
 //! existing sm-pipeline worker scheduler. No diagnostic admits a Rust replacement.
+mod fixture_output;
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
@@ -113,7 +114,7 @@ fn side(text: &mut String, k: usize, right: bool, timer: u16, pointer: u16, x: u
     let d = usize::from(right) * 36 + k;
     words(text, &[(0xd658 + d, timer), (0xd6a0 + d, pointer), (0xd6e8 + d, tile), (0xd730 + d, x), (0xd778 + d, y)]);
 }
-fn fixtures(checkout: &Path, rom_path: &Path, output: &Path) -> Result<()> {
+fn fixtures(checkout: &Path, rom_path: &Path, pipeline: &Path, output: &Path) -> Result<()> {
     require(digest(rom_path)? == ROM_SHA, "fixture ROM identity differs")?;
     let rom = fs::read(rom_path)?;
     let script_pointers = scripts(&rom)?;
@@ -209,7 +210,7 @@ fn fixtures(checkout: &Path, rom_path: &Path, output: &Path) -> Result<()> {
             }
         }
     }
-    fs::write(output, text)?;
+    fixture_output::write(pipeline, output, &text)?;
     println!("fixtures={cases} native_script_starts={} output={}", script_pointers.len(), output.display());
     Ok(())
 }
@@ -398,6 +399,7 @@ fn inventory(checkout: &Path, main: &Path, executable: &Path, run: &Path, frames
         fs::write(run.join("headless.c"), host)?;
         fs::write(run.join("instrumentation.c.in"), TEMPLATE)?;
         fs::copy(checkout.join("tools/decomp/projectile_trails_inventory.rs"), run.join("producer.rs"))?;
+        fs::copy(checkout.join("tools/decomp/fixture_output.rs"), run.join("fixture_output.rs"))?;
         fs::copy(main.join("tools/decomp/headless.c"), run.join("original-headless.c"))?;
         fs::copy(main.join("tools/decomp/headless_frame.h"), run.join("headless_frame.h"))?;
         let command = build_command(&run)?;
@@ -493,11 +495,15 @@ fn authenticate(checkout: &Path, run: &Path) -> Result<()> {
         fs::read(run.join("producer.rs"))? == fs::read(checkout.join("tools/decomp/projectile_trails_inventory.rs"))?,
         "producer source changed",
     )?;
+    require(
+        fs::read(run.join("fixture_output.rs"))? == fs::read(checkout.join("tools/decomp/fixture_output.rs"))?,
+        "Fixture writer source changed",
+    )?;
     require(fs::read_to_string(run.join("instrumentation.c.in"))? == TEMPLATE, "instrumentation template changed")?;
     println!("natural_inventory_authenticated=true artifacts={checked}");
     Ok(())
 }
-fn capture_fixture(checkout: &Path, run: &Path, output: &Path) -> Result<()> {
+fn capture_fixture(checkout: &Path, run: &Path, pipeline: &Path, output: &Path) -> Result<()> {
     authenticate(checkout, run)?;
     let records = fs::read_to_string(run.join("trail-captures.tsv"))?;
     let mut first_rom: Option<PathBuf> = None;
@@ -519,18 +525,18 @@ fn capture_fixture(checkout: &Path, run: &Path, output: &Path) -> Result<()> {
     for (name, before, after) in &cases {
         text.push_str(&format!("\n[[routines.cases]]\nname = {}\nexpected_return = 0\nbefore_file = {}\nbefore_sha256 = {}\nexpected_after_file = {}\nexpected_after_sha256 = {}\n", quoted(format!("natural-active-call-{name}")), quoted(before.to_string_lossy()), quoted(digest(before)?), quoted(after.to_string_lossy()), quoted(digest(after)?)));
     }
-    fs::write(output, text)?;
+    fixture_output::write(pipeline, output, &text)?;
     println!("natural_active_fixtures={} output={}", cases.len(), output.display());
     Ok(())
 }
 fn run() -> Result<()> {
     let args = std::env::args().skip(1).collect::<Vec<_>>();
     match args.first().map(String::as_str) {
-        Some("fixtures") if args.len() == 4 => fixtures(Path::new(&args[1]), Path::new(&args[2]), Path::new(&args[3])),
+        Some("fixtures") if args.len() == 5 => fixtures(Path::new(&args[1]), Path::new(&args[2]), Path::new(&args[3]), Path::new(&args[4])),
         Some("inventory") if args.len() == 6 => inventory(Path::new(&args[1]), Path::new(&args[2]), Path::new(&args[3]), Path::new(&args[4]), args[5].parse()?),
         Some("authenticate") if args.len() == 3 => authenticate(Path::new(&args[1]), Path::new(&args[2])),
-        Some("captures") if args.len() == 4 => capture_fixture(Path::new(&args[1]), Path::new(&args[2]), Path::new(&args[3])),
-        _ => Err("usage: producer fixtures CHECKOUT ROM OUTPUT | inventory CHECKOUT MAIN PIPELINE NEW_RUN FRAMES | authenticate CHECKOUT RUN | captures CHECKOUT RUN OUTPUT".into()),
+        Some("captures") if args.len() == 5 => capture_fixture(Path::new(&args[1]), Path::new(&args[2]), Path::new(&args[3]), Path::new(&args[4])),
+        _ => Err("usage: producer fixtures CHECKOUT ROM PIPELINE OUTPUT.smf | inventory CHECKOUT MAIN PIPELINE NEW_RUN FRAMES | authenticate CHECKOUT RUN | captures CHECKOUT RUN PIPELINE OUTPUT.smf".into()),
     }
 }
 fn main() {

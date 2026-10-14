@@ -1,7 +1,8 @@
 //! Standalone Rust producer for bank90 camera fixtures and actual-C observations.
 //! Compile with `rustc --edition=2024 tools/decomp/camera_scroll_inventory.rs -o /tmp/camera-scroll-inventory`.
-//! `fixtures OUTPUT` publishes the synthetic family. `inventory CHECKOUT SOURCE ROM INPUTS PIPELINE OUTPUT FRAMES`
+//! `fixtures PIPELINE OUTPUT.smf` publishes the synthetic family. `inventory CHECKOUT SOURCE ROM INPUTS PIPELINE OUTPUT FRAMES`
 //! runs bounded actual C and preserves first/last full-WRAM observations per native branch.
+mod fixture_output;
 use std::{
     collections::BTreeMap,
     error::Error,
@@ -143,7 +144,7 @@ fn defaults() -> BTreeMap<usize, u16> {
     .into_iter()
     .collect()
 }
-fn fixtures(output: &Path) -> Result<usize> {
+fn fixtures(pipeline: &Path, output: &Path) -> Result<usize> {
     let mut text = family_header(Path::new("/home/jim/sm-decomp/rom/sm.sfc"))?;
     let mut count = 0;
     for symbol in 0..4 {
@@ -289,7 +290,7 @@ fn fixtures(output: &Path) -> Result<usize> {
     if let Some(parent) = output.parent() {
         fs::create_dir_all(parent)?;
     }
-    fs::write(output, text)?;
+    fixture_output::write(pipeline, output, &text)?;
     Ok(count)
 }
 
@@ -405,7 +406,7 @@ fn pipeline_request(pipeline: &Path, operation: &str, request: &str, output: &Pa
 fn command_toml(command: &[String]) -> String {
     format!("[{}]", command.iter().map(quoted).collect::<Vec<_>>().join(", "))
 }
-fn natural_family(run: &Path, rom: &Path, frames: u64, output: &Path) -> Result<usize> {
+fn natural_family(run: &Path, rom: &Path, frames: u64, pipeline: &Path, output: &Path) -> Result<usize> {
     let counters = fs::read_to_string(run.join("camera.tsv"))?;
     if !counters.starts_with("symbol\tpath\thits\tfirst_frame\tlast_frame\n") {
         return Err("camera counter header differs".into());
@@ -445,7 +446,7 @@ fn natural_family(run: &Path, rom: &Path, frames: u64, output: &Path) -> Result<
             count += 1;
         }
     }
-    fs::write(output, text)?;
+    fixture_output::write(pipeline, output, &text)?;
     Ok(count)
 }
 fn inventory(args: &[String]) -> Result<()> {
@@ -483,10 +484,12 @@ fn inventory(args: &[String]) -> Result<()> {
     identities.insert("movie".into(), hash(&inputs)?);
     identities.insert("pipeline".into(), hash(&pipeline)?);
     identities.insert("producer".into(), hash(&checkout.join("tools/decomp/camera_scroll_inventory.rs"))?);
+    identities.insert("fixture_output".into(), hash(&checkout.join("tools/decomp/fixture_output.rs"))?);
     identities.insert("host".into(), hash(&checkout.join("tools/decomp/headless.c"))?);
     identities.insert("frame_header".into(), hash(&checkout.join("tools/decomp/headless_frame.h"))?);
     let result = (|| -> Result<()> {
         fs::copy(checkout.join("tools/decomp/camera_scroll_inventory.rs"), run.join("producer.rs"))?;
+        fs::copy(checkout.join("tools/decomp/fixture_output.rs"), run.join("fixture_output.rs"))?;
         let original = run.join("original-source");
         fs::create_dir(&original)?;
         let extraction = Command::new("tar")
@@ -580,12 +583,13 @@ fn inventory(args: &[String]) -> Result<()> {
             || hash(&inputs)? != identities["movie"]
             || hash(&pipeline)? != identities["pipeline"]
             || hash(&checkout.join("tools/decomp/camera_scroll_inventory.rs"))? != identities["producer"]
+            || hash(&checkout.join("tools/decomp/fixture_output.rs"))? != identities["fixture_output"]
             || hash(&checkout.join("tools/decomp/headless.c"))? != identities["host"]
             || hash(&checkout.join("tools/decomp/headless_frame.h"))? != identities["frame_header"]
         {
             return Err("diagnostic inputs changed during execution".into());
         }
-        natural_cases = natural_family(&run, &rom, frames, &run.join("camera-natural.toml"))?;
+        natural_cases = natural_family(&run, &rom, frames, &pipeline, &run.join("camera-natural.smf"))?;
         if natural_cases == 0 {
             return Err("camera boundary not exercised".into());
         }
@@ -616,14 +620,14 @@ fn inventory(args: &[String]) -> Result<()> {
 fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().skip(1).collect();
     match args.first().map(String::as_str){
-        Some("fixtures") if args.len()==2=>{let cases=fixtures(Path::new(&args[1]))?;println!("camera synthetic fixtures: {cases}");Ok(())},
+        Some("fixtures") if args.len()==3=>{let cases=fixtures(Path::new(&args[1]),Path::new(&args[2]))?;println!("camera synthetic fixtures: {cases}");Ok(())},
         Some("inventory")=>inventory(&args[1..]),
-        Some("natural") if args.len() == 4 => {
+        Some("natural") if args.len() == 5 => {
             let run = fs::canonicalize(&args[1])?;
-            let cases = natural_family(&run, Path::new("/home/jim/sm-decomp/rom/sm.sfc"), args[3].parse()?, Path::new(&args[2]))?;
+            let cases = natural_family(&run, Path::new("/home/jim/sm-decomp/rom/sm.sfc"), args[4].parse()?, Path::new(&args[2]), Path::new(&args[3]))?;
             println!("camera natural fixtures: {cases}");
             Ok(())
         },
-        _=>Err("usage: camera-scroll-inventory fixtures OUTPUT | inventory CHECKOUT SOURCE ROM INPUTS PIPELINE OUTPUT FRAMES".into()),
+        _=>Err("usage: camera-scroll-inventory fixtures PIPELINE OUTPUT.smf | inventory CHECKOUT SOURCE ROM INPUTS PIPELINE OUTPUT FRAMES | natural RUN PIPELINE OUTPUT.smf FRAMES".into()),
     }
 }
