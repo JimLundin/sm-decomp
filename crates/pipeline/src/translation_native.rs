@@ -2350,8 +2350,11 @@ mod tests {
             if !path.is_file() {
                 continue;
             }
+            let checkout = std::env::var_os("SM_NATIVE_PROOF_SOURCE")
+                .map(PathBuf::from)
+                .unwrap_or_else(|| root.join(source));
             let receipt: NativeReceipt = family::object(&path)?;
-            authenticate(&prepared, &root.join(source), &receipt)?;
+            authenticate(&prepared, &checkout, &receipt)?;
             let intent: NativeIntent = family::object(&root.join(output).join("native-intent.toml"))?;
             let mut runtime = StrictRuntime {
                 helper: root.join("retired-helper"),
@@ -2364,11 +2367,11 @@ mod tests {
                 deadline_unix_ms: intent.outer_deadline_unix_ms,
                 max_output_bytes: receipt.max_output_bytes,
             };
-            let retry = run(&prepared, &root.join(source), &root.join(output), &runtime, &receipt.context)?;
+            let retry = run(&prepared, &checkout, &root.join(output), &runtime, &receipt.context)?;
             ensure!(sealed(&retry)? == sealed(&receipt)?, "expired deadline changed a completed receipt");
             runtime.deadline_unix_ms = Some(intent.outer_deadline_unix_ms.unwrap_or(0).saturating_add(1));
             ensure!(
-                run(&prepared, &root.join(source), &root.join(output), &runtime, &receipt.context).is_err(),
+                run(&prepared, &checkout, &root.join(output), &runtime, &receipt.context).is_err(),
                 "completed receipt admitted a changed outer deadline"
             );
             let operations = receipt
@@ -2380,7 +2383,7 @@ mod tests {
             for reference in &references {
                 translation_execution::retention::authenticate_reference(reference, receipt.max_output_bytes)?;
             }
-            authenticate(&prepared, &root.join(source), &receipt)?;
+            authenticate(&prepared, &checkout, &receipt)?;
             for (path, modified) in operations {
                 ensure!(fs::metadata(path)?.modified()? == modified, "authentication rewrote a producer result");
             }
