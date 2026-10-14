@@ -1,6 +1,6 @@
 # Ticket 10 compact verdict-only recovery
 
-Status: exact regression observed red then green; all focused controls passed; cleanup pending
+Status: implemented; red-green and refusal controls passed; retained fixtures authenticated after cleanup; ready for root
 Owner: `/root/compact_diagnostic`
 Worktree: `/tmp/sm-ticket10-compact-recovery-20261014`
 Branch: `ticket10-compact-recovery`
@@ -105,7 +105,49 @@ SM_COMPACT_RECOVERY_PROOF_ROOT=/tmp/sm-ticket10-compact-recovery-proof-20261014/
 translation_compact:: --nocapture --test-threads=1
 ```
 
-After the fix and focused controls, freeze a green reader and source, run both
-project cleanup passes on this new proof, authenticate retained fixtures, record
-bytes reclaimed/remaining space and checkpoint the exact owned files for root.
-Root owns final integration and retirement of this worker worktree/target.
+## Completion evidence and cleanup
+
+The scoped source checkpoints, in order, are `0df92dc` (regression before fix),
+`7693752` (authenticated verdict recovery) and `27416a1` (supplementary refusal
+controls). The final module and tests passed rustfmt and `git diff --check`.
+All authoring, test and cleanup sessions have finished. There is no compact
+producer to stop and no unfinished operation in the supplementary fixtures.
+
+Both project cleanup passes succeeded, each reclaiming 0 bytes:
+
+```sh
+/tmp/sm-ticket10-compact-proof-05-20261014/tools/sm-pipeline-producer \
+cleanup --root /tmp/sm-ticket10-compact-recovery-proof-20261014 --apply
+/tmp/sm-ticket10-compact-proof-05-20261014/tools/sm-pipeline-producer \
+cleanup --root /tmp/sm-ticket10-compact-recovery-proof-20261014 --deduplicate --apply
+```
+
+The existing utility was only read/executed; its proof 05 root was not modified.
+Logs are `cleanup-pass1.log` and `cleanup-pass2.log` in the new recovery proof.
+All red/green fixture bytes, frozen reader/source seals and context logs remained
+unchanged; see `after-cleanup-hash-check.log` against the `before-cleanup-*` and
+three reader manifests. The red fixture retains its deliberately missing receipt
+and original failure, without a recovery mutation after the red run.
+
+After cleanup the final reader authenticated four final green fixtures in
+0.04 seconds and the initial green fixture in 0.01 seconds. Each audit passed,
+checked unchanged receipt/reference bytes and confirmed no operation/capture.
+Logs are `after-cleanup-authenticate-green.log` and
+`after-cleanup-authenticate-initial-green.log`. The exact read-only command is
+recorded in the proof's `reader-context.md`; it can be repeated after retirement.
+Available space after cleanup was 162,899,931,136 bytes, recorded in
+`free-space-after-cleanup.txt`.
+
+Retain `/tmp/sm-ticket10-compact-recovery-proof-20261014` with all fixture source,
+prepared/runtime/context records, verdicts/receipts, readers, source snapshots
+and manifests. `reader-runtime.txt` confirms the final reader links only system C
+libraries and does not depend on the disposable target or worktree. The exact
+build compiler is Rust 1.101.0-nightly (`c1070d693`), preserved in
+`compiler-version.txt`. Existing proofs 01–05 and original Submitted source stay
+untouched and retained.
+
+Root owns integration and retirement of only this new recovery worker worktree
+and `/tmp/sm-ticket10-compact-recovery-target-20261014`, then the quick retained
+authentication check. Its ignored pinned-C dependency symlink is disposable;
+the canonical dependency in the main checkout is retained. Root separately owns
+the original supervisor control, receipt index, final review and ticket status.
