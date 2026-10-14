@@ -1,6 +1,6 @@
 # Ticket 10 compact-controller adapter
 
-Status: source implemented; proof 04 authenticated after cleanup; ready for root review
+Status: source implemented; proof 04 authenticated after cleanup; final v4 proof preparation
 Owner: `/root/compact_diagnostic`
 Worktree: `/tmp/sm-ticket10-compact-20261014`
 Branch: `ticket10-compact`
@@ -203,3 +203,44 @@ Root should remove this integrated worker worktree and disposable
 listed above. The original Submitted worktree and all referenced proof/readers
 must remain. Final production cleanup/publication and ticket status belong to
 root. This handoff grants no gameplay Offline, Live or ROM-parity acceptance.
+
+## Final v4 proof checkpoint
+
+Root authorized one final original experiment after native publishes a validated
+v4 helper. Cargo reports no active producer/build and reserves compact's producer
+window first; notify `/root/cargo_acceptance` when these producer phases close.
+No v4 producer has launched at this checkpoint.
+
+The new root is `/tmp/sm-ticket10-compact-proof-05-20261014`. Its reader, producer,
+three source-context snapshots and prepared contract are exact copies from proof
+04, checked in `reader-and-prepared.sha256`. No adapter source changed. The
+original Submitted checkout remains the source; original private inputs, frame
+2240 and the single whole-experiment 60-second bound remain unchanged.
+
+After native publishes the validated immutable helper and its passing regression
+evidence, seal that helper identity and run from the original Submitted checkout:
+
+```sh
+SM_PIPELINE_ROOT=/home/jim/sm-decomp/out/pipeline SM_PIPELINE_WORKERS=4 \
+SM_COMPACT_SOURCE=/tmp/sm-ceres-continuation-compact-controller-1 \
+SM_COMPACT_ASSETS=/home/jim/sm-decomp \
+SM_COMPACT_PROOF_ROOT=/tmp/sm-ticket10-compact-proof-05-20261014 \
+SM_COMPACT_RUSTC=/home/jim/.rustup/toolchains/nightly-2026-09-29-x86_64-unknown-linux-gnu/bin/rustc \
+SM_COMPACT_PRODUCER=/tmp/sm-ticket10-compact-proof-05-20261014/tools/sm-pipeline-producer \
+SM_COMPACT_HELPER=/tmp/sm-ticket10-native-proofs/confinement-v4/tools/sm-translation-sandbox \
+/tmp/sm-ticket10-compact-proof-05-20261014/tools/compact-proof-reader \
+--ignored --exact translation_compact::tests::original_experiment_retains_exact_target_and_unchanged_resume \
+--nocapture --test-threads=1
+```
+
+Proof 04's native result retains null status/stdout/stderr and no output files.
+It cannot establish whether frame 2240 completed or packing began. The v3
+`O_TMPFILE` mask also includes `O_DIRECTORY`, causing unnecessary full quota
+scans for read-only directory opens. Compact's packer uses `fs::read_dir` after
+the native child exits. This makes the fix relevant to the workload, but there
+is no measured attribution of the previous timeout to that path. The original
+unconfined 2240 capture's 12.488-second timing is context only.
+
+After the final result, retain unchanged replay, both cleanup passes, read-only
+authentication, artifact checksums and remaining disk space. Preserve proofs
+02–04 and their helper dependencies regardless of this result.
