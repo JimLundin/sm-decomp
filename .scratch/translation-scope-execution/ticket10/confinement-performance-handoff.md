@@ -198,3 +198,18 @@ Original/live verdict or shared evidence store object was created here.
 No confinement producer/build remains. Parent owns worktree retirement after
 integration; it must retain these persistent source/readers and recheck the
 manifests. No completed ticket, gameplay stage or Original acceptance is claimed.
+
+## Parent integration and retirement
+
+Integrated as `326c2aa`, `1198963` and `3c2e9e3` on the main branch. Merged
+Cargo check and both independent source-review axes pass. The final V6 helper
+also passed the complete Native control proof with the updated reader; the
+production helper selection was not changed.
+
+The integrated worktree was removed after retaining selected source at
+`/home/jim/sm-decomp-performance-20261014/confinement/source-final-ccc04bc`
+(770,048 allocated bytes), in addition to the exact source snapshots above.
+The removed worktree occupied 448,593,920 allocated bytes. Source/tool/timing,
+evidence and historical manifests pass after retirement. All proof helpers,
+readers and existing pinned dependencies remain at their exact retained paths.
+See [performance results](performance-results.md) for the combined outcome.

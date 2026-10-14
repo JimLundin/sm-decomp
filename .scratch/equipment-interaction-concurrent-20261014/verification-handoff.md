@@ -47,3 +47,11 @@ snapshots and reclaimed 91,488,256 bytes. Retained Native authentication passed
 after both passes. Keep the input snapshot, exact reader/helper, pinned C/ROM,
 prepared contract, operation tree and receipt/verdict closure. Review and main
 integration remain pending.
+
+Both independent source reviews subsequently passed with no findings; source
+and manifest bytes are unchanged. After both performance worktrees were
+retired, read-only Native authentication again passed for all 856 producers
+and 12,569 references. The log is
+`checks/native-v1-after-worktree-retirement-auth.log` under the private root.
+See [the review](../translation-scope-execution/ticket10/performance-review-20261014.md).
+Main integration, Live replay and original-ROM parity remain pending.

@@ -15,51 +15,87 @@ completed through the new installed command at this checkpoint.
 
 2026-10-14 performance priority: the user asked for serious speed improvements
 before further sealed evidence work, including measured parallel execution.
-Main was at `528581b246e6ace9748e711743482f72e83cf9e3` when this work began.
+The performance changes are integrated on `affected-family-assignment` through
+`3c2e9e3`. Native commits are `cfdbc6e`, `00bf076`; confinement commits are
+`326c2aa`, `1198963`, `3c2e9e3`. The starting performance baseline was
+`528581b246e6ace9748e711743482f72e83cf9e3`.
+
+The complete original 16-pair Native control test fell from 43.11 to 25.56
+seconds with both changes; its positive proof/authentication/replay portion
+fell from 17.662 to 10.682 seconds and fixture wall time from 5.480 to 0.843
+seconds. Fixed-helper 1/2/4-worker fixture spans were 3.103/1.805/1.212 seconds:
+2.56x throughput at four workers within the unchanged shared process capacity.
+Continuation order, failure joins and aggregate resource budgets are preserved.
+Final same-reader sandbox medians show 7.24x regular-write and 4.39x pipe
+speedups. These measured small-family and focused gains do not establish
+whole-catalog throughput; see [performance results](performance-results.md).
+
+All 31 focused pipeline tests, 12 operation controls, 16 sandbox runtime
+controls, eight original sandbox guards and 32 stress repetitions passed.
+The complete actual-C control proof passed with the combined Native/final V6
+helper. Merged `cargo check -p pipeline --bin sm-pipeline --locked --offline
+-j 1` passed in 58.51 seconds. Both independent source-review axes found zero
+issues; [the review](performance-review-20261014.md) records their exact frozen
+source scopes and limits. All implementation and review workers are finished.
+
+Concurrent private equipment source commit `847d76f` implements all 29 routines,
+passes all 13 independent Rust controls and all 427 declared actual-C Fixture
+pairs. Its complete Native proof, replay and post-cleanup authentication took
+97.78 seconds using two fixture workers. Both source-review axes passed; the
+source and manifest remained unchanged. The shared inventory now contains the
+reviewed `verified` observation as well as the earlier `translated` and
+`verified` observations. This is private bootstrap and confined verification;
+managed integration, Live replay and original-ROM parity remain pending. See
+[the equipment handoff](../../equipment-interaction-concurrent-20261014/verification-handoff.md).
+
+Both integrated performance worktrees were removed after retaining their exact
+source dependencies. Selected archives are `native/source-final-dfc06db` and
+`confinement/source-final-ccc04bc` under
+`/home/jim/sm-decomp-performance-20261014`. Seven Native proof sets and the
+equipment proof (856 producers, 12,569 references) authenticated again after
+retirement. All retained source/tool/timing and historical manifests passed
+their integrity checks. Normal and deduplicating cleanup succeeded; identified
+removals plus deduplication total 2,767,081,472 bytes including private equipment
+work. Last observed available space was 187,063,205,888 bytes on the shared
+filesystem. The existing main-checkout Cargo cache and required proof readers,
+helpers, private inputs and source snapshots remain retained.
+
+The final helper is
+`/home/jim/sm-decomp-performance-20261014/confinement/tools/sm-translation-sandbox-fd-table-v6-opt1`,
+SHA-256 `8f825e97e00ce534878131d6838411aee99576f7e0e2a088e1501b0c67cda0b0`.
+Rebuilding pipeline alone does not select or install it. The existing production
+Installation, registry, fence, claims and stopped attempt remain unchanged.
+No full catalog run or new Original attempt was started.
+
+The separate architecture-performance session retains five completed candidate
+worktrees and its combined source `bc5c1cf9ba2965ef6513273deb4880a93d770cc9`.
+Its [composition handoff](/home/jim/sm-decomp-architecture-20261014/03-builds/.scratch/architecture-performance-20261014/composition.md)
+records 32 passing controls and two actual-C results authenticated after cleanup.
+Those candidates have not been composed with this Native implementation.
+Preserve our strict reservations/waves and their `build_cache.rs` source-list
+registrations during later composition. The five requested worktrees belong
+to that session and remain separate.
+
+Ticket 10 remains claimed. The next performance work is largest-family
+reference/finalization scaling, shared scheduling and build reuse, with finite
+whole-catalog budgets. The Native reference inventory still has a 65,536 ceiling.
 The unfinished Original Offline reuse changes are preserved in isolated commit
 `20b0316f87fe31146e652d262c39b28a946dad33` on
-`ticket10-original-reuse-parked`; they are not integrated or tested. They still
-need the journal-bound candidate-gate helper. Main has been restored to its
-compiling committed implementation for performance integration.
+`ticket10-original-reuse-parked`, at
+`/home/jim/sm-decomp-ticket10-work/original-reuse`; they are not integrated or
+tested and still need `translation_execution::journaled_candidate_gate`.
+Installed Original acceptance and ordered continuation/recovery remain pending.
+Do not repeat the old 600-second Cargo prerequisite unchanged. JSON format
+maintenance remains deferred.
+
+## Historical checkpoints
 
 Prior `/tmp/sm-ticket10-*` proof, reader, target and worktree directories were
 absent after the environment resumed. The earlier records below are historical
 results, not currently authenticated evidence. Do not recreate those paths and
 pretend they contain the original results. New measurements and frozen tools
-use `/home/jim/sm-decomp-performance-20261014`; worktrees use
-`/home/jim/sm-decomp-ticket10-work`.
-
-Current independent workers are `confinement_performance` (sandbox accounting),
-`native_performance` (actual-C execution and bounded 1/2/4-worker scaling), and
-`equipment_implementation` (the full private 29-routine equipment interaction
-source scope). Gameplay setup and ownership are recorded in
-`../../equipment-interaction-concurrent-20261014/bootstrap-handoff.md`.
-Its `translated` and `verified` observations are published: private source
-commit `847d76f` implements all 29 routines, passes all 13 independent Rust
-controls and all 427 declared actual-C Fixture pairs. The complete Native
-proof, replay and post-cleanup authentication took 97.78 seconds with two
-fixture workers. Review and main integration remain pending; no production
-claim is asserted. No JSON format migration is part of this work.
-
-Native performance source is checkpointed at `5cda6a0`. Adjacent complete
-control runs fell from 43.11 to 33.54 seconds; their positive proof/authentication/
-replay portions fell from 17.662 to 13.317 seconds. Compiler totals stayed
-essentially equal (10.748/10.834 seconds); fixture wall time fell from 5.480
-to 1.120 seconds, combining input reuse and four workers. Updated Native
-1/2/4-worker fixture spans were 3.103/1.805/1.212 seconds. All 31 focused
-pipeline and 12 operation controls pass. Final integration/review and one
-combined run with the corrected sandbox helper remain pending.
-
-Confinement source is provisionally committed at `14c5cd5`. V6 passes 16
-runtime controls, eight original guards and 32 concurrent stress repetitions.
-It includes complete-snapshot retry for the existing directory-unlink race
-and exact FD-table tracking for shared, unshared and exec-remapped descriptors.
-Final V7/V6 timing and cleanup are pending; earlier microbenchmarks are not
-whole-catalog performance claims.
-
-The installed production `status` still authenticates the unchanged original
-registry/request/activation identities. No Original Installation or new attempt
-has been activated. Full-catalog execution and completion remain pending.
+use `/home/jim/sm-decomp-performance-20261014`; the two integrated performance
+worktrees formerly under `/home/jim/sm-decomp-ticket10-work` are retired.
 
 Integrated source through `e0b7303` includes the completed Original prerequisite
 regression, compact verdict-only recovery, native operation indexing, finite

@@ -252,3 +252,18 @@ proof; no such producer was started by this worker.
 Concurrent architecture work has overlapping legacy scheduling/build-cache
 branches in a different worktree. Root coordinates their later composition;
 none of those edits is in this frozen comparison.
+
+## Parent integration and retirement
+
+Integrated as `cfdbc6e` and `00bf076` on the main branch. The combined source
+through `3c2e9e3` passes Cargo check and both review axes. Parent also ran the
+complete original control test with the final V6 helper: 10.682-second positive
+proof, 25.56-second complete test, with all controls passing.
+
+The integrated worktree was removed after retaining selected source at
+`/home/jim/sm-decomp-performance-20261014/native/source-final-dfc06db` (4,673,536
+allocated bytes). The removed worktree occupied 448,630,784 allocated bytes.
+All seven retained Native proof sets authenticate afterward without executing
+producers; logs end in `after-worktree-retirement-auth.log`. The existing
+retained-evidence manifest also passes. See [performance results](performance-results.md)
+for combined measurements, cleanup and remaining ticket scope.

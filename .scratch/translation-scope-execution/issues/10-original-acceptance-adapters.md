@@ -87,3 +87,29 @@ or full-catalog runs. Keep the original verification contracts and timeouts.
 Independent private equipment interaction source work proceeds concurrently.
 The unfinished Original reuse source is parked in commit `20b0316` for later
 completion; it does not block the compiling performance baseline `528581b`.
+
+## Completion evidence
+
+2026-10-14 performance slice: integrated through `3c2e9e3`; merged Cargo check
+passes and both independent review axes report zero findings. The combined
+Native/sandbox control run fell from 43.11 to 25.56 seconds; fixture execution
+fell from 5.480 to 0.843 seconds. Fixed-helper 1/2/4-worker measurements show
+2.56x fixture throughput at four workers. Original verification coverage and
+timeouts remain intact. Full methods, source/tool identities and limits are in
+[the performance results](../ticket10/performance-results.md).
+
+The complete private 29-routine equipment subsystem now passes 427 actual-C
+pairs and 13 independent Rust controls. Its achieved stages are published;
+main integration and Live/ROM parity remain separate.
+
+Both integrated performance worktrees and their disposable targets are removed,
+with exact source/readers retained. Normal and deduplicating cleanup succeeded;
+identified removals and deduplication total 2,767,081,472 bytes including the
+private equipment work. Seven Native proof sets, equipment's 856 producers and
+all retained confinement manifests authenticate after retirement. Last observed
+free space was 187,063,205,888 bytes. See the linked results for precise scope,
+commands, retained dependencies and concurrent-disk limitations.
+
+This completes the performance slice only. Original installed acceptance,
+complete catalog execution and ordered continuation remain unfinished, so
+ticket 10 is not resolved and the installed production state is unchanged.

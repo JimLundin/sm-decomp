@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "root": "/home/jim/sm-decomp",
-  "updated_at": 1791998837,
+  "updated_at": 1792000392,
   "source": {
     "revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
     "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
@@ -99183,6 +99183,87 @@
         "Two-axis source review and main integration remain pending. Live replay, hardware effect order and original-ROM parity are not established."
       ],
       "updated_at": 1791998837
+    },
+    {
+      "id": "equipment-interaction-private-verified-reviewed-20261014",
+      "scope": "Complete equipment interaction Offline fixture domain (29 routines)",
+      "agent": "/root",
+      "stage": "verified",
+      "routines": [
+        "ChangePaletteValues",
+        "EquipmentScreenMain",
+        "EquipmentScreenCategory_Tanks",
+        "EquipmentScreenHandleDpad",
+        "EquipmentScreenGlowingArrow",
+        "EquipmentScreenGlowingArrowAnimated",
+        "EquipmentScreenGlowingArrowSolidOn",
+        "EquipmentScreenGlowingArrowSolidOff",
+        "EquipmentScreenEnergyArrowGlow_On",
+        "EquipmentScreenEnergyArrowGlow_Off",
+        "EquipmentScreenCategory_Tanks_0",
+        "EquipmentScreenHudReserveAutoTilemap_On_BUGGY",
+        "EquipmentScreenHudReserveAutoTilemap_Off",
+        "EquipmentScreenCategory_Tanks_1",
+        "EquipmentScreenCategory_Weapons",
+        "EquipmentScreenCategory_Weapons_MoveButtons",
+        "EquipmentScreenCategory_Weapons_PlazmaSpazerCheck",
+        "EquipmentScreenCategory_Suit",
+        "EquipmentScreenCategory_Suit_MoveResponse",
+        "EquipmentScreenCategory_Boots",
+        "EquipmentScreenCategory_Boots_MoveResponse",
+        "EquipmentScreenMoveToReserveTanks",
+        "EquipmentScreenMoveToBeams",
+        "EquipmentScreenMoveToBottomOfBeams",
+        "EquipmentScreenMoveLowerOnSuitsMisc",
+        "EquipmentScreenMoveToScrewOrHigherOnSuits",
+        "EquipmentScreenMoveToHighJumpOrLowerInBoots",
+        "EquipmentScreenCategory_Boots_MoveUpInBoots",
+        "EquipmentScreenCategory_ButtonResponse"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "847d76f60d8a373b7b051f0be5c441f6be2342f4",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-equipment-interaction-20261014/native-v1/pause-equipment/run/native-receipt.toml",
+          "sha256": "08b3697335c5f0e41840faee1715dbb073513ea6bf7aba170c99bfcd36c8080e"
+        },
+        {
+          "path": "/home/jim/sm-decomp-equipment-interaction-20261014/native-v1/pause-equipment/run/family/verdict.toml",
+          "sha256": "be5d6a84f204182a7c7cafb52677800ec61640b38292d642f6e63b2ce118045a"
+        },
+        {
+          "path": "/home/jim/sm-decomp-equipment-interaction-20261014/native-v1/summary.toml",
+          "sha256": "374c09a356dada285bd2bcdec2244b0798bd2118caa5fb2e8335dc8ce603b415"
+        },
+        {
+          "path": "/home/jim/sm-decomp-equipment-interaction-20261014/checks/native-v1.log",
+          "sha256": "10f6014cf8cf0ccbb24433549b02c53dc2960bfc12bdc3c4777cb8f7b9c9a9c2"
+        },
+        {
+          "path": "/home/jim/sm-decomp-equipment-interaction-20261014/native-v1/pause-equipment/cleanup.toml",
+          "sha256": "db5bac8a65aebadf59f0fdf35212019050be91606a9165b298d3f3d192ecacdc"
+        },
+        {
+          "path": "/home/jim/sm-decomp-equipment-interaction-20261014/native-v1/pause-equipment/cleanup-deduplicated.toml",
+          "sha256": "2ed967dd83928eb0a379255c17b31491e726e35ade632814994da60f534ed056"
+        },
+        {
+          "path": "/home/jim/sm-decomp/.scratch/translation-scope-execution/ticket10/performance-review-20261014.md",
+          "sha256": "e14f66f7b24831f63c5249e6d96ab14ba137614d2d1c5672d1f42a811c109bbc"
+        },
+        {
+          "path": "/home/jim/sm-decomp-equipment-interaction-20261014/checks/native-v1-after-worktree-retirement-auth.log",
+          "sha256": "2f3e2b4213acda9d8fe2edbf625240b61df9cfc110f5e2ae341133af4b758265"
+        }
+      ],
+      "limitations": [
+        "All 427 declared actual-C pairs pass with full WRAM and raw-return comparison; 28 direct entries and static ChangePaletteValues exercised through callers.",
+        "Includes 181 complete-root cases, 411 independent roots and 16 continuation nodes; 13 independent Rust controls passed separately.",
+        "Private source bootstrap and confined Native verification; no confined rewrite, production claim or managed integration is asserted.",
+        "Both independent source-review axes passed with no findings. Main integration remains pending; Live replay, hardware effect order and original-ROM parity are not established."
+      ],
+      "updated_at": 1792000392
     }
   ],
   "notices": [
@@ -99384,7 +99465,7 @@
     "body_lines": 75229,
     "declared_definitions": 842,
     "declared_body_lines": 9227,
-    "updates": 270,
+    "updates": 271,
     "stale_updates": 16,
     "stages": {
       "integrated": {
