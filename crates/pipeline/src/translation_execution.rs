@@ -854,6 +854,7 @@ impl Adapter {
                 operation_root: self.operations(),
                 pipeline_root: self.installed.pipeline_root.clone(),
                 workers: self.installed.workers,
+                jobs: 1,
                 gate_timeout_seconds: self.installed.policy.budgets.gate_timeout_seconds,
                 max_output_bytes: self.installed.max_gate_bytes,
                 deadline_unix_ms: Some(deadline),

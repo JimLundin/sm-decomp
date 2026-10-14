@@ -565,6 +565,7 @@ fn authenticate_stage(config: &Config, stage: &Stage) -> Result<()> {
     let domain: Migration = read(&stage.migration)?;
     let original: Migration = read(&scope.migration)?;
     let template: Installation = read(&config.template)?;
+    let before_ledger = stage.before.ledgers.get(&domain.effort).context("successor omitted its original ledger")?;
     ensure!(
         stage.migration.path == stage_root(config, stage.index).join("migration.json")
             && stage.installation.path == stage_root(config, stage.index).join("installation.json")
@@ -584,7 +585,8 @@ fn authenticate_stage(config: &Config, stage: &Stage) -> Result<()> {
             && domain.generation == original.generation
             && domain.coordinator == original.coordinator
             && domain.effort == original.effort
-            && domain.ledger.sha256 == stage.before.ledgers[&domain.effort].sha256
+            && domain.ledger.sha256 == before_ledger.sha256
+            && domain.ledger.bytes == before_ledger.bytes
             && domain.historical == original.historical
             && domain.stopped_owners == original.stopped_owners
             && domain.proof == original.proof
@@ -663,6 +665,32 @@ fn authenticate_stage(config: &Config, stage: &Stage) -> Result<()> {
             stage.predecessor.is_none() && stage.before.head == config.reviewed_head,
             "first original source boundary changed"
         );
+        let mut expected = config
+            .preserved
+            .iter()
+            .map(|reference| (reference.path.clone(), reference.clone()))
+            .collect::<BTreeMap<_, _>>();
+        let marker = config.checkout.join(MARKER);
+        expected.insert(marker.clone(), retention::seal_file(&marker, MAX_RECORD)?);
+        ensure!(
+            stage.before.files.keys().eq(expected.keys())
+                && stage.before.files.iter().all(|(path, reference)| {
+                    reference.sha256 == expected[path].sha256 && reference.bytes == expected[path].bytes
+                }),
+            "first successor changed the reviewed preserved metadata boundary"
+        );
+        let mut ledgers = BTreeMap::new();
+        for scope in &config.scopes {
+            let original: Migration = read(&scope.migration)?;
+            ledgers.insert(original.effort, original.ledger);
+        }
+        ensure!(
+            stage.before.ledgers.keys().eq(ledgers.keys())
+                && stage.before.ledgers.iter().all(|(effort, reference)| {
+                    reference.sha256 == ledgers[effort].sha256 && reference.bytes == ledgers[effort].bytes
+                }),
+            "first successor changed an original frozen ledger"
+        );
     } else {
         let previous = stage.predecessor.as_ref().context("successor was prepared without a completed predecessor")?;
         ensure!(previous.path == terminal_path(config, stage.index - 1), "successor skipped original production order");
@@ -686,6 +714,10 @@ fn authenticate_terminal(config: &Config, terminal: &Terminal) -> Result<()> {
     authenticate_boundary(&terminal.after)?;
     let installed: Installation = read(&stage.installation)?;
     let domain: Migration = read(&stage.migration)?;
+    ensure!(
+        stage.before.ledgers.keys().eq(terminal.after.ledgers.keys()),
+        "terminal changed the original effort ledger inventory"
+    );
     for (effort, reference) in &stage.before.ledgers {
         if effort != &domain.effort {
             let after = terminal.after.ledgers.get(effort).context("terminal dropped an original effort ledger")?;
@@ -695,12 +727,54 @@ fn authenticate_terminal(config: &Config, terminal: &Terminal) -> Result<()> {
             );
         }
     }
-    migration::authenticate_frozen_publication(
+    let controller = migration::authenticate_frozen_publication(
         &installed,
         &terminal.accepted,
         &terminal.after.ledgers[&domain.effort],
         &terminal.after.head,
     )?;
+    ensure!(terminal.controller == controller, "terminal changed its sealed completed controller projection");
+    let mutable = controller.paths.iter().collect::<BTreeSet<_>>();
+    let projected =
+        controller.references.iter().map(|reference| (&reference.path, reference)).collect::<BTreeMap<_, _>>();
+    let ledger_path = config.checkout.join(format!(".scratch/{}/ledger.toml", domain.effort));
+    let ledger = projected.get(&ledger_path).context("completed original ledger projection is missing")?;
+    let after_ledger = &terminal.after.ledgers[&domain.effort];
+    ensure!(
+        ledger.sha256 == after_ledger.sha256 && ledger.bytes == after_ledger.bytes,
+        "terminal ledger bytes differ from the accepted completed projection"
+    );
+    for (path, before) in &stage.before.files {
+        if !mutable.contains(path) {
+            let after = terminal.after.files.get(path).context("terminal dropped preserved host metadata")?;
+            ensure!(
+                before.sha256 == after.sha256 && before.bytes == after.bytes,
+                "terminal changed preserved host metadata"
+            );
+        }
+    }
+    for (path, after) in &terminal.after.files {
+        if mutable.contains(path) {
+            let expected = projected.get(path).context("terminal added an unsealed controller projection")?;
+            ensure!(
+                expected.sha256 == after.sha256 && expected.bytes == after.bytes,
+                "terminal controller output differs from its accepted publication"
+            );
+        } else {
+            ensure!(stage.before.files.contains_key(path), "terminal admitted unrelated new host metadata");
+        }
+    }
+    for reference in &controller.references {
+        if terminal.after.files.contains_key(&reference.path) {
+            continue;
+        }
+        let name = reference.path.strip_prefix(&config.checkout)?.to_str().context("controller path is not UTF8")?;
+        let bytes = migration::git_bytes(&config.checkout, &["show", &format!("{}:{name}", terminal.after.head)])?;
+        ensure!(
+            reference.sha256 == sha256(&bytes) && reference.bytes == bytes.len() as u64,
+            "terminal omitted changed controller metadata from its frozen boundary"
+        );
+    }
     execution::authenticate_managed_terminal(&installed, &terminal.view, &terminal.accepted)?;
     Ok(())
 }

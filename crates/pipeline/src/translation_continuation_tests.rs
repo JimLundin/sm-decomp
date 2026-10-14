@@ -32,6 +32,7 @@ impl Fixture {
         fs::create_dir_all(&checkout)?;
         fs::write(checkout.join("source.rs"), "reviewed source\n")?;
         git(&checkout, &["init", "-q"])?;
+        fs::write(checkout.join(".git/info/exclude"), "/.scratch/assignment.lock\n")?;
         git(&checkout, &["config", "user.name", "Continuation test"])?;
         git(&checkout, &["config", "user.email", "continuation@invalid"])?;
         git(&checkout, &["add", "source.rs"])?;
@@ -225,6 +226,33 @@ impl Fixture {
         )?;
         Ok(Self { directory, config })
     }
+
+    fn prepare_status_stage(&mut self) -> Result<Stage> {
+        // A status-only installation uses the real reader identity. Its other
+        // tools remain inert fixtures and cannot pass producer preparation.
+        let mut template: Installation = read(&self.config.template)?;
+        let controller = retention::seal_file(&std::env::current_exe()?, 512 * 1024 * 1024)?;
+        template.controller = execution::InstalledFile { path: controller.path, sha256: controller.sha256 };
+        template.max_checkout_bytes = 2 * 1024 * 1024 * 1024;
+        template.policy.budgets.max_evidence_bytes = 8 * 1024 * 1024 * 1024;
+        self.config.template = write(&self.directory.0.join("status-template.json"), &template)?;
+        let retained = self.config.checkout.join(".scratch/retained.md");
+        fs::write(&retained, "reviewed retained metadata\n")?;
+        self.config.preserved.push(retention::seal_file(&retained, MAX_RECORD)?);
+        let reference = write(&self.directory.0.join("status-config.json"), &self.config)?;
+        let marker = self.config.checkout.join(MARKER);
+        fs::set_permissions(&marker, fs::Permissions::from_mode(0o600))?;
+        fs::write(
+            &marker,
+            serde_json::to_vec(&Activation {
+                schema: "translation-original-production-v1".into(),
+                registry: self.config.registry.clone(),
+                config: reference.clone(),
+            })?,
+        )?;
+        fs::set_permissions(&marker, fs::Permissions::from_mode(0o400))?;
+        prepare_stage(&reference, &self.config, 0, None)
+    }
 }
 
 #[test]
@@ -274,5 +302,27 @@ fn changed_frozen_contract_is_refused_before_any_successor_allocation() -> Resul
     fs::set_permissions(contract, fs::Permissions::from_mode(0o400))?;
     assert!(run(&fixture.config.checkout, "run").is_err());
     assert!(!fixture.config.output_root.exists(), "changed policy allocated a successor or controller lease");
+    Ok(())
+}
+
+#[test]
+fn status_refuses_resealed_initial_metadata_without_a_reviewed_configuration() -> Result<()> {
+    let mut fixture = Fixture::new()?;
+    let mut stage = fixture.prepare_status_stage()?;
+    assert_eq!(run(&fixture.config.checkout, "status")?.context("status missing")?.state, "ready");
+    let path = fixture.config.checkout.join(".scratch/retained.md");
+    fs::write(&path, "changed after operator review\n")?;
+    let replacement = copy(&path, &fixture.directory.0.join("changed-metadata.md"), MAX_RECORD)?;
+    stage.before.files.insert(path, replacement);
+    let transition = stage_path(&fixture.config, 0);
+    fs::set_permissions(&transition, fs::Permissions::from_mode(0o600))?;
+    fs::write(&transition, serde_json::to_vec(&stage)?)?;
+    fs::set_permissions(&transition, fs::Permissions::from_mode(0o400))?;
+    let before = crate::translation_execution::tests::records(&fixture.directory.0)?;
+    assert!(
+        run(&fixture.config.checkout, "status").is_err(),
+        "a resealed transition silently replaced the operator-reviewed metadata boundary"
+    );
+    assert_eq!(before, crate::translation_execution::tests::records(&fixture.directory.0)?);
     Ok(())
 }

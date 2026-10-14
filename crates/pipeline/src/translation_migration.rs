@@ -1408,6 +1408,11 @@ struct AcceptedAdmission {
     references: Vec<Reference>,
     existing_references: Vec<Reference>,
     observation_ids: Vec<String>,
+    /// Original continuation binds completed mutable projections here before
+    /// the terminal journal seals this accepted publication. Later scopes may
+    /// change their live paths; the continuation retains exact content copies.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    completed_projection: Option<ControllerProjection>,
 }
 
 fn publication_root(migration: &Migration, policy: &FrozenPolicy, attempt: u32) -> Result<PathBuf> {
@@ -3171,6 +3176,9 @@ fn publish_inner(
         .map(|plan| progress::publish_admitted(&migration.checkout, plan))
         .transpose()?
         .unwrap_or_default();
+    let completed_projection = matches!(&installed.contract, supervisor::Contract::Original { .. })
+        .then(|| controller_projection(installed, &migration, &intent, None))
+        .transpose()?;
     let intent_reference = retention::seal_file(&intent_path, MAX_BYTES)?;
     let mut references = intent.references.clone();
     references.push(intent_reference.clone());
@@ -3186,6 +3194,7 @@ fn publish_inner(
         references,
         existing_references: intent.existing_references,
         observation_ids,
+        completed_projection,
     };
     let proposed = publication_value(&root.join("accepted.json"), &accepted, &installed.policy)?;
     ensure!(
@@ -3342,6 +3351,32 @@ fn authenticate_accepted_with_history(
                 == intent.progress.as_ref().map(progress::admitted_observation_ids).unwrap_or_default(),
         "managed accepted source publication or observation graph changed"
     );
+    if matches!(&installed.contract, supervisor::Contract::Original { .. }) {
+        let projection = accepted
+            .completed_projection
+            .as_ref()
+            .context("original completion lacks sealed final controller projections")?;
+        let mut paths = projection.paths.clone();
+        paths.sort();
+        ensure!(
+            source_intent.get("controller_paths") == Some(&serde_json::to_value(&paths)?)
+                && source_intent.get("preserved") == Some(&serde_json::to_value(&projection.preserved)?)
+                && projection.references.len() <= MAX_REFERENCES,
+            "original completed projection changed source publication ownership"
+        );
+        let mut observed = BTreeSet::new();
+        for reference in &projection.references {
+            ensure!(
+                paths.binary_search(&reference.path).is_ok()
+                    && observed.insert(&reference.path)
+                    && reference.path != accepted.intent.path.parent().unwrap().join("accepted.json")
+                    && reference.path != accepted.intent.path.parent().unwrap().join("accepted.pending"),
+                "original completed projection contains a foreign, repeated or circular reference"
+            );
+        }
+    } else {
+        ensure!(accepted.completed_projection.is_none(), "foreign original continuation projection");
+    }
     let migrated = migration
         .claims
         .iter()
@@ -3438,6 +3473,13 @@ fn authenticate_accepted_with_history(
     );
     if history.is_none() {
         let controller = controller_projection(installed, migration, &intent, Some(accepted))?;
+        if let Some(expected) = &accepted.completed_projection {
+            let mut completed = controller.clone();
+            completed.references.retain(|reference| {
+                reference.path != accepted_path && reference.path != accepted_path.with_extension("pending")
+            });
+            ensure!(completed == *expected, "original completed controller projection changed");
+        }
         supervisor::authenticate_managed_source(installed, &accepted.completion, &authenticated, &controller)?;
     }
     if projections {
@@ -3474,7 +3516,7 @@ pub(crate) fn authenticate_frozen_publication(
     accepted: &Reference,
     ledger: &Reference,
     head: &str,
-) -> Result<()> {
+) -> Result<ControllerProjection> {
     let supervisor::Admission::Managed { checkout, migration: asset, .. } = &installed.admission else {
         bail!("historical original publication requires managed lineage");
     };
@@ -3488,7 +3530,13 @@ pub(crate) fn authenticate_frozen_publication(
             == publication_root(&migration, &installed.policy, value.completion.attempt)?.join("accepted.json"),
         "historical accepted publication location changed"
     );
-    authenticate_accepted_with_history(installed, &migration, &value, false, Some((ledger, head)))
+    authenticate_accepted_with_history(installed, &migration, &value, false, Some((ledger, head)))?;
+    let mut projection = value
+        .completed_projection
+        .context("original terminal lacks its authenticated completed controller projection")?;
+    projection.references.push(accepted.clone());
+    projection.references.sort_by(|a, b| a.path.cmp(&b.path));
+    Ok(projection)
 }
 
 fn repair_accepted(

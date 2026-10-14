@@ -168,7 +168,18 @@ fn acquire_lease(root: &Path, requested: usize) -> Result<(File, f64)> {
 }
 
 fn acquire_lease_until(root: &Path, requested: usize, deadline_unix_ms: u64) -> Result<(File, f64)> {
+    let (mut held, wait) = acquire_leases_until(root, requested, 1, deadline_unix_ms)?;
+    Ok((held.pop().context("shared worker reservation is empty")?, wait))
+}
+
+fn acquire_leases_until(
+    root: &Path,
+    requested: usize,
+    count: usize,
+    deadline_unix_ms: u64,
+) -> Result<(Vec<File>, f64)> {
     ensure!((1..=64).contains(&requested), "worker count must be 1..64");
+    ensure!((1..=requested).contains(&count), "shared worker reservation exceeds configured capacity");
     let started = Instant::now();
     let now = u64::try_from(std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_millis())?;
     ensure!(now < deadline_unix_ms, "shared worker time budget exhausted before reservation");
@@ -206,8 +217,9 @@ fn acquire_lease_until(root: &Path, requested: usize, deadline_unix_ms: u64) -> 
     let held = loop {
         metrics::check_cancelled()?;
         ensure!(Instant::now() < deadline, "shared worker time budget exhausted waiting for a slot");
-        let mut selected = None;
+        let mut selected = Vec::with_capacity(count);
         for slot in 0..capacity {
+            ensure!(Instant::now() < deadline, "shared worker time budget exhausted while reserving slots");
             let file = OpenOptions::new()
                 .create(true)
                 .append(true)
@@ -216,20 +228,30 @@ fn acquire_lease_until(root: &Path, requested: usize, deadline_unix_ms: u64) -> 
             ensure!(file.metadata()?.is_file(), "worker slot lock is not regular");
             match file.try_lock() {
                 Ok(()) => {
-                    selected = Some(file);
-                    break;
+                    selected.push(file);
+                    if selected.len() == count {
+                        break;
+                    }
                 }
                 Err(std::fs::TryLockError::WouldBlock) => {}
                 Err(std::fs::TryLockError::Error(error)) => return Err(error.into()),
             }
         }
-        if let Some(file) = selected {
-            break file;
+        if selected.len() == count {
+            ensure!(Instant::now() < deadline, "shared worker time budget exhausted during reservation");
+            break selected;
         }
+        // Never wait with a partial reservation: concurrent multi-slot callers
+        // must leave enough capacity for one complete producer to make progress.
+        drop(selected);
         std::thread::sleep(Duration::from_millis(10));
     };
     Ok((held, started.elapsed().as_secs_f64()))
 }
+
+#[cfg(test)]
+#[path = "worker_budget_tests.rs"]
+mod worker_budget_tests;
 
 fn lease(root: &Path, requested: usize) -> Result<()> {
     let (held, wait) = acquire_lease(root, requested)?;
