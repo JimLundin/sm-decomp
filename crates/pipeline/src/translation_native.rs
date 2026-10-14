@@ -1742,7 +1742,7 @@ mod tests {
     fn complete_current_catalog_has_a_frozen_native_recipe() -> Result<()> {
         let root = PathBuf::from(std::env::var("SM_NATIVE_CATALOG_PROOF")?);
         fs::create_dir_all(&root)?;
-        let checkout = current_checkout();
+        let checkout = std::env::var_os("SM_NATIVE_CATALOG_SOURCE").map(PathBuf::from).unwrap_or_else(current_checkout);
         prepare_generated_plm(&checkout, &checkout.join(".scratch/translation-native/plm-instructions"))?;
         let catalog = batch::catalog(&checkout)?;
         let catalog_path = root.join("catalog.toml");
@@ -1807,6 +1807,33 @@ mod tests {
             atomic_toml(&root.join("summary.toml"), &summary)?;
         }
         ensure!(summary.len() == catalog.families.len(), "catalog entry omitted");
+        let direct = (|| -> Result<usize> {
+            let contract = bounded::until(deadline, 8 * bounded::DEFAULT_BYTES, || {
+                contract_for_direct_animation(
+                    &checkout,
+                    Path::new(".scratch/decomp-coverage/renderer/direct-animation.toml"),
+                    inventory,
+                    provenance,
+                    limits,
+                    fixture,
+                )
+            })?;
+            let prepared = bounded::until(deadline, 8 * bounded::DEFAULT_BYTES, || {
+                prepare_bounded_with_catalog(&checkout, pinned, &contract, Some(&inputs))
+            })?;
+            let cases = contract.coverage.values().map(Vec::len).sum();
+            ensure!(contract.family == "pause-direct-animation" && cases == 360, "auxiliary animation domain changed");
+            immutable(&root.join("pause-direct-animation.toml"), toml::to_string(&prepared)?.as_bytes())?;
+            Ok(cases)
+        })();
+        let result = match direct {
+            Ok(cases) => format!("prepared {cases} fixture pairs"),
+            Err(error) => {
+                failures.push(format!("pause-direct-animation: {error:#}"));
+                format!("rejected: {error:#}")
+            }
+        };
+        atomic_toml(&root.join("auxiliary-summary.toml"), &BTreeMap::from([("pause-direct-animation", result)]))?;
         ensure!(failures.is_empty(), "{}", failures.join("; "));
         Ok(())
     }
