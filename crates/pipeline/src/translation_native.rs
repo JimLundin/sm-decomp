@@ -1591,6 +1591,7 @@ mod tests {
     #[test]
     fn native_receipt_storage_preserves_large_operation_sets_within_controller_record_bound() -> Result<()> {
         let directory = bounded::tests::Directory::new()?;
+        fs::create_dir_all(directory.0.join("family"))?;
         let mut retained = directory.0.join("retained");
         for level in 0..16 {
             retained.push(format!("{level}-{}", "source".repeat(16)));
@@ -1652,6 +1653,123 @@ mod tests {
             Ok(())
         })?;
         assert_eq!(actual, expected);
+        let retained = references(&restored)?;
+        ensure!(retained.iter().any(|item| item == &reference), "producer input missing from retention");
+        let index = restored.operation_index.as_ref().context("native receipt did not seal its attribution")?;
+        ensure!(retained.iter().any(|item| item == index), "operation index missing from retention");
+        ensure!(
+            evidence_bytes(&directory.0.join("family"), &restored)?
+                == retained.iter().map(|item| item.bytes).sum::<u64>(),
+            "indexed attribution omitted from aggregate evidence extent"
+        );
+        println!("Retained all {} operations in a {}-byte controller receipt", expected.len(), encoded.len());
+        Ok(())
+    }
+
+    #[test]
+    fn native_receipt_retention_rejects_changed_incomplete_or_redirected_attribution() -> Result<()> {
+        use std::os::unix::fs::PermissionsExt;
+        let directory = bounded::tests::Directory::new()?;
+        fs::create_dir_all(directory.0.join("family"))?;
+        let context = OperationContext {
+            run_id: sha256("retention-storage"),
+            attempt: 1,
+            policy_sha256: sha256("policy"),
+            operation_key: sha256("gate"),
+            phase: translation_execution::model::ExecutionPhase::Candidate,
+        };
+        let operation = NativeOperation {
+            directory: directory.0.join("family/pair"),
+            label: "rust".into(),
+            invocation: Asset { file: directory.0.join("invocation"), sha256: sha256("invocation") },
+            context: context.clone(),
+            result: Reference { path: directory.0.join("result"), sha256: sha256("result"), bytes: 6 },
+            result_sha256: sha256("result"),
+            references: vec![],
+        };
+        let mut receipt = NativeReceipt {
+            prepared_sha256: sha256("prepared"),
+            candidate_sha256: sha256("candidate"),
+            verdict: Asset { file: directory.0.join("family/verdict.toml"), sha256: sha256("verdict") },
+            passed: false,
+            diagnostic: "storage only; no native acceptance".into(),
+            evidence_bytes: 0,
+            context,
+            operation_root: directory.0.join("operations"),
+            operations: vec![operation.clone()],
+            operation_index: None,
+            max_output_bytes: 16 * 1024 * 1024,
+            reserved_bytes: 16 * 1024 * 1024,
+        };
+        // Legacy receipts remain byte-for-byte serializable with no index key.
+        let legacy = serde_json::to_vec(&receipt)?;
+        ensure!(!String::from_utf8(legacy.clone())?.contains("operation_index"), "legacy receipt encoding changed");
+        let historical: NativeReceipt = serde_json::from_slice(&legacy)?;
+        assert_eq!(serde_json::to_vec(&historical)?, legacy);
+        assert_eq!(historical.operation_count()?, 1);
+
+        receipt.store_operations(&directory.0)?;
+        references(&receipt)?;
+        let index = receipt.operation_index.as_ref().unwrap().clone();
+        let index_bytes = fs::read(&index.path)?;
+        let chunk = directory.0.join("native-operations/00000.json");
+        let chunk_bytes = fs::read(&chunk)?;
+        fs::set_permissions(&index.path, fs::Permissions::from_mode(0o600))?;
+        fs::set_permissions(&chunk, fs::Permissions::from_mode(0o600))?;
+
+        let mut changed = receipt.clone();
+        changed.operations.push(operation);
+        ensure!(references(&changed).is_err(), "conflicting inline attribution admitted");
+        changed = receipt.clone();
+        changed.candidate_sha256 = sha256("foreign candidate");
+        ensure!(references(&changed).is_err(), "index admitted a different candidate");
+        changed = receipt.clone();
+        changed.context.operation_key = sha256("foreign operation");
+        ensure!(references(&changed).is_err(), "index admitted a different operation");
+
+        let extra = directory.0.join("native-operations/00001.json");
+        fs::write(&extra, &chunk_bytes)?;
+        ensure!(references(&receipt).is_err(), "unlisted operation chunk admitted");
+        fs::remove_file(&extra)?;
+        fs::remove_file(&chunk)?;
+        ensure!(references(&receipt).is_err(), "missing operation chunk admitted");
+        fs::write(&chunk, &chunk_bytes)?;
+        fs::write(&chunk, b"changed operation chunk")?;
+        ensure!(references(&receipt).is_err(), "changed operation chunk admitted");
+
+        // A newly sealed corrupt index cannot redirect a chunk or erase the
+        // complete ordered count. Independent producer checks still follow.
+        let original_index: serde_json::Value = serde_json::from_slice(&index_bytes)?;
+        for alteration in ["redirect", "omit", "ordering", "extra-operation"] {
+            fs::write(&chunk, &chunk_bytes)?;
+            let mut value = original_index.clone();
+            match alteration {
+                "redirect" => value["chunks"][0]["path"] = serde_json::json!(directory.0.join("foreign.json")),
+                "omit" => value["chunks"] = serde_json::json!([]),
+                _ => {
+                    let mut value_chunk: serde_json::Value = serde_json::from_slice(&chunk_bytes)?;
+                    if alteration == "ordering" {
+                        value_chunk["first"] = serde_json::json!(1);
+                    } else {
+                        let duplicate = value_chunk["operations"][0].clone();
+                        value_chunk["operations"].as_array_mut().unwrap().push(duplicate);
+                    }
+                    let bytes = serde_json::to_vec(&value_chunk)?;
+                    fs::write(&chunk, &bytes)?;
+                    value["chunks"][0]["sha256"] = serde_json::json!(sha256(&bytes));
+                    value["chunks"][0]["bytes"] = serde_json::json!(bytes.len());
+                }
+            }
+            let bytes = serde_json::to_vec(&value)?;
+            fs::write(&index.path, &bytes)?;
+            changed = receipt.clone();
+            changed.operation_index =
+                Some(Reference { path: index.path.clone(), sha256: sha256(&bytes), bytes: bytes.len() as u64 });
+            ensure!(references(&changed).is_err(), "{alteration} admitted by native retention");
+        }
+        fs::write(&index.path, &index_bytes)?;
+        fs::write(&chunk, &chunk_bytes)?;
+        references(&receipt)?;
         Ok(())
     }
 
@@ -2657,8 +2775,25 @@ mod tests {
                 .iter()
                 .map(|operation| Ok((operation.result.path.clone(), fs::metadata(&operation.result.path)?.modified()?)))
                 .collect::<Result<Vec<_>>>()?;
-            let bytes = evidence_bytes(&run, &operations)?;
-            ensure!(evidence_bytes(&run, &operations)? == bytes, "retained evidence extent changed");
+            let producer_count = operations.len();
+            // In-memory accounting view only. The failed original receipt is
+            // deliberately not created or upgraded by this read-only audit.
+            let accounting = NativeReceipt {
+                prepared_sha256: intent.prepared_sha256.clone(),
+                candidate_sha256: intent.candidate_sha256.clone(),
+                verdict: Asset { file: run.join("verdict.toml"), sha256: digest(&run.join("verdict.toml"))? },
+                passed: false,
+                diagnostic: "retained finalization audit only".into(),
+                evidence_bytes: 0,
+                context: intent.context.clone(),
+                operation_root: intent.operation_root.clone(),
+                operations,
+                operation_index: None,
+                max_output_bytes: intent.max_output_bytes,
+                reserved_bytes: intent.parent_reservation_bytes,
+            };
+            let bytes = evidence_bytes(&run, &accounting)?;
+            ensure!(evidence_bytes(&run, &accounting)? == bytes, "retained evidence extent changed");
             let checked = bounded::discovery(|| {
                 family::authenticate_with_source(
                     crate::family_model::AuthenticateRequest { checkout, verdict: run.join("verdict.toml") },
@@ -2672,7 +2807,7 @@ mod tests {
             for (path, modified) in identities {
                 ensure!(fs::metadata(path)?.modified()? == modified, "audit changed a producer result");
             }
-            Ok((checked.verified_cases, operations.len(), bytes))
+            Ok((checked.verified_cases, producer_count, bytes))
         })?;
         ensure!(!output.join("native-receipt.toml").exists(), "audit published native acceptance");
         let report = BTreeMap::from([

@@ -5,6 +5,7 @@ use crate::inputs::{self, bounded};
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use std::{
+    collections::BTreeSet,
     fs,
     os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
@@ -155,6 +156,11 @@ fn index(receipt: &NativeReceipt) -> Result<Index> {
         total = total.checked_add(chunk.bytes).context("native operation metadata extent overflow")?;
         ensure!(total <= maximum, "native operation metadata aggregate exceeded");
     }
+    let mut expected = index.chunks.iter().map(|chunk| chunk.path.clone()).collect::<BTreeSet<_>>();
+    expected.insert(reference.path.clone());
+    let directory = reference.path.parent().context("native operation index parent missing")?;
+    let actual = bounded::entries(directory)?.into_iter().collect::<BTreeSet<_>>();
+    ensure!(actual == expected, "native operation storage has missing or extra chunks");
     Ok(index)
 }
 
