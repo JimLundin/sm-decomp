@@ -155,17 +155,45 @@ pub fn build(
     source: &Path,
     run: &Path,
 ) -> Result<Implementation> {
+    build_with(request, manifest, checkout, source, run, None)
+}
+
+pub(crate) fn build_with(
+    request: &VerifyRequest,
+    manifest: &Manifest,
+    checkout: &Path,
+    source: &Path,
+    run: &Path,
+    execution: Option<&builds::StrictExecution>,
+) -> Result<Implementation> {
     ensure!(cfg!(all(target_os = "linux", target_arch = "x86_64")), "Ridley fixture worker requires Linux x86_64");
     ensure!(manifest.projectile_host && manifest.rom.is_some(), "Ridley fixtures require canonical ROM and host words");
     ensure!(manifest.callback_adapter.as_deref() == Some("ridley-subsystem"), "Ridley adapter declaration missing");
     validate_capture_assets(manifest, checkout)?;
     let module = fs::canonicalize(family::source_path(checkout, &manifest.rust_module))?;
-    let memory = inputs::wrapper(inputs::WrapperRequest {
-        checkout: checkout.into(),
-        run: run.into(),
-        modules: vec![module.clone()],
-        imports: manifest.rust_imports.clone(),
-    })?;
+    let child_modules = [
+        "ridley_movement",
+        "ridley_rendering",
+        "ridley_cutscene",
+        "ridley_subsystem_instructions",
+        "ridley_subsystem_admission",
+    ];
+    let memory = if let Some(execution) = execution {
+        let roots = execution
+            .rust_inputs
+            .iter()
+            .filter(|path| path.file_stem().is_none_or(|name| !child_modules.iter().any(|child| name == *child)))
+            .cloned()
+            .collect::<Vec<_>>();
+        inputs::canonical_wrapper(checkout, run, &roots)?
+    } else {
+        inputs::wrapper(inputs::WrapperRequest {
+            checkout: checkout.into(),
+            run: run.into(),
+            modules: vec![module.clone()],
+            imports: manifest.rust_imports.clone(),
+        })?
+    };
     // These files are children of the subsystem module. Lexical discovery sees
     // their path attributes as import names, but their `super` is the Ridley
     // context, so they must never be emitted as independent crate modules.
@@ -184,7 +212,7 @@ pub fn build(
             scoped.push('\n');
         }
     }
-    fs::write(&memory.path, scoped)?;
+    family::write_build_input(&memory.path, scoped.as_bytes(), execution.is_some())?;
     let imports = manifest
         .rust_imports
         .iter()
@@ -194,40 +222,66 @@ pub fn build(
         })
         .collect::<Result<String>>()?;
     let abi = include_str!("ridley_subsystem_abi.rs.in").replace("__MODULE__", &format!("{module:?}"));
-    fs::write(
-        run.join("wrapper.rs"),
+    let wrapper = if execution.is_some() {
+        format!(
+            "include!(\"/inputs/generated/memory.rs\");\n#[path=\"/inputs/generated/fixture-worker.rs\"] mod fixture_worker;\n{}",
+            abi.replace(
+                &format!("#[path={module:?}]\nmod family;"),
+                &format!("use {} as family;", module.file_stem().unwrap().to_string_lossy())
+            )
+        )
+    } else {
         format!(
             "#[path={:?}] mod memory;use memory::*;\n{imports}#[path={:?}] mod fixture_worker;\n{abi}",
             memory.path,
             checkout.join("crates/pipeline/src/fixture_worker.rs")
-        ),
-    )?;
-    fs::write(
-        run.join("oracle.c"),
+        )
+    };
+    family::write_build_input(&run.join("wrapper.rs"), wrapper.as_bytes(), execution.is_some())?;
+    if execution.is_some() {
+        inputs::immutable_bytes(&run.join("fixture-worker.rs"), include_bytes!("fixture_worker.rs"))?;
+    }
+    let headless = if execution.is_some() {
+        "/inputs/rust/tools/decomp/headless.c".into()
+    } else {
+        checkout.join("tools/decomp/headless.c")
+    };
+    family::write_build_input(
+        &run.join("oracle.c"),
         include_str!("ridley_subsystem_host.c.in")
-            .replace("__HEADLESS__", &format!("{:?}", checkout.join("tools/decomp/headless.c")))
-            .replace("__BRANCHES__", &branches(manifest)?),
+            .replace("__HEADLESS__", &format!("{headless:?}"))
+            .replace("__BRANCHES__", &branches(manifest)?)
+            .as_bytes(),
+        execution.is_some(),
     )?;
     let instrumented = instrument_units(source)?;
     for (bank, code) in &instrumented {
-        fs::write(run.join(format!("ridley-services-{bank}")), code)?;
+        family::write_build_input(&run.join(format!("ridley-services-{bank}")), code.as_bytes(), execution.is_some())?;
     }
-    builds::execute(
-        &[
-            "rustc".into(),
-            "--edition=2024".into(),
-            "-O".into(),
-            "--crate-type=staticlib".into(),
-            format!("--emit=link,dep-info={}", run.join("compiler.d").display()),
-            run.join("wrapper.rs").display().to_string(),
-            "-o".into(),
-            run.join("libridley.a").display().to_string(),
-        ],
-        run,
-        "rust-build",
-        &request.root,
-        request.workers,
-    )?;
+    let command = vec![
+        "rustc".into(),
+        "--edition=2024".into(),
+        "-O".into(),
+        "--crate-type=staticlib".into(),
+        format!("--emit=link,dep-info={}", run.join("compiler.d").display()),
+        run.join("wrapper.rs").display().to_string(),
+        "-o".into(),
+        run.join("libridley.a").display().to_string(),
+    ];
+    if let Some(execution) = execution {
+        execution.compile_recipe(
+            &command,
+            run,
+            "rust-build",
+            checkout,
+            source,
+            &["wrapper.rs", "memory.rs", "fixture-worker.rs"],
+            &["libridley.a", "compiler.d"],
+            false,
+        )?;
+    } else {
+        builds::execute(&command, run, "rust-build", &request.root, request.workers)?;
+    }
     let mut command = vec![
         "cc".into(),
         "-O2".into(),
@@ -258,32 +312,49 @@ pub fn build(
         "-o".into(),
         run.join("ridley").display().to_string(),
     ]);
-    builds::c_build(builds::CBuildRequest {
-        command,
-        run: run.into(),
-        checkout: checkout.into(),
-        root: request.root.clone(),
-        workers: request.workers,
-    })?;
-    builds::execute(
-        &[run.join("ridley").display().to_string(), "--abi-controls".into()],
-        run,
-        "abi-controls",
-        &request.root,
-        request.workers,
-    )?;
+    if let Some(execution) = execution {
+        let names = instrumented.keys().map(|bank| format!("ridley-services-{bank}")).collect::<Vec<_>>();
+        let mut generated = vec!["oracle.c", "libridley.a"];
+        generated.extend(names.iter().map(String::as_str));
+        execution.compile_recipe(&command, run, "c-build", checkout, source, &generated, &["ridley"], true)?;
+    } else {
+        builds::c_build(builds::CBuildRequest {
+            command,
+            run: run.into(),
+            checkout: checkout.into(),
+            root: request.root.clone(),
+            workers: request.workers,
+        })?;
+    }
+    let command = [run.join("ridley").display().to_string(), "--abi-controls".into()];
+    if let Some(execution) = execution {
+        execution.fixture_recipe(&command, run, "abi-controls", builds::StrictFixture::RidleyAbi)?;
+    } else {
+        builds::execute(&command, run, "abi-controls", &request.root, request.workers)?;
+    }
     // The executor preloads these separately. Each fixture still forks a fresh
     // child from its respective native image; the helper never invokes gameplay.
     for subject in ["c", "rust"] {
-        fs::hard_link(run.join("ridley"), run.join(subject))?;
+        family::write_build_input(
+            &run.join(subject),
+            &inputs::bounded::read(run.join("ridley"))?,
+            execution.is_some(),
+        )?;
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(run.join(subject), fs::Permissions::from_mode(0o500))?;
     }
     fs::copy(&module, run.join("candidate.rs"))?;
     fs::copy(checkout.join("crates/pipeline/src/fixture_worker.rs"), run.join("fixture-worker.rs"))?;
-    let dependencies = inputs::dependencies(inputs::DependenciesRequest {
+    let dependency_request = inputs::DependenciesRequest {
         checkout: checkout.into(),
         run: run.into(),
         extra: manifest.rust_dependencies.clone(),
-    })?;
+    };
+    let dependencies = if execution.is_some() {
+        inputs::confined_dependencies(dependency_request)?
+    } else {
+        inputs::dependencies(dependency_request)?
+    };
     let mut harness = BTreeMap::new();
     for (name, compiled) in [
         ("ridley_subsystem_adapter.rs", include_str!("ridley_subsystem_adapter.rs")),
@@ -579,13 +650,34 @@ pub fn case(
     run: &Path,
     worker: &mut crate::fixture_execution::Worker,
 ) -> Result<CaseRecord> {
+    case_with(routine, fixture, run, false, |command, directory, subject| worker.execute(command, directory, subject))
+}
+
+pub(crate) fn confined_case(
+    routine: &Routine,
+    fixture: &Case,
+    run: &Path,
+    execution: &builds::StrictExecution,
+) -> Result<CaseRecord> {
+    case_with(routine, fixture, run, true, |command, directory, subject| {
+        execution.fixture_recipe(command, directory, subject, builds::StrictFixture::Ridley).map(|_| ())
+    })
+}
+
+fn case_with(
+    routine: &Routine,
+    fixture: &Case,
+    run: &Path,
+    resume: bool,
+    mut execute: impl FnMut(&[String], &Path, &str) -> Result<()>,
+) -> Result<CaseRecord> {
     let directory = run.join(&fixture.name);
-    family::prepare_case(fixture, &directory, &family::types(routine)?)?;
+    family::prepare_case_with(fixture, &directory, &family::types(routine)?, resume)?;
     fs::write(directory.join("host-before.bin"), host_before(fixture, run)?)?;
     fs::write(directory.join("ppu-before.bin"), ppu_before(fixture, run)?)?;
     retain_capture(&directory, fixture)?;
     for subject in ["rust", "c"] {
-        worker.execute(
+        execute(
             &[
                 run.join(subject).display().to_string(),
                 subject.into(),

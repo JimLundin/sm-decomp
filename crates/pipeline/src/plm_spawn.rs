@@ -33,42 +33,79 @@ pub fn build(
     source: &Path,
     run: &Path,
 ) -> Result<Implementation> {
+    build_with(request, manifest, checkout, source, run, None)
+}
+
+pub(crate) fn build_with(
+    request: &VerifyRequest,
+    manifest: &Manifest,
+    checkout: &Path,
+    source: &Path,
+    run: &Path,
+    execution: Option<&builds::StrictExecution>,
+) -> Result<Implementation> {
     let module = fs::canonicalize(family::source_path(checkout, &manifest.rust_module))?;
-    let memory = inputs::wrapper(inputs::WrapperRequest {
-        checkout: checkout.into(),
-        run: run.into(),
-        modules: vec![module.clone()],
-        imports: vec![],
-    })?;
-    fs::write(
-        run.join("wrapper.rs"),
-        include_str!("plm_spawn_abi.rs.in")
-            .replace("__MEMORY__", &format!("{:?}", memory.path))
-            .replace("__MODULE__", &format!("{module:?}")),
-    )?;
-    fs::write(
-        run.join("oracle.c"),
-        include_str!("plm_spawn_host.c.in")
-            .replace("__HEADLESS__", &format!("{:?}", checkout.join("tools/decomp/headless.c"))),
+    let memory = if let Some(execution) = execution {
+        inputs::canonical_wrapper(checkout, run, &execution.rust_inputs)?
+    } else {
+        inputs::wrapper(inputs::WrapperRequest {
+            checkout: checkout.into(),
+            run: run.into(),
+            modules: vec![module.clone()],
+            imports: vec![],
+        })?
+    };
+    let mut wrapper = include_str!("plm_spawn_abi.rs.in")
+        .replace("__MEMORY__", &format!("{:?}", memory.path))
+        .replace("__MODULE__", &format!("{module:?}"));
+    if execution.is_some() {
+        wrapper = wrapper
+            .replace(
+                &format!("#[path={:?}]mod memory;use memory::*;", memory.path),
+                "include!(\"/inputs/generated/memory.rs\");",
+            )
+            .replace(
+                &format!("#[path={module:?}]mod plm;"),
+                &format!("use {} as plm;", module.file_stem().unwrap().to_string_lossy()),
+            );
+    }
+    family::write_build_input(&run.join("wrapper.rs"), wrapper.as_bytes(), execution.is_some())?;
+    let headless = if execution.is_some() {
+        "/inputs/rust/tools/decomp/headless.c".into()
+    } else {
+        checkout.join("tools/decomp/headless.c")
+    };
+    family::write_build_input(
+        &run.join("oracle.c"),
+        include_str!("plm_spawn_host.c.in").replace("__HEADLESS__", &format!("{headless:?}")).as_bytes(),
+        execution.is_some(),
     )?;
     let root = &request.root;
     let workers = request.workers;
-    builds::execute(
-        &[
-            "rustc".into(),
-            "--edition=2024".into(),
-            "-O".into(),
-            "--crate-type=staticlib".into(),
-            format!("--emit=link,dep-info={}", run.join("compiler.d").display()),
-            run.join("wrapper.rs").to_string_lossy().into_owned(),
-            "-o".into(),
-            run.join("libplm.a").to_string_lossy().into_owned(),
-        ],
-        run,
-        "rust-build",
-        root,
-        workers,
-    )?;
+    let command = vec![
+        "rustc".into(),
+        "--edition=2024".into(),
+        "-O".into(),
+        "--crate-type=staticlib".into(),
+        format!("--emit=link,dep-info={}", run.join("compiler.d").display()),
+        run.join("wrapper.rs").to_string_lossy().into_owned(),
+        "-o".into(),
+        run.join("libplm.a").to_string_lossy().into_owned(),
+    ];
+    if let Some(execution) = execution {
+        execution.compile_recipe(
+            &command,
+            run,
+            "rust-build",
+            checkout,
+            source,
+            &["wrapper.rs", "memory.rs"],
+            &["libplm.a", "compiler.d"],
+            false,
+        )?;
+    } else {
+        builds::execute(&command, run, "rust-build", root, workers)?;
+    }
     let mut command = vec![
         "cc".into(),
         "-O0".into(),
@@ -92,35 +129,52 @@ pub fn build(
         "-o".into(),
         run.join("spawn").to_string_lossy().into_owned(),
     ]);
-    builds::c_build(builds::CBuildRequest {
-        command,
-        run: run.into(),
-        checkout: checkout.into(),
-        root: root.clone(),
-        workers,
-    })?;
-    builds::execute(
-        &[
-            run.join("spawn").to_string_lossy().into_owned(),
-            "abi".into(),
-            "0".into(),
-            "0".into(),
-            "reserved".into(),
-            "reserved".into(),
-            run.join("rom.bin").to_string_lossy().into_owned(),
-            "reserved".into(),
-        ],
-        run,
-        "abi-controls",
-        root,
-        workers,
-    )?;
+    if let Some(execution) = execution {
+        execution.compile_recipe(
+            &command,
+            run,
+            "c-build",
+            checkout,
+            source,
+            &["oracle.c", "libplm.a"],
+            &["spawn"],
+            true,
+        )?;
+    } else {
+        builds::c_build(builds::CBuildRequest {
+            command,
+            run: run.into(),
+            checkout: checkout.into(),
+            root: root.clone(),
+            workers,
+        })?;
+    }
+    let command = vec![
+        run.join("spawn").to_string_lossy().into_owned(),
+        "abi".into(),
+        "0".into(),
+        "0".into(),
+        "reserved".into(),
+        "reserved".into(),
+        run.join("rom.bin").to_string_lossy().into_owned(),
+        "reserved".into(),
+    ];
+    if let Some(execution) = execution {
+        execution.fixture_recipe(&command, run, "abi-controls", builds::StrictFixture::PlmAbi)?;
+    } else {
+        builds::execute(&command, run, "abi-controls", root, workers)?;
+    }
     fs::copy(&module, run.join("candidate.rs"))?;
-    let dependencies = inputs::dependencies(inputs::DependenciesRequest {
+    let dependency_request = inputs::DependenciesRequest {
         checkout: checkout.into(),
         run: run.into(),
         extra: manifest.rust_dependencies.clone(),
-    })?;
+    };
+    let dependencies = if execution.is_some() {
+        inputs::confined_dependencies(dependency_request)?
+    } else {
+        inputs::dependencies(dependency_request)?
+    };
     let mut harness = BTreeMap::new();
     for (name, compiled) in [
         ("plm_spawn.rs", include_str!("plm_spawn.rs")),
@@ -218,12 +272,33 @@ pub fn case(
     run: &Path,
     worker: &mut crate::fixture_execution::Worker,
 ) -> Result<CaseRecord> {
+    case_with(routine, fixture, run, false, |command, directory, subject| worker.execute(command, directory, subject))
+}
+
+pub(crate) fn confined_case(
+    routine: &Routine,
+    fixture: &Case,
+    run: &Path,
+    execution: &builds::StrictExecution,
+) -> Result<CaseRecord> {
+    case_with(routine, fixture, run, true, |command, directory, subject| {
+        execution.fixture_recipe(command, directory, subject, builds::StrictFixture::Plm).map(|_| ())
+    })
+}
+
+fn case_with(
+    routine: &Routine,
+    fixture: &Case,
+    run: &Path,
+    resume: bool,
+    mut execute: impl FnMut(&[String], &Path, &str) -> Result<()>,
+) -> Result<CaseRecord> {
     let name = fixture.name.as_str();
     let kind = routine.symbol.as_str();
     let directory = run.join(name);
-    family::prepare_case(fixture, &directory, &["uint16".into(), "int32".into()])?;
+    family::prepare_case_with(fixture, &directory, &["uint16".into(), "int32".into()], resume)?;
     for subject in ["rust", "c"] {
-        worker.execute(
+        execute(
             &[
                 run.join("spawn").to_string_lossy().into_owned(),
                 subject.into(),

@@ -23,6 +23,10 @@ use translation_execution::{
     retention::Reference,
 };
 
+#[path = "translation_native_recipe.rs"]
+mod recipes;
+pub(crate) use recipes::{NativeRecipe, contract_for_direct_animation, prepare_generated_plm};
+
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct NativeLimits {
@@ -58,6 +62,7 @@ impl NativeLimits {
 pub(crate) enum NativeProvenance {
     NativeScope { scope: Asset, checkout: PathBuf },
     ReviewedOfflineFamily { verdict: Asset, checkout: PathBuf },
+    ReviewedCatalog { catalog: Asset, requirements: Asset, checkout: PathBuf, rationale: String },
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -74,6 +79,8 @@ pub(crate) struct NativeContract {
     pub frozen_inputs: BTreeMap<String, String>,
     pub compiler_limits: NativeLimits,
     pub fixture_limits: NativeLimits,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub recipe: Option<NativeRecipe>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -319,7 +326,21 @@ fn contract_for_family_bounded(
     ensure!(relative(manifest), "registered native manifest must be relative");
     let path = file(&checkout.join(manifest))?;
     let declared: Manifest = family::object(&path)?;
-    plain(&declared)?;
+    let recipe = recipes::for_family(&checkout, &declared)?;
+    contract_for_declared(&checkout, manifest, source_inventory, provenance, compiler_limits, fixture_limits, recipe)
+}
+
+fn contract_for_declared(
+    checkout: &Path,
+    manifest: &Path,
+    source_inventory: Asset,
+    provenance: NativeProvenance,
+    compiler_limits: NativeLimits,
+    fixture_limits: NativeLimits,
+    recipe: Option<NativeRecipe>,
+) -> Result<NativeContract> {
+    let path = file(&checkout.join(manifest))?;
+    let declared = recipes::manifest(checkout, &path, recipe.as_ref())?;
     let candidate = file(&checkout.join(&declared.rust_module))?;
     ensure!(declared.rust_dependencies.len() <= 4096, "native declared dependency inventory exceeded");
     let sources = inputs::canonical_sources(&checkout, &[candidate], &declared.rust_imports)?;
@@ -332,9 +353,15 @@ fn contract_for_family_bounded(
         let name = format!("crates/pipeline/src/{name}");
         frozen_inputs.insert(name.clone(), digest(&file(&checkout.join(&name))?)?);
     }
+    for name in recipes::harness(recipe.as_ref()) {
+        frozen_inputs.insert(name.into(), digest(&file(&checkout.join(name))?)?);
+    }
     for path in &declared.rust_dependencies {
         bounded::check()?;
-        ensure!(relative(path), "native declared dependency must be relative");
+        ensure!(
+            relative(path) || recipe.is_some() && path.is_absolute(),
+            "native declared dependency must be relative"
+        );
         frozen_inputs.insert(
             path.to_str().context("native dependency path UTF-8")?.into(),
             digest(&file(&checkout.join(path))?)?,
@@ -342,6 +369,7 @@ fn contract_for_family_bounded(
     }
     frozen_inputs.insert("tools/dependencies.toml".into(), digest(&file(&checkout.join("tools/dependencies.toml"))?)?);
     frozen_inputs.insert(manifest.display().to_string(), digest(&path)?);
+    recipes::freeze_assets(checkout, recipe.as_ref(), &mut frozen_inputs)?;
     Ok(NativeContract {
         family: declared.family.clone(),
         manifest: Asset { file: manifest.into(), sha256: digest(&path)? },
@@ -351,6 +379,7 @@ fn contract_for_family_bounded(
         frozen_inputs,
         compiler_limits,
         fixture_limits,
+        recipe,
     })
 }
 
@@ -362,6 +391,17 @@ fn provenance(
     source: &Source,
 ) -> Result<()> {
     match &contract.provenance {
+        NativeProvenance::ReviewedCatalog { catalog, requirements, checkout: owner, rationale } => {
+            ensure!(!rationale.trim().is_empty() && rationale.len() <= 4096, "catalog review rationale missing");
+            check_asset(owner, requirements)?;
+            let reviewed = check_asset(owner, catalog)?;
+            let inventory: batch::Catalog = family::object(&reviewed)?;
+            ensure!(
+                sealed(&inventory)? == sealed(&batch::catalog(checkout)?)?,
+                "reviewed conservative catalog differs"
+            );
+            recipes::registration(checkout, contract, manifest)?;
+        }
         NativeProvenance::NativeScope { scope, checkout: owner } => {
             let path = check_asset(owner, scope)?;
             crate::translation::validate_scope(owner, &path)?;
@@ -463,23 +503,20 @@ fn prepare_bounded(checkout: &Path, pinned_source: &Path, contract: &NativeContr
     let pinned_source = fs::canonicalize(pinned_source)?;
     ensure!(relative(&contract.manifest.file), "native manifest is not registered relative input");
     let manifest_path = check_asset(&checkout, &contract.manifest)?;
-    let manifest: Manifest = family::object(&manifest_path)?;
+    let manifest = recipes::manifest(&checkout, &manifest_path, contract.recipe.as_ref())?;
     ensure!(
         contract.frozen_inputs.len() <= 4096 && contract.coverage.len() <= 1024,
         "native frozen input or coverage inventory exceeded"
     );
     bounded::count(contract.frozen_inputs.len())?;
-    plain(&manifest)?;
+    if contract.recipe.is_none() {
+        plain(&manifest)?;
+    }
     ensure!(
         manifest.family == contract.family && coverage(&manifest)? == contract.coverage,
         "prescribed native fixture coverage missing or changed"
     );
-    let catalog = batch::catalog(&checkout)?;
-    let entry = batch::entry(&catalog, &contract.family)?;
-    ensure!(
-        entry.kind == "family" && entry.prepare.is_none() && entry.manifest == contract.manifest.file,
-        "native family registration differs"
-    );
+    recipes::registration(&checkout, contract, &manifest)?;
     contract.compiler_limits.run_limits()?;
     let fixture_limits = contract.fixture_limits.run_limits()?;
     ensure!(fixture_limits.writable_bytes > 0x20000, "native fixture quota cannot retain full WRAM");
@@ -493,14 +530,15 @@ fn prepare_bounded(checkout: &Path, pinned_source: &Path, contract: &NativeContr
         .map(|routine| routine["symbol"].as_str().context("native inventory symbol missing"))
         .collect::<Result<BTreeSet<_>>>()?;
     ensure!(
-        contract.coverage.keys().all(|symbol| symbols.contains(symbol.as_str())),
+        recipes::source_symbols(&manifest, contract.recipe.as_ref()).iter().all(|symbol| symbols.contains(*symbol)),
         "required native routine is absent from agreed source inventory"
     );
     provenance(&checkout, &pinned_source, contract, &manifest, &source)?;
     for (name, expected) in &contract.frozen_inputs {
         bounded::check()?;
         ensure!(
-            relative(Path::new(name)) && digest(&file(&checkout.join(name))?)? == *expected,
+            (relative(Path::new(name)) || contract.recipe.is_some() && Path::new(name).is_absolute())
+                && digest(&file(&checkout.join(name))?)? == *expected,
             "native frozen input changed: {name}"
         );
     }
@@ -519,8 +557,17 @@ fn prepare_bounded(checkout: &Path, pinned_source: &Path, contract: &NativeContr
             "installed native harness dependency missing: {name}"
         );
     }
+    for name in recipes::harness(contract.recipe.as_ref()) {
+        ensure!(
+            contract.frozen_inputs.get(name) == Some(&digest(&file(&checkout.join(name))?)?),
+            "native recipe input missing: {name}"
+        );
+    }
     for dependency in &manifest.rust_dependencies {
-        ensure!(relative(dependency), "native declared dependency must be relative");
+        ensure!(
+            relative(dependency) || contract.recipe.is_some() && dependency.is_absolute(),
+            "native declared dependency must be relative"
+        );
         let name = dependency.to_str().context("native dependency path UTF-8")?;
         ensure!(
             contract.frozen_inputs.get(name) == Some(&digest(&file(&checkout.join(dependency))?)?),
@@ -530,7 +577,12 @@ fn prepare_bounded(checkout: &Path, pinned_source: &Path, contract: &NativeContr
     if let Some(rom) = &manifest.rom {
         check_asset(&checkout, rom)?;
     }
-    let c = c_inputs(&pinned_source, &manifest)?;
+    let mut c = c_inputs(&pinned_source, &manifest)?;
+    if recipes::full_c(contract.recipe.as_ref()) {
+        c.extend(family::c_units(&pinned_source)?);
+        c.sort();
+        c.dedup();
+    }
     let c_names = c
         .iter()
         .map(|path| Ok(path.strip_prefix(&pinned_source)?.display().to_string()))
@@ -763,7 +815,7 @@ fn run_bounded(
         root: runtime.pipeline_root.clone(),
         workers: runtime.workers,
         case_jobs: 1,
-        adapter: "family".into(),
+        adapter: recipes::adapter(prepared.contract.recipe.as_ref()).into(),
     };
     let mut verdict = Verdict {
         status: "rejected".into(),
@@ -774,7 +826,8 @@ fn run_bounded(
         ..Default::default()
     };
     let produce = || -> Result<()> {
-        immutable(&run.join("manifest.toml"), &bounded::read(checkout.join(&prepared.contract.manifest.file))?)?;
+        let manifest_bytes = recipes::manifest_bytes(prepared, &checkout)?;
+        immutable(&run.join("manifest.toml"), &manifest_bytes)?;
         immutable(&run.join("LICENSE.txt"), &bounded::read(prepared.pinned_source.join("LICENSE.txt"))?)?;
         if let Some(rom) = &prepared.manifest.rom {
             let bytes = bounded::read(check_asset(&checkout, rom)?)?;
@@ -782,20 +835,24 @@ fn run_bounded(
             immutable(&run.join("rom.bin"), &bytes)?;
             verdict.rom = Some(crate::family_model::RomIdentity { sha256: sha256(&bytes), bytes: bytes.len() });
         }
-        let mut implementation =
-            family::build_confined(&request, &prepared.manifest, &checkout, &prepared.pinned_source, &run, &execution)?;
+        let mut implementation = recipes::build(&request, prepared, &checkout, &run, &execution)?;
         implementation.manifest = Some(Asset {
-            file: checkout.join(&prepared.contract.manifest.file),
-            sha256: prepared.contract.manifest.sha256.clone(),
+            file: if recipes::generated(prepared.contract.recipe.as_ref()) {
+                run.join("manifest.toml")
+            } else {
+                checkout.join(&prepared.contract.manifest.file)
+            },
+            sha256: sha256(&manifest_bytes),
         });
         immutable(
             &run.join("manifest-input.toml"),
             toml::to_string(implementation.manifest.as_ref().unwrap())?.as_bytes(),
         )?;
         verdict.implementation = Some(implementation);
-        for (routine, fixture, _) in family::ordered_tasks(&prepared.manifest)? {
-            verdict.cases.push(family::confined_case(&prepared.manifest, routine, fixture, &run, &execution)?);
+        for (routine, fixture, index) in family::ordered_tasks(&prepared.manifest)? {
+            verdict.cases.push(recipes::fixture(prepared, routine, fixture, index, &run, &execution)?);
         }
+        recipes::verdict_fields(prepared, &mut verdict)?;
         check_candidate(prepared, &checkout)?;
         ensure!(now_unix_ms()? < intent.deadline_unix_ms, "native full family gate time budget exhausted");
         verdict.status = "offline-verified".into();
@@ -936,15 +993,21 @@ fn authenticate_bounded(prepared: &PreparedNative, checkout: &Path, receipt: &Na
         verdict.family == prepared.contract.family && verdict.source.as_ref() == Some(&prepared.source),
         "native family source identity differs"
     );
-    ensure!(
-        coverage(&family::object::<Manifest>(&verdict.run.join("manifest.toml"))?)? == prepared.contract.coverage,
-        "native frozen coverage differs"
-    );
+    let declared: Manifest = family::object(&verdict.run.join("manifest.toml"))?;
+    let declared = if matches!(prepared.contract.recipe, Some(NativeRecipe::Plm)) {
+        crate::plm_spawn::normalize(&declared)?
+    } else {
+        declared
+    };
+    ensure!(coverage(&declared)? == prepared.contract.coverage, "native frozen coverage differs");
     Ok(verdict)
 }
 
 fn operation_slots(prepared: &PreparedNative, run: &Path) -> Result<Vec<(PathBuf, String)>> {
     let mut result = vec![(run.to_path_buf(), "c-build".into()), (run.to_path_buf(), "rust-build".into())];
+    if recipes::abi(prepared.contract.recipe.as_ref()) {
+        result.push((run.to_path_buf(), "abi-controls".into()));
+    }
     for (_, fixture, _) in family::ordered_tasks(&prepared.manifest)? {
         bounded::check()?;
         result.push((run.join(&fixture.name), "rust".into()));
@@ -1029,7 +1092,7 @@ fn authenticate_operation(
     );
     let compiler = operation.label.ends_with("-build");
     let rust = operation.label == "rust-build";
-    let family_run = if compiler {
+    let family_run = if compiler || operation.label == "abi-controls" {
         operation.directory.clone()
     } else {
         operation.directory.parent().context("native fixture family parent missing")?.to_path_buf()
@@ -1069,46 +1132,42 @@ fn authenticate_operation(
             };
             expected_inputs.insert((source, Path::new(if rust { "/inputs/rust" } else { "/inputs/c" }).join(name)));
         }
-        for name in if rust { vec!["wrapper.rs", "memory.rs"] } else { vec!["oracle.c"] } {
+        let (generated, outputs, headless) = recipes::compiler_files(prepared.contract.recipe.as_ref(), rust);
+        for name in generated {
             expected_inputs.insert((operation.directory.join(name), Path::new("/inputs/generated").join(name)));
         }
-        let outputs: BTreeSet<PathBuf> = if rust {
-            [PathBuf::from("rust"), PathBuf::from("compiler.d")].into()
-        } else {
-            [PathBuf::from("c")].into()
-        };
+        if headless {
+            for name in ["headless.c", "headless_frame.h"] {
+                // The first retained recipe stop predates the complete header
+                // closure. It remains a valid failed receipt, never readiness.
+                if name == "headless_frame.h" && !prepared.contract.frozen_inputs.contains_key("tools/decomp/headless_frame.h") {
+                    continue;
+                }
+                let destination = Path::new("/inputs/rust/tools/decomp").join(name);
+                let input = invocation
+                    .program
+                    .inputs
+                    .iter()
+                    .find(|i| i.destination == destination)
+                    .context("native headless source missing")?;
+                ensure!(
+                    prepared.contract.frozen_inputs.get(&format!("tools/decomp/{name}"))
+                        == Some(&digest(&input.source)?),
+                    "native headless source changed"
+                );
+                expected_inputs.insert((input.source.clone(), destination));
+            }
+        }
+        let outputs = outputs.into_iter().map(PathBuf::from).collect::<BTreeSet<_>>();
         ensure!(
             invocation.program.outputs.iter().cloned().collect::<BTreeSet<_>>() == outputs,
             "native compiler outputs changed"
         );
     } else {
-        let run = operation.directory.parent().context("native fixture has no family parent")?;
-        let fixture = family::ordered_tasks(&prepared.manifest)?
-            .into_iter()
-            .find(|(_, fixture, _)| run.join(&fixture.name) == operation.directory)
-            .context("native producer is not a declared fixture")?;
-        ensure!(invocation.program.executable == run.join(&operation.label), "native fixture executed another binary");
-        let mut arguments = vec![
-            fixture.0.symbol.clone(),
-            fixture.1.a.to_string(),
-            fixture.1.b.to_string(),
-            "/inputs/before.wram".into(),
-            "/work/after.wram".into(),
-        ];
-        expected_inputs.insert((operation.directory.join("before.wram"), "/inputs/before.wram".into()));
-        if prepared.manifest.rom.is_some() {
-            arguments.push("/inputs/rom.bin".into());
-            expected_inputs.insert((run.join("rom.bin"), "/inputs/rom.bin".into()));
-        }
-        ensure!(
-            invocation.program.arguments == arguments
-                && invocation.program.outputs == vec![PathBuf::from("after.wram")],
-            "native fixture arguments or output declarations changed"
-        );
-        ensure!(
-            invocation.program.runtime == translation_execution::confinement::helper_runtime()?,
-            "native fixture runtime capabilities changed"
-        );
+        let expected =
+            recipes::fixture_program(prepared, &family_run, &operation.directory, &operation.label, &intent.helper)?;
+        ensure!(invocation.program == expected, "native fixture arguments, outputs or capabilities changed");
+        expected_inputs.extend(expected.inputs.into_iter().map(|i| (i.source, i.destination)));
     }
     ensure!(
         invocation
@@ -1149,12 +1208,17 @@ fn authenticate_operation(
         );
     }
     for (name, bytes) in &result.outputs {
-        let destination = if name == Path::new("after.wram") {
-            operation.directory.join(format!("{}-after.wram", operation.label))
-        } else {
-            operation.directory.join(name)
-        };
+        let destination = builds::strict_output_path(&operation.directory, &operation.label, name);
         ensure!(bounded::read(destination)? == *bytes, "native parent output differs from confined producer");
+    }
+    if result.passed
+        && !compiler
+        && matches!(
+            prepared.contract.recipe,
+            Some(NativeRecipe::Callback | NativeRecipe::PowerBomb | NativeRecipe::GameHost)
+        )
+    {
+        crate::callback::authenticate_packed_snapshots(&operation.directory, &operation.label)?;
     }
     Ok(result.passed)
 }
@@ -1265,6 +1329,211 @@ mod tests {
     use super::*;
 
     #[test]
+    fn frozen_shared_host_contracts_preserve_both_original_matrices() -> Result<()> {
+        let checkout = current_checkout();
+        let limits = NativeLimits {
+            timeout_seconds: 60,
+            writable_bytes: 128 * 1024 * 1024,
+            stdout_bytes: 4096,
+            stderr_bytes: 256 * 1024,
+            stdin_bytes: 0,
+        };
+        let mut pairs = 0;
+        for name in ["game-host-projectile", "game-host-room-scroll"] {
+            let contract = contract_for_family(
+                &checkout,
+                &PathBuf::from(format!("tools/port/{name}.toml")),
+                Asset::default(),
+                NativeProvenance::NativeScope { scope: Asset::default(), checkout: checkout.clone() },
+                limits.clone(),
+                limits.clone(),
+            )?;
+            pairs += contract.coverage.values().map(Vec::len).sum::<usize>();
+        }
+        assert_eq!(pairs, 10);
+        Ok(())
+    }
+
+    #[test]
+    #[ignore = "real separately confined actual-C controls; retains source, replay and cleanup evidence"]
+    fn real_reviewed_recipes_replay_and_authenticate() -> Result<()> {
+        let _ = crate::BINARY_SHA256.set(crate::digest(&std::env::current_exe()?)?);
+        let root = PathBuf::from(std::env::var("SM_NATIVE_RECIPE_PROOF")?);
+        fs::create_dir_all(&root)?;
+        let current = current_checkout();
+        let checkout = root.join("source");
+        let selection = std::env::var("SM_NATIVE_RECIPE_FAMILIES")
+            .unwrap_or_else(|_| "game-host-projectile,game-host-room-scroll".into());
+        let names = selection.split(',').collect::<Vec<_>>();
+        let mut paths = BTreeSet::from([
+            "tools/port/batch.toml".to_owned(),
+            "tools/dependencies.toml".into(),
+            "tools/decomp/headless.c".into(),
+            "tools/decomp/headless_frame.h".into(),
+            "tools/port/source-inventory.toml".into(),
+        ]);
+        for directory in ["crates/pipeline/src", "crates/port/src"] {
+            for entry in fs::read_dir(current.join(directory))? {
+                let path = entry?.path();
+                if path.is_file() {
+                    paths.insert(path.strip_prefix(&current)?.display().to_string());
+                }
+            }
+        }
+        for name in &names {
+            if *name == "pause-direct-animation" {
+                paths.extend([
+                    "tools/port/pause-equipment-render.toml".into(),
+                    ".scratch/decomp-coverage/renderer/direct-animation.toml".into(),
+                ]);
+            } else {
+                paths.insert(format!("tools/port/{name}.toml"));
+            }
+        }
+        if names.contains(&"plm-instructions") {
+            paths.insert("rom/sm.sfc".into());
+        }
+        for path in paths {
+            fs::create_dir_all(checkout.join(&path).parent().unwrap())?;
+            immutable(&checkout.join(&path), &bounded::read(current.join(&path))?)?;
+        }
+        if names.contains(&"plm-instructions") {
+            prepare_generated_plm(&checkout, &checkout.join(".scratch/translation-native/plm-instructions"))?;
+        }
+        let catalog = root.join("catalog.toml");
+        immutable(&catalog, toml::to_string(&batch::catalog(&checkout)?)?.as_bytes())?;
+        let requirements = root.join("requirements.md");
+        immutable(
+            &requirements,
+            &bounded::read(
+                current.join(".scratch/translation-scope-execution/issues/10-original-acceptance-adapters.md"),
+            )?,
+        )?;
+        let inventory = Asset {
+            file: "tools/port/source-inventory.toml".into(),
+            sha256: digest(&checkout.join("tools/port/source-inventory.toml"))?,
+        };
+        let provenance = NativeProvenance::ReviewedCatalog {
+            catalog: Asset { file: catalog.clone(), sha256: digest(&catalog)? },
+            requirements: Asset { file: requirements.clone(), sha256: digest(&requirements)? },
+            checkout: checkout.clone(),
+            rationale: "Ticket 10 public original recipe test with complete selected declarations and actual pinned C"
+                .into(),
+        };
+        let compiler = NativeLimits {
+            timeout_seconds: 60,
+            writable_bytes: 128 * 1024 * 1024,
+            stdout_bytes: 4096,
+            stderr_bytes: 256 * 1024,
+            stdin_bytes: 0,
+        };
+        let fixture = NativeLimits {
+            timeout_seconds: 5,
+            writable_bytes: 16 * 1024 * 1024,
+            stdout_bytes: 4096,
+            stderr_bytes: 4096,
+            stdin_bytes: 0,
+        };
+        let mut completed = Vec::new();
+        let mut failures = Vec::new();
+        for name in names {
+            let output = root.join(name);
+            fs::create_dir_all(&output)?;
+            let contract = if name == "pause-direct-animation" {
+                contract_for_direct_animation(
+                    &checkout,
+                    Path::new(".scratch/decomp-coverage/renderer/direct-animation.toml"),
+                    inventory.clone(),
+                    provenance.clone(),
+                    compiler.clone(),
+                    fixture.clone(),
+                )?
+            } else {
+                contract_for_family(
+                    &checkout,
+                    Path::new(&format!("tools/port/{name}.toml")),
+                    inventory.clone(),
+                    provenance.clone(),
+                    compiler.clone(),
+                    fixture.clone(),
+                )?
+            };
+            let prepared = prepare(&checkout, Path::new("/home/jim/sm-decomp/deps/snesrev-sm"), &contract)?;
+            immutable(&output.join("prepared.toml"), toml::to_string(&prepared)?.as_bytes())?;
+            let runtime = StrictRuntime {
+                helper: "/home/jim/sm-decomp/out/translation-production/sm-translation-sandbox".into(),
+                rustc: "/home/jim/.rustup/toolchains/nightly-2026-09-29-x86_64-unknown-linux-gnu/bin/rustc".into(),
+                c_compiler: "/usr/bin/x86_64-linux-gnu-gcc-9".into(),
+                operation_root: output.join("operations"),
+                pipeline_root: "/home/jim/sm-decomp/out/pipeline".into(),
+                workers: 4,
+                gate_timeout_seconds: 600,
+                deadline_unix_ms: None,
+                max_output_bytes: 64 * 1024 * 1024 * 1024,
+            };
+            let context = OperationContext {
+                run_id: sha256(root.display().to_string()),
+                attempt: 1,
+                policy_sha256: prepared.verification_sha256.clone(),
+                operation_key: sha256(name),
+                phase: translation_execution::model::ExecutionPhase::Candidate,
+            };
+            let receipt = run(&prepared, &checkout, &output.join("run"), &runtime, &context)?;
+            let verdict = authenticate(&prepared, &checkout, &receipt)?;
+            let identities = receipt
+                .operations
+                .iter()
+                .map(|o| Ok((o.result.path.clone(), o.result.path.metadata()?.modified()?)))
+                .collect::<Result<Vec<_>>>()?;
+            ensure!(
+                sealed(&run(&prepared, &checkout, &output.join("run"), &runtime, &context)?)? == sealed(&receipt)?,
+                "recipe replay changed receipt"
+            );
+            for (path, modified) in identities {
+                ensure!(path.metadata()?.modified()? == modified, "recipe replay changed producer");
+            }
+            for deduplicate in [false, true] {
+                let cleanup = crate::cleanup::cleanup(crate::cleanup::CleanupRequest {
+                    root: output.join("run"),
+                    apply: true,
+                    deduplicate,
+                })?;
+                atomic_toml(
+                    &output.join(if deduplicate { "cleanup-deduplicated.toml" } else { "cleanup.toml" }),
+                    &cleanup,
+                )?;
+            }
+            authenticate(&prepared, &checkout, &receipt)?;
+            if receipt.passed {
+                if name == "game-host-room-scroll" {
+                    ensure!(
+                        verdict.cases.len() == 3 && verdict.cases.iter().all(|case| case.callbacks == 17),
+                        "original VRAM flush effects missing"
+                    );
+                }
+                if name == "game-host-projectile" {
+                    ensure!(
+                        verdict.cases.len() == 7
+                            && verdict.cases[0].callbacks == 2
+                            && verdict.cases[1].callbacks == 2
+                            && verdict.cases[2].callbacks >= 1,
+                        "original HDMA/PLM material controls missing"
+                    );
+                }
+                if name == "pause-direct-animation" {
+                    ensure!(verdict.verified_cases == 360, "original direct animation extent changed");
+                }
+            } else {
+                failures.push(format!("{name}: {}", receipt.diagnostic));
+            }
+            completed.push((name.to_string(), receipt.passed, verdict.verified_cases, receipt.diagnostic));
+        }
+        atomic_toml(&root.join("summary.toml"), &BTreeMap::from([("families", completed)]))?;
+        ensure!(failures.is_empty(), "{}", failures.join("; "));
+        Ok(())
+    }
+
+    #[test]
     fn scope_candidate_dependencies_are_mutable_and_bound_to_receipt_identity() -> Result<()> {
         let directory = bounded::tests::Directory::new()?;
         let checkout = &directory.0;
@@ -1288,6 +1557,7 @@ mod tests {
                 frozen_inputs,
                 compiler_limits: limits.clone(),
                 fixture_limits: limits,
+                recipe: None,
             },
             manifest: Manifest::default(),
             source: Source::default(),
@@ -1367,6 +1637,7 @@ mod tests {
                 frozen_inputs: BTreeMap::new(),
                 compiler_limits: limits.clone(),
                 fixture_limits: limits,
+                recipe: None,
             },
             manifest: Manifest::default(),
             source: Source::default(),
@@ -1432,6 +1703,7 @@ mod tests {
                 frozen_inputs: BTreeMap::new(),
                 compiler_limits: limits.clone(),
                 fixture_limits: limits,
+                recipe: None,
             },
             manifest,
             source: Source::default(),

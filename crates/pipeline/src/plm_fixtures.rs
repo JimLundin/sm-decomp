@@ -35,6 +35,20 @@ fn tiles(base: usize) -> Vec<u8> {
 }
 
 pub fn generate(checkout: &Path, output: &Path, manifest_path: Option<&Path>) -> Result<PlmGeneration> {
+    fs::create_dir_all(output)?;
+    let output = fs::canonicalize(output)?;
+    let path = output.join("plm-instructions-synthetic.sfc");
+    let (manifest, rom) = generated_contents(checkout, &path)?;
+    fs::write(&path, rom)?;
+    let destination = manifest_path.map(Path::to_path_buf).unwrap_or(output.join("plm-instructions.toml"));
+    fs::create_dir_all(destination.parent().context("manifest parent missing")?)?;
+    atomic_toml(&destination, &manifest)?;
+    Ok(PlmGeneration { manifest: fs::canonicalize(destination)?, rom: path, rom_sha256: manifest.rom.unwrap().sha256 })
+}
+
+/// Reconstruct the complete deterministic declaration without changing a frozen
+/// verification checkout or accepting caller-selected generated fixture rows.
+pub(crate) fn generated_contents(checkout: &Path, path: &Path) -> Result<(Manifest, Vec<u8>)> {
     let original = fs::read(checkout.join("rom/sm.sfc"))?;
     ensure!(
         digest(&checkout.join("rom/sm.sfc"))? == "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72",
@@ -336,17 +350,13 @@ pub fn generate(checkout: &Path, output: &Path, manifest_path: Option<&Path>) ->
             ));
         }
     }
-    fs::create_dir_all(output)?;
-    let output = fs::canonicalize(output)?;
-    let path = output.join("plm-instructions-synthetic.sfc");
-    fs::write(&path, rom)?;
     let manifest = Manifest {
         family: ("plm-instructions").to_owned(),
         bank: ("sm_84.c").to_owned(),
         c_support: (vec!["sm_80.c", "sm_rtl.c"]).into_iter().map(str::to_owned).collect(),
         rust_module: ("crates/port/src/plm_instructions.rs").to_owned(),
         rust_imports: (vec!["audio"]).into_iter().map(str::to_owned).collect(),
-        rom: Some(Asset { file: path.clone(), sha256: digest(&path)? }),
+        rom: Some(Asset { file: path.into(), sha256: translation_execution::model::sha256(&rom) }),
         routines: vec![
             Routine {
                 symbol: ("PlmInstruction").to_owned(),
@@ -393,10 +403,7 @@ pub fn generate(checkout: &Path, output: &Path, manifest_path: Option<&Path>) ->
         ],
         ..Default::default()
     };
-    let destination = manifest_path.map(Path::to_path_buf).unwrap_or(output.join("plm-instructions.toml"));
-    fs::create_dir_all(destination.parent().context("manifest parent missing")?)?;
-    atomic_toml(&destination, &manifest)?;
-    Ok(PlmGeneration { manifest: fs::canonicalize(destination)?, rom: path, rom_sha256: manifest.rom.unwrap().sha256 })
+    Ok((manifest, rom))
 }
 
 #[cfg(test)]

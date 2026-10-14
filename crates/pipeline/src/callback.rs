@@ -39,6 +39,17 @@ pub fn build(
     source: &Path,
     run: &Path,
 ) -> Result<Implementation> {
+    build_with(request, manifest, checkout, source, run, None)
+}
+
+pub(crate) fn build_with(
+    request: &VerifyRequest,
+    manifest: &Manifest,
+    checkout: &Path,
+    source: &Path,
+    run: &Path,
+    execution: Option<&builds::StrictExecution>,
+) -> Result<Implementation> {
     let module = fs::canonicalize(family::source_path(checkout, &manifest.rust_module))?;
     let game_host = manifest.callback_adapter.as_deref() == Some("game-host");
     let power_bomb = request.adapter == "power-bomb" || game_host;
@@ -80,12 +91,16 @@ pub fn build(
         branches.push(format!("if(!strcmp(argv[2],\"{symbol}\")){{{statement}}}"));
     }
     ensure!(manifest.rom.as_ref().is_some(), "callback verification requires ROM");
-    let memory = inputs::wrapper(inputs::WrapperRequest {
-        checkout: checkout.into(),
-        run: run.into(),
-        modules: vec![module.clone()],
-        imports: manifest.rust_imports.clone(),
-    })?;
+    let memory = if let Some(execution) = execution {
+        inputs::canonical_wrapper(checkout, run, &execution.rust_inputs)?
+    } else {
+        inputs::wrapper(inputs::WrapperRequest {
+            checkout: checkout.into(),
+            run: run.into(),
+            modules: vec![module.clone()],
+            imports: manifest.rust_imports.clone(),
+        })?
+    };
     let root_imports = manifest
         .rust_imports
         .iter()
@@ -94,42 +109,64 @@ pub fn build(
             Ok(format!("use memory::{name};\n"))
         })
         .collect::<Result<String>>()?;
-    fs::write(
-        run.join("wrapper.rs"),
-        format!("#[path={:?}] mod memory;use memory::*;\n{root_imports}{}", memory.path, abi(&manifest, &module)?),
-    )?;
-    fs::write(
-        run.join("oracle.c"),
-        include_str!("callback_host.c.in")
-            .replace("__HEADLESS__", &format!("{:?}", checkout.join("tools/decomp/headless.c")))
-            .replace(
-                "__HDMA_HOST__",
-                &format!(
-                    "{}{}",
-                    if power_bomb { include_str!("power_bomb_host.c.in") } else { "" },
-                    if game_host { include_str!("game_host_dependency.c.in") } else { "" }
-                ),
+    let wrapper = if execution.is_some() {
+        format!(
+            "include!(\"/inputs/generated/memory.rs\");\n{}",
+            abi(&manifest, &module)?.replace(
+                &format!("#[path={module:?}] mod family;"),
+                &format!("use {} as family;", module.file_stem().unwrap().to_string_lossy())
             )
-            .replace("__BRANCHES__", &branches.join("else ")),
-    )?;
+        )
+    } else {
+        format!("#[path={:?}] mod memory;use memory::*;\n{root_imports}{}", memory.path, abi(&manifest, &module)?)
+    };
+    family::write_build_input(&run.join("wrapper.rs"), wrapper.as_bytes(), execution.is_some())?;
+    let headless = if execution.is_some() {
+        "/inputs/rust/tools/decomp/headless.c".into()
+    } else {
+        checkout.join("tools/decomp/headless.c")
+    };
+    let mut oracle = include_str!("callback_host.c.in")
+        .replace("__HEADLESS__", &format!("{headless:?}"))
+        .replace(
+            "__HDMA_HOST__",
+            &format!(
+                "{}{}",
+                if power_bomb { include_str!("power_bomb_host.c.in") } else { "" },
+                if game_host { include_str!("game_host_dependency.c.in") } else { "" }
+            ),
+        )
+        .replace("__BRANCHES__", &branches.join("else "));
+    if execution.is_some() {
+        oracle = packed_snapshots(&oracle)?;
+    }
+    family::write_build_input(&run.join("oracle.c"), oracle.as_bytes(), execution.is_some())?;
     let root = &request.root;
     let workers = request.workers;
-    builds::execute(
-        &[
-            "rustc".into(),
-            "--edition=2024".into(),
-            "-O".into(),
-            "--crate-type=staticlib".into(),
-            format!("--emit=link,dep-info={}", run.join("compiler.d").display()),
-            run.join("wrapper.rs").to_string_lossy().into_owned(),
-            "-o".into(),
-            run.join("libcollision.a").to_string_lossy().into_owned(),
-        ],
-        run,
-        "rust-build",
-        root,
-        workers,
-    )?;
+    let command = vec![
+        "rustc".into(),
+        "--edition=2024".into(),
+        "-O".into(),
+        "--crate-type=staticlib".into(),
+        format!("--emit=link,dep-info={}", run.join("compiler.d").display()),
+        run.join("wrapper.rs").to_string_lossy().into_owned(),
+        "-o".into(),
+        run.join("libcollision.a").to_string_lossy().into_owned(),
+    ];
+    if let Some(execution) = execution {
+        execution.compile_recipe(
+            &command,
+            run,
+            "rust-build",
+            checkout,
+            source,
+            &["wrapper.rs", "memory.rs"],
+            &["libcollision.a", "compiler.d"],
+            false,
+        )?;
+    } else {
+        builds::execute(&command, run, "rust-build", root, workers)?;
+    }
     let mut command = vec![
         "cc".into(),
         if power_bomb { "-O0" } else { "-O2" }.into(),
@@ -145,7 +182,11 @@ pub fn build(
         let token = "uint16 SpawnHdmaObject(uint8 db, const void *p)";
         ensure!(original.matches(token).count() == 1, "HDMA definition seal not found");
         let seam = run.join("sm_88-allocation-seam.c");
-        fs::write(&seam, original.replace(token, "uint16 PortActualSpawnHdmaObject(uint8 db, const void *p)"))?;
+        family::write_build_input(
+            &seam,
+            original.replace(token, "uint16 PortActualSpawnHdmaObject(uint8 db, const void *p)").as_bytes(),
+            execution.is_some(),
+        )?;
         let bank =
             units.iter_mut().find(|p| p.file_name().is_some_and(|n| n == "sm_88.c")).context("bank88 missing")?;
         *bank = seam;
@@ -155,7 +196,11 @@ pub fn build(
         let token = "void NMI_ProcessVramWriteQueue(void)";
         ensure!(original.matches(token).count() == 1, "VRAM definition seal not found");
         let seam = run.join("sm_80-vram-seam.c");
-        fs::write(&seam, original.replace(token, "void PortActualNmiProcessVramWriteQueue(void)"))?;
+        family::write_build_input(
+            &seam,
+            original.replace(token, "void PortActualNmiProcessVramWriteQueue(void)").as_bytes(),
+            execution.is_some(),
+        )?;
         let bank =
             units.iter_mut().find(|p| p.file_name().is_some_and(|n| n == "sm_80.c")).context("bank80 missing")?;
         *bank = seam;
@@ -180,19 +225,35 @@ pub fn build(
         "-o".into(),
         run.join("collision").to_string_lossy().into_owned(),
     ]);
-    builds::c_build(builds::CBuildRequest {
-        command,
-        run: run.into(),
-        checkout: checkout.into(),
-        root: root.clone(),
-        workers,
-    })?;
+    if let Some(execution) = execution {
+        let mut generated = vec!["oracle.c", "libcollision.a"];
+        if power_bomb {
+            generated.push("sm_88-allocation-seam.c");
+        }
+        if game_host {
+            generated.push("sm_80-vram-seam.c");
+        }
+        execution.compile_recipe(&command, run, "c-build", checkout, source, &generated, &["collision"], true)?;
+    } else {
+        builds::c_build(builds::CBuildRequest {
+            command,
+            run: run.into(),
+            checkout: checkout.into(),
+            root: root.clone(),
+            workers,
+        })?;
+    }
     fs::copy(&module, run.join("candidate.rs"))?;
-    let dependencies = inputs::dependencies(inputs::DependenciesRequest {
+    let dependency_request = inputs::DependenciesRequest {
         checkout: checkout.into(),
         run: run.into(),
         extra: manifest.rust_dependencies.clone(),
-    })?;
+    };
+    let dependencies = if execution.is_some() {
+        inputs::confined_dependencies(dependency_request)?
+    } else {
+        inputs::dependencies(dependency_request)?
+    };
     let mut harness = BTreeMap::new();
     for (name, compiled) in [
         ("callback.rs", include_str!("callback.rs")),
@@ -384,13 +445,41 @@ pub fn case(
     run: &Path,
     worker: &mut crate::fixture_execution::Worker,
 ) -> Result<CaseRecord> {
+    case_with(manifest, routine, fixture, index, run, false, |command, directory, subject| {
+        worker.execute(command, directory, subject)
+    })
+}
+
+pub(crate) fn confined_case(
+    manifest: &Manifest,
+    routine: &Routine,
+    fixture: &Case,
+    index: usize,
+    run: &Path,
+    execution: &builds::StrictExecution,
+) -> Result<CaseRecord> {
+    case_with(manifest, routine, fixture, index, run, true, |command, directory, subject| {
+        execution.fixture_recipe(command, directory, subject, builds::StrictFixture::Callback)?;
+        unpack_snapshots(directory, subject)
+    })
+}
+
+fn case_with(
+    manifest: &Manifest,
+    routine: &Routine,
+    fixture: &Case,
+    index: usize,
+    run: &Path,
+    resume: bool,
+    mut execute: impl FnMut(&[String], &Path, &str) -> Result<()>,
+) -> Result<CaseRecord> {
     let name = fixture.name.as_str();
     let symbol = routine.symbol.as_str();
     let directory = run.join(name);
-    family::prepare_case(fixture, &directory, &family::types(routine)?)?;
+    family::prepare_case_with(fixture, &directory, &family::types(routine)?, resume)?;
     for subject in ["rust", "c"] {
-        fs::create_dir(directory.join(subject))?;
-        worker.execute(
+        fs::create_dir_all(directory.join(subject))?;
+        execute(
             &[
                 run.join("collision").to_string_lossy().into_owned(),
                 subject.into(),
@@ -411,6 +500,52 @@ pub fn case(
     record.routine = symbol.into();
     record.name = name.into();
     Ok(record)
+}
+
+/// Keep the same sequence and all full-WRAM images while using a fixed set of
+/// output files inside confinement. The parent reconstructs historical names.
+fn packed_snapshots(oracle: &str) -> Result<String> {
+    let start = oracle.find("static void CallbackSnapshot(").context("callback snapshot declaration missing")?;
+    let end = start + oracle[start..].find("\n}\n").context("callback snapshot body missing")? + 3;
+    let mut result = oracle.to_owned();
+    result.replace_range(start..end, "static FILE *callback_states;\nstatic void CallbackSnapshot(const char *phase) {\n uint64_t index=callbacks; uint8_t after=!strcmp(phase,\"after\");\n if(fwrite(&index,8,1,callback_states)!=1||fwrite(&after,1,1,callback_states)!=1||fwrite(g_ram,1,sizeof(g_ram),callback_states)!=sizeof(g_ram))exit(2);\n}\n");
+    let token = "callback_log=fopen(log_path,\"w\");if(!callback_log)return 2;";
+    ensure!(result.matches(token).count() == 1, "callback log initialization differs");
+    result = result.replace(token, &format!("{token}\n snprintf(log_path,sizeof(log_path),\"%s/callback-states.bin\",callback_directory);callback_states=fopen(log_path,\"wb\");if(!callback_states)return 2;"));
+    result = result
+        .replace("if(fclose(callback_log))return 2;", "if(fclose(callback_log)||fclose(callback_states))return 2;");
+    Ok(result)
+}
+
+fn unpack_snapshots(directory: &Path, subject: &str) -> Result<()> {
+    snapshots(directory, subject, true)
+}
+
+pub(crate) fn authenticate_packed_snapshots(directory: &Path, subject: &str) -> Result<()> {
+    snapshots(directory, subject, false)
+}
+
+fn snapshots(directory: &Path, subject: &str, publish: bool) -> Result<()> {
+    let bytes = inputs::bounded::read(directory.join(format!("{subject}-callback-states.bin")))?;
+    let count = metrics(directory, subject)?.c_gameplay_callbacks;
+    let stride = 9 + 0x20000;
+    ensure!(count <= 4096 && bytes.len() == usize::try_from(count)? * 2 * stride, "packed callback extent differs");
+    for (at, record) in bytes.chunks_exact(stride).enumerate() {
+        let index = u64::from_le_bytes(record[..8].try_into()?);
+        let after = record[8];
+        ensure!(index == (at / 2 + 1) as u64 && after == (at % 2) as u8, "packed callback sequence differs");
+        let phase = if after == 0 { "before" } else { "after" };
+        let path = directory.join(subject).join(format!("callback-{index:04}-{phase}.wram"));
+        if publish {
+            inputs::immutable_bytes(&path, &record[9..])?;
+        } else {
+            ensure!(
+                inputs::bounded::read(&path)? == record[9..],
+                "retained callback snapshot differs from confined output"
+            );
+        }
+    }
+    Ok(())
 }
 
 #[cfg(test)]

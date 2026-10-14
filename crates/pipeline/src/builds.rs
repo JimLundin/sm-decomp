@@ -48,6 +48,76 @@ pub(crate) struct StrictInvocation {
     pub reserved_bytes: u64,
 }
 
+#[derive(Clone, Copy)]
+pub(crate) enum StrictFixture {
+    Family,
+    Callback,
+    Plm,
+    Ridley,
+    PlmAbi,
+    RidleyAbi,
+}
+
+/// Recipe argv is constructed by the trusted family adapter. Only named input
+/// files enter a fixture, and every material output has an explicit file name.
+pub(crate) fn strict_fixture_program(helper: &Path, command: &[String], kind: StrictFixture) -> Result<Program> {
+    let mut program = Program {
+        executable: PathBuf::from(command.first().context("empty fixture command")?),
+        arguments: command[1..].to_vec(),
+        inputs: vec![],
+        runtime: confinement::helper_runtime()?,
+        helper: helper.into(),
+        outputs: vec![],
+    };
+    let (lengths, inputs, outputs): (&[usize], Vec<(usize, &str)>, Vec<(usize, &str)>) = match kind {
+        StrictFixture::Family => (
+            &[6, 7, 9],
+            [(4, "before.wram"), (6, "rom.bin"), (7, "host-before.bin")]
+                .into_iter()
+                .filter(|(i, _)| *i < command.len())
+                .collect(),
+            [(5, "after.wram"), (8, "host-after.bin")].into_iter().filter(|(i, _)| *i < command.len()).collect(),
+        ),
+        StrictFixture::Callback => (&[10], vec![(5, "before.wram"), (8, "rom.bin")], vec![(6, "after.wram")]),
+        StrictFixture::Plm => (&[8], vec![(4, "before.wram"), (6, "rom.bin")], vec![(5, "after.wram")]),
+        StrictFixture::Ridley => (
+            &[15],
+            vec![(5, "before.wram"), (8, "rom.bin"), (9, "host-before.bin"), (14, "ppu-before.bin")],
+            vec![(6, "after.wram"), (10, "host-after.bin"), (11, "effects.log"), (12, "ppu.bin"), (13, "services.bin")],
+        ),
+        StrictFixture::PlmAbi => (&[8], vec![(6, "rom.bin")], vec![]),
+        StrictFixture::RidleyAbi => (&[2], vec![], vec![]),
+    };
+    ensure!(lengths.contains(&command.len()), "confined fixture argument contract differs");
+    for (index, name) in inputs {
+        let destination = Path::new("/inputs").join(name);
+        program.inputs.push(ReadOnlyBind { source: PathBuf::from(&command[index]), destination: destination.clone() });
+        program.arguments[index - 1] = destination.display().to_string();
+    }
+    for (index, name) in outputs {
+        program.arguments[index - 1] = Path::new("/work").join(name).display().to_string();
+        program.outputs.push(name.into());
+    }
+    if matches!(kind, StrictFixture::Callback) {
+        program.arguments[8] = "/work".into();
+        program.outputs.extend(["callbacks.txt".into(), "callback-states.bin".into()]);
+    }
+    Ok(program)
+}
+
+pub(crate) fn strict_output_path(run: &Path, label: &str, name: &Path) -> PathBuf {
+    if name == Path::new("callbacks.txt") {
+        run.join(label).join(name)
+    } else if ["after.wram", "host-after.bin", "effects.log", "ppu.bin", "services.bin", "callback-states.bin"]
+        .iter()
+        .any(|n| name == Path::new(n))
+    {
+        run.join(format!("{label}-{}", name.display()))
+    } else {
+        run.join(name)
+    }
+}
+
 impl StrictExecution {
     pub(crate) fn compile(
         &self,
@@ -56,6 +126,31 @@ impl StrictExecution {
         label: &str,
         checkout: &Path,
         source: &Path,
+    ) -> Result<ExecutionRecord> {
+        let rust = command.first().is_some_and(|name| name == "rustc");
+        self.compile_recipe(
+            command,
+            run,
+            label,
+            checkout,
+            source,
+            if rust { &["wrapper.rs", "memory.rs"] } else { &["oracle.c"] },
+            if rust { &["rust", "compiler.d"] } else { &["c"] },
+            false,
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn compile_recipe(
+        &self,
+        command: &[String],
+        run: &Path,
+        label: &str,
+        checkout: &Path,
+        source: &Path,
+        generated: &[&str],
+        outputs: &[&str],
+        headless: bool,
     ) -> Result<ExecutionRecord> {
         let rust = command.first().is_some_and(|name| name == "rustc");
         let executable = if rust { self.rustc.clone() } else { self.c_compiler.clone() };
@@ -67,12 +162,18 @@ impl StrictExecution {
                 destination: Path::new(if rust { "/inputs/rust" } else { "/inputs/c" }).join(relative),
             });
         }
-        let generated = if rust { vec!["wrapper.rs", "memory.rs"] } else { vec!["oracle.c"] };
         for name in generated {
             inputs
                 .push(ReadOnlyBind { source: run.join(name), destination: Path::new("/inputs/generated").join(name) });
         }
-        let outputs = if rust { vec!["rust".into(), "compiler.d".into()] } else { vec!["c".into()] };
+        if headless {
+            for name in ["headless.c", "headless_frame.h"] {
+                inputs.push(ReadOnlyBind {
+                    source: checkout.join("tools/decomp").join(name),
+                    destination: Path::new("/inputs/rust/tools/decomp").join(name),
+                });
+            }
+        }
         let mut arguments = Vec::new();
         for argument in &command[1..] {
             let mapped = if argument.starts_with("--emit=link,dep-info=") {
@@ -80,7 +181,7 @@ impl StrictExecution {
             } else {
                 let path = Path::new(argument);
                 if let Ok(relative) = path.strip_prefix(run) {
-                    if ["rust", "c", "compiler.d"].iter().any(|name| relative == Path::new(name)) {
+                    if outputs.iter().any(|name| relative == Path::new(name)) {
                         Path::new("/work").join(relative).display().to_string()
                     } else {
                         Path::new("/inputs/generated").join(relative).display().to_string()
@@ -120,7 +221,7 @@ impl StrictExecution {
                 inputs,
                 runtime: self.compiler_runtime.clone(),
                 helper: self.helper.clone(),
-                outputs,
+                outputs: outputs.iter().map(PathBuf::from).collect(),
             },
             &self.compiler_limits,
             run,
@@ -129,29 +230,17 @@ impl StrictExecution {
     }
 
     pub(crate) fn fixture(&self, command: &[String], directory: &Path, subject: &str) -> Result<ExecutionRecord> {
-        ensure!(command.len() == 6 || command.len() == 7, "confined plain fixture argument contract differs");
-        let executable = PathBuf::from(&command[0]);
-        let mut arguments = command[1..4].to_vec();
-        arguments.extend(["/inputs/before.wram".into(), "/work/after.wram".into()]);
-        let mut inputs =
-            vec![ReadOnlyBind { source: PathBuf::from(&command[4]), destination: "/inputs/before.wram".into() }];
-        if command.len() == 7 {
-            inputs.push(ReadOnlyBind { source: PathBuf::from(&command[6]), destination: "/inputs/rom.bin".into() });
-            arguments.push("/inputs/rom.bin".into());
-        }
-        self.execute(
-            &Program {
-                executable,
-                arguments,
-                inputs,
-                runtime: confinement::helper_runtime()?,
-                helper: self.helper.clone(),
-                outputs: vec!["after.wram".into()],
-            },
-            &self.fixture_limits,
-            directory,
-            subject,
-        )
+        self.fixture_recipe(command, directory, subject, StrictFixture::Family)
+    }
+
+    pub(crate) fn fixture_recipe(
+        &self,
+        command: &[String],
+        directory: &Path,
+        subject: &str,
+        kind: StrictFixture,
+    ) -> Result<ExecutionRecord> {
+        self.execute(&strict_fixture_program(&self.helper, command, kind)?, &self.fixture_limits, directory, subject)
     }
 
     fn execute(&self, program: &Program, limits: &RunLimits, run: &Path, label: &str) -> Result<ExecutionRecord> {
@@ -247,14 +336,14 @@ impl StrictExecution {
                 immutable_output(&run.join(format!("{label}.diagnostic.txt")), output.diagnostic.as_bytes())?;
             }
             for (name, bytes) in output.outputs {
-                let destination = if name == Path::new("after.wram") {
-                    run.join(format!("{label}-after.wram"))
-                } else {
-                    run.join(name)
-                };
+                let destination = strict_output_path(run, label, &name);
+                fs::create_dir_all(destination.parent().context("strict output parent missing")?)?;
                 immutable_output(&destination, &bytes)?;
                 #[cfg(unix)]
-                if destination.file_name().is_some_and(|name| name == "rust" || name == "c") {
+                if destination
+                    .file_name()
+                    .is_some_and(|name| ["rust", "c", "collision", "spawn", "ridley"].iter().any(|n| name == *n))
+                {
                     use std::os::unix::fs::PermissionsExt;
                     if fs::metadata(&destination)?.permissions().mode() & 0o777 != 0o500 {
                         fs::set_permissions(&destination, fs::Permissions::from_mode(0o500))?;

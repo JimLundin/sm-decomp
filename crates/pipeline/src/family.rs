@@ -171,7 +171,7 @@ pub(crate) fn prepare_case(case: &Case, directory: &Path, arg_types: &[String]) 
     prepare_case_with(case, directory, arg_types, false)
 }
 
-fn prepare_case_with(case: &Case, directory: &Path, arg_types: &[String], resume: bool) -> Result<()> {
+pub(crate) fn prepare_case_with(case: &Case, directory: &Path, arg_types: &[String], resume: bool) -> Result<()> {
     let name = &case.name;
     ensure!(
         !name.is_empty() && name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-'),
@@ -234,7 +234,7 @@ fn prepare_case_with(case: &Case, directory: &Path, arg_types: &[String], resume
     }
 }
 
-fn write_build_input(path: &Path, bytes: &[u8], immutable: bool) -> Result<()> {
+pub(crate) fn write_build_input(path: &Path, bytes: &[u8], immutable: bool) -> Result<()> {
     if immutable { inputs::immutable_bytes(path, bytes) } else { Ok(fs::write(path, bytes)?) }
 }
 
@@ -308,7 +308,7 @@ fn build_with(
     execution: Option<&builds::StrictExecution>,
 ) -> Result<Implementation> {
     let fork = fork_execution(request)?;
-    ensure!(execution.is_none() || (!fork && !dispatcher(manifest)), "confined plain adapter requires fresh fixtures");
+    ensure!(execution.is_none() || !fork, "confined adapter requires fresh fixtures");
     let dispatcher = dispatcher(manifest);
     let eproj = manifest.projectile_host
         || manifest.projectile_rendering
@@ -370,6 +370,11 @@ fn build_with(
                     *prototypes.last_mut().unwrap() =
                         format!("extern {} {symbol}(uint16_t,uint16_t,uint16_t);", c_type(kind)?);
                     call = format!("{symbol}((uint16_t)a,(uint16_t)b,(uint16_t)((uint32_t)b>>16))");
+                }
+                3 if args == ["uint32", "uint16"] => {
+                    *prototypes.last_mut().unwrap() =
+                        format!("extern {} {symbol}(uint16_t,uint16_t,uint16_t);", c_type(kind)?);
+                    call = format!("{symbol}((uint16_t)a,(uint16_t)((uint32_t)a>>16),(uint16_t)b)");
                 }
                 4 if args == ["uint32", "uint32"] => {
                     *prototypes.last_mut().unwrap() =
@@ -580,10 +585,19 @@ fn build_with(
         if manifest.projectile_rendering {
             shim.push_str("uint32 PortScreenShake(void) { Point16U p=GetValuesForScreenShaking(); return p.x|((uint32)p.y<<16); }\nvoid PortDrawEprojs(uint16 k,uint32 xy) { DrawEprojs(k,(Point16U){(uint16)xy,(uint16)(xy>>16)}); }\nvoid PortDrawEprojSpritemap(uint32 xy,uint32 map_gfx) { DrawEprojSpritemapWithBaseTile(0x8D,(uint16)map_gfx,(uint16)xy,(uint16)(xy>>16),(uint8)(map_gfx>>16),(uint16)(map_gfx>>16)&0xFF00); }\nvoid PortDrawEprojSpritemapOffscreen(uint32 xy,uint32 map_gfx) { DrawEprojSpritemapWithBaseTileOffscreen(0x8D,(uint16)map_gfx,(uint16)xy,(uint16)(xy>>16),(uint8)(map_gfx>>16),(uint16)(map_gfx>>16)&0xFF00); }\n");
         }
-        fs::write(run.join("plm-shim.c"), shim)?;
-        fs::write(
-            run.join("host-support.c"),
-            format!("#define main retained_main\n#include {:?}\n", checkout.join("tools/decomp/headless.c")),
+        if execution.is_some() {
+            shim = shim.replace(&source.display().to_string(), "/inputs/c");
+        }
+        write_build_input(&run.join("plm-shim.c"), shim.as_bytes(), execution.is_some())?;
+        let headless = if execution.is_some() {
+            PathBuf::from("/inputs/rust/tools/decomp/headless.c")
+        } else {
+            checkout.join("tools/decomp/headless.c")
+        };
+        write_build_input(
+            &run.join("host-support.c"),
+            format!("#define main retained_main\n#include {headless:?}\n").as_bytes(),
+            execution.is_some(),
         )?;
         command.extend([
             run.join("plm-shim.c").to_string_lossy().into_owned(),
@@ -604,7 +618,20 @@ fn build_with(
         );
     }
     if let Some(execution) = execution {
-        execution.compile(&command, run, "c-build", checkout, source)?;
+        if dispatcher {
+            execution.compile_recipe(
+                &command,
+                run,
+                "c-build",
+                checkout,
+                source,
+                &["oracle.c", "plm-shim.c", "host-support.c"],
+                &["c"],
+                true,
+            )?;
+        } else {
+            execution.compile(&command, run, "c-build", checkout, source)?;
+        }
     } else {
         builds::c_build(builds::CBuildRequest {
             command,
@@ -1235,8 +1262,8 @@ fn authenticate_with_source_bounded(request: AuthenticateRequest, source: &Path)
     for name in &binaries {
         ensure!(actual.contains_key(*name), "family binary artifact missing: {name}");
     }
-    let source = verify_source(&checkout, source)?;
-    ensure!(Some(source) == verdict.source, "family pinned source differs");
+    let pinned = verify_source(&checkout, source)?;
+    ensure!(Some(pinned) == verdict.source, "family pinned source differs");
     for map in [&implementation.rust_dependencies, &implementation.harness_sources] {
         for (name, expected) in map {
             ensure!(digest(&source_path(&checkout, name))? == *expected, "family implementation changed: {name}");
@@ -1303,7 +1330,7 @@ fn authenticate_with_source_bounded(request: AuthenticateRequest, source: &Path)
                 && implementation.harness_sources.contains_key("tools/decomp/headless.c"),
             "Ridley host input missing"
         );
-        crate::ridley_subsystem_adapter::check_instrumented_units(&checkout.join("deps/snesrev-sm"), &run)?;
+        crate::ridley_subsystem_adapter::check_instrumented_units(source, &run)?;
         ensure!(verdict.gameplay_translation == Some(true), "Ridley translation scope missing");
         ensure!(
             verdict.rejected_abi_inputs == 7
@@ -1335,7 +1362,7 @@ fn authenticate_with_source_bounded(request: AuthenticateRequest, source: &Path)
             "callback host input missing"
         );
         if matches!(implementation.callback_adapter.as_deref(), Some("power-bomb" | "game-host")) {
-            let original = bounded::text(checkout.join("deps/snesrev-sm/src/sm_88.c"))?;
+            let original = bounded::text(source.join("src/sm_88.c"))?;
             let token = "uint16 SpawnHdmaObject(uint8 db, const void *p)";
             ensure!(
                 original.matches(token).count() == 1
@@ -1351,7 +1378,7 @@ fn authenticate_with_source_bounded(request: AuthenticateRequest, source: &Path)
                     "shared host input missing: {required}"
                 );
             }
-            let original = bounded::text(checkout.join("deps/snesrev-sm/src/sm_80.c"))?;
+            let original = bounded::text(source.join("src/sm_80.c"))?;
             let token = "void NMI_ProcessVramWriteQueue(void)";
             ensure!(
                 original.matches(token).count() == 1
