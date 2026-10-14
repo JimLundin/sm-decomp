@@ -231,3 +231,83 @@ retained in `catalog-v1/source` (811b2f0) and `catalog-v2/source` (dc91352) unde
 `/tmp/sm-ticket10-native-proofs`. Original absolute private inputs, pinned C and
 the original requirements path remain dependencies. The preparation audits have
 no compiler/fixture receipts and do not establish actual-C acceptance.
+
+## Resumed optimized native proof checkpoint
+
+Commit `ac2b343` adds an optional explicitly frozen source to the complete-catalog
+preparation audit and separately checks the original 360-pair direct-animation
+declaration. The primary summary still enumerates the dynamically discovered
+catalog without a fixed family count. The original 600-second preparation bound
+is unchanged.
+
+The optimized pipeline test reader build remains active in exec session `38412`,
+using `/tmp/sm-ticket10-native-target`. Resume that session; do not duplicate the
+build. Fresh `catalog-v3/source` is archived from `ac2b343` with the private ROM
+copied in. Its exact temporary compile-only migration overlay is retained as
+`catalog-v3/compile-only-migration-overlay.patch` and present in the source
+snapshot; it is not committed to this worker branch.
+
+The Cargo worker's reported possible ptrace wait was corrected by exact ancestry:
+the process was compact dependency preparation and continued progressing. No new
+confinement-runtime defect is established. Pause candidate and integrated Rust
+controls passed on v2; the Cargo worker owns those receipts and the separate
+host-control timeout diagnosis.
+
+Next commands use the retained optimized test reader for `catalog-v3`, then whole
+native recipe families with immutable v2. Original case coverage and gate budgets
+remain fixed. Replay, both cleanup passes, source retention and post-cleanup
+authentication remain required for every passing or failed new proof.
+
+## Read-only-open performance correction and optimized catalog result
+
+Commit `ec09afe` preserves all quota-error tracing and extent checks around
+mutations, while skipping full tree/descriptor walks for provably read-only
+`open` and `openat` calls. `openat2` remains conservative because its flags are
+in candidate memory. Cargo's linker had used only seconds of CPU while the
+helper used minutes scanning an existing output tree.
+
+The new Rust probe creates 256 empty compiler-output files and performs 8,192
+read-only input opens. The first setup trial exhausted its deliberately small
+inode quota; that diagnosis is retained separately. With adequate inode capacity,
+immutable v2 hit the unchanged five-second timeout. Immutable v3 passes the same
+probe with all six focused tests in 2.22 seconds, and all eight original
+confinement tests pass in 62.84 seconds, including six real Rust linker controls.
+Evidence, source, test readers and build log are retained under
+`/tmp/sm-ticket10-native-proofs/confinement-v3`. The helper is
+`tools/sm-translation-sandbox`, SHA-256
+`21f1bdb8d4bb10cbad2c5c23a24e7e146b2ed9a17fc4695b41d7813c3f2b66c5`.
+No client/wire-protocol change is required. Earlier helpers remain untouched.
+
+The optimized native test reader finished in 7m22s and is retained at
+`/tmp/sm-ticket10-native-proofs/readers/native-tests-ac2b343`, SHA-256
+`319b6e4be120b07f3fc46728598529a16e29ab4fa955089a39e87d3d54bd19e9`.
+The complete `catalog-v3` audit finished in 253.61 seconds under its unchanged
+600-second bound. The current discovered catalog contains 177 families: 176
+prepared and `ridley-subsystem-captured` rejected its known original callback
+metadata. The auxiliary direct-animation declaration prepared all 360 pairs.
+No compiler or fixture ran in this preparation-only audit. The captured-Ridley
+registration correction and original-fixture preservation test are authored but
+not yet compiled at this checkpoint.
+
+## Passing original room-scroll matrix
+
+Fresh proof `/tmp/sm-ticket10-native-proofs/host-v4` used immutable v3 and passed
+all three original room-scroll fixture pairs, each with all 17 ordered callbacks.
+The proof completed in 122.10 seconds. Unchanged replay preserved every producer,
+ordinary cleanup reclaimed zero bytes, and deduplication reclaimed 13,762,560
+bytes across 213 checked snapshots. Post-cleanup native authentication passed.
+Its exact input source, eight producer results, native receipt, family verdict,
+cleanup records and summary remain retained.
+
+Room-scroll's final lease is closed and no native producer remains active.
+Further compiler/fixture launches are deferred while the Cargo worker runs its
+coordinated jobs4 host/compact proofs. The standalone reader still uses cumulative
+worst-case reservations; the parent's integrated streaming reservation path is
+required for complete large PLM/Ridley actual-C runs within the frozen byte cap.
+No family coverage or original time bound was reduced to obtain a pass.
+
+Remaining filesystem space at this checkpoint: 167,771,295,744 bytes. Runtime
+test sandboxes were torn down and descendants reaped by the confinement tests;
+their retained logs/source/readers have no unsealed run intermediates. Final
+build-tree and integrated-worktree retirement remains the integration owner's
+cleanup responsibility after the remaining tests and source retention.
