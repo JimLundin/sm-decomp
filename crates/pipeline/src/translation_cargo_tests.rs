@@ -103,6 +103,48 @@ fn collect_fixture(source: &Path, destination: Option<&Path>, names: &mut BTreeM
 #[test]
 #[ignore = "real confined original Cargo proof; requires the installed producer and private offline vendor closure"]
 fn real_original_cargo_controls_retain_authenticatable_success_and_unchanged_replay() {
+    real_controls(CargoKind::SharedGameHost);
+}
+
+#[test]
+#[ignore = "real confined original pause controls; requires the installed producer and private offline vendor closure"]
+fn real_original_pause_controls_run_on_candidate_and_integrated_source() {
+    real_controls(CargoKind::PauseEquipment);
+}
+
+#[test]
+#[ignore = "real confined original compact controls and dependency preparation; requires installed tools and original source"]
+fn real_original_compact_controls_run_on_candidate_and_integrated_source() {
+    real_controls(CargoKind::CompactController);
+}
+
+#[test]
+#[ignore = "read-only authentication of retained real Cargo proof receipts after cleanup"]
+fn retained_original_cargo_proofs_authenticate_after_cleanup() {
+    let root = PathBuf::from(std::env::var_os("SM_CARGO_PROOF_ROOT").expect("SM_CARGO_PROOF_ROOT"));
+    let prepared =
+        |name: &str| -> PreparedCargo { serde_json::from_slice(&fs::read(root.join(name)).unwrap()).unwrap() };
+    let mut authenticated = 0usize;
+    let environment_path = root.join("environment/cargo-environment-receipt.toml");
+    if environment_path.is_file() {
+        let prerequisite =
+            prepared(if root.join("prerequisite.json").is_file() { "prerequisite.json" } else { "prepared.json" });
+        let receipt: CargoEnvironmentReceipt = family::object(&environment_path).unwrap();
+        authenticate_environment(&prerequisite, &root.join("environment/source"), &receipt).unwrap();
+        authenticated += 1;
+    }
+    for phase in ["candidate", "integrated", "protected-input-refusal"] {
+        let receipt_path = root.join(phase).join("cargo-receipt.toml");
+        if receipt_path.is_file() {
+            let receipt: CargoReceipt = family::object(&receipt_path).unwrap();
+            authenticate(&prepared("prepared.json"), &root.join(phase).join("source"), &receipt).unwrap();
+            authenticated += 1;
+        }
+    }
+    assert!(authenticated > 0, "no retained Cargo proof receipt was authenticated");
+}
+
+fn real_controls(kind: CargoKind) {
     let root = PathBuf::from(std::env::var_os("SM_CARGO_PROOF_ROOT").expect("SM_CARGO_PROOF_ROOT"));
     let current = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().parent().unwrap();
     let checkout = root.join("source");
@@ -120,25 +162,64 @@ fn real_original_cargo_controls_retain_authenticatable_success_and_unchanged_rep
     let bytes = fs::read(deps.join("rustysnes/Cargo.toml")).unwrap();
     fs::write(checkout.join(name), &bytes).unwrap();
     sources.insert(name.into(), sha256(bytes));
+    if kind == CargoKind::CompactController {
+        for name in [
+            "crates/pipeline/src/decomp_prefix.rs",
+            "crates/pipeline/src/prefix_compact_observer.lua.in",
+            "crates/pipeline/src/prefix_observer.lua.in",
+            "crates/pipeline/tests/prefix.rs",
+            "docs/DECOMP_PREFIX.md",
+        ] {
+            let original = std::process::Command::new("git")
+                .current_dir(current)
+                .args(["show", &format!("223f8a1b0c7382817b1290d13c7a41f4e722d5e1:{name}")])
+                .output()
+                .unwrap();
+            assert!(original.status.success(), "original compact source missing: {name}");
+            let path = checkout.join(name);
+            fs::create_dir_all(path.parent().unwrap()).unwrap();
+            fs::write(path, &original.stdout).unwrap();
+            sources.insert(name.into(), sha256(original.stdout));
+        }
+        for name in [
+            "deps/snesrev-sm/src/sm_a0.c",
+            "deps/snesrev-sm/src/sm_a6.c",
+            "deps/snesrev-sm/src/sm_86.c",
+            "deps/snesrev-sm/src/sm_80.c",
+            "deps/snesrev-sm/src/sm_90.c",
+            "deps/snesrev-sm/src/snes/snes.c",
+            "tools/decomp/headless.c",
+        ] {
+            let bytes = fs::read(current.join(name)).unwrap();
+            let path = checkout.join(name);
+            fs::create_dir_all(path.parent().unwrap()).unwrap();
+            fs::write(path, &bytes).unwrap();
+            sources.insert(name.into(), sha256(bytes));
+        }
+    }
     let vendor = PathBuf::from(std::env::var_os("SM_CARGO_VENDOR").expect("SM_CARGO_VENDOR"));
     let mut vendor_files = BTreeMap::new();
     collect_fixture(&vendor, None, &mut vendor_files, Path::new(""));
-    let contract = CargoContract {
+    let mut contract = CargoContract {
         schema: "translation-cargo-contract-v1".into(),
-        kind: CargoKind::SharedGameHost,
+        kind,
         source_files: sources,
-        approved_files: vec!["crates/port/src/game_host.rs".into(), "crates/port/src/lib.rs".into()],
+        approved_files: match kind {
+            CargoKind::CompactController => vec!["crates/pipeline/src/decomp_prefix.rs".into()],
+            CargoKind::SharedGameHost => vec!["crates/port/src/game_host.rs".into(), "crates/port/src/lib.rs".into()],
+            CargoKind::PauseEquipment => vec!["crates/port/src/pause_equipment_render.rs".into()],
+        },
         vendor: CargoClosure { root: vendor, files: vendor_files },
         dependency_cache: None,
         limits: CargoLimits {
             timeout_seconds: 60,
-            writable_bytes: 256 * 1024 * 1024,
+            writable_bytes: if kind == CargoKind::CompactController { 768 * 1024 * 1024 } else { 256 * 1024 * 1024 },
             stdout_bytes: 256 * 1024,
             stderr_bytes: 65536,
         },
     };
-    let prepared = prepare(&checkout, &contract).unwrap();
-    fs::write(root.join("prepared.json"), serde_json::to_vec_pretty(&prepared).unwrap()).unwrap();
+    let prerequisite = prepare(&checkout, &contract).unwrap();
+    fs::write(root.join("prerequisite.json"), serde_json::to_vec_pretty(&prerequisite).unwrap()).unwrap();
     let runtime = StrictRuntime {
         helper: std::env::var_os("SM_CARGO_HELPER")
             .map(PathBuf::from)
@@ -151,8 +232,12 @@ fn real_original_cargo_controls_retain_authenticatable_success_and_unchanged_rep
         operation_root: root.join("operations"),
         pipeline_root: "/home/jim/sm-decomp/out/pipeline".into(),
         workers: 4,
-        gate_timeout_seconds: 60,
-        max_output_bytes: 1024 * 1024 * 1024,
+        gate_timeout_seconds: if kind == CargoKind::CompactController { 120 } else { 60 },
+        max_output_bytes: if kind == CargoKind::CompactController {
+            4 * 1024 * 1024 * 1024
+        } else {
+            1024 * 1024 * 1024
+        },
         deadline_unix_ms: None,
     };
     let context = OperationContext {
@@ -167,23 +252,72 @@ fn real_original_cargo_controls_retain_authenticatable_success_and_unchanged_rep
     environment_context.operation_key = sha256("ticket10-original-cargo-runtime-preparation");
     environment_context.phase = translation_execution::model::ExecutionPhase::Preparation;
     let environment = prepare_environment(
-        &prepared,
+        &prerequisite,
         &checkout,
         &root.join("environment"),
         &runtime,
         &environment_context,
-        180,
-        false,
+        if kind == CargoKind::CompactController { 600 } else { 180 },
+        kind == CargoKind::CompactController,
     )
     .unwrap();
     assert!(environment.passed, "{}", environment.diagnostic);
-    authenticate_environment(&prepared, &checkout, &environment).unwrap();
+    authenticate_environment(&prerequisite, &checkout, &environment).unwrap();
+    contract.dependency_cache = environment.cache.clone();
+    let prepared = prepare(&checkout, &contract).unwrap();
+    fs::write(root.join("prepared.json"), serde_json::to_vec_pretty(&prepared).unwrap()).unwrap();
     let receipt = run(&prepared, &checkout, &output, &runtime, &context).unwrap();
     assert!(receipt.passed, "{}", receipt.diagnostic);
     let verdict = authenticate(&prepared, &checkout, &receipt).unwrap();
-    assert_eq!(verdict.test_count, 31);
-    assert_eq!(verdict.operations.len(), 1);
+    let expected = if kind == CargoKind::SharedGameHost { 31 } else { 10 };
+    assert_eq!(verdict.test_count, expected);
+    assert_eq!(verdict.operations.len(), if kind == CargoKind::CompactController { 2 } else { 1 });
     let replay = run(&prepared, &checkout, &output, &runtime, &context).unwrap();
     assert_eq!(replay, receipt);
     assert_eq!(authenticate(&prepared, &checkout, &replay).unwrap(), verdict);
+
+    let protected = root.join("undeclared-input.txt");
+    fs::write(&protected, "outside-the-cargo-input-closure").unwrap();
+    let approved = match kind {
+        CargoKind::CompactController => "crates/pipeline/src/decomp_prefix.rs",
+        CargoKind::SharedGameHost => "crates/port/src/game_host.rs",
+        CargoKind::PauseEquipment => "crates/port/src/pause_equipment_render.rs",
+    };
+    let original = fs::read_to_string(checkout.join(approved)).unwrap();
+    let integrated_source = if kind == CargoKind::SharedGameHost {
+        let marker = "    fn request(&mut self, ram: &mut Wram<'_>, request: Request) -> Result<Response> {";
+        assert!(original.contains(marker));
+        original.replacen(marker, &format!("{marker}\n        assert!(std::fs::read({protected:?}).is_err());"), 1)
+    } else {
+        format!("// Integrated source identity control.\n{original}")
+    };
+    fs::write(checkout.join(approved), integrated_source).unwrap();
+    let mut integrated_context = context.clone();
+    integrated_context.operation_key = sha256("ticket10-original-cargo-integrated");
+    integrated_context.phase = translation_execution::model::ExecutionPhase::Integration;
+    let integrated = run(&prepared, &checkout, &root.join("integrated"), &runtime, &integrated_context).unwrap();
+    assert!(integrated.passed, "{}", integrated.diagnostic);
+    assert_ne!(integrated.candidate_sha256, receipt.candidate_sha256);
+    assert_eq!(authenticate(&prepared, &checkout, &integrated).unwrap().test_count, expected);
+    assert_eq!(run(&prepared, &checkout, &root.join("integrated"), &runtime, &integrated_context).unwrap(), integrated);
+    authenticate(&prepared, &output.join("source"), &receipt).unwrap();
+
+    if kind == CargoKind::SharedGameHost {
+        let library = checkout.join("crates/port/src/lib.rs");
+        let mut source = fs::read_to_string(&library).unwrap();
+        source.push_str(&format!("\nconst UNDECLARED_INPUT: &str = include_str!({protected:?});\n"));
+        fs::write(library, source).unwrap();
+        let mut refused_context = context.clone();
+        refused_context.operation_key = sha256("ticket10-original-cargo-protected-input-refusal");
+        let refused_output = root.join("protected-input-refusal");
+        let refused = run(&prepared, &checkout, &refused_output, &runtime, &refused_context).unwrap();
+        assert!(!refused.passed);
+        let refused_verdict = authenticate(&prepared, &checkout, &refused).unwrap();
+        assert_eq!(refused_verdict.test_count, 0);
+        assert_eq!(refused_verdict.operations.len(), 1);
+        assert!(refused.diagnostic.contains("couldn't read"), "{}", refused.diagnostic);
+        assert!(!refused.diagnostic.contains("outside-the-cargo-input-closure"));
+        assert_eq!(run(&prepared, &checkout, &refused_output, &runtime, &refused_context).unwrap(), refused);
+        authenticate(&prepared, &root.join("integrated/source"), &integrated).unwrap();
+    }
 }

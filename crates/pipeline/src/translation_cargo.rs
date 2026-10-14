@@ -1261,6 +1261,8 @@ pub(crate) fn prepare_environment(
     let _lock = gate_lock(output)?;
     let record_path = output.join("cargo-environment.toml");
     let receipt_path = output.join("cargo-environment-receipt.toml");
+    let requested =
+        EnvironmentRequest { schema: "translation-cargo-environment-producer-v1".into(), build_dependencies };
     if receipt_path.is_file() {
         let receipt: CargoEnvironmentReceipt = family::object(&receipt_path)?;
         ensure!(
@@ -1268,12 +1270,21 @@ pub(crate) fn prepare_environment(
             "Cargo environment retry changed context or runtime"
         );
         authenticate_environment(prepared, checkout, &receipt)?;
+        let record: EnvironmentRecord = family::object(&receipt.record.file)?;
+        ensure!(
+            record.request.sha256 == sealed_json(&requested)?
+                && record.limits.timeout == Duration::from_secs(timeout_seconds),
+            "Cargo environment retry changed producer mode or deadline"
+        );
         return Ok(receipt);
     }
     if record_path.is_file() {
         let record: EnvironmentRecord = family::object(&record_path)?;
         ensure!(
-            record.context == *context && record.runtime == *runtime,
+            record.context == *context
+                && record.runtime == *runtime
+                && record.request.sha256 == sealed_json(&requested)?
+                && record.limits.timeout == Duration::from_secs(timeout_seconds),
             "Cargo environment finalization changed identity"
         );
         return finish_environment(prepared, checkout, &record_path, &record);
@@ -1281,10 +1292,12 @@ pub(crate) fn prepare_environment(
     let intent_path = output.join("cargo-environment-intent.toml");
     let saved: Option<EnvironmentRecord> =
         if intent_path.is_file() { Some(family::object(&intent_path)?) } else { None };
-    let deadline = saved.as_ref().map_or(
-        entered.checked_add(timeout_seconds * 1000).context("Cargo environment deadline overflow")?,
-        |record| record.deadline_unix_ms,
-    );
+    let local_deadline = entered.checked_add(timeout_seconds * 1000).context("Cargo environment deadline overflow")?;
+    let deadline = saved
+        .as_ref()
+        .map_or(runtime.deadline_unix_ms.map_or(local_deadline, |outer| outer.min(local_deadline)), |record| {
+            record.deadline_unix_ms
+        });
     let setup = || -> Result<EnvironmentRecord> {
         let candidate = validate_prepared(prepared, checkout)?;
         let expected_request =
@@ -1335,7 +1348,7 @@ pub(crate) fn prepare_environment(
         };
         let reserved_bytes = operation::reserve_bytes_until(&program, &limits, 0, deadline)?
             .checked_add(
-                source_bytes * 2 + MAX_RECORD_BYTES * 3 + if build_dependencies { MAX_DEPENDENCY_BYTES * 2 } else { 0 },
+                source_bytes * 2 + MAX_RECORD_BYTES * 3 + if build_dependencies { MAX_DEPENDENCY_BYTES } else { 0 },
             )
             .context("Cargo environment reservation overflow")?;
         ensure!(
@@ -1379,31 +1392,31 @@ pub(crate) fn prepare_environment(
         let _lease = acquire_lease_until(&runtime.pipeline_root, runtime.workers, deadline)?.0;
         operation::run_until(&runtime.operation_root, context, &record.program, &record.limits, &[], deadline)?
     };
-    record.operation_result_sha256 = result.result_sha256;
-    record.references = operation::references(&runtime.operation_root, context)?;
-    record.references.push(retention::seal_file(&intent_path, MAX_RECORD_BYTES)?);
-    record.references.push(record.request.clone());
-    record.references.extend(record.snapshots.values().cloned());
-    record.passed = result.passed && result.status_raw == Some(0);
-    if !record.passed {
-        record.diagnostic = diagnostic(&result.diagnostic);
-    }
-    if record.passed && build_dependencies {
-        let project_names = project_packages(checkout, &prepared.contract.source_files)?;
-        let unpacked = result
-            .outputs
-            .get(Path::new("dependencies.zip"))
-            .context("Cargo dependency preparation omitted its sealed archive")
-            .and_then(|bytes| unpack_cache(bytes, &output.join("dependencies"), &project_names));
-        match unpacked {
-            Ok(cache) => record.cache = Some(cache),
-            Err(error) => {
-                record.passed = false;
-                record.diagnostic = diagnostic(&format!("{error:#}"));
+    bounded::reconcile(4 * bounded::DEFAULT_BYTES, || {
+        record.operation_result_sha256 = result.result_sha256;
+        record.references = operation::references(&runtime.operation_root, context)?;
+        record.references.push(retention::seal_file(&intent_path, MAX_RECORD_BYTES)?);
+        record.references.push(record.request.clone());
+        record.references.extend(record.snapshots.values().cloned());
+        record.passed = result.passed && result.status_raw == Some(0);
+        if !record.passed {
+            record.diagnostic = diagnostic(&result.diagnostic);
+        }
+        if record.passed && build_dependencies {
+            let project_names = project_packages(checkout, &prepared.contract.source_files)?;
+            let unpacked = result
+                .outputs
+                .get(Path::new("dependencies.zip"))
+                .context("Cargo dependency preparation omitted its sealed archive")
+                .and_then(|bytes| unpack_cache(bytes, &output.join("dependencies"), &project_names));
+            match unpacked {
+                Ok(cache) => record.cache = Some(cache),
+                Err(error) => {
+                    record.passed = false;
+                    record.diagnostic = diagnostic(&format!("{error:#}"));
+                }
             }
         }
-    }
-    bounded::reconcile(4 * bounded::DEFAULT_BYTES, || {
         publish_record(&record_path, &record)?;
         finish_environment(prepared, checkout, &record_path, &record)
     })
@@ -1524,6 +1537,7 @@ pub(crate) fn authenticate_environment(
                 "Cargo environment snapshot differs from source"
             );
             retention::authenticate_reference(snapshot, MAX_SOURCE_BYTES)?;
+            ensure!(record.references.contains(snapshot), "Cargo environment retained graph omitted a source snapshot");
         }
         let actual = operation::authenticate_request(
             &record.runtime.operation_root,
@@ -1533,6 +1547,30 @@ pub(crate) fn authenticate_environment(
             &[],
         )?;
         ensure!(actual.result_sha256 == record.operation_result_sha256, "Cargo environment operation changed");
+        ensure!(
+            operation::references(&record.runtime.operation_root, &record.context)?
+                .iter()
+                .all(|reference| record.references.contains(reference))
+                && record.references.contains(&record.request),
+            "Cargo environment omitted durable operation dependencies"
+        );
+        let intent_path = root.join("cargo-environment-intent.toml");
+        let intent: EnvironmentRecord = family::object(&intent_path)?;
+        ensure!(
+            intent.schema == record.schema
+                && intent.prepared_sha256 == record.prepared_sha256
+                && intent.candidate_sha256 == record.candidate_sha256
+                && intent.context == record.context
+                && intent.runtime == record.runtime
+                && intent.request == record.request
+                && intent.program == record.program
+                && intent.limits == record.limits
+                && intent.deadline_unix_ms == record.deadline_unix_ms
+                && intent.reserved_bytes == record.reserved_bytes
+                && intent.snapshots == record.snapshots
+                && record.references.contains(&retention::seal_file(&intent_path, MAX_RECORD_BYTES)?),
+            "Cargo environment durable intent changed"
+        );
         for reference in &record.references {
             retention::authenticate_reference(reference, MAX_RECORD_BYTES.max(MAX_SOURCE_BYTES))?;
         }
@@ -1617,13 +1655,13 @@ fn external_cache_path(name: &str, projects: &BTreeSet<String>) -> bool {
 }
 
 fn archive_cache_files(bytes: &[u8], projects: &BTreeSet<String>) -> Result<BTreeMap<String, String>> {
-    use std::io::Read;
     ensure!(bytes.len() as u64 <= MAX_SOURCE_BYTES, "Cargo dependency archive extent exceeded");
     let mut archive = zip::ZipArchive::new(std::io::Cursor::new(bytes))?;
     ensure!(!archive.is_empty() && archive.len() <= MAX_FILES, "Cargo dependency archive is empty or excessive");
     let mut files = BTreeMap::new();
     let mut total = 0u64;
     for index in 0..archive.len() {
+        bounded::check()?;
         let mut entry = archive.by_index(index)?;
         let name = entry.name().to_owned();
         ensure!(
@@ -1639,8 +1677,7 @@ fn archive_cache_files(bytes: &[u8], projects: &BTreeSet<String>) -> Result<BTre
             total <= MAX_DEPENDENCY_BYTES && entry.size() <= MAX_SOURCE_BYTES,
             "Cargo cache decompressed extent exceeded"
         );
-        let mut body = Vec::new();
-        entry.by_ref().take(MAX_SOURCE_BYTES + 1).read_to_end(&mut body)?;
+        let body = read_cache_entry(&mut entry)?;
         ensure!(
             body.len() as u64 == entry.size() && files.insert(name, sha256(&body)).is_none(),
             "Cargo cache archive duplicates or changes an entry"
@@ -1650,33 +1687,44 @@ fn archive_cache_files(bytes: &[u8], projects: &BTreeSet<String>) -> Result<BTre
 }
 
 fn unpack_cache(bytes: &[u8], output: &Path, projects: &BTreeSet<String>) -> Result<CargoClosure> {
-    use std::io::Read;
     let files = archive_cache_files(bytes, projects)?;
     let mut archive = zip::ZipArchive::new(std::io::Cursor::new(bytes))?;
     for index in 0..archive.len() {
+        bounded::check()?;
         let mut entry = archive.by_index(index)?;
         let name = entry.name().to_owned();
         let executable = entry.unix_mode().is_some_and(|mode| mode & 0o111 != 0);
-        let mut body = Vec::new();
-        entry.by_ref().take(MAX_SOURCE_BYTES + 1).read_to_end(&mut body)?;
+        let body = read_cache_entry(&mut entry)?;
         ensure!(files.get(&name) == Some(&sha256(&body)), "Cargo dependency archive changed during extraction");
         publish_bytes(&output.join(name), &body, executable)?;
     }
     Ok(CargoClosure { root: output.into(), files })
 }
 
+fn read_cache_entry(entry: &mut impl std::io::Read) -> Result<Vec<u8>> {
+    let mut body = Vec::new();
+    let mut buffer = [0u8; 65536];
+    loop {
+        bounded::check()?;
+        let count = entry.read(&mut buffer)?;
+        if count == 0 {
+            break;
+        }
+        ensure!(body.len() as u64 + count as u64 <= MAX_SOURCE_BYTES, "Cargo cache entry grew beyond its bound");
+        bounded::account(count as u64)?;
+        body.extend_from_slice(&buffer[..count]);
+    }
+    Ok(body)
+}
+
 /// This installed producer is entered only inside the quota namespace. Every
 /// child receives a fresh environment and the declared offline closure.
 pub(crate) fn producer_cli(args: &[String]) -> Result<()> {
-    ensure!(args == ["--request", "/inputs/cargo-request.json"], "Cargo producer requires its installed request path");
-    ensure!(
-        std::env::current_dir()? == Path::new("/work")
-            && std::env::var("CARGO_HOME").ok().as_deref() == Some("/work/tmp/cargo-home")
-            && !Path::new("/trusted-helper").try_exists()?,
-        "Cargo producer requires the confined execution namespace"
-    );
-    let request: ProducerRequest =
-        serde_json::from_slice(&bounded::read_limit(Path::new("/inputs/cargo-request.json"), 65536)?)?;
+    require_confined_request(args)?;
+    let request: ProducerRequest = serde_json::from_slice(
+        &bounded::read_limit(Path::new("/inputs/cargo-request.json"), 65536)
+            .context("read the installed Cargo producer request")?,
+    )?;
     ensure!(request.schema == "translation-cargo-producer-v1", "unknown Cargo producer request");
     let command = request
         .kind
@@ -1688,7 +1736,7 @@ pub(crate) fn producer_cli(args: &[String]) -> Result<()> {
     if request.dependency_cache {
         copy_cache(Path::new("/inputs/cache"), Path::new("/work/tmp/target"))?;
     }
-    let status = configured_cargo()?.args(&command.argv[1..]).status()?;
+    let status = configured_cargo()?.args(&command.argv[1..]).status().context("launch the installed offline Cargo")?;
     ensure!(status.success(), "original Cargo command exited with {status}");
     if command.export_binary {
         let source = Path::new("/work/tmp/target/debug/sm-pipeline");
@@ -1725,12 +1773,13 @@ fn configured_cargo() -> Result<Command> {
         .env("RUST_TEST_THREADS", "1")
         .env("RUSTC", "/toolchain/bin/rustc")
         .env("RUSTDOC", "/toolchain/bin/rustdoc")
-        .env("RUSTFLAGS", "-C linker=/usr/bin/cc -C linker-features=-lld -C link-arg=-B/usr/lib/gcc/x86_64-linux-gnu/9/ -C link-arg=-B/usr/bin/")
+        .env("RUSTFLAGS", "--sysroot /toolchain -C linker=/usr/bin/cc -C linker-features=-lld -C link-arg=-B/usr/lib/gcc/x86_64-linux-gnu/9/ -C link-arg=-B/usr/bin/")
         .env("CC", "/usr/bin/cc")
         .env("AR", "/usr/bin/ar")
         .env("LD_LIBRARY_PATH", "/toolchain/lib")
         .env("SM_PIPELINE_ROOT", "/work/tmp/pipeline")
         .env("SM_PIPELINE_WORKERS", "1")
+        .env("SM_PIPELINE_CONFINED_CARGO", "1")
         .stdin(Stdio::null())
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit());
@@ -1738,15 +1787,11 @@ fn configured_cargo() -> Result<Command> {
 }
 
 pub(crate) fn environment_producer_cli(args: &[String]) -> Result<()> {
-    ensure!(
-        args == ["--request", "/inputs/cargo-request.json"]
-            && std::env::current_dir()? == Path::new("/work")
-            && std::env::var("CARGO_HOME").ok().as_deref() == Some("/work/tmp/cargo-home")
-            && !Path::new("/trusted-helper").try_exists()?,
-        "Cargo environment producer requires the installed confined request"
-    );
-    let request: EnvironmentRequest =
-        serde_json::from_slice(&bounded::read_limit(Path::new("/inputs/cargo-request.json"), 65536)?)?;
+    require_confined_request(args)?;
+    let request: EnvironmentRequest = serde_json::from_slice(
+        &bounded::read_limit(Path::new("/inputs/cargo-request.json"), 65536)
+            .context("read the installed Cargo environment request")?,
+    )?;
     ensure!(request.schema == "translation-cargo-environment-producer-v1", "unsupported Cargo prerequisite producer");
     if !request.build_dependencies {
         let status = Command::new("/toolchain/bin/rustc")
@@ -1754,7 +1799,8 @@ pub(crate) fn environment_producer_cli(args: &[String]) -> Result<()> {
             .env_clear()
             .env("LD_LIBRARY_PATH", "/toolchain/lib")
             .stdin(Stdio::null())
-            .status()?;
+            .status()
+            .context("launch the installed compiler version prerequisite")?;
         ensure!(status.success(), "installed compiler prerequisite failed");
         return Ok(());
     }
@@ -1773,7 +1819,8 @@ pub(crate) fn environment_producer_cli(args: &[String]) -> Result<()> {
             "-p",
             "pipeline-model",
         ])
-        .status()?;
+        .status()
+        .context("launch the installed offline Cargo prerequisite")?;
     ensure!(status.success(), "confined frozen dependency build failed with {status}");
     let source_names = tree_files(Path::new("/inputs/source"))?.into_iter().map(|name| (name, String::new())).collect();
     let projects = project_packages(Path::new("/inputs/source"), &source_names)?;
@@ -1820,6 +1867,24 @@ pub(crate) fn environment_producer_cli(args: &[String]) -> Result<()> {
     Ok(())
 }
 
+fn require_confined_request(args: &[String]) -> Result<()> {
+    ensure!(args == ["--request", "/inputs/cargo-request.json"], "Cargo producer requires its installed request path");
+    ensure!(std::env::current_dir()? == Path::new("/work"), "Cargo producer requires the quota work directory");
+    ensure!(
+        std::env::var("CARGO_HOME").ok().as_deref() == Some("/work/tmp/cargo-home"),
+        "Cargo producer requires its isolated Cargo home"
+    );
+    // Unmounting the installed image can leave bubblewrap's empty bind target.
+    // The image itself must never remain readable by a candidate process.
+    let helper_hidden = match fs::symlink_metadata("/trusted-helper") {
+        Ok(metadata) => metadata.is_file() && metadata.len() == 0,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => true,
+        Err(error) => return Err(error.into()),
+    };
+    ensure!(helper_hidden, "Cargo producer requires the installed helper image to be hidden");
+    Ok(())
+}
+
 fn copy_cache(source: &Path, destination: &Path) -> Result<()> {
     let names = tree_files(source)?;
     let mut total = 0u64;
@@ -1831,7 +1896,8 @@ fn copy_cache(source: &Path, destination: &Path) -> Result<()> {
         ensure!(total <= MAX_DEPENDENCY_BYTES, "Cargo cache extent exceeded");
         fs::create_dir_all(output.parent().context("Cargo cache parent missing")?)?;
         fs::copy(&input, &output)?;
-        fs::set_permissions(&output, fs::Permissions::from_mode(metadata.permissions().mode() & 0o777))?;
+        let mode = if metadata.permissions().mode() & 0o111 != 0 { 0o700 } else { 0o600 };
+        fs::set_permissions(&output, fs::Permissions::from_mode(mode))?;
     }
     Ok(())
 }
