@@ -284,6 +284,8 @@ struct Sample {
     scenario: String,
     elapsed_ns: u64,
     compiler_identity_queries: usize,
+    header_sha256: String,
+    program_sha256: String,
     objects: Vec<CacheResult>,
 }
 #[test]
@@ -308,11 +310,24 @@ fn retained_cold_warm_build_preparation_measurement() {
         fs::write(proof.join(format!("{implementation}-{scenario}.stdout")), output.stdout).unwrap();
         fs::write(proof.join(format!("{implementation}-{scenario}.stderr")), output.stderr).unwrap();
         assert_eq!(Command::new(request.run.join("program")).status().unwrap().code(), Some(52));
+        fs::copy(checkout.join("deps/value.h"), proof.join(format!("{implementation}-{scenario}.value.h"))).unwrap();
+        fs::copy(request.run.join("program"), proof.join(format!("{implementation}-{scenario}.program"))).unwrap();
+        fs::copy(request.run.join("c-cache.toml"), proof.join(format!("{implementation}-{scenario}.c-cache.toml")))
+            .unwrap();
+        if request.run.join("c-build.metrics.toml").exists() {
+            fs::copy(
+                request.run.join("c-build.metrics.toml"),
+                proof.join(format!("{implementation}-{scenario}.metrics.toml")),
+            )
+            .unwrap();
+        }
         Sample {
             implementation: implementation.into(),
             scenario: scenario.into(),
             elapsed_ns,
             compiler_identity_queries: count() - before,
+            header_sha256: hash(&checkout.join("deps/value.h")),
+            program_sha256: hash(&request.run.join("program")),
             objects: records(&request.run),
         }
     };
