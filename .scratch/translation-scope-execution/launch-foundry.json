@@ -1,0 +1,30 @@
+{
+  "schema": "translation-launch-request-v1",
+  "id": "foundry-native-launch",
+  "output_root": "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/model-launch/operator-run-01",
+  "helper": {
+    "path": "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/model-launch/native-02/execution/installed/helper",
+    "sha256": "89ee3514c53d3cb55373561e30ed54d673bda3f398f49b1c483d38301ed898e8",
+    "bytes": 69597808
+  },
+  "provider": {
+    "endpoint": "https://fcg.palantirfoundry.com/language-model-service/api/proxy/openai/v1/responses",
+    "token_env": "FOUNDRY_TOKEN",
+    "model": "gpt-6.1-sol",
+    "reasoning_effort": "high",
+    "max_output_tokens": 32768,
+    "timeout_seconds": 300,
+    "max_response_bytes": 1048576
+  },
+  "scopes": [
+    {
+      "id": "enemy-jump-instructions",
+      "after": [],
+      "template": {
+        "path": "/home/jim/sm-decomp-translation-execution/.scratch/translation-scope-execution/model-launch/native-02/approved-template.json",
+        "sha256": "4e7899977368412838412a0422671faa6281f4e6f30232a9bf1d76350fefa84e",
+        "bytes": 9469
+      }
+    }
+  ]
+}

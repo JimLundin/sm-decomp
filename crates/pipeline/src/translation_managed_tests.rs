@@ -481,6 +481,7 @@ impl ManagedProject {
             max_checkout_bytes: 64 * 1024 * 1024,
             max_context_bytes: 256 * 1024,
             rewrite: RewriteInstallation {
+                provider: None,
                 executable: installed(protocol)?,
                 recorded: false,
                 limits: RunLimits {

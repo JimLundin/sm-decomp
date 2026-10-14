@@ -12,6 +12,83 @@ The implementation lives in `crates/translation-execution` and the pipeline's
 `translation_migration` modules. The local implementation contract and evidence
 are in [.scratch/translation-scope-execution](../.scratch/translation-scope-execution/spec.md).
 
+## One-command Foundry launch
+
+The maintained `translation-launch` command owns an ordered plan of approved
+Translation scopes. It installs sealed configuration, prepares each scope,
+invokes the model, runs the prescribed gates, integrates, publishes and cleans
+up. The model returns Source replacements; it chooses no pipeline operation.
+
+A concrete local request is prepared in the architecture worktree. From
+`/home/jim/sm-decomp-translation-execution`, run:
+
+```sh
+./out/translation-launch/bin/sm-pipeline translation-launch \
+  --request "$PWD/.scratch/translation-scope-execution/launch-foundry.json" run
+```
+
+This configuration runs the approved closed `enemy-jump-instructions` scope:
+two routines and 16 actual-C Fixture pairs, with candidate and merged focused
+and Offline gates. Its source, ROM, recovered C, complete closed catalog,
+coverage, provenance and budgets are frozen. It retains acceptance under
+`model-launch/operator-run-01`. Production queue migration remains the separate
+[switch ticket](../.scratch/translation-scope-execution/issues/08-production-switch.md).
+Original-ROM parity and Live replay retain their separate gates.
+
+The request uses the existing `FOUNDRY_TOKEN` and the Foundry Responses endpoint,
+with frozen model `gpt-6.1-sol`, reasoning effort `high`, 32,768 output tokens,
+a 300-second model deadline and a 1-MiB wire response limit. Credentials are
+read only when a new exchange starts and passed to the trusted HTTP helper.
+They are excluded from requests, retained evidence and diagnostics. The helper
+sends `tools: []`, `tool_choice: "none"`, strict Source replacement JSON Schema,
+and `store: false`. It uses one fresh HTTP/1 connection, disables redirects and
+proxy discovery, and makes no automatic retry. Non-success gateway bodies are
+discarded because they can contain authorization diagnostics.
+
+The [Responses request](https://developers.openai.com/api/reference/resources/responses/methods/create)
+and [Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs)
+contracts are implemented directly in Rust. No Codex session, model-selected
+command or language runtime orchestrates the launch.
+
+`translation-launch-request-v1` supplies an exact helper Reference, provider,
+output root and ordered scope-template References. Preparation copies the
+approved policy, original claim and verification contract into a new sealed
+Installation. The template installer accepts isolated scopes; final managed
+Installations use their separately reviewed migration and `--plan`. The
+`translation-launch-plan-v1` records exact Installation References and any
+earlier `after` dependencies. The existing supervisor still checks all managed
+ownership and admission. Each scope uses its declared frozen source and
+integration baseline; an ordering dependency does not rebase its policy.
+
+```sh
+./out/translation-launch/bin/sm-pipeline translation-launch \
+  --request "$PWD/.scratch/translation-scope-execution/launch-foundry.json" inspect
+./out/translation-launch/bin/sm-pipeline translation-launch \
+  --plan "$PWD/.scratch/translation-scope-execution/model-launch/operator-run-01/plan.json" \
+  repair enemy-jump-instructions 'reviewed repair reason'
+```
+
+`prepare` installs and authenticates configuration without a model or gate
+producer. `run` advances in declared order and stops at the first unfinished
+scope; a pending or stopped run exits nonzero after its typed report. Repeating
+`run` reconciles the same attempt. `inspect` authenticates read-only.
+`repair SCOPE REASON` deliberately starts a new rewrite attempt; `retry` runs a
+new evaluation of the retained candidate; `cancel` stops the first unfinished
+scope. All three preserve the supervisor's frozen attempt budget. Continue the
+ordered plan with `run` after the deliberate action completes.
+
+An immutable model intent precedes sending. The helper inherits the operation
+lease and owns deadline enforcement and publication after a controller crash.
+Recovery consumes its original sealed response or records ambiguous delivery;
+it never resends that intent. A complete fsynced wire response can be recovered
+before source application. Changed endpoint, model, request, capsule or helper
+identity refuses reuse. Stopped attempts require deliberate repair.
+
+The [Foundry/actual-C checkpoint](../.scratch/translation-scope-execution/model-launch/checkpoint.md)
+records the passing CLI lifecycle, ordered-plan/recovery tests and cleanup.
+The installed CLI is retained independently of disposable Cargo targets; use
+that exact binary for this prepared request.
+
 ## Installed operation
 
 A reviewed, controller-owned `translation-supervisor-installation-v1` JSON file

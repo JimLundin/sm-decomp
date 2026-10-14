@@ -6,6 +6,7 @@ pub mod confinement;
 mod executor;
 mod journal;
 pub mod model;
+pub mod model_rewrite;
 pub mod operation;
 pub mod retention;
 pub mod rewrite;

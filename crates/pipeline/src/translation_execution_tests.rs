@@ -7,9 +7,9 @@ use std::{
 
 static NEXT: AtomicU64 = AtomicU64::new(0);
 
-struct Project {
-    root: PathBuf,
-    installation: Installation,
+pub(crate) struct Project {
+    pub(crate) root: PathBuf,
+    pub(crate) installation: Installation,
 }
 
 fn git(root: &Path, args: &[&str]) -> Result<String> {
@@ -74,7 +74,7 @@ pub(crate) fn policy(
 }
 
 impl Project {
-    fn new() -> Result<Self> {
+    pub(crate) fn new() -> Result<Self> {
         let root = std::env::temp_dir().join(format!(
             "sm-complete-supervisor-{}-{}",
             std::process::id(),
@@ -177,6 +177,7 @@ impl Project {
             rewrite: RewriteInstallation {
                 executable: installed(root.join("installed/rewrite"))?,
                 recorded: true,
+                provider: None,
                 limits: RunLimits {
                     timeout: Duration::from_secs(10),
                     writable_bytes: 1024 * 1024,
@@ -614,7 +615,7 @@ pub(crate) fn native_harness_sources() -> Vec<(&'static str, &'static str)> {
     ]
 }
 
-fn native_installation(root: &Path) -> Result<Installation> {
+pub(crate) fn native_installation(root: &Path) -> Result<Installation> {
     let current = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .context("workspace missing")?
@@ -714,6 +715,7 @@ fn native_installation(root: &Path) -> Result<Installation> {
         rewrite: RewriteInstallation {
             executable: installed(root.join("installed/rewrite"))?,
             recorded: true,
+            provider: None,
             limits: RunLimits {
                 timeout: Duration::from_secs(20),
                 writable_bytes: 1024 * 1024,

@@ -9,7 +9,7 @@ use ::translation_execution::{
     self as execution, ExecutionAdapter, FinalizationJournal, PublicationJournal, Supervisor, checkout,
     confinement::{self, Program, RunLimits},
     model::*,
-    operation,
+    model_rewrite, operation,
     retention::{self, Reference, Retained, RetainedKind, RetentionResult},
     rewrite_adapter::{InstalledRewriteAdapter, RecordedRewriteAdapter, RewriteAdapter},
 };
@@ -44,6 +44,8 @@ pub(crate) struct RewriteInstallation {
     /// A recorded source transformation is used only in an isolated proof.
     /// The installed program still executes under the real restricted transport.
     pub recorded: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub provider: Option<model_rewrite::Provider>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -333,7 +335,7 @@ pub(crate) fn installation_identity(installation: &Installation) -> Result<Strin
 }
 
 impl Installation {
-    fn validate(&self) -> Result<()> {
+    pub(crate) fn validate(&self) -> Result<()> {
         ensure!(
             self.schema == "translation-supervisor-installation-v1"
                 && !self.id.is_empty()
@@ -342,6 +344,14 @@ impl Installation {
             "unsupported installed supervisor"
         );
         self.policy.validate()?;
+        if let Some(provider) = &self.rewrite.provider {
+            provider.validate()?;
+            ensure!(!self.rewrite.recorded, "model-backed rewrites cannot use recorded transformations");
+            ensure!(
+                provider.timeout_seconds <= self.policy.budgets.gate_timeout_seconds,
+                "model deadline exceeds frozen whole-stage limit"
+            );
+        }
         ensure!(self.workers == 4 && self.policy.budgets.workers == 4, "installed shared worker capacity must be four");
         ensure!(
             self.policy.verification_stages.iter().all(|stage| *stage != VerificationStage::Live),
@@ -485,6 +495,9 @@ impl Adapter {
     fn operations(&self) -> PathBuf {
         self.run_root.join("operations")
     }
+    fn model_operations(&self) -> PathBuf {
+        self.run_root.join("model-operations")
+    }
     fn reserve_attempt(&self, number: u32) -> Result<()> {
         self.reserve(
             &sha256(format!("attempt-{number}-controller-metadata")),
@@ -508,6 +521,25 @@ impl Adapter {
                     && matches!(self.installed.admission, Admission::IsolatedProof { .. })),
             "recorded rewrite is limited to an isolated proof"
         );
+        if let Some(provider) = &self.installed.rewrite.provider {
+            ensure!(recorded.is_none(), "model transport refuses recorded source");
+            let limits = self.installed.policy.rewrite_limits;
+            self.reserve(
+                &context.operation_key,
+                "model-rewrite",
+                model_rewrite::reserve_bytes(provider, capsule, limits)?,
+            )?;
+            let deadline = self.deadline(context)?;
+            let adapter = model_rewrite::ModelRewriteAdapter::new(
+                self.model_operations(),
+                provider.clone(),
+                self.installed.helper.path.clone(),
+                self.installed.helper.sha256.clone(),
+            )?;
+            let result = adapter.run_until(context, capsule, limits, deadline)?;
+            ensure!(result.passed, "model rewrite stopped: {}", result.diagnostic);
+            return result.replacements.context("model completion lacks replacements");
+        }
         let arguments = recorded.map(serde_json::to_string).transpose()?.into_iter().collect();
         let program = Program {
             executable: self.installed.rewrite.executable.path.clone(),
@@ -1613,6 +1645,22 @@ impl ExecutionAdapter for Adapter {
                 }
             }
         }
+        let model_root = self.model_operations();
+        if model_root.is_dir() {
+            for entry in fs::read_dir(&model_root)? {
+                let intent_path = entry?.path().join("intent.json");
+                if !intent_path.is_file() {
+                    continue;
+                }
+                let intent: serde_json::Value = read(&intent_path)?;
+                let owned: OperationContext =
+                    serde_json::from_value(intent.get("context").context("model intent context missing")?.clone())?;
+                ensure!(owned.run_id == context.run_id, "foreign model intent in run");
+                if owned.attempt == context.attempt {
+                    model_rewrite::stop(&model_root, &owned)?;
+                }
+            }
+        }
         let intent_path = attempt.join("finalization-intent.json");
         let intent: FinalIntent = if intent_path.exists() {
             let intent: FinalIntent = read(&intent_path)?;
@@ -1785,6 +1833,20 @@ impl ExecutionAdapter for Adapter {
                     if owned.attempt == context.attempt && owned.run_id == context.run_id {
                         files.extend(operation::references(&operation_root, &owned)?);
                     }
+                }
+            }
+        }
+        if model_root.is_dir() {
+            for entry in fs::read_dir(&model_root)? {
+                let intent_path = entry?.path().join("intent.json");
+                if !intent_path.is_file() {
+                    continue;
+                }
+                let intent: serde_json::Value = read(&intent_path)?;
+                let owned: OperationContext =
+                    serde_json::from_value(intent.get("context").context("model intent context missing")?.clone())?;
+                if owned.attempt == context.attempt && owned.run_id == context.run_id {
+                    files.extend(model_rewrite::references(&model_root, &owned)?);
                 }
             }
         }
@@ -2377,13 +2439,14 @@ pub(crate) fn cli(args: &[String]) -> Result<()> {
     );
     let reason_required = matches!(action, "retry" | "repair" | "cancel");
     ensure!(args.len() == if reason_required { 4 } else { 3 }, "unexpected translation supervisor arguments");
+    emit(&execute(installed, action, args.get(3).map(String::as_str))?)
+}
+
+/// Shared lifecycle used by the single-scope CLI and ordered Rust launcher.
+pub(crate) fn execute(installed: Installation, action: &str, reason: Option<&str>) -> Result<View> {
     if action == "inspect" {
         let adapter = Adapter::existing(installed.clone())?;
-        return emit(&Supervisor::inspect_retained(
-            &adapter.run_root.join("journal"),
-            installed.policy,
-            adapter.clone(),
-        )?);
+        return Supervisor::inspect_retained(&adapter.run_root.join("journal"), installed.policy, adapter.clone());
     }
     let adapter = Adapter::new(installed.clone())?;
     let mut supervisor =
@@ -2397,14 +2460,14 @@ pub(crate) fn cli(args: &[String]) -> Result<()> {
             );
             supervisor.run_with_rewrite(|adapter, context, capsule| adapter.rewrite(context, capsule, None))?
         }
-        "retry" => supervisor.retry(args.get(3).context("retry requires operator reason")?)?,
-        "repair" => supervisor.repair(args.get(3).context("repair requires operator reason")?)?,
-        "cancel" => supervisor.cancel(args.get(3).context("cancel requires operator reason")?)?,
+        "retry" => supervisor.retry(reason.context("retry requires operator reason")?)?,
+        "repair" => supervisor.repair(reason.context("repair requires operator reason")?)?,
+        "cancel" => supervisor.cancel(reason.context("cancel requires operator reason")?)?,
         _ => bail!("unknown translation supervisor action"),
     };
     // Keep all reporting on accepted durable outcomes. Inspect/resume cannot
     // execute a producer after a stopped or completed evaluation.
-    emit(&view)
+    Ok(view)
 }
 
 #[cfg(test)]

@@ -75,6 +75,8 @@ mod storage_studies;
 mod translation;
 mod translation_execution;
 mod translation_infrastructure;
+mod translation_launch;
+mod translation_launch_prepare;
 mod translation_migration;
 mod translation_migration_builder;
 mod translation_migration_guard;
@@ -483,6 +485,7 @@ fn main() -> Result<()> {
     let args: Vec<_> = std::env::args().skip(1).collect();
     match args.first().map(String::as_str) {
         Some("translation-execute") => translation_execution::cli(&args[1..]),
+        Some("translation-launch") => translation_launch::cli(&args[1..]),
         Some("translation-migration") if args.get(1).is_some_and(|value| value == "build-preparation") => {
             ensure!(
                 args.len() == 4 && args[2] == "--request",

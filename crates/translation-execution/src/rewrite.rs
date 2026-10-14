@@ -127,7 +127,7 @@ fn capsule_id(capsule: &RewriteCapsule) -> Result<String> {
     ))?))
 }
 
-fn validate_capsule(capsule: &RewriteCapsule, limits: RewriteLimits) -> Result<()> {
+pub(crate) fn validate_capsule(capsule: &RewriteCapsule, limits: RewriteLimits) -> Result<()> {
     limits_valid(limits)?;
     ensure!(!capsule.run_id.is_empty() && capsule.attempt > 0, "capsule lacks attempt identity");
     ensure!(
