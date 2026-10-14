@@ -2375,7 +2375,11 @@ mod tests {
             max_output_bytes: 4 * 1024 * 1024 * 1024,
         };
         let first = run(&prepared, &checkout, &output.join("gate"), &runtime, &context).unwrap();
-        let retained = authenticate(&prepared, &checkout, &first).unwrap();
+        // run authenticates before publishing or returning a retained receipt.
+        // Keep the unchanged-resume authentication below without hashing every
+        // multi-gigabyte historical capture a redundant third time here.
+        let retained: CompactVerdict =
+            toml::from_str(&String::from_utf8(read(&first.verdict.file, MAX_RECORD).unwrap()).unwrap()).unwrap();
         assert_eq!(retained.historical.len(), 5, "{}", first.diagnostic);
         assert_eq!(retained.historical[0].summary.as_ref().unwrap().matching_prefix, 1097);
         assert_eq!(retained.historical[2].summary.as_ref().unwrap().matching_prefix, 1736);
@@ -2395,5 +2399,29 @@ mod tests {
         }
         let repeat = run(&prepared, &checkout, &output.join("gate"), &runtime, &context).unwrap();
         assert_eq!(first, repeat);
+    }
+
+    #[test]
+    #[ignore = "requires a retained original experiment and its exact private reader/input closure"]
+    fn retained_original_experiment_authenticates_without_execution() {
+        let checkout = PathBuf::from(std::env::var("SM_COMPACT_SOURCE").unwrap());
+        let output = PathBuf::from(std::env::var("SM_COMPACT_PROOF_ROOT").unwrap());
+        let prepared: PreparedCompact =
+            toml::from_str(&fs::read_to_string(output.join("prepared.toml")).unwrap()).unwrap();
+        let receipt: CompactReceipt =
+            toml::from_str(&fs::read_to_string(output.join("gate/compact-receipt.toml")).unwrap()).unwrap();
+        let before = files(&output.join("operations"), MAX_HISTORY).unwrap();
+        let references_before = references(&receipt).unwrap();
+        let verdict = authenticate(&prepared, &checkout, &receipt).unwrap();
+        assert_eq!(verdict.requested_frames, 2240);
+        assert_eq!(verdict.experiment_budget_seconds, 60);
+        assert_eq!(verdict.historical.len(), 5);
+        assert!(!verdict.live_replay && !verdict.original_rom_parity);
+        assert_eq!(references_before, references(&receipt).unwrap());
+        assert_eq!(before, files(&output.join("operations"), MAX_HISTORY).unwrap());
+        println!(
+            "Retained compact experiment authenticated; passed={}; diagnosis={}",
+            receipt.passed, receipt.diagnostic
+        );
     }
 }

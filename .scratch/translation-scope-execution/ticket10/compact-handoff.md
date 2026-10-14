@@ -95,3 +95,29 @@ phase. The frozen producer has debug sections removed, with its complete
 executable seal retained in `producer-stripped.sha256`; its producer behavior is
 unchanged. The proof reader and exact adapter source are retained independently
 of the disposable Cargo target.
+
+Proof 02 authenticated all five original histories, covering 6,629,732,570 bytes
+of historical artifacts. It recomputed matching prefixes 1097, 1096 and 1736;
+both original 8600-frame error statuses remain errors. The exact original compact
+reader completed inside confinement with status 0 and stdout `Prefix diagnostic
+authenticated; acceptance remains false` (stdout SHA
+`2bcde0bb1a6f2e3a0e4a31510e11f29d15a58a4ba8b7d6f30f4b88d5261b8cd1`).
+The fresh native phase exhausted the original budget before compile/candidate/
+control. Its experiment began at 1791974982178 ms, had deadline 1791975042178 ms,
+and finished termination at 1791975042217 ms. The exact retained diagnosis is
+`confined compact native failed: sandbox timeout`; no shorter target was used.
+Receipt SHA is `c88f4651afafc5e9561cfe523c1314dca4bcca698d55de93d94d87dd030e8cc6`,
+verdict SHA is `9e42de4c9b0461b5e55e82c8bad42b739a4d5d0319cd9c73c8a901b23d963fb0`,
+and prepared.toml SHA is `365e26f230ad0fc4ccc92db60c05ad141b532aba70da4cc9e72a58e0df19d21d`.
+Unchanged-resume validation and cleanup are still running/pending for this proof.
+
+The native worker identified the v1 helper as unoptimized and is validating an
+optimized v2 helper. Root approved a separate proof 03 with that new exact helper
+identity and the unchanged frame/deadline contract. Its frozen host test reader
+is `a5e46472ac191805ed8e264368df09772d71bd084c86eaefb1010d37400cd54b` under
+`/tmp/sm-ticket10-compact-proof-03-20261014/tools/compact-proof-reader`.
+The current compact suite passes 3 ordinary tests and has 2 original-evidence
+tests ignored by default. The new read-only cleanup test authenticates one
+retained receipt and verifies that its operation inventory and references remain
+unchanged. The fresh proof harness still authenticates both initial run and
+unchanged resume, without a third redundant historical pass between them.
