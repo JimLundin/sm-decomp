@@ -6,7 +6,7 @@ Worktree: `/home/jim/sm-decomp-translation-execution`
 Branch: `architecture/translation-scope-execution-20261013`
 Checkpoint: `f845516` (ticket lifecycle authentication and recovery handoff)
 
-## Current next action — ticket lifecycle recovery checkpoint
+## Current next action — managed proof passed; final cleanup
 
 The current continuation has inspected the same three children through
 collaboration: `bounded_git` and `managed_admission` errored with encrypted-output
@@ -40,13 +40,49 @@ admitted-progress regression passed. Pipeline Clippy's one cloned-slice finding
 has been corrected and its final rerun is pending.
 
 The fresh managed proof at `managed-gates/actual-c-managed-11` was launched once
-at 2026-10-13 22:35:37 UTC with the command below. Current writer PID is 1098911,
-parent 3389, Linux start ticks 6514166, boot ID
-`7119fcce-5593-4526-aa9b-07127767c4ef`; exec session39653 retains its output.
-Its executable path and SHA-256 match the frozen test executable below. Inspect
-that exact start identity before resuming monitoring; a PID alone is insufficient.
-Do not launch another proof or rebuild this executable while it runs. Preserve
-any failure and diagnose the retained graph read-only before another producer.
+at 2026-10-13 22:35:37 UTC with the command below and completed successfully.
+Its former writer PID1098911 (parent3389, start ticks6514166, boot
+`7119fcce-5593-4526-aa9b-07127767c4ef`) is observed stopped. Exec session39653
+returned exit0. Do not rerun this or the earlier passing producer matrices.
+
+The full managed interface test passed in 601.65 seconds. Its loop took
+103.420 seconds; all recovery checks together took 587.984 seconds excluding
+fixture construction. Four actual-C gates contain two Fixture pairs each;
+six unique gate producers supply24 references with18 reuses. Fourteen operation
+receipts are retained. Finalization retained27,249,752 bytes; publication
+retained1,203,738 bytes. Run logical bytes are27,480,037; retired checkouts
+reclaimed7,666,300 logical bytes. Exact pending recovery allocated zero new
+producer evidence. Original job/claim/worker/attempt and original owner source
+are unchanged; both normal queue entries complete and three distinct stages
+publish. Partial/changed/symlink/hardlink pending and host/acceptance tampering
+all refuse. This is a disposable Observed/Helper diagnostic with synthetic
+stopped-owner observation; it establishes no production liveness, shipped
+gameplay, original-ROM parity or Live replay acceptance.
+
+Both cleanup passes for09/10/11 passed with zero eligible bytes and12 source
+snapshots each. Managed11's exact installed controller passed read-only
+authentication in36.63 seconds (session50837, exit0). Final pipeline Clippy with
+the documented shared exceptions passed in34.65 seconds (session48294, exit0);
+the current locked/offline CLI build passed in15.12 seconds (session85450, exit0).
+The affected source remains byte-identical to checkpointf845516.
+
+Both final verification-directory cleanup passes passed with zero eligible
+bytes. The Rust disposal plan passed reader authentication, process-reference
+and alias checks. Its23 closed targets measure5,195,113,120 logical bytes and
+4,825,128,960 reclaimable allocated bytes; available space is186,285,498,368 bytes.
+Receipt: `verification/disposable-retirement-plan-final-01.jsonl`. It contains
+only disposable Cargo/protocol targets, unreferenced helper copies in failed06/07
+and six ignored C copies in this worktree. It excludes every sealed reader,
+private original source/input graph and `/tmp/sm-complete-supervisor-976030-0`.
+
+Next apply that unchanged Rust disposal helper, retaining
+`verification/disposable-retirement-apply-final-01.jsonl`, then authenticate
+actual-c02 and managed11 through their exact retained readers. After those
+read-only checks finish, run both verification-directory cleanup passes again
+with `verification-cleanup-{ordinary,deduplicate}-final-02` receipts. Build/run
+the prepared compact-receipt helper only after all of its referenced logs exist;
+retire both final helpers and their source afterward. Tickets02–07 stay claimed
+until these completion steps pass; ticket08 remains open.
 
 ```sh
 cd /home/jim/sm-decomp-translation-execution
@@ -61,12 +97,16 @@ SM_MANAGED_NATIVE_PROOF_ROOT=/home/jim/sm-decomp-translation-execution/.scratch/
 
 This executable is 240,702,016 bytes, SHA-256
 `cde6329250ae3657385aa9a887ccdb6fc881a3329f4495757449e37c9bd4ecb8`.
-After a complete proof, authenticate through its exact `installed/controller`,
-finish affected Clippy/format/current CLI checks, both scoped cleanup passes and
-measured disposal. Extend `/tmp/sm-translation-retirement.rs`'s managed root and
-reader arrays through11 before `plan`/`apply`; retain all sealed readers, source
+After the completed proof, authenticate through its exact `installed/controller`,
+finish affected Clippy/current CLI checks, both scoped cleanup passes and
+measured disposal. Formatting of all three affected Rust files already passes.
+`/tmp/sm-translation-retirement.rs`'s managed root and reader arrays now include11,
+and its executable is rebuilt. Run `plan` before `apply`; retain all sealed readers, source
 and private input graphs. Authenticate actual-c02 through its immutable reader
-after retirement. Do not repeat the passing broad/native/linker matrices.
+after retirement. The Rust compact-receipt helper is
+`/tmp/sm-translation-final-checkpoint.rs`; build/run it only after its required
+final logs exist and retire both helper source/binary afterward. Do not repeat
+the passing broad/native/linker matrices.
 
 Main HEAD and the authority/Ceres/canonical/progress hashes still match the
 recorded production baseline. Tickets02–07 remain claimed until proof and
