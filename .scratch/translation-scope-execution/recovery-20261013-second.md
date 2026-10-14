@@ -6,6 +6,7 @@ Worktree: `/home/jim/sm-decomp-translation-execution`
 Branch: `architecture/translation-scope-execution-20261013`
 Verified source: `f845516b975c3bfc413800c6bed9e329696a79e6`
 Proof/documentation checkpoint: `9dd4361`
+Completion checkpoint: `9083275fc80a1f66ddc7a7c7ddca149692123a5a`
 Completion: [completion-20261014.md](completion-20261014.md)
 
 ## Completed executor — production preparation is next
@@ -128,6 +129,17 @@ separate explicit decision after that package is reviewable; no approval is
 requested here. [Final completion](completion-20261014.md) and
 [47 retained references](verification/completion-f845516.references.json)
 record the exact completed source, results and cleanup.
+
+The next read-only command, from this worktree, is:
+
+```sh
+cat .scratch/translation-scope-execution/issues/08-production-switch.md \
+  .scratch/translation-scope-execution/production-preparation/preparation-checkpoint-27b8b0a.md
+```
+
+It inspects remaining preparation and ownership requirements;
+it starts no evaluation. The completion checkpoint above contains the proved
+source, resolved tickets and compact retained receipts.
 
 ## Recovery history
 

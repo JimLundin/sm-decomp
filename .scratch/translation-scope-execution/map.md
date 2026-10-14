@@ -41,6 +41,8 @@ No production mutation is authorized before the reviewed switch.
 
 Verified Rust source checkpoint:
 `f845516b975c3bfc413800c6bed9e329696a79e6`; proof/documentation checkpoint 9dd4361.
+Completed tickets and retained receipts are checkpointed at
+`9083275fc80a1f66ddc7a7c7ddca149692123a5a`.
 The complete deterministic native actual-C proof, infrastructure lifecycle,
 deliberate retry/repair, bounded failure/accounting, confinement and recovery
 gates pass. The complete managed proof now passes exact original queue/ticket/

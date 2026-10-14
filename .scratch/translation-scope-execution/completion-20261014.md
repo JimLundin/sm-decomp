@@ -6,6 +6,7 @@ Worktree: `/home/jim/sm-decomp-translation-execution`
 Branch: `architecture/translation-scope-execution-20261013`
 Verified Rust source: `f845516b975c3bfc413800c6bed9e329696a79e6`
 Proof/documentation checkpoint: `9dd4361`
+Completion checkpoint: `9083275fc80a1f66ddc7a7c7ddca149692123a5a`
 
 For installed supported Translation scopes, Rust owns preparation, restricted
 rewriting, source application, candidate and merged gates, integration,
