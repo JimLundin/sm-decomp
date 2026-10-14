@@ -288,3 +288,20 @@ time showed 79.1% supervisor CPU and 0.5% Cargo CPU, while linking ring's build
 script. A future helper uses a fresh proof root; this stopped identity remains
 unchanged. After the validated next helper, the compact diagnostic owner takes
 its original experiment window first, followed by the next Cargo prerequisite.
+
+`compact-04` started at approximately 2026-10-14 12:34:29 UTC after the compact
+and native owners confirmed their producer windows were closed. The retained
+selector reader runs in unified command session `82885`, host PID `1251183`
+(observed live at 12:34:49 UTC). It uses one Cargo job, capacity four, the paired
+1.97.1 toolchain and `sm-pipeline-e071c3c`. Its helper is
+`/tmp/sm-ticket10-native-proofs/confinement-v4/tools/sm-translation-sandbox`,
+SHA-256 `1ec74e0bcc1024ae460d74b47148114526bf6743e2cc4a87302f9ecf551ab6d9`.
+The native owner's v4 fixes `O_DIRECTORY` versus `O_TMPFILE` classification;
+seven runtime controls and eight original confinement controls pass. No compiler
+profile, original argv, control identity or deadline changes accompany this run.
+The proof root is `/tmp/sm-ticket10-cargo-proof/compact-04`, with sibling
+`compact-04.stdout` and `compact-04.stderr` logs. Dependency preparation remains
+bounded to 600 seconds and each original acceptance command to 60 seconds.
+Next: await this exact process, publish a successful external dependency cache
+immediately if produced, then complete both cleanup passes and retained receipt
+authentication. Never restart or overwrite this proof identity.
