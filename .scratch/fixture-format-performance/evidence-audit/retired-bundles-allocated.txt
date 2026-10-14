@@ -1,0 +1,4 @@
+23293952	out/fixture-format-performance/20261014T191818Z
+159748096	out/fixture-format-performance/20261014T202443Z
+152817664	out/fixture-format-performance/evidence-audit-cNZPAN
+335859712	total

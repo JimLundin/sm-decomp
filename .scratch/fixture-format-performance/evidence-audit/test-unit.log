@@ -1,0 +1,317 @@
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on build directory
+warning: function `validate_duplicate_ticket_receipts` is never used
+   --> crates/pipeline/src/drill_evidence.rs:251:15
+    |
+251 | pub(crate) fn validate_duplicate_ticket_receipts(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `authenticate_inventory_until` is never used
+   --> crates/pipeline/src/family.rs:781:15
+    |
+781 | pub(crate) fn authenticate_inventory_until(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `authenticate_with_source_until` is never used
+    --> crates/pipeline/src/family.rs:1202:15
+     |
+1202 | pub(crate) fn authenticate_with_source_until(
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `prepare_until` is never used
+   --> crates/pipeline/src/translation_compact.rs:387:15
+    |
+387 | pub(crate) fn prepare_until(
+    |               ^^^^^^^^^^^^^
+
+warning: function `build_preparation` is never used
+    --> crates/pipeline/src/translation_migration_builder.rs:1173:15
+     |
+1173 | pub(crate) fn build_preparation(request: BuildRequest) -> Result<BuildReceipt> {
+     |               ^^^^^^^^^^^^^^^^^
+
+warning: function `prepare_until` is never used
+   --> crates/pipeline/src/translation_native.rs:603:15
+    |
+603 | pub(crate) fn prepare_until(
+    |               ^^^^^^^^^^^^^
+
+warning: `pipeline` (bin "sm-pipeline" test) generated 6 warnings
+    Finished `test` profile [unoptimized] target(s) in 1.38s
+     Running unittests src/main.rs (/tmp/sm-fixture-evidence-audit-cNZPAN/target/debug/build/pipeline/ae2656f0af30355a/out/sm_pipeline-ae2656f0af30355a)
+
+running 253 tests
+test affected::tests::expired_or_exhausted_planning_stops_without_output_or_family_exclusion ... ok
+test batch::tests::catalog_discovers_retained_checkout_manifests ... ignored, reads the checkout's complete manifest inventory
+test affected::tests::approved_paths_plan_the_full_catalog_and_keep_unknown_inputs ... ok
+test batch::tests::replay_selection_authenticates_manifests_and_optional_plm ... ok
+test assignment::ticket_projection_tests::original_ticket_accepts_actual_submission_and_completion_without_changing_prose ... ok
+test benchmark::controls::real_live_refusal_keeps_diagnostics_and_scoped_cleanup ... ok
+test builds::strict_tests::compiler_runtime_and_source_discovery_share_inherited_bounds ... ok
+test builds::strict_tests::parallel_wave_reserves_the_sum_and_reconciles_only_at_the_join ... ok
+test builds::strict_tests::real_producers_reconcile_unused_reservations_and_replay ... ignored, real bounded native producer accounting and replay proof; retains every result
+test builds::strict_tests::expired_gate_cannot_reserve_runtime_or_publish_a_producer_invocation ... ok
+test builds::strict_tests::reconciled_producers_share_capacity_without_forgiving_retained_bytes ... ok
+test callback::tests::absent_amount_uses_a_distinct_callback_signature_and_invalid_context_fails ... ok
+test callback::tests::game_host_log_preserves_ordered_hardware_and_requires_complete_vram_requests ... ok
+test checkpoints::tests::repeated_visits_keep_order_and_frame_offset_is_constant ... ok
+test checkpoints::tests::completed_sidecar_authenticates_capture_beyond_final_visit ... ok
+test assignment::ticket_projection_tests::derived_ticket_accepts_exact_normal_and_interrupted_publication_sequences ... ok
+test decomp_job::tests::malformed_streams_never_enter_unsafe_oracle ... ok
+test decomp_job::tests::negative_control_ledger_roundtrips_as_a_toml_document ... ok
+test decomp_prefix::tests::clearing_severs_poll_ownership_and_completion_never_borrows_future_input ... ok
+test decomp_prefix::tests::observer_keeps_read_addresses_passive_and_rejects_lua_delimiter ... ok
+test enemy_instruction_inventory::tests::counters_validate_native_banks_windows_and_frame_bounds ... ok
+test enemy_instruction_inventory::tests::instrumentation_preserves_call_sites_and_rejects_duplicate_definitions ... ok
+test family::host_tests::continuation_orders_and_inherits_verified_wram_and_host ... ok
+test family::host_tests::host_only_mismatch_and_missing_sidecar_fail_independently_of_wram ... ok
+test family::host_tests::projectile_rendering_selects_specialized_bank86_adapter_without_dispatcher_symbols ... ok
+test family::source_tests::explicit_artifact_profile_keeps_a_finite_file_count ... ok
+test family::source_tests::pinned_source_cache_rechecks_files_and_binds_changed_revision ... ok
+test coverage::tests::actual_table_parser_rejects_duplicate_or_mismatched_symbols_and_profiles_bind_totals ... ok
+test family::source_tests::rust_archive_reader_authenticates_actual_pinned_source ... ok
+test fixture_execution::tests::native_waves_join_failures_and_preserve_continuations_and_order ... ok
+test batch::tests::catalog_refuses_expired_budget_and_excessive_inventory_before_manifest_reads ... ok
+test fixture_format::tests::authenticated_reads_bind_decoded_bytes_with_one_input_budget ... ok
+test fixture_format::tests::binary_roundtrip_preserves_overlaps_root_fill_and_inherited_holes ... ok
+test fixture_format::tests::captured_assets_and_optional_metadata_survive_without_payloads ... ok
+test fixture_format::tests::editing_shared_spans_does_not_modify_another_fixture ... ok
+test fixture_format::tests::malformed_binary_extents_and_text_are_rejected_without_panics ... ok
+test coverage::tests::added_or_modified_unexecuted_keys_cannot_borrow_old_execution_and_corrupt_predecessors_fail ... ok
+test fixture_execution::tests::incomplete_reply_and_oversized_request_are_rejected ... ok
+test hdma_probe::tests::cartridge_has_literal_register_program_and_indirect_table ... ok
+test hdma_probe::tests::incomplete_and_clock_mismatches_are_independent_failures ... ok
+test hdma_probe::tests::sealed_capture_rejects_changes_and_path_escape ... ok
+test hdma_probe::tests::trace_rollover_uses_ntsc_frame_clock_and_rejects_third_frame ... ok
+test inputs::bounded::tests::declared_discovery_limits_keep_global_ceiling_and_outer_resource_guards ... ok
+test inputs::bounded::tests::digest_reads_share_one_snapshot_and_budget_without_caching_files ... ok
+test inputs::bounded::tests::expired_deadline_and_nested_budget_refuse_before_output ... ok
+test fixture_execution::tests::real_worker_isolates_mutation_crash_timeout_and_reaps_descendants ... ok
+test inputs::bounded::tests::fixture_workers_share_byte_path_and_deadline_limits ... ok
+test inputs::bounded::tests::immutable_streamed_copy_preserves_budget_identity_and_replay ... ok
+test inputs::bounded::tests::implicit_helpers_preserve_explicit_budget_and_nested_deadline ... ok
+test inputs::bounded::tests::nonregular_files_and_path_aliases_refuse_without_blocking ... ok
+test inputs::bounded::tests::pax_path_size_and_metadata_parse_without_extraction ... ok
+test inputs::bounded::tests::retained_tree_passes_share_bytes_and_deadline_but_not_previous_discovery ... ok
+test inputs::bounded::tests::tar_compares_exact_bytes_and_rejects_changed_source_archive_and_gzip_tail ... ok
+test inputs::bounded::tests::tar_expansion_and_member_count_share_outer_limits ... ok
+test inputs::bounded::tests::tar_rejects_links_duplicate_unsafe_and_truncated_members ... ok
+test inputs::bounded::tests::tree_refuses_deep_or_oversized_discovery ... ok
+test inputs::bounded::tests::explicit_streaming_hash_preserves_the_default_file_limit ... ok
+test inputs::tests::canonical_discovery_rejects_module_symlink ... ok
+test inputs::tests::canonical_wrapper_declares_the_candidate_and_dependencies_once ... ok
+test inputs::tests::canonical_discovery_deduplicates_cycles_and_repeated_tokens_with_one_budget ... ok
+test inputs::tests::parses_compiler_rules_with_spaces_and_continuations ... ok
+test inputs::tests::immutable_input_recovers_partial_publication_and_rejects_changed_final_bytes ... ok
+test iteration_diagnosis::tests::lineage_safe_ids_and_legacy_history_cannot_reset_streak ... ok
+test fixtures::tests::checked_in_family_configs_use_typed_contracts ... ok
+test iteration_diagnosis::tests::retries_preserve_candidate_and_escalate_on_third_without_evidence ... ok
+test iteration_diagnosis::tests::routing_requires_matched_controls_and_preserves_cold_failure ... ok
+test iteration_increment::tests::atomic_application_preserves_mode_and_rejects_tampered_proposal_or_changed_source ... ok
+test iteration_diagnosis::tests::mutated_process_logs_artifacts_and_unexecuted_outputs_fail_closed ... ok
+test iteration_increment::tests::progress_rejects_zero_negative_uncomparable_and_self_certified_repairs ... ok
+test iteration_pattern::tests::altered_preparation_never_records_application_intent_or_changes_sources ... ok
+test iteration_pattern::tests::promotion_preserves_other_patterns_and_rejects_repeated_or_unknown_proof ... ok
+test iteration_pattern::tests::sealed_application_recovers_partial_rename_and_rejects_unowned_edits ... ok
+test iteration_session::tests::bounded_count_target_and_failed_publication_preserve_exact_unresolved_increment ... ok
+test iteration_session::tests::invalid_requests_and_corrupt_ordered_events_reject_before_candidate_work ... ok
+test iteration_session::tests::published_event_recovery_counts_once_and_reauthenticates_before_counting ... ok
+test iteration_session::tests::replay_rejects_forged_count_and_recovers_committed_event_before_state_save ... ok
+test live::tests::bounded_contract_installs_whole_verified_roots_and_rejects_wrong_host_or_signature ... ok
+test live::tests::bounded_counter_admission_keeps_explicit_c_scope_and_rejects_missing_material ... ok
+test live::tests::counter_exclusivity_rejects_double_execution_and_unexecuted_predecessors ... ok
+test live::tests::dispatcher_contract_rejects_unowned_bank_signature_and_ineligible_only_matrix ... ok
+test live::tests::native_projectile_contract_requires_owned_host_and_packed_gfx_signature ... ok
+test live::tests::projectile_admission_rejects_refusal_missing_material_and_wrong_full_route_allocations ... ok
+test pattern_contract::tests::native_declaration_preserves_complete_scope_and_rejects_missing_width_conditions ... ok
+test pattern_contract::tests::native_fixtures_preserve_inactive_cycles_and_literal_boundaries ... ok
+test iteration_diagnosis::tests::actual_effect_novelty_survives_paths_timing_and_restart ... ok
+test preflight::tests::hardware_inventory_ignores_documentation_and_rejects_symlinked_build_inputs ... ok
+test preflight::tests::original_movie_inputs_are_independently_bound_and_stateful_or_modified_inputs_fail ... ok
+test progress::source::tests::numeric_branches_do_not_count_unselected_constants_or_forwarded_bodies ... ok
+test progress::source::tests::scanner_requires_executable_selectors_and_ignores_comments_and_support_lists ... ok
+test progress::tests::admitted_progress_preserves_exact_stages_and_repairs_only_accepted_observations ... ok
+test progress::tests::binary_declarations_preserve_symbols_and_reject_corruption ... ok
+test progress::tests::committed_coverage_history_ignores_import_dates_deduplicates_and_detects_stale_inputs ... ok
+test progress::tests::concurrent_writers_preserve_scope_observations_and_valid_json ... ok
+test progress::tests::contention_is_bounded_and_lock_releases_after_owner_exit ... ok
+test progress::tests::evidence_context_counts_overlap_and_exclude_stale_evidence ... ok
+test progress::tests::evidence_context_defaults_preserve_legacy_observations_and_retries ... ok
+test progress::tests::idempotent_retry_preserves_timestamp_and_conflicting_id_is_rejected ... ok
+test progress::tests::inventory_refresh_retains_historical_stage_observations_without_current_coverage ... ok
+test progress::tests::live_http_snapshot_excludes_changed_evidence_and_rejects_stale_inventory ... ok
+test progress::tests::malformed_updates_and_unsafe_embedding_are_handled ... ok
+test progress::tests::refresh_covers_inventory_and_validates_pin_and_definition_totals ... ok
+test progress::tests::reviewed_supersession_preserves_history_without_resurrecting_stale_claims ... ok
+test progress::tests::server_routes_only_bounded_gets_without_directory_access ... ok
+test progress::tests::stages_are_independent_and_declarations_do_not_grant_progress ... ok
+test progress::tests::stale_source_unknown_symbols_and_missing_evidence_are_rejected ... ok
+test progress::tests::supersession_requires_existing_same_stage_inventory_targets_and_rejects_cycles ... ok
+test progress::tests::update_command_publishes_reviewed_correction_and_preserves_legacy_serialization ... ok
+test progress::tests::update_command_rechecks_retained_evidence_and_source_before_publication ... ok
+test readiness::tests::final_origin_and_publication_refusals_retain_durable_error_without_acceptance ... ok
+test readiness_reuse::tests::compiler_changes_refresh_candidate_checks_and_shared_changes_refresh_reusable_checks ... ok
+test readiness_reuse::tests::scoped_pass_cannot_publish_or_replace_predecessor ... ok
+test readiness_run::tests::failures_timeouts_mutation_and_missing_checks_prevent_success_and_completed_runs_are_immutable ... ok
+test readiness_run::tests::snapshots_preserve_dirty_untracked_files_exclude_private_material_and_reject_corruption ... ok
+test readiness_run::tests::timestamps_are_utc_and_preserve_calendar_boundaries ... ok
+test replay::tests::original_observer_preserves_actual_fetch_and_literal_paths ... ok
+test plm_fixtures::tests::pinned_rom_and_all_fixture_domains_match_the_migration_reference ... ok
+test ridley_subsystem_adapter::tests::continuation_inherits_hardware_and_rejects_different_predecessors ... ok
+test ridley_subsystem_adapter::tests::agreeing_service_bytes_require_complete_native_ordered_transactions ... ok
+test ridley_subsystem_adapter::tests::equal_outputs_do_not_admit_a_patched_capture_or_broken_chain ... ok
+test ridley_subsystem_fixtures::tests::binary_spans_preserve_ridley_input_state ... ok
+test ridley_subsystem_fixtures::tests::canonical_state_records_do_not_alias_host_or_audio_cursors ... ok
+test ridley_subsystem_adapter::tests::host_hardware_and_service_differences_reject_equal_wram ... ok
+test ridley_subsystem_inventory::tests::counter_identity_preserves_header_slot_orientation_and_intervals ... ok
+test ridley_subsystem_inventory::tests::definition_renaming_preserves_calls_and_rejects_ambiguous_sources ... ok
+test ridley_subsystem_inventory::tests::one_native_command_replaces_only_owned_units_and_sets_capture_budget ... ok
+test rng_job::tests::ordered_rng_effects_bind_values_stores_and_call_count ... ok
+test rng_job::tests::retained_rng_artifacts_reject_missing_tampered_extra_symlink_and_escaping_members ... ok
+test routine_live::tests::native_epoch_rows_preserve_reset_and_exclusive_dispatch_counts ... ok
+test source_inventory::tests::comments_strings_and_nested_bodies_do_not_create_dependencies ... ok
+test source_inventory::tests::directives_prototypes_and_initializers_do_not_consume_definitions ... ok
+test ridley_subsystem_inventory::tests::composed_observer_retains_all_native_bodies_and_catches_same_unit_services ... ok
+test source_inventory::tests::inventory_generation_inherits_expired_budget_before_any_output ... ok
+test source_inventory::tests::parenthesized_return_dependency_facts_match_definition_inventory ... ok
+test source_inventory::tests::fallible_lexical_readers_preserve_facts_and_honor_inherited_deadline ... ok
+test storage_studies::tests::event_and_codec_adversarial_controls ... ok
+test storage_studies::tests::merkle_missing_corrupt_partial_pages_and_shared_roots ... ok
+test storage_studies::tests::native_format_and_merkle_preserve_sources_and_sampling ... ok
+test storage_studies::tests::output_containment_and_scope_failure_cleanup ... ok
+test storage_studies::tests::receipts_authenticate_inventory_and_producer_independently ... ok
+test translation::tests::discovery_and_scope_reading_are_bounded_and_do_not_follow_ticket_symlinks ... ok
+test translation::tests::local_work_honors_claims_blockers_triage_and_order_before_new_research ... ok
+/tmp/sm-fixture-evidence-audit-cNZPAN/test-runs/sm-translation-test-553776-2/run/headless.c: In function ‘__wrap_DecompressToMem’:
+/tmp/sm-fixture-evidence-audit-cNZPAN/test-runs/sm-translation-test-553776-2/run/headless.c:8:24: warning: implicit declaration of function ‘__real_DecompressToMem’; did you mean ‘__wrap_DecompressToMem’? [-Wimplicit-function-declaration]
+    8 |  decompression_calls++;__real_DecompressToMem(src,dst);
+      |                        ^~~~~~~~~~~~~~~~~~~~~~
+      |                        __wrap_DecompressToMem
+test source_inventory::tests::pinned_ridley_callbacks_and_first_bank_function_are_indexed_exactly ... ok
+test translation::tests::native_scope_requires_every_mandatory_fact_before_promotion ... ok
+test translation::tests::pinned_definition_binds_exact_clean_function_token ... ok
+test translation::tests::routine_and_address_mentions_preserve_existing_work_ownership ... ok
+test translation::tests::scope_verification_executes_real_gates_and_rejects_misleading_commands ... ok
+test translation::tests::stale_inventory_and_missing_exercise_remain_research_without_invented_admission ... ok
+test translation_cargo::tests::dependency_cache_accepts_installed_layouts_without_admitting_project_artifacts ... ok
+test translation_cargo::tests::original_cargo_refuses_compiler_jobs_outside_the_shared_capacity_before_launch ... ok
+test translation_cargo::tests::preparation_prescribes_all_original_controls_before_accepting_a_source_closure ... ok
+test translation_cargo::tests::real_original_cargo_controls_retain_authenticatable_success_and_unchanged_replay ... ignored, real confined original Cargo proof; requires the installed producer and private offline vendor closure
+test translation_cargo::tests::real_original_compact_controls_run_on_candidate_and_integrated_source ... ignored, real confined original compact controls and dependency preparation; requires installed tools and original source
+test translation_cargo::tests::real_original_pause_controls_run_on_candidate_and_integrated_source ... ignored, real confined original pause controls; requires the installed producer and private offline vendor closure
+test translation_cargo::tests::retained_original_cargo_proofs_authenticate_after_cleanup ... ignored, read-only authentication of retained real Cargo proof receipts after cleanup
+test translation_compact::recovery_tests::retained_recovery_fixtures_authenticate_without_execution ... ignored, read-only authentication of retained compact recovery fixtures after cleanup
+test translation_compact::recovery_tests::sealed_verdict_recovers_an_expired_stopped_experiment_without_relaunch ... ok
+test translation_compact::recovery_tests::verdict_only_recovery_authenticates_retained_timing_source_and_budgets ... ok
+test translation_compact::recovery_tests::verdict_only_recovery_refuses_changed_caller_identity ... ok
+test translation_compact::recovery_tests::verdict_only_recovery_refuses_unbound_operation_declarations ... ok
+test translation_compact::tests::original_experiment_retains_exact_target_and_unchanged_resume ... ignored, requires the sealed original ROM/movie/reader closure and installed confined producer
+test translation_compact::tests::retained_original_experiment_authenticates_without_execution ... ignored, requires a retained original experiment and its exact private reader/input closure
+test translation_compact::tests::supervisor_preparation_preserves_the_complete_original_capture_lineage ... ok
+test translation_compact::tests::supervisor_preparation_refuses_a_shorter_passing_substitute ... ok
+test translation_compact::tests::supervisor_preparation_requires_both_original_capture_profiles ... ok
+test translation_continuation::tests::changed_frozen_contract_is_refused_before_any_successor_allocation ... ok
+test translation::tests::native_scope_promotes_only_sealed_observed_dependency_complete_owned_work ... ok
+test translation_continuation::tests::status_authenticates_initial_source_boundary_without_creating_an_attempt ... ok
+test translation_continuation::tests::status_refuses_changed_preserved_ledger_source_and_reviewed_order ... ok
+test translation_execution::managed_tests::managed_native_publication_preserves_original_claim_and_recovers_exact_pending_once ... ignored, one bounded managed actual-C diagnostic proof; requires installed confinement, private ROM and current thread
+test translation_execution::managed_tests::retained_managed_native_publication_authenticates_without_producers ... ignored, read-only authentication of retained managed diagnostic evidence; no producer execution
+test translation_continuation::tests::status_refuses_resealed_initial_metadata_without_a_reviewed_configuration ... ok
+test translation_execution::tests::closed_installation_rejects_overlapping_roots_and_metadata_budget_before_dispatch ... ok
+test fixtures::tests::native_domains_match_checked_in_fixture_matrices has been running for over 60 seconds
+test translation_execution::tests::cancelled_finalization_accounts_for_exact_terminal_bytes_and_refuses_whitespace_tampering ... ok
+test translation_execution::tests::complete_native_supervisor_rewrite_verify_integrate_retire_publish_and_recover ... ignored, bounded complete real actual-C supervisor proof; requires pinned source, ROM and confinement
+test iteration_increment::tests::measured_proposal_and_deferred_revisit_physically_prune_only_unselected_keys has been running for over 60 seconds
+test translation_execution::tests::complete_infrastructure_lifecycle_retires_authenticates_reuses_and_repairs_publication has been running for over 60 seconds
+test iteration_increment::tests::measured_proposal_and_deferred_revisit_physically_prune_only_unselected_keys ... ok
+test translation_execution::tests::failed_candidate_retirement_restores_exact_retry_then_repair_without_automatic_gates has been running for over 60 seconds
+test fixtures::tests::native_domains_match_checked_in_fixture_matrices ... ok
+test translation_execution::tests::failed_rewrite_and_preparation_failure_finalize_once_without_candidate_acceptance has been running for over 60 seconds
+test translation_execution::tests::partial_apply_and_incomplete_clone_failures_preserve_source_then_retire_once has been running for over 60 seconds
+test translation_execution::tests::partial_apply_and_incomplete_clone_failures_preserve_source_then_retire_once ... ok
+test translation_execution::tests::preparation_context_and_shared_worker_reservations_obey_inherited_bounds ... ok
+test translation_execution::tests::retained_complete_native_supervisor_authenticates_without_producers ... ignored, read-only authentication of the retained complete supervisor proof; no producer execution
+test translation_execution::tests::failed_rewrite_and_preparation_failure_finalize_once_without_candidate_acceptance ... ok
+test translation_execution::tests::surviving_creation_lease_prevents_failure_retirement_until_owner_stops ... ok
+test translation_infrastructure::tests::compiler_dependency_spellings_stay_within_the_frozen_source_closure ... ok
+test translation_infrastructure::tests::compiled_infrastructure_candidate_cannot_read_controller_or_overflow_tmp has been running for over 60 seconds
+test translation_infrastructure::tests::confined_standalone_linker_replays_with_readonly_source_inputs has been running for over 60 seconds
+test translation_infrastructure::tests::confined_standalone_linker_replays_with_readonly_source_inputs ... ok
+test translation_infrastructure::tests::compiled_infrastructure_candidate_cannot_read_controller_or_overflow_tmp ... ok
+test translation_infrastructure::tests::infrastructure_aggregate_reservation_refuses_compiler_before_launch ... ok
+test translation_infrastructure::tests::failed_test_is_bounded_and_exact_retry_produces_no_new_capture ... ok
+test translation_infrastructure::tests::missing_coverage_provenance_dependency_and_writable_test_rules_stop_preparation ... ok
+test translation_infrastructure::tests::infrastructure_nonzero_confined_gates_authenticate_and_replay_exactly ... ok
+test translation_launch::tests::authenticate_concrete_foundry_native_launch ... ignored, authenticate the separately launched real Foundry/actual-C lifecycle without producers
+test translation_infrastructure::tests::outer_deadline_refuses_setup_then_exact_replay_after_expiry_reuses_receipt ... ok
+test translation_execution::tests::complete_infrastructure_lifecycle_retires_authenticates_reuses_and_repairs_publication ... ok
+test translation_launch::tests::prepare_concrete_foundry_native_launch_request ... ignored, fresh closed actual-C source and concrete Foundry launch request; does not call a model
+test translation_launch::tests::failing_scope_stops_ordered_plan_without_resending_or_starting_successor has been running for over 60 seconds
+test translation_execution::tests::failed_candidate_retirement_restores_exact_retry_then_repair_without_automatic_gates ... ok
+test translation_legacy::tests::host_contract_retains_complete_callback_and_catalog_requirements ... ok
+test translation_legacy::tests::legacy_readiness_is_repeatable_nonaccepting_and_read_only ... ok
+test translation_legacy::tests::original_lineage_ownership_and_sealed_evidence_cannot_be_replaced ... ok
+test translation_legacy::tests::readiness_and_prepared_fingerprint_tamper_cannot_claim_acceptance ... ok
+test translation_legacy::tests::source_tamper_and_aliased_or_oversized_references_fail_closed ... ok
+test translation_migration::tests::active_fence_preserves_status_but_denies_assign_and_session_producers_before_writes ... ok
+test translation_migration::tests::admitted_queue_keeps_original_attempt_and_standard_submission_integration_contract ... ok
+test translation_migration::tests::fence_symlinks_and_directory_aliases_fail_closed_but_preparation_is_not_activation ... ok
+test translation_migration::tests::frozen_original_inputs_fail_before_retention_on_stale_hash_fingerprint_and_alias ... ok
+test translation_migration::tests::imported_ready_integration_reserves_one_attempt_and_recovers_exact_completion_without_writes ... ok
+test translation_migration::tests::imported_running_integration_preserves_paused_original_worker_and_refuses_restart ... ok
+test translation_migration::tests::managed_domain_binds_original_identity_without_derived_seal_cycles ... ok
+test translation_migration::tests::managed_immutable_write_recovers_exact_pending_and_preserves_partial_failure ... ok
+test translation_migration::tests::managed_original_commands_require_exact_confined_equivalence ... ok
+test translation_migration::tests::migration_lineage_rejects_changed_revision_writable_paths_and_checkpoint_bytes ... ok
+test translation_migration::tests::nominal_proof_hash_is_never_accepted_as_completed_supervisor_evidence ... ok
+test translation_migration::tests::original_pause_coverage_refuses_reduced_native_acceptance_before_producers ... ok
+test translation_migration::tests::preparation_preserves_only_exact_legacy_linked_ownership_and_abbreviated_baseline ... ok
+test translation_migration::tests::retained_managed_intent_and_controller_projection_authenticate_without_mutation ... ignored, read-only diagnosis of a retained managed publication intent; no source or queue mutation
+test translation_migration::tests::retained_original_package_validates_read_only_after_complete_proof ... ignored, read-only actual retained supervisor proof and original claim package; no producers
+test translation_migration::tests::stopped_observation_must_name_exact_owner_and_no_current_kernel_writer ... ok
+test translation_migration_builder::tests::bounded_extent_counts_interrupted_files_and_never_publishes_over_budget ... ok
+test translation_migration_builder::tests::bounded_subprocess_refuses_expired_deadline_and_terminates_overflow_or_timeout ... ok
+test translation_launch::tests::preparing_model_installation_is_repeatable_and_refuses_changed_request ... ok
+test translation_migration_builder::tests::foreign_submission_and_git_symlink_mode_are_rejected ... ok
+test translation_migration_builder::tests::completed_or_interrupted_packages_reject_foreign_files_and_tamper ... ok
+test translation_migration_builder::tests::identical_and_interrupted_retries_preserve_all_package_bytes ... ok
+test translation_migration_builder::tests::owner_observations_reject_foreign_session_and_exact_live_kernel_process ... ok
+test translation_migration_builder::tests::linked_integration_preserves_original_inputs_and_requires_exact_current_head ... ok
+test translation_migration_builder::tests::pending_publications_require_identical_prefix_and_paths_reject_aliases ... ok
+test translation_migration_builder::tests::submitted_capture_preserves_original_job_and_reads_commit_despite_dirty_main ... ok
+test translation_native::tests::complete_current_catalog_has_a_frozen_native_recipe ... ignored, freezes every current catalog declaration with real pinned source; no producer is launched
+test translation_native::tests::coverage_rejects_empty_duplicate_and_incomplete_registered_domain ... ok
+test translation_migration_builder::tests::request_authority_and_ledger_changes_cannot_resume_the_previous_package ... ok
+test translation_native::tests::declared_tree_budget_rejects_inflated_extent_and_coverage ... ok
+test translation_native::tests::discovered_recipe_rejects_a_declaration_from_an_alias_path ... ok
+test translation_native::tests::expired_outer_deadline_refuses_before_accessing_or_creating_any_source ... ok
+test translation_native::tests::expired_saved_failure_replays_authentication_without_runtime_or_dispatch ... ok
+test translation_native::tests::frozen_shared_host_contracts_preserve_both_original_matrices ... ok
+test translation_native::tests::full_real_family_retains_authenticates_and_reuses_every_producer ... ignored, bounded real compiler/actual-C proof; requires installed confinement and private ROM
+test translation_native::tests::historical_provenance_authenticates_retained_source ... ignored, requires the retained actual-C run and private pinned source
+test translation_native::tests::native_receipt_retention_rejects_changed_incomplete_or_redirected_attribution ... ok
+test translation_native::tests::native_receipt_storage_preserves_large_operation_sets_within_controller_record_bound ... ok
+test translation_native::tests::real_reviewed_recipes_replay_and_authenticate ... ignored, real separately confined actual-C controls; retains source, replay and cleanup evidence
+test translation_native::tests::registered_catalog_alias_preserves_declared_family_and_coverage ... ok
+test translation_native::tests::retained_complete_family_finalization_authenticates_without_acceptance ... ignored, audits a retained finalization failure; never publishes native acceptance or launches a producer
+test translation_native::tests::retained_original_whole_family_authentication_fits_trusted_scope ... ignored, authenticates all retained Original cases against sealed source without launching producers
+test translation_native::tests::retained_original_whole_family_uses_finite_declared_tree_limits ... ignored, audits the complete retained Original artifact tree without launching any producer
+test translation_native::tests::retained_real_family_authenticates_without_executing_producers ... ignored, requires retained real native proof; executes no compiler or fixture
+test translation_native::tests::scope_candidate_dependencies_are_mutable_and_bound_to_receipt_identity ... ok
+test translation_launch::tests::ordered_launch_prepares_runs_once_and_authenticates_read_only_recovery has been running for over 60 seconds
+test translation_native::tests::discovered_captured_ridley_keeps_its_original_callback_recipe ... ok
+test translation_original::tests::retained_original_prerequisite_failure_authenticates_without_execution ... ignored, read-only replay of a retained Original prerequisite fixture after cleanup
+test translation_production::tests::activation_is_one_registry_commit_and_recovery_preserves_original_bytes ... ok
+test translation_production::tests::foreign_partial_and_missing_original_claim_cannot_authorize_switch ... ok
+test translation_production::tests::interruption_after_legacy_fence_blocks_old_readers_until_exact_recovery ... ok
+test translation_production::tests::partial_registry_requires_the_exact_intent_and_tampering_fails_closed ... ok
+test worker_budget_tests::concurrent_producers_release_partial_reservations_and_hold_their_full_capacity ... ok
+test translation_original::tests::original_missing_auxiliary_prerequisite_stops_once_and_resume_preserves_submission ... ok
+test translation_launch::tests::failing_scope_stops_ordered_plan_without_resending_or_starting_successor ... ok
+test translation_launch::tests::ordered_launch_prepares_runs_once_and_authenticates_read_only_recovery ... ok
+
+test result: ok. 227 passed; 0 failed; 26 ignored; 0 measured; 0 filtered out; finished in 677.16s

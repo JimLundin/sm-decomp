@@ -1,0 +1,50 @@
+warning: function `validate_duplicate_ticket_receipts` is never used
+   --> crates/pipeline/src/drill_evidence.rs:251:15
+    |
+251 | pub(crate) fn validate_duplicate_ticket_receipts(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `authenticate_inventory_until` is never used
+   --> crates/pipeline/src/family.rs:781:15
+    |
+781 | pub(crate) fn authenticate_inventory_until(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `authenticate_with_source_until` is never used
+    --> crates/pipeline/src/family.rs:1202:15
+     |
+1202 | pub(crate) fn authenticate_with_source_until(
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `prepare_until` is never used
+   --> crates/pipeline/src/translation_compact.rs:387:15
+    |
+387 | pub(crate) fn prepare_until(
+    |               ^^^^^^^^^^^^^
+
+warning: function `build_preparation` is never used
+    --> crates/pipeline/src/translation_migration_builder.rs:1173:15
+     |
+1173 | pub(crate) fn build_preparation(request: BuildRequest) -> Result<BuildReceipt> {
+     |               ^^^^^^^^^^^^^^^^^
+
+warning: function `prepare_until` is never used
+   --> crates/pipeline/src/translation_native.rs:577:15
+    |
+577 | pub(crate) fn prepare_until(
+    |               ^^^^^^^^^^^^^
+
+warning: `pipeline` (bin "sm-pipeline" test) generated 6 warnings
+    Finished `test` profile [unoptimized] target(s) in 0.09s
+     Running unittests src/main.rs (/tmp/sm-fixture-evidence-audit-cNZPAN/target/debug/build/pipeline/ae2656f0af30355a/out/sm_pipeline-ae2656f0af30355a)
+
+running 5 tests
+test builds::strict_tests::real_producers_reconcile_unused_reservations_and_replay ... ignored, real bounded native producer accounting and replay proof; retains every result
+test builds::strict_tests::parallel_wave_reserves_the_sum_and_reconciles_only_at_the_join ... ok
+test builds::strict_tests::reconciled_producers_share_capacity_without_forgiving_retained_bytes ... ok
+test builds::strict_tests::expired_gate_cannot_reserve_runtime_or_publish_a_producer_invocation ... ok
+test builds::strict_tests::compiler_runtime_and_source_discovery_share_inherited_bounds ... ok
+
+test result: ok. 4 passed; 0 failed; 1 ignored; 0 measured; 243 filtered out; finished in 0.01s

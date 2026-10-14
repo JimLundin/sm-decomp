@@ -53,9 +53,8 @@ disposable benchmark corpora and build files. Available disk afterward: 174,314,
 bytes. Cleanup logs are retained beside the results. No project evidence or unrelated
 session outputs were removed.
 
-The original source entries in `../retained.sha256` referred to live workspace
-paths subsequently changed by ticket 02. Their exact original bytes have now
-been reconstructed and checked against that checkpoint under
-`out/fixture-format-performance/20261014T202443Z/source-original/`.
-`original-study-relocations.json` maps the old paths to the retained copies;
-`../retained-final.sha256` seals the current retained inventory.
+The user subsequently rejected historical replay and old-reader retention.
+Ticket 04 retired the study programs, original-source bundles, generated
+variants and obsolete checksum inventories. The validation above records the
+completed experiment; its archived readers and source are no longer required
+or present. Compact format measurements remain in the result JSON files.

@@ -1,0 +1,146 @@
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+warning: function `validate_admitted_ticket_projection` is never used
+    --> crates/pipeline/src/assignment.rs:1612:15
+     |
+1612 | pub(crate) fn validate_admitted_ticket_projection(
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `catalog_until` is never used
+  --> crates/pipeline/src/batch.rs:38:15
+   |
+38 | pub(crate) fn catalog_until(checkout: &Path, deadline: u64, max_bytes: u64) -> Result<Catalog> {
+   |               ^^^^^^^^^^^^^
+
+warning: function `verify_source_until` is never used
+   --> crates/pipeline/src/family.rs:123:15
+    |
+123 | pub(crate) fn verify_source_until(checkout: &Path, source: &Path, deadline: u64, max_bytes: u64) -> Result<Source> {
+    |               ^^^^^^^^^^^^^^^^^^^
+
+warning: function `prepare_case` is never used
+   --> crates/pipeline/src/family.rs:170:15
+    |
+170 | pub(crate) fn prepare_case(case: &Case, directory: &Path, arg_types: &[String]) -> Result<()> {
+    |               ^^^^^^^^^^^^
+
+warning: function `authenticate_inventory_until` is never used
+   --> crates/pipeline/src/family.rs:781:15
+    |
+781 | pub(crate) fn authenticate_inventory_until(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `authenticate_with_source_until` is never used
+    --> crates/pipeline/src/family.rs:1202:15
+     |
+1202 | pub(crate) fn authenticate_with_source_until(
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `canonical_sources_until` is never used
+  --> crates/pipeline/src/inputs.rs:72:15
+   |
+72 | pub(crate) fn canonical_sources_until(
+   |               ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `discovery` is never used
+   --> crates/pipeline/src/bounded_inputs.rs:121:15
+    |
+121 | pub(crate) fn discovery<T>(action: impl FnOnce() -> Result<T>) -> Result<T> {
+    |               ^^^^^^^^^
+
+warning: function `clean` is never used
+  --> crates/pipeline/src/source_inventory.rs:27:15
+   |
+27 | pub(crate) fn clean(text: &str) -> Vec<u8> {
+   |               ^^^^^
+
+warning: function `names` is never used
+  --> crates/pipeline/src/source_inventory.rs:93:15
+   |
+93 | pub(crate) fn names(bytes: &[u8]) -> (Vec<String>, Vec<String>) {
+   |               ^^^^^
+
+warning: function `run_until` is never used
+   --> crates/pipeline/src/source_inventory.rs:170:15
+    |
+170 | pub(crate) fn run_until(root: &Path, source: &Path, output: &Path, deadline: u64, max_bytes: u64) -> Result<()> {
+    |               ^^^^^^^^^
+
+warning: function `c_code` is never used
+   --> crates/pipeline/src/translation.rs:240:4
+    |
+240 | fn c_code(text: &str) -> Vec<u8> {
+    |    ^^^^^^
+
+warning: function `prepare_until` is never used
+   --> crates/pipeline/src/translation_compact.rs:387:15
+    |
+387 | pub(crate) fn prepare_until(
+    |               ^^^^^^^^^^^^^
+
+warning: function `prepare` is never used
+   --> crates/pipeline/src/translation_infrastructure.rs:346:15
+    |
+346 | pub(crate) fn prepare(checkout: &Path, contract: &InfrastructureContract) -> Result<PreparedInfrastructure> {
+    |               ^^^^^^^
+
+warning: function `build_preparation` is never used
+    --> crates/pipeline/src/translation_migration_builder.rs:1173:15
+     |
+1173 | pub(crate) fn build_preparation(request: BuildRequest) -> Result<BuildReceipt> {
+     |               ^^^^^^^^^^^^^^^^^
+
+warning: function `contract_for_family_until` is never used
+   --> crates/pipeline/src/translation_native.rs:429:15
+    |
+429 | pub(crate) fn contract_for_family_until(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `prepare_until` is never used
+   --> crates/pipeline/src/translation_native.rs:603:15
+    |
+603 | pub(crate) fn prepare_until(
+    |               ^^^^^^^^^^^^^
+
+warning: function `manifest` is never used
+   --> crates/pipeline/src/translation_native_recipe.rs:125:15
+    |
+125 | pub(super) fn manifest(checkout: &Path, path: &Path, recipe: Option<&NativeRecipe>) -> Result<Manifest> {
+    |               ^^^^^^^^
+
+warning: `pipeline` (bin "sm-pipeline") generated 18 warnings
+    Finished `test` profile [unoptimized] target(s) in 1.14s
+     Running tests/family.rs (/tmp/sm-fixture-evidence-audit-cNZPAN/target/debug/build/pipeline/069b8ff5b783090f/out/family-069b8ff5b783090f)
+
+running 21 tests
+test cancelling_family_reaps_helper_fixture_and_descendant ... ok
+test changed_current_manifest_cannot_authenticate_prior_family_admission ... ok
+test binary_roots_and_continuations_preserve_full_state_and_compact_evidence ... ok
+test dispatcher_pointer_banks_normalize_raw_and_host_pointers_and_reject_other_banks ... ok
+test changed_since_verifies_one_actual_c_family_without_visiting_unrelated_history has been running for over 60 seconds
+test empty_duplicate_and_out_of_bounds_cases_cannot_pass ... ok
+test coordinator_authenticates_verification_and_derives_failure_diagnosis has been running for over 60 seconds
+test changed_since_verifies_one_actual_c_family_without_visiting_unrelated_history ... ok
+test coordinator_promotes_research_runs_required_gates_and_integrates_with_cleanup has been running for over 60 seconds
+test fork_parent_is_pristine_and_execution_seals_cannot_be_stripped ... ok
+test coordinator_authenticates_verification_and_derives_failure_diagnosis ... ok
+test invalid_dispatcher_pointer_bank_is_rejected_before_compilation ... ok
+test idle_fixture_chain_workers_release_shared_execution_capacity_in_both_modes ... ok
+test measure_affected_family_work_with_retained_evidence ... ignored, bounded measurement retains actual-C evidence under the explicit output directory
+test measure_fixture_chain_shared_capacity ... ignored, bounded comparison retains actual-C evidence and requires an explicit baseline binary
+test independent_chains_overlap_and_failed_returns_block_descendants_in_both_modes has been running for over 60 seconds
+test live_generation_rejects_missing_tampered_and_stale_admission_before_writing_sources ... ok
+test coordinator_promotes_research_runs_required_gates_and_integrates_with_cleanup ... ok
+test independent_chains_overlap_and_failed_returns_block_descendants_in_both_modes ... ok
+test native_batch_lock_conflicts_do_not_block_independent_batches ... ok
+test packed_word_calls_preserve_argument_order_high_bits_and_manifest_acceptance ... ok
+test rust_admission_rejection_precedes_c_and_other_cases_keep_diagnostics ... ok
+test native_batch_reuses_authenticated_runs_and_rejects_stale_candidate ... ok
+test native_projectile_candidate_is_available_to_the_compiled_host_wrapper has been running for over 60 seconds
+test valid_cases_authenticate_and_tampering_is_rejected_even_with_rebound_inventory ... ok
+test native_projectile_candidate_is_available_to_the_compiled_host_wrapper ... ok
+
+test result: ok. 19 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 365.30s

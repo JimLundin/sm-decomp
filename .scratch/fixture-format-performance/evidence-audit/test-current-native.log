@@ -1,0 +1,61 @@
+   Compiling pipeline v0.1.0 (/home/jim/sm-decomp/crates/pipeline)
+warning: function `validate_duplicate_ticket_receipts` is never used
+   --> crates/pipeline/src/drill_evidence.rs:251:15
+    |
+251 | pub(crate) fn validate_duplicate_ticket_receipts(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `authenticate_inventory_until` is never used
+   --> crates/pipeline/src/family.rs:781:15
+    |
+781 | pub(crate) fn authenticate_inventory_until(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `authenticate_with_source_until` is never used
+    --> crates/pipeline/src/family.rs:1202:15
+     |
+1202 | pub(crate) fn authenticate_with_source_until(
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `prepare_until` is never used
+   --> crates/pipeline/src/translation_compact.rs:387:15
+    |
+387 | pub(crate) fn prepare_until(
+    |               ^^^^^^^^^^^^^
+
+warning: function `build_preparation` is never used
+    --> crates/pipeline/src/translation_migration_builder.rs:1173:15
+     |
+1173 | pub(crate) fn build_preparation(request: BuildRequest) -> Result<BuildReceipt> {
+     |               ^^^^^^^^^^^^^^^^^
+
+warning: function `prepare_until` is never used
+   --> crates/pipeline/src/translation_native.rs:577:15
+    |
+577 | pub(crate) fn prepare_until(
+    |               ^^^^^^^^^^^^^
+
+warning: `pipeline` (bin "sm-pipeline" test) generated 6 warnings
+    Finished `test` profile [unoptimized] target(s) in 15.72s
+     Running unittests src/main.rs (/tmp/sm-fixture-evidence-audit-cNZPAN/target/debug/build/pipeline/ae2656f0af30355a/out/sm_pipeline-ae2656f0af30355a)
+
+running 14 tests
+test translation_native::tests::complete_current_catalog_has_a_frozen_native_recipe ... ignored, freezes every current catalog declaration with real pinned source; no producer is launched
+test translation_native::tests::full_real_family_retains_authenticates_and_reuses_every_producer ... ignored, bounded real compiler/actual-C proof; requires installed confinement and private ROM
+test translation_native::tests::coverage_rejects_empty_duplicate_and_incomplete_registered_domain ... ok
+test translation_native::tests::expired_outer_deadline_refuses_before_accessing_or_creating_any_source ... ok
+test translation_native::tests::real_reviewed_recipes_replay_and_authenticate ... ignored, real separately confined actual-C controls; retains source, replay and cleanup evidence
+test translation_native::tests::discovered_recipe_rejects_a_declaration_from_an_alias_path ... ok
+test translation_native::tests::scope_candidate_dependencies_are_mutable_and_bound_to_receipt_identity ... ok
+test translation_native::tests::native_receipt_retention_rejects_changed_incomplete_or_redirected_attribution ... ok
+test translation_native::tests::expired_saved_failure_replays_authentication_without_runtime_or_dispatch ... ok
+test translation_native::tests::registered_catalog_alias_preserves_declared_family_and_coverage ... ok
+test translation_native::tests::declared_tree_budget_rejects_inflated_extent_and_coverage ... ok
+test translation_native::tests::frozen_shared_host_contracts_preserve_both_original_matrices ... ok
+Retained all 2048 operations in a 1104-byte controller receipt
+test translation_native::tests::native_receipt_storage_preserves_large_operation_sets_within_controller_record_bound ... ok
+test translation_native::tests::discovered_captured_ridley_keeps_its_original_callback_recipe ... ok
+
+test result: ok. 11 passed; 0 failed; 3 ignored; 0 measured; 234 filtered out; finished in 5.09s

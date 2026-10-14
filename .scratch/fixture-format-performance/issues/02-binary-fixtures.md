@@ -113,3 +113,9 @@ subsequently committed at the user's request:
 
 Ticket 03 records the follow-up evidence-cost audit. No PR is required for local
 integration.
+
+The user's subsequent direction explicitly retires historical results and
+reader/source retention. Ticket 04 removed this session's archived runs,
+obsolete readers, study/migration programs and checksum inventories. Paths to
+those bundles above describe the initial validation and are no longer completion
+dependencies. Current Rust format and actual-C verification tests remain.

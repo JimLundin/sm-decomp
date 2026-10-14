@@ -32,9 +32,9 @@ Ridley adapters. Discovery reads binary metadata; per-case declarations retain c
 identities; prepared native work seals fixture references rather than expanded payloads.
 Fresh admission and reuse still authenticate current inputs.
 
-Measurements: results-first.json and results-merged.json. The retained executable and
-nine final binary variants are in out/fixture-format-performance/20261014T191818Z.
-The original family model is snapshotted beside the benchmark sources.
+Measurements: results-first.json and results-merged.json. The study executables,
+baseline model and generated variants were retired at the user's request after
+the current format was implemented and validated.
 
 ## Production integration
 
@@ -71,12 +71,12 @@ imports preserving the prior binary. Standalone camera output is byte-identical
 to the checked-in binary; the trail generator preserves all cases and differs in
 family metadata because it binds its source path to the supplied checkout.
 
-`out/fixture-format-performance/20261014T202443Z/actual-c/` retains two compiled-C
-runs of root/continuation inputs in fresh and fork modes. Every before/after WRAM
+Two compiled-C runs exercised root/continuation inputs in fresh and fork modes.
+Every before/after WRAM
 byte is independently asserted, including explicit zero patches and inherited
 holes; compact case identities and post-cleanup authentication also pass.
-The exact reader and final measurement executable/source are retained alongside
-those runs. `source-original/` reconstructs the initial study source files at
-their original pre-migration hashes, with relocations recorded in
-`original-study-relocations.json`. The initial `retained.sha256` is a historical
-checkpoint; `retained-final.sha256` is the current retained-file inventory.
+Historical runs and their readers/source snapshots are no longer deliverables.
+The one-off migration/audit programs and this session's archived bundles were
+retired. Current actual-C, format, ownership, retry and tampering tests remain in
+the production Rust test suites. Follow-up input/receipt IO improvements and
+their validation are recorded in `evidence-audit/README.md` and tickets 03–04.

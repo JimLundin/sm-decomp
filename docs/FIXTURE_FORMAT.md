@@ -89,10 +89,30 @@ case, along with the existing before/after WRAM evidence. Prepared native work
 serializes its authenticated source contract and normalized fixture identity;
 the decoded Manifest is an in-memory cache and is reopened for each operation.
 Fixture task lookup is built once during authentication, avoiding repeated
-whole-family ordering for individual producer records.
+whole-family ordering for individual producer records. Producer checks share
+one parsed native intent per authentication.
 
-Historical evidence retains its original files and exact reader. The new runtime
-does not read historical TOML Fixture declarations or old prepared identities.
+Native receipts require indexed producer attribution and explicit candidate
+ownership. Completed producers release unused reservations before more work is
+admitted. There are no inline-receipt, old-reservation or implicit single-module
+identity modes. Receipt enumeration and byte accounting each authenticate the
+index and its chunks in one pass.
+
+Producing verification results costs full WRAM writes and SHA-256 checks. Bounded
+reads return a single snapshot for hashing and state comparison; Fixture
+admission similarly authenticates the exact bytes it decodes. Authentication
+reuses binary identities from its fresh artifact inventory and reopens current
+inputs on each operation.
+
+This removes half the captured-input read volume and one third of the ordinary
+root-case WRAM-authentication read volume, including its inventory pass. Warm-cache
+timing gains were modest and noisy; these measurements do not establish a complete
+verification speedup. Details are in
+`.scratch/fixture-format-performance/evidence-audit/README.md`.
+
+Historical formats and results are not supported. The migration executables,
+obsolete readers and archived runs created for this format study were retired;
+current Rust tests exercise the supported format and verification contracts.
 
 ## Migration evidence
 
@@ -107,5 +127,5 @@ mother-brain-bomb-update and ridley-subsystem were 2.52, 3.20 and 2.50 ms
 over five repetitions. The original TOML medians were 2,924.57, 1,069.33 and
 635.93 ms over three repetitions. Other machine work was active.
 These measure input loading, not complete actual-C verification or gameplay.
-Exact measurements, source and cleanup evidence are recorded in
+Measurements and cleanup records are in
 `.scratch/fixture-format-performance/`.

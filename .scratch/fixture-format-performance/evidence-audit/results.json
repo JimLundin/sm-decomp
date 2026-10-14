@@ -1,0 +1,194 @@
+{
+  "baseline_commit": "108bee3",
+  "case_file_sha256": [
+    "7141ff32bf9600e16b4b7157f98d1d269fdcdea28b3d5487508c7fd8fe89c34b",
+    "8f84c06281abfb037acfbae6486626d130f537463a5fc4597f6e339237c70453",
+    "8f84c06281abfb037acfbae6486626d130f537463a5fc4597f6e339237c70453"
+  ],
+  "executable_sha256": "2a57e68ef8c6d2dd00a19befb63c258a60e9f95e5b0ca9993d6153975faa5b0a",
+  "fixtures": [
+    {
+      "bytes": 1298991,
+      "path": "/home/jim/sm-decomp/tools/port/floater-spike-motion.smf",
+      "sha256": "0b5b9451c1ea4de2765f6204a4337326c0290d94922027424ec7f96f93ed7807"
+    },
+    {
+      "bytes": 1532824,
+      "path": "/home/jim/sm-decomp/tools/port/mother-brain-bomb-update.smf",
+      "sha256": "2c1af9ac8fe770a1cbf9497a64fe1449354caebaddc2b0e1774735a7cc1a6efa"
+    },
+    {
+      "bytes": 1421007,
+      "path": "/home/jim/sm-decomp/tools/port/ridley-subsystem.smf",
+      "sha256": "ad885b5e5509b25b04eabf4023a96e36cb0176de9e6cce31a11a13c2998c9359"
+    }
+  ],
+  "machine_load_after": "5.85 4.50 3.90 5/582 553613\n",
+  "machine_load_before": "5.72 4.43 3.87 5/582 553496\n",
+  "measurements": [
+    {
+      "baseline_median_ms": 0.2179113359375,
+      "baseline_ms": [
+        0.2146012421875,
+        0.25261304687499997,
+        0.23995256250000002,
+        0.2471966171875,
+        0.174458328125,
+        0.2179113359375,
+        0.25326696875000004,
+        0.19049442187500001,
+        0.1740037265625
+      ],
+      "candidate_median_ms": 0.18625341406249998,
+      "candidate_ms": [
+        0.1706698203125,
+        0.21026967968750002,
+        0.1598754921875,
+        0.2010744296875,
+        0.2073233671875,
+        0.18625341406249998,
+        0.15955059375,
+        0.2091099140625,
+        0.17796376562500002
+      ],
+      "iterations_per_sample": 128,
+      "logical_read_bytes_after": 131072,
+      "logical_read_bytes_before": 262144,
+      "speedup": 1.169972303779499,
+      "workload": "captured WRAM input: read and SHA-256"
+    },
+    {
+      "baseline_median_ms": 1.36248525,
+      "baseline_ms": [
+        1.3279227500000002,
+        1.4344611171875001,
+        1.6854607265625,
+        1.4236585312499999,
+        1.2899987890625,
+        1.329005859375,
+        1.191639296875,
+        1.492969109375,
+        1.36248525
+      ],
+      "candidate_median_ms": 1.3373331796874999,
+      "candidate_ms": [
+        1.271083921875,
+        1.3638058046875001,
+        1.8180176171875,
+        1.4247598203125,
+        1.3509482265625,
+        1.3373331796874999,
+        1.2286676406250001,
+        1.11809996875,
+        1.2133374296875001
+      ],
+      "iterations_per_sample": 128,
+      "logical_read_bytes_after": 786432,
+      "logical_read_bytes_before": 1179648,
+      "speedup": 1.0188076320056438,
+      "workload": "ordinary WRAM authentication: inventory, full-state comparison and case hashes"
+    },
+    {
+      "baseline_median_ms": 3.365973,
+      "baseline_ms": [
+        3.20469028125,
+        3.21595440625,
+        3.4064205,
+        3.365973,
+        3.26617746875,
+        3.600162875,
+        3.1052665937499997,
+        3.4176272500000002,
+        3.46359753125
+      ],
+      "candidate_median_ms": 3.1616370625,
+      "candidate_ms": [
+        3.37638621875,
+        3.09861425,
+        3.0601798437500003,
+        3.4945916875000003,
+        2.5504490625000003,
+        3.4838961875,
+        3.22845721875,
+        3.1616370625,
+        3.122017875
+      ],
+      "iterations_per_sample": 32,
+      "logical_read_bytes_after": 1298991,
+      "logical_read_bytes_before": 2597982,
+      "speedup": 1.0646297893972767,
+      "workload": "floater-spike-motion: bounded read, SHA-256 and decode"
+    },
+    {
+      "baseline_median_ms": 4.068968375,
+      "baseline_ms": [
+        4.232543968750001,
+        4.53993871875,
+        3.8706334062499996,
+        3.9664650937499997,
+        4.068968375,
+        3.763072875,
+        3.9799136875000003,
+        4.6010871875,
+        4.6434989687499995
+      ],
+      "candidate_median_ms": 3.9476702187500003,
+      "candidate_ms": [
+        3.93443071875,
+        4.15711715625,
+        3.53134515625,
+        3.63584196875,
+        3.727738875,
+        4.46919975,
+        3.9476702187500003,
+        4.1421958125,
+        4.0535317187499995
+      ],
+      "iterations_per_sample": 32,
+      "logical_read_bytes_after": 1532824,
+      "logical_read_bytes_before": 3065648,
+      "speedup": 1.0307265170413367,
+      "workload": "mother-brain-bomb-update: bounded read, SHA-256 and decode"
+    },
+    {
+      "baseline_median_ms": 6.21612965625,
+      "baseline_ms": [
+        5.932982781250001,
+        6.26048271875,
+        6.1794435000000005,
+        6.467496156249999,
+        7.07967696875,
+        6.21612965625,
+        6.27637475,
+        5.71727678125,
+        5.26390909375
+      ],
+      "candidate_median_ms": 5.68366384375,
+      "candidate_ms": [
+        5.68366384375,
+        5.4730525624999995,
+        5.90956178125,
+        5.96515903125,
+        6.42091984375,
+        6.72836853125,
+        5.5130895625,
+        5.6203569375,
+        5.475165656250001
+      ],
+      "iterations_per_sample": 32,
+      "logical_read_bytes_after": 1421007,
+      "logical_read_bytes_before": 2842014,
+      "speedup": 1.0936835511631327,
+      "workload": "ridley-subsystem: bounded read, SHA-256 and decode"
+    }
+  ],
+  "method": "Nine alternating sequential warm-cache samples per variant. Actual old/new bounded IO implementations; same codec and bytes. WRAM authentication includes its fresh inventory pass. No producer, compiler, scheduler, continuation, directory-discovery, verdict-text or gameplay timing.",
+  "retained_case": "/home/jim/sm-decomp/out/fixture-format-performance/20261014T202443Z/actual-c/out/1792009502092051-397531-0/root",
+  "schema": "fixture-evidence-cost-audit-v1",
+  "source_sha256": {
+    "baseline_bounded_inputs": "89be330dd9aaa1fc3f02d5e251778b04775c2920141109a6cf748ef596f48e32",
+    "benchmark": "3e625cf024836e9705f214004670747a03d2db22395ee47ee7a77cd1e78142a5",
+    "candidate_bounded_inputs": "731afcbbe850f76dda17de3b3eecb2248921cf35d425fc6bc52002de6d5c15e1",
+    "fixture_format": "594ddb174d90dd3a5a18f88cedbf00f4df05357d9b7c89cbf3c661c37c938c74"
+  }
+}
