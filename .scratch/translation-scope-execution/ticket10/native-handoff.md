@@ -510,3 +510,147 @@ are shared by producer construction and the separate authenticator. The new
 reader reauthenticated unchanged room-scroll and projectile material receipts
 (8 producers/581 references and 16 producers/545 references respectively).
 No broader native matrix was started for this refactor.
+
+## Confinement child registration and exit visibility
+
+Commit `687a7cfc6c31ef79dc6854d2b40d04cce0131e09` fixes two observed
+kernel-ordering races. Root integrated it as `e8904e8`. An initial child stop can
+arrive before its parent's fork/clone event. The helper now holds unknown child
+wait statuses until the parent registers that exact PID; the combined observed
+and deferred population retains the 512-task ceiling. Diagnostic 4 reproduced
+the former early resume/reap followed by stale PID registration in 0.48 seconds:
+`confinement-exec-v1/diagnostic4-stress.log`.
+
+Descriptor teardown can also precede non-consuming wait visibility. Diagnostic
+5 observed a still-owned running task after the former 1 ms window, then an
+owned zombie with authenticated termination at the next 100 microsecond sample.
+The final helper retries EACCES for at most 10 ms without resuming a pending
+mutation. It proceeds only after descriptor access succeeds or `waitid` with
+`WNOWAIT` proves termination of the exact owned, unreaped task. Time alone never
+authorizes ignoring an inaccessible live descriptor. The original producer
+watchdogs are unchanged. Diagnostic sources, helpers, logs, failed V5/V6 tests
+and failed direct-rustc bridge builds remain in the proof directories.
+
+Final immutable helper:
+`/tmp/sm-ticket10-native-proofs/confinement-v7/tools/sm-translation-sandbox`,
+SHA-256 `aaf4af4cedc6990bdefa3e39321d8670635dbd2aed0c099164ca87489d8caa75`.
+Its exact source is under `confinement-v7/source/`. Passing evidence:
+
+| Check | Coverage | Elapsed |
+| --- | --- | ---: |
+| Runtime controls | All eight controls | 8.58 s |
+| Minimized exec/writer regression | 16 repetitions, one child, 512 writes | 6.05 s |
+| Original concurrent exec regression | 16 repetitions, two threads, eight children each | 9.40 s |
+| Stress regression | 16 repetitions, four threads, 16 children each, 1,024 writes | 22.15 s |
+| Original confinement guards | All eight guards, including real Rust linker descendants | 37.95 s |
+
+The exec regressions keep the original five-second per-probe bound. The first
+V7 guard suite had seven passes and one `AlreadyExists` failure at temporary
+fixture creation, before that test launched its producer. Its log remains
+`confinement-v7/confinement-green.log`; it is a failure despite the filename.
+The constructor used only PID and wall-clock nanoseconds. No stale fixture
+directory remained after the suite. Adding a process-local atomic serial makes
+concurrent fixture names distinct. The successful rerun, exact test source and
+reader are retained under `confinement-v7/fixture-fix/`; reader SHA-256 is
+`789e374f6c8175eb0274327e9e31536a5c32f639aff0493cb6256650c9eb69c7`.
+
+## Finite declared-tree limits and complete historical Original audit
+
+Commit `575962253e9db39aab9ce648d187e3b34ee23c7b` adds explicit artifact
+inventory/authentication profiles and `retained_tree_limits(run)`. Generic
+discovery and artifact inventory retain 65,536 paths/files. Explicit native
+profiles derive from the exact manifest coverage and the native intent's output
+allowance:
+
+```text
+files = 65,536 + declared_fixture_pairs * 64 + max_output_bytes / 131,072
+paths = files * 2
+```
+
+The fixed maximum is 2,097,152 files and 4,194,304 paths. Existing declaration
+validation still rejects more than 16,384 fixtures or 1,024 routines, and an
+inflated intent cannot exceed the fixed ceilings. Each pass retains shared byte
+charges and the earliest enclosing deadline. No compiler, fixture, Cargo,
+diagnostic or generic trusted-read allowance was increased. Root owns the
+operation index/reference representation and any Original aggregate-read or
+catalog-budget policy; a catalog-wide allowance must not silently become an
+excessive per-family intent allowance.
+
+The new profile for 6,457 pairs with a 64 GiB output allowance is 1,003,072
+files / 2,006,144 paths. Read-only proof `large-tree-v1` first reproduced the
+generic discovery refusal, then authenticated the entire retained artifact map
+and measured its logical extent within one unchanged 60-second / 8 GiB scope.
+The test took 51.89 seconds including the separate expected generic refusal.
+The Original run remains unchanged:
+`/home/jim/sm-decomp/out/port/ridley-subsystem/recovery-controlled/1791858747222202-2-0`.
+
+| Original retained extent | Value |
+| --- | ---: |
+| Declared Fixture pairs | 6,457 |
+| Regular files | 142,328 |
+| WRAM snapshots | 19,371 |
+| Logical regular-file bytes, counting every hardlink | 2,830,112,791 |
+| Allocated tree bytes from the earlier `du -B1 -s` measurement | 1,502,228,480 |
+
+`large-tree-v1/summary.toml` SHA-256:
+`0d312162eff83e6acf6d7487bdc0aedaa4e03a75de3ffc66c6982b2aec3fe35a`.
+All 12 bounded-input controls, the explicit artifact-count control and all nine
+non-ignored native controls passed with these production changes.
+
+Proof `large-tree-v3` reconstructed only hash-bound Rust/harness/manifest files
+from the Original run's sealed artifacts into `original-source/`. It retained
+the dependency declaration from `/tmp/sm-ridley-controlled-source`, then used
+the original private `/home/jim/sm-decomp/deps/snesrev-sm` closure. Complete family
+authentication passed all 6,457 cases in **21,218 ms** inside the unchanged
+60-second / 8 GiB scope; the entire test including source reconstruction took
+23.01 seconds. The measured trusted byte counter was **2,879,647,342 bytes**.
+This counter is not total OS IO: existing Ridley semantic and continuation
+checkers use direct `fs::read` calls outside it. Root was notified to include
+those rereads when designing an aggregate allowance. This historical tree has
+no confined-operation bundle, so these measurements do not cover native
+`collect_operations` or repeated producer-result authentication.
+
+`large-tree-v3/authentication.toml` SHA-256:
+`a8550fcc07faa28dc6059b60ccfb8f02b0d48c92e561bd1d6504622344a4e5d4`.
+The retained reader is
+`/tmp/sm-ticket10-native-proofs/readers/native-tests-large-tree-v3`, SHA-256
+`25c0f043ee9ee297fdba510126a74fe1cb858b94afd1e1dfef43fe52a78a2f8f`.
+Exact source, base commit and the unowned compile-only migration overlay remain
+in `large-tree-v3/source/`. V2 is a retained build-only source snapshot; its
+elapsed-time serialization was corrected to `u64` before any audit ran.
+
+The V3 reader also authenticated unchanged historical native success and
+failure: room-scroll retained eight producers / 581 references in 2.23 seconds;
+the failed projectile retained two producers / 213 references in 1.37 seconds.
+Expired replay used retired compiler/helper paths, preserved original results,
+and launched no producer. All 12 bounded tests plus the artifact and inflated
+intent/coverage controls also passed with this exact reader. These audits
+create no fresh Offline verification, native acceptance or queue completion.
+
+## Completion evidence for these follow-up proofs
+
+Both project cleanup passes completed for `confinement-exec-v1`, `confinement-v5`,
+`confinement-v6`, `confinement-v7`, `large-tree-v1`, `large-tree-v2` and
+`large-tree-v3`, each under `/tmp/sm-ticket10-native-proofs/`. Commands used the
+retained `/tmp/sm-ticket10-root-target-20261014/release/sm-pipeline` utility with
+`cleanup --root PROOF --apply` and `cleanup --root PROOF --deduplicate --apply`.
+Every utility pass reclaimed zero bytes. Exact TOML results are beside each
+proof. External `*-retained.before.sha256` / `*-retained.final.sha256` manifests
+and their `post-cleanup*-hashes.log` checks preserve every pre-cleanup file.
+Both large-tree readers also passed their post-cleanup SHA-256 checks.
+
+The only manual removal was 274 identified disposable symlinks under
+`confinement-exec-v1/diagnostic-libs/`, then that empty directory. Their complete
+target manifest and `du -B1 -s` measurement remain in
+`retired-diagnostic-links.log` and `retired-diagnostic-links-bytes.log`:
+**1,142,784 allocated bytes reclaimed**. The failed bridge build logs, exact
+diagnostic source and executable helpers remain. No test fixture directory or
+native-owned producer remained active at handoff. Latest available space:
+**165,142,081,536 bytes**.
+
+Final integrated worktree/build retirement remains with root. The worktree's
+5,308,416-byte `.scratch/translation-native/` directory contains generated PLM
+inputs from the earlier declaration audit; preserve any referenced exact inputs
+before retiring it. The one-line uncommitted `translation_migration.rs` workaround
+remains unowned and must not be committed. Root's installed Original catalog,
+aggregate accounting, operation indexing and completion gates remain separate.
