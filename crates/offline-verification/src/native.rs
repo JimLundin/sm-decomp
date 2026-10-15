@@ -1472,27 +1472,22 @@ fn collect_operations(prepared: &PreparedNative, run: &Path, intent: &NativeInte
         if !invocation_path.is_file() {
             continue;
         }
-        let invocation: builds::StrictInvocation = bounded::object(&invocation_path)?;
+        let (invocation, invocation_asset) = read_invocation(&directory, &label)?;
         if !translation_execution::operation::directory(root, &invocation.context)?.join("result.json").exists() {
             continue;
         }
-        let result = translation_execution::operation::authenticate_request(
-            root,
-            &invocation.context,
-            &invocation.program,
-            &invocation.limits,
-            &[],
-        )?;
+        let producer =
+            authenticate_producer(prepared, &tasks, intent, &directory, &label, invocation, invocation_asset)?;
         let operation = NativeOperation {
             directory,
             label,
-            invocation: Asset { file: invocation_path.clone(), sha256: digest(&invocation_path)? },
-            context: invocation.context.clone(),
-            result: translation_execution::operation::reference(root, &invocation.context)?,
-            result_sha256: result.result_sha256,
-            references: translation_execution::operation::references(root, &invocation.context)?,
+            invocation: producer.invocation_asset.clone(),
+            context: producer.invocation.context.clone(),
+            result: producer.evidence.result_reference().clone(),
+            result_sha256: producer.evidence.result().result_sha256.clone(),
+            references: producer.evidence.references().to_vec(),
         };
-        authenticate_operation(prepared, &tasks, intent, &operation)?;
+        authenticate_producer_outputs(prepared, &operation, &producer)?;
         operations.push(operation);
     }
     Ok(operations)
@@ -1510,24 +1505,56 @@ fn authenticate_operation(
     intent: &NativeIntent,
     operation: &NativeOperation,
 ) -> Result<(bool, builds::ProducerReservation)> {
-    let root = &intent.operation_root;
-    let context = &intent.context;
-    let invocation_path = file(&operation.invocation.file)?;
     ensure!(
-        invocation_path == operation.directory.join(format!("{}.invocation.toml", operation.label))
-            && digest(&invocation_path)? == operation.invocation.sha256,
+        operation.invocation.file == operation.directory.join(format!("{}.invocation.toml", operation.label)),
         "native invocation reference changed"
     );
-    let invocation: builds::StrictInvocation = bounded::object(&invocation_path)?;
+    let (invocation, invocation_asset) = read_invocation(&operation.directory, &operation.label)?;
+    ensure!(invocation_asset == operation.invocation, "native invocation reference changed");
+    let producer = authenticate_producer(
+        prepared,
+        tasks,
+        intent,
+        &operation.directory,
+        &operation.label,
+        invocation,
+        invocation_asset,
+    )?;
+    authenticate_producer_outputs(prepared, operation, &producer)
+}
+
+struct AuthenticatedProducer {
+    invocation: builds::StrictInvocation,
+    invocation_asset: Asset,
+    evidence: translation_execution::operation::AuthenticatedOperation,
+}
+
+fn read_invocation(directory: &Path, label: &str) -> Result<(builds::StrictInvocation, Asset)> {
+    let path = file(&directory.join(format!("{label}.invocation.toml")))?;
+    let bytes = bounded::read_limit(&path, bounded::MAX_DOCUMENT_BYTES)?;
+    let invocation = toml::from_str(std::str::from_utf8(&bytes)?)?;
+    Ok((invocation, Asset { file: path, sha256: sha256(&bytes) }))
+}
+
+fn authenticate_producer(
+    prepared: &PreparedNative,
+    tasks: &TaskLookup<'_>,
+    intent: &NativeIntent,
+    directory: &Path,
+    label: &str,
+    invocation: builds::StrictInvocation,
+    invocation_asset: Asset,
+) -> Result<AuthenticatedProducer> {
+    let root = &intent.operation_root;
+    let context = &intent.context;
     let mut expected_context = context.clone();
-    expected_context.operation_key = sealed(&(&context.operation_key, &operation.directory, &operation.label))?;
+    expected_context.operation_key = sealed(&(&context.operation_key, directory, label))?;
     ensure!(
-        operation.context == expected_context
-            && invocation.context == expected_context
+        invocation.context == expected_context
             && invocation.request_sha256 == sealed(&(&invocation.program, &invocation.requested_limits))?,
         "native producer context/request changed"
     );
-    let configured = if operation.label.ends_with("-build") {
+    let configured = if label.ends_with("-build") {
         prepared.contract.compiler_limits.run_limits()?
     } else {
         prepared.contract.fixture_limits.run_limits()?
@@ -1541,12 +1568,12 @@ fn authenticate_operation(
             && invocation.limits.stdin_bytes == configured.stdin_bytes,
         "native installed producer limits changed"
     );
-    let compiler = operation.label.ends_with("-build");
-    let rust = operation.label == "rust-build";
-    let family_run = if compiler || operation.label == "abi-controls" {
-        operation.directory.clone()
+    let compiler = label.ends_with("-build");
+    let rust = label == "rust-build";
+    let family_run = if compiler || label == "abi-controls" {
+        directory.to_path_buf()
     } else {
-        operation.directory.parent().context("native fixture family parent missing")?.to_path_buf()
+        directory.parent().context("native fixture family parent missing")?.to_path_buf()
     };
     ensure!(invocation.program.helper == intent.helper, "native helper configuration changed");
     if compiler {
@@ -1623,16 +1650,12 @@ fn authenticate_operation(
         )?;
         ensure!(invocation.program == expected, "native compiler arguments, outputs or capabilities changed");
     } else {
-        let selection = if operation.label == "abi-controls" {
+        let selection = if label == "abi-controls" {
             recipes::FixtureSelection::AbiControls
         } else {
-            let name = operation
-                .directory
-                .file_name()
-                .and_then(|name| name.to_str())
-                .context("native fixture name missing")?;
+            let name = directory.file_name().and_then(|name| name.to_str()).context("native fixture name missing")?;
             let &(routine, fixture, index) = tasks.get(name).context("undeclared native fixture")?;
-            ensure!(family_run.join(&fixture.name) == operation.directory, "native fixture directory differs");
+            ensure!(family_run.join(&fixture.name) == directory, "native fixture directory differs");
             recipes::FixtureSelection::Case { routine, fixture, index }
         };
         let expected = recipes::fixture_program(
@@ -1640,26 +1663,40 @@ fn authenticate_operation(
             &prepared.manifest,
             selection,
             &family_run,
-            &operation.label,
+            label,
             &intent.helper,
         )?;
         ensure!(invocation.program == expected, "native fixture arguments, outputs or capabilities changed");
     }
-    let result = translation_execution::operation::authenticate_request(
+    let evidence = translation_execution::operation::authenticate_request_with_references(
         root,
         &expected_context,
         &invocation.program,
         &invocation.limits,
         &[],
     )?;
+    Ok(AuthenticatedProducer { invocation, invocation_asset, evidence })
+}
+
+fn authenticate_producer_outputs(
+    prepared: &PreparedNative,
+    operation: &NativeOperation,
+    producer: &AuthenticatedProducer,
+) -> Result<(bool, builds::ProducerReservation)> {
+    let invocation = &producer.invocation;
+    let result = producer.evidence.result();
     ensure!(
-        result.result_sha256 == operation.result_sha256
-            && translation_execution::operation::reference(root, &expected_context)? == operation.result
-            && translation_execution::operation::references(root, &expected_context)? == operation.references,
+        operation.context == invocation.context
+            && operation.invocation == producer.invocation_asset
+            && result.result_sha256 == operation.result_sha256
+            && *producer.evidence.result_reference() == operation.result
+            && producer.evidence.references() == operation.references,
         "native retained producer evidence changed"
     );
     for reference in &operation.references {
-        translation_execution::retention::authenticate_reference(reference, invocation.reserved_bytes)?;
+        // Each reference has already been read and authenticated by this
+        // producer's owned admission; retain its exact reservation bound.
+        ensure!(reference.bytes <= invocation.reserved_bytes, "invalid retention reference");
     }
     ensure!(
         bounded::read(operation.directory.join(format!("{}.stdout", operation.label)))? == result.stdout
@@ -1677,7 +1714,7 @@ fn authenticate_operation(
         let destination = recipes::fixture_output_path(&operation.directory, &operation.label, name);
         ensure!(bounded::read(destination)? == *bytes, "native parent output differs from confined producer");
     }
-    if result.passed && !compiler {
+    if result.passed && !operation.label.ends_with("-build") {
         recipes::authenticate_fixture_artifacts(
             prepared.contract.recipe.as_ref(),
             &operation.directory,
@@ -1688,8 +1725,8 @@ fn authenticate_operation(
         before_bytes: invocation.reservation_before_bytes,
         reserved_bytes: invocation.reserved_bytes,
         retained_bytes: builds::retained_producer_bytes(
-            &invocation,
-            &result,
+            invocation,
+            result,
             &operation.references,
             &operation.directory,
             &operation.label,
