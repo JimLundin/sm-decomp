@@ -12,6 +12,10 @@ The Rust and actual-C executions of the same fixture whose outputs are compared.
 A sequence of fixtures in which each continuation inherits matching state from
 its declared predecessor.
 
+**Recovered C source**:
+The dependency-pinned C reconstruction used as the reference for source analysis
+and actual-C Fixture execution.
+
 **Offline family**:
 A declared set of routines and fixtures verified against actual compiled C.
 
