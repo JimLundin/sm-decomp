@@ -100,3 +100,45 @@ Root also requires volatile `__DATE__`, `__TIME__` and `__TIMESTAMP__` coverage.
 An actual GCC probe showed `-M -Werror=date-time` does not expand expression macros.
 Eligibility will use full preprocessing with dependency emission; unsupported or
 volatile preprocessing must fall back to fresh compilation, never a cache hit.
+
+## Semantic key and volatile eligibility checkpoint
+
+`logs/eligibility-controls.log`: **6 tests passed**, 24.25 s execution / 4.49 s
+Cargo build. Actual controls cover one preparation/common compilation for two
+families, independent failed-family cancellation, shared Rust selection, raw
+physical `__FILE__` separation, explicit logical `__FILE__`/`__BASE_FILE__`/header
+mapping, changed logical targets and optimization flags, and fresh volatile C
+through headers plus direct and macro-expanded diagnostic pragmas.
+
+`logs/system-angle-eligibility-controls.log`: the expanded volatile test passed in
+17.29 s, including real angle-bracket includes resolved through `-isystem`, with
+and without a diagnostic pragma. Seven distinct input cases each require two
+actual C compilations, empty cached-object records and the explicit fresh reason.
+The preceding `system-eligibility-controls.log` used quoted includes and is not
+the system-header proof; it is retained as diagnostic test development evidence.
+
+Cache identities are now version 5. Literal paths and a bound working directory
+are the default. The private C path contract normalizes only typed source/include
+operands under explicit `-ffile-prefix-map`; targets, macro values and other flags
+remain literal. Debug/switch-recording contexts keep physical identity. Eligible
+pinned objects use the stable checkout cwd with absolute source/include operands;
+generated units keep their original run cwd and remain fresh. Supported standalone
+helpers also compile in their selected checkout; unreviewed helper flags retain
+their run cwd in the key. Removing generic repository substring normalization also
+removes its Git identity subprocess. Existing version-4 cache entries are not
+removed and cannot satisfy the corrected version-5 contract.
+
+Eligible C performs full preprocessing and dependency emission. A bounded stream
+discards code payloads while preserving a <=4 KiB line prefix and <=1 MiB stderr,
+with <=64 MiB total stdout and the caller's deadline/byte budget. Active diagnostic
+pragmas (including `_Pragma`) make the unit fresh because they can suppress
+`-Werror=date-time`; unclassifiable long lines also remain fresh. Unsupported or
+volatile preprocessing falls back to actual fresh C compilation with emitted
+dependency equality, while IO, compiler identity, deadline and byte-budget errors
+remain hard failures. Contended artifact waits repeat the actual dependency proof
+before accepting a hit. Every unit records why it was eligible or fresh.
+
+Further focused cache-wait mutation/corruption/environment and bounded-output
+controls, matched cold/warm measurements and both scoped cleanup passes remain.
+The source checkpoint is available for root/bulk integration; ticket acceptance
+still waits for their combined-source proof and retirement/admission.

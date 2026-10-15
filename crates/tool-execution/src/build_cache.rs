@@ -44,11 +44,88 @@ pub struct CacheIdentity {
     platform: [String; 2],
     #[serde(skip_serializing_if = "Option::is_none")]
     rustc: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    working_directory: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    path_contract: Option<String>,
 }
 #[derive(Deserialize, Serialize)]
 pub struct CacheSeal {
     pub inputs: CacheIdentity,
     pub sha256: String,
+}
+
+/// The C recipe supplies typed path operands and real `-ffile-prefix-map`
+/// arguments. Only those operands may use logical identity. Arbitrary argument
+/// substrings (including macro values and remap targets) always remain literal.
+#[derive(Default)]
+pub(crate) struct ArtifactPaths {
+    pub(crate) directory: Option<PathBuf>,
+    mappings: Vec<(PathBuf, PathBuf)>,
+}
+
+impl ArtifactPaths {
+    pub(crate) fn literal(directory: &Path) -> Result<Self> {
+        Ok(Self { directory: Some(fs::canonicalize(directory)?), mappings: Vec::new() })
+    }
+
+    pub(crate) fn c(directory: &Path, flags: &[String]) -> Result<Self> {
+        let mut paths = Self { directory: Some(fs::canonicalize(directory)?), mappings: Vec::new() };
+        // Debug/switch recording can expose paths beyond macro/file remapping.
+        // Keep physical identity until that larger contract has its own proof.
+        if flags.iter().any(|flag| flag.starts_with("-g") || flag == "-frecord-gcc-switches") {
+            return Ok(paths);
+        }
+        for flag in flags {
+            if let Some(mapping) = flag.strip_prefix("-ffile-prefix-map=") {
+                let Some((physical, logical)) = mapping.split_once('=') else { continue };
+                let physical = PathBuf::from(physical);
+                let logical = PathBuf::from(logical);
+                if !physical.is_absolute() || !logical.is_absolute() || fs::canonicalize(&physical)? != physical {
+                    // The actual flag remains in the key; no equivalence is
+                    // claimed for relative or redirected mapping selectors.
+                    paths.mappings.clear();
+                    return Ok(paths);
+                }
+                paths.mappings.push((physical, logical));
+            }
+        }
+        Ok(paths)
+    }
+
+    fn logical(&self, path: &Path) -> PathBuf {
+        self.mappings
+            .iter()
+            .rev()
+            .find_map(|(physical, logical)| path.strip_prefix(physical).ok().map(|suffix| logical.join(suffix)))
+            .unwrap_or_else(|| path.to_owned())
+    }
+
+    fn command(&self, command: &[String]) -> Result<Vec<String>> {
+        if self.mappings.is_empty() {
+            return Ok(command.to_vec());
+        }
+        let mut result = Vec::with_capacity(command.len());
+        let mut path_operand = false;
+        for (index, argument) in command.iter().enumerate() {
+            if index == 0 {
+                result.push(argument.clone());
+            } else if path_operand {
+                let path = Path::new(argument);
+                ensure!(path.is_absolute(), "mapped compiler path operand is not absolute");
+                result.push(self.logical(path).display().to_string());
+                path_operand = false;
+            } else if let Some(mapping) = argument.strip_prefix("-ffile-prefix-map=") {
+                let (_, logical) = mapping.split_once('=').context("invalid compiler prefix map")?;
+                result.push(format!("-ffile-prefix-map={{mapped-input-prefix}}={logical}"));
+            } else {
+                path_operand = ["-I", "-iquote", "-isystem", "-c"].contains(&argument.as_str());
+                result.push(argument.clone());
+            }
+        }
+        ensure!(!path_operand, "mapped compiler path operand missing");
+        Ok(result)
+    }
 }
 
 pub(crate) fn environment_digest() -> Result<String> {
@@ -130,8 +207,6 @@ pub(crate) fn checked_lock<T>(mutex: &Mutex<T>) -> Result<MutexGuard<'_, T>> {
 }
 
 struct CompilerContext {
-    checkout: PathBuf,
-    repository: PathBuf,
     compiler_name: String,
     compiler: PathBuf,
     identity: CompilerIdentity,
@@ -165,16 +240,6 @@ impl CompilerContext {
     fn prepare(checkout: &Path, compiler_name: &str) -> Result<Self> {
         let checkout = fs::canonicalize(checkout)?;
         let environment_sha256 = environment_digest()?;
-        let common = metrics::command_output(
-            Command::new("git").args(["rev-parse", "--git-common-dir"]).current_dir(&checkout),
-            "cache-repository-identity",
-        )?;
-        let repository = if common.status.success() {
-            let common = PathBuf::from(String::from_utf8(common.stdout)?.trim());
-            fs::canonicalize(checkout.join(common))?.parent().context("git common parent missing")?.to_path_buf()
-        } else {
-            checkout.clone()
-        };
         // Preserve argv[0] for toolchain proxies such as rustup's rustc link.
         let compiler = executable(compiler_name)?;
         let compiler_sha256 = digest(&compiler)?;
@@ -202,8 +267,6 @@ impl CompilerContext {
             None
         };
         let context = Self {
-            checkout,
-            repository,
             compiler_name: compiler_name.into(),
             compiler,
             identity,
@@ -279,13 +342,17 @@ impl Preparation {
         bounded::check()
     }
 
-    fn lock(&self, path: &Path) -> Result<File> {
+    fn lock(&self, path: &Path) -> Result<(File, bool)> {
         let file = fs::OpenOptions::new().create(true).append(true).open(path)?;
+        let mut waited = false;
         loop {
             self.check_active()?;
             match file.try_lock() {
-                Ok(()) => return Ok(file),
-                Err(std::fs::TryLockError::WouldBlock) => std::thread::sleep(Duration::from_millis(20)),
+                Ok(()) => return Ok((file, waited)),
+                Err(std::fs::TryLockError::WouldBlock) => {
+                    waited = true;
+                    std::thread::sleep(Duration::from_millis(20));
+                }
                 Err(error) => return Err(error.into()),
             }
         }
@@ -309,7 +376,19 @@ impl Preparation {
         destination: &Path,
         build: impl FnOnce(&Path) -> Result<()>,
     ) -> Result<CacheResult> {
-        metrics::measure("compiler-cache", || self.artifact_inner(command, inputs, destination, build))
+        self.artifact_checked(command, inputs, destination, &ArtifactPaths::default(), |_| Ok(()), build)
+    }
+
+    pub(crate) fn artifact_checked(
+        &self,
+        command: &[String],
+        inputs: &[PathBuf],
+        destination: &Path,
+        paths: &ArtifactPaths,
+        ready: impl FnOnce(bool) -> Result<()>,
+        build: impl FnOnce(&Path) -> Result<()>,
+    ) -> Result<CacheResult> {
+        metrics::measure("compiler-cache", || self.artifact_inner(command, inputs, destination, paths, ready, build))
     }
 
     fn artifact_inner(
@@ -317,6 +396,8 @@ impl Preparation {
         command: &[String],
         inputs: &[PathBuf],
         destination: &Path,
+        paths: &ArtifactPaths,
+        ready: impl FnOnce(bool) -> Result<()>,
         build: impl FnOnce(&Path) -> Result<()>,
     ) -> Result<CacheResult> {
         ensure!(command.first() == Some(&self.context.compiler_name), "prepared compiler differs");
@@ -330,37 +411,26 @@ impl Preparation {
                 continue;
             }
             let hash = self.observe(&path)?;
-            let key = path
-                .strip_prefix(&self.context.checkout)
-                .or_else(|_| path.strip_prefix(&self.context.repository))
-                .unwrap_or(&path)
-                .to_string_lossy()
-                .into_owned();
-            if let Some(previous) = sources.insert(key, hash.clone()) {
-                ensure!(previous == hash, "conflicting normalized compiler input");
-            }
+            let key = paths.logical(&path).to_string_lossy().into_owned();
+            ensure!(sources.insert(key, hash.clone()).is_none(), "conflicting mapped compiler input");
             originals.insert(path, hash);
         }
         let identity = CacheIdentity {
-            version: 4,
-            command: command
-                .iter()
-                .map(|arg| {
-                    arg.replace(self.context.checkout.to_string_lossy().as_ref(), "{checkout}")
-                        .replace(self.context.repository.to_string_lossy().as_ref(), "{checkout}")
-                })
-                .collect(),
+            version: 5,
+            command: paths.command(command)?,
             sources,
             compiler: self.context.identity.clone(),
             environment_sha256: self.context.environment_sha256.clone(),
             platform: [std::env::consts::ARCH.into(), std::env::consts::OS.into()],
             rustc: self.context.rustc.clone(),
+            working_directory: paths.directory.as_ref().map(|path| paths.logical(path).display().to_string()),
+            path_contract: (!paths.mappings.is_empty()).then(|| "c-file-prefix-map-v1".into()),
         };
         let key = format!("{:x}", Sha256::digest(toml::to_string(&identity)?.as_bytes()));
         let root = self.root.join("build-cache");
         fs::create_dir_all(&root)?;
         let waiting = context.as_ref().map(|c| c.stage("cache-lock-wait")).transpose()?;
-        let _held = self.lock(&root.join(format!("{key}.lock")))?;
+        let (_held, waited) = self.lock(&root.join(format!("{key}.lock")))?;
         if let Some(waiting) = waiting {
             waiting.finish("success")?;
         }
@@ -368,6 +438,7 @@ impl Preparation {
             ensure!(digest(path)? == *expected, "compiler input changed while waiting for cache");
         }
         self.context.authenticate()?;
+        ready(waited)?;
         let entry = root.join(&key);
         let authenticated = (|| -> Result<String> {
             ensure!(!entry.symlink_metadata()?.file_type().is_symlink(), "cache symlink");

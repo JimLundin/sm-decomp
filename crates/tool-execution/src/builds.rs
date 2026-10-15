@@ -1,15 +1,20 @@
 //! Authenticated compilation and execution; callers supply their fixed recipes.
 use crate::{
     acquire_lease, atomic_toml, bounded,
-    build_cache::{CacheRequest, CacheResult, CompilerPreparations, cached_artifact, checked_lock, environment_digest},
+    build_cache::{
+        ArtifactPaths, CacheRequest, CacheResult, CompilerPreparations, cached_artifact, checked_lock,
+        environment_digest,
+    },
 };
 use anyhow::{Context, Result, bail, ensure};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::BTreeMap,
     fs::{self, File},
+    io::Read,
+    os::{fd::OwnedFd, unix::net::UnixStream},
     path::{Path, PathBuf},
-    process::{Command, Stdio},
+    process::{Command, ExitStatus, Stdio},
     sync::{
         Arc, Mutex,
         atomic::{AtomicBool, AtomicUsize, Ordering},
@@ -219,6 +224,10 @@ pub fn standalone_builds_in(context: &BuildContext, request: StandaloneBuildRequ
     let mut artifacts = Vec::new();
     for recipe in recipes {
         let StandaloneArtifact { source, name, label, flags } = recipe;
+        let stable_directory =
+            flags.iter().all(|flag| flag.starts_with("--crate-type=") || flag.starts_with("--remap-path-prefix="));
+        let cwd = if stable_directory { &checkout } else { &run };
+        let paths = ArtifactPaths::literal(cwd)?;
         let source = checkout.join(source);
         preparation.freeze(std::slice::from_ref(&source))?;
         let mut command = vec![compiler.clone(), "--edition=2024".into(), "-O".into()];
@@ -229,7 +238,7 @@ pub fn standalone_builds_in(context: &BuildContext, request: StandaloneBuildRequ
         let dep_file = run.join(format!("{label}.compiler.d"));
         let mut dependency = command.clone();
         dependency.push(format!("--emit=dep-info={}", dep_file.display()));
-        execute_at_checked(&dependency, &run, &run, &format!("{label}-dependencies"), &root, workers, 240, || {
+        execute_at_checked(&dependency, &run, cwd, &format!("{label}-dependencies"), &root, workers, 240, || {
             selected.authenticate()?;
             preparation.validate(std::slice::from_ref(&source))
         })?;
@@ -245,30 +254,62 @@ pub fn standalone_builds_in(context: &BuildContext, request: StandaloneBuildRequ
             .into_iter()
             .map(|path| {
                 let path = PathBuf::from(path);
-                if path.is_absolute() { path } else { run.join(path) }
+                if path.is_absolute() { path } else { cwd.join(path) }
             })
             .collect();
         inputs.push(source);
         preparation.freeze(&inputs)?;
         command.extend(["-o".into(), "{artifact}".into()]);
-        let result = preparation.artifact(&command, &inputs, &run.join(name), |artifact| {
-            let mut actual = command.clone();
-            *actual.last_mut().unwrap() = artifact.display().to_string();
-            let actual_dependencies = artifact.with_extension("d");
-            actual.push(format!("--emit=link,dep-info={}", actual_dependencies.display()));
-            execute_at_checked(&actual, &run, &run, &label, &root, workers, 240, || {
+        let result = preparation.artifact_checked(
+            &command,
+            &inputs,
+            &run.join(name),
+            &paths,
+            |waited| {
                 selected.authenticate()?;
-                preparation.validate(&inputs)
-            })?;
-            let actual_text = fs::read_to_string(&actual_dependencies)?;
-            ensure!(
-                !actual_text.lines().any(|line| line.starts_with("# env-dep:")),
-                "standalone helper has an unsupported build-time environment dependency"
-            );
-            authenticate_dependency_closure(&inputs, &actual_text, &run)?;
-            fs::remove_file(actual_dependencies)?;
-            Ok(())
-        })?;
+                preparation.validate(&inputs)?;
+                if waited {
+                    execute_at_checked(
+                        &dependency,
+                        &run,
+                        cwd,
+                        &format!("{label}-dependencies"),
+                        &root,
+                        workers,
+                        240,
+                        || {
+                            selected.authenticate()?;
+                            preparation.validate(&inputs)
+                        },
+                    )?;
+                    let current = bounded::text(&dep_file)?;
+                    ensure!(
+                        !current.lines().any(|line| line.starts_with("# env-dep:")),
+                        "standalone helper has an unsupported build-time environment dependency"
+                    );
+                    authenticate_dependency_closure(&inputs, &current, cwd)?;
+                }
+                Ok(())
+            },
+            |artifact| {
+                let mut actual = command.clone();
+                *actual.last_mut().unwrap() = artifact.display().to_string();
+                let actual_dependencies = artifact.with_extension("d");
+                actual.push(format!("--emit=link,dep-info={}", actual_dependencies.display()));
+                execute_at_checked(&actual, &run, cwd, &label, &root, workers, 240, || {
+                    selected.authenticate()?;
+                    preparation.validate(&inputs)
+                })?;
+                let actual_text = fs::read_to_string(&actual_dependencies)?;
+                ensure!(
+                    !actual_text.lines().any(|line| line.starts_with("# env-dep:")),
+                    "standalone helper has an unsupported build-time environment dependency"
+                );
+                authenticate_dependency_closure(&inputs, &actual_text, cwd)?;
+                fs::remove_file(actual_dependencies)?;
+                Ok(())
+            },
+        )?;
         selected.authenticate()?;
         atomic_toml(&run.join(format!("{label}.cache.toml")), &result)?;
         artifacts.push(result);
@@ -542,6 +583,7 @@ fn c_build_prepared(
     let CBuildRequest { run, checkout, root, workers, command } = request;
     ensure!(!command.is_empty(), "empty C command");
     ensure!((1..=64).contains(&workers), "invalid C worker count");
+    let checkout = fs::canonicalize(checkout)?;
     let mut flags = Vec::new();
     let mut sources = Vec::new();
     let mut inputs = Vec::new();
@@ -552,8 +594,10 @@ fn c_build_prepared(
             sources.push(PathBuf::from(arg));
         } else if ["-I", "-iquote", "-isystem"].contains(&arg.as_str()) {
             let include = command.get(i + 1).context("include directory missing")?;
-            headers(Path::new(include), &mut inputs)?;
-            flags.extend([arg.clone(), include.clone()]);
+            let include = Path::new(include);
+            let include = fs::canonicalize(if include.is_absolute() { include.to_owned() } else { run.join(include) })?;
+            headers(&include, &mut inputs)?;
+            flags.extend([arg.clone(), include.display().to_string()]);
             i += 1;
         } else if arg == "-o" {
             ensure!(i + 1 < command.len(), "output missing");
@@ -581,32 +625,39 @@ fn c_build_prepared(
     validate_inputs(&inputs)?;
     preparation.freeze(&inputs)?;
     let objects: Vec<_> = (0..sources.len()).map(|index| run.join(format!("c-object-{index:03}.o"))).collect();
-    let compile_unit = |index: usize| -> Result<Option<CacheResult>> {
+    #[derive(Debug, Serialize)]
+    struct UnitCache {
+        reason: &'static str,
+        cache: Option<CacheResult>,
+    }
+    let compile_unit = |index: usize| -> Result<UnitCache> {
         let source = &sources[index];
         let source = fs::canonicalize(if source.is_absolute() { source.clone() } else { run.join(source) })?;
         let destination = &objects[index];
+        let pinned = source.starts_with(&pinned);
+        // Eligible objects execute in one stable checkout directory. All
+        // source/include operands are absolute, so per-family output paths do
+        // not become hidden cwd inputs. Generated units retain their run cwd.
+        let cwd = if pinned { &checkout } else { &run };
+        let eligible_flags = c_cache_flags(&flags);
+        let paths = ArtifactPaths::c(cwd, &flags)?;
         let mut compile = vec![command[0].clone()];
         compile.extend(flags.clone());
         compile.extend(["-c".into(), source.to_string_lossy().into_owned(), "-o".into(), "{artifact}".into()]);
         preparation.freeze(std::slice::from_ref(&source))?;
         validate_inputs(std::slice::from_ref(&source))?;
-        // Discover every actual preprocessor closure. A generated wrapper can
-        // include pinned source, system headers, or macro-selected paths too.
-        let (_held, _) = acquire_lease(&root, workers)?;
-        preparation.validate(std::slice::from_ref(&source))?;
-        preparation.validate(&inputs)?;
-        validate_inputs(std::slice::from_ref(&source))?;
-        let dependencies = crate::metrics::command_output(
-            Command::new(&command[0]).args(&flags).arg("-M").arg(&source).current_dir(&run),
-            "c-dependency-scan",
-        )?;
-        drop(_held);
-        ensure!(
-            dependencies.status.success(),
-            "C dependency scan failed: {}",
-            String::from_utf8_lossy(&dependencies.stderr)
-        );
-        let discovered = dependency_paths(&String::from_utf8(dependencies.stdout)?, &run)?;
+        // Full preprocessing detects actual volatile macro expansions, also
+        // through headers. -M alone omits expression expansion and cannot prove
+        // that an object is independent of __DATE__/__TIME__/__TIMESTAMP__.
+        let discover = || -> Result<(String, bool)> {
+            let (_held, _) = acquire_lease(&root, workers)?;
+            preparation.validate(std::slice::from_ref(&source))?;
+            preparation.validate(&inputs)?;
+            validate_inputs(std::slice::from_ref(&source))?;
+            c_dependencies(&command[0], &flags, &source, cwd, &run, index, pinned && eligible_flags)
+        };
+        let (dependencies, stable) = discover()?;
+        let discovered = dependency_paths(&dependencies, cwd)?;
         validate_inputs(&discovered)?;
         let mut closure = inputs.clone();
         closure.extend(discovered.clone());
@@ -620,24 +671,51 @@ fn c_build_prepared(
             *actual.last_mut().unwrap() = artifact.to_string_lossy().into_owned();
             let dep_file = artifact.with_extension("d");
             actual.extend(["-MD".into(), "-MF".into(), dep_file.display().to_string()]);
-            execute_at_checked(&actual, &run, &run, &format!("c-object-{index:03}"), &root, workers, 240, || {
+            execute_at_checked(&actual, &run, cwd, &format!("c-object-{index:03}"), &root, workers, 240, || {
                 preparation.validate(&closure)?;
                 validate_inputs(&closure)
             })?;
             let actual = fs::read_to_string(&dep_file)?;
-            authenticate_dependency_closure(&discovered, &actual, &run)?;
-            validate_inputs(&dependency_paths(&actual, &run)?)?;
+            authenticate_dependency_closure(&discovered, &actual, cwd)?;
+            validate_inputs(&dependency_paths(&actual, cwd)?)?;
             preparation.validate(&closure)?;
             fs::remove_file(dep_file)?;
             Ok(())
         };
-        if source.starts_with(&pinned) {
-            let result = preparation.artifact(&compile, &closure, destination, build)?;
+        if stable {
+            let result = preparation.artifact_checked(
+                &compile,
+                &closure,
+                destination,
+                &paths,
+                |waited| {
+                    preparation.validate(&closure)?;
+                    validate_inputs(&closure)?;
+                    if waited {
+                        // A newly available include can change the closure without
+                        // changing a previously read file. Re-run the actual proof
+                        // after contended cache waits, before accepting a hit.
+                        let (current, stable) = discover()?;
+                        ensure!(stable, "compiler cache eligibility changed while waiting");
+                        authenticate_dependency_closure(&discovered, &current, cwd)?;
+                        validate_inputs(&dependency_paths(&current, cwd)?)?;
+                    }
+                    Ok(())
+                },
+                build,
+            )?;
             validate_inputs(&closure)?;
-            Ok(Some(result))
+            Ok(UnitCache { reason: "eligible-pinned-source", cache: Some(result) })
         } else {
             build(destination)?;
-            Ok(None)
+            let reason = if !pinned {
+                "generated-source"
+            } else if !eligible_flags {
+                "unsupported-build-flags"
+            } else {
+                "volatile-or-unsupported-preprocessing"
+            };
+            Ok(UnitCache { reason, cache: None })
         }
     };
     // A fixed number of local workers feed the same cross-process leases.
@@ -682,8 +760,7 @@ fn c_build_prepared(
     }) {
         return Err(completed.remove(index).1.unwrap_err());
     }
-    let records: Vec<_> =
-        completed.into_iter().map(|(_, result)| result).collect::<Result<Vec<_>>>()?.into_iter().flatten().collect();
+    let records: Vec<_> = completed.into_iter().map(|(_, result)| result).collect::<Result<Vec<_>>>()?;
     preparation.finish()?;
     let source_names: Vec<_> = sources.iter().map(|p| p.to_string_lossy().into_owned()).collect();
     let mut linked: Vec<String> = command.into_iter().filter(|arg| !source_names.contains(arg)).collect();
@@ -698,9 +775,195 @@ fn c_build_prepared(
     #[derive(Serialize)]
     struct CacheRecords {
         objects: Vec<CacheResult>,
+        units: Vec<UnitCache>,
     }
-    atomic_toml(&run.join("c-cache.toml"), &CacheRecords { objects: records })?;
+    let objects = records.iter().filter_map(|unit| unit.cache.clone()).collect();
+    atomic_toml(&run.join("c-cache.toml"), &CacheRecords { objects, units: records })?;
     result
+}
+
+fn c_cache_flags(flags: &[String]) -> bool {
+    let mut include = false;
+    for flag in flags {
+        if include {
+            include = false;
+        } else if ["-I", "-iquote", "-isystem"].contains(&flag.as_str()) {
+            include = true;
+        } else if [
+            "-O0",
+            "-O1",
+            "-O2",
+            "-O3",
+            "-Os",
+            "-Oz",
+            "-Og",
+            "-Ofast",
+            "-fno-strict-aliasing",
+            "-ffunction-sections",
+            "-fdata-sections",
+            "-fno-pie",
+            "-fPIC",
+            "-fpic",
+            "-fno-common",
+            "-fwrapv",
+            "-fno-strict-overflow",
+            "-pthread",
+            "-g",
+            "-m32",
+            "-m64",
+        ]
+        .contains(&flag.as_str())
+            || flag.starts_with("-ffile-prefix-map=")
+            || flag.starts_with("-D")
+            || flag.starts_with("-U")
+            || flag.starts_with("-std=")
+            || (flag.starts_with("-W") && !flag.starts_with("-Wp,") && !flag.starts_with("-Wa,"))
+        {
+        } else {
+            return false;
+        }
+    }
+    !include
+}
+
+fn c_dependencies(
+    compiler: &str,
+    flags: &[String],
+    source: &Path,
+    cwd: &Path,
+    run: &Path,
+    index: usize,
+    cache_eligible: bool,
+) -> Result<(String, bool)> {
+    if cache_eligible {
+        let dependencies = run.join(format!("c-dependencies-{index:03}.d"));
+        let mut command = Command::new(compiler);
+        command
+            .args(flags)
+            .args(["-E", "-MD", "-MF"])
+            .arg(&dependencies)
+            .args(["-Wsystem-headers", "-Werror=date-time"])
+            .arg(source)
+            .current_dir(cwd);
+        let (status, diagnostic_pragma, stderr) = c_preprocessor(command)?;
+        if status.success() && !diagnostic_pragma {
+            let text = bounded::text(&dependencies)?;
+            fs::remove_file(dependencies)?;
+            return Ok((text, true));
+        }
+        // Any failed proof means fresh compilation, regardless of diagnostic
+        // spelling. The ordinary compiler still supplies its complete errors.
+        fs::write(run.join(format!("c-eligibility-{index:03}.stderr")), stderr)?;
+        if dependencies.exists() {
+            fs::remove_file(dependencies)?;
+        }
+    }
+    let output = crate::metrics::command_output(
+        Command::new(compiler).args(flags).arg("-M").arg(source).current_dir(cwd),
+        "c-dependency-scan",
+    )?;
+    ensure!(output.status.success(), "C dependency scan failed: {}", String::from_utf8_lossy(&output.stderr));
+    Ok((String::from_utf8(output.stdout)?, false))
+}
+
+/// Discard preprocessed code through two bounded streams. Active diagnostic
+/// pragmas survive preprocessing, including `_Pragma` expansion. They can
+/// override command-line warning policy, so such a unit stays uncached even if
+/// the preprocessor exits successfully. This never trusts a source text scan.
+fn c_preprocessor(mut command: Command) -> Result<(ExitStatus, bool, Vec<u8>)> {
+    let context = crate::metrics::active().context("C preparation accounting missing")?;
+    let (mut stdout, stdout_writer) = UnixStream::pair()?;
+    let (mut stderr, stderr_writer) = UnixStream::pair()?;
+    stdout.set_nonblocking(true)?;
+    stderr.set_nonblocking(true)?;
+    command.stdout(Stdio::from(OwnedFd::from(stdout_writer))).stderr(Stdio::from(OwnedFd::from(stderr_writer)));
+    let mut child = crate::metrics::OwnedChild::spawn(&mut command, &context, "c-dependency-scan")?;
+    // Close the parent's writing endpoints so EOF reflects owned child exit.
+    drop(command);
+    let started = Instant::now();
+    let mut stdout_bytes = 0u64;
+    let mut stderr_bytes = Vec::new();
+    let mut prefix = Vec::new();
+    let mut diagnostic_pragma = false;
+    let mut output_done = false;
+    let mut errors_done = false;
+    let mut status = None;
+    let result = (|| -> Result<()> {
+        let mut buffer = [0u8; 65536];
+        while !output_done || !errors_done || status.is_none() {
+            bounded::check()?;
+            crate::metrics::check_cancelled()?;
+            ensure!(started.elapsed().as_secs() < 240, "C preprocessor timeout after 240s");
+            let mut progress = false;
+            if !output_done {
+                match stdout.read(&mut buffer) {
+                    Ok(0) => {
+                        output_done = true;
+                        progress = true;
+                    }
+                    Ok(count) => {
+                        bounded::account(count as u64)?;
+                        stdout_bytes += count as u64;
+                        ensure!(stdout_bytes <= bounded::MAX_FILE_BYTES, "C preprocessor output byte extent exceeded");
+                        for byte in &buffer[..count] {
+                            if *byte == b'\n' {
+                                diagnostic_pragma |= diagnostic_directive(&prefix);
+                                prefix.clear();
+                            } else if prefix.len() < 4096 {
+                                prefix.push(*byte);
+                            } else {
+                                // A longer directive cannot be classified by
+                                // this bounded reader; never make it eligible.
+                                diagnostic_pragma = true;
+                            }
+                        }
+                        progress = true;
+                    }
+                    Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {}
+                    Err(error) => return Err(error.into()),
+                }
+            }
+            if !errors_done {
+                match stderr.read(&mut buffer) {
+                    Ok(0) => {
+                        errors_done = true;
+                        progress = true;
+                    }
+                    Ok(count) => {
+                        bounded::account(count as u64)?;
+                        ensure!(
+                            stderr_bytes.len() + count <= 1024 * 1024,
+                            "C preprocessor diagnostic byte extent exceeded"
+                        );
+                        stderr_bytes.extend_from_slice(&buffer[..count]);
+                        progress = true;
+                    }
+                    Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {}
+                    Err(error) => return Err(error.into()),
+                }
+            }
+            if status.is_none() {
+                status = child.poll()?;
+            }
+            if !progress && (!output_done || !errors_done || status.is_none()) {
+                std::thread::sleep(std::time::Duration::from_millis(1));
+            }
+        }
+        Ok(())
+    })();
+    if result.is_err() {
+        child.kill_wait()?;
+    }
+    result?;
+    diagnostic_pragma |= diagnostic_directive(&prefix);
+    Ok((status.context("C preprocessor exit missing")?, diagnostic_pragma, stderr_bytes))
+}
+
+fn diagnostic_directive(line: &[u8]) -> bool {
+    let line = line.trim_ascii_start();
+    let Some(line) = line.strip_prefix(b"#") else { return false };
+    let mut words = line.split(|byte| byte.is_ascii_whitespace()).filter(|word| !word.is_empty());
+    words.next() == Some(b"pragma".as_slice()) && words.any(|word| word == b"diagnostic")
 }
 
 pub fn dep_paths(text: &str) -> Result<Vec<String>> {

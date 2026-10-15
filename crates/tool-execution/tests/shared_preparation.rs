@@ -238,3 +238,145 @@ fn unmapped_source_paths_remain_semantic_build_inputs() -> Result<()> {
     }
     Ok(())
 }
+
+#[test]
+fn explicit_file_maps_share_objects_and_preserve_logical_targets_and_flags() -> Result<()> {
+    let directory = Directory::new("mapped-paths")?;
+    let compiler = compiler(&directory)?;
+    let context = builds::BuildContext::default();
+    let mut previous = None;
+    for (family, logical, optimization) in [
+        ("first", "logical", "-O2"),
+        ("second", "logical", "-O2"),
+        ("new-target", "other-logical", "-O2"),
+        ("new-flags", "logical", "-O0"),
+    ] {
+        let checkout = Directory { path: directory.path.join(family), retained: true };
+        fs::create_dir(&checkout.path)?;
+        inputs(&checkout)?;
+        let mut request = request(&checkout, &compiler, "run")?;
+        let target = directory.path.join(logical);
+        request.command.push(format!("-ffile-prefix-map={}={}", checkout.path.display(), target.display()));
+        request.command[1] = optimization.into();
+        fs::write(checkout.path.join("deps/value.h"), "static const char *header(void) { return __FILE__; }\n")?;
+        fs::write(
+            checkout.path.join("deps/unit.c"),
+            "#include \"value.h\"\n#include <stdio.h>\nint value(void) { puts(__FILE__); puts(__BASE_FILE__); puts(header()); return 0; }\n",
+        )?;
+        builds::c_build_in(&context, request, &|_| Ok(()))?;
+        let actual = Command::new(checkout.path.join("run/program")).output()?;
+        assert!(actual.status.success());
+        assert_eq!(
+            String::from_utf8(actual.stdout)?,
+            format!(
+                "{}\n{}\n{}\n",
+                target.join("deps/unit.c").display(),
+                target.join("deps/unit.c").display(),
+                target.join("deps/value.h").display()
+            )
+        );
+        let records = records(&checkout.path.join("run"))?;
+        if family == "second" {
+            assert!(records[0].hit);
+            assert_eq!(previous.as_ref(), Some(&records[0].key));
+        } else {
+            assert!(!records[0].hit);
+            if family == "first" {
+                previous = Some(records[0].key.clone());
+            } else {
+                assert_ne!(previous.as_ref(), Some(&records[0].key));
+            }
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn volatile_c_units_stay_fresh_through_headers_and_diagnostic_pragmas() -> Result<()> {
+    let directory = Directory::new("volatile-inputs")?;
+    let compiler = compiler(&directory)?;
+    let context = builds::BuildContext::default();
+    for (case, header) in [
+        ("date", "#define CLOCK_TEXT __DATE__\n"),
+        ("time", "#define INNER_CLOCK __TIME__\n#define CLOCK_TEXT INNER_CLOCK\n"),
+        ("timestamp", "#define CLOCK_TEXT __TIMESTAMP__\n"),
+        ("system-time", "#define CLOCK_TEXT __TIME__\n"),
+        ("pragma", "#pragma GCC diagnostic ignored \"-Wdate-time\"\n#define CLOCK_TEXT __TIME__\n"),
+        ("system-pragma", "#pragma GCC diagnostic ignored \"-Wdate-time\"\n#define CLOCK_TEXT __TIME__\n"),
+        (
+            "macro-pragma",
+            "#define SILENCE _Pragma(\"GCC diagnostic ignored \\\"-Wdate-time\\\"\")\nSILENCE\n#define CLOCK_TEXT __TIMESTAMP__\n",
+        ),
+    ] {
+        let checkout = Directory { path: directory.path.join(case), retained: true };
+        fs::create_dir(&checkout.path)?;
+        inputs(&checkout)?;
+        fs::write(checkout.path.join("deps/value.h"), header)?;
+        fs::write(
+            checkout.path.join("deps/unit.c"),
+            if case.starts_with("system-") {
+                "#include <value.h>\nconst char *value(void) { return CLOCK_TEXT; }\n"
+            } else {
+                "#include \"value.h\"\nconst char *value(void) { return CLOCK_TEXT; }\n"
+            },
+        )?;
+        for family in ["a", "b"] {
+            let mut request = request(&checkout, &compiler, family)?;
+            if case.starts_with("system-") {
+                request.command[2] = "-isystem".into();
+            }
+            fs::write(
+                request.run.join("main.c"),
+                "#include <stdio.h>\nconst char *value(void); int main(void) { puts(value()); }\n",
+            )?;
+            let run = request.run.clone();
+            builds::c_build_in(&context, request, &|_| Ok(()))?;
+            assert!(records(&run)?.is_empty(), "{case} incorrectly became cache eligible");
+            let metadata: toml::Value = toml::from_str(&fs::read_to_string(run.join("c-cache.toml"))?)?;
+            assert_eq!(metadata["units"][0]["reason"].as_str(), Some("volatile-or-unsupported-preprocessing"));
+            let actual = Command::new(run.join("program")).output()?;
+            assert!(actual.status.success());
+            assert!(!actual.stdout.trim_ascii().is_empty());
+        }
+        let unit = checkout.path.join("deps/unit.c").display().to_string();
+        let calls = fs::read_to_string(directory.path.join("compiler-calls"))?;
+        assert_eq!(calls.lines().filter(|line| *line == unit).count(), 2, "{case} did not execute both real compilers");
+    }
+    Ok(())
+}
+
+#[test]
+fn failed_family_does_not_cancel_an_independent_family_in_the_same_context() -> Result<()> {
+    let directory = Directory::new("independent-cancellation")?;
+    inputs(&directory)?;
+    let compiler = compiler(&directory)?;
+    let requests = [request(&directory, &compiler, "good")?, request(&directory, &compiler, "bad")?];
+    fs::write(requests[1].run.join("main.c"), "invalid syntax;\n")?;
+    let builds = Arc::new(builds::BuildContext::default());
+    let mut parent = metrics::Run::start(directory.path.join("families.metrics.toml"), "family-builds")?;
+    let context = metrics::active().context("test metrics missing")?;
+    let ready = Arc::new(Barrier::new(2));
+    let results = std::thread::scope(|scope| {
+        let handles: Vec<_> = requests
+            .into_iter()
+            .map(|request| {
+                let context = context.clone();
+                let builds = builds.clone();
+                let ready = ready.clone();
+                scope.spawn(move || {
+                    let _entered = context.enter();
+                    ready.wait();
+                    builds::c_build_in(&builds, request, &|_| Ok(()))
+                })
+            })
+            .collect();
+        handles.into_iter().map(|handle| handle.join().expect("family panicked")).collect::<Vec<_>>()
+    });
+    assert!(results[0].is_ok(), "independent family was cancelled: {:?}", results[0]);
+    assert!(results[1].as_ref().unwrap_err().to_string().contains("c-object-001 failed"));
+    assert_eq!(Command::new(directory.path.join("good/program")).status()?.code(), Some(7));
+    assert!(directory.path.join("bad/c-object-001.stderr").is_file());
+    assert!(!directory.path.join("bad/c-cache.toml").exists());
+    parent.finish("success", None)?;
+    Ok(())
+}
