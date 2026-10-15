@@ -524,6 +524,23 @@ mod tests {
     }
 
     #[test]
+    fn canonical_discovery_proves_parent_glob_builtins_from_literal_module_edges() -> Result<()> {
+        let directory = tool_execution::testing::Directory::new()?;
+        let sources = directory.0.join("crates/port/src");
+        fs::create_dir_all(&sources)?;
+        fs::write(sources.join("memory.rs"), "pub struct Wram;")?;
+        let root = sources.join("candidate.rs");
+        let child = sources.join("child_impl.rs");
+        fs::write(&root, "#[path=\"child_impl.rs\"] mod owned; pub fn step() { owned::step(); }")?;
+        fs::write(&child, "use super::*; #[derive(Clone)] pub struct State; pub fn step() { let _=vec![1]; }")?;
+        let paths = canonical_sources(&directory.0, std::slice::from_ref(&root), &[])?;
+        assert!(paths.contains(&root) && paths.contains(&child));
+        fs::write(&root, "use crate::macros::vec; #[path=\"child_impl.rs\"] mod owned;")?;
+        assert!(canonical_sources(&directory.0, &[root], &[]).is_err());
+        Ok(())
+    }
+
+    #[test]
     fn canonical_discovery_rejects_module_symlink() -> Result<()> {
         let directory = tool_execution::testing::Directory::new()?;
         let sources = directory.0.join("crates/port/src");
