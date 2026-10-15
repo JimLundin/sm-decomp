@@ -621,7 +621,7 @@ pub(crate) fn copy_native_source_snapshot(current: &Path, destination: &Path) ->
 }
 
 pub(crate) fn native_installation(root: &Path) -> Result<Installation> {
-    let _ = crate::BINARY_SHA256.set(digest(&std::env::current_exe()?)?);
+    crate::initialize_test_binary_identity()?;
     let offline = crate::offline::families()?;
     let current = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .parent()
@@ -752,7 +752,7 @@ pub(crate) fn native_installation(root: &Path) -> Result<Installation> {
 #[test]
 #[ignore = "bounded complete real actual-C supervisor proof; requires pinned source, ROM and confinement"]
 fn complete_native_supervisor_rewrite_verify_integrate_retire_publish_and_recover() -> Result<()> {
-    let _ = crate::BINARY_SHA256.set(digest(&std::env::current_exe()?)?);
+    crate::initialize_test_binary_identity()?;
     let root = PathBuf::from(std::env::var("SM_SUPERVISOR_NATIVE_PROOF")?);
     let installation = native_installation(&root)?;
     let started = Instant::now();
@@ -874,7 +874,7 @@ fn complete_native_supervisor_rewrite_verify_integrate_retire_publish_and_recove
 #[test]
 #[ignore = "read-only authentication of the retained complete supervisor proof; no producer execution"]
 fn retained_complete_native_supervisor_authenticates_without_producers() -> Result<()> {
-    let _ = crate::BINARY_SHA256.set(digest(&std::env::current_exe()?)?);
+    crate::initialize_test_binary_identity()?;
     let root = PathBuf::from(std::env::var("SM_SUPERVISOR_NATIVE_PROOF")?);
     let installation: Installation = read(&root.join("installation.json"))?;
     let run_id = sha256(format!("translation-execution-run-v1:{}", sealed(&installation.policy)?));

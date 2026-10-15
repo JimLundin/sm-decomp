@@ -172,7 +172,7 @@ fn retained_native_proofs_authenticate_without_execution() -> Result<()> {
 #[test]
 #[ignore = "real separately confined actual-C controls; retains source, replay and cleanup evidence"]
 fn real_reviewed_recipes_replay_and_authenticate() -> Result<()> {
-    let _ = crate::BINARY_SHA256.set(crate::digest(&std::env::current_exe()?)?);
+    crate::initialize_test_binary_identity()?;
     let offline = crate::offline::families()?;
     let root = PathBuf::from(std::env::var("SM_NATIVE_RECIPE_PROOF")?);
     fs::create_dir_all(&root)?;
@@ -407,7 +407,7 @@ fn real_reviewed_recipes_replay_and_authenticate() -> Result<()> {
 #[test]
 #[ignore = "freezes every current catalog declaration with real pinned source; no producer is launched"]
 fn complete_current_catalog_has_a_frozen_native_recipe() -> Result<()> {
-    let _ = crate::BINARY_SHA256.set(crate::digest(&std::env::current_exe()?)?);
+    crate::initialize_test_binary_identity()?;
     let offline = crate::offline::families()?;
     let root = PathBuf::from(std::env::var("SM_NATIVE_CATALOG_PROOF")?);
     fs::create_dir_all(&root)?;
@@ -543,7 +543,7 @@ fn variant_source(prepared: &PreparedNative, original: &Path, destination: &Path
 #[ignore = "bounded real compiler/actual-C proof; requires installed confinement and private ROM"]
 fn full_real_family_retains_authenticates_and_reuses_every_producer() -> Result<()> {
     let preparation_started = std::time::Instant::now();
-    let _ = crate::BINARY_SHA256.set(crate::digest(&std::env::current_exe()?)?);
+    crate::initialize_test_binary_identity()?;
     let offline = crate::offline::families()?;
     let proof = PathBuf::from(std::env::var("SM_NATIVE_PROOF_ROOT")?);
     let root = proof.join(std::env::var("SM_NATIVE_PROOF_NAME").unwrap_or_else(|_| "actual-c".into()));

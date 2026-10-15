@@ -126,6 +126,12 @@ fn binary_digest() -> Result<&'static str> {
     BINARY_IDENTITY.get().context("binary identity was not initialized")?.digest()
 }
 
+#[cfg(test)]
+fn initialize_test_binary_identity() -> Result<()> {
+    let _ = BINARY_IDENTITY.set(BinaryIdentity::open(&std::env::current_exe()?)?);
+    Ok(())
+}
+
 #[test]
 fn deferred_binary_identity_keeps_the_initial_image_after_path_replacement() -> Result<()> {
     let root =
