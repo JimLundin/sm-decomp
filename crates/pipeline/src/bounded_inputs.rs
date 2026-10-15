@@ -6,6 +6,7 @@ pub(crate) use decomp_source::context::{
     SourceContext as SharedScope, discovery, discovery_with_limit, limited, reconcile, shared_scope, until,
 };
 #[cfg(test)]
+#[allow(unused_imports)]
 pub(crate) use tool_execution::bounded::charged_bytes;
 #[allow(unused_imports)]
 pub(crate) use tool_execution::bounded::{
@@ -13,6 +14,7 @@ pub(crate) use tool_execution::bounded::{
     entries, immutable_copy, now_unix_ms, object, read, read_limit, read_with_digest, safe, text, tree, write,
 };
 #[cfg(test)]
+#[allow(unused_imports)]
 pub(crate) mod tests {
     pub(crate) use decomp_source::testing::{append_tar, gzip_archive};
     pub(crate) use tool_execution::testing::Directory;

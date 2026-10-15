@@ -1,0 +1,217 @@
+   Compiling proc-macro2 v1.0.107
+   Compiling quote v1.0.47
+   Compiling libc v0.2.190
+   Compiling syn v3.0.6
+   Compiling jobserver v0.1.35
+   Compiling find-msvc-tools v0.1.14
+   Compiling shlex v2.0.1
+   Compiling cc v1.6.0
+   Compiling synstructure v0.14.0
+    Checking stable_deref_trait v1.2.1
+    Checking bytes v1.12.1
+   Compiling zerofrom-derive v0.1.8
+   Compiling yoke-derive v0.8.4
+    Checking zerofrom v0.1.8
+   Compiling displaydoc v0.2.7
+    Checking yoke v0.8.3
+   Compiling zerovec-derive v0.11.6
+   Compiling serde_derive v1.0.229
+    Checking zerovec v0.11.8
+    Checking pin-project-lite v0.2.17
+    Checking zeroize v1.9.1
+    Checking memchr v2.8.3
+    Checking futures-core v0.3.34
+    Checking rustls-pki-types v1.15.1
+    Checking tinystr v0.8.4
+   Compiling ring v0.17.14
+    Checking smallvec v1.16.2
+    Checking litemap v0.8.3
+    Checking serde v1.0.229
+    Checking writeable v0.6.4
+    Checking icu_locale_core v2.3.0
+    Checking serde_spanned v0.6.9
+    Checking toml_datetime v0.6.11
+    Checking potential_utf v0.1.6
+    Checking zerotrie v0.2.5
+    Checking mio v1.2.4
+    Checking socket2 v0.6.5
+   Compiling icu_properties_data v2.3.0
+    Checking utf8_iter v1.0.4
+    Checking once_cell v1.21.4
+   Compiling icu_normalizer_data v2.3.0
+    Checking toml_edit v0.22.27
+    Checking icu_collections v2.3.0
+    Checking tokio v1.53.2
+    Checking icu_provider v2.3.1
+    Checking http v1.5.0
+    Checking getrandom v0.2.17
+   Compiling httparse v1.10.1
+    Checking futures-sink v0.3.34
+    Checking untrusted v0.9.0
+   Compiling crc32fast v1.5.2
+   Compiling pkg-config v0.3.34
+   Compiling zstd-sys v2.1.0+zstd.1.5.7
+    Checking http-body v1.1.0
+    Checking toml v0.8.23
+    Checking try-lock v0.2.5
+    Checking futures-io v0.3.34
+   Compiling rustls v0.23.45
+    Checking slab v0.4.12
+    Checking simd-adler32 v0.3.10
+    Checking futures-task v0.3.34
+    Checking want v0.3.2
+    Checking futures-util v0.3.34
+    Checking icu_normalizer v2.3.0
+    Checking rustls-webpki v0.103.15
+    Checking icu_properties v2.3.0
+    Checking tracing-core v0.1.36
+    Checking tower-service v0.3.3
+    Checking log v0.4.34
+    Checking percent-encoding v2.3.2
+    Checking subtle v2.6.1
+    Checking atomic-waker v1.1.2
+    Checking hyper v1.12.0
+    Checking form_urlencoded v1.2.2
+    Checking miniz_oxide v0.9.1
+    Checking tracing v0.1.44
+    Checking idna_adapter v1.2.2
+    Checking futures-channel v0.3.34
+    Checking webpki-roots v1.0.9
+   Compiling zstd-safe v7.3.0
+   Compiling thiserror v2.0.21
+    Checking hyper-util v0.1.21
+    Checking idna v1.1.0
+    Checking flate2 v1.1.10
+    Checking tokio-rustls v0.26.6
+    Checking pipeline-model v0.1.0 (/home/jim/sm-decomp-offline-foundations/crates/pipeline-model)
+    Checking sync_wrapper v1.0.2
+   Compiling thiserror-impl v2.0.21
+    Checking ryu v1.0.23
+   Compiling zip v2.4.2
+    Checking bumpalo v3.20.3
+    Checking tower-layer v0.3.3
+    Checking tower v0.5.3
+    Checking zopfli v0.8.3
+    Checking serde_urlencoded v0.7.1
+    Checking serde_json v1.0.151
+    Checking hyper-rustls v0.27.10
+    Checking url v2.5.8
+    Checking webpki-roots v0.26.11
+    Checking http-body-util v0.1.5
+    Checking rustls-pemfile v2.2.0
+    Checking base64 v0.22.1
+    Checking mime v0.3.17
+    Checking ipnet v2.12.2
+    Checking reqwest v0.12.12
+    Checking zstd v0.13.3
+    Checking tool-execution v0.1.0 (/home/jim/sm-decomp-offline-foundations/crates/tool-execution)
+    Checking evidence v0.1.0 (/home/jim/sm-decomp-offline-foundations/crates/evidence)
+    Checking translation-execution v0.1.0 (/home/jim/sm-decomp-offline-foundations/crates/translation-execution)
+    Checking decomp-source v0.1.0 (/home/jim/sm-decomp-offline-foundations/crates/decomp-source)
+    Checking movie v0.1.0 (/home/jim/sm-decomp-offline-foundations/crates/movie)
+    Checking pipeline v0.1.0 (/home/jim/sm-decomp-offline-foundations/crates/pipeline)
+warning: unused import: `ExecRequest`
+ --> crates/pipeline/src/builds.rs:4:41
+  |
+4 | pub(crate) use tool_execution::builds::{ExecRequest, CBuildRequest, CargoBuildRequest, ExecutionRecord, c_build, cargo_build, exec, e...
+  |                                         ^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused imports: `AtomicBool`, `AtomicUsize`, `Command`, `Ordering`, and `Stdio`
+  --> crates/pipeline/src/builds.rs:12:15
+   |
+12 |     process::{Command, Stdio},
+   |               ^^^^^^^  ^^^^^
+...
+15 |         atomic::{AtomicBool, AtomicUsize, Ordering},
+   |                  ^^^^^^^^^^  ^^^^^^^^^^^  ^^^^^^^^
+
+warning: unused imports: `authenticate_inventory_until` and `verify_source_until`
+  --> crates/pipeline/src/family.rs:18:47
+   |
+18 | pub(crate) use decomp_source::{verify_source, verify_source_until, c_units, authenticate_inventory, authenticate_inventory_until};
+   |                                               ^^^^^^^^^^^^^^^^^^^                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `family`
+ --> crates/pipeline/src/translation_execution.rs:5:38
+  |
+5 |     affected, cleanup, digest, emit, family, family_model::Asset, translation_infrastructure as infrastructure,
+  |                                      ^^^^^^
+
+warning: function `validate_admitted_ticket_projection` is never used
+    --> crates/pipeline/src/assignment.rs:1612:15
+     |
+1612 | pub(crate) fn validate_admitted_ticket_projection(
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `catalog_until` is never used
+  --> crates/pipeline/src/batch.rs:38:15
+   |
+38 | pub(crate) fn catalog_until(checkout: &Path, deadline: u64, max_bytes: u64) -> Result<Catalog> {
+   |               ^^^^^^^^^^^^^
+
+warning: function `prepare_case` is never used
+   --> crates/pipeline/src/family.rs:110:15
+    |
+110 | pub(crate) fn prepare_case(case: &Case, directory: &Path, arg_types: &[String]) -> Result<()> {
+    |               ^^^^^^^^^^^^
+
+warning: function `authenticate_with_source_until` is never used
+    --> crates/pipeline/src/family.rs:1010:15
+     |
+1010 | pub(crate) fn authenticate_with_source_until(
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `canonical_sources_until` is never used
+  --> crates/pipeline/src/inputs.rs:72:15
+   |
+72 | pub(crate) fn canonical_sources_until(
+   |               ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `run_until` is never used
+  --> crates/pipeline/src/source_inventory.rs:10:15
+   |
+10 | pub(crate) fn run_until(root: &Path, source: &Path, output: &Path, deadline: u64, max_bytes: u64) -> Result<()> {
+   |               ^^^^^^^^^
+
+warning: function `prepare_until` is never used
+   --> crates/pipeline/src/translation_compact.rs:387:15
+    |
+387 | pub(crate) fn prepare_until(
+    |               ^^^^^^^^^^^^^
+
+warning: function `prepare` is never used
+   --> crates/pipeline/src/translation_infrastructure.rs:346:15
+    |
+346 | pub(crate) fn prepare(checkout: &Path, contract: &InfrastructureContract) -> Result<PreparedInfrastructure> {
+    |               ^^^^^^^
+
+warning: function `build_preparation` is never used
+    --> crates/pipeline/src/translation_migration_builder.rs:1173:15
+     |
+1173 | pub(crate) fn build_preparation(request: BuildRequest) -> Result<BuildReceipt> {
+     |               ^^^^^^^^^^^^^^^^^
+
+warning: function `contract_for_family_until` is never used
+   --> crates/pipeline/src/translation_native.rs:403:15
+    |
+403 | pub(crate) fn contract_for_family_until(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `prepare_until` is never used
+   --> crates/pipeline/src/translation_native.rs:577:15
+    |
+577 | pub(crate) fn prepare_until(
+    |               ^^^^^^^^^^^^^
+
+warning: function `manifest` is never used
+   --> crates/pipeline/src/translation_native_recipe.rs:125:15
+    |
+125 | pub(super) fn manifest(checkout: &Path, path: &Path, recipe: Option<&NativeRecipe>) -> Result<Manifest> {
+    |               ^^^^^^^^
+
+warning: `pipeline` (bin "sm-pipeline") generated 16 warnings (run `cargo fix --bin "sm-pipeline" -p pipeline` to apply 4 suggestions)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3m 04s

@@ -650,8 +650,9 @@ pub(crate) fn native_installation(root: &Path) -> Result<Installation> {
     let pinned = PathBuf::from("/home/jim/sm-decomp/deps/snesrev-sm");
     let inventory = root.join("source-inventory.toml");
     crate::source_inventory::run(&repository, &pinned, &inventory)?;
-    let provenance: native::NativeProvenance =
-        family::object(&current.join(".scratch/translation-scope-execution/native-gates/provenance/provenance.toml"))?;
+    let provenance: native::NativeProvenance = tool_execution::bounded::object(
+        &current.join(".scratch/translation-scope-execution/native-gates/provenance/provenance.toml"),
+    )?;
     let contract = native::contract_for_family(
         &repository,
         manifest_path,

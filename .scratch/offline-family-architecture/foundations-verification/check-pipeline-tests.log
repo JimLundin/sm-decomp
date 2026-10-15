@@ -1,0 +1,60 @@
+    Checking tool-execution v0.1.0 (/home/jim/sm-decomp-offline-foundations/crates/tool-execution)
+    Checking decomp-source v0.1.0 (/home/jim/sm-decomp-offline-foundations/crates/decomp-source)
+    Checking pipeline v0.1.0 (/home/jim/sm-decomp-offline-foundations/crates/pipeline)
+warning: unused import: `tool_execution::bounded::charged_bytes`
+ --> crates/pipeline/tests/../src/bounded_inputs.rs:9:16
+  |
+9 | pub(crate) use tool_execution::bounded::charged_bytes;
+  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused imports: `append_tar` and `gzip_archive`
+  --> crates/pipeline/tests/../src/bounded_inputs.rs:17:45
+   |
+17 |     pub(crate) use decomp_source::testing::{append_tar, gzip_archive};
+   |                                             ^^^^^^^^^^  ^^^^^^^^^^^^
+
+warning: unused import: `tool_execution::testing::Directory`
+  --> crates/pipeline/tests/../src/bounded_inputs.rs:18:20
+   |
+18 |     pub(crate) use tool_execution::testing::Directory;
+   |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `pipeline` (test "assignment_queue") generated 3 warnings (3 duplicates)
+warning: `pipeline` (test "decomp_sessions") generated 3 warnings (run `cargo fix --test "decomp_sessions" -p pipeline` to apply 3 suggestions)
+warning: `pipeline` (test "session_authority") generated 3 warnings (3 duplicates)
+warning: function `validate_duplicate_ticket_receipts` is never used
+   --> crates/pipeline/src/drill_evidence.rs:251:15
+    |
+251 | pub(crate) fn validate_duplicate_ticket_receipts(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `authenticate_with_source_until` is never used
+    --> crates/pipeline/src/family.rs:1010:15
+     |
+1010 | pub(crate) fn authenticate_with_source_until(
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `prepare_until` is never used
+   --> crates/pipeline/src/translation_compact.rs:387:15
+    |
+387 | pub(crate) fn prepare_until(
+    |               ^^^^^^^^^^^^^
+
+warning: function `build_preparation` is never used
+    --> crates/pipeline/src/translation_migration_builder.rs:1173:15
+     |
+1173 | pub(crate) fn build_preparation(request: BuildRequest) -> Result<BuildReceipt> {
+     |               ^^^^^^^^^^^^^^^^^
+
+warning: function `prepare_until` is never used
+   --> crates/pipeline/src/translation_native.rs:577:15
+    |
+577 | pub(crate) fn prepare_until(
+    |               ^^^^^^^^^^^^^
+
+warning: `pipeline` (bin "sm-pipeline" test) generated 5 warnings
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1m 13s
