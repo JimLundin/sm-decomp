@@ -299,10 +299,23 @@ fn inherited_clock_sigterm_still_stops_descendants_and_releases_capacity() {
         .unwrap();
     pipeline.stdin.take().unwrap().write_all(toml::to_string(&request).unwrap().as_bytes()).unwrap();
     let started = Instant::now();
-    while !run.0.join("grandchild.pid").is_file() && started.elapsed() < Duration::from_secs(5) {
+    let published_pid =
+        |name| fs::read_to_string(run.0.join(name)).ok().is_some_and(|text| text.trim().parse::<i32>().is_ok());
+    while !(published_pid("child.pid") && published_pid("grandchild.pid"))
+        && started.elapsed() < Duration::from_secs(5)
+    {
         std::thread::sleep(Duration::from_millis(10));
     }
-    assert!(run.0.join("grandchild.pid").is_file());
+    if !(published_pid("child.pid") && published_pid("grandchild.pid")) {
+        if published_pid("producer.pid") {
+            let pid = fs::read_to_string(run.0.join("producer.pid")).unwrap().trim().parse::<i32>().unwrap();
+            // SAFETY: this test's still-owned producer group has not been reaped.
+            unsafe { libc::kill(-pid, libc::SIGKILL) };
+        }
+        pipeline.kill().unwrap();
+        pipeline.wait().unwrap();
+        panic!("inherited-clock control failed to publish both descendant PIDs");
+    }
     let descendants = [Descendant::read(&run.0.join("child.pid")), Descendant::read(&run.0.join("grandchild.pid"))];
     let _producer = Descendant::read(&run.0.join("producer.pid"));
     // SAFETY: the test owns this still-running native orchestration process.
@@ -343,7 +356,11 @@ fn disabled_telemetry_preserves_execution_and_one_owned_wait4_record() {
     let metrics = receipt(&run.0.join("disabled.metrics.toml"));
     assert_eq!(metrics["enabled"].as_bool(), Some(false));
     assert_eq!(metrics["outcome"].as_str(), Some("success"));
-    assert!(metrics["stages"].as_array().unwrap().is_empty());
+    let stages = metrics["stages"].as_array().unwrap();
+    for name in ["worker-wait", "shared-capacity-wait", "execute"] {
+        assert!(stages.iter().any(|stage| stage["name"].as_str() == Some(name)), "missing cheap timing: {name}");
+    }
+    assert_eq!(metrics["configuration"]["resource-sampling-calls"].as_str(), Some("0"));
     assert_eq!(metrics["resources"]["rss_samples"].as_integer(), Some(0));
     assert_eq!(metrics["resources"]["disk_samples"].as_integer(), Some(0));
     for field in [
@@ -368,4 +385,201 @@ fn disabled_telemetry_preserves_execution_and_one_owned_wait4_record() {
     assert_eq!(enabled_metrics["enabled"].as_bool(), Some(true));
     assert!(!enabled_metrics["stages"].as_array().unwrap().is_empty());
     assert_eq!(enabled_metrics["resources"]["aggregate_sampled_rss_bytes"]["state"].as_str(), Some("measured"));
+}
+
+fn stage_workload(root: &Path, workload: &str, telemetry: &str) -> pipeline_model::metrics::Receipt {
+    let output = Command::new(std::env::current_exe().unwrap())
+        .args(["stage_accounting_subprocess", "--exact", "--ignored", "--nocapture"])
+        .env("SM_METRICS_CONTROL_ROOT", root)
+        .env("SM_METRICS_CONTROL_WORKLOAD", workload)
+        .env("SM_PIPELINE_METRICS", telemetry)
+        .env_remove("SM_PIPELINE_METRICS_CONTEXT")
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let receipt: pipeline_model::metrics::Receipt =
+        toml::from_str(&fs::read_to_string(root.join("stages.metrics.toml")).unwrap()).unwrap();
+    receipt.validate().unwrap();
+    receipt
+}
+
+fn stage_counter(configuration: &std::collections::BTreeMap<String, String>, name: &str) -> u64 {
+    configuration.get(name).unwrap_or_else(|| panic!("missing stage counter {name}")).parse().unwrap()
+}
+
+// Subprocess isolation permits both telemetry modes and inherited process
+// contexts without changing the test runner's environment or signal handlers.
+#[test]
+#[ignore = "subprocess fixture for the public stage accounting controls"]
+fn stage_accounting_subprocess() {
+    use tool_execution::metrics;
+    let workload = std::env::var("SM_METRICS_CONTROL_WORKLOAD").expect("stage control workload required");
+    let root = PathBuf::from(std::env::var_os("SM_METRICS_CONTROL_ROOT").unwrap());
+    let mut run = metrics::Run::start(root.join("stages.metrics.toml"), "stage-control").unwrap();
+    let mut outcome = "success";
+    match workload.as_str() {
+        "repeated" => {
+            run.context.expect_stages(&["fixture-comparison", "not-reached"]);
+            for index in 0..20_000 {
+                let stage = run.context.stage("fixture-comparison").unwrap();
+                if index % 5 != 4 {
+                    stage.finish(["success", "failed", "timed-out", "interrupted"][index % 5]).unwrap();
+                }
+            }
+            outcome = "failed";
+        }
+        "labels" => {
+            for (name, count) in [("name", 3), ("name:child", 5), ("name%3Achild", 7), ("name:child:count", 11)] {
+                for _ in 0..count {
+                    run.context.stage(name).unwrap().finish("success").unwrap();
+                }
+            }
+            for index in 0..600 {
+                for _ in 0..2 {
+                    run.context.stage(&format!("label-{index}")).unwrap().finish("success").unwrap();
+                }
+            }
+            run.context.stage(&"oversized-label".repeat(10_000)).unwrap().finish("failed").unwrap();
+        }
+        "nested" => {
+            run.context.expect_stages(&["root-finalization"]);
+            for index in 0..8 {
+                let mut child = metrics::Run::start(root.join(format!("nested-{index}.toml")), "nested").unwrap();
+                for _ in 0..2_048 {
+                    child.context.stage("fixture-comparison").unwrap().finish("success").unwrap();
+                }
+                for label in 0..64 {
+                    child.context.stage(&format!("nested-{index}-{label}")).unwrap().finish("success").unwrap();
+                }
+                assert!(child.context.output(&mut Command::new("true"), "owned-control").unwrap().status.success());
+                child.finish("success", None).unwrap();
+            }
+            run.context.stage("root-finalization").unwrap().finish("success").unwrap();
+        }
+        "imported" => {
+            run.context.expect_stages(&["root-finalization"]);
+            for index in 0..4 {
+                let path = root.join(format!("imported-{index}.metrics.toml"));
+                let mut command = Command::new(std::env::current_exe().unwrap());
+                command
+                    .args(["stage_accounting_subprocess", "--exact", "--ignored", "--nocapture"])
+                    .env("SM_METRICS_CONTROL_WORKLOAD", format!("leaf-{index}"));
+                run.context.child_context(&mut command, &path, "imported").unwrap();
+                let output = run.context.output(&mut command, "owned-control").unwrap();
+                assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+                run.context.merge_child(&path).unwrap();
+            }
+            run.context.stage("root-finalization").unwrap().finish("success").unwrap();
+        }
+        leaf if leaf.starts_with("leaf-") => {
+            for _ in 0..5_000 {
+                run.context.stage("repeated-import").unwrap().finish("success").unwrap();
+            }
+            for label in 0..160 {
+                let name = if label < 4 {
+                    ["name", "name:child", "name%3Achild", "name:child:count"][label].to_owned()
+                } else {
+                    format!("{leaf}-label-{label}")
+                };
+                run.context.stage(&name).unwrap().finish("success").unwrap();
+            }
+        }
+        other => panic!("unknown stage control workload {other}"),
+    }
+    run.finish(outcome, None).unwrap();
+}
+
+#[test]
+fn repeated_stages_keep_complete_counts_and_failure_outcomes_with_bounded_traces() {
+    for telemetry in ["disabled", "enabled"] {
+        let root = Run::new();
+        let receipt = stage_workload(&root.0, "repeated", telemetry);
+        let configuration = &receipt.configuration;
+        let summaries = tool_execution::metrics::stage_summaries(&receipt).unwrap();
+        assert_eq!(summaries.len(), 1);
+        assert_eq!(summaries[0].name.as_deref(), Some("fixture-comparison"));
+        assert_eq!(summaries[0].count, 20_000);
+        assert!(summaries[0].summed_elapsed_ns > 0);
+        assert_eq!(summaries[0].summed_elapsed_ns, stage_counter(configuration, "stage-spans-summed-elapsed-ns"));
+        assert_eq!(stage_counter(configuration, "stage-spans-observed"), 20_000);
+        assert_eq!(stage_counter(configuration, "stage-outcome:failed"), 8_000);
+        assert_eq!(stage_counter(configuration, "stage-outcome:incomplete"), 0);
+        for outcome in ["success", "timed-out", "interrupted"] {
+            assert_eq!(stage_counter(configuration, &format!("stage-outcome:{outcome}")), 4_000);
+        }
+        assert_eq!(stage_counter(configuration, "stage-summary:fixture-comparison:outcome:failed"), 8_000);
+        assert!(receipt.stages.iter().all(|stage| stage.outcome != "incomplete"));
+        let limit = if telemetry == "disabled" { 5 } else { 4_096 };
+        assert!(!receipt.stages.is_empty() && receipt.stages.len() <= limit);
+        assert_eq!(stage_counter(configuration, "stage-trace-omitted-events") + receipt.stages.len() as u64, 20_000);
+        assert!(configuration.contains_key("unavailable-stage:not-reached"));
+        assert!(!configuration.contains_key("unavailable-stage:fixture-comparison"));
+        assert!(fs::metadata(root.0.join("stages.metrics.toml")).unwrap().len() < 2_000_000);
+    }
+}
+
+#[test]
+fn unbounded_label_inputs_keep_bounded_attribution_and_explicit_unavailable_totals() {
+    let root = Run::new();
+    let receipt = stage_workload(&root.0, "labels", "disabled");
+    let summaries = tool_execution::metrics::stage_summaries(&receipt).unwrap();
+    let named: Vec<_> = summaries.iter().filter(|summary| summary.name.is_some()).collect();
+    assert!(named.len() <= 128);
+    assert!(named.iter().all(|summary| summary.name.as_ref().unwrap().len() <= 128));
+    for (name, count) in [("name", 3), ("name:child", 5), ("name%3Achild", 7), ("name:child:count", 11)] {
+        assert_eq!(named.iter().find(|summary| summary.name.as_deref() == Some(name)).unwrap().count, count);
+    }
+    assert!(summaries.iter().any(|summary| summary.name.is_none() && summary.count > 0));
+    assert_eq!(summaries.iter().map(|summary| summary.count).sum::<u64>(), 1_227);
+    assert_eq!(
+        summaries.iter().map(|summary| summary.summed_elapsed_ns).sum::<u64>(),
+        stage_counter(&receipt.configuration, "stage-spans-summed-elapsed-ns")
+    );
+    assert!(receipt.stages.len() <= 128);
+    assert!(fs::metadata(root.0.join("stages.metrics.toml")).unwrap().len() < 200_000);
+}
+
+#[test]
+fn nested_and_imported_scopes_cannot_evade_bounds_or_drop_owned_process_records() {
+    for (workload, child_count, span_count) in [("nested", 8, 16_897), ("imported", 4, 20_641)] {
+        let root = Run::new();
+        let receipt = stage_workload(&root.0, workload, "enabled");
+        assert_eq!(receipt.scopes.len(), child_count);
+        assert_eq!(receipt.processes.len(), child_count);
+        assert!(receipt.processes.iter().all(|process| process.reap_count == 1));
+        assert!(receipt.stages.len() <= 4_096);
+        assert!(receipt.stages.iter().any(|stage| stage.name == "root-finalization"));
+        let summaries = tool_execution::metrics::stage_summaries(&receipt).unwrap();
+        let names: std::collections::BTreeSet<_> =
+            summaries.iter().filter_map(|summary| summary.name.as_deref()).collect();
+        assert!(names.len() <= 128);
+        assert_eq!(summaries.iter().map(|summary| summary.count).sum::<u64>(), span_count);
+        assert!(summaries.iter().any(|summary| summary.name.is_none() && summary.count > 0));
+        let configurations =
+            std::iter::once(&receipt.configuration).chain(receipt.scopes.iter().map(|scope| &scope.configuration));
+        let omitted = configurations
+            .map(|configuration| {
+                stage_counter(configuration, "stage-trace-omitted-events")
+                    + stage_counter(configuration, "stage-trace-omitted-on-merge")
+            })
+            .sum::<u64>();
+        assert_eq!(omitted + receipt.stages.len() as u64, span_count);
+        if workload == "imported" {
+            for name in ["name", "name:child", "name%3Achild", "name:child:count"] {
+                assert_eq!(
+                    summaries
+                        .iter()
+                        .filter(|summary| summary.name.as_deref() == Some(name))
+                        .map(|summary| summary.count)
+                        .sum::<u64>(),
+                    4
+                );
+            }
+        }
+    }
 }

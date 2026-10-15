@@ -1,7 +1,9 @@
 //! Generate original-emulator input scripts from validated SNES masks.
-use crate::{atomic_toml, builds, digest};
+use crate::atomic_toml;
+use crate::digest;
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
+use tool_execution::builds;
 #[derive(Serialize, Deserialize)]
 pub struct LsnesRequest {
     pub checkout: Option<PathBuf>,

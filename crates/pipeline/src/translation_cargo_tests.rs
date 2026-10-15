@@ -198,14 +198,14 @@ fn retained_original_cargo_proofs_authenticate_after_cleanup() {
     if environment_path.is_file() {
         let prerequisite =
             prepared(if root.join("prerequisite.json").is_file() { "prerequisite.json" } else { "prepared.json" });
-        let receipt: CargoEnvironmentReceipt = family::object(&environment_path).unwrap();
+        let receipt: CargoEnvironmentReceipt = tool_execution::bounded::object(&environment_path).unwrap();
         authenticate_environment(&prerequisite, &root.join("environment/source"), &receipt).unwrap();
         authenticated += 1;
     }
     for phase in ["candidate", "integrated", "protected-input-refusal"] {
         let receipt_path = root.join(phase).join("cargo-receipt.toml");
         if receipt_path.is_file() {
-            let receipt: CargoReceipt = family::object(&receipt_path).unwrap();
+            let receipt: CargoReceipt = tool_execution::bounded::object(&receipt_path).unwrap();
             authenticate(&prepared("prepared.json"), &root.join(phase).join("source"), &receipt).unwrap();
             authenticated += 1;
         }

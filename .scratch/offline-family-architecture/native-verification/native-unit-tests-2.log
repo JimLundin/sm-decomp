@@ -1,0 +1,132 @@
+warning: unused import: `PathBuf`
+ --> crates/translation-execution/src/compiler_runtime.rs:6:18
+  |
+6 |     path::{Path, PathBuf},
+  |                  ^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `translation-execution` (lib) generated 1 warning (run `cargo fix --lib -p translation-execution` to apply 1 suggestion)
+   Compiling offline-verification v0.1.0 (/home/jim/sm-decomp-offline-native/crates/offline-verification)
+warning: unused imports: `CargoBuildRequest`, `cargo_build`, `exec`, and `execute_timeout`
+  --> crates/offline-verification/src/builds.rs:15:20
+   |
+15 |     CBuildRequest, CargoBuildRequest, ExecutionRecord, c_build, cargo_build, exec, execute, execute_timeout,
+   |                    ^^^^^^^^^^^^^^^^^                            ^^^^^^^^^^^  ^^^^           ^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `Sha256`
+ --> crates/offline-verification/src/callback.rs:5:20
+  |
+5 | use sha2::{Digest, Sha256};
+  |                    ^^^^^^
+
+warning: unused import: `Sha256`
+ --> crates/offline-verification/src/family.rs:6:20
+  |
+6 | use sha2::{Digest, Sha256};
+  |                    ^^^^^^
+
+warning: unused import: `authenticate_inventory`
+  --> crates/offline-verification/src/family.rs:17:32
+   |
+17 | pub(crate) use decomp_source::{authenticate_inventory, c_units, verify_source};
+   |                                ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `append_tar` and `gzip_archive`
+  --> crates/offline-verification/src/bounded_inputs.rs:17:45
+   |
+17 |     pub(crate) use decomp_source::testing::{append_tar, gzip_archive};
+   |                                             ^^^^^^^^^^  ^^^^^^^^^^^^
+
+warning: unused import: `Sha256`
+ --> crates/offline-verification/src/plm_spawn.rs:5:20
+  |
+5 | use sha2::{Digest, Sha256};
+  |                    ^^^^^^
+
+warning: unused imports: `FixtureCommand` and `compiler_files`
+  --> crates/offline-verification/src/recipe.rs:18:22
+   |
+18 |     CompilerCommand, FixtureCommand, FixtureKind, FixtureSelection, c_compiler_command, compiler_files,
+   |                      ^^^^^^^^^^^^^^                                                     ^^^^^^^^^^^^^^
+
+warning: unused import: `Sha256`
+ --> crates/offline-verification/src/ridley_subsystem_adapter.rs:8:20
+  |
+8 | use sha2::{Digest, Sha256};
+  |                    ^^^^^^
+
+warning: unused import: `Digest`
+ --> crates/offline-verification/src/callback.rs:5:12
+  |
+5 | use sha2::{Digest, Sha256};
+  |            ^^^^^^
+
+warning: unused import: `Digest`
+ --> crates/offline-verification/src/family.rs:6:12
+  |
+6 | use sha2::{Digest, Sha256};
+  |            ^^^^^^
+
+warning: unused import: `Digest`
+ --> crates/offline-verification/src/ridley_subsystem_adapter.rs:8:12
+  |
+8 | use sha2::{Digest, Sha256};
+  |            ^^^^^^
+
+warning: unused import: `Digest`
+ --> crates/offline-verification/src/plm_spawn.rs:5:12
+  |
+5 | use sha2::{Digest, Sha256};
+  |            ^^^^^^
+
+warning: method `fixture` is never used
+   --> crates/offline-verification/src/builds.rs:247:19
+    |
+182 | impl StrictExecution {
+    | -------------------- method in this implementation
+...
+247 |     pub(crate) fn fixture(&self, command: &[String], directory: &Path, subject: &str) -> Result<ExecutionRecord> {
+    |                   ^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `field` is never used
+  --> crates/offline-verification/src/family.rs:33:15
+   |
+33 | pub(crate) fn field<'a>(value: &'a Value, key: &str) -> Result<&'a str> {
+   |               ^^^^^
+
+warning: function `array` is never used
+  --> crates/offline-verification/src/family.rs:36:15
+   |
+36 | pub(crate) fn array<'a>(value: &'a Value, key: &str) -> Result<&'a Vec<Value>> {
+   |               ^^^^^
+
+warning: function `authenticate_with_source_until` is never used
+   --> crates/offline-verification/src/family.rs:820:15
+    |
+820 | pub(crate) fn authenticate_with_source_until(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `offline-verification` (lib test) generated 16 warnings (run `cargo fix --lib -p offline-verification --tests` to apply 8 suggestions)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 13.29s
+     Running unittests src/lib.rs (out/native-target/debug/build/offline-verification/05f1004e5228f486/out/offline_verification-05f1004e5228f486)
+
+running 11 tests
+test native::tests::coverage_rejects_empty_duplicate_and_incomplete_registered_domain ... ok
+test native::tests::declared_tree_budget_rejects_inflated_extent_and_coverage ... ok
+test native::tests::discovered_captured_ridley_keeps_its_original_callback_recipe ... ok
+test native::tests::discovered_recipe_rejects_a_declaration_from_an_alias_path ... ok
+test native::tests::expired_outer_deadline_refuses_before_accessing_or_creating_any_source ... ok
+test native::tests::expired_saved_failure_replays_authentication_without_runtime_or_dispatch ... ok
+test native::tests::frozen_shared_host_contracts_preserve_both_original_matrices ... ok
+test native::tests::native_receipt_retention_rejects_changed_incomplete_or_redirected_attribution ... ok
+test native::tests::native_receipt_storage_preserves_large_operation_sets_within_controller_record_bound ... ok
+test native::tests::registered_catalog_alias_preserves_declared_family_and_coverage ... ok
+test native::tests::scope_candidate_dependencies_are_mutable_and_bound_to_receipt_identity ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 29 filtered out; finished in 17.96s
+

@@ -1,10 +1,9 @@
 //! One command freezes an approved ordered plan and drives installed supervisors.
 //! An interruption resumes the same scope and request. Only explicit repair can
 //! authorize a fresh model exchange; plan preparation has no model operation.
-use crate::{
-    emit, inputs,
-    translation_execution::{self as execution, Installation},
-};
+use crate::emit;
+use crate::translation_execution as execution;
+use crate::translation_execution::Installation;
 use ::translation_execution::{
     model::{State, View, digest_valid, sealed, sha256},
     retention::{self, Reference},
@@ -78,15 +77,15 @@ fn name(value: &str) -> bool {
 
 fn read<T: for<'a> Deserialize<'a>>(path: &Path) -> Result<T> {
     ensure!(path.is_absolute(), "launch configuration path must be absolute");
-    serde_json::from_slice(&inputs::bounded::read(path)?).context("invalid launch JSON")
+    serde_json::from_slice(&tool_execution::bounded::read(path)?).context("invalid launch JSON")
 }
 
 fn immutable<T: Serialize>(path: &Path, value: &T) -> Result<()> {
     let bytes = serde_json::to_vec(value)?;
     ensure!(bytes.len() as u64 <= MAX_RECORD, "launch record extent exceeded");
-    inputs::bounded::safe(path)?;
+    tool_execution::bounded::safe(path)?;
     fs::create_dir_all(path.parent().context("launch record parent missing")?)?;
-    inputs::immutable_bytes(path, &bytes)
+    tool_execution::bounded::immutable_bytes(path, &bytes)
 }
 
 impl Plan {
@@ -98,7 +97,7 @@ impl Plan {
                 && self.scopes.len() <= 32,
             "unsupported or empty ordered launch plan"
         );
-        inputs::bounded::safe(&self.state_root)?;
+        tool_execution::bounded::safe(&self.state_root)?;
         ensure!(
             self.state_root.is_absolute() && !path.starts_with(&self.state_root),
             "launch state overlaps its plan input"
@@ -157,7 +156,7 @@ impl Plan {
 }
 
 fn lease(path: &Path) -> Result<File> {
-    inputs::bounded::safe(path)?;
+    tool_execution::bounded::safe(path)?;
     fs::create_dir_all(path)?;
     let metadata = path.symlink_metadata()?;
     ensure!(
@@ -165,7 +164,7 @@ fn lease(path: &Path) -> Result<File> {
         "launch state is foreign or writable by others"
     );
     let lock = path.join("lock");
-    inputs::bounded::safe(&lock)?;
+    tool_execution::bounded::safe(&lock)?;
     let file = OpenOptions::new()
         .append(true)
         .create(true)

@@ -1,8 +1,7 @@
+use crate::digest;
 use crate::readiness_metadata::toml_from_slice;
-use crate::{
-    digest, family,
-    readiness_run::{Run, identity},
-};
+use crate::readiness_run::Run;
+use crate::readiness_run::identity;
 use anyhow::{Context, Result, ensure};
 use sha2::{Digest, Sha256};
 use std::{
@@ -18,7 +17,7 @@ fn document(path: &Path) -> Result<Value> {
 }
 pub(crate) fn movie_inputs(run: &mut Run, entry: &Value) -> Result<Value> {
     let rom = run.root.join("rom/sm.sfc");
-    let movie = run.root.join("movies").join(family::field(entry, "file")?);
+    let movie = run.root.join("movies").join(crate::documents::field(entry, "file")?);
     let rom_hash = run.guard(&rom).context("missing ROM: place verified unheadered Japan/USA ROM at rom/sm.sfc")?;
     ensure!(
         entry["rom_sha256"] == crate::readiness_metadata::value(&rom_hash).expect("validated native metadata"),
@@ -181,9 +180,9 @@ pub(crate) fn hardware(run: &mut Run) -> Result<Value> {
         .iter()
         .find(|v| v["name"] == crate::readiness_metadata::value(&"rustysnes").expect("validated native metadata"))
         .context("hardware dependency pin missing")?;
-    let archive = run.root.join("deps/downloads").join(family::field(pin, "archive")?);
+    let archive = run.root.join("deps/downloads").join(crate::documents::field(pin, "archive")?);
     ensure!(
-        run.guard(&archive)? == family::field(pin, "sha256")?,
+        run.guard(&archive)? == crate::documents::field(pin, "sha256")?,
         "pinned hardware download missing or invalid: run just setup"
     );
     let temporary = run.path.join("generated/hardware-origin");
@@ -245,7 +244,8 @@ pub(crate) fn hardware(run: &mut Run) -> Result<Value> {
             run.guard(&record)?;
             for entry in document(&record)?.get("files").and_then(Value::as_array).context("patch records missing")? {
                 ensure!(
-                    digest(&temporary.join(family::field(entry, "path")?))? == family::field(entry, "patched_sha256")?,
+                    digest(&temporary.join(crate::documents::field(entry, "path")?))?
+                        == crate::documents::field(entry, "patched_sha256")?,
                     "reconstructed patch differs from declared output"
                 );
             }
@@ -281,7 +281,7 @@ pub(crate) fn hardware(run: &mut Run) -> Result<Value> {
     }
     let cargo = fs::read_to_string(run.root.join("Cargo.toml"))?;
     ensure!(
-        cargo.contains(family::field(pin, "revision")?) && cargo.contains("features = [\"lsnes-profile\"]"),
+        cargo.contains(crate::documents::field(pin, "revision")?) && cargo.contains("features = [\"lsnes-profile\"]"),
         "workspace hardware profile selection differs"
     );
     let record = crate :: report ! ({ "revision" : pin ["revision"] , "archive_sha256" : pin ["sha256"] , "source_sha256" : identity (& actual) ? , "files" : actual , "patches" : patches , "features" : crate :: report ! (vec ! ["std" , "lsnes-profile" , "clocked-smp" , "clocked-dma" , "clocked-interrupts"]) , });
@@ -358,7 +358,7 @@ pub(crate) fn verify_existing(run: &mut Run) -> Result<Vec<String>> {
         &BTreeMap::new(),
     )?;
     if compiler["status"] == crate::readiness_metadata::value(&"pass").expect("validated native metadata") {
-        run . manifest . identities . insert ("compiler" . into () , crate :: report ! ({ "version" : fs :: read_to_string (run . path . join (family :: field (& compiler , "stdout") ?)) ? . trim () , })) ;
+        run . manifest . identities . insert ("compiler" . into () , crate :: report ! ({ "version" : fs :: read_to_string (run . path . join (crate::documents::field (& compiler , "stdout") ?)) ? . trim () , })) ;
     } else {
         failures.push("Install the pinned Rust toolchain; inspect compiler logs".into());
     }
@@ -404,8 +404,8 @@ pub(crate) fn authenticate(owner: &Path, manifest: &Value) -> Result<()> {
         );
     }
     ensure!(
-        digest(&crate::readiness_run::safe_artifact(owner, family::field(inputs, "input_evidence")?)?)?
-            == family::field(inputs, "input_sha256")?,
+        digest(&crate::readiness_run::safe_artifact(owner, crate::documents::field(inputs, "input_evidence")?)?)?
+            == crate::documents::field(inputs, "input_sha256")?,
         "canonical inputs changed"
     );
     let dependencies = document(&source.join("tools/dependencies.toml"))?;
@@ -420,7 +420,7 @@ pub(crate) fn authenticate(owner: &Path, manifest: &Value) -> Result<()> {
     ensure!(
         hardware["revision"] == pin["revision"]
             && hardware["archive_sha256"] == pin["sha256"]
-            && identity(&hardware["files"])? == family::field(hardware, "source_sha256")?,
+            && identity(&hardware["files"])? == crate::documents::field(hardware, "source_sha256")?,
         "hardware pin/source inventory differs"
     );
     let expected = [
@@ -433,20 +433,23 @@ pub(crate) fn authenticate(owner: &Path, manifest: &Value) -> Result<()> {
         "rustysnes-readiness-checkpoints",
     ]
     .map(|name| format!("tools/patches/{name}.patch"));
-    let patches = family::array(hardware, "patches")?;
+    let patches = crate::documents::array(hardware, "patches")?;
     ensure!(patches.len() == expected.len(), "hardware patch recipe incomplete");
     for (patch, path) in patches.iter().zip(expected) {
         ensure!(
             patch["path"] == crate::readiness_metadata::value(&path).expect("validated native metadata")
-                && digest(&crate::readiness_run::safe_artifact(&source, &path)?)? == family::field(patch, "sha256")?,
+                && digest(&crate::readiness_run::safe_artifact(&source, &path)?)?
+                    == crate::documents::field(patch, "sha256")?,
             "hardware patch recipe differs"
         );
     }
     let root = owner.parent().and_then(|p| p.parent()).and_then(|p| p.parent()).context("checkout owner missing")?;
-    for entry in family::array(hardware, "files")? {
+    for entry in crate::documents::array(hardware, "files")? {
         ensure!(
-            digest(&crate::readiness_run::safe_artifact(&root.join("deps/rustysnes"), family::field(entry, "path")?)?)?
-                == family::field(entry, "sha256")?,
+            digest(&crate::readiness_run::safe_artifact(
+                &root.join("deps/rustysnes"),
+                crate::documents::field(entry, "path")?
+            )?)? == crate::documents::field(entry, "sha256")?,
             "current patched hardware differs"
         );
     }

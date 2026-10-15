@@ -18,6 +18,28 @@ in the individual family manifests. The partial power-bomb entry is excluded
 from live installation. A passing replay remains C/Rust integration evidence,
 not original-ROM parity or full gameplay ownership.
 
+Use the optimized Cargo `verification` profile for repeated Offline batches:
+
+```sh
+cargo run --profile verification -p pipeline --locked --offline --bin sm-pipeline -- batch verify --profile offline-all --jobs 2 --case-jobs 4
+```
+
+The first `--profile` selects the controller's build configuration; the second
+selects the complete Offline catalog domain. Tool compilation happens once per
+source change and is separate from verification time. The `verification` profile
+also applies to the separate sandbox and dependencies, keeps line tables in debug
+companions, and emits tools under `target/verification/`. Build a matched pair with:
+
+```sh
+cargo build --profile verification --locked --offline -p pipeline -p translation-execution --bin sm-pipeline --bin sm-translation-sandbox
+```
+
+Managed Translation execution uses the exact tools in its sealed Installation;
+see [the production command](TRANSLATION_EXECUTION.md#production-command) for its
+installed launcher and ownership. A local Cargo build does not change that
+installation. Retain debug companions beside copied tools when retaining a build
+for diagnosis.
+
 Batch records and complete per-job stdout/stderr live under ignored
 `out/port/batches/`. The first verification creates a batch; later commands use
 the latest batch. Interrupted or failed work can be resumed by repeating the
@@ -30,9 +52,9 @@ One command owns each batch record; distinct batch records and worktrees can run
 concurrently. Long jobs print progress every 30 seconds, with full output kept
 in their log directories.
 
-`sm-pipeline` in `crates/pipeline` owns process leases, authenticated build reuse,
-compiler dependency inventories, C translation-unit builds and native family
-admission. Worktrees
+`sm-pipeline` composes the batch. `offline-verification` owns captured inputs,
+complete family execution and admission; `tool-execution` owns shared process
+leases and authenticated compiler preparation/artifacts. Worktrees
 share a budget and cache under the main checkout's `out/pipeline` (located through
 Git's common directory). `SM_PIPELINE_ROOT` selects another shared directory;
 `SM_PIPELINE_WORKERS` sets its capacity, defaulting to four or the machine's CPU
@@ -47,6 +69,22 @@ Rust admission always runs before C. Packed live subjects capture to private
 stores concurrently, then import authenticated observations into the shared
 store after the comparison gates pass. `sm-pipeline live-verify --retain-private-stores`
 keeps those stores for diagnostics. Native capture uses packed binary records.
+
+An ordinary batch captures one catalog/input context and shares declaration
+decoding and compatible compiler preparation across its families. One ready-work
+executor serves the admitted family window; waiting chains consume no producer
+slot. Helper residency is bounded by the shared worker count, with at most one
+Rust and one C helper per executor. A failed comparison or completion publication
+stops new admission and settles work already admitted. Canonical case order and
+complete comparison requirements are unchanged. Native waves and Original family
+ordering retain their existing reservations and execution order.
+
+`work-graph.toml` files show advisory progress. Recovery authenticates the original
+requirements, producer operations and verdicts; missing or edited progress files
+cannot grant acceptance or request another producer. Set
+`SM_PIPELINE_METRICS=enabled` to retain detailed preparation, build, execution and
+admission timing. Compare complete wall time separately because those phases can
+overlap.
 
 The cache seals compiler identity/options/environment and source contents. It
 checks artifact bytes on every hit and rechecks inputs before publication under
@@ -94,6 +132,11 @@ Selection explains changed inputs and uncertainty, including current Rust module
 discovery, untracked files and captured assets. It grants no evidence reuse or
 Live admission. Verification still authenticates current source; skipped historical
 records remain in the batch. The receipt's `selected` list names invocation work.
+Rust dependency facts are syntax-aware: words in documentation comments do not
+create input edges. Unresolved macros, generated inputs and external inputs with
+insufficient history keep a family affected. A smaller selected set therefore
+requires complete dependency evidence; a requested fresh domain still executes
+all of its declared Fixture pairs.
 For exclusive claims, translation research/promotion and isolated implementation
 worktrees, follow [subagent assignments](agents/assignments.md).
 

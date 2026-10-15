@@ -1,9 +1,9 @@
-use crate::{
-    digest, family,
-    iteration_diagnosis::{self, Request},
-    iteration_session, readiness_origins as origins,
-    readiness_run::Run,
-};
+use crate::digest;
+use crate::iteration_diagnosis;
+use crate::iteration_diagnosis::Request;
+use crate::iteration_session;
+use crate::readiness_origins as origins;
+use crate::readiness_run::Run;
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -115,7 +115,7 @@ pub(crate) fn operate(root: &Path, timeout: u64) -> Result<Value> {
     eprintln!("Run: {}", run.path.display());
     let result = (|| -> Result<()> {
         run.capture_source()?;
-        let source = family::field(&run.manifest.identities["source"], "sha256")?.to_owned();
+        let source = crate::documents::field(&run.manifest.identities["source"], "sha256")?.to_owned();
         iteration_session::policy(&run.path.join("diagnostics/policy"))?;
         let private = run.path.join("diagnostics/lineage");
         fs::create_dir(&private)?;

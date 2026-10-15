@@ -1,0 +1,283 @@
+   Compiling libc v0.2.190
+   Compiling jobserver v0.1.35
+   Compiling cc v1.6.0
+   Compiling ring v0.17.14
+    Checking toml_edit v0.22.27
+   Compiling crc32fast v1.5.2
+    Checking toml v0.8.23
+    Checking simd-adler32 v0.3.10
+   Compiling pkg-config v0.3.34
+   Compiling zstd-sys v2.1.0+zstd.1.5.7
+   Compiling rustls v0.23.45
+    Checking rustls-webpki v0.103.15
+    Checking miniz_oxide v0.9.1
+    Checking pipeline-model v0.1.0 (/home/jim/sm-decomp-offline-native/crates/pipeline-model)
+    Checking flate2 v1.1.10
+    Checking tokio-rustls v0.26.6
+   Compiling zstd-safe v7.3.0
+   Compiling thiserror v2.0.21
+    Checking hyper-rustls v0.27.10
+    Checking tool-execution v0.1.0 (/home/jim/sm-decomp-offline-native/crates/tool-execution)
+   Compiling thiserror-impl v2.0.21
+    Checking bumpalo v3.20.3
+   Compiling zip v2.4.2
+    Checking reqwest v0.12.12
+    Checking zopfli v0.8.3
+    Checking zstd v0.13.3
+    Checking translation-execution v0.1.0 (/home/jim/sm-decomp-offline-native/crates/translation-execution)
+warning: unused import: `PathBuf`
+ --> crates/translation-execution/src/compiler_runtime.rs:6:18
+  |
+6 |     path::{Path, PathBuf},
+  |                  ^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `translation-execution` (lib) generated 1 warning (run `cargo fix --lib -p translation-execution` to apply 1 suggestion)
+    Checking decomp-source v0.1.0 (/home/jim/sm-decomp-offline-native/crates/decomp-source)
+    Checking offline-verification v0.1.0 (/home/jim/sm-decomp-offline-native/crates/offline-verification)
+warning: unused imports: `CargoBuildRequest`, `cargo_build`, `exec`, and `execute_timeout`
+  --> crates/offline-verification/src/builds.rs:15:20
+   |
+15 |     CBuildRequest, CargoBuildRequest, ExecutionRecord, c_build, cargo_build, exec, execute, execute_timeout,
+   |                    ^^^^^^^^^^^^^^^^^                            ^^^^^^^^^^^  ^^^^           ^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `self`
+  --> crates/offline-verification/src/builds.rs:19:19
+   |
+19 |     confinement::{self, Program, ReadOnlyBind, RunLimits},
+   |                   ^^^^
+
+warning: unused import: `Sha256`
+ --> crates/offline-verification/src/callback.rs:5:20
+  |
+5 | use sha2::{Digest, Sha256};
+  |                    ^^^^^^
+
+warning: unused import: `Sha256`
+ --> crates/offline-verification/src/family.rs:6:20
+  |
+6 | use sha2::{Digest, Sha256};
+  |                    ^^^^^^
+
+warning: unused import: `authenticate_inventory`
+  --> crates/offline-verification/src/family.rs:17:32
+   |
+17 | pub(crate) use decomp_source::{authenticate_inventory, c_units, verify_source};
+   |                                ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Sha256`
+ --> crates/offline-verification/src/plm_spawn.rs:5:20
+  |
+5 | use sha2::{Digest, Sha256};
+  |                    ^^^^^^
+
+warning: unused imports: `FixtureCommand` and `compiler_files`
+  --> crates/offline-verification/src/recipe.rs:18:22
+   |
+18 |     CompilerCommand, FixtureCommand, FixtureKind, FixtureSelection, c_compiler_command, compiler_files,
+   |                      ^^^^^^^^^^^^^^                                                     ^^^^^^^^^^^^^^
+
+warning: unused import: `Sha256`
+ --> crates/offline-verification/src/ridley_subsystem_adapter.rs:8:20
+  |
+8 | use sha2::{Digest, Sha256};
+  |                    ^^^^^^
+
+warning: unused import: `Digest`
+ --> crates/offline-verification/src/callback.rs:5:12
+  |
+5 | use sha2::{Digest, Sha256};
+  |            ^^^^^^
+
+warning: unused import: `Digest`
+ --> crates/offline-verification/src/family.rs:6:12
+  |
+6 | use sha2::{Digest, Sha256};
+  |            ^^^^^^
+
+warning: unused import: `Digest`
+ --> crates/offline-verification/src/plm_spawn.rs:5:12
+  |
+5 | use sha2::{Digest, Sha256};
+  |            ^^^^^^
+
+warning: unused import: `Digest`
+ --> crates/offline-verification/src/ridley_subsystem_adapter.rs:8:12
+  |
+8 | use sha2::{Digest, Sha256};
+  |            ^^^^^^
+
+warning: method `fixture` is never used
+   --> crates/offline-verification/src/builds.rs:247:19
+    |
+182 | impl StrictExecution {
+    | -------------------- method in this implementation
+...
+247 |     pub(crate) fn fixture(&self, command: &[String], directory: &Path, subject: &str) -> Result<ExecutionRecord> {
+    |                   ^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `field` is never used
+  --> crates/offline-verification/src/family.rs:33:15
+   |
+33 | pub(crate) fn field<'a>(value: &'a Value, key: &str) -> Result<&'a str> {
+   |               ^^^^^
+
+warning: function `array` is never used
+  --> crates/offline-verification/src/family.rs:36:15
+   |
+36 | pub(crate) fn array<'a>(value: &'a Value, key: &str) -> Result<&'a Vec<Value>> {
+   |               ^^^^^
+
+warning: function `prepare_case` is never used
+   --> crates/offline-verification/src/family.rs:110:15
+    |
+110 | pub(crate) fn prepare_case(case: &Case, directory: &Path, arg_types: &[String]) -> Result<()> {
+    |               ^^^^^^^^^^^^
+
+warning: function `authenticate_with_source_until` is never used
+   --> crates/offline-verification/src/family.rs:820:15
+    |
+820 | pub(crate) fn authenticate_with_source_until(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `canonical_sources_until` is never used
+   --> crates/offline-verification/src/inputs.rs:151:15
+    |
+151 | pub(crate) fn canonical_sources_until(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `manifest` is never used
+   --> crates/offline-verification/src/recipe.rs:234:15
+    |
+234 | pub(crate) fn manifest(checkout: &Path, path: &Path, recipe: Option<&Recipe>) -> Result<Manifest> {
+    |               ^^^^^^^^
+
+warning: `offline-verification` (lib) generated 19 warnings (run `cargo fix --lib -p offline-verification` to apply 8 suggestions)
+    Checking movie v0.1.0 (/home/jim/sm-decomp-offline-native/crates/movie)
+    Checking evidence v0.1.0 (/home/jim/sm-decomp-offline-native/crates/evidence)
+    Checking pipeline v0.1.0 (/home/jim/sm-decomp-offline-native/crates/pipeline)
+error: couldn't read `crates/pipeline/src/../../../deps/snesrev-sm/src/sm_a0.c`: No such file or directory (os error 2)
+    --> crates/pipeline/src/ridley_subsystem_inventory.rs:1048:32
+     |
+1048 |             ("sm_a0.c".into(), include_str!("../../../deps/snesrev-sm/src/sm_a0.c").into()),
+     |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: couldn't read `crates/pipeline/src/../../../deps/snesrev-sm/src/sm_a6.c`: No such file or directory (os error 2)
+    --> crates/pipeline/src/ridley_subsystem_inventory.rs:1049:32
+     |
+1049 |             ("sm_a6.c".into(), include_str!("../../../deps/snesrev-sm/src/sm_a6.c").into()),
+     |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: couldn't read `crates/pipeline/src/../../../deps/snesrev-sm/src/sm_86.c`: No such file or directory (os error 2)
+    --> crates/pipeline/src/ridley_subsystem_inventory.rs:1050:32
+     |
+1050 |             ("sm_86.c".into(), include_str!("../../../deps/snesrev-sm/src/sm_86.c").into()),
+     |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: couldn't read `crates/pipeline/src/../../../deps/snesrev-sm/src/sm_80.c`: No such file or directory (os error 2)
+    --> crates/pipeline/src/ridley_subsystem_inventory.rs:1051:32
+     |
+1051 |             ("sm_80.c".into(), include_str!("../../../deps/snesrev-sm/src/sm_80.c").into()),
+     |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: couldn't read `crates/pipeline/src/../../../deps/snesrev-sm/src/sm_90.c`: No such file or directory (os error 2)
+    --> crates/pipeline/src/ridley_subsystem_inventory.rs:1052:32
+     |
+1052 |             ("sm_90.c".into(), include_str!("../../../deps/snesrev-sm/src/sm_90.c").into()),
+     |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: couldn't read `crates/pipeline/src/../../../deps/snesrev-sm/src/snes/snes.c`: No such file or directory (os error 2)
+    --> crates/pipeline/src/ridley_subsystem_inventory.rs:1053:36
+     |
+1053 |             ("snes/snes.c".into(), include_str!("../../../deps/snesrev-sm/src/snes/snes.c").into()),
+     |                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0433]: cannot find type `CatalogEntry` in this scope
+   --> crates/pipeline/src/batch.rs:475:49
+    |
+475 |             config.families.insert(name.into(), CatalogEntry::Kind(kind.into()));
+    |                                                 ^^^^^^^^^^^^ use of undeclared type `CatalogEntry`
+    |
+help: consider importing this enum
+    |
+420 +     use offline_verification::catalog::CatalogEntry;
+    |
+
+error[E0433]: cannot find type `CatalogEntry` in this scope
+   --> crates/pipeline/src/batch.rs:479:13
+    |
+479 |             CatalogEntry::Details(FamilyEntry {
+    |             ^^^^^^^^^^^^ use of undeclared type `CatalogEntry`
+    |
+help: consider importing this enum
+    |
+420 +     use offline_verification::catalog::CatalogEntry;
+    |
+
+error[E0422]: cannot find struct, variant or union type `FamilyEntry` in this scope
+   --> crates/pipeline/src/batch.rs:479:35
+    |
+479 |             CatalogEntry::Details(FamilyEntry {
+    |                                   ^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+420 +     use offline_verification::catalog::FamilyEntry;
+    |
+
+error[E0599]: no method named `contract` found for struct `PreparedOriginal` in the current scope
+    --> crates/pipeline/src/translation_migration.rs:1826:49
+     |
+1826 |                         && sealed(gate.prepared.contract())? == sealed(original)?
+     |                                                 ^^^^^^^^-- help: remove the arguments
+     |                                                 |
+     |                                                 field, not a method
+     |
+    ::: crates/pipeline/src/translation_original.rs:89:1
+     |
+  89 | pub(crate) struct PreparedOriginal {
+     | ---------------------------------- method `contract` not found for this struct
+
+error[E0599]: no method named `dependencies_sha256` found for struct `PreparedOriginal` in the current scope
+    --> crates/pipeline/src/translation_migration.rs:1827:42
+     |
+1827 |                         && gate.prepared.dependencies_sha256() == installed.policy.dependencies_sha256
+     |                                          ^^^^^^^^^^^^^^^^^^^-- help: remove the arguments
+     |                                          |
+     |                                          field, not a method
+     |
+    ::: crates/pipeline/src/translation_original.rs:89:1
+     |
+  89 | pub(crate) struct PreparedOriginal {
+     | ---------------------------------- method `dependencies_sha256` not found for this struct
+
+error[E0599]: no method named `verification_sha256` found for struct `PreparedOriginal` in the current scope
+    --> crates/pipeline/src/translation_migration.rs:1828:42
+     |
+1828 |                         && gate.prepared.verification_sha256() == installed.policy.verification_sha256,
+     |                                          ^^^^^^^^^^^^^^^^^^^-- help: remove the arguments
+     |                                          |
+     |                                          field, not a method
+     |
+    ::: crates/pipeline/src/translation_original.rs:89:1
+     |
+  89 | pub(crate) struct PreparedOriginal {
+     | ---------------------------------- method `verification_sha256` not found for this struct
+
+warning: unused variable: `manifest`
+   --> crates/pipeline/src/translation_native_tests.rs:543:9
+    |
+543 |     let manifest = fixtures::read(&current.join(manifest_path))?;
+    |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_manifest`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+Some errors have detailed explanations: E0422, E0433, E0599.
+For more information about an error, try `rustc --explain E0422`.
+warning: `pipeline` (bin "sm-pipeline" test) generated 1 warning
+error: could not compile `pipeline` (bin "sm-pipeline" test) due to 12 previous errors; 1 warning emitted

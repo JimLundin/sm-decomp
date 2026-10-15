@@ -79,26 +79,40 @@ struct StageSummary {
     stage: String,
     count: usize,
     summed_elapsed_ns: u64,
-    union_elapsed_ns: u64,
+    union_elapsed_ns: Option<u64>,
+    union_unavailable_reason: Option<String>,
     semantics: String,
 }
-fn attribute(receipt: &Receipt) -> Vec<StageSummary> {
+fn attribute(receipt: &Receipt) -> Result<Vec<StageSummary>> {
     let roles = std::iter::once((receipt.scope_id.clone(), receipt.role.clone()))
         .chain(receipt.scopes.iter().map(|s| (s.id.clone(), s.role.clone())))
         .collect::<BTreeMap<_, _>>();
-    let mut groups: BTreeMap<(String, String), Vec<(u64, u64)>> = BTreeMap::new();
-    for stage in &receipt.stages {
-        let role = stage.parent.as_ref().and_then(|p| roles.get(p)).cloned().unwrap_or_else(|| "unknown".into());
-        groups.entry((role, stage.name.clone())).or_default().push((stage.start_ns, stage.end_ns));
+    let mut groups: BTreeMap<(String, Option<String>), (u64, u64)> = BTreeMap::new();
+    for summary in tool_execution::metrics::stage_summaries(receipt)? {
+        let totals = groups.entry((summary.role, summary.name)).or_default();
+        totals.0 = totals.0.checked_add(summary.count).context("stage count overflow")?;
+        totals.1 = totals.1.checked_add(summary.summed_elapsed_ns).context("stage duration overflow")?;
     }
-    groups.into_iter().map(|((role,stage),mut spans)| {
-        spans.sort_unstable();
-        let summed_elapsed_ns=spans.iter().map(|(start,end)|end-start).sum();
-        let mut union_elapsed_ns=0;
-        let mut end=0;
-        for (start,next) in &spans {union_elapsed_ns+=next.saturating_sub(end.max(*start));end=end.max(*next);}
-        StageSummary{role,stage,count:spans.len(),summed_elapsed_ns,union_elapsed_ns,
-            semantics:"union removes overlap within this role/stage group; other groups can overlap/nest; neither sums nor unions across groups equal total wall or removable critical-path share".into()}
+    groups.into_iter().map(|((role, name), (count, summed_elapsed_ns))| {
+        let count = usize::try_from(count)?;
+        let mut spans = receipt.stages.iter().filter(|stage| {
+            name.as_deref() == Some(stage.name.as_str())
+                && stage.parent.as_ref().and_then(|parent| roles.get(parent)) == Some(&role)
+        }).map(|stage| (stage.start_ns, stage.end_ns)).collect::<Vec<_>>();
+        let complete = name.is_some() && count == spans.len();
+        let union_elapsed_ns = complete.then(|| {
+            spans.sort_unstable();
+            let mut union = 0;
+            let mut end = 0;
+            for (start, next) in &spans { union += next.saturating_sub(end.max(*start)); end = end.max(*next); }
+            union
+        });
+        Ok(StageSummary {
+            role, stage: name.unwrap_or_else(|| "unavailable-stage-labels".into()), count, summed_elapsed_ns,
+            union_elapsed_ns,
+            union_unavailable_reason: (!complete).then(|| "individual spans or labels omitted by bounded telemetry; summed duration cannot establish a wall-time union".into()),
+            semantics: "counts and summed durations cover all observed spans; a union is reported only for a complete trace; other groups can overlap/nest; neither sums nor unions across groups equal total wall or removable critical-path share".into(),
+        })
     }).collect()
 }
 #[derive(Serialize)]
@@ -120,7 +134,7 @@ struct Summary {
 }
 
 pub fn command(args: &[String]) -> Result<()> {
-    let _detailed = crate::metrics::detailed();
+    let _detailed = tool_execution::metrics::detailed();
     ensure!(args.len() == 2, "usage: benchmark prepare|freeze|validate|run CONFIG.toml");
     let path = Path::new(&args[1]);
     let mut config: Config = pipeline_model::read(path)?;
@@ -159,7 +173,8 @@ fn prepare(config: &mut Config, path: &Path) -> Result<()> {
     ensure!(!root.join("build-cache").exists(), "prepare requires a fresh capacity root cache");
     let mut host = host::Monitor::start(&seeds.join("host.toml"))?;
     host.preflight()?;
-    let mut metrics = crate::metrics::Run::start(seeds.join("pipeline.metrics.toml"), "benchmark-seed-preparation")?;
+    let mut metrics =
+        tool_execution::metrics::Run::start(seeds.join("pipeline.metrics.toml"), "benchmark-seed-preparation")?;
     fs::create_dir(seeds.join("live"))?;
     metrics.context.add_live_output(seeds.join("live"));
     metrics.context.sample_disk();
@@ -192,7 +207,7 @@ fn prepare(config: &mut Config, path: &Path) -> Result<()> {
             }
         }
     }
-    metrics.finish(crate::metrics::outcome(error.as_deref()), error)?;
+    metrics.finish(tool_execution::metrics::outcome(error.as_deref()), error)?;
     host.finish()?;
     for deduplicate in [false, true] {
         let cleanup = crate::cleanup::cleanup(crate::cleanup::CleanupRequest {
@@ -220,7 +235,7 @@ fn prepare(config: &mut Config, path: &Path) -> Result<()> {
         keys.insert(verdict.decompressor_cache.context("decompressor cache receipt missing")?.key);
         #[derive(Deserialize)]
         struct CCache {
-            objects: Vec<crate::CacheResult>,
+            objects: Vec<tool_execution::build_cache::CacheResult>,
         }
         let c: CCache = pipeline_model::read(&verdict.run.join("c-cache.toml"))?;
         keys.extend(c.objects.into_iter().map(|c| c.key));
@@ -311,7 +326,7 @@ fn freeze(config: &mut Config) -> Result<()> {
         paths.extend([verdict.clone(), verdict.parent().context("seed parent missing")?.join("sm-evidence")]);
         let admitted: crate::live_model::Verdict = pipeline_model::read(verdict)?;
         for relative in admitted.rust_dependencies.keys() {
-            paths.push(crate::family::source_path(checkout, relative));
+            paths.push(crate::documents::resolve(checkout, relative));
         }
         if let Some(source) = admitted.source {
             paths.extend(source.files.keys().map(|relative| checkout.join("deps/snesrev-sm").join(relative)));
@@ -409,7 +424,7 @@ fn validate(config: &Config) -> Result<()> {
     for entry in fs::read_dir(&config.cache_seed)? {
         let entry = entry?.path();
         ensure!(entry.is_dir(), "cache seed must contain entry directories");
-        let seal: crate::CacheSeal = pipeline_model::read(&entry.join("seal.toml"))?;
+        let seal: tool_execution::build_cache::CacheSeal = pipeline_model::read(&entry.join("seal.toml"))?;
         ensure!(
             seal.inputs.version == 4 && crate::digest(&entry.join("artifact"))? == seal.sha256,
             "cache seed seal differs"
@@ -467,7 +482,7 @@ fn authenticate_seeds(config: &Config) -> Result<()> {
         );
         for (relative, hash) in &verdict.rust_dependencies {
             ensure!(
-                crate::digest(&crate::family::source_path(&config.request.checkout, relative))? == *hash,
+                crate::digest(&crate::documents::resolve(&config.request.checkout, relative))? == *hash,
                 "seed current-source closure differs: {relative}"
             );
         }
@@ -513,7 +528,7 @@ fn value(measurement: &Measurement, name: &str) -> Result<u64> {
         Measurement::Unavailable { reason } => bail!("required {name} unavailable: {reason}"),
     }
 }
-fn budgets(config: &Config, context: &crate::metrics::Context) -> Result<()> {
+fn budgets(config: &Config, context: &tool_execution::metrics::Context) -> Result<()> {
     let (resources, complete) = context.budget_resources();
     ensure!(complete, "incomplete resource sampling");
     ensure!(value(&resources.aggregate_sampled_rss_bytes, "RSS")? <= config.max_rss_bytes, "RSS budget exceeded");
@@ -522,7 +537,7 @@ fn budgets(config: &Config, context: &crate::metrics::Context) -> Result<()> {
         ensure!(allocation <= config.max_private_staging_bytes, "staging/private budget exceeded");
     }
     ensure!(
-        crate::resource_sampler::available_bytes(&config.output)? >= config.minimum_free_bytes,
+        tool_execution::resource_sampler::available_bytes(&config.output)? >= config.minimum_free_bytes,
         "free disk reserve breached"
     );
     Ok(())
@@ -530,7 +545,7 @@ fn budgets(config: &Config, context: &crate::metrics::Context) -> Result<()> {
 
 fn invoke<T: Serialize>(
     config: &Config,
-    context: &crate::metrics::Context,
+    context: &tool_execution::metrics::Context,
     host: &mut host::Monitor,
     operation: &str,
     request: &T,
@@ -555,11 +570,11 @@ fn invoke<T: Serialize>(
     } else {
         command.env_remove("SM_PIPELINE_METRICS_CONTEXT");
     }
-    let mut child = crate::metrics::OwnedChild::spawn(&mut command, context, operation)?;
+    let mut child = tool_execution::metrics::OwnedChild::spawn(&mut command, context, operation)?;
     child.take_stdin().context("child stdin missing")?.write_all(toml::to_string(request)?.as_bytes())?;
     let mut last = Instant::now() - Duration::from_secs(1);
     let status = loop {
-        if let Err(error) = crate::metrics::check_cancelled() {
+        if let Err(error) = tool_execution::metrics::check_cancelled() {
             child.terminate()?;
             return Err(error);
         }
@@ -678,12 +693,12 @@ fn run(config: Config, config_path: &Path) -> Result<()> {
                         Err(error) => record.error.as_mut().unwrap().push_str(&format!("; cleanup: {error:#}")),
                     }
                 }
-                record.free_bytes_after = crate::resource_sampler::available_bytes(&config.output)?;
+                record.free_bytes_after = tool_execution::resource_sampler::available_bytes(&config.output)?;
                 crate::atomic_toml(&sample.join("sample.toml"), &record)?;
                 return Err(error);
             }
         };
-        let mut metrics = crate::metrics::Run::start(metrics_path, "benchmark")?;
+        let mut metrics = tool_execution::metrics::Run::start(metrics_path, "benchmark")?;
         record.measurement_started = true;
         metrics.context.configuration("config-sha256", &config_hash);
         metrics.context.configuration("source-revision", &config.source_revision);
@@ -792,13 +807,13 @@ fn run(config: Config, config_path: &Path) -> Result<()> {
                 }
             }
         }
-        metrics.finish(crate::metrics::outcome(record.error.as_deref()), record.error.clone())?;
+        metrics.finish(tool_execution::metrics::outcome(record.error.as_deref()), record.error.clone())?;
         let receipt = metrics.context.snapshot();
         record.elapsed_ns = measured_end.saturating_sub(receipt.start_ns);
-        record.attribution = attribute(&receipt);
+        record.attribution = attribute(&receipt)?;
         record.last_completed_stage = receipt.last_completed_stage;
         record.comparable = result.is_ok();
-        record.free_bytes_after = crate::resource_sampler::available_bytes(&config.output)?;
+        record.free_bytes_after = tool_execution::resource_sampler::available_bytes(&config.output)?;
         host.finish()?;
         crate::atomic_toml(&sample.join("sample.toml"), &record)?;
         // Preserve the sample's final cache inventory for warmth audit and diagnostics.
@@ -842,8 +857,34 @@ fn run(config: Config, config_path: &Path) -> Result<()> {
 mod controls {
     use super::*;
     #[test]
+    fn bounded_attribution_retains_complete_sums_and_marks_missing_time_unions() {
+        let _detailed = tool_execution::metrics::detailed();
+        let path = std::env::temp_dir().join(format!("sm-benchmark-attribution-{}.toml", std::process::id()));
+        let mut run = tool_execution::metrics::Run::start(path.clone(), "attribution-control").unwrap();
+        let outer = run.context.stage("overlap").unwrap();
+        let inner = run.context.stage("overlap").unwrap();
+        inner.finish("success").unwrap();
+        outer.finish("success").unwrap();
+        for _ in 0..5_000 {
+            run.context.stage("repeated").unwrap().finish("success").unwrap();
+        }
+        run.finish("success", None).unwrap();
+        let receipt = run.context.snapshot();
+        let attribution = attribute(&receipt).unwrap();
+        let overlap = attribution.iter().find(|summary| summary.stage == "overlap").unwrap();
+        assert_eq!(overlap.count, 2);
+        assert!(overlap.union_elapsed_ns.is_some_and(|union| union > 0 && union < overlap.summed_elapsed_ns));
+        assert!(overlap.union_unavailable_reason.is_none());
+        let repeated = attribution.iter().find(|summary| summary.stage == "repeated").unwrap();
+        assert_eq!(repeated.count, 5_000);
+        assert!(repeated.summed_elapsed_ns > 0);
+        assert!(repeated.union_elapsed_ns.is_none());
+        assert!(repeated.union_unavailable_reason.as_deref().is_some_and(|reason| reason.contains("omitted")));
+        fs::remove_file(path).unwrap();
+    }
+    #[test]
     fn real_live_refusal_keeps_diagnostics_and_scoped_cleanup() {
-        let _detailed = crate::metrics::detailed();
+        let _detailed = tool_execution::metrics::detailed();
         let root = std::env::temp_dir().join(format!(
             "sm-benchmark-live-refusal-{}-{}",
             std::process::id(),

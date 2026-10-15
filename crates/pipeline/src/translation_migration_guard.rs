@@ -1,6 +1,6 @@
 //! Shared migration ownership validation for every legacy producer entrypoint.
 //! This guard reads sealed controller metadata and never launches verification.
-use crate::{assignment, inputs::bounded};
+use crate::assignment;
 use ::translation_execution::{
     ClaimLineage,
     model::digest_valid,
@@ -13,6 +13,7 @@ use std::{
     os::unix::fs::MetadataExt,
     path::{Component, Path, PathBuf},
 };
+use tool_execution::bounded;
 const FENCE: &str = ".scratch/decomp-parallel/deterministic-execution.json";
 const MAX_BYTES: u64 = 4 * 1024 * 1024;
 const MAX_REFERENCES: usize = 4096;
@@ -136,7 +137,7 @@ fn same_claim(left: &ClaimLineage, right: &assignment::Claim) -> bool {
 }
 
 pub(crate) fn read(path: &Path) -> Result<Migration> {
-    bounded::limited(|| read_inner(path))
+    decomp_source::context::limited(|| read_inner(path))
 }
 
 fn read_inner(path: &Path) -> Result<Migration> {
@@ -313,7 +314,7 @@ pub(crate) fn fence_session_locked(root: &Path, request: &assignment::Request) -
 }
 
 fn fence_effort(root: &Path, effort: &str) -> Result<()> {
-    bounded::limited(|| fence_effort_inner(root, effort))
+    decomp_source::context::limited(|| fence_effort_inner(root, effort))
 }
 
 fn fence_effort_inner(root: &Path, effort: &str) -> Result<()> {

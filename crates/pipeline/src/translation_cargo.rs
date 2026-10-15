@@ -1,10 +1,7 @@
 //! Confined Cargo acceptance for the preserved original production jobs.
-use crate::{
-    acquire_leases_until, builds, family,
-    family_model::Asset,
-    inputs::{self, bounded},
-};
+use crate::acquire_leases_until;
 use anyhow::{Context, Result, ensure};
+use offline_verification::fixtures::Asset;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -14,6 +11,7 @@ use std::{
     process::{Command, Stdio},
     time::Duration,
 };
+use tool_execution::bounded;
 use translation_execution::{
     OperationContext,
     budget::ByteBudget,
@@ -529,7 +527,7 @@ fn check_source(checkout: &Path, contract: &CargoContract, baseline: bool) -> Re
 }
 
 pub(crate) fn prepare(checkout: &Path, contract: &CargoContract) -> Result<PreparedCargo> {
-    bounded::limited(|| {
+    decomp_source::context::limited(|| {
         ensure!(contract.schema == "translation-cargo-contract-v1", "unsupported Cargo contract");
         ensure!(
             !contract.source_files.is_empty() && contract.source_files.len() <= MAX_FILES,
@@ -594,9 +592,9 @@ pub(crate) fn run(
     let receipt_path = output.join("cargo-receipt.toml");
     let verdict_path = output.join("cargo-verdict.toml");
     if receipt_path.is_file() || verdict_path.is_file() {
-        return bounded::reconcile(4 * bounded::DEFAULT_BYTES, || {
+        return decomp_source::context::reconcile(4 * bounded::DEFAULT_BYTES, || {
             if receipt_path.is_file() {
-                let receipt: CargoReceipt = family::object(&receipt_path)?;
+                let receipt: CargoReceipt = tool_execution::bounded::object(&receipt_path)?;
                 ensure!(
                     receipt.context == *context && receipt.runtime_sha256 == sealed(runtime)?,
                     "Cargo retry changed operation or installed runtime"
@@ -604,7 +602,7 @@ pub(crate) fn run(
                 authenticate(prepared, checkout, &receipt)?;
                 return Ok(receipt);
             }
-            let verdict: CargoVerdict = family::object(&verdict_path)?;
+            let verdict: CargoVerdict = tool_execution::bounded::object(&verdict_path)?;
             ensure!(
                 verdict.context == *context && verdict.runtime == *runtime,
                 "Cargo finalization recovery changed identity"
@@ -619,7 +617,8 @@ pub(crate) fn run(
         "Cargo installed aggregate budget is missing or excessive"
     );
     let intent_path = output.join("cargo-intent.toml");
-    let saved: Option<CargoIntent> = if intent_path.is_file() { Some(family::object(&intent_path)?) } else { None };
+    let saved: Option<CargoIntent> =
+        if intent_path.is_file() { Some(tool_execution::bounded::object(&intent_path)?) } else { None };
     let resumed = saved.is_some();
     let local = entered
         .checked_add(runtime.gate_timeout_seconds.checked_mul(1000).context("Cargo deadline overflow")?)
@@ -687,9 +686,9 @@ pub(crate) fn run(
         Ok((candidate, budget, verdict))
     };
     let (candidate, mut budget, mut verdict) = if resumed && entered >= deadline {
-        bounded::reconcile(4 * bounded::DEFAULT_BYTES, setup)?
+        decomp_source::context::reconcile(4 * bounded::DEFAULT_BYTES, setup)?
     } else {
-        bounded::until(deadline, 4 * bounded::DEFAULT_BYTES, setup)?
+        decomp_source::context::until(deadline, 4 * bounded::DEFAULT_BYTES, setup)?
     };
     let produce = || -> Result<()> {
         if !resumed {
@@ -716,7 +715,7 @@ pub(crate) fn run(
             let mut operation_context = context.clone();
             operation_context.operation_key = sealed(&(&context.operation_key, output, &command.id))?;
             let invocation = if existing {
-                let intent: InvocationIntent = family::object(&invocation_path)?;
+                let intent: InvocationIntent = tool_execution::bounded::object(&invocation_path)?;
                 ensure!(
                     intent.context == operation_context && intent.request == request_ref,
                     "Cargo invocation retry changed identity"
@@ -843,9 +842,9 @@ pub(crate) fn run(
         Ok(())
     };
     let result = if resumed && bounded::now_unix_ms()? >= deadline {
-        bounded::reconcile(4 * bounded::DEFAULT_BYTES, produce)
+        decomp_source::context::reconcile(4 * bounded::DEFAULT_BYTES, produce)
     } else {
-        bounded::until(deadline, 4 * bounded::DEFAULT_BYTES, produce)
+        decomp_source::context::until(deadline, 4 * bounded::DEFAULT_BYTES, produce)
     };
     if let Err(error) = result {
         if error.downcast_ref::<translation_execution::ExecutionPending>().is_some() {
@@ -856,7 +855,7 @@ pub(crate) fn run(
         verdict.diagnostic = diagnostic(&format!("{error:#}"));
     }
     verdict.reserved_bytes = budget.used();
-    bounded::reconcile(4 * bounded::DEFAULT_BYTES, || {
+    decomp_source::context::reconcile(4 * bounded::DEFAULT_BYTES, || {
         publish_record(&verdict_path, &verdict)?;
         finish(prepared, checkout, &verdict_path, &verdict)
     })
@@ -923,7 +922,7 @@ fn validate_prepared(prepared: &PreparedCargo, checkout: &Path) -> Result<BTreeM
 fn publish_bytes(path: &Path, bytes: &[u8], executable: bool) -> Result<()> {
     bounded::safe(path)?;
     fs::create_dir_all(path.parent().context("Cargo retained path has no parent")?)?;
-    inputs::immutable_bytes(path, bytes)?;
+    tool_execution::bounded::immutable_bytes(path, bytes)?;
     let mode = if executable { 0o500 } else { 0o400 };
     if path.symlink_metadata()?.permissions().mode() & 0o777 != mode {
         fs::set_permissions(path, fs::Permissions::from_mode(mode))?;
@@ -975,7 +974,7 @@ fn producer_program(
             && rustc.parent() == cargo.parent(),
         "Cargo requires explicit matching installed compiler/toolchain files"
     );
-    let mut binds = builds::strict_compiler_runtime(&rustc)?;
+    let mut binds = ::translation_execution::compiler_runtime::discover(&rustc)?;
     binds.push(ReadOnlyBind { source: rustc, destination: "/toolchain/bin/rustc".into() });
     binds.push(ReadOnlyBind { source: cargo, destination: "/toolchain/bin/cargo".into() });
     for (source, destination) in
@@ -1108,14 +1107,14 @@ fn finish(prepared: &PreparedCargo, checkout: &Path, path: &Path, verdict: &Carg
 }
 
 pub(crate) fn authenticate(prepared: &PreparedCargo, checkout: &Path, receipt: &CargoReceipt) -> Result<CargoVerdict> {
-    bounded::limited(|| {
+    decomp_source::context::limited(|| {
         let candidate = validate_prepared(prepared, checkout)?;
         ensure!(
             receipt.prepared_sha256 == sealed(prepared)? && receipt.candidate_sha256 == sealed(&candidate)?,
             "Cargo receipt belongs to another preparation or source"
         );
         ensure!(bounded::digest(&receipt.verdict.file)? == receipt.verdict.sha256, "retained Cargo verdict changed");
-        let verdict: CargoVerdict = family::object(&receipt.verdict.file)?;
+        let verdict: CargoVerdict = tool_execution::bounded::object(&receipt.verdict.file)?;
         validate_jobs(&verdict.runtime)?;
         ensure!(
             verdict.schema == "translation-cargo-verdict-v1"
@@ -1152,7 +1151,7 @@ pub(crate) fn authenticate(prepared: &PreparedCargo, checkout: &Path, receipt: &
             retention::authenticate_reference(reference, MAX_RECORD_BYTES)?;
         }
         let intent_path = output.join("cargo-intent.toml");
-        let intent: CargoIntent = family::object(&intent_path)?;
+        let intent: CargoIntent = tool_execution::bounded::object(&intent_path)?;
         ensure!(
             intent.context == verdict.context
                 && intent.prepared_sha256 == verdict.prepared_sha256
@@ -1189,7 +1188,7 @@ pub(crate) fn authenticate(prepared: &PreparedCargo, checkout: &Path, receipt: &
             );
             retention::authenticate_reference(&invocation.request, MAX_RECORD_BYTES)?;
             let invocation_path = output.join(format!("{}-invocation.toml", command.id));
-            let saved: InvocationIntent = family::object(&invocation_path)?;
+            let saved: InvocationIntent = tool_execution::bounded::object(&invocation_path)?;
             ensure!(
                 saved.context == invocation.context
                     && saved.program == invocation.program
@@ -1261,7 +1260,7 @@ pub(crate) fn authenticate(prepared: &PreparedCargo, checkout: &Path, receipt: &
 
 pub(crate) fn references(receipt: &CargoReceipt) -> Result<Vec<Reference>> {
     ensure!(bounded::digest(&receipt.verdict.file)? == receipt.verdict.sha256, "Cargo retained verdict changed");
-    let verdict: CargoVerdict = family::object(&receipt.verdict.file)?;
+    let verdict: CargoVerdict = tool_execution::bounded::object(&receipt.verdict.file)?;
     let mut references = verdict_references(&verdict, &receipt.verdict.file)?;
     references.push(retention::seal_file(
         &receipt.verdict.file.parent().context("Cargo verdict parent missing")?.join("cargo-receipt.toml"),
@@ -1299,13 +1298,13 @@ pub(crate) fn prepare_environment(
         jobs: if build_dependencies { runtime.jobs } else { 1 },
     };
     if receipt_path.is_file() {
-        let receipt: CargoEnvironmentReceipt = family::object(&receipt_path)?;
+        let receipt: CargoEnvironmentReceipt = tool_execution::bounded::object(&receipt_path)?;
         ensure!(
             receipt.context == *context && receipt.runtime_sha256 == sealed(runtime)?,
             "Cargo environment retry changed context or runtime"
         );
         authenticate_environment(prepared, checkout, &receipt)?;
-        let record: EnvironmentRecord = family::object(&receipt.record.file)?;
+        let record: EnvironmentRecord = tool_execution::bounded::object(&receipt.record.file)?;
         ensure!(
             record.request.sha256 == sealed_json(&requested)?
                 && record.limits.timeout == Duration::from_secs(timeout_seconds),
@@ -1314,7 +1313,7 @@ pub(crate) fn prepare_environment(
         return Ok(receipt);
     }
     if record_path.is_file() {
-        let record: EnvironmentRecord = family::object(&record_path)?;
+        let record: EnvironmentRecord = tool_execution::bounded::object(&record_path)?;
         ensure!(
             record.context == *context
                 && record.runtime == *runtime
@@ -1326,7 +1325,7 @@ pub(crate) fn prepare_environment(
     }
     let intent_path = output.join("cargo-environment-intent.toml");
     let saved: Option<EnvironmentRecord> =
-        if intent_path.is_file() { Some(family::object(&intent_path)?) } else { None };
+        if intent_path.is_file() { Some(tool_execution::bounded::object(&intent_path)?) } else { None };
     let local_deadline = entered.checked_add(timeout_seconds * 1000).context("Cargo environment deadline overflow")?;
     let deadline = saved
         .as_ref()
@@ -1415,9 +1414,9 @@ pub(crate) fn prepare_environment(
         Ok(record)
     };
     let mut record = if entered >= deadline {
-        bounded::reconcile(4 * bounded::DEFAULT_BYTES, setup)?
+        decomp_source::context::reconcile(4 * bounded::DEFAULT_BYTES, setup)?
     } else {
-        bounded::until(deadline, 4 * bounded::DEFAULT_BYTES, setup)?
+        decomp_source::context::until(deadline, 4 * bounded::DEFAULT_BYTES, setup)?
     };
     let directory = operation::directory(&runtime.operation_root, context)?;
     let result = if directory.join("result.json").is_file() {
@@ -1436,7 +1435,7 @@ pub(crate) fn prepare_environment(
         .0;
         operation::run_until(&runtime.operation_root, context, &record.program, &record.limits, &[], deadline)?
     };
-    bounded::reconcile(4 * bounded::DEFAULT_BYTES, || {
+    decomp_source::context::reconcile(4 * bounded::DEFAULT_BYTES, || {
         record.operation_result_sha256 = result.result_sha256;
         record.references = operation::references(&runtime.operation_root, context)?;
         record.references.push(retention::seal_file(&intent_path, MAX_RECORD_BYTES)?);
@@ -1518,7 +1517,7 @@ pub(crate) fn authenticate_environment(
     checkout: &Path,
     receipt: &CargoEnvironmentReceipt,
 ) -> Result<()> {
-    bounded::limited(|| {
+    decomp_source::context::limited(|| {
         let candidate = validate_prepared(prepared, checkout)?;
         ensure!(
             receipt.schema == "translation-cargo-environment-receipt-v1"
@@ -1527,7 +1526,7 @@ pub(crate) fn authenticate_environment(
                 && bounded::digest(&receipt.record.file)? == receipt.record.sha256,
             "Cargo environment receipt differs from source or preparation"
         );
-        let record: EnvironmentRecord = family::object(&receipt.record.file)?;
+        let record: EnvironmentRecord = tool_execution::bounded::object(&receipt.record.file)?;
         validate_jobs(&record.runtime)?;
         ensure!(
             record.schema == "translation-cargo-environment-v1"
@@ -1601,7 +1600,7 @@ pub(crate) fn authenticate_environment(
             "Cargo environment omitted durable operation dependencies"
         );
         let intent_path = root.join("cargo-environment-intent.toml");
-        let intent: EnvironmentRecord = family::object(&intent_path)?;
+        let intent: EnvironmentRecord = tool_execution::bounded::object(&intent_path)?;
         ensure!(
             intent.schema == record.schema
                 && intent.prepared_sha256 == record.prepared_sha256
@@ -1662,7 +1661,7 @@ fn sealed_json(value: &impl Serialize) -> Result<String> {
 
 pub(crate) fn environment_references(receipt: &CargoEnvironmentReceipt) -> Result<Vec<Reference>> {
     ensure!(bounded::digest(&receipt.record.file)? == receipt.record.sha256, "Cargo environment record changed");
-    let record: EnvironmentRecord = family::object(&receipt.record.file)?;
+    let record: EnvironmentRecord = tool_execution::bounded::object(&receipt.record.file)?;
     let mut files = environment_record_references(&record, &receipt.record.file)?;
     files.push(retention::seal_file(
         &receipt

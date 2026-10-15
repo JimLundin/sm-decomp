@@ -1,5 +1,9 @@
+use crate::atomic_toml;
+use crate::digest;
+use crate::parity;
+use crate::preflight;
 use crate::readiness_metadata::toml_from_slice;
-use crate::{atomic_toml, digest, family, parity, preflight, readiness_run::Run};
+use crate::readiness_run::Run;
 use anyhow::{Context, Result, ensure};
 use std::{
     fs,
@@ -41,7 +45,7 @@ pub(crate) fn focused(run: &mut Run, mode: &str, namespace: &str, timeout: Durat
         run.record_artifact("focused-prepared-binary", &binary, Some("generated/focused-prepared"))?;
     } else {
         ensure!(
-            digest(&binary)? == family::field(&run.manifest.identities["focused-prepared-binary"], "sha256")?,
+            digest(&binary)? == crate::documents::field(&run.manifest.identities["focused-prepared-binary"], "sha256")?,
             "focused binary changed after preparation"
         );
     }
@@ -117,14 +121,14 @@ pub(crate) fn diagnose(run: &mut Run, request: &Value, namespace: &str) -> Resul
         let inputs = &run.manifest.identities["inputs"];
         let ids = &run.manifest.identities;
         let identity = pipeline_model::CheckpointIdentities {
-            rom_sha256: family::field(inputs, "rom_sha256")?.into(),
-            movie_sha256: family::field(inputs, "movie_sha256")?.into(),
-            input_sha256: family::field(inputs, "input_sha256")?.into(),
-            source_sha256: family::field(&ids["source"], "sha256")?.into(),
-            hardware_sha256: family::field(&ids["hardware"], "source_sha256")?.into(),
+            rom_sha256: crate::documents::field(inputs, "rom_sha256")?.into(),
+            movie_sha256: crate::documents::field(inputs, "movie_sha256")?.into(),
+            input_sha256: crate::documents::field(inputs, "input_sha256")?.into(),
+            source_sha256: crate::documents::field(&ids["source"], "sha256")?.into(),
+            hardware_sha256: crate::documents::field(&ids["hardware"], "source_sha256")?.into(),
             profile: "lsnes-profile".into(),
             serializer: "paired-v2".into(),
-            compiler: family::field(&ids["compiler"], "version")?.into(),
+            compiler: crate::documents::field(&ids["compiler"], "version")?.into(),
             features: crate::pattern_contract::strings(&ids["hardware"]["features"])?,
             settings: pipeline_model::CheckpointSettings {
                 seed: 0,
@@ -399,7 +403,7 @@ pub fn operate(request: Value) -> Result<Value> {
     })();
     match outcome {
         Ok(report) => run.finalize(
-            family::field(&report, "status")?,
+            crate::documents::field(&report, "status")?,
             Some("instruction-diagnosis"),
             report
                 .get("reason")

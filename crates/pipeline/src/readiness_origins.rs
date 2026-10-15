@@ -1,8 +1,7 @@
 //! Independent immutable run, process and artifact authentication.
-use crate::{
-    digest, family,
-    readiness_run::{identity, safe_artifact},
-};
+use crate::digest;
+use crate::readiness_run::identity;
+use crate::readiness_run::safe_artifact;
 use anyhow::{Context, Result, ensure};
 use pipeline_model::readiness::{ArtifactIdentity, ProcessRecord, RUN_VERSION, RunManifest, SourceInventory};
 use std::{
@@ -78,7 +77,7 @@ pub fn owned(owner: &Path, manifest: &Value) -> Result<()> {
     for (name, entry) in &manifest.identities {
         if let Some(relative) = entry.get("evidence").and_then(Value::as_str) {
             let path = safe_artifact(owner, relative)?;
-            ensure!(digest(&path)? == family::field(entry, "sha256")?, "owned artifact changed: {name}");
+            ensure!(digest(&path)? == crate::documents::field(entry, "sha256")?, "owned artifact changed: {name}");
         }
     }
     for (name, entry) in &manifest.check_evidence {

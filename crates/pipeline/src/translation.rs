@@ -1,7 +1,7 @@
 //! Bounded translation research discovery; planning facts never grant gameplay admission.
 use crate::assignment::{Job, Kind};
-use crate::family_model::Source;
 use anyhow::{Context, Result, ensure};
+use decomp_source::Source;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -108,6 +108,11 @@ struct Ticket {
     missing_blockers: bool,
 }
 
+fn identifier(symbol: &str) -> bool {
+    let mut chars = symbol.chars();
+    chars.next().is_some_and(|c| c.is_ascii_alphabetic() || c == '_')
+        && chars.all(|c| c.is_ascii_alphanumeric() || c == '_')
+}
 fn relative(path: &Path) -> bool {
     !path.as_os_str().is_empty() && path.components().all(|c| matches!(c, Component::Normal(_)))
 }
@@ -122,7 +127,7 @@ fn document<T: serde::de::DeserializeOwned>(path: &Path) -> Result<T> {
         path.display()
     );
     ensure!(metadata.len() <= MAX_DOCUMENT_BYTES, "planning document is too large: {}", path.display());
-    Ok(toml::from_str(&crate::inputs::bounded::text(path)?)?)
+    Ok(toml::from_str(&tool_execution::bounded::text(path)?)?)
 }
 fn metadata<'a>(text: &'a str, name: &str) -> Option<&'a str> {
     text.lines().take_while(|line| !line.starts_with("## ")).find_map(|line| line.strip_prefix(name).map(str::trim))
@@ -137,7 +142,7 @@ fn tickets(checkout: &Path) -> Result<Vec<Ticket>> {
         return Ok(vec![]);
     }
     let mut paths = Vec::new();
-    let efforts = crate::inputs::bounded::entries(&scratch)?;
+    let efforts = tool_execution::bounded::entries(&scratch)?;
     for effort in efforts {
         if effort.is_symlink() || !effort.is_dir() {
             continue;
@@ -146,7 +151,7 @@ fn tickets(checkout: &Path) -> Result<Vec<Ticket>> {
         if !issues.is_dir() || issues.is_symlink() {
             continue;
         }
-        for path in crate::inputs::bounded::entries(&issues)? {
+        for path in tool_execution::bounded::entries(&issues)? {
             if path.extension().is_some_and(|e| e == "md") && !path.is_symlink() {
                 paths.push(path);
             }
@@ -156,9 +161,9 @@ fn tickets(checkout: &Path) -> Result<Vec<Ticket>> {
     paths.sort();
     let mut result = Vec::new();
     for path in &paths {
-        crate::inputs::bounded::check()?;
+        tool_execution::bounded::check()?;
         ensure!(fs::metadata(path)?.len() <= MAX_DOCUMENT_BYTES, "ticket is too large");
-        let text = crate::inputs::bounded::text(path)?;
+        let text = tool_execution::bounded::text(path)?;
         let Some(number) =
             path.file_name().and_then(|p| p.to_str()).and_then(|s| s.split('-').next()).and_then(|s| s.parse().ok())
         else {
@@ -241,26 +246,24 @@ fn inventory(checkout: &Path, path: &Path) -> Result<Inventory> {
     let value: Inventory = document(path)?;
     ensure!(value.schema_version == 1 && !value.routines.is_empty(), "unsupported or empty source inventory");
     ensure!(
-        crate::inputs::bounded::digest(&checkout.join("tools/dependencies.toml"))? == value.source_identity_sha256,
+        tool_execution::bounded::digest(&checkout.join("tools/dependencies.toml"))? == value.source_identity_sha256,
         "source inventory dependency pin changed"
     );
-    let identity = crate::family::verify_source(checkout, &checkout.join("deps/snesrev-sm"))?;
+    let identity = decomp_source::verify_source(checkout, &checkout.join("deps/snesrev-sm"))?;
     ensure!(value.source_identity == identity, "source inventory pinned source differs");
     let mut symbols = BTreeSet::new();
     ensure!(value.routines.len() <= 65536, "scope source routine inventory exceeded");
     let mut source_text = BTreeMap::new();
     let all_symbols: BTreeSet<_> = value.routines.iter().map(|r| r.symbol.as_str()).collect();
     for routine in &value.routines {
-        crate::inputs::bounded::check()?;
+        tool_execution::bounded::check()?;
         ensure!(
-            crate::family::identifier(&routine.symbol)
-                && relative(Path::new(&routine.source))
-                && symbols.insert(&routine.symbol),
+            identifier(&routine.symbol) && relative(Path::new(&routine.source)) && symbols.insert(&routine.symbol),
             "invalid or duplicate source inventory routine"
         );
         ensure!(identity.files.contains_key(&routine.source), "routine source missing from pinned inventory");
         if !source_text.contains_key(&routine.source) {
-            let text = crate::inputs::bounded::text(checkout.join("deps/snesrev-sm").join(&routine.source))?;
+            let text = tool_execution::bounded::text(checkout.join("deps/snesrev-sm").join(&routine.source))?;
             source_text.insert(routine.source.clone(), decomp_source::DefinitionSource::new(text)?);
         }
         let definition = source_text[&routine.source].at_line(routine.line)?;
@@ -303,11 +306,11 @@ fn exercise(checkout: &Path, path: &Path, source: &Source) -> Result<Vec<Hit>> {
     ensure!(&value.source == source, "exercise source differs from pinned inventory");
     ensure!(
         value.rom_sha256 == ROM_SHA256
-            && crate::inputs::bounded::digest(&checkout.join("rom/sm.sfc"))? == value.rom_sha256,
+            && tool_execution::bounded::digest(&checkout.join("rom/sm.sfc"))? == value.rom_sha256,
         "exercise ROM identity differs"
     );
     ensure!(
-        crate::inputs::bounded::digest(&checkout.join("movies/super-metroid-any-3653.inputs"))? == value.inputs_sha256,
+        tool_execution::bounded::digest(&checkout.join("movies/super-metroid-any-3653.inputs"))? == value.inputs_sha256,
         "exercise movie identity differs"
     );
     ensure!(
@@ -315,7 +318,7 @@ fn exercise(checkout: &Path, path: &Path, source: &Source) -> Result<Vec<Hit>> {
         "exercise original bank86 source differs"
     );
     ensure!(
-        crate::inputs::bounded::digest(&checkout.join("tools/decomp/headless.c"))? == value.host_sha256,
+        tool_execution::bounded::digest(&checkout.join("tools/decomp/headless.c"))? == value.host_sha256,
         "exercise host source differs"
     );
     let run = fs::canonicalize(path.parent().context("exercise parent missing")?)?;
@@ -326,7 +329,7 @@ fn exercise(checkout: &Path, path: &Path, source: &Source) -> Result<Vec<Hit>> {
             value.artifacts.get(required).with_context(|| format!("exercise artifact seal missing: {required}"))?;
         let artifact = run.join(required);
         ensure!(
-            !artifact.is_symlink() && crate::inputs::bounded::digest(&artifact)? == *expected,
+            !artifact.is_symlink() && tool_execution::bounded::digest(&artifact)? == *expected,
             "exercise artifact changed: {required}"
         );
     }
@@ -347,11 +350,11 @@ fn exercise(checkout: &Path, path: &Path, source: &Source) -> Result<Vec<Hit>> {
         "exercise replay identity differs"
     );
     ensure!(
-        crate::inputs::bounded::digest(Path::new(&value.replay_command[1]))? == value.rom_sha256
-            && crate::inputs::bounded::digest(Path::new(&value.replay_command[2]))? == value.inputs_sha256,
+        tool_execution::bounded::digest(Path::new(&value.replay_command[1]))? == value.rom_sha256
+            && tool_execution::bounded::digest(Path::new(&value.replay_command[2]))? == value.inputs_sha256,
         "exercise replay inputs changed"
     );
-    let table = crate::inputs::bounded::text(run.join("projectiles.tsv"))?;
+    let table = tool_execution::bounded::text(run.join("projectiles.tsv"))?;
     ensure!(
         table.lines().next() == Some("kind\taddress\thits\tfirst_frame\tlast_frame"),
         "exercise table header differs"
@@ -359,7 +362,7 @@ fn exercise(checkout: &Path, path: &Path, source: &Source) -> Result<Vec<Hit>> {
     let mut result = Vec::new();
     let mut seen = BTreeSet::new();
     for line in table.lines().skip(1) {
-        crate::inputs::bounded::check()?;
+        tool_execution::bounded::check()?;
         let values: Vec<_> = line.split('\t').collect();
         ensure!(
             values.len() == 5 && ["id", "init", "pre", "instruction"].contains(&values[0]),
@@ -387,7 +390,7 @@ fn default_exercise(checkout: &Path) -> Result<Option<PathBuf>> {
     }
     let mut paths = Vec::new();
     for (index, entry) in fs::read_dir(root)?.take(129).enumerate() {
-        crate::inputs::bounded::check()?;
+        tool_execution::bounded::check()?;
         ensure!(index < 128, "exercise discovery exceeds 128 runs; specify an explicit native verdict");
         let path = entry?.path();
         if path.is_dir() && !path.is_symlink() && path.join("verdict.toml").is_file() {
@@ -460,10 +463,10 @@ pub(crate) fn discover(checkout: &Path, source_inventory: Option<&Path>, observe
                 }
             }
             let mut inputs = BTreeMap::from([
-                (file_key(&inventory_path), crate::inputs::bounded::digest(&inventory_path)?),
+                (file_key(&inventory_path), tool_execution::bounded::digest(&inventory_path)?),
                 (
                     file_key(observed_path.as_ref().unwrap()),
-                    crate::inputs::bounded::digest(observed_path.as_ref().unwrap())?,
+                    tool_execution::bounded::digest(observed_path.as_ref().unwrap())?,
                 ),
             ]);
             inputs.insert(
@@ -481,7 +484,7 @@ pub(crate) fn discover(checkout: &Path, source_inventory: Option<&Path>, observe
             _ => "No native projectile exercise verdict is available; historical JSON is not a native scope receipt"
                 .into(),
         };
-        jobs.push(job("translation-research-establish-inputs".into(),"Establish translation exercise and scope inputs".into(), BTreeMap::from([(file_key(Path::new("tools/dependencies.toml")),crate::inputs::bounded::digest(&checkout.join("tools/dependencies.toml"))?)]), format!("{reason}. Establish pinned source inventory and naturally exercised coherent gameplay candidates. Existing claimed/resolved tickets remain authoritative; preserve historical evidence. Use existing Rust source-inventory and projectile-inventory commands as appropriate; start with bounded approximately 60-second experiments. Missing observations remain research, never implementation readiness."),None)?);
+        jobs.push(job("translation-research-establish-inputs".into(),"Establish translation exercise and scope inputs".into(), BTreeMap::from([(file_key(Path::new("tools/dependencies.toml")),tool_execution::bounded::digest(&checkout.join("tools/dependencies.toml"))?)]), format!("{reason}. Establish pinned source inventory and naturally exercised coherent gameplay candidates. Existing claimed/resolved tickets remain authoritative; preserve historical evidence. Use existing Rust source-inventory and projectile-inventory commands as appropriate; start with bounded approximately 60-second experiments. Missing observations remain research, never implementation readiness."),None)?);
     }
     Ok(jobs)
 }
@@ -492,7 +495,7 @@ fn mentions(text: &str, routine: &Routine) -> bool {
 }
 
 pub(crate) fn validate_scope(checkout: &Path, path: &Path) -> Result<Job> {
-    crate::inputs::bounded::limited(|| validate_scope_bounded(checkout, path))
+    decomp_source::context::limited(|| validate_scope_bounded(checkout, path))
 }
 
 fn validate_scope_bounded(checkout: &Path, path: &Path) -> Result<Job> {
@@ -510,8 +513,8 @@ fn validate_scope_bounded(checkout: &Path, path: &Path) -> Result<Job> {
     let inventory_path = resolve(&checkout, &scope.source_inventory);
     let exercise_path = resolve(&checkout, &scope.exercise);
     ensure!(
-        crate::inputs::bounded::digest(&inventory_path)? == scope.source_inventory_sha256
-            && crate::inputs::bounded::digest(&exercise_path)? == scope.exercise_sha256,
+        tool_execution::bounded::digest(&inventory_path)? == scope.source_inventory_sha256
+            && tool_execution::bounded::digest(&exercise_path)? == scope.exercise_sha256,
         "research input receipt changed"
     );
     let loaded = inventory(&checkout, &inventory_path)?;
@@ -552,7 +555,7 @@ fn validate_scope_bounded(checkout: &Path, path: &Path) -> Result<Job> {
                 ensure!(
                     relative(evidence)
                         && scope.inputs.get(&evidence.to_string_lossy().into_owned())
-                            == Some(&crate::inputs::bounded::digest(&checkout.join(evidence))?),
+                            == Some(&tool_execution::bounded::digest(&checkout.join(evidence))?),
                     "scope dependency evidence input missing or changed: {}",
                     evidence.display()
                 );
@@ -612,7 +615,7 @@ fn validate_scope_bounded(checkout: &Path, path: &Path) -> Result<Job> {
         ensure!(finished(&ticket.status), "scope dependency is not resolved: {}", dependency.display());
         ensure!(
             scope.inputs.get(&dependency.to_string_lossy().into_owned())
-                == Some(&crate::inputs::bounded::digest(&checkout.join(dependency))?),
+                == Some(&tool_execution::bounded::digest(&checkout.join(dependency))?),
             "scope dependency input seal missing"
         );
     }
@@ -636,7 +639,7 @@ fn validate_scope_bounded(checkout: &Path, path: &Path) -> Result<Job> {
         if checkout.join(target).exists() {
             ensure!(
                 scope.inputs.get(&target.to_string_lossy().into_owned())
-                    == Some(&crate::inputs::bounded::digest(&checkout.join(target))?),
+                    == Some(&tool_execution::bounded::digest(&checkout.join(target))?),
                 "current writable source input seal missing: {}",
                 target.display()
             );
@@ -645,7 +648,7 @@ fn validate_scope_bounded(checkout: &Path, path: &Path) -> Result<Job> {
     ensure!(!scope.inputs.is_empty(), "scope input seals missing");
     for (name, expected) in &scope.inputs {
         ensure!(
-            relative(Path::new(name)) && crate::inputs::bounded::digest(&checkout.join(name))? == *expected,
+            relative(Path::new(name)) && tool_execution::bounded::digest(&checkout.join(name))? == *expected,
             "scope input changed: {name}"
         );
     }
@@ -671,9 +674,9 @@ fn validate_scope_bounded(checkout: &Path, path: &Path) -> Result<Job> {
     }
     let mut inputs: BTreeMap<_, _> =
         scope.inputs.iter().map(|(key, value)| (file_key(Path::new(key)), value.clone())).collect();
-    inputs.insert(file_key(&path), crate::inputs::bounded::digest(&path)?);
+    inputs.insert(file_key(&path), tool_execution::bounded::digest(&path)?);
     inputs.insert("scope-file".into(), path.display().to_string());
-    inputs.insert("scope-sha256".into(), crate::inputs::bounded::digest(&path)?);
+    inputs.insert("scope-sha256".into(), tool_execution::bounded::digest(&path)?);
     if let Some(origin) = &scope.origin_ticket {
         inputs.insert("origin-ticket".into(), origin.display().to_string());
         inputs.insert("origin-ticket-type".into(), "task".into());
@@ -857,26 +860,26 @@ mod tests {
         fs::create_dir_all(root.join("deps/downloads")).unwrap();
         let archive = root.join("deps/downloads/oracle.tar.gz");
         let mut tar = Vec::new();
-        crate::inputs::bounded::tests::append_tar(&mut tar, "snesrev-sm/src/sm_86.c", b'0', bank.as_bytes());
-        crate::inputs::bounded::tests::append_tar(&mut tar, "snesrev-sm/LICENSE.txt", b'0', b"test pinned source\n");
-        crate::inputs::bounded::tests::append_tar(&mut tar, "snesrev-sm/src/sm_rtl.h", b'0', b"#include <stdbool.h>\n");
-        crate::inputs::bounded::tests::append_tar(
+        decomp_source::testing::append_tar(&mut tar, "snesrev-sm/src/sm_86.c", b'0', bank.as_bytes());
+        decomp_source::testing::append_tar(&mut tar, "snesrev-sm/LICENSE.txt", b'0', b"test pinned source\n");
+        decomp_source::testing::append_tar(&mut tar, "snesrev-sm/src/sm_rtl.h", b'0', b"#include <stdbool.h>\n");
+        decomp_source::testing::append_tar(
             &mut tar,
             "snesrev-sm/src/funcs.h",
             b'0',
             b"// pinned native test declarations\n",
         );
         tar.extend_from_slice(&[0u8; 1024]);
-        crate::inputs::bounded::tests::gzip_archive(&archive, &tar).unwrap();
+        decomp_source::testing::gzip_archive(&archive, &tar).unwrap();
         write(
             root,
             "tools/dependencies.toml",
             format!(
                 "schema_version = 1\n[[dependencies]]\nname = \"snesrev-sm\"\narchive = \"oracle.tar.gz\"\nrevision = \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"\nsha256 = {:?}\n",
-                crate::inputs::bounded::digest(&archive).unwrap()
+                tool_execution::bounded::digest(&archive).unwrap()
             ),
         );
-        let source = crate::family::verify_source(root, &root.join("deps/snesrev-sm")).unwrap();
+        let source = decomp_source::verify_source(root, &root.join("deps/snesrev-sm")).unwrap();
         let routines = toml::Value::Array(vec![
             toml::Value::Table(toml::Table::from_iter([
                 ("symbol".into(), "Observed".into()),
@@ -908,7 +911,7 @@ mod tests {
             ("source_identity".into(), toml::Value::try_from(&source).unwrap()),
             (
                 "source_identity_sha256".into(),
-                crate::inputs::bounded::digest(&root.join("tools/dependencies.toml")).unwrap().into(),
+                tool_execution::bounded::digest(&root.join("tools/dependencies.toml")).unwrap().into(),
             ),
             ("routines".into(), routines),
         ]));
@@ -1055,7 +1058,7 @@ mod tests {
         fs::create_dir_all(root.join("deps/snesrev-sm/src/snes")).unwrap();
         fs::create_dir_all(root.join("rom")).unwrap();
         fs::copy(&rom, root.join("rom/sm.sfc")).unwrap();
-        assert_eq!(crate::inputs::bounded::digest(&root.join("rom/sm.sfc")).unwrap(), ROM_SHA256);
+        assert_eq!(tool_execution::bounded::digest(&root.join("rom/sm.sfc")).unwrap(), ROM_SHA256);
         write(root, "movies/super-metroid-any-3653.inputs", "native test movie identity\n");
         let host = concat!(
             "#include <stdio.h>\n#include <stdlib.h>\n",
@@ -1107,12 +1110,12 @@ mod tests {
                 "original-source/sm_86.c",
             ]
             .into_iter()
-            .map(|name| (name.into(), crate::inputs::bounded::digest(&run.join(name)).unwrap()))
+            .map(|name| (name.into(), tool_execution::bounded::digest(&run.join(name)).unwrap()))
             .collect(),
             rom_sha256: ROM_SHA256.into(),
-            inputs_sha256: crate::inputs::bounded::digest(&root.join("movies/super-metroid-any-3653.inputs")).unwrap(),
+            inputs_sha256: tool_execution::bounded::digest(&root.join("movies/super-metroid-any-3653.inputs")).unwrap(),
             original_sm86_sha256: source.files["src/sm_86.c"].clone(),
-            host_sha256: crate::inputs::bounded::digest(&root.join("tools/decomp/headless.c")).unwrap(),
+            host_sha256: tool_execution::bounded::digest(&root.join("tools/decomp/headless.c")).unwrap(),
             build_command: build,
             replay_command: replay,
         };
@@ -1125,16 +1128,16 @@ mod tests {
             subject: "Observed and coherent helper behavior".into(),
             origin_ticket: Some(".scratch/work/issues/02-work.md".into()),
             source_inventory: "inventory.toml".into(),
-            source_inventory_sha256: crate::inputs::bounded::digest(&root.join("inventory.toml")).unwrap(),
+            source_inventory_sha256: tool_execution::bounded::digest(&root.join("inventory.toml")).unwrap(),
             exercise: "run/verdict.toml".into(),
-            exercise_sha256: crate::inputs::bounded::digest(&root.join("run/verdict.toml")).unwrap(),
+            exercise_sha256: tool_execution::bounded::digest(&root.join("run/verdict.toml")).unwrap(),
             routines: vec!["Observed".into(), "Helper".into()],
             dependencies: vec![".scratch/work/issues/01-work.md".into()],
             dependency_review: BTreeMap::new(),
             writable_paths: vec!["crates/port/src/example.rs".into()],
             inputs: ["deps/snesrev-sm/src/sm_86.c", "crates/port/src/example.rs", ".scratch/work/issues/01-work.md"]
                 .into_iter()
-                .map(|name| (name.into(), crate::inputs::bounded::digest(&root.join(name)).unwrap()))
+                .map(|name| (name.into(), tool_execution::bounded::digest(&root.join(name)).unwrap()))
                 .collect(),
             verification: vec![
                 Verification {
@@ -1178,7 +1181,7 @@ mod tests {
         assert_eq!(job.kind, Kind::Implement);
         assert_eq!(job.writable_paths, scope.writable_paths);
         assert_eq!(job.ticket, scope.origin_ticket);
-        assert_eq!(job.inputs["scope-sha256"], crate::inputs::bounded::digest(&root.join("scope.toml")).unwrap());
+        assert_eq!(job.inputs["scope-sha256"], tool_execution::bounded::digest(&root.join("scope.toml")).unwrap());
         assert_eq!(job.inputs["origin-ticket-type"], "task");
         let candidates =
             discover(root, Some(Path::new("inventory.toml")), Some(Path::new("run/verdict.toml"))).unwrap();
@@ -1189,17 +1192,17 @@ mod tests {
         let mut substituted: Exercise = document(&root.join("run/verdict.toml")).unwrap();
         substituted
             .artifacts
-            .insert("sm_86.c".into(), crate::inputs::bounded::digest(&root.join("run/sm_86.c")).unwrap());
+            .insert("sm_86.c".into(), tool_execution::bounded::digest(&root.join("run/sm_86.c")).unwrap());
         write(root, "run/verdict.toml", toml::to_string(&substituted).unwrap());
         let mut substituted_scope = scope.clone();
-        substituted_scope.exercise_sha256 = crate::inputs::bounded::digest(&root.join("run/verdict.toml")).unwrap();
+        substituted_scope.exercise_sha256 = tool_execution::bounded::digest(&root.join("run/verdict.toml")).unwrap();
         assert!(promote(root, &substituted_scope).unwrap_err().to_string().contains("transformed sources differ"));
         write(root, "run/sm_86.c", original_bank);
         substituted
             .artifacts
-            .insert("sm_86.c".into(), crate::inputs::bounded::digest(&root.join("run/sm_86.c")).unwrap());
+            .insert("sm_86.c".into(), tool_execution::bounded::digest(&root.join("run/sm_86.c")).unwrap());
         write(root, "run/verdict.toml", toml::to_string(&substituted).unwrap());
-        assert_eq!(crate::inputs::bounded::digest(&root.join("run/verdict.toml")).unwrap(), scope.exercise_sha256);
+        assert_eq!(tool_execution::bounded::digest(&root.join("run/verdict.toml")).unwrap(), scope.exercise_sha256);
 
         let mut missing_helper = scope.clone();
         missing_helper.routines.pop();
@@ -1239,17 +1242,17 @@ mod tests {
         let mut exercise: Exercise = document(&root.join("run/verdict.toml")).unwrap();
         exercise.artifacts.insert(
             "projectiles.tsv".into(),
-            crate::inputs::bounded::digest(&root.join("run/projectiles.tsv")).unwrap(),
+            tool_execution::bounded::digest(&root.join("run/projectiles.tsv")).unwrap(),
         );
         write(root, "run/verdict.toml", toml::to_string(&exercise).unwrap());
         let mut resealed = scope.clone();
-        resealed.exercise_sha256 = crate::inputs::bounded::digest(&root.join("run/verdict.toml")).unwrap();
+        resealed.exercise_sha256 = tool_execution::bounded::digest(&root.join("run/verdict.toml")).unwrap();
         assert!(promote(root, &resealed).unwrap_err().to_string().contains("counter bounds"));
 
         let mut inventory: toml::Value = document(&root.join("inventory.toml")).unwrap();
         inventory["routines"].as_array_mut().unwrap()[0]["defined_dependencies"] = toml::Value::Array(vec![]);
         write(root, "inventory.toml", toml::to_string(&inventory).unwrap());
-        resealed.source_inventory_sha256 = crate::inputs::bounded::digest(&root.join("inventory.toml")).unwrap();
+        resealed.source_inventory_sha256 = tool_execution::bounded::digest(&root.join("inventory.toml")).unwrap();
         assert!(promote(root, &resealed).unwrap_err().to_string().contains("lexical dependency inventory differs"));
     }
 }

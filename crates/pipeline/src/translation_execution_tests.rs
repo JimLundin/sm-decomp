@@ -267,6 +267,54 @@ fn closed_installation_rejects_overlapping_roots_and_metadata_budget_before_disp
 }
 
 #[test]
+#[ignore = "explicit disposable-image installation identity control"]
+fn changed_controller_and_helper_images_are_rejected_before_dispatch() -> Result<()> {
+    let project = Project::new()?;
+    let mut installation = project.installation.clone();
+    let copied_controller = project.root.join("installed/controller");
+    fs::copy(&installation.controller.path, &copied_controller)?;
+    installation.controller = installed(copied_controller)?;
+    installation.policy.adapter_sha256 = installation_identity(&installation)?;
+    installation.validate()?;
+
+    let helper = fs::read(&installation.helper.path)?;
+    fs::write(&installation.helper.path, b"changed disposable helper image")?;
+    let helper_error = installation.validate().expect_err("changed helper image admitted").to_string();
+    ensure!(
+        helper_error.contains("installed controller/tool identity changed")
+            && helper_error.contains(installation.helper.path.to_str().unwrap()),
+        "helper control failed for an unrelated prerequisite: {helper_error}"
+    );
+    let changed_helper_sha256 = digest(&installation.helper.path)?;
+    fs::write(&installation.helper.path, helper)?;
+    installation.validate()?;
+
+    fs::write(&installation.controller.path, b"changed disposable controller image")?;
+    let controller_error = installation.validate().expect_err("changed controller image admitted").to_string();
+    ensure!(
+        controller_error.contains("installed controller/tool identity changed")
+            && controller_error.contains(installation.controller.path.to_str().unwrap()),
+        "controller control failed for an unrelated prerequisite: {controller_error}"
+    );
+    ensure!(!installation.state_root.exists(), "identity refusal created an execution state root");
+    write_once(
+        &project.root.join("tool-identity-control.json"),
+        &serde_json::json!({
+            "format": "installed-tool-identity-control-v1",
+            "helper": installation.helper,
+            "controller": installation.controller,
+            "changed_helper_sha256": changed_helper_sha256,
+            "changed_controller_sha256": digest(&installation.controller.path)?,
+            "helper_error": helper_error,
+            "controller_error": controller_error,
+            "valid_installation_checked_before_each_mutation": true,
+            "state_created": false,
+        }),
+    )?;
+    Ok(())
+}
+
+#[test]
 fn partial_apply_and_incomplete_clone_failures_preserve_source_then_retire_once() -> Result<()> {
     for unborn in [false, true] {
         let project = Project::new()?;
@@ -565,7 +613,7 @@ fn preparation_context_and_shared_worker_reservations_obey_inherited_bounds() ->
         crate::acquire_lease_until(&root, 4, 0).is_err() && !root.exists(),
         "expired shared worker reservation created state"
     );
-    let now = crate::inputs::bounded::now_unix_ms()?;
+    let now = tool_execution::bounded::now_unix_ms()?;
     let worker_root = root.join("workers");
     fs::create_dir_all(&worker_root)?;
     let held = OpenOptions::new().create_new(true).append(true).open(worker_root.join("config.lock"))?;
@@ -590,36 +638,39 @@ fn preparation_context_and_shared_worker_reservations_obey_inherited_bounds() ->
 }
 
 pub(crate) fn native_harness_sources() -> Vec<(&'static str, &'static str)> {
-    vec![
-        ("main.rs", include_str!("main.rs")),
-        ("inputs.rs", include_str!("inputs.rs")),
-        ("bounded_inputs.rs", include_str!("bounded_inputs.rs")),
-        ("builds.rs", include_str!("builds.rs")),
-        ("build_cache.rs", include_str!("build_cache.rs")),
-        ("family.rs", include_str!("family.rs")),
-        ("family_model.rs", include_str!("family_model.rs")),
-        ("fixture_format.rs", include_str!("fixture_format.rs")),
-        ("fixture_writes.rs", include_str!("fixture_writes.rs")),
-        ("fixture_cli.rs", include_str!("fixture_cli.rs")),
-        ("translation_native.rs", include_str!("translation_native.rs")),
-        ("source_inventory.rs", include_str!("source_inventory.rs")),
-        ("batch.rs", include_str!("batch.rs")),
-        ("family_header.c", include_str!("family_header.c")),
-        ("family_pointer.c", include_str!("family_pointer.c")),
-        ("dispatcher_pointer.c", include_str!("dispatcher_pointer.c")),
-        ("dispatcher_plm.c", include_str!("dispatcher_plm.c")),
-        ("dispatcher_eproj.c", include_str!("dispatcher_eproj.c")),
-        ("dispatcher_host.c", include_str!("dispatcher_host.c")),
-        ("plm_fixtures.rs", include_str!("plm_fixtures.rs")),
-        ("cleanup.rs", include_str!("cleanup.rs")),
-        ("fixture_execution.rs", include_str!("fixture_execution.rs")),
-        ("fixture_worker.rs", include_str!("fixture_worker.rs")),
-        ("metrics.rs", include_str!("metrics.rs")),
-        ("resource_sampler.rs", include_str!("resource_sampler.rs")),
-    ]
+    crate::source_stamps::all()
+}
+
+pub(crate) fn copy_native_source_snapshot(current: &Path, destination: &Path) -> Result<()> {
+    fn copy_port(current: &Path, destination: &Path, relative: &Path, depth: usize) -> Result<()> {
+        ensure!(depth <= 32, "native proof source tree is too deep");
+        for path in tool_execution::bounded::entries(&current.join(relative))? {
+            tool_execution::bounded::safe(&path)?;
+            let relative = path.strip_prefix(current)?;
+            if path.is_dir() {
+                copy_port(current, destination, relative, depth + 1)?;
+            } else {
+                fs::create_dir_all(destination.join(relative).parent().context("native source parent missing")?)?;
+                tool_execution::bounded::immutable_bytes(
+                    &destination.join(relative),
+                    &tool_execution::bounded::read(&path)?,
+                )?;
+            }
+        }
+        Ok(())
+    }
+    copy_port(current, destination, Path::new("crates/port/src"), 0)?;
+    for (name, source) in native_harness_sources() {
+        let path = destination.join(name);
+        fs::create_dir_all(path.parent().context("native harness parent missing")?)?;
+        tool_execution::bounded::immutable_bytes(&path, source.as_bytes())?;
+    }
+    Ok(())
 }
 
 pub(crate) fn native_installation(root: &Path) -> Result<Installation> {
+    crate::initialize_test_binary_identity()?;
+    let offline = crate::offline::families()?;
     let current = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .context("workspace missing")?
@@ -632,16 +683,9 @@ pub(crate) fn native_installation(root: &Path) -> Result<Installation> {
     fs::create_dir_all(repository.join("crates/port/src"))?;
     fs::create_dir_all(repository.join("tools/port"))?;
     let manifest_path = Path::new("tools/port/enemy-jump-instructions.smf");
-    let manifest = crate::fixture_format::read(&current.join(manifest_path))?;
+    let manifest = offline_verification::fixtures::read(&current.join(manifest_path))?;
     fs::copy(current.join(manifest_path), repository.join(manifest_path))?;
-    for source in
-        crate::inputs::canonical_sources(&current, &[current.join(&manifest.rust_module)], &manifest.rust_imports)?
-    {
-        fs::copy(&source, repository.join(source.strip_prefix(&current)?))?;
-    }
-    for (name, text) in native_harness_sources() {
-        fs::write(repository.join("crates/pipeline/src").join(name), text)?;
-    }
+    copy_native_source_snapshot(&current, &repository)?;
     fs::copy(current.join("tools/dependencies.toml"), repository.join("tools/dependencies.toml"))?;
     fs::write(
         repository.join("tools/port/batch.toml"),
@@ -653,27 +697,32 @@ pub(crate) fn native_installation(root: &Path) -> Result<Installation> {
     let provenance: native::NativeProvenance = tool_execution::bounded::object(
         &current.join(".scratch/translation-scope-execution/native-gates/provenance/provenance.toml"),
     )?;
-    let contract = native::contract_for_family(
-        &repository,
-        manifest_path,
-        Asset { file: inventory.clone(), sha256: digest(&inventory)? },
+    let contract = offline.declare_native(native::NativeDeclaration {
+        checkout: &repository,
+        kind: native::NativeDeclarationKind::Family(manifest_path),
+        source_inventory: Asset { file: inventory.clone(), sha256: digest(&inventory)? },
         provenance,
-        native::NativeLimits {
+        compiler_limits: native::NativeLimits {
             timeout_seconds: 120,
             writable_bytes: 128 * 1024 * 1024,
             stdout_bytes: 4096,
             stderr_bytes: 256 * 1024,
             stdin_bytes: 0,
         },
-        native::NativeLimits {
+        fixture_limits: native::NativeLimits {
             timeout_seconds: 5,
             writable_bytes: 512 * 1024,
             stdout_bytes: 4096,
             stderr_bytes: 4096,
             stdin_bytes: 0,
         },
+        deadline_unix_ms: None,
+        max_input_bytes: tool_execution::bounded::DEFAULT_BYTES,
+    })?;
+    let prepared = offline.prepare_native(
+        native::NativePreparation::new(&repository, &pinned, &contract),
+        &crate::translation_native::ScopeApproval,
     )?;
-    let prepared = native::prepare(&repository, &pinned, &contract)?;
     git(&repository, &["init", "-q"])?;
     git(&repository, &["config", "user.name", "Native supervisor proof"])?;
     git(&repository, &["config", "user.email", "proof@invalid"])?;
@@ -684,9 +733,9 @@ pub(crate) fn native_installation(root: &Path) -> Result<Installation> {
         &repository,
         baseline.clone(),
         &[&manifest.rust_module],
-        sealed(&vec![&prepared.dependencies_sha256])?,
-        sealed(&vec![&prepared.verification_sha256])?,
-        sealed(&vec![&prepared.source])?,
+        sealed(&vec![prepared.dependencies_sha256()])?,
+        sealed(&vec![prepared.verification_sha256()])?,
+        sealed(&vec![prepared.source()])?,
     )?;
     policy.scope_id = "enemy-jump-instructions-complete-supervisor-proof".into();
     policy.verification_stages = vec![VerificationStage::Focused, VerificationStage::Offline];
@@ -751,7 +800,7 @@ pub(crate) fn native_installation(root: &Path) -> Result<Installation> {
 #[test]
 #[ignore = "bounded complete real actual-C supervisor proof; requires pinned source, ROM and confinement"]
 fn complete_native_supervisor_rewrite_verify_integrate_retire_publish_and_recover() -> Result<()> {
-    let _ = crate::BINARY_SHA256.set(digest(&std::env::current_exe()?)?);
+    crate::initialize_test_binary_identity()?;
     let root = PathBuf::from(std::env::var("SM_SUPERVISOR_NATIVE_PROOF")?);
     let installation = native_installation(&root)?;
     let started = Instant::now();
@@ -789,14 +838,21 @@ fn complete_native_supervisor_rewrite_verify_integrate_retire_publish_and_recove
         let Receipt::Native { prepared, source, receipt } = &gate.receipts[0] else {
             bail!("native gate changed domain");
         };
-        let verdict = native::authenticate(prepared, source, receipt)?;
+        let authenticated = prepared.authenticate(native::NativeEvidence { checkout: source, receipt })?;
+        let verdict = authenticated.report();
         ensure!(verdict.verified_cases == 16 && verdict.verified_routines == 2, "actual-C complete coverage differs");
         cases = verdict.verified_cases;
-        receipt.visit_operations(|operation| {
-            referenced_producers += 1;
-            producers.insert(operation.context.operation_key.clone());
-            Ok(())
-        })?;
+        referenced_producers += receipt.operation_count()?;
+        producers.extend(
+            authenticated
+                .references()
+                .iter()
+                .filter(|reference| {
+                    reference.path.starts_with(&receipt.operation_root)
+                        && reference.path.file_name().is_some_and(|name| name == "result.json")
+                })
+                .map(|reference| reference.path.clone()),
+        );
     }
     ensure!(
         producers.len() == 34 && referenced_producers == 136,
@@ -866,7 +922,7 @@ fn complete_native_supervisor_rewrite_verify_integrate_retire_publish_and_recove
 #[test]
 #[ignore = "read-only authentication of the retained complete supervisor proof; no producer execution"]
 fn retained_complete_native_supervisor_authenticates_without_producers() -> Result<()> {
-    let _ = crate::BINARY_SHA256.set(digest(&std::env::current_exe()?)?);
+    crate::initialize_test_binary_identity()?;
     let root = PathBuf::from(std::env::var("SM_SUPERVISOR_NATIVE_PROOF")?);
     let installation: Installation = read(&root.join("installation.json"))?;
     let run_id = sha256(format!("translation-execution-run-v1:{}", sealed(&installation.policy)?));

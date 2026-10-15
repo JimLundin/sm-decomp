@@ -1,22 +1,22 @@
 # Whole Ridley fixture adapter integration
 
-Owned adapter: `crates/pipeline/src/ridley_subsystem_adapter.rs`, public
-`build`, `case`, `check` and crate-visible `check_instrumented_units`;
-dependency contract `rust-ridley-subsystem-v1`.
+Owned adapter: `crates/offline-verification/src/ridley_subsystem_adapter.rs`;
+dependency contract `rust-ridley-subsystem-v1`. Its build, case and admission
+operations are private. Pipeline calls `OfflineFamilies::verify` and
+`OfflineFamilies::authenticate` through `offline-verification`.
 Fixture generator: `ridley_subsystem_fixtures::generate(checkout, rom, output)`.
 Manifest: `tools/port/ridley-subsystem.smf`, callback adapter `ridley-subsystem`.
 
-The root coordinator owns `main.rs`, `family.rs`, batch catalog, public port
-exports and live registration. This handoff supplies the required routing while
-keeping those shared files untouched in the implementation worktree.
+Pipeline owns CLI generation, batch selection and Live composition. The Offline
+verification crate owns the catalog, recipe, Fixture execution and evidence
+admission described below.
 
 ## Shared routing
 
-1. Add `mod ridley_subsystem_adapter; mod ridley_subsystem_fixtures;` to pipeline
-   `main.rs`. Expose a bounded fixture generation command using the generator
-   above. The manifest is offline-only; live eligibility remains false.
-2. In `family::verify`, recognize request adapter `ridley-subsystem`, validate it
-   agrees with the manifest, and route build/case to the new adapter. The existing
+1. Pipeline exposes bounded Fixture generation using the generator above. The
+   manifest is offline-only; live eligibility remains false.
+2. `OfflineFamilies::verify` recognizes request adapter `ridley-subsystem`,
+   validates agreement with the manifest, and selects the private recipe. The
    `fixture_execution::run` owns dependency scheduling, the shared leases and
    independent preloaded C/Rust helpers. It may use Linux x86_64 fork or fresh
    execution. Every fixture starts Rust before C, and failures block successors.
@@ -24,13 +24,13 @@ keeping those shared files untouched in the implementation worktree.
    from `CaseRecord::callbacks`. Record seven rejected ABI controls when the
    build completes and set `remaining_c_gameplay_callbacks` to the checked sum
    of these per-case counts. Do not set remaining C callbacks to zero.
-4. In `family::authenticate`, recognize `rust-ridley-subsystem-v1`, require its
+4. `OfflineFamilies::authenticate` recognizes `rust-ridley-subsystem-v1`, requires its
    callback adapter `ridley-subsystem`, and check all four sealed binaries:
    `ridley`, `c`, `rust`, `libridley.a`. All three executable paths contain the
    same linked image; `fixture_execution` launches separate helper processes and
    independently forked subject children. Actual C never routes through Rust.
-5. Require the new adapter/generator/ABI/host template, canonical headless source,
-   family/batch/cleanup, executor/worker, metrics and sampler source seals. The
+5. Require adapter/generator/ABI/host template, canonical headless source,
+   application, source-analysis and execution source seals from their owners. The
    embedded worker is part of `libridley.a`; require `fixture-worker.rs` and its
    exact worker-source hash instead of an extra `libfixture_worker.a` artifact.
    Allow this explicit contract at the fork-adapter check.

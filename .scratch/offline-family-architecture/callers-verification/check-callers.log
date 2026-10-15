@@ -1,0 +1,193 @@
+crates/translation-execution/src/compiler_runtime.rs:6:18: warning: unused import: `PathBuf`
+warning: `translation-execution` (lib) generated 1 warning (run `cargo fix --lib -p translation-execution` to apply 1 suggestion)
+crates/offline-verification/src/builds.rs:15:20: warning: unused imports: `CargoBuildRequest`, `cargo_build`, `exec`, and `execute_timeout`
+crates/offline-verification/src/builds.rs:894:5: warning: unused imports: `discover as strict_compiler_runtime` and `discover_until as strict_compiler_runtime_until`
+crates/offline-verification/src/callback.rs:5:20: warning: unused import: `Sha256`
+crates/offline-verification/src/family.rs:6:20: warning: unused import: `Sha256`
+crates/offline-verification/src/family.rs:17:32: warning: unused import: `authenticate_inventory`
+crates/offline-verification/src/plm_spawn.rs:5:20: warning: unused import: `Sha256`
+crates/offline-verification/src/recipe.rs:18:5: warning: unused imports: `CompilerCommand`, `FixtureCommand`, `FixtureKind`, `FixtureSelection`, `c_compiler_command`, `compiler_files`, `confined_fixture_program`, `fixture_command`, `fixture_output_path`, `fixture_program`, and `rust_compiler_command`
+crates/offline-verification/src/ridley_subsystem_adapter.rs:8:20: warning: unused import: `Sha256`
+crates/offline-verification/src/callback.rs:5:12: warning: unused import: `Digest`
+crates/offline-verification/src/family.rs:6:12: warning: unused import: `Digest`
+crates/offline-verification/src/plm_spawn.rs:5:12: warning: unused import: `Digest`
+crates/offline-verification/src/ridley_subsystem_adapter.rs:8:12: warning: unused import: `Digest`
+crates/offline-verification/src/builds.rs:69:5: warning: variants `Family`, `Callback`, `Plm`, and `Ridley` are never constructed
+crates/offline-verification/src/builds.rs:164:19: warning: struct `ProducerReservation` is never constructed
+crates/offline-verification/src/builds.rs:170:15: warning: function `authenticate_reservations` is never used
+crates/offline-verification/src/builds.rs:248:19: warning: methods `begin_fixture_group`, `finish_fixture_group`, and `fixture` are never used
+crates/offline-verification/src/callback.rs:432:15: warning: function `confined_case` is never used
+crates/offline-verification/src/callback.rs:506:4: warning: function `unpack_snapshots` is never used
+crates/offline-verification/src/callback.rs:510:15: warning: function `authenticate_packed_snapshots` is never used
+crates/offline-verification/src/callback.rs:514:4: warning: function `snapshots` is never used
+crates/offline-verification/src/family.rs:33:15: warning: function `field` is never used
+crates/offline-verification/src/family.rs:36:15: warning: function `array` is never used
+crates/offline-verification/src/family.rs:110:15: warning: function `prepare_case` is never used
+crates/offline-verification/src/family.rs:198:15: warning: function `build_confined` is never used
+crates/offline-verification/src/family.rs:672:15: warning: function `confined_case` is never used
+crates/offline-verification/src/family.rs:764:9: warning: field `paths` is never read
+crates/offline-verification/src/family.rs:772:22: warning: associated items `MAX_FILES` and `validate` are never used
+crates/offline-verification/src/family.rs:786:15: warning: function `inventory_with_limits` is never used
+crates/offline-verification/src/family.rs:971:15: warning: function `authenticate_with_source_limits` is never used
+crates/offline-verification/src/family.rs:980:15: warning: function `authenticate_with_source_until` is never used
+crates/offline-verification/src/fixture_execution.rs:43:15: warning: function `waves` is never used
+crates/offline-verification/src/fixture_execution.rs:77:15: warning: function `run_waves` is never used
+crates/offline-verification/src/inputs.rs:147:15: warning: function `canonical_sources` is never used
+crates/offline-verification/src/inputs.rs:151:15: warning: function `canonical_sources_until` is never used
+crates/offline-verification/src/inputs.rs:161:4: warning: function `canonical_sources_bounded` is never used
+crates/offline-verification/src/plm_spawn.rs:261:15: warning: function `confined_case` is never used
+crates/offline-verification/src/recipe.rs:24:17: warning: enum `Recipe` is never used
+crates/offline-verification/src/recipe.rs:36:7: warning: constant `GENERATED_PLM` is never used
+crates/offline-verification/src/recipe.rs:38:15: warning: function `input_inventory_limit` is never used
+crates/offline-verification/src/recipe.rs:44:15: warning: function `dependency_digest` is never used
+crates/offline-verification/src/recipe.rs:52:15: warning: function `prepare_generated_plm` is never used
+crates/offline-verification/src/recipe.rs:56:4: warning: function `relative` is never used
+crates/offline-verification/src/recipe.rs:60:4: warning: function `file` is never used
+crates/offline-verification/src/recipe.rs:66:4: warning: function `asset_path` is never used
+crates/offline-verification/src/recipe.rs:76:4: warning: function `check_asset` is never used
+crates/offline-verification/src/recipe.rs:82:4: warning: function `read_fixture` is never used
+crates/offline-verification/src/recipe.rs:86:4: warning: function `plain` is never used
+crates/offline-verification/src/recipe.rs:99:15: warning: function `for_family` is never used
+crates/offline-verification/src/recipe.rs:106:15: warning: function `for_adapter` is never used
+crates/offline-verification/src/recipe.rs:127:4: warning: function `recipe_for_entry` is never used
+crates/offline-verification/src/recipe.rs:174:19: warning: struct `Registration` is never constructed
+crates/offline-verification/src/recipe.rs:179:4: warning: function `registered_entry` is never used
+crates/offline-verification/src/recipe.rs:210:15: warning: function `registration` is never used
+crates/offline-verification/src/recipe.rs:234:15: warning: function `manifest` is never used
+crates/offline-verification/src/recipe.rs:238:15: warning: function `normalize_manifest` is never used
+crates/offline-verification/src/recipe.rs:270:15: warning: function `retained_manifest` is never used
+crates/offline-verification/src/recipe.rs:277:15: warning: function `harness` is never used
+crates/offline-verification/src/recipe.rs:309:15: warning: function `freeze_assets` is never used
+crates/offline-verification/src/recipe.rs:329:15: warning: function `full_c` is never used
+crates/offline-verification/src/recipe.rs:333:15: warning: function `generated` is never used
+crates/offline-verification/src/recipe.rs:337:15: warning: function `adapter` is never used
+crates/offline-verification/src/recipe.rs:347:15: warning: function `manifest_bytes` is never used
+crates/offline-verification/src/recipe.rs:356:15: warning: function `source_symbols` is never used
+crates/offline-verification/src/recipe.rs:378:15: warning: function `build` is never used
+crates/offline-verification/src/recipe.rs:399:17: warning: enum `FixtureExecution` is never used
+crates/offline-verification/src/recipe.rs:404:15: warning: function `fixture` is never used
+crates/offline-verification/src/recipe.rs:443:15: warning: function `verdict_fields` is never used
+crates/offline-verification/src/recipe.rs:465:15: warning: function `abi` is never used
+crates/offline-verification/src/recipe.rs:471:15: warning: function `authenticate_fixture_artifacts` is never used
+crates/offline-verification/src/recipe.rs:480:8: warning: struct `AnimationPlan` is never constructed
+crates/offline-verification/src/recipe.rs:491:15: warning: function `direct_manifest` is never used
+crates/offline-verification/src/recipe_commands.rs:9:17: warning: enum `FixtureSelection` is never used
+crates/offline-verification/src/recipe_commands.rs:15:17: warning: enum `FixtureKind` is never used
+crates/offline-verification/src/recipe_commands.rs:25:19: warning: struct `FixtureCommand` is never constructed
+crates/offline-verification/src/recipe_commands.rs:30:15: warning: function `fixture_command` is never used
+crates/offline-verification/src/recipe_commands.rs:108:15: warning: function `fixture_program` is never used
+crates/offline-verification/src/recipe_commands.rs:121:15: warning: function `confined_fixture_program` is never used
+crates/offline-verification/src/recipe_commands.rs:166:15: warning: function `fixture_output_path` is never used
+crates/offline-verification/src/recipe_commands.rs:180:19: warning: struct `CompilerCommand` is never constructed
+crates/offline-verification/src/recipe_commands.rs:187:15: warning: function `compiler_files` is never used
+crates/offline-verification/src/recipe_commands.rs:227:15: warning: function `rust_compiler_command` is never used
+crates/offline-verification/src/recipe_commands.rs:244:15: warning: function `c_compiler_command` is never used
+crates/offline-verification/src/ridley_subsystem_adapter.rs:639:15: warning: function `confined_case` is never used
+warning: `offline-verification` (lib) generated 83 warnings (run `cargo fix --lib -p offline-verification` to apply 8 suggestions)
+    Checking pipeline v0.1.0 (/home/jim/sm-decomp-offline-callers/crates/pipeline)
+crates/pipeline/src/translation_execution.rs:5:38: error[E0432]: unresolved import `crate::family_model`: could not find `family_model` in the crate root
+crates/pipeline/src/translation_native.rs:5:33: error[E0432]: unresolved imports `crate::family`, `crate::family_model`, `crate::inputs`: no `family` in the root, could not find `family_model` in the crate root, no `inputs` in the root
+crates/pipeline/src/translation_native_recipe.rs:4:12: error[E0432]: unresolved import `crate::family_model`: could not find `family_model` in the crate root
+crates/pipeline/src/translation_native_operations.rs:3:12: error[E0432]: unresolved import `crate::inputs`: could not find `inputs` in the crate root
+crates/pipeline/src/translation_original.rs:5:24: error[E0432]: unresolved import `crate::inputs`: could not find `inputs` in the crate root
+crates/pipeline/src/translation_original_prepare.rs:6:5: error[E0432]: unresolved imports `crate::family_model`, `crate::inputs`: could not find `family_model` in the crate root, could not find `inputs` in the crate root
+crates/pipeline/src/translation_native_recipe.rs:427:9: error[E0432]: unresolved import `builds::StrictFixture`
+crates/pipeline/src/translation_execution.rs:153:25: error[E0433]: cannot find `family_model` in the crate root: could not find `family_model` in the crate root
+crates/pipeline/src/translation_migration.rs:705:35: error[E0433]: cannot find `fixture_format` in the crate root: could not find `fixture_format` in the crate root
+crates/pipeline/src/translation_migration.rs:706:23: error[E0433]: cannot find `family` in the crate root: could not find `family` in the crate root
+crates/pipeline/src/translation_native_recipe.rs:37:86: error[E0433]: cannot find `family_model` in the crate root: could not find `family_model` in the crate root
+crates/pipeline/src/translation_native_recipe.rs:38:32: error[E0433]: cannot find `plm_fixtures` in the crate root: could not find `plm_fixtures` in the crate root
+crates/pipeline/src/translation_native_recipe.rs:126:27: error[E0433]: cannot find `fixture_format` in the crate root: could not find `fixture_format` in the crate root
+crates/pipeline/src/translation_native_recipe.rs:136:43: error[E0433]: cannot find `plm_spawn` in the crate root: could not find `plm_spawn` in the crate root
+crates/pipeline/src/translation_native_recipe.rs:140:44: error[E0433]: cannot find `plm_fixtures` in the crate root: could not find `plm_fixtures` in the crate root
+crates/pipeline/src/translation_native_recipe.rs:142:37: error[E0433]: cannot find `fixture_format` in the crate root: could not find `fixture_format` in the crate root
+crates/pipeline/src/translation_native_recipe.rs:142:67: error[E0433]: cannot find `fixture_format` in the crate root: could not find `fixture_format` in the crate root
+crates/pipeline/src/translation_native_recipe.rs:149:20: error[E0433]: cannot find `fixture_format` in the crate root: could not find `fixture_format` in the crate root
+crates/pipeline/src/translation_native_recipe.rs:149:50: error[E0433]: cannot find `fixture_format` in the crate root: could not find `fixture_format` in the crate root
+crates/pipeline/src/translation_native_recipe.rs:281:16: error[E0433]: cannot find `fixture_format` in the crate root: could not find `fixture_format` in the crate root
+crates/pipeline/src/translation_native_recipe.rs:317:20: error[E0433]: cannot find `callback` in the crate root: could not find `callback` in the crate root
+crates/pipeline/src/translation_native_recipe.rs:320:20: error[E0433]: cannot find `plm_spawn` in the crate root: could not find `plm_spawn` in the crate root
+crates/pipeline/src/translation_native_recipe.rs:322:46: error[E0433]: cannot find `ridley_subsystem_adapter` in the crate root: could not find `ridley_subsystem_adapter` in the crate root
+crates/pipeline/src/translation_native_recipe.rs:340:20: error[E0433]: cannot find `family_model` in the crate root: could not find `family_model` in the crate root
+crates/pipeline/src/translation_native_recipe.rs:343:20: error[E0433]: cannot find `callback` in the crate root: could not find `callback` in the crate root
+crates/pipeline/src/translation_native_recipe.rs:345:43: error[E0433]: cannot find `plm_spawn` in the crate root: could not find `plm_spawn` in the crate root
+crates/pipeline/src/translation_native_recipe.rs:346:46: error[E0433]: cannot find `ridley_subsystem_adapter` in the crate root: could not find `ridley_subsystem_adapter` in the crate root
+crates/pipeline/src/translation_native_recipe.rs:462:21: error[E0433]: cannot find `callback` in the crate root: could not find `callback` in the crate root
+crates/pipeline/src/translation_native_recipe.rs:464:44: error[E0433]: cannot find `plm_spawn` in the crate root: could not find `plm_spawn` in the crate root
+crates/pipeline/src/translation_native_recipe.rs:528:31: error[E0433]: cannot find `fixture_format` in the crate root: could not find `fixture_format` in the crate root
+crates/pipeline/src/translation_native.rs:293:12: error[E0433]: cannot find `fixture_format` in the crate root: could not find `fixture_format` in the crate root
+crates/pipeline/src/translation_native.rs:430:27: error[E0433]: cannot find `fixture_format` in the crate root: could not find `fixture_format` in the crate root
+crates/pipeline/src/translation_native.rs:551:24: error[E0433]: cannot find `family_model` in the crate root: could not find `family_model` in the crate root
+crates/pipeline/src/translation_native.rs:558:41: error[E0433]: cannot find `fixture_format` in the crate root: could not find `fixture_format` in the crate root
+crates/pipeline/src/translation_native.rs:748:57: error[E0433]: cannot find `fixture_format` in the crate root: could not find `fixture_format` in the crate root
+crates/pipeline/src/translation_native.rs:768:73: error[E0433]: cannot find `fixture_format` in the crate root: could not find `fixture_format` in the crate root
+crates/pipeline/src/translation_native.rs:1020:39: error[E0433]: cannot find `family_model` in the crate root: could not find `family_model` in the crate root
+crates/pipeline/src/translation_native.rs:1043:35: error[E0433]: cannot find `fixture_execution` in the crate root: could not find `fixture_execution` in the crate root
+crates/pipeline/src/translation_native.rs:1224:16: error[E0433]: cannot find `family_model` in the crate root: could not find `family_model` in the crate root
+crates/pipeline/src/translation_native.rs:1232:27: error[E0433]: cannot find `fixture_format` in the crate root: could not find `fixture_format` in the crate root
+crates/pipeline/src/translation_native.rs:1234:16: error[E0433]: cannot find `plm_spawn` in the crate root: could not find `plm_spawn` in the crate root
+crates/pipeline/src/translation_native.rs:1291:53: error[E0433]: cannot find `family_model` in the crate root: could not find `family_model` in the crate root
+crates/pipeline/src/translation_native.rs:1291:87: error[E0433]: cannot find `family_model` in the crate root: could not find `family_model` in the crate root
+crates/pipeline/src/translation_native.rs:1461:16: error[E0433]: cannot find `callback` in the crate root: could not find `callback` in the crate root
+crates/pipeline/src/translation_native.rs:1623:27: error[E0433]: cannot find `fixture_format` in the crate root: could not find `fixture_format` in the crate root
+crates/pipeline/src/translation_original.rs:176:12: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_original.rs:296:28: error[E0433]: cannot find `fixture_format` in the crate root: could not find `fixture_format` in the crate root
+crates/pipeline/src/translation_original.rs:522:16: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_original_prepare.rs:302:16: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/benchmark.rs:224:33: error[E0425]: cannot find type `CacheResult` in the crate root: not found in the crate root
+crates/pipeline/src/benchmark.rs:413:26: error[E0425]: cannot find type `CacheSeal` in the crate root: not found in the crate root
+crates/pipeline/src/translation_execution.rs:1293:29: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_execution.rs:1295:27: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_execution.rs:1311:52: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_execution.rs:1343:36: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_execution.rs:1523:44: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_execution.rs:1526:16: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_execution.rs:1590:31: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_execution.rs:1625:29: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_execution.rs:1626:16: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_execution.rs:1633:28: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_execution.rs:1635:39: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_execution.rs:1637:32: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_migration.rs:40:46: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_migration.rs:198:12: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_migration.rs:1188:27: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_migration.rs:1191:12: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_migration.rs:1532:12: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_migration.rs:1554:24: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_migration.rs:1586:20: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_migration.rs:1625:20: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_migration.rs:2886:12: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_migration.rs:3575:12: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_migration.rs:3619:12: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_native_recipe.rs:46:74: error[E0425]: cannot find type `FamilyEntry` in module `batch`: not found in `batch`
+crates/pipeline/src/translation_native_recipe.rs:111:27: error[E0422]: cannot find struct, variant or union type `FamilyEntry` in module `batch`: not found in `batch`
+crates/pipeline/src/translation_native_recipe.rs:166:23: error[E0425]: cannot find type `FamilyEntry` in module `batch`: not found in `batch`
+crates/pipeline/src/translation_native_recipe.rs:313:25: error[E0425]: cannot find type `StrictExecution` in module `builds`: not found in `builds`
+crates/pipeline/src/translation_native_recipe.rs:339:25: error[E0425]: cannot find type `StrictExecution` in module `builds`: not found in `builds`
+crates/pipeline/src/translation_native_recipe.rs:449:24: error[E0425]: cannot find function `strict_fixture_program` in module `builds`: not found in `builds`
+crates/pipeline/src/translation_native_recipe.rs:499:13: error[E0425]: cannot find function `strict_fixture_program` in module `builds`: not found in `builds`
+crates/pipeline/src/translation_native.rs:912:21: error[E0425]: cannot find function `strict_compiler_runtime` in module `builds`: not found in `builds`
+crates/pipeline/src/translation_native.rs:914:21: error[E0425]: cannot find function `strict_compiler_runtime_until` in module `builds`: not found in `builds`
+crates/pipeline/src/translation_native.rs:966:33: error[E0422]: cannot find struct, variant or union type `StrictExecution` in module `builds`: not found in `builds`
+crates/pipeline/src/translation_native.rs:1197:17: error[E0425]: cannot find function `authenticate_reservations` in module `builds`: not found in `builds`
+crates/pipeline/src/translation_native.rs:1265:33: error[E0425]: cannot find type `StrictInvocation` in module `builds`: not found in `builds`
+crates/pipeline/src/translation_native.rs:1302:28: error[E0425]: cannot find type `ProducerReservation` in module `builds`: not found in `builds`
+crates/pipeline/src/translation_native.rs:1311:29: error[E0425]: cannot find type `StrictInvocation` in module `builds`: not found in `builds`
+crates/pipeline/src/translation_native.rs:1451:35: error[E0425]: cannot find function `strict_output_path` in module `builds`: not found in `builds`
+crates/pipeline/src/translation_native.rs:1463:31: error[E0422]: cannot find struct, variant or union type `ProducerReservation` in module `builds`: not found in `builds`
+crates/pipeline/src/translation_native.rs:1466:33: error[E0425]: cannot find function `retained_producer_bytes` in module `builds`: not found in `builds`
+crates/pipeline/src/translation_migration.rs:694:26: error[E0603]: function import `catalog` is private: private function import
+crates/pipeline/src/translation_migration.rs:701:28: error[E0603]: function import `entry` is private: private function import
+crates/pipeline/src/translation_native_recipe.rs:95:25: error[E0603]: struct import `Catalog` is private: private struct import
+crates/pipeline/src/translation_native_recipe.rs:99:28: error[E0603]: function import `entry` is private: private function import
+crates/pipeline/src/translation_native.rs:533:35: error[E0603]: struct import `Catalog` is private: private struct import
+crates/pipeline/src/translation_native.rs:535:32: error[E0603]: function import `entry` is private: private function import
+crates/pipeline/src/translation_original.rs:277:34: error[E0603]: function import `catalog` is private: private function import
+crates/pipeline/src/translation_original.rs:288:28: error[E0603]: function import `entry` is private: private function import
+crates/pipeline/src/translation_original_prepare.rs:300:30: error[E0603]: function import `catalog` is private: private function import
+crates/pipeline/src/translation_original_prepare.rs:335:32: error[E0603]: function import `entry` is private: private function import
+crates/pipeline/src/translation_execution.rs:1465:47: error[E0599]: no method named `clone` found for struct `std::path::Path` in the current scope
+crates/pipeline/src/translation_execution.rs:1483:43: error[E0599]: no method named `clone` found for struct `std::path::Path` in the current scope
+crates/pipeline/src/translation_execution.rs:1535:13: error[E0308]: mismatched types: expected `PathBuf`, found `Path`
+crates/pipeline/src/translation_native_recipe.rs:102:62: error[E0308]: mismatched types: expected `String`, found `&str`
+error: could not compile `pipeline` (bin "sm-pipeline") due to 105 previous errors

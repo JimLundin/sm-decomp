@@ -357,6 +357,11 @@ fn nonempty(value: &str, kind: &str) -> Result<()> {
 fn hex(value: &str, length: usize) -> bool {
     value.len() == length && value.bytes().all(|v| v.is_ascii_hexdigit())
 }
+fn identifier(symbol: &str) -> bool {
+    let mut chars = symbol.chars();
+    chars.next().is_some_and(|c| c.is_ascii_alphabetic() || c == '_')
+        && chars.all(|c| c.is_ascii_alphanumeric() || c == '_')
+}
 fn relative(value: &str) -> bool {
     !value.is_empty() && Path::new(value).components().all(|c| matches!(c, Component::Normal(_)))
 }
@@ -475,7 +480,7 @@ fn load_inventory(root: &Path, checked_source: Option<&Path>) -> Result<(Source,
     let mut keys = BTreeSet::new();
     let mut routines = Vec::new();
     for routine in inventory.routines {
-        ensure!(crate::family::identifier(&routine.symbol), "invalid C inventory routine {}", routine.symbol);
+        ensure!(identifier(&routine.symbol), "invalid C inventory routine {}", routine.symbol);
         ensure!(
             sm_source(&routine.source) && source_files.contains(&routine.source),
             "routine source is outside pinned sm_*.c files"
@@ -501,7 +506,7 @@ fn load_inventory(root: &Path, checked_source: Option<&Path>) -> Result<(Source,
             .chain(&routine.defined_dependencies)
             .chain(&routine.external_or_macro_calls)
         {
-            ensure!(crate::family::identifier(name), "invalid lexical call {name}");
+            ensure!(identifier(name), "invalid lexical call {name}");
         }
         if let Some(address) = &routine.original_address {
             ensure!(address.starts_with("0x") && hex(&address[2..], 6), "invalid C routine address");
@@ -563,17 +568,17 @@ fn add_declarations(root: &Path, routines: &mut [Routine], notices: &mut Vec<Str
     let known = routines.iter().map(|r| r.symbol.clone()).collect::<BTreeSet<_>>();
     let mut declarations: BTreeMap<String, Vec<String>> = BTreeMap::new();
     for path in paths {
-        if path.extension().is_none_or(|v| v != crate::fixture_format::EXTENSION) {
+        if path.extension().is_none_or(|v| v != offline_verification::fixtures::EXTENSION) {
             continue;
         }
-        let declaration = crate::fixture_format::read(&path)
+        let declaration = offline_verification::fixtures::read(&path)
             .with_context(|| format!("invalid declaration manifest {}", path.display()))?;
         if declaration.family.is_empty() {
             continue;
         }
         let name = path.strip_prefix(root)?.to_string_lossy().into_owned();
         for routine in declaration.routines {
-            ensure!(crate::family::identifier(&routine.symbol), "invalid declared symbol in {name}");
+            ensure!(routine.has_valid_symbol(), "invalid declared symbol in {name}");
             if known.contains(&routine.symbol) {
                 let manifests = declarations.entry(routine.symbol).or_default();
                 if !manifests.contains(&name) {
@@ -608,7 +613,7 @@ fn read_registry(options: &Options) -> Result<Registry> {
     let mut definitions = BTreeSet::new();
     for routine in &registry.routines {
         ensure!(
-            crate::family::identifier(&routine.symbol)
+            identifier(&routine.symbol)
                 && sm_source(&routine.source)
                 && routine.line > 0
                 && routine.line as u64 <= MAX_METADATA
@@ -679,10 +684,7 @@ fn validate_update_shape(update: &Update) -> Result<()> {
     ensure!(!update.routines.is_empty(), "progress update must name at least one C routine");
     let mut symbols = BTreeSet::new();
     for symbol in &update.routines {
-        ensure!(
-            crate::family::identifier(symbol) && symbols.insert(symbol),
-            "invalid or duplicate progress routine {symbol}"
-        );
+        ensure!(identifier(symbol) && symbols.insert(symbol), "invalid or duplicate progress routine {symbol}");
     }
     ensure!(!update.evidence.is_empty(), "progress update must retain evidence");
     let mut paths = BTreeSet::new();

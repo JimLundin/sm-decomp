@@ -1,7 +1,11 @@
-use crate::{
-    atomic_toml, coverage, digest, family, preflight, readiness_contract as contract, readiness_origins as origins,
-    readiness_run::{Run, safe_artifact},
-};
+use crate::atomic_toml;
+use crate::coverage;
+use crate::digest;
+use crate::preflight;
+use crate::readiness_contract as contract;
+use crate::readiness_origins as origins;
+use crate::readiness_run::Run;
+use crate::readiness_run::safe_artifact;
 use anyhow::{Context, Result, ensure};
 use std::{
     collections::BTreeMap,
@@ -58,7 +62,7 @@ fn assertions(case: &str, actual: &Value) -> Result<Value> {
                 require(
                     actual["focus"]["completed_instructions"]
                         == crate::readiness_metadata::value(&8).expect("validated native metadata")
-                        && !family::array(&actual["focus"], "executed_generated_keys")?.is_empty(),
+                        && !crate::documents::array(&actual["focus"], "executed_generated_keys")?.is_empty(),
                     "correct fixture did not execute generated instructions",
                 )?;
                 return Ok(strings(&["fresh generated execution", "complete instruction and frame parity"]));
@@ -351,7 +355,10 @@ fn fixture_inventory(root: &Path, inputs: &Value, source: &str) -> Result<(Run, 
     let steps = run.path.join("generated/steps.rs");
     fs::write(
         &steps,
-        format!("{source}\npub const ROM_SHA256: Option<&str> = Some(\"{}\");\n", family::field(inputs, "rom_sha256")?),
+        format!(
+            "{source}\npub const ROM_SHA256: Option<&str> = Some(\"{}\");\n",
+            crate::documents::field(inputs, "rom_sha256")?
+        ),
     )?;
     let path = coverage::generated_inventory(&mut run, &steps)?;
     Ok((run, path))
@@ -404,15 +411,15 @@ fn coverage_control(case: &str, output: &Path) -> Result<()> {
     let coverage = coverage::evaluate(&mut run, &path, &inventory, previous.as_deref())?;
     actual.as_table_mut().context("feedback report must be a table")?.insert("coverage".into(), coverage);
     actual["status"] = actual["coverage"]["status"].clone();
-    let status = family::field(&actual, "status")?;
+    let status = crate::documents::field(&actual, "status")?;
     run.finalize(status, None, None, &[])?;
     assertions(case, &actual)?;
     atomic_toml(&output.join("coverage-control.toml"), &actual)
 }
 pub fn verify(owner: &Path, manifest: &Value, report: &Value) -> Result<()> {
     contract::validate("feedback-demonstrations", report)?;
-    let source = family::field(&manifest["identities"]["source"], "sha256")?;
-    let hardware = family::field(&manifest["identities"]["hardware"], "source_sha256")?;
+    let source = crate::documents::field(&manifest["identities"]["source"], "sha256")?;
+    let hardware = crate::documents::field(&manifest["identities"]["hardware"], "source_sha256")?;
     let binary = origins::artifact(owner, "feedback-binary", manifest)?;
     origins::process(
         owner,
@@ -435,7 +442,7 @@ pub fn verify(owner: &Path, manifest: &Value, report: &Value) -> Result<()> {
     )?;
     for (case, expected) in CASES {
         let detail = &report["cases"][case];
-        let relative = family::field(&detail["evidence"], "path")?;
+        let relative = crate::documents::field(&detail["evidence"], "path")?;
         let path = safe_artifact(owner, relative)?;
         let filename = if ["uncovered-key", "empty-compilation"].contains(&case) {
             "coverage-control.toml"
@@ -444,7 +451,7 @@ pub fn verify(owner: &Path, manifest: &Value, report: &Value) -> Result<()> {
         };
         ensure!(
             relative == format!("diagnostics/feedback/{case}/{filename}")
-                && digest(&path)? == family::field(&detail["evidence"], "sha256")?,
+                && digest(&path)? == crate::documents::field(&detail["evidence"], "sha256")?,
             "feedback report identity differs"
         );
         let actual = origins::document(&path)?;
@@ -480,7 +487,7 @@ pub fn verify(owner: &Path, manifest: &Value, report: &Value) -> Result<()> {
                 "lifecycle process scope differs"
             );
             for observation in actual["observations"].as_table().context("lifecycle observations missing")?.values() {
-                let candidate = Path::new(family::field(observation, "run")?);
+                let candidate = Path::new(crate::documents::field(observation, "run")?);
                 ensure!(candidate.starts_with(path.parent().unwrap()), "lifecycle origin escaped private repository");
                 let observed = terminal(candidate)?;
                 ensure!(
@@ -531,7 +538,7 @@ pub fn verify(owner: &Path, manifest: &Value, report: &Value) -> Result<()> {
                     .collect::<Vec<_>>();
                 ensure!(
                     profiles.len() == 1
-                        && digest(&profiles[0])? == family::field(&actual["coverage"], "profile_sha256")?,
+                        && digest(&profiles[0])? == crate::documents::field(&actual["coverage"], "profile_sha256")?,
                     "coverage actual profile differs"
                 );
                 let candidate = profiles[0].parent().and_then(Path::parent).context("coverage owner missing")?;
@@ -541,7 +548,7 @@ pub fn verify(owner: &Path, manifest: &Value, report: &Value) -> Result<()> {
                         candidate
                             .parent()
                             .context("coverage run parent missing")?
-                            .join(family::field(&actual["coverage"]["predecessor"], "run_id")?),
+                            .join(crate::documents::field(&actual["coverage"]["predecessor"], "run_id")?),
                     )
                 } else {
                     None
@@ -610,8 +617,8 @@ fn demonstrations_inner(run: &mut Run, timeout: u64) -> Result<Value> {
         )?;
         run.guard(&binary)?;
     }
-    let source = family::field(&run.manifest.identities["source"], "sha256")?.to_owned();
-    let hardware = family::field(&run.manifest.identities["hardware"], "source_sha256")?.to_owned();
+    let source = crate::documents::field(&run.manifest.identities["source"], "sha256")?.to_owned();
+    let hardware = crate::documents::field(&run.manifest.identities["hardware"], "source_sha256")?.to_owned();
     let mut cases = BTreeMap::new();
     for (case, expected) in CASES {
         let result = capture_failure(|| -> Result<Value> {

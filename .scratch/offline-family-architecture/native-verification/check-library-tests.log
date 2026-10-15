@@ -1,0 +1,227 @@
+   Compiling libc v0.2.190
+   Compiling zerofrom v0.1.8
+   Compiling stable_deref_trait v1.2.1
+   Compiling yoke v0.8.3
+   Compiling cfg-if v1.0.5
+   Compiling zerovec v0.11.8
+   Compiling serde_core v1.0.229
+   Compiling bytes v1.12.1
+   Compiling pin-project-lite v0.2.17
+   Compiling itoa v1.0.18
+   Compiling serde v1.0.229
+   Compiling futures-core v0.3.34
+   Compiling zeroize v1.9.1
+   Compiling rustls-pki-types v1.15.1
+   Compiling tinystr v0.8.4
+   Compiling smallvec v1.16.2
+   Compiling typenum v1.20.1
+   Compiling litemap v0.8.3
+   Compiling writeable v0.6.4
+   Compiling icu_locale_core v2.3.0
+   Compiling generic-array v0.14.7
+   Compiling zerotrie v0.2.5
+   Compiling potential_utf v0.1.6
+   Compiling mio v1.2.4
+   Compiling socket2 v0.6.5
+   Compiling utf8_iter v1.0.4
+   Compiling once_cell v1.21.4
+   Compiling memchr v2.8.3
+   Compiling icu_collections v2.3.0
+   Compiling tokio v1.53.2
+   Compiling icu_provider v2.3.1
+   Compiling http v1.5.0
+   Compiling getrandom v0.2.17
+   Compiling futures-sink v0.3.34
+   Compiling untrusted v0.9.0
+   Compiling equivalent v1.0.2
+   Compiling hashbrown v0.17.1
+   Compiling indexmap v2.14.2
+   Compiling ring v0.17.14
+   Compiling http-body v1.1.0
+   Compiling icu_normalizer_data v2.3.0
+   Compiling icu_properties_data v2.3.0
+   Compiling block-buffer v0.10.4
+   Compiling crypto-common v0.1.7
+   Compiling serde_spanned v0.6.9
+   Compiling toml_datetime v0.6.11
+   Compiling winnow v0.7.15
+   Compiling futures-io v0.3.34
+   Compiling slab v0.4.12
+   Compiling futures-task v0.3.34
+   Compiling try-lock v0.2.5
+   Compiling toml_write v0.1.2
+   Compiling toml_edit v0.22.27
+   Compiling want v0.3.2
+   Compiling futures-util v0.3.34
+   Compiling digest v0.10.7
+   Compiling icu_properties v2.3.0
+   Compiling icu_normalizer v2.3.0
+   Compiling rustls-webpki v0.103.15
+   Compiling httparse v1.10.1
+   Compiling tracing-core v0.1.36
+   Compiling subtle v2.6.1
+   Compiling cpufeatures v0.2.17
+   Compiling atomic-waker v1.1.2
+   Compiling percent-encoding v2.3.2
+   Compiling tower-service v0.3.3
+   Compiling form_urlencoded v1.2.2
+   Compiling hyper v1.12.0
+   Compiling sha2 v0.10.9
+   Compiling rustls v0.23.45
+   Compiling tracing v0.1.44
+   Compiling idna_adapter v1.2.2
+   Compiling anyhow v1.0.104
+   Compiling toml v0.8.23
+   Compiling futures-channel v0.3.34
+   Compiling webpki-roots v1.0.9
+   Compiling hyper-util v0.1.21
+   Compiling pipeline-model v0.1.0 (/home/jim/sm-decomp-offline-native/crates/pipeline-model)
+   Compiling idna v1.1.0
+   Compiling zmij v1.0.23
+   Compiling tokio-rustls v0.26.6
+   Compiling sync_wrapper v1.0.2
+   Compiling simd-adler32 v0.3.10
+   Compiling adler2 v2.0.1
+   Compiling tower-layer v0.3.3
+   Compiling ryu v1.0.23
+   Compiling serde_urlencoded v0.7.1
+   Compiling tower v0.5.3
+   Compiling miniz_oxide v0.9.1
+   Compiling hyper-rustls v0.27.10
+   Compiling serde_json v1.0.151
+   Compiling url v2.5.8
+   Compiling tool-execution v0.1.0 (/home/jim/sm-decomp-offline-native/crates/tool-execution)
+   Compiling crc32fast v1.5.2
+   Compiling webpki-roots v0.26.11
+   Compiling http-body-util v0.1.5
+   Compiling rustls-pemfile v2.2.0
+   Compiling mime v0.3.17
+   Compiling ipnet v2.12.2
+   Compiling base64 v0.22.1
+   Compiling log v0.4.34
+   Compiling reqwest v0.12.12
+   Compiling flate2 v1.1.10
+   Compiling decomp-source v0.1.0 (/home/jim/sm-decomp-offline-native/crates/decomp-source)
+   Compiling translation-execution v0.1.0 (/home/jim/sm-decomp-offline-native/crates/translation-execution)
+warning: unused import: `PathBuf`
+ --> crates/translation-execution/src/compiler_runtime.rs:6:18
+  |
+6 |     path::{Path, PathBuf},
+  |                  ^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `translation-execution` (lib) generated 1 warning (run `cargo fix --lib -p translation-execution` to apply 1 suggestion)
+   Compiling offline-verification v0.1.0 (/home/jim/sm-decomp-offline-native/crates/offline-verification)
+warning: unused imports: `CargoBuildRequest`, `cargo_build`, `exec`, and `execute_timeout`
+  --> crates/offline-verification/src/builds.rs:15:20
+   |
+15 |     CBuildRequest, CargoBuildRequest, ExecutionRecord, c_build, cargo_build, exec, execute, execute_timeout,
+   |                    ^^^^^^^^^^^^^^^^^                            ^^^^^^^^^^^  ^^^^           ^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `Sha256`
+ --> crates/offline-verification/src/callback.rs:5:20
+  |
+5 | use sha2::{Digest, Sha256};
+  |                    ^^^^^^
+
+warning: unused import: `Sha256`
+ --> crates/offline-verification/src/family.rs:6:20
+  |
+6 | use sha2::{Digest, Sha256};
+  |                    ^^^^^^
+
+warning: unused import: `authenticate_inventory`
+  --> crates/offline-verification/src/family.rs:17:32
+   |
+17 | pub(crate) use decomp_source::{authenticate_inventory, c_units, verify_source};
+   |                                ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `append_tar` and `gzip_archive`
+  --> crates/offline-verification/src/bounded_inputs.rs:17:45
+   |
+17 |     pub(crate) use decomp_source::testing::{append_tar, gzip_archive};
+   |                                             ^^^^^^^^^^  ^^^^^^^^^^^^
+
+warning: unused import: `Sha256`
+ --> crates/offline-verification/src/plm_spawn.rs:5:20
+  |
+5 | use sha2::{Digest, Sha256};
+  |                    ^^^^^^
+
+warning: unused imports: `FixtureCommand` and `compiler_files`
+  --> crates/offline-verification/src/recipe.rs:18:22
+   |
+18 |     CompilerCommand, FixtureCommand, FixtureKind, FixtureSelection, c_compiler_command, compiler_files,
+   |                      ^^^^^^^^^^^^^^                                                     ^^^^^^^^^^^^^^
+
+warning: unused import: `Sha256`
+ --> crates/offline-verification/src/ridley_subsystem_adapter.rs:8:20
+  |
+8 | use sha2::{Digest, Sha256};
+  |                    ^^^^^^
+
+warning: unused import: `Digest`
+ --> crates/offline-verification/src/callback.rs:5:12
+  |
+5 | use sha2::{Digest, Sha256};
+  |            ^^^^^^
+
+warning: unused import: `Digest`
+ --> crates/offline-verification/src/family.rs:6:12
+  |
+6 | use sha2::{Digest, Sha256};
+  |            ^^^^^^
+
+warning: unused import: `Digest`
+ --> crates/offline-verification/src/ridley_subsystem_adapter.rs:8:12
+  |
+8 | use sha2::{Digest, Sha256};
+  |            ^^^^^^
+
+warning: unused import: `Digest`
+ --> crates/offline-verification/src/plm_spawn.rs:5:12
+  |
+5 | use sha2::{Digest, Sha256};
+  |            ^^^^^^
+
+warning: method `fixture` is never used
+   --> crates/offline-verification/src/builds.rs:247:19
+    |
+182 | impl StrictExecution {
+    | -------------------- method in this implementation
+...
+247 |     pub(crate) fn fixture(&self, command: &[String], directory: &Path, subject: &str) -> Result<ExecutionRecord> {
+    |                   ^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `field` is never used
+  --> crates/offline-verification/src/family.rs:33:15
+   |
+33 | pub(crate) fn field<'a>(value: &'a Value, key: &str) -> Result<&'a str> {
+   |               ^^^^^
+
+warning: function `array` is never used
+  --> crates/offline-verification/src/family.rs:36:15
+   |
+36 | pub(crate) fn array<'a>(value: &'a Value, key: &str) -> Result<&'a Vec<Value>> {
+   |               ^^^^^
+
+warning: function `authenticate_with_source_until` is never used
+   --> crates/offline-verification/src/family.rs:820:15
+    |
+820 | pub(crate) fn authenticate_with_source_until(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `contract_for_family_until` is never used
+   --> crates/offline-verification/src/native.rs:522:4
+    |
+522 | fn contract_for_family_until(
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `offline-verification` (lib test) generated 17 warnings (run `cargo fix --lib -p offline-verification --tests` to apply 8 suggestions)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5m 15s
+  Executable unittests src/lib.rs (out/native-target/debug/build/offline-verification/05f1004e5228f486/out/offline_verification-05f1004e5228f486)

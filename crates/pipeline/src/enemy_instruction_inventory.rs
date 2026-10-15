@@ -1,5 +1,6 @@
 //! Passive actual-C enemy instruction observations, sealed independently of Rust admission.
-use crate::{atomic_toml, builds, digest, family};
+use crate::atomic_toml;
+use crate::digest;
 use anyhow::{Context, Result, ensure};
 use std::{
     collections::BTreeMap,
@@ -8,6 +9,7 @@ use std::{
     time::{Instant, SystemTime, UNIX_EPOCH},
 };
 use toml::Value;
+use tool_execution::builds;
 
 const SUPPORT: &str = include_str!("enemy_instruction_inventory.c.in");
 const HOST_SAVE: &str = r#"
@@ -90,7 +92,7 @@ fn build_command(source: &Path, run: &Path) -> Result<Vec<String>> {
         "-iquote".into(),
         src.to_string_lossy().into_owned(),
     ];
-    command.extend(family::c_units(source)?.into_iter().map(|unit| {
+    command.extend(decomp_source::c_units(source)?.into_iter().map(|unit| {
         if unit.file_name().is_some_and(|name| name == "sm_a0.c" || name == "sm_86.c") {
             run.join(unit.file_name().unwrap()).to_string_lossy().into_owned()
         } else {
@@ -174,8 +176,8 @@ pub fn operate(request: Value) -> Result<Value> {
         "capture_windows":["prefix<36000","first-combat36000..49999","later-combat>=50000"]
     });
     let result = (|| -> Result<()> {
-        let identity = family::verify_source(&checkout, &source)?;
-        for unit in family::c_units(&source)? {
+        let identity = decomp_source::verify_source(&checkout, &source)?;
+        for unit in decomp_source::c_units(&source)? {
             ensure!(
                 identity.files.get(&unit.strip_prefix(&source)?.to_string_lossy().into_owned())
                     == Some(&digest(&unit)?),
@@ -244,7 +246,7 @@ pub fn operate(request: Value) -> Result<Value> {
             digest(&rom)? == ROM_SHA256 && digest(&inputs)? == INPUT_SHA256,
             "native inventory assets changed during execution"
         );
-        family::verify_source(&checkout, &source)?;
+        decomp_source::verify_source(&checkout, &source)?;
         let rows = validate_counters(&fs::read_to_string(run.join("enemy-instructions.tsv"))?, frames)?;
         let progress = fs::read_to_string(run.join("replay.stdout"))?;
         let terminal = progress

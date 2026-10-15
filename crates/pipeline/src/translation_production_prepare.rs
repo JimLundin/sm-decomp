@@ -1,14 +1,24 @@
 //! Install an immutable production switch request from preserved migration
 //! packages. Preparation writes only the declared external output root; the
 //! separate production command owns activation and all queue mutations.
-use crate::{
-    assignment, inputs,
-    translation_execution::{self as execution, Admission, Contract, Installation, InstalledFile},
-    translation_launch::{Plan, Scope},
-    translation_legacy::{self as legacy, LegacyContract, LegacyKind},
-    translation_migration::{self as migration, Migration, MigrationExecution, OriginalClaim},
-    translation_production::{BlockedClaim, Deployment, Request},
-};
+use crate::assignment;
+use crate::translation_execution as execution;
+use crate::translation_execution::Admission;
+use crate::translation_execution::Contract;
+use crate::translation_execution::Installation;
+use crate::translation_execution::InstalledFile;
+use crate::translation_launch::Plan;
+use crate::translation_launch::Scope;
+use crate::translation_legacy as legacy;
+use crate::translation_legacy::LegacyContract;
+use crate::translation_legacy::LegacyKind;
+use crate::translation_migration as migration;
+use crate::translation_migration::Migration;
+use crate::translation_migration::MigrationExecution;
+use crate::translation_migration::OriginalClaim;
+use crate::translation_production::BlockedClaim;
+use crate::translation_production::Deployment;
+use crate::translation_production::Request;
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use std::{
@@ -83,8 +93,8 @@ struct Receipt {
 
 fn read<T: DeserializeOwned>(path: &Path) -> Result<T> {
     ensure!(path.is_absolute(), "production preparation input must be absolute");
-    inputs::bounded::safe(path)?;
-    serde_json::from_slice(&inputs::bounded::read_limit(path, MAX_RECORD)?)
+    tool_execution::bounded::safe(path)?;
+    serde_json::from_slice(&tool_execution::bounded::read_limit(path, MAX_RECORD)?)
         .context("invalid production preparation JSON")
 }
 
@@ -107,7 +117,7 @@ fn exact_commit(value: &str) -> bool {
 }
 
 fn protect(path: &Path) -> Result<()> {
-    inputs::bounded::safe(path)?;
+    tool_execution::bounded::safe(path)?;
     ensure!(
         path.components().collect::<PathBuf>().as_os_str() == path.as_os_str(),
         "production preparation path alias"
@@ -121,7 +131,7 @@ fn protect(path: &Path) -> Result<()> {
 }
 
 fn directory(path: &Path) -> Result<()> {
-    inputs::bounded::safe(path)?;
+    tool_execution::bounded::safe(path)?;
     fs::DirBuilder::new().recursive(true).mode(0o700).create(path)?;
     protect(path)
 }
@@ -129,7 +139,7 @@ fn directory(path: &Path) -> Result<()> {
 fn lock(root: &Path) -> Result<File> {
     directory(root)?;
     let path = root.join("preparation.lock");
-    inputs::bounded::safe(&path)?;
+    tool_execution::bounded::safe(&path)?;
     let file = OpenOptions::new()
         .create(true)
         .append(true)
@@ -148,7 +158,7 @@ fn write<T: Serialize>(path: &Path, value: &T) -> Result<Reference> {
     let bytes = serde_json::to_vec(value)?;
     ensure!(bytes.len() as u64 <= MAX_RECORD, "production preparation metadata extent exceeded");
     directory(path.parent().context("production preparation parent missing")?)?;
-    inputs::immutable_bytes(path, &bytes)?;
+    tool_execution::bounded::immutable_bytes(path, &bytes)?;
     protect(path)?;
     retention::seal_file(path, MAX_RECORD)
 }
@@ -157,7 +167,7 @@ pub(crate) fn install(reference: &Reference, path: &Path) -> Result<Reference> {
     authenticate(reference, MAX_TOOL)?;
     let metadata = reference.path.symlink_metadata()?;
     ensure!(metadata.is_file() && metadata.mode() & 0o111 != 0, "production tool is not executable");
-    inputs::bounded::safe(path)?;
+    tool_execution::bounded::safe(path)?;
     if path.try_exists()? {
         protect(path)?;
         let saved = retention::seal_file(path, MAX_TOOL)?;
@@ -189,7 +199,7 @@ pub(crate) fn install(reference: &Reference, path: &Path) -> Result<Reference> {
     let mut buffer = [0u8; 65536];
     let mut total = 0u64;
     loop {
-        inputs::bounded::check()?;
+        tool_execution::bounded::check()?;
         let count = input.read(&mut buffer)?;
         if count == 0 {
             break;
@@ -213,7 +223,7 @@ fn current_head(checkout: &Path) -> Result<String> {
     let metadata = checkout.join(".git");
     protect(&metadata)?;
     ensure!(metadata.is_dir(), "production preparation requires the main repository Git directory");
-    let head = String::from_utf8(inputs::bounded::read_limit(&metadata.join("HEAD"), 4096)?)?;
+    let head = String::from_utf8(tool_execution::bounded::read_limit(&metadata.join("HEAD"), 4096)?)?;
     let head = head.trim();
     if exact_commit(head) {
         return Ok(head.into());
@@ -227,9 +237,10 @@ fn current_head(checkout: &Path) -> Result<String> {
     );
     let loose = metadata.join(branch);
     let value = if loose.try_exists()? {
-        String::from_utf8(inputs::bounded::read_limit(&loose, 4096)?)?.trim().to_owned()
+        String::from_utf8(tool_execution::bounded::read_limit(&loose, 4096)?)?.trim().to_owned()
     } else {
-        let packed = String::from_utf8(inputs::bounded::read_limit(&metadata.join("packed-refs"), MAX_RECORD)?)?;
+        let packed =
+            String::from_utf8(tool_execution::bounded::read_limit(&metadata.join("packed-refs"), MAX_RECORD)?)?;
         let matches = packed
             .lines()
             .filter_map(|line| line.split_once(' '))
@@ -283,8 +294,8 @@ fn authenticate_receipt(config: &Config, intent: &Intent, receipt: &Receipt) -> 
 }
 
 pub(crate) fn prepare(path: &Path) -> Result<Reference> {
-    let now = inputs::bounded::now_unix_ms()?;
-    inputs::bounded::until(now + 120_000, 4 * inputs::bounded::DEFAULT_BYTES, || prepare_inner(path))
+    let now = tool_execution::bounded::now_unix_ms()?;
+    decomp_source::context::until(now + 120_000, 4 * tool_execution::bounded::DEFAULT_BYTES, || prepare_inner(path))
 }
 
 fn prepare_inner(path: &Path) -> Result<Reference> {
@@ -299,7 +310,7 @@ fn prepare_inner(path: &Path) -> Result<Reference> {
             && exact_commit(&config.integration_baseline),
         "unsupported production preparation configuration"
     );
-    inputs::bounded::safe(&config.output_root)?;
+    tool_execution::bounded::safe(&config.output_root)?;
     protect(&config.pinned_source)?;
     ensure!(config.pinned_source.is_dir(), "production pinned source must be a real external directory");
     ensure!(
@@ -499,7 +510,7 @@ fn prepare_inner(path: &Path) -> Result<Reference> {
             coordinator: domain.coordinator.clone(),
             session_id: domain.session_id.clone(),
             generation: domain.generation,
-            migration: crate::family_model::Asset {
+            migration: offline_verification::fixtures::Asset {
                 file: config.output_root.join("migrations").join(&domain.effort).join("active.json"),
                 sha256: "0".repeat(64),
             },

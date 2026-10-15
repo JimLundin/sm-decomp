@@ -1,12 +1,13 @@
 //! Atomic production ownership switch. Migration packages, original claims and
 //! ledgers stay intact; one immutable registry retires every imported effort.
-use crate::{
-    assignment, emit,
-    inputs::bounded,
-    translation_execution::{Admission, Installation},
-    translation_launch::Plan,
-    translation_migration::{self as migration, Migration, MigrationExecution},
-};
+use crate::assignment;
+use crate::emit;
+use crate::translation_execution::Admission;
+use crate::translation_execution::Installation;
+use crate::translation_launch::Plan;
+use crate::translation_migration as migration;
+use crate::translation_migration::Migration;
+use crate::translation_migration::MigrationExecution;
 use ::translation_execution::{
     ClaimLineage,
     model::sealed,
@@ -21,6 +22,7 @@ use std::{
     os::unix::fs::{DirBuilderExt, MetadataExt, OpenOptionsExt},
     path::{Path, PathBuf},
 };
+use tool_execution::bounded;
 
 #[cfg(test)]
 use crate::translation_production_registry::AUTHORITY;
@@ -362,7 +364,7 @@ fn finish_activation(root: &Path, reference: &Reference, expected: &Registry) ->
 
 pub(crate) fn operate(path: &Path, action: &str) -> Result<Report> {
     let deadline = bounded::now_unix_ms()?.checked_add(600_000).context("production activation deadline overflow")?;
-    bounded::until(deadline, 8 * bounded::DEFAULT_BYTES, || operate_bounded(path, action))
+    decomp_source::context::until(deadline, 8 * bounded::DEFAULT_BYTES, || operate_bounded(path, action))
 }
 
 fn operate_bounded(path: &Path, action: &str) -> Result<Report> {

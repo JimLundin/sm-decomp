@@ -1,6 +1,8 @@
 //! Native evidence must reject wrong results, incomplete coverage and unchecked C.
 #[path = "support/binary_fixture.rs"]
 mod binary_fixture;
+#[path = "../src/source_stamps.rs"]
+mod source_stamps;
 use sha2::{Digest, Sha256};
 use std::{
     fs,
@@ -144,15 +146,8 @@ impl Project {
     fn at(root: PathBuf, retain: bool) -> Self {
         fs::create_dir(&root).unwrap();
         let crate_root = Path::new(env!("CARGO_MANIFEST_DIR"));
-        for entry in fs::read_dir(crate_root.join("src")).unwrap() {
-            let entry = entry.unwrap();
-            if entry.path().is_file() {
-                write(
-                    &root,
-                    &format!("crates/pipeline/src/{}", entry.file_name().to_string_lossy()),
-                    fs::read(entry.path()).unwrap(),
-                );
-            }
+        for (name, source) in source_stamps::all() {
+            write(&root, name, source);
         }
         write(
             &root,
@@ -276,31 +271,53 @@ impl Project {
             success,
         )
     }
-}
 
-#[test]
-fn dispatcher_pointer_banks_normalize_raw_and_host_pointers_and_reject_other_banks() {
-    let project = Project::new();
-    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let function = fs::read_to_string(root.join("src/dispatcher_pointer.c")).unwrap();
-    write(
-        &project.0,
-        "pointer.c",
-        format!(
-            "#include <stdint.h>\n#include <stdlib.h>\n#include <assert.h>\nstatic uint8_t rom[0x400000];static uint8_t *g_rom=rom;\n{function}\nint main(int argc,char **argv){{if(argc>1){{PortPointerResult((void*)(rom+0x190000),0x86);return 1;}}for(int bank=0x84;bank<=0xb2;bank++){{if(bank!=0x84&&bank!=0x86&&bank!=0xb2)continue;assert(PortPointerResult((void*)(rom+((bank&0x7f)*0x8000)+0x1234),bank)==((bank<<16)|0x9234));assert(PortPointerResult((void*)0x9234,bank)==((bank<<16)|0x9234));assert(PortPointerResult(0,bank)==0);}}return 0;}}"
-        ),
-    );
-    assert!(
-        Command::new("cc")
-            .arg(project.0.join("pointer.c"))
-            .arg("-o")
-            .arg(project.0.join("pointer"))
-            .status()
-            .unwrap()
-            .success()
-    );
-    assert!(Command::new(project.0.join("pointer")).status().unwrap().success());
-    assert_eq!(Command::new(project.0.join("pointer")).arg("wrong-bank").status().unwrap().code(), Some(3));
+    // Performance controls isolate artifact-cache contents while sharing the
+    // session's process capacity. Ordinary isolated capacity tests are unchanged.
+    fn measured_batch(&self, fresh: bool, sampling: &str, success: bool) -> (Value, f64) {
+        let (child, started) = self.spawn_measured_batch(fresh, sampling);
+        let output = child.wait_with_output().unwrap();
+        let seconds = started.elapsed().as_secs_f64();
+        assert_eq!(output.status.success(), success, "{}", String::from_utf8_lossy(&output.stderr));
+        (toml::from_str(&String::from_utf8(output.stdout).unwrap()).unwrap(), seconds)
+    }
+
+    fn spawn_measured_batch(&self, fresh: bool, sampling: &str) -> (std::process::Child, std::time::Instant) {
+        let cache = self.0.join("cache");
+        fs::create_dir_all(&cache).unwrap();
+        let workers = if let Some(shared) = std::env::var_os("SM_PIPELINE_ROOT") {
+            let worker_path = cache.join("workers");
+            if !worker_path.exists() {
+                std::os::unix::fs::symlink(Path::new(&shared).join("workers"), &worker_path).unwrap();
+            }
+            std::env::var("SM_PIPELINE_WORKERS").unwrap().parse::<i64>().unwrap()
+        } else {
+            2
+        };
+        let request = Value::Table(toml::Table::from_iter([
+            ("checkout".into(), Value::try_from(&self.0).unwrap()),
+            ("operation".into(), "verify".into()),
+            ("batch".into(), Value::try_from(self.0.join("batch/batch.toml")).unwrap()),
+            ("families".into(), Value::Array(vec!["fixture".into()])),
+            ("root".into(), Value::try_from(cache).unwrap()),
+            ("workers".into(), workers.into()),
+            ("jobs".into(), 1.into()),
+            ("case_jobs".into(), 1.into()),
+            ("fresh".into(), fresh.into()),
+        ]));
+        let started = std::time::Instant::now();
+        let mut child = Command::new(env!("CARGO_BIN_EXE_sm-pipeline"))
+            .arg("batch")
+            .env("SM_PIPELINE_METRICS", sampling)
+            .env_remove("SM_PIPELINE_METRICS_CONTEXT")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .unwrap();
+        child.stdin.take().unwrap().write_all(toml::to_string(&request).unwrap().as_bytes()).unwrap();
+        (child, started)
+    }
 }
 
 #[test]
@@ -722,7 +739,7 @@ fn idle_fixture_chain_workers_release_shared_execution_capacity_in_both_modes() 
     };
     scheduling_project(&project, false);
     if let Some(source) = std::env::var_os("SM_SCHEDULING_BASELINE_SOURCE") {
-        write(&project.0, "crates/pipeline/src/fixture_execution.rs", fs::read(source).unwrap());
+        write(&project.0, "crates/offline-verification/src/fixture_execution.rs", fs::read(source).unwrap());
     }
     let binary = std::env::var_os("SM_SCHEDULING_REGRESSION_BINARY")
         .map(PathBuf::from)
@@ -746,7 +763,11 @@ fn measure_fixture_chain_shared_capacity() {
     let candidate_project = Project::at(output.join("candidate"), true);
     scheduling_project(&baseline_project, true);
     scheduling_project(&candidate_project, true);
-    write(&baseline_project.0, "crates/pipeline/src/fixture_execution.rs", fs::read(&baseline_source).unwrap());
+    write(
+        &baseline_project.0,
+        "crates/offline-verification/src/fixture_execution.rs",
+        fs::read(&baseline_source).unwrap(),
+    );
     for input in ["crates/port/src/fixture.rs", "tools/port/fixture.smf", "deps/snesrev-sm/src/sm_80.c", "peer.rs"] {
         assert_eq!(
             fs::read(baseline_project.0.join(input)).unwrap(),
@@ -1101,6 +1122,353 @@ fn changed_since_verifies_one_actual_c_family_without_visiting_unrelated_history
     // Keep the restored unrelated verdict live so evidence remains valid at exit.
     retained = toml::from_str(&fs::read_to_string(&other_verdict).unwrap()).unwrap();
     project.authenticate(&retained, true);
+}
+
+#[test]
+fn batch_reuse_reports_current_elapsed_time_and_retains_original_run_time() {
+    let project = Project::new();
+    project.manifest(Value::Array(vec![Value::Table(toml::Table::from_iter([
+        ("name".into(), "one".into()),
+        ("a".into(), 1.into()),
+        ("expected_return".into(), 2.into()),
+    ]))]));
+    write(&project.0, "tools/port/batch.toml", "[families]\nfixture='family'\n[profiles]\ngameplay=['fixture']\n");
+    let (first, _) = project.measured_batch(false, "disabled", true);
+    assert_eq!(first["families"]["fixture"]["status"].as_str(), Some("offline-verified"));
+    let read_metrics = |result: &Value| -> pipeline_model::metrics::Receipt {
+        let receipt: pipeline_model::metrics::Receipt =
+            toml::from_str(&fs::read_to_string(result["metrics"].as_str().unwrap()).unwrap()).unwrap();
+        receipt.validate().unwrap();
+        receipt
+    };
+    let first_metrics = read_metrics(&first);
+    assert!(!first_metrics.enabled);
+    assert_eq!(first_metrics.resources.rss_samples, 0);
+    for name in [
+        "batch-planning",
+        "registered-input-authentication",
+        "family-input-authentication",
+        "family-builds",
+        "compiler-preparation",
+        "compiler-cache",
+        "shared-capacity-wait",
+        "fixture-execution",
+        "fixture-comparison",
+        "family-publication",
+        "family-evidence-admission",
+        "batch-publication",
+        "batch-scoped-cleanup",
+    ] {
+        assert!(
+            first_metrics.stages.iter().any(|stage| stage.name == name && stage.outcome == "success"),
+            "missing successful stage: {name}"
+        );
+    }
+    // Batch timing is advisory, outside authenticated Fixture evidence. A large
+    // retained duration makes copying it distinguishable from any current run.
+    let batch_path = project.0.join("batch/batch.toml");
+    let mut retained: Value = toml::from_str(&fs::read_to_string(&batch_path).unwrap()).unwrap();
+    retained["families"]["fixture"]["seconds"] = 86_400.0.into();
+    fs::write(&batch_path, toml::to_string(&retained).unwrap()).unwrap();
+    for _ in 0..2 {
+        let (reused, invocation_seconds) = project.measured_batch(false, "disabled", true);
+        let record = &reused["families"]["fixture"];
+        assert_eq!(record["status"].as_str(), Some("reused"));
+        assert_eq!(record["verdict"], first["families"]["fixture"]["verdict"]);
+        let current = record["seconds"].as_float().unwrap();
+        assert!(
+            current > 0.0 && current <= invocation_seconds,
+            "reported {current}s for {invocation_seconds}s invocation"
+        );
+        assert_eq!(record["original_run_seconds"].as_float(), Some(86_400.0));
+        let authentication = record["reuse_authentication_seconds"].as_float().unwrap();
+        assert!(authentication > 0.0 && authentication <= current);
+        let receipt = read_metrics(&reused);
+        assert!(receipt.processes.is_empty(), "unchanged reuse launched a producer");
+        assert!(receipt.stages.iter().any(|stage| stage.name == "reuse-authentication" && stage.outcome == "success"));
+        assert!(receipt.scopes.iter().any(|scope| {
+            scope
+                .configuration
+                .get("unavailable-stage:family-verification")
+                .is_some_and(|reason| reason.contains("retained evidence"))
+        }));
+        println!(
+            "reuse current={current:.6}s authentication={authentication:.6}s historical=86400s invocation={invocation_seconds:.6}s"
+        );
+    }
+
+    let candidate = project.0.join("crates/port/src/fixture.rs");
+    let source = fs::read_to_string(&candidate).unwrap();
+    fs::write(&candidate, source.replace("a as u32+1", "a as u32+2")).unwrap();
+    let (rejected, _) = project.measured_batch(false, "disabled", false);
+    let record = &rejected["families"]["fixture"];
+    assert_eq!(record["status"].as_str(), Some("rejected"));
+    assert!(record["seconds"].as_float().unwrap() >= record["reuse_authentication_seconds"].as_float().unwrap());
+    assert!(record["reuse_authentication_error"].as_str().unwrap().contains("changed"));
+    let rejected_metrics = read_metrics(&rejected);
+    assert_eq!(rejected_metrics.outcome, "failed");
+    for name in ["reuse-authentication", "fixture-comparison", "family-verification"] {
+        assert!(
+            rejected_metrics.stages.iter().any(|stage| stage.name == name && stage.outcome == "failed"),
+            "failed stage missing: {name}"
+        );
+    }
+
+    fs::write(&candidate, source).unwrap();
+    let (fresh, _) = project.measured_batch(true, "disabled", true);
+    assert_eq!(fresh["families"]["fixture"]["status"].as_str(), Some("offline-verified"));
+    assert_ne!(fresh["families"]["fixture"]["verdict"], first["families"]["fixture"]["verdict"]);
+    assert!(fresh["families"]["fixture"].get("original_run_seconds").is_none());
+    assert!(fresh["families"]["fixture"].get("reuse_authentication_seconds").is_none());
+    for deduplicate in [false, true] {
+        let mut command = Command::new(env!("CARGO_BIN_EXE_sm-pipeline"));
+        command.args(["cleanup", "--root"]).arg(project.0.join("batch")).arg("--apply");
+        if deduplicate {
+            command.arg("--deduplicate");
+        }
+        let output = command.output().unwrap();
+        assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+        let cleanup: Value = toml::from_str(std::str::from_utf8(&output.stdout).unwrap()).unwrap();
+        println!("post-control cleanup deduplicate={deduplicate} bytes={}", cleanup["bytes"]);
+    }
+    for result in [&first, &fresh] {
+        let verdict: Value =
+            toml::from_str(&fs::read_to_string(result["families"]["fixture"]["verdict"].as_str().unwrap()).unwrap())
+                .unwrap();
+        project.authenticate(&verdict, true);
+    }
+}
+
+#[test]
+fn interrupted_batch_reports_current_time_and_recovers_shared_capacity() {
+    use std::time::{Duration, Instant};
+    struct WriterControl(Option<std::process::Child>);
+    impl Drop for WriterControl {
+        fn drop(&mut self) {
+            if let Some(child) = &mut self.0 {
+                // SAFETY: this test owns the unreaped controller. Give its
+                // existing cancellation path time to stop and reap producers.
+                unsafe { libc::kill(child.id() as i32, libc::SIGTERM) };
+                let deadline = Instant::now() + Duration::from_secs(5);
+                while child.try_wait().unwrap().is_none() {
+                    if Instant::now() >= deadline {
+                        child.kill().unwrap();
+                        child.wait().unwrap();
+                        break;
+                    }
+                    std::thread::sleep(Duration::from_millis(10));
+                }
+            }
+        }
+    }
+    let project = Project::new();
+    project.manifest(toml::from_str::<Value>("cases=[{name='one',a=1,expected_return=2}]").unwrap()["cases"].clone());
+    write(&project.0, "tools/port/batch.toml", "[families]\nfixture='family'\n[profiles]\ngameplay=['fixture']\n");
+    let candidate = project.0.join("crates/port/src/fixture.rs");
+    let original = fs::read(&candidate).unwrap();
+    write(
+        &project.0,
+        "crates/port/src/fixture.rs",
+        r#"use crate::memory::Wram;
+unsafe extern "C" {fn getppid()->i32;}
+pub fn dispatch(_ram:&mut Wram<'_>,_name:&str,_a:u16,_b:u16)->Result<u32,&'static str>{
+std::fs::write("started.pids",format!("{} {}",std::process::id(),unsafe{getppid()})).unwrap();
+std::thread::sleep(std::time::Duration::from_secs(30));Ok(0)}"#,
+    );
+    let (child, started) = project.spawn_measured_batch(false, "disabled");
+    let mut writer = WriterControl(Some(child));
+    let evidence = project.0.join("batch/families/fixture/evidence");
+    let deadline = Instant::now() + Duration::from_secs(30);
+    let marker = loop {
+        if let Ok(entries) = fs::read_dir(&evidence)
+            && let Some(marker) = entries
+                .filter_map(Result::ok)
+                .map(|entry| entry.path().join("one/started.pids"))
+                .find(|path| fs::read_to_string(path).is_ok_and(|text| text.split_whitespace().count() == 2))
+        {
+            break marker;
+        }
+        assert!(Instant::now() < deadline, "batch interruption Fixture did not start");
+        assert!(writer.0.as_mut().unwrap().try_wait().unwrap().is_none(), "batch returned before interruption control");
+        std::thread::sleep(Duration::from_millis(10));
+    };
+    let identities = fs::read_to_string(&marker)
+        .unwrap()
+        .split_whitespace()
+        .map(|pid| {
+            let path = PathBuf::from(format!("/proc/{pid}/stat"));
+            let stat = fs::read_to_string(&path).unwrap();
+            let start = stat.rsplit_once(')').unwrap().1.split_whitespace().nth(19).unwrap().to_owned();
+            (path, start)
+        })
+        .collect::<Vec<_>>();
+    // SAFETY: the controller is still owned and unreaped.
+    assert_eq!(unsafe { libc::kill(writer.0.as_ref().unwrap().id() as i32, libc::SIGTERM) }, 0);
+    let deadline = Instant::now() + Duration::from_secs(5);
+    while writer.0.as_mut().unwrap().try_wait().unwrap().is_none() {
+        assert!(Instant::now() < deadline, "batch did not finish after interruption");
+        std::thread::sleep(Duration::from_millis(10));
+    }
+    let output = writer.0.take().unwrap().wait_with_output().unwrap();
+    let invocation_seconds = started.elapsed().as_secs_f64();
+    assert!(!output.status.success());
+    let result: Value = toml::from_str(std::str::from_utf8(&output.stdout).unwrap()).unwrap();
+    let record = &result["families"]["fixture"];
+    assert_eq!(record["status"].as_str(), Some("interrupted"));
+    let seconds = record["seconds"].as_float().unwrap();
+    assert!(seconds > 0.0 && seconds <= invocation_seconds);
+    let metrics: pipeline_model::metrics::Receipt =
+        toml::from_str(&fs::read_to_string(result["metrics"].as_str().unwrap()).unwrap()).unwrap();
+    metrics.validate().unwrap();
+    assert_eq!(metrics.outcome, "interrupted");
+    assert!(
+        metrics.stages.iter().any(|stage| stage.name == "batch-family-verification" && stage.outcome == "interrupted")
+    );
+    assert!(
+        metrics.scopes.iter().any(|scope| scope.configuration.contains_key("unavailable-stage:fixture-comparison"))
+    );
+    assert!(metrics.processes.iter().all(|process| process.reap_count == 1));
+    for (path, start) in identities {
+        assert!(
+            !fs::read_to_string(path).is_ok_and(|stat| {
+                let fields = stat.rsplit_once(')').unwrap().1.split_whitespace().collect::<Vec<_>>();
+                fields[19] == start && !matches!(fields[0], "Z" | "X" | "x")
+            }),
+            "Fixture writer survived cancellation"
+        );
+    }
+    fs::write(candidate, original).unwrap();
+    let (recovered, _) = project.measured_batch(true, "disabled", true);
+    assert_eq!(recovered["families"]["fixture"]["status"].as_str(), Some("offline-verified"));
+    let verdict: Value =
+        toml::from_str(&fs::read_to_string(recovered["families"]["fixture"]["verdict"].as_str().unwrap()).unwrap())
+            .unwrap();
+    for deduplicate in [false, true] {
+        let mut command = Command::new(env!("CARGO_BIN_EXE_sm-pipeline"));
+        command.args(["cleanup", "--root"]).arg(project.0.join("batch")).arg("--apply");
+        if deduplicate {
+            command.arg("--deduplicate");
+        }
+        let output = command.output().unwrap();
+        assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+        let cleanup: Value = toml::from_str(std::str::from_utf8(&output.stdout).unwrap()).unwrap();
+        println!("interruption cleanup deduplicate={deduplicate} bytes={}", cleanup["bytes"]);
+    }
+    project.authenticate(&verdict, true);
+    println!("interrupted current={seconds:.6}s invocation={invocation_seconds:.6}s; fresh recovery authenticated");
+}
+
+#[test]
+fn registered_admission_binds_computation_instead_of_caller_kind_hints() {
+    use offline_verification::{BatchAdmission, CatalogRequest, FamilyEvidence, HostInputs, OfflineFamilies};
+    let project = match std::env::var_os("SM_DEPENDENCY_IDENTITY_ROOT") {
+        Some(root) => Project::at(PathBuf::from(root), true),
+        None => Project::new(),
+    };
+    let candidate = project.0.join("crates/port/src/fixture.rs");
+    let original = fs::read_to_string(&candidate).unwrap();
+    fs::write(
+        &candidate,
+        original.replace("a as u32+1", "crate::helper::add_one(a)")
+            + "\n// unrelated include!(\"unexpected.rs\")\nconst PROSE: &str = \"unrelated include_str!(data)\";\n",
+    )
+    .unwrap();
+    write(
+        &project.0,
+        "crates/port/src/helper.rs",
+        "#[path=\"extra_impl.rs\"] mod owned; pub fn add_one(a:u16)->u32 { owned::add(a) }",
+    );
+    write(&project.0, "crates/port/src/extra_impl.rs", "pub fn add(a:u16)->u32 { crate::adjust::add(a) }");
+    write(&project.0, "crates/port/src/adjust.rs", "pub fn add(a:u16)->u32 { a as u32 + 1 }");
+    write(&project.0, "crates/port/src/unrelated.rs", "compile_error!(\"prose entered the compiler closure\");");
+    project.manifest(Value::Array(vec![Value::Table(toml::Table::from_iter([
+        ("name".into(), "one".into()),
+        ("a".into(), 1.into()),
+        ("expected_return".into(), 2.into()),
+    ]))]));
+    let configuration = "[families]\nfixture='family'\n[profiles]\ngameplay=['fixture']\n";
+    write(&project.0, "tools/port/batch.toml", configuration);
+    let (first, _) = project.measured_batch(false, "disabled", true);
+    assert_eq!(first["families"]["fixture"]["status"].as_str(), Some("offline-verified"));
+    let verdict = PathBuf::from(first["families"]["fixture"]["verdict"].as_str().unwrap());
+    let dependencies =
+        tool_execution::builds::dep_paths(&fs::read_to_string(verdict.parent().unwrap().join("compiler.d")).unwrap())
+            .unwrap();
+    for name in ["fixture.rs", "helper.rs", "extra_impl.rs", "adjust.rs"] {
+        assert!(
+            dependencies.iter().any(|path| Path::new(path).file_name().is_some_and(|part| part == name)),
+            "actual compiler omitted {name}"
+        );
+    }
+    assert!(
+        !dependencies.iter().any(|path| Path::new(path).ends_with("unrelated.rs")),
+        "prose became an actual compiler input"
+    );
+    let offline = OfflineFamilies::new(
+        HostInputs::new(
+            source_stamps::HOST_SOURCES,
+            format!("{:x}", Sha256::digest(fs::read(env!("CARGO_BIN_EXE_sm-pipeline")).unwrap())),
+        )
+        .unwrap(),
+    );
+    let required = vec!["fixture".into()];
+    let admit = |kind: &str, claimed_manifest: Option<&str>| -> anyhow::Result<_> {
+        let catalog = offline.capture_catalog(CatalogRequest::new(&project.0)?)?;
+        let facts = catalog.family("fixture")?;
+        offline.authenticate_batch(BatchAdmission {
+            catalog: &catalog,
+            required: &required,
+            source: project.0.join("deps/snesrev-sm"),
+            evidence: vec![FamilyEvidence {
+                family: "fixture".into(),
+                verdict: verdict.clone(),
+                kind: kind.into(),
+                manifest_sha256: claimed_manifest.unwrap_or(facts.manifest_sha256()).into(),
+            }],
+        })
+    };
+    assert!(admit("family", None).is_ok());
+    assert!(admit("family", Some(&"0".repeat(64))).is_err(), "claimed content hash admitted another requirement");
+    // Alias catalog labels with the same complete recipe may reuse evidence.
+    write(&project.0, "tools/port/batch.toml", configuration.replace("='family'", "='offline-family'"));
+    assert!(admit("offline-family", None).is_ok());
+    write(&project.0, "tools/port/batch.toml", configuration.replace("='family'", "='callback'"));
+    let different_recipe = admit("callback", None);
+    // Restore before asserting so even the red run retains authenticatable
+    // original evidence and no changed registration masquerades as its proof.
+    write(&project.0, "tools/port/batch.toml", configuration);
+    assert!(different_recipe.is_err(), "caller kind hint replaced the admitted recipe contract");
+
+    for name in [
+        "crates/port/src/fixture.rs",
+        "crates/port/src/adjust.rs",
+        "crates/offline-verification/src/family.rs",
+        "Cargo.lock",
+    ] {
+        let path = project.0.join(name);
+        let original = fs::read(&path).unwrap();
+        fs::write(&path, [original.as_slice(), b"\n// changed exact source input\n"].concat()).unwrap();
+        let changed = admit("family", None);
+        fs::write(&path, &original).unwrap();
+        assert!(changed.is_err(), "changed candidate/comparison source was accepted: {name}");
+    }
+    let manifest = project.0.join("tools/port/fixture.smf");
+    let original = fs::read(&manifest).unwrap();
+    project.manifest(Value::Array(vec![Value::Table(toml::Table::from_iter([
+        ("name".into(), "another-case".into()),
+        ("a".into(), 1.into()),
+        ("expected_return".into(), 2.into()),
+    ]))]));
+    let changed = admit("family", None);
+    fs::write(&manifest, &original).unwrap();
+    assert!(changed.is_err(), "current complete requirements were replaced by a retained declaration");
+    let dependency = project.0.join("crates/port/src/extra_impl.rs");
+    let original = fs::read(&dependency).unwrap();
+    fs::remove_file(&dependency).unwrap();
+    let missing = admit("family", None);
+    fs::write(&dependency, &original).unwrap();
+    assert!(missing.is_err(), "missing current compiler closure was accepted");
+    assert!(admit("family", None).is_ok());
 }
 
 #[test]
@@ -1640,4 +2008,171 @@ fn measure_affected_family_work_with_retained_evidence() {
             );
         }
     }
+}
+
+#[test]
+#[ignore = "bounded batch metrics comparison retains exact sources, tools and actual-C evidence"]
+fn measure_batch_metrics_with_retained_evidence() {
+    use std::{collections::BTreeSet, os::unix::fs::MetadataExt, time::Instant};
+    fn storage(root: &Path) -> Value {
+        fn walk(path: &Path, seen: &mut BTreeSet<(u64, u64)>, totals: &mut [u64; 3]) {
+            let metadata = fs::symlink_metadata(path).unwrap();
+            if metadata.is_dir() {
+                for entry in fs::read_dir(path).unwrap() {
+                    walk(&entry.unwrap().path(), seen, totals);
+                }
+            } else if metadata.is_file() {
+                totals[0] += 1;
+                totals[1] += metadata.len();
+                if seen.insert((metadata.dev(), metadata.ino())) {
+                    totals[2] += metadata.blocks() * 512;
+                }
+            }
+        }
+        let mut totals = [0; 3];
+        walk(root, &mut BTreeSet::new(), &mut totals);
+        Value::Table(toml::Table::from_iter([
+            ("files".into(), Value::try_from(totals[0]).unwrap()),
+            ("logical_file_bytes".into(), Value::try_from(totals[1]).unwrap()),
+            ("unique_allocated_file_bytes".into(), Value::try_from(totals[2]).unwrap()),
+        ]))
+    }
+    fn output(command: &mut Command) -> String {
+        let result = command.output().unwrap();
+        assert!(result.status.success(), "{}", String::from_utf8_lossy(&result.stderr));
+        String::from_utf8(result.stdout).unwrap().trim().into()
+    }
+    fn host() -> Value {
+        Value::Table(toml::Table::from_iter([
+            ("loadavg".into(), fs::read_to_string("/proc/loadavg").unwrap().into()),
+            ("meminfo".into(), fs::read_to_string("/proc/meminfo").unwrap().into()),
+            ("process_activity".into(), output(Command::new("ps").args(["-eo", "comm=,pcpu=,rss="])).into()),
+        ]))
+    }
+    let root =
+        PathBuf::from(std::env::var_os("SM_BATCH_METRICS_MEASUREMENT_OUTPUT").expect("measurement output required"));
+    assert!(root.is_absolute() && !root.exists(), "use a new absolute measurement directory");
+    assert_eq!(std::env::var("SM_PIPELINE_WORKERS").as_deref(), Ok("4"));
+    assert!(std::env::var_os("SM_PIPELINE_ROOT").is_some(), "shared capacity directory required");
+    fs::create_dir_all(root.parent().unwrap()).unwrap();
+    let project = Project::at(root.clone(), true);
+    project.manifest(toml::from_str::<Value>("cases=[{name='one',a=1,expected_return=2}]").unwrap()["cases"].clone());
+    write(&root, "tools/port/batch.toml", "[families]\nfixture='family'\n[profiles]\ngameplay=['fixture']\n");
+    project.initialize_git();
+    let fixture_source_revision = project.git(&["rev-parse", "HEAD"]);
+    let worktree = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().parent().unwrap();
+    let revision = output(Command::new("git").args(["rev-parse", "HEAD"]).current_dir(worktree));
+    let tools = root.join("retained-tools");
+    fs::create_dir(&tools).unwrap();
+    let reader = tools.join("sm-pipeline");
+    fs::copy(env!("CARGO_BIN_EXE_sm-pipeline"), &reader).unwrap();
+    fs::copy(std::env::current_exe().unwrap(), tools.join("family-control")).unwrap();
+    write(&root, "measurement-source.rs", include_str!("family.rs"));
+    let mut report = toml::Table::from_iter([
+        ("format".into(), "batch-metrics-measurement-v1".into()),
+        ("implementation_revision".into(), revision.into()),
+        ("fixture_source_revision".into(), fixture_source_revision.into()),
+        ("reader".into(), sealed(&reader)),
+        ("control".into(), sealed(&tools.join("family-control"))),
+        ("control_source".into(), sealed(&root.join("measurement-source.rs"))),
+        ("rustc_version".into(), output(Command::new("rustc").arg("-vV")).into()),
+        ("cc_version".into(), output(Command::new("cc").arg("--version")).into()),
+        ("cargo_profile".into(), "dev/test; debug=0; no extra features; locked/offline; jobs1".into()),
+        ("workers".into(), 4.into()),
+        ("family_jobs".into(), 1.into()),
+        ("case_jobs".into(), 1.into()),
+        ("required_families".into(), 1.into()),
+        ("required_routines".into(), 1.into()),
+        ("required_fixture_pairs".into(), 1.into()),
+        ("initial_host".into(), host()),
+        ("minimum_useful_change".into(), "greater of 5% or 20ms, and greater than observed variation; three pairs do not establish significance".into()),
+        ("physical_disk_io".into(), "unavailable; logical bytes and allocated blocks are not OS disk I/O".into()),
+        ("limitations".into(), "one complete tiny actual-C family; alternating sampling comparison is advisory; concurrent compilation/host activity must be assessed from each sample; no full-catalog speedup claim".into()),
+    ]);
+    assert!(!root.join("cache").exists());
+    let started = Instant::now();
+    let mut samples = Vec::new();
+    let mut verdicts = BTreeSet::new();
+    let mut sample = |scenario: &str, fresh: bool, sampling: &str| {
+        let host_before = host();
+        let (result, invocation_seconds) = project.measured_batch(fresh, sampling, true);
+        assert!(invocation_seconds < 60.0, "{scenario} exceeded its declared executable budget");
+        let record = &result["families"]["fixture"];
+        let path = record["verdict"].as_str().unwrap();
+        verdicts.insert(path.to_owned());
+        let verdict: Value = toml::from_str(&fs::read_to_string(path).unwrap()).unwrap();
+        assert_eq!(verdict["verified_cases"].as_integer(), Some(1));
+        assert_eq!(verdict["verified_routines"].as_integer(), Some(1));
+        let metrics: pipeline_model::metrics::Receipt =
+            toml::from_str(&fs::read_to_string(result["metrics"].as_str().unwrap()).unwrap()).unwrap();
+        metrics.validate().unwrap();
+        assert_eq!(metrics.enabled, sampling == "enabled");
+        if scenario == "retained-authentication" {
+            assert_eq!(record["status"].as_str(), Some("reused"));
+            assert!(metrics.processes.is_empty(), "retained authentication launched a producer");
+        } else {
+            assert_eq!(record["status"].as_str(), Some("offline-verified"));
+            assert!(!metrics.processes.is_empty(), "fresh verification did not execute producers");
+        }
+        let item = Value::Table(toml::Table::from_iter([
+            ("scenario".into(), scenario.into()),
+            ("sampling".into(), sampling.into()),
+            ("fresh_required".into(), fresh.into()),
+            ("invocation_seconds".into(), invocation_seconds.into()),
+            ("batch_elapsed_ns".into(), Value::try_from(metrics.elapsed_ns).unwrap()),
+            ("owned_processes".into(), Value::try_from(metrics.processes.len()).unwrap()),
+            ("host_before".into(), host_before),
+            ("host_after".into(), host()),
+            ("batch_storage".into(), storage(&root.join("batch"))),
+            ("receipt".into(), result),
+        ]));
+        write(&root, &format!("samples/{}.toml", samples.len()), toml::to_string_pretty(&item).unwrap());
+        samples.push(item);
+    };
+    sample("fresh-empty-private-cache", true, "disabled");
+    for _ in 0..3 {
+        sample("retained-authentication", false, "disabled");
+        sample("retained-authentication", false, "enabled");
+    }
+    sample("fresh-existing-private-cache", true, "disabled");
+    drop(sample);
+    report.insert("samples".into(), samples.into());
+    report.insert("storage_before_cleanup".into(), storage(&root.join("batch")));
+    report.insert("private_cache_before_removal".into(), storage(&root.join("cache")));
+    report.insert("cache_interpretation".into(), "empty/existing artifact namespaces are distinguished; retained compiler/cache receipts determine actual hits; run-specific build identities may still miss".into());
+    let cleanup_started = Instant::now();
+    drop(project);
+    report.insert("cleanup_seconds".into(), cleanup_started.elapsed().as_secs_f64().into());
+    assert!(!root.join("cache").exists() && !root.join(".git").exists());
+    report.insert(
+        "cleanup".into(),
+        toml::from_str::<Value>(&fs::read_to_string(root.join("retention.toml")).unwrap()).unwrap(),
+    );
+    let admission_started = Instant::now();
+    for (index, verdict) in verdicts.iter().enumerate() {
+        let request = toml::to_string(&toml::Table::from_iter([
+            ("checkout".into(), Value::try_from(&root).unwrap()),
+            ("verdict".into(), verdict.clone().into()),
+        ]))
+        .unwrap();
+        let mut child = Command::new(&reader)
+            .arg("family-authenticate")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .unwrap();
+        child.stdin.take().unwrap().write_all(request.as_bytes()).unwrap();
+        let result = child.wait_with_output().unwrap();
+        write(&root, &format!("post-cleanup/{index}.stdout"), &result.stdout);
+        write(&root, &format!("post-cleanup/{index}.stderr"), &result.stderr);
+        assert!(result.status.success(), "post-cleanup admission: {}", String::from_utf8_lossy(&result.stderr));
+    }
+    report.insert("post_cleanup_admission_seconds".into(), admission_started.elapsed().as_secs_f64().into());
+    report.insert("complete_elapsed_seconds".into(), started.elapsed().as_secs_f64().into());
+    report.insert("storage_after_cleanup".into(), storage(&root.join("batch")));
+    report.insert("free_space_after".into(), output(Command::new("df").args(["-B1"]).arg(&root)).into());
+    report.insert("final_host".into(), host());
+    write(&root, "measurement.toml", toml::to_string_pretty(&report).unwrap());
+    println!("retained batch metrics control: {}", root.join("measurement.toml").display());
 }

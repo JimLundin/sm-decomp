@@ -3,15 +3,6 @@
 #[path = "../src/assignment.rs"]
 mod assignment;
 #[allow(dead_code)]
-#[path = "../src/bounded_inputs.rs"]
-pub(crate) mod bounded_inputs;
-#[allow(dead_code)]
-#[path = "../src/family_model.rs"]
-mod family_model;
-mod inputs {
-    pub(crate) use crate::bounded_inputs as bounded;
-}
-#[allow(dead_code)]
 #[path = "../src/translation_migration_guard.rs"]
 mod translation_migration_guard;
 #[allow(dead_code)]

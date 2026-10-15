@@ -1,6 +1,6 @@
 # Native verification after Offline family extraction
 
-Status: audit complete; verification not run
+Status: corrected source frozen; final Native verification in progress
 Owner: integration owner, ticket [05](issues/05-verification-and-cleanup.md)
 Audited: 2026-10-15, source baseline `77022896e6e92abe69c27c1c0f9786b838d63ba9`
 
@@ -8,6 +8,14 @@ This is the Native portion of the [approved implementation plan](implementation.
 It records the existing gates and the harness migration they need. The audit
 read source and local prerequisite metadata/hashes only. It did not build, run
 producers, change installed policy, or create verification artifacts.
+
+The harness migration and PLM wrapper/accounting correction are frozen at
+`4a736587af557de9e44b3126ff08f6d6d11beee8`. The requirements below remain the
+gate contract; [the checkpoint](checkpoint.md) records current execution and
+evidence. Current proof parent:
+`/home/jim/sm-decomp-offline-architecture-proofs/plm-fix-20261015`.
+The earlier `15d5a7e-20261015` source, readers and partial recipe results remain
+historical evidence; they are not final proof of the corrected source.
 
 Use frozen integrated source for the actual gates. All new harness code remains
 Rust. Preserve the current indexed evidence formats, complete declared domains,
@@ -72,10 +80,11 @@ No confinement capability probe ran. The host exposes
 `user.max_user_namespaces = 47816` and `ptrace_scope = 1`; absence of the
 distribution-specific `unprivileged_userns_clone` sysctl is not a failed probe.
 
-## Harness changes required before running
+## Harness migration (implemented)
 
-Current proof entry points are ignored tests in
-`crates/pipeline/src/translation_native.rs`:
+Proof entry points retain their exact names under `translation_native::tests`.
+They now live in `crates/pipeline/src/translation_native_tests.rs`; the source
+anchors below describe their locations at the original audit baseline:
 
 | Exact current test name | Source anchor | Purpose |
 | --- | --- | --- |
@@ -308,10 +317,28 @@ routines and 34 producer operations. It must additionally prove:
 - Identical replay retains every original producer result and receipt.
 - Tampering with a recorded producer invocation is rejected, then original
   bytes are restored and successfully authenticated.
-- A candidate `include_str!` of protected `compiler-secret.txt` is rejected;
-  unchanged failure replay reuses the same rejected receipt.
-- Runtime parent read/write, sibling C-state read and `/program-c` read are
-  denied while the complete family still passes and parent contents stay intact.
+- A candidate `include_str!` of protected `compiler-secret.txt` is refused by
+  source capture with the exact unresolved-input diagnostic, before a Native
+  intent or producer is published.
+- A separate real Rust compiler operation binds a tiny source file but omits the
+  protected file. It fails with the exact path and `couldn't read` diagnostic;
+  unchanged replay preserves result/runner bytes and modification times.
+  Independent operation authentication succeeds after cleanup. This explicitly
+  tests compiler confinement even though the family scanner refuses earlier.
+- A syntactically understood `compile_error!` candidate separately retains a
+  failed Native compiler receipt with complete producer attribution. Unchanged
+  failure replay reuses that rejected receipt.
+- A candidate containing `std::fs` runtime capabilities is refused during source
+  capture with the exact diagnostic and no Native intent or producer.
+- A second complete family evaluation passes all 16 pairs with 34 producers.
+  Its independently admitted Rust invocations supply the exact bindings, argv,
+  runtime, helper, outputs and limits for 16 separate diagnostic operations.
+  Only the executable changes to a trusted probe, itself built by a retained
+  confined compiler operation. Every probe denies parent read/write, sibling
+  C-state read and `/program-c` read. The protected host files exist and remain
+  unchanged; each probe copies the declared WRAM input to its required output
+  and emits an exact success marker. These diagnostics have independent
+  attribution and do not count as Native Fixture passes.
 - An aggregate allowance of parent reservation plus 4,096 bytes rejects
   before launching producers, with operation count zero.
 
@@ -321,12 +348,26 @@ stdin. Fixture limits are five seconds, 512 KiB writable, 4 KiB stdout/stderr,
 no stdin. Authentication gets its existing 60-second / 8 GiB scope.
 
 Retain `full-real/prepared.toml`, `source-inventory.toml`, `catalog.toml`,
-`requirements.md`, `source/`, `operations/`, `compile-denial-source/`,
-`runtime-denial-source/`, protected diagnostic files and each of `run/`,
-`compile-denial/`, `runtime-denial/`, `reservation-denial/`. Each completed
-output retains its intent, receipt, indexed attribution, verdict and artifacts.
-The current test needs an end-of-proof cleanup/authentication addition; it
-currently returns after the reservation assertion.
+`requirements.md`, `source/`, `operations/`, `capture-refusal-source/`,
+`compile-failure-source/`, `runtime-refusal-source/`, `runtime-family-source/`, protected diagnostic files
+and each of `run/`, `capture-refusal/`, `compiler-denial/`, `compile-failure/`,
+`runtime-refusal/`, `runtime-family/`, `runtime-probes/`, `reservation-denial/`. Each completed Native output retains
+its intent, receipt, indexed attribution, verdict and artifacts. Capture refusal
+retains the exact candidate/diagnostic with no producer. The direct compiler
+probe retains its exact Program, context, limits and authenticated operation.
+The runtime proof retains all 16 original invocation references, its compiler
+operation and executable, and the 16 derived requests/results. Replay checks
+producer hashes and modification times before independent authentication.
+The migrated test performs both cleanup passes and retained authentication
+after the reservation assertion.
+
+The performance integration separates capture refusal from actual compiler and
+runtime confinement in `crates/pipeline/src/translation_native_tests.rs`. The
+earlier assumption that injected file macros or `std::fs` calls reach execution
+became obsolete once captured source facts correctly rejected their unresolved
+inputs. Preserve the original failed evidence; do not relax capture or treat an
+absent pre-capture receipt as a Native finalization failure. All original limits
+and required positive, runtime-denial, tamper and reservation domains remain.
 
 Preserve these nonignored regressions under their new owner as well:
 
@@ -342,13 +383,15 @@ does not cover the existing `check_ready` behavior.
 
 ## Read-only authentication after cleanup and worktree retirement
 
-The current Native test harness has no standalone current authentication mode.
+The migrated Rust harness provides
+`translation_native::tests::retained_native_proofs_authenticate_without_execution`.
+Select exactly that ignored test and set `SM_NATIVE_AUTHENTICATION_MANIFEST` to
+the retained proof's `retained-authentication.toml`. It uses the prepared handle's
+existing authentication interface without preparation, execution or cleanup.
 Ordinary `family-authenticate` omits confined producer attribution and cannot
 satisfy this gate. Rerunning the full real proof is also unsuitable: it rebuilds
-its negative source variants and executes controls. Add a small Rust test
-entry point or test-reader mode during harness migration, using the new
-prepared handle's existing authentication interface. This is application test
-orchestration, not a new production session/receipt API.
+its negative source variants and executes controls. This reader is application
+test orchestration, with no new production session or receipt interface.
 
 At proof creation, retain a small authentication-input manifest containing, for
 each case, its prepared-record path, exact candidate checkout, Native receipt
@@ -358,9 +401,19 @@ and these full-proof combinations:
 | Output | Prepared record | Candidate source | Expected result |
 | --- | --- | --- | --- |
 | `full-real/run` | `full-real/prepared.toml` | `full-real/source` | Passed |
-| `full-real/compile-denial` | same | `full-real/compile-denial-source` | Rejected with retained compiler denial |
-| `full-real/runtime-denial` | same | `full-real/runtime-denial-source` | Passed with runtime denial assertions |
+| `full-real/compile-failure` | same | `full-real/compile-failure-source` | Rejected with both compiler producers and unchanged replay |
+| `full-real/runtime-family` | same | `full-real/runtime-family-source` | Passed, all 16 pairs / 34 producers; source of runtime probe bindings |
 | `full-real/reservation-denial` | same | `full-real/source` | Rejected with reservation exhaustion and no producers |
+
+The same retained manifest separately names both capture refusals, the direct
+compiler-denial operation and all 16 runtime probes with their compiler. Its
+reader checks the exact refusal source/diagnostic
+and absent Native publication, and authenticates the compiler operation through
+`authenticate_request_with_references`, including actual compiler failure,
+protected contents and complete runner/result attribution.
+It independently admits the runtime family's original invocation references,
+checks every derived Program against those references, and authenticates the
+probe build, output bytes, denial markers and unchanged protected files.
 
 The reader loads retained prepared/receipt records and invokes Native
 authentication for each exact candidate path. It asserts original outcomes

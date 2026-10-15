@@ -1,5 +1,6 @@
 //! Source-authenticated C trajectory counters; diagnostic output never admits a Rust port.
-use crate::{atomic_toml, builds, digest, family};
+use crate::atomic_toml;
+use crate::digest;
 use anyhow::{Context, Result, ensure};
 use std::{
     collections::BTreeMap,
@@ -8,6 +9,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 use toml::Value;
+use tool_execution::builds;
 const SUPPORT: &str = r#"
 #include <stdio.h>
 static unsigned long inventory_hits[4][65536];
@@ -64,7 +66,7 @@ pub(crate) fn build_command(source: &Path, run: &Path) -> Result<Vec<String>> {
         src.to_string_lossy().into_owned(),
     ];
     command.extend(
-        family::c_units(source)?
+        decomp_source::c_units(source)?
             .into_iter()
             .map(|path| if path.file_name().is_some_and(|name| name == "sm_86.c") { run.join("sm_86.c") } else { path })
             .map(|path| path.to_string_lossy().into_owned()),
@@ -86,10 +88,10 @@ pub(crate) fn authenticate_inputs(
     checkout: &Path,
     run: &Path,
     command: &[String],
-    identity: &crate::family_model::Source,
+    identity: &decomp_source::Source,
 ) -> Result<()> {
     let source = checkout.join("deps/snesrev-sm");
-    for unit in family::c_units(&source)? {
+    for unit in decomp_source::c_units(&source)? {
         let relative = unit.strip_prefix(&source)?.to_string_lossy().into_owned();
         ensure!(
             identity.files.get(&relative) == Some(&digest(&unit)?),
@@ -160,7 +162,7 @@ pub fn operate(request: Value) -> Result<Value> {
     let mut verdict = crate::report!({"schema_version":2,"status":"diagnostic-failed","accepted":false,"frames":frames,"live_exercised":false,"scope":"fresh C trajectory; counters only; no Rust replacement/parity claim","evidence":run});
     let result = (|| -> Result<()> {
         let source = checkout.join("deps/snesrev-sm");
-        let identity = family::verify_source(&checkout, &source)?;
+        let identity = decomp_source::verify_source(&checkout, &source)?;
         verdict.as_table_mut().unwrap().insert("source".into(), Value::try_from(identity)?);
         let rom = checkout.join("rom/sm.sfc");
         let inputs = checkout.join("movies/super-metroid-any-3653.inputs");
@@ -219,7 +221,7 @@ pub fn operate(request: Value) -> Result<Value> {
                 && digest(&inputs)? == input_hash,
             "inventory inputs changed during execution"
         );
-        family::verify_source(&checkout, &source)?;
+        decomp_source::verify_source(&checkout, &source)?;
         let table = fs::read_to_string(run.join("projectiles.tsv"))?;
         ensure!(table.starts_with("kind\taddress\thits\tfirst_frame\tlast_frame\n"), "inventory table missing");
         for line in table.lines().skip(1) {

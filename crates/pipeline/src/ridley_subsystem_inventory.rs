@@ -2,7 +2,9 @@
 //!
 //! The one replay retains the attack inventory and observes whole native lifecycle,
 //! AI, script, contact and death boundaries. Diagnostic receipts grant no Rust admission.
-use crate::{atomic_toml, builds, digest, enemy_instruction_inventory, family};
+use crate::atomic_toml;
+use crate::digest;
+use crate::enemy_instruction_inventory;
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -14,6 +16,7 @@ use std::{
     time::{Instant, SystemTime, UNIX_EPOCH},
 };
 use toml::Value;
+use tool_execution::builds;
 
 const SUPPORT: &str = include_str!("ridley_subsystem_inventory.c.in");
 const HOOKS: &str = include_str!("ridley_subsystem_inventory_hooks.c.in");
@@ -315,7 +318,7 @@ pub(crate) fn build_command(source: &Path, run: &Path, capture_limit: usize, per
         format!("-DRIDLEY_SUBSYSTEM_CAPTURE_LIMIT={capture_limit}"),
         format!("-DRIDLEY_SUBSYSTEM_CAPTURES_PER_KEY={per_key}"),
     ];
-    for unit in family::c_units(source)? {
+    for unit in decomp_source::c_units(source)? {
         let relative = unit.strip_prefix(source.join("src"))?.to_string_lossy().replace('\\', "/");
         command.push(if UNITS.contains(&relative.as_str()) {
             run.join(relative).display().to_string()
@@ -755,8 +758,8 @@ pub fn operate(value: Value) -> Result<Value> {
         "capture_contract":"full WRAM + eight little-endian host words + 20-byte PPU + ordered effects + actual C service entry/return snapshots",
         "retained_dependencies":["original-source","rom-view.bin","producer.rs","instrumentation.c.in","instrumentation-hooks.c.in","attack-producer.rs","attack-instrumentation.c.in"]});
     let result = (|| -> Result<()> {
-        let identity = family::verify_source(&checkout, &source)?;
-        for unit in family::c_units(&source)? {
+        let identity = decomp_source::verify_source(&checkout, &source)?;
+        for unit in decomp_source::c_units(&source)? {
             ensure!(
                 identity.files.get(&unit.strip_prefix(&source)?.to_string_lossy().into_owned())
                     == Some(&digest(&unit)?),
@@ -874,7 +877,7 @@ pub fn operate(value: Value) -> Result<Value> {
             verdict.as_table_mut().unwrap().insert("ordered_effects".into(), crate::report!(effects));
         }
         ensure!(
-            family::verify_source(&checkout, &source)? == identity && harness_sources(&checkout)? == harness,
+            decomp_source::verify_source(&checkout, &source)? == identity && harness_sources(&checkout)? == harness,
             "whole Ridley inventory source changed during execution"
         );
         ensure!(
@@ -917,7 +920,7 @@ pub fn authenticate(checkout: &Path, path: &Path) -> Result<Value> {
         verdict.get("artifacts").context("Ridley inventory artifact seal missing")?.clone().try_into()?;
     ensure!(actual == expected, "Ridley inventory artifacts differ");
     let source = checkout.join("deps/snesrev-sm");
-    let identity = family::verify_source(&checkout, &source)?;
+    let identity = decomp_source::verify_source(&checkout, &source)?;
     ensure!(
         Value::try_from(&identity)? == *verdict.get("source").context("Ridley source seal missing")?,
         "Ridley inventory source differs"

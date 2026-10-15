@@ -64,7 +64,7 @@ fn document<T: serde::de::DeserializeOwned>(path: &Path) -> Result<T> {
     Ok(toml::from_str(&fs::read_to_string(path)?)?)
 }
 pub fn subject(directory: &Path, root: &Path, workers: usize, expected_pointer: Option<&str>) -> Result<Pointer> {
-    let context = crate::metrics::active();
+    let context = tool_execution::metrics::active();
     subject_with_metrics(directory, root, workers, expected_pointer, context.as_ref())
 }
 pub(crate) fn subject_with_metrics(
@@ -72,7 +72,7 @@ pub(crate) fn subject_with_metrics(
     root: &Path,
     workers: usize,
     expected_pointer: Option<&str>,
-    metrics: Option<&crate::metrics::Context>,
+    metrics: Option<&tool_execution::metrics::Context>,
 ) -> Result<Pointer> {
     ensure!(!directory.is_symlink(), "subject directory is a symlink");
     let pointer_path = directory.join("evidence.toml");
@@ -95,7 +95,7 @@ pub(crate) fn subject_with_metrics(
     let mut command = Command::new(reader);
     command.arg("inventory").arg(store).arg(&pointer.run);
     let output = if let Some(metrics) = metrics {
-        let sidecar = crate::metrics::sidecar(directory, "authentication");
+        let sidecar = tool_execution::metrics::sidecar(directory, "authentication");
         let context = metrics.child_context(&mut command, &sidecar, "authentication")?;
         let output = metrics.output(&mut command, "subject-authentication")?;
         metrics.merge_child(&sidecar)?;

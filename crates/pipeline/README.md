@@ -1,19 +1,35 @@
 # Local verification pipeline
 
-Rust owns process leases, authenticated compiler caches, cleanup, ordinary
-offline families, dispatcher/callback/PLM verification, fixture generation,
-packed live replay, decompressor acceptance and RNG jobs. Several worktrees share one capacity configured by
+`pipeline` composes the CLI, Batch, Translation approval, Live replay and cleanup.
+`offline-verification` owns complete Offline family verification, recipes and
+retained evidence admission, including the explicit Fixture authoring interface.
+`decomp-source` owns pinned Recovered C source and inventories. `tool-execution`
+owns shared process leases, authenticated compiler caches and bounded input reads.
+Several worktrees share one capacity configured by
 `SM_PIPELINE_WORKERS` (default 4) under the Git common checkout's `out/pipeline`.
 Set the same `SM_PIPELINE_ROOT` to share an explicit directory.
+
+For repeated Offline verification, build/run with Cargo's `--profile verification`.
+It optimizes the controller, sandbox and dependencies while retaining separate
+debug line tables. The first build is a separate cost; emitted tools are under
+`target/verification/`. Managed Translation execution continues to select its
+exact sealed installed tool pair. See the [batch guide](../../docs/DECOMP_BATCH.md)
+for matched builds and complete-catalog commands.
 
 For affected-family explanations and automatic local subagent assignments,
 follow [the coordinator workflow](../../docs/agents/assignments.md).
 `batch plan --changed-since BASE` is read-only; `assign next` reserves a shared
 claim before returning work. Translation research promotes only complete scopes.
 
+Ordinary batches share one captured catalog/input context, compatible compiler
+preparation and a bounded ready-work executor across the requested family window.
 Fixture execution overlaps independent chains within that shared capacity.
 Continuations run only after their predecessor passes every comparison; failures
 leave causal `blocked.toml` records. Verdict case order stays canonical.
+Terminal failure stops new admission and settles admitted work. Optional
+`work-graph.toml` sidecars describe progress; retained verdicts and producer
+operations remain recovery authority. Native wave and Original family ordering
+keep their existing contracts.
 Ordinary/projectile families on Linux x86_64 use preloaded subject workers that
 fork a fresh child for each fixture. Worker parents never execute gameplay;
 unchanged ROM data is loaded once. Callback/PLM families use prompt fresh-process
@@ -27,11 +43,12 @@ fork receipts retain per-child CPU and reaping details. Aggregate helper CPU
 includes its children; fixture identity records mark CPU unavailable to avoid
 counting it twice. RSS sampling can count shared fork pages more than once and
 miss brief child peaks. Compiler/general `exec` commands keep their own receipts.
-New execution source and worker artifacts are part of family admission; existing
-sealed historical evidence is retained under its original contract.
+Execution source and worker artifacts are part of family admission. Only the
+current indexed evidence format is supported. Existing sealed artifacts are
+retained without rewriting; moved source inputs can require fresh verification.
 
 ```sh
-cargo run -p pipeline --locked --offline -- batch verify --families system audio --jobs 2 --case-jobs 4
+cargo run --profile verification -p pipeline --locked --offline -- batch verify --families system audio --jobs 2 --case-jobs 4
 cargo run -p pipeline --locked --offline -- batch status
 cargo run -p pipeline --locked --offline -- batch catalog
 cargo run -p pipeline --locked --offline -- family-verify --manifest tools/port/system.smf --output out/port/system --case-jobs 4

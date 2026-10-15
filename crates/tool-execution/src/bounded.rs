@@ -249,9 +249,15 @@ pub fn read(path: impl AsRef<Path>) -> Result<Vec<u8>> {
 /// Return the exact bytes and their SHA-256 from one bounded file read.
 /// The identity belongs to this snapshot; each call opens the current file.
 pub fn read_with_digest(path: impl AsRef<Path>) -> Result<(Vec<u8>, String)> {
+    read_with_digest_limit(path.as_ref(), MAX_FILE_BYTES)
+}
+
+/// A caller can reserve memory before opening a file and cap the allocation at
+/// that reservation. A replacement larger than the bound fails before reading.
+pub fn read_with_digest_limit(path: &Path, maximum: u64) -> Result<(Vec<u8>, String)> {
     limited(|| {
         let mut hash = Sha256::new();
-        let bytes = read_chunks(path.as_ref(), MAX_FILE_BYTES, |chunk| hash.update(chunk))?;
+        let bytes = read_chunks(path, maximum, |chunk| hash.update(chunk))?;
         Ok((bytes, format!("{:x}", hash.finalize())))
     })
 }
@@ -701,4 +707,48 @@ mod tests {
 /// Decode bounded TOML metadata, inheriting the active byte and deadline budget.
 pub fn object<T: serde::de::DeserializeOwned>(path: &Path) -> Result<T> {
     limited(|| Ok(toml::from_str(&text(path)?)?))
+}
+
+/// Controller-owned immutable publication. A partial write has only the
+/// identified pending name; response recovery preserves final file metadata.
+pub fn immutable_bytes(path: &Path, bytes: &[u8]) -> Result<()> {
+    limited(|| immutable_bytes_bounded(path, bytes))
+}
+
+fn immutable_bytes_bounded(path: &Path, bytes: &[u8]) -> Result<()> {
+    use std::io::Write;
+    ensure!(path.is_absolute(), "immutable input requires absolute path");
+    safe(path)?;
+    ensure!(bytes.len() as u64 <= MAX_FILE_BYTES, "immutable native file byte extent exceeded");
+    if path.exists() {
+        ensure!(!path.is_symlink() && read(path)? == bytes, "immutable native file changed: {}", path.display());
+        return Ok(());
+    }
+    let pending = path.with_file_name(format!(
+        "{}.pending",
+        path.file_name().context("immutable file name missing")?.to_string_lossy()
+    ));
+    if pending.exists() {
+        ensure!(
+            !pending.is_symlink() && pending.is_file() && pending.metadata()?.len() <= bytes.len() as u64,
+            "immutable pending extent changed"
+        );
+        fs::remove_file(&pending)?;
+    }
+    use std::os::unix::fs::OpenOptionsExt;
+    account(bytes.len() as u64)?;
+    let mut file = fs::OpenOptions::new()
+        .create_new(true)
+        .write(true)
+        .custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK)
+        .open(&pending)?;
+    for block in bytes.chunks(64 * 1024) {
+        check()?;
+        file.write_all(block)?;
+    }
+    file.sync_all()?;
+    check()?;
+    fs::rename(&pending, path)?;
+    fs::File::open(path.parent().context("immutable parent missing")?)?.sync_all()?;
+    Ok(())
 }

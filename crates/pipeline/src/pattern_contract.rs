@@ -1,5 +1,5 @@
 use crate::readiness_metadata::toml_value_decode;
-use crate::{family, readiness_run::identity};
+use crate::readiness_run::identity;
 use anyhow::{Context, Result, ensure};
 use pipeline_model::timed_pattern::Declaration;
 use serde::Deserialize;
@@ -125,13 +125,13 @@ pub fn validate_report(report: &Value, timing: bool) -> Result<()> {
     let declaration = &report["declaration"];
     validate_declaration(declaration)?;
     ensure!(
-        identity(declaration)? == family::field(report, "declaration_sha256")?
-            && !family::field(report, "source_sha256")?.is_empty(),
+        identity(declaration)? == crate::documents::field(report, "declaration_sha256")?
+            && !crate::documents::field(report, "source_sha256")?.is_empty(),
         "pattern declaration/source identity incomplete"
     );
     ensure!(
         ["complete production declaration", "complete prospective declaration"]
-            .contains(&family::field(report, "scope")?),
+            .contains(&crate::documents::field(report, "scope")?),
         "development pattern scope cannot establish acceptance"
     );
     if timing {
@@ -153,7 +153,7 @@ pub fn validate_report(report: &Value, timing: bool) -> Result<()> {
             && report["corpus_archive_sha256"] == report["pinned_dependency"]["sha256"],
         "pattern complete pinned corpus verification missing"
     );
-    let patterns = family::array(declaration, "patterns")?;
+    let patterns = crate::documents::array(declaration, "patterns")?;
     let opcodes = report["opcodes"].as_table().context("opcode counts missing")?;
     ensure!(opcodes.len() == patterns.len(), "pattern declared opcode coverage incomplete");
     let expected = report["expected"].as_integer().and_then(|n| u64::try_from(n).ok()).context("case count missing")?;
@@ -165,11 +165,11 @@ pub fn validate_report(report: &Value, timing: bool) -> Result<()> {
             && report["skipped"] == crate::readiness_metadata::value(&0).expect("validated native metadata"),
         "pattern complete case count missing"
     );
-    let corpus = family::array(report, "corpus")?;
+    let corpus = crate::documents::array(report, "corpus")?;
     ensure!(corpus.len() == patterns.len(), "pattern complete corpus identities missing");
     let mut total = 0;
     for pattern in patterns {
-        let opcode = family::field(pattern, "opcode")?;
+        let opcode = crate::documents::field(pattern, "opcode")?;
         let item = corpus
             .iter()
             .filter(|c| c["opcode"] == crate::readiness_metadata::value(&opcode).expect("validated native metadata"))
@@ -177,7 +177,7 @@ pub fn validate_report(report: &Value, timing: bool) -> Result<()> {
         ensure!(item.len() == 1, "pattern complete corpus identity missing");
         let count =
             item[0]["cases"].as_integer().and_then(|n| u64::try_from(n).ok()).context("corpus cases missing")?
-                + family::array(pattern, "independent_fixtures")?.len() as u64;
+                + crate::documents::array(pattern, "independent_fixtures")?.len() as u64;
         let counts = &report["opcodes"][opcode];
         ensure!(
             count > 0
@@ -186,7 +186,7 @@ pub fn validate_report(report: &Value, timing: bool) -> Result<()> {
                     .all(|f| counts[f] == crate::readiness_metadata::value(&count).expect("validated native metadata"))
                 && counts["failed"] == crate::readiness_metadata::value(&0).expect("validated native metadata")
                 && counts["skipped"] == crate::readiness_metadata::value(&0).expect("validated native metadata")
-                && !family::field(item[0], "sha256")?.is_empty(),
+                && !crate::documents::field(item[0], "sha256")?.is_empty(),
             "pattern complete opcode corpus/fixtures missing"
         );
         for condition in

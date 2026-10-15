@@ -5,6 +5,7 @@ use std::{
     fs::{self, File},
     io::{Read, Write},
     os::fd::FromRawFd,
+    os::unix::fs::MetadataExt,
     path::PathBuf,
     sync::atomic::{AtomicBool, AtomicUsize, Ordering},
     time::{Duration, Instant},
@@ -27,7 +28,12 @@ fn helper() -> PathBuf {
 // /usr/bin/time around bubblewrap does not include all reparented namespace
 // children. Sample only this invocation's descendants, never the whole host.
 // This is diagnostic CPU measurement, entirely outside quota enforcement.
-fn sample_helper_cpu(tid: i32, stop: &AtomicBool) -> Vec<(f64, u64)> {
+fn sample_helper_cpu(
+    tid: i32,
+    stop: &AtomicBool,
+    expected_image: (u64, u64),
+    image_seen: &AtomicBool,
+) -> Vec<(f64, u64)> {
     let mut descendants = BTreeSet::new();
     let mut helper_ticks = BTreeMap::<i32, u64>::new();
     let mut samples = Vec::new();
@@ -44,6 +50,13 @@ fn sample_helper_cpu(tid: i32, stop: &AtomicBool) -> Vec<(f64, u64)> {
             let Some((name, fields)) = stat.split_once(") ") else { continue };
             if !name.ends_with("(trusted-helper") {
                 continue;
+            }
+            // Read the live image through procfs, not its supplied pathname.
+            // A bind mount keeps the selected helper's device/inode identity.
+            if let Ok(image) = fs::metadata(format!("/proc/{pid}/exe")) {
+                if (image.dev(), image.ino()) == expected_image {
+                    image_seen.store(true, Ordering::Release);
+                }
             }
             let fields = fields.split_whitespace().collect::<Vec<_>>();
             if let (Some(user), Some(system)) = (
@@ -67,6 +80,7 @@ struct Measurement {
     helper_steady_cpu: f64,
     producer_steady_cpu: f64,
     cpu_samples: usize,
+    helper_image_seen: bool,
 }
 
 fn measure(mode: &str, retained: usize) -> Measurement {
@@ -86,10 +100,13 @@ fn measure(mode: &str, retained: usize) -> Measurement {
         stdin_bytes: 128,
     };
     let stop = AtomicBool::new(false);
+    let image_seen = AtomicBool::new(false);
+    let image = fs::metadata(&program.helper).unwrap();
+    let expected_image = (image.dev(), image.ino());
     let tid = unsafe { libc::syscall(libc::SYS_gettid) } as i32;
     let started = Instant::now();
     let (output, samples) = std::thread::scope(|scope| {
-        let sampler = scope.spawn(|| sample_helper_cpu(tid, &stop));
+        let sampler = scope.spawn(|| sample_helper_cpu(tid, &stop, expected_image, &image_seen));
         let input = format!("{mode} {retained} 256");
         let output = run(&program, &limits, input.as_bytes());
         stop.store(true, Ordering::Release);
@@ -97,6 +114,7 @@ fn measure(mode: &str, retained: usize) -> Measurement {
     });
     let total = started.elapsed().as_secs_f64();
     assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    assert!(image_seen.load(Ordering::Acquire), "selected helper image was not observed executing");
     let stdout = String::from_utf8(output.stdout).unwrap();
     let timing = stdout.lines().find_map(|line| line.strip_prefix("timing ")).unwrap();
     let values = timing.split_whitespace().map(|value| value.parse::<f64>().unwrap()).collect::<Vec<_>>();
@@ -113,6 +131,7 @@ fn measure(mode: &str, retained: usize) -> Measurement {
         helper_steady_cpu: ticks_at(end).saturating_sub(ticks_at(begin)) as f64 / ticks_per_second,
         producer_steady_cpu,
         cpu_samples: samples.len(),
+        helper_image_seen: image_seen.load(Ordering::Acquire),
     }
 }
 
@@ -124,7 +143,8 @@ fn retained_files_do_not_multiply_streaming_io_cost() {
     let repeats: usize =
         std::env::var("SM_CONFINEMENT_PERFORMANCE_REPEATS").map(|value| value.parse().unwrap()).unwrap_or(3);
     let mut report = format!(
-        "helper_cpu_tick_seconds = {}\nhelper_cpu_poll_seconds = 0.002\n\n",
+        "helper = {:?}\nhelper_cpu_tick_seconds = {}\nhelper_cpu_poll_seconds = 0.002\n\n",
+        fs::canonicalize(helper()).unwrap().to_str().unwrap(),
         1.0 / unsafe { libc::sysconf(libc::_SC_CLK_TCK) } as f64
     );
     let mut measurements = Vec::new();
@@ -133,8 +153,8 @@ fn retained_files_do_not_multiply_streaming_io_cost() {
             for repeat in 0..repeats {
                 let value = measure(mode, retained);
                 report.push_str(&format!(
-                    "[[measurement]]\nmode = {mode:?}\nretained_files = {retained}\noperations = 256\nrepeat = {repeat}\nsetup_seconds = {:.9}\nsteady_seconds = {:.9}\ntotal_seconds = {:.9}\nhelper_cpu_seconds = {:.6}\nhelper_steady_cpu_seconds = {:.6}\nproducer_steady_cpu_seconds = {:.9}\ncpu_samples = {}\n\n",
-                    value.setup, value.steady, value.total, value.helper_cpu, value.helper_steady_cpu, value.producer_steady_cpu, value.cpu_samples,
+                    "[[measurement]]\nmode = {mode:?}\nretained_files = {retained}\noperations = 256\nrepeat = {repeat}\nsetup_seconds = {:.9}\nsteady_seconds = {:.9}\ntotal_seconds = {:.9}\nhelper_cpu_seconds = {:.6}\nhelper_steady_cpu_seconds = {:.6}\nproducer_steady_cpu_seconds = {:.9}\ncpu_samples = {}\nselected_helper_image_observed = {}\n\n",
+                    value.setup, value.steady, value.total, value.helper_cpu, value.helper_steady_cpu, value.producer_steady_cpu, value.cpu_samples, value.helper_image_seen,
                 ));
                 fs::write(root.join("timings.toml"), &report).unwrap();
                 println!(

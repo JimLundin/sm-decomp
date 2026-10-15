@@ -60,7 +60,14 @@ impl Capture<'_> {
             host.to_string_lossy().into_owned(),
             host_after.to_string_lossy().into_owned(),
         ];
-        crate::builds::execute_timeout(&command, &directory, "c", &self.request.root, self.request.workers, 30)?;
+        tool_execution::builds::execute_timeout(
+            &command,
+            &directory,
+            "c",
+            &self.request.root,
+            self.request.workers,
+            30,
+        )?;
         let stdout = fs::read_to_string(directory.join("c.stdout"))?;
         let returned = stdout.trim().lines().last().context("sequence return missing")?.parse()?;
         let next = fs::read(&after)?;
@@ -177,7 +184,7 @@ pub fn generate_sequence(request: SequenceRequest) -> Result<Generation> {
     manifest.family = family.into();
     manifest.routines = routines;
     manifest.case_order = None;
-    crate::fixture_format::write(&output, &manifest)?;
+    offline_verification::fixtures::write(&output, &manifest)?;
     Ok(Generation {
         family: family.into(),
         manifest: output,

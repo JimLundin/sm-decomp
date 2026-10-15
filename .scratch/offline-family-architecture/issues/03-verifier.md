@@ -39,4 +39,26 @@ Full real Native proofs and final integration are ticket 05 responsibilities.
 
 ## Completion evidence
 
-Pending implementation, checks and scoped cleanup.
+The assembled implementation is frozen at `15d5a7e`; [the checkpoint](../checkpoint.md)
+records the integrated source and test-only follow-ups. `OfflineFamilies` owns
+ordinary verification, registered reuse and authenticated declarations. The
+opaque `PreparedNative` owns preparation, resource calculations, execution and
+retained admission. Shared private recipes drive both execution adapters and
+authentication; producer-operation traversal stays private.
+
+The final integration review's duplicate Fixture decisions and duplicate lease
+handling were consolidated in `360483d`. Ordinary verification now performs its
+own final admission. Native follow-up `f5433bb` was integrated as `da02c90`;
+compiler Program expectations have one shared owner. `4c5c03d` removes unused
+exports and a redundant source-publication wrapper.
+
+All 39 verifier owner tests passed, including 11 Native regressions. Test-only
+commit `09ea8ca` moves the existing pointer-bank C check into the verifier owner;
+it passes all original raw/host/null/wrong-bank assertions. Both owner and pointer
+test cleanup passes succeeded, and their temporary directories are removed.
+The recipe and Native implementer worktrees have been removed with their source
+and logs integrated. The retained ordinary actual-C verdict still authenticates.
+
+The complete catalog preparation passed for all 177 declarations. Final real
+Native execution, assembly retirement and final retained authentication are
+tracked by ticket 05; this ticket remains claimed until those gates finish.

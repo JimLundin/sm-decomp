@@ -1,14 +1,10 @@
 //! CLI publication of typed Recovered C source inventories.
-use crate::inputs::bounded;
 use anyhow::{Context, Result, ensure};
 use std::{fs, path::Path};
+use tool_execution::bounded;
 
 pub(crate) fn run(root: &Path, source: &Path, output: &Path) -> Result<()> {
-    bounded::limited(|| publish(decomp_source::inventory(root, source)?, output))
-}
-
-pub(crate) fn run_until(root: &Path, source: &Path, output: &Path, deadline: u64, max_bytes: u64) -> Result<()> {
-    bounded::until(deadline, max_bytes, || publish(decomp_source::inventory(root, source)?, output))
+    decomp_source::context::limited(|| publish(decomp_source::inventory(root, source)?, output))
 }
 
 fn publish(report: decomp_source::Inventory, output: &Path) -> Result<()> {
@@ -26,10 +22,12 @@ mod tests {
 
     #[test]
     fn inventory_generation_inherits_expired_budget_before_any_output() -> Result<()> {
-        let directory = bounded::tests::Directory::new()?;
+        let directory = tool_execution::testing::Directory::new()?;
         let output = directory.0.join("out/inventory.toml");
-        let error =
-            run_until(&directory.0.join("absent"), &directory.0.join("absent-source"), &output, 0, 1024).unwrap_err();
+        let error = decomp_source::context::until(0, 1024, || {
+            run(&directory.0.join("absent"), &directory.0.join("absent-source"), &output)
+        })
+        .unwrap_err();
         assert!(error.to_string().contains("deadline"));
         assert!(!output.parent().unwrap().exists());
         Ok(())

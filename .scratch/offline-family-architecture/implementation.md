@@ -1,6 +1,6 @@
 # Offline family migration and verification plan
 
-Status: approved; implementation startup in progress
+Status: implemented; final verification and integration in progress
 
 This implements the [approved design](proposal.md). All tools and tests stay
 in Rust. The user approved implementation on 2026-10-15. Tickets 02–05 follow
