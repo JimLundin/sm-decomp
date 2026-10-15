@@ -1,0 +1,63 @@
+# Performance refactor ticket map
+
+Planning status: complete proposal
+Implementation status: tickets 01 and 05 claimed; no production claims reserved
+
+The active Offline family extraction must finish and its owners must hand over
+the relevant source before these implementation tickets are dispatched. Freeze
+that integrated revision as the baseline. Existing original-acceptance work and
+production policies retain their own authority and prerequisites.
+
+| Ticket | Type | Depends on | Deliverable |
+| --- | --- | --- | --- |
+| [01](issues/01-baseline-and-metrics.md) | task | None | Current phase/reuse metrics, benchmark requirements and budgets |
+| [02](issues/02-bulk-input-context.md) | task | 01 | Small bulk Interface and one immutable authenticated input/catalog context |
+| [03](issues/03-dependency-and-result-identities.md) | task | 02 | Syntax-aware dependency facts and precise identity contracts |
+| [04](issues/04-shared-build-preparation.md) | task | 03 | Shared compiler preparation and eligible build coalescing |
+| [05](issues/05-offline-evidence-prototype.md) | prototype | None | Measured indexed-evidence experiment using frozen admitted baseline outputs |
+| [06](issues/06-indexed-evidence-and-admission.md) | task | 02, 03, 05 | Production indexed evidence, Native attribution and scoped retention |
+| [07](issues/07-batch-work-graph.md) | task | 04, 06 | Private work graph and explicit Native scheduling contracts |
+| [08](issues/08-optimized-tools-and-installation.md) | task | 03, 04, 06, 07 | Validated optimized tool pair and concrete sealed installation candidate |
+| [09](issues/09-integration-measurement-and-cleanup.md) | task | 08 | Complete required acceptance, measured improvement and rollout cleanup |
+
+```mermaid
+flowchart LR
+    A["01 Metrics"] --> B["02 Bulk context"]
+    B --> C["03 Dependencies"] --> D["04 Builds"]
+    R["Frozen admitted baseline outputs"] --> E["05 Evidence prototype"] --> F["06 Evidence integration"]
+    B --> F
+    C --> F
+    D --> G["07 Work graph"]
+    F --> G
+    C --> H["08 Optimized tools"]
+    D --> H
+    F --> H
+    G --> H
+    H --> I["09 Acceptance and cleanup"]
+```
+
+The isolated storage prototype can begin independently using completed frozen
+baseline outputs, with no production edits. After 02, dependency/build work can
+proceed while that experiment completes. Production evidence integration waits
+for 02's input context and 03's identity contracts. Shared recipe registration, main Git/index,
+combined-source verification and publication have one integration owner. Resolve
+exact writable paths against the final extraction before creating claims; a
+logical Module in a ticket does not authorize editing another worker's files.
+
+The storage prototype is a decision gate. If direct packing costs more than it
+saves, revise 06 explicitly to the measured narrower storage change before claiming
+it; do not ship an expensive design merely to satisfy the original graph. Native
+compiler sharing or barrier removal similarly requires a passed contract gate.
+
+## Decisions so far
+
+- User approved implementation. Ticket 01 starts in an isolated worktree;
+  extraction recovery and baseline ownership are in [checkpoint.md](checkpoint.md).
+- Choose the bulk Interface with a private graph; keep existing journal and
+  capacity authority. [Architecture](architecture.md).
+- Prioritize complete required-run performance and separately measure incremental
+  selection and unchanged reuse. [Validation](validation.md).
+- Produce immutable indexed Offline evidence during execution; choose storage
+  granularity/transport after a bounded comparison. [Ticket 05](issues/05-offline-evidence-prototype.md).
+- A daemon, distributed execution and reference-output caching remain separate
+  deferred designs, with no promised speedup. [Alternatives](architecture.md#compare-the-alternatives).
