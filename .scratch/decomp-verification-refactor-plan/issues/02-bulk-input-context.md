@@ -55,6 +55,24 @@ gates and ticket 01 baseline acceptance remain pending; this ticket stays claime
 
 ## Comments
 
+2026-10-15 measured correction, explicitly approved by the integration owner:
+the real 177-family capture has 6,967 distinct inputs / 477,164,947 bytes,
+including 7,104,059 compiler bytes. Complete materialization succeeds at
+1,046,226,292 charged I/O bytes. The following full freshness pass exhausts
+the original single 1-GiB scope after another 27,394,048 bytes. Peak resident
+reservation is only 347,912,221 bytes; the failure is aggregate I/O, not memory.
+
+Ordinary capture now has two explicit phases: materialization and full
+freshness/materialized authentication. Each keeps a 1-GiB ceiling and both use
+the same original absolute deadline. With no enclosing scope their combined
+ceiling is at most 2 GiB; any existing caller byte/deadline scope must still
+aggregate both phases and remain stricter. Native and declaration resident
+limits do not change. No input or freshness check is omitted and counters are
+never reset per file. This is a reviewed composition correction, not a claim
+of less I/O or faster execution. Complete real capture and inherited-budget /
+deadline controls are required. Deferred noncompiler materialization remains
+a future optimization requiring its own byte-identity and mutation evidence.
+
 2026-10-15: full-catalog graph-capacity validation exposed a bulk capture defect:
 the raw GeneratedPlm manifest names an obsolete synthetic ROM that ordinary
 preparation should replace through the trusted generator. Its missing/stale file
