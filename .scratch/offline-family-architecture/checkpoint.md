@@ -85,8 +85,9 @@ All Cargo work is locked/offline; the optimized verification build uses one job.
 - Pipeline unit tests passed: 165 passed, 21 ignored, 224.51 seconds
   (`logs/pipeline-unit-2.log`). This includes helper-dependent confinement,
   lifecycle, ordered launch and replay controls. Both cleanup passes over
-  `unit-tmp-2` succeeded with zero bytes. Two tiny synthetic launch fixtures
-  remain for final disposal. The Original supervisor proof removes its own root.
+  `unit-tmp-2` succeeded with zero bytes. Its two synthetic launch fixtures were
+  removed with the first unit run's unsealed setup inputs. The Original
+  supervisor proof removes its own root.
 - The initial unit run had 150 passes and 15 setup failures because the private
   ROM and current helper environment were missing (`logs/pipeline-unit.log`).
   Diagnostics remain; the complete passing rerun supersedes this result.
@@ -94,9 +95,11 @@ All Cargo work is locked/offline; the optimized verification build uses one job.
   evidence reader, pipeline CLI and pipeline test reader are retained in
   `tools/`; `tools/executables.sha256` records exact hashes.
 - Both cleanup passes over the first `unit-tmp/` succeeded with zero targets
-  and zero bytes (`logs/unit-setup-failure-cleanup*.toml`). Unsealed constructor
-  inputs remain there; there are no receipts or verdicts. Preserve diagnostics
-  and remove their disposable Git metadata/temporary inputs at final cleanup.
+  and zero bytes (`logs/unit-setup-failure-cleanup*.toml`). Its unsealed constructor
+  inputs and Git metadata had no receipts or verdicts and are now removed.
+  `logs/disposable-unit-fixtures.txt` retains their inventory;
+  `logs/disposable-finished-tmp-bytes.txt` records 4,349,952 allocated bytes
+  removed across both unit TMPDIRs and four empty finished TMPDIRs.
 - The explicit catalog proof passed: exactly one test selected, 19.79 seconds;
   `logs/catalog.log` and `logs/catalog.time`. All 177 declarations prepared,
   covering 150,204 declared Fixture pairs plus the 360-pair animation auxiliary.
@@ -133,17 +136,24 @@ All Cargo work is locked/offline; the optimized verification build uses one job.
   `logs/pattern-corpus-prerequisites.sha256`. No source change was needed.
   Both cleanup passes over `integration-tmp-3` succeeded; its rejected pattern
   report and diagnostic source snapshot remain.
-- Remaining CLI targets are running in exec session 97482: `patterns`,
+- The remaining CLI targets passed all 37 tests: `patterns`,
   `plm_spawn`, `prefix`, `processes`, `producer_metrics`, `readiness_feedback`,
   `readiness_interrupt`, `resource_metrics`, `routine_jobs`, `selection`,
-  `session_authority`. They use locked/offline release, one Cargo job, one
-  test thread, all four current helper variables and fresh `integration-tmp-4`.
-  Log: `logs/integration-4.log`. Other passing groups need not be repeated.
-- Both real Native execution proofs remain pending. Follow
-  `native-verification-plan.md`; preserve the 12 complete recipes (8,159 pairs),
-  full-family negative controls and current budgets. `SM_NATIVE_PERFORMANCE_ONLY`
-  must be absent. Use the retained test reader and `frozen-source` overrides;
-  keep the original `15d5a7e` source identity separate from the test-only overlay.
+  `session_authority`. One session-process child entry is ignored by default.
+  They used locked/offline release, one Cargo job, one test thread and all four
+  current helper variables. Log: `logs/integration-4.log`. Both cleanup passes
+  over `integration-tmp-4` succeeded. Overall final CLI coverage is 163 passed,
+  four ignored, across 33 integration targets; none remains pending.
+- The real Native recipe proof is running in exec session 8680 using the
+  retained `tools/sm-pipeline-tests`, `frozen-source`, current sandbox and
+  `native-tmp`. Logs: `logs/recipes.log`, `recipes.time`; output: `recipes/`.
+  All 12 complete recipe declarations (8,159 pairs) are explicitly selected
+  exactly as in `native-verification-plan.md`, compiler limit 180 seconds,
+  Fixture jobs/workers four. `SM_NATIVE_PERFORMANCE_ONLY` is unset.
+  The exact archive and private ROM hashes passed again before this gate.
+  The full-family Native proof and independent post-cleanup/retirement Native
+  authentication remain pending. Keep the original `15d5a7e` source identity
+  separate from test-only overlay `09ea8ca`.
 
 ## Cleanup and remaining work
 
@@ -161,8 +171,8 @@ Remaining implementation worktrees are:
 - `/home/jim/sm-decomp-offline-native`: stopped, clean, integrated.
 - `/home/jim/sm-decomp-offline-callers`: stopped, clean, integrated.
 
-Next: finish the relocated pointer check and remaining CLI suites, then the
-real recipe/full-family Native proofs. Retain exact tools and source,
+Next: finish the real recipe proof and run the full-family Native proof.
+Retain exact tools and source,
 run both cleanup passes, authenticate retained evidence, integrate on main,
 retire only these worktrees/build outputs and authenticate again. Resolve
 tickets 03–05 and the spec only after those checks and cleanup succeed.
