@@ -4,6 +4,53 @@ Updated: 2026-10-15
 Owner session: `01a13c3b-d421-7bb3-80a2-ec91045678e7` (`/root`)
 User authorization: approved the rendered design and instructed "go ahead".
 
+Recovery: the original owner was confirmed `systemError` by the performance
+implementation coordinator `01a13e7f-ab01-7413-a1c2-288b08a4b719`.
+Its `/root/recover_extraction_verification` child owns only the final frozen-source
+gates and this effort's retained proof output. The coordinator owns integration,
+main Git/index and worktree retirement. No production claim or installed policy
+has been adopted, replaced or changed. The worktree was recovered clean at
+`8bf8acf610e1a94a1a3bccd5d718dae4a4244857`; its production source is byte-identical
+to freeze `4a736587af557de9e44b3126ff08f6d6d11beee8`.
+
+## Recovered verification handoff
+
+All verification processes owned by the recovery child have finished. The
+pipeline unit suite passed 165 tests (21 explicitly ignored), 229.35 seconds,
+in exec session `42584`. Its log SHA-256 is
+`b82e0e60bf227d776cb8dd4a5e4b3d7b9d907541998d99ad60e174f41c9a9e76`.
+The previously recovered owner suites passed 65 unit tests and one dispatcher
+integration test; the complete catalog and ordinary 16-pair gates also passed.
+
+The first Native recipe gate failed during PLM finalization, after all 1,969
+PLM pairs passed and all 3,941 producer operations were indexed. Its error is
+`trusted input whole-stage deadline exhausted`; no Native receipt exists.
+[The diagnostic](native-deadline-diagnostic.md) records exact source references,
+timestamps, retained evidence, a non-producing reproducer proposal and the
+source-derived repeated-admission count. Native acceptance is incomplete.
+
+Both cleanup passes succeeded for every completed/failed recovery run. Total
+utility reclamation is 434,765,824 bytes: 4,194,304 ordinary plus 430,571,520
+PLM snapshot bytes. Unit cleanup reclaimed zero bytes; retain its fourteen
+small synthetic launch-plan/state files listed in `logs/unit-retained-files.txt`.
+Its empty compact-recovery directory was removed. All other recovery TMPDIRs
+are removed. The original regression diagnostics remain unchanged.
+
+At handoff, ordinary authentication passed again
+(`logs/ordinary-authenticated-at-handoff.toml`); retained PLM intent/verdict/index/
+chunk/result hashes and precise mtimes are unchanged. Exact reader/helper and
+private prerequisite hashes passed again. Production source still matches the
+freeze (`logs/production-source-at-handoff.diff` is empty). Free disk space was
+126,212,780,032 bytes. The proof parent, source snapshots, tools, original C/ROM
+and absolute Original capture dependencies remain in place.
+
+At the integration owner's explicit instruction, no CLI integration, full-real
+Native proof or matrix retry was launched after the unit suite. Return this
+child's execution slot for the scoped Native/operation admission repair. The
+child identity remains available for a later frozen candidate. The coordinator
+owns source repair/merge, remaining gate claims, final admission and worktree
+retirement; neither integration nor retirement is complete.
+
 ## Source and ownership
 
 The complete assembled implementation is in
@@ -206,10 +253,83 @@ All Cargo work is locked/offline; the optimized verification build uses one job.
 
 ### Corrected-source verification in progress
 
+Recovery observed original build shell PID `1292644` stopped. Both retained time
+records report exit 0: the combined optimized test build completed in 20m24.05s,
+and helper builds in 1m20.54s. Exact emitted
+pipeline test, CLI, sandbox, recorded-rewrite and evidence-reader executables
+are retained in the corrected-source proof parent's `tools/`, with hashes in
+`tools/executables.sha256`. The pipeline reader was compared byte-for-byte with
+the emitted Cargo path; its Cargo fingerprint is retained. Source, private ROM,
+pinned archive and captured Ridley input checks passed again at recovery.
+
+The narrowed owner Cargo invocation in exec session `72561` selected a different
+feature union and began rebuilding `offline-verification`. It was interrupted
+before any test or verification producer ran; `logs/owners.log` and
+`logs/owners.time` retain the diagnostic. Continue with the already-built exact
+test executables listed in `logs/test-build.log`, avoiding a feature-union build.
+Use one test thread, the shared workers4 pool, isolated `owner-tmp/`, and the
+retained cleanup executable. Complete both scoped cleanup passes before
+proceeding to application, ordinary,
+catalog, all twelve real recipes (PLM first), full real Native controls and
+standalone retained authentication. No full-catalog fresh execution is planned.
+
+The direct emitted owner executables completed successfully: 13 `decomp-source`,
+11 `tool-execution`, 41 `offline-verification` unit tests (one optional measurement
+ignored), plus the one dispatcher pointer integration test. Logs and time records
+are `logs/{decomp-source,tool-execution,offline-verification,dispatcher-pointer}.*`.
+Both cleanup passes over the interrupted build's empty TMPDIR and the completed
+owner TMPDIR passed, with zero bytes reclaimed; the empty TMPDIR was removed.
+The ordinary actual-C gate is now running in exec session `22958`, using the
+unchanged `ordinary-verify.toml` and retained current pipeline executable.
+The complete intended environment is retained in
+`logs/recovered-execution-environment.toml`; each explicit Native gate's `--list`
+output selects exactly one test (`logs/*-selected-test.txt`).
+
+Ordinary actual-C passed 16 Fixture pairs / two routines at
+`ordinary/1792064366867709-1385229-0/verdict.toml`. Both run cleanup passes
+succeeded; deduplication reclaimed 4,194,304 bytes across 48 snapshots, and
+`logs/ordinary-authenticated-after-cleanup.toml` reports `offline-verified`.
+Both passes over its empty TMPDIR succeeded, and that directory was removed.
+The complete current catalog gate passed in 38.47 seconds: 177 declarations /
+150,204 Fixture pairs plus the 360-pair animation auxiliary. Its own two cleanup
+records report zero bytes, and its separate empty TMPDIR was cleaned and removed.
+Generated PLM inputs are sealed in `logs/generated-catalog-plm-inputs.sha256`.
+
+Current gate: all twelve required Native recipe declarations, PLM first,
+in exec session `97392` / observed reader PID `1387304`. Exact stdout/stderr are
+in `logs/recipes.log`, timing and exit status in `logs/recipes.time`, and the full
+selection/environment in `logs/recovered-execution-environment.toml`. Use the
+existing process and `recipes/` evidence; do not duplicate its producers. Its
+fixture capacity remains four in the shared pool, compiler limit 180 seconds,
+per-family gate limit 600 seconds, and complete domain 8,159 pairs. Other
+owners' worktrees and producers are unchanged. Application suites, full Native
+controls and independent final authentication remain pending after this gate.
+
+Recipe gate `97392` has now stopped, exit 101 at 510.41 test seconds. First
+failure: `trusted input whole-stage deadline exhausted` during the separate
+60-second finalization/reconciliation block, before Native receipt publication.
+All 1,969 PLM pairs / three routines passed actual-C comparison and all 3,941
+producer records were indexed. The other eleven families did not run.
+[The precise diagnostic and narrow reproducer proposal](native-deadline-diagnostic.md)
+record measured boundaries, source references and the remaining localization
+uncertainty. No deadline changed and no matrix retry was launched.
+Both failed-root cleanup passes succeeded: 430,571,520 bytes deduplicated,
+5,907 snapshots checked. All retained intent/verdict/index/chunk/result hashes
+and mtimes remain equal. Its empty TMPDIR was cleaned and removed. Native
+reauthentication remains impossible without a published receipt.
+
+At the integration owner's direction, independent current-source application
+checks continue. The default pipeline unit suite is running in exec session
+`42584`, using `tools/sm-pipeline-tests`, one test thread, all current retained
+helper variables and separate `unit-tmp/`. Exact stdout/stderr and command/time
+records: `logs/pipeline-unit.log` and `logs/pipeline-unit.time`. CLI integration
+and applicable full-family controls remain pending; source repair belongs to
+the coordinator, not this verification worker.
+
 Locked/offline workspace all-target compilation passed in 46.27 seconds
 (`plm-fix-20261015/logs/check.log`). Release owner/application no-run build and
-helper builds are running serially in exec session 98089, one Cargo job and the
-shared workers4 settings. Logs: `logs/test-build.log`, `logs/helper-build.log`.
+helper builds completed serially in original exec session 98089, one Cargo job
+and the shared workers4 settings. Logs: `logs/test-build.log`, `logs/helper-build.log`.
 Both `frozen-source/` and `catalog-source/` match `tracked-source.sha256` from
 the freeze. Private archive, ROM and captured Ridley input hashes match the
 reviewed prerequisites; `prerequisites.sha256` retains exact paths and values.
@@ -244,13 +364,13 @@ original. These steps reclaimed 36,962,304 measured allocated bytes; see
 `logs/failed-setup-disposable-before.txt`, `failed-setup-retained-after.txt`
 and `recipes-setup-{uncompressed,decompressed}.sha256`.
 
-Next: finish the current release build, retain its exact readers and run
-current-source owner/application, ordinary, catalog, complete recipe and
-full-family Native gates. Historical `recipes-2/` cleanup/authentication and the
-PLM regressions are complete. All 12 declared recipes remain required; execute
-the PLM allocation family first to check the corrected path before the other
-11 families. This changes only test order, not domains, limits or coverage.
-Retain exact tools and source,
-run both cleanup passes, authenticate retained evidence, integrate on main,
-retire only these worktrees/build outputs and authenticate again. Resolve
-tickets 03–05 and the spec only after those checks and cleanup succeed.
+Next: the integration owner coordinates the scoped repeated-admission repair
+described in the diagnostic, with unchanged limits and evidence contracts.
+Then return a frozen candidate and exact remaining gate claim. All twelve
+declared recipes, full real Native controls and standalone Native authentication
+remain required; the newer current-source CLI integration gate also remains
+pending. Preserve this failed proof and the earlier historical proofs unchanged.
+Retain exact tools and source, complete both cleanup passes after new runs,
+authenticate retained evidence, integrate on main, retire only these worktrees/
+build outputs and authenticate again. Resolve tickets 03–05 and the spec only
+after those checks and cleanup succeed.
