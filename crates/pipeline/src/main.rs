@@ -1,6 +1,7 @@
 //! Local CLI composition for decomp verification and Translation operations.
 use anyhow::{Context, Result, bail, ensure};
 use serde::Serialize;
+use sha2::{Digest, Sha256};
 use std::fs;
 use std::io::{BufRead, Read, Write};
 use std::path::{Path, PathBuf};
@@ -86,10 +87,62 @@ mod translation_production;
 mod translation_production_prepare;
 mod translation_production_registry;
 
-static BINARY_SHA256: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+struct BinaryIdentity {
+    image: fs::File,
+    sha256: std::sync::OnceLock<std::result::Result<String, String>>,
+}
+
+impl BinaryIdentity {
+    fn open(path: &Path) -> Result<Self> {
+        Ok(Self { image: fs::File::open(path)?, sha256: std::sync::OnceLock::new() })
+    }
+
+    fn digest(&self) -> Result<&str> {
+        // One initializer owns the read offset. Keep the descriptor opened at
+        // startup so replacing its pathname cannot redirect a deferred read.
+        // A failed identity remains a failure for this invocation.
+        self.sha256
+            .get_or_init(|| {
+                let mut image = &self.image;
+                let mut hash = Sha256::new();
+                let mut buffer = [0u8; 65536];
+                loop {
+                    let count = image.read(&mut buffer).map_err(|error| error.to_string())?;
+                    if count == 0 {
+                        break;
+                    }
+                    hash.update(&buffer[..count]);
+                }
+                Ok(format!("{:x}", hash.finalize()))
+            })
+            .as_deref()
+            .map_err(|error| anyhow::anyhow!("cannot read controller identity: {error}"))
+    }
+}
+
+static BINARY_IDENTITY: std::sync::OnceLock<BinaryIdentity> = std::sync::OnceLock::new();
 
 fn binary_digest() -> Result<&'static str> {
-    BINARY_SHA256.get().map(String::as_str).context("binary identity was not initialized")
+    BINARY_IDENTITY.get().context("binary identity was not initialized")?.digest()
+}
+
+#[test]
+fn deferred_binary_identity_keeps_the_initial_image_after_path_replacement() -> Result<()> {
+    let root =
+        std::env::temp_dir().join(format!("pipeline-identity-{}-{}", std::process::id(), tool_execution::unique_id()));
+    fs::create_dir(&root)?;
+    let path = root.join("controller");
+    fs::write(&path, "initial controller image")?;
+    let initial = digest(&path)?;
+    let identity = BinaryIdentity::open(&path)?;
+    let replacement = root.join("replacement");
+    fs::write(&replacement, "different controller image")?;
+    fs::rename(&replacement, &path)?;
+    assert_ne!(digest(&path)?, initial);
+    assert_eq!(identity.digest()?, initial);
+    assert_eq!(identity.digest()?, initial);
+    fs::remove_dir_all(root)?;
+    Ok(())
 }
 
 fn emit<T: Serialize>(value: &T) -> Result<()> {
@@ -201,7 +254,11 @@ fn main() -> Result<()> {
         }
         Err(error) => return Err(error.into()),
     };
-    BINARY_SHA256.set(digest(&executable)?).map_err(|_| anyhow::anyhow!("binary identity already initialized"))?;
+    // Utility commands do not consume a producer identity. Retain the selected
+    // image now, and hash it once only if a command's evidence contract asks.
+    BINARY_IDENTITY
+        .set(BinaryIdentity::open(&executable)?)
+        .map_err(|_| anyhow::anyhow!("binary identity already initialized"))?;
     match args.first().map(String::as_str) {
         Some("translation-execute") => translation_execution::cli(&args[1..]),
         Some("translation-launch") => translation_launch::cli(&args[1..]),
