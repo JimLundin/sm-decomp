@@ -1066,7 +1066,7 @@ pub fn verify(request: Request) -> Result<Verdict> {
         verdict.frames = frames;
         verdict.hardware_storage = "packed".into();
         let cli = run.join("sm-evidence");
-        verdict.evidence_cache = Some(builds::cargo_build(builds::CargoBuildRequest {
+        verdict.evidence_cache = Some(crate::tool_helpers::cargo_build(crate::tool_helpers::CargoBuildRequest {
             checkout: checkout.clone(),
             root: root.clone(),
             workers,
@@ -1123,7 +1123,7 @@ pub fn verify(request: Request) -> Result<Verdict> {
                 .collect(),
             })?;
         let decomp = run.join("libdecomp.a");
-        verdict.decompressor_cache = Some(builds::cargo_build(builds::CargoBuildRequest {
+        verdict.decompressor_cache = Some(crate::tool_helpers::cargo_build(crate::tool_helpers::CargoBuildRequest {
             checkout: checkout.clone(),
             root: root.clone(),
             workers,

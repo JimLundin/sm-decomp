@@ -2,12 +2,95 @@
 use anyhow::{Result, ensure};
 use offline_verification::authoring::FixtureWorkerRequest;
 use serde::{Deserialize, Serialize};
-use std::{fs, path::PathBuf};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 use tool_execution::{
+    bounded,
     build_cache::CacheResult,
-    builds::{StandaloneArtifact, StandaloneBuildRequest, standalone_builds},
+    builds::{self, StandaloneArtifact, StandaloneBuildRequest, source_files, standalone_builds},
     metrics,
 };
+
+/// Existing CLI protocol for the application's maintained Cargo artifacts.
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct CargoBuildRequest {
+    pub checkout: PathBuf,
+    pub root: PathBuf,
+    pub run: PathBuf,
+    pub package: String,
+    pub member: String,
+    pub destination: PathBuf,
+    pub workers: usize,
+}
+
+pub(crate) fn cargo_build(request: CargoBuildRequest) -> Result<CacheResult> {
+    fs::create_dir_all(&request.run)?;
+    let mut metrics =
+        metrics::Run::start(request.run.join(format!("{}-cache.metrics.toml", request.package)), "cargo-cache")?;
+    let result = (|| -> Result<CacheResult> {
+        let checkout = fs::canonicalize(request.checkout)?;
+        ensure!(
+            (request.package == "evidence" && request.member == "sm-evidence")
+                || (request.package == "decomp" && request.member == "libdecomp.a"),
+            "Cargo input closure is defined only for evidence and decomp"
+        );
+        let inputs = cargo_inputs(&checkout, &request.package)?;
+        builds::cargo_build(
+            builds::CargoBuildRequest {
+                checkout,
+                root: request.root,
+                run: request.run,
+                package: request.package,
+                member: request.member,
+                destination: request.destination,
+                workers: request.workers,
+                inputs,
+            },
+            &metrics.context,
+        )
+    })();
+    if let Ok(cache) = &result {
+        metrics.context.configuration("cache-key", &cache.key);
+        metrics.context.configuration("cache-hit", cache.hit);
+    }
+    let error = result.as_ref().err().map(|e| format!("{e:#}"));
+    let finished = metrics.finish(metrics::outcome(error.as_deref()), error);
+    if result.is_ok() {
+        finished?;
+    }
+    result
+}
+
+fn cargo_inputs(checkout: &Path, package: &str) -> Result<Vec<PathBuf>> {
+    let mut inputs = ["Cargo.toml", "Cargo.lock", "rust-toolchain.toml"].map(|p| checkout.join(p)).to_vec();
+    inputs.push(checkout.join(format!("crates/{package}/Cargo.toml")));
+    source_files(&checkout.join(format!("crates/{package}/src")), "rs", &mut inputs)?;
+    if package == "evidence" {
+        source_files(&checkout.join("crates/pipeline-model/src"), "rs", &mut inputs)?;
+    }
+    for path in bounded::entries(&checkout.join("crates"))? {
+        let manifest = path.join("Cargo.toml");
+        if manifest.is_file() {
+            inputs.push(manifest);
+        }
+    }
+    let config = checkout.join(".cargo");
+    if config.is_dir() {
+        for p in bounded::entries(&config)? {
+            if p.is_file() {
+                inputs.push(p);
+            }
+        }
+    }
+    let external = checkout.join("deps/rustysnes/crates/rustysnes-core/Cargo.toml");
+    if external.exists() {
+        inputs.push(external);
+    }
+    Ok(inputs)
+}
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]

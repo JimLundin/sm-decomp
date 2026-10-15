@@ -52,6 +52,8 @@ pub struct CargoBuildRequest {
     pub member: String,
     pub destination: PathBuf,
     pub workers: usize,
+    /// Complete input closure selected by the application owning this artifact.
+    pub inputs: Vec<PathBuf>,
 }
 
 /// One fixed standalone output selected by its application owner.
@@ -274,10 +276,6 @@ pub fn exec(request: ExecRequest) -> Result<ExecutionRecord> {
     result
 }
 
-fn rust_sources(directory: &Path, result: &mut Vec<PathBuf>) -> Result<()> {
-    source_files(directory, "rs", result)
-}
-
 pub fn source_files(directory: &Path, extension: &str, result: &mut Vec<PathBuf>) -> Result<()> {
     bounded::limited(|| {
         let mut pending = vec![(directory.to_path_buf(), 0usize)];
@@ -301,100 +299,55 @@ pub fn source_files(directory: &Path, extension: &str, result: &mut Vec<PathBuf>
     })
 }
 
-pub fn cargo_build(request: CargoBuildRequest) -> Result<CacheResult> {
-    fs::create_dir_all(&request.run)?;
-    let mut metrics =
-        crate::metrics::Run::start(request.run.join(format!("{}-cache.metrics.toml", request.package)), "cargo-cache")?;
-    let result = (|| -> Result<CacheResult> {
-        let checkout = fs::canonicalize(request.checkout)?;
-        let root = request.root;
-        let run = request.run;
-        let package = request.package.as_str();
-        let member = request.member.as_str();
-        ensure!(
-            (package == "evidence" && member == "sm-evidence") || (package == "decomp" && member == "libdecomp.a"),
-            "Cargo input closure is defined only for evidence and decomp"
-        );
-        let mut inputs = ["Cargo.toml", "Cargo.lock", "rust-toolchain.toml"].map(|p| checkout.join(p)).to_vec();
-        inputs.push(checkout.join(format!("crates/{package}/Cargo.toml")));
-        rust_sources(&checkout.join(format!("crates/{package}/src")), &mut inputs)?;
-        if package == "evidence" {
-            rust_sources(&checkout.join("crates/pipeline-model/src"), &mut inputs)?;
-        }
-        for path in bounded::entries(&checkout.join("crates"))? {
-            let manifest = path.join("Cargo.toml");
-            if manifest.is_file() {
-                inputs.push(manifest);
-            }
-        }
-        let config = checkout.join(".cargo");
-        if config.is_dir() {
-            for p in bounded::entries(&config)? {
-                if p.is_file() {
-                    inputs.push(p);
-                }
-            }
-        }
-        let external = checkout.join("deps/rustysnes/crates/rustysnes-core/Cargo.toml");
-        if external.exists() {
-            inputs.push(external);
-        }
-        let command = vec![
-            "cargo".to_owned(),
-            "build".into(),
-            "--locked".into(),
-            "--offline".into(),
-            "--release".into(),
-            "-p".into(),
-            package.into(),
-        ];
-        let workers = request.workers;
-        cached_artifact(
-            &CacheRequest {
-                root: root.clone(),
-                checkout: checkout.clone(),
-                command: command.clone(),
-                inputs,
-                destination: request.destination,
-            },
-            |artifact| {
-                let target = artifact.parent().unwrap().join("target");
-                let mut actual = command.clone();
-                actual.extend([
-                    "--jobs".into(),
-                    "1".into(),
-                    "--target-dir".into(),
-                    target.to_string_lossy().into_owned(),
-                ]);
-                // Cargo's working directory must select this checkout, while logs stay in the run.
-                fs::create_dir_all(&run)?;
-                let waiting = metrics.context.stage("cargo-worker-wait")?;
-                let (_held, _) = acquire_lease(&root, workers)?;
-                waiting.finish("success")?;
-                let mut command = Command::new(&actual[0]);
-                command
-                    .args(&actual[1..])
-                    .current_dir(&checkout)
-                    .stdout(File::create(run.join(format!("{package}-build.stdout")))?)
-                    .stderr(File::create(run.join(format!("{package}-build.stderr")))?);
-                let status = metrics.context.status(&mut command, "cargo-build")?;
-                ensure!(status.success(), "{package} build failed: {status}");
-                fs::copy(target.join("release").join(member), artifact)?;
-                fs::remove_dir_all(target)?;
-                Ok(())
-            },
-        )
-    })();
-    if let Ok(cache) = &result {
-        metrics.context.configuration("cache-key", &cache.key);
-        metrics.context.configuration("cache-hit", cache.hit);
-    }
-    let error = result.as_ref().err().map(|e| format!("{e:#}"));
-    let finished = metrics.finish(crate::metrics::outcome(error.as_deref()), error);
-    if result.is_ok() {
-        finished?;
-    }
-    result
+/// Build one application-selected Cargo artifact inside the caller's accounting
+/// scope. The caller also accounts for selecting and discovering its inputs.
+pub fn cargo_build(request: CargoBuildRequest, metrics: &crate::metrics::Context) -> Result<CacheResult> {
+    let _entered = metrics.enter();
+    let checkout = fs::canonicalize(request.checkout)?;
+    let root = request.root;
+    let run = request.run;
+    let package = request.package.as_str();
+    let member = request.member.as_str();
+    let command = vec![
+        "cargo".to_owned(),
+        "build".into(),
+        "--locked".into(),
+        "--offline".into(),
+        "--release".into(),
+        "-p".into(),
+        package.into(),
+    ];
+    let workers = request.workers;
+    cached_artifact(
+        &CacheRequest {
+            root: root.clone(),
+            checkout: checkout.clone(),
+            command: command.clone(),
+            inputs: request.inputs,
+            destination: request.destination,
+        },
+        |artifact| {
+            let target = artifact.parent().unwrap().join("target");
+            let mut actual = command.clone();
+            actual.extend(["--jobs".into(), "1".into(), "--target-dir".into(), target.to_string_lossy().into_owned()]);
+            // Cargo's working directory must select this checkout, while logs stay in the run.
+            fs::create_dir_all(&run)?;
+            let waiting = metrics.stage("cargo-worker-wait")?;
+            let (_held, _) = acquire_lease(&root, workers)?;
+            waiting.finish("success")?;
+            let mut command = Command::new(&actual[0]);
+            command
+                .args(&actual[1..])
+                .current_dir(&checkout)
+                .stdout(File::create(run.join(format!("{package}-build.stdout")))?)
+                .stderr(File::create(run.join(format!("{package}-build.stderr")))?);
+            let status = metrics.status(&mut command, "cargo-build")?;
+            ensure!(status.success(), "{package} build failed: {status}");
+            fs::copy(target.join("release").join(member), artifact)?;
+            fs::remove_dir_all(target)?;
+            Ok(())
+        },
+    )
 }
 
 pub fn c_build(request: CBuildRequest) -> Result<ExecutionRecord> {

@@ -7,7 +7,7 @@ use crate::live_model;
 use anyhow::{Context, Result, ensure};
 use offline_verification::catalog::{Catalog, catalog, entry};
 #[cfg(test)]
-use offline_verification::catalog::{catalog_until, catalog_using};
+use offline_verification::catalog::{CatalogEntry, FamilyEntry, catalog_until, catalog_using};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{BTreeMap, BTreeSet},

@@ -1183,7 +1183,7 @@ fn main() -> Result<()> {
         Some("dependencies") if args.len() == 1 => emit(&crate::offline::families()?.record_dependencies(request()?)?),
         Some("c-build") if args.len() == 1 => emit(&builds::c_build(request()?)?),
         Some("exec") if args.len() == 1 => emit(&builds::exec(request()?)?),
-        Some("cargo-build") if args.len() == 1 => emit(&builds::cargo_build(request()?)?),
+        Some("cargo-build") if args.len() == 1 => emit(&tool_helpers::cargo_build(request()?)?),
         Some("helper-build") if args.len() == 1 => emit(&crate::tool_helpers::helper_builds(request()?)?),
         Some("live-authenticate") if args.len() == 1 => emit(&observations::authenticate(request()?)?),
         Some("live-authenticate") if args.len() == 2 => {

@@ -2,13 +2,13 @@
 use crate::atomic_toml;
 use crate::decomp_acceptance;
 use crate::digest;
+use crate::tool_helpers::CargoBuildRequest;
 use anyhow::{Result, ensure};
 use decomp_source::Source;
 use serde::{Deserialize, Serialize};
 use tool_execution::build_cache::CacheResult;
 use tool_execution::builds;
 use tool_execution::builds::CBuildRequest;
-use tool_execution::builds::CargoBuildRequest;
 use tool_execution::builds::ExecutionRecord;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default, deny_unknown_fields)]
@@ -211,7 +211,7 @@ pub fn verify(request: Request) -> Result<Verdict> {
         let source = checkout.join("deps/snesrev-sm");
         verdict.source = Some(decomp_source::verify_source(&checkout, &source)?);
         let library = run.join("libdecomp.a");
-        verdict.rust_cache = Some(builds::cargo_build(CargoBuildRequest {
+        verdict.rust_cache = Some(crate::tool_helpers::cargo_build(CargoBuildRequest {
             checkout: checkout.clone(),
             root: root.to_path_buf(),
             workers,
