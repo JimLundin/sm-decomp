@@ -2,6 +2,7 @@
 pub const IMPLEMENTATION_SOURCES: &[(&str, &str)] = &[
     ("Cargo.toml", include_str!("../../../Cargo.toml")),
     ("Cargo.lock", include_str!("../../../Cargo.lock")),
+    ("crates/offline-verification/src/admission_reader.rs", include_str!("admission_reader.rs")),
     ("crates/offline-verification/src/authoring.rs", include_str!("authoring.rs")),
     ("crates/offline-verification/src/ordinary.rs", include_str!("ordinary.rs")),
     ("crates/offline-verification/Cargo.toml", include_str!("../Cargo.toml")),

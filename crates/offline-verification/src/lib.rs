@@ -9,6 +9,7 @@ use std::{
 };
 
 mod builds;
+mod admission_reader;
 mod bulk;
 mod callback;
 mod declarations;
