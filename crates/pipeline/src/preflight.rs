@@ -358,7 +358,7 @@ pub(crate) fn verify_existing(run: &mut Run) -> Result<Vec<String>> {
         &BTreeMap::new(),
     )?;
     if compiler["status"] == crate::readiness_metadata::value(&"pass").expect("validated native metadata") {
-        run . manifest . identities . insert ("compiler" . into () , crate :: report ! ({ "version" : fs :: read_to_string (run . path . join (family :: field (& compiler , "stdout") ?)) ? . trim () , })) ;
+        run . manifest . identities . insert ("compiler" . into () , crate :: report ! ({ "version" : fs :: read_to_string (run . path . join (crate::documents::field (& compiler , "stdout") ?)) ? . trim () , })) ;
     } else {
         failures.push("Install the pinned Rust toolchain; inspect compiler logs".into());
     }

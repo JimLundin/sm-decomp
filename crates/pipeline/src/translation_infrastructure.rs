@@ -14,7 +14,6 @@ use std::{
     path::{Component, Path, PathBuf},
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
-use tool_execution::builds;
 use translation_execution::{
     OperationContext,
     budget::ByteBudget,

@@ -221,7 +221,7 @@ fn prepare(config: &mut Config, path: &Path) -> Result<()> {
         keys.insert(verdict.decompressor_cache.context("decompressor cache receipt missing")?.key);
         #[derive(Deserialize)]
         struct CCache {
-            objects: Vec<crate::CacheResult>,
+            objects: Vec<tool_execution::build_cache::CacheResult>,
         }
         let c: CCache = pipeline_model::read(&verdict.run.join("c-cache.toml"))?;
         keys.extend(c.objects.into_iter().map(|c| c.key));
@@ -410,7 +410,7 @@ fn validate(config: &Config) -> Result<()> {
     for entry in fs::read_dir(&config.cache_seed)? {
         let entry = entry?.path();
         ensure!(entry.is_dir(), "cache seed must contain entry directories");
-        let seal: crate::CacheSeal = pipeline_model::read(&entry.join("seal.toml"))?;
+        let seal: tool_execution::build_cache::CacheSeal = pipeline_model::read(&entry.join("seal.toml"))?;
         ensure!(
             seal.inputs.version == 4 && crate::digest(&entry.join("artifact"))? == seal.sha256,
             "cache seed seal differs"

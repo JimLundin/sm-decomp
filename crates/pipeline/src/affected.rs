@@ -1,5 +1,4 @@
 //! Read-only affected Offline family selection. Planning never admits retained evidence.
-use crate::batch;
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};

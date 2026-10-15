@@ -57,7 +57,9 @@ require a new magic/version.
 Four contiguous sections follow the header:
 
 1. Typed metadata in the explicit `Wire` field order in
-   `crates/pipeline/src/fixture_format.rs`. Strings and vectors have a 32-bit
+   `crates/offline-verification/src/fixture_format.rs`. The public
+   `offline_verification::fixtures` interface owns authoring and codec access.
+   Strings and vectors have a 32-bit
    length, optional values have a one-byte presence tag, and booleans are 0 or 1.
    Machine-sized fields are encoded as 64-bit integers. No textual document is
    embedded. All Manifest, Routine and Case fields are preserved except writes,

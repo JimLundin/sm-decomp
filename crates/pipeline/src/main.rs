@@ -6,7 +6,7 @@ use std::io::{BufRead, Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use toml::Value;
-use tool_execution::build_cache::{CacheRequest, CacheResult, CacheSeal, cached_artifact};
+use tool_execution::build_cache::{CacheRequest, cached_artifact};
 use tool_execution::builds;
 
 use tool_execution::{acquire_lease, acquire_lease_until, acquire_leases_until, atomic_toml, digest, executable, lock};
