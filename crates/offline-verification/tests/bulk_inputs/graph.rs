@@ -816,7 +816,9 @@ fn cancelled_batch_child() -> Result<()> {
     let offline = verifier()?;
     let catalog = offline.capture_catalog(CatalogRequest::new(&project.checkout())?)?;
     let mut metrics = tool_execution::metrics::Run::start(project.root.join("batch.metrics.toml"), "cancelled-batch")?;
-    let batch = offline.verify_batch(batch_request(&project, &catalog), |_| Ok(()))?;
+    let mut request = batch_request(&project, &catalog);
+    request.case_jobs = 4;
+    let batch = offline.verify_batch(request, |_| Ok(()))?;
     let first = batch.families()[0].result().as_ref().map_err(|error| anyhow::anyhow!("{error:#}"))?;
     ensure!(
         first.run.report().status == "rejected"
@@ -835,20 +837,41 @@ fn cancelled_batch_child() -> Result<()> {
 fn cancelling_batch_reaps_helpers_fixture_descendant_and_blocks_new_admission() -> Result<()> {
     let mut project = Project::new("graph-cancellation")?;
     let rust = project.checkout().join("crates/port/src/fixture.rs");
+    // Keep Rust within the captured source contract: the trusted controller
+    // observes its PID through /proc; no unmodeled filesystem/foreign imports
+    // are introduced solely to instrument a gameplay candidate.
     let code = fs::read_to_string(&rust)?
-        .replace("pub fn dispatch", "unsafe extern \"C\" {fn fork()->i32;fn getppid()->i32;}\npub fn dispatch")
-        .replace(
-            "    if name",
-            r#"    if a == 3 {
-        std::fs::write("helper.pid", unsafe { getppid() }.to_string()).unwrap();
-        std::fs::write("fixture.pid", std::process::id().to_string()).unwrap();
-        let child = unsafe { fork() }; assert!(child >= 0);
-        if child == 0 { std::fs::write("descendant.pid", std::process::id().to_string()).unwrap(); }
-        std::thread::sleep(std::time::Duration::from_secs(30));
-    }
-    if name"#,
-        );
+        .replace("    if name", "    if a == 3 { loop { std::thread::yield_now(); } }\n    if name");
     fs::write(&rust, code)?;
+    let c = project.source().join("src/sm_80.c");
+    fs::write(
+        &c,
+        fs::read_to_string(&c)?
+            .replace("#include <stdint.h>", "#include <stdint.h>\n#include <stdio.h>\n#include <unistd.h>")
+            .replace(
+                "  const char *path",
+                r#"  if (a == 9) {
+    FILE *out = fopen("helper.pid", "w"); fprintf(out, "%d", getppid()); fclose(out);
+    out = fopen("fixture.pid", "w"); fprintf(out, "%d", getpid()); fclose(out);
+    if (fork() == 0) {
+      out = fopen("descendant.pid", "w"); fprintf(out, "%d", getpid()); fclose(out);
+    }
+    sleep(30);
+  }
+  const char *path"#,
+            ),
+    )?;
+    project.pin()?;
+    let manifest_path = project.checkout().join("tools/port/a.smf");
+    let mut manifest = fixtures::read(&manifest_path)?;
+    let mut completed = manifest.routines[0].cases[0].clone();
+    completed.name = "completed".into();
+    completed.a = 4;
+    completed.expected_return = Some(5);
+    completed.expected_after_file = None;
+    completed.expected_after_sha256 = None;
+    manifest.routines[0].cases.push(completed);
+    fixtures::write(&manifest_path, &manifest)?;
     let mut children = Children(vec![
         Command::new(std::env::current_exe()?)
             .args(["--exact", "graph::cancelled_batch_child", "--ignored", "--nocapture"])
@@ -862,8 +885,8 @@ fn cancelling_batch_reaps_helpers_fixture_descendant_and_blocks_new_admission() 
         if let Ok(entries) = fs::read_dir(project.root.join("a/evidence"))
             && let Some(directory) =
                 entries.filter_map(Result::ok).map(|entry| entry.path().join("root")).find(|path| {
-                    path.join("descendant.pid").is_file()
-                        && path.parent().unwrap().join("captured/c-after.wram").is_file()
+                    path.parent().unwrap().join("captured/descendant.pid").is_file()
+                        && path.parent().unwrap().join("completed/c-after.wram").is_file()
                 })
         {
             break directory;
@@ -872,9 +895,26 @@ fn cancelling_batch_reaps_helpers_fixture_descendant_and_blocks_new_admission() 
         ensure!(children.0[0].try_wait()?.is_none(), "cancellation child stopped before signal; see retained logs");
         std::thread::sleep(std::time::Duration::from_millis(10));
     };
-    let mut identities = Vec::new();
+    let rust_process = fs::read_dir("/proc")?
+        .filter_map(Result::ok)
+        .map(|entry| entry.path())
+        .find(|process| fs::read_link(process.join("cwd")).is_ok_and(|cwd| cwd == directory))
+        .context("admitted Rust Fixture process missing")?;
+    let rust_pid: i32 = rust_process.file_name().context("Rust Fixture PID")?.to_str().context("PID UTF-8")?.parse()?;
+    let rust_status = fs::read_to_string(rust_process.join("status"))?;
+    let rust_helper: i32 = rust_status
+        .lines()
+        .find_map(|line| line.strip_prefix("PPid:"))
+        .context("Rust Fixture helper parent missing")?
+        .trim()
+        .parse()?;
+    let mut pids = vec![rust_pid, rust_helper];
+    let captured = directory.parent().unwrap().join("captured");
     for name in ["helper.pid", "fixture.pid", "descendant.pid"] {
-        let pid: i32 = fs::read_to_string(directory.join(name))?.parse()?;
+        pids.push(fs::read_to_string(captured.join(name))?.parse()?);
+    }
+    let mut identities = Vec::new();
+    for pid in pids {
         let path = PathBuf::from(format!("/proc/{pid}/stat"));
         let stat = fs::read_to_string(&path)?;
         let started = stat
