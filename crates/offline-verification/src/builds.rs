@@ -66,6 +66,24 @@ pub(crate) struct StrictInvocation {
 
 use crate::recipe::{FixtureKind, confined_fixture_program, fixture_output_path};
 
+pub(crate) fn ordinary_c_build(
+    description: &crate::recipe::CompilerCommand,
+    run: &Path,
+    checkout: &Path,
+    root: &Path,
+    workers: usize,
+) -> Result<ExecutionRecord> {
+    let view = crate::input_view::current().context("ordinary C compilation requires captured inputs")?;
+    let generated = description.generated.iter().map(|name| fs::canonicalize(run.join(name)))
+        .collect::<std::io::Result<std::collections::BTreeSet<_>>>()?;
+    tool_execution::builds::c_build_with_inputs(
+        tool_execution::builds::CBuildRequest {
+            command: description.command.clone(), run: run.into(), checkout: checkout.into(), root: root.into(), workers,
+        },
+        &|paths| view.validate_c_inputs(paths, &generated),
+    )
+}
+
 fn has_callback_snapshots(program: &Program) -> bool {
     program.outputs.iter().any(|path| path == Path::new("callback-states.bin"))
 }

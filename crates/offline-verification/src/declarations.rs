@@ -40,6 +40,16 @@ pub struct CatalogStatistics {
     pub input_bytes: u64,
     pub freshness_reads: u64,
     pub freshness_bytes: u64,
+    pub source_reads: u64,
+    pub source_bytes: u64,
+    pub source_freshness_reads: u64,
+    pub source_freshness_bytes: u64,
+    pub materialized_reads: u64,
+    pub materialized_bytes: u64,
+    /// In-flight full input buffers, included in the resident reservation.
+    pub transient_bytes: u64,
+    pub metadata_bytes: u64,
+    pub peak_resident_bytes: u64,
     /// Conservative reserved resident bytes, including decoded metadata.
     pub retained_bytes: u64,
 }
@@ -53,6 +63,15 @@ pub(crate) struct Counters {
     pub input_bytes: AtomicU64,
     pub freshness_reads: AtomicU64,
     pub freshness_bytes: AtomicU64,
+    pub source_reads: AtomicU64,
+    pub source_bytes: AtomicU64,
+    pub source_freshness_reads: AtomicU64,
+    pub source_freshness_bytes: AtomicU64,
+    pub materialized_reads: AtomicU64,
+    pub materialized_bytes: AtomicU64,
+    transient_bytes: AtomicU64,
+    metadata_bytes: AtomicU64,
+    peak_resident_bytes: AtomicU64,
     retained_bytes: AtomicU64,
 }
 
@@ -66,8 +85,28 @@ impl Counters {
             input_bytes: self.input_bytes.load(Ordering::Relaxed),
             freshness_reads: self.freshness_reads.load(Ordering::Relaxed),
             freshness_bytes: self.freshness_bytes.load(Ordering::Relaxed),
+            source_reads: self.source_reads.load(Ordering::Relaxed),
+            source_bytes: self.source_bytes.load(Ordering::Relaxed),
+            source_freshness_reads: self.source_freshness_reads.load(Ordering::Relaxed),
+            source_freshness_bytes: self.source_freshness_bytes.load(Ordering::Relaxed),
+            materialized_reads: self.materialized_reads.load(Ordering::Relaxed),
+            materialized_bytes: self.materialized_bytes.load(Ordering::Relaxed),
+            transient_bytes: self.transient_bytes.load(Ordering::Relaxed),
+            metadata_bytes: self.metadata_bytes.load(Ordering::Relaxed),
+            peak_resident_bytes: self.peak_resident_bytes.load(Ordering::Relaxed),
             retained_bytes: self.retained_bytes.load(Ordering::Relaxed),
         }
+    }
+}
+
+pub(crate) struct Transient<'a> {
+    owner: &'a Declarations,
+    amount: u64,
+}
+impl Drop for Transient<'_> {
+    fn drop(&mut self) {
+        self.owner.counters.transient_bytes.fetch_sub(self.amount, Ordering::Relaxed);
+        self.owner.release(self.amount);
     }
 }
 
@@ -121,7 +160,7 @@ impl Declarations {
         if let Some(catalog) = catalogs.get(&hash) {
             return Ok(catalog.clone());
         }
-        self.reserve(bytes.len() as u64 * 8 + 4096)?;
+        self.reserve_metadata(bytes.len() as u64 * 8 + 4096)?;
         let catalog = Arc::new(toml::from_str::<crate::catalog::Catalog>(std::str::from_utf8(bytes)?)?);
         ensure!(catalog.families.len() <= 4096 && catalog.profiles.len() <= 1024, "native catalog inventory exceeded");
         self.counters.catalog_parses.fetch_add(1, Ordering::Relaxed);
@@ -130,12 +169,15 @@ impl Declarations {
     }
 
     pub fn read_catalog(&self, path: &Path) -> Result<Arc<crate::catalog::Catalog>> {
-        let (bytes, hash) = bounded::read_with_digest(path)?;
+        let extent = std::fs::symlink_metadata(path)?.len();
+        let _buffer = self.transient(extent)?;
+        let (bytes, hash) = bounded::read_with_digest_limit(path, extent)?;
         {
             let mut paths = self.catalog_paths.lock().map_err(|_| anyhow::anyhow!("catalog binding lock poisoned"))?;
             if let Some(expected) = paths.get(path) {
                 ensure!(expected == &hash, "registered catalog changed within captured invocation");
             } else {
+                self.reserve_metadata(path.as_os_str().len() as u64 * 2 + 256)?;
                 paths.insert(path.into(), hash.clone());
             }
         }
@@ -143,13 +185,31 @@ impl Declarations {
     }
 
     pub fn reserve(&self, amount: u64) -> Result<()> {
-        self.counters
+        let previous = self.counters
             .retained_bytes
             .try_update(Ordering::Relaxed, Ordering::Relaxed, |used| {
                 used.checked_add(amount).filter(|next| *next <= self.maximum)
             })
             .map_err(|_| anyhow::anyhow!("captured declaration resident memory budget exhausted"))?;
+        self.counters.peak_resident_bytes.fetch_max(previous + amount, Ordering::Relaxed);
         Ok(())
+    }
+
+    pub(crate) fn reserve_metadata(&self, amount: u64) -> Result<()> {
+        self.reserve(amount)?;
+        self.counters.metadata_bytes.fetch_add(amount, Ordering::Relaxed);
+        Ok(())
+    }
+
+    pub(crate) fn release_metadata(&self, amount: u64) {
+        self.counters.metadata_bytes.fetch_sub(amount, Ordering::Relaxed);
+        self.release(amount);
+    }
+
+    pub(crate) fn transient(&self, amount: u64) -> Result<Transient<'_>> {
+        self.reserve(amount)?;
+        self.counters.transient_bytes.fetch_add(amount, Ordering::Relaxed);
+        Ok(Transient { owner: self, amount })
     }
 
     pub(crate) fn release(&self, amount: u64) {
@@ -157,8 +217,16 @@ impl Declarations {
     }
 
     pub fn decode(&self, bytes: Vec<u8>, sha256: String) -> Result<Arc<Declaration>> {
+        let _buffer = self.transient(bytes.capacity() as u64)?;
+        self.decode_buffered(bytes, sha256)
+    }
+
+    fn decode_buffered(&self, bytes: Vec<u8>, sha256: String) -> Result<Arc<Declaration>> {
         let cell = {
             let mut decoded = self.decoded.lock().map_err(|_| anyhow::anyhow!("declaration cache lock poisoned"))?;
+            if !decoded.contains_key(&sha256) {
+                self.reserve_metadata(512)?;
+            }
             decoded.entry(sha256.clone()).or_default().clone()
         };
         // Only this content's initializer holds the full decode. Other content
@@ -167,7 +235,9 @@ impl Declarations {
         let result = cell.get_or_init(|| {
             initialized = true;
             (|| -> Result<Arc<Declaration>> {
-                self.reserve(fixture_format::retained_bound(&bytes)?)?;
+                let bound = fixture_format::retained_bound(&bytes)?;
+                self.reserve(bytes.len() as u64)?;
+                self.reserve_metadata(bound.saturating_sub(bytes.len() as u64))?;
                 self.counters.manifest_decodes.fetch_add(1, Ordering::Relaxed);
                 let bytes = Arc::new(bytes);
                 let manifest = Arc::new(fixture_format::decode_shared(bytes.clone())?);
@@ -184,12 +254,15 @@ impl Declarations {
     /// Every admission opens the retained file, even when its decoded content
     /// is already owned in this invocation. A cached digest cannot admit it.
     pub fn read(&self, path: &Path, expected: Option<&str>) -> Result<Arc<Declaration>> {
-        let (bytes, hash) = bounded::read_with_digest(path)?;
+        bounded::safe(path)?;
+        let extent = std::fs::symlink_metadata(path)?.len();
+        let _buffer = self.transient(extent)?;
+        let (bytes, hash) = bounded::read_with_digest_limit(path, extent)?;
         self.counters.manifest_reads.fetch_add(1, Ordering::Relaxed);
         self.counters.input_bytes.fetch_add(bytes.len() as u64, Ordering::Relaxed);
         if let Some(expected) = expected {
             ensure!(hash == expected, "captured declaration identity differs: {}", path.display());
         }
-        self.decode(bytes, hash).with_context(|| format!("binary fixture {}", path.display()))
+        self.decode_buffered(bytes, hash).with_context(|| format!("binary fixture {}", path.display()))
     }
 }

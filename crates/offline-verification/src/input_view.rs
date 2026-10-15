@@ -11,7 +11,7 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
     path::{Component, Path, PathBuf},
-    sync::Arc,
+    sync::{Arc, atomic::Ordering},
 };
 use tool_execution::bounded;
 
@@ -25,6 +25,7 @@ struct File {
     sha256: String,
     bytes: Option<Arc<Vec<u8>>>,
     maximum: u64,
+    extent: u64,
 }
 
 /// The directory is private materialization of retained owned bytes. Neither
@@ -34,12 +35,16 @@ pub(crate) struct InputView {
     checkout: PathBuf,
     source: PathBuf,
     directory: PathBuf,
-    files: BTreeMap<PathBuf, File>,
-    namespace: Vec<PathBuf>,
-    source_identity: Source,
+    files: Arc<BTreeMap<PathBuf, File>>,
+    namespace: Arc<Vec<PathBuf>>,
+    source_identity: Arc<Source>,
     declarations: Arc<Declarations>,
     reserved_bytes: u64,
-    compiler_inputs: BTreeSet<PathBuf>,
+    metadata_bytes: u64,
+    compiler_inputs: Arc<BTreeSet<PathBuf>>,
+    common_inputs: Arc<BTreeSet<PathBuf>>,
+    family_inputs: Arc<BTreeMap<(PathBuf, Vec<String>), BTreeSet<PathBuf>>>,
+    selected_inputs: Option<BTreeSet<PathBuf>>,
     /// A generated family may add a trusted asset while sharing the same
     /// compiler tree. Its parent owns that directory and the original bytes.
     parent: Option<Arc<InputView>>,
@@ -53,6 +58,7 @@ impl Drop for InputView {
             let _ = fs::remove_dir_all(&self.directory);
         }
         self.declarations.release(self.reserved_bytes);
+        self.declarations.release_metadata(self.metadata_bytes);
     }
 }
 
@@ -84,19 +90,23 @@ impl InputView {
                 checkout,
                 source,
                 directory,
-                files: BTreeMap::new(),
-                namespace,
-                source_identity,
+                files: Arc::new(BTreeMap::new()),
+                namespace: Arc::new(namespace),
+                source_identity: Arc::new(source_identity),
                 declarations: declarations.clone(),
                 reserved_bytes: 0,
-                compiler_inputs: BTreeSet::new(),
+                metadata_bytes: 0,
+                compiler_inputs: Arc::new(BTreeSet::new()),
+                common_inputs: Arc::new(BTreeSet::new()),
+                family_inputs: Arc::new(BTreeMap::new()),
+                selected_inputs: None,
                 parent: None,
             };
             let mut paths = BTreeMap::<PathBuf, Option<String>>::new();
             for (name, hash) in &view.source_identity.files {
                 paths.insert(view.source.join(name), Some(hash.clone()));
             }
-            for path in &view.namespace {
+            for path in view.namespace.iter() {
                 bounded::safe(path)?;
                 if path.extension().is_some_and(|extension| extension == "rs") {
                     ensure!(path.symlink_metadata()?.is_file(), "captured gameplay input is not regular");
@@ -117,14 +127,18 @@ impl InputView {
                     paths.insert(path, None);
                 }
             }
-            view.compiler_inputs = paths.keys().cloned().collect();
+            view.compiler_inputs = Arc::new(paths.keys().cloned().collect());
+            view.common_inputs = view.compiler_inputs.clone();
             if generated_plm {
                 Self::bind_asset(&mut paths, view.checkout.join("rom/sm.sfc"), crate::plm_fixtures::BASE_ROM_SHA256)?;
             }
             for manifest in manifests {
                 let module = view.logical_input(Path::new(&manifest.rust_module));
-                for path in crate::inputs::ordinary_sources(&view.checkout, &[module], &manifest.rust_imports)? {
-                    view.compiler_inputs.insert(path.clone());
+                let selected = crate::inputs::ordinary_sources(&view.checkout, &[module], &manifest.rust_imports)?;
+                let key = view.family_key(manifest);
+                Arc::make_mut(&mut view.family_inputs).insert(key, selected.iter().cloned().collect());
+                for path in selected {
+                    Arc::make_mut(&mut view.compiler_inputs).insert(path.clone());
                     paths.insert(path, None);
                 }
                 for path in &manifest.rust_dependencies {
@@ -149,6 +163,12 @@ impl InputView {
                 }
             }
             ensure!(paths.len() <= 16384, "captured input inventory exceeded");
+            let metadata_bytes = view.namespace.iter().chain(paths.keys()).try_fold(4096u64, |total, path| {
+                total.checked_add(path.as_os_str().len() as u64 * 8 + 1024)
+                    .context("captured source metadata extent overflow")
+            })?;
+            view.declarations.reserve_metadata(metadata_bytes)?;
+            view.metadata_bytes += metadata_bytes;
             for (path, expected) in paths {
                 view.capture_file(path, expected.as_deref())?;
             }
@@ -171,11 +191,11 @@ impl InputView {
         );
         // The cloned inventory owns only path/hash metadata; source buffers
         // stay shared, with their original reservation held by the parent.
-        let reserved_bytes = (self.files.len() as u64)
-            .checked_mul(16 * 1024)
-            .and_then(|bytes| bytes.checked_add(16 * 1024))
-            .context("generated input metadata reservation overflow")?;
-        self.declarations.reserve(reserved_bytes)?;
+        let metadata_bytes = self.files.iter().try_fold(1024u64, |total, (path, file)| {
+            total.checked_add((path.as_os_str().len() + file.physical.as_os_str().len()) as u64 * 2 + 512)
+                .context("generated input metadata reservation overflow")
+        })?;
+        self.declarations.reserve_metadata(metadata_bytes)?;
         let mut view = Self {
             checkout: self.checkout.clone(),
             source: self.source.clone(),
@@ -184,8 +204,12 @@ impl InputView {
             namespace: self.namespace.clone(),
             source_identity: self.source_identity.clone(),
             declarations: self.declarations.clone(),
-            reserved_bytes,
+            reserved_bytes: 0,
+            metadata_bytes,
             compiler_inputs: self.compiler_inputs.clone(),
+            common_inputs: self.common_inputs.clone(),
+            family_inputs: self.family_inputs.clone(),
+            selected_inputs: self.selected_inputs.clone(),
             parent: Some(self.clone()),
         };
         view.capture_file(generated.rom.clone(), Some(&generated.rom_sha256))?;
@@ -206,60 +230,29 @@ impl InputView {
 
     fn capture_file(&mut self, path: PathBuf, expected: Option<&str>) -> Result<()> {
         bounded::safe(&path)?;
+        let extent = fs::symlink_metadata(&path)?.len();
         let physical = self.destination(&path)?;
         fs::create_dir_all(physical.parent().context("captured input parent missing")?)?;
         let (bytes, hash, maximum) = if !self.compiler_inputs.contains(&path) {
-            let (hash, maximum) = if path == Path::new(crate::inputs::CAPTURED_RIDLEY_EVENT) {
-                (crate::inputs::captured_ridley_event_digest(&path)?, 128 * 1024 * 1024)
-            } else {
-                (bounded::digest(&path)?, bounded::MAX_FILE_BYTES)
-            };
+            let maximum = if path == Path::new(crate::inputs::CAPTURED_RIDLEY_EVENT) { 128 * 1024 * 1024 } else { bounded::MAX_FILE_BYTES };
+            let hash = if let Some(expected) = expected { expected.to_owned() } else { self.source_hash(&path, maximum, false)? };
             bounded::immutable_copy(&path, &physical, &hash, maximum)?;
+            self.declarations.counters.source_reads.fetch_add(1, Ordering::Relaxed);
+            self.declarations.counters.source_bytes.fetch_add(extent, Ordering::Relaxed);
             (None, hash, maximum)
         } else {
-            let extent = fs::symlink_metadata(&path)?.len();
             self.declarations.reserve(extent)?;
             self.reserved_bytes += extent;
-            let (bytes, hash) = bounded::read_with_digest(&path)?;
-            // Absolute C includes would bypass the captured tree. The existing
-            // conservative contract deliberately refuses ambiguous directives;
-            // syntax-aware precision belongs to dependency discovery.
-            if path.starts_with(&self.source) && path.extension().is_some_and(|ext| ext == "c" || ext == "h") {
-                for line in std::str::from_utf8(&bytes)?.lines() {
-                    let line = line.trim_start();
-                    if line.starts_with('#') && line[1..].trim_start().starts_with("include") {
-                        let include = line.split_once("include").unwrap().1.trim_start();
-                        ensure!(
-                            !include.starts_with("\"/") && !include.starts_with("</"),
-                            "absolute C include is outside captured inputs"
-                        );
-                        if let Some(name) = include.strip_prefix('"').and_then(|text| text.split('"').next()) {
-                            let mut resolved = path.parent().unwrap().to_path_buf();
-                            for component in Path::new(name).components() {
-                                match component {
-                                    Component::Normal(name) => resolved.push(name),
-                                    Component::ParentDir => {
-                                        ensure!(resolved.pop(), "escaping C include");
-                                    }
-                                    Component::CurDir => {}
-                                    _ => anyhow::bail!("absolute C include is outside captured inputs"),
-                                }
-                            }
-                            ensure!(
-                                resolved.starts_with(&self.source),
-                                "escaping C include is outside captured inputs"
-                            );
-                        }
-                    }
-                }
-            }
+            let (bytes, hash) = bounded::read_with_digest_limit(&path, extent)?;
+            self.declarations.counters.source_reads.fetch_add(1, Ordering::Relaxed);
+            self.declarations.counters.source_bytes.fetch_add(bytes.len() as u64, Ordering::Relaxed);
             bounded::immutable_bytes(&physical, &bytes)?;
             (Some(Arc::new(bytes)), hash, bounded::MAX_FILE_BYTES)
         };
         if let Some(expected) = expected {
             ensure!(hash == expected, "captured input identity differs: {}", path.display());
         }
-        self.files.insert(path, File { physical, sha256: hash, bytes, maximum });
+        Arc::make_mut(&mut self.files).insert(path, File { physical, sha256: hash, bytes, maximum, extent });
         Ok(())
     }
 
@@ -294,6 +287,57 @@ impl InputView {
 
     fn logical_input(&self, path: &Path) -> PathBuf {
         if path.is_absolute() { path.into() } else { self.checkout.join(path) }
+    }
+
+    fn family_key(&self, manifest: &Manifest) -> (PathBuf, Vec<String>) {
+        let mut imports = manifest.rust_imports.clone();
+        imports.sort();
+        imports.dedup();
+        (self.logical_input(Path::new(&manifest.rust_module)), imports)
+    }
+
+    /// Select an already captured family without rediscovering or reading the
+    /// shared compiler union. Full invocation checks stay at batch barriers.
+    pub(crate) fn for_family(self: &Arc<Self>, manifest: &Manifest) -> Result<Arc<Self>> {
+        let mut selected = (*self.common_inputs).clone();
+        selected.extend(self.family_inputs.get(&self.family_key(manifest)).context("family source scope was not captured")?.iter().cloned());
+        let reserved_bytes = selected.iter().try_fold(512u64, |total, path| {
+            total.checked_add(path.as_os_str().len() as u64 * 2 + 128)
+                .context("family input metadata reservation overflow")
+        })?;
+        self.declarations.reserve_metadata(reserved_bytes)?;
+        Ok(Arc::new(Self {
+            checkout: self.checkout.clone(), source: self.source.clone(), directory: self.directory.clone(),
+            files: self.files.clone(), namespace: self.namespace.clone(), source_identity: self.source_identity.clone(),
+            declarations: self.declarations.clone(), reserved_bytes: 0, metadata_bytes: reserved_bytes,
+            compiler_inputs: self.compiler_inputs.clone(), common_inputs: self.common_inputs.clone(),
+            family_inputs: self.family_inputs.clone(), selected_inputs: Some(selected), parent: Some(self.clone()),
+        }))
+    }
+
+    fn selected_compiler_inputs(&self) -> &BTreeSet<PathBuf> {
+        self.selected_inputs.as_ref().unwrap_or(&self.compiler_inputs)
+    }
+
+    fn source_hash(&self, path: &Path, maximum: u64, freshness: bool) -> Result<String> {
+        let bytes = fs::symlink_metadata(path)?.len();
+        let hash = bounded::digest_limit(path, maximum)?;
+        let counters = &self.declarations.counters;
+        if freshness {
+            counters.source_freshness_reads.fetch_add(1, Ordering::Relaxed);
+            counters.source_freshness_bytes.fetch_add(bytes, Ordering::Relaxed);
+        } else {
+            counters.source_reads.fetch_add(1, Ordering::Relaxed);
+            counters.source_bytes.fetch_add(bytes, Ordering::Relaxed);
+        }
+        Ok(hash)
+    }
+
+    fn materialized_hash(&self, file: &File) -> Result<String> {
+        let hash = bounded::digest_limit(&file.physical, file.maximum)?;
+        self.declarations.counters.materialized_reads.fetch_add(1, Ordering::Relaxed);
+        self.declarations.counters.materialized_bytes.fetch_add(file.extent, Ordering::Relaxed);
+        Ok(hash)
     }
 
     pub fn physical(&self, path: &Path) -> Result<PathBuf> {
@@ -340,12 +384,12 @@ impl InputView {
 
     pub fn validate_current(&self) -> Result<()> {
         ensure!(
-            bounded::entries(&self.checkout.join("crates/port/src"))? == self.namespace,
+            bounded::entries(&self.checkout.join("crates/port/src"))? == *self.namespace,
             "gameplay source namespace changed after capture"
         );
-        for (path, file) in &self.files {
+        for (path, file) in self.files.iter() {
             ensure!(
-                bounded::digest_limit(path, file.maximum)? == file.sha256,
+                self.source_hash(path, file.maximum, true)? == file.sha256,
                 "source or asset changed after capture: {}",
                 path.display()
             );
@@ -354,30 +398,24 @@ impl InputView {
     }
 
     pub fn validate_materialized(&self) -> Result<()> {
-        for file in self.files.iter().filter(|(path, _)| self.compiler_inputs.contains(*path)).map(|(_, file)| file) {
-            if let Some(bytes) = &file.bytes {
-                ensure!(
-                    bounded::read(&file.physical)?.as_slice() == bytes.as_slice(),
-                    "captured compiler bytes changed"
-                );
-            } else {
-                ensure!(
-                    bounded::digest_limit(&file.physical, file.maximum)? == file.sha256,
-                    "captured streamed input changed"
-                );
-            }
+        for path in self.selected_compiler_inputs() {
+            let file = &self.files[path];
+            ensure!(
+                self.materialized_hash(file)? == file.sha256,
+                "captured compiler bytes changed"
+            );
         }
         Ok(())
     }
 
     pub fn validate_compiler_current(&self) -> Result<()> {
         ensure!(
-            bounded::entries(&self.checkout.join("crates/port/src"))? == self.namespace,
+            bounded::entries(&self.checkout.join("crates/port/src"))? == *self.namespace,
             "gameplay source namespace changed after capture"
         );
-        for path in &self.compiler_inputs {
+        for path in self.selected_compiler_inputs() {
             let file = &self.files[path];
-            ensure!(bounded::digest(path)? == file.sha256, "source changed after capture: {}", path.display());
+            ensure!(self.source_hash(path, file.maximum, true)? == file.sha256, "source changed after capture: {}", path.display());
         }
         Ok(())
     }
@@ -396,10 +434,33 @@ impl InputView {
         for path in paths {
             let file = self.files.get(&path).context("family dependency was not captured")?;
             ensure!(
-                bounded::digest_limit(&path, file.maximum)? == file.sha256,
+                self.source_hash(&path, file.maximum, true)? == file.sha256,
                 "asset changed after capture: {}",
                 path.display()
             );
+        }
+        Ok(())
+    }
+
+    pub(crate) fn validate_c_inputs(&self, paths: &[PathBuf], generated: &BTreeSet<PathBuf>) -> Result<()> {
+        for path in paths {
+            bounded::safe(path)?;
+            if let Some((logical, file)) = self.files.iter().find(|(_, file)| &file.physical == path) {
+                ensure!(self.selected_compiler_inputs().contains(logical), "C dependency is outside selected captured inputs");
+                ensure!(self.materialized_hash(file)? == file.sha256, "captured C dependency changed");
+            } else if generated.contains(path) {
+                ensure!(path.symlink_metadata()?.is_file(), "generated C input is not regular");
+            } else {
+                // These are the same installed header roots as the confined
+                // compiler runtime. The generic preparation reads and freezes
+                // every actual header identity and rechecks it after waits and
+                // builds; membership alone never authenticates header bytes.
+                ensure!(
+                    ["/usr/include", "/usr/lib/gcc/x86_64-linux-gnu/9/include"].iter().any(|root| path.starts_with(root)),
+                    "C dependency is outside captured inputs: {}", path.display()
+                );
+                bounded::digest(path)?;
+            }
         }
         Ok(())
     }
@@ -463,7 +524,7 @@ impl InputView {
             format!("{prefix}{}={}", self.physical_checkout().display(), self.checkout.display()),
             format!("{prefix}{}={}", self.physical_source().display(), self.source.display()),
         ];
-        for logical in &self.compiler_inputs {
+        for logical in self.selected_compiler_inputs() {
             if !logical.starts_with(&self.checkout) && !logical.starts_with(&self.source) {
                 arguments.push(format!("{prefix}{}={}", self.files[logical].physical.display(), logical.display()));
             }

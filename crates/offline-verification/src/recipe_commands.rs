@@ -291,9 +291,6 @@ pub(crate) fn c_compiler_command(
         "-iquote".into(),
         source.join("src").display().to_string(),
     ];
-    if let Some(view) = crate::input_view::current() {
-        command.extend(view.remap_arguments(false));
-    }
     match recipe {
         Some(Recipe::Callback | Recipe::PowerBomb | Recipe::GameHost) => {
             let mut units = c_units.to_vec();
@@ -398,6 +395,9 @@ pub(crate) fn c_compiler_command(
                 ]);
             }
         }
+    }
+    if let Some(view) = crate::input_view::current() {
+        command.extend(view.remap_arguments(false));
     }
     command.extend(["-o".into(), run.join(outputs[0]).display().to_string()]);
     Ok(CompilerCommand { command, generated, outputs, full_c })

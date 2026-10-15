@@ -166,13 +166,7 @@ pub(crate) fn build(
     if let Some(execution) = execution {
         execution.compile_description(&description, run, "c-build", checkout, source)?;
     } else {
-        tool_execution::builds::c_build(tool_execution::builds::CBuildRequest {
-            command: description.command,
-            run: run.into(),
-            checkout: checkout.into(),
-            root: root.clone(),
-            workers,
-        })?;
+        crate::builds::ordinary_c_build(&description, run, checkout, root, workers)?;
     }
     fs::copy(&module, run.join("candidate.rs"))?;
     let dependency_request = crate::authoring::DependenciesRequest {

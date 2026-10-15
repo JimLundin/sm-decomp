@@ -249,9 +249,15 @@ pub fn read(path: impl AsRef<Path>) -> Result<Vec<u8>> {
 /// Return the exact bytes and their SHA-256 from one bounded file read.
 /// The identity belongs to this snapshot; each call opens the current file.
 pub fn read_with_digest(path: impl AsRef<Path>) -> Result<(Vec<u8>, String)> {
+    read_with_digest_limit(path.as_ref(), MAX_FILE_BYTES)
+}
+
+/// A caller can reserve memory before opening a file and cap the allocation at
+/// that reservation. A replacement larger than the bound fails before reading.
+pub fn read_with_digest_limit(path: &Path, maximum: u64) -> Result<(Vec<u8>, String)> {
     limited(|| {
         let mut hash = Sha256::new();
-        let bytes = read_chunks(path.as_ref(), MAX_FILE_BYTES, |chunk| hash.update(chunk))?;
+        let bytes = read_chunks(path, maximum, |chunk| hash.update(chunk))?;
         Ok((bytes, format!("{:x}", hash.finalize())))
     })
 }

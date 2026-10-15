@@ -443,13 +443,7 @@ pub(crate) fn build(
     if let Some(execution) = execution {
         execution.compile_description(&description, run, "c-build", checkout, source)?;
     } else {
-        tool_execution::builds::c_build(tool_execution::builds::CBuildRequest {
-            command: description.command,
-            run: run.into(),
-            checkout: checkout.into(),
-            root: root.clone(),
-            workers,
-        })?;
+        builds::ordinary_c_build(&description, run, checkout, root, workers)?;
     }
     let description = crate::recipe::rust_compiler_command(recipe, run);
     if let Some(execution) = execution {
@@ -747,6 +741,7 @@ pub(crate) fn verify_with_declarations(
                 declarations,
             )?
         };
+        let view = view.for_family(&manifest)?;
         view.validate_manifest_inputs(&manifest)?;
         verdict.source = Some(view.source_identity().clone());
         fs::write(run.join("LICENSE.txt"), view.read(&source.join("LICENSE.txt"), None)?)?;

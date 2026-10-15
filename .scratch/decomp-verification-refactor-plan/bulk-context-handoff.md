@@ -1,7 +1,7 @@
 # Bulk input context implementation
 
 Status: claimed; provisional source, acceptance remains root-owned.
-Owner: `/root/bulk_context`, parent session `01a13e7f-ab01-7413-a1c2-288b08a4b719`.
+Owner: `/root/bulk_context_resume`, parent session `01a13e7f-ab01-7413-a1c2-288b08a4b719`.
 Worktree: `/home/jim/sm-decomp-performance-bulk`.
 Branch: `performance/bulk-context-20261015`.
 Baseline: `c09e47b66a35e6d61dab4065cb7e30d16ff28119`.
@@ -35,6 +35,22 @@ family; narrow that to the selected family and common sources before performance
 acceptance. Full catalog freshness checks occur at invocation boundaries, not
 inside every worker. Declaration/source counters must remain separate from
 freshness reads.
+
+The resumed worker checkpoint adds the C discovered-input policy to every
+ordinary recipe, moves C path-remapping flags after recipe command assembly,
+shares immutable inventory metadata by Arc, selects only common plus selected
+family compiler inputs for family rereads, and counts materialization/freshness
+work separately. Declaration buffer reservations now happen before bounded
+allocation and include transient and metadata counters. Owner library no-run
+build passed in 12.50 seconds (locked/offline, jobs 1). No acceptance run yet.
+
+Reusable C helper seam is separately committed at `b333ca5`. Root assigned
+`tool-execution/src/builds.rs` and `build_cache.rs` to ticket 04 after that
+checkpoint; do not edit them here. Ticket 04 will supply an invocation-owned
+BuildContext interface for the offline attachment. Root separately owns
+ordinary admission/comparison edits for ticket 06. Scanner checkpoints
+`a023ff5` and `c1f4c83` are available from ticket 03; integrate those before
+actual producer controls.
 
 ## Remaining implementation and gates
 

@@ -256,13 +256,7 @@ pub(crate) fn build(
     if let Some(execution) = execution {
         execution.compile_description(&description, run, "c-build", checkout, source)?;
     } else {
-        tool_execution::builds::c_build(tool_execution::builds::CBuildRequest {
-            command: description.command,
-            run: run.into(),
-            checkout: checkout.into(),
-            root: request.root.clone(),
-            workers: request.workers,
-        })?;
+        crate::builds::ordinary_c_build(&description, run, checkout, &request.root, request.workers)?;
     }
     let fixture = crate::recipe::fixture_command(
         recipe,
