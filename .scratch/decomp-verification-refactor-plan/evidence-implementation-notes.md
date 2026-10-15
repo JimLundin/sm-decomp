@@ -1,7 +1,14 @@
 # Evidence prototype implementation inputs
 
-Status: source observations for tickets 05/06; no prototype result yet
+Status: ticket 05 resolved; source observations for the selected ticket 06 reader
 Source: extracted production freeze `4a736587af557de9e44b3126ff08f6d6d11beee8`
+
+The completed storage experiment selected existing directory/operation-index
+formats with bounded payload reuse inside each independent admission. Its exact
+measurements and retirement are in [ticket 05](issues/05-offline-evidence-prototype.md).
+The storage alternatives below remain research context, not selected production
+changes. Native operation reuse is implemented and its combined gates are active;
+see [Native recovery](native-finalization-recovery.md).
 
 ## Reuse existing storage code
 
@@ -63,3 +70,57 @@ must record contention. No shared cache, old evidence or active run may be clear
 ## Cleanup
 
 This note used source/document reads only and created no execution artifacts.
+
+## Current ordinary reader implementation guidance
+
+These additional observations use the frozen assembly `7b27ea1` and do not
+change its source. They prepare the ticket 06 implementation after the captured
+input/identity interfaces are ready.
+
+`family::authenticate_contents` currently inventories/hashes the entire run,
+decodes the declaration and authenticates sources, then checks every case.
+`inventory_bounded` omits the verdict and existing metrics sidecars and bounds
+file count, discovered paths and depth. Preserve those exact membership rules.
+`inputs::artifact_digest` permits the one large original Ridley event snapshot
+only for its authenticated captured declaration and exact known hash; it is an
+exception for streaming hashing, not permission to retain that asset in a case
+cache or enlarge all file-read bounds.
+
+The comparison owners mix generic bounded readers and direct `fs::read` calls:
+
+- `family.rs`: case declaration identity, WRAM, return text, captured output,
+  projectile host and predecessor WRAM/host checks.
+- `callback.rs`: output metrics, the complete ordered C/Rust callback file sets,
+  full WRAM and captured output. `callback_files` currently loads each complete
+  set into a map; convert paired-member comparison to bounded windows rather than
+  retaining all callback images in another whole-family cache.
+- `plm_spawn.rs`: metrics, input/output WRAM, expected flags/amount and captures.
+- `ridley_subsystem_adapter.rs`: WRAM, host, PPU, ordered effects/services,
+  independent captured companions and predecessor inheritance. Its current
+  `check` reads several files then hashes/reads them again. External original
+  capture freshness remains a separate obligation.
+
+A small private retained-reader Module can separate namespace discovery from
+payload validation, authenticate each consumed member while reading it, and
+explicitly authenticate all unconsumed members before success. If expected
+digests are used during early metadata checks, they are still untrusted until
+that final complete admission succeeds. An owning case reader can serve the
+same immutable bytes and hash to recipe comparison; no process-global path/hash
+cache or unbounded run payload map is appropriate. Source/compiler/input reads
+outside the admitted retained run must keep their independent freshness checks.
+
+Actual continuations may patch inherited WRAM through `case.writes`; matching
+only the predecessor digest cannot replace applying those writes and comparing
+the resulting complete bytes. Branching continuations can revisit an older
+predecessor. Bound any retained predecessor frontier explicitly, or use fresh
+bounded predecessor windows and account for their rereads separately. Preserve
+host and PPU inheritance as well as WRAM. A later independent admission always
+starts a fresh reader, regardless of any prior invocation cache.
+
+Keep existing mismatch diagnostics and missing/corrupt/extra-member refusals.
+Budget/path/deadline errors cannot become cache misses that bypass validation.
+Use the public actual-C family and recipe controls, plus a read-byte structural
+control on complete retained outputs. Counters must distinguish repeated reads
+inside one case window from a necessary independent admission or predecessor
+window. Integrate source stamps for the new reader so it remains part of the
+verification implementation identity.
