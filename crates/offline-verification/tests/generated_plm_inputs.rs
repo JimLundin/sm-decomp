@@ -57,6 +57,9 @@ impl Project {
         for path in [
             "tools/dependencies.toml",
             "tools/port/plm-instructions.smf",
+            "tools/decomp/headless.c",
+            "tools/decomp/headless_frame.h",
+            "rust-toolchain.toml",
             "deps/downloads/snesrev-sm.tar.gz",
             "rom/sm.sfc",
         ] {
