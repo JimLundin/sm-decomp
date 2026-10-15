@@ -21,16 +21,23 @@ Authorization: user instructed "please go ahead and implement" the nine-ticket p
   worktree, currently WIP `94104cc`. Captured compiler-input plumbing and Native
   preparation remain required; catalog-only work is not acceptance. It owns
   `/home/jim/sm-decomp-performance-metrics-continuation-target`.
-- `/root/batch_metrics` has passed its final eight-sample retained measurement
-  and is preparing the interpretation/final handoff. Passing source/control
-  checkpoint `eb88118` is already assembled. Ticket 01 remains claimed pending
-  final handoff, retirement and baseline acceptance.
+- `/root/batch_metrics` finished its final eight-sample retained measurement and
+  interpretation at documentation commit `6c385d2`. Passing source/control
+  checkpoint `eb88118` is already assembled. Root retired its worktree and both
+  retained verdicts authenticated again with identical output; both cleanup
+  passes passed. Ticket 01 remains claimed only for recovered baseline acceptance.
 - Native admission source `7729faf`, documentation `6005329`, passed 14 operation,
   6 retention and 41 owner controls. Its integrated worktree is retired; five
   exact source snapshots remain at the original paths. Both post-retirement
   cleanup passes and fresh result admission passed. See
   `native-finalization-recovery.md` for exact evidence and limitations.
-- Ticket 05 remains resolved. Tickets 03/04/06/07/08/09 still require their
+- `/root/dependency_facts` owns claimed ticket 03 in
+  `/home/jim/sm-decomp-performance-dependencies`, branch
+  `performance/dependency-facts-20261015`, baseline `94104cc`. Its isolated pure
+  scanner proceeds from the coherent catalog checkpoint; final captured-input
+  consumer/identity acceptance still waits for complete 02. It owns the released
+  original target `/home/jim/sm-decomp-performance-metrics-target`.
+- Ticket 05 remains resolved. Tickets 04/06/07/08/09 still require their
   implementation and gates. Preserve all original production prerequisite stops.
 
 ## Startup and ownership

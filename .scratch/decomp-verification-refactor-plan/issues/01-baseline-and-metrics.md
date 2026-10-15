@@ -37,8 +37,44 @@ the stripped-plan timeout are not reused as a successful performance baseline.
 
 ## Completion evidence
 
-Pending. Record exact commands, nonzero test counts, baseline samples, noise and
-limits, both scoped cleanup passes, bytes/free space and retained dependencies.
+Implementation and bounded controls passed; final acceptance still waits for the
+recovered extraction's combined-source gates. Source/control commit:
+`eb8811829ef080d35a61b0c859ba1787908b6e18` (production interface `e086190`),
+final worker documentation `6c385d208e9daf4d0f38ce9cc53da01cdc4a724a`.
+The source is assembled in frozen `7b27ea1`; main remains documentation-only.
+
+Thirteen controls passed, including real actual-C reuse/rejection/fresh execution,
+batch interruption/recovery, bounded stage accounting, benchmark attribution and
+the eight-sample retained measurement. Reuse reports current work separately from
+historical duration and produces no new children when accepted. Exact commands,
+source/readers, observations and limits are in [metrics-results](../metrics-results.md)
+and [metrics-handoff](../metrics-handoff.md).
+
+The retained one-pair measurement took 25.072966732 seconds from first invocation
+through cleanup and independent admission, excluding initial source/tool setup.
+Sampling-off/on differences were smaller than observed variation; no reliable
+overhead or whole-catalog speedup is claimed. Automatic cleanup reclaimed 524,288
+reported bytes; explicit passes reclaimed zero more. The private cache/Git removal
+removed 22,328,985 logical file bytes. Required full-workload comparisons still
+need the expanded toolchain/environment records listed in the handoff.
+
+Root retired the integrated metrics worktree after independent pre-retirement
+admission and no-writer checks, unlinking only its two ignored dependency links.
+It contained 208,438,864 logical bytes / 218,275,840 allocated bytes before
+removal. No retained verdict depends on that checkout: its exact inputs and
+copied reader remain under
+`/home/jim/sm-decomp-performance-metrics-proof/baseline-20261015`.
+Both post-retirement cleanup passes succeeded on the proof parent with zero
+additional bytes (six snapshots checked). Both fresh retained verdicts then
+authenticated with byte-identical output; the complete `baseline-retained.sha256`
+manifest passed again. Evidence is in the proof parent's `post-retirement/`.
+Available filesystem space was 116,722,200,576 bytes at that observation.
+
+The source/control branch remains available for reproduction. Its whole-control
+binary embeds old compile-time paths and must be rebuilt/restored to rerun that
+harness; standalone evidence admission uses the retained independent source and
+reader. Warmed targets remain owned by `dependency_facts` and `bulk_context`,
+respectively, and are not counted as reclaimed.
 
 ## Comments
 

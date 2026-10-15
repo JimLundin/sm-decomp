@@ -1,6 +1,6 @@
 # Make dependency selection and computation identity precise
 
-Status: open
+Status: claimed
 Blocked by: 02
 Triage: ready-for-agent
 Type: task
@@ -45,3 +45,17 @@ current corpus, planner reads/time, mutation controls, exact source and cleanup.
 ## Comments
 
 Do not promise that fixing the first 158 refusals eliminates all later uncertainty.
+
+2026-10-15 scheduling refinement: the pure owned-source-facts implementation may
+start independently from ticket 02's coherent catalog checkpoint `94104cc` while
+captured compiler-input plumbing is finished by its owner. The scanner accepts
+source bytes and emits owned facts; this slice does not depend on mutable compiler
+capture state. Integrate its consumers with the next frozen ticket 02 checkpoint.
+Final acceptance, complete identity integration and ticket resolution still depend
+on 02; this does not promote its provisional source into accepted evidence.
+
+Assigned isolated worktree: `/home/jim/sm-decomp-performance-dependencies`, branch
+`performance/dependency-facts-20261015`, baseline
+`94104cc224b6997c7eb1ad946be451af168287b5`. Root owns main and frozen combined-source
+verification. The worker owns its scanner, dependency consumers, identity
+integration and scoped tests, with a durable handoff in this plan directory.
