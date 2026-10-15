@@ -29,6 +29,11 @@ pub(crate) struct Declaration {
     pub manifest: Arc<Manifest>,
 }
 
+pub(crate) struct EncodedDeclaration {
+    pub bytes: Arc<Vec<u8>>,
+    pub sha256: String,
+}
+
 /// These counters describe work performed by this invocation, including failed
 /// attempts. Freshness hashes are intentionally distinct from retained reads.
 #[derive(Clone, Copy, Debug, Default, serde::Serialize, PartialEq, Eq)]
@@ -114,6 +119,14 @@ pub(crate) struct Transient<'a> {
     owner: &'a Declarations,
     amount: u64,
 }
+impl Transient<'_> {
+    fn retain(mut self) {
+        self.owner.counters.transient_bytes.fetch_sub(self.amount, Ordering::Relaxed);
+        // Ownership moved to the invocation cache; keep the same reservation
+        // without charging a second copy of this allocation.
+        self.amount = 0;
+    }
+}
 impl Drop for Transient<'_> {
     fn drop(&mut self) {
         self.owner.counters.transient_bytes.fetch_sub(self.amount, Ordering::Relaxed);
@@ -123,6 +136,7 @@ impl Drop for Transient<'_> {
 
 pub(crate) struct Declarations {
     maximum: u64,
+    encoded: Mutex<BTreeMap<String, Arc<EncodedDeclaration>>>,
     decoded: Mutex<BTreeMap<String, Arc<OnceLock<Decoded>>>>,
     pub counters: Counters,
     catalogs: Mutex<BTreeMap<String, Arc<crate::catalog::Catalog>>>,
@@ -155,6 +169,7 @@ impl Declarations {
         ensure!(maximum > 0 && maximum <= 8 * bounded::DEFAULT_BYTES, "declaration memory budget missing or excessive");
         Ok(Self {
             maximum,
+            encoded: Mutex::new(BTreeMap::new()),
             decoded: Mutex::new(BTreeMap::new()),
             counters: Counters::default(),
             catalogs: Mutex::new(BTreeMap::new()),
@@ -235,14 +250,34 @@ impl Declarations {
     /// An independent reader may transfer its once-read authenticated buffer.
     /// This shares storage only; the caller still owns fresh path admission.
     pub fn decode_shared(&self, bytes: Arc<Vec<u8>>, sha256: String) -> Result<Arc<Declaration>> {
-        let _buffer = self.transient(bytes.capacity() as u64)?;
-        self.decode_buffered(bytes, sha256)
+        let buffer = self.transient(bytes.capacity() as u64)?;
+        let captured = self.retain_encoded(bytes, sha256, buffer)?;
+        self.decode_captured(&captured)
     }
 
-    fn decode_buffered(&self, bytes: Arc<Vec<u8>>, sha256: String) -> Result<Arc<Declaration>> {
+    fn retain_encoded(
+        &self,
+        bytes: Arc<Vec<u8>>,
+        sha256: String,
+        buffer: Transient<'_>,
+    ) -> Result<Arc<EncodedDeclaration>> {
+        let mut encoded = self.encoded.lock().map_err(|_| anyhow::anyhow!("declaration bytes lock poisoned"))?;
+        if let Some(captured) = encoded.get(&sha256) {
+            return Ok(captured.clone());
+        }
+        self.reserve_metadata(512)?;
+        let captured = Arc::new(EncodedDeclaration { bytes, sha256: sha256.clone() });
+        buffer.retain();
+        encoded.insert(sha256, captured.clone());
+        Ok(captured)
+    }
+
+    pub(crate) fn decode_captured(&self, captured: &EncodedDeclaration) -> Result<Arc<Declaration>> {
+        let bytes = &captured.bytes;
+        let sha256 = &captured.sha256;
         let cell = {
             let mut decoded = self.decoded.lock().map_err(|_| anyhow::anyhow!("declaration cache lock poisoned"))?;
-            if !decoded.contains_key(&sha256) {
+            if !decoded.contains_key(sha256) {
                 self.reserve_metadata(512)?;
             }
             decoded.entry(sha256.clone()).or_default().clone()
@@ -253,12 +288,11 @@ impl Declarations {
         let result = cell.get_or_init(|| {
             initialized = true;
             (|| -> Result<Arc<Declaration>> {
-                let bound = fixture_format::retained_bound(&bytes)?;
-                self.reserve(bytes.len() as u64)?;
+                let bound = fixture_format::retained_bound(bytes)?;
                 self.reserve_metadata(bound.saturating_sub(bytes.len() as u64))?;
                 self.counters.manifest_decodes.fetch_add(1, Ordering::Relaxed);
                 let manifest = Arc::new(fixture_format::decode_shared(bytes.clone())?);
-                Ok(Arc::new(Declaration { bytes, sha256, manifest }))
+                Ok(Arc::new(Declaration { bytes: bytes.clone(), sha256: sha256.clone(), manifest }))
             })()
             .map_err(|error| format!("{error:#}"))
         });
@@ -271,15 +305,22 @@ impl Declarations {
     /// Every admission opens the retained file, even when its decoded content
     /// is already owned in this invocation. A cached digest cannot admit it.
     pub fn read(&self, path: &Path, expected: Option<&str>) -> Result<Arc<Declaration>> {
+        let captured = self.capture(path, expected)?;
+        self.decode_captured(&captured).with_context(|| format!("binary fixture {}", path.display()))
+    }
+
+    /// Capture bytes once while leaving potentially large Fixture vectors lazy.
+    /// Current-path admission remains an explicit independent read boundary.
+    pub(crate) fn capture(&self, path: &Path, expected: Option<&str>) -> Result<Arc<EncodedDeclaration>> {
         bounded::safe(path)?;
         let extent = std::fs::symlink_metadata(path)?.len();
-        let _buffer = self.transient(extent)?;
+        let buffer = self.transient(extent)?;
         let (bytes, hash) = bounded::read_with_digest_limit(path, extent)?;
         self.counters.manifest_reads.fetch_add(1, Ordering::Relaxed);
         self.counters.input_bytes.fetch_add(bytes.len() as u64, Ordering::Relaxed);
         if let Some(expected) = expected {
             ensure!(hash == expected, "captured declaration identity differs: {}", path.display());
         }
-        self.decode_buffered(Arc::new(bytes), hash).with_context(|| format!("binary fixture {}", path.display()))
+        self.retain_encoded(Arc::new(bytes), hash, buffer)
     }
 }

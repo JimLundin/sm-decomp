@@ -42,6 +42,8 @@ fn explicit_declarations_are_lazy_and_concurrent_aliases_decode_once() -> Result
     let snapshot = verifier().capture_catalog(CatalogRequest::new(&root.0)?)?;
     assert_eq!(snapshot.statistics().catalog_parses, 1);
     assert_eq!(snapshot.statistics().manifest_decodes, 0);
+    assert_eq!(snapshot.statistics().manifest_reads, 2);
+    let captured_bytes = snapshot.statistics().input_bytes;
     assert_eq!(snapshot.catalog().profiles["all"], ["b", "a"]);
     let pointers = std::thread::scope(|scope| {
         let a = scope.spawn(|| snapshot.family("a").map(|facts| facts.declaration() as *const Manifest as usize));
@@ -52,6 +54,7 @@ fn explicit_declarations_are_lazy_and_concurrent_aliases_decode_once() -> Result
     assert_eq!(snapshot.statistics().manifest_reads, 2);
     assert_eq!(snapshot.statistics().manifest_decodes, 1);
     assert_eq!(snapshot.statistics().shared_content_hits, 1);
+    assert_eq!(snapshot.statistics().input_bytes, captured_bytes, "lazy decoding reread captured declarations");
     let retained = snapshot.statistics().retained_bytes;
     snapshot.validate_current()?;
     snapshot.family("a")?;
@@ -81,22 +84,24 @@ fn discovery_retains_decodes_and_configuration_and_namespace_remain_bound() -> R
 }
 
 #[test]
-fn mutation_before_lazy_load_missing_and_redirected_inputs_refuse() -> Result<()> {
+fn captured_facts_stay_coherent_and_current_mutation_missing_or_redirected_inputs_refuse() -> Result<()> {
     let root = checkout("[families]\na='family'\nb='family'\n[profiles]\n")?;
     declaration(&root.0, "a")?;
     declaration(&root.0, "b")?;
     let snapshot = verifier().capture_catalog(CatalogRequest::new(&root.0)?)?;
     let path = root.0.join("tools/port/a.smf");
     let bytes = fs::read(&path)?;
+    let captured_hash = snapshot.input_identities()[Path::new("tools/port/a.smf")].clone();
     fs::write(&path, b"changed declaration")?;
-    assert!(snapshot.family("a").is_err());
+    assert_eq!(snapshot.family("a")?.manifest_sha256(), captured_hash);
     assert!(snapshot.validate_current().is_err());
     fs::write(&path, &bytes)?;
     let snapshot = verifier().capture_catalog(CatalogRequest::new(&root.0)?)?;
     fs::remove_file(&path)?;
+    assert_eq!(snapshot.family("a")?.manifest_sha256(), captured_hash);
     assert!(snapshot.validate_current().is_err());
     std::os::unix::fs::symlink(root.0.join("tools/port/b.smf"), &path)?;
-    assert!(snapshot.family("a").is_err());
+    assert_eq!(snapshot.family("a")?.manifest_sha256(), captured_hash);
     assert!(snapshot.validate_current().is_err());
     Ok(())
 }
@@ -114,12 +119,13 @@ fn capture_memory_io_and_deadline_bounds_refuse_through_the_interface() -> Resul
     let mut request = CatalogRequest::new(&root.0)?;
     request.max_retained_bytes = 1;
     assert!(verifier().capture_catalog(request).err().unwrap().to_string().contains("memory"));
+    let encoded_extent = verifier().capture_catalog(CatalogRequest::new(&root.0)?)?.statistics().retained_bytes;
     let mut request = CatalogRequest::new(&root.0)?;
-    request.max_retained_bytes = 5000;
+    request.max_retained_bytes = encoded_extent;
     let snapshot = verifier().capture_catalog(request)?;
     assert!(snapshot.family("a").is_err());
     assert!(snapshot.check_budget().is_err());
-    assert!(snapshot.statistics().retained_bytes <= 5000);
+    assert!(snapshot.statistics().retained_bytes <= encoded_extent);
     Ok(())
 }
 

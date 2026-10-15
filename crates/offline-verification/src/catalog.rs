@@ -4,10 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     collections::BTreeMap,
     path::{Path, PathBuf},
-    sync::{
-        Arc, Mutex, OnceLock,
-        atomic::{AtomicU64, Ordering},
-    },
+    sync::{Arc, Mutex, OnceLock, atomic::Ordering},
 };
 use tool_execution::bounded;
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -90,7 +87,7 @@ pub fn entry(config: &Catalog, name: &str) -> Result<FamilyEntry> {
 }
 
 pub use crate::declarations::CatalogStatistics;
-use crate::declarations::{Declaration, Declarations};
+use crate::declarations::{Declaration, Declarations, EncodedDeclaration};
 
 /// Bounds for capturing catalog/declaration inputs, separate from every
 /// family's execution and independent evidence-admission scope.
@@ -115,7 +112,7 @@ impl CatalogRequest {
 type Loaded = std::result::Result<Arc<Declaration>, String>;
 struct Binding {
     path: PathBuf,
-    identity: std::result::Result<String, String>,
+    captured: std::result::Result<Arc<EncodedDeclaration>, String>,
     declaration: OnceLock<Loaded>,
 }
 
@@ -129,7 +126,6 @@ struct CapturedCatalog {
     declarations: Arc<Declarations>,
     deadline: u64,
     maximum: u64,
-    input_bytes: AtomicU64,
     exhausted: Mutex<Option<String>>,
 }
 
@@ -176,7 +172,7 @@ pub fn capture(request: CatalogRequest) -> Result<CatalogSnapshot> {
         let checkout = std::fs::canonicalize(checkout)?;
         let configuration = checkout.join("tools/port/batch.toml");
         let (bytes, configuration_sha256) = bounded::read_with_digest(&configuration)?;
-        let mut input_bytes = bytes.len() as u64;
+        let configuration_bytes = bytes.len() as u64;
         let explicit = (*declarations.parse_catalog(&bytes, configuration_sha256.clone())?).clone();
         let mut catalog = explicit.clone();
         let namespace = bounded::entries(&checkout.join("tools/port"))?;
@@ -185,25 +181,21 @@ pub fn capture(request: CatalogRequest) -> Result<CatalogSnapshot> {
             "native catalog discovery inventory exceeded"
         );
         let mut bindings = BTreeMap::new();
-        // Bind explicit paths now without constructing their potentially large
-        // case vectors. Missing declarations remain lazy family errors, as in
-        // the application catalog's existing metadata-only contract.
+        // Keep owned encoded bytes without constructing potentially large case
+        // vectors. Missing declarations remain lazy family errors. Facts always
+        // describe this snapshot; current-path admission has its own boundary.
         for name in explicit.families.keys() {
             let path = checkout.join(entry(&explicit, name)?.manifest);
             if bindings.contains_key(&path) {
                 continue;
             }
-            let identity = (|| -> Result<String> {
-                bounded::safe(&path)?;
-                let bytes = std::fs::symlink_metadata(&path)?.len();
-                input_bytes = input_bytes.checked_add(bytes).context("catalog input extent overflow")?;
-                ensure!(input_bytes <= max_input_bytes, "catalog aggregate input budget exhausted");
-                bounded::digest(&path)
-            })()
-            .map_err(|error| format!("{error:#}"));
+            declarations.reserve_metadata(path.as_os_str().len() as u64 * 2 + 256)?;
+            let captured = declarations.capture(&path, None).map_err(|error| format!("{error:#}"));
+            if let Err(error) = &captured {
+                ensure!(!error.contains("budget") && !error.contains("deadline"), "{error}");
+            }
             bounded::check()?;
-            ensure!(input_bytes <= max_input_bytes, "catalog aggregate input budget exhausted");
-            bindings.insert(path.clone(), Arc::new(Binding { path, identity, declaration: OnceLock::new() }));
+            bindings.insert(path.clone(), Arc::new(Binding { path, captured, declaration: OnceLock::new() }));
         }
         for path in &namespace {
             bounded::check()?;
@@ -214,16 +206,18 @@ pub fn capture(request: CatalogRequest) -> Result<CatalogSnapshot> {
             if catalog.families.contains_key(name.as_ref()) {
                 continue;
             }
-            let declaration = if let Some(binding) = bindings.get(path) {
-                declarations.read(path, Some(binding.identity.as_ref().map_err(|error| anyhow::anyhow!("{error}"))?))?
+            let captured = if let Some(binding) = bindings.get(path) {
+                binding.captured.as_ref().map_err(|error| anyhow::anyhow!("{error}"))?.clone()
             } else {
-                declarations.read(path, None)?
+                declarations.reserve_metadata(path.as_os_str().len() as u64 * 2 + 256)?;
+                declarations.capture(path, None)?
             };
+            let declaration = declarations.decode_captured(&captured)?;
             let cell = OnceLock::new();
             let _ = cell.set(Ok(declaration.clone()));
             bindings.insert(
                 path.clone(),
-                Arc::new(Binding { path: path.clone(), identity: Ok(declaration.sha256.clone()), declaration: cell }),
+                Arc::new(Binding { path: path.clone(), captured: Ok(captured), declaration: cell }),
             );
             catalog.families.insert(
                 name.into_owned(),
@@ -236,7 +230,7 @@ pub fn capture(request: CatalogRequest) -> Result<CatalogSnapshot> {
             );
             ensure!(catalog.families.len() <= 4096, "native catalog family inventory exceeded");
         }
-        input_bytes = input_bytes
+        let input_bytes = configuration_bytes
             .checked_add(declarations.counters.input_bytes.load(Ordering::Relaxed))
             .context("catalog input extent overflow")?;
         ensure!(input_bytes <= max_input_bytes, "catalog aggregate input budget exhausted");
@@ -252,7 +246,6 @@ pub fn capture(request: CatalogRequest) -> Result<CatalogSnapshot> {
             declarations,
             deadline: deadline_unix_ms,
             maximum: max_input_bytes,
-            input_bytes: AtomicU64::new(input_bytes),
             exhausted: Mutex::new(None),
         })))
     })
@@ -288,6 +281,8 @@ impl CatalogSnapshot {
         Ok(())
     }
 
+    /// Return facts from the captured bytes. This is not current-path admission;
+    /// callers publish or execute only after the explicit freshness boundary.
     pub fn family(&self, name: &str) -> Result<FamilyFacts> {
         self.check_budget()?;
         let entry = entry(&self.0.catalog, name)?;
@@ -297,17 +292,9 @@ impl CatalogSnapshot {
             .declaration
             .get_or_init(|| {
                 (|| -> Result<Arc<Declaration>> {
-                    let expected = binding.identity.as_ref().map_err(|error| anyhow::anyhow!("{error}"))?;
+                    let captured = binding.captured.as_ref().map_err(|error| anyhow::anyhow!("{error}"))?;
                     let read = decomp_source::context::until(self.0.deadline, self.0.maximum, || {
-                        bounded::safe(&binding.path)?;
-                        let bytes = std::fs::symlink_metadata(&binding.path)?.len();
-                        self.0
-                            .input_bytes
-                            .try_update(Ordering::Relaxed, Ordering::Relaxed, |used| {
-                                used.checked_add(bytes).filter(|next| *next <= self.0.maximum)
-                            })
-                            .map_err(|_| anyhow::anyhow!("catalog aggregate input budget exhausted"))?;
-                        self.0.declarations.read(&binding.path, Some(expected))
+                        self.0.declarations.decode_captured(captured)
                     });
                     if let Err(error) = &read {
                         if format!("{error:#}").contains("budget") || format!("{error:#}").contains("deadline") {
@@ -327,9 +314,11 @@ impl CatalogSnapshot {
         let mut result =
             BTreeMap::from([(PathBuf::from("tools/port/batch.toml"), self.0.configuration_sha256.clone())]);
         for binding in self.0.bindings.values() {
-            if let Ok(hash) = &binding.identity {
-                result
-                    .insert(binding.path.strip_prefix(&self.0.checkout).unwrap_or(&binding.path).into(), hash.clone());
+            if let Ok(captured) = &binding.captured {
+                result.insert(
+                    binding.path.strip_prefix(&self.0.checkout).unwrap_or(&binding.path).into(),
+                    captured.sha256.clone(),
+                );
             }
         }
         result
@@ -371,9 +360,9 @@ impl CatalogSnapshot {
                 "Offline family catalog changed after capture"
             );
             for binding in self.0.bindings.values() {
-                if let Ok(expected) = &binding.identity {
+                if let Ok(captured) = &binding.captured {
                     ensure!(
-                        self.current_hash(&binding.path)? == *expected,
+                        self.current_hash(&binding.path)? == captured.sha256,
                         "Offline family manifest changed after capture: {}",
                         binding.path.display()
                     );
