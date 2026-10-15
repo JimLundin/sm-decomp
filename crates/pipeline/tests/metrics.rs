@@ -301,8 +301,7 @@ fn inherited_clock_sigterm_still_stops_descendants_and_releases_capacity() {
     let started = Instant::now();
     let published_pid =
         |name| fs::read_to_string(run.0.join(name)).ok().is_some_and(|text| text.trim().parse::<i32>().is_ok());
-    while !(published_pid("child.pid") && published_pid("grandchild.pid"))
-        && started.elapsed() < Duration::from_secs(5)
+    while !(published_pid("child.pid") && published_pid("grandchild.pid")) && started.elapsed() < Duration::from_secs(5)
     {
         std::thread::sleep(Duration::from_millis(10));
     }

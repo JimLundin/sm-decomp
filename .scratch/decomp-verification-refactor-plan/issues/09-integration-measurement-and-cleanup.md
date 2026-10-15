@@ -45,7 +45,14 @@ reclaimed, available space and actual selected production tools.
 
 ## Completion evidence
 
-Pending. Publish frozen source, exact commands/nonzero tests, comparison report,
+2026-10-15: at the user's explicit instruction, source integration onto main is
+complete without requiring pending verification status: `40ee572` merges final
+assembly `3e7c21f`, and `4f01aa8` merges scheduler test correction `d0334b5`.
+See [main-merge.md](../main-merge.md) for merge checks and scoped cleanup.
+The stopped test and measurement campaign was not restarted for this merge.
+
+The broader measurement/installation deliverables remain recorded separately.
+Publish frozen source, exact commands/nonzero tests, comparison report,
 installation state, cleanup receipts and post-retirement ordinary/Native/Live
 authentication. Resolve the spec only when every required ticket is resolved.
 

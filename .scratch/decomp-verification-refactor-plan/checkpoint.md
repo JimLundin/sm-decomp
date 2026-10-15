@@ -1,13 +1,53 @@
 # Verification performance implementation checkpoint
 
-Status: implementation active
+Status: performance refactor merged onto main at the user's explicit request
 Updated: 2026-10-15
 Owner session: `01a13e7f-ab01-7413-a1c2-288b08a4b719` (`/root`)
 Authorization: user instructed "please go ahead and implement" the nine-ticket plan.
 
 ## Current state (supersedes historical observations below)
 
-At 2026-10-15 20:34 UTC, final assembly is clean at
+The user explicitly requested merging the performance refactor onto main without
+requiring the pending verification status. Merge `40ee572` includes final assembly
+`3e7c21f`; merge `4f01aa8` also includes the final scheduler test correction
+`d0334b5`. Source integration is complete. The seven handoff-document conflicts
+retain the newer completion records: main's versions for six files and the
+assembly's optimized-tools handoff. Production source merged without conflicts.
+
+The stopped test/measurement campaign was not restarted. The merge adds no new
+test-result or overall speedup claim. Historical outcomes and the separately
+prepared installation remain recorded below; their pending work does not block
+this explicitly authorized source merge. Cleanup completion is recorded in
+[main-merge.md](main-merge.md).
+
+### Previous stopped checkpoint
+
+The user said **stop**. Root terminated the active test build (exec `65964`,
+exit 143) and interrupted the graph worker. No Cargo/rustc writer remains.
+Final assembly is saved at `3e7c21f`; graph test-only correction `d0334b5` is
+saved on its worker branch but is not integrated or verified. Do not resume
+work automatically. Main source and production tools remain unchanged.
+
+The initial combined test build found a missing test helper; `35f0b2c` fixes it.
+Focused execution passed Rust-before-C rejection and reproduced four obsolete
+scheduler-fixture failures. The graph followup adapts those fixtures. The early
+selection suite passed 10/15 and metrics 8/9; `3e7c21f` corrects test-only semantic
+dependency setup and PID-publication readiness, but has not been rerun. Four
+observation tests lacked the existing `SM_EVIDENCE_TEST_BINARY` setting; no
+production failure is inferred. Startup's default invocation ran zero tests and
+is not acceptance. No final Native matrix or graph timing samples were started.
+
+The stopped proof's two cleanup passes succeeded with zero bytes reclaimed,
+under `/home/jim/sm-decomp-performance-final-proof/c0cc7fc/logs/stopped-cleanup*`.
+Available space was 95,509,712,896 bytes. Build targets, worktrees, retained tools,
+logs and source remain for an explicitly requested resume; final acceptance and
+retirement are incomplete. The isolated Installation prepared and inspected
+successfully, with 204 final digest checks and both cleanup passes complete;
+its handoff is under the candidate directory. It was not activated in production.
+
+### Previous running checkpoint
+
+At 2026-10-15 20:29 UTC, final assembly is clean at
 `c0cc7fcaff052c6ba251e43ca7dccab3679976f5`. All implementation and the final graph
 and GeneratedPlm test/documentation followups are integrated there. Main remains
 documentation-only for this effort. The user asked for a clear status update;

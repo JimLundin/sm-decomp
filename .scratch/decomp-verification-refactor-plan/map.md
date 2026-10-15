@@ -1,7 +1,10 @@
 # Performance refactor ticket map
 
 Planning status: complete proposal
-Implementation status: 05 resolved; 01, 02, 03, 04, 06, 07 and 08 claimed; no production claims reserved
+Implementation status: source merged onto main by explicit user instruction
+(`40ee572`, `4f01aa8`), without waiting for pending verification status.
+Historical ticket outcomes and remaining measurements/installation work are
+retained below; they do not block the completed source merge.
 
 The active Offline family extraction must finish and its owners must hand over
 the relevant source before these implementation tickets are dispatched. Freeze
