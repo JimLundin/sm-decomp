@@ -81,6 +81,23 @@ fn families<'a>(report: &'a Value, group: &str) -> Vec<&'a str> {
 }
 
 #[test]
+fn metadata_commands_are_read_only_even_with_metrics_enabled() {
+    for operation in ["plan", "catalog"] {
+        let project = Project::new();
+        let output = Command::new(env!("CARGO_BIN_EXE_sm-pipeline"))
+            .args(["batch", operation])
+            .env("SM_PIPELINE_METRICS", "enabled")
+            .current_dir(&project.0)
+            .output()
+            .unwrap();
+        assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+        let report: Value = toml::from_str(std::str::from_utf8(&output.stdout).unwrap()).unwrap();
+        assert!(report.get("metrics").is_none(), "{operation} published a default metrics receipt");
+        assert!(!project.0.join("out").exists(), "{operation} created output state");
+    }
+}
+
+#[test]
 fn cold_plan_selects_only_the_leaf_and_transitive_dependencies() {
     let project = Project::new();
     project.write("crates/port/src/helper.rs", "pub fn helper() { let changed=1; }");
@@ -88,6 +105,137 @@ fn cold_plan_selects_only_the_leaf_and_transitive_dependencies() {
     assert_eq!(families(&report, "selected"), ["b"]);
     assert_eq!(families(&report, "excluded"), ["a"]);
     assert_eq!(report["selected"][0]["reasons"][0]["paths"][0].as_str(), Some("crates/port/src/helper.rs"));
+}
+
+#[test]
+fn shared_cyclic_source_closures_fit_one_planning_budget() {
+    let project = Project::new();
+    let names = (0..70).map(|index| format!("shared{index}")).collect::<Vec<_>>();
+    let mut catalog = String::from("[families]\n");
+    for name in &names {
+        catalog.push_str(&format!("{name}='family'\n"));
+        project.manifest(name, "node0", "");
+    }
+    catalog.push_str(&format!("[profiles]\ngameplay={names:?}\n"));
+    project.write("tools/port/batch.toml", &catalog);
+    let mut source = String::from("pub fn step() {\n");
+    for index in 0..32 {
+        source.push_str(&format!("crate::node{index}::step();\n"));
+    }
+    source.push_str("}\n");
+    for index in 0..32 {
+        project.write(&format!("crates/port/src/node{index}.rs"), &source);
+    }
+    project.commit();
+    project.write("docs/unrelated.md", "Only documentation changed.\n");
+    let report = project.plan();
+    assert!(families(&report, "selected").is_empty());
+    assert_eq!(families(&report, "excluded").len(), names.len());
+    assert_eq!(report["planning_statistics"]["rust_source_parses"].as_integer(), Some(33));
+
+    project.write("crates/port/src/node17.rs", &(source + "pub fn added() {}\n"));
+    let changed = project.plan();
+    assert_eq!(families(&changed, "selected").len(), names.len());
+    assert!(families(&changed, "excluded").is_empty());
+    assert!(changed["selected"].as_array().unwrap().iter().all(|decision| {
+        decision["reasons"][0]["code"].as_str() == Some("changed-dependency")
+            && decision["dependencies"].as_array().unwrap().contains(&Value::from("crates/port/src/node17.rs"))
+    }));
+}
+
+#[test]
+fn shared_assets_are_read_once_but_each_requirement_is_checked() {
+    let project = Project::new();
+    let asset = vec![7; 4 * 1024 * 1024];
+    let digest = format!("{:x}", Sha256::digest(&asset));
+    fs::create_dir(project.0.join("fixtures")).unwrap();
+    let path = project.0.join("fixtures/shared.sfc");
+    fs::write(&path, &asset).unwrap();
+    let names = (0..70).map(|index| format!("shared{index}")).collect::<Vec<_>>();
+    let mut catalog = String::from("[families]\n");
+    let rom = format!("rom={{file='fixtures/shared.sfc',sha256='{digest}'}}\n");
+    for name in &names {
+        catalog.push_str(&format!("{name}='family'\n"));
+        project.manifest(name, "a", &rom);
+    }
+    catalog.push_str(&format!("[profiles]\ngameplay={names:?}\n"));
+    project.write("tools/port/batch.toml", &catalog);
+    project.commit();
+    project.write("docs/unrelated.md", "Only documentation changed.\n");
+    let report = project.plan();
+    assert!(families(&report, "selected").is_empty());
+    assert_eq!(families(&report, "excluded").len(), names.len());
+    assert!(report["planning_statistics"]["input_bytes"].as_integer().unwrap() < 3 * asset.len() as i64);
+    assert_eq!(report["planning_statistics"]["asset_declarations"].as_integer(), Some(70));
+    assert_eq!(report["planning_statistics"]["asset_reads"].as_integer(), Some(1));
+
+    project.manifest("shared69", "a", &rom.replace(&digest, &"f".repeat(64)));
+    let wrong_requirement = project.plan();
+    assert_eq!(families(&wrong_requirement, "selected"), ["shared69"]);
+    assert_eq!(wrong_requirement["selected"][0]["reasons"][0]["code"].as_str(), Some("uncertain-inputs"));
+    assert_eq!(families(&wrong_requirement, "excluded").len(), names.len() - 1);
+
+    fs::write(&path, vec![8; asset.len()]).unwrap();
+    let changed = project.plan();
+    assert_eq!(families(&changed, "selected").len(), names.len());
+    assert!(families(&changed, "excluded").is_empty());
+    assert!(
+        changed["selected"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|decision| decision["reasons"][0]["code"].as_str() == Some("uncertain-inputs"))
+    );
+}
+
+#[test]
+fn asset_paths_with_parent_aliases_cannot_prove_exclusion() {
+    let project = Project::new();
+    project.write("fixtures/input.bin", "declared");
+    project.write("other/input.bin", "outside");
+    fs::create_dir(project.0.join("other/child")).unwrap();
+    std::os::unix::fs::symlink("../other/child", project.0.join("fixtures/alias")).unwrap();
+    project.manifest(
+        "a",
+        "a",
+        &format!("rom={{file='fixtures/alias/../input.bin',sha256='{:x}'}}\n", Sha256::digest(b"declared")),
+    );
+    project.commit();
+    project.write("docs/unrelated.md", "Only documentation changed.\n");
+    let report = project.plan();
+    assert_eq!(families(&report, "selected"), ["a"]);
+    assert_eq!(report["selected"][0]["reasons"][0]["code"].as_str(), Some("uncertain-inputs"));
+}
+
+#[test]
+fn comment_and_literal_names_do_not_select_unrelated_families() {
+    let project = Project::new();
+    project.write(
+        "crates/port/src/a.rs",
+        r###"
+/// ROM-aware preinstructions include native room projectile spawning.
+/// Trail coordinates include native Ceres Mode7 arithmetic and ROM trail frames.
+/* helper /* include_str!("helper") */ future_name */
+pub fn a() {
+    let _ = "helper File fs mod include include_bytes env option_env macro_rules";
+    let _ = r##"helper include!("anything")"##;
+    let _ = b"helper include_str";
+    let _ = br#"helper include_bytes"#;
+    let _ = '\'';
+}
+"###,
+    );
+    project.commit();
+    project.write("crates/port/src/helper.rs", "pub fn helper() { let changed = 1; }");
+    let report = project.selection();
+    assert_eq!(families(&report, "selected"), ["b"]);
+    assert_eq!(families(&report, "excluded"), ["a"]);
+    assert_eq!(
+        report["excluded"][0]["dependencies"],
+        Value::Array(
+            ["crates/port/src/a.rs", "crates/port/src/memory.rs", "tools/port/a.smf"].map(Value::from).to_vec()
+        )
+    );
 }
 
 #[test]

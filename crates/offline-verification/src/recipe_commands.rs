@@ -265,6 +265,9 @@ pub(crate) fn rust_compiler_command(recipe: Option<&Recipe>, run: &Path) -> Comp
         "-o".into(),
         run.join(outputs[0]).display().to_string(),
     ]);
+    if let Some(view) = crate::input_view::current() {
+        command.extend(view.remap_arguments(true));
+    }
     CompilerCommand { command, generated, outputs, full_c }
 }
 
@@ -392,6 +395,9 @@ pub(crate) fn c_compiler_command(
                 ]);
             }
         }
+    }
+    if let Some(view) = crate::input_view::current() {
+        command.extend(view.remap_arguments(false));
     }
     command.extend(["-o".into(), run.join(outputs[0]).display().to_string()]);
     Ok(CompilerCommand { command, generated, outputs, full_c })

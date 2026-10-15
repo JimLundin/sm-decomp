@@ -1,8 +1,9 @@
 //! Deterministic PLM scripts and valid canonical-WRAM fixture domains.
-use crate::digest;
 use crate::family_model::{Asset, Case, Manifest, PlmGeneration, Routine, Write};
 use anyhow::{Context, Result, ensure};
 use std::{fs, path::Path};
+
+pub(crate) const BASE_ROM_SHA256: &str = "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72";
 
 fn le(word: usize) -> Vec<u8> {
     (word as u16).to_le_bytes().to_vec()
@@ -49,11 +50,13 @@ pub fn generate(checkout: &Path, output: &Path, manifest_path: Option<&Path>) ->
 /// Reconstruct the complete deterministic declaration without changing a frozen
 /// verification checkout or accepting caller-selected generated fixture rows.
 pub(crate) fn generated_contents(checkout: &Path, path: &Path) -> Result<(Manifest, Vec<u8>)> {
-    let original = fs::read(checkout.join("rom/sm.sfc"))?;
-    ensure!(
-        digest(&checkout.join("rom/sm.sfc"))? == "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72",
-        "PLM fixture ROM identity differs"
-    );
+    let original = if let Some(view) = crate::input_view::current() {
+        view.read(&checkout.join("rom/sm.sfc"), Some(BASE_ROM_SHA256))?
+    } else {
+        let (bytes, hash) = tool_execution::bounded::read_with_digest(checkout.join("rom/sm.sfc"))?;
+        ensure!(hash == BASE_ROM_SHA256, "PLM fixture ROM identity differs");
+        bytes
+    };
     let mut rom = vec![0; 0x300000];
     let mut opcodes = vec![
         0x86b4, 0x86bc, 0x86c1, 0x86ca, 0x8724, 0x873f, 0x874e, 0x87e5, 0x880e, 0x882d, 0x883e, 0x8848, 0x8865, 0x887c,

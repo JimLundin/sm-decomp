@@ -7,6 +7,7 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
     path::{Path, PathBuf},
+    sync::Arc,
 };
 use tool_execution::bounded;
 
@@ -27,7 +28,7 @@ pub(crate) fn with_host<T>(host: &crate::HostInputs, action: impl FnOnce() -> Re
     action()
 }
 
-fn host_inputs() -> Result<crate::HostInputs> {
+pub(crate) fn host_inputs() -> Result<crate::HostInputs> {
     HOST.with(|current| current.borrow().clone().context("verification host inputs were not supplied"))
 }
 
@@ -70,6 +71,7 @@ pub(crate) fn authenticate_implementation(
     run: &Path,
     implementation: &crate::family_model::Implementation,
     artifacts: &BTreeMap<String, String>,
+    reader: &mut crate::admission_reader::Window<'_, '_>,
 ) -> Result<()> {
     #[derive(Deserialize)]
     #[serde(deny_unknown_fields)]
@@ -77,7 +79,7 @@ pub(crate) fn authenticate_implementation(
         binary_sha256: String,
         sources: BTreeMap<String, String>,
     }
-    let retained: ProducerInputs = bounded::object(&run.join("pipeline-inputs.toml"))?;
+    let retained: ProducerInputs = reader.object(run.join("pipeline-inputs.toml"))?;
     ensure!(
         retained.binary_sha256.len() == 64 && retained.binary_sha256.bytes().all(|b| b.is_ascii_hexdigit()),
         "retained producer identity is invalid"
@@ -159,6 +161,15 @@ fn canonical_sources_until(
 }
 
 fn canonical_sources_bounded(checkout: &Path, modules: &[PathBuf], imports: &[String]) -> Result<Vec<PathBuf>> {
+    discover_sources_bounded(checkout, modules, imports, true)
+}
+
+fn discover_sources_bounded(
+    checkout: &Path,
+    modules: &[PathBuf],
+    imports: &[String],
+    direct_only: bool,
+) -> Result<Vec<PathBuf>> {
     bounded::safe(checkout)?;
     let checkout = fs::canonicalize(checkout)?;
     let sources = checkout.join("crates/port/src");
@@ -174,28 +185,51 @@ fn canonical_sources_bounded(checkout: &Path, modules: &[PathBuf], imports: &[St
             }
         }
     }
-    let mut pending = modules.to_vec();
+    let mut pending = modules.iter().cloned().map(|path| (path, None)).collect::<BTreeSet<_>>();
+    pending.insert((sources.join("memory.rs"), None));
     for name in imports {
-        pending.push(available.get(name).context("unknown canonical gameplay import")?.clone());
+        pending.insert((available.get(name).context("unknown canonical gameplay import")?.clone(), None));
     }
     let mut selected = BTreeSet::new();
-    while let Some(path) = pending.pop() {
+    let mut placements = BTreeSet::new();
+    let mut scanned = BTreeMap::<PathBuf, std::sync::Arc<crate::source_facts::RustSourceFacts>>::new();
+    while let Some((path, parent)) = pending.pop_first() {
         bounded::check()?;
         bounded::safe(&path)?;
         let path = fs::canonicalize(path)?;
         ensure!(
-            path.parent() == Some(sources.as_path()) && path.extension().is_some_and(|value| value == "rs"),
+            (!direct_only || path.parent() == Some(sources.as_path()))
+                && path.extension().is_some_and(|value| value == "rs"),
             "canonical family modules must be direct gameplay source files"
         );
+        if !placements.insert((path.clone(), parent.clone())) {
+            continue;
+        }
+        let facts = if let Some(facts) = scanned.get(&path) {
+            facts.clone()
+        } else {
+            let facts = std::sync::Arc::new(crate::source_facts::scan(&path, &bounded::read(&path)?)?);
+            scanned.insert(path.clone(), facts.clone());
+            facts
+        };
+        if let Some(parent) = &parent {
+            facts.require_complete_with_parent(scanned.get(parent).context("Rust module parent was not scanned")?)?;
+        } else {
+            facts.require_complete()?;
+        }
         if !selected.insert(path.clone()) {
             continue;
         }
-        for word in bounded::text(&path)?.split(|value: char| !(value.is_ascii_alphanumeric() || value == '_')) {
+        for word in facts.identifiers() {
             if let Some(dependency) = available.get(word)
-                && !selected.contains(dependency)
-                && !pending.contains(dependency)
+                && !placements.contains(&(dependency.clone(), None))
             {
-                pending.push(dependency.clone());
+                pending.insert((dependency.clone(), None));
+            }
+        }
+        for dependency in facts.file_dependencies() {
+            if !placements.contains(&(dependency.clone(), Some(path.clone()))) {
+                pending.insert((dependency.clone(), Some(path.clone())));
             }
         }
     }
@@ -233,6 +267,22 @@ pub fn wrapper(request: WrapperRequest) -> Result<WrapperResult> {
     decomp_source::context::limited(|| wrapper_bounded(request))
 }
 
+#[derive(Clone)]
+enum WrapperSource {
+    Captured(Arc<crate::input_view::RetainedRustFacts>),
+    Parsed(Arc<crate::source_facts::RustSourceFacts>),
+}
+
+impl std::ops::Deref for WrapperSource {
+    type Target = crate::source_facts::RustSourceFacts;
+    fn deref(&self) -> &Self::Target {
+        match self {
+            Self::Captured(retained) => &retained.facts,
+            Self::Parsed(facts) => facts,
+        }
+    }
+}
+
 fn wrapper_bounded(request: WrapperRequest) -> Result<WrapperResult> {
     ensure!(request.modules.len() <= 4096 && request.imports.len() <= 4096, "wrapper source seed inventory exceeded");
     let checkout = fs::canonicalize(request.checkout)?;
@@ -248,24 +298,61 @@ fn wrapper_bounded(request: WrapperRequest) -> Result<WrapperResult> {
             available.insert(name, p);
         }
     }
-    let mut pending: Vec<PathBuf> = request.modules.iter().map(fs::canonicalize).collect::<std::io::Result<_>>()?;
+    let mut pending = request
+        .modules
+        .iter()
+        .map(|path| Ok((fs::canonicalize(path)?, None)))
+        .collect::<std::io::Result<BTreeSet<_>>>()?;
+    pending.insert((sources.join("memory.rs"), None));
     let mut selected = BTreeSet::new();
     for name in request.imports {
-        pending.push(available.get(&name).context("unknown gameplay import")?.clone());
+        pending.insert((available.get(&name).context("unknown gameplay import")?.clone(), None));
         selected.insert(name);
     }
     let mut visited = BTreeSet::new();
-    while let Some(p) = pending.pop() {
+    let mut placements = BTreeSet::new();
+    let mut scanned = BTreeMap::<PathBuf, WrapperSource>::new();
+    let captured = crate::input_view::current();
+    while let Some((p, parent)) = pending.pop_first() {
         bounded::check()?;
+        ensure!(pending.len() + placements.len() < 65536, "wrapper Rust placement inventory exceeded");
+        bounded::safe(&p)?;
+        let p = fs::canonicalize(p)?;
+        if !placements.insert((p.clone(), parent.clone())) {
+            continue;
+        }
+        let facts = if let Some(facts) = scanned.get(&p) {
+            facts.clone()
+        } else {
+            let facts = if let Some(view) = &captured {
+                WrapperSource::Captured(view.source_facts(&p)?)
+            } else {
+                WrapperSource::Parsed(Arc::new(crate::source_facts::scan(&p, &bounded::read(&p)?)?))
+            };
+            scanned.insert(p.clone(), facts.clone());
+            facts
+        };
+        if let Some(parent) = &parent {
+            facts.require_complete_with_parent(scanned.get(parent).context("Rust wrapper parent was not scanned")?)?;
+        } else {
+            facts.require_complete()?;
+        }
         if !visited.insert(p.clone()) {
             continue;
         }
-        let source = bounded::text(&p)?;
-        for word in source.split(|c: char| !(c.is_ascii_alphanumeric() || c == '_')) {
+        for word in facts.identifiers() {
             if let Some(module) = available.get(word)
                 && selected.insert(word.to_owned())
             {
-                pending.push(module.clone());
+                pending.insert((module.clone(), None));
+            }
+        }
+        // A module path is an actual compiler input, not a crate-root import.
+        // Traverse its dependencies without declaring another nominal copy.
+        for path in facts.file_dependencies() {
+            let path = if let Some(view) = &captured { view.physical(path)? } else { path.clone() };
+            if !placements.contains(&(path.clone(), Some(p.clone()))) {
+                pending.insert((path, Some(p.clone())));
             }
         }
     }
@@ -327,7 +414,12 @@ fn dependency_inventory_bounded(
     let checkout = fs::canonicalize(request.checkout)?;
     let run = fs::canonicalize(request.run)?;
     let mut paths = BTreeSet::new();
-    for name in dep_paths(&bounded::text(run.join("compiler.d"))?)? {
+    let compiler_dependencies = bounded::text(run.join("compiler.d"))?;
+    ensure!(
+        !compiler_dependencies.lines().any(|line| line.starts_with("# env-dep:")),
+        "unsupported compiler environment dependency"
+    );
+    for name in dep_paths(&compiler_dependencies)? {
         bounded::check()?;
         let p = Path::new(&name);
         let path = if confined {
@@ -351,21 +443,52 @@ fn dependency_inventory_bounded(
         } else {
             run.join(p)
         };
+        let path = if let Some(view) = crate::input_view::current() {
+            // Retained Native captures live below run, but remain source
+            // dependencies. Only the recipe's known generated Rust files gain
+            // the run-prefix exemption.
+            if view.logical(&path).is_ok() {
+                view.physical(&path)?
+            } else if ["wrapper.rs", "memory.rs", "fixture-worker.rs"].iter().any(|name| path == run.join(name)) {
+                path
+            } else {
+                anyhow::bail!("unbound compiler dependency: {}", path.display());
+            }
+        } else {
+            path
+        };
         bounded::safe(&path)?;
         paths.insert(fs::canonicalize(path)?);
     }
     for p in &request.extra {
         bounded::check()?;
-        paths.insert(fs::canonicalize(if p.is_absolute() { p.to_path_buf() } else { checkout.join(p) })?);
+        let path = if p.is_absolute() { p.to_path_buf() } else { checkout.join(p) };
+        let path = if let Some(view) = crate::input_view::current() { view.physical(&path)? } else { path };
+        paths.insert(fs::canonicalize(path)?);
     }
     let mut result = BTreeMap::new();
     for (index, p) in paths.into_iter().enumerate() {
         bounded::check()?;
-        if p.starts_with(&run) {
-            continue;
-        }
-        let key = p.strip_prefix(&checkout).unwrap_or(&p).to_string_lossy().into_owned();
-        if captured_ridley && p == Path::new(CAPTURED_RIDLEY_EVENT) {
+        let logical = if let Some(view) = crate::input_view::current() {
+            if let Ok(logical) = view.logical(&p) {
+                logical
+            } else {
+                ensure!(
+                    ["wrapper.rs", "memory.rs", "fixture-worker.rs"].iter().any(|name| p == run.join(name)),
+                    "unbound retained compiler dependency"
+                );
+                continue;
+            }
+        } else {
+            if p.starts_with(&run) {
+                continue;
+            }
+            p.clone()
+        };
+        let logical_checkout =
+            crate::input_view::current().map(|view| view.checkout().to_path_buf()).unwrap_or_else(|| checkout.clone());
+        let key = logical.strip_prefix(&logical_checkout).unwrap_or(&logical).to_string_lossy().into_owned();
+        if captured_ridley && logical == Path::new(CAPTURED_RIDLEY_EVENT) {
             let hash = captured_ridley_event_digest(&p)?;
             bounded::immutable_copy(&p, &run.join(CAPTURED_RIDLEY_SNAPSHOT), &hash, CAPTURED_RIDLEY_EVENT_BYTES)?;
             result.insert(key, hash);
@@ -420,12 +543,12 @@ mod tests {
         let sources = directory.0.join("crates/port/src");
         fs::create_dir_all(&sources)?;
         fs::write(sources.join("memory.rs"), "pub struct Wram;")?;
-        let candidate = "dependency ".repeat(8192);
-        let dependency = "candidate ".repeat(8192);
+        let candidate = format!("pub fn step() {{ {} }}", "crate::dependency::step(); ".repeat(8192));
+        let dependency = format!("pub fn step() {{ {} }}", "crate::candidate::step(); ".repeat(8192));
         fs::write(sources.join("candidate.rs"), &candidate)?;
         fs::write(sources.join("dependency.rs"), &dependency)?;
         let expected = vec![sources.join("candidate.rs"), sources.join("dependency.rs"), sources.join("memory.rs")];
-        let cap = candidate.len() as u64 + dependency.len() as u64;
+        let cap = candidate.len() as u64 + dependency.len() as u64 + b"pub struct Wram;".len() as u64;
         let result = canonical_sources_until(
             &directory.0,
             &[sources.join("candidate.rs")],
@@ -450,6 +573,26 @@ mod tests {
                 .to_string()
                 .contains("deadline")
         );
+        Ok(())
+    }
+
+    #[test]
+    fn canonical_discovery_proves_parent_glob_builtins_from_literal_module_edges() -> Result<()> {
+        let directory = tool_execution::testing::Directory::new()?;
+        let sources = directory.0.join("crates/port/src");
+        fs::create_dir_all(&sources)?;
+        fs::write(sources.join("memory.rs"), "pub struct Wram;")?;
+        let root = sources.join("candidate.rs");
+        let child = sources.join("child_impl.rs");
+        fs::write(&root, "#[path=\"child_impl.rs\"] mod owned; pub fn step() { owned::step(); }")?;
+        fs::write(&child, "use super::*; #[derive(Clone)] pub struct State; pub fn step() { let _=vec![1]; }")?;
+        let paths = canonical_sources(&directory.0, std::slice::from_ref(&root), &[])?;
+        assert!(paths.contains(&root) && paths.contains(&child));
+        let other = sources.join("other_parent.rs");
+        fs::write(&other, "use crate::macros::vec; #[path=\"child_impl.rs\"] mod owned;")?;
+        assert!(canonical_sources(&directory.0, &[root.clone(), other], &[]).is_err());
+        fs::write(&root, "use crate::macros::vec; #[path=\"child_impl.rs\"] mod owned;")?;
+        assert!(canonical_sources(&directory.0, &[root], &[]).is_err());
         Ok(())
     }
 

@@ -6,6 +6,7 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
     path::{Component, Path, PathBuf},
+    sync::Arc,
     time::{SystemTime, UNIX_EPOCH},
 };
 use tool_execution::bounded::{self, digest};
@@ -45,26 +46,34 @@ fn continuation_directory(case: &Case, run: &Path) -> Result<PathBuf> {
     Ok(run.join(name))
 }
 fn host_bytes(case: &Case, run: &Path) -> Result<Vec<u8>> {
+    host_bytes_with(case, run, &mut crate::admission_reader::Window::unsealed(run))
+}
+fn host_bytes_with(case: &Case, run: &Path, reader: &mut crate::admission_reader::Window<'_, '_>) -> Result<Vec<u8>> {
     if case.continue_from.is_some() {
         ensure!(case.host_words.is_none(), "continuation must inherit all external host words");
         let previous = continuation_directory(case, run)?;
-        let c = bounded::read(previous.join("c-host-after.bin"))?;
-        ensure!(
-            c.len() == 16 && c == bounded::read(previous.join("rust-host-after.bin"))?,
-            "continuation host differs"
-        );
-        return Ok(c);
+        let c = reader.read(previous.join("c-host-after.bin"))?;
+        ensure!(c.len() == 16 && c == reader.read(previous.join("rust-host-after.bin"))?, "continuation host differs");
+        return Ok(c.to_vec());
     }
     let words = case.host_words.as_ref().context("host words missing")?;
     ensure!(words.len() == 8, "projectile host requires eight words");
     Ok(words.iter().flat_map(|v| v.to_le_bytes()).collect())
 }
 fn authenticate_host(directory: &Path, fixture: &Case) -> Result<()> {
-    let before = bounded::read(directory.join("host-before.bin"))?;
-    let c = bounded::read(directory.join("c-host-after.bin"))?;
-    let rust = bounded::read(directory.join("rust-host-after.bin"))?;
+    let run = directory.parent().context("case parent missing")?;
+    authenticate_host_with(directory, fixture, &mut crate::admission_reader::Window::unsealed(run))
+}
+fn authenticate_host_with(
+    directory: &Path,
+    fixture: &Case,
+    reader: &mut crate::admission_reader::Window<'_, '_>,
+) -> Result<()> {
+    let before = reader.read(directory.join("host-before.bin"))?;
+    let c = reader.read(directory.join("c-host-after.bin"))?;
+    let rust = reader.read(directory.join("rust-host-after.bin"))?;
     ensure!(
-        before == host_bytes(fixture, directory.parent().context("case parent missing")?)?
+        before.as_ref() == host_bytes_with(fixture, directory.parent().context("case parent missing")?, reader)?
             && c.len() == 16
             && c == rust,
         "projectile host state differs"
@@ -73,8 +82,13 @@ fn authenticate_host(directory: &Path, fixture: &Case) -> Result<()> {
 }
 
 fn asset(path: &Path, expected: &str, extent: Option<usize>) -> Result<Vec<u8>> {
-    let (bytes, hash) = bounded::read_with_digest(path)?;
-    ensure!(hash == expected, "asset identity mismatch: {}", path.display());
+    let bytes = if let Some(view) = crate::input_view::current() {
+        view.read(path, Some(expected))?
+    } else {
+        let (bytes, hash) = bounded::read_with_digest(path)?;
+        ensure!(hash == expected, "asset identity mismatch: {}", path.display());
+        bytes
+    };
     if let Some(n) = extent {
         ensure!(bytes.len() == n, "asset extent mismatch");
     }
@@ -437,13 +451,7 @@ pub(crate) fn build(
     if let Some(execution) = execution {
         execution.compile_description(&description, run, "c-build", checkout, source)?;
     } else {
-        tool_execution::builds::c_build(tool_execution::builds::CBuildRequest {
-            command: description.command,
-            run: run.into(),
-            checkout: checkout.into(),
-            root: root.clone(),
-            workers,
-        })?;
+        builds::ordinary_c_build(&description, run, checkout, root, workers)?;
     }
     let description = crate::recipe::rust_compiler_command(recipe, run);
     if let Some(execution) = execution {
@@ -491,6 +499,9 @@ pub(crate) fn build(
 
 fn numeric(path: &Path) -> Result<u64> {
     let data = bounded::text(path)?;
+    numeric_text(&data)
+}
+fn numeric_text(data: &str) -> Result<u64> {
     let final_line = data.lines().last().context("missing final numeric routine return")?;
     ensure!(
         !final_line.is_empty() && final_line.bytes().all(|v| v.is_ascii_digit()),
@@ -528,16 +539,22 @@ pub(crate) fn ordered_tasks(manifest: &Manifest) -> Result<Vec<(&Routine, &Case,
     }
     Ok(tasks)
 }
-fn authenticate_continuation(case: &Case, run: &Path, before: &[u8]) -> Result<()> {
+fn authenticate_continuation(
+    case: &Case,
+    run: &Path,
+    before: &[u8],
+    reader: &mut crate::admission_reader::Window<'_, '_>,
+) -> Result<()> {
     if case.continue_from.is_none() {
         return Ok(());
     }
     let previous = continuation_directory(case, run)?;
-    let mut expected = bounded::read(previous.join("c-after.wram"))?;
+    let previous_c = reader.read(previous.join("c-after.wram"))?;
     ensure!(
-        expected.len() == WRAM && expected == bounded::read(previous.join("rust-after.wram"))?,
+        previous_c.len() == WRAM && previous_c == reader.read(previous.join("rust-after.wram"))?,
         "continuation previous WRAM differs"
     );
+    let mut expected = previous_c.to_vec();
     for write in &case.writes {
         ensure!(
             write.offset.checked_add(write.data.len()).is_some_and(|end| end <= WRAM),
@@ -674,6 +691,15 @@ fn inventory_bounded(
 }
 
 pub fn verify(request: VerifyRequest) -> Result<Verdict> {
+    verify_with_declarations(request, &Arc::new(crate::declarations::Declarations::standard()), None, None)
+}
+
+pub(crate) fn verify_with_declarations(
+    request: VerifyRequest,
+    declarations: &Arc<crate::declarations::Declarations>,
+    captured: Option<Arc<crate::declarations::Declaration>>,
+    captured_inputs: Option<&Arc<crate::input_view::InputView>>,
+) -> Result<Verdict> {
     let checkout = fs::canonicalize(&request.checkout)?;
     let source = fs::canonicalize(&request.source)?;
     let output = request.output.clone();
@@ -707,14 +733,35 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
     let result = (|| -> Result<()> {
         let preparing = metrics.context.stage("family-input-authentication")?;
         let manifest_path = source_path(&checkout, request.manifest.to_str().context("non-UTF8 manifest")?);
-        let (manifest_bytes, manifest_sha256) = bounded::read_with_digest(&manifest_path)?;
-        fs::write(run.join(crate::fixture_format::RUN_MANIFEST), &manifest_bytes)?;
-        let mut manifest = crate::fixture_format::decode(manifest_bytes)?;
+        let declaration = if let Some(captured) = captured {
+            ensure!(digest(&manifest_path)? == captured.sha256, "family manifest changed after capture");
+            captured
+        } else {
+            declarations.read(&manifest_path, None)?
+        };
+        let manifest_sha256 = declaration.sha256.clone();
+        fs::write(run.join(crate::fixture_format::RUN_MANIFEST), declaration.bytes.as_slice())?;
+        let mut manifest = (*declaration.manifest).clone();
         let recipe = crate::recipe::for_adapter(&request.adapter, &manifest)?;
         manifest = crate::recipe::normalize_manifest(&checkout, manifest, recipe.as_ref())?;
         verdict.family = manifest.family.clone();
-        verdict.source = Some(verify_source(&checkout, &source)?);
-        fs::copy(source.join("LICENSE.txt"), run.join("LICENSE.txt"))?;
+        let view = if let Some(view) = captured_inputs {
+            ensure!(view.checkout() == checkout && view.source() == source, "family captured source context differs");
+            view.clone()
+        } else {
+            crate::input_view::InputView::capture(
+                &inputs::host_inputs()?,
+                &checkout,
+                &source,
+                &[&manifest],
+                false,
+                declarations,
+            )?
+        };
+        let view = view.for_family(&manifest)?;
+        view.validate_manifest_inputs(&manifest)?;
+        verdict.source = Some(view.source_identity().clone());
+        fs::write(run.join("LICENSE.txt"), view.read(&source.join("LICENSE.txt"), None)?)?;
         let tasks = ordered_tasks(&manifest)?;
         ensure!(!tasks.is_empty(), "empty family cannot be verified");
         metrics.context.configuration("declared-cases", tasks.len());
@@ -728,14 +775,29 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
         let fork = fork_execution(&request)?;
         ensure!((1..=64).contains(&jobs), "case jobs must be 1..64");
         if let Some(rom) = manifest.rom.as_ref() {
-            let bytes = asset(&rom.file, &rom.sha256, None)?;
+            let bytes = view.read(&rom.file, Some(&rom.sha256))?;
             ensure!(!bytes.is_empty() && bytes.len() <= 0x400000, "ROM extent outside LoROM view");
             fs::write(run.join("rom.bin"), &bytes)?;
             verdict.rom = Some(RomIdentity { sha256: rom.sha256.clone(), bytes: bytes.len() });
         }
         preparing.finish("success")?;
         verdict.implementation = Some(metrics::measure("family-builds", || {
-            crate::recipe::build(recipe.as_ref(), &manifest, &request, &checkout, &source, &run, None)
+            view.validate_compiler_current()?;
+            view.validate_materialized()?;
+            let result = view.enter(|| {
+                crate::recipe::build(
+                    recipe.as_ref(),
+                    &manifest,
+                    &request,
+                    &view.physical_checkout(),
+                    &view.physical_source(),
+                    &run,
+                    None,
+                )
+            });
+            view.validate_materialized()?;
+            view.validate_compiler_current()?;
+            result
         })?);
         verdict.implementation.as_mut().unwrap().manifest =
             Some(Asset { file: fs::canonicalize(&manifest_path)?, sha256: manifest_sha256.clone() });
@@ -753,15 +815,17 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
                 request.workers,
                 fork,
                 |(routine, fixture, routine_index), worker| {
-                    crate::recipe::fixture(
-                        recipe.as_ref(),
-                        &manifest,
-                        routine,
-                        fixture,
-                        routine_index,
-                        &run,
-                        crate::recipe::FixtureExecution::Ordinary { worker },
-                    )
+                    view.enter(|| {
+                        crate::recipe::fixture(
+                            recipe.as_ref(),
+                            &manifest,
+                            routine,
+                            fixture,
+                            routine_index,
+                            &run,
+                            crate::recipe::FixtureExecution::Ordinary { worker },
+                        )
+                    })
                 },
             )?;
             let mut errors = Vec::new();
@@ -780,6 +844,7 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
             ensure!(errors.is_empty(), "{}", errors.join("; "));
             Ok(())
         })?;
+        view.validate_manifest_inputs(&manifest)?;
         ensure!(
             digest(&manifest_path)? == manifest_sha256 && digest(&run.join("manifest.smf"))? == manifest_sha256,
             "family manifest changed during verification"
@@ -815,7 +880,23 @@ pub fn authenticate(request: AuthenticateRequest) -> Result<Verdict> {
 }
 
 pub(crate) fn authenticate_with_source(request: AuthenticateRequest, source: &Path) -> Result<Verdict> {
-    decomp_source::context::limited(|| authenticate_with_source_bounded(request, source, ArtifactLimits::default()))
+    Ok(admit_with_source(request, source, &crate::declarations::Declarations::standard())?.report)
+}
+
+pub(crate) struct AdmittedFamily {
+    pub report: Verdict,
+    pub original: Arc<Manifest>,
+    pub effective: Arc<Manifest>,
+}
+
+pub(crate) fn admit_with_source(
+    request: AuthenticateRequest,
+    source: &Path,
+    declarations: &crate::declarations::Declarations,
+) -> Result<AdmittedFamily> {
+    decomp_source::context::limited(|| {
+        authenticate_with_source_bounded(request, source, ArtifactLimits::default(), declarations)
+    })
 }
 
 pub(crate) fn authenticate_with_source_limits(
@@ -823,9 +904,18 @@ pub(crate) fn authenticate_with_source_limits(
     source: &Path,
     limits: ArtifactLimits,
 ) -> Result<Verdict> {
+    Ok(admit_with_source_limits(request, source, limits, &crate::declarations::Declarations::standard())?.report)
+}
+
+pub(crate) fn admit_with_source_limits(
+    request: AuthenticateRequest,
+    source: &Path,
+    limits: ArtifactLimits,
+    declarations: &crate::declarations::Declarations,
+) -> Result<AdmittedFamily> {
     limits.validate()?;
     decomp_source::context::discovery_with_limit(limits.paths, || {
-        authenticate_with_source_bounded(request, source, limits)
+        authenticate_with_source_bounded(request, source, limits, declarations)
     })
 }
 
@@ -833,11 +923,17 @@ fn authenticate_with_source_bounded(
     request: AuthenticateRequest,
     source: &Path,
     limits: ArtifactLimits,
-) -> Result<Verdict> {
-    metrics::measure("family-evidence-admission", || authenticate_contents(request, source, limits))
+    declarations: &crate::declarations::Declarations,
+) -> Result<AdmittedFamily> {
+    metrics::measure("family-evidence-admission", || authenticate_contents(request, source, limits, declarations))
 }
 
-fn authenticate_contents(request: AuthenticateRequest, source: &Path, limits: ArtifactLimits) -> Result<Verdict> {
+fn authenticate_contents(
+    request: AuthenticateRequest,
+    source: &Path,
+    limits: ArtifactLimits,
+    declarations: &crate::declarations::Declarations,
+) -> Result<AdmittedFamily> {
     let context = metrics::active();
     if let Some(context) = &context {
         context.expect_stages(&[
@@ -851,12 +947,13 @@ fn authenticate_contents(request: AuthenticateRequest, source: &Path, limits: Ar
     let run = fs::canonicalize(path.parent().context("verdict parent missing")?)?;
     let verdict: Verdict = object(path)?;
     ensure!(verdict.status == "offline-verified", "family evidence is not offline verification");
-    let mut actual = BTreeMap::new();
-    metrics::measure("family-admission-inventory", || {
-        inventory_bounded(&run, &run, &mut actual, 0, limits)?;
-        ensure!(actual == verdict.artifacts, "family artifact inventory differs");
-        Ok(())
+    // Expected seals are provisional until every member has been authenticated
+    // by this invocation. They cannot construct an admitted result themselves.
+    let actual = &verdict.artifacts;
+    let mut admission = metrics::measure("family-admission-inventory", || {
+        crate::admission_reader::Admission::open(&run, actual, limits)
     })?;
+    let mut reader = admission.window();
     let authenticating =
         context.as_ref().map(|context| context.stage("family-admission-input-authentication")).transpose()?;
     for required in
@@ -864,10 +961,11 @@ fn authenticate_contents(request: AuthenticateRequest, source: &Path, limits: Ar
     {
         ensure!(actual.contains_key(required), "family artifact missing: {required}");
     }
-    let mut manifest = crate::fixture_format::read_authenticated(
-        &run.join(crate::fixture_format::RUN_MANIFEST),
-        &actual[crate::fixture_format::RUN_MANIFEST],
-    )?;
+    let manifest_bytes = reader.read(run.join(crate::fixture_format::RUN_MANIFEST))?;
+    let original =
+        declarations.decode_shared(manifest_bytes.shared_bytes(), manifest_bytes.hash().to_owned())?.manifest.clone();
+    drop(manifest_bytes);
+    let mut manifest = original.clone();
     ensure!(manifest.family == verdict.family, "family identity differs");
     let implementation = verdict.implementation.as_ref().context("missing family implementation")?;
     ensure!(
@@ -922,7 +1020,7 @@ fn authenticate_contents(request: AuthenticateRequest, source: &Path, limits: Ar
     }
     let manifest_identity = implementation.manifest.as_ref().context("current family manifest seal missing")?;
     ensure!(actual.contains_key("manifest-input.toml"), "current source inputs manifest seal missing");
-    let input_manifest: Asset = object(&run.join("manifest-input.toml"))?;
+    let input_manifest: Asset = reader.object(run.join("manifest-input.toml"))?;
     ensure!(input_manifest == *manifest_identity, "family manifest source input differs");
     let manifest_source = manifest_identity
         .file
@@ -938,7 +1036,7 @@ fn authenticate_contents(request: AuthenticateRequest, source: &Path, limits: Ar
     let plm = implementation.dependency_contract == "rust-plm-v2";
     let ridley = implementation.dependency_contract == crate::ridley_subsystem_adapter::CONTRACT;
     if plm {
-        manifest = crate::plm_spawn::normalize(&manifest)?;
+        manifest = Arc::new(crate::plm_spawn::normalize(&manifest)?);
     }
     ordered_tasks(&manifest)?;
     ensure!(
@@ -971,7 +1069,7 @@ fn authenticate_contents(request: AuthenticateRequest, source: &Path, limits: Ar
             ensure!(hash == *expected, "family implementation changed: {name}");
         }
     }
-    inputs::authenticate_implementation(&run, implementation, &actual)?;
+    inputs::authenticate_implementation(&run, implementation, actual, &mut reader)?;
     if ridley {
         ensure!(
             implementation.callback_adapter.as_deref() == Some("ridley-subsystem")
@@ -983,11 +1081,11 @@ fn authenticate_contents(request: AuthenticateRequest, source: &Path, limits: Ar
                 && implementation.harness_sources.contains_key("tools/decomp/headless.c"),
             "Ridley host input missing"
         );
-        crate::ridley_subsystem_adapter::check_instrumented_units(source, &run)?;
+        crate::ridley_subsystem_adapter::check_instrumented_units(source, &run, &mut reader)?;
         ensure!(verdict.gameplay_translation == Some(true), "Ridley translation scope missing");
         ensure!(
             verdict.rejected_abi_inputs == 7
-                && bounded::text(run.join("abi-controls.stdout"))?.lines().last() == Some("7 rejected ABI inputs"),
+                && reader.text(run.join("abi-controls.stdout"))?.lines().last() == Some("7 rejected ABI inputs"),
             "Ridley ABI controls missing"
         );
         ensure!(
@@ -1003,7 +1101,7 @@ fn authenticate_contents(request: AuthenticateRequest, source: &Path, limits: Ar
         );
         ensure!(
             verdict.rejected_abi_inputs == 5
-                && bounded::text(run.join("abi-controls.stdout"))?.lines().last() == Some("5 rejected ABI inputs"),
+                && reader.text(run.join("abi-controls.stdout"))?.lines().last() == Some("5 rejected ABI inputs"),
             "PLM ABI rejection evidence incomplete"
         );
         let counts = manifest.routines.iter().map(|r| (r.symbol.clone(), r.cases.len())).collect();
@@ -1019,7 +1117,7 @@ fn authenticate_contents(request: AuthenticateRequest, source: &Path, limits: Ar
             let token = "uint16 SpawnHdmaObject(uint8 db, const void *p)";
             ensure!(
                 original.matches(token).count() == 1
-                    && bounded::text(run.join("sm_88-allocation-seam.c"))?
+                    && reader.text(run.join("sm_88-allocation-seam.c"))?
                         == original.replace(token, "uint16 PortActualSpawnHdmaObject(uint8 db, const void *p)"),
                 "power bomb allocation seam changed"
             );
@@ -1035,7 +1133,7 @@ fn authenticate_contents(request: AuthenticateRequest, source: &Path, limits: Ar
             let token = "void NMI_ProcessVramWriteQueue(void)";
             ensure!(
                 original.matches(token).count() == 1
-                    && bounded::text(run.join("sm_80-vram-seam.c"))?
+                    && reader.text(run.join("sm_80-vram-seam.c"))?
                         == original.replace(token, "void PortActualNmiProcessVramWriteQueue(void)"),
                 "shared host VRAM seam changed"
             );
@@ -1077,6 +1175,7 @@ fn authenticate_contents(request: AuthenticateRequest, source: &Path, limits: Ar
     if let Some(authenticating) = authenticating {
         authenticating.finish("success")?;
     }
+    drop(reader);
     metrics::measure("family-admission-comparison", || {
         let mut expected = BTreeMap::new();
         for routine in &manifest.routines {
@@ -1094,12 +1193,13 @@ fn authenticate_contents(request: AuthenticateRequest, source: &Path, limits: Ar
             let fixture = expected.get(&key).context("unexpected family coverage")?;
             ensure!(observed.insert(key), "duplicate observed case");
             let directory = run.join(key.1);
+            let mut reader = admission.window();
             ensure!(
-                bounded::text(directory.join("case.sha256"))? == crate::fixture_format::case_identity(fixture)?,
+                reader.text(directory.join("case.sha256"))? == crate::fixture_format::case_identity(fixture)?,
                 "retained fixture declaration identity differs"
             );
             if ridley {
-                let checked = crate::ridley_subsystem_adapter::check(&directory, fixture)?;
+                let checked = crate::ridley_subsystem_adapter::check_with(&directory, fixture, &mut reader)?;
                 ensure!(
                     checked.results == record.results
                         && checked.returns == record.returns
@@ -1113,36 +1213,41 @@ fn authenticate_contents(request: AuthenticateRequest, source: &Path, limits: Ar
             }
             if plm {
                 ensure!(
-                    crate::plm_spawn::check(&directory, fixture)?.spawn_results == record.spawn_results,
+                    crate::plm_spawn::check_with(&directory, fixture, &mut reader)?.spawn_results
+                        == record.spawn_results,
                     "retained PLM result differs"
                 );
                 continue;
             }
             if callbacks {
-                let checked =
-                    callback::check(&directory, fixture, manifest.callback_adapter.as_deref() == Some("game-host"))?;
+                let checked = callback::check_with(
+                    &directory,
+                    fixture,
+                    manifest.callback_adapter.as_deref() == Some("game-host"),
+                    &mut reader,
+                )?;
                 ensure!(
                     checked.results == record.results && checked.callbacks == record.callbacks,
                     "retained callback result differs"
                 );
                 continue;
             }
-            let (before, before_sha256) = bounded::read_with_digest(directory.join("before.wram"))?;
-            authenticate_continuation(fixture, &run, &before)?;
-            let (c, c_sha256) = bounded::read_with_digest(directory.join("c-after.wram"))?;
-            let (rust, rust_sha256) = bounded::read_with_digest(directory.join("rust-after.wram"))?;
+            let before = reader.read(directory.join("before.wram"))?;
+            authenticate_continuation(fixture, &run, &before, &mut reader)?;
+            let c = reader.read(directory.join("c-after.wram"))?;
+            let rust = reader.read(directory.join("rust-after.wram"))?;
             ensure!(
                 before.len() == WRAM && c.len() == WRAM && rust.len() == WRAM && c == rust,
                 "family actual full WRAM outputs differ"
             );
             ensure!(
-                before_sha256 == record.before_sha256
-                    && c_sha256 == record.after_sha256["c"]
-                    && rust_sha256 == record.after_sha256["rust"],
+                before.hash() == record.before_sha256
+                    && c.hash() == record.after_sha256["c"]
+                    && rust.hash() == record.after_sha256["rust"],
                 "family case hashes differ"
             );
-            let a = numeric(&directory.join("c.stdout"))?;
-            let b = numeric(&directory.join("rust.stdout"))?;
+            let a = numeric_text(&reader.text(directory.join("c.stdout"))?)?;
+            let b = numeric_text(&reader.text(directory.join("rust.stdout"))?)?;
             ensure!(
                 a == b && record.returns["c"] == a && record.returns["rust"] == b,
                 "family actual return outputs differ"
@@ -1152,12 +1257,12 @@ fn authenticate_contents(request: AuthenticateRequest, source: &Path, limits: Ar
             }
             if fixture.expected_after_file.as_ref().is_some() {
                 ensure!(
-                    c == bounded::read(directory.join("expected-after.wram"))?,
+                    c == reader.read(directory.join("expected-after.wram"))?,
                     "family actual captured output differs"
                 );
             }
             if manifest.projectile_host {
-                authenticate_host(&directory, fixture)?;
+                authenticate_host_with(&directory, fixture, &mut reader)?;
             }
         }
         ensure!(
@@ -1169,12 +1274,17 @@ fn authenticate_contents(request: AuthenticateRequest, source: &Path, limits: Ar
         );
         Ok(())
     })?;
+    let read_stats = metrics::measure("family-admission-inventory", || admission.finish())?;
     if let Some(context) = &context {
         context.configuration("admitted-cases", verdict.verified_cases);
         context.configuration("admitted-routines", verdict.verified_routines);
         context.configuration("admitted-artifact-files", actual.len());
+        context.configuration("admitted-payload-reads", read_stats.reads);
+        context.configuration("admitted-payload-read-bytes", read_stats.bytes);
+        context.configuration("admitted-payload-window-hits", read_stats.cache_hits);
+        context.configuration("admitted-payload-window-peak-bytes", read_stats.peak_window_bytes);
     }
-    Ok(verdict)
+    Ok(AdmittedFamily { report: verdict, original, effective: manifest })
 }
 
 #[cfg(test)]
@@ -1261,7 +1371,13 @@ mod host_tests {
         let inherited = bounded::read(directory.join("next/before.wram")).unwrap();
         assert_eq!(inherited[42], 99);
         assert_eq!(inherited[41], 3);
-        authenticate_continuation(&fixture, &directory, &inherited).unwrap();
+        authenticate_continuation(
+            &fixture,
+            &directory,
+            &inherited,
+            &mut crate::admission_reader::Window::unsealed(&directory),
+        )
+        .unwrap();
         assert_eq!(host_bytes(&fixture, &directory).unwrap(), host);
         let manifest = Manifest {
             routines: vec![Routine {
@@ -1280,7 +1396,15 @@ mod host_tests {
         wrong.host_words = Some(vec![0; 8]);
         assert!(host_bytes(&wrong, &directory).is_err());
         fs::write(directory.join("first/rust-after.wram"), vec![4; WRAM]).unwrap();
-        assert!(authenticate_continuation(&fixture, &directory, &inherited).is_err());
+        assert!(
+            authenticate_continuation(
+                &fixture,
+                &directory,
+                &inherited,
+                &mut crate::admission_reader::Window::unsealed(&directory),
+            )
+            .is_err()
+        );
         fs::remove_dir_all(directory).unwrap();
     }
 }

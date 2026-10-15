@@ -87,13 +87,7 @@ pub(crate) fn build(
     if let Some(execution) = execution {
         execution.compile_description(&description, run, "c-build", checkout, source)?;
     } else {
-        tool_execution::builds::c_build(tool_execution::builds::CBuildRequest {
-            command: description.command,
-            run: run.into(),
-            checkout: checkout.into(),
-            root: root.clone(),
-            workers,
-        })?;
+        crate::builds::ordinary_c_build(&description, run, checkout, root, workers)?;
     }
     let fixture = crate::recipe::fixture_command(
         recipe,
@@ -140,9 +134,18 @@ pub(crate) fn build(
 }
 
 pub fn check(directory: &Path, fixture: &Case) -> Result<CaseRecord> {
+    let run = directory.parent().context("PLM case parent missing")?;
+    check_with(directory, fixture, &mut crate::admission_reader::Window::unsealed(run))
+}
+
+pub(crate) fn check_with(
+    directory: &Path,
+    fixture: &Case,
+    reader: &mut crate::admission_reader::Window<'_, '_>,
+) -> Result<CaseRecord> {
     let mut results = BTreeMap::new();
     for subject in ["c", "rust"] {
-        let text = fs::read_to_string(directory.join(format!("{subject}.stdout")))?;
+        let text = reader.text(directory.join(format!("{subject}.stdout")))?;
         let values = text
             .lines()
             .last()
@@ -170,12 +173,12 @@ pub fn check(directory: &Path, fixture: &Case) -> Result<CaseRecord> {
     if let Some(expected) = fixture.expected_flags {
         ensure!(expected == rust.flags, "independent flags mismatch");
     }
-    let before = fs::read(directory.join("before.wram"))?;
-    let c = fs::read(directory.join("c-after.wram"))?;
-    let rust = fs::read(directory.join("rust-after.wram"))?;
+    let before = reader.read(directory.join("before.wram"))?;
+    let c = reader.read(directory.join("c-after.wram"))?;
+    let rust = reader.read(directory.join("rust-after.wram"))?;
     ensure!(before.len() == 0x20000 && c.len() == 0x20000 && rust.len() == 0x20000, "PLM full WRAM extent");
     if c != rust {
-        let offset = c.iter().zip(&rust).position(|(a, b)| a != b).unwrap();
+        let offset = c.iter().zip(rust.iter()).position(|(a, b)| a != b).unwrap();
         atomic_toml(
             &directory.join("rejection.toml"),
             &CaseRecord {
@@ -186,7 +189,7 @@ pub fn check(directory: &Path, fixture: &Case) -> Result<CaseRecord> {
         anyhow::bail!("WRAM mismatch at {offset:#x}");
     }
     if fixture.expected_after_file.as_ref().is_some() {
-        ensure!(c == fs::read(directory.join("expected-after.wram"))?, "captured PLM WRAM mismatch");
+        ensure!(c == reader.read(directory.join("expected-after.wram"))?, "captured PLM WRAM mismatch");
     }
     Ok(CaseRecord { spawn_results: results, ..Default::default() })
 }

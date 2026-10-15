@@ -193,6 +193,9 @@ pub fn read_authenticated(path: &Path, expected: &str) -> Result<Manifest> {
 fn open(path: &Path, expected: Option<&str>) -> Result<Manifest> {
     let path = if path.is_absolute() { path.to_path_buf() } else { std::env::current_dir()?.join(path) };
     decomp_source::context::limited(|| {
+        if let Some(declarations) = crate::declarations::current() {
+            return Ok((*declarations.read(&path, expected)?.manifest).clone());
+        }
         let bytes = bounded::read(&path)?;
         if let Some(expected) = expected {
             use sha2::{Digest, Sha256};
@@ -204,6 +207,16 @@ fn open(path: &Path, expected: Option<&str>) -> Result<Manifest> {
 }
 
 pub fn decode(bytes: Vec<u8>) -> Result<Manifest> {
+    if let Some(declarations) = crate::declarations::current() {
+        let hash = translation_execution::model::sha256(&bytes);
+        return Ok((*declarations.decode(bytes, hash)?.manifest).clone());
+    }
+    decode_shared(Arc::new(bytes))
+}
+
+/// Retain the caller's immutable container in every packed span. Declaration
+/// caches must not copy the payload merely to keep its authenticated bytes.
+pub(crate) fn decode_shared(bytes: Arc<Vec<u8>>) -> Result<Manifest> {
     ensure!(bytes.len() >= HEADER && bytes.get(..8) == Some(MAGIC), "expected SMFIXT01 binary fixture");
     ensure!(bytes[40..HEADER].iter().all(|&v| v == 0), "unsupported fixture format flags");
     let metadata_len = number(&bytes, 8)?;
@@ -244,7 +257,6 @@ pub fn decode(bytes: Vec<u8>) -> Result<Manifest> {
         next += count;
     }
     ensure!(next == records, "unreferenced fixture write records");
-    let bytes = Arc::new(bytes);
     for (i, case) in
         manifest.cases.iter_mut().chain(manifest.routines.iter_mut().flat_map(|r| &mut r.cases)).enumerate()
     {
@@ -254,6 +266,19 @@ pub fn decode(bytes: Vec<u8>) -> Result<Manifest> {
         validate_input(case)?;
     }
     Ok(manifest)
+}
+
+/// A conservative allocation reservation made before decoding untrusted
+/// metadata. Packed payloads are shared; strings, records and vector capacity
+/// are bounded by their wire representation plus fixed container overhead.
+pub(crate) fn retained_bound(bytes: &[u8]) -> Result<u64> {
+    ensure!(bytes.len() >= HEADER, "truncated fixture header");
+    let metadata = u64::try_from(number(bytes, 8)?)?;
+    ensure!(metadata <= bytes.len() as u64 - HEADER as u64, "fixture metadata extent differs");
+    (bytes.len() as u64)
+        .checked_add(metadata.checked_mul(24).context("fixture memory reservation overflow")?)
+        .and_then(|amount| amount.checked_add(4096))
+        .context("fixture memory reservation overflow")
 }
 
 fn validate_input(case: &Case) -> Result<()> {

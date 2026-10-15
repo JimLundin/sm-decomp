@@ -5,18 +5,15 @@ use crate::digest;
 use crate::live;
 use crate::live_model;
 use anyhow::{Context, Result, ensure};
-use offline_verification::catalog::{Catalog, catalog, entry};
+use offline_verification::catalog::{Catalog, entry};
 #[cfg(test)]
-use offline_verification::catalog::{CatalogEntry, FamilyEntry, catalog_until, catalog_using};
+use offline_verification::catalog::{CatalogEntry, FamilyEntry, catalog, catalog_until, catalog_using};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs::{self, OpenOptions},
     path::{Path, PathBuf},
-    sync::{
-        Mutex,
-        atomic::{AtomicUsize, Ordering},
-    },
+    sync::Mutex,
     time::{Instant, SystemTime, UNIX_EPOCH},
 };
 #[cfg(test)]
@@ -163,80 +160,45 @@ fn replay_request(
     }
     Ok(replay)
 }
-fn verify_one(
-    request: &Request,
-    checkout: &Path,
-    batch_path: &Path,
-    name: &str,
-    previous: Option<&FamilyRecord>,
-) -> Result<FamilyRecord> {
-    let directory = batch_path.parent().context("batch parent missing")?.join("metrics");
-    fs::create_dir_all(&directory)?;
-    let mut run = metrics::Run::start(metrics::sidecar(&directory, name), "batch-family")?;
-    run.context.configuration("family", name);
-    run.context.configuration("fresh-required", request.fresh);
-    run.context.configuration("case-jobs", request.case_jobs);
-    let result = verify_one_inner(request, checkout, batch_path, name, previous);
-    let error = result.as_ref().err().map(|error| format!("{error:#}")).or_else(|| result.as_ref().ok()?.error.clone());
-    let finished = run.finish(metrics::outcome(error.as_deref()), error);
-    if result.is_ok() {
-        finished?;
-    }
-    result
-}
-
-fn verify_one_inner(
-    request: &Request,
-    checkout: &Path,
-    batch_path: &Path,
-    name: &str,
-    previous: Option<&FamilyRecord>,
-) -> Result<FamilyRecord> {
-    let reusable = previous.filter(|record| !request.fresh && record.exit_code == 0);
-    let prior = reusable.and_then(|record| {
-        Some(offline_verification::PreviousFamily {
-            verdict: record.verdict.clone()?,
-            manifest_sha256: record.manifest_sha256.clone()?,
-            kind: record.kind.clone()?,
-        })
-    });
-    let started = Instant::now();
-    let evaluated = crate::offline::families()?.verify_registered(offline_verification::RegisteredRequest {
-        checkout: checkout.into(),
-        source: checkout.join("deps/snesrev-sm"),
-        root: request.root.clone(),
-        workers: request.workers,
-        case_jobs: request.case_jobs,
-        family: name.into(),
-        output: batch_path.parent().unwrap().join("families").join(name),
-        previous: prior,
-    })?;
+fn family_record(outcome: &offline_verification::FamilyCompletion, previous: Option<&FamilyRecord>) -> FamilyRecord {
+    let evaluated = match outcome.result() {
+        Ok(evaluated) => evaluated,
+        Err(error) => {
+            return FamilyRecord {
+                status: metrics::outcome(Some(&format!("{error:#}"))).into(),
+                exit_code: 1,
+                error: Some(format!("{error:#}")),
+                seconds: outcome.seconds(),
+                ..Default::default()
+            };
+        }
+    };
     if evaluated.run.reused() {
-        let mut record = reusable.context("reused family has no previous batch record")?.clone();
+        let mut record = previous.expect("reused family has a supplied previous batch record").clone();
         record.status = "reused".into();
         record.original_run_seconds = Some(record.original_run_seconds.unwrap_or(record.seconds));
-        record.seconds = started.elapsed().as_secs_f64();
+        record.seconds = outcome.seconds();
         record.reuse_authentication_seconds = evaluated.reuse_authentication_seconds;
-        record.reuse_authentication_error = evaluated.reuse_authentication_error;
-        return Ok(record);
+        record.reuse_authentication_error = evaluated.reuse_authentication_error.clone();
+        return record;
     }
     let path = evaluated.run.evidence();
-    let verdict = evaluated.run.into_report();
-    Ok(FamilyRecord {
+    let verdict = evaluated.run.report();
+    FamilyRecord {
         exit_code: if verdict.status == "offline-verified" { 0 } else { 1 },
         status: match metrics::outcome(verdict.error.as_deref()) {
             outcome @ ("interrupted" | "timed-out") => outcome.into(),
-            _ => verdict.status,
+            _ => verdict.status.clone(),
         },
         verdict: Some(path),
-        manifest_sha256: Some(evaluated.manifest_sha256),
-        kind: Some(evaluated.kind),
-        seconds: started.elapsed().as_secs_f64(),
+        manifest_sha256: Some(evaluated.manifest_sha256.clone()),
+        kind: Some(evaluated.kind.clone()),
+        seconds: outcome.seconds(),
         original_run_seconds: None,
         reuse_authentication_seconds: evaluated.reuse_authentication_seconds,
-        reuse_authentication_error: evaluated.reuse_authentication_error,
-        error: verdict.error,
-    })
+        reuse_authentication_error: evaluated.reuse_authentication_error.clone(),
+        error: verdict.error.clone(),
+    }
 }
 #[derive(Serialize)]
 pub(crate) struct Receipt {
@@ -252,6 +214,11 @@ struct Latest {
     batch: PathBuf,
 }
 pub fn operate(request: Request) -> Result<toml::Value> {
+    // Metadata commands remain read-only. An existing caller metrics scope can
+    // still observe planning inside operate_inner; no default sidecar is created.
+    if matches!(request.operation.as_str(), "plan" | "catalog") {
+        return operate_inner(request);
+    }
     let destination = request
         .batch
         .as_ref()
@@ -323,7 +290,9 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
     let context = metrics::active();
     let planning = context.as_ref().map(|context| context.stage("batch-planning")).transpose()?;
     let checkout = fs::canonicalize(&request.checkout)?;
-    let config = catalog(&checkout)?;
+    let offline = crate::offline::families()?;
+    let snapshot = offline.capture_catalog(offline_verification::CatalogRequest::new(&checkout)?)?;
+    let config = snapshot.catalog();
     metrics::check_cancelled()?;
     let command = request.operation.as_str();
     ensure!(
@@ -342,17 +311,14 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
         .or_else(|| config.profiles.get(&request.profile).cloned())
         .context("unknown profile or missing families")?;
     if command == "plan" || request.changed_since.is_some() {
-        let report = crate::affected::select(&checkout, &names, request.changed_since.as_deref())?;
-        ensure!(
-            toml::to_string(&config)? == toml::to_string(&catalog(&checkout)?)?,
-            "Offline family catalog changed during selection; retry"
-        );
+        let report = crate::affected::select_with_snapshot(&snapshot, &names, request.changed_since.as_deref())?;
         if command == "plan" {
             if let Some(planning) = planning {
                 planning.finish("success")?;
             }
             return Ok(toml::Value::try_from(report)?);
         }
+        snapshot.validate_current()?;
         names = report.families();
         if names.is_empty() {
             if let Some(planning) = planning {
@@ -381,6 +347,20 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
     if let Some(planning) = planning {
         planning.finish("success")?;
     }
+    let source = if ["verify", "run", "replay"].contains(&command) {
+        Some(fs::canonicalize(checkout.join("deps/snesrev-sm"))?)
+    } else {
+        None
+    };
+    let captured_inputs = if ["verify", "run"].contains(&command) {
+        Some(offline.capture_batch_inputs(offline_verification::BatchInputRequest {
+            catalog: &snapshot,
+            source: source.as_ref().unwrap(),
+            required: &names,
+        })?)
+    } else {
+        None
+    };
     let selection = checkout.join("out/port/batches");
     fs::create_dir_all(&selection)?;
     let selecting = OpenOptions::new().create(true).append(true).open(selection.join("selection.lock"))?;
@@ -407,6 +387,10 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
     }
     let lock = OpenOptions::new().create(true).append(true).open(path.with_extension("lock"))?;
     ensure!(lock.try_lock().is_ok(), "another command is writing this batch; retry after it finishes");
+    snapshot.validate_current()?;
+    if let Some(inputs) = &captured_inputs {
+        inputs.validate_current()?;
+    }
     let mut batch: Batch = if path.exists() {
         let value: Batch = pipeline_model::read(&path)?;
         ensure!(value.schema_version == 2, "unsupported batch version");
@@ -430,47 +414,54 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
     if ["verify", "run"].contains(&command) {
         let verifying = context.as_ref().map(|context| context.stage("batch-family-verification")).transpose()?;
         ensure!((1..=8).contains(&request.jobs), "batch jobs must be 1..8");
+        let families = names
+            .iter()
+            .map(|name| {
+                let previous =
+                    batch.families.get(name).filter(|record| !request.fresh && record.exit_code == 0).and_then(
+                        |record| {
+                            Some(offline_verification::PreviousFamily {
+                                verdict: record.verdict.clone()?,
+                                manifest_sha256: record.manifest_sha256.clone()?,
+                                kind: record.kind.clone()?,
+                            })
+                        },
+                    );
+                offline_verification::FamilyJob {
+                    family: name.clone(),
+                    output: path.parent().unwrap().join("families").join(name),
+                    previous,
+                }
+            })
+            .collect();
         let state = Mutex::new(&mut batch);
-        let next = AtomicUsize::new(0);
-        let metrics = tool_execution::metrics::active();
-        std::thread::scope(|scope| {
-            for _ in 0..request.jobs.min(names.len()) {
-                let metrics = metrics.clone();
-                let next = &next;
-                let state = &state;
-                let names = &names;
-                let request = &request;
-                let checkout = &checkout;
-                let path = &path;
-                scope.spawn(move || {
-                    let _entered = metrics.as_ref().map(|metrics| metrics.enter());
-                    loop {
-                        let index = next.fetch_add(1, Ordering::Relaxed);
-                        let Some(name) = names.get(index) else {
-                            break;
-                        };
-                        let previous = state.lock().unwrap().families.get(name).cloned();
-                        let started = Instant::now();
-                        let mut record = match verify_one(request, checkout, path, name, previous.as_ref()) {
-                            Ok(record) => record,
-                            Err(error) => FamilyRecord {
-                                status: metrics::outcome(Some(&format!("{error:#}"))).into(),
-                                exit_code: 1,
-                                error: Some(format!("{error:#}")),
-                                ..Default::default()
-                            },
-                        };
-                        record.seconds = started.elapsed().as_secs_f64();
-                        eprintln!("{name}: {}", record.status);
-                        let mut owner = state.lock().unwrap();
-                        owner.families.insert(name.clone(), record);
-                        if let Err(error) = metrics::measure("batch-publication", || atomic_toml(path, &**owner)) {
-                            owner.publication_error = Some(format!("{error:#}"));
-                        }
-                    }
-                });
-            }
-        });
+        let execution = offline.verify_batch(
+            offline_verification::BatchVerification {
+                catalog: &snapshot,
+                source: source.as_ref().unwrap().clone(),
+                root: request.root.clone(),
+                workers: request.workers,
+                family_jobs: request.jobs,
+                case_jobs: request.case_jobs,
+                families,
+                inputs: captured_inputs.as_ref(),
+            },
+            |outcome| {
+                let mut owner = state.lock().unwrap();
+                let record = family_record(outcome, owner.families.get(outcome.family()));
+                eprintln!("{}: {}", outcome.family(), record.status);
+                owner.families.insert(outcome.family().into(), record);
+                if let Err(error) = metrics::measure("batch-publication", || atomic_toml(&path, &**owner)) {
+                    owner.publication_error = Some(format!("{error:#}"));
+                    return Err(error);
+                }
+                Ok(())
+            },
+        );
+        if let Err(error) = execution {
+            batch.publication_error = Some(format!("{error:#}"));
+            atomic_toml(&path, &batch)?;
+        }
         ensure!(batch.publication_error.is_none(), "batch publication failed");
         if let Some(verifying) = verifying {
             let errors = names
@@ -482,6 +473,27 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
         }
     }
     let verified = names.iter().all(|name| batch.families.get(name).is_some_and(|r| r.exit_code == 0));
+    if command == "replay" {
+        let evidence = names
+            .iter()
+            .map(|name| -> Result<_> {
+                let record = batch.families.get(name).context("required batch family missing")?;
+                ensure!(record.exit_code == 0, "required batch family has no passing evidence");
+                Ok(offline_verification::FamilyEvidence {
+                    family: name.clone(),
+                    verdict: record.verdict.clone().context("family verdict missing")?,
+                    manifest_sha256: record.manifest_sha256.clone().context("family manifest identity missing")?,
+                    kind: record.kind.clone().context("family kind missing")?,
+                })
+            })
+            .collect::<Result<Vec<_>>>()?;
+        offline.authenticate_batch(offline_verification::BatchAdmission {
+            catalog: &snapshot,
+            required: &names,
+            source: source.as_ref().unwrap().clone(),
+            evidence,
+        })?;
+    }
     let mut replay_passed = true;
     if ["replay", "run"].contains(&command) && (command == "replay" || verified) {
         let replaying = context.as_ref().map(|context| context.stage("batch-live-replay")).transpose()?;
@@ -527,6 +539,13 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
     })?;
     if let Some(context) = &context {
         context.configuration("cleanup-reclaimed-bytes", cleaned.bytes);
+        let stats = snapshot.statistics();
+        context.configuration("catalog-parses", stats.catalog_parses);
+        context.configuration("catalog-manifest-decodes", stats.manifest_decodes);
+        context.configuration("catalog-manifest-reads", stats.manifest_reads);
+        context.configuration("catalog-freshness-reads", stats.freshness_reads);
+        context.configuration("catalog-freshness-bytes", stats.freshness_bytes);
+        context.configuration("catalog-retained-byte-reservation", stats.retained_bytes);
     }
     let passed = replay_passed && (command == "replay" || verified);
     Ok(toml::Value::try_from(Receipt {
@@ -542,6 +561,27 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn read_only_catalog_preserves_a_callers_metrics_scope() -> Result<()> {
+        let _ = crate::BINARY_SHA256.set(digest(&std::env::current_exe()?)?);
+        let directory = tool_execution::testing::Directory::new()?;
+        let checkout = directory.0.join("checkout");
+        fs::create_dir_all(checkout.join("tools/port"))?;
+        fs::write(checkout.join("tools/port/batch.toml"), "[families]\n[profiles]\n")?;
+        let metrics_path = directory.0.join("caller.metrics.toml");
+        let mut caller = metrics::Run::start(metrics_path.clone(), "metadata-caller")?;
+        let result =
+            operate(Request { checkout: checkout.clone(), operation: "catalog".into(), ..Default::default() })?;
+        assert!(result.get("metrics").is_none());
+        assert!(!checkout.join("out").exists());
+        assert_eq!(metrics::active().unwrap().path(), metrics_path);
+        caller.finish("success", None)?;
+        let receipt: pipeline_model::metrics::Receipt = pipeline_model::read(&metrics_path)?;
+        assert!(receipt.stages.iter().any(|stage| stage.name == "batch-planning" && stage.outcome == "success"));
+        assert!(receipt.processes.is_empty(), "metadata planning launched a producer");
+        Ok(())
+    }
 
     #[test]
     fn catalog_refuses_expired_budget_and_excessive_inventory_before_manifest_reads() -> Result<()> {

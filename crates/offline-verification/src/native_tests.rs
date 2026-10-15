@@ -399,6 +399,7 @@ fn scope_candidate_dependencies_are_mutable_and_bound_to_receipt_identity() -> R
             recipe: None,
         },
         manifest: Manifest::default(),
+        declarations: Default::default(),
         source: Source::default(),
         pinned_source: checkout.clone(),
         candidate_path: names[0].clone(),
@@ -483,6 +484,7 @@ fn expired_outer_deadline_refuses_before_accessing_or_creating_any_source() -> R
             recipe: None,
         },
         manifest: Manifest::default(),
+        declarations: Default::default(),
         source: Source::default(),
         pinned_source: absent.clone(),
         candidate_path: "candidate.rs".into(),
@@ -576,6 +578,7 @@ fn saved_failure_replay(retain_plm: bool) -> Result<()> {
             recipe,
         },
         manifest: normalized,
+        declarations: Default::default(),
         source: Source::default(),
         pinned_source: directory.0.join("unavailable-source"),
         candidate_path: "candidate.rs".into(),
@@ -626,6 +629,7 @@ fn saved_failure_replay(retain_plm: bool) -> Result<()> {
         rustc: runtime.rustc.clone(),
         c_compiler: runtime.c_compiler.clone(),
         compiler_runtime_sha256: sha256("none"),
+        captured_inputs: None,
     };
     atomic_toml(&output.join("native-intent.toml"), &intent)?;
     if retain_plm {

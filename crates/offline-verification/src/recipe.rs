@@ -179,7 +179,11 @@ pub(crate) struct Registration {
 fn registered_entry(checkout: &Path, path: &Path, declared: &Manifest) -> Result<Registration> {
     // Read the explicitly reviewed catalog first. Discovered declarations keep
     // the existing exact family/path rule rather than being promoted to aliases.
-    let catalog: catalog::Catalog = bounded::object(&checkout.join("tools/port/batch.toml"))?;
+    let catalog = if let Some(declarations) = crate::declarations::current() {
+        declarations.read_catalog(&checkout.join("tools/port/batch.toml"))?
+    } else {
+        std::sync::Arc::new(bounded::object::<catalog::Catalog>(&checkout.join("tools/port/batch.toml"))?)
+    };
     ensure!(catalog.families.len() <= 4096, "native registered family inventory exceeded");
     let mut registered = None;
     for name in catalog.families.keys() {
@@ -387,7 +391,18 @@ pub(crate) fn build(
     run: &Path,
     execution: Option<&builds::StrictExecution>,
 ) -> Result<Implementation> {
-    match recipe {
+    let mut mapped;
+    let manifest = if let Some(view) = crate::input_view::current() {
+        mapped = manifest.clone();
+        if Path::new(&mapped.rust_module).is_absolute() {
+            mapped.rust_module =
+                view.physical(Path::new(&mapped.rust_module))?.to_str().context("captured module path UTF-8")?.into();
+        }
+        &mapped
+    } else {
+        manifest
+    };
+    let mut implementation = match recipe {
         Some(Recipe::Callback | Recipe::PowerBomb | Recipe::GameHost) => {
             callback::build(recipe, request, manifest, checkout, pinned_source, run, execution)
         }
@@ -396,7 +411,12 @@ pub(crate) fn build(
             crate::ridley_subsystem_adapter::build(recipe, request, manifest, checkout, pinned_source, run, execution)
         }
         _ => family::build(recipe, request, manifest, checkout, pinned_source, run, execution),
+    }?;
+    if let Some(view) = crate::input_view::current() {
+        implementation.source_root = view.checkout().into();
+        implementation.module = view.logical(&implementation.module)?;
     }
+    Ok(implementation)
 }
 
 pub(crate) enum FixtureExecution<'a> {
