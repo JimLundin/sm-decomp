@@ -8,7 +8,7 @@ use proc_macro2::{TokenStream, TokenTree};
 use sha2::{Digest, Sha256};
 use std::{
     collections::BTreeSet,
-    path::{Path, PathBuf},
+    path::{Component, Path, PathBuf},
 };
 use syn::{
     parse::Parser,
@@ -40,6 +40,7 @@ pub struct RustSourceFacts {
     source_bytes: usize,
     identifiers: BTreeSet<String>,
     inputs: BTreeSet<RustInput>,
+    file_dependencies: BTreeSet<PathBuf>,
     incomplete: BTreeSet<String>,
 }
 
@@ -58,6 +59,12 @@ impl RustSourceFacts {
     }
     pub fn inputs(&self) -> &BTreeSet<RustInput> {
         &self.inputs
+    }
+    /// Literal top-level module paths resolved relative to this source. Callers
+    /// must read, scan and bind these files; the syntax facts alone prove no
+    /// filesystem membership or compiler closure.
+    pub fn file_dependencies(&self) -> &BTreeSet<PathBuf> {
+        &self.file_dependencies
     }
     pub fn incompleteness(&self) -> &BTreeSet<String> {
         &self.incomplete
@@ -101,6 +108,7 @@ fn scan_bounded(logical_path: &Path, bytes: &[u8]) -> Result<RustSourceFacts> {
         source_bytes: bytes.len(),
         identifiers: BTreeSet::new(),
         inputs: BTreeSet::new(),
+        file_dependencies: BTreeSet::new(),
         incomplete: BTreeSet::new(),
     };
     let Ok(source) = std::str::from_utf8(bytes) else {
@@ -136,6 +144,7 @@ fn scan_bounded(logical_path: &Path, bytes: &[u8]) -> Result<RustSourceFacts> {
         imports: BTreeSet::new(),
         glob_import: false,
         builtins: BTreeSet::new(),
+        module_depth: 0,
     };
     scanner.visit_file(&syntax);
     if let Some(error) = scanner.error {
@@ -275,6 +284,7 @@ struct Scanner<'a> {
     imports: BTreeSet<String>,
     glob_import: bool,
     builtins: BTreeSet<String>,
+    module_depth: usize,
 }
 
 impl Scanner<'_> {
@@ -492,9 +502,39 @@ impl<'ast> Visit<'ast> for Scanner<'_> {
         if module.content.is_none() {
             let name = name(&module.ident);
             self.facts.inputs.insert(RustInput::ExternalModule { name: name.clone() });
+            // This reviewed form has deterministic source-relative semantics.
+            // Implicit modules and inline-module path resolution remain
+            // uncertain; cfg_attr is still visited as an unmodeled attribute.
+            let paths = module.attrs.iter().filter(|attribute| attribute.path().is_ident("path")).collect::<Vec<_>>();
+            if self.module_depth == 0 && paths.len() == 1 {
+                let path = match &paths[0].meta {
+                    syn::Meta::NameValue(value) => literal_expression(&value.value),
+                    _ => None,
+                };
+                if let Some(path) = path
+                    && !path.is_empty()
+                    && Path::new(&path).components().all(|part| matches!(part, Component::Normal(_)))
+                    && Path::new(&path).extension().is_some_and(|extension| extension == "rs")
+                {
+                    self.facts
+                        .file_dependencies
+                        .insert(self.facts.logical_path.parent().unwrap_or(Path::new("")).join(&path));
+                    self.facts.inputs.insert(RustInput::ModulePath { path: Some(path) });
+                    self.visit_ident(&module.ident);
+                    self.visit_visibility(&module.vis);
+                    for attribute in &module.attrs {
+                        if !attribute.path().is_ident("path") {
+                            self.visit_attribute(attribute);
+                        }
+                    }
+                    return;
+                }
+            }
             self.unresolved(format!("unresolved external Rust module: {name}"));
         }
+        self.module_depth += 1;
         visit::visit_item_mod(self, module);
+        self.module_depth -= 1;
     }
     fn visit_item_foreign_mod(&mut self, module: &'ast syn::ItemForeignMod) {
         self.unresolved("unmodeled foreign linkage/runtime inputs".into());

@@ -157,7 +157,6 @@ fn real_input_macros_keep_literal_or_dynamic_input_facts() -> Result<()> {
             "#[doc = include_str!(\"README.md\")] pub fn step() {}",
             RustInput::FileMacro { name: "include_str".into(), path: Some("README.md".into()) },
         ),
-        ("#[path = \"external.rs\"] mod selected;", RustInput::ModulePath { path: Some("external.rs".into()) }),
         ("mod external;", RustInput::ExternalModule { name: "external".into() }),
         (
             "pub fn step() { assert_eq!(include_str!(\"value.txt\"), \"value\"); }",
@@ -168,6 +167,29 @@ fn real_input_macros_keep_literal_or_dynamic_input_facts() -> Result<()> {
         let facts = source_facts::scan(Path::new("candidate.rs"), source.as_bytes())?;
         assert!(facts.require_complete().is_err(), "input became complete: {source}");
         assert!(facts.inputs().contains(&input), "missing input {input:?}: {:?}", facts.inputs());
+    }
+    Ok(())
+}
+
+#[test]
+fn literal_module_paths_are_real_edges_and_unresolved_resolution_stays_explicit() -> Result<()> {
+    let facts = source_facts::scan(
+        Path::new("src/candidate.rs"),
+        b"#[cfg(any())] #[path = \"nested/actual.rs\"] mod selected;",
+    )?;
+    facts.require_complete()?;
+    assert!(facts.inputs().contains(&RustInput::ModulePath { path: Some("nested/actual.rs".into()) }));
+    assert_eq!(facts.file_dependencies().iter().collect::<Vec<_>>(), [Path::new("src/nested/actual.rs")]);
+    assert!(!facts.identifiers().contains("actual"), "a path literal became a module-name heuristic");
+    for source in [
+        "mod implicit;",
+        "#[path = \"/external.rs\"] mod outside;",
+        "#[path = \"../external.rs\"] mod outside;",
+        "#[path = concat!(\"external\", \".rs\")] mod dynamic;",
+        "mod inline { #[path = \"external.rs\"] mod nested; }",
+        "#[cfg_attr(unix, path = \"other.rs\")] #[path = \"fallback.rs\"] mod conditional;",
+    ] {
+        assert!(!source_facts::scan(Path::new("src/candidate.rs"), source.as_bytes())?.is_complete(), "{source}");
     }
     Ok(())
 }

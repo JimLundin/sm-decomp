@@ -489,30 +489,22 @@ impl InputView {
             }
             bounded::check()?;
             let file = self.files.get(&path).context("Rust discovery found an unbound captured input")?;
-            let text = std::str::from_utf8(file.bytes.as_ref().context("Rust source cannot be streamed asset")?)?;
-            for word in text.split(|value: char| !(value.is_ascii_alphanumeric() || value == '_')) {
+            let facts =
+                crate::source_facts::scan(&path, file.bytes.as_ref().context("Rust source cannot be streamed asset")?)?;
+            ensure!(facts.sha256() == file.sha256, "captured Rust source facts differ from bound bytes");
+            facts.require_complete()?;
+            for word in facts.identifiers() {
                 if let Some(path) = available.get(word) {
                     if !visited.contains(path) {
                         pending.push(path.clone());
                     }
                 }
             }
-            ensure!(
-                !["include!", "include_str!", "include_bytes!", "env!", "option_env!"]
-                    .iter()
-                    .any(|token| text.contains(token)),
-                "captured Rust source has an unsupported include or build-time environment dependency"
-            );
-            for attribute in text.split("#[path").skip(1) {
-                let attribute = attribute.split_once(']').context("unsupported Rust path attribute")?.0;
-                let name = attribute.split('"').nth(1).context("unsupported Rust path attribute")?;
-                let relative = Path::new(name);
-                ensure!(
-                    !relative.is_absolute() && relative.components().all(|part| matches!(part, Component::Normal(_))),
-                    "absolute or escaping Rust source path is outside captured inputs"
-                );
-                let dependency = path.parent().unwrap().join(relative);
-                ensure!(self.files.contains_key(&dependency), "Rust path attribute names an unbound captured input");
+            for dependency in facts.file_dependencies() {
+                ensure!(self.files.contains_key(dependency), "Rust module path names an unbound captured input");
+                if !visited.contains(dependency) {
+                    pending.push(dependency.clone());
+                }
             }
         }
         Ok(())

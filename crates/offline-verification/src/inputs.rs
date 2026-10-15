@@ -188,6 +188,7 @@ fn discover_sources_bounded(
         }
     }
     let mut pending = modules.to_vec();
+    pending.push(sources.join("memory.rs"));
     for name in imports {
         pending.push(available.get(name).context("unknown canonical gameplay import")?.clone());
     }
@@ -204,7 +205,9 @@ fn discover_sources_bounded(
         if !selected.insert(path.clone()) {
             continue;
         }
-        for word in bounded::text(&path)?.split(|value: char| !(value.is_ascii_alphanumeric() || value == '_')) {
+        let facts = crate::source_facts::scan(&path, &bounded::read(&path)?)?;
+        facts.require_complete()?;
+        for word in facts.identifiers() {
             if let Some(dependency) = available.get(word)
                 && !selected.contains(dependency)
                 && !pending.contains(dependency)
@@ -212,6 +215,7 @@ fn discover_sources_bounded(
                 pending.push(dependency.clone());
             }
         }
+        pending.extend(facts.file_dependencies().iter().filter(|path| !selected.contains(*path)).cloned());
     }
     selected.insert(sources.join("memory.rs"));
     bounded::safe(&sources.join("memory.rs"))?;
@@ -263,6 +267,7 @@ fn wrapper_bounded(request: WrapperRequest) -> Result<WrapperResult> {
         }
     }
     let mut pending: Vec<PathBuf> = request.modules.iter().map(fs::canonicalize).collect::<std::io::Result<_>>()?;
+    pending.push(sources.join("memory.rs"));
     let mut selected = BTreeSet::new();
     for name in request.imports {
         pending.push(available.get(&name).context("unknown gameplay import")?.clone());
@@ -274,14 +279,18 @@ fn wrapper_bounded(request: WrapperRequest) -> Result<WrapperResult> {
         if !visited.insert(p.clone()) {
             continue;
         }
-        let source = bounded::text(&p)?;
-        for word in source.split(|c: char| !(c.is_ascii_alphanumeric() || c == '_')) {
+        let facts = crate::source_facts::scan(&p, &bounded::read(&p)?)?;
+        facts.require_complete()?;
+        for word in facts.identifiers() {
             if let Some(module) = available.get(word)
                 && selected.insert(word.to_owned())
             {
                 pending.push(module.clone());
             }
         }
+        // A module path is an actual compiler input, not a crate-root import.
+        // Traverse its dependencies without declaring another nominal copy.
+        pending.extend(facts.file_dependencies().iter().filter(|path| !visited.contains(*path)).cloned());
     }
     let memory = sources.join("memory.rs");
     let mut output = format!(
@@ -449,12 +458,12 @@ mod tests {
         let sources = directory.0.join("crates/port/src");
         fs::create_dir_all(&sources)?;
         fs::write(sources.join("memory.rs"), "pub struct Wram;")?;
-        let candidate = "dependency ".repeat(8192);
-        let dependency = "candidate ".repeat(8192);
+        let candidate = format!("pub fn step() {{ {} }}", "crate::dependency::step(); ".repeat(8192));
+        let dependency = format!("pub fn step() {{ {} }}", "crate::candidate::step(); ".repeat(8192));
         fs::write(sources.join("candidate.rs"), &candidate)?;
         fs::write(sources.join("dependency.rs"), &dependency)?;
         let expected = vec![sources.join("candidate.rs"), sources.join("dependency.rs"), sources.join("memory.rs")];
-        let cap = candidate.len() as u64 + dependency.len() as u64;
+        let cap = candidate.len() as u64 + dependency.len() as u64 + b"pub struct Wram;".len() as u64;
         let result = canonical_sources_until(
             &directory.0,
             &[sources.join("candidate.rs")],

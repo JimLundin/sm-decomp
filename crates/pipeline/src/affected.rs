@@ -9,6 +9,7 @@ use std::{
     io::Read,
     os::unix::fs::{MetadataExt, OpenOptionsExt},
     path::{Component, Path, PathBuf},
+    sync::Arc,
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 use translation_execution::checkout;
@@ -109,11 +110,6 @@ impl PlanningBudget {
         );
         self.check()?;
         Ok((bytes, format!("{:x}", hash.finalize())))
-    }
-
-    fn text(&self, path: &Path) -> Result<(String, String)> {
-        let (bytes, hash) = self.read(path, true)?;
-        Ok((String::from_utf8(bytes)?, hash))
     }
 
     fn hash(&self, path: &Path) -> Result<String> {
@@ -258,7 +254,7 @@ struct Discovery<'a> {
     available: BTreeMap<String, PathBuf>,
     namespace: BTreeMap<String, PathBuf>,
     history: BTreeSet<PathBuf>,
-    sources: BTreeMap<PathBuf, String>,
+    sources: BTreeMap<PathBuf, Arc<offline_verification::source_facts::RustSourceFacts>>,
     hashes: BTreeMap<PathBuf, String>,
 }
 
@@ -286,7 +282,7 @@ impl<'a> Discovery<'a> {
         })
     }
 
-    fn source(&mut self, path: &Path) -> Result<String> {
+    fn source(&mut self, path: &Path) -> Result<Arc<offline_verification::source_facts::RustSourceFacts>> {
         ensure!(!path.is_symlink(), "Rust discovery source is a symlink: {}", path.display());
         ensure!(
             self.history.contains(&normalize(self.checkout, path)),
@@ -295,29 +291,26 @@ impl<'a> Discovery<'a> {
         if let Some(source) = self.sources.get(path) {
             return Ok(source.clone());
         }
-        let (source, before) = self.budget.text(path)?;
+        let (source, before) = self.budget.read(path, true)?;
         ensure!(before == self.budget.hash(path)?, "Rust discovery source changed while reading: {}", path.display());
         self.hashes.insert(normalize(self.checkout, path), before);
-        // Unsupported file inputs cannot be excluded by top-level discovery.
-        // This conservative check may also match comments, which only adds work.
-        ensure!(
-            !source.split(|c: char| !(c.is_ascii_alphanumeric() || c == '_')).any(|word| [
-                "mod",
-                "include",
-                "include_str",
-                "include_bytes",
-                "env",
-                "option_env",
-                "fs",
-                "File",
-                "macro_rules"
-            ]
-            .contains(&word)),
-            "Rust source has inputs beyond supported module discovery: {}",
-            path.display()
+        let facts = tool_execution::bounded::until(
+            self.budget.deadline_unix_ms,
+            self.budget.maximum.saturating_sub(self.budget.bytes.get()).max(1),
+            || offline_verification::source_facts::scan(&normalize(self.checkout, path), &source),
         );
-        self.sources.insert(path.into(), source.clone());
-        Ok(source)
+        let facts = match facts {
+            Ok(facts) => Arc::new(facts),
+            Err(error) => {
+                // Scanner errors are resource/deadline failures. Unsupported
+                // syntax returns explicit facts, never an error that can hide
+                // exhaustion as an ordinary uncertain family.
+                self.budget.exhausted.set(true);
+                return Err(error);
+            }
+        };
+        self.sources.insert(path.into(), facts.clone());
+        Ok(facts)
     }
 
     fn dependencies(
@@ -343,11 +336,11 @@ impl<'a> Discovery<'a> {
         ensure!(kind != "plm-instructions", "generated PLM fixture inputs require verification");
         let mut result = BTreeSet::new();
         let memory = self.checkout.join("crates/port/src/memory.rs");
-        self.source(&memory)?;
+        self.source(&memory)?.require_complete()?;
         result.insert(normalize(self.checkout, &memory));
         let root = self.checkout.join(&manifest.rust_module);
         ensure!(!root.is_symlink(), "Rust root module is a symlink");
-        let mut pending = vec![root];
+        let mut pending = vec![root, memory];
         // PLM uses the same discovery implementation, but has no explicit imports.
         if kind != "plm" {
             for name in &manifest.rust_imports {
@@ -366,12 +359,14 @@ impl<'a> Discovery<'a> {
                 continue;
             }
             result.insert(normalize(self.checkout, &path));
-            let source = self.source(&path)?;
-            for word in source.split(|c: char| !(c.is_ascii_alphanumeric() || c == '_')) {
+            let facts = self.source(&path)?;
+            facts.require_complete()?;
+            for word in facts.identifiers() {
                 if let Some(dependency) = self.available.get(word) {
                     pending.push(dependency.clone());
                 }
             }
+            pending.extend(facts.file_dependencies().iter().map(|path| self.checkout.join(path)));
         }
         for path in &manifest.rust_dependencies {
             let path = normalize(self.checkout, path);
