@@ -9,10 +9,12 @@ User authorization: approved the rendered design and instructed "go ahead".
 The complete assembled implementation is in
 `/home/jim/sm-decomp-offline-verifier`, branch
 `architecture/offline-verifier-20261015`. Frozen verification source is
-`15d5a7e`; subsequent handoff/checkpoint commits change documentation only,
-apart from test-only overlay `09ea8ca`. It moves the pointer-normalization C-helper check
+`15d5a7e`; subsequent source changes are test-only overlays `09ea8ca` and
+`1a770f8`. The first moves the pointer-normalization C-helper check
 from `pipeline/tests/family.rs` to `offline-verification/tests/dispatcher_pointer.rs`.
 It preserves every assertion and does not change production or stamped source.
+The second completes the real recipe test's source snapshot from each selected
+declaration's relative inputs, retaining absolute Original capture paths.
 Main is at `5c011eb` and will receive the verified branch after the final gates.
 Main's foundation commits were confirmed identical to worker commits `446dd64`
 and `aeb6632`; the assembly merge preserves the newer implementation and imports
@@ -144,16 +146,28 @@ All Cargo work is locked/offline; the optimized verification build uses one job.
   current helper variables. Log: `logs/integration-4.log`. Both cleanup passes
   over `integration-tmp-4` succeeded. Overall final CLI coverage is 163 passed,
   four ignored, across 33 integration targets; none remains pending.
-- The real Native recipe proof is running in exec session 8680 using the
-  retained `tools/sm-pipeline-tests`, `frozen-source`, current sandbox and
-  `native-tmp`. Logs: `logs/recipes.log`, `recipes.time`; output: `recipes/`.
-  All 12 complete recipe declarations (8,159 pairs) are explicitly selected
+- The first real Native recipe attempt stopped during declaration, before any
+  producer ran (`logs/recipes.log`, `recipes.time`, output `recipes/`). The
+  diagnostic replay (`recipes-diagnostic/`, `logs/recipes-setup.strace`) found
+  the omitted declared input `crates/pipeline/src/ridley_subsystem_captured.rs`.
+  That source still correctly belongs to pipeline; the test snapshot copied
+  compiled harness inputs but omitted additional manifest-declared inputs.
+  Both cleanup passes succeeded for both failed roots. Preserve diagnostics.
+- Test-only fix `1a770f8` copies all selected declarations' relative inputs,
+  including the direct-animation base declaration; absolute capture paths stay
+  unchanged. Production/stamped source is unchanged from `15d5a7e`.
+  The replacement pipeline test reader is building in exec session 27219:
+  `cargo test --locked --offline --release -j 1 -p pipeline --bin sm-pipeline --no-run`.
+  Logs: `logs/native-reader-build.log`, `native-reader-build.time`.
+  Exact changed test sources are retained in `native-reader-source/`, with
+  `logs/native-reader-source-commit.txt` and `native-reader-test-overlay.patch`.
+  Retain the original reader too; it produced the prior passing catalog/unit
+  evidence. Run the revised reader's full matrix in a fresh `recipes-2/` root.
+- Both actual Native execution proofs and independent post-cleanup/retirement
+  Native authentication remain pending. Select all 12 declarations (8,159 pairs)
   exactly as in `native-verification-plan.md`, compiler limit 180 seconds,
-  Fixture jobs/workers four. `SM_NATIVE_PERFORMANCE_ONLY` is unset.
-  The exact archive and private ROM hashes passed again before this gate.
-  The full-family Native proof and independent post-cleanup/retirement Native
-  authentication remain pending. Keep the original `15d5a7e` source identity
-  separate from test-only overlay `09ea8ca`.
+  Fixture jobs/workers four, `SM_NATIVE_PERFORMANCE_ONLY` unset. The archive and
+  private ROM hashes passed again before the first attempt.
 
 ## Cleanup and remaining work
 
