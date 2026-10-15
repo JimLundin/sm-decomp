@@ -874,7 +874,7 @@ pub(crate) fn verify_with_declarations(
                     0usize,
                     |bytes, error| {
                         bytes
-                            .checked_add(format!("{error:#}").len())
+                            .checked_add(crate::work_graph::formatted_error_bytes(error)?)
                             .and_then(|bytes| bytes.checked_add(2))
                             .context("batch diagnostic aggregate extent overflow")
                     },
@@ -888,10 +888,19 @@ pub(crate) fn verify_with_declarations(
             for (index, outcome) in outcomes {
                 match outcome {
                     Ok(record) => verdict.cases.push(record),
-                    Err(error) => {
-                        let rejection = tasks.get(index).map(|task| run.join(&task.1.name).join("rejection.toml"));
-                        if let Some(rejection) = rejection.filter(|p| p.is_file()) {
-                            verdict.cases.push(object(&rejection)?);
+                    Err(mut error) => {
+                        if node.is_some() {
+                            if let Some(record) = error
+                                .downcast_mut::<crate::work_graph::FixtureError>()
+                                .and_then(crate::work_graph::FixtureError::take_rejection)
+                            {
+                                verdict.cases.push(record);
+                            }
+                        } else {
+                            let rejection = tasks.get(index).map(|task| run.join(&task.1.name).join("rejection.toml"));
+                            if let Some(rejection) = rejection.filter(|p| p.is_file()) {
+                                verdict.cases.push(object(&rejection)?);
+                            }
                         }
                         if let Some(joined) = &mut joined {
                             use std::fmt::Write as _;
@@ -928,13 +937,8 @@ pub(crate) fn verify_with_declarations(
         Ok(())
     })();
     if let Err(error) = result {
-        verdict.error = Some(if node.is_some() {
-            // A batch's full canonical diagnostic is already an owned String.
-            // Move it into evidence instead of allocating a second full copy.
-            error.downcast::<String>().unwrap_or_else(|error| format!("{error:#}"))
-        } else {
-            format!("{error:#}")
-        });
+        verdict.error =
+            Some(if let Some(node) = node { node.report_error(error, &verdict)? } else { format!("{error:#}") });
         if let Some(node) = node {
             node.stop(verdict.error.as_deref().unwrap());
         }
@@ -952,7 +956,8 @@ pub(crate) fn verify_with_declarations(
         })
     });
     if let Err(error) = &publication {
-        metrics.finish(crate::metrics::outcome(Some(&format!("{error:#}"))), Some(format!("{error:#}")))?;
+        let message = if node.is_some() { crate::work_graph::error_diagnostic(error) } else { format!("{error:#}") };
+        metrics.finish(crate::metrics::outcome(Some(&message)), Some(message))?;
     }
     publication?;
     let metrics_error = verdict

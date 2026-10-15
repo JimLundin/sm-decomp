@@ -28,7 +28,7 @@ mod plm_spawn;
 mod recipe;
 mod ridley_subsystem_adapter;
 mod sources;
-mod work_graph;
+pub(crate) use bulk::work_graph;
 
 pub mod authoring;
 pub mod catalog;

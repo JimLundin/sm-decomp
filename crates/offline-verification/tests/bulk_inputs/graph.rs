@@ -189,7 +189,11 @@ fn legacy_native_intent_replays_without_unreserved_projection() -> Result<()> {
         deadline_unix_ms: intent.get("outer_deadline_unix_ms").and_then(toml::Value::as_integer).map(|n| n as u64),
         max_output_bytes: receipt.max_output_bytes,
     };
-    let offline = verifier()?;
+    // Retained evidence authenticates against its original trusted host path
+    // contract. Fresh producer controls above still use the complete HOST.
+    const LEGACY_HOST: &[(&str, &str)] =
+        &[("crates/offline-verification/tests/bulk_inputs.rs", include_str!("../bulk_inputs.rs"))];
+    let offline = OfflineFamilies::new(HostInputs::new(LEGACY_HOST, digest(&std::env::current_exe()?)?)?);
     let replayed = prepared.verify(
         NativeTarget {
             checkout: &replay.checkout,
@@ -433,6 +437,44 @@ fn batch_stops_new_family_admission_after_terminal_rejection() -> Result<()> {
     ensure!(!project.root.join("b").exists(), "batch admitted family b after terminal rejection");
     ensure!(families[1].result().is_err(), "unadmitted family disappeared instead of retaining canonical outcome");
     ensure!(*completed.lock().unwrap() == ["a", "b"], "completion projection omitted a blocked family");
+    project.cleanup()
+}
+
+#[test]
+fn canonical_rejection_keeps_long_diagnostic_tail_and_complete_record() -> Result<()> {
+    let mut project = Project::new("graph-long-diagnostic")?;
+    let symbol = format!("Touch{}DISTINGUISHING_DIAGNOSTIC_TAIL", "A".repeat(8192));
+    let rust = project.checkout().join("crates/port/src/fixture.rs");
+    fs::write(&rust, fs::read_to_string(&rust)?.replace("Touch", &symbol))?;
+    let c = project.source().join("src/sm_80.c");
+    fs::write(
+        &c,
+        fs::read_to_string(&c)?
+            .replace("Touch", &symbol)
+            .replace("g_ram[17] = (uint8_t)a;", "g_ram[17] = (uint8_t)(a + 1);"),
+    )?;
+    project.pin()?;
+    let manifest_path = project.checkout().join("tools/port/a.smf");
+    let mut manifest = fixtures::read(&manifest_path)?;
+    manifest.routines[0].symbol = symbol.clone();
+    manifest.routines[0].cases.truncate(1);
+    fixtures::write(&manifest_path, &manifest)?;
+    let offline = verifier()?;
+    let catalog = offline.capture_catalog(CatalogRequest::new(&project.checkout())?)?;
+    let mut request = batch_request(&project, &catalog);
+    request.families.truncate(1);
+    let batch = offline.verify_batch(request, |_| Ok(()))?;
+    let run = &batch.families()[0].result().as_ref().map_err(|error| anyhow::anyhow!("{error:#}"))?.run;
+    let report = run.report();
+    let expected = format!("WRAM mismatch at 0x11: {symbol}/root");
+    ensure!(report.status == "rejected" && expected.len() > 8192);
+    ensure!(report.error.as_deref() == Some(expected.as_str()), "canonical diagnostic lost its distinguishing tail");
+    let retained: offline_verification::Verdict = bounded::object(&run.evidence())?;
+    ensure!(retained.error == report.error, "published canonical diagnostic changed");
+    let record: CaseRecord = bounded::object(&report.run.join("root/rejection.toml"))?;
+    ensure!(report.cases.len() == 1 && record.routine == symbol && report.cases[0] == record);
+    ensure!(record.returns.len() == 2 && record.after_sha256.len() == 2 && record.first_mismatch.is_some());
+    ensure!(fs::metadata(report.run.join("root/c-after.wram"))?.len() == 0x20000);
     project.cleanup()
 }
 
