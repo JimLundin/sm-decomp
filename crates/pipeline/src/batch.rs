@@ -312,13 +312,13 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
         .context("unknown profile or missing families")?;
     if command == "plan" || request.changed_since.is_some() {
         let report = crate::affected::select_with_snapshot(&snapshot, &names, request.changed_since.as_deref())?;
-        snapshot.validate_current()?;
         if command == "plan" {
             if let Some(planning) = planning {
                 planning.finish("success")?;
             }
             return Ok(toml::Value::try_from(report)?);
         }
+        snapshot.validate_current()?;
         names = report.families();
         if names.is_empty() {
             if let Some(planning) = planning {
@@ -571,7 +571,8 @@ mod tests {
         fs::write(checkout.join("tools/port/batch.toml"), "[families]\n[profiles]\n")?;
         let metrics_path = directory.0.join("caller.metrics.toml");
         let mut caller = metrics::Run::start(metrics_path.clone(), "metadata-caller")?;
-        let result = operate(Request { checkout: checkout.clone(), operation: "catalog".into(), ..Default::default() })?;
+        let result =
+            operate(Request { checkout: checkout.clone(), operation: "catalog".into(), ..Default::default() })?;
         assert!(result.get("metrics").is_none());
         assert!(!checkout.join("out").exists());
         assert_eq!(metrics::active().unwrap().path(), metrics_path);

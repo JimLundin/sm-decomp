@@ -7,6 +7,7 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
     path::{Path, PathBuf},
+    sync::Arc,
 };
 use tool_execution::bounded;
 
@@ -266,6 +267,22 @@ pub fn wrapper(request: WrapperRequest) -> Result<WrapperResult> {
     decomp_source::context::limited(|| wrapper_bounded(request))
 }
 
+#[derive(Clone)]
+enum WrapperSource {
+    Captured(Arc<crate::input_view::RetainedRustFacts>),
+    Parsed(Arc<crate::source_facts::RustSourceFacts>),
+}
+
+impl std::ops::Deref for WrapperSource {
+    type Target = crate::source_facts::RustSourceFacts;
+    fn deref(&self) -> &Self::Target {
+        match self {
+            Self::Captured(retained) => &retained.facts,
+            Self::Parsed(facts) => facts,
+        }
+    }
+}
+
 fn wrapper_bounded(request: WrapperRequest) -> Result<WrapperResult> {
     ensure!(request.modules.len() <= 4096 && request.imports.len() <= 4096, "wrapper source seed inventory exceeded");
     let checkout = fs::canonicalize(request.checkout)?;
@@ -281,43 +298,61 @@ fn wrapper_bounded(request: WrapperRequest) -> Result<WrapperResult> {
             available.insert(name, p);
         }
     }
-    let mut pending: Vec<PathBuf> = request.modules.iter().map(fs::canonicalize).collect::<std::io::Result<_>>()?;
-    pending.push(sources.join("memory.rs"));
+    let mut pending = request
+        .modules
+        .iter()
+        .map(|path| Ok((fs::canonicalize(path)?, None)))
+        .collect::<std::io::Result<BTreeSet<_>>>()?;
+    pending.insert((sources.join("memory.rs"), None));
     let mut selected = BTreeSet::new();
     for name in request.imports {
-        pending.push(available.get(&name).context("unknown gameplay import")?.clone());
+        pending.insert((available.get(&name).context("unknown gameplay import")?.clone(), None));
         selected.insert(name);
     }
     let mut visited = BTreeSet::new();
+    let mut placements = BTreeSet::new();
+    let mut scanned = BTreeMap::<PathBuf, WrapperSource>::new();
     let captured = crate::input_view::current();
-    while let Some(p) = pending.pop() {
+    while let Some((p, parent)) = pending.pop_first() {
         bounded::check()?;
+        ensure!(pending.len() + placements.len() < 65536, "wrapper Rust placement inventory exceeded");
+        bounded::safe(&p)?;
+        let p = fs::canonicalize(p)?;
+        if !placements.insert((p.clone(), parent.clone())) {
+            continue;
+        }
+        let facts = if let Some(facts) = scanned.get(&p) {
+            facts.clone()
+        } else {
+            let facts = if let Some(view) = &captured {
+                WrapperSource::Captured(view.source_facts(&p)?)
+            } else {
+                WrapperSource::Parsed(Arc::new(crate::source_facts::scan(&p, &bounded::read(&p)?)?))
+            };
+            scanned.insert(p.clone(), facts.clone());
+            facts
+        };
+        if let Some(parent) = &parent {
+            facts.require_complete_with_parent(scanned.get(parent).context("Rust wrapper parent was not scanned")?)?;
+        } else {
+            facts.require_complete()?;
+        }
         if !visited.insert(p.clone()) {
             continue;
         }
-        let retained;
-        let fresh;
-        let facts = if let Some(view) = &captured {
-            retained = view.source_facts(&p)?;
-            &retained.facts
-        } else {
-            fresh = crate::source_facts::scan(&p, &bounded::read(&p)?)?;
-            &fresh
-        };
-        facts.require_complete()?;
         for word in facts.identifiers() {
             if let Some(module) = available.get(word)
                 && selected.insert(word.to_owned())
             {
-                pending.push(module.clone());
+                pending.insert((module.clone(), None));
             }
         }
         // A module path is an actual compiler input, not a crate-root import.
         // Traverse its dependencies without declaring another nominal copy.
         for path in facts.file_dependencies() {
             let path = if let Some(view) = &captured { view.physical(path)? } else { path.clone() };
-            if !visited.contains(&path) {
-                pending.push(path);
+            if !placements.contains(&(path.clone(), Some(p.clone()))) {
+                pending.insert((path, Some(p.clone())));
             }
         }
     }

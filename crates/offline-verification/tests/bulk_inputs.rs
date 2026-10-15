@@ -91,7 +91,10 @@ pub fn dispatch(ram: &mut Wram<'_>, name: &str, a: u16, _b: u16) -> Result<u32, 
             "crates/port/src/helper.rs",
             "#[path = \"helper_inner.rs\"] mod inner;\npub fn returned(a: u16) -> u32 { inner::returned(a) }\n",
         )?;
-        self.write("crates/port/src/helper_inner.rs", "pub fn returned(a: u16) -> u32 { a as u32 + 1 }\n")?;
+        self.write(
+            "crates/port/src/helper_inner.rs",
+            "use super::*;\npub fn returned(a: u16) -> u32 { let _ = vec![0u8]; a as u32 + 1 }\n",
+        )?;
         self.write("crates/port/src/unrelated.rs", "compile_error!(\"unrelated source must not be selected\");\n")?;
         let c_path = self.source().join("src/sm_80.c").display().to_string();
         self.write(

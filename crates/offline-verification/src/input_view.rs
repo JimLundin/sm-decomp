@@ -354,51 +354,19 @@ impl InputView {
     /// Discover from the owned bytes that compilers will consume. Another
     /// family can extend the union, but cannot reread or replace a bound file.
     fn capture_rust_inputs(&mut self, manifest: &Manifest) -> Result<BTreeSet<PathBuf>> {
-        let available = self
-            .namespace
-            .iter()
-            .filter_map(|path| {
-                let name = path.file_stem()?.to_str()?;
-                (path.extension().is_some_and(|extension| extension == "rs") && !["lib", "memory"].contains(&name))
-                    .then(|| (name.to_owned(), path.clone()))
-            })
-            .collect::<BTreeMap<_, _>>();
-        ensure!(available.len() <= 4096 && manifest.rust_imports.len() <= 4096, "captured Rust source scope exceeded");
-        let mut pending =
-            vec![self.logical_input(Path::new(&manifest.rust_module)), self.checkout.join("crates/port/src/memory.rs")];
-        for name in &manifest.rust_imports {
-            pending.push(available.get(name).context("unknown gameplay import")?.clone());
-        }
-        let mut selected = BTreeSet::new();
-        while let Some(path) = pending.pop() {
-            bounded::check()?;
-            bounded::safe(&path)?;
-            let path = fs::canonicalize(path)?;
-            ensure!(path.extension().is_some_and(|extension| extension == "rs"), "captured Rust source is not Rust");
-            if !selected.insert(path.clone()) {
-                continue;
-            }
-            if !self.files.contains_key(&path) {
+        let checkout = self.checkout.clone();
+        let namespace = self.namespace.clone();
+        rust_closure(&checkout, &namespace, manifest, |path| {
+            if !self.files.contains_key(path) {
                 ensure!(self.files.len() < 16384, "captured input inventory exceeded");
                 let metadata = path.as_os_str().len() as u64 * 8 + 1024;
                 self.declarations.reserve_metadata(metadata)?;
                 self.metadata_bytes += metadata;
-                Arc::make_mut(&mut self.compiler_inputs).insert(path.clone());
-                self.capture_file(path.clone(), None)?;
+                Arc::make_mut(&mut self.compiler_inputs).insert(path.into());
+                self.capture_file(path.into(), None)?;
             }
-            let retained = self.rust_facts(&path, &self.files[&path])?;
-            let facts = &retained.facts;
-            facts.require_complete()?;
-            for word in facts.identifiers() {
-                if let Some(path) = available.get(word)
-                    && !selected.contains(path)
-                {
-                    pending.push(path.clone());
-                }
-            }
-            pending.extend(facts.file_dependencies().iter().filter(|path| !selected.contains(*path)).cloned());
-        }
-        Ok(selected)
+            self.source_facts(path)
+        })
     }
 
     /// Select an already captured family without rediscovering or reading the
@@ -597,46 +565,8 @@ impl InputView {
     }
 
     fn validate_rust_inputs(&self, manifest: &Manifest) -> Result<()> {
-        // Match ordinary wrappers, including standalone external candidates.
-        // Native keeps its direct-module ownership check in canonical_sources.
-        let available = self
-            .namespace
-            .iter()
-            .filter_map(|path| {
-                let name = path.file_stem()?.to_str()?;
-                (path.extension().is_some_and(|extension| extension == "rs") && !["lib", "memory"].contains(&name))
-                    .then(|| (name.to_owned(), path.clone()))
-            })
-            .collect::<BTreeMap<_, _>>();
-        let mut pending =
-            vec![self.logical_input(Path::new(&manifest.rust_module)), self.checkout.join("crates/port/src/memory.rs")];
-        for name in &manifest.rust_imports {
-            pending.push(available.get(name).context("unknown gameplay import")?.clone());
-        }
-        let mut visited = BTreeSet::new();
-        while let Some(path) = pending.pop() {
-            if !visited.insert(path.clone()) {
-                continue;
-            }
-            bounded::check()?;
-            let file = self.files.get(&path).context("Rust discovery found an unbound captured input")?;
-            let retained = self.rust_facts(&path, file)?;
-            let facts = &retained.facts;
-            facts.require_complete()?;
-            for word in facts.identifiers() {
-                if let Some(path) = available.get(word) {
-                    if !visited.contains(path) {
-                        pending.push(path.clone());
-                    }
-                }
-            }
-            for dependency in facts.file_dependencies() {
-                ensure!(self.files.contains_key(dependency), "Rust module path names an unbound captured input");
-                if !visited.contains(dependency) {
-                    pending.push(dependency.clone());
-                }
-            }
-        }
+        // The same traversal can validate but cannot extend this inventory.
+        rust_closure(&self.checkout, &self.namespace, manifest, |path| self.source_facts(path))?;
         Ok(())
     }
 
@@ -694,6 +624,67 @@ impl InputView {
         let _restore = Restore(CURRENT.with(|current| current.borrow_mut().replace(self.clone())));
         action()
     }
+}
+
+fn rust_closure(
+    checkout: &Path,
+    namespace: &[PathBuf],
+    manifest: &Manifest,
+    mut load: impl FnMut(&Path) -> Result<Arc<RetainedRustFacts>>,
+) -> Result<BTreeSet<PathBuf>> {
+    let available = namespace
+        .iter()
+        .filter_map(|path| {
+            let name = path.file_stem()?.to_str()?;
+            (path.extension().is_some_and(|extension| extension == "rs") && !["lib", "memory"].contains(&name))
+                .then(|| (name.to_owned(), path.clone()))
+        })
+        .collect::<BTreeMap<_, _>>();
+    ensure!(available.len() <= 4096 && manifest.rust_imports.len() <= 4096, "captured Rust source scope exceeded");
+    let mut pending = BTreeSet::from([
+        (checkout.join(&manifest.rust_module), None),
+        (checkout.join("crates/port/src/memory.rs"), None),
+    ]);
+    for name in &manifest.rust_imports {
+        pending.insert((available.get(name).context("unknown gameplay import")?.clone(), None));
+    }
+    let mut selected = BTreeSet::new();
+    let mut placements = BTreeSet::new();
+    while let Some((path, parent)) = pending.pop_first() {
+        bounded::check()?;
+        ensure!(pending.len() + placements.len() < 65536, "captured Rust placement inventory exceeded");
+        bounded::safe(&path)?;
+        let path = fs::canonicalize(path)?;
+        ensure!(path.extension().is_some_and(|extension| extension == "rs"), "captured Rust source is not Rust");
+        if !placements.insert((path.clone(), parent.clone())) {
+            continue;
+        }
+        let retained = load(&path)?;
+        let facts = &retained.facts;
+        // A file can appear under more than one module. Each literal placement
+        // must prove its own parent before the dependency traversal is shared.
+        if let Some(parent) = &parent {
+            facts.require_complete_with_parent(&load(parent)?.facts)?;
+        } else {
+            facts.require_complete()?;
+        }
+        if !selected.insert(path.clone()) {
+            continue;
+        }
+        for word in facts.identifiers() {
+            if let Some(dependency) = available.get(word)
+                && !placements.contains(&(dependency.clone(), None))
+            {
+                pending.insert((dependency.clone(), None));
+            }
+        }
+        for dependency in facts.file_dependencies() {
+            if !placements.contains(&(dependency.clone(), Some(path.clone()))) {
+                pending.insert((dependency.clone(), Some(path.clone())));
+            }
+        }
+    }
+    Ok(selected)
 }
 
 pub(crate) fn current() -> Option<Arc<InputView>> {
