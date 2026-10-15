@@ -199,6 +199,19 @@ fn execute_at(
     workers: usize,
     timeout: u64,
 ) -> Result<ExecutionRecord> {
+    execute_at_checked(command, run, cwd, label, root, workers, timeout, || Ok(()))
+}
+
+fn execute_at_checked(
+    command: &[String],
+    run: &Path,
+    cwd: &Path,
+    label: &str,
+    root: &Path,
+    workers: usize,
+    timeout: u64,
+    ready: impl FnOnce() -> Result<()>,
+) -> Result<ExecutionRecord> {
     ensure!(!command.is_empty(), "empty process command");
     ensure!(label.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_'), "unsafe process label");
     fs::create_dir_all(run)?;
@@ -208,6 +221,7 @@ fn execute_at(
         let waiting = metrics.context.stage("worker-wait")?;
         let (_held, wait) = acquire_lease(root, workers)?;
         waiting.finish("success")?;
+        ready()?;
         let building = metrics.context.stage("execute")?;
         let active = Instant::now();
         let mut actual = Command::new(&command[0]);
@@ -351,12 +365,25 @@ pub fn cargo_build(request: CargoBuildRequest, metrics: &crate::metrics::Context
 }
 
 pub fn c_build(request: CBuildRequest) -> Result<ExecutionRecord> {
+    c_build_with_inputs(request, &|_| Ok(()))
+}
+
+/// Compile the application's fixed C recipe and admit every compiler-discovered
+/// input through its policy. All units, including uncached generated units,
+/// receive fresh discovery and emitted-closure equality checks. The validator
+/// must be read-only and thread safe; it is also called after capacity waits.
+/// Compiler/header byte identities, cache locks and artifact authentication
+/// remain owned by this module rather than delegated to the validator.
+pub fn c_build_with_inputs(
+    request: CBuildRequest,
+    validate_inputs: &(dyn Fn(&[PathBuf]) -> Result<()> + Sync),
+) -> Result<ExecutionRecord> {
     fs::create_dir_all(&request.run)?;
     // Install cancellation once on the parent. Thread-local child scopes then
     // inherit this context rather than racing to replace signal handlers.
     let mut metrics = crate::metrics::Run::start(request.run.join("c-build.metrics.toml"), "c-build")?;
     metrics.context.configuration("workers", request.workers);
-    let result = c_build_prepared(request);
+    let result = bounded::limited(|| c_build_prepared(request, validate_inputs));
     let error = result.as_ref().err().map(|error| format!("{error:#}"));
     let finished = metrics.finish(crate::metrics::outcome(error.as_deref()), error);
     if result.is_ok() {
@@ -365,7 +392,10 @@ pub fn c_build(request: CBuildRequest) -> Result<ExecutionRecord> {
     result
 }
 
-fn c_build_prepared(request: CBuildRequest) -> Result<ExecutionRecord> {
+fn c_build_prepared(
+    request: CBuildRequest,
+    validate_inputs: &(dyn Fn(&[PathBuf]) -> Result<()> + Sync),
+) -> Result<ExecutionRecord> {
     let CBuildRequest { run, checkout, root, workers, command } = request;
     ensure!(!command.is_empty(), "empty C command");
     ensure!((1..=64).contains(&workers), "invalid C worker count");
@@ -405,6 +435,7 @@ fn c_build_prepared(request: CBuildRequest) -> Result<ExecutionRecord> {
     ensure!(!sources.is_empty(), "C build has no translation units");
     let pinned = fs::canonicalize(checkout.join("deps"))?;
     let preparation = Preparation::new(&root, &checkout, &command[0])?;
+    validate_inputs(&inputs)?;
     preparation.freeze(&inputs)?;
     let objects: Vec<_> = (0..sources.len()).map(|index| run.join(format!("c-object-{index:03}.o"))).collect();
     let compile_unit = |index: usize| -> Result<Option<CacheResult>> {
@@ -414,45 +445,55 @@ fn c_build_prepared(request: CBuildRequest) -> Result<ExecutionRecord> {
         let mut compile = vec![command[0].clone()];
         compile.extend(flags.clone());
         compile.extend(["-c".into(), source.to_string_lossy().into_owned(), "-o".into(), "{artifact}".into()]);
-        let build = |artifact: &Path, expected: Option<&[PathBuf]>| -> Result<()> {
+        preparation.freeze(std::slice::from_ref(&source))?;
+        validate_inputs(std::slice::from_ref(&source))?;
+        // Discover every actual preprocessor closure. A generated wrapper can
+        // include pinned source, system headers, or macro-selected paths too.
+        let (_held, _) = acquire_lease(&root, workers)?;
+        preparation.validate(std::slice::from_ref(&source))?;
+        preparation.validate(&inputs)?;
+        validate_inputs(std::slice::from_ref(&source))?;
+        let dependencies = crate::metrics::command_output(
+            Command::new(&command[0]).args(&flags).arg("-M").arg(&source).current_dir(&run),
+            "c-dependency-scan",
+        )?;
+        drop(_held);
+        ensure!(
+            dependencies.status.success(),
+            "C dependency scan failed: {}",
+            String::from_utf8_lossy(&dependencies.stderr)
+        );
+        let discovered = dependency_paths(&String::from_utf8(dependencies.stdout)?, &run)?;
+        validate_inputs(&discovered)?;
+        let mut closure = inputs.clone();
+        closure.extend(discovered.clone());
+        closure.push(source.clone());
+        closure.sort();
+        closure.dedup();
+        preparation.freeze(&closure)?;
+        preparation.validate(&closure)?;
+        let build = |artifact: &Path| -> Result<()> {
             let mut actual = compile.clone();
             *actual.last_mut().unwrap() = artifact.to_string_lossy().into_owned();
             let dep_file = artifact.with_extension("d");
-            if expected.is_some() {
-                actual.extend(["-MD".into(), "-MF".into(), dep_file.display().to_string()]);
-            }
-            execute(&actual, &run, &format!("c-object-{index:03}"), &root, workers)?;
-            if let Some(expected) = expected {
-                authenticate_dependency_closure(expected, &fs::read_to_string(&dep_file)?, &run)?;
-                fs::remove_file(dep_file)?;
-            }
+            actual.extend(["-MD".into(), "-MF".into(), dep_file.display().to_string()]);
+            execute_at_checked(&actual, &run, &run, &format!("c-object-{index:03}"), &root, workers, 240, || {
+                preparation.validate(&closure)?;
+                validate_inputs(&closure)
+            })?;
+            let actual = fs::read_to_string(&dep_file)?;
+            authenticate_dependency_closure(&discovered, &actual, &run)?;
+            validate_inputs(&dependency_paths(&actual, &run)?)?;
+            preparation.validate(&closure)?;
+            fs::remove_file(dep_file)?;
             Ok(())
         };
         if source.starts_with(&pinned) {
-            preparation.freeze(std::slice::from_ref(&source))?;
-            // Ask the compiler for its complete preprocessor closure, including
-            // system headers and textually included sources. Header edits and
-            // changed include search paths must invalidate even a warm object.
-            let (_held, _) = acquire_lease(&root, workers)?;
-            let dependencies = crate::metrics::command_output(
-                Command::new(&command[0]).args(&flags).arg("-M").arg(&source).current_dir(&run),
-                "c-dependency-scan",
-            )?;
-            drop(_held);
-            ensure!(
-                dependencies.status.success(),
-                "C dependency scan failed: {}",
-                String::from_utf8_lossy(&dependencies.stderr)
-            );
-            let discovered = dependency_paths(&String::from_utf8(dependencies.stdout)?, &run)?;
-            let mut closure = inputs.clone();
-            closure.extend(discovered.clone());
-            closure.push(source);
-            Ok(Some(
-                preparation.artifact(&compile, &closure, destination, |artifact| build(artifact, Some(&discovered)))?,
-            ))
+            let result = preparation.artifact(&compile, &closure, destination, build)?;
+            validate_inputs(&closure)?;
+            Ok(Some(result))
         } else {
-            build(destination, None)?;
+            build(destination)?;
             Ok(None)
         }
     };
@@ -461,6 +502,7 @@ fn c_build_prepared(request: CBuildRequest) -> Result<ExecutionRecord> {
     let next = AtomicUsize::new(0);
     let failed = AtomicBool::new(false);
     let context = crate::metrics::active();
+    let input_scope = bounded::shared_scope()?;
     let mut completed = std::thread::scope(|scope| -> Result<Vec<_>> {
         let handles: Vec<_> = (0..workers.min(sources.len()))
             .map(|_| {
@@ -472,7 +514,7 @@ fn c_build_prepared(request: CBuildRequest) -> Result<ExecutionRecord> {
                         if index >= sources.len() {
                             break;
                         }
-                        let result = compile_unit(index);
+                        let result = input_scope.enter(|| compile_unit(index));
                         if result.is_err() {
                             preparation.abort();
                             failed.store(true, Ordering::Release);

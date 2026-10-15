@@ -168,6 +168,21 @@ impl Preparation {
         Ok(())
     }
 
+    /// Authenticate one already frozen closure after a capacity wait and before
+    /// a producer starts. This cannot discover or silently bind another input.
+    pub fn validate(&self, inputs: &[PathBuf]) -> Result<()> {
+        self.check_active()?;
+        let observed = self.observed.lock().map_err(|_| anyhow::anyhow!("compiler input lock poisoned"))?;
+        for path in inputs {
+            let path = fs::canonicalize(path)?;
+            let expected = observed.get(&path).context("compiler input was not frozen before validation")?;
+            ensure!(digest(&path)? == *expected, "prepared compiler input changed after wait");
+        }
+        ensure!(digest(&self.compiler)? == self.identity.sha256, "prepared compiler changed");
+        ensure!(environment_digest()? == self.environment_sha256, "prepared compiler environment changed");
+        Ok(())
+    }
+
     pub fn abort(&self) {
         self.aborted.store(true, Ordering::Release);
     }
