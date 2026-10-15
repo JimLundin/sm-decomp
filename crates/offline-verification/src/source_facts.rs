@@ -73,6 +73,31 @@ impl RustSourceFacts {
         self.incomplete.is_empty()
     }
 
+    /// Conservative retained allocation reservation, including ordered-set
+    /// nodes and allocator overhead. Parser working storage is independently
+    /// bounded and is discarded before these owned facts are cached.
+    pub fn retained_byte_bound(&self) -> u64 {
+        let text =
+            self.identifiers.iter().chain(&self.incomplete).map(|value| 1024 + value.capacity() as u64).sum::<u64>();
+        let paths = self.file_dependencies.iter().map(|path| 1024 + path.capacity() as u64).sum::<u64>();
+        let inputs = self
+            .inputs
+            .iter()
+            .map(|input| {
+                let characters = match input {
+                    RustInput::FileMacro { name, path } => name.capacity() + path.as_ref().map_or(0, String::capacity),
+                    RustInput::EnvironmentMacro { name, variable } => {
+                        name.capacity() + variable.as_ref().map_or(0, String::capacity)
+                    }
+                    RustInput::ExternalModule { name } => name.capacity(),
+                    RustInput::ModulePath { path } => path.as_ref().map_or(0, String::capacity),
+                };
+                1024 + characters as u64
+            })
+            .sum::<u64>();
+        4096 + self.logical_path.capacity() as u64 + self.sha256.capacity() as u64 + text + paths + inputs
+    }
+
     /// Discovery cannot prove an exclusion or narrow execution inputs when the
     /// source contains an unmodeled dependency. This is not compiler acceptance.
     pub fn require_complete(&self) -> Result<()> {

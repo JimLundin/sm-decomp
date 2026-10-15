@@ -11,7 +11,7 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
     path::{Component, Path, PathBuf},
-    sync::{Arc, atomic::Ordering},
+    sync::{Arc, OnceLock, atomic::Ordering},
 };
 use tool_execution::bounded;
 
@@ -30,6 +30,19 @@ struct File {
     bytes: Option<Arc<Vec<u8>>>,
     maximum: u64,
     extent: u64,
+    rust_facts: OnceLock<Arc<RetainedRustFacts>>,
+}
+
+struct RetainedRustFacts {
+    facts: crate::source_facts::RustSourceFacts,
+    declarations: Arc<Declarations>,
+    reserved_bytes: u64,
+}
+
+impl Drop for RetainedRustFacts {
+    fn drop(&mut self) {
+        self.declarations.release_metadata(self.reserved_bytes);
+    }
 }
 
 /// The directory is private materialization of retained owned bytes. Neither
@@ -275,7 +288,8 @@ impl InputView {
         if let Some(expected) = expected {
             ensure!(hash == expected, "captured input identity differs: {}", path.display());
         }
-        Arc::make_mut(&mut self.files).insert(path, File { physical, sha256: hash, bytes, maximum, extent });
+        Arc::make_mut(&mut self.files)
+            .insert(path, File { physical, sha256: hash, bytes, maximum, extent, rust_facts: OnceLock::new() });
         Ok(())
     }
 
@@ -541,9 +555,8 @@ impl InputView {
             }
             bounded::check()?;
             let file = self.files.get(&path).context("Rust discovery found an unbound captured input")?;
-            let facts =
-                crate::source_facts::scan(&path, file.bytes.as_ref().context("Rust source cannot be streamed asset")?)?;
-            ensure!(facts.sha256() == file.sha256, "captured Rust source facts differ from bound bytes");
+            let retained = self.rust_facts(&path, file)?;
+            let facts = &retained.facts;
             facts.require_complete()?;
             for word in facts.identifiers() {
                 if let Some(path) = available.get(word) {
@@ -560,6 +573,22 @@ impl InputView {
             }
         }
         Ok(())
+    }
+
+    fn rust_facts(&self, path: &Path, file: &File) -> Result<Arc<RetainedRustFacts>> {
+        if let Some(facts) = file.rust_facts.get() {
+            bounded::check()?;
+            return Ok(facts.clone());
+        }
+        let facts =
+            crate::source_facts::scan(path, file.bytes.as_ref().context("Rust source cannot be streamed asset")?)?;
+        ensure!(facts.sha256() == file.sha256, "captured Rust source facts differ from bound bytes");
+        let reserved_bytes = facts.retained_byte_bound();
+        self.declarations.reserve_metadata(reserved_bytes)?;
+        let retained = Arc::new(RetainedRustFacts { facts, declarations: self.declarations.clone(), reserved_bytes });
+        // A concurrent initializer's unused reservation is released by Drop.
+        let _ = file.rust_facts.set(retained);
+        Ok(file.rust_facts.get().context("captured Rust source facts were not retained")?.clone())
     }
 
     pub fn remap_arguments(&self, rust: bool) -> Vec<String> {

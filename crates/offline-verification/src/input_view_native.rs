@@ -284,7 +284,14 @@ impl InputView {
             let physical = view.destination(logical)?;
             bounded::safe(&physical)?;
             ensure!(fs::symlink_metadata(&physical)?.len() == captured.bytes, "native captured input extent changed");
-            let file = File { physical, sha256: captured.sha256.clone(), bytes: None, maximum, extent: captured.bytes };
+            let file = File {
+                physical,
+                sha256: captured.sha256.clone(),
+                bytes: None,
+                maximum,
+                extent: captured.bytes,
+                rust_facts: OnceLock::new(),
+            };
             ensure!(view.materialized_hash(&file)? == *expected_hash, "native captured input bytes changed");
             Arc::make_mut(&mut view.files).insert(logical.clone(), file);
         }
