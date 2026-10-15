@@ -8,8 +8,8 @@ use std::{
     sync::Arc,
 };
 
-mod builds;
 mod admission_reader;
+mod builds;
 mod bulk;
 mod callback;
 mod declarations;
@@ -28,6 +28,7 @@ mod plm_spawn;
 mod recipe;
 mod ridley_subsystem_adapter;
 mod sources;
+pub(crate) use bulk::work_graph;
 
 pub mod authoring;
 pub mod catalog;
@@ -41,9 +42,10 @@ pub mod source_facts;
 pub use family_model::{AuthenticateRequest, Verdict, VerifyRequest};
 pub use host::HostInputs;
 pub use native::{
-    AdmittedScope, AuthenticatedNative, ConfinedEnvironment, NativeContract, NativeDeclaration, NativeDeclarationKind,
-    NativeEvidence, NativeLimits, NativePreparation, NativeProvenance, NativeReceipt, NativeTarget, NoScopeAdmission,
-    PreparedNative, ScopeAdmission,
+    AdmittedScope, AuthenticatedNative, ConfinedEnvironment, NATIVE_FAMILY_RECORD_BYTES, NativeContract,
+    NativeDeclaration, NativeDeclarationKind, NativeEvidence, NativeFamilyReceipt, NativeLimits, NativePreparation,
+    NativeProvenance, NativeReceipt, NativeSequence, NativeSequenceJob, NativeSequenceRun, NativeTarget,
+    NoScopeAdmission, PreparedNative, ScopeAdmission,
 };
 pub use ordinary::{PreviousFamily, RegisteredRequest, RegisteredRun};
 pub use sources::IMPLEMENTATION_SOURCES;
@@ -78,7 +80,8 @@ impl OfflineFamilies {
             let checkout = request.checkout.clone();
             let source = request.source.clone();
             let declarations = Arc::new(declarations::Declarations::standard());
-            let report = declarations.enter(|| family::verify_with_declarations(request, &declarations, None, None))?;
+            let report =
+                declarations.enter(|| family::verify_with_declarations(request, &declarations, None, None, None))?;
             if report.status == "offline-verified" {
                 family::admit_with_source(
                     AuthenticateRequest { checkout, verdict: report.run.join("verdict.toml") },

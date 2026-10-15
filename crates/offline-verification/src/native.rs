@@ -28,8 +28,325 @@ use translation_execution::{
     retention::Reference,
 };
 
+mod graph {
+    //! Bounded advisory projection of the existing Native wave/operation contract.
+    //! No projection is read for execution, reuse, ownership, or deadline decisions.
+    use super::{NativeIntent, NativeReceipt, PreparedNative};
+    use anyhow::{Context, Result, ensure};
+    use serde::Serialize;
+    use std::{
+        path::Path,
+        sync::atomic::{AtomicUsize, Ordering},
+    };
+    use tool_execution::metrics;
+    use translation_execution::model::sealed;
+
+    const FILE_BYTES: u64 = 32 * 1024;
+    /// The current file and its atomic replacement both fit before publication.
+    pub(super) const RESERVED_BYTES: u64 = 2 * FILE_BYTES;
+
+    pub(super) fn validate_allowance(bytes: u64) -> Result<()> {
+        ensure!(bytes == 0 || bytes == RESERVED_BYTES, "native graph metadata reservation changed");
+        Ok(())
+    }
+
+    pub(super) fn check_budget(intent: &NativeIntent, receipt: &NativeReceipt) -> Result<()> {
+        validate_allowance(intent.graph_metadata_bytes)?;
+        let total = receipt
+            .evidence_bytes
+            .checked_add(intent.graph_metadata_bytes)
+            .context("native evidence and graph metadata extent overflow")?;
+        ensure!(
+            total <= receipt.reserved_bytes && total <= receipt.max_output_bytes,
+            "native evidence and graph metadata exceed reserved output capacity"
+        );
+        Ok(())
+    }
+
+    #[derive(Clone, Copy, Serialize)]
+    #[serde(rename_all = "kebab-case")]
+    pub(super) enum Phase {
+        Prepared,
+        Building,
+        Fixtures,
+        Publishing,
+        Complete,
+        Rejected,
+        OwnershipPending,
+    }
+
+    pub(super) struct Progress<'a> {
+        prepared: &'a PreparedNative,
+        intent: &'a NativeIntent,
+        output: &'a Path,
+        admitted_waves: AtomicUsize,
+        settled_waves: AtomicUsize,
+        compared_cases: AtomicUsize,
+    }
+
+    impl<'a> Progress<'a> {
+        pub(super) fn new(prepared: &'a PreparedNative, intent: &'a NativeIntent, output: &'a Path) -> Self {
+            Self {
+                prepared,
+                intent,
+                output,
+                admitted_waves: AtomicUsize::new(0),
+                settled_waves: AtomicUsize::new(0),
+                compared_cases: AtomicUsize::new(0),
+            }
+        }
+
+        pub(super) fn admit_wave(&self) {
+            self.admitted_waves.fetch_add(1, Ordering::Relaxed);
+        }
+        pub(super) fn compared(&self) {
+            self.compared_cases.fetch_add(1, Ordering::Relaxed);
+        }
+        pub(super) fn settle_wave(&self) {
+            let settled = self.settled_waves.fetch_add(1, Ordering::Relaxed) + 1;
+            // Large single-case chains must not pay a sync/write for every case.
+            // An interrupted projection may lag; operations remain authoritative.
+            if settled.is_multiple_of(64) {
+                self.phase(Phase::Fixtures, None);
+            }
+        }
+        pub(super) fn phase(&self, phase: Phase, receipt: Option<&NativeReceipt>) {
+            self.write(phase, receipt, false);
+        }
+
+        pub(super) fn replay(&self, receipt: &NativeReceipt, compared_cases: usize) {
+            self.compared_cases.store(compared_cases, Ordering::Relaxed);
+            self.write(if receipt.passed { Phase::Complete } else { Phase::Rejected }, Some(receipt), true);
+        }
+
+        fn write(&self, phase: Phase, receipt: Option<&NativeReceipt>, replay: bool) {
+            // Existing intents did not reserve this sidecar. Preserve their exact
+            // retained receipt/reservation semantics and write no new file.
+            if self.intent.graph_metadata_bytes == 0 {
+                return;
+            }
+            let result = (|| -> Result<()> {
+                validate_allowance(self.intent.graph_metadata_bytes)?;
+                #[derive(Serialize)]
+                struct Projection<'a> {
+                    schema: &'static str,
+                    authority: &'static str,
+                    scheduling: &'static str,
+                    prepared_sha256: &'a str,
+                    candidate_sha256: &'a str,
+                    manifest_sha256: &'a str,
+                    operation_context_sha256: String,
+                    deadline_unix_ms: u64,
+                    fixture_jobs: usize,
+                    declared_cases: usize,
+                    required_producers: usize,
+                    phase: Phase,
+                    compared_cases: usize,
+                    admitted_waves: Option<usize>,
+                    settled_waves: Option<usize>,
+                    recovered_from_authenticated_receipt: bool,
+                    operation_index: Option<&'a translation_execution::retention::Reference>,
+                    reserved_advisory_bytes: u64,
+                }
+                let declared = self.prepared.contract.coverage.values().map(Vec::len).sum::<usize>();
+                let projection = Projection {
+                    schema: "offline-native-work-graph-v1",
+                    authority: "advisory; original intent, operations and authenticated receipt own recovery",
+                    scheduling: "canonical dependency waves; atomic existing group reservations",
+                    prepared_sha256: &self.intent.prepared_sha256,
+                    candidate_sha256: &self.intent.candidate_sha256,
+                    manifest_sha256: &self.prepared.contract.manifest.sha256,
+                    operation_context_sha256: sealed(&self.intent.context)?,
+                    deadline_unix_ms: self.intent.deadline_unix_ms,
+                    fixture_jobs: self.intent.fixture_jobs,
+                    declared_cases: declared,
+                    required_producers: 2
+                        + declared * 2
+                        + usize::from(crate::recipe::abi(self.prepared.contract.recipe.as_ref())),
+                    phase,
+                    compared_cases: self.compared_cases.load(Ordering::Relaxed),
+                    admitted_waves: (!replay).then(|| self.admitted_waves.load(Ordering::Relaxed)),
+                    settled_waves: (!replay).then(|| self.settled_waves.load(Ordering::Relaxed)),
+                    recovered_from_authenticated_receipt: replay,
+                    operation_index: receipt.map(|receipt| &receipt.operation_index),
+                    reserved_advisory_bytes: self.intent.graph_metadata_bytes,
+                };
+                ensure!(
+                    toml::to_string(&projection)?.len() as u64 <= FILE_BYTES,
+                    "native graph projection extent exceeded"
+                );
+                crate::atomic_toml(&self.output.join("work-graph.toml"), &projection)
+            })();
+            if let Err(error) = result
+                && let Some(context) = metrics::active()
+            {
+                // A projection write cannot turn a completed producer into new work.
+                context.configuration(
+                    "native-graph-projection",
+                    format!("unavailable: {}", error.to_string().chars().take(512).collect::<String>()),
+                );
+            }
+        }
+    }
+}
+
 #[path = "native_operations.rs"]
 mod operation_storage;
+mod sequence {
+    //! Closed composition of a frozen Native family prefix. Original acceptance
+    //! keeps canonical serial family ordering and the existing per-family waves.
+    use super::{ConfinedEnvironment, NativeEvidence, NativeReceipt, NativeTarget, OfflineFamilies, PreparedNative};
+    use anyhow::{Context, Result, ensure};
+    use serde::{Deserialize, Serialize};
+    use std::{
+        collections::BTreeMap,
+        fs,
+        path::{Component, Path},
+    };
+    use tool_execution::bounded;
+    use translation_execution::{
+        OperationContext,
+        model::sealed,
+        retention::{self, Reference},
+    };
+
+    pub const NATIVE_FAMILY_RECORD_BYTES: u64 = 64 * 1024 * 1024;
+
+    pub struct NativeSequenceJob {
+        pub family: String,
+        /// Preserve preparation failures in canonical family order.
+        pub prepared: Result<PreparedNative>,
+        pub required_prepared_sha256: String,
+        pub context: OperationContext,
+    }
+
+    pub struct NativeSequence<'a> {
+        pub checkout: &'a Path,
+        pub output: &'a Path,
+        pub environment: &'a ConfinedEnvironment,
+        /// Already retained source/composite metadata in the same output budget.
+        pub retained_bytes: u64,
+        pub families: Vec<NativeSequenceJob>,
+    }
+
+    /// The identical prepared/receipt representation retained by Original gates.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[serde(deny_unknown_fields)]
+    pub struct NativeFamilyReceipt {
+        pub prepared: PreparedNative,
+        pub receipt: NativeReceipt,
+    }
+
+    /// A report projection. Original acceptance still authenticates every family
+    /// and its complete required prefix independently before accepting this result.
+    pub struct NativeSequenceRun {
+        pub families: BTreeMap<String, Reference>,
+        pub passed: bool,
+        pub diagnostic: String,
+        pub retained_bytes: u64,
+    }
+
+    impl OfflineFamilies {
+        pub fn verify_native_sequence(&self, request: NativeSequence<'_>) -> Result<NativeSequenceRun> {
+            ensure!(!request.families.is_empty(), "native family sequence is empty");
+            ensure!(
+                request.retained_bytes <= request.environment.max_output_bytes,
+                "native sequence initial output bound exceeded"
+            );
+            let mut previous = None;
+            for job in &request.families {
+                ensure!(
+                    Path::new(&job.family).components().count() == 1
+                        && matches!(Path::new(&job.family).components().next(), Some(Component::Normal(_)))
+                        && previous.is_none_or(|previous: &str| previous < job.family.as_str()),
+                    "native sequence families must have unique canonical names and order"
+                );
+                previous = Some(job.family.as_str());
+            }
+            let mut result = NativeSequenceRun {
+                families: BTreeMap::new(),
+                passed: true,
+                diagnostic: String::new(),
+                retained_bytes: request.retained_bytes,
+            };
+            for job in request.families {
+                let prepared = job.prepared?;
+                ensure!(
+                    sealed(&prepared)? == job.required_prepared_sha256,
+                    "original native preparation changed: {}",
+                    job.family
+                );
+                let capacity = prepared
+                    .required_output_bytes()?
+                    .min(request.environment.max_output_bytes.saturating_sub(result.retained_bytes));
+                ensure!(
+                    capacity >= NATIVE_FAMILY_RECORD_BYTES,
+                    "original catalog evidence budget exhausted before family launch"
+                );
+                let environment = ConfinedEnvironment {
+                    helper: request.environment.helper.clone(),
+                    rustc: request.environment.rustc.clone(),
+                    c_compiler: request.environment.c_compiler.clone(),
+                    operation_root: request.environment.operation_root.clone(),
+                    pipeline_root: request.environment.pipeline_root.clone(),
+                    workers: request.environment.workers,
+                    gate_timeout_seconds: request.environment.gate_timeout_seconds,
+                    deadline_unix_ms: request.environment.deadline_unix_ms,
+                    max_output_bytes: capacity,
+                };
+                let output = request.output.join("native").join(&job.family);
+                let receipt = prepared.verify(
+                    NativeTarget {
+                        checkout: request.checkout,
+                        output: &output,
+                        context: &job.context,
+                        fixture_jobs: None,
+                    },
+                    &environment,
+                    self.host_inputs(),
+                )?;
+                prepared.authenticate(NativeEvidence { checkout: request.checkout, receipt: &receipt })?;
+                let advisory_bytes = receipt.advisory_output_bytes()?;
+                result.retained_bytes = result
+                    .retained_bytes
+                    .checked_add(receipt.evidence_bytes)
+                    .and_then(|bytes| bytes.checked_add(advisory_bytes))
+                    .context("original catalog extent overflow")?;
+                result.passed = receipt.passed;
+                result.diagnostic = receipt.diagnostic.clone();
+                let bytes = serde_json::to_vec(&NativeFamilyReceipt { prepared, receipt })?;
+                ensure!(bytes.len() as u64 <= NATIVE_FAMILY_RECORD_BYTES, "original acceptance record extent exceeded");
+                let retained_bytes = result
+                    .retained_bytes
+                    .checked_add(bytes.len() as u64)
+                    .context("original catalog record extent overflow")?;
+                ensure!(
+                    retained_bytes <= request.environment.max_output_bytes,
+                    "original catalog exceeded its reserved capacity"
+                );
+                let path = request.output.join("families").join(format!("{}.json", job.family));
+                bounded::safe(&path)?;
+                fs::create_dir_all(path.parent().context("native sequence record parent missing")?)?;
+                bounded::immutable_bytes(&path, &bytes)?;
+                let reference = retention::seal_file(&path, NATIVE_FAMILY_RECORD_BYTES)?;
+                ensure!(
+                    reference.bytes == bytes.len() as u64,
+                    "native sequence record extent changed during publication"
+                );
+                result.retained_bytes = retained_bytes;
+                result.families.insert(job.family, reference);
+                if !result.passed {
+                    break;
+                }
+            }
+            Ok(result)
+        }
+    }
+}
+
+pub use sequence::{
+    NATIVE_FAMILY_RECORD_BYTES, NativeFamilyReceipt, NativeSequence, NativeSequenceJob, NativeSequenceRun,
+};
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
@@ -373,6 +690,19 @@ impl NativeReceipt {
     pub fn retained_references(&self) -> Result<Vec<Reference>> {
         references(self)
     }
+
+    /// Bounded non-evidence output reserved by this intent. This is retention
+    /// accounting only; it cannot admit a result or authorize another producer.
+    pub fn advisory_output_bytes(&self) -> Result<u64> {
+        let output = self.verdict.file.parent().and_then(Path::parent).context("native output missing")?;
+        let intent: NativeIntent = bounded::object(&output.join("native-intent.toml"))?;
+        ensure!(
+            intent.context == self.context && intent.prepared_sha256 == self.prepared_sha256,
+            "native advisory accounting identifies another operation"
+        );
+        graph::validate_allowance(intent.graph_metadata_bytes)?;
+        Ok(intent.graph_metadata_bytes)
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -396,6 +726,14 @@ struct NativeIntent {
     /// A new attempt binds its complete captured mapping before publication.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     captured_inputs: Option<Asset>,
+    /// Optional advisory progress, charged independently from required evidence.
+    /// An absent field retains the historical zero-allocation contract.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    graph_metadata_bytes: u64,
+}
+
+fn is_zero(value: &u64) -> bool {
+    *value == 0
 }
 
 fn now_unix_ms() -> Result<u64> {
@@ -1143,12 +1481,16 @@ fn run_bounded(
                 intent.outer_deadline_unix_ms == runtime.deadline_unix_ms,
                 "native whole-stage deadline changed on retry"
             );
-            authenticate(prepared, &checkout, &receipt)?;
+            let admitted = authenticate(prepared, &checkout, &receipt)?;
+            graph::Progress::new(prepared, &intent, output).replay(&receipt, admitted.cases.len());
             Ok(receipt)
         });
     }
     let saved_intent =
         if intent_exists { Some(bounded::object::<NativeIntent>(&output.join("native-intent.toml"))?) } else { None };
+    if let Some(intent) = &saved_intent {
+        graph::validate_allowance(intent.graph_metadata_bytes)?;
+    }
     let deadline = saved_intent.as_ref().map_or(new_deadline(entered, runtime)?, |intent| intent.deadline_unix_ms);
     let opened = execute_or_reconcile(intent_exists, deadline, || open_prepared(prepared, checkout))?;
     let prepared = &opened;
@@ -1241,6 +1583,7 @@ fn run_bounded(
             let plan = capture_plan.as_ref().context("new native intent has no captured inputs")?;
             let parent_reservation_bytes = parent_reservation(prepared, &checkout)?
                 .checked_add(plan.retained_bytes())
+                .and_then(|bytes| bytes.checked_add(graph::RESERVED_BYTES))
                 .context("native captured parent reservation overflow")?;
             ensure!(
                 runtime.max_output_bytes >= parent_reservation_bytes,
@@ -1262,6 +1605,7 @@ fn run_bounded(
                 c_compiler: c_compiler.clone(),
                 compiler_runtime_sha256,
                 captured_inputs: Some(plan.asset()),
+                graph_metadata_bytes: graph::RESERVED_BYTES,
             };
             atomic_toml(&intent_path, &intent)?;
             intent
@@ -1273,6 +1617,17 @@ fn run_bounded(
         } else {
             None
         };
+        if intent_exists
+            && intent.graph_metadata_bytes > 0
+            && let Some(view) = &captured
+        {
+            let asset = intent.captured_inputs.as_ref().context("captured input binding missing")?;
+            let expected_parent = parent_reservation(prepared, &checkout)?
+                .checked_add(view.retained_native_bytes(asset)?)
+                .and_then(|bytes| bytes.checked_add(intent.graph_metadata_bytes))
+                .context("native captured reservation overflow")?;
+            ensure!(expected_parent == intent.parent_reservation_bytes, "native captured parent reservation changed");
+        }
         let compiler_checkout =
             captured.as_ref().map(|view| view.physical_checkout()).unwrap_or_else(|| checkout.clone());
         let compiler_source =
@@ -1305,6 +1660,8 @@ fn run_bounded(
     };
     let prepared_sha256 = intent.prepared_sha256.clone();
     let candidate_sha256 = intent.candidate_sha256.clone();
+    let progress = graph::Progress::new(prepared, &intent, &output);
+    progress.phase(graph::Phase::Prepared, None);
     let request = VerifyRequest {
         execution: "fresh".into(),
         checkout: checkout.clone(),
@@ -1351,6 +1708,7 @@ fn run_bounded(
             immutable(&run.join("rom.bin"), &bytes)?;
             verdict.rom = Some(crate::family_model::RomIdentity { sha256: sha256(&bytes), bytes: bytes.len() });
         }
+        progress.phase(graph::Phase::Building, None);
         let mut implementation = recipes::build(
             prepared.contract.recipe.as_ref(),
             &prepared.manifest,
@@ -1374,9 +1732,11 @@ fn run_bounded(
         )?;
         verdict.implementation = Some(implementation);
         let tasks = family::ordered_tasks(&prepared.manifest)?;
+        progress.phase(graph::Phase::Fixtures, None);
         if intent.fixture_jobs == 1 {
             // A single worker executes directly without per-fixture thread startup.
             for (routine, fixture, index) in tasks {
+                progress.admit_wave();
                 let fixture_result = || {
                     recipes::fixture(
                         prepared.contract.recipe.as_ref(),
@@ -1393,13 +1753,23 @@ fn run_bounded(
                 } else {
                     fixture_result()?
                 });
+                progress.compared();
+                progress.settle_wave();
             }
         } else {
             let outcomes = crate::fixture_execution::run_waves(
                 &tasks,
                 intent.fixture_jobs,
-                || execution.begin_fixture_group(),
-                || execution.finish_fixture_group(),
+                || {
+                    execution.begin_fixture_group()?;
+                    progress.admit_wave();
+                    Ok(())
+                },
+                || {
+                    execution.finish_fixture_group()?;
+                    progress.settle_wave();
+                    Ok(())
+                },
                 |(routine, fixture, index)| {
                     let fixture_result = || {
                         recipes::fixture(
@@ -1412,7 +1782,11 @@ fn run_bounded(
                             recipes::FixtureExecution::Confined(&execution),
                         )
                     };
-                    if let Some(view) = &captured { view.enter(fixture_result) } else { fixture_result() }
+                    let result = if let Some(view) = &captured { view.enter(fixture_result) } else { fixture_result() };
+                    if result.is_ok() {
+                        progress.compared();
+                    }
+                    result
                 },
             )?;
             let mut failure = None;
@@ -1450,6 +1824,7 @@ fn run_bounded(
     });
     if let Err(error) = result {
         if error.downcast_ref::<translation_execution::ExecutionPending>().is_some() {
+            progress.phase(graph::Phase::OwnershipPending, None);
             return Err(error);
         }
         let diagnostic = format!("{error:#}");
@@ -1463,6 +1838,7 @@ fn run_bounded(
         verdict.error = Some(diagnostic[..end].into());
     }
     source_context::reconcile(8 * bounded::DEFAULT_BYTES, || {
+        progress.phase(graph::Phase::Publishing, None);
         family::inventory_with_limits(&run, &run, &mut verdict.artifacts, retained_tree_limits(&run)?)?;
         atomic_toml(&run.join("verdict.toml"), &verdict)?;
         let operations = collect_operations(prepared, &run, &intent)?;
@@ -1487,6 +1863,7 @@ fn run_bounded(
             "native evidence exceeded prelaunch aggregate reservation"
         );
         ensure!(receipt.evidence_bytes <= receipt.reserved_bytes, "native evidence exceeded reconciled reservation");
+        graph::check_budget(&intent, &receipt)?;
         if receipt.passed {
             authenticate(prepared, &checkout, &receipt)?;
             if now_unix_ms()? >= intent.deadline_unix_ms {
@@ -1499,6 +1876,7 @@ fn run_bounded(
                 receipt.diagnostic = verdict.error.clone().unwrap();
                 receipt.verdict.sha256 = digest(&run.join("verdict.toml"))?;
                 receipt.evidence_bytes = evidence_bytes(&run, &receipt)?;
+                graph::check_budget(&intent, &receipt)?;
                 ensure!(
                     receipt.evidence_bytes <= intent.max_output_bytes,
                     "native failed evidence exceeded aggregate reservation"
@@ -1506,6 +1884,7 @@ fn run_bounded(
             }
         }
         atomic_toml(&receipt_path, &receipt)?;
+        progress.phase(if receipt.passed { graph::Phase::Complete } else { graph::Phase::Rejected }, Some(&receipt));
         Ok(receipt)
     })
 }
@@ -1538,6 +1917,7 @@ fn authenticate_bounded(prepared: &PreparedNative, checkout: &Path, receipt: &Na
     let run = path.parent().context("native verdict has no run parent")?;
     let output = run.parent().context("native run has no output parent")?;
     let intent: NativeIntent = bounded::object(&output.join("native-intent.toml"))?;
+    graph::validate_allowance(intent.graph_metadata_bytes)?;
     ensure!(
         intent.context == receipt.context
             && intent.prepared_sha256 == receipt.prepared_sha256
@@ -1553,6 +1933,7 @@ fn authenticate_bounded(prepared: &PreparedNative, checkout: &Path, receipt: &Na
         let view = open_captured_inputs(prepared, &checkout, run, asset)?;
         let expected_parent = parent_reservation(prepared, &checkout)?
             .checked_add(view.retained_native_bytes(asset)?)
+            .and_then(|bytes| bytes.checked_add(intent.graph_metadata_bytes))
             .context("native captured reservation overflow")?;
         ensure!(intent.parent_reservation_bytes == expected_parent, "native captured parent reservation changed");
     }
@@ -1583,6 +1964,7 @@ fn authenticate_bounded(prepared: &PreparedNative, checkout: &Path, receipt: &Na
         "native completed reservation extent differs"
     );
     ensure!(receipt.evidence_bytes <= receipt.reserved_bytes, "native evidence exceeds retained reservation");
+    graph::check_budget(&intent, receipt)?;
     ensure!(
         !receipt.passed || observed.len() == expected.len(),
         "native fixture pair compiler/execution receipts incomplete"

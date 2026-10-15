@@ -630,6 +630,7 @@ fn saved_failure_replay(retain_plm: bool) -> Result<()> {
         c_compiler: runtime.c_compiler.clone(),
         compiler_runtime_sha256: sha256("none"),
         captured_inputs: None,
+        graph_metadata_bytes: 0,
     };
     atomic_toml(&output.join("native-intent.toml"), &intent)?;
     if retain_plm {
@@ -669,6 +670,9 @@ fn saved_failure_replay(retain_plm: bool) -> Result<()> {
     assert_eq!(replay.diagnostic, "original bounded stop");
     assert_eq!(receipt_path.metadata()?.modified()?, metadata);
     assert_eq!(digest(&receipt_path)?, receipt_sha256);
+    assert!(!fs::read_to_string(output.join("native-intent.toml"))?.contains("graph_metadata_bytes"));
+    assert_eq!(replay.advisory_output_bytes()?, 0);
+    assert!(!output.join("work-graph.toml").exists(), "legacy intent has no reserved projection bytes");
     assert!(!runtime.operation_root.exists() && !runtime.pipeline_root.exists());
     fs::write(checkout.join("candidate.rs"), b"pub fn Changed() {}")?;
     assert!(run(&prepared, &checkout, &output, &runtime, &context).is_err());

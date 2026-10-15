@@ -23,7 +23,13 @@ use translation_execution::{
     model::{ExecutionPhase, sealed, sha256},
 };
 
-const HOST: &[(&str, &str)] = &[("crates/offline-verification/tests/bulk_inputs.rs", include_str!("bulk_inputs.rs"))];
+#[path = "bulk_inputs/graph.rs"]
+mod graph;
+
+const HOST: &[(&str, &str)] = &[
+    ("crates/offline-verification/tests/bulk_inputs.rs", include_str!("bulk_inputs.rs")),
+    ("crates/offline-verification/tests/bulk_inputs/graph.rs", include_str!("bulk_inputs/graph.rs")),
+];
 
 fn verifier() -> Result<OfflineFamilies> {
     Ok(OfflineFamilies::new(HostInputs::new(HOST, digest(&std::env::current_exe()?)?)?))
@@ -530,6 +536,7 @@ fn native_capture_replays_without_tools_and_binds_mapping_and_source() -> Result
     for image in observations(admitted.report())?.1 {
         ensure!(image[18] == 2, "confined compiler path semantics changed");
     }
+    graph::native_recovery_controls(&project, &offline, &prepared, &runtime, &context, &output, &receipt)?;
     let captures = output.join("family/captured-inputs");
     let candidate = captures.join("checkout/crates/port/src/fixture.rs");
     let original = fs::read(&candidate)?;
