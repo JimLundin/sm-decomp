@@ -198,10 +198,7 @@ fn asset_paths_with_parent_aliases_cannot_prove_exclusion() {
     project.manifest(
         "a",
         "a",
-        &format!(
-            "rom={{file='fixtures/alias/../input.bin',sha256='{:x}'}}\n",
-            Sha256::digest(b"declared")
-        ),
+        &format!("rom={{file='fixtures/alias/../input.bin',sha256='{:x}'}}\n", Sha256::digest(b"declared")),
     );
     project.commit();
     project.write("docs/unrelated.md", "Only documentation changed.\n");

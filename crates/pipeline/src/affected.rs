@@ -554,6 +554,10 @@ impl<'a> Discovery<'a> {
 
     fn asset(&mut self, path: &Path, expected: Option<&str>, family: &str) -> Result<()> {
         self.budget.entry()?;
+        ensure!(
+            !path.components().any(|part| part == Component::ParentDir),
+            "family asset parent traversal has unresolved filesystem aliases"
+        );
         let expected = expected.context("family asset is missing a declared digest")?;
         ensure!(
             expected.len() == 64 && expected.bytes().all(|byte| byte.is_ascii_hexdigit()),
