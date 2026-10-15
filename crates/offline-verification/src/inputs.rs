@@ -163,10 +163,6 @@ fn canonical_sources_bounded(checkout: &Path, modules: &[PathBuf], imports: &[St
     discover_sources_bounded(checkout, modules, imports, true)
 }
 
-pub(crate) fn ordinary_sources(checkout: &Path, modules: &[PathBuf], imports: &[String]) -> Result<Vec<PathBuf>> {
-    decomp_source::context::limited(|| discover_sources_bounded(checkout, modules, imports, false))
-}
-
 fn discover_sources_bounded(
     checkout: &Path,
     modules: &[PathBuf],
@@ -275,12 +271,21 @@ fn wrapper_bounded(request: WrapperRequest) -> Result<WrapperResult> {
         selected.insert(name);
     }
     let mut visited = BTreeSet::new();
+    let captured = crate::input_view::current();
     while let Some(p) = pending.pop() {
         bounded::check()?;
         if !visited.insert(p.clone()) {
             continue;
         }
-        let facts = crate::source_facts::scan(&p, &bounded::read(&p)?)?;
+        let retained;
+        let fresh;
+        let facts = if let Some(view) = &captured {
+            retained = view.source_facts(&p)?;
+            &retained.facts
+        } else {
+            fresh = crate::source_facts::scan(&p, &bounded::read(&p)?)?;
+            &fresh
+        };
         facts.require_complete()?;
         for word in facts.identifiers() {
             if let Some(module) = available.get(word)
@@ -291,7 +296,12 @@ fn wrapper_bounded(request: WrapperRequest) -> Result<WrapperResult> {
         }
         // A module path is an actual compiler input, not a crate-root import.
         // Traverse its dependencies without declaring another nominal copy.
-        pending.extend(facts.file_dependencies().iter().filter(|path| !visited.contains(*path)).cloned());
+        for path in facts.file_dependencies() {
+            let path = if let Some(view) = &captured { view.physical(path)? } else { path.clone() };
+            if !visited.contains(&path) {
+                pending.push(path);
+            }
+        }
     }
     let memory = sources.join("memory.rs");
     let mut output = format!(

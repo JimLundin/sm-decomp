@@ -81,12 +81,18 @@ pub fn dispatch(ram: &mut Wram<'_>, name: &str, a: u16, _b: u16) -> Result<u32, 
     if path != {rust_path:?} && path != "/inputs/rust/crates/port/src/fixture.rs" {{ return Err("Rust path changed"); }}
     ram.set_byte(17, a as u8);
     ram.set_byte(18, if path == {rust_path:?} {{ 1 }} else {{ 2 }});
-    Ok(a as u32 + 1)
+    Ok(crate::helper::returned(a))
 }}
 "#,
                 rust_path = rust_path.display().to_string()
             ),
         )?;
+        self.write(
+            "crates/port/src/helper.rs",
+            "#[path = \"helper_inner.rs\"] mod inner;\npub fn returned(a: u16) -> u32 { inner::returned(a) }\n",
+        )?;
+        self.write("crates/port/src/helper_inner.rs", "pub fn returned(a: u16) -> u32 { a as u32 + 1 }\n")?;
+        self.write("crates/port/src/unrelated.rs", "compile_error!(\"unrelated source must not be selected\");\n")?;
         let c_path = self.source().join("src/sm_80.c").display().to_string();
         self.write(
             "deps/snesrev-sm/src/sm_80.c",
@@ -292,6 +298,7 @@ fn ordinary_bulk_shares_capture_and_preserves_complete_path_sensitive_observatio
     })?;
     let prepared_stats = snapshot.statistics();
     ensure!(prepared_stats.manifest_decodes == 1 && prepared_stats.source_reads > 0, "capture was not shared");
+    ensure!(prepared_stats.source_fact_scans == 4, "aliased families rescanned their four Rust source inputs");
     let started = Instant::now();
     let mut completed = std::sync::Mutex::new(Vec::new());
     let batch = offline.verify_batch(
@@ -338,6 +345,11 @@ fn ordinary_bulk_shares_capture_and_preserves_complete_path_sensitive_observatio
         stats.source_freshness_reads > prepared_stats.source_freshness_reads && stats.transient_bytes == 0,
         "freshness or temporary-buffer accounting changed"
     );
+    ensure!(
+        stats.source_fact_scans == prepared_stats.source_fact_scans
+            && stats.source_fact_reuses > prepared_stats.source_fact_reuses,
+        "wrapper preparation reparsed already captured Rust source"
+    );
     let admitted = offline.authenticate_batch(BatchAdmission {
         catalog: &snapshot,
         required: &required,
@@ -372,7 +384,7 @@ fn changed_source_after_batch_capture_refuses_before_any_producer() -> Result<()
         required: &required,
     })?;
     let candidate = project.checkout().join("crates/port/src/fixture.rs");
-    fs::write(&candidate, fs::read_to_string(&candidate)?.replace("a as u32 + 1", "a as u32 + 2"))?;
+    fs::write(&candidate, fs::read_to_string(&candidate)?.replace("helper::returned(a)", "helper::returned(a) + 1"))?;
     let output = project.root.join("must-not-launch");
     let result = offline.verify_batch(
         BatchVerification {

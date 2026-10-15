@@ -33,8 +33,8 @@ struct File {
     rust_facts: OnceLock<Arc<RetainedRustFacts>>,
 }
 
-struct RetainedRustFacts {
-    facts: crate::source_facts::RustSourceFacts,
+pub(crate) struct RetainedRustFacts {
+    pub(crate) facts: crate::source_facts::RustSourceFacts,
     declarations: Arc<Declarations>,
     reserved_bytes: u64,
 }
@@ -156,10 +156,14 @@ impl InputView {
                 Self::bind_asset(&mut paths, view.checkout.join("rom/sm.sfc"), crate::plm_fixtures::BASE_ROM_SHA256)?;
             }
             for manifest in manifests {
-                let module = view.logical_input(Path::new(&manifest.rust_module));
-                let selected = crate::inputs::ordinary_sources(&view.checkout, &[module], &manifest.rust_imports)?;
                 let key = view.family_key(manifest);
-                Arc::make_mut(&mut view.family_inputs).insert(key, selected.iter().cloned().collect());
+                let selected = if let Some(selected) = view.family_inputs.get(&key) {
+                    selected.clone()
+                } else {
+                    let selected = view.capture_rust_inputs(manifest)?;
+                    Arc::make_mut(&mut view.family_inputs).insert(key, selected.clone());
+                    selected
+                };
                 for path in selected {
                     Arc::make_mut(&mut view.compiler_inputs).insert(path.clone());
                     paths.insert(path, None);
@@ -191,8 +195,11 @@ impl InputView {
                     .checked_add(path.as_os_str().len() as u64 * 8 + 1024)
                     .context("captured source metadata extent overflow")
             })?;
-            view.declarations.reserve_metadata(metadata_bytes)?;
-            view.metadata_bytes += metadata_bytes;
+            let remaining = metadata_bytes
+                .checked_sub(view.metadata_bytes)
+                .context("captured source metadata reservation differs")?;
+            view.declarations.reserve_metadata(remaining)?;
+            view.metadata_bytes = metadata_bytes;
             for (path, expected) in paths {
                 view.capture_file(path, expected.as_deref())?;
             }
@@ -258,6 +265,14 @@ impl InputView {
 
     fn capture_file(&mut self, path: PathBuf, expected: Option<&str>) -> Result<()> {
         bounded::safe(&path)?;
+        if let Some(file) = self.files.get(&path) {
+            ensure!(
+                expected.is_none_or(|expected| expected == file.sha256),
+                "captured input identity differs: {}",
+                path.display()
+            );
+            return Ok(());
+        }
         let extent = fs::symlink_metadata(&path)?.len();
         let physical = self.destination(&path)?;
         fs::create_dir_all(physical.parent().context("captured input parent missing")?)?;
@@ -334,6 +349,56 @@ impl InputView {
         imports.sort();
         imports.dedup();
         (self.logical_input(Path::new(&manifest.rust_module)), imports)
+    }
+
+    /// Discover from the owned bytes that compilers will consume. Another
+    /// family can extend the union, but cannot reread or replace a bound file.
+    fn capture_rust_inputs(&mut self, manifest: &Manifest) -> Result<BTreeSet<PathBuf>> {
+        let available = self
+            .namespace
+            .iter()
+            .filter_map(|path| {
+                let name = path.file_stem()?.to_str()?;
+                (path.extension().is_some_and(|extension| extension == "rs") && !["lib", "memory"].contains(&name))
+                    .then(|| (name.to_owned(), path.clone()))
+            })
+            .collect::<BTreeMap<_, _>>();
+        ensure!(available.len() <= 4096 && manifest.rust_imports.len() <= 4096, "captured Rust source scope exceeded");
+        let mut pending =
+            vec![self.logical_input(Path::new(&manifest.rust_module)), self.checkout.join("crates/port/src/memory.rs")];
+        for name in &manifest.rust_imports {
+            pending.push(available.get(name).context("unknown gameplay import")?.clone());
+        }
+        let mut selected = BTreeSet::new();
+        while let Some(path) = pending.pop() {
+            bounded::check()?;
+            bounded::safe(&path)?;
+            let path = fs::canonicalize(path)?;
+            ensure!(path.extension().is_some_and(|extension| extension == "rs"), "captured Rust source is not Rust");
+            if !selected.insert(path.clone()) {
+                continue;
+            }
+            if !self.files.contains_key(&path) {
+                ensure!(self.files.len() < 16384, "captured input inventory exceeded");
+                let metadata = path.as_os_str().len() as u64 * 8 + 1024;
+                self.declarations.reserve_metadata(metadata)?;
+                self.metadata_bytes += metadata;
+                Arc::make_mut(&mut self.compiler_inputs).insert(path.clone());
+                self.capture_file(path.clone(), None)?;
+            }
+            let retained = self.rust_facts(&path, &self.files[&path])?;
+            let facts = &retained.facts;
+            facts.require_complete()?;
+            for word in facts.identifiers() {
+                if let Some(path) = available.get(word)
+                    && !selected.contains(path)
+                {
+                    pending.push(path.clone());
+                }
+            }
+            pending.extend(facts.file_dependencies().iter().filter(|path| !selected.contains(*path)).cloned());
+        }
+        Ok(selected)
     }
 
     /// Select an already captured family without rediscovering or reading the
@@ -578,10 +643,13 @@ impl InputView {
     fn rust_facts(&self, path: &Path, file: &File) -> Result<Arc<RetainedRustFacts>> {
         if let Some(facts) = file.rust_facts.get() {
             bounded::check()?;
+            self.declarations.counters.source_fact_reuses.fetch_add(1, Ordering::Relaxed);
             return Ok(facts.clone());
         }
-        let facts =
-            crate::source_facts::scan(path, file.bytes.as_ref().context("Rust source cannot be streamed asset")?)?;
+        let bytes = file.bytes.as_ref().context("Rust source cannot be streamed asset")?;
+        self.declarations.counters.source_fact_scans.fetch_add(1, Ordering::Relaxed);
+        self.declarations.counters.source_fact_bytes.fetch_add(bytes.len() as u64, Ordering::Relaxed);
+        let facts = crate::source_facts::scan(path, bytes)?;
         ensure!(facts.sha256() == file.sha256, "captured Rust source facts differ from bound bytes");
         let reserved_bytes = facts.retained_byte_bound();
         self.declarations.reserve_metadata(reserved_bytes)?;
@@ -589,6 +657,12 @@ impl InputView {
         // A concurrent initializer's unused reservation is released by Drop.
         let _ = file.rust_facts.set(retained);
         Ok(file.rust_facts.get().context("captured Rust source facts were not retained")?.clone())
+    }
+
+    pub(crate) fn source_facts(&self, path: &Path) -> Result<Arc<RetainedRustFacts>> {
+        let logical = self.logical(path)?;
+        let file = self.files.get(&logical).context("Rust source is outside captured inputs")?;
+        self.rust_facts(&logical, file)
     }
 
     pub fn remap_arguments(&self, rust: bool) -> Vec<String> {

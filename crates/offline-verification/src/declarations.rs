@@ -42,6 +42,9 @@ pub struct CatalogStatistics {
     pub freshness_bytes: u64,
     pub source_reads: u64,
     pub source_bytes: u64,
+    pub source_fact_scans: u64,
+    pub source_fact_bytes: u64,
+    pub source_fact_reuses: u64,
     pub source_freshness_reads: u64,
     pub source_freshness_bytes: u64,
     pub materialized_reads: u64,
@@ -50,7 +53,9 @@ pub struct CatalogStatistics {
     pub transient_bytes: u64,
     pub metadata_bytes: u64,
     pub peak_resident_bytes: u64,
-    /// Conservative reserved resident bytes, including decoded metadata.
+    /// Conservative reserved input buffers and retained metadata. Scanner
+    /// tokenizer/AST working storage has separate finite source/token/depth/work
+    /// limits; these counters are not an allocator or process-RSS measurement.
     pub retained_bytes: u64,
 }
 
@@ -65,6 +70,9 @@ pub(crate) struct Counters {
     pub freshness_bytes: AtomicU64,
     pub source_reads: AtomicU64,
     pub source_bytes: AtomicU64,
+    pub source_fact_scans: AtomicU64,
+    pub source_fact_bytes: AtomicU64,
+    pub source_fact_reuses: AtomicU64,
     pub source_freshness_reads: AtomicU64,
     pub source_freshness_bytes: AtomicU64,
     pub materialized_reads: AtomicU64,
@@ -87,6 +95,9 @@ impl Counters {
             freshness_bytes: self.freshness_bytes.load(Ordering::Relaxed),
             source_reads: self.source_reads.load(Ordering::Relaxed),
             source_bytes: self.source_bytes.load(Ordering::Relaxed),
+            source_fact_scans: self.source_fact_scans.load(Ordering::Relaxed),
+            source_fact_bytes: self.source_fact_bytes.load(Ordering::Relaxed),
+            source_fact_reuses: self.source_fact_reuses.load(Ordering::Relaxed),
             source_freshness_reads: self.source_freshness_reads.load(Ordering::Relaxed),
             source_freshness_bytes: self.source_freshness_bytes.load(Ordering::Relaxed),
             materialized_reads: self.materialized_reads.load(Ordering::Relaxed),
