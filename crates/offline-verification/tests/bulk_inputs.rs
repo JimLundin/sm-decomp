@@ -562,11 +562,10 @@ fn native_capture_replays_without_tools_and_binds_mapping_and_source() -> Result
     let resealed = prepared.authenticate(NativeEvidence { checkout: &project.checkout(), receipt: &receipt });
     fs::write(&record, &mapping)?;
     fs::write(&intent_path, intent)?;
+    let resealed_error = resealed.err().context("resealed mapping admitted")?;
     ensure!(
-        resealed.err().is_some_and(
-            |error| format!("{error:#}").contains("native compiler arguments, outputs or capabilities changed")
-        ),
-        "resealed mapping was not bound to the actual compiler capability record"
+        format!("{resealed_error:#}").contains("native compiler arguments, outputs or capabilities changed"),
+        "resealed mapping was not bound to the actual compiler capability record: {resealed_error:#}"
     );
     let record_before = (digest(&record)?, fs::metadata(&record)?.modified()?);
     let before = admitted

@@ -785,9 +785,14 @@ pub(crate) fn compiler_program(
     let mut inputs = Vec::new();
     if let Some(record) = capture_record {
         ensure!(record == run.join("captured-inputs.toml"), "native compiler capture record path changed");
-        // Seal the complete logical mapping into each compiler request, so
-        // changing its provenance cannot preserve an old producer result.
-        inputs.push(ReadOnlyBind { source: record.into(), destination: "/inputs/capture-record.toml".into() });
+        // Program binds paths, while completed operations retain their original
+        // input identities. Put the mapping digest in this unused virtual path
+        // so reconstructed Program equality also binds its complete contents.
+        let identity = bounded::digest(record)?;
+        inputs.push(ReadOnlyBind {
+            source: record.into(),
+            destination: format!("/inputs/capture-record-{identity}.toml").into(),
+        });
     }
     for path in if rust { rust_inputs } else { c_inputs } {
         let relative = path.strip_prefix(if rust { checkout } else { source })?;
