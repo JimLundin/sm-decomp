@@ -1,0 +1,176 @@
+   Compiling jobserver v0.1.35
+   Compiling cc v1.6.0
+   Compiling zerofrom v0.1.8
+   Compiling stable_deref_trait v1.2.1
+   Compiling yoke v0.8.3
+   Compiling serde v1.0.229
+   Compiling zerovec v0.11.8
+   Compiling bytes v1.12.1
+   Compiling pin-project-lite v0.2.17
+   Compiling futures-core v0.3.34
+   Compiling memchr v2.8.3
+   Compiling zeroize v1.9.1
+   Compiling rustls-pki-types v1.15.1
+   Compiling tinystr v0.8.4
+   Compiling ring v0.17.14
+   Compiling smallvec v1.16.2
+   Compiling litemap v0.8.3
+   Compiling writeable v0.6.4
+   Compiling icu_locale_core v2.3.0
+   Compiling potential_utf v0.1.6
+   Compiling serde_spanned v0.6.9
+   Compiling toml_datetime v0.6.11
+   Compiling zerotrie v0.2.5
+   Compiling mio v1.2.4
+   Compiling socket2 v0.6.5
+   Compiling utf8_iter v1.0.4
+   Compiling once_cell v1.21.4
+   Compiling toml_edit v0.22.27
+   Compiling icu_collections v2.3.0
+   Compiling tokio v1.53.2
+   Compiling icu_provider v2.3.1
+   Compiling http v1.5.0
+   Compiling getrandom v0.2.17
+   Compiling untrusted v0.9.0
+   Compiling futures-sink v0.3.34
+   Compiling zstd-sys v2.1.0+zstd.1.5.7
+   Compiling http-body v1.1.0
+   Compiling icu_properties_data v2.3.0
+   Compiling toml v0.8.23
+   Compiling icu_normalizer_data v2.3.0
+   Compiling slab v0.4.12
+   Compiling simd-adler32 v0.3.10
+   Compiling futures-task v0.3.34
+   Compiling try-lock v0.2.5
+   Compiling futures-io v0.3.34
+   Compiling rustls v0.23.45
+   Compiling futures-util v0.3.34
+   Compiling want v0.3.2
+   Compiling icu_normalizer v2.3.0
+   Compiling icu_properties v2.3.0
+   Compiling httparse v1.10.1
+   Compiling rustls-webpki v0.103.15
+   Compiling crc32fast v1.5.2
+   Compiling tracing-core v0.1.36
+   Compiling atomic-waker v1.1.2
+   Compiling tower-service v0.3.3
+   Compiling log v0.4.34
+   Compiling percent-encoding v2.3.2
+   Compiling subtle v2.6.1
+   Compiling form_urlencoded v1.2.2
+   Compiling miniz_oxide v0.9.1
+   Compiling hyper v1.12.0
+   Compiling tracing v0.1.44
+   Compiling idna_adapter v1.2.2
+   Compiling futures-channel v0.3.34
+   Compiling webpki-roots v1.0.9
+   Compiling zstd-safe v7.3.0
+   Compiling hyper-util v0.1.21
+   Compiling idna v1.1.0
+   Compiling flate2 v1.1.10
+   Compiling tokio-rustls v0.26.6
+   Compiling pipeline-model v0.1.0 (/home/jim/sm-decomp-offline-foundations/crates/pipeline-model)
+   Compiling sync_wrapper v1.0.2
+   Compiling bumpalo v3.20.3
+   Compiling tower-layer v0.3.3
+   Compiling ryu v1.0.23
+   Compiling serde_urlencoded v0.7.1
+   Compiling tower v0.5.3
+   Compiling zopfli v0.8.3
+   Compiling thiserror v2.0.21
+   Compiling hyper-rustls v0.27.10
+   Compiling serde_json v1.0.151
+   Compiling url v2.5.8
+   Compiling webpki-roots v0.26.11
+   Compiling http-body-util v0.1.5
+   Compiling rustls-pemfile v2.2.0
+   Compiling ipnet v2.12.2
+   Compiling base64 v0.22.1
+   Compiling mime v0.3.17
+   Compiling reqwest v0.12.12
+   Compiling zstd v0.13.3
+   Compiling zip v2.4.2
+   Compiling tool-execution v0.1.0 (/home/jim/sm-decomp-offline-foundations/crates/tool-execution)
+   Compiling decomp-source v0.1.0 (/home/jim/sm-decomp-offline-foundations/crates/decomp-source)
+   Compiling movie v0.1.0 (/home/jim/sm-decomp-offline-foundations/crates/movie)
+   Compiling evidence v0.1.0 (/home/jim/sm-decomp-offline-foundations/crates/evidence)
+   Compiling translation-execution v0.1.0 (/home/jim/sm-decomp-offline-foundations/crates/translation-execution)
+   Compiling pipeline v0.1.0 (/home/jim/sm-decomp-offline-foundations/crates/pipeline)
+warning: function `validate_admitted_ticket_projection` is never used
+    --> crates/pipeline/src/assignment.rs:1612:15
+     |
+1612 | pub(crate) fn validate_admitted_ticket_projection(
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `catalog_until` is never used
+  --> crates/pipeline/src/batch.rs:38:15
+   |
+38 | pub(crate) fn catalog_until(checkout: &Path, deadline: u64, max_bytes: u64) -> Result<Catalog> {
+   |               ^^^^^^^^^^^^^
+
+warning: function `prepare_case` is never used
+   --> crates/pipeline/src/family.rs:110:15
+    |
+110 | pub(crate) fn prepare_case(case: &Case, directory: &Path, arg_types: &[String]) -> Result<()> {
+    |               ^^^^^^^^^^^^
+
+warning: function `authenticate_with_source_until` is never used
+    --> crates/pipeline/src/family.rs:1010:15
+     |
+1010 | pub(crate) fn authenticate_with_source_until(
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `canonical_sources_until` is never used
+  --> crates/pipeline/src/inputs.rs:72:15
+   |
+72 | pub(crate) fn canonical_sources_until(
+   |               ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `run_until` is never used
+  --> crates/pipeline/src/source_inventory.rs:10:15
+   |
+10 | pub(crate) fn run_until(root: &Path, source: &Path, output: &Path, deadline: u64, max_bytes: u64) -> Result<()> {
+   |               ^^^^^^^^^
+
+warning: function `prepare_until` is never used
+   --> crates/pipeline/src/translation_compact.rs:387:15
+    |
+387 | pub(crate) fn prepare_until(
+    |               ^^^^^^^^^^^^^
+
+warning: function `prepare` is never used
+   --> crates/pipeline/src/translation_infrastructure.rs:346:15
+    |
+346 | pub(crate) fn prepare(checkout: &Path, contract: &InfrastructureContract) -> Result<PreparedInfrastructure> {
+    |               ^^^^^^^
+
+warning: function `build_preparation` is never used
+    --> crates/pipeline/src/translation_migration_builder.rs:1173:15
+     |
+1173 | pub(crate) fn build_preparation(request: BuildRequest) -> Result<BuildReceipt> {
+     |               ^^^^^^^^^^^^^^^^^
+
+warning: function `contract_for_family_until` is never used
+   --> crates/pipeline/src/translation_native.rs:403:15
+    |
+403 | pub(crate) fn contract_for_family_until(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `prepare_until` is never used
+   --> crates/pipeline/src/translation_native.rs:577:15
+    |
+577 | pub(crate) fn prepare_until(
+    |               ^^^^^^^^^^^^^
+
+warning: function `manifest` is never used
+   --> crates/pipeline/src/translation_native_recipe.rs:125:15
+    |
+125 | pub(super) fn manifest(checkout: &Path, path: &Path, recipe: Option<&NativeRecipe>) -> Result<Manifest> {
+    |               ^^^^^^^^
+
+warning: `pipeline` (bin "sm-pipeline") generated 12 warnings
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4m 46s
+  Executable tests/build_preparation.rs (out/foundations-target/debug/build/pipeline/0b2345d55e7c1fee/out/build_preparation-0b2345d55e7c1fee)
+  Executable tests/processes.rs (out/foundations-target/debug/build/pipeline/a84cae22b6686eed/out/processes-a84cae22b6686eed)

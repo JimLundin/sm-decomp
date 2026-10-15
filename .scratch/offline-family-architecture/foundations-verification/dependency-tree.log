@@ -1,0 +1,32 @@
+decomp-source v0.1.0 (/home/jim/sm-decomp-offline-foundations/crates/decomp-source)
+├── anyhow v1.0.104
+├── flate2 v1.1.10
+│   ├── crc32fast v1.5.2
+│   └── miniz_oxide v0.9.1
+├── libc v0.2.190
+├── serde v1.0.229
+│   ├── serde_core v1.0.229
+│   └── serde_derive v1.0.229 (proc-macro)
+├── serde_json v1.0.151
+│   ├── itoa v1.0.18
+│   ├── memchr v2.8.3
+│   ├── serde_core v1.0.229
+│   └── zmij v1.0.23
+├── sha2 v0.10.9
+│   ├── cfg-if v1.0.5
+│   ├── cpufeatures v0.2.17
+│   └── digest v0.10.7
+├── toml v0.8.23
+│   ├── serde v1.0.229 (*)
+│   ├── serde_spanned v0.6.9
+│   ├── toml_datetime v0.6.11
+│   └── toml_edit v0.22.27
+└── tool-execution v0.1.0 (/home/jim/sm-decomp-offline-foundations/crates/tool-execution)
+    ├── anyhow v1.0.104
+    ├── libc v0.2.190
+    ├── pipeline-model v0.1.0 (/home/jim/sm-decomp-offline-foundations/crates/pipeline-model)
+    ├── serde v1.0.229 (*)
+    ├── sha2 v0.10.9 (*)
+    └── toml v0.8.23 (*)
+[dev-dependencies]
+└── tool-execution v0.1.0 (/home/jim/sm-decomp-offline-foundations/crates/tool-execution) (*)

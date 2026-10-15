@@ -279,6 +279,19 @@ mod source_tests {
                 recheck_bytes,
                 "the source worker must inherit both the cache and the input counters"
             );
+            let before = bounded::charged_bytes();
+            let reconciled_bytes = context::reconcile(1024 * 1024, || {
+                assert_eq!(verify_source(&directory.0, &source)?, first);
+                Ok(bounded::charged_bytes())
+            })?;
+            assert!(reconciled_bytes > recheck_bytes, "reconciliation must reauthenticate the archive from scratch");
+            assert_eq!(bounded::charged_bytes(), before, "reconciliation must restore the enclosing input scope");
+            assert_eq!(verify_source(&directory.0, &source)?, first);
+            assert_eq!(
+                bounded::charged_bytes() - before,
+                recheck_bytes,
+                "reconciliation must restore the enclosing source cache"
+            );
             fs::write(&material, b"void Evil(void) {}\n")?;
             assert!(verify_source(&directory.0, &source).is_err());
             fs::write(&material, b"void Step(void) {}\n")?;

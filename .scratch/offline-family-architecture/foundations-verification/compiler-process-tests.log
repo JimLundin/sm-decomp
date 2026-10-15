@@ -1,0 +1,101 @@
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+warning: function `validate_admitted_ticket_projection` is never used
+    --> crates/pipeline/src/assignment.rs:1612:15
+     |
+1612 | pub(crate) fn validate_admitted_ticket_projection(
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `catalog_until` is never used
+  --> crates/pipeline/src/batch.rs:38:15
+   |
+38 | pub(crate) fn catalog_until(checkout: &Path, deadline: u64, max_bytes: u64) -> Result<Catalog> {
+   |               ^^^^^^^^^^^^^
+
+warning: function `prepare_case` is never used
+   --> crates/pipeline/src/family.rs:110:15
+    |
+110 | pub(crate) fn prepare_case(case: &Case, directory: &Path, arg_types: &[String]) -> Result<()> {
+    |               ^^^^^^^^^^^^
+
+warning: function `authenticate_with_source_until` is never used
+    --> crates/pipeline/src/family.rs:1010:15
+     |
+1010 | pub(crate) fn authenticate_with_source_until(
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `canonical_sources_until` is never used
+  --> crates/pipeline/src/inputs.rs:72:15
+   |
+72 | pub(crate) fn canonical_sources_until(
+   |               ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `run_until` is never used
+  --> crates/pipeline/src/source_inventory.rs:10:15
+   |
+10 | pub(crate) fn run_until(root: &Path, source: &Path, output: &Path, deadline: u64, max_bytes: u64) -> Result<()> {
+   |               ^^^^^^^^^
+
+warning: function `prepare_until` is never used
+   --> crates/pipeline/src/translation_compact.rs:387:15
+    |
+387 | pub(crate) fn prepare_until(
+    |               ^^^^^^^^^^^^^
+
+warning: function `prepare` is never used
+   --> crates/pipeline/src/translation_infrastructure.rs:346:15
+    |
+346 | pub(crate) fn prepare(checkout: &Path, contract: &InfrastructureContract) -> Result<PreparedInfrastructure> {
+    |               ^^^^^^^
+
+warning: function `build_preparation` is never used
+    --> crates/pipeline/src/translation_migration_builder.rs:1173:15
+     |
+1173 | pub(crate) fn build_preparation(request: BuildRequest) -> Result<BuildReceipt> {
+     |               ^^^^^^^^^^^^^^^^^
+
+warning: function `contract_for_family_until` is never used
+   --> crates/pipeline/src/translation_native.rs:403:15
+    |
+403 | pub(crate) fn contract_for_family_until(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `prepare_until` is never used
+   --> crates/pipeline/src/translation_native.rs:577:15
+    |
+577 | pub(crate) fn prepare_until(
+    |               ^^^^^^^^^^^^^
+
+warning: function `manifest` is never used
+   --> crates/pipeline/src/translation_native_recipe.rs:125:15
+    |
+125 | pub(super) fn manifest(checkout: &Path, path: &Path, recipe: Option<&NativeRecipe>) -> Result<Manifest> {
+    |               ^^^^^^^^
+
+warning: `pipeline` (bin "sm-pipeline") generated 12 warnings
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.45s
+     Running tests/build_preparation.rs (out/foundations-target/debug/build/pipeline/0b2345d55e7c1fee/out/build_preparation-0b2345d55e7c1fee)
+
+running 8 tests
+test c_build_prepares_once_and_progresses_independent_units ... ok
+test c_build_rejects_input_mutation_during_the_cache_lock_wait ... ok
+test failed_c_unit_cancels_sibling_cache_wait_and_preserves_the_compiler_error ... ok
+test helper_artifacts_are_reused_and_authenticate_discovered_rust_inputs ... ok
+test helper_pins_checkout_toolchain_across_run_overrides_and_cache_waits ... ok
+test helper_rejects_a_changed_transitive_closure_before_cache_publication ... ok
+test retained_cold_warm_build_preparation_measurement ... ignored, bounded retained build comparison; SM_BUILD_PREPARATION_PROOF selects the evidence directory
+test sigterm_reaps_all_parallel_c_compilers ... ok
+
+test result: ok. 7 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 153.33s
+
+     Running tests/processes.rs (out/foundations-target/debug/build/pipeline/a84cae22b6686eed/out/processes-a84cae22b6686eed)
+
+running 4 tests
+test equivalent_worktrees_share_one_build_and_corruption_is_rejected ... ok
+test killed_lease_holder_releases_capacity ... ok
+test mutation_and_abandoned_publication_never_become_hits ... ok
+test real_c_objects_preserve_options_and_invalidate_on_header_edits ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 66.83s
