@@ -1,6 +1,6 @@
 # Native extraction handoff
 
-Status: production and application test compilation passed; cleanup in progress
+Status: Native implementation and local verification/cleanup complete; root owns final proofs and worktree retirement
 Owner: `/root/translation_architecture`, delegated by `/root`
 Parent session: `01a13c3b-d421-7bb3-80a2-ec91045678e7`
 Worktree: `/home/jim/sm-decomp-offline-native`
@@ -70,17 +70,22 @@ uses. Recovered C was copied into this isolated worktree, the Original accesses
 were fixed, and the caller imports were added locally only for checking. The
 Native commit excludes `batch.rs`; the caller owner publishes that fix.
 The final `-p pipeline --tests` check passed and is recorded separately in
-`native-verification/check-pipeline-tests-2.log`.
+`native-verification/check-pipeline-tests-2.log`. After the test declaration
+helper was switched to the public API, all 11 Native tests passed again in
+`native-verification/native-unit-tests-2.log`. The targeted formatter and
+source-diff whitespace checks passed. Captured Cargo test logs preserve their
+trailing blank line; Git's whole-artifact whitespace check reports those two
+raw-log lines only.
 
 No real Native producer or ignored proof has run here. Synthetic unit-test
-directories are self-cleaning. Utility cleanup and integrated worktree/build
-retirement remain pending. Parent owns integrated worktree retirement after
-exact required source is retained. Own disposable dependency copies are
-`deps/rustysnes` and `deps/snesrev-sm`; no private ROM was copied.
+directories are self-cleaning. Utility cleanup, local build retirement and
+disposable dependency removal are complete. Parent owns integrated worktree
+retirement after exact required source is retained. No private ROM was copied.
 
 ## Follow-up implementation
 
-The initial compiling extraction is `3b9e8e8`. This follow-up shares the full
+The initial compiling extraction is `3b9e8e8`; the Native follow-up is
+`f5433bb`. The follow-up shares the full
 expected compiler Program between execution and Native authentication through
 the private recipe and compiler owners. Authentication recovers original
 retained checkout bindings from the recorded candidate or headless input, so
@@ -124,3 +129,34 @@ calls `PreparedNative::authenticate` only. It never calls source preparation,
 generation, execution, retry, cleanup or `current_checkout()`, and does not
 require today's producer hash. New owner-stamped indexed formats are the only
 current-reader target; old pinned readers/source snapshots remain separate.
+
+## Completion evidence
+
+All local test/build writers finished successfully before the final two
+sequential cleanup passes. Root provided the existing project utility at
+`/home/jim/sm-decomp/target/debug/sm-pipeline` for implementation-log cleanup;
+its SHA-256 was
+`d542f3ea5eba461bc2e0ae6420410840308846ff9f6b7943be061cdf057164c2`.
+The utility supported the same cleanup schema; root builds a separate current
+reader for final actual-C evidence.
+
+```sh
+/home/jim/sm-decomp/target/debug/sm-pipeline cleanup --root /home/jim/sm-decomp-offline-native/.scratch/offline-family-architecture/native-verification --apply
+/home/jim/sm-decomp/target/debug/sm-pipeline cleanup --root /home/jim/sm-decomp-offline-native/.scratch/offline-family-architecture/native-verification --deduplicate --apply
+env CARGO_TARGET_DIR=/home/jim/sm-decomp-offline-native/out/native-target CARGO_BUILD_JOBS=1 cargo clean --locked --offline
+```
+
+Both cleanup receipts report zero bytes and no targets; the deduplicating pass
+checked zero snapshots. Cargo removed 3,797 files, reporting 1.6 GiB total, and
+the isolated target directory no longer exists. Identified disposable copies
+`deps/rustysnes`, `deps/snesrev-sm`, and the two `/tmp/sm-offline-native-*` Rust
+editing helpers/source files were removed: 59,507,933 measured logical bytes.
+`df -B1` then reported 147,531,984,896 bytes available. Other sessions were
+active, so free-space changes are not used to attribute reclaimed bytes.
+
+Small successful/failing check logs, formatter output, both cleanup receipts,
+the cleanup reader hash, Cargo cleanup output, disposable-file measurements
+and remaining disk measurement are retained under `native-verification/`.
+No evidence from this work depends on the removed build or dependency copies.
+The remaining integration action is root's removal of this clean Git worktree
+and final proof authentication from its independently retained sources/reader.
