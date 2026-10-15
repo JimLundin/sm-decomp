@@ -33,6 +33,8 @@ pub const IMPLEMENTATION_SOURCES: &[(&str, &str)] = &[
     ("crates/offline-verification/src/plm_spawn_host.c.in", include_str!("plm_spawn_host.c.in")),
     ("crates/offline-verification/src/power_bomb_abi.rs.in", include_str!("power_bomb_abi.rs.in")),
     ("crates/offline-verification/src/power_bomb_host.c.in", include_str!("power_bomb_host.c.in")),
+    ("crates/offline-verification/src/recipe.rs", include_str!("recipe.rs")),
+    ("crates/offline-verification/src/recipe_commands.rs", include_str!("recipe_commands.rs")),
     ("crates/offline-verification/src/ridley_subsystem_abi.rs.in", include_str!("ridley_subsystem_abi.rs.in")),
     ("crates/offline-verification/src/ridley_subsystem_adapter.rs", include_str!("ridley_subsystem_adapter.rs")),
     ("crates/offline-verification/src/ridley_subsystem_host.c.in", include_str!("ridley_subsystem_host.c.in")),

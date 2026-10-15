@@ -16,6 +16,7 @@ mod inputs;
 mod ordinary;
 mod plm_fixtures;
 mod plm_spawn;
+mod recipe;
 mod ridley_subsystem_adapter;
 mod sources;
 
