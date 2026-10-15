@@ -15,8 +15,8 @@ use translation_execution::model::sha256;
 #[path = "recipe_commands.rs"]
 mod commands;
 pub(crate) use commands::{
-    CompilerCommand, FixtureKind, FixtureSelection, c_compiler_command, compiler_files, confined_fixture_program,
-    fixture_command, fixture_output_path, fixture_program, rust_compiler_command,
+    CompilerCommand, FixtureKind, FixtureSelection, c_compiler_command, confined_fixture_program, fixture_command,
+    fixture_output_path, fixture_program, rust_compiler_command,
 };
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]

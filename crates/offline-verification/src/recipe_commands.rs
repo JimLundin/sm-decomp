@@ -213,7 +213,7 @@ pub(crate) struct CompilerCommand {
     pub full_c: bool,
 }
 
-pub(crate) fn compiler_files(recipe: Option<&Recipe>, rust: bool) -> (Vec<&'static str>, Vec<&'static str>, bool) {
+fn compiler_files(recipe: Option<&Recipe>, rust: bool) -> (Vec<&'static str>, Vec<&'static str>, bool) {
     if rust {
         let mut generated = vec!["wrapper.rs", "memory.rs"];
         let output = match recipe {

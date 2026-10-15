@@ -18,6 +18,7 @@ pub(crate) const HOST_SOURCES: &[(&str, &str)] = &[
     ("crates/pipeline/src/ridley_subsystem_fixtures.rs", include_str!("ridley_subsystem_fixtures.rs")),
 ];
 
+#[cfg(test)]
 pub(crate) fn all() -> Vec<(&'static str, &'static str)> {
     HOST_SOURCES
         .iter()

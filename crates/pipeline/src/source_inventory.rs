@@ -7,10 +7,6 @@ pub(crate) fn run(root: &Path, source: &Path, output: &Path) -> Result<()> {
     decomp_source::context::limited(|| publish(decomp_source::inventory(root, source)?, output))
 }
 
-pub(crate) fn run_until(root: &Path, source: &Path, output: &Path, deadline: u64, max_bytes: u64) -> Result<()> {
-    decomp_source::context::until(deadline, max_bytes, || publish(decomp_source::inventory(root, source)?, output))
-}
-
 fn publish(report: decomp_source::Inventory, output: &Path) -> Result<()> {
     bounded::safe(output)?;
     fs::create_dir_all(output.parent().context("source inventory output parent missing")?)?;
@@ -28,8 +24,10 @@ mod tests {
     fn inventory_generation_inherits_expired_budget_before_any_output() -> Result<()> {
         let directory = tool_execution::testing::Directory::new()?;
         let output = directory.0.join("out/inventory.toml");
-        let error =
-            run_until(&directory.0.join("absent"), &directory.0.join("absent-source"), &output, 0, 1024).unwrap_err();
+        let error = decomp_source::context::until(0, 1024, || {
+            run(&directory.0.join("absent"), &directory.0.join("absent-source"), &output)
+        })
+        .unwrap_err();
         assert!(error.to_string().contains("deadline"));
         assert!(!output.parent().unwrap().exists());
         Ok(())
