@@ -1,0 +1,220 @@
+// Actual-C services and hardware transactions for the whole Ridley boundary.
+#define main retained_headless_main
+#include __HEADLESS__
+#undef main
+#include "funcs.h"
+#include "snes/ppu.h"
+#include <inttypes.h>
+
+extern int64_t port_ridley_subsystem_call(uint8_t*,size_t,const uint8_t*,size_t,uint16_t*,size_t,const char*,int32_t,int32_t);
+extern uint32_t port_ridley_subsystem_abi_controls(void);
+static FILE *ridley_effects;
+static FILE *ridley_services;
+static uint64_t ridley_service_count;
+static void RidleyHostLoad(const uint16_t *words) {
+ eproj_spawn_pt=(Point16U){words[0],words[1]};
+ eproj_spawn_rect=(Rect16U){words[2],words[3],words[4],words[5]};
+ eproj_spawn_r22=words[6];eproj_spawn_varE24=words[7];
+}
+static void RidleyHostSave(uint16_t *words) {
+ words[0]=eproj_spawn_pt.x;words[1]=eproj_spawn_pt.y;
+ words[2]=eproj_spawn_rect.x;words[3]=eproj_spawn_rect.y;
+ words[4]=eproj_spawn_rect.w;words[5]=eproj_spawn_rect.h;
+ words[6]=eproj_spawn_r22;words[7]=eproj_spawn_varE24;
+}
+static void RidleyServiceRecord(uint32_t phase,uint32_t kind,uint16_t a,uint16_t b,uint32_t result) {
+ uint32_t record[5]={phase,kind,a,b,result};uint16_t words[8];RidleyHostSave(words);
+ if(!ridley_services||fwrite(record,4,5,ridley_services)!=5||
+ fwrite(g_ram,1,sizeof(g_ram),ridley_services)!=sizeof(g_ram)||fwrite(words,2,8,ridley_services)!=8)exit(2);
+}
+static void RidleyServiceBegin(uint32_t kind,uint16_t a,uint16_t b) {
+ ridley_service_count++;RidleyServiceRecord(0,kind,a,b,0);
+}
+static void RidleyServiceEnd(uint32_t kind,uint16_t a,uint16_t b,uint32_t result) {
+ RidleyServiceRecord(1,kind,a,b,result);
+}
+void __real_WriteReg(uint16,uint8);
+uint8 __real_ReadReg(uint16);
+uint8 __real_snes_read(Snes*,uint32);
+void __real_snes_write(Snes*,uint32,uint8);
+void __wrap_snes_write(Snes *snes,uint32 address,uint8 value) {
+ __real_snes_write(snes,address,value);
+ if(ridley_effects)fprintf(ridley_effects,"write %u %u\n",address,value);
+}
+uint8 __wrap_snes_read(Snes *snes,uint32 address) {
+ uint8 value=__real_snes_read(snes,address);
+ if(ridley_effects)fprintf(ridley_effects,"read %u %u\n",address,value);
+ return value;
+}
+void __wrap_WriteReg(uint16 address,uint8 value) {
+ __real_WriteReg(address,value);
+}
+uint8 __wrap_ReadReg(uint16 address) {
+ uint8 value=__real_ReadReg(address);
+ return value;
+}
+uint16 RidleyActual_SpawnEnemy(uint8,uint16);
+uint16 SpawnEnemy(uint8 bank,uint16 population) {
+ RidleyServiceBegin(0,bank,population);
+ if(ridley_effects)fprintf(ridley_effects,"service 0 %u %u\n",bank,population);
+ uint16 result=RidleyActual_SpawnEnemy(bank,population);RidleyServiceEnd(0,bank,population,result);return result;
+}
+void RidleyActual_EnemyDeathAnimation(uint16,uint16);
+void EnemyDeathAnimation(uint16 slot,uint16 animation) {
+ RidleyServiceBegin(1,slot,animation);
+ if(ridley_effects)fprintf(ridley_effects,"service 1 %u %u\n",slot,animation);
+ RidleyActual_EnemyDeathAnimation(slot,animation);
+ RidleyServiceEnd(1,slot,animation,0);
+}
+void RidleyActual_Enemy_ItemDrop_Ridley(uint16);
+void Enemy_ItemDrop_Ridley(uint16 slot) {
+ RidleyServiceBegin(2,slot,0);
+ if(ridley_effects)fprintf(ridley_effects,"service 2 %u 0\n",slot);
+ RidleyActual_Enemy_ItemDrop_Ridley(slot);
+ RidleyServiceEnd(2,slot,0,0);
+}
+void RidleyActual_NormalEnemyTouchAiSkipDeathAnim_CurEnemy(void);
+void NormalEnemyTouchAiSkipDeathAnim_CurEnemy(void) {
+ RidleyServiceBegin(3,0,0);
+ if(ridley_effects)fprintf(ridley_effects,"service 3 0 0\n");
+ RidleyActual_NormalEnemyTouchAiSkipDeathAnim_CurEnemy();
+ RidleyServiceEnd(3,0,0,0);
+}
+void RidleyActual_NormalEnemyShotAiSkipDeathAnim_CurEnemy(void);
+void NormalEnemyShotAiSkipDeathAnim_CurEnemy(void) {
+ RidleyServiceBegin(4,0,0);
+ if(ridley_effects)fprintf(ridley_effects,"service 4 0 0\n");
+ RidleyActual_NormalEnemyShotAiSkipDeathAnim_CurEnemy();
+ RidleyServiceEnd(4,0,0,0);
+}
+void RidleyActual_NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(void);
+void NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(void) {
+ RidleyServiceBegin(5,0,0);
+ if(ridley_effects)fprintf(ridley_effects,"service 5 0 0\n");
+ RidleyActual_NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy();
+ RidleyServiceEnd(5,0,0,0);
+}
+uint16 RidleyActual_CallSomeSamusCode(uint16);
+uint16 CallSomeSamusCode(uint16 code) {
+ RidleyServiceBegin(6,code,0);
+ if(ridley_effects)fprintf(ridley_effects,"service 6 %u 0\n",code);
+ uint16 result=RidleyActual_CallSomeSamusCode(code);RidleyServiceEnd(6,code,0,result);return result;
+}
+#define RIDLEY_AUDIO_WRAPPER(NAME,CHANNEL,MAXIMUM) \
+ void RidleyActual_##NAME(uint16 sound); \
+ void NAME(uint16 sound){ \
+ if(ridley_effects)fprintf(ridley_effects,"sound %u %u %u\n",CHANNEL,sound,MAXIMUM); \
+ RidleyActual_##NAME(sound);}
+RIDLEY_AUDIO_WRAPPER(QueueSfx1_Max1,0,1)
+RIDLEY_AUDIO_WRAPPER(QueueSfx1_Max3,0,3)
+RIDLEY_AUDIO_WRAPPER(QueueSfx1_Max6,0,6)
+RIDLEY_AUDIO_WRAPPER(QueueSfx1_Max9,0,9)
+RIDLEY_AUDIO_WRAPPER(QueueSfx1_Max15,0,15)
+RIDLEY_AUDIO_WRAPPER(QueueSfx2_Max1,1,1)
+RIDLEY_AUDIO_WRAPPER(QueueSfx2_Max3,1,3)
+RIDLEY_AUDIO_WRAPPER(QueueSfx2_Max6,1,6)
+RIDLEY_AUDIO_WRAPPER(QueueSfx2_Max9,1,9)
+RIDLEY_AUDIO_WRAPPER(QueueSfx2_Max15,1,15)
+RIDLEY_AUDIO_WRAPPER(QueueSfx3_Max1,2,1)
+RIDLEY_AUDIO_WRAPPER(QueueSfx3_Max3,2,3)
+RIDLEY_AUDIO_WRAPPER(QueueSfx3_Max6,2,6)
+RIDLEY_AUDIO_WRAPPER(QueueSfx3_Max9,2,9)
+RIDLEY_AUDIO_WRAPPER(QueueSfx3_Max15,2,15)
+void RidleyActual_QueueMusic_Delayed8(uint16);
+void QueueMusic_Delayed8(uint16 track) {
+ if(ridley_effects)fprintf(ridley_effects,"music %u 8\n",track);
+ RidleyActual_QueueMusic_Delayed8(track);
+}
+void RidleyActual_SpawnEprojWithRoomGfx(uint16,uint16);
+void SpawnEprojWithRoomGfx(uint16 definition,uint16 parameter) {
+ if(ridley_effects)fprintf(ridley_effects,"projectile %u %u\n",definition,parameter);
+ RidleyActual_SpawnEprojWithRoomGfx(definition,parameter);
+}
+static int RidleyMemory(uint8_t *ram,size_t length,uint16_t *words,size_t count) {
+ if(!ram||length!=sizeof(g_ram)||ram==g_ram||!words||count!=8)return 0;
+ memcpy(g_ram,ram,length);RidleyHostLoad(words);return 1;
+}
+int64_t sm_ridley_service(uint8_t *ram,size_t length,uint16_t *words,size_t count,uint32_t kind,uint16_t a,uint16_t b) {
+ if(!RidleyMemory(ram,length,words,count))return -1;
+ uint32_t result=0;
+ switch(kind){
+ case 0:result=SpawnEnemy(a,b);break;
+ case 1:EnemyDeathAnimation(a,b);break;
+ case 2:Enemy_ItemDrop_Ridley(a);break;
+ case 3:NormalEnemyTouchAiSkipDeathAnim_CurEnemy();break;
+ case 4:NormalEnemyShotAiSkipDeathAnim_CurEnemy();break;
+ case 5:NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy();break;
+ case 6:result=CallSomeSamusCode(a);break;
+ default:return -1;
+ }
+ memcpy(ram,g_ram,length);RidleyHostSave(words);return result;
+}
+int64_t sm_ridley_mode7(int16_t sine,uint8_t factor) {
+ __wrap_WriteReg(M7A,(uint8)sine);__wrap_WriteReg(M7A,(uint16)sine>>8);__wrap_WriteReg(M7B,factor);
+ uint16 low=__wrap_ReadReg(MPYM);return low|((uint16)__wrap_ReadReg(MPYM+1)<<8);
+}
+int32_t sm_ridley_ordered(uint32_t kind,uint16_t a,uint16_t b,uint16_t c) {
+ if(!ridley_effects)return -1;
+ if(kind==0)fprintf(ridley_effects,"sound %u %u %u\n",a,b,c);
+ else if(kind==1)fprintf(ridley_effects,"music %u %u\n",a,b);
+ else if(kind==2)fprintf(ridley_effects,"projectile %u %u\n",a,b);
+ else return -1;
+ return ferror(ridley_effects)?-1:0;
+}
+static uint32_t RidleyPointer(const uint16 *p,uint32_t bank) {
+ if(!p)return 0;
+ if((uintptr_t)p<0x10000)return bank|(uintptr_t)p;
+ uintptr_t base=(uintptr_t)g_rom+(((bank>>16)&127)*0x8000);
+ if((uintptr_t)p<base||(uintptr_t)p>=base+0x8000)exit(3);
+ return bank|0x8000|((uintptr_t)p-base);
+}
+static int RidleyPpuState(const char *path) {
+ FILE *out=fopen(path,"wb");if(!out)return 2;
+ const Ppu *ppu=g_snes->my_ppu;
+ if(fwrite(ppu->m7matrix,2,8,out)!=8||fputc(ppu->m7prev,out)==EOF||fputc(ppu->ppu1openBus,out)==EOF||
+ fputc(ppu->ppu2openBus,out)==EOF||fputc(g_snes->openBus,out)==EOF||fclose(out))return 2;
+ return 0;
+}
+static int RidleyPpuLoad(const char *path) {
+ FILE *in=fopen(path,"rb");if(!in)return 2;uint8_t state[20];
+ if(fread(state,1,sizeof(state),in)!=sizeof(state)||fgetc(in)!=EOF||fclose(in))return 2;
+ Ppu *ppu=g_snes->my_ppu;
+ for(unsigned i=0;i<8;i++)ppu->m7matrix[i]=(int16_t)((uint16_t)state[2*i]|((uint16_t)state[2*i+1]<<8));
+ ppu->m7prev=state[16];ppu->ppu1openBus=state[17];ppu->ppu2openBus=state[18];g_snes->openBus=state[19];
+ return 0;
+}
+static int RidleyInvoke(int argc,char **argv) {
+ if(argc!=15)return 2;
+ const char *mode=argv[1],*symbol=argv[2];int32_t a=strtol(argv[3],NULL,10),b=strtol(argv[4],NULL,10);uint32_t result=0;
+ uint16_t words[8];FILE *f=fopen(argv[5],"rb");
+ if(!f||fread(g_ram,1,sizeof(g_ram),f)!=sizeof(g_ram)||fgetc(f)!=EOF||fclose(f))return 2;
+ f=fopen(argv[9],"rb");if(!f||fread(words,2,8,f)!=8||fgetc(f)!=EOF||fclose(f))return 2;RidleyHostLoad(words);
+ if(RidleyPpuLoad(argv[14]))return 2;
+ ridley_effects=fopen(argv[11],"w");if(!ridley_effects)return 2;
+ ridley_services=fopen(argv[13],"wb");if(!ridley_services)return 2;ridley_service_count=0;
+ if(!strcmp(mode,"rust")){
+ int64_t value=port_ridley_subsystem_call(g_ram,sizeof(g_ram),g_rom,g_snes->cart->romSize,words,8,symbol,a,b);
+ if(value<0)return 4;result=value;RidleyHostLoad(words);
+ }else if(!strcmp(mode,"c")){
+ __BRANCHES__ else return 2;
+ }else return 2;
+ if(fclose(ridley_effects))return 2;ridley_effects=NULL;
+ if(fclose(ridley_services))return 2;ridley_services=NULL;
+ f=fopen(argv[6],"wb");if(!f||fwrite(g_ram,1,sizeof(g_ram),f)!=sizeof(g_ram)||fclose(f))return 2;
+ RidleyHostSave(words);f=fopen(argv[10],"wb");if(!f||fwrite(words,2,8,f)!=8||fclose(f))return 2;
+ if(RidleyPpuState(argv[12]))return 2;
+ printf("%u %" PRIu64 " %lu %lu\n",result,ridley_service_count,fallback_calls,fallback_instructions);return 0;
+}
+extern int sm_fixture_worker(int (*invoke)(int,char**));
+int main(int argc,char **argv) {
+ if(argc==2&&!strcmp(argv[1],"--abi-controls")){
+ uint32_t rejected=port_ridley_subsystem_abi_controls();
+ if(rejected!=7||ridley_service_count||fallback_calls||fallback_instructions)return 4;
+ printf("%u rejected ABI inputs\n",rejected);return 0;
+ }
+ const char *rom=argc==3&&!strcmp(argv[1],"--fixture-worker")?argv[2]:(argc==15?argv[8]:NULL);
+ if(!rom||!SnesInit(rom))return 2;
+ g_spc_player=SpcPlayer_Create();SpcPlayer_Initialize(g_spc_player);
+ if(argc==3)return sm_fixture_worker(RidleyInvoke);
+ return RidleyInvoke(argc,argv);
+}

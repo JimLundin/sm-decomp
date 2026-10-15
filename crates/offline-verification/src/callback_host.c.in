@@ -1,0 +1,54 @@
+#define main retained_headless_main
+#include __HEADLESS__
+#undef main
+#include "funcs.h"
+#include <inttypes.h>
+extern int32 *cur_coll_amt32;
+extern uint8 __real_SpawnPLM(uint16);
+extern int64_t port_collision_call(uint8_t*,size_t,const uint8_t*,size_t,uint32_t,int32_t,int32_t);
+static FILE *callback_log;
+static const char *callback_directory;
+static unsigned long callbacks;
+static void CallbackSnapshot(const char *phase) {
+ char path[4096];snprintf(path,sizeof(path),"%s/callback-%04lu-%s.wram",callback_directory,callbacks,phase);
+ FILE *f=fopen(path,"wb");if(!f||fwrite(g_ram,1,sizeof(g_ram),f)!=sizeof(g_ram)||fclose(f))exit(2);
+}
+__HDMA_HOST__
+uint8 __wrap_SpawnPLM(uint16 header) {
+ callbacks++;int32 before=cur_coll_amt32?*cur_coll_amt32:0;
+ CallbackSnapshot("before");
+ uint8 value=__real_SpawnPLM(header);
+ CallbackSnapshot("after");
+ fprintf(callback_log,"%u %" PRId32 " %" PRId32 " %u\n",header,before,cur_coll_amt32?*cur_coll_amt32:0,value);
+ return value;
+}
+int32_t sm_rust_collision_spawn_plm(uint8_t *ram,size_t len,uint16_t header,int32_t *amount) {
+ if(!ram||len!=sizeof(g_ram)||!amount||ram==g_ram)return -1;
+ memcpy(g_ram,ram,len);int32 *previous=cur_coll_amt32;cur_coll_amt32=amount;
+ uint8 result=__wrap_SpawnPLM(header);cur_coll_amt32=previous;
+ memcpy(ram,g_ram,len);return result;
+}
+int32_t sm_rust_collision_spawn_plm_without_amount(uint8_t *ram,size_t len,uint16_t header) {
+ if(!ram||len!=sizeof(g_ram)||ram==g_ram)return -1;
+ memcpy(g_ram,ram,len);int32 *previous=cur_coll_amt32;cur_coll_amt32=NULL;
+ uint8 result=__wrap_SpawnPLM(header);cur_coll_amt32=previous;
+ memcpy(ram,g_ram,len);return result;
+}
+int main(int argc,char **argv){
+ if(argc!=10)return 2;
+ if(!SnesInit(argv[8]))return 2;
+ g_spc_player=SpcPlayer_Create();SpcPlayer_Initialize(g_spc_player);
+ int32_t a=(int32_t)strtoll(argv[3],NULL,10),b=(int32_t)strtoll(argv[4],NULL,10);uint32_t result=0;
+ FILE *f=fopen(argv[5],"rb");if(!f||fread(g_ram,1,sizeof(g_ram),f)!=sizeof(g_ram)||fgetc(f)!=EOF||fclose(f))return 2;
+ callback_directory=argv[9];char log_path[4096];snprintf(log_path,sizeof(log_path),"%s/callbacks.txt",callback_directory);
+ callback_log=fopen(log_path,"w");if(!callback_log)return 2;
+ if(!strcmp(argv[1],"rust")){
+ int64_t value=port_collision_call(g_ram,sizeof(g_ram),g_rom,g_snes->cart->romSize,(uint32_t)strtoul(argv[7],NULL,10),a,b);
+ if(value<0)return 4;result=(uint32_t)value;
+ }else{
+ __BRANCHES__ else return 2;
+ }
+ if(fclose(callback_log))return 2;
+ f=fopen(argv[6],"wb");if(!f||fwrite(g_ram,1,sizeof(g_ram),f)!=sizeof(g_ram)||fclose(f))return 2;
+ printf("%u %lu %lu %lu\n",result,callbacks,fallback_calls,fallback_instructions);return 0;
+}
