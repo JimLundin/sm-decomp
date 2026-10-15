@@ -13,13 +13,15 @@ Authorization: user instructed "please go ahead and implement" the nine-ticket p
   `/home/jim/sm-decomp-performance-integration`. It includes the recovered
   extraction, passing metrics/control source, storage experiment and Native
   operation-admission fix. Do not edit while its verification is active.
-- `/root/recover_extraction_verification` owns new proof
+- `/root/native_verification_resume` now owns the predecessor's new proof
   `/home/jim/sm-decomp-performance-native-proof/7b27ea1-20261015` and exclusive
   Cargo target `/home/jim/sm-decomp-offline-verifier/target`. Required Native
   producer/admission deadlines and all 12 recipes remain unchanged.
-- `/root/bulk_context` owns the complete ticket 02 implementation in its isolated
-  worktree, currently WIP `94104cc`. Captured compiler-input plumbing and Native
-  preparation remain required; catalog-only work is not acceptance. It owns
+- `/root/bulk_context_resume` owns the complete ticket 02 implementation in its isolated
+  worktree, currently compiled WIP `d04a1e9`. Ordinary captured source/assets and
+  shared declarations are wired; actual-C gates and retained Native capture remain
+  required. The C dependency validator, selected-family freshness and budget
+  accounting are being completed. It owns
   `/home/jim/sm-decomp-performance-metrics-continuation-target`.
 - `/root/batch_metrics` finished its final eight-sample retained measurement and
   interpretation at documentation commit `6c385d2`. Passing source/control
@@ -34,14 +36,37 @@ Authorization: user instructed "please go ahead and implement" the nine-ticket p
   exact source snapshots remain at the original paths. Both post-retirement
   cleanup passes and fresh result admission passed. See
   `native-finalization-recovery.md` for exact evidence and limitations.
-- `/root/dependency_facts` owns claimed ticket 03 in
+- `/root/dependency_facts_resume` owns claimed ticket 03 in
   `/home/jim/sm-decomp-performance-dependencies`, branch
-  `performance/dependency-facts-20261015`, baseline `94104cc`. Its isolated pure
-  scanner proceeds from the coherent catalog checkpoint; final captured-input
+  `performance/dependency-facts-20261015`, baseline `94104cc`, current `320feeb`
+  including bulk `d04a1e9`. Its interrupted source-facts implementation and tests
+  are retained; registration and green controls continue. Final captured-input
   consumer/identity acceptance still waits for complete 02. It owns the released
   original target `/home/jim/sm-decomp-performance-metrics-target`.
 - Ticket 05 remains resolved. Tickets 04/06/07/08/09 still require their
   implementation and gates. Preserve all original production prerequisite stops.
+
+## Recovery after the user's continue instructions
+
+Root inspected collaboration and process state before replacements: the old
+subagents were gone and no performance Cargo/compiler/producer survived. Existing
+worktrees and dirty scanner work were retained; no production claim was adopted.
+The three replacement owners above resume the same exact scopes and targets.
+
+The matched Native CLI/helper build completed during the interruption, exit 0,
+with Cargo reporting 21m58s and the external timer 37m41.13s. Treat this as a
+build/host interruption observation, not a successful bounded timing sample.
+The replacement verifier copied and hashed completed tools without rebuilding;
+the exact set is in the proof's `tools/helpers.sha256`.
+The 177-family / 150,204-pair +360 auxiliary catalog gate already passed and is
+not rerun. Its scopes are being cleaned before the fresh PLM-first matrix.
+
+The separate read-only plan/catalog correction is `40e4cdb`. Eleven public
+affected tests passed in 18.62 seconds with existing no-output assertions intact;
+the new syntax red was deliberately excluded until the scanner is fixed.
+The inherited-parent-metrics test needed executable initialization (`006f78f`);
+its green rerun remains assigned. The initial syntax defects were reproduced
+through both public selection and wrapper discovery before implementation.
 
 ## Startup and ownership
 
