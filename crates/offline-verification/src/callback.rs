@@ -211,7 +211,15 @@ pub(crate) fn build(
 }
 
 fn metrics(directory: &Path, subject: &str) -> Result<CallbackMetrics> {
-    let text = fs::read_to_string(directory.join(format!("{subject}.stdout")))?;
+    let run = directory.parent().context("callback case parent missing")?;
+    metrics_with(directory, subject, &mut crate::admission_reader::Window::unsealed(run))
+}
+fn metrics_with(
+    directory: &Path,
+    subject: &str,
+    reader: &mut crate::admission_reader::Window<'_, '_>,
+) -> Result<CallbackMetrics> {
+    let text = reader.text(directory.join(format!("{subject}.stdout")))?;
     let line = text.lines().last().context("missing callback metrics")?;
     let values = line.split_whitespace().map(str::parse::<u64>).collect::<std::result::Result<Vec<_>, _>>()?;
     ensure!(values.len() == 4, "callback metrics extent");
@@ -223,12 +231,14 @@ fn metrics(directory: &Path, subject: &str) -> Result<CallbackMetrics> {
     })
 }
 
-fn callback_files(directory: &Path) -> Result<BTreeMap<String, Vec<u8>>> {
-    let mut files = BTreeMap::new();
-    for entry in fs::read_dir(directory)? {
-        let p = entry?.path();
+fn callback_files(directory: &Path) -> Result<std::collections::BTreeSet<String>> {
+    let mut files = std::collections::BTreeSet::new();
+    for p in tool_execution::bounded::entries(directory)? {
         ensure!(!p.is_symlink() && p.is_file(), "invalid callback artifact");
-        files.insert(p.file_name().context("callback filename missing")?.to_string_lossy().into_owned(), fs::read(p)?);
+        ensure!(
+            files.insert(p.file_name().and_then(|name| name.to_str()).context("callback filename missing")?.to_owned()),
+            "duplicate callback artifact"
+        );
     }
     Ok(files)
 }
@@ -284,8 +294,17 @@ fn check_game_host_log(log: &str, count: u64) -> Result<()> {
 }
 
 pub fn check(directory: &Path, fixture: &Case, game_host: bool) -> Result<CaseRecord> {
-    let c = metrics(directory, "c")?;
-    let rust = metrics(directory, "rust")?;
+    let run = directory.parent().context("callback case parent missing")?;
+    check_with(directory, fixture, game_host, &mut crate::admission_reader::Window::unsealed(run))
+}
+pub(crate) fn check_with(
+    directory: &Path,
+    fixture: &Case,
+    game_host: bool,
+    reader: &mut crate::admission_reader::Window<'_, '_>,
+) -> Result<CaseRecord> {
+    let c = metrics_with(directory, "c", reader)?;
+    let rust = metrics_with(directory, "rust", reader)?;
     ensure!(c == rust, "actual callback metrics mismatch");
     ensure!(
         rust.cpu_fallback_calls == 0 && rust.cpu_fallback_instructions == 0,
@@ -296,31 +315,51 @@ pub fn check(directory: &Path, fixture: &Case, game_host: bool) -> Result<CaseRe
     if let Some(expected) = fixture.expected_return {
         ensure!(expected == rust.returns, "independent expected callback return differs");
     }
-    let c_files = callback_files(&directory.join("c"))?;
-    let rust_files = callback_files(&directory.join("rust"))?;
+    let (c_files, rust_files) = tool_execution::bounded::discovery(|| {
+        Ok((callback_files(&directory.join("c"))?, callback_files(&directory.join("rust"))?))
+    })?;
     ensure!(c_files == rust_files, "ordered actual C callback state/argument sequence mismatch");
-    ensure!(c_files.len() == 1 + 2 * count as usize, "callback record extent missing");
-    let log = String::from_utf8(c_files.get("callbacks.txt").context("callback log missing")?.clone())?;
-    if game_host {
-        check_game_host_log(&log, count)?;
-    } else {
-        ensure!(log.lines().count() == count as usize, "callback log count differs");
-    }
+    let records =
+        usize::try_from(count)?.checked_mul(2).and_then(|n| n.checked_add(1)).context("callback count overflow")?;
+    ensure!(c_files.len() == records, "callback record extent missing");
+    ensure!(c_files.contains("callbacks.txt"), "callback log missing");
     for index in 1..=count {
+        tool_execution::bounded::check()?;
         for phase in ["before", "after"] {
             ensure!(
-                c_files.get(&format!("callback-{index:04}-{phase}.wram")).is_some_and(|v| v.len() == 0x20000),
+                c_files.contains(&format!("callback-{index:04}-{phase}.wram")),
                 "callback full WRAM extent missing"
             );
         }
     }
-    for name in ["before.wram", "c-after.wram", "rust-after.wram"] {
-        ensure!(fs::metadata(directory.join(name))?.len() == 0x20000, "callback full WRAM extent missing");
+    // Keep exactly one paired observation in memory, regardless of callback count.
+    reader.clear();
+    for name in &c_files {
+        {
+            let c = reader.read(directory.join("c").join(name))?;
+            let rust = reader.read(directory.join("rust").join(name))?;
+            ensure!(c == rust, "ordered actual C callback state/argument sequence mismatch");
+            if name == "callbacks.txt" {
+                ensure!(c.len() as u64 <= tool_execution::bounded::MAX_DOCUMENT_BYTES, "callback log extent exceeded");
+                let log = std::str::from_utf8(&c)?;
+                if game_host {
+                    check_game_host_log(log, count)?;
+                } else {
+                    ensure!(log.lines().count() == count as usize, "callback log count differs");
+                }
+            } else {
+                ensure!(c.len() == 0x20000 && rust.len() == 0x20000, "callback full WRAM extent missing");
+            }
+        }
+        reader.clear();
     }
-    let c_state = fs::read(directory.join("c-after.wram"))?;
-    let rust_state = fs::read(directory.join("rust-after.wram"))?;
+    for name in ["before.wram", "c-after.wram", "rust-after.wram"] {
+        ensure!(reader.read(directory.join(name))?.len() == 0x20000, "callback full WRAM extent missing");
+    }
+    let c_state = reader.read(directory.join("c-after.wram"))?;
+    let rust_state = reader.read(directory.join("rust-after.wram"))?;
     if c_state != rust_state {
-        let offset = c_state.iter().zip(&rust_state).position(|(a, b)| a != b).unwrap();
+        let offset = c_state.iter().zip(rust_state.iter()).position(|(a, b)| a != b).unwrap();
         atomic_toml(
             &directory.join("rejection.toml"),
             &CaseRecord {
@@ -331,7 +370,7 @@ pub fn check(directory: &Path, fixture: &Case, game_host: bool) -> Result<CaseRe
         anyhow::bail!("WRAM mismatch at {offset:#x}");
     }
     if fixture.expected_after_file.as_ref().is_some() {
-        ensure!(c_state == fs::read(directory.join("expected-after.wram"))?, "captured full WRAM mismatch");
+        ensure!(c_state == reader.read(directory.join("expected-after.wram"))?, "captured full WRAM mismatch");
     }
     Ok(CaseRecord {
         results: BTreeMap::from([("c".into(), c), ("rust".into(), rust)]),

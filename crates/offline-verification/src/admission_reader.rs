@@ -4,10 +4,12 @@ use crate::family::ArtifactLimits;
 use anyhow::{Context, Result, ensure};
 use serde::de::DeserializeOwned;
 use std::{
+    cell::Cell,
     collections::{BTreeMap, BTreeSet},
     fs,
     ops::Deref,
     path::{Path, PathBuf},
+    rc::Rc,
     sync::Arc,
 };
 use tool_execution::bounded;
@@ -16,11 +18,22 @@ use tool_execution::bounded;
 // between observations; predecessor payloads live only in the current case.
 const MAX_WINDOW_BYTES: u64 = 4 * bounded::MAX_FILE_BYTES;
 
+struct Reservation {
+    live_bytes: Rc<Cell<u64>>,
+    bytes: u64,
+}
+impl Drop for Reservation {
+    fn drop(&mut self) {
+        self.live_bytes.set(self.live_bytes.get() - self.bytes);
+    }
+}
+
 #[derive(Clone)]
 pub(crate) struct Payload {
     bytes: Arc<Vec<u8>>,
     hash: String,
     version: Arc<fs::Metadata>,
+    _reservation: Rc<Reservation>,
 }
 
 impl Deref for Payload {
@@ -68,13 +81,12 @@ pub(crate) struct Admission<'a> {
 impl<'a> Admission<'a> {
     pub(crate) fn open(run: &'a Path, expected: &'a BTreeMap<String, String>, limits: ArtifactLimits) -> Result<Self> {
         limits.validate()?;
-        let mut actual = BTreeMap::new();
-        crate::family::inventory_with_limits(run, run, &mut actual, limits)?;
-        ensure!(actual == *expected, "family artifact inventory differs");
+        let names = discover(run, limits)?;
+        ensure!(names.iter().eq(expected.keys()), "family artifact inventory differs");
         Ok(Self {
             run,
             expected,
-            consumed: expected.keys().cloned().collect(),
+            consumed: BTreeSet::new(),
             versions: BTreeMap::new(),
             limits,
             stats: ReadStats::default(),
@@ -82,7 +94,13 @@ impl<'a> Admission<'a> {
     }
 
     pub(crate) fn window(&mut self) -> Window<'_, 'a> {
-        Window { run: self.run, admission: Some(self), payloads: BTreeMap::new(), bytes: 0 }
+        Window {
+            run: self.run,
+            admission: Some(self),
+            payloads: BTreeMap::new(),
+            live_bytes: Rc::new(Cell::new(0)),
+            maximum: MAX_WINDOW_BYTES,
+        }
     }
 
     fn consume(&mut self, path: &Path, hash: &str, version: Arc<fs::Metadata>) -> Result<()> {
@@ -156,21 +174,32 @@ pub(crate) struct Window<'a, 'r> {
     run: &'r Path,
     admission: Option<&'a mut Admission<'r>>,
     payloads: BTreeMap<PathBuf, Payload>,
-    bytes: u64,
+    live_bytes: Rc<Cell<u64>>,
+    maximum: u64,
 }
 
 impl<'r> Window<'_, 'r> {
     /// Immediate post-producer comparison has no published inventory yet.
     /// A later retained admission creates its own reader and reopens all bytes.
     pub(crate) fn unsealed(run: &'r Path) -> Self {
-        Self { run, admission: None, payloads: BTreeMap::new(), bytes: 0 }
+        Self {
+            run,
+            admission: None,
+            payloads: BTreeMap::new(),
+            live_bytes: Rc::new(Cell::new(0)),
+            maximum: MAX_WINDOW_BYTES,
+        }
     }
 
     pub(crate) fn read(&mut self, path: impl AsRef<Path>) -> Result<Payload> {
-        let path = path.as_ref();
+        self.read_limit(path.as_ref(), bounded::MAX_FILE_BYTES)
+    }
+
+    fn read_limit(&mut self, path: &Path, maximum: u64) -> Result<Payload> {
         ensure!(path.starts_with(self.run), "comparison input outside retained run");
         bounded::safe(path)?;
         if let Some(payload) = self.payloads.get(path) {
+            ensure!(payload.len() as u64 <= maximum, "comparison input extent exceeded");
             ensure!(
                 bounded::same_file_version(&payload.version, &path.symlink_metadata()?),
                 "family artifact changed inside comparison window"
@@ -181,26 +210,27 @@ impl<'r> Window<'_, 'r> {
             return Ok(payload.clone());
         }
         let before = path.symlink_metadata()?;
-        let total = self.bytes.checked_add(before.len()).context("comparison window extent overflow")?;
-        ensure!(total <= MAX_WINDOW_BYTES, "comparison window byte budget exhausted");
-        let (bytes, hash) = bounded::read_with_digest(path)?;
+        ensure!(before.len() <= maximum, "comparison input extent exceeded");
+        let total = self.live_bytes.get().checked_add(before.len()).context("comparison window extent overflow")?;
+        ensure!(total <= self.maximum, "comparison window byte budget exhausted");
+        self.live_bytes.set(total);
+        let reservation = Rc::new(Reservation { live_bytes: self.live_bytes.clone(), bytes: before.len() });
+        let (bytes, hash) = bounded::read_with_digest_limit(path, maximum)?;
         let version = Arc::new(path.symlink_metadata()?);
         ensure!(bounded::same_file_version(&before, &version), "family artifact changed during comparison");
-        let payload = Payload { bytes: Arc::new(bytes), hash, version };
+        let payload = Payload { bytes: Arc::new(bytes), hash, version, _reservation: reservation };
         if let Some(admission) = &mut self.admission {
             admission.consume(path, &payload.hash, payload.version.clone())?;
             admission.stats.reads += 1;
             admission.stats.bytes += payload.len() as u64;
             admission.stats.peak_window_bytes = admission.stats.peak_window_bytes.max(total);
         }
-        self.bytes = total;
         self.payloads.insert(path.to_path_buf(), payload.clone());
         Ok(payload)
     }
 
     pub(crate) fn text(&mut self, path: impl AsRef<Path>) -> Result<String> {
-        let bytes = self.read(path)?;
-        ensure!(bytes.len() as u64 <= bounded::MAX_DOCUMENT_BYTES, "comparison document extent exceeded");
+        let bytes = self.read_limit(path.as_ref(), bounded::MAX_DOCUMENT_BYTES)?;
         Ok(std::str::from_utf8(&bytes)?.to_owned())
     }
 
@@ -208,17 +238,20 @@ impl<'r> Window<'_, 'r> {
         Ok(toml::from_str(&self.text(path)?)?)
     }
 
-    /// Call only after paired callback payloads leave scope. Consumed member
-    /// seals remain in Admission; no callback family payload map is retained.
+    /// Consumed member seals remain in Admission. Any payload still held by
+    /// its caller remains charged until its final owner releases it.
     pub(crate) fn clear(&mut self) {
         self.payloads.clear();
-        self.bytes = 0;
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn seals(root: &Path, names: &[&str]) -> Result<BTreeMap<String, String>> {
+        names.iter().map(|name| Ok(((*name).to_owned(), bounded::digest(&root.join(name))?))).collect()
+    }
 
     #[test]
     fn inventory_and_comparison_read_each_member_once_per_independent_admission() -> Result<()> {
@@ -248,5 +281,109 @@ mod tests {
             })?;
         }
         Ok(())
+    }
+
+    #[test]
+    fn unconsumed_bytes_and_final_namespace_are_required() -> Result<()> {
+        let directory = tool_execution::testing::Directory::new()?;
+        let root = &directory.0;
+        fs::write(root.join("used"), b"used")?;
+        fs::write(root.join("unused"), b"good")?;
+        let expected = seals(root, &["used", "unused"])?;
+        let mut admission = Admission::open(root, &expected, ArtifactLimits::default())?;
+        admission.window().read(root.join("used"))?;
+        fs::write(root.join("unused"), b"evil")?;
+        assert!(admission.finish().is_err(), "uncompared bytes were trusted from the inventory claim");
+        fs::write(root.join("unused"), b"good")?;
+        let admission = Admission::open(root, &expected, ArtifactLimits::default())?;
+        fs::write(root.join("undeclared"), b"extra")?;
+        assert!(admission.finish().is_err(), "late undeclared member was admitted");
+        assert!(Admission::open(root, &expected, ArtifactLimits::default()).is_err());
+        fs::remove_file(root.join("undeclared"))?;
+        fs::remove_file(root.join("unused"))?;
+        assert!(Admission::open(root, &expected, ArtifactLimits::default()).is_err(), "missing member admitted");
+        Ok(())
+    }
+
+    #[test]
+    fn owned_bytes_do_not_authorize_mutation_or_a_later_admission() -> Result<()> {
+        let directory = tool_execution::testing::Directory::new()?;
+        let root = &directory.0;
+        let path = root.join("member");
+        fs::write(&path, b"good")?;
+        let expected = seals(root, &["member"])?;
+        let modified = path.metadata()?.modified()?;
+        let mut admission = Admission::open(root, &expected, ArtifactLimits::default())?;
+        {
+            let mut window = admission.window();
+            let owned = window.read(&path)?;
+            fs::write(&path, b"evil")?;
+            fs::File::options().write(true).open(&path)?.set_times(fs::FileTimes::new().set_modified(modified))?;
+            assert_eq!(owned.as_ref(), b"good");
+            assert!(window.read(&path).is_err(), "restored mtime authorized changed bytes inside a window");
+        }
+        assert!(admission.finish().is_err(), "changed consumed member survived final admission");
+        let mut later = Admission::open(root, &expected, ArtifactLimits::default())?;
+        assert!(later.window().read(&path).is_err(), "later admission used an earlier payload");
+        fs::remove_file(&path)?;
+        let outside = tool_execution::testing::Directory::new()?;
+        fs::write(outside.0.join("member"), b"good")?;
+        std::os::unix::fs::symlink(outside.0.join("member"), &path)?;
+        assert!(Admission::open(root, &expected, ArtifactLimits::default()).is_err(), "redirected member admitted");
+        Ok(())
+    }
+
+    #[test]
+    fn retained_payload_owners_remain_charged_after_window_eviction() -> Result<()> {
+        let directory = tool_execution::testing::Directory::new()?;
+        let root = &directory.0;
+        fs::write(root.join("first"), b"12345678")?;
+        fs::write(root.join("second"), b"abcdefgh")?;
+        let mut window = Window::unsealed(root);
+        window.maximum = 8;
+        let owned = window.read(root.join("first"))?;
+        window.clear();
+        assert!(window.read(root.join("second")).is_err(), "eviction hid a still-owned payload allocation");
+        drop(owned);
+        assert_eq!(window.read(root.join("second"))?.as_ref(), b"abcdefgh");
+        assert_eq!(window.live_bytes.get(), 8);
+        window.clear();
+        assert_eq!(window.live_bytes.get(), 0);
+        Ok(())
+    }
+
+    #[test]
+    fn byte_deadline_and_namespace_limits_remain_hard_refusals() -> Result<()> {
+        let directory = tool_execution::testing::Directory::new()?;
+        let root = &directory.0;
+        fs::write(root.join("first"), b"12345678")?;
+        fs::write(root.join("second"), b"abcdefgh")?;
+        let expected = seals(root, &["first", "second"])?;
+        assert!(Admission::open(root, &expected, ArtifactLimits { files: 1, paths: 4 }).is_err());
+        assert!(
+            bounded::until(bounded::now_unix_ms()? + 5_000, 7, || {
+                Admission::open(root, &expected, ArtifactLimits::default())?.finish()
+            })
+            .is_err()
+        );
+        assert!(
+            bounded::until(bounded::now_unix_ms()?.saturating_sub(1), 1024, || {
+                Admission::open(root, &expected, ArtifactLimits::default())?.finish()
+            })
+            .is_err()
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn oversized_document_refuses_before_loading_or_charging_its_payload() -> Result<()> {
+        let directory = tool_execution::testing::Directory::new()?;
+        let path = directory.0.join("large.toml");
+        fs::File::create(&path)?.set_len(bounded::MAX_DOCUMENT_BYTES + 1)?;
+        bounded::until(bounded::now_unix_ms()? + 5_000, 1024, || {
+            assert!(Window::unsealed(&directory.0).text(&path).is_err());
+            assert_eq!(bounded::charged_bytes(), 0);
+            Ok(())
+        })
     }
 }

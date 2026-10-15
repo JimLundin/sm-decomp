@@ -99,10 +99,14 @@ fn instrument_units(source: &Path) -> Result<BTreeMap<String, String>> {
 }
 
 /// Reconstructs the exact actual-C units while preserving every public call site.
-pub(crate) fn check_instrumented_units(source: &Path, run: &Path) -> Result<()> {
+pub(crate) fn check_instrumented_units(
+    source: &Path,
+    run: &Path,
+    reader: &mut crate::admission_reader::Window<'_, '_>,
+) -> Result<()> {
     for (bank, expected) in instrument_units(source)? {
         ensure!(
-            fs::read_to_string(run.join(format!("ridley-services-{bank}")))? == expected,
+            reader.text(run.join(format!("ridley-services-{bank}")))? == expected,
             "Ridley service source changed: {bank}"
         );
     }
@@ -364,12 +368,16 @@ fn retain_capture(directory: &Path, fixture: &Case) -> Result<()> {
     atomic_toml(&directory.join("capture-inputs.toml"), &assets)
 }
 
-fn authenticate_capture(directory: &Path, fixture: &Case) -> Result<()> {
+fn authenticate_capture(
+    directory: &Path,
+    fixture: &Case,
+    reader: &mut crate::admission_reader::Window<'_, '_>,
+) -> Result<()> {
     if fixture.before_file.is_none() {
         ensure!(!directory.join("capture-inputs.toml").exists(), "synthetic Ridley fixture gained a capture");
         return Ok(());
     }
-    let assets: BTreeMap<String, Asset> = toml::from_str(&fs::read_to_string(directory.join("capture-inputs.toml"))?)?;
+    let assets: BTreeMap<String, Asset> = reader.object(directory.join("capture-inputs.toml"))?;
     ensure!(assets.len() == CAPTURE_SUFFIXES.len(), "Ridley capture companion inventory differs");
     for suffix in CAPTURE_SUFFIXES {
         let asset = assets.get(suffix).context("Ridley captured companion missing")?;
@@ -379,12 +387,12 @@ fn authenticate_capture(directory: &Path, fixture: &Case) -> Result<()> {
         );
         ensure!(
             digest(&asset.file)? == asset.sha256
-                && digest(&directory.join(format!("captured-{suffix}")))? == asset.sha256,
+                && reader.read(directory.join(format!("captured-{suffix}")))?.hash() == asset.sha256,
             "Ridley capture companion bytes differ"
         );
     }
     ensure!(
-        fs::read(directory.join("captured-before.host"))? == fs::read(directory.join("host-before.bin"))?,
+        reader.read(directory.join("captured-before.host"))? == reader.read(directory.join("host-before.bin"))?,
         "Ridley captured host input differs"
     );
     for (suffix, output) in [
@@ -394,25 +402,35 @@ fn authenticate_capture(directory: &Path, fixture: &Case) -> Result<()> {
         ("effects.log", "effects.log"),
         ("services.bin", "services.bin"),
     ] {
-        let expected = fs::read(directory.join(format!("captured-{suffix}")))?;
-        ensure!(expected == fs::read(directory.join(format!("c-{output}")))?, "Ridley natural {suffix} differs");
+        let expected = reader.read(directory.join(format!("captured-{suffix}")))?;
+        ensure!(expected == reader.read(directory.join(format!("c-{output}")))?, "Ridley natural {suffix} differs");
     }
     Ok(())
 }
 
-fn authenticate_before(directory: &Path, fixture: &Case, before: &[u8]) -> Result<()> {
+fn authenticate_before(
+    directory: &Path,
+    fixture: &Case,
+    before: &[u8],
+    reader: &mut crate::admission_reader::Window<'_, '_>,
+) -> Result<()> {
     let run = directory.parent().context("Ridley fixture parent missing")?;
     if let Some(previous) = &fixture.continue_from {
         ensure!(fixture.before_file.is_none() && fixture.fill.is_none(), "Ridley continuation replaced WRAM");
-        let mut expected = fs::read(run.join(previous).join("c-after.wram"))?;
-        ensure!(expected == fs::read(run.join(previous).join("rust-after.wram"))?, "Ridley predecessor WRAM differs");
+        let previous_c = reader.read(run.join(previous).join("c-after.wram"))?;
+        ensure!(
+            previous_c == reader.read(run.join(previous).join("rust-after.wram"))?,
+            "Ridley predecessor WRAM differs"
+        );
+        let mut expected = previous_c.to_vec();
         apply_writes(&mut expected, fixture)?;
         ensure!(before == expected, "Ridley continuation did not inherit full WRAM");
     } else if let Some(file) = &fixture.before_file {
         ensure!(fixture.writes.is_empty() && fixture.fill.is_none(), "captured Ridley fixture was patched");
+        let (original, hash) = tool_execution::bounded::read_with_digest(file)?;
         ensure!(
-            digest(file)? == fixture.before_sha256.as_deref().context("Ridley captured input hash missing")?
-                && before == fs::read(file)?,
+            hash == fixture.before_sha256.as_deref().context("Ridley captured input hash missing")?
+                && before == original,
             "Ridley captured input differs"
         );
     } else {
@@ -420,14 +438,29 @@ fn authenticate_before(directory: &Path, fixture: &Case, before: &[u8]) -> Resul
         apply_writes(&mut expected, fixture)?;
         ensure!(before == expected, "Ridley fixture input differs");
     }
-    ensure!(
-        fs::read(directory.join("host-before.bin"))? == host_before(fixture, run)?,
-        "Ridley fixture host input differs"
-    );
-    ensure!(
-        fs::read(directory.join("ppu-before.bin"))? == ppu_before(fixture, run)?,
-        "Ridley fixture hardware input differs"
-    );
+    let host = reader.read(directory.join("host-before.bin"))?;
+    let ppu = reader.read(directory.join("ppu-before.bin"))?;
+    if let Some(previous) = &fixture.continue_from {
+        ensure!(fixture.host_words.is_none(), "Ridley continuation must inherit host words");
+        let c_host = reader.read(run.join(previous).join("c-host-after.bin"))?;
+        let rust_host = reader.read(run.join(previous).join("rust-host-after.bin"))?;
+        ensure!(c_host.len() == 16 && c_host == rust_host && host == c_host, "Ridley fixture host input differs");
+        let c_ppu = reader.read(run.join(previous).join("c-ppu.bin"))?;
+        let rust_ppu = reader.read(run.join(previous).join("rust-ppu.bin"))?;
+        ensure!(c_ppu.len() == 20 && c_ppu == rust_ppu && ppu == c_ppu, "Ridley fixture hardware input differs");
+    } else {
+        let words = fixture.host_words.as_ref().context("Ridley initial host state missing")?;
+        ensure!(words.len() == 8, "Ridley host requires exactly eight words");
+        let expected = words.iter().flat_map(|word| word.to_le_bytes()).collect::<Vec<_>>();
+        ensure!(host.as_ref() == expected, "Ridley fixture host input differs");
+        let expected_ppu = if fixture.before_file.is_some() {
+            // Original capture freshness is independent of retained-run reuse.
+            tool_execution::bounded::read(capture_path(fixture, "before.ppu")?)?
+        } else {
+            vec![0; 20]
+        };
+        ensure!(expected_ppu.len() == 20 && ppu.as_ref() == expected_ppu, "Ridley fixture hardware input differs");
+    }
     Ok(())
 }
 
@@ -444,8 +477,12 @@ fn apply_writes(bytes: &mut [u8], fixture: &Case) -> Result<()> {
     Ok(())
 }
 
-fn metrics(directory: &Path, subject: &str) -> Result<CallbackMetrics> {
-    let text = fs::read_to_string(directory.join(format!("{subject}.stdout")))?;
+fn metrics(
+    directory: &Path,
+    subject: &str,
+    reader: &mut crate::admission_reader::Window<'_, '_>,
+) -> Result<CallbackMetrics> {
+    let text = reader.text(directory.join(format!("{subject}.stdout")))?;
     let values = text
         .lines()
         .last()
@@ -506,34 +543,42 @@ fn authenticate_services(bytes: &[u8], effects: &str, expected_calls: u64) -> Re
 
 /// Rechecks retained case outputs, independent expectations and predecessor state.
 pub fn check(directory: &Path, fixture: &Case) -> Result<CaseRecord> {
-    let before = fs::read(directory.join("before.wram"))?;
+    let run = directory.parent().context("Ridley case parent missing")?;
+    check_with(directory, fixture, &mut crate::admission_reader::Window::unsealed(run))
+}
+pub(crate) fn check_with(
+    directory: &Path,
+    fixture: &Case,
+    reader: &mut crate::admission_reader::Window<'_, '_>,
+) -> Result<CaseRecord> {
+    let before = reader.read(directory.join("before.wram"))?;
     ensure!(before.len() == WRAM, "Ridley input WRAM extent differs");
-    authenticate_before(directory, fixture, &before)?;
-    let c = metrics(directory, "c")?;
-    let rust = metrics(directory, "rust")?;
+    authenticate_before(directory, fixture, &before, reader)?;
+    let c = metrics(directory, "c", reader)?;
+    let rust = metrics(directory, "rust", reader)?;
     ensure!(c == rust, "Ridley return/callback/fallback metrics differ");
     ensure!(rust.cpu_fallback_calls == 0 && rust.cpu_fallback_instructions == 0, "Ridley fixture invoked CPU fallback");
     ensure!(rust.c_gameplay_callbacks >= fixture.minimum_callbacks, "Ridley external service coverage missing");
     if let Some(expected) = fixture.expected_return {
         ensure!(rust.returns == expected, "Ridley independent return differs");
     }
-    let c_state = fs::read(directory.join("c-after.wram"))?;
-    let rust_state = fs::read(directory.join("rust-after.wram"))?;
+    let c_state = reader.read(directory.join("c-after.wram"))?;
+    let rust_state = reader.read(directory.join("rust-after.wram"))?;
     ensure!(c_state.len() == WRAM && rust_state.len() == WRAM, "Ridley full output WRAM missing");
     let mut record = CaseRecord {
         name: fixture.name.clone(),
-        before_sha256: digest(&directory.join("before.wram"))?,
-        after_sha256: ["c", "rust"]
-            .into_iter()
-            .map(|subject| Ok((subject.into(), digest(&directory.join(format!("{subject}-after.wram")))?)))
-            .collect::<Result<_>>()?,
+        before_sha256: before.hash().to_owned(),
+        after_sha256: BTreeMap::from([
+            ("c".into(), c_state.hash().to_owned()),
+            ("rust".into(), rust_state.hash().to_owned()),
+        ]),
         returns: BTreeMap::from([("c".into(), c.returns), ("rust".into(), rust.returns)]),
         callbacks: rust.c_gameplay_callbacks,
         results: BTreeMap::from([("c".into(), c), ("rust".into(), rust)]),
         ..Default::default()
     };
     if c_state != rust_state {
-        let offset = c_state.iter().zip(&rust_state).position(|(c, rust)| c != rust).expect("different WRAM");
+        let offset = c_state.iter().zip(rust_state.iter()).position(|(c, rust)| c != rust).expect("different WRAM");
         record.first_mismatch =
             Some(crate::family_model::Mismatch { offset, c: c_state[offset], rust: rust_state[offset] });
         atomic_toml(&directory.join("rejection.toml"), &record)?;
@@ -542,24 +587,27 @@ pub fn check(directory: &Path, fixture: &Case) -> Result<CaseRecord> {
     for (suffix, extent) in
         [("host-after.bin", Some(16)), ("ppu.bin", Some(20)), ("effects.log", None), ("services.bin", None)]
     {
-        let c = fs::read(directory.join(format!("c-{suffix}")))?;
-        let rust = fs::read(directory.join(format!("rust-{suffix}")))?;
+        let c = reader.read(directory.join(format!("c-{suffix}")))?;
+        let rust = reader.read(directory.join(format!("rust-{suffix}")))?;
         if let Some(extent) = extent {
             ensure!(c.len() == extent && rust.len() == extent, "Ridley {suffix} extent differs");
         }
         ensure!(c == rust, "Ridley ordered hardware/service or external state differs: {suffix}");
         if suffix == "services.bin" {
-            authenticate_services(&c, &fs::read_to_string(directory.join("c-effects.log"))?, record.callbacks)?;
+            authenticate_services(&c, &reader.text(directory.join("c-effects.log"))?, record.callbacks)?;
         }
     }
     if fixture.expected_after_file.is_some() {
         let path = directory.join("expected-after.wram");
-        let hash = digest(&path)?;
-        ensure!(Some(hash.as_str()) == fixture.expected_after_sha256.as_deref(), "Ridley captured output hash differs");
-        ensure!(c_state == fs::read(&path)?, "Ridley captured full WRAM output differs");
-        record.capture_after_sha256 = Some(hash);
+        let expected = reader.read(&path)?;
+        ensure!(
+            Some(expected.hash()) == fixture.expected_after_sha256.as_deref(),
+            "Ridley captured output hash differs"
+        );
+        ensure!(c_state == expected, "Ridley captured full WRAM output differs");
+        record.capture_after_sha256 = Some(expected.hash().to_owned());
     }
-    authenticate_capture(directory, fixture)?;
+    authenticate_capture(directory, fixture, reader)?;
     Ok(record)
 }
 

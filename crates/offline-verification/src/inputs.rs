@@ -70,6 +70,7 @@ pub(crate) fn authenticate_implementation(
     run: &Path,
     implementation: &crate::family_model::Implementation,
     artifacts: &BTreeMap<String, String>,
+    reader: &mut crate::admission_reader::Window<'_, '_>,
 ) -> Result<()> {
     #[derive(Deserialize)]
     #[serde(deny_unknown_fields)]
@@ -77,7 +78,7 @@ pub(crate) fn authenticate_implementation(
         binary_sha256: String,
         sources: BTreeMap<String, String>,
     }
-    let retained: ProducerInputs = bounded::object(&run.join("pipeline-inputs.toml"))?;
+    let retained: ProducerInputs = reader.object(run.join("pipeline-inputs.toml"))?;
     ensure!(
         retained.binary_sha256.len() == 64 && retained.binary_sha256.bytes().all(|b| b.is_ascii_hexdigit()),
         "retained producer identity is invalid"
