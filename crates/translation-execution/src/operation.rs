@@ -52,6 +52,37 @@ pub struct OperationResult {
     pub retained_bytes: u64,
 }
 
+/// One freshly authenticated operation and its complete retained dependency
+/// closure. Accessors borrow the same owned admission and perform no I/O.
+/// This snapshot does not authenticate later filesystem state: independent
+/// admission must call `authenticate_request_with_references` again.
+#[derive(Debug)]
+pub struct AuthenticatedOperation {
+    result: OperationResult,
+    result_reference: Reference,
+    references: Vec<Reference>,
+}
+
+impl AuthenticatedOperation {
+    pub fn result(&self) -> &OperationResult {
+        &self.result
+    }
+
+    pub fn result_reference(&self) -> &Reference {
+        &self.result_reference
+    }
+
+    pub fn references(&self) -> &[Reference] {
+        &self.references
+    }
+}
+
+struct ResultPayload {
+    result: OperationResult,
+    reference: Reference,
+    material_references: Vec<Reference>,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 struct Stamp {
@@ -550,23 +581,27 @@ fn write_started(root: &Path, name: &str, intent: &Intent, pid: u32) -> Result<(
 }
 
 fn read_intent(root: &Path, context: &OperationContext) -> Result<Intent> {
-    let intent: Intent = serde_json::from_slice(&retention::read_bounded(&root.join("intent.json"), MAX_METADATA)?)?;
+    Ok(read_intent_with_reference(root, context)?.0)
+}
+
+fn read_intent_with_reference(root: &Path, context: &OperationContext) -> Result<(Intent, Reference)> {
+    let (bytes, reference) = retention::read_with_reference(&root.join("intent.json"), MAX_METADATA)?;
+    let intent: Intent = serde_json::from_slice(&bytes)?;
     ensure!(
         intent.schema == "translation-operation-intent-v1" && intent.context == *context,
         "operation intent context changed"
     );
-    retention::authenticate_reference(&intent.input, MAX_STDIN_BYTES)?;
+    let input = retention::read_authenticated(&intent.input, MAX_STDIN_BYTES.min(intent.limits.stdin_bytes as u64))?;
     for reference in &intent.identities {
         retention::authenticate_reference(reference, MAX_IDENTITY_METADATA)?;
     }
-    let input = retention::read_bounded(&intent.input.path, intent.limits.stdin_bytes as u64)?;
     ensure!(
         request_hash(context, &intent.program, &intent.limits, &input)? == intent.request_sha256,
         "operation intent request seal changed"
     );
     ensure!(intent.input.path == root.join("stdin.bin"), "operation stdin reference redirected");
     check_limits(&intent.limits, &input)?;
-    Ok(intent)
+    Ok((intent, reference))
 }
 
 fn result_seal(record: &ResultRecord) -> Result<String> {
@@ -639,7 +674,11 @@ fn publish(root: &Path, intent: &Intent, output: Result<confinement::RunOutput>)
 }
 
 fn load_result(root: &Path, intent: &Intent) -> Result<OperationResult> {
-    let bytes = retention::read_bounded(&root.join("result.json"), MAX_METADATA)?;
+    Ok(load_result_payload(root, intent)?.result)
+}
+
+fn load_result_payload(root: &Path, intent: &Intent) -> Result<ResultPayload> {
+    let (bytes, result_reference) = retention::read_with_reference(&root.join("result.json"), MAX_METADATA)?;
     let record: ResultRecord = serde_json::from_slice(&bytes)?;
     ensure!(
         record.schema == "translation-operation-result-v1"
@@ -670,9 +709,12 @@ fn load_result(root: &Path, intent: &Intent) -> Result<OperationResult> {
     let mut retained_bytes = bytes.len() as u64;
     let mut read = |reference: &Reference, expected: PathBuf, maximum: u64| -> Result<Vec<u8>> {
         ensure!(reference.path == expected, "operation output reference redirected");
-        retention::authenticate_reference(reference, maximum)?;
         retained_bytes = retained_bytes.checked_add(reference.bytes).context("operation retained extent overflow")?;
-        retention::read_bounded(&reference.path, maximum)
+        ensure!(
+            retained_bytes <= intent.limits.writable_bytes + MAX_METADATA,
+            "retained operation output exceeds aggregate bound"
+        );
+        retention::read_authenticated(reference, maximum)
     };
     let stdout = record
         .stdout
@@ -697,7 +739,9 @@ fn load_result(root: &Path, intent: &Intent) -> Result<OperationResult> {
         retained_bytes <= intent.limits.writable_bytes + MAX_METADATA,
         "retained operation output exceeds aggregate bound"
     );
-    Ok(OperationResult {
+    let material_references =
+        record.stdout.iter().chain(record.stderr.iter()).chain(record.outputs.values()).cloned().collect();
+    let result = OperationResult {
         passed: record.passed,
         status_raw: record.status_raw,
         stdout,
@@ -706,7 +750,8 @@ fn load_result(root: &Path, intent: &Intent) -> Result<OperationResult> {
         diagnostic: record.diagnostic,
         result_sha256: record.result_sha256,
         retained_bytes,
-    })
+    };
+    Ok(ResultPayload { result, reference: result_reference, material_references })
 }
 
 fn reconcile(root: &Path, intent: &Intent) -> Result<OperationResult> {
@@ -971,10 +1016,7 @@ pub fn runner_main() -> Result<()> {
 }
 
 pub fn authenticate(root: &Path, context: &OperationContext) -> Result<OperationResult> {
-    let path = directory(root, context)?;
-    let intent = read_intent(&path, context)?;
-    ensure!(path.join("result.json").try_exists()?, "operation has no sealed completion");
-    load_result(&path, &intent)
+    Ok(authenticate_complete(root, context, None)?.result)
 }
 
 /// Read-only trust transition for a prescribed adapter invocation. Matching
@@ -986,46 +1028,58 @@ pub fn authenticate_request(
     limits: &RunLimits,
     input: &[u8],
 ) -> Result<OperationResult> {
+    Ok(authenticate_request_with_references(root, context, program, limits, input)?.result)
+}
+
+/// Admit one exact prescribed request and return its output and complete
+/// retained references from the same bounded reads. Only this module can
+/// construct the owned admission; caller-supplied hashes are never sufficient.
+pub fn authenticate_request_with_references(
+    root: &Path,
+    context: &OperationContext,
+    program: &Program,
+    limits: &RunLimits,
+    input: &[u8],
+) -> Result<AuthenticatedOperation> {
+    authenticate_complete(root, context, Some((program, limits, input)))
+}
+
+fn authenticate_complete(
+    root: &Path,
+    context: &OperationContext,
+    request: Option<(&Program, &RunLimits, &[u8])>,
+) -> Result<AuthenticatedOperation> {
     let path = directory(root, context)?;
-    let intent = read_intent(&path, context)?;
-    ensure!(
-        intent.request_sha256 == request_hash(context, program, limits, input)?,
-        "cached operation differs from prescribed request"
-    );
+    let (intent, intent_reference) = read_intent_with_reference(&path, context)?;
+    if let Some((program, limits, input)) = request {
+        ensure!(
+            intent.request_sha256 == request_hash(context, program, limits, input)?,
+            "cached operation differs from prescribed request"
+        );
+    }
     ensure!(path.join("result.json").try_exists()?, "operation has no sealed completion");
-    load_result(&path, &intent)
-}
-
-pub fn reference(root: &Path, context: &OperationContext) -> Result<Reference> {
-    authenticate(root, context)?;
-    retention::seal_file(&directory(root, context)?.join("result.json"), MAX_METADATA)
-}
-
-/// Exact transitive dependencies needed to authenticate a receipt after its
-/// source checkout/runtime is retired. Material output is referenced only for
-/// passing gates; failed gates retain one bounded diagnostic.
-pub fn references(root: &Path, context: &OperationContext) -> Result<Vec<Reference>> {
-    let path = directory(root, context)?;
-    let intent = read_intent(&path, context)?;
-    load_result(&path, &intent)?;
-    let record: ResultRecord =
-        serde_json::from_slice(&retention::read_bounded(&path.join("result.json"), MAX_METADATA)?)?;
-    let mut references = vec![
-        retention::seal_file(&path.join("intent.json"), MAX_METADATA)?,
-        intent.input,
-        retention::seal_file(&path.join("result.json"), MAX_METADATA)?,
-    ];
+    let payload = load_result_payload(&path, &intent)?;
+    let mut references = vec![intent_reference, intent.input, payload.reference.clone()];
     references.extend(intent.identities);
-    references.extend(record.stdout);
-    references.extend(record.stderr);
-    references.extend(record.outputs.into_values());
+    references.extend(payload.material_references);
     for name in ["runner.json", "sandbox.json", "interrupted-output.json", "interrupted-output-cleanup.json"] {
         let record = path.join(name);
         if record.try_exists()? {
             references.push(retention::seal_file(&record, MAX_METADATA)?);
         }
     }
-    Ok(references)
+    Ok(AuthenticatedOperation { result: payload.result, result_reference: payload.reference, references })
+}
+
+pub fn reference(root: &Path, context: &OperationContext) -> Result<Reference> {
+    Ok(authenticate_complete(root, context, None)?.result_reference)
+}
+
+/// Exact transitive dependencies needed to authenticate a receipt after its
+/// source checkout/runtime is retired. Material output is referenced only for
+/// passing gates; failed gates retain one bounded diagnostic.
+pub fn references(root: &Path, context: &OperationContext) -> Result<Vec<Reference>> {
+    Ok(authenticate_complete(root, context, None)?.references)
 }
 
 /// Stop only exact recorded kernel identities. pidfd signaling cannot hit a

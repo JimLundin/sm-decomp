@@ -152,19 +152,139 @@ fn complete_operation_admission_reads_each_retained_byte_once() {
         .unwrap(),
     )
     .unwrap();
-    let ((result, result_reference, references), read_bytes) =
-        translation_execution::retention::testing::read_bytes(|| {
-            let result =
-                operation::authenticate_request(&root, &context, &fixture.program, &limits(), b"bounded-input")
-                    .unwrap();
-            let result_reference = operation::reference(&root, &context).unwrap();
-            let references = operation::references(&root, &context).unwrap();
-            (result, result_reference, references)
-        });
-    assert_eq!(result, produced);
-    assert!(references.contains(&result_reference));
-    let expected_bytes = references.iter().map(|reference| reference.bytes).sum::<u64>();
+    let (admitted, read_bytes) = translation_execution::retention::testing::read_bytes(|| {
+        let admitted = operation::authenticate_request_with_references(
+            &root,
+            &context,
+            &fixture.program,
+            &limits(),
+            b"bounded-input",
+        )
+        .unwrap();
+        for _ in 0..3 {
+            assert_eq!(admitted.result(), &produced);
+            assert!(admitted.references().contains(admitted.result_reference()));
+        }
+        admitted
+    });
+    assert_eq!(admitted.result(), &produced);
+    assert_eq!(admitted.result_reference(), &operation::reference(&root, &context).unwrap());
+    assert_eq!(admitted.references(), operation::references(&root, &context).unwrap());
+    for reference in admitted.references() {
+        let bytes = fs::read(&reference.path).unwrap();
+        assert_eq!(reference.sha256, sha256(&bytes));
+        assert_eq!(reference.bytes, bytes.len() as u64);
+    }
+    let expected_bytes = admitted.references().iter().map(|reference| reference.bytes).sum::<u64>();
     assert_eq!(read_bytes, expected_bytes, "complete operation admission reread retained evidence");
+    let (_, independent_read_bytes) = translation_execution::retention::testing::read_bytes(|| {
+        let independent = operation::authenticate_request_with_references(
+            &root,
+            &context,
+            &fixture.program,
+            &limits(),
+            b"bounded-input",
+        )
+        .unwrap();
+        assert_eq!(independent.result(), admitted.result());
+        assert_eq!(independent.result_reference(), admitted.result_reference());
+        assert_eq!(independent.references(), admitted.references());
+    });
+    assert_eq!(independent_read_bytes, expected_bytes, "independent admission did not read the complete evidence");
+    eprintln!("Complete admission read {read_bytes} bytes; independent admission read {independent_read_bytes} bytes");
+}
+
+#[test]
+fn owned_admission_keeps_exact_bytes_while_fresh_admission_rechecks_retained_files() {
+    let fixture = Fixture::new();
+    let context = fixture.context("owned-admission");
+    let first = fixture.run(&context).unwrap();
+    assert!(first.passed, "{}", first.diagnostic);
+    let root = fixture.operation_root();
+    let admit = || {
+        operation::authenticate_request_with_references(&root, &context, &fixture.program, &limits(), b"bounded-input")
+    };
+    let admitted = admit().unwrap();
+    let directory = operation::directory(&root, &context).unwrap();
+    let output = directory.join("output/member-0000.bin");
+    let original = fs::read(&output).unwrap();
+    let modified = output.metadata().unwrap().modified().unwrap();
+    fs::set_permissions(&output, fs::Permissions::from_mode(0o600)).unwrap();
+    fs::write(&output, b"forged").unwrap();
+    fs::File::options()
+        .write(true)
+        .open(&output)
+        .unwrap()
+        .set_times(fs::FileTimes::new().set_modified(modified))
+        .unwrap();
+    assert!(admit().is_err(), "same-size output edit with restored mtime was admitted");
+    assert_eq!(admitted.result().outputs[Path::new("result.bin")], b"sealed");
+    fs::remove_file(&output).unwrap();
+    assert!(admit().is_err(), "a known reference must not stand in for missing payload bytes");
+    fs::write(&output, &original).unwrap();
+    let saved = output.with_extension("original");
+    fs::rename(&output, &saved).unwrap();
+    std::os::unix::fs::symlink(&saved, &output).unwrap();
+    assert!(admit().is_err(), "retained output symlink was admitted");
+    fs::remove_file(&output).unwrap();
+    fs::rename(&saved, &output).unwrap();
+    assert_eq!(admit().unwrap().result(), &first);
+
+    let mut wrong_program = fixture.program.clone();
+    wrong_program.arguments = vec!["failure".into()];
+    assert!(
+        operation::authenticate_request_with_references(&root, &context, &wrong_program, &limits(), b"bounded-input")
+            .is_err()
+    );
+    let mut wrong_context = context.clone();
+    wrong_context.attempt += 1;
+    assert!(
+        operation::authenticate_request_with_references(
+            &root,
+            &wrong_context,
+            &fixture.program,
+            &limits(),
+            b"bounded-input",
+        )
+        .is_err()
+    );
+    assert!(
+        operation::authenticate_request_with_references(&root, &context, &fixture.program, &limits(), b"wrong-input")
+            .is_err()
+    );
+    let mut wrong_limits = limits();
+    wrong_limits.stdout_bytes += 1;
+    assert!(
+        operation::authenticate_request_with_references(
+            &root,
+            &context,
+            &fixture.program,
+            &wrong_limits,
+            b"bounded-input",
+        )
+        .is_err()
+    );
+
+    // Metadata references bind actual retained bytes, not a reserialization
+    // of decoded fields. Formatting alone preserves the semantic result seal.
+    for name in ["intent.json", "result.json"] {
+        let path = directory.join(name);
+        let original = fs::read(&path).unwrap();
+        let mut formatted = original.clone();
+        formatted.push(b'\n');
+        fs::set_permissions(&path, fs::Permissions::from_mode(0o600)).unwrap();
+        fs::write(&path, &formatted).unwrap();
+        let fresh = admit().unwrap();
+        assert_eq!(fresh.result().result_sha256, first.result_sha256);
+        let reference = fresh.references().iter().find(|reference| reference.path == path).unwrap();
+        assert_eq!(reference.sha256, sha256(&formatted));
+        assert_eq!(reference.bytes, formatted.len() as u64);
+        assert_ne!(admitted.references().iter().find(|reference| reference.path == path).unwrap(), reference);
+        fs::write(path, original).unwrap();
+    }
+    fs::remove_file(&fixture.program.executable).unwrap();
+    fs::remove_file(fixture.root.join("probe.c")).unwrap();
+    assert_eq!(admit().unwrap().result(), &first, "independent admission depends on a retired producer");
 }
 
 #[test]
@@ -177,6 +297,16 @@ fn failed_gate_has_one_bounded_stop_record_and_no_retained_large_output() {
     assert!(first.diagnostic.len() <= operation::MAX_DIAGNOSTIC_BYTES);
     assert!(first.stdout.is_empty() && first.stderr.is_empty() && first.outputs.is_empty());
     assert!(!operation::directory(&fixture.operation_root(), &ctx).unwrap().join("output").exists());
+    let admitted = operation::authenticate_request_with_references(
+        &fixture.operation_root(),
+        &ctx,
+        &fixture.program,
+        &limits(),
+        b"bounded-input",
+    )
+    .unwrap();
+    assert_eq!(admitted.result(), &first);
+    assert!(admitted.references().iter().all(|reference| !reference.path.parent().unwrap().ends_with("output")));
     assert_eq!(fixture.run(&ctx).unwrap(), first);
     let mut changed = fixture.program.clone();
     changed.arguments = vec!["sleep".into()];

@@ -192,16 +192,27 @@ pub(crate) fn regular(path: &Path, maximum: u64) -> Result<File> {
 }
 
 pub(crate) fn read_bounded(path: &Path, maximum: u64) -> Result<Vec<u8>> {
-    let mut file = regular(path, maximum)?;
-    let expected = file.metadata()?.len();
     let mut bytes = Vec::new();
-    (&mut file).take(maximum.saturating_add(1)).read_to_end(&mut bytes)?;
-    #[cfg(any(test, feature = "test-support"))]
-    testing::read(bytes.len());
-    ensure!(
-        bytes.len() as u64 == expected && bytes.len() as u64 <= maximum,
-        "retained file changed or exceeded its extent"
-    );
+    read_chunks(path, maximum, |chunk| bytes.extend_from_slice(chunk))?;
+    Ok(bytes)
+}
+
+/// The reference seals the same owned bytes returned by this bounded read.
+/// A separate admission always opens the current file again.
+pub(crate) fn read_with_reference(path: &Path, maximum: u64) -> Result<(Vec<u8>, Reference)> {
+    let mut bytes = Vec::new();
+    let mut hash = Sha256::new();
+    let count = read_chunks(path, maximum, |chunk| {
+        hash.update(chunk);
+        bytes.extend_from_slice(chunk);
+    })?;
+    Ok((bytes, Reference { path: path.to_path_buf(), sha256: format!("{:x}", hash.finalize()), bytes: count }))
+}
+
+pub(crate) fn read_authenticated(reference: &Reference, maximum: u64) -> Result<Vec<u8>> {
+    ensure!(digest_valid(&reference.sha256) && reference.bytes <= maximum, "invalid retention reference");
+    let (bytes, observed) = read_with_reference(&reference.path, reference.bytes)?;
+    ensure!(observed == *reference, "retained content seal changed");
     Ok(bytes)
 }
 
@@ -235,9 +246,14 @@ pub(crate) fn write_once(path: &Path, bytes: &[u8], maximum: u64) -> Result<()> 
 }
 
 pub fn seal_file(path: &Path, maximum: u64) -> Result<Reference> {
+    let mut hash = Sha256::new();
+    let count = read_chunks(path, maximum, |chunk| hash.update(chunk))?;
+    Ok(Reference { path: path.to_path_buf(), sha256: format!("{:x}", hash.finalize()), bytes: count })
+}
+
+fn read_chunks(path: &Path, maximum: u64, mut observe: impl FnMut(&[u8])) -> Result<u64> {
     let mut file = regular(path, maximum)?;
     let before = file.metadata()?;
-    let mut hash = Sha256::new();
     let mut count = 0u64;
     let mut buffer = [0u8; 64 * 1024];
     loop {
@@ -248,8 +264,8 @@ pub fn seal_file(path: &Path, maximum: u64) -> Result<Reference> {
         #[cfg(any(test, feature = "test-support"))]
         testing::read(n);
         count = count.checked_add(n as u64).context("retained extent overflow")?;
-        ensure!(count <= maximum, "retained file exceeded budget while sealing");
-        hash.update(&buffer[..n]);
+        ensure!(count <= before.len() && count <= maximum, "retained file exceeded budget while reading");
+        observe(&buffer[..n]);
     }
     let after = file.metadata()?;
     ensure!(
@@ -261,9 +277,9 @@ pub fn seal_file(path: &Path, maximum: u64) -> Result<Reference> {
             && after.mtime_nsec() == before.mtime_nsec()
             && after.ctime() == before.ctime()
             && after.ctime_nsec() == before.ctime_nsec(),
-        "retained file changed while sealing"
+        "retained file changed while reading"
     );
-    Ok(Reference { path: path.to_path_buf(), sha256: format!("{:x}", hash.finalize()), bytes: count })
+    Ok(count)
 }
 
 pub fn authenticate_reference(reference: &Reference, maximum: u64) -> Result<()> {
