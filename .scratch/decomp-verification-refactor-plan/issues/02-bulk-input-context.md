@@ -55,6 +55,17 @@ gates and ticket 01 baseline acceptance remain pending; this ticket stays claime
 
 ## Comments
 
+2026-10-15: full-catalog graph-capacity validation exposed a bulk capture defect:
+the raw GeneratedPlm manifest names an obsolete synthetic ROM that ordinary
+preparation should replace through the trusted generator. Its missing/stale file
+must not block capture of the effective required inputs. A subsequent diagnostic
+also hit aggregate input accounting before scheduler reservations. Root assigns
+the narrow production-seam correction and public regression to the original bulk
+owner in `/home/jim/sm-decomp-performance-generated` from `87fb368`; exact ownership
+is in the checkpoint. Preserve the original registration, complete current
+generated domain, base ROM identity, source freshness and existing limits.
+This must pass through the real full-catalog capture path before final freeze.
+
 Do not introduce a daemon, public editable graph or second authority ledger.
 
 2026-10-15 scheduling refinement: the metrics interface is frozen at

@@ -7,6 +7,45 @@ Authorization: user instructed "please go ahead and implement" the nine-ticket p
 
 ## Current state (supersedes historical observations below)
 
+The larger controls found two remaining correctness/performance gates before
+freeze. Full ordinary catalog capture tries to open the obsolete synthetic ROM
+in the raw PLM registration before the trusted generator supplies its current
+inputs; after bypassing that only for diagnosis, aggregate trusted I/O also
+exhausted before graph reservations. Root assigned the corrected production
+capture seam to `/root/bulk_context_resume` in
+`/home/jim/sm-decomp-performance-generated`, branch
+`performance/generated-plm-capture-20261015`, baseline `87fb368`, proof
+`/home/jim/sm-decomp-performance-generated-proof`. That owner temporarily has
+exclusive Cargo writer use of `/home/jim/sm-decomp-offline-verifier/target`.
+Root has no build in that target. No manifest, ROM identity or budget may be
+silently changed. The complete real public capture path must pass.
+
+The eight-family scheduler control completed 192 actual-C/Rust pairs with all
+eight Fixture groups overlapping. It observed 322 helper launches, peak resident
+helpers eight, producer peak four and 52.761 seconds of Fixture wall time.
+Bounded helper residency alone did not remove helper churn. The graph owner is
+testing bounded reuse credits while preserving fair family selection and all
+failure/continuation obligations. The final full-catalog memory control waits for
+the corrected production input capture; synthetic substitutions are diagnostic.
+
+Native test repair `955ffc3` passed its complete gate in 96.03 seconds, including
+both 16-pair/34-producer families and all negatives. Root integrated handoff
+`af96cca`, removed its worker and Cargo target, and authenticated all four retained
+proof groups afterward. Root also integrated tool handoff `a1f80f9`, retired that
+worktree with its four exact referenced source files restored, and authenticated
+all nine retained ordinary samples. Both cleanup passes succeeded for each proof.
+The old `7b27ea1` integration worktree is retired; its two observed-outcome Native
+manifests authenticated after removal (eleven passed recipes plus the original
+Ceres rejection, and the original full-real rejection). Original expected-pass
+manifests remain unchanged and still reject those incomplete gates.
+
+Core primitive readers prebuilt successfully from `3c08126` in 34.21 seconds;
+this is build preparation, not final-source acceptance. Helpers/tools remain
+separately retained. The tools worker prepared exact isolated Installation
+commands with all 44 historical gameplay source pins and 16 Fixture pairs intact;
+final tool bindings are still unset. Its next work needs only the candidate/proof
+directories, not its retired checkout.
+
 Latest continuation: final assembly is now `6509381`, including source-ready 08
 (`3e02b61`, merge `8b5ebd5`), Native test repair `955ffc3` (merge `b7463de`) and
 complete runtime-obligation documentation. The focused runtime proof passed all
@@ -26,7 +65,7 @@ supported isolated Installation preparation still wait for the combined source.
 See the latest comments in tickets 01, 07, 08 and 09; no active production state
 changed and no complete-batch multiplier is established.
 
-Root retains exclusive Cargo writer ownership of
+Before the explicit temporary transfer above, root held Cargo writer ownership of
 `/home/jim/sm-decomp-offline-verifier/target` from the completed 08 worker.
 The unchanged `translation-execution`/`evidence` helpers prebuilt from `cc059fd`
 successfully in 74.52 seconds, peak RSS 586,648 KiB. Cargo exec `98467` is complete;
@@ -34,7 +73,7 @@ it used the `verification` profile, locked/offline jobs1 and a 900-second bound.
 Exact command/resources and separately copied tools/debug companions are under
 `/home/jim/sm-decomp-performance-final-proof/helper-build-cc059fd/`.
 Final controller/test-reader build and final source seals still wait for the
-combined freeze. No worker may write this target until root returns it.
+combined freeze. The current exclusive target owner is the GeneratedPlm worker.
 
 The completed 08 worker has resumed independent isolated Installation input
 preparation and the final retention audit. It must wait for root's exact frozen
