@@ -1,13 +1,14 @@
 # Generated PLM effective input capture
 
-Status: claimed; effective capture, full 177-family production capture and
-mutation/budget controls pass. Complete generated actual-C composition pending.
+Status: ready for integration-owner handoff; all scoped controls pass.
+Worktree retirement remains with the integration owner.
 Owner: `/root/bulk_context_resume`, parent `/root`, session
 `01a13e7f-ab01-7413-a1c2-288b08a4b719`.
 Worktree: `/home/jim/sm-decomp-performance-generated`.
 Branch: `performance/generated-plm-capture-20261015`.
 Baseline: `87fb368`.
-Exclusive Cargo target: `/home/jim/sm-decomp-offline-verifier/target`.
+Cargo target: `/home/jim/sm-decomp-offline-verifier/target`; explicitly returned
+to `/root` after the completed gate. No further worker target use is planned.
 Proof root: `/home/jim/sm-decomp-performance-generated-proof`.
 
 Own `input_view.rs`, `ordinary.rs`, only `capture_batch_inputs` in `bulk.rs`
@@ -97,5 +98,50 @@ failed trial reclaimed zero bytes. The test-only copier now includes both files
 and `rust-toolchain.toml`; its incremental build passed. No production source
 changed in this repair.
 
-Pending: repaired generated actual-C composition, final source checkpoint,
-retained readers and integration-owner retirement.
+The test-only prerequisite repair is checkpointed at **`2511abd`**. Its complete
+generated ordinary composition passed in **80.01s** (80.02s external wall time),
+exec 11481 exit 0, with all **1,444 actual-C Fixture cases / six routines**.
+Unchanged ordinary reuse passed. Both cleanup passes then passed, and the test
+spawned the retained reader in a separate process with
+`PATH=/unavailable-generated-plm-compilers`; complete independent admission
+passed in **8.16s**. No additional verification was launched after root's request
+to finish the existing evidence only.
+
+Final proof:
+`/home/jim/sm-decomp-performance-generated-proof/2511abd`.
+The complete control is `full-real/complete-ordinary-276456-0/`; its
+`replay.toml` has SHA-256
+`2dd56bde02754d2f823b326a1c4c78631e423b923bb68c2e983fa4195179c3a4`.
+The verdict is
+`bulk/evidence/1792094867831524-276456-3/verdict.toml`, SHA-256
+`9f6b89c5c16dc12ed20cb147e12445e653cedcda9eae5009c4ca409b4007a9f3`.
+The retained reader is `tools/generated-plm-tests`, SHA-256
+`66569553053621c6be0e8f86156d637c77d0853f16308b987b10a8c2a0b6ce32`.
+`completion-evidence.sha256` records these pointers, cleanup outputs, reader
+output, logs, tool checksums and frozen-source/prerequisite checksum lists.
+The exact tracked frozen source passed its checksum verification.
+
+Cleanup reclaimed **235,274,240 bytes** across **4,332 snapshots**. The initial
+pass and every earlier successful/failed control reclaimed zero bytes; all
+recorded cleanup passes succeeded. Remaining filesystem space was
+**96,054,546,432 bytes**. No worker Cargo/test/compiler/reader writer remains.
+All four private `tmp/` roots contain no files.
+
+## Retirement dependencies
+
+No retained TOML/JSON/JSONL record references the worker checkout or Cargo
+target, excluding copied source, frozen snapshots and build logs. No source
+needs to remain at the worker checkout path. Preserve the existing proof root,
+including historical failures and each control's source snapshot.
+
+For the passing generated-family reader, the exact source dependency is
+`2511abd/full-real/complete-ordinary-276456-0/source/` beneath the proof root.
+It contains the pinned C source/archive, base ROM, registration and all captured
+Rust/tool source. Retain the sibling `bulk/` tree (generated ROM/manifest and
+complete evidence), `replay.toml`, cleanup records and the reader above.
+The reader requires no worker build output or obsolete `/tmp` ROM asset.
+
+Root already integrated production commits `8fcc32c`, `2b0e206` and test repair
+`2511abd`. The remaining worker action is this documentation checkpoint;
+integration-owner worktree retirement and final effort acceptance remain with
+`/root`.
