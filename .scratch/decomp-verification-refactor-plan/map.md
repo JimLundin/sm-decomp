@@ -1,7 +1,7 @@
 # Performance refactor ticket map
 
 Planning status: complete proposal
-Implementation status: 05 resolved; 01, 02 and 03 claimed; no production claims reserved
+Implementation status: 05 resolved; 01, 02, 03 and 04 claimed; no production claims reserved
 
 The active Offline family extraction must finish and its owners must hand over
 the relevant source before these implementation tickets are dispatched. Freeze
@@ -13,7 +13,7 @@ production policies retain their own authority and prerequisites.
 | [01](issues/01-baseline-and-metrics.md) | task | None | Current phase/reuse metrics, benchmark requirements and budgets |
 | [02](issues/02-bulk-input-context.md) | task | Frozen 01 interface; final acceptance waits for 01 | Small bulk Interface and one immutable authenticated input/catalog context |
 | [03](issues/03-dependency-and-result-identities.md) | task | Frozen 02 catalog interface for isolated scanner; final acceptance waits for 02 | Syntax-aware dependency facts and precise identity contracts |
-| [04](issues/04-shared-build-preparation.md) | task | 03 | Shared compiler preparation and eligible build coalescing |
+| [04](issues/04-shared-build-preparation.md) | task | Frozen 02 C seam for isolated preparation; final acceptance waits for 02/03 | Shared compiler preparation and eligible build coalescing |
 | [05](issues/05-offline-evidence-prototype.md) | prototype | None | Measured indexed-evidence experiment using frozen admitted baseline outputs |
 | [06](issues/06-indexed-evidence-and-admission.md) | task | 02, 03, 05 | Bounded payload reuse within ordinary/Native admission; current formats retained |
 | [07](issues/07-batch-work-graph.md) | task | 04, 06 | Private work graph and explicit Native scheduling contracts |
@@ -66,6 +66,12 @@ Ticket 03's pure owned source-facts slice likewise starts from ticket 02's
 coherent `94104cc` catalog checkpoint while 02 finishes captured compiler inputs.
 Its execution/planning consumers join the next frozen 02 checkpoint, and final
 acceptance still waits for complete 02. See the exact ownership in ticket 03.
+
+Ticket 04 starts isolated compiler-preparation work from 02's `b333ca5` C input
+validation seam. It preserves broad cache identities and per-family cancellation;
+02/03 still gate final acceptance and any new artifact eligibility. The released
+Native build target is exclusively assigned to this worker while retained Native
+verification runs from independent copied tools.
 
 ## Decisions so far
 

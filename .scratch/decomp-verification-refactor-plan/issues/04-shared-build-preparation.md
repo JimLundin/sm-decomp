@@ -1,6 +1,6 @@
 # Share eligible compiler preparation and artifacts across families
 
-Status: open
+Status: claimed
 Blocked by: 03
 Triage: ready-for-agent
 Type: task
@@ -46,3 +46,22 @@ source/flags/artifact identities, negative controls and scoped cleanup/admission
 ## Comments
 
 Common reference images are a measured design choice, not an all-game binary mandate.
+
+2026-10-15: isolated implementation starts from ticket 02's frozen generic C
+dependency-validation seam `b333ca5c488e9f923c5672c321284f870f8fbede` while
+ticket 03 completes its independent source facts. This refines the implementation
+dependency only: final acceptance still requires complete 02/03. Sharing immutable
+compiler facts, with per-family cancellation and existing cache identities, does
+not require narrowing source dependencies. New eligible artifacts remain gated
+on exact path, emitted-input and environment proofs.
+
+Owner: `/root/shared_preparation`, under integration session
+`01a13e7f-ab01-7413-a1c2-288b08a4b719`. Worktree:
+`/home/jim/sm-decomp-performance-builds`, branch
+`performance/shared-preparation-20261015`. The worker owns
+`crates/tool-execution/src/builds.rs`, `build_cache.rs`, related scoped tests and
+its private handoff. Offline recipe/context attachment is coordinated with
+`/root/bulk_context_resume`; main registration and integration stay with root.
+Exclusive released build target: `/home/jim/sm-decomp-offline-verifier/target`;
+retained Native tools are independent copies and no build writer survives there.
+Private proof root: `/home/jim/sm-decomp-performance-builds-proof`.

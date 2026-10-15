@@ -1,7 +1,8 @@
 # Fresh frozen-source Native verification
 
-Status: active; building exact current release readers
-Owner: `/root/recover_extraction_verification`
+Status: active; complete twelve-recipe gate running, handed to integrator for monitoring
+Owner: `/root` integration owner; `/root/native_verification_resume` has returned
+the live proof after checked recovery of stopped `/root/recover_extraction_verification`
 Integration owner session: `01a13e7f-ab01-7413-a1c2-288b08a4b719`
 Frozen source: `7b27ea1a29bb2ade3bc6483f99bf59626e298671`
 Worktree: `/home/jim/sm-decomp-performance-integration`
@@ -43,8 +44,15 @@ before reuse. All Cargo commands use locked/offline release, one job, and a
 separate 1,800-second build bound. All producers use the shared root
 `SM_PIPELINE_ROOT=/home/jim/sm-decomp/out/pipeline`, `SM_PIPELINE_WORKERS=4`.
 
-Active reader build: exec session `80649`; observed timeout PID `1507495`,
-Cargo PID `1507496`. TMPDIR is `<proof-parent>/build-tmp`.
+The reader build completed successfully (exit 0). Its externally measured wall
+time was 17:12.39; Cargo's compilation summary reported 15m41s. The emitted
+reader was independently copied to `tools/sm-pipeline-tests`, compared with the
+emitted file, and sealed in `tools/reader.sha256`:
+
+`3ee16ec9010ac48178ad60bec656f3796e7a7f8f0d39cf585da0e8347f9510fd`.
+
+Its Cargo fingerprint is retained in `logs/reader-build-fingerprint.json`.
+TMPDIR is `<proof-parent>/build-tmp`.
 
 ```sh
 timeout --signal=TERM 1800s cargo test --locked --offline --release -j 1 \
@@ -52,13 +60,139 @@ timeout --signal=TERM 1800s cargo test --locked --offline --release -j 1 \
 ```
 
 Exact stdout/stderr and command/resource results are in `logs/reader-build.log`
-and `logs/reader-build.time`. Do not launch a duplicate. Retain the exact emitted
-test executable immediately, then build the current CLI and separate sandbox,
-recorded-rewrite and evidence helpers. The 33 CLI integration targets are not
-rebuilt merely to obtain this reader. Later execution invokes retained binaries
-directly so a narrowed Cargo command cannot change the feature cohort.
+and `logs/reader-build.time`. The matching CLI and separate sandbox,
+recorded-rewrite and evidence helper build is active in exec session `1066`:
+
+```sh
+timeout --signal=TERM 1800s cargo build --locked --offline --release -j 1 \
+  -p pipeline -p translation-execution -p evidence --bins
+```
+
+Observed on recovery: Cargo PID `1622004`, timeout PID `1622002`, starting
+2026-10-15 16:56:53 Europe/Stockholm (14:56:53 UTC). Its exact output and
+resource result are `logs/controller-helpers-build.log` and
+`logs/controller-helpers-build.time`. Inspect liveness before resuming; do not
+launch a duplicate. Retain and hash each freshly emitted executable after it
+finishes. The 33 CLI integration targets are not rebuilt merely to obtain the
+reader. Later execution invokes retained binaries directly so a narrowed Cargo
+command cannot change the feature cohort.
+
+### Checked recovery, 2026-10-15
+
+The integrator observed the old worker stopped and delegated only this proof
+parent and handoff to the replacement verifier. Recovery process inspection
+found no surviving Cargo, rustc, reader or producer. The helper build had
+finished successfully: Cargo reports 21m58s, while the external resource log
+reports 37m41.13 and exit 0. The host/session interruption leaves that wall-clock
+discrepancy unexplained; it is retained as observed and is not a performance
+comparison. No completed build or catalog gate was repeated.
+
+Freshly emitted helpers were copied independently from the exclusively held
+target, compared byte for byte, and sealed in `tools/helpers.sha256`:
+
+| Retained executable | SHA-256 |
+| --- | --- |
+| `sm-pipeline` | `20c8a35fab96ce9e34e6c8817d26eb4abb1b30f73c162116f31d093d91fbe108` |
+| `sm-translation-sandbox` | `3795227bf9930061fd767a82e8897f42df56f7347d7767e155c1080f5bf22187` |
+| `sm-translation-recorded-rewrite` | `fa774ed35b6251b4e465ea053ac0273219d87297befc871bacd37e49164b6b3f` |
+| `sm-evidence` | `3d698b74aff8aadb0b77e14fe39bed35fb481553774e01c3ea871f9c3a7d35e6` |
+
+The retained reader seal, all frozen tracked-source hashes, private prerequisite
+hashes and clean integrated HEAD were checked again before producer launch.
+Logs: `logs/*-recovery-check.log`,
+`logs/frozen-source-before-producers-recovery.log`,
+`logs/prerequisites-before-producers-recovery.log`,
+`logs/recovery-processes.txt`, `logs/recovery-boot-id.txt` and
+`logs/recovery-observed.txt`.
+
+Both retained-CLI cleanup passes completed for each of `catalog/` and
+`catalog-tmp/`; all four reclaimed zero bytes. Every catalog record and generated
+source hash passed afterward. Exact stdout/stderr/resource results are retained
+under `logs/catalog[-tmp]-cleanup*`; free space is in
+`logs/recovery-free-space-after-catalog.txt`. Catalog has no Native receipt or
+producer to authenticate. Its post-cleanup check authenticates the retained
+catalog records and generated-input seals without replaying preparation.
+
+Next approved command is recorded in `logs/recipes-command.txt`: the exact
+retained reader selects one ignored recipe gate with all twelve declarations,
+PLM first, unchanged per-family/producer limits, shared four-worker capacity,
+and `SM_NATIVE_PERFORMANCE_ONLY` absent. No prior `recipes/` output exists.
+Checkpoint its process identity immediately after launch. The frozen assembly
+remains unchanged; application diagnostics on that source do not authorize a
+source edit by this verifier.
+
+Recipe launch checkpoint: exec session `11384`, timer PID `9353`, retained-reader
+PID `9356`, both observed starting 2026-10-15 18:53:32 Europe/Stockholm
+(16:53:32 UTC). `logs/recipes.started.txt`, `logs/recipes-processes.txt` and
+`logs/recipes-proc-start.stat` retain the start identity. Initial stdout selects
+one test. Observe that exact process/`logs/recipes.log`; do not duplicate it.
+
+### Live-process handback to the integrator
+
+At the integrator's explicit direction, this verifier returns the still-running
+recipe process without terminating it or launching another gate. Exclusive
+proof/handoff ownership returns to the integration owner. Latest liveness and
+kernel start ticks are recorded in `logs/recipes-handoff-observed.txt`,
+`logs/recipes-handoff-processes.txt` and `logs/recipes-handoff-proc.stat`.
+`logs/recovery-handoff-seals.sha256` binds recovered tool/source/prerequisite,
+catalog-cleanup and next-command records. Recipe stdout remains
+`logs/recipes.log`; `/usr/bin/time` writes final resource statistics and the
+process exit status to `logs/recipes.time` when it completes. There is no
+separate exit-code sidecar. Exec session `11384` can be polled if available;
+otherwise inspect the same PID/start identity and the final time/log records.
+
+No complete twelve-recipe gate result or new failure was available at handback.
+The latest observation found all 3,941 PLM producer results plus its published
+Native receipt and ordinary verdict; their initial seals/mtimes are retained in
+`logs/recipe-handoff-first-receipt.sha256` and
+`logs/recipe-handoff-first-receipt.stat`. Full retry/cleanup/independent
+authentication still needs the gate's final outcome. Completed
+catalog preparation remains passed and cleaned; its retained seals passed.
+The required real recipe domain is still all twelve declarations / 8,159 pairs.
+PLM is first; the successful catalog result does not admit actual-C execution.
+
+After the live recipe process stops, inspect its exact first failure or complete
+result before any retry. Seal final receipts, intents, operation indexes/chunks,
+producer results and their mtimes. Check the harness's per-family cleanup
+receipts; run both retained-CLI cleanup passes over `recipes/` and `recipes-tmp/`
+as needed, preserving every sealed artifact and source dependency. Independently
+authenticate the retained manifest using the exact commands in
+`logs/retained-authentication-commands.txt`, then recheck receipt/result hashes
+and mtimes. A failure before receipt publication remains a diagnostic failure;
+do not manufacture a Native authentication manifest or rerun its producers.
+
+The next independent sequential gate is the complete full-real proof.
+`logs/full-real-command.txt` contains its exact reader/argv/environment and
+output paths; create only its absent `full-real-tmp/` before launch and retain
+new process identity. Its original 16-pair/34-producer positive, source and
+attribution tamper controls, compiler denial, runtime denials and zero-producer
+reservation rejection remain required. `SM_NATIVE_PERFORMANCE_ONLY` is absent.
+The default application reader command and matching helpers are preserved in
+`logs/application-command.txt`; the known frozen-source catalog/planning
+diagnostic must be retained without changing this assembly. No additional gate
+has been launched. The integrator decides whether to monitor directly or
+delegate a later gate, and owns merges, worktree/target retirement and final
+post-retirement admission.
 
 ## Gate configuration
+
+The retained reader selected exactly one ignored test for each required gate;
+selection stdout is retained in `logs/*-selected-tests.log`. Complete catalog
+preparation passed (1 test, 0 failed, 186 filtered out): 177 catalog families /
+150,204 declared Fixture pairs, plus the complete 360-pair direct-animation
+auxiliary. It took 87.23 seconds in libtest and 87.32 seconds externally. These
+are preparation results; no compiler or Fixture was launched. The host was
+contended, including the matching helper build; this is no throughput claim.
+
+Exact command/time and stdout are retained in `logs/catalog.time` and
+`logs/catalog.log`. `logs/catalog-counts.txt` summarizes the actual records;
+`logs/catalog-records.sha256` seals all catalog records and
+`logs/catalog-generated-source.sha256` seals the generated PLM manifest and
+synthetic ROM in `catalog-source/.scratch/translation-native/plm-instructions/`.
+Catalog summary SHA-256:
+`c441fbc043d0002b0a9963813bab87c3f0de0d67453c407a4177dc61a4014124`.
+Its completed `catalog/` and separate `catalog-tmp/` still need both cleanup
+passes when the matching CLI build completes.
 
 The twelve families, in order, are `plm-spawn`, `projectile-script-leaves`,
 `collision`, `power_bomb`, `game-host-projectile`, `game-host-room-scroll`,

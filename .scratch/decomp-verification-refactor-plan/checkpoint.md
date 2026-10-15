@@ -13,10 +13,13 @@ Authorization: user instructed "please go ahead and implement" the nine-ticket p
   `/home/jim/sm-decomp-performance-integration`. It includes the recovered
   extraction, passing metrics/control source, storage experiment and Native
   operation-admission fix. Do not edit while its verification is active.
-- `/root/native_verification_resume` now owns the predecessor's new proof
-  `/home/jim/sm-decomp-performance-native-proof/7b27ea1-20261015` and exclusive
-  Cargo target `/home/jim/sm-decomp-offline-verifier/target`. Required Native
-  producer/admission deadlines and all 12 recipes remain unchanged.
+- Root now monitors the live twelve-recipe proof after
+  `/root/native_verification_resume` returned it without interruption. Proof:
+  `/home/jim/sm-decomp-performance-native-proof/7b27ea1-20261015`; reader PID
+  `9356`, timer PID `9353`, exec `11384`, start 16:53:32 UTC. PLM published its
+  passing 1,969-pair / 3,941-producer Native receipt. All twelve recipes, later
+  controls, cleanup and independent admission remain required. Retained tools
+  are independent copies; the source remains frozen and deadlines unchanged.
 - `/root/bulk_context_resume` owns the complete ticket 02 implementation in its isolated
   worktree, currently compiled WIP `d04a1e9`. Ordinary captured source/assets and
   shared declarations are wired; actual-C gates and retained Native capture remain
@@ -43,7 +46,10 @@ Authorization: user instructed "please go ahead and implement" the nine-ticket p
   are retained; registration and green controls continue. Final captured-input
   consumer/identity acceptance still waits for complete 02. It owns the released
   original target `/home/jim/sm-decomp-performance-metrics-target`.
-- Ticket 05 remains resolved. Tickets 04/06/07/08/09 still require their
+- Ticket 04 is claimed by `/root/shared_preparation` in
+  `/home/jim/sm-decomp-performance-builds` from `b333ca5`. It owns the released
+  `/home/jim/sm-decomp-offline-verifier/target` exclusively. Final acceptance
+  waits for 02/03. Ticket 05 remains resolved; 06/07/08/09 still require their
   implementation and gates. Preserve all original production prerequisite stops.
 
 ## Recovery after the user's continue instructions
