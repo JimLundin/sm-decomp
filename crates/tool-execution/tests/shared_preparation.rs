@@ -1,7 +1,8 @@
 //! Actual compiler controls for invocation-scoped preparation and cache reuse.
 use anyhow::{Context, Result, ensure};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::{
+    collections::BTreeMap,
     fs::{self, File},
     path::{Path, PathBuf},
     process::Command,
@@ -570,5 +571,204 @@ fn preprocessor_budget_exhaustion_is_a_hard_failure_without_cache_publication() 
     assert!(!directory.path.join("limited/c-cache.toml").exists());
     let calls = fs::read_to_string(directory.path.join("compiler-calls"))?;
     assert!(calls.lines().all(|line| line == "version"), "budget failure incorrectly launched an object compiler");
+    Ok(())
+}
+
+#[test]
+fn compiler_environment_is_bound_even_when_declared_inputs_stay_equal() -> Result<()> {
+    // Set environment only on new processes. Mutating this multithreaded test
+    // process's environment would be unsafe and could contaminate other gates.
+    if let Some(path) = std::env::var_os("SM_SHARED_BUILD_ENVIRONMENT_DIRECTORY") {
+        let directory = Directory { path: path.into(), retained: true };
+        let family = std::env::var("SM_SHARED_BUILD_ENVIRONMENT_FAMILY")?;
+        builds::c_build_in(
+            &builds::BuildContext::default(),
+            request(&directory, &directory.path.join("compiler"), &family)?,
+            &|_| Ok(()),
+        )?;
+        assert_eq!(Command::new(directory.path.join(family).join("program")).status()?.code(), Some(7));
+        return Ok(());
+    }
+    let directory = Directory::new("environment-identity")?;
+    inputs(&directory)?;
+    compiler(&directory)?;
+    let mut first = None;
+    for (family, environment, hit) in [("seed", "1", false), ("same", "1", true), ("changed", "2", false)] {
+        let output = Command::new(std::env::current_exe()?)
+            .args(["--exact", "compiler_environment_is_bound_even_when_declared_inputs_stay_equal", "--nocapture"])
+            .env("SM_SHARED_BUILD_ENVIRONMENT_DIRECTORY", &directory.path)
+            .env("SM_SHARED_BUILD_ENVIRONMENT_FAMILY", family)
+            .env("CFLAGS", format!("-DENVIRONMENT_IDENTITY_CONTROL={environment}"))
+            .output()?;
+        fs::write(directory.path.join(format!("{family}.stdout")), &output.stdout)?;
+        fs::write(directory.path.join(format!("{family}.stderr")), &output.stderr)?;
+        ensure!(
+            output.status.success(),
+            "environment subprocess {family} failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let record = records(&directory.path.join(family))?.remove(0);
+        assert_eq!(record.hit, hit);
+        let mut seal: toml::Value = toml::from_str(&fs::read_to_string(
+            directory.capacity().join("build-cache").join(&record.key).join("seal.toml"),
+        )?)?;
+        let inputs = seal.get_mut("inputs").and_then(toml::Value::as_table_mut).context("cache inputs missing")?;
+        let environment_hash = inputs.remove("environment_sha256").context("cache environment missing")?;
+        if let Some((first_key, first_inputs, first_environment)) = &first {
+            assert_eq!(inputs, first_inputs, "environment control changed another cache input");
+            if family == "same" {
+                assert_eq!(&record.key, first_key);
+                assert_eq!(&environment_hash, first_environment);
+            } else {
+                assert_ne!(&record.key, first_key);
+                assert_ne!(&environment_hash, first_environment);
+            }
+        } else {
+            first = Some((record.key, inputs.clone(), environment_hash));
+        }
+    }
+    Ok(())
+}
+
+#[derive(Serialize)]
+struct PreparationMeasurement {
+    round: usize,
+    mode: String,
+    seed: String,
+    elapsed_ns: u64,
+    checkout: PathBuf,
+    metrics: PathBuf,
+    key: String,
+    cache_hits: usize,
+    compiler_processes: BTreeMap<String, usize>,
+}
+
+fn measure_preparation(
+    directory: &Directory,
+    compiler: &Path,
+    round: usize,
+    shared: bool,
+    warm: bool,
+) -> Result<PreparationMeasurement> {
+    let seed = if warm { "warm" } else { "cold" };
+    let mode = if shared { "shared" } else { "private" };
+    let requests =
+        [request(directory, compiler, &format!("{seed}-a"))?, request(directory, compiler, &format!("{seed}-b"))?];
+    let metrics_path = directory.path.join(format!("{seed}.metrics.toml"));
+    let started = Instant::now();
+    let mut parent = metrics::Run::start(metrics_path.clone(), "matched-preparation-measurement")?;
+    let metrics = metrics::active().context("measurement metrics missing")?;
+    let context = Arc::new(builds::BuildContext::default());
+    let ready = Arc::new(Barrier::new(requests.len()));
+    std::thread::scope(|scope| -> Result<()> {
+        let handles: Vec<_> = requests
+            .into_iter()
+            .map(|request| {
+                let metrics = metrics.clone();
+                let context = if shared { context.clone() } else { Arc::new(builds::BuildContext::default()) };
+                let ready = ready.clone();
+                scope.spawn(move || {
+                    let _entered = metrics.enter();
+                    ready.wait();
+                    builds::c_build_in(&context, request, &|_| Ok(()))
+                })
+            })
+            .collect();
+        for handle in handles {
+            handle.join().expect("measurement family panicked")?;
+        }
+        Ok(())
+    })?;
+    parent.finish("success", None)?;
+    let mut cache = Vec::new();
+    for family in [format!("{seed}-a"), format!("{seed}-b")] {
+        assert_eq!(Command::new(directory.path.join(&family).join("program")).status()?.code(), Some(7));
+        cache.extend(records(&directory.path.join(family))?);
+    }
+    let elapsed_ns = u64::try_from(started.elapsed().as_nanos())?;
+    assert_eq!(cache.len(), 2);
+    assert_eq!(cache[0].key, cache[1].key);
+    let cache_hits = cache.iter().filter(|result| result.hit).count();
+    assert_eq!(cache_hits, if warm { 2 } else { 1 });
+    let receipt: pipeline_model::metrics::Receipt = pipeline_model::read(&metrics_path)?;
+    let mut compiler_processes = BTreeMap::new();
+    for process in receipt.processes {
+        *compiler_processes.entry(process.role).or_default() += 1;
+    }
+    assert_eq!(compiler_processes.get("cache-compiler-identity"), Some(&if shared { 1 } else { 2 }));
+    assert_eq!(compiler_processes.get("c-object-000").copied().unwrap_or_default(), if warm { 0 } else { 1 });
+    assert_eq!(compiler_processes.get("c-object-001"), Some(&2));
+    assert_eq!(compiler_processes.get("c-link"), Some(&2));
+    Ok(PreparationMeasurement {
+        round,
+        mode: mode.into(),
+        seed: seed.into(),
+        elapsed_ns,
+        checkout: directory.path.clone(),
+        metrics: metrics_path,
+        key: cache.remove(0).key,
+        cache_hits,
+        compiler_processes,
+    })
+}
+
+#[test]
+#[ignore = "opt-in matched cold/warm preparation measurement"]
+fn preparation_matched_cold_warm_measurements() -> Result<()> {
+    let directory = Directory::new("matched-measurements")?;
+    let compiler = compiler(&directory)?;
+    let mut observations = Vec::new();
+    // Separate physical checkouts provide empty cache seeds without clearing
+    // the shared cache. Their C bytes and flags are equal and use no file/cwd
+    // macros; the typed absolute source/include operands are the only variation.
+    // Alternate ordering to expose rather than hide host/cache warming noise.
+    for round in 0..3 {
+        for shared in if round % 2 == 0 { [false, true] } else { [true, false] } {
+            let mode = if shared { "shared" } else { "private" };
+            let checkout = Directory { path: directory.path.join(format!("{round}-{mode}")), retained: true };
+            fs::create_dir(&checkout.path)?;
+            inputs(&checkout)?;
+            for warm in [false, true] {
+                let sample = measure_preparation(&checkout, &compiler, round, shared, warm)?;
+                println!(
+                    "round={} mode={} seed={} wall_ns={} processes={:?}",
+                    sample.round, sample.mode, sample.seed, sample.elapsed_ns, sample.compiler_processes
+                );
+                observations.push(sample);
+            }
+        }
+    }
+    #[derive(Serialize)]
+    struct Measurements {
+        format: &'static str,
+        compiler: PathBuf,
+        compiler_sha256: String,
+        source_sha256: String,
+        header_sha256: String,
+        capacity_root: PathBuf,
+        workers: usize,
+        observations: Vec<PreparationMeasurement>,
+    }
+    let source = directory.path.join("0-private/deps/unit.c");
+    let header = directory.path.join("0-private/deps/value.h");
+    let source_sha256 = tool_execution::digest(&source)?;
+    let header_sha256 = tool_execution::digest(&header)?;
+    for sample in &observations {
+        assert_eq!(tool_execution::digest(&sample.checkout.join("deps/unit.c"))?, source_sha256);
+        assert_eq!(tool_execution::digest(&sample.checkout.join("deps/value.h"))?, header_sha256);
+    }
+    fs::write(
+        directory.path.join("measurements.toml"),
+        toml::to_string_pretty(&Measurements {
+            format: "shared-preparation-measurements-v1",
+            compiler_sha256: tool_execution::digest(&compiler)?,
+            compiler,
+            source_sha256,
+            header_sha256,
+            capacity_root: directory.capacity(),
+            workers: directory.workers(),
+            observations,
+        })?,
+    )?;
     Ok(())
 }
