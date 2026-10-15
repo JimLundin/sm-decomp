@@ -237,9 +237,6 @@ fn hash(text: &str) -> String {
     use sha2::{Digest, Sha256};
     format!("{:x}", Sha256::digest(text.as_bytes()))
 }
-fn c_code(text: &str) -> Vec<u8> {
-    crate::source_inventory::clean(text)
-}
 fn inventory(checkout: &Path, path: &Path) -> Result<Inventory> {
     let value: Inventory = document(path)?;
     ensure!(value.schema_version == 1 && !value.routines.is_empty(), "unsupported or empty source inventory");
@@ -264,36 +261,13 @@ fn inventory(checkout: &Path, path: &Path) -> Result<Inventory> {
         ensure!(identity.files.contains_key(&routine.source), "routine source missing from pinned inventory");
         if !source_text.contains_key(&routine.source) {
             let text = crate::inputs::bounded::text(checkout.join("deps/snesrev-sm").join(&routine.source))?;
-            let code = crate::source_inventory::clean_bounded(&text)?;
-            source_text.insert(routine.source.clone(), (text, code));
+            source_text.insert(routine.source.clone(), decomp_source::DefinitionSource::new(text)?);
         }
-        let (text, code) = &source_text[&routine.source];
-        ensure!(routine.line > 0, "routine source line missing");
-        let offset = text.split_inclusive('\n').take(routine.line - 1).map(str::len).sum::<usize>();
-        let start = text.get(offset..).context("routine source line outside pinned file")?;
-        let clean = &code[offset..];
-        let open = clean.iter().position(|c| *c == b'{').context("routine definition body missing")?;
-        ensure!(
-            definition_symbol(&clean[..open]) == Some(routine.symbol.as_str()),
-            "routine symbol differs from pinned definition"
-        );
-        let mut depth = 1;
-        let mut end = open + 1;
-        // The inventory producer hashes the complete C definition. A supplied
-        // inventory cannot relabel another definition's observed address.
-        while end < start.len() && depth > 0 {
-            if end.is_multiple_of(64 * 1024) {
-                crate::inputs::bounded::check()?;
-            }
-            match clean[end] {
-                b'{' => depth += 1,
-                b'}' => depth -= 1,
-                _ => {}
-            }
-            end += 1;
-        }
-        ensure!(depth == 0 && hash(&start[..end]) == routine.definition_sha256, "routine definition identity differs");
-        let (calls, indexed) = crate::source_inventory::names_bounded(&clean[open..end])?;
+        let definition = source_text[&routine.source].at_line(routine.line)?;
+        ensure!(definition.symbol == routine.symbol, "routine symbol differs from pinned definition");
+        ensure!(definition.sha256 == routine.definition_sha256, "routine definition identity differs");
+        let calls = definition.calls;
+        let indexed = definition.indirect_indexed_calls;
         let defined: Vec<_> = calls.iter().filter(|s| all_symbols.contains(s.as_str())).cloned().collect();
         let external: Vec<_> = calls.iter().filter(|s| !all_symbols.contains(s.as_str())).cloned().collect();
         ensure!(
@@ -303,7 +277,7 @@ fn inventory(checkout: &Path, path: &Path) -> Result<Inventory> {
             "routine lexical dependency inventory differs from pinned source"
         );
         if let Some(address) = address(routine) {
-            let opening_line = start[open..].lines().next().unwrap_or_default();
+            let opening_line = definition.opening_line;
             ensure!(
                 opening_line.to_ascii_lowercase().contains(&format!("0x{address:06x}")),
                 "routine observed address differs from pinned definition"
@@ -311,18 +285,6 @@ fn inventory(checkout: &Path, path: &Path) -> Result<Inventory> {
         }
     }
     Ok(value)
-}
-fn definition_symbol(signature: &[u8]) -> Option<&str> {
-    if signature.contains(&b';') {
-        return None;
-    }
-    let paren = signature.iter().position(|byte| *byte == b'(')?;
-    let end = signature[..paren].iter().rposition(|byte| !byte.is_ascii_whitespace())? + 1;
-    let start = signature[..end]
-        .iter()
-        .rposition(|byte| !(byte.is_ascii_alphanumeric() || *byte == b'_'))
-        .map_or(0, |index| index + 1);
-    std::str::from_utf8(&signature[start..end]).ok()
 }
 fn address(routine: &Routine) -> Option<u32> {
     let value = routine.original_address.as_deref()?;
@@ -1056,14 +1018,6 @@ mod tests {
         ] {
             assert!(!command(&parts), "non-verification accepted: {parts:?}");
         }
-    }
-
-    #[test]
-    fn pinned_definition_binds_exact_clean_function_token() {
-        assert_eq!(definition_symbol(&c_code("void Observed (void) ")), Some("Observed"));
-        assert_ne!(definition_symbol(&c_code("void NotObserved(void) ")), Some("Observed"));
-        assert_eq!(definition_symbol(&c_code("/* Observed( */ void NotObserved(void) ")), Some("NotObserved"));
-        assert_eq!(definition_symbol(&c_code("void Observed(void); void NotObserved(void) ")), None);
     }
 
     /// Execute a small C diagnostic with the production ROM identity and seal

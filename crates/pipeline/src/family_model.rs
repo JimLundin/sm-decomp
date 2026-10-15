@@ -91,13 +91,7 @@ pub struct PlmGeneration {
     pub rom: PathBuf,
     pub rom_sha256: String,
 }
-#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
-pub struct Source {
-    pub revision: String,
-    pub archive_sha256: String,
-    pub files: BTreeMap<String, String>,
-    pub freshness: String,
-}
+pub use decomp_source::Source;
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct Implementation {
     #[serde(default, skip_serializing_if = "Option::is_none")]

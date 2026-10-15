@@ -2,7 +2,7 @@
 //! gates, integration, source retention, cleanup and stable publication. The
 //! worker interface carries only the immutable capsule and source replacements.
 use crate::{
-    affected, cleanup, digest, emit, family, family_model::Asset, translation_infrastructure as infrastructure,
+    affected, cleanup, digest, emit, family_model::Asset, translation_infrastructure as infrastructure,
     translation_native as native, translation_original as original,
 };
 use ::translation_execution::{
@@ -2729,51 +2729,7 @@ pub(crate) fn authenticate_managed_source(
     )
 }
 
-fn recovered_definition_bounded(bank: &str, symbol: &str, max_bytes: u64) -> Result<String> {
-    crate::inputs::bounded::check()?;
-    ensure!(family::identifier(symbol), "recovered C symbol is invalid");
-    let masked = crate::source_inventory::clean_bounded(bank)?;
-    let token = format!("{symbol}(");
-    let mut starts = Vec::new();
-    for (offset, _) in String::from_utf8_lossy(&masked).match_indices(&token) {
-        crate::inputs::bounded::check()?;
-        let line_start = masked[..offset].iter().rposition(|byte| *byte == b'\n').map_or(0, |at| at + 1);
-        let Some(brace) = masked[offset..].iter().position(|byte| b";{}".contains(byte)) else {
-            continue;
-        };
-        let brace = offset + brace;
-        if masked[brace] != b'{' {
-            continue;
-        }
-        let prefix = String::from_utf8_lossy(&masked[line_start..offset]);
-        if prefix.trim().is_empty() || prefix.contains('=') {
-            continue;
-        }
-        let mut end = brace + 1;
-        let mut depth = 1u32;
-        while end < masked.len() && depth > 0 {
-            if end.is_multiple_of(65536) {
-                crate::inputs::bounded::check()?;
-            }
-            if masked[end] == b'{' {
-                depth += 1;
-            }
-            if masked[end] == b'}' {
-                depth -= 1;
-            }
-            end += 1;
-        }
-        ensure!(depth == 0, "recovered C routine body is unbalanced");
-        ensure!(
-            end.saturating_sub(line_start) as u64 <= max_bytes,
-            "recovered C definition exceeds remaining context budget"
-        );
-        ensure!(starts.is_empty(), "recovered C definition is ambiguous: {symbol}");
-        starts.push(bank[line_start..end].to_owned());
-    }
-    ensure!(starts.len() == 1, "recovered C definition is missing or ambiguous: {symbol}");
-    Ok(starts.remove(0))
-}
+use decomp_source::recovered_definition as recovered_definition_bounded;
 
 pub(crate) fn cli(args: &[String]) -> Result<()> {
     ensure!(
