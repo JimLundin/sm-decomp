@@ -2,20 +2,17 @@
 use crate::family_model::*;
 use crate::{atomic_toml, builds, callback, inputs};
 use anyhow::{Context, Result, bail, ensure};
-use inputs::bounded::{self, digest};
-use sha2::{Digest, Sha256};
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
     path::{Component, Path, PathBuf},
     time::{SystemTime, UNIX_EPOCH},
 };
-use toml::Value;
+use tool_execution::bounded::{self, digest};
 
 const WRAM: usize = 0x20000;
-// Temporary explicit imports until the Offline family owner is extracted.
-pub(crate) use decomp_source::{authenticate_inventory, c_units, verify_source};
-pub(crate) use tool_execution::{bounded::object, unique_id};
+use decomp_source::{c_units, verify_source};
+use tool_execution::{bounded::object, unique_id};
 
 fn fork_execution(request: &VerifyRequest) -> Result<bool> {
     ensure!(
@@ -30,12 +27,6 @@ fn fork_execution(request: &VerifyRequest) -> Result<bool> {
     );
     Ok(supported && request.execution != "fresh")
 }
-pub(crate) fn field<'a>(value: &'a Value, key: &str) -> Result<&'a str> {
-    value[key].as_str().with_context(|| format!("missing {key}"))
-}
-pub(crate) fn array<'a>(value: &'a Value, key: &str) -> Result<&'a Vec<Value>> {
-    value[key].as_array().with_context(|| format!("missing {key}"))
-}
 pub(crate) fn identifier(text: &str) -> bool {
     let mut chars = text.chars();
     chars.next().is_some_and(|c| c.is_ascii_alphabetic() || c == '_')
@@ -47,24 +38,6 @@ pub(crate) fn source_path(checkout: &Path, text: &str) -> PathBuf {
 }
 fn safe_relative(text: &str) -> bool {
     !text.is_empty() && Path::new(text).components().all(|c| matches!(c, Component::Normal(_)))
-}
-pub(crate) fn types(routine: &Routine) -> Result<Vec<String>> {
-    if let Some(values) = &routine.arg_types {
-        return Ok(values.clone());
-    }
-    ensure!(routine.args <= 2, "too many arguments");
-    Ok(vec!["uint16".into(); routine.args])
-}
-pub(crate) fn dispatcher(manifest: &Manifest) -> bool {
-    manifest.projectile_host
-        || manifest.projectile_rendering
-        || manifest.routines.iter().any(|r| {
-            r.pointer_bank.is_some()
-                || matches!(
-                    r.symbol.as_str(),
-                    "EprojInstruction" | "EprojPreinstruction" | "PlmInstruction" | "PlmFrame" | "PlmControlFrame"
-                )
-        })
 }
 fn continuation_directory(case: &Case, run: &Path) -> Result<PathBuf> {
     let name = case.continue_from.as_deref().context("continuation missing")?;
@@ -107,10 +80,6 @@ fn asset(path: &Path, expected: &str, extent: Option<usize>) -> Result<Vec<u8>> 
     }
     Ok(bytes)
 }
-pub(crate) fn prepare_case(case: &Case, directory: &Path, arg_types: &[String]) -> Result<()> {
-    prepare_case_with(case, directory, arg_types, false)
-}
-
 pub(crate) fn prepare_case_with(case: &Case, directory: &Path, arg_types: &[String], resume: bool) -> Result<()> {
     let name = &case.name;
     ensure!(
@@ -170,7 +139,7 @@ pub(crate) fn prepare_case_with(case: &Case, directory: &Path, arg_types: &[Stri
 }
 
 pub(crate) fn write_build_input(path: &Path, bytes: &[u8], immutable: bool) -> Result<()> {
-    if immutable { inputs::immutable_bytes(path, bytes) } else { Ok(fs::write(path, bytes)?) }
+    if immutable { tool_execution::bounded::immutable_bytes(path, bytes) } else { Ok(fs::write(path, bytes)?) }
 }
 
 pub(crate) fn c_type(kind: &str) -> Result<&str> {
@@ -196,7 +165,7 @@ pub(crate) fn build(
 ) -> Result<Implementation> {
     let fork = fork_execution(request)?;
     ensure!(execution.is_none() || !fork, "confined adapter requires fresh fixtures");
-    let dispatcher = dispatcher(manifest);
+    let dispatcher = manifest.uses_dispatcher();
     let eproj = manifest.projectile_host
         || manifest.projectile_rendering
         || manifest.routines.iter().any(|r| r.symbol == "EprojInstruction");
@@ -217,7 +186,7 @@ pub(crate) fn build(
     for routine in &manifest.routines {
         let symbol = &routine.symbol;
         let kind = routine.returns.as_str();
-        let args = types(routine)?;
+        let args = routine.argument_types()?;
         ensure!(identifier(symbol) && args.len() <= 2, "invalid routine signature");
         let arguments = args.iter().map(|kind| c_type(kind)).collect::<Result<Vec<_>>>()?;
         prototypes.push(format!(
@@ -352,7 +321,7 @@ pub(crate) fn build(
     let memory = if let Some(execution) = execution {
         inputs::canonical_wrapper(checkout, run, &execution.rust_inputs)?
     } else {
-        inputs::wrapper(inputs::WrapperRequest {
+        inputs::wrapper(crate::authoring::WrapperRequest {
             checkout: checkout.into(),
             run: run.into(),
             modules: vec![module.clone()],
@@ -464,7 +433,7 @@ pub(crate) fn build(
     if let Some(execution) = execution {
         execution.compile_description(&description, run, "c-build", checkout, source)?;
     } else {
-        builds::c_build(builds::CBuildRequest {
+        tool_execution::builds::c_build(tool_execution::builds::CBuildRequest {
             command: description.command,
             run: run.into(),
             checkout: checkout.into(),
@@ -476,10 +445,10 @@ pub(crate) fn build(
     if let Some(execution) = execution {
         execution.compile_description(&description, run, "rust-build", checkout, source)?;
     } else {
-        builds::execute(&description.command, run, "rust-build", root, workers)?;
+        tool_execution::builds::execute(&description.command, run, "rust-build", root, workers)?;
     }
     write_build_input(&run.join("candidate.rs"), &bounded::read(&module)?, execution.is_some())?;
-    let dependency_request = inputs::DependenciesRequest {
+    let dependency_request = crate::authoring::DependenciesRequest {
         checkout: checkout.into(),
         run: run.into(),
         extra: manifest.rust_dependencies.clone(),
@@ -587,7 +556,7 @@ pub(crate) fn case(
     let name = &case.name;
     let symbol = &routine.symbol;
     let directory = run.join(name);
-    prepare_case_with(case, &directory, &types(routine)?, resume)?;
+    prepare_case_with(case, &directory, &routine.argument_types()?, resume)?;
     if manifest.projectile_host {
         fs::write(directory.join("host-before.bin"), host_bytes(case, run)?)?;
     }
@@ -633,7 +602,7 @@ pub(crate) fn case(
 }
 
 pub(crate) fn inventory(run: &Path, base: &Path, result: &mut BTreeMap<String, String>) -> Result<()> {
-    bounded::limited(|| inventory_bounded(run, base, result, 0, ArtifactLimits::default()))
+    decomp_source::context::limited(|| inventory_bounded(run, base, result, 0, ArtifactLimits::default()))
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -668,7 +637,7 @@ pub(crate) fn inventory_with_limits(
     limits: ArtifactLimits,
 ) -> Result<()> {
     limits.validate()?;
-    bounded::discovery_with_limit(limits.paths, || inventory_bounded(run, base, result, 0, limits))
+    decomp_source::context::discovery_with_limit(limits.paths, || inventory_bounded(run, base, result, 0, limits))
 }
 
 fn inventory_bounded(
@@ -804,7 +773,7 @@ pub fn authenticate(request: AuthenticateRequest) -> Result<Verdict> {
 }
 
 pub(crate) fn authenticate_with_source(request: AuthenticateRequest, source: &Path) -> Result<Verdict> {
-    bounded::limited(|| authenticate_with_source_bounded(request, source, ArtifactLimits::default()))
+    decomp_source::context::limited(|| authenticate_with_source_bounded(request, source, ArtifactLimits::default()))
 }
 
 pub(crate) fn authenticate_with_source_limits(
@@ -813,16 +782,9 @@ pub(crate) fn authenticate_with_source_limits(
     limits: ArtifactLimits,
 ) -> Result<Verdict> {
     limits.validate()?;
-    bounded::discovery_with_limit(limits.paths, || authenticate_with_source_bounded(request, source, limits))
-}
-
-pub(crate) fn authenticate_with_source_until(
-    request: AuthenticateRequest,
-    source: &Path,
-    deadline: u64,
-    max_bytes: u64,
-) -> Result<Verdict> {
-    bounded::until(deadline, max_bytes, || authenticate_with_source_bounded(request, source, ArtifactLimits::default()))
+    decomp_source::context::discovery_with_limit(limits.paths, || {
+        authenticate_with_source_bounded(request, source, limits)
+    })
 }
 
 fn authenticate_with_source_bounded(
@@ -1028,7 +990,7 @@ fn authenticate_with_source_bounded(
             verdict.gameplay_translation == Some(!manifest.infrastructure_probe),
             "callback gameplay scope differs"
         );
-    } else if dispatcher(&manifest) {
+    } else if manifest.uses_dispatcher() {
         for required in ["plm-shim.c", "host-support.c", "pipeline-headless.c"] {
             ensure!(actual.contains_key(required), "dispatcher artifact missing: {required}");
         }
@@ -1151,7 +1113,7 @@ mod source_tests {
 
     #[test]
     fn explicit_artifact_profile_keeps_a_finite_file_count() -> Result<()> {
-        let directory = bounded::tests::Directory::new()?;
+        let directory = tool_execution::testing::Directory::new()?;
         fs::write(directory.0.join("first"), b"one")?;
         fs::write(directory.0.join("second"), b"two")?;
         let mut inventory = BTreeMap::new();
@@ -1184,7 +1146,7 @@ mod host_tests {
             routines: vec![Routine { symbol: "PortScreenShake".into(), ..Default::default() }],
             ..Default::default()
         };
-        assert!(dispatcher(&manifest));
+        assert!(manifest.uses_dispatcher());
     }
     #[test]
     fn host_only_mismatch_and_missing_sidecar_fail_independently_of_wram() {
@@ -1225,7 +1187,7 @@ mod host_tests {
             writes: vec![Write { offset: 42, data: vec![99] }].into(),
             ..Default::default()
         };
-        prepare_case(&fixture, &directory.join("next"), &[]).unwrap();
+        prepare_case_with(&fixture, &directory.join("next"), &[], false).unwrap();
         let inherited = bounded::read(directory.join("next/before.wram")).unwrap();
         assert_eq!(inherited[42], 99);
         assert_eq!(inherited[41], 3);

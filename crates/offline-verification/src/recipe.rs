@@ -15,8 +15,8 @@ use translation_execution::model::sha256;
 #[path = "recipe_commands.rs"]
 mod commands;
 pub(crate) use commands::{
-    CompilerCommand, FixtureCommand, FixtureKind, FixtureSelection, c_compiler_command, compiler_files,
-    confined_fixture_program, fixture_command, fixture_output_path, fixture_program, rust_compiler_command,
+    CompilerCommand, FixtureKind, FixtureSelection, c_compiler_command, compiler_files, confined_fixture_program,
+    fixture_command, fixture_output_path, fixture_program, rust_compiler_command,
 };
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -50,7 +50,7 @@ pub(crate) fn dependency_digest(recipe: Option<&Recipe>, path: &Path) -> Result<
 }
 
 pub(crate) fn prepare_generated_plm(checkout: &Path, output: &Path) -> Result<crate::family_model::PlmGeneration> {
-    bounded::limited(|| plm_fixtures::generate(checkout, output, Some(&checkout.join(GENERATED_PLM))))
+    decomp_source::context::limited(|| plm_fixtures::generate(checkout, output, Some(&checkout.join(GENERATED_PLM))))
 }
 
 fn relative(path: &Path) -> bool {
@@ -83,9 +83,9 @@ fn read_fixture(checkout: &Path, asset: &Asset) -> Result<Manifest> {
     fixture_format::read_authenticated(&asset_path(checkout, asset)?, &asset.sha256)
 }
 
-fn plain(manifest: &Manifest) -> Result<()> {
+pub(crate) fn plain(manifest: &Manifest) -> Result<()> {
     ensure!(
-        !family::dispatcher(manifest)
+        !manifest.uses_dispatcher()
             && !manifest.projectile_host
             && !manifest.projectile_rendering
             && manifest.callback_adapter.is_none()
@@ -119,7 +119,7 @@ pub(crate) fn for_adapter(adapter: &str, manifest: &Manifest) -> Result<Option<R
         }
         "power-bomb" => Some(Recipe::PowerBomb),
         "callback" => Some(Recipe::Callback),
-        _ if family::dispatcher(manifest) => Some(Recipe::Dispatcher),
+        _ if manifest.uses_dispatcher() => Some(Recipe::Dispatcher),
         _ => None,
     })
 }
@@ -150,7 +150,7 @@ fn recipe_for_entry(checkout: &Path, declared: &Manifest, entry: &catalog::Famil
         }
         "family" | "offline-family" | "dispatcher" | "projectile" | "offline-projectile" => {
             ensure!(declared.callback_adapter.is_none(), "unregistered native callback adapter");
-            if family::dispatcher(declared) {
+            if declared.uses_dispatcher() {
                 Some(Recipe::Dispatcher)
             } else {
                 plain(declared)?;
@@ -196,7 +196,7 @@ fn registered_entry(checkout: &Path, path: &Path, declared: &Manifest) -> Result
         Registration {
             catalog_family: declared.family.clone(),
             entry: catalog::FamilyEntry {
-                kind: if family::dispatcher(declared) { "dispatcher" } else { "family" }.into(),
+                kind: if declared.uses_dispatcher() { "dispatcher" } else { "family" }.into(),
                 manifest: PathBuf::from(format!("tools/port/{}.smf", declared.family)),
                 live: None,
                 prepare: None,
@@ -231,6 +231,7 @@ pub(crate) fn registration(
     Ok(registration)
 }
 
+#[cfg(test)]
 pub(crate) fn manifest(checkout: &Path, path: &Path, recipe: Option<&Recipe>) -> Result<Manifest> {
     normalize_manifest(checkout, fixture_format::read(path)?, recipe)
 }

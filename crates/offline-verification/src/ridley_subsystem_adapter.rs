@@ -5,7 +5,6 @@
 use crate::family_model::{Asset, CallbackMetrics, Case, CaseRecord, Implementation, Manifest, Routine, VerifyRequest};
 use crate::{atomic_toml, builds, digest, family, inputs};
 use anyhow::{Context, Result, bail, ensure};
-use sha2::{Digest, Sha256};
 use std::{collections::BTreeMap, fs, path::Path};
 
 const WRAM: usize = 0x20000;
@@ -114,7 +113,7 @@ fn branches(manifest: &Manifest) -> Result<String> {
     let mut branches = Vec::new();
     for routine in &manifest.routines {
         let symbol = &routine.symbol;
-        let args = family::types(routine)?;
+        let args = routine.argument_types()?;
         ensure!(
             family::identifier(symbol) && args.len() == routine.args && args.len() <= 2,
             "invalid Ridley signature"
@@ -175,7 +174,7 @@ pub(crate) fn build(
             .collect::<Vec<_>>();
         inputs::canonical_wrapper(checkout, run, &roots)?
     } else {
-        inputs::wrapper(inputs::WrapperRequest {
+        inputs::wrapper(crate::authoring::WrapperRequest {
             checkout: checkout.into(),
             run: run.into(),
             modules: vec![module.clone()],
@@ -227,7 +226,7 @@ pub(crate) fn build(
     };
     family::write_build_input(&run.join("wrapper.rs"), wrapper.as_bytes(), execution.is_some())?;
     if execution.is_some() {
-        inputs::immutable_bytes(&run.join("fixture-worker.rs"), include_bytes!("fixture_worker.rs"))?;
+        tool_execution::bounded::immutable_bytes(&run.join("fixture-worker.rs"), include_bytes!("fixture_worker.rs"))?;
     }
     let headless = if execution.is_some() {
         "/inputs/rust/tools/decomp/headless.c".into()
@@ -250,14 +249,14 @@ pub(crate) fn build(
     if let Some(execution) = execution {
         execution.compile_description(&description, run, "rust-build", checkout, source)?;
     } else {
-        builds::execute(&description.command, run, "rust-build", &request.root, request.workers)?;
+        tool_execution::builds::execute(&description.command, run, "rust-build", &request.root, request.workers)?;
     }
     let description =
-        crate::recipe::c_compiler_command(recipe, manifest, source, run, &family::c_units(source)?, false)?;
+        crate::recipe::c_compiler_command(recipe, manifest, source, run, &decomp_source::c_units(source)?, false)?;
     if let Some(execution) = execution {
         execution.compile_description(&description, run, "c-build", checkout, source)?;
     } else {
-        builds::c_build(builds::CBuildRequest {
+        tool_execution::builds::c_build(tool_execution::builds::CBuildRequest {
             command: description.command,
             run: run.into(),
             checkout: checkout.into(),
@@ -275,14 +274,14 @@ pub(crate) fn build(
     if let Some(execution) = execution {
         execution.fixture_recipe(&fixture.command, run, "abi-controls", fixture.kind)?;
     } else {
-        builds::execute(&fixture.command, run, "abi-controls", &request.root, request.workers)?;
+        tool_execution::builds::execute(&fixture.command, run, "abi-controls", &request.root, request.workers)?;
     }
     // The executor preloads these separately. Each fixture still forks a fresh
     // child from its respective native image; the helper never invokes gameplay.
     for subject in ["c", "rust"] {
         family::write_build_input(
             &run.join(subject),
-            &inputs::bounded::read(run.join("ridley"))?,
+            &tool_execution::bounded::read(run.join("ridley"))?,
             execution.is_some(),
         )?;
         use std::os::unix::fs::PermissionsExt;
@@ -290,7 +289,7 @@ pub(crate) fn build(
     }
     fs::copy(&module, run.join("candidate.rs"))?;
     fs::copy(checkout.join("crates/offline-verification/src/fixture_worker.rs"), run.join("fixture-worker.rs"))?;
-    let dependency_request = inputs::DependenciesRequest {
+    let dependency_request = crate::authoring::DependenciesRequest {
         checkout: checkout.into(),
         run: run.into(),
         extra: manifest.rust_dependencies.clone(),
@@ -578,7 +577,7 @@ pub(crate) fn case(
     mut execute: impl FnMut(&Path, &str) -> Result<()>,
 ) -> Result<CaseRecord> {
     let directory = run.join(&fixture.name);
-    family::prepare_case_with(fixture, &directory, &family::types(routine)?, resume)?;
+    family::prepare_case_with(fixture, &directory, &routine.argument_types()?, resume)?;
     fs::write(directory.join("host-before.bin"), host_before(fixture, run)?)?;
     fs::write(directory.join("ppu-before.bin"), ppu_before(fixture, run)?)?;
     retain_capture(&directory, fixture)?;
@@ -600,8 +599,11 @@ mod tests {
         }
     }
     fn retained() -> (Retained, Case) {
-        let root =
-            std::env::temp_dir().join(format!("sm-ridley-adapter-test-{}-{}", std::process::id(), family::unique_id()));
+        let root = std::env::temp_dir().join(format!(
+            "sm-ridley-adapter-test-{}-{}",
+            std::process::id(),
+            tool_execution::unique_id()
+        ));
         let dir = root.join("frame");
         fs::create_dir_all(&dir).unwrap();
         let fixture = Case { name: "frame".into(), host_words: Some(vec![0; 8]), ..Default::default() };

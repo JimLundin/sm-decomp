@@ -1,11 +1,11 @@
 //! Read-only catalog declarations and bounded Fixture discovery.
-use crate::inputs::bounded;
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::BTreeMap,
     path::{Path, PathBuf},
 };
+use tool_execution::bounded;
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum CatalogEntry {
@@ -25,11 +25,11 @@ pub struct Catalog {
     pub profiles: BTreeMap<String, Vec<String>>,
 }
 pub fn catalog(checkout: &Path) -> Result<Catalog> {
-    bounded::limited(|| catalog_using(checkout, |path| bounded::read(path)))
+    decomp_source::context::limited(|| catalog_using(checkout, |path| bounded::read(path)))
 }
 
 pub fn catalog_until(checkout: &Path, deadline: u64, max_bytes: u64) -> Result<Catalog> {
-    bounded::until(deadline, max_bytes, || catalog_using(checkout, |path| bounded::read(path)))
+    decomp_source::context::until(deadline, max_bytes, || catalog_using(checkout, |path| bounded::read(path)))
 }
 
 /// Keep catalog discovery identical for the supervisor's bounded source reader.
@@ -51,13 +51,7 @@ pub fn catalog_using(checkout: &Path, mut read: impl FnMut(&Path) -> Result<Vec<
         }
         let manifest = crate::fixture_format::decode(read(&path)?)
             .with_context(|| format!("invalid discovery manifest {}", path.display()))?;
-        let specialized = manifest.projectile_host
-            || manifest.projectile_rendering
-            || manifest.routines.iter().any(|r| {
-                r.pointer_bank.is_some()
-                    || ["EprojInstruction", "EprojPreinstruction", "PlmInstruction", "PlmFrame", "PlmControlFrame"]
-                        .contains(&r.symbol.as_str())
-            });
+        let specialized = manifest.uses_dispatcher();
         config.families.insert(
             name.into_owned(),
             CatalogEntry::Details(FamilyEntry {

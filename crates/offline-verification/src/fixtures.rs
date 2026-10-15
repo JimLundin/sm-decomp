@@ -16,9 +16,7 @@ impl Routine {
     }
 
     pub fn has_valid_symbol(&self) -> bool {
-        let mut chars = self.symbol.chars();
-        chars.next().is_some_and(|c| c.is_ascii_alphabetic() || c == '_')
-            && chars.all(|c| c.is_ascii_alphanumeric() || c == '_')
+        crate::family::identifier(&self.symbol)
     }
 }
 

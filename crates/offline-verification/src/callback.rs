@@ -2,7 +2,6 @@
 use crate::family_model::*;
 use crate::{atomic_toml, builds, digest, family, inputs};
 use anyhow::{Context, Result, ensure};
-use sha2::{Digest, Sha256};
 use std::{collections::BTreeMap, fs, path::Path};
 
 pub fn abi(manifest: &Manifest, module: &Path) -> Result<String> {
@@ -52,7 +51,7 @@ pub(crate) fn build(
     for routine in &manifest.routines {
         let symbol = routine.symbol.as_str();
         let kind = routine.returns.as_str();
-        let args = family::types(routine)?;
+        let args = routine.argument_types()?;
         ensure!(family::identifier(symbol) && args.len() <= 2, "invalid callback signature");
         let actual = args
             .iter()
@@ -85,7 +84,7 @@ pub(crate) fn build(
     let memory = if let Some(execution) = execution {
         inputs::canonical_wrapper(checkout, run, &execution.rust_inputs)?
     } else {
-        inputs::wrapper(inputs::WrapperRequest {
+        inputs::wrapper(crate::authoring::WrapperRequest {
             checkout: checkout.into(),
             run: run.into(),
             modules: vec![module.clone()],
@@ -138,7 +137,7 @@ pub(crate) fn build(
     if let Some(execution) = execution {
         execution.compile_description(&description, run, "rust-build", checkout, source)?;
     } else {
-        builds::execute(&description.command, run, "rust-build", root, workers)?;
+        tool_execution::builds::execute(&description.command, run, "rust-build", root, workers)?;
     }
     if power_bomb {
         let original = fs::read_to_string(source.join("src/sm_88.c"))?;
@@ -163,11 +162,11 @@ pub(crate) fn build(
         )?;
     }
     let description =
-        crate::recipe::c_compiler_command(recipe, &manifest, source, run, &family::c_units(source)?, false)?;
+        crate::recipe::c_compiler_command(recipe, &manifest, source, run, &decomp_source::c_units(source)?, false)?;
     if let Some(execution) = execution {
         execution.compile_description(&description, run, "c-build", checkout, source)?;
     } else {
-        builds::c_build(builds::CBuildRequest {
+        tool_execution::builds::c_build(tool_execution::builds::CBuildRequest {
             command: description.command,
             run: run.into(),
             checkout: checkout.into(),
@@ -176,7 +175,7 @@ pub(crate) fn build(
         })?;
     }
     fs::copy(&module, run.join("candidate.rs"))?;
-    let dependency_request = inputs::DependenciesRequest {
+    let dependency_request = crate::authoring::DependenciesRequest {
         checkout: checkout.into(),
         run: run.into(),
         extra: manifest.rust_dependencies.clone(),
@@ -358,7 +357,7 @@ pub(crate) fn case(
     let name = fixture.name.as_str();
     let symbol = routine.symbol.as_str();
     let directory = run.join(name);
-    family::prepare_case_with(fixture, &directory, &family::types(routine)?, resume)?;
+    family::prepare_case_with(fixture, &directory, &routine.argument_types()?, resume)?;
     for subject in ["rust", "c"] {
         fs::create_dir_all(directory.join(subject))?;
         execute(&directory, subject)?;
@@ -396,7 +395,7 @@ pub(crate) fn authenticate_packed_snapshots(directory: &Path, subject: &str) -> 
 }
 
 fn snapshots(directory: &Path, subject: &str, publish: bool) -> Result<()> {
-    let bytes = inputs::bounded::read(directory.join(format!("{subject}-callback-states.bin")))?;
+    let bytes = tool_execution::bounded::read(directory.join(format!("{subject}-callback-states.bin")))?;
     let count = metrics(directory, subject)?.c_gameplay_callbacks;
     let stride = 9 + 0x20000;
     ensure!(count <= 4096 && bytes.len() == usize::try_from(count)? * 2 * stride, "packed callback extent differs");
@@ -407,10 +406,10 @@ fn snapshots(directory: &Path, subject: &str, publish: bool) -> Result<()> {
         let phase = if after == 0 { "before" } else { "after" };
         let path = directory.join(subject).join(format!("callback-{index:04}-{phase}.wram"));
         if publish {
-            inputs::immutable_bytes(&path, &record[9..])?;
+            tool_execution::bounded::immutable_bytes(&path, &record[9..])?;
         } else {
             ensure!(
-                inputs::bounded::read(&path)? == record[9..],
+                tool_execution::bounded::read(&path)? == record[9..],
                 "retained callback snapshot differs from confined output"
             );
         }

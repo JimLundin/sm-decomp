@@ -3,7 +3,6 @@ pub const IMPLEMENTATION_SOURCES: &[(&str, &str)] = &[
     ("crates/offline-verification/src/authoring.rs", include_str!("authoring.rs")),
     ("crates/offline-verification/src/ordinary.rs", include_str!("ordinary.rs")),
     ("crates/offline-verification/Cargo.toml", include_str!("../Cargo.toml")),
-    ("crates/offline-verification/src/bounded_inputs.rs", include_str!("bounded_inputs.rs")),
     ("crates/offline-verification/src/builds.rs", include_str!("builds.rs")),
     ("crates/offline-verification/src/callback.rs", include_str!("callback.rs")),
     ("crates/offline-verification/src/callback_abi.rs.in", include_str!("callback_abi.rs.in")),

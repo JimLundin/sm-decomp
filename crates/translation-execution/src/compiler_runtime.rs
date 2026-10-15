@@ -1,10 +1,7 @@
 //! Bounded discovery of the installed compiler and linker confinement inputs.
 use crate::confinement::{self, ReadOnlyBind};
 use anyhow::{Context, Result, ensure};
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
+use std::{fs, path::Path};
 use tool_execution::bounded;
 
 /// Read-only files needed by the host's installed compiler/linker. This exposes

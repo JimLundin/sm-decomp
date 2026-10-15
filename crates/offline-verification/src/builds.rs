@@ -1,22 +1,22 @@
 //! Translation-unit reuse; generated candidate units are always rebuilt.
-use crate::inputs::bounded;
-use crate::{CacheResult, atomic_toml};
+use crate::atomic_toml;
 use anyhow::{Context, Result, bail, ensure};
 use serde::{Deserialize, Serialize};
 use std::{
-    fs::{self, File},
+    fs,
     path::{Path, PathBuf},
     sync::Mutex,
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
+use tool_execution::bounded;
 #[cfg(test)]
 use tool_execution::builds::source_files;
-pub(crate) use tool_execution::builds::{
-    CBuildRequest, CargoBuildRequest, ExecutionRecord, c_build, cargo_build, exec, execute, execute_timeout,
-};
+use tool_execution::{build_cache::CacheResult, builds::ExecutionRecord};
+#[cfg(test)]
+use translation_execution::confinement;
 use translation_execution::{
     OperationContext,
-    confinement::{self, Program, ReadOnlyBind, RunLimits},
+    confinement::{Program, ReadOnlyBind, RunLimits},
 };
 
 /// Internal installed execution context. Every compiler and fixture receives a
@@ -64,10 +64,7 @@ pub(crate) struct StrictInvocation {
     pub reservation_before_bytes: u64,
 }
 
-pub(crate) use crate::recipe::{
-    FixtureKind as StrictFixture, confined_fixture_program as strict_fixture_program,
-    fixture_output_path as strict_output_path,
-};
+use crate::recipe::{FixtureKind, confined_fixture_program, fixture_output_path};
 
 fn has_callback_snapshots(program: &Program) -> bool {
     program.outputs.iter().any(|path| path == Path::new("callback-states.bin"))
@@ -244,18 +241,14 @@ impl StrictExecution {
         self.execute(&program, &self.compiler_limits, run, label)
     }
 
-    pub(crate) fn fixture(&self, command: &[String], directory: &Path, subject: &str) -> Result<ExecutionRecord> {
-        self.fixture_recipe(command, directory, subject, StrictFixture::Family)
-    }
-
     pub(crate) fn fixture_recipe(
         &self,
         command: &[String],
         directory: &Path,
         subject: &str,
-        kind: StrictFixture,
+        kind: FixtureKind,
     ) -> Result<ExecutionRecord> {
-        self.execute(&strict_fixture_program(&self.helper, command, kind)?, &self.fixture_limits, directory, subject)
+        self.execute(&confined_fixture_program(&self.helper, command, kind)?, &self.fixture_limits, directory, subject)
     }
 
     fn execute(&self, program: &Program, limits: &RunLimits, run: &Path, label: &str) -> Result<ExecutionRecord> {
@@ -271,7 +264,7 @@ impl StrictExecution {
         let (_held, wait) = if resumed {
             (None, 0.0)
         } else {
-            let (held, wait) = self.lease()?;
+            let (held, wait) = tool_execution::acquire_lease_until(&self.root, self.workers, self.deadline_unix_ms)?;
             (Some(held), wait)
         };
         let invocation = if resumed {
@@ -357,7 +350,7 @@ impl StrictExecution {
                 immutable_output(&run.join(format!("{label}.diagnostic.txt")), output.diagnostic.as_bytes())?;
             }
             for (name, bytes) in &output.outputs {
-                let destination = strict_output_path(run, label, &name);
+                let destination = fixture_output_path(run, label, &name);
                 fs::create_dir_all(destination.parent().context("strict output parent missing")?)?;
                 immutable_output(&destination, bytes)?;
                 #[cfg(unix)]
@@ -397,7 +390,7 @@ impl StrictExecution {
         };
         let record =
             if u64::try_from(SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis())? >= self.deadline_unix_ms {
-                bounded::reconcile(8 * bounded::DEFAULT_BYTES, publish)?
+                decomp_source::context::reconcile(8 * bounded::DEFAULT_BYTES, publish)?
             } else {
                 publish()?
             };
@@ -432,7 +425,7 @@ impl StrictExecution {
                 Ok(())
             };
             if u64::try_from(SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis())? >= self.deadline_unix_ms {
-                bounded::reconcile(8 * bounded::DEFAULT_BYTES, reconcile)?;
+                decomp_source::context::reconcile(8 * bounded::DEFAULT_BYTES, reconcile)?;
             } else {
                 reconcile()?;
             }
@@ -458,49 +451,6 @@ impl StrictExecution {
                 group.reserved_bytes.checked_add(bytes).context("native group reservation overflow")?;
         }
         Ok(())
-    }
-
-    fn lease(&self) -> Result<(File, f64)> {
-        ensure!((1..=64).contains(&self.workers), "native worker count missing");
-        let started = Instant::now();
-        let workers = self.root.join("workers");
-        fs::create_dir_all(&workers)?;
-        let guard = fs::OpenOptions::new().create(true).append(true).open(workers.join("config.lock"))?;
-        loop {
-            if guard.try_lock().is_ok() {
-                break;
-            }
-            let now = u64::try_from(SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis())?;
-            ensure!(now < self.deadline_unix_ms, "native gate deadline exhausted waiting for shared configuration");
-            std::thread::sleep(Duration::from_millis(10));
-        }
-        let config = workers.join("capacity.toml");
-        #[derive(Serialize, Deserialize)]
-        struct Capacity {
-            workers: usize,
-        }
-        if config.exists() {
-            ensure!(
-                bounded::object::<Capacity>(&config)?.workers == self.workers,
-                "shared native worker budget differs"
-            );
-        } else {
-            atomic_toml(&config, &Capacity { workers: self.workers })?;
-        }
-        drop(guard);
-        loop {
-            crate::metrics::check_cancelled()?;
-            for slot in 0..self.workers {
-                let held =
-                    fs::OpenOptions::new().create(true).append(true).open(workers.join(format!("{slot}.lock")))?;
-                if held.try_lock().is_ok() {
-                    return Ok((held, started.elapsed().as_secs_f64()));
-                }
-            }
-            let now = u64::try_from(SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis())?;
-            ensure!(now < self.deadline_unix_ms, "native gate deadline exhausted waiting for shared worker");
-            std::thread::sleep(Duration::from_millis(10));
-        }
     }
 }
 
@@ -663,7 +613,7 @@ mod strict_tests {
         let root = std::env::temp_dir().join(format!(
             "sm-expired-producer-{}-{}",
             std::process::id(),
-            crate::family::unique_id()
+            tool_execution::unique_id()
         ));
         let limits = RunLimits {
             timeout: Duration::from_secs(1),
@@ -718,13 +668,16 @@ mod strict_tests {
 
     #[test]
     fn compiler_runtime_and_source_discovery_share_inherited_bounds() -> Result<()> {
-        let directory = bounded::tests::Directory::new()?;
-        let error = strict_compiler_runtime_until(&directory.0.join("unavailable-rustc"), 0, 1024).unwrap_err();
+        let directory = tool_execution::testing::Directory::new()?;
+        let error =
+            translation_execution::compiler_runtime::discover_until(&directory.0.join("unavailable-rustc"), 0, 1024)
+                .unwrap_err();
         assert!(error.to_string().contains("deadline"));
         fs::write(directory.0.join("source.rs"), b"12345")?;
-        let error =
-            bounded::until(bounded::now_unix_ms()? + 1000, 4, || source_files(&directory.0, "rs", &mut Vec::new()))
-                .unwrap_err();
+        let error = decomp_source::context::until(bounded::now_unix_ms()? + 1000, 4, || {
+            source_files(&directory.0, "rs", &mut Vec::new())
+        })
+        .unwrap_err();
         assert!(error.to_string().contains("budget"));
         let mut path = directory.0.clone();
         for _ in 0..34 {
@@ -737,12 +690,8 @@ mod strict_tests {
 }
 
 fn immutable_output(path: &Path, bytes: &[u8]) -> Result<()> {
-    crate::inputs::immutable_bytes(path, bytes)
+    tool_execution::bounded::immutable_bytes(path, bytes)
 }
-
-pub(crate) use translation_execution::compiler_runtime::{
-    discover as strict_compiler_runtime, discover_until as strict_compiler_runtime_until,
-};
 
 /// Prepare the fixed pristine Fixture worker through the generic compiler cache.
 pub(crate) fn prepare_fixture_worker(request: crate::authoring::FixtureWorkerRequest) -> Result<CacheResult> {

@@ -53,7 +53,7 @@ impl OfflineFamilies {
             );
             ensure!(entry.prepare.is_none(), "unreviewed family preparation command");
             let mut manifest = request.checkout.join(&entry.manifest);
-            let manifest_sha256 = inputs::bounded::digest(&manifest)?;
+            let manifest_sha256 = tool_execution::bounded::digest(&manifest)?;
             if let Some(previous) = &request.previous
                 && previous.manifest_sha256 == manifest_sha256
                 && previous.kind == entry.kind
@@ -78,8 +78,8 @@ impl OfflineFamilies {
                 .manifest;
             }
             let run = self.verify(VerifyRequest {
-                checkout: request.checkout.clone(),
-                source: request.source.clone(),
+                checkout: request.checkout,
+                source: request.source,
                 root: request.root,
                 workers: request.workers,
                 case_jobs: request.case_jobs,
@@ -88,12 +88,6 @@ impl OfflineFamilies {
                 adapter: entry.kind.clone(),
                 execution: String::new(),
             })?;
-            if run.report().status == "offline-verified" {
-                family::authenticate_with_source(
-                    AuthenticateRequest { checkout: request.checkout, verdict: run.evidence() },
-                    &request.source,
-                )?;
-            }
             Ok(RegisteredRun { run, manifest_sha256, kind: entry.kind })
         })
     }

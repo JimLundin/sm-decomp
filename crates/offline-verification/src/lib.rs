@@ -27,14 +27,13 @@ pub mod fixtures;
 pub use family_model::{AuthenticateRequest, Verdict, VerifyRequest};
 pub use host::HostInputs;
 pub use native::{
-    AdmittedScope, AuthenticatedNative, ConfinedEnvironment, NativeContract, NativeDeclaration,
-    NativeDeclarationKind, NativeEvidence, NativeLimits, NativePreparation, NativeProvenance, NativeReceipt,
-    NativeTarget, NoScopeAdmission, PreparedNative, ScopeAdmission,
+    AdmittedScope, AuthenticatedNative, ConfinedEnvironment, NativeContract, NativeDeclaration, NativeDeclarationKind,
+    NativeEvidence, NativeLimits, NativePreparation, NativeProvenance, NativeReceipt, NativeTarget, NoScopeAdmission,
+    PreparedNative, ScopeAdmission,
 };
 pub use ordinary::{PreviousFamily, RegisteredRequest, RegisteredRun};
 pub use sources::IMPLEMENTATION_SOURCES;
 
-use tool_execution::build_cache::CacheResult;
 use tool_execution::{acquire_lease, atomic_toml, digest, metrics};
 
 #[cfg(test)]
@@ -58,7 +57,15 @@ impl OfflineFamilies {
 
     pub fn verify(&self, request: VerifyRequest) -> Result<FamilyRun> {
         inputs::with_host(&self.host, || {
+            let checkout = request.checkout.clone();
+            let source = request.source.clone();
             let report = family::verify(request)?;
+            if report.status == "offline-verified" {
+                family::authenticate_with_source(
+                    AuthenticateRequest { checkout, verdict: report.run.join("verdict.toml") },
+                    &source,
+                )?;
+            }
             Ok(FamilyRun { report, reused: false })
         })
     }

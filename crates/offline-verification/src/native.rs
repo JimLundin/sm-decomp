@@ -244,21 +244,24 @@ impl OfflineFamilies {
         requests: &'a [NativePreparation<'a>],
         scope_admission: &'a dyn ScopeAdmission,
     ) -> Result<impl Iterator<Item = Result<PreparedNative>> + 'a> {
-        let catalog = requests.first().map(|first| match first.deadline_unix_ms {
-            Some(deadline) => source_context::until(deadline, first.max_input_bytes, || {
-                catalog_inputs(first.checkout, first.pinned_source, &first.contract.source_inventory)
-            }),
-            None => source_context::limited(|| {
-                catalog_inputs(first.checkout, first.pinned_source, &first.contract.source_inventory)
-            }),
-        }).transpose()?;
+        let catalog = requests
+            .first()
+            .map(|first| match first.deadline_unix_ms {
+                Some(deadline) => source_context::until(deadline, first.max_input_bytes, || {
+                    catalog_inputs(first.checkout, first.pinned_source, &first.contract.source_inventory)
+                }),
+                None => source_context::limited(|| {
+                    catalog_inputs(first.checkout, first.pinned_source, &first.contract.source_inventory)
+                }),
+            })
+            .transpose()?;
         Ok(requests.iter().map(move |request| {
-                ensure!(
-                    matches!(request.contract.provenance, NativeProvenance::ReviewedCatalog { .. }),
-                    "catalog input context requires reviewed catalog provenance"
-                );
-                prepare_request(self.host_inputs(), request, scope_admission, catalog.as_ref())
-            }))
+            ensure!(
+                matches!(request.contract.provenance, NativeProvenance::ReviewedCatalog { .. }),
+                "catalog input context requires reviewed catalog provenance"
+            );
+            prepare_request(self.host_inputs(), request, scope_admission, catalog.as_ref())
+        }))
     }
 
     pub fn prepare_generated_plm(&self, checkout: &Path, output: &Path) -> Result<crate::family_model::PlmGeneration> {
@@ -409,7 +412,7 @@ fn file(path: &Path) -> Result<PathBuf> {
     Ok(path.into())
 }
 fn immutable(path: &Path, bytes: &[u8]) -> Result<()> {
-    inputs::immutable_bytes(path, bytes)
+    tool_execution::bounded::immutable_bytes(path, bytes)
 }
 fn asset_path(checkout: &Path, asset: &Asset) -> Result<PathBuf> {
     let path = if asset.file.is_absolute() {
@@ -446,19 +449,6 @@ fn coverage(manifest: &Manifest) -> Result<BTreeMap<String, Vec<String>>> {
     ensure!(!result.is_empty(), "native fixture coverage missing");
     Ok(result)
 }
-fn plain(manifest: &Manifest) -> Result<()> {
-    ensure!(
-        !family::dispatcher(manifest)
-            && !manifest.projectile_host
-            && !manifest.projectile_rendering
-            && manifest.callback_adapter.is_none()
-            && !manifest.infrastructure_probe,
-        "native recipe does not support this registered harness"
-    );
-    ensure!(manifest.cases.is_empty(), "plain family has undeclared top-level cases");
-    Ok(())
-}
-
 fn c_inputs(source: &Path, manifest: &Manifest, full: bool) -> Result<Vec<PathBuf>> {
     ensure!(manifest.c_support.len() <= 4096, "native C support inventory exceeded");
     fn headers(path: &Path, result: &mut BTreeSet<PathBuf>, depth: usize) -> Result<()> {
@@ -814,7 +804,7 @@ fn prepare_bounded_with_catalog(
     );
     bounded::count(contract.frozen_inputs.len())?;
     if contract.recipe.is_none() {
-        plain(&manifest)?;
+        recipes::plain(&manifest)?;
     }
     ensure!(
         manifest.family == contract.family && coverage(&manifest)? == contract.coverage,
@@ -1154,9 +1144,9 @@ fn run_bounded(
             );
         }
         let compiler_runtime = if entered >= deadline {
-            builds::strict_compiler_runtime(&rustc)?
+            translation_execution::compiler_runtime::discover(&rustc)?
         } else {
-            builds::strict_compiler_runtime_until(&rustc, deadline, 8 * bounded::DEFAULT_BYTES)?
+            translation_execution::compiler_runtime::discover_until(&rustc, deadline, 8 * bounded::DEFAULT_BYTES)?
         };
         let compiler_runtime_sha256 = sealed(&compiler_runtime)?;
         let intent_path = output.join("native-intent.toml");
@@ -1737,7 +1727,9 @@ fn authenticate_operation(
     }
     if result.passed && !compiler {
         recipes::authenticate_fixture_artifacts(
-            prepared.contract.recipe.as_ref(), &operation.directory, &operation.label,
+            prepared.contract.recipe.as_ref(),
+            &operation.directory,
+            &operation.label,
         )?;
     }
     let reservation = builds::ProducerReservation {

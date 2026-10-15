@@ -1,6 +1,4 @@
 //! Compiler inputs and conservative module discovery for Offline family wrappers.
-#[path = "bounded_inputs.rs"]
-pub(crate) mod bounded;
 use anyhow::{Context, Result, ensure};
 use bounded::digest;
 use serde::{Deserialize, Serialize};
@@ -10,6 +8,7 @@ use std::{
     fs,
     path::{Path, PathBuf},
 };
+use tool_execution::bounded;
 
 thread_local! {
     static HOST: RefCell<Option<crate::HostInputs>> = const { RefCell::new(None) };
@@ -138,24 +137,25 @@ pub(crate) fn artifact_digest(run: &Path, path: &Path) -> Result<String> {
     }
 }
 
-pub(crate) use crate::authoring::{DependenciesRequest, WrapperRequest, WrapperResult};
+use crate::authoring::{DependenciesRequest, WrapperRequest, WrapperResult};
 
 /// The installed confined family adapter places every gameplay module at the
 /// crate root. A selected candidate must never be declared both under a memory
 /// wrapper and as a separate `family` module: those create nominally distinct
 /// copies of types in its dependency closure.
 pub(crate) fn canonical_sources(checkout: &Path, modules: &[PathBuf], imports: &[String]) -> Result<Vec<PathBuf>> {
-    bounded::limited(|| canonical_sources_bounded(checkout, modules, imports))
+    decomp_source::context::limited(|| canonical_sources_bounded(checkout, modules, imports))
 }
 
-pub(crate) fn canonical_sources_until(
+#[cfg(test)]
+fn canonical_sources_until(
     checkout: &Path,
     modules: &[PathBuf],
     imports: &[String],
     deadline: u64,
     max_bytes: u64,
 ) -> Result<Vec<PathBuf>> {
-    bounded::until(deadline, max_bytes, || canonical_sources_bounded(checkout, modules, imports))
+    decomp_source::context::until(deadline, max_bytes, || canonical_sources_bounded(checkout, modules, imports))
 }
 
 fn canonical_sources_bounded(checkout: &Path, modules: &[PathBuf], imports: &[String]) -> Result<Vec<PathBuf>> {
@@ -206,7 +206,7 @@ fn canonical_sources_bounded(checkout: &Path, modules: &[PathBuf], imports: &[St
 }
 
 pub(crate) fn canonical_wrapper(checkout: &Path, run: &Path, sources: &[PathBuf]) -> Result<WrapperResult> {
-    bounded::limited(|| canonical_wrapper_bounded(checkout, run, sources))
+    decomp_source::context::limited(|| canonical_wrapper_bounded(checkout, run, sources))
 }
 
 fn canonical_wrapper_bounded(checkout: &Path, run: &Path, sources: &[PathBuf]) -> Result<WrapperResult> {
@@ -227,10 +227,10 @@ fn canonical_wrapper_bounded(checkout: &Path, run: &Path, sources: &[PathBuf]) -
     Ok(WrapperResult { path })
 }
 
-pub(crate) use tool_execution::bounded::immutable_bytes;
+use tool_execution::bounded::immutable_bytes;
 
 pub fn wrapper(request: WrapperRequest) -> Result<WrapperResult> {
-    bounded::limited(|| wrapper_bounded(request))
+    decomp_source::context::limited(|| wrapper_bounded(request))
 }
 
 fn wrapper_bounded(request: WrapperRequest) -> Result<WrapperResult> {
@@ -285,7 +285,7 @@ fn wrapper_bounded(request: WrapperRequest) -> Result<WrapperResult> {
     Ok(WrapperResult { path: destination })
 }
 
-pub(crate) use tool_execution::builds::dep_paths;
+use tool_execution::builds::dep_paths;
 
 pub fn dependencies(request: DependenciesRequest) -> Result<BTreeMap<String, String>> {
     dependency_inventory(request, false, false)
@@ -312,7 +312,7 @@ fn dependency_inventory(
     confined: bool,
     captured_ridley: bool,
 ) -> Result<BTreeMap<String, String>> {
-    bounded::limited(|| dependency_inventory_bounded(request, confined, captured_ridley))
+    decomp_source::context::limited(|| dependency_inventory_bounded(request, confined, captured_ridley))
 }
 
 fn dependency_inventory_bounded(
@@ -416,7 +416,7 @@ mod tests {
 
     #[test]
     fn canonical_discovery_deduplicates_cycles_and_repeated_tokens_with_one_budget() -> Result<()> {
-        let directory = bounded::tests::Directory::new()?;
+        let directory = tool_execution::testing::Directory::new()?;
         let sources = directory.0.join("crates/port/src");
         fs::create_dir_all(&sources)?;
         fs::write(sources.join("memory.rs"), "pub struct Wram;")?;
@@ -455,7 +455,7 @@ mod tests {
 
     #[test]
     fn canonical_discovery_rejects_module_symlink() -> Result<()> {
-        let directory = bounded::tests::Directory::new()?;
+        let directory = tool_execution::testing::Directory::new()?;
         let sources = directory.0.join("crates/port/src");
         fs::create_dir_all(&sources)?;
         fs::write(sources.join("candidate.rs"), "pub fn Step() {}")?;
@@ -470,7 +470,7 @@ mod tests {
         let root = std::env::temp_dir().join(format!(
             "sm-canonical-inputs-{}-{}",
             std::process::id(),
-            crate::family::unique_id()
+            tool_execution::unique_id()
         ));
         let sources = root.join("crates/port/src");
         let run = root.join("run");
@@ -498,7 +498,7 @@ mod tests {
         let root = std::env::temp_dir().join(format!(
             "sm-immutable-inputs-{}-{}",
             std::process::id(),
-            crate::family::unique_id()
+            tool_execution::unique_id()
         ));
         fs::create_dir(&root)?;
         fs::write(root.join("source.pending"), "par")?;

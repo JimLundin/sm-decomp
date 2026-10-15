@@ -1,6 +1,6 @@
 //! Authoritative binary Offline families. See docs/FIXTURE_FORMAT.md.
 //! All byte extents are validated before shared, allocation-free span access.
-use crate::{family_model::*, inputs::bounded};
+use crate::family_model::*;
 use anyhow::{Context, Result, ensure};
 use std::{
     collections::{BTreeMap, HashMap},
@@ -8,6 +8,7 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
+use tool_execution::bounded;
 
 const MAGIC: &[u8; 8] = b"SMFIXT01";
 const HEADER: usize = 64;
@@ -191,7 +192,7 @@ pub fn read_authenticated(path: &Path, expected: &str) -> Result<Manifest> {
 
 fn open(path: &Path, expected: Option<&str>) -> Result<Manifest> {
     let path = if path.is_absolute() { path.to_path_buf() } else { std::env::current_dir()?.join(path) };
-    bounded::limited(|| {
+    decomp_source::context::limited(|| {
         let bytes = bounded::read(&path)?;
         if let Some(expected) = expected {
             use sha2::{Digest, Sha256};
@@ -352,7 +353,7 @@ pub fn write(path: &Path, manifest: &Manifest) -> Result<()> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
-    let temporary = path.with_extension(format!("smf-{}-{}", std::process::id(), crate::family::unique_id()));
+    let temporary = path.with_extension(format!("smf-{}-{}", std::process::id(), tool_execution::unique_id()));
     let result = (|| -> Result<()> {
         use std::io::Write as _;
         let mut file = fs::OpenOptions::new().create_new(true).write(true).open(&temporary)?;
@@ -406,14 +407,14 @@ mod tests {
     #[test]
     fn authenticated_reads_bind_decoded_bytes_with_one_input_budget() -> Result<()> {
         use sha2::{Digest, Sha256};
-        let directory = bounded::tests::Directory::new()?;
+        let directory = tool_execution::testing::Directory::new()?;
         let path = directory.0.join("family.smf");
         let mut original =
             Manifest { cases: vec![Case { name: "root".into(), a: 5, ..Default::default() }], ..Default::default() };
         let bytes = encode(&original)?;
         let hash = format!("{:x}", Sha256::digest(&bytes));
         fs::write(&path, &bytes)?;
-        bounded::until(bounded::now_unix_ms()? + 10_000, bytes.len() as u64, || {
+        decomp_source::context::until(bounded::now_unix_ms()? + 10_000, bytes.len() as u64, || {
             assert_eq!(read_authenticated(&path, &hash)?, original);
             assert_eq!(bounded::charged_bytes(), bytes.len() as u64);
             Ok(())

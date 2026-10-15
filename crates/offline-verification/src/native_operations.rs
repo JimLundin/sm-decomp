@@ -1,6 +1,5 @@
 //! Bounded indexed storage for complete native producer attribution.
 use super::{NativeOperation, NativeReceipt};
-use crate::inputs;
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use std::{
@@ -77,7 +76,7 @@ fn publish(path: &Path, bytes: &[u8], maximum: u64) -> Result<Reference> {
     ensure!(!bytes.is_empty() && bytes.len() as u64 <= maximum, "native operation storage bound exceeded");
     bounded::safe(path)?;
     fs::create_dir_all(path.parent().context("native operation storage parent missing")?)?;
-    inputs::immutable_bytes(path, bytes)?;
+    tool_execution::bounded::immutable_bytes(path, bytes)?;
     fs::set_permissions(path, fs::Permissions::from_mode(0o400))?;
     Ok(Reference { path: path.into(), sha256: sha256(bytes), bytes: bytes.len() as u64 })
 }

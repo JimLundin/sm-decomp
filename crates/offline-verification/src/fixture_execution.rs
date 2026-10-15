@@ -1,7 +1,6 @@
 //! Dependency admission, worker leases and isolated fixture execution.
 use crate::{
     atomic_toml,
-    builds::ExecutionRecord,
     metrics::{self, Context, OwnedChild},
 };
 use anyhow::{Context as _, Result, bail, ensure};
@@ -16,6 +15,7 @@ use std::{
     sync::{Condvar, Mutex},
     time::{Duration, Instant},
 };
+use tool_execution::builds::ExecutionRecord;
 
 pub(crate) type Task<'a> = (&'a crate::family_model::Routine, &'a crate::family_model::Case, usize);
 
@@ -81,7 +81,7 @@ pub(crate) fn run_waves<T: Send>(
     finish: impl Fn() -> Result<()>,
     adapter: impl Fn(Task<'_>) -> Result<T> + Sync,
 ) -> Result<Vec<(usize, Result<T>)>> {
-    let shared = crate::inputs::bounded::shared_scope()?;
+    let shared = decomp_source::context::shared_scope()?;
     let mut outcomes = Vec::new();
     for wave in waves(tasks, jobs)? {
         if let Err(error) = begin() {
@@ -329,7 +329,7 @@ impl Helper {
             .current_dir(run)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
-            .stderr(File::create(run.join(format!("helper-{label}-{}.stderr", crate::family::unique_id())))?);
+            .stderr(File::create(run.join(format!("helper-{label}-{}.stderr", tool_execution::unique_id())))?);
         let mut child = OwnedChild::spawn(&mut command, context, &format!("fixture-helper-{label}"))?;
         let input = child.take_stdin().context("helper stdin missing")?;
         let output = child.take_stdout().context("helper stdout missing")?;
@@ -474,14 +474,12 @@ mod tests {
 
     #[test]
     fn native_waves_join_failures_and_preserve_continuations_and_order() -> Result<()> {
-        use crate::{
-            family_model::{Case, Routine},
-            inputs::bounded,
-        };
+        use crate::family_model::{Case, Routine};
         use std::sync::{
             Barrier,
             atomic::{AtomicUsize, Ordering},
         };
+        use tool_execution::bounded;
         let routine = Routine::default();
         let cases = [
             Case { name: "bad".into(), ..Default::default() },
@@ -498,7 +496,7 @@ mod tests {
         let begins = AtomicUsize::new(0);
         let finishes = AtomicUsize::new(0);
         let barrier = Barrier::new(2);
-        bounded::until(bounded::now_unix_ms()? + 1000, 8, || {
+        decomp_source::context::until(bounded::now_unix_ms()? + 1000, 8, || {
             let outcomes = run_waves(
                 &tasks,
                 2,
@@ -536,7 +534,7 @@ mod tests {
         let root = std::env::temp_dir().join(format!(
             "sm-fixture-worker-{}-{}",
             std::process::id(),
-            crate::family::unique_id()
+            tool_execution::unique_id()
         ));
         fs::create_dir(&root).unwrap();
         let source = format!(
@@ -593,7 +591,7 @@ match a[1].as_str(){{
         let root = std::env::temp_dir().join(format!(
             "sm-fixture-framing-{}-{}",
             std::process::id(),
-            crate::family::unique_id()
+            tool_execution::unique_id()
         ));
         fs::create_dir(&root).unwrap();
         fs::write(root.join("broken.rs"),r#"use std::io::{Read,Write};fn main(){let mut out=std::io::stdout().lock();out.write_all(b"SMFX0001").unwrap();out.flush().unwrap();drop(out);let mut header=[0;4];std::io::stdin().read_exact(&mut header).unwrap();let mut bytes=vec![0;u32::from_le_bytes(header) as usize];std::io::stdin().read_exact(&mut bytes).unwrap();std::io::stdout().write_all(&[0;3]).unwrap();}"#).unwrap();
