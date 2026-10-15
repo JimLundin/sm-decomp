@@ -49,13 +49,6 @@ impl OfflineFamilies {
         &self,
         request: FixtureWorkerRequest,
     ) -> Result<tool_execution::build_cache::CacheResult> {
-        let mut result = builds::helper_builds(builds::HelperBuildRequest {
-            checkout: request.checkout,
-            root: request.root,
-            run: request.run,
-            workers: request.workers,
-            helpers: vec![builds::Helper::FixtureWorker],
-        })?;
-        Ok(result.artifacts.remove(0))
+        builds::prepare_fixture_worker(request)
     }
 }

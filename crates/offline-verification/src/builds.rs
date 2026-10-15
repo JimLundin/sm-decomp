@@ -744,75 +744,29 @@ pub(crate) use translation_execution::compiler_runtime::{
     discover as strict_compiler_runtime, discover_until as strict_compiler_runtime_until,
 };
 
-/// Fixed standalone helper recipes. Generated Live replay families contain
-/// run-specific source paths and deliberately do not use this cache.
-#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
-#[serde(rename_all = "kebab-case")]
-pub(crate) enum Helper {
-    FixtureWorker,
-    RandomLibrary,
-    RandomCli,
-}
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-pub(crate) struct HelperBuildRequest {
-    pub checkout: PathBuf,
-    pub root: PathBuf,
-    pub run: PathBuf,
-    pub workers: usize,
-    pub helpers: Vec<Helper>,
-}
-#[derive(Serialize, Deserialize)]
-pub(crate) struct HelperBuildResult {
-    pub artifacts: Vec<CacheResult>,
-}
-
-pub(crate) fn helper_builds(request: HelperBuildRequest) -> Result<HelperBuildResult> {
+/// Prepare the fixed pristine Fixture worker through the generic compiler cache.
+pub(crate) fn prepare_fixture_worker(request: crate::authoring::FixtureWorkerRequest) -> Result<CacheResult> {
     fs::create_dir_all(&request.run)?;
     let mut metrics = crate::metrics::Run::start(request.run.join("helper-build.metrics.toml"), "helper-build")?;
-    let result = helper_builds_prepared(request);
+    let result = tool_execution::builds::standalone_builds(tool_execution::builds::StandaloneBuildRequest {
+        checkout: request.checkout,
+        root: request.root,
+        run: request.run,
+        workers: request.workers,
+        artifacts: vec![tool_execution::builds::StandaloneArtifact {
+            source: "crates/offline-verification/src/fixture_worker.rs".into(),
+            name: "libfixture_worker.a".into(),
+            label: "fixture-worker-build".into(),
+            flags: vec!["--crate-type=staticlib".into()],
+        }],
+    })
+    .and_then(|artifacts| artifacts.into_iter().next().context("Fixture worker build returned no artifact"));
     let error = result.as_ref().err().map(|error| format!("{error:#}"));
     let finished = metrics.finish(crate::metrics::outcome(error.as_deref()), error);
     if result.is_ok() {
         finished?;
     }
     result
-}
-
-fn helper_builds_prepared(request: HelperBuildRequest) -> Result<HelperBuildResult> {
-    let HelperBuildRequest { checkout, root, run, workers, helpers } = request;
-    ensure!(!helpers.is_empty() && helpers.len() <= 3, "invalid helper build extent");
-    let artifacts = helpers
-        .into_iter()
-        .map(|helper| {
-            let (source, name, label, flags): (_, _, _, &[&str]) = match helper {
-                Helper::FixtureWorker => (
-                    "crates/offline-verification/src/fixture_worker.rs",
-                    "libfixture_worker.a",
-                    "fixture-worker-build",
-                    &["--crate-type=staticlib"],
-                ),
-                Helper::RandomLibrary => {
-                    ("tools/decomp/next_random.rs", "librng.a", "rng-build", &["--crate-type=staticlib"])
-                }
-                Helper::RandomCli => ("tools/decomp/next_random.rs", "rng-cli", "rng-cli-build", &["--cfg", "cli"]),
-            };
-            tool_execution::builds::StandaloneArtifact {
-                source: source.into(),
-                name: name.into(),
-                label: label.into(),
-                flags: flags.iter().map(|flag| (*flag).into()).collect(),
-            }
-        })
-        .collect();
-    let artifacts = tool_execution::builds::standalone_builds(tool_execution::builds::StandaloneBuildRequest {
-        checkout,
-        root,
-        run,
-        workers,
-        artifacts,
-    })?;
-    Ok(HelperBuildResult { artifacts })
 }
 
 pub(crate) struct CompilerContext<'a> {

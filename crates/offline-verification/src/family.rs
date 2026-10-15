@@ -416,12 +416,11 @@ pub(crate) fn build(
         let worker_source = checkout.join("crates/offline-verification/src/fixture_worker.rs");
         let worker_hash = digest(&run.join("fixture-worker.rs"))?;
         ensure!(digest(&worker_source)? == worker_hash, "fixture worker source differs from this pipeline");
-        builds::helper_builds(builds::HelperBuildRequest {
+        builds::prepare_fixture_worker(crate::authoring::FixtureWorkerRequest {
             checkout: checkout.into(),
             root: request.root.clone(),
             run: run.into(),
             workers: request.workers,
-            helpers: vec![builds::Helper::FixtureWorker],
         })?;
         ensure!(digest(&worker_source)? == worker_hash, "fixture worker source changed during build");
     }
