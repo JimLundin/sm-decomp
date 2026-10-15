@@ -23,6 +23,9 @@ use std::{
 use tool_execution::metrics::{self, Context};
 
 const PROJECTION_BYTES: u64 = 64 * 1024;
+// Keep pristine helpers warm for a bounded number of ready pairs. A pending
+// round-robin turn may be bypassed only by these finite remaining credits.
+const HELPER_QUANTUM: usize = 8;
 
 #[derive(Clone, Copy, Debug, Serialize)]
 #[serde(rename_all = "kebab-case")]
@@ -60,12 +63,12 @@ struct State {
     closed: bool,
     cursor: usize,
     groups: BTreeMap<usize, Group>,
-    idle: Vec<(usize, Worker)>,
+    idle: Vec<(usize, Reusable)>,
     residents: usize,
     families: Vec<Family>,
     // Completed records move into the batch's canonical results. Keep their
     // reservation through the whole invocation, after their group is removed.
-    _result_reservations: Vec<Reservation>,
+    result_reservations: BTreeMap<usize, Reservation>,
 }
 
 /// Graph scheduling metadata shares the invocation's existing resident budget.
@@ -78,6 +81,12 @@ impl Reservation {
     fn new(declarations: &Arc<Declarations>, bytes: u64) -> Result<Self> {
         declarations.reserve_metadata(bytes)?;
         Ok(Self { declarations: declarations.clone(), bytes })
+    }
+    fn shrink(&mut self, bytes: u64) -> Result<()> {
+        ensure!(bytes <= self.bytes, "retained Fixture result exceeded its provisional reservation");
+        self.declarations.release_metadata(self.bytes - bytes);
+        self.bytes = bytes;
+        Ok(())
     }
 }
 impl Drop for Reservation {
@@ -160,7 +169,7 @@ impl Fixtures {
                 // Closed recipes retain two subject entries per map, short hash
                 // strings and declaration names. Check the actual retained extent
                 // before queueing a record, including future recipe extensions.
-                16 * 1024 + 2 * (routine.symbol.len() + routine.cases[case].name.len()) as u64
+                result_bound(routine, &routine.cases[case])
             })
             .collect::<Vec<_>>();
         let result_bytes = result_bounds
@@ -226,30 +235,49 @@ impl Fixtures {
         match result {
             Err(error) => Err(anyhow::anyhow!(diagnostic(&format!("{error:#}")))),
             Ok(record) => {
-                // A BTree node may have unused keys/edges. Reserve a full
-                // kilobyte per observed entry, plus the owned String buffers
-                // and fixed record shell; this exceeds each closed map shape.
-                let entries = record.returns.len()
-                    + record.after_sha256.len()
-                    + record.results.len()
-                    + record.spawn_results.len();
-                let mut bytes = 1024 * (entries as u64 + 1);
-                for value in [&record.routine, &record.name, &record.before_sha256]
-                    .into_iter()
-                    .chain(record.capture_after_sha256.iter())
-                    .chain(record.returns.keys())
-                    .chain(record.after_sha256.keys())
-                    .chain(record.after_sha256.values())
-                    .chain(record.results.keys())
-                    .chain(record.spawn_results.keys())
-                {
-                    bytes = bytes.checked_add(value.capacity() as u64).context("Fixture result extent overflow")?;
-                }
+                let bytes = retained_case_bytes(&record)?;
                 ensure!(bytes <= self.result_bounds[index], "Fixture result exceeded its retained memory reservation");
                 Ok(record)
             }
         }
     }
+}
+
+fn retained_case_bytes(record: &CaseRecord) -> Result<u64> {
+    // Closed subject maps have zero or two entries. A nonempty map has one
+    // leaf; 1 KiB covers its eleven key/value slots and allocator overhead for
+    // all four concrete value types. Larger future shapes reserve one such
+    // node per entry until their representation is reviewed.
+    let mut bytes = std::mem::size_of::<CaseRecord>() as u64 + 128;
+    for count in [record.returns.len(), record.after_sha256.len(), record.results.len(), record.spawn_results.len()] {
+        let nodes = if count == 0 {
+            0
+        } else if count <= 2 {
+            1
+        } else {
+            count
+        };
+        bytes = bytes.checked_add(nodes as u64 * 1024).context("Fixture result map extent overflow")?;
+    }
+    for value in [&record.routine, &record.name, &record.before_sha256]
+        .into_iter()
+        .chain(record.capture_after_sha256.iter())
+        .chain(record.returns.keys())
+        .chain(record.after_sha256.keys())
+        .chain(record.after_sha256.values())
+        .chain(record.results.keys())
+        .chain(record.spawn_results.keys())
+    {
+        bytes = bytes.checked_add(value.capacity() as u64).context("Fixture result extent overflow")?;
+    }
+    Ok(bytes)
+}
+
+fn result_bound(routine: &crate::family_model::Routine, case: &crate::family_model::Case) -> u64 {
+    // At most one bounded diagnostic and its exact-sized canonical aggregate
+    // coexist per case. The separate 512 bytes cover result-vector slots and
+    // error/container overhead; declaration names cover successful records.
+    8 * 1024 + 512 + 2 * (routine.symbol.len() + case.name.len()) as u64
 }
 
 struct Group {
@@ -262,8 +290,13 @@ struct Group {
     outcomes: Vec<(usize, Result<CaseRecord>)>,
 }
 
+struct Reusable {
+    worker: Worker,
+    remaining: usize,
+}
+
 enum Action {
-    Pair { family: usize, task: usize, work: Arc<Fixtures>, worker: Worker },
+    Pair { family: usize, task: usize, work: Arc<Fixtures>, worker: Reusable },
     Blocked { family: usize, task: usize, work: Arc<Fixtures>, reason: String },
     Retire { family: usize, worker: Worker },
     Done,
@@ -274,7 +307,7 @@ fn framed(hash: &mut Sha256, bytes: &[u8]) {
     hash.update(bytes);
 }
 
-fn diagnostic(message: &str) -> String {
+pub(crate) fn diagnostic(message: &str) -> String {
     let mut end = message.len().min(4096);
     while !message.is_char_boundary(end) {
         end -= 1;
@@ -283,6 +316,14 @@ fn diagnostic(message: &str) -> String {
 }
 
 impl Graph {
+    fn metadata_bytes(jobs: &[FamilyJob], capacity: usize, family_jobs: usize) -> Result<u64> {
+        jobs.iter()
+            .try_fold(PROJECTION_BYTES * capacity.min(family_jobs) as u64 + capacity as u64 * 8192, |total, job| {
+                total.checked_add((job.family.len() + job.output.as_os_str().len()) as u64 * 2 + 1024)
+            })
+            .context("batch graph metadata extent overflow")
+    }
+
     pub(crate) fn new(
         catalog: &CatalogSnapshot,
         inputs: &InputView,
@@ -292,12 +333,7 @@ impl Graph {
         family_jobs: usize,
     ) -> Result<Self> {
         let declarations = catalog.declarations().clone();
-        let bytes = jobs
-            .iter()
-            .try_fold(PROJECTION_BYTES * capacity.min(family_jobs) as u64 + capacity as u64 * 8192, |total, job| {
-                total.checked_add((job.family.len() + job.output.as_os_str().len()) as u64 * 2 + 1024)
-            })
-            .context("batch graph metadata extent overflow")?;
+        let bytes = Self::metadata_bytes(jobs, capacity, family_jobs)?;
         let reservation = Reservation::new(&declarations, bytes)?;
         let mut hash = Sha256::new();
         framed(&mut hash, b"offline-batch-graph-v1");
@@ -326,6 +362,7 @@ impl Graph {
             context.configuration("batch-resident-helper-limit", 2 * capacity);
             context.configuration("batch-metadata-workers", capacity.min(family_jobs));
             context.configuration("batch-family-window", family_jobs);
+            context.configuration("batch-helper-reuse-quantum", HELPER_QUANTUM);
             context
                 .configuration("batch-graph-projection", "advisory only; never read for producer admission or reuse");
         }
@@ -339,7 +376,7 @@ impl Graph {
                 idle: Vec::new(),
                 residents: 0,
                 families,
-                _result_reservations: Vec::new(),
+                result_reservations: BTreeMap::new(),
             }),
             changed: Condvar::new(),
             metadata: Mutex::new(0),
@@ -412,7 +449,28 @@ impl Graph {
                 .chain(state.groups.range(..state.cursor))
                 .find(|(_, group)| !group.ready.is_empty() && group.running < group.work.jobs)
                 .map(|(id, _)| *id);
-            if let Some(family) = selected {
+            if let Some(turn) = selected {
+                let mut family = turn;
+                if state.stopped.is_none()
+                    && state.residents == self.capacity
+                    && !state.idle.iter().any(|(id, _)| *id == turn)
+                {
+                    // Preserve the pending fair turn while amortizing helper
+                    // startup. Every bypass consumes a finite resident credit;
+                    // it never renews a helper or moves the fair cursor.
+                    if let Some((&id, _)) =
+                        state.groups.range(state.cursor..).chain(state.groups.range(..state.cursor)).find(
+                            |(id, group)| {
+                                !group.ready.is_empty()
+                                    && group.running < group.work.jobs
+                                    && state.idle.iter().any(|(owner, worker)| owner == *id && worker.remaining > 0)
+                            },
+                        )
+                    {
+                        family = id;
+                    }
+                }
+                let fair_turn = family == turn;
                 let group = &state.groups[&family];
                 let (&task, &blocked) = group.ready.first_key_value().unwrap();
                 let work = group.work.clone();
@@ -420,29 +478,38 @@ impl Graph {
                 let action = if let Some(reason) = reason {
                     Action::Blocked { family, task, work, reason }
                 } else {
-                    let worker = if let Some(index) = state.idle.iter().position(|(id, _)| *id == family) {
-                        state.idle.swap_remove(index).1
+                    let mut worker = if let Some(index) =
+                        state.idle.iter().position(|(id, worker)| *id == family && (fair_turn || worker.remaining > 0))
+                    {
+                        let mut worker = state.idle.swap_remove(index).1;
+                        if fair_turn {
+                            worker.remaining = HELPER_QUANTUM;
+                        }
+                        worker
                     } else if state.residents < self.capacity {
                         state.residents += 1;
                         state.groups.get_mut(&family).unwrap().residents += 1;
-                        Worker::new(&work.run, work.fork, &work.context)
+                        Reusable { worker: Worker::new(&work.run, work.fork, &work.context), remaining: HELPER_QUANTUM }
                     } else if !state.idle.is_empty() {
                         // Retire an idle helper pair before creating its replacement.
                         // Waiting for a predecessor or cache never retains a lease.
                         let index =
                             state.idle.iter().position(|(id, _)| state.groups[id].ready.is_empty()).unwrap_or(0);
                         let (family, worker) = state.idle.swap_remove(index);
-                        return Action::Retire { family, worker };
+                        return Action::Retire { family, worker: worker.worker };
                     } else {
                         state = self.changed.wait_timeout(state, Duration::from_millis(20)).unwrap().0;
                         continue;
                     };
+                    worker.remaining -= 1;
                     Action::Pair { family, task, work, worker }
                 };
                 let group = state.groups.get_mut(&family).unwrap();
                 group.ready.remove(&task);
                 group.running += 1;
-                state.cursor = family + 1;
+                if fair_turn {
+                    state.cursor = family + 1;
+                }
                 return action;
             }
             if state.closed {
@@ -470,7 +537,7 @@ impl Graph {
         self.changed.notify_all();
     }
 
-    fn settled(&self, family: usize, task: usize, result: Result<CaseRecord>, worker: Option<Worker>, blocked: bool) {
+    fn settled(&self, family: usize, task: usize, result: Result<CaseRecord>, worker: Option<Reusable>, blocked: bool) {
         let mut state = self.state.lock().unwrap();
         let result = state.groups[&family].work.bounded_result(task, result);
         let failed = result.is_err();
@@ -501,7 +568,7 @@ impl Graph {
             let mut index = 0;
             while index < state.idle.len() {
                 if state.idle[index].0 == family {
-                    retired.push(state.idle.swap_remove(index).1);
+                    retired.push(state.idle.swap_remove(index).1.worker);
                 } else {
                     index += 1;
                 }
@@ -533,9 +600,9 @@ impl Graph {
                         // A stop while this task waited for another batch's
                         // capacity must not admit a fresh Rust/C invocation.
                         self.check_admission()?;
-                        worker.set_wait(wait);
+                        worker.worker.set_wait(wait);
                         invoked = true;
-                        work.execute(task, &mut worker, &self.declarations)
+                        work.execute(task, &mut worker.worker, &self.declarations)
                     }))
                     .unwrap_or_else(|_| Err(anyhow::anyhow!("batch Fixture worker panicked")));
                     let result = if !invoked {
@@ -554,6 +621,28 @@ impl Graph {
 }
 
 impl<'a> FamilyNode<'a> {
+    pub(crate) fn retain_completed(self, result: &Result<crate::RegisteredRun>) -> Result<()> {
+        let bytes = match result {
+            Ok(result) => {
+                let report = result.run.report();
+                let initial = report.error.as_ref().map_or(0, |error| error.capacity() as u64)
+                    + (report.cases.capacity() - report.cases.len()) as u64 * std::mem::size_of::<CaseRecord>() as u64;
+                report.cases.iter().try_fold(initial, |bytes, record| {
+                    bytes.checked_add(retained_case_bytes(record)?).context("completed family result extent overflow")
+                })?
+            }
+            Err(error) => format!("{error:#}").len() as u64 + 128,
+        };
+        let mut state = self.graph.state.lock().unwrap();
+        if let Some(reservation) = state.result_reservations.get_mut(&self.index) {
+            reservation.shrink(bytes)?;
+        } else {
+            // Reused evidence submits no new Fixtures but returns records that
+            // the batch retains until its invocation is complete.
+            state.result_reservations.insert(self.index, Reservation::new(&self.graph.declarations, bytes)?);
+        }
+        Ok(())
+    }
     pub(crate) fn check_admission(self) -> Result<()> {
         self.graph.check_admission()
     }
@@ -645,7 +734,9 @@ impl<'a> FamilyNode<'a> {
                 order_sha256: format!("{:x}", order.finalize()),
                 ..Default::default()
             };
-            state._result_reservations.push(work.result_reservation.take().expect("one result reservation per group"));
+            state
+                .result_reservations
+                .insert(self.index, work.result_reservation.take().expect("one result reservation per group"));
             state.groups.insert(
                 self.index,
                 Group {
@@ -655,7 +746,9 @@ impl<'a> FamilyNode<'a> {
                     remaining: count,
                     running: 0,
                     residents: 0,
-                    outcomes: Vec::with_capacity(count),
+                    // A terminal retirement error can add at most one row per
+                    // resident executor. Avoid doubling this large vector.
+                    outcomes: Vec::with_capacity(count + self.graph.capacity),
                 },
             );
             self.graph.changed.notify_all();
@@ -671,5 +764,158 @@ impl<'a> FamilyNode<'a> {
             }
             state = self.graph.changed.wait(state).unwrap();
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::family_model::{CallbackMetrics, SpawnMetrics};
+
+    fn captured_catalog() -> Result<(PathBuf, CatalogSnapshot)> {
+        let checkout = std::fs::canonicalize(
+            std::env::var_os("SM_GRAPH_MEMORY_CHECKOUT")
+                .map(PathBuf::from)
+                .unwrap_or_else(|| PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")),
+        )?;
+        let catalog = crate::catalog::capture(crate::CatalogRequest::new(&checkout)?)?;
+        Ok((checkout, catalog))
+    }
+
+    #[derive(Debug)]
+    struct Extent {
+        family: String,
+        cases: usize,
+        retained: u64,
+        provisional: u64,
+        queue: u64,
+    }
+
+    fn extents(checkout: &std::path::Path, catalog: &CatalogSnapshot) -> Result<Vec<Extent>> {
+        let facts = catalog.catalog().families.keys().map(|name| catalog.family(name)).collect::<Result<Vec<_>>>()?;
+        let mut counts = Vec::new();
+        for facts in &facts {
+            let declared = facts.declaration();
+            let recipe = crate::recipe::for_family(checkout, &facts.entry().manifest, declared)
+                .with_context(|| format!("catalog result shape recipe {}", facts.name()))?;
+            let manifest = crate::recipe::normalize_manifest(&checkout, declared.clone(), recipe.as_ref())?;
+            let mut retained = 0;
+            let mut provisional = 0;
+            let indices = crate::family::ordered_task_indices(&manifest)?;
+            for &(routine, case) in &indices {
+                let routine = &manifest.routines[routine];
+                let case = &routine.cases[case];
+                let mut record =
+                    CaseRecord { routine: routine.symbol.clone(), name: case.name.clone(), ..Default::default() };
+                match recipe.as_ref() {
+                    Some(Recipe::Plm) => {
+                        record.spawn_results = BTreeMap::from([
+                            ("rust".into(), SpawnMetrics::default()),
+                            ("c".into(), SpawnMetrics::default()),
+                        ])
+                    }
+                    Some(Recipe::Callback | Recipe::PowerBomb | Recipe::GameHost | Recipe::Ridley) => {
+                        record.results = BTreeMap::from([
+                            ("rust".into(), CallbackMetrics::default()),
+                            ("c".into(), CallbackMetrics::default()),
+                        ])
+                    }
+                    _ => {
+                        record.returns = BTreeMap::from([("rust".into(), 0), ("c".into(), 0)]);
+                        record.before_sha256 = "0".repeat(64);
+                        record.after_sha256 =
+                            BTreeMap::from([("rust".into(), "0".repeat(64)), ("c".into(), "0".repeat(64))]);
+                        record.capture_after_sha256 = case.expected_after_file.as_ref().map(|_| "0".repeat(64));
+                    }
+                }
+                retained += retained_case_bytes(&record)?;
+                provisional += result_bound(routine, case);
+            }
+            // Vec growth can leave unused CaseRecord slots in the returned
+            // report. Account its next power-of-two capacity conservatively.
+            let unused = indices.len().max(4).next_power_of_two() - indices.len();
+            retained += unused as u64 * std::mem::size_of::<CaseRecord>() as u64;
+            counts.push(Extent {
+                family: facts.name().to_owned(),
+                cases: indices.len(),
+                retained,
+                provisional,
+                queue: indices.len() as u64 * 1024 + 4096,
+            });
+        }
+        counts.sort_by_key(|extent| std::cmp::Reverse(extent.provisional - extent.retained + extent.queue));
+        Ok(counts)
+    }
+
+    fn totals(extents: &[Extent]) -> Result<(u64, u64)> {
+        let case_count = extents.iter().map(|extent| extent.cases).sum::<usize>();
+        let completed_bytes = extents.iter().map(|extent| extent.retained).sum::<u64>();
+        // Any eight active families, even when all others have completed. This
+        // is a stricter window than canonical admission normally produces.
+        let active_extra =
+            extents.iter().take(8).map(|extent| extent.provisional - extent.retained + extent.queue).sum::<u64>();
+        println!(
+            "Catalog graph result shapes: families={}, cases={case_count}, completed_case_bytes={completed_bytes}, maximum_eight_active_extra_bytes={active_extra}",
+            extents.len()
+        );
+        for extent in extents.iter().take(8) {
+            println!(
+                "{}: cases={}, retained={}, provisional={}, queues={}",
+                extent.family, extent.cases, extent.retained, extent.provisional, extent.queue
+            );
+        }
+        ensure!(case_count >= 150_204 && extents.len() >= 177, "memory control omitted the complete catalog");
+        Ok((completed_bytes, active_extra))
+    }
+
+    #[test]
+    #[ignore = "read-only declaration shape measurement; no input capture or producers"]
+    fn complete_catalog_result_shapes() -> Result<()> {
+        let (checkout, catalog) = captured_catalog()?;
+        let extents = extents(&checkout, &catalog)?;
+        let (completed, active) = totals(&extents)?;
+        let declarations = catalog.statistics().retained_bytes;
+        println!("Declaration bytes={declarations}, declarations_and_results={}", declarations + completed + active);
+        Ok(())
+    }
+
+    #[test]
+    #[ignore = "complete production input capture and graph memory control; requires retained project inputs"]
+    fn full_catalog_graph_reservations_fit_standard_budget() -> Result<()> {
+        let (checkout, catalog) = captured_catalog()?;
+        let extents = extents(&checkout, &catalog)?;
+        let (completed_bytes, active_extra) = totals(&extents)?;
+        let host = crate::HostInputs::new(&[("Cargo.toml", include_str!("../../../Cargo.toml"))], "1".repeat(64))?;
+        let offline = crate::OfflineFamilies::new(host);
+        let required = catalog.catalog().families.keys().cloned().collect::<Vec<_>>();
+        let source = std::fs::canonicalize(checkout.join("deps/snesrev-sm"))?;
+        let inputs = offline.capture_batch_inputs(crate::BatchInputRequest {
+            catalog: &catalog,
+            source: &source,
+            required: &required,
+        })?;
+        let jobs = required
+            .into_iter()
+            .map(|family| FamilyJob {
+                output: checkout.join("unused-memory-control").join(&family),
+                family,
+                previous: None,
+            })
+            .collect::<Vec<_>>();
+        let graph = Reservation::new(catalog.declarations(), Graph::metadata_bytes(&jobs, 4, 8)?)?;
+        let base_bytes = catalog.statistics().retained_bytes;
+        let combined = base_bytes + completed_bytes + active_extra;
+        println!(
+            "Complete captured graph reservation: base_bytes={base_bytes}, completed_bytes={completed_bytes}, active_extra_bytes={active_extra}, combined_bytes={combined}, limit={}",
+            tool_execution::bounded::DEFAULT_BYTES
+        );
+        let completed = Reservation::new(catalog.declarations(), completed_bytes)?;
+        let active = Reservation::new(catalog.declarations(), active_extra)?;
+        ensure!(
+            catalog.statistics().retained_bytes == combined,
+            "structural reservation did not cover the complete active window"
+        );
+        drop((active, completed, graph, inputs));
+        Ok(())
     }
 }

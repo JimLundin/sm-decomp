@@ -866,6 +866,24 @@ pub(crate) fn verify_with_declarations(
                     },
                 )?
             };
+            // The batch owns a bounded result reservation. Preallocate the
+            // exact joined diagnostic extent before consuming errors, so it
+            // never retains a Vec of copied messages or a growing String.
+            let mut joined = if node.is_some() {
+                let bytes = outcomes.iter().filter_map(|(_, result)| result.as_ref().err()).try_fold(
+                    0usize,
+                    |bytes, error| {
+                        bytes
+                            .checked_add(format!("{error:#}").len())
+                            .and_then(|bytes| bytes.checked_add(2))
+                            .context("batch diagnostic aggregate extent overflow")
+                    },
+                )?;
+                Some(String::with_capacity(bytes))
+            } else {
+                None
+            };
+            let mut error_count = 0;
             let mut errors = Vec::new();
             for (index, outcome) in outcomes {
                 match outcome {
@@ -875,9 +893,21 @@ pub(crate) fn verify_with_declarations(
                         if let Some(rejection) = rejection.filter(|p| p.is_file()) {
                             verdict.cases.push(object(&rejection)?);
                         }
-                        errors.push(format!("{error:#}"));
+                        if let Some(joined) = &mut joined {
+                            use std::fmt::Write as _;
+                            if error_count > 0 {
+                                joined.push_str("; ");
+                            }
+                            write!(joined, "{error:#}")?;
+                            error_count += 1;
+                        } else {
+                            errors.push(format!("{error:#}"));
+                        }
                     }
                 }
+            }
+            if error_count > 0 {
+                return Err(anyhow::Error::msg(joined.expect("batch diagnostic allocation")));
             }
             ensure!(errors.is_empty(), "{}", errors.join("; "));
             Ok(())
@@ -898,7 +928,13 @@ pub(crate) fn verify_with_declarations(
         Ok(())
     })();
     if let Err(error) = result {
-        verdict.error = Some(format!("{error:#}"));
+        verdict.error = Some(if node.is_some() {
+            // A batch's full canonical diagnostic is already an owned String.
+            // Move it into evidence instead of allocating a second full copy.
+            error.downcast::<String>().unwrap_or_else(|error| format!("{error:#}"))
+        } else {
+            format!("{error:#}")
+        });
         if let Some(node) = node {
             node.stop(verdict.error.as_deref().unwrap());
         }
@@ -919,7 +955,11 @@ pub(crate) fn verify_with_declarations(
         metrics.finish(crate::metrics::outcome(Some(&format!("{error:#}"))), Some(format!("{error:#}")))?;
     }
     publication?;
-    metrics.finish(crate::metrics::outcome(verdict.error.as_deref()), verdict.error.clone())?;
+    let metrics_error = verdict
+        .error
+        .as_deref()
+        .map(|error| if node.is_some() { crate::work_graph::diagnostic(error) } else { error.to_owned() });
+    metrics.finish(crate::metrics::outcome(verdict.error.as_deref()), metrics_error)?;
     Ok(verdict)
 }
 

@@ -241,7 +241,7 @@ impl OfflineFamilies {
                             let job = &jobs[index];
                             let job = job.lock().unwrap().take().expect("one family worker per index");
                             let started = Instant::now();
-                            let result = (|| -> Result<RegisteredRun> {
+                            let mut result = (|| -> Result<RegisteredRun> {
                                 let metrics_directory = job.output.join("metrics");
                                 std::fs::create_dir_all(&metrics_directory)?;
                                 let mut metrics_run = tool_execution::metrics::Run::start(
@@ -265,11 +265,16 @@ impl OfflineFamilies {
                                     Some(&captured.view),
                                     Some(node),
                                 );
-                                let error = result
-                                    .as_ref()
-                                    .err()
-                                    .map(|error| format!("{error:#}"))
-                                    .or_else(|| result.as_ref().ok()?.run.report().error.clone());
+                                let error = result.as_ref().err().map(|error| format!("{error:#}")).or_else(|| {
+                                    result
+                                        .as_ref()
+                                        .ok()?
+                                        .run
+                                        .report()
+                                        .error
+                                        .as_deref()
+                                        .map(crate::work_graph::diagnostic)
+                                });
                                 let finished =
                                     metrics_run.finish(tool_execution::metrics::outcome(error.as_deref()), error);
                                 if result.is_ok() {
@@ -277,6 +282,10 @@ impl OfflineFamilies {
                                 }
                                 result
                             })();
+                            if let Err(error) = node.retain_completed(&result) {
+                                graph.stop(&format!("{error:#}"));
+                                result = Err(error);
+                            }
                             let outcome = FamilyCompletion {
                                 family: job.family,
                                 seconds: started.elapsed().as_secs_f64(),
