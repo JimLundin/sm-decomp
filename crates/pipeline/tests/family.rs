@@ -1896,3 +1896,170 @@ fn measure_affected_family_work_with_retained_evidence() {
         }
     }
 }
+
+#[test]
+#[ignore = "bounded batch metrics comparison retains exact sources, tools and actual-C evidence"]
+fn measure_batch_metrics_with_retained_evidence() {
+    use std::{collections::BTreeSet, os::unix::fs::MetadataExt, time::Instant};
+    fn storage(root: &Path) -> Value {
+        fn walk(path: &Path, seen: &mut BTreeSet<(u64, u64)>, totals: &mut [u64; 3]) {
+            let metadata = fs::symlink_metadata(path).unwrap();
+            if metadata.is_dir() {
+                for entry in fs::read_dir(path).unwrap() {
+                    walk(&entry.unwrap().path(), seen, totals);
+                }
+            } else if metadata.is_file() {
+                totals[0] += 1;
+                totals[1] += metadata.len();
+                if seen.insert((metadata.dev(), metadata.ino())) {
+                    totals[2] += metadata.blocks() * 512;
+                }
+            }
+        }
+        let mut totals = [0; 3];
+        walk(root, &mut BTreeSet::new(), &mut totals);
+        Value::Table(toml::Table::from_iter([
+            ("files".into(), Value::try_from(totals[0]).unwrap()),
+            ("logical_file_bytes".into(), Value::try_from(totals[1]).unwrap()),
+            ("unique_allocated_file_bytes".into(), Value::try_from(totals[2]).unwrap()),
+        ]))
+    }
+    fn output(command: &mut Command) -> String {
+        let result = command.output().unwrap();
+        assert!(result.status.success(), "{}", String::from_utf8_lossy(&result.stderr));
+        String::from_utf8(result.stdout).unwrap().trim().into()
+    }
+    fn host() -> Value {
+        Value::Table(toml::Table::from_iter([
+            ("loadavg".into(), fs::read_to_string("/proc/loadavg").unwrap().into()),
+            ("meminfo".into(), fs::read_to_string("/proc/meminfo").unwrap().into()),
+            ("process_activity".into(), output(Command::new("ps").args(["-eo", "comm=,pcpu=,rss="])).into()),
+        ]))
+    }
+    let root =
+        PathBuf::from(std::env::var_os("SM_BATCH_METRICS_MEASUREMENT_OUTPUT").expect("measurement output required"));
+    assert!(root.is_absolute() && !root.exists(), "use a new absolute measurement directory");
+    assert_eq!(std::env::var("SM_PIPELINE_WORKERS").as_deref(), Ok("4"));
+    assert!(std::env::var_os("SM_PIPELINE_ROOT").is_some(), "shared capacity directory required");
+    fs::create_dir_all(root.parent().unwrap()).unwrap();
+    let project = Project::at(root.clone(), true);
+    project.manifest(toml::from_str::<Value>("cases=[{name='one',a=1,expected_return=2}]").unwrap()["cases"].clone());
+    write(&root, "tools/port/batch.toml", "[families]\nfixture='family'\n[profiles]\ngameplay=['fixture']\n");
+    project.initialize_git();
+    let fixture_source_revision = project.git(&["rev-parse", "HEAD"]);
+    let worktree = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().parent().unwrap();
+    let revision = output(Command::new("git").args(["rev-parse", "HEAD"]).current_dir(worktree));
+    let tools = root.join("retained-tools");
+    fs::create_dir(&tools).unwrap();
+    let reader = tools.join("sm-pipeline");
+    fs::copy(env!("CARGO_BIN_EXE_sm-pipeline"), &reader).unwrap();
+    fs::copy(std::env::current_exe().unwrap(), tools.join("family-control")).unwrap();
+    write(&root, "measurement-source.rs", include_str!("family.rs"));
+    let mut report = toml::Table::from_iter([
+        ("format".into(), "batch-metrics-measurement-v1".into()),
+        ("implementation_revision".into(), revision.into()),
+        ("fixture_source_revision".into(), fixture_source_revision.into()),
+        ("reader".into(), sealed(&reader)),
+        ("control".into(), sealed(&tools.join("family-control"))),
+        ("control_source".into(), sealed(&root.join("measurement-source.rs"))),
+        ("rustc_version".into(), output(Command::new("rustc").arg("-vV")).into()),
+        ("cc_version".into(), output(Command::new("cc").arg("--version")).into()),
+        ("cargo_profile".into(), "dev/test; debug=0; no extra features; locked/offline; jobs1".into()),
+        ("workers".into(), 4.into()),
+        ("family_jobs".into(), 1.into()),
+        ("case_jobs".into(), 1.into()),
+        ("required_families".into(), 1.into()),
+        ("required_routines".into(), 1.into()),
+        ("required_fixture_pairs".into(), 1.into()),
+        ("initial_host".into(), host()),
+        ("minimum_useful_change".into(), "greater of 5% or 20ms, and greater than observed variation; three pairs do not establish significance".into()),
+        ("physical_disk_io".into(), "unavailable; logical bytes and allocated blocks are not OS disk I/O".into()),
+        ("limitations".into(), "one complete tiny actual-C family; alternating sampling comparison is advisory; concurrent compilation/host activity must be assessed from each sample; no full-catalog speedup claim".into()),
+    ]);
+    assert!(!root.join("cache").exists());
+    let started = Instant::now();
+    let mut samples = Vec::new();
+    let mut verdicts = BTreeSet::new();
+    let mut sample = |scenario: &str, fresh: bool, sampling: &str| {
+        let host_before = host();
+        let (result, invocation_seconds) = project.measured_batch(fresh, sampling, true);
+        assert!(invocation_seconds < 60.0, "{scenario} exceeded its declared executable budget");
+        let record = &result["families"]["fixture"];
+        let path = record["verdict"].as_str().unwrap();
+        verdicts.insert(path.to_owned());
+        let verdict: Value = toml::from_str(&fs::read_to_string(path).unwrap()).unwrap();
+        assert_eq!(verdict["verified_cases"].as_integer(), Some(1));
+        assert_eq!(verdict["verified_routines"].as_integer(), Some(1));
+        let metrics: pipeline_model::metrics::Receipt =
+            toml::from_str(&fs::read_to_string(result["metrics"].as_str().unwrap()).unwrap()).unwrap();
+        metrics.validate().unwrap();
+        assert_eq!(metrics.enabled, sampling == "enabled");
+        if scenario == "retained-authentication" {
+            assert_eq!(record["status"].as_str(), Some("reused"));
+            assert!(metrics.processes.is_empty(), "retained authentication launched a producer");
+        } else {
+            assert_eq!(record["status"].as_str(), Some("offline-verified"));
+            assert!(!metrics.processes.is_empty(), "fresh verification did not execute producers");
+        }
+        let item = Value::Table(toml::Table::from_iter([
+            ("scenario".into(), scenario.into()),
+            ("sampling".into(), sampling.into()),
+            ("fresh_required".into(), fresh.into()),
+            ("invocation_seconds".into(), invocation_seconds.into()),
+            ("batch_elapsed_ns".into(), Value::try_from(metrics.elapsed_ns).unwrap()),
+            ("owned_processes".into(), Value::try_from(metrics.processes.len()).unwrap()),
+            ("host_before".into(), host_before),
+            ("host_after".into(), host()),
+            ("batch_storage".into(), storage(&root.join("batch"))),
+            ("receipt".into(), result),
+        ]));
+        write(&root, &format!("samples/{}.toml", samples.len()), toml::to_string_pretty(&item).unwrap());
+        samples.push(item);
+    };
+    sample("fresh-empty-private-cache", true, "disabled");
+    for _ in 0..3 {
+        sample("retained-authentication", false, "disabled");
+        sample("retained-authentication", false, "enabled");
+    }
+    sample("fresh-existing-private-cache", true, "disabled");
+    drop(sample);
+    report.insert("samples".into(), samples.into());
+    report.insert("storage_before_cleanup".into(), storage(&root.join("batch")));
+    report.insert("private_cache_before_removal".into(), storage(&root.join("cache")));
+    report.insert("cache_interpretation".into(), "empty/existing artifact namespaces are distinguished; retained compiler/cache receipts determine actual hits; run-specific build identities may still miss".into());
+    let cleanup_started = Instant::now();
+    drop(project);
+    report.insert("cleanup_seconds".into(), cleanup_started.elapsed().as_secs_f64().into());
+    assert!(!root.join("cache").exists() && !root.join(".git").exists());
+    report.insert(
+        "cleanup".into(),
+        toml::from_str::<Value>(&fs::read_to_string(root.join("retention.toml")).unwrap()).unwrap(),
+    );
+    let admission_started = Instant::now();
+    for (index, verdict) in verdicts.iter().enumerate() {
+        let request = toml::to_string(&toml::Table::from_iter([
+            ("checkout".into(), Value::try_from(&root).unwrap()),
+            ("verdict".into(), verdict.clone().into()),
+        ]))
+        .unwrap();
+        let mut child = Command::new(&reader)
+            .arg("family-authenticate")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .unwrap();
+        child.stdin.take().unwrap().write_all(request.as_bytes()).unwrap();
+        let result = child.wait_with_output().unwrap();
+        write(&root, &format!("post-cleanup/{index}.stdout"), &result.stdout);
+        write(&root, &format!("post-cleanup/{index}.stderr"), &result.stderr);
+        assert!(result.status.success(), "post-cleanup admission: {}", String::from_utf8_lossy(&result.stderr));
+    }
+    report.insert("post_cleanup_admission_seconds".into(), admission_started.elapsed().as_secs_f64().into());
+    report.insert("complete_elapsed_seconds".into(), started.elapsed().as_secs_f64().into());
+    report.insert("storage_after_cleanup".into(), storage(&root.join("batch")));
+    report.insert("free_space_after".into(), output(Command::new("df").args(["-B1"]).arg(&root)).into());
+    report.insert("final_host".into(), host());
+    write(&root, "measurement.toml", toml::to_string_pretty(&report).unwrap());
+    println!("retained batch metrics control: {}", root.join("measurement.toml").display());
+}
