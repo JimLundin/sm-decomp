@@ -299,10 +299,23 @@ fn inherited_clock_sigterm_still_stops_descendants_and_releases_capacity() {
         .unwrap();
     pipeline.stdin.take().unwrap().write_all(toml::to_string(&request).unwrap().as_bytes()).unwrap();
     let started = Instant::now();
-    while !run.0.join("grandchild.pid").is_file() && started.elapsed() < Duration::from_secs(5) {
+    let published_pid =
+        |name| fs::read_to_string(run.0.join(name)).ok().is_some_and(|text| text.trim().parse::<i32>().is_ok());
+    while !(published_pid("child.pid") && published_pid("grandchild.pid"))
+        && started.elapsed() < Duration::from_secs(5)
+    {
         std::thread::sleep(Duration::from_millis(10));
     }
-    assert!(run.0.join("grandchild.pid").is_file());
+    if !(published_pid("child.pid") && published_pid("grandchild.pid")) {
+        if published_pid("producer.pid") {
+            let pid = fs::read_to_string(run.0.join("producer.pid")).unwrap().trim().parse::<i32>().unwrap();
+            // SAFETY: this test's still-owned producer group has not been reaped.
+            unsafe { libc::kill(-pid, libc::SIGKILL) };
+        }
+        pipeline.kill().unwrap();
+        pipeline.wait().unwrap();
+        panic!("inherited-clock control failed to publish both descendant PIDs");
+    }
     let descendants = [Descendant::read(&run.0.join("child.pid")), Descendant::read(&run.0.join("grandchild.pid"))];
     let _producer = Descendant::read(&run.0.join("producer.pid"));
     // SAFETY: the test owns this still-running native orchestration process.

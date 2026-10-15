@@ -29,8 +29,8 @@ impl Project {
         let project = Self(root);
         project.write("tools/port/batch.toml", "[families]\na='family'\nb='family'\n[profiles]\ngameplay=['a','b']\n");
         project.write("crates/port/src/memory.rs", "pub struct Wram;");
-        project.write("crates/port/src/a.rs", "pub fn a() {} // future_name");
-        project.write("crates/port/src/b.rs", "pub fn b() {} // helper");
+        project.write("crates/port/src/a.rs", "pub fn a() { future_name::call(); }");
+        project.write("crates/port/src/b.rs", "pub fn b() { crate::helper::helper(); }");
         project.write("crates/port/src/helper.rs", "pub fn helper() {} ");
         project.manifest("a", "a", "");
         project.manifest("b", "b", "");
