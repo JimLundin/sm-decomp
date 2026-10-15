@@ -2,7 +2,7 @@
 use anyhow::{Context as _, Result, ensure};
 use pipeline_model::metrics::{Clock, Measurement, Process, Receipt, Resources, Stage, Transport};
 use std::{
-    collections::BTreeSet,
+    collections::{BTreeMap, BTreeSet},
     fs,
     os::unix::process::ExitStatusExt,
     path::{Path, PathBuf},
@@ -12,11 +12,119 @@ use std::{
         atomic::{AtomicBool, AtomicU64, Ordering},
     },
     thread,
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 static NEXT: AtomicU64 = AtomicU64::new(0);
 static CANCELLED: AtomicU64 = AtomicU64::new(0);
+const STAGE_LABELS: usize = 128;
+const STAGE_LABEL_BYTES: usize = 128;
+const COARSE_STAGE_EVENTS: usize = 512;
+const DETAILED_STAGE_EVENTS: usize = 4096;
+const OWN_STAGE_RESERVE: usize = 256;
+const STAGE_OUTCOMES: &[&str] = &["success", "failed", "timed-out", "interrupted", "incomplete"];
+
+fn counter(configuration: &BTreeMap<String, String>, name: &str) -> u64 {
+    configuration.get(name).and_then(|value| value.parse().ok()).unwrap_or(0)
+}
+fn add_counter(configuration: &mut BTreeMap<String, String>, name: &str, value: u64) {
+    let previous = counter(configuration, name);
+    let sum = previous.checked_add(value).unwrap_or_else(|| {
+        configuration.insert("stage-counter-overflow".into(), "true".into());
+        u64::MAX
+    });
+    configuration.insert(name.into(), sum.to_string());
+}
+fn admit_label(labels: &mut BTreeSet<String>, name: &str) -> bool {
+    if name.len() > STAGE_LABEL_BYTES {
+        return false;
+    }
+    if labels.contains(name) {
+        return true;
+    }
+    labels.len() < STAGE_LABELS && labels.insert(name.into())
+}
+fn stage_limit(enabled: bool) -> usize {
+    if enabled { DETAILED_STAGE_EVENTS } else { COARSE_STAGE_EVENTS }
+}
+fn summary_prefix(name: &str) -> String {
+    format!("stage-summary:{}:", name.replace('%', "%25").replace(':', "%3A"))
+}
+fn summary_name(key: &str) -> Option<String> {
+    Some(key.strip_prefix("stage-summary:")?.strip_suffix(":count")?.replace("%3A", ":").replace("%25", "%"))
+}
+
+/// A scope's complete summed/count accounting, independently of trace retention.
+/// `None` identifies spans whose labels exceeded the bounded label registry.
+pub struct StageSummary {
+    pub scope: String,
+    pub role: String,
+    pub name: Option<String>,
+    pub count: u64,
+    pub summed_elapsed_ns: u64,
+}
+pub fn stage_summaries(receipt: &Receipt) -> Result<Vec<StageSummary>> {
+    let mut result = Vec::new();
+    for (scope, role, configuration) in std::iter::once((&receipt.scope_id, &receipt.role, &receipt.configuration))
+        .chain(receipt.scopes.iter().map(|scope| (&scope.id, &scope.role, &scope.configuration)))
+    {
+        ensure!(
+            configuration.get("stage-summary-format").map(String::as_str) == Some("bounded-v1"),
+            "stage summaries unavailable for scope {scope}"
+        );
+        ensure!(
+            configuration.get("stage-counter-overflow").map(String::as_str) != Some("true"),
+            "stage summary counter overflow"
+        );
+        for (key, count) in configuration {
+            let Some(name) = summary_name(key) else { continue };
+            let count: u64 = count.parse()?;
+            if count == 0 {
+                continue;
+            }
+            let summed_elapsed_ns = configuration
+                .get(&format!("{}summed-elapsed-ns", summary_prefix(&name)))
+                .context("stage summed duration missing")?
+                .parse()?;
+            result.push(StageSummary {
+                scope: scope.clone(),
+                role: role.clone(),
+                name: Some(name),
+                count,
+                summed_elapsed_ns,
+            });
+        }
+        let count = counter(configuration, "stage-summary-unavailable-events");
+        if count > 0 {
+            result.push(StageSummary {
+                scope: scope.clone(),
+                role: role.clone(),
+                name: None,
+                count,
+                summed_elapsed_ns: counter(configuration, "stage-summary-unavailable-summed-elapsed-ns"),
+            });
+        }
+    }
+    Ok(result)
+}
+
+fn retain_summary_labels(configuration: &mut BTreeMap<String, String>, labels: &mut BTreeSet<String>) {
+    let names = configuration.keys().filter_map(|key| summary_name(key)).collect::<Vec<_>>();
+    for name in names {
+        if admit_label(labels, &name) {
+            continue;
+        }
+        let prefix = summary_prefix(&name);
+        let count = counter(configuration, &format!("{prefix}count"));
+        let elapsed = counter(configuration, &format!("{prefix}summed-elapsed-ns"));
+        add_counter(configuration, "stage-summary-unavailable-events", count);
+        add_counter(configuration, "stage-summary-unavailable-summed-elapsed-ns", elapsed);
+        configuration.retain(|key, _| !key.starts_with(&prefix));
+        if configuration.remove(&format!("unavailable-stage:{name}")).is_some() {
+            add_counter(configuration, "stage-unavailable-labels-omitted", 1);
+        }
+    }
+}
 extern "C" fn cancel(signal: libc::c_int) {
     CANCELLED.store(signal as u64, Ordering::Relaxed);
 }
@@ -52,7 +160,13 @@ pub fn outcome(error: Option<&str>) -> &'static str {
     match error {
         None => "success",
         Some(error) if error.contains("interrupted by signal") => "interrupted",
-        Some(error) if error.contains("timeout") => "timed-out",
+        Some(error)
+            if error.contains("timeout")
+                || error.contains("time budget exhausted")
+                || error.contains("deadline expired") =>
+        {
+            "timed-out"
+        }
         Some(_) => "failed",
     }
 }
@@ -88,6 +202,20 @@ impl Drop for DetailedGuard {
 }
 pub fn active() -> Option<Context> {
     ACTIVE.with(|value| value.borrow().clone())
+}
+/// Time an operation even when resource sampling is disabled. Caught failures
+/// retain their own outcome instead of inheriting a later successful retry.
+pub fn measure<T>(name: &str, action: impl FnOnce() -> Result<T>) -> Result<T> {
+    let stage = active().as_ref().map(|context| context.stage(name)).transpose()?;
+    let result = action();
+    if let Some(stage) = stage {
+        let error = result.as_ref().err().map(|error| format!("{error:#}"));
+        let finished = stage.finish(outcome(error.as_deref()));
+        if result.is_ok() {
+            finished?;
+        }
+    }
+    result
 }
 pub fn command_output(command: &mut Command, role: &str) -> Result<std::process::Output> {
     if let Some(context) = active() { context.output(command, role) } else { Ok(command.output()?) }
@@ -150,6 +278,27 @@ impl Context {
     }
     pub fn configuration(&self, name: &str, value: impl ToString) {
         self.inner.receipt.lock().unwrap().configuration.insert(name.into(), value.to_string());
+    }
+    pub fn path(&self) -> &Path {
+        &self.inner.path
+    }
+    /// Declare required accounting up front, including phases never reached
+    /// after invalid input, rejection or cancellation. Recording a measured span
+    /// removes its unavailable marker in this same scope.
+    pub fn expect_stages(&self, names: &[&str]) {
+        for name in names {
+            self.stage_unavailable(name, "not reached before this scope returned or stopped");
+        }
+    }
+    pub fn stage_unavailable(&self, name: &str, reason: &str) {
+        let mut labels = self.inner.stage_labels.lock().unwrap();
+        let mut receipt = self.inner.receipt.lock().unwrap();
+        if !admit_label(&mut labels, name) {
+            add_counter(&mut receipt.configuration, "stage-unavailable-labels-omitted", 1);
+        } else if counter(&receipt.configuration, &format!("{}count", summary_prefix(name))) == 0 {
+            receipt.configuration.entry(format!("{}count", summary_prefix(name))).or_insert_with(|| "0".into());
+            receipt.configuration.insert(format!("unavailable-stage:{name}"), reason.into());
+        }
     }
     pub fn enabled(&self) -> bool {
         self.inner.receipt.lock().unwrap().enabled
@@ -228,6 +377,7 @@ struct Inner {
     wake_lock: Mutex<()>,
     resources: Arc<Mutex<crate::resource_sampler::ResourceSampler>>,
     last_disk: AtomicU64,
+    stage_labels: Arc<Mutex<BTreeSet<String>>>,
 }
 pub struct Run {
     pub context: Context,
@@ -275,8 +425,44 @@ impl Run {
                     Arc::new(Mutex::new(crate::resource_sampler::ResourceSampler::new(std::process::id())))
                 }),
                 last_disk: AtomicU64::new(0),
+                stage_labels: previous.as_ref().map(|parent| parent.inner.stage_labels.clone()).unwrap_or_default(),
             }),
         };
+        context.configuration(
+            "stage-timing",
+            "always-on CLOCK_MONOTONIC spans; overlapping spans are not additive wall time",
+        );
+        context.configuration(
+            "resource-sampling",
+            if context.enabled() {
+                "enabled"
+            } else {
+                "disabled; stage timing and owned-child wait4 accounting remain enabled"
+            },
+        );
+        context.configuration("resource-sampling-calls", 0);
+        context.configuration("resource-sampling-sum-elapsed-ns", 0);
+        context.configuration("stage-summary-format", "bounded-v1");
+        context.configuration("stage-summary-label-limit", STAGE_LABELS);
+        context.configuration("stage-summary-label-byte-limit", STAGE_LABEL_BYTES);
+        context.configuration("stage-trace-event-limit", stage_limit(context.enabled()));
+        context.configuration("stage-trace-semantics", "sampling disabled retains first span per label/outcome; detailed traces are capped; complete summed durations/counts remain in bounded per-scope summaries; omitted labels and trace events are counted explicitly");
+        context.configuration("stage-summary-semantics", "summed overlapping durations, not wall time; first-start/last-end delimit observed extent and do not establish a time union");
+        for name in [
+            "stage-spans-observed",
+            "stage-spans-summed-elapsed-ns",
+            "stage-trace-omitted-events",
+            "stage-trace-omitted-on-merge",
+            "stage-summary-unavailable-events",
+            "stage-summary-unavailable-summed-elapsed-ns",
+            "stage-unavailable-labels-omitted",
+        ] {
+            context.configuration(name, 0);
+        }
+        context.configuration(
+            "unavailable-os-disk-io",
+            "physical disk I/O is not collected; allocated blocks and logical payload bytes are different measures",
+        );
         let worker = context.clone();
         // Every top-level native process handles teardown, even when its clock
         // and receipt identity were inherited from a benchmark parent.
@@ -311,6 +497,41 @@ impl Run {
             r.elapsed_ns = r.end_ns - r.start_ns;
             r.outcome = outcome.into();
             r.error = error;
+            let process_ns: u128 =
+                r.processes.iter().map(|process| u128::from(process.end_ns - process.start_ns)).sum();
+            r.configuration.insert("sum-observed-process-intervals-ns".into(), process_ns.to_string());
+            r.configuration.insert(
+                "process-interval-accounting".into(),
+                "sum of overlapping observed process lifetimes, including helper/child overlap; not elapsed wall time or additive CPU time".into(),
+            );
+            if matches!(outcome, "failed" | "timed-out" | "interrupted") {
+                let scope = r.scope_id.clone();
+                for stage in &mut r.stages {
+                    if stage.parent.as_deref() == Some(scope.as_str()) && stage.outcome == "incomplete" {
+                        stage.outcome = outcome.into();
+                    }
+                }
+                let incomplete = r
+                    .configuration
+                    .keys()
+                    .filter_map(|key| {
+                        key.strip_prefix("stage-summary:")?.strip_suffix(":outcome:incomplete").map(str::to_owned)
+                    })
+                    .collect::<Vec<_>>();
+                for name in incomplete {
+                    let key = format!("stage-summary:{name}:outcome:incomplete");
+                    let count = counter(&r.configuration, &key);
+                    r.configuration.insert(key, "0".into());
+                    add_counter(&mut r.configuration, &format!("stage-summary:{name}:outcome:{outcome}"), count);
+                }
+                let count = counter(&r.configuration, "stage-outcome:incomplete");
+                r.configuration.insert("stage-outcome:incomplete".into(), "0".into());
+                add_counter(&mut r.configuration, &format!("stage-outcome:{outcome}"), count);
+                r.configuration.insert(
+                    "unfinished-stage-accounting".into(),
+                    "unfinished spans in this scope inherit its terminal failure/cancellation outcome".into(),
+                );
+            }
         }
         self.context.write()?;
         if let Some(parent) = &self.previous {
@@ -342,6 +563,7 @@ pub struct StageGuard {
     context: Context,
     id: String,
     name: String,
+    label_unavailable: bool,
     start: u64,
     finished: bool,
 }
@@ -361,7 +583,8 @@ impl Context {
         Ok(StageGuard {
             context: self.clone(),
             id: format!("{scope}-stage-{}", NEXT.fetch_add(1, Ordering::Relaxed)),
-            name: name.into(),
+            name: if name.len() <= STAGE_LABEL_BYTES { name.into() } else { String::new() },
+            label_unavailable: name.len() > STAGE_LABEL_BYTES,
             start: self.now()?,
             finished: false,
         })
@@ -394,8 +617,9 @@ impl Context {
         );
         self.merge_receipt(child)
     }
-    fn merge_receipt(&self, child: Receipt) -> Result<()> {
+    fn merge_receipt(&self, mut child: Receipt) -> Result<()> {
         child.validate()?;
+        let mut labels = self.inner.stage_labels.lock().unwrap();
         let mut r = self.inner.receipt.lock().unwrap();
         ensure!(
             child.format == "pipeline-metrics-v1"
@@ -404,6 +628,15 @@ impl Context {
                 && child.run_id == r.run_id,
             "child metrics clock/run differs"
         );
+        retain_summary_labels(&mut child.configuration, &mut labels);
+        for scope in &mut child.scopes {
+            retain_summary_labels(&mut scope.configuration, &mut labels);
+        }
+        let count = child.stages.len();
+        child.stages.retain(|stage| labels.contains(&stage.name));
+        let available = stage_limit(r.enabled).saturating_sub(OWN_STAGE_RESERVE).saturating_sub(r.stages.len());
+        child.stages.truncate(available);
+        add_counter(&mut r.configuration, "stage-trace-omitted-on-merge", u64::try_from(count - child.stages.len())?);
         ensure!(child.parent_scope.as_deref() == Some(r.scope_id.as_str()), "child metrics parent differs");
         ensure!(
             child.start_ns >= r.start_ns && child.end_ns <= r.clock.offset()?,
@@ -466,9 +699,15 @@ impl Context {
         if !self.inner.receipt.lock().unwrap().enabled {
             return;
         }
+        let started = Instant::now();
         let now = self.now().unwrap_or(0);
         let snapshot = self.inner.resources.lock().unwrap().sample(now, disk);
         let mut r = self.inner.receipt.lock().unwrap();
+        let elapsed_ns = started.elapsed().as_nanos();
+        for (name, value) in [("resource-sampling-calls", 1), ("resource-sampling-sum-elapsed-ns", elapsed_ns)] {
+            let previous = r.configuration.get(name).and_then(|value| value.parse::<u128>().ok()).unwrap_or(0);
+            r.configuration.insert(name.into(), previous.saturating_add(value).to_string());
+        }
         r.resources = snapshot.resources;
         r.configuration.insert("resource-samples-complete".into(), snapshot.complete.to_string());
         r.configuration.insert("resource-limitations".into(), snapshot.limitations.join("; "));
@@ -484,13 +723,51 @@ impl StageGuard {
         Ok(())
     }
     fn record(&self, outcome: &str) -> Result<()> {
-        if !self.context.enabled() {
+        ensure!(STAGE_OUTCOMES.contains(&outcome), "invalid stage outcome");
+        let end = self.context.now()?;
+        let elapsed = end - self.start;
+        let mut labels = self.context.inner.stage_labels.lock().unwrap();
+        let mut r = self.context.inner.receipt.lock().unwrap();
+        add_counter(&mut r.configuration, "stage-spans-observed", 1);
+        add_counter(&mut r.configuration, "stage-spans-summed-elapsed-ns", elapsed);
+        add_counter(&mut r.configuration, &format!("stage-outcome:{outcome}"), 1);
+        if self.label_unavailable || !admit_label(&mut labels, &self.name) {
+            add_counter(&mut r.configuration, "stage-summary-unavailable-events", 1);
+            add_counter(&mut r.configuration, "stage-summary-unavailable-summed-elapsed-ns", elapsed);
+            add_counter(&mut r.configuration, "stage-trace-omitted-events", 1);
             return Ok(());
         }
-        let end = self.context.now()?;
-        let mut r = self.context.inner.receipt.lock().unwrap();
+        let prefix = summary_prefix(&self.name);
+        let count = counter(&r.configuration, &format!("{prefix}count"));
+        let outcome_key = format!("{prefix}outcome:{outcome}");
+        let first_outcome = counter(&r.configuration, &outcome_key) == 0;
+        add_counter(&mut r.configuration, &format!("{prefix}count"), 1);
+        add_counter(&mut r.configuration, &format!("{prefix}summed-elapsed-ns"), elapsed);
+        add_counter(&mut r.configuration, &outcome_key, 1);
+        for (field, value, minimum) in [
+            ("first-start-ns", self.start, true),
+            ("last-end-ns", end, false),
+            ("minimum-elapsed-ns", elapsed, true),
+            ("maximum-elapsed-ns", elapsed, false),
+        ] {
+            let key = format!("{prefix}{field}");
+            let previous = counter(&r.configuration, &key);
+            let value = if count == 0 {
+                value
+            } else if minimum {
+                previous.min(value)
+            } else {
+                previous.max(value)
+            };
+            r.configuration.insert(key, value.to_string());
+        }
+        r.configuration.remove(&format!("unavailable-stage:{}", self.name));
         if outcome == "success" {
             r.last_completed_stage = Some(self.name.clone());
+        }
+        if (!r.enabled && !first_outcome) || r.stages.len() >= stage_limit(r.enabled) {
+            add_counter(&mut r.configuration, "stage-trace-omitted-events", 1);
+            return Ok(());
         }
         let parent = Some(r.scope_id.clone());
         r.stages.push(Stage {

@@ -105,6 +105,10 @@ impl std::fmt::Display for PreparationAborted {
 impl std::error::Error for PreparationAborted {}
 impl Preparation {
     pub fn new(root: &Path, checkout: &Path, compiler_name: &str) -> Result<Self> {
+        metrics::measure("compiler-preparation", || Self::prepare(root, checkout, compiler_name))
+    }
+
+    fn prepare(root: &Path, checkout: &Path, compiler_name: &str) -> Result<Self> {
         let checkout = fs::canonicalize(checkout)?;
         let common = metrics::command_output(
             Command::new("git").args(["rev-parse", "--git-common-dir"]).current_dir(&checkout),
@@ -199,6 +203,16 @@ impl Preparation {
     }
 
     pub fn artifact(
+        &self,
+        command: &[String],
+        inputs: &[PathBuf],
+        destination: &Path,
+        build: impl FnOnce(&Path) -> Result<()>,
+    ) -> Result<CacheResult> {
+        metrics::measure("compiler-cache", || self.artifact_inner(command, inputs, destination, build))
+    }
+
+    fn artifact_inner(
         &self,
         command: &[String],
         inputs: &[PathBuf],
@@ -323,6 +337,10 @@ impl Preparation {
     /// Recheck the complete shared closure before handing a prepared build to
     /// its caller. Inputs changing between translation units fail the operation.
     pub fn finish(&self) -> Result<()> {
+        metrics::measure("compiler-input-authentication", || self.authenticate_inputs())
+    }
+
+    fn authenticate_inputs(&self) -> Result<()> {
         let observed = self.observed.lock().map_err(|_| anyhow::anyhow!("compiler input lock poisoned"))?;
         for (path, hash) in observed.iter() {
             ensure!(digest(path)? == *hash, "prepared compiler input changed");

@@ -23,6 +23,15 @@ pub fn acquire_leases_until(
     count: usize,
     deadline_unix_ms: u64,
 ) -> Result<(Vec<File>, f64)> {
+    metrics::measure("shared-capacity-wait", || acquire_leases_inner(root, requested, count, deadline_unix_ms))
+}
+
+fn acquire_leases_inner(
+    root: &Path,
+    requested: usize,
+    count: usize,
+    deadline_unix_ms: u64,
+) -> Result<(Vec<File>, f64)> {
     ensure!((1..=64).contains(&requested), "worker count must be 1..64");
     ensure!((1..=requested).contains(&count), "shared worker reservation exceeds configured capacity");
     let started = Instant::now();

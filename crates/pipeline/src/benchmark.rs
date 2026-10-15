@@ -79,26 +79,40 @@ struct StageSummary {
     stage: String,
     count: usize,
     summed_elapsed_ns: u64,
-    union_elapsed_ns: u64,
+    union_elapsed_ns: Option<u64>,
+    union_unavailable_reason: Option<String>,
     semantics: String,
 }
-fn attribute(receipt: &Receipt) -> Vec<StageSummary> {
+fn attribute(receipt: &Receipt) -> Result<Vec<StageSummary>> {
     let roles = std::iter::once((receipt.scope_id.clone(), receipt.role.clone()))
         .chain(receipt.scopes.iter().map(|s| (s.id.clone(), s.role.clone())))
         .collect::<BTreeMap<_, _>>();
-    let mut groups: BTreeMap<(String, String), Vec<(u64, u64)>> = BTreeMap::new();
-    for stage in &receipt.stages {
-        let role = stage.parent.as_ref().and_then(|p| roles.get(p)).cloned().unwrap_or_else(|| "unknown".into());
-        groups.entry((role, stage.name.clone())).or_default().push((stage.start_ns, stage.end_ns));
+    let mut groups: BTreeMap<(String, Option<String>), (u64, u64)> = BTreeMap::new();
+    for summary in tool_execution::metrics::stage_summaries(receipt)? {
+        let totals = groups.entry((summary.role, summary.name)).or_default();
+        totals.0 = totals.0.checked_add(summary.count).context("stage count overflow")?;
+        totals.1 = totals.1.checked_add(summary.summed_elapsed_ns).context("stage duration overflow")?;
     }
-    groups.into_iter().map(|((role,stage),mut spans)| {
-        spans.sort_unstable();
-        let summed_elapsed_ns=spans.iter().map(|(start,end)|end-start).sum();
-        let mut union_elapsed_ns=0;
-        let mut end=0;
-        for (start,next) in &spans {union_elapsed_ns+=next.saturating_sub(end.max(*start));end=end.max(*next);}
-        StageSummary{role,stage,count:spans.len(),summed_elapsed_ns,union_elapsed_ns,
-            semantics:"union removes overlap within this role/stage group; other groups can overlap/nest; neither sums nor unions across groups equal total wall or removable critical-path share".into()}
+    groups.into_iter().map(|((role, name), (count, summed_elapsed_ns))| {
+        let count = usize::try_from(count)?;
+        let mut spans = receipt.stages.iter().filter(|stage| {
+            name.as_deref() == Some(stage.name.as_str())
+                && stage.parent.as_ref().and_then(|parent| roles.get(parent)) == Some(&role)
+        }).map(|stage| (stage.start_ns, stage.end_ns)).collect::<Vec<_>>();
+        let complete = name.is_some() && count == spans.len();
+        let union_elapsed_ns = complete.then(|| {
+            spans.sort_unstable();
+            let mut union = 0;
+            let mut end = 0;
+            for (start, next) in &spans { union += next.saturating_sub(end.max(*start)); end = end.max(*next); }
+            union
+        });
+        Ok(StageSummary {
+            role, stage: name.unwrap_or_else(|| "unavailable-stage-labels".into()), count, summed_elapsed_ns,
+            union_elapsed_ns,
+            union_unavailable_reason: (!complete).then(|| "individual spans or labels omitted by bounded telemetry; summed duration cannot establish a wall-time union".into()),
+            semantics: "counts and summed durations cover all observed spans; a union is reported only for a complete trace; other groups can overlap/nest; neither sums nor unions across groups equal total wall or removable critical-path share".into(),
+        })
     }).collect()
 }
 #[derive(Serialize)]
@@ -796,7 +810,7 @@ fn run(config: Config, config_path: &Path) -> Result<()> {
         metrics.finish(tool_execution::metrics::outcome(record.error.as_deref()), record.error.clone())?;
         let receipt = metrics.context.snapshot();
         record.elapsed_ns = measured_end.saturating_sub(receipt.start_ns);
-        record.attribution = attribute(&receipt);
+        record.attribution = attribute(&receipt)?;
         record.last_completed_stage = receipt.last_completed_stage;
         record.comparable = result.is_ok();
         record.free_bytes_after = tool_execution::resource_sampler::available_bytes(&config.output)?;
@@ -842,6 +856,32 @@ fn run(config: Config, config_path: &Path) -> Result<()> {
 #[cfg(test)]
 mod controls {
     use super::*;
+    #[test]
+    fn bounded_attribution_retains_complete_sums_and_marks_missing_time_unions() {
+        let _detailed = tool_execution::metrics::detailed();
+        let path = std::env::temp_dir().join(format!("sm-benchmark-attribution-{}.toml", std::process::id()));
+        let mut run = tool_execution::metrics::Run::start(path.clone(), "attribution-control").unwrap();
+        let outer = run.context.stage("overlap").unwrap();
+        let inner = run.context.stage("overlap").unwrap();
+        inner.finish("success").unwrap();
+        outer.finish("success").unwrap();
+        for _ in 0..5_000 {
+            run.context.stage("repeated").unwrap().finish("success").unwrap();
+        }
+        run.finish("success", None).unwrap();
+        let receipt = run.context.snapshot();
+        let attribution = attribute(&receipt).unwrap();
+        let overlap = attribution.iter().find(|summary| summary.stage == "overlap").unwrap();
+        assert_eq!(overlap.count, 2);
+        assert!(overlap.union_elapsed_ns.is_some_and(|union| union > 0 && union < overlap.summed_elapsed_ns));
+        assert!(overlap.union_unavailable_reason.is_none());
+        let repeated = attribution.iter().find(|summary| summary.stage == "repeated").unwrap();
+        assert_eq!(repeated.count, 5_000);
+        assert!(repeated.summed_elapsed_ns > 0);
+        assert!(repeated.union_elapsed_ns.is_none());
+        assert!(repeated.union_unavailable_reason.as_deref().is_some_and(|reason| reason.contains("omitted")));
+        fs::remove_file(path).unwrap();
+    }
     #[test]
     fn real_live_refusal_keeps_diagnostics_and_scoped_cleanup() {
         let _detailed = tool_execution::metrics::detailed();
