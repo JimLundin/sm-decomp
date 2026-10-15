@@ -30,9 +30,15 @@ pub(crate) enum Recipe {
     GameHost,
     Plm,
     Ridley,
-    GeneratedPlm { manifest: Asset },
-    DirectAnimation { plan: Asset },
-    SupplementedC { support: Vec<String> },
+    GeneratedPlm {
+        manifest: Asset,
+    },
+    DirectAnimation {
+        plan: Asset,
+    },
+    SupplementedC {
+        support: Vec<String>,
+    },
 }
 
 const GENERATED_PLM: &str = ".scratch/translation-native/plm-instructions/manifest.smf";
