@@ -39,8 +39,19 @@ Public tests exercise ordinary and prepared Native callers through their Interfa
 
 ## Completion evidence
 
-Pending. Record removed reads/decodes, bounded cold/warm timings, complete controls,
-source/tool identities, scoped cleanup and post-cleanup authentication.
+Tested foundation `b1f869102ac69897be674acfef682e3d867c6be6` passed 48 owner,
+five catalog and four public ordinary/Native controls. One catalog parse, lazy
+declaration decoding and shared captured facts are exercised through the public
+Interface; the representative control records four Rust scans and 19 reuses.
+Both cleanup passes reclaimed 4,980,736 bytes. See
+[bulk-context-handoff.md](../bulk-context-handoff.md) for exact contracts and tools.
+
+Root integrated it into `45b89f8`, retired the implementer worktree and removed
+its disposable Cargo target. Independent ordinary and Native readers passed
+afterward, with unchanged tool seals. Combined owner and Native capture controls
+also passed. Exact retirement, bytes and proof pointers are in
+[integration-foundation.md](../integration-foundation.md). Final complete Native
+gates and ticket 01 baseline acceptance remain pending; this ticket stays claimed.
 
 ## Comments
 

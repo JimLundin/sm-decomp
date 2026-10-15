@@ -35,8 +35,30 @@ All concrete installation inputs and commands are reviewable before activation.
 
 ## Completion evidence
 
-Pending. Record source/tool hashes, flags, profiles, matched measurements and
-candidate-installation pointers, plus build-output cleanup and retained readers.
+Provisional source `a643f8b` preserves an open executable descriptor and hashes it
+lazily once when the command requires identity. The utility control changes from
+365,502,352 executable bytes read to zero; Offline identity still reads the exact
+executable once. Descriptor replacement controls pass. The `verification` profile
+uses opt-level 2, 16 codegen units, no LTO and separately retained line-table debug
+information. Initial optimized pair build: 755.27 seconds, 2,771,584 KiB peak RSS.
+
+Matched source `5b6e59d`, complete 12-case workload with four continuations:
+three alternating warm dev samples 12.639/11.770/11.426 seconds versus
+verification 1.117/1.106/1.103 seconds. Median 11.770 to 1.106 seconds is about
+10.65 times faster for this bounded workload. Fresh Rust/actual-C executions,
+private artifact caches and shared four-worker capacity were retained; outcomes
+were byte-identical and cleanup plus independent/cross-profile admission passed.
+This is not a complete-batch multiplier. Proof:
+`/home/jim/sm-decomp-performance-tools-proof/family-profile-comparison/alternating.toml`.
+
+Remaining: helper/runtime and disposable-image tamper controls, final assembled
+source/tool pair, complete gates and sealed installation candidate. Candidate
+staging root is `/home/jim/sm-decomp-performance-installation-candidate`.
+Root supplied the exact existing production request, two Installations, launch
+plan and prepared/active migration references from the documented production
+checkpoint. Preparation preserves original policy/claim tuples, acceptance
+requirements and the held pause blocker. No active registry, fence, policy,
+tool or attempt changes before the supported final ownership transition.
 
 ## Comments
 

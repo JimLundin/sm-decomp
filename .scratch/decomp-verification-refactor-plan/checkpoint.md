@@ -7,6 +7,52 @@ Authorization: user instructed "please go ahead and implement" the nine-ticket p
 
 ## Current state (supersedes historical observations below)
 
+- Main remains documentation-only; production source matches `5c011eb5d02a54d74903715bffb3f8c15ab78c51`.
+  Final assembly is `45b89f844df928478b890c4b4814208dfe44bfb8` in
+  `/home/jim/sm-decomp-performance-final`. It combines the tested 02/03/04/06
+  foundation, optimized Native operation admission and complete actual-C Ceres recipe.
+- Combined owner controls passed 48 tests, with two explicit real gates ignored.
+  Public Native capture/replay/source-binding passed. Both cleanup passes and
+  independent Native admission passed. The full-real positive completed all
+  16 pairs / 34 producers, retry and tamper checks; its obsolete `include_str!`
+  negative then stopped at the newly enforced capture boundary. This is an
+  incomplete full-real gate. Its completed positive was independently admitted
+  after cleanup. See [combined foundation](integration-foundation.md).
+- `/root/bulk_context_resume` owns the test-only negative-control repair from
+  `45b89f8` in `/home/jim/sm-decomp-performance-native-denial`, branch
+  `performance/native-denial-controls-20261015`, target
+  `/home/jim/sm-decomp-performance-admission-target`, proof
+  `/home/jim/sm-decomp-performance-native-denial-proof`. Preserve capture refusal,
+  actual compiler file-access denial with durable replay, and a separate failed
+  Native compiler receipt. All original budgets and later controls remain.
+- `/root/dependency_facts_resume` owns 07 in the graph worktree/metrics target.
+  Red checkpoint `c672bea` demonstrates admission after rejection/publication
+  failure and 16 resident helpers for 48 actual-C pairs at a producer peak of four.
+  One private shared ready-work executor is being implemented; no Native
+  reservation or barrier change is authorized.
+- `/root/shared_preparation` owns 08 in the tools worktree/offline-verifier target.
+  Lazy descriptor-bound executable identity and the `verification` profile are
+  at `a643f8b`. Three matched 12-case warm samples measured medians
+  11.770 seconds (dev) and 1.106 seconds (verification), about 10.65 times faster
+  for that bounded workload only. Final matched tools wait for 07 and repaired
+  controls. Candidate staging is `/home/jim/sm-decomp-performance-installation-candidate`;
+  exact existing production request, Installation and migration references were
+  supplied. Production registry, fence, claims and installed tools stay intact.
+- Root retired integrated bulk, dependency, shared-build, admission and Ceres
+  implementer worktrees. Their retained evidence authenticated afterward.
+  The bulk Cargo target was removed with Cargo after exact readers were retained;
+  the other targets have explicit current owners above. The corrected 63-program
+  shared-build reader also completed both final cleanup passes. Exact reclaimed
+  bytes and references are in [combined foundation](integration-foundation.md).
+- Next: finish 07/08/test repair, merge into final assembly, build one matched
+  optimized tool set, run complete catalog and all twelve Native recipes (8,159
+  declared pairs; PLM first), full-real controls and applicable Rust gates,
+  prepare the sealed installation candidate, measure equivalent workloads,
+  finish retirement and independent admission. No complete-batch multiplier or
+  completed Original gameplay gate is established.
+
+## Earlier foundation assembly
+
 - Main still has documentation-only changes for this effort. Frozen baseline
   `7b27ea1` is unchanged; its required acceptance is incomplete.
 - The twelve-recipe gate finished after journal recovery: eleven passed /

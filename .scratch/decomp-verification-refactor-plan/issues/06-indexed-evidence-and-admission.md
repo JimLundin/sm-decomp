@@ -78,6 +78,15 @@ admission integration, worktree retirement and complete-domain acceptance.
 
 ## Comments
 
+2026-10-15 combined checkpoint: `45b89f8` retains optimized Native operation
+admission and the complete Ceres recipe. The 48 owner controls and public Native
+capture/replay/source-binding check passed; independent admission passed after
+both cleanup passes. Root retired the admission implementer worktree and checked
+all retained evidence hashes. Complete 1,296-pair Ceres ordinary admission also
+passed after that retirement. The target transferred to the test-only Native
+negative-control repair. See [integration-foundation.md](../integration-foundation.md).
+Final complete Native acceptance is still required before resolution.
+
 2026-10-15 decision from ticket 05: 18 alternating storage-only samples of the
 complete 16-pair ordinary proof (333 members, 43,675,132 logical bytes) took
 0.246–0.358 seconds for deduplicated directories, 0.880–1.100 seconds for raw

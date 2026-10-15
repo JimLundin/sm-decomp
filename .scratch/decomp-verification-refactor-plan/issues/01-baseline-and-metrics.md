@@ -78,6 +78,27 @@ respectively, and are not counted as reclaimed.
 
 ## Comments
 
+2026-10-15 full-real continuation: the combined `45b89f8` source passed the
+original 60-second compiler / 180-second family positive gate: all 16 pairs,
+34 producers and unchanged retry. Its negative `include_str!` candidate now
+fails at the deliberately conservative capture boundary before a Native intent.
+Root retains that incomplete full-real proof and assigns a test-only repair to
+`/root/bulk_context_resume` in `/home/jim/sm-decomp-performance-native-denial`,
+branch `performance/native-denial-controls-20261015`, from `45b89f8`.
+
+Owned file: `crates/pipeline/src/translation_native_tests.rs`, including its
+test-only retained authentication records, plus a private handoff. Preserve the
+early unresolved-input refusal, add an actual confined Rust compiler file-denial
+operation with durable replay/independent authentication, and retain a separate
+failed Native compiler receipt/replay control. All 16 positive/runtime-denial
+pairs, 34 positive producer slots and original budgets remain required. No
+production scanner, lifecycle, operation authority or installed tool changes.
+Ticket 08 owns only the existing test identity-initialization sites in this
+file; root reconciles those disjoint edits. The released
+`/home/jim/sm-decomp-performance-admission-target` is exclusively assigned to
+this repair; root's earlier readers are independently retained. Proof:
+`/home/jim/sm-decomp-performance-native-denial-proof`.
+
 2026-10-15 continuation: [Ceres recovery](../ceres-recipe-recovery.md) records
 the actual transitive-C repair, passing full 1,296-pair ordinary proof, both
 cleanup passes and independent admission. The frozen eleven-pass/one-failure

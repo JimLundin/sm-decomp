@@ -51,12 +51,15 @@ lock-wait mutation, corruption and hard-budget controls are covered.
 Both proof cleanup passes reclaimed zero bytes; 3,454 retained files, 66 copied
 cache artifacts and 63 actual programs authenticated afterward. Exact evidence
 and retained dependencies are in [shared-preparation-handoff.md](../shared-preparation-handoff.md).
-Worktree retirement and combined acceptance remain with root. The writer-free
-target is now exclusively reassigned to provisional ticket 08; no retained
-evidence depends on it and no cache was cleared.
-
-Pending. Record compiler/process counts, build-hit reasons, full-workload effect,
-source/flags/artifact identities, negative controls and scoped cleanup/admission.
+Root retired the implementation worktree, authenticated all retained files and
+artifacts, and replayed all 63 programs with their original requirements: 49 exact
+stdout predicates and 14 nonempty predicates. The first reader's unsupported
+predicate failure is retained; the corrected reader and source are sealed.
+Its final build-directory cleanup passes both reclaimed zero bytes. The target
+is now exclusively assigned to 08; no retained evidence depends on it and no
+shared cache was cleared. Exact evidence and retirement allocations are in
+[integration-foundation.md](../integration-foundation.md). Combined required gates
+and any whole-batch performance conclusion remain pending.
 
 ## Comments
 

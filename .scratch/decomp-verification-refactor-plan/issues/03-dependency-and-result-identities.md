@@ -39,8 +39,24 @@ recipe, producer identity or claim/attempt.
 
 ## Completion evidence
 
-Pending. Record selected/skipped counts and every remaining uncertainty on the
-current corpus, planner reads/time, mutation controls, exact source and cleanup.
+Final source guard `2b2712b`, handoff `095d952e711c3ecbcb857471dbef9abe203b760b`:
+the complete 177-family corpus passes under unchanged budgets. Documentation
+excludes 174 and leaves three uncertain (7.77 seconds); audio behavior, rename
+and deletion each select exactly 165 and exclude 12 (5.03/2.78/2.74 seconds).
+Remaining uncertainties are generated PLM, the unknown Ridley-subsystem adapter
+and the captured Ridley external dependency without changed-since history.
+The corpus records 45 Rust parses, 437 closure hits and one final asset pass.
+See [dependency-facts-handoff.md](../dependency-facts-handoff.md) and
+[dependency-identities.md](../dependency-identities.md).
+
+Both cleanup passes reclaimed zero disposable and 262,144 deduplicated bytes.
+The corpus worktree was retired while retaining 223 exact report inputs; all four
+reports reopened afterward and wrong-source readback refused. Root also retired
+the implementation worktree; both matching old/new actual-C result readers passed
+independently and all proof seals remained valid. The target transferred to 07.
+Exact proof paths and retirement allocations are in
+[integration-foundation.md](../integration-foundation.md). Final acceptance waits
+for 02 and the combined required gates.
 
 ## Comments
 
