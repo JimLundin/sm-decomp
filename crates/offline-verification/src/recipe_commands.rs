@@ -265,6 +265,9 @@ pub(crate) fn rust_compiler_command(recipe: Option<&Recipe>, run: &Path) -> Comp
         "-o".into(),
         run.join(outputs[0]).display().to_string(),
     ]);
+    if let Some(view) = crate::input_view::current() {
+        command.extend(view.remap_arguments(true));
+    }
     CompilerCommand { command, generated, outputs, full_c }
 }
 
@@ -288,6 +291,9 @@ pub(crate) fn c_compiler_command(
         "-iquote".into(),
         source.join("src").display().to_string(),
     ];
+    if let Some(view) = crate::input_view::current() {
+        command.extend(view.remap_arguments(false));
+    }
     match recipe {
         Some(Recipe::Callback | Recipe::PowerBomb | Recipe::GameHost) => {
             let mut units = c_units.to_vec();

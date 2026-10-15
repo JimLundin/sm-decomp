@@ -9,7 +9,7 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     path::{Path, PathBuf},
     sync::{
-        Mutex,
+        Arc, Mutex,
         atomic::{AtomicUsize, Ordering},
     },
     time::Instant,
@@ -29,6 +29,28 @@ pub struct BatchVerification<'a> {
     pub family_jobs: usize,
     pub case_jobs: usize,
     pub families: Vec<FamilyJob>,
+    /// Capture before an application lock wait when execution follows planning.
+    /// The convenience path captures the same inputs before starting workers.
+    pub inputs: Option<&'a BatchInputs>,
+}
+
+pub struct BatchInputRequest<'a> {
+    pub catalog: &'a CatalogSnapshot,
+    pub source: &'a Path,
+    pub required: &'a [String],
+}
+
+pub struct BatchInputs {
+    catalog: CatalogSnapshot,
+    required: BTreeSet<String>,
+    view: Arc<crate::input_view::InputView>,
+}
+
+impl BatchInputs {
+    pub fn validate_current(&self) -> Result<()> {
+        self.catalog.validate_current()?;
+        decomp_source::context::limited(|| self.view.validate_current())
+    }
 }
 
 /// A terminal family outcome, including a pre-execution refusal with no run.
@@ -129,6 +151,23 @@ pub(crate) fn check_admitted_binding(
 }
 
 impl OfflineFamilies {
+    pub fn capture_batch_inputs(&self, request: BatchInputRequest<'_>) -> Result<BatchInputs> {
+        let required = request.required.iter().cloned().collect::<BTreeSet<_>>();
+        ensure!(required.len() == request.required.len(), "duplicate required family");
+        request.catalog.validate_current()?;
+        let facts = request.required.iter().map(|name| request.catalog.family(name)).collect::<Result<Vec<_>>>()?;
+        let manifests = facts.iter().map(FamilyFacts::declaration).collect::<Vec<_>>();
+        let view = crate::input_view::InputView::capture(
+            self.host_inputs(),
+            request.catalog.checkout(),
+            request.source,
+            &manifests,
+            facts.iter().any(|facts| facts.entry().kind == "plm-instructions"),
+            request.catalog.declarations(),
+        )?;
+        request.catalog.validate_current()?;
+        Ok(BatchInputs { catalog: request.catalog.clone(), required, view })
+    }
     /// Publish each completion while sibling families are still running. The
     /// observer cannot alter required work; its errors are returned after all
     /// admitted workers have joined so callers can safely perform cleanup.
@@ -150,6 +189,28 @@ impl OfflineFamilies {
             crate::catalog::entry(request.catalog.catalog(), &job.family)?;
         }
         request.catalog.validate_current()?;
+        if request.families.is_empty() {
+            return Ok(BatchRun { families: Vec::new() });
+        }
+        let owned_inputs;
+        let captured = if let Some(inputs) = request.inputs {
+            ensure!(
+                inputs.catalog.same_capture(request.catalog)
+                    && inputs.required == names.into_iter().cloned().collect()
+                    && std::fs::canonicalize(&request.source)? == inputs.view.source(),
+                "batch captured input requirement differs"
+            );
+            inputs.validate_current()?;
+            inputs
+        } else {
+            let required = request.families.iter().map(|job| job.family.clone()).collect::<Vec<_>>();
+            owned_inputs = self.capture_batch_inputs(BatchInputRequest {
+                catalog: request.catalog,
+                source: &request.source,
+                required: &required,
+            })?;
+            &owned_inputs
+        };
         let next = AtomicUsize::new(0);
         let jobs: Vec<_> = request.families.into_iter().map(|job| Mutex::new(Some(job))).collect();
         let outcomes = Mutex::new(BTreeMap::new());
@@ -187,6 +248,7 @@ impl OfflineFamilies {
                                     previous: job.previous,
                                 },
                                 request.catalog,
+                                Some(&captured.view),
                             );
                             let error = result
                                 .as_ref()
@@ -213,6 +275,7 @@ impl OfflineFamilies {
         let errors = publication_errors.into_inner().unwrap();
         ensure!(errors.is_empty(), "batch completion publication failed: {}", errors.join("; "));
         request.catalog.validate_current()?;
+        captured.validate_current()?;
         Ok(BatchRun { families: outcomes.into_inner().unwrap().into_values().collect() })
     }
 

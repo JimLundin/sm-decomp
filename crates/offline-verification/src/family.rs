@@ -74,8 +74,13 @@ fn authenticate_host(directory: &Path, fixture: &Case) -> Result<()> {
 }
 
 fn asset(path: &Path, expected: &str, extent: Option<usize>) -> Result<Vec<u8>> {
-    let (bytes, hash) = bounded::read_with_digest(path)?;
-    ensure!(hash == expected, "asset identity mismatch: {}", path.display());
+    let bytes = if let Some(view) = crate::input_view::current() {
+        view.read(path, Some(expected))?
+    } else {
+        let (bytes, hash) = bounded::read_with_digest(path)?;
+        ensure!(hash == expected, "asset identity mismatch: {}", path.display());
+        bytes
+    };
     if let Some(n) = extent {
         ensure!(bytes.len() == n, "asset extent mismatch");
     }
@@ -675,13 +680,14 @@ fn inventory_bounded(
 }
 
 pub fn verify(request: VerifyRequest) -> Result<Verdict> {
-    verify_with_declarations(request, &crate::declarations::Declarations::standard(), None)
+    verify_with_declarations(request, &Arc::new(crate::declarations::Declarations::standard()), None, None)
 }
 
 pub(crate) fn verify_with_declarations(
     request: VerifyRequest,
-    declarations: &crate::declarations::Declarations,
+    declarations: &Arc<crate::declarations::Declarations>,
     captured: Option<Arc<crate::declarations::Declaration>>,
+    captured_inputs: Option<&Arc<crate::input_view::InputView>>,
 ) -> Result<Verdict> {
     let checkout = fs::canonicalize(&request.checkout)?;
     let source = fs::canonicalize(&request.source)?;
@@ -728,8 +734,22 @@ pub(crate) fn verify_with_declarations(
         let recipe = crate::recipe::for_adapter(&request.adapter, &manifest)?;
         manifest = crate::recipe::normalize_manifest(&checkout, manifest, recipe.as_ref())?;
         verdict.family = manifest.family.clone();
-        verdict.source = Some(verify_source(&checkout, &source)?);
-        fs::copy(source.join("LICENSE.txt"), run.join("LICENSE.txt"))?;
+        let view = if let Some(view) = captured_inputs {
+            ensure!(view.checkout() == checkout && view.source() == source, "family captured source context differs");
+            view.clone()
+        } else {
+            crate::input_view::InputView::capture(
+                &inputs::host_inputs()?,
+                &checkout,
+                &source,
+                &[&manifest],
+                false,
+                declarations,
+            )?
+        };
+        view.validate_manifest_inputs(&manifest)?;
+        verdict.source = Some(view.source_identity().clone());
+        fs::write(run.join("LICENSE.txt"), view.read(&source.join("LICENSE.txt"), None)?)?;
         let tasks = ordered_tasks(&manifest)?;
         ensure!(!tasks.is_empty(), "empty family cannot be verified");
         metrics.context.configuration("declared-cases", tasks.len());
@@ -743,14 +763,29 @@ pub(crate) fn verify_with_declarations(
         let fork = fork_execution(&request)?;
         ensure!((1..=64).contains(&jobs), "case jobs must be 1..64");
         if let Some(rom) = manifest.rom.as_ref() {
-            let bytes = asset(&rom.file, &rom.sha256, None)?;
+            let bytes = view.read(&rom.file, Some(&rom.sha256))?;
             ensure!(!bytes.is_empty() && bytes.len() <= 0x400000, "ROM extent outside LoROM view");
             fs::write(run.join("rom.bin"), &bytes)?;
             verdict.rom = Some(RomIdentity { sha256: rom.sha256.clone(), bytes: bytes.len() });
         }
         preparing.finish("success")?;
         verdict.implementation = Some(metrics::measure("family-builds", || {
-            crate::recipe::build(recipe.as_ref(), &manifest, &request, &checkout, &source, &run, None)
+            view.validate_compiler_current()?;
+            view.validate_materialized()?;
+            let result = view.enter(|| {
+                crate::recipe::build(
+                    recipe.as_ref(),
+                    &manifest,
+                    &request,
+                    &view.physical_checkout(),
+                    &view.physical_source(),
+                    &run,
+                    None,
+                )
+            });
+            view.validate_materialized()?;
+            view.validate_compiler_current()?;
+            result
         })?);
         verdict.implementation.as_mut().unwrap().manifest =
             Some(Asset { file: fs::canonicalize(&manifest_path)?, sha256: manifest_sha256.clone() });
@@ -768,15 +803,17 @@ pub(crate) fn verify_with_declarations(
                 request.workers,
                 fork,
                 |(routine, fixture, routine_index), worker| {
-                    crate::recipe::fixture(
-                        recipe.as_ref(),
-                        &manifest,
-                        routine,
-                        fixture,
-                        routine_index,
-                        &run,
-                        crate::recipe::FixtureExecution::Ordinary { worker },
-                    )
+                    view.enter(|| {
+                        crate::recipe::fixture(
+                            recipe.as_ref(),
+                            &manifest,
+                            routine,
+                            fixture,
+                            routine_index,
+                            &run,
+                            crate::recipe::FixtureExecution::Ordinary { worker },
+                        )
+                    })
                 },
             )?;
             let mut errors = Vec::new();
@@ -795,6 +832,7 @@ pub(crate) fn verify_with_declarations(
             ensure!(errors.is_empty(), "{}", errors.join("; "));
             Ok(())
         })?;
+        view.validate_manifest_inputs(&manifest)?;
         ensure!(
             digest(&manifest_path)? == manifest_sha256 && digest(&run.join("manifest.smf"))? == manifest_sha256,
             "family manifest changed during verification"

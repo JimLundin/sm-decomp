@@ -27,7 +27,7 @@ pub(crate) fn with_host<T>(host: &crate::HostInputs, action: impl FnOnce() -> Re
     action()
 }
 
-fn host_inputs() -> Result<crate::HostInputs> {
+pub(crate) fn host_inputs() -> Result<crate::HostInputs> {
     HOST.with(|current| current.borrow().clone().context("verification host inputs were not supplied"))
 }
 
@@ -159,6 +159,19 @@ fn canonical_sources_until(
 }
 
 fn canonical_sources_bounded(checkout: &Path, modules: &[PathBuf], imports: &[String]) -> Result<Vec<PathBuf>> {
+    discover_sources_bounded(checkout, modules, imports, true)
+}
+
+pub(crate) fn ordinary_sources(checkout: &Path, modules: &[PathBuf], imports: &[String]) -> Result<Vec<PathBuf>> {
+    decomp_source::context::limited(|| discover_sources_bounded(checkout, modules, imports, false))
+}
+
+fn discover_sources_bounded(
+    checkout: &Path,
+    modules: &[PathBuf],
+    imports: &[String],
+    direct_only: bool,
+) -> Result<Vec<PathBuf>> {
     bounded::safe(checkout)?;
     let checkout = fs::canonicalize(checkout)?;
     let sources = checkout.join("crates/port/src");
@@ -184,7 +197,8 @@ fn canonical_sources_bounded(checkout: &Path, modules: &[PathBuf], imports: &[St
         bounded::safe(&path)?;
         let path = fs::canonicalize(path)?;
         ensure!(
-            path.parent() == Some(sources.as_path()) && path.extension().is_some_and(|value| value == "rs"),
+            (!direct_only || path.parent() == Some(sources.as_path()))
+                && path.extension().is_some_and(|value| value == "rs"),
             "canonical family modules must be direct gameplay source files"
         );
         if !selected.insert(path.clone()) {
@@ -327,7 +341,12 @@ fn dependency_inventory_bounded(
     let checkout = fs::canonicalize(request.checkout)?;
     let run = fs::canonicalize(request.run)?;
     let mut paths = BTreeSet::new();
-    for name in dep_paths(&bounded::text(run.join("compiler.d"))?)? {
+    let compiler_dependencies = bounded::text(run.join("compiler.d"))?;
+    ensure!(
+        !compiler_dependencies.lines().any(|line| line.starts_with("# env-dep:")),
+        "unsupported compiler environment dependency"
+    );
+    for name in dep_paths(&compiler_dependencies)? {
         bounded::check()?;
         let p = Path::new(&name);
         let path = if confined {
@@ -351,12 +370,19 @@ fn dependency_inventory_bounded(
         } else {
             run.join(p)
         };
+        let path = if let Some(view) = crate::input_view::current() {
+            if path.starts_with(&run) { path } else { view.physical(&path)? }
+        } else {
+            path
+        };
         bounded::safe(&path)?;
         paths.insert(fs::canonicalize(path)?);
     }
     for p in &request.extra {
         bounded::check()?;
-        paths.insert(fs::canonicalize(if p.is_absolute() { p.to_path_buf() } else { checkout.join(p) })?);
+        let path = if p.is_absolute() { p.to_path_buf() } else { checkout.join(p) };
+        let path = if let Some(view) = crate::input_view::current() { view.physical(&path)? } else { path };
+        paths.insert(fs::canonicalize(path)?);
     }
     let mut result = BTreeMap::new();
     for (index, p) in paths.into_iter().enumerate() {
@@ -364,8 +390,11 @@ fn dependency_inventory_bounded(
         if p.starts_with(&run) {
             continue;
         }
-        let key = p.strip_prefix(&checkout).unwrap_or(&p).to_string_lossy().into_owned();
-        if captured_ridley && p == Path::new(CAPTURED_RIDLEY_EVENT) {
+        let logical = if let Some(view) = crate::input_view::current() { view.logical(&p)? } else { p.clone() };
+        let logical_checkout =
+            crate::input_view::current().map(|view| view.checkout().to_path_buf()).unwrap_or_else(|| checkout.clone());
+        let key = logical.strip_prefix(&logical_checkout).unwrap_or(&logical).to_string_lossy().into_owned();
+        if captured_ridley && logical == Path::new(CAPTURED_RIDLEY_EVENT) {
             let hash = captured_ridley_event_digest(&p)?;
             bounded::immutable_copy(&p, &run.join(CAPTURED_RIDLEY_SNAPSHOT), &hash, CAPTURED_RIDLEY_EVENT_BYTES)?;
             result.insert(key, hash);

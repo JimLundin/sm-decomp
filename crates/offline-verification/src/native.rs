@@ -14,7 +14,7 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
     path::{Component, Path, PathBuf},
-    sync::Mutex,
+    sync::{Arc, Mutex},
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 use tool_execution::{
@@ -95,6 +95,8 @@ pub struct PreparedNative {
     /// Persisting this cache would expand shared fixture payloads back into text.
     #[serde(skip)]
     manifest: Manifest,
+    #[serde(skip)]
+    declarations: Arc<crate::declarations::Declarations>,
     source: Source,
     pinned_source: PathBuf,
     candidate_path: String,
@@ -201,6 +203,7 @@ impl AuthenticatedNative {
 
 impl OfflineFamilies {
     pub fn declare_native(&self, request: NativeDeclaration<'_>) -> Result<NativeContract> {
+        let declarations = Arc::new(crate::declarations::Declarations::standard());
         let action = || match request.kind {
             NativeDeclarationKind::Family(manifest) => contract_for_family_bounded(
                 self.host_inputs(),
@@ -221,10 +224,10 @@ impl OfflineFamilies {
                 request.fixture_limits,
             ),
         };
-        match request.deadline_unix_ms {
+        declarations.enter(|| match request.deadline_unix_ms {
             Some(deadline) => source_context::until(deadline, request.max_input_bytes, action),
             None => source_context::limited(action),
-        }
+        })
     }
 
     pub fn prepare_native(
@@ -279,6 +282,7 @@ struct NativeCatalogInputs {
     inventory_sha256: String,
     source: Source,
     symbols: BTreeSet<String>,
+    declarations: Arc<crate::declarations::Declarations>,
 }
 
 fn catalog_inputs(checkout: &Path, pinned_source: &Path, inventory: &Asset) -> Result<NativeCatalogInputs> {
@@ -302,6 +306,8 @@ fn catalog_inputs(checkout: &Path, pinned_source: &Path, inventory: &Asset) -> R
         inventory_sha256: inventory.sha256.clone(),
         source,
         symbols,
+        declarations: crate::declarations::current()
+            .unwrap_or_else(|| Arc::new(crate::declarations::Declarations::standard())),
     })
 }
 
@@ -632,7 +638,11 @@ fn provenance(
             ensure!(!rationale.trim().is_empty() && rationale.len() <= 4096, "catalog review rationale missing");
             check_asset(owner, requirements)?;
             let reviewed = check_asset(owner, catalog)?;
-            let inventory: batch::Catalog = bounded::object(&reviewed)?;
+            let inventory = if let Some(declarations) = crate::declarations::current() {
+                declarations.read_catalog(&reviewed)?
+            } else {
+                Arc::new(bounded::object::<batch::Catalog>(&reviewed)?)
+            };
             ensure!(
                 sealed(&batch::entry(&inventory, &registration.catalog_family)?)? == sealed(&registration.entry)?,
                 "reviewed catalog entry differs"
@@ -664,17 +674,20 @@ fn provenance(
         }
         NativeProvenance::ReviewedOfflineFamily { verdict, checkout: owner } => {
             let path = check_asset(owner, verdict)?;
-            let prior = family::authenticate_with_source(
+            let admitted = family::admit_with_source(
                 crate::family_model::AuthenticateRequest { checkout: owner.clone(), verdict: path },
                 pinned_source,
+                &crate::declarations::current()
+                    .unwrap_or_else(|| Arc::new(crate::declarations::Declarations::standard())),
             )?;
+            let prior = &admitted.report;
             ensure!(
                 prior.family == contract.family && prior.source.as_ref() == Some(source),
                 "offline provenance family/source differs"
             );
-            let prior_manifest = crate::fixture_format::read(&prior.run.join("manifest.smf"))?;
+            let prior_manifest = &admitted.original;
             ensure!(
-                coverage(&prior_manifest)? == contract.coverage && prior_manifest == *manifest,
+                coverage(prior_manifest)? == contract.coverage && prior_manifest.as_ref() == manifest,
                 "offline provenance verification declarations differ"
             );
             ensure!(
@@ -700,10 +713,13 @@ fn prepare_request(
         }
         Ok(prepared)
     };
-    match request.deadline_unix_ms {
+    let declarations = catalog
+        .map(|catalog| catalog.declarations.clone())
+        .unwrap_or_else(|| Arc::new(crate::declarations::Declarations::standard()));
+    declarations.enter(|| match request.deadline_unix_ms {
         Some(deadline) => source_context::until(deadline, request.max_input_bytes, action),
         None => source_context::limited(action),
-    }
+    })
 }
 
 fn bind_scope_candidates(prepared: &mut PreparedNative, approved_paths: &[String]) -> Result<()> {
@@ -862,6 +878,7 @@ fn prepare_bounded_with_catalog(
     Ok(PreparedNative {
         contract: contract.clone(),
         manifest,
+        declarations: crate::declarations::current().context("native declaration context missing")?,
         source,
         pinned_source,
         approved_candidate_paths: BTreeSet::from([candidate_path.clone()]),
@@ -930,13 +947,19 @@ impl PreparedNative {
     }
 
     pub fn declaration(&self, checkout: &Path) -> Result<Manifest> {
-        let original = read_fixture(checkout, &self.contract.manifest)?;
-        let manifest = recipes::normalize_manifest(checkout, original, self.contract.recipe.as_ref())?;
-        ensure!(
-            self.verification_sha256 == sealed(&(&self.contract, crate::fixture_format::identity(&manifest)?))?,
-            "prepared binary fixture identity differs"
-        );
-        Ok(manifest)
+        self.declarations.enter(|| {
+            let original = read_fixture(checkout, &self.contract.manifest)?;
+            let manifest = recipes::normalize_manifest(checkout, original, self.contract.recipe.as_ref())?;
+            ensure!(
+                self.verification_sha256 == sealed(&(&self.contract, crate::fixture_format::identity(&manifest)?))?,
+                "prepared binary fixture identity differs"
+            );
+            Ok(manifest)
+        })
+    }
+
+    pub fn catalog_statistics(&self) -> crate::CatalogStatistics {
+        self.declarations.counters.statistics()
     }
 
     /// Run the complete prescribed family, or authenticate its unchanged
@@ -947,15 +970,17 @@ impl PreparedNative {
         environment: &ConfinedEnvironment,
         host: &HostInputs,
     ) -> Result<NativeReceipt> {
-        inputs::with_host(host, || {
-            run_bounded(
-                self,
-                target.checkout,
-                target.output,
-                environment,
-                target.context,
-                target.fixture_jobs.unwrap_or(environment.workers),
-            )
+        self.declarations.enter(|| {
+            inputs::with_host(host, || {
+                run_bounded(
+                    self,
+                    target.checkout,
+                    target.output,
+                    environment,
+                    target.context,
+                    target.fixture_jobs.unwrap_or(environment.workers),
+                )
+            })
         })
     }
 
@@ -1359,8 +1384,10 @@ fn execute_or_reconcile<T>(resumed: bool, deadline: u64, action: impl FnOnce() -
 }
 
 pub(crate) fn authenticate(prepared: &PreparedNative, checkout: &Path, receipt: &NativeReceipt) -> Result<Verdict> {
-    source_context::until(now_unix_ms()?.saturating_add(60_000), 8 * bounded::DEFAULT_BYTES, || {
-        authenticate_bounded(prepared, checkout, receipt)
+    prepared.declarations.enter(|| {
+        source_context::until(now_unix_ms()?.saturating_add(60_000), 8 * bounded::DEFAULT_BYTES, || {
+            authenticate_bounded(prepared, checkout, receipt)
+        })
     })
 }
 
@@ -1434,17 +1461,18 @@ fn authenticate_bounded(prepared: &PreparedNative, checkout: &Path, receipt: &Na
         return Ok(verdict);
     }
     let limits = retained_tree_limits(run)?;
-    let verdict = family::authenticate_with_source_limits(
+    let admitted = family::admit_with_source_limits(
         crate::family_model::AuthenticateRequest { checkout, verdict: path },
         &prepared.pinned_source,
         limits,
+        &prepared.declarations,
     )?;
+    let verdict = admitted.report;
     ensure!(
         verdict.family == prepared.contract.family && verdict.source.as_ref() == Some(&prepared.source),
         "native family source identity differs"
     );
-    let declared = crate::fixture_format::read(&verdict.run.join("manifest.smf"))?;
-    let declared = recipes::retained_manifest(declared)?;
+    let declared = admitted.effective;
     ensure!(coverage(&declared)? == prepared.contract.coverage, "native frozen coverage differs");
     Ok(verdict)
 }

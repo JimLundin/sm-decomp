@@ -17,6 +17,7 @@ mod family_model;
 mod fixture_execution;
 mod fixture_format;
 mod host;
+mod input_view;
 mod inputs;
 mod native;
 mod ordinary;
@@ -29,7 +30,8 @@ mod sources;
 pub mod authoring;
 pub mod catalog;
 pub use bulk::{
-    AuthenticatedBatch, BatchAdmission, BatchRun, BatchVerification, FamilyCompletion, FamilyEvidence, FamilyJob,
+    AuthenticatedBatch, BatchAdmission, BatchInputRequest, BatchInputs, BatchRun, BatchVerification, FamilyCompletion,
+    FamilyEvidence, FamilyJob,
 };
 pub use catalog::{CatalogRequest, CatalogSnapshot, CatalogStatistics, FamilyFacts};
 pub mod fixtures;
@@ -72,8 +74,8 @@ impl OfflineFamilies {
         inputs::with_host(&self.host, || {
             let checkout = request.checkout.clone();
             let source = request.source.clone();
-            let declarations = declarations::Declarations::standard();
-            let report = family::verify_with_declarations(request, &declarations, None)?;
+            let declarations = Arc::new(declarations::Declarations::standard());
+            let report = declarations.enter(|| family::verify_with_declarations(request, &declarations, None, None))?;
             if report.status == "offline-verified" {
                 family::admit_with_source(
                     AuthenticateRequest { checkout, verdict: report.run.join("verdict.toml") },

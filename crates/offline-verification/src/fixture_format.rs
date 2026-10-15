@@ -193,6 +193,9 @@ pub fn read_authenticated(path: &Path, expected: &str) -> Result<Manifest> {
 fn open(path: &Path, expected: Option<&str>) -> Result<Manifest> {
     let path = if path.is_absolute() { path.to_path_buf() } else { std::env::current_dir()?.join(path) };
     decomp_source::context::limited(|| {
+        if let Some(declarations) = crate::declarations::current() {
+            return Ok((*declarations.read(&path, expected)?.manifest).clone());
+        }
         let bytes = bounded::read(&path)?;
         if let Some(expected) = expected {
             use sha2::{Digest, Sha256};
@@ -204,6 +207,10 @@ fn open(path: &Path, expected: Option<&str>) -> Result<Manifest> {
 }
 
 pub fn decode(bytes: Vec<u8>) -> Result<Manifest> {
+    if let Some(declarations) = crate::declarations::current() {
+        let hash = translation_execution::model::sha256(&bytes);
+        return Ok((*declarations.decode(bytes, hash)?.manifest).clone());
+    }
     decode_shared(Arc::new(bytes))
 }
 

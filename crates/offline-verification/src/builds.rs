@@ -706,7 +706,9 @@ pub(crate) fn prepare_fixture_worker(request: crate::authoring::FixtureWorkerReq
             source: "crates/offline-verification/src/fixture_worker.rs".into(),
             name: "libfixture_worker.a".into(),
             label: "fixture-worker-build".into(),
-            flags: vec!["--crate-type=staticlib".into()],
+            flags: std::iter::once("--crate-type=staticlib".into())
+                .chain(crate::input_view::current().into_iter().flat_map(|view| view.remap_arguments(true)))
+                .collect(),
         }],
     })
     .and_then(|artifacts| artifacts.into_iter().next().context("Fixture worker build returned no artifact"));

@@ -177,9 +177,7 @@ pub fn capture(request: CatalogRequest) -> Result<CatalogSnapshot> {
         let configuration = checkout.join("tools/port/batch.toml");
         let (bytes, configuration_sha256) = bounded::read_with_digest(&configuration)?;
         let mut input_bytes = bytes.len() as u64;
-        declarations.reserve(bytes.len() as u64 * 8 + 4096)?;
-        let explicit: Catalog = toml::from_str(std::str::from_utf8(&bytes)?)?;
-        declarations.counters.catalog_parses.fetch_add(1, Ordering::Relaxed);
+        let explicit = (*declarations.parse_catalog(&bytes, configuration_sha256.clone())?).clone();
         let mut catalog = explicit.clone();
         let namespace = bounded::entries(&checkout.join("tools/port"))?;
         ensure!(
@@ -277,6 +275,10 @@ impl CatalogSnapshot {
         &self.0.declarations
     }
 
+    pub(crate) fn same_capture(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.0, &other.0)
+    }
+
     /// Input refusal must stay a hard error in callers that otherwise turn
     /// missing dependency knowledge into conservative affected-family reasons.
     pub fn check_budget(&self) -> Result<()> {
@@ -301,7 +303,7 @@ impl CatalogSnapshot {
                         let bytes = std::fs::symlink_metadata(&binding.path)?.len();
                         self.0
                             .input_bytes
-                            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |used| {
+                            .try_update(Ordering::Relaxed, Ordering::Relaxed, |used| {
                                 used.checked_add(bytes).filter(|next| *next <= self.0.maximum)
                             })
                             .map_err(|_| anyhow::anyhow!("catalog aggregate input budget exhausted"))?;

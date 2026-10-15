@@ -167,6 +167,7 @@ fn batch_membership_refuses_omissions_duplicates_and_extra_bindings_without_runt
                     families: ["a", "a"]
                         .map(|name| FamilyJob { family: name.into(), output: root.0.join(name), previous: None })
                         .into(),
+                    inputs: None,
                 },
                 |_| {
                     *published.lock().unwrap() += 1;

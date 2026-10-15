@@ -342,6 +342,20 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
     if let Some(planning) = planning {
         planning.finish("success")?;
     }
+    let source = if ["verify", "run", "replay"].contains(&command) {
+        Some(fs::canonicalize(checkout.join("deps/snesrev-sm"))?)
+    } else {
+        None
+    };
+    let captured_inputs = if ["verify", "run"].contains(&command) {
+        Some(offline.capture_batch_inputs(offline_verification::BatchInputRequest {
+            catalog: &snapshot,
+            source: source.as_ref().unwrap(),
+            required: &names,
+        })?)
+    } else {
+        None
+    };
     let selection = checkout.join("out/port/batches");
     fs::create_dir_all(&selection)?;
     let selecting = OpenOptions::new().create(true).append(true).open(selection.join("selection.lock"))?;
@@ -369,6 +383,9 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
     let lock = OpenOptions::new().create(true).append(true).open(path.with_extension("lock"))?;
     ensure!(lock.try_lock().is_ok(), "another command is writing this batch; retry after it finishes");
     snapshot.validate_current()?;
+    if let Some(inputs) = &captured_inputs {
+        inputs.validate_current()?;
+    }
     let mut batch: Batch = if path.exists() {
         let value: Batch = pipeline_model::read(&path)?;
         ensure!(value.schema_version == 2, "unsupported batch version");
@@ -416,12 +433,13 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
         let execution = offline.verify_batch(
             offline_verification::BatchVerification {
                 catalog: &snapshot,
-                source: checkout.join("deps/snesrev-sm"),
+                source: source.as_ref().unwrap().clone(),
                 root: request.root.clone(),
                 workers: request.workers,
                 family_jobs: request.jobs,
                 case_jobs: request.case_jobs,
                 families,
+                inputs: captured_inputs.as_ref(),
             },
             |outcome| {
                 let mut owner = state.lock().unwrap();
@@ -467,7 +485,7 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
         offline.authenticate_batch(offline_verification::BatchAdmission {
             catalog: &snapshot,
             required: &names,
-            source: checkout.join("deps/snesrev-sm"),
+            source: source.as_ref().unwrap().clone(),
             evidence,
         })?;
     }
