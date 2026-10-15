@@ -16,6 +16,7 @@ use translation_execution::checkout;
 
 const DEFAULT_PLANNING_BYTES: u64 = 256 * 1024 * 1024;
 const MAX_PLANNING_ENTRIES: u64 = 65536;
+const MAX_CLOSURE_CACHE_BYTES: usize = 16 * 1024 * 1024;
 
 /// Source discovery belongs to the whole stage budget, including rereads that
 /// check stability. Resource exhaustion cannot become ordinary uncertainty.
@@ -178,6 +179,10 @@ pub(crate) struct PlanningStatistics {
     pub entries: u64,
     pub rust_source_parses: usize,
     pub rust_source_cache_hits: usize,
+    #[serde(default)]
+    pub rust_closure_cache_hits: usize,
+    #[serde(default)]
+    pub shared_input_cache_hits: usize,
 }
 
 impl Report {
@@ -274,8 +279,12 @@ struct Discovery<'a> {
     namespace: BTreeMap<String, PathBuf>,
     history: BTreeSet<PathBuf>,
     sources: BTreeMap<PathBuf, Arc<offline_verification::source_facts::RustSourceFacts>>,
+    closures: BTreeMap<PathBuf, Arc<BTreeSet<PathBuf>>>,
+    closure_bytes: usize,
     hashes: BTreeMap<PathBuf, String>,
     cache_hits: usize,
+    closure_cache_hits: usize,
+    input_cache_hits: usize,
 }
 
 impl<'a> Discovery<'a> {
@@ -298,8 +307,12 @@ impl<'a> Discovery<'a> {
             available,
             history: history_paths(checkout, budget)?,
             sources: BTreeMap::new(),
+            closures: BTreeMap::new(),
+            closure_bytes: 0,
             hashes: BTreeMap::new(),
             cache_hits: 0,
+            closure_cache_hits: 0,
+            input_cache_hits: 0,
         })
     }
 
@@ -335,6 +348,92 @@ impl<'a> Discovery<'a> {
         Ok(facts)
     }
 
+    fn rust_closure(&mut self, root: &Path) -> Result<Arc<BTreeSet<PathBuf>>> {
+        self.budget.check()?;
+        let root = normalize(self.checkout, root);
+        if let Some(closure) = self.closures.get(&root) {
+            self.closure_cache_hits += 1;
+            return Ok(closure.clone());
+        }
+        let mut pending = BTreeSet::from([root.clone()]);
+        let mut result = BTreeSet::new();
+        while let Some(path) = pending.pop_first() {
+            self.budget.check()?;
+            if !result.insert(path.clone()) {
+                continue;
+            }
+            self.budget.entry()?;
+            if let Some(closure) = self.closures.get(&path) {
+                self.closure_cache_hits += 1;
+                for dependency in closure.iter() {
+                    self.budget.entry()?;
+                    result.insert(dependency.clone());
+                }
+                continue;
+            }
+            let actual = self.checkout.join(&path);
+            ensure!(!actual.is_symlink(), "Rust discovery module is a symlink");
+            let actual = fs::canonicalize(actual)?;
+            ensure!(path == normalize(self.checkout, &actual), "Rust discovery module has a filesystem alias");
+            ensure!(actual.starts_with(self.checkout), "Rust source outside checkout lacks changed-since history");
+            let facts = self.source(&actual)?;
+            facts.require_complete()?;
+            for word in facts.identifiers() {
+                if let Some(dependency) = self.available.get(word) {
+                    let dependency = normalize(self.checkout, dependency);
+                    if !result.contains(&dependency) {
+                        pending.insert(dependency);
+                    }
+                }
+            }
+            for dependency in facts.file_dependencies() {
+                if !result.contains(dependency) {
+                    pending.insert(dependency.clone());
+                }
+            }
+        }
+        // Only complete transitive closures are reusable. This optional cache
+        // has its own retained-memory ceiling; uncached work still uses the
+        // same whole-stage budget. Every reported membership is charged below.
+        let retained = 512 + root.capacity() + result.iter().map(|path| 256 + path.capacity()).sum::<usize>();
+        let result = Arc::new(result);
+        if retained <= MAX_CLOSURE_CACHE_BYTES.saturating_sub(self.closure_bytes) {
+            self.closure_bytes += retained;
+            self.closures.insert(root, result.clone());
+        }
+        Ok(result)
+    }
+
+    fn input_hash(&mut self, path: &Path) -> Result<String> {
+        self.budget.check()?;
+        let path = normalize(self.checkout, path);
+        if let Some(hash) = self.hashes.get(&path) {
+            self.input_cache_hits += 1;
+            return Ok(hash.clone());
+        }
+        let hash = self.budget.hash(&self.checkout.join(&path))?;
+        self.hashes.insert(path, hash.clone());
+        Ok(hash)
+    }
+
+    fn validate_current(&self, inputs: &BTreeMap<PathBuf, String>) -> Result<bool> {
+        let namespace = Self::new(self.checkout, self.budget).map(|current| current.available);
+        self.budget.check()?;
+        let mut stable = namespace.is_ok_and(|namespace| namespace == self.namespace);
+        // Cached source closures also retain their filesystem alias checks.
+        // Replacing a source directory with a same-content symlink cannot make
+        // a cached closure eligible for a changed-since exclusion.
+        for path in self.sources.keys() {
+            self.budget.entry()?;
+            stable &= !path.is_symlink() && fs::canonicalize(path).is_ok_and(|current| current == *path);
+        }
+        for (path, expected) in inputs {
+            stable &= self.budget.hash(&self.checkout.join(path)).is_ok_and(|actual| actual == *expected);
+            self.budget.check()?;
+        }
+        Ok(stable)
+    }
+
     fn dependencies(
         &mut self,
         manifest: &offline_verification::fixtures::Manifest,
@@ -358,37 +457,19 @@ impl<'a> Discovery<'a> {
         ensure!(kind != "plm-instructions", "generated PLM fixture inputs require verification");
         let mut result = BTreeSet::new();
         let memory = self.checkout.join("crates/port/src/memory.rs");
-        self.source(&memory)?.require_complete()?;
-        result.insert(normalize(self.checkout, &memory));
         let root = self.checkout.join(&manifest.rust_module);
-        ensure!(!root.is_symlink(), "Rust root module is a symlink");
-        let mut pending = vec![root, memory];
+        let mut roots = BTreeSet::from([root, memory]);
         // PLM uses the same discovery implementation, but has no explicit imports.
         if kind != "plm" {
             for name in &manifest.rust_imports {
-                pending.push(self.available.get(name).with_context(|| format!("unknown Rust import: {name}"))?.clone());
+                roots.insert(self.available.get(name).with_context(|| format!("unknown Rust import: {name}"))?.clone());
             }
         }
-        let mut visited = BTreeSet::new();
-        while let Some(path) = pending.pop() {
-            self.budget.entry()?;
-            ensure!(!path.is_symlink(), "Rust discovery module is a symlink");
-            let lexical = normalize(self.checkout, &path);
-            let path = fs::canonicalize(&path)?;
-            ensure!(lexical == normalize(self.checkout, &path), "Rust discovery module has a filesystem alias");
-            ensure!(path.starts_with(self.checkout), "Rust source outside checkout lacks changed-since history");
-            if !visited.insert(path.clone()) {
-                continue;
+        for root in roots {
+            for path in self.rust_closure(&root)?.iter() {
+                self.budget.entry()?;
+                result.insert(path.clone());
             }
-            result.insert(normalize(self.checkout, &path));
-            let facts = self.source(&path)?;
-            facts.require_complete()?;
-            for word in facts.identifiers() {
-                if let Some(dependency) = self.available.get(word) {
-                    pending.push(dependency.clone());
-                }
-            }
-            pending.extend(facts.file_dependencies().iter().map(|path| self.checkout.join(path)));
         }
         for path in &manifest.rust_dependencies {
             let path = normalize(self.checkout, path);
@@ -400,7 +481,7 @@ impl<'a> Discovery<'a> {
                 "declared dependency has a filesystem alias"
             );
             ensure!(self.checkout.join(&path).is_file(), "declared dependency is missing: {}", path.display());
-            self.hashes.insert(path.clone(), self.budget.hash(&self.checkout.join(&path))?);
+            self.input_hash(&path)?;
             result.insert(path);
         }
         if let Some(rom) = &manifest.rom {
@@ -424,13 +505,12 @@ impl<'a> Discovery<'a> {
     fn asset(&mut self, path: &Path, expected: Option<&str>) -> Result<()> {
         let actual = self.checkout.join(path);
         ensure!(!actual.is_symlink(), "family asset is a symlink");
-        let hash = self.budget.hash(&actual)?;
+        let hash = self.input_hash(path)?;
         ensure!(
             expected == Some(hash.as_str()),
             "family asset is missing a matching declared digest: {}",
             actual.display()
         );
-        self.hashes.insert(normalize(self.checkout, path), hash);
         Ok(())
     }
 }
@@ -607,15 +687,10 @@ fn select_changed(
     if let Some(discovery) = discovery {
         report.planning_statistics.rust_source_parses = discovery.sources.len();
         report.planning_statistics.rust_source_cache_hits = discovery.cache_hits;
-        report.planning_inputs.extend(discovery.hashes);
-        let namespace = Discovery::new(checkout, budget).map(|current| current.available);
-        budget.check()?;
-        let mut stable = namespace.is_ok_and(|namespace| namespace == discovery.namespace);
-        for (path, expected) in &report.planning_inputs {
-            stable &= budget.hash(&checkout.join(path)).is_ok_and(|actual| actual == *expected);
-            budget.check()?;
-        }
-        if !stable {
+        report.planning_statistics.rust_closure_cache_hits = discovery.closure_cache_hits;
+        report.planning_statistics.shared_input_cache_hits = discovery.input_cache_hits;
+        report.planning_inputs.extend(discovery.hashes.iter().map(|(path, hash)| (path.clone(), hash.clone())));
+        if !discovery.validate_current(&report.planning_inputs)? {
             for mut decision in std::mem::take(&mut report.excluded) {
                 decision.reasons = vec![reason(
                     "uncertain-inputs",
@@ -639,6 +714,65 @@ fn select_changed(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn reused_closures_and_assets_keep_independent_freshness_checks() -> Result<()> {
+        let directory = tool_execution::testing::Directory::new()?;
+        let root = &directory.0;
+        let sources = root.join("crates/port/src");
+        fs::create_dir_all(sources.join("nested"))?;
+        ensure!(
+            std::process::Command::new("git").args(["init", "-q"]).arg(root).status()?.success(),
+            "test Git initialization failed"
+        );
+        fs::write(sources.join("memory.rs"), "pub struct Wram;")?;
+        fs::write(
+            sources.join("candidate.rs"),
+            "#[path=\"nested/helper.rs\"] mod owned; pub fn step() { owned::step(); }",
+        )?;
+        let helper = sources.join("nested/helper.rs");
+        fs::write(&helper, "pub fn step() {}")?;
+        let asset = root.join("asset.bin");
+        fs::write(&asset, b"original")?;
+        let asset_hash = format!("{:x}", Sha256::digest(b"original"));
+        let budget = PlanningBudget::new(tool_execution::bounded::now_unix_ms()? + 10_000, DEFAULT_PLANNING_BYTES)?;
+        let mut discovery = Discovery::new(root, &budget)?;
+        let manifest = offline_verification::fixtures::Manifest {
+            rust_module: "crates/port/src/candidate.rs".into(),
+            ..Default::default()
+        };
+        let first = discovery.dependencies(&manifest, "family")?;
+        assert!(first.contains(Path::new("crates/port/src/nested/helper.rs")));
+        assert_eq!(first, discovery.dependencies(&manifest, "family")?);
+        assert!(discovery.closure_cache_hits > 0);
+        discovery.asset(&asset, Some(&asset_hash))?;
+        discovery.asset(&asset, Some(&asset_hash))?;
+        assert!(discovery.input_cache_hits > 0);
+        let inputs = discovery.hashes.clone();
+        assert!(discovery.validate_current(&inputs)?);
+
+        fs::write(&helper, "pub fn step() { changed(); }")?;
+        assert!(!discovery.validate_current(&inputs)?);
+        fs::write(&helper, "pub fn step() {}")?;
+        assert!(discovery.validate_current(&inputs)?);
+        fs::write(&asset, b"mutation")?;
+        assert!(!discovery.validate_current(&inputs)?);
+        fs::write(&asset, b"original")?;
+
+        fs::rename(sources.join("nested"), sources.join("retained"))?;
+        std::os::unix::fs::symlink(sources.join("retained"), sources.join("nested"))?;
+        assert!(!discovery.validate_current(&inputs)?, "same-content ancestor alias kept a cached exclusion");
+        fs::remove_file(sources.join("nested"))?;
+        fs::rename(sources.join("retained"), sources.join("nested"))?;
+        fs::remove_file(&helper)?;
+        assert!(!discovery.validate_current(&inputs)?);
+        fs::write(&helper, "pub fn step() {}")?;
+        fs::write(sources.join("new_module.rs"), "pub fn added() {}")?;
+        assert!(!discovery.validate_current(&inputs)?);
+        fs::remove_file(sources.join("new_module.rs"))?;
+        assert!(discovery.validate_current(&inputs)?);
+        Ok(())
+    }
 
     #[test]
     fn approved_paths_plan_the_full_catalog_and_keep_unknown_inputs() -> Result<()> {

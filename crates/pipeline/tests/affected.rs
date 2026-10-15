@@ -177,11 +177,13 @@ fn shared_assets_are_read_once_but_each_requirement_is_checked() {
     let changed = project.plan();
     assert_eq!(families(&changed, "selected").len(), names.len());
     assert!(families(&changed, "excluded").is_empty());
-    assert!(changed["selected"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .all(|decision| decision["reasons"][0]["code"].as_str() == Some("uncertain-inputs")));
+    assert!(
+        changed["selected"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|decision| decision["reasons"][0]["code"].as_str() == Some("uncertain-inputs"))
+    );
 }
 
 #[test]
@@ -209,7 +211,9 @@ pub fn a() {
     assert_eq!(families(&report, "excluded"), ["a"]);
     assert_eq!(
         report["excluded"][0]["dependencies"],
-        Value::Array(["crates/port/src/a.rs", "crates/port/src/memory.rs", "tools/port/a.smf"].map(Value::from).to_vec())
+        Value::Array(
+            ["crates/port/src/a.rs", "crates/port/src/memory.rs", "tools/port/a.smf"].map(Value::from).to_vec()
+        )
     );
 }
 
