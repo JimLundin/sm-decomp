@@ -227,7 +227,7 @@ pub fn a() {
     );
     project.commit();
     project.write("crates/port/src/helper.rs", "pub fn helper() { let changed = 1; }");
-    let report = project.selection();
+    let report = project.plan();
     assert_eq!(families(&report, "selected"), ["b"]);
     assert_eq!(families(&report, "excluded"), ["a"]);
     assert_eq!(
