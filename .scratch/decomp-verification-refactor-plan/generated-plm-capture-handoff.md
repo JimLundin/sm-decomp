@@ -1,7 +1,7 @@
 # Generated PLM effective input capture
 
-Status: claimed; effective-input correction and both public capture controls pass.
-Full input accounting diagnosis and composition controls remain pending.
+Status: claimed; effective capture, full 177-family production capture and
+mutation/budget controls pass. Complete generated actual-C composition pending.
 Owner: `/root/bulk_context_resume`, parent `/root`, session
 `01a13e7f-ab01-7413-a1c2-288b08a4b719`.
 Worktree: `/home/jim/sm-decomp-performance-generated`.
@@ -48,7 +48,45 @@ completed for both controls. The base ROM and C archive hashes match the pinned
 identities; the retained cleanup binary's production source is unchanged from
 `b1f8691`.
 
-Pending: mutation/refusal and complete generated actual-C composition controls,
-measured full-catalog input accounting with the graph owner, final frozen proof,
-retained readers and integration-owner retirement. No aggregate accounting
-change is authorized without root review of measured charged-read evidence.
+The corrected production capture was checkpointed at `8fcc32c` and integrated
+by the root and graph owners. Full-catalog diagnostics then measured **6,967
+distinct inputs / 477,164,947 bytes**, of which **7,104,059 bytes** are compiler
+inputs. All materialization completed at **1,046,226,292 charged bytes**. The
+immediate complete freshness pass failed after 140 files / 27,394,048 bytes,
+at **1,073,751,412 charged bytes**. Peak resident reservation was **347,912,221
+bytes**, below its unchanged 1-GiB ceiling. The exact production-path diagnostic
+took 36.23s; logs are `bfab2b5-red/logs/full-capture-production-diagnostic.*` and
+the retained source/statistics/cleanup are in
+`8fcc32c-diagnostics/full-catalog-272929-0/`. An earlier diagnostic accidentally
+composed catalog and capture under an extra outer scope; it is retained
+separately as `full-capture-diagnostic.*` and is not the production measurement.
+
+Root explicitly approved an **ordinary-only composition change**: materialize
+owned inputs under one 1-GiB I/O phase, then authenticate every current input
+and materialized compiler input under another 1-GiB phase. Both share the same
+absolute deadline established before capture. Any existing caller scope still
+aggregates both phases and remains stricter. With no enclosing scope the
+combined maximum is **2 GiB**; this is not reduced I/O or a performance gain.
+Per-file limits, the declaration resident ceiling, all input/namespace checks
+and Native/predecessor/current-scope contracts remain unchanged. Root approval
+and rationale are recorded in this session's handoff messages.
+
+The three owner controls for per-phase ceilings, stricter outer aggregate
+exhaustion spanning both phases and the original absolute deadline passed in
+0.21s. The complete public capture plus missing/stale and source/base-ROM/
+registration mutation controls passed in **67.11s**, exec 27139 exit 0, with logs
+under `phase-controls/logs/public-controls.*`. The real production catalog had
+all **177 families**; capture and subsequent explicit freshness validation both
+passed. Each changed real input refused before any output/producer directory,
+and restoring its bytes restored current validation. Both cleanup passes
+completed for all six retained public control roots. All temporary diagnostic
+instrumentation has been removed from the production source.
+
+Deferred noncompiler materialization could avoid approximately 470 MB of eager
+copy work, especially on unchanged-result reuse. It needs an explicit asset
+lifetime and synchronized bounded materialization against the initial content
+identity, plus at-use/current-source checks. It is a further optimization, not
+part of this correction; no lazy asset lifetime or timestamp identity was added.
+
+Pending: generated actual-C composition, final source checkpoint, retained
+readers and integration-owner retirement.

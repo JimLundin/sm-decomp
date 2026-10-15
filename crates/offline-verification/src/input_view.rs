@@ -82,6 +82,20 @@ impl Drop for InputView {
     }
 }
 
+/// Ordinary batch preparation has two complete passes over the captured image.
+/// Each pass retains the ordinary 1-GiB I/O ceiling, with one deadline for both.
+/// Existing caller scopes still aggregate every charge across both passes.
+/// With no enclosing scope the combined ceiling is therefore 2 GiB.
+fn ordinary_capture_phases<T>(
+    deadline_unix_ms: u64,
+    capture: impl FnOnce() -> Result<T>,
+    authenticate: impl FnOnce(&T) -> Result<()>,
+) -> Result<T> {
+    let captured = decomp_source::context::until(deadline_unix_ms, bounded::DEFAULT_BYTES, capture)?;
+    decomp_source::context::until(deadline_unix_ms, bounded::DEFAULT_BYTES, || authenticate(&captured))?;
+    Ok(captured)
+}
+
 impl InputView {
     pub fn capture(
         host: &HostInputs,
@@ -91,7 +105,9 @@ impl InputView {
         generated_plm: bool,
         declarations: &Arc<Declarations>,
     ) -> Result<Arc<Self>> {
-        decomp_source::context::limited(|| {
+        let deadline =
+            bounded::now_unix_ms()?.checked_add(60 * 60 * 1000).context("ordinary capture deadline overflow")?;
+        let capture = || {
             bounded::safe(checkout)?;
             bounded::safe(source)?;
             let checkout = fs::canonicalize(checkout)?;
@@ -222,9 +238,11 @@ impl InputView {
             for manifest in &manifests {
                 view.validate_rust_inputs(manifest)?;
             }
-            view.validate_current()?;
-            view.validate_materialized()?;
             Ok(Arc::new(view))
+        };
+        ordinary_capture_phases(deadline, capture, |view| {
+            view.validate_current()?;
+            view.validate_materialized()
         })
     }
 
@@ -710,4 +728,65 @@ fn rust_closure(
 
 pub(crate) fn current() -> Option<Arc<InputView>> {
     CURRENT.with(|current| current.borrow().clone())
+}
+
+#[cfg(test)]
+mod capture_budget_tests {
+    use super::*;
+    use std::{cell::Cell, time::Duration};
+
+    #[test]
+    fn phases_preserve_the_stricter_outer_aggregate_budget() -> Result<()> {
+        let deadline = bounded::now_unix_ms()? + 10_000;
+        let authenticated = Cell::new(false);
+        let error = bounded::until(deadline, 12, || {
+            ordinary_capture_phases(
+                deadline,
+                || bounded::account(8),
+                |()| {
+                    authenticated.set(true);
+                    bounded::account(8)
+                },
+            )
+        })
+        .expect_err("separate phases escaped their caller's aggregate limit");
+        ensure!(
+            authenticated.get() && error.to_string().contains("aggregate byte budget"),
+            "unexpected outer-limit result: {error:#}"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn phases_share_the_original_absolute_deadline() -> Result<()> {
+        let deadline = bounded::now_unix_ms()? + 200;
+        let error = ordinary_capture_phases(
+            deadline,
+            || bounded::account(1),
+            |()| {
+                let remaining = deadline.saturating_sub(bounded::now_unix_ms()?);
+                std::thread::sleep(Duration::from_millis(remaining + 10));
+                bounded::account(1)
+            },
+        )
+        .expect_err("authentication restarted the capture deadline");
+        ensure!(error.to_string().contains("deadline"), "unexpected deadline result: {error:#}");
+        Ok(())
+    }
+
+    #[test]
+    fn each_phase_keeps_its_one_gib_ceiling() -> Result<()> {
+        let deadline = bounded::now_unix_ms()? + 10_000;
+        ordinary_capture_phases(
+            deadline,
+            || bounded::account(bounded::DEFAULT_BYTES),
+            |()| bounded::account(bounded::DEFAULT_BYTES),
+        )?;
+        let capture = ordinary_capture_phases(deadline, || bounded::account(bounded::DEFAULT_BYTES + 1), |()| Ok(()));
+        ensure!(capture.is_err(), "materialization ceiling changed");
+        let authentication =
+            ordinary_capture_phases(deadline, || Ok(()), |()| bounded::account(bounded::DEFAULT_BYTES + 1));
+        ensure!(authentication.is_err(), "authentication ceiling changed");
+        Ok(())
+    }
 }
