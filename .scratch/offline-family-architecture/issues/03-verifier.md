@@ -1,6 +1,6 @@
 # Extract complete Offline family verification
 
-Status: open
+Status: claimed
 Blocked by: 02
 Triage: ready-for-agent
 Type: task
@@ -28,6 +28,14 @@ Full real Native proofs and final integration are ticket 05 responsibilities.
 
 - Approved design: [proposal](../proposal.md). Source ownership and worktree
   will be recorded before this ticket is claimed.
+- Implementation starts from the compiling foundation checkpoint `446dd64`.
+  Ticket 02's final verification/integration remains required before resolving
+  this ticket. Root owns ordinary extraction and public/source interfaces in
+  `/home/jim/sm-decomp-offline-verifier`; `/root/gameplay_architecture` owns the
+  new common recipe files in `/home/jim/sm-decomp-offline-recipes`;
+  `/root/translation_architecture` owns Native extraction and its application
+  bridge in `/home/jim/sm-decomp-offline-native`. See the checkpoint for exact
+  writable groups. These worktrees do not change main's baseline test inputs.
 
 ## Completion evidence
 

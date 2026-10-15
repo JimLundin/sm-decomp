@@ -1,6 +1,6 @@
 # Complete callers and conservative source contracts
 
-Status: open
+Status: claimed
 Blocked by: 03
 Triage: ready-for-agent
 Type: task
