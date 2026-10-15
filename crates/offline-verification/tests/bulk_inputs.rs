@@ -534,8 +534,28 @@ fn native_capture_replays_without_tools_and_binds_mapping_and_source() -> Result
     let mapping = fs::read(&record)?;
     fs::write(&record, [mapping.as_slice(), b"\n# changed captured mapping\n"].concat())?;
     let changed_mapping = prepared.authenticate(NativeEvidence { checkout: &project.checkout(), receipt: &receipt });
-    fs::write(&record, mapping)?;
+    fs::write(&record, &mapping)?;
     ensure!(changed_mapping.is_err(), "changed captured mapping admitted");
+    // Even an otherwise identical, valid mapping with a resealed intent must
+    // match the independently reconstructed compiler capability record.
+    let changed_mapping = std::str::from_utf8(&mapping)?.replacen(" = ", "\t= ", 1);
+    ensure!(changed_mapping.len() == mapping.len() && changed_mapping.as_bytes() != mapping);
+    let intent_path = output.join("native-intent.toml");
+    let intent = fs::read(&intent_path)?;
+    let resealed_intent =
+        std::str::from_utf8(&intent)?.replacen(&sha256(&mapping), &sha256(changed_mapping.as_bytes()), 1);
+    ensure!(resealed_intent.as_bytes() != intent, "capture identity was not present in intent");
+    fs::write(&record, changed_mapping)?;
+    fs::write(&intent_path, resealed_intent)?;
+    let resealed = prepared.authenticate(NativeEvidence { checkout: &project.checkout(), receipt: &receipt });
+    fs::write(&record, &mapping)?;
+    fs::write(&intent_path, intent)?;
+    ensure!(
+        resealed.err().is_some_and(
+            |error| format!("{error:#}").contains("native compiler arguments, outputs or capabilities changed")
+        ),
+        "resealed mapping was not bound to the actual compiler capability record"
+    );
     let record_before = (digest(&record)?, fs::metadata(&record)?.modified()?);
     let before = admitted
         .references()
