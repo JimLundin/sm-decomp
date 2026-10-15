@@ -252,39 +252,7 @@ fn wrapper_bounded(request: WrapperRequest) -> Result<WrapperResult> {
     Ok(WrapperResult { path: destination })
 }
 
-pub(crate) fn dep_paths(text: &str) -> Result<Vec<String>> {
-    bounded::check()?;
-    ensure!(text.len() as u64 <= bounded::MAX_DOCUMENT_BYTES, "compiler dependency rule extent exceeded");
-    let joined = text.replace("\\\n", "");
-    let rule =
-        joined.split_once(": ").context("invalid compiler dependency rule")?.1.lines().next().unwrap_or_default();
-    let mut result = Vec::new();
-    let mut token = String::new();
-    let mut escaped = false;
-    for c in rule.chars() {
-        if escaped {
-            token.push(c);
-            escaped = false;
-        } else if c == '\\' {
-            escaped = true;
-        } else if c.is_whitespace() {
-            if !token.is_empty() {
-                result.push(std::mem::take(&mut token));
-                ensure!(result.len() <= 65536, "compiler dependency path count exceeded");
-                bounded::check()?;
-            }
-        } else {
-            token.push(c);
-        }
-    }
-    ensure!(!escaped, "truncated compiler dependency escape");
-    if !token.is_empty() {
-        result.push(token);
-    }
-    ensure!(result.len() <= 65536, "compiler dependency path count exceeded");
-    bounded::check()?;
-    Ok(result)
-}
+pub(crate) use tool_execution::builds::dep_paths;
 
 pub fn dependencies(request: DependenciesRequest) -> Result<BTreeMap<String, String>> {
     dependency_inventory(request, false, false)

@@ -1,15 +1,14 @@
-//! Local process leases and authenticated cache publication for decomp workers.
+//! Local CLI composition for decomp verification and Translation operations.
 use anyhow::{Context, Result, bail, ensure};
 use build_cache::{CacheRequest, CacheResult, CacheSeal, cached_artifact};
 use serde::Serialize;
-use sha2::{Digest, Sha256};
-use std::fs::{self, File, OpenOptions};
+use std::fs;
 use std::io::{BufRead, Read, Write};
-use std::os::unix::fs::OpenOptionsExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::time::{Duration, Instant};
 use toml::Value;
+
+use tool_execution::{acquire_lease, acquire_lease_until, acquire_leases_until, atomic_toml, digest, executable, lock};
 
 mod affected;
 mod assignment;
@@ -100,26 +99,6 @@ fn binary_digest() -> Result<&'static str> {
     BINARY_SHA256.get().map(String::as_str).context("binary identity was not initialized")
 }
 
-fn digest(path: &Path) -> Result<String> {
-    let mut hash = Sha256::new();
-    let mut input = File::open(path)?;
-    let mut buffer = [0u8; 65536];
-    loop {
-        let count = input.read(&mut buffer)?;
-        if count == 0 {
-            break;
-        }
-        hash.update(&buffer[..count]);
-    }
-    Ok(format!("{:x}", hash.finalize()))
-}
-
-fn lock(path: &Path) -> Result<File> {
-    let file = OpenOptions::new().create(true).append(true).open(path)?;
-    metrics::lock(&file)?;
-    Ok(file)
-}
-
 fn emit<T: Serialize>(value: &T) -> Result<()> {
     print!("{}", toml::to_string_pretty(value)?);
     std::io::stdout().flush()?;
@@ -166,97 +145,6 @@ fn line() -> Result<String> {
     Ok(value)
 }
 
-fn acquire_lease(root: &Path, requested: usize) -> Result<(File, f64)> {
-    let now = u64::try_from(std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_millis())?;
-    acquire_lease_until(root, requested, now.checked_add(3_600_000).context("worker deadline overflow")?)
-}
-
-fn acquire_lease_until(root: &Path, requested: usize, deadline_unix_ms: u64) -> Result<(File, f64)> {
-    let (mut held, wait) = acquire_leases_until(root, requested, 1, deadline_unix_ms)?;
-    Ok((held.pop().context("shared worker reservation is empty")?, wait))
-}
-
-fn acquire_leases_until(
-    root: &Path,
-    requested: usize,
-    count: usize,
-    deadline_unix_ms: u64,
-) -> Result<(Vec<File>, f64)> {
-    ensure!((1..=64).contains(&requested), "worker count must be 1..64");
-    ensure!((1..=requested).contains(&count), "shared worker reservation exceeds configured capacity");
-    let started = Instant::now();
-    let now = u64::try_from(std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_millis())?;
-    ensure!(now < deadline_unix_ms, "shared worker time budget exhausted before reservation");
-    let deadline = started + Duration::from_millis(deadline_unix_ms - now).min(Duration::from_secs(3600));
-    let root = root.join("workers");
-    fs::create_dir_all(&root)?;
-    let guard = OpenOptions::new()
-        .create(true)
-        .append(true)
-        .custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK)
-        .open(root.join("config.lock"))?;
-    ensure!(guard.metadata()?.is_file(), "worker configuration lock is not regular");
-    loop {
-        metrics::check_cancelled()?;
-        ensure!(Instant::now() < deadline, "shared worker time budget exhausted waiting for configuration");
-        match guard.try_lock() {
-            Ok(()) => break,
-            Err(std::fs::TryLockError::WouldBlock) => std::thread::sleep(Duration::from_millis(10)),
-            Err(std::fs::TryLockError::Error(error)) => return Err(error.into()),
-        }
-    }
-    let config = root.join("capacity.toml");
-    #[derive(serde::Serialize, serde::Deserialize)]
-    struct Capacity {
-        workers: usize,
-    }
-    let capacity = if config.exists() {
-        pipeline_model::read::<Capacity>(&config)?.workers
-    } else {
-        pipeline_model::write(&config, &Capacity { workers: requested })?;
-        requested
-    };
-    ensure!(capacity == requested, "shared worker budget already configured to {capacity}");
-    drop(guard);
-    let held = loop {
-        metrics::check_cancelled()?;
-        ensure!(Instant::now() < deadline, "shared worker time budget exhausted waiting for a slot");
-        let mut selected = Vec::with_capacity(count);
-        for slot in 0..capacity {
-            ensure!(Instant::now() < deadline, "shared worker time budget exhausted while reserving slots");
-            let file = OpenOptions::new()
-                .create(true)
-                .append(true)
-                .custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK)
-                .open(root.join(format!("{slot}.lock")))?;
-            ensure!(file.metadata()?.is_file(), "worker slot lock is not regular");
-            match file.try_lock() {
-                Ok(()) => {
-                    selected.push(file);
-                    if selected.len() == count {
-                        break;
-                    }
-                }
-                Err(std::fs::TryLockError::WouldBlock) => {}
-                Err(std::fs::TryLockError::Error(error)) => return Err(error.into()),
-            }
-        }
-        if selected.len() == count {
-            ensure!(Instant::now() < deadline, "shared worker time budget exhausted during reservation");
-            break selected;
-        }
-        // Never wait with a partial reservation: concurrent multi-slot callers
-        // must leave enough capacity for one complete producer to make progress.
-        drop(selected);
-        std::thread::sleep(Duration::from_millis(10));
-    };
-    Ok((held, started.elapsed().as_secs_f64()))
-}
-
-#[cfg(test)]
-#[path = "worker_budget_tests.rs"]
-mod worker_budget_tests;
-
 fn lease(root: &Path, requested: usize) -> Result<()> {
     let (held, wait) = acquire_lease(root, requested)?;
     #[derive(Serialize)]
@@ -268,36 +156,6 @@ fn lease(root: &Path, requested: usize) -> Result<()> {
     let _ = line();
     drop(held);
     Ok(())
-}
-
-fn atomic_toml<T: Serialize>(path: &Path, value: &T) -> Result<()> {
-    ensure!(path.extension().is_some_and(|e| e == "toml"), "metadata must use .toml");
-    let pending = path.with_extension(format!("pending-{}", std::process::id()));
-    let result = (|| -> Result<()> {
-        let mut out = OpenOptions::new().create_new(true).write(true).open(&pending)?;
-        out.write_all(toml::to_string_pretty(value)?.as_bytes())?;
-        out.sync_all()?;
-        fs::rename(&pending, path)?;
-        File::open(path.parent().context("path parent missing")?)?.sync_all()?;
-        Ok(())
-    })();
-    if result.is_err() {
-        let _ = fs::remove_file(&pending);
-    }
-    result
-}
-
-fn executable(name: &str) -> Result<PathBuf> {
-    if name.contains('/') {
-        return Ok(PathBuf::from(name));
-    }
-    for directory in std::env::split_paths(&std::env::var_os("PATH").context("PATH missing")?) {
-        let candidate = directory.join(name);
-        if candidate.is_file() {
-            return Ok(candidate);
-        }
-    }
-    bail!("compiler not found: {name}")
 }
 
 fn cache(request: CacheRequest) -> Result<()> {

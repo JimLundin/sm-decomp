@@ -3,37 +3,20 @@ use crate::family_model::*;
 use crate::{atomic_toml, builds, callback, inputs};
 use anyhow::{Context, Result, bail, ensure};
 use inputs::bounded::{self, digest};
-use serde::{Deserialize, de::DeserializeOwned};
 use sha2::{Digest, Sha256};
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
     path::{Component, Path, PathBuf},
-    sync::atomic::{AtomicUsize, Ordering},
     time::{SystemTime, UNIX_EPOCH},
 };
 use toml::Value;
 
-#[derive(Deserialize)]
-struct DependencyPins {
-    dependencies: Vec<DependencyPin>,
-}
-#[derive(Deserialize)]
-struct DependencyPin {
-    name: String,
-    archive: String,
-    revision: String,
-    sha256: String,
-}
 const WRAM: usize = 0x20000;
-static NEXT: AtomicUsize = AtomicUsize::new(0);
+// Temporary explicit imports until the Offline family owner is extracted.
+pub(crate) use decomp_source::{authenticate_inventory, c_units, verify_source};
+pub(crate) use tool_execution::{bounded::object, unique_id};
 
-pub(crate) fn object<T: DeserializeOwned>(path: &Path) -> Result<T> {
-    bounded::limited(|| Ok(toml::from_str(&bounded::text(path)?)?))
-}
-pub(crate) fn unique_id() -> usize {
-    NEXT.fetch_add(1, Ordering::Relaxed)
-}
 fn fork_execution(request: &VerifyRequest) -> Result<bool> {
     ensure!(
         ["", "auto", "fresh", "fork"].contains(&request.execution.as_str()),
@@ -114,49 +97,6 @@ fn authenticate_host(directory: &Path, fixture: &Case) -> Result<()> {
         "projectile host state differs"
     );
     Ok(())
-}
-
-pub(crate) fn verify_source(checkout: &Path, source: &Path) -> Result<Source> {
-    bounded::limited(|| verify_source_bounded(checkout, source))
-}
-
-pub(crate) fn verify_source_until(checkout: &Path, source: &Path, deadline: u64, max_bytes: u64) -> Result<Source> {
-    bounded::until(deadline, max_bytes, || verify_source_bounded(checkout, source))
-}
-
-fn verify_source_bounded(checkout: &Path, source: &Path) -> Result<Source> {
-    bounded::safe(checkout)?;
-    bounded::safe(source)?;
-    let checkout = fs::canonicalize(checkout)?;
-    let source = fs::canonicalize(source)?;
-    bounded::safe(&checkout)?;
-    bounded::safe(&source)?;
-    let pins: DependencyPins = object(&checkout.join("tools/dependencies.toml"))?;
-    ensure!(pins.dependencies.len() <= 1024, "dependency pin count exceeded");
-    let pin = pins.dependencies.iter().find(|v| v.name == "snesrev-sm").context("snesrev pin missing")?;
-    ensure!(
-        safe_relative(&pin.archive) && !pin.archive.contains('/') && pin.sha256.len() == 64,
-        "pinned archive name or digest invalid"
-    );
-    let archive = source.parent().context("source parent missing")?.join("downloads").join(&pin.archive);
-    let key =
-        (checkout, source.clone(), translation_execution::model::sealed(&(&pin.archive, &pin.revision, &pin.sha256))?);
-    if let Some(cached) = bounded::cached_source(&key) {
-        ensure!(digest(&archive)? == pin.sha256, "pinned archive identity changed");
-        for (name, expected) in &cached.files {
-            ensure!(digest(&source.join(name))? == *expected, "pinned source changed: {name}");
-        }
-        return Ok(cached);
-    }
-    let files = bounded::authenticate_tar_source(&archive, &source, &pin.sha256)?;
-    let result = Source {
-        revision: pin.revision.clone(),
-        archive_sha256: pin.sha256.clone(),
-        files,
-        freshness: "exact pinned archive; no latest-upstream assertion".into(),
-    };
-    bounded::cache_source(key, result.clone());
-    Ok(result)
 }
 
 fn asset(path: &Path, expected: &str, extent: Option<usize>) -> Result<Vec<u8>> {
@@ -243,34 +183,6 @@ pub(crate) fn c_type(kind: &str) -> Result<&str> {
         "rom_ptr" => "const uint16_t *",
         _ => bail!("invalid routine type"),
     })
-}
-
-pub(crate) fn c_units(source: &Path) -> Result<Vec<PathBuf>> {
-    bounded::limited(|| c_units_bounded(source))
-}
-
-fn c_units_bounded(source: &Path) -> Result<Vec<PathBuf>> {
-    let mut units = bounded::entries(&source.join("src"))?;
-    units.retain(|path| {
-        path.extension().is_some_and(|v| v == "c")
-            && path.file_stem().is_some_and(|v| {
-                v.to_string_lossy().starts_with("sm_")
-                    || ["spc_player", "tracing", "util"].contains(&v.to_string_lossy().as_ref())
-            })
-    });
-    for path in bounded::entries(&source.join("src/snes"))? {
-        bounded::check()?;
-        if path.extension().is_some_and(|v| v == "c") {
-            units.push(path);
-        }
-    }
-    ensure!(units.len() <= 4096, "pinned C unit inventory exceeded");
-    for path in &units {
-        bounded::safe(path)?;
-        ensure!(path.symlink_metadata()?.is_file(), "pinned C unit is not a regular file");
-    }
-    units.sort();
-    Ok(units)
 }
 
 fn build(
@@ -774,110 +686,6 @@ fn authenticate_continuation(case: &Case, run: &Path, before: &[u8]) -> Result<(
     Ok(())
 }
 
-pub(crate) fn authenticate_inventory(checkout: &Path, source: &Path, path: &Path) -> Result<Source> {
-    bounded::limited(|| authenticate_inventory_bounded(checkout, source, path))
-}
-
-pub(crate) fn authenticate_inventory_until(
-    checkout: &Path,
-    source: &Path,
-    path: &Path,
-    deadline: u64,
-    max_bytes: u64,
-) -> Result<Source> {
-    bounded::until(deadline, max_bytes, || authenticate_inventory_bounded(checkout, source, path))
-}
-
-fn authenticate_inventory_bounded(checkout: &Path, source: &Path, path: &Path) -> Result<Source> {
-    #[derive(Deserialize)]
-    struct DeclaredInventory {
-        schema_version: u32,
-        source_identity: Source,
-        source_identity_sha256: String,
-        routines: Vec<DeclaredRoutine>,
-    }
-    #[derive(Deserialize)]
-    struct DeclaredRoutine {
-        symbol: String,
-        source: String,
-        line: usize,
-        definition_sha256: String,
-        #[serde(default)]
-        defined_dependencies: Vec<String>,
-        #[serde(default)]
-        external_or_macro_calls: Vec<String>,
-        #[serde(default)]
-        indirect_indexed_calls: Vec<String>,
-    }
-    let inventory: DeclaredInventory = object(path)?;
-    ensure!(
-        inventory.schema_version == 1 && !inventory.routines.is_empty() && inventory.routines.len() <= 65536,
-        "unsupported native source inventory"
-    );
-    let identity = verify_source(checkout, source)?;
-    ensure!(
-        inventory.source_identity == identity
-            && inventory.source_identity_sha256 == digest(&checkout.join("tools/dependencies.toml"))?,
-        "native source inventory identity differs"
-    );
-    let symbols = inventory.routines.iter().map(|routine| routine.symbol.as_str()).collect::<BTreeSet<_>>();
-    ensure!(symbols.len() == inventory.routines.len(), "duplicate inventory symbol");
-    let mut files = BTreeMap::new();
-    for routine in &inventory.routines {
-        bounded::check()?;
-        ensure!(identifier(&routine.symbol) && safe_relative(&routine.source), "unsafe inventory routine");
-        ensure!(
-            identity.files.contains_key(&routine.source) && routine.line > 0,
-            "inventory definition provenance missing"
-        );
-        if !files.contains_key(&routine.source) {
-            let text = bounded::text(source.join(&routine.source))?;
-            let code = crate::source_inventory::clean_bounded(&text)?;
-            files.insert(routine.source.clone(), (text, code));
-        }
-        let (text, code) = &files[&routine.source];
-        let offset = text.split_inclusive('\n').take(routine.line - 1).map(str::len).sum::<usize>();
-        let original = text.get(offset..).context("inventory line exceeds source")?;
-        let code = code.get(offset..).context("inventory code exceeds source")?;
-        let open = code.iter().position(|value| *value == b'{').context("inventory definition body missing")?;
-        let signature = &code[..open];
-        ensure!(!signature.contains(&b';'), "inventory definition absorbed prototype");
-        let paren = signature.iter().position(|value| *value == b'(').context("inventory signature missing")?;
-        let prefix = std::str::from_utf8(&signature[..paren])?.trim();
-        let name = prefix
-            .split(|value: char| !(value.is_ascii_alphanumeric() || value == '_'))
-            .rfind(|value| !value.is_empty());
-        ensure!(name == Some(routine.symbol.as_str()), "inventory symbol disagrees with pinned definition");
-        let mut end = open + 1;
-        let mut depth = 1;
-        while end < code.len() && depth > 0 {
-            if end.is_multiple_of(64 * 1024) {
-                bounded::check()?;
-            }
-            match code[end] {
-                b'{' => depth += 1,
-                b'}' => depth -= 1,
-                _ => {}
-            }
-            end += 1;
-        }
-        ensure!(
-            depth == 0 && format!("{:x}", Sha256::digest(&original.as_bytes()[..end])) == routine.definition_sha256,
-            "inventory definition hash differs"
-        );
-        let (calls, indexed) = crate::source_inventory::names_bounded(&code[open..end])?;
-        let defined = calls.iter().filter(|name| symbols.contains(name.as_str())).cloned().collect::<Vec<_>>();
-        let external = calls.iter().filter(|name| !symbols.contains(name.as_str())).cloned().collect::<Vec<_>>();
-        ensure!(
-            defined == routine.defined_dependencies
-                && external == routine.external_or_macro_calls
-                && indexed == routine.indirect_indexed_calls,
-            "inventory lexical dependency agreement missing"
-        );
-    }
-    Ok(identity)
-}
-
 fn case(
     _request: &VerifyRequest,
     manifest: &Manifest,
@@ -1045,7 +853,7 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
     let output = request.output.clone();
     fs::create_dir_all(&output)?;
     let stamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_micros();
-    let run = output.join(format!("{stamp}-{}-{}", std::process::id(), NEXT.fetch_add(1, Ordering::Relaxed)));
+    let run = output.join(format!("{stamp}-{}-{}", std::process::id(), unique_id()));
     fs::create_dir(&run)?;
     let run = fs::canonicalize(run)?;
     let mut metrics = crate::metrics::Run::start(run.join("family.metrics.toml"), "family")?;
@@ -1599,67 +1407,6 @@ mod source_tests {
         assert_eq!(ArtifactLimits::default().paths, 65536);
         Ok(())
     }
-
-    #[test]
-    fn pinned_source_cache_rechecks_files_and_binds_changed_revision() -> Result<()> {
-        let directory = bounded::tests::Directory::new()?;
-        let source = directory.0.join("deps/snesrev-sm");
-        let downloads = directory.0.join("deps/downloads");
-        fs::create_dir_all(source.join("src"))?;
-        fs::create_dir_all(&downloads)?;
-        fs::create_dir(directory.0.join("tools"))?;
-        let material = source.join("src/sm_80.c");
-        fs::write(&material, b"void Step(void) {}\n")?;
-        fs::write(source.join("LICENSE.txt"), b"test source\n")?;
-        let mut tar = Vec::new();
-        bounded::tests::append_tar(&mut tar, "root/src/sm_80.c", b'0', b"void Step(void) {}\n");
-        bounded::tests::append_tar(&mut tar, "root/LICENSE.txt", b'0', b"test source\n");
-        tar.extend_from_slice(&[0u8; 1024]);
-        let hash = bounded::tests::gzip_archive(&downloads.join("source.tar.gz"), &tar)?;
-        let pins = directory.0.join("tools/dependencies.toml");
-        let pin = |revision: &str| {
-            format!(
-                "[[dependencies]]\nname=\"snesrev-sm\"\narchive=\"source.tar.gz\"\nrevision={revision:?}\nsha256={hash:?}\n"
-            )
-        };
-        fs::write(&pins, pin("first"))?;
-        bounded::until(bounded::now_unix_ms()? + 10_000, 1024 * 1024, || {
-            let first = verify_source(&directory.0, &source)?;
-            assert_eq!(first.revision, "first");
-            assert_eq!(first, verify_source(&directory.0, &source)?);
-            fs::write(&material, b"void Evil(void) {}\n")?;
-            assert!(verify_source(&directory.0, &source).is_err());
-            fs::write(&material, b"void Step(void) {}\n")?;
-            fs::write(&pins, pin("second"))?;
-            let second = verify_source(&directory.0, &source)?;
-            assert_eq!(second.revision, "second");
-            assert_eq!(first.files, second.files);
-            fs::write(downloads.join("source.tar.gz"), b"changed archive")?;
-            assert!(verify_source(&directory.0, &source).is_err());
-            Ok(())
-        })?;
-        Ok(())
-    }
-
-    #[test]
-    fn rust_archive_reader_authenticates_actual_pinned_source() -> Result<()> {
-        let checkout = Path::new("/home/jim/sm-decomp");
-        if !checkout.join("deps/downloads/snesrev-sm.tar.gz").is_file() {
-            return Ok(());
-        }
-        let source = verify_source_until(
-            checkout,
-            &checkout.join("deps/snesrev-sm"),
-            bounded::now_unix_ms()? + 10_000,
-            64 * 1024 * 1024,
-        )?;
-        assert_eq!(source.revision, "578f90b3cc49557bb70060ad033bb90b8cf8ac50");
-        assert_eq!(source.archive_sha256, "69c78831351112887575f852dadf0281dd5c23cef890b07a268ae6cf60aa9193");
-        assert!(source.files.contains_key("src/sm_80.c"));
-        assert!(source.files.contains_key("LICENSE.txt"));
-        assert_eq!(source.files["src/sm_80.c"], digest(&checkout.join("deps/snesrev-sm/src/sm_80.c"))?);
-        Ok(())
-    }
 }
 
 #[cfg(test)]
@@ -1698,11 +1445,8 @@ mod host_tests {
     }
     #[test]
     fn continuation_orders_and_inherits_verified_wram_and_host() {
-        let directory = std::env::temp_dir().join(format!(
-            "sm-continuation-test-{}-{}",
-            std::process::id(),
-            NEXT.fetch_add(1, Ordering::Relaxed)
-        ));
+        let directory =
+            std::env::temp_dir().join(format!("sm-continuation-test-{}-{}", std::process::id(), unique_id()));
         fs::create_dir(&directory).unwrap();
         fs::create_dir(directory.join("first")).unwrap();
         let before = vec![3; WRAM];

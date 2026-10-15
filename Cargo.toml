@@ -4,6 +4,8 @@ exclude = ["deps/rustysnes", "tools/bootstrap"]
 members = [
     "crates/pipeline",
     "crates/pipeline-model",
+    "crates/tool-execution",
+    "crates/decomp-source",
     "crates/translation-execution",
     "crates/evidence",
     "crates/port",
@@ -34,6 +36,8 @@ zip = { version = "2", default-features = false, features = ["deflate"] }
 runtime = { path = "crates/runtime" }
 recomp = { path = "crates/recomp" }
 pipeline-model = { path = "crates/pipeline-model" }
+tool-execution = { path = "crates/tool-execution" }
+decomp-source = { path = "crates/decomp-source" }
 rustysnes-core = { git = "https://github.com/doublegate/RustySNES", rev = "98f8d398020b8798b16076fae315960031c6b3b7", features = ["lsnes-profile"] }
 
 [patch."https://github.com/doublegate/RustySNES"]
