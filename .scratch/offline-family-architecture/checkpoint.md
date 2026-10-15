@@ -156,13 +156,17 @@ All Cargo work is locked/offline; the optimized verification build uses one job.
 - Test-only fix `1a770f8` copies all selected declarations' relative inputs,
   including the direct-animation base declaration; absolute capture paths stay
   unchanged. Production/stamped source is unchanged from `15d5a7e`.
-  The replacement pipeline test reader is building in exec session 27219:
+  The replacement pipeline test reader built successfully in 7m24s:
   `cargo test --locked --offline --release -j 1 -p pipeline --bin sm-pipeline --no-run`.
   Logs: `logs/native-reader-build.log`, `native-reader-build.time`.
   Exact changed test sources are retained in `native-reader-source/`, with
   `logs/native-reader-source-commit.txt` and `native-reader-test-overlay.patch`.
-  Retain the original reader too; it produced the prior passing catalog/unit
-  evidence. Run the revised reader's full matrix in a fresh `recipes-2/` root.
+  It is retained as `tools/sm-pipeline-tests-1a770f8`, hash appended to
+  `tools/executables.sha256`; `cmp` confirms the emitted Cargo executable.
+  The original reader remains for the prior passing catalog/unit evidence.
+  Exactly one revised recipe test was selected and is running in exec session
+  53868, with a fresh `recipes-2/` root. Logs: `logs/recipes-2.log`,
+  `recipes-2.time`, `recipes-2-selected-test.txt`.
 - Both actual Native execution proofs and independent post-cleanup/retirement
   Native authentication remain pending. Select all 12 declarations (8,159 pairs)
   exactly as in `native-verification-plan.md`, compiler limit 180 seconds,
