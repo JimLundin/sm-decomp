@@ -217,11 +217,17 @@ impl Declarations {
     }
 
     pub fn decode(&self, bytes: Vec<u8>, sha256: String) -> Result<Arc<Declaration>> {
+        self.decode_shared(Arc::new(bytes), sha256)
+    }
+
+    /// An independent reader may transfer its once-read authenticated buffer.
+    /// This shares storage only; the caller still owns fresh path admission.
+    pub fn decode_shared(&self, bytes: Arc<Vec<u8>>, sha256: String) -> Result<Arc<Declaration>> {
         let _buffer = self.transient(bytes.capacity() as u64)?;
         self.decode_buffered(bytes, sha256)
     }
 
-    fn decode_buffered(&self, bytes: Vec<u8>, sha256: String) -> Result<Arc<Declaration>> {
+    fn decode_buffered(&self, bytes: Arc<Vec<u8>>, sha256: String) -> Result<Arc<Declaration>> {
         let cell = {
             let mut decoded = self.decoded.lock().map_err(|_| anyhow::anyhow!("declaration cache lock poisoned"))?;
             if !decoded.contains_key(&sha256) {
@@ -239,7 +245,6 @@ impl Declarations {
                 self.reserve(bytes.len() as u64)?;
                 self.reserve_metadata(bound.saturating_sub(bytes.len() as u64))?;
                 self.counters.manifest_decodes.fetch_add(1, Ordering::Relaxed);
-                let bytes = Arc::new(bytes);
                 let manifest = Arc::new(fixture_format::decode_shared(bytes.clone())?);
                 Ok(Arc::new(Declaration { bytes, sha256, manifest }))
             })()
@@ -263,6 +268,6 @@ impl Declarations {
         if let Some(expected) = expected {
             ensure!(hash == expected, "captured declaration identity differs: {}", path.display());
         }
-        self.decode_buffered(bytes, hash).with_context(|| format!("binary fixture {}", path.display()))
+        self.decode_buffered(Arc::new(bytes), hash).with_context(|| format!("binary fixture {}", path.display()))
     }
 }
