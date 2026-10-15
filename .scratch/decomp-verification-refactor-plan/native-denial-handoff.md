@@ -1,7 +1,7 @@
 # Native negative-control adaptation
 
-Status: ready for integration-owner handoff; all scoped gates passed.
-Integration-owner retirement remains outstanding.
+Status: integrated into final assembly; all scoped gates and post-retirement
+authentication passed. Combined final-source acceptance remains with root.
 Owner: `/root/bulk_context_resume`, parent `/root`, session
 `01a13e7f-ab01-7413-a1c2-288b08a4b719`.
 Main tracking: verification refactor ticket 01, integration-owner claim.
@@ -164,3 +164,27 @@ The new worktree uses the existing RustySNES dependency via an ignored link.
 Pinned C, its source archive and the private ROM are independent real copies
 from the frozen final worktree. Do not retire this worktree or target until the
 integration owner audits retained evidence references.
+
+## Integration-owner retirement
+
+Root merged the final handoff after the source integration. With every writer
+stopped, both project cleanup passes over the complete proof parent succeeded:
+zero intermediate bytes and another 2,097,152 deduplicated bytes across 144
+snapshots. Total scoped deduplication is now 16,777,216 bytes.
+
+The reference audit found no retained proof dependency on the worker checkout or
+Cargo target. Cargo removed 14,525 target files (reported 4.7 GiB); the target's
+measured allocation before cleanup was 4,910,026,752 bytes. Root then removed the
+clean integrated worktree. Both paths are absent. Exact source snapshots and
+readers remain in the two proof roots at their original authenticated paths.
+
+All four retained proof groups authenticated after retirement with the copied
+955ffc3 reader, unavailable PATH and no compiler/helper environment: the earlier
+compiler-focused proof, earlier completed full-real cases, focused 16-namespace
+runtime proof and complete repaired full-real proof. Each selected one test and
+passed. These independent reads ran concurrently and are not latency samples.
+Commands, cleanup output, source/evidence checks and readback logs are retained
+under `/home/jim/sm-decomp-performance-native-denial-proof/retirement/`.
+An initial relative checksum invocation used the wrong working directory;
+`completion-evidence-check-correct-cwd.log` records the successful corrected
+check without any source or evidence change.
