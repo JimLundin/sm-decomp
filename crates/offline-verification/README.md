@@ -21,6 +21,15 @@ starts independent evidence reads. Current-source checks reject a changed input
 instead of mixing revisions. The private work graph is an advisory projection
 over existing work; callers cannot submit arbitrary tasks or use it as a journal.
 
+Ordinary input capture materializes the complete selected input set, then
+authenticates current source and materialized compiler bytes. Each phase has a
+1-GiB I/O ceiling and both share one absolute deadline. Without an enclosing
+scope, their combined ceiling is 2 GiB. A caller's existing byte/deadline scope
+still covers both phases and can impose a stricter aggregate limit. The separate
+1-GiB declaration resident limit and Native limits are unchanged. Generated PLM
+capture binds the complete trusted generator's inputs and the raw registration;
+its obsolete placeholder ROM is not an effective input.
+
 Native callers declare a complete registered domain, then prepare an opaque
 `PreparedNative`. Preparation checks frozen inputs and asks the application's
 `ScopeAdmission` adapter about Translation approval. The handle owns resource
