@@ -44,3 +44,15 @@ rustysnes-core = { git = "https://github.com/doublegate/RustySNES", rev = "98f8d
 
 [patch."https://github.com/doublegate/RustySNES"]
 rustysnes-core = { path = "deps/rustysnes/crates/rustysnes-core" }
+
+# Build the controller and its separate sandbox with this same profile. Keep
+# line tables in companion debug files, outside the executable identity read.
+# No LTO keeps source-change builds bounded while dependencies stay optimized.
+[profile.verification]
+inherits = "release"
+opt-level = 2
+codegen-units = 16
+lto = false
+debug = "line-tables-only"
+split-debuginfo = "packed"
+strip = "debuginfo"

@@ -178,7 +178,7 @@ struct ManagedProject {
 
 impl ManagedProject {
     fn new(root: &Path) -> Result<Self> {
-        let _ = crate::BINARY_SHA256.set(crate::digest(&std::env::current_exe()?)?);
+        crate::initialize_test_binary_identity()?;
         let offline = crate::offline::families()?;
         let host = root.join("host");
         let owner = root.join("original-owner");
@@ -560,7 +560,7 @@ fn managed_native_publication_preserves_original_claim_and_recovers_exact_pendin
     let root = PathBuf::from(std::env::var("SM_MANAGED_NATIVE_PROOF_ROOT")?);
     ensure!(root.is_absolute() && !root.exists(), "managed diagnostic proof needs a fresh absolute retained root");
     fs::create_dir_all(&root)?;
-    let _ = crate::BINARY_SHA256.set(crate::digest(&std::env::current_exe()?)?);
+    crate::initialize_test_binary_identity()?;
     let result = run_managed_proof(&root);
     if let Err(error) = &result {
         put(&root.join("failure.log"), format!("{error:#}\n"))?;
@@ -574,7 +574,7 @@ fn managed_native_publication_preserves_original_claim_and_recovers_exact_pendin
 fn retained_managed_native_publication_authenticates_without_producers() -> Result<()> {
     let root = PathBuf::from(std::env::var("SM_MANAGED_NATIVE_PROOF_ROOT")?);
     ensure!(root.is_absolute() && root.is_dir(), "managed retained proof root missing");
-    let _ = crate::BINARY_SHA256.set(crate::digest(&std::env::current_exe()?)?);
+    crate::initialize_test_binary_identity()?;
     let installation: Installation = read(&root.join("installation.json"))?;
     let project = ManagedProject {
         host: installation.integration_repository.clone(),
