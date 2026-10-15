@@ -386,13 +386,13 @@ pub(crate) fn build(
 ) -> Result<Implementation> {
     match recipe {
         Some(Recipe::Callback | Recipe::PowerBomb | Recipe::GameHost) => {
-            callback::build_with(request, manifest, checkout, pinned_source, run, execution)
+            callback::build(recipe, request, manifest, checkout, pinned_source, run, execution)
         }
-        Some(Recipe::Plm) => plm_spawn::build_with(request, manifest, checkout, pinned_source, run, execution),
+        Some(Recipe::Plm) => plm_spawn::build(recipe, request, manifest, checkout, pinned_source, run, execution),
         Some(Recipe::Ridley) => {
-            crate::ridley_subsystem_adapter::build_with(request, manifest, checkout, pinned_source, run, execution)
+            crate::ridley_subsystem_adapter::build(recipe, request, manifest, checkout, pinned_source, run, execution)
         }
-        _ => family::build_with(request, manifest, checkout, pinned_source, run, execution),
+        _ => family::build(recipe, request, manifest, checkout, pinned_source, run, execution),
     }
 }
 
@@ -440,10 +440,16 @@ pub(crate) fn fixture(
     }
 }
 
+pub(crate) fn start_verdict(recipe: Option<&Recipe>, manifest: &Manifest, verdict: &mut Verdict) {
+    if matches!(recipe, Some(Recipe::Callback | Recipe::PowerBomb | Recipe::GameHost | Recipe::Ridley)) {
+        verdict.gameplay_translation = Some(!manifest.infrastructure_probe);
+    }
+}
+
 pub(crate) fn verdict_fields(recipe: Option<&Recipe>, manifest: &Manifest, verdict: &mut Verdict) -> Result<()> {
+    start_verdict(recipe, manifest, verdict);
     match recipe {
         Some(Recipe::Callback | Recipe::PowerBomb | Recipe::GameHost | Recipe::Ridley) => {
-            verdict.gameplay_translation = Some(!manifest.infrastructure_probe);
             if matches!(recipe, Some(Recipe::GameHost | Recipe::Ridley)) {
                 verdict.remaining_c_gameplay_callbacks =
                     usize::try_from(verdict.cases.iter().map(|c| c.callbacks).sum::<u64>())?;

@@ -185,28 +185,8 @@ pub(crate) fn c_type(kind: &str) -> Result<&str> {
     })
 }
 
-fn build(
-    request: &VerifyRequest,
-    manifest: &Manifest,
-    checkout: &Path,
-    source: &Path,
-    run: &Path,
-) -> Result<Implementation> {
-    build_with(request, manifest, checkout, source, run, None)
-}
-
-pub(crate) fn build_confined(
-    request: &VerifyRequest,
-    manifest: &Manifest,
-    checkout: &Path,
-    source: &Path,
-    run: &Path,
-    execution: &builds::StrictExecution,
-) -> Result<Implementation> {
-    build_with(request, manifest, checkout, source, run, Some(execution))
-}
-
-pub(crate) fn build_with(
+pub(crate) fn build(
+    recipe: Option<&crate::recipe::Recipe>,
     request: &VerifyRequest,
     manifest: &Manifest,
     checkout: &Path,
@@ -448,30 +428,7 @@ pub(crate) fn build_with(
     write_build_input(&run.join("wrapper.rs"), wrapper.as_bytes(), execution.is_some())?;
     let root = &request.root;
     let workers = request.workers;
-    let mut command = vec![
-        "cc".to_owned(),
-        "-O2".into(),
-        "-fno-strict-aliasing".into(),
-        "-ffunction-sections".into(),
-        "-fdata-sections".into(),
-        "-iquote".into(),
-        source.join("src").to_string_lossy().into_owned(),
-    ];
-    for name in std::iter::once(bank_name).chain(support) {
-        ensure!(
-            safe_relative(name) && !name.contains('/') && name.starts_with("sm_") && name.ends_with(".c"),
-            "invalid source bank"
-        );
-        let path = source.join("src").join(name).to_string_lossy().into_owned();
-        if !command.contains(&path) {
-            command.push(path);
-        }
-    }
     if dispatcher {
-        command.truncate(7);
-        let mut units = c_units(source)?;
-        units.retain(|p| !eproj || p.file_name().is_none_or(|v| v != "sm_86.c"));
-        command.extend(units.iter().map(|p| p.to_string_lossy().into_owned()));
         let mut shim = if eproj {
             format!("#include {:?}\n{}", source.join("src/sm_86.c"), include_str!("dispatcher_eproj.c"))
         } else {
@@ -502,61 +459,25 @@ pub(crate) fn build_with(
             format!("#define main retained_main\n#include {headless:?}\n").as_bytes(),
             execution.is_some(),
         )?;
-        command.extend([
-            run.join("plm-shim.c").to_string_lossy().into_owned(),
-            run.join("host-support.c").to_string_lossy().into_owned(),
-            "-lm".into(),
-        ]);
     }
-    command.extend([
-        run.join("oracle.c").to_string_lossy().into_owned(),
-        "-Wl,--gc-sections".into(),
-        "-o".into(),
-        run.join("c").to_string_lossy().into_owned(),
-    ]);
-    if fork {
-        command.splice(
-            command.len() - 2..command.len() - 2,
-            [run.join("libfixture_worker.a").display().to_string(), "-ldl".into(), "-lpthread".into(), "-lm".into()],
-        );
-    }
+    let units = if dispatcher { c_units(source)? } else { vec![] };
+    let description = crate::recipe::c_compiler_command(recipe, manifest, source, run, &units, fork)?;
     if let Some(execution) = execution {
-        if dispatcher {
-            execution.compile_recipe(
-                &command,
-                run,
-                "c-build",
-                checkout,
-                source,
-                &["oracle.c", "plm-shim.c", "host-support.c"],
-                &["c"],
-                true,
-            )?;
-        } else {
-            execution.compile(&command, run, "c-build", checkout, source)?;
-        }
+        execution.compile_description(&description, run, "c-build", checkout, source)?;
     } else {
         builds::c_build(builds::CBuildRequest {
-            command,
+            command: description.command,
             run: run.into(),
             checkout: checkout.into(),
             root: root.clone(),
             workers,
         })?;
     }
-    let command = vec![
-        "rustc".into(),
-        "--edition=2024".into(),
-        "-O".into(),
-        format!("--emit=link,dep-info={}", run.join("compiler.d").display()),
-        run.join("wrapper.rs").to_string_lossy().into_owned(),
-        "-o".into(),
-        run.join("rust").to_string_lossy().into_owned(),
-    ];
+    let description = crate::recipe::rust_compiler_command(recipe, run);
     if let Some(execution) = execution {
-        execution.compile(&command, run, "rust-build", checkout, source)?;
+        execution.compile_description(&description, run, "rust-build", checkout, source)?;
     } else {
-        builds::execute(&command, run, "rust-build", root, workers)?;
+        builds::execute(&description.command, run, "rust-build", root, workers)?;
     }
     write_build_input(&run.join("candidate.rs"), &bounded::read(&module)?, execution.is_some())?;
     let dependency_request = inputs::DependenciesRequest {
@@ -840,23 +761,8 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
         let (manifest_bytes, manifest_sha256) = bounded::read_with_digest(&manifest_path)?;
         fs::write(run.join(crate::fixture_format::RUN_MANIFEST), &manifest_bytes)?;
         let mut manifest = crate::fixture_format::decode(manifest_bytes)?;
-        let callbacks = request.adapter == "callback" || request.adapter == "power-bomb";
-        let plm = request.adapter == "plm";
-        let ridley = request.adapter == "ridley-subsystem";
-        if ridley {
-            ensure!(
-                manifest.callback_adapter.as_deref() == Some("ridley-subsystem"),
-                "Ridley adapter declaration differs"
-            );
-        } else {
-            ensure!(
-                manifest.callback_adapter.as_deref() != Some("ridley-subsystem"),
-                "Ridley manifest requires its native adapter"
-            );
-        }
-        if plm {
-            manifest = crate::plm_spawn::normalize(&manifest)?;
-        }
+        let recipe = crate::recipe::for_adapter(&request.adapter, &manifest)?;
+        manifest = crate::recipe::normalize_manifest(&checkout, manifest, recipe.as_ref())?;
         verdict.family = manifest.family.clone();
         verdict.source = Some(verify_source(&checkout, &source)?);
         fs::copy(source.join("LICENSE.txt"), run.join("LICENSE.txt"))?;
@@ -871,24 +777,15 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
             fs::write(run.join("rom.bin"), &bytes)?;
             verdict.rom = Some(RomIdentity { sha256: rom.sha256.clone(), bytes: bytes.len() });
         }
-        verdict.implementation = Some(if ridley {
-            crate::ridley_subsystem_adapter::build(&request, &manifest, &checkout, &source, &run)?
-        } else if plm {
-            crate::plm_spawn::build(&request, &manifest, &checkout, &source, &run)?
-        } else if callbacks {
-            callback::build(&request, &manifest, &checkout, &source, &run)?
-        } else {
-            build(&request, &manifest, &checkout, &source, &run)?
-        });
+        verdict.implementation =
+            Some(crate::recipe::build(recipe.as_ref(), &manifest, &request, &checkout, &source, &run, None)?);
         verdict.implementation.as_mut().unwrap().manifest =
             Some(Asset { file: fs::canonicalize(&manifest_path)?, sha256: manifest_sha256.clone() });
         atomic_toml(
             &run.join("manifest-input.toml"),
             verdict.implementation.as_ref().unwrap().manifest.as_ref().unwrap(),
         )?;
-        if callbacks || ridley {
-            verdict.gameplay_translation = Some(!manifest.infrastructure_probe);
-        }
+        crate::recipe::start_verdict(recipe.as_ref(), &manifest, &mut verdict);
         let outcomes = crate::fixture_execution::run(
             &tasks,
             jobs,
@@ -897,15 +794,15 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
             request.workers,
             fork,
             |(routine, fixture, routine_index), worker| {
-                if ridley {
-                    crate::ridley_subsystem_adapter::case(&request, &manifest, routine, fixture, &run, worker)
-                } else if plm {
-                    crate::plm_spawn::case(&request, routine, fixture, &run, worker)
-                } else if callbacks {
-                    callback::case(&request, &manifest, routine, fixture, routine_index, &run, worker)
-                } else {
-                    case(&request, &manifest, routine, fixture, &run, worker)
-                }
+                crate::recipe::fixture(
+                    recipe.as_ref(),
+                    &manifest,
+                    routine,
+                    fixture,
+                    routine_index,
+                    &run,
+                    crate::recipe::FixtureExecution::Ordinary { request: &request, worker },
+                )
             },
         )?;
         let mut errors = Vec::new();
@@ -929,22 +826,7 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
         verdict.status = "offline-verified".into();
         verdict.verified_cases = tasks.len();
         verdict.verified_routines = manifest.routines.len();
-        if ridley {
-            verdict.rejected_abi_inputs = 7;
-            verdict.remaining_c_gameplay_callbacks =
-                usize::try_from(verdict.cases.iter().map(|case| case.callbacks).sum::<u64>())?;
-        }
-        if manifest.callback_adapter.as_deref() == Some("game-host") {
-            verdict.remaining_c_gameplay_callbacks =
-                usize::try_from(verdict.cases.iter().map(|case| case.callbacks).sum::<u64>())?;
-        }
-        if plm {
-            verdict.rejected_abi_inputs = 5;
-            verdict.native_rust_spawn_calls = tasks.len();
-            verdict.remaining_c_gameplay_callbacks = 0;
-            let counts = manifest.routines.iter().map(|r| (r.symbol.clone(), r.cases.len())).collect();
-            verdict.allocator_cases = counts;
-        }
+        crate::recipe::verdict_fields(recipe.as_ref(), &manifest, &mut verdict)?;
         verdict.scope = "declared valid fixture domain only; full canonical WRAM and return values".into();
         Ok(())
     })();

@@ -50,9 +50,6 @@ fn validate_capture_assets(manifest: &Manifest, checkout: &Path) -> Result<()> {
     Ok(())
 }
 
-const WRAPPED: &[&str] =
-    &["Call", "cpu_runOpcode", "DecompressToMem", "WriteReg", "ReadReg", "snes_read", "snes_write"];
-
 fn instrument_units(source: &Path) -> Result<BTreeMap<String, String>> {
     let mut units = BTreeMap::new();
     for bank in ["sm_a0.c", "sm_90.c", "sm_80.c", "sm_86.c"] {
@@ -148,17 +145,8 @@ fn branches(manifest: &Manifest) -> Result<String> {
     Ok(branches.join("else "))
 }
 
-pub fn build(
-    request: &VerifyRequest,
-    manifest: &Manifest,
-    checkout: &Path,
-    source: &Path,
-    run: &Path,
-) -> Result<Implementation> {
-    build_with(request, manifest, checkout, source, run, None)
-}
-
-pub(crate) fn build_with(
+pub(crate) fn build(
+    recipe: Option<&crate::recipe::Recipe>,
     request: &VerifyRequest,
     manifest: &Manifest,
     checkout: &Path,
@@ -258,79 +246,36 @@ pub(crate) fn build_with(
     for (bank, code) in &instrumented {
         family::write_build_input(&run.join(format!("ridley-services-{bank}")), code.as_bytes(), execution.is_some())?;
     }
-    let command = vec![
-        "rustc".into(),
-        "--edition=2024".into(),
-        "-O".into(),
-        "--crate-type=staticlib".into(),
-        format!("--emit=link,dep-info={}", run.join("compiler.d").display()),
-        run.join("wrapper.rs").display().to_string(),
-        "-o".into(),
-        run.join("libridley.a").display().to_string(),
-    ];
+    let description = crate::recipe::rust_compiler_command(recipe, run);
     if let Some(execution) = execution {
-        execution.compile_recipe(
-            &command,
-            run,
-            "rust-build",
-            checkout,
-            source,
-            &["wrapper.rs", "memory.rs", "fixture-worker.rs"],
-            &["libridley.a", "compiler.d"],
-            false,
-        )?;
+        execution.compile_description(&description, run, "rust-build", checkout, source)?;
     } else {
-        builds::execute(&command, run, "rust-build", &request.root, request.workers)?;
+        builds::execute(&description.command, run, "rust-build", &request.root, request.workers)?;
     }
-    let mut command = vec![
-        "cc".into(),
-        "-O2".into(),
-        "-fno-strict-aliasing".into(),
-        "-ffunction-sections".into(),
-        "-fdata-sections".into(),
-        "-iquote".into(),
-        source.join("src").display().to_string(),
-    ];
-    command.extend(family::c_units(source)?.iter().map(|path| {
-        let bank = path.file_name().and_then(|name| name.to_str()).unwrap_or("");
-        if instrumented.contains_key(bank) {
-            run.join(format!("ridley-services-{bank}")).display().to_string()
-        } else {
-            path.display().to_string()
-        }
-    }));
-    command.extend([
-        run.join("oracle.c").display().to_string(),
-        run.join("libridley.a").display().to_string(),
-        "-Wl,--gc-sections".into(),
-    ]);
-    command.extend(WRAPPED.iter().map(|name| format!("-Wl,--wrap={name}")));
-    command.extend([
-        "-lm".into(),
-        "-ldl".into(),
-        "-lpthread".into(),
-        "-o".into(),
-        run.join("ridley").display().to_string(),
-    ]);
+    let description =
+        crate::recipe::c_compiler_command(recipe, manifest, source, run, &family::c_units(source)?, false)?;
     if let Some(execution) = execution {
-        let names = instrumented.keys().map(|bank| format!("ridley-services-{bank}")).collect::<Vec<_>>();
-        let mut generated = vec!["oracle.c", "libridley.a"];
-        generated.extend(names.iter().map(String::as_str));
-        execution.compile_recipe(&command, run, "c-build", checkout, source, &generated, &["ridley"], true)?;
+        execution.compile_description(&description, run, "c-build", checkout, source)?;
     } else {
         builds::c_build(builds::CBuildRequest {
-            command,
+            command: description.command,
             run: run.into(),
             checkout: checkout.into(),
             root: request.root.clone(),
             workers: request.workers,
         })?;
     }
-    let command = [run.join("ridley").display().to_string(), "--abi-controls".into()];
+    let fixture = crate::recipe::fixture_command(
+        recipe,
+        manifest,
+        crate::recipe::FixtureSelection::AbiControls,
+        run,
+        "abi-controls",
+    )?;
     if let Some(execution) = execution {
-        execution.fixture_recipe(&command, run, "abi-controls", builds::StrictFixture::RidleyAbi)?;
+        execution.fixture_recipe(&fixture.command, run, "abi-controls", fixture.kind)?;
     } else {
-        builds::execute(&command, run, "abi-controls", &request.root, request.workers)?;
+        builds::execute(&fixture.command, run, "abi-controls", &request.root, request.workers)?;
     }
     // The executor preloads these separately. Each fixture still forks a fresh
     // child from its respective native image; the helper never invokes gameplay.

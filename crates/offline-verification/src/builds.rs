@@ -64,75 +64,10 @@ pub(crate) struct StrictInvocation {
     pub reservation_before_bytes: u64,
 }
 
-#[derive(Clone, Copy)]
-pub(crate) enum StrictFixture {
-    Family,
-    Callback,
-    Plm,
-    Ridley,
-    PlmAbi,
-    RidleyAbi,
-}
-
-/// Recipe argv is constructed by the trusted family adapter. Only named input
-/// files enter a fixture, and every material output has an explicit file name.
-pub(crate) fn strict_fixture_program(helper: &Path, command: &[String], kind: StrictFixture) -> Result<Program> {
-    let mut program = Program {
-        executable: PathBuf::from(command.first().context("empty fixture command")?),
-        arguments: command[1..].to_vec(),
-        inputs: vec![],
-        runtime: confinement::helper_runtime()?,
-        helper: helper.into(),
-        outputs: vec![],
-    };
-    let (lengths, inputs, outputs): (&[usize], Vec<(usize, &str)>, Vec<(usize, &str)>) = match kind {
-        StrictFixture::Family => (
-            &[6, 7, 9],
-            [(4, "before.wram"), (6, "rom.bin"), (7, "host-before.bin")]
-                .into_iter()
-                .filter(|(i, _)| *i < command.len())
-                .collect(),
-            [(5, "after.wram"), (8, "host-after.bin")].into_iter().filter(|(i, _)| *i < command.len()).collect(),
-        ),
-        StrictFixture::Callback => (&[10], vec![(5, "before.wram"), (8, "rom.bin")], vec![(6, "after.wram")]),
-        StrictFixture::Plm => (&[8], vec![(4, "before.wram"), (6, "rom.bin")], vec![(5, "after.wram")]),
-        StrictFixture::Ridley => (
-            &[15],
-            vec![(5, "before.wram"), (8, "rom.bin"), (9, "host-before.bin"), (14, "ppu-before.bin")],
-            vec![(6, "after.wram"), (10, "host-after.bin"), (11, "effects.log"), (12, "ppu.bin"), (13, "services.bin")],
-        ),
-        StrictFixture::PlmAbi => (&[8], vec![(6, "rom.bin")], vec![]),
-        StrictFixture::RidleyAbi => (&[2], vec![], vec![]),
-    };
-    ensure!(lengths.contains(&command.len()), "confined fixture argument contract differs");
-    for (index, name) in inputs {
-        let destination = Path::new("/inputs").join(name);
-        program.inputs.push(ReadOnlyBind { source: PathBuf::from(&command[index]), destination: destination.clone() });
-        program.arguments[index - 1] = destination.display().to_string();
-    }
-    for (index, name) in outputs {
-        program.arguments[index - 1] = Path::new("/work").join(name).display().to_string();
-        program.outputs.push(name.into());
-    }
-    if matches!(kind, StrictFixture::Callback) {
-        program.arguments[8] = "/work".into();
-        program.outputs.extend(["callbacks.txt".into(), "callback-states.bin".into()]);
-    }
-    Ok(program)
-}
-
-pub(crate) fn strict_output_path(run: &Path, label: &str, name: &Path) -> PathBuf {
-    if name == Path::new("callbacks.txt") {
-        run.join(label).join(name)
-    } else if ["after.wram", "host-after.bin", "effects.log", "ppu.bin", "services.bin", "callback-states.bin"]
-        .iter()
-        .any(|n| name == Path::new(n))
-    {
-        run.join(format!("{label}-{}", name.display()))
-    } else {
-        run.join(name)
-    }
-}
+pub(crate) use crate::recipe::{
+    FixtureKind as StrictFixture, confined_fixture_program as strict_fixture_program,
+    fixture_output_path as strict_output_path,
+};
 
 fn has_callback_snapshots(program: &Program) -> bool {
     program.outputs.iter().any(|path| path == Path::new("callback-states.bin"))
@@ -284,114 +219,29 @@ impl StrictExecution {
         group.as_ref().map_or_else(|| *self.reserved_bytes.lock().unwrap(), |group| group.before_bytes)
     }
 
-    pub(crate) fn compile(
+    pub(crate) fn compile_description(
         &self,
-        command: &[String],
+        description: &crate::recipe::CompilerCommand,
         run: &Path,
         label: &str,
         checkout: &Path,
         source: &Path,
     ) -> Result<ExecutionRecord> {
-        let rust = command.first().is_some_and(|name| name == "rustc");
-        self.compile_recipe(
-            command,
+        let program = compiler_program(
+            description,
             run,
-            label,
-            checkout,
-            source,
-            if rust { &["wrapper.rs", "memory.rs"] } else { &["oracle.c"] },
-            if rust { &["rust", "compiler.d"] } else { &["c"] },
-            false,
-        )
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    pub(crate) fn compile_recipe(
-        &self,
-        command: &[String],
-        run: &Path,
-        label: &str,
-        checkout: &Path,
-        source: &Path,
-        generated: &[&str],
-        outputs: &[&str],
-        headless: bool,
-    ) -> Result<ExecutionRecord> {
-        let rust = command.first().is_some_and(|name| name == "rustc");
-        let executable = if rust { self.rustc.clone() } else { self.c_compiler.clone() };
-        let mut inputs = Vec::new();
-        for path in if rust { &self.rust_inputs } else { &self.c_inputs } {
-            let relative = path.strip_prefix(if rust { checkout } else { source })?;
-            inputs.push(ReadOnlyBind {
-                source: path.clone(),
-                destination: Path::new(if rust { "/inputs/rust" } else { "/inputs/c" }).join(relative),
-            });
-        }
-        for name in generated {
-            inputs
-                .push(ReadOnlyBind { source: run.join(name), destination: Path::new("/inputs/generated").join(name) });
-        }
-        if headless {
-            for name in ["headless.c", "headless_frame.h"] {
-                inputs.push(ReadOnlyBind {
-                    source: checkout.join("tools/decomp").join(name),
-                    destination: Path::new("/inputs/rust/tools/decomp").join(name),
-                });
-            }
-        }
-        let mut arguments = Vec::new();
-        for argument in &command[1..] {
-            let mapped = if argument.starts_with("--emit=link,dep-info=") {
-                "--emit=link,dep-info=/work/compiler.d".to_owned()
-            } else {
-                let path = Path::new(argument);
-                if let Ok(relative) = path.strip_prefix(run) {
-                    if outputs.iter().any(|name| relative == Path::new(name)) {
-                        Path::new("/work").join(relative).display().to_string()
-                    } else {
-                        Path::new("/inputs/generated").join(relative).display().to_string()
-                    }
-                } else if let Ok(relative) = path.strip_prefix(source) {
-                    Path::new("/inputs/c").join(relative).display().to_string()
-                } else if let Ok(relative) = path.strip_prefix(checkout) {
-                    Path::new("/inputs/rust").join(relative).display().to_string()
-                } else {
-                    argument.clone()
-                }
-            };
-            arguments.push(mapped);
-        }
-        if rust {
-            arguments.extend([
-                "--sysroot".into(),
-                "/toolchain".into(),
-                "-C".into(),
-                "linker=/usr/bin/cc".into(),
-                "-C".into(),
-                "link-arg=-B/usr/lib/gcc/x86_64-linux-gnu/9/".into(),
-                "-C".into(),
-                "link-arg=-B/usr/bin/".into(),
-                "-C".into(),
-                "linker-features=-lld".into(),
-            ]);
-        } else {
-            // GCC normally locates subprocesses relative to argv[0] or PATH.
-            // /program is deliberately not the host compiler path.
-            arguments.extend(["-B/usr/lib/gcc/x86_64-linux-gnu/9/".into(), "-B/usr/bin/".into()]);
-        }
-        self.execute(
-            &Program {
-                executable,
-                arguments,
-                inputs,
-                runtime: self.compiler_runtime.clone(),
-                helper: self.helper.clone(),
-                outputs: outputs.iter().map(PathBuf::from).collect(),
+            CompilerContext {
+                helper: &self.helper,
+                rustc: &self.rustc,
+                c_compiler: &self.c_compiler,
+                runtime: &self.compiler_runtime,
+                rust_inputs: &self.rust_inputs,
+                c_inputs: &self.c_inputs,
+                checkout,
+                source,
             },
-            &self.compiler_limits,
-            run,
-            label,
-        )
+        )?;
+        self.execute(&program, &self.compiler_limits, run, label)
     }
 
     pub(crate) fn fixture(&self, command: &[String], directory: &Path, subject: &str) -> Result<ExecutionRecord> {
@@ -963,4 +813,99 @@ fn helper_builds_prepared(request: HelperBuildRequest) -> Result<HelperBuildResu
         artifacts,
     })?;
     Ok(HelperBuildResult { artifacts })
+}
+
+pub(crate) struct CompilerContext<'a> {
+    pub helper: &'a Path,
+    pub rustc: &'a Path,
+    pub c_compiler: &'a Path,
+    pub runtime: &'a [ReadOnlyBind],
+    pub rust_inputs: &'a [PathBuf],
+    pub c_inputs: &'a [PathBuf],
+    pub checkout: &'a Path,
+    pub source: &'a Path,
+}
+
+/// Resolve the recipe's compiler description identically for execution and
+/// retained authentication. All paths/capabilities come from the trusted owner.
+pub(crate) fn compiler_program(
+    description: &crate::recipe::CompilerCommand,
+    run: &Path,
+    context: CompilerContext<'_>,
+) -> Result<Program> {
+    let CompilerContext { helper, rustc, c_compiler, runtime, rust_inputs, c_inputs, checkout, source } = context;
+    let command = &description.command;
+    let generated = &description.generated;
+    let outputs = &description.outputs;
+    let headless = description.full_c;
+    let rust = command.first().is_some_and(|name| name == "rustc");
+    let executable = if rust { rustc.to_path_buf() } else { c_compiler.to_path_buf() };
+    let mut inputs = Vec::new();
+    for path in if rust { rust_inputs } else { c_inputs } {
+        let relative = path.strip_prefix(if rust { checkout } else { source })?;
+        inputs.push(ReadOnlyBind {
+            source: path.clone(),
+            destination: Path::new(if rust { "/inputs/rust" } else { "/inputs/c" }).join(relative),
+        });
+    }
+    for name in generated {
+        inputs.push(ReadOnlyBind { source: run.join(name), destination: Path::new("/inputs/generated").join(name) });
+    }
+    if headless {
+        for name in ["headless.c", "headless_frame.h"] {
+            inputs.push(ReadOnlyBind {
+                source: checkout.join("tools/decomp").join(name),
+                destination: Path::new("/inputs/rust/tools/decomp").join(name),
+            });
+        }
+    }
+    let mut arguments = Vec::new();
+    for argument in &command[1..] {
+        let mapped = if argument.starts_with("--emit=link,dep-info=") {
+            "--emit=link,dep-info=/work/compiler.d".to_owned()
+        } else {
+            let path = Path::new(argument);
+            if let Ok(relative) = path.strip_prefix(run) {
+                if outputs.iter().any(|name| relative == Path::new(name)) {
+                    Path::new("/work").join(relative).display().to_string()
+                } else {
+                    Path::new("/inputs/generated").join(relative).display().to_string()
+                }
+            } else if let Ok(relative) = path.strip_prefix(source) {
+                Path::new("/inputs/c").join(relative).display().to_string()
+            } else if let Ok(relative) = path.strip_prefix(checkout) {
+                Path::new("/inputs/rust").join(relative).display().to_string()
+            } else {
+                argument.clone()
+            }
+        };
+        arguments.push(mapped);
+    }
+    if rust {
+        arguments.extend([
+            "--sysroot".into(),
+            "/toolchain".into(),
+            "-C".into(),
+            "linker=/usr/bin/cc".into(),
+            "-C".into(),
+            "link-arg=-B/usr/lib/gcc/x86_64-linux-gnu/9/".into(),
+            "-C".into(),
+            "link-arg=-B/usr/bin/".into(),
+            "-C".into(),
+            "linker-features=-lld".into(),
+        ]);
+    } else {
+        // GCC normally locates subprocesses relative to argv[0] or PATH.
+        // /program is deliberately not the host compiler path.
+        arguments.extend(["-B/usr/lib/gcc/x86_64-linux-gnu/9/".into(), "-B/usr/bin/".into()]);
+    }
+
+    Ok(Program {
+        executable,
+        arguments,
+        inputs,
+        runtime: runtime.to_vec(),
+        helper: helper.to_path_buf(),
+        outputs: outputs.iter().map(PathBuf::from).collect(),
+    })
 }

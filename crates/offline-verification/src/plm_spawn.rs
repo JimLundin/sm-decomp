@@ -26,17 +26,8 @@ pub fn normalize(manifest: &Manifest) -> Result<Manifest> {
     Ok(normalized)
 }
 
-pub fn build(
-    request: &VerifyRequest,
-    manifest: &Manifest,
-    checkout: &Path,
-    source: &Path,
-    run: &Path,
-) -> Result<Implementation> {
-    build_with(request, manifest, checkout, source, run, None)
-}
-
-pub(crate) fn build_with(
+pub(crate) fn build(
+    recipe: Option<&crate::recipe::Recipe>,
     request: &VerifyRequest,
     manifest: &Manifest,
     checkout: &Path,
@@ -82,87 +73,36 @@ pub(crate) fn build_with(
     )?;
     let root = &request.root;
     let workers = request.workers;
-    let command = vec![
-        "rustc".into(),
-        "--edition=2024".into(),
-        "-O".into(),
-        "--crate-type=staticlib".into(),
-        format!("--emit=link,dep-info={}", run.join("compiler.d").display()),
-        run.join("wrapper.rs").to_string_lossy().into_owned(),
-        "-o".into(),
-        run.join("libplm.a").to_string_lossy().into_owned(),
-    ];
+    let description = crate::recipe::rust_compiler_command(recipe, run);
     if let Some(execution) = execution {
-        execution.compile_recipe(
-            &command,
-            run,
-            "rust-build",
-            checkout,
-            source,
-            &["wrapper.rs", "memory.rs"],
-            &["libplm.a", "compiler.d"],
-            false,
-        )?;
+        execution.compile_description(&description, run, "rust-build", checkout, source)?;
     } else {
-        builds::execute(&command, run, "rust-build", root, workers)?;
+        builds::execute(&description.command, run, "rust-build", root, workers)?;
     }
-    let mut command = vec![
-        "cc".into(),
-        "-O0".into(),
-        "-fno-strict-aliasing".into(),
-        "-ffunction-sections".into(),
-        "-fdata-sections".into(),
-        "-iquote".into(),
-        source.join("src").to_string_lossy().into_owned(),
-    ];
-    command.extend(family::c_units(source)?.iter().map(|p| p.to_string_lossy().into_owned()));
-    command.extend([
-        run.join("oracle.c").to_string_lossy().into_owned(),
-        run.join("libplm.a").to_string_lossy().into_owned(),
-        "-Wl,--gc-sections".into(),
-        "-Wl,--wrap=Call".into(),
-        "-Wl,--wrap=cpu_runOpcode".into(),
-        "-Wl,--wrap=DecompressToMem".into(),
-        "-lm".into(),
-        "-ldl".into(),
-        "-lpthread".into(),
-        "-o".into(),
-        run.join("spawn").to_string_lossy().into_owned(),
-    ]);
+    let description =
+        crate::recipe::c_compiler_command(recipe, manifest, source, run, &family::c_units(source)?, false)?;
     if let Some(execution) = execution {
-        execution.compile_recipe(
-            &command,
-            run,
-            "c-build",
-            checkout,
-            source,
-            &["oracle.c", "libplm.a"],
-            &["spawn"],
-            true,
-        )?;
+        execution.compile_description(&description, run, "c-build", checkout, source)?;
     } else {
         builds::c_build(builds::CBuildRequest {
-            command,
+            command: description.command,
             run: run.into(),
             checkout: checkout.into(),
             root: root.clone(),
             workers,
         })?;
     }
-    let command = vec![
-        run.join("spawn").to_string_lossy().into_owned(),
-        "abi".into(),
-        "0".into(),
-        "0".into(),
-        "reserved".into(),
-        "reserved".into(),
-        run.join("rom.bin").to_string_lossy().into_owned(),
-        "reserved".into(),
-    ];
+    let fixture = crate::recipe::fixture_command(
+        recipe,
+        manifest,
+        crate::recipe::FixtureSelection::AbiControls,
+        run,
+        "abi-controls",
+    )?;
     if let Some(execution) = execution {
-        execution.fixture_recipe(&command, run, "abi-controls", builds::StrictFixture::PlmAbi)?;
+        execution.fixture_recipe(&fixture.command, run, "abi-controls", fixture.kind)?;
     } else {
-        builds::execute(&command, run, "abi-controls", root, workers)?;
+        builds::execute(&fixture.command, run, "abi-controls", root, workers)?;
     }
     fs::copy(&module, run.join("candidate.rs"))?;
     let dependency_request = inputs::DependenciesRequest {

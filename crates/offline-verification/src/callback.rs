@@ -32,17 +32,8 @@ pub fn abi(manifest: &Manifest, module: &Path) -> Result<String> {
         .replace("__NAMES__", &format!("{names:?}")))
 }
 
-pub fn build(
-    request: &VerifyRequest,
-    manifest: &Manifest,
-    checkout: &Path,
-    source: &Path,
-    run: &Path,
-) -> Result<Implementation> {
-    build_with(request, manifest, checkout, source, run, None)
-}
-
-pub(crate) fn build_with(
+pub(crate) fn build(
+    recipe: Option<&crate::recipe::Recipe>,
     request: &VerifyRequest,
     manifest: &Manifest,
     checkout: &Path,
@@ -143,40 +134,12 @@ pub(crate) fn build_with(
     family::write_build_input(&run.join("oracle.c"), oracle.as_bytes(), execution.is_some())?;
     let root = &request.root;
     let workers = request.workers;
-    let command = vec![
-        "rustc".into(),
-        "--edition=2024".into(),
-        "-O".into(),
-        "--crate-type=staticlib".into(),
-        format!("--emit=link,dep-info={}", run.join("compiler.d").display()),
-        run.join("wrapper.rs").to_string_lossy().into_owned(),
-        "-o".into(),
-        run.join("libcollision.a").to_string_lossy().into_owned(),
-    ];
+    let description = crate::recipe::rust_compiler_command(recipe, run);
     if let Some(execution) = execution {
-        execution.compile_recipe(
-            &command,
-            run,
-            "rust-build",
-            checkout,
-            source,
-            &["wrapper.rs", "memory.rs"],
-            &["libcollision.a", "compiler.d"],
-            false,
-        )?;
+        execution.compile_description(&description, run, "rust-build", checkout, source)?;
     } else {
-        builds::execute(&command, run, "rust-build", root, workers)?;
+        builds::execute(&description.command, run, "rust-build", root, workers)?;
     }
-    let mut command = vec![
-        "cc".into(),
-        if power_bomb { "-O0" } else { "-O2" }.into(),
-        "-fno-strict-aliasing".into(),
-        "-ffunction-sections".into(),
-        "-fdata-sections".into(),
-        "-iquote".into(),
-        source.join("src").to_string_lossy().into_owned(),
-    ];
-    let mut units = family::c_units(source)?;
     if power_bomb {
         let original = fs::read_to_string(source.join("src/sm_88.c"))?;
         let token = "uint16 SpawnHdmaObject(uint8 db, const void *p)";
@@ -187,9 +150,6 @@ pub(crate) fn build_with(
             original.replace(token, "uint16 PortActualSpawnHdmaObject(uint8 db, const void *p)").as_bytes(),
             execution.is_some(),
         )?;
-        let bank =
-            units.iter_mut().find(|p| p.file_name().is_some_and(|n| n == "sm_88.c")).context("bank88 missing")?;
-        *bank = seam;
     }
     if game_host {
         let original = fs::read_to_string(source.join("src/sm_80.c"))?;
@@ -201,42 +161,14 @@ pub(crate) fn build_with(
             original.replace(token, "void PortActualNmiProcessVramWriteQueue(void)").as_bytes(),
             execution.is_some(),
         )?;
-        let bank =
-            units.iter_mut().find(|p| p.file_name().is_some_and(|n| n == "sm_80.c")).context("bank80 missing")?;
-        *bank = seam;
     }
-    command.extend(units.iter().map(|p| p.to_string_lossy().into_owned()));
-    if game_host {
-        for symbol in ["WriteReg", "ppu_write", "snes_read", "snes_write"] {
-            command.push(format!("-Wl,--wrap={symbol}"));
-        }
-    }
-    command.extend([
-        run.join("oracle.c").to_string_lossy().into_owned(),
-        run.join("libcollision.a").to_string_lossy().into_owned(),
-        "-Wl,--gc-sections".into(),
-        "-Wl,--wrap=SpawnPLM".into(),
-        "-Wl,--wrap=Call".into(),
-        "-Wl,--wrap=cpu_runOpcode".into(),
-        "-Wl,--wrap=DecompressToMem".into(),
-        "-lm".into(),
-        "-ldl".into(),
-        "-lpthread".into(),
-        "-o".into(),
-        run.join("collision").to_string_lossy().into_owned(),
-    ]);
+    let description =
+        crate::recipe::c_compiler_command(recipe, &manifest, source, run, &family::c_units(source)?, false)?;
     if let Some(execution) = execution {
-        let mut generated = vec!["oracle.c", "libcollision.a"];
-        if power_bomb {
-            generated.push("sm_88-allocation-seam.c");
-        }
-        if game_host {
-            generated.push("sm_80-vram-seam.c");
-        }
-        execution.compile_recipe(&command, run, "c-build", checkout, source, &generated, &["collision"], true)?;
+        execution.compile_description(&description, run, "c-build", checkout, source)?;
     } else {
         builds::c_build(builds::CBuildRequest {
-            command,
+            command: description.command,
             run: run.into(),
             checkout: checkout.into(),
             root: root.clone(),

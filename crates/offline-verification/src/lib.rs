@@ -107,7 +107,10 @@ pub struct AuthenticatedFamily {
 
 impl AuthenticatedFamily {
     fn from_report(report: Verdict) -> Result<Self> {
-        let mut declaration = fixture_format::read(&report.run.join(fixture_format::RUN_MANIFEST))?;
+        let mut declaration = fixture_format::read_authenticated(
+            &report.run.join(fixture_format::RUN_MANIFEST),
+            report.artifacts.get(fixture_format::RUN_MANIFEST).context("missing admitted family declaration")?,
+        )?;
         if report.implementation.as_ref().context("missing family implementation")?.dependency_contract == "rust-plm-v2"
         {
             declaration = plm_spawn::normalize(&declaration)?;
