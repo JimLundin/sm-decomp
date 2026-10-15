@@ -108,6 +108,71 @@ fn cold_plan_selects_only_the_leaf_and_transitive_dependencies() {
 }
 
 #[test]
+fn shared_cyclic_source_closures_fit_one_planning_budget() {
+    let project = Project::new();
+    let names = (0..70).map(|index| format!("shared{index}")).collect::<Vec<_>>();
+    let mut catalog = String::from("[families]\n");
+    for name in &names {
+        catalog.push_str(&format!("{name}='family'\n"));
+        project.manifest(name, "node0", "");
+    }
+    catalog.push_str(&format!("[profiles]\ngameplay={names:?}\n"));
+    project.write("tools/port/batch.toml", &catalog);
+    let mut source = String::from("pub fn step() {\n");
+    for index in 0..32 {
+        source.push_str(&format!("crate::node{index}::step();\n"));
+    }
+    source.push_str("}\n");
+    for index in 0..32 {
+        project.write(&format!("crates/port/src/node{index}.rs"), &source);
+    }
+    project.commit();
+    project.write("docs/unrelated.md", "Only documentation changed.\n");
+    let report = project.plan();
+    assert!(families(&report, "selected").is_empty());
+    assert_eq!(families(&report, "excluded").len(), names.len());
+    assert_eq!(report["planning_statistics"]["rust_source_parses"].as_integer(), Some(33));
+
+    project.write("crates/port/src/node17.rs", &(source + "pub fn added() {}\n"));
+    let changed = project.plan();
+    assert_eq!(families(&changed, "selected").len(), names.len());
+    assert!(families(&changed, "excluded").is_empty());
+    assert!(changed["selected"].as_array().unwrap().iter().all(|decision| {
+        decision["reasons"][0]["code"].as_str() == Some("changed-dependency")
+            && decision["dependencies"].as_array().unwrap().contains(&Value::from("crates/port/src/node17.rs"))
+    }));
+}
+
+#[test]
+fn comment_and_literal_names_do_not_select_unrelated_families() {
+    let project = Project::new();
+    project.write(
+        "crates/port/src/a.rs",
+        r###"
+/// ROM-aware preinstructions include native room projectile spawning.
+/// Trail coordinates include native Ceres Mode7 arithmetic and ROM trail frames.
+/* helper /* include_str!("helper") */ future_name */
+pub fn a() {
+    let _ = "helper File fs mod include include_bytes env option_env macro_rules";
+    let _ = r##"helper include!("anything")"##;
+    let _ = b"helper include_str";
+    let _ = br#"helper include_bytes"#;
+    let _ = '\'';
+}
+"###,
+    );
+    project.commit();
+    project.write("crates/port/src/helper.rs", "pub fn helper() { let changed = 1; }");
+    let report = project.selection();
+    assert_eq!(families(&report, "selected"), ["b"]);
+    assert_eq!(families(&report, "excluded"), ["a"]);
+    assert_eq!(
+        report["excluded"][0]["dependencies"],
+        Value::Array(["crates/port/src/a.rs", "crates/port/src/memory.rs", "tools/port/a.smf"].map(Value::from).to_vec())
+    );
+}
+
+#[test]
 fn untracked_module_namespace_can_affect_an_unchanged_family() {
     let project = Project::new();
     project.write("crates/port/src/future_name.rs", "pub fn new_behavior() {}");

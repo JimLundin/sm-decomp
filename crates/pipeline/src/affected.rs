@@ -47,7 +47,12 @@ impl PlanningBudget {
     fn check(&self) -> Result<()> {
         ensure!(
             !self.exhausted.get() && Instant::now() < self.deadline,
-            "affected planning aggregate byte, inode or time budget exhausted"
+            "affected planning aggregate byte, inode or time budget exhausted (bytes {}/{}, entries {}/{}, elapsed {:.3}s)",
+            self.bytes.get(),
+            self.maximum,
+            self.entries.get(),
+            MAX_PLANNING_ENTRIES,
+            self.started.elapsed().as_secs_f64()
         );
         Ok(())
     }
