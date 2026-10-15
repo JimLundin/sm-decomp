@@ -214,6 +214,11 @@ struct Latest {
     batch: PathBuf,
 }
 pub fn operate(request: Request) -> Result<toml::Value> {
+    // Metadata commands remain read-only. An existing caller metrics scope can
+    // still observe planning inside operate_inner; no default sidecar is created.
+    if matches!(request.operation.as_str(), "plan" | "catalog") {
+        return operate_inner(request);
+    }
     let destination = request
         .batch
         .as_ref()
@@ -556,6 +561,25 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn read_only_catalog_preserves_a_callers_metrics_scope() -> Result<()> {
+        let directory = tool_execution::testing::Directory::new()?;
+        let checkout = directory.0.join("checkout");
+        fs::create_dir_all(checkout.join("tools/port"))?;
+        fs::write(checkout.join("tools/port/batch.toml"), "[families]\n[profiles]\n")?;
+        let metrics_path = directory.0.join("caller.metrics.toml");
+        let mut caller = metrics::Run::start(metrics_path.clone(), "metadata-caller")?;
+        let result = operate(Request { checkout: checkout.clone(), operation: "catalog".into(), ..Default::default() })?;
+        assert!(result.get("metrics").is_none());
+        assert!(!checkout.join("out").exists());
+        assert_eq!(metrics::active().unwrap().path(), metrics_path);
+        caller.finish("success", None)?;
+        let receipt: pipeline_model::metrics::Receipt = pipeline_model::read(&metrics_path)?;
+        assert!(receipt.stages.iter().any(|stage| stage.name == "batch-planning" && stage.outcome == "success"));
+        assert!(receipt.processes.is_empty(), "metadata planning launched a producer");
+        Ok(())
+    }
 
     #[test]
     fn catalog_refuses_expired_budget_and_excessive_inventory_before_manifest_reads() -> Result<()> {

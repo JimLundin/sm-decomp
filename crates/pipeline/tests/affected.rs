@@ -81,6 +81,23 @@ fn families<'a>(report: &'a Value, group: &str) -> Vec<&'a str> {
 }
 
 #[test]
+fn metadata_commands_are_read_only_even_with_metrics_enabled() {
+    for operation in ["plan", "catalog"] {
+        let project = Project::new();
+        let output = Command::new(env!("CARGO_BIN_EXE_sm-pipeline"))
+            .args(["batch", operation])
+            .env("SM_PIPELINE_METRICS", "enabled")
+            .current_dir(&project.0)
+            .output()
+            .unwrap();
+        assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+        let report: Value = toml::from_str(std::str::from_utf8(&output.stdout).unwrap()).unwrap();
+        assert!(report.get("metrics").is_none(), "{operation} published a default metrics receipt");
+        assert!(!project.0.join("out").exists(), "{operation} created output state");
+    }
+}
+
+#[test]
 fn cold_plan_selects_only_the_leaf_and_transitive_dependencies() {
     let project = Project::new();
     project.write("crates/port/src/helper.rs", "pub fn helper() { let changed=1; }");
