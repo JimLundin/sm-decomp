@@ -157,7 +157,11 @@ impl OfflineFamilies {
         ensure!(required.len() == request.required.len(), "duplicate required family");
         request.catalog.validate_current()?;
         let facts = request.required.iter().map(|name| request.catalog.family(name)).collect::<Result<Vec<_>>>()?;
-        let manifests = facts.iter().map(FamilyFacts::declaration).collect::<Vec<_>>();
+        let manifests = facts
+            .iter()
+            .filter(|facts| facts.entry().kind != "plm-instructions")
+            .map(FamilyFacts::declaration)
+            .collect::<Vec<_>>();
         let view = crate::input_view::InputView::capture(
             self.host_inputs(),
             request.catalog.checkout(),

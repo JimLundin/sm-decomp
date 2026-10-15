@@ -114,40 +114,41 @@ fn verifier() -> Result<OfflineFamilies> {
 
 #[test]
 #[ignore = "real pinned C/ROM capture; retains source and cleanup evidence"]
-fn generated_plm_capture_ignores_missing_and_stale_obsolete_rom() -> Result<()> {
-    for stale in [false, true] {
-        let mut project = Project::new(if stale { "obsolete-stale" } else { "obsolete-missing" })?;
-        let registration = project.checkout().join("tools/port/plm-instructions.smf");
-        let mut raw = fixtures::read(&registration)?;
-        let placeholder = project.root.join("obsolete-generated.sfc");
-        raw.rom.as_mut().context("raw PLM ROM missing")?.file = placeholder.clone();
-        fixtures::write(&registration, &raw)?;
-        if stale {
-            fs::write(&placeholder, b"stale generated PLM placeholder control\n")?;
-        }
-        ensure!(placeholder.exists() == stale, "placeholder control differs");
-        let offline = verifier()?;
-        let catalog = offline.capture_catalog(CatalogRequest::new(&project.checkout())?)?;
-        let required = vec!["plm-instructions".to_owned()];
-        let inputs = offline
-            .capture_batch_inputs(BatchInputRequest {
-                catalog: &catalog,
-                source: &project.source(),
-                required: &required,
-            })
-            .context(
-                "generated PLM capture must use the complete effective recipe, not the obsolete ROM placeholder",
-            )?;
-        inputs.validate_current()?;
-        ensure!(placeholder.exists() == stale, "capture materialized an obsolete ROM placeholder");
-        if stale {
-            ensure!(
-                fs::read(&placeholder)? == b"stale generated PLM placeholder control\n",
-                "capture rewrote stale placeholder"
-            );
-        }
-        drop((inputs, catalog));
-        project.cleanup()?;
+fn generated_plm_capture_ignores_missing_obsolete_rom() -> Result<()> {
+    capture_obsolete(false)
+}
+
+#[test]
+#[ignore = "real pinned C/ROM capture; retains source and cleanup evidence"]
+fn generated_plm_capture_ignores_stale_obsolete_rom() -> Result<()> {
+    capture_obsolete(true)
+}
+
+fn capture_obsolete(stale: bool) -> Result<()> {
+    let mut project = Project::new(if stale { "obsolete-stale" } else { "obsolete-missing" })?;
+    let registration = project.checkout().join("tools/port/plm-instructions.smf");
+    let mut raw = fixtures::read(&registration)?;
+    let placeholder = project.root.join("obsolete-generated.sfc");
+    raw.rom.as_mut().context("raw PLM ROM missing")?.file = placeholder.clone();
+    fixtures::write(&registration, &raw)?;
+    if stale {
+        fs::write(&placeholder, b"stale generated PLM placeholder control\n")?;
     }
-    Ok(())
+    ensure!(placeholder.exists() == stale, "placeholder control differs");
+    let offline = verifier()?;
+    let catalog = offline.capture_catalog(CatalogRequest::new(&project.checkout())?)?;
+    let required = vec!["plm-instructions".to_owned()];
+    let inputs = offline
+        .capture_batch_inputs(BatchInputRequest { catalog: &catalog, source: &project.source(), required: &required })
+        .context("generated PLM capture must use the complete effective recipe, not the obsolete ROM placeholder")?;
+    inputs.validate_current()?;
+    ensure!(placeholder.exists() == stale, "capture materialized an obsolete ROM placeholder");
+    if stale {
+        ensure!(
+            fs::read(&placeholder)? == b"stale generated PLM placeholder control\n",
+            "capture rewrote stale placeholder"
+        );
+    }
+    drop((inputs, catalog));
+    project.cleanup()
 }

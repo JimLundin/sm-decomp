@@ -155,7 +155,23 @@ impl InputView {
             if generated_plm {
                 Self::bind_asset(&mut paths, view.checkout.join("rom/sm.sfc"), crate::plm_fixtures::BASE_ROM_SHA256)?;
             }
-            for manifest in manifests {
+            // Registered PLM instructions execute the complete pinned generator,
+            // not the catalog's historical declaration and temporary ROM asset.
+            // Capture its effective Rust closure and all declared fixture inputs.
+            // Only its generated ROM is an output: ordinary preparation binds
+            // that file later through the existing trusted generated_plm extension.
+            let generated = if generated_plm {
+                let (mut manifest, _) = crate::plm_fixtures::generated_contents(
+                    &view.checkout,
+                    &view.directory.join("plm-instructions-synthetic.sfc"),
+                )?;
+                manifest.rom = None;
+                Some(manifest)
+            } else {
+                None
+            };
+            let manifests = manifests.iter().copied().chain(generated.as_ref()).collect::<Vec<_>>();
+            for manifest in &manifests {
                 let key = view.family_key(manifest);
                 let selected = if let Some(selected) = view.family_inputs.get(&key) {
                     selected.clone()
@@ -203,7 +219,7 @@ impl InputView {
             for (path, expected) in paths {
                 view.capture_file(path, expected.as_deref())?;
             }
-            for manifest in manifests {
+            for manifest in &manifests {
                 view.validate_rust_inputs(manifest)?;
             }
             view.validate_current()?;
