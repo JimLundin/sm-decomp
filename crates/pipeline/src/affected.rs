@@ -20,6 +20,7 @@ const MAX_PLANNING_ENTRIES: u64 = 65536;
 /// Source discovery belongs to the whole stage budget, including rereads that
 /// check stability. Resource exhaustion cannot become ordinary uncertainty.
 struct PlanningBudget {
+    started: Instant,
     deadline_unix_ms: u64,
     deadline: Instant,
     maximum: u64,
@@ -33,6 +34,7 @@ impl PlanningBudget {
         let now = u64::try_from(SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis())?;
         ensure!(now < deadline_unix_ms && maximum > 0, "affected planning budget exhausted before discovery");
         Ok(Self {
+            started: Instant::now(),
             deadline_unix_ms,
             deadline: Instant::now() + Duration::from_millis(deadline_unix_ms - now).min(Duration::from_secs(120)),
             maximum,
@@ -159,6 +161,18 @@ pub(crate) struct Report {
     pub selected: Vec<FamilyDecision>,
     pub excluded: Vec<FamilyDecision>,
     pub planning_inputs: BTreeMap<PathBuf, String>,
+    #[serde(default)]
+    pub planning_statistics: PlanningStatistics,
+}
+
+/// Advisory work counters; this read-only report never grants reuse admission.
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub(crate) struct PlanningStatistics {
+    pub elapsed_seconds: f64,
+    pub input_bytes: u64,
+    pub entries: u64,
+    pub rust_source_parses: usize,
+    pub rust_source_cache_hits: usize,
 }
 
 impl Report {
@@ -256,6 +270,7 @@ struct Discovery<'a> {
     history: BTreeSet<PathBuf>,
     sources: BTreeMap<PathBuf, Arc<offline_verification::source_facts::RustSourceFacts>>,
     hashes: BTreeMap<PathBuf, String>,
+    cache_hits: usize,
 }
 
 impl<'a> Discovery<'a> {
@@ -279,6 +294,7 @@ impl<'a> Discovery<'a> {
             history: history_paths(checkout, budget)?,
             sources: BTreeMap::new(),
             hashes: BTreeMap::new(),
+            cache_hits: 0,
         })
     }
 
@@ -289,6 +305,7 @@ impl<'a> Discovery<'a> {
             "Rust source is ignored or outside changed-since history"
         );
         if let Some(source) = self.sources.get(path) {
+            self.cache_hits += 1;
             return Ok(source.clone());
         }
         let (source, before) = self.budget.read(path, true)?;
@@ -522,6 +539,7 @@ fn select_changed(
         selected: vec![],
         excluded: vec![],
         planning_inputs: BTreeMap::new(),
+        planning_statistics: PlanningStatistics::default(),
     };
     report.planning_inputs = snapshot.input_identities();
     let catalog_names = config.families.keys().cloned().collect::<Vec<_>>();
@@ -582,6 +600,8 @@ fn select_changed(
         }
     }
     if let Some(discovery) = discovery {
+        report.planning_statistics.rust_source_parses = discovery.sources.len();
+        report.planning_statistics.rust_source_cache_hits = discovery.cache_hits;
         report.planning_inputs.extend(discovery.hashes);
         let namespace = Discovery::new(checkout, budget).map(|current| current.available);
         budget.check()?;
@@ -605,6 +625,9 @@ fn select_changed(
     let after = snapshot.statistics();
     budget.charge(after.input_bytes - before.input_bytes + after.freshness_bytes - before.freshness_bytes)?;
     budget.check()?;
+    report.planning_statistics.elapsed_seconds = budget.started.elapsed().as_secs_f64();
+    report.planning_statistics.input_bytes = budget.bytes.get();
+    report.planning_statistics.entries = budget.entries.get();
     Ok(report)
 }
 
@@ -659,6 +682,9 @@ mod tests {
         assert!(report.changed_since.is_none());
         assert!(!root.join("out").exists());
         assert!(select_paths_until(root, &["../escape".into()], now + 10_000, DEFAULT_PLANNING_BYTES).is_err());
+        fs::write(root.join("crates/port/src/a.rs"), vec![b' '; 8 * 1024 * 1024 + 1])?;
+        let exhausted = select_paths_until(root, &["docs/unrelated.md".into()], now + 10_000, DEFAULT_PLANNING_BYTES);
+        assert!(exhausted.is_err(), "scanner resource exhaustion was converted into ordinary family uncertainty");
         Ok(())
     }
 

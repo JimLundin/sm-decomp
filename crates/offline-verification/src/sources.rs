@@ -1,5 +1,7 @@
 //! Exact compiled implementation inputs owned by Offline verification.
 pub const IMPLEMENTATION_SOURCES: &[(&str, &str)] = &[
+    ("Cargo.toml", include_str!("../../../Cargo.toml")),
+    ("Cargo.lock", include_str!("../../../Cargo.lock")),
     ("crates/offline-verification/src/authoring.rs", include_str!("authoring.rs")),
     ("crates/offline-verification/src/ordinary.rs", include_str!("ordinary.rs")),
     ("crates/offline-verification/Cargo.toml", include_str!("../Cargo.toml")),
@@ -26,6 +28,7 @@ pub const IMPLEMENTATION_SOURCES: &[(&str, &str)] = &[
     ("crates/offline-verification/src/game_host_abi.rs.in", include_str!("game_host_abi.rs.in")),
     ("crates/offline-verification/src/game_host_dependency.c.in", include_str!("game_host_dependency.c.in")),
     ("crates/offline-verification/src/host.rs", include_str!("host.rs")),
+    ("crates/offline-verification/src/identities.rs", include_str!("identities.rs")),
     ("crates/offline-verification/src/inputs.rs", include_str!("inputs.rs")),
     ("crates/offline-verification/src/input_view.rs", include_str!("input_view.rs")),
     ("crates/offline-verification/src/input_view_native.rs", include_str!("input_view_native.rs")),

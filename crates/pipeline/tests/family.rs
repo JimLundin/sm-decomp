@@ -1359,6 +1359,119 @@ std::thread::sleep(std::time::Duration::from_secs(30));Ok(0)}"#,
 }
 
 #[test]
+fn registered_admission_binds_computation_instead_of_caller_kind_hints() {
+    use offline_verification::{BatchAdmission, CatalogRequest, FamilyEvidence, HostInputs, OfflineFamilies};
+    let project = match std::env::var_os("SM_DEPENDENCY_IDENTITY_ROOT") {
+        Some(root) => Project::at(PathBuf::from(root), true),
+        None => Project::new(),
+    };
+    let candidate = project.0.join("crates/port/src/fixture.rs");
+    let original = fs::read_to_string(&candidate).unwrap();
+    fs::write(
+        &candidate,
+        original.replace("a as u32+1", "crate::helper::add_one(a)")
+            + "\n// unrelated include!(\"unexpected.rs\")\nconst PROSE: &str = \"unrelated include_str!(data)\";\n",
+    )
+    .unwrap();
+    write(
+        &project.0,
+        "crates/port/src/helper.rs",
+        "#[path=\"extra_impl.rs\"] mod owned; pub fn add_one(a:u16)->u32 { owned::add(a) }",
+    );
+    write(&project.0, "crates/port/src/extra_impl.rs", "pub fn add(a:u16)->u32 { crate::adjust::add(a) }");
+    write(&project.0, "crates/port/src/adjust.rs", "pub fn add(a:u16)->u32 { a as u32 + 1 }");
+    write(&project.0, "crates/port/src/unrelated.rs", "compile_error!(\"prose entered the compiler closure\");");
+    project.manifest(Value::Array(vec![Value::Table(toml::Table::from_iter([
+        ("name".into(), "one".into()),
+        ("a".into(), 1.into()),
+        ("expected_return".into(), 2.into()),
+    ]))]));
+    let configuration = "[families]\nfixture='family'\n[profiles]\ngameplay=['fixture']\n";
+    write(&project.0, "tools/port/batch.toml", configuration);
+    let (first, _) = project.measured_batch(false, "disabled", true);
+    assert_eq!(first["families"]["fixture"]["status"].as_str(), Some("offline-verified"));
+    let verdict = PathBuf::from(first["families"]["fixture"]["verdict"].as_str().unwrap());
+    let dependencies =
+        tool_execution::builds::dep_paths(&fs::read_to_string(verdict.parent().unwrap().join("compiler.d")).unwrap())
+            .unwrap();
+    for name in ["fixture.rs", "helper.rs", "extra_impl.rs", "adjust.rs"] {
+        assert!(
+            dependencies.iter().any(|path| Path::new(path).file_name().is_some_and(|part| part == name)),
+            "actual compiler omitted {name}"
+        );
+    }
+    assert!(
+        !dependencies.iter().any(|path| Path::new(path).ends_with("unrelated.rs")),
+        "prose became an actual compiler input"
+    );
+    let offline = OfflineFamilies::new(
+        HostInputs::new(
+            source_stamps::HOST_SOURCES,
+            format!("{:x}", Sha256::digest(fs::read(env!("CARGO_BIN_EXE_sm-pipeline")).unwrap())),
+        )
+        .unwrap(),
+    );
+    let required = vec!["fixture".into()];
+    let admit = |kind: &str, claimed_manifest: Option<&str>| -> anyhow::Result<_> {
+        let catalog = offline.capture_catalog(CatalogRequest::new(&project.0)?)?;
+        let facts = catalog.family("fixture")?;
+        offline.authenticate_batch(BatchAdmission {
+            catalog: &catalog,
+            required: &required,
+            source: project.0.join("deps/snesrev-sm"),
+            evidence: vec![FamilyEvidence {
+                family: "fixture".into(),
+                verdict: verdict.clone(),
+                kind: kind.into(),
+                manifest_sha256: claimed_manifest.unwrap_or(facts.manifest_sha256()).into(),
+            }],
+        })
+    };
+    assert!(admit("family", None).is_ok());
+    assert!(admit("family", Some(&"0".repeat(64))).is_err(), "claimed content hash admitted another requirement");
+    // Alias catalog labels with the same complete recipe may reuse evidence.
+    write(&project.0, "tools/port/batch.toml", configuration.replace("='family'", "='offline-family'"));
+    assert!(admit("offline-family", None).is_ok());
+    write(&project.0, "tools/port/batch.toml", configuration.replace("='family'", "='callback'"));
+    let different_recipe = admit("callback", None);
+    // Restore before asserting so even the red run retains authenticatable
+    // original evidence and no changed registration masquerades as its proof.
+    write(&project.0, "tools/port/batch.toml", configuration);
+    assert!(different_recipe.is_err(), "caller kind hint replaced the admitted recipe contract");
+
+    for name in [
+        "crates/port/src/fixture.rs",
+        "crates/port/src/adjust.rs",
+        "crates/offline-verification/src/family.rs",
+        "Cargo.lock",
+    ] {
+        let path = project.0.join(name);
+        let original = fs::read(&path).unwrap();
+        fs::write(&path, [original.as_slice(), b"\n// changed exact source input\n"].concat()).unwrap();
+        let changed = admit("family", None);
+        fs::write(&path, &original).unwrap();
+        assert!(changed.is_err(), "changed candidate/comparison source was accepted: {name}");
+    }
+    let manifest = project.0.join("tools/port/fixture.smf");
+    let original = fs::read(&manifest).unwrap();
+    project.manifest(Value::Array(vec![Value::Table(toml::Table::from_iter([
+        ("name".into(), "another-case".into()),
+        ("a".into(), 1.into()),
+        ("expected_return".into(), 2.into()),
+    ]))]));
+    let changed = admit("family", None);
+    fs::write(&manifest, &original).unwrap();
+    assert!(changed.is_err(), "current complete requirements were replaced by a retained declaration");
+    let dependency = project.0.join("crates/port/src/extra_impl.rs");
+    let original = fs::read(&dependency).unwrap();
+    fs::remove_file(&dependency).unwrap();
+    let missing = admit("family", None);
+    fs::write(&dependency, &original).unwrap();
+    assert!(missing.is_err(), "missing current compiler closure was accepted");
+    assert!(admit("family", None).is_ok());
+}
+
+#[test]
 fn native_batch_reuses_authenticated_runs_and_rejects_stale_candidate() {
     let project = Project::new();
     project.manifest(Value::Array(vec![Value::Table(toml::Table::from_iter([

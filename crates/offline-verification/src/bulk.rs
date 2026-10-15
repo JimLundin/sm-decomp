@@ -124,6 +124,7 @@ pub(crate) fn check_admitted_binding(
     checkout: &Path,
     declarations: &Declarations,
 ) -> Result<()> {
+    crate::identities::check_registered_computation(&facts.entry().kind, admitted)?;
     if facts.entry().kind == "plm-instructions" {
         let rom = admitted.original.rom.as_ref().context("generated PLM ROM missing")?;
         let (expected, _) = crate::plm_fixtures::generated_contents(checkout, &rom.file)?;

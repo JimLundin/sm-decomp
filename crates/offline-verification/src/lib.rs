@@ -17,6 +17,7 @@ mod family_model;
 mod fixture_execution;
 mod fixture_format;
 mod host;
+mod identities;
 mod input_view;
 mod inputs;
 mod native;
