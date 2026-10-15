@@ -184,6 +184,7 @@ pub(crate) fn build(
     let fork = fork_execution(request)?;
     ensure!(execution.is_none() || !fork, "confined adapter requires fresh fixtures");
     let dispatcher = manifest.uses_dispatcher();
+    let complete_c = matches!(recipe, Some(crate::recipe::Recipe::CompleteC));
     let eproj = manifest.projectile_host
         || manifest.projectile_rendering
         || manifest.routines.iter().any(|r| r.symbol == "EprojInstruction");
@@ -281,7 +282,7 @@ pub(crate) fn build(
     let bank_name = &manifest.bank;
     let support = &manifest.c_support;
     let uses_rtl = bank_name == "sm_rtl.c" || support.iter().any(|v| v == "sm_rtl.c");
-    let globals = if dispatcher {
+    let globals = if dispatcher || complete_c {
         "extern uint8_t g_ram[0x20000]; extern const uint8_t *g_rom;"
     } else if uses_rtl {
         "extern uint8_t g_ram[0x20000]; extern const uint8_t *g_rom; bool g_fail;"
@@ -446,7 +447,7 @@ pub(crate) fn build(
             execution.is_some(),
         )?;
     }
-    let units = if dispatcher { c_units(source)? } else { vec![] };
+    let units = if dispatcher || complete_c { c_units(source)? } else { vec![] };
     let description = crate::recipe::c_compiler_command(recipe, manifest, source, run, &units, fork)?;
     if let Some(execution) = execution {
         execution.compile_description(&description, run, "c-build", checkout, source)?;
