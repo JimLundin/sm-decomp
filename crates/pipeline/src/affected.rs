@@ -18,6 +18,34 @@ const DEFAULT_PLANNING_BYTES: u64 = 256 * 1024 * 1024;
 const MAX_PLANNING_ENTRIES: u64 = 65536;
 const MAX_CLOSURE_CACHE_BYTES: usize = 16 * 1024 * 1024;
 
+/// A version fence supplements an actual digest read during this invocation.
+/// It never substitutes for reading a declared asset or admitting evidence.
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct InputVersion {
+    device: u64,
+    inode: u64,
+    length: u64,
+    modified: (i64, i64),
+    changed: (i64, i64),
+}
+
+impl InputVersion {
+    fn of(metadata: &fs::Metadata) -> Self {
+        Self {
+            device: metadata.dev(),
+            inode: metadata.ino(),
+            length: metadata.len(),
+            modified: (metadata.mtime(), metadata.mtime_nsec()),
+            changed: (metadata.ctime(), metadata.ctime_nsec()),
+        }
+    }
+}
+
+struct AssetObservation {
+    sha256: String,
+    version: InputVersion,
+}
+
 /// Source discovery belongs to the whole stage budget, including rereads that
 /// check stability. Resource exhaustion cannot become ordinary uncertainty.
 struct PlanningBudget {
@@ -78,7 +106,7 @@ impl PlanningBudget {
         self.check()
     }
 
-    fn read(&self, path: &Path, capture: bool) -> Result<(Vec<u8>, String)> {
+    fn read(&self, path: &Path, capture: bool) -> Result<(Vec<u8>, String, InputVersion)> {
         self.check()?;
         ensure!(!path.is_symlink(), "planning input is a symlink: {}", path.display());
         let mut file = OpenOptions::new().read(true).custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK).open(path)?;
@@ -107,17 +135,12 @@ impl PlanningBudget {
         }
         let after = file.metadata()?;
         ensure!(
-            length == before.len()
-                && after.len() == before.len()
-                && after.mtime() == before.mtime()
-                && after.mtime_nsec() == before.mtime_nsec()
-                && after.ctime() == before.ctime()
-                && after.ctime_nsec() == before.ctime_nsec(),
+            length == before.len() && InputVersion::of(&after) == InputVersion::of(&before),
             "planning input changed while reading: {}",
             path.display()
         );
         self.check()?;
-        Ok((bytes, format!("{:x}", hash.finalize())))
+        Ok((bytes, format!("{:x}", hash.finalize()), InputVersion::of(&after)))
     }
 
     fn hash(&self, path: &Path) -> Result<String> {
@@ -183,6 +206,10 @@ pub(crate) struct PlanningStatistics {
     pub rust_closure_cache_hits: usize,
     #[serde(default)]
     pub shared_input_cache_hits: usize,
+    #[serde(default)]
+    pub asset_declarations: usize,
+    #[serde(default)]
+    pub asset_reads: usize,
 }
 
 impl Report {
@@ -282,6 +309,10 @@ struct Discovery<'a> {
     closures: BTreeMap<PathBuf, Arc<BTreeSet<PathBuf>>>,
     closure_bytes: usize,
     hashes: BTreeMap<PathBuf, String>,
+    assets: BTreeMap<PathBuf, BTreeMap<String, String>>,
+    asset_observations: BTreeMap<PathBuf, AssetObservation>,
+    asset_declarations: usize,
+    asset_reads: usize,
     cache_hits: usize,
     closure_cache_hits: usize,
     input_cache_hits: usize,
@@ -310,6 +341,10 @@ impl<'a> Discovery<'a> {
             closures: BTreeMap::new(),
             closure_bytes: 0,
             hashes: BTreeMap::new(),
+            assets: BTreeMap::new(),
+            asset_observations: BTreeMap::new(),
+            asset_declarations: 0,
+            asset_reads: 0,
             cache_hits: 0,
             closure_cache_hits: 0,
             input_cache_hits: 0,
@@ -326,7 +361,7 @@ impl<'a> Discovery<'a> {
             self.cache_hits += 1;
             return Ok(source.clone());
         }
-        let (source, before) = self.budget.read(path, true)?;
+        let (source, before, _) = self.budget.read(path, true)?;
         ensure!(before == self.budget.hash(path)?, "Rust discovery source changed while reading: {}", path.display());
         self.hashes.insert(normalize(self.checkout, path), before);
         let facts = tool_execution::bounded::until(
@@ -438,16 +473,21 @@ impl<'a> Discovery<'a> {
             stable &= !path.is_symlink() && fs::canonicalize(path).is_ok_and(|current| current == *path);
         }
         for (path, expected) in inputs {
-            stable &= self.budget.hash(&self.checkout.join(path)).is_ok_and(|actual| actual == *expected);
+            stable &= if let Some(observed) = self.asset_observations.get(path) {
+                observed.sha256 == *expected
+            } else {
+                self.budget.hash(&self.checkout.join(path)).is_ok_and(|actual| actual == *expected)
+            };
             self.budget.check()?;
         }
-        Ok(stable)
+        Ok(stable && self.validate_asset_versions()?)
     }
 
     fn dependencies(
         &mut self,
         manifest: &offline_verification::fixtures::Manifest,
         kind: &str,
+        family: &str,
     ) -> Result<BTreeSet<PathBuf>> {
         ensure!(
             [
@@ -495,7 +535,7 @@ impl<'a> Discovery<'a> {
             result.insert(path);
         }
         if let Some(rom) = &manifest.rom {
-            self.asset(&rom.file, Some(&rom.sha256))?;
+            self.asset(&rom.file, Some(&rom.sha256), family)?;
             result.insert(normalize(self.checkout, &rom.file));
         }
         for case in manifest.cases.iter().chain(manifest.routines.iter().flat_map(|routine| &routine.cases)) {
@@ -505,23 +545,81 @@ impl<'a> Discovery<'a> {
                 let Some(path) = path else {
                     continue;
                 };
-                self.asset(path, expected.as_deref())?;
+                self.asset(path, expected.as_deref(), family)?;
                 result.insert(normalize(self.checkout, path));
             }
         }
         Ok(result)
     }
 
-    fn asset(&mut self, path: &Path, expected: Option<&str>) -> Result<()> {
-        let actual = self.checkout.join(path);
-        ensure!(!actual.is_symlink(), "family asset is a symlink");
-        let hash = self.input_hash(path)?;
+    fn asset(&mut self, path: &Path, expected: Option<&str>, family: &str) -> Result<()> {
+        self.budget.entry()?;
+        let expected = expected.context("family asset is missing a declared digest")?;
         ensure!(
-            expected == Some(hash.as_str()),
-            "family asset is missing a matching declared digest: {}",
-            actual.display()
+            expected.len() == 64 && expected.bytes().all(|byte| byte.is_ascii_hexdigit()),
+            "family asset has an invalid declared digest"
         );
+        self.asset_declarations += 1;
+        let path = normalize(self.checkout, path);
+        if self.assets.contains_key(&path) {
+            self.input_cache_hits += 1;
+        }
+        let requirements = self.assets.entry(path).or_default();
+        if let Some(previous) = requirements.insert(family.into(), expected.into()) {
+            ensure!(previous == expected, "family has conflicting asset requirements");
+        }
         Ok(())
+    }
+
+    /// Discovery consumes declarations, not asset contents. Authenticate each
+    /// distinct asset once after all expected digests have been captured. All
+    /// families still check their own requirement; a shared path is not proof
+    /// that different declared digests are equivalent.
+    fn authenticate_assets(&mut self) -> Result<BTreeMap<String, String>> {
+        self.asset_observations.clear();
+        let mut failures = BTreeMap::new();
+        for (path, requirements) in &self.assets {
+            self.budget.entry()?;
+            self.asset_reads += 1;
+            let observed = self.budget.read(&self.checkout.join(path), false);
+            self.budget.check()?;
+            match observed {
+                Ok((_, sha256, version)) => {
+                    for (family, expected) in requirements {
+                        if expected != &sha256 {
+                            failures.entry(family.clone()).or_insert_with(|| {
+                                format!("family asset differs from its declared digest: {}", path.display())
+                            });
+                        }
+                    }
+                    self.asset_observations.insert(path.clone(), AssetObservation { sha256, version });
+                }
+                Err(error) => {
+                    for family in requirements.keys() {
+                        failures.entry(family.clone()).or_insert_with(|| {
+                            format!("family asset could not be authenticated at {}: {error:#}", path.display())
+                        });
+                    }
+                }
+            }
+        }
+        Ok(failures)
+    }
+
+    /// Preserve one coherent end-of-pass view after actual asset hashing and
+    /// final source/catalog validation. Same-sized replacement, content edits
+    /// and namespace aliases cannot reuse an earlier file observation.
+    fn validate_asset_versions(&self) -> Result<bool> {
+        let mut stable = true;
+        for (path, observed) in &self.asset_observations {
+            self.budget.entry()?;
+            stable &= self
+                .checkout
+                .join(path)
+                .symlink_metadata()
+                .is_ok_and(|current| current.is_file() && InputVersion::of(&current) == observed.version);
+        }
+        Ok(stable)
     }
 }
 
@@ -640,8 +738,10 @@ fn select_changed(
     let catalog_names = config.families.keys().cloned().collect::<Vec<_>>();
     let names = names.unwrap_or(&catalog_names);
     let mut seen = BTreeSet::new();
+    let mut family_order = BTreeMap::new();
     for name in names.iter().filter(|name| seen.insert((*name).clone())) {
         budget.entry()?;
+        family_order.insert(name.clone(), family_order.len());
         let mut decision = FamilyDecision { family: name.clone(), reasons: vec![], dependencies: vec![] };
         let examined = (|| -> Result<BTreeSet<PathBuf>> {
             let facts = snapshot.family(name)?;
@@ -653,7 +753,7 @@ fn select_changed(
             let mut dependencies = discovery
                 .as_mut()
                 .context("Rust module namespace is unavailable")?
-                .dependencies(manifest, &item.kind)?;
+                .dependencies(manifest, &item.kind, name)?;
             dependencies.insert(manifest_path);
             Ok(dependencies)
         })();
@@ -694,26 +794,53 @@ fn select_changed(
             report.selected.push(decision);
         }
     }
-    if let Some(discovery) = discovery {
+    let mut stable = true;
+    if let Some(discovery) = &mut discovery {
+        let failures = discovery.authenticate_assets()?;
+        for decision in &mut report.selected {
+            if let Some(detail) = failures.get(&decision.family) {
+                decision.reasons.insert(0, reason("uncertain-inputs", detail.clone(), vec![]));
+            }
+        }
+        for mut decision in std::mem::take(&mut report.excluded) {
+            if let Some(detail) = failures.get(&decision.family) {
+                decision.reasons = vec![reason("uncertain-inputs", detail.clone(), vec![])];
+                report.selected.push(decision);
+            } else {
+                report.excluded.push(decision);
+            }
+        }
         report.planning_statistics.rust_source_parses = discovery.sources.len();
         report.planning_statistics.rust_source_cache_hits = discovery.cache_hits;
         report.planning_statistics.rust_closure_cache_hits = discovery.closure_cache_hits;
         report.planning_statistics.shared_input_cache_hits = discovery.input_cache_hits;
+        report.planning_statistics.asset_declarations = discovery.asset_declarations;
+        report.planning_statistics.asset_reads = discovery.asset_reads;
+        report.planning_inputs.extend(
+            discovery.asset_observations.iter().map(|(path, observed)| (path.clone(), observed.sha256.clone())),
+        );
         report.planning_inputs.extend(discovery.hashes.iter().map(|(path, hash)| (path.clone(), hash.clone())));
-        if !discovery.validate_current(&report.planning_inputs)? {
-            for mut decision in std::mem::take(&mut report.excluded) {
-                decision.reasons = vec![reason(
-                    "uncertain-inputs",
-                    "Planning source or module namespace changed during selection",
-                    vec![],
-                )];
-                report.selected.push(decision);
-            }
-        }
+        // The captured catalog owns fresh validation of its exact declarations.
+        // Rehashing those same manifests here duplicates that independent pass.
+        stable &= discovery.validate_current(&discovery.hashes)?;
     }
     snapshot.validate_current()?;
     let after = snapshot.statistics();
     budget.charge(after.input_bytes - before.input_bytes + after.freshness_bytes - before.freshness_bytes)?;
+    if let Some(discovery) = &discovery {
+        stable &= discovery.validate_asset_versions()?;
+    }
+    if !stable {
+        for mut decision in std::mem::take(&mut report.excluded) {
+            decision.reasons = vec![reason(
+                "uncertain-inputs",
+                "Planning source, asset or module namespace changed during selection",
+                vec![],
+            )];
+            report.selected.push(decision);
+        }
+    }
+    report.selected.sort_by_key(|decision| family_order[&decision.family]);
     budget.check()?;
     report.planning_statistics.elapsed_seconds = budget.started.elapsed().as_secs_f64();
     report.planning_statistics.input_bytes = budget.bytes.get();
@@ -751,13 +878,16 @@ mod tests {
             rust_module: "crates/port/src/candidate.rs".into(),
             ..Default::default()
         };
-        let first = discovery.dependencies(&manifest, "family")?;
+        let first = discovery.dependencies(&manifest, "family", "candidate")?;
         assert!(first.contains(Path::new("crates/port/src/nested/helper.rs")));
-        assert_eq!(first, discovery.dependencies(&manifest, "family")?);
+        assert_eq!(first, discovery.dependencies(&manifest, "family", "candidate")?);
         assert!(discovery.closure_cache_hits > 0);
-        discovery.asset(&asset, Some(&asset_hash))?;
-        discovery.asset(&asset, Some(&asset_hash))?;
+        discovery.asset(&asset, Some(&asset_hash), "candidate")?;
+        discovery.asset(&asset, Some(&asset_hash), "candidate")?;
         assert!(discovery.input_cache_hits > 0);
+        assert_eq!(discovery.asset_reads, 0, "asset declaration discovery consumed its bytes");
+        assert!(discovery.authenticate_assets()?.is_empty());
+        assert_eq!(discovery.asset_reads, 1);
         let inputs = discovery.hashes.clone();
         assert!(discovery.validate_current(&inputs)?);
 
@@ -768,6 +898,8 @@ mod tests {
         fs::write(&asset, b"mutation")?;
         assert!(!discovery.validate_current(&inputs)?);
         fs::write(&asset, b"original")?;
+        assert!(!discovery.validate_asset_versions()?, "restored bytes bypassed the end-of-pass version fence");
+        assert!(discovery.authenticate_assets()?.is_empty());
 
         fs::rename(sources.join("nested"), sources.join("retained"))?;
         std::os::unix::fs::symlink(sources.join("retained"), sources.join("nested"))?;

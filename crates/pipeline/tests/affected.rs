@@ -166,6 +166,8 @@ fn shared_assets_are_read_once_but_each_requirement_is_checked() {
     assert!(families(&report, "selected").is_empty());
     assert_eq!(families(&report, "excluded").len(), names.len());
     assert!(report["planning_statistics"]["input_bytes"].as_integer().unwrap() < 3 * asset.len() as i64);
+    assert_eq!(report["planning_statistics"]["asset_declarations"].as_integer(), Some(70));
+    assert_eq!(report["planning_statistics"]["asset_reads"].as_integer(), Some(1));
 
     project.manifest("shared69", "a", &rom.replace(&digest, &"f".repeat(64)));
     let wrong_requirement = project.plan();
