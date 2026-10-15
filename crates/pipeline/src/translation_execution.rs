@@ -2,10 +2,8 @@
 //! gates, integration, source retention, cleanup and stable publication. The
 //! worker interface carries only the immutable capsule and source replacements.
 use crate::{
-    affected, cleanup, digest, emit, family_model::Asset, translation_infrastructure as infrastructure,
-    translation_original as original,
+    affected, cleanup, digest, emit, translation_infrastructure as infrastructure, translation_original as original,
 };
-use offline_verification as native;
 use ::translation_execution::{
     self as execution, ExecutionAdapter, FinalizationJournal, PublicationJournal, Supervisor, checkout,
     confinement::{self, Program, RunLimits},
@@ -15,6 +13,7 @@ use ::translation_execution::{
     rewrite_adapter::{InstalledRewriteAdapter, RecordedRewriteAdapter, RewriteAdapter},
 };
 use anyhow::{Context, Result, bail, ensure};
+use offline_verification::{self as native, fixtures::Asset};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -151,7 +150,7 @@ pub(crate) struct AuthenticatedNativeGate {
     pub source: SourceSnapshot,
     pub prepared: native::PreparedNative,
     pub receipt: native::NativeReceipt,
-    pub verdict: crate::family_model::Verdict,
+    pub verdict: offline_verification::Verdict,
 }
 
 pub(crate) struct AuthenticatedCompletion {
@@ -925,7 +924,8 @@ impl Adapter {
                         if sealed(current)? != sealed(&prior)? {
                             continue;
                         }
-                        if current.authenticate(native::NativeEvidence { checkout: source, receipt: &receipt }).is_err() {
+                        if current.authenticate(native::NativeEvidence { checkout: source, receipt: &receipt }).is_err()
+                        {
                             continue;
                         }
                         Receipt::Native { prepared: current.clone(), source: source.into(), receipt }
@@ -1291,9 +1291,9 @@ impl Adapter {
             .max_checkout_bytes
             .checked_mul(8)
             .context("preparation input budget overflow")?
-            .min(8 * crate::inputs::bounded::DEFAULT_BYTES);
+            .min(8 * tool_execution::bounded::DEFAULT_BYTES);
         if let Contract::Legacy { contract } = &self.installed.contract {
-            return crate::inputs::bounded::until(stage_deadline, input_budget, || {
+            return decomp_source::context::until(stage_deadline, input_budget, || {
                 let prepared = crate::translation_legacy::prepare(contract)?;
                 ensure!(
                     prepared.source_commit == policy.baseline_commit
@@ -1309,7 +1309,7 @@ impl Adapter {
             });
         }
         self.bootstrap(context, stage_deadline)?;
-        let (candidate, source, prepared) = crate::inputs::bounded::until(stage_deadline, input_budget, || {
+        let (candidate, source, prepared) = decomp_source::context::until(stage_deadline, input_budget, || {
             let candidate = self.candidate(context.attempt);
             if !candidate.join(".git").is_dir() {
                 if let Some(previous) = previous {
@@ -1341,7 +1341,7 @@ impl Adapter {
                     Contract::Legacy { .. } => unreachable!("legacy readiness stops before checkout preparation"),
                     Contract::Native { contracts, catalog_sha256, focused_family } => {
                         ensure!(
-                            crate::inputs::bounded::digest(&candidate.join("tools/port/batch.toml"))?
+                            tool_execution::bounded::digest(&candidate.join("tools/port/batch.toml"))?
                                 == *catalog_sha256,
                             "frozen full catalog changed"
                         );
@@ -1525,10 +1525,10 @@ impl Adapter {
         }
         // Readiness refers to baseline source. Preserve it before a replacement
         // can change the implementer checkout used by that independent proof.
-        let preservation_deadline = crate::inputs::bounded::now_unix_ms()?
+        let preservation_deadline = tool_execution::bounded::now_unix_ms()?
             .checked_add(120_000)
             .context("readiness preservation deadline overflow")?;
-        crate::inputs::bounded::until(preservation_deadline, input_budget, || {
+        decomp_source::context::until(preservation_deadline, input_budget, || {
             for receipt in &mut ready_receipts {
                 self.preserve_receipt(receipt)?;
             }
@@ -1592,7 +1592,7 @@ impl ExecutionAdapter for Adapter {
         );
         // Both live checkout and retired archive authenticate the complete Git
         // tree, not only the owned files carried by original queue admission.
-        let deadline = crate::inputs::bounded::now_unix_ms()?.saturating_add(60_000);
+        let deadline = tool_execution::bounded::now_unix_ms()?.saturating_add(60_000);
         if self.source_path(&imported.source, deadline).is_err() {
             self.source_archive(&imported.source)?;
         }
@@ -1627,19 +1627,19 @@ impl ExecutionAdapter for Adapter {
             .max_checkout_bytes
             .checked_mul(8)
             .context("preparation input budget overflow")?
-            .min(8 * crate::inputs::bounded::DEFAULT_BYTES);
-        crate::inputs::bounded::until(stage_deadline, input_budget, || {
+            .min(8 * tool_execution::bounded::DEFAULT_BYTES);
+        decomp_source::context::until(stage_deadline, input_budget, || {
             let mut context_text = format!(
                 "Approved scope: {}. Frozen dependencies: {}. Prescribed coverage: {}.\n",
                 policy.scope_id, policy.dependencies_sha256, policy.verification_sha256
             );
             if let Prepared::Native { families } = &prepared {
                 for family in families {
-                    crate::inputs::bounded::check()?;
+                    tool_execution::bounded::check()?;
                     let manifest = family.declaration(&candidate)?;
-                    let bank = crate::inputs::bounded::text(family.pinned_source().join("src").join(&manifest.bank))?;
+                    let bank = tool_execution::bounded::text(family.pinned_source().join("src").join(&manifest.bank))?;
                     for routine in &manifest.routines {
-                        crate::inputs::bounded::check()?;
+                        tool_execution::bounded::check()?;
                         let remaining = self.installed.max_context_bytes.saturating_sub(context_text.len() as u64);
                         let definition =
                             recovered_definition_bounded(&bank, &routine.symbol, remaining.saturating_sub(1))?;
@@ -1757,8 +1757,14 @@ impl ExecutionAdapter for Adapter {
                     let mut child = context.clone();
                     child.operation_key = sealed(&(&context.operation_key, &name))?;
                     let receipt = prepared.verify(
-                        native::NativeTarget { checkout: &checkout, output: &output.join(&name), context: &child, fixture_jobs: None },
-                        &runtime, &crate::offline::host_inputs()?,
+                        native::NativeTarget {
+                            checkout: &checkout,
+                            output: &output.join(&name),
+                            context: &child,
+                            fixture_jobs: None,
+                        },
+                        &runtime,
+                        &crate::offline::host_inputs()?,
                     )?;
                     let passed = receipt.passed;
                     receipts.push(Receipt::Native { prepared, source: checkout.clone(), receipt });
@@ -2581,9 +2587,11 @@ pub(crate) fn authenticate_completion(
                 let overlay: original::SourceOverlay = original::read(&verdict.overlay)?;
                 for reference in verdict.families.values() {
                     let family = original::read_family(reference)?;
-                    let native_verdict = family.prepared.authenticate(native::NativeEvidence {
-                        checkout: &overlay.root, receipt: &family.receipt,
-                    })?.report().clone();
+                    let native_verdict = family
+                        .prepared
+                        .authenticate(native::NativeEvidence { checkout: &overlay.root, receipt: &family.receipt })?
+                        .report()
+                        .clone();
                     native_gates.push(AuthenticatedNativeGate {
                         phase,
                         stage,
@@ -2606,7 +2614,8 @@ pub(crate) fn authenticate_completion(
             let Receipt::Native { prepared, source: path, receipt } = receipt else {
                 continue;
             };
-            let verdict = prepared.authenticate(native::NativeEvidence { checkout: &path, receipt: &receipt })?.report().clone();
+            let verdict =
+                prepared.authenticate(native::NativeEvidence { checkout: &path, receipt: &receipt })?.report().clone();
             native_gates.push(AuthenticatedNativeGate {
                 phase,
                 stage,

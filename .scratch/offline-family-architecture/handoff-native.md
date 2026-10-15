@@ -1,6 +1,6 @@
 # Native extraction handoff
 
-Status: production library extraction compiles; caller/proof migration in progress
+Status: production and application test compilation passed; cleanup in progress
 Owner: `/root/translation_architecture`, delegated by `/root`
 Parent session: `01a13c3b-d421-7bb3-80a2-ec91045678e7`
 Worktree: `/home/jim/sm-decomp-offline-native`
@@ -50,11 +50,77 @@ Cargo build job. Root owns the final real Native proofs after integration;
 the audited commands and complete recipe matrix are in the main checkout's
 `native-verification-plan.md` beside this handoff.
 
-The implementation library check passed with `cargo check --locked --offline
--p offline-verification`, an isolated `out/native-target`, one build job and the
-shared four-worker pool. Its log is
-`native-verification/check-library.log`. This check was not frozen-source
-verification; tests and the new application proof file still need migration.
-No Native producers have run. Cleanup and worktree retirement remain pending
-implementation/verification. Parent owns integrated worktree retirement after
-exact required source is retained.
+The following implementation checks passed with locked/offline Cargo, isolated
+`out/native-target`, one build job and the shared four-worker pool:
+
+- `cargo check --locked --offline -p offline-verification`:
+  `native-verification/check-library.log`.
+- `cargo test --locked --offline -p offline-verification --lib --no-run`:
+  `native-verification/check-library-tests.log`.
+- `cargo test --locked --offline -p offline-verification --lib native::tests::
+  -- --test-threads=1`: all 11 Native tests passed;
+  `native-verification/native-unit-tests.log`.
+- `cargo check --locked --offline -p pipeline`:
+  `native-verification/check-pipeline.log`.
+
+These are implementation checks, not frozen-source actual-C verification.
+The first application test check failed on missing private C include inputs,
+two caller-owned Catalog imports, and three accidental PreparedOriginal getter
+uses. Recovered C was copied into this isolated worktree, the Original accesses
+were fixed, and the caller imports were added locally only for checking. The
+Native commit excludes `batch.rs`; the caller owner publishes that fix.
+The final `-p pipeline --tests` check passed and is recorded separately in
+`native-verification/check-pipeline-tests-2.log`.
+
+No real Native producer or ignored proof has run here. Synthetic unit-test
+directories are self-cleaning. Utility cleanup and integrated worktree/build
+retirement remain pending. Parent owns integrated worktree retirement after
+exact required source is retained. Own disposable dependency copies are
+`deps/rustysnes` and `deps/snesrev-sm`; no private ROM was copied.
+
+## Follow-up implementation
+
+The initial compiling extraction is `3b9e8e8`. This follow-up shares the full
+expected compiler Program between execution and Native authentication through
+the private recipe and compiler owners. Authentication recovers original
+retained checkout bindings from the recorded candidate or headless input, so
+an equivalent new checkout can reuse the complete old result.
+
+Pipeline production callers and tests use public Native requests, opaque
+prepared accessors, scalar operation counts and retained references. Shared
+operation scopes remain in `decomp_source::context`; generic bounded IO stays
+in `tool_execution::bounded`. Scope approval remains in the pipeline adapter.
+
+Native proof snapshots use `source_stamps::all()` and copy the complete nested
+port source tree. The full proof accepts optional `SM_NATIVE_FULL_SOURCE`.
+The catalog freeze requires explicit `SM_NATIVE_CATALOG_SOURCE` and refuses
+the compiling checkout because it authors generated PLM inputs. Recipe proofs
+preserve the original fresh ten-minute preparation scope for each family;
+catalog preparation stays lazy and does not retain expanded manifests.
+
+## Retained read-only Native gate
+
+Recipe and full proofs write `retained-authentication.toml` in their proof root.
+It records only exact prepared/checkout/receipt paths and expected outcomes.
+The full proof records all four cases: passing `run`, rejected
+`compile-denial`, passing denial-checking `runtime-denial`, and rejected
+zero-producer `reservation-denial`. The optional performance-only route records
+only the passing baseline; final acceptance must leave
+`SM_NATIVE_PERFORMANCE_ONLY` unset so all negative controls run.
+
+After cleanup, and again after implementer worktree/build retirement, run the
+retained test reader with:
+
+```sh
+env SM_NATIVE_AUTHENTICATION_MANIFEST=<proof-root>/retained-authentication.toml \
+  <retained-test-reader> --ignored --exact \
+  translation_native::tests::retained_native_proofs_authenticate_without_execution \
+  --nocapture --test-threads=1
+```
+
+Run it separately for the recipe proof root and the full proof's `actual-c`
+root (or its explicitly selected name). This test reads the saved paths and
+calls `PreparedNative::authenticate` only. It never calls source preparation,
+generation, execution, retry, cleanup or `current_checkout()`, and does not
+require today's producer hash. New owner-stamped indexed formats are the only
+current-reader target; old pinned readers/source snapshots remain separate.

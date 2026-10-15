@@ -12,7 +12,16 @@ fn contract_for_family(
         &[("crates/offline-verification/src/native_tests.rs", include_str!("native_tests.rs"))],
         sha256("native-unit-test-producer"),
     )?;
-    super::contract_for_family(&host, checkout, manifest, source_inventory, provenance, compiler_limits, fixture_limits)
+    OfflineFamilies::new(host).declare_native(NativeDeclaration {
+        checkout,
+        kind: NativeDeclarationKind::Family(manifest),
+        source_inventory,
+        provenance,
+        compiler_limits,
+        fixture_limits,
+        deadline_unix_ms: None,
+        max_input_bytes: bounded::DEFAULT_BYTES,
+    })
 }
 
 #[test]

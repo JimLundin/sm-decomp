@@ -2,10 +2,8 @@
 //! public lifecycle. This intentionally incomplete fixture grants no native,
 //! managed production, Live replay or original-ROM acceptance.
 use super::*;
-use crate::{
-    family_model::Asset,
-    translation_execution::{self as supervisor, Contract, InstalledFile, tests::Project},
-};
+use crate::translation_execution::{self as supervisor, Contract, InstalledFile, tests::Project};
+use offline_verification::fixtures::Asset;
 use std::{
     process::Command,
     time::{Duration, Instant, SystemTime},
@@ -119,7 +117,7 @@ fn fixture() -> Result<Project> {
     let requirement = write(&project.root.join("original-requirements.json"), &LIMITATION)?;
     let catalog = project.root.join("catalog.toml");
     fs::write(&catalog, "[families]\npause-equipment-render = \"family\"\n[profiles]\n")?;
-    let manifest = crate::fixture_format::decode(contents[2].1.to_vec())?;
+    let manifest = offline_verification::fixtures::decode(contents[2].1.to_vec())?;
     let coverage: BTreeMap<String, Vec<String>> = manifest
         .routines
         .iter()
@@ -129,37 +127,36 @@ fn fixture() -> Result<Project> {
     // Completeness is checked before native provenance or C preparation. These
     // declarations preserve the real primary manifest/coverage and cannot be
     // mistaken for a prepared native proof: its auxiliary declaration is absent.
-    let primary = native::NativeContract {
-        family: manifest.family,
-        manifest: Asset { file: OWNED[2].into(), sha256: files[OWNED[2]].clone() },
-        source_inventory: Asset {
+    let primary: native::NativeContract = serde_json::from_value(serde_json::json!({
+        "family": manifest.family,
+        "manifest": Asset { file: OWNED[2].into(), sha256: files[OWNED[2]].clone() },
+        "source_inventory": Asset {
             file: "unavailable-before-composite-completeness.toml".into(),
             sha256: sha256(LIMITATION),
         },
-        coverage,
-        provenance: native::NativeProvenance::ReviewedCatalog {
+        "coverage": coverage,
+        "provenance": native::NativeProvenance::ReviewedCatalog {
             catalog: asset(retention::seal_file(&catalog, MAX_RECORD)?),
             requirements: asset(requirement),
             checkout: verification.clone(),
             rationale: LIMITATION.into(),
         },
-        frozen_inputs: files.clone(),
-        compiler_limits: native::NativeLimits {
+        "frozen_inputs": files.clone(),
+        "compiler_limits": native::NativeLimits {
             timeout_seconds: 60,
             writable_bytes: 128 * 1024 * 1024,
             stdout_bytes: 4096,
             stderr_bytes: 65536,
             stdin_bytes: 0,
         },
-        fixture_limits: native::NativeLimits {
+        "fixture_limits": native::NativeLimits {
             timeout_seconds: 5,
             writable_bytes: 512 * 1024,
             stdout_bytes: 4096,
             stderr_bytes: 4096,
             stdin_bytes: 0,
         },
-        recipe: None,
-    };
+    }))?;
     let primary = write(&project.root.join("primary-family.json"), &primary)?;
     let rustc = &project.installation.rustc.path;
     let cargo_executable = rustc.parent().context("fixture toolchain missing")?.join("cargo");

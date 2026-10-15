@@ -1,4 +1,4 @@
-//! Installed actual-C adapter for frozen, registered plain Offline families.
+//! Installed actual-C execution for complete frozen, registered Offline families.
 //! Candidate compilation and each fixture invocation are separate confined
 //! producers. Only the trusted parent writes the family verdict and inventory.
 use crate::{
@@ -480,57 +480,6 @@ fn c_inputs(source: &Path, manifest: &Manifest, full: bool) -> Result<Vec<PathBu
     }
     ensure!(result.len() <= 4096, "pinned C input inventory exceeded");
     Ok(result.into_iter().collect())
-}
-
-/// Freeze a reviewed catalog entry. Preparation still authenticates every seal
-/// and rejects missing provenance/coverage before the supervisor emits a capsule.
-#[cfg(test)]
-fn contract_for_family(
-    host: &HostInputs,
-    checkout: &Path,
-    manifest: &Path,
-    source_inventory: Asset,
-    provenance: NativeProvenance,
-    compiler_limits: NativeLimits,
-    fixture_limits: NativeLimits,
-) -> Result<NativeContract> {
-    source_context::limited(|| {
-        contract_for_family_bounded(
-            host,
-            checkout,
-            manifest,
-            source_inventory,
-            provenance,
-            compiler_limits,
-            fixture_limits,
-        )
-    })
-}
-
-#[allow(clippy::too_many_arguments)]
-#[cfg(test)]
-fn contract_for_family_until(
-    host: &HostInputs,
-    checkout: &Path,
-    manifest: &Path,
-    source_inventory: Asset,
-    provenance: NativeProvenance,
-    compiler_limits: NativeLimits,
-    fixture_limits: NativeLimits,
-    deadline: u64,
-    max_bytes: u64,
-) -> Result<NativeContract> {
-    source_context::until(deadline, max_bytes, || {
-        contract_for_family_bounded(
-            host,
-            checkout,
-            manifest,
-            source_inventory,
-            provenance,
-            compiler_limits,
-            fixture_limits,
-        )
-    })
 }
 
 fn contract_for_family_bounded(
@@ -1066,7 +1015,6 @@ fn candidate_digest(prepared: &PreparedNative, checkout: &Path) -> Result<String
     sealed(&inputs)
 }
 
-/// Before rewrite dispatch, the supervisor runs this same prescribed path on
 #[cfg(test)]
 fn run(
     prepared: &PreparedNative,
@@ -1601,64 +1549,79 @@ fn authenticate_operation(
         operation.directory.parent().context("native fixture family parent missing")?.to_path_buf()
     };
     ensure!(invocation.program.helper == intent.helper, "native helper configuration changed");
-    let candidate_root = if compiler && rust {
-        let candidate = invocation
-            .program
-            .inputs
-            .iter()
-            .find(|input| input.destination == Path::new("/inputs/rust").join(&prepared.candidate_path))
-            .context("confined candidate compiler input missing")?;
-        let mut checkout = candidate.source.clone();
-        for _ in Path::new(&prepared.candidate_path).components() {
-            checkout.pop();
-        }
-        Some(checkout)
-    } else {
-        None
-    };
-    let mut expected_inputs = BTreeSet::new();
     if compiler {
         ensure!(
             &invocation.program.executable == if rust { &intent.rustc } else { &intent.c_compiler }
                 && sealed(&invocation.program.runtime)? == intent.compiler_runtime_sha256,
             "native compiler installed capabilities changed"
         );
-        for name in if rust { &prepared.rust_inputs } else { &prepared.c_inputs } {
-            let source = if rust {
-                // Compiler inputs use the exact frozen candidate checkout path
-                // already retained by its family implementation identity.
-                candidate_root.as_ref().context("confined candidate checkout missing")?.join(name)
-            } else {
-                prepared.pinned_source.join(name)
-            };
-            expected_inputs.insert((source, Path::new(if rust { "/inputs/rust" } else { "/inputs/c" }).join(name)));
-        }
-        let (generated, outputs, headless) = recipes::compiler_files(prepared.contract.recipe.as_ref(), rust);
-        for name in generated {
-            expected_inputs.insert((operation.directory.join(name), Path::new("/inputs/generated").join(name)));
-        }
-        if headless {
+        let recipe = prepared.contract.recipe.as_ref();
+        let c_inputs = prepared.c_inputs.iter().map(|name| prepared.pinned_source.join(name)).collect::<Vec<_>>();
+        let c_units =
+            c_inputs.iter().filter(|path| path.extension().is_some_and(|ext| ext == "c")).cloned().collect::<Vec<_>>();
+        let description = if rust {
+            recipes::rust_compiler_command(recipe, &family_run)
+        } else {
+            recipes::c_compiler_command(
+                recipe,
+                &prepared.manifest,
+                &prepared.pinned_source,
+                &family_run,
+                &c_units,
+                false,
+            )?
+        };
+        // A completed receipt may be reused from an equivalent retained
+        // checkout. Recover its original binding rather than remapping it to
+        // the checkout currently being authenticated.
+        let root_input = if rust {
+            Some(PathBuf::from(&prepared.candidate_path))
+        } else if description.full_c {
+            Some(PathBuf::from("tools/decomp/headless.c"))
+        } else {
+            None
+        };
+        let compiler_checkout = if let Some(relative) = root_input {
+            let input = invocation
+                .program
+                .inputs
+                .iter()
+                .find(|input| input.destination == Path::new("/inputs/rust").join(&relative))
+                .context("confined compiler checkout input missing")?;
+            let mut checkout = input.source.clone();
+            for _ in relative.components() {
+                ensure!(checkout.pop(), "confined compiler checkout path truncated");
+            }
+            checkout
+        } else {
+            // Plain C compilation has no checkout capability or argument.
+            family_run.clone()
+        };
+        if description.full_c {
             for name in ["headless.c", "headless_frame.h"] {
-                let destination = Path::new("/inputs/rust/tools/decomp").join(name);
-                let input = invocation
-                    .program
-                    .inputs
-                    .iter()
-                    .find(|i| i.destination == destination)
-                    .context("native headless source missing")?;
                 ensure!(
                     prepared.contract.frozen_inputs.get(&format!("tools/decomp/{name}"))
-                        == Some(&digest(&input.source)?),
+                        == Some(&digest(&compiler_checkout.join("tools/decomp").join(name))?),
                     "native headless source changed"
                 );
-                expected_inputs.insert((input.source.clone(), destination));
             }
         }
-        let outputs = outputs.into_iter().map(PathBuf::from).collect::<BTreeSet<_>>();
-        ensure!(
-            invocation.program.outputs.iter().cloned().collect::<BTreeSet<_>>() == outputs,
-            "native compiler outputs changed"
-        );
+        let rust_inputs = prepared.rust_inputs.iter().map(|name| compiler_checkout.join(name)).collect::<Vec<_>>();
+        let expected = builds::compiler_program(
+            &description,
+            &family_run,
+            builds::CompilerContext {
+                helper: &intent.helper,
+                rustc: &intent.rustc,
+                c_compiler: &intent.c_compiler,
+                runtime: &invocation.program.runtime,
+                rust_inputs: &rust_inputs,
+                c_inputs: &c_inputs,
+                checkout: &compiler_checkout,
+                source: &prepared.pinned_source,
+            },
+        )?;
+        ensure!(invocation.program == expected, "native compiler arguments, outputs or capabilities changed");
     } else {
         let selection = if operation.label == "abi-controls" {
             recipes::FixtureSelection::AbiControls
@@ -1681,18 +1644,7 @@ fn authenticate_operation(
             &intent.helper,
         )?;
         ensure!(invocation.program == expected, "native fixture arguments, outputs or capabilities changed");
-        expected_inputs.extend(expected.inputs.into_iter().map(|i| (i.source, i.destination)));
     }
-    ensure!(
-        invocation
-            .program
-            .inputs
-            .iter()
-            .map(|input| (input.source.clone(), input.destination.clone()))
-            .collect::<BTreeSet<_>>()
-            == expected_inputs,
-        "native compiler/fixture read capabilities changed"
-    );
     let result = translation_execution::operation::authenticate_request(
         root,
         &expected_context,

@@ -2,17 +2,14 @@
 //! result is a separately sealed installation; it never edits an original
 //! migration, claim, submission, policy or stopped attempt.
 use crate::{
-    batch,
-    family_model::Asset,
-    inputs::bounded,
     translation_cargo as cargo, translation_compact as compact, translation_continuation as continuation,
     translation_execution::{Contract, Installation, InstalledFile},
     translation_migration::{self as migration, Migration, OriginalClaim},
     translation_original as original, translation_production as production,
     translation_production_prepare as deployment,
 };
-use offline_verification as native;
 use anyhow::{Context, Result, ensure};
+use offline_verification::{self as native, catalog as batch, fixtures::Asset};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -20,6 +17,7 @@ use std::{
     os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
 };
+use tool_execution::bounded;
 use translation_execution::{
     model::sealed,
     retention::{self, Reference},
@@ -154,7 +152,8 @@ fn snapshot(config: &Config, claim: &OriginalClaim, output: &Path) -> Result<ori
     ensure!(reference.sha256 == config.direct_animation.sha256, "direct animation review changed");
     files.insert(plan.into(), reference.sha256);
     if !output.join(".scratch/translation-native/plm-instructions/manifest.smf").exists() {
-        crate::offline::families()?.prepare_generated_plm(output, &output.join(".scratch/translation-native/plm-instructions"))?;
+        crate::offline::families()?
+            .prepare_generated_plm(output, &output.join(".scratch/translation-native/plm-instructions"))?;
     }
     let mut generated = BTreeSet::new();
     collect(output, &output.join(".scratch/translation-native/plm-instructions"), &mut generated)?;
@@ -300,7 +299,7 @@ pub(crate) fn prepare(path: &Path) -> Result<Report> {
         let cargo = original::write(&scope_root.join("cargo.json"), &cargo)?;
         let catalog = batch::catalog(&source.root)?;
         let catalog_path = scope_root.join("catalog.toml");
-        crate::inputs::immutable_bytes(&catalog_path, toml::to_string(&catalog)?.as_bytes())?;
+        bounded::immutable_bytes(&catalog_path, toml::to_string(&catalog)?.as_bytes())?;
         let catalog_reference = retention::seal_file(&catalog_path, MAX_RECORD)?;
         let inventory = Asset {
             file: "tools/port/source-inventory.toml".into(),
@@ -335,17 +334,18 @@ pub(crate) fn prepare(path: &Path) -> Result<Report> {
         for name in names {
             let entry = batch::entry(&catalog, &name)?;
             let callback = matches!(entry.kind.as_str(), "callback" | "power-bomb" | "ridley-subsystem");
-            let contract = crate::offline::families()?.declare_native(native::NativeDeclaration {
-                checkout: &source.root,
-                kind: native::NativeDeclarationKind::Family(&entry.manifest),
-                source_inventory: inventory.clone(),
-                provenance: provenance.clone(),
-                compiler_limits: compiler.clone(),
-                fixture_limits: fixture(callback),
-                deadline_unix_ms: None,
-                max_input_bytes: bounded::DEFAULT_BYTES,
-            })
-            .with_context(|| format!("preparing original {id} Offline family {name}"))?;
+            let contract = crate::offline::families()?
+                .declare_native(native::NativeDeclaration {
+                    checkout: &source.root,
+                    kind: native::NativeDeclarationKind::Family(&entry.manifest),
+                    source_inventory: inventory.clone(),
+                    provenance: provenance.clone(),
+                    compiler_limits: compiler.clone(),
+                    fixture_limits: fixture(callback),
+                    deadline_unix_ms: None,
+                    max_input_bytes: bounded::DEFAULT_BYTES,
+                })
+                .with_context(|| format!("preparing original {id} Offline family {name}"))?;
             families.insert(
                 name.clone(),
                 original::write(&scope_root.join("families").join(format!("{name}.json")), &contract)?,
@@ -354,7 +354,9 @@ pub(crate) fn prepare(path: &Path) -> Result<Report> {
         if kind == original::OriginalKind::PauseEquipment {
             let direct = crate::offline::families()?.declare_native(native::NativeDeclaration {
                 checkout: &source.root,
-                kind: native::NativeDeclarationKind::DirectAnimation(Path::new(".scratch/translation-native/pause-direct-animation.toml")),
+                kind: native::NativeDeclarationKind::DirectAnimation(Path::new(
+                    ".scratch/translation-native/pause-direct-animation.toml",
+                )),
                 source_inventory: inventory,
                 provenance,
                 compiler_limits: compiler,

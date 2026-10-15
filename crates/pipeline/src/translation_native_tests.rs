@@ -1,13 +1,179 @@
 //! Retained real Native proofs use the public Offline verification interface.
 use super::*;
+use offline_verification::{
+    AuthenticatedNative, ConfinedEnvironment as StrictRuntime, NativeContract, NativeDeclaration,
+    NativeDeclarationKind, NativeEvidence, NativeLimits, NativePreparation, NativeProvenance, NativeReceipt,
+    NativeTarget, NoScopeAdmission, PreparedNative, Verdict, catalog as batch,
+};
+use serde::{Deserialize, Serialize};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    path::PathBuf,
+    time::SystemTime,
+};
+use tool_execution::{
+    atomic_toml,
+    bounded::{digest, immutable_bytes as immutable, now_unix_ms},
+};
+use translation_execution::{
+    OperationContext,
+    model::{sealed, sha256},
+    retention::Reference,
+};
+
 fn current_checkout() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).parent().unwrap().parent().unwrap().to_path_buf()
+}
+
+fn prepare(checkout: &Path, pinned: &Path, contract: &NativeContract) -> Result<PreparedNative> {
+    crate::offline::families()?.prepare_native(NativePreparation::new(checkout, pinned, contract), &ScopeApproval)
+}
+
+fn run(
+    prepared: &PreparedNative,
+    checkout: &Path,
+    output: &Path,
+    runtime: &StrictRuntime,
+    context: &OperationContext,
+) -> Result<NativeReceipt> {
+    run_bounded(prepared, checkout, output, runtime, context, runtime.workers)
+}
+
+fn run_bounded(
+    prepared: &PreparedNative,
+    checkout: &Path,
+    output: &Path,
+    runtime: &StrictRuntime,
+    context: &OperationContext,
+    fixture_jobs: usize,
+) -> Result<NativeReceipt> {
+    prepared.verify(
+        NativeTarget { checkout, output, context, fixture_jobs: Some(fixture_jobs) },
+        runtime,
+        &crate::offline::host_inputs()?,
+    )
+}
+
+fn authenticate(prepared: &PreparedNative, checkout: &Path, receipt: &NativeReceipt) -> Result<Verdict> {
+    Ok(prepared.authenticate(NativeEvidence { checkout, receipt })?.report().clone())
+}
+
+struct ProofProducer {
+    directory: PathBuf,
+    label: String,
+    invocation: Asset,
+    result: Reference,
+}
+
+fn proof_producers(admitted: &AuthenticatedNative, receipt: &NativeReceipt) -> Result<Vec<ProofProducer>> {
+    let mut producers = Vec::new();
+    for reference in admitted.references() {
+        let Some(label) = reference
+            .path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .and_then(|name| name.strip_suffix(".invocation.toml"))
+        else {
+            continue;
+        };
+        if !reference.path.starts_with(&admitted.report().run) {
+            continue;
+        }
+        let record: toml::Value = bounded::object(&reference.path)?;
+        let context: OperationContext =
+            record.get("context").context("retained producer context missing")?.clone().try_into()?;
+        let result = translation_execution::operation::reference(&receipt.operation_root, &context)?;
+        ensure!(admitted.references().contains(&result), "producer result absent from admitted retention");
+        producers.push(ProofProducer {
+            directory: reference.path.parent().context("producer invocation parent missing")?.to_path_buf(),
+            label: label.to_owned(),
+            invocation: Asset { file: reference.path.clone(), sha256: reference.sha256.clone() },
+            result,
+        });
+    }
+    ensure!(producers.len() == receipt.operation_count()?, "retained producer attribution incomplete");
+    Ok(producers)
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct RetainedProof {
+    schema: String,
+    cases: BTreeMap<String, RetainedCase>,
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct RetainedCase {
+    prepared: PathBuf,
+    checkout: PathBuf,
+    receipt: PathBuf,
+    passed: bool,
+    fixture_pairs: Option<usize>,
+    operation_count: Option<usize>,
+    diagnostic_contains: Option<String>,
+}
+
+fn retain_case(root: &Path, name: &str, mut case: RetainedCase) -> Result<()> {
+    case.prepared = fs::canonicalize(case.prepared)?;
+    case.checkout = fs::canonicalize(case.checkout)?;
+    case.receipt = fs::canonicalize(case.receipt)?;
+    let path = root.join("retained-authentication.toml");
+    let mut proof = if path.exists() {
+        bounded::object::<RetainedProof>(&path)?
+    } else {
+        RetainedProof { schema: "retained-native-proof-v1".into(), cases: BTreeMap::new() }
+    };
+    ensure!(proof.schema == "retained-native-proof-v1", "retained Native proof schema changed");
+    proof.cases.insert(name.into(), case);
+    atomic_toml(&path, &proof)
+}
+
+fn cleanup_proof(root: &Path) -> Result<()> {
+    for deduplicate in [false, true] {
+        let result =
+            crate::cleanup::cleanup(crate::cleanup::CleanupRequest { root: root.into(), apply: true, deduplicate })?;
+        atomic_toml(&root.join(if deduplicate { "cleanup-deduplicated.toml" } else { "cleanup.toml" }), &result)?;
+    }
+    Ok(())
+}
+
+fn authenticate_retained(path: &Path) -> Result<()> {
+    let proof: RetainedProof = bounded::object(path)?;
+    ensure!(
+        proof.schema == "retained-native-proof-v1" && !proof.cases.is_empty(),
+        "retained Native proof is incomplete"
+    );
+    for (name, case) in proof.cases {
+        let prepared: PreparedNative = bounded::object(&case.prepared)?;
+        let receipt: NativeReceipt = bounded::object(&case.receipt)?;
+        let admitted = prepared.authenticate(NativeEvidence { checkout: &case.checkout, receipt: &receipt })?;
+        ensure!(receipt.passed == case.passed, "{name}: retained Native outcome changed");
+        if let Some(pairs) = case.fixture_pairs {
+            ensure!(admitted.report().verified_cases == pairs, "{name}: complete Fixture domain changed");
+        }
+        if let Some(operations) = case.operation_count {
+            ensure!(receipt.operation_count()? == operations, "{name}: producer attribution changed");
+        }
+        if let Some(diagnostic) = case.diagnostic_contains {
+            ensure!(receipt.diagnostic.contains(&diagnostic), "{name}: rejection diagnostic changed");
+        }
+        println!("Authenticated retained Native proof {name}: {}", admitted.report().status);
+    }
+    Ok(())
+}
+
+#[test]
+#[ignore = "read-only retained Native authentication; never prepares or executes a producer"]
+fn retained_native_proofs_authenticate_without_execution() -> Result<()> {
+    authenticate_retained(Path::new(&std::env::var("SM_NATIVE_AUTHENTICATION_MANIFEST")?))
 }
 
 #[test]
 #[ignore = "real separately confined actual-C controls; retains source, replay and cleanup evidence"]
 fn real_reviewed_recipes_replay_and_authenticate() -> Result<()> {
     let _ = crate::BINARY_SHA256.set(crate::digest(&std::env::current_exe()?)?);
+    let offline = crate::offline::families()?;
     let root = PathBuf::from(std::env::var("SM_NATIVE_RECIPE_PROOF")?);
     fs::create_dir_all(&root)?;
     let current = std::env::var_os("SM_NATIVE_RECIPE_SOURCE").map(PathBuf::from).unwrap_or_else(current_checkout);
@@ -23,14 +189,7 @@ fn real_reviewed_recipes_replay_and_authenticate() -> Result<()> {
         "tools/decomp/headless_frame.h".into(),
         "tools/port/source-inventory.toml".into(),
     ]);
-    for directory in ["crates/pipeline/src", "crates/port/src"] {
-        for entry in fs::read_dir(current.join(directory))? {
-            let path = entry?.path();
-            if path.is_file() {
-                paths.insert(path.strip_prefix(&current)?.display().to_string());
-            }
-        }
-    }
+    crate::translation_execution::tests::copy_native_source_snapshot(&current, &checkout)?;
     for name in &names {
         if *name == "pause-direct-animation" {
             paths.extend([
@@ -49,7 +208,7 @@ fn real_reviewed_recipes_replay_and_authenticate() -> Result<()> {
         immutable(&checkout.join(&path), &bounded::read(current.join(&path))?)?;
     }
     if names.contains(&"plm-instructions") {
-        prepare_generated_plm(&checkout, &checkout.join(".scratch/translation-native/plm-instructions"))?;
+        offline.prepare_generated_plm(&checkout, &checkout.join(".scratch/translation-native/plm-instructions"))?;
     }
     let catalog = root.join("catalog.toml");
     immutable(&catalog, toml::to_string(&batch::catalog(&checkout)?)?.as_bytes())?;
@@ -92,45 +251,47 @@ fn real_reviewed_recipes_replay_and_authenticate() -> Result<()> {
     let mut completed = Vec::new();
     let mut failures = Vec::new();
     let pinned = Path::new("/home/jim/sm-decomp/deps/snesrev-sm");
-    let inputs = prepare_catalog_inputs_until(
-        &checkout,
-        pinned,
-        &inventory,
-        now_unix_ms()? + 600_000,
-        8 * bounded::DEFAULT_BYTES,
-    )?;
+    let contracts = names
+        .iter()
+        .map(|name| {
+            let path = if *name == "pause-direct-animation" {
+                PathBuf::from(".scratch/decomp-coverage/renderer/direct-animation.toml")
+            } else {
+                PathBuf::from(format!("tools/port/{name}.smf"))
+            };
+            offline.declare_native(NativeDeclaration {
+                checkout: &checkout,
+                kind: if *name == "pause-direct-animation" {
+                    NativeDeclarationKind::DirectAnimation(&path)
+                } else {
+                    NativeDeclarationKind::Family(&path)
+                },
+                source_inventory: inventory.clone(),
+                provenance: provenance.clone(),
+                compiler_limits: compiler.clone(),
+                fixture_limits: fixture.clone(),
+                deadline_unix_ms: None,
+                max_input_bytes: 8 * bounded::DEFAULT_BYTES,
+            })
+        })
+        .collect::<Result<Vec<_>>>()?;
+    let requests = contracts
+        .iter()
+        .map(|contract| NativePreparation {
+            deadline_unix_ms: None,
+            max_input_bytes: 8 * bounded::DEFAULT_BYTES,
+            ..NativePreparation::new(&checkout, pinned, contract)
+        })
+        .collect::<Vec<_>>();
+    let mut preparations = decomp_source::context::until(now_unix_ms()? + 600_000, 8 * bounded::DEFAULT_BYTES, || {
+        offline.prepare_native_catalog(&requests, &NoScopeAdmission)
+    })?;
     for name in names {
         let output = root.join(name);
         fs::create_dir_all(&output)?;
-        let contract = if name == "pause-direct-animation" {
-            contract_for_direct_animation(
-                &checkout,
-                Path::new(".scratch/decomp-coverage/renderer/direct-animation.toml"),
-                inventory.clone(),
-                provenance.clone(),
-                compiler.clone(),
-                fixture.clone(),
-            )?
-        } else {
-            contract_for_family(
-                &checkout,
-                Path::new(&format!("tools/port/{name}.smf")),
-                inventory.clone(),
-                provenance.clone(),
-                compiler.clone(),
-                fixture.clone(),
-            )?
-        };
-        let declared = recipes::manifest(&checkout, &checkout.join(&contract.manifest.file), contract.recipe.as_ref())?;
-        let prepared = prepare_scope_in_catalog_until(
-            &checkout,
-            pinned,
-            &contract,
-            &[declared.rust_module],
-            &inputs,
-            now_unix_ms()? + 600_000,
-            8 * bounded::DEFAULT_BYTES,
-        )?;
+        let prepared = decomp_source::context::until(now_unix_ms()? + 600_000, 8 * bounded::DEFAULT_BYTES, || {
+            preparations.next().context("prepared recipe declaration missing")?
+        })?;
         immutable(&output.join("prepared.toml"), toml::to_string(&prepared)?.as_bytes())?;
         let runtime = StrictRuntime {
             helper: std::env::var("SM_NATIVE_RECIPE_HELPER")
@@ -148,7 +309,7 @@ fn real_reviewed_recipes_replay_and_authenticate() -> Result<()> {
         let context = OperationContext {
             run_id: sha256(root.display().to_string()),
             attempt: 1,
-            policy_sha256: prepared.verification_sha256.clone(),
+            policy_sha256: prepared.verification_sha256().to_owned(),
             operation_key: sha256(name),
             phase: translation_execution::model::ExecutionPhase::Candidate,
         };
@@ -158,18 +319,40 @@ fn real_reviewed_recipes_replay_and_authenticate() -> Result<()> {
             .transpose()?
             .unwrap_or(runtime.workers);
         let receipt = run_bounded(&prepared, &checkout, &output.join("run"), &runtime, &context, fixture_jobs)?;
-        let verdict = authenticate(&prepared, &checkout, &receipt)?;
-        let mut identities = Vec::new();
-        receipt.visit_operations(|operation| {
-            identities.push((operation.result.path.clone(), operation.result.path.metadata()?.modified()?));
-            Ok(())
-        })?;
+        retain_case(
+            &root,
+            name,
+            RetainedCase {
+                prepared: output.join("prepared.toml"),
+                checkout: checkout.clone(),
+                receipt: output.join("run/native-receipt.toml"),
+                passed: true,
+                fixture_pairs: Some(prepared.contract().coverage.values().map(Vec::len).sum()),
+                operation_count: None,
+                diagnostic_contains: None,
+            },
+        )?;
+        let admitted = prepared.authenticate(NativeEvidence { checkout: &checkout, receipt: &receipt })?;
+        let verdict = admitted.report();
+        let identities = proof_producers(&admitted, &receipt)?
+            .into_iter()
+            .map(|operation| {
+                Ok((
+                    operation.result.path.clone(),
+                    operation.result.sha256,
+                    operation.result.path.metadata()?.modified()?,
+                ))
+            })
+            .collect::<Result<Vec<_>>>()?;
         ensure!(
             sealed(&run(&prepared, &checkout, &output.join("run"), &runtime, &context)?)? == sealed(&receipt)?,
             "recipe replay changed receipt"
         );
-        for (path, modified) in identities {
-            ensure!(path.metadata()?.modified()? == modified, "recipe replay changed producer");
+        for (path, hash, modified) in identities {
+            ensure!(
+                path.metadata()?.modified()? == modified && digest(&path)? == hash,
+                "recipe replay changed producer"
+            );
         }
         for deduplicate in [false, true] {
             let cleanup = crate::cleanup::cleanup(crate::cleanup::CleanupRequest {
@@ -208,32 +391,41 @@ fn real_reviewed_recipes_replay_and_authenticate() -> Result<()> {
         completed.push((name.to_string(), receipt.passed, verdict.verified_cases, receipt.diagnostic));
     }
     atomic_toml(&root.join("summary.toml"), &BTreeMap::from([("families", completed)]))?;
+    cleanup_proof(&root)?;
     ensure!(failures.is_empty(), "{}", failures.join("; "));
+    authenticate_retained(&root.join("retained-authentication.toml"))?;
     Ok(())
 }
 
 #[test]
 #[ignore = "freezes every current catalog declaration with real pinned source; no producer is launched"]
 fn complete_current_catalog_has_a_frozen_native_recipe() -> Result<()> {
+    let _ = crate::BINARY_SHA256.set(crate::digest(&std::env::current_exe()?)?);
+    let offline = crate::offline::families()?;
     let root = PathBuf::from(std::env::var("SM_NATIVE_CATALOG_PROOF")?);
     fs::create_dir_all(&root)?;
-    let checkout = std::env::var_os("SM_NATIVE_CATALOG_SOURCE").map(PathBuf::from).unwrap_or_else(current_checkout);
-    prepare_generated_plm(&checkout, &checkout.join(".scratch/translation-native/plm-instructions"))?;
+    // The catalog's generated PLM declarations belong in an explicit retained
+    // source snapshot, because this proof authors those inputs.
+    let checkout = fs::canonicalize(PathBuf::from(std::env::var("SM_NATIVE_CATALOG_SOURCE")?))?;
+    ensure!(checkout != fs::canonicalize(current_checkout())?, "catalog proof requires a separate source snapshot");
+    offline.prepare_generated_plm(&checkout, &checkout.join(".scratch/translation-native/plm-instructions"))?;
     let catalog = batch::catalog(&checkout)?;
     let catalog_path = root.join("catalog.toml");
     immutable(&catalog_path, toml::to_string(&catalog)?.as_bytes())?;
     let requirements = checkout.join(".scratch/translation-scope-execution/issues/10-original-acceptance-adapters.md");
-    let provenance = NativeProvenance::ReviewedCatalog { catalog: Asset { file: catalog_path.clone(), sha256: digest(&catalog_path)? },
-            requirements: Asset { file: requirements.clone(), sha256: digest(&requirements)? }, checkout: checkout.clone(),
-            rationale: "Current conservative catalog: every registered declaration, all generated cases, exact original requirements".into() };
+    let provenance = NativeProvenance::ReviewedCatalog {
+        catalog: Asset { file: catalog_path.clone(), sha256: digest(&catalog_path)? },
+        requirements: Asset { file: requirements.clone(), sha256: digest(&requirements)? },
+        checkout: checkout.clone(),
+        rationale: "Current conservative catalog: every registered declaration, all generated cases, exact original requirements".into(),
+    };
     let inventory = Asset {
         file: "tools/port/source-inventory.toml".into(),
         sha256: digest(&checkout.join("tools/port/source-inventory.toml"))?,
     };
     let pinned = Path::new("/home/jim/sm-decomp/deps/snesrev-sm");
     let deadline = now_unix_ms()? + 600_000;
-    let inputs = prepare_catalog_inputs_until(&checkout, pinned, &inventory, deadline, 8 * bounded::DEFAULT_BYTES)?;
-    let limits = NativeLimits {
+    let compiler = NativeLimits {
         timeout_seconds: 180,
         writable_bytes: 128 * 1024 * 1024,
         stdout_bytes: 4096,
@@ -248,103 +440,90 @@ fn complete_current_catalog_has_a_frozen_native_recipe() -> Result<()> {
         stdin_bytes: 0,
     };
     let mut summary = BTreeMap::new();
+    let mut auxiliary = BTreeMap::new();
     let mut failures = Vec::new();
-    for name in catalog.families.keys() {
-        let result = (|| -> Result<usize> {
-            let entry = batch::entry(&catalog, name)?;
-            let contract = contract_for_family_until(
-                &checkout,
-                &entry.manifest,
-                inventory.clone(),
-                provenance.clone(),
-                limits.clone(),
-                fixture.clone(),
-                deadline,
-                8 * bounded::DEFAULT_BYTES,
-            )?;
-            let prepared = bounded::until(deadline, 8 * bounded::DEFAULT_BYTES, || {
-                prepare_bounded_with_catalog(&checkout, pinned, &contract, Some(&inputs))
+    let mut declarations = Vec::new();
+    for name in catalog.families.keys().map(String::as_str).chain(["pause-direct-animation"]) {
+        let result = (|| -> Result<NativeContract> {
+            let path = if name == "pause-direct-animation" {
+                PathBuf::from(".scratch/decomp-coverage/renderer/direct-animation.toml")
+            } else {
+                batch::entry(&catalog, name)?.manifest
+            };
+            let contract = offline.declare_native(NativeDeclaration {
+                checkout: &checkout,
+                kind: if name == "pause-direct-animation" {
+                    NativeDeclarationKind::DirectAnimation(&path)
+                } else {
+                    NativeDeclarationKind::Family(&path)
+                },
+                source_inventory: inventory.clone(),
+                provenance: provenance.clone(),
+                compiler_limits: compiler.clone(),
+                fixture_limits: fixture.clone(),
+                deadline_unix_ms: Some(deadline),
+                max_input_bytes: 8 * bounded::DEFAULT_BYTES,
             })?;
-            let output = root.join(format!("{name}.toml"));
-            immutable(&output, toml::to_string(&prepared)?.as_bytes())?;
-            Ok(contract.coverage.values().map(Vec::len).sum())
+            if name == "pause-direct-animation" {
+                ensure!(
+                    contract.family == name && contract.coverage.values().map(Vec::len).sum::<usize>() == 360,
+                    "auxiliary animation domain changed"
+                );
+            }
+            Ok(contract)
         })();
         match result {
-            Ok(cases) => {
-                summary.insert(name.clone(), format!("prepared {cases} fixture pairs"));
-            }
+            Ok(contract) => declarations.push((name.to_owned(), contract)),
             Err(error) => {
-                summary.insert(name.clone(), format!("rejected: {error:#}"));
+                let message = format!("rejected: {error:#}");
+                if name == "pause-direct-animation" {
+                    auxiliary.insert(name.to_owned(), message);
+                } else {
+                    summary.insert(name.to_owned(), message);
+                }
                 failures.push(format!("{name}: {error:#}"));
             }
         }
-        atomic_toml(&root.join("summary.toml"), &summary)?;
     }
-    ensure!(summary.len() == catalog.families.len(), "catalog entry omitted");
-    let direct = (|| -> Result<usize> {
-        let contract = bounded::until(deadline, 8 * bounded::DEFAULT_BYTES, || {
-            contract_for_direct_animation(
-                &checkout,
-                Path::new(".scratch/decomp-coverage/renderer/direct-animation.toml"),
-                inventory,
-                provenance,
-                limits,
-                fixture,
-            )
-        })?;
-        let prepared = bounded::until(deadline, 8 * bounded::DEFAULT_BYTES, || {
-            prepare_bounded_with_catalog(&checkout, pinned, &contract, Some(&inputs))
-        })?;
-        let cases = contract.coverage.values().map(Vec::len).sum();
-        ensure!(contract.family == "pause-direct-animation" && cases == 360, "auxiliary animation domain changed");
-        immutable(&root.join("pause-direct-animation.toml"), toml::to_string(&prepared)?.as_bytes())?;
-        Ok(cases)
-    })();
-    let result = match direct {
-        Ok(cases) => format!("prepared {cases} fixture pairs"),
-        Err(error) => {
-            failures.push(format!("pause-direct-animation: {error:#}"));
-            format!("rejected: {error:#}")
+    let requests = declarations
+        .iter()
+        .map(|(_, contract)| NativePreparation {
+            deadline_unix_ms: Some(deadline),
+            max_input_bytes: 8 * bounded::DEFAULT_BYTES,
+            ..NativePreparation::new(&checkout, pinned, contract)
+        })
+        .collect::<Vec<_>>();
+    for ((name, contract), prepared) in
+        declarations.iter().zip(offline.prepare_native_catalog(&requests, &NoScopeAdmission)?)
+    {
+        let result = prepared.and_then(|prepared| {
+            immutable(&root.join(format!("{name}.toml")), toml::to_string(&prepared)?.as_bytes())?;
+            Ok(contract.coverage.values().map(Vec::len).sum::<usize>())
+        });
+        let message = match result {
+            Ok(cases) => format!("prepared {cases} fixture pairs"),
+            Err(error) => {
+                failures.push(format!("{name}: {error:#}"));
+                format!("rejected: {error:#}")
+            }
+        };
+        if name == "pause-direct-animation" {
+            auxiliary.insert(name.clone(), message);
+        } else {
+            summary.insert(name.clone(), message);
         }
-    };
-    atomic_toml(&root.join("auxiliary-summary.toml"), &BTreeMap::from([("pause-direct-animation", result)]))?;
+        atomic_toml(&root.join("summary.toml"), &summary)?;
+        atomic_toml(&root.join("auxiliary-summary.toml"), &auxiliary)?;
+    }
+    ensure!(summary.len() == catalog.families.len() && auxiliary.len() == 1, "catalog entry omitted");
+    cleanup_proof(&root)?;
     ensure!(failures.is_empty(), "{}", failures.join("; "));
     Ok(())
 }
 
-fn compiled_sources() -> Vec<(&'static str, &'static str)> {
-    vec![
-        ("main.rs", include_str!("main.rs")),
-        ("inputs.rs", include_str!("inputs.rs")),
-        ("bounded_inputs.rs", include_str!("bounded_inputs.rs")),
-        ("builds.rs", include_str!("builds.rs")),
-        ("build_cache.rs", include_str!("build_cache.rs")),
-        ("family.rs", include_str!("family.rs")),
-        ("family_model.rs", include_str!("family_model.rs")),
-        ("fixture_format.rs", include_str!("fixture_format.rs")),
-        ("fixture_writes.rs", include_str!("fixture_writes.rs")),
-        ("fixture_cli.rs", include_str!("fixture_cli.rs")),
-        ("translation_native.rs", include_str!("translation_native.rs")),
-        ("source_inventory.rs", include_str!("source_inventory.rs")),
-        ("batch.rs", include_str!("batch.rs")),
-        ("family_header.c", include_str!("family_header.c")),
-        ("family_pointer.c", include_str!("family_pointer.c")),
-        ("dispatcher_pointer.c", include_str!("dispatcher_pointer.c")),
-        ("dispatcher_plm.c", include_str!("dispatcher_plm.c")),
-        ("dispatcher_eproj.c", include_str!("dispatcher_eproj.c")),
-        ("dispatcher_host.c", include_str!("dispatcher_host.c")),
-        ("plm_fixtures.rs", include_str!("plm_fixtures.rs")),
-        ("cleanup.rs", include_str!("cleanup.rs")),
-        ("fixture_execution.rs", include_str!("fixture_execution.rs")),
-        ("fixture_worker.rs", include_str!("fixture_worker.rs")),
-        ("metrics.rs", include_str!("metrics.rs")),
-        ("resource_sampler.rs", include_str!("resource_sampler.rs")),
-    ]
-}
-
 fn variant_source(prepared: &PreparedNative, original: &Path, destination: &Path) -> Result<PathBuf> {
     fs::create_dir_all(destination)?;
-    for name in prepared.contract.frozen_inputs.keys() {
+    for name in prepared.contract().frozen_inputs.keys() {
         let path = destination.join(name);
         fs::create_dir_all(path.parent().unwrap())?;
         immutable(&path, &bounded::read(original.join(name))?)?;
@@ -358,24 +537,18 @@ fn variant_source(prepared: &PreparedNative, original: &Path, destination: &Path
 fn full_real_family_retains_authenticates_and_reuses_every_producer() -> Result<()> {
     let preparation_started = std::time::Instant::now();
     let _ = crate::BINARY_SHA256.set(crate::digest(&std::env::current_exe()?)?);
+    let offline = crate::offline::families()?;
     let proof = PathBuf::from(std::env::var("SM_NATIVE_PROOF_ROOT")?);
     let root = proof.join(std::env::var("SM_NATIVE_PROOF_NAME").unwrap_or_else(|_| "actual-c".into()));
     fs::create_dir_all(&root)?;
-    let current = current_checkout();
+    let current = std::env::var_os("SM_NATIVE_FULL_SOURCE").map(PathBuf::from).unwrap_or_else(current_checkout);
     let checkout = root.join("source");
     fs::create_dir_all(checkout.join("crates/pipeline/src"))?;
     fs::create_dir_all(checkout.join("crates/port/src"))?;
     fs::create_dir_all(checkout.join("tools/port"))?;
     let manifest_path = Path::new("tools/port/enemy-jump-instructions.smf");
-    let manifest = crate::fixture_format::read(&current.join(manifest_path))?;
     immutable(&checkout.join(manifest_path), &bounded::read(current.join(manifest_path))?)?;
-    for path in inputs::canonical_sources(&current, &[current.join(&manifest.rust_module)], &manifest.rust_imports)? {
-        let relative = path.strip_prefix(&current)?;
-        immutable(&checkout.join(relative), &bounded::read(&path)?)?;
-    }
-    for (name, text) in compiled_sources() {
-        immutable(&checkout.join("crates/pipeline/src").join(name), text.as_bytes())?;
-    }
+    crate::translation_execution::tests::copy_native_source_snapshot(&current, &checkout)?;
     immutable(&checkout.join("tools/dependencies.toml"), &bounded::read(current.join("tools/dependencies.toml"))?)?;
     immutable(
         &checkout.join("tools/port/batch.toml"),
@@ -413,14 +586,16 @@ fn full_real_family_retains_authenticates_and_reuses_every_producer() -> Result<
         stderr_bytes: 4096,
         stdin_bytes: 0,
     };
-    let contract = contract_for_family(
-        &checkout,
-        manifest_path,
-        Asset { file: inventory_path.clone(), sha256: digest(&inventory_path)? },
+    let contract = offline.declare_native(NativeDeclaration {
+        checkout: &checkout,
+        kind: NativeDeclarationKind::Family(manifest_path),
+        source_inventory: Asset { file: inventory_path.clone(), sha256: digest(&inventory_path)? },
         provenance,
-        limits,
+        compiler_limits: limits,
         fixture_limits,
-    )?;
+        deadline_unix_ms: None,
+        max_input_bytes: bounded::DEFAULT_BYTES,
+    })?;
     let prepared = prepare(&checkout, pinned, &contract)?;
     let mut missing = contract.clone();
     missing.coverage.get_mut("Sidehopper_Func_1").unwrap().pop();
@@ -447,7 +622,7 @@ fn full_real_family_retains_authenticates_and_reuses_every_producer() -> Result<
     let context = OperationContext {
         run_id: sha256("native-adapter-real-enemy-jump-family"),
         attempt: 1,
-        policy_sha256: prepared.verification_sha256.clone(),
+        policy_sha256: prepared.verification_sha256().to_owned(),
         operation_key: sha256("native-real-family-first"),
         phase: translation_execution::model::ExecutionPhase::Candidate,
     };
@@ -460,37 +635,63 @@ fn full_real_family_retains_authenticates_and_reuses_every_producer() -> Result<
     let started = std::time::Instant::now();
     let receipt = run_bounded(&prepared, &checkout, &root.join("run"), &runtime, &context, fixture_jobs)?;
     let run_seconds = started.elapsed().as_secs_f64();
+    retain_case(
+        &root,
+        "run",
+        RetainedCase {
+            prepared: root.join("prepared.toml"),
+            checkout: checkout.clone(),
+            receipt: root.join("run/native-receipt.toml"),
+            passed: true,
+            fixture_pairs: Some(16),
+            operation_count: Some(34),
+            diagnostic_contains: None,
+        },
+    )?;
     ensure!(receipt.passed, "{}", receipt.diagnostic);
     let authentication_started = std::time::Instant::now();
-    let verdict = authenticate(&prepared, &checkout, &receipt)?;
+    let admitted = prepared.authenticate(NativeEvidence { checkout: &checkout, receipt: &receipt })?;
+    let verdict = admitted.report();
     let authentication_seconds = authentication_started.elapsed().as_secs_f64();
     ensure!(
         verdict.verified_cases == 16 && verdict.verified_routines == 2 && receipt.operation_count()? == 34,
         "real family coverage differs"
     );
     let mut before = Vec::new();
-    let mut operations = Vec::new();
+    let operations = proof_producers(&admitted, &receipt)?;
     let mut invocation_times = BTreeMap::new();
-    receipt.visit_operations(|operation| {
-        before.push((operation.result.path.clone(), fs::metadata(&operation.result.path)?.modified()?));
+    for operation in &operations {
+        before.push((
+            operation.result.path.clone(),
+            operation.result.sha256.clone(),
+            fs::metadata(&operation.result.path)?.modified()?,
+        ));
         invocation_times.insert(operation.invocation.file.clone(), operation.invocation.file.metadata()?.modified()?);
-        operations.push(operation.clone());
-        Ok(())
-    })?;
+    }
     let replay_started = std::time::Instant::now();
     let retry = run(&prepared, &checkout, &root.join("run"), &runtime, &context)?;
     let replay_seconds = replay_started.elapsed().as_secs_f64();
     ensure!(sealed(&retry)? == sealed(&receipt)?, "lost response retry allocated another result");
-    for (path, modified) in before {
-        ensure!(fs::metadata(path)?.modified()? == modified, "retry rewrote a producer result");
+    for (path, hash, modified) in before {
+        ensure!(
+            fs::metadata(&path)?.modified()? == modified && digest(&path)? == hash,
+            "retry rewrote a producer result"
+        );
     }
     // Hash-only family tampering cannot bypass the independent durable
     // producer authenticators, even if a forged receipt copies a new hash.
-    let operation = &operations[0];
+    let operation = operations
+        .iter()
+        .find(|operation| operation.label == "rust-build")
+        .context("retained Rust compiler operation missing")?;
     let invocation_bytes = bounded::read(&operation.invocation.file)?;
-    let original: builds::StrictInvocation = family::object(&operation.invocation.file)?;
-    let mut changed = original.clone();
-    changed.program.arguments.push("--undeclared".into());
+    let mut changed: toml::Value = bounded::object(&operation.invocation.file)?;
+    changed
+        .get_mut("program")
+        .and_then(|program| program.get_mut("arguments"))
+        .and_then(toml::Value::as_array_mut)
+        .context("retained compiler arguments missing")?
+        .push(toml::Value::String("--undeclared".into()));
     atomic_toml(&operation.invocation.file, &changed)?;
     let rejected = authenticate(&prepared, &checkout, &receipt).is_err();
     fs::write(&operation.invocation.file, &invocation_bytes)?;
@@ -532,7 +733,7 @@ fn full_real_family_retains_authenticates_and_reuses_every_producer() -> Result<
             producers: Vec<ProducerTiming>,
         }
         let references_started = std::time::Instant::now();
-        references(&receipt)?;
+        receipt.retained_references()?;
         let references_seconds = references_started.elapsed().as_secs_f64();
         let mut producers = Vec::new();
         let mut compile_seconds = 0.0;
@@ -545,7 +746,7 @@ fn full_real_family_retains_authenticates_and_reuses_every_producer() -> Result<
         };
         for operation in &operations {
             let timing_path = operation.directory.join(format!("{}.timing.toml", operation.label));
-            let timing: builds::ExecutionRecord = family::object(&timing_path)?;
+            let timing: tool_execution::builds::ExecutionRecord = bounded::object(&timing_path)?;
             let directory = operation.result.path.parent().context("operation result parent missing")?;
             if operation.directory == verdict.run {
                 compile_seconds += timing.seconds;
@@ -589,10 +790,12 @@ fn full_real_family_retains_authenticates_and_reuses_every_producer() -> Result<
                 producers,
             },
         )?;
+        cleanup_proof(&root)?;
+        authenticate_retained(&root.join("retained-authentication.toml"))?;
         return Ok(());
     }
     let compile_source = variant_source(&prepared, &checkout, &root.join("compile-denial-source"))?;
-    let candidate = compile_source.join(&prepared.candidate_path);
+    let candidate = compile_source.join(prepared.candidate_path());
     let candidate_bytes = bounded::read(&candidate)?;
     let undeclared = root.join("compiler-secret.txt");
     fs::write(&undeclared, "protected input")?;
@@ -612,6 +815,19 @@ fn full_real_family_retains_authenticates_and_reuses_every_producer() -> Result<
         Err(_) => None,
     };
     let denied = denied?;
+    retain_case(
+        &root,
+        "compile-denial",
+        RetainedCase {
+            prepared: root.join("prepared.toml"),
+            checkout: compile_source.clone(),
+            receipt: root.join("compile-denial/native-receipt.toml"),
+            passed: false,
+            fixture_pairs: None,
+            operation_count: None,
+            diagnostic_contains: Some("compiler-secret".into()),
+        },
+    )?;
     ensure!(retry.is_some(), "failed native evaluation was not durably reused");
     ensure!(
         !denied.passed && denied.diagnostic.contains("compiler-secret"),
@@ -621,7 +837,7 @@ fn full_real_family_retains_authenticates_and_reuses_every_producer() -> Result<
     authenticate(&prepared, &compile_source, &denied)?;
 
     let runtime_source = variant_source(&prepared, &checkout, &root.join("runtime-denial-source"))?;
-    let candidate = runtime_source.join(&prepared.candidate_path);
+    let candidate = runtime_source.join(prepared.candidate_path());
     let runtime_secret = root.join("parent-verdict.toml");
     fs::write(&runtime_secret, "protected parent verdict")?;
     let candidate_text = String::from_utf8(candidate_bytes.clone())?;
@@ -635,6 +851,19 @@ fn full_real_family_retains_authenticates_and_reuses_every_producer() -> Result<
     deny_context.operation_key = sha256("native-runtime-protected-denial");
     let denied = run(&prepared, &runtime_source, &root.join("runtime-denial"), &runtime, &deny_context);
     let denied = denied?;
+    retain_case(
+        &root,
+        "runtime-denial",
+        RetainedCase {
+            prepared: root.join("prepared.toml"),
+            checkout: runtime_source.clone(),
+            receipt: root.join("runtime-denial/native-receipt.toml"),
+            passed: true,
+            fixture_pairs: Some(16),
+            operation_count: Some(34),
+            diagnostic_contains: None,
+        },
+    )?;
     ensure!(
         denied.passed && bounded::text(&runtime_secret)? == "protected parent verdict",
         "runtime denial escaped namespace or changed real family semantics: {}",
@@ -643,12 +872,36 @@ fn full_real_family_retains_authenticates_and_reuses_every_producer() -> Result<
     authenticate(&prepared, &runtime_source, &denied)?;
     let mut deny_context = context.clone();
     deny_context.operation_key = sha256("native-output-reservation-denial");
-    let narrow = StrictRuntime { max_output_bytes: parent_reservation(&prepared, &checkout)? + 4096, ..runtime };
+    let intent: toml::Value = bounded::object(&root.join("run/native-intent.toml"))?;
+    let parent_bytes = intent
+        .get("parent_reservation_bytes")
+        .and_then(toml::Value::as_integer)
+        .context("recorded parent reservation missing")?;
+    let narrow = StrictRuntime {
+        max_output_bytes: u64::try_from(parent_bytes)?.checked_add(4096).context("proof reservation overflow")?,
+        ..runtime
+    };
     let denied = run(&prepared, &checkout, &root.join("reservation-denial"), &narrow, &deny_context)?;
+    retain_case(
+        &root,
+        "reservation-denial",
+        RetainedCase {
+            prepared: root.join("prepared.toml"),
+            checkout: checkout.clone(),
+            receipt: root.join("reservation-denial/native-receipt.toml"),
+            passed: false,
+            fixture_pairs: None,
+            operation_count: Some(0),
+            diagnostic_contains: Some("reservation exhausted".into()),
+        },
+    )?;
     ensure!(
         !denied.passed && denied.operation_count()? == 0 && denied.diagnostic.contains("reservation exhausted"),
         "aggregate reservation did not stop before compiler launch"
     );
+    authenticate(&prepared, &checkout, &denied)?;
+    cleanup_proof(&root)?;
+    authenticate_retained(&root.join("retained-authentication.toml"))?;
     println!(
         "Preparation gaps, compiler undeclared inclusion, runtime parent/sibling read/write, tampered operation and aggregate prelaunch reservation checks passed"
     );

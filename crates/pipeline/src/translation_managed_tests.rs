@@ -178,6 +178,8 @@ struct ManagedProject {
 
 impl ManagedProject {
     fn new(root: &Path) -> Result<Self> {
+        let _ = crate::BINARY_SHA256.set(crate::digest(&std::env::current_exe()?)?);
+        let offline = crate::offline::families()?;
         let host = root.join("host");
         let owner = root.join("original-owner");
         fs::create_dir_all(&owner)?;
@@ -185,19 +187,19 @@ impl ManagedProject {
         put(&owner.join(CANDIDATE), CANDIDATE_SOURCE)?;
         put(&owner.join("crates/port/src/memory.rs"), MEMORY_SOURCE)?;
         for (name, text) in tests::native_harness_sources() {
-            put(&owner.join("crates/pipeline/src").join(name), text)?;
+            put(&owner.join(name), text)?;
         }
-        let manifest = crate::family_model::Manifest {
+        let manifest = offline_verification::fixtures::Manifest {
             family: FAMILY.into(),
             rust_module: CANDIDATE.into(),
             bank: "sm_86.c".into(),
             routines: ["Observed", "Helper"]
                 .into_iter()
-                .map(|symbol| crate::family_model::Routine {
+                .map(|symbol| offline_verification::fixtures::Routine {
                     symbol: symbol.into(),
                     args: 0,
                     returns: "void".into(),
-                    cases: vec![crate::family_model::Case {
+                    cases: vec![offline_verification::fixtures::Case {
                         name: format!("{symbol}-full-wram"),
                         fill: Some(if symbol == "Observed" { 0xa5 } else { 0x5a }),
                         expected_return: Some(0),
@@ -208,7 +210,7 @@ impl ManagedProject {
                 .collect(),
             ..Default::default()
         };
-        put(&owner.join(MANIFEST), crate::fixture_format::encode(&manifest)?)?;
+        put(&owner.join(MANIFEST), offline_verification::fixtures::encode(&manifest)?)?;
         put(&owner.join("tools/port/batch.toml"), format!("[families]\n{FAMILY} = \"family\"\n[profiles]\n"))?;
         let reviewed_inventory: toml::Value = toml::from_str(&fs::read_to_string(owner.join("inventory.toml"))?)?;
         crate::source_inventory::run(&owner, &owner.join("deps/snesrev-sm"), &owner.join("inventory.toml"))?;
@@ -410,39 +412,47 @@ impl ManagedProject {
         let pinned = root.join("pinned-source/snesrev-sm");
         copy_tree(&owner.join("deps/snesrev-sm"), &pinned)?;
         copy_tree(&owner.join("deps/downloads"), &root.join("pinned-source/downloads"))?;
-        let contract = native::contract_for_family(
-            &host,
-            Path::new(MANIFEST),
-            Asset { file: "inventory.toml".into(), sha256: scope.source_inventory_sha256 },
-            native::NativeProvenance::NativeScope {
-                scope: Asset { file: scope_path.clone(), sha256: digest(&scope_path)? },
-                checkout: owner.clone(),
-            },
-            native::NativeLimits {
-                timeout_seconds: 30,
-                writable_bytes: 128 * 1024 * 1024,
-                stdout_bytes: 4096,
-                stderr_bytes: 256 * 1024,
-                stdin_bytes: 0,
-            },
-            native::NativeLimits {
-                timeout_seconds: 5,
-                writable_bytes: 512 * 1024,
-                stdout_bytes: 4096,
-                stderr_bytes: 4096,
-                stdin_bytes: 0,
-            },
-        )
-        .context("bind declared managed diagnostic harness")?;
-        let prepared = native::prepare(&host, &pinned, &contract).context("prepare pinned managed diagnostic")?;
-        ensure!(prepared.source.revision == "a".repeat(40), "diagnostic pin must be full and archive-bound");
+        let contract = offline
+            .declare_native(native::NativeDeclaration {
+                checkout: &host,
+                kind: native::NativeDeclarationKind::Family(Path::new(MANIFEST)),
+                source_inventory: Asset { file: "inventory.toml".into(), sha256: scope.source_inventory_sha256 },
+                provenance: native::NativeProvenance::NativeScope {
+                    scope: Asset { file: scope_path.clone(), sha256: digest(&scope_path)? },
+                    checkout: owner.clone(),
+                },
+                compiler_limits: native::NativeLimits {
+                    timeout_seconds: 30,
+                    writable_bytes: 128 * 1024 * 1024,
+                    stdout_bytes: 4096,
+                    stderr_bytes: 256 * 1024,
+                    stdin_bytes: 0,
+                },
+                fixture_limits: native::NativeLimits {
+                    timeout_seconds: 5,
+                    writable_bytes: 512 * 1024,
+                    stdout_bytes: 4096,
+                    stderr_bytes: 4096,
+                    stdin_bytes: 0,
+                },
+                deadline_unix_ms: None,
+                max_input_bytes: tool_execution::bounded::DEFAULT_BYTES,
+            })
+            .context("bind declared managed diagnostic harness")?;
+        let prepared = offline
+            .prepare_native(
+                native::NativePreparation::new(&host, &pinned, &contract),
+                &crate::translation_native::ScopeApproval,
+            )
+            .context("prepare pinned managed diagnostic")?;
+        ensure!(prepared.source().revision == "a".repeat(40), "diagnostic pin must be full and archive-bound");
         let mut policy = tests::policy(
             &host,
             baseline.clone(),
             &[CANDIDATE],
-            sealed(&vec![&prepared.dependencies_sha256])?,
-            sealed(&vec![&prepared.verification_sha256])?,
-            sealed(&vec![&prepared.source])?,
+            sealed(&vec![prepared.dependencies_sha256()])?,
+            sealed(&vec![prepared.verification_sha256()])?,
+            sealed(&vec![prepared.source()])?,
         )?;
         policy.scope_id = scope.subject;
         policy.claim = lineage;
@@ -633,11 +643,17 @@ fn run_managed_proof(root: &Path) -> Result<()> {
                 && !gate.verdict.live_exercised,
             "managed diagnostic fixture domain differs"
         );
-        gate.receipt.visit_operations(|operation| {
-            gate_producer_references += 1;
-            gate_producers.insert(operation.context.operation_key.clone());
-            Ok(())
-        })?;
+        gate_producer_references += gate.receipt.operation_count()?;
+        gate_producers.extend(
+            gate.receipt
+                .retained_references()?
+                .into_iter()
+                .filter(|reference| {
+                    reference.path.starts_with(&gate.receipt.operation_root)
+                        && reference.path.file_name().is_some_and(|name| name == "result.json")
+                })
+                .map(|reference| reference.path),
+        );
     }
     let host_head = git(&project.host, &["rev-parse", "HEAD"])?;
     ensure!(
