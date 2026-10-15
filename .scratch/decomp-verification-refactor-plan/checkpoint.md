@@ -7,6 +7,24 @@ Authorization: user instructed "please go ahead and implement" the nine-ticket p
 
 ## Current state (supersedes historical observations below)
 
+Latest continuation: final assembly is now `cc059fd`, adding source-ready 08
+(`3e02b61`, merge `8b5ebd5`) and operator/Native-obligation documentation to
+`45b89f8`; no final combined build has started. Graph checkpoint `00edc00` compiles,
+five ordinary actual-C controls pass, and final memory/locality/Native controls
+remain active. Native test source `1b0b75c` passes compiler controls but its old
+runtime mutation now refuses at capture; `ad8b706` preserves cleanup and independent
+admission of that incomplete run. The same worker is implementing 16 runtime
+diagnostic operations derived from the admitted Native bindings while preserving
+a second complete 16/34 Native evaluation. Exact ownership/targets below remain.
+
+Ticket 08's private candidate has 19 retained production/lineage/template inputs,
+passing read-only status/host inspection and an exact changed-request refusal.
+Existing successor machinery changes frozen Original requirements, so managed
+activation remains a separate unfulfilled prerequisite. Final optimized tools and
+supported isolated Installation preparation still wait for the combined source.
+See the latest comments in tickets 01, 07, 08 and 09; no active production state
+changed and no complete-batch multiplier is established.
+
 - Main remains documentation-only; production source matches `5c011eb5d02a54d74903715bffb3f8c15ab78c51`.
   Final assembly is `45b89f844df928478b890c4b4814208dfe44bfb8` in
   `/home/jim/sm-decomp-performance-final`. It combines the tested 02/03/04/06

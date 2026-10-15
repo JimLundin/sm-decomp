@@ -51,5 +51,17 @@ authentication. Resolve the spec only when every required ticket is resolved.
 
 ## Comments
 
+2026-10-15 rollout finding: ticket 08's read-only candidate preparation established
+that the installed registry refuses a different checked request. The available
+Original successor command also changes max attempts, gate/checkout budgets,
+integration baseline and held Original contracts. It cannot be used as a tools-only
+activation while preserving this plan's frozen requirements. Exact source checks,
+status/refusal receipts and unchanged lineage pins are retained at
+`/home/jim/sm-decomp-performance-installation-candidate/transition-review.md`.
+Complete all independently authorized source, combined verification, measurement,
+isolated installation preparation and cleanup. Keep managed activation explicitly
+pending the separate fresh-policy/current-owner Original transition; do not
+resolve this ticket as a completed production rollout from a prepared candidate.
+
 If the measured design needs revision, update the plan and preserve the incomplete
 result; finishing documentation alone does not complete implementation.

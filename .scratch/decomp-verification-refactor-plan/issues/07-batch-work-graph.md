@@ -48,6 +48,25 @@ measurements, unchanged recovery lineage and scoped cleanup/authentication.
 
 ## Comments
 
+2026-10-15 checkpoint `00edc00` compiles the canonical serial Native sequence
+composition and bounded advisory progress. Root approved only a fixed 64-KiB
+advisory allowance inside the existing parent/max output limit for new intents.
+It covers a 32-KiB file and atomic replacement. Absent/zero retained intent fields
+preserve their original reservation/receipt semantics and write no new sidecar.
+Existing operations, waves, saved deadlines and source/attempt bindings remain
+authoritative. No producer slot, limit, reservation API or ownership change occurs.
+
+The preceding ordinary checkpoint `fc2cf3a` passes five public actual-C controls:
+terminal rejection, publication error, publication panic/reaping, complete
+48-pair overlapping chains and two competing isolated batches. Peak resident
+helpers fell 16 to eight at unchanged producer peak four; the single elapsed
+sample changed 8.332 to 8.562 seconds and establishes no latency improvement.
+Root review requires shrinking conservative completed-result reservations before
+final acceptance: retaining 16 KiB per all 150,204 cases would itself exceed the
+standard 1-GiB context. Maximum-window helper reuse/Fixture time is also being
+checked so bounded residency does not hide repeated helper churn. Native
+projection/tamper/recovery and cancellation controls remain with the worker.
+
 The graph is private implementation detail; callers do not submit arbitrary tasks.
 
 2026-10-15: root assigns the implementation to `/root/dependency_facts_resume`

@@ -78,6 +78,26 @@ respectively, and are not counted as reclaimed.
 
 ## Comments
 
+2026-10-15 test-only follow-up: checkpoint `1b0b75c` passed the focused actual
+compiler denial/replay and independent reader. Its full-real gate passed the
+16-pair/34-producer positive, explicit file-macro capture refusal, actual confined
+compiler denial and separate failed Native compiler receipt/replay (two producers).
+It then refused the old `std::fs` runtime mutation at source capture, correctly,
+before a Native intent. The 54.49-second incomplete run is retained and cleaned
+(4,194,304 bytes reclaimed); its completed records independently authenticated.
+Worker checkpoint `ad8b706` preserves that result.
+
+Root assigns the same worker a further test-only adaptation: keep the exact
+runtime-capability capture refusal; keep a second full 16/34 Native family; and
+derive one confined diagnostic Program from every admitted Rust Fixture invocation.
+Only its executable changes to a separately compiled trusted probe. Preserve
+original argv, input/runtime binds, helper, output obligations and five-second /
+512-KiB limits. All 16 probes must check parent read/write, sibling C-state and
+`/program-c` denial, unchanged protected host contents, complete durable compiler/
+probe attribution, identical replay and independent readback after cleanup.
+Do not disguise runtime access to bypass the production scanner or count the
+diagnostic operations as Native Fixture passes. Complete acceptance remains pending.
+
 2026-10-15 full-real continuation: the combined `45b89f8` source passed the
 original 60-second compiler / 180-second family positive gate: all 16 pairs,
 34 producers and unchanged retry. Its negative `include_str!` candidate now

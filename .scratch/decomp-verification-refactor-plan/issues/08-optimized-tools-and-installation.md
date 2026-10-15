@@ -62,6 +62,31 @@ tool or attempt changes before the supported final ownership transition.
 
 ## Comments
 
+2026-10-15 source-ready handoff: `3e02b61bcdf46644110b77ae97e62db4934d0df5`
+merged automatically into final assembly at `8b5ebd5`. Both helpers pass all
+16 unchanged confinement-runtime controls; 24 observed sandbox operations used
+the selected live helper image. Disposable complete-Installation tool tampering
+refuses correctly without execution state. Both cleanup passes reclaimed zero
+intermediate and 25,165,824 deduplicated bytes across 324 snapshots; nine retained
+ordinary runs independently authenticated afterward. Exact hashes and controls:
+[optimized-tools-handoff.md](../optimized-tools-handoff.md).
+
+The private candidate retains 19 exact production/lineage/template inputs and
+read-only production status/host inspection. Original/copy hashes, registry,
+fence, ledgers and installed image hashes remain identical. Both candidate cleanup
+passes reclaim zero; measured remaining filesystem space is 95,470,952,448 bytes.
+See `/home/jim/sm-decomp-performance-installation-candidate/transition-review.md`
+and `transition-inputs.json`. Final source/tool fields remain explicitly pending.
+
+Existing machinery does not offer a tools-only managed replacement: Original
+prepare/install changes frozen attempts, limits and integration baseline, while
+initial production preparation requires the historical exact HEAD and the active
+registry refuses a different checked request. A byte-identical private request
+copy produced that exact refusal without attempting activation. Keep all original
+policies and stops. Prepare/inspect a supported concrete isolated Installation
+after the final source build; record the managed transition as a separate
+unfulfilled prerequisite, not successful installation.
+
 2026-10-15: provisional isolated profile/startup implementation is assigned to
 `/root/shared_preparation` after its completed ticket 04 handoff. Worktree:
 `/home/jim/sm-decomp-performance-tools`; branch
