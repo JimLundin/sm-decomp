@@ -1,6 +1,6 @@
 //! Native offline family verification. Acceptance is limited to declared fixtures.
 use crate::family_model::*;
-use crate::{atomic_toml, builds, callback, inputs};
+use crate::{atomic_toml, builds, callback, inputs, metrics};
 use anyhow::{Context, Result, bail, ensure};
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -81,6 +81,10 @@ fn asset(path: &Path, expected: &str, extent: Option<usize>) -> Result<Vec<u8>> 
     Ok(bytes)
 }
 pub(crate) fn prepare_case_with(case: &Case, directory: &Path, arg_types: &[String], resume: bool) -> Result<()> {
+    metrics::measure("fixture-input-authentication", || prepare_case_inputs(case, directory, arg_types, resume))
+}
+
+fn prepare_case_inputs(case: &Case, directory: &Path, arg_types: &[String], resume: bool) -> Result<()> {
     let name = &case.name;
     ensure!(
         !name.is_empty() && name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-'),
@@ -564,41 +568,46 @@ pub(crate) fn case(
     let mut hashes = BTreeMap::new();
     let mut states = [Vec::new(), Vec::new()];
     for (subject, state) in ["rust", "c"].into_iter().zip(&mut states) {
-        execute(&directory, subject)?;
-        returns.insert(subject.into(), numeric(&directory.join(format!("{subject}.stdout")))?);
-        let (bytes, hash) = bounded::read_with_digest(directory.join(format!("{subject}-after.wram")))?;
-        *state = bytes;
-        hashes.insert(subject.into(), hash);
+        metrics::measure("fixture-execution", || execute(&directory, subject))?;
+        metrics::measure("fixture-comparison", || {
+            returns.insert(subject.into(), numeric(&directory.join(format!("{subject}.stdout")))?);
+            let (bytes, hash) = bounded::read_with_digest(directory.join(format!("{subject}-after.wram")))?;
+            *state = bytes;
+            hashes.insert(subject.into(), hash);
+            Ok(())
+        })?;
     }
-    let mut record = CaseRecord {
-        routine: symbol.clone(),
-        name: name.clone(),
-        returns,
-        before_sha256: digest(&directory.join("before.wram"))?,
-        after_sha256: hashes,
-        ..Default::default()
-    };
-    ensure!(record.returns["c"] == record.returns["rust"], "return mismatch: {symbol}/{name}");
-    if let Some(expected) = case.expected_return {
-        ensure!(expected == record.returns["c"], "independent expected return mismatch: {name}");
-    }
-    let [rust, c] = &states;
-    ensure!(c.len() == WRAM && rust.len() == WRAM, "subject did not retain full WRAM extent");
-    if c != rust {
-        let offset = c.iter().zip(rust).position(|(a, b)| a != b).unwrap();
-        record.first_mismatch = Some(Mismatch { offset, c: c[offset], rust: rust[offset] });
-        atomic_toml(&directory.join("rejection.toml"), &record)?;
-        bail!("WRAM mismatch at {offset:#x}: {symbol}/{name}");
-    }
-    if case.expected_after_file.is_some() {
-        let (expected, hash) = bounded::read_with_digest(directory.join("expected-after.wram"))?;
-        ensure!(*c == expected, "captured expected WRAM mismatch: {name}");
-        record.capture_after_sha256 = Some(hash);
-    }
-    if manifest.projectile_host {
-        authenticate_host(&directory, case)?;
-    }
-    Ok(record)
+    metrics::measure("fixture-comparison", || {
+        let mut record = CaseRecord {
+            routine: symbol.clone(),
+            name: name.clone(),
+            returns,
+            before_sha256: digest(&directory.join("before.wram"))?,
+            after_sha256: hashes,
+            ..Default::default()
+        };
+        ensure!(record.returns["c"] == record.returns["rust"], "return mismatch: {symbol}/{name}");
+        if let Some(expected) = case.expected_return {
+            ensure!(expected == record.returns["c"], "independent expected return mismatch: {name}");
+        }
+        let [rust, c] = &states;
+        ensure!(c.len() == WRAM && rust.len() == WRAM, "subject did not retain full WRAM extent");
+        if c != rust {
+            let offset = c.iter().zip(rust).position(|(a, b)| a != b).unwrap();
+            record.first_mismatch = Some(Mismatch { offset, c: c[offset], rust: rust[offset] });
+            atomic_toml(&directory.join("rejection.toml"), &record)?;
+            bail!("WRAM mismatch at {offset:#x}: {symbol}/{name}");
+        }
+        if case.expected_after_file.is_some() {
+            let (expected, hash) = bounded::read_with_digest(directory.join("expected-after.wram"))?;
+            ensure!(*c == expected, "captured expected WRAM mismatch: {name}");
+            record.capture_after_sha256 = Some(hash);
+        }
+        if manifest.projectile_host {
+            authenticate_host(&directory, case)?;
+        }
+        Ok(record)
+    })
 }
 
 pub(crate) fn inventory(run: &Path, base: &Path, result: &mut BTreeMap<String, String>) -> Result<()> {
@@ -676,6 +685,19 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
     let mut metrics = crate::metrics::Run::start(run.join("family.metrics.toml"), "family")?;
     metrics.context.configuration("manifest", request.manifest.display());
     metrics.context.configuration("workers", request.workers);
+    metrics.context.configuration("case-jobs", request.case_jobs);
+    metrics.context.configuration(
+        "fixture-comparison-accounting",
+        "output parsing/digests plus complete equality/capture checks; spans may overlap across independent Fixtures",
+    );
+    metrics.context.expect_stages(&[
+        "family-input-authentication",
+        "family-builds",
+        "fixture-execution-and-comparison",
+        "fixture-execution",
+        "fixture-comparison",
+        "family-publication",
+    ]);
     let mut verdict = Verdict {
         status: "rejected".into(),
         run: run.clone(),
@@ -683,6 +705,7 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
         ..Default::default()
     };
     let result = (|| -> Result<()> {
+        let preparing = metrics.context.stage("family-input-authentication")?;
         let manifest_path = source_path(&checkout, request.manifest.to_str().context("non-UTF8 manifest")?);
         let (manifest_bytes, manifest_sha256) = bounded::read_with_digest(&manifest_path)?;
         fs::write(run.join(crate::fixture_format::RUN_MANIFEST), &manifest_bytes)?;
@@ -694,6 +717,13 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
         fs::copy(source.join("LICENSE.txt"), run.join("LICENSE.txt"))?;
         let tasks = ordered_tasks(&manifest)?;
         ensure!(!tasks.is_empty(), "empty family cannot be verified");
+        metrics.context.configuration("declared-cases", tasks.len());
+        metrics.context.configuration("declared-routines", manifest.routines.len());
+        if recipe.is_some() {
+            for name in ["fixture-execution", "fixture-comparison"] {
+                metrics.context.stage_unavailable(name, "adapter currently reports the combined Fixture interval; attributable producer intervals remain available");
+            }
+        }
         let jobs = request.case_jobs.max(1);
         let fork = fork_execution(&request)?;
         ensure!((1..=64).contains(&jobs), "case jobs must be 1..64");
@@ -703,8 +733,10 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
             fs::write(run.join("rom.bin"), &bytes)?;
             verdict.rom = Some(RomIdentity { sha256: rom.sha256.clone(), bytes: bytes.len() });
         }
-        verdict.implementation =
-            Some(crate::recipe::build(recipe.as_ref(), &manifest, &request, &checkout, &source, &run, None)?);
+        preparing.finish("success")?;
+        verdict.implementation = Some(metrics::measure("family-builds", || {
+            crate::recipe::build(recipe.as_ref(), &manifest, &request, &checkout, &source, &run, None)
+        })?);
         verdict.implementation.as_mut().unwrap().manifest =
             Some(Asset { file: fs::canonicalize(&manifest_path)?, sha256: manifest_sha256.clone() });
         atomic_toml(
@@ -712,39 +744,42 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
             verdict.implementation.as_ref().unwrap().manifest.as_ref().unwrap(),
         )?;
         crate::recipe::start_verdict(recipe.as_ref(), &manifest, &mut verdict);
-        let outcomes = crate::fixture_execution::run(
-            &tasks,
-            jobs,
-            &run,
-            &request.root,
-            request.workers,
-            fork,
-            |(routine, fixture, routine_index), worker| {
-                crate::recipe::fixture(
-                    recipe.as_ref(),
-                    &manifest,
-                    routine,
-                    fixture,
-                    routine_index,
-                    &run,
-                    crate::recipe::FixtureExecution::Ordinary { worker },
-                )
-            },
-        )?;
-        let mut errors = Vec::new();
-        for (index, outcome) in outcomes {
-            match outcome {
-                Ok(record) => verdict.cases.push(record),
-                Err(error) => {
-                    let rejection = tasks.get(index).map(|task| run.join(&task.1.name).join("rejection.toml"));
-                    if let Some(rejection) = rejection.filter(|p| p.is_file()) {
-                        verdict.cases.push(object(&rejection)?);
+        metrics::measure("fixture-execution-and-comparison", || {
+            let outcomes = crate::fixture_execution::run(
+                &tasks,
+                jobs,
+                &run,
+                &request.root,
+                request.workers,
+                fork,
+                |(routine, fixture, routine_index), worker| {
+                    crate::recipe::fixture(
+                        recipe.as_ref(),
+                        &manifest,
+                        routine,
+                        fixture,
+                        routine_index,
+                        &run,
+                        crate::recipe::FixtureExecution::Ordinary { worker },
+                    )
+                },
+            )?;
+            let mut errors = Vec::new();
+            for (index, outcome) in outcomes {
+                match outcome {
+                    Ok(record) => verdict.cases.push(record),
+                    Err(error) => {
+                        let rejection = tasks.get(index).map(|task| run.join(&task.1.name).join("rejection.toml"));
+                        if let Some(rejection) = rejection.filter(|p| p.is_file()) {
+                            verdict.cases.push(object(&rejection)?);
+                        }
+                        errors.push(format!("{error:#}"));
                     }
-                    errors.push(format!("{error:#}"));
                 }
             }
-        }
-        ensure!(errors.is_empty(), "{}", errors.join("; "));
+            ensure!(errors.is_empty(), "{}", errors.join("; "));
+            Ok(())
+        })?;
         ensure!(
             digest(&manifest_path)? == manifest_sha256 && digest(&run.join("manifest.smf"))? == manifest_sha256,
             "family manifest changed during verification"
@@ -759,10 +794,17 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
     if let Err(error) = result {
         verdict.error = Some(format!("{error:#}"));
     }
-    let mut artifacts = BTreeMap::new();
-    inventory(&run, &run, &mut artifacts)?;
-    verdict.artifacts = artifacts;
-    atomic_toml(&run.join("verdict.toml"), &verdict)?;
+    let publication = metrics::measure("family-publication", || {
+        let mut artifacts = BTreeMap::new();
+        inventory(&run, &run, &mut artifacts)?;
+        metrics.context.configuration("artifact-files", artifacts.len());
+        verdict.artifacts = artifacts;
+        atomic_toml(&run.join("verdict.toml"), &verdict)
+    });
+    if let Err(error) = &publication {
+        metrics.finish(crate::metrics::outcome(Some(&format!("{error:#}"))), Some(format!("{error:#}")))?;
+    }
+    publication?;
     metrics.finish(crate::metrics::outcome(verdict.error.as_deref()), verdict.error.clone())?;
     Ok(verdict)
 }
@@ -792,14 +834,31 @@ fn authenticate_with_source_bounded(
     source: &Path,
     limits: ArtifactLimits,
 ) -> Result<Verdict> {
+    metrics::measure("family-evidence-admission", || authenticate_contents(request, source, limits))
+}
+
+fn authenticate_contents(request: AuthenticateRequest, source: &Path, limits: ArtifactLimits) -> Result<Verdict> {
+    let context = metrics::active();
+    if let Some(context) = &context {
+        context.expect_stages(&[
+            "family-admission-inventory",
+            "family-admission-input-authentication",
+            "family-admission-comparison",
+        ]);
+    }
     let checkout = fs::canonicalize(&request.checkout)?;
     let path = &request.verdict;
     let run = fs::canonicalize(path.parent().context("verdict parent missing")?)?;
     let verdict: Verdict = object(path)?;
     ensure!(verdict.status == "offline-verified", "family evidence is not offline verification");
     let mut actual = BTreeMap::new();
-    inventory_bounded(&run, &run, &mut actual, 0, limits)?;
-    ensure!(actual == verdict.artifacts, "family artifact inventory differs");
+    metrics::measure("family-admission-inventory", || {
+        inventory_bounded(&run, &run, &mut actual, 0, limits)?;
+        ensure!(actual == verdict.artifacts, "family artifact inventory differs");
+        Ok(())
+    })?;
+    let authenticating =
+        context.as_ref().map(|context| context.stage("family-admission-input-authentication")).transpose()?;
     for required in
         ["manifest.smf", "candidate.rs", "memory.rs", "oracle.c", "wrapper.rs", "compiler.d", "pipeline-inputs.toml"]
     {
@@ -1015,95 +1074,106 @@ fn authenticate_with_source_bounded(
     for binary in binaries {
         ensure!(actual.get(binary) == implementation.binaries.get(binary), "family binary changed");
     }
-    let mut expected = BTreeMap::new();
-    for routine in &manifest.routines {
-        ensure!(!&routine.cases.is_empty(), "empty family coverage");
-        for fixture in &routine.cases {
-            ensure!(
-                expected.insert((routine.symbol.as_str(), fixture.name.as_str()), fixture).is_none(),
-                "duplicate family coverage"
-            );
-        }
+    if let Some(authenticating) = authenticating {
+        authenticating.finish("success")?;
     }
-    let mut observed = BTreeSet::new();
-    for record in &verdict.cases {
-        let key = (record.routine.as_str(), record.name.as_str());
-        let fixture = expected.get(&key).context("unexpected family coverage")?;
-        ensure!(observed.insert(key), "duplicate observed case");
-        let directory = run.join(key.1);
-        ensure!(
-            bounded::text(directory.join("case.sha256"))? == crate::fixture_format::case_identity(fixture)?,
-            "retained fixture declaration identity differs"
-        );
-        if ridley {
-            let checked = crate::ridley_subsystem_adapter::check(&directory, fixture)?;
+    metrics::measure("family-admission-comparison", || {
+        let mut expected = BTreeMap::new();
+        for routine in &manifest.routines {
+            ensure!(!&routine.cases.is_empty(), "empty family coverage");
+            for fixture in &routine.cases {
+                ensure!(
+                    expected.insert((routine.symbol.as_str(), fixture.name.as_str()), fixture).is_none(),
+                    "duplicate family coverage"
+                );
+            }
+        }
+        let mut observed = BTreeSet::new();
+        for record in &verdict.cases {
+            let key = (record.routine.as_str(), record.name.as_str());
+            let fixture = expected.get(&key).context("unexpected family coverage")?;
+            ensure!(observed.insert(key), "duplicate observed case");
+            let directory = run.join(key.1);
             ensure!(
-                checked.results == record.results
-                    && checked.returns == record.returns
-                    && checked.callbacks == record.callbacks
-                    && checked.before_sha256 == record.before_sha256
-                    && checked.after_sha256 == record.after_sha256
-                    && checked.capture_after_sha256 == record.capture_after_sha256,
-                "Ridley retained case differs"
+                bounded::text(directory.join("case.sha256"))? == crate::fixture_format::case_identity(fixture)?,
+                "retained fixture declaration identity differs"
             );
-            continue;
-        }
-        if plm {
+            if ridley {
+                let checked = crate::ridley_subsystem_adapter::check(&directory, fixture)?;
+                ensure!(
+                    checked.results == record.results
+                        && checked.returns == record.returns
+                        && checked.callbacks == record.callbacks
+                        && checked.before_sha256 == record.before_sha256
+                        && checked.after_sha256 == record.after_sha256
+                        && checked.capture_after_sha256 == record.capture_after_sha256,
+                    "Ridley retained case differs"
+                );
+                continue;
+            }
+            if plm {
+                ensure!(
+                    crate::plm_spawn::check(&directory, fixture)?.spawn_results == record.spawn_results,
+                    "retained PLM result differs"
+                );
+                continue;
+            }
+            if callbacks {
+                let checked =
+                    callback::check(&directory, fixture, manifest.callback_adapter.as_deref() == Some("game-host"))?;
+                ensure!(
+                    checked.results == record.results && checked.callbacks == record.callbacks,
+                    "retained callback result differs"
+                );
+                continue;
+            }
+            let (before, before_sha256) = bounded::read_with_digest(directory.join("before.wram"))?;
+            authenticate_continuation(fixture, &run, &before)?;
+            let (c, c_sha256) = bounded::read_with_digest(directory.join("c-after.wram"))?;
+            let (rust, rust_sha256) = bounded::read_with_digest(directory.join("rust-after.wram"))?;
             ensure!(
-                crate::plm_spawn::check(&directory, fixture)?.spawn_results == record.spawn_results,
-                "retained PLM result differs"
+                before.len() == WRAM && c.len() == WRAM && rust.len() == WRAM && c == rust,
+                "family actual full WRAM outputs differ"
             );
-            continue;
-        }
-        if callbacks {
-            let checked =
-                callback::check(&directory, fixture, manifest.callback_adapter.as_deref() == Some("game-host"))?;
             ensure!(
-                checked.results == record.results && checked.callbacks == record.callbacks,
-                "retained callback result differs"
+                before_sha256 == record.before_sha256
+                    && c_sha256 == record.after_sha256["c"]
+                    && rust_sha256 == record.after_sha256["rust"],
+                "family case hashes differ"
             );
-            continue;
-        }
-        let (before, before_sha256) = bounded::read_with_digest(directory.join("before.wram"))?;
-        authenticate_continuation(fixture, &run, &before)?;
-        let (c, c_sha256) = bounded::read_with_digest(directory.join("c-after.wram"))?;
-        let (rust, rust_sha256) = bounded::read_with_digest(directory.join("rust-after.wram"))?;
-        ensure!(
-            before.len() == WRAM && c.len() == WRAM && rust.len() == WRAM && c == rust,
-            "family actual full WRAM outputs differ"
-        );
-        ensure!(
-            before_sha256 == record.before_sha256
-                && c_sha256 == record.after_sha256["c"]
-                && rust_sha256 == record.after_sha256["rust"],
-            "family case hashes differ"
-        );
-        let a = numeric(&directory.join("c.stdout"))?;
-        let b = numeric(&directory.join("rust.stdout"))?;
-        ensure!(
-            a == b && record.returns["c"] == a && record.returns["rust"] == b,
-            "family actual return outputs differ"
-        );
-        if let Some(value) = fixture.expected_return {
-            ensure!(value == a, "family expected return differs");
-        }
-        if fixture.expected_after_file.as_ref().is_some() {
+            let a = numeric(&directory.join("c.stdout"))?;
+            let b = numeric(&directory.join("rust.stdout"))?;
             ensure!(
-                c == bounded::read(directory.join("expected-after.wram"))?,
-                "family actual captured output differs"
+                a == b && record.returns["c"] == a && record.returns["rust"] == b,
+                "family actual return outputs differ"
             );
+            if let Some(value) = fixture.expected_return {
+                ensure!(value == a, "family expected return differs");
+            }
+            if fixture.expected_after_file.as_ref().is_some() {
+                ensure!(
+                    c == bounded::read(directory.join("expected-after.wram"))?,
+                    "family actual captured output differs"
+                );
+            }
+            if manifest.projectile_host {
+                authenticate_host(&directory, fixture)?;
+            }
         }
-        if manifest.projectile_host {
-            authenticate_host(&directory, fixture)?;
-        }
+        ensure!(
+            !observed.is_empty()
+                && observed.len() == expected.len()
+                && verdict.verified_cases == observed.len()
+                && verdict.verified_routines == manifest.routines.len(),
+            "family coverage incomplete"
+        );
+        Ok(())
+    })?;
+    if let Some(context) = &context {
+        context.configuration("admitted-cases", verdict.verified_cases);
+        context.configuration("admitted-routines", verdict.verified_routines);
+        context.configuration("admitted-artifact-files", actual.len());
     }
-    ensure!(
-        !observed.is_empty()
-            && observed.len() == expected.len()
-            && verdict.verified_cases == observed.len()
-            && verdict.verified_routines == manifest.routines.len(),
-        "family coverage incomplete"
-    );
     Ok(verdict)
 }
 

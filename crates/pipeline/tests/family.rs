@@ -271,6 +271,53 @@ impl Project {
             success,
         )
     }
+
+    // Performance controls isolate artifact-cache contents while sharing the
+    // session's process capacity. Ordinary isolated capacity tests are unchanged.
+    fn measured_batch(&self, fresh: bool, sampling: &str, success: bool) -> (Value, f64) {
+        let (child, started) = self.spawn_measured_batch(fresh, sampling);
+        let output = child.wait_with_output().unwrap();
+        let seconds = started.elapsed().as_secs_f64();
+        assert_eq!(output.status.success(), success, "{}", String::from_utf8_lossy(&output.stderr));
+        (toml::from_str(&String::from_utf8(output.stdout).unwrap()).unwrap(), seconds)
+    }
+
+    fn spawn_measured_batch(&self, fresh: bool, sampling: &str) -> (std::process::Child, std::time::Instant) {
+        let cache = self.0.join("cache");
+        fs::create_dir_all(&cache).unwrap();
+        let workers = if let Some(shared) = std::env::var_os("SM_PIPELINE_ROOT") {
+            let worker_path = cache.join("workers");
+            if !worker_path.exists() {
+                std::os::unix::fs::symlink(Path::new(&shared).join("workers"), &worker_path).unwrap();
+            }
+            std::env::var("SM_PIPELINE_WORKERS").unwrap().parse::<i64>().unwrap()
+        } else {
+            2
+        };
+        let request = Value::Table(toml::Table::from_iter([
+            ("checkout".into(), Value::try_from(&self.0).unwrap()),
+            ("operation".into(), "verify".into()),
+            ("batch".into(), Value::try_from(self.0.join("batch/batch.toml")).unwrap()),
+            ("families".into(), Value::Array(vec!["fixture".into()])),
+            ("root".into(), Value::try_from(cache).unwrap()),
+            ("workers".into(), workers.into()),
+            ("jobs".into(), 1.into()),
+            ("case_jobs".into(), 1.into()),
+            ("fresh".into(), fresh.into()),
+        ]));
+        let started = std::time::Instant::now();
+        let mut child = Command::new(env!("CARGO_BIN_EXE_sm-pipeline"))
+            .arg("batch")
+            .env("SM_PIPELINE_METRICS", sampling)
+            .env_remove("SM_PIPELINE_METRICS_CONTEXT")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .unwrap();
+        child.stdin.take().unwrap().write_all(toml::to_string(&request).unwrap().as_bytes()).unwrap();
+        (child, started)
+    }
 }
 
 #[test]
@@ -1075,6 +1122,240 @@ fn changed_since_verifies_one_actual_c_family_without_visiting_unrelated_history
     // Keep the restored unrelated verdict live so evidence remains valid at exit.
     retained = toml::from_str(&fs::read_to_string(&other_verdict).unwrap()).unwrap();
     project.authenticate(&retained, true);
+}
+
+#[test]
+fn batch_reuse_reports_current_elapsed_time_and_retains_original_run_time() {
+    let project = Project::new();
+    project.manifest(Value::Array(vec![Value::Table(toml::Table::from_iter([
+        ("name".into(), "one".into()),
+        ("a".into(), 1.into()),
+        ("expected_return".into(), 2.into()),
+    ]))]));
+    write(&project.0, "tools/port/batch.toml", "[families]\nfixture='family'\n[profiles]\ngameplay=['fixture']\n");
+    let (first, _) = project.measured_batch(false, "disabled", true);
+    assert_eq!(first["families"]["fixture"]["status"].as_str(), Some("offline-verified"));
+    let read_metrics = |result: &Value| -> pipeline_model::metrics::Receipt {
+        let receipt: pipeline_model::metrics::Receipt =
+            toml::from_str(&fs::read_to_string(result["metrics"].as_str().unwrap()).unwrap()).unwrap();
+        receipt.validate().unwrap();
+        receipt
+    };
+    let first_metrics = read_metrics(&first);
+    assert!(!first_metrics.enabled);
+    assert_eq!(first_metrics.resources.rss_samples, 0);
+    for name in [
+        "batch-planning",
+        "registered-input-authentication",
+        "family-input-authentication",
+        "family-builds",
+        "compiler-preparation",
+        "compiler-cache",
+        "shared-capacity-wait",
+        "fixture-execution",
+        "fixture-comparison",
+        "family-publication",
+        "family-evidence-admission",
+        "batch-publication",
+        "batch-scoped-cleanup",
+    ] {
+        assert!(
+            first_metrics.stages.iter().any(|stage| stage.name == name && stage.outcome == "success"),
+            "missing successful stage: {name}"
+        );
+    }
+    // Batch timing is advisory, outside authenticated Fixture evidence. A large
+    // retained duration makes copying it distinguishable from any current run.
+    let batch_path = project.0.join("batch/batch.toml");
+    let mut retained: Value = toml::from_str(&fs::read_to_string(&batch_path).unwrap()).unwrap();
+    retained["families"]["fixture"]["seconds"] = 86_400.0.into();
+    fs::write(&batch_path, toml::to_string(&retained).unwrap()).unwrap();
+    for _ in 0..2 {
+        let (reused, invocation_seconds) = project.measured_batch(false, "disabled", true);
+        let record = &reused["families"]["fixture"];
+        assert_eq!(record["status"].as_str(), Some("reused"));
+        assert_eq!(record["verdict"], first["families"]["fixture"]["verdict"]);
+        let current = record["seconds"].as_float().unwrap();
+        assert!(
+            current > 0.0 && current <= invocation_seconds,
+            "reported {current}s for {invocation_seconds}s invocation"
+        );
+        assert_eq!(record["original_run_seconds"].as_float(), Some(86_400.0));
+        let authentication = record["reuse_authentication_seconds"].as_float().unwrap();
+        assert!(authentication > 0.0 && authentication <= current);
+        let receipt = read_metrics(&reused);
+        assert!(receipt.processes.is_empty(), "unchanged reuse launched a producer");
+        assert!(receipt.stages.iter().any(|stage| stage.name == "reuse-authentication" && stage.outcome == "success"));
+        assert!(receipt.scopes.iter().any(|scope| {
+            scope
+                .configuration
+                .get("unavailable-stage:family-verification")
+                .is_some_and(|reason| reason.contains("retained evidence"))
+        }));
+        println!(
+            "reuse current={current:.6}s authentication={authentication:.6}s historical=86400s invocation={invocation_seconds:.6}s"
+        );
+    }
+
+    let candidate = project.0.join("crates/port/src/fixture.rs");
+    let source = fs::read_to_string(&candidate).unwrap();
+    fs::write(&candidate, source.replace("a as u32+1", "a as u32+2")).unwrap();
+    let (rejected, _) = project.measured_batch(false, "disabled", false);
+    let record = &rejected["families"]["fixture"];
+    assert_eq!(record["status"].as_str(), Some("rejected"));
+    assert!(record["seconds"].as_float().unwrap() >= record["reuse_authentication_seconds"].as_float().unwrap());
+    assert!(record["reuse_authentication_error"].as_str().unwrap().contains("changed"));
+    let rejected_metrics = read_metrics(&rejected);
+    assert_eq!(rejected_metrics.outcome, "failed");
+    for name in ["reuse-authentication", "fixture-comparison", "family-verification"] {
+        assert!(
+            rejected_metrics.stages.iter().any(|stage| stage.name == name && stage.outcome == "failed"),
+            "failed stage missing: {name}"
+        );
+    }
+
+    fs::write(&candidate, source).unwrap();
+    let (fresh, _) = project.measured_batch(true, "disabled", true);
+    assert_eq!(fresh["families"]["fixture"]["status"].as_str(), Some("offline-verified"));
+    assert_ne!(fresh["families"]["fixture"]["verdict"], first["families"]["fixture"]["verdict"]);
+    assert!(fresh["families"]["fixture"].get("original_run_seconds").is_none());
+    assert!(fresh["families"]["fixture"].get("reuse_authentication_seconds").is_none());
+    for deduplicate in [false, true] {
+        let mut command = Command::new(env!("CARGO_BIN_EXE_sm-pipeline"));
+        command.args(["cleanup", "--root"]).arg(project.0.join("batch")).arg("--apply");
+        if deduplicate {
+            command.arg("--deduplicate");
+        }
+        let output = command.output().unwrap();
+        assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+        let cleanup: Value = toml::from_str(std::str::from_utf8(&output.stdout).unwrap()).unwrap();
+        println!("post-control cleanup deduplicate={deduplicate} bytes={}", cleanup["bytes"]);
+    }
+    for result in [&first, &fresh] {
+        let verdict: Value =
+            toml::from_str(&fs::read_to_string(result["families"]["fixture"]["verdict"].as_str().unwrap()).unwrap())
+                .unwrap();
+        project.authenticate(&verdict, true);
+    }
+}
+
+#[test]
+fn interrupted_batch_reports_current_time_and_recovers_shared_capacity() {
+    use std::time::{Duration, Instant};
+    struct WriterControl(Option<std::process::Child>);
+    impl Drop for WriterControl {
+        fn drop(&mut self) {
+            if let Some(child) = &mut self.0 {
+                // SAFETY: this test owns the unreaped controller. Give its
+                // existing cancellation path time to stop and reap producers.
+                unsafe { libc::kill(child.id() as i32, libc::SIGTERM) };
+                let deadline = Instant::now() + Duration::from_secs(5);
+                while child.try_wait().unwrap().is_none() {
+                    if Instant::now() >= deadline {
+                        child.kill().unwrap();
+                        child.wait().unwrap();
+                        break;
+                    }
+                    std::thread::sleep(Duration::from_millis(10));
+                }
+            }
+        }
+    }
+    let project = Project::new();
+    project.manifest(toml::from_str::<Value>("cases=[{name='one',a=1,expected_return=2}]").unwrap()["cases"].clone());
+    write(&project.0, "tools/port/batch.toml", "[families]\nfixture='family'\n[profiles]\ngameplay=['fixture']\n");
+    let candidate = project.0.join("crates/port/src/fixture.rs");
+    let original = fs::read(&candidate).unwrap();
+    write(
+        &project.0,
+        "crates/port/src/fixture.rs",
+        r#"use crate::memory::Wram;
+unsafe extern "C" {fn getppid()->i32;}
+pub fn dispatch(_ram:&mut Wram<'_>,_name:&str,_a:u16,_b:u16)->Result<u32,&'static str>{
+std::fs::write("started.pids",format!("{} {}",std::process::id(),unsafe{getppid()})).unwrap();
+std::thread::sleep(std::time::Duration::from_secs(30));Ok(0)}"#,
+    );
+    let (child, started) = project.spawn_measured_batch(false, "disabled");
+    let mut writer = WriterControl(Some(child));
+    let evidence = project.0.join("batch/families/fixture/evidence");
+    let deadline = Instant::now() + Duration::from_secs(30);
+    let marker = loop {
+        if let Ok(entries) = fs::read_dir(&evidence)
+            && let Some(marker) = entries
+                .filter_map(Result::ok)
+                .map(|entry| entry.path().join("one/started.pids"))
+                .find(|path| fs::read_to_string(path).is_ok_and(|text| text.split_whitespace().count() == 2))
+        {
+            break marker;
+        }
+        assert!(Instant::now() < deadline, "batch interruption Fixture did not start");
+        assert!(writer.0.as_mut().unwrap().try_wait().unwrap().is_none(), "batch returned before interruption control");
+        std::thread::sleep(Duration::from_millis(10));
+    };
+    let identities = fs::read_to_string(&marker)
+        .unwrap()
+        .split_whitespace()
+        .map(|pid| {
+            let path = PathBuf::from(format!("/proc/{pid}/stat"));
+            let stat = fs::read_to_string(&path).unwrap();
+            let start = stat.rsplit_once(')').unwrap().1.split_whitespace().nth(19).unwrap().to_owned();
+            (path, start)
+        })
+        .collect::<Vec<_>>();
+    // SAFETY: the controller is still owned and unreaped.
+    assert_eq!(unsafe { libc::kill(writer.0.as_ref().unwrap().id() as i32, libc::SIGTERM) }, 0);
+    let deadline = Instant::now() + Duration::from_secs(5);
+    while writer.0.as_mut().unwrap().try_wait().unwrap().is_none() {
+        assert!(Instant::now() < deadline, "batch did not finish after interruption");
+        std::thread::sleep(Duration::from_millis(10));
+    }
+    let output = writer.0.take().unwrap().wait_with_output().unwrap();
+    let invocation_seconds = started.elapsed().as_secs_f64();
+    assert!(!output.status.success());
+    let result: Value = toml::from_str(std::str::from_utf8(&output.stdout).unwrap()).unwrap();
+    let record = &result["families"]["fixture"];
+    assert_eq!(record["status"].as_str(), Some("interrupted"));
+    let seconds = record["seconds"].as_float().unwrap();
+    assert!(seconds > 0.0 && seconds <= invocation_seconds);
+    let metrics: pipeline_model::metrics::Receipt =
+        toml::from_str(&fs::read_to_string(result["metrics"].as_str().unwrap()).unwrap()).unwrap();
+    metrics.validate().unwrap();
+    assert_eq!(metrics.outcome, "interrupted");
+    assert!(
+        metrics.stages.iter().any(|stage| stage.name == "batch-family-verification" && stage.outcome == "interrupted")
+    );
+    assert!(
+        metrics.scopes.iter().any(|scope| scope.configuration.contains_key("unavailable-stage:fixture-comparison"))
+    );
+    assert!(metrics.processes.iter().all(|process| process.reap_count == 1));
+    for (path, start) in identities {
+        assert!(
+            !fs::read_to_string(path).is_ok_and(|stat| {
+                let fields = stat.rsplit_once(')').unwrap().1.split_whitespace().collect::<Vec<_>>();
+                fields[19] == start && !matches!(fields[0], "Z" | "X" | "x")
+            }),
+            "Fixture writer survived cancellation"
+        );
+    }
+    fs::write(candidate, original).unwrap();
+    let (recovered, _) = project.measured_batch(true, "disabled", true);
+    assert_eq!(recovered["families"]["fixture"]["status"].as_str(), Some("offline-verified"));
+    let verdict: Value =
+        toml::from_str(&fs::read_to_string(recovered["families"]["fixture"]["verdict"].as_str().unwrap()).unwrap())
+            .unwrap();
+    for deduplicate in [false, true] {
+        let mut command = Command::new(env!("CARGO_BIN_EXE_sm-pipeline"));
+        command.args(["cleanup", "--root"]).arg(project.0.join("batch")).arg("--apply");
+        if deduplicate {
+            command.arg("--deduplicate");
+        }
+        let output = command.output().unwrap();
+        assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+        let cleanup: Value = toml::from_str(std::str::from_utf8(&output.stdout).unwrap()).unwrap();
+        println!("interruption cleanup deduplicate={deduplicate} bytes={}", cleanup["bytes"]);
+    }
+    project.authenticate(&verdict, true);
+    println!("interrupted current={seconds:.6}s invocation={invocation_seconds:.6}s; fresh recovery authenticated");
 }
 
 #[test]

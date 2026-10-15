@@ -21,6 +21,7 @@ use std::{
 };
 #[cfg(test)]
 use tool_execution::bounded;
+use tool_execution::metrics;
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub(crate) struct FamilyRecord {
     pub status: String,
@@ -28,7 +29,12 @@ pub(crate) struct FamilyRecord {
     pub verdict: Option<PathBuf>,
     pub manifest_sha256: Option<String>,
     pub kind: Option<String>,
+    /// Elapsed work on this invocation, including unsuccessful reuse attempts.
     pub seconds: f64,
+    /// First execution's duration when this row represents retained-result reuse.
+    pub original_run_seconds: Option<f64>,
+    pub reuse_authentication_seconds: Option<f64>,
+    pub reuse_authentication_error: Option<String>,
     pub error: Option<String>,
 }
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
@@ -164,6 +170,28 @@ fn verify_one(
     name: &str,
     previous: Option<&FamilyRecord>,
 ) -> Result<FamilyRecord> {
+    let directory = batch_path.parent().context("batch parent missing")?.join("metrics");
+    fs::create_dir_all(&directory)?;
+    let mut run = metrics::Run::start(metrics::sidecar(&directory, name), "batch-family")?;
+    run.context.configuration("family", name);
+    run.context.configuration("fresh-required", request.fresh);
+    run.context.configuration("case-jobs", request.case_jobs);
+    let result = verify_one_inner(request, checkout, batch_path, name, previous);
+    let error = result.as_ref().err().map(|error| format!("{error:#}")).or_else(|| result.as_ref().ok()?.error.clone());
+    let finished = run.finish(metrics::outcome(error.as_deref()), error);
+    if result.is_ok() {
+        finished?;
+    }
+    result
+}
+
+fn verify_one_inner(
+    request: &Request,
+    checkout: &Path,
+    batch_path: &Path,
+    name: &str,
+    previous: Option<&FamilyRecord>,
+) -> Result<FamilyRecord> {
     let reusable = previous.filter(|record| !request.fresh && record.exit_code == 0);
     let prior = reusable.and_then(|record| {
         Some(offline_verification::PreviousFamily {
@@ -186,17 +214,27 @@ fn verify_one(
     if evaluated.run.reused() {
         let mut record = reusable.context("reused family has no previous batch record")?.clone();
         record.status = "reused".into();
+        record.original_run_seconds = Some(record.original_run_seconds.unwrap_or(record.seconds));
+        record.seconds = started.elapsed().as_secs_f64();
+        record.reuse_authentication_seconds = evaluated.reuse_authentication_seconds;
+        record.reuse_authentication_error = evaluated.reuse_authentication_error;
         return Ok(record);
     }
     let path = evaluated.run.evidence();
     let verdict = evaluated.run.into_report();
     Ok(FamilyRecord {
         exit_code: if verdict.status == "offline-verified" { 0 } else { 1 },
-        status: verdict.status,
+        status: match metrics::outcome(verdict.error.as_deref()) {
+            outcome @ ("interrupted" | "timed-out") => outcome.into(),
+            _ => verdict.status,
+        },
         verdict: Some(path),
         manifest_sha256: Some(evaluated.manifest_sha256),
         kind: Some(evaluated.kind),
         seconds: started.elapsed().as_secs_f64(),
+        original_run_seconds: None,
+        reuse_authentication_seconds: evaluated.reuse_authentication_seconds,
+        reuse_authentication_error: evaluated.reuse_authentication_error,
         error: verdict.error,
     })
 }
@@ -214,9 +252,6 @@ struct Latest {
     batch: PathBuf,
 }
 pub fn operate(request: Request) -> Result<toml::Value> {
-    if ["status", "catalog", "plan"].contains(&request.operation.as_str()) {
-        return operate_inner(request);
-    }
     let destination = request
         .batch
         .as_ref()
@@ -224,32 +259,81 @@ pub fn operate(request: Request) -> Result<toml::Value> {
         .map(Path::to_path_buf)
         .unwrap_or_else(|| request.checkout.join("out/port/batches"));
     fs::create_dir_all(&destination)?;
-    let mut metrics = tool_execution::metrics::Run::start(
+    let mut metrics = metrics::Run::start(
         destination.join(format!("batch-{}.metrics.toml", SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos())),
         "batch",
     )?;
     metrics.context.configuration("workers", request.workers);
     metrics.context.configuration("case-jobs", request.case_jobs);
-    let result = operate_inner(request);
+    metrics.context.configuration("jobs", request.jobs);
+    metrics.context.configuration("operation", &request.operation);
+    metrics.context.configuration("profile", &request.profile);
+    metrics.context.configuration("fresh-required", request.fresh);
+    metrics.context.configuration("elapsed-boundary", "after CLI startup/tool authentication through batch cleanup; external wall time includes startup, metrics publication and later independent admission");
+    metrics.context.expect_stages(&[
+        "batch-planning",
+        "batch-selection-lock",
+        "batch-record-admission",
+        "batch-family-verification",
+        "batch-live-replay",
+        "batch-publication",
+        "batch-scoped-cleanup",
+    ]);
+    let metrics_path = metrics.context.path().to_path_buf();
+    let mut result = operate_inner(request);
     let success = result.as_ref().is_ok_and(|value| {
         value
             .get("status")
             .and_then(toml::Value::as_str)
             .is_none_or(|status| ["complete", "unchanged"].contains(&status))
     });
-    metrics
-        .finish(if success { "success" } else { "failed" }, result.as_ref().err().map(|error| format!("{error:#}")))?;
+    let error = if success {
+        None
+    } else {
+        Some(result.as_ref().err().map(|error| format!("{error:#}")).unwrap_or_else(|| {
+            let value = result.as_ref().unwrap();
+            let errors = value
+                .get("selected")
+                .and_then(toml::Value::as_array)
+                .into_iter()
+                .flatten()
+                .filter_map(|name| value.get("families")?.get(name.as_str()?)?.get("error")?.as_str())
+                .chain(
+                    value
+                        .get("replays")
+                        .and_then(toml::Value::as_array)
+                        .and_then(|replays| replays.last())
+                        .and_then(|replay| replay.get("error"))
+                        .and_then(toml::Value::as_str),
+                )
+                .collect::<Vec<_>>()
+                .join("; ");
+            if errors.is_empty() { "batch reports unsuccessful verification".into() } else { errors }
+        }))
+    };
+    metrics.finish(metrics::outcome(error.as_deref()), error)?;
+    if let Ok(value) = &mut result
+        && let Some(table) = value.as_table_mut()
+    {
+        table.insert("metrics".into(), toml::Value::try_from(metrics_path)?);
+    }
     result
 }
 fn operate_inner(request: Request) -> Result<toml::Value> {
+    let context = metrics::active();
+    let planning = context.as_ref().map(|context| context.stage("batch-planning")).transpose()?;
     let checkout = fs::canonicalize(&request.checkout)?;
     let config = catalog(&checkout)?;
+    metrics::check_cancelled()?;
     let command = request.operation.as_str();
     ensure!(
         ["verify", "replay", "run", "status", "catalog", "plan"].contains(&command),
         "unsupported batch operation: {command}"
     );
     if command == "catalog" {
+        if let Some(planning) = planning {
+            planning.finish("success")?;
+        }
         return Ok(toml::Value::try_from(config)?);
     }
     let mut names = request
@@ -264,10 +348,16 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
             "Offline family catalog changed during selection; retry"
         );
         if command == "plan" {
+            if let Some(planning) = planning {
+                planning.finish("success")?;
+            }
             return Ok(toml::Value::try_from(report)?);
         }
         names = report.families();
         if names.is_empty() {
+            if let Some(planning) = planning {
+                planning.finish("success")?;
+            }
             return Ok(
                 crate::report!({"status":"unchanged","selected":Vec::<String>::new(),"families":Vec::<String>::new()}),
             );
@@ -285,10 +375,17 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
         );
         entry(&config, name)?;
     }
+    if let Some(context) = &context {
+        context.configuration("selected-families", names.len());
+    }
+    if let Some(planning) = planning {
+        planning.finish("success")?;
+    }
     let selection = checkout.join("out/port/batches");
     fs::create_dir_all(&selection)?;
     let selecting = OpenOptions::new().create(true).append(true).open(selection.join("selection.lock"))?;
-    selecting.lock()?;
+    metrics::measure("batch-selection-lock", || metrics::lock(&selecting))?;
+    let admitting = context.as_ref().map(|context| context.stage("batch-record-admission")).transpose()?;
     let latest = selection.join("latest.toml");
     let path = if let Some(path) = &request.batch {
         path.clone()
@@ -301,6 +398,13 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
     ensure!(!path.is_symlink(), "batch record is a symlink");
     fs::create_dir_all(path.parent().context("batch parent missing")?)?;
     let path = fs::canonicalize(path.parent().unwrap())?.join(path.file_name().context("batch filename missing")?);
+    if let Some(context) = &context {
+        context.add_path(path.parent().unwrap().into(), tool_execution::resource_sampler::PathKind::Staging);
+        context.configuration(
+            "disk-path-accounting",
+            "selected batch directory, including retained outputs and temporary files; artifact cache excluded",
+        );
+    }
     let lock = OpenOptions::new().create(true).append(true).open(path.with_extension("lock"))?;
     ensure!(lock.try_lock().is_ok(), "another command is writing this batch; retry after it finishes");
     let mut batch: Batch = if path.exists() {
@@ -310,15 +414,21 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
     } else {
         ensure!(["verify", "run"].contains(&command), "batch does not exist");
         let value = Batch { schema_version: 2, profile: request.profile.clone(), ..Default::default() };
-        atomic_toml(&path, &value)?;
-        atomic_toml(&latest, &Latest { batch: path.clone() })?;
+        metrics::measure("batch-publication", || {
+            atomic_toml(&path, &value)?;
+            atomic_toml(&latest, &Latest { batch: path.clone() })
+        })?;
         value
     };
     drop(selecting);
+    if let Some(admitting) = admitting {
+        admitting.finish("success")?;
+    }
     if command == "status" {
         return Ok(toml::Value::try_from(batch)?);
     }
     if ["verify", "run"].contains(&command) {
+        let verifying = context.as_ref().map(|context| context.stage("batch-family-verification")).transpose()?;
         ensure!((1..=8).contains(&request.jobs), "batch jobs must be 1..8");
         let state = Mutex::new(&mut batch);
         let next = AtomicUsize::new(0);
@@ -340,19 +450,21 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
                             break;
                         };
                         let previous = state.lock().unwrap().families.get(name).cloned();
-                        let record = match verify_one(request, checkout, path, name, previous.as_ref()) {
+                        let started = Instant::now();
+                        let mut record = match verify_one(request, checkout, path, name, previous.as_ref()) {
                             Ok(record) => record,
                             Err(error) => FamilyRecord {
-                                status: "failed".into(),
+                                status: metrics::outcome(Some(&format!("{error:#}"))).into(),
                                 exit_code: 1,
                                 error: Some(format!("{error:#}")),
                                 ..Default::default()
                             },
                         };
+                        record.seconds = started.elapsed().as_secs_f64();
                         eprintln!("{name}: {}", record.status);
                         let mut owner = state.lock().unwrap();
                         owner.families.insert(name.clone(), record);
-                        if let Err(error) = atomic_toml(path, &**owner) {
+                        if let Err(error) = metrics::measure("batch-publication", || atomic_toml(path, &**owner)) {
                             owner.publication_error = Some(format!("{error:#}"));
                         }
                     }
@@ -360,10 +472,19 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
             }
         });
         ensure!(batch.publication_error.is_none(), "batch publication failed");
+        if let Some(verifying) = verifying {
+            let errors = names
+                .iter()
+                .filter_map(|name| batch.families.get(name)?.error.as_deref())
+                .collect::<Vec<_>>()
+                .join("; ");
+            verifying.finish(metrics::outcome((!errors.is_empty()).then_some(errors.as_str())))?;
+        }
     }
     let verified = names.iter().all(|name| batch.families.get(name).is_some_and(|r| r.exit_code == 0));
     let mut replay_passed = true;
     if ["replay", "run"].contains(&command) && (command == "replay" || verified) {
+        let replaying = context.as_ref().map(|context| context.stage("batch-live-replay")).transpose()?;
         let started = Instant::now();
         let directory = path
             .parent()
@@ -391,18 +512,21 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
                 },
             };
         replay_passed = record.exit_code == 0;
+        if let Some(replaying) = replaying {
+            replaying.finish(metrics::outcome(record.error.as_deref()))?;
+        }
         batch.replays.push(record);
-        atomic_toml(&path, &batch)?;
+        metrics::measure("batch-publication", || atomic_toml(&path, &batch))?;
     }
-    let context = tool_execution::metrics::active();
-    let cleaning = context.as_ref().map(|context| context.stage("batch-scoped-cleanup")).transpose()?;
-    let cleaned = cleanup::cleanup(cleanup::CleanupRequest {
-        root: path.parent().unwrap().into(),
-        apply: true,
-        deduplicate: true,
+    let cleaned = metrics::measure("batch-scoped-cleanup", || {
+        cleanup::cleanup(cleanup::CleanupRequest {
+            root: path.parent().unwrap().into(),
+            apply: true,
+            deduplicate: true,
+        })
     })?;
-    if let Some(cleaning) = cleaning {
-        cleaning.finish("success")?;
+    if let Some(context) = &context {
+        context.configuration("cleanup-reclaimed-bytes", cleaned.bytes);
     }
     let passed = replay_passed && (command == "replay" || verified);
     Ok(toml::Value::try_from(Receipt {
