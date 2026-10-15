@@ -13,15 +13,18 @@ mod fixture_execution;
 mod fixture_format;
 mod host;
 mod inputs;
+mod ordinary;
 mod plm_fixtures;
 mod plm_spawn;
 mod ridley_subsystem_adapter;
 mod sources;
 
+pub mod authoring;
 pub mod catalog;
 pub mod fixtures;
 pub use family_model::{AuthenticateRequest, Verdict, VerifyRequest};
 pub use host::HostInputs;
+pub use ordinary::{PreviousFamily, RegisteredRequest, RegisteredRun};
 pub use sources::IMPLEMENTATION_SOURCES;
 
 use tool_execution::build_cache::CacheResult;

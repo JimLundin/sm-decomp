@@ -23,6 +23,7 @@ pub(crate) fn all() -> Vec<(&'static str, &'static str)> {
         .chain(offline_verification::IMPLEMENTATION_SOURCES)
         .chain(decomp_source::IMPLEMENTATION_SOURCES)
         .chain(tool_execution::IMPLEMENTATION_SOURCES)
+        .chain(translation_execution::compiler_runtime::IMPLEMENTATION_SOURCES)
         .copied()
         .collect()
 }

@@ -38,6 +38,7 @@ pub(crate) fn required_sources(host: &crate::HostInputs) -> Vec<(&'static str, &
         .chain(crate::IMPLEMENTATION_SOURCES)
         .chain(decomp_source::IMPLEMENTATION_SOURCES)
         .chain(tool_execution::IMPLEMENTATION_SOURCES)
+        .chain(translation_execution::compiler_runtime::IMPLEMENTATION_SOURCES)
         .copied()
         .collect()
 }
@@ -86,6 +87,7 @@ pub(crate) fn authenticate_implementation(
         .iter()
         .chain(decomp_source::IMPLEMENTATION_SOURCES)
         .chain(tool_execution::IMPLEMENTATION_SOURCES)
+        .chain(translation_execution::compiler_runtime::IMPLEMENTATION_SOURCES)
         .map(|(name, _)| *name)
         .collect();
     if let Some(host) = HOST.with(|current| current.borrow().clone()) {
@@ -136,25 +138,7 @@ pub(crate) fn artifact_digest(run: &Path, path: &Path) -> Result<String> {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-pub(crate) struct WrapperRequest {
-    pub checkout: PathBuf,
-    pub run: PathBuf,
-    pub modules: Vec<PathBuf>,
-    pub imports: Vec<String>,
-}
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-pub(crate) struct DependenciesRequest {
-    pub checkout: PathBuf,
-    pub run: PathBuf,
-    pub extra: Vec<PathBuf>,
-}
-#[derive(Debug, Deserialize, Serialize)]
-pub(crate) struct WrapperResult {
-    pub path: PathBuf,
-}
+pub(crate) use crate::authoring::{DependenciesRequest, WrapperRequest, WrapperResult};
 
 /// The installed confined family adapter places every gameplay module at the
 /// crate root. A selected candidate must never be declared both under a memory
@@ -243,53 +227,7 @@ fn canonical_wrapper_bounded(checkout: &Path, run: &Path, sources: &[PathBuf]) -
     Ok(WrapperResult { path })
 }
 
-/// Controller-owned immutable publication. A partial write has only the
-/// identified pending name; response recovery preserves final file metadata.
-pub(crate) fn immutable_bytes(path: &Path, bytes: &[u8]) -> Result<()> {
-    bounded::limited(|| immutable_bytes_bounded(path, bytes))
-}
-
-fn immutable_bytes_bounded(path: &Path, bytes: &[u8]) -> Result<()> {
-    use std::io::Write;
-    ensure!(path.is_absolute(), "immutable input requires absolute path");
-    bounded::safe(path)?;
-    ensure!(bytes.len() as u64 <= bounded::MAX_FILE_BYTES, "immutable native file byte extent exceeded");
-    if path.exists() {
-        ensure!(
-            !path.is_symlink() && bounded::read(path)? == bytes,
-            "immutable native file changed: {}",
-            path.display()
-        );
-        return Ok(());
-    }
-    let pending = path.with_file_name(format!(
-        "{}.pending",
-        path.file_name().context("immutable file name missing")?.to_string_lossy()
-    ));
-    if pending.exists() {
-        ensure!(
-            !pending.is_symlink() && pending.is_file() && pending.metadata()?.len() <= bytes.len() as u64,
-            "immutable pending extent changed"
-        );
-        fs::remove_file(&pending)?;
-    }
-    use std::os::unix::fs::OpenOptionsExt;
-    bounded::account(bytes.len() as u64)?;
-    let mut file = fs::OpenOptions::new()
-        .create_new(true)
-        .write(true)
-        .custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK)
-        .open(&pending)?;
-    for block in bytes.chunks(64 * 1024) {
-        bounded::check()?;
-        file.write_all(block)?;
-    }
-    file.sync_all()?;
-    bounded::check()?;
-    fs::rename(&pending, path)?;
-    fs::File::open(path.parent().context("immutable parent missing")?)?.sync_all()?;
-    Ok(())
-}
+pub(crate) use tool_execution::bounded::immutable_bytes;
 
 pub fn wrapper(request: WrapperRequest) -> Result<WrapperResult> {
     bounded::limited(|| wrapper_bounded(request))
