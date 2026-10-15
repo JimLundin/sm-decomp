@@ -199,6 +199,28 @@ impl Project {
         ]));
         write(&self.0, "tools/port/fixture.smf", toml::to_string(&manifest).unwrap());
     }
+
+    fn pinned_c(&self, source: &str) {
+        write(&self.0, "deps/snesrev-sm/src/sm_80.c", source);
+        // The extracted actual-C body includes this pinned common header.
+        write(&self.0, "deps/snesrev-sm/src/sm_rtl.h", "#include <stdbool.h>\n#include <unistd.h>\n");
+        let archive = self.0.join("deps/downloads/oracle.tar.gz");
+        assert!(
+            Command::new("tar")
+                .arg("-czf")
+                .arg(&archive)
+                .arg("-C")
+                .arg(self.0.join("deps"))
+                .arg("snesrev-sm")
+                .status()
+                .unwrap()
+                .success()
+        );
+        let pins = self.0.join("tools/dependencies.toml");
+        let mut value: Value = toml::from_str(&fs::read_to_string(&pins).unwrap()).unwrap();
+        value["dependencies"][0]["sha256"] = format!("{:x}", Sha256::digest(fs::read(archive).unwrap())).into();
+        fs::write(pins, toml::to_string(&value).unwrap()).unwrap();
+    }
     fn invoke(&self, operation: &str, request: Value, success: bool) -> Value {
         let mut child = Command::new(env!("CARGO_BIN_EXE_sm-pipeline"))
             .arg(operation)
@@ -578,15 +600,24 @@ fn independent_chains_overlap_and_failed_returns_block_descendants_in_both_modes
         assert_eq!(fs::read_to_string(run.join("blocked/blocked.toml")).unwrap(), "blocked_by = \"fail\"\n");
         assert!(run.join("independent/c-after.wram").is_file());
     }
-    // Filesystem rendezvous fails if a continuation serializes unrelated roots.
-    write(
-        &project.0,
-        "crates/port/src/fixture.rs",
-        r#"use crate::memory::Wram;
-pub fn dispatch(ram:&mut Wram<'_>,name:&str,a:u16,_b:u16)->Result<u32,&'static str>{
-if name!="Touch"{return Err("routine");}
-if a==1||a==7{std::fs::write(format!("../ready-{a}"),b"ready").unwrap();let other=if a==1{7}else{1};let deadline=std::time::Instant::now()+std::time::Duration::from_secs(3);while !std::path::Path::new(&format!("../ready-{other}")).exists(){if std::time::Instant::now()>deadline{return Err("independent chains serialized");}std::thread::sleep(std::time::Duration::from_millis(1));}}
-ram.set_byte(17,a as u8);Ok(a as u32+1)}"#,
+    // The pinned C rendezvous fails if a continuation serializes unrelated
+    // roots. Rust retains its complete, input-free captured source contract.
+    project.pinned_c(
+        r#"#include <stdint.h>
+extern uint8_t g_ram[0x20000];
+uint16_t Touch(uint16_t a) {
+  if (a == 1 || a == 7) {
+    char ready[64], other[64];
+    snprintf(ready, sizeof(ready), "../ready-%u", a);
+    snprintf(other, sizeof(other), "../ready-%u", a == 1 ? 7 : 1);
+    FILE *out = fopen(ready, "w"); if (!out) return 65535; fputs("ready", out); fclose(out);
+    for (int remaining = 3000; access(other, 0) != 0; --remaining) {
+      if (remaining == 0) return 65535;
+      usleep(1000);
+    }
+  }
+  g_ram[17] = (uint8_t)a; return a + 1;
+}"#,
     );
     project.manifest(
         toml::from_str::<Value>(
@@ -620,26 +651,30 @@ while !std::path::Path::new("release").exists(){assert!(std::time::Instant::now(
             .unwrap()
             .success()
     );
-    write(
-        &project.0,
-        "crates/port/src/fixture.rs",
-        r#"use crate::memory::Wram;
-pub fn dispatch(ram:&mut Wram<'_>,name:&str,a:u16,_b:u16)->Result<u32,&'static str>{
-if name!="Touch"{return Err("routine");}
-if a==1||a==4{
-let deadline=std::time::Instant::now()+std::time::Duration::from_secs(3);
-while !std::path::Path::new("../short/c-after.wram").exists(){
-if std::time::Instant::now()>deadline{return Err("short root did not finish");}
-std::thread::sleep(std::time::Duration::from_millis(1));}
-std::fs::write("../waiting",b"ready").unwrap();
-if a==4{std::thread::sleep(std::time::Duration::from_millis(600));}
-else{let directory=std::env::current_dir().unwrap();let family=directory.parent().unwrap();
-let peer=family.with_file_name(format!("{}-peer",family.file_name().unwrap().to_str().unwrap()));
-while !peer.join("admitted").exists(){
-if std::time::Instant::now()>deadline{return Err("idle worker stranded shared capacity");}
-std::thread::sleep(std::time::Duration::from_millis(1));}}
-}
-ram.set_byte(17,a as u8);Ok(a as u32+1)}"#,
+    project.pinned_c(
+        r#"#include <stdint.h>
+extern uint8_t g_ram[0x20000];
+uint16_t Touch(uint16_t a) {
+  if (a == 1 || a == 4) {
+    for (int remaining = 3000; access("../short/c-after.wram", 0) != 0; --remaining) {
+      if (remaining == 0) return 65535;
+      usleep(1000);
+    }
+    FILE *out = fopen("../waiting", "w"); if (!out) return 65535; fputs("ready", out); fclose(out);
+    if (a == 4) { usleep(600000); }
+    else {
+      char directory[4096], peer[8192];
+      if (!getcwd(directory, sizeof(directory))) return 65535;
+      char *last = strrchr(directory, '/'); if (!last) return 65535; *last = 0;
+      snprintf(peer, sizeof(peer), "%s-peer/admitted", directory);
+      for (int remaining = 3000; access(peer, 0) != 0; --remaining) {
+        if (remaining == 0) return 65535;
+        usleep(1000);
+      }
+    }
+  }
+  g_ram[17] = (uint8_t)a; return a + 1;
+}"#,
     );
     let a = if bounded_delay { 4 } else { 1 };
     project.manifest(
@@ -874,6 +909,52 @@ fn fork_parent_is_pristine_and_execution_seals_cannot_be_stripped() {
     project.authenticate(&verdict, false);
 }
 
+struct WriterControl(Option<std::process::Child>);
+impl Drop for WriterControl {
+    fn drop(&mut self) {
+        if let Some(child) = &mut self.0
+            && child.try_wait().unwrap().is_none()
+        {
+            // SAFETY: this test owns the still-unreaped controller.
+            unsafe { libc::kill(child.id() as i32, libc::SIGTERM) };
+            let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+            while child.try_wait().unwrap().is_none() {
+                if std::time::Instant::now() >= deadline {
+                    child.kill().unwrap();
+                    child.wait().unwrap();
+                    break;
+                }
+                std::thread::sleep(std::time::Duration::from_millis(10));
+            }
+        }
+    }
+}
+
+// Process observation belongs to the trusted test host, so the synthetic Rust
+// candidate does not need unmodeled runtime or foreign-linkage capabilities.
+fn processes_with_cwd(directory: &Path) -> Vec<(u32, u32)> {
+    fs::read_dir("/proc")
+        .unwrap()
+        .filter_map(Result::ok)
+        .filter_map(|entry| {
+            let pid = entry.file_name().to_str()?.parse().ok()?;
+            if fs::read_link(entry.path().join("cwd")).ok()? != directory {
+                return None;
+            }
+            let stat = fs::read_to_string(entry.path().join("stat")).ok()?;
+            let parent = stat.rsplit_once(')')?.1.split_whitespace().nth(1)?.parse().ok()?;
+            Some((pid, parent))
+        })
+        .collect()
+}
+
+fn process_identity(pid: u32) -> (PathBuf, String) {
+    let path = PathBuf::from(format!("/proc/{pid}/stat"));
+    let stat = fs::read_to_string(&path).unwrap();
+    let started = stat.rsplit_once(')').unwrap().1.split_whitespace().nth(19).unwrap().to_owned();
+    (path, started)
+}
+
 #[test]
 fn cancelling_family_reaps_helper_fixture_and_descendant() {
     let project = Project::new();
@@ -881,17 +962,29 @@ fn cancelling_family_reaps_helper_fixture_and_descendant() {
         &project.0,
         "crates/port/src/fixture.rs",
         r#"use crate::memory::Wram;
-unsafe extern "C"{fn fork()->i32;fn getppid()->i32;}
-pub fn dispatch(ram:&mut Wram<'_>,_name:&str,a:u16,_b:u16)->Result<u32,&'static str>{
-if a==2{std::fs::write("../idle-helper.pid",unsafe{getppid()}.to_string()).unwrap();ram.set_byte(17,2);return Ok(3);}
-std::fs::write("helper.pid",unsafe{getppid()}.to_string()).unwrap();
-std::fs::write("child.pid",std::process::id().to_string()).unwrap();
-let pid=unsafe{fork()};assert!(pid>=0);if pid==0{std::fs::write("descendant.pid",std::process::id().to_string()).unwrap();}
-std::thread::sleep(std::time::Duration::from_secs(30));Ok(0)}"#,
+pub fn dispatch(ram:&mut Wram<'_>,name:&str,a:u16,_b:u16)->Result<u32,&'static str>{
+if name!="Touch"{return Err("routine");}
+if a==1{loop{std::thread::yield_now();}}
+ram.set_byte(17,a as u8);Ok(a as u32+1)}"#,
+    );
+    project.pinned_c(
+        r#"#include <stdint.h>
+extern uint8_t g_ram[0x20000];
+uint16_t Touch(uint16_t a) {
+  if (a == 9) {
+    FILE *out = fopen("child.pid", "w"); fprintf(out, "%d", getpid()); fclose(out);
+    int child = fork(); if (child < 0) return 65535;
+    if (child == 0) {
+      out = fopen("descendant.pid", "w"); fprintf(out, "%d", getpid()); fclose(out);
+    }
+    sleep(30);
+  }
+  g_ram[17] = (uint8_t)a; return a + 1;
+}"#,
     );
     project.manifest(
         toml::from_str::<Value>(
-            "cases=[{name='sleep',a=1},{name='short',a=2},{name='blocked',a=3,continue_from='sleep'}]",
+            "cases=[{name='sleep',a=1},{name='short',a=2},{name='blocked',a=3,continue_from='sleep'},{name='forked',a=9}]",
         )
         .unwrap()["cases"]
             .clone(),
@@ -902,8 +995,8 @@ std::thread::sleep(std::time::Duration::from_secs(30));Ok(0)}"#,
         ("manifest".into(), "tools/port/fixture.smf".into()),
         ("output".into(), Value::try_from(project.0.join("out")).unwrap()),
         ("root".into(), Value::try_from(project.0.join("cache")).unwrap()),
-        ("workers".into(), 2.into()),
-        ("case_jobs".into(), 2.into()),
+        ("workers".into(), 4.into()),
+        ("case_jobs".into(), 4.into()),
         ("execution".into(), "fork".into()),
     ]))
     .unwrap();
@@ -915,29 +1008,50 @@ std::thread::sleep(std::time::Duration::from_secs(30));Ok(0)}"#,
         .spawn()
         .unwrap();
     process.stdin.take().unwrap().write_all(request.as_bytes()).unwrap();
+    let mut writer = WriterControl(Some(process));
     let deadline = std::time::Instant::now() + std::time::Duration::from_secs(20);
     let dir = loop {
         if let Ok(entries) = fs::read_dir(project.0.join("out"))
             && let Some(dir) = entries.filter_map(Result::ok).map(|e| e.path().join("sleep")).find(|p| {
-                p.join("descendant.pid").is_file() && p.parent().unwrap().join("short/c-after.wram").is_file()
+                fs::read_to_string(p.parent().unwrap().join("forked/descendant.pid"))
+                    .is_ok_and(|text| text.parse::<u32>().is_ok())
+                    && p.parent().unwrap().join("short/c-after.wram").is_file()
             })
         {
             break dir;
         }
         assert!(std::time::Instant::now() < deadline, "cancellation fixture did not start");
+        assert!(writer.0.as_mut().unwrap().try_wait().unwrap().is_none(), "cancellation controller stopped early");
         std::thread::sleep(std::time::Duration::from_millis(5));
     };
+    let controller = writer.0.as_ref().unwrap().id();
+    let helpers = processes_with_cwd(dir.parent().unwrap())
+        .into_iter()
+        .filter(|&(_, parent)| parent == controller)
+        .map(|(pid, _)| pid)
+        .collect::<Vec<_>>();
+    assert!(helpers.len() >= 5, "active and idle helper pairs were not observed");
+    let rust = processes_with_cwd(&dir);
+    assert_eq!(rust.len(), 1, "blocked Rust Fixture missing");
+    let mut identities = helpers.into_iter().chain([rust[0].0]).map(process_identity).collect::<Vec<_>>();
+    for name in ["child.pid", "descendant.pid"] {
+        identities.push(process_identity(
+            fs::read_to_string(dir.parent().unwrap().join("forked").join(name)).unwrap().parse().unwrap(),
+        ));
+    }
     unsafe {
-        libc::kill(process.id() as i32, libc::SIGTERM);
+        libc::kill(controller as i32, libc::SIGTERM);
     }
-    let output = process.wait_with_output().unwrap();
+    let output = writer.0.take().unwrap().wait_with_output().unwrap();
     assert!(!output.status.success());
-    for name in ["helper.pid", "child.pid", "descendant.pid"] {
-        let pid: i32 = fs::read_to_string(dir.join(name)).unwrap().parse().unwrap();
-        assert_eq!(unsafe { libc::kill(pid, 0) }, -1, "{name} survived cancellation");
+    for (path, started) in identities {
+        assert!(
+            !fs::read_to_string(path).is_ok_and(|stat| {
+                stat.rsplit_once(')').unwrap().1.split_whitespace().nth(19) == Some(started.as_str())
+            }),
+            "helper, Fixture or descendant survived cancellation"
+        );
     }
-    let idle_helper: i32 = fs::read_to_string(dir.parent().unwrap().join("idle-helper.pid")).unwrap().parse().unwrap();
-    assert_eq!(unsafe { libc::kill(idle_helper, 0) }, -1, "idle helper survived cancellation");
     assert!(!dir.join("c.stdout").exists());
     assert!(dir.parent().unwrap().join("blocked/blocked.toml").is_file());
     let verdict: Value =
@@ -1242,25 +1356,6 @@ fn batch_reuse_reports_current_elapsed_time_and_retains_original_run_time() {
 #[test]
 fn interrupted_batch_reports_current_time_and_recovers_shared_capacity() {
     use std::time::{Duration, Instant};
-    struct WriterControl(Option<std::process::Child>);
-    impl Drop for WriterControl {
-        fn drop(&mut self) {
-            if let Some(child) = &mut self.0 {
-                // SAFETY: this test owns the unreaped controller. Give its
-                // existing cancellation path time to stop and reap producers.
-                unsafe { libc::kill(child.id() as i32, libc::SIGTERM) };
-                let deadline = Instant::now() + Duration::from_secs(5);
-                while child.try_wait().unwrap().is_none() {
-                    if Instant::now() >= deadline {
-                        child.kill().unwrap();
-                        child.wait().unwrap();
-                        break;
-                    }
-                    std::thread::sleep(Duration::from_millis(10));
-                }
-            }
-        }
-    }
     let project = Project::new();
     project.manifest(toml::from_str::<Value>("cases=[{name='one',a=1,expected_return=2}]").unwrap()["cases"].clone());
     write(&project.0, "tools/port/batch.toml", "[families]\nfixture='family'\n[profiles]\ngameplay=['fixture']\n");
@@ -1270,38 +1365,29 @@ fn interrupted_batch_reports_current_time_and_recovers_shared_capacity() {
         &project.0,
         "crates/port/src/fixture.rs",
         r#"use crate::memory::Wram;
-unsafe extern "C" {fn getppid()->i32;}
 pub fn dispatch(_ram:&mut Wram<'_>,_name:&str,_a:u16,_b:u16)->Result<u32,&'static str>{
-std::fs::write("started.pids",format!("{} {}",std::process::id(),unsafe{getppid()})).unwrap();
-std::thread::sleep(std::time::Duration::from_secs(30));Ok(0)}"#,
+loop{std::thread::yield_now();}}"#,
     );
     let (child, started) = project.spawn_measured_batch(false, "disabled");
     let mut writer = WriterControl(Some(child));
     let evidence = project.0.join("batch/families/fixture/evidence");
     let deadline = Instant::now() + Duration::from_secs(30);
-    let marker = loop {
+    let directory = loop {
         if let Ok(entries) = fs::read_dir(&evidence)
-            && let Some(marker) = entries
+            && let Some(directory) = entries
                 .filter_map(Result::ok)
-                .map(|entry| entry.path().join("one/started.pids"))
-                .find(|path| fs::read_to_string(path).is_ok_and(|text| text.split_whitespace().count() == 2))
+                .map(|entry| entry.path().join("one"))
+                .find(|path| path.join("rust.stdout").is_file() && !processes_with_cwd(path).is_empty())
         {
-            break marker;
+            break directory;
         }
         assert!(Instant::now() < deadline, "batch interruption Fixture did not start");
         assert!(writer.0.as_mut().unwrap().try_wait().unwrap().is_none(), "batch returned before interruption control");
         std::thread::sleep(Duration::from_millis(10));
     };
-    let identities = fs::read_to_string(&marker)
-        .unwrap()
-        .split_whitespace()
-        .map(|pid| {
-            let path = PathBuf::from(format!("/proc/{pid}/stat"));
-            let stat = fs::read_to_string(&path).unwrap();
-            let start = stat.rsplit_once(')').unwrap().1.split_whitespace().nth(19).unwrap().to_owned();
-            (path, start)
-        })
-        .collect::<Vec<_>>();
+    let rust = processes_with_cwd(&directory);
+    assert_eq!(rust.len(), 1, "admitted Rust Fixture process missing");
+    let identities = [rust[0].0, rust[0].1].into_iter().map(process_identity).collect::<Vec<_>>();
     // SAFETY: the controller is still owned and unreaped.
     assert_eq!(unsafe { libc::kill(writer.0.as_ref().unwrap().id() as i32, libc::SIGTERM) }, 0);
     let deadline = Instant::now() + Duration::from_secs(5);

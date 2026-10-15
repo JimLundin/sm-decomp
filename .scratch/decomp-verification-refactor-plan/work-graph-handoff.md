@@ -145,3 +145,22 @@ Earlier maximum-window diagnostic samples remain in `window-maximum-before.log`
 and `window-maximum-affinity.log`: helper starts fell 322 to 56, but Fixture wall
 rose 52.761 to 55.935 seconds in that single pair. This is a resource reduction,
 not established latency improvement. The final finite comparison remains open.
+
+## Final CLI harness follow-up
+
+Root reproduced the four legacy harness failures against byte-identical retained
+production CLI `6bc0a78`; the original Rust-before-C rejection test passes.
+Evidence is under
+`/home/jim/sm-decomp-performance-final-proof/c0cc7fc/logs/family-red-status.tsv`
+and the corresponding exact-test-name `.red.log` files. At root's request, the
+four tests in `crates/pipeline/tests/family.rs` now move their rendezvous/fork
+instrumentation into pinned actual C or trusted `/proc` observations. Both
+fresh/fork scheduling modes, canonical completion/continuation order, independent
+failure diagnostics, cancelled-Rust-before-C and active/idle helper/descendant
+reaping remain asserted. Cancellation uses the same four-case setup that passed
+the graph control. Production code and runtime capability admission are unchanged.
+
+This follow-up edits only that test file and this handoff. Root owns its actual
+recompiled tests. The worker ran no Cargo or producer command and made no target
+changes for this follow-up; formatting and `git diff --check` pass. Timing remains
+queued for root's explicit quiet-window notice.
