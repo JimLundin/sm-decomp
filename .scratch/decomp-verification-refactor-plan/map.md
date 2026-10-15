@@ -1,7 +1,7 @@
 # Performance refactor ticket map
 
 Planning status: complete proposal
-Implementation status: tickets 01 and 05 claimed; no production claims reserved
+Implementation status: tickets 01, 02 and 05 claimed; no production claims reserved
 
 The active Offline family extraction must finish and its owners must hand over
 the relevant source before these implementation tickets are dispatched. Freeze
@@ -11,7 +11,7 @@ production policies retain their own authority and prerequisites.
 | Ticket | Type | Depends on | Deliverable |
 | --- | --- | --- | --- |
 | [01](issues/01-baseline-and-metrics.md) | task | None | Current phase/reuse metrics, benchmark requirements and budgets |
-| [02](issues/02-bulk-input-context.md) | task | 01 | Small bulk Interface and one immutable authenticated input/catalog context |
+| [02](issues/02-bulk-input-context.md) | task | Frozen 01 interface; final acceptance waits for 01 | Small bulk Interface and one immutable authenticated input/catalog context |
 | [03](issues/03-dependency-and-result-identities.md) | task | 02 | Syntax-aware dependency facts and precise identity contracts |
 | [04](issues/04-shared-build-preparation.md) | task | 03 | Shared compiler preparation and eligible build coalescing |
 | [05](issues/05-offline-evidence-prototype.md) | prototype | None | Measured indexed-evidence experiment using frozen admitted baseline outputs |
@@ -56,6 +56,11 @@ formats/identities/producers/budgets, and changes no storage representation.
 Its isolated source and gates are tracked in
 [native-finalization-recovery.md](native-finalization-recovery.md). The failed
 baseline remains retained; acceptance still needs the complete corrected matrix.
+
+Ticket 02 starts provisionally from ticket 01's frozen source interface
+`e086190` after the core timing regression passed. Final metrics controls and
+dependency recovery still gate its acceptance; isolated implementation need not
+idle while those independent controls run.
 
 ## Decisions so far
 

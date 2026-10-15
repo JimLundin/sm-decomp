@@ -1,7 +1,7 @@
 # Add a bulk Interface with one authenticated input context
 
-Status: open
-Blocked by: 01
+Status: claimed
+Blocked by: None
 Triage: ready-for-agent
 Type: task
 
@@ -45,3 +45,12 @@ source/tool identities, scoped cleanup and post-cleanup authentication.
 ## Comments
 
 Do not introduce a daemon, public editable graph or second authority ledger.
+
+2026-10-15 scheduling refinement: the metrics interface is frozen at
+`e08619089313c187dbaacc279a4a5c36adc19007`, and its core actual-C reuse regression
+has passed. The independent bulk-context implementation can now proceed in an
+isolated checkout while the final bounded-metrics controls and Native dependency
+recovery complete. This removes the implementation scheduling blocker only;
+acceptance and resolution still require ticket 01's final controls and the
+recovered extraction gates. No in-flight verifier source or main production
+source is edited by this provisional worker.
