@@ -148,7 +148,7 @@ All Cargo work is locked/offline; the optimized verification build uses one job.
   four ignored, across 33 integration targets; none remains pending.
 - The first real Native recipe attempt stopped during declaration, before any
   producer ran (`logs/recipes.log`, `recipes.time`, output `recipes/`). The
-  diagnostic replay (`recipes-diagnostic/`, `logs/recipes-setup.strace`) found
+  diagnostic replay (`recipes-diagnostic/`, `logs/recipes-setup.strace.gz`) found
   the omitted declared input `crates/pipeline/src/ridley_subsystem_captured.rs`.
   That source still correctly belongs to pipeline; the test snapshot copied
   compiled harness inputs but omitted additional manifest-declared inputs.
@@ -171,19 +171,28 @@ All Cargo work is locked/offline; the optimized verification build uses one job.
 
 ## Cleanup and remaining work
 
-Foundation and recipe worktrees are integrated, cleaned and removed. Native
-and caller workers are finished and idle; both targets and temporary editing
-tools are cleaned. Their handoffs include measurements and retained logs. No
-proof depends on either implementer worktree. Root owns their final retirement.
+Foundation, recipe, Native and caller worktrees are integrated, cleaned and
+removed. Native/caller retirement reclaimed 484,716,544 measured allocated
+bytes; `logs/worker-worktrees-before-retirement.txt` and
+`worktrees-after-worker-retirement.txt` retain the inspection/removal evidence.
+`logs/ordinary-authenticated-after-worker-retirement.toml` records successful
+ordinary authentication afterward. Their source/check logs are integrated;
+no retained proof depends on either implementer worktree.
 Root's fourteen temporary Rust editing source/executable files were also removed,
 reclaiming 32,178,176 allocated bytes; the measurement and disk observation are
 in `logs/edit-tools-before-cleanup.txt` and `logs/disk-after-edit-tool-cleanup.txt`.
 
-Remaining implementation worktrees are:
+The only remaining implementation worktree is
+`/home/jim/sm-decomp-offline-verifier`, which owns root assembly and active
+verification. Main currently also contains an unrelated untracked performance
+effort; preserve it during integration.
 
-- `/home/jim/sm-decomp-offline-verifier`: root assembly and active verification.
-- `/home/jim/sm-decomp-offline-native`: stopped, clean, integrated.
-- `/home/jim/sm-decomp-offline-callers`: stopped, clean, integrated.
+The failed pattern test's unsealed Git metadata and the empty final CLI TMPDIR
+were removed. Its rejected report and source snapshot remain. The Native
+diagnostic trace was losslessly compressed; its decompressed hash matches the
+original. These steps reclaimed 36,962,304 measured allocated bytes; see
+`logs/failed-setup-disposable-before.txt`, `failed-setup-retained-after.txt`
+and `recipes-setup-{uncompressed,decompressed}.sha256`.
 
 Next: finish the real recipe proof and run the full-family Native proof.
 Retain exact tools and source,

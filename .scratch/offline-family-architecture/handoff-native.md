@@ -160,3 +160,14 @@ and remaining disk measurement are retained under `native-verification/`.
 No evidence from this work depends on the removed build or dependency copies.
 The remaining integration action is root's removal of this clean Git worktree
 and final proof authentication from its independently retained sources/reader.
+
+## Integration owner retirement
+
+The integration owner confirmed the agent completed, the worktree was clean
+and no process still used it, then removed it with `git worktree remove` on
+2026-10-15. The measured worktree size was 217,985,024 allocated bytes.
+Source and local check evidence are integrated into the assembled verifier
+branch. Measurements and surviving worktrees are recorded under
+`/home/jim/sm-decomp-offline-architecture-proofs/15d5a7e-20261015/logs/worker-worktrees-before-retirement.txt`
+and `worktrees-after-worker-retirement.txt`. The retained ordinary verdict
+authenticated afterward. Final Native proofs remain the integration owner's gate.

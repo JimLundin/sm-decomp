@@ -127,3 +127,16 @@ verification evidence. No source snapshot or evidence path requires this
 worktree to survive. The integration owner will remove the worktree after
 cherry-picking the final source and evidence commits. Caller cleanup is finished;
 integration tests and worktree retirement remain the integration owner's work.
+
+## Integration owner retirement
+
+The integration owner confirmed the agent completed, the worktree was clean
+and no process still used it, then removed it with `git worktree remove` on
+2026-10-15. The measured worktree size, including its private rustysnes copy,
+was 266,731,520 allocated bytes. Source and local check evidence are integrated
+into the assembled verifier branch. Measurements and surviving worktrees are
+recorded under
+`/home/jim/sm-decomp-offline-architecture-proofs/15d5a7e-20261015/logs/worker-worktrees-before-retirement.txt`
+and `worktrees-after-worker-retirement.txt`. The retained ordinary verdict
+authenticated afterward. All final CLI integration targets passed; Native
+execution and final assembly retirement remain the integration owner's gate.
