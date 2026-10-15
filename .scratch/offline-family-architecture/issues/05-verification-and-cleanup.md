@@ -1,6 +1,6 @@
 # Verify and integrate the complete architecture
 
-Status: open
+Status: claimed
 Blocked by: 04
 Triage: ready-for-agent
 Type: task
@@ -25,4 +25,10 @@ remaining free space. Preserve failed diagnostic evidence and shared stores.
 
 ## Completion evidence
 
-Pending frozen-source checks, integration and retained-evidence cleanup.
+Root is running the combined gates on frozen source `15d5a7e`. The persistent
+proof parent is
+`/home/jim/sm-decomp-offline-architecture-proofs/15d5a7e-20261015`; see
+[the checkpoint](../checkpoint.md) for exact active commands and prior evidence.
+Implementation is assembled; final behavioral checks, integration and retained
+evidence cleanup are pending. This ticket and its dependencies remain unresolved
+until that completion evidence is available.
