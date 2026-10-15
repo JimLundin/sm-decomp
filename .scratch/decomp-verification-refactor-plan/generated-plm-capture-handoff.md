@@ -1,6 +1,7 @@
 # Generated PLM effective input capture
 
-Status: claimed; focused public red pending.
+Status: claimed; effective-input correction and both public capture controls pass.
+Full input accounting diagnosis and composition controls remain pending.
 Owner: `/root/bulk_context_resume`, parent `/root`, session
 `01a13e7f-ab01-7413-a1c2-288b08a4b719`.
 Worktree: `/home/jim/sm-decomp-performance-generated`.
@@ -22,6 +23,32 @@ any aggregate accounting redesign after measured charged-read evidence.
 
 ## Completion evidence
 
-Pending reproduction, production effective-input correction, focused controls,
-complete generated actual-C composition, full-catalog capture with the graph
-owner, both cleanup passes, retained readers and integration-owner retirement.
+The public red is retained at `bfab2b5-red/`: the original combined control
+failed in 4.17s on the missing obsolete ROM, and independently split controls
+failed in 5.60s with ENOENT (missing) and `streamed input identity changed`
+(stale). The initial test build took 1m 40s. Both cleanup passes on all three
+failed controls reclaimed zero bytes. The original red reader is retained in
+`bfab2b5-red/tools/generated-plm-tests`; source and real prerequisites are in
+`frozen-source/`. An initial missing RustySNES worktree link caused a retained
+Cargo setup failure before any test; the ignored link was then restored.
+
+The production correction removes only GeneratedPlm raw declarations from
+ordinary input selection. `InputView::capture` derives the complete generated
+declaration from the checksum-pinned base ROM, captures every effective Rust
+source and declared input, and leaves only the generated ROM to the existing
+trusted output extension. The raw catalog remains captured and revalidated.
+Standalone and bulk preparation share this same path. No generic skipped-asset
+option, canonical manifest, Native contract, generator domain or limit changed.
+
+The corrected two public controls passed in **7.57s**, with an incremental build
+of 2.84s. Logs are `bfab2b5-red/logs/green-initial.{log,time}`; complete control
+sources are retained under `bfab2b5-green/obsolete-{missing,stale}-*/source`.
+Both missing and stale placeholders remained unchanged. Automatic cleanup
+completed for both controls. The base ROM and C archive hashes match the pinned
+identities; the retained cleanup binary's production source is unchanged from
+`b1f8691`.
+
+Pending: mutation/refusal and complete generated actual-C composition controls,
+measured full-catalog input accounting with the graph owner, final frozen proof,
+retained readers and integration-owner retirement. No aggregate accounting
+change is authorized without root review of measured charged-read evidence.

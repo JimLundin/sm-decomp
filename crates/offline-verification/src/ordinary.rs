@@ -170,7 +170,7 @@ impl OfflineFamilies {
                             self.host_inputs(),
                             &request.checkout,
                             &request.source,
-                            &[facts.declaration()],
+                            &[],
                             true,
                             snapshot.declarations(),
                         )?
