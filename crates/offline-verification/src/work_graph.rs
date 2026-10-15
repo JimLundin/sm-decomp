@@ -63,6 +63,9 @@ struct State {
     idle: Vec<(usize, Worker)>,
     residents: usize,
     families: Vec<Family>,
+    // Completed records move into the batch's canonical results. Keep their
+    // reservation through the whole invocation, after their group is removed.
+    _result_reservations: Vec<Reservation>,
 }
 
 /// Graph scheduling metadata shares the invocation's existing resident budget.
@@ -123,6 +126,8 @@ pub(crate) struct Fixtures {
     jobs: usize,
     fork: bool,
     _reservation: Reservation,
+    result_reservation: Option<Reservation>,
+    result_bounds: Vec<u64>,
 }
 
 impl Fixtures {
@@ -148,6 +153,21 @@ impl Fixtures {
                 .context("batch Fixture metadata extent overflow")?,
         )?;
         let indices = crate::family::ordered_task_indices(&manifest)?;
+        let result_bounds = indices
+            .iter()
+            .map(|&(routine, case)| {
+                let routine = &manifest.routines[routine];
+                // Closed recipes retain two subject entries per map, short hash
+                // strings and declaration names. Check the actual retained extent
+                // before queueing a record, including future recipe extensions.
+                16 * 1024 + 2 * (routine.symbol.len() + routine.cases[case].name.len()) as u64
+            })
+            .collect::<Vec<_>>();
+        let result_bytes = result_bounds
+            .iter()
+            .try_fold(0u64, |sum, bytes| sum.checked_add(*bytes))
+            .context("batch Fixture result reservation overflow")?;
+        let result_reservation = Some(Reservation::new(&declarations, result_bytes)?);
         Ok(Self {
             manifest,
             recipe,
@@ -159,6 +179,8 @@ impl Fixtures {
             jobs,
             fork,
             _reservation: reservation,
+            result_reservation,
+            result_bounds,
         })
     }
 
@@ -198,6 +220,35 @@ impl Fixtures {
         let previous = case.continue_from.as_deref().unwrap_or("batch");
         crate::atomic_toml(&directory.join("blocked.toml"), &Blocked { blocked_by: previous, reason })?;
         bail!("fixture {} blocked by {previous}: {reason}", case.name)
+    }
+
+    fn bounded_result(&self, index: usize, result: Result<CaseRecord>) -> Result<CaseRecord> {
+        match result {
+            Err(error) => Err(anyhow::anyhow!(diagnostic(&format!("{error:#}")))),
+            Ok(record) => {
+                // A BTree node may have unused keys/edges. Reserve a full
+                // kilobyte per observed entry, plus the owned String buffers
+                // and fixed record shell; this exceeds each closed map shape.
+                let entries = record.returns.len()
+                    + record.after_sha256.len()
+                    + record.results.len()
+                    + record.spawn_results.len();
+                let mut bytes = 1024 * (entries as u64 + 1);
+                for value in [&record.routine, &record.name, &record.before_sha256]
+                    .into_iter()
+                    .chain(record.capture_after_sha256.iter())
+                    .chain(record.returns.keys())
+                    .chain(record.after_sha256.keys())
+                    .chain(record.after_sha256.values())
+                    .chain(record.results.keys())
+                    .chain(record.spawn_results.keys())
+                {
+                    bytes = bytes.checked_add(value.capacity() as u64).context("Fixture result extent overflow")?;
+                }
+                ensure!(bytes <= self.result_bounds[index], "Fixture result exceeded its retained memory reservation");
+                Ok(record)
+            }
+        }
     }
 }
 
@@ -243,7 +294,7 @@ impl Graph {
         let declarations = catalog.declarations().clone();
         let bytes = jobs
             .iter()
-            .try_fold(PROJECTION_BYTES * capacity.min(family_jobs) as u64, |total, job| {
+            .try_fold(PROJECTION_BYTES * capacity.min(family_jobs) as u64 + capacity as u64 * 8192, |total, job| {
                 total.checked_add((job.family.len() + job.output.as_os_str().len()) as u64 * 2 + 1024)
             })
             .context("batch graph metadata extent overflow")?;
@@ -288,6 +339,7 @@ impl Graph {
                 idle: Vec::new(),
                 residents: 0,
                 families,
+                _result_reservations: Vec::new(),
             }),
             changed: Condvar::new(),
             metadata: Mutex::new(0),
@@ -403,7 +455,7 @@ impl Graph {
     fn retire(&self, family: usize, mut worker: Worker) {
         // Drop reaps all remaining helpers even if an explicit stop fails.
         // Only then may this family's metrics and evidence be finalized.
-        let result = worker.finish();
+        let result = worker.finish().map_err(|error| anyhow::anyhow!(diagnostic(&format!("{error:#}"))));
         drop(worker);
         let mut state = self.state.lock().unwrap();
         if let Err(error) = &result {
@@ -419,8 +471,9 @@ impl Graph {
     }
 
     fn settled(&self, family: usize, task: usize, result: Result<CaseRecord>, worker: Option<Worker>, blocked: bool) {
-        let failed = result.is_err();
         let mut state = self.state.lock().unwrap();
+        let result = state.groups[&family].work.bounded_result(task, result);
+        let failed = result.is_err();
         if let Err(error) = &result {
             state.stopped.get_or_insert_with(|| diagnostic(&format!("{error:#}")));
         }
@@ -561,7 +614,7 @@ impl<'a> FamilyNode<'a> {
         action()
     }
 
-    pub(crate) fn fixtures(self, work: Fixtures) -> Result<Vec<(usize, Result<CaseRecord>)>> {
+    pub(crate) fn fixtures(self, mut work: Fixtures) -> Result<Vec<(usize, Result<CaseRecord>)>> {
         let tasks = (0..work.indices.len()).map(|index| work.task(index)).collect::<Vec<_>>();
         let count = tasks.len();
         ensure!(count > 0 && (1..=64).contains(&work.jobs), "invalid batch Fixture group");
@@ -592,6 +645,7 @@ impl<'a> FamilyNode<'a> {
                 order_sha256: format!("{:x}", order.finalize()),
                 ..Default::default()
             };
+            state._result_reservations.push(work.result_reservation.take().expect("one result reservation per group"));
             state.groups.insert(
                 self.index,
                 Group {

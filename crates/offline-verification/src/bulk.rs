@@ -76,6 +76,14 @@ impl FamilyCompletion {
 pub struct BatchRun {
     families: Vec<FamilyCompletion>,
 }
+
+fn publish_completion(
+    completed: &(impl Fn(&FamilyCompletion) -> Result<()> + Sync),
+    outcome: &FamilyCompletion,
+) -> Result<()> {
+    std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| completed(outcome)))
+        .unwrap_or_else(|_| Err(anyhow::anyhow!("batch completion observer panicked")))
+}
 impl BatchRun {
     /// Canonical request order, independent of completion/publication order.
     pub fn families(&self) -> &[FamilyCompletion] {
@@ -290,9 +298,9 @@ impl OfflineFamilies {
                                 graph.stop(&reason);
                                 node.phase(crate::work_graph::Phase::Rejected);
                             }
-                            if let Err(error) =
-                                crate::work_graph::FamilyNode::metadata(Some(node), || completed(&outcome))
-                            {
+                            if let Err(error) = crate::work_graph::FamilyNode::metadata(Some(node), || {
+                                publish_completion(&completed, &outcome)
+                            }) {
                                 graph.stop(&format!("completion publication failed: {error:#}"));
                                 publication_errors.lock().unwrap().push(format!("{error:#}"));
                             }
@@ -327,7 +335,7 @@ impl OfflineFamilies {
                     .err()
                     .unwrap_or_else(|| anyhow::anyhow!("batch family did not complete"))),
             };
-            if let Err(error) = completed(&outcome) {
+            if let Err(error) = publish_completion(&completed, &outcome) {
                 publication_errors.lock().unwrap().push(format!("{error:#}"));
             }
             outcomes.insert(index, outcome);
