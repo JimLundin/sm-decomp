@@ -7,7 +7,7 @@ use anyhow::{Result, ensure};
 use proc_macro2::{TokenStream, TokenTree};
 use sha2::{Digest, Sha256};
 use std::{
-    collections::BTreeSet,
+    collections::{BTreeMap, BTreeSet, VecDeque},
     path::{Component, Path, PathBuf},
 };
 use syn::{
@@ -145,8 +145,12 @@ fn scan_bounded(logical_path: &Path, bytes: &[u8]) -> Result<RustSourceFacts> {
         glob_import: false,
         builtins: BTreeSet::new(),
         module_depth: 0,
+        import_roots: BTreeSet::new(),
+        import_edges: BTreeMap::new(),
+        declared_roots: ["crate", "self", "super", "std", "core", "alloc"].map(String::from).into(),
     };
     scanner.visit_file(&syntax);
+    scanner.resolve_imports();
     if let Some(error) = scanner.error {
         return Err(error);
     }
@@ -285,6 +289,9 @@ struct Scanner<'a> {
     glob_import: bool,
     builtins: BTreeSet<String>,
     module_depth: usize,
+    import_roots: BTreeSet<String>,
+    import_edges: BTreeMap<String, BTreeSet<String>>,
+    declared_roots: BTreeSet<String>,
 }
 
 impl Scanner<'_> {
@@ -417,6 +424,41 @@ impl Scanner<'_> {
         }
     }
 
+    fn import_binding(&mut self, prefix: &[String], binding: Option<String>) {
+        let Some(root) = prefix.first() else {
+            return;
+        };
+        self.import_roots.insert(root.clone());
+        if let Some(binding) = binding {
+            self.import_edges.entry(root.clone()).or_default().insert(binding.clone());
+            self.imports.insert(binding);
+        }
+    }
+
+    fn resolve_imports(&mut self) {
+        // Resolve aliases from actual imports, independent of source order.
+        // An unresolved root or an unrooted alias cycle stays uncertain.
+        let mut pending = self.declared_roots.iter().cloned().collect::<VecDeque<_>>();
+        while let Some(root) = pending.pop_front() {
+            if !self.step() {
+                return;
+            }
+            for binding in self.import_edges.get(&root).into_iter().flatten() {
+                if self.declared_roots.insert(binding.clone()) {
+                    pending.push_back(binding.clone());
+                }
+            }
+        }
+        for root in std::mem::take(&mut self.import_roots) {
+            if !self.step() {
+                return;
+            }
+            if !self.declared_roots.contains(&root) {
+                self.unresolved(format!("unresolved import origin: {root}"));
+            }
+        }
+    }
+
     fn import(&mut self, prefix: &mut Vec<String>, tree: &syn::UseTree) {
         if !self.step() {
             return;
@@ -430,17 +472,18 @@ impl Scanner<'_> {
             syn::UseTree::Name(value) => {
                 prefix.push(name(&value.ident));
                 self.path(prefix);
-                self.imports.insert(name(&value.ident));
+                self.import_binding(prefix, Some(name(&value.ident)));
                 prefix.pop();
             }
             syn::UseTree::Rename(value) => {
                 prefix.push(name(&value.ident));
                 self.path(prefix);
-                self.imports.insert(name(&value.rename));
+                self.import_binding(prefix, Some(name(&value.rename)));
                 prefix.pop();
             }
             syn::UseTree::Glob(_) => {
                 self.path(prefix);
+                self.import_binding(prefix, None);
                 self.glob_import = true;
             }
             syn::UseTree::Group(group) => {
@@ -464,6 +507,17 @@ impl<'ast> Visit<'ast> for Scanner<'_> {
         }
         if matches!(item, syn::Item::Verbatim(_)) {
             self.unresolved("unmodeled Rust item syntax".into());
+        }
+        let defined = match item {
+            syn::Item::Mod(item) => Some(&item.ident),
+            syn::Item::Enum(item) => Some(&item.ident),
+            syn::Item::Struct(item) => Some(&item.ident),
+            syn::Item::Type(item) => Some(&item.ident),
+            syn::Item::Union(item) => Some(&item.ident),
+            _ => None,
+        };
+        if let Some(ident) = defined {
+            self.declared_roots.insert(name(ident));
         }
         visit::visit_item(self, item);
         self.depth -= 1;
@@ -546,16 +600,11 @@ impl<'ast> Visit<'ast> for Scanner<'_> {
         }
         if let Some((_, alias)) = &item.rename {
             self.imports.insert(name(alias));
+            self.import_edges.entry(name(&item.ident)).or_default().insert(name(alias));
         }
         visit::visit_item_extern_crate(self, item);
     }
     fn visit_item_use(&mut self, item: &'ast syn::ItemUse) {
-        if let syn::UseTree::Path(path) = &item.tree {
-            let origin = name(&path.ident);
-            if !["crate", "self", "super", "std", "core", "alloc"].contains(&origin.as_str()) {
-                self.unresolved(format!("unresolved import origin: {origin}"));
-            }
-        }
         self.import(&mut vec![], &item.tree);
         visit::visit_item_use(self, item);
     }

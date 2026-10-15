@@ -172,6 +172,30 @@ fn real_input_macros_keep_literal_or_dynamic_input_facts() -> Result<()> {
 }
 
 #[test]
+fn import_roots_follow_real_aliases_and_do_not_accept_unrooted_cycles() -> Result<()> {
+    let source = br#"
+use shifted::constants::VALUE;
+use enemy_projectiles as shifted;
+use crate::enemy_projectiles;
+use Kind::One;
+enum Kind { One }
+fn step() { let _ = (VALUE, One); }
+"#;
+    let facts = source_facts::scan(Path::new("candidate.rs"), source)?;
+    facts.require_complete()?;
+    assert!(facts.identifiers().contains("enemy_projectiles"));
+    for source in [
+        "use missing::State;",
+        "use {missing::State, std::fmt::Debug};",
+        "use first::second; use second::first;",
+        "use missing::missing;",
+    ] {
+        assert!(!source_facts::scan(Path::new("candidate.rs"), source.as_bytes())?.is_complete(), "{source}");
+    }
+    Ok(())
+}
+
+#[test]
 fn literal_module_paths_are_real_edges_and_unresolved_resolution_stays_explicit() -> Result<()> {
     let facts = source_facts::scan(
         Path::new("src/candidate.rs"),
