@@ -328,8 +328,17 @@ routines and 34 producer operations. It must additionally prove:
 - A syntactically understood `compile_error!` candidate separately retains a
   failed Native compiler receipt with complete producer attribution. Unchanged
   failure replay reuses that rejected receipt.
-- Runtime parent read/write, sibling C-state read and `/program-c` read are
-  denied while the complete family still passes and parent contents stay intact.
+- A candidate containing `std::fs` runtime capabilities is refused during source
+  capture with the exact diagnostic and no Native intent or producer.
+- A second complete family evaluation passes all 16 pairs with 34 producers.
+  Its independently admitted Rust invocations supply the exact bindings, argv,
+  runtime, helper, outputs and limits for 16 separate diagnostic operations.
+  Only the executable changes to a trusted probe, itself built by a retained
+  confined compiler operation. Every probe denies parent read/write, sibling
+  C-state read and `/program-c` read. The protected host files exist and remain
+  unchanged; each probe copies the declared WRAM input to its required output
+  and emits an exact success marker. These diagnostics have independent
+  attribution and do not count as Native Fixture passes.
 - An aggregate allowance of parent reservation plus 4,096 bytes rejects
   before launching producers, with operation count zero.
 
@@ -340,22 +349,25 @@ no stdin. Authentication gets its existing 60-second / 8 GiB scope.
 
 Retain `full-real/prepared.toml`, `source-inventory.toml`, `catalog.toml`,
 `requirements.md`, `source/`, `operations/`, `capture-refusal-source/`,
-`compile-failure-source/`, `runtime-denial-source/`, protected diagnostic files
+`compile-failure-source/`, `runtime-refusal-source/`, `runtime-family-source/`, protected diagnostic files
 and each of `run/`, `capture-refusal/`, `compiler-denial/`, `compile-failure/`,
-`runtime-denial/`, `reservation-denial/`. Each completed Native output retains
+`runtime-refusal/`, `runtime-family/`, `runtime-probes/`, `reservation-denial/`. Each completed Native output retains
 its intent, receipt, indexed attribution, verdict and artifacts. Capture refusal
 retains the exact candidate/diagnostic with no producer. The direct compiler
 probe retains its exact Program, context, limits and authenticated operation.
+The runtime proof retains all 16 original invocation references, its compiler
+operation and executable, and the 16 derived requests/results. Replay checks
+producer hashes and modification times before independent authentication.
 The migrated test performs both cleanup passes and retained authentication
 after the reservation assertion.
 
-The performance integration implements these three distinct negative controls
-in `crates/pipeline/src/translation_native_tests.rs`. The earlier requirement
-that the family `include_str!` candidate itself reach rustc became obsolete once
-captured source facts correctly rejected unresolved file macros. Preserve the
-original failed evidence; do not relax capture or treat an absent pre-capture
-receipt as a Native finalization failure. All original limits and required
-positive, runtime-denial, tamper and reservation domains remain unchanged.
+The performance integration separates capture refusal from actual compiler and
+runtime confinement in `crates/pipeline/src/translation_native_tests.rs`. The
+earlier assumption that injected file macros or `std::fs` calls reach execution
+became obsolete once captured source facts correctly rejected their unresolved
+inputs. Preserve the original failed evidence; do not relax capture or treat an
+absent pre-capture receipt as a Native finalization failure. All original limits
+and required positive, runtime-denial, tamper and reservation domains remain.
 
 Preserve these nonignored regressions under their new owner as well:
 
@@ -390,14 +402,18 @@ and these full-proof combinations:
 | --- | --- | --- | --- |
 | `full-real/run` | `full-real/prepared.toml` | `full-real/source` | Passed |
 | `full-real/compile-failure` | same | `full-real/compile-failure-source` | Rejected with both compiler producers and unchanged replay |
-| `full-real/runtime-denial` | same | `full-real/runtime-denial-source` | Passed with runtime denial assertions |
+| `full-real/runtime-family` | same | `full-real/runtime-family-source` | Passed, all 16 pairs / 34 producers; source of runtime probe bindings |
 | `full-real/reservation-denial` | same | `full-real/source` | Rejected with reservation exhaustion and no producers |
 
-The same retained manifest separately names capture refusals and the direct
-compiler-denial operation. Its reader checks the exact refusal source/diagnostic
+The same retained manifest separately names both capture refusals, the direct
+compiler-denial operation and all 16 runtime probes with their compiler. Its
+reader checks the exact refusal source/diagnostic
 and absent Native publication, and authenticates the compiler operation through
 `authenticate_request_with_references`, including actual compiler failure,
 protected contents and complete runner/result attribution.
+It independently admits the runtime family's original invocation references,
+checks every derived Program against those references, and authenticates the
+probe build, output bytes, denial markers and unchanged protected files.
 
 The reader loads retained prepared/receipt records and invokes Native
 authentication for each exact candidate path. It asserts original outcomes
