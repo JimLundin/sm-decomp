@@ -531,6 +531,11 @@ fn native_capture_replays_without_tools_and_binds_mapping_and_source() -> Result
     );
     fs::remove_file(captures.join("extra"))?;
     let record = output.join("family/captured-inputs.toml");
+    let mapping = fs::read(&record)?;
+    fs::write(&record, [mapping.as_slice(), b"\n# changed captured mapping\n"].concat())?;
+    let changed_mapping = prepared.authenticate(NativeEvidence { checkout: &project.checkout(), receipt: &receipt });
+    fs::write(&record, mapping)?;
+    ensure!(changed_mapping.is_err(), "changed captured mapping admitted");
     let record_before = (digest(&record)?, fs::metadata(&record)?.modified()?);
     let before = admitted
         .references()
