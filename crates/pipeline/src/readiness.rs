@@ -1,9 +1,17 @@
-use crate::{
-    atomic_toml, diagnostics, digest, family, parity, patterns, preflight, readiness_contract as contract,
-    readiness_feedback, readiness_origins as origins, readiness_reuse as reuse,
-    readiness_run::{Run, identity, safe_artifact},
-    readiness_sync,
-};
+use crate::atomic_toml;
+use crate::diagnostics;
+use crate::digest;
+use crate::parity;
+use crate::patterns;
+use crate::preflight;
+use crate::readiness_contract as contract;
+use crate::readiness_feedback;
+use crate::readiness_origins as origins;
+use crate::readiness_reuse as reuse;
+use crate::readiness_run::Run;
+use crate::readiness_run::identity;
+use crate::readiness_run::safe_artifact;
+use crate::readiness_sync;
 use anyhow::{Context, Result, ensure};
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -57,10 +65,10 @@ fn verify_check_chain(owner: &Path, name: &str, verified: &Value, visited: &mut 
     contract::validate(name, report)?;
     if let Some(prior) = report.get("reused_from") {
         ensure!(contract::REUSABLE.contains(&name), "candidate-specific check cannot reuse predecessor evidence");
-        let previous = Path::new(family::field(prior, "path")?);
+        let previous = Path::new(crate::documents::field(prior, "path")?);
         let accepted = reuse::verify_accepted(previous, true)?;
-        let before = family::field(&accepted["manifest"], "started_utc")?;
-        let current = family::field(manifest, "started_utc")?;
+        let before = crate::documents::field(&accepted["manifest"], "started_utc")?;
+        let current = crate::documents::field(manifest, "started_utc")?;
         ensure!(
             before < current && accepted["manifest"]["run_id"] == prior["run_id"],
             "reused evidence must precede current run and match origin"
@@ -69,7 +77,7 @@ fn verify_check_chain(owner: &Path, name: &str, verified: &Value, visited: &mut 
         let current = origins::document(&origins::artifact(&owner, "dependency-policy", manifest)?)?;
         ensure!(
             old["checks"][name] == current["checks"][name]
-                && identity(&old["checks"][name])? == family::field(prior, "dependency_sha256")?,
+                && identity(&old["checks"][name])? == crate::documents::field(prior, "dependency_sha256")?,
             "reused check dependencies differ"
         );
         let actual = verify_check_chain(previous, name, &accepted, visited)?;
@@ -84,7 +92,7 @@ fn verify_check_chain(owner: &Path, name: &str, verified: &Value, visited: &mut 
         ensure!(process == *report, "successful check process differs from gate");
     } else if ["fallback-only-parity", "generated-parity"].contains(&name) {
         let mode = if name == "fallback-only-parity" { "fallback-only" } else { "generated" };
-        let raw_path = safe_artifact(&owner, family::field(report, "evidence")?)?;
+        let raw_path = safe_artifact(&owner, crate::documents::field(report, "evidence")?)?;
         let raw = origins::document(&raw_path)?;
         let saved = origins::artifact(&owner, &format!("{mode}-parity-report"), manifest)?;
         ensure!(saved == raw_path, "parity report provenance differs");
@@ -103,8 +111,11 @@ fn verify_check_chain(owner: &Path, name: &str, verified: &Value, visited: &mut 
                     == crate::readiness_metadata::value(&digest(&binary)?).expect("validated native metadata"),
             "parity actual executable/scope differs"
         );
-        let canonical = safe_artifact(&owner, family::field(inputs, "input_evidence")?)?;
-        ensure!(digest(&canonical)? == family::field(inputs, "input_sha256")?, "parity canonical input differs");
+        let canonical = safe_artifact(&owner, crate::documents::field(inputs, "input_evidence")?)?;
+        ensure!(
+            digest(&canonical)? == crate::documents::field(inputs, "input_sha256")?,
+            "parity canonical input differs"
+        );
         let selected =
             fs::read_to_string(&canonical)?.lines().take(18000).map(|line| format!("{line}\n")).collect::<String>();
         use sha2::{Digest, Sha256};
@@ -122,7 +133,7 @@ fn verify_check_chain(owner: &Path, name: &str, verified: &Value, visited: &mut 
         }
         let process = origins::process(&owner, &format!("{mode}-replay"), manifest, None, &[0])?;
         let command = crate::pattern_contract::strings(&process["command"])?;
-        let cwd = Path::new(family::field(&process, "cwd")?);
+        let cwd = Path::new(crate::documents::field(&process, "cwd")?);
         let expected = vec![
             binary.to_string_lossy().into_owned(),
             cwd.join("movies/super-metroid-any-3653.lsmv").to_string_lossy().into_owned(),
@@ -161,14 +172,14 @@ fn verify_check_chain(owner: &Path, name: &str, verified: &Value, visited: &mut 
         let original = if owner.join("generated/original.csv").exists() {
             owner.join("generated/original.csv")
         } else {
-            let reused = family::array(manifest, "reused_evidence")?
+            let reused = crate::documents::array(manifest, "reused_evidence")?
                 .iter()
                 .find(|r| {
                     r["kind"]
                         == crate::readiness_metadata::value(&"original-oracle").expect("validated native metadata")
                 })
                 .context("original reuse origin missing")?;
-            Path::new(family::field(reused, "path")?).join("generated/original.csv")
+            Path::new(crate::documents::field(reused, "path")?).join("generated/original.csv")
         };
         let computed = readiness_sync::compare(
             &original,
@@ -201,12 +212,12 @@ fn focus_gate(run: &mut Run, timeout: u64) -> Result<Value> {
         coverage["status"] == crate::readiness_metadata::value(&"pass").expect("validated native metadata"),
         "coverage must pass before mandatory focus"
     );
-    let keys = if family::array(&coverage, "required_keys")?.is_empty() {
-        let row = family::array(&coverage, "executed")?.first().context("no compiled key executed")?;
+    let keys = if crate::documents::array(&coverage, "required_keys")?.is_empty() {
+        let row = crate::documents::array(&coverage, "executed")?.first().context("no compiled key executed")?;
         crate::report!(vec![crate :: report ! ({ "address" : row ["address"] , "mx" : row ["mx"] , })])
     } else {
         Value::Array(
-            family::array(&coverage, "required_keys")?
+            crate::documents::array(&coverage, "required_keys")?
                 .iter()
                 .map(|r| crate :: report ! ({ "address" : r ["address"] , "mx" : r ["mx"] , }))
                 .collect::<Vec<_>>(),
@@ -217,7 +228,7 @@ fn focus_gate(run: &mut Run, timeout: u64) -> Result<Value> {
         discovery["status"] == crate::readiness_metadata::value(&"pass").expect("validated native metadata"),
         "covered instruction discovery failed"
     );
-    let mut intervals = family::array(&discovery, "intervals")?.clone();
+    let mut intervals = crate::documents::array(&discovery, "intervals")?.clone();
     intervals.sort_by_key(|i| {
         (
             i["start_input"].as_integer().and_then(|n| u64::try_from(n).ok()),
@@ -251,7 +262,7 @@ fn focus_gate(run: &mut Run, timeout: u64) -> Result<Value> {
             last["instructions"] = Value::Integer(i64::try_from(
                 end - last["start_instruction"].as_integer().and_then(|n| u64::try_from(n).ok()).unwrap(),
             )?);
-            last["keys"].as_array_mut().unwrap().extend(family::array(&interval, "keys")?.clone());
+            last["keys"].as_array_mut().unwrap().extend(crate::documents::array(&interval, "keys")?.clone());
         } else {
             merged.push(interval);
         }
@@ -345,7 +356,7 @@ fn verify_focus(
     );
     let command = crate::pattern_contract::strings(&process["command"])?;
     ensure!(command.len() == 16, "focused invocation has unexpected flags");
-    let cwd = Path::new(family::field(process, "cwd")?);
+    let cwd = Path::new(crate::documents::field(process, "cwd")?);
     ensure!(
         command[0] == binary.to_string_lossy()
             && command[1] == cwd.join("movies/super-metroid-any-3653.lsmv").to_string_lossy()
@@ -382,9 +393,9 @@ fn verify_focus(
     let ids = &manifest["identities"];
     let inputs = &ids["inputs"];
     ensure!(
-        supplied.source_sha256 == family::field(&ids["source"], "sha256")?
-            && supplied.hardware_sha256 == family::field(&ids["hardware"], "source_sha256")?
-            && supplied.compiler == family::field(&ids["compiler"], "version")?
+        supplied.source_sha256 == crate::documents::field(&ids["source"], "sha256")?
+            && supplied.hardware_sha256 == crate::documents::field(&ids["hardware"], "source_sha256")?
+            && supplied.compiler == crate::documents::field(&ids["compiler"], "version")?
             && supplied.features == crate::pattern_contract::strings(&ids["hardware"]["features"])?
             && supplied.settings.seed == 0
             && supplied.settings.mode.as_deref() == Some("generated")
@@ -425,8 +436,8 @@ pub fn verify_origins(owner: &Path, verified: &Value) -> Result<()> {
         &[0],
     )?;
     ensure!(
-        fs::read_to_string(owner.join(family::field(&compiler, "stdout")?))?.trim()
-            == family::field(&manifest["identities"]["compiler"], "version")?,
+        fs::read_to_string(owner.join(crate::documents::field(&compiler, "stdout")?))?.trim()
+            == crate::documents::field(&manifest["identities"]["compiler"], "version")?,
         "compiler identity differs"
     );
     for name in ["check", "lint", "fallback-only-parity", "generated-parity", "synchronization"] {
@@ -443,7 +454,7 @@ pub fn verify_origins(owner: &Path, verified: &Value) -> Result<()> {
     let previous = if coverage.get("predecessor").is_none_or(|v| v.as_table().is_some_and(|t| t.is_empty())) {
         None
     } else {
-        let path = PathBuf::from(family::field(&coverage["predecessor"], "run_path")?);
+        let path = PathBuf::from(crate::documents::field(&coverage["predecessor"], "run_path")?);
         let accepted = reuse::verify_accepted(&path, true)?;
         ensure!(
             accepted["manifest"]["run_id"] == coverage["predecessor"]["run_id"],
@@ -458,15 +469,15 @@ pub fn verify_origins(owner: &Path, verified: &Value) -> Result<()> {
         "coverage gate differs from independently derived actual keys/counts"
     );
     ensure!(
-        digest(&profile)? == family::field(coverage, "profile_sha256")?
-            && digest(&inventory)? == family::field(coverage, "candidate_inventory_sha256")?
+        digest(&profile)? == crate::documents::field(coverage, "profile_sha256")?
+            && digest(&inventory)? == crate::documents::field(coverage, "candidate_inventory_sha256")?
             && coverage["candidate_source_sha256"] == manifest["identities"]["source"]["sha256"],
         "coverage profile/inventory/source differs"
     );
     let inventory_doc = origins::document(&inventory)?;
-    let steps = safe_artifact(owner, family::field(&inventory_doc, "steps_evidence")?)?;
+    let steps = safe_artifact(owner, crate::documents::field(&inventory_doc, "steps_evidence")?)?;
     ensure!(
-        digest(&steps)? == family::field(&inventory_doc, "steps_sha256")?
+        digest(&steps)? == crate::documents::field(&inventory_doc, "steps_sha256")?
             && crate::readiness_metadata::value(&crate::coverage::table_rows(&fs::read_to_string(steps)?)?)
                 .expect("validated native metadata")
                 == inventory_doc["keys"],
@@ -475,13 +486,13 @@ pub fn verify_origins(owner: &Path, verified: &Value) -> Result<()> {
     let raw_profile = owner.join("diagnostics/generated-frame-parity/coverage.toml");
     let raw = origins::document(&owner.join("diagnostics/generated-frame-parity/parity.toml"))?;
     ensure!(
-        digest(&raw_profile)? == family::field(&raw, "coverage_sha256")?
+        digest(&raw_profile)? == crate::documents::field(&raw, "coverage_sha256")?
             && origins::document(&raw_profile)?["generated_instructions"] == coverage["generated_instructions"],
         "coverage raw replay totals differ"
     );
     let discovery = origins::document(&safe_artifact(
         owner,
-        family::field(&checks["instruction-diagnosis"], "discovery_evidence")?,
+        crate::documents::field(&checks["instruction-diagnosis"], "discovery_evidence")?,
     )?)?;
     ensure!(
         discovery["status"] == crate::readiness_metadata::value(&"pass").expect("validated native metadata")
@@ -495,11 +506,11 @@ pub fn verify_origins(owner: &Path, verified: &Value) -> Result<()> {
             "focused discovery input differs"
         );
     }
-    let reports = family::array(&checks["instruction-diagnosis"], "reports")?;
-    let intervals = family::array(&checks["instruction-diagnosis"], "intervals")?;
+    let reports = crate::documents::array(&checks["instruction-diagnosis"], "reports")?;
+    let intervals = crate::documents::array(&checks["instruction-diagnosis"], "intervals")?;
     ensure!(!reports.is_empty() && reports.len() == intervals.len(), "focus lacks covered intervals");
     for (index, report) in reports.iter().enumerate() {
-        let actual = origins::document(&safe_artifact(owner, family::field(report, "evidence")?)?)?;
+        let actual = origins::document(&safe_artifact(owner, crate::documents::field(report, "evidence")?)?)?;
         let binary = origins::artifact(owner, &format!("mandatory-focus-{index}-focused-binary"), manifest)?;
         let process =
             origins::process(owner, &format!("mandatory-focus-{index}-focused-replay"), manifest, None, &[0])?;
@@ -517,9 +528,9 @@ pub fn verify_origins(owner: &Path, verified: &Value) -> Result<()> {
         for key in ["rom_sha256", "movie_sha256", "input_sha256"] {
             ensure!(actual["identities"][key] == manifest["identities"]["inputs"][key], "focus input identity differs");
         }
-        for key in family::array(&intervals[index], "keys")? {
+        for key in crate::documents::array(&intervals[index], "keys")? {
             ensure!(
-                family::array(&actual, "executed_generated_keys")?
+                crate::documents::array(&actual, "executed_generated_keys")?
                     .contains(&crate::report!(vec![key["address"], key["mx"]])),
                 "focused interval did not execute target key"
             );

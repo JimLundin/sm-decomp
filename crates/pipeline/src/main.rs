@@ -1,12 +1,13 @@
 //! Local CLI composition for decomp verification and Translation operations.
 use anyhow::{Context, Result, bail, ensure};
-use build_cache::{CacheRequest, CacheResult, CacheSeal, cached_artifact};
 use serde::Serialize;
 use std::fs;
 use std::io::{BufRead, Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use toml::Value;
+use tool_execution::build_cache::{CacheRequest, cached_artifact};
+use tool_execution::builds;
 
 use tool_execution::{acquire_lease, acquire_lease_until, acquire_leases_until, atomic_toml, digest, executable, lock};
 
@@ -15,9 +16,6 @@ mod assignment;
 mod baseline;
 mod batch;
 mod benchmark;
-mod build_cache;
-mod builds;
-mod callback;
 mod checkpoints;
 mod cleanup;
 mod coordination;
@@ -27,14 +25,11 @@ mod decomp_job;
 mod decomp_model;
 mod decomp_prefix;
 mod diagnostics;
+mod documents;
 mod enemy_instruction_inventory;
-mod family;
-mod family_model;
-mod fixture_execution;
-mod fixture_format;
+mod fixture_cli;
 mod fixtures;
 mod hdma_probe;
-mod inputs;
 mod iteration_demonstrations;
 mod iteration_diagnosis;
 mod iteration_increment;
@@ -44,15 +39,13 @@ mod iteration_session;
 mod live;
 mod live_model;
 mod lsnes_configure;
-mod metrics;
 mod observations;
+mod offline;
 mod packed;
 mod paired_verify;
 mod parity;
 mod pattern_contract;
 mod patterns;
-mod plm_fixtures;
-mod plm_spawn;
 mod preflight;
 mod progress;
 mod projectile_inventory;
@@ -65,15 +58,15 @@ mod readiness_reuse;
 mod readiness_run;
 mod readiness_sync;
 mod replay;
-mod resource_sampler;
-mod ridley_subsystem_adapter;
 mod ridley_subsystem_fixtures;
 mod ridley_subsystem_inventory;
 mod rng_job;
 mod routine_live;
 mod session;
 mod source_inventory;
+mod source_stamps;
 mod storage_studies;
+mod tool_helpers;
 mod translation;
 mod translation_cargo;
 mod translation_compact;
@@ -184,7 +177,7 @@ fn main() -> Result<()> {
     // have no proc filesystem and never initialize the controller's ambient
     // executable identity or enter its broader command dispatcher.
     match args.first().map(String::as_str) {
-        Some("fixture") => return fixture_format::cli(&args[1..]),
+        Some("fixture") => return fixture_cli::run(&args[1..]),
         Some("translation-cargo-producer") => return translation_cargo::producer_cli(&args[1..]),
         Some("translation-cargo-environment-producer") => {
             return translation_cargo::environment_producer_cli(&args[1..]);
@@ -196,7 +189,7 @@ fn main() -> Result<()> {
         Ok(path) => path,
         Err(error) if std::env::var_os("SM_PIPELINE_CONFINED_CARGO").as_deref() == Some(std::ffi::OsStr::new("1")) => {
             let path = PathBuf::from(std::env::args_os().next().context("confined Cargo executable path missing")?);
-            inputs::bounded::safe(&path)?;
+            tool_execution::bounded::safe(&path)?;
             ensure!(
                 path.is_absolute()
                     && path.starts_with("/work/tmp/target")
@@ -333,7 +326,7 @@ fn main() -> Result<()> {
                 }
             }
             let manifest = ridley_subsystem_fixtures::generate(&checkout, &rom, &output)?;
-            emit(&family_model::Generation {
+            emit(&offline_verification::fixtures::Generation {
                 manifest: output,
                 family: manifest.family,
                 cases: manifest.routines.iter().map(|routine| routine.cases.len()).sum(),
@@ -611,7 +604,7 @@ fn main() -> Result<()> {
                         .and_then(Value::as_str)
                         .map(PathBuf::from)
                         .unwrap_or(std::env::current_dir()?);
-                    let owner = Path::new(family::field(&request, "preparation")?);
+                    let owner = Path::new(crate::documents::field(&request, "preparation")?);
                     let increment = iteration_increment::apply(&root, owner)?;
                     set_option(&mut request, "predecessor", crate::report!(&increment.baseline_path))?;
                     set_option(&mut request, "increment", Value::try_from(increment)?)?;
@@ -972,7 +965,7 @@ fn main() -> Result<()> {
         Some("callback-abi") => {
             let request: Value = request()?;
             emit(
-                &crate::report!({"source":callback::abi(&request["manifest"].clone().try_into()?,Path::new(family::field(&request,"module")?))?}),
+                &crate::report!({"source":offline_verification::fixtures::callback_abi(&request["manifest"].clone().try_into()?,Path::new(crate::documents::field(&request,"module")?))?}),
             )
         }
         Some("packed-materialize") if args.len() == 1 => emit(&packed::materialize(request()?)?),
@@ -1182,16 +1175,16 @@ fn main() -> Result<()> {
                 };
                 index += 1;
             }
-            emit(&plm_fixtures::generate(&checkout, &output, manifest.as_deref())?)
+            emit(&offline_verification::fixtures::generate_plm(&checkout, &output, manifest.as_deref())?)
         }
         Some("lease") if args.len() == 3 => lease(Path::new(&args[1]), args[2].parse()?),
         Some("cache") if args.len() == 1 => cache(framed_request()?),
-        Some("wrapper") if args.len() == 1 => emit(&inputs::wrapper(request()?)?),
-        Some("dependencies") if args.len() == 1 => emit(&inputs::dependencies(request()?)?),
+        Some("wrapper") if args.len() == 1 => emit(&crate::offline::families()?.generate_wrapper(request()?)?),
+        Some("dependencies") if args.len() == 1 => emit(&crate::offline::families()?.record_dependencies(request()?)?),
         Some("c-build") if args.len() == 1 => emit(&builds::c_build(request()?)?),
         Some("exec") if args.len() == 1 => emit(&builds::exec(request()?)?),
-        Some("cargo-build") if args.len() == 1 => emit(&builds::cargo_build(request()?)?),
-        Some("helper-build") if args.len() == 1 => emit(&builds::helper_builds(request()?)?),
+        Some("cargo-build") if args.len() == 1 => emit(&tool_helpers::cargo_build(request()?)?),
+        Some("helper-build") if args.len() == 1 => emit(&crate::tool_helpers::helper_builds(request()?)?),
         Some("live-authenticate") if args.len() == 1 => emit(&observations::authenticate(request()?)?),
         Some("live-authenticate") if args.len() == 2 => {
             let checkout = std::env::current_dir()?;
@@ -1209,12 +1202,14 @@ fn main() -> Result<()> {
             })?)
         }
         Some("family-verify") if args.len() == 1 => {
-            let verdict = family::verify(request()?)?;
+            let verdict = crate::offline::families()?.verify(request()?)?.into_report();
             emit(&verdict)?;
             ensure!(verdict.status == "offline-verified", "family verification rejected");
             Ok(())
         }
-        Some("family-authenticate") if args.len() == 1 => emit(&family::authenticate(request()?)?),
+        Some("family-authenticate") if args.len() == 1 => {
+            emit(crate::offline::families()?.authenticate(request()?)?.report())
+        }
         Some("decomp-session") if args.len() == 1 => emit(&session::operate(request()?)?),
         Some("decomp-session") => {
             ensure!(
@@ -1396,9 +1391,9 @@ fn main() -> Result<()> {
                 index += 1;
             }
             if args[0] == "family-authenticate" {
-                emit(&family::authenticate(request.try_into()?)?)
+                emit(crate::offline::families()?.authenticate(request.try_into()?)?.report())
             } else {
-                let verdict = family::verify(request.try_into()?)?;
+                let verdict = crate::offline::families()?.verify(request.try_into()?)?.into_report();
                 emit(&verdict)?;
                 ensure!(verdict.status == "offline-verified", "family verification rejected");
                 Ok(())

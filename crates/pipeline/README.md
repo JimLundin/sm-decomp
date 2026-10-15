@@ -1,8 +1,11 @@
 # Local verification pipeline
 
-Rust owns process leases, authenticated compiler caches, cleanup, ordinary
-offline families, dispatcher/callback/PLM verification, fixture generation,
-packed live replay, decompressor acceptance and RNG jobs. Several worktrees share one capacity configured by
+`pipeline` composes the CLI, Batch, Translation approval, Live replay and cleanup.
+`offline-verification` owns complete Offline family verification, recipes and
+retained evidence admission, including the explicit Fixture authoring interface.
+`decomp-source` owns pinned Recovered C source and inventories. `tool-execution`
+owns shared process leases, authenticated compiler caches and bounded input reads.
+Several worktrees share one capacity configured by
 `SM_PIPELINE_WORKERS` (default 4) under the Git common checkout's `out/pipeline`.
 Set the same `SM_PIPELINE_ROOT` to share an explicit directory.
 
@@ -27,8 +30,9 @@ fork receipts retain per-child CPU and reaping details. Aggregate helper CPU
 includes its children; fixture identity records mark CPU unavailable to avoid
 counting it twice. RSS sampling can count shared fork pages more than once and
 miss brief child peaks. Compiler/general `exec` commands keep their own receipts.
-New execution source and worker artifacts are part of family admission; existing
-sealed historical evidence is retained under its original contract.
+Execution source and worker artifacts are part of family admission. Only the
+current indexed evidence format is supported. Existing sealed artifacts are
+retained without rewriting; moved source inputs can require fresh verification.
 
 ```sh
 cargo run -p pipeline --locked --offline -- batch verify --families system audio --jobs 2 --case-jobs 4

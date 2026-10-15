@@ -1,5 +1,4 @@
 //! Read-only affected Offline family selection. Planning never admits retained evidence.
-use crate::{batch, family_model};
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -242,6 +241,9 @@ fn shared(path: &Path) -> bool {
     }
     path.starts_with("tools")
         || path.starts_with("crates/pipeline")
+        || path.starts_with("crates/offline-verification")
+        || path.starts_with("crates/tool-execution")
+        || path.starts_with("crates/decomp-source")
         || path.starts_with("crates/pipeline-model")
         || path.starts_with(".cargo")
         || path.starts_with("deps")
@@ -318,7 +320,11 @@ impl<'a> Discovery<'a> {
         Ok(source)
     }
 
-    fn dependencies(&mut self, manifest: &family_model::Manifest, kind: &str) -> Result<BTreeSet<PathBuf>> {
+    fn dependencies(
+        &mut self,
+        manifest: &offline_verification::fixtures::Manifest,
+        kind: &str,
+    ) -> Result<BTreeSet<PathBuf>> {
         ensure!(
             [
                 "family",
@@ -470,7 +476,7 @@ fn select_changed(
     let catalog_path = checkout.join("tools/port/batch.toml");
     let catalog_hash = budget.hash(&catalog_path)?;
     let mut catalog_inputs = BTreeMap::new();
-    let config = batch::catalog_using(checkout, |path| {
+    let config = offline_verification::catalog::catalog_using(checkout, |path| {
         budget.entry()?;
         let (bytes, hash) = budget.read(path, true)?;
         catalog_inputs.insert(normalize(checkout, path), hash);
@@ -513,13 +519,13 @@ fn select_changed(
         budget.entry()?;
         let mut decision = FamilyDecision { family: name.clone(), reasons: vec![], dependencies: vec![] };
         let examined = (|| -> Result<BTreeSet<PathBuf>> {
-            let item = batch::entry(&config, name)?;
+            let item = offline_verification::catalog::entry(&config, name)?;
             ensure!(item.prepare.is_none(), "unknown fixture preparation inputs");
             let manifest_path = normalize(checkout, &item.manifest);
             let path = checkout.join(&manifest_path);
             ensure!(!path.is_symlink(), "manifest is a symlink");
             let (bytes, manifest_hash) = budget.read(&path, true)?;
-            let manifest = crate::fixture_format::decode(bytes)?;
+            let manifest = offline_verification::fixtures::decode(bytes)?;
             ensure!(manifest_hash == budget.hash(&path)?, "Offline family manifest changed during selection");
             report.planning_inputs.insert(manifest_path.clone(), manifest_hash);
             let mut dependencies = discovery
@@ -595,7 +601,7 @@ mod tests {
 
     #[test]
     fn approved_paths_plan_the_full_catalog_and_keep_unknown_inputs() -> Result<()> {
-        let directory = crate::inputs::bounded::tests::Directory::new()?;
+        let directory = tool_execution::testing::Directory::new()?;
         let root = &directory.0;
         fs::create_dir_all(root.join("tools/port"))?;
         fs::create_dir_all(root.join("crates/port/src"))?;
@@ -619,7 +625,7 @@ mod tests {
         for name in ["a", "b", "unknown"] {
             fs::write(
                 root.join(format!("tools/port/{name}.smf")),
-                crate::fixture_format::encode(&family_model::Manifest {
+                offline_verification::fixtures::encode(&offline_verification::fixtures::Manifest {
                     family: name.into(),
                     bank: "sm_80.c".into(),
                     rust_module: format!("crates/port/src/{name}.rs"),

@@ -4,8 +4,9 @@ Shared execution infrastructure for project tools: bounded filesystem input,
 authenticated compiler preparation and artifact caching, cross-process worker
 capacity, child-process ownership, atomic metadata publication and accounting.
 
-`builds` accepts tool invocations and standalone Rust build descriptions. Its
-callers own the fixed fixture and RNG recipes. `bounded` shares byte/path
+`builds` accepts tool invocations, standalone Rust build descriptions and Cargo
+artifact requests with explicit source inputs. Its callers own Cargo package
+selection and the fixed Fixture and RNG recipes. `bounded` shares byte/path
 counters and deadlines across nested operations and captured worker scopes.
 It contains no Recovered C identity, Fixture model or Translation policy.
 

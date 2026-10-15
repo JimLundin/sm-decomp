@@ -1,7 +1,13 @@
 //! Per-batch ownership and authenticated native family reuse across worktrees.
-use crate::inputs::bounded;
-use crate::{atomic_toml, cleanup, digest, family, family_model, live, live_model, plm_fixtures};
+use crate::atomic_toml;
+use crate::cleanup;
+use crate::digest;
+use crate::live;
+use crate::live_model;
 use anyhow::{Context, Result, ensure};
+use offline_verification::catalog::{Catalog, catalog, entry};
+#[cfg(test)]
+use offline_verification::catalog::{CatalogEntry, FamilyEntry, catalog_until, catalog_using};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -13,83 +19,8 @@ use std::{
     },
     time::{Instant, SystemTime, UNIX_EPOCH},
 };
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(untagged)]
-pub(crate) enum CatalogEntry {
-    Kind(String),
-    Details(FamilyEntry),
-}
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub(crate) struct FamilyEntry {
-    pub kind: String,
-    pub manifest: PathBuf,
-    pub live: Option<String>,
-    pub prepare: Option<String>,
-}
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub(crate) struct Catalog {
-    pub families: BTreeMap<String, CatalogEntry>,
-    pub profiles: BTreeMap<String, Vec<String>>,
-}
-pub fn catalog(checkout: &Path) -> Result<Catalog> {
-    bounded::limited(|| catalog_using(checkout, |path| bounded::read(path)))
-}
-
-pub(crate) fn catalog_until(checkout: &Path, deadline: u64, max_bytes: u64) -> Result<Catalog> {
-    bounded::until(deadline, max_bytes, || catalog_using(checkout, |path| bounded::read(path)))
-}
-
-/// Keep catalog discovery identical for the supervisor's bounded source reader.
-pub(crate) fn catalog_using(checkout: &Path, mut read: impl FnMut(&Path) -> Result<Vec<u8>>) -> Result<Catalog> {
-    let mut config: Catalog = toml::from_str(std::str::from_utf8(&read(&checkout.join("tools/port/batch.toml"))?)?)?;
-    let paths = bounded::entries(&checkout.join("tools/port"))?;
-    ensure!(
-        paths.len() <= 4096 && config.families.len() <= 4096 && config.profiles.len() <= 1024,
-        "native catalog discovery inventory exceeded"
-    );
-    for path in paths {
-        bounded::check()?;
-        if path.extension().is_none_or(|v| v != crate::fixture_format::EXTENSION) {
-            continue;
-        }
-        let name = path.file_stem().unwrap().to_string_lossy();
-        if config.families.contains_key(name.as_ref()) {
-            continue;
-        }
-        let manifest = crate::fixture_format::decode(read(&path)?)
-            .with_context(|| format!("invalid discovery manifest {}", path.display()))?;
-        let specialized = manifest.projectile_host
-            || manifest.projectile_rendering
-            || manifest.routines.iter().any(|r| {
-                r.pointer_bank.is_some()
-                    || ["EprojInstruction", "EprojPreinstruction", "PlmInstruction", "PlmFrame", "PlmControlFrame"]
-                        .contains(&r.symbol.as_str())
-            });
-        config.families.insert(
-            name.into_owned(),
-            CatalogEntry::Details(FamilyEntry {
-                kind: if specialized { "dispatcher" } else { "family" }.into(),
-                manifest: path.strip_prefix(checkout)?.into(),
-                live: None,
-                prepare: None,
-            }),
-        );
-        ensure!(config.families.len() <= 4096, "native catalog family inventory exceeded");
-    }
-    config.profiles.insert("offline-all".into(), config.families.keys().cloned().collect());
-    Ok(config)
-}
-pub(crate) fn entry(config: &Catalog, name: &str) -> Result<FamilyEntry> {
-    Ok(match config.families.get(name).with_context(|| format!("unknown family: {name}"))? {
-        CatalogEntry::Kind(kind) => FamilyEntry {
-            kind: kind.clone(),
-            manifest: format!("tools/port/{name}.smf").into(),
-            live: ["family", "callback", "projectile"].contains(&kind.as_str()).then(|| kind.clone()),
-            prepare: None,
-        },
-        CatalogEntry::Details(item) => item.clone(),
-    })
-}
+#[cfg(test)]
+use tool_execution::bounded;
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub(crate) struct FamilyRecord {
     pub status: String,
@@ -230,79 +161,41 @@ fn verify_one(
     request: &Request,
     checkout: &Path,
     batch_path: &Path,
-    config: &Catalog,
     name: &str,
     previous: Option<&FamilyRecord>,
 ) -> Result<FamilyRecord> {
-    let item = entry(config, name)?;
-    let kind = item.kind;
-    ensure!(
-        [
-            "family",
-            "offline-family",
-            "dispatcher",
-            "plm-instructions",
-            "projectile",
-            "offline-projectile",
-            "callback",
-            "plm",
-            "power-bomb",
-            "ridley-subsystem"
-        ]
-        .contains(&kind.as_str()),
-        "{name}: unsupported native adapter {kind}"
-    );
-    ensure!(item.prepare.is_none(), "{name}: fixture preparation command unsupported");
-    let mut manifest = checkout.join(item.manifest);
-    let hash = digest(&manifest)?;
-    if !request.fresh
-        && let Some(previous) = previous
-        && previous.exit_code == 0
-        && previous.manifest_sha256.as_deref() == Some(&hash)
-        && let Some(verdict) = &previous.verdict
-        && family::authenticate(family_model::AuthenticateRequest {
-            checkout: checkout.into(),
-            verdict: verdict.clone(),
+    let reusable = previous.filter(|record| !request.fresh && record.exit_code == 0);
+    let prior = reusable.and_then(|record| {
+        Some(offline_verification::PreviousFamily {
+            verdict: record.verdict.clone()?,
+            manifest_sha256: record.manifest_sha256.clone()?,
+            kind: record.kind.clone()?,
         })
-        .is_ok()
-    {
-        let mut previous = previous.clone();
-        previous.status = "reused".into();
-        return Ok(previous);
-    }
+    });
     let started = Instant::now();
-    if kind == "plm-instructions" {
-        let output = batch_path
-            .parent()
-            .unwrap()
-            .join("families")
-            .join(name)
-            .join("fixtures")
-            .join(SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos().to_string());
-        manifest = plm_fixtures::generate(checkout, &output, None)?.manifest;
-    }
-    let verdict = family::verify(family_model::VerifyRequest {
-        execution: String::new(),
+    let evaluated = crate::offline::families()?.verify_registered(offline_verification::RegisteredRequest {
         checkout: checkout.into(),
         source: checkout.join("deps/snesrev-sm"),
         root: request.root.clone(),
         workers: request.workers,
         case_jobs: request.case_jobs,
-        adapter: kind.clone(),
-        manifest,
-        output: batch_path.parent().unwrap().join("families").join(name).join("evidence"),
+        family: name.into(),
+        output: batch_path.parent().unwrap().join("families").join(name),
+        previous: prior,
     })?;
-    let passed = verdict.status == "offline-verified";
-    let path = verdict.run.join("verdict.toml");
-    if passed {
-        family::authenticate(family_model::AuthenticateRequest { checkout: checkout.into(), verdict: path.clone() })?;
+    if evaluated.run.reused() {
+        let mut record = reusable.context("reused family has no previous batch record")?.clone();
+        record.status = "reused".into();
+        return Ok(record);
     }
+    let path = evaluated.run.evidence();
+    let verdict = evaluated.run.into_report();
     Ok(FamilyRecord {
+        exit_code: if verdict.status == "offline-verified" { 0 } else { 1 },
         status: verdict.status,
-        exit_code: if passed { 0 } else { 1 },
         verdict: Some(path),
-        manifest_sha256: Some(hash),
-        kind: Some(kind),
+        manifest_sha256: Some(evaluated.manifest_sha256),
+        kind: Some(evaluated.kind),
         seconds: started.elapsed().as_secs_f64(),
         error: verdict.error,
     })
@@ -331,7 +224,7 @@ pub fn operate(request: Request) -> Result<toml::Value> {
         .map(Path::to_path_buf)
         .unwrap_or_else(|| request.checkout.join("out/port/batches"));
     fs::create_dir_all(&destination)?;
-    let mut metrics = crate::metrics::Run::start(
+    let mut metrics = tool_execution::metrics::Run::start(
         destination.join(format!("batch-{}.metrics.toml", SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos())),
         "batch",
     )?;
@@ -429,7 +322,7 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
         ensure!((1..=8).contains(&request.jobs), "batch jobs must be 1..8");
         let state = Mutex::new(&mut batch);
         let next = AtomicUsize::new(0);
-        let metrics = crate::metrics::active();
+        let metrics = tool_execution::metrics::active();
         std::thread::scope(|scope| {
             for _ in 0..request.jobs.min(names.len()) {
                 let metrics = metrics.clone();
@@ -439,7 +332,6 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
                 let request = &request;
                 let checkout = &checkout;
                 let path = &path;
-                let config = &config;
                 scope.spawn(move || {
                     let _entered = metrics.as_ref().map(|metrics| metrics.enter());
                     loop {
@@ -448,7 +340,7 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
                             break;
                         };
                         let previous = state.lock().unwrap().families.get(name).cloned();
-                        let record = match verify_one(request, checkout, path, config, name, previous.as_ref()) {
+                        let record = match verify_one(request, checkout, path, name, previous.as_ref()) {
                             Ok(record) => record,
                             Err(error) => FamilyRecord {
                                 status: "failed".into(),
@@ -502,7 +394,7 @@ fn operate_inner(request: Request) -> Result<toml::Value> {
         batch.replays.push(record);
         atomic_toml(&path, &batch)?;
     }
-    let context = crate::metrics::active();
+    let context = tool_execution::metrics::active();
     let cleaning = context.as_ref().map(|context| context.stage("batch-scoped-cleanup")).transpose()?;
     let cleaned = cleanup::cleanup(cleanup::CleanupRequest {
         root: path.parent().unwrap().into(),
@@ -529,14 +421,14 @@ mod tests {
 
     #[test]
     fn catalog_refuses_expired_budget_and_excessive_inventory_before_manifest_reads() -> Result<()> {
-        let directory = bounded::tests::Directory::new()?;
+        let directory = tool_execution::testing::Directory::new()?;
         let port = directory.0.join("tools/port");
         fs::create_dir_all(&port)?;
         let config = "[families]\n[profiles]\n";
         fs::write(port.join("batch.toml"), config)?;
-        crate::fixture_format::write(
+        offline_verification::fixtures::write(
             &port.join("one.smf"),
-            &family_model::Manifest { rust_module: "one.rs".into(), ..Default::default() },
+            &offline_verification::fixtures::Manifest { rust_module: "one.rs".into(), ..Default::default() },
         )?;
         assert!(catalog_until(&directory.0, 0, 1024).unwrap_err().to_string().contains("deadline"));
         assert!(catalog_until(&directory.0, bounded::now_unix_ms()? + 1000, config.len() as u64).is_err());

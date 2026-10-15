@@ -1,0 +1,74 @@
+crates/translation-execution/src/compiler_runtime.rs:6:18: warning: unused import: `PathBuf`
+warning: `translation-execution` (lib) generated 1 warning (run `cargo fix --lib -p translation-execution` to apply 1 suggestion)
+    Checking offline-verification v0.1.0 (/home/jim/sm-decomp-offline-callers/crates/offline-verification)
+crates/offline-verification/src/builds.rs:15:20: warning: unused imports: `CargoBuildRequest`, `cargo_build`, `exec`, and `execute_timeout`
+crates/offline-verification/src/callback.rs:5:20: warning: unused import: `Sha256`
+crates/offline-verification/src/family.rs:6:20: warning: unused import: `Sha256`
+crates/offline-verification/src/family.rs:17:32: warning: unused import: `authenticate_inventory`
+crates/offline-verification/src/plm_spawn.rs:5:20: warning: unused import: `Sha256`
+crates/offline-verification/src/recipe.rs:18:5: warning: unused imports: `CompilerCommand`, `FixtureCommand`, `FixtureKind`, `c_compiler_command`, `confined_fixture_program`, `fixture_command`, and `rust_compiler_command`
+crates/offline-verification/src/ridley_subsystem_adapter.rs:8:20: warning: unused import: `Sha256`
+crates/offline-verification/src/callback.rs:5:12: warning: unused import: `Digest`
+crates/offline-verification/src/family.rs:6:12: warning: unused import: `Digest`
+crates/offline-verification/src/plm_spawn.rs:5:12: warning: unused import: `Digest`
+crates/offline-verification/src/ridley_subsystem_adapter.rs:8:12: warning: unused import: `Digest`
+crates/offline-verification/src/family.rs:33:15: warning: function `field` is never used
+crates/offline-verification/src/family.rs:36:15: warning: function `array` is never used
+crates/offline-verification/src/family.rs:110:15: warning: function `prepare_case` is never used
+crates/offline-verification/src/family.rs:198:15: warning: function `build_confined` is never used
+crates/offline-verification/src/family.rs:980:15: warning: function `authenticate_with_source_until` is never used
+crates/offline-verification/src/inputs.rs:151:15: warning: function `canonical_sources_until` is never used
+crates/offline-verification/src/recipe.rs:106:15: warning: function `for_adapter` is never used
+crates/offline-verification/src/recipe.rs:234:15: warning: function `manifest` is never used
+crates/offline-verification/src/recipe.rs:400:5: warning: variant `Ordinary` is never constructed
+crates/offline-verification/src/recipe_commands.rs:180:19: warning: struct `CompilerCommand` is never constructed
+crates/offline-verification/src/recipe_commands.rs:227:15: warning: function `rust_compiler_command` is never used
+crates/offline-verification/src/recipe_commands.rs:244:15: warning: function `c_compiler_command` is never used
+warning: `offline-verification` (lib) generated 23 warnings (run `cargo fix --lib -p offline-verification` to apply 7 suggestions)
+    Checking pipeline v0.1.0 (/home/jim/sm-decomp-offline-callers/crates/pipeline)
+crates/pipeline/src/translation_execution.rs:5:38: error[E0432]: unresolved import `crate::family_model`: could not find `family_model` in the crate root
+crates/pipeline/src/translation_original.rs:5:24: error[E0432]: unresolved import `crate::inputs`: could not find `inputs` in the crate root
+crates/pipeline/src/translation_original_prepare.rs:6:5: error[E0432]: unresolved imports `crate::family_model`, `crate::inputs`: could not find `family_model` in the crate root, could not find `inputs` in the crate root
+crates/pipeline/src/translation_execution.rs:154:25: error[E0433]: cannot find `family_model` in the crate root: could not find `family_model` in the crate root
+crates/pipeline/src/translation_migration.rs:705:35: error[E0433]: cannot find `fixture_format` in the crate root: could not find `fixture_format` in the crate root
+crates/pipeline/src/translation_migration.rs:706:23: error[E0433]: cannot find `family` in the crate root: could not find `family` in the crate root
+crates/pipeline/src/translation_original.rs:177:12: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_original.rs:297:28: error[E0433]: cannot find `fixture_format` in the crate root: could not find `fixture_format` in the crate root
+crates/pipeline/src/translation_original.rs:511:16: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_original_prepare.rs:303:16: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_execution.rs:1294:29: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_execution.rs:1296:27: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_execution.rs:1312:52: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_execution.rs:1344:36: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_execution.rs:1528:44: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_execution.rs:1531:16: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_execution.rs:1595:31: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_execution.rs:1630:29: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_execution.rs:1631:16: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_execution.rs:1638:28: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_execution.rs:1640:39: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_execution.rs:1642:32: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_migration.rs:40:46: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_migration.rs:198:12: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_migration.rs:1191:27: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_migration.rs:1194:12: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_migration.rs:1535:12: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_migration.rs:1557:24: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_migration.rs:1589:20: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_migration.rs:1628:20: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_migration.rs:2889:12: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_migration.rs:3578:12: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_migration.rs:3622:12: error[E0433]: cannot find `inputs` in the crate root: could not find `inputs` in the crate root
+crates/pipeline/src/translation_migration.rs:694:26: error[E0603]: function import `catalog` is private: private function import
+crates/pipeline/src/translation_migration.rs:701:28: error[E0603]: function import `entry` is private: private function import
+crates/pipeline/src/translation_original.rs:278:34: error[E0603]: function import `catalog` is private: private function import
+crates/pipeline/src/translation_original.rs:289:28: error[E0603]: function import `entry` is private: private function import
+crates/pipeline/src/translation_original_prepare.rs:301:30: error[E0603]: function import `catalog` is private: private function import
+crates/pipeline/src/translation_original_prepare.rs:336:32: error[E0603]: function import `entry` is private: private function import
+crates/pipeline/src/translation_execution.rs:1470:47: error[E0599]: no method named `clone` found for struct `std::path::Path` in the current scope
+crates/pipeline/src/translation_execution.rs:1488:43: error[E0599]: no method named `clone` found for struct `std::path::Path` in the current scope
+crates/pipeline/src/translation_execution.rs:1540:13: error[E0308]: mismatched types: expected `PathBuf`, found `Path`
+crates/pipeline/src/translation_migration.rs:1828:49: error[E0599]: no method named `contract` found for struct `PreparedOriginal` in the current scope: field, not a method
+crates/pipeline/src/translation_migration.rs:1829:42: error[E0599]: no method named `dependencies_sha256` found for struct `PreparedOriginal` in the current scope: field, not a method
+crates/pipeline/src/translation_migration.rs:1830:42: error[E0599]: no method named `verification_sha256` found for struct `PreparedOriginal` in the current scope: field, not a method
+error: could not compile `pipeline` (bin "sm-pipeline") due to 45 previous errors

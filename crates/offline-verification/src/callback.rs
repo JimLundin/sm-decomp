@@ -2,7 +2,6 @@
 use crate::family_model::*;
 use crate::{atomic_toml, builds, digest, family, inputs};
 use anyhow::{Context, Result, ensure};
-use sha2::{Digest, Sha256};
 use std::{collections::BTreeMap, fs, path::Path};
 
 pub fn abi(manifest: &Manifest, module: &Path) -> Result<String> {
@@ -32,17 +31,8 @@ pub fn abi(manifest: &Manifest, module: &Path) -> Result<String> {
         .replace("__NAMES__", &format!("{names:?}")))
 }
 
-pub fn build(
-    request: &VerifyRequest,
-    manifest: &Manifest,
-    checkout: &Path,
-    source: &Path,
-    run: &Path,
-) -> Result<Implementation> {
-    build_with(request, manifest, checkout, source, run, None)
-}
-
-pub(crate) fn build_with(
+pub(crate) fn build(
+    recipe: Option<&crate::recipe::Recipe>,
     request: &VerifyRequest,
     manifest: &Manifest,
     checkout: &Path,
@@ -61,7 +51,7 @@ pub(crate) fn build_with(
     for routine in &manifest.routines {
         let symbol = routine.symbol.as_str();
         let kind = routine.returns.as_str();
-        let args = family::types(routine)?;
+        let args = routine.argument_types()?;
         ensure!(family::identifier(symbol) && args.len() <= 2, "invalid callback signature");
         let actual = args
             .iter()
@@ -94,7 +84,7 @@ pub(crate) fn build_with(
     let memory = if let Some(execution) = execution {
         inputs::canonical_wrapper(checkout, run, &execution.rust_inputs)?
     } else {
-        inputs::wrapper(inputs::WrapperRequest {
+        inputs::wrapper(crate::authoring::WrapperRequest {
             checkout: checkout.into(),
             run: run.into(),
             modules: vec![module.clone()],
@@ -143,40 +133,12 @@ pub(crate) fn build_with(
     family::write_build_input(&run.join("oracle.c"), oracle.as_bytes(), execution.is_some())?;
     let root = &request.root;
     let workers = request.workers;
-    let command = vec![
-        "rustc".into(),
-        "--edition=2024".into(),
-        "-O".into(),
-        "--crate-type=staticlib".into(),
-        format!("--emit=link,dep-info={}", run.join("compiler.d").display()),
-        run.join("wrapper.rs").to_string_lossy().into_owned(),
-        "-o".into(),
-        run.join("libcollision.a").to_string_lossy().into_owned(),
-    ];
+    let description = crate::recipe::rust_compiler_command(recipe, run);
     if let Some(execution) = execution {
-        execution.compile_recipe(
-            &command,
-            run,
-            "rust-build",
-            checkout,
-            source,
-            &["wrapper.rs", "memory.rs"],
-            &["libcollision.a", "compiler.d"],
-            false,
-        )?;
+        execution.compile_description(&description, run, "rust-build", checkout, source)?;
     } else {
-        builds::execute(&command, run, "rust-build", root, workers)?;
+        tool_execution::builds::execute(&description.command, run, "rust-build", root, workers)?;
     }
-    let mut command = vec![
-        "cc".into(),
-        if power_bomb { "-O0" } else { "-O2" }.into(),
-        "-fno-strict-aliasing".into(),
-        "-ffunction-sections".into(),
-        "-fdata-sections".into(),
-        "-iquote".into(),
-        source.join("src").to_string_lossy().into_owned(),
-    ];
-    let mut units = family::c_units(source)?;
     if power_bomb {
         let original = fs::read_to_string(source.join("src/sm_88.c"))?;
         let token = "uint16 SpawnHdmaObject(uint8 db, const void *p)";
@@ -187,9 +149,6 @@ pub(crate) fn build_with(
             original.replace(token, "uint16 PortActualSpawnHdmaObject(uint8 db, const void *p)").as_bytes(),
             execution.is_some(),
         )?;
-        let bank =
-            units.iter_mut().find(|p| p.file_name().is_some_and(|n| n == "sm_88.c")).context("bank88 missing")?;
-        *bank = seam;
     }
     if game_host {
         let original = fs::read_to_string(source.join("src/sm_80.c"))?;
@@ -201,42 +160,14 @@ pub(crate) fn build_with(
             original.replace(token, "void PortActualNmiProcessVramWriteQueue(void)").as_bytes(),
             execution.is_some(),
         )?;
-        let bank =
-            units.iter_mut().find(|p| p.file_name().is_some_and(|n| n == "sm_80.c")).context("bank80 missing")?;
-        *bank = seam;
     }
-    command.extend(units.iter().map(|p| p.to_string_lossy().into_owned()));
-    if game_host {
-        for symbol in ["WriteReg", "ppu_write", "snes_read", "snes_write"] {
-            command.push(format!("-Wl,--wrap={symbol}"));
-        }
-    }
-    command.extend([
-        run.join("oracle.c").to_string_lossy().into_owned(),
-        run.join("libcollision.a").to_string_lossy().into_owned(),
-        "-Wl,--gc-sections".into(),
-        "-Wl,--wrap=SpawnPLM".into(),
-        "-Wl,--wrap=Call".into(),
-        "-Wl,--wrap=cpu_runOpcode".into(),
-        "-Wl,--wrap=DecompressToMem".into(),
-        "-lm".into(),
-        "-ldl".into(),
-        "-lpthread".into(),
-        "-o".into(),
-        run.join("collision").to_string_lossy().into_owned(),
-    ]);
+    let description =
+        crate::recipe::c_compiler_command(recipe, &manifest, source, run, &decomp_source::c_units(source)?, false)?;
     if let Some(execution) = execution {
-        let mut generated = vec!["oracle.c", "libcollision.a"];
-        if power_bomb {
-            generated.push("sm_88-allocation-seam.c");
-        }
-        if game_host {
-            generated.push("sm_80-vram-seam.c");
-        }
-        execution.compile_recipe(&command, run, "c-build", checkout, source, &generated, &["collision"], true)?;
+        execution.compile_description(&description, run, "c-build", checkout, source)?;
     } else {
-        builds::c_build(builds::CBuildRequest {
-            command,
+        tool_execution::builds::c_build(tool_execution::builds::CBuildRequest {
+            command: description.command,
             run: run.into(),
             checkout: checkout.into(),
             root: root.clone(),
@@ -244,7 +175,7 @@ pub(crate) fn build_with(
         })?;
     }
     fs::copy(&module, run.join("candidate.rs"))?;
-    let dependency_request = inputs::DependenciesRequest {
+    let dependency_request = crate::authoring::DependenciesRequest {
         checkout: checkout.into(),
         run: run.into(),
         extra: manifest.rust_dependencies.clone(),
@@ -254,31 +185,7 @@ pub(crate) fn build_with(
     } else {
         inputs::dependencies(dependency_request)?
     };
-    let mut harness = BTreeMap::new();
-    for (name, compiled) in [
-        ("callback.rs", include_str!("callback.rs")),
-        ("callback_abi.rs.in", include_str!("callback_abi.rs.in")),
-        ("callback_host.c.in", include_str!("callback_host.c.in")),
-        ("power_bomb_abi.rs.in", include_str!("power_bomb_abi.rs.in")),
-        ("power_bomb_host.c.in", include_str!("power_bomb_host.c.in")),
-        ("game_host_abi.rs.in", include_str!("game_host_abi.rs.in")),
-        ("game_host_dependency.c.in", include_str!("game_host_dependency.c.in")),
-        ("family.rs", include_str!("family.rs")),
-        ("family_model.rs", include_str!("family_model.rs")),
-        ("fixture_format.rs", include_str!("fixture_format.rs")),
-        ("fixture_writes.rs", include_str!("fixture_writes.rs")),
-        ("batch.rs", include_str!("batch.rs")),
-        ("cleanup.rs", include_str!("cleanup.rs")),
-        ("fixture_execution.rs", include_str!("fixture_execution.rs")),
-        ("metrics.rs", include_str!("metrics.rs")),
-        ("resource_sampler.rs", include_str!("resource_sampler.rs")),
-    ] {
-        let key = format!("crates/pipeline/src/{name}");
-        let hash = digest(&checkout.join(&key))?;
-        ensure!(hash == format!("{:x}", Sha256::digest(compiled)), "stale callback executable: {name}");
-        harness.insert(key, hash);
-        fs::copy(checkout.join(format!("crates/pipeline/src/{name}")), run.join(format!("pipeline-{name}")))?;
-    }
+    let mut harness = inputs::implementation_sources(checkout, run, execution.is_some())?;
     let key = "tools/decomp/headless.c";
     harness.insert(key.to_owned(), digest(&checkout.join(key))?);
     fs::copy(checkout.join(key), run.join("pipeline-headless.c"))?;
@@ -439,72 +346,24 @@ pub fn check(directory: &Path, fixture: &Case, game_host: bool) -> Result<CaseRe
     })
 }
 
-pub fn case(
-    _request: &VerifyRequest,
+pub(crate) fn case(
     manifest: &Manifest,
     routine: &Routine,
     fixture: &Case,
-    index: usize,
-    run: &Path,
-    worker: &mut crate::fixture_execution::Worker,
-) -> Result<CaseRecord> {
-    case_with(manifest, routine, fixture, index, run, false, |command, directory, subject| {
-        worker.execute(command, directory, subject)
-    })
-}
-
-pub(crate) fn confined_case(
-    manifest: &Manifest,
-    routine: &Routine,
-    fixture: &Case,
-    index: usize,
-    run: &Path,
-    execution: &builds::StrictExecution,
-) -> Result<CaseRecord> {
-    case_with(manifest, routine, fixture, index, run, true, |command, directory, subject| {
-        execution.fixture_recipe(command, directory, subject, builds::StrictFixture::Callback)?;
-        unpack_snapshots(directory, subject)
-    })
-}
-
-pub(crate) fn fixture_command(
-    routine: &Routine,
-    fixture: &Case,
-    index: usize,
-    run: &Path,
-    subject: &str,
-) -> Vec<String> {
-    let directory = run.join(&fixture.name);
-    vec![
-        run.join("collision").to_string_lossy().into_owned(),
-        subject.into(),
-        routine.symbol.clone(),
-        fixture.a.to_string(),
-        fixture.b.to_string(),
-        directory.join("before.wram").to_string_lossy().into_owned(),
-        directory.join(format!("{subject}-after.wram")).to_string_lossy().into_owned(),
-        index.to_string(),
-        run.join("rom.bin").to_string_lossy().into_owned(),
-        directory.join(subject).to_string_lossy().into_owned(),
-    ]
-}
-
-fn case_with(
-    manifest: &Manifest,
-    routine: &Routine,
-    fixture: &Case,
-    index: usize,
     run: &Path,
     resume: bool,
-    mut execute: impl FnMut(&[String], &Path, &str) -> Result<()>,
+    mut execute: impl FnMut(&Path, &str) -> Result<()>,
 ) -> Result<CaseRecord> {
     let name = fixture.name.as_str();
     let symbol = routine.symbol.as_str();
     let directory = run.join(name);
-    family::prepare_case_with(fixture, &directory, &family::types(routine)?, resume)?;
+    family::prepare_case_with(fixture, &directory, &routine.argument_types()?, resume)?;
     for subject in ["rust", "c"] {
         fs::create_dir_all(directory.join(subject))?;
-        execute(&fixture_command(routine, fixture, index, run, subject), &directory, subject)?;
+        execute(&directory, subject)?;
+        if resume {
+            unpack_snapshots(&directory, subject)?;
+        }
     }
     let mut record = check(&directory, fixture, manifest.callback_adapter.as_deref() == Some("game-host"))?;
     record.routine = symbol.into();
@@ -536,7 +395,7 @@ pub(crate) fn authenticate_packed_snapshots(directory: &Path, subject: &str) -> 
 }
 
 fn snapshots(directory: &Path, subject: &str, publish: bool) -> Result<()> {
-    let bytes = inputs::bounded::read(directory.join(format!("{subject}-callback-states.bin")))?;
+    let bytes = tool_execution::bounded::read(directory.join(format!("{subject}-callback-states.bin")))?;
     let count = metrics(directory, subject)?.c_gameplay_callbacks;
     let stride = 9 + 0x20000;
     ensure!(count <= 4096 && bytes.len() == usize::try_from(count)? * 2 * stride, "packed callback extent differs");
@@ -547,10 +406,10 @@ fn snapshots(directory: &Path, subject: &str, publish: bool) -> Result<()> {
         let phase = if after == 0 { "before" } else { "after" };
         let path = directory.join(subject).join(format!("callback-{index:04}-{phase}.wram"));
         if publish {
-            inputs::immutable_bytes(&path, &record[9..])?;
+            tool_execution::bounded::immutable_bytes(&path, &record[9..])?;
         } else {
             ensure!(
-                inputs::bounded::read(&path)? == record[9..],
+                tool_execution::bounded::read(&path)? == record[9..],
                 "retained callback snapshot differs from confined output"
             );
         }

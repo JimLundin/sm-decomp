@@ -2,13 +2,16 @@
 //! Each successor is frozen only after its predecessor's source/queue publication
 //! has authenticated. The original production registry and stopped run remain
 //! immutable dependencies of this separately reviewed installation.
-use crate::{
-    assignment,
-    inputs::bounded,
-    translation_execution::{self as execution, Admission, Contract, Installation},
-    translation_migration::{self as migration, Migration, MigrationExecution},
-    translation_original as original, translation_production as production,
-};
+use crate::assignment;
+use crate::translation_execution as execution;
+use crate::translation_execution::Admission;
+use crate::translation_execution::Contract;
+use crate::translation_execution::Installation;
+use crate::translation_migration as migration;
+use crate::translation_migration::Migration;
+use crate::translation_migration::MigrationExecution;
+use crate::translation_original as original;
+use crate::translation_production as production;
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -21,6 +24,7 @@ use std::{
     },
     path::{Path, PathBuf},
 };
+use tool_execution::bounded;
 use translation_execution::{
     checkout::ControllerProjection,
     model::{State, View, sealed, sha256},
@@ -518,7 +522,7 @@ fn prepare_stage(
         coordinator: domain.coordinator.clone(),
         session_id: domain.session_id.clone(),
         generation: domain.generation,
-        migration: crate::family_model::Asset { file: root.join("migration.json"), sha256: "0".repeat(64) },
+        migration: offline_verification::fixtures::Asset { file: root.join("migration.json"), sha256: "0".repeat(64) },
     };
     let installation_path = root.join("installation.json");
     for claim in &mut domain.claims {
@@ -646,7 +650,7 @@ fn authenticate_stage(config: &Config, stage: &Stage) -> Result<()> {
         coordinator: domain.coordinator.clone(),
         session_id: domain.session_id.clone(),
         generation: domain.generation,
-        migration: crate::family_model::Asset {
+        migration: offline_verification::fixtures::Asset {
             file: stage.migration.path.clone(),
             sha256: stage.migration.sha256.clone(),
         },

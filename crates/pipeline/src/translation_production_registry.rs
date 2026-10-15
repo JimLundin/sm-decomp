@@ -1,6 +1,6 @@
 //! Immutable production ownership metadata shared by queue admission and the
 //! production command. Reading this module never launches producers.
-use crate::{inputs::bounded, translation_migration_guard::Migration};
+use crate::translation_migration_guard::Migration;
 use ::translation_execution::{
     ClaimLineage,
     model::{digest_valid, sealed},
@@ -13,6 +13,7 @@ use std::{
     os::unix::fs::MetadataExt,
     path::{Path, PathBuf},
 };
+use tool_execution::bounded;
 
 pub(crate) const REGISTRY: &str = ".scratch/translation-execution/production.json";
 pub(crate) const AUTHORITY: &str = ".scratch/decomp-parallel/authority.toml";
@@ -200,7 +201,7 @@ pub(crate) fn migrations(request: &Request) -> Result<Vec<Migration>> {
 /// Cheap immutable metadata authentication for every dispatch boundary. Current
 /// ledger bytes are deliberately not reread: managed publication advances them.
 pub(crate) fn read_registry(root: &Path) -> Result<Option<Registry>> {
-    bounded::limited(|| {
+    decomp_source::context::limited(|| {
         let path = root.join(REGISTRY);
         match path.symlink_metadata() {
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),

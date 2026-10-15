@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::{collections::BTreeMap, path::PathBuf};
 #[path = "fixture_writes.rs"]
 mod writes;
-pub(crate) use writes::Writes;
+pub use writes::Writes;
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Write {

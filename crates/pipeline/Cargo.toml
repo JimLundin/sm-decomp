@@ -17,6 +17,7 @@ toml_edit = "0.22"
 pipeline-model.workspace = true
 tool-execution.workspace = true
 decomp-source.workspace = true
+offline-verification.workspace = true
 movie = { path = "../movie" }
 evidence = { path = "../evidence" }
 translation-execution = { path = "../translation-execution" }

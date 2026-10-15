@@ -1,6 +1,8 @@
 //! Pinned actual-C baseline and source-authenticated full-state captures.
-use crate::{atomic_toml, builds, digest, family, family_model::Source};
+use crate::atomic_toml;
+use crate::digest;
 use anyhow::{Context, Result, ensure};
+use decomp_source::Source;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::BTreeMap,
@@ -8,6 +10,7 @@ use std::{
     path::{Path, PathBuf},
     time::{SystemTime, UNIX_EPOCH},
 };
+use tool_execution::builds;
 const REVISION: &str = "578f90b3cc49557bb70060ad033bb90b8cf8ac50";
 const ROM: &str = "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72";
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -236,7 +239,7 @@ pub fn operate(request: Request) -> Result<Verdict> {
         let root = &request.root;
         let workers = request.workers;
         let source = checkout.join("deps/snesrev-sm");
-        let identity = family::verify_source(&checkout, &source)?;
+        let identity = decomp_source::verify_source(&checkout, &source)?;
         ensure!(identity.revision == REVISION, "frozen source revision differs");
         verdict.source_archive_sha256 = identity.archive_sha256.clone();
         verdict.source = Some(identity.clone());
@@ -246,7 +249,7 @@ pub fn operate(request: Request) -> Result<Verdict> {
         ensure!(digest(&rom)? == ROM, "unsupported ROM identity");
         verdict.rom_sha256 = digest(&rom)?;
         verdict.inputs_sha256 = digest(&inputs)?;
-        let units = family::c_units(&source)?;
+        let units = decomp_source::c_units(&source)?;
         let mut sources = BTreeMap::new();
         for unit in &units {
             sources.insert(unit.to_string_lossy().into_owned(), digest(unit)?);
@@ -388,7 +391,7 @@ pub fn operate(request: Request) -> Result<Verdict> {
         verdict.fixtures = fixture_hashes.unwrap();
         verdict.state_sha256 = digest(&run.join("replay.state.bin"))?;
         ensure!(
-            family::verify_source(&checkout, &source)? == identity
+            decomp_source::verify_source(&checkout, &source)? == identity
                 && digest(&rom)? == ROM
                 && verdict.inputs_sha256 == digest(&inputs)?,
             "baseline source/assets changed during replay"

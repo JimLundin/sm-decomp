@@ -1,9 +1,13 @@
+use crate::atomic_toml;
+use crate::checkpoints;
+use crate::digest;
+use crate::lsnes_configure;
+use crate::preflight;
 use crate::readiness_metadata::toml_from_slice;
-use crate::{
-    atomic_toml, checkpoints, digest, family, lsnes_configure, preflight,
-    readiness_run::{Run, identity, safe_artifact},
-    replay,
-};
+use crate::readiness_run::Run;
+use crate::readiness_run::identity;
+use crate::readiness_run::safe_artifact;
+use crate::replay;
 use anyhow::{Context, Result, ensure};
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -80,7 +84,7 @@ fn stage(
 fn build_original(run: &mut Run) -> Result<(PathBuf, Value)> {
     let root = run.root.clone();
     let pins = document(&root.join("docs/lsnes-dependencies.toml"))?;
-    let official = root.join("deps/downloads").join(family::field(&pins["archive"], "filename")?);
+    let official = root.join("deps/downloads").join(crate::documents::field(&pins["archive"], "filename")?);
     let tar = root.join("deps/lsnes/sources.tar");
     ensure!(
         run.guard(&official)? == OFFICIAL && run.guard(&tar)? == SOURCE,
@@ -93,9 +97,9 @@ fn build_original(run: &mut Run) -> Result<(PathBuf, Value)> {
     fs::create_dir(&libraries)?;
     extract(&tar, &source)?;
     let mut packages = Vec::new();
-    for (index, record) in family::array(&pins, "packages")?.iter().enumerate() {
-        let path = root.join("deps/downloads").join(family::field(record, "filename")?);
-        ensure!(run.guard(&path)? == family::field(record, "sha256")?, "invalid original build package");
+    for (index, record) in crate::documents::array(&pins, "packages")?.iter().enumerate() {
+        let path = root.join("deps/downloads").join(crate::documents::field(record, "filename")?);
+        ensure!(run.guard(&path)? == crate::documents::field(record, "sha256")?, "invalid original build package");
         stage(
             run,
             &format!("original-package-{index}"),
@@ -137,7 +141,7 @@ fn build_original(run: &mut Run) -> Result<(PathBuf, Value)> {
         &BTreeMap::new(),
         Duration::from_secs(30),
     )?;
-    let compiler = fs::read_to_string(run.path.join(family::field(&compiler, "stdout")?))?.trim().to_owned();
+    let compiler = fs::read_to_string(run.path.join(crate::documents::field(&compiler, "stdout")?))?.trim().to_owned();
     let compiler_path = Command::new("sh").args(["-c", "command -v g++"]).output()?;
     ensure!(compiler_path.status.success(), "original compiler path unavailable");
     let compiler_path = fs::canonicalize(String::from_utf8(compiler_path.stdout)?.trim())?;
@@ -181,7 +185,7 @@ fn build_original(run: &mut Run) -> Result<(PathBuf, Value)> {
     )?;
     for row in files.as_array().unwrap() {
         ensure!(
-            digest(&source.join(family::field(row, "path")?))? == family::field(row, "sha256")?,
+            digest(&source.join(crate::documents::field(row, "path")?))? == crate::documents::field(row, "sha256")?,
             "original source changed during build"
         );
     }
@@ -190,7 +194,7 @@ fn build_original(run: &mut Run) -> Result<(PathBuf, Value)> {
     run.manifest.identities.get_mut("original-binary").context("original binary identity missing")?["evidence"] =
         bind(run, &binary)?.into();
     let recipe = run.path.join("source/files/crates/pipeline/src/lsnes_configure.rs");
-    let provenance = crate :: report ! ({ "method" : "verified-clean-build" , "archive_sha256" : OFFICIAL , "source_tar_sha256" : SOURCE , "source_sha256" : source_hash , "binary_sha256" : digest (& binary) ? , "build_log_sha256" : digest (& run . path . join (family :: field (& process , "stdout") ?)) ? , "build_report_sha256" : digest (& run . path . join ("logs/original-build.toml")) ? , "build_command" : process ["command"] , "compiler" : compiler , "features" : crate :: report ! (vec ! ["bsnes v085 Compatibility" , "NTSC" , "DUMMY graphics/sound/joystick"]) , "recipe_sha256" : digest (& recipe) ? , "configured_libraries" : libraries , "packages" : packages , "build_dependencies" : dependencies , "artifacts" : crate :: report ! ({ "official_archive" : official , "source_tar" : tar , "source_root" : bind (run , & source) ? , "source_inventory" : bind (run , & inventory_path) ? , "binary" : bind (run , & binary) ? , "build_log" : process ["stdout"] , "build_report" : "logs/original-build.toml" , "recipe" : bind (run , & recipe) ? , }) , });
+    let provenance = crate :: report ! ({ "method" : "verified-clean-build" , "archive_sha256" : OFFICIAL , "source_tar_sha256" : SOURCE , "source_sha256" : source_hash , "binary_sha256" : digest (& binary) ? , "build_log_sha256" : digest (& run . path . join (crate::documents::field (& process , "stdout") ?)) ? , "build_report_sha256" : digest (& run . path . join ("logs/original-build.toml")) ? , "build_command" : process ["command"] , "compiler" : compiler , "features" : crate :: report ! (vec ! ["bsnes v085 Compatibility" , "NTSC" , "DUMMY graphics/sound/joystick"]) , "recipe_sha256" : digest (& recipe) ? , "configured_libraries" : libraries , "packages" : packages , "build_dependencies" : dependencies , "artifacts" : crate :: report ! ({ "official_archive" : official , "source_tar" : tar , "source_root" : bind (run , & source) ? , "source_inventory" : bind (run , & inventory_path) ? , "binary" : bind (run , & binary) ? , "build_log" : process ["stdout"] , "build_report" : "logs/original-build.toml" , "recipe" : bind (run , & recipe) ? , }) , });
     atomic_toml(&build.join("attestation.toml"), &provenance)?;
     run.record_artifact("original-build", &build.join("attestation.toml"), None)?;
     run.save()?;
@@ -217,7 +221,7 @@ fn metadata(
         run.root.join("rom/sm.sfc"),
         run.root.join("movies/super-metroid-any-3653.lsmv"),
         run.path.join("generated/movie.inputs"),
-        linked(&run.path, family::field(&provenance["artifacts"], "binary")?)?,
+        linked(&run.path, crate::documents::field(&provenance["artifacts"], "binary")?)?,
     ] {
         files . push (crate :: report ! ({ "command_path" : path , "artifact" : path . strip_prefix (& run . path) . map (| p | p . to_string_lossy () . into_owned ()) . unwrap_or_else (| _ | path . to_string_lossy () . into_owned ()) , "sha256" : digest (& path) ? , })) ;
     }
@@ -232,7 +236,8 @@ fn capture_original(run: &mut Run, binary: &Path, provenance: Value, frames: u64
     fs::write(&observer, replay::lsnes_observer(&out)?)?;
     run.guard(&observer)?;
     let root = run.root.clone();
-    let libraries = Path::new(family::field(&provenance, "configured_libraries")?).join("usr/lib/x86_64-linux-gnu");
+    let libraries =
+        Path::new(crate::documents::field(&provenance, "configured_libraries")?).join("usr/lib/x86_64-linux-gnu");
     let env = BTreeMap::from([
         ("XDG_CONFIG_HOME".into(), run.path.join("generated/original-config").to_string_lossy().into_owned()),
         ("LD_LIBRARY_PATH".into(), libraries.to_string_lossy().into_owned()),
@@ -246,8 +251,8 @@ fn capture_original(run: &mut Run, binary: &Path, provenance: Value, frames: u64
         root.join("movies/super-metroid-any-3653.lsmv").to_string_lossy().into_owned(),
     ];
     let process = stage(run, "original-replay", &command, &root, &env, Duration::from_secs(1800))?;
-    let logs = fs::read_to_string(run.path.join(family::field(&process, "stdout")?))?
-        + &fs::read_to_string(run.path.join(family::field(&process, "stderr")?))?;
+    let logs = fs::read_to_string(run.path.join(crate::documents::field(&process, "stdout")?))?
+        + &fs::read_to_string(run.path.join(crate::documents::field(&process, "stderr")?))?;
     ensure!(
         ["Finished!", "bsnes v085 (Compatibility core)", "snes_ntsc"].iter().all(|s| logs.contains(s)),
         "original replay lacks completion/core/region diagnostics"
@@ -291,7 +296,7 @@ fn capture_candidate(run: &mut Run, frames: u64) -> Result<PathBuf> {
     )?;
     run.guard(&binary)?;
     let observer = run.path.join("source/files/crates/snes/src/checkpoint.rs");
-    let provenance = crate :: report ! ({ "method" : "verified-clean-build" , "source_sha256" : run . manifest . identities ["source"] ["sha256"] , "hardware_source_sha256" : run . manifest . identities ["hardware"] ["source_sha256"] , "lockfile_sha256" : run . manifest . identities ["Cargo.lock"] ["sha256"] , "hardware" : run . manifest . identities ["hardware"] , "hardware_root" : root . join ("deps/rustysnes") , "binary_sha256" : digest (& binary) ? , "build_log_sha256" : digest (& run . path . join (family :: field (& process , "stdout") ?)) ? , "build_report_sha256" : digest (& run . path . join ("logs/sync-reference-build.toml")) ? , "build_command" : process ["command"] , "compiler" : run . manifest . identities ["compiler"] ["version"] , "features" : run . manifest . identities ["hardware"] ["features"] , "recipe_sha256" : digest (& run . path . join ("source/files/Cargo.toml")) ? , "artifacts" : crate :: report ! ({ "binary" : "generated/reference-replay" , "build_log" : process ["stdout"] , "build_report" : "logs/sync-reference-build.toml" , "source_inventory" : "source/inventory.toml" , "source_root" : "source/files" , "recipe" : "source/files/Cargo.toml" , }) , });
+    let provenance = crate :: report ! ({ "method" : "verified-clean-build" , "source_sha256" : run . manifest . identities ["source"] ["sha256"] , "hardware_source_sha256" : run . manifest . identities ["hardware"] ["source_sha256"] , "lockfile_sha256" : run . manifest . identities ["Cargo.lock"] ["sha256"] , "hardware" : run . manifest . identities ["hardware"] , "hardware_root" : root . join ("deps/rustysnes") , "binary_sha256" : digest (& binary) ? , "build_log_sha256" : digest (& run . path . join (crate::documents::field (& process , "stdout") ?)) ? , "build_report_sha256" : digest (& run . path . join ("logs/sync-reference-build.toml")) ? , "build_command" : process ["command"] , "compiler" : run . manifest . identities ["compiler"] ["version"] , "features" : run . manifest . identities ["hardware"] ["features"] , "recipe_sha256" : digest (& run . path . join ("source/files/Cargo.toml")) ? , "artifacts" : crate :: report ! ({ "binary" : "generated/reference-replay" , "build_log" : process ["stdout"] , "build_report" : "logs/sync-reference-build.toml" , "source_inventory" : "source/inventory.toml" , "source_root" : "source/files" , "recipe" : "source/files/Cargo.toml" , }) , });
     let out = run.path.join("generated/candidate.csv");
     let command = vec![
         binary.to_string_lossy().into_owned(),
@@ -334,11 +339,11 @@ fn verify_process(owner: &Path, path: &Path, hash: &str, command: &Value) -> Res
     );
     let manifest = document(&owner.join("manifest.toml"))?;
     ensure!(
-        family::array(&manifest, "commands")?.contains(&process),
+        crate::documents::array(&manifest, "commands")?.contains(&process),
         "capture/build process lacks owner invocation origin"
     );
     for name in ["stdout", "stderr"] {
-        ensure!(linked(owner, family::field(&process, name)?)?.is_file(), "capture/build log missing");
+        ensure!(linked(owner, crate::documents::field(&process, name)?)?.is_file(), "capture/build log missing");
     }
     Ok(process)
 }
@@ -390,69 +395,75 @@ pub(crate) fn verify_capture(
                     .expect("validated native metadata"),
         "incompatible actual-fetch observer identity"
     );
-    let observer_path = linked(owner, family::field(observer, "artifact")?)?;
-    ensure!(digest(&observer_path)? == family::field(observer, "sha256")?, "observer artifact checksum differs");
+    let observer_path = linked(owner, crate::documents::field(observer, "artifact")?)?;
+    ensure!(
+        digest(&observer_path)? == crate::documents::field(observer, "sha256")?,
+        "observer artifact checksum differs"
+    );
     let provenance = &metadata["provenance"];
     let artifacts = &provenance["artifacts"];
     ensure!(
         provenance["method"]
             == crate::readiness_metadata::value(&"verified-clean-build").expect("validated native metadata")
-            && !family::field(provenance, "compiler")?.is_empty()
-            && !family::array(provenance, "features")?.is_empty(),
+            && !crate::documents::field(provenance, "compiler")?.is_empty()
+            && !crate::documents::array(provenance, "features")?.is_empty(),
         "missing verified source/build provenance"
     );
     for (name, hash) in [("binary", "binary_sha256"), ("build_log", "build_log_sha256"), ("recipe", "recipe_sha256")] {
         ensure!(
-            digest(&linked(owner, family::field(artifacts, name)?)?)? == family::field(provenance, hash)?,
+            digest(&linked(owner, crate::documents::field(artifacts, name)?)?)?
+                == crate::documents::field(provenance, hash)?,
             "provenance artifact checksum differs: {name}"
         );
     }
     let build = verify_process(
         owner,
-        &linked(owner, family::field(artifacts, "build_report")?)?,
-        family::field(provenance, "build_report_sha256")?,
+        &linked(owner, crate::documents::field(artifacts, "build_report")?)?,
+        crate::documents::field(provenance, "build_report_sha256")?,
         &provenance["build_command"],
     )?;
     ensure!(
-        linked(owner, family::field(&build, "stdout")?)? == linked(owner, family::field(artifacts, "build_log")?)?,
+        linked(owner, crate::documents::field(&build, "stdout")?)?
+            == linked(owner, crate::documents::field(artifacts, "build_log")?)?,
         "build output log origin differs"
     );
-    let inventory = document(&linked(owner, family::field(artifacts, "source_inventory")?)?)?;
+    let inventory = document(&linked(owner, crate::documents::field(artifacts, "source_inventory")?)?)?;
     ensure!(
-        identity(&inventory["files"])? == family::field(provenance, "source_sha256")?
+        identity(&inventory["files"])? == crate::documents::field(provenance, "source_sha256")?
             && inventory["sha256"] == provenance["source_sha256"],
         "source inventory checksum differs"
     );
-    let source_root = linked(owner, family::field(artifacts, "source_root")?)?;
-    for entry in family::array(&inventory, "files")? {
+    let source_root = linked(owner, crate::documents::field(artifacts, "source_root")?)?;
+    for entry in crate::documents::array(&inventory, "files")? {
         ensure!(
-            digest(&safe_artifact(&source_root, family::field(entry, "path")?)?)? == family::field(entry, "sha256")?,
+            digest(&safe_artifact(&source_root, crate::documents::field(entry, "path")?)?)?
+                == crate::documents::field(entry, "sha256")?,
             "source snapshot artifact checksum differs"
         );
     }
     verify_process(
         owner,
-        &linked(owner, family::field(&metadata, "capture_report")?)?,
-        family::field(&metadata, "capture_report_sha256")?,
+        &linked(owner, crate::documents::field(&metadata, "capture_report")?)?,
+        crate::documents::field(&metadata, "capture_report_sha256")?,
         &metadata["command"],
     )?;
-    let files = family::array(&metadata, "command_files")?;
+    let files = crate::documents::array(&metadata, "command_files")?;
     let mut digests = BTreeSet::new();
     let mut command_files = BTreeMap::new();
     for record in files {
-        let hash = family::field(record, "sha256")?;
-        let artifact = linked(owner, family::field(record, "artifact")?)?;
+        let hash = crate::documents::field(record, "sha256")?;
+        let artifact = linked(owner, crate::documents::field(record, "artifact")?)?;
         ensure!(digest(&artifact)? == hash, "capture command artifact/input changed");
         digests.insert(hash.to_owned());
-        command_files.insert(family::field(record, "command_path")?.to_owned(), (hash.to_owned(), artifact));
+        command_files.insert(crate::documents::field(record, "command_path")?.to_owned(), (hash.to_owned(), artifact));
     }
     let required = [
-        family::field(&metadata, "checkpoint_sha256")?,
-        family::field(observer, "sha256")?,
-        family::field(provenance, "binary_sha256")?,
-        family::field(inputs, "rom_sha256")?,
-        family::field(inputs, "movie_sha256")?,
-        family::field(inputs, "input_sha256")?,
+        crate::documents::field(&metadata, "checkpoint_sha256")?,
+        crate::documents::field(observer, "sha256")?,
+        crate::documents::field(provenance, "binary_sha256")?,
+        crate::documents::field(inputs, "rom_sha256")?,
+        crate::documents::field(inputs, "movie_sha256")?,
+        crate::documents::field(inputs, "input_sha256")?,
     ];
     ensure!(
         required.iter().all(|hash| digests.contains(*hash)),
@@ -462,7 +473,7 @@ pub(crate) fn verify_capture(
     ensure!(
         command_files
             .get(&command[0])
-            .is_some_and(|(hash, _)| hash == family::field(provenance, "binary_sha256").unwrap()),
+            .is_some_and(|(hash, _)| hash == crate::documents::field(provenance, "binary_sha256").unwrap()),
         "capture executable differs"
     );
     let find = |hash: &str| -> Result<String> {
@@ -470,9 +481,9 @@ pub(crate) fn verify_capture(
         ensure!(matches.len() == 1, "ambiguous capture command artifact identity");
         Ok(matches[0].0.clone())
     };
-    let checkpoint = find(family::field(&metadata, "checkpoint_sha256")?)?;
-    let rom = find(family::field(inputs, "rom_sha256")?)?;
-    let movie = find(family::field(inputs, "movie_sha256")?)?;
+    let checkpoint = find(crate::documents::field(&metadata, "checkpoint_sha256")?)?;
+    let rom = find(crate::documents::field(inputs, "rom_sha256")?)?;
+    let movie = find(crate::documents::field(inputs, "movie_sha256")?)?;
     if role == "original" {
         ensure!(
             provenance["archive_sha256"]
@@ -481,14 +492,16 @@ pub(crate) fn verify_capture(
                     == crate::readiness_metadata::value(&SOURCE).expect("validated native metadata"),
             "original archive differs from independently pinned official origin"
         );
-        let official = linked(owner, family::field(artifacts, "official_archive")?)?;
-        let tar = linked(owner, family::field(artifacts, "source_tar")?)?;
+        let official = linked(owner, crate::documents::field(artifacts, "official_archive")?)?;
+        let tar = linked(owner, crate::documents::field(artifacts, "source_tar")?)?;
         ensure!(digest(&official)? == OFFICIAL && digest(&tar)? == SOURCE, "official original source artifact differs");
-        for record in
-            family::array(provenance, "packages")?.iter().chain(family::array(provenance, "build_dependencies")?)
+        for record in crate::documents::array(provenance, "packages")?
+            .iter()
+            .chain(crate::documents::array(provenance, "build_dependencies")?)
         {
             ensure!(
-                digest(&linked(owner, family::field(record, "path")?)?)? == family::field(record, "sha256")?,
+                digest(&linked(owner, crate::documents::field(record, "path")?)?)?
+                    == crate::documents::field(record, "sha256")?,
                 "original build dependency changed"
             );
         }
@@ -496,7 +509,7 @@ pub(crate) fn verify_capture(
             provenance["build_command"] == crate::report!(vec!["make", "-j1", "headless"]),
             "original build command differs from headless target"
         );
-        let observer_command = find(family::field(observer, "sha256")?)?;
+        let observer_command = find(crate::documents::field(observer, "sha256")?)?;
         ensure!(
             command
                 == vec![
@@ -521,10 +534,10 @@ pub(crate) fn verify_capture(
             lsnes_configure::configure(
                 &temporary,
                 &tar,
-                &linked(owner, family::field(provenance, "configured_libraries")?)?,
+                &linked(owner, crate::documents::field(provenance, "configured_libraries")?)?,
             )?;
             ensure!(
-                identity(&source_inventory(&temporary)?)? == family::field(provenance, "source_sha256")?,
+                identity(&source_inventory(&temporary)?)? == crate::documents::field(provenance, "source_sha256")?,
                 "original source inventory differs from official archive plus declared build edits"
             );
             Ok(())
@@ -542,7 +555,7 @@ pub(crate) fn verify_capture(
             "candidate provenance differs from owner identities"
         );
         ensure!(
-            digest(&source_root.join("Cargo.lock"))? == family::field(provenance, "lockfile_sha256")?
+            digest(&source_root.join("Cargo.lock"))? == crate::documents::field(provenance, "lockfile_sha256")?
                 && provenance["build_command"]
                     == crate::report!(vec![
                         "cargo",
@@ -561,19 +574,19 @@ pub(crate) fn verify_capture(
         );
         let hardware = &provenance["hardware"];
         ensure!(
-            identity(&hardware["files"])? == family::field(hardware, "source_sha256")?,
+            identity(&hardware["files"])? == crate::documents::field(hardware, "source_sha256")?,
             "candidate hardware inventory identity differs"
         );
-        for entry in family::array(hardware, "files")? {
+        for entry in crate::documents::array(hardware, "files")? {
             ensure!(
                 digest(&safe_artifact(
-                    &linked(owner, family::field(provenance, "hardware_root")?)?,
-                    family::field(entry, "path")?
-                )?)? == family::field(entry, "sha256")?,
+                    &linked(owner, crate::documents::field(provenance, "hardware_root")?)?,
+                    crate::documents::field(entry, "path")?
+                )?)? == crate::documents::field(entry, "sha256")?,
                 "candidate hardware artifact changed"
             );
         }
-        let input = find(family::field(inputs, "input_sha256")?)?;
+        let input = find(crate::documents::field(inputs, "input_sha256")?)?;
         ensure!(
             command.len() == 11
                 && command[1] == input
@@ -652,8 +665,11 @@ pub(crate) fn synchronize(run: &mut Run, original_run: Option<&Path>, frames: u6
                         == crate::readiness_metadata::value(&"pass").expect("validated native metadata"),
                 "attestation incomplete"
             );
-            let capture = PathBuf::from(family::field(report, "capture")?);
-            ensure!(digest(&capture)? == family::field(report, "checkpoint_sha256")?, "attested capture changed");
+            let capture = PathBuf::from(crate::documents::field(report, "capture")?);
+            ensure!(
+                digest(&capture)? == crate::documents::field(report, "checkpoint_sha256")?,
+                "attested capture changed"
+            );
             capture
         } else {
             owner.join("generated/original.csv")
@@ -698,7 +714,7 @@ pub fn operate(request: Value) -> Result<Value> {
     })();
     match outcome {
         Ok(report) => run.finalize(
-            family::field(&report, "status")?,
+            crate::documents::field(&report, "status")?,
             Some("synchronization"),
             report
                 .get("reason")

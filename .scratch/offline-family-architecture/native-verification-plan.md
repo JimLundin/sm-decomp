@@ -1,6 +1,6 @@
 # Native verification after Offline family extraction
 
-Status: audit complete; verification not run
+Status: corrected source frozen; final Native verification in progress
 Owner: integration owner, ticket [05](issues/05-verification-and-cleanup.md)
 Audited: 2026-10-15, source baseline `77022896e6e92abe69c27c1c0f9786b838d63ba9`
 
@@ -8,6 +8,14 @@ This is the Native portion of the [approved implementation plan](implementation.
 It records the existing gates and the harness migration they need. The audit
 read source and local prerequisite metadata/hashes only. It did not build, run
 producers, change installed policy, or create verification artifacts.
+
+The harness migration and PLM wrapper/accounting correction are frozen at
+`4a736587af557de9e44b3126ff08f6d6d11beee8`. The requirements below remain the
+gate contract; [the checkpoint](checkpoint.md) records current execution and
+evidence. Current proof parent:
+`/home/jim/sm-decomp-offline-architecture-proofs/plm-fix-20261015`.
+The earlier `15d5a7e-20261015` source, readers and partial recipe results remain
+historical evidence; they are not final proof of the corrected source.
 
 Use frozen integrated source for the actual gates. All new harness code remains
 Rust. Preserve the current indexed evidence formats, complete declared domains,
@@ -72,10 +80,11 @@ No confinement capability probe ran. The host exposes
 `user.max_user_namespaces = 47816` and `ptrace_scope = 1`; absence of the
 distribution-specific `unprivileged_userns_clone` sysctl is not a failed probe.
 
-## Harness changes required before running
+## Harness migration (implemented)
 
-Current proof entry points are ignored tests in
-`crates/pipeline/src/translation_native.rs`:
+Proof entry points retain their exact names under `translation_native::tests`.
+They now live in `crates/pipeline/src/translation_native_tests.rs`; the source
+anchors below describe their locations at the original audit baseline:
 
 | Exact current test name | Source anchor | Purpose |
 | --- | --- | --- |
@@ -325,8 +334,8 @@ Retain `full-real/prepared.toml`, `source-inventory.toml`, `catalog.toml`,
 `runtime-denial-source/`, protected diagnostic files and each of `run/`,
 `compile-denial/`, `runtime-denial/`, `reservation-denial/`. Each completed
 output retains its intent, receipt, indexed attribution, verdict and artifacts.
-The current test needs an end-of-proof cleanup/authentication addition; it
-currently returns after the reservation assertion.
+The migrated test performs both cleanup passes and retained authentication
+after the reservation assertion.
 
 Preserve these nonignored regressions under their new owner as well:
 
@@ -342,13 +351,15 @@ does not cover the existing `check_ready` behavior.
 
 ## Read-only authentication after cleanup and worktree retirement
 
-The current Native test harness has no standalone current authentication mode.
+The migrated Rust harness provides
+`translation_native::tests::retained_native_proofs_authenticate_without_execution`.
+Select exactly that ignored test and set `SM_NATIVE_AUTHENTICATION_MANIFEST` to
+the retained proof's `retained-authentication.toml`. It uses the prepared handle's
+existing authentication interface without preparation, execution or cleanup.
 Ordinary `family-authenticate` omits confined producer attribution and cannot
 satisfy this gate. Rerunning the full real proof is also unsuitable: it rebuilds
-its negative source variants and executes controls. Add a small Rust test
-entry point or test-reader mode during harness migration, using the new
-prepared handle's existing authentication interface. This is application test
-orchestration, not a new production session/receipt API.
+its negative source variants and executes controls. This reader is application
+test orchestration, with no new production session or receipt interface.
 
 At proof creation, retain a small authentication-input manifest containing, for
 each case, its prepared-record path, exact candidate checkout, Native receipt

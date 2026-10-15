@@ -1,10 +1,7 @@
 //! Read-only migration preparation and refusal of retired producer routes.
 //! A retained proof validates its own closed policy; it is never an approval
 //! token for another claim or for an unimplemented managed result publisher.
-use crate::{
-    assignment, batch, digest, emit, progress, translation, translation_execution as supervisor,
-    translation_native as native,
-};
+use crate::{assignment, digest, emit, progress, translation, translation_execution as supervisor};
 use ::translation_execution::{
     ClaimLineage, Completion, FrozenPolicy,
     checkout::ControllerProjection,
@@ -13,6 +10,7 @@ use ::translation_execution::{
     retention::{self, Reference},
 };
 use anyhow::{Context, Result, bail, ensure};
+use offline_verification::{self as native, catalog as batch};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -37,7 +35,7 @@ const MANAGED_METADATA_RESERVATION: u64 = 24 * MAX_BYTES;
 // Authentication reads the same complete proof at each trust transition before
 // scanning the production catalog. Bound total IO independently of the unique
 // retained reference extent and of every producer's installed output budget.
-const PREPARATION_IO_BYTES: u64 = 8 * crate::inputs::bounded::DEFAULT_BYTES;
+const PREPARATION_IO_BYTES: u64 = 8 * tool_execution::bounded::DEFAULT_BYTES;
 const PREPARATION_TIMEOUT_MS: u64 = 300_000;
 
 #[cfg(test)]
@@ -195,7 +193,7 @@ fn safe(path: &Path) -> Result<()> {
 
 fn bytes(path: &Path, maximum: u64) -> Result<Vec<u8>> {
     safe(path)?;
-    crate::inputs::bounded::read_limit(path, maximum)
+    tool_execution::bounded::read_limit(path, maximum)
 }
 
 fn object<T: DeserializeOwned>(path: &Path) -> Result<T> {
@@ -702,8 +700,8 @@ fn coverage(checkout: &Path, proof: &supervisor::Installation) -> Result<Catalog
         let reason = if entry.kind != "family" || entry.prepare.is_some() {
             Some("The confined plain-family recipe does not support this registered dispatcher/preparation contract.")
         } else {
-            let manifest = crate::fixture_format::read(&checkout.join(&entry.manifest))?;
-            if crate::family::dispatcher(&manifest)
+            let manifest = offline_verification::fixtures::read(&checkout.join(&entry.manifest))?;
+            if manifest.uses_dispatcher()
                 || manifest.projectile_host
                 || manifest.projectile_rendering
                 || manifest.callback_adapter.is_some()
@@ -1048,8 +1046,11 @@ fn native_admission(
         }
         ensure!(!contract.coverage.is_empty(), "managed native provenance omits an original family routine");
         if validate_scope {
-            let prepared = native::prepare(&installed.source_repository, &installed.pinned_source, contract)?;
-            ensure!(prepared.source.revision == revision, "prepared native original source identity differs");
+            let prepared = crate::offline::families()?.prepare_native(
+                native::NativePreparation::new(&installed.source_repository, &installed.pinned_source, contract),
+                &crate::translation_native::ScopeApproval,
+            )?;
+            ensure!(prepared.source().revision == revision, "prepared native original source identity differs");
         }
         all_routines.extend(contract.coverage.keys().cloned());
     }
@@ -1185,10 +1186,10 @@ fn require_offline_composite_adapter(original_job_id: &str) -> Result<NativeAdmi
 /// Validates immutable lineage, current recorded authority and actual retained
 /// proof. It activates nothing and reports unfinished production contracts.
 pub(crate) fn validate_preparation(path: &Path) -> Result<PreparationReport> {
-    let deadline = crate::inputs::bounded::now_unix_ms()?
+    let deadline = tool_execution::bounded::now_unix_ms()?
         .checked_add(PREPARATION_TIMEOUT_MS)
         .context("migration preparation deadline overflow")?;
-    crate::inputs::bounded::until(deadline, PREPARATION_IO_BYTES, || validate_preparation_inner(path))
+    decomp_source::context::until(deadline, PREPARATION_IO_BYTES, || validate_preparation_inner(path))
 }
 
 fn validate_preparation_inner(path: &Path) -> Result<PreparationReport> {
@@ -1529,7 +1530,7 @@ fn current_ledger(migration: &Migration) -> Result<LedgerView> {
 /// producer. A completed original claim may only enter exact accepted-result
 /// resume; the supervisor cannot start a new rewrite under that lineage.
 pub(crate) fn admit_installation(installed: &supervisor::Installation) -> Result<()> {
-    crate::inputs::bounded::limited(|| admit_installation_inner(installed))
+    decomp_source::context::limited(|| admit_installation_inner(installed))
 }
 
 fn admit_installation_inner(installed: &supervisor::Installation) -> Result<()> {
@@ -1551,7 +1552,7 @@ fn admit_installation_inner(installed: &supervisor::Installation) -> Result<()> 
             safe(&roots)?;
             let mut count = 0;
             for directory in std::fs::read_dir(&roots)? {
-                crate::inputs::bounded::check()?;
+                tool_execution::bounded::check()?;
                 count += 1;
                 ensure!(
                     count <= installed.policy.budgets.max_attempts,
@@ -1583,7 +1584,7 @@ fn admit_installation_inner(installed: &supervisor::Installation) -> Result<()> 
         let mut accepted = false;
         let mut count = 0;
         for file in std::fs::read_dir(&roots)? {
-            crate::inputs::bounded::check()?;
+            tool_execution::bounded::check()?;
             count += 1;
             ensure!(count <= installed.policy.budgets.max_attempts, "managed recovery attempts exceed frozen bound");
             let directory = file?.path();
@@ -1622,7 +1623,7 @@ fn admit_installation_inner(installed: &supervisor::Installation) -> Result<()> 
             None
         };
         for directory in directories.into_iter().flatten() {
-            crate::inputs::bounded::check()?;
+            tool_execution::bounded::check()?;
             count += 1;
             ensure!(count <= installed.policy.budgets.max_attempts, "managed recovery attempts exceed frozen bound");
             let path = directory?.path().join("intent.json");
@@ -1854,12 +1855,12 @@ fn completion_gates(
                         && expected.contains(&gate.verdict.family)
                         && observed.insert(gate.verdict.family.clone())
                         && contracts.iter().any(|declared| declared.family == gate.verdict.family
-                            && sealed(declared).ok() == sealed(&gate.prepared.contract).ok()),
+                            && sealed(declared).ok() == sealed(gate.prepared.contract()).ok()),
                     "managed actual-C gate source, coverage or prescribed family changed"
                 );
                 ensure!(
-                    gate.verdict.source.as_ref() == Some(&gate.prepared.source)
-                        && gate.prepared.source.revision == contract.source_revision()?,
+                    gate.verdict.source.as_ref() == Some(gate.prepared.source())
+                        && gate.prepared.source().revision == contract.source_revision()?,
                     "managed actual-C evidence changed original pinned source identity"
                 );
             }
@@ -2883,7 +2884,7 @@ pub(crate) fn publish(
     completion: &Completion,
     _stages: &Path,
 ) -> Result<ManagedPublication> {
-    crate::inputs::bounded::limited(|| publish_inner(installed, completion, _stages))
+    decomp_source::context::limited(|| publish_inner(installed, completion, _stages))
 }
 
 fn publish_inner(
@@ -3572,7 +3573,7 @@ pub(crate) fn authenticate_publication(
     completion: &Completion,
     publication: &ManagedPublication,
 ) -> Result<()> {
-    crate::inputs::bounded::limited(|| authenticate_publication_inner(installed, completion, publication))
+    decomp_source::context::limited(|| authenticate_publication_inner(installed, completion, publication))
 }
 
 fn authenticate_publication_inner(
@@ -3616,7 +3617,7 @@ pub(crate) fn resume_publication(
     completion: &Completion,
     publication: &ManagedPublication,
 ) -> Result<()> {
-    crate::inputs::bounded::limited(|| resume_publication_inner(installed, completion, publication))
+    decomp_source::context::limited(|| resume_publication_inner(installed, completion, publication))
 }
 
 fn resume_publication_inner(
@@ -3690,7 +3691,7 @@ mod tests {
         let completion: Completion =
             object(&installed.state_root.join(run_id).join("attempt-0001/publication/completion.json"))?;
         let before = supervisor::tests::records(&installed.integration_repository)?;
-        let result = crate::inputs::bounded::limited(|| {
+        let result = decomp_source::context::limited(|| {
             let authenticated = supervisor::authenticate_managed_completion(&installed, &completion)
                 .context("retained completion authentication")?;
             let (_, migration, _) = managed_migration(&installed)?;

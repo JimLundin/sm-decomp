@@ -1,6 +1,6 @@
 //! Authoritative binary Offline families. See docs/FIXTURE_FORMAT.md.
 //! All byte extents are validated before shared, allocation-free span access.
-use crate::{family_model::*, inputs::bounded};
+use crate::family_model::*;
 use anyhow::{Context, Result, ensure};
 use std::{
     collections::{BTreeMap, HashMap},
@@ -8,15 +8,13 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
+use tool_execution::bounded;
 
 const MAGIC: &[u8; 8] = b"SMFIXT01";
 const HEADER: usize = 64;
 const WRAM: usize = 0x20000;
-pub(crate) const EXTENSION: &str = "smf";
-pub(crate) const RUN_MANIFEST: &str = "manifest.smf";
-#[path = "fixture_cli.rs"]
-mod cli;
-pub(crate) use cli::run as cli;
+pub const EXTENSION: &str = "smf";
+pub const RUN_MANIFEST: &str = "manifest.smf";
 
 // Metadata is typed and little endian. Its schema changes with the magic/version;
 // there is deliberately no runtime legacy TOML-fixture decoder.
@@ -184,17 +182,17 @@ fn offset(base: usize, count: usize, stride: usize) -> Result<usize> {
     base.checked_add(count.checked_mul(stride).context("fixture count overflow")?).context("fixture extent overflow")
 }
 
-pub(crate) fn read(path: &Path) -> Result<Manifest> {
+pub fn read(path: &Path) -> Result<Manifest> {
     open(path, None)
 }
 
-pub(crate) fn read_authenticated(path: &Path, expected: &str) -> Result<Manifest> {
+pub fn read_authenticated(path: &Path, expected: &str) -> Result<Manifest> {
     open(path, Some(expected))
 }
 
 fn open(path: &Path, expected: Option<&str>) -> Result<Manifest> {
     let path = if path.is_absolute() { path.to_path_buf() } else { std::env::current_dir()?.join(path) };
-    bounded::limited(|| {
+    decomp_source::context::limited(|| {
         let bytes = bounded::read(&path)?;
         if let Some(expected) = expected {
             use sha2::{Digest, Sha256};
@@ -205,7 +203,7 @@ fn open(path: &Path, expected: Option<&str>) -> Result<Manifest> {
     .with_context(|| format!("binary fixture {}", path.display()))
 }
 
-pub(crate) fn decode(bytes: Vec<u8>) -> Result<Manifest> {
+pub fn decode(bytes: Vec<u8>) -> Result<Manifest> {
     ensure!(bytes.len() >= HEADER && bytes.get(..8) == Some(MAGIC), "expected SMFIXT01 binary fixture");
     ensure!(bytes[40..HEADER].iter().all(|&v| v == 0), "unsupported fixture format flags");
     let metadata_len = number(&bytes, 8)?;
@@ -312,7 +310,7 @@ fn spans(case: &Case, state: &mut [u8], touched: &mut [bool]) -> Result<Vec<Writ
     Ok(writes)
 }
 
-pub(crate) fn encode(manifest: &Manifest) -> Result<Vec<u8>> {
+pub fn encode(manifest: &Manifest) -> Result<Vec<u8>> {
     let mut metadata = Vec::new();
     manifest.put(&mut metadata)?;
     let mut index = Vec::new();
@@ -350,12 +348,12 @@ pub(crate) fn encode(manifest: &Manifest) -> Result<Vec<u8>> {
     Ok(out)
 }
 
-pub(crate) fn write(path: &Path, manifest: &Manifest) -> Result<()> {
+pub fn write(path: &Path, manifest: &Manifest) -> Result<()> {
     let bytes = encode(manifest)?;
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
-    let temporary = path.with_extension(format!("smf-{}-{}", std::process::id(), crate::family::unique_id()));
+    let temporary = path.with_extension(format!("smf-{}-{}", std::process::id(), tool_execution::unique_id()));
     let result = (|| -> Result<()> {
         use std::io::Write as _;
         let mut file = fs::OpenOptions::new().create_new(true).write(true).open(&temporary)?;
@@ -371,7 +369,7 @@ pub(crate) fn write(path: &Path, manifest: &Manifest) -> Result<()> {
 }
 
 /// Compact resume identity: payloads already reside in manifest.smf and before.wram.
-pub(crate) fn case_identity(case: &Case) -> Result<String> {
+pub fn case_identity(case: &Case) -> Result<String> {
     use sha2::{Digest, Sha256};
     let mut metadata = Vec::new();
     case.put(&mut metadata)?;
@@ -385,7 +383,7 @@ pub(crate) fn case_identity(case: &Case) -> Result<String> {
     Ok(format!("{:x}", hash.finalize()))
 }
 
-pub(crate) fn identity(manifest: &Manifest) -> Result<String> {
+pub fn identity(manifest: &Manifest) -> Result<String> {
     use sha2::{Digest, Sha256};
     let mut metadata = Vec::new();
     manifest.put(&mut metadata)?;
@@ -409,14 +407,14 @@ mod tests {
     #[test]
     fn authenticated_reads_bind_decoded_bytes_with_one_input_budget() -> Result<()> {
         use sha2::{Digest, Sha256};
-        let directory = bounded::tests::Directory::new()?;
+        let directory = tool_execution::testing::Directory::new()?;
         let path = directory.0.join("family.smf");
         let mut original =
             Manifest { cases: vec![Case { name: "root".into(), a: 5, ..Default::default() }], ..Default::default() };
         let bytes = encode(&original)?;
         let hash = format!("{:x}", Sha256::digest(&bytes));
         fs::write(&path, &bytes)?;
-        bounded::until(bounded::now_unix_ms()? + 10_000, bytes.len() as u64, || {
+        decomp_source::context::until(bounded::now_unix_ms()? + 10_000, bytes.len() as u64, || {
             assert_eq!(read_authenticated(&path, &hash)?, original);
             assert_eq!(bounded::charged_bytes(), bytes.len() as u64);
             Ok(())

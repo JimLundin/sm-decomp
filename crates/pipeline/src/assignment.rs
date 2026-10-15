@@ -496,7 +496,7 @@ pub(crate) fn admitted_input_files(checkout: &Path, job: &Job) -> Result<BTreeMa
     ensure!(job.inputs.len() <= 4096, "managed original input count exceeded");
     let mut files = BTreeMap::new();
     for (key, expected) in &job.inputs {
-        crate::inputs::bounded::check()?;
+        tool_execution::bounded::check()?;
         let name = key.strip_prefix("file:").unwrap_or(key);
         let path = Path::new(name);
         if !(expected.len() == 64 && expected.bytes().all(|b| b.is_ascii_hexdigit()))
@@ -506,7 +506,7 @@ pub(crate) fn admitted_input_files(checkout: &Path, job: &Job) -> Result<BTreeMa
             continue;
         }
         let path = if path.is_absolute() { path.to_path_buf() } else { checkout.join(path) };
-        crate::inputs::bounded::safe(&path)?;
+        tool_execution::bounded::safe(&path)?;
         let owned = path
             .strip_prefix(checkout)
             .ok()
@@ -533,7 +533,7 @@ pub(crate) fn authenticate_frozen_job_inputs(checkout: &Path, job: &Job, frozen:
         );
         total = total.checked_add(reference.bytes).context("managed original input extent overflow")?;
         ensure!(total <= 96 * 1024 * 1024, "managed frozen input aggregate budget exhausted");
-        crate::inputs::bounded::account(reference.bytes)?;
+        tool_execution::bounded::account(reference.bytes)?;
         ::translation_execution::retention::authenticate_reference(reference, 4 * 1024 * 1024)?;
     }
     Ok(())

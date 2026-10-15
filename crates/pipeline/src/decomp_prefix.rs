@@ -1,7 +1,8 @@
 //! Nonaccepting original-ROM prefix diagnostics and independently changed C controls.
-use crate::{builds, digest, family};
+use crate::digest;
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
+use tool_execution::builds;
 
 use std::{
     collections::BTreeMap,
@@ -410,7 +411,7 @@ fn investigate(root: &Path, assets: &Path, run: &Path, request: &Request, report
     let corpus: Corpus = toml::from_str(&fs::read_to_string(assets.join("movies/manifest.toml"))?)?;
     ensure!(corpus.movies.iter().any(|r| r.sha256 == movie_hash && r.category == "any%"), "unsupported movie identity");
     movie::load(&movie)?;
-    family::verify_source(root, &assets.join("deps/snesrev-sm"))?;
+    decomp_source::verify_source(root, &assets.join("deps/snesrev-sm"))?;
     let binary = assets.join("deps/lsnes/source/src/util/lsnes-dumpavi.util");
     let native = run.join("native");
     fs::create_dir(&native)?;
@@ -545,7 +546,7 @@ fn investigate(root: &Path, assets: &Path, run: &Path, request: &Request, report
         "-iquote".into(),
         source.join("src").to_string_lossy().into_owned(),
     ];
-    command.extend(family::c_units(&source)?.iter().map(|p| p.to_string_lossy().into_owned()));
+    command.extend(decomp_source::c_units(&source)?.iter().map(|p| p.to_string_lossy().into_owned()));
     command.push(root.join("tools/decomp/prefix_host.c").to_string_lossy().into_owned());
     command.push("-Wl,--gc-sections".into());
     for symbol in [
@@ -741,7 +742,7 @@ fn investigate(root: &Path, assets: &Path, run: &Path, request: &Request, report
     }
     report.explicit_wait_events = events.iter().filter(|r| r.kind == "explicit-wait").map(|r| r.source_event).collect();
     // Authenticate mutable inputs again after the original and all C controls.
-    family::verify_source(root, &source)?;
+    decomp_source::verify_source(root, &source)?;
     ensure!(digest(&rom)? == ROM_SHA256, "ROM changed during investigation");
     ensure!(digest(&movie)? == report.native.as_ref().unwrap().movie_sha256, "movie changed during investigation");
     report.status = "nonaccepting".into();

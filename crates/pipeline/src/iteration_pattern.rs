@@ -1,8 +1,13 @@
-use crate::{
-    digest, family, iteration_increment as increment, lock, pattern_contract as contract, patterns, readiness,
-    readiness_origins as origins,
-    readiness_run::{Run, safe_artifact, source_inventory},
-};
+use crate::digest;
+use crate::iteration_increment as increment;
+use crate::lock;
+use crate::pattern_contract as contract;
+use crate::patterns;
+use crate::readiness;
+use crate::readiness_origins as origins;
+use crate::readiness_run::Run;
+use crate::readiness_run::safe_artifact;
+use crate::readiness_run::source_inventory;
 use anyhow::{Context, Result, ensure};
 use pipeline_model::{
     Candidate, Complexity, InstructionProfile, KeyInventory, SelectedKey, SelectionAction, SelectionOutcome,
@@ -54,7 +59,7 @@ pub(crate) fn prove(root: &Path, opcode: &str) -> Result<Value> {
             complete: true,
             opcode: opcode.into(),
             production_enabled: false,
-            source_sha256: family::field(&run.manifest.identities["source"], "sha256")?.into(),
+            source_sha256: crate::documents::field(&run.manifest.identities["source"], "sha256")?.into(),
             instruction_sha256: digest(&output.join("instruction.toml"))?,
             timing_sha256: digest(&output.join("timing.toml"))?,
         };
@@ -369,13 +374,13 @@ pub(crate) fn verify_promotion(owner: &Path, verified: &Value, record: &incremen
             == promotion.proposed_declaration_sha256,
         "accepted declaration differs from proved proposal"
     );
-    for file in family::array(&inventory, "files")? {
-        let relative = family::field(file, "path")?;
+    for file in crate::documents::array(&inventory, "files")? {
+        let relative = crate::documents::field(file, "path")?;
         if [contract::DECLARATION, "config/functions.toml"].contains(&relative) {
             continue;
         }
         ensure!(
-            digest(&safe_artifact(&owner.join("source/files"), relative)?)? == family::field(file, "sha256")?,
+            digest(&safe_artifact(&owner.join("source/files"), relative)?)? == crate::documents::field(file, "sha256")?,
             "promoted emitter/runtime differs from proved sources"
         );
     }
@@ -399,8 +404,8 @@ pub(crate) fn operate(request: Value) -> Result<Value> {
     } else {
         prepare(
             &root,
-            Path::new(family::field(&request, "selection")?),
-            Path::new(family::field(&request, "proof")?),
+            Path::new(crate::documents::field(&request, "selection")?),
+            Path::new(crate::documents::field(&request, "proof")?),
             timeout,
         )?
     };

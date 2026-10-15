@@ -2,16 +2,18 @@
 //! The original candidate remains a Git identity. Reviewed verification source
 //! is a separate, immutable input; each tested source is overlaid on that input.
 use crate::{
-    assignment, batch, inputs::bounded, translation_cargo as cargo, translation_compact as compact,
-    translation_legacy as legacy, translation_migration::OriginalClaim, translation_native as native,
+    assignment, translation_cargo as cargo, translation_compact as compact, translation_legacy as legacy,
+    translation_migration::OriginalClaim,
 };
 use anyhow::{Context, Result, bail, ensure};
+use offline_verification::{self as native, catalog as batch};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
     path::{Path, PathBuf},
 };
+use tool_execution::bounded;
 use translation_execution::{
     model::{OperationContext, SourceSnapshot, VerificationStage, digest_valid, sealed, sha256},
     retention::{self, Reference},
@@ -106,7 +108,7 @@ pub(crate) struct SourceOverlay {
 }
 
 pub(crate) struct StrictRuntime {
-    pub native: native::StrictRuntime,
+    pub native: native::ConfinedEnvironment,
     pub cargo: cargo::StrictRuntime,
     pub compact: compact::StrictRuntime,
 }
@@ -173,7 +175,7 @@ fn write_with_limit<T: Serialize>(path: &Path, value: &T, maximum: u64) -> Resul
     ensure!(bytes.len() as u64 <= maximum, "original acceptance record extent exceeded");
     bounded::safe(path)?;
     fs::create_dir_all(path.parent().context("original acceptance record parent missing")?)?;
-    crate::inputs::immutable_bytes(path, &bytes)?;
+    bounded::immutable_bytes(path, &bytes)?;
     retention::seal_file(path, maximum)
 }
 
@@ -292,8 +294,9 @@ fn required_families(
             let mut pairs = 0;
             for name in ["game-host-projectile", "game-host-room-scroll"] {
                 let declared = declarations.get(name).context("original material shared-host matrix missing")?;
-                let manifest =
-                    crate::fixture_format::read(&contract.verification_source.root.join(&declared.manifest.file))?;
+                let manifest = offline_verification::fixtures::read(
+                    &contract.verification_source.root.join(&declared.manifest.file),
+                )?;
                 ensure!(
                     manifest.callback_adapter.as_deref() == Some("game-host"),
                     "material shared-host recipe changed"
@@ -351,7 +354,7 @@ fn required_families(
 /// complete result; historical readiness-only policies are not upgraded in place.
 pub(crate) fn prepare(contract: &OriginalContract, pinned_source: &Path) -> Result<PreparedOriginal> {
     let deadline = bounded::now_unix_ms()?.checked_add(600_000).context("original preparation deadline overflow")?;
-    bounded::until(deadline, 8 * bounded::DEFAULT_BYTES, || {
+    decomp_source::context::until(deadline, 8 * bounded::DEFAULT_BYTES, || {
         ensure!(contract.schema == "translation-original-contract-v1", "unsupported original acceptance contract");
         let original = lineage(contract)?;
         let mut references = source_references(&contract.verification_source)?;
@@ -419,32 +422,23 @@ pub(crate) fn prepare(contract: &OriginalContract, pinned_source: &Path) -> Resu
         let paths = native_paths(&original);
         let mut native = BTreeMap::new();
         let mut source = BTreeSet::new();
-        let catalog = declarations
+        let verifier = crate::offline::families()?;
+        let requests = declarations
             .values()
-            .next()
-            .map(|first| {
-                native::prepare_catalog_inputs_until(
-                    &contract.verification_source.root,
-                    pinned_source,
-                    &first.source_inventory,
-                    deadline,
-                    8 * bounded::DEFAULT_BYTES,
-                )
-            })
-            .transpose()?;
-        for (name, declared) in declarations {
-            let prepared = native::prepare_scope_in_catalog_until(
-                &contract.verification_source.root,
+            .map(|declared| native::NativePreparation {
+                checkout: &contract.verification_source.root,
                 pinned_source,
-                &declared,
-                &paths,
-                catalog.as_ref().context("original catalog inputs missing")?,
-                deadline,
-                8 * bounded::DEFAULT_BYTES,
-            )
-            .with_context(|| format!("preparing original Offline family {name}"))?;
-            source.insert(sealed(&prepared.source)?);
-            native.insert(name, sealed(&prepared)?);
+                contract: declared,
+                approved_candidate_paths: Some(&paths),
+                deadline_unix_ms: Some(deadline),
+                max_input_bytes: 8 * bounded::DEFAULT_BYTES,
+            })
+            .collect::<Vec<_>>();
+        let families = verifier.prepare_native_catalog(&requests, &crate::translation_native::ScopeApproval)?;
+        for ((name, _), prepared) in declarations.iter().zip(families) {
+            let prepared = prepared.with_context(|| format!("preparing original Offline family {name}"))?;
+            source.insert(sealed(prepared.source())?);
+            native.insert(name.clone(), sealed(&prepared)?);
         }
         let compact = if let Some(reference) = &contract.compact {
             let declaration: compact::CompactContract = read(reference)?;
@@ -519,7 +513,7 @@ pub(crate) fn overlay(
         let path = output.join(name);
         bounded::safe(&path)?;
         fs::create_dir_all(path.parent().context("overlay input parent missing")?)?;
-        crate::inputs::immutable_bytes(&path, &bytes)?;
+        bounded::immutable_bytes(&path, &bytes)?;
         files.insert(name.clone(), retention::seal_file(&path, 16 * MAX_RECORD)?);
     }
     let result = SourceOverlay { source: source.clone(), root: output, files };
@@ -597,29 +591,6 @@ pub(crate) fn gate_capacity(prepared: &PreparedOriginal, stage: VerificationStag
     Ok(requested)
 }
 
-fn family_capacity(contract: &native::NativeContract) -> Result<u64> {
-    let cases = contract.coverage.values().map(Vec::len).sum::<usize>() as u64;
-    // Native reserves writable output three times (namespace, imported output,
-    // and retained material), plus bounded runtime/reference metadata. The
-    // source allowance also covers generated fixture state and receipt records.
-    let compiler = contract
-        .compiler_limits
-        .writable_bytes
-        .checked_mul(6)
-        .and_then(|bytes| bytes.checked_add(16 * MAX_RECORD))
-        .context("original compiler capacity overflow")?;
-    let fixture = contract
-        .fixture_limits
-        .writable_bytes
-        .checked_mul(6)
-        .and_then(|bytes| bytes.checked_add(2 * MAX_RECORD))
-        .context("original fixture capacity overflow")?;
-    (2 * MAX_SOURCE)
-        .checked_add(compiler)
-        .and_then(|bytes| fixture.checked_mul(cases + 1).and_then(|fixtures| bytes.checked_add(fixtures)))
-        .context("original family capacity overflow")
-}
-
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn run(
     prepared: &PreparedOriginal,
@@ -687,36 +658,38 @@ pub(crate) fn run(
         }
         VerificationStage::Offline => {
             let paths = native_paths(&prepared.original);
-            let first: native::NativeContract =
-                read(prepared.contract.families.values().next().context("original Offline catalog empty")?)?;
             let deadline = runtime.native.deadline_unix_ms.context("original Offline stage deadline missing")?;
-            let catalog = native::prepare_catalog_inputs_until(
-                &prepared.contract.verification_source.root,
-                pinned_source,
-                &first.source_inventory,
-                deadline,
-                8 * bounded::DEFAULT_BYTES,
-            )?;
-            for (name, fingerprint) in &prepared.native {
-                let declaration: native::NativeContract = read(&prepared.contract.families[name])?;
+            ensure!(!prepared.contract.families.is_empty(), "original Offline catalog empty");
+            let declarations = prepared
+                .native
+                .keys()
+                .map(|name| Ok((name.clone(), read::<native::NativeContract>(&prepared.contract.families[name])?)))
+                .collect::<Result<BTreeMap<_, _>>>()?;
+            let verifier = crate::offline::families()?;
+            let requests = declarations
+                .values()
+                .map(|declaration| native::NativePreparation {
+                    checkout: &prepared.contract.verification_source.root,
+                    pinned_source,
+                    contract: declaration,
+                    approved_candidate_paths: Some(&paths),
+                    deadline_unix_ms: Some(deadline),
+                    max_input_bytes: 8 * bounded::DEFAULT_BYTES,
+                })
+                .collect::<Vec<_>>();
+            let prepared_families =
+                verifier.prepare_native_catalog(&requests, &crate::translation_native::ScopeApproval)?;
+            for ((name, _), family) in declarations.iter().zip(prepared_families) {
                 // Preparation always reads the reviewed baseline. Candidate
                 // variability is limited by the separately bound approved set.
-                let family = native::prepare_scope_in_catalog_until(
-                    &prepared.contract.verification_source.root,
-                    pinned_source,
-                    &declaration,
-                    &paths,
-                    &catalog,
-                    deadline,
-                    8 * bounded::DEFAULT_BYTES,
-                )?;
-                ensure!(sealed(&family)? == *fingerprint, "original native preparation changed: {name}");
-                let capacity = family_capacity(&declaration)?.min(output_limit.saturating_sub(retained));
+                let family = family?;
+                ensure!(sealed(&family)? == prepared.native[name], "original native preparation changed: {name}");
+                let capacity = family.required_output_bytes()?.min(output_limit.saturating_sub(retained));
                 ensure!(
                     capacity >= MAX_FAMILY_RECORD,
                     "original catalog evidence budget exhausted before family launch"
                 );
-                let family_runtime = native::StrictRuntime {
+                let family_runtime = native::ConfinedEnvironment {
                     helper: runtime.native.helper.clone(),
                     rustc: runtime.native.rustc.clone(),
                     c_compiler: runtime.native.c_compiler.clone(),
@@ -727,14 +700,17 @@ pub(crate) fn run(
                     deadline_unix_ms: runtime.native.deadline_unix_ms,
                     max_output_bytes: capacity,
                 };
-                let receipt = native::run(
-                    &family,
-                    &overlay.root,
-                    &output.join("native").join(name),
+                let receipt = family.verify(
+                    native::NativeTarget {
+                        checkout: &overlay.root,
+                        output: &output.join("native").join(name),
+                        context: &child(context, name)?,
+                        fixture_jobs: None,
+                    },
                     &family_runtime,
-                    &child(context, name)?,
+                    verifier.host_inputs(),
                 )?;
-                native::authenticate(&family, &overlay.root, &receipt)?;
+                family.authenticate(native::NativeEvidence { checkout: &overlay.root, receipt: &receipt })?;
                 retained = retained.checked_add(receipt.evidence_bytes).context("original catalog extent overflow")?;
                 passed = receipt.passed;
                 diagnostic = receipt.diagnostic.clone();
@@ -853,7 +829,9 @@ pub(crate) fn authenticate(prepared: &PreparedOriginal, receipt: &OriginalReceip
                         && family.receipt.context == child(&verdict.context, name)?,
                     "original native recipe, source or operation changed: {name}"
                 );
-                native::authenticate(&family.prepared, &overlay.root, &family.receipt)?;
+                family
+                    .prepared
+                    .authenticate(native::NativeEvidence { checkout: &overlay.root, receipt: &family.receipt })?;
                 passed = family.receipt.passed;
                 diagnosis = family.receipt.diagnostic.clone();
             }
@@ -893,7 +871,7 @@ pub(crate) fn references(prepared: &PreparedOriginal, receipt: &OriginalReceipt)
     for reference in verdict.families.values() {
         let family = read_family(reference)?;
         references.push(reference.clone());
-        references.extend(native::references(&family.receipt)?);
+        references.extend(family.receipt.retained_references()?);
     }
     let mut unique = BTreeMap::new();
     for reference in references {

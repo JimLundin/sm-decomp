@@ -1,9 +1,12 @@
+use crate::digest;
+use crate::preflight;
+use crate::readiness;
+use crate::readiness_contract as contract;
 use crate::readiness_metadata::toml_value_decode;
-use crate::{
-    digest, family, preflight, readiness, readiness_contract as contract, readiness_origins as origins,
-    readiness_reuse as reuse,
-    readiness_run::{Run, safe_artifact},
-};
+use crate::readiness_origins as origins;
+use crate::readiness_reuse as reuse;
+use crate::readiness_run::Run;
+use crate::readiness_run::safe_artifact;
 use anyhow::{Context, Result, ensure};
 use pipeline_model::{
     AcceptedBaseline, BoundSelection, InputDomain, InstructionProfile, KeyInventory, ProfileIdentities,
@@ -29,15 +32,18 @@ fn bind_profile(
     profile.validate()?;
     let inputs = &manifest["identities"]["inputs"];
     let binary = &manifest["identities"]["generated-binary"];
-    let canonical = safe_artifact(owner, family::field(inputs, "input_evidence")?)?;
-    ensure!(digest(&canonical)? == family::field(inputs, "input_sha256")?, "baseline canonical input differs");
+    let canonical = safe_artifact(owner, crate::documents::field(inputs, "input_evidence")?)?;
+    ensure!(
+        digest(&canonical)? == crate::documents::field(inputs, "input_sha256")?,
+        "baseline canonical input differs"
+    );
     let selected = fs::read_to_string(&canonical)?.lines().take(18000).map(|l| format!("{l}\n")).collect::<String>();
     let expected = ProfileIdentities {
-        rom_sha256: family::field(inputs, "rom_sha256")?.into(),
-        movie_sha256: family::field(inputs, "movie_sha256")?.into(),
-        input_sha256: family::field(inputs, "input_sha256")?.into(),
-        binary_sha256: family::field(binary, "sha256")?.into(),
-        compiled_rom_sha256: family::field(inputs, "rom_sha256")?.into(),
+        rom_sha256: crate::documents::field(inputs, "rom_sha256")?.into(),
+        movie_sha256: crate::documents::field(inputs, "movie_sha256")?.into(),
+        input_sha256: crate::documents::field(inputs, "input_sha256")?.into(),
+        binary_sha256: crate::documents::field(binary, "sha256")?.into(),
+        compiled_rom_sha256: crate::documents::field(inputs, "rom_sha256")?.into(),
         selected_input_sha256: format!("{:x}", Sha256::digest(selected.as_bytes())),
     };
     let expected_value = toml::Value::try_from(&expected)?;
@@ -112,7 +118,7 @@ pub(crate) fn select(run: &mut Run, owner: &Path, timeout: u64) -> Result<BoundS
     let verified = reuse::verify_accepted(owner, true)?;
     readiness::verify_origins(owner, &verified)?;
     let manifest = &verified["manifest"];
-    run.manifest.accepted_parent = Some(family::field(manifest, "run_id")?.into());
+    run.manifest.accepted_parent = Some(crate::documents::field(manifest, "run_id")?.into());
     run . manifest . selection_baseline = Some (crate :: report ! ({ "run_id" : manifest ["run_id"] , "run_path" : fs :: canonicalize (owner) ? , "source_sha256" : manifest ["identities"] ["source"] ["sha256"] , "domain" : contract :: domain () , }) . as_table () . unwrap () . clone ()) ;
     run.save()?;
     run.record_check(
@@ -135,7 +141,7 @@ pub(crate) fn select(run: &mut Run, owner: &Path, timeout: u64) -> Result<BoundS
     }
     let shared = |files: &Value| -> Result<Value> {
         Ok(Value::Array(
-            family::array(files, "files")?
+            crate::documents::array(files, "files")?
                 .iter()
                 .filter(|r| {
                     r["path"].as_str().is_some_and(|p| {
@@ -153,7 +159,7 @@ pub(crate) fn select(run: &mut Run, owner: &Path, timeout: u64) -> Result<BoundS
         "selection shared execution inputs differ"
     );
     let gate = &verified["verdict"]["checks"]["generated-parity"];
-    let raw = safe_artifact(owner, family::field(gate, "evidence")?)?;
+    let raw = safe_artifact(owner, crate::documents::field(gate, "evidence")?)?;
     let mut profile_path = raw.parent().unwrap().join("coverage.toml");
     let mut report_path = raw.clone();
     if !profile_path.exists() || origins::document(&raw)?.get("coverage_sha256").is_none() {
@@ -254,7 +260,7 @@ pub(crate) fn select(run: &mut Run, owner: &Path, timeout: u64) -> Result<BoundS
     let report = BoundSelection {
         schema_version: 1,
         baseline: baseline(owner, manifest)?,
-        source_sha256: family::field(&run.manifest.identities["source"], "sha256")?.into(),
+        source_sha256: crate::documents::field(&run.manifest.identities["source"], "sha256")?.into(),
         profile_sha256: digest(&profile)?,
         baseline_inventory_sha256: digest(&native_inventory)?,
         original_inventory_sha256: digest(&inventory)?,
@@ -278,7 +284,7 @@ pub fn operate(request: Value) -> Result<Value> {
             PathBuf::from(path)
         } else {
             let pointer = origins::document(&root.join("out/accepted.toml"))?;
-            PathBuf::from(family::field(&pointer, "run_path")?)
+            PathBuf::from(crate::documents::field(&pointer, "run_path")?)
         };
         select(
             &mut run,
@@ -307,8 +313,8 @@ pub fn operate(request: Value) -> Result<Value> {
 }
 fn baseline(owner: &Path, manifest: &Value) -> Result<AcceptedBaseline> {
     Ok(AcceptedBaseline {
-        run_id: family::field(manifest, "run_id")?.into(),
+        run_id: crate::documents::field(manifest, "run_id")?.into(),
         run_path: fs::canonicalize(owner)?,
-        source_sha256: family::field(&manifest["identities"]["source"], "sha256")?.into(),
+        source_sha256: crate::documents::field(&manifest["identities"]["source"], "sha256")?.into(),
     })
 }

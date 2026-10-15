@@ -1,7 +1,12 @@
 //! Deterministic whole-WRAM fixture domains for actual C/Rust comparison.
-use crate::family;
-use crate::family_model::{Case, Generation, Manifest, Routine, Write, Writes};
+
 use anyhow::{Result, ensure};
+use offline_verification::fixtures::Case;
+use offline_verification::fixtures::Generation;
+use offline_verification::fixtures::Manifest;
+use offline_verification::fixtures::Routine;
+use offline_verification::fixtures::Write;
+use offline_verification::fixtures::Writes;
 use std::{fs, path::Path};
 #[path = "fixtures/host.rs"]
 mod host;
@@ -11,7 +16,7 @@ mod projectiles;
 mod sequences;
 pub use sequences::{SequenceRequest, generate_sequence};
 fn load(checkout: &Path, name: &str) -> Result<Manifest> {
-    crate::fixture_format::read(&checkout.join(format!("tools/port/{name}.smf")))
+    offline_verification::fixtures::read(&checkout.join(format!("tools/port/{name}.smf")))
 }
 
 // These bounded domains are maintained directly as typed case matrices. Keeping
@@ -53,13 +58,13 @@ fn declared(checkout: &Path, name: &str) -> Result<Manifest> {
     let manifest = load(checkout, name)?;
     ensure!(manifest.family == name && !manifest.routines.is_empty(), "fixture domain identity differs");
     if let Some(asset) = &manifest.rom {
-        let path = family::source_path(checkout, &asset.file.to_string_lossy());
+        let path = crate::documents::resolve(checkout, &asset.file.to_string_lossy());
         ensure!(crate::digest(&path)? == asset.sha256, "fixture ROM identity differs");
     }
     let mut names = std::collections::BTreeSet::new();
     for routine in &manifest.routines {
-        ensure!(family::identifier(&routine.symbol), "unsafe fixture routine");
-        family::types(routine)?;
+        ensure!(routine.has_valid_symbol(), "unsafe fixture routine");
+        routine.argument_types()?;
         for case in &routine.cases {
             ensure!(
                 !case.name.is_empty()
@@ -514,7 +519,7 @@ fn rom(checkout: &Path) -> Result<Vec<u8>> {
     Ok(fs::read(path)?)
 }
 fn bank_units(checkout: &Path, excluded: &str) -> Result<Vec<String>> {
-    Ok(family::c_units(&checkout.join("deps/snesrev-sm"))?
+    Ok(decomp_source::c_units(&checkout.join("deps/snesrev-sm"))?
         .into_iter()
         .filter_map(|path| {
             let name = path.file_name()?.to_str()?;
@@ -763,7 +768,7 @@ fn animated(checkout: &Path, name: &str) -> Result<Manifest> {
     }
     manifest.routines = routines;
     if name == "animated-tile-frame-live" {
-        manifest.c_support = family::c_units(&checkout.join("deps/snesrev-sm"))?
+        manifest.c_support = decomp_source::c_units(&checkout.join("deps/snesrev-sm"))?
             .into_iter()
             .filter_map(|path| {
                 let name = path.file_name()?.to_str()?;
@@ -1081,7 +1086,7 @@ pub fn generate(checkout: &Path, name: &str, output: &Path) -> Result<Generation
         _ => anyhow::bail!("unknown native fixture generator: {name}"),
     };
     ensure!(manifest.family == name, "fixture family identity differs");
-    crate::fixture_format::write(output, &manifest)?;
+    offline_verification::fixtures::write(output, &manifest)?;
     Ok(Generation {
         manifest: output.into(),
         family: (name).to_owned(),
@@ -1101,7 +1106,8 @@ mod tests {
             if path.extension().and_then(|s| s.to_str()) != Some("smf") {
                 continue;
             }
-            let manifest = crate::fixture_format::read(&path).unwrap_or_else(|e| panic!("{}: {e}", path.display()));
+            let manifest =
+                offline_verification::fixtures::read(&path).unwrap_or_else(|e| panic!("{}: {e}", path.display()));
             assert!(!manifest.family.is_empty(), "{}: missing family", path.display());
             assert!(!manifest.routines.is_empty() || !manifest.cases.is_empty(), "{}: empty cases", path.display());
             for routine in &manifest.routines {
@@ -1168,7 +1174,7 @@ mod tests {
         ] {
             let output = directory.join(format!("{name}.smf"));
             generate(checkout, name, &output).unwrap();
-            let actual = crate::fixture_format::read(&output).unwrap();
+            let actual = offline_verification::fixtures::read(&output).unwrap();
             let mut expected = load(checkout, name).unwrap();
             if name == "ceres-pad" {
                 // Compare case declarations by name; the legacy pad loop ordered timer first.

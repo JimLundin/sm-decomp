@@ -2,6 +2,7 @@
 //! rewrite seam; trusted adapters own execution, evidence and publication.
 pub mod budget;
 pub mod checkout;
+pub mod compiler_runtime;
 pub mod confinement;
 mod executor;
 mod journal;

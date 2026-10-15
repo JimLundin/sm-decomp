@@ -1,7 +1,10 @@
 //! Frozen standalone Rust infrastructure gates. Both rustc and the test binary
 //! execute as bounded confined producers; the trusted supervisor owns receipts.
-use crate::{acquire_lease_until, atomic_toml, builds, digest, family, family_model::Asset, inputs};
+use crate::acquire_lease_until;
+use crate::atomic_toml;
+use crate::digest;
 use anyhow::{Context, Result, ensure};
+use offline_verification::fixtures::Asset;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -50,7 +53,7 @@ fn compiler_arguments(test_root: &str) -> Vec<String> {
 
 fn compiler_dependencies(prepared: &PreparedInfrastructure, bytes: &[u8]) -> Result<()> {
     let mut observed = BTreeSet::new();
-    for path in inputs::dep_paths(std::str::from_utf8(bytes)?)? {
+    for path in tool_execution::builds::dep_paths(std::str::from_utf8(bytes)?)? {
         let relative = Path::new(&path)
             .strip_prefix("/inputs/rust")
             .context("infrastructure compiler used an undeclared dependency")?;
@@ -280,7 +283,8 @@ fn regular(path: &Path) -> Result<PathBuf> {
 }
 
 fn text(path: &Path) -> Result<String> {
-    inputs::bounded::text(&regular(path)?).with_context(|| format!("read infrastructure Rust input {}", path.display()))
+    tool_execution::bounded::text(&regular(path)?)
+        .with_context(|| format!("read infrastructure Rust input {}", path.display()))
 }
 
 fn approved_source(path: &str, source: &str) -> Result<()> {
@@ -317,7 +321,8 @@ fn checked_provenance(checkout: &Path, contract: &InfrastructureContract) -> Res
     };
     let path = regular(&path)?;
     ensure!(
-        digest_valid(&contract.provenance.sha256) && inputs::bounded::digest(&path)? == contract.provenance.sha256,
+        digest_valid(&contract.provenance.sha256)
+            && tool_execution::bounded::digest(&path)? == contract.provenance.sha256,
         "reviewed infrastructure provenance changed"
     );
     let provenance: InfrastructureProvenance = serde_json::from_str(&text(&path)?)?;
@@ -344,7 +349,7 @@ fn checked_provenance(checkout: &Path, contract: &InfrastructureContract) -> Res
 }
 
 pub(crate) fn prepare(checkout: &Path, contract: &InfrastructureContract) -> Result<PreparedInfrastructure> {
-    inputs::bounded::limited(|| prepare_inner(checkout, contract))
+    decomp_source::context::limited(|| prepare_inner(checkout, contract))
 }
 
 pub(crate) fn prepare_until(
@@ -353,11 +358,11 @@ pub(crate) fn prepare_until(
     deadline_unix_ms: u64,
     max_input_bytes: u64,
 ) -> Result<PreparedInfrastructure> {
-    inputs::bounded::until(deadline_unix_ms, max_input_bytes, || prepare_inner(checkout, contract))
+    decomp_source::context::until(deadline_unix_ms, max_input_bytes, || prepare_inner(checkout, contract))
 }
 
 fn prepare_inner(checkout: &Path, contract: &InfrastructureContract) -> Result<PreparedInfrastructure> {
-    inputs::bounded::check()?;
+    tool_execution::bounded::check()?;
     safe(checkout)?;
     ensure!(
         contract.schema == "translation-infrastructure-contract-v1" && !contract.scope_id.trim().is_empty(),
@@ -401,12 +406,12 @@ fn prepare_inner(checkout: &Path, contract: &InfrastructureContract) -> Result<P
     contract.tests_limits.run_limits()?;
     let mut total = 0u64;
     for (name, expected) in &contract.source_files {
-        inputs::bounded::check()?;
+        tool_execution::bounded::check()?;
         ensure!(relative(name) && digest_valid(expected), "infrastructure source path/hash invalid");
         let path = regular(&checkout.join(name))?;
         total = total.checked_add(path.metadata()?.len()).context("infrastructure source extent overflow")?;
         ensure!(
-            total <= MAX_SOURCE_BYTES && inputs::bounded::digest(&path)? == *expected,
+            total <= MAX_SOURCE_BYTES && tool_execution::bounded::digest(&path)? == *expected,
             "infrastructure source dependency missing or changed: {name}"
         );
         let compact = text(&path)?.chars().filter(|value| !value.is_whitespace()).collect::<String>();
@@ -438,7 +443,7 @@ fn prepare_inner(checkout: &Path, contract: &InfrastructureContract) -> Result<P
 }
 
 fn check_candidate(prepared: &PreparedInfrastructure, checkout: &Path) -> Result<BTreeMap<String, String>> {
-    inputs::bounded::check()?;
+    tool_execution::bounded::check()?;
     safe(checkout)?;
     ensure!(
         prepared.dependencies_sha256
@@ -449,13 +454,13 @@ fn check_candidate(prepared: &PreparedInfrastructure, checkout: &Path) -> Result
     let mut identities = BTreeMap::new();
     let mut total_bytes = 0u64;
     for (name, expected) in &prepared.contract.source_files {
-        inputs::bounded::check()?;
+        tool_execution::bounded::check()?;
         let path = regular(&checkout.join(name))?;
         total_bytes = total_bytes
             .checked_add(path.metadata()?.len())
             .context("infrastructure candidate source extent overflow")?;
         ensure!(total_bytes <= MAX_SOURCE_BYTES, "infrastructure candidate aggregate source extent exceeded");
-        let hash = inputs::bounded::digest(&path)?;
+        let hash = tool_execution::bounded::digest(&path)?;
         if prepared.contract.approved_files.contains(name) {
             approved_source(name, &text(&path)?)?;
         } else {
@@ -491,7 +496,7 @@ fn publish_bytes(path: &Path, bytes: &[u8], executable: bool) -> Result<()> {
             metadata.is_file()
                 && metadata.nlink() == 1
                 && metadata.len() == bytes.len() as u64
-                && inputs::bounded::read_limit(path, bytes.len() as u64)? == bytes,
+                && tool_execution::bounded::read_limit(path, bytes.len() as u64)? == bytes,
             "infrastructure retained output changed"
         );
         return Ok(());
@@ -537,7 +542,7 @@ impl Gate<'_> {
         };
         let declared_timeout = limits.timeout;
         let invocation = if existed {
-            let saved: InvocationIntent = family::object(&path)?;
+            let saved: InvocationIntent = tool_execution::bounded::object(&path)?;
             ensure!(
                 saved.context == context
                     && saved.request_sha256 == request_sha256
@@ -699,9 +704,9 @@ fn run_inner(
     if receipt_path.is_file() || verdict_path.is_file() {
         // Finalized producers and interrupted receipt publication get finite
         // authentication/publication IO and cannot launch another candidate.
-        return inputs::bounded::reconcile(inputs::bounded::DEFAULT_BYTES, || {
+        return decomp_source::context::reconcile(tool_execution::bounded::DEFAULT_BYTES, || {
             if receipt_path.is_file() {
-                let receipt: InfrastructureReceipt = family::object(&receipt_path)?;
+                let receipt: InfrastructureReceipt = tool_execution::bounded::object(&receipt_path)?;
                 ensure!(
                     receipt.context == *context && receipt.runtime_sha256 == runtime_identity(runtime)?,
                     "infrastructure cached receipt belongs to another operation or installed runtime"
@@ -709,7 +714,7 @@ fn run_inner(
                 authenticate(prepared, checkout, &receipt)?;
                 return Ok(receipt);
             }
-            let verdict: InfrastructureVerdict = family::object(&verdict_path)?;
+            let verdict: InfrastructureVerdict = tool_execution::bounded::object(&verdict_path)?;
             ensure!(
                 verdict.context == *context && verdict.runtime_sha256 == runtime_identity(runtime)?,
                 "infrastructure sealed verdict belongs to another operation or installed runtime"
@@ -719,7 +724,7 @@ fn run_inner(
     }
     let intent_path = output.join("infrastructure-intent.toml");
     let saved: Option<InfrastructureIntent> = if intent_path.is_file() {
-        Some(inputs::bounded::reconcile(MAX_RECORD_BYTES, || family::object(&intent_path))?)
+        Some(decomp_source::context::reconcile(MAX_RECORD_BYTES, || tool_execution::bounded::object(&intent_path))?)
     } else {
         None
     };
@@ -736,7 +741,7 @@ fn run_inner(
         ensure!(entered_unix_ms < deadline, "infrastructure whole-stage time budget exhausted before preparation");
     }
     let setup = || -> Result<_> {
-        inputs::bounded::check()?;
+        tool_execution::bounded::check()?;
         let candidates = check_candidate(prepared, checkout)?;
         safe(output)?;
         safe(&runtime.operation_root)?;
@@ -790,10 +795,10 @@ fn run_inner(
         let snapshots = output.join("source");
         let mut source_snapshots = BTreeMap::new();
         for name in prepared.contract.source_files.keys() {
-            inputs::bounded::check()?;
+            tool_execution::bounded::check()?;
             let source = regular(&checkout.join(name))?;
             let destination = snapshots.join(name);
-            let bytes = inputs::bounded::read_limit(&source, MAX_SOURCE_BYTES)?;
+            let bytes = tool_execution::bounded::read_limit(&source, MAX_SOURCE_BYTES)?;
             publish_bytes(&destination, &bytes, false)?;
             source_snapshots.insert(name.clone(), retention::seal_file(&destination, MAX_SOURCE_BYTES)?);
         }
@@ -824,9 +829,9 @@ fn run_inner(
         Ok((candidates, snapshots, gate, verdict, intent))
     };
     let (candidates, snapshots, mut gate, mut verdict, intent) = if resumed && entered_unix_ms >= deadline {
-        inputs::bounded::reconcile(inputs::bounded::DEFAULT_BYTES, setup)?
+        decomp_source::context::reconcile(tool_execution::bounded::DEFAULT_BYTES, setup)?
     } else {
-        inputs::bounded::until(deadline, inputs::bounded::DEFAULT_BYTES, setup)?
+        decomp_source::context::until(deadline, tool_execution::bounded::DEFAULT_BYTES, setup)?
     };
     let produce = || -> Result<()> {
         let compiler = fs::canonicalize(&runtime.rustc)?;
@@ -846,9 +851,13 @@ fn run_inner(
             executable: compiler.clone(),
             helper: helper.clone(),
             runtime: if now_ms()? >= deadline {
-                builds::strict_compiler_runtime(&compiler)?
+                ::translation_execution::compiler_runtime::discover(&compiler)?
             } else {
-                builds::strict_compiler_runtime_until(&compiler, deadline, inputs::bounded::DEFAULT_BYTES)?
+                ::translation_execution::compiler_runtime::discover_until(
+                    &compiler,
+                    deadline,
+                    tool_execution::bounded::DEFAULT_BYTES,
+                )?
             },
             inputs,
             arguments: compiler_arguments(&prepared.contract.test_root),
@@ -897,9 +906,9 @@ fn run_inner(
         Ok(())
     };
     let result = if resumed && now_ms()? >= deadline {
-        inputs::bounded::reconcile(inputs::bounded::DEFAULT_BYTES, produce)
+        decomp_source::context::reconcile(tool_execution::bounded::DEFAULT_BYTES, produce)
     } else {
-        inputs::bounded::until(deadline, inputs::bounded::DEFAULT_BYTES, produce)
+        decomp_source::context::until(deadline, tool_execution::bounded::DEFAULT_BYTES, produce)
     };
     if let Err(error) = result {
         if error.downcast_ref::<translation_execution::ExecutionPending>().is_some() {
@@ -916,7 +925,7 @@ fn run_inner(
     }
     verdict.operations = gate.operations;
     verdict.reserved_bytes = gate.budget.used();
-    inputs::bounded::reconcile(inputs::bounded::DEFAULT_BYTES, || {
+    decomp_source::context::reconcile(tool_execution::bounded::DEFAULT_BYTES, || {
         if verdict.passed && now_ms()? >= intent.deadline_unix_ms {
             verdict.passed = false;
             verdict.tested_count = 0;
@@ -982,7 +991,7 @@ pub(crate) fn authenticate(
     checkout: &Path,
     receipt: &InfrastructureReceipt,
 ) -> Result<InfrastructureVerdict> {
-    inputs::bounded::limited(|| authenticate_inner(prepared, checkout, receipt))
+    decomp_source::context::limited(|| authenticate_inner(prepared, checkout, receipt))
 }
 
 fn authenticate_inner(
@@ -996,8 +1005,11 @@ fn authenticate_inner(
         "infrastructure receipt source/preparation identity differs"
     );
     let path = regular(&receipt.verdict.file)?;
-    ensure!(inputs::bounded::digest(&path)? == receipt.verdict.sha256, "retained infrastructure verdict changed");
-    let verdict: InfrastructureVerdict = family::object(&path)?;
+    ensure!(
+        tool_execution::bounded::digest(&path)? == receipt.verdict.sha256,
+        "retained infrastructure verdict changed"
+    );
+    let verdict: InfrastructureVerdict = tool_execution::bounded::object(&path)?;
     ensure!(
         verdict.schema == "translation-infrastructure-verdict-v1"
             && verdict.evidence_kind == "infrastructure"
@@ -1161,7 +1173,7 @@ fn authenticate_inner(
 pub(crate) fn references(receipt: &InfrastructureReceipt) -> Result<Vec<Reference>> {
     let path = regular(&receipt.verdict.file)?;
     ensure!(digest(&path)? == receipt.verdict.sha256, "infrastructure evidence pointer changed");
-    let verdict: InfrastructureVerdict = family::object(&path)?;
+    let verdict: InfrastructureVerdict = tool_execution::bounded::object(&path)?;
     let mut references = verdict.source_snapshots.into_values().collect::<Vec<_>>();
     references.extend(verdict.compiler_outputs.into_values());
     references.extend(verdict.operations.into_iter().flat_map(|operation| operation.references));
@@ -1399,7 +1411,7 @@ mod tests {
                     destination: Path::new("/inputs/rust").join(name),
                 })
                 .collect(),
-            runtime: builds::strict_compiler_runtime(&runtime.rustc).unwrap(),
+            runtime: ::translation_execution::compiler_runtime::discover(&runtime.rustc).unwrap(),
             outputs: vec!["tests".into(), "compiler.d".into()],
         };
         let limits = fixture.contract.compiler_limits.run_limits().unwrap();
@@ -1469,7 +1481,8 @@ mod tests {
         runtime.deadline_unix_ms = None;
         let receipt = run(&prepared, &fixture.root, &output, &runtime, &context).unwrap();
         assert!(receipt.passed, "{}", receipt.diagnostic);
-        let mut intent: InfrastructureIntent = family::object(&output.join("infrastructure-intent.toml")).unwrap();
+        let mut intent: InfrastructureIntent =
+            tool_execution::bounded::object(&output.join("infrastructure-intent.toml")).unwrap();
         intent.deadline_unix_ms = 1;
         atomic_toml(&output.join("infrastructure-intent.toml"), &intent).unwrap();
         let before = records(&output);

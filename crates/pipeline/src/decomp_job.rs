@@ -1,6 +1,8 @@
 //! Bounded decompressor admission, ordered writes and exercised fault controls.
+use crate::atomic_toml;
+use crate::decomp_acceptance;
 use crate::decomp_model::*;
-use crate::{atomic_toml, builds, decomp_acceptance, digest};
+use crate::digest;
 use anyhow::{Context, Result, ensure};
 use serde::{Serialize, de::DeserializeOwned};
 use sha2::{Digest, Sha256};
@@ -10,6 +12,7 @@ use std::{
     path::{Path, PathBuf},
     time::{SystemTime, UNIX_EPOCH},
 };
+use tool_execution::builds;
 const FAULTS: [&str; 11] = [
     "wrong-output",
     "write-restore",
@@ -338,8 +341,8 @@ pub fn verify(request: Request) -> Result<Verdict> {
             "tools/decomp/offline-acceptance-v1.toml",
             "crates/pipeline/src/decomp_job.rs",
             "crates/pipeline/src/decomp_acceptance.rs",
-            "crates/pipeline/src/builds.rs",
-            "crates/pipeline/src/build_cache.rs",
+            "crates/tool-execution/src/builds.rs",
+            "crates/tool-execution/src/build_cache.rs",
         ] {
             let path = checkout.join(name);
             if path.is_file() {

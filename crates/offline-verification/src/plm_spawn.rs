@@ -2,7 +2,6 @@
 use crate::family_model::*;
 use crate::{atomic_toml, builds, digest, family, inputs};
 use anyhow::{Context, Result, ensure};
-use sha2::{Digest, Sha256};
 use std::{collections::BTreeMap, fs, path::Path};
 
 pub fn normalize(manifest: &Manifest) -> Result<Manifest> {
@@ -26,17 +25,25 @@ pub fn normalize(manifest: &Manifest) -> Result<Manifest> {
     Ok(normalized)
 }
 
-pub fn build(
-    request: &VerifyRequest,
-    manifest: &Manifest,
-    checkout: &Path,
-    source: &Path,
-    run: &Path,
-) -> Result<Implementation> {
-    build_with(request, manifest, checkout, source, run, None)
+fn rust_wrapper(memory: &Path, module: &Path, confined: bool) -> String {
+    let mut wrapper = include_str!("plm_spawn_abi.rs.in")
+        .replace("__MEMORY__", &format!("{memory:?}"))
+        .replace("__MODULE__", &format!("{module:?}"));
+    if confined {
+        let module_name = module.file_stem().unwrap().to_string_lossy();
+        let binding = if module_name == "plm" { String::new() } else { format!("use {module_name} as plm;") };
+        wrapper = wrapper
+            .replace(
+                &format!("#[path={memory:?}]mod memory;use memory::*;"),
+                "include!(\"/inputs/generated/memory.rs\");",
+            )
+            .replace(&format!("#[path={module:?}]mod plm;"), &binding);
+    }
+    wrapper
 }
 
-pub(crate) fn build_with(
+pub(crate) fn build(
+    recipe: Option<&crate::recipe::Recipe>,
     request: &VerifyRequest,
     manifest: &Manifest,
     checkout: &Path,
@@ -48,27 +55,14 @@ pub(crate) fn build_with(
     let memory = if let Some(execution) = execution {
         inputs::canonical_wrapper(checkout, run, &execution.rust_inputs)?
     } else {
-        inputs::wrapper(inputs::WrapperRequest {
+        inputs::wrapper(crate::authoring::WrapperRequest {
             checkout: checkout.into(),
             run: run.into(),
             modules: vec![module.clone()],
             imports: vec![],
         })?
     };
-    let mut wrapper = include_str!("plm_spawn_abi.rs.in")
-        .replace("__MEMORY__", &format!("{:?}", memory.path))
-        .replace("__MODULE__", &format!("{module:?}"));
-    if execution.is_some() {
-        wrapper = wrapper
-            .replace(
-                &format!("#[path={:?}]mod memory;use memory::*;", memory.path),
-                "include!(\"/inputs/generated/memory.rs\");",
-            )
-            .replace(
-                &format!("#[path={module:?}]mod plm;"),
-                &format!("use {} as plm;", module.file_stem().unwrap().to_string_lossy()),
-            );
-    }
+    let wrapper = rust_wrapper(&memory.path, &module, execution.is_some());
     family::write_build_input(&run.join("wrapper.rs"), wrapper.as_bytes(), execution.is_some())?;
     let headless = if execution.is_some() {
         "/inputs/rust/tools/decomp/headless.c".into()
@@ -82,90 +76,39 @@ pub(crate) fn build_with(
     )?;
     let root = &request.root;
     let workers = request.workers;
-    let command = vec![
-        "rustc".into(),
-        "--edition=2024".into(),
-        "-O".into(),
-        "--crate-type=staticlib".into(),
-        format!("--emit=link,dep-info={}", run.join("compiler.d").display()),
-        run.join("wrapper.rs").to_string_lossy().into_owned(),
-        "-o".into(),
-        run.join("libplm.a").to_string_lossy().into_owned(),
-    ];
+    let description = crate::recipe::rust_compiler_command(recipe, run);
     if let Some(execution) = execution {
-        execution.compile_recipe(
-            &command,
-            run,
-            "rust-build",
-            checkout,
-            source,
-            &["wrapper.rs", "memory.rs"],
-            &["libplm.a", "compiler.d"],
-            false,
-        )?;
+        execution.compile_description(&description, run, "rust-build", checkout, source)?;
     } else {
-        builds::execute(&command, run, "rust-build", root, workers)?;
+        tool_execution::builds::execute(&description.command, run, "rust-build", root, workers)?;
     }
-    let mut command = vec![
-        "cc".into(),
-        "-O0".into(),
-        "-fno-strict-aliasing".into(),
-        "-ffunction-sections".into(),
-        "-fdata-sections".into(),
-        "-iquote".into(),
-        source.join("src").to_string_lossy().into_owned(),
-    ];
-    command.extend(family::c_units(source)?.iter().map(|p| p.to_string_lossy().into_owned()));
-    command.extend([
-        run.join("oracle.c").to_string_lossy().into_owned(),
-        run.join("libplm.a").to_string_lossy().into_owned(),
-        "-Wl,--gc-sections".into(),
-        "-Wl,--wrap=Call".into(),
-        "-Wl,--wrap=cpu_runOpcode".into(),
-        "-Wl,--wrap=DecompressToMem".into(),
-        "-lm".into(),
-        "-ldl".into(),
-        "-lpthread".into(),
-        "-o".into(),
-        run.join("spawn").to_string_lossy().into_owned(),
-    ]);
+    let description =
+        crate::recipe::c_compiler_command(recipe, manifest, source, run, &decomp_source::c_units(source)?, false)?;
     if let Some(execution) = execution {
-        execution.compile_recipe(
-            &command,
-            run,
-            "c-build",
-            checkout,
-            source,
-            &["oracle.c", "libplm.a"],
-            &["spawn"],
-            true,
-        )?;
+        execution.compile_description(&description, run, "c-build", checkout, source)?;
     } else {
-        builds::c_build(builds::CBuildRequest {
-            command,
+        tool_execution::builds::c_build(tool_execution::builds::CBuildRequest {
+            command: description.command,
             run: run.into(),
             checkout: checkout.into(),
             root: root.clone(),
             workers,
         })?;
     }
-    let command = vec![
-        run.join("spawn").to_string_lossy().into_owned(),
-        "abi".into(),
-        "0".into(),
-        "0".into(),
-        "reserved".into(),
-        "reserved".into(),
-        run.join("rom.bin").to_string_lossy().into_owned(),
-        "reserved".into(),
-    ];
+    let fixture = crate::recipe::fixture_command(
+        recipe,
+        manifest,
+        crate::recipe::FixtureSelection::AbiControls,
+        run,
+        "abi-controls",
+    )?;
     if let Some(execution) = execution {
-        execution.fixture_recipe(&command, run, "abi-controls", builds::StrictFixture::PlmAbi)?;
+        execution.fixture_recipe(&fixture.command, run, "abi-controls", fixture.kind)?;
     } else {
-        builds::execute(&command, run, "abi-controls", root, workers)?;
+        tool_execution::builds::execute(&fixture.command, run, "abi-controls", root, workers)?;
     }
     fs::copy(&module, run.join("candidate.rs"))?;
-    let dependency_request = inputs::DependenciesRequest {
+    let dependency_request = crate::authoring::DependenciesRequest {
         checkout: checkout.into(),
         run: run.into(),
         extra: manifest.rust_dependencies.clone(),
@@ -175,27 +118,7 @@ pub(crate) fn build_with(
     } else {
         inputs::dependencies(dependency_request)?
     };
-    let mut harness = BTreeMap::new();
-    for (name, compiled) in [
-        ("plm_spawn.rs", include_str!("plm_spawn.rs")),
-        ("plm_spawn_abi.rs.in", include_str!("plm_spawn_abi.rs.in")),
-        ("plm_spawn_host.c.in", include_str!("plm_spawn_host.c.in")),
-        ("family.rs", include_str!("family.rs")),
-        ("family_model.rs", include_str!("family_model.rs")),
-        ("fixture_format.rs", include_str!("fixture_format.rs")),
-        ("fixture_writes.rs", include_str!("fixture_writes.rs")),
-        ("batch.rs", include_str!("batch.rs")),
-        ("cleanup.rs", include_str!("cleanup.rs")),
-        ("fixture_execution.rs", include_str!("fixture_execution.rs")),
-        ("metrics.rs", include_str!("metrics.rs")),
-        ("resource_sampler.rs", include_str!("resource_sampler.rs")),
-    ] {
-        let key = format!("crates/pipeline/src/{name}");
-        let hash = digest(&checkout.join(&key))?;
-        ensure!(hash == format!("{:x}", Sha256::digest(compiled)), "stale PLM executable: {name}");
-        harness.insert(key, hash);
-        fs::copy(checkout.join(format!("crates/pipeline/src/{name}")), run.join(format!("pipeline-{name}")))?;
-    }
+    let mut harness = inputs::implementation_sources(checkout, run, execution.is_some())?;
     let key = "tools/decomp/headless.c";
     harness.insert(key.to_owned(), digest(&checkout.join(key))?);
     fs::copy(checkout.join(key), run.join("pipeline-headless.c"))?;
@@ -268,63 +191,26 @@ pub fn check(directory: &Path, fixture: &Case) -> Result<CaseRecord> {
     Ok(CaseRecord { spawn_results: results, ..Default::default() })
 }
 
-pub fn case(
-    _request: &VerifyRequest,
-    routine: &Routine,
-    fixture: &Case,
-    run: &Path,
-    worker: &mut crate::fixture_execution::Worker,
-) -> Result<CaseRecord> {
-    case_with(routine, fixture, run, false, |command, directory, subject| worker.execute(command, directory, subject))
-}
-
-pub(crate) fn confined_case(
-    routine: &Routine,
-    fixture: &Case,
-    run: &Path,
-    execution: &builds::StrictExecution,
-) -> Result<CaseRecord> {
-    case_with(routine, fixture, run, true, |command, directory, subject| {
-        execution.fixture_recipe(command, directory, subject, builds::StrictFixture::Plm).map(|_| ())
-    })
-}
-
-pub(crate) fn fixture_command(routine: &Routine, fixture: &Case, run: &Path, subject: &str) -> Result<Vec<String>> {
-    let directory = run.join(&fixture.name);
-    Ok(vec![
-        run.join("spawn").to_string_lossy().into_owned(),
-        subject.into(),
-        fixture.a.to_string(),
-        fixture.b.to_string(),
-        directory.join("before.wram").to_string_lossy().into_owned(),
-        directory.join(format!("{subject}-after.wram")).to_string_lossy().into_owned(),
-        run.join("rom.bin").to_string_lossy().into_owned(),
-        match routine.symbol.as_str() {
-            "terrain" => "0",
-            "room" => "1",
-            "hardcoded" => "2",
-            _ => anyhow::bail!("invalid allocator"),
-        }
-        .into(),
-    ])
-}
-
-fn case_with(
+pub(crate) fn case(
     routine: &Routine,
     fixture: &Case,
     run: &Path,
     resume: bool,
-    mut execute: impl FnMut(&[String], &Path, &str) -> Result<()>,
+    mut execute: impl FnMut(&Path, &str) -> Result<()>,
 ) -> Result<CaseRecord> {
     let name = fixture.name.as_str();
     let kind = routine.symbol.as_str();
     let directory = run.join(name);
     family::prepare_case_with(fixture, &directory, &["uint16".into(), "int32".into()], resume)?;
     for subject in ["rust", "c"] {
-        execute(&fixture_command(routine, fixture, run, subject)?, &directory, subject)?;
+        execute(&directory, subject)?;
     }
     let mut record = check(&directory, fixture)?;
     record.name = name.into();
     record.routine = kind.into();
     Ok(record)
 }
+
+#[cfg(test)]
+#[path = "plm_spawn_tests.rs"]
+mod tests;

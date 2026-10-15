@@ -1,9 +1,14 @@
+use crate::digest;
+use crate::iteration_increment as increment;
+use crate::iteration_selection;
+use crate::lock;
+use crate::readiness;
+use crate::readiness_contract as contract;
 use crate::readiness_metadata::toml_value_decode;
-use crate::{
-    digest, family, iteration_increment as increment, iteration_selection, lock, readiness,
-    readiness_contract as contract, readiness_origins as origins, readiness_reuse as reuse,
-    readiness_run::{Run, source_inventory},
-};
+use crate::readiness_origins as origins;
+use crate::readiness_reuse as reuse;
+use crate::readiness_run::Run;
+use crate::readiness_run::source_inventory;
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -526,7 +531,7 @@ impl Production {
     }
     fn accepted(&self) -> Result<Baseline> {
         let pointer = origins::document(&self.root.join("out/accepted.toml"))?;
-        let owner = Path::new(family::field(&pointer, "run_path")?);
+        let owner = Path::new(crate::documents::field(&pointer, "run_path")?);
         let verified = reuse::verify_accepted(owner, true)?;
         readiness::verify_origins(owner, &verified)?;
         ensure!(
@@ -536,12 +541,15 @@ impl Production {
         let coverage = &verified["verdict"]["checks"]["changed-entry-coverage"];
         let inputs = &verified["manifest"]["identities"]["inputs"];
         for (file, key) in [("rom/sm.sfc", "rom_sha256"), ("movies/super-metroid-any-3653.lsmv", "movie_sha256")] {
-            ensure!(digest(&self.root.join(file))? == family::field(inputs, key)?, "accepted material differs");
+            ensure!(
+                digest(&self.root.join(file))? == crate::documents::field(inputs, key)?,
+                "accepted material differs"
+            );
         }
         Ok(Baseline {
-            run_id: family::field(&pointer, "run_id")?.into(),
+            run_id: crate::documents::field(&pointer, "run_id")?.into(),
             run_path: owner.into(),
-            source_sha256: family::field(&verified["manifest"]["identities"]["source"], "sha256")?.into(),
+            source_sha256: crate::documents::field(&verified["manifest"]["identities"]["source"], "sha256")?.into(),
             generated: coverage["generated_instructions"]
                 .as_integer()
                 .and_then(|n| u64::try_from(n).ok())
@@ -588,9 +596,10 @@ impl Operations for Production {
             if let Ok(verified) = verified {
                 let coverage = &verified["verdict"]["checks"]["changed-entry-coverage"];
                 let baseline = Baseline {
-                    run_id: family::field(&verified["manifest"], "run_id")?.into(),
+                    run_id: crate::documents::field(&verified["manifest"], "run_id")?.into(),
                     run_path: owner.clone(),
-                    source_sha256: family::field(&verified["manifest"]["identities"]["source"], "sha256")?.into(),
+                    source_sha256: crate::documents::field(&verified["manifest"]["identities"]["source"], "sha256")?
+                        .into(),
                     generated: coverage["generated_instructions"]
                         .as_integer()
                         .and_then(|n| u64::try_from(n).ok())
@@ -679,7 +688,7 @@ impl Operations for Production {
             verdict["status"] == crate::readiness_metadata::value(&"pass").expect("validated native metadata"),
             "measured selection failed"
         );
-        let owner = self.root.join("out/runs").join(family::field(&verdict, "run_id")?);
+        let owner = self.root.join("out/runs").join(crate::documents::field(&verdict, "run_id")?);
         let selected: pipeline_model::BoundSelection = pipeline_model::read(&owner.join("selection.toml"))?;
         Ok(Selection { run_path: owner, outcome: selected.ranking.outcome })
     }
@@ -739,7 +748,7 @@ impl Operations for Production {
             crate :: report ! ({ "checkout" : self . root , "timeout" : self . timeout , "original_run" : self . original , "predecessor" : baseline . run_path , "increment" : increment , }),
             run,
         )?;
-        let owner = self.root.join("out/runs").join(family::field(&verdict, "run_id")?);
+        let owner = self.root.join("out/runs").join(crate::documents::field(&verdict, "run_id")?);
         if verdict["status"] != crate::readiness_metadata::value(&"pass").expect("validated native metadata") {
             return Ok(Candidate {
                 published: false,

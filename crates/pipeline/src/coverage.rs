@@ -1,7 +1,8 @@
-use crate::{
-    atomic_toml, digest, family,
-    readiness_run::{Run, identity, safe_artifact},
-};
+use crate::atomic_toml;
+use crate::digest;
+use crate::readiness_run::Run;
+use crate::readiness_run::identity;
+use crate::readiness_run::safe_artifact;
 use anyhow::{Context, Result, ensure};
 use sha2::{Digest, Sha256};
 use std::{
@@ -93,7 +94,7 @@ pub(crate) fn generated_inventory(run: &mut Run, steps: &Path) -> Result<PathBuf
     let source = fs::read_to_string(steps)?;
     let rows = table_rows(&source)?;
     let inventory = document(&run.path.join("source/inventory.toml"))?;
-    let relevant = family::array(&inventory, "files")?
+    let relevant = crate::documents::array(&inventory, "files")?
         .iter()
         .filter(|entry| {
             entry["path"].as_str().is_some_and(|p| {
@@ -116,10 +117,10 @@ pub(crate) fn generated_inventory(run: &mut Run, steps: &Path) -> Result<PathBuf
     Ok(path)
 }
 fn authenticate_inventory(owner: &Path, manifest: &Value, inventory: &Value) -> Result<()> {
-    let path = safe_artifact(owner, family::field(inventory, "steps_evidence")?)?;
+    let path = safe_artifact(owner, crate::documents::field(inventory, "steps_evidence")?)?;
     let source = fs::read_to_string(&path)?;
     ensure!(
-        digest(&path)? == family::field(inventory, "steps_sha256")?
+        digest(&path)? == crate::documents::field(inventory, "steps_sha256")?
             && inventory["keys"]
                 == crate::readiness_metadata::value(&table_rows(&source)?).expect("validated native metadata"),
         "generated inventory differs from actual steps"
@@ -152,8 +153,11 @@ fn predecessor(owner: &Path) -> Result<(Value, Value)> {
         "predecessor lacks completed passing verdict"
     );
     let ids = &manifest["identities"]["generated-key-inventory"];
-    let path = safe_artifact(owner, family::field(ids, "evidence")?)?;
-    ensure!(digest(&path)? == family::field(ids, "sha256")?, "predecessor generated-key inventory missing or corrupt");
+    let path = safe_artifact(owner, crate::documents::field(ids, "evidence")?)?;
+    ensure!(
+        digest(&path)? == crate::documents::field(ids, "sha256")?,
+        "predecessor generated-key inventory missing or corrupt"
+    );
     let source: pipeline_model::readiness::SourceInventory =
         pipeline_model::read(&owner.join("source/inventory.toml"))?;
     ensure!(
@@ -226,7 +230,8 @@ pub(crate) fn derive(
     );
     authenticate_inventory(owner, manifest, &candidate)?;
     ensure!(
-        digest(inventory_path)? == family::field(&manifest["identities"]["generated-key-inventory"], "sha256")?,
+        digest(inventory_path)?
+            == crate::documents::field(&manifest["identities"]["generated-key-inventory"], "sha256")?,
         "candidate generated inventory artifact mismatch"
     );
     ensure!(
@@ -245,14 +250,14 @@ pub(crate) fn derive(
             "candidate inventory config identity mismatch"
         );
     }
-    let keys = family::array(&candidate, "keys")?;
+    let keys = crate::documents::array(&candidate, "keys")?;
     let mut current = BTreeMap::new();
     for row in keys {
         ensure!(current.insert(key(row)?, row).is_none(), "duplicate candidate key");
     }
     let mut counts = BTreeMap::new();
     let mut generated = 0u64;
-    for row in family::array(&profile, "compiled")? {
+    for row in crate::documents::array(&profile, "compiled")? {
         let key = key(row)?;
         let count = row["count"].as_integer().and_then(|n| u64::try_from(n).ok()).context("invalid compiled count")?;
         ensure!(
@@ -269,7 +274,7 @@ pub(crate) fn derive(
         "executed table inventory/totals differ from candidate keys"
     );
     let mut interpreted = 0u64;
-    for row in family::array(&profile, "interpreted")? {
+    for row in crate::documents::array(&profile, "interpreted")? {
         interpreted = interpreted
             .checked_add(
                 row["count"].as_integer().and_then(|n| u64::try_from(n).ok()).context("invalid interpreted count")?,
@@ -291,11 +296,13 @@ pub(crate) fn derive(
                 || manifest.get("accepted_parent") == prior_manifest.get("run_id"),
             "predecessor differs from declared parent"
         );
-        let old =
-            family::array(&old, "keys")?.iter().map(|row| Ok((key(row)?, row))).collect::<Result<BTreeMap<_, _>>>()?;
+        let old = crate::documents::array(&old, "keys")?
+            .iter()
+            .map(|row| Ok((key(row)?, row)))
+            .collect::<Result<BTreeMap<_, _>>>()?;
         let previous_inventory = document(&safe_artifact(
             owner,
-            family::field(&prior_manifest["identities"]["generated-key-inventory"], "evidence")?,
+            crate::documents::field(&prior_manifest["identities"]["generated-key-inventory"], "evidence")?,
         )?)?;
         let shared_change = candidate["execution_source_sha256"] != previous_inventory["execution_source_sha256"];
         for (key, row) in &current {
@@ -320,12 +327,12 @@ pub(crate) fn derive(
         .filter(|row| counts[&key(row).unwrap()] == 0)
         .map(|row| crate :: report ! ({ "address" : row ["address"] , "mx" : row ["mx"] , }))
         .collect::<Vec<_>>();
-    let executed = family::array(&profile, "compiled")?
+    let executed = crate::documents::array(&profile, "compiled")?
         .iter()
         .filter(|row| row["count"].as_integer().and_then(|n| u64::try_from(n).ok()).unwrap() > 0)
         .cloned()
         .collect::<Vec<_>>();
-    let unexecuted = family::array(&profile, "compiled")?
+    let unexecuted = crate::documents::array(&profile, "compiled")?
         .iter()
         .filter(|row| row["count"] == crate::readiness_metadata::value(&0).expect("validated native metadata"))
         .map(|row| {
@@ -356,7 +363,7 @@ pub(crate) fn derive(
         Some(Value::Table(domain))
     });
     let status = if !uncovered.is_empty() || current.is_empty() || generated == 0 { "uncovered" } else { "pass" };
-    let mut report = crate :: report ! ({ "schema_version" : 1 , "status" : status , "complete" : true , "required_keys" : required , "uncovered_keys" : uncovered , "executed" : executed , "unexecuted" : unexecuted , "unsupported" : family :: array (& profile , "interpreted") ? . iter () . filter (| r | r.get("supported").and_then(Value::as_bool) != Some(true)) . collect :: < Vec < _ > > () , "deferred" : family :: array (& profile , "interpreted") ? . iter () . filter (| r | r.get("supported").and_then(Value::as_bool) == Some(true)) . collect :: < Vec < _ > > () , "generated_instructions" : generated , "interpreted_instructions" : interpreted , "fallback_fraction" : if generated + interpreted > 0 { interpreted as f64 / (generated + interpreted) as f64 } else { 0.0 } , "validated_distinct_keys" : executed . len () , "predecessor" : parent_identity , "candidate_inventory_sha256" : digest (inventory_path) ? , "candidate_source_sha256" : manifest ["identities"] ["source"] ["sha256"] , "profile_sha256" : digest (profile_path) ? , "discovery" : "call-target misses are separate; not instruction counts" , });
+    let mut report = crate :: report ! ({ "schema_version" : 1 , "status" : status , "complete" : true , "required_keys" : required , "uncovered_keys" : uncovered , "executed" : executed , "unexecuted" : unexecuted , "unsupported" : crate::documents::array (& profile , "interpreted") ? . iter () . filter (| r | r.get("supported").and_then(Value::as_bool) != Some(true)) . collect :: < Vec < _ > > () , "deferred" : crate::documents::array (& profile , "interpreted") ? . iter () . filter (| r | r.get("supported").and_then(Value::as_bool) == Some(true)) . collect :: < Vec < _ > > () , "generated_instructions" : generated , "interpreted_instructions" : interpreted , "fallback_fraction" : if generated + interpreted > 0 { interpreted as f64 / (generated + interpreted) as f64 } else { 0.0 } , "validated_distinct_keys" : executed . len () , "predecessor" : parent_identity , "candidate_inventory_sha256" : digest (inventory_path) ? , "candidate_source_sha256" : manifest ["identities"] ["source"] ["sha256"] , "profile_sha256" : digest (profile_path) ? , "discovery" : "call-target misses are separate; not instruction counts" , });
     if let Some(domain) = domain {
         report.as_table_mut().expect("coverage report table").insert("domain".into(), domain);
     }
@@ -373,7 +380,7 @@ pub(crate) fn derive(
     }
     let mut groups: BTreeMap<(u64, String, bool), Value> = BTreeMap::new();
     for (kind, field) in [("generated", "compiled"), ("interpreted", "interpreted")] {
-        for row in family::array(&profile, field)? {
+        for row in crate::documents::array(&profile, field)? {
             let opcode =
                 row["opcode"].as_integer().and_then(|n| u64::try_from(n).ok()).context("profile opcode missing")?;
             let pattern = row.get("pattern").and_then(Value::as_str).unwrap_or("unknown").to_owned();

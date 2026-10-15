@@ -1,22 +1,22 @@
 //! Translation-unit reuse; generated candidate units are always rebuilt.
-use crate::inputs::bounded;
-use crate::{CacheResult, atomic_toml};
+use crate::atomic_toml;
 use anyhow::{Context, Result, bail, ensure};
 use serde::{Deserialize, Serialize};
 use std::{
-    fs::{self, File},
+    fs,
     path::{Path, PathBuf},
     sync::Mutex,
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
+use tool_execution::bounded;
 #[cfg(test)]
 use tool_execution::builds::source_files;
-pub(crate) use tool_execution::builds::{
-    CBuildRequest, CargoBuildRequest, ExecutionRecord, c_build, cargo_build, exec, execute, execute_timeout,
-};
+use tool_execution::{build_cache::CacheResult, builds::ExecutionRecord};
+#[cfg(test)]
+use translation_execution::confinement;
 use translation_execution::{
     OperationContext,
-    confinement::{self, Program, ReadOnlyBind, RunLimits},
+    confinement::{Program, ReadOnlyBind, RunLimits},
 };
 
 /// Internal installed execution context. Every compiler and fixture receives a
@@ -64,75 +64,7 @@ pub(crate) struct StrictInvocation {
     pub reservation_before_bytes: u64,
 }
 
-#[derive(Clone, Copy)]
-pub(crate) enum StrictFixture {
-    Family,
-    Callback,
-    Plm,
-    Ridley,
-    PlmAbi,
-    RidleyAbi,
-}
-
-/// Recipe argv is constructed by the trusted family adapter. Only named input
-/// files enter a fixture, and every material output has an explicit file name.
-pub(crate) fn strict_fixture_program(helper: &Path, command: &[String], kind: StrictFixture) -> Result<Program> {
-    let mut program = Program {
-        executable: PathBuf::from(command.first().context("empty fixture command")?),
-        arguments: command[1..].to_vec(),
-        inputs: vec![],
-        runtime: confinement::helper_runtime()?,
-        helper: helper.into(),
-        outputs: vec![],
-    };
-    let (lengths, inputs, outputs): (&[usize], Vec<(usize, &str)>, Vec<(usize, &str)>) = match kind {
-        StrictFixture::Family => (
-            &[6, 7, 9],
-            [(4, "before.wram"), (6, "rom.bin"), (7, "host-before.bin")]
-                .into_iter()
-                .filter(|(i, _)| *i < command.len())
-                .collect(),
-            [(5, "after.wram"), (8, "host-after.bin")].into_iter().filter(|(i, _)| *i < command.len()).collect(),
-        ),
-        StrictFixture::Callback => (&[10], vec![(5, "before.wram"), (8, "rom.bin")], vec![(6, "after.wram")]),
-        StrictFixture::Plm => (&[8], vec![(4, "before.wram"), (6, "rom.bin")], vec![(5, "after.wram")]),
-        StrictFixture::Ridley => (
-            &[15],
-            vec![(5, "before.wram"), (8, "rom.bin"), (9, "host-before.bin"), (14, "ppu-before.bin")],
-            vec![(6, "after.wram"), (10, "host-after.bin"), (11, "effects.log"), (12, "ppu.bin"), (13, "services.bin")],
-        ),
-        StrictFixture::PlmAbi => (&[8], vec![(6, "rom.bin")], vec![]),
-        StrictFixture::RidleyAbi => (&[2], vec![], vec![]),
-    };
-    ensure!(lengths.contains(&command.len()), "confined fixture argument contract differs");
-    for (index, name) in inputs {
-        let destination = Path::new("/inputs").join(name);
-        program.inputs.push(ReadOnlyBind { source: PathBuf::from(&command[index]), destination: destination.clone() });
-        program.arguments[index - 1] = destination.display().to_string();
-    }
-    for (index, name) in outputs {
-        program.arguments[index - 1] = Path::new("/work").join(name).display().to_string();
-        program.outputs.push(name.into());
-    }
-    if matches!(kind, StrictFixture::Callback) {
-        program.arguments[8] = "/work".into();
-        program.outputs.extend(["callbacks.txt".into(), "callback-states.bin".into()]);
-    }
-    Ok(program)
-}
-
-pub(crate) fn strict_output_path(run: &Path, label: &str, name: &Path) -> PathBuf {
-    if name == Path::new("callbacks.txt") {
-        run.join(label).join(name)
-    } else if ["after.wram", "host-after.bin", "effects.log", "ppu.bin", "services.bin", "callback-states.bin"]
-        .iter()
-        .any(|n| name == Path::new(n))
-    {
-        run.join(format!("{label}-{}", name.display()))
-    } else {
-        run.join(name)
-    }
-}
+use crate::recipe::{FixtureKind, confined_fixture_program, fixture_output_path};
 
 fn has_callback_snapshots(program: &Program) -> bool {
     program.outputs.iter().any(|path| path == Path::new("callback-states.bin"))
@@ -284,118 +216,29 @@ impl StrictExecution {
         group.as_ref().map_or_else(|| *self.reserved_bytes.lock().unwrap(), |group| group.before_bytes)
     }
 
-    pub(crate) fn compile(
+    pub(crate) fn compile_description(
         &self,
-        command: &[String],
+        description: &crate::recipe::CompilerCommand,
         run: &Path,
         label: &str,
         checkout: &Path,
         source: &Path,
     ) -> Result<ExecutionRecord> {
-        let rust = command.first().is_some_and(|name| name == "rustc");
-        self.compile_recipe(
-            command,
+        let program = compiler_program(
+            description,
             run,
-            label,
-            checkout,
-            source,
-            if rust { &["wrapper.rs", "memory.rs"] } else { &["oracle.c"] },
-            if rust { &["rust", "compiler.d"] } else { &["c"] },
-            false,
-        )
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    pub(crate) fn compile_recipe(
-        &self,
-        command: &[String],
-        run: &Path,
-        label: &str,
-        checkout: &Path,
-        source: &Path,
-        generated: &[&str],
-        outputs: &[&str],
-        headless: bool,
-    ) -> Result<ExecutionRecord> {
-        let rust = command.first().is_some_and(|name| name == "rustc");
-        let executable = if rust { self.rustc.clone() } else { self.c_compiler.clone() };
-        let mut inputs = Vec::new();
-        for path in if rust { &self.rust_inputs } else { &self.c_inputs } {
-            let relative = path.strip_prefix(if rust { checkout } else { source })?;
-            inputs.push(ReadOnlyBind {
-                source: path.clone(),
-                destination: Path::new(if rust { "/inputs/rust" } else { "/inputs/c" }).join(relative),
-            });
-        }
-        for name in generated {
-            inputs
-                .push(ReadOnlyBind { source: run.join(name), destination: Path::new("/inputs/generated").join(name) });
-        }
-        if headless {
-            for name in ["headless.c", "headless_frame.h"] {
-                inputs.push(ReadOnlyBind {
-                    source: checkout.join("tools/decomp").join(name),
-                    destination: Path::new("/inputs/rust/tools/decomp").join(name),
-                });
-            }
-        }
-        let mut arguments = Vec::new();
-        for argument in &command[1..] {
-            let mapped = if argument.starts_with("--emit=link,dep-info=") {
-                "--emit=link,dep-info=/work/compiler.d".to_owned()
-            } else {
-                let path = Path::new(argument);
-                if let Ok(relative) = path.strip_prefix(run) {
-                    if outputs.iter().any(|name| relative == Path::new(name)) {
-                        Path::new("/work").join(relative).display().to_string()
-                    } else {
-                        Path::new("/inputs/generated").join(relative).display().to_string()
-                    }
-                } else if let Ok(relative) = path.strip_prefix(source) {
-                    Path::new("/inputs/c").join(relative).display().to_string()
-                } else if let Ok(relative) = path.strip_prefix(checkout) {
-                    Path::new("/inputs/rust").join(relative).display().to_string()
-                } else {
-                    argument.clone()
-                }
-            };
-            arguments.push(mapped);
-        }
-        if rust {
-            arguments.extend([
-                "--sysroot".into(),
-                "/toolchain".into(),
-                "-C".into(),
-                "linker=/usr/bin/cc".into(),
-                "-C".into(),
-                "link-arg=-B/usr/lib/gcc/x86_64-linux-gnu/9/".into(),
-                "-C".into(),
-                "link-arg=-B/usr/bin/".into(),
-                "-C".into(),
-                "linker-features=-lld".into(),
-            ]);
-        } else {
-            // GCC normally locates subprocesses relative to argv[0] or PATH.
-            // /program is deliberately not the host compiler path.
-            arguments.extend(["-B/usr/lib/gcc/x86_64-linux-gnu/9/".into(), "-B/usr/bin/".into()]);
-        }
-        self.execute(
-            &Program {
-                executable,
-                arguments,
-                inputs,
-                runtime: self.compiler_runtime.clone(),
-                helper: self.helper.clone(),
-                outputs: outputs.iter().map(PathBuf::from).collect(),
+            CompilerContext {
+                helper: &self.helper,
+                rustc: &self.rustc,
+                c_compiler: &self.c_compiler,
+                runtime: &self.compiler_runtime,
+                rust_inputs: &self.rust_inputs,
+                c_inputs: &self.c_inputs,
+                checkout,
+                source,
             },
-            &self.compiler_limits,
-            run,
-            label,
-        )
-    }
-
-    pub(crate) fn fixture(&self, command: &[String], directory: &Path, subject: &str) -> Result<ExecutionRecord> {
-        self.fixture_recipe(command, directory, subject, StrictFixture::Family)
+        )?;
+        self.execute(&program, &self.compiler_limits, run, label)
     }
 
     pub(crate) fn fixture_recipe(
@@ -403,9 +246,9 @@ impl StrictExecution {
         command: &[String],
         directory: &Path,
         subject: &str,
-        kind: StrictFixture,
+        kind: FixtureKind,
     ) -> Result<ExecutionRecord> {
-        self.execute(&strict_fixture_program(&self.helper, command, kind)?, &self.fixture_limits, directory, subject)
+        self.execute(&confined_fixture_program(&self.helper, command, kind)?, &self.fixture_limits, directory, subject)
     }
 
     fn execute(&self, program: &Program, limits: &RunLimits, run: &Path, label: &str) -> Result<ExecutionRecord> {
@@ -421,7 +264,7 @@ impl StrictExecution {
         let (_held, wait) = if resumed {
             (None, 0.0)
         } else {
-            let (held, wait) = self.lease()?;
+            let (held, wait) = tool_execution::acquire_lease_until(&self.root, self.workers, self.deadline_unix_ms)?;
             (Some(held), wait)
         };
         let invocation = if resumed {
@@ -507,7 +350,7 @@ impl StrictExecution {
                 immutable_output(&run.join(format!("{label}.diagnostic.txt")), output.diagnostic.as_bytes())?;
             }
             for (name, bytes) in &output.outputs {
-                let destination = strict_output_path(run, label, &name);
+                let destination = fixture_output_path(run, label, &name);
                 fs::create_dir_all(destination.parent().context("strict output parent missing")?)?;
                 immutable_output(&destination, bytes)?;
                 #[cfg(unix)]
@@ -547,7 +390,7 @@ impl StrictExecution {
         };
         let record =
             if u64::try_from(SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis())? >= self.deadline_unix_ms {
-                bounded::reconcile(8 * bounded::DEFAULT_BYTES, publish)?
+                decomp_source::context::reconcile(8 * bounded::DEFAULT_BYTES, publish)?
             } else {
                 publish()?
             };
@@ -582,7 +425,7 @@ impl StrictExecution {
                 Ok(())
             };
             if u64::try_from(SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis())? >= self.deadline_unix_ms {
-                bounded::reconcile(8 * bounded::DEFAULT_BYTES, reconcile)?;
+                decomp_source::context::reconcile(8 * bounded::DEFAULT_BYTES, reconcile)?;
             } else {
                 reconcile()?;
             }
@@ -608,49 +451,6 @@ impl StrictExecution {
                 group.reserved_bytes.checked_add(bytes).context("native group reservation overflow")?;
         }
         Ok(())
-    }
-
-    fn lease(&self) -> Result<(File, f64)> {
-        ensure!((1..=64).contains(&self.workers), "native worker count missing");
-        let started = Instant::now();
-        let workers = self.root.join("workers");
-        fs::create_dir_all(&workers)?;
-        let guard = fs::OpenOptions::new().create(true).append(true).open(workers.join("config.lock"))?;
-        loop {
-            if guard.try_lock().is_ok() {
-                break;
-            }
-            let now = u64::try_from(SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis())?;
-            ensure!(now < self.deadline_unix_ms, "native gate deadline exhausted waiting for shared configuration");
-            std::thread::sleep(Duration::from_millis(10));
-        }
-        let config = workers.join("capacity.toml");
-        #[derive(Serialize, Deserialize)]
-        struct Capacity {
-            workers: usize,
-        }
-        if config.exists() {
-            ensure!(
-                bounded::object::<Capacity>(&config)?.workers == self.workers,
-                "shared native worker budget differs"
-            );
-        } else {
-            atomic_toml(&config, &Capacity { workers: self.workers })?;
-        }
-        drop(guard);
-        loop {
-            crate::metrics::check_cancelled()?;
-            for slot in 0..self.workers {
-                let held =
-                    fs::OpenOptions::new().create(true).append(true).open(workers.join(format!("{slot}.lock")))?;
-                if held.try_lock().is_ok() {
-                    return Ok((held, started.elapsed().as_secs_f64()));
-                }
-            }
-            let now = u64::try_from(SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis())?;
-            ensure!(now < self.deadline_unix_ms, "native gate deadline exhausted waiting for shared worker");
-            std::thread::sleep(Duration::from_millis(10));
-        }
     }
 }
 
@@ -813,7 +613,7 @@ mod strict_tests {
         let root = std::env::temp_dir().join(format!(
             "sm-expired-producer-{}-{}",
             std::process::id(),
-            crate::family::unique_id()
+            tool_execution::unique_id()
         ));
         let limits = RunLimits {
             timeout: Duration::from_secs(1),
@@ -868,13 +668,16 @@ mod strict_tests {
 
     #[test]
     fn compiler_runtime_and_source_discovery_share_inherited_bounds() -> Result<()> {
-        let directory = bounded::tests::Directory::new()?;
-        let error = strict_compiler_runtime_until(&directory.0.join("unavailable-rustc"), 0, 1024).unwrap_err();
+        let directory = tool_execution::testing::Directory::new()?;
+        let error =
+            translation_execution::compiler_runtime::discover_until(&directory.0.join("unavailable-rustc"), 0, 1024)
+                .unwrap_err();
         assert!(error.to_string().contains("deadline"));
         fs::write(directory.0.join("source.rs"), b"12345")?;
-        let error =
-            bounded::until(bounded::now_unix_ms()? + 1000, 4, || source_files(&directory.0, "rs", &mut Vec::new()))
-                .unwrap_err();
+        let error = decomp_source::context::until(bounded::now_unix_ms()? + 1000, 4, || {
+            source_files(&directory.0, "rs", &mut Vec::new())
+        })
+        .unwrap_err();
         assert!(error.to_string().contains("budget"));
         let mut path = directory.0.clone();
         for _ in 0..34 {
@@ -887,144 +690,26 @@ mod strict_tests {
 }
 
 fn immutable_output(path: &Path, bytes: &[u8]) -> Result<()> {
-    crate::inputs::immutable_bytes(path, bytes)
+    tool_execution::bounded::immutable_bytes(path, bytes)
 }
 
-/// Read-only files needed by the host's installed compiler/linker. This exposes
-/// neither a host checkout nor a controller executable. Runtime imports are
-/// frozen by the durable operation runner before executing rewritten Rust.
-pub(crate) fn strict_compiler_runtime(rustc: &Path) -> Result<Vec<ReadOnlyBind>> {
-    bounded::limited(|| strict_compiler_runtime_bounded(rustc))
-}
-
-pub(crate) fn strict_compiler_runtime_until(rustc: &Path, deadline: u64, max_bytes: u64) -> Result<Vec<ReadOnlyBind>> {
-    bounded::until(deadline, max_bytes, || strict_compiler_runtime_bounded(rustc))
-}
-
-fn strict_compiler_runtime_bounded(rustc: &Path) -> Result<Vec<ReadOnlyBind>> {
-    let rustc = fs::canonicalize(rustc)?;
-    let toolchain = rustc.parent().and_then(Path::parent).context("compiler toolchain root missing")?;
-    ensure!(toolchain.join("bin/rustc") == rustc && toolchain.join("lib/rustlib").is_dir(), "installed rustc required");
-    let mut bindings = confinement::helper_runtime()?;
-    for (source, destination) in [
-        ("/usr/bin/x86_64-linux-gnu-gcc-9", "/usr/bin/cc"),
-        ("/usr/bin/x86_64-linux-gnu-as", "/usr/bin/as"),
-        ("/usr/bin/x86_64-linux-gnu-ld.bfd", "/usr/bin/ld"),
-        ("/usr/lib/gcc/x86_64-linux-gnu/9/cc1", "/usr/lib/gcc/x86_64-linux-gnu/9/cc1"),
-        ("/usr/lib/gcc/x86_64-linux-gnu/9/collect2", "/usr/lib/gcc/x86_64-linux-gnu/9/collect2"),
-        ("/usr/lib/gcc/x86_64-linux-gnu/9/include", "/usr/lib/gcc/x86_64-linux-gnu/9/include"),
-        ("/usr/include", "/usr/include"),
-    ] {
-        bounded::check()?;
-        bindings.push(ReadOnlyBind { source: fs::canonicalize(source)?, destination: destination.into() });
-    }
-    // GCC's non-LTO link closure; enumerate files so unrelated installed shared
-    // libraries, system programs and package caches are inaccessible.
-    for directory in ["/usr/lib/gcc/x86_64-linux-gnu/9", "/usr/lib/x86_64-linux-gnu"] {
-        for path in bounded::entries(Path::new(directory))? {
-            let name = path.file_name().context("runtime filename missing")?.to_string_lossy();
-            if (name.starts_with("crt") && name.ends_with(".o"))
-                || ["Scrt1.o", "rcrt1.o"].contains(&name.as_ref())
-                || [
-                    "libgcc.a",
-                    "libgcc_eh.a",
-                    "libgcc_s.so",
-                    "liblto_plugin.so",
-                    "libc.so",
-                    "libc.a",
-                    "libc_nonshared.a",
-                    "libm.so",
-                    "libm.a",
-                    "libmvec.so",
-                    "libmvec.a",
-                    "libpthread.so",
-                    "libpthread.a",
-                    "libpthread_nonshared.a",
-                    "libdl.so",
-                    "libdl.a",
-                    "librt.so",
-                    "librt.a",
-                    "libutil.so",
-                    "libutil.a",
-                ]
-                .contains(&name.as_ref())
-            {
-                bindings.push(ReadOnlyBind { source: fs::canonicalize(&path)?, destination: path });
-            }
-        }
-    }
-    // Dynamic linker/search aliases referenced by libc and gcc's link scripts.
-    for path in [
-        "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
-        "/lib/x86_64-linux-gnu/libc.so.6",
-        "/lib/x86_64-linux-gnu/libm.so.6",
-        "/lib/x86_64-linux-gnu/libmvec.so.1",
-        "/lib/x86_64-linux-gnu/libpthread.so.0",
-        "/lib/x86_64-linux-gnu/libdl.so.2",
-        "/lib/x86_64-linux-gnu/librt.so.1",
-        "/lib/x86_64-linux-gnu/libutil.so.1",
-        "/lib/x86_64-linux-gnu/libz.so.1",
-        "/lib/x86_64-linux-gnu/libmpfr.so.6",
-        "/lib/x86_64-linux-gnu/libmpc.so.3",
-        "/lib/x86_64-linux-gnu/libgmp.so.10",
-        "/lib/x86_64-linux-gnu/libisl.so.22",
-        "/lib/x86_64-linux-gnu/libexpat.so.1",
-        "/lib/x86_64-linux-gnu/libzstd.so.1",
-        "/lib/x86_64-linux-gnu/libstdc++.so.6",
-        "/lib/x86_64-linux-gnu/libtinfo.so.6",
-        "/lib/x86_64-linux-gnu/libxml2.so.2",
-        "/lib/x86_64-linux-gnu/liblzma.so.5",
-    ] {
-        bounded::check()?;
-        if Path::new(path).exists() && !bindings.iter().any(|binding| binding.destination == Path::new(path)) {
-            bindings.push(ReadOnlyBind { source: fs::canonicalize(path)?, destination: path.into() });
-        }
-    }
-    for path in [
-        "/lib/x86_64-linux-gnu/libopcodes-2.34-system.so",
-        "/lib/x86_64-linux-gnu/libbfd-2.34-system.so",
-        "/lib/x86_64-linux-gnu/libctf.so.0",
-    ] {
-        bounded::check()?;
-        bindings.push(ReadOnlyBind { source: fs::canonicalize(path)?, destination: path.into() });
-    }
-    bindings.push(ReadOnlyBind {
-        source: fs::canonicalize("/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2")?,
-        destination: "/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2".into(),
-    });
-    bindings.push(ReadOnlyBind { source: toolchain.join("lib"), destination: "/toolchain/lib".into() });
-    ensure!(bindings.len() <= 1024, "installed compiler runtime binding inventory exceeded");
-    bounded::count(bindings.len())?;
-    Ok(bindings)
-}
-
-/// Fixed standalone helper recipes. Generated Live replay families contain
-/// run-specific source paths and deliberately do not use this cache.
-#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
-#[serde(rename_all = "kebab-case")]
-pub(crate) enum Helper {
-    FixtureWorker,
-    RandomLibrary,
-    RandomCli,
-}
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-pub(crate) struct HelperBuildRequest {
-    pub checkout: PathBuf,
-    pub root: PathBuf,
-    pub run: PathBuf,
-    pub workers: usize,
-    pub helpers: Vec<Helper>,
-}
-#[derive(Serialize, Deserialize)]
-pub(crate) struct HelperBuildResult {
-    pub artifacts: Vec<CacheResult>,
-}
-
-pub(crate) fn helper_builds(request: HelperBuildRequest) -> Result<HelperBuildResult> {
+/// Prepare the fixed pristine Fixture worker through the generic compiler cache.
+pub(crate) fn prepare_fixture_worker(request: crate::authoring::FixtureWorkerRequest) -> Result<CacheResult> {
     fs::create_dir_all(&request.run)?;
     let mut metrics = crate::metrics::Run::start(request.run.join("helper-build.metrics.toml"), "helper-build")?;
-    let result = helper_builds_prepared(request);
+    let result = tool_execution::builds::standalone_builds(tool_execution::builds::StandaloneBuildRequest {
+        checkout: request.checkout,
+        root: request.root,
+        run: request.run,
+        workers: request.workers,
+        artifacts: vec![tool_execution::builds::StandaloneArtifact {
+            source: "crates/offline-verification/src/fixture_worker.rs".into(),
+            name: "libfixture_worker.a".into(),
+            label: "fixture-worker-build".into(),
+            flags: vec!["--crate-type=staticlib".into()],
+        }],
+    })
+    .and_then(|artifacts| artifacts.into_iter().next().context("Fixture worker build returned no artifact"));
     let error = result.as_ref().err().map(|error| format!("{error:#}"));
     let finished = metrics.finish(crate::metrics::outcome(error.as_deref()), error);
     if result.is_ok() {
@@ -1033,38 +718,97 @@ pub(crate) fn helper_builds(request: HelperBuildRequest) -> Result<HelperBuildRe
     result
 }
 
-fn helper_builds_prepared(request: HelperBuildRequest) -> Result<HelperBuildResult> {
-    let HelperBuildRequest { checkout, root, run, workers, helpers } = request;
-    ensure!(!helpers.is_empty() && helpers.len() <= 3, "invalid helper build extent");
-    let artifacts = helpers
-        .into_iter()
-        .map(|helper| {
-            let (source, name, label, flags): (_, _, _, &[&str]) = match helper {
-                Helper::FixtureWorker => (
-                    "crates/pipeline/src/fixture_worker.rs",
-                    "libfixture_worker.a",
-                    "fixture-worker-build",
-                    &["--crate-type=staticlib"],
-                ),
-                Helper::RandomLibrary => {
-                    ("tools/decomp/next_random.rs", "librng.a", "rng-build", &["--crate-type=staticlib"])
+pub(crate) struct CompilerContext<'a> {
+    pub helper: &'a Path,
+    pub rustc: &'a Path,
+    pub c_compiler: &'a Path,
+    pub runtime: &'a [ReadOnlyBind],
+    pub rust_inputs: &'a [PathBuf],
+    pub c_inputs: &'a [PathBuf],
+    pub checkout: &'a Path,
+    pub source: &'a Path,
+}
+
+/// Resolve the recipe's compiler description identically for execution and
+/// retained authentication. All paths/capabilities come from the trusted owner.
+pub(crate) fn compiler_program(
+    description: &crate::recipe::CompilerCommand,
+    run: &Path,
+    context: CompilerContext<'_>,
+) -> Result<Program> {
+    let CompilerContext { helper, rustc, c_compiler, runtime, rust_inputs, c_inputs, checkout, source } = context;
+    let command = &description.command;
+    let generated = &description.generated;
+    let outputs = &description.outputs;
+    let headless = description.full_c;
+    let rust = command.first().is_some_and(|name| name == "rustc");
+    let executable = if rust { rustc.to_path_buf() } else { c_compiler.to_path_buf() };
+    let mut inputs = Vec::new();
+    for path in if rust { rust_inputs } else { c_inputs } {
+        let relative = path.strip_prefix(if rust { checkout } else { source })?;
+        inputs.push(ReadOnlyBind {
+            source: path.clone(),
+            destination: Path::new(if rust { "/inputs/rust" } else { "/inputs/c" }).join(relative),
+        });
+    }
+    for name in generated {
+        inputs.push(ReadOnlyBind { source: run.join(name), destination: Path::new("/inputs/generated").join(name) });
+    }
+    if headless {
+        for name in ["headless.c", "headless_frame.h"] {
+            inputs.push(ReadOnlyBind {
+                source: checkout.join("tools/decomp").join(name),
+                destination: Path::new("/inputs/rust/tools/decomp").join(name),
+            });
+        }
+    }
+    let mut arguments = Vec::new();
+    for argument in &command[1..] {
+        let mapped = if argument.starts_with("--emit=link,dep-info=") {
+            "--emit=link,dep-info=/work/compiler.d".to_owned()
+        } else {
+            let path = Path::new(argument);
+            if let Ok(relative) = path.strip_prefix(run) {
+                if outputs.iter().any(|name| relative == Path::new(name)) {
+                    Path::new("/work").join(relative).display().to_string()
+                } else {
+                    Path::new("/inputs/generated").join(relative).display().to_string()
                 }
-                Helper::RandomCli => ("tools/decomp/next_random.rs", "rng-cli", "rng-cli-build", &["--cfg", "cli"]),
-            };
-            tool_execution::builds::StandaloneArtifact {
-                source: source.into(),
-                name: name.into(),
-                label: label.into(),
-                flags: flags.iter().map(|flag| (*flag).into()).collect(),
+            } else if let Ok(relative) = path.strip_prefix(source) {
+                Path::new("/inputs/c").join(relative).display().to_string()
+            } else if let Ok(relative) = path.strip_prefix(checkout) {
+                Path::new("/inputs/rust").join(relative).display().to_string()
+            } else {
+                argument.clone()
             }
-        })
-        .collect();
-    let artifacts = tool_execution::builds::standalone_builds(tool_execution::builds::StandaloneBuildRequest {
-        checkout,
-        root,
-        run,
-        workers,
-        artifacts,
-    })?;
-    Ok(HelperBuildResult { artifacts })
+        };
+        arguments.push(mapped);
+    }
+    if rust {
+        arguments.extend([
+            "--sysroot".into(),
+            "/toolchain".into(),
+            "-C".into(),
+            "linker=/usr/bin/cc".into(),
+            "-C".into(),
+            "link-arg=-B/usr/lib/gcc/x86_64-linux-gnu/9/".into(),
+            "-C".into(),
+            "link-arg=-B/usr/bin/".into(),
+            "-C".into(),
+            "linker-features=-lld".into(),
+        ]);
+    } else {
+        // GCC normally locates subprocesses relative to argv[0] or PATH.
+        // /program is deliberately not the host compiler path.
+        arguments.extend(["-B/usr/lib/gcc/x86_64-linux-gnu/9/".into(), "-B/usr/bin/".into()]);
+    }
+
+    Ok(Program {
+        executable,
+        arguments,
+        inputs,
+        runtime: runtime.to_vec(),
+        helper: helper.to_path_buf(),
+        outputs: outputs.iter().map(PathBuf::from).collect(),
+    })
 }

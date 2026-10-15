@@ -5,7 +5,6 @@
 use crate::family_model::{Asset, CallbackMetrics, Case, CaseRecord, Implementation, Manifest, Routine, VerifyRequest};
 use crate::{atomic_toml, builds, digest, family, inputs};
 use anyhow::{Context, Result, bail, ensure};
-use sha2::{Digest, Sha256};
 use std::{collections::BTreeMap, fs, path::Path};
 
 const WRAM: usize = 0x20000;
@@ -49,9 +48,6 @@ fn validate_capture_assets(manifest: &Manifest, checkout: &Path) -> Result<()> {
     }
     Ok(())
 }
-
-const WRAPPED: &[&str] =
-    &["Call", "cpu_runOpcode", "DecompressToMem", "WriteReg", "ReadReg", "snes_read", "snes_write"];
 
 fn instrument_units(source: &Path) -> Result<BTreeMap<String, String>> {
     let mut units = BTreeMap::new();
@@ -117,7 +113,7 @@ fn branches(manifest: &Manifest) -> Result<String> {
     let mut branches = Vec::new();
     for routine in &manifest.routines {
         let symbol = &routine.symbol;
-        let args = family::types(routine)?;
+        let args = routine.argument_types()?;
         ensure!(
             family::identifier(symbol) && args.len() == routine.args && args.len() <= 2,
             "invalid Ridley signature"
@@ -148,17 +144,8 @@ fn branches(manifest: &Manifest) -> Result<String> {
     Ok(branches.join("else "))
 }
 
-pub fn build(
-    request: &VerifyRequest,
-    manifest: &Manifest,
-    checkout: &Path,
-    source: &Path,
-    run: &Path,
-) -> Result<Implementation> {
-    build_with(request, manifest, checkout, source, run, None)
-}
-
-pub(crate) fn build_with(
+pub(crate) fn build(
+    recipe: Option<&crate::recipe::Recipe>,
     request: &VerifyRequest,
     manifest: &Manifest,
     checkout: &Path,
@@ -187,7 +174,7 @@ pub(crate) fn build_with(
             .collect::<Vec<_>>();
         inputs::canonical_wrapper(checkout, run, &roots)?
     } else {
-        inputs::wrapper(inputs::WrapperRequest {
+        inputs::wrapper(crate::authoring::WrapperRequest {
             checkout: checkout.into(),
             run: run.into(),
             modules: vec![module.clone()],
@@ -234,12 +221,12 @@ pub(crate) fn build_with(
         format!(
             "#[path={:?}] mod memory;use memory::*;\n{imports}#[path={:?}] mod fixture_worker;\n{abi}",
             memory.path,
-            checkout.join("crates/pipeline/src/fixture_worker.rs")
+            checkout.join("crates/offline-verification/src/fixture_worker.rs")
         )
     };
     family::write_build_input(&run.join("wrapper.rs"), wrapper.as_bytes(), execution.is_some())?;
     if execution.is_some() {
-        inputs::immutable_bytes(&run.join("fixture-worker.rs"), include_bytes!("fixture_worker.rs"))?;
+        tool_execution::bounded::immutable_bytes(&run.join("fixture-worker.rs"), include_bytes!("fixture_worker.rs"))?;
     }
     let headless = if execution.is_some() {
         "/inputs/rust/tools/decomp/headless.c".into()
@@ -258,94 +245,51 @@ pub(crate) fn build_with(
     for (bank, code) in &instrumented {
         family::write_build_input(&run.join(format!("ridley-services-{bank}")), code.as_bytes(), execution.is_some())?;
     }
-    let command = vec![
-        "rustc".into(),
-        "--edition=2024".into(),
-        "-O".into(),
-        "--crate-type=staticlib".into(),
-        format!("--emit=link,dep-info={}", run.join("compiler.d").display()),
-        run.join("wrapper.rs").display().to_string(),
-        "-o".into(),
-        run.join("libridley.a").display().to_string(),
-    ];
+    let description = crate::recipe::rust_compiler_command(recipe, run);
     if let Some(execution) = execution {
-        execution.compile_recipe(
-            &command,
-            run,
-            "rust-build",
-            checkout,
-            source,
-            &["wrapper.rs", "memory.rs", "fixture-worker.rs"],
-            &["libridley.a", "compiler.d"],
-            false,
-        )?;
+        execution.compile_description(&description, run, "rust-build", checkout, source)?;
     } else {
-        builds::execute(&command, run, "rust-build", &request.root, request.workers)?;
+        tool_execution::builds::execute(&description.command, run, "rust-build", &request.root, request.workers)?;
     }
-    let mut command = vec![
-        "cc".into(),
-        "-O2".into(),
-        "-fno-strict-aliasing".into(),
-        "-ffunction-sections".into(),
-        "-fdata-sections".into(),
-        "-iquote".into(),
-        source.join("src").display().to_string(),
-    ];
-    command.extend(family::c_units(source)?.iter().map(|path| {
-        let bank = path.file_name().and_then(|name| name.to_str()).unwrap_or("");
-        if instrumented.contains_key(bank) {
-            run.join(format!("ridley-services-{bank}")).display().to_string()
-        } else {
-            path.display().to_string()
-        }
-    }));
-    command.extend([
-        run.join("oracle.c").display().to_string(),
-        run.join("libridley.a").display().to_string(),
-        "-Wl,--gc-sections".into(),
-    ]);
-    command.extend(WRAPPED.iter().map(|name| format!("-Wl,--wrap={name}")));
-    command.extend([
-        "-lm".into(),
-        "-ldl".into(),
-        "-lpthread".into(),
-        "-o".into(),
-        run.join("ridley").display().to_string(),
-    ]);
+    let description =
+        crate::recipe::c_compiler_command(recipe, manifest, source, run, &decomp_source::c_units(source)?, false)?;
     if let Some(execution) = execution {
-        let names = instrumented.keys().map(|bank| format!("ridley-services-{bank}")).collect::<Vec<_>>();
-        let mut generated = vec!["oracle.c", "libridley.a"];
-        generated.extend(names.iter().map(String::as_str));
-        execution.compile_recipe(&command, run, "c-build", checkout, source, &generated, &["ridley"], true)?;
+        execution.compile_description(&description, run, "c-build", checkout, source)?;
     } else {
-        builds::c_build(builds::CBuildRequest {
-            command,
+        tool_execution::builds::c_build(tool_execution::builds::CBuildRequest {
+            command: description.command,
             run: run.into(),
             checkout: checkout.into(),
             root: request.root.clone(),
             workers: request.workers,
         })?;
     }
-    let command = [run.join("ridley").display().to_string(), "--abi-controls".into()];
+    let fixture = crate::recipe::fixture_command(
+        recipe,
+        manifest,
+        crate::recipe::FixtureSelection::AbiControls,
+        run,
+        "abi-controls",
+    )?;
     if let Some(execution) = execution {
-        execution.fixture_recipe(&command, run, "abi-controls", builds::StrictFixture::RidleyAbi)?;
+        execution.fixture_recipe(&fixture.command, run, "abi-controls", fixture.kind)?;
     } else {
-        builds::execute(&command, run, "abi-controls", &request.root, request.workers)?;
+        tool_execution::builds::execute(&fixture.command, run, "abi-controls", &request.root, request.workers)?;
     }
     // The executor preloads these separately. Each fixture still forks a fresh
     // child from its respective native image; the helper never invokes gameplay.
     for subject in ["c", "rust"] {
         family::write_build_input(
             &run.join(subject),
-            &inputs::bounded::read(run.join("ridley"))?,
+            &tool_execution::bounded::read(run.join("ridley"))?,
             execution.is_some(),
         )?;
         use std::os::unix::fs::PermissionsExt;
         fs::set_permissions(run.join(subject), fs::Permissions::from_mode(0o500))?;
     }
     fs::copy(&module, run.join("candidate.rs"))?;
-    fs::copy(checkout.join("crates/pipeline/src/fixture_worker.rs"), run.join("fixture-worker.rs"))?;
-    let dependency_request = inputs::DependenciesRequest {
+    fs::copy(checkout.join("crates/offline-verification/src/fixture_worker.rs"), run.join("fixture-worker.rs"))?;
+    let dependency_request = crate::authoring::DependenciesRequest {
         checkout: checkout.into(),
         run: run.into(),
         extra: manifest.rust_dependencies.clone(),
@@ -357,29 +301,7 @@ pub(crate) fn build_with(
     } else {
         inputs::dependencies(dependency_request)?
     };
-    let mut harness = BTreeMap::new();
-    for (name, compiled) in [
-        ("ridley_subsystem_adapter.rs", include_str!("ridley_subsystem_adapter.rs")),
-        ("ridley_subsystem_fixtures.rs", include_str!("ridley_subsystem_fixtures.rs")),
-        ("ridley_subsystem_abi.rs.in", include_str!("ridley_subsystem_abi.rs.in")),
-        ("ridley_subsystem_host.c.in", include_str!("ridley_subsystem_host.c.in")),
-        ("family.rs", include_str!("family.rs")),
-        ("family_model.rs", include_str!("family_model.rs")),
-        ("fixture_format.rs", include_str!("fixture_format.rs")),
-        ("fixture_writes.rs", include_str!("fixture_writes.rs")),
-        ("batch.rs", include_str!("batch.rs")),
-        ("cleanup.rs", include_str!("cleanup.rs")),
-        ("fixture_execution.rs", include_str!("fixture_execution.rs")),
-        ("fixture_worker.rs", include_str!("fixture_worker.rs")),
-        ("metrics.rs", include_str!("metrics.rs")),
-        ("resource_sampler.rs", include_str!("resource_sampler.rs")),
-    ] {
-        let key = format!("crates/pipeline/src/{name}");
-        let hash = digest(&checkout.join(&key))?;
-        ensure!(hash == format!("{:x}", Sha256::digest(compiled)), "stale Ridley adapter executable: {name}");
-        harness.insert(key.clone(), hash);
-        fs::copy(checkout.join(key), run.join(format!("pipeline-{name}")))?;
-    }
+    let mut harness = inputs::implementation_sources(checkout, run, execution.is_some())?;
     let headless = "tools/decomp/headless.c";
     harness.insert(headless.into(), digest(&checkout.join(headless))?);
     fs::copy(checkout.join(headless), run.join("pipeline-headless.c"))?;
@@ -647,62 +569,20 @@ pub fn check(directory: &Path, fixture: &Case) -> Result<CaseRecord> {
     Ok(record)
 }
 
-pub fn case(
-    _request: &VerifyRequest,
-    _manifest: &Manifest,
-    routine: &Routine,
-    fixture: &Case,
-    run: &Path,
-    worker: &mut crate::fixture_execution::Worker,
-) -> Result<CaseRecord> {
-    case_with(routine, fixture, run, false, |command, directory, subject| worker.execute(command, directory, subject))
-}
-
-pub(crate) fn confined_case(
-    routine: &Routine,
-    fixture: &Case,
-    run: &Path,
-    execution: &builds::StrictExecution,
-) -> Result<CaseRecord> {
-    case_with(routine, fixture, run, true, |command, directory, subject| {
-        execution.fixture_recipe(command, directory, subject, builds::StrictFixture::Ridley).map(|_| ())
-    })
-}
-
-fn case_with(
+pub(crate) fn case(
     routine: &Routine,
     fixture: &Case,
     run: &Path,
     resume: bool,
-    mut execute: impl FnMut(&[String], &Path, &str) -> Result<()>,
+    mut execute: impl FnMut(&Path, &str) -> Result<()>,
 ) -> Result<CaseRecord> {
     let directory = run.join(&fixture.name);
-    family::prepare_case_with(fixture, &directory, &family::types(routine)?, resume)?;
+    family::prepare_case_with(fixture, &directory, &routine.argument_types()?, resume)?;
     fs::write(directory.join("host-before.bin"), host_before(fixture, run)?)?;
     fs::write(directory.join("ppu-before.bin"), ppu_before(fixture, run)?)?;
     retain_capture(&directory, fixture)?;
     for subject in ["rust", "c"] {
-        execute(
-            &[
-                run.join(subject).display().to_string(),
-                subject.into(),
-                routine.symbol.clone(),
-                fixture.a.to_string(),
-                fixture.b.to_string(),
-                directory.join("before.wram").display().to_string(),
-                directory.join(format!("{subject}-after.wram")).display().to_string(),
-                "0".into(),
-                run.join("rom.bin").display().to_string(),
-                directory.join("host-before.bin").display().to_string(),
-                directory.join(format!("{subject}-host-after.bin")).display().to_string(),
-                directory.join(format!("{subject}-effects.log")).display().to_string(),
-                directory.join(format!("{subject}-ppu.bin")).display().to_string(),
-                directory.join(format!("{subject}-services.bin")).display().to_string(),
-                directory.join("ppu-before.bin").display().to_string(),
-            ],
-            &directory,
-            subject,
-        )?;
+        execute(&directory, subject)?;
     }
     let mut record = check(&directory, fixture)?;
     record.routine = routine.symbol.clone();
@@ -719,8 +599,11 @@ mod tests {
         }
     }
     fn retained() -> (Retained, Case) {
-        let root =
-            std::env::temp_dir().join(format!("sm-ridley-adapter-test-{}-{}", std::process::id(), family::unique_id()));
+        let root = std::env::temp_dir().join(format!(
+            "sm-ridley-adapter-test-{}-{}",
+            std::process::id(),
+            tool_execution::unique_id()
+        ));
         let dir = root.join("frame");
         fs::create_dir_all(&dir).unwrap();
         let fixture = Case { name: "frame".into(), host_words: Some(vec![0; 8]), ..Default::default() };

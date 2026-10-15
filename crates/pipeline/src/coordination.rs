@@ -1,9 +1,17 @@
 //! Coordinator adapter: derive jobs and validate outcomes before durable claims change.
-use crate::{
-    affected,
-    assignment::{self, Artifact, Claim, Job, Kind, Update, WorkResult, source_fingerprint},
-    batch, cleanup, digest, family, family_model, translation,
-};
+use crate::affected;
+use crate::assignment;
+use crate::assignment::Artifact;
+use crate::assignment::Claim;
+use crate::assignment::Job;
+use crate::assignment::Kind;
+use crate::assignment::Update;
+use crate::assignment::WorkResult;
+use crate::assignment::source_fingerprint;
+use crate::batch;
+use crate::cleanup;
+use crate::digest;
+use crate::translation;
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -172,7 +180,7 @@ fn diagnosis_jobs(checkout: &Path, path: &Path) -> Result<Vec<Job>> {
 // A batch record alone is mutable metadata. Authenticate every requested verdict
 // and its current catalog manifest before creating a coordinator receipt.
 fn authenticate_batches(checkout: &Path, evidence: &[Artifact], required: Option<&str>) -> Result<Vec<PathBuf>> {
-    let catalog = batch::catalog(checkout)?;
+    let catalog = offline_verification::catalog::catalog(checkout)?;
     let required = required.map(|names| names.lines().collect::<Vec<_>>());
     let mut verified = BTreeMap::new();
     let mut roots = vec![];
@@ -186,7 +194,7 @@ fn authenticate_batches(checkout: &Path, evidence: &[Artifact], required: Option
         for name in names {
             let Some(record) = result.families.get(name) else { continue };
             ensure!(record.exit_code == 0, "{name} has not passed actual-C verification");
-            let entry = batch::entry(&catalog, name)?;
+            let entry = offline_verification::catalog::entry(&catalog, name)?;
             let manifest = fs::canonicalize(checkout.join(&entry.manifest))?;
             ensure!(
                 record.manifest_sha256.as_deref() == Some(digest(&manifest)?.as_str())
@@ -194,15 +202,17 @@ fn authenticate_batches(checkout: &Path, evidence: &[Artifact], required: Option
                 "verified family manifest changed"
             );
             let verdict = record.verdict.as_ref().context("passing family verdict missing")?;
-            let authenticated = family::authenticate(family_model::AuthenticateRequest {
-                checkout: checkout.into(),
-                verdict: verdict.clone(),
-            })?;
-            ensure!(authenticated.status == "offline-verified", "family evidence did not authenticate");
-            let declared = crate::fixture_format::read(&manifest)?;
-            ensure!(authenticated.family == declared.family, "batch verdict verifies a different Offline family");
+            let authenticated =
+                crate::offline::families()?.authenticate(offline_verification::AuthenticateRequest {
+                    checkout: checkout.into(),
+                    verdict: verdict.clone(),
+                })?;
+            let report = authenticated.report();
+            ensure!(report.status == "offline-verified", "family evidence did not authenticate");
+            let declared = offline_verification::fixtures::read(&manifest)?;
+            ensure!(report.family == declared.family, "batch verdict verifies a different Offline family");
             if entry.kind != "plm-instructions" {
-                let identity = authenticated
+                let identity = report
                     .implementation
                     .as_ref()
                     .and_then(|implementation| implementation.manifest.as_ref())
@@ -330,9 +340,10 @@ fn gates(
             .stdin(std::process::Stdio::null())
             .stdout(fs::File::create(&stdout)?)
             .stderr(fs::File::create(&stderr)?);
-        let mut metrics = crate::metrics::Run::start(run.join(format!("{index}.metrics.toml")), "assignment-gate")?;
+        let mut metrics =
+            tool_execution::metrics::Run::start(run.join(format!("{index}.metrics.toml")), "assignment-gate")?;
         let context = metrics.context.clone();
-        let mut child = crate::metrics::OwnedChild::spawn(&mut command, &context, "assignment-scope-gate")?;
+        let mut child = tool_execution::metrics::OwnedChild::spawn(&mut command, &context, "assignment-scope-gate")?;
         let started = std::time::Instant::now();
         let mut timed_out = false;
         let result = loop {
@@ -515,7 +526,7 @@ fn validate_update(request: &Request, status: &assignment::Receipt, update: &mut
                     anyhow::bail!("implementation is not submitted");
                 };
                 submission(&request.checkout, &submitted.job, commit, true)?;
-                let config = batch::catalog(&request.checkout)?;
+                let config = offline_verification::catalog::catalog(&request.checkout)?;
                 let names = config.families.keys().cloned().collect::<Vec<_>>();
                 let baseline = submitted.job.inputs.get("base-head").context("submission baseline missing")?;
                 required.extend(affected::select(&request.checkout, &names, Some(baseline))?.families());
@@ -596,7 +607,7 @@ pub(crate) fn operate(mut request: Request) -> Result<toml::Value> {
         )?;
     }
     let before = source_fingerprint(&request.checkout)?;
-    let catalog = batch::catalog(&request.checkout)?;
+    let catalog = offline_verification::catalog::catalog(&request.checkout)?;
     let names = request
         .families
         .clone()
@@ -604,7 +615,7 @@ pub(crate) fn operate(mut request: Request) -> Result<toml::Value> {
         .context("unknown profile")?;
     let selection = affected::select(&request.checkout, &names, request.changed_since.as_deref())?;
     ensure!(
-        toml::to_string(&catalog)? == toml::to_string(&batch::catalog(&request.checkout)?)?,
+        toml::to_string(&catalog)? == toml::to_string(&offline_verification::catalog::catalog(&request.checkout)?)?,
         "catalog changed during assignment selection; retry after source freeze"
     );
     let mut jobs = vec![verification_job(&selection)?];

@@ -1,14 +1,110 @@
 //! Compiler inputs and conservative module discovery for Offline family wrappers.
-#[path = "bounded_inputs.rs"]
-pub(crate) mod bounded;
 use anyhow::{Context, Result, ensure};
 use bounded::digest;
 use serde::{Deserialize, Serialize};
 use std::{
+    cell::RefCell,
     collections::{BTreeMap, BTreeSet},
     fs,
     path::{Path, PathBuf},
 };
+use tool_execution::bounded;
+
+thread_local! {
+    static HOST: RefCell<Option<crate::HostInputs>> = const { RefCell::new(None) };
+}
+
+/// Install trusted producer configuration for this operation, restoring a
+/// containing operation on every return path, including unwinding.
+pub(crate) fn with_host<T>(host: &crate::HostInputs, action: impl FnOnce() -> Result<T>) -> Result<T> {
+    struct Restore(Option<crate::HostInputs>);
+    impl Drop for Restore {
+        fn drop(&mut self) {
+            HOST.with(|current| *current.borrow_mut() = self.0.take());
+        }
+    }
+    let _restore = Restore(HOST.with(|current| current.borrow_mut().replace(host.clone())));
+    action()
+}
+
+fn host_inputs() -> Result<crate::HostInputs> {
+    HOST.with(|current| current.borrow().clone().context("verification host inputs were not supplied"))
+}
+
+pub(crate) fn required_sources(host: &crate::HostInputs) -> Vec<(&'static str, &'static str)> {
+    host.sources()
+        .iter()
+        .chain(crate::IMPLEMENTATION_SOURCES)
+        .chain(decomp_source::IMPLEMENTATION_SOURCES)
+        .chain(tool_execution::IMPLEMENTATION_SOURCES)
+        .chain(translation_execution::compiler_runtime::IMPLEMENTATION_SOURCES)
+        .copied()
+        .collect()
+}
+
+fn source_snapshot(name: &str) -> String {
+    format!("sources/{name}")
+}
+
+/// One conservative implementation contract is used by every recipe. The
+/// application cannot omit the verifier, source or execution owner's inputs.
+pub(crate) fn implementation_sources(checkout: &Path, run: &Path, immutable: bool) -> Result<BTreeMap<String, String>> {
+    use sha2::{Digest, Sha256};
+    let host = host_inputs()?;
+    let mut sources = BTreeMap::new();
+    for (name, compiled) in required_sources(&host) {
+        let path = checkout.join(name);
+        let hash = digest(&path)?;
+        ensure!(hash == format!("{:x}", Sha256::digest(compiled.as_bytes())), "stale verifier executable: {name}");
+        let destination = run.join(source_snapshot(name));
+        fs::create_dir_all(destination.parent().context("source snapshot parent missing")?)?;
+        snapshot(&path, &destination, immutable)?;
+        sources.insert(name.into(), hash);
+    }
+    Ok(sources)
+}
+
+/// Authenticate retained producer provenance and every required source stamp.
+/// The producer hash belongs to the retained run, not the current executable.
+pub(crate) fn authenticate_implementation(
+    run: &Path,
+    implementation: &crate::family_model::Implementation,
+    artifacts: &BTreeMap<String, String>,
+) -> Result<()> {
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct ProducerInputs {
+        binary_sha256: String,
+        sources: BTreeMap<String, String>,
+    }
+    let retained: ProducerInputs = bounded::object(&run.join("pipeline-inputs.toml"))?;
+    ensure!(
+        retained.binary_sha256.len() == 64 && retained.binary_sha256.bytes().all(|b| b.is_ascii_hexdigit()),
+        "retained producer identity is invalid"
+    );
+    let mut required: Vec<_> = crate::IMPLEMENTATION_SOURCES
+        .iter()
+        .chain(decomp_source::IMPLEMENTATION_SOURCES)
+        .chain(tool_execution::IMPLEMENTATION_SOURCES)
+        .chain(translation_execution::compiler_runtime::IMPLEMENTATION_SOURCES)
+        .map(|(name, _)| *name)
+        .collect();
+    if let Some(host) = HOST.with(|current| current.borrow().clone()) {
+        required.extend(host.sources().iter().map(|(name, _)| *name));
+    }
+    for name in required {
+        ensure!(retained.sources.contains_key(name), "required verifier input missing: {name}");
+    }
+    for (name, hash) in &retained.sources {
+        ensure!(
+            implementation.rust_dependencies.get(name) == Some(hash)
+                && implementation.harness_sources.get(name) == Some(hash)
+                && artifacts.get(&source_snapshot(name)) == Some(hash),
+            "retained verifier source provenance differs: {name}"
+        );
+    }
+    Ok(())
+}
 
 // This original captured Ridley log is 71,595,494 bytes. Its exact identity,
 // not an arbitrary family filename, selects the bounded streaming exception.
@@ -41,42 +137,25 @@ pub(crate) fn artifact_digest(run: &Path, path: &Path) -> Result<String> {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-pub(crate) struct WrapperRequest {
-    pub checkout: PathBuf,
-    pub run: PathBuf,
-    pub modules: Vec<PathBuf>,
-    pub imports: Vec<String>,
-}
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-pub(crate) struct DependenciesRequest {
-    pub checkout: PathBuf,
-    pub run: PathBuf,
-    pub extra: Vec<PathBuf>,
-}
-#[derive(Debug, Deserialize, Serialize)]
-pub(crate) struct WrapperResult {
-    pub path: PathBuf,
-}
+use crate::authoring::{DependenciesRequest, WrapperRequest, WrapperResult};
 
 /// The installed confined family adapter places every gameplay module at the
 /// crate root. A selected candidate must never be declared both under a memory
 /// wrapper and as a separate `family` module: those create nominally distinct
 /// copies of types in its dependency closure.
 pub(crate) fn canonical_sources(checkout: &Path, modules: &[PathBuf], imports: &[String]) -> Result<Vec<PathBuf>> {
-    bounded::limited(|| canonical_sources_bounded(checkout, modules, imports))
+    decomp_source::context::limited(|| canonical_sources_bounded(checkout, modules, imports))
 }
 
-pub(crate) fn canonical_sources_until(
+#[cfg(test)]
+fn canonical_sources_until(
     checkout: &Path,
     modules: &[PathBuf],
     imports: &[String],
     deadline: u64,
     max_bytes: u64,
 ) -> Result<Vec<PathBuf>> {
-    bounded::until(deadline, max_bytes, || canonical_sources_bounded(checkout, modules, imports))
+    decomp_source::context::until(deadline, max_bytes, || canonical_sources_bounded(checkout, modules, imports))
 }
 
 fn canonical_sources_bounded(checkout: &Path, modules: &[PathBuf], imports: &[String]) -> Result<Vec<PathBuf>> {
@@ -127,7 +206,7 @@ fn canonical_sources_bounded(checkout: &Path, modules: &[PathBuf], imports: &[St
 }
 
 pub(crate) fn canonical_wrapper(checkout: &Path, run: &Path, sources: &[PathBuf]) -> Result<WrapperResult> {
-    bounded::limited(|| canonical_wrapper_bounded(checkout, run, sources))
+    decomp_source::context::limited(|| canonical_wrapper_bounded(checkout, run, sources))
 }
 
 fn canonical_wrapper_bounded(checkout: &Path, run: &Path, sources: &[PathBuf]) -> Result<WrapperResult> {
@@ -148,56 +227,10 @@ fn canonical_wrapper_bounded(checkout: &Path, run: &Path, sources: &[PathBuf]) -
     Ok(WrapperResult { path })
 }
 
-/// Controller-owned immutable publication. A partial write has only the
-/// identified pending name; response recovery preserves final file metadata.
-pub(crate) fn immutable_bytes(path: &Path, bytes: &[u8]) -> Result<()> {
-    bounded::limited(|| immutable_bytes_bounded(path, bytes))
-}
-
-fn immutable_bytes_bounded(path: &Path, bytes: &[u8]) -> Result<()> {
-    use std::io::Write;
-    ensure!(path.is_absolute(), "immutable input requires absolute path");
-    bounded::safe(path)?;
-    ensure!(bytes.len() as u64 <= bounded::MAX_FILE_BYTES, "immutable native file byte extent exceeded");
-    if path.exists() {
-        ensure!(
-            !path.is_symlink() && bounded::read(path)? == bytes,
-            "immutable native file changed: {}",
-            path.display()
-        );
-        return Ok(());
-    }
-    let pending = path.with_file_name(format!(
-        "{}.pending",
-        path.file_name().context("immutable file name missing")?.to_string_lossy()
-    ));
-    if pending.exists() {
-        ensure!(
-            !pending.is_symlink() && pending.is_file() && pending.metadata()?.len() <= bytes.len() as u64,
-            "immutable pending extent changed"
-        );
-        fs::remove_file(&pending)?;
-    }
-    use std::os::unix::fs::OpenOptionsExt;
-    bounded::account(bytes.len() as u64)?;
-    let mut file = fs::OpenOptions::new()
-        .create_new(true)
-        .write(true)
-        .custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK)
-        .open(&pending)?;
-    for block in bytes.chunks(64 * 1024) {
-        bounded::check()?;
-        file.write_all(block)?;
-    }
-    file.sync_all()?;
-    bounded::check()?;
-    fs::rename(&pending, path)?;
-    fs::File::open(path.parent().context("immutable parent missing")?)?.sync_all()?;
-    Ok(())
-}
+use tool_execution::bounded::immutable_bytes;
 
 pub fn wrapper(request: WrapperRequest) -> Result<WrapperResult> {
-    bounded::limited(|| wrapper_bounded(request))
+    decomp_source::context::limited(|| wrapper_bounded(request))
 }
 
 fn wrapper_bounded(request: WrapperRequest) -> Result<WrapperResult> {
@@ -252,7 +285,7 @@ fn wrapper_bounded(request: WrapperRequest) -> Result<WrapperResult> {
     Ok(WrapperResult { path: destination })
 }
 
-pub(crate) use tool_execution::builds::dep_paths;
+use tool_execution::builds::dep_paths;
 
 pub fn dependencies(request: DependenciesRequest) -> Result<BTreeMap<String, String>> {
     dependency_inventory(request, false, false)
@@ -279,7 +312,7 @@ fn dependency_inventory(
     confined: bool,
     captured_ridley: bool,
 ) -> Result<BTreeMap<String, String>> {
-    bounded::limited(|| dependency_inventory_bounded(request, confined, captured_ridley))
+    decomp_source::context::limited(|| dependency_inventory_bounded(request, confined, captured_ridley))
 }
 
 fn dependency_inventory_bounded(
@@ -343,35 +376,15 @@ fn dependency_inventory_bounded(
     }
     // Keep the tool identity alongside the source inventory, so changing the
     // discovery algorithm cannot silently admit an older dependency contract.
-    let mut tools = BTreeMap::new();
-    for (name, compiled) in [
-        ("main.rs", include_str!("main.rs")),
-        ("inputs.rs", include_str!("inputs.rs")),
-        ("bounded_inputs.rs", include_str!("bounded_inputs.rs")),
-        ("builds.rs", include_str!("builds.rs")),
-        ("build_cache.rs", include_str!("build_cache.rs")),
-    ] {
-        let key = format!("crates/pipeline/src/{name}");
-        let hash = digest(&checkout.join(&key))?;
-        ensure!(
-            hash == format!("{:x}", <sha2::Sha256 as sha2::Digest>::digest(compiled.as_bytes())),
-            "pipeline executable is stale: {name}"
-        );
-        result.insert(key.clone(), hash.clone());
-        tools.insert(key, hash);
-        snapshot(
-            &checkout.join(format!("crates/pipeline/src/{name}")),
-            &run.join(format!("pipeline-{name}")),
-            confined,
-        )?;
-    }
+    let tools = implementation_sources(&checkout, &run, confined)?;
+    result.extend(tools.clone());
     #[derive(Serialize)]
     struct PipelineInputs<'a> {
         binary_sha256: &'a str,
         sources: BTreeMap<String, String>,
     }
     let path = run.join("pipeline-inputs.toml");
-    let bytes = toml::to_string(&PipelineInputs { binary_sha256: crate::binary_digest()?, sources: tools })?;
+    let bytes = toml::to_string(&PipelineInputs { binary_sha256: host_inputs()?.producer_sha256(), sources: tools })?;
     if confined {
         immutable_bytes(&path, bytes.as_bytes())?;
     } else {
@@ -403,7 +416,7 @@ mod tests {
 
     #[test]
     fn canonical_discovery_deduplicates_cycles_and_repeated_tokens_with_one_budget() -> Result<()> {
-        let directory = bounded::tests::Directory::new()?;
+        let directory = tool_execution::testing::Directory::new()?;
         let sources = directory.0.join("crates/port/src");
         fs::create_dir_all(&sources)?;
         fs::write(sources.join("memory.rs"), "pub struct Wram;")?;
@@ -442,7 +455,7 @@ mod tests {
 
     #[test]
     fn canonical_discovery_rejects_module_symlink() -> Result<()> {
-        let directory = bounded::tests::Directory::new()?;
+        let directory = tool_execution::testing::Directory::new()?;
         let sources = directory.0.join("crates/port/src");
         fs::create_dir_all(&sources)?;
         fs::write(sources.join("candidate.rs"), "pub fn Step() {}")?;
@@ -457,7 +470,7 @@ mod tests {
         let root = std::env::temp_dir().join(format!(
             "sm-canonical-inputs-{}-{}",
             std::process::id(),
-            crate::family::unique_id()
+            tool_execution::unique_id()
         ));
         let sources = root.join("crates/port/src");
         let run = root.join("run");
@@ -485,7 +498,7 @@ mod tests {
         let root = std::env::temp_dir().join(format!(
             "sm-immutable-inputs-{}-{}",
             std::process::id(),
-            crate::family::unique_id()
+            tool_execution::unique_id()
         ));
         fs::create_dir(&root)?;
         fs::write(root.join("source.pending"), "par")?;

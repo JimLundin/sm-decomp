@@ -9,7 +9,7 @@ use crate::{
 use translation_execution::model::{ClaimLineage, Disposition};
 
 struct Fixture {
-    directory: bounded::tests::Directory,
+    directory: tool_execution::testing::Directory,
     config: Config,
 }
 
@@ -26,7 +26,7 @@ fn git(root: &Path, args: &[&str]) -> Result<String> {
 
 impl Fixture {
     fn new() -> Result<Self> {
-        let directory = bounded::tests::Directory::new()?;
+        let directory = tool_execution::testing::Directory::new()?;
         let root = &directory.0;
         let checkout = root.join("checkout");
         fs::create_dir_all(&checkout)?;

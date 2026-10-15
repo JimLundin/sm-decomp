@@ -1,9 +1,14 @@
+use crate::digest;
+use crate::lock;
+use crate::preflight;
+use crate::readiness;
+use crate::readiness_contract as contract;
 use crate::readiness_metadata::toml_value_decode;
-use crate::{
-    digest, family, lock, preflight, readiness, readiness_contract as contract, readiness_origins as origins,
-    readiness_reuse as reuse,
-    readiness_run::{Run, safe_artifact, source_inventory},
-};
+use crate::readiness_origins as origins;
+use crate::readiness_reuse as reuse;
+use crate::readiness_run::Run;
+use crate::readiness_run::safe_artifact;
+use crate::readiness_run::source_inventory;
 use anyhow::{Context, Result, ensure};
 use pipeline_model::{BoundSelection, Candidate, GeneratedKey, KeyInventory, SelectionAction, SelectionOutcome};
 use serde::{Deserialize, Serialize};
@@ -578,7 +583,7 @@ pub(crate) fn operate(request: Value) -> Result<Value> {
     let owner = if let Some(path) = request.get("preparation").and_then(Value::as_str) {
         PathBuf::from(path)
     } else {
-        prepare(&root, Path::new(family::field(&request, "selection")?), timeout)?
+        prepare(&root, Path::new(crate::documents::field(&request, "selection")?), timeout)?
     };
     if request.get("prepare_only").and_then(toml::Value::as_bool) == Some(true) {
         return Ok(crate :: report ! ({ "status" : "pass" , "preparation_path" : owner , }));

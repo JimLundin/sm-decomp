@@ -6,6 +6,7 @@ members = [
     "crates/pipeline-model",
     "crates/tool-execution",
     "crates/decomp-source",
+    "crates/offline-verification",
     "crates/translation-execution",
     "crates/evidence",
     "crates/port",
@@ -38,6 +39,7 @@ recomp = { path = "crates/recomp" }
 pipeline-model = { path = "crates/pipeline-model" }
 tool-execution = { path = "crates/tool-execution" }
 decomp-source = { path = "crates/decomp-source" }
+offline-verification = { path = "crates/offline-verification" }
 rustysnes-core = { git = "https://github.com/doublegate/RustySNES", rev = "98f8d398020b8798b16076fae315960031c6b3b7", features = ["lsnes-profile"] }
 
 [patch."https://github.com/doublegate/RustySNES"]
