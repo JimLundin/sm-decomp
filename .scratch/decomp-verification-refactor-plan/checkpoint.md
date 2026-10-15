@@ -7,6 +7,51 @@ Authorization: user instructed "please go ahead and implement" the nine-ticket p
 
 ## Current state (supersedes historical observations below)
 
+- Main still has documentation-only changes for this effort. Frozen baseline
+  `7b27ea1` is unchanged; its required acceptance is incomplete.
+- The twelve-recipe gate finished after journal recovery: eleven passed /
+  6,863 pairs, Ceres-pad rejected during C linking before its 1,296 pairs.
+  Both cleanup passes passed and all 27,539 sealed metadata files were retained.
+  Independent retained admission of all twelve **observed** outcomes passed in
+  162.48 seconds. The failed Ceres receipt remains explicitly rejected.
+- Full-real exited 101 during C input discovery under its original deadline,
+  before fixtures and later controls. Both cleanup passes and independent
+  admission of its zero-pair, one-operation rejection passed. Original
+  expected-pass manifests are unchanged. Details and exact evidence:
+  [Native recovery](native-recovery-verification.md).
+- Default application suite completed: 164 passed and two symlink-input failures,
+  21 ignored, 342.60 seconds. Both failed checks passed with the same reader after
+  independent exact C/ROM copies replaced ignored links; no source changed.
+  Both cleanup passes before/after targeted reruns passed, zero bytes. No writer
+  remains in the baseline proof; ignored Native acceptance gaps remain above.
+  Proof parent: `/home/jim/sm-decomp-performance-native-proof/7b27ea1-20261015`.
+- Ticket 02 combined checkpoint `b7f2c0d` includes 03 and 06; four preliminary
+  public actual-C controls passed, including Native three-pair/eight-producer
+  capture/replay and independent compiler-free admission. Final source work
+  removes remaining shared scanner reparses and integrates ticket 04.
+- Ticket 03 has an actual-C identity/closure green at `13e4d2b` and explicit
+  budget regressions at `4e916d0`. Duplicate shared dependency visits and ROM
+  rereads exhaust the unchanged aggregate planner budget. The worker is fixing
+  bounded shared closures/assets, retaining independent freshness checks.
+  The read-only metrics correction `40e4cdb`/`006f78f` now passes its parent
+  metrics control. Six isolated cycle controls passed without changing limits.
+- Ticket 04 source `88a0c30`/`f425730` after `7a0fb97` closes unsafe path-key
+  normalization and volatile C-macro eligibility. Actual compiler controls pass;
+  final lock-wait, corruption, measurement and cleanup work continues.
+- Ticket 06 ordinary reader is `8d9d00e`; owner controls pass 47/1 ignored,
+  6.25 seconds. Both cleanup passes for its unit scope reclaimed zero bytes.
+  Bulk includes it; combined acceptance and worktree/target retirement remain.
+- Root owns the focused Ceres actual-C recipe repair in
+  `/home/jim/sm-decomp-performance-ceres`, branch
+  `performance/ceres-recipe-20261015`, baseline `b7f2c0d`. It exclusively reuses
+  the now-idle `/home/jim/sm-decomp-performance-admission-target`; retained
+  reader binaries are independent. Probe/evidence parent:
+  `/home/jim/sm-decomp-performance-ceres-proof`. Other active workers retain
+  their previously assigned scopes and private targets. Tickets 07/08/09 remain
+  required. No installed tools, production policies or gameplay claims changed.
+
+## Earlier recovery state
+
 - Main remains documentation-only for this effort; production still matches
   `5c011eb5d02a54d74903715bffb3f8c15ab78c51`.
 - Frozen assembly: `7b27ea1a29bb2ade3bc6483f99bf59626e298671` in

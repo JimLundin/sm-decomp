@@ -1,12 +1,70 @@
 # Fresh frozen-source Native verification
 
-Status: active; complete twelve-recipe gate running, handed to integrator for monitoring
+Status: active; baseline gates and cleanup finished, recipe/full-real acceptance gaps retained
 Owner: `/root` integration owner; `/root/native_verification_resume` has returned
 the live proof after checked recovery of stopped `/root/recover_extraction_verification`
 Integration owner session: `01a13e7f-ab01-7413-a1c2-288b08a4b719`
 Frozen source: `7b27ea1a29bb2ade3bc6483f99bf59626e298671`
 Worktree: `/home/jim/sm-decomp-performance-integration`
 Branch: `performance/verification-integration-20261015`
+
+## Current outcomes (supersedes historical launch checkpoints below)
+
+The resumed twelve-recipe gate exited 101 after 850.51 seconds in libtest
+(850.52 seconds externally). Eleven recipes passed, totaling 6,863 Fixture
+pairs. Ceres-pad failed during C linking, before its required 1,296 pairs.
+`recipes/summary.toml` and `logs/recipes-resume-01.{log,time}` are authoritative.
+Its receipt records rejection; receipt existence is not acceptance.
+
+The missing C symbols are transitive dependencies retained by
+`sm_90.c`'s Samus handler table. The existing Ceres recipe supplements
+`sm_86.c`/`sm_rtl.c` with only `sm_90.c`. Root owns a focused actual-C recipe
+repair in a separate worktree; this frozen source stays unchanged.
+
+Both cleanup passes completed for `recipes/` and `recipes-tmp/`, reclaiming
+zero additional bytes after the harness's final 262,144-byte deduplication.
+All 27,539 sealed receipt/intent/result/preparation/summary files passed
+post-cleanup hashing (`logs/recipes-before-cleanup.sha256` and
+`logs/recipes-after-cleanup-seals.log`). A separate
+`recipes/observed-authentication.toml` records eleven successes and the actual
+zero-pair, one-operation Ceres rejection. The original expected-pass manifest
+remains unchanged. Independent authentication passed in 162.48 seconds in
+exec `13646`; outputs are `logs/recipes-observed-authentication.{log,time}`.
+
+The original full-real gate (exec `65060`) finished with exit 101:
+`operation total deadline exhausted during declared input discovery` in the
+C compiler operation. It took 112.16 seconds in libtest, 113.01 externally.
+No Fixture pair ran, and later full-real negative controls were not reached.
+The original gate/compiler/reconciliation budgets remain unchanged. Both
+cleanup passes completed for `full-real/` and `full-real-tmp/`, all zero bytes;
+every sealed member passed afterward. Its separate observed-outcome manifest
+records zero pairs and one rejected operation. Independent authentication of
+that failure passed. Original expected-pass manifests are diagnostic
+gate requirements, not successful receipts.
+
+The default retained application reader completed in exec `12823`: 164 passed,
+two failed, 21 ignored, 342.60 seconds. Both failures were the trusted-input
+symlink refusal (fixture-domain generation and Ridley command construction).
+The ignored C/ROM symlinks in the integration checkout were replaced with
+independent byte-checked copies, preserving every tracked source byte. Both
+affected tests then passed with the same reader (6.62 seconds and 0.00 seconds).
+The other 164 successes were not repeated. Original failures remain in
+`logs/application.{log,time}`; corrected-prerequisite checks are in
+`logs/application-*-local-inputs.{log,time}` and copy checks in
+`logs/application-{inputs-*,c-source-copy-check.log,local-rom.sha256}`.
+
+Both cleanup passes after the suite and after the two targeted checks passed,
+all zero bytes. No retained verdict or completion remains in this unit scope.
+Its source-independent behavioral controls are complete; the ignored real
+Native gates retain the gaps above. The suite built its `recomp` prerequisites
+in the integration checkout's disposable `target/`, which remains for final
+retirement. No performance worker owns that target. The retained Native tools,
+prerequisites and source stay available independently of it.
+
+These interrupted or failed observations establish no complete-batch speedup.
+Remaining acceptance includes repaired Ceres coverage, successful full-real
+positive/negative controls, final combined-source gates and post-retirement
+authentication. Installed production tools and policies remain unchanged.
 
 ## Ownership and required scope
 
@@ -233,8 +291,9 @@ Check unchanged receipt/result hashes and mtimes on retry and authentication.
 
 ## Cleanup and remaining work
 
-No verification producer has run yet. Wait for every relevant writer before
-cleaning its completed or failed root. Use the separately retained current CLI:
+The current outcomes above record completed cleanup and remaining writers.
+Wait for every relevant writer before cleaning its completed or failed root.
+Use the separately retained current CLI:
 
 ```sh
 <proof-parent>/tools/sm-pipeline cleanup --root <finished-root> --apply

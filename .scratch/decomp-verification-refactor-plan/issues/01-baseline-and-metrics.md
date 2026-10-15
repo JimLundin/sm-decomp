@@ -78,6 +78,16 @@ respectively, and are not counted as reclaimed.
 
 ## Comments
 
+2026-10-15 recovery: frozen `7b27ea1` recipe gate passed eleven families /
+6,863 pairs; Ceres-pad failed before its 1,296 fixtures because the linked
+Samus handler table retains missing actual-C dependencies. Full-real separately
+failed its original C input-discovery deadline before fixtures. Exact outcomes
+and completed cleanup are in `native-recovery-verification.md`. Root owns a
+focused recipe repair in `/home/jim/sm-decomp-performance-ceres`, branch
+`performance/ceres-recipe-20261015`, from `b7f2c0d`. Scope: reviewed recipe,
+C compiler/host generation and corresponding actual-C controls, preserving
+all declared coverage and Native compiler slots. Final acceptance remains open.
+
 The first implementation task once source ownership and baseline are available.
 
 2026-10-15: claimed by session `01a13e7f-ab01-7413-a1c2-288b08a4b719`.

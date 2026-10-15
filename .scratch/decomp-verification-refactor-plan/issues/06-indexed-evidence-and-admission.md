@@ -47,9 +47,27 @@ timings, with all required evidence still readable.
 
 ## Completion evidence
 
-Pending. Record exact byte comparisons, full producer attribution, interrupted-run
-controls, reader byte counts and memory bounds, timing/resource deltas, cleanup
-receipts and post-retirement admission.
+Ordinary reader implementation: `8d9d00eb5b3d0b7d31414bae7be6ef3bfa8114d9`,
+including structural regression `3621cf6`. The original control read 67 bytes
+for a 44-byte closure; six final bounded reader controls pass. The complete
+owner gate passed 47 tests with one ignored in 6.25 seconds, including chain,
+capture, equal-wrong-output, host/service, Native owner and compiled PLM ABI
+checks. Exact logs and retained reader are under
+`/home/jim/sm-decomp-performance-admission-proof`.
+
+Both scoped cleanup passes over that proof's `unit-tmp/` passed, reclaiming
+zero bytes (`logs/unit-cleanup*.log`). Worktree/target retirement is pending
+combined-source acceptance. The reader preserves current formats, authenticates
+unconsumed members, and bounds retained windows to 256 MiB with reservations
+held until every shared owner releases its buffer. Document and file limits
+remain 32 and 64 MiB. Independent admission opens a new reader.
+
+Bulk source `b7f2c0d` includes this reader (integrated `edf69e3`/`b7f2c0d`).
+Four preliminary public actual-C controls passed, including complete ordinary
+single/bulk observations and a three-pair/eight-producer Native capture/replay
+with independent compiler-free authentication after both cleanup passes.
+Final combined controls remain pending ticket 03/04 source completion; no
+complete-batch performance claim or ticket resolution follows from these probes.
 
 ## Comments
 
