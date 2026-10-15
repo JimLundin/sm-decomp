@@ -76,3 +76,27 @@ now also occurs immediately after cache-key waits and restoration. Shared contex
 and input maps have explicit extent limits and cancellation/deadline-aware waits.
 Standalone calls accept the same context interface; coalescing their selected
 Rust toolchain discovery is the next implementation slice.
+
+## Rust selection and path control
+
+C green source checkpoint: `7a0fb97`.
+`logs/toolchain-path-controls.log` records two passing controls and a new path
+failure (10.41 s for the three tests). Rust has one selected sysroot, one compiler
+version query, one detailed Rust version query and one actual helper compilation;
+both calls still emit fresh dependency scans. The helper's actual output agrees,
+run-local overrides cannot redirect it, and adding a checkout override invalidates
+the shared selection. The context binds launcher identity, environment, all
+possible ancestor override paths (including absence), rustup settings and selected
+compiler bytes; it rechecks before producers and after waits.
+
+The new actual-C `__FILE__` control reproduced an existing incorrect cross-checkout
+hit: the second checkout restored an object reporting the first checkout's source
+path. Generic substring normalization in `CacheIdentity` is the cause. Preserve
+semantic physical paths by default; only typed path operands with explicit
+compiler prefix maps may become logically equivalent. Keep prefix-map targets
+literal. This is required before extending eligibility.
+
+Root also requires volatile `__DATE__`, `__TIME__` and `__TIMESTAMP__` coverage.
+An actual GCC probe showed `-M -Werror=date-time` does not expand expression macros.
+Eligibility will use full preprocessing with dependency emission; unsupported or
+volatile preprocessing must fall back to fresh compilation, never a cache hit.

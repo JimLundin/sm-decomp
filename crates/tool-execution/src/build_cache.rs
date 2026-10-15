@@ -51,7 +51,7 @@ pub struct CacheSeal {
     pub sha256: String,
 }
 
-fn environment_digest() -> Result<String> {
+pub(crate) fn environment_digest() -> Result<String> {
     let environment: BTreeMap<_, _> = std::env::vars()
         .filter(|(name, _)| {
             name.starts_with("CARGO_")
@@ -64,6 +64,7 @@ fn environment_digest() -> Result<String> {
                     "CPPFLAGS",
                     "LDFLAGS",
                     "PATH",
+                    "HOME",
                     "CPATH",
                     "C_INCLUDE_PATH",
                     "CPLUS_INCLUDE_PATH",

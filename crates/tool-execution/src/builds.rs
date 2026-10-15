@@ -1,15 +1,19 @@
 //! Authenticated compilation and execution; callers supply their fixed recipes.
 use crate::{
     acquire_lease, atomic_toml, bounded,
-    build_cache::{CacheRequest, CacheResult, CompilerPreparations, cached_artifact},
+    build_cache::{CacheRequest, CacheResult, CompilerPreparations, cached_artifact, checked_lock, environment_digest},
 };
 use anyhow::{Context, Result, bail, ensure};
 use serde::{Deserialize, Serialize};
 use std::{
+    collections::BTreeMap,
     fs::{self, File},
     path::{Path, PathBuf},
     process::{Command, Stdio},
-    sync::atomic::{AtomicBool, AtomicUsize, Ordering},
+    sync::{
+        Arc, Mutex,
+        atomic::{AtomicBool, AtomicUsize, Ordering},
+    },
     time::Instant,
 };
 #[derive(Debug, Deserialize, Serialize)]
@@ -80,6 +84,124 @@ pub struct StandaloneBuildRequest {
 #[derive(Default)]
 pub struct BuildContext {
     compilers: CompilerPreparations,
+    rustc: Mutex<BTreeMap<PathBuf, Arc<Mutex<Option<Arc<SelectedRustc>>>>>>,
+}
+
+/// Selection inputs include absent override files: adding a nearer override is
+/// a change too. The selected compiler is absolute; run-local overrides cannot
+/// redirect a later scan or build.
+struct RustSelection {
+    launcher: PathBuf,
+    launcher_target: PathBuf,
+    launcher_sha256: String,
+    environment_sha256: String,
+    files: BTreeMap<PathBuf, Option<(PathBuf, String)>>,
+}
+
+struct SelectedRustc {
+    selection: RustSelection,
+    compiler: PathBuf,
+    compiler_sha256: String,
+}
+
+impl RustSelection {
+    fn file(path: &Path) -> Result<Option<(PathBuf, String)>> {
+        match fs::canonicalize(path) {
+            Ok(target) => Ok(Some((target.clone(), bounded::digest(&target)?))),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
+            Err(error) => Err(error.into()),
+        }
+    }
+
+    fn capture(checkout: &Path) -> Result<Self> {
+        let launcher = crate::executable("rustc")?;
+        let launcher_target = fs::canonicalize(&launcher)?;
+        let launcher_sha256 = crate::digest(&launcher_target)?;
+        let environment_sha256 = environment_digest()?;
+        let mut files = BTreeMap::new();
+        for parent in checkout.ancestors() {
+            ensure!(files.len() < 256, "Rust toolchain selection extent exceeded");
+            for name in ["rust-toolchain", "rust-toolchain.toml"] {
+                let path = parent.join(name);
+                files.insert(path.clone(), Self::file(&path)?);
+            }
+        }
+        let rustup = std::env::var_os("RUSTUP_HOME")
+            .map(PathBuf::from)
+            .or_else(|| std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".rustup")));
+        if let Some(rustup) = rustup {
+            let settings = rustup.join("settings.toml");
+            files.insert(settings.clone(), Self::file(&settings)?);
+        }
+        let selection = Self { launcher, launcher_target, launcher_sha256, environment_sha256, files };
+        selection.authenticate()?;
+        Ok(selection)
+    }
+
+    fn authenticate(&self) -> Result<()> {
+        bounded::check()?;
+        crate::metrics::check_cancelled()?;
+        ensure!(crate::executable("rustc")? == self.launcher, "prepared Rust toolchain selection changed");
+        ensure!(fs::canonicalize(&self.launcher)? == self.launcher_target, "prepared Rust toolchain launcher changed");
+        ensure!(
+            crate::digest(&self.launcher_target)? == self.launcher_sha256,
+            "prepared Rust toolchain launcher changed"
+        );
+        ensure!(environment_digest()? == self.environment_sha256, "prepared Rust toolchain environment changed");
+        for (path, expected) in &self.files {
+            ensure!(Self::file(path)? == *expected, "prepared Rust toolchain configuration changed");
+        }
+        Ok(())
+    }
+}
+
+impl SelectedRustc {
+    fn authenticate(&self) -> Result<()> {
+        self.selection.authenticate()?;
+        ensure!(fs::canonicalize(&self.compiler)? == self.compiler, "prepared Rust compiler path changed");
+        ensure!(crate::digest(&self.compiler)? == self.compiler_sha256, "prepared Rust compiler changed");
+        Ok(())
+    }
+}
+
+impl BuildContext {
+    fn selected_rustc(&self, checkout: &Path, run: &Path, root: &Path, workers: usize) -> Result<Arc<SelectedRustc>> {
+        let slot = {
+            let mut compilers = checked_lock(&self.rustc)?;
+            if !compilers.contains_key(checkout) {
+                ensure!(compilers.len() < 64, "shared Rust toolchain context extent exceeded");
+            }
+            compilers.entry(checkout.to_owned()).or_default().clone()
+        };
+        let selected = {
+            let mut selected = checked_lock(&slot)?;
+            if let Some(compiler) = &*selected {
+                compiler.clone()
+            } else {
+                let selection = RustSelection::capture(checkout)?;
+                execute_at_checked(
+                    &[selection.launcher.display().to_string(), "--print".into(), "sysroot".into()],
+                    run,
+                    checkout,
+                    "helper-toolchain",
+                    root,
+                    workers,
+                    240,
+                    || selection.authenticate(),
+                )?;
+                selection.authenticate()?;
+                let sysroot = bounded::text(run.join("helper-toolchain.stdout"))?;
+                let compiler = fs::canonicalize(Path::new(sysroot.trim()).join("bin/rustc"))?;
+                let compiler_sha256 = crate::digest(&compiler)?;
+                let compiler = Arc::new(SelectedRustc { selection, compiler, compiler_sha256 });
+                compiler.authenticate()?;
+                *selected = Some(compiler.clone());
+                compiler
+            }
+        };
+        selected.authenticate()?;
+        Ok(selected)
+    }
 }
 
 pub fn standalone_builds(request: StandaloneBuildRequest) -> Result<Vec<CacheResult>> {
@@ -91,20 +213,8 @@ pub fn standalone_builds_in(context: &BuildContext, request: StandaloneBuildRequ
     ensure!(!recipes.is_empty() && recipes.len() <= 3, "invalid standalone build extent");
     fs::create_dir_all(&run)?;
     let checkout = fs::canonicalize(checkout)?;
-    // Resolve the project's selected toolchain once. A run outside checkout
-    // must not silently choose a different rustup override for scan or build.
-    execute_at(
-        &["rustc".into(), "--print".into(), "sysroot".into()],
-        &run,
-        &checkout,
-        "helper-toolchain",
-        &root,
-        workers,
-        240,
-    )?;
-    let sysroot = fs::read_to_string(run.join("helper-toolchain.stdout"))?;
-    let compiler = fs::canonicalize(Path::new(sysroot.trim()).join("bin/rustc"))?;
-    let compiler = compiler.display().to_string();
+    let selected = context.selected_rustc(&checkout, &run, &root, workers)?;
+    let compiler = selected.compiler.display().to_string();
     let preparation = context.compilers.prepare(&root, &checkout, &compiler)?;
     let mut artifacts = Vec::new();
     for recipe in recipes {
@@ -119,7 +229,10 @@ pub fn standalone_builds_in(context: &BuildContext, request: StandaloneBuildRequ
         let dep_file = run.join(format!("{label}.compiler.d"));
         let mut dependency = command.clone();
         dependency.push(format!("--emit=dep-info={}", dep_file.display()));
-        execute(&dependency, &run, &format!("{label}-dependencies"), &root, workers)?;
+        execute_at_checked(&dependency, &run, &run, &format!("{label}-dependencies"), &root, workers, 240, || {
+            selected.authenticate()?;
+            preparation.validate(std::slice::from_ref(&source))
+        })?;
         let dependency_text = fs::read_to_string(&dep_file)?;
         // These standalone recipes currently use no env!/option_env! input.
         // Fail closed if that changes instead of hiding an arbitrary variable
@@ -136,13 +249,17 @@ pub fn standalone_builds_in(context: &BuildContext, request: StandaloneBuildRequ
             })
             .collect();
         inputs.push(source);
+        preparation.freeze(&inputs)?;
         command.extend(["-o".into(), "{artifact}".into()]);
         let result = preparation.artifact(&command, &inputs, &run.join(name), |artifact| {
             let mut actual = command.clone();
             *actual.last_mut().unwrap() = artifact.display().to_string();
             let actual_dependencies = artifact.with_extension("d");
             actual.push(format!("--emit=link,dep-info={}", actual_dependencies.display()));
-            execute(&actual, &run, &label, &root, workers)?;
+            execute_at_checked(&actual, &run, &run, &label, &root, workers, 240, || {
+                selected.authenticate()?;
+                preparation.validate(&inputs)
+            })?;
             let actual_text = fs::read_to_string(&actual_dependencies)?;
             ensure!(
                 !actual_text.lines().any(|line| line.starts_with("# env-dep:")),
@@ -152,10 +269,12 @@ pub fn standalone_builds_in(context: &BuildContext, request: StandaloneBuildRequ
             fs::remove_file(actual_dependencies)?;
             Ok(())
         })?;
+        selected.authenticate()?;
         atomic_toml(&run.join(format!("{label}.cache.toml")), &result)?;
         artifacts.push(result);
     }
     preparation.finish()?;
+    selected.authenticate()?;
     Ok(artifacts)
 }
 

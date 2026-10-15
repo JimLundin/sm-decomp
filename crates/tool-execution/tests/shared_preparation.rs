@@ -163,3 +163,78 @@ fn compatible_families_prepare_compiler_once_and_coalesce_the_actual_object() ->
     assert_eq!(versions, 1, "compatible families repeated compiler identity preparation");
     Ok(())
 }
+
+fn rust_request(directory: &Directory, family: &str) -> builds::StandaloneBuildRequest {
+    builds::StandaloneBuildRequest {
+        checkout: directory.path.clone(),
+        root: directory.capacity(),
+        run: directory.path.join(family),
+        workers: directory.workers(),
+        artifacts: vec![builds::StandaloneArtifact {
+            source: "helper.rs".into(),
+            name: "program".into(),
+            label: "helper-build".into(),
+            flags: vec![],
+        }],
+    }
+}
+
+#[test]
+fn rust_toolchain_is_prepared_once_and_stays_bound_to_checkout_configuration() -> Result<()> {
+    let directory = Directory::new("rust-families")?;
+    fs::write(directory.path.join("helper.rs"), "fn main() { println!(\"{}\", include_str!(\"value.txt\")); }\n")?;
+    fs::write(directory.path.join("value.txt"), "seven")?;
+    for family in ["a", "b"] {
+        let run = directory.path.join(family);
+        fs::create_dir(&run)?;
+        fs::write(run.join("rust-toolchain.toml"), "[toolchain]\nchannel = \"unavailable-run-toolchain\"\n")?;
+    }
+    let context = builds::BuildContext::default();
+    let mut metrics = metrics::Run::start(directory.path.join("families.metrics.toml"), "rust-family-builds")?;
+    let cold = builds::standalone_builds_in(&context, rust_request(&directory, "a"))?;
+    let warm = builds::standalone_builds_in(&context, rust_request(&directory, "b"))?;
+    assert!(!cold[0].hit);
+    assert!(warm[0].hit);
+    assert_eq!(cold[0].key, warm[0].key);
+    for family in ["a", "b"] {
+        let actual = Command::new(directory.path.join(family).join("program")).output()?;
+        assert!(actual.status.success());
+        assert_eq!(actual.stdout, b"seven\n");
+    }
+    // Adding a previously absent checkout override must invalidate the shared
+    // discovery, even though the selected compiler executable still exists.
+    fs::write(directory.path.join("rust-toolchain.toml"), "[toolchain]\nchannel = \"changed-toolchain\"\n")?;
+    let error = builds::standalone_builds_in(&context, rust_request(&directory, "changed")).unwrap_err();
+    assert!(error.to_string().contains("Rust toolchain configuration changed"), "{error:#}");
+    metrics.finish("success", None)?;
+    let receipt: pipeline_model::metrics::Receipt =
+        pipeline_model::read(&directory.path.join("families.metrics.toml"))?;
+    for role in ["helper-toolchain", "cache-compiler-identity", "cache-rustc-identity", "helper-build"] {
+        assert_eq!(receipt.processes.iter().filter(|process| process.role == role).count(), 1, "repeated {role}");
+    }
+    assert_eq!(receipt.processes.iter().filter(|process| process.role == "helper-build-dependencies").count(), 2);
+    Ok(())
+}
+
+#[test]
+fn unmapped_source_paths_remain_semantic_build_inputs() -> Result<()> {
+    let directory = Directory::new("physical-paths")?;
+    let compiler = compiler(&directory)?;
+    let context = builds::BuildContext::default();
+    for family in ["first", "second"] {
+        let checkout = Directory { path: directory.path.join(family), retained: true };
+        fs::create_dir(&checkout.path)?;
+        inputs(&checkout)?;
+        let request = request(&checkout, &compiler, "run")?;
+        fs::write(checkout.path.join("deps/unit.c"), "const char *value(void) { return __FILE__; }\n")?;
+        fs::write(
+            request.run.join("main.c"),
+            "#include <stdio.h>\nconst char *value(void); int main(void) { puts(value()); }\n",
+        )?;
+        builds::c_build_in(&context, request, &|_| Ok(()))?;
+        let actual = Command::new(checkout.path.join("run/program")).output()?;
+        assert!(actual.status.success());
+        assert_eq!(String::from_utf8(actual.stdout)?.trim(), checkout.path.join("deps/unit.c").display().to_string());
+    }
+    Ok(())
+}
