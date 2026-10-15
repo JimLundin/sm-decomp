@@ -42,6 +42,9 @@ pub struct RustSourceFacts {
     inputs: BTreeSet<RustInput>,
     file_dependencies: BTreeSet<PathBuf>,
     incomplete: BTreeSet<String>,
+    imported_names: BTreeSet<String>,
+    has_glob_import: bool,
+    parent_glob_builtins: BTreeSet<String>,
 }
 
 impl RustSourceFacts {
@@ -77,8 +80,14 @@ impl RustSourceFacts {
     /// nodes and allocator overhead. Parser working storage is independently
     /// bounded and is discarded before these owned facts are cached.
     pub fn retained_byte_bound(&self) -> u64 {
-        let text =
-            self.identifiers.iter().chain(&self.incomplete).map(|value| 1024 + value.capacity() as u64).sum::<u64>();
+        let text = self
+            .identifiers
+            .iter()
+            .chain(&self.incomplete)
+            .chain(&self.imported_names)
+            .chain(&self.parent_glob_builtins)
+            .map(|value| 1024 + value.capacity() as u64)
+            .sum::<u64>();
         let paths = self.file_dependencies.iter().map(|path| 1024 + path.capacity() as u64).sum::<u64>();
         let inputs = self
             .inputs
@@ -109,6 +118,40 @@ impl RustSourceFacts {
         );
         Ok(())
     }
+
+    /// A literal module edge supplies the actual parent of a top-level
+    /// `use super::*`. A complete parent without glob or ambiguous builtin
+    /// imports proves that this import cannot shadow a builtin. This narrow
+    /// proof never discharges other incompleteness or guesses a file's parent.
+    /// Callers must retain and bind both exact source files, and check every
+    /// placement before deduplicating traversal by source path.
+    pub fn require_complete_with_parent(&self, parent: &Self) -> Result<()> {
+        if self.is_complete() {
+            return Ok(());
+        }
+        parent.require_complete()?;
+        ensure!(
+            parent.file_dependencies.contains(&self.logical_path),
+            "Rust parent context does not declare this literal module path"
+        );
+        let discharged = self.parent_glob_builtins.iter().map(|name| parent_glob_reason(name)).collect::<BTreeSet<_>>();
+        ensure!(
+            !discharged.is_empty() && self.incomplete == discharged && !parent.has_glob_import,
+            "Rust source has unresolved inputs beyond the supported parent glob context at {}",
+            self.logical_path.display()
+        );
+        ensure!(
+            !parent.imported_names.contains("std")
+                && !parent.imported_names.contains("core")
+                && self.parent_glob_builtins.is_disjoint(&parent.imported_names),
+            "Rust parent context has potentially shadowing builtin imports"
+        );
+        Ok(())
+    }
+}
+
+fn parent_glob_reason(name: &str) -> String {
+    format!("builtin macro or derive may be shadowed by parent glob: {name}")
 }
 
 /// Inspect exact bytes within the current bounded deadline. Fixed byte, token,
@@ -135,6 +178,9 @@ fn scan_bounded(logical_path: &Path, bytes: &[u8]) -> Result<RustSourceFacts> {
         inputs: BTreeSet::new(),
         file_dependencies: BTreeSet::new(),
         incomplete: BTreeSet::new(),
+        imported_names: BTreeSet::new(),
+        has_glob_import: false,
+        parent_glob_builtins: BTreeSet::new(),
     };
     let Ok(source) = std::str::from_utf8(bytes) else {
         facts.incomplete.insert("Rust source is not UTF-8".into());
@@ -168,6 +214,7 @@ fn scan_bounded(logical_path: &Path, bytes: &[u8]) -> Result<RustSourceFacts> {
         error: None,
         imports: BTreeSet::new(),
         glob_import: false,
+        parent_glob: false,
         builtins: BTreeSet::new(),
         module_depth: 0,
         import_roots: BTreeSet::new(),
@@ -186,8 +233,13 @@ fn scan_bounded(logical_path: &Path, bytes: &[u8]) -> Result<RustSourceFacts> {
             || scanner.imports.contains("core")
         {
             scanner.facts.incomplete.insert(format!("builtin macro or derive may be shadowed by an import: {name}"));
+        } else if scanner.parent_glob {
+            scanner.facts.incomplete.insert(parent_glob_reason(&name));
+            scanner.facts.parent_glob_builtins.insert(name);
         }
     }
+    scanner.facts.imported_names = scanner.imports;
+    scanner.facts.has_glob_import = scanner.glob_import || scanner.parent_glob;
     ensure!(
         facts.identifiers.len() <= MAX_FACTS && facts.inputs.len() <= MAX_FACTS && facts.incomplete.len() <= MAX_FACTS,
         "Rust source fact inventory limit exceeded"
@@ -312,6 +364,7 @@ struct Scanner<'a> {
     error: Option<anyhow::Error>,
     imports: BTreeSet<String>,
     glob_import: bool,
+    parent_glob: bool,
     builtins: BTreeSet<String>,
     module_depth: usize,
     import_roots: BTreeSet<String>,
@@ -509,7 +562,11 @@ impl Scanner<'_> {
             syn::UseTree::Glob(_) => {
                 self.path(prefix);
                 self.import_binding(prefix, None);
-                self.glob_import = true;
+                if self.module_depth == 0 && prefix == &[String::from("super")] {
+                    self.parent_glob = true;
+                } else {
+                    self.glob_import = true;
+                }
             }
             syn::UseTree::Group(group) => {
                 for tree in &group.items {

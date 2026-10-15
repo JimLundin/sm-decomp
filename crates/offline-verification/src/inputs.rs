@@ -184,13 +184,15 @@ fn discover_sources_bounded(
             }
         }
     }
-    let mut pending = modules.to_vec();
-    pending.push(sources.join("memory.rs"));
+    let mut pending = modules.iter().cloned().map(|path| (path, None)).collect::<BTreeSet<_>>();
+    pending.insert((sources.join("memory.rs"), None));
     for name in imports {
-        pending.push(available.get(name).context("unknown canonical gameplay import")?.clone());
+        pending.insert((available.get(name).context("unknown canonical gameplay import")?.clone(), None));
     }
     let mut selected = BTreeSet::new();
-    while let Some(path) = pending.pop() {
+    let mut placements = BTreeSet::new();
+    let mut scanned = BTreeMap::<PathBuf, std::sync::Arc<crate::source_facts::RustSourceFacts>>::new();
+    while let Some((path, parent)) = pending.pop_first() {
         bounded::check()?;
         bounded::safe(&path)?;
         let path = fs::canonicalize(path)?;
@@ -199,20 +201,36 @@ fn discover_sources_bounded(
                 && path.extension().is_some_and(|value| value == "rs"),
             "canonical family modules must be direct gameplay source files"
         );
+        if !placements.insert((path.clone(), parent.clone())) {
+            continue;
+        }
+        let facts = if let Some(facts) = scanned.get(&path) {
+            facts.clone()
+        } else {
+            let facts = std::sync::Arc::new(crate::source_facts::scan(&path, &bounded::read(&path)?)?);
+            scanned.insert(path.clone(), facts.clone());
+            facts
+        };
+        if let Some(parent) = &parent {
+            facts.require_complete_with_parent(scanned.get(parent).context("Rust module parent was not scanned")?)?;
+        } else {
+            facts.require_complete()?;
+        }
         if !selected.insert(path.clone()) {
             continue;
         }
-        let facts = crate::source_facts::scan(&path, &bounded::read(&path)?)?;
-        facts.require_complete()?;
         for word in facts.identifiers() {
             if let Some(dependency) = available.get(word)
-                && !selected.contains(dependency)
-                && !pending.contains(dependency)
+                && !placements.contains(&(dependency.clone(), None))
             {
-                pending.push(dependency.clone());
+                pending.insert((dependency.clone(), None));
             }
         }
-        pending.extend(facts.file_dependencies().iter().filter(|path| !selected.contains(*path)).cloned());
+        for dependency in facts.file_dependencies() {
+            if !placements.contains(&(dependency.clone(), Some(path.clone()))) {
+                pending.insert((dependency.clone(), Some(path.clone())));
+            }
+        }
     }
     selected.insert(sources.join("memory.rs"));
     bounded::safe(&sources.join("memory.rs"))?;
@@ -535,6 +553,9 @@ mod tests {
         fs::write(&child, "use super::*; #[derive(Clone)] pub struct State; pub fn step() { let _=vec![1]; }")?;
         let paths = canonical_sources(&directory.0, std::slice::from_ref(&root), &[])?;
         assert!(paths.contains(&root) && paths.contains(&child));
+        let other = sources.join("other_parent.rs");
+        fs::write(&other, "use crate::macros::vec; #[path=\"child_impl.rs\"] mod owned;")?;
+        assert!(canonical_sources(&directory.0, &[root.clone(), other], &[]).is_err());
         fs::write(&root, "use crate::macros::vec; #[path=\"child_impl.rs\"] mod owned;")?;
         assert!(canonical_sources(&directory.0, &[root], &[]).is_err());
         Ok(())

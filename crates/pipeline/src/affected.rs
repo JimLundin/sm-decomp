@@ -355,14 +355,31 @@ impl<'a> Discovery<'a> {
             self.closure_cache_hits += 1;
             return Ok(closure.clone());
         }
-        let mut pending = BTreeSet::from([root.clone()]);
+        let mut pending = BTreeSet::from([(root.clone(), None)]);
         let mut result = BTreeSet::new();
-        while let Some(path) = pending.pop_first() {
+        let mut placements = BTreeSet::new();
+        while let Some((path, parent)) = pending.pop_first() {
             self.budget.check()?;
-            if !result.insert(path.clone()) {
+            if !placements.insert((path.clone(), parent.clone())) {
                 continue;
             }
             self.budget.entry()?;
+            let actual = self.checkout.join(&path);
+            ensure!(!actual.is_symlink(), "Rust discovery module is a symlink");
+            let actual = fs::canonicalize(actual)?;
+            ensure!(path == normalize(self.checkout, &actual), "Rust discovery module has a filesystem alias");
+            ensure!(actual.starts_with(self.checkout), "Rust source outside checkout lacks changed-since history");
+            let facts = self.source(&actual)?;
+            if let Some(parent) = &parent {
+                facts.require_complete_with_parent(
+                    self.sources.get(&self.checkout.join(parent)).context("Rust module parent was not scanned")?,
+                )?;
+            } else {
+                facts.require_complete()?;
+            }
+            if !result.insert(path.clone()) {
+                continue;
+            }
             if let Some(closure) = self.closures.get(&path) {
                 self.closure_cache_hits += 1;
                 for dependency in closure.iter() {
@@ -371,24 +388,17 @@ impl<'a> Discovery<'a> {
                 }
                 continue;
             }
-            let actual = self.checkout.join(&path);
-            ensure!(!actual.is_symlink(), "Rust discovery module is a symlink");
-            let actual = fs::canonicalize(actual)?;
-            ensure!(path == normalize(self.checkout, &actual), "Rust discovery module has a filesystem alias");
-            ensure!(actual.starts_with(self.checkout), "Rust source outside checkout lacks changed-since history");
-            let facts = self.source(&actual)?;
-            facts.require_complete()?;
             for word in facts.identifiers() {
                 if let Some(dependency) = self.available.get(word) {
                     let dependency = normalize(self.checkout, dependency);
-                    if !result.contains(&dependency) {
-                        pending.insert(dependency);
+                    if !placements.contains(&(dependency.clone(), None)) {
+                        pending.insert((dependency, None));
                     }
                 }
             }
             for dependency in facts.file_dependencies() {
-                if !result.contains(dependency) {
-                    pending.insert(dependency.clone());
+                if !placements.contains(&(dependency.clone(), Some(path.clone()))) {
+                    pending.insert((dependency.clone(), Some(path.clone())));
                 }
             }
         }

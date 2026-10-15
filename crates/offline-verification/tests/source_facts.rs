@@ -219,6 +219,36 @@ fn literal_module_paths_are_real_edges_and_unresolved_resolution_stays_explicit(
 }
 
 #[test]
+fn parent_glob_proof_requires_exact_complete_nonshadowing_parent() -> Result<()> {
+    let path = Path::new("src/child_impl.rs");
+    let child = source_facts::scan(
+        path,
+        b"use super::*; #[derive(Clone,Debug)] pub struct State; pub fn step() { let _=vec![1]; }",
+    )?;
+    assert!(child.require_complete().is_err());
+    let declaration = "#[path=\"child_impl.rs\"] mod owned;";
+    let parent = source_facts::scan(Path::new("src/root.rs"), declaration.as_bytes())?;
+    child.require_complete_with_parent(&parent)?;
+    assert!(!child.is_complete(), "a placement-specific proof mutated the cached source facts");
+    for extra in [
+        "use crate::macros::vec;",
+        "use crate::macros::Clone;",
+        "use crate::macros::*;",
+        "use crate::custom as std;",
+        "macro_rules! vec { () => {} }",
+        "include!(\"other.rs\");",
+    ] {
+        let parent = source_facts::scan(Path::new("src/root.rs"), format!("{declaration} {extra}").as_bytes())?;
+        assert!(child.require_complete_with_parent(&parent).is_err(), "unproved parent accepted: {extra}");
+    }
+    let wrong = source_facts::scan(Path::new("src/root.rs"), b"#[path=\"different.rs\"] mod owned;")?;
+    assert!(child.require_complete_with_parent(&wrong).is_err());
+    let unsupported = source_facts::scan(path, b"use super::*; fn step() { let _=vec![env!(\"INPUT\")]; }")?;
+    assert!(unsupported.require_complete_with_parent(&parent).is_err());
+    Ok(())
+}
+
+#[test]
 fn unmodeled_expansion_aliases_runtime_and_invalid_source_never_exclude() -> Result<()> {
     for source in [
         "macro_rules! generated { () => { mod generated_input; } } generated!();",
