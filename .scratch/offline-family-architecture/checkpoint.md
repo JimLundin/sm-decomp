@@ -8,9 +8,10 @@ User authorization: approved the rendered design and instructed "go ahead".
 
 The complete assembled implementation is in
 `/home/jim/sm-decomp-offline-verifier`, branch
-`architecture/offline-verifier-20261015`. Current source includes the PLM
-wrapper/accounting correction and passing focused regressions; a new production
-freeze and all final proofs are next.
+`architecture/offline-verifier-20261015`. Current production freeze is
+`4a736587af557de9e44b3126ff08f6d6d11beee8`, including the PLM wrapper/accounting
+correction and passing regressions. Final proofs use the new retained parent
+`/home/jim/sm-decomp-offline-architecture-proofs/plm-fix-20261015`.
 Historical frozen verification source is
 `15d5a7e`; subsequent source changes are test-only overlays `09ea8ca` and
 `1a770f8`. The first moves the pointer-normalization C-helper check
@@ -197,6 +198,23 @@ All Cargo work is locked/offline; the optimized verification build uses one job.
   private ROM hashes passed again before the first attempt.
 
 ## Cleanup and remaining work
+
+### Corrected-source verification in progress
+
+Locked/offline workspace all-target compilation passed in 46.27 seconds
+(`plm-fix-20261015/logs/check.log`). Release owner/application no-run build and
+helper builds are running serially in exec session 98089, one Cargo job and the
+shared workers4 settings. Logs: `logs/test-build.log`, `logs/helper-build.log`.
+Both `frozen-source/` and `catalog-source/` match `tracked-source.sha256` from
+the freeze. Private archive, ROM and captured Ridley input hashes match the
+reviewed prerequisites; `prerequisites.sha256` retains exact paths and values.
+
+Both cleanup passes over the completed regression TMPDIR succeeded with zero
+utility reclamation. Two unsealed synthetic worker binaries from the earlier
+cleanup-callback setup failure were removed, reclaiming 9,056,256 measured
+allocated bytes. Their diagnostic sources, metrics and stderr remain in
+`regression-tmp/`; `logs/regression-disposable-build-bytes.txt` records the
+measurement. No runtime or build process writes to that directory.
 
 Foundation, recipe, Native and caller worktrees are integrated, cleaned and
 removed. Native/caller retirement reclaimed 484,716,544 measured allocated

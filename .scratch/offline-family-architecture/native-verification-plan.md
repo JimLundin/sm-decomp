@@ -1,6 +1,6 @@
 # Native verification after Offline family extraction
 
-Status: catalog passed; real Native verification in progress
+Status: corrected source frozen; final Native verification in progress
 Owner: integration owner, ticket [05](issues/05-verification-and-cleanup.md)
 Audited: 2026-10-15, source baseline `77022896e6e92abe69c27c1c0f9786b838d63ba9`
 
@@ -9,11 +9,13 @@ It records the existing gates and the harness migration they need. The audit
 read source and local prerequisite metadata/hashes only. It did not build, run
 producers, change installed policy, or create verification artifacts.
 
-The harness migration is now implemented on production source `15d5a7e`, with
-test-only snapshot follow-up `1a770f8`. The requirements below remain the gate
-contract; [the checkpoint](checkpoint.md) records current execution and evidence.
-The current retained reader is `tools/sm-pipeline-tests-1a770f8` under the proof
-parent. The original reader remains for the earlier unit/catalog results.
+The harness migration and PLM wrapper/accounting correction are frozen at
+`4a736587af557de9e44b3126ff08f6d6d11beee8`. The requirements below remain the
+gate contract; [the checkpoint](checkpoint.md) records current execution and
+evidence. Current proof parent:
+`/home/jim/sm-decomp-offline-architecture-proofs/plm-fix-20261015`.
+The earlier `15d5a7e-20261015` source, readers and partial recipe results remain
+historical evidence; they are not final proof of the corrected source.
 
 Use frozen integrated source for the actual gates. All new harness code remains
 Rust. Preserve the current indexed evidence formats, complete declared domains,
