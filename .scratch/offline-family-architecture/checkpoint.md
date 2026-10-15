@@ -122,15 +122,23 @@ All Cargo work is locked/offline; the optimized verification build uses one job.
   test passed (`logs/dispatcher-pointer.log`); both cleanup passes reclaimed
   zero bytes and its empty TMPDIR is removed. The exact overlay is retained in
   `logs/test-relocation-commit.txt` and `logs/test-relocation.patch`.
-- Pending CLI targets: `fixture`, `hdma_probe`, `iteration_demonstrations`,
-  `live`, `live_frames`, `metrics`, `no_python`, `observations`, `packed`,
-  `parity`, `pattern_promotion`, `patterns`, `plm_spawn`, `prefix`, `processes`,
-  `producer_metrics`, `readiness_feedback`, `readiness_interrupt`,
-  `resource_metrics`, `routine_jobs`, `selection`, `session_authority`.
-  These are running in exec session 11117, with the changed family target,
-  locked/offline release, one Cargo job, one test thread, all four current
-  helper variables and fresh `integration-tmp-3`. Log: `logs/integration-3.log`.
-  Other passing groups need not be repeated.
+- `logs/integration-3.log`: the changed family target passed all 18 remaining
+  tests (two ignored). Another 27 tests passed across `fixture`, `hdma_probe`,
+  `iteration_demonstrations`, `live`, `live_frames`, `metrics`, `no_python`,
+  `observations`, `packed`, `parity`, `pattern_promotion`. `patterns` stopped on
+  a missing `deps/65816/v1` prerequisite in the isolated worktree. The test's
+  developed corpus is separate; it still canonicalizes the existing pinned
+  location and later copies the original EA/CA cases. A read-only link to main's
+  existing corpus now provides this prerequisite; exact input hashes are in
+  `logs/pattern-corpus-prerequisites.sha256`. No source change was needed.
+  Both cleanup passes over `integration-tmp-3` succeeded; its rejected pattern
+  report and diagnostic source snapshot remain.
+- Remaining CLI targets are running in exec session 97482: `patterns`,
+  `plm_spawn`, `prefix`, `processes`, `producer_metrics`, `readiness_feedback`,
+  `readiness_interrupt`, `resource_metrics`, `routine_jobs`, `selection`,
+  `session_authority`. They use locked/offline release, one Cargo job, one
+  test thread, all four current helper variables and fresh `integration-tmp-4`.
+  Log: `logs/integration-4.log`. Other passing groups need not be repeated.
 - Both real Native execution proofs remain pending. Follow
   `native-verification-plan.md`; preserve the 12 complete recipes (8,159 pairs),
   full-family negative controls and current budgets. `SM_NATIVE_PERFORMANCE_ONLY`
