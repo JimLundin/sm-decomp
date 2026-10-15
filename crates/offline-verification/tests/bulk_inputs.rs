@@ -23,7 +23,13 @@ use translation_execution::{
     model::{ExecutionPhase, sealed, sha256},
 };
 
-const HOST: &[(&str, &str)] = &[("crates/offline-verification/tests/bulk_inputs.rs", include_str!("bulk_inputs.rs"))];
+#[path = "bulk_inputs/graph.rs"]
+mod graph;
+
+const HOST: &[(&str, &str)] = &[
+    ("crates/offline-verification/tests/bulk_inputs.rs", include_str!("bulk_inputs.rs")),
+    ("crates/offline-verification/tests/bulk_inputs/graph.rs", include_str!("bulk_inputs/graph.rs")),
+];
 
 fn verifier() -> Result<OfflineFamilies> {
     Ok(OfflineFamilies::new(HostInputs::new(HOST, digest(&std::env::current_exe()?)?)?))

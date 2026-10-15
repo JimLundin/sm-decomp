@@ -1,7 +1,7 @@
 # Ticket 07 work graph handoff
 
-Status: claimed implementation, before first red controls. No scheduler change
-or new Native scheduling contract has been accepted.
+Status: claimed implementation, first three public actual-C controls are red on
+the unchanged scheduler. No new Native scheduling contract has been accepted.
 
 - Owner: `/root/dependency_facts_resume`, parent session
   `01a13e7f-ab01-7413-a1c2-288b08a4b719`.
@@ -61,6 +61,25 @@ Native/Original recovery with missing projections and publication interruptions.
 The existing standalone independent-case diagnostic behavior remains a contract
 to preserve while applying stop-admission to the batch graph.
 
-At this checkpoint no build/test child is active and no verification run exists.
-Finished-run cleanup, retained readback and root-owned integrated worktree
-retirement remain required before ticket resolution.
+## Baseline feedback loop
+
+`cargo test -p offline-verification --locked --offline --test bulk_inputs graph::
+-- --nocapture --test-threads=1` reaches all three intended failures on the
+unchanged scheduler. Two controls show family b starting after a terminal
+comparison rejection or observer publication failure. The complete 48-pair
+actual-C workload observes four active producers but **16 resident Fixture
+helpers**, exceeding two per shared worker. Full chain observations agree before
+the bound assertion. Baseline batch elapsed time was 8.332222724 seconds; this
+single sample is not a speedup claim.
+
+The log is `/home/jim/sm-decomp-performance-graph-proof/red-controls.log`.
+The exact reader/test executable is retained at
+`/home/jim/sm-decomp-performance-graph-proof/tools/bulk-inputs-baseline`.
+Both cleanup passes ran for every finished successful/rejected control, including
+the initial rejection assertion correction; per-project cleanup output remains
+under `proof/red/`. No build/test process remains active at this checkpoint.
+
+Next: implement the shared ordinary executor and bounded stage projection,
+retaining existing Native waves/Original ordering. Final independent readback,
+both whole-proof cleanup passes and root-owned integrated worktree retirement
+remain required before ticket resolution.
