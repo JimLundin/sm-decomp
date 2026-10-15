@@ -84,3 +84,40 @@ fn offline_identity_reads_the_complete_controller_image() {
     let (bytes, size) = trace("offline", "family-verify");
     assert_eq!(bytes, size, "Offline preparation must consume the complete exact producer image once");
 }
+
+#[test]
+#[ignore = "explicit untraced retained-tool startup comparison"]
+fn alternating_utility_startup_comparison() {
+    let baseline = fs::canonicalize(std::env::var_os("SM_STARTUP_BASELINE").expect("baseline tool")).unwrap();
+    let candidate = fs::canonicalize(std::env::var_os("SM_STARTUP_CANDIDATE").expect("candidate tool")).unwrap();
+    let root = PathBuf::from(std::env::var_os("SM_STARTUP_PROOF").expect("fresh proof root"));
+    fs::create_dir(&root).unwrap();
+    fs::create_dir(root.join("empty")).unwrap();
+    let mut report = String::new();
+    for round in 0..3 {
+        let order = if round % 2 == 0 { [0, 1] } else { [1, 0] };
+        for index in order {
+            let (name, tool) = [("baseline", &baseline), ("candidate", &candidate)][index];
+            let host_load = fs::read_to_string("/proc/loadavg").unwrap_or_default();
+            let started = Instant::now();
+            let output = Command::new("timeout")
+                .args(["--signal=TERM", "--kill-after=2s", "30s"])
+                .arg(tool)
+                .args(["cleanup", "--root"])
+                .arg(root.join("empty"))
+                .stdin(Stdio::null())
+                .output()
+                .unwrap();
+            let seconds = started.elapsed().as_secs_f64();
+            fs::write(root.join(format!("{round}-{name}.stdout.toml")), &output.stdout).unwrap();
+            fs::write(root.join(format!("{round}-{name}.stderr.txt")), &output.stderr).unwrap();
+            assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+            report.push_str(&format!(
+                "[[sample]]\nround = {round}\nvariant = {name:?}\nbinary = {:?}\nseconds = {seconds:.9}\nhost_load_before = {host_load:?}\n",
+                tool.to_str().unwrap()
+            ));
+            fs::write(root.join("measurements.toml"), &report).unwrap();
+            println!("round={round} {name}: {seconds:.6}s");
+        }
+    }
+}

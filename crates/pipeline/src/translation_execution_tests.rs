@@ -267,6 +267,54 @@ fn closed_installation_rejects_overlapping_roots_and_metadata_budget_before_disp
 }
 
 #[test]
+#[ignore = "explicit disposable-image installation identity control"]
+fn changed_controller_and_helper_images_are_rejected_before_dispatch() -> Result<()> {
+    let project = Project::new()?;
+    let mut installation = project.installation.clone();
+    let copied_controller = project.root.join("installed/controller");
+    fs::copy(&installation.controller.path, &copied_controller)?;
+    installation.controller = installed(copied_controller)?;
+    installation.policy.adapter_sha256 = installation_identity(&installation)?;
+    installation.validate()?;
+
+    let helper = fs::read(&installation.helper.path)?;
+    fs::write(&installation.helper.path, b"changed disposable helper image")?;
+    let helper_error = installation.validate().expect_err("changed helper image admitted").to_string();
+    ensure!(
+        helper_error.contains("installed controller/tool identity changed")
+            && helper_error.contains(installation.helper.path.to_str().unwrap()),
+        "helper control failed for an unrelated prerequisite: {helper_error}"
+    );
+    let changed_helper_sha256 = digest(&installation.helper.path)?;
+    fs::write(&installation.helper.path, helper)?;
+    installation.validate()?;
+
+    fs::write(&installation.controller.path, b"changed disposable controller image")?;
+    let controller_error = installation.validate().expect_err("changed controller image admitted").to_string();
+    ensure!(
+        controller_error.contains("installed controller/tool identity changed")
+            && controller_error.contains(installation.controller.path.to_str().unwrap()),
+        "controller control failed for an unrelated prerequisite: {controller_error}"
+    );
+    ensure!(!installation.state_root.exists(), "identity refusal created an execution state root");
+    write_once(
+        &project.root.join("tool-identity-control.json"),
+        &serde_json::json!({
+            "format": "installed-tool-identity-control-v1",
+            "helper": installation.helper,
+            "controller": installation.controller,
+            "changed_helper_sha256": changed_helper_sha256,
+            "changed_controller_sha256": digest(&installation.controller.path)?,
+            "helper_error": helper_error,
+            "controller_error": controller_error,
+            "valid_installation_checked_before_each_mutation": true,
+            "state_created": false,
+        }),
+    )?;
+    Ok(())
+}
+
+#[test]
 fn partial_apply_and_incomplete_clone_failures_preserve_source_then_retire_once() -> Result<()> {
     for unborn in [false, true] {
         let project = Project::new()?;
