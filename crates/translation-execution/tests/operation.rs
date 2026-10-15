@@ -84,6 +84,10 @@ int main(int argc,char **argv) {
 }
 impl Drop for Fixture {
     fn drop(&mut self) {
+        if std::env::var_os("SM_OPERATION_TEST_KEEP").is_some_and(|value| value == "1") {
+            eprintln!("Retained operation control: {}", self.root.display());
+            return;
+        }
         let _ = fs::remove_dir_all(&self.root);
     }
 }
@@ -127,6 +131,40 @@ fn sealed_process_output_lost_response_retry_and_checkout_retirement() {
     fs::remove_file(fixture.root.join("probe.c")).unwrap();
     assert_eq!(fixture.run(&ctx).unwrap(), first);
     assert_eq!(operation::authenticate(&fixture.operation_root(), &ctx).unwrap(), first);
+}
+
+#[cfg(feature = "test-support")]
+#[test]
+fn complete_operation_admission_reads_each_retained_byte_once() {
+    let fixture = Fixture::new();
+    let context = fixture.context("single-admission");
+    let produced = fixture.run(&context).unwrap();
+    assert!(produced.passed, "{}", produced.diagnostic);
+    let root = fixture.operation_root();
+    fs::write(
+        fixture.root.join("admission-request.json"),
+        serde_json::to_vec(&serde_json::json!({
+            "root": root,
+            "program": fixture.program,
+            "context": context,
+            "limits": limits(),
+        }))
+        .unwrap(),
+    )
+    .unwrap();
+    let ((result, result_reference, references), read_bytes) =
+        translation_execution::retention::testing::read_bytes(|| {
+            let result =
+                operation::authenticate_request(&root, &context, &fixture.program, &limits(), b"bounded-input")
+                    .unwrap();
+            let result_reference = operation::reference(&root, &context).unwrap();
+            let references = operation::references(&root, &context).unwrap();
+            (result, result_reference, references)
+        });
+    assert_eq!(result, produced);
+    assert!(references.contains(&result_reference));
+    let expected_bytes = references.iter().map(|reference| reference.bytes).sum::<u64>();
+    assert_eq!(read_bytes, expected_bytes, "complete operation admission reread retained evidence");
 }
 
 #[test]

@@ -23,6 +23,43 @@ const MAX_GROUP_PAGES: usize = 16;
 const MAX_GROUP_REFERENCES: usize = MAX_REFERENCES * MAX_GROUP_PAGES;
 const MAX_GROUPS: usize = 256;
 
+/// Scoped reader accounting for deterministic admission controls. Production
+/// builds contain neither this observation state nor reader instrumentation.
+#[cfg(any(test, feature = "test-support"))]
+pub mod testing {
+    use std::cell::Cell;
+
+    thread_local! {
+        static READ_BYTES: Cell<Option<u64>> = const { Cell::new(None) };
+    }
+
+    pub(crate) fn read(bytes: usize) {
+        READ_BYTES.with(|value| {
+            if let Some(previous) = value.get() {
+                value.set(Some(previous.checked_add(bytes as u64).expect("test reader extent overflow")));
+            }
+        });
+    }
+
+    /// Observe only bounded-reader bytes on the calling thread, without
+    /// retaining paths, payloads, or observations outside this one scope.
+    pub fn read_bytes<T>(action: impl FnOnce() -> T) -> (T, u64) {
+        struct Reset;
+        impl Drop for Reset {
+            fn drop(&mut self) {
+                READ_BYTES.with(|value| value.set(None));
+            }
+        }
+        READ_BYTES.with(|value| {
+            assert!(value.get().is_none(), "nested test reader observation");
+            value.set(Some(0));
+        });
+        let _reset = Reset;
+        let result = action();
+        (result, READ_BYTES.with(|value| value.get().unwrap()))
+    }
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct Reference {
@@ -159,6 +196,8 @@ pub(crate) fn read_bounded(path: &Path, maximum: u64) -> Result<Vec<u8>> {
     let expected = file.metadata()?.len();
     let mut bytes = Vec::new();
     (&mut file).take(maximum.saturating_add(1)).read_to_end(&mut bytes)?;
+    #[cfg(any(test, feature = "test-support"))]
+    testing::read(bytes.len());
     ensure!(
         bytes.len() as u64 == expected && bytes.len() as u64 <= maximum,
         "retained file changed or exceeded its extent"
@@ -206,6 +245,8 @@ pub fn seal_file(path: &Path, maximum: u64) -> Result<Reference> {
         if n == 0 {
             break;
         }
+        #[cfg(any(test, feature = "test-support"))]
+        testing::read(n);
         count = count.checked_add(n as u64).context("retained extent overflow")?;
         ensure!(count <= maximum, "retained file exceeded budget while sealing");
         hash.update(&buffer[..n]);
