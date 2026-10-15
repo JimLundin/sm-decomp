@@ -52,18 +52,8 @@ impl OfflineFamilies {
 
     pub fn verify(&self, request: VerifyRequest) -> Result<FamilyRun> {
         inputs::with_host(&self.host, || {
-            decomp_source::context::limited(|| {
-                let checkout = request.checkout.clone();
-                let source = request.source.clone();
-                let report = family::verify(request)?;
-                if report.status == "offline-verified" {
-                    family::authenticate_with_source(
-                        AuthenticateRequest { checkout, verdict: report.run.join("verdict.toml") },
-                        &source,
-                    )?;
-                }
-                Ok(FamilyRun { report, reused: false })
-            })
+            let report = family::verify(request)?;
+            Ok(FamilyRun { report, reused: false })
         })
     }
 

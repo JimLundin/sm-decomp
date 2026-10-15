@@ -32,65 +32,69 @@ impl OfflineFamilies {
     /// perform complete declared verification when reuse is unavailable.
     pub fn verify_registered(&self, request: RegisteredRequest) -> Result<RegisteredRun> {
         inputs::with_host(self.host_inputs(), || {
-            decomp_source::context::limited(|| {
-                let catalog = catalog::catalog(&request.checkout)?;
-                let entry = catalog::entry(&catalog, &request.family)?;
-                ensure!(
-                    [
-                        "family",
-                        "offline-family",
-                        "dispatcher",
-                        "projectile",
-                        "offline-projectile",
-                        "callback",
-                        "power-bomb",
-                        "plm",
-                        "plm-instructions",
-                        "ridley-subsystem"
-                    ]
-                    .contains(&entry.kind.as_str()),
-                    "unsupported native family kind: {}",
-                    entry.kind
-                );
-                ensure!(entry.prepare.is_none(), "unreviewed family preparation command");
-                let mut manifest = request.checkout.join(&entry.manifest);
-                let manifest_sha256 = inputs::bounded::digest(&manifest)?;
-                if let Some(previous) = &request.previous
-                    && previous.manifest_sha256 == manifest_sha256
-                    && previous.kind == entry.kind
-                    && let Ok(report) = family::authenticate_with_source(
-                        AuthenticateRequest { checkout: request.checkout.clone(), verdict: previous.verdict.clone() },
-                        &request.source,
-                    )
-                {
-                    return Ok(RegisteredRun {
-                        run: FamilyRun { report, reused: true },
-                        manifest_sha256,
-                        kind: entry.kind,
-                    });
-                }
-                if entry.kind == "plm-instructions" {
-                    let stamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_nanos();
-                    manifest = plm_fixtures::generate(
-                        &request.checkout,
-                        &request.output.join("fixtures").join(stamp.to_string()),
-                        None,
-                    )?
-                    .manifest;
-                }
-                let run = self.verify(VerifyRequest {
-                    checkout: request.checkout,
-                    source: request.source,
-                    root: request.root,
-                    workers: request.workers,
-                    case_jobs: request.case_jobs,
-                    manifest,
-                    output: request.output.join("evidence"),
-                    adapter: entry.kind.clone(),
-                    execution: String::new(),
-                })?;
-                Ok(RegisteredRun { run, manifest_sha256, kind: entry.kind })
-            })
+            let catalog = catalog::catalog(&request.checkout)?;
+            let entry = catalog::entry(&catalog, &request.family)?;
+            ensure!(
+                [
+                    "family",
+                    "offline-family",
+                    "dispatcher",
+                    "projectile",
+                    "offline-projectile",
+                    "callback",
+                    "power-bomb",
+                    "plm",
+                    "plm-instructions",
+                    "ridley-subsystem"
+                ]
+                .contains(&entry.kind.as_str()),
+                "unsupported native family kind: {}",
+                entry.kind
+            );
+            ensure!(entry.prepare.is_none(), "unreviewed family preparation command");
+            let mut manifest = request.checkout.join(&entry.manifest);
+            let manifest_sha256 = inputs::bounded::digest(&manifest)?;
+            if let Some(previous) = &request.previous
+                && previous.manifest_sha256 == manifest_sha256
+                && previous.kind == entry.kind
+                && let Ok(report) = family::authenticate_with_source(
+                    AuthenticateRequest { checkout: request.checkout.clone(), verdict: previous.verdict.clone() },
+                    &request.source,
+                )
+            {
+                return Ok(RegisteredRun {
+                    run: FamilyRun { report, reused: true },
+                    manifest_sha256,
+                    kind: entry.kind,
+                });
+            }
+            if entry.kind == "plm-instructions" {
+                let stamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_nanos();
+                manifest = plm_fixtures::generate(
+                    &request.checkout,
+                    &request.output.join("fixtures").join(stamp.to_string()),
+                    None,
+                )?
+                .manifest;
+            }
+            let run = self.verify(VerifyRequest {
+                checkout: request.checkout.clone(),
+                source: request.source.clone(),
+                root: request.root,
+                workers: request.workers,
+                case_jobs: request.case_jobs,
+                manifest,
+                output: request.output.join("evidence"),
+                adapter: entry.kind.clone(),
+                execution: String::new(),
+            })?;
+            if run.report().status == "offline-verified" {
+                family::authenticate_with_source(
+                    AuthenticateRequest { checkout: request.checkout, verdict: run.evidence() },
+                    &request.source,
+                )?;
+            }
+            Ok(RegisteredRun { run, manifest_sha256, kind: entry.kind })
         })
     }
 }
