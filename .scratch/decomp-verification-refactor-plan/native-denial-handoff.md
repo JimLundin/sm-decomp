@@ -1,6 +1,6 @@
 # Native negative-control adaptation
 
-Status: claimed; focused actual compiler denial passed, full-real gate next.
+Status: claimed; compiler controls passed, newly reached runtime control needs adaptation.
 Owner: `/root/bulk_context_resume`, parent `/root`, session
 `01a13e7f-ab01-7413-a1c2-288b08a4b719`.
 Main tracking: verification refactor ticket 01, integration-owner claim.
@@ -43,15 +43,31 @@ process passed in 0.03s with `PATH=/unavailable` and compiler/helper environment
 variables absent. Exact logs are `logs/focused*`, with cleanup records under
 `focused/`. No focused writer remains; exec 63226 completed successfully.
 
-Next: run `full_real_family_retains_authenticates_and_reuses_every_producer`
-using the retained `tools/sm-pipeline-tests`, matched `sm-translation-sandbox`,
-the installed nightly-2026-09-29 rustc, `SM_NATIVE_FULL_SOURCE` pointing to the
-frozen snapshot and `SM_NATIVE_PROOF_NAME=full-real`. `SM_NATIVE_PROOF_ROOT`
-is the proof directory above. `SM_NATIVE_PERFORMANCE_ONLY` must be absent.
-Retain and independently authenticate all resulting cases after both cleanup
-passes. No implementation source will change during that gate.
+The complete full-real invocation (exec 6474) stopped after 54.49s at the
+pre-existing runtime-denial fixture: `std::fs`, `std::fs::read` and
+`std::fs::write` are unmodeled runtime inputs, so its injected candidate now
+refuses before Native intent publication. Source remains `1b0b75c`. This gate
+already passed all 16 original pairs / 34 producers in 26.626s, replay and
+tampering, the explicit include capture refusal, actual compiler file denial
+and durable replay, and the separate rejected Native compiler receipt with
+two real producers and unchanged retry. The remaining runtime and reservation
+controls were not completed; no complete full-real acceptance is claimed.
 
-Pending: repaired full-real gate, its cleanup and independent authentication,
+Both cleanup passes completed after the stopped test; deduplication reclaimed
+4,194,304 bytes across 48 snapshots. The cleanup binary is retained at
+`/home/jim/sm-decomp-performance-bulk-proof/b1f8691-20261015/tools/sm-pipeline`;
+its cleanup source is identical to this checkpoint. Logs are
+`logs/failed-full-real-{cleanup,deduplicate}.log`. The separate compiler-free
+reader passed every completed retained case in 1.48s afterward, recorded in
+`logs/failed-full-real-reader.{log,time}`. Remaining disk space was
+95,679,139,840 bytes. No writer remains in either proof.
+
+The root integration owner was notified of this newly reached stale runtime
+fixture. Next adapt its actual runtime denial through a test-only explicit
+Program while preserving early Native runtime-input refusal and the complete
+required family exercise. No production scanner or runtime change is allowed.
+
+Pending: runtime-control adaptation, repaired full-real gate, its cleanup and independent authentication,
 retirement-reference audit and final handoff. Compiler,
 Fixture and family budgets remain 60, 5 and 180 seconds. Cargo is locked/offline,
 jobs 1; shared execution root is `/home/jim/sm-decomp/out/pipeline`, workers 4.
