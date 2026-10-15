@@ -15,7 +15,7 @@ production policies retain their own authority and prerequisites.
 | [03](issues/03-dependency-and-result-identities.md) | task | 02 | Syntax-aware dependency facts and precise identity contracts |
 | [04](issues/04-shared-build-preparation.md) | task | 03 | Shared compiler preparation and eligible build coalescing |
 | [05](issues/05-offline-evidence-prototype.md) | prototype | None | Measured indexed-evidence experiment using frozen admitted baseline outputs |
-| [06](issues/06-indexed-evidence-and-admission.md) | task | 02, 03, 05 | Production indexed evidence, Native attribution and scoped retention |
+| [06](issues/06-indexed-evidence-and-admission.md) | task | 02, 03, 05 | Bounded payload reuse within ordinary/Native admission; current formats retained |
 | [07](issues/07-batch-work-graph.md) | task | 04, 06 | Private work graph and explicit Native scheduling contracts |
 | [08](issues/08-optimized-tools-and-installation.md) | task | 03, 04, 06, 07 | Validated optimized tool pair and concrete sealed installation candidate |
 | [09](issues/09-integration-measurement-and-cleanup.md) | task | 08 | Complete required acceptance, measured improvement and rollout cleanup |
@@ -68,7 +68,9 @@ baseline remains retained; acceptance still needs the complete corrected matrix.
   capacity authority. [Architecture](architecture.md).
 - Prioritize complete required-run performance and separately measure incremental
   selection and unchanged reuse. [Validation](validation.md).
-- Produce immutable indexed Offline evidence during execution; choose storage
-  granularity/transport after a bounded comparison. [Ticket 05](issues/05-offline-evidence-prototype.md).
+- Storage-only packing reduced space but increased elapsed time in all 18
+  alternating samples. Keep current formats and remove duplicate payload reads
+  within independent admission. Direct producer transport remains unmeasured.
+  [Revised ticket 06](issues/06-indexed-evidence-and-admission.md).
 - A daemon, distributed execution and reference-output caching remain separate
   deferred designs, with no promised speedup. [Alternatives](architecture.md#compare-the-alternatives).

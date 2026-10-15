@@ -13,9 +13,9 @@ No installed policy or achieved verification stage changes merely on that author
 
 Build a bulk verification Module in `offline-verification` that owns one frozen
 input/catalog snapshot and a private typed graph of required work for the batch.
-Reuse compiler preparation and eligible artifacts across families. Write Offline
-evidence as indexed immutable bundles during execution, with bounded staging and
-independent authentication. Keep the existing shared worker pool and the existing
+Reuse compiler preparation and eligible artifacts across families. Reuse bounded
+authenticated payload bytes within each independent evidence admission. Keep the
+current directory/operation-index formats, the existing shared worker pool and the existing
 Translation journal as their respective capacity and attempt authorities.
 
 This builds on the approved
@@ -30,8 +30,8 @@ The significant changes are:
    Fixture payload loading and explicit current-source checks.
 2. A private work graph that coalesces eligible build work and schedules ready
    work across families under the existing capacity and frozen ordering rules.
-3. Indexed Offline evidence produced directly, replacing repeated directory
-   inventories and large persistent trees of individual state files.
+3. One bounded payload reader per admission window, removing repeated evidence
+   reads while retaining exact inventory, state, chain and producer checks.
 4. Separate computation identity from attempt/admission identity so build reuse
    can be precise without weakening production authorization or provenance.
 
@@ -50,13 +50,20 @@ already underway.
 | Shared input/catalog context | Removes repeated discovery, decoding and eligible preparation | Same savings during planning and admission | Medium |
 | Precise dependencies and identities | Enables safe build sharing; does not reduce mandatory cases | Avoids unnecessary selection and invalidation | Medium |
 | Shared build preparation/artifacts | Avoids duplicate eligible compilation; cold runs still build distinct artifacts | Reuses unchanged eligible artifacts | Medium to large; Native producer changes are a separate gate |
-| Direct indexed evidence | Reduces small-file traffic, repeated inventories and state reads | Makes complete retained-result authentication and cleanup cheaper | Large; prototype decides storage and transport |
+| Bounded admission reads | Removes duplicate payload hashing/reading in finalization | Removes the same repeated reads during each independent admission | Medium; current formats and producers retained |
 | Private work graph | Keeps available capacity busy with independent families and ready cases | Reconciles existing work and schedules remaining work | Large; existing ordering and reservation contracts matter |
 | Optimized installed tools | May reduce hashing, parsing and comparison CPU time | May reduce startup and admission overhead | Small to medium code change, with full installation validation |
 
 Instrumentation comes first so implementation effort follows the measured cost.
-The most substantial rearchitecture is direct evidence production plus a shared
-batch work graph. The shared context and identity work provide their foundation.
+The most substantial selected rearchitecture is a shared input/build context plus
+a private batch work graph. The source and identity work provide their foundation.
+
+The ticket 05 storage experiment measured 18 alternating samples of a complete
+ordinary proof. Packing reduced retained space but increased the measured
+conversion/reopen/extraction/admission/cleanup time. The implementation therefore
+selects the narrower reader change in [revised ticket 06](issues/06-indexed-evidence-and-admission.md).
+Direct producer transport remains an unmeasured future option; no reduction in
+initial producer file writes is claimed by this selection.
 
 ## Evidence and limits
 
@@ -147,10 +154,10 @@ gates are recovered. Acceptance, baseline conclusions and main integration remai
 dependent on completing those gates; the frozen verifier checkout is not edited
 by performance workers.
 
-Two explicit contract changes need their own verified cutovers: packed Native
-output references, and any Native sharing/scheduling that changes required
-compiler slots, reservation groups or failure ordering. Initially preserve those
-obligations. Performance is not grounds to reinterpret an old frozen policy.
+Any later packed Native output references or Native sharing/scheduling that
+changes required compiler slots, reservation groups or failure ordering needs
+its own verified cutover. The selected reader change preserves those obligations.
+Performance is not grounds to reinterpret an old frozen policy.
 
 ## Plan completion evidence
 

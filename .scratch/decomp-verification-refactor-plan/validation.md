@@ -1,6 +1,8 @@
 # Verification and measurement gates
 
-Status: proposed; no new performance or gameplay acceptance has been established.
+Status: implementation gates active; no whole-batch improvement or gameplay
+acceptance has been established. Storage-only packing was rejected for this
+iteration after ticket 05's measured comparison.
 
 ## Establish a usable baseline
 
@@ -78,9 +80,11 @@ These verify removed work without depending on noisy wall-clock limits:
 - Within one independent authentication stage, each distinct immutable payload
   is read/authenticated at most once where the new representation permits it.
   Every later admission stage starts a new validation scope.
-- Packed payload files scale with bounded pack/chunk count. Complete logical
-  per-case and per-producer records still scale with the required domain; an index
-  is not permission to omit attribution. Report retained and temporary file counts.
+- The selected admission reader preserves physical file counts while reducing
+  repeat payload reads. Report retained and temporary file counts without claiming
+  a packing benefit. If direct packing is reconsidered later, its physical payload
+  count must scale with bounded packs/chunks while preserving every logical case
+  and producer record.
 - Scheduler activity never exceeds shared capacity or aggregate reservations.
   Waiting dependencies/cache keys consume no producer slot. Existing barriers
   remain until the approved scheduling contract permits their removal.

@@ -1,6 +1,7 @@
 # Recommended verification architecture
 
-Status: proposed; Interface sketches are illustrative Rust, not installed code.
+Status: implementation active; Interface sketches are illustrative Rust.
+Storage selection revised after the bounded ticket 05 experiment.
 
 This is the selected proposal. The three alternative sketches are retained for
 comparison; [validation.md](validation.md) and [map.md](map.md) govern the selected
@@ -189,7 +190,37 @@ a current-format contract, precise reservations and attributable producer
 dependencies, followed by new frozen policy integration. Shared objects cannot
 be mislabeled as fresh per-family compilation.
 
-## 4. Produce indexed Offline evidence directly
+## 4. Reuse bounded bytes within independent evidence admission
+
+The initial direct-packing proposal was a decision gate. Ticket 05 measured
+deduplicated directory output against raw Store payloads, 256-byte Merkle images,
+and private raw stores followed by authenticated import. On the complete 16-pair
+ordinary proof, every packing variant took longer across 18 alternating samples,
+although retained allocation fell from about 40 MB to 10 MB with raw payloads.
+See [revised ticket 06](issues/06-indexed-evidence-and-admission.md) and its exact
+measurement pointers. These are storage-stage results, not whole-batch timings.
+
+Select bounded payload reuse inside an admission, retaining the current directory
+and operation-index formats. A small owning reader authenticates each opened
+payload while reading it, then supplies the same immutable bytes to inventory,
+semantic comparison and chain checks. Metadata cannot replace actual reads.
+Complete namespace/member checks and authentication of every remaining member
+still precede acceptance. Keep memory bounded by a case/operation window and
+explicitly account for chain state retained beyond that window.
+
+Native operation admission exposes its authenticated result, result reference
+and complete dependency references together. Those projections must not each
+reload all outputs. They preserve exact producer context, Program, request,
+limits, copied outputs/logs and reservations. Independent later admission creates
+a new scope, opens every required payload again and needs no invocation cache.
+
+This removes duplicate reads; it does not reduce the producer's original file
+writes or change physical evidence file count. Existing exact extraction,
+failure diagnostics and cleanup remain supported. Direct transport has not been
+measured and is deferred. The design requirements below retain the original
+alternative for any future experiment; they are not selected production work.
+
+### Deferred direct-output alternative
 
 The main storage change is to replace the directory-first evidence lifecycle with
 a bounded record stream and immutable payload objects:

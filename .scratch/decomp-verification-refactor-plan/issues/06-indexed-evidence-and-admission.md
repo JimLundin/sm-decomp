@@ -1,4 +1,4 @@
-# Integrate indexed output, independent admission and scoped retention
+# Reuse bounded evidence reads within independent admission
 
 Status: open
 Blocked by: 02, 03, 05
@@ -7,47 +7,62 @@ Type: task
 
 ## Scope and ownership
 
-Own the measured Offline evidence writer/reader and private output transport in
-`offline-verification`, generic required storage operations in `evidence`, Native
-output-reference integration and cleanup consumers. Keep build recipe edits with
-ticket 04; coordinate any shared recipe file through one owner.
+Own bounded Offline evidence reading in `offline-verification`, its Native
+operation-admission composition, and narrowly required generic retained-reader
+operations in `translation-execution`. Keep current directory/operation-index
+formats and producer output paths. Coordinate shared recipe/input files with 02
+and build preparation with 04.
 
 ## Required work
 
-Implement the prototype's selected representation using ticket 03's content,
-computation and admission identities. Preserve all logical case
-members and producer records, even when equal bytes share content. Bound active
-staging, pending packs, collector buffers and total retained data. Commit, reopen
-and authenticate before publishing pointers or releasing required staging.
-Failure diagnostics remain readable. Import independently produced stores through
-the supported ordinal-remapping path.
+Use one bounded owned reader for the payloads a case/producer admission needs.
+Authenticate bytes while reading them, and reuse those immutable bytes for the
+corresponding inventory, semantic comparison and chain checks. Preserve exact
+names/member counts and complete source/producer reference closure; missing,
+duplicate, redirected, corrupt or undeclared evidence must still refuse.
+Unconsumed members require explicit authentication before success. Do not trust
+path metadata or a caller-supplied digest instead of reading the bytes.
 
-Within each independent admission, reuse validated immutable payload bytes for
-inventory/comparison/chain checks. Later admissions and post-cleanup checks reopen
-their own closure. Preserve exact member counts and detect missing data even when
-claimed roots match. Support single-case inspection and exact extraction through
-the current reader.
+Bound live memory by an explicit case/operation window, including branch/chain
+continuations, and preserve input/output/deadline accounting. A later admission
+or post-cleanup check creates a fresh reader and independently reopens its entire
+required closure. Preserve current case inspection, failed diagnostics, cleanup,
+Native compiler slots, exact Program/context/request checks, copied output checks
+and aggregate reservations. No new output transport or receipt format is selected.
 
-Update Native producer ownership, output capabilities, reservations and indexed
-references together under one current contract. Reuse existing operation chunks.
-Do not treat a collector's aggregate success as evidence for each child. Introduce
-no old-format readers or automatic rewrites of frozen receipts.
+Compose the narrow Native finalization recovery's authenticated-operation result
+with the bulk input/identity work. That early slice removes repeated result and
+reference loads without changing storage; this ticket also removes redundant
+ordinary inventory/comparison reads wherever the bounded reader permits it.
 
 ## Acceptance
 
-All storage/protocol controls from 05 pass in production ordinary and affected
-Native recipes. Authenticate without producers or invocation memory after cleanup
-and worktree retirement. Physical payload file counts and actual reads match the
-selected design; import/compression costs are included in performance results.
-Cleanup uses explicit finished-run facts and preserves every published shared
-object/source/reader. No general shared-store garbage collector is required.
+Production ordinary and affected Native recipes preserve all applicable missing,
+corrupt, extra-member, equal-wrong-output, chain, source and producer controls.
+Authenticate without producers or invocation memory after cleanup and worktree
+retirement. Structural read counts prove removed duplicate payload work inside
+one admission; independent later checks perform new reads. Retained file counts
+remain those of the existing format. Include complete admission and cleanup in
+timings, with all required evidence still readable.
 
 ## Completion evidence
 
 Pending. Record exact byte comparisons, full producer attribution, interrupted-run
-controls, timing/resource deltas, cleanup receipts and post-retirement admission.
+controls, reader byte counts and memory bounds, timing/resource deltas, cleanup
+receipts and post-retirement admission.
 
 ## Comments
 
-If the prototype selects a narrower improvement, revise this ticket before claiming
-it rather than implementing an unmeasured storage architecture.
+2026-10-15 decision from ticket 05: 18 alternating storage-only samples of the
+complete 16-pair ordinary proof (333 members, 43,675,132 logical bytes) took
+0.246–0.358 seconds for deduplicated directories, 0.880–1.100 seconds for raw
+Store payloads, 1.016–2.221 seconds for 256-byte Merkle pages, and 1.366–2.144
+seconds for private raw stores plus authenticated import. Packing reduced retained
+allocation from 40,206,336 to 9,912,320 bytes, but increased elapsed time.
+All 16 reported negative controls passed. Final prototype handoff/cleanup remains
+ticket 05's responsibility. Raw measurements:
+`/home/jim/sm-decomp-performance-evidence-proofs/20261015/ordinary/matrix.toml`.
+
+Select this narrower admission change for performance. The study measures packing
+already completed staging, not direct producer transport; it cannot rule out a
+future transport improvement or establish a whole-batch speedup.
