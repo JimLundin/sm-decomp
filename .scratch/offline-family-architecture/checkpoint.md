@@ -8,7 +8,10 @@ User authorization: approved the rendered design and instructed "go ahead".
 
 The complete assembled implementation is in
 `/home/jim/sm-decomp-offline-verifier`, branch
-`architecture/offline-verifier-20261015`. Frozen verification source is
+`architecture/offline-verifier-20261015`. Current source includes the PLM
+wrapper/accounting correction and passing focused regressions; a new production
+freeze and all final proofs are next.
+Historical frozen verification source is
 `15d5a7e`; subsequent source changes are test-only overlays `09ea8ca` and
 `1a770f8`. The first moves the pointer-normalization C-helper check
 from `pipeline/tests/family.rs` to `offline-verification/tests/dispatcher_pointer.rs`.
@@ -164,9 +167,29 @@ All Cargo work is locked/offline; the optimized verification build uses one job.
   It is retained as `tools/sm-pipeline-tests-1a770f8`, hash appended to
   `tools/executables.sha256`; `cmp` confirms the emitted Cargo executable.
   The original reader remains for the prior passing catalog/unit evidence.
-  Exactly one revised recipe test was selected and is running in exec session
-  53868, with a fresh `recipes-2/` root. Logs: `logs/recipes-2.log`,
-  `recipes-2.time`, `recipes-2-selected-test.txt`.
+  Exactly one revised recipe test was selected and finished in 717.60 seconds
+  in exec session 53868, with a fresh `recipes-2/` root. Logs:
+  `logs/recipes-2.log`, `recipes-2.time`, `recipes-2-selected-test.txt`.
+  The first five families passed execution, authentication, unchanged retry
+  and per-family cleanup (2,192 Fixture pairs). PLM then failed: its confined
+  wrapper redeclared `plm`, and finalization reported `native fixture coverage
+  missing` while accounting for the retained flat allocation manifest. The
+  rejected compiler result is retained, but PLM published no Native receipt.
+  Production fixes are in `plm_spawn.rs`, `recipe.rs`, and `native.rs`; focused
+  regressions now pass. Preserve the old frozen source and evidence unchanged.
+  Both whole-root cleanup passes succeeded with zero bytes reclaimed and 7,048
+  snapshots checked. Independent historical authentication with ordinary strace
+  exceeded the unchanged 60-second input deadline; its diagnostic log/trace
+  remain. Rerun with syscall filtering to avoid tracing unrelated file IO.
+- Corrected-source verifier tests: 41 passed, one optional proof ignored,
+  including generated PLM ABI execution in all four ordinary/confined and
+  canonical/renamed placements, and saved flat-PLM rejection replay with absent
+  helper/compiler paths, expired deadline and unchanged receipt hash/mtime.
+  Existing inflated-coverage/extent denial still passes. Logs are under the new
+  proof parent `/home/jim/sm-decomp-offline-architecture-proofs/plm-fix-20261015`,
+  `logs/regression-3.log`. An initial test compile needed the explicit `Case`
+  import; the next run passed all behavior assertions but two cleanup callbacks
+  lacked `SM_PIPELINE_CLEANUP_BIN`. The complete passing rerun supplies it.
 - Both actual Native execution proofs and independent post-cleanup/retirement
   Native authentication remain pending. Select all 12 declarations (8,159 pairs)
   exactly as in `native-verification-plan.md`, compiler limit 180 seconds,
@@ -198,7 +221,10 @@ original. These steps reclaimed 36,962,304 measured allocated bytes; see
 `logs/failed-setup-disposable-before.txt`, `failed-setup-retained-after.txt`
 and `recipes-setup-{uncompressed,decompressed}.sha256`.
 
-Next: finish the real recipe proof and run the full-family Native proof.
+Next: clean the finished historical `recipes-2/` root with both passes and
+authenticate its five retained families using its original reader. Finish the
+PLM regressions, commit/freeze corrected source, and run current-source owner,
+application, ordinary, catalog, complete recipe and full-family Native gates.
 Retain exact tools and source,
 run both cleanup passes, authenticate retained evidence, integrate on main,
 retire only these worktrees/build outputs and authenticate again. Resolve

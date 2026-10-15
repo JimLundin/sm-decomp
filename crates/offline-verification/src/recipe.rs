@@ -266,12 +266,14 @@ pub(crate) fn normalize_manifest(checkout: &Path, declared: Manifest, recipe: Op
     })
 }
 
-/// Generated declarations are already materialized in retained runs. Only PLM
-/// allocation fixtures still need their ordinary normalized view on readback.
-pub(crate) fn retained_manifest(manifest: Manifest, recipe: Option<&Recipe>) -> Result<Manifest> {
-    match recipe {
-        Some(Recipe::Plm) => plm_spawn::normalize(&manifest),
-        _ => Ok(manifest),
+/// Generated declarations are already materialized in retained runs. Flat PLM
+/// allocation fixtures still need routine groups for coverage and accounting,
+/// including rejected runs that have not published an implementation record.
+pub(crate) fn retained_manifest(manifest: Manifest) -> Result<Manifest> {
+    if manifest.routines.is_empty() && !manifest.cases.is_empty() {
+        plm_spawn::normalize(&manifest)
+    } else {
+        Ok(manifest)
     }
 }
 

@@ -1,4 +1,5 @@
 use super::*;
+use crate::family_model::Case;
 
 fn contract_for_family(
     checkout: &Path,
@@ -524,6 +525,15 @@ fn expired_outer_deadline_refuses_before_accessing_or_creating_any_source() -> R
 
 #[test]
 fn expired_saved_failure_replays_authentication_without_runtime_or_dispatch() -> Result<()> {
+    saved_failure_replay(false)
+}
+
+#[test]
+fn expired_saved_plm_failure_replays_flat_manifest_without_runtime_or_dispatch() -> Result<()> {
+    saved_failure_replay(true)
+}
+
+fn saved_failure_replay(retain_plm: bool) -> Result<()> {
     let directory = tool_execution::testing::Directory::new()?;
     let checkout = directory.0.join("checkout");
     fs::create_dir(&checkout)?;
@@ -531,8 +541,26 @@ fn expired_saved_failure_replays_authentication_without_runtime_or_dispatch() ->
     let run_path = output.join("family");
     fs::create_dir_all(&run_path)?;
     fs::write(checkout.join("candidate.rs"), b"pub fn Step() {}")?;
-    let manifest = Manifest { family: "failure".into(), rust_module: "candidate.rs".into(), ..Default::default() };
+    let manifest = Manifest {
+        family: "failure".into(),
+        rust_module: "candidate.rs".into(),
+        cases: if retain_plm {
+            ["terrain", "room", "hardcoded"]
+                .into_iter()
+                .map(|allocator| Case {
+                    name: allocator.into(),
+                    allocator: Some(allocator.into()),
+                    ..Default::default()
+                })
+                .collect()
+        } else {
+            Vec::new()
+        },
+        ..Default::default()
+    };
     crate::fixture_format::write(&checkout.join("manifest.smf"), &manifest)?;
+    let recipe = retain_plm.then_some(NativeRecipe::Plm);
+    let normalized = recipes::normalize_manifest(&checkout, manifest.clone(), recipe.as_ref())?;
     let limits =
         NativeLimits { timeout_seconds: 1, writable_bytes: 4096, stdout_bytes: 0, stderr_bytes: 0, stdin_bytes: 0 };
     let mut prepared = PreparedNative {
@@ -540,14 +568,14 @@ fn expired_saved_failure_replays_authentication_without_runtime_or_dispatch() ->
             family: "failure".into(),
             manifest: Asset { file: "manifest.smf".into(), sha256: digest(&checkout.join("manifest.smf"))? },
             source_inventory: Asset::default(),
-            coverage: BTreeMap::new(),
+            coverage: if retain_plm { coverage(&normalized)? } else { BTreeMap::new() },
             provenance: NativeProvenance::NativeScope { scope: Asset::default(), checkout: checkout.clone() },
             frozen_inputs: BTreeMap::new(),
             compiler_limits: limits.clone(),
             fixture_limits: limits,
-            recipe: None,
+            recipe,
         },
-        manifest,
+        manifest: normalized,
         source: Source::default(),
         pinned_source: directory.0.join("unavailable-source"),
         candidate_path: "candidate.rs".into(),
@@ -590,7 +618,9 @@ fn expired_saved_failure_replays_authentication_without_runtime_or_dispatch() ->
         max_output_bytes: runtime.max_output_bytes,
         operation_root: runtime.operation_root.clone(),
         parent_reservation_bytes: 16 * 1024 * 1024,
-        operation_metadata_bytes: operation_storage::capacity(2)?,
+        operation_metadata_bytes: operation_storage::capacity(
+            operation_slots(&open_prepared(&prepared, &checkout)?, &run_path)?.len(),
+        )?,
         fixture_jobs: 1,
         helper: runtime.helper.clone(),
         rustc: runtime.rustc.clone(),
@@ -598,13 +628,17 @@ fn expired_saved_failure_replays_authentication_without_runtime_or_dispatch() ->
         compiler_runtime_sha256: sha256("none"),
     };
     atomic_toml(&output.join("native-intent.toml"), &intent)?;
-    let verdict = Verdict {
+    if retain_plm {
+        crate::fixture_format::write(&run_path.join("manifest.smf"), &manifest)?;
+    }
+    let mut verdict = Verdict {
         status: "rejected".into(),
         run: run_path.clone(),
         family: "failure".into(),
         error: Some("original bounded stop".into()),
         ..Default::default()
     };
+    family::inventory_with_limits(&run_path, &run_path, &mut verdict.artifacts, retained_tree_limits(&run_path)?)?;
     atomic_toml(&run_path.join("verdict.toml"), &verdict)?;
     let operation_index =
         operation_storage::store(&output, &intent.prepared_sha256, &intent.candidate_sha256, &context, &[])?;
@@ -623,11 +657,14 @@ fn expired_saved_failure_replays_authentication_without_runtime_or_dispatch() ->
     };
     receipt.evidence_bytes = evidence_bytes(&run_path, &receipt)?;
     atomic_toml(&output.join("native-receipt.toml"), &receipt)?;
-    let metadata = output.join("native-receipt.toml").metadata()?.modified()?;
+    let receipt_path = output.join("native-receipt.toml");
+    let metadata = receipt_path.metadata()?.modified()?;
+    let receipt_sha256 = digest(&receipt_path)?;
     let replay = run(&prepared, &checkout, &output, &runtime, &context)?;
     assert!(!replay.passed);
     assert_eq!(replay.diagnostic, "original bounded stop");
-    assert_eq!(output.join("native-receipt.toml").metadata()?.modified()?, metadata);
+    assert_eq!(receipt_path.metadata()?.modified()?, metadata);
+    assert_eq!(digest(&receipt_path)?, receipt_sha256);
     assert!(!runtime.operation_root.exists() && !runtime.pipeline_root.exists());
     fs::write(checkout.join("candidate.rs"), b"pub fn Changed() {}")?;
     assert!(run(&prepared, &checkout, &output, &runtime, &context).is_err());

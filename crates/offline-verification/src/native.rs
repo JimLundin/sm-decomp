@@ -1444,7 +1444,7 @@ fn authenticate_bounded(prepared: &PreparedNative, checkout: &Path, receipt: &Na
         "native family source identity differs"
     );
     let declared = crate::fixture_format::read(&verdict.run.join("manifest.smf"))?;
-    let declared = recipes::retained_manifest(declared, prepared.contract.recipe.as_ref())?;
+    let declared = recipes::retained_manifest(declared)?;
     ensure!(coverage(&declared)? == prepared.contract.coverage, "native frozen coverage differs");
     Ok(verdict)
 }
@@ -1848,7 +1848,7 @@ pub(crate) fn retained_tree_limits(run: &Path) -> Result<family::ArtifactLimits>
     if !manifest_path.exists() {
         return Ok(family::ArtifactLimits::default());
     }
-    let manifest = crate::fixture_format::read(&manifest_path)?;
+    let manifest = recipes::retained_manifest(crate::fixture_format::read(&manifest_path)?)?;
     let intent: NativeIntent =
         bounded::object(&run.parent().context("native artifact parent missing")?.join("native-intent.toml"))?;
     declared_tree_limits(&manifest, intent.max_output_bytes)

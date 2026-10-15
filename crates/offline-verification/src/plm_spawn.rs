@@ -25,6 +25,23 @@ pub fn normalize(manifest: &Manifest) -> Result<Manifest> {
     Ok(normalized)
 }
 
+fn rust_wrapper(memory: &Path, module: &Path, confined: bool) -> String {
+    let mut wrapper = include_str!("plm_spawn_abi.rs.in")
+        .replace("__MEMORY__", &format!("{memory:?}"))
+        .replace("__MODULE__", &format!("{module:?}"));
+    if confined {
+        let module_name = module.file_stem().unwrap().to_string_lossy();
+        let binding = if module_name == "plm" { String::new() } else { format!("use {module_name} as plm;") };
+        wrapper = wrapper
+            .replace(
+                &format!("#[path={memory:?}]mod memory;use memory::*;"),
+                "include!(\"/inputs/generated/memory.rs\");",
+            )
+            .replace(&format!("#[path={module:?}]mod plm;"), &binding);
+    }
+    wrapper
+}
+
 pub(crate) fn build(
     recipe: Option<&crate::recipe::Recipe>,
     request: &VerifyRequest,
@@ -45,20 +62,7 @@ pub(crate) fn build(
             imports: vec![],
         })?
     };
-    let mut wrapper = include_str!("plm_spawn_abi.rs.in")
-        .replace("__MEMORY__", &format!("{:?}", memory.path))
-        .replace("__MODULE__", &format!("{module:?}"));
-    if execution.is_some() {
-        wrapper = wrapper
-            .replace(
-                &format!("#[path={:?}]mod memory;use memory::*;", memory.path),
-                "include!(\"/inputs/generated/memory.rs\");",
-            )
-            .replace(
-                &format!("#[path={module:?}]mod plm;"),
-                &format!("use {} as plm;", module.file_stem().unwrap().to_string_lossy()),
-            );
-    }
+    let wrapper = rust_wrapper(&memory.path, &module, execution.is_some());
     family::write_build_input(&run.join("wrapper.rs"), wrapper.as_bytes(), execution.is_some())?;
     let headless = if execution.is_some() {
         "/inputs/rust/tools/decomp/headless.c".into()
@@ -206,3 +210,7 @@ pub(crate) fn case(
     record.routine = kind.into();
     Ok(record)
 }
+
+#[cfg(test)]
+#[path = "plm_spawn_tests.rs"]
+mod tests;
