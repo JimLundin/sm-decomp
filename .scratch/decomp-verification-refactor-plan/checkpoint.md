@@ -5,6 +5,34 @@ Updated: 2026-10-15
 Owner session: `01a13e7f-ab01-7413-a1c2-288b08a4b719` (`/root`)
 Authorization: user instructed "please go ahead and implement" the nine-ticket plan.
 
+## Current state (supersedes historical observations below)
+
+- Main remains documentation-only for this effort; production still matches
+  `5c011eb5d02a54d74903715bffb3f8c15ab78c51`.
+- Frozen assembly: `7b27ea1a29bb2ade3bc6483f99bf59626e298671` in
+  `/home/jim/sm-decomp-performance-integration`. It includes the recovered
+  extraction, passing metrics/control source, storage experiment and Native
+  operation-admission fix. Do not edit while its verification is active.
+- `/root/recover_extraction_verification` owns new proof
+  `/home/jim/sm-decomp-performance-native-proof/7b27ea1-20261015` and exclusive
+  Cargo target `/home/jim/sm-decomp-offline-verifier/target`. Required Native
+  producer/admission deadlines and all 12 recipes remain unchanged.
+- `/root/bulk_context` owns the complete ticket 02 implementation in its isolated
+  worktree, currently WIP `94104cc`. Captured compiler-input plumbing and Native
+  preparation remain required; catalog-only work is not acceptance. It owns
+  `/home/jim/sm-decomp-performance-metrics-continuation-target`.
+- `/root/batch_metrics` has passed its final eight-sample retained measurement
+  and is preparing the interpretation/final handoff. Passing source/control
+  checkpoint `eb88118` is already assembled. Ticket 01 remains claimed pending
+  final handoff, retirement and baseline acceptance.
+- Native admission source `7729faf`, documentation `6005329`, passed 14 operation,
+  6 retention and 41 owner controls. Its integrated worktree is retired; five
+  exact source snapshots remain at the original paths. Both post-retirement
+  cleanup passes and fresh result admission passed. See
+  `native-finalization-recovery.md` for exact evidence and limitations.
+- Ticket 05 remains resolved. Tickets 03/04/06/07/08/09 still require their
+  implementation and gates. Preserve all original production prerequisite stops.
+
 ## Startup and ownership
 
 - Main contains documentation-only commit
