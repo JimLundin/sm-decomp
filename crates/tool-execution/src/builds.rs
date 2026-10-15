@@ -9,7 +9,7 @@ use crate::{
 use anyhow::{Context, Result, bail, ensure};
 use serde::{Deserialize, Serialize};
 use std::{
-    collections::BTreeMap,
+    collections::{BTreeMap, BTreeSet},
     fs::{self, File},
     io::Read,
     os::{fd::OwnedFd, unix::net::UnixStream},
@@ -640,7 +640,7 @@ fn c_build_prepared(
         // not become hidden cwd inputs. Generated units retain their run cwd.
         let cwd = if pinned { &checkout } else { &run };
         let eligible_flags = c_cache_flags(&flags);
-        let paths = ArtifactPaths::c(cwd, &flags)?;
+        let mut paths = ArtifactPaths::c(cwd, &flags)?;
         let mut compile = vec![command[0].clone()];
         compile.extend(flags.clone());
         compile.extend(["-c".into(), source.to_string_lossy().into_owned(), "-o".into(), "{artifact}".into()]);
@@ -649,21 +649,23 @@ fn c_build_prepared(
         // Full preprocessing detects actual volatile macro expansions, also
         // through headers. -M alone omits expression expansion and cannot prove
         // that an object is independent of __DATE__/__TIME__/__TIMESTAMP__.
-        let discover = || -> Result<(String, bool)> {
+        let discover = || -> Result<CDependencies> {
             let (_held, _) = acquire_lease(&root, workers)?;
             preparation.validate(std::slice::from_ref(&source))?;
             preparation.validate(&inputs)?;
             validate_inputs(std::slice::from_ref(&source))?;
             c_dependencies(&command[0], &flags, &source, cwd, &run, index, pinned && eligible_flags)
         };
-        let (dependencies, stable) = discover()?;
-        let discovered = dependency_paths(&dependencies, cwd)?;
+        let dependencies = discover()?;
+        let stable = dependencies.stable;
+        let discovered = dependency_paths(&dependencies.text, cwd)?;
         validate_inputs(&discovered)?;
         let mut closure = inputs.clone();
         closure.extend(discovered.clone());
         closure.push(source.clone());
         closure.sort();
         closure.dedup();
+        paths.bind_locations(&closure, dependencies.locations.as_deref());
         preparation.freeze(&closure)?;
         preparation.validate(&closure)?;
         let build = |artifact: &Path| -> Result<()> {
@@ -695,10 +697,10 @@ fn c_build_prepared(
                         // A newly available include can change the closure without
                         // changing a previously read file. Re-run the actual proof
                         // after contended cache waits, before accepting a hit.
-                        let (current, stable) = discover()?;
-                        ensure!(stable, "compiler cache eligibility changed while waiting");
-                        authenticate_dependency_closure(&discovered, &current, cwd)?;
-                        validate_inputs(&dependency_paths(&current, cwd)?)?;
+                        let current = discover()?;
+                        ensure!(current.stable, "compiler cache eligibility changed while waiting");
+                        authenticate_dependency_closure(&discovered, &current.text, cwd)?;
+                        validate_inputs(&dependency_paths(&current.text, cwd)?)?;
                     }
                     Ok(())
                 },
@@ -826,6 +828,12 @@ fn c_cache_flags(flags: &[String]) -> bool {
     !include
 }
 
+struct CDependencies {
+    text: String,
+    stable: bool,
+    locations: Option<Vec<PathBuf>>,
+}
+
 fn c_dependencies(
     compiler: &str,
     flags: &[String],
@@ -834,7 +842,7 @@ fn c_dependencies(
     run: &Path,
     index: usize,
     cache_eligible: bool,
-) -> Result<(String, bool)> {
+) -> Result<CDependencies> {
     if cache_eligible {
         let dependencies = run.join(format!("c-dependencies-{index:03}.d"));
         let mut command = Command::new(compiler);
@@ -845,15 +853,22 @@ fn c_dependencies(
             .args(["-Wsystem-headers", "-Werror=date-time"])
             .arg(source)
             .current_dir(cwd);
-        let (status, diagnostic_pragma, stderr) = c_preprocessor(command)?;
-        if status.success() && !diagnostic_pragma {
+        let proof = c_preprocessor(command)?;
+        if proof.status.success() && !proof.diagnostic_pragma {
             let text = bounded::text(&dependencies)?;
             fs::remove_file(dependencies)?;
-            return Ok((text, true));
+            let declared: BTreeSet<_> = dependency_paths(&text, cwd)?.into_iter().collect();
+            let locations = proof.locations.and_then(|locations| {
+                locations
+                    .iter()
+                    .all(|path| fs::canonicalize(path).ok().is_some_and(|path| declared.contains(&path)))
+                    .then(|| locations.into_iter().collect())
+            });
+            return Ok(CDependencies { text, stable: true, locations });
         }
         // Any failed proof means fresh compilation, regardless of diagnostic
         // spelling. The ordinary compiler still supplies its complete errors.
-        fs::write(run.join(format!("c-eligibility-{index:03}.stderr")), stderr)?;
+        fs::write(run.join(format!("c-eligibility-{index:03}.stderr")), proof.stderr)?;
         if dependencies.exists() {
             fs::remove_file(dependencies)?;
         }
@@ -863,14 +878,21 @@ fn c_dependencies(
         "c-dependency-scan",
     )?;
     ensure!(output.status.success(), "C dependency scan failed: {}", String::from_utf8_lossy(&output.stderr));
-    Ok((String::from_utf8(output.stdout)?, false))
+    Ok(CDependencies { text: String::from_utf8(output.stdout)?, stable: false, locations: None })
+}
+
+struct CPreprocessor {
+    status: ExitStatus,
+    diagnostic_pragma: bool,
+    stderr: Vec<u8>,
+    locations: Option<BTreeSet<PathBuf>>,
 }
 
 /// Discard preprocessed code through two bounded streams. Active diagnostic
 /// pragmas survive preprocessing, including `_Pragma` expansion. They can
 /// override command-line warning policy, so such a unit stays uncached even if
 /// the preprocessor exits successfully. This never trusts a source text scan.
-fn c_preprocessor(mut command: Command) -> Result<(ExitStatus, bool, Vec<u8>)> {
+fn c_preprocessor(mut command: Command) -> Result<CPreprocessor> {
     let context = crate::metrics::active().context("C preparation accounting missing")?;
     let (mut stdout, stdout_writer) = UnixStream::pair()?;
     let (mut stderr, stderr_writer) = UnixStream::pair()?;
@@ -885,6 +907,7 @@ fn c_preprocessor(mut command: Command) -> Result<(ExitStatus, bool, Vec<u8>)> {
     let mut stderr_bytes = Vec::new();
     let mut prefix = Vec::new();
     let mut diagnostic_pragma = false;
+    let mut locations = Some(BTreeSet::new());
     let mut output_done = false;
     let mut errors_done = false;
     let mut status = None;
@@ -908,6 +931,7 @@ fn c_preprocessor(mut command: Command) -> Result<(ExitStatus, bool, Vec<u8>)> {
                         for byte in &buffer[..count] {
                             if *byte == b'\n' {
                                 diagnostic_pragma |= diagnostic_directive(&prefix);
+                                source_location(&prefix, &mut locations)?;
                                 prefix.clear();
                             } else if prefix.len() < 4096 {
                                 prefix.push(*byte);
@@ -956,7 +980,46 @@ fn c_preprocessor(mut command: Command) -> Result<(ExitStatus, bool, Vec<u8>)> {
     }
     result?;
     diagnostic_pragma |= diagnostic_directive(&prefix);
-    Ok((status.context("C preprocessor exit missing")?, diagnostic_pragma, stderr_bytes))
+    source_location(&prefix, &mut locations)?;
+    Ok(CPreprocessor {
+        status: status.context("C preprocessor exit missing")?,
+        diagnostic_pragma,
+        stderr: stderr_bytes,
+        locations,
+    })
+}
+
+fn source_location(line: &[u8], locations: &mut Option<BTreeSet<PathBuf>>) -> Result<()> {
+    if locations.is_none() {
+        return Ok(());
+    }
+    let Some(line) = line.trim_ascii_start().strip_prefix(b"#") else { return Ok(()) };
+    let line = line.trim_ascii_start();
+    let Some(end) = line.iter().position(|byte| byte.is_ascii_whitespace()) else { return Ok(()) };
+    if line[..end].is_empty() || !line[..end].iter().all(|byte| byte.is_ascii_digit()) {
+        return Ok(());
+    }
+    let file = line[end..].trim_ascii_start();
+    let parsed = file.strip_prefix(b"\"").and_then(|file| {
+        let end = file.iter().position(|byte| *byte == b'"')?;
+        let file = &file[..end];
+        // Escaped or non-UTF8 filenames retain physical key identity. A prefix
+        // equivalence proof must not guess at another compiler's path grammar.
+        if file.contains(&b'\\') {
+            return None;
+        }
+        std::str::from_utf8(file).ok().map(PathBuf::from)
+    });
+    if let Some(path) = parsed {
+        if path.is_absolute() {
+            let known = locations.as_mut().unwrap();
+            ensure!(known.len() < 4096 || known.contains(&path), "C preprocessor source-location extent exceeded");
+            known.insert(path);
+        }
+    } else {
+        *locations = None;
+    }
+    Ok(())
 }
 
 fn diagnostic_directive(line: &[u8]) -> bool {

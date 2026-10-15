@@ -93,6 +93,25 @@ impl ArtifactPaths {
         Ok(paths)
     }
 
+    pub(crate) fn bind_locations(&mut self, inputs: &[PathBuf], locations: Option<&[PathBuf]>) {
+        let Some(locations) = locations else {
+            self.mappings.clear();
+            return;
+        };
+        let unsupported = self.mappings.iter().any(|(physical, _)| {
+            // Preserve unused selectors verbatim: they may affect a literal
+            // #line filename or a lexical prefix outside a directory segment.
+            !inputs.iter().any(|input| input.starts_with(physical))
+                || locations.iter().any(|location| {
+                    location.to_string_lossy().starts_with(physical.to_string_lossy().as_ref())
+                        && !location.starts_with(physical)
+                })
+        });
+        if unsupported {
+            self.mappings.clear();
+        }
+    }
+
     fn logical(&self, path: &Path) -> PathBuf {
         self.mappings
             .iter()
@@ -424,7 +443,7 @@ impl Preparation {
             platform: [std::env::consts::ARCH.into(), std::env::consts::OS.into()],
             rustc: self.context.rustc.clone(),
             working_directory: paths.directory.as_ref().map(|path| paths.logical(path).display().to_string()),
-            path_contract: (!paths.mappings.is_empty()).then(|| "c-file-prefix-map-v1".into()),
+            path_contract: (!paths.mappings.is_empty()).then(|| "c-file-prefix-map-v2".into()),
         };
         let key = format!("{:x}", Sha256::digest(toml::to_string(&identity)?.as_bytes()));
         let root = self.root.join("build-cache");

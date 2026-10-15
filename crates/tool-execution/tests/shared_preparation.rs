@@ -2,10 +2,11 @@
 use anyhow::{Context, Result, ensure};
 use serde::Deserialize;
 use std::{
-    fs,
+    fs::{self, File},
     path::{Path, PathBuf},
     process::Command,
     sync::{Arc, Barrier},
+    time::{Duration, Instant},
 };
 use tool_execution::{build_cache::CacheResult, builds, metrics};
 
@@ -292,6 +293,36 @@ fn explicit_file_maps_share_objects_and_preserve_logical_targets_and_flags() -> 
 }
 
 #[test]
+fn file_maps_keep_artificial_line_paths_in_the_computation() -> Result<()> {
+    let directory = Directory::new("artificial-line-paths")?;
+    let compiler = compiler(&directory)?;
+    let context = builds::BuildContext::default();
+    let artificial = directory.path.join("first/virtual.c");
+    let logical = directory.path.join("logical");
+    for family in ["first", "second"] {
+        let checkout = Directory { path: directory.path.join(family), retained: true };
+        fs::create_dir(&checkout.path)?;
+        inputs(&checkout)?;
+        let mut request = request(&checkout, &compiler, "run")?;
+        request.command.push(format!("-ffile-prefix-map={}={}", checkout.path.display(), logical.display()));
+        fs::write(
+            checkout.path.join("deps/unit.c"),
+            format!("#line 1 {:?}\nconst char *value(void) {{ return __FILE__; }}\n", artificial.to_str().unwrap()),
+        )?;
+        fs::write(
+            request.run.join("main.c"),
+            "#include <stdio.h>\nconst char *value(void); int main(void) { puts(value()); }\n",
+        )?;
+        builds::c_build_in(&context, request, &|_| Ok(()))?;
+        let actual = Command::new(checkout.path.join("run/program")).output()?;
+        assert!(actual.status.success());
+        let expected = if family == "first" { logical.join("virtual.c") } else { artificial.clone() };
+        assert_eq!(String::from_utf8(actual.stdout)?.trim(), expected.display().to_string());
+    }
+    Ok(())
+}
+
+#[test]
 fn volatile_c_units_stay_fresh_through_headers_and_diagnostic_pragmas() -> Result<()> {
     let directory = Directory::new("volatile-inputs")?;
     let compiler = compiler(&directory)?;
@@ -378,5 +409,166 @@ fn failed_family_does_not_cancel_an_independent_family_in_the_same_context() -> 
     assert!(directory.path.join("bad/c-object-001.stderr").is_file());
     assert!(!directory.path.join("bad/c-cache.toml").exists());
     parent.finish("success", None)?;
+    Ok(())
+}
+
+fn wait_until(mut ready: impl FnMut() -> bool) -> Result<()> {
+    let started = Instant::now();
+    while !ready() {
+        ensure!(started.elapsed() < Duration::from_secs(20), "bounded cache-wait observation timed out");
+        std::thread::sleep(Duration::from_millis(10));
+    }
+    Ok(())
+}
+
+fn mutate_while_waiting(
+    directory: &Directory,
+    context: &builds::BuildContext,
+    request: builds::CBuildRequest,
+    key: &str,
+    mutation: impl FnOnce() -> Result<()>,
+) -> Result<anyhow::Error> {
+    let lock = directory.capacity().join("build-cache").join(format!("{key}.lock"));
+    let held = File::open(&lock)?;
+    held.lock()?;
+    let mut parent = metrics::Run::start(request.run.join("wait.metrics.toml"), "cache-wait-control")?;
+    let metrics = metrics::active().context("test metrics missing")?;
+    let result = std::thread::scope(|scope| -> Result<_> {
+        let child = scope.spawn(|| {
+            let _entered = metrics.enter();
+            builds::c_build_in(context, request, &|_| Ok(()))
+        });
+        let waiting = wait_until(|| {
+            fs::read_dir("/proc/self/fd")
+                .unwrap()
+                .flatten()
+                .filter(|entry| fs::read_link(entry.path()).ok().as_ref() == Some(&lock))
+                .count()
+                >= 2
+        });
+        let changed = if waiting.is_ok() { mutation() } else { Ok(()) };
+        drop(held);
+        let result = child.join().expect("waiting family panicked");
+        waiting?;
+        changed?;
+        Ok(result)
+    })?;
+    parent.finish("success", None)?;
+    match result {
+        Ok(_) => Err(anyhow::anyhow!("changed build was incorrectly admitted")),
+        Err(error) => Ok(error),
+    }
+}
+
+#[test]
+fn shared_context_rejects_header_mutation_during_an_artifact_wait() -> Result<()> {
+    let directory = Directory::new("header-wait")?;
+    inputs(&directory)?;
+    let compiler = compiler(&directory)?;
+    let context = builds::BuildContext::default();
+    let first = request(&directory, &compiler, "seed")?;
+    let seed = first.run.clone();
+    builds::c_build_in(&context, first, &|_| Ok(()))?;
+    let key = records(&seed)?[0].key.clone();
+    let error = mutate_while_waiting(&directory, &context, request(&directory, &compiler, "waiting")?, &key, || {
+        Ok(fs::write(directory.path.join("deps/value.h"), "#define VALUE 9\n")?)
+    })?;
+    assert!(format!("{error:#}").contains("compiler input changed while waiting"), "{error:#}");
+    assert!(!directory.path.join("waiting/c-cache.toml").exists());
+    let stale = builds::c_build_in(&context, request(&directory, &compiler, "stale-context")?, &|_| Ok(()));
+    assert!(format!("{:#}", stale.unwrap_err()).contains("compiler input changed"));
+    builds::c_build_in(&builds::BuildContext::default(), request(&directory, &compiler, "fresh")?, &|_| Ok(()))?;
+    assert!(!records(&directory.path.join("fresh"))?[0].hit);
+    assert_eq!(Command::new(directory.path.join("fresh/program")).status()?.code(), Some(9));
+    Ok(())
+}
+
+#[test]
+fn shared_context_rejects_new_transitive_include_during_an_artifact_wait() -> Result<()> {
+    let directory = Directory::new("include-wait")?;
+    inputs(&directory)?;
+    fs::write(
+        directory.path.join("deps/unit.c"),
+        "#if __has_include(\"later.h\")\n#include \"later.h\"\n#else\n#define VALUE 7\n#endif\nint value(void) { return VALUE; }\n",
+    )?;
+    let compiler = compiler(&directory)?;
+    let context = builds::BuildContext::default();
+    builds::c_build_in(&context, request(&directory, &compiler, "seed")?, &|_| Ok(()))?;
+    let key = records(&directory.path.join("seed"))?[0].key.clone();
+    let error = mutate_while_waiting(&directory, &context, request(&directory, &compiler, "waiting")?, &key, || {
+        Ok(fs::write(directory.path.join("deps/later.h"), "#define VALUE 11\n")?)
+    })?;
+    assert!(format!("{error:#}").contains("compiler dependency closure changed"), "{error:#}");
+    assert!(!directory.path.join("waiting/c-cache.toml").exists());
+    builds::c_build_in(&builds::BuildContext::default(), request(&directory, &compiler, "fresh")?, &|_| Ok(()))?;
+    assert_eq!(Command::new(directory.path.join("fresh/program")).status()?.code(), Some(11));
+    Ok(())
+}
+
+#[test]
+fn shared_context_rechecks_compiler_bytes_after_artifact_waits() -> Result<()> {
+    use std::os::unix::fs::PermissionsExt;
+    let directory = Directory::new("compiler-wait")?;
+    inputs(&directory)?;
+    let compiler = compiler(&directory)?;
+    let context = builds::BuildContext::default();
+    builds::c_build_in(&context, request(&directory, &compiler, "seed")?, &|_| Ok(()))?;
+    let key = records(&directory.path.join("seed"))?[0].key.clone();
+    let error = mutate_while_waiting(&directory, &context, request(&directory, &compiler, "waiting")?, &key, || {
+        let mut bytes = fs::read(&compiler)?;
+        bytes.extend_from_slice(b"changed-compiler-identity");
+        let replacement = compiler.with_extension("replacement");
+        fs::write(&replacement, bytes)?;
+        fs::set_permissions(&replacement, fs::Permissions::from_mode(0o755))?;
+        Ok(fs::rename(replacement, &compiler)?)
+    })?;
+    assert!(format!("{error:#}").contains("prepared compiler changed"), "{error:#}");
+    assert!(!directory.path.join("waiting/c-cache.toml").exists());
+    builds::c_build_in(&builds::BuildContext::default(), request(&directory, &compiler, "fresh")?, &|_| Ok(()))?;
+    assert!(!records(&directory.path.join("fresh"))?[0].hit);
+    assert_eq!(Command::new(directory.path.join("fresh/program")).status()?.code(), Some(7));
+    Ok(())
+}
+
+#[test]
+fn corrupted_shared_artifact_is_rebuilt_and_authenticated() -> Result<()> {
+    let directory = Directory::new("artifact-corruption")?;
+    inputs(&directory)?;
+    let compiler = compiler(&directory)?;
+    let context = builds::BuildContext::default();
+    builds::c_build_in(&context, request(&directory, &compiler, "seed")?, &|_| Ok(()))?;
+    let key = records(&directory.path.join("seed"))?[0].key.clone();
+    fs::write(directory.capacity().join("build-cache").join(&key).join("artifact"), "corrupt object")?;
+    builds::c_build_in(&context, request(&directory, &compiler, "repaired")?, &|_| Ok(()))?;
+    assert!(!records(&directory.path.join("repaired"))?[0].hit);
+    builds::c_build_in(&context, request(&directory, &compiler, "restored")?, &|_| Ok(()))?;
+    assert!(records(&directory.path.join("restored"))?[0].hit);
+    assert_eq!(Command::new(directory.path.join("restored/program")).status()?.code(), Some(7));
+    let calls = fs::read_to_string(directory.path.join("compiler-calls"))?;
+    let source = directory.path.join("deps/unit.c").display().to_string();
+    assert_eq!(calls.lines().filter(|line| *line == source).count(), 2);
+    assert_eq!(calls.lines().filter(|line| *line == "version").count(), 1);
+    Ok(())
+}
+
+#[test]
+fn preprocessor_budget_exhaustion_is_a_hard_failure_without_cache_publication() -> Result<()> {
+    let directory = Directory::new("preprocessor-budget")?;
+    inputs(&directory)?;
+    let compiler = compiler(&directory)?;
+    let mut request = request(&directory, &compiler, "limited")?;
+    request.command.retain(|argument| !argument.ends_with("/main.c"));
+    fs::write(
+        directory.path.join("deps/unit.c"),
+        (0..32).map(|index| format!("int value{index}(void) {{ return {index}; }}\n")).collect::<String>(),
+    )?;
+    let error = tool_execution::bounded::until(tool_execution::bounded::now_unix_ms()? + 30_000, 512, || {
+        builds::c_build_in(&builds::BuildContext::default(), request, &|_| Ok(()))
+    })
+    .unwrap_err();
+    assert!(format!("{error:#}").contains("budget"), "{error:#}");
+    assert!(!directory.path.join("limited/c-cache.toml").exists());
+    let calls = fs::read_to_string(directory.path.join("compiler-calls"))?;
+    assert!(calls.lines().all(|line| line == "version"), "budget failure incorrectly launched an object compiler");
     Ok(())
 }
