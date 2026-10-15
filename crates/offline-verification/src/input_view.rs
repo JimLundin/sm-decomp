@@ -641,7 +641,7 @@ fn rust_closure(
         })
         .collect::<BTreeMap<_, _>>();
     ensure!(available.len() <= 4096 && manifest.rust_imports.len() <= 4096, "captured Rust source scope exceeded");
-    let mut pending = BTreeSet::from([
+    let mut pending: BTreeSet<(PathBuf, Option<PathBuf>)> = BTreeSet::from([
         (checkout.join(&manifest.rust_module), None),
         (checkout.join("crates/port/src/memory.rs"), None),
     ]);
