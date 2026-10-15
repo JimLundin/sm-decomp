@@ -423,6 +423,29 @@ pub(crate) fn select(checkout: &Path, names: &[String], revision: Option<&str>) 
     select_until(checkout, names, revision, now + 120_000, DEFAULT_PLANNING_BYTES)
 }
 
+pub(crate) fn select_with_snapshot(
+    snapshot: &offline_verification::CatalogSnapshot,
+    names: &[String],
+    revision: Option<&str>,
+) -> Result<Report> {
+    let now = u64::try_from(SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis())?;
+    let budget = PlanningBudget::new(now + 120_000, DEFAULT_PLANNING_BYTES)?;
+    let checkout = snapshot.checkout();
+    let changed = revision.map(|revision| changed_paths(checkout, revision, &budget)).transpose()?.unwrap_or_default();
+    select_changed(snapshot, Some(names), revision, &changed, revision.is_none(), &budget)
+}
+
+fn capture_catalog(checkout: &Path, budget: &PlanningBudget) -> Result<offline_verification::CatalogSnapshot> {
+    let snapshot = offline_verification::catalog::capture(offline_verification::CatalogRequest {
+        checkout: checkout.into(),
+        deadline_unix_ms: budget.deadline_unix_ms,
+        max_input_bytes: budget.maximum.saturating_sub(budget.bytes.get()),
+        max_retained_bytes: tool_execution::bounded::DEFAULT_BYTES,
+    })?;
+    budget.charge(snapshot.statistics().input_bytes)?;
+    Ok(snapshot)
+}
+
 pub(crate) fn select_until(
     checkout: &Path,
     names: &[String],
@@ -433,7 +456,8 @@ pub(crate) fn select_until(
     let budget = PlanningBudget::new(deadline_unix_ms, maximum)?;
     let checkout = fs::canonicalize(checkout)?;
     let changed = revision.map(|revision| changed_paths(&checkout, revision, &budget)).transpose()?.unwrap_or_default();
-    select_changed(&checkout, Some(names), revision, &changed, revision.is_none(), &budget)
+    let snapshot = capture_catalog(&checkout, &budget)?;
+    select_changed(&snapshot, Some(names), revision, &changed, revision.is_none(), &budget)
 }
 
 /// Plan against every catalog family before a rewrite can touch any approved
@@ -459,30 +483,24 @@ pub(crate) fn select_paths_until(
         ensure!(changed.insert(path), "duplicate approved affected-planning path");
     }
     ensure!(!changed.is_empty(), "approved affected-planning ownership is empty");
-    let mut report = select_changed(&checkout, None, None, &changed, false, &budget)?;
+    let snapshot = capture_catalog(&checkout, &budget)?;
+    let mut report = select_changed(&snapshot, None, None, &changed, false, &budget)?;
     report.scope = "potentially affected full catalog for approved writable paths; no verification, evidence reuse or Live replay admission".into();
     Ok(report)
 }
 
 fn select_changed(
-    checkout: &Path,
+    snapshot: &offline_verification::CatalogSnapshot,
     names: Option<&[String]>,
     revision: Option<&str>,
     changed: &BTreeSet<PathBuf>,
     requested: bool,
     budget: &PlanningBudget,
 ) -> Result<Report> {
+    let checkout = snapshot.checkout();
     let global = changed.iter().filter(|path| shared(path)).cloned().collect::<Vec<_>>();
-    let catalog_path = checkout.join("tools/port/batch.toml");
-    let catalog_hash = budget.hash(&catalog_path)?;
-    let mut catalog_inputs = BTreeMap::new();
-    let config = offline_verification::catalog::catalog_using(checkout, |path| {
-        budget.entry()?;
-        let (bytes, hash) = budget.read(path, true)?;
-        catalog_inputs.insert(normalize(checkout, path), hash);
-        Ok(bytes)
-    })?;
-    ensure!(catalog_hash == budget.hash(&catalog_path)?, "Offline family catalog changed during selection");
+    let config = snapshot.catalog();
+    let before = snapshot.statistics();
     let mut discovery = Discovery::new(checkout, budget).ok();
     budget.check()?;
     if let Some(discovery) = &mut discovery {
@@ -510,8 +528,7 @@ fn select_changed(
         excluded: vec![],
         planning_inputs: BTreeMap::new(),
     };
-    report.planning_inputs = catalog_inputs;
-    report.planning_inputs.insert("tools/port/batch.toml".into(), catalog_hash);
+    report.planning_inputs = snapshot.input_identities();
     let catalog_names = config.families.keys().cloned().collect::<Vec<_>>();
     let names = names.unwrap_or(&catalog_names);
     let mut seen = BTreeSet::new();
@@ -519,22 +536,20 @@ fn select_changed(
         budget.entry()?;
         let mut decision = FamilyDecision { family: name.clone(), reasons: vec![], dependencies: vec![] };
         let examined = (|| -> Result<BTreeSet<PathBuf>> {
-            let item = offline_verification::catalog::entry(&config, name)?;
+            let facts = snapshot.family(name)?;
+            let item = facts.entry();
             ensure!(item.prepare.is_none(), "unknown fixture preparation inputs");
             let manifest_path = normalize(checkout, &item.manifest);
-            let path = checkout.join(&manifest_path);
-            ensure!(!path.is_symlink(), "manifest is a symlink");
-            let (bytes, manifest_hash) = budget.read(&path, true)?;
-            let manifest = offline_verification::fixtures::decode(bytes)?;
-            ensure!(manifest_hash == budget.hash(&path)?, "Offline family manifest changed during selection");
-            report.planning_inputs.insert(manifest_path.clone(), manifest_hash);
+            let manifest = facts.declaration();
+            report.planning_inputs.insert(manifest_path.clone(), facts.manifest_sha256().into());
             let mut dependencies = discovery
                 .as_mut()
                 .context("Rust module namespace is unavailable")?
-                .dependencies(&manifest, &item.kind)?;
+                .dependencies(manifest, &item.kind)?;
             dependencies.insert(manifest_path);
             Ok(dependencies)
         })();
+        snapshot.check_budget()?;
         budget.check()?;
         match examined {
             Ok(dependencies) => {
@@ -591,6 +606,9 @@ fn select_changed(
             }
         }
     }
+    snapshot.validate_current()?;
+    let after = snapshot.statistics();
+    budget.charge(after.input_bytes - before.input_bytes + after.freshness_bytes - before.freshness_bytes)?;
     budget.check()?;
     Ok(report)
 }

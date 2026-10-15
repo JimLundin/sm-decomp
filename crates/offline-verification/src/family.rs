@@ -6,6 +6,7 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
     path::{Component, Path, PathBuf},
+    sync::Arc,
     time::{SystemTime, UNIX_EPOCH},
 };
 use tool_execution::bounded::{self, digest};
@@ -674,6 +675,14 @@ fn inventory_bounded(
 }
 
 pub fn verify(request: VerifyRequest) -> Result<Verdict> {
+    verify_with_declarations(request, &crate::declarations::Declarations::standard(), None)
+}
+
+pub(crate) fn verify_with_declarations(
+    request: VerifyRequest,
+    declarations: &crate::declarations::Declarations,
+    captured: Option<Arc<crate::declarations::Declaration>>,
+) -> Result<Verdict> {
     let checkout = fs::canonicalize(&request.checkout)?;
     let source = fs::canonicalize(&request.source)?;
     let output = request.output.clone();
@@ -707,9 +716,15 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
     let result = (|| -> Result<()> {
         let preparing = metrics.context.stage("family-input-authentication")?;
         let manifest_path = source_path(&checkout, request.manifest.to_str().context("non-UTF8 manifest")?);
-        let (manifest_bytes, manifest_sha256) = bounded::read_with_digest(&manifest_path)?;
-        fs::write(run.join(crate::fixture_format::RUN_MANIFEST), &manifest_bytes)?;
-        let mut manifest = crate::fixture_format::decode(manifest_bytes)?;
+        let declaration = if let Some(captured) = captured {
+            ensure!(digest(&manifest_path)? == captured.sha256, "family manifest changed after capture");
+            captured
+        } else {
+            declarations.read(&manifest_path, None)?
+        };
+        let manifest_sha256 = declaration.sha256.clone();
+        fs::write(run.join(crate::fixture_format::RUN_MANIFEST), declaration.bytes.as_slice())?;
+        let mut manifest = (*declaration.manifest).clone();
         let recipe = crate::recipe::for_adapter(&request.adapter, &manifest)?;
         manifest = crate::recipe::normalize_manifest(&checkout, manifest, recipe.as_ref())?;
         verdict.family = manifest.family.clone();
@@ -815,7 +830,23 @@ pub fn authenticate(request: AuthenticateRequest) -> Result<Verdict> {
 }
 
 pub(crate) fn authenticate_with_source(request: AuthenticateRequest, source: &Path) -> Result<Verdict> {
-    decomp_source::context::limited(|| authenticate_with_source_bounded(request, source, ArtifactLimits::default()))
+    Ok(admit_with_source(request, source, &crate::declarations::Declarations::standard())?.report)
+}
+
+pub(crate) struct AdmittedFamily {
+    pub report: Verdict,
+    pub original: Arc<Manifest>,
+    pub effective: Arc<Manifest>,
+}
+
+pub(crate) fn admit_with_source(
+    request: AuthenticateRequest,
+    source: &Path,
+    declarations: &crate::declarations::Declarations,
+) -> Result<AdmittedFamily> {
+    decomp_source::context::limited(|| {
+        authenticate_with_source_bounded(request, source, ArtifactLimits::default(), declarations)
+    })
 }
 
 pub(crate) fn authenticate_with_source_limits(
@@ -823,9 +854,18 @@ pub(crate) fn authenticate_with_source_limits(
     source: &Path,
     limits: ArtifactLimits,
 ) -> Result<Verdict> {
+    Ok(admit_with_source_limits(request, source, limits, &crate::declarations::Declarations::standard())?.report)
+}
+
+pub(crate) fn admit_with_source_limits(
+    request: AuthenticateRequest,
+    source: &Path,
+    limits: ArtifactLimits,
+    declarations: &crate::declarations::Declarations,
+) -> Result<AdmittedFamily> {
     limits.validate()?;
     decomp_source::context::discovery_with_limit(limits.paths, || {
-        authenticate_with_source_bounded(request, source, limits)
+        authenticate_with_source_bounded(request, source, limits, declarations)
     })
 }
 
@@ -833,11 +873,17 @@ fn authenticate_with_source_bounded(
     request: AuthenticateRequest,
     source: &Path,
     limits: ArtifactLimits,
-) -> Result<Verdict> {
-    metrics::measure("family-evidence-admission", || authenticate_contents(request, source, limits))
+    declarations: &crate::declarations::Declarations,
+) -> Result<AdmittedFamily> {
+    metrics::measure("family-evidence-admission", || authenticate_contents(request, source, limits, declarations))
 }
 
-fn authenticate_contents(request: AuthenticateRequest, source: &Path, limits: ArtifactLimits) -> Result<Verdict> {
+fn authenticate_contents(
+    request: AuthenticateRequest,
+    source: &Path,
+    limits: ArtifactLimits,
+    declarations: &crate::declarations::Declarations,
+) -> Result<AdmittedFamily> {
     let context = metrics::active();
     if let Some(context) = &context {
         context.expect_stages(&[
@@ -864,10 +910,11 @@ fn authenticate_contents(request: AuthenticateRequest, source: &Path, limits: Ar
     {
         ensure!(actual.contains_key(required), "family artifact missing: {required}");
     }
-    let mut manifest = crate::fixture_format::read_authenticated(
-        &run.join(crate::fixture_format::RUN_MANIFEST),
-        &actual[crate::fixture_format::RUN_MANIFEST],
-    )?;
+    let original = declarations
+        .read(&run.join(crate::fixture_format::RUN_MANIFEST), Some(&actual[crate::fixture_format::RUN_MANIFEST]))?
+        .manifest
+        .clone();
+    let mut manifest = original.clone();
     ensure!(manifest.family == verdict.family, "family identity differs");
     let implementation = verdict.implementation.as_ref().context("missing family implementation")?;
     ensure!(
@@ -938,7 +985,7 @@ fn authenticate_contents(request: AuthenticateRequest, source: &Path, limits: Ar
     let plm = implementation.dependency_contract == "rust-plm-v2";
     let ridley = implementation.dependency_contract == crate::ridley_subsystem_adapter::CONTRACT;
     if plm {
-        manifest = crate::plm_spawn::normalize(&manifest)?;
+        manifest = Arc::new(crate::plm_spawn::normalize(&manifest)?);
     }
     ordered_tasks(&manifest)?;
     ensure!(
@@ -1174,7 +1221,7 @@ fn authenticate_contents(request: AuthenticateRequest, source: &Path, limits: Ar
         context.configuration("admitted-routines", verdict.verified_routines);
         context.configuration("admitted-artifact-files", actual.len());
     }
-    Ok(verdict)
+    Ok(AdmittedFamily { report: verdict, original, effective: manifest })
 }
 
 #[cfg(test)]

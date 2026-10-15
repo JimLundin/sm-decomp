@@ -1,5 +1,8 @@
 //! Catalog selection, complete verification and authenticated ordinary reuse.
-use crate::{AuthenticateRequest, FamilyRun, OfflineFamilies, VerifyRequest, catalog, family, inputs, plm_fixtures};
+use crate::{
+    AuthenticateRequest, CatalogRequest, CatalogSnapshot, FamilyRun, OfflineFamilies, VerifyRequest, family, inputs,
+    plm_fixtures,
+};
 use anyhow::{Result, ensure};
 use std::{path::PathBuf, time::Instant};
 use tool_execution::metrics;
@@ -36,6 +39,15 @@ impl OfflineFamilies {
     /// Resolve one catalog family, authenticate optional prior evidence, and
     /// perform complete declared verification when reuse is unavailable.
     pub fn verify_registered(&self, request: RegisteredRequest) -> Result<RegisteredRun> {
+        let snapshot = self.capture_catalog(CatalogRequest::new(&request.checkout)?)?;
+        self.verify_registered_captured(request, &snapshot)
+    }
+
+    pub(crate) fn verify_registered_captured(
+        &self,
+        request: RegisteredRequest,
+        snapshot: &CatalogSnapshot,
+    ) -> Result<RegisteredRun> {
         inputs::with_host(self.host_inputs(), || {
             let context = metrics::active();
             if let Some(context) = &context {
@@ -46,10 +58,15 @@ impl OfflineFamilies {
                     "family-evidence-admission",
                 ]);
             }
-            let (entry, mut manifest, manifest_sha256) = metrics::measure("registered-input-authentication", || {
+            let (facts, mut manifest) = metrics::measure("registered-input-authentication", || {
                 metrics::check_cancelled()?;
-                let catalog = catalog::catalog(&request.checkout)?;
-                let entry = catalog::entry(&catalog, &request.family)?;
+                ensure!(
+                    std::fs::canonicalize(&request.checkout)? == snapshot.checkout(),
+                    "registered request checkout differs from captured catalog"
+                );
+                snapshot.validate_family(&request.family)?;
+                let facts = snapshot.family(&request.family)?;
+                let entry = facts.entry();
                 ensure!(
                     [
                         "family",
@@ -69,9 +86,10 @@ impl OfflineFamilies {
                 );
                 ensure!(entry.prepare.is_none(), "unreviewed family preparation command");
                 let manifest = request.checkout.join(&entry.manifest);
-                let manifest_sha256 = tool_execution::bounded::digest(&manifest)?;
-                Ok((entry, manifest, manifest_sha256))
+                Ok((facts, manifest))
             })?;
+            let entry = facts.entry().clone();
+            let manifest_sha256 = facts.manifest_sha256().to_owned();
             let mut reuse_authentication_seconds = None;
             let mut reuse_authentication_error = None;
             if let Some(previous) = &request.previous
@@ -80,10 +98,14 @@ impl OfflineFamilies {
             {
                 let started = Instant::now();
                 let authenticated = metrics::measure("reuse-authentication", || {
-                    family::authenticate_with_source(
+                    let admitted = family::admit_with_source(
                         AuthenticateRequest { checkout: request.checkout.clone(), verdict: previous.verdict.clone() },
                         &request.source,
-                    )
+                        snapshot.declarations(),
+                    )?;
+                    crate::bulk::check_admitted_binding(&facts, &admitted, &request.checkout, snapshot.declarations())?;
+                    snapshot.validate_family(&request.family)?;
+                    Ok(admitted.report)
                 });
                 reuse_authentication_seconds = Some(started.elapsed().as_secs_f64());
                 match authenticated {
@@ -123,17 +145,35 @@ impl OfflineFamilies {
                 .manifest;
             }
             let verifying = context.as_ref().map(|context| context.stage("family-verification")).transpose()?;
-            let run = self.verify(VerifyRequest {
-                checkout: request.checkout,
-                source: request.source,
-                root: request.root,
-                workers: request.workers,
-                case_jobs: request.case_jobs,
-                manifest,
-                output: request.output.join("evidence"),
-                adapter: entry.kind.clone(),
-                execution: String::new(),
-            })?;
+            let generated = entry.kind == "plm-instructions";
+            let report = family::verify_with_declarations(
+                VerifyRequest {
+                    checkout: request.checkout.clone(),
+                    source: request.source.clone(),
+                    root: request.root,
+                    workers: request.workers,
+                    case_jobs: request.case_jobs,
+                    manifest,
+                    output: request.output.join("evidence"),
+                    adapter: entry.kind.clone(),
+                    execution: String::new(),
+                },
+                snapshot.declarations(),
+                (!generated).then(|| facts.captured()),
+            )?;
+            if report.status == "offline-verified" {
+                let admitted = family::admit_with_source(
+                    AuthenticateRequest {
+                        checkout: request.checkout.clone(),
+                        verdict: report.run.join("verdict.toml"),
+                    },
+                    &request.source,
+                    snapshot.declarations(),
+                )?;
+                crate::bulk::check_admitted_binding(&facts, &admitted, &request.checkout, snapshot.declarations())?;
+                snapshot.validate_family(&request.family)?;
+            }
+            let run = FamilyRun { report, reused: false };
             if let Some(verifying) = verifying {
                 verifying.finish(metrics::outcome(run.report().error.as_deref()))?;
             }

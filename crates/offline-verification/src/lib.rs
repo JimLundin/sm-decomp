@@ -2,11 +2,16 @@
 //!
 //! Ordinary callers submit one request. Fixture scheduling, adapter recipes,
 //! compilation, comparison and evidence seals stay behind this interface.
-use anyhow::{Context, Result};
-use std::path::{Path, PathBuf};
+use anyhow::Result;
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 mod builds;
+mod bulk;
 mod callback;
+mod declarations;
 mod family;
 mod family_model;
 mod fixture_execution;
@@ -23,6 +28,10 @@ mod sources;
 
 pub mod authoring;
 pub mod catalog;
+pub use bulk::{
+    AuthenticatedBatch, BatchAdmission, BatchRun, BatchVerification, FamilyCompletion, FamilyEvidence, FamilyJob,
+};
+pub use catalog::{CatalogRequest, CatalogSnapshot, CatalogStatistics, FamilyFacts};
 pub mod fixtures;
 pub use family_model::{AuthenticateRequest, Verdict, VerifyRequest};
 pub use host::HostInputs;
@@ -55,15 +64,21 @@ impl OfflineFamilies {
         &self.host
     }
 
+    pub fn capture_catalog(&self, request: CatalogRequest) -> Result<CatalogSnapshot> {
+        catalog::capture(request)
+    }
+
     pub fn verify(&self, request: VerifyRequest) -> Result<FamilyRun> {
         inputs::with_host(&self.host, || {
             let checkout = request.checkout.clone();
             let source = request.source.clone();
-            let report = family::verify(request)?;
+            let declarations = declarations::Declarations::standard();
+            let report = family::verify_with_declarations(request, &declarations, None)?;
             if report.status == "offline-verified" {
-                family::authenticate_with_source(
+                family::admit_with_source(
                     AuthenticateRequest { checkout, verdict: report.run.join("verdict.toml") },
                     &source,
+                    &declarations,
                 )?;
             }
             Ok(FamilyRun { report, reused: false })
@@ -73,8 +88,12 @@ impl OfflineFamilies {
     pub fn authenticate(&self, request: AuthenticateRequest) -> Result<AuthenticatedFamily> {
         inputs::with_host(&self.host, || {
             decomp_source::context::limited(|| {
-                let report = family::authenticate(request)?;
-                AuthenticatedFamily::from_report(report)
+                let source = request.checkout.join("deps/snesrev-sm");
+                Ok(AuthenticatedFamily::from_admitted(family::admit_with_source(
+                    request,
+                    &source,
+                    &declarations::Declarations::standard(),
+                )?))
             })
         })
     }
@@ -105,20 +124,12 @@ impl FamilyRun {
 /// Deserializing a verdict cannot construct this value.
 pub struct AuthenticatedFamily {
     report: Verdict,
-    declaration: fixtures::Manifest,
+    declaration: Arc<fixtures::Manifest>,
 }
 
 impl AuthenticatedFamily {
-    fn from_report(report: Verdict) -> Result<Self> {
-        let mut declaration = fixture_format::read_authenticated(
-            &report.run.join(fixture_format::RUN_MANIFEST),
-            report.artifacts.get(fixture_format::RUN_MANIFEST).context("missing admitted family declaration")?,
-        )?;
-        if report.implementation.as_ref().context("missing family implementation")?.dependency_contract == "rust-plm-v2"
-        {
-            declaration = plm_spawn::normalize(&declaration)?;
-        }
-        Ok(Self { report, declaration })
+    fn from_admitted(admitted: family::AdmittedFamily) -> Self {
+        Self { report: admitted.report, declaration: admitted.effective }
     }
 
     pub fn report(&self) -> &Verdict {
