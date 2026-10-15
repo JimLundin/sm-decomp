@@ -564,6 +564,7 @@ mod tests {
 
     #[test]
     fn read_only_catalog_preserves_a_callers_metrics_scope() -> Result<()> {
+        let _ = crate::BINARY_SHA256.set(digest(&std::env::current_exe()?)?);
         let directory = tool_execution::testing::Directory::new()?;
         let checkout = directory.0.join("checkout");
         fs::create_dir_all(checkout.join("tools/port"))?;
