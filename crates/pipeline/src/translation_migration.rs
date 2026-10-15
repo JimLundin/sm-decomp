@@ -3,8 +3,8 @@
 //! token for another claim or for an unimplemented managed result publisher.
 use crate::{
     assignment, batch, digest, emit, progress, translation, translation_execution as supervisor,
-    translation_native as native,
 };
+use offline_verification as native;
 use ::translation_execution::{
     ClaimLineage, Completion, FrozenPolicy,
     checkout::ControllerProjection,
@@ -1048,8 +1048,11 @@ fn native_admission(
         }
         ensure!(!contract.coverage.is_empty(), "managed native provenance omits an original family routine");
         if validate_scope {
-            let prepared = native::prepare(&installed.source_repository, &installed.pinned_source, contract)?;
-            ensure!(prepared.source.revision == revision, "prepared native original source identity differs");
+            let prepared = crate::offline::families()?.prepare_native(
+                native::NativePreparation::new(&installed.source_repository, &installed.pinned_source, contract),
+                &crate::translation_native::ScopeApproval,
+            )?;
+            ensure!(prepared.source().revision == revision, "prepared native original source identity differs");
         }
         all_routines.extend(contract.coverage.keys().cloned());
     }
@@ -1822,9 +1825,9 @@ fn completion_gates(
                         && gate.receipt.source == *source
                         && gate.receipt.passed
                         && gate.verdict.passed
-                        && sealed(&gate.prepared.contract)? == sealed(original)?
-                        && gate.prepared.dependencies_sha256 == installed.policy.dependencies_sha256
-                        && gate.prepared.verification_sha256 == installed.policy.verification_sha256,
+                        && sealed(gate.prepared.contract())? == sealed(original)?
+                        && gate.prepared.dependencies_sha256() == installed.policy.dependencies_sha256
+                        && gate.prepared.verification_sha256() == installed.policy.verification_sha256,
                     "original composite evidence changed its requirements or source identity"
                 );
                 crate::translation_original::authenticate(&gate.prepared, &gate.receipt)?;
@@ -1854,12 +1857,12 @@ fn completion_gates(
                         && expected.contains(&gate.verdict.family)
                         && observed.insert(gate.verdict.family.clone())
                         && contracts.iter().any(|declared| declared.family == gate.verdict.family
-                            && sealed(declared).ok() == sealed(&gate.prepared.contract).ok()),
+                            && sealed(declared).ok() == sealed(gate.prepared.contract()).ok()),
                     "managed actual-C gate source, coverage or prescribed family changed"
                 );
                 ensure!(
-                    gate.verdict.source.as_ref() == Some(&gate.prepared.source)
-                        && gate.prepared.source.revision == contract.source_revision()?,
+                    gate.verdict.source.as_ref() == Some(gate.prepared.source())
+                        && gate.prepared.source().revision == contract.source_revision()?,
                     "managed actual-C evidence changed original pinned source identity"
                 );
             }

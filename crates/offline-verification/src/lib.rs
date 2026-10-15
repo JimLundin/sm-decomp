@@ -13,6 +13,7 @@ mod fixture_execution;
 mod fixture_format;
 mod host;
 mod inputs;
+mod native;
 mod ordinary;
 mod plm_fixtures;
 mod plm_spawn;
@@ -25,6 +26,11 @@ pub mod catalog;
 pub mod fixtures;
 pub use family_model::{AuthenticateRequest, Verdict, VerifyRequest};
 pub use host::HostInputs;
+pub use native::{
+    AdmittedScope, AuthenticatedNative, ConfinedEnvironment, NativeContract, NativeDeclaration,
+    NativeDeclarationKind, NativeEvidence, NativeLimits, NativePreparation, NativeProvenance, NativeReceipt,
+    NativeTarget, NoScopeAdmission, PreparedNative, ScopeAdmission,
+};
 pub use ordinary::{PreviousFamily, RegisteredRequest, RegisteredRun};
 pub use sources::IMPLEMENTATION_SOURCES;
 

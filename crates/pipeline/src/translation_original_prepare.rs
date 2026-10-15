@@ -8,9 +8,10 @@ use crate::{
     translation_cargo as cargo, translation_compact as compact, translation_continuation as continuation,
     translation_execution::{Contract, Installation, InstalledFile},
     translation_migration::{self as migration, Migration, OriginalClaim},
-    translation_native as native, translation_original as original, translation_production as production,
+    translation_original as original, translation_production as production,
     translation_production_prepare as deployment,
 };
+use offline_verification as native;
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -153,7 +154,7 @@ fn snapshot(config: &Config, claim: &OriginalClaim, output: &Path) -> Result<ori
     ensure!(reference.sha256 == config.direct_animation.sha256, "direct animation review changed");
     files.insert(plan.into(), reference.sha256);
     if !output.join(".scratch/translation-native/plm-instructions/manifest.smf").exists() {
-        native::prepare_generated_plm(output, &output.join(".scratch/translation-native/plm-instructions"))?;
+        crate::offline::families()?.prepare_generated_plm(output, &output.join(".scratch/translation-native/plm-instructions"))?;
     }
     let mut generated = BTreeSet::new();
     collect(output, &output.join(".scratch/translation-native/plm-instructions"), &mut generated)?;
@@ -334,14 +335,16 @@ pub(crate) fn prepare(path: &Path) -> Result<Report> {
         for name in names {
             let entry = batch::entry(&catalog, &name)?;
             let callback = matches!(entry.kind.as_str(), "callback" | "power-bomb" | "ridley-subsystem");
-            let contract = native::contract_for_family(
-                &source.root,
-                &entry.manifest,
-                inventory.clone(),
-                provenance.clone(),
-                compiler.clone(),
-                fixture(callback),
-            )
+            let contract = crate::offline::families()?.declare_native(native::NativeDeclaration {
+                checkout: &source.root,
+                kind: native::NativeDeclarationKind::Family(&entry.manifest),
+                source_inventory: inventory.clone(),
+                provenance: provenance.clone(),
+                compiler_limits: compiler.clone(),
+                fixture_limits: fixture(callback),
+                deadline_unix_ms: None,
+                max_input_bytes: bounded::DEFAULT_BYTES,
+            })
             .with_context(|| format!("preparing original {id} Offline family {name}"))?;
             families.insert(
                 name.clone(),
@@ -349,14 +352,16 @@ pub(crate) fn prepare(path: &Path) -> Result<Report> {
             );
         }
         if kind == original::OriginalKind::PauseEquipment {
-            let direct = native::contract_for_direct_animation(
-                &source.root,
-                Path::new(".scratch/translation-native/pause-direct-animation.toml"),
-                inventory,
+            let direct = crate::offline::families()?.declare_native(native::NativeDeclaration {
+                checkout: &source.root,
+                kind: native::NativeDeclarationKind::DirectAnimation(Path::new(".scratch/translation-native/pause-direct-animation.toml")),
+                source_inventory: inventory,
                 provenance,
-                compiler,
-                fixture(false),
-            )?;
+                compiler_limits: compiler,
+                fixture_limits: fixture(false),
+                deadline_unix_ms: None,
+                max_input_bytes: bounded::DEFAULT_BYTES,
+            })?;
             families.insert(
                 direct.family.clone(),
                 original::write(&scope_root.join("families/pause-direct-animation.json"), &direct)?,

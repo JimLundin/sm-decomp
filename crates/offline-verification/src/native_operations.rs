@@ -1,6 +1,6 @@
 //! Bounded indexed storage for complete native producer attribution.
 use super::{NativeOperation, NativeReceipt};
-use crate::inputs::{self, bounded};
+use crate::inputs;
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use std::{
@@ -9,6 +9,7 @@ use std::{
     os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
 };
+use tool_execution::bounded;
 use translation_execution::{OperationContext, model::sha256, retention::Reference};
 
 const MAX_OPERATIONS: usize = 32_770;
