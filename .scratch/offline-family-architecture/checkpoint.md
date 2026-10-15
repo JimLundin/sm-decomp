@@ -179,9 +179,14 @@ All Cargo work is locked/offline; the optimized verification build uses one job.
   Production fixes are in `plm_spawn.rs`, `recipe.rs`, and `native.rs`; focused
   regressions now pass. Preserve the old frozen source and evidence unchanged.
   Both whole-root cleanup passes succeeded with zero bytes reclaimed and 7,048
-  snapshots checked. Independent historical authentication with ordinary strace
-  exceeded the unchanged 60-second input deadline; its diagnostic log/trace
-  remain. Rerun with syscall filtering to avoid tracing unrelated file IO.
+  snapshots checked. Independent historical authentication with ordinary and
+  filtered strace exceeded the unchanged 60-second input deadline; diagnostics
+  remain. The untraced reader passed all five families in 46.98 seconds
+  (`logs/recipes-2-authentication-untraced.log`). Every Native receipt and
+  producer-result hash and precise mtime is unchanged across authentication;
+  see `logs/recipes-2-retained-{before,after}.{sha256,mtimes}`. Use untraced
+  authentication for the large final matrix; tracing smaller controls remains
+  possible without extending any deadline.
 - Corrected-source verifier tests: 41 passed, one optional proof ignored,
   including generated PLM ABI execution in all four ordinary/confined and
   canonical/renamed placements, and saved flat-PLM rejection replay with absent
@@ -239,10 +244,12 @@ original. These steps reclaimed 36,962,304 measured allocated bytes; see
 `logs/failed-setup-disposable-before.txt`, `failed-setup-retained-after.txt`
 and `recipes-setup-{uncompressed,decompressed}.sha256`.
 
-Next: clean the finished historical `recipes-2/` root with both passes and
-authenticate its five retained families using its original reader. Finish the
-PLM regressions, commit/freeze corrected source, and run current-source owner,
-application, ordinary, catalog, complete recipe and full-family Native gates.
+Next: finish the current release build, retain its exact readers and run
+current-source owner/application, ordinary, catalog, complete recipe and
+full-family Native gates. Historical `recipes-2/` cleanup/authentication and the
+PLM regressions are complete. All 12 declared recipes remain required; execute
+the PLM allocation family first to check the corrected path before the other
+11 families. This changes only test order, not domains, limits or coverage.
 Retain exact tools and source,
 run both cleanup passes, authenticate retained evidence, integrate on main,
 retire only these worktrees/build outputs and authenticate again. Resolve
