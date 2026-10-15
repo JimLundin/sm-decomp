@@ -53,6 +53,24 @@ also passed. Exact retirement, bytes and proof pointers are in
 [integration-foundation.md](../integration-foundation.md). Final complete Native
 gates and ticket 01 baseline acceptance remain pending; this ticket stays claimed.
 
+The final GeneratedPlm correction and full public composition are integrated
+through `c0cc7fc`. The worker's real 177-family capture/freshness and mutation
+controls passed in 67.11 seconds. Its complete six-routine, 1,444-pair ordinary
+batch, unchanged standalone reuse and independent reader passed in 80.01 seconds.
+Exact source and proof: `2511abd`,
+`/home/jim/sm-decomp-performance-generated-proof/2511abd/`.
+This includes the explicit ordinary I/O phase composition described below.
+
+Worker cleanup reclaimed 235,274,240 bytes. Root's two final cleanup passes
+reclaimed zero additional bytes and retained 4,332 snapshots; all completion
+seals passed. Root removed the integrated GeneratedPlm worktree (219,156,480
+allocated bytes before removal) and its independent compiler-free reader passed
+again: one test in 12.57 seconds. No retained proof requires that checkout or
+the loaned Cargo target. Final available space was 95,869,181,952 bytes, observed
+while the separate root build was active. Commands and receipts are in
+`/home/jim/sm-decomp-performance-generated-proof/retirement/`; retain the complete
+proof, exact source/C/archive/ROM and reader under `2511abd`.
+
 ## Comments
 
 2026-10-15 measured correction, explicitly approved by the integration owner:

@@ -7,6 +7,44 @@ Authorization: user instructed "please go ahead and implement" the nine-ticket p
 
 ## Current state (supersedes historical observations below)
 
+At 2026-10-15 20:34 UTC, final assembly is clean at
+`c0cc7fcaff052c6ba251e43ca7dccab3679976f5`. All implementation and the final graph
+and GeneratedPlm test/documentation followups are integrated there. Main remains
+documentation-only for this effort. The user asked for a clear status update;
+the remaining scope is combined acceptance, the finite existing measurement,
+usable source integration and cleanup, with no further exploratory tuning.
+
+The optimized tools built successfully from `6bc0a78` in 578.97 seconds, with
+2,776,388 KiB peak RSS. Exact Cargo-emitted executables and debug companions are
+retained and sealed under
+`/home/jim/sm-decomp-performance-final-proof/6bc0a78/tools/`. Production source
+and Cargo files are unchanged at `c0cc7fc`; the later commits contain tests/docs.
+Root exclusively owns `/home/jim/sm-decomp-offline-verifier/target` and is building
+the combined pipeline readers in exec session `77684`, with a deliberate
+1,800-second build bound, locked/offline Cargo and one build job. Logs and exact
+command are under `final-proof/c0cc7fc/logs/` at the same absolute proof parent.
+
+The graph owner is idle before exactly three alternating baseline/candidate
+192-pair samples, awaiting root's quiet-window notice. Its retained Rust driver
+is `/home/jim/sm-decomp-performance-graph-proof/tools/alternating-benchmark`.
+Root owns the five standalone family regressions before that window. The
+shared-preparation owner has the exact final tool References and is preparing
+only the isolated Installation; production activation remains pending.
+
+The GeneratedPlm worktree is removed. Both final cleanup passes succeeded;
+the retained complete 1,444-pair proof authenticated again after removal with
+compilers unavailable (one test, 12.57 seconds). Retirement evidence is under
+`/home/jim/sm-decomp-performance-generated-proof/retirement/`. The extraction
+retirement audit is complete; its one required 10,839-byte source file is copied
+under the candidate's `retention/extraction-audit/`. Do not remove the extraction
+worktree or target until root's builds and tests are finished.
+
+No whole-batch speedup is established. The retained small profile comparison
+remains 11.770 to 1.106 seconds; the graph's helper reduction alone is not a
+latency claim. Preserve all mutation worktrees, production state and shared caches.
+
+## Superseded assembly observations
+
 Root resumed at 2026-10-15 19:55 UTC. The final assembly is now `2231f93`,
 including GeneratedPlm capture correction `8fcc32c`; it has no dirty files.
 Main remains documentation-only at `71591f4`. No root build is running.
