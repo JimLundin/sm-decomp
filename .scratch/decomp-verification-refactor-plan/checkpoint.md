@@ -25,6 +25,16 @@ supported isolated Installation preparation still wait for the combined source.
 See the latest comments in tickets 01, 07, 08 and 09; no active production state
 changed and no complete-batch multiplier is established.
 
+Root has taken exclusive Cargo writer ownership of
+`/home/jim/sm-decomp-offline-verifier/target` from the completed 08 worker.
+Only unchanged `translation-execution`/`evidence` helper binaries are prebuilding
+from `cc059fd` while remaining graph and test changes finish. Cargo exec `98467`
+uses the `verification` profile, locked/offline jobs1 and a 900-second bound.
+Exact command/resources/process observation are under
+`/home/jim/sm-decomp-performance-final-proof/helper-build-cc059fd/`.
+Final controller/test-reader build and final source seals still wait for the
+combined freeze. No worker may write this target until root returns it.
+
 - Main remains documentation-only; production source matches `5c011eb5d02a54d74903715bffb3f8c15ab78c51`.
   Final assembly is `45b89f844df928478b890c4b4814208dfe44bfb8` in
   `/home/jim/sm-decomp-performance-final`. It combines the tested 02/03/04/06
