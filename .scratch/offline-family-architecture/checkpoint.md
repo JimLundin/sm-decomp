@@ -71,9 +71,30 @@ All Cargo work is locked/offline; the optimized verification build uses one job.
   It holds `source-commit.txt`, `frozen-source/` with the private ROM,
   `prerequisites.sha256`, `logs/`, `tools/` and isolated `tmp/`.
   Build log: `logs/test-build.log`; dependency review: `logs/dependencies.txt`.
-  Final combined behavioral suites and all three explicit Native proofs remain
-  pending. Follow `native-verification-plan.md`; keep the complete recipe matrix
-  and negative controls, and preserve the current budgets.
+  The emitted pipeline test reader is retained under `tools/sm-pipeline-tests`;
+  its exact Cargo fingerprint is in `logs/pipeline-test-build-fingerprint.json`.
+  Final Cargo output must agree with the retained artifact path
+  `target/release/build/pipeline/5c82b7b185b372cf/out/sm_pipeline-5c82b7b185b372cf`.
+- The initial pipeline unit run finished: 150 passed, 15 failed during setup,
+  21 ignored (`logs/pipeline-unit.log`). The worktree lacked the private ROM,
+  `SM_TRANSLATION_TEST_HELPER` and `SM_TRANSLATION_RECORDED_REWRITE`. The ROM
+  is now copied and hash-checked. Build both current `translation-execution`
+  binaries after the active build, retain them under `tools/`, set both variables
+  and rerun the pipeline unit suite, including helper-dependent conditional
+  controls. No source change is needed for these setup failures.
+- Both cleanup passes over the first `unit-tmp/` succeeded with zero targets
+  and zero bytes (`logs/unit-setup-failure-cleanup*.toml`). Unsealed constructor
+  inputs remain there; there are no receipts or verdicts. Preserve diagnostics
+  and remove their disposable Git metadata/temporary inputs at final cleanup.
+- The explicit catalog proof passed: exactly one test selected, 19.79 seconds;
+  `logs/catalog.log` and `logs/catalog.time`. All 177 declarations prepared,
+  covering 150,204 declared Fixture pairs plus the 360-pair animation auxiliary.
+  This gate launches no producer. `catalog/cleanup*.toml` records both successful
+  zero-byte cleanup passes. Keep `catalog-source/`, including generated PLM
+  inputs, intact. Do not rerun this completed gate without a source change.
+- The remaining combined behavioral suites, ordinary retained run and two real
+  Native execution proofs are pending. Follow `native-verification-plan.md`;
+  preserve the complete matrix, negative controls and current budgets.
 
 ## Cleanup and remaining work
 
@@ -81,6 +102,9 @@ Foundation and recipe worktrees are integrated, cleaned and removed. Native
 and caller workers are finished and idle; both targets and temporary editing
 tools are cleaned. Their handoffs include measurements and retained logs. No
 proof depends on either implementer worktree. Root owns their final retirement.
+Root's fourteen temporary Rust editing source/executable files were also removed,
+reclaiming 32,178,176 allocated bytes; the measurement and disk observation are
+in `logs/edit-tools-before-cleanup.txt` and `logs/disk-after-edit-tool-cleanup.txt`.
 
 Remaining implementation worktrees are:
 
