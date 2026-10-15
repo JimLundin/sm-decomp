@@ -7,6 +7,35 @@ Authorization: user instructed "please go ahead and implement" the nine-ticket p
 
 ## Current state (supersedes historical observations below)
 
+Root resumed at 2026-10-15 19:55 UTC. The final assembly is now `2231f93`,
+including GeneratedPlm capture correction `8fcc32c`; it has no dirty files.
+Main remains documentation-only at `71591f4`. No root build is running.
+The GeneratedPlm worker still exclusively owns the extraction Cargo target;
+the graph worker exclusively owns the metrics target. No mutation worktree,
+production claim, installed policy or shared cache belongs to this effort.
+
+Ticket 07's first helper-reuse control completes all 192 pairs with all eight
+families overlapping: helper starts 322 to 56, peak helpers eight and peak
+producers four. Fixture wall time changed 52.761 to 55.935 seconds; this is a
+structural reduction, not an established latency improvement. The approved
+finite three alternating pairs with metrics enabled remain in progress.
+Root review also requires full canonical diagnostics (only advisory copies
+may be shortened), rejection-record memory accounting and a concrete allocation
+check before accepting the reduced resident reservations.
+
+Actual historical Native replay exposed a new-source-path compatibility failure.
+Root approved inlining the three private graph/sequence modules into already
+registered parent files, preserving the strict provenance check and module
+seams. There is no historical-format reader or relaxed source admission.
+The old proof's original host source contract remains distinct from the new
+test producer's complete source closure.
+
+Initial capture instrumentation measures 6,967 distinct planned inputs,
+477,165,615 bytes, including 7,104,727 compiler bytes. The worker is measuring
+the exact public capture scope after retaining an overly strict diagnostic
+wrapper separately. No byte limit or freshness rule has changed; a correction
+must follow the production-path measurement.
+
 The larger controls found two remaining correctness/performance gates before
 freeze. Full ordinary catalog capture tries to open the obsolete synthetic ROM
 in the raw PLM registration before the trusted generator supplies its current
