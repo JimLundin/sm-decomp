@@ -1,8 +1,8 @@
 # Ticket 08 optimized controller and sandbox
 
-Status: provisional investigation/implementation; no installed-tool change or
-acceptance. Final matched pair and installation candidate await root's complete
-03/04/06/07 source plus Ceres repair.
+Status: source implementation and provisional controls complete; merged by root.
+Final controller/test reader and isolated Installation await the combined source
+freeze. No production tool, policy, claim or authority has been changed.
 
 Owner `/root/shared_preparation`, session
 `01a13e7f-ab01-7413-a1c2-288b08a4b719`. Worktree
@@ -16,8 +16,11 @@ bulk owns capture/generation/provenance; dependency owner owns scanner/planner
 and then scheduling. No shared registration or installed policy/registry/claim
 mutation belongs to this worker.
 
-Exclusive Cargo target `/home/jim/sm-decomp-offline-verifier/target` was released
-by ticket 04 after copying its reader/evidence. Builds use locked/offline,
+Cargo target `/home/jim/sm-decomp-offline-verifier/target` was released
+by ticket 04 after copying its reader/evidence and used exclusively for the
+completed 08 experiments below. **Root now owns its exclusive Cargo writer**;
+this worker must not build into it without an explicit return of ownership.
+Builds use locked/offline,
 `CARGO_BUILD_JOBS=1`, `SM_PIPELINE_ROOT=/home/jim/sm-decomp/out/pipeline` and
 `SM_PIPELINE_WORKERS=4`. Proof root:
 `/home/jim/sm-decomp-performance-tools-proof`. Local ignored dependency link
@@ -225,3 +228,63 @@ final pair and reviewable candidate under
 `/home/jim/sm-decomp-performance-installation-candidate` must use that source.
 The active production registry, owner generations, original claims/policies,
 integration baseline and held pause blocker remain unchanged.
+
+### Private final candidate preparation checkpoint
+
+Root now builds and supplies the final retained tools from the complete source
+freeze. The final assembly was `6509381` at the resumed planning checkpoint;
+07 and Native controls were still pending, so that revision was not bound as a
+final candidate. The candidate root is
+`/home/jim/sm-decomp-performance-installation-candidate`. Its
+`transition-review.md`, `transition-inputs.json` and
+`isolated-preparation-plan.md` record the concrete deployment seam, exact
+preserved authority and final request/inspection requirements.
+
+All 19 supplied production/original-lineage/template inputs matched their pins
+and were copied and checked independently. The retained original controller's
+read-only production status and host inspection passed. The host remains the
+same stopped run/attempt/policy, retaining 102,220 bytes with completed cleanup,
+authentication and worker retirement. A read-only status using the identical
+production request at a copied private path refused with exactly
+`production already activated a different checked request`. Production and copy
+hashes remained unchanged afterward. Both candidate-input cleanup passes
+reported zero reclaimable bytes; that checkpoint occupied 344,276 logical bytes,
+with 95,470,952,448 bytes available. New source-review copies were added later
+and require the final scoped cleanup pass after candidate preparation.
+
+Existing machinery does not supply a tools-only Managed successor under the
+preserved original policy. Initial production preparation requires current main
+HEAD equal the old `a50a13e3...` integration baseline, and a different checked
+production request cannot replace the active registry. The supported Original
+continuation requires separately reviewed acceptance contracts, resource bounds
+and source baselines; it must not be invoked as a tool replacement. Managed
+activation is therefore an explicit unfulfilled prerequisite requiring fresh
+policy review and the original-acceptance adapter work. No new authority or
+ad hoc migration is implemented by this ticket.
+
+The independently preparable Installation uses the unchanged isolated
+enemy-jump-instructions template: two routines, all 16 Fixture pairs, original
+compiler/Fixture limits and original policy budgets. All 44 historical frozen
+source files authenticated at their existing clean
+`f69ae88d96f66f0da5e2d2a78354ccb8db7fe8b9` source checkout. Source inventory,
+catalog, original provenance verdict, ROM and compiler hashes also matched.
+The 44 files plus inventory/catalog/verdict review copies are retained below
+the private candidate. **The final assembly is tool source only**; the template
+retains its historical gameplay/source revision and paths. The supported
+`translation-launch --request ... prepare` and installed `... inspect` commands
+invoke no model or gate. `requests/isolated-launch.template.json` remains
+explicitly incomplete (`helper: null`) until root supplies final tool References.
+
+The proof-reference audit found four absolute source paths below this worker's
+worktree: `crates/pipeline/tests/startup.rs`,
+`crates/pipeline/tests/tool_profiles.rs`,
+`crates/translation-execution/tests/confinement_performance.rs` and
+`crates/translation-execution/tests/confinement_runtime.rs`. Their exact copies
+and SHA-256 manifests are in candidate `retention/worktree-source/` and
+`retention/worktree-source.expected.sha256`. Root should restore these small
+files at their original paths after retiring the integrated Git worktree,
+without its Git metadata, Cargo target or other build outputs. The nine family
+results authenticate against their already retained `family-pilot/source/` and
+`family-profile-comparison/source/` snapshots. Existing readers, debug files,
+probe executables, original provenance graphs and private evidence dependencies
+remain required. Final authentication after retirement is still pending.
