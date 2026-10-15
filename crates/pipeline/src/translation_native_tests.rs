@@ -8,8 +8,9 @@ use offline_verification::{
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{BTreeMap, BTreeSet},
+    os::unix::process::ExitStatusExt,
     path::PathBuf,
-    time::SystemTime,
+    time::{Duration, SystemTime},
 };
 use tool_execution::{
     atomic_toml,
@@ -17,7 +18,9 @@ use tool_execution::{
 };
 use translation_execution::{
     OperationContext,
+    confinement::{Program, ReadOnlyBind, RunLimits},
     model::{sealed, sha256},
+    operation,
     retention::Reference,
 };
 
@@ -100,6 +103,10 @@ fn proof_producers(admitted: &AuthenticatedNative, receipt: &NativeReceipt) -> R
 struct RetainedProof {
     schema: String,
     cases: BTreeMap<String, RetainedCase>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    capture_refusals: BTreeMap<String, RetainedCaptureRefusal>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    compiler_denials: BTreeMap<String, RetainedCompilerDenial>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -114,18 +121,57 @@ struct RetainedCase {
     diagnostic_contains: Option<String>,
 }
 
+#[derive(Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct RetainedCaptureRefusal {
+    candidate: Asset,
+    output: PathBuf,
+    diagnostic: String,
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct CompilerDenialRequest {
+    operation_root: PathBuf,
+    context: OperationContext,
+    program: Program,
+    limits: RunLimits,
+    deadline_unix_ms: u64,
+    source: Asset,
+    protected: Asset,
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct RetainedCompilerDenial {
+    request: Asset,
+    result: Reference,
+    references: Vec<Reference>,
+}
+
 fn retain_case(root: &Path, name: &str, mut case: RetainedCase) -> Result<()> {
     case.prepared = fs::canonicalize(case.prepared)?;
     case.checkout = fs::canonicalize(case.checkout)?;
     case.receipt = fs::canonicalize(case.receipt)?;
+    retain_proof(root, |proof| {
+        proof.cases.insert(name.into(), case);
+    })
+}
+
+fn retain_proof(root: &Path, update: impl FnOnce(&mut RetainedProof)) -> Result<()> {
     let path = root.join("retained-authentication.toml");
     let mut proof = if path.exists() {
         bounded::object::<RetainedProof>(&path)?
     } else {
-        RetainedProof { schema: "retained-native-proof-v1".into(), cases: BTreeMap::new() }
+        RetainedProof {
+            schema: "retained-native-proof-v1".into(),
+            cases: BTreeMap::new(),
+            capture_refusals: BTreeMap::new(),
+            compiler_denials: BTreeMap::new(),
+        }
     };
     ensure!(proof.schema == "retained-native-proof-v1", "retained Native proof schema changed");
-    proof.cases.insert(name.into(), case);
+    update(&mut proof);
     atomic_toml(&path, &proof)
 }
 
@@ -141,7 +187,8 @@ fn cleanup_proof(root: &Path) -> Result<()> {
 fn authenticate_retained(path: &Path) -> Result<()> {
     let proof: RetainedProof = bounded::object(path)?;
     ensure!(
-        proof.schema == "retained-native-proof-v1" && !proof.cases.is_empty(),
+        proof.schema == "retained-native-proof-v1"
+            && !(proof.cases.is_empty() && proof.capture_refusals.is_empty() && proof.compiler_denials.is_empty()),
         "retained Native proof is incomplete"
     );
     for (name, case) in proof.cases {
@@ -160,7 +207,251 @@ fn authenticate_retained(path: &Path) -> Result<()> {
         }
         println!("Authenticated retained Native proof {name}: {}", admitted.report().status);
     }
+    for (name, refusal) in proof.capture_refusals {
+        authenticate_capture_refusal(&refusal)?;
+        println!("Authenticated retained Native capture refusal {name}");
+    }
+    for (name, denial) in proof.compiler_denials {
+        authenticate_compiler_denial(&denial)?;
+        println!("Authenticated retained confined compiler denial {name}");
+    }
     Ok(())
+}
+
+fn authenticate_capture_refusal(refusal: &RetainedCaptureRefusal) -> Result<()> {
+    let (bytes, hash) = bounded::read_with_digest(&refusal.candidate.file)?;
+    ensure!(hash == refusal.candidate.sha256, "capture-refusal candidate changed");
+    let error = offline_verification::source_facts::scan(&refusal.candidate.file, &bytes)?
+        .require_complete()
+        .err()
+        .context("uncaptured file macro became a complete source closure")?;
+    ensure!(
+        format!("{error:#}") == refusal.diagnostic
+            && refusal.diagnostic.contains("Rust source has unresolved inputs")
+            && refusal.diagnostic.contains("uncaptured file macro include_str!"),
+        "Native capture-refusal diagnostic changed"
+    );
+    ensure!(
+        !refusal.output.join("native-intent.toml").exists()
+            && !refusal.output.join("native-receipt.toml").exists()
+            && bounded::entries(&refusal.output.join("family"))?.is_empty(),
+        "refused source capture published Native intent or producer evidence"
+    );
+    Ok(())
+}
+
+fn compiler_denial_source(protected: &Path) -> String {
+    format!("const SECRET: &str = include_str!({protected:?});\nfn main() {{ let _ = SECRET; }}\n")
+}
+
+fn compiler_denial_arguments() -> Vec<String> {
+    [
+        "--edition=2024",
+        "--crate-name=native_compile_denial",
+        "--sysroot",
+        "/toolchain",
+        "--emit=metadata",
+        "/inputs/denial.rs",
+        "-o",
+        "/work/tmp/denial.rmeta",
+    ]
+    .into_iter()
+    .map(str::to_owned)
+    .collect()
+}
+
+fn compiler_denial_limits() -> RunLimits {
+    RunLimits {
+        timeout: Duration::from_secs(60),
+        writable_bytes: 128 * 1024 * 1024,
+        stdout_bytes: 4096,
+        stderr_bytes: 256 * 1024,
+        stdin_bytes: 0,
+    }
+}
+
+fn producer_stamps(directory: &Path) -> Result<BTreeMap<PathBuf, (String, SystemTime)>> {
+    ["intent.json", "runner.json", "sandbox.json", "result.json"]
+        .into_iter()
+        .map(|name| {
+            let path = directory.join(name);
+            Ok((path.clone(), (digest(&path)?, fs::metadata(&path)?.modified()?)))
+        })
+        .collect()
+}
+
+fn authenticate_compiler_denial(denial: &RetainedCompilerDenial) -> Result<()> {
+    ensure!(digest(&denial.request.file)? == denial.request.sha256, "compiler-denial request changed");
+    let request: CompilerDenialRequest = bounded::object(&denial.request.file)?;
+    let (source, hash) = bounded::read_with_digest(&request.source.file)?;
+    ensure!(
+        hash == request.source.sha256 && source == compiler_denial_source(&request.protected.file).as_bytes(),
+        "compiler-denial probe source changed"
+    );
+    let (protected, hash) = bounded::read_with_digest(&request.protected.file)?;
+    ensure!(
+        hash == request.protected.sha256 && protected == b"protected compiler input\n",
+        "compiler-denial protected input changed"
+    );
+    ensure!(
+        request.program.arguments == compiler_denial_arguments()
+            && request.program.outputs.is_empty()
+            && request.program.inputs
+                == vec![ReadOnlyBind { source: request.source.file.clone(), destination: "/inputs/denial.rs".into() }]
+            && request.program.executable.file_name().is_some_and(|name| name == "rustc")
+            && request.limits == compiler_denial_limits(),
+        "compiler-denial request does not prescribe the real Rust compiler probe"
+    );
+    ensure!(
+        request.program.inputs.iter().chain(&request.program.runtime).all(|binding| {
+            !request.protected.file.starts_with(&binding.source)
+                && !request.protected.file.starts_with(&binding.destination)
+        }),
+        "compiler-denial request exposes the protected host file"
+    );
+    let directory = operation::directory(&request.operation_root, &request.context)?;
+    let before = producer_stamps(&directory)?;
+    let admitted = operation::authenticate_request_with_references(
+        &request.operation_root,
+        &request.context,
+        &request.program,
+        &request.limits,
+        b"",
+    )?;
+    let result = admitted.result();
+    ensure!(
+        admitted.result_reference() == &denial.result && admitted.references() == denial.references,
+        "compiler-denial retained attribution changed"
+    );
+    ensure!(
+        !result.passed
+            && result.status_raw.is_some_and(|raw| !std::process::ExitStatus::from_raw(raw).success())
+            && result.diagnostic.contains("couldn't read")
+            && result.diagnostic.contains(request.protected.file.to_str().context("protected path is not UTF-8")?),
+        "the actual confined compiler did not deny the protected file: {}",
+        result.diagnostic
+    );
+    for name in ["runner.json", "sandbox.json"] {
+        ensure!(
+            admitted.references().iter().any(|reference| reference.path == directory.join(name)),
+            "compiler-denial result lacks actual runner attribution"
+        );
+    }
+    ensure!(producer_stamps(&directory)? == before, "compiler-denial admission rewrote producer evidence");
+    Ok(())
+}
+
+fn prove_compiler_denial(root: &Path, runtime: &StrictRuntime, context: &OperationContext) -> Result<()> {
+    let root = fs::canonicalize(root)?;
+    let directory = root.join("compiler-denial");
+    fs::create_dir_all(&directory)?;
+    let protected = directory.join("compiler-secret.txt");
+    immutable(&protected, b"protected compiler input\n")?;
+    let source = directory.join("denial.rs");
+    immutable(&source, compiler_denial_source(&protected).as_bytes())?;
+    let now = now_unix_ms()?;
+    let deadline_unix_ms = now
+        .checked_add(180_000)
+        .context("compiler-denial proof deadline overflow")?
+        .min(runtime.deadline_unix_ms.unwrap_or(u64::MAX));
+    let rustc = fs::canonicalize(&runtime.rustc)?;
+    let program = Program {
+        executable: rustc.clone(),
+        arguments: compiler_denial_arguments(),
+        inputs: vec![ReadOnlyBind { source: source.clone(), destination: "/inputs/denial.rs".into() }],
+        runtime: translation_execution::compiler_runtime::discover_until(
+            &rustc,
+            deadline_unix_ms,
+            8 * bounded::DEFAULT_BYTES,
+        )?,
+        helper: fs::canonicalize(&runtime.helper)?,
+        outputs: Vec::new(),
+    };
+    let mut context = context.clone();
+    context.operation_key = sha256("native-actual-compiler-file-denial");
+    let request = CompilerDenialRequest {
+        operation_root: runtime.operation_root.clone(),
+        context,
+        program,
+        limits: compiler_denial_limits(),
+        deadline_unix_ms,
+        source: Asset { file: source.clone(), sha256: digest(&source)? },
+        protected: Asset { file: protected.clone(), sha256: digest(&protected)? },
+    };
+    let request_path = directory.join("request.toml");
+    immutable(&request_path, toml::to_string(&request)?.as_bytes())?;
+    let (lease, _) =
+        tool_execution::acquire_lease_until(&runtime.pipeline_root, runtime.workers, request.deadline_unix_ms)?;
+    let result = operation::run_until(
+        &request.operation_root,
+        &request.context,
+        &request.program,
+        &request.limits,
+        b"",
+        request.deadline_unix_ms,
+    )?;
+    drop(lease);
+    let admitted = operation::authenticate_request_with_references(
+        &request.operation_root,
+        &request.context,
+        &request.program,
+        &request.limits,
+        b"",
+    )?;
+    let denial = RetainedCompilerDenial {
+        request: Asset { file: request_path.clone(), sha256: digest(&request_path)? },
+        result: admitted.result_reference().clone(),
+        references: admitted.references().to_vec(),
+    };
+    authenticate_compiler_denial(&denial)?;
+    let operation_directory = operation::directory(&request.operation_root, &request.context)?;
+    let before = producer_stamps(&operation_directory)?;
+    let retry = operation::run_until(
+        &request.operation_root,
+        &request.context,
+        &request.program,
+        &request.limits,
+        b"",
+        request.deadline_unix_ms,
+    )?;
+    ensure!(retry == result, "compiler-denial retry returned another result");
+    ensure!(producer_stamps(&operation_directory)? == before, "compiler-denial retry reran or rewrote the producer");
+    authenticate_compiler_denial(&denial)?;
+    retain_proof(&root, |proof| {
+        proof.compiler_denials.insert("undeclared-host-file".into(), denial);
+    })?;
+    println!(
+        "Actual Rust compiler denied the undeclared host file; durable retry preserved result and runner bytes/mtimes"
+    );
+    Ok(())
+}
+
+#[test]
+#[ignore = "bounded real compiler denial; retains exact operation, retry and independent authentication evidence"]
+fn confined_compiler_denial_replays_and_authenticates() -> Result<()> {
+    let root = PathBuf::from(std::env::var("SM_NATIVE_COMPILER_DENIAL_PROOF")?);
+    fs::create_dir_all(&root)?;
+    let runtime = StrictRuntime {
+        helper: PathBuf::from(std::env::var("SM_NATIVE_SANDBOX")?),
+        rustc: PathBuf::from(std::env::var("SM_NATIVE_RUSTC")?),
+        c_compiler: "/usr/bin/x86_64-linux-gnu-gcc-9".into(),
+        operation_root: root.join("operations"),
+        pipeline_root: "/home/jim/sm-decomp/out/pipeline".into(),
+        workers: 4,
+        gate_timeout_seconds: 180,
+        deadline_unix_ms: None,
+        max_output_bytes: 1024 * 1024 * 1024,
+    };
+    let context = OperationContext {
+        run_id: sha256("native-compiler-denial-focused-proof"),
+        attempt: 1,
+        policy_sha256: sha256("actual compiler must deny an undeclared host input"),
+        operation_key: sha256("native-compiler-denial-focused-proof"),
+        phase: translation_execution::model::ExecutionPhase::Candidate,
+    };
+    prove_compiler_denial(&root, &runtime, &context)?;
+    cleanup_proof(&root)?;
+    authenticate_retained(&root.join("retained-authentication.toml"))
 }
 
 #[test]
@@ -801,8 +1092,8 @@ fn full_real_family_retains_authenticates_and_reuses_every_producer() -> Result<
         authenticate_retained(&root.join("retained-authentication.toml"))?;
         return Ok(());
     }
-    let compile_source = variant_source(&prepared, &checkout, &root.join("compile-denial-source"))?;
-    let candidate = compile_source.join(prepared.candidate_path());
+    let capture_source = variant_source(&prepared, &checkout, &root.join("capture-refusal-source"))?;
+    let candidate = capture_source.join(prepared.candidate_path());
     let candidate_bytes = bounded::read(&candidate)?;
     let undeclared = root.join("compiler-secret.txt");
     fs::write(&undeclared, "protected input")?;
@@ -811,36 +1102,86 @@ fn full_real_family_retains_authenticates_and_reuses_every_producer() -> Result<
     mutated.extend(compile_read.as_bytes());
     fs::write(&candidate, &mutated)?;
     let mut deny_context = context.clone();
-    deny_context.operation_key = sha256("native-compile-time-denial");
-    let denied = run(&prepared, &compile_source, &root.join("compile-denial"), &runtime, &deny_context);
-    let retry = match &denied {
-        Ok(denied) => {
-            let retry = run(&prepared, &compile_source, &root.join("compile-denial"), &runtime, &deny_context)?;
-            ensure!(sealed(&retry)? == sealed(denied)?, "unchanged rejected candidate reran compiler");
-            Some(retry)
-        }
-        Err(_) => None,
+    deny_context.operation_key = sha256("native-uncaptured-input-refusal");
+    let capture_output = root.join("capture-refusal");
+    let producers_before = bounded::entries(&runtime.operation_root)?;
+    let error = run(&prepared, &capture_source, &capture_output, &runtime, &deny_context)
+        .err()
+        .context("uncaptured file macro reached Native producer execution")?;
+    ensure!(
+        bounded::entries(&runtime.operation_root)? == producers_before,
+        "refused source capture created a producer operation"
+    );
+    let refusal = RetainedCaptureRefusal {
+        candidate: Asset { file: candidate.clone(), sha256: digest(&candidate)? },
+        output: capture_output,
+        diagnostic: format!("{error:#}"),
     };
-    let denied = denied?;
+    authenticate_capture_refusal(&refusal)?;
+    ensure!(
+        refusal.diagnostic.contains(undeclared.to_str().context("uncaptured input path is not UTF-8")?),
+        "capture refusal did not identify the undeclared input"
+    );
+    retain_proof(&root, |proof| {
+        proof.capture_refusals.insert("uncaptured-file-macro".into(), refusal);
+    })?;
+    println!("Uncaptured include_str! refused before Native intent or producer publication");
+
+    // Source capture refuses unknown inputs before compilation. Exercise the
+    // actual confinement boundary separately with an explicitly bound probe.
+    prove_compiler_denial(&root, &runtime, &context)?;
+
+    // A complete source closure can still fail in rustc. This independently
+    // preserves rejected Native receipts and their exact producer replay.
+    let compile_source = variant_source(&prepared, &checkout, &root.join("compile-failure-source"))?;
+    let candidate = compile_source.join(prepared.candidate_path());
+    let mut mutated = candidate_bytes.clone();
+    mutated.extend(b"\ncompile_error!(\"native compiler failure control\");\n");
+    fs::write(&candidate, &mutated)?;
+    let mut deny_context = context.clone();
+    deny_context.operation_key = sha256("native-compiler-failure-replay");
+    let compile_output = root.join("compile-failure");
+    let denied = run(&prepared, &compile_source, &compile_output, &runtime, &deny_context)?;
+    ensure!(
+        !denied.passed
+            && denied.diagnostic.contains("native compiler failure control")
+            && denied.operation_count()? == 2,
+        "native compiler failure was not retained: {}",
+        denied.diagnostic
+    );
+    let admitted = prepared.authenticate(NativeEvidence { checkout: &compile_source, receipt: &denied })?;
+    let operations = proof_producers(&admitted, &denied)?;
+    let producer_stamps_before = operations
+        .iter()
+        .map(|producer| producer_stamps(producer.result.path.parent().context("producer result parent missing")?))
+        .collect::<Result<Vec<_>>>()?;
+    let receipt_path = compile_output.join("native-receipt.toml");
+    let receipt_before = (digest(&receipt_path)?, fs::metadata(&receipt_path)?.modified()?);
+    let retry = run(&prepared, &compile_source, &compile_output, &runtime, &deny_context)?;
+    ensure!(sealed(&retry)? == sealed(&denied)?, "unchanged rejected candidate returned another Native receipt");
+    ensure!(
+        (digest(&receipt_path)?, fs::metadata(&receipt_path)?.modified()?) == receipt_before,
+        "rejected Native retry rewrote its receipt"
+    );
+    for (producer, before) in operations.iter().zip(producer_stamps_before) {
+        ensure!(
+            producer_stamps(producer.result.path.parent().context("producer result parent missing")?)? == before,
+            "rejected Native retry reran or rewrote a compiler producer"
+        );
+    }
     retain_case(
         &root,
-        "compile-denial",
+        "compile-failure",
         RetainedCase {
             prepared: root.join("prepared.toml"),
             checkout: compile_source.clone(),
-            receipt: root.join("compile-denial/native-receipt.toml"),
+            receipt: receipt_path,
             passed: false,
             fixture_pairs: None,
-            operation_count: None,
-            diagnostic_contains: Some("compiler-secret".into()),
+            operation_count: Some(2),
+            diagnostic_contains: Some("native compiler failure control".into()),
         },
     )?;
-    ensure!(retry.is_some(), "failed native evaluation was not durably reused");
-    ensure!(
-        !denied.passed && denied.diagnostic.contains("compiler-secret"),
-        "compile-time undeclared inclusion was not denied: {}",
-        denied.diagnostic
-    );
     authenticate(&prepared, &compile_source, &denied)?;
 
     let runtime_source = variant_source(&prepared, &checkout, &root.join("runtime-denial-source"))?;
@@ -910,7 +1251,7 @@ fn full_real_family_retains_authenticates_and_reuses_every_producer() -> Result<
     cleanup_proof(&root)?;
     authenticate_retained(&root.join("retained-authentication.toml"))?;
     println!(
-        "Preparation gaps, compiler undeclared inclusion, runtime parent/sibling read/write, tampered operation and aggregate prelaunch reservation checks passed"
+        "Preparation gaps, uncaptured input refusal, actual compiler file denial, rejected Native replay, runtime parent/sibling read/write, tampered operation and aggregate prelaunch reservation checks passed"
     );
     Ok(())
 }
