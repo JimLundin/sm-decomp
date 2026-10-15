@@ -570,34 +570,12 @@ pub fn check(directory: &Path, fixture: &Case) -> Result<CaseRecord> {
     Ok(record)
 }
 
-pub fn case(
-    _request: &VerifyRequest,
-    _manifest: &Manifest,
-    routine: &Routine,
-    fixture: &Case,
-    run: &Path,
-    worker: &mut crate::fixture_execution::Worker,
-) -> Result<CaseRecord> {
-    case_with(routine, fixture, run, false, |command, directory, subject| worker.execute(command, directory, subject))
-}
-
-pub(crate) fn confined_case(
-    routine: &Routine,
-    fixture: &Case,
-    run: &Path,
-    execution: &builds::StrictExecution,
-) -> Result<CaseRecord> {
-    case_with(routine, fixture, run, true, |command, directory, subject| {
-        execution.fixture_recipe(command, directory, subject, builds::StrictFixture::Ridley).map(|_| ())
-    })
-}
-
-fn case_with(
+pub(crate) fn case(
     routine: &Routine,
     fixture: &Case,
     run: &Path,
     resume: bool,
-    mut execute: impl FnMut(&[String], &Path, &str) -> Result<()>,
+    mut execute: impl FnMut(&Path, &str) -> Result<()>,
 ) -> Result<CaseRecord> {
     let directory = run.join(&fixture.name);
     family::prepare_case_with(fixture, &directory, &family::types(routine)?, resume)?;
@@ -605,27 +583,7 @@ fn case_with(
     fs::write(directory.join("ppu-before.bin"), ppu_before(fixture, run)?)?;
     retain_capture(&directory, fixture)?;
     for subject in ["rust", "c"] {
-        execute(
-            &[
-                run.join(subject).display().to_string(),
-                subject.into(),
-                routine.symbol.clone(),
-                fixture.a.to_string(),
-                fixture.b.to_string(),
-                directory.join("before.wram").display().to_string(),
-                directory.join(format!("{subject}-after.wram")).display().to_string(),
-                "0".into(),
-                run.join("rom.bin").display().to_string(),
-                directory.join("host-before.bin").display().to_string(),
-                directory.join(format!("{subject}-host-after.bin")).display().to_string(),
-                directory.join(format!("{subject}-effects.log")).display().to_string(),
-                directory.join(format!("{subject}-ppu.bin")).display().to_string(),
-                directory.join(format!("{subject}-services.bin")).display().to_string(),
-                directory.join("ppu-before.bin").display().to_string(),
-            ],
-            &directory,
-            subject,
-        )?;
+        execute(&directory, subject)?;
     }
     let mut record = check(&directory, fixture)?;
     record.routine = routine.symbol.clone();

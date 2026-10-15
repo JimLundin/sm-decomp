@@ -1,7 +1,6 @@
 //! Command and file contracts shared by execution and receipt authentication.
 use super::Recipe;
 use crate::family_model::{Case, Manifest, Routine};
-use crate::{callback, plm_spawn};
 use anyhow::{Context, Result, ensure};
 use std::path::{Path, PathBuf};
 use translation_execution::confinement::{self, Program, ReadOnlyBind};
@@ -64,10 +63,40 @@ pub(crate) fn fixture_command(
     let a = fixture.a.to_string();
     let b = fixture.b.to_string();
     let (command, kind) = match recipe {
-        Some(Recipe::Callback | Recipe::PowerBomb | Recipe::GameHost) => {
-            (callback::fixture_command(routine, fixture, index, run, label), FixtureKind::Callback)
-        }
-        Some(Recipe::Plm) => (plm_spawn::fixture_command(routine, fixture, run, label)?, FixtureKind::Plm),
+        Some(Recipe::Callback | Recipe::PowerBomb | Recipe::GameHost) => (
+            vec![
+                text(run.join("collision")),
+                label.into(),
+                routine.symbol.clone(),
+                a,
+                b,
+                before,
+                after,
+                index.to_string(),
+                rom,
+                text(directory.join(label)),
+            ],
+            FixtureKind::Callback,
+        ),
+        Some(Recipe::Plm) => (
+            vec![
+                text(run.join("spawn")),
+                label.into(),
+                a,
+                b,
+                before,
+                after,
+                rom,
+                match routine.symbol.as_str() {
+                    "terrain" => "0",
+                    "room" => "1",
+                    "hardcoded" => "2",
+                    _ => anyhow::bail!("invalid allocator"),
+                }
+                .into(),
+            ],
+            FixtureKind::Plm,
+        ),
         Some(Recipe::Ridley) => (
             vec![
                 text(run.join(label)),

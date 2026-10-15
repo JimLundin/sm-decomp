@@ -347,64 +347,13 @@ pub fn check(directory: &Path, fixture: &Case, game_host: bool) -> Result<CaseRe
     })
 }
 
-pub fn case(
-    _request: &VerifyRequest,
+pub(crate) fn case(
     manifest: &Manifest,
     routine: &Routine,
     fixture: &Case,
-    index: usize,
-    run: &Path,
-    worker: &mut crate::fixture_execution::Worker,
-) -> Result<CaseRecord> {
-    case_with(manifest, routine, fixture, index, run, false, |command, directory, subject| {
-        worker.execute(command, directory, subject)
-    })
-}
-
-pub(crate) fn confined_case(
-    manifest: &Manifest,
-    routine: &Routine,
-    fixture: &Case,
-    index: usize,
-    run: &Path,
-    execution: &builds::StrictExecution,
-) -> Result<CaseRecord> {
-    case_with(manifest, routine, fixture, index, run, true, |command, directory, subject| {
-        execution.fixture_recipe(command, directory, subject, builds::StrictFixture::Callback)?;
-        unpack_snapshots(directory, subject)
-    })
-}
-
-pub(crate) fn fixture_command(
-    routine: &Routine,
-    fixture: &Case,
-    index: usize,
-    run: &Path,
-    subject: &str,
-) -> Vec<String> {
-    let directory = run.join(&fixture.name);
-    vec![
-        run.join("collision").to_string_lossy().into_owned(),
-        subject.into(),
-        routine.symbol.clone(),
-        fixture.a.to_string(),
-        fixture.b.to_string(),
-        directory.join("before.wram").to_string_lossy().into_owned(),
-        directory.join(format!("{subject}-after.wram")).to_string_lossy().into_owned(),
-        index.to_string(),
-        run.join("rom.bin").to_string_lossy().into_owned(),
-        directory.join(subject).to_string_lossy().into_owned(),
-    ]
-}
-
-fn case_with(
-    manifest: &Manifest,
-    routine: &Routine,
-    fixture: &Case,
-    index: usize,
     run: &Path,
     resume: bool,
-    mut execute: impl FnMut(&[String], &Path, &str) -> Result<()>,
+    mut execute: impl FnMut(&Path, &str) -> Result<()>,
 ) -> Result<CaseRecord> {
     let name = fixture.name.as_str();
     let symbol = routine.symbol.as_str();
@@ -412,7 +361,10 @@ fn case_with(
     family::prepare_case_with(fixture, &directory, &family::types(routine)?, resume)?;
     for subject in ["rust", "c"] {
         fs::create_dir_all(directory.join(subject))?;
-        execute(&fixture_command(routine, fixture, index, run, subject), &directory, subject)?;
+        execute(&directory, subject)?;
+        if resume {
+            unpack_snapshots(&directory, subject)?;
+        }
     }
     let mut record = check(&directory, fixture, manifest.callback_adapter.as_deref() == Some("game-host"))?;
     record.routine = symbol.into();

@@ -397,7 +397,7 @@ pub(crate) fn build(
 }
 
 pub(crate) enum FixtureExecution<'a> {
-    Ordinary { request: &'a VerifyRequest, worker: &'a mut fixture_execution::Worker },
+    Ordinary { worker: &'a mut fixture_execution::Worker },
     Confined(&'a builds::StrictExecution),
 }
 
@@ -408,35 +408,26 @@ pub(crate) fn fixture(
     fixture: &Case,
     index: usize,
     run: &Path,
-    execution: FixtureExecution<'_>,
+    mut execution: FixtureExecution<'_>,
 ) -> Result<CaseRecord> {
+    let resume = matches!(execution, FixtureExecution::Confined(_));
+    let execute = |directory: &Path, label: &str| {
+        let command =
+            fixture_command(recipe, manifest, FixtureSelection::Case { routine, fixture, index }, run, label)?;
+        match &mut execution {
+            FixtureExecution::Ordinary { worker } => worker.execute(&command.command, directory, label),
+            FixtureExecution::Confined(execution) => {
+                execution.fixture_recipe(&command.command, directory, label, command.kind).map(|_| ())
+            }
+        }
+    };
     match recipe {
-        Some(Recipe::Callback | Recipe::PowerBomb | Recipe::GameHost) => match execution {
-            FixtureExecution::Ordinary { request, worker } => {
-                callback::case(request, manifest, routine, fixture, index, run, worker)
-            }
-            FixtureExecution::Confined(execution) => {
-                callback::confined_case(manifest, routine, fixture, index, run, execution)
-            }
-        },
-        Some(Recipe::Plm) => match execution {
-            FixtureExecution::Ordinary { request, worker } => plm_spawn::case(request, routine, fixture, run, worker),
-            FixtureExecution::Confined(execution) => plm_spawn::confined_case(routine, fixture, run, execution),
-        },
-        Some(Recipe::Ridley) => match execution {
-            FixtureExecution::Ordinary { request, worker } => {
-                crate::ridley_subsystem_adapter::case(request, manifest, routine, fixture, run, worker)
-            }
-            FixtureExecution::Confined(execution) => {
-                crate::ridley_subsystem_adapter::confined_case(routine, fixture, run, execution)
-            }
-        },
-        _ => match execution {
-            FixtureExecution::Ordinary { request, worker } => {
-                family::case(request, manifest, routine, fixture, run, worker)
-            }
-            FixtureExecution::Confined(execution) => family::confined_case(manifest, routine, fixture, run, execution),
-        },
+        Some(Recipe::Callback | Recipe::PowerBomb | Recipe::GameHost) => {
+            callback::case(manifest, routine, fixture, run, resume, execute)
+        }
+        Some(Recipe::Plm) => plm_spawn::case(routine, fixture, run, resume, execute),
+        Some(Recipe::Ridley) => crate::ridley_subsystem_adapter::case(routine, fixture, run, resume, execute),
+        _ => family::case(manifest, routine, fixture, run, resume, execute),
     }
 }
 

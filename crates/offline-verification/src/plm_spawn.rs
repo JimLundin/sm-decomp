@@ -188,60 +188,19 @@ pub fn check(directory: &Path, fixture: &Case) -> Result<CaseRecord> {
     Ok(CaseRecord { spawn_results: results, ..Default::default() })
 }
 
-pub fn case(
-    _request: &VerifyRequest,
-    routine: &Routine,
-    fixture: &Case,
-    run: &Path,
-    worker: &mut crate::fixture_execution::Worker,
-) -> Result<CaseRecord> {
-    case_with(routine, fixture, run, false, |command, directory, subject| worker.execute(command, directory, subject))
-}
-
-pub(crate) fn confined_case(
-    routine: &Routine,
-    fixture: &Case,
-    run: &Path,
-    execution: &builds::StrictExecution,
-) -> Result<CaseRecord> {
-    case_with(routine, fixture, run, true, |command, directory, subject| {
-        execution.fixture_recipe(command, directory, subject, builds::StrictFixture::Plm).map(|_| ())
-    })
-}
-
-pub(crate) fn fixture_command(routine: &Routine, fixture: &Case, run: &Path, subject: &str) -> Result<Vec<String>> {
-    let directory = run.join(&fixture.name);
-    Ok(vec![
-        run.join("spawn").to_string_lossy().into_owned(),
-        subject.into(),
-        fixture.a.to_string(),
-        fixture.b.to_string(),
-        directory.join("before.wram").to_string_lossy().into_owned(),
-        directory.join(format!("{subject}-after.wram")).to_string_lossy().into_owned(),
-        run.join("rom.bin").to_string_lossy().into_owned(),
-        match routine.symbol.as_str() {
-            "terrain" => "0",
-            "room" => "1",
-            "hardcoded" => "2",
-            _ => anyhow::bail!("invalid allocator"),
-        }
-        .into(),
-    ])
-}
-
-fn case_with(
+pub(crate) fn case(
     routine: &Routine,
     fixture: &Case,
     run: &Path,
     resume: bool,
-    mut execute: impl FnMut(&[String], &Path, &str) -> Result<()>,
+    mut execute: impl FnMut(&Path, &str) -> Result<()>,
 ) -> Result<CaseRecord> {
     let name = fixture.name.as_str();
     let kind = routine.symbol.as_str();
     let directory = run.join(name);
     family::prepare_case_with(fixture, &directory, &["uint16".into(), "int32".into()], resume)?;
     for subject in ["rust", "c"] {
-        execute(&fixture_command(routine, fixture, run, subject)?, &directory, subject)?;
+        execute(&directory, subject)?;
     }
     let mut record = check(&directory, fixture)?;
     record.name = name.into();

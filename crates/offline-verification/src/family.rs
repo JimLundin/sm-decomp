@@ -577,37 +577,12 @@ fn authenticate_continuation(case: &Case, run: &Path, before: &[u8]) -> Result<(
 }
 
 pub(crate) fn case(
-    _request: &VerifyRequest,
-    manifest: &Manifest,
-    routine: &Routine,
-    case: &Case,
-    run: &Path,
-    worker: &mut crate::fixture_execution::Worker,
-) -> Result<CaseRecord> {
-    case_with(manifest, routine, case, run, false, |command, directory, subject| {
-        worker.execute(command, directory, subject)
-    })
-}
-
-pub(crate) fn confined_case(
-    manifest: &Manifest,
-    routine: &Routine,
-    case: &Case,
-    run: &Path,
-    execution: &builds::StrictExecution,
-) -> Result<CaseRecord> {
-    case_with(manifest, routine, case, run, true, |command, directory, subject| {
-        execution.fixture(command, directory, subject).map(|_| ())
-    })
-}
-
-fn case_with(
     manifest: &Manifest,
     routine: &Routine,
     case: &Case,
     run: &Path,
     resume: bool,
-    mut execute: impl FnMut(&[String], &Path, &str) -> Result<()>,
+    mut execute: impl FnMut(&Path, &str) -> Result<()>,
 ) -> Result<CaseRecord> {
     let name = &case.name;
     let symbol = &routine.symbol;
@@ -620,24 +595,7 @@ fn case_with(
     let mut hashes = BTreeMap::new();
     let mut states = [Vec::new(), Vec::new()];
     for (subject, state) in ["rust", "c"].into_iter().zip(&mut states) {
-        let mut command = vec![
-            run.join(subject).to_string_lossy().into_owned(),
-            symbol.clone(),
-            case.a.to_string(),
-            case.b.to_string(),
-            directory.join("before.wram").to_string_lossy().into_owned(),
-            directory.join(format!("{subject}-after.wram")).to_string_lossy().into_owned(),
-        ];
-        if manifest.rom.is_some() {
-            command.push(run.join("rom.bin").to_string_lossy().into_owned());
-        }
-        if manifest.projectile_host {
-            command.extend([
-                directory.join("host-before.bin").to_string_lossy().into_owned(),
-                directory.join(format!("{subject}-host-after.bin")).to_string_lossy().into_owned(),
-            ]);
-        }
-        execute(&command, &directory, subject)?;
+        execute(&directory, subject)?;
         returns.insert(subject.into(), numeric(&directory.join(format!("{subject}.stdout")))?);
         let (bytes, hash) = bounded::read_with_digest(directory.join(format!("{subject}-after.wram")))?;
         *state = bytes;
@@ -800,7 +758,7 @@ pub fn verify(request: VerifyRequest) -> Result<Verdict> {
                     fixture,
                     routine_index,
                     &run,
-                    crate::recipe::FixtureExecution::Ordinary { request: &request, worker },
+                    crate::recipe::FixtureExecution::Ordinary { worker },
                 )
             },
         )?;
