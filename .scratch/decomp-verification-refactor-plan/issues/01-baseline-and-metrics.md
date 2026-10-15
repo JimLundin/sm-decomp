@@ -78,6 +78,13 @@ respectively, and are not counted as reclaimed.
 
 ## Comments
 
+2026-10-15 continuation: [Ceres recovery](../ceres-recipe-recovery.md) records
+the actual transitive-C repair, passing full 1,296-pair ordinary proof, both
+cleanup passes and independent admission. The frozen eleven-pass/one-failure
+Native baseline remains retained; final Native and full-real acceptance are
+still incomplete. Final177 dependency controls at `b1f8691` pass, including
+read-only planning/metrics behavior. No full-batch timing multiplier is claimed.
+
 2026-10-15 recovery: frozen `7b27ea1` recipe gate passed eleven families /
 6,863 pairs; Ceres-pad failed before its 1,296 fixtures because the linked
 Samus handler table retains missing actual-C dependencies. Full-real separately

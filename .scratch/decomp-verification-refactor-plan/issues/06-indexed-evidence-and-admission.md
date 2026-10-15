@@ -69,6 +69,13 @@ with independent compiler-free authentication after both cleanup passes.
 Final combined controls remain pending ticket 03/04 source completion; no
 complete-batch performance claim or ticket resolution follows from these probes.
 
+The final02/03/04/06 foundation at `b1f8691` has since passed 48 owner tests
+(one explicit real-producer entry ignored), five catalog controls and four
+public actual-C/Native controls. Both independent readers passed again after
+aggregate cleanup. Complete source/evidence is in
+[the bulk handoff](../bulk-context-handoff.md). Root still owns final Native
+admission integration, worktree retirement and complete-domain acceptance.
+
 ## Comments
 
 2026-10-15 decision from ticket 05: 18 alternating storage-only samples of the

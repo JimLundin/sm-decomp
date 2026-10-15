@@ -40,6 +40,21 @@ revised build contract. Cold and warm measurements include discovery and sealing
 
 ## Completion evidence
 
+Implementer checkpoint `fb1cd4963711416cf7bb49e00e6ab91681641c61` is clean.
+Production correction `cb00f32`, complete gates `330e8c0`: 13 actual controls
+passed in 35.02 seconds. Shared compiler identity preparation removes one of
+two version queries; three alternating cold/warm pairs show no reliable elapsed
+improvement for this small workload. Final integration must measure its batch
+effect. Semantic path, volatile macro, actual source-location, environment,
+lock-wait mutation, corruption and hard-budget controls are covered.
+
+Both proof cleanup passes reclaimed zero bytes; 3,454 retained files, 66 copied
+cache artifacts and 63 actual programs authenticated afterward. Exact evidence
+and retained dependencies are in [shared-preparation-handoff.md](../shared-preparation-handoff.md).
+Worktree retirement and combined acceptance remain with root. The writer-free
+target is now exclusively reassigned to provisional ticket 08; no retained
+evidence depends on it and no cache was cleared.
+
 Pending. Record compiler/process counts, build-hit reasons, full-workload effect,
 source/flags/artifact identities, negative controls and scoped cleanup/admission.
 

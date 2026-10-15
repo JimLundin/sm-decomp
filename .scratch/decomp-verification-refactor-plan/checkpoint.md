@@ -25,30 +25,56 @@ Authorization: user instructed "please go ahead and implement" the nine-ticket p
   Both cleanup passes before/after targeted reruns passed, zero bytes. No writer
   remains in the baseline proof; ignored Native acceptance gaps remain above.
   Proof parent: `/home/jim/sm-decomp-performance-native-proof/7b27ea1-20261015`.
-- Ticket 02 combined checkpoint `b7f2c0d` includes 03 and 06; four preliminary
-  public actual-C controls passed, including Native three-pair/eight-producer
-  capture/replay and independent compiler-free admission. Final source work
-  removes remaining shared scanner reparses and integrates ticket 04.
-- Ticket 03 has an actual-C identity/closure green at `13e4d2b` and explicit
-  budget regressions at `4e916d0`. Duplicate shared dependency visits and ROM
-  rereads exhaust the unchanged aggregate planner budget. The worker is fixing
-  bounded shared closures/assets, retaining independent freshness checks.
-  The read-only metrics correction `40e4cdb`/`006f78f` now passes its parent
-  metrics control. Six isolated cycle controls passed without changing limits.
-- Ticket 04 source `88a0c30`/`f425730` after `7a0fb97` closes unsafe path-key
-  normalization and volatile C-macro eligibility. Actual compiler controls pass;
-  final lock-wait, corruption, measurement and cleanup work continues.
+- Ticket 02's final combined source is `b1f8691`, documentation `5af3ca3`.
+  It includes 03, 04 and 06. Owner 48/1 ignored, catalog 5/5 and public
+  actual-C/Native 4/4 controls passed; independent ordinary and Native readers
+  passed after cleanup. Cleanup reclaimed 4,980,736 bytes. The matched CLI
+  and helper are retained under the bulk proof's `b1f8691-20261015/tools`.
+  Worktree/target retirement remains with root; no own writer remains.
+- Ticket 03's final 177-family corpus passed with unchanged budgets on that
+  combined source. A documentation edit excludes 174 and retains 3 uncertain
+  families (7.77 seconds wall time); audio behavior, rename and deletion each
+  select exactly the expected 165 and exclude 12. The syntax facts, shared
+  closure traversal, parent placements and single bounded asset pass are
+  complete. Corpus source is restored; the worker is preserving exact report
+  inputs, completing cleanup and retiring its disposable observation worktree.
+- Ticket 04 is ready at source `cb00f32`, complete controls `330e8c0`, handoff
+  `fb1cd49`: 13 actual controls passed in 35.02 seconds. Both cleanup passes
+  and authentication of 3,454 files, 66 artifacts and 63 programs passed.
+  Three alternating cold/warm pairs show no reliable elapsed improvement;
+  compiler identity queries are reduced from two to one. Worktree retirement
+  remains with root. See [shared preparation](shared-preparation-handoff.md).
 - Ticket 06 ordinary reader is `8d9d00e`; owner controls pass 47/1 ignored,
   6.25 seconds. Both cleanup passes for its unit scope reclaimed zero bytes.
   Bulk includes it; combined acceptance and worktree/target retirement remain.
-- Root owns the focused Ceres actual-C recipe repair in
+- Root owns the focused Ceres actual-C recipe repair at `c4dc689` in
   `/home/jim/sm-decomp-performance-ceres`, branch
   `performance/ceres-recipe-20261015`, baseline `b7f2c0d`. It exclusively reuses
   the now-idle `/home/jim/sm-decomp-performance-admission-target`; retained
-  reader binaries are independent. Probe/evidence parent:
-  `/home/jim/sm-decomp-performance-ceres-proof`. Other active workers retain
-  their previously assigned scopes and private targets. Tickets 07/08/09 remain
-  required. No installed tools, production policies or gameplay claims changed.
+  reader binaries are independent. CompleteC links the entire actual pinned C
+  unit set without a gameplay stub; registered compiler red/green is retained.
+  The first full ordinary run failed before fixtures because its source copy
+  omitted the pinned C archive. That failure and all five link diagnoses have
+  completed both cleanup passes (zero bytes); all files hash identically.
+  The archive is now independently copied and checked. A fresh ordinary attempt
+  passed all 1,296 pairs in 50.40 seconds. Both cleanup passes passed,
+  deduplicating 233,570,304 bytes; independent compiler-free admission passed
+  in 8.20 seconds and sealed metadata is unchanged. Exact retained proof and
+  reader: [Ceres recovery](ceres-recipe-recovery.md). Native acceptance remains.
+- Ticket 07 is assigned to `/root/dependency_facts_resume` after the final03
+  cleanup/handoff, from `b1f8691`, in the new graph worktree. Ticket 08 is
+  active with `/root/shared_preparation` in the tools worktree. Its eager
+  executable hashing red measured 365,502,352 unnecessary cleanup startup
+  bytes; lazy identity and a matched optimized profile are under verification.
+  Final installed candidate preparation waits for assembled 07/Ceres source.
+  No installed tools, production policies or gameplay claims changed. There is
+  still no measured complete-batch speedup.
+- Root's final assembly worktree is `/home/jim/sm-decomp-performance-final`,
+  branch `performance/verification-final-20261015`, starting from `7b27ea1`.
+  It merges the tested bulk foundation while retaining optimized Native
+  operation admission. The original integration checkout remains frozen for
+  its baseline proof. The bulk worker is also diagnosing the retained full-real
+  deadline failure read-only; no replacement full-real gate is running.
 
 ## Earlier recovery state
 

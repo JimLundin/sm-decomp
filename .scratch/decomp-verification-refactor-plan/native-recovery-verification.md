@@ -21,6 +21,13 @@ The missing C symbols are transitive dependencies retained by
 `sm_86.c`/`sm_rtl.c` with only `sm_90.c`. Root owns a focused actual-C recipe
 repair in a separate worktree; this frozen source stays unchanged.
 
+The correction is now `c4dc689`: the complete pinned C unit set satisfies
+the real transitive dependencies. Registered compiler red/green and the full
+ordinary 1,296-pair proof pass. Both cleanup passes and independent retained
+ordinary admission also pass. This does not replace the failed Native receipt;
+final combined Native acceptance remains required. See
+[Ceres recovery](ceres-recipe-recovery.md) for exact source/readers and evidence.
+
 Both cleanup passes completed for `recipes/` and `recipes-tmp/`, reclaiming
 zero additional bytes after the harness's final 262,144-byte deduplication.
 All 27,539 sealed receipt/intent/result/preparation/summary files passed

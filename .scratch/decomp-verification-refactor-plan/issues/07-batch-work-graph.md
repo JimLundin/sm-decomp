@@ -1,6 +1,6 @@
 # Schedule shared batch work through one private graph
 
-Status: open
+Status: claimed
 Blocked by: 04, 06
 Triage: ready-for-agent
 Type: task
@@ -49,3 +49,25 @@ measurements, unchanged recovery lineage and scoped cleanup/authentication.
 ## Comments
 
 The graph is private implementation detail; callers do not submit arbitrary tasks.
+
+2026-10-15: root assigns the implementation to `/root/dependency_facts_resume`
+after that worker completes ticket 03's corpus cleanup and releases its target.
+The tested foundation is `b1f869102ac69897be674acfef682e3d867c6be6`, with
+02/03/04/06 owner, catalog and actual-C/Native controls passing. Final ticket
+acceptance still requires integrated retirement and the complete final gates.
+
+Worktree: `/home/jim/sm-decomp-performance-graph`, branch
+`performance/batch-work-graph-20261015`. Exclusive target after the explicit
+03 handoff: `/home/jim/sm-decomp-performance-metrics-target`. Private proof:
+`/home/jim/sm-decomp-performance-graph-proof`. Parent session:
+`01a13e7f-ab01-7413-a1c2-288b08a4b719`.
+
+Owned implementation: private graph module and bulk/Fixture scheduling in
+`crates/offline-verification`, Original composition in
+`crates/pipeline/src/translation_original.rs` and narrowly necessary batch
+composition, plus related tests. Any reservation API change in
+`tool-execution`/`translation-execution` must be coordinated with root first.
+Root owns Ceres recipe construction and final source registration; ticket 08
+owns Cargo profiles and tool startup. Preserve the separate optimized Native
+operation admission during final integration. No installed policy or production
+claim changes belong to this ticket.
