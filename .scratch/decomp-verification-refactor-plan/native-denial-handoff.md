@@ -1,6 +1,7 @@
 # Native negative-control adaptation
 
-Status: claimed; complete runtime namespace adaptation authored, compilation and gates pending.
+Status: claimed; focused compiler/runtime gates and independent readers passed;
+fresh complete full-real gate pending.
 Owner: `/root/bulk_context_resume`, parent `/root`, session
 `01a13e7f-ab01-7413-a1c2-288b08a4b719`.
 Main tracking: verification refactor ticket 01, integration-owner claim.
@@ -80,7 +81,30 @@ state and C executable must exist and remain unchanged. A focused runtime gate
 can reuse the already admitted 1b0b75c positive as its namespace seed, before a
 fresh complete full-real gate. No production scanner/runtime source changed.
 
-Pending: runtime-control adaptation, repaired full-real gate, its cleanup and independent authentication,
+Current tested source checkpoint: `955ffc3b9e86e0290301e435ef646c4ffa412dac`.
+Its retained proof is
+`/home/jim/sm-decomp-performance-native-denial-proof/955ffc3-20261015`.
+The full tracked snapshot and prerequisite copies in `frozen-source/` pass
+their SHA-256 checks. The pipeline test build passed in 54.44s. The helper
+matches the earlier successful build; `logs/helper-source-unchanged.diff` is
+empty. Retained tool SHA-256 values are:
+
+- `sm-pipeline-tests`: `64aafcc12256a4f16f340784828da5427628260b6c9bbbdcc6f9d5b3c5387c52`.
+- `sm-translation-sandbox`: `a49f79b9a613c96a5c8dc386a942065d1ae191fbed0d724b066435a013b4dce9`.
+
+The focused `confined_runtime_probes_replay_and_authenticate` gate passed in
+21.86s. It independently admits the completed positive Native run retained in
+the older `1b0b75c-20261015/full-real/` proof, then compiles and executes all
+16 runtime namespace probes with durable replay. This focused gate creates
+17 diagnostic operations and no new Native family producers. Both automatic
+cleanup passes reclaimed zero bytes, recorded in
+`runtime-focused/cleanup.toml` and `runtime-focused/cleanup-deduplicated.toml`.
+The separate retained reader passed in 2.63s with `PATH=/unavailable` and no
+compiler/helper environment, authenticating the Native seed and every original
+Rust fixture namespace. Logs are `logs/runtime-focused{,-reader}.{log,time}`;
+reader exec 40810 completed with exit 0. No focused writer remains.
+
+Pending: repaired full-real gate, its cleanup and independent authentication,
 retirement-reference audit and final handoff. Compiler,
 Fixture and family budgets remain 60, 5 and 180 seconds. Cargo is locked/offline,
 jobs 1; shared execution root is `/home/jim/sm-decomp/out/pipeline`, workers 4.
