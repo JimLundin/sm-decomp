@@ -88,5 +88,14 @@ lifetime and synchronized bounded materialization against the initial content
 identity, plus at-use/current-source checks. It is a further optimization, not
 part of this correction; no lazy asset lifetime or timestamp identity was added.
 
-Pending: generated actual-C composition, final source checkpoint, retained
-readers and integration-owner retirement.
+The ordinary composition change was checkpointed at `2b0e206`. The first
+complete generated-family trial retained under `2b0e206/full-real/` failed after
+21.42s during C dependency scanning because this focused test's prerequisite
+copier omitted `tools/decomp/headless.c` and `headless_frame.h`. The production
+full-catalog fixture already contained those files. Both cleanup passes on the
+failed trial reclaimed zero bytes. The test-only copier now includes both files
+and `rust-toolchain.toml`; its incremental build passed. No production source
+changed in this repair.
+
+Pending: repaired generated actual-C composition, final source checkpoint,
+retained readers and integration-owner retirement.
