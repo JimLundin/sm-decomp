@@ -317,8 +317,17 @@ routines and 34 producer operations. It must additionally prove:
 - Identical replay retains every original producer result and receipt.
 - Tampering with a recorded producer invocation is rejected, then original
   bytes are restored and successfully authenticated.
-- A candidate `include_str!` of protected `compiler-secret.txt` is rejected;
-  unchanged failure replay reuses the same rejected receipt.
+- A candidate `include_str!` of protected `compiler-secret.txt` is refused by
+  source capture with the exact unresolved-input diagnostic, before a Native
+  intent or producer is published.
+- A separate real Rust compiler operation binds a tiny source file but omits the
+  protected file. It fails with the exact path and `couldn't read` diagnostic;
+  unchanged replay preserves result/runner bytes and modification times.
+  Independent operation authentication succeeds after cleanup. This explicitly
+  tests compiler confinement even though the family scanner refuses earlier.
+- A syntactically understood `compile_error!` candidate separately retains a
+  failed Native compiler receipt with complete producer attribution. Unchanged
+  failure replay reuses that rejected receipt.
 - Runtime parent read/write, sibling C-state read and `/program-c` read are
   denied while the complete family still passes and parent contents stay intact.
 - An aggregate allowance of parent reservation plus 4,096 bytes rejects
@@ -330,12 +339,23 @@ stdin. Fixture limits are five seconds, 512 KiB writable, 4 KiB stdout/stderr,
 no stdin. Authentication gets its existing 60-second / 8 GiB scope.
 
 Retain `full-real/prepared.toml`, `source-inventory.toml`, `catalog.toml`,
-`requirements.md`, `source/`, `operations/`, `compile-denial-source/`,
-`runtime-denial-source/`, protected diagnostic files and each of `run/`,
-`compile-denial/`, `runtime-denial/`, `reservation-denial/`. Each completed
-output retains its intent, receipt, indexed attribution, verdict and artifacts.
+`requirements.md`, `source/`, `operations/`, `capture-refusal-source/`,
+`compile-failure-source/`, `runtime-denial-source/`, protected diagnostic files
+and each of `run/`, `capture-refusal/`, `compiler-denial/`, `compile-failure/`,
+`runtime-denial/`, `reservation-denial/`. Each completed Native output retains
+its intent, receipt, indexed attribution, verdict and artifacts. Capture refusal
+retains the exact candidate/diagnostic with no producer. The direct compiler
+probe retains its exact Program, context, limits and authenticated operation.
 The migrated test performs both cleanup passes and retained authentication
 after the reservation assertion.
+
+The performance integration implements these three distinct negative controls
+in `crates/pipeline/src/translation_native_tests.rs`. The earlier requirement
+that the family `include_str!` candidate itself reach rustc became obsolete once
+captured source facts correctly rejected unresolved file macros. Preserve the
+original failed evidence; do not relax capture or treat an absent pre-capture
+receipt as a Native finalization failure. All original limits and required
+positive, runtime-denial, tamper and reservation domains remain unchanged.
 
 Preserve these nonignored regressions under their new owner as well:
 
@@ -369,9 +389,15 @@ and these full-proof combinations:
 | Output | Prepared record | Candidate source | Expected result |
 | --- | --- | --- | --- |
 | `full-real/run` | `full-real/prepared.toml` | `full-real/source` | Passed |
-| `full-real/compile-denial` | same | `full-real/compile-denial-source` | Rejected with retained compiler denial |
+| `full-real/compile-failure` | same | `full-real/compile-failure-source` | Rejected with both compiler producers and unchanged replay |
 | `full-real/runtime-denial` | same | `full-real/runtime-denial-source` | Passed with runtime denial assertions |
 | `full-real/reservation-denial` | same | `full-real/source` | Rejected with reservation exhaustion and no producers |
+
+The same retained manifest separately names capture refusals and the direct
+compiler-denial operation. Its reader checks the exact refusal source/diagnostic
+and absent Native publication, and authenticates the compiler operation through
+`authenticate_request_with_references`, including actual compiler failure,
+protected contents and complete runner/result attribution.
 
 The reader loads retained prepared/receipt records and invokes Native
 authentication for each exact candidate path. It asserts original outcomes
