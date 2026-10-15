@@ -85,3 +85,13 @@ Provisional source is the clean extracted commit `8bf8acf610e1a94a1a3bccd5d718da
 worktree `/home/jim/sm-decomp-performance-metrics`, branch
 `performance/batch-metrics-20261015`. Final acceptance waits for the extraction's
 pending frozen-source verification and cleanup. No installed policy is modified.
+
+2026-10-15 additional control finding: ticket 03's public affected-selection
+regression reached an existing read-only assertion before its intended syntax
+failure. The metrics wrapper creates `out/port/batches` before dispatching
+`batch plan`/`catalog`. Root assigned a narrow separate correction to
+`/root/dependency_facts` in `batch.rs`: retain read-only command behavior and
+parent-context stage recording without creating a default metrics sidecar.
+Existing public no-output assertions must remain intact. This correction and its
+green controls are required before ticket 01 resolves; the Native baseline
+checkout stays frozen while its independent gates run.

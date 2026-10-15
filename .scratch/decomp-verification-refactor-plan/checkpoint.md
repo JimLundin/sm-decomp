@@ -25,7 +25,10 @@ Authorization: user instructed "please go ahead and implement" the nine-ticket p
   interpretation at documentation commit `6c385d2`. Passing source/control
   checkpoint `eb88118` is already assembled. Root retired its worktree and both
   retained verdicts authenticated again with identical output; both cleanup
-  passes passed. Ticket 01 remains claimed only for recovered baseline acceptance.
+  passes passed. Ticket 01 remains claimed for recovered baseline acceptance and
+  the newly observed read-only plan/catalog metrics regression. The narrow
+  separate correction is assigned to `dependency_facts`; preserve existing
+  no-output public planning assertions.
 - Native admission source `7729faf`, documentation `6005329`, passed 14 operation,
   6 retention and 41 owner controls. Its integrated worktree is retired; five
   exact source snapshots remain at the original paths. Both post-retirement
