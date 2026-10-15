@@ -1,6 +1,6 @@
 # Reuse bounded evidence reads within independent admission
 
-Status: open
+Status: claimed
 Blocked by: 02, 03, 05
 Triage: ready-for-agent
 Type: task
@@ -66,3 +66,17 @@ ticket 05's responsibility. Raw measurements:
 Select this narrower admission change for performance. The study measures packing
 already completed staging, not direct producer transport; it cannot rule out a
 future transport improvement or establish a whole-batch speedup.
+
+2026-10-15: root starts the ordinary admission-reader slice in isolated worktree
+`/home/jim/sm-decomp-performance-admission`, branch
+`performance/ordinary-admission-20261015`, from the frozen `b333ca5` input seam
+plus accepted Native admission source `7729faf`. This only refines the start of
+independent reader work; final acceptance remains dependent on complete 02/03/05.
+Owner session: `01a13e7f-ab01-7413-a1c2-288b08a4b719`. Own the new private
+reader, ordinary authentication in `family.rs`, and recipe comparison functions
+in callback/PLM/Ridley modules. Bulk retains preparation/generation functions in
+those modules. Shared source registration is reconciled by root at integration.
+Private proof: `/home/jim/sm-decomp-performance-admission-proof`; private copied
+target: `/home/jim/sm-decomp-performance-admission-target`. No live target files
+were copied: ticket 04 waited before its first Cargo write until the independent
+copy completed. Frozen `7b27ea1` and its ongoing Native gate are unchanged.

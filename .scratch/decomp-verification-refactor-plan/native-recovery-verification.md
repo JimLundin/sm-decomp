@@ -176,6 +176,26 @@ post-retirement admission.
 
 ## Gate configuration
 
+### Checked interrupted-process recovery
+
+At 17:02 UTC root found neither original timer `9353` nor reader `9356` nor
+their producers alive. The boot ID was unchanged, no OOM diagnostic appeared,
+and the original resource file was empty: there is no observed final exit code.
+The inherited exec session `11384` was unavailable to root. The cause is unknown;
+the original stdout/resource files remain untouched. PLM and projectile-script
+receipts existed, while collision retained its original intent and completed
+producer records. Observation/process/boot/seal files are
+`logs/recipes-interruption-*`.
+
+Root resumed the exact twelve-recipe command against the same source and output
+through the existing journal. New root exec session: `60673`; timer `76138`,
+reader `76139`. Outputs are `logs/recipes-resume-01.log` and
+`logs/recipes-resume-01.time`. This is same-attempt recovery: completed operations
+are authenticated, and the retained intent preserves the original deadline.
+No source, requirement, producer limit, operation identity or recipe domain was
+changed. Collision subsequently published its Native receipt. Full gate outcome,
+remaining controls, cleanup and independent retained authentication are pending.
+
 The retained reader selected exactly one ignored test for each required gate;
 selection stdout is retained in `logs/*-selected-tests.log`. Complete catalog
 preparation passed (1 test, 0 failed, 186 filtered out): 177 catalog families /

@@ -1,7 +1,7 @@
 # Performance refactor ticket map
 
 Planning status: complete proposal
-Implementation status: 05 resolved; 01, 02, 03 and 04 claimed; no production claims reserved
+Implementation status: 05 resolved; 01, 02, 03, 04 and 06 claimed; no production claims reserved
 
 The active Offline family extraction must finish and its owners must hand over
 the relevant source before these implementation tickets are dispatched. Freeze
@@ -72,6 +72,11 @@ validation seam. It preserves broad cache identities and per-family cancellation
 02/03 still gate final acceptance and any new artifact eligibility. The released
 Native build target is exclusively assigned to this worker while retained Native
 verification runs from independent copied tools.
+
+Root starts the independent ordinary reader slice of 06 from the same frozen
+input seam plus the accepted Native reader. Preparation/generation remains with
+02 and final reader acceptance still requires complete 02/03/05. No reader work
+changes the live frozen Native verification source.
 
 ## Decisions so far
 
