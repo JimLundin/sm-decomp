@@ -8,8 +8,10 @@ use offline_verification::{
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{BTreeMap, BTreeSet},
+    os::unix::fs::PermissionsExt,
+    os::unix::process::ExitStatusExt,
     path::PathBuf,
-    time::SystemTime,
+    time::{Duration, SystemTime},
 };
 use tool_execution::{
     atomic_toml,
@@ -17,7 +19,9 @@ use tool_execution::{
 };
 use translation_execution::{
     OperationContext,
+    confinement::{Program, ReadOnlyBind, RunLimits},
     model::{sealed, sha256},
+    operation,
     retention::Reference,
 };
 
@@ -100,9 +104,15 @@ fn proof_producers(admitted: &AuthenticatedNative, receipt: &NativeReceipt) -> R
 struct RetainedProof {
     schema: String,
     cases: BTreeMap<String, RetainedCase>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    capture_refusals: BTreeMap<String, RetainedCaptureRefusal>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    compiler_denials: BTreeMap<String, RetainedOperation>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    runtime_probes: BTreeMap<String, RetainedRuntimeProbes>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 struct RetainedCase {
     prepared: PathBuf,
@@ -114,18 +124,111 @@ struct RetainedCase {
     diagnostic_contains: Option<String>,
 }
 
+#[derive(Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct RetainedCaptureRefusal {
+    candidate: Asset,
+    output: PathBuf,
+    diagnostic: String,
+    #[serde(default)]
+    kind: CaptureRefusalKind,
+}
+
+#[derive(Default, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
+enum CaptureRefusalKind {
+    #[default]
+    FileMacro,
+    RuntimeCapability,
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct CompilerDenialRequest {
+    operation_root: PathBuf,
+    context: OperationContext,
+    program: Program,
+    limits: RunLimits,
+    deadline_unix_ms: u64,
+    source: Asset,
+    protected: Asset,
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct RetainedOperation {
+    request: Asset,
+    result: Reference,
+    references: Vec<Reference>,
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct ProbeRequest {
+    operation_root: PathBuf,
+    context: OperationContext,
+    program: Program,
+    limits: RunLimits,
+    deadline_unix_ms: u64,
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct RetainedRuntimeProbe {
+    original_invocation: Asset,
+    operation: RetainedOperation,
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct RetainedRuntimeProbes {
+    native_case: String,
+    operation_root: PathBuf,
+    deadline_unix_ms: u64,
+    protected_parent: Asset,
+    protected_sibling: Asset,
+    protected_c_program: Asset,
+    source: Asset,
+    executable: Asset,
+    compiler_invocation: Asset,
+    build: RetainedOperation,
+    fixtures: Vec<RetainedRuntimeProbe>,
+}
+
+// Read only after the entire original Native receipt admitted this exact
+// invocation reference. Other fields remain authenticated by that admission.
+#[derive(Deserialize)]
+struct AdmittedInvocation {
+    context: OperationContext,
+    program: Program,
+    requested_limits: RunLimits,
+    limits: RunLimits,
+}
+
 fn retain_case(root: &Path, name: &str, mut case: RetainedCase) -> Result<()> {
     case.prepared = fs::canonicalize(case.prepared)?;
     case.checkout = fs::canonicalize(case.checkout)?;
     case.receipt = fs::canonicalize(case.receipt)?;
+    retain_proof(root, |proof| {
+        proof.cases.insert(name.into(), case);
+    })
+}
+
+fn retain_proof(root: &Path, update: impl FnOnce(&mut RetainedProof)) -> Result<()> {
     let path = root.join("retained-authentication.toml");
     let mut proof = if path.exists() {
         bounded::object::<RetainedProof>(&path)?
     } else {
-        RetainedProof { schema: "retained-native-proof-v1".into(), cases: BTreeMap::new() }
+        RetainedProof {
+            schema: "retained-native-proof-v1".into(),
+            cases: BTreeMap::new(),
+            capture_refusals: BTreeMap::new(),
+            compiler_denials: BTreeMap::new(),
+            runtime_probes: BTreeMap::new(),
+        }
     };
     ensure!(proof.schema == "retained-native-proof-v1", "retained Native proof schema changed");
-    proof.cases.insert(name.into(), case);
+    update(&mut proof);
     atomic_toml(&path, &proof)
 }
 
@@ -141,10 +244,14 @@ fn cleanup_proof(root: &Path) -> Result<()> {
 fn authenticate_retained(path: &Path) -> Result<()> {
     let proof: RetainedProof = bounded::object(path)?;
     ensure!(
-        proof.schema == "retained-native-proof-v1" && !proof.cases.is_empty(),
+        proof.schema == "retained-native-proof-v1"
+            && !(proof.cases.is_empty()
+                && proof.capture_refusals.is_empty()
+                && proof.compiler_denials.is_empty()
+                && proof.runtime_probes.is_empty()),
         "retained Native proof is incomplete"
     );
-    for (name, case) in proof.cases {
+    for (name, case) in &proof.cases {
         let prepared: PreparedNative = bounded::object(&case.prepared)?;
         let receipt: NativeReceipt = bounded::object(&case.receipt)?;
         let admitted = prepared.authenticate(NativeEvidence { checkout: &case.checkout, receipt: &receipt })?;
@@ -155,12 +262,640 @@ fn authenticate_retained(path: &Path) -> Result<()> {
         if let Some(operations) = case.operation_count {
             ensure!(receipt.operation_count()? == operations, "{name}: producer attribution changed");
         }
-        if let Some(diagnostic) = case.diagnostic_contains {
-            ensure!(receipt.diagnostic.contains(&diagnostic), "{name}: rejection diagnostic changed");
+        if let Some(diagnostic) = &case.diagnostic_contains {
+            ensure!(receipt.diagnostic.contains(diagnostic.as_str()), "{name}: rejection diagnostic changed");
         }
         println!("Authenticated retained Native proof {name}: {}", admitted.report().status);
     }
+    for (name, refusal) in proof.capture_refusals {
+        authenticate_capture_refusal(&refusal)?;
+        println!("Authenticated retained Native capture refusal {name}");
+    }
+    for (name, denial) in proof.compiler_denials {
+        authenticate_compiler_denial(&denial)?;
+        println!("Authenticated retained confined compiler denial {name}");
+    }
+    for (name, probes) in proof.runtime_probes {
+        let case = proof.cases.get(&probes.native_case).context("runtime probes have no retained Native case")?;
+        authenticate_runtime_probes(&probes, case)?;
+        println!("Authenticated retained runtime proof {name}: 16 original Rust fixture namespaces");
+    }
     Ok(())
+}
+
+fn authenticate_capture_refusal(refusal: &RetainedCaptureRefusal) -> Result<()> {
+    let (bytes, hash) = bounded::read_with_digest(&refusal.candidate.file)?;
+    ensure!(hash == refusal.candidate.sha256, "capture-refusal candidate changed");
+    let error = offline_verification::source_facts::scan(&refusal.candidate.file, &bytes)?
+        .require_complete()
+        .err()
+        .context("uncaptured file macro became a complete source closure")?;
+    let markers: &[&str] = match refusal.kind {
+        CaptureRefusalKind::FileMacro => &["uncaptured file macro include_str!"],
+        CaptureRefusalKind::RuntimeCapability => &[
+            "unmodeled runtime input or capability: std::fs",
+            "unmodeled runtime input or capability: std::fs::read",
+            "unmodeled runtime input or capability: std::fs::write",
+        ],
+    };
+    ensure!(
+        format!("{error:#}") == refusal.diagnostic
+            && refusal.diagnostic.contains("Rust source has unresolved inputs")
+            && markers.iter().all(|marker| refusal.diagnostic.contains(marker)),
+        "Native capture-refusal diagnostic changed"
+    );
+    ensure!(
+        !refusal.output.join("native-intent.toml").exists()
+            && !refusal.output.join("native-receipt.toml").exists()
+            && bounded::entries(&refusal.output.join("family"))?.is_empty(),
+        "refused source capture published Native intent or producer evidence"
+    );
+    Ok(())
+}
+
+fn compiler_denial_source(protected: &Path) -> String {
+    format!("const SECRET: &str = include_str!({protected:?});\nfn main() {{ let _ = SECRET; }}\n")
+}
+
+fn compiler_denial_arguments() -> Vec<String> {
+    [
+        "--edition=2024",
+        "--crate-name=native_compile_denial",
+        "--sysroot",
+        "/toolchain",
+        "--emit=metadata",
+        "/inputs/denial.rs",
+        "-o",
+        "/work/tmp/denial.rmeta",
+    ]
+    .into_iter()
+    .map(str::to_owned)
+    .collect()
+}
+
+fn compiler_denial_limits() -> RunLimits {
+    RunLimits {
+        timeout: Duration::from_secs(60),
+        writable_bytes: 128 * 1024 * 1024,
+        stdout_bytes: 4096,
+        stderr_bytes: 256 * 1024,
+        stdin_bytes: 0,
+    }
+}
+
+fn producer_stamps(directory: &Path) -> Result<BTreeMap<PathBuf, (String, SystemTime)>> {
+    ["intent.json", "runner.json", "sandbox.json", "result.json"]
+        .into_iter()
+        .map(|name| {
+            let path = directory.join(name);
+            Ok((path.clone(), (digest(&path)?, fs::metadata(&path)?.modified()?)))
+        })
+        .collect()
+}
+
+fn authenticate_compiler_denial(denial: &RetainedOperation) -> Result<()> {
+    ensure!(digest(&denial.request.file)? == denial.request.sha256, "compiler-denial request changed");
+    let request: CompilerDenialRequest = bounded::object(&denial.request.file)?;
+    let (source, hash) = bounded::read_with_digest(&request.source.file)?;
+    ensure!(
+        hash == request.source.sha256 && source == compiler_denial_source(&request.protected.file).as_bytes(),
+        "compiler-denial probe source changed"
+    );
+    let (protected, hash) = bounded::read_with_digest(&request.protected.file)?;
+    ensure!(
+        hash == request.protected.sha256 && protected == b"protected compiler input\n",
+        "compiler-denial protected input changed"
+    );
+    ensure!(
+        request.program.arguments == compiler_denial_arguments()
+            && request.program.outputs.is_empty()
+            && request.program.inputs
+                == vec![ReadOnlyBind { source: request.source.file.clone(), destination: "/inputs/denial.rs".into() }]
+            && request.program.executable.file_name().is_some_and(|name| name == "rustc")
+            && request.limits == compiler_denial_limits(),
+        "compiler-denial request does not prescribe the real Rust compiler probe"
+    );
+    ensure!(
+        request.program.inputs.iter().chain(&request.program.runtime).all(|binding| {
+            !request.protected.file.starts_with(&binding.source)
+                && !request.protected.file.starts_with(&binding.destination)
+        }),
+        "compiler-denial request exposes the protected host file"
+    );
+    let directory = operation::directory(&request.operation_root, &request.context)?;
+    let before = producer_stamps(&directory)?;
+    let admitted = operation::authenticate_request_with_references(
+        &request.operation_root,
+        &request.context,
+        &request.program,
+        &request.limits,
+        b"",
+    )?;
+    let result = admitted.result();
+    ensure!(
+        admitted.result_reference() == &denial.result && admitted.references() == denial.references,
+        "compiler-denial retained attribution changed"
+    );
+    ensure!(
+        !result.passed
+            && result.status_raw.is_some_and(|raw| !std::process::ExitStatus::from_raw(raw).success())
+            && result.diagnostic.contains("couldn't read")
+            && result.diagnostic.contains(request.protected.file.to_str().context("protected path is not UTF-8")?),
+        "the actual confined compiler did not deny the protected file: {}",
+        result.diagnostic
+    );
+    for name in ["runner.json", "sandbox.json"] {
+        ensure!(
+            admitted.references().iter().any(|reference| reference.path == directory.join(name)),
+            "compiler-denial result lacks actual runner attribution"
+        );
+    }
+    ensure!(producer_stamps(&directory)? == before, "compiler-denial admission rewrote producer evidence");
+    Ok(())
+}
+
+fn prove_compiler_denial(root: &Path, runtime: &StrictRuntime, context: &OperationContext) -> Result<()> {
+    let root = fs::canonicalize(root)?;
+    let directory = root.join("compiler-denial");
+    fs::create_dir_all(&directory)?;
+    let protected = directory.join("compiler-secret.txt");
+    immutable(&protected, b"protected compiler input\n")?;
+    let source = directory.join("denial.rs");
+    immutable(&source, compiler_denial_source(&protected).as_bytes())?;
+    let now = now_unix_ms()?;
+    let deadline_unix_ms = now
+        .checked_add(180_000)
+        .context("compiler-denial proof deadline overflow")?
+        .min(runtime.deadline_unix_ms.unwrap_or(u64::MAX));
+    let rustc = fs::canonicalize(&runtime.rustc)?;
+    let program = Program {
+        executable: rustc.clone(),
+        arguments: compiler_denial_arguments(),
+        inputs: vec![ReadOnlyBind { source: source.clone(), destination: "/inputs/denial.rs".into() }],
+        runtime: translation_execution::compiler_runtime::discover_until(
+            &rustc,
+            deadline_unix_ms,
+            8 * bounded::DEFAULT_BYTES,
+        )?,
+        helper: fs::canonicalize(&runtime.helper)?,
+        outputs: Vec::new(),
+    };
+    let mut context = context.clone();
+    context.operation_key = sha256("native-actual-compiler-file-denial");
+    let request = CompilerDenialRequest {
+        operation_root: runtime.operation_root.clone(),
+        context,
+        program,
+        limits: compiler_denial_limits(),
+        deadline_unix_ms,
+        source: Asset { file: source.clone(), sha256: digest(&source)? },
+        protected: Asset { file: protected.clone(), sha256: digest(&protected)? },
+    };
+    let request_path = directory.join("request.toml");
+    immutable(&request_path, toml::to_string(&request)?.as_bytes())?;
+    let (lease, _) =
+        tool_execution::acquire_lease_until(&runtime.pipeline_root, runtime.workers, request.deadline_unix_ms)?;
+    let result = operation::run_until(
+        &request.operation_root,
+        &request.context,
+        &request.program,
+        &request.limits,
+        b"",
+        request.deadline_unix_ms,
+    )?;
+    drop(lease);
+    let admitted = operation::authenticate_request_with_references(
+        &request.operation_root,
+        &request.context,
+        &request.program,
+        &request.limits,
+        b"",
+    )?;
+    let denial = RetainedOperation {
+        request: Asset { file: request_path.clone(), sha256: digest(&request_path)? },
+        result: admitted.result_reference().clone(),
+        references: admitted.references().to_vec(),
+    };
+    authenticate_compiler_denial(&denial)?;
+    let operation_directory = operation::directory(&request.operation_root, &request.context)?;
+    let before = producer_stamps(&operation_directory)?;
+    let retry = operation::run_until(
+        &request.operation_root,
+        &request.context,
+        &request.program,
+        &request.limits,
+        b"",
+        request.deadline_unix_ms,
+    )?;
+    ensure!(retry == result, "compiler-denial retry returned another result");
+    ensure!(producer_stamps(&operation_directory)? == before, "compiler-denial retry reran or rewrote the producer");
+    authenticate_compiler_denial(&denial)?;
+    retain_proof(&root, |proof| {
+        proof.compiler_denials.insert("undeclared-host-file".into(), denial);
+    })?;
+    println!(
+        "Actual Rust compiler denied the undeclared host file; durable retry preserved result and runner bytes/mtimes"
+    );
+    Ok(())
+}
+
+fn retained_asset(path: &Path) -> Result<Asset> {
+    bounded::safe(path)?;
+    let file = fs::canonicalize(path)?;
+    ensure!(file.symlink_metadata()?.is_file(), "proof asset is not a regular file");
+    Ok(Asset { sha256: digest(&file)?, file })
+}
+
+fn read_proof_asset(asset: &Asset) -> Result<Vec<u8>> {
+    let (bytes, hash) = bounded::read_with_digest(&asset.file)?;
+    ensure!(hash == asset.sha256, "retained proof asset changed: {}", asset.file.display());
+    Ok(bytes)
+}
+
+fn admitted_invocation(admitted: &AuthenticatedNative, asset: &Asset) -> Result<AdmittedInvocation> {
+    ensure!(
+        admitted.references().iter().any(|reference| reference.path == asset.file && reference.sha256 == asset.sha256),
+        "probe source invocation is not independently admitted Native evidence"
+    );
+    Ok(toml::from_str(std::str::from_utf8(&read_proof_asset(asset)?)?)?)
+}
+
+fn admit_runtime_case(case: &RetainedCase) -> Result<(NativeReceipt, AuthenticatedNative)> {
+    ensure!(
+        case.passed && case.fixture_pairs == Some(16) && case.operation_count == Some(34),
+        "runtime probes require the complete passing Native family"
+    );
+    let prepared: PreparedNative = bounded::object(&case.prepared)?;
+    let receipt: NativeReceipt = bounded::object(&case.receipt)?;
+    let admitted = prepared.authenticate(NativeEvidence { checkout: &case.checkout, receipt: &receipt })?;
+    ensure!(
+        receipt.passed && receipt.operation_count()? == 34 && admitted.report().verified_cases == 16,
+        "runtime probe Native source domain changed"
+    );
+    Ok((receipt, admitted))
+}
+
+fn runtime_probe_source(parent: &Path) -> String {
+    format!(
+        r#"fn main() {{
+    let args: Vec<_> = std::env::args().collect();
+    assert_eq!(args.len(), 7);
+    assert_eq!(args[4], "/inputs/before.wram");
+    assert_eq!(args[5], "/work/after.wram");
+    assert_eq!(args[6], "/inputs/rom.bin");
+    assert!(std::fs::read({parent:?}).is_err(), "parent read escaped");
+    assert!(std::fs::write({parent:?}, b"forged").is_err(), "parent write escaped");
+    assert!(std::fs::read("../Sidehopper_Func_1-0/c-after.wram").is_err(), "sibling read escaped");
+    assert!(std::fs::read("/program-c").is_err(), "C program read escaped");
+    let before = std::fs::read(&args[4]).unwrap();
+    assert_eq!(before.len(), 131072);
+    std::fs::write(&args[5], &before).unwrap();
+    print!("native-runtime-denials-passed\n");
+}}
+"#
+    )
+}
+
+fn runtime_fixture_limits() -> RunLimits {
+    RunLimits {
+        timeout: Duration::from_secs(5),
+        writable_bytes: 512 * 1024,
+        stdout_bytes: 4096,
+        stderr_bytes: 4096,
+        stdin_bytes: 0,
+    }
+}
+
+fn probe_context(original: &OperationContext, role: &str, subject: &Asset) -> Result<OperationContext> {
+    let mut context = original.clone();
+    context.operation_key = sealed(&(role, original, subject))?;
+    Ok(context)
+}
+
+fn runtime_probe_build_program(original: &Program, source: &Asset) -> Result<Program> {
+    ensure!(
+        original.executable.file_name().is_some_and(|name| name == "rustc")
+            && original.arguments.iter().any(|argument| argument == "/inputs/generated/wrapper.rs")
+            && original.outputs == vec![PathBuf::from("rust"), PathBuf::from("compiler.d")],
+        "admitted Native compiler has no supported standalone probe source seam"
+    );
+    let mut program = original.clone();
+    program.inputs =
+        vec![ReadOnlyBind { source: source.file.clone(), destination: "/inputs/generated/wrapper.rs".into() }];
+    Ok(program)
+}
+
+fn run_passing_probe(request: &ProbeRequest, path: &Path, runtime: &StrictRuntime) -> Result<RetainedOperation> {
+    immutable(path, toml::to_string(request)?.as_bytes())?;
+    let (lease, _) =
+        tool_execution::acquire_lease_until(&runtime.pipeline_root, runtime.workers, request.deadline_unix_ms)?;
+    let result = operation::run_until(
+        &request.operation_root,
+        &request.context,
+        &request.program,
+        &request.limits,
+        b"",
+        request.deadline_unix_ms,
+    )?;
+    drop(lease);
+    ensure!(result.passed, "runtime diagnostic operation failed: {}", result.diagnostic);
+    let directory = operation::directory(&request.operation_root, &request.context)?;
+    let before = producer_stamps(&directory)?;
+    let retry = operation::run_until(
+        &request.operation_root,
+        &request.context,
+        &request.program,
+        &request.limits,
+        b"",
+        request.deadline_unix_ms,
+    )?;
+    ensure!(retry == result, "runtime diagnostic retry returned another result");
+    ensure!(producer_stamps(&directory)? == before, "runtime diagnostic retry reran or rewrote its producer");
+    let admitted = operation::authenticate_request_with_references(
+        &request.operation_root,
+        &request.context,
+        &request.program,
+        &request.limits,
+        b"",
+    )?;
+    Ok(RetainedOperation {
+        request: retained_asset(path)?,
+        result: admitted.result_reference().clone(),
+        references: admitted.references().to_vec(),
+    })
+}
+
+fn authenticate_probe_operation(
+    record: &RetainedOperation,
+) -> Result<(ProbeRequest, operation::AuthenticatedOperation)> {
+    let request: ProbeRequest = toml::from_str(std::str::from_utf8(&read_proof_asset(&record.request)?)?)?;
+    let directory = operation::directory(&request.operation_root, &request.context)?;
+    let before = producer_stamps(&directory)?;
+    let admitted = operation::authenticate_request_with_references(
+        &request.operation_root,
+        &request.context,
+        &request.program,
+        &request.limits,
+        b"",
+    )?;
+    ensure!(
+        admitted.result_reference() == &record.result && admitted.references() == record.references,
+        "runtime diagnostic operation attribution changed"
+    );
+    ensure!(
+        admitted.result().passed
+            && admitted.result().status_raw.is_some_and(|raw| std::process::ExitStatus::from_raw(raw).success()),
+        "runtime diagnostic operation was not executed successfully"
+    );
+    for name in ["runner.json", "sandbox.json"] {
+        ensure!(
+            admitted.references().iter().any(|reference| reference.path == directory.join(name)),
+            "runtime diagnostic operation lacks actual process attribution"
+        );
+    }
+    ensure!(producer_stamps(&directory)? == before, "runtime diagnostic admission rewrote producer evidence");
+    Ok((request, admitted))
+}
+
+fn check_runtime_protected(proof: &RetainedRuntimeProbes, admitted: &AuthenticatedNative) -> Result<()> {
+    ensure!(
+        read_proof_asset(&proof.protected_parent)? == b"protected parent verdict",
+        "runtime probe changed the real protected parent"
+    );
+    ensure!(
+        proof.protected_sibling.file == admitted.report().run.join("Sidehopper_Func_1-0/c-after.wram")
+            && proof.protected_c_program.file == admitted.report().run.join("c"),
+        "runtime probe protected host paths do not name the real Native siblings"
+    );
+    for asset in [&proof.protected_sibling, &proof.protected_c_program] {
+        ensure!(
+            admitted
+                .references()
+                .iter()
+                .any(|reference| reference.path == asset.file && reference.sha256 == asset.sha256),
+            "runtime probe protected sibling is not independently admitted Native evidence"
+        );
+        ensure!(!read_proof_asset(asset)?.is_empty(), "runtime probe protected host file is absent or empty");
+    }
+    Ok(())
+}
+
+fn authenticate_runtime_probes(proof: &RetainedRuntimeProbes, case: &RetainedCase) -> Result<()> {
+    let (receipt, admitted) = admit_runtime_case(case)?;
+    let producers = proof_producers(&admitted, &receipt)?;
+    let compiler =
+        producers.iter().find(|producer| producer.label == "rust-build").context("Native compiler missing")?;
+    ensure!(compiler.invocation == proof.compiler_invocation, "runtime probe compiler attribution changed");
+    let original = admitted_invocation(&admitted, &proof.compiler_invocation)?;
+    ensure!(
+        original.requested_limits == compiler_denial_limits() && original.limits == compiler_denial_limits(),
+        "runtime probe compiler limits differ from the original 60-second Native compiler"
+    );
+    ensure!(
+        read_proof_asset(&proof.source)? == runtime_probe_source(&proof.protected_parent.file).as_bytes(),
+        "runtime probe source no longer performs the prescribed denials and declared output copy"
+    );
+    check_runtime_protected(proof, &admitted)?;
+    let (build, compiled) = authenticate_probe_operation(&proof.build)?;
+    ensure!(
+        build.operation_root == proof.operation_root
+            && build.deadline_unix_ms == proof.deadline_unix_ms
+            && build.context == probe_context(&original.context, "native-runtime-probe-build-v1", &proof.source)?
+            && build.program == runtime_probe_build_program(&original.program, &proof.source)?
+            && build.limits == original.limits,
+        "runtime probe build is not bound to the admitted Native compiler and trusted probe source"
+    );
+    ensure!(
+        compiled.result().outputs.get(Path::new("rust")).context("runtime probe compiler output missing")?
+            == &read_proof_asset(&proof.executable)?,
+        "runtime probe executable differs from its durable compiler output"
+    );
+    let expected = producers
+        .iter()
+        .filter(|producer| producer.label == "rust")
+        .map(|producer| (producer.invocation.file.clone(), producer.invocation.sha256.clone()))
+        .collect::<BTreeMap<_, _>>();
+    ensure!(
+        expected.len() == 16 && proof.fixtures.len() == 16,
+        "runtime proof does not cover every Native Rust fixture"
+    );
+    let mut observed = BTreeSet::new();
+    for fixture in &proof.fixtures {
+        ensure!(
+            expected.get(&fixture.original_invocation.file) == Some(&fixture.original_invocation.sha256)
+                && observed.insert(fixture.original_invocation.file.clone()),
+            "runtime proof repeats or substitutes a Native Rust fixture"
+        );
+        let original = admitted_invocation(&admitted, &fixture.original_invocation)?;
+        ensure!(
+            original.requested_limits == runtime_fixture_limits() && original.limits == runtime_fixture_limits(),
+            "runtime probe changed the original five-second/512-KiB Fixture limits"
+        );
+        let mut program = original.program.clone();
+        program.executable = proof.executable.file.clone();
+        let (request, result) = authenticate_probe_operation(&fixture.operation)?;
+        ensure!(
+            request.operation_root == proof.operation_root
+                && request.deadline_unix_ms == proof.deadline_unix_ms
+                && request.context
+                    == probe_context(&original.context, "native-runtime-probe-fixture-v1", &proof.executable)?
+                && request.program == program
+                && request.limits == original.limits,
+            "runtime probe changed the admitted Fixture namespace, argv, runtime, helper or output obligations"
+        );
+        let input = program
+            .inputs
+            .iter()
+            .find(|input| input.destination == Path::new("/inputs/before.wram"))
+            .context("original Native Fixture lacks its declared WRAM input")?;
+        ensure!(
+            result.result().stdout == b"native-runtime-denials-passed\n"
+                && result.result().stderr.is_empty()
+                && result.result().outputs
+                    == BTreeMap::from([(PathBuf::from("after.wram"), bounded::read(&input.source)?)]),
+            "runtime probe failed its exact success marker or declared before-to-after output contract"
+        );
+    }
+    ensure!(observed.len() == expected.len(), "runtime probe Native fixture membership is incomplete");
+    check_runtime_protected(proof, &admitted)?;
+    Ok(())
+}
+
+fn prove_runtime_probes(root: &Path, native_case: &str, case: &RetainedCase, runtime: &StrictRuntime) -> Result<()> {
+    let (receipt, admitted) = admit_runtime_case(case)?;
+    let producers = proof_producers(&admitted, &receipt)?;
+    ensure!(
+        producers.iter().filter(|producer| producer.label == "rust").count() == 16,
+        "runtime probes require every original Rust Fixture invocation"
+    );
+    let root = fs::canonicalize(root)?;
+    let directory = root.join("runtime-probes");
+    fs::create_dir_all(&directory)?;
+    let parent = root.join("parent-verdict.toml");
+    immutable(&parent, b"protected parent verdict")?;
+    let source_path = directory.join("probe.rs");
+    immutable(&source_path, runtime_probe_source(&parent).as_bytes())?;
+    let source = retained_asset(&source_path)?;
+    let protected_parent = retained_asset(&parent)?;
+    let protected_sibling = retained_asset(&admitted.report().run.join("Sidehopper_Func_1-0/c-after.wram"))?;
+    let protected_c_program = retained_asset(&admitted.report().run.join("c"))?;
+    let compiler =
+        producers.iter().find(|producer| producer.label == "rust-build").context("Native compiler missing")?;
+    let original = admitted_invocation(&admitted, &compiler.invocation)?;
+    ensure!(
+        original.requested_limits == compiler_denial_limits() && original.limits == compiler_denial_limits(),
+        "runtime probe compiler limits differ from the original 60-second Native compiler"
+    );
+    let deadline_unix_ms = now_unix_ms()?
+        .checked_add(180_000)
+        .context("runtime probe proof deadline overflow")?
+        .min(runtime.deadline_unix_ms.unwrap_or(u64::MAX));
+    let request = ProbeRequest {
+        operation_root: runtime.operation_root.clone(),
+        context: probe_context(&original.context, "native-runtime-probe-build-v1", &source)?,
+        program: runtime_probe_build_program(&original.program, &source)?,
+        limits: original.limits,
+        deadline_unix_ms,
+    };
+    let build = run_passing_probe(&request, &directory.join("build.toml"), runtime)?;
+    let (_, compiled) = authenticate_probe_operation(&build)?;
+    let executable_path = directory.join("probe");
+    immutable(&executable_path, compiled.result().outputs.get(Path::new("rust")).context("probe binary missing")?)?;
+    fs::set_permissions(&executable_path, fs::Permissions::from_mode(0o500))?;
+    let executable = retained_asset(&executable_path)?;
+    let mut proof = RetainedRuntimeProbes {
+        native_case: native_case.into(),
+        operation_root: runtime.operation_root.clone(),
+        deadline_unix_ms,
+        protected_parent,
+        protected_sibling,
+        protected_c_program,
+        source,
+        executable,
+        compiler_invocation: compiler.invocation.clone(),
+        build,
+        fixtures: Vec::new(),
+    };
+    check_runtime_protected(&proof, &admitted)?;
+    for (index, producer) in producers.iter().filter(|producer| producer.label == "rust").enumerate() {
+        let original = admitted_invocation(&admitted, &producer.invocation)?;
+        ensure!(
+            original.requested_limits == runtime_fixture_limits() && original.limits == runtime_fixture_limits(),
+            "runtime probe changed the original five-second/512-KiB Fixture limits"
+        );
+        let mut program = original.program;
+        program.executable = proof.executable.file.clone();
+        let request = ProbeRequest {
+            operation_root: runtime.operation_root.clone(),
+            context: probe_context(&original.context, "native-runtime-probe-fixture-v1", &proof.executable)?,
+            program,
+            limits: original.limits,
+            deadline_unix_ms,
+        };
+        let operation = run_passing_probe(&request, &directory.join(format!("fixture-{index:02}.toml")), runtime)?;
+        proof.fixtures.push(RetainedRuntimeProbe { original_invocation: producer.invocation.clone(), operation });
+        check_runtime_protected(&proof, &admitted)?;
+    }
+    authenticate_runtime_probes(&proof, case)?;
+    retain_proof(&root, |retained| {
+        retained.runtime_probes.insert("all-native-rust-fixture-namespaces".into(), proof);
+    })?;
+    println!(
+        "Runtime denials passed in all 16 admitted Rust Fixture namespaces; 17 separate diagnostic producers replayed unchanged"
+    );
+    Ok(())
+}
+
+#[test]
+#[ignore = "real runtime probes in all 16 admitted Native Fixture namespaces; retains build, replay and readback"]
+fn confined_runtime_probes_replay_and_authenticate() -> Result<()> {
+    let root = PathBuf::from(std::env::var("SM_NATIVE_RUNTIME_PROBE_PROOF")?);
+    fs::create_dir_all(&root)?;
+    let seed: RetainedProof = bounded::object(Path::new(&std::env::var("SM_NATIVE_RUNTIME_SEED_MANIFEST")?))?;
+    let case = seed.cases.get("run").context("runtime probe seed has no full Native run")?.clone();
+    retain_case(&root, "runtime-family", case.clone())?;
+    let runtime = StrictRuntime {
+        helper: PathBuf::from(std::env::var("SM_NATIVE_SANDBOX")?),
+        rustc: PathBuf::from(std::env::var("SM_NATIVE_RUSTC")?),
+        c_compiler: "/usr/bin/x86_64-linux-gnu-gcc-9".into(),
+        operation_root: root.join("operations"),
+        pipeline_root: "/home/jim/sm-decomp/out/pipeline".into(),
+        workers: 4,
+        gate_timeout_seconds: 180,
+        deadline_unix_ms: None,
+        max_output_bytes: 1024 * 1024 * 1024,
+    };
+    prove_runtime_probes(&root, "runtime-family", &case, &runtime)?;
+    cleanup_proof(&root)?;
+    authenticate_retained(&root.join("retained-authentication.toml"))
+}
+
+#[test]
+#[ignore = "bounded real compiler denial; retains exact operation, retry and independent authentication evidence"]
+fn confined_compiler_denial_replays_and_authenticates() -> Result<()> {
+    let root = PathBuf::from(std::env::var("SM_NATIVE_COMPILER_DENIAL_PROOF")?);
+    fs::create_dir_all(&root)?;
+    let runtime = StrictRuntime {
+        helper: PathBuf::from(std::env::var("SM_NATIVE_SANDBOX")?),
+        rustc: PathBuf::from(std::env::var("SM_NATIVE_RUSTC")?),
+        c_compiler: "/usr/bin/x86_64-linux-gnu-gcc-9".into(),
+        operation_root: root.join("operations"),
+        pipeline_root: "/home/jim/sm-decomp/out/pipeline".into(),
+        workers: 4,
+        gate_timeout_seconds: 180,
+        deadline_unix_ms: None,
+        max_output_bytes: 1024 * 1024 * 1024,
+    };
+    let context = OperationContext {
+        run_id: sha256("native-compiler-denial-focused-proof"),
+        attempt: 1,
+        policy_sha256: sha256("actual compiler must deny an undeclared host input"),
+        operation_key: sha256("native-compiler-denial-focused-proof"),
+        phase: translation_execution::model::ExecutionPhase::Candidate,
+    };
+    prove_compiler_denial(&root, &runtime, &context)?;
+    cleanup_proof(&root)?;
+    authenticate_retained(&root.join("retained-authentication.toml"))
 }
 
 #[test]
@@ -801,8 +1536,8 @@ fn full_real_family_retains_authenticates_and_reuses_every_producer() -> Result<
         authenticate_retained(&root.join("retained-authentication.toml"))?;
         return Ok(());
     }
-    let compile_source = variant_source(&prepared, &checkout, &root.join("compile-denial-source"))?;
-    let candidate = compile_source.join(prepared.candidate_path());
+    let capture_source = variant_source(&prepared, &checkout, &root.join("capture-refusal-source"))?;
+    let candidate = capture_source.join(prepared.candidate_path());
     let candidate_bytes = bounded::read(&candidate)?;
     let undeclared = root.join("compiler-secret.txt");
     fs::write(&undeclared, "protected input")?;
@@ -811,39 +1546,90 @@ fn full_real_family_retains_authenticates_and_reuses_every_producer() -> Result<
     mutated.extend(compile_read.as_bytes());
     fs::write(&candidate, &mutated)?;
     let mut deny_context = context.clone();
-    deny_context.operation_key = sha256("native-compile-time-denial");
-    let denied = run(&prepared, &compile_source, &root.join("compile-denial"), &runtime, &deny_context);
-    let retry = match &denied {
-        Ok(denied) => {
-            let retry = run(&prepared, &compile_source, &root.join("compile-denial"), &runtime, &deny_context)?;
-            ensure!(sealed(&retry)? == sealed(denied)?, "unchanged rejected candidate reran compiler");
-            Some(retry)
-        }
-        Err(_) => None,
+    deny_context.operation_key = sha256("native-uncaptured-input-refusal");
+    let capture_output = root.join("capture-refusal");
+    let producers_before = bounded::entries(&runtime.operation_root)?;
+    let error = run(&prepared, &capture_source, &capture_output, &runtime, &deny_context)
+        .err()
+        .context("uncaptured file macro reached Native producer execution")?;
+    ensure!(
+        bounded::entries(&runtime.operation_root)? == producers_before,
+        "refused source capture created a producer operation"
+    );
+    let refusal = RetainedCaptureRefusal {
+        candidate: Asset { file: candidate.clone(), sha256: digest(&candidate)? },
+        output: capture_output,
+        diagnostic: format!("{error:#}"),
+        kind: CaptureRefusalKind::FileMacro,
     };
-    let denied = denied?;
+    authenticate_capture_refusal(&refusal)?;
+    ensure!(
+        refusal.diagnostic.contains(undeclared.to_str().context("uncaptured input path is not UTF-8")?),
+        "capture refusal did not identify the undeclared input"
+    );
+    retain_proof(&root, |proof| {
+        proof.capture_refusals.insert("uncaptured-file-macro".into(), refusal);
+    })?;
+    println!("Uncaptured include_str! refused before Native intent or producer publication");
+
+    // Source capture refuses unknown inputs before compilation. Exercise the
+    // actual confinement boundary separately with an explicitly bound probe.
+    prove_compiler_denial(&root, &runtime, &context)?;
+
+    // A complete source closure can still fail in rustc. This independently
+    // preserves rejected Native receipts and their exact producer replay.
+    let compile_source = variant_source(&prepared, &checkout, &root.join("compile-failure-source"))?;
+    let candidate = compile_source.join(prepared.candidate_path());
+    let mut mutated = candidate_bytes.clone();
+    mutated.extend(b"\ncompile_error!(\"native compiler failure control\");\n");
+    fs::write(&candidate, &mutated)?;
+    let mut deny_context = context.clone();
+    deny_context.operation_key = sha256("native-compiler-failure-replay");
+    let compile_output = root.join("compile-failure");
+    let denied = run(&prepared, &compile_source, &compile_output, &runtime, &deny_context)?;
+    ensure!(
+        !denied.passed
+            && denied.diagnostic.contains("native compiler failure control")
+            && denied.operation_count()? == 2,
+        "native compiler failure was not retained: {}",
+        denied.diagnostic
+    );
+    let admitted = prepared.authenticate(NativeEvidence { checkout: &compile_source, receipt: &denied })?;
+    let operations = proof_producers(&admitted, &denied)?;
+    let producer_stamps_before = operations
+        .iter()
+        .map(|producer| producer_stamps(producer.result.path.parent().context("producer result parent missing")?))
+        .collect::<Result<Vec<_>>>()?;
+    let receipt_path = compile_output.join("native-receipt.toml");
+    let receipt_before = (digest(&receipt_path)?, fs::metadata(&receipt_path)?.modified()?);
+    let retry = run(&prepared, &compile_source, &compile_output, &runtime, &deny_context)?;
+    ensure!(sealed(&retry)? == sealed(&denied)?, "unchanged rejected candidate returned another Native receipt");
+    ensure!(
+        (digest(&receipt_path)?, fs::metadata(&receipt_path)?.modified()?) == receipt_before,
+        "rejected Native retry rewrote its receipt"
+    );
+    for (producer, before) in operations.iter().zip(producer_stamps_before) {
+        ensure!(
+            producer_stamps(producer.result.path.parent().context("producer result parent missing")?)? == before,
+            "rejected Native retry reran or rewrote a compiler producer"
+        );
+    }
     retain_case(
         &root,
-        "compile-denial",
+        "compile-failure",
         RetainedCase {
             prepared: root.join("prepared.toml"),
             checkout: compile_source.clone(),
-            receipt: root.join("compile-denial/native-receipt.toml"),
+            receipt: receipt_path,
             passed: false,
             fixture_pairs: None,
-            operation_count: None,
-            diagnostic_contains: Some("compiler-secret".into()),
+            operation_count: Some(2),
+            diagnostic_contains: Some("native compiler failure control".into()),
         },
     )?;
-    ensure!(retry.is_some(), "failed native evaluation was not durably reused");
-    ensure!(
-        !denied.passed && denied.diagnostic.contains("compiler-secret"),
-        "compile-time undeclared inclusion was not denied: {}",
-        denied.diagnostic
-    );
     authenticate(&prepared, &compile_source, &denied)?;
 
-    let runtime_source = variant_source(&prepared, &checkout, &root.join("runtime-denial-source"))?;
+    let runtime_source = variant_source(&prepared, &checkout, &root.join("runtime-refusal-source"))?;
     let candidate = runtime_source.join(prepared.candidate_path());
     let runtime_secret = root.join("parent-verdict.toml");
     fs::write(&runtime_secret, "protected parent verdict")?;
@@ -855,28 +1641,51 @@ fn full_real_family_retains_authenticates_and_reuses_every_producer() -> Result<
     );
     fs::write(&candidate, candidate_text.replacen(signature, &checks, 1))?;
     let mut deny_context = context.clone();
-    deny_context.operation_key = sha256("native-runtime-protected-denial");
-    let denied = run(&prepared, &runtime_source, &root.join("runtime-denial"), &runtime, &deny_context);
-    let denied = denied?;
-    retain_case(
-        &root,
-        "runtime-denial",
-        RetainedCase {
-            prepared: root.join("prepared.toml"),
-            checkout: runtime_source.clone(),
-            receipt: root.join("runtime-denial/native-receipt.toml"),
-            passed: true,
-            fixture_pairs: Some(16),
-            operation_count: Some(34),
-            diagnostic_contains: None,
-        },
-    )?;
+    deny_context.operation_key = sha256("native-runtime-capability-refusal");
+    let runtime_output = root.join("runtime-refusal");
+    let producers_before = bounded::entries(&runtime.operation_root)?;
+    let error = run(&prepared, &runtime_source, &runtime_output, &runtime, &deny_context)
+        .err()
+        .context("unmodeled runtime capability reached Native producer execution")?;
     ensure!(
-        denied.passed && bounded::text(&runtime_secret)? == "protected parent verdict",
-        "runtime denial escaped namespace or changed real family semantics: {}",
-        denied.diagnostic
+        bounded::entries(&runtime.operation_root)? == producers_before
+            && bounded::text(&runtime_secret)? == "protected parent verdict",
+        "refused runtime capability created a producer or changed the protected parent"
     );
-    authenticate(&prepared, &runtime_source, &denied)?;
+    let refusal = RetainedCaptureRefusal {
+        candidate: retained_asset(&candidate)?,
+        output: runtime_output,
+        diagnostic: format!("{error:#}"),
+        kind: CaptureRefusalKind::RuntimeCapability,
+    };
+    authenticate_capture_refusal(&refusal)?;
+    retain_proof(&root, |proof| {
+        proof.capture_refusals.insert("unmodeled-runtime-capability".into(), refusal);
+    })?;
+    println!("Injected std::fs capabilities refused before Native intent or producer publication");
+
+    // Preserve the second complete actual-C family evaluation. Its admitted
+    // Rust invocations prescribe each diagnostic probe's exact namespace.
+    let runtime_source = variant_source(&prepared, &checkout, &root.join("runtime-family-source"))?;
+    let mut runtime_context = context.clone();
+    runtime_context.operation_key = sha256("native-runtime-fixture-namespaces");
+    let runtime_receipt = run(&prepared, &runtime_source, &root.join("runtime-family"), &runtime, &runtime_context)?;
+    ensure!(
+        runtime_receipt.passed && runtime_receipt.operation_count()? == 34,
+        "second complete Native runtime family failed: {}",
+        runtime_receipt.diagnostic
+    );
+    let runtime_case = RetainedCase {
+        prepared: root.join("prepared.toml"),
+        checkout: runtime_source,
+        receipt: root.join("runtime-family/native-receipt.toml"),
+        passed: true,
+        fixture_pairs: Some(16),
+        operation_count: Some(34),
+        diagnostic_contains: None,
+    };
+    retain_case(&root, "runtime-family", runtime_case.clone())?;
+    prove_runtime_probes(&root, "runtime-family", &runtime_case, &runtime)?;
     let mut deny_context = context.clone();
     deny_context.operation_key = sha256("native-output-reservation-denial");
     let intent: toml::Value = bounded::object(&root.join("run/native-intent.toml"))?;
@@ -910,7 +1719,7 @@ fn full_real_family_retains_authenticates_and_reuses_every_producer() -> Result<
     cleanup_proof(&root)?;
     authenticate_retained(&root.join("retained-authentication.toml"))?;
     println!(
-        "Preparation gaps, compiler undeclared inclusion, runtime parent/sibling read/write, tampered operation and aggregate prelaunch reservation checks passed"
+        "Preparation gaps, input/capability capture refusals, actual compiler file denial, rejected Native replay, all 16 runtime namespace probes, tampered operation and aggregate prelaunch reservation checks passed"
     );
     Ok(())
 }
