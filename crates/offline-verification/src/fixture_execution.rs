@@ -19,7 +19,7 @@ use tool_execution::builds::ExecutionRecord;
 
 pub(crate) type Task<'a> = (&'a crate::family_model::Routine, &'a crate::family_model::Case, usize);
 
-fn predecessors(tasks: &[Task<'_>]) -> Result<Vec<Option<usize>>> {
+pub(crate) fn predecessors(tasks: &[Task<'_>]) -> Result<Vec<Option<usize>>> {
     let names: BTreeMap<_, _> = tasks.iter().enumerate().map(|(i, t)| (t.1.name.as_str(), i)).collect();
     ensure!(names.len() == tasks.len(), "duplicate fixture task name");
     tasks
@@ -226,8 +226,11 @@ pub(crate) struct Worker {
     run: PathBuf,
 }
 impl Worker {
-    fn new(run: &Path, fork: bool, context: &Context) -> Self {
+    pub(crate) fn new(run: &Path, fork: bool, context: &Context) -> Self {
         Self { wait: 0., context: context.clone(), helpers: BTreeMap::new(), fork, run: run.into() }
+    }
+    pub(crate) fn set_wait(&mut self, wait: f64) {
+        self.wait = wait;
     }
     pub fn execute(&mut self, args: &[String], dir: &Path, label: &str) -> Result<()> {
         self.execute_timeout(args, dir, label, Duration::from_secs(240))
@@ -277,7 +280,7 @@ impl Worker {
         ensure!(result?.success(), "{label} fixture refused or failed");
         Ok(())
     }
-    fn finish(&mut self) -> Result<()> {
+    pub(crate) fn finish(&mut self) -> Result<()> {
         for helper in self.helpers.values_mut() {
             helper.stop()?;
         }

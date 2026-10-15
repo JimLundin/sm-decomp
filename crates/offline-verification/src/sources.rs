@@ -49,4 +49,5 @@ pub const IMPLEMENTATION_SOURCES: &[(&str, &str)] = &[
     ("crates/offline-verification/src/ridley_subsystem_host.c.in", include_str!("ridley_subsystem_host.c.in")),
     ("crates/offline-verification/src/sources.rs", include_str!("sources.rs")),
     ("crates/offline-verification/src/source_facts.rs", include_str!("source_facts.rs")),
+    ("crates/offline-verification/src/work_graph.rs", include_str!("work_graph.rs")),
 ];

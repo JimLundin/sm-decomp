@@ -8,8 +8,8 @@ use std::{
     sync::Arc,
 };
 
-mod builds;
 mod admission_reader;
+mod builds;
 mod bulk;
 mod callback;
 mod declarations;
@@ -28,6 +28,7 @@ mod plm_spawn;
 mod recipe;
 mod ridley_subsystem_adapter;
 mod sources;
+mod work_graph;
 
 pub mod authoring;
 pub mod catalog;
@@ -78,7 +79,8 @@ impl OfflineFamilies {
             let checkout = request.checkout.clone();
             let source = request.source.clone();
             let declarations = Arc::new(declarations::Declarations::standard());
-            let report = declarations.enter(|| family::verify_with_declarations(request, &declarations, None, None))?;
+            let report =
+                declarations.enter(|| family::verify_with_declarations(request, &declarations, None, None, None))?;
             if report.status == "offline-verified" {
                 family::admit_with_source(
                     AuthenticateRequest { checkout, verdict: report.run.join("verdict.toml") },

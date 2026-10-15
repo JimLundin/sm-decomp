@@ -8,10 +8,7 @@ use anyhow::{Context, Result, ensure};
 use std::{
     collections::{BTreeMap, BTreeSet},
     path::{Path, PathBuf},
-    sync::{
-        Arc, Mutex,
-        atomic::{AtomicUsize, Ordering},
-    },
+    sync::{Arc, Mutex},
     time::Instant,
 };
 
@@ -212,72 +209,134 @@ impl OfflineFamilies {
             })?;
             &owned_inputs
         };
-        let next = AtomicUsize::new(0);
+        let graph = crate::work_graph::Graph::new(
+            request.catalog,
+            &captured.view,
+            &request.families,
+            request.root.clone(),
+            request.workers,
+            request.family_jobs,
+        )?;
+        let family_names = request.families.iter().map(|job| job.family.clone()).collect::<Vec<_>>();
         let jobs: Vec<_> = request.families.into_iter().map(|job| Mutex::new(Some(job))).collect();
         let outcomes = Mutex::new(BTreeMap::new());
         let publication_errors = Mutex::new(Vec::new());
         let metrics = tool_execution::metrics::active();
         std::thread::scope(|scope| {
-            for _ in 0..request.family_jobs.min(jobs.len()) {
-                scope.spawn(|| {
-                    let _active = metrics.as_ref().map(|context| context.enter());
-                    loop {
-                        let index = next.fetch_add(1, Ordering::Relaxed);
-                        let Some(job) = jobs.get(index) else {
-                            break;
-                        };
-                        let job = job.lock().unwrap().take().expect("one family worker per index");
-                        let started = Instant::now();
-                        let result = (|| -> Result<RegisteredRun> {
-                            let metrics_directory = job.output.join("metrics");
-                            std::fs::create_dir_all(&metrics_directory)?;
-                            let mut metrics_run = tool_execution::metrics::Run::start(
-                                tool_execution::metrics::sidecar(&metrics_directory, &job.family),
-                                "batch-family",
-                            )?;
-                            metrics_run.context.configuration("family", &job.family);
-                            metrics_run.context.configuration("case-jobs", request.case_jobs);
-                            let result = self.verify_registered_captured(
-                                RegisteredRequest {
-                                    checkout: request.catalog.checkout().into(),
-                                    source: request.source.clone(),
-                                    root: request.root.clone(),
-                                    workers: request.workers,
-                                    case_jobs: request.case_jobs,
-                                    family: job.family.clone(),
-                                    output: job.output,
-                                    previous: job.previous,
-                                },
-                                request.catalog,
-                                Some(&captured.view),
-                            );
-                            let error = result
+            let executors = (0..request.workers).map(|_| scope.spawn(|| graph.serve())).collect::<Vec<_>>();
+            let families = (0..request.family_jobs.min(jobs.len()))
+                .map(|_| {
+                    scope.spawn(|| {
+                        let _active = metrics.as_ref().map(|context| context.enter());
+                        while let Some(index) = graph.next_family() {
+                            let node = graph.node(index);
+                            let job = &jobs[index];
+                            let job = job.lock().unwrap().take().expect("one family worker per index");
+                            let started = Instant::now();
+                            let result = (|| -> Result<RegisteredRun> {
+                                let metrics_directory = job.output.join("metrics");
+                                std::fs::create_dir_all(&metrics_directory)?;
+                                let mut metrics_run = tool_execution::metrics::Run::start(
+                                    tool_execution::metrics::sidecar(&metrics_directory, &job.family),
+                                    "batch-family",
+                                )?;
+                                metrics_run.context.configuration("family", &job.family);
+                                metrics_run.context.configuration("case-jobs", request.case_jobs);
+                                let result = self.verify_registered_captured(
+                                    RegisteredRequest {
+                                        checkout: request.catalog.checkout().into(),
+                                        source: request.source.clone(),
+                                        root: request.root.clone(),
+                                        workers: request.workers,
+                                        case_jobs: request.case_jobs,
+                                        family: job.family.clone(),
+                                        output: job.output,
+                                        previous: job.previous,
+                                    },
+                                    request.catalog,
+                                    Some(&captured.view),
+                                    Some(node),
+                                );
+                                let error = result
+                                    .as_ref()
+                                    .err()
+                                    .map(|error| format!("{error:#}"))
+                                    .or_else(|| result.as_ref().ok()?.run.report().error.clone());
+                                let finished =
+                                    metrics_run.finish(tool_execution::metrics::outcome(error.as_deref()), error);
+                                if result.is_ok() {
+                                    finished?;
+                                }
+                                result
+                            })();
+                            let outcome = FamilyCompletion {
+                                family: job.family,
+                                seconds: started.elapsed().as_secs_f64(),
+                                result,
+                            };
+                            if outcome
+                                .result
                                 .as_ref()
-                                .err()
-                                .map(|error| format!("{error:#}"))
-                                .or_else(|| result.as_ref().ok()?.run.report().error.clone());
-                            let finished =
-                                metrics_run.finish(tool_execution::metrics::outcome(error.as_deref()), error);
-                            if result.is_ok() {
-                                finished?;
+                                .is_ok_and(|result| result.run.report().status == "offline-verified")
+                            {
+                                node.phase(crate::work_graph::Phase::Complete);
+                            } else {
+                                let reason = match &outcome.result {
+                                    Err(error) => format!("{error:#}"),
+                                    Ok(result) => {
+                                        result.run.report().error.clone().unwrap_or_else(|| "family rejected".into())
+                                    }
+                                };
+                                graph.stop(&reason);
+                                node.phase(crate::work_graph::Phase::Rejected);
                             }
-                            result
-                        })();
-                        let outcome =
-                            FamilyCompletion { family: job.family, seconds: started.elapsed().as_secs_f64(), result };
-                        if let Err(error) = completed(&outcome) {
-                            publication_errors.lock().unwrap().push(format!("{error:#}"));
+                            if let Err(error) =
+                                crate::work_graph::FamilyNode::metadata(Some(node), || completed(&outcome))
+                            {
+                                graph.stop(&format!("completion publication failed: {error:#}"));
+                                publication_errors.lock().unwrap().push(format!("{error:#}"));
+                            }
+                            outcomes.lock().unwrap().insert(index, outcome);
                         }
-                        outcomes.lock().unwrap().insert(index, outcome);
-                    }
-                });
+                    })
+                })
+                .collect::<Vec<_>>();
+            for family in families {
+                if family.join().is_err() {
+                    graph.stop("batch family worker panicked");
+                    publication_errors.lock().unwrap().push("batch family worker panicked".into());
+                }
+            }
+            graph.close();
+            for executor in executors {
+                if executor.join().is_err() {
+                    publication_errors.lock().unwrap().push("batch Fixture executor panicked".into());
+                }
             }
         });
+        let mut outcomes = outcomes.into_inner().unwrap();
+        for (index, family) in family_names.into_iter().enumerate() {
+            if outcomes.contains_key(&index) {
+                continue;
+            }
+            let outcome = FamilyCompletion {
+                family,
+                seconds: 0.,
+                result: Err(graph
+                    .check_admission()
+                    .err()
+                    .unwrap_or_else(|| anyhow::anyhow!("batch family did not complete"))),
+            };
+            if let Err(error) = completed(&outcome) {
+                publication_errors.lock().unwrap().push(format!("{error:#}"));
+            }
+            outcomes.insert(index, outcome);
+        }
         let errors = publication_errors.into_inner().unwrap();
         ensure!(errors.is_empty(), "batch completion publication failed: {}", errors.join("; "));
         request.catalog.validate_current()?;
         captured.validate_current()?;
-        Ok(BatchRun { families: outcomes.into_inner().unwrap().into_values().collect() })
+        Ok(BatchRun { families: outcomes.into_values().collect() })
     }
 
     pub fn authenticate_batch(&self, request: BatchAdmission<'_>) -> Result<AuthenticatedBatch> {

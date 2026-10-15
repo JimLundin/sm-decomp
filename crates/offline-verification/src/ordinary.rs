@@ -41,7 +41,7 @@ impl OfflineFamilies {
     pub fn verify_registered(&self, request: RegisteredRequest) -> Result<RegisteredRun> {
         let snapshot = self.capture_catalog(CatalogRequest::new(&request.checkout)?)?;
         snapshot.validate_current()?;
-        let result = self.verify_registered_captured(request, &snapshot, None)?;
+        let result = self.verify_registered_captured(request, &snapshot, None, None)?;
         snapshot.validate_current()?;
         Ok(result)
     }
@@ -51,9 +51,15 @@ impl OfflineFamilies {
         request: RegisteredRequest,
         snapshot: &CatalogSnapshot,
         inputs: Option<&std::sync::Arc<crate::input_view::InputView>>,
+        node: Option<crate::work_graph::FamilyNode<'_>>,
     ) -> Result<RegisteredRun> {
+        use crate::work_graph::{FamilyNode, Phase};
         snapshot.declarations().enter(|| {
             inputs::with_host(self.host_inputs(), || {
+                if let Some(node) = node {
+                    node.check_admission()?;
+                    node.phase(Phase::Resolving);
+                }
                 let context = metrics::active();
                 if let Some(context) = &context {
                     context.expect_stages(&[
@@ -63,6 +69,7 @@ impl OfflineFamilies {
                         "family-evidence-admission",
                     ]);
                 }
+                let resolving_metadata = node.map(FamilyNode::metadata_permit);
                 let (facts, mut manifest) = metrics::measure("registered-input-authentication", || {
                     metrics::check_cancelled()?;
                     ensure!(
@@ -93,6 +100,7 @@ impl OfflineFamilies {
                     let manifest = request.checkout.join(&entry.manifest);
                     Ok((facts, manifest))
                 })?;
+                drop(resolving_metadata);
                 let entry = facts.entry().clone();
                 let manifest_sha256 = facts.manifest_sha256().to_owned();
                 let mut reuse_authentication_seconds = None;
@@ -101,6 +109,10 @@ impl OfflineFamilies {
                     && previous.manifest_sha256 == manifest_sha256
                     && previous.kind == entry.kind
                 {
+                    if let Some(node) = node {
+                        node.phase(Phase::ReuseAdmission);
+                    }
+                    let reuse_metadata = node.map(FamilyNode::metadata_permit);
                     let started = Instant::now();
                     let authenticated = metrics::measure("reuse-authentication", || {
                         let admitted = family::admit_with_source(
@@ -120,6 +132,7 @@ impl OfflineFamilies {
                         snapshot.validate_family(&request.family)?;
                         Ok(admitted.report)
                     });
+                    drop(reuse_metadata);
                     reuse_authentication_seconds = Some(started.elapsed().as_secs_f64());
                     match authenticated {
                         Ok(report) => {
@@ -163,12 +176,14 @@ impl OfflineFamilies {
                         )?
                     };
                     let stamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_nanos();
-                    let generated = base.enter(|| {
-                        plm_fixtures::generate(
-                            &request.checkout,
-                            &request.output.join("fixtures").join(stamp.to_string()),
-                            None,
-                        )
+                    let generated = FamilyNode::metadata(node, || {
+                        base.enter(|| {
+                            plm_fixtures::generate(
+                                &request.checkout,
+                                &request.output.join("fixtures").join(stamp.to_string()),
+                                None,
+                            )
+                        })
                     })?;
                     generated_inputs = Some(base.generated_plm(&generated)?);
                     manifest = generated.manifest;
@@ -190,8 +205,13 @@ impl OfflineFamilies {
                     snapshot.declarations(),
                     (!generated).then(|| facts.captured()),
                     generated_inputs.as_ref().or(inputs),
+                    node,
                 )?;
                 if report.status == "offline-verified" {
+                    if let Some(node) = node {
+                        node.phase(Phase::Admission);
+                    }
+                    let _admission_metadata = node.map(FamilyNode::metadata_permit);
                     let admitted = family::admit_with_source(
                         AuthenticateRequest {
                             checkout: request.checkout.clone(),

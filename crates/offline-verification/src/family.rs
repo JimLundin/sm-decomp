@@ -511,18 +511,26 @@ fn numeric_text(data: &str) -> Result<u64> {
     Ok(final_line.parse()?)
 }
 pub(crate) fn ordered_tasks(manifest: &Manifest) -> Result<Vec<(&Routine, &Case, usize)>> {
+    Ok(ordered_task_indices(manifest)?
+        .into_iter()
+        .map(|(routine, case)| (&manifest.routines[routine], &manifest.routines[routine].cases[case], routine))
+        .collect())
+}
+
+pub(crate) fn ordered_task_indices(manifest: &Manifest) -> Result<Vec<(usize, usize)>> {
     let mut tasks = Vec::new();
     let mut names = BTreeSet::new();
     for (index, routine) in manifest.routines.iter().enumerate() {
         ensure!(!routine.cases.is_empty(), "empty declared routine coverage");
-        for case in &routine.cases {
+        for (case_index, case) in routine.cases.iter().enumerate() {
             ensure!(names.insert(case.name.as_str()), "duplicate fixture case name");
-            tasks.push((routine, case, index));
+            tasks.push((index, case_index));
         }
     }
     if let Some(order) = &manifest.case_order {
         ensure!(order.len() == tasks.len(), "case order must include every unique case exactly once");
-        let original: BTreeMap<_, _> = tasks.into_iter().map(|task| (task.1.name.as_str(), task)).collect();
+        let original: BTreeMap<_, _> =
+            tasks.into_iter().map(|task| (manifest.routines[task.0].cases[task.1].name.as_str(), task)).collect();
         tasks = Vec::with_capacity(order.len());
         let mut seen = BTreeSet::new();
         for name in order {
@@ -532,7 +540,8 @@ pub(crate) fn ordered_tasks(manifest: &Manifest) -> Result<Vec<(&Routine, &Case,
         }
     }
     let mut seen = BTreeSet::new();
-    for (_, case, _) in &tasks {
+    for &(routine, case) in &tasks {
+        let case = &manifest.routines[routine].cases[case];
         if let Some(previous) = &case.continue_from {
             ensure!(seen.contains(previous.as_str()), "continuation must follow its verified predecessor");
         }
@@ -692,7 +701,7 @@ fn inventory_bounded(
 }
 
 pub fn verify(request: VerifyRequest) -> Result<Verdict> {
-    verify_with_declarations(request, &Arc::new(crate::declarations::Declarations::standard()), None, None)
+    verify_with_declarations(request, &Arc::new(crate::declarations::Declarations::standard()), None, None, None)
 }
 
 pub(crate) fn verify_with_declarations(
@@ -700,7 +709,9 @@ pub(crate) fn verify_with_declarations(
     declarations: &Arc<crate::declarations::Declarations>,
     captured: Option<Arc<crate::declarations::Declaration>>,
     captured_inputs: Option<&Arc<crate::input_view::InputView>>,
+    node: Option<crate::work_graph::FamilyNode<'_>>,
 ) -> Result<Verdict> {
+    use crate::work_graph::{FamilyNode, Phase};
     let checkout = fs::canonicalize(&request.checkout)?;
     let source = fs::canonicalize(&request.source)?;
     let output = request.output.clone();
@@ -732,6 +743,11 @@ pub(crate) fn verify_with_declarations(
         ..Default::default()
     };
     let result = (|| -> Result<()> {
+        if let Some(node) = node {
+            node.check_admission()?;
+            node.phase(Phase::Preparing);
+        }
+        let preparing_metadata = node.map(FamilyNode::metadata_permit);
         let preparing = metrics.context.stage("family-input-authentication")?;
         let manifest_path = source_path(&checkout, request.manifest.to_str().context("non-UTF8 manifest")?);
         let declaration = if let Some(captured) = captured {
@@ -745,6 +761,7 @@ pub(crate) fn verify_with_declarations(
         let mut manifest = (*declaration.manifest).clone();
         let recipe = crate::recipe::for_adapter(&request.adapter, &manifest)?;
         manifest = crate::recipe::normalize_manifest(&checkout, manifest, recipe.as_ref())?;
+        let manifest = Arc::new(manifest);
         verdict.family = manifest.family.clone();
         let view = if let Some(view) = captured_inputs {
             ensure!(view.checkout() == checkout && view.source() == source, "family captured source context differs");
@@ -782,9 +799,16 @@ pub(crate) fn verify_with_declarations(
             verdict.rom = Some(RomIdentity { sha256: rom.sha256.clone(), bytes: bytes.len() });
         }
         preparing.finish("success")?;
+        drop(preparing_metadata);
+        if let Some(node) = node {
+            node.check_admission()?;
+            node.phase(Phase::Building);
+        }
         verdict.implementation = Some(metrics::measure("family-builds", || {
-            view.validate_compiler_current()?;
-            view.validate_materialized()?;
+            FamilyNode::metadata(node, || {
+                view.validate_compiler_current()?;
+                view.validate_materialized()
+            })?;
             let result = view.enter(|| {
                 crate::recipe::build(
                     recipe.as_ref(),
@@ -796,8 +820,10 @@ pub(crate) fn verify_with_declarations(
                     None,
                 )
             });
-            view.validate_materialized()?;
-            view.validate_compiler_current()?;
+            FamilyNode::metadata(node, || {
+                view.validate_materialized()?;
+                view.validate_compiler_current()
+            })?;
             result
         })?);
         verdict.implementation.as_mut().unwrap().manifest =
@@ -808,27 +834,38 @@ pub(crate) fn verify_with_declarations(
         )?;
         crate::recipe::start_verdict(recipe.as_ref(), &manifest, &mut verdict);
         metrics::measure("fixture-execution-and-comparison", || {
-            let outcomes = crate::fixture_execution::run(
-                &tasks,
-                jobs,
-                &run,
-                &request.root,
-                request.workers,
-                fork,
-                |(routine, fixture, routine_index), worker| {
-                    view.enter(|| {
-                        crate::recipe::fixture(
-                            recipe.as_ref(),
-                            &manifest,
-                            routine,
-                            fixture,
-                            routine_index,
-                            &run,
-                            crate::recipe::FixtureExecution::Ordinary { worker },
-                        )
-                    })
-                },
-            )?;
+            let outcomes = if let Some(node) = node {
+                node.fixtures(crate::work_graph::Fixtures::new(
+                    manifest.clone(),
+                    recipe.clone(),
+                    view.clone(),
+                    run.clone(),
+                    jobs,
+                    fork,
+                )?)?
+            } else {
+                crate::fixture_execution::run(
+                    &tasks,
+                    jobs,
+                    &run,
+                    &request.root,
+                    request.workers,
+                    fork,
+                    |(routine, fixture, routine_index), worker| {
+                        view.enter(|| {
+                            crate::recipe::fixture(
+                                recipe.as_ref(),
+                                &manifest,
+                                routine,
+                                fixture,
+                                routine_index,
+                                &run,
+                                crate::recipe::FixtureExecution::Ordinary { worker },
+                            )
+                        })
+                    },
+                )?
+            };
             let mut errors = Vec::new();
             for (index, outcome) in outcomes {
                 match outcome {
@@ -845,11 +882,14 @@ pub(crate) fn verify_with_declarations(
             ensure!(errors.is_empty(), "{}", errors.join("; "));
             Ok(())
         })?;
-        view.validate_manifest_inputs(&manifest)?;
-        ensure!(
-            digest(&manifest_path)? == manifest_sha256 && digest(&run.join("manifest.smf"))? == manifest_sha256,
-            "family manifest changed during verification"
-        );
+        FamilyNode::metadata(node, || {
+            view.validate_manifest_inputs(&manifest)?;
+            ensure!(
+                digest(&manifest_path)? == manifest_sha256 && digest(&run.join("manifest.smf"))? == manifest_sha256,
+                "family manifest changed during verification"
+            );
+            Ok(())
+        })?;
         verdict.status = "offline-verified".into();
         verdict.verified_cases = tasks.len();
         verdict.verified_routines = manifest.routines.len();
@@ -859,13 +899,21 @@ pub(crate) fn verify_with_declarations(
     })();
     if let Err(error) = result {
         verdict.error = Some(format!("{error:#}"));
+        if let Some(node) = node {
+            node.stop(verdict.error.as_deref().unwrap());
+        }
+    }
+    if let Some(node) = node {
+        node.phase(Phase::Publishing);
     }
     let publication = metrics::measure("family-publication", || {
-        let mut artifacts = BTreeMap::new();
-        inventory(&run, &run, &mut artifacts)?;
-        metrics.context.configuration("artifact-files", artifacts.len());
-        verdict.artifacts = artifacts;
-        atomic_toml(&run.join("verdict.toml"), &verdict)
+        FamilyNode::metadata(node, || {
+            let mut artifacts = BTreeMap::new();
+            inventory(&run, &run, &mut artifacts)?;
+            metrics.context.configuration("artifact-files", artifacts.len());
+            verdict.artifacts = artifacts;
+            atomic_toml(&run.join("verdict.toml"), &verdict)
+        })
     });
     if let Err(error) = &publication {
         metrics.finish(crate::metrics::outcome(Some(&format!("{error:#}"))), Some(format!("{error:#}")))?;

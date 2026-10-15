@@ -330,6 +330,11 @@ impl InputView {
     pub fn source_identity(&self) -> &Source {
         &self.source_identity
     }
+    /// Ordered captured logical identities for advisory projections only.
+    /// This does not reopen files or replace current-input authentication.
+    pub(crate) fn identities(&self) -> impl Iterator<Item = (&Path, &str)> {
+        self.files.iter().map(|(path, file)| (path.as_path(), file.sha256.as_str()))
+    }
     pub(crate) fn build_context(&self) -> &tool_execution::builds::BuildContext {
         &self.builds
     }
