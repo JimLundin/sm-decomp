@@ -2,7 +2,8 @@
 
 Status: source implementation and provisional controls complete; merged by root.
 Final controller/test reader and isolated Installation await the combined source
-freeze. No production tool, policy, claim or authority has been changed.
+freeze. The integrated worker is retired. No production tool, policy, claim or
+authority has been changed.
 
 Owner `/root/shared_preparation`, session
 `01a13e7f-ab01-7413-a1c2-288b08a4b719`. Worktree
@@ -46,6 +47,25 @@ do not use stripped-plan timeouts as throughput evidence. No full-batch speedup
 can be inferred from utility startup alone.
 
 ## Completion evidence
+
+### Integration-owner retirement
+
+Root merged `a1f80f9`, completed both cleanup passes over the tool proof parent
+(zero further bytes, 324 snapshots checked), and removed the integrated tools
+worktree. Its allocation was 218,890,240 bytes before removal. Four exact probe
+sources were restored at their referenced paths without Git metadata or build
+output: 57,876 content bytes, 94,208 allocated bytes. The copied and restored
+source hashes and all retained tool hashes pass.
+
+All nine retained ordinary runs independently authenticated afterward using the
+copied optimized controller with `PATH=/unavailable`; every result remains
+`offline-verified`. No producer was relaunched. Exact cleanup, worktree measurements,
+source/tool checks, requests and readback outputs are under
+`/home/jim/sm-decomp-performance-tools-proof/retirement/`.
+The Cargo target was not removed because the integration owner transferred its
+exclusive writer temporarily to the GeneratedPlm bulk-capture correction.
+Future Installation preparation uses only the private candidate/proof directories;
+the former tools directory remains a four-file evidence snapshot.
 
 ### Provisional source checkpoints
 
