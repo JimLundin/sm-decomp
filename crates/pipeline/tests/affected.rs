@@ -189,6 +189,28 @@ fn shared_assets_are_read_once_but_each_requirement_is_checked() {
 }
 
 #[test]
+fn asset_paths_with_parent_aliases_cannot_prove_exclusion() {
+    let project = Project::new();
+    project.write("fixtures/input.bin", "declared");
+    project.write("other/input.bin", "outside");
+    fs::create_dir(project.0.join("other/child")).unwrap();
+    std::os::unix::fs::symlink("../other/child", project.0.join("fixtures/alias")).unwrap();
+    project.manifest(
+        "a",
+        "a",
+        &format!(
+            "rom={{file='fixtures/alias/../input.bin',sha256='{:x}'}}\n",
+            Sha256::digest(b"declared")
+        ),
+    );
+    project.commit();
+    project.write("docs/unrelated.md", "Only documentation changed.\n");
+    let report = project.plan();
+    assert_eq!(families(&report, "selected"), ["a"]);
+    assert_eq!(report["selected"][0]["reasons"][0]["code"].as_str(), Some("uncertain-inputs"));
+}
+
+#[test]
 fn comment_and_literal_names_do_not_select_unrelated_families() {
     let project = Project::new();
     project.write(
