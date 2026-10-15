@@ -18,7 +18,10 @@ fn main() -> Result<()> {
     let run = fs::canonicalize(run)?;
     let generated = run.join("oracle.c");
     if minimal {
-        fs::write(&generated, "#include <stdlib.h>\n#include \"sm_rtl.h\"\n#include \"funcs.h\"\nbool g_fail;\nextern void EprojPreInstr_CeresElevatorPad(uint16);\nint main(int argc, char **argv) { if (argc != 2) return 2; EprojPreInstr_CeresElevatorPad((uint16)strtoul(argv[1], 0, 0)); return 0; }\n")?;
+        fs::write(
+            &generated,
+            "#include <stdlib.h>\n#include \"sm_rtl.h\"\n#include \"funcs.h\"\nbool g_fail;\nextern void EprojPreInstr_CeresElevatorPad(uint16);\nint main(int argc, char **argv) { if (argc != 2) return 2; EprojPreInstr_CeresElevatorPad((uint16)strtoul(argv[1], 0, 0)); return 0; }\n",
+        )?;
     } else if full {
         let original = fs::read_to_string(&oracle)?;
         ensure!(original.matches("bool g_fail;").count() == 1, "retained oracle globals changed");
@@ -27,16 +30,32 @@ fn main() -> Result<()> {
         fs::copy(&oracle, &generated)?;
     }
     let mut command = [
-        "/usr/bin/x86_64-linux-gnu-gcc-9", "-O2", "-fno-strict-aliasing",
-        "-ffunction-sections", "-fdata-sections", "-iquote",
-    ].map(String::from).to_vec();
+        "/usr/bin/x86_64-linux-gnu-gcc-9",
+        "-O2",
+        "-fno-strict-aliasing",
+        "-ffunction-sections",
+        "-fdata-sections",
+        "-iquote",
+    ]
+    .map(String::from)
+    .to_vec();
     command.push(source.join("src").display().to_string());
     if full {
-        let mut units = fs::read_dir(source.join("src"))?.map(|entry| entry.map(|entry| entry.path())).collect::<std::io::Result<Vec<_>>>()?;
-        units.retain(|path| path.extension().is_some_and(|value| value == "c") && path.file_stem().is_some_and(|value| value.to_string_lossy().starts_with("sm_") || ["spc_player", "tracing", "util"].contains(&value.to_string_lossy().as_ref())));
+        let mut units = fs::read_dir(source.join("src"))?
+            .map(|entry| entry.map(|entry| entry.path()))
+            .collect::<std::io::Result<Vec<_>>>()?;
+        units.retain(|path| {
+            path.extension().is_some_and(|value| value == "c")
+                && path.file_stem().is_some_and(|value| {
+                    value.to_string_lossy().starts_with("sm_")
+                        || ["spc_player", "tracing", "util"].contains(&value.to_string_lossy().as_ref())
+                })
+        });
         for entry in fs::read_dir(source.join("src/snes"))? {
             let path = entry?.path();
-            if path.extension().is_some_and(|value| value == "c") { units.push(path); }
+            if path.extension().is_some_and(|value| value == "c") {
+                units.push(path);
+            }
         }
         units.sort();
         command.extend(units.iter().map(|path| path.display().to_string()));
@@ -53,8 +72,10 @@ fn main() -> Result<()> {
         }
     }
     command.extend([
-        generated.display().to_string(), "-Wl,--gc-sections".into(),
-        "-o".into(), run.join("c").display().to_string(),
+        generated.display().to_string(),
+        "-Wl,--gc-sections".into(),
+        "-o".into(),
+        run.join("c").display().to_string(),
     ]);
     let root = PathBuf::from(std::env::var_os("SM_PIPELINE_ROOT").context("shared pipeline root")?);
     let workers: usize = std::env::var("SM_PIPELINE_WORKERS")?.parse()?;

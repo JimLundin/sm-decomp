@@ -292,6 +292,18 @@ pub(crate) fn c_compiler_command(
         source.join("src").display().to_string(),
     ];
     match recipe {
+        Some(Recipe::CompleteC) => {
+            ensure!(!c_units.is_empty(), "complete C recipe has no dependency units");
+            command.extend(c_units.iter().map(|path| path.display().to_string()));
+            command.extend([run.join("oracle.c").display().to_string(), "-Wl,--gc-sections".into(), "-lm".into()]);
+            if fork {
+                command.extend([
+                    run.join("libfixture_worker.a").display().to_string(),
+                    "-ldl".into(),
+                    "-lpthread".into(),
+                ]);
+            }
+        }
         Some(Recipe::Callback | Recipe::PowerBomb | Recipe::GameHost) => {
             let mut units = c_units.to_vec();
             if matches!(recipe, Some(Recipe::PowerBomb | Recipe::GameHost)) {
@@ -419,17 +431,22 @@ mod tests {
         let run = fs::canonicalize(run)?;
         let relative = Path::new("tools/port/ceres-pad.smf");
         let declared = crate::fixture_format::read(&checkout.join(relative))?;
-        ensure!(declared.routines.iter().map(|routine| routine.cases.len()).sum::<usize>() == 1296,
-            "complete Ceres declaration changed");
+        ensure!(
+            declared.routines.iter().map(|routine| routine.cases.len()).sum::<usize>() == 1296,
+            "complete Ceres declaration changed"
+        );
         let recipe = crate::recipe::for_family(&checkout, relative, &declared)?;
         let manifest = crate::recipe::normalize_manifest(&checkout, declared, recipe.as_ref())?;
         let full_c = crate::recipe::full_c(recipe.as_ref());
         // One real Ceres call is enough to retain CallSomeSamusCode's entire
         // handler table. This is a link regression, not reduced fixture coverage.
-        fs::write(run.join("oracle.c"), format!(
-            "#include <stdlib.h>\n#include \"sm_rtl.h\"\n{}\nextern void EprojPreInstr_CeresElevatorPad(uint16);\nint main(int argc,char **argv){{if(argc!=2)return 2;EprojPreInstr_CeresElevatorPad((uint16)strtoul(argv[1],0,0));return 0;}}\n",
-            if full_c { "" } else { "bool g_fail;" },
-        ))?;
+        fs::write(
+            run.join("oracle.c"),
+            format!(
+                "#include <stdlib.h>\n#include \"sm_rtl.h\"\n{}\nextern void EprojPreInstr_CeresElevatorPad(uint16);\nint main(int argc,char **argv){{if(argc!=2)return 2;EprojPreInstr_CeresElevatorPad((uint16)strtoul(argv[1],0,0));return 0;}}\n",
+                if full_c { "" } else { "bool g_fail;" },
+            ),
+        )?;
         let units = if full_c { decomp_source::c_units(&source)? } else { Vec::new() };
         let mut description = c_compiler_command(recipe.as_ref(), &manifest, &source, &run, &units, false)?;
         description.command[0] = "/usr/bin/x86_64-linux-gnu-gcc-9".into();

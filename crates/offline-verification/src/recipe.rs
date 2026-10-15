@@ -23,6 +23,8 @@ pub(crate) use commands::{
 #[serde(tag = "kind", rename_all = "kebab-case", deny_unknown_fields)]
 pub(crate) enum Recipe {
     Dispatcher,
+    /// Plain family ABI with the complete pinned C dependency image.
+    CompleteC,
     Callback,
     PowerBomb,
     GameHost,
@@ -120,6 +122,10 @@ pub(crate) fn for_adapter(adapter: &str, manifest: &Manifest) -> Result<Option<R
         "power-bomb" => Some(Recipe::PowerBomb),
         "callback" => Some(Recipe::Callback),
         _ if manifest.uses_dispatcher() => Some(Recipe::Dispatcher),
+        _ if manifest.family == "ceres-pad" => {
+            plain(manifest)?;
+            Some(Recipe::CompleteC)
+        }
         _ => None,
     })
 }
@@ -154,10 +160,14 @@ fn recipe_for_entry(checkout: &Path, declared: &Manifest, entry: &catalog::Famil
                 Some(Recipe::Dispatcher)
             } else {
                 plain(declared)?;
+                if declared.family == "ceres-pad" {
+                    // CallSomeSamusCode retains its complete function-pointer
+                    // table, so sm_90.c alone is not a closed actual-C image.
+                    return Ok(Some(Recipe::CompleteC));
+                }
                 let additional: &[&str] = match declared.family.as_str() {
                     "animated-tile-frames" => &["sm_84.c", "sm_94.c", "sm_a0.c"],
                     "animated-tile-spawns" => &["sm_80.c", "sm_84.c", "sm_94.c", "sm_a0.c"],
-                    "ceres-pad" => &["sm_90.c"],
                     _ => &[],
                 };
                 if additional.is_empty() {
@@ -307,7 +317,7 @@ pub(crate) fn harness(recipe: Option<&Recipe>) -> Vec<&'static str> {
         ],
         _ => &[],
     });
-    if full_c(recipe) {
+    if full_c(recipe) && !matches!(recipe, Some(Recipe::CompleteC)) {
         paths.extend(["tools/decomp/headless.c", "tools/decomp/headless_frame.h"]);
     }
     paths
