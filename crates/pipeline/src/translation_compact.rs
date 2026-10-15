@@ -1,6 +1,7 @@
 //! Original compact causal diagnostic at the trusted supervisor boundary.
-use crate::{acquire_lease_until, builds, family, family_model::Asset, inputs::bounded};
+use crate::acquire_lease_until;
 use anyhow::{Context, Result, bail, ensure};
+use offline_verification::fixtures::Asset;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -11,6 +12,8 @@ use std::{
     process::{Command, Stdio},
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
+use tool_execution::bounded;
+use tool_execution::builds;
 use translation_execution::{
     OperationContext,
     budget::ByteBudget,
@@ -206,7 +209,7 @@ pub(crate) fn contract_for_original(
     rustc: &Path,
     historical: Vec<HistoricalCapture>,
 ) -> Result<CompactContract> {
-    let source = family::verify_source(checkout, &assets.join("deps/snesrev-sm"))?;
+    let source = decomp_source::verify_source(checkout, &assets.join("deps/snesrev-sm"))?;
     let mut private_inputs = BTreeMap::new();
     for (name, path) in [
         ("rom.sfc", assets.join("rom/sm.sfc")),
@@ -241,7 +244,7 @@ pub(crate) fn contract_for_original(
             private_inputs.insert(format!("c/{name}"), reference);
         }
     }
-    let mut runtime = builds::strict_compiler_runtime(rustc)?;
+    let mut runtime = ::translation_execution::compiler_runtime::discover(rustc)?;
     runtime.retain(|bind| !bind.destination.starts_with("/toolchain"));
     // Exact dynamic closure of the retained lsnes binary on the supported host.
     // The producer receives individual libraries, never host /usr or HOME.
@@ -312,7 +315,7 @@ pub(crate) fn contract_for_original(
         .map(|name| Ok((name.into(), retention::seal_file(&checkout.join(name), MAX_RECORD)?.sha256)))
         .collect::<Result<_>>()?;
     let c_root = assets.join("deps/snesrev-sm");
-    let c_units = family::c_units(&c_root)?
+    let c_units = decomp_source::c_units(&c_root)?
         .into_iter()
         .map(|path| Ok(format!("c/{}", path.strip_prefix(&c_root)?.display())))
         .collect::<Result<_>>()?;
@@ -381,7 +384,7 @@ fn prepare_reference(reference: &Reference, authenticated: &mut BTreeMap<PathBuf
 }
 
 pub(crate) fn prepare(checkout: &Path, contract: &CompactContract) -> Result<PreparedCompact> {
-    bounded::limited(|| prepare_inner(checkout, contract))
+    decomp_source::context::limited(|| prepare_inner(checkout, contract))
 }
 
 pub(crate) fn prepare_until(
@@ -390,7 +393,7 @@ pub(crate) fn prepare_until(
     deadline: u64,
     bytes: u64,
 ) -> Result<PreparedCompact> {
-    bounded::until(deadline, bytes, || prepare_inner(checkout, contract))
+    decomp_source::context::until(deadline, bytes, || prepare_inner(checkout, contract))
 }
 
 fn prepare_inner(checkout: &Path, contract: &CompactContract) -> Result<PreparedCompact> {
@@ -448,7 +451,7 @@ fn prepare_inner(checkout: &Path, contract: &CompactContract) -> Result<Prepared
         "original compact private archive, movie or native executable differs"
     );
     let c_root = contract.private_inputs["c/LICENSE.txt"].path.parent().context("compact C root missing")?;
-    let source = family::verify_source(checkout, c_root)?;
+    let source = decomp_source::verify_source(checkout, c_root)?;
     ensure!(
         source.revision == C_REVISION && source.archive_sha256 == C_ARCHIVE_SHA256,
         "compact original pinned C revision differs"
@@ -471,7 +474,7 @@ fn prepare_inner(checkout: &Path, contract: &CompactContract) -> Result<Prepared
             "compact original private C dependency differs: {name}"
         );
     }
-    let units = family::c_units(c_root)?
+    let units = decomp_source::c_units(c_root)?
         .iter()
         .map(|path| Ok(format!("c/{}", path.strip_prefix(c_root)?.display())))
         .collect::<Result<Vec<_>>>()?;
@@ -1432,7 +1435,7 @@ pub(crate) fn run(
     if receipt_path.is_file() || verdict_path.is_file() {
         // Finalization authenticates the stored production interval even after
         // it has expired. This branch cannot set up or launch another producer.
-        return bounded::reconcile(MAX_HISTORY, || {
+        return decomp_source::context::reconcile(MAX_HISTORY, || {
             if receipt_path.is_file() {
                 let receipt: CompactReceipt = toml::from_str(&String::from_utf8(read(&receipt_path, MAX_RECORD)?)?)?;
                 let verdict = authenticate(prepared, checkout, &receipt)?;
@@ -1686,7 +1689,7 @@ fn candidate_identity_unchanged(prepared: &PreparedCompact, checkout: &Path, exp
 /// The exact full/compact lineage named by the original owner bridge. Legacy
 /// driver.py is retained evidence only; this adapter never starts Python.
 pub(crate) fn historical_for_original(root: &Path) -> Result<Vec<HistoricalCapture>> {
-    let source = family::verify_source(root, &root.join("deps/snesrev-sm"))?;
+    let source = decomp_source::verify_source(root, &root.join("deps/snesrev-sm"))?;
     let pins: toml::Value =
         toml::from_str(&String::from_utf8(read(&root.join("tools/dependencies.toml"), MAX_RECORD)?)?)?;
     let pin = pins["dependencies"]

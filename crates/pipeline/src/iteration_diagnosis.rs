@@ -1,8 +1,10 @@
+use crate::digest;
+use crate::lock;
+use crate::readiness_contract as contract;
 use crate::readiness_metadata::toml_value_decode;
-use crate::{
-    digest, family, lock, readiness_contract as contract, readiness_origins as origins,
-    readiness_run::{Run, safe_artifact},
-};
+use crate::readiness_origins as origins;
+use crate::readiness_run::Run;
+use crate::readiness_run::safe_artifact;
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -279,9 +281,9 @@ fn terminal(owner: &Path) -> Result<(Value, Value, Value)> {
     origins::owned(owner, &manifest)?;
     for (name, report) in verdict["checks"].as_table().context("terminal checks missing")? {
         let entry = &manifest["check_evidence"][name];
-        let relative = family::field(entry, "path")?;
+        let relative = crate::documents::field(entry, "path")?;
         let path = safe_artifact(owner, relative)?;
-        let expected = family::field(entry, "sha256")?;
+        let expected = crate::documents::field(entry, "sha256")?;
         ensure!(
             digest(&path)? == expected && origins::document(&path)? == *report,
             "terminal check differs from sealed evidence: {name}"
@@ -379,7 +381,7 @@ fn summarize(verdict: &Value) -> Result<Failure> {
     });
     let report = selected.map(|name| &checks[*name]).unwrap_or(verdict);
     let stage = selected.copied().unwrap_or(verdict.get("stage").and_then(Value::as_str).unwrap_or("validation"));
-    let status = family::field(report, "status")?;
+    let status = crate::documents::field(report, "status")?;
     let controls = checks
         .get("failure-controls")
         .and_then(|report| report.get("controls"))
@@ -451,7 +453,7 @@ fn execution(descriptor: &Descriptor) -> Result<(Value, Value, PathBuf)> {
         process["complete"] == crate::readiness_metadata::value(&true).expect("validated native metadata")
             && process.get("signal").is_none()
             && process["returncode"].as_integer().is_some_and(|code| [0, 1].contains(&code))
-            && family::array(&manifest, "commands")?.contains(&process),
+            && crate::documents::array(&manifest, "commands")?.contains(&process),
         "observation execution did not complete with preserved provenance"
     );
     let name = Path::new(&descriptor.process)
@@ -462,7 +464,7 @@ fn execution(descriptor: &Descriptor) -> Result<(Value, Value, PathBuf)> {
     origins::process(&owner, name, &manifest, None, &[0, 1])?;
     let binary = owned_hash(&owner, &descriptor.executable, &descriptor.executable_sha256, &manifest)?;
     ensure!(binary.metadata()?.permissions().mode() & 0o111 != 0, "observation executable is not executable");
-    let command = family::array(&process, "command")?;
+    let command = crate::documents::array(&process, "command")?;
     ensure!(
         command.first().and_then(Value::as_str).is_some_and(|path| Path::new(path) == binary),
         "observation is not bound to executed preserved binary"
@@ -495,7 +497,7 @@ pub fn verify_observation(descriptor: &Descriptor) -> Result<Observation> {
             crate :: report ! ({ "mismatch" : mismatch , })
         }
         ObservationKind::Controls => {
-            let controls = family::array(&actual, "controls")?;
+            let controls = crate::documents::array(&actual, "controls")?;
             ensure!(
                 !controls.is_empty() && controls.iter().any(|row| reproduced(&row["candidate"])),
                 "passing controls do not reproduce a failure"
@@ -553,7 +555,7 @@ pub fn verify_observation(descriptor: &Descriptor) -> Result<Observation> {
             );
             let mut executed = Vec::new();
             let mut keys = BTreeSet::new();
-            for row in family::array(&actual, "executed")? {
+            for row in crate::documents::array(&actual, "executed")? {
                 let address = row["address"]
                     .as_integer()
                     .and_then(|n| u64::try_from(n).ok())
@@ -580,7 +582,7 @@ pub fn verify_observation(descriptor: &Descriptor) -> Result<Observation> {
                     && actual["observations"].as_array().is_some_and(|values| !values.is_empty()),
                 "independent hardware observation provenance/effects missing"
             );
-            let capture = safe_artifact(&owner, family::field(&actual, "capture")?)?;
+            let capture = safe_artifact(&owner, crate::documents::field(&actual, "capture")?)?;
             let frames = actual["completed_frames"]
                 .as_integer()
                 .and_then(|n| u64::try_from(n).ok())
@@ -889,7 +891,7 @@ pub fn operate(request: Request) -> Result<History> {
         run.capture_source()?;
         run.manifest.session_id = Some(session.into());
         run.manifest.increment_id = Some(request.increment_id.clone());
-        run.manifest.candidate_run_id = Some(family::field(&manifest, "run_id")?.into());
+        run.manifest.candidate_run_id = Some(crate::documents::field(&manifest, "run_id")?.into());
         run.save()?;
         run.record_artifact(
             "failed-candidate-verdict",
@@ -898,9 +900,11 @@ pub fn operate(request: Request) -> Result<History> {
         )?;
         let current = origins::document(&run.path.join("source/inventory.toml"))?;
         let map = |inventory: &Value| -> Result<BTreeMap<String, String>> {
-            family::array(inventory, "files")?
+            crate::documents::array(inventory, "files")?
                 .iter()
-                .map(|row| Ok((family::field(row, "path")?.into(), family::field(row, "sha256")?.into())))
+                .map(|row| {
+                    Ok((crate::documents::field(row, "path")?.into(), crate::documents::field(row, "sha256")?.into()))
+                })
                 .collect()
         };
         let before = map(&inventory)?;
@@ -921,8 +925,8 @@ pub fn operate(request: Request) -> Result<History> {
         pipeline_model::write(
             &path,
             &SourceDiff {
-                candidate_source_sha256: family::field(&manifest["identities"]["source"], "sha256")?.into(),
-                current_source_sha256: family::field(&run.manifest.identities["source"], "sha256")?.into(),
+                candidate_source_sha256: crate::documents::field(&manifest["identities"]["source"], "sha256")?.into(),
+                current_source_sha256: crate::documents::field(&run.manifest.identities["source"], "sha256")?.into(),
                 changed,
             },
         )?;
@@ -947,12 +951,12 @@ pub fn operate(request: Request) -> Result<History> {
             increment_id: request.increment_id.clone(),
             sequence,
             previous_sha256: previous.clone(),
-            candidate_run_id: family::field(&manifest, "run_id")?.into(),
+            candidate_run_id: crate::documents::field(&manifest, "run_id")?.into(),
             candidate_path: candidate.clone(),
             candidate_manifest_sha256: digest(&candidate.join("manifest.toml"))?,
             candidate_verdict_sha256: digest(&candidate.join("verdict.toml"))?,
-            candidate_source_sha256: family::field(&manifest["identities"]["source"], "sha256")?.into(),
-            experiment_source_sha256: family::field(&run.manifest.identities["source"], "sha256")?.into(),
+            candidate_source_sha256: crate::documents::field(&manifest["identities"]["source"], "sha256")?.into(),
+            experiment_source_sha256: crate::documents::field(&run.manifest.identities["source"], "sha256")?.into(),
             accepted_parent: parent,
             hypothesis: hypothesis.into(),
             predicted_discriminator: discriminator.into(),

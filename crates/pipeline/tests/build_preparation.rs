@@ -233,11 +233,11 @@ fn helper_run(request: &HelperRequest) -> HelperResult {
     toml::from_str(std::str::from_utf8(&output.stdout).unwrap()).unwrap()
 }
 fn helper_checkout(checkout: &Path, nonce: &str) {
-    fs::create_dir_all(checkout.join("crates/pipeline/src")).unwrap();
+    fs::create_dir_all(checkout.join("crates/offline-verification/src")).unwrap();
     fs::create_dir_all(checkout.join("tools/decomp")).unwrap();
     fs::write(
-        checkout.join("crates/pipeline/src/fixture_worker.rs"),
-        format!("{}\n// {nonce}\n", include_str!("../src/fixture_worker.rs")),
+        checkout.join("crates/offline-verification/src/fixture_worker.rs"),
+        format!("{}\n// {nonce}\n", include_str!("../../offline-verification/src/fixture_worker.rs")),
     )
     .unwrap();
     fs::write(

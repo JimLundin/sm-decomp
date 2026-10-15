@@ -1,8 +1,11 @@
 //! Complete native binary case execution with pinned external JSON corpus input.
-use crate::{
-    atomic_toml, digest, family, pattern_contract as contract,
-    readiness_run::{Run, identity, safe_artifact, source_inventory},
-};
+use crate::atomic_toml;
+use crate::digest;
+use crate::pattern_contract as contract;
+use crate::readiness_run::Run;
+use crate::readiness_run::identity;
+use crate::readiness_run::safe_artifact;
+use crate::readiness_run::source_inventory;
 use anyhow::{Context, Result, ensure};
 use pipeline_model::{
     readiness::{ProcessRecord, SourceFile},
@@ -213,7 +216,7 @@ fn pinned(run: &mut Run, corpus: &Path, pin: &Dependency, opcodes: &[String]) ->
             Duration::from_secs(120),
             &BTreeMap::new(),
         )?;
-        ensure!(family::field(&process, "status")? == "pass", "pinned corpus extraction failed");
+        ensure!(crate::documents::field(&process, "status")? == "pass", "pinned corpus extraction failed");
         for (opcode, member) in opcodes.iter().zip(members) {
             ensure!(
                 digest(&safe_artifact(&extracted, &member)?)? == run.guard(&corpus.join(format!("{opcode}.n.json")))?,
@@ -306,8 +309,8 @@ pub(crate) fn produce(run: &mut Run, output: &Path, request: &Value, report: &mu
         Duration::from_secs(30),
         &BTreeMap::new(),
     )?;
-    ensure!(family::field(&process, "status")? == "pass", "compiler identity failed");
-    native.compiler = fs::read_to_string(run.path.join(family::field(&process, "stdout")?))?;
+    ensure!(crate::documents::field(&process, "status")? == "pass", "compiler identity failed");
+    native.compiler = fs::read_to_string(run.path.join(crate::documents::field(&process, "stdout")?))?;
     run.manifest.identities.insert("compiler".into(), Value::Table(toml::toml! {version=(native.compiler.trim())}));
     run.save()?;
     native.corpus_archive_sha256 = pinned(run, &corpus_path, &native.pinned_dependency, &opcodes)?;
@@ -341,7 +344,7 @@ pub(crate) fn produce(run: &mut Run, output: &Path, request: &Value, report: &mu
             ensure!(
                 case.initial.e == 0
                     && case.fin.e == 0
-                    && family::array(&patterns[opcode], "mx")?.contains(&Value::Integer(i64::from(mx))),
+                    && crate::documents::array(&patterns[opcode], "mx")?.contains(&Value::Integer(i64::from(mx))),
                 "unsupported corpus width/mode"
             );
             cases.push(prepare_case(case, opcode, &patterns[opcode])?);
@@ -399,7 +402,7 @@ pub(crate) fn produce(run: &mut Run, output: &Path, request: &Value, report: &mu
         Duration::from_secs(240),
         &BTreeMap::new(),
     )?;
-    ensure!(family::field(&process, "status")? == "pass", "pattern generator build failed");
+    ensure!(crate::documents::field(&process, "status")? == "pass", "pattern generator build failed");
     let generator = output.join("timed-gen");
     fs::copy(target.join("debug/timed-gen"), &generator)?;
     native.generator = Some(Generator { path: "timed-gen".into(), sha256: digest(&generator)? });
@@ -435,7 +438,7 @@ pub(crate) fn produce(run: &mut Run, output: &Path, request: &Value, report: &mu
                 &BTreeMap::new(),
             )?;
             atomic_toml(&batch.join(format!("{kind}.toml")), &process)?;
-            ensure!(family::field(&process, "status")? == "pass", "pattern {kind} failed");
+            ensure!(crate::documents::field(&process, "status")? == "pass", "pattern {kind} failed");
         }
         let binary = batch.join("timed-run");
         fs::copy(target.join("debug/timed-run"), &binary)?;
@@ -579,7 +582,7 @@ pub fn operate(request: Value) -> Result<Value> {
         "pattern-output".into(),
         crate::report!({"path":output,"instruction_sha256":digest(&output.join("instruction.toml"))?}),
     );
-    let status = family::field(&report, "status")?.to_owned();
+    let status = crate::documents::field(&report, "status")?.to_owned();
     run.finalize(
         &status,
         Some("patterns"),
@@ -626,7 +629,7 @@ fn authenticate_process(
     Ok(process)
 }
 pub fn authenticate(request: Value) -> Result<Value> {
-    let output = fs::canonicalize(family::field(&request, "output")?)?;
+    let output = fs::canonicalize(crate::documents::field(&request, "output")?)?;
     let report: PatternReport = pipeline_model::read(&output.join("instruction.toml"))?;
     ensure!(report.schema_version == 3, "unsupported native pattern version");
     let owner = fs::canonicalize(

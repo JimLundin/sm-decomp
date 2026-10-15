@@ -201,3 +201,19 @@ fn new_untracked_manifest_is_discovered_without_selecting_existing_families() {
     assert_eq!(families(&report, "excluded"), ["a", "b"]);
     assert!(!project.0.join("out").exists());
 }
+
+#[test]
+fn verification_owner_changes_keep_every_family_affected() {
+    for path in [
+        "crates/pipeline/src/main.rs",
+        "crates/offline-verification/src/lib.rs",
+        "crates/tool-execution/src/lib.rs",
+        "crates/decomp-source/src/lib.rs",
+    ] {
+        let project = Project::new();
+        project.write(path, "// changed verification input\n");
+        let report = project.plan();
+        assert_eq!(families(&report, "selected"), ["a", "b"], "{path}");
+        assert!(families(&report, "excluded").is_empty(), "{path}");
+    }
+}

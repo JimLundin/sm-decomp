@@ -1,4 +1,4 @@
-use crate::{family, pattern_contract};
+use crate::pattern_contract;
 use anyhow::{Result, ensure};
 use std::collections::BTreeSet;
 use toml::Value;
@@ -86,18 +86,18 @@ pub fn validate(name: &str, report: &Value) -> Result<()> {
         );
     }
     if name == "changed-entry-coverage" {
-        let executed = family::array(report, "executed")?;
+        let executed = crate::documents::array(report, "executed")?;
         ensure!(
             report["generated_instructions"].as_integer().and_then(|n| u64::try_from(n).ok()).is_some_and(|n| n > 0)
                 && report["uncovered_keys"] == crate::report!(vec![])
                 && !executed.is_empty()
                 && report["validated_distinct_keys"]
                     == crate::readiness_metadata::value(&executed.len()).expect("validated native metadata")
-                && !family::field(report, "candidate_inventory_sha256")?.is_empty()
-                && !family::field(report, "profile_sha256")?.is_empty(),
+                && !crate::documents::field(report, "candidate_inventory_sha256")?.is_empty()
+                && !crate::documents::field(report, "profile_sha256")?.is_empty(),
             "changed-entry actual execution evidence incomplete"
         );
-        for key in family::array(report, "required_keys")? {
+        for key in crate::documents::array(report, "required_keys")? {
             ensure!(
                 executed.iter().any(|row| row["address"] == key["address"]
                     && row["mx"] == key["mx"]
@@ -119,8 +119,8 @@ pub fn validate(name: &str, report: &Value) -> Result<()> {
                 detail["observed_rollovers"]
                     == crate::readiness_metadata::value(&2).expect("validated native metadata")
                     && detail["instructions"].as_integer().and_then(|n| u64::try_from(n).ok()).is_some_and(|n| n > 0)
-                    && !family::field(detail, "ordered_trace_sha256")?.is_empty()
-                    && !family::field(detail, "ending_sha256")?.is_empty(),
+                    && !crate::documents::field(detail, "ordered_trace_sha256")?.is_empty()
+                    && !crate::documents::field(detail, "ending_sha256")?.is_empty(),
                 "checkpoint complete cold side validation missing"
             );
         }

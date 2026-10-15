@@ -1,11 +1,12 @@
 //! Install a new model-backed ordered launch from exact approved scope templates.
 //! Source baselines, original claim lineage and verification contracts are copied
 //! unchanged. Production migration remains subject to its managed admission.
-use crate::{
-    inputs,
-    translation_execution::{self as execution, Admission, Installation, InstalledFile},
-    translation_launch::{Plan, Scope},
-};
+use crate::translation_execution as execution;
+use crate::translation_execution::Admission;
+use crate::translation_execution::Installation;
+use crate::translation_execution::InstalledFile;
+use crate::translation_launch::Plan;
+use crate::translation_launch::Scope;
 use ::translation_execution::{
     model::{digest_valid, sealed},
     model_rewrite::Provider,
@@ -73,17 +74,17 @@ fn name(value: &str) -> bool {
 }
 fn read<T: for<'a> Deserialize<'a>>(path: &Path) -> Result<T> {
     ensure!(path.is_absolute(), "launch request path must be absolute");
-    serde_json::from_slice(&inputs::bounded::read(path)?).context("invalid launch preparation JSON")
+    serde_json::from_slice(&tool_execution::bounded::read(path)?).context("invalid launch preparation JSON")
 }
 fn write<T: Serialize>(path: &Path, value: &T) -> Result<()> {
     let bytes = serde_json::to_vec(value)?;
     ensure!(bytes.len() as u64 <= MAX_RECORD, "launch preparation metadata exceeds bound");
-    inputs::bounded::safe(path)?;
+    tool_execution::bounded::safe(path)?;
     fs::create_dir_all(path.parent().context("launch preparation record parent missing")?)?;
-    inputs::immutable_bytes(path, &bytes)
+    tool_execution::bounded::immutable_bytes(path, &bytes)
 }
 fn protect(path: &Path) -> Result<()> {
-    inputs::bounded::safe(path)?;
+    tool_execution::bounded::safe(path)?;
     let meta = path.symlink_metadata()?;
     ensure!(
         meta.uid() == unsafe { libc::geteuid() } && meta.mode() & 0o022 == 0,
@@ -92,11 +93,11 @@ fn protect(path: &Path) -> Result<()> {
     Ok(())
 }
 fn lock(root: &Path) -> Result<File> {
-    inputs::bounded::safe(root)?;
+    tool_execution::bounded::safe(root)?;
     fs::create_dir_all(root)?;
     protect(root)?;
     let path = root.join("preparation.lock");
-    inputs::bounded::safe(&path)?;
+    tool_execution::bounded::safe(&path)?;
     let file = OpenOptions::new()
         .create(true)
         .append(true)
@@ -115,7 +116,7 @@ fn install(reference: &Reference, path: &Path) -> Result<Reference> {
     retention::authenticate_reference(reference, MAX_TOOL)?;
     let source = reference.path.symlink_metadata()?;
     ensure!(source.is_file() && source.mode() & 0o111 != 0, "installed launcher tool is not executable");
-    inputs::bounded::safe(path)?;
+    tool_execution::bounded::safe(path)?;
     if path.try_exists()? {
         protect(path)?;
         let saved = retention::seal_file(path, MAX_TOOL)?;
@@ -127,7 +128,7 @@ fn install(reference: &Reference, path: &Path) -> Result<Reference> {
     protect(parent)?;
     let pending = path.with_extension("pending");
     if pending.try_exists()? {
-        inputs::bounded::safe(&pending)?;
+        tool_execution::bounded::safe(&pending)?;
         ensure!(
             pending.symlink_metadata()?.is_file()
                 && pending.metadata()?.nlink() == 1
@@ -146,7 +147,7 @@ fn install(reference: &Reference, path: &Path) -> Result<Reference> {
     let mut buffer = [0u8; 64 * 1024];
     let mut total = 0u64;
     loop {
-        inputs::bounded::check()?;
+        tool_execution::bounded::check()?;
         let count = input.read(&mut buffer)?;
         if count == 0 {
             break;
@@ -250,8 +251,8 @@ fn configure(
 }
 
 pub(crate) fn prepare(request_path: &Path, read_only: bool) -> Result<Reference> {
-    let entered = inputs::bounded::now_unix_ms()?;
-    inputs::bounded::until(entered + 120_000, 4 * inputs::bounded::DEFAULT_BYTES, || {
+    let entered = tool_execution::bounded::now_unix_ms()?;
+    decomp_source::context::until(entered + 120_000, 4 * tool_execution::bounded::DEFAULT_BYTES, || {
         prepare_bounded(request_path, read_only)
     })
 }
@@ -265,7 +266,7 @@ fn prepare_bounded(request_path: &Path, read_only: bool) -> Result<Reference> {
             && request.scopes.len() <= 32,
         "unsupported launch installation request"
     );
-    inputs::bounded::safe(&request.output_root)?;
+    tool_execution::bounded::safe(&request.output_root)?;
     ensure!(
         request.output_root.is_absolute() && !request_path.starts_with(&request.output_root),
         "launch installation overlaps original request"

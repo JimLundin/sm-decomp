@@ -2,7 +2,7 @@ use super::*;
 use ::translation_execution::model::sha256;
 
 struct Fixture {
-    directory: bounded::tests::Directory,
+    directory: tool_execution::testing::Directory,
     request: Request,
     reference: Reference,
     registry: Registry,
@@ -10,7 +10,7 @@ struct Fixture {
 
 impl Fixture {
     fn new() -> Result<Self> {
-        let directory = bounded::tests::Directory::new()?;
+        let directory = tool_execution::testing::Directory::new()?;
         let root = &directory.0;
         let authority = write(&root.join(AUTHORITY), &serde_json::json!({"original": "authority"}))?;
         let proof = write(&root.join("package/proof.json"), &serde_json::json!({"proof": "retained"}))?;

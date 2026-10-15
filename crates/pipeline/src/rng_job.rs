@@ -1,5 +1,8 @@
 //! One evidence-bound RNG translation job with actual C exhaustive and live oracles.
-use crate::{atomic_toml, builds, decomp_acceptance, digest, family, routine_live};
+use crate::atomic_toml;
+use crate::decomp_acceptance;
+use crate::digest;
+use crate::routine_live;
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -9,6 +12,7 @@ use std::{
     path::{Path, PathBuf},
     time::{SystemTime, UNIX_EPOCH},
 };
+use tool_execution::builds;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct Request {
@@ -78,7 +82,7 @@ pub struct Verdict {
     pub run: PathBuf,
     pub original_rom_parity: String,
     pub predecessor: Option<Predecessor>,
-    pub source: Option<crate::family_model::Source>,
+    pub source: Option<decomp_source::Source>,
     pub implementation: BTreeMap<String, String>,
     pub synthetic: Option<Synthetic>,
     pub captures: Vec<Capture>,
@@ -208,7 +212,7 @@ pub fn authenticate(request: AuthenticateRequest) -> Result<Verdict> {
         pointer: predecessor.pointer.clone(),
     })?;
     ensure!(digest(&predecessor.pointer)? == predecessor.sha256, "RNG predecessor changed");
-    let source = family::verify_source(&checkout, &checkout.join("deps/snesrev-sm"))?;
+    let source = decomp_source::verify_source(&checkout, &checkout.join("deps/snesrev-sm"))?;
     ensure!(verdict.source.as_ref() == Some(&source), "RNG source identity changed");
     let required = [
         "tools/decomp/next-random-job.toml",
@@ -329,7 +333,7 @@ fn run(request: &Request) -> Result<Report> {
         let predecessor = digest(accepted)?;
         verdict.predecessor = Some(Predecessor { pointer: accepted.clone(), sha256: predecessor.clone() });
         let source = checkout.join("deps/snesrev-sm");
-        let identity = family::verify_source(&checkout, &source)?;
+        let identity = decomp_source::verify_source(&checkout, &source)?;
         let job = checkout.join("tools/decomp/next-random-job.toml");
         let manifest: Job = toml::from_str(&fs::read_to_string(&job)?)?;
         ensure!(
@@ -519,7 +523,7 @@ fn run(request: &Request) -> Result<Report> {
         })?;
         ensure!(digest(accepted)? == predecessor, "RNG predecessor changed");
         ensure!(
-            family::verify_source(&checkout, &source)? == identity,
+            decomp_source::verify_source(&checkout, &source)? == identity,
             "RNG upstream source changed during verification"
         );
         for (name, hash) in implementation {

@@ -1,21 +1,42 @@
 //! Authenticated live observer generation and four independent packed subjects.
-use crate::{atomic_toml, builds, callback, digest, family, inputs, observations, packed};
-use crate::{
-    family_model::{AuthenticateRequest, Manifest},
-    live_model::*,
-};
+use crate::atomic_toml;
+use crate::digest;
+use crate::live_model::*;
+use crate::observations;
+use crate::packed;
 use anyhow::{Context, Result, ensure};
+use offline_verification::AuthenticateRequest;
+use offline_verification::fixtures::Manifest;
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
     path::{Path, PathBuf},
     time::{Instant, SystemTime, UNIX_EPOCH},
 };
+use tool_execution::builds;
 const SUBJECTS: [&str; 4] = ["c-0", "c-1", "mixed-0", "mixed-1"];
 const PROJECTILE_ENTRIES: [&str; 3] = ["SpawnEprojWithRoomGfx", "EprojRunAll", "SpawnEprojWithGfx"];
 const PROJECTILE_IDS: [u16; 9] = [0x9642, 0x9650, 0x965e, 0x966c, 0x967a, 0x9688, 0x9696, 0xa387, 0xa395];
 const ROM_SHA256: &str = "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72";
 const RIDLEY_OPCODES: [u32; 8] = [0xa6e517, 0xa6e4d2, 0xa6e4be, 0xa6e4ca, 0xa6e84d, 0xa6e904, 0xa6e909, 0xa6812f];
+
+fn identifier(symbol: &str) -> bool {
+    let mut chars = symbol.chars();
+    chars.next().is_some_and(|c| c.is_ascii_alphabetic() || c == '_')
+        && chars.all(|c| c.is_ascii_alphanumeric() || c == '_')
+}
+
+fn c_type(kind: &str) -> Result<&str> {
+    Ok(match kind {
+        "void" => "void",
+        "uint8" => "uint8_t",
+        "uint16" => "uint16_t",
+        "uint32" => "uint32_t",
+        "int32" => "int32_t",
+        "rom_ptr" => "const uint16_t *",
+        _ => anyhow::bail!("invalid routine type"),
+    })
+}
 
 fn bounded_module(module: &Path, checkout: &Path) -> Option<&'static str> {
     ["projectile_trails", "camera_scroll", "room_scroll", "samus_projectile_frame", "ridley_enemy_instructions"]
@@ -43,7 +64,7 @@ fn bounded_contract(manifest: &Manifest, module: &str) -> Result<()> {
             continue;
         }
         ensure!(
-            family::types(routine)?.is_empty() && routine.returns == "void",
+            routine.argument_types()?.is_empty() && routine.returns == "void",
             "bounded frame native signature differs"
         );
         ensure!(routine.live_eligible != Some(false), "bounded native frame marked offline-only");
@@ -67,7 +88,7 @@ fn bounded_contract(manifest: &Manifest, module: &str) -> Result<()> {
 // Match only a complete definition at the beginning of a source line. This
 // preserves call sites and prototypes, including bank-local helper declarations.
 fn definition(text: &str, symbol: &str) -> Result<std::ops::Range<usize>> {
-    ensure!(family::identifier(symbol), "invalid live symbol");
+    ensure!(identifier(symbol), "invalid live symbol");
     let mut found = Vec::new();
     let mut offset = 0;
     for line in text.split_inclusive('\n') {
@@ -135,7 +156,7 @@ fn dispatcher_contract(manifest: &mut Manifest, module: &Path, checkout: &Path) 
         };
         let args =
             if kind == "rom_ptr" { vec!["uint16".to_owned(), "rom_ptr".to_owned()] } else { vec!["uint16".to_owned()] };
-        ensure!(family::types(routine)? == args && routine.returns == kind, "dispatcher leaf signature differs");
+        ensure!(routine.argument_types()? == args && routine.returns == kind, "dispatcher leaf signature differs");
         if kind == "rom_ptr" {
             ensure!(routine.pointer_bank == Some(0x86), "dispatcher leaf pointer bank differs");
         }
@@ -174,7 +195,7 @@ fn projectile_contract(manifest: &Manifest, module: &Path, checkout: &Path) -> R
             _ => anyhow::bail!("unsupported native projectile entry"),
         };
         ensure!(
-            entries.insert(routine.symbol.as_str()) && family::types(routine)? == args && routine.returns == "void",
+            entries.insert(routine.symbol.as_str()) && routine.argument_types()? == args && routine.returns == "void",
             "projectile native signature differs"
         );
         ensure!(
@@ -197,7 +218,8 @@ pub fn generate(request: Request) -> Result<Generated> {
     let checkout = fs::canonicalize(&request.checkout)?;
     let run = fs::canonicalize(&request.run)?;
     let source = checkout.join("deps/snesrev-sm");
-    let source_identity = family::verify_source(&checkout, &source)?;
+    let source_identity = decomp_source::verify_source(&checkout, &source)?;
+    let verifier = crate::offline::families()?;
     let mut families = Vec::new();
     let mut predecessors = Vec::new();
     for (values, kind) in [
@@ -206,15 +228,12 @@ pub fn generate(request: Request) -> Result<Generated> {
         (&request.callback_verdicts, "callback"),
     ] {
         for verdict_path in values {
-            let evidence = family::authenticate(AuthenticateRequest {
-                checkout: checkout.clone(),
-                verdict: verdict_path.clone(),
-            })?;
+            let admitted = verifier
+                .authenticate(AuthenticateRequest { checkout: checkout.clone(), verdict: verdict_path.clone() })?;
+            let evidence = admitted.report();
             ensure!(evidence.source.as_ref() == Some(&source_identity), "family source identity differs");
-            let mut manifest: Manifest = crate::fixture_format::read(
-                &verdict_path.parent().context("predecessor parent missing")?.join("manifest.smf"),
-            )?;
-            let module = fs::canonicalize(family::source_path(&checkout, &manifest.rust_module))?;
+            let mut manifest = admitted.declaration().clone();
+            let module = fs::canonicalize(crate::documents::resolve(&checkout, &manifest.rust_module))?;
             if kind == "dispatcher" {
                 dispatcher_contract(&mut manifest, &module, &checkout)?;
             }
@@ -252,13 +271,13 @@ pub fn generate(request: Request) -> Result<Generated> {
     }
     let projectile = request.projectile_verdict.as_ref();
     if let Some(path) = projectile {
-        let evidence = family::authenticate(AuthenticateRequest { checkout: checkout.clone(), verdict: path.clone() })?;
+        let admitted =
+            verifier.authenticate(AuthenticateRequest { checkout: checkout.clone(), verdict: path.clone() })?;
+        let evidence = admitted.report();
         ensure!(evidence.source.as_ref() == Some(&source_identity), "projectile source identity differs");
-        let manifest: Manifest = crate::fixture_format::read(
-            &path.parent().context("projectile predecessor parent missing")?.join("manifest.smf"),
-        )?;
-        let module = fs::canonicalize(family::source_path(&checkout, &manifest.rust_module))?;
-        projectile_contract(&manifest, &module, &checkout)?;
+        let manifest = admitted.declaration();
+        let module = fs::canonicalize(crate::documents::resolve(&checkout, &manifest.rust_module))?;
+        projectile_contract(manifest, &module, &checkout)?;
         predecessors.push(Predecessor { path: path.clone(), sha256: digest(path)?, kind: "projectile".into() });
     }
     ensure!(!families.is_empty() || projectile.is_some(), "no family contracts");
@@ -269,18 +288,18 @@ pub fn generate(request: Request) -> Result<Generated> {
     let plm = request.plm_verdict.as_ref();
     ensure!(!positioned || plm.is_some(), "room PLM requires allocation evidence");
     if let Some(plm) = plm {
-        let evidence = family::authenticate(AuthenticateRequest { checkout: checkout.clone(), verdict: plm.clone() })?;
+        let admitted =
+            verifier.authenticate(AuthenticateRequest { checkout: checkout.clone(), verdict: plm.clone() })?;
+        let evidence = admitted.report();
         ensure!(
             evidence.source.as_ref() == Some(&source_identity)
                 && evidence.implementation.as_ref().context("missing implementation")?.dependency_contract
                     == "rust-plm-v2",
             "native PLM source identity differs"
         );
-        let manifest: Manifest = crate::fixture_format::read(
-            &Path::new(plm).parent().context("PLM predecessor parent missing")?.join("manifest.smf"),
-        )?;
+        let manifest = admitted.declaration();
         ensure!(
-            fs::canonicalize(family::source_path(&checkout, &manifest.rust_module))?
+            fs::canonicalize(crate::documents::resolve(&checkout, &manifest.rust_module))?
                 == checkout.join("crates/port/src/plm.rs"),
             "native PLM does not seal installed module"
         );
@@ -304,7 +323,7 @@ pub fn generate(request: Request) -> Result<Generated> {
     if ridley {
         imports.insert("ridley_enemy_instructions".into());
     }
-    let memory = inputs::wrapper(inputs::WrapperRequest {
+    let memory = crate::offline::families()?.generate_wrapper(offline_verification::authoring::WrapperRequest {
         checkout: checkout.clone(),
         run: run.clone(),
         modules,
@@ -321,7 +340,7 @@ pub fn generate(request: Request) -> Result<Generated> {
     if ridley {
         rust.push_str(include_str!("live_ridley.rs.in"));
     }
-    let mut units = family::c_units(&source)?;
+    let mut units = decomp_source::c_units(&source)?;
     let banks = units
         .iter()
         .filter(|p| p.file_name().is_some_and(|n| n.to_string_lossy().starts_with("sm_")))
@@ -349,7 +368,8 @@ pub fn generate(request: Request) -> Result<Generated> {
         if *kind == "callback" {
             rust.push_str(&format!(
                 "mod collision{family_index}{{use super::*;\n{}\n}}\n",
-                callback::abi(manifest, module)?.replace("port_collision_call", &abi_symbol)
+                offline_verification::fixtures::callback_abi(manifest, module)?
+                    .replace("port_collision_call", &abi_symbol)
             ));
         } else {
             let call = if manifest.rom.as_ref().is_some() {
@@ -396,10 +416,7 @@ pub fn generate(request: Request) -> Result<Generated> {
                 projectile.is_none() || !PROJECTILE_ENTRIES.contains(&symbol),
                 "native projectile entries require only projectile verdict"
             );
-            ensure!(
-                family::identifier(symbol) && !symbols.iter().any(|v| v == symbol),
-                "duplicate or invalid live symbol"
-            );
+            ensure!(identifier(symbol) && !symbols.iter().any(|v| v == symbol), "duplicate or invalid live symbol");
             let owners = originals
                 .iter()
                 .filter(|(_, text)| definition(text, symbol).is_ok())
@@ -410,10 +427,10 @@ pub fn generate(request: Request) -> Result<Generated> {
             let text = transformed.get(owner).unwrap_or(&originals[owner]);
             let text = rename(text, symbol, &format!("C_{symbol}"), true)?;
             transformed.insert(owner.clone(), text);
-            let args = family::types(routine)?;
+            let args = routine.argument_types()?;
             ensure!(args.len() <= 2, "unsupported live signature");
             let ret = routine.returns.as_str();
-            let mut ctype = family::c_type(ret)?.to_owned();
+            let mut ctype = c_type(ret)?.to_owned();
             let dispatcher = *kind == "dispatcher";
             if dispatcher && ret == "rom_ptr" {
                 ctype = "const uint8_t *".into();
@@ -425,10 +442,7 @@ pub fn generate(request: Request) -> Result<Generated> {
                 .iter()
                 .zip(["a", "b"])
                 .map(|(t, n)| {
-                    Ok(format!(
-                        "{} {n}",
-                        if dispatcher && t == "rom_ptr" { "const uint8_t *" } else { family::c_type(t)? }
-                    ))
+                    Ok(format!("{} {n}", if dispatcher && t == "rom_ptr" { "const uint8_t *" } else { c_type(t)? }))
                 })
                 .collect::<Result<Vec<_>>>()?
                 .join(",");
@@ -1001,7 +1015,7 @@ pub fn verify(request: Request) -> Result<Verdict> {
         output.join(format!("{}-{}", SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos(), std::process::id()));
     fs::create_dir(&run)?;
     let run = fs::canonicalize(run)?;
-    let mut metrics = crate::metrics::Run::start(run.join("pipeline.metrics.toml"), "live")?;
+    let mut metrics = tool_execution::metrics::Run::start(run.join("pipeline.metrics.toml"), "live")?;
     metrics.context.configuration("frames", request.frames);
     metrics.context.configuration("live-jobs", request.live_jobs);
     metrics.context.configuration("workers", request.workers);
@@ -1078,35 +1092,36 @@ pub fn verify(request: Request) -> Result<Verdict> {
             root,
             workers,
         )?;
-        verdict.rust_dependencies = inputs::dependencies(inputs::DependenciesRequest {
-            checkout: checkout.clone(),
-            run: run.clone(),
-            extra: vec![
-                "crates/pipeline/src/live.rs",
-                "crates/pipeline/src/live_host.c.in",
-                "crates/pipeline/src/live_family.rs.in",
-                "crates/pipeline/src/live_transaction.rs.in",
-                "crates/pipeline/src/live_wrapper.c.in",
-                "crates/pipeline/src/live_plm.rs.in",
-                "crates/pipeline/src/live_positioned.c.in",
-                "crates/pipeline/src/effect_writer.c.in",
-                "crates/pipeline/src/callback.rs",
-                "crates/pipeline/src/callback_abi.rs.in",
-                "crates/pipeline/src/packed.rs",
-                "crates/pipeline/src/observations.rs",
-                "crates/pipeline/src/live_projectile.rs.in",
-                "crates/pipeline/src/live_projectile_host.c.in",
-                "crates/pipeline/src/live_projectile_bank.c.in",
-                "crates/pipeline/src/live_bounded_family.rs.in",
-                "crates/pipeline/src/live_bounded_wrapper.c.in",
-                "crates/pipeline/src/live_ridley.rs.in",
-                "crates/pipeline/src/live_ridley_host.c.in",
-                "crates/pipeline/src/live_ridley_bank.c.in",
-            ]
-            .into_iter()
-            .map(PathBuf::from)
-            .collect(),
-        })?;
+        verdict.rust_dependencies =
+            crate::offline::families()?.record_dependencies(offline_verification::authoring::DependenciesRequest {
+                checkout: checkout.clone(),
+                run: run.clone(),
+                extra: vec![
+                    "crates/pipeline/src/live.rs",
+                    "crates/pipeline/src/live_host.c.in",
+                    "crates/pipeline/src/live_family.rs.in",
+                    "crates/pipeline/src/live_transaction.rs.in",
+                    "crates/pipeline/src/live_wrapper.c.in",
+                    "crates/pipeline/src/live_plm.rs.in",
+                    "crates/pipeline/src/live_positioned.c.in",
+                    "crates/pipeline/src/effect_writer.c.in",
+                    "crates/offline-verification/src/callback.rs",
+                    "crates/offline-verification/src/callback_abi.rs.in",
+                    "crates/pipeline/src/packed.rs",
+                    "crates/pipeline/src/observations.rs",
+                    "crates/pipeline/src/live_projectile.rs.in",
+                    "crates/pipeline/src/live_projectile_host.c.in",
+                    "crates/pipeline/src/live_projectile_bank.c.in",
+                    "crates/pipeline/src/live_bounded_family.rs.in",
+                    "crates/pipeline/src/live_bounded_wrapper.c.in",
+                    "crates/pipeline/src/live_ridley.rs.in",
+                    "crates/pipeline/src/live_ridley_host.c.in",
+                    "crates/pipeline/src/live_ridley_bank.c.in",
+                ]
+                .into_iter()
+                .map(PathBuf::from)
+                .collect(),
+            })?;
         let decomp = run.join("libdecomp.a");
         verdict.decompressor_cache = Some(builds::cargo_build(builds::CargoBuildRequest {
             checkout: checkout.clone(),
@@ -1123,12 +1138,12 @@ pub fn verify(request: Request) -> Result<Verdict> {
         })?;
         let rng = checkout.join("tools/decomp/next_random.rs");
         let rng_hash = digest(&rng)?;
-        builds::helper_builds(builds::HelperBuildRequest {
+        crate::tool_helpers::helper_builds(crate::tool_helpers::HelperBuildRequest {
             checkout: checkout.clone(),
             root: root.clone(),
             run: run.clone(),
             workers,
-            helpers: vec![builds::Helper::RandomLibrary, builds::Helper::RandomCli],
+            helpers: vec![crate::tool_helpers::Helper::RandomLibrary, crate::tool_helpers::Helper::RandomCli],
         })?;
         ensure!(digest(&rng)? == rng_hash, "RNG source changed during build");
         builds::execute(
@@ -1343,12 +1358,13 @@ pub fn verify(request: Request) -> Result<Verdict> {
         ensure!(digest(&rng_predecessor)? == verdict.rng_predecessor_sha256, "RNG predecessor changed during replay");
         for predecessor in &generated.predecessors {
             let path = &predecessor.path;
-            family::authenticate(AuthenticateRequest { checkout: checkout.clone(), verdict: path.clone() })?;
+            crate::offline::families()?
+                .authenticate(AuthenticateRequest { checkout: checkout.clone(), verdict: path.clone() })?;
             ensure!(digest(path)? == predecessor.sha256, "family predecessor changed during replay");
         }
         for (name, hash) in &verdict.rust_dependencies {
             ensure!(
-                digest(&family::source_path(&checkout, name))? == *hash,
+                digest(&crate::documents::resolve(&checkout, name))? == *hash,
                 "live candidate source changed during replay"
             );
         }
@@ -1386,7 +1402,7 @@ pub fn verify(request: Request) -> Result<Verdict> {
         })?;
         auth.finish("success")?;
     }
-    metrics.finish(crate::metrics::outcome(verdict.error.as_deref()), verdict.error.clone())?;
+    metrics.finish(tool_execution::metrics::outcome(verdict.error.as_deref()), verdict.error.clone())?;
     Ok(verdict)
 }
 
@@ -1398,12 +1414,12 @@ mod tests {
         let mut manifest = Manifest {
             rom: Some(Default::default()),
             routines: vec![
-                crate::family_model::Routine {
+                offline_verification::fixtures::Routine {
                     symbol: "MainScrollingRoutine".into(),
                     returns: "void".into(),
                     ..Default::default()
                 },
-                crate::family_model::Routine {
+                offline_verification::fixtures::Routine {
                     symbol: "Samus_HandleScroll_X".into(),
                     args: 1,
                     returns: "void".into(),
@@ -1469,25 +1485,25 @@ mod tests {
             projectile_host: true,
             rom: Some(Default::default()),
             routines: vec![
-                crate::family_model::Routine {
+                offline_verification::fixtures::Routine {
                     symbol: "SpawnEprojWithRoomGfx".into(),
                     args: 2,
                     returns: "void".into(),
                     ..Default::default()
                 },
-                crate::family_model::Routine {
+                offline_verification::fixtures::Routine {
                     symbol: "EprojRunAll".into(),
                     returns: "void".into(),
                     ..Default::default()
                 },
-                crate::family_model::Routine {
+                offline_verification::fixtures::Routine {
                     symbol: "SpawnEprojWithGfx".into(),
                     arg_types: Some(vec!["uint16".into(), "uint32".into()]),
                     returns: "void".into(),
                     packed_args: Some("eproj-with-gfx-v1".into()),
                     ..Default::default()
                 },
-                crate::family_model::Routine {
+                offline_verification::fixtures::Routine {
                     symbol: "EprojInstruction".into(),
                     live_eligible: Some(false),
                     ..Default::default()
@@ -1573,7 +1589,7 @@ mod tests {
     fn dispatcher_contract_rejects_unowned_bank_signature_and_ineligible_only_matrix() {
         let root = Path::new("/checkout");
         let module = root.join("crates/port/src/enemy_projectile_instructions.rs");
-        let leaf = crate::family_model::Routine {
+        let leaf = offline_verification::fixtures::Routine {
             symbol: "EprojInstr_Delete".into(),
             arg_types: Some(vec!["uint16".into(), "rom_ptr".into()]),
             returns: "rom_ptr".into(),
@@ -1583,7 +1599,7 @@ mod tests {
         let manifest = Manifest {
             bank: "sm_86.c".into(),
             routines: vec![
-                crate::family_model::Routine { symbol: "EprojInstruction".into(), ..Default::default() },
+                offline_verification::fixtures::Routine { symbol: "EprojInstruction".into(), ..Default::default() },
                 leaf,
             ],
             ..Default::default()

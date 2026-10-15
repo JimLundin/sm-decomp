@@ -1,7 +1,12 @@
-use crate::{
-    atomic_toml, digest, family, lock, readiness_contract as contract, readiness_origins as origins,
-    readiness_run::{Run, identity, safe_artifact, source_inventory},
-};
+use crate::atomic_toml;
+use crate::digest;
+use crate::lock;
+use crate::readiness_contract as contract;
+use crate::readiness_origins as origins;
+use crate::readiness_run::Run;
+use crate::readiness_run::identity;
+use crate::readiness_run::safe_artifact;
+use crate::readiness_run::source_inventory;
 use anyhow::{Context, Result, ensure};
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -22,13 +27,13 @@ pub fn policy(manifest: &Value, files: &Value, source: &Path) -> Result<Value> {
         entries.iter().filter(|entry| entry["path"].as_str().is_some_and(|p| !executable(p))).collect::<Vec<_>>();
     let mut referenced = BTreeSet::new();
     for entry in entries {
-        let path = family::field(entry, "path")?;
+        let path = crate::documents::field(entry, "path")?;
         if !executable(path) {
             continue;
         }
         let text = String::from_utf8_lossy(&fs::read(safe_artifact(source, path)?)?).into_owned();
         for document in &docs {
-            let p = family::field(document, "path")?;
+            let p = crate::documents::field(document, "path")?;
             let filename = Path::new(p).file_name().and_then(|s| s.to_str()).context("document filename")?;
             if text.contains(p) || text.contains(filename) {
                 referenced.insert(p.to_owned());
@@ -193,14 +198,15 @@ pub fn publish(owner: &Path, root: &Path) -> Result<Value> {
     {
         let current = origins::document(&root.join("out/accepted.toml"))?;
         ensure!(
-            family::field(&current, "run_id")? == family::field(&verified["manifest"], "accepted_parent")?,
+            crate::documents::field(&current, "run_id")?
+                == crate::documents::field(&verified["manifest"], "accepted_parent")?,
             "competing acceptance changed predecessor before publication"
         );
     }
     let pointer = pointer(owner, &verified["manifest"])?;
     let history = root.join("out/accepted-history");
     fs::create_dir_all(&history)?;
-    let retained = history.join(format!("{}.toml", family::field(&verified["manifest"], "run_id")?));
+    let retained = history.join(format!("{}.toml", crate::documents::field(&verified["manifest"], "run_id")?));
     if retained.exists() {
         ensure!(origins::document(&retained)? == pointer, "accepted history immutable identity differs");
     } else {
@@ -285,7 +291,7 @@ pub fn apply(run: &mut Run, name: &str, plan: &Value) -> Result<Value> {
             && plan["action"] == crate::readiness_metadata::value(&"reuse").expect("validated native metadata"),
         "check is not eligible for reuse"
     );
-    let owner = Path::new(family::field(plan, "path")?);
+    let owner = Path::new(crate::documents::field(plan, "path")?);
     let verified = verify_accepted(owner, true)?;
     let report = crate::readiness::verify_check(owner, name, &verified)?;
     ensure!(
@@ -298,7 +304,7 @@ pub fn apply(run: &mut Run, name: &str, plan: &Value) -> Result<Value> {
     let current = verify_policy(&run.path, &Value::try_from(&run.manifest)?, &inventory)?;
     ensure!(
         old["checks"][name] == current["checks"][name]
-            && identity(&old["checks"][name])? == family::field(plan, "dependency_sha256")?,
+            && identity(&old["checks"][name])? == crate::documents::field(plan, "dependency_sha256")?,
         "reuse dependencies differ"
     );
     let mut report = report;

@@ -208,11 +208,11 @@ fn inventory_root(root: &Path) {
     .unwrap();
     fs::write(
         root.join("tools/port/declared.smf"),
-        crate::fixture_format::encode(&crate::family_model::Manifest {
+        offline_verification::fixtures::encode(&offline_verification::fixtures::Manifest {
             family: "declaration".into(),
             routines: ["First", "HostWrapper"]
                 .into_iter()
-                .map(|symbol| crate::family_model::Routine { symbol: symbol.into(), ..Default::default() })
+                .map(|symbol| offline_verification::fixtures::Routine { symbol: symbol.into(), ..Default::default() })
                 .collect(),
             ..Default::default()
         })
@@ -226,15 +226,15 @@ fn binary_declarations_preserve_symbols_and_reject_corruption() {
     let scratch = Scratch::new();
     fs::create_dir_all(scratch.0.join("tools/port")).unwrap();
     let path = scratch.0.join("tools/port/large.smf");
-    let manifest = crate::family_model::Manifest {
+    let manifest = offline_verification::fixtures::Manifest {
         family: "large".into(),
         routines: ["First", "First", "Unknown"]
             .into_iter()
-            .map(|symbol| crate::family_model::Routine {
+            .map(|symbol| offline_verification::fixtures::Routine {
                 symbol: symbol.into(),
-                cases: vec![crate::family_model::Case {
+                cases: vec![offline_verification::fixtures::Case {
                     name: "payload".into(),
-                    writes: vec![crate::family_model::Write { offset: 0, data: vec![12; 0x20000] }].into(),
+                    writes: vec![offline_verification::fixtures::Write { offset: 0, data: vec![12; 0x20000] }].into(),
                     ..Default::default()
                 }],
                 ..Default::default()
@@ -242,7 +242,7 @@ fn binary_declarations_preserve_symbols_and_reject_corruption() {
             .collect(),
         ..Default::default()
     };
-    crate::fixture_format::write(&path, &manifest).unwrap();
+    offline_verification::fixtures::write(&path, &manifest).unwrap();
     let mut routines = registry(&scratch.0).routines;
     let mut notices = Vec::new();
     add_declarations(&scratch.0, &mut routines, &mut notices).unwrap();

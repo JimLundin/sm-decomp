@@ -1,7 +1,11 @@
 //! One deterministic subsystem batch: lifecycle, scripts, tail and frame chains.
 use crate::digest;
-use crate::family_model::{Asset, Case, Manifest, Routine, Write};
 use anyhow::{Result, ensure};
+use offline_verification::fixtures::Asset;
+use offline_verification::fixtures::Case;
+use offline_verification::fixtures::Manifest;
+use offline_verification::fixtures::Routine;
+use offline_verification::fixtures::Write;
 use std::path::Path;
 
 const ROM_SHA256: &str = "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72";
@@ -319,7 +323,7 @@ pub fn generate(checkout: &Path, rom: &Path, output: &Path) -> Result<Manifest> 
         )),
         ..Default::default()
     };
-    crate::fixture_format::write(output, &manifest)?;
+    offline_verification::fixtures::write(output, &manifest)?;
     ensure!(checkout.join(&manifest.rust_module).is_file(), "whole Ridley maintained module missing");
     Ok(manifest)
 }
@@ -340,8 +344,8 @@ mod tests {
         let mut entry = routine("Ridley_Main", &[], "void");
         entry.cases.push(case("main".into(), 2, 2, &[write(0x330, 0xffff)]));
         let manifest = Manifest { routines: vec![entry], ..Default::default() };
-        let binary = crate::fixture_format::encode(&manifest).unwrap();
-        let decoded = crate::fixture_format::decode(binary.clone()).unwrap();
+        let binary = offline_verification::fixtures::encode(&manifest).unwrap();
+        let decoded = offline_verification::fixtures::decode(binary.clone()).unwrap();
         let state = |m: &Manifest| {
             let mut bytes = vec![0; 0x20000];
             for write in &m.routines[0].cases[0].writes {
@@ -350,6 +354,6 @@ mod tests {
             bytes
         };
         assert_eq!(state(&decoded), state(&manifest));
-        assert_eq!(crate::fixture_format::encode(&decoded).unwrap(), binary);
+        assert_eq!(offline_verification::fixtures::encode(&decoded).unwrap(), binary);
     }
 }

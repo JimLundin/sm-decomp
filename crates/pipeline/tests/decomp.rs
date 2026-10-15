@@ -1,4 +1,6 @@
 //! Exercise the public job against independent whole-memory and store-order expectations.
+#[path = "../src/source_stamps.rs"]
+mod source_stamps;
 use std::{
     fs,
     io::Write,
@@ -26,9 +28,17 @@ fn snapshot(checkout: &Path, root: &Path) -> PathBuf {
     for relative in ["crates/decomp", "crates/pipeline/src", "tools/decomp"] {
         copy_tree(&checkout.join(relative), &snapshot.join(relative));
     }
+    for (name, source) in source_stamps::all() {
+        let path = snapshot.join(name);
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(path, source).unwrap();
+    }
     fs::copy(checkout.join("Cargo.lock"), snapshot.join("Cargo.lock")).unwrap();
     fs::copy(checkout.join("tools/dependencies.toml"), snapshot.join("tools/dependencies.toml")).unwrap();
-    std::os::unix::fs::symlink(checkout.join("deps"), snapshot.join("deps")).unwrap();
+    copy_tree(&checkout.join("deps/snesrev-sm"), &snapshot.join("deps/snesrev-sm"));
+    fs::create_dir_all(snapshot.join("deps/downloads")).unwrap();
+    fs::copy(checkout.join("deps/downloads/snesrev-sm.tar.gz"), snapshot.join("deps/downloads/snesrev-sm.tar.gz"))
+        .unwrap();
     snapshot
 }
 impl Drop for Run {

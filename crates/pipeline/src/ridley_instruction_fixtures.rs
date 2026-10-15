@@ -1,7 +1,11 @@
 //! Deterministic actual-ROM direct callbacks and complete native attack-frame chains.
-use crate::family_model::{Asset, Case, Manifest, Routine, Write};
 use crate::digest;
 use anyhow::{Context, Result, ensure};
+use offline_verification::fixtures::Asset;
+use offline_verification::fixtures::Case;
+use offline_verification::fixtures::Manifest;
+use offline_verification::fixtures::Routine;
+use offline_verification::fixtures::Write;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::BTreeMap,
@@ -341,7 +345,7 @@ pub fn generate(checkout: &Path, rom_path: &Path, output: &Path, expected: &Path
     if let Some(parent) = output.parent() {
         fs::create_dir_all(parent)?;
     }
-    crate::fixture_format::write(output, &manifest)?;
+    offline_verification::fixtures::write(output, &manifest)?;
     Ok(direct_count + frame_count)
 }
 
@@ -599,7 +603,7 @@ pub fn generate_captured(
     if let Some(parent) = output.parent() {
         fs::create_dir_all(parent)?;
     }
-    crate::fixture_format::write(output, &manifest)?;
+    offline_verification::fixtures::write(output, &manifest)?;
     Ok(CapturedGeneration {
         inventory_verdict_sha256: digest(&inventory.join("verdict.toml"))?,
         inventory,

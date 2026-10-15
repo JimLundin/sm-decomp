@@ -1,7 +1,9 @@
 //! Unpatched whole-Ridley fixtures from an authenticated actual-C inventory.
-use crate::family_model::{Case, Manifest, Routine};
 use crate::{digest, ridley_subsystem_inventory};
 use anyhow::{Context, Result, bail, ensure};
+use offline_verification::fixtures::Case;
+use offline_verification::fixtures::Manifest;
+use offline_verification::fixtures::Routine;
 use serde::Deserialize;
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -180,7 +182,7 @@ pub fn generate(checkout: &Path, inventory_verdict: &Path, output: &Path) -> Res
     );
     let artifacts = verdict["artifacts"].as_table().context("native artifact seal missing")?;
     let controlled_path = checkout.join("tools/port/ridley-subsystem.smf");
-    let mut manifest = crate::fixture_format::read(&controlled_path)?;
+    let mut manifest = offline_verification::fixtures::read(&controlled_path)?;
     ensure!(
         manifest.callback_adapter.as_deref() == Some("ridley-subsystem")
             && manifest.routines.len() == 33
@@ -319,7 +321,7 @@ pub fn generate(checkout: &Path, inventory_verdict: &Path, output: &Path) -> Res
     if let Some(parent) = output.parent() {
         fs::create_dir_all(parent)?;
     }
-    crate::fixture_format::write(output, &manifest)?;
+    offline_verification::fixtures::write(output, &manifest)?;
     Ok(manifest)
 }
 

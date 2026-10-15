@@ -2,13 +2,15 @@
 //! from a passing gate: these original jobs need adapters that are not yet
 //! available to the confined supervisor, and historical evidence cannot replace
 //! candidate or integrated-source verification.
-use crate::{assignment, inputs::bounded, translation_migration::OriginalClaim};
+use crate::assignment;
+use crate::translation_migration::OriginalClaim;
 use anyhow::{Context, Result, bail, ensure};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{BTreeMap, BTreeSet},
     path::PathBuf,
 };
+use tool_execution::bounded;
 use translation_execution::{
     model::{digest_valid, sealed, sha256},
     retention::{self, Reference},
@@ -371,7 +373,7 @@ fn prepare_inner(contract: &LegacyContract) -> Result<(PreparedLegacy, OriginalC
 /// Read-only preparation. This performs no process launch, filesystem writes,
 /// claim changes, acceptance publication or source replacement.
 pub(crate) fn prepare(contract: &LegacyContract) -> Result<PreparedLegacy> {
-    bounded::limited(|| Ok(prepare_inner(contract)?.0))
+    decomp_source::context::limited(|| Ok(prepare_inner(contract)?.0))
 }
 
 pub(crate) fn readiness(prepared: &PreparedLegacy) -> LegacyReadiness {
@@ -421,7 +423,7 @@ pub(crate) fn authenticate(
 }
 
 pub(crate) fn validate_original(contract: &LegacyContract, original: &OriginalClaim) -> Result<LegacyAdmissionData> {
-    bounded::limited(|| {
+    decomp_source::context::limited(|| {
         let (prepared, frozen) = prepare_inner(contract)?;
         ensure!(frozen == *original, "legacy managed admission differs from its exact frozen original claim");
         Ok(LegacyAdmissionData {

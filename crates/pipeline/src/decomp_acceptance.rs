@@ -1,6 +1,6 @@
 //! Authenticate complete offline decompressor evidence before live admission.
 use crate::decomp_model::*;
-use crate::{digest, family};
+use crate::digest;
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use sha2::{Digest, Sha256};
@@ -25,7 +25,7 @@ fn artifact(root: &Path, name: &str) -> Result<PathBuf> {
     Ok(path)
 }
 pub fn source(checkout: &Path, manifest: &Job) -> Result<std::collections::BTreeMap<String, String>> {
-    let identity = family::verify_source(checkout, &checkout.join("deps/snesrev-sm"))?;
+    let identity = decomp_source::verify_source(checkout, &checkout.join("deps/snesrev-sm"))?;
     ensure!(
         identity.revision == manifest.source_revision && identity.archive_sha256 == manifest.source_archive_sha256,
         "source archive identity differs from routine manifest"
@@ -105,7 +105,10 @@ pub fn authenticate(request: AuthenticateRequest) -> Result<Seal> {
         "accepted contract/job changed"
     );
     for (name, hash) in &seal.implementation {
-        ensure!(digest(&family::source_path(&checkout, name))? == *hash, "accepted implementation changed: {name}");
+        ensure!(
+            digest(&crate::documents::resolve(&checkout, name))? == *hash,
+            "accepted implementation changed: {name}"
+        );
     }
     for (name, hash) in &seal.binaries {
         ensure!(digest(&artifact(run, name)?)? == *hash, "accepted binary changed: {name}");

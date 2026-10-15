@@ -1,5 +1,7 @@
 //! Explicit text inspection/import; verification only opens binary fixtures.
-use super::*;
+use anyhow::{Context, Result};
+use offline_verification::fixtures::{Case, Manifest, read, write};
+use std::{collections::BTreeMap, fs, path::Path};
 
 pub(crate) fn run(args: &[String]) -> Result<()> {
     match args.first().map(String::as_str) {

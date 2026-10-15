@@ -1,6 +1,8 @@
 //! Native evidence must reject wrong results, incomplete coverage and unchecked C.
 #[path = "support/binary_fixture.rs"]
 mod binary_fixture;
+#[path = "../src/source_stamps.rs"]
+mod source_stamps;
 use sha2::{Digest, Sha256};
 use std::{
     fs,
@@ -144,15 +146,8 @@ impl Project {
     fn at(root: PathBuf, retain: bool) -> Self {
         fs::create_dir(&root).unwrap();
         let crate_root = Path::new(env!("CARGO_MANIFEST_DIR"));
-        for entry in fs::read_dir(crate_root.join("src")).unwrap() {
-            let entry = entry.unwrap();
-            if entry.path().is_file() {
-                write(
-                    &root,
-                    &format!("crates/pipeline/src/{}", entry.file_name().to_string_lossy()),
-                    fs::read(entry.path()).unwrap(),
-                );
-            }
+        for (name, source) in source_stamps::all() {
+            write(&root, name, source);
         }
         write(
             &root,
@@ -722,7 +717,7 @@ fn idle_fixture_chain_workers_release_shared_execution_capacity_in_both_modes() 
     };
     scheduling_project(&project, false);
     if let Some(source) = std::env::var_os("SM_SCHEDULING_BASELINE_SOURCE") {
-        write(&project.0, "crates/pipeline/src/fixture_execution.rs", fs::read(source).unwrap());
+        write(&project.0, "crates/offline-verification/src/fixture_execution.rs", fs::read(source).unwrap());
     }
     let binary = std::env::var_os("SM_SCHEDULING_REGRESSION_BINARY")
         .map(PathBuf::from)
@@ -746,7 +741,11 @@ fn measure_fixture_chain_shared_capacity() {
     let candidate_project = Project::at(output.join("candidate"), true);
     scheduling_project(&baseline_project, true);
     scheduling_project(&candidate_project, true);
-    write(&baseline_project.0, "crates/pipeline/src/fixture_execution.rs", fs::read(&baseline_source).unwrap());
+    write(
+        &baseline_project.0,
+        "crates/offline-verification/src/fixture_execution.rs",
+        fs::read(&baseline_source).unwrap(),
+    );
     for input in ["crates/port/src/fixture.rs", "tools/port/fixture.smf", "deps/snesrev-sm/src/sm_80.c", "peer.rs"] {
         assert_eq!(
             fs::read(baseline_project.0.join(input)).unwrap(),

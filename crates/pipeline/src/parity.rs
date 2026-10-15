@@ -1,5 +1,8 @@
+use crate::coverage;
+use crate::digest;
+use crate::preflight;
 use crate::readiness_metadata::toml_from_slice;
-use crate::{coverage, digest, family, preflight, readiness_run::Run};
+use crate::readiness_run::Run;
 use anyhow::{Context, Result, ensure};
 use sha2::{Digest, Sha256};
 use std::{
@@ -45,7 +48,8 @@ pub(crate) fn prepare(run: &mut Run, mode: &str, timeout: Duration) -> Result<Ca
             [("generated-game", &game), ("generated-steps", &steps), ("binary", &directory.join("diff"))]
         {
             ensure!(
-                digest(path)? == family::field(&run.manifest.identities[&format!("{mode}-{name}")], "sha256")?,
+                digest(path)?
+                    == crate::documents::field(&run.manifest.identities[&format!("{mode}-{name}")], "sha256")?,
                 "prepared candidate artifact lacks matching provenance"
             );
         }
@@ -179,7 +183,7 @@ pub(crate) fn replay(
         crate :: report ! ({ "status" : if process ["status"] == crate :: readiness_metadata :: value (& "pass") ? { "incomplete" } else { process ["status"] . as_str () . unwrap_or ("error") } , "complete" : false , "expected_frames" : frames , "completed_frames" : 0 , "reason" : "replay produced no structured completion evidence" , })
     };
     if path.is_file() {
-        let canonical = fs::read_to_string(run.path.join(family::field(&inputs, "input_evidence")?))?;
+        let canonical = fs::read_to_string(run.path.join(crate::documents::field(&inputs, "input_evidence")?))?;
         let selected = canonical.lines().take(frames as usize).map(|line| format!("{line}\n")).collect::<String>();
         let mut expected = crate :: report ! ({ "rom_sha256" : inputs ["rom_sha256"] , "movie_sha256" : inputs ["movie_sha256"] , "input_sha256" : inputs ["input_sha256"] , "binary_sha256" : digest (& binary) ? , "selected_input_sha256" : format ! ("{:x}" , Sha256 :: digest (selected . as_bytes ())) , });
         if mode == "generated" {
@@ -304,7 +308,7 @@ pub(crate) fn replay(
     {
         let profile = output.join("coverage.toml");
         ensure!(
-            digest(&profile)? == family::field(&report, "coverage_sha256")?,
+            digest(&profile)? == crate::documents::field(&report, "coverage_sha256")?,
             "instruction profile digest differs from replay report"
         );
         run.record_artifact("generated-instruction-profile", &profile, None)?;
@@ -374,7 +378,7 @@ pub fn operate(request: Value) -> Result<Value> {
     })();
     match outcome {
         Ok(report) => run.finalize(
-            family::field(&report, "status")?,
+            crate::documents::field(&report, "status")?,
             Some(&format!("{mode}-parity")),
             report
                 .get("reason")
