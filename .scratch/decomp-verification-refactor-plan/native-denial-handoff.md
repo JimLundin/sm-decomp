@@ -1,7 +1,7 @@
 # Native negative-control adaptation
 
-Status: claimed; focused compiler/runtime gates and independent readers passed;
-fresh complete full-real gate pending.
+Status: ready for integration-owner handoff; all scoped gates passed.
+Integration-owner retirement remains outstanding.
 Owner: `/root/bulk_context_resume`, parent `/root`, session
 `01a13e7f-ab01-7413-a1c2-288b08a4b719`.
 Main tracking: verification refactor ticket 01, integration-owner claim.
@@ -104,10 +104,61 @@ compiler/helper environment, authenticating the Native seed and every original
 Rust fixture namespace. Logs are `logs/runtime-focused{,-reader}.{log,time}`;
 reader exec 40810 completed with exit 0. No focused writer remains.
 
-Pending: repaired full-real gate, its cleanup and independent authentication,
-retirement-reference audit and final handoff. Compiler,
-Fixture and family budgets remain 60, 5 and 180 seconds. Cargo is locked/offline,
-jobs 1; shared execution root is `/home/jim/sm-decomp/out/pipeline`, workers 4.
+## Completion evidence
+
+The fresh full-real gate at frozen `955ffc3` passed in **96.03s**, exec 87980
+exit 0. `SM_NATIVE_PERFORMANCE_ONLY` was absent. Its retained manifest contains
+two independently admitted complete Native families, each with **16 Fixture
+pairs / 34 producers**; the compiler-failure case has two producers and a
+rejected receipt; reservation denial has a rejected receipt and zero producers.
+Both exact capture refusals, the real compiler host-file denial, all 16 runtime
+namespace probes, unchanged producer retry/hash/mtime checks, tampering and
+aggregate prelaunch reservation controls passed. The complete run retained
+88 operation results, including the 17 separately attributed runtime diagnostic
+operations. The first full family and unchanged retry reported 29.872s.
+
+Both automatic cleanup passes passed: initial cleanup reclaimed zero bytes;
+deduplication reclaimed **10,485,760 bytes**, checking 96 snapshots. In-process
+authentication passed afterward. The independent reader then passed in **4.81s**
+with `PATH=/unavailable` and compiler/helper variables absent, exec 61247 exit 0,
+from the proof root rather than the worker checkout. It authenticated both
+complete families, both rejected Native receipts, both capture refusals, the
+actual compiler denial and every runtime probe. Logs and timing are
+`logs/full-real{,-reader}.{log,time}`. Cleanup is recorded in
+`full-real/cleanup{,-deduplicated}.toml`.
+
+The full retained manifest is
+`955ffc3-20261015/full-real/retained-authentication.toml`, SHA-256
+`54327aeb0093fac382a34e72bb6487871813f31b1789fea7ca80d27241cd190e`.
+The focused runtime manifest has SHA-256
+`27c07b0214196313c70523c4b541ed7a3743e448a80e6450ffd4e110b236a712`.
+`955ffc3-20261015/completion-evidence.sha256` records exact manifest, cleanup,
+log, source-checksum, prerequisite-checksum and retained-tool-checksum identities.
+All tracked source, prerequisites and retained tools passed their SHA-256
+checks after the full gate and cleanup.
+
+No Native test, compiler, sandbox or reader writer remains. Both private `tmp/`
+trees contain no files (12,288 bytes of directory metadata each). Available
+filesystem space was **94,489,649,152 bytes** after cleanup. Total measured
+reclamation across this worker's two proof roots is **14,680,064 bytes**;
+both focused controls reclaimed zero bytes. No successful or failed evidence
+was deleted or overwritten.
+
+The final TOML/JSON/JSONL reference audit across both proof roots found no
+references to the worker checkout or admission Cargo target, excluding frozen
+source snapshots, logs and copied source code. Keep both proof roots: the
+focused runtime proof depends on the older `1b0b75c` positive Native seed.
+Retain their operations, source snapshots, tools, protected host controls,
+installed Rust/C runtime dependencies, canonical pinned C source and adjacent
+archive. The full-real retained proof is independent of the older seed.
+
+The integration owner may now audit and retire this worker checkout and Cargo
+target, then rerun the retained reader after retirement. This worker did not
+remove them, as requested. Integration acceptance and ticket 01/09 resolution
+remain with `/root`; these results prove this isolated test-source checkpoint.
+Compiler, Fixture and family budgets remain 60, 5 and 180 seconds. Cargo is
+locked/offline, jobs 1; shared execution root is
+`/home/jim/sm-decomp/out/pipeline`, workers 4.
 
 The new worktree uses the existing RustySNES dependency via an ignored link.
 Pinned C, its source archive and the private ROM are independent real copies
