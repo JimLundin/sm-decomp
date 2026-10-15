@@ -191,13 +191,20 @@ fn real_reviewed_recipes_replay_and_authenticate() -> Result<()> {
     ]);
     crate::translation_execution::tests::copy_native_source_snapshot(&current, &checkout)?;
     for name in &names {
-        if *name == "pause-direct-animation" {
-            paths.extend([
-                "tools/port/pause-equipment-render.smf".into(),
-                ".scratch/decomp-coverage/renderer/direct-animation.toml".into(),
-            ]);
+        let manifest = if *name == "pause-direct-animation" {
+            paths.insert(".scratch/decomp-coverage/renderer/direct-animation.toml".into());
+            "tools/port/pause-equipment-render.smf".to_owned()
         } else {
-            paths.insert(format!("tools/port/{name}.smf"));
+            format!("tools/port/{name}.smf")
+        };
+        let declaration = offline_verification::fixtures::read(&current.join(&manifest))?;
+        paths.insert(manifest);
+        for dependency in declaration.rust_dependencies {
+            // Captured declarations can name authoring inputs outside the
+            // compiled harness. Absolute capture inputs retain their paths.
+            if dependency.is_relative() {
+                paths.insert(dependency.to_str().context("native proof dependency path is not UTF-8")?.into());
+            }
         }
     }
     if names.contains(&"plm-instructions") {
