@@ -7,8 +7,10 @@ Authorization: user instructed "please go ahead and implement" the nine-ticket p
 
 ## Startup and ownership
 
-- Main is clean except this effort and the prior performance assessment, at
-  `5c011eb5d02a54d74903715bffb3f8c15ab78c51`.
+- Main contains documentation-only commit
+  `9a665cc8cd68d302a785d408cf1dcfa185e8a210`. Its production source still matches
+  `5c011eb5d02a54d74903715bffb3f8c15ab78c51`. The prior performance assessment
+  remains an unrelated untracked directory.
 - The extraction coordinator `01a13c3b-d421-7bb3-80a2-ec91045678e7` is reported
   `systemError`; its latest turn failed with a model socket timeout. Its last
   message says source work is finished and compilation is progressing.
@@ -17,10 +19,11 @@ Authorization: user instructed "please go ahead and implement" the nine-ticket p
   `4a736587af557de9e44b3126ff08f6d6d11beee8`; later commits record evidence.
   Remaining work is recorded in that worktree's architecture `checkpoint.md`
   and `completion.md`, which supersede stale copies on main.
-- The original build process (shell PID 1292644, original exec session 98089)
-  was observed alive. The release no-run output has reached its executable list;
-  helper build and final gates must be inspected before launching anything.
-  Keep its writers and exact source intact. Do not rerun completed historical gates.
+- The original build process completed: release no-run took 20m24.05s and
+  the helper build took 1m20.54s. Retained emitted binaries are hashed under the
+  proof parent's `tools/`. Do not restart those builds or completed historical
+  gates. The extraction coordinator was rechecked at 12:04 UTC and remains
+  stopped with the recorded model socket timeout.
 - The mutation-testing coordinator is active in its separate worktrees; its
   current edits are under `/home/jim/sm-decomp-mutation-followups`. No mutation
   worktree, output or source belongs to this effort.
@@ -72,7 +75,18 @@ The current ordinary proof at
 `/home/jim/sm-decomp-offline-architecture-proofs/plm-fix-20261015/ordinary/1792064366867709-1385229-0/verdict.toml`
 passed all 16 actual-C pairs, cleanup and standalone authentication. It may be
 read as a prototype input, never modified. Complete current catalog preparation
-also passed all 177 declarations; the twelve-recipe Native matrix is running.
+also passed all 177 declarations / 150,204 pairs plus 360 auxiliary pairs.
+
+The twelve-recipe Native matrix stopped on PLM after 510.41 seconds. All
+1,969 actual-C/Rust pairs and five rejected ABI controls finished; the ordinary
+verdict is `offline-verified`. The 3,941 producer operations were indexed, but
+`native-receipt.toml` was not published. The other eleven recipes did not run.
+Failure: `trusted input whole-stage deadline exhausted`, within the fixed
+60-second reconciliation scope, before the 600-second producer deadline.
+Both cleanup passes succeeded and deduplicated 430,571,520 bytes across 5,907
+snapshots; all retained intent/verdict/index/chunk/result hashes and mtimes
+were unchanged. This is incomplete Native acceptance, not a passed recipe.
+See `native-finalization-recovery.md` for the narrow recovery scope.
 
 Ticket 01's public CLI regression reproduced the defect: a 3.32114051-second
 reuse invocation reported 86,400 seconds from the deliberately seeded advisory
@@ -85,7 +99,9 @@ not a throughput baseline or a speedup.
 
 ## Cleanup
 
-Startup performs reads only. No new verification run has been created yet.
-Every worker must record bounded commands, exact source/tool identities, failed
+The recovered owner, catalog, ordinary and failed Native runs have completed
+both scoped cleanup passes. Active metrics and evidence-study writers retain
+their own private output ownership. Every worker must record bounded commands,
+exact source/tool identities, failed
 diagnostics, both scoped cleanup passes and independent retained authentication.
 Main Git/index integration and implementer retirement remain with this owner.

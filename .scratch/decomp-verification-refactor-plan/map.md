@@ -49,10 +49,21 @@ saves, revise 06 explicitly to the measured narrower storage change before claim
 it; do not ship an expensive design merely to satisfy the original graph. Native
 compiler sharing or barrier removal similarly requires a passed contract gate.
 
+The recovered extraction's complete PLM execution exposed a 60-second Native
+finalization failure. A narrow operation-admission recovery slice may precede 02/03:
+it removes repeated reads inside one independent admission, preserves all current
+formats/identities/producers/budgets, and changes no storage representation.
+Its isolated source and gates are tracked in
+[native-finalization-recovery.md](native-finalization-recovery.md). The failed
+baseline remains retained; acceptance still needs the complete corrected matrix.
+
 ## Decisions so far
 
 - User approved implementation. Ticket 01 starts in an isolated worktree;
   extraction recovery and baseline ownership are in [checkpoint.md](checkpoint.md).
+- Recovered PLM completed every comparison but failed Native finalization. Use
+  one owned authenticated-operation result for projections currently causing
+  repeated full reads; preserve independent later admissions and unchanged limits.
 - Choose the bulk Interface with a private graph; keep existing journal and
   capacity authority. [Architecture](architecture.md).
 - Prioritize complete required-run performance and separately measure incremental
