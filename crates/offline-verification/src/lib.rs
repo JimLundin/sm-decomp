@@ -35,6 +35,7 @@ pub use bulk::{
 };
 pub use catalog::{CatalogRequest, CatalogSnapshot, CatalogStatistics, FamilyFacts};
 pub mod fixtures;
+pub mod source_facts;
 pub use family_model::{AuthenticateRequest, Verdict, VerifyRequest};
 pub use host::HostInputs;
 pub use native::{
