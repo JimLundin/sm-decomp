@@ -21,7 +21,7 @@ use translation_execution::{
 
 pub(crate) const MAX_RECORD: u64 = 4 * 1024 * 1024;
 pub(crate) const MAX_SOURCE: u64 = 512 * 1024 * 1024;
-const MAX_FAMILY_RECORD: u64 = 64 * 1024 * 1024;
+const MAX_FAMILY_RECORD: u64 = native::NATIVE_FAMILY_RECORD_BYTES;
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
@@ -126,12 +126,7 @@ pub(crate) struct OriginalReceipt {
     pub evidence_bytes: u64,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub(crate) struct FamilyReceipt {
-    pub prepared: native::PreparedNative,
-    pub receipt: native::NativeReceipt,
-}
+pub(crate) type FamilyReceipt = native::NativeFamilyReceipt;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -621,7 +616,7 @@ pub(crate) fn run(
     let mut families = BTreeMap::new();
     let mut passed = true;
     let mut diagnostic = String::new();
-    let mut retained =
+    let retained =
         prepared.references.iter().chain(overlay.files.values()).try_fold(4 * MAX_RECORD, |sum, reference| {
             sum.checked_add(reference.bytes).context("original initial extent overflow")
         })?;
@@ -679,53 +674,28 @@ pub(crate) fn run(
                 .collect::<Vec<_>>();
             let prepared_families =
                 verifier.prepare_native_catalog(&requests, &crate::translation_native::ScopeApproval)?;
-            for ((name, _), family) in declarations.iter().zip(prepared_families) {
-                // Preparation always reads the reviewed baseline. Candidate
-                // variability is limited by the separately bound approved set.
-                let family = family?;
-                ensure!(sealed(&family)? == prepared.native[name], "original native preparation changed: {name}");
-                let capacity = family.required_output_bytes()?.min(output_limit.saturating_sub(retained));
-                ensure!(
-                    capacity >= MAX_FAMILY_RECORD,
-                    "original catalog evidence budget exhausted before family launch"
-                );
-                let family_runtime = native::ConfinedEnvironment {
-                    helper: runtime.native.helper.clone(),
-                    rustc: runtime.native.rustc.clone(),
-                    c_compiler: runtime.native.c_compiler.clone(),
-                    operation_root: runtime.native.operation_root.clone(),
-                    pipeline_root: runtime.native.pipeline_root.clone(),
-                    workers: runtime.native.workers,
-                    gate_timeout_seconds: runtime.native.gate_timeout_seconds,
-                    deadline_unix_ms: runtime.native.deadline_unix_ms,
-                    max_output_bytes: capacity,
-                };
-                let receipt = family.verify(
-                    native::NativeTarget {
-                        checkout: &overlay.root,
-                        output: &output.join("native").join(name),
-                        context: &child(context, name)?,
-                        fixture_jobs: None,
-                    },
-                    &family_runtime,
-                    verifier.host_inputs(),
-                )?;
-                family.authenticate(native::NativeEvidence { checkout: &overlay.root, receipt: &receipt })?;
-                retained = retained.checked_add(receipt.evidence_bytes).context("original catalog extent overflow")?;
-                passed = receipt.passed;
-                diagnostic = receipt.diagnostic.clone();
-                let reference = write_with_limit(
-                    &output.join("families").join(format!("{name}.json")),
-                    &FamilyReceipt { prepared: family, receipt },
-                    MAX_FAMILY_RECORD,
-                )?;
-                retained = retained.checked_add(reference.bytes).context("original catalog record extent overflow")?;
-                ensure!(retained <= output_limit, "original catalog exceeded its reserved capacity");
-                families.insert(name.clone(), reference);
-                if !passed {
-                    break;
-                }
-            }
+            let jobs = declarations
+                .keys()
+                .zip(prepared_families)
+                .map(|(name, family)| {
+                    Ok(native::NativeSequenceJob {
+                        family: name.clone(),
+                        prepared: family,
+                        required_prepared_sha256: prepared.native[name].clone(),
+                        context: child(context, name)?,
+                    })
+                })
+                .collect::<Result<Vec<_>>>()?;
+            let sequence = verifier.verify_native_sequence(native::NativeSequence {
+                checkout: &overlay.root,
+                output,
+                environment: &runtime.native,
+                retained_bytes: retained,
+                families: jobs,
+            })?;
+            families = sequence.families;
+            passed = sequence.passed;
+            diagnostic = sequence.diagnostic;
         }
         VerificationStage::Live => unreachable!("stage checked above"),
     }
@@ -786,6 +756,7 @@ pub(crate) fn authenticate(prepared: &PreparedOriginal, receipt: &OriginalReceip
     authenticate_overlay(prepared, &overlay)?;
     let mut passed = true;
     let mut diagnosis = String::new();
+    let mut advisory_bytes = 0u64;
     match verdict.stage {
         VerificationStage::Focused => {
             ensure!(verdict.families.is_empty(), "original controls contain an unprescribed Offline result");
@@ -832,6 +803,9 @@ pub(crate) fn authenticate(prepared: &PreparedOriginal, receipt: &OriginalReceip
                 family
                     .prepared
                     .authenticate(native::NativeEvidence { checkout: &overlay.root, receipt: &family.receipt })?;
+                advisory_bytes = advisory_bytes
+                    .checked_add(family.receipt.advisory_output_bytes()?)
+                    .context("original advisory output extent overflow")?;
                 passed = family.receipt.passed;
                 diagnosis = family.receipt.diagnostic.clone();
             }
@@ -850,7 +824,8 @@ pub(crate) fn authenticate(prepared: &PreparedOriginal, receipt: &OriginalReceip
         sum.checked_add(reference.bytes).context("original evidence extent overflow")
     })?;
     ensure!(
-        bytes == receipt.evidence_bytes && bytes <= verdict.output_limit,
+        bytes == receipt.evidence_bytes
+            && bytes.checked_add(advisory_bytes).is_some_and(|total| total <= verdict.output_limit),
         "original composite evidence extent changed"
     );
     Ok(verdict)

@@ -28,8 +28,15 @@ use translation_execution::{
     retention::Reference,
 };
 
+#[path = "native_graph.rs"]
+mod graph;
 #[path = "native_operations.rs"]
 mod operation_storage;
+#[path = "native_sequence.rs"]
+mod sequence;
+pub use sequence::{
+    NATIVE_FAMILY_RECORD_BYTES, NativeFamilyReceipt, NativeSequence, NativeSequenceJob, NativeSequenceRun,
+};
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
@@ -373,6 +380,19 @@ impl NativeReceipt {
     pub fn retained_references(&self) -> Result<Vec<Reference>> {
         references(self)
     }
+
+    /// Bounded non-evidence output reserved by this intent. This is retention
+    /// accounting only; it cannot admit a result or authorize another producer.
+    pub fn advisory_output_bytes(&self) -> Result<u64> {
+        let output = self.verdict.file.parent().and_then(Path::parent).context("native output missing")?;
+        let intent: NativeIntent = bounded::object(&output.join("native-intent.toml"))?;
+        ensure!(
+            intent.context == self.context && intent.prepared_sha256 == self.prepared_sha256,
+            "native advisory accounting identifies another operation"
+        );
+        graph::validate_allowance(intent.graph_metadata_bytes)?;
+        Ok(intent.graph_metadata_bytes)
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -396,6 +416,14 @@ struct NativeIntent {
     /// A new attempt binds its complete captured mapping before publication.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     captured_inputs: Option<Asset>,
+    /// Optional advisory progress, charged independently from required evidence.
+    /// An absent field retains the historical zero-allocation contract.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    graph_metadata_bytes: u64,
+}
+
+fn is_zero(value: &u64) -> bool {
+    *value == 0
 }
 
 fn now_unix_ms() -> Result<u64> {
@@ -1143,12 +1171,16 @@ fn run_bounded(
                 intent.outer_deadline_unix_ms == runtime.deadline_unix_ms,
                 "native whole-stage deadline changed on retry"
             );
-            authenticate(prepared, &checkout, &receipt)?;
+            let admitted = authenticate(prepared, &checkout, &receipt)?;
+            graph::Progress::new(prepared, &intent, output).replay(&receipt, admitted.cases.len());
             Ok(receipt)
         });
     }
     let saved_intent =
         if intent_exists { Some(bounded::object::<NativeIntent>(&output.join("native-intent.toml"))?) } else { None };
+    if let Some(intent) = &saved_intent {
+        graph::validate_allowance(intent.graph_metadata_bytes)?;
+    }
     let deadline = saved_intent.as_ref().map_or(new_deadline(entered, runtime)?, |intent| intent.deadline_unix_ms);
     let opened = execute_or_reconcile(intent_exists, deadline, || open_prepared(prepared, checkout))?;
     let prepared = &opened;
@@ -1241,6 +1273,7 @@ fn run_bounded(
             let plan = capture_plan.as_ref().context("new native intent has no captured inputs")?;
             let parent_reservation_bytes = parent_reservation(prepared, &checkout)?
                 .checked_add(plan.retained_bytes())
+                .and_then(|bytes| bytes.checked_add(graph::RESERVED_BYTES))
                 .context("native captured parent reservation overflow")?;
             ensure!(
                 runtime.max_output_bytes >= parent_reservation_bytes,
@@ -1262,6 +1295,7 @@ fn run_bounded(
                 c_compiler: c_compiler.clone(),
                 compiler_runtime_sha256,
                 captured_inputs: Some(plan.asset()),
+                graph_metadata_bytes: graph::RESERVED_BYTES,
             };
             atomic_toml(&intent_path, &intent)?;
             intent
@@ -1273,6 +1307,17 @@ fn run_bounded(
         } else {
             None
         };
+        if intent_exists
+            && intent.graph_metadata_bytes > 0
+            && let Some(view) = &captured
+        {
+            let asset = intent.captured_inputs.as_ref().context("captured input binding missing")?;
+            let expected_parent = parent_reservation(prepared, &checkout)?
+                .checked_add(view.retained_native_bytes(asset)?)
+                .and_then(|bytes| bytes.checked_add(intent.graph_metadata_bytes))
+                .context("native captured reservation overflow")?;
+            ensure!(expected_parent == intent.parent_reservation_bytes, "native captured parent reservation changed");
+        }
         let compiler_checkout =
             captured.as_ref().map(|view| view.physical_checkout()).unwrap_or_else(|| checkout.clone());
         let compiler_source =
@@ -1305,6 +1350,8 @@ fn run_bounded(
     };
     let prepared_sha256 = intent.prepared_sha256.clone();
     let candidate_sha256 = intent.candidate_sha256.clone();
+    let progress = graph::Progress::new(prepared, &intent, &output);
+    progress.phase(graph::Phase::Prepared, None);
     let request = VerifyRequest {
         execution: "fresh".into(),
         checkout: checkout.clone(),
@@ -1351,6 +1398,7 @@ fn run_bounded(
             immutable(&run.join("rom.bin"), &bytes)?;
             verdict.rom = Some(crate::family_model::RomIdentity { sha256: sha256(&bytes), bytes: bytes.len() });
         }
+        progress.phase(graph::Phase::Building, None);
         let mut implementation = recipes::build(
             prepared.contract.recipe.as_ref(),
             &prepared.manifest,
@@ -1374,9 +1422,11 @@ fn run_bounded(
         )?;
         verdict.implementation = Some(implementation);
         let tasks = family::ordered_tasks(&prepared.manifest)?;
+        progress.phase(graph::Phase::Fixtures, None);
         if intent.fixture_jobs == 1 {
             // A single worker executes directly without per-fixture thread startup.
             for (routine, fixture, index) in tasks {
+                progress.admit_wave();
                 let fixture_result = || {
                     recipes::fixture(
                         prepared.contract.recipe.as_ref(),
@@ -1393,13 +1443,23 @@ fn run_bounded(
                 } else {
                     fixture_result()?
                 });
+                progress.compared();
+                progress.settle_wave();
             }
         } else {
             let outcomes = crate::fixture_execution::run_waves(
                 &tasks,
                 intent.fixture_jobs,
-                || execution.begin_fixture_group(),
-                || execution.finish_fixture_group(),
+                || {
+                    execution.begin_fixture_group()?;
+                    progress.admit_wave();
+                    Ok(())
+                },
+                || {
+                    execution.finish_fixture_group()?;
+                    progress.settle_wave();
+                    Ok(())
+                },
                 |(routine, fixture, index)| {
                     let fixture_result = || {
                         recipes::fixture(
@@ -1412,7 +1472,11 @@ fn run_bounded(
                             recipes::FixtureExecution::Confined(&execution),
                         )
                     };
-                    if let Some(view) = &captured { view.enter(fixture_result) } else { fixture_result() }
+                    let result = if let Some(view) = &captured { view.enter(fixture_result) } else { fixture_result() };
+                    if result.is_ok() {
+                        progress.compared();
+                    }
+                    result
                 },
             )?;
             let mut failure = None;
@@ -1450,6 +1514,7 @@ fn run_bounded(
     });
     if let Err(error) = result {
         if error.downcast_ref::<translation_execution::ExecutionPending>().is_some() {
+            progress.phase(graph::Phase::OwnershipPending, None);
             return Err(error);
         }
         let diagnostic = format!("{error:#}");
@@ -1463,6 +1528,7 @@ fn run_bounded(
         verdict.error = Some(diagnostic[..end].into());
     }
     source_context::reconcile(8 * bounded::DEFAULT_BYTES, || {
+        progress.phase(graph::Phase::Publishing, None);
         family::inventory_with_limits(&run, &run, &mut verdict.artifacts, retained_tree_limits(&run)?)?;
         atomic_toml(&run.join("verdict.toml"), &verdict)?;
         let operations = collect_operations(prepared, &run, &intent)?;
@@ -1487,6 +1553,7 @@ fn run_bounded(
             "native evidence exceeded prelaunch aggregate reservation"
         );
         ensure!(receipt.evidence_bytes <= receipt.reserved_bytes, "native evidence exceeded reconciled reservation");
+        graph::check_budget(&intent, &receipt)?;
         if receipt.passed {
             authenticate(prepared, &checkout, &receipt)?;
             if now_unix_ms()? >= intent.deadline_unix_ms {
@@ -1499,6 +1566,7 @@ fn run_bounded(
                 receipt.diagnostic = verdict.error.clone().unwrap();
                 receipt.verdict.sha256 = digest(&run.join("verdict.toml"))?;
                 receipt.evidence_bytes = evidence_bytes(&run, &receipt)?;
+                graph::check_budget(&intent, &receipt)?;
                 ensure!(
                     receipt.evidence_bytes <= intent.max_output_bytes,
                     "native failed evidence exceeded aggregate reservation"
@@ -1506,6 +1574,7 @@ fn run_bounded(
             }
         }
         atomic_toml(&receipt_path, &receipt)?;
+        progress.phase(if receipt.passed { graph::Phase::Complete } else { graph::Phase::Rejected }, Some(&receipt));
         Ok(receipt)
     })
 }
@@ -1538,6 +1607,7 @@ fn authenticate_bounded(prepared: &PreparedNative, checkout: &Path, receipt: &Na
     let run = path.parent().context("native verdict has no run parent")?;
     let output = run.parent().context("native run has no output parent")?;
     let intent: NativeIntent = bounded::object(&output.join("native-intent.toml"))?;
+    graph::validate_allowance(intent.graph_metadata_bytes)?;
     ensure!(
         intent.context == receipt.context
             && intent.prepared_sha256 == receipt.prepared_sha256
@@ -1553,6 +1623,7 @@ fn authenticate_bounded(prepared: &PreparedNative, checkout: &Path, receipt: &Na
         let view = open_captured_inputs(prepared, &checkout, run, asset)?;
         let expected_parent = parent_reservation(prepared, &checkout)?
             .checked_add(view.retained_native_bytes(asset)?)
+            .and_then(|bytes| bytes.checked_add(intent.graph_metadata_bytes))
             .context("native captured reservation overflow")?;
         ensure!(intent.parent_reservation_bytes == expected_parent, "native captured parent reservation changed");
     }
@@ -1583,6 +1654,7 @@ fn authenticate_bounded(prepared: &PreparedNative, checkout: &Path, receipt: &Na
         "native completed reservation extent differs"
     );
     ensure!(receipt.evidence_bytes <= receipt.reserved_bytes, "native evidence exceeds retained reservation");
+    graph::check_budget(&intent, receipt)?;
     ensure!(
         !receipt.passed || observed.len() == expected.len(),
         "native fixture pair compiler/execution receipts incomplete"

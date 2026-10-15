@@ -35,6 +35,8 @@ pub const IMPLEMENTATION_SOURCES: &[(&str, &str)] = &[
     ("crates/offline-verification/src/input_view_native.rs", include_str!("input_view_native.rs")),
     ("crates/offline-verification/src/lib.rs", include_str!("lib.rs")),
     ("crates/offline-verification/src/native.rs", include_str!("native.rs")),
+    ("crates/offline-verification/src/native_graph.rs", include_str!("native_graph.rs")),
+    ("crates/offline-verification/src/native_sequence.rs", include_str!("native_sequence.rs")),
     ("crates/offline-verification/src/native_operations.rs", include_str!("native_operations.rs")),
     ("crates/offline-verification/src/plm_fixtures.rs", include_str!("plm_fixtures.rs")),
     ("crates/offline-verification/src/plm_spawn.rs", include_str!("plm_spawn.rs")),

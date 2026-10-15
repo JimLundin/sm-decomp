@@ -42,9 +42,10 @@ pub mod source_facts;
 pub use family_model::{AuthenticateRequest, Verdict, VerifyRequest};
 pub use host::HostInputs;
 pub use native::{
-    AdmittedScope, AuthenticatedNative, ConfinedEnvironment, NativeContract, NativeDeclaration, NativeDeclarationKind,
-    NativeEvidence, NativeLimits, NativePreparation, NativeProvenance, NativeReceipt, NativeTarget, NoScopeAdmission,
-    PreparedNative, ScopeAdmission,
+    AdmittedScope, AuthenticatedNative, ConfinedEnvironment, NATIVE_FAMILY_RECORD_BYTES, NativeContract,
+    NativeDeclaration, NativeDeclarationKind, NativeEvidence, NativeFamilyReceipt, NativeLimits, NativePreparation,
+    NativeProvenance, NativeReceipt, NativeSequence, NativeSequenceJob, NativeSequenceRun, NativeTarget,
+    NoScopeAdmission, PreparedNative, ScopeAdmission,
 };
 pub use ordinary::{PreviousFamily, RegisteredRequest, RegisteredRun};
 pub use sources::IMPLEMENTATION_SOURCES;
