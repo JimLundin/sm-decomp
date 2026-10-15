@@ -7,15 +7,16 @@ Authorization: user instructed "please go ahead and implement" the nine-ticket p
 
 ## Current state (supersedes historical observations below)
 
-Latest continuation: final assembly is now `cc059fd`, adding source-ready 08
-(`3e02b61`, merge `8b5ebd5`) and operator/Native-obligation documentation to
-`45b89f8`; no final combined build has started. Graph checkpoint `00edc00` compiles,
-five ordinary actual-C controls pass, and final memory/locality/Native controls
-remain active. Native test source `1b0b75c` passes compiler controls but its old
-runtime mutation now refuses at capture; `ad8b706` preserves cleanup and independent
-admission of that incomplete run. The same worker is implementing 16 runtime
-diagnostic operations derived from the admitted Native bindings while preserving
-a second complete 16/34 Native evaluation. Exact ownership/targets below remain.
+Latest continuation: final assembly is now `6509381`, including source-ready 08
+(`3e02b61`, merge `8b5ebd5`), Native test repair `955ffc3` (merge `b7463de`) and
+complete runtime-obligation documentation. The focused runtime proof passed all
+16 admitted namespaces, replay and cleanup in 21.86 seconds. Independent admission
+with unavailable compiler/helper environment passed in 2.63 seconds. A fresh
+full-real gate at `955ffc3` is running in exec `87980`; its worker checkpoint is
+`e9ece44`. Root owns final combined verification and has not frozen the final
+controller source yet. Graph checkpoint `00edc00` compiles, five ordinary actual-C
+controls pass, and final memory/locality/Native controls remain active. Exact
+ownership/targets below remain.
 
 Ticket 08's private candidate has 19 retained production/lineage/template inputs,
 passing read-only status/host inspection and an exact changed-request refusal.
@@ -25,15 +26,19 @@ supported isolated Installation preparation still wait for the combined source.
 See the latest comments in tickets 01, 07, 08 and 09; no active production state
 changed and no complete-batch multiplier is established.
 
-Root has taken exclusive Cargo writer ownership of
+Root retains exclusive Cargo writer ownership of
 `/home/jim/sm-decomp-offline-verifier/target` from the completed 08 worker.
-Only unchanged `translation-execution`/`evidence` helper binaries are prebuilding
-from `cc059fd` while remaining graph and test changes finish. Cargo exec `98467`
-uses the `verification` profile, locked/offline jobs1 and a 900-second bound.
-Exact command/resources/process observation are under
+The unchanged `translation-execution`/`evidence` helpers prebuilt from `cc059fd`
+successfully in 74.52 seconds, peak RSS 586,648 KiB. Cargo exec `98467` is complete;
+it used the `verification` profile, locked/offline jobs1 and a 900-second bound.
+Exact command/resources and separately copied tools/debug companions are under
 `/home/jim/sm-decomp-performance-final-proof/helper-build-cc059fd/`.
 Final controller/test-reader build and final source seals still wait for the
 combined freeze. No worker may write this target until root returns it.
+
+The completed 08 worker has resumed independent isolated Installation input
+preparation and the final retention audit. It must wait for root's exact frozen
+source/tool references before sealing the candidate; it owns no Cargo writer.
 
 - Main remains documentation-only; production source matches `5c011eb5d02a54d74903715bffb3f8c15ab78c51`.
   Final assembly is `45b89f844df928478b890c4b4814208dfe44bfb8` in

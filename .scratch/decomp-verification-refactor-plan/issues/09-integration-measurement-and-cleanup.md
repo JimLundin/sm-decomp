@@ -1,6 +1,6 @@
 # Verify the complete refactor and finish the supported rollout
 
-Status: open
+Status: claimed
 Blocked by: 08
 Triage: ready-for-agent
 Type: task
@@ -50,6 +50,12 @@ installation state, cleanup receipts and post-retirement ordinary/Native/Live
 authentication. Resolve the spec only when every required ticket is resolved.
 
 ## Comments
+
+2026-10-15: the existing root integration owner claims final combined verification
+and retirement from assembly `6509381` in
+`/home/jim/sm-decomp-performance-final`. Pending 07 source/control completion and
+the repaired full-real gate still block the final freeze. Exact target, source,
+reader, run and cleanup ownership is in [the checkpoint](../checkpoint.md).
 
 2026-10-15 rollout finding: ticket 08's read-only candidate preparation established
 that the installed registry refuses a different checked request. The available
