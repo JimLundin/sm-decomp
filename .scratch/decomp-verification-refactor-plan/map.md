@@ -1,7 +1,7 @@
 # Performance refactor ticket map
 
 Planning status: complete proposal
-Implementation status: tickets 01, 02 and 05 claimed; no production claims reserved
+Implementation status: 05 resolved; 01 and 02 claimed; no production claims reserved
 
 The active Offline family extraction must finish and its owners must hand over
 the relevant source before these implementation tickets are dispatched. Freeze

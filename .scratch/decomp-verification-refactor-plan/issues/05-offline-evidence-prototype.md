@@ -1,6 +1,6 @@
 # Measure direct indexed Offline evidence
 
-Status: claimed
+Status: resolved
 Blocked by: None
 Triage: ready-for-agent
 Type: prototype
@@ -38,14 +38,45 @@ and staging bytes/files, CPU, memory, reads and full elapsed time.
 
 ## Answer
 
-Pending. Select granularity, writer/import layout, transport and Native contract
-changes only from the comparison. If packing loses overall, propose the narrower
-winning change and update ticket 06 explicitly before implementation.
+Keep the current directory/operation-index formats and implement bounded reuse of
+authenticated bytes within a case/operation admission. Packing the complete
+finished ordinary run lost elapsed time in every alternating comparison, despite
+about 75% lower retained allocation with raw chunks. Ticket 06, the architecture
+and the spec were revised explicitly before production adoption (commit `9070f0f`).
+Direct producer transport remains unmeasured and is neither selected nor ruled
+out by this storage-only experiment.
 
 ## Completion evidence
 
-Pending. Retain exact source, raw measurements and failures. Run both cleanup
-passes, remove disposable builds, authenticate retained proof and record space.
+Implementation: `30cd749c272a42a62c7d3a57bb7d35634291013a`; final study/handoff:
+`5bb08b45b459d2a8f8b86d839a16d961545cd3a3`. Integrated on the isolated performance
+assembly branch at `8b82d4af41a50105a0fc82e4164c74d3f7f9f06f`. This resolves the
+prototype decision, not production verification acceptance or the full refactor.
+
+The [retained study](/home/jim/sm-decomp-performance-evidence-proofs/20261015/evidence-study.md)
+contains exact commands, source/readers, bounds, CPU/RSS, syscall-count limitations
+and all measurements. It used the complete admitted 16-pair ordinary run: 333
+members / 43,675,132 logical bytes. Eighteen alternating samples and 16 explicit
+negative controls passed; current `sm-evidence` independently checked all three
+packed strategies. Median storage lifecycle from finished staging was 0.2628 s
+for directories, 0.9034 s raw, 1.0246 s Merkle and 1.8181 s private writers/import.
+No host/callback/chain/Native transport or end-to-end speedup is claimed.
+
+All writers stopped, both scoped cleanup passes succeeded for samples, controls,
+failed setup and the study. Controls deduplicated 10,354,688 bytes; final study
+cleanup deduplicated 20,971,520 bytes. Removing the private build reclaimed
+76,251,136 allocated bytes plus a 4,096-byte TMPDIR; retained source, exact reader,
+raw results and diagnostics remain. The dependency symlink was unlinked safely.
+
+Root retired `/home/jim/sm-decomp-performance-evidence` after integration. Both
+post-retirement cleanup passes succeeded with zero further bytes reclaimed and
+767 snapshots checked. New readers then authenticated all 18 retained samples,
+and frozen `family-authenticate` returned byte-identical original evidence
+(`50cc84fd73fb6b4d14c635fcd763d3411b9051056a4f70f590258e12bde1c166`).
+See study `logs/post-retirement-after-cleanup-*` and `post-retirement-cleanup*.toml`.
+Available space at that check: 120,924,135,424 bytes. Original frozen source,
+ROM/capture dependencies and baseline readers remain required; the retired worker
+checkout and deleted build target are not dependencies.
 
 ## Comments
 

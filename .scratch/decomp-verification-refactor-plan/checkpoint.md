@@ -59,8 +59,9 @@ parent session above; it did not return separate child UUIDs.
 | `/root/recover_extraction_verification` | Existing final proof parent and architecture verification documents in the frozen extraction worktree; no production source | Handed back after failure localization, passing owner/application unit gates and cleanup; no active writer |
 | `/root/batch_metrics` | Isolated metrics worktree: batch/ordinary timing, related tool metrics/cache/leases and public metrics/family tests | Ticket 01 implementation and bounded controls |
 | `/root/bulk_context_research` | Read-only extracted source; this effort's input and dependency/build research notes | Completed; no producers or source edits |
-| `/root/evidence_prototype` | Isolated evidence-study worktree: Rust example(s) under `crates/evidence/examples/` and prototype handoff/results | 18 storage samples / 16 negative controls passed; final handoff being recorded |
+| `/root/evidence_prototype` | Retained study/source/reader under the evidence proof parent; worker source integrated on assembly branch | Complete; worker checkout retired and all 18 samples reauthenticated afterward |
 | `/root/native_admission` | Isolated Native-admission worktree: operation/retention reader, Native operation composition, scoped behavioral controls | Narrow finalization recovery; all existing limits and formats preserved |
+| `/root/bulk_context` | `/home/jim/sm-decomp-performance-bulk`: captured catalog/declarations/source inputs, bulk Interface and selection/batch composition, scoped tests | Ticket 02 provisional implementation from `c09e47b` |
 
 The recovery verifier handed back clean documentation commit
 `c873849259b8588bb2c870b9b649b319d71b7878` after its pipeline unit gate
@@ -132,3 +133,18 @@ worker waits for the explicit release of the warmed metrics target.
 Ticket 02 is claimed for a provisional isolated bulk-context implementation from
 that interface. Its acceptance still requires final ticket 01 and recovery gates;
 the scheduling refinement is recorded in the ticket/map.
+
+Metrics moved to `/home/jim/sm-decomp-performance-metrics-continuation-target`
+after a real/reflink copy of the idle 1,213,911,040-byte warmed target (5.88s),
+retaining the emitted tools first. Native admission now owns the original
+`/home/jim/sm-decomp-performance-metrics-target`. It reproduced its exact red
+control at `4f43fe7`: 39,501 reader bytes for a 10,482-byte retained closure,
+one failing test in 0.89s, no timeout. Its build took 28.89s. Candidate controls
+follow after scoped failed-run cleanup.
+
+Ticket 05 is resolved: source `30cd749`, handoff `5bb08b4`, assembly `8b82d4a`.
+Current formats remain selected; ticket 06 is bounded independent-admission byte
+reuse. The storage-only results do not measure direct producer transport. Root
+retired the prototype worktree, ran both zero-byte cleanup passes, authenticated
+all 18 retained representations and independently recovered the unchanged
+16-pair ordinary verdict afterward. Exact completion evidence is in ticket 05.
