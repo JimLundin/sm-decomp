@@ -56,10 +56,27 @@ parent session above; it did not return separate child UUIDs.
 
 | Task | Writable ownership | State |
 | --- | --- | --- |
-| `/root/recover_extraction_verification` | Existing final proof parent and architecture verification documents in the frozen extraction worktree; no production source | Original build completed; current-source gates running |
+| `/root/recover_extraction_verification` | Existing final proof parent and architecture verification documents in the frozen extraction worktree; no production source | Handed back after failure localization, passing owner/application unit gates and cleanup; no active writer |
 | `/root/batch_metrics` | Isolated metrics worktree: batch/ordinary timing, related tool metrics/cache/leases and public metrics/family tests | Ticket 01 implementation and bounded controls |
 | `/root/bulk_context_research` | Read-only extracted source; this effort's input and dependency/build research notes | Completed; no producers or source edits |
-| `/root/evidence_prototype` | Isolated evidence-study worktree: Rust example(s) under `crates/evidence/examples/` and prototype handoff/results | Ticket 05 storage-only comparison; no production hooks |
+| `/root/evidence_prototype` | Isolated evidence-study worktree: Rust example(s) under `crates/evidence/examples/` and prototype handoff/results | 18 storage samples / 16 negative controls passed; final handoff being recorded |
+| `/root/native_admission` | Isolated Native-admission worktree: operation/retention reader, Native operation composition, scoped behavioral controls | Narrow finalization recovery; all existing limits and formats preserved |
+
+The recovery verifier handed back clean documentation commit
+`c873849259b8588bb2c870b9b649b319d71b7878` after its pipeline unit gate
+(165 passed / 21 ignored) and cleanup. Its identity remains available for the
+next frozen-source gates; it owns no live writer now.
+Native-admission worktree:
+`/home/jim/sm-decomp-performance-native-admission`, branch
+`performance/native-admission-20261015`, baseline `8bf8acf`.
+Its exact structural-red control is checkpointed at `4f43fe7`; it has not yet run.
+
+Root owns provisional assembly commit `066018d839980f0e23473f15bae08c4053c57611`
+in `/home/jim/sm-decomp-performance-integration`, branch
+`performance/verification-integration-20261015`. It contains the clean recovered
+extraction plus this plan's documentation. This is an unaccepted assembly branch,
+not a main source merge or installed-tool change. Performance workers retain
+their separate writable paths. Final main integration still requires the gates.
 
 The release no-run and helper builds both completed without a replacement launch.
 The original build shell has exited. Baseline verification continues with the
@@ -105,3 +122,13 @@ their own private output ownership. Every worker must record bounded commands,
 exact source/tool identities, failed
 diagnostics, both scoped cleanup passes and independent retained authentication.
 Main Git/index integration and implementer retirement remain with this owner.
+
+## Next implementation dispatch
+
+Ticket 01 WIP source is frozen at `e08619089313c187dbaacc279a4a5c36adc19007`.
+Core reused-timing red/green controls passed; bounded summaries, benchmark
+attribution and interruption controls are compiling. The Native-admission
+worker waits for the explicit release of the warmed metrics target.
+Ticket 02 is claimed for a provisional isolated bulk-context implementation from
+that interface. Its acceptance still requires final ticket 01 and recovery gates;
+the scheduling refinement is recorded in the ticket/map.
