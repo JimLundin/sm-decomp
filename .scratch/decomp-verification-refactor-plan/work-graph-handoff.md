@@ -1,7 +1,9 @@
 # Ticket 07 work graph handoff
 
-Status: claimed implementation, first three public actual-C controls are red on
-the unchanged scheduler. No new Native scheduling contract has been accepted.
+Status: substantive source ready at `4ed5f33`, awaiting the remaining scoped
+controls, finite latency comparison, final cleanup and root-owned integration.
+Ordinary graph and serial Native composition are implemented; no new Native
+scheduling contract has been accepted.
 
 - Owner: `/root/dependency_facts_resume`, parent session
   `01a13e7f-ab01-7413-a1c2-288b08a4b719`.
@@ -79,7 +81,67 @@ Both cleanup passes ran for every finished successful/rejected control, includin
 the initial rejection assertion correction; per-project cleanup output remains
 under `proof/red/`. No build/test process remains active at this checkpoint.
 
-Next: implement the shared ordinary executor and bounded stage projection,
-retaining existing Native waves/Original ordering. Final independent readback,
-both whole-proof cleanup passes and root-owned integrated worktree retirement
-remain required before ticket resolution.
+## Resumed checkpoint, 2026-10-15
+
+Substantive source commit: `4ed5f33`. It includes the prior ordinary/Native
+graph commits through `00edc00`, bounded helper-locality/result-memory work in
+`c08c729`, the generated PLM correction (`2bebe14`, `9dea09f`), source-contract
+and complete-diagnostic correction `d27aca4`, and the approved ordinary capture
+phase correction `4ed5f33` (upstream `2b0e206`). Root owns final assembly and
+shared source registration; its assembled candidate is `6bc0a78`.
+
+- Graph modules are inlined into the already registered `bulk.rs`/`native.rs`
+  paths. Strict implementation input authentication is unchanged.
+- One shared executor bounds resident helper pairs by worker capacity. A finite
+  eight-pair locality quantum does not advance or renew a bypassed fair turn.
+- Provisional result reservations shrink to actual retained record/String/Vec
+  capacities. Long canonical errors grow their reservation; error formatting is
+  counted without a temporary full buffer. Rejection records cross the graph
+  seam with their error instead of being loaded as an unaccounted second copy.
+- Complete primary diagnostics remain in canonical outcomes. Bounded advisory
+  errors are not copied into later blocked canonical outcomes.
+- The two-subject BTree leaf allowance is independently checked with the real
+  allocator for all four concrete value types, not only the accounting formula.
+
+Passing checks at this checkpoint:
+
+- Long actual-C WRAM rejection, including an 8,192-character distinguishing
+  symbol tail and its complete rejection CaseRecord: first red in
+  `long-diagnostic-red.log`, then green in `long-diagnostic-green.log` and
+  `4ed5f33-controls.log`. Each public Project ran both cleanup passes.
+- Real full-catalog capture plus worst-eight-active reservation:
+  `4ed5f33-full-catalog-memory.log`; 177 families, 150,204 cases,
+  348,313,314 captured/base bytes + 393,630,334 completed result bytes +
+  277,268,796 extra active bytes = **1,019,212,444 bytes**, below the unchanged
+  **1,073,741,824-byte** resident bound. This uses the complete real public
+  capture; it does not substitute diagnostic manifests or increase the limit.
+- Two absent-field expired saved Native failure controls:
+  `4ed5f33-expired-replays.log`.
+- Actual historical Native replay: `4ed5f33-legacy-native.log`; eight unchanged
+  producers, original saved deadline/receipt, no new projection or allowance.
+- New Native recovery projection/tamper/publication controls and serial family
+  failure-prefix retry: `4ed5f33-controls.log`; automatic cleanup and independent
+  retained Native prefix reader pass. No repeat of the full Native matrix.
+
+The same public control set exposed a test-setup issue: its synthetic Rust
+fork/filesystem/process imports were rejected by the existing strict source-fact
+contract before scheduling. A test-only correction now uses a permitted Rust
+yield loop, pinned C fork/sleep, an independently completed actual-C case, and
+trusted controller `/proc` observations. Production admission remains unchanged.
+
+Remaining checklist:
+
+1. Finish corrected cancellation control, checkpoint its test-only changes.
+2. Root runs the five already requested standalone family regressions using its
+   combined target; no duplicate pipeline build in this worktree.
+3. Run exactly three alternating baseline/candidate maximum-window pairs with
+   `SM_PIPELINE_METRICS=enabled`, four shared producer slots, all 192 Fixture
+   pairs, fixed profile/workload, and recorded host/cache conditions.
+4. Retain exact readers/tools and evidence, run both whole-proof cleanup passes,
+   authenticate retained proofs, then hand root the final source/test commits
+   for integrated worktree retirement.
+
+Earlier maximum-window diagnostic samples remain in `window-maximum-before.log`
+and `window-maximum-affinity.log`: helper starts fell 322 to 56, but Fixture wall
+rose 52.761 to 55.935 seconds in that single pair. This is a resource reduction,
+not established latency improvement. The final finite comparison remains open.
