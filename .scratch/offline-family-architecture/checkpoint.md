@@ -9,7 +9,10 @@ User authorization: approved the rendered design and instructed "go ahead".
 The complete assembled implementation is in
 `/home/jim/sm-decomp-offline-verifier`, branch
 `architecture/offline-verifier-20261015`. Frozen verification source is
-`15d5a7e`; subsequent handoff/checkpoint commits change documentation only.
+`15d5a7e`; subsequent handoff/checkpoint commits change documentation only,
+apart from test-only overlay `09ea8ca`. It moves the pointer-normalization C-helper check
+from `pipeline/tests/family.rs` to `offline-verification/tests/dispatcher_pointer.rs`.
+It preserves every assertion and does not change production or stamped source.
 Main is at `5c011eb` and will receive the verified branch after the final gates.
 Main's foundation commits were confirmed identical to worker commits `446dd64`
 and `aeb6632`; the assembly merge preserves the newer implementation and imports
@@ -63,8 +66,8 @@ All Cargo work is locked/offline; the optimized verification build uses one job.
   `out/offline-architecture/combined-all-targets-check.log`. Final cleanup
   removed the newly unused export/wrapper reported by this check. The new
   owners' dependency graph has no upward dependency.
-- Final formatting passed. The optimized combined test build is running in
-  exec session `9031` from the verifier worktree:
+- Final formatting passed. The optimized combined test build passed in
+  31m58s from the verifier worktree:
   `cargo test --locked --offline --release -j 1 -p tool-execution -p decomp-source -p offline-verification -p pipeline --no-run`.
 - Persistent proof parent:
   `/home/jim/sm-decomp-offline-architecture-proofs/15d5a7e-20261015`.
@@ -73,15 +76,23 @@ All Cargo work is locked/offline; the optimized verification build uses one job.
   Build log: `logs/test-build.log`; dependency review: `logs/dependencies.txt`.
   The emitted pipeline test reader is retained under `tools/sm-pipeline-tests`;
   its exact Cargo fingerprint is in `logs/pipeline-test-build-fingerprint.json`.
-  Final Cargo output must agree with the retained artifact path
+  Final Cargo output and `cmp` agree with the retained artifact path
   `target/release/build/pipeline/5c82b7b185b372cf/out/sm_pipeline-5c82b7b185b372cf`.
-- The initial pipeline unit run finished: 150 passed, 15 failed during setup,
-  21 ignored (`logs/pipeline-unit.log`). The worktree lacked the private ROM,
-  `SM_TRANSLATION_TEST_HELPER` and `SM_TRANSLATION_RECORDED_REWRITE`. The ROM
-  is now copied and hash-checked. Build both current `translation-execution`
-  binaries after the active build, retain them under `tools/`, set both variables
-  and rerun the pipeline unit suite, including helper-dependent conditional
-  controls. No source change is needed for these setup failures.
+- All 63 owner tests passed: 13 `decomp-source`, 11 `tool-execution`,
+  39 `offline-verification`; one optional real reservation measurement ignored.
+  Logs: `logs/decomp-source.log`, `tool-execution.log`, `offline-verification.log`.
+  Both cleanup passes over `owner-tmp` succeeded with zero bytes; it is removed.
+- Pipeline unit tests passed: 165 passed, 21 ignored, 224.51 seconds
+  (`logs/pipeline-unit-2.log`). This includes helper-dependent confinement,
+  lifecycle, ordered launch and replay controls. Both cleanup passes over
+  `unit-tmp-2` succeeded with zero bytes. Two tiny synthetic launch fixtures
+  remain for final disposal. The Original supervisor proof removes its own root.
+- The initial unit run had 150 passes and 15 setup failures because the private
+  ROM and current helper environment were missing (`logs/pipeline-unit.log`).
+  Diagnostics remain; the complete passing rerun supersedes this result.
+  The ROM is copied and hashed. Current release sandbox, recorded-rewrite,
+  evidence reader, pipeline CLI and pipeline test reader are retained in
+  `tools/`; `tools/executables.sha256` records exact hashes.
 - Both cleanup passes over the first `unit-tmp/` succeeded with zero targets
   and zero bytes (`logs/unit-setup-failure-cleanup*.toml`). Unsealed constructor
   inputs remain there; there are no receipts or verdicts. Preserve diagnostics
@@ -92,9 +103,39 @@ All Cargo work is locked/offline; the optimized verification build uses one job.
   This gate launches no producer. `catalog/cleanup*.toml` records both successful
   zero-byte cleanup passes. Keep `catalog-source/`, including generated PLM
   inputs, intact. Do not rerun this completed gate without a source change.
-- The remaining combined behavioral suites, ordinary retained run and two real
-  Native execution proofs are pending. Follow `native-verification-plan.md`;
-  preserve the complete matrix, negative controls and current budgets.
+- Ordinary actual-C verification passed: 16 Fixture pairs, two routines.
+  Retained verdict: `ordinary/1792051572065878-996235-0/verdict.toml`.
+  Requests: `ordinary-verify.toml`, `ordinary-authenticate.toml`; logs:
+  `logs/ordinary.log`, `ordinary.time`, `ordinary-authenticated-after-cleanup.toml`.
+  Cleanup reclaimed zero bytes; deduplication reclaimed 4,194,304 bytes across
+  48 snapshots. Authentication passed afterward.
+- CLI integration: 76 tests passed across `affected`, `assignment_queue`,
+  `baseline`, `benchmark`, `build_preparation`, `callback`, `cleanup`, `decomp`,
+  `decomp_sessions` (`logs/integration.log`). One optional build measurement
+  was ignored; the following evidence target lacked its helper at setup.
+  Both cleanup passes over `integration-tmp` succeeded.
+- With all helpers configured, `evidence_metrics` passed five tests and
+  `family` passed 18, with two optional tests ignored (`logs/integration-2.log`).
+  The one failure read the removed private pipeline C-helper path; the
+  test-only relocation above fixes its ownership. Both cleanup passes over
+  `integration-tmp-2` succeeded with zero bytes. The relocated owner integration
+  test passed (`logs/dispatcher-pointer.log`); both cleanup passes reclaimed
+  zero bytes and its empty TMPDIR is removed. The exact overlay is retained in
+  `logs/test-relocation-commit.txt` and `logs/test-relocation.patch`.
+- Pending CLI targets: `fixture`, `hdma_probe`, `iteration_demonstrations`,
+  `live`, `live_frames`, `metrics`, `no_python`, `observations`, `packed`,
+  `parity`, `pattern_promotion`, `patterns`, `plm_spawn`, `prefix`, `processes`,
+  `producer_metrics`, `readiness_feedback`, `readiness_interrupt`,
+  `resource_metrics`, `routine_jobs`, `selection`, `session_authority`.
+  These are running in exec session 11117, with the changed family target,
+  locked/offline release, one Cargo job, one test thread, all four current
+  helper variables and fresh `integration-tmp-3`. Log: `logs/integration-3.log`.
+  Other passing groups need not be repeated.
+- Both real Native execution proofs remain pending. Follow
+  `native-verification-plan.md`; preserve the 12 complete recipes (8,159 pairs),
+  full-family negative controls and current budgets. `SM_NATIVE_PERFORMANCE_ONLY`
+  must be absent. Use the retained test reader and `frozen-source` overrides;
+  keep the original `15d5a7e` source identity separate from the test-only overlay.
 
 ## Cleanup and remaining work
 
@@ -112,8 +153,8 @@ Remaining implementation worktrees are:
 - `/home/jim/sm-decomp-offline-native`: stopped, clean, integrated.
 - `/home/jim/sm-decomp-offline-callers`: stopped, clean, integrated.
 
-Next: finish optimized readers/helper, run the combined suites, then the complete
-catalog/real recipe/full-family Native proofs. Retain exact tools and source,
+Next: finish the relocated pointer check and remaining CLI suites, then the
+real recipe/full-family Native proofs. Retain exact tools and source,
 run both cleanup passes, authenticate retained evidence, integrate on main,
 retire only these worktrees/build outputs and authenticate again. Resolve
 tickets 03–05 and the spec only after those checks and cleanup succeed.
