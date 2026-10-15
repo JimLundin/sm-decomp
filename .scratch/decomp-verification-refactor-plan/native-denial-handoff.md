@@ -1,6 +1,6 @@
 # Native negative-control adaptation
 
-Status: claimed; compiler controls passed, newly reached runtime control needs adaptation.
+Status: claimed; complete runtime namespace adaptation authored, compilation and gates pending.
 Owner: `/root/bulk_context_resume`, parent `/root`, session
 `01a13e7f-ab01-7413-a1c2-288b08a4b719`.
 Main tracking: verification refactor ticket 01, integration-owner claim.
@@ -62,10 +62,23 @@ reader passed every completed retained case in 1.48s afterward, recorded in
 `logs/failed-full-real-reader.{log,time}`. Remaining disk space was
 95,679,139,840 bytes. No writer remains in either proof.
 
-The root integration owner was notified of this newly reached stale runtime
-fixture. Next adapt its actual runtime denial through a test-only explicit
-Program while preserving early Native runtime-input refusal and the complete
-required family exercise. No production scanner or runtime change is allowed.
+The root integration owner required the complete second 16-pair/34-producer
+Native run and a diagnostic operation in every admitted Rust fixture namespace.
+That test-only adaptation is now authored. The original std::fs mutation has
+its own exact capture-refusal record. A trusted standalone probe compiles through
+the admitted Native Rust compiler with a single explicitly bound source. Every
+runtime Program copies the independently admitted original argv, inputs, runtime,
+helper, outputs and five-second/512-KiB limits, replacing only the executable.
+All 16 probes require the parent read/write, sibling-state and C-program read
+denials, then copy declared before.wram to declared after.wram and emit one exact
+success marker. These diagnostic results grant no additional Native Fixture pass.
+
+The probe compiler and all 16 executions have separate durable results, exact
+retry/hash/mtime checks and a retained reader binding them to the admitted Native
+invocations and compiled executable. The real protected host parent, sibling
+state and C executable must exist and remain unchanged. A focused runtime gate
+can reuse the already admitted 1b0b75c positive as its namespace seed, before a
+fresh complete full-real gate. No production scanner/runtime source changed.
 
 Pending: runtime-control adaptation, repaired full-real gate, its cleanup and independent authentication,
 retirement-reference audit and final handoff. Compiler,
