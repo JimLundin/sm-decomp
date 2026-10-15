@@ -380,7 +380,16 @@ fn dependency_inventory_bounded(
             run.join(p)
         };
         let path = if let Some(view) = crate::input_view::current() {
-            if path.starts_with(&run) { path } else { view.physical(&path)? }
+            // Retained Native captures live below run, but remain source
+            // dependencies. Only the recipe's known generated Rust files gain
+            // the run-prefix exemption.
+            if view.logical(&path).is_ok() {
+                view.physical(&path)?
+            } else if ["wrapper.rs", "memory.rs", "fixture-worker.rs"].iter().any(|name| path == run.join(name)) {
+                path
+            } else {
+                anyhow::bail!("unbound compiler dependency: {}", path.display());
+            }
         } else {
             path
         };
@@ -396,10 +405,22 @@ fn dependency_inventory_bounded(
     let mut result = BTreeMap::new();
     for (index, p) in paths.into_iter().enumerate() {
         bounded::check()?;
-        if p.starts_with(&run) {
-            continue;
-        }
-        let logical = if let Some(view) = crate::input_view::current() { view.logical(&p)? } else { p.clone() };
+        let logical = if let Some(view) = crate::input_view::current() {
+            if let Ok(logical) = view.logical(&p) {
+                logical
+            } else {
+                ensure!(
+                    ["wrapper.rs", "memory.rs", "fixture-worker.rs"].iter().any(|name| p == run.join(name)),
+                    "unbound retained compiler dependency"
+                );
+                continue;
+            }
+        } else {
+            if p.starts_with(&run) {
+                continue;
+            }
+            p.clone()
+        };
         let logical_checkout =
             crate::input_view::current().map(|view| view.checkout().to_path_buf()).unwrap_or_else(|| checkout.clone());
         let key = logical.strip_prefix(&logical_checkout).unwrap_or(&logical).to_string_lossy().into_owned();

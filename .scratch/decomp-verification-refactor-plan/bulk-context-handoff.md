@@ -8,6 +8,33 @@ Baseline: `c09e47b66a35e6d61dab4065cb7e30d16ff28119`.
 
 ## Current checkpoint
 
+The resumed coherent source checkpoint now implements retained Native capture.
+Its complete deterministic mapping is reserved and bound by the intent before
+publication and is also a compiler Program input. Captured source under the run
+directory remains a logical dependency; only exact recipe-generated Rust files
+receive the generated exemption. Independent receipt admission reopens and
+checks the mapping and complete membership without rematerialization or any
+compiler. Original source/candidate checks, compiler slots, operation collection,
+receipt formats and deadlines remain; the intent's optional capture field keeps
+old retained attempts on their original direct-input contract.
+
+Public actual-C controls are authored in `tests/bulk_inputs.rs`: complete ordinary
+single/bulk observations, Rust and C compiler path semantics, post-capture source
+mutation, macro/continued include escape refusal, and Native capture/replay with
+unavailable tools plus current/retained source and extra-member tampering. They
+have compiled but have not executed. The bounded locked/offline no-run build
+passed in 16.66 seconds; log:
+`/home/jim/sm-decomp-performance-bulk-proof/capture-20261015/logs/no-run.log`.
+The exact library and integration-test executables are in the exclusive warmed
+target. Next integrate ticket 03's captured-facts cache `3710ab0`, retaining its
+metadata memory reservations, rebuild frozen source/tools, then run these gates
+with the proof root's private TMPDIR and both cleanup passes.
+
+Ticket 04's `BuildContext` interface is integrated and attached to ordinary
+captures only. Native compilation still uses its separately attributed original
+producer slots. Ticket 03 aliases and metadata guards are preserved. Root's
+zero-copy declaration method is independently available at `f7d19b2`.
+
 The first slice is committed at `94104cc`. The next source checkpoint adds
 ordinary captured compiler/source/asset inputs, pre-lock `BatchInputs`, logical
 path remapping and compiler dependency binding, bounded generation from the

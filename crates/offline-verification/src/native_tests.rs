@@ -629,6 +629,7 @@ fn saved_failure_replay(retain_plm: bool) -> Result<()> {
         rustc: runtime.rustc.clone(),
         c_compiler: runtime.c_compiler.clone(),
         compiler_runtime_sha256: sha256("none"),
+        captured_inputs: None,
     };
     atomic_toml(&output.join("native-intent.toml"), &intent)?;
     if retain_plm {

@@ -15,6 +15,10 @@ use std::{
 };
 use tool_execution::bounded;
 
+#[path = "input_view_native.rs"]
+mod retained;
+pub(crate) use retained::NativeCapturePlan;
+
 thread_local! {
     static CURRENT: RefCell<Option<Arc<InputView>>> = const { RefCell::new(None) };
 }
@@ -39,12 +43,15 @@ pub(crate) struct InputView {
     namespace: Arc<Vec<PathBuf>>,
     source_identity: Arc<Source>,
     declarations: Arc<Declarations>,
+    builds: Arc<tool_execution::builds::BuildContext>,
     reserved_bytes: u64,
     metadata_bytes: u64,
     compiler_inputs: Arc<BTreeSet<PathBuf>>,
     common_inputs: Arc<BTreeSet<PathBuf>>,
     family_inputs: Arc<BTreeMap<(PathBuf, Vec<String>), BTreeSet<PathBuf>>>,
     selected_inputs: Option<BTreeSet<PathBuf>>,
+    retained: bool,
+    confined: bool,
     /// A generated family may add a trusted asset while sharing the same
     /// compiler tree. Its parent owns that directory and the original bytes.
     parent: Option<Arc<InputView>>,
@@ -54,7 +61,7 @@ impl Drop for InputView {
     fn drop(&mut self) {
         // Only this invocation creates this directory. All family workers hold
         // an Arc, so it cannot be removed while a compiler or fixture uses it.
-        if self.parent.is_none() {
+        if self.parent.is_none() && !self.retained {
             let _ = fs::remove_dir_all(&self.directory);
         }
         self.declarations.release(self.reserved_bytes);
@@ -94,12 +101,15 @@ impl InputView {
                 namespace: Arc::new(namespace),
                 source_identity: Arc::new(source_identity),
                 declarations: declarations.clone(),
+                builds: Arc::new(tool_execution::builds::BuildContext::default()),
                 reserved_bytes: 0,
                 metadata_bytes: 0,
                 compiler_inputs: Arc::new(BTreeSet::new()),
                 common_inputs: Arc::new(BTreeSet::new()),
                 family_inputs: Arc::new(BTreeMap::new()),
                 selected_inputs: None,
+                retained: false,
+                confined: false,
                 parent: None,
             };
             let mut paths = BTreeMap::<PathBuf, Option<String>>::new();
@@ -164,7 +174,8 @@ impl InputView {
             }
             ensure!(paths.len() <= 16384, "captured input inventory exceeded");
             let metadata_bytes = view.namespace.iter().chain(paths.keys()).try_fold(4096u64, |total, path| {
-                total.checked_add(path.as_os_str().len() as u64 * 8 + 1024)
+                total
+                    .checked_add(path.as_os_str().len() as u64 * 8 + 1024)
                     .context("captured source metadata extent overflow")
             })?;
             view.declarations.reserve_metadata(metadata_bytes)?;
@@ -192,7 +203,8 @@ impl InputView {
         // The cloned inventory owns only path/hash metadata; source buffers
         // stay shared, with their original reservation held by the parent.
         let metadata_bytes = self.files.iter().try_fold(1024u64, |total, (path, file)| {
-            total.checked_add((path.as_os_str().len() + file.physical.as_os_str().len()) as u64 * 2 + 512)
+            total
+                .checked_add((path.as_os_str().len() + file.physical.as_os_str().len()) as u64 * 2 + 512)
                 .context("generated input metadata reservation overflow")
         })?;
         self.declarations.reserve_metadata(metadata_bytes)?;
@@ -204,12 +216,15 @@ impl InputView {
             namespace: self.namespace.clone(),
             source_identity: self.source_identity.clone(),
             declarations: self.declarations.clone(),
+            builds: self.builds.clone(),
             reserved_bytes: 0,
             metadata_bytes,
             compiler_inputs: self.compiler_inputs.clone(),
             common_inputs: self.common_inputs.clone(),
             family_inputs: self.family_inputs.clone(),
             selected_inputs: self.selected_inputs.clone(),
+            retained: self.retained,
+            confined: self.confined,
             parent: Some(self.clone()),
         };
         view.capture_file(generated.rom.clone(), Some(&generated.rom_sha256))?;
@@ -234,8 +249,16 @@ impl InputView {
         let physical = self.destination(&path)?;
         fs::create_dir_all(physical.parent().context("captured input parent missing")?)?;
         let (bytes, hash, maximum) = if !self.compiler_inputs.contains(&path) {
-            let maximum = if path == Path::new(crate::inputs::CAPTURED_RIDLEY_EVENT) { 128 * 1024 * 1024 } else { bounded::MAX_FILE_BYTES };
-            let hash = if let Some(expected) = expected { expected.to_owned() } else { self.source_hash(&path, maximum, false)? };
+            let maximum = if path == Path::new(crate::inputs::CAPTURED_RIDLEY_EVENT) {
+                128 * 1024 * 1024
+            } else {
+                bounded::MAX_FILE_BYTES
+            };
+            let hash = if let Some(expected) = expected {
+                expected.to_owned()
+            } else {
+                self.source_hash(&path, maximum, false)?
+            };
             bounded::immutable_copy(&path, &physical, &hash, maximum)?;
             self.declarations.counters.source_reads.fetch_add(1, Ordering::Relaxed);
             self.declarations.counters.source_bytes.fetch_add(extent, Ordering::Relaxed);
@@ -278,6 +301,9 @@ impl InputView {
     pub fn source_identity(&self) -> &Source {
         &self.source_identity
     }
+    pub(crate) fn build_context(&self) -> &tool_execution::builds::BuildContext {
+        &self.builds
+    }
     pub fn physical_checkout(&self) -> PathBuf {
         self.directory.join("checkout")
     }
@@ -300,18 +326,37 @@ impl InputView {
     /// shared compiler union. Full invocation checks stay at batch barriers.
     pub(crate) fn for_family(self: &Arc<Self>, manifest: &Manifest) -> Result<Arc<Self>> {
         let mut selected = (*self.common_inputs).clone();
-        selected.extend(self.family_inputs.get(&self.family_key(manifest)).context("family source scope was not captured")?.iter().cloned());
+        selected.extend(
+            self.family_inputs
+                .get(&self.family_key(manifest))
+                .context("family source scope was not captured")?
+                .iter()
+                .cloned(),
+        );
         let reserved_bytes = selected.iter().try_fold(512u64, |total, path| {
-            total.checked_add(path.as_os_str().len() as u64 * 2 + 128)
+            total
+                .checked_add(path.as_os_str().len() as u64 * 2 + 128)
                 .context("family input metadata reservation overflow")
         })?;
         self.declarations.reserve_metadata(reserved_bytes)?;
         Ok(Arc::new(Self {
-            checkout: self.checkout.clone(), source: self.source.clone(), directory: self.directory.clone(),
-            files: self.files.clone(), namespace: self.namespace.clone(), source_identity: self.source_identity.clone(),
-            declarations: self.declarations.clone(), reserved_bytes: 0, metadata_bytes: reserved_bytes,
-            compiler_inputs: self.compiler_inputs.clone(), common_inputs: self.common_inputs.clone(),
-            family_inputs: self.family_inputs.clone(), selected_inputs: Some(selected), parent: Some(self.clone()),
+            checkout: self.checkout.clone(),
+            source: self.source.clone(),
+            directory: self.directory.clone(),
+            files: self.files.clone(),
+            namespace: self.namespace.clone(),
+            source_identity: self.source_identity.clone(),
+            declarations: self.declarations.clone(),
+            builds: self.builds.clone(),
+            reserved_bytes: 0,
+            metadata_bytes: reserved_bytes,
+            compiler_inputs: self.compiler_inputs.clone(),
+            common_inputs: self.common_inputs.clone(),
+            family_inputs: self.family_inputs.clone(),
+            selected_inputs: Some(selected),
+            parent: Some(self.clone()),
+            retained: self.retained,
+            confined: self.confined,
         }))
     }
 
@@ -400,10 +445,7 @@ impl InputView {
     pub fn validate_materialized(&self) -> Result<()> {
         for path in self.selected_compiler_inputs() {
             let file = &self.files[path];
-            ensure!(
-                self.materialized_hash(file)? == file.sha256,
-                "captured compiler bytes changed"
-            );
+            ensure!(self.materialized_hash(file)? == file.sha256, "captured compiler bytes changed");
         }
         Ok(())
     }
@@ -415,7 +457,11 @@ impl InputView {
         );
         for path in self.selected_compiler_inputs() {
             let file = &self.files[path];
-            ensure!(self.source_hash(path, file.maximum, true)? == file.sha256, "source changed after capture: {}", path.display());
+            ensure!(
+                self.source_hash(path, file.maximum, true)? == file.sha256,
+                "source changed after capture: {}",
+                path.display()
+            );
         }
         Ok(())
     }
@@ -446,7 +492,10 @@ impl InputView {
         for path in paths {
             bounded::safe(path)?;
             if let Some((logical, file)) = self.files.iter().find(|(_, file)| &file.physical == path) {
-                ensure!(self.selected_compiler_inputs().contains(logical), "C dependency is outside selected captured inputs");
+                ensure!(
+                    self.selected_compiler_inputs().contains(logical),
+                    "C dependency is outside selected captured inputs"
+                );
                 ensure!(self.materialized_hash(file)? == file.sha256, "captured C dependency changed");
             } else if generated.contains(path) {
                 ensure!(path.symlink_metadata()?.is_file(), "generated C input is not regular");
@@ -456,8 +505,11 @@ impl InputView {
                 // every actual header identity and rechecks it after waits and
                 // builds; membership alone never authenticates header bytes.
                 ensure!(
-                    ["/usr/include", "/usr/lib/gcc/x86_64-linux-gnu/9/include"].iter().any(|root| path.starts_with(root)),
-                    "C dependency is outside captured inputs: {}", path.display()
+                    ["/usr/include", "/usr/lib/gcc/x86_64-linux-gnu/9/include"]
+                        .iter()
+                        .any(|root| path.starts_with(root)),
+                    "C dependency is outside captured inputs: {}",
+                    path.display()
                 );
                 bounded::digest(path)?;
             }
@@ -511,6 +563,11 @@ impl InputView {
     }
 
     pub fn remap_arguments(&self, rust: bool) -> Vec<String> {
+        // Confined Programs already expose the stable /inputs/rust and
+        // /inputs/c paths. Host capture directories must never enter argv.
+        if self.confined {
+            return Vec::new();
+        }
         let prefix = if rust { "--remap-path-prefix=" } else { "-ffile-prefix-map=" };
         let mut arguments = vec![
             format!("{prefix}{}={}", self.physical_checkout().display(), self.checkout.display()),

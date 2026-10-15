@@ -185,7 +185,8 @@ impl Declarations {
     }
 
     pub fn reserve(&self, amount: u64) -> Result<()> {
-        let previous = self.counters
+        let previous = self
+            .counters
             .retained_bytes
             .try_update(Ordering::Relaxed, Ordering::Relaxed, |used| {
                 used.checked_add(amount).filter(|next| *next <= self.maximum)

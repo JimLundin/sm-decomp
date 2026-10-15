@@ -35,6 +35,7 @@ pub(crate) struct StrictExecution {
     pub fixture_limits: RunLimits,
     pub rust_inputs: Vec<PathBuf>,
     pub c_inputs: Vec<PathBuf>,
+    pub capture_record: Option<PathBuf>,
     pub deadline_unix_ms: u64,
     /// Entire gate reservation includes live quotas, durable results and the
     /// parent copies. Reserving before launch bounds peak production bytes.
@@ -74,11 +75,19 @@ pub(crate) fn ordinary_c_build(
     workers: usize,
 ) -> Result<ExecutionRecord> {
     let view = crate::input_view::current().context("ordinary C compilation requires captured inputs")?;
-    let generated = description.generated.iter().map(|name| fs::canonicalize(run.join(name)))
+    let generated = description
+        .generated
+        .iter()
+        .map(|name| fs::canonicalize(run.join(name)))
         .collect::<std::io::Result<std::collections::BTreeSet<_>>>()?;
-    tool_execution::builds::c_build_with_inputs(
+    tool_execution::builds::c_build_in(
+        view.build_context(),
         tool_execution::builds::CBuildRequest {
-            command: description.command.clone(), run: run.into(), checkout: checkout.into(), root: root.into(), workers,
+            command: description.command.clone(),
+            run: run.into(),
+            checkout: checkout.into(),
+            root: root.into(),
+            workers,
         },
         &|paths| view.validate_c_inputs(paths, &generated),
     )
@@ -254,6 +263,7 @@ impl StrictExecution {
                 c_inputs: &self.c_inputs,
                 checkout,
                 source,
+                capture_record: self.capture_record.as_deref(),
             },
         )?;
         self.execute(&program, &self.compiler_limits, run, label)
@@ -563,6 +573,7 @@ mod strict_tests {
             fixture_limits: limits.clone(),
             rust_inputs: vec![],
             c_inputs: vec![],
+            capture_record: None,
             deadline_unix_ms,
             max_output_bytes,
             reserved_bytes: Mutex::new(0),
@@ -659,6 +670,7 @@ mod strict_tests {
             fixture_limits: limits.clone(),
             rust_inputs: Vec::new(),
             c_inputs: Vec::new(),
+            capture_record: None,
             deadline_unix_ms: 0,
             max_output_bytes: 4096,
             reserved_bytes: Mutex::new(0),
@@ -715,7 +727,7 @@ fn immutable_output(path: &Path, bytes: &[u8]) -> Result<()> {
 pub(crate) fn prepare_fixture_worker(request: crate::authoring::FixtureWorkerRequest) -> Result<CacheResult> {
     fs::create_dir_all(&request.run)?;
     let mut metrics = crate::metrics::Run::start(request.run.join("helper-build.metrics.toml"), "helper-build")?;
-    let result = tool_execution::builds::standalone_builds(tool_execution::builds::StandaloneBuildRequest {
+    let request = tool_execution::builds::StandaloneBuildRequest {
         checkout: request.checkout,
         root: request.root,
         run: request.run,
@@ -728,7 +740,12 @@ pub(crate) fn prepare_fixture_worker(request: crate::authoring::FixtureWorkerReq
                 .chain(crate::input_view::current().into_iter().flat_map(|view| view.remap_arguments(true)))
                 .collect(),
         }],
-    })
+    };
+    let result = if let Some(view) = crate::input_view::current() {
+        tool_execution::builds::standalone_builds_in(view.build_context(), request)
+    } else {
+        tool_execution::builds::standalone_builds(request)
+    }
     .and_then(|artifacts| artifacts.into_iter().next().context("Fixture worker build returned no artifact"));
     let error = result.as_ref().err().map(|error| format!("{error:#}"));
     let finished = metrics.finish(crate::metrics::outcome(error.as_deref()), error);
@@ -747,6 +764,7 @@ pub(crate) struct CompilerContext<'a> {
     pub c_inputs: &'a [PathBuf],
     pub checkout: &'a Path,
     pub source: &'a Path,
+    pub capture_record: Option<&'a Path>,
 }
 
 /// Resolve the recipe's compiler description identically for execution and
@@ -756,7 +774,8 @@ pub(crate) fn compiler_program(
     run: &Path,
     context: CompilerContext<'_>,
 ) -> Result<Program> {
-    let CompilerContext { helper, rustc, c_compiler, runtime, rust_inputs, c_inputs, checkout, source } = context;
+    let CompilerContext { helper, rustc, c_compiler, runtime, rust_inputs, c_inputs, checkout, source, capture_record } =
+        context;
     let command = &description.command;
     let generated = &description.generated;
     let outputs = &description.outputs;
@@ -764,6 +783,12 @@ pub(crate) fn compiler_program(
     let rust = command.first().is_some_and(|name| name == "rustc");
     let executable = if rust { rustc.to_path_buf() } else { c_compiler.to_path_buf() };
     let mut inputs = Vec::new();
+    if let Some(record) = capture_record {
+        ensure!(record == run.join("captured-inputs.toml"), "native compiler capture record path changed");
+        // Seal the complete logical mapping into each compiler request, so
+        // changing its provenance cannot preserve an old producer result.
+        inputs.push(ReadOnlyBind { source: record.into(), destination: "/inputs/capture-record.toml".into() });
+    }
     for path in if rust { rust_inputs } else { c_inputs } {
         let relative = path.strip_prefix(if rust { checkout } else { source })?;
         inputs.push(ReadOnlyBind {
@@ -788,12 +813,10 @@ pub(crate) fn compiler_program(
             "--emit=link,dep-info=/work/compiler.d".to_owned()
         } else {
             let path = Path::new(argument);
-            if let Ok(relative) = path.strip_prefix(run) {
-                if outputs.iter().any(|name| relative == Path::new(name)) {
-                    Path::new("/work").join(relative).display().to_string()
-                } else {
-                    Path::new("/inputs/generated").join(relative).display().to_string()
-                }
+            if let Some(name) = outputs.iter().find(|name| path == run.join(name)) {
+                Path::new("/work").join(name).display().to_string()
+            } else if let Some(name) = generated.iter().find(|name| path == run.join(name)) {
+                Path::new("/inputs/generated").join(name).display().to_string()
             } else if let Ok(relative) = path.strip_prefix(source) {
                 Path::new("/inputs/c").join(relative).display().to_string()
             } else if let Ok(relative) = path.strip_prefix(checkout) {

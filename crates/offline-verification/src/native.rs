@@ -392,6 +392,10 @@ struct NativeIntent {
     rustc: PathBuf,
     c_compiler: PathBuf,
     compiler_runtime_sha256: String,
+    /// Older retained attempts keep their original direct-input contract.
+    /// A new attempt binds its complete captured mapping before publication.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    captured_inputs: Option<Asset>,
 }
 
 fn now_unix_ms() -> Result<u64> {
@@ -1040,6 +1044,58 @@ fn candidate_digest(prepared: &PreparedNative, checkout: &Path) -> Result<String
     sealed(&inputs)
 }
 
+fn captured_input_spec(
+    prepared: &PreparedNative,
+    current_checkout: &Path,
+    logical_checkout: &Path,
+) -> Result<(BTreeMap<PathBuf, String>, BTreeSet<PathBuf>)> {
+    let mut expected = BTreeMap::new();
+    for (name, frozen) in &prepared.contract.frozen_inputs {
+        let hash = if mutable_candidate(prepared, name) {
+            digest(&file(&current_checkout.join(name))?)?
+        } else {
+            frozen.clone()
+        };
+        expected.insert(logical_checkout.join(name), hash);
+    }
+    for (name, hash) in &prepared.source.files {
+        expected.insert(prepared.pinned_source.join(name), hash.clone());
+    }
+    if let Some(rom) = &prepared.manifest.rom {
+        let logical = logical_checkout.join(&rom.file);
+        if let Some(previous) = expected.insert(logical, rom.sha256.clone()) {
+            ensure!(previous == rom.sha256, "native captured ROM identity conflicts");
+        }
+    }
+    let compiler = expected
+        .keys()
+        .filter(|path| {
+            path.extension()
+                .and_then(|name| name.to_str())
+                .is_some_and(|name| ["rs", "c", "h", "in", "toml"].contains(&name))
+        })
+        .cloned()
+        .collect();
+    Ok((expected, compiler))
+}
+
+fn open_captured_inputs(
+    prepared: &PreparedNative,
+    checkout: &Path,
+    run: &Path,
+    asset: &Asset,
+) -> Result<Arc<crate::input_view::InputView>> {
+    crate::input_view::InputView::open_native_retained(
+        run,
+        asset,
+        &prepared.pinned_source,
+        &prepared.source,
+        checkout,
+        &prepared.declarations,
+        |logical_checkout| captured_input_spec(prepared, checkout, logical_checkout),
+    )
+}
+
 #[cfg(test)]
 fn run(
     prepared: &PreparedNative,
@@ -1123,6 +1179,34 @@ fn run_bounded(
         };
         let compiler_runtime_sha256 = sealed(&compiler_runtime)?;
         let intent_path = output.join("native-intent.toml");
+        // Completed receipts were reconciled before reaching this point. Only
+        // a new intent, or its interrupted pre-publication capture, can build
+        // a retained view. A complete retained view is reopened in place.
+        let capture_plan: Option<crate::input_view::NativeCapturePlan> = if !intent_exists
+            || saved_intent
+                .as_ref()
+                .and_then(|intent| intent.captured_inputs.as_ref())
+                .is_some_and(|asset| !asset.file.exists())
+        {
+            let (expected, compiler) = captured_input_spec(prepared, &checkout, &checkout)?;
+            let view = crate::input_view::InputView::capture_native(
+                &checkout,
+                &prepared.pinned_source,
+                &prepared.source,
+                &expected,
+                &compiler,
+                &prepared.manifest,
+                &prepared.declarations,
+            )?;
+            check_candidate(prepared, &checkout)?;
+            ensure!(
+                candidate_digest(prepared, &checkout)? == candidate_sha256,
+                "native candidate changed during capture"
+            );
+            Some(view.plan_native_retention(&run)?)
+        } else {
+            None
+        };
         let intent = if let Some(intent) = saved_intent {
             ensure!(
                 intent.context == *context
@@ -1140,6 +1224,13 @@ fn run_bounded(
                     && intent.compiler_runtime_sha256 == compiler_runtime_sha256,
                 "native installed runner configuration changed"
             );
+            if let Some(plan) = &capture_plan {
+                let asset = intent.captured_inputs.as_ref().context("native capture was not reserved by intent")?;
+                ensure!(
+                    asset.file == plan.asset().file && asset.sha256 == plan.asset().sha256,
+                    "native interrupted capture source changed"
+                );
+            }
             intent
         } else {
             let deadline_unix_ms = deadline;
@@ -1147,7 +1238,10 @@ fn run_bounded(
                 now_unix_ms()? < deadline_unix_ms,
                 "native whole-stage time budget exhausted during runtime preparation"
             );
-            let parent_reservation_bytes = parent_reservation(prepared, &checkout)?;
+            let plan = capture_plan.as_ref().context("new native intent has no captured inputs")?;
+            let parent_reservation_bytes = parent_reservation(prepared, &checkout)?
+                .checked_add(plan.retained_bytes())
+                .context("native captured parent reservation overflow")?;
             ensure!(
                 runtime.max_output_bytes >= parent_reservation_bytes,
                 "native parent snapshots exceed aggregate output budget"
@@ -1167,10 +1261,22 @@ fn run_bounded(
                 rustc: rustc.clone(),
                 c_compiler: c_compiler.clone(),
                 compiler_runtime_sha256,
+                captured_inputs: Some(plan.asset()),
             };
             atomic_toml(&intent_path, &intent)?;
             intent
         };
+        let captured = if let Some(plan) = capture_plan {
+            Some(plan.publish()?)
+        } else if let Some(asset) = &intent.captured_inputs {
+            Some(open_captured_inputs(prepared, &checkout, &run, asset)?)
+        } else {
+            None
+        };
+        let compiler_checkout =
+            captured.as_ref().map(|view| view.physical_checkout()).unwrap_or_else(|| checkout.clone());
+        let compiler_source =
+            captured.as_ref().map(|view| view.physical_source()).unwrap_or_else(|| prepared.pinned_source.clone());
         let execution = builds::StrictExecution {
             helper,
             rustc,
@@ -1182,16 +1288,17 @@ fn run_bounded(
             workers: runtime.workers,
             compiler_limits: prepared.contract.compiler_limits.run_limits()?,
             fixture_limits: prepared.contract.fixture_limits.run_limits()?,
-            rust_inputs: prepared.rust_inputs.iter().map(|path| checkout.join(path)).collect(),
-            c_inputs: prepared.c_inputs.iter().map(|path| prepared.pinned_source.join(path)).collect(),
+            rust_inputs: prepared.rust_inputs.iter().map(|path| compiler_checkout.join(path)).collect(),
+            c_inputs: prepared.c_inputs.iter().map(|path| compiler_source.join(path)).collect(),
+            capture_record: intent.captured_inputs.as_ref().map(|asset| asset.file.clone()),
             deadline_unix_ms: intent.deadline_unix_ms,
             max_output_bytes: intent.max_output_bytes,
             reserved_bytes: Mutex::new(intent.parent_reservation_bytes),
             reservation_group: Mutex::new(None),
         };
-        Ok((checkout, output, run, intent, execution))
+        Ok((checkout, output, run, intent, execution, captured))
     };
-    let (checkout, output, run, intent, execution) = if intent_exists && entered >= deadline {
+    let (checkout, output, run, intent, execution, captured) = if intent_exists && entered >= deadline {
         source_context::reconcile(8 * bounded::DEFAULT_BYTES, setup)?
     } else {
         source_context::until(deadline, 8 * bounded::DEFAULT_BYTES, setup)?
@@ -1217,17 +1324,29 @@ fn run_bounded(
         source: Some(prepared.source.clone()),
         ..Default::default()
     };
-    let produce = || -> Result<()> {
+    let mut produce = || -> Result<()> {
+        if let Some(view) = &captured {
+            view.validate_manifest_inputs(&prepared.manifest)?;
+            view.validate_materialized()?;
+        }
+        let compiler_checkout =
+            captured.as_ref().map(|view| view.physical_checkout()).unwrap_or_else(|| checkout.clone());
+        let compiler_source =
+            captured.as_ref().map(|view| view.physical_source()).unwrap_or_else(|| prepared.pinned_source.clone());
         let manifest_bytes = recipes::manifest_bytes(
             prepared.contract.recipe.as_ref(),
             &prepared.manifest,
             &prepared.contract.manifest,
-            &checkout,
+            &compiler_checkout,
         )?;
         immutable(&run.join("manifest.smf"), &manifest_bytes)?;
-        immutable(&run.join("LICENSE.txt"), &bounded::read(prepared.pinned_source.join("LICENSE.txt"))?)?;
+        immutable(&run.join("LICENSE.txt"), &bounded::read(compiler_source.join("LICENSE.txt"))?)?;
         if let Some(rom) = &prepared.manifest.rom {
-            let bytes = bounded::read(check_asset(&checkout, rom)?)?;
+            let bytes = if let Some(view) = &captured {
+                view.read(&rom.file, Some(&rom.sha256))?
+            } else {
+                bounded::read(check_asset(&checkout, rom)?)?
+            };
             ensure!(!bytes.is_empty() && bytes.len() <= 0x400000, "native ROM extent differs");
             immutable(&run.join("rom.bin"), &bytes)?;
             verdict.rom = Some(crate::family_model::RomIdentity { sha256: sha256(&bytes), bytes: bytes.len() });
@@ -1236,8 +1355,8 @@ fn run_bounded(
             prepared.contract.recipe.as_ref(),
             &prepared.manifest,
             &request,
-            &checkout,
-            &prepared.pinned_source,
+            &compiler_checkout,
+            &compiler_source,
             &run,
             Some(&execution),
         )?;
@@ -1258,23 +1377,7 @@ fn run_bounded(
         if intent.fixture_jobs == 1 {
             // A single worker executes directly without per-fixture thread startup.
             for (routine, fixture, index) in tasks {
-                verdict.cases.push(recipes::fixture(
-                    prepared.contract.recipe.as_ref(),
-                    &prepared.manifest,
-                    routine,
-                    fixture,
-                    index,
-                    &run,
-                    recipes::FixtureExecution::Confined(&execution),
-                )?);
-            }
-        } else {
-            let outcomes = crate::fixture_execution::run_waves(
-                &tasks,
-                intent.fixture_jobs,
-                || execution.begin_fixture_group(),
-                || execution.finish_fixture_group(),
-                |(routine, fixture, index)| {
+                let fixture_result = || {
                     recipes::fixture(
                         prepared.contract.recipe.as_ref(),
                         &prepared.manifest,
@@ -1284,6 +1387,32 @@ fn run_bounded(
                         &run,
                         recipes::FixtureExecution::Confined(&execution),
                     )
+                };
+                verdict.cases.push(if let Some(view) = &captured {
+                    view.enter(fixture_result)?
+                } else {
+                    fixture_result()?
+                });
+            }
+        } else {
+            let outcomes = crate::fixture_execution::run_waves(
+                &tasks,
+                intent.fixture_jobs,
+                || execution.begin_fixture_group(),
+                || execution.finish_fixture_group(),
+                |(routine, fixture, index)| {
+                    let fixture_result = || {
+                        recipes::fixture(
+                            prepared.contract.recipe.as_ref(),
+                            &prepared.manifest,
+                            routine,
+                            fixture,
+                            index,
+                            &run,
+                            recipes::FixtureExecution::Confined(&execution),
+                        )
+                    };
+                    if let Some(view) = &captured { view.enter(fixture_result) } else { fixture_result() }
                 },
             )?;
             let mut failure = None;
@@ -1305,6 +1434,10 @@ fn run_bounded(
         }
         recipes::verdict_fields(prepared.contract.recipe.as_ref(), &prepared.manifest, &mut verdict)?;
         check_candidate(prepared, &checkout)?;
+        if let Some(view) = &captured {
+            view.validate_manifest_inputs(&prepared.manifest)?;
+            view.validate_materialized()?;
+        }
         ensure!(now_unix_ms()? < intent.deadline_unix_ms, "native full family gate time budget exhausted");
         verdict.status = "offline-verified".into();
         verdict.verified_cases = verdict.cases.len();
@@ -1312,7 +1445,9 @@ fn run_bounded(
         verdict.scope = "declared valid fixture domain only; full canonical WRAM and return values; separately confined actual-C/Rust invocations".into();
         Ok(())
     };
-    let result = execute_or_reconcile(intent_exists, deadline, produce);
+    let result = execute_or_reconcile(intent_exists, deadline, || {
+        if let Some(view) = &captured { view.enter(produce) } else { produce() }
+    });
     if let Err(error) = result {
         if error.downcast_ref::<translation_execution::ExecutionPending>().is_some() {
             return Err(error);
@@ -1414,6 +1549,13 @@ fn authenticate_bounded(prepared: &PreparedNative, checkout: &Path, receipt: &Na
             && receipt.reserved_bytes <= receipt.max_output_bytes,
         "native receipt intent or aggregate budget differs"
     );
+    if let Some(asset) = &intent.captured_inputs {
+        let view = open_captured_inputs(prepared, &checkout, run, asset)?;
+        let expected_parent = parent_reservation(prepared, &checkout)?
+            .checked_add(view.retained_native_bytes(asset)?)
+            .context("native captured reservation overflow")?;
+        ensure!(intent.parent_reservation_bytes == expected_parent, "native captured parent reservation changed");
+    }
     let expected = operation_slots(prepared, run)?.into_iter().collect::<BTreeSet<_>>();
     ensure!(
         intent.operation_metadata_bytes == operation_storage::capacity(expected.len())?,
@@ -1584,20 +1726,17 @@ fn authenticate_operation(
             "native compiler installed capabilities changed"
         );
         let recipe = prepared.contract.recipe.as_ref();
-        let c_inputs = prepared.c_inputs.iter().map(|name| prepared.pinned_source.join(name)).collect::<Vec<_>>();
+        let captured_roots =
+            intent.captured_inputs.as_ref().map(|_| crate::input_view::InputView::native_compiler_roots(&family_run));
+        let compiler_source =
+            captured_roots.as_ref().map(|(_, source)| source.as_path()).unwrap_or(&prepared.pinned_source);
+        let c_inputs = prepared.c_inputs.iter().map(|name| compiler_source.join(name)).collect::<Vec<_>>();
         let c_units =
             c_inputs.iter().filter(|path| path.extension().is_some_and(|ext| ext == "c")).cloned().collect::<Vec<_>>();
         let description = if rust {
             recipes::rust_compiler_command(recipe, &family_run)
         } else {
-            recipes::c_compiler_command(
-                recipe,
-                &prepared.manifest,
-                &prepared.pinned_source,
-                &family_run,
-                &c_units,
-                false,
-            )?
+            recipes::c_compiler_command(recipe, &prepared.manifest, compiler_source, &family_run, &c_units, false)?
         };
         // A completed receipt may be reused from an equivalent retained
         // checkout. Recover its original binding rather than remapping it to
@@ -1609,7 +1748,9 @@ fn authenticate_operation(
         } else {
             None
         };
-        let compiler_checkout = if let Some(relative) = root_input {
+        let compiler_checkout = if let Some((checkout, _)) = &captured_roots {
+            checkout.clone()
+        } else if let Some(relative) = root_input {
             let input = invocation
                 .program
                 .inputs
@@ -1646,7 +1787,8 @@ fn authenticate_operation(
                 rust_inputs: &rust_inputs,
                 c_inputs: &c_inputs,
                 checkout: &compiler_checkout,
-                source: &prepared.pinned_source,
+                source: compiler_source,
+                capture_record: intent.captured_inputs.as_ref().map(|asset| asset.file.as_path()),
             },
         )?;
         ensure!(invocation.program == expected, "native compiler arguments, outputs or capabilities changed");
