@@ -1,5 +1,5 @@
-//! Authenticated artifact preparation for one frozen compiler operation.
-use crate::{atomic_toml, digest, executable, metrics};
+//! Shared immutable compiler facts, with operation-local publication and aborts.
+use crate::{atomic_toml, bounded, digest, executable, metrics};
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -9,7 +9,7 @@ use std::{
     path::{Path, PathBuf},
     process::Command,
     sync::{
-        Mutex,
+        Arc, Mutex, MutexGuard, TryLockError,
         atomic::{AtomicBool, Ordering},
     },
     time::Duration,
@@ -80,11 +80,55 @@ fn environment_digest() -> Result<String> {
     Ok(format!("{:x}", Sha256::digest(toml::to_string(&environment)?.as_bytes())))
 }
 
-/// The preparation is deliberately operation-local. Reusing an input digest
-/// here freezes its expected bytes; it never bypasses validation after a lock
-/// wait or build. No filesystem timestamps are used as an authenticity cache.
-pub struct Preparation {
-    root: PathBuf,
+/// One invocation shares immutable facts, not failures or producer authority.
+/// Compatibility includes the canonical checkout and requested compiler name;
+/// changed executable selection, bytes or environment invalidates the context.
+#[derive(Default)]
+pub(crate) struct CompilerPreparations {
+    contexts: Mutex<BTreeMap<(PathBuf, String), Arc<Mutex<Option<Arc<CompilerContext>>>>>>,
+}
+
+impl CompilerPreparations {
+    pub(crate) fn prepare(&self, root: &Path, checkout: &Path, compiler_name: &str) -> Result<Preparation> {
+        let checkout = fs::canonicalize(checkout)?;
+        let key = (checkout.clone(), compiler_name.to_owned());
+        let slot = {
+            let mut contexts = checked_lock(&self.contexts)?;
+            if !contexts.contains_key(&key) {
+                ensure!(contexts.len() < 64, "shared compiler context extent exceeded");
+            }
+            contexts.entry(key).or_default().clone()
+        };
+        // Only the identical preparation waits here. Other compilers can make
+        // progress, and no producer lease is held by a context waiter.
+        let context = {
+            let mut prepared = checked_lock(&slot)?;
+            if let Some(context) = &*prepared {
+                context.clone()
+            } else {
+                let context = Arc::new(CompilerContext::new(&checkout, compiler_name)?);
+                *prepared = Some(context.clone());
+                context
+            }
+        };
+        context.authenticate()?;
+        Ok(Preparation::with_context(root, context))
+    }
+}
+
+pub(crate) fn checked_lock<T>(mutex: &Mutex<T>) -> Result<MutexGuard<'_, T>> {
+    loop {
+        metrics::check_cancelled()?;
+        bounded::check()?;
+        match mutex.try_lock() {
+            Ok(guard) => return Ok(guard),
+            Err(TryLockError::WouldBlock) => std::thread::sleep(Duration::from_millis(20)),
+            Err(TryLockError::Poisoned(_)) => anyhow::bail!("compiler preparation lock poisoned"),
+        }
+    }
+}
+
+struct CompilerContext {
     checkout: PathBuf,
     repository: PathBuf,
     compiler_name: String,
@@ -92,6 +136,15 @@ pub struct Preparation {
     identity: CompilerIdentity,
     environment_sha256: String,
     rustc: Option<String>,
+    inputs: Mutex<BTreeMap<PathBuf, String>>,
+}
+
+/// Only this family owns its cancellation and observed closure. Shared input
+/// facts freeze expected bytes; every cache wait/build/publication reopens the
+/// family's actual inputs. Timestamps never replace authenticity checks.
+pub struct Preparation {
+    root: PathBuf,
+    context: Arc<CompilerContext>,
     observed: Mutex<BTreeMap<PathBuf, String>>,
     aborted: AtomicBool,
 }
@@ -103,13 +156,14 @@ impl std::fmt::Display for PreparationAborted {
     }
 }
 impl std::error::Error for PreparationAborted {}
-impl Preparation {
-    pub fn new(root: &Path, checkout: &Path, compiler_name: &str) -> Result<Self> {
-        metrics::measure("compiler-preparation", || Self::prepare(root, checkout, compiler_name))
+impl CompilerContext {
+    fn new(checkout: &Path, compiler_name: &str) -> Result<Self> {
+        metrics::measure("compiler-preparation", || Self::prepare(checkout, compiler_name))
     }
 
-    fn prepare(root: &Path, checkout: &Path, compiler_name: &str) -> Result<Self> {
+    fn prepare(checkout: &Path, compiler_name: &str) -> Result<Self> {
         let checkout = fs::canonicalize(checkout)?;
+        let environment_sha256 = environment_digest()?;
         let common = metrics::command_output(
             Command::new("git").args(["rev-parse", "--git-common-dir"]).current_dir(&checkout),
             "cache-repository-identity",
@@ -122,12 +176,13 @@ impl Preparation {
         };
         // Preserve argv[0] for toolchain proxies such as rustup's rustc link.
         let compiler = executable(compiler_name)?;
+        let compiler_sha256 = digest(&compiler)?;
         let version = metrics::command_output(
             Command::new(&compiler).arg("--version").current_dir(&checkout),
             "cache-compiler-identity",
         )?;
         ensure!(version.status.success(), "compiler version failed");
-        let identity = CompilerIdentity { sha256: digest(&compiler)?, version: String::from_utf8(version.stdout)? };
+        let identity = CompilerIdentity { sha256: compiler_sha256, version: String::from_utf8(version.stdout)? };
         let rustc = if ["cargo", "rustc"]
             .contains(&Path::new(compiler_name).file_name().and_then(|s| s.to_str()).unwrap_or_default())
         {
@@ -145,18 +200,48 @@ impl Preparation {
         } else {
             None
         };
-        Ok(Self {
-            root: root.into(),
+        let context = Self {
             checkout,
             repository,
             compiler_name: compiler_name.into(),
             compiler,
             identity,
-            environment_sha256: environment_digest()?,
+            environment_sha256,
             rustc,
-            observed: Mutex::new(BTreeMap::new()),
-            aborted: AtomicBool::new(false),
-        })
+            inputs: Mutex::new(BTreeMap::new()),
+        };
+        context.authenticate()?;
+        Ok(context)
+    }
+
+    fn authenticate(&self) -> Result<()> {
+        bounded::check()?;
+        metrics::check_cancelled()?;
+        ensure!(executable(&self.compiler_name)? == self.compiler, "prepared compiler selection changed");
+        ensure!(digest(&self.compiler)? == self.identity.sha256, "prepared compiler changed");
+        ensure!(environment_digest()? == self.environment_sha256, "prepared compiler environment changed");
+        Ok(())
+    }
+
+    fn observe(&self, path: &Path) -> Result<String> {
+        let mut inputs = checked_lock(&self.inputs)?;
+        if let Some(hash) = inputs.get(path) {
+            return Ok(hash.clone());
+        }
+        ensure!(inputs.len() < 65536, "shared compiler input extent exceeded");
+        let hash = digest(path)?;
+        inputs.insert(path.into(), hash.clone());
+        Ok(hash)
+    }
+}
+
+impl Preparation {
+    pub fn new(root: &Path, checkout: &Path, compiler_name: &str) -> Result<Self> {
+        Ok(Self::with_context(root, Arc::new(CompilerContext::new(checkout, compiler_name)?)))
+    }
+
+    fn with_context(root: &Path, context: Arc<CompilerContext>) -> Self {
+        Self { root: root.into(), context, observed: Mutex::new(BTreeMap::new()), aborted: AtomicBool::new(false) }
     }
 
     /// Freeze known roots before invoking dependency discovery. The compiler's
@@ -178,9 +263,7 @@ impl Preparation {
             let expected = observed.get(&path).context("compiler input was not frozen before validation")?;
             ensure!(digest(&path)? == *expected, "prepared compiler input changed after wait");
         }
-        ensure!(digest(&self.compiler)? == self.identity.sha256, "prepared compiler changed");
-        ensure!(environment_digest()? == self.environment_sha256, "prepared compiler environment changed");
-        Ok(())
+        self.context.authenticate()
     }
 
     pub fn abort(&self) {
@@ -191,7 +274,8 @@ impl Preparation {
         if self.aborted.load(Ordering::Acquire) {
             return Err(PreparationAborted.into());
         }
-        metrics::check_cancelled()
+        metrics::check_cancelled()?;
+        bounded::check()
     }
 
     fn lock(&self, path: &Path) -> Result<File> {
@@ -212,7 +296,7 @@ impl Preparation {
         if let Some(hash) = observed.get(path) {
             return Ok(hash.clone());
         }
-        let hash = digest(path)?;
+        let hash = self.context.observe(path)?;
         observed.insert(path.into(), hash.clone());
         Ok(hash)
     }
@@ -234,7 +318,7 @@ impl Preparation {
         destination: &Path,
         build: impl FnOnce(&Path) -> Result<()>,
     ) -> Result<CacheResult> {
-        ensure!(command.first() == Some(&self.compiler_name), "prepared compiler differs");
+        ensure!(command.first() == Some(&self.context.compiler_name), "prepared compiler differs");
         let context = metrics::active();
         let lookup = context.as_ref().map(|c| c.stage("cache-lookup")).transpose()?;
         let mut sources = BTreeMap::new();
@@ -246,8 +330,8 @@ impl Preparation {
             }
             let hash = self.observe(&path)?;
             let key = path
-                .strip_prefix(&self.checkout)
-                .or_else(|_| path.strip_prefix(&self.repository))
+                .strip_prefix(&self.context.checkout)
+                .or_else(|_| path.strip_prefix(&self.context.repository))
                 .unwrap_or(&path)
                 .to_string_lossy()
                 .into_owned();
@@ -261,15 +345,15 @@ impl Preparation {
             command: command
                 .iter()
                 .map(|arg| {
-                    arg.replace(self.checkout.to_string_lossy().as_ref(), "{checkout}")
-                        .replace(self.repository.to_string_lossy().as_ref(), "{checkout}")
+                    arg.replace(self.context.checkout.to_string_lossy().as_ref(), "{checkout}")
+                        .replace(self.context.repository.to_string_lossy().as_ref(), "{checkout}")
                 })
                 .collect(),
             sources,
-            compiler: self.identity.clone(),
-            environment_sha256: self.environment_sha256.clone(),
+            compiler: self.context.identity.clone(),
+            environment_sha256: self.context.environment_sha256.clone(),
             platform: [std::env::consts::ARCH.into(), std::env::consts::OS.into()],
-            rustc: self.rustc.clone(),
+            rustc: self.context.rustc.clone(),
         };
         let key = format!("{:x}", Sha256::digest(toml::to_string(&identity)?.as_bytes()));
         let root = self.root.join("build-cache");
@@ -282,6 +366,7 @@ impl Preparation {
         for (path, expected) in &originals {
             ensure!(digest(path)? == *expected, "compiler input changed while waiting for cache");
         }
+        self.context.authenticate()?;
         let entry = root.join(&key);
         let authenticated = (|| -> Result<String> {
             ensure!(!entry.symlink_metadata()?.file_type().is_symlink(), "cache symlink");
@@ -310,8 +395,7 @@ impl Preparation {
             }
             fs::create_dir(&stage)?;
             let result = (|| -> Result<String> {
-                ensure!(digest(&self.compiler)? == self.identity.sha256, "prepared compiler changed before build");
-                ensure!(environment_digest()? == self.environment_sha256, "prepared compiler environment changed");
+                self.context.authenticate()?;
                 let building = context.as_ref().map(|c| c.stage("cache-build")).transpose()?;
                 build(&stage.join("artifact"))?;
                 if let Some(building) = building {
@@ -320,7 +404,7 @@ impl Preparation {
                 for (path, expected) in &originals {
                     ensure!(digest(path)? == *expected, "compiler input changed during build");
                 }
-                ensure!(digest(&self.compiler)? == self.identity.sha256, "prepared compiler changed during build");
+                self.context.authenticate()?;
                 ensure!(!stage.join("artifact").symlink_metadata()?.file_type().is_symlink(), "build artifact symlink");
                 let hash = digest(&stage.join("artifact"))?;
                 File::open(stage.join("artifact"))?.sync_all()?;
@@ -343,6 +427,7 @@ impl Preparation {
         // Compare to the seal authenticated above, not a second read of mutable
         // cache bytes. This also detects replacement during the copy itself.
         ensure!(digest(destination)? == expected, "copied artifact differs");
+        self.context.authenticate()?;
         if let Some(restoring) = restoring {
             restoring.finish("success")?;
         }
@@ -360,9 +445,7 @@ impl Preparation {
         for (path, hash) in observed.iter() {
             ensure!(digest(path)? == *hash, "prepared compiler input changed");
         }
-        ensure!(digest(&self.compiler)? == self.identity.sha256, "prepared compiler changed");
-        ensure!(environment_digest()? == self.environment_sha256, "prepared compiler environment changed");
-        Ok(())
+        self.context.authenticate()
     }
 }
 

@@ -1,7 +1,7 @@
 //! Authenticated compilation and execution; callers supply their fixed recipes.
 use crate::{
     acquire_lease, atomic_toml, bounded,
-    build_cache::{CacheRequest, CacheResult, Preparation, cached_artifact},
+    build_cache::{CacheRequest, CacheResult, CompilerPreparations, cached_artifact},
 };
 use anyhow::{Context, Result, bail, ensure};
 use serde::{Deserialize, Serialize};
@@ -71,7 +71,22 @@ pub struct StandaloneBuildRequest {
     pub workers: usize,
     pub artifacts: Vec<StandaloneArtifact>,
 }
+
+/// Immutable compiler/toolchain/input facts shared by one verification
+/// invocation. Each call retains its own cancellation and publication scope;
+/// cache hits, emitted dependencies and current inputs still authenticate.
+/// Reuse is limited to compatible checkout/compiler selections. Changed inputs
+/// or environment invalidate the context rather than silently refreshing it.
+#[derive(Default)]
+pub struct BuildContext {
+    compilers: CompilerPreparations,
+}
+
 pub fn standalone_builds(request: StandaloneBuildRequest) -> Result<Vec<CacheResult>> {
+    standalone_builds_in(&BuildContext::default(), request)
+}
+
+pub fn standalone_builds_in(context: &BuildContext, request: StandaloneBuildRequest) -> Result<Vec<CacheResult>> {
     let StandaloneBuildRequest { checkout, root, run, workers, artifacts: recipes } = request;
     ensure!(!recipes.is_empty() && recipes.len() <= 3, "invalid standalone build extent");
     fs::create_dir_all(&run)?;
@@ -90,7 +105,7 @@ pub fn standalone_builds(request: StandaloneBuildRequest) -> Result<Vec<CacheRes
     let sysroot = fs::read_to_string(run.join("helper-toolchain.stdout"))?;
     let compiler = fs::canonicalize(Path::new(sysroot.trim()).join("bin/rustc"))?;
     let compiler = compiler.display().to_string();
-    let preparation = Preparation::new(&root, &checkout, &compiler)?;
+    let preparation = context.compilers.prepare(&root, &checkout, &compiler)?;
     let mut artifacts = Vec::new();
     for recipe in recipes {
         let StandaloneArtifact { source, name, label, flags } = recipe;
@@ -378,12 +393,20 @@ pub fn c_build_with_inputs(
     request: CBuildRequest,
     validate_inputs: &(dyn Fn(&[PathBuf]) -> Result<()> + Sync),
 ) -> Result<ExecutionRecord> {
+    c_build_in(&BuildContext::default(), request, validate_inputs)
+}
+
+pub fn c_build_in(
+    context: &BuildContext,
+    request: CBuildRequest,
+    validate_inputs: &(dyn Fn(&[PathBuf]) -> Result<()> + Sync),
+) -> Result<ExecutionRecord> {
     fs::create_dir_all(&request.run)?;
     // Install cancellation once on the parent. Thread-local child scopes then
     // inherit this context rather than racing to replace signal handlers.
     let mut metrics = crate::metrics::Run::start(request.run.join("c-build.metrics.toml"), "c-build")?;
     metrics.context.configuration("workers", request.workers);
-    let result = bounded::limited(|| c_build_prepared(request, validate_inputs));
+    let result = bounded::limited(|| c_build_prepared(context, request, validate_inputs));
     let error = result.as_ref().err().map(|error| format!("{error:#}"));
     let finished = metrics.finish(crate::metrics::outcome(error.as_deref()), error);
     if result.is_ok() {
@@ -393,6 +416,7 @@ pub fn c_build_with_inputs(
 }
 
 fn c_build_prepared(
+    context: &BuildContext,
     request: CBuildRequest,
     validate_inputs: &(dyn Fn(&[PathBuf]) -> Result<()> + Sync),
 ) -> Result<ExecutionRecord> {
@@ -434,7 +458,7 @@ fn c_build_prepared(
     }
     ensure!(!sources.is_empty(), "C build has no translation units");
     let pinned = fs::canonicalize(checkout.join("deps"))?;
-    let preparation = Preparation::new(&root, &checkout, &command[0])?;
+    let preparation = context.compilers.prepare(&root, &checkout, &command[0])?;
     validate_inputs(&inputs)?;
     preparation.freeze(&inputs)?;
     let objects: Vec<_> = (0..sources.len()).map(|index| run.join(format!("c-object-{index:03}.o"))).collect();

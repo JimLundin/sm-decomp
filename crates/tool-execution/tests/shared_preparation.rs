@@ -17,9 +17,7 @@ struct Directory {
 impl Directory {
     fn new(name: &str) -> Result<Self> {
         let retained = std::env::var_os("SM_SHARED_BUILD_PROOF").is_some();
-        let parent = std::env::var_os("SM_SHARED_BUILD_PROOF")
-            .map(PathBuf::from)
-            .unwrap_or_else(std::env::temp_dir);
+        let parent = std::env::var_os("SM_SHARED_BUILD_PROOF").map(PathBuf::from).unwrap_or_else(std::env::temp_dir);
         let path = parent.join(format!("{name}-{}-{}", std::process::id(), tool_execution::unique_id()));
         fs::create_dir_all(&path)?;
         Ok(Self { path, retained })
@@ -66,7 +64,13 @@ fn main() {
     )?;
     let compiler = directory.path.join("compiler");
     builds::execute(
-        &["rustc".into(), "--edition=2024".into(), source.display().to_string(), "-o".into(), compiler.display().to_string()],
+        &[
+            "rustc".into(),
+            "--edition=2024".into(),
+            source.display().to_string(),
+            "-o".into(),
+            compiler.display().to_string(),
+        ],
         &directory.path.join("adapter-build"),
         "adapter-build",
         &directory.capacity(),
@@ -81,10 +85,14 @@ fn request(directory: &Directory, compiler: &Path, family: &str) -> Result<build
     fs::write(run.join("main.c"), "int value(void); int main(void) { return value(); }\n")?;
     Ok(builds::CBuildRequest {
         command: vec![
-            compiler.display().to_string(), "-O2".into(), "-iquote".into(),
+            compiler.display().to_string(),
+            "-O2".into(),
+            "-iquote".into(),
             directory.path.join("deps").display().to_string(),
             directory.path.join("deps/unit.c").display().to_string(),
-            run.join("main.c").display().to_string(), "-o".into(), run.join("program").display().to_string(),
+            run.join("main.c").display().to_string(),
+            "-o".into(),
+            run.join("program").display().to_string(),
         ],
         run,
         checkout: directory.path.clone(),
@@ -102,7 +110,9 @@ fn inputs(directory: &Directory) -> Result<()> {
 
 fn records(run: &Path) -> Result<Vec<CacheResult>> {
     #[derive(Deserialize)]
-    struct Records { objects: Vec<CacheResult> }
+    struct Records {
+        objects: Vec<CacheResult>,
+    }
     Ok(toml::from_str::<Records>(&fs::read_to_string(run.join("c-cache.toml"))?)?.objects)
 }
 
@@ -114,17 +124,22 @@ fn compatible_families_prepare_compiler_once_and_coalesce_the_actual_object() ->
     let requests = [request(&directory, &compiler, "a")?, request(&directory, &compiler, "b")?];
     let mut parent = metrics::Run::start(directory.path.join("families.metrics.toml"), "family-builds")?;
     let context = metrics::active().context("test metrics missing")?;
+    let builds = Arc::new(builds::BuildContext::default());
     let ready = Arc::new(Barrier::new(requests.len()));
     std::thread::scope(|scope| -> Result<()> {
-        let handles: Vec<_> = requests.into_iter().map(|request| {
-            let context = context.clone();
-            let ready = ready.clone();
-            scope.spawn(move || {
-                let _entered = context.enter();
-                ready.wait();
-                builds::c_build_with_inputs(request, &|_| Ok(()))
+        let handles: Vec<_> = requests
+            .into_iter()
+            .map(|request| {
+                let context = context.clone();
+                let ready = ready.clone();
+                let builds = builds.clone();
+                scope.spawn(move || {
+                    let _entered = context.enter();
+                    ready.wait();
+                    builds::c_build_in(&builds, request, &|_| Ok(()))
+                })
             })
-        }).collect();
+            .collect();
         for handle in handles {
             handle.join().expect("family thread panicked")?;
         }
@@ -140,7 +155,10 @@ fn compatible_families_prepare_compiler_once_and_coalesce_the_actual_object() ->
     assert_eq!(a[0].key, b[0].key);
     assert_ne!(a[0].hit, b[0].hit);
     for family in ["a", "b"] {
-        ensure!(Command::new(directory.path.join(family).join("program")).status()?.code() == Some(7), "actual C result changed");
+        ensure!(
+            Command::new(directory.path.join(family).join("program")).status()?.code() == Some(7),
+            "actual C result changed"
+        );
     }
     assert_eq!(versions, 1, "compatible families repeated compiler identity preparation");
     Ok(())

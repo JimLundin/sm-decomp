@@ -59,3 +59,20 @@ Implement the small context; rerun the same actual compiler control with the
 shared interface, add bounded mutation/cancellation/path controls, and measure
 compatible cold/warm family builds. Final acceptance waits for tickets 02/03 and
 root's frozen integration gates. Record every source freeze and cleanup here.
+
+## First C green
+
+`red` source checkpoint: `af36c4a`.
+`logs/green-shared-preparation.log` records the matching control passing in
+1.76 s (6.06 s Cargo compilation). Compiler identity queries fell from 2 to 1;
+the shared pinned object still has one actual compilation, one miss and one
+authenticated hit. Both programs return 7. These timings are observations under
+host activity, not a throughput comparison.
+
+The initial implementation shares compiler selection/version/environment and
+immutable expected source hashes behind `BuildContext`; each `Preparation`
+retains separate abort state and its own closure. Compiler/environment validation
+now also occurs immediately after cache-key waits and restoration. Shared context
+and input maps have explicit extent limits and cancellation/deadline-aware waits.
+Standalone calls accept the same context interface; coalescing their selected
+Rust toolchain discovery is the next implementation slice.
