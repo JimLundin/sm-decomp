@@ -8,6 +8,51 @@ Baseline: `c09e47b66a35e6d61dab4065cb7e30d16ff28119`.
 
 ## Current checkpoint
 
+Source checkpoint `f4d58e9` contains the complete retained Native capture plus
+ticket 03's captured Rust facts (`3710ab0` integrated as `4f748f7`) and current
+recipe identity checks/root Cargo stamps (`13e4d2b` as `b7cd7cb`). It also includes
+root's ticket 06 reader (`3621cf6` as `edf69e3`, `8d9d00e` as `b7f2c0d`). Native
+operation-admission optimizations remain parent-owned; preserve them on merge.
+The newest source adds a stronger mapping control: a valid same-length record
+edit with a resealed intent must still fail reconstructed compiler Program
+equality. That added assertion has not yet compiled or executed.
+
+All four public producer controls passed on frozen **`b7f2c0d`**, before the
+stronger assertion and before ticket 04's final cache-key correction:
+
+| Control | Result |
+| --- | --- |
+| Candidate mutation after capture, before producers | passed, 1.57 s |
+| Macro and continued C include escape | passed, 4.67 s |
+| Single/bulk complete three-Fixture observations and logical paths | passed, 10.65 s |
+| Native capture, three pairs/eight producers, tamper and compiler-free replay | passed, 32.59 s |
+
+Proof root is `/home/jim/sm-decomp-performance-bulk-proof/b7f2c0d-20261015`;
+`logs/{source-mutation,include-escape,ordinary,native}.log` retain results.
+The ordinary and Native runs both passed independent subprocess admission with
+unavailable compiler PATH **after** both cleanup passes. Cleanup reclaimed
+4,063,232 ordinary bytes and 655,360 Native bytes; the three negative controls
+reported zero bytes. Every project retains its own cleanup stdout/stderr and
+source under `runs/`. The filesystem then had 100 GiB free (80% used).
+
+Retained preliminary tools are `tools/bulk-inputs` (SHA-256
+`96aebf5a3e2958016c5bc97291e0383cc5412997851b5ef40b525990d628759a`)
+and matched `tools/sm-translation-sandbox` (SHA-256
+`5ae4db64f5748f442bb237001af7b3d4e3de41763b0d1374de96f94425ca1de7`).
+The cleanup reader remains parent-owned at
+`/home/jim/sm-decomp-performance-native-proof/7b27ea1-20261015/tools/sm-pipeline`.
+No test/build writer remains active.
+
+Next: integrate ticket 04's completed semantic-path/volatile-preprocessing
+checkpoint, rebuild frozen source and matched helper in the exclusive target,
+run final public controls plus relevant owner/metadata controls, perform both
+cleanup passes and independent admission, then hand back to root. Do not rerun
+root's full-real Native gate; root owns its unchanged-deadline discovery failure.
+No end-to-end speedup or final acceptance is claimed from these preliminary
+controls. Worktree retirement and ticket resolution remain parent-owned.
+
+## Historical checkpoints
+
 The resumed coherent source checkpoint now implements retained Native capture.
 Its complete deterministic mapping is reserved and bound by the intent before
 publication and is also a compiler Program input. Captured source under the run
