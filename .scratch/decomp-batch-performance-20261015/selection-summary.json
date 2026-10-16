@@ -1,0 +1,11 @@
+{
+  "selected": 160,
+  "excluded": 17,
+  "reasons": {
+    "Rust source has inputs beyond supported module discovery: /home/jim/sm-decomp/crates/port/src/plm.rs": 151,
+    "Rust source has inputs beyond supported module discovery: /home/jim/sm-decomp/crates/port/src/projectile_flight.rs": 7,
+    "generated PLM fixture inputs require verification": 1,
+    "unknown Offline family adapter: ridley-subsystem": 1
+  },
+  "changed_paths_scope": "Five tracked architecture documents plus this assessment's untracked .scratch files; see plan-original.stdout.toml for the full exact list."
+}

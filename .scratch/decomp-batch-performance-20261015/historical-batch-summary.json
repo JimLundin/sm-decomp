@@ -1,0 +1,60 @@
+{
+  "historical_only": true,
+  "counts": {
+    "offline-verified": 106,
+    "rejected": 24
+  },
+  "sum_recorded_family_seconds": 9475.399767827003,
+  "slowest": [
+    {
+      "family": "floater-spike-motion",
+      "status": "offline-verified",
+      "seconds": 573.633880069
+    },
+    {
+      "family": "observed-projectile-initializers",
+      "status": "offline-verified",
+      "seconds": 512.129666347
+    },
+    {
+      "family": "mother-brain-blue-ring-lifecycle",
+      "status": "offline-verified",
+      "seconds": 394.322085153
+    },
+    {
+      "family": "control",
+      "status": "offline-verified",
+      "seconds": 322.7174957
+    },
+    {
+      "family": "mother-brain-bomb-update",
+      "status": "offline-verified",
+      "seconds": 288.049993692
+    },
+    {
+      "family": "collision",
+      "status": "offline-verified",
+      "seconds": 255.205516263
+    },
+    {
+      "family": "kago-bug-callbacks",
+      "status": "offline-verified",
+      "seconds": 234.565460871
+    },
+    {
+      "family": "mother-brain-bomb-collision",
+      "status": "offline-verified",
+      "seconds": 183.091859838
+    },
+    {
+      "family": "draygon-attached-gunk",
+      "status": "offline-verified",
+      "seconds": 179.338625893
+    },
+    {
+      "family": "observed-ridley-instructions",
+      "status": "offline-verified",
+      "seconds": 161.535742121
+    }
+  ]
+}

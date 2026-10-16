@@ -1,0 +1,6 @@
+.scratch/decomp-batch-performance-20261015/controller-original logical_bytes=333415728 allocated_blocks=650840 block_bytes=512
+.scratch/decomp-batch-performance-20261015/controller-stripped logical_bytes=106780368 allocated_blocks=208560 block_bytes=512
+.scratch/decomp-batch-performance-20261015/probe logical_bytes=4602488 allocated_blocks=8992 block_bytes=512
+Filesystem        1B-blocks         Used    Available Use% Mounted on
+/dev/sdd       539980652544 365841530880 146634555392  72% /
+212992	.scratch/decomp-batch-performance-20261015

@@ -22,6 +22,8 @@ __pycache__/
 /.scratch/**/build/
 /.scratch/**/target/
 /.scratch/**/chromium-profile/
+# Retained local recovery executable; its Rust source and receipt are tracked.
+/.scratch/restart-continuity/recovery-control/client
 
 # Captured gameplay runs and frozen evidence readers stay at their sealed paths.
 # Small authored source snapshots are backed up by decomp-parallel/checkpoint.

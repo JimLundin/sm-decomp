@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "root": "/home/jim/sm-decomp",
-  "updated_at": 1792000392,
+  "updated_at": 1792178928,
   "source": {
     "revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
     "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
@@ -99264,6 +99264,3405 @@
         "Both independent source-review axes passed with no findings. Main integration remains pending; Live replay, hardware effect order and original-ROM parity are not established."
       ],
       "updated_at": 1792000392
+    },
+    {
+      "id": "restart-ordinary-projectile-translating-20261016",
+      "scope": "Restart ordinary uncharged projectile lifecycle",
+      "agent": "/root/ceres_route @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "translating",
+      "routines": [
+        "FireUnchargedBeam",
+        "HandleProjectile",
+        "DrawPlayerExplosions2",
+        "DrawBombAndProjectileExplosions"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "c177b4b",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/.scratch/restart-pipeline/issues/05-rust-projectile-pilot.md",
+          "sha256": "3aac640ea20710f6b882e16022dc563b858b19a3c715fba7069ab92d771c60b6"
+        }
+      ],
+      "limitations": [
+        "Independent restart pilot; no original production claim adopted.",
+        "Only ordinary unupgraded beams/explosions before Ceres escape, with empty bomb slots and no shinespark echoes.",
+        "Input/cooldown scheduling and enemy-contact processing remain C; SpawnPLM is an explicit foreign service.",
+        "No verification, integration, live exercise or original-ROM agreement is established by this assignment."
+      ],
+      "updated_at": 1792125291
+    },
+    {
+      "id": "restart-ordinary-projectile-translated-20261016",
+      "scope": "Restart ordinary uncharged projectile lifecycle",
+      "agent": "/root/ceres_route @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "translated",
+      "routines": [
+        "FireUnchargedBeam",
+        "HandleProjectile",
+        "DrawPlayerExplosions2",
+        "DrawBombAndProjectileExplosions"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "eadcb9e",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/projectile/VERIFICATION.md",
+          "sha256": "2dab3c0678f092323335c01538939407e9ecedf00cd7f2ed6142f211544404bc"
+        }
+      ],
+      "limitations": [
+        "Independent restart pilot; copied/adapted ordinary-only algorithms with no old crate imports.",
+        "Only ordinary unupgraded beams/explosions before Ceres escape, empty bomb slots and no shinespark echoes.",
+        "Input/cooldown scheduling and enemy-contact processing remain C; SpawnPLM is an explicit foreign service.",
+        "Six focused Rust tests pass. Actual-C/live comparison is still pending; original-ROM agreement is untested."
+      ],
+      "updated_at": 1792128205
+    },
+    {
+      "id": "restart-ordinary-projectile-verified-20261016",
+      "scope": "Restart ordinary uncharged projectile lifecycle",
+      "agent": "/root @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "verified",
+      "routines": [
+        "FireUnchargedBeam",
+        "HandleProjectile",
+        "DrawPlayerExplosions2",
+        "DrawBombAndProjectileExplosions"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "010ab94f147dd50ae9a7319712b4ef70ce1966d9",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/pilot/runs/dev-01/result.toml",
+          "sha256": "bcf2f5241c49af0928607f1d0297812ce44ac0750190420201fb5aa346c15382"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/pilot/runs/dev-01/invocation.toml",
+          "sha256": "32cc5b295d46773d7d0b3761f48a1f2da539a7d907afc696d7947c49c014dc83"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/pilot/runs/reference-03/trace.bin",
+          "sha256": "479dbe6bd9cb3201bf4c9c097782ac116e049eae4f9dbca831f2ce776acbadc2"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/pilot/runs/cli-rust-01/result.toml",
+          "sha256": "9db9a5243a7a19670de2a52f9c1f83f89620d8f54a1d13f0676dc5a037cea8f5"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/pilot/source-commit.txt",
+          "sha256": "4a2d1245462ebabeebc6ec9ae6be5680fd54ed6c1a56c7f1309cab068577346d"
+        }
+      ],
+      "limitations": [
+        "Restart branch only; no original production claim or old acceptance transferred.",
+        "Ordinary unupgraded projectiles in initial Ceres; cinematic prefix and unowned gameplay remain C.",
+        "8777-step native C/Rust replay; required Rust interval starts8262 with zero refusal/C ownership/foreign calls.",
+        "Comparison covers complete WRAM and declared external state/ordered effects at each host step; not all branches or original-ROM equivalence.",
+        "Original-ROM comparison not tested. Warm17.479s is one measured forced incremental rebuild plus candidate comparison."
+      ],
+      "updated_at": 1792129799
+    },
+    {
+      "id": "restart-ordinary-projectile-integrated-20261016",
+      "scope": "Restart ordinary uncharged projectile lifecycle",
+      "agent": "/root @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "integrated",
+      "routines": [
+        "FireUnchargedBeam",
+        "HandleProjectile",
+        "DrawPlayerExplosions2",
+        "DrawBombAndProjectileExplosions"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "010ab94f147dd50ae9a7319712b4ef70ce1966d9",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/pilot/runs/dev-01/result.toml",
+          "sha256": "bcf2f5241c49af0928607f1d0297812ce44ac0750190420201fb5aa346c15382"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/pilot/runs/dev-01/invocation.toml",
+          "sha256": "32cc5b295d46773d7d0b3761f48a1f2da539a7d907afc696d7947c49c014dc83"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/pilot/runs/reference-03/trace.bin",
+          "sha256": "479dbe6bd9cb3201bf4c9c097782ac116e049eae4f9dbca831f2ce776acbadc2"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/pilot/runs/cli-rust-01/result.toml",
+          "sha256": "9db9a5243a7a19670de2a52f9c1f83f89620d8f54a1d13f0676dc5a037cea8f5"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/pilot/source-commit.txt",
+          "sha256": "4a2d1245462ebabeebc6ec9ae6be5680fd54ed6c1a56c7f1309cab068577346d"
+        }
+      ],
+      "limitations": [
+        "Restart branch only; no original production claim or old acceptance transferred.",
+        "Ordinary unupgraded projectiles in initial Ceres; cinematic prefix and unowned gameplay remain C.",
+        "8777-step native C/Rust replay; required Rust interval starts8262 with zero refusal/C ownership/foreign calls.",
+        "Comparison covers complete WRAM and declared external state/ordered effects at each host step; not all branches or original-ROM equivalence.",
+        "Original-ROM comparison not tested. Warm17.479s is one measured forced incremental rebuild plus candidate comparison."
+      ],
+      "updated_at": 1792129809
+    },
+    {
+      "id": "restart-ordinary-projectile-live-exercised-20261016",
+      "scope": "Restart ordinary uncharged projectile lifecycle",
+      "agent": "/root @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "live-exercised",
+      "routines": [
+        "FireUnchargedBeam",
+        "HandleProjectile",
+        "DrawPlayerExplosions2",
+        "DrawBombAndProjectileExplosions"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "010ab94f147dd50ae9a7319712b4ef70ce1966d9",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/pilot/runs/dev-01/result.toml",
+          "sha256": "bcf2f5241c49af0928607f1d0297812ce44ac0750190420201fb5aa346c15382"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/pilot/runs/dev-01/invocation.toml",
+          "sha256": "32cc5b295d46773d7d0b3761f48a1f2da539a7d907afc696d7947c49c014dc83"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/pilot/runs/reference-03/trace.bin",
+          "sha256": "479dbe6bd9cb3201bf4c9c097782ac116e049eae4f9dbca831f2ce776acbadc2"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/pilot/runs/cli-rust-01/result.toml",
+          "sha256": "9db9a5243a7a19670de2a52f9c1f83f89620d8f54a1d13f0676dc5a037cea8f5"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/pilot/source-commit.txt",
+          "sha256": "4a2d1245462ebabeebc6ec9ae6be5680fd54ed6c1a56c7f1309cab068577346d"
+        }
+      ],
+      "limitations": [
+        "Restart branch only; no original production claim or old acceptance transferred.",
+        "Ordinary unupgraded projectiles in initial Ceres; cinematic prefix and unowned gameplay remain C.",
+        "8777-step native C/Rust replay; required Rust interval starts8262 with zero refusal/C ownership/foreign calls.",
+        "Comparison covers complete WRAM and declared external state/ordered effects at each host step; not all branches or original-ROM equivalence.",
+        "Original-ROM comparison not tested. Warm17.479s is one measured forced incremental rebuild plus candidate comparison."
+      ],
+      "updated_at": 1792129817
+    },
+    {
+      "id": "restart-room-scrolling-translating-20261016",
+      "scope": "Restart room display and scrolling",
+      "agent": "/root/ceres_route @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "translating",
+      "routines": [
+        "DisplayViewablePartOfRoom",
+        "UpdateScrollVarsUpdateMap",
+        "CalculateLayer2PosAndScrollsWhenScrolling",
+        "UpdateBgGraphicsWhenScrolling",
+        "CalculateBgScrollAndLayerPositionBlocks",
+        "CalculateBgScrolls",
+        "CalculateLayer2Xpos",
+        "CalculateLayer2Ypos",
+        "UploadLevelDataColumn",
+        "UploadBackgroundDataColumn",
+        "UpdateLevelOrBackgroundDataColumn",
+        "UpdateLevelDataRow",
+        "UpdateBackgroundDataRow",
+        "UpdateLevelOrBackgroundDataRow"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "a82fe50a8e38e6314e6422ed9c36faf144d09628",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/.scratch/restart-pipeline/issues/06-rust-room-scrolling.md",
+          "sha256": "c3ec8102cb456a37cb536a610a355953997e4e0898b395e99ae42f3c395d97c8"
+        }
+      ],
+      "limitations": [
+        "Independent restart scope; original production claims remain unchanged.",
+        "Bounded pre-escape Ceres loading, camera movement and door transition scenario; other rooms and Mode7 remain unproved.",
+        "VRAM queue execution remains synchronous foreign hardware service; camera policy and room loading remain C.",
+        "Assignment establishes no verification, integration, live exercise or original-ROM agreement."
+      ],
+      "updated_at": 1792138674
+    },
+    {
+      "id": "restart-room-scrolling-translated-20261016",
+      "scope": "Restart room display and scrolling",
+      "agent": "/root/ceres_route @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "translated",
+      "routines": [
+        "DisplayViewablePartOfRoom",
+        "UpdateScrollVarsUpdateMap",
+        "CalculateLayer2PosAndScrollsWhenScrolling",
+        "UpdateBgGraphicsWhenScrolling",
+        "CalculateBgScrollAndLayerPositionBlocks",
+        "CalculateBgScrolls",
+        "CalculateLayer2Xpos",
+        "CalculateLayer2Ypos",
+        "UploadLevelDataColumn",
+        "UploadBackgroundDataColumn",
+        "UpdateLevelOrBackgroundDataColumn",
+        "UpdateLevelDataRow",
+        "UpdateBackgroundDataRow",
+        "UpdateLevelOrBackgroundDataRow"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "aa0654a",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/room-scroll/VERIFICATION.md",
+          "sha256": "47f12aa6e6323f13926e4424331917f5ffa5c67eeb962cc222f5d10baf4f53ca"
+        }
+      ],
+      "limitations": [
+        "Independent restart scope; original production claims remain unchanged.",
+        "Bounded pre-escape Ceres loading, camera movement and door transition scenario; other rooms and Mode7 remain unproved.",
+        "VRAM queue execution remains synchronous foreign hardware service; camera policy and room loading remain C.",
+        "Assignment establishes no verification, integration, live exercise or original-ROM agreement."
+      ],
+      "updated_at": 1792139062
+    },
+    {
+      "id": "restart-room-scrolling-verified-20261016",
+      "scope": "Restart room display and scrolling",
+      "agent": "/root @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "verified",
+      "routines": [
+        "DisplayViewablePartOfRoom",
+        "UpdateScrollVarsUpdateMap",
+        "CalculateLayer2PosAndScrollsWhenScrolling",
+        "UpdateBgGraphicsWhenScrolling",
+        "CalculateBgScrollAndLayerPositionBlocks",
+        "CalculateBgScrolls",
+        "CalculateLayer2Xpos",
+        "CalculateLayer2Ypos",
+        "UploadLevelDataColumn",
+        "UploadBackgroundDataColumn",
+        "UpdateLevelOrBackgroundDataColumn",
+        "UpdateLevelDataRow",
+        "UpdateBackgroundDataRow",
+        "UpdateLevelOrBackgroundDataRow"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "6c095fd",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/scroll/runs/dev-01/result.toml",
+          "sha256": "4b4ddda4d06e8b0515d3dc656a0e9226f5c751f50bfe00d9aa0b6d566eaf6765"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/scroll/runs/cli-rust-01/result.toml",
+          "sha256": "ec5a08dd394cd7af9b6d0507a474c7590075fcb120214a0511bf0523fbe4f9cb"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/scroll/evidence/cleanup.md",
+          "sha256": "406108a101f8c77b92a7e28b4754600aa1493545d62852b638683c26e18243ad"
+        }
+      ],
+      "limitations": [
+        "9380-step native C/Rust replay through pre-escape Ceres stairwell; original-ROM agreement unproved.",
+        "Foreground columns in DF8D and rows in DFD7 materially exercised; background uploads not reached.",
+        "Initial DF45 Display makes17 synchronous empty flushes under Mode7 guard; nonempty17-column display branch not live-proved.",
+        "Native nonempty service controls and gameplay flush-order unit tests are separate bounded evidence.",
+        "Camera policy, door/loading scheduling and hardware queue execution remain C; projectile cinematic prefix remains C-owned.",
+        "Ordinary and deduplicating cleanup succeeded; worker worktrees removed and primary incremental build cache retained."
+      ],
+      "updated_at": 1792140991
+    },
+    {
+      "id": "restart-room-scrolling-integrated-20261016",
+      "scope": "Restart room display and scrolling",
+      "agent": "/root @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "integrated",
+      "routines": [
+        "DisplayViewablePartOfRoom",
+        "UpdateScrollVarsUpdateMap",
+        "CalculateLayer2PosAndScrollsWhenScrolling",
+        "UpdateBgGraphicsWhenScrolling",
+        "CalculateBgScrollAndLayerPositionBlocks",
+        "CalculateBgScrolls",
+        "CalculateLayer2Xpos",
+        "CalculateLayer2Ypos",
+        "UploadLevelDataColumn",
+        "UploadBackgroundDataColumn",
+        "UpdateLevelOrBackgroundDataColumn",
+        "UpdateLevelDataRow",
+        "UpdateBackgroundDataRow",
+        "UpdateLevelOrBackgroundDataRow"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "6c095fd",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/scroll/runs/dev-01/result.toml",
+          "sha256": "4b4ddda4d06e8b0515d3dc656a0e9226f5c751f50bfe00d9aa0b6d566eaf6765"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/scroll/runs/cli-rust-01/result.toml",
+          "sha256": "ec5a08dd394cd7af9b6d0507a474c7590075fcb120214a0511bf0523fbe4f9cb"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/scroll/evidence/cleanup.md",
+          "sha256": "406108a101f8c77b92a7e28b4754600aa1493545d62852b638683c26e18243ad"
+        }
+      ],
+      "limitations": [
+        "9380-step native C/Rust replay through pre-escape Ceres stairwell; original-ROM agreement unproved.",
+        "Foreground columns in DF8D and rows in DFD7 materially exercised; background uploads not reached.",
+        "Initial DF45 Display makes17 synchronous empty flushes under Mode7 guard; nonempty17-column display branch not live-proved.",
+        "Native nonempty service controls and gameplay flush-order unit tests are separate bounded evidence.",
+        "Camera policy, door/loading scheduling and hardware queue execution remain C; projectile cinematic prefix remains C-owned.",
+        "Ordinary and deduplicating cleanup succeeded; worker worktrees removed and primary incremental build cache retained."
+      ],
+      "updated_at": 1792141002
+    },
+    {
+      "id": "restart-room-scrolling-live-exercised-20261016",
+      "scope": "Restart room display and scrolling",
+      "agent": "/root @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "live-exercised",
+      "routines": [
+        "DisplayViewablePartOfRoom",
+        "UpdateScrollVarsUpdateMap",
+        "CalculateLayer2PosAndScrollsWhenScrolling",
+        "UpdateBgGraphicsWhenScrolling",
+        "CalculateBgScrollAndLayerPositionBlocks",
+        "CalculateBgScrolls",
+        "CalculateLayer2Xpos",
+        "CalculateLayer2Ypos",
+        "UploadLevelDataColumn",
+        "UploadBackgroundDataColumn",
+        "UpdateLevelOrBackgroundDataColumn",
+        "UpdateLevelDataRow",
+        "UpdateBackgroundDataRow",
+        "UpdateLevelOrBackgroundDataRow"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "6c095fd",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/scroll/runs/dev-01/result.toml",
+          "sha256": "4b4ddda4d06e8b0515d3dc656a0e9226f5c751f50bfe00d9aa0b6d566eaf6765"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/scroll/runs/cli-rust-01/result.toml",
+          "sha256": "ec5a08dd394cd7af9b6d0507a474c7590075fcb120214a0511bf0523fbe4f9cb"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/scroll/evidence/cleanup.md",
+          "sha256": "406108a101f8c77b92a7e28b4754600aa1493545d62852b638683c26e18243ad"
+        }
+      ],
+      "limitations": [
+        "9380-step native C/Rust replay through pre-escape Ceres stairwell; original-ROM agreement unproved.",
+        "Foreground columns in DF8D and rows in DFD7 materially exercised; background uploads not reached.",
+        "Initial DF45 Display makes17 synchronous empty flushes under Mode7 guard; nonempty17-column display branch not live-proved.",
+        "Native nonempty service controls and gameplay flush-order unit tests are separate bounded evidence.",
+        "Camera policy, door/loading scheduling and hardware queue execution remain C; projectile cinematic prefix remains C-owned.",
+        "Ordinary and deduplicating cleanup succeeded; worker worktrees removed and primary incremental build cache retained."
+      ],
+      "updated_at": 1792141012
+    },
+    {
+      "id": "restart-first-original-fire-verified-20261016",
+      "scope": "Restart first ordinary Fire invocation from original DF45 state",
+      "agent": "/root @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "verified",
+      "routines": [
+        "FireUnchargedBeam"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "fac67e6",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/original/fire-02/result.toml",
+          "sha256": "9a78167cff64870db4a1dc148ac1692fb66c1bbf49614044882c09ac23b40bc4"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/original/fire-fault-01/result.toml",
+          "sha256": "322823cccd015351fd370c7a8ee3f46fbb0789e059eb5eebff06b060677c0656"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/original/capture-04/result.toml",
+          "sha256": "771c44ceeb064d4b5c2c4688b50837bd716cbb01547e9037a982782ddc80de40"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/original/evidence/cleanup.md",
+          "sha256": "b27451cc80489851c9b48574219ee064624c09ebd32e99afe6def65dcea94eed"
+        }
+      ],
+      "limitations": [
+        "One ordinary first shot from original frame8661, standing DF45 X130/Y75; no claim outside this context.",
+        "Full131072-byte C/Rust WRAM agreement; original return agreement only on the predeclared441-byte projectile/firing/sound-queue projection.",
+        "C and Rust use the shared native patched ROM view; original capture uses pristine pinned ROM.",
+        "Original shot lifecycle observed separately; no full original WRAM, MMIO/audio, complete lifecycle or live-replay C/Rust equivalence claim.",
+        "Injected post-execution Rust-output mismatch is a comparator control, not a gameplay implementation mutation.",
+        "Worker worktrees retired, both cleanup passes completed, primary warm target retained, artifacts and external dependencies authenticated after cleanup."
+      ],
+      "updated_at": 1792145524
+    },
+    {
+      "id": "restart-ceres-door-translating-20261016",
+      "scope": "Restart Ceres door actor and solid-block setup lifecycle",
+      "agent": "/root @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "translating",
+      "routines": [
+        "CeresDoor_Init",
+        "CeresDoor_Main",
+        "CeresDoor_Instr_1",
+        "CeresDoor_Instr_2",
+        "CeresDoor_Instr_3",
+        "CeresDoor_Instr_4",
+        "CeresDoor_Instr_5",
+        "CeresDoor_Instr_6",
+        "CeresDoor_Instr_7",
+        "CeresDoor_Instr_8",
+        "CeresSteam_Instr_4",
+        "CeresSteam_Instr_5",
+        "CeresDoor_Func_1",
+        "CeresDoor_Func_2",
+        "CeresDoor_Func_3",
+        "CeresDoor_F773",
+        "CeresDoor_Func_4",
+        "CeresDoor_Func_5",
+        "CeresDoor_Func_6",
+        "CeresDoor_Func_6b",
+        "CeresDoor_Func_7",
+        "CeresDoor_Func_8",
+        "sub_84B9F1"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "a99dc3a",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/.scratch/restart-pipeline/issues/08-rust-ceres-doors.md",
+          "sha256": "0b31d1fe71e928ea0e24d8011be3f1268a5da801d001eadd84c07cdc1b3bbabc"
+        }
+      ],
+      "limitations": [
+        "Assignment only; implementation, actual C/Rust comparison and cleanup pending.",
+        "E23F actor parameters0–6; shared Steam callbacks only when dispatched for E23F; BA48 solid setup only.",
+        "Generic enemy/PLM scheduling/rendering/collision, Goto/delete, NMI queue consumption and room loading stay C.",
+        "One explicit counted foreign SpawnEprojWithRoomGfx service for escape puffs; retained9380 route does not exercise escape branch.",
+        "No original-ROM equivalence claim for this scope."
+      ],
+      "updated_at": 1792146865
+    },
+    {
+      "id": "restart-ceres-door-translated-20261016",
+      "scope": "Restart Ceres door actor and solid-block setup lifecycle",
+      "agent": "/root @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "translated",
+      "routines": [
+        "CeresDoor_Init",
+        "CeresDoor_Main",
+        "CeresDoor_Instr_1",
+        "CeresDoor_Instr_2",
+        "CeresDoor_Instr_3",
+        "CeresDoor_Instr_4",
+        "CeresDoor_Instr_5",
+        "CeresDoor_Instr_6",
+        "CeresDoor_Instr_7",
+        "CeresDoor_Instr_8",
+        "CeresSteam_Instr_4",
+        "CeresSteam_Instr_5",
+        "CeresDoor_Func_1",
+        "CeresDoor_Func_2",
+        "CeresDoor_Func_3",
+        "CeresDoor_F773",
+        "CeresDoor_Func_4",
+        "CeresDoor_Func_5",
+        "CeresDoor_Func_6",
+        "CeresDoor_Func_6b",
+        "CeresDoor_Func_7",
+        "CeresDoor_Func_8",
+        "sub_84B9F1"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "b81c165",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/ceres-door/source/worker-gameplay/restart/ceres-door/src/lib.rs",
+          "sha256": "69be2baba095f140bae4e03910084123e42fb413aba9adcd725c3a97af756e61"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/ceres-door/evidence/gameplay-worker/test.stdout",
+          "sha256": "374deed975f6110e3d6790a6981601dda3a1336ffbfaa2cfbd907ca4577fe0b1"
+        }
+      ],
+      "limitations": [
+        "All13 scheduled entries and private six-state main implementation supplied;13 focused Rust tests and strict Clippy pass. Actual C/Rust gameplay verification is pending.",
+        "E23F actor parameters0–6; shared Steam callbacks only when dispatched for E23F; BA48 solid setup only.",
+        "Generic enemy/PLM scheduling/rendering/collision, Goto/delete, NMI queue consumption and room loading stay C.",
+        "One explicit counted foreign SpawnEprojWithRoomGfx service for escape puffs; retained9380 route does not exercise escape branch.",
+        "No original-ROM equivalence claim for this scope."
+      ],
+      "updated_at": 1792148005
+    },
+    {
+      "id": "restart-ceres-door-verified-20261016",
+      "scope": "Restart Ceres door actor and solid-block setup lifecycle",
+      "agent": "/root @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "verified",
+      "routines": [
+        "CeresDoor_Init",
+        "CeresDoor_Main",
+        "CeresDoor_Instr_1",
+        "CeresDoor_Instr_2",
+        "CeresDoor_Instr_6",
+        "CeresDoor_Instr_7",
+        "CeresSteam_Instr_4",
+        "CeresSteam_Instr_5"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "bd4e28c",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/ceres-door/runs/dev-01/result.toml",
+          "sha256": "97b413f8c817e62cce5e8f95c9ff2de6e02c9adc79bbcdbae9c31db21bd6cf2c"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/ceres-door/runs/cli-rust-02/result.toml",
+          "sha256": "a8b2f398986b198e681ead40ef530a92c9208b9ec4d8981461ee263b133e41e5"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/ceres-door/evidence/verifier/independent-review.md",
+          "sha256": "96b2fc64979207736f5f0140de8607794f29f1345c9c25b25292f27acafedb04"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/ceres-door/evidence/cleanup.md",
+          "sha256": "ba9f75752c4fa2af6eb244c9ee644989064fc813d1f175063e0370922ba8799e"
+        }
+      ],
+      "limitations": [
+        "9380-step recovered-C/Rust trace comparison covers WRAM, passive external state and ordered effects; original-ROM parity unproved.",
+        "2735 Rust entries complete with zero C entries/refusals; only8/13 scheduled entry kinds reached. Three parameter1 actors open; parameter0 reopening, BA48 setup and escape parameters3–6 remain outside live coverage.",
+        "Generic enemy/PLM scheduling, collision, rendering, room loading and hardware queue consumption remain C; escape puffs use one explicit unexercised foreign spawn service.",
+        "First C invocation remains failed for an incorrect BA48 pre-escape assertion. Its complete authenticated trace is reused without modifying failed verdicts; corrected scenario source is bd4e28c.",
+        "Both room crossings resume movement; existing Rust projectile/scrolling material retained. Normal CLI final WRAM/PNG match; zero CPU fallback. Injected live proximity return diverges at8692.",
+        "Cleanup passes complete, implementer worktrees retired, retained evidence reauthenticated and primary warm cache retained."
+      ],
+      "updated_at": 1792148871
+    },
+    {
+      "id": "restart-ceres-door-integrated-20261016",
+      "scope": "Restart Ceres door actor and solid-block setup lifecycle",
+      "agent": "/root @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "integrated",
+      "routines": [
+        "CeresDoor_Init",
+        "CeresDoor_Main",
+        "CeresDoor_Instr_1",
+        "CeresDoor_Instr_2",
+        "CeresDoor_Instr_3",
+        "CeresDoor_Instr_4",
+        "CeresDoor_Instr_5",
+        "CeresDoor_Instr_6",
+        "CeresDoor_Instr_7",
+        "CeresDoor_Instr_8",
+        "CeresSteam_Instr_4",
+        "CeresSteam_Instr_5",
+        "CeresDoor_Func_1",
+        "CeresDoor_Func_2",
+        "CeresDoor_Func_3",
+        "CeresDoor_F773",
+        "CeresDoor_Func_4",
+        "CeresDoor_Func_5",
+        "CeresDoor_Func_6",
+        "CeresDoor_Func_6b",
+        "CeresDoor_Func_7",
+        "CeresDoor_Func_8",
+        "sub_84B9F1"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "bd4e28c",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/ceres-door/runs/dev-01/result.toml",
+          "sha256": "97b413f8c817e62cce5e8f95c9ff2de6e02c9adc79bbcdbae9c31db21bd6cf2c"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/ceres-door/runs/cli-rust-02/result.toml",
+          "sha256": "a8b2f398986b198e681ead40ef530a92c9208b9ec4d8981461ee263b133e41e5"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/ceres-door/evidence/verifier/independent-review.md",
+          "sha256": "96b2fc64979207736f5f0140de8607794f29f1345c9c25b25292f27acafedb04"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/ceres-door/evidence/cleanup.md",
+          "sha256": "ba9f75752c4fa2af6eb244c9ee644989064fc813d1f175063e0370922ba8799e"
+        }
+      ],
+      "limitations": [
+        "9380-step recovered-C/Rust trace comparison covers WRAM, passive external state and ordered effects; original-ROM parity unproved.",
+        "2735 Rust entries complete with zero C entries/refusals; only8/13 scheduled entry kinds reached. Three parameter1 actors open; parameter0 reopening, BA48 setup and escape parameters3–6 remain outside live coverage.",
+        "Generic enemy/PLM scheduling, collision, rendering, room loading and hardware queue consumption remain C; escape puffs use one explicit unexercised foreign spawn service.",
+        "First C invocation remains failed for an incorrect BA48 pre-escape assertion. Its complete authenticated trace is reused without modifying failed verdicts; corrected scenario source is bd4e28c.",
+        "Both room crossings resume movement; existing Rust projectile/scrolling material retained. Normal CLI final WRAM/PNG match; zero CPU fallback. Injected live proximity return diverges at8692.",
+        "Cleanup passes complete, implementer worktrees retired, retained evidence reauthenticated and primary warm cache retained."
+      ],
+      "updated_at": 1792148884
+    },
+    {
+      "id": "restart-ceres-door-live-exercised-20261016",
+      "scope": "Restart Ceres door actor and solid-block setup lifecycle",
+      "agent": "/root @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "live-exercised",
+      "routines": [
+        "CeresDoor_Init",
+        "CeresDoor_Main",
+        "CeresDoor_Instr_1",
+        "CeresDoor_Instr_2",
+        "CeresDoor_Instr_6",
+        "CeresDoor_Instr_7",
+        "CeresSteam_Instr_4",
+        "CeresSteam_Instr_5"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "bd4e28c",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/ceres-door/runs/dev-01/result.toml",
+          "sha256": "97b413f8c817e62cce5e8f95c9ff2de6e02c9adc79bbcdbae9c31db21bd6cf2c"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/ceres-door/runs/cli-rust-02/result.toml",
+          "sha256": "a8b2f398986b198e681ead40ef530a92c9208b9ec4d8981461ee263b133e41e5"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/ceres-door/evidence/verifier/independent-review.md",
+          "sha256": "96b2fc64979207736f5f0140de8607794f29f1345c9c25b25292f27acafedb04"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/ceres-door/evidence/cleanup.md",
+          "sha256": "ba9f75752c4fa2af6eb244c9ee644989064fc813d1f175063e0370922ba8799e"
+        }
+      ],
+      "limitations": [
+        "9380-step recovered-C/Rust trace comparison covers WRAM, passive external state and ordered effects; original-ROM parity unproved.",
+        "2735 Rust entries complete with zero C entries/refusals; only8/13 scheduled entry kinds reached. Three parameter1 actors open; parameter0 reopening, BA48 setup and escape parameters3–6 remain outside live coverage.",
+        "Generic enemy/PLM scheduling, collision, rendering, room loading and hardware queue consumption remain C; escape puffs use one explicit unexercised foreign spawn service.",
+        "First C invocation remains failed for an incorrect BA48 pre-escape assertion. Its complete authenticated trace is reused without modifying failed verdicts; corrected scenario source is bd4e28c.",
+        "Both room crossings resume movement; existing Rust projectile/scrolling material retained. Normal CLI final WRAM/PNG match; zero CPU fallback. Injected live proximity return diverges at8692.",
+        "Cleanup passes complete, implementer worktrees retired, retained evidence reauthenticated and primary warm cache retained."
+      ],
+      "updated_at": 1792148897
+    },
+    {
+      "id": "restart-room-transition-translating-20261016",
+      "scope": "Restart complete door-transition coordinator and background commands",
+      "agent": "/root/ceres_route + /root/native_host @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "translating",
+      "routines": [
+        "GameState_9_HitDoorBlock",
+        "GameState_10_LoadingNextRoom_Async",
+        "GameState_11_LoadingNextRoom_Async",
+        "CallDoorTransitionFunction_Async",
+        "DoorTransitionFunction_HandleElevator",
+        "DoorTransitionFunction_Wait48frames",
+        "DoorTransitionFunction_WaitForSoundsToFinish",
+        "DoorTransitionFunction_FadeOutScreen",
+        "DoorTransitionFunction_LoadDoorHeaderEtc",
+        "DoorTransitionFunction_ScrollScreenToAlignment",
+        "DoorTransitionFunction_FixDoorsMovingUp",
+        "DoorTransitionFunction_SetupNewRoom",
+        "DoorTransitionFunction_SetupScrolling",
+        "DoorTransitionFunction_PlaceSamusLoadTiles",
+        "DoorTransitionFunction_LoadMoreThings_Async",
+        "DoorTransition_C_HandleAnimTiles",
+        "DoorTransition_WaitForMusicToClear",
+        "DoorTransition_HandleTransition",
+        "DoorTransition_FadeInScreenAndFinish",
+        "UpdateBackgroundCommand_0_Finish",
+        "UpdateBackgroundCommand_2_TransferToVram",
+        "UpdateBackgroundCommand_4_Decompression",
+        "UpdateBackgroundCommand_6_ClearFxTilemap",
+        "UpdateBackgroundCommand_8_TransferToVramAndSetBg3",
+        "UpdateBackgroundCommand_A_ClearBg2Tilemap",
+        "UpdateBackgroundCommand_C_ClearKraidBg2Tilemap",
+        "UpdateBackgroundCommand_E_DoorDependentTransferToVRAM"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "764a8e5",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/room-transition/evidence/assignment.md",
+          "sha256": "a99b84c67b367c5059cf384f683a9d2b431f6103346f85aa27a8390d4c8e6c86"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/room-transition/evidence/abi.md",
+          "sha256": "bbac1a84e00813e84b81f16eca1186b2606a95535ba213ab8106034610176e7f"
+        }
+      ],
+      "limitations": [
+        "Implementation and verification pending; complete27-routine scope with53 explicit foreign services.",
+        "Outer scheduler/NMI, directional IRQ movement and named loading/actor/hardware services remain C.",
+        "First live domain is the existing9380-step two-rightward-crossing Ceres route; no original-ROM claim."
+      ],
+      "updated_at": 1792149456
+    },
+    {
+      "id": "restart-room-transition-translated-20261016",
+      "scope": "Restart complete door-transition coordinator and background commands",
+      "agent": "/root/ceres_route @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "translated",
+      "routines": [
+        "GameState_9_HitDoorBlock",
+        "GameState_10_LoadingNextRoom_Async",
+        "GameState_11_LoadingNextRoom_Async",
+        "CallDoorTransitionFunction_Async",
+        "DoorTransitionFunction_HandleElevator",
+        "DoorTransitionFunction_Wait48frames",
+        "DoorTransitionFunction_WaitForSoundsToFinish",
+        "DoorTransitionFunction_FadeOutScreen",
+        "DoorTransitionFunction_LoadDoorHeaderEtc",
+        "DoorTransitionFunction_ScrollScreenToAlignment",
+        "DoorTransitionFunction_FixDoorsMovingUp",
+        "DoorTransitionFunction_SetupNewRoom",
+        "DoorTransitionFunction_SetupScrolling",
+        "DoorTransitionFunction_PlaceSamusLoadTiles",
+        "DoorTransitionFunction_LoadMoreThings_Async",
+        "DoorTransition_C_HandleAnimTiles",
+        "DoorTransition_WaitForMusicToClear",
+        "DoorTransition_HandleTransition",
+        "DoorTransition_FadeInScreenAndFinish",
+        "UpdateBackgroundCommand_0_Finish",
+        "UpdateBackgroundCommand_2_TransferToVram",
+        "UpdateBackgroundCommand_4_Decompression",
+        "UpdateBackgroundCommand_6_ClearFxTilemap",
+        "UpdateBackgroundCommand_8_TransferToVramAndSetBg3",
+        "UpdateBackgroundCommand_A_ClearBg2Tilemap",
+        "UpdateBackgroundCommand_C_ClearKraidBg2Tilemap",
+        "UpdateBackgroundCommand_E_DoorDependentTransferToVRAM"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "9f7f646",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/room-transition/source/worker-gameplay/restart/room-transition/src/scheduler.rs",
+          "sha256": "2f0404d99e1bceaf90c0658c98f3e5c6c8a48d8562db8735bd4b597a79e46b4e"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/room-transition/evidence/gameplay-worker/test.stdout",
+          "sha256": "6fddf0e61bd9d33b0808e8c1d2e849a158d7e6a7305092551ba687c3ac7e9d58"
+        }
+      ],
+      "limitations": [
+        "Complete27-routine Rust coordinator and53 named foreign services implemented;14 focused tests and strictClippy/fmt pass.",
+        "Actual-C/live comparison is pending; generic branch tests do not establish all-branch actual-C equivalence.",
+        "Outer scheduler/NMI, directional IRQ movement and named room/actor/hardware services remain C. First live route is two rightward Ceres crossings; no original-ROM claim."
+      ],
+      "updated_at": 1792150536
+    },
+    {
+      "id": "restart-room-transition-verified-20261016",
+      "scope": "Restart complete door-transition coordinator and background commands",
+      "agent": "/root @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "verified",
+      "routines": [
+        "GameState_9_HitDoorBlock",
+        "GameState_10_LoadingNextRoom_Async",
+        "GameState_11_LoadingNextRoom_Async",
+        "CallDoorTransitionFunction_Async",
+        "DoorTransitionFunction_HandleElevator",
+        "DoorTransitionFunction_WaitForSoundsToFinish",
+        "DoorTransitionFunction_FadeOutScreen",
+        "DoorTransitionFunction_LoadDoorHeaderEtc",
+        "DoorTransitionFunction_ScrollScreenToAlignment",
+        "DoorTransitionFunction_FixDoorsMovingUp",
+        "DoorTransitionFunction_SetupNewRoom",
+        "DoorTransitionFunction_SetupScrolling",
+        "DoorTransitionFunction_PlaceSamusLoadTiles",
+        "DoorTransitionFunction_LoadMoreThings_Async",
+        "DoorTransition_C_HandleAnimTiles",
+        "DoorTransition_WaitForMusicToClear",
+        "DoorTransition_HandleTransition",
+        "DoorTransition_FadeInScreenAndFinish",
+        "UpdateBackgroundCommand_0_Finish",
+        "UpdateBackgroundCommand_2_TransferToVram",
+        "UpdateBackgroundCommand_4_Decompression"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "9ee6419e492c936ea9937f8cb839cf076bc1d0ca",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/room-transition/runs/dev-02/result.toml",
+          "sha256": "78c2a14d7866fbcf8d32d75a5ac9caa795185806ab55e5543eeb0a12e118babb"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/room-transition/runs/cli-rust-01/result.toml",
+          "sha256": "e2461fc5776198fdf82f8c7c7033a7099ac4200bd297a3ab123a2b2c8c5943f5"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/room-transition/evidence/verifier/independent-review.md",
+          "sha256": "fbcee01b4f7b750a77505aab71b26acd85d94b00420fb56b7ad5ab81a37d490e"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/room-transition/evidence/cleanup.md",
+          "sha256": "9c0fc28168f24fef10f4a11796277fb830adcf3d2cce482b3539308223c02d5a"
+        }
+      ],
+      "limitations": [
+        "9380-step recovered-C/Rust comparison covers complete WRAM, passive external state and ordered effects on two rightward pre-escape Ceres transitions; no new original-ROM parity.",
+        "All27 routines implemented;21 reached. Wait48 and background6/8/A/C/E remain outside live coverage; focused Rust probes do not establish actual-C equivalence for missing branches.",
+        "Scheduled entries/completions [2,0,213], zero owned C/refusals,126 pending/resumed; private state10 executes twice. All existing Rust projectile/scrolling/door material checks retained.",
+        "Outer scheduler/NMI, directional IRQ movement and53 named foreign services remain dependencies; their admitted child hooks compose synchronously.",
+        "Normal CLI final WRAM/PNG match with zero CPU fallback; real pending-wait fault first diverges at8750 external. Warm cached-build comparison15.356s; docs reuse0.189s, zero game processes.",
+        "Initial ROM-view guard failure preserved; gameplay-only fix9ee6419 reused reference01. Both worker worktrees retired, cleanup complete, retained artifacts and native/trace/result authenticated."
+      ],
+      "updated_at": 1792151211
+    },
+    {
+      "id": "restart-room-transition-integrated-20261016",
+      "scope": "Restart complete door-transition coordinator and background commands",
+      "agent": "/root @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "integrated",
+      "routines": [
+        "GameState_9_HitDoorBlock",
+        "GameState_10_LoadingNextRoom_Async",
+        "GameState_11_LoadingNextRoom_Async",
+        "CallDoorTransitionFunction_Async",
+        "DoorTransitionFunction_HandleElevator",
+        "DoorTransitionFunction_Wait48frames",
+        "DoorTransitionFunction_WaitForSoundsToFinish",
+        "DoorTransitionFunction_FadeOutScreen",
+        "DoorTransitionFunction_LoadDoorHeaderEtc",
+        "DoorTransitionFunction_ScrollScreenToAlignment",
+        "DoorTransitionFunction_FixDoorsMovingUp",
+        "DoorTransitionFunction_SetupNewRoom",
+        "DoorTransitionFunction_SetupScrolling",
+        "DoorTransitionFunction_PlaceSamusLoadTiles",
+        "DoorTransitionFunction_LoadMoreThings_Async",
+        "DoorTransition_C_HandleAnimTiles",
+        "DoorTransition_WaitForMusicToClear",
+        "DoorTransition_HandleTransition",
+        "DoorTransition_FadeInScreenAndFinish",
+        "UpdateBackgroundCommand_0_Finish",
+        "UpdateBackgroundCommand_2_TransferToVram",
+        "UpdateBackgroundCommand_4_Decompression",
+        "UpdateBackgroundCommand_6_ClearFxTilemap",
+        "UpdateBackgroundCommand_8_TransferToVramAndSetBg3",
+        "UpdateBackgroundCommand_A_ClearBg2Tilemap",
+        "UpdateBackgroundCommand_C_ClearKraidBg2Tilemap",
+        "UpdateBackgroundCommand_E_DoorDependentTransferToVRAM"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "9ee6419e492c936ea9937f8cb839cf076bc1d0ca",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/room-transition/runs/dev-02/result.toml",
+          "sha256": "78c2a14d7866fbcf8d32d75a5ac9caa795185806ab55e5543eeb0a12e118babb"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/room-transition/runs/cli-rust-01/result.toml",
+          "sha256": "e2461fc5776198fdf82f8c7c7033a7099ac4200bd297a3ab123a2b2c8c5943f5"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/room-transition/evidence/verifier/independent-review.md",
+          "sha256": "fbcee01b4f7b750a77505aab71b26acd85d94b00420fb56b7ad5ab81a37d490e"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/room-transition/evidence/cleanup.md",
+          "sha256": "9c0fc28168f24fef10f4a11796277fb830adcf3d2cce482b3539308223c02d5a"
+        }
+      ],
+      "limitations": [
+        "9380-step recovered-C/Rust comparison covers complete WRAM, passive external state and ordered effects on two rightward pre-escape Ceres transitions; no new original-ROM parity.",
+        "All27 routines implemented;21 reached. Wait48 and background6/8/A/C/E remain outside live coverage; focused Rust probes do not establish actual-C equivalence for missing branches.",
+        "Scheduled entries/completions [2,0,213], zero owned C/refusals,126 pending/resumed; private state10 executes twice. All existing Rust projectile/scrolling/door material checks retained.",
+        "Outer scheduler/NMI, directional IRQ movement and53 named foreign services remain dependencies; their admitted child hooks compose synchronously.",
+        "Normal CLI final WRAM/PNG match with zero CPU fallback; real pending-wait fault first diverges at8750 external. Warm cached-build comparison15.356s; docs reuse0.189s, zero game processes.",
+        "Initial ROM-view guard failure preserved; gameplay-only fix9ee6419 reused reference01. Both worker worktrees retired, cleanup complete, retained artifacts and native/trace/result authenticated."
+      ],
+      "updated_at": 1792151240
+    },
+    {
+      "id": "restart-room-transition-live-exercised-20261016",
+      "scope": "Restart complete door-transition coordinator and background commands",
+      "agent": "/root @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "live-exercised",
+      "routines": [
+        "GameState_9_HitDoorBlock",
+        "GameState_10_LoadingNextRoom_Async",
+        "GameState_11_LoadingNextRoom_Async",
+        "CallDoorTransitionFunction_Async",
+        "DoorTransitionFunction_HandleElevator",
+        "DoorTransitionFunction_WaitForSoundsToFinish",
+        "DoorTransitionFunction_FadeOutScreen",
+        "DoorTransitionFunction_LoadDoorHeaderEtc",
+        "DoorTransitionFunction_ScrollScreenToAlignment",
+        "DoorTransitionFunction_FixDoorsMovingUp",
+        "DoorTransitionFunction_SetupNewRoom",
+        "DoorTransitionFunction_SetupScrolling",
+        "DoorTransitionFunction_PlaceSamusLoadTiles",
+        "DoorTransitionFunction_LoadMoreThings_Async",
+        "DoorTransition_C_HandleAnimTiles",
+        "DoorTransition_WaitForMusicToClear",
+        "DoorTransition_HandleTransition",
+        "DoorTransition_FadeInScreenAndFinish",
+        "UpdateBackgroundCommand_0_Finish",
+        "UpdateBackgroundCommand_2_TransferToVram",
+        "UpdateBackgroundCommand_4_Decompression"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "9ee6419e492c936ea9937f8cb839cf076bc1d0ca",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/room-transition/runs/dev-02/result.toml",
+          "sha256": "78c2a14d7866fbcf8d32d75a5ac9caa795185806ab55e5543eeb0a12e118babb"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/room-transition/runs/cli-rust-01/result.toml",
+          "sha256": "e2461fc5776198fdf82f8c7c7033a7099ac4200bd297a3ab123a2b2c8c5943f5"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/room-transition/evidence/verifier/independent-review.md",
+          "sha256": "fbcee01b4f7b750a77505aab71b26acd85d94b00420fb56b7ad5ab81a37d490e"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/room-transition/evidence/cleanup.md",
+          "sha256": "9c0fc28168f24fef10f4a11796277fb830adcf3d2cce482b3539308223c02d5a"
+        }
+      ],
+      "limitations": [
+        "9380-step recovered-C/Rust comparison covers complete WRAM, passive external state and ordered effects on two rightward pre-escape Ceres transitions; no new original-ROM parity.",
+        "All27 routines implemented;21 reached. Wait48 and background6/8/A/C/E remain outside live coverage; focused Rust probes do not establish actual-C equivalence for missing branches.",
+        "Scheduled entries/completions [2,0,213], zero owned C/refusals,126 pending/resumed; private state10 executes twice. All existing Rust projectile/scrolling/door material checks retained.",
+        "Outer scheduler/NMI, directional IRQ movement and53 named foreign services remain dependencies; their admitted child hooks compose synchronously.",
+        "Normal CLI final WRAM/PNG match with zero CPU fallback; real pending-wait fault first diverges at8750 external. Warm cached-build comparison15.356s; docs reuse0.189s, zero game processes.",
+        "Initial ROM-view guard failure preserved; gameplay-only fix9ee6419 reused reference01. Both worker worktrees retired, cleanup complete, retained artifacts and native/trace/result authenticated."
+      ],
+      "updated_at": 1792151269
+    },
+    {
+      "id": "restart-door-scrolling-translating-20261016",
+      "scope": "Restart complete directional door scrolling and IRQ completion",
+      "agent": "/root/ceres_route @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "translating",
+      "routines": [
+        "FixDoorsMovingUp",
+        "DoorTransitionScrollingSetup",
+        "DoorTransitionScrollingSetup_Right",
+        "DoorTransitionScrollingSetup_Left",
+        "DoorTransitionScrollingSetup_Down",
+        "DoorTransitionScrollingSetup_Up",
+        "UpdatePreviousLayerBlocks",
+        "UpdateBgScrollOffsets",
+        "Irq_FollowDoorTransition",
+        "DoorTransition_Right",
+        "DoorTransition_Left",
+        "DoorTransition_Down",
+        "DoorTransition_Up"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "f3d1e64",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/door-scrolling/evidence/assignment.md",
+          "sha256": "611d442f69aa81624bc1dcedebab9ce87b899b01569793db2adb735c0f0b782c"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/door-scrolling/evidence/abi.md",
+          "sha256": "7c93cce7ef9ad5a7ccad69f7c2525c5eaa55dae972e70fe3bab28dc7a90a0f7d"
+        }
+      ],
+      "limitations": [
+        "Whole13-routine scope assigned to gameplay worker; native host and root integration have disjoint ownership.",
+        "No implementation or actual-C/live verification stage yet. Existing9380 route is rightward; other directions require focused evidence.",
+        "Generic IRQ/register scheduling, coordinator continuations and three setup-math dependencies remain C. Existing Rust scrolling child is reused. No original-ROM claim."
+      ],
+      "updated_at": 1792151670
+    },
+    {
+      "id": "restart-door-scrolling-translated-20261016",
+      "scope": "Restart complete directional door scrolling and IRQ completion",
+      "agent": "/root/ceres_route @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "translated",
+      "routines": [
+        "FixDoorsMovingUp",
+        "DoorTransitionScrollingSetup",
+        "DoorTransitionScrollingSetup_Right",
+        "DoorTransitionScrollingSetup_Left",
+        "DoorTransitionScrollingSetup_Down",
+        "DoorTransitionScrollingSetup_Up",
+        "UpdatePreviousLayerBlocks",
+        "UpdateBgScrollOffsets",
+        "Irq_FollowDoorTransition",
+        "DoorTransition_Right",
+        "DoorTransition_Left",
+        "DoorTransition_Down",
+        "DoorTransition_Up"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "2dc95a2",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/door-scrolling/source/worker-gameplay/restart/door-scrolling/VERIFICATION.md",
+          "sha256": "fbab574bdcc87aa91a641066ee26a2b5bf51ca261668f36efdd09550ac547b6c"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/door-scrolling/source/worker-gameplay/restart/door-scrolling/src/scrolling.rs",
+          "sha256": "2270fb3c6ff8afd180b7238ea74473dd7dbb126d4c141b768a8d45d0f7cfe297"
+        }
+      ],
+      "limitations": [
+        "Complete13-routine implementation and accepted ABI;13 focused Rust tests, strictClippy and formatting passed.",
+        "Actual-C/live comparison pending; authored Host probes do not establish all-branch actual-C equivalence.",
+        "Three setup-math callees and generic IRQ/register scheduling remain C; existing Rust scrolling child reused. No original-ROM claim."
+      ],
+      "updated_at": 1792152233
+    },
+    {
+      "id": "restart-door-scrolling-verified-20261016",
+      "scope": "Restart complete directional door scrolling and IRQ completion",
+      "agent": "/root @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "verified",
+      "routines": [
+        "DoorTransitionScrollingSetup",
+        "DoorTransitionScrollingSetup_Right",
+        "UpdatePreviousLayerBlocks",
+        "UpdateBgScrollOffsets",
+        "Irq_FollowDoorTransition",
+        "DoorTransition_Right"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "4d6c541f5cdedc9667a32ef286850e1bb908989e",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/door-scrolling/runs/dev-01/result.toml",
+          "sha256": "a5015e326d3ffe89b44c713accf2e5a662d025ced1da44cfa8beff9005c171d0"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/door-scrolling/runs/cli-rust-01/result.toml",
+          "sha256": "04d9948572776552c4aebc011cb6a190d9f1226f2268e250c18029fa7107645e"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/door-scrolling/evidence/verifier/independent-review.md",
+          "sha256": "ee9ad38ea46cdef08ee85ba72030637a15acedfcbef3d120e4d1d7c6a0c6fc18"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/door-scrolling/evidence/cleanup.md",
+          "sha256": "1e08c358f563b511d022b1da1bc18ef70c57cc337bdedafe01264db59821f27f"
+        }
+      ],
+      "limitations": [
+        "9380-step recovered-C/Rust comparison agrees on complete WRAM, passive external state and ordered effects for two rightward Ceres crossings; no original-ROM parity.",
+        "All13 routines implemented; six reached. Upward correction, left/down/up movements and setups remain focused tests/controls, not live parity.",
+        "All128 scheduled entries complete in Rust with zero owned C/refusals; two setups,126 IRQ roots,128 right movements and130 balanced Rust scrolling children. Previous four consumers' material gates pass.",
+        "Generic IRQ/register timing and three setup-math callees remain C; coordinator and directional children compose with the existing Rust scrolling entry synchronously.",
+        "First candidate passes without correction. Forced warm build+compare15.689s (0.601s build); CLI9.797s finalWRAM/PNG match; actual completion-bit fault first diverges8812 WRAM; docs reuse0.191s zero game processes.",
+        "Both workers retired, utility cleanup passed, retained source/evidence and native/trace/result authenticated. Full Ceres escape with accumulated consumers is the next separate milestone."
+      ],
+      "updated_at": 1792152678
+    },
+    {
+      "id": "restart-door-scrolling-integrated-20261016",
+      "scope": "Restart complete directional door scrolling and IRQ completion",
+      "agent": "/root @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "integrated",
+      "routines": [
+        "FixDoorsMovingUp",
+        "DoorTransitionScrollingSetup",
+        "DoorTransitionScrollingSetup_Right",
+        "DoorTransitionScrollingSetup_Left",
+        "DoorTransitionScrollingSetup_Down",
+        "DoorTransitionScrollingSetup_Up",
+        "UpdatePreviousLayerBlocks",
+        "UpdateBgScrollOffsets",
+        "Irq_FollowDoorTransition",
+        "DoorTransition_Right",
+        "DoorTransition_Left",
+        "DoorTransition_Down",
+        "DoorTransition_Up"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "4d6c541f5cdedc9667a32ef286850e1bb908989e",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/door-scrolling/runs/dev-01/result.toml",
+          "sha256": "a5015e326d3ffe89b44c713accf2e5a662d025ced1da44cfa8beff9005c171d0"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/door-scrolling/runs/cli-rust-01/result.toml",
+          "sha256": "04d9948572776552c4aebc011cb6a190d9f1226f2268e250c18029fa7107645e"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/door-scrolling/evidence/verifier/independent-review.md",
+          "sha256": "ee9ad38ea46cdef08ee85ba72030637a15acedfcbef3d120e4d1d7c6a0c6fc18"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/door-scrolling/evidence/cleanup.md",
+          "sha256": "1e08c358f563b511d022b1da1bc18ef70c57cc337bdedafe01264db59821f27f"
+        }
+      ],
+      "limitations": [
+        "9380-step recovered-C/Rust comparison agrees on complete WRAM, passive external state and ordered effects for two rightward Ceres crossings; no original-ROM parity.",
+        "All13 routines implemented; six reached. Upward correction, left/down/up movements and setups remain focused tests/controls, not live parity.",
+        "All128 scheduled entries complete in Rust with zero owned C/refusals; two setups,126 IRQ roots,128 right movements and130 balanced Rust scrolling children. Previous four consumers' material gates pass.",
+        "Generic IRQ/register timing and three setup-math callees remain C; coordinator and directional children compose with the existing Rust scrolling entry synchronously.",
+        "First candidate passes without correction. Forced warm build+compare15.689s (0.601s build); CLI9.797s finalWRAM/PNG match; actual completion-bit fault first diverges8812 WRAM; docs reuse0.191s zero game processes.",
+        "Both workers retired, utility cleanup passed, retained source/evidence and native/trace/result authenticated. Full Ceres escape with accumulated consumers is the next separate milestone."
+      ],
+      "updated_at": 1792152746
+    },
+    {
+      "id": "restart-door-scrolling-live-exercised-20261016",
+      "scope": "Restart complete directional door scrolling and IRQ completion",
+      "agent": "/root @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "live-exercised",
+      "routines": [
+        "DoorTransitionScrollingSetup",
+        "DoorTransitionScrollingSetup_Right",
+        "UpdatePreviousLayerBlocks",
+        "UpdateBgScrollOffsets",
+        "Irq_FollowDoorTransition",
+        "DoorTransition_Right"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "4d6c541f5cdedc9667a32ef286850e1bb908989e",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/door-scrolling/runs/dev-01/result.toml",
+          "sha256": "a5015e326d3ffe89b44c713accf2e5a662d025ced1da44cfa8beff9005c171d0"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/door-scrolling/runs/cli-rust-01/result.toml",
+          "sha256": "04d9948572776552c4aebc011cb6a190d9f1226f2268e250c18029fa7107645e"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/door-scrolling/evidence/verifier/independent-review.md",
+          "sha256": "ee9ad38ea46cdef08ee85ba72030637a15acedfcbef3d120e4d1d7c6a0c6fc18"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/door-scrolling/evidence/cleanup.md",
+          "sha256": "1e08c358f563b511d022b1da1bc18ef70c57cc337bdedafe01264db59821f27f"
+        }
+      ],
+      "limitations": [
+        "9380-step recovered-C/Rust comparison agrees on complete WRAM, passive external state and ordered effects for two rightward Ceres crossings; no original-ROM parity.",
+        "All13 routines implemented; six reached. Upward correction, left/down/up movements and setups remain focused tests/controls, not live parity.",
+        "All128 scheduled entries complete in Rust with zero owned C/refusals; two setups,126 IRQ roots,128 right movements and130 balanced Rust scrolling children. Previous four consumers' material gates pass.",
+        "Generic IRQ/register timing and three setup-math callees remain C; coordinator and directional children compose with the existing Rust scrolling entry synchronously.",
+        "First candidate passes without correction. Forced warm build+compare15.689s (0.601s build); CLI9.797s finalWRAM/PNG match; actual completion-bit fault first diverges8812 WRAM; docs reuse0.191s zero game processes.",
+        "Both workers retired, utility cleanup passed, retained source/evidence and native/trace/result authenticated. Full Ceres escape with accumulated consumers is the next separate milestone."
+      ],
+      "updated_at": 1792152785
+    },
+    {
+      "id": "restart-full-ceres-mixed-live-exercised-20261016",
+      "scope": "Full Ceres escape and area0 mixed-Rust live exercise",
+      "agent": "/root @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "live-exercised",
+      "routines": [
+        "CeresDoor_Init",
+        "CeresDoor_Main",
+        "CeresDoor_Instr_1",
+        "CeresDoor_Instr_2",
+        "CeresDoor_Instr_3",
+        "CeresDoor_Instr_4",
+        "CeresDoor_Instr_5",
+        "CeresDoor_Instr_6",
+        "CeresDoor_Instr_7",
+        "CeresDoor_Instr_8",
+        "CeresSteam_Instr_4",
+        "CeresSteam_Instr_5",
+        "sub_84B9F1",
+        "GameState_9_HitDoorBlock",
+        "GameState_10_LoadingNextRoom_Async",
+        "GameState_11_LoadingNextRoom_Async",
+        "CallDoorTransitionFunction_Async",
+        "DoorTransitionFunction_HandleElevator",
+        "DoorTransitionFunction_WaitForSoundsToFinish",
+        "DoorTransitionFunction_FadeOutScreen",
+        "DoorTransitionFunction_LoadDoorHeaderEtc",
+        "DoorTransitionFunction_ScrollScreenToAlignment",
+        "DoorTransitionFunction_FixDoorsMovingUp",
+        "DoorTransitionFunction_SetupNewRoom",
+        "DoorTransitionFunction_SetupScrolling",
+        "DoorTransitionFunction_PlaceSamusLoadTiles",
+        "DoorTransitionFunction_LoadMoreThings_Async",
+        "DoorTransition_C_HandleAnimTiles",
+        "DoorTransition_WaitForMusicToClear",
+        "DoorTransition_HandleTransition",
+        "DoorTransition_FadeInScreenAndFinish",
+        "UpdateBackgroundCommand_0_Finish",
+        "UpdateBackgroundCommand_2_TransferToVram",
+        "UpdateBackgroundCommand_4_Decompression",
+        "UpdateBackgroundCommand_A_ClearBg2Tilemap",
+        "DoorTransitionScrollingSetup",
+        "DoorTransitionScrollingSetup_Right",
+        "DoorTransitionScrollingSetup_Left",
+        "UpdatePreviousLayerBlocks",
+        "UpdateBgScrollOffsets",
+        "Irq_FollowDoorTransition",
+        "DoorTransition_Right",
+        "DoorTransition_Left",
+        "DisplayViewablePartOfRoom",
+        "UpdateScrollVarsUpdateMap",
+        "CalculateLayer2PosAndScrollsWhenScrolling",
+        "HandleProjectile",
+        "DrawPlayerExplosions2",
+        "DrawBombAndProjectileExplosions"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "4d6c541f5cdedc9667a32ef286850e1bb908989e",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/full-ceres-rust/runs/escape-01/result.toml",
+          "sha256": "3c4c157d579b4da801e3dbaf2439774d85d814c361f7581c3eadea0d3beb36b5"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/full-ceres-rust/evidence/baseline-comparison.log",
+          "sha256": "2743b0e4e87b1bac910a553185d403212e500b8563b3d222842dfd17bacd5557"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/full-ceres-rust/evidence/verifier/independent-review.md",
+          "sha256": "cbc74fddff60f31cb1f298e0bbf7b67114a62574146131ff407415921f3750bd"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/full-ceres-rust/evidence/cleanup.md",
+          "sha256": "e974350e7772c286b3a3b67da82caa7c34916f203f7dc4cbaa6a17db6a0f3410"
+        }
+      ],
+      "limitations": [
+        "One16991-step normal CLI mixed-Rust exercise reaches actual Ceres escape and area0 normal gameplay; live-exercised only, no new verified/integrated/translated or original-ROM claim.",
+        "Full observations CSV and final WRAM/PNG equal retained recovered-C baseline, but CSV is sampled state, not per-step full WRAM/external/effect hashes.",
+        "Ceresdoor13/13 scheduled entry kinds, coordinator22/27 routines, directional8/13 routines reached. Five right and five left setups,645 nested scroll children; no vertical/upward-correction claim.",
+        "Four non-projectile consumers have zero C entries/refusals. Ceresdoor ten puff services and one solid setup are observed; private main-state coverage is not inferred from Main count.",
+        "Projectile refusals[0,706,707,707] and C entries[0,2282,3885,737] remain explicit. Existing Ceres highbit exclusion observed706 sampled steps; no per-call refusal attribution or domain widening. Fire is not reached and omitted.",
+        "Scrolling display/update calls are observed; the extra display does not alone prove nonempty uploads. Named foreign gameplay/hardware dependencies remain C.",
+        "Single gameplay run27.445s; exact source/runtime/input retained, independent review and cleanup complete. No gameplay build, new native recipe or worker worktree was needed."
+      ],
+      "updated_at": 1792153295
+    },
+    {
+      "id": "restart-normal-camera-translating-20261016",
+      "scope": "Restart complete normal-camera scheduled frame",
+      "agent": "/root/ceres_route @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "translating",
+      "routines": [
+        "MainScrollingRoutine",
+        "CallScrollingFinishedHook",
+        "Samus_ScrollFinishedHook_SporeSpawnFight",
+        "Samus_HandleScroll_X",
+        "Samus_HandleScroll_Y",
+        "Samus_CalcDistanceMoved_X",
+        "Samus_CalcDistanceMoved_Y",
+        "HandleAutoscrolling_X",
+        "HandleScrollingWhenTriggeringScrollRight",
+        "HandleScrollingWhenTriggeringScrollLeft",
+        "HandleAutoscrolling_Y",
+        "HandleScrollingWhenTriggeringScrollDown",
+        "HandleScrollingWhenTriggeringScrollUp"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "d82f0be",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/camera/evidence/assignment.md",
+          "sha256": "a2ac0301a2223adbc30314b6b46625cf4727408620689b9711012e4af8675334"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/camera/evidence/abi.md",
+          "sha256": "8062bf938aa811a53c375ce4cc5f0e7429ac5e5970f69de6a5f5ea1704c85a09"
+        }
+      ],
+      "limitations": [
+        "Whole13-routine pure-WRAM camera scope assigned with disjoint gameplay/native ownership; existing main Rust algorithms reused.",
+        "No implementation or verification claim yet. First route remains existing9380 combined inputs; slow mode/Spore/knockback/alternate tables need focused evidence.",
+        "One actual function-body hook, atomic preparation/commit once, no ROM or foreign services. Graphics scrolling and directional/coordinator boundaries remain separate."
+      ],
+      "updated_at": 1792153662
+    },
+    {
+      "id": "restart-normal-camera-translated-20261016",
+      "scope": "Restart complete normal-camera scheduled frame",
+      "agent": "/root @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "translated",
+      "routines": [
+        "MainScrollingRoutine",
+        "CallScrollingFinishedHook",
+        "Samus_ScrollFinishedHook_SporeSpawnFight",
+        "Samus_HandleScroll_X",
+        "Samus_HandleScroll_Y",
+        "Samus_CalcDistanceMoved_X",
+        "Samus_CalcDistanceMoved_Y",
+        "HandleAutoscrolling_X",
+        "HandleScrollingWhenTriggeringScrollRight",
+        "HandleScrollingWhenTriggeringScrollLeft",
+        "HandleAutoscrolling_Y",
+        "HandleScrollingWhenTriggeringScrollDown",
+        "HandleScrollingWhenTriggeringScrollUp"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "3a582894ef6fbff92c3100901611cd417079ab3d",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/camera/worker-source/camera/VERIFICATION.md",
+          "sha256": "3a53c9f57c66f6723b803f5693a2f30a6a2abcbb1e846f6eadc31ccb2f3e2f3c"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/camera/host-controls/verification.md",
+          "sha256": "0426b9e964ce3e62029a00d30094210b6f37f614b931f73bce73044f074bfc7a"
+        }
+      ],
+      "limitations": [
+        "Complete13-routine source adapted from main bounded Rust implementation; native body hook separately implemented.",
+        "Eighteen focused Rust tests pass; native C/refusal controls cover44 fixtures/all13 routines and21 fatal ownership cases. These do not establish Rust/C all-branch agreement.",
+        "Integration replay is pending. Slow grapple/Spore/alternate selectors retain focused source tests only; no original-ROM claim."
+      ],
+      "updated_at": 1792154266
+    },
+    {
+      "id": "restart-normal-camera-verified-20261016",
+      "scope": "Restart complete normal-camera scheduled frame",
+      "agent": "/root @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "verified",
+      "routines": [
+        "MainScrollingRoutine",
+        "Samus_HandleScroll_X",
+        "Samus_HandleScroll_Y",
+        "Samus_CalcDistanceMoved_X",
+        "Samus_CalcDistanceMoved_Y",
+        "HandleAutoscrolling_X",
+        "HandleScrollingWhenTriggeringScrollRight",
+        "HandleScrollingWhenTriggeringScrollLeft",
+        "HandleAutoscrolling_Y",
+        "HandleScrollingWhenTriggeringScrollDown",
+        "HandleScrollingWhenTriggeringScrollUp"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "482e6b9d65fb5057735ff540852284435ef867c0",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/camera/runs/dev-01/result.toml",
+          "sha256": "6a675acb919210fb551cbd3662fbd886444dc78003704714a2cb096372737320"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/camera/runs/cli-rust-01/result.toml",
+          "sha256": "85f3ebc4f4dc7569ae9b4d2f44f5f6469f9ee09c927da9fc92ead946b142a87f"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/camera/evidence/verifier/independent-review.md",
+          "sha256": "66777a589f09abdb4d92a9a51c4def822badfff5864313a05b9fa07039a60bd6"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/camera/evidence/cleanup.md",
+          "sha256": "27faca931a8b791dc8940e88df3b8134a8fab9621a808e10b4afc4225a990a94"
+        }
+      ],
+      "limitations": [
+        "Complete13-routine camera closure integrated;11 reached through9380-step recovered-C comparison and ordinary Rust CLI. Finish dispatcher/Spore and slow mode retain focused evidence, not live parity.",
+        "934 balanced Rust root calls and11 reached routines have zero owned C/refusals. State9 tail calls8726/9030 are covered. All934 publish previous actor pairs,848 nonvacuously;103 integerX and286 integerY changes occur inside camera roots.",
+        "First candidate matches complete WRAM, passive external state and ordered effects; all five preceding material gates pass. New C reference preserves all prior reference WRAM/external hashes.",
+        "Forced warm rebuild+compare12.834s includes0.549s build; CLI8.037s finalWRAM/PNG agree. Real +1Y fault first diverges8412 WRAM; docs reuse0.151s with zero game processes.",
+        "103 affected/root tests and strictClippy/fmt/build pass. Native44 C/refusal cases and21 fatal controls prove boundary behavior; they do not establish Rust all-branch parity.",
+        "Worker source/evidence retained, workers retired, utility cleanup passed;420 pre-cleanup hashes and post-cleanup native/trace/result authentication pass with no extra game process.",
+        "No original-ROM, whole-game ownership or changed-source full-Ceres parity claim. Existing projectile Mode7 exclusion remains unchanged."
+      ],
+      "updated_at": 1792154832
+    },
+    {
+      "id": "restart-normal-camera-integrated-20261016",
+      "scope": "Restart complete normal-camera scheduled frame",
+      "agent": "/root @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "integrated",
+      "routines": [
+        "MainScrollingRoutine",
+        "CallScrollingFinishedHook",
+        "Samus_ScrollFinishedHook_SporeSpawnFight",
+        "Samus_HandleScroll_X",
+        "Samus_HandleScroll_Y",
+        "Samus_CalcDistanceMoved_X",
+        "Samus_CalcDistanceMoved_Y",
+        "HandleAutoscrolling_X",
+        "HandleScrollingWhenTriggeringScrollRight",
+        "HandleScrollingWhenTriggeringScrollLeft",
+        "HandleAutoscrolling_Y",
+        "HandleScrollingWhenTriggeringScrollDown",
+        "HandleScrollingWhenTriggeringScrollUp"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "482e6b9d65fb5057735ff540852284435ef867c0",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/camera/runs/dev-01/result.toml",
+          "sha256": "6a675acb919210fb551cbd3662fbd886444dc78003704714a2cb096372737320"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/camera/runs/cli-rust-01/result.toml",
+          "sha256": "85f3ebc4f4dc7569ae9b4d2f44f5f6469f9ee09c927da9fc92ead946b142a87f"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/camera/evidence/verifier/independent-review.md",
+          "sha256": "66777a589f09abdb4d92a9a51c4def822badfff5864313a05b9fa07039a60bd6"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/camera/evidence/cleanup.md",
+          "sha256": "27faca931a8b791dc8940e88df3b8134a8fab9621a808e10b4afc4225a990a94"
+        }
+      ],
+      "limitations": [
+        "Complete13-routine camera closure integrated;11 reached through9380-step recovered-C comparison and ordinary Rust CLI. Finish dispatcher/Spore and slow mode retain focused evidence, not live parity.",
+        "934 balanced Rust root calls and11 reached routines have zero owned C/refusals. State9 tail calls8726/9030 are covered. All934 publish previous actor pairs,848 nonvacuously;103 integerX and286 integerY changes occur inside camera roots.",
+        "First candidate matches complete WRAM, passive external state and ordered effects; all five preceding material gates pass. New C reference preserves all prior reference WRAM/external hashes.",
+        "Forced warm rebuild+compare12.834s includes0.549s build; CLI8.037s finalWRAM/PNG agree. Real +1Y fault first diverges8412 WRAM; docs reuse0.151s with zero game processes.",
+        "103 affected/root tests and strictClippy/fmt/build pass. Native44 C/refusal cases and21 fatal controls prove boundary behavior; they do not establish Rust all-branch parity.",
+        "Worker source/evidence retained, workers retired, utility cleanup passed;420 pre-cleanup hashes and post-cleanup native/trace/result authentication pass with no extra game process.",
+        "No original-ROM, whole-game ownership or changed-source full-Ceres parity claim. Existing projectile Mode7 exclusion remains unchanged."
+      ],
+      "updated_at": 1792154840
+    },
+    {
+      "id": "restart-normal-camera-live-exercised-20261016",
+      "scope": "Restart complete normal-camera scheduled frame",
+      "agent": "/root @ 01a1414e-7fc1-73c3-969e-a7294824368a",
+      "stage": "live-exercised",
+      "routines": [
+        "MainScrollingRoutine",
+        "Samus_HandleScroll_X",
+        "Samus_HandleScroll_Y",
+        "Samus_CalcDistanceMoved_X",
+        "Samus_CalcDistanceMoved_Y",
+        "HandleAutoscrolling_X",
+        "HandleScrollingWhenTriggeringScrollRight",
+        "HandleScrollingWhenTriggeringScrollLeft",
+        "HandleAutoscrolling_Y",
+        "HandleScrollingWhenTriggeringScrollDown",
+        "HandleScrollingWhenTriggeringScrollUp"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "482e6b9d65fb5057735ff540852284435ef867c0",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/camera/runs/dev-01/result.toml",
+          "sha256": "6a675acb919210fb551cbd3662fbd886444dc78003704714a2cb096372737320"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/camera/runs/cli-rust-01/result.toml",
+          "sha256": "85f3ebc4f4dc7569ae9b4d2f44f5f6469f9ee09c927da9fc92ead946b142a87f"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/camera/evidence/verifier/independent-review.md",
+          "sha256": "66777a589f09abdb4d92a9a51c4def822badfff5864313a05b9fa07039a60bd6"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/camera/evidence/cleanup.md",
+          "sha256": "27faca931a8b791dc8940e88df3b8134a8fab9621a808e10b4afc4225a990a94"
+        }
+      ],
+      "limitations": [
+        "Complete13-routine camera closure integrated;11 reached through9380-step recovered-C comparison and ordinary Rust CLI. Finish dispatcher/Spore and slow mode retain focused evidence, not live parity.",
+        "934 balanced Rust root calls and11 reached routines have zero owned C/refusals. State9 tail calls8726/9030 are covered. All934 publish previous actor pairs,848 nonvacuously;103 integerX and286 integerY changes occur inside camera roots.",
+        "First candidate matches complete WRAM, passive external state and ordered effects; all five preceding material gates pass. New C reference preserves all prior reference WRAM/external hashes.",
+        "Forced warm rebuild+compare12.834s includes0.549s build; CLI8.037s finalWRAM/PNG agree. Real +1Y fault first diverges8412 WRAM; docs reuse0.151s with zero game processes.",
+        "103 affected/root tests and strictClippy/fmt/build pass. Native44 C/refusal cases and21 fatal controls prove boundary behavior; they do not establish Rust all-branch parity.",
+        "Worker source/evidence retained, workers retired, utility cleanup passed;420 pre-cleanup hashes and post-cleanup native/trace/result authentication pass with no extra game process.",
+        "No original-ROM, whole-game ownership or changed-source full-Ceres parity claim. Existing projectile Mode7 exclusion remains unchanged."
+      ],
+      "updated_at": 1792154847
+    },
+    {
+      "id": "restart-projectile-escape-translating-20261016",
+      "scope": "Restart ordinary projectile update and transformed trail during Ceres escape",
+      "agent": "/root/projectile @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "translating",
+      "routines": [
+        "HandleProjectile",
+        "ProjPreInstr_Beam_NoWaveBeam",
+        "SpawnProjectileTrail",
+        "ProjectileTrail_Func5",
+        "CalcExplosion_Mode7"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "099af049183241e37b6b756600aafc2ba3db2197",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/projectile-escape/evidence/assignment.md",
+          "sha256": "5d6175865e7019a21253fc855c5345db7ea91f6a0bcff53f38f6fa51829dc65c"
+        }
+      ],
+      "limitations": [
+        "Ordinary update high-bit domain only; Fire and undefined recovered-C drawing remain excluded.",
+        "Full no-Fire route establishes update ownership, not active transformed-trail rendering. Separate bounded actual-C update-return evidence required.",
+        "No implementation or original-ROM parity claim yet; original production claims unchanged."
+      ],
+      "updated_at": 1792155638
+    },
+    {
+      "id": "restart-projectile-escape-translated-20261016",
+      "scope": "Restart ordinary projectile update and transformed trail during Ceres escape",
+      "agent": "/root/projectile @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "translated",
+      "routines": [
+        "HandleProjectile",
+        "ProjPreInstr_Beam_NoWaveBeam",
+        "SpawnProjectileTrail",
+        "ProjectileTrail_Func5",
+        "CalcExplosion_Mode7"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "5930c75",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/projectile-escape/worker-source/projectile/VERIFICATION.md",
+          "sha256": "cfaf70d9b7e2f36bc4d689361345c6e9c6b9a0e2f97cdbeb9aca8158cebb4498"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/projectile-escape/worker-checks/projectile/tests-final.log",
+          "sha256": "447b1e7123a09b42c1e7a344fa817149b5e6d8b1e30c65ebb68e22aa09f18460"
+        }
+      ],
+      "limitations": [
+        "Ordinary update high-bit domain only; Fire and undefined recovered-C drawing remain excluded.",
+        "Ten focused Rust tests pass; native actual-C update-return comparison and full-route replay remain pending.",
+        "No active-shot rendering or original-ROM parity claim. Full no-Fire replay is separate from transformed-trail fixtures."
+      ],
+      "updated_at": 1792155884
+    },
+    {
+      "id": "restart-projectile-escape-verified-20261016",
+      "scope": "Restart ordinary projectile update and transformed trail during Ceres escape",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "verified",
+      "routines": [
+        "HandleProjectile",
+        "ProjPreInstr_Beam_NoWaveBeam",
+        "SpawnProjectileTrail",
+        "ProjectileTrail_Func5",
+        "CalcExplosion_Mode7"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "5850265482ed31abcad31a5768386df8d38b5365",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/projectile-escape/runs/dev-02/result.toml",
+          "sha256": "42351a44184901eb703b083d058b36f1760fb4ada866b0af8fa7f05f0a244839"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/projectile-escape/runs/short-rust-01/result.toml",
+          "sha256": "f1375db2753021638bab50aed11ec8311eabd84266dec339f1d8173296b3a106"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/projectile-escape/worker-checks/native/escape-update-final.log",
+          "sha256": "6efbde115f9730137754ffe2a602056f28359b1014bed8e66120eb9ddd789899"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/projectile-escape/evidence/post-cleanup-auth.stdout",
+          "sha256": "edc266ad8a6e58436326509d0b2a0c5ea60165cb10ffa36376d35391b9f8d7c4"
+        }
+      ],
+      "limitations": [
+        "Complete ordinary update/trail extension only; inventory guards and Fire/render high-bit exclusions preserved.",
+        "Four synthetic active matrix chains cover108 complete WRAM/effect update-return pairs; full16991 and short9380 live comparisons pass. Synthetic active trails do not grant live-from-reset active rendering or original-ROM parity."
+      ],
+      "updated_at": 1792156503
+    },
+    {
+      "id": "restart-projectile-escape-integrated-20261016",
+      "scope": "Restart ordinary projectile update and transformed trail during Ceres escape",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "integrated",
+      "routines": [
+        "HandleProjectile",
+        "ProjPreInstr_Beam_NoWaveBeam",
+        "SpawnProjectileTrail",
+        "ProjectileTrail_Func5",
+        "CalcExplosion_Mode7"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "5850265482ed31abcad31a5768386df8d38b5365",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/projectile-escape/runs/dev-02/result.toml",
+          "sha256": "42351a44184901eb703b083d058b36f1760fb4ada866b0af8fa7f05f0a244839"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/projectile-escape/runs/short-rust-01/result.toml",
+          "sha256": "f1375db2753021638bab50aed11ec8311eabd84266dec339f1d8173296b3a106"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/projectile-escape/worker-checks/native/escape-update-final.log",
+          "sha256": "6efbde115f9730137754ffe2a602056f28359b1014bed8e66120eb9ddd789899"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/projectile-escape/evidence/post-cleanup-auth.stdout",
+          "sha256": "edc266ad8a6e58436326509d0b2a0c5ea60165cb10ffa36376d35391b9f8d7c4"
+        }
+      ],
+      "limitations": [
+        "Complete ordinary update/trail extension only; inventory guards and Fire/render high-bit exclusions preserved.",
+        "Four synthetic active matrix chains cover108 complete WRAM/effect update-return pairs; full16991 and short9380 live comparisons pass. Synthetic active trails do not grant live-from-reset active rendering or original-ROM parity."
+      ],
+      "updated_at": 1792156514
+    },
+    {
+      "id": "restart-projectile-escape-live-exercised-20261016",
+      "scope": "Restart ordinary projectile update and transformed trail during Ceres escape",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "live-exercised",
+      "routines": [
+        "HandleProjectile"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "5850265482ed31abcad31a5768386df8d38b5365",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/projectile-escape/runs/dev-02/result.toml",
+          "sha256": "42351a44184901eb703b083d058b36f1760fb4ada866b0af8fa7f05f0a244839"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/projectile-escape/runs/short-rust-01/result.toml",
+          "sha256": "f1375db2753021638bab50aed11ec8311eabd84266dec339f1d8173296b3a106"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/projectile-escape/worker-checks/native/escape-update-final.log",
+          "sha256": "6efbde115f9730137754ffe2a602056f28359b1014bed8e66120eb9ddd789899"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/projectile-escape/evidence/post-cleanup-auth.stdout",
+          "sha256": "edc266ad8a6e58436326509d0b2a0c5ea60165cb10ffa36376d35391b9f8d7c4"
+        }
+      ],
+      "limitations": [
+        "Full16991-step no-Fire route:706 high-bit Rust updates, zero update fallback; active transformed trails are separate synthetic actual-C evidence.",
+        "Fire and both renderers retain high-bit exclusions;707 explicitly attributed refusals per renderer. No active escape-shot rendering or original-ROM parity."
+      ],
+      "updated_at": 1792156526
+    },
+    {
+      "id": "restart-original-handle-34-verified-20261016",
+      "scope": "34 independent ordinary HandleProjectile calls from retained original capture04",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "verified",
+      "routines": [
+        "HandleProjectile"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "cbe2b38",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/original-updates/handle-01/result.toml",
+          "sha256": "899a02ce38ec588fa1ca3eb3c862ca13338bd055d8852eeaf6dd58ce3e4c404a"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/original-updates/fault-01/result.toml",
+          "sha256": "8ab206b8b3d09fdf08b0803d69d922b86e2169377577d00bd18f29a478d92e4c"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/original-updates/fire-compat-01/result.toml",
+          "sha256": "37b6b8bdd45f4229afa3b2f494c90707ac4dc9476b274fa269a0e9ee96b2211f"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/original-updates/evidence/cleanup.md",
+          "sha256": "3a41f3054cfaa8034a662deca89971d96e21799c086a36cc2e87cb47a6c98479"
+        }
+      ],
+      "limitations": [
+        "34 invocations at original frames8661..8694 independently start from their own captured entry; isolated outputs are never chained.",
+        "Original agreement is only the fixed801-byte projectile/word/sound/trail projection; complete131072-byte C/Rust WRAM agreement is separate.",
+        "Ordinary beam flight, trail allocation, wall impact and removal only; no drawing, bombs, echoes, upgrades, PLM, high-bit Ceres or broader original state coverage.",
+        "CPU/stack/scratch, original MMIO/audio/request ordering and continuous original replay parity are not compared.",
+        "C/Rust use authenticated native patched ROM view; captured original uses pristine pinned ROM.",
+        "Fault flips post-execution Rust X and tests comparator sensitivity, not a gameplay implementation mutation.",
+        "Tooling comparison extension only; no new gameplay translation or live-exercised stage. Both worker worktrees retired and cleanup/authentication complete."
+      ],
+      "updated_at": 1792157445
+    },
+    {
+      "id": "restart-landing-parlor-live-exercised-20261016",
+      "scope": "Existing Rust consumers through Landing Site west door and resumed Parlor control",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "live-exercised",
+      "routines": [
+        "FireUnchargedBeam",
+        "HandleProjectile",
+        "DrawPlayerExplosions2",
+        "DrawBombAndProjectileExplosions",
+        "UpdateScrollVarsUpdateMap",
+        "CalculateLayer2PosAndScrollsWhenScrolling",
+        "GameState_9_HitDoorBlock",
+        "GameState_11_LoadingNextRoom_Async",
+        "DoorTransitionScrollingSetup",
+        "Irq_FollowDoorTransition",
+        "MainScrollingRoutine"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "c7d8e50f16bd063bbdeb1d09f363802e910ffb24",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/parlor/author-01/result.toml",
+          "sha256": "b88c7f65b08b1fe3135fd96f618f61d06a0348bd8918bc7955b1699ef9525815"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/parlor/replay-01/result.toml",
+          "sha256": "fc2b021c5b95131e9187baa82d9bc59bfa7ef3a1d8013cab55bae248a6b41214"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/parlor/evidence/replay-equality.md",
+          "sha256": "ddff983b336022c7154984cf1cf551f655fae22db388c718df86680bfebc4f81"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/parlor/evidence/cleanup.md",
+          "sha256": "7262fab37289971c2654d40c0552888e84185fdf501558c74770cac9aa2b0794"
+        }
+      ],
+      "limitations": [
+        "Tooling/policy extension only: no new gameplay translation. Exact16991-pad Ceres prefix plus1081 ordinary-input tail reaches Parlor92FD state8 and consumes8 polls moving29px left.",
+        "Author and strict no-policy replay have identical complete inputs/observation CSV/final WRAM/PNG; this is not per-step full-state C/Rust differential or original-ROM equivalence.",
+        "Tail adds57 Rust Fire,365 Handle,1007 each renderer,1041 scrolling,105 transition,64 directional and976 camera root completions; no added owned C entries/refusals. Ceres-door coverage belongs to the prefix.",
+        "Whole-route projectile counters retain1576 pre-install C Handle entries,3885/737 renderer C entries and707 refusals per renderer. Other gameplay/foreign services remain recovered C; one new projectile foreign service occurs.",
+        "All18072 host steps have zero CPU fallback/instructions. Short Parlor response does not establish downstream item progression or whole-game completion.",
+        "Both integrated worker worktrees retired; ordinary/deduplicating cleanup and post-cleanup artifact authentication pass. Primary warm target and exact shared native/ROM/input dependencies retained."
+      ],
+      "updated_at": 1792158880
+    },
+    {
+      "id": "restart-morph-pickup-live-exercised-20261016",
+      "scope": "Existing Rust consumers through the Morph Ball pickup and resumed control route",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "live-exercised",
+      "routines": [
+        "FireUnchargedBeam",
+        "HandleProjectile",
+        "DrawPlayerExplosions2",
+        "DrawBombAndProjectileExplosions",
+        "UpdateScrollVarsUpdateMap",
+        "CalculateLayer2PosAndScrollsWhenScrolling",
+        "GameState_9_HitDoorBlock",
+        "GameState_11_LoadingNextRoom_Async",
+        "DoorTransitionScrollingSetup",
+        "Irq_FollowDoorTransition",
+        "MainScrollingRoutine"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "c3b6a76e25c1d1dd80fb2a88f5e980414a21e714",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/morph/author-03/result.toml",
+          "sha256": "0cce2271e4ffe08bb29f29e3b5a2bb910d12264550724ab39c5ed1f04a8bd66e"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/morph/replay-02/result.toml",
+          "sha256": "e2de48a344c933c6b8271de3b25b1b6513b1737201e2689c27529533cc08d0fa"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/morph/evidence/replay-equality.md",
+          "sha256": "3609ff4da94e1eae4c0e7210c3ae52ed79df7d69e3480c2d144de648cc7d1a92"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/morph/evidence/cleanup.md",
+          "sha256": "8b14a629d43b11596677151fd9d52d693f0ab320d338409ff2f32eef0266356e"
+        }
+      ],
+      "limitations": [
+        "Policy/tooling extension only: no gameplay translation. Exact18072-pad Parlor prefix plus4964 tail; ordered room progression, all three Morph bits clear-to-set, message09 and resumed16px movement.",
+        "Author03/replay02 agree on complete inputs/general/item CSVs,prefix/acquisition WRAM,final WRAM and PNG. This is deterministic native replay, not new per-step full-state C/Rust or original-ROM equivalence.",
+        "Tail adds506 Rust Fire,4106 Handle,4284 each renderer,4356 scrolling,460 transition,242 directional and4106 camera roots; no added owned C entries/refusals. Eleven added projectile foreign services remain dependencies.",
+        "Whole route retains prefix1576 C Handle,3885/737 renderer C entries and707 refusals per renderer; other registered consumers have zero owned C/refusals. All23036 steps have zero CPU fallback/instructions.",
+        "Samus, elevator, PLM/item, message and remaining gameplay stay recovered C. Actual Morph-form movement and downstream missiles are not part of this checkpoint.",
+        "Two bounded navigation failures, red regressions and one pre-spawn path error retained. Both worker worktrees retired, ordinary/deduplicating cleanup and post-cleanup artifact checks complete."
+      ],
+      "updated_at": 1792160498
+    },
+    {
+      "id": "restart-first-missile-live-exercised-20261016",
+      "scope": "Existing Rust consumers through actual Morph movement and first Chozo missile pickup",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "live-exercised",
+      "routines": [
+        "FireUnchargedBeam",
+        "HandleProjectile",
+        "DrawPlayerExplosions2",
+        "DrawBombAndProjectileExplosions",
+        "UpdateScrollVarsUpdateMap",
+        "CalculateLayer2PosAndScrollsWhenScrolling",
+        "GameState_9_HitDoorBlock",
+        "GameState_11_LoadingNextRoom_Async",
+        "DoorTransitionScrollingSetup",
+        "Irq_FollowDoorTransition",
+        "MainScrollingRoutine"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "1b69b059abfff3433234eca9c2fde74a7bff79cb",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/first-missile/author-05/result.toml",
+          "sha256": "79375b747e7d9b1710f966ca3e680cc20723c9e60fb9c286a4be6749b8a08040"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/first-missile/replay-01/result.toml",
+          "sha256": "90aa6bb0a822afc6e430aad69e45ab6a9c39409b8ead1a8d181eab5cb235a117"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/first-missile/evidence/replay-equality.md",
+          "sha256": "166a48af474a22c9e36c0fe81accb13cea63d649583f0ca05f18f4b2fef252e8"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/first-missile/evidence/cleanup.md",
+          "sha256": "4b616bc24090274e8fda4e1fd53e8b886f1b71132a8fadf62c0b585fe86bed7f"
+        }
+      ],
+      "limitations": [
+        "Policy/tooling extension only: no gameplay translation. Exact23036-pad Morph prefix plus1796 tail; actual ground Morph movement18px, first missile reveal/pickup +5ammo/capacity and D874bit4, message2 completion,17px resumed response.",
+        "Author05/replay01 agree on complete inputs/general/missile CSVs,prefix/reveal/acquisition WRAM,final WRAM and PNG. Deterministic native replay does not establish per-step full-state C/Rust or original-ROM equivalence.",
+        "Tail adds50 Rust Fire,1188 Handle,1254 each renderer,1319 scrolling,214 transition,128 directional and1188 camera root completions; no added owned C entries/refusals. Twelve added projectile foreign calls remain dependencies.",
+        "Whole route retains prefix1576 C Handle,3885/737 renderer C entries and707 refusals per renderer; other registered consumers have zero owned C/refusals. All24832 steps have zero CPU fallback/instructions.",
+        "Samus, collision, item/PLM, message and remaining gameplay stay recovered C. Missile firing is outside this acquisition checkpoint.",
+        "Four bounded navigation failures and four red regressions are retained. Both worker worktrees retired, ordinary/deduplicating cleanup and post-cleanup artifact authentication complete."
+      ],
+      "updated_at": 1792163264
+    },
+    {
+      "id": "restart-ordinary-missile-instructions-translating-20261016",
+      "scope": "Ordinary Chozo missile instruction and trigger family",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "translating",
+      "routines": [
+        "PlmInstr_Delete",
+        "PlmInstr_PreInstr",
+        "PlmInstr_ClearPreInstr",
+        "PlmInstr_Goto",
+        "PlmInstr_SetTimer",
+        "PlmInstr_GotoIfItemBitSet",
+        "PlmInstr_SetItemBit",
+        "PlmInstr_CollectAmmoMissileTank",
+        "PlmInstr_SetLinkReg",
+        "PlmInstr_Call",
+        "PlmInstr_Return",
+        "PlmInstr_ClearMusicQueueAndQueueTrack",
+        "PlmPreInstr_GotoLinkIfTriggered"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "5439ae54b5305e44db7b2f33fdc70d1003225295",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/item-instructions/planning/claimed-scope.md",
+          "sha256": "69847b68dcd8347fffc21417bbeb079c793cd57948045c5c69f9b3ac0540bc35"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/first-missile/worker-checks/next-item-scope.md",
+          "sha256": "53e764d49c2a5fa0243827305bd852bdbd88a109df6ee84e6305feb5d606455a"
+        }
+      ],
+      "limitations": [
+        "Assignment/planning only: no new gameplay source or accepted verification yet. Native owns typed adapter/service52/nested SpawnPLM prerequisite; material owns exact semantics and a sufficient compact actual-C matrix.",
+        "Bounded ordinary EF2F/E47C script domain, not all PLMs/items/rooms. Native PLM scheduler, allocation/collision, timed drawing, HUD/music and message presentation remain dependencies.",
+        "Typed return values, atomic refusal, ordered native services and actual-C/live composition must be resolved before implementation admission. Ticket17 observed pickup is source context, not proof of Rust item ownership.",
+        "Original production claims are unchanged. No original-ROM parity or downstream missile firing is claimed."
+      ],
+      "updated_at": 1792163647
+    },
+    {
+      "id": "restart-ordinary-missile-instructions-translated-20261016",
+      "scope": "Ordinary Chozo missile instruction and trigger family",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "translated",
+      "routines": [
+        "PlmInstr_Delete",
+        "PlmInstr_PreInstr",
+        "PlmInstr_ClearPreInstr",
+        "PlmInstr_Goto",
+        "PlmInstr_SetTimer",
+        "PlmInstr_GotoIfItemBitSet",
+        "PlmInstr_SetItemBit",
+        "PlmInstr_CollectAmmoMissileTank",
+        "PlmInstr_SetLinkReg",
+        "PlmInstr_Call",
+        "PlmInstr_Return",
+        "PlmInstr_ClearMusicQueueAndQueueTrack",
+        "PlmPreInstr_GotoLinkIfTriggered"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "1bba1a8758c640915d163ef889198239f86c7827",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/item-instructions/evidence/compact-controls.md",
+          "sha256": "ed6fc9bcec9f338d21b597557e49e9e261ed479af6cbc8f40ec632ca8289b446"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/item-instructions/controls-02/all.stdout",
+          "sha256": "24e5b78e17a99643d5944aadadb272df2c8b0d3535bba7436b5e192a62361d6a"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/item-instructions/evidence/live-comparison.md",
+          "sha256": "4f1ad82bb3b729489618aa819ff14b6181c06c53ef1981481598cccd959a36d5"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/item-instructions/live-rust-01/result.toml",
+          "sha256": "8fcb5fa2eb1aed119d738e6328b5a97c69c05434f693430d68b1b91397a0fa1e"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/item-instructions/evidence/cleanup.md",
+          "sha256": "2510bdcb730f4478913c815d30586b1a6095170d207b15947d5814ddc43f1074"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/item-instructions/evidence/dependencies.sha256",
+          "sha256": "fddce925f39a8fb7bdd6d8a7d4d91a3deffb820fc10d3c838d0153cda4d170bf"
+        }
+      ],
+      "limitations": [
+        "Bounded EF2F/argument0022 identity and source-sealed bank84 script sites, not all PLMs or item domains.",
+        "All13 bodies implemented.25 actual-C pairs,14 atomic preflight cases, K03 real service52, sentinel transport, actual SpawnPLM trigger and safe foreign fallback pass.11 fatal controls exit2.",
+        "Fixed24832-input C/Rust pair passes with114 identical full-WRAM callback records; eight prior artifacts match each other and ticket17. All13 scope bodies have Rust completions; scope C/refusals0; real service52 completions3; native service requests/completions1 each. Message2 waits394 steps.",
+        "Outside scope1184 C entries and unchanged Rust refusals are explicit. Native allocation/collision, timed drawing, HUD/music and message presentation remain dependencies.",
+        "No original-ROM parity or new input policy. Both cleanup passes and worker retirement complete; exact failure/source/binary/dependency evidence retained."
+      ],
+      "updated_at": 1792166473
+    },
+    {
+      "id": "restart-ordinary-missile-instructions-verified-20261016",
+      "scope": "Ordinary Chozo missile instruction and trigger family",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "verified",
+      "routines": [
+        "PlmInstr_Delete",
+        "PlmInstr_PreInstr",
+        "PlmInstr_ClearPreInstr",
+        "PlmInstr_Goto",
+        "PlmInstr_SetTimer",
+        "PlmInstr_GotoIfItemBitSet",
+        "PlmInstr_SetItemBit",
+        "PlmInstr_CollectAmmoMissileTank",
+        "PlmInstr_SetLinkReg",
+        "PlmInstr_Call",
+        "PlmInstr_Return",
+        "PlmInstr_ClearMusicQueueAndQueueTrack",
+        "PlmPreInstr_GotoLinkIfTriggered"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "1bba1a8758c640915d163ef889198239f86c7827",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/item-instructions/evidence/compact-controls.md",
+          "sha256": "ed6fc9bcec9f338d21b597557e49e9e261ed479af6cbc8f40ec632ca8289b446"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/item-instructions/controls-02/all.stdout",
+          "sha256": "24e5b78e17a99643d5944aadadb272df2c8b0d3535bba7436b5e192a62361d6a"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/item-instructions/evidence/live-comparison.md",
+          "sha256": "4f1ad82bb3b729489618aa819ff14b6181c06c53ef1981481598cccd959a36d5"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/item-instructions/live-rust-01/result.toml",
+          "sha256": "8fcb5fa2eb1aed119d738e6328b5a97c69c05434f693430d68b1b91397a0fa1e"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/item-instructions/evidence/cleanup.md",
+          "sha256": "2510bdcb730f4478913c815d30586b1a6095170d207b15947d5814ddc43f1074"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/item-instructions/evidence/dependencies.sha256",
+          "sha256": "fddce925f39a8fb7bdd6d8a7d4d91a3deffb820fc10d3c838d0153cda4d170bf"
+        }
+      ],
+      "limitations": [
+        "Bounded EF2F/argument0022 identity and source-sealed bank84 script sites, not all PLMs or item domains.",
+        "All13 bodies implemented.25 actual-C pairs,14 atomic preflight cases, K03 real service52, sentinel transport, actual SpawnPLM trigger and safe foreign fallback pass.11 fatal controls exit2.",
+        "Fixed24832-input C/Rust pair passes with114 identical full-WRAM callback records; eight prior artifacts match each other and ticket17. All13 scope bodies have Rust completions; scope C/refusals0; real service52 completions3; native service requests/completions1 each. Message2 waits394 steps.",
+        "Outside scope1184 C entries and unchanged Rust refusals are explicit. Native allocation/collision, timed drawing, HUD/music and message presentation remain dependencies.",
+        "No original-ROM parity or new input policy. Both cleanup passes and worker retirement complete; exact failure/source/binary/dependency evidence retained."
+      ],
+      "updated_at": 1792166481
+    },
+    {
+      "id": "restart-ordinary-missile-instructions-integrated-20261016",
+      "scope": "Ordinary Chozo missile instruction and trigger family",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "integrated",
+      "routines": [
+        "PlmInstr_Delete",
+        "PlmInstr_PreInstr",
+        "PlmInstr_ClearPreInstr",
+        "PlmInstr_Goto",
+        "PlmInstr_SetTimer",
+        "PlmInstr_GotoIfItemBitSet",
+        "PlmInstr_SetItemBit",
+        "PlmInstr_CollectAmmoMissileTank",
+        "PlmInstr_SetLinkReg",
+        "PlmInstr_Call",
+        "PlmInstr_Return",
+        "PlmInstr_ClearMusicQueueAndQueueTrack",
+        "PlmPreInstr_GotoLinkIfTriggered"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "1bba1a8758c640915d163ef889198239f86c7827",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/item-instructions/evidence/compact-controls.md",
+          "sha256": "ed6fc9bcec9f338d21b597557e49e9e261ed479af6cbc8f40ec632ca8289b446"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/item-instructions/controls-02/all.stdout",
+          "sha256": "24e5b78e17a99643d5944aadadb272df2c8b0d3535bba7436b5e192a62361d6a"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/item-instructions/evidence/live-comparison.md",
+          "sha256": "4f1ad82bb3b729489618aa819ff14b6181c06c53ef1981481598cccd959a36d5"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/item-instructions/live-rust-01/result.toml",
+          "sha256": "8fcb5fa2eb1aed119d738e6328b5a97c69c05434f693430d68b1b91397a0fa1e"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/item-instructions/evidence/cleanup.md",
+          "sha256": "2510bdcb730f4478913c815d30586b1a6095170d207b15947d5814ddc43f1074"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/item-instructions/evidence/dependencies.sha256",
+          "sha256": "fddce925f39a8fb7bdd6d8a7d4d91a3deffb820fc10d3c838d0153cda4d170bf"
+        }
+      ],
+      "limitations": [
+        "Bounded EF2F/argument0022 identity and source-sealed bank84 script sites, not all PLMs or item domains.",
+        "All13 bodies implemented.25 actual-C pairs,14 atomic preflight cases, K03 real service52, sentinel transport, actual SpawnPLM trigger and safe foreign fallback pass.11 fatal controls exit2.",
+        "Fixed24832-input C/Rust pair passes with114 identical full-WRAM callback records; eight prior artifacts match each other and ticket17. All13 scope bodies have Rust completions; scope C/refusals0; real service52 completions3; native service requests/completions1 each. Message2 waits394 steps.",
+        "Outside scope1184 C entries and unchanged Rust refusals are explicit. Native allocation/collision, timed drawing, HUD/music and message presentation remain dependencies.",
+        "No original-ROM parity or new input policy. Both cleanup passes and worker retirement complete; exact failure/source/binary/dependency evidence retained."
+      ],
+      "updated_at": 1792166491
+    },
+    {
+      "id": "restart-ordinary-missile-instructions-live-exercised-20261016",
+      "scope": "Ordinary Chozo missile instruction and trigger family",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "live-exercised",
+      "routines": [
+        "PlmInstr_Delete",
+        "PlmInstr_PreInstr",
+        "PlmInstr_ClearPreInstr",
+        "PlmInstr_Goto",
+        "PlmInstr_SetTimer",
+        "PlmInstr_GotoIfItemBitSet",
+        "PlmInstr_SetItemBit",
+        "PlmInstr_CollectAmmoMissileTank",
+        "PlmInstr_SetLinkReg",
+        "PlmInstr_Call",
+        "PlmInstr_Return",
+        "PlmInstr_ClearMusicQueueAndQueueTrack",
+        "PlmPreInstr_GotoLinkIfTriggered"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "1bba1a8758c640915d163ef889198239f86c7827",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/item-instructions/evidence/compact-controls.md",
+          "sha256": "ed6fc9bcec9f338d21b597557e49e9e261ed479af6cbc8f40ec632ca8289b446"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/item-instructions/controls-02/all.stdout",
+          "sha256": "24e5b78e17a99643d5944aadadb272df2c8b0d3535bba7436b5e192a62361d6a"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/item-instructions/evidence/live-comparison.md",
+          "sha256": "4f1ad82bb3b729489618aa819ff14b6181c06c53ef1981481598cccd959a36d5"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/item-instructions/live-rust-01/result.toml",
+          "sha256": "8fcb5fa2eb1aed119d738e6328b5a97c69c05434f693430d68b1b91397a0fa1e"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/item-instructions/evidence/cleanup.md",
+          "sha256": "2510bdcb730f4478913c815d30586b1a6095170d207b15947d5814ddc43f1074"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/item-instructions/evidence/dependencies.sha256",
+          "sha256": "fddce925f39a8fb7bdd6d8a7d4d91a3deffb820fc10d3c838d0153cda4d170bf"
+        }
+      ],
+      "limitations": [
+        "Bounded EF2F/argument0022 identity and source-sealed bank84 script sites, not all PLMs or item domains.",
+        "All13 bodies implemented.25 actual-C pairs,14 atomic preflight cases, K03 real service52, sentinel transport, actual SpawnPLM trigger and safe foreign fallback pass.11 fatal controls exit2.",
+        "Fixed24832-input C/Rust pair passes with114 identical full-WRAM callback records; eight prior artifacts match each other and ticket17. All13 scope bodies have Rust completions; scope C/refusals0; real service52 completions3; native service requests/completions1 each. Message2 waits394 steps.",
+        "Outside scope1184 C entries and unchanged Rust refusals are explicit. Native allocation/collision, timed drawing, HUD/music and message presentation remain dependencies.",
+        "No original-ROM parity or new input policy. Both cleanup passes and worker retirement complete; exact failure/source/binary/dependency evidence retained."
+      ],
+      "updated_at": 1792166500
+    },
+    {
+      "id": "restart-ordinary-morph-instructions-translating-20261016",
+      "scope": "Ordinary Morph Ball instruction and animation family",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "translating",
+      "routines": [
+        "PlmInstr_Delete",
+        "PlmInstr_PreInstr",
+        "PlmInstr_Goto",
+        "PlmInstr_GotoIfItemBitSet",
+        "PlmInstr_SetItemBit",
+        "PlmInstr_SetLinkReg",
+        "PlmInstr_ClearMusicQueueAndQueueTrack",
+        "PlmPreInstr_GotoLinkIfTriggered",
+        "PlmInstr_LoadItemPlmGfx",
+        "PlmInstr_DrawItemFrame0",
+        "PlmInstr_DrawItemFrame1",
+        "PlmInstr_DrawItemFrame_Common",
+        "PlmInstr_PickupEquipmentAndShowMessage"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "549ef7775a44e9379a4e5d2fc930f2455a57fe9e",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/morph-instructions/planning/claimed-scope.md",
+          "sha256": "574ce5241095354b243d3cb23221147656710e511b7e65ae6ce1dfa22a033a17"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/morph-instructions/planning/scope-research.md",
+          "sha256": "124d6c6608f1201933b4bf0b16f1e05e84109bd32c7552cfa794b2402c66ae5c"
+        }
+      ],
+      "limitations": [
+        "Claim and implementation assignment only; ticket19 actual-C and live ownership are pending.",
+        "Bounded EF23/argument001A sealed script domain; eight18bodies reused plus four new scheduled bodies and local Common.",
+        "Native scheduler/setup/contact, three explicit draw services, music and message remain dependencies. Existing24832input route reused.",
+        "Existing healthy material/native workers own disjoint new worktrees; root owns integration, all execution/publication/cleanup. Original production unchanged; no original-ROM parity."
+      ],
+      "updated_at": 1792167130
+    },
+    {
+      "id": "restart-ordinary-morph-instructions-translated-20261016",
+      "scope": "Ordinary Morph Ball instruction and animation family",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "translated",
+      "routines": [
+        "PlmInstr_Delete",
+        "PlmInstr_PreInstr",
+        "PlmInstr_Goto",
+        "PlmInstr_GotoIfItemBitSet",
+        "PlmInstr_SetItemBit",
+        "PlmInstr_SetLinkReg",
+        "PlmInstr_ClearMusicQueueAndQueueTrack",
+        "PlmPreInstr_GotoLinkIfTriggered",
+        "PlmInstr_LoadItemPlmGfx",
+        "PlmInstr_DrawItemFrame0",
+        "PlmInstr_DrawItemFrame1",
+        "PlmInstr_DrawItemFrame_Common",
+        "PlmInstr_PickupEquipmentAndShowMessage"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "64f135cf73b42c802979f6ab1479a90646006322",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/morph-instructions/evidence/compact-controls.md",
+          "sha256": "653b2078a71cdf00e2e0b08f6a64bde45e0687e5a62ef6a446754df09719c789"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/morph-instructions/controls-01/all.stdout",
+          "sha256": "955eb572ca5c15ee6dcb2aa2a2d06f4d00d28b0c7d3411a1cdac0452d307d399"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/morph-instructions/evidence/live-comparison.md",
+          "sha256": "eedee16b78ef8be564d4df6f00f084d64134d6e0d622acebd3c1fde659712155"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/morph-instructions/live-rust-01/result.toml",
+          "sha256": "8335152b66e06353f6514474772f81a3b5d5ab0f811ca4521ce51355f7e55a02"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/morph-instructions/evidence/cleanup.md",
+          "sha256": "cf10498bba2cdd8beaa3f97344bf0d210907e42125015fd7e2f170cfff73e9d9"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/morph-instructions/evidence/dependencies.sha256",
+          "sha256": "53585e687df2140d8dad845191453cc85dd88ce3e33ef895d8a525351a20ff24"
+        }
+      ],
+      "limitations": [
+        "Bounded EF23/argument001A and sealed scripts/tables.13functions comprise12scheduled roots and private Common; eight bodies reuse18.",
+        "31Morph actual-C pairs,20atomic refusals, already-collected real service52 with gfx load and three-service transaction pass. Four new fatal controls and changed-ABI legacy25/14/composition/11fatal controls pass.",
+        "One24832-input C/Rust pair varies only Morph ownership.13artifact pairs equal;3176Morph and114missile callback rows equal. Original Morph prefix/acquired WRAM/item CSV match16; eightold artifacts/missile callbacks match18.",
+        "All12scheduled Morph roots execute in Rust:1028completions, including5real service52. Common executes via186frame roots. Scope C/refusals0; services[1,2,2,186,186,186] complete. Message9 waits398steps, then normal control; later missile progression preserved.",
+        "Native scheduler/setup/contact, explicit drawing services, music/message and other gameplay remain dependencies. Outside both item scopes344C/refusals. Original-ROM gameplay parity not tested.",
+        "First candidate passes. Both cleanup passes and worker retirement complete;443600896allocated bytes reclaimed. Exact source/binaries/native manifests/dependencies and post-retirement hashes retained."
+      ],
+      "updated_at": 1792167830
+    },
+    {
+      "id": "restart-ordinary-morph-instructions-verified-20261016",
+      "scope": "Ordinary Morph Ball instruction and animation family",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "verified",
+      "routines": [
+        "PlmInstr_Delete",
+        "PlmInstr_PreInstr",
+        "PlmInstr_Goto",
+        "PlmInstr_GotoIfItemBitSet",
+        "PlmInstr_SetItemBit",
+        "PlmInstr_SetLinkReg",
+        "PlmInstr_ClearMusicQueueAndQueueTrack",
+        "PlmPreInstr_GotoLinkIfTriggered",
+        "PlmInstr_LoadItemPlmGfx",
+        "PlmInstr_DrawItemFrame0",
+        "PlmInstr_DrawItemFrame1",
+        "PlmInstr_DrawItemFrame_Common",
+        "PlmInstr_PickupEquipmentAndShowMessage"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "64f135cf73b42c802979f6ab1479a90646006322",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/morph-instructions/evidence/compact-controls.md",
+          "sha256": "653b2078a71cdf00e2e0b08f6a64bde45e0687e5a62ef6a446754df09719c789"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/morph-instructions/controls-01/all.stdout",
+          "sha256": "955eb572ca5c15ee6dcb2aa2a2d06f4d00d28b0c7d3411a1cdac0452d307d399"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/morph-instructions/evidence/live-comparison.md",
+          "sha256": "eedee16b78ef8be564d4df6f00f084d64134d6e0d622acebd3c1fde659712155"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/morph-instructions/live-rust-01/result.toml",
+          "sha256": "8335152b66e06353f6514474772f81a3b5d5ab0f811ca4521ce51355f7e55a02"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/morph-instructions/evidence/cleanup.md",
+          "sha256": "cf10498bba2cdd8beaa3f97344bf0d210907e42125015fd7e2f170cfff73e9d9"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/morph-instructions/evidence/dependencies.sha256",
+          "sha256": "53585e687df2140d8dad845191453cc85dd88ce3e33ef895d8a525351a20ff24"
+        }
+      ],
+      "limitations": [
+        "Bounded EF23/argument001A and sealed scripts/tables.13functions comprise12scheduled roots and private Common; eight bodies reuse18.",
+        "31Morph actual-C pairs,20atomic refusals, already-collected real service52 with gfx load and three-service transaction pass. Four new fatal controls and changed-ABI legacy25/14/composition/11fatal controls pass.",
+        "One24832-input C/Rust pair varies only Morph ownership.13artifact pairs equal;3176Morph and114missile callback rows equal. Original Morph prefix/acquired WRAM/item CSV match16; eightold artifacts/missile callbacks match18.",
+        "All12scheduled Morph roots execute in Rust:1028completions, including5real service52. Common executes via186frame roots. Scope C/refusals0; services[1,2,2,186,186,186] complete. Message9 waits398steps, then normal control; later missile progression preserved.",
+        "Native scheduler/setup/contact, explicit drawing services, music/message and other gameplay remain dependencies. Outside both item scopes344C/refusals. Original-ROM gameplay parity not tested.",
+        "First candidate passes. Both cleanup passes and worker retirement complete;443600896allocated bytes reclaimed. Exact source/binaries/native manifests/dependencies and post-retirement hashes retained."
+      ],
+      "updated_at": 1792167839
+    },
+    {
+      "id": "restart-ordinary-morph-instructions-integrated-20261016",
+      "scope": "Ordinary Morph Ball instruction and animation family",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "integrated",
+      "routines": [
+        "PlmInstr_Delete",
+        "PlmInstr_PreInstr",
+        "PlmInstr_Goto",
+        "PlmInstr_GotoIfItemBitSet",
+        "PlmInstr_SetItemBit",
+        "PlmInstr_SetLinkReg",
+        "PlmInstr_ClearMusicQueueAndQueueTrack",
+        "PlmPreInstr_GotoLinkIfTriggered",
+        "PlmInstr_LoadItemPlmGfx",
+        "PlmInstr_DrawItemFrame0",
+        "PlmInstr_DrawItemFrame1",
+        "PlmInstr_DrawItemFrame_Common",
+        "PlmInstr_PickupEquipmentAndShowMessage"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "64f135cf73b42c802979f6ab1479a90646006322",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/morph-instructions/evidence/compact-controls.md",
+          "sha256": "653b2078a71cdf00e2e0b08f6a64bde45e0687e5a62ef6a446754df09719c789"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/morph-instructions/controls-01/all.stdout",
+          "sha256": "955eb572ca5c15ee6dcb2aa2a2d06f4d00d28b0c7d3411a1cdac0452d307d399"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/morph-instructions/evidence/live-comparison.md",
+          "sha256": "eedee16b78ef8be564d4df6f00f084d64134d6e0d622acebd3c1fde659712155"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/morph-instructions/live-rust-01/result.toml",
+          "sha256": "8335152b66e06353f6514474772f81a3b5d5ab0f811ca4521ce51355f7e55a02"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/morph-instructions/evidence/cleanup.md",
+          "sha256": "cf10498bba2cdd8beaa3f97344bf0d210907e42125015fd7e2f170cfff73e9d9"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/morph-instructions/evidence/dependencies.sha256",
+          "sha256": "53585e687df2140d8dad845191453cc85dd88ce3e33ef895d8a525351a20ff24"
+        }
+      ],
+      "limitations": [
+        "Bounded EF23/argument001A and sealed scripts/tables.13functions comprise12scheduled roots and private Common; eight bodies reuse18.",
+        "31Morph actual-C pairs,20atomic refusals, already-collected real service52 with gfx load and three-service transaction pass. Four new fatal controls and changed-ABI legacy25/14/composition/11fatal controls pass.",
+        "One24832-input C/Rust pair varies only Morph ownership.13artifact pairs equal;3176Morph and114missile callback rows equal. Original Morph prefix/acquired WRAM/item CSV match16; eightold artifacts/missile callbacks match18.",
+        "All12scheduled Morph roots execute in Rust:1028completions, including5real service52. Common executes via186frame roots. Scope C/refusals0; services[1,2,2,186,186,186] complete. Message9 waits398steps, then normal control; later missile progression preserved.",
+        "Native scheduler/setup/contact, explicit drawing services, music/message and other gameplay remain dependencies. Outside both item scopes344C/refusals. Original-ROM gameplay parity not tested.",
+        "First candidate passes. Both cleanup passes and worker retirement complete;443600896allocated bytes reclaimed. Exact source/binaries/native manifests/dependencies and post-retirement hashes retained."
+      ],
+      "updated_at": 1792167856
+    },
+    {
+      "id": "restart-ordinary-morph-instructions-live-exercised-20261016",
+      "scope": "Ordinary Morph Ball instruction and animation family",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "live-exercised",
+      "routines": [
+        "PlmInstr_Delete",
+        "PlmInstr_PreInstr",
+        "PlmInstr_Goto",
+        "PlmInstr_GotoIfItemBitSet",
+        "PlmInstr_SetItemBit",
+        "PlmInstr_SetLinkReg",
+        "PlmInstr_ClearMusicQueueAndQueueTrack",
+        "PlmPreInstr_GotoLinkIfTriggered",
+        "PlmInstr_LoadItemPlmGfx",
+        "PlmInstr_DrawItemFrame0",
+        "PlmInstr_DrawItemFrame1",
+        "PlmInstr_DrawItemFrame_Common",
+        "PlmInstr_PickupEquipmentAndShowMessage"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "64f135cf73b42c802979f6ab1479a90646006322",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/morph-instructions/evidence/compact-controls.md",
+          "sha256": "653b2078a71cdf00e2e0b08f6a64bde45e0687e5a62ef6a446754df09719c789"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/morph-instructions/controls-01/all.stdout",
+          "sha256": "955eb572ca5c15ee6dcb2aa2a2d06f4d00d28b0c7d3411a1cdac0452d307d399"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/morph-instructions/evidence/live-comparison.md",
+          "sha256": "eedee16b78ef8be564d4df6f00f084d64134d6e0d622acebd3c1fde659712155"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/morph-instructions/live-rust-01/result.toml",
+          "sha256": "8335152b66e06353f6514474772f81a3b5d5ab0f811ca4521ce51355f7e55a02"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/morph-instructions/evidence/cleanup.md",
+          "sha256": "cf10498bba2cdd8beaa3f97344bf0d210907e42125015fd7e2f170cfff73e9d9"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/morph-instructions/evidence/dependencies.sha256",
+          "sha256": "53585e687df2140d8dad845191453cc85dd88ce3e33ef895d8a525351a20ff24"
+        }
+      ],
+      "limitations": [
+        "Bounded EF23/argument001A and sealed scripts/tables.13functions comprise12scheduled roots and private Common; eight bodies reuse18.",
+        "31Morph actual-C pairs,20atomic refusals, already-collected real service52 with gfx load and three-service transaction pass. Four new fatal controls and changed-ABI legacy25/14/composition/11fatal controls pass.",
+        "One24832-input C/Rust pair varies only Morph ownership.13artifact pairs equal;3176Morph and114missile callback rows equal. Original Morph prefix/acquired WRAM/item CSV match16; eightold artifacts/missile callbacks match18.",
+        "All12scheduled Morph roots execute in Rust:1028completions, including5real service52. Common executes via186frame roots. Scope C/refusals0; services[1,2,2,186,186,186] complete. Message9 waits398steps, then normal control; later missile progression preserved.",
+        "Native scheduler/setup/contact, explicit drawing services, music/message and other gameplay remain dependencies. Outside both item scopes344C/refusals. Original-ROM gameplay parity not tested.",
+        "First candidate passes. Both cleanup passes and worker retirement complete;443600896allocated bytes reclaimed. Exact source/binaries/native manifests/dependencies and post-retirement hashes retained."
+      ],
+      "updated_at": 1792167862
+    },
+    {
+      "id": "restart-exposed-tank-instructions-translating-20261016",
+      "scope": "Complete exposed resource-tank instruction family",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "translating",
+      "routines": [
+        "PlmInstr_Delete",
+        "PlmInstr_PreInstr",
+        "PlmInstr_Goto",
+        "PlmInstr_GotoIfItemBitSet",
+        "PlmInstr_SetItemBit",
+        "PlmInstr_SetLinkReg",
+        "PlmInstr_ClearMusicQueueAndQueueTrack",
+        "PlmPreInstr_GotoLinkIfTriggered",
+        "PlmInstr_CollectAmmoMissileTank",
+        "PlmInstr_LoadItemPlmGfx",
+        "PlmInstr_DrawItemFrame0",
+        "PlmInstr_DrawItemFrame1",
+        "PlmInstr_DrawItemFrame_Common",
+        "PlmInstr_CollectHealthEnergyTank",
+        "PlmInstr_CollectHealthReserveTank",
+        "PlmInstr_CollectAmmoSuperMissileTank",
+        "PlmInstr_CollectAmmoPowerBombTank"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "5012bcaccefe9c815a7ded975f20ee23bcc805c9",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/tank-instructions/planning/claimed-scope.md",
+          "sha256": "d2929ee64fc5853caeb877fb0c18a28e9f93af55824f1d871f16afbc320b7a57"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/tank-instructions/planning/scope-research.md",
+          "sha256": "3c921483432126a36a5e4ff454f49a5ae095fed28448b866978c3021a18a1314"
+        }
+      ],
+      "limitations": [
+        "Claim/implementation assignment only; no20translated or verified stage yet.",
+        "Five exposed-tank headers and nonnegative permanent IDs0000..01FF;17functions/16scheduled roots+localCommon. Four new collectors/two explicit HUD services;13functions reuse18/19.",
+        "Source translation and actual-C family acceptance selected. Existing24832input replay is compatibility only and cannot prove live execution of the four new collectors; no new route or live-exercised claim is selected.",
+        "Native scheduler/setup/contact/drawing/HUD/music/message remain dependencies. Original production and original-ROM parity remain separate. Existing workers own disjoint new trees; root alone executes."
+      ],
+      "updated_at": 1792168160
+    },
+    {
+      "id": "restart-exposed-tank-instructions-translated-20261016",
+      "scope": "Complete exposed resource-tank instruction family",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "translated",
+      "routines": [
+        "PlmInstr_Delete",
+        "PlmInstr_PreInstr",
+        "PlmInstr_Goto",
+        "PlmInstr_GotoIfItemBitSet",
+        "PlmInstr_SetItemBit",
+        "PlmInstr_SetLinkReg",
+        "PlmInstr_ClearMusicQueueAndQueueTrack",
+        "PlmPreInstr_GotoLinkIfTriggered",
+        "PlmInstr_CollectAmmoMissileTank",
+        "PlmInstr_LoadItemPlmGfx",
+        "PlmInstr_DrawItemFrame0",
+        "PlmInstr_DrawItemFrame1",
+        "PlmInstr_DrawItemFrame_Common",
+        "PlmInstr_CollectHealthEnergyTank",
+        "PlmInstr_CollectHealthReserveTank",
+        "PlmInstr_CollectAmmoSuperMissileTank",
+        "PlmInstr_CollectAmmoPowerBombTank"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "e5d749840a10d59f91e810ff1faed4161bf9195e",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/tank-instructions/evidence/compact-controls.md",
+          "sha256": "2d749140126cd94467bede6d7357674e8fa8445b8e0a20590ee55c2c577f64df"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/tank-instructions/controls-01/all.stdout",
+          "sha256": "66f540b28192a9306c20e7cc27d8609866cfb77b29d734abc2cb637fd25593c3"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/tank-instructions/evidence/compatibility.md",
+          "sha256": "2f32b7da3419763175534f9ab373e1f67e43423e2286a61d8f114cbfb3182b60"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/tank-instructions/compat-rust-01/result.toml",
+          "sha256": "8c967756f537bb77ed57a9e8a5817469823ba861bc7afe2fb101fc139c570f16"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/tank-instructions/evidence/cleanup.md",
+          "sha256": "573f0703a025a84533356f2d5bd452d6670056492767767ded39a86e61f57cad"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/tank-instructions/evidence/dependencies.sha256",
+          "sha256": "1e4942db376eebab0bbe90a0246d5ae69f7594a304a80d659a5d6196313758cb"
+        }
+      ],
+      "limitations": [
+        "Five exposed headers EED7/EEDB/EEDF/EEE3/EF27 and permanent IDs 0000..01FF. 17 functions: 16 scheduled roots and local Common; 13 reused functions and four new collectors.",
+        "36 actual-C body pairs, 21 atomic refusals and ten fresh-process scheduler pairs pass. Normal paths reach real pending messages only; completed presentation is not claimed. Collected reserve loads graphics before branching.",
+        "Six new tank and fifteen affected legacy fatal controls return native exit 2. Affected missile 25/14 and Morph 31/20 compact families, real service52/drawing/trigger composition pass.",
+        "One unchanged 24832-input candidate replay takes 25.373278852 seconds and matches all 13 accepted ticket19 artifacts. Existing Morph/missile ownership is unchanged; no tank collector or tank callback is reached.",
+        "No new-collector live-exercised stage is granted. Native scheduler/setup/contact, timed drawing, HUD/music/message services remain dependencies. Original-ROM parity is untested.",
+        "Both cleanup passes and tank worker retirement complete; 443797504 allocated bytes reclaimed. Exact sources, binaries, raw native chains and post-retirement dependency/candidate/artifact hashes retained."
+      ],
+      "updated_at": 1792168996
+    },
+    {
+      "id": "restart-exposed-tank-instructions-verified-20261016",
+      "scope": "Complete exposed resource-tank instruction family",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "verified",
+      "routines": [
+        "PlmInstr_Delete",
+        "PlmInstr_PreInstr",
+        "PlmInstr_Goto",
+        "PlmInstr_GotoIfItemBitSet",
+        "PlmInstr_SetItemBit",
+        "PlmInstr_SetLinkReg",
+        "PlmInstr_ClearMusicQueueAndQueueTrack",
+        "PlmPreInstr_GotoLinkIfTriggered",
+        "PlmInstr_CollectAmmoMissileTank",
+        "PlmInstr_LoadItemPlmGfx",
+        "PlmInstr_DrawItemFrame0",
+        "PlmInstr_DrawItemFrame1",
+        "PlmInstr_DrawItemFrame_Common",
+        "PlmInstr_CollectHealthEnergyTank",
+        "PlmInstr_CollectHealthReserveTank",
+        "PlmInstr_CollectAmmoSuperMissileTank",
+        "PlmInstr_CollectAmmoPowerBombTank"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "e5d749840a10d59f91e810ff1faed4161bf9195e",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/tank-instructions/evidence/compact-controls.md",
+          "sha256": "2d749140126cd94467bede6d7357674e8fa8445b8e0a20590ee55c2c577f64df"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/tank-instructions/controls-01/all.stdout",
+          "sha256": "66f540b28192a9306c20e7cc27d8609866cfb77b29d734abc2cb637fd25593c3"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/tank-instructions/evidence/compatibility.md",
+          "sha256": "2f32b7da3419763175534f9ab373e1f67e43423e2286a61d8f114cbfb3182b60"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/tank-instructions/compat-rust-01/result.toml",
+          "sha256": "8c967756f537bb77ed57a9e8a5817469823ba861bc7afe2fb101fc139c570f16"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/tank-instructions/evidence/cleanup.md",
+          "sha256": "573f0703a025a84533356f2d5bd452d6670056492767767ded39a86e61f57cad"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/tank-instructions/evidence/dependencies.sha256",
+          "sha256": "1e4942db376eebab0bbe90a0246d5ae69f7594a304a80d659a5d6196313758cb"
+        }
+      ],
+      "limitations": [
+        "Five exposed headers EED7/EEDB/EEDF/EEE3/EF27 and permanent IDs 0000..01FF. 17 functions: 16 scheduled roots and local Common; 13 reused functions and four new collectors.",
+        "36 actual-C body pairs, 21 atomic refusals and ten fresh-process scheduler pairs pass. Normal paths reach real pending messages only; completed presentation is not claimed. Collected reserve loads graphics before branching.",
+        "Six new tank and fifteen affected legacy fatal controls return native exit 2. Affected missile 25/14 and Morph 31/20 compact families, real service52/drawing/trigger composition pass.",
+        "One unchanged 24832-input candidate replay takes 25.373278852 seconds and matches all 13 accepted ticket19 artifacts. Existing Morph/missile ownership is unchanged; no tank collector or tank callback is reached.",
+        "No new-collector live-exercised stage is granted. Native scheduler/setup/contact, timed drawing, HUD/music/message services remain dependencies. Original-ROM parity is untested.",
+        "Both cleanup passes and tank worker retirement complete; 443797504 allocated bytes reclaimed. Exact sources, binaries, raw native chains and post-retirement dependency/candidate/artifact hashes retained."
+      ],
+      "updated_at": 1792169023
+    },
+    {
+      "id": "restart-exposed-tank-instructions-integrated-20261016",
+      "scope": "Complete exposed resource-tank instruction family",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "integrated",
+      "routines": [
+        "PlmInstr_Delete",
+        "PlmInstr_PreInstr",
+        "PlmInstr_Goto",
+        "PlmInstr_GotoIfItemBitSet",
+        "PlmInstr_SetItemBit",
+        "PlmInstr_SetLinkReg",
+        "PlmInstr_ClearMusicQueueAndQueueTrack",
+        "PlmPreInstr_GotoLinkIfTriggered",
+        "PlmInstr_CollectAmmoMissileTank",
+        "PlmInstr_LoadItemPlmGfx",
+        "PlmInstr_DrawItemFrame0",
+        "PlmInstr_DrawItemFrame1",
+        "PlmInstr_DrawItemFrame_Common",
+        "PlmInstr_CollectHealthEnergyTank",
+        "PlmInstr_CollectHealthReserveTank",
+        "PlmInstr_CollectAmmoSuperMissileTank",
+        "PlmInstr_CollectAmmoPowerBombTank"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "e5d749840a10d59f91e810ff1faed4161bf9195e",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/tank-instructions/evidence/compact-controls.md",
+          "sha256": "2d749140126cd94467bede6d7357674e8fa8445b8e0a20590ee55c2c577f64df"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/tank-instructions/controls-01/all.stdout",
+          "sha256": "66f540b28192a9306c20e7cc27d8609866cfb77b29d734abc2cb637fd25593c3"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/tank-instructions/evidence/compatibility.md",
+          "sha256": "2f32b7da3419763175534f9ab373e1f67e43423e2286a61d8f114cbfb3182b60"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/tank-instructions/compat-rust-01/result.toml",
+          "sha256": "8c967756f537bb77ed57a9e8a5817469823ba861bc7afe2fb101fc139c570f16"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/tank-instructions/evidence/cleanup.md",
+          "sha256": "573f0703a025a84533356f2d5bd452d6670056492767767ded39a86e61f57cad"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/tank-instructions/evidence/dependencies.sha256",
+          "sha256": "1e4942db376eebab0bbe90a0246d5ae69f7594a304a80d659a5d6196313758cb"
+        }
+      ],
+      "limitations": [
+        "Five exposed headers EED7/EEDB/EEDF/EEE3/EF27 and permanent IDs 0000..01FF. 17 functions: 16 scheduled roots and local Common; 13 reused functions and four new collectors.",
+        "36 actual-C body pairs, 21 atomic refusals and ten fresh-process scheduler pairs pass. Normal paths reach real pending messages only; completed presentation is not claimed. Collected reserve loads graphics before branching.",
+        "Six new tank and fifteen affected legacy fatal controls return native exit 2. Affected missile 25/14 and Morph 31/20 compact families, real service52/drawing/trigger composition pass.",
+        "One unchanged 24832-input candidate replay takes 25.373278852 seconds and matches all 13 accepted ticket19 artifacts. Existing Morph/missile ownership is unchanged; no tank collector or tank callback is reached.",
+        "No new-collector live-exercised stage is granted. Native scheduler/setup/contact, timed drawing, HUD/music/message services remain dependencies. Original-ROM parity is untested.",
+        "Both cleanup passes and tank worker retirement complete; 443797504 allocated bytes reclaimed. Exact sources, binaries, raw native chains and post-retirement dependency/candidate/artifact hashes retained."
+      ],
+      "updated_at": 1792169032
+    },
+    {
+      "id": "restart-bounded-sram-codec-translating-20261016",
+      "scope": "Bounded SRAM save/load and packed map codec",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "translating",
+      "routines": [
+        "SaveToSram",
+        "LoadFromSram",
+        "PackMapToSave",
+        "UnpackMapFromSave"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "5363d46c70483f13de322a913977be4d797bac16",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/persistence/planning/persistence-contract.md",
+          "sha256": "408c5a3e0c496046215364deff3c1ee6d2e49ebc76ea159609c32e12fbf4ca75"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/persistence/planning/persistence-interface.md",
+          "sha256": "14616b8520ce812c1f86753423546498f5d08da44decb6558f23b74e0a8b47a7"
+        }
+      ],
+      "limitations": [
+        "Claim and source assignment only; no translated or verified stage yet.",
+        "Canonical full WRAM and8192-byte SRAM, masked slots0..2 and save areas0..5; slot3 is unsafe native C and excluded before invocation. Exact327 map indices and065C payload retained.",
+        "Four-routine source codec includes two local map helpers; ordered real disk request remains native. Load invalid-data return is distinct from atomic admission refusal.",
+        "Actual-C source acceptance and integration are selected. Live save/reopen/continue, filesystem durability and original-ROM parity remain separate and untested.",
+        "Second active source lane beside22route; one native adapter owner, independent Rust crate, root shared registration and all producers."
+      ],
+      "updated_at": 1792172339
+    },
+    {
+      "id": "restart-bounded-sram-codec-translated-20261016",
+      "scope": "Bounded SRAM save/load and packed map codec",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "translated",
+      "routines": [
+        "SaveToSram",
+        "LoadFromSram",
+        "PackMapToSave",
+        "UnpackMapFromSave"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "230fd9ebec6f92a151316202ffee3a823374ecf0",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/persistence/evidence/source-handoff.md",
+          "sha256": "ddf2137e3531b56d1b859876b76a6aa38c6c12fdcf898edec085ad73f0450f5d"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/persistence/planning/semantic-tests-01.log",
+          "sha256": "77bae028d0b6cbea98ab839596b2b32b03e72648fbe10a213662cd1ceb019d1d"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/persistence/planning/clippy-02.log",
+          "sha256": "bd0e8b00e2f9488dfc385d3a2027af3e059bf54b00416e90e4f0b154072b17cb"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/persistence/candidate-01/sha256.txt",
+          "sha256": "180a933763e8e275627a2f34c55b3bc54ba3bb3cb0637d8253e2df2599c06cad"
+        }
+      ],
+      "limitations": [
+        "Complete bounded four-routine Rust source, 12 semantic tests and Clippy passed. Actual-C native controls are pending and grant no verified stage yet.",
+        "Masked slots0..2, save areas0..5, exact327 packed-map indices, full WRAM/SRAM. Unsafe slot3 refuses before C. Real ordered disk service remains native.",
+        "Live save/reopen/continue, filesystem durability and original-ROM parity remain untested."
+      ],
+      "updated_at": 1792173040
+    },
+    {
+      "id": "restart-bounded-sram-codec-verified-20261016",
+      "scope": "Bounded SRAM save/load and packed map codec",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "verified",
+      "routines": [
+        "SaveToSram",
+        "LoadFromSram",
+        "PackMapToSave",
+        "UnpackMapFromSave"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "f00f2069e6547f5931f15f0f334fb0a40e1fa160",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/persistence/evidence/verification.md",
+          "sha256": "41164d100e26402e06c9cd38ceb809985077a55c012a73fc6d6b6b1b6dd2715c"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/persistence/evidence/post-retirement-audit.json",
+          "sha256": "39397d40b1f5dfe1c290012f279e98a17944e15cc84d8734088cc64f1fddf88f"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/persistence/evidence/cleanup.md",
+          "sha256": "4ab7fb4c644e1272991c790b45301c98bf99e0e4066b699ae8f2544e77520d67"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/persistence/evidence/native-reauth.log",
+          "sha256": "914f3a80fd41a91bf29ebe5c945e9061fae1ff1a4c689736995e919f362459ee"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/persistence/candidate-01/sha256.txt",
+          "sha256": "180a933763e8e275627a2f34c55b3bc54ba3bb3cb0637d8253e2df2599c06cad"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/persistence/candidate-02/sha256.txt",
+          "sha256": "26d3ad9317a57e2579f4020c87c7b5434be938d1ca87772569d715386c7dd14d"
+        }
+      ],
+      "limitations": [
+        "Bounded source/actual-C acceptance: 30body pairs, one missing-directory disk pair, three Save/Load chains with declared WRAM perturbation and canonical SRAM, nine atomic admission checks, 15fatal controls exact exit2.",
+        "Full WRAM/SRAM and ordered native disk service compared. Masked slots0..2 and save areas0..5. Unsafe slot3 excluded before C. Source and control binaries frozen; 12semantic tests, Clippy and build passed.",
+        "Rust callback installed by native control only. Ordinary gameplay persistence remains native; normal-runtime callback installation, live save/reopen/continue, filesystem durability and original-ROM parity are not claimed.",
+        "Initial wrong-WRAM fatal expectation corrected by retained-data audit; only12unexecuted fatal suffix cases ran afterward. No body or gameplay rerun for that report correction."
+      ],
+      "updated_at": 1792173427
+    },
+    {
+      "id": "restart-bounded-sram-codec-integrated-20261016",
+      "scope": "Bounded SRAM save/load and packed map codec",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "integrated",
+      "routines": [
+        "SaveToSram",
+        "LoadFromSram",
+        "PackMapToSave",
+        "UnpackMapFromSave"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "f00f2069e6547f5931f15f0f334fb0a40e1fa160",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/persistence/evidence/verification.md",
+          "sha256": "41164d100e26402e06c9cd38ceb809985077a55c012a73fc6d6b6b1b6dd2715c"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/persistence/evidence/post-retirement-audit.json",
+          "sha256": "39397d40b1f5dfe1c290012f279e98a17944e15cc84d8734088cc64f1fddf88f"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/persistence/evidence/cleanup.md",
+          "sha256": "4ab7fb4c644e1272991c790b45301c98bf99e0e4066b699ae8f2544e77520d67"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/persistence/evidence/native-reauth.log",
+          "sha256": "914f3a80fd41a91bf29ebe5c945e9061fae1ff1a4c689736995e919f362459ee"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/persistence/candidate-01/sha256.txt",
+          "sha256": "180a933763e8e275627a2f34c55b3bc54ba3bb3cb0637d8253e2df2599c06cad"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/persistence/candidate-02/sha256.txt",
+          "sha256": "26d3ad9317a57e2579f4020c87c7b5434be938d1ca87772569d715386c7dd14d"
+        }
+      ],
+      "limitations": [
+        "Bounded source/actual-C acceptance: 30body pairs, one missing-directory disk pair, three Save/Load chains with declared WRAM perturbation and canonical SRAM, nine atomic admission checks, 15fatal controls exact exit2.",
+        "Full WRAM/SRAM and ordered native disk service compared. Masked slots0..2 and save areas0..5. Unsafe slot3 excluded before C. Source and control binaries frozen; 12semantic tests, Clippy and build passed.",
+        "Rust callback installed by native control only. Ordinary gameplay persistence remains native; normal-runtime callback installation, live save/reopen/continue, filesystem durability and original-ROM parity are not claimed.",
+        "Initial wrong-WRAM fatal expectation corrected by retained-data audit; only12unexecuted fatal suffix cases ran afterward. No body or gameplay rerun for that report correction."
+      ],
+      "updated_at": 1792173427
+    },
+    {
+      "id": "restart-player-vertical-motion-translating-20261016",
+      "scope": "Player vertical movement and solid-enemy contact",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "translating",
+      "routines": [
+        "Samus_MoveUp",
+        "Samus_MoveDown",
+        "Samus_CheckSolidEnemyColl",
+        "Samus_MoveUp_NoColl",
+        "Samus_MoveDown_NoColl",
+        "Samus_MoveUp_SetPoseCalcInput",
+        "Samus_MoveDown_SetPoseCalcInput"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "768779a56b186231c17116584f2b04f3e98b9df4",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/player-motion/planning/frozen-scope.md",
+          "sha256": "d05da7acea7d3e04eaacccd9505002619eaaa0b951cbab0fa2e4384cf2bdd7f6"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/player-motion/planning/contract.sha256",
+          "sha256": "34f4a35b4347f3e487118cec82876de66d1b0c340ba2aa82f12d3551806f1e8a"
+        }
+      ],
+      "limitations": [
+        "Claim/assignment only: seven definitions, two scheduled roots and five internal/direct-fixture helpers; no translated, verified, integrated or live stage yet.",
+        "Terrain remains one synchronous native949763 dependency with explicitly bounded admission, real PLM continuation and counted requests. No whole-player, arbitrary-terrain or original-ROM ownership.",
+        "Source/native workers isolated; root owns shared registration/runtime, one Cargo job and all producers. Existing22navigation gap and24normal-runtime persistence hookup are separate."
+      ],
+      "updated_at": 1792173835
+    },
+    {
+      "id": "restart-player-vertical-motion-translated-20261016",
+      "scope": "Player vertical movement and solid-enemy contact",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "translated",
+      "routines": [
+        "Samus_MoveUp",
+        "Samus_MoveDown",
+        "Samus_CheckSolidEnemyColl",
+        "Samus_MoveUp_NoColl",
+        "Samus_MoveDown_NoColl",
+        "Samus_MoveUp_SetPoseCalcInput",
+        "Samus_MoveDown_SetPoseCalcInput"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "73555e096f97d57ba1e4719577ba557acbf11c82",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/player-motion/evidence/source-handoff.md",
+          "sha256": "c7c5ecce3d7b5f8a37da7530d7dadffffb1118ea0fd5b6f1795d524efe42a31d"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/player-motion/planning/semantic-tests-01.log",
+          "sha256": "edd79cda18a4cc29803c9a680b2886d4cf7d04f61112afbec709f50295cf6fd5"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/player-motion/planning/clippy-policy-01.log",
+          "sha256": "2a7549a99376b025d48f551a5d519db9bd353dca5de7e4dd6e5361225c9d7edf"
+        }
+      ],
+      "limitations": [
+        "Complete seven-definition Rust source,14semantic tests and crateClippy pass.192shared body fixtures defined but actual-C controls pending.",
+        "Terrain remains explicit synchronous native949763 dependency. No verified/integrated/live stage or arbitrary terrain/whole-player/original-ROM claim yet.",
+        "Enabled bounded enemy list, reachablefeedback indexes and signednegation preflight retained; native finite terrain admission and transport remain pending."
+      ],
+      "updated_at": 1792174481
+    },
+    {
+      "id": "restart-persistence-runtime-installation-translating-20261016",
+      "scope": "Install verified SRAM codec in ordinary runtime",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "translating",
+      "routines": [
+        "SaveToSram",
+        "LoadFromSram",
+        "PackMapToSave",
+        "UnpackMapFromSave"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "faab675b8de9367b8e270969c2a2903ccfcaf0bf",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/persistence-runtime/planning/frozen-scope.md",
+          "sha256": "8e6d2b7a4cc9a6be88cd0d7781b306f87eb688178a5d74383534a9ba6eed6963"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/persistence-runtime/planning/contract.sha256",
+          "sha256": "161424f8c31db44f03bf681da333cefbdabb57d48649885bd73c5fa8c5a841a4"
+        }
+      ],
+      "limitations": [
+        "Runtime hook installation assignment only; underlying four-routine codec already translated and actual-C verified under24. No new gameplay body or duplicate codec proof.",
+        "Source-only worker owns new production bridge/composition control. Root owns sharedCLI/Cargo/registration and allproducers, with25secondactive scope.",
+        "Actual gameplay Save/Load, reopen/continue, durability and original-ROM parity remain unclaimed. Safe area6 refusal remains nativeC fallback."
+      ],
+      "updated_at": 1792174510
+    },
+    {
+      "id": "restart-persistence-runtime-installation-integrated-20261016",
+      "scope": "Install verified SRAM codec in ordinary runtime",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "integrated",
+      "routines": [
+        "SaveToSram",
+        "LoadFromSram",
+        "PackMapToSave",
+        "UnpackMapFromSave"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "9868614012ae0ee0df6c2b2a40ed16778a0f0bac",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/persistence-runtime/evidence/verification.md",
+          "sha256": "3c4f8da91d00b147d3b914f413ad1ed6f64ad97f15f9b8ce3650866dee848435"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/persistence-runtime/control-01/result.toml",
+          "sha256": "07fe8aea30a4c040bc7c5426b9a118f5cf167b6595f0f5af5c7cd50b0701e188"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/persistence-runtime/control-01/counters.toml",
+          "sha256": "3a8c1ac681f78757ab5245d4ac78b3284815ef67da88e4cb39e30bd008dcef14"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/persistence-runtime/evidence/cleanup.md",
+          "sha256": "718e29075723beb43df4c03e4bcc1fa47cfd318005524db75b2aa949b99abdcc"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/persistence-runtime/evidence/candidate-auth.log",
+          "sha256": "9a6fe5b2294d31adbb83266f89875be3075f40be39441260dc4466f24fc34754"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/persistence-runtime/evidence/dependencies-auth.log",
+          "sha256": "1cc9111ff57f14f4b199c018a3e596c3607a9fc88b29b2ea61ac3b44602c0d52"
+        }
+      ],
+      "limitations": [
+        "New production runtime installation of already translated/verified24codec; no new gameplay body or duplicate full codec matrix.",
+        "19runtime tests and Clippy/build pass. Six ordinary symbol composition invocations prove one admitted C/R Save/Load pair and one safearea6 C/refused-C Save pair, exact fullstate/disk/ordered observations. Eight other hooks registered but unexercised.",
+        "Normal runtime now installs selected Rust persistence before first step; --persistence overrides gameplay inheritance. Gameplay Save/Load reach, file reopen/continue, durability and original-ROM parity remain unclaimed.",
+        "Runtime coverage remains bounded: area6Save refuses unchanged to C, local helpers do not invent nested callbacks. No live stage follows installation alone."
+      ],
+      "updated_at": 1792174977
+    },
+    {
+      "id": "restart-waver-translating-20261016",
+      "scope": "Complete Waver actor with native terrain services",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "translating",
+      "routines": [
+        "Waver_Init",
+        "Waver_Main",
+        "Waver_Instr_1",
+        "Waver_Func_1"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "d0ea23b",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/waver/planning/ordinary-actor-dispatch.md",
+          "sha256": "8bdba70dc52fd1cce05885296bc72affb1a3e0adca5dfe98ec03ee35bbc4e5e2"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/waver/planning/ordinary-actor-source.md",
+          "sha256": "95afb7bd9b08928502ede62d949de65c41530401b29b2cfcecf6fb5ad93bcec5"
+        }
+      ],
+      "limitations": [
+        "Source assignment only; native scheduler/interpreter/contact/death/draw and terrain retained. No verification or live stage."
+      ],
+      "updated_at": 1792175207
+    },
+    {
+      "id": "restart-player-motion-verified-20261016",
+      "scope": "Player vertical motion with bounded native terrain continuation",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "verified",
+      "routines": [
+        "Samus_MoveUp",
+        "Samus_MoveDown",
+        "Samus_CheckSolidEnemyColl",
+        "Samus_MoveUp_NoColl",
+        "Samus_MoveDown_NoColl",
+        "Samus_MoveUp_SetPoseCalcInput",
+        "Samus_MoveDown_SetPoseCalcInput"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "3613047",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/player-motion/evidence/actual-c.md",
+          "sha256": "c4c55dd17902e30b25c71d70e274c1d2de4eda5211eee22b9d8f01fc11ef21ab"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/player-motion/native-01/player-motion-all/result.json",
+          "sha256": "ccac9f5256f3fd71c17c12d0eda055774896f524907de646d49058c292e30f25"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/player-motion/candidate-control-01/sha256.txt",
+          "sha256": "fa8f6b5f948e5384c2bbf8f7df48832126415a782ea7a515b008194547d88937"
+        }
+      ],
+      "limitations": [
+        "192 shared and31 terrain actual-C pairs,12 admissions,13 exactexit2 fatal controls; native terrain949763 bounded continuation retained.",
+        "Two scheduled roots and five internal helpers; no arbitrary terrain, whole-player or original-ROM parity claim. Live evidence published separately."
+      ],
+      "updated_at": 1792175284
+    },
+    {
+      "id": "restart-player-motion-integrated-20261016",
+      "scope": "Player vertical motion with bounded native terrain continuation",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "integrated",
+      "routines": [
+        "Samus_MoveUp",
+        "Samus_MoveDown",
+        "Samus_CheckSolidEnemyColl",
+        "Samus_MoveUp_NoColl",
+        "Samus_MoveDown_NoColl",
+        "Samus_MoveUp_SetPoseCalcInput",
+        "Samus_MoveDown_SetPoseCalcInput"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "3613047",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/player-motion/evidence/actual-c.md",
+          "sha256": "c4c55dd17902e30b25c71d70e274c1d2de4eda5211eee22b9d8f01fc11ef21ab"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/player-motion/evidence/cleanup.md",
+          "sha256": "bad93fcd2375f9d9dcf3d2d9024be635331f31dfa5db0c162d427b148a52bce2"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/player-motion/evidence/compatibility-auth.log",
+          "sha256": "00262feba56cfdd85e6c9171f1866b2ea5d2e07a3e2aa24c33de919ba62d7b98"
+        }
+      ],
+      "limitations": [
+        "Game/runtime installation with explicit --player-motion rust; default C. Seven verified definitions, two scheduled roots, bounded native terrain949763.",
+        "223actual-C pairs,12admissions,13fatals passed;13accepted fixed-route artifacts match. Workers retired and cleanup/authentication passed. Whole-player/unrestricted terrain/original-ROM parity remain unclaimed."
+      ],
+      "updated_at": 1792175421
+    },
+    {
+      "id": "restart-player-motion-live-20261016",
+      "scope": "Reached vertical motion roots and branches on fixed missile route",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "live-exercised",
+      "routines": [
+        "Samus_MoveUp",
+        "Samus_MoveDown",
+        "Samus_CheckSolidEnemyColl",
+        "Samus_MoveDown_NoColl",
+        "Samus_MoveUp_SetPoseCalcInput",
+        "Samus_MoveDown_SetPoseCalcInput"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "3613047",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/player-motion/evidence/live.md",
+          "sha256": "9ad8cc7fcbb9b6ce41fcd09492c027bb957e683113f6150d2cb6e0bb09ba172f"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/player-motion/live-rust-01/result.toml",
+          "sha256": "2a0e43b53aeb27bd1313299790c5412fe58db308c09b801c9f4b01083960f07c"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/player-motion/evidence/live-audit.log",
+          "sha256": "617924f42fa87ad68fd2419dfe91a3451e97ef9fbeb079fc3a7a9c6f890080db"
+        }
+      ],
+      "limitations": [
+        "24832inputs,13accepted artifact pairs equal; RustUp539/Down1230,Downenemy/NoColl33. UpNoColl unexercised.",
+        "Mixed ownership: C/refusedUp655/Down9792. Native terrain retained;12183 global continuations include C,1736 Rust terrain returns. No unrestricted route/player or original-ROM claim."
+      ],
+      "updated_at": 1792175421
+    },
+    {
+      "id": "restart-persistence-runtime-live-20261016",
+      "scope": "Reached ordinary persistence Save and Load on selected fixed route",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "live-exercised",
+      "routines": [
+        "SaveToSram",
+        "LoadFromSram"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "3613047",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/player-motion/evidence/live.md",
+          "sha256": "9ad8cc7fcbb9b6ce41fcd09492c027bb957e683113f6150d2cb6e0bb09ba172f"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/player-motion/live-rust-01/result.toml",
+          "sha256": "2a0e43b53aeb27bd1313299790c5412fe58db308c09b801c9f4b01083960f07c"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/player-motion/evidence/cleanup.md",
+          "sha256": "bad93fcd2375f9d9dcf3d2d9024be635331f31dfa5db0c162d427b148a52bce2"
+        }
+      ],
+      "limitations": [
+        "One shared25fixed24832input run naturally reaches RustSave1/Load7;Save refuses safely toC twice,writes3/3. All13accepted artifacts match.",
+        "No separately instrumented local Pack/Unpack reach, user file reopen/continue, durability or original-ROM parity.26installation evidence seal remains unchanged; this is additional25run evidence."
+      ],
+      "updated_at": 1792175421
+    },
+    {
+      "id": "restart-waver-translated-20261016",
+      "scope": "Complete Waver actor with native terrain services",
+      "agent": "/root/persistence @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "translated",
+      "routines": [
+        "Waver_Init",
+        "Waver_Main",
+        "Waver_Instr_1",
+        "Waver_Func_1"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "ebb36ff",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/waver/HANDOFF.md",
+          "sha256": "3565566b1503afa9d1e4be1ab7fe0f06cd317fef2b841c4129ef6f0afb30a6ed"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/waver/src/actor.rs",
+          "sha256": "032d06fe3e92007b12433922b1afd7d584a6813b11e7b807c55e531356285842"
+        }
+      ],
+      "limitations": [
+        "Complete four-definition actor source with24sharedfixtures/15semantic tests submitted; root execution and actual-C acceptance remain separate.",
+        "Native scheduler, interpreter, terrain/sine, contact/death/draw retained. Instruction same odd jp/current-slot distinction preserved. No live or original-ROM claim."
+      ],
+      "updated_at": 1792175568
+    },
+    {
+      "id": "restart-waver-verified-20261016",
+      "scope": "Complete Waver actor with native terrain services",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "verified",
+      "routines": [
+        "Waver_Init",
+        "Waver_Main",
+        "Waver_Instr_1",
+        "Waver_Func_1"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "c5e4376",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/waver/evidence/actual-c.md",
+          "sha256": "f4fde3cfbd25c8e1d77c4c841a95428b8df76912f8ba3d8cf22507e45da2613c"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/waver/native-01/waver-all/result.json",
+          "sha256": "b3a9a87deea6fa0ef9e7fba48b96bd8a7adfb33613588dc2f023f696d56f9270"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/waver/candidate-control-01/sha256.txt",
+          "sha256": "f4720ea7b91e5041ec2ec122fad1c5e96728da54c2fa49ee6dcaefd9477506b0"
+        }
+      ],
+      "limitations": [
+        "24shared+2chain+2interpreter actual-C pairs,14admissions,19exactexit2 fatal controls;15semantic/20runtime tests and Clippy/build pass.",
+        "Bounded native horizontal/sine/vertical services; native scheduler/interpreter/contact/death/draw remain. Production sibling composition and integration separate; no live/original-ROM claim."
+      ],
+      "updated_at": 1792175881
+    },
+    {
+      "id": "restart-ripper-patrol-translating-20261016",
+      "scope": "Ripper variants initialization and horizontal patrol",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "translating",
+      "routines": [
+        "JetPowerRipper_Init",
+        "JetPowerRipper_Main",
+        "Ripper_Init",
+        "Ripper_Main"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "7e6f994",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/ripper/planning/ripper-patrol-dispatch.md",
+          "sha256": "f8b7cfe1f226254f22bb516a13a60c3198e6bd152befe2790878e9b9ff59089b"
+        }
+      ],
+      "limitations": [
+        "Four complete init/patrol definitions assigned; native horizontal service, scheduler, shot/frozen/contact/death/draw retained. No verified/live stage.",
+        "Finite65-row runtime table, wrapping parameter aliases, dedicated velocity C/D adapter and compact Waver coexistence controls planned."
+      ],
+      "updated_at": 1792175961
+    },
+    {
+      "id": "restart-waver-integrated-20261016",
+      "scope": "Complete Waver actor with bounded native terrain services",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "integrated",
+      "routines": [
+        "Waver_Init",
+        "Waver_Main",
+        "Waver_Instr_1",
+        "Waver_Func_1"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "c888708",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/waver/evidence/actual-c.md",
+          "sha256": "f4fde3cfbd25c8e1d77c4c841a95428b8df76912f8ba3d8cf22507e45da2613c"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/waver/evidence/composition.md",
+          "sha256": "f3f88fec56ecf7ea216105b1d473bb4a4b67fc83f70c9f9af4be6f4201587e34"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/waver/composition-01/result.toml",
+          "sha256": "d59a82c7ae067657e161b6452210dc0d3cd2119c499fbbfc07f4aa4e6bb18768"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/waver/evidence/cleanup.md",
+          "sha256": "bfac5edf35fd3554c93ec7739035eea0f736ea36979d003104f82678aafc6c08"
+        }
+      ],
+      "limitations": [
+        "28actual-C pairs/14admissions/19fatal controls pass. Eight additional ordinary production composition calls compare WaverMain/playerDown/Save/Load with all10owners registered, fullstate/effects and balanced services.",
+        "DefaultC, opt-in --waver rust; native scheduler/interpreter/terrain/sine/contact/death/draw retained. No natural live encounter, whole lifecycle, file reopen or original-ROM parity claim.",
+        "Both source workers retired, cleanup and candidate authentication passed."
+      ],
+      "updated_at": 1792178003
+    },
+    {
+      "id": "restart-ripper-patrol-translated-20261016",
+      "scope": "Ripper variants initialization and horizontal patrol",
+      "agent": "/root/material @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "translated",
+      "routines": [
+        "JetPowerRipper_Init",
+        "JetPowerRipper_Main",
+        "Ripper_Init",
+        "Ripper_Main"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "3728890",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/ripper/HANDOFF.md",
+          "sha256": "9598a64c00f1abc2e3b3fcb7d86373d1b3f759dcf3fa8d9050dfc382fd658dde"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/ripper/src/patrol.rs",
+          "sha256": "a5b65f1a2ab259669d653842594b2f4ea739fe2c212f66c8b719287dd49a848d"
+        }
+      ],
+      "limitations": [
+        "Four complete init/patrol definitions,46sharedfixtures/10semantic tests; actual-C verification separate. Native horizontal service retained.",
+        "65-row runtime table incl endpoint64 and wrapping aliases; shot/frozen/contact/death/draw/scheduler/interpreter remain native. No live/original-ROM claim."
+      ],
+      "updated_at": 1792178193
+    },
+    {
+      "id": "restart-ripper-patrol-verified-20261016",
+      "scope": "Ripper variants initialization and horizontal patrol",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "verified",
+      "routines": [
+        "JetPowerRipper_Init",
+        "JetPowerRipper_Main",
+        "Ripper_Init",
+        "Ripper_Main"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "4263fda",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/ripper/evidence/actual-c.md",
+          "sha256": "54c370528ddf872552ae13f0b3be1e26e3ebb81e9b24e980019104434c342f91"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/ripper/native-01/ripper-all/result.json",
+          "sha256": "783549b8459b120700506d8838cc477f5dcea687639797dd3f856a8e15d3014a"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/ripper/candidate-control-01/sha256.txt",
+          "sha256": "5fbadc3ea58e16624059ef329acb5370ba553d05d6562bf613ae282c5c86487c"
+        }
+      ],
+      "limitations": [
+        "46shared+6inherited Ripper actual-C pairs and1Waver coexistence pair,13admissions,19exactexit2 fatals pass.10semantic/20runtime tests andClippy/build pass.",
+        "Bounded65-row runtime table/native horizontal continuation. Shot/frozen/contact/death/draw/scheduler/interpreter retained; no live/original-ROM claim. Production installation composition separate."
+      ],
+      "updated_at": 1792178420
+    },
+    {
+      "id": "restart-ripper-patrol-integrated-20261016",
+      "scope": "Ripper variants initialization and horizontal patrol",
+      "agent": "/root @ 01a144ca-27ba-7130-a9e2-a615c7c80e3a",
+      "stage": "integrated",
+      "routines": [
+        "JetPowerRipper_Init",
+        "JetPowerRipper_Main",
+        "Ripper_Init",
+        "Ripper_Main"
+      ],
+      "source_revision": "578f90b3cc49557bb70060ad033bb90b8cf8ac50",
+      "inventory_sha256": "7842e9035e7360eef10a93a96e6abc1cca601888b8423ea92fb554bbb15abb25",
+      "commit": "cdf130f",
+      "evidence": [
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/ripper/evidence/actual-c.md",
+          "sha256": "54c370528ddf872552ae13f0b3be1e26e3ebb81e9b24e980019104434c342f91"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/ripper/evidence/composition.md",
+          "sha256": "3aa0e8e97ae1f1e6400bd449d3ee2e42cc2a7bda09c8147b543eb245b6a00ff9"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/ripper/composition-01/result.toml",
+          "sha256": "20f8e906a54a7e497921053acf1ec6627d00863df9ce2edb683bd5907542e9d2"
+        },
+        {
+          "path": "/home/jim/sm-decomp-restart/restart/out/ripper/evidence/cleanup.md",
+          "sha256": "aa9270213d63c40c94e13cd1f3650a14ed57962c055b14ae9ab65d1aea1d0168"
+        }
+      ],
+      "limitations": [
+        "53actual-C pairs/13admissions/19fatal controls plus6ordinaryproductioncalls JetMain/RipperMain/WaverMain with all11owners registered; fullstates/effects/services and unchanged unrelated counters pass.",
+        "DefaultC,opt-in --ripper rust;65-row runtime table and bounded native horizontal terrain. Shot/frozen/contact/death/draw/scheduler/interpreter retained; no natural live encounter or original-ROM claim.",
+        "All three workers retired, cleanup/candidate/input authentication passed. Local harness enum naming correction only; native recipe unchanged."
+      ],
+      "updated_at": 1792178928
     }
   ],
   "notices": [
@@ -99431,6 +102830,10 @@
     "Stale update historical-dispatch-5-6053-translated-accuracy-20261013: evidence changed: /home/jim/sm-decomp/.scratch/decomp-strategy/ticket-authenticated-internal-mappings.json; excluded from stage totals.",
     "Stale update historical-dispatch-5-6053-verified-accuracy-20261013: evidence changed: /home/jim/sm-decomp/.scratch/decomp-strategy/ticket-authenticated-internal-mappings.json; excluded from stage totals.",
     "Stale update historical-dispatch-6-6053-translated-accuracy-20261013: evidence changed: /home/jim/sm-decomp/.scratch/decomp-strategy/ticket-authenticated-internal-mappings.json; excluded from stage totals.",
+    "Stale update restart-ordinary-projectile-translating-20261016: evidence changed: /home/jim/sm-decomp-restart/.scratch/restart-pipeline/issues/05-rust-projectile-pilot.md; excluded from stage totals.",
+    "Stale update restart-ordinary-projectile-translated-20261016: evidence changed: /home/jim/sm-decomp-restart/restart/projectile/VERIFICATION.md; excluded from stage totals.",
+    "Stale update restart-room-scrolling-translating-20261016: evidence changed: /home/jim/sm-decomp-restart/.scratch/restart-pipeline/issues/06-rust-room-scrolling.md; excluded from stage totals.",
+    "Stale update restart-ceres-door-translating-20261016: evidence changed: /home/jim/sm-decomp-restart/.scratch/restart-pipeline/issues/08-rust-ceres-doors.md; excluded from stage totals.",
     "Superseded update pause-equipment-render-offline-translated-20261013: replaced by pause-equipment-render-main-translated-20261013; excluded from stage totals even if replacement evidence becomes stale.",
     "Superseded update pause-equipment-render-offline-verified-20261013: replaced by pause-equipment-render-main-verified-final-20261013; excluded from stage totals even if replacement evidence becomes stale.",
     "Superseded update ridley-whole-6053-recovered-translated-20261013: replaced by ridley-whole-owned-6053-reviewed-translated-20261013, ridley-whole-reviewed-translated-20261013; excluded from stage totals even if replacement evidence becomes stale.",
@@ -99451,6 +102854,10 @@
     "projectile-trails-cf5f2d8-translated",
     "projectile-trails-cf5f2d8-verified",
     "projectile-trails-root-6053-live-20261013",
+    "restart-ceres-door-translating-20261016",
+    "restart-ordinary-projectile-translated-20261016",
+    "restart-ordinary-projectile-translating-20261016",
+    "restart-room-scrolling-translating-20261016",
     "samus-projectile-frame-0f59de1-translated",
     "samus-projectile-frame-0f59de1-verified"
   ],
@@ -99465,28 +102872,28 @@
     "body_lines": 75229,
     "declared_definitions": 842,
     "declared_body_lines": 9227,
-    "updates": 271,
-    "stale_updates": 16,
+    "updates": 346,
+    "stale_updates": 20,
     "stages": {
       "integrated": {
-        "definitions": 38,
-        "body_lines": 775
+        "definitions": 159,
+        "body_lines": 2506
       },
       "live-exercised": {
-        "definitions": 121,
-        "body_lines": 1642
+        "definitions": 198,
+        "body_lines": 2795
       },
       "translated": {
-        "definitions": 1498,
-        "body_lines": 17016
+        "definitions": 1574,
+        "body_lines": 17905
       },
       "translating": {
-        "definitions": 259,
-        "body_lines": 3659
+        "definitions": 357,
+        "body_lines": 5164
       },
       "verified": {
-        "definitions": 962,
-        "body_lines": 10592
+        "definitions": 1012,
+        "body_lines": 11349
       }
     },
     "context_stages": {
@@ -99536,24 +102943,24 @@
       },
       "unspecified": {
         "integrated": {
-          "definitions": 34,
-          "body_lines": 719
+          "definitions": 155,
+          "body_lines": 2450
         },
         "live-exercised": {
-          "definitions": 0,
-          "body_lines": 0
+          "definitions": 98,
+          "body_lines": 1658
         },
         "translated": {
-          "definitions": 63,
-          "body_lines": 1070
+          "definitions": 183,
+          "body_lines": 2734
         },
         "translating": {
-          "definitions": 251,
-          "body_lines": 3521
+          "definitions": 349,
+          "body_lines": 5026
         },
         "verified": {
-          "definitions": 63,
-          "body_lines": 1070
+          "definitions": 155,
+          "body_lines": 2515
         }
       }
     }

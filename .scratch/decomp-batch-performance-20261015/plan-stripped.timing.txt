@@ -1,0 +1,2 @@
+Command exited with non-zero status 124
+wall_seconds=45.02 user_seconds=42.39 system_seconds=1.58 peak_rss_kib=38220
