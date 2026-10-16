@@ -2,9 +2,11 @@
 /tools/bootstrap/target/
 # Downloaded upstream sources, test corpora and emulator binaries.
 /deps/
-# Never commit the ROM or anything derived from it.
+# The canonical ROM is intentionally tracked in this private repository.
+# Keep other local ROM files and generated artifacts excluded.
 /rom/*
 !/rom/README.md
+!/rom/sm.sfc
 # Ignore legacy output locations as well as the current /out tree.
 /crates/game/generated/
 /crates/fuzz/generated/

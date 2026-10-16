@@ -25,8 +25,9 @@ checkpoint label at frame 18,195 and position at frame 35,203. IRQ mask
 sampling is corrected; `just probe-hdma` reproduces a remaining HDMA timing
 disagreement with synthetic cartridges. See [docs/LSNES_BASELINE.md](docs/LSNES_BASELINE.md).
 
-You need your own ROM. Nothing derived from it (the ROM, generated code, traces)
-is ever committed — see `.gitignore`.
+This private repository includes the canonical ROM at `rom/sm.sfc`, as requested
+by its owner. Generated code, traces, and other local ROM files remain excluded
+from Git — see `.gitignore`.
 
 ## Layout
 
