@@ -47,8 +47,9 @@ development branches and worktrees; this is not a gameplay integration session.
   when the user questioned their scope. No full workspace-test pass is claimed.
   The diagnostic log remains `/tmp/sm-decomp-git-setup-check.log`.
 - GitHub Actions was temporarily disabled for the initial 121-branch import to
-  avoid starting historical CI runs. Restore its original enabled state after
-  the final setup-record push; future pushes and PRs retain the existing workflow.
+  avoid starting historical CI runs. Its original enabled state was restored
+  during the subsequent environment cleanup; future pushes and PRs retain the
+  existing workflow.
 - Cleanup: all processes in the verification process group stopped. No new
   temporary test directories remained. A Cargo cleanup invocation began rebuilding
   the command and was stopped; the existing `target/debug/sm-pipeline` utility
@@ -59,3 +60,44 @@ development branches and worktrees; this is not a gameplay integration session.
   `/tmp/sm-decomp-git-setup-deduplicate.toml`. Free disk: 85,129,437,184 bytes.
   Shared Cargo caches, existing worktrees and historical evidence dependencies
   remain retained; this task created no worktree or gameplay evidence run.
+
+## Environment cleanup at the user's request
+
+The user subsequently requested finishing the push and cleaning generated data,
+and explicitly selected **Delete old verification runs too**. This authorizes
+removal of historical evidence despite the normal retention rule. Old acceptance
+records that reference deleted runs are historical records, not currently
+authenticatable evidence.
+
+- All 121 branch heads matched GitHub, including `main` and
+  `restart/playable-baseline`; GitHub Actions is enabled again.
+- Removed disposable Cargo incremental/build caches in main, restart and the
+  mutation-headroom worktree, the pipeline build cache and the restart progress
+  reporting build cache. Kept runnable executables and source inputs.
+- Removed old main `out/port`, `out/sync`, `out/runs`, `out/decomp`,
+  `out/recovery-session`, `out/recovery`, `out/feedback-development` and
+  `out/iteration-sessions` trees using explicit `rm -r` paths.
+- Removed 17 old performance/architecture proof and mutation-result directories
+  after preserving source/configuration/documentation files in
+  `/home/jim/sm-decomp-retained-sources-20261016.tar.gz` (426 MiB).
+  `gzip -t` passed; archive SHA-256:
+  `20f1f09db9ed12789f9b9b741cfc1cc7873ed11523e9dd0d8a2b100681301049`.
+  Exact removed roots are recorded in `/tmp/sm-environment-old-proof-roots.txt`.
+- Removed six clean, pushed mutation-test worktrees with `git worktree remove`:
+  current, followups, pipeline-current, pipeline-fast, pipeline-nextest and
+  pipeline-v2. Pruned six registrations whose `/tmp` directories already no
+  longer existed. Kept all branches and the three mutation worktrees containing
+  uncommitted source changes, plus restart and parked architecture/original work.
+- No producers were active before cleanup; all deletion processes completed.
+  The conservative main-output cleanup preview was stopped once the user
+  authorized deletion of those old runs. Both project utility cleanup passes
+  succeeded for retained restart output, reporting zero eligible bytes and zero
+  snapshots. No new gameplay verification run was started.
+- After all deletion, the 897-entry latest Ripper retained-file manifest and
+  composition input hashes passed from the restart checkout. The ROM, restart
+  runnable binaries, restart evidence, production configuration, downloaded
+  dependencies and remaining source snapshots are retained.
+- Filesystem free space increased from 85,129,437,184 to 358,439,387,136 bytes:
+  **273,309,949,952 bytes (254.5 GiB) reclaimed; 333.8 GiB available**.
+  These are host filesystem observations; the retained archive is included in
+  the final usage. Main and restart source checkouts remain clean.
