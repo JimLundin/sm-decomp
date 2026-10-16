@@ -101,3 +101,8 @@ authenticatable evidence.
   **273,309,949,952 bytes (254.5 GiB) reclaimed; 333.8 GiB available**.
   These are host filesystem observations; the retained archive is included in
   the final usage. Main and restart source checkouts remain clean.
+- Final remote inspection exposes only `main` and `restart/playable-baseline`;
+  both match their local heads. All 121 branches matched at the initial backup
+  check, but the other remote refs disappeared during cleanup without a branch
+  deletion command from this session. They remain intact locally. Do not recreate
+  potentially deliberately removed remote refs as part of cleanup.
