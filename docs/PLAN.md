@@ -400,7 +400,9 @@ Rust lines +22 and unsafe functions +1 document/isolate the ROM boundary;
 all other counters unchanged. Local Cargo remains ASR-denied. The prior
 temporary SDL metadata dependencies disappeared and the standard DLL output
 was denied overwrite; a fresh DLL output linked/loaded and verified this
-source. Linux validates the actual stable frontend release build.
+source. Linux stable format/release build, smoke and full any% passed on
+`876c21e8` (129712 frames: 0 failing frames (420.96s)):
+https://github.com/JimLundin/sm-decomp/actions/runs/39071332693.
 Next: make Waver's movement/ROM dependencies an explicit safe boundary and
 choose the next readable gameplay subsystem.
 Checked ROM boundary applied: successful cartridge load registers a private
@@ -417,6 +419,16 @@ registered allocation and checked reader; remaining counters unchanged.
 Local Cargo remains ASR-denied; Linux stable frontend validation is pending.
 Next: deepen the shared enemy movement/sine boundary starting with the sine
 helper, then convert collision helpers without changing quirks.
+Shared sine/cosine helpers converted: all five helpers are safe Rust, using
+checked live-ROM byte reads, 8-bit amplitude truncation, phase wrapping and
+independent integer/fraction negation (no carry between halves). Exhaustive
+131,072 sample/amplitude/sign combinations and 131,072 phase shifts agree
+with the original arithmetic. Format, optimized DLL build and any% pass:
+129,712 frames, zero failures (183.97s). Unsafe functions -5, c_int cast
+lines -17, Rust lines -6; other counters unchanged. Local Cargo remains
+ASR-denied; Linux stable build/any% validation is pending on this commit.
+Next: convert horizontal/vertical enemy collision arithmetic, retaining live
+enemy fields after callbacks and the original wrapping edge calculations.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:

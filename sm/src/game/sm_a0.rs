@@ -9703,52 +9703,33 @@ pub unsafe fn Abs16(mut a: uint16) -> uint16 {
 pub unsafe fn SubtractThenAbs16(mut k: uint16, mut j: uint16) -> uint16 {
     return Abs16((j as ::core::ffi::c_int - k as ::core::ffi::c_int) as uint16);
 }
-unsafe fn SineMult8bitInner(mut varE32: uint16, mut varE34: uint16, game: &mut Game) -> uint32 {
-    let mut mult: uint16 = Mult8x8(
-        *(game.g_rom.offset(
-            (((0xa0b143 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0xa0b143 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint8)
-            .offset((varE34 as ::core::ffi::c_int & 0x7f as ::core::ffi::c_int) as isize),
-        varE32 as uint8,
-    );
-    let mut a: uint16 = (mult as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint16;
-    let mut b: uint16 = ((mult as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16;
-    if varE34 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
-        a = -(a as ::core::ffi::c_int) as uint16;
-        b = -(b as ::core::ffi::c_int) as uint16;
+fn SineMult8bitInner(amplitude: uint16, phase: uint16, game: &Game) -> uint32 {
+    let sample = game.read_rom_byte(0xa0b143, usize::from(phase & 0x7f));
+    let product = u16::from(sample) * u16::from(amplitude as u8);
+    let mut integer = product >> 8;
+    let mut fraction = product << 8;
+    if phase & 0x80 != 0 {
+        // The original negates each half independently, without a carry.
+        integer = integer.wrapping_neg();
+        fraction = fraction.wrapping_neg();
     }
-    return (a as uint32) << 16 as ::core::ffi::c_int | b as uint32;
+    (u32::from(integer) << 16) | u32::from(fraction)
 }
-pub unsafe fn CosineMult8bit(mut a: uint16, mut varE32: uint16, game: &mut Game) -> uint16 {
-    return (SineMult8bitInner(
-        varE32,
-        (a as ::core::ffi::c_int + 64 as ::core::ffi::c_int) as uint8 as uint16,
-        game,
-    ) >> 16 as ::core::ffi::c_int) as uint16;
+
+pub fn CosineMult8bit(phase: uint16, amplitude: uint16, game: &mut Game) -> uint16 {
+    (SineMult8bitInner(amplitude, phase.wrapping_add(64) as u8 as u16, game) >> 16) as u16
 }
-pub unsafe fn SineMult8bit(mut a: uint16, mut varE32: uint16, game: &mut Game) -> uint16 {
-    return (SineMult8bitInner(
-        varE32,
-        (a as ::core::ffi::c_int + 0x80 as ::core::ffi::c_int) as uint8 as uint16,
-        game,
-    ) >> 16 as ::core::ffi::c_int) as uint16;
+
+pub fn SineMult8bit(phase: uint16, amplitude: uint16, game: &mut Game) -> uint16 {
+    (SineMult8bitInner(amplitude, phase.wrapping_add(0x80) as u8 as u16, game) >> 16) as u16
 }
-pub unsafe fn CosineMult8bitFull(mut a: uint16, mut varE32: uint16, game: &mut Game) -> uint32 {
-    return SineMult8bitInner(
-        varE32,
-        (a as ::core::ffi::c_int + 64 as ::core::ffi::c_int) as uint8 as uint16,
-        game,
-    );
+
+pub fn CosineMult8bitFull(phase: uint16, amplitude: uint16, game: &mut Game) -> uint32 {
+    SineMult8bitInner(amplitude, phase.wrapping_add(64) as u8 as u16, game)
 }
-pub unsafe fn SineMult8bitFull(mut a: uint16, mut varE32: uint16, game: &mut Game) -> uint32 {
-    return SineMult8bitInner(
-        varE32,
-        (a as ::core::ffi::c_int + 0x80 as ::core::ffi::c_int) as uint8 as uint16,
-        game,
-    );
+
+pub fn SineMult8bitFull(phase: uint16, amplitude: uint16, game: &mut Game) -> uint32 {
+    SineMult8bitInner(amplitude, phase.wrapping_add(0x80) as u8 as u16, game)
 }
 pub unsafe fn ConvertAngleToXy(mut r18: uint16, mut r20: uint16, game: &mut Game) -> Point32 {
     let mut ss: uint32 = (*(game.g_rom.offset(

@@ -78,9 +78,24 @@ impl Game {
         self.loaded_rom = Some(LoadedRom { bytes, len });
     }
 
+    /// Read a byte at a LoROM address plus a linear offset in the allocation.
+    pub fn read_rom_byte(&self, address: u32, byte_offset: usize) -> u8 {
+        let start = self.rom_offset(address, byte_offset, 1);
+        let rom = self.loaded_rom.as_ref().expect("ROM must be loaded");
+        // Registration guarantees allocation validity; rom_offset checks bounds.
+        unsafe { *rom.bytes.add(start) }
+    }
+
     /// Read a little-endian word at a LoROM address plus a linear byte offset.
     /// Adding the offset after mapping preserves table reads across bank edges.
     pub fn read_rom_word(&self, address: u32, byte_offset: usize) -> u16 {
+        let start = self.rom_offset(address, byte_offset, 2);
+        let rom = self.loaded_rom.as_ref().expect("ROM must be loaded");
+        // Registration guarantees allocation validity; bounds cover both bytes.
+        unsafe { u16::from_le_bytes([*rom.bytes.add(start), *rom.bytes.add(start + 1)]) }
+    }
+
+    fn rom_offset(&self, address: u32, byte_offset: usize, width: usize) -> usize {
         assert!(
             address & 0x8000 != 0,
             "ROM address must select a LoROM window"
@@ -88,11 +103,9 @@ impl Game {
         let rom = self.loaded_rom.as_ref().expect("ROM must be loaded");
         let base = (((address >> 16) << 15 | address & 0x7fff) & 0x3fffff) as usize;
         let start = base.checked_add(byte_offset).expect("ROM offset overflow");
-        let end = start.checked_add(2).expect("ROM offset overflow");
-        assert!(end <= rom.len, "ROM word outside loaded allocation");
-        // Registration guarantees allocation validity; bounds above cover both
-        // bytes. Read only these bytes, without borrowing the patched ROM.
-        unsafe { u16::from_le_bytes([*rom.bytes.add(start), *rom.bytes.add(start + 1)]) }
+        let end = start.checked_add(width).expect("ROM offset overflow");
+        assert!(end <= rom.len, "ROM read outside loaded allocation");
+        start
     }
 
     /// Current enemy slot offset ($7E:0E54 in ram_map).
