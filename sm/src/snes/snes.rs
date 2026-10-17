@@ -1,3 +1,4 @@
+use crate::snes::input::{input_free, input_init, input_reset};
 extern "C" {
     fn printf(__format: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
@@ -47,9 +48,7 @@ extern "C" {
     fn cart_read(cart: *mut Cart, bank: uint8_t, adr: uint16_t) -> uint8_t;
     fn cart_write(cart: *mut Cart, bank: uint8_t, adr: uint16_t, val: uint8_t);
     fn cart_saveload(cart: *mut Cart, func: Option<SaveLoadFunc>, ctx: *mut ::core::ffi::c_void);
-    fn input_init(snes: *mut Snes) -> *mut Input;
-    fn input_free(input: *mut Input);
-    fn input_reset(input: *mut Input);
+
     fn RtlApuWrite(adr: uint32_t, val: uint8_t);
 }
 pub use crate::types::{

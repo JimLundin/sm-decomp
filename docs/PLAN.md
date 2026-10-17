@@ -230,6 +230,10 @@ every step makes the next one easier.
    binary crate: its `Die`, `Warning` and audio-lock hooks cannot be imported
    by the library until ownership moves or explicit callbacks replace them.
    Keep real libc, math, SDL and OpenGL FFI until their replacements exist.
+   Input pilot applied: `input_init`, `input_free`, `input_reset` use ordinary
+   Rust imports/ABI. Any% 129,712 frames, zero failures; format and normal
+   library/frontend metadata builds pass. C exports/no_mangle each fall by
+   three, Rust lines 271,090 -> 271,086; other counters unchanged.
 3. Replace the hand-written SDL/OpenGL FFI with the `sdl2` crate (or similar)
    and drop `extern_types`; then move `rust-toolchain.toml` to stable.
 4. Globals: gather `static mut` game state behind one `Game` struct passed by
