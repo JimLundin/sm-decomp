@@ -303,6 +303,11 @@ every step makes the next one easier.
    Any% 129,712 frames, zero failures (185.67s); format and frontend/core
    metadata builds pass. Progress counters unchanged (they count unsafe
    functions/RAM offsets, not mutable statics). Stable local Cargo blocked.
+   Demo-table precursor applied: outer pointer table is immutable static
+   slice references to unchanged child arrays; `.as_ptr()` retains the
+   existing unchecked entry offset. Any% 129,712 frames, zero failures;
+   format and library/frontend metadata builds pass. Rust lines -1; other
+   progress counters unchanged.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 

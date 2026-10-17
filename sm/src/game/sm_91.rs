@@ -1334,14 +1334,12 @@ static kDemoSetFuncPtrs_3: [Option<Func_V>; 5] = unsafe {
         Some(DemoSetFunc_7 as unsafe fn() -> ()),
     ]
 };
-static mut kDemoSetFuncPtrs: [*const Option<Func_V>; 4] = unsafe {
-    [
-        &raw const kDemoSetFuncPtrs_0 as *const Option<Func_V>,
-        &raw const kDemoSetFuncPtrs_1 as *const Option<Func_V>,
-        &raw const kDemoSetFuncPtrs_2 as *const Option<Func_V>,
-        &raw const kDemoSetFuncPtrs_3 as *const Option<Func_V>,
-    ]
-};
+static kDemoSetFuncPtrs: [&'static [Option<Func_V>]; 4] = [
+    &kDemoSetFuncPtrs_0,
+    &kDemoSetFuncPtrs_1,
+    &kDemoSetFuncPtrs_2,
+    &kDemoSetFuncPtrs_3,
+];
 pub unsafe fn LoadDemoData() {
     let mut DemoSetDef: *mut DemoSetDef = ::core::ptr::null_mut::<DemoSetDef>();
     let mut v0: uint16 = (16 as ::core::ffi::c_int
@@ -1396,6 +1394,7 @@ pub unsafe fn LoadDemoData() {
     (*kDemoSetFuncPtrs[*((&raw mut g_ram as *mut uint8)
         .offset(0x1f55 as ::core::ffi::c_int as isize) as *mut uint16)
         as usize]
+        .as_ptr()
         .offset(
             *((&raw mut g_ram as *mut uint8).offset(0x1f57 as ::core::ffi::c_int as isize)
                 as *mut uint16) as isize,
