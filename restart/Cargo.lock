@@ -417,6 +417,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "sm-mini-crocomire"
+version = "0.1.0"
+
+[[package]]
+name = "sm-minidraygon"
+version = "0.1.0"
+
+[[package]]
 name = "sm-native-host"
 version = "0.1.0"
 dependencies = [
