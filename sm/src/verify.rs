@@ -1,6 +1,67 @@
 //! Single-threaded replay through the same differential oracle as the UI.
 use sm::game_state::Game;
-use std::{ffi::CString, time::Instant};
+use std::{collections::BTreeSet, ffi::CString, time::Instant};
+
+#[derive(Default)]
+struct ReplayCoverage {
+    states: std::collections::BTreeMap<u16, usize>,
+    gameplay_frames: usize,
+    rooms: BTreeSet<u16>,
+    enemies: BTreeSet<u16>,
+    last_state_room: Option<(u16, u16)>,
+    unchanged_frames: usize,
+    longest_unchanged: usize,
+}
+
+impl ReplayCoverage {
+    fn word(game: &Game, address: usize) -> u16 {
+        u16::from_le_bytes([game.g_ram[address], game.g_ram[address + 1]])
+    }
+
+    fn observe(&mut self, game: &Game) {
+        // Addresses and slot stride match ram_map::RAM_VARS / EnemyData.
+        let state = Self::word(game, 0x998);
+        let room = Self::word(game, 0x79b);
+        *self.states.entry(state).or_default() += 1;
+        let state_room = (state, room);
+        if self.last_state_room == Some(state_room) {
+            self.unchanged_frames += 1;
+        } else {
+            self.last_state_room = Some(state_room);
+            self.unchanged_frames = 1;
+        }
+        self.longest_unchanged = self.longest_unchanged.max(self.unchanged_frames);
+        if u32::from(state) == sm::game::sm_82::kGameState_8_MainGameplay {
+            self.gameplay_frames += 1;
+            self.rooms.insert(room);
+            for slot in (0xf78..0x1778).step_by(core::mem::size_of::<sm::types::EnemyData>()) {
+                let definition = Self::word(game, slot);
+                if definition != 0 {
+                    self.enemies.insert(definition);
+                }
+            }
+        }
+    }
+
+    fn report(&self) {
+        let (state, room) = self.last_state_room.unwrap();
+        println!(
+            "Replay coverage: {} gameplay frames, {} rooms, {} enemy definitions; final state {state}, room ${room:04X}; longest unchanged state/room {} frames",
+            self.gameplay_frames, self.rooms.len(), self.enemies.len(), self.longest_unchanged
+        );
+        println!("Observed game states (state:frames): {:?}", self.states);
+        println!("Gameplay rooms: {:04X?}", self.rooms);
+        println!("Gameplay enemy definitions: {:04X?}", self.enemies);
+    }
+
+    fn report_progress(&self) {
+        let (state, room) = self.last_state_room.unwrap();
+        eprintln!(
+            "Coverage so far: {} gameplay frames, {} rooms, {} enemy definitions; state {state}, room ${room:04X}",
+            self.gameplay_frames, self.rooms.len(), self.enemies.len()
+        );
+    }
+}
 
 pub fn run(game: &mut Game) -> i32 {
     let args: Vec<String> = std::env::args().skip(2).collect();
@@ -74,10 +135,12 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             0,
         );
         let mut discarded_audio = [0i16; 534 * 2];
+        let mut coverage = ReplayCoverage::default();
         for (index, &pad) in inputs[..frames].iter().enumerate() {
             sm::rtl::RtlRunFrame(i32::from(pad), game);
             // Advance the music driver once per frame without playing audio.
             sm::rtl::RtlRenderAudio(discarded_audio.as_mut_ptr(), 534, 2, game);
+            coverage.observe(game);
             let completed = index + 1;
             if completed % 10_000 == 0 {
                 let failures = game.VERIFY_FAILURES;
@@ -85,10 +148,12 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
                     "Progress {completed}/{frames} frames: {failures} failing frames ({:.2}s)",
                     start.elapsed().as_secs_f64()
                 );
+                coverage.report_progress();
             }
         }
         super::finish_verify_audio();
         let failures = game.VERIFY_FAILURES;
+        coverage.report();
         println!(
             "Verified {frames} frames: {failures} failing frames ({:.2}s)",
             start.elapsed().as_secs_f64()

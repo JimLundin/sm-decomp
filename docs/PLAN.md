@@ -475,6 +475,22 @@ Supplemental low% and 100% run concurrently against the same built DLL;
 Linux stable validation is pending. Next: slope handlers. In parallel,
 inspect actual replay progression: zero mismatches alone does not establish
 that the movies reach the intended gameplay paths.
+Coverage inspection found a real gap: the imported any% movie visits only
+the six Ceres rooms (DF45, DF8D, DFD7, E021, E06B, E0B5), with enemy
+definitions E13F/E1FF/E23F. It never reaches Zebes or Waver (D63F).
+Its full replay still passes 129,712 frames with zero failures (248.94s
+under parallel load). The verify run now prints gameplay-frame, room and
+enemy-presence counts, final state/room, state frequencies and longest
+unchanged state/room interval, with coverage counts at existing progress
+checkpoints. These are presence measurements, not function-call coverage.
+Format and optimized verifier-host build pass; final-source 10,000-frame
+smoke has zero failures. Rust lines +67 add this observation to the verify
+run; other counters unchanged. Local Cargo remains ASR-denied.
+Before continuing further gameplay cleanup, improve actual input coverage:
+RtlRunFrame clears opposite directions used by these TASes, and its forced
+game-yield/NMI timing differs from bsnes movie frame timing. First preserve
+the recorded pads in verify mode, then measure reach and retime inputs if
+needed. Repeating unchanged movies cannot establish broader coverage.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
