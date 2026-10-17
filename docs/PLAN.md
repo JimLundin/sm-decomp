@@ -546,6 +546,15 @@ Boot investigation also confirms any% starts the intro before its later
 menu inputs; the intended moonwalk setting is missed. Retiming only the
 startup reaches five rooms and is insufficient. Align room transitions,
 using the optional trace, rather than applying a constant movie offset.
+Concurrent coverage trials now ascend DFD7 to X131/Y139 by frame 17,900:
+turn right at frame 17,685 and hold jump through the apex; early release
+truncates the ascent. Upper-exit/elevator trials are running against the
+unchanged trace DLL. Six suffix-compression trials found no wider reach,
+with zero oracle failures; no general scheduling correction is proven.
+Temporary cleanup mistakenly removed concurrent input trials from the
+shared target/geometry-probe directory. The supervisor reconstructed the
+successful ledge input from its creation history; cleanup is stopped and
+active trial files/DLLs are retained. Tracked source was unaffected.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
