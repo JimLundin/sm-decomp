@@ -3942,18 +3942,17 @@ pub unsafe extern "C" fn FileSelectMap_22() {
 #[no_mangle]
 pub unsafe extern "C" fn FileSelectMenu_1_LoadFileSelectMenuBG2() {
     let mut v2: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
+    // This menu spans $3600..$3dff, beyond the pause-map union field.
+    let menu_tilemap = (&raw mut g_ram as *mut uint8).add(0x3600).cast::<uint16>();
     let mut i: ::core::ffi::c_int = 1023 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
-        (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000))
-            .pause_menu_map_tilemap[(i + 768 as ::core::ffi::c_int) as usize] =
-            *(g_rom.offset(
-                (((0x8edc00 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x8edc00 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
-                .offset(i as isize);
+        *menu_tilemap.add(i as usize) = *(g_rom.offset(
+            (((0x8edc00 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                << 15 as ::core::ffi::c_int
+                | 0x8edc00 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                & 0x3fffff as ::core::ffi::c_int) as isize,
+        ) as *const uint8 as *mut uint16)
+            .offset(i as isize);
         i -= 1;
     }
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
