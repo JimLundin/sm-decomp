@@ -612,6 +612,20 @@ Format and optimized verifier-host build pass; trace-enabled 10,000-frame
 check and full any% pass: 129,712 frames, zero failures (193.75s).
 Rust lines +4 add diagnostics; other counters unchanged. Local Cargo remains
 ASR-denied; Linux validation is pending on this source change.
+Morph Ball pickup coverage achieved: target/morph-route/collect-jump.inputs
+passes the current standard verifier for 28,301 frames, zero failures
+(39.77s). Twelve rooms and nine enemy definitions are reached. Equipped
+and collected item bits both become 0004; the standard trace confirms
+this by frame 27,600 and finishes at X1103/Y651 in 9E9F with the message
+closed. Source/progress counters unchanged; controller inputs stay ignored.
+The 97B5 elevator requires standing near X128 on its pad and a fresh Down
+press. In 9E9F, the elevator arrival remains scripted before control resumes;
+the Morph ledges need staged jumps. A right jump then left reversal lands
+on X1269/Y619, a fresh left jump clears the main wall, and another fresh
+jump reaches the pedestal. Contact, not shooting, collects the item.
+Next: extend collect-jump.inputs right through 9F11 into 9F64 and collect
+the first missiles at X736/Y656; then return toward the bomb room. Preserve
+the verified route and use separate worker directories for further trials.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
