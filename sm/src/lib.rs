@@ -68,6 +68,7 @@ pub mod snes {
 }
 
 /// Window, renderer and OpenGL output.
+#[cfg(not(sm_verify_dll))]
 pub mod platform {
     pub mod gl_core;
     pub mod glsl_shader;
@@ -75,6 +76,7 @@ pub mod platform {
 }
 
 /// Config file parsing.
+#[cfg(not(sm_verify_dll))]
 pub mod config;
 /// Frame runner and the per-frame comparison against the original ROM.
 pub mod cpu_infra;

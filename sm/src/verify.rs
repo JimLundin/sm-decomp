@@ -2,7 +2,12 @@
 use std::{ffi::CString, time::Instant};
 
 pub fn run() -> i32 {
-    match run_checked() {
+    let args: Vec<String> = std::env::args().skip(2).collect();
+    run_args(&args)
+}
+
+pub fn run_args(args: &[String]) -> i32 {
+    match run_checked(args) {
         Ok(failures) => i32::from(failures != 0),
         Err(error) => {
             eprintln!("verify: {error}");
@@ -11,8 +16,7 @@ pub fn run() -> i32 {
     }
 }
 
-fn run_checked() -> Result<u64, String> {
-    let args: Vec<String> = std::env::args().skip(2).collect();
+fn run_checked(args: &[String]) -> Result<u64, String> {
     if args.len() != 2 && (args.len() != 4 || args[2] != "--frames") {
         return Err("usage: sm verify <rom> <inputs> [--frames N]".into());
     }
@@ -55,17 +59,7 @@ fn run_checked() -> Result<u64, String> {
         if snes.is_null() {
             return Err("unable to load ROM".into());
         }
-        // No SDL window, event loop, audio device or worker thread is needed.
-        // SDL's mutex protects the existing sound driver even in this mode.
-        super::g_audio_mutex = super::SDL_CreateMutex();
-        if super::g_audio_mutex.is_null() {
-            return Err("unable to create audio mutex".into());
-        }
-        super::g_spc_player = super::SpcPlayer_Create();
-        if super::g_spc_player.is_null() {
-            return Err("unable to initialize sound driver".into());
-        }
-        super::SpcPlayer_Initialize(super::g_spc_player);
+        super::initialize_verify_audio()?;
         sm::snes::ppu::PpuBeginDrawing(
             (*snes).snes_ppu.cast(),
             (&raw mut super::g_pixels).cast(),
@@ -92,7 +86,7 @@ fn run_checked() -> Result<u64, String> {
                 );
             }
         }
-        super::SDL_DestroyMutex(super::g_audio_mutex);
+        super::finish_verify_audio();
         let failures = sm::cpu_infra::VERIFY_FAILURES;
         println!(
             "Verified {frames} frames: {failures} failing frames ({:.2}s)",

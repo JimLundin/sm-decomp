@@ -2147,6 +2147,24 @@ static mut g_audiobuffer: *mut uint8 = ::core::ptr::null::<uint8>() as *mut uint
 static mut g_frames_per_block: ::core::ffi::c_int = 0;
 static mut g_audio_channels: uint8 = 0;
 static mut g_audio_device: SDL_AudioDeviceID = 0;
+unsafe fn initialize_verify_audio() -> Result<(), String> {
+    g_audio_mutex = SDL_CreateMutex();
+    if g_audio_mutex.is_null() {
+        return Err("unable to create audio mutex".into());
+    }
+    g_spc_player = SpcPlayer_Create();
+    if g_spc_player.is_null() {
+        SDL_DestroyMutex(g_audio_mutex);
+        return Err("unable to initialize sound driver".into());
+    }
+    SpcPlayer_Initialize(g_spc_player);
+    Ok(())
+}
+
+unsafe fn finish_verify_audio() {
+    SDL_DestroyMutex(g_audio_mutex);
+}
+
 #[no_mangle]
 pub unsafe extern "C" fn RtlApuLock() {
     SDL_LockMutex(g_audio_mutex);
