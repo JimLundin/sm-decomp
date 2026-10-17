@@ -47,6 +47,7 @@ use sm::spc_player::{SpcPlayer_Create, SpcPlayer_Initialize};
 pub use sm::types::{_IO_codecvt, _IO_marker, _IO_wide_data, SDL_Window};
 extern "C" {
 
+    #[cfg(not(windows))]
     static mut stderr: *mut FILE;
     fn fclose(__stream: *mut FILE) -> ::core::ffi::c_int;
     fn fopen(
@@ -87,6 +88,7 @@ extern "C" {
     fn chdir(__path: *const ::core::ffi::c_char) -> ::core::ffi::c_int;
     fn getcwd(__buf: *mut ::core::ffi::c_char, __size: size_t) -> *mut ::core::ffi::c_char;
 
+    #[cfg(not(windows))]
     fn __assert_fail(
         __assertion: *const ::core::ffi::c_char,
         __file: *const ::core::ffi::c_char,
@@ -2490,7 +2492,39 @@ unsafe fn SwitchDirectory() {
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+// The transpiled runtime references glibc's stderr and assertion symbols.
+// MinGW uses a stream accessor instead; FILE is passed opaquely to the CRT.
+#[cfg(windows)]
+#[no_mangle]
+pub static mut stderr: *mut FILE = std::ptr::null_mut();
+
+#[cfg(windows)]
+extern "C" {
+    fn __acrt_iob_func(index: u32) -> *mut FILE;
+}
+
+#[cfg(windows)]
+#[no_mangle]
+pub unsafe extern "C" fn __assert_fail(
+    assertion: *const std::ffi::c_char,
+    file: *const std::ffi::c_char,
+    line: u32,
+    function: *const std::ffi::c_char,
+) -> ! {
+    eprintln!(
+        "Assertion failed: {} at {}:{line} ({})",
+        std::ffi::CStr::from_ptr(assertion).to_string_lossy(),
+        std::ffi::CStr::from_ptr(file).to_string_lossy(),
+        std::ffi::CStr::from_ptr(function).to_string_lossy()
+    );
+    std::process::abort();
+}
+
 pub fn main() {
+    #[cfg(windows)]
+    unsafe {
+        stderr = __acrt_iob_func(2);
+    }
     sm::host::install_host_hooks(sm::host::HostHooks {
         die: host_die,
         warning: host_warning,

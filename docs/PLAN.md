@@ -285,6 +285,12 @@ every step makes the next one easier.
    stable cargo/compiler execution is also denied on this Windows host;
    Linux must validate stable. Blocks -1, exports/no_mangle/unsafe/c_int
    each -1, Rust lines 249,227 ->249,179; other counters unchanged.
+   Windows frontend CRT fix applied separately: initialize `stderr` through
+   MinGW's `__acrt_iob_func`, supply an assertion diagnostic/abort bridge.
+   Real-dependency optimized Windows frontend linking now passes. Any%
+   129,712 frames, zero failures (188.07s); format passes with permitted
+   compiler. Blocks +1, C export/unsafe +1, no_mangle +2, lines +34 are
+   required Windows CRT compatibility symbols; gameplay counters unchanged.
 4. Globals: gather `static mut` game state behind one `Game` struct passed by
    `&mut`, keeping `g_ram` as the 128 KiB array it is (RAM layout must stay
    byte-identical for the oracle comparison and for save states).
