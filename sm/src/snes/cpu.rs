@@ -735,16 +735,6 @@ pub unsafe extern "C" fn cpu_saveload(
 }
 #[no_mangle]
 pub unsafe extern "C" fn cpu_runOpcode(mut cpu: *mut Cpu) -> ::core::ffi::c_int {
-    if crate::cpu_infra::VERIFY_ACTIVE && (*cpu).k == 0x80 {
-        let pc = (*cpu).pc;
-        if pc == 0xb119 || pc == 0xb266 || pc == 0xb128 || pc == 0xb18e {
-            let snes = &*((*cpu).mem as *mut Snes);
-            let source = u16::from_le_bytes([*snes.ram.add(0x47), *snes.ram.add(0x48)]);
-            if pc != 0xb18e || (*cpu).x < 0x8000 {
-                eprintln!("Decompress PC={pc:04X} source={source:04X} bank={:02X} A={:04X} X={:04X} Y={:04X} SP={:04X} Z={}", *snes.ram.add(0x49), (*cpu).a, (*cpu).x, (*cpu).y, (*cpu).sp, (*cpu).z);
-            }
-        }
-    }
     (*cpu).cyclesUsed = 0 as uint8_t;
     if (*cpu).stopped {
         return 1 as ::core::ffi::c_int;
@@ -2701,9 +2691,9 @@ unsafe extern "C" fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t) {
                 break;
             }
             128 => {
-                (*cpu).pc = ((*cpu).pc as ::core::ffi::c_int
-                    + cpu_readOpcode(cpu) as int8_t as ::core::ffi::c_int)
-                    as uint16_t;
+                // Relative branches start after the displacement operand.
+                let displacement = cpu_readOpcode(cpu) as int8_t;
+                (*cpu).pc = (*cpu).pc.wrapping_add_signed(displacement as i16);
                 break;
             }
             129 => {
@@ -2713,9 +2703,8 @@ unsafe extern "C" fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t) {
                 break;
             }
             130 => {
-                (*cpu).pc = ((*cpu).pc as ::core::ffi::c_int
-                    + cpu_readOpcodeWord(cpu) as int16_t as ::core::ffi::c_int)
-                    as uint16_t;
+                let displacement = cpu_readOpcodeWord(cpu) as int16_t;
+                (*cpu).pc = (*cpu).pc.wrapping_add_signed(displacement);
                 break;
             }
             131 => {
