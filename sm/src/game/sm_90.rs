@@ -1,3 +1,4 @@
+use crate::game::sm_92::{PlaySamusFanfare, SetSamusTilesDefsForCurAnim};
 extern "C" {
     fn printf(__format: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
     static mut g_ram: [uint8; 131072];
@@ -54,8 +55,7 @@ extern "C" {
     fn Samus_RestoreHealth(a: uint16);
     fn Samus_SetAnimationFrameIfPoseChanged();
     fn XrayRunHandler();
-    fn PlaySamusFanfare() -> uint8;
-    fn SetSamusTilesDefsForCurAnim();
+
     fn DrawPlayerExplosions2();
     fn InitializeBombExplosion(k: uint16);
     fn InitializeInstrForMissile(k: uint16);

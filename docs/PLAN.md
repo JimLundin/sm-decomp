@@ -234,6 +234,10 @@ every step makes the next one easier.
    Rust imports/ABI. Any% 129,712 frames, zero failures; format and normal
    library/frontend metadata builds pass. C exports/no_mangle each fall by
    three, Rust lines 271,090 -> 271,086; other counters unchanged.
+   Bank 92 pilot applied: four exports use Rust imports/ABI in banks 90/9b.
+   Any% 129,712 frames, zero failures (181.35s); format, unchanged-body audit
+   and library/frontend metadata builds pass. C exports/no_mangle each fall
+   by four, Rust lines 271,086 -> 271,083; other counters unchanged.
 3. Replace the hand-written SDL/OpenGL FFI with the `sdl2` crate (or similar)
    and drop `extern_types`; then move `rust-toolchain.toml` to stable.
 4. Globals: gather `static mut` game state behind one `Game` struct passed by

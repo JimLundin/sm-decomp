@@ -22,8 +22,7 @@ unsafe extern "C" fn get_SamusTileAnimationDefs(mut a: uint16) -> *mut SamusTile
     return RomPtr((0x920000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut SamusTileAnimationDefs;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetSamusTilesDefsForCurAnim() {
+pub unsafe fn SetSamusTilesDefsForCurAnim() {
     let mut v0: uint16 = (4 as ::core::ffi::c_int
         * *((&raw mut g_ram as *mut uint8).offset(0xa96 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
@@ -71,8 +70,7 @@ pub unsafe extern "C" fn SetSamusTilesDefsForCurAnim() {
             ) = 1 as uint8;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlaySamusFanfare() -> uint8 {
+pub unsafe fn PlaySamusFanfare() -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xdec as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -118,15 +116,13 @@ pub unsafe extern "C" fn PlaySamusFanfare() -> uint8 {
         return 1 as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Unused_SamusTileViewer() {
+pub unsafe fn Unused_SamusTileViewer() {
     DrawSamusSpritemap(0x182 as uint16, 0x40 as uint16, 0x40 as uint16);
     DrawSamusSpritemap(0x183 as uint16, 0xc0 as uint16, 0x40 as uint16);
     DrawSamusSpritemap(0x184 as uint16, 0x80 as uint16, 0x60 as uint16);
     DrawSamusSpritemap(0x185 as uint16, 0x80 as uint16, 0x50 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawSamusSuitExploding() {
+pub unsafe fn DrawSamusSuitExploding() {
     let mut r18: uint16 = (if *(&raw mut g_ram as *mut uint8)
         .offset(0xa1e as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int

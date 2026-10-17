@@ -1,3 +1,4 @@
+use crate::game::sm_92::DrawSamusSuitExploding;
 extern "C" {
     fn memcpy(
         __dest: *mut ::core::ffi::c_void,
@@ -26,7 +27,7 @@ extern "C" {
     fn Samus_LoadSuitPalette();
     fn Samus_Pose_CancelGrapple();
     fn Samus_SetAnimationFrameIfPoseChanged();
-    fn DrawSamusSuitExploding();
+
     fn ProjectileInsts_GetValue(k: uint16) -> uint16;
     fn BlockCollGrappleBeam() -> uint8;
     fn BlockFunc_AC31() -> uint8;
