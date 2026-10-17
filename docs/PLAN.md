@@ -733,6 +733,14 @@ shaft climb described the wrong room and are superseded by this replay.
 Keep all five missiles for the bomb-room red door. The return and awake
 pirate quota are the next coverage item; shaft preparation continues in
 parallel. No gameplay source changed; residue counters remain unchanged.
+Large-shaft ascent is now reusable across its repeated geometry:
+target/mother-shaft-ascent2/repeat-exact-run.inputs passes the standard
+oracle for 28,638 frames, zero failures (41.66s), ending X401/Y419 in 96BA.
+The 559-frame suffix from shelf7-right.inputs (X401/Y1699) to
+shelf11-right32.inputs (X401/Y1443) repeats four more times exactly,
+covering the remaining 256-pixel cycles. The unique upper shelves and
+ceiling hatch still need input verification, then the suffix can be
+grafted onto the actual post-missile return. Progress counters unchanged.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
