@@ -30,11 +30,15 @@ impl ReplayCoverage {
                     && frame % 100 == 0))
         {
             eprintln!(
-                "Replay trace: frame {frame}, state {state}, room ${room:04X}, samus_x_pos {}, samus_y_pos {}, samus_pose ${:04X}, timer_status {}",
+                "Replay trace: frame {frame}, state {state}, room ${room:04X}, samus_x_pos {}, samus_y_pos {}, samus_pose ${:04X}, timer_status {}, equipped_items ${:04X}, collected_items ${:04X}, missiles {}/{}",
                 Self::word(game, 0xaf6),
                 Self::word(game, 0xafa),
                 Self::word(game, 0xa1c),
-                Self::word(game, 0x943)
+                Self::word(game, 0x943),
+                Self::word(game, 0x9a2),
+                Self::word(game, 0x9a4),
+                Self::word(game, 0x9c6),
+                Self::word(game, 0x9c8)
             );
         }
         if self.last_state_room == Some(state_room) {

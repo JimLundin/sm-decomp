@@ -605,6 +605,13 @@ X299/Y187 in 975C (25,755 frames, zero failures, probe host); validate
 that continuation with the standard verifier next. This pass stops at
 the item's hour limit. Source/progress counters unchanged; useful inputs
 and build outputs retained, working tree clean after this plan update.
+Optional replay trace now also reports equipped/collected item words and
+current/maximum missiles, using ram_map $09A2/$09A4/$09C6/$09C8. This
+allows pickup coverage to be proved rather than inferred from room entry.
+Format and optimized verifier-host build pass; trace-enabled 10,000-frame
+check and full any% pass: 129,712 frames, zero failures (193.75s).
+Rust lines +4 add diagnostics; other counters unchanged. Local Cargo remains
+ASR-denied; Linux validation is pending on this source change.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
