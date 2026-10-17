@@ -14,7 +14,6 @@
 #![allow(non_upper_case_globals)]
 #![allow(unused_assignments)]
 #![allow(unused_mut)]
-#![feature(extern_types)]
 
 /// Gameplay, one module per original ROM bank (`sm_80` = bank $80, ...).
 pub mod game {

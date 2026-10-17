@@ -6,7 +6,6 @@
     unused_assignments,
     unused_mut
 )]
-#![feature(extern_types)]
 #[allow(unused_imports)]
 use ::sm as _;
 mod verify;

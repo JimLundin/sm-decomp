@@ -10,12 +10,6 @@ extern "C" {
         __filename: *const ::core::ffi::c_char,
         __modes: *const ::core::ffi::c_char,
     ) -> *mut FILE;
-    fn vsnprintf(
-        __s: *mut ::core::ffi::c_char,
-        __maxlen: size_t,
-        __format: *const ::core::ffi::c_char,
-        __arg: ::core::ffi::VaList,
-    ) -> ::core::ffi::c_int;
     fn fread(
         __ptr: *mut ::core::ffi::c_void,
         __size: size_t,
@@ -293,26 +287,6 @@ pub unsafe fn StrSet(mut rv: *mut *mut ::core::ffi::c_char, mut s: *const ::core
     let mut old: *mut ::core::ffi::c_char = *rv;
     *rv = news;
     free(old as *mut ::core::ffi::c_void);
-}
-#[no_mangle]
-pub unsafe extern "C" fn StrFmt(
-    mut fmt: *const ::core::ffi::c_char,
-    mut args: ...
-) -> *mut ::core::ffi::c_char {
-    let mut buf: [::core::ffi::c_char; 4096] = [0; 4096];
-    let mut va = args.clone();
-    let mut n: ::core::ffi::c_int = vsnprintf(
-        &raw mut buf as *mut ::core::ffi::c_char,
-        ::core::mem::size_of::<[::core::ffi::c_char; 4096]>() as size_t,
-        fmt,
-        va,
-    );
-    if n < 0 as ::core::ffi::c_int
-        || n as usize >= ::core::mem::size_of::<[::core::ffi::c_char; 4096]>() as usize
-    {
-        Die(b"vsnprintf failed\0" as *const u8 as *const ::core::ffi::c_char);
-    }
-    return strdup(&raw mut buf as *mut ::core::ffi::c_char);
 }
 pub unsafe fn ByteArray_Resize(mut arr: *mut ByteArray, mut new_size: size_t) {
     (*arr).size = new_size;

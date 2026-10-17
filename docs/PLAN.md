@@ -277,6 +277,14 @@ every step makes the next one easier.
    real-binding library/frontend metadata builds pass. Extern blocks 40 ->39,
    unsafe functions 6,901 ->6,863, c_int casts 90,001 ->89,831, Rust lines
    261,137 ->249,227; remaining counters unchanged.
+   Stable cleanup applied: opaque pointer targets are stable Rust types;
+   unused variadic `StrFmt` removed, feature attributes gone. Toolchain now
+   stable; DLL linker uses shipped `ld.lld` with supported options (no `-Z`).
+   Any% 129,712 frames, zero failures (184.76s), using permitted pinned
+   compiler locally. Metadata builds pass without nightly features. Actual
+   stable cargo/compiler execution is also denied on this Windows host;
+   Linux must validate stable. Blocks -1, exports/no_mangle/unsafe/c_int
+   each -1, Rust lines 249,227 ->249,179; other counters unchanged.
 4. Globals: gather `static mut` game state behind one `Game` struct passed by
    `&mut`, keeping `g_ram` as the 128 KiB array it is (RAM layout must stay
    byte-identical for the oracle comparison and for save states).

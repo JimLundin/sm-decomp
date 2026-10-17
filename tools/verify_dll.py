@@ -28,11 +28,10 @@ def build(root, rustc):
         raise RuntimeError("DLL host requires the pinned x86_64-pc-windows-gnu toolchain")
     # The bundled GNU linker cannot read bigobj emitted for the large game;
     # Rust's bundled lld handles those object files without external tools.
-    linker = sysroot / "lib" / "rustlib" / host / "bin" / "rust-lld.exe"
+    linker = sysroot / "lib" / "rustlib" / host / "bin" / "gcc-ld" / "ld.lld.exe"
     subprocess.run(
         common + ["--crate-name", "sm_verify", "--crate-type", "cdylib",
-                  "-Z", "unstable-options", "-C", f"linker={linker}",
-                  "-C", "linker-flavor=gnu-lld", "sm/src/verify_dll.rs",
+                  "-C", f"linker={linker}", "-C", "linker-flavor=ld", "sm/src/verify_dll.rs",
                   "--extern", f"sm={library}", "-o", str(dll)],
         cwd=root, check=True,
     )
