@@ -81,10 +81,12 @@ change is judged.
    Interactive play and WSL are unavailable on the current Windows machine;
    Cargo's build script is denied execution (OS error 5). Use the automated
    3,600-frame smoke run followed by any% in Linux GitHub Actions instead.
-   The private `sm-decomp-private-archive-20261017` repo supplies its ROM and
-   calls this repo's `.github/workflows/verify.yml`; logs stay private and
-   no ROM, save state or image is uploaded. ROM restored locally from that
-   archive to gitignored `rom/sm.smc`; expected SHA-1 confirmed.
+   The private archive supplied the ROM, restored locally to gitignored
+   `rom/sm.smc`; expected SHA-1 confirmed. Private Actions could not start
+   because GitHub reported a billing/spending limit. The archive was restored
+   to archived status. Manual `.github/workflows/verify.yml` runs publicly
+   using gzip/base64 ROM chunks in encrypted Actions secrets. Only comparison
+   diagnostics are printed; no ROM, save state or image is uploaded.
 2. **Headless verify mode.** Add `sm verify <rom> <inputs> [--frames N]`:
    no window, no audio, unthrottled, `RM_BOTH`. It feeds one recorded
    controller word per game frame through the same path as `RtlRunFrame`,

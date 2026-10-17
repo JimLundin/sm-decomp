@@ -9,8 +9,8 @@ permissions:
 
 jobs:
   build:
-    # Public CI checks build/format. verify.yml is called from the private
-    # ROM archive so verification never publishes ROM data or save states.
+    # Public CI checks build/format. Manual verify.yml obtains the ROM from
+    # encrypted Actions secrets without publishing ROM data or save states.
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
