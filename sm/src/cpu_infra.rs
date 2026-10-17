@@ -1474,6 +1474,8 @@ unsafe extern "C" fn VerifySnapshotsEq(
     mut a: *mut Snapshot,
     mut prev: *mut Snapshot,
 ) {
+    // Keep checking every frame, but bound headless logs to the first failure.
+    let report_details = !VERIFY_ACTIVE || VERIFY_FAILURES == 0;
     memcpy(
         (&raw mut (*b).ram as *mut uint8).offset(0 as ::core::ffi::c_int as isize) as *mut uint8
             as *mut ::core::ffi::c_void,
@@ -1781,62 +1783,69 @@ unsafe extern "C" fn VerifySnapshotsEq(
         0x20000 as ::core::ffi::c_int as size_t,
     ) != 0
     {
-        fprintf(
-            stderr,
-            b"@%d: Memory compare failed (mine != theirs, prev):\n\0" as *const u8
-                as *const ::core::ffi::c_char,
-            snes_frame_counter,
-        );
-        let mut j: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-        let mut i: size_t = 0 as size_t;
-        while i < 0x20000 as ::core::ffi::c_int as size_t {
-            if (*a).ram[i as usize] as ::core::ffi::c_int
-                != (*b).ram[i as usize] as ::core::ffi::c_int
-            {
-                j += 1;
-                if j < 256 as ::core::ffi::c_int {
-                    if (i & 1 as size_t == 0 as size_t
-                        || i < 0x10000 as ::core::ffi::c_int as size_t)
-                        && (*a).ram[i.wrapping_add(1 as size_t) as usize] as ::core::ffi::c_int
-                            != (*b).ram[i.wrapping_add(1 as size_t) as usize] as ::core::ffi::c_int
-                    {
-                        fprintf(
-                            stderr,
-                            b"0x%.6X: %.4X != %.4X (%.4X)\n\0" as *const u8
-                                as *const ::core::ffi::c_char,
-                            i as ::core::ffi::c_int,
-                            *((&raw mut (*b).ram as *mut uint8).offset(i as isize) as *mut uint8
-                                as *mut uint16) as ::core::ffi::c_int,
-                            *((&raw mut (*a).ram as *mut uint8).offset(i as isize) as *mut uint8
-                                as *mut uint16) as ::core::ffi::c_int,
-                            *((&raw mut (*prev).ram as *mut uint8).offset(i as isize) as *mut uint8
-                                as *mut uint16) as ::core::ffi::c_int,
-                        );
-                        i = i.wrapping_add(1);
-                        j += 1;
-                    } else {
-                        fprintf(
-                            stderr,
-                            b"0x%.6X: %.2X != %.2X (%.2X)\n\0" as *const u8
-                                as *const ::core::ffi::c_char,
-                            i as ::core::ffi::c_int,
-                            (*b).ram[i as usize] as ::core::ffi::c_int,
-                            (*a).ram[i as usize] as ::core::ffi::c_int,
-                            (*prev).ram[i as usize] as ::core::ffi::c_int,
-                        );
+        g_fail = true_0 != 0;
+        if report_details {
+            fprintf(
+                stderr,
+                b"@%d: Memory compare failed (mine != theirs, prev):\n\0" as *const u8
+                    as *const ::core::ffi::c_char,
+                snes_frame_counter,
+            );
+            let mut j: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+            let mut i: size_t = 0 as size_t;
+            while i < 0x20000 as ::core::ffi::c_int as size_t {
+                if (*a).ram[i as usize] as ::core::ffi::c_int
+                    != (*b).ram[i as usize] as ::core::ffi::c_int
+                {
+                    j += 1;
+                    if j < 256 as ::core::ffi::c_int {
+                        if (i & 1 as size_t == 0 as size_t
+                            || i < 0x10000 as ::core::ffi::c_int as size_t)
+                            && (*a).ram[i.wrapping_add(1 as size_t) as usize] as ::core::ffi::c_int
+                                != (*b).ram[i.wrapping_add(1 as size_t) as usize]
+                                    as ::core::ffi::c_int
+                        {
+                            fprintf(
+                                stderr,
+                                b"0x%.6X: %.4X != %.4X (%.4X)\n\0" as *const u8
+                                    as *const ::core::ffi::c_char,
+                                i as ::core::ffi::c_int,
+                                *((&raw mut (*b).ram as *mut uint8).offset(i as isize) as *mut uint8
+                                    as *mut uint16)
+                                    as ::core::ffi::c_int,
+                                *((&raw mut (*a).ram as *mut uint8).offset(i as isize) as *mut uint8
+                                    as *mut uint16)
+                                    as ::core::ffi::c_int,
+                                *((&raw mut (*prev).ram as *mut uint8).offset(i as isize)
+                                    as *mut uint8 as *mut uint16)
+                                    as ::core::ffi::c_int,
+                            );
+                            i = i.wrapping_add(1);
+                            j += 1;
+                        } else {
+                            fprintf(
+                                stderr,
+                                b"0x%.6X: %.2X != %.2X (%.2X)\n\0" as *const u8
+                                    as *const ::core::ffi::c_char,
+                                i as ::core::ffi::c_int,
+                                (*b).ram[i as usize] as ::core::ffi::c_int,
+                                (*a).ram[i as usize] as ::core::ffi::c_int,
+                                (*prev).ram[i as usize] as ::core::ffi::c_int,
+                            );
+                        }
                     }
                 }
+                i = i.wrapping_add(1);
             }
-            i = i.wrapping_add(1);
+            if j != 0 {
+                g_fail = true_0 != 0;
+            }
+            fprintf(
+                stderr,
+                b"  total of %d failed bytes\n\0" as *const u8 as *const ::core::ffi::c_char,
+                j,
+            );
         }
-        if j != 0 {
-            g_fail = true_0 != 0;
-        }
-        fprintf(
-            stderr,
-            b"  total of %d failed bytes\n\0" as *const u8 as *const ::core::ffi::c_char,
-            j,
-        );
     }
     if memcmp(
         &raw mut (*b).sram as *mut uint8 as *const ::core::ffi::c_void,
@@ -1844,63 +1853,69 @@ unsafe extern "C" fn VerifySnapshotsEq(
         0x2000 as size_t,
     ) != 0
     {
-        fprintf(
-            stderr,
-            b"@%d: SRAM compare failed (mine != theirs, prev):\n\0" as *const u8
-                as *const ::core::ffi::c_char,
-            snes_frame_counter,
-        );
-        let mut j_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-        let mut i_0: size_t = 0 as size_t;
-        while i_0 < 0x2000 as size_t {
-            if (*a).sram[i_0 as usize] as ::core::ffi::c_int
-                != (*b).sram[i_0 as usize] as ::core::ffi::c_int
-            {
-                j_0 += 1;
-                if j_0 < 128 as ::core::ffi::c_int {
-                    if i_0 & 1 as size_t == 0 as size_t
-                        && (*a).sram[i_0.wrapping_add(1 as size_t) as usize] as ::core::ffi::c_int
-                            != (*b).sram[i_0.wrapping_add(1 as size_t) as usize]
+        g_fail = true_0 != 0;
+        if report_details {
+            fprintf(
+                stderr,
+                b"@%d: SRAM compare failed (mine != theirs, prev):\n\0" as *const u8
+                    as *const ::core::ffi::c_char,
+                snes_frame_counter,
+            );
+            let mut j_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+            let mut i_0: size_t = 0 as size_t;
+            while i_0 < 0x2000 as size_t {
+                if (*a).sram[i_0 as usize] as ::core::ffi::c_int
+                    != (*b).sram[i_0 as usize] as ::core::ffi::c_int
+                {
+                    j_0 += 1;
+                    if j_0 < 128 as ::core::ffi::c_int {
+                        if i_0 & 1 as size_t == 0 as size_t
+                            && (*a).sram[i_0.wrapping_add(1 as size_t) as usize]
                                 as ::core::ffi::c_int
-                    {
-                        fprintf(
-                            stderr,
-                            b"0x%.6X: %.4X != %.4X (%.4X)\n\0" as *const u8
-                                as *const ::core::ffi::c_char,
-                            i_0 as ::core::ffi::c_int,
-                            *((&raw mut (*b).sram as *mut uint8).offset(i_0 as isize) as *mut uint8
-                                as *mut uint16) as ::core::ffi::c_int,
-                            *((&raw mut (*a).sram as *mut uint8).offset(i_0 as isize) as *mut uint8
-                                as *mut uint16) as ::core::ffi::c_int,
-                            *((&raw mut (*prev).sram as *mut uint8).offset(i_0 as isize)
-                                as *mut uint8 as *mut uint16)
-                                as ::core::ffi::c_int,
-                        );
-                        i_0 = i_0.wrapping_add(1);
-                        j_0 += 1;
-                    } else {
-                        fprintf(
-                            stderr,
-                            b"0x%.6X: %.2X != %.2X (%.2X)\n\0" as *const u8
-                                as *const ::core::ffi::c_char,
-                            i_0 as ::core::ffi::c_int,
-                            (*b).sram[i_0 as usize] as ::core::ffi::c_int,
-                            (*a).sram[i_0 as usize] as ::core::ffi::c_int,
-                            (*prev).sram[i_0 as usize] as ::core::ffi::c_int,
-                        );
+                                != (*b).sram[i_0.wrapping_add(1 as size_t) as usize]
+                                    as ::core::ffi::c_int
+                        {
+                            fprintf(
+                                stderr,
+                                b"0x%.6X: %.4X != %.4X (%.4X)\n\0" as *const u8
+                                    as *const ::core::ffi::c_char,
+                                i_0 as ::core::ffi::c_int,
+                                *((&raw mut (*b).sram as *mut uint8).offset(i_0 as isize)
+                                    as *mut uint8 as *mut uint16)
+                                    as ::core::ffi::c_int,
+                                *((&raw mut (*a).sram as *mut uint8).offset(i_0 as isize)
+                                    as *mut uint8 as *mut uint16)
+                                    as ::core::ffi::c_int,
+                                *((&raw mut (*prev).sram as *mut uint8).offset(i_0 as isize)
+                                    as *mut uint8 as *mut uint16)
+                                    as ::core::ffi::c_int,
+                            );
+                            i_0 = i_0.wrapping_add(1);
+                            j_0 += 1;
+                        } else {
+                            fprintf(
+                                stderr,
+                                b"0x%.6X: %.2X != %.2X (%.2X)\n\0" as *const u8
+                                    as *const ::core::ffi::c_char,
+                                i_0 as ::core::ffi::c_int,
+                                (*b).sram[i_0 as usize] as ::core::ffi::c_int,
+                                (*a).sram[i_0 as usize] as ::core::ffi::c_int,
+                                (*prev).sram[i_0 as usize] as ::core::ffi::c_int,
+                            );
+                        }
                     }
                 }
+                i_0 = i_0.wrapping_add(1);
             }
-            i_0 = i_0.wrapping_add(1);
+            if j_0 != 0 {
+                g_fail = true_0 != 0;
+            }
+            fprintf(
+                stderr,
+                b"  total of %d failed bytes\n\0" as *const u8 as *const ::core::ffi::c_char,
+                j_0,
+            );
         }
-        if j_0 != 0 {
-            g_fail = true_0 != 0;
-        }
-        fprintf(
-            stderr,
-            b"  total of %d failed bytes\n\0" as *const u8 as *const ::core::ffi::c_char,
-            j_0,
-        );
     }
     if memcmp(
         &raw mut (*b).vram as *mut uint16 as *const ::core::ffi::c_void,
@@ -1908,33 +1923,37 @@ unsafe extern "C" fn VerifySnapshotsEq(
         (::core::mem::size_of::<uint16>() as size_t).wrapping_mul(0x8000 as size_t),
     ) != 0
     {
-        fprintf(
-            stderr,
-            b"@%d: VRAM compare failed (mine != theirs, prev):\n\0" as *const u8
-                as *const ::core::ffi::c_char,
-            snes_frame_counter,
-        );
-        let mut i_1: size_t = 0 as size_t;
-        let mut j_1: size_t = 0 as size_t;
-        while i_1 < 0x8000 as size_t {
-            if (*a).vram[i_1 as usize] as ::core::ffi::c_int
-                != (*b).vram[i_1 as usize] as ::core::ffi::c_int
-            {
-                fprintf(
-                    stderr,
-                    b"0x%.6X: %.4X != %.4X (%.4X)\n\0" as *const u8 as *const ::core::ffi::c_char,
-                    i_1 as ::core::ffi::c_int,
-                    (*b).vram[i_1 as usize] as ::core::ffi::c_int,
-                    (*a).vram[i_1 as usize] as ::core::ffi::c_int,
-                    (*prev).vram[i_1 as usize] as ::core::ffi::c_int,
-                );
-                g_fail = true_0 != 0;
-                j_1 = j_1.wrapping_add(1);
-                if j_1 >= 32 as size_t {
-                    break;
+        g_fail = true_0 != 0;
+        if report_details {
+            fprintf(
+                stderr,
+                b"@%d: VRAM compare failed (mine != theirs, prev):\n\0" as *const u8
+                    as *const ::core::ffi::c_char,
+                snes_frame_counter,
+            );
+            let mut i_1: size_t = 0 as size_t;
+            let mut j_1: size_t = 0 as size_t;
+            while i_1 < 0x8000 as size_t {
+                if (*a).vram[i_1 as usize] as ::core::ffi::c_int
+                    != (*b).vram[i_1 as usize] as ::core::ffi::c_int
+                {
+                    fprintf(
+                        stderr,
+                        b"0x%.6X: %.4X != %.4X (%.4X)\n\0" as *const u8
+                            as *const ::core::ffi::c_char,
+                        i_1 as ::core::ffi::c_int,
+                        (*b).vram[i_1 as usize] as ::core::ffi::c_int,
+                        (*a).vram[i_1 as usize] as ::core::ffi::c_int,
+                        (*prev).vram[i_1 as usize] as ::core::ffi::c_int,
+                    );
+                    g_fail = true_0 != 0;
+                    j_1 = j_1.wrapping_add(1);
+                    if j_1 >= 32 as size_t {
+                        break;
+                    }
                 }
+                i_1 = i_1.wrapping_add(1);
             }
-            i_1 = i_1.wrapping_add(1);
         }
     }
     if memcmp(
@@ -1943,33 +1962,37 @@ unsafe extern "C" fn VerifySnapshotsEq(
         (::core::mem::size_of::<uint16>() as size_t).wrapping_mul(0x120 as size_t),
     ) != 0
     {
-        fprintf(
-            stderr,
-            b"@%d: VRAM OAM compare failed (mine != theirs, prev):\n\0" as *const u8
-                as *const ::core::ffi::c_char,
-            snes_frame_counter,
-        );
-        let mut i_2: size_t = 0 as size_t;
-        let mut j_2: size_t = 0 as size_t;
-        while i_2 < 0x120 as size_t {
-            if (*a).oam[i_2 as usize] as ::core::ffi::c_int
-                != (*b).oam[i_2 as usize] as ::core::ffi::c_int
-            {
-                fprintf(
-                    stderr,
-                    b"0x%.6X: %.4X != %.4X (%.4X)\n\0" as *const u8 as *const ::core::ffi::c_char,
-                    i_2 as ::core::ffi::c_int,
-                    (*b).oam[i_2 as usize] as ::core::ffi::c_int,
-                    (*a).oam[i_2 as usize] as ::core::ffi::c_int,
-                    (*prev).oam[i_2 as usize] as ::core::ffi::c_int,
-                );
-                g_fail = true_0 != 0;
-                j_2 = j_2.wrapping_add(1);
-                if j_2 >= 16 as size_t {
-                    break;
+        g_fail = true_0 != 0;
+        if report_details {
+            fprintf(
+                stderr,
+                b"@%d: VRAM OAM compare failed (mine != theirs, prev):\n\0" as *const u8
+                    as *const ::core::ffi::c_char,
+                snes_frame_counter,
+            );
+            let mut i_2: size_t = 0 as size_t;
+            let mut j_2: size_t = 0 as size_t;
+            while i_2 < 0x120 as size_t {
+                if (*a).oam[i_2 as usize] as ::core::ffi::c_int
+                    != (*b).oam[i_2 as usize] as ::core::ffi::c_int
+                {
+                    fprintf(
+                        stderr,
+                        b"0x%.6X: %.4X != %.4X (%.4X)\n\0" as *const u8
+                            as *const ::core::ffi::c_char,
+                        i_2 as ::core::ffi::c_int,
+                        (*b).oam[i_2 as usize] as ::core::ffi::c_int,
+                        (*a).oam[i_2 as usize] as ::core::ffi::c_int,
+                        (*prev).oam[i_2 as usize] as ::core::ffi::c_int,
+                    );
+                    g_fail = true_0 != 0;
+                    j_2 = j_2.wrapping_add(1);
+                    if j_2 >= 16 as size_t {
+                        break;
+                    }
                 }
+                i_2 = i_2.wrapping_add(1);
             }
-            i_2 = i_2.wrapping_add(1);
         }
     }
 }
@@ -3362,8 +3385,13 @@ unsafe fn report_first_verify_failure() {
     eprintln!("First failing frame: {} (zero-based)", snes_frame_counter);
     let mine = &*(&raw const g_snapshot_mine);
     let theirs = &*(&raw const g_snapshot_theirs);
+    let mut differing_bytes = 0usize;
     for (addr, (&actual, &expected)) in mine.ram.iter().zip(&theirs.ram).enumerate() {
         if actual == expected {
+            continue;
+        }
+        differing_bytes += 1;
+        if differing_bytes > 64 {
             continue;
         }
         let var = crate::ram_map::RAM_VARS
@@ -3384,6 +3412,7 @@ unsafe fn report_first_verify_failure() {
             );
         }
     }
+    eprintln!("RAM: {differing_bytes} differing bytes (showing at most 64)");
 }
 #[no_mangle]
 pub unsafe extern "C" fn RunOneFrameOfGame_Both() {
@@ -3414,7 +3443,9 @@ pub unsafe extern "C" fn RunOneFrameOfGame_Both() {
                 }
             }
             g_fail = false_0 != 0;
-            printf(b"Verify failure!\n\0" as *const u8 as *const ::core::ffi::c_char);
+            if !VERIFY_ACTIVE || VERIFY_FAILURES == 1 {
+                printf(b"Verify failure!\n\0" as *const u8 as *const ::core::ffi::c_char);
+            }
             (*g_snes).ppu = (*g_snes).snes_ppu;
             RestoreSnapshot(&raw mut g_snapshot_before);
             if g_debug_flag {

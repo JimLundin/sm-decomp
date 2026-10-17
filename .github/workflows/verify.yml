@@ -77,10 +77,11 @@ jobs:
           ROM_41: ${{ secrets.SM_ROM_41 }}
           ROM_42: ${{ secrets.SM_ROM_42 }}
           ROM_43: ${{ secrets.SM_ROM_43 }}
+          ROM_44: ${{ secrets.SM_ROM_44 }}
         run: |
           python3 - <<'PY'
           import base64, gzip, hashlib, io, os, pathlib, tomllib, urllib.request, zipfile
-          encoded = "".join(os.environ[f"ROM_{i:02d}"] for i in range(44))
+          encoded = "".join(os.environ[f"ROM_{i:02d}"] for i in range(45))
           if not encoded:
               raise SystemExit("ROM secrets are missing")
           pathlib.Path("rom/sm.smc").write_bytes(gzip.decompress(base64.b64decode(encoded)))

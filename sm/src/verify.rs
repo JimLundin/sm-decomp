@@ -79,10 +79,18 @@ fn run_checked() -> Result<u64, String> {
             0,
         );
         let mut discarded_audio = [0i16; 534 * 2];
-        for &pad in &inputs[..frames] {
+        for (index, &pad) in inputs[..frames].iter().enumerate() {
             sm::rtl::RtlRunFrame(i32::from(pad));
             // Advance the music driver once per frame without playing audio.
             sm::rtl::RtlRenderAudio(discarded_audio.as_mut_ptr(), 534, 2);
+            let completed = index + 1;
+            if completed % 10_000 == 0 {
+                let failures = sm::cpu_infra::VERIFY_FAILURES;
+                eprintln!(
+                    "Progress {completed}/{frames} frames: {failures} failing frames ({:.2}s)",
+                    start.elapsed().as_secs_f64()
+                );
+            }
         }
         super::SDL_DestroyMutex(super::g_audio_mutex);
         let failures = sm::cpu_infra::VERIFY_FAILURES;
