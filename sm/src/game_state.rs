@@ -117,6 +117,11 @@ impl Game {
         self.g_ram[0xdc4..0xdc6].copy_from_slice(&index.to_le_bytes());
     }
 
+    /// BTS behavior byte for the live collision block ($7F:6402 in ram_map).
+    pub fn current_block_bts(&self) -> u8 {
+        self.g_ram[0x16402 + usize::from(self.cur_block_index())]
+    }
+
     /// Live level-data word selected by the collision block index.
     pub fn current_level_block(&self) -> u16 {
         let offset = 0x10002 + usize::from(self.cur_block_index()) * 2;

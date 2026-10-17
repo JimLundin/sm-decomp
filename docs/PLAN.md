@@ -464,6 +464,17 @@ Rust lines -48; other counters unchanged. Local Cargo remains ASR-denied;
 Linux stable frontend validation is pending on this commit.
 Next: convert extension/spike handler RAM/ROM reads, then slope handlers,
 so the shared movement boundary can become safe.
+Extension/spike reads converted: BTS uses the live named byte accessor;
+spike PLMs use checked live-ROM words. Extension offsets preserve signed
+bytes, full room width, wrapping block indexes and high-bit retry results.
+All 16,777,216 byte/width products match the original arithmetic. Format,
+optimized DLL build and full any% pass: 129,712 frames, zero failures
+(185.28s). Raw offsets -11, unsafe functions -2, c_int cast lines -20,
+Rust lines -35; remaining counters unchanged. Local Cargo remains ASR-denied.
+Supplemental low% and 100% run concurrently against the same built DLL;
+Linux stable validation is pending. Next: slope handlers. In parallel,
+inspect actual replay progression: zero mismatches alone does not establish
+that the movies reach the intended gameplay paths.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:

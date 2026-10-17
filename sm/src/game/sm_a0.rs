@@ -10497,27 +10497,14 @@ pub unsafe fn ProcessEnemyInstructions(game: &mut Game) {
         }
     }
 }
-unsafe fn EnemyBlockCollReact_Spike(mut ebci: &mut EnemyBlockCollInfo, game: &mut Game) -> uint8 {
-    let mut v0: uint16 = *(game.g_rom.offset(
-        (((0xa0c2da as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xa0c2da as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
-        .offset(
-            (*(&raw mut game.g_ram as *mut uint8)
-                .offset(0x16402 as ::core::ffi::c_int as isize)
-                .offset(
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xdc4 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as isize,
-                ) as ::core::ffi::c_int
-                & 0x7f as ::core::ffi::c_int) as isize,
-        );
-    if v0 == 0 {
-        return 1 as uint8;
+unsafe fn EnemyBlockCollReact_Spike(_collision: &mut EnemyBlockCollInfo, game: &mut Game) -> uint8 {
+    let behavior = game.current_block_bts() & 0x7f;
+    let plm = game.read_rom_word(0xa0c2da, usize::from(behavior) * 2);
+    if plm == 0 {
+        return 1;
     }
-    SpawnPLM(v0, game);
-    return 0 as uint8;
+    SpawnPLM(plm, game);
+    0
 }
 unsafe fn EnemyBlockCollHorizReact_Slope(
     mut ebci: &mut EnemyBlockCollInfo,
@@ -10922,50 +10909,23 @@ unsafe fn EnemyBlockCollVertReact_Slope_NonSquare(
         }
     };
 }
-unsafe fn EnemyBlockCollReact_HorizExt(
-    mut ebci: &mut EnemyBlockCollInfo,
-    game: &mut Game,
-) -> uint8 {
-    let mut t: uint8 = *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        );
-    if t != 0 {
-        let ref mut fresh11 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xdc4 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        *fresh11 = (*fresh11 as ::core::ffi::c_int + t as int8 as ::core::ffi::c_int) as uint16;
-        return 0xff as uint8;
+fn EnemyBlockCollReact_HorizExt(_collision: &mut EnemyBlockCollInfo, game: &mut Game) -> uint8 {
+    let offset = game.current_block_bts() as i8 as i16;
+    if offset == 0 {
+        return 0;
     }
-    return 0 as uint8;
+    game.set_cur_block_index(game.cur_block_index().wrapping_add(offset as u16));
+    0xff
 }
-unsafe fn EnemyBlockCollReact_VertExt(mut ebci: &mut EnemyBlockCollInfo, game: &mut Game) -> uint8 {
-    if *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        )
-        != 0
-    {
-        let ref mut fresh10 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xdc4 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        *fresh10 = (*fresh10 as ::core::ffi::c_int
-            + *(&raw mut game.g_ram as *mut uint8)
-                .offset(0x16402 as ::core::ffi::c_int as isize)
-                .offset(
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xdc4 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as isize,
-                ) as int8 as ::core::ffi::c_int
-                * *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int) as uint16;
-        return 0xff as uint8;
+
+fn EnemyBlockCollReact_VertExt(_collision: &mut EnemyBlockCollInfo, game: &mut Game) -> uint8 {
+    let offset = game.current_block_bts() as i8 as i16;
+    if offset == 0 {
+        return 0;
     }
-    return 0 as uint8;
+    let offset = (offset as u16).wrapping_mul(game.room_width_in_blocks());
+    game.set_cur_block_index(game.cur_block_index().wrapping_add(offset));
+    0xff
 }
 pub unsafe fn Enemy_MoveRight_SlopesAsWalls(
     mut k: uint16,
