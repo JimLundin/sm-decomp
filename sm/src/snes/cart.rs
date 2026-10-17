@@ -561,7 +561,7 @@ unsafe extern "C" fn cart_readLorom(
     let cpu = &*snes.cpu;
     eprintln!(
         "Invalid LoROM read ${original_bank:02X}:{adr:04X}, frame {}: PC ${:02X}:{:04X} A ${:04X} X ${:04X} Y ${:04X} SP ${:04X} DP ${:04X} DB ${:02X}",
-        crate::rtl::snes_frame_counter,
+        crate::snes::snes::snes_frame_counter,
         cpu.k, cpu.pc, cpu.a, cpu.x, cpu.y, cpu.sp, cpu.dp, cpu.db,
     );
     eprintln!(
