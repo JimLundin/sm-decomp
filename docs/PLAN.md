@@ -334,7 +334,8 @@ every step makes the next one easier.
    metadata builds pass. Unsafe functions +1 and Rust lines +31 provide the
    immutable string-pointer constructor and its documented safety contract;
    all other residue counters unchanged. Final-source any%: 129,712 frames,
-   zero failures (182.91s). Linux stable release validation is pending.
+   zero failures (183.28s). Linux stable release validation is pending:
+   https://github.com/JimLundin/sm-decomp/actions/runs/39070035812.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
