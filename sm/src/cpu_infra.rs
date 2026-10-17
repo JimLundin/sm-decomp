@@ -381,7 +381,7 @@ pub unsafe fn FixBugHook(mut addr: uint32, game: &mut Game) -> bool {
     }
     return false_0 != 0;
 }
-static mut kPatchedCarrys: [uint32; 155] = [
+static kPatchedCarrys: [uint32; 155] = [
     0xa7ac33 as ::core::ffi::c_int as uint32,
     0xa7ac36 as ::core::ffi::c_int as uint32,
     0xa7ac39 as ::core::ffi::c_int as uint32,

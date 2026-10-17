@@ -65,7 +65,7 @@ unsafe fn IntMin(mut a: ::core::ffi::c_int, mut b: ::core::ffi::c_int) -> ::core
 unsafe fn IntMax(mut a: ::core::ffi::c_int, mut b: ::core::ffi::c_int) -> ::core::ffi::c_int {
     return if a > b { a } else { b };
 }
-static mut layersPerMode: [[::core::ffi::c_int; 12]; 10] = [
+static layersPerMode: [[::core::ffi::c_int; 12]; 10] = [
     [
         4 as ::core::ffi::c_int,
         0 as ::core::ffi::c_int,
@@ -207,7 +207,7 @@ static mut layersPerMode: [[::core::ffi::c_int; 12]; 10] = [
         5 as ::core::ffi::c_int,
     ],
 ];
-static mut prioritysPerMode: [[::core::ffi::c_int; 12]; 10] = [
+static prioritysPerMode: [[::core::ffi::c_int; 12]; 10] = [
     [
         3 as ::core::ffi::c_int,
         1 as ::core::ffi::c_int,
@@ -349,7 +349,7 @@ static mut prioritysPerMode: [[::core::ffi::c_int; 12]; 10] = [
         5 as ::core::ffi::c_int,
     ],
 ];
-static mut layerCountPerMode: [::core::ffi::c_int; 10] = [
+static layerCountPerMode: [::core::ffi::c_int; 10] = [
     12 as ::core::ffi::c_int,
     10 as ::core::ffi::c_int,
     8 as ::core::ffi::c_int,
@@ -361,7 +361,7 @@ static mut layerCountPerMode: [::core::ffi::c_int; 10] = [
     10 as ::core::ffi::c_int,
     7 as ::core::ffi::c_int,
 ];
-static mut bitDepthsPerMode: [[::core::ffi::c_int; 4]; 10] = [
+static bitDepthsPerMode: [[::core::ffi::c_int; 4]; 10] = [
     [
         2 as ::core::ffi::c_int,
         2 as ::core::ffi::c_int,
@@ -423,7 +423,7 @@ static mut bitDepthsPerMode: [[::core::ffi::c_int; 4]; 10] = [
         5 as ::core::ffi::c_int,
     ],
 ];
-static mut spriteSizes: [[::core::ffi::c_int; 2]; 8] = [
+static spriteSizes: [[::core::ffi::c_int; 2]; 8] = [
     [8 as ::core::ffi::c_int, 16 as ::core::ffi::c_int],
     [8 as ::core::ffi::c_int, 32 as ::core::ffi::c_int],
     [8 as ::core::ffi::c_int, 64 as ::core::ffi::c_int],
@@ -2330,7 +2330,7 @@ unsafe fn PpuDrawWholeLine(mut ppu: *mut Ppu, mut y: uint) {
         bits: 0,
     };
     PpuWindows_Calc(&raw mut cwin, ppu, 5 as uint);
-    static mut kCwBitsMod: [uint8; 8] = [
+    static kCwBitsMod: [uint8; 8] = [
         0 as ::core::ffi::c_int as uint8,
         0xff as ::core::ffi::c_int as uint8,
         0xff as ::core::ffi::c_int as uint8,

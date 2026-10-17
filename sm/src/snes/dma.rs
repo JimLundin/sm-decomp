@@ -26,7 +26,7 @@ pub const __ASSERT_FUNCTION: [::core::ffi::c_char; 34] = unsafe {
         *b"uint8_t dma_read(Dma *, uint16_t)\0",
     )
 };
-static mut bAdrOffsets: [[::core::ffi::c_int; 4]; 8] = [
+static bAdrOffsets: [[::core::ffi::c_int; 4]; 8] = [
     [
         0 as ::core::ffi::c_int,
         0 as ::core::ffi::c_int,
@@ -76,7 +76,7 @@ static mut bAdrOffsets: [[::core::ffi::c_int; 4]; 8] = [
         1 as ::core::ffi::c_int,
     ],
 ];
-static mut transferLength: [::core::ffi::c_int; 8] = [
+static transferLength: [::core::ffi::c_int; 8] = [
     1 as ::core::ffi::c_int,
     2 as ::core::ffi::c_int,
     2 as ::core::ffi::c_int,

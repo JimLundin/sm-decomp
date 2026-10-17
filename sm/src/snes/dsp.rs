@@ -14,7 +14,7 @@ pub use crate::types::{
 };
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-static mut rateValues: [::core::ffi::c_int; 32] = [
+static rateValues: [::core::ffi::c_int; 32] = [
     0 as ::core::ffi::c_int,
     2048 as ::core::ffi::c_int,
     1536 as ::core::ffi::c_int,
@@ -48,7 +48,7 @@ static mut rateValues: [::core::ffi::c_int; 32] = [
     2 as ::core::ffi::c_int,
     1 as ::core::ffi::c_int,
 ];
-static mut gaussValues: [uint16_t; 512] = [
+static gaussValues: [uint16_t; 512] = [
     0 as ::core::ffi::c_int as uint16_t,
     0 as ::core::ffi::c_int as uint16_t,
     0 as ::core::ffi::c_int as uint16_t,

@@ -22,7 +22,7 @@ pub use crate::types::{
 };
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-static mut bootRom: [uint8_t; 64] = [
+static bootRom: [uint8_t; 64] = [
     0xcd as ::core::ffi::c_int as uint8_t,
     0xef as ::core::ffi::c_int as uint8_t,
     0xbd as ::core::ffi::c_int as uint8_t,

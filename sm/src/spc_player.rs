@@ -144,7 +144,7 @@ pub const V0ENVX: DspReg = 8;
 pub const V0VOLR: DspReg = 1;
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-static mut kChannel_Maps: [MemMap; 47] = [
+static kChannel_Maps: [MemMap; 47] = [
     MemMap {
         off: 0 as ::core::ffi::c_ulong as uint16,
         org_off: 0x8030 as uint16,
@@ -334,7 +334,7 @@ static mut kChannel_Maps: [MemMap; 47] = [
         org_off: 0x400 as uint16,
     },
 ];
-static mut kSpcPlayer_Maps: [MemMapSized; 283] = [
+static kSpcPlayer_Maps: [MemMapSized; 283] = [
     MemMapSized {
         off: 855 as ::core::ffi::c_ulong as uint16,
         org_off: 0 as uint16,
@@ -1841,7 +1841,7 @@ unsafe fn SetupEchoParameter_EDL(mut p: *mut SpcPlayer, mut a: uint8) {
     );
 }
 unsafe fn WriteVolumeToDsp(mut p: *mut SpcPlayer, mut c: *mut Channel, mut volume: uint16) {
-    static mut kVolumeTable: [uint8; 22] = [
+    static kVolumeTable: [uint8; 22] = [
         0 as ::core::ffi::c_int as uint8,
         1 as ::core::ffi::c_int as uint8,
         3 as ::core::ffi::c_int as uint8,
@@ -1906,7 +1906,7 @@ unsafe fn WriteVolumeToDsp(mut p: *mut SpcPlayer, mut c: *mut Channel, mut volum
     }
 }
 unsafe fn WritePitchInner(mut p: *mut SpcPlayer, mut c: *mut Channel, mut pitch: uint16) {
-    static mut kBaseNoteFreqs: [uint16; 13] = [
+    static kBaseNoteFreqs: [uint16; 13] = [
         2143 as ::core::ffi::c_int as uint16,
         2270 as ::core::ffi::c_int as uint16,
         2405 as ::core::ffi::c_int as uint16,
@@ -2104,7 +2104,7 @@ unsafe fn PitchSlideToNote_Check(mut p: *mut SpcPlayer, mut c: *mut Channel) {
             + (*c).channel_transposition as ::core::ffi::c_int) as uint8,
     );
 }
-static mut kEffectByteLength: [uint8; 31] = [
+static kEffectByteLength: [uint8; 31] = [
     1 as ::core::ffi::c_int as uint8,
     1 as ::core::ffi::c_int as uint8,
     2 as ::core::ffi::c_int as uint8,
@@ -2304,7 +2304,7 @@ unsafe fn HandleEffect(mut p: *mut SpcPlayer, mut c: *mut Channel, mut effect: u
                 ((*p).reg_FLG as ::core::ffi::c_int | 0x20 as ::core::ffi::c_int) as uint8;
         }
         247 => {
-            static mut kEchoFirParameters: [int8_t; 32] = [
+            static kEchoFirParameters: [int8_t; 32] = [
                 127 as ::core::ffi::c_int as int8_t,
                 0 as ::core::ffi::c_int as int8_t,
                 0 as ::core::ffi::c_int as int8_t,
@@ -2836,7 +2836,7 @@ unsafe fn Music_HandleCmdFromSnes(mut p: *mut SpcPlayer) {
                                                 & 0x80 as ::core::ffi::c_int
                                                 == 0
                                             {
-                                                static mut kNoteVol: [uint8; 16] = [
+                                                static kNoteVol: [uint8; 16] = [
                                                     25 as ::core::ffi::c_int as uint8,
                                                     50 as ::core::ffi::c_int as uint8,
                                                     76 as ::core::ffi::c_int as uint8,
@@ -2854,7 +2854,7 @@ unsafe fn Music_HandleCmdFromSnes(mut p: *mut SpcPlayer) {
                                                     242 as ::core::ffi::c_int as uint8,
                                                     252 as ::core::ffi::c_int as uint8,
                                                 ];
-                                                static mut kNoteGateOffPct: [uint8; 8] = [
+                                                static kNoteGateOffPct: [uint8; 8] = [
                                                     50 as ::core::ffi::c_int as uint8,
                                                     101 as ::core::ffi::c_int as uint8,
                                                     127 as ::core::ffi::c_int as uint8,
@@ -3205,7 +3205,7 @@ pub unsafe fn Sfx_Chan_Reset(mut p: *mut SpcPlayer, mut sr: *mut SfxRegs, mut s:
         (*sr).init_flag = 0 as uint8;
     }
 }
-static mut kSfx1InstrListPtrs: [uint16; 66] = [
+static kSfx1InstrListPtrs: [uint16; 66] = [
     0x2b71 as ::core::ffi::c_int as uint16,
     0x2baf as ::core::ffi::c_int as uint16,
     0x2bb7 as ::core::ffi::c_int as uint16,
@@ -3273,7 +3273,7 @@ static mut kSfx1InstrListPtrs: [uint16; 66] = [
     0x312a as ::core::ffi::c_int as uint16,
     0x313f as ::core::ffi::c_int as uint16,
 ];
-static mut kSfx1Conf: [uint8; 66] = [
+static kSfx1Conf: [uint8; 66] = [
     5 as ::core::ffi::c_int as uint8,
     0 as ::core::ffi::c_int as uint8,
     0 as ::core::ffi::c_int as uint8,
@@ -3422,7 +3422,7 @@ pub unsafe fn Sfx1_HandleCmdFromSnes(mut p: *mut SpcPlayer) {
         _ => {}
     };
 }
-static mut kSfx2InstrListPtrs: [uint16; 127] = [
+static kSfx2InstrListPtrs: [uint16; 127] = [
     0x3ab1 as ::core::ffi::c_int as uint16,
     0x3ac3 as ::core::ffi::c_int as uint16,
     0x3ad5 as ::core::ffi::c_int as uint16,
@@ -3551,7 +3551,7 @@ static mut kSfx2InstrListPtrs: [uint16; 127] = [
     0x4686 as ::core::ffi::c_int as uint16,
     0x468e as ::core::ffi::c_int as uint16,
 ];
-static mut kSfx2Conf: [uint8; 127] = [
+static kSfx2Conf: [uint8; 127] = [
     1 as ::core::ffi::c_int as uint8,
     1 as ::core::ffi::c_int as uint8,
     1 as ::core::ffi::c_int as uint8,
@@ -3741,7 +3741,7 @@ pub unsafe fn Sfx2_HandleCmdFromSnes(mut p: *mut SpcPlayer) {
         _ => {}
     };
 }
-static mut kSfx3InstrListPtrs: [uint16; 47] = [
+static kSfx3InstrListPtrs: [uint16; 47] = [
     0x4eed as ::core::ffi::c_int as uint16,
     0x4ef5 as ::core::ffi::c_int as uint16,
     0x4f00 as ::core::ffi::c_int as uint16,
@@ -3790,7 +3790,7 @@ static mut kSfx3InstrListPtrs: [uint16; 47] = [
     0x52f1 as ::core::ffi::c_int as uint16,
     0x530b as ::core::ffi::c_int as uint16,
 ];
-static mut kSfx3Conf: [uint8; 47] = [
+static kSfx3Conf: [uint8; 47] = [
     0 as ::core::ffi::c_int as uint8,
     1 as ::core::ffi::c_int as uint8,
     2 as ::core::ffi::c_int as uint8,
@@ -4174,7 +4174,7 @@ pub unsafe fn Sfx_Init(
     } else {
         2 as ::core::ffi::c_int
     };
-    static mut kSomeAddrs: [[uint16; 3]; 3] = [
+    static kSomeAddrs: [[uint16; 3]; 3] = [
         [
             0x3a6 as ::core::ffi::c_int as uint16,
             0x3aa as ::core::ffi::c_int as uint16,

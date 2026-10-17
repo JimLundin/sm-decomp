@@ -28,7 +28,7 @@ pub use crate::types::{
 };
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-static mut cyclesPerOpcode: [::core::ffi::c_int; 256] = [
+static cyclesPerOpcode: [::core::ffi::c_int; 256] = [
     7 as ::core::ffi::c_int,
     6 as ::core::ffi::c_int,
     7 as ::core::ffi::c_int,

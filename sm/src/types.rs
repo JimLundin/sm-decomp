@@ -1822,3 +1822,26 @@ pub struct _IO_marker {
 pub struct _IO_wide_data {
     _private: [u8; 0],
 }
+
+/// Immutable format/path pointer storage. Every entry points to a static
+/// NUL-terminated byte string; dereferencing this table never mutates strings.
+#[repr(transparent)]
+pub(crate) struct ImmutableCStringPointers<const N: usize>([*const core::ffi::c_char; N]);
+// Safety: tables contain only immutable static string addresses, and expose
+// no mutable access to either the pointer array or the pointed-to bytes.
+unsafe impl<const N: usize> Sync for ImmutableCStringPointers<N> {}
+impl<const N: usize> ImmutableCStringPointers<N> {
+    /// # Safety
+    /// Every pointer must refer to an immutable NUL-terminated byte string
+    /// that remains valid for the entire program. Neither its bytes nor the
+    /// pointer storage may be mutated through another alias.
+    pub(crate) const unsafe fn new(pointers: [*const core::ffi::c_char; N]) -> Self {
+        Self(pointers)
+    }
+}
+impl<const N: usize> core::ops::Deref for ImmutableCStringPointers<N> {
+    type Target = [*const core::ffi::c_char; N];
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}

@@ -324,7 +324,17 @@ every step makes the next one easier.
    249,212 -> 259,878 because explicit context expands calls and rustfmt
    wraps existing expressions. No casts or gameplay algorithms were added.
    Remaining mutable core statics are read-only hardware/music/debug tables,
-   to make immutable in a separate mechanical change.
+   now immutable in the following separate mechanical change.
+   Core-table batch: 35 read-only hardware/music/debug tables made immutable;
+   pointer tables use a transparent wrapper retaining layout and storage
+   identity. Initializers and all function bodies audited unchanged except
+   local `static mut` declarations. No mutable core state remains outside
+   `Game` (CRT `stderr` declarations are external FFI); frontend/config/image
+   loader state stays at the platform boundary. Format and core/frontend
+   metadata builds pass. Unsafe functions +1 and Rust lines +31 provide the
+   immutable string-pointer constructor and its documented safety contract;
+   all other residue counters unchanged. Final-source any%: 129,712 frames,
+   zero failures (182.91s). Linux stable release validation is pending.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 

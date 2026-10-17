@@ -1145,15 +1145,17 @@ pub unsafe fn RtlSaveSnapshot(
     RtlApuUnlock();
     fclose(f);
 }
-static mut kBugSaves: [*const ::core::ffi::c_char; 7] = [
-    b"Before Kraid\0" as *const u8 as *const ::core::ffi::c_char,
-    b"Before Golden Torizo\0" as *const u8 as *const ::core::ffi::c_char,
-    b"After Crocomire\0" as *const u8 as *const ::core::ffi::c_char,
-    b"Baby Metroid\0" as *const u8 as *const ::core::ffi::c_char,
-    b"Tourian Statue\0" as *const u8 as *const ::core::ffi::c_char,
-    b"Before Ridley\0" as *const u8 as *const ::core::ffi::c_char,
-    b"Enter Mother Brain\0" as *const u8 as *const ::core::ffi::c_char,
-];
+static kBugSaves: crate::types::ImmutableCStringPointers<7> = unsafe {
+    crate::types::ImmutableCStringPointers::new([
+        b"Before Kraid\0" as *const u8 as *const ::core::ffi::c_char,
+        b"Before Golden Torizo\0" as *const u8 as *const ::core::ffi::c_char,
+        b"After Crocomire\0" as *const u8 as *const ::core::ffi::c_char,
+        b"Baby Metroid\0" as *const u8 as *const ::core::ffi::c_char,
+        b"Tourian Statue\0" as *const u8 as *const ::core::ffi::c_char,
+        b"Before Ridley\0" as *const u8 as *const ::core::ffi::c_char,
+        b"Enter Mother Brain\0" as *const u8 as *const ::core::ffi::c_char,
+    ])
+};
 pub unsafe fn RtlSaveLoad(
     mut cmd: ::core::ffi::c_int,
     mut slot: ::core::ffi::c_int,
