@@ -119,7 +119,8 @@ change is judged.
    menu-overlay bounds panics in file-copy confirmation and file clear.
    All three row-clear writes now use the full backing menu tilemap.
    Local full any% now passes: 129,712 frames, zero failures, 181.67 seconds.
-   Linux verification of the final source is still running:
+   Linux full any% also passes: 129,712 frames, zero failures, 216.62 seconds.
+   Final-source smoke and any% passed; low% and 100% repeats are still running:
    https://github.com/JimLundin/sm-decomp/actions/runs/39060756294.
 2. **Headless verify mode — done.** Add `sm verify <rom> <inputs> [--frames N]`:
    no window, no audio, unthrottled, `RM_BOTH`. It feeds one recorded
@@ -146,10 +147,11 @@ change is judged.
    | low% | 167,797 | 0 | 240.59s |
    | 100% | 222,788 | 0 | 319.10s |
 
-   Any% uses `f2569067`; low% and 100% used the DLL at `554e5727` before
+   Any% uses `f2569067` (Linux and local); low% and 100% used the DLL at `554e5727` before
    the final any%-triggered file-clear bounds fix. Linux also confirmed low%
    and 100% at `21c8a165` (618.18s / 373.15s). The final Actions matrix above
-   reruns all three on `f2569067`. No known mismatches in these replays.
+   reruns all three on `f2569067`; its full any% passed in 216.62s.
+   No known mismatches in these replays.
 5. **Speed — done.** A full any% verify should finish in a few minutes. If it is
    slower, profile the snapshot and compare path before anything else.
    Local full any% takes about three minutes; all movies run concurrently.
