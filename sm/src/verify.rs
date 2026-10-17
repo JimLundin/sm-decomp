@@ -18,12 +18,25 @@ impl ReplayCoverage {
         u16::from_le_bytes([game.g_ram[address], game.g_ram[address + 1]])
     }
 
-    fn observe(&mut self, game: &Game) {
+    fn observe(&mut self, game: &Game, frame: usize, trace: bool) {
         // Addresses and slot stride match ram_map::RAM_VARS / EnemyData.
         let state = Self::word(game, 0x998);
         let room = Self::word(game, 0x79b);
         *self.states.entry(state).or_default() += 1;
         let state_room = (state, room);
+        if trace
+            && (self.last_state_room != Some(state_room)
+                || (u32::from(state) == sm::game::sm_82::kGameState_8_MainGameplay
+                    && frame % 100 == 0))
+        {
+            eprintln!(
+                "Replay trace: frame {frame}, state {state}, room ${room:04X}, samus_x_pos {}, samus_y_pos {}, samus_pose ${:04X}, timer_status {}",
+                Self::word(game, 0xaf6),
+                Self::word(game, 0xafa),
+                Self::word(game, 0xa1c),
+                Self::word(game, 0x943)
+            );
+        }
         if self.last_state_room == Some(state_room) {
             self.unchanged_frames += 1;
         } else {
@@ -136,11 +149,13 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
         );
         let mut discarded_audio = [0i16; 534 * 2];
         let mut coverage = ReplayCoverage::default();
+        // Optional console diagnostics share the normal CLI and DLL replay path.
+        let trace = std::env::var_os("SM_VERIFY_TRACE").is_some();
         for (index, &pad) in inputs[..frames].iter().enumerate() {
             sm::rtl::RtlRunFrame(i32::from(pad), game);
             // Advance the music driver once per frame without playing audio.
             sm::rtl::RtlRenderAudio(discarded_audio.as_mut_ptr(), 534, 2, game);
-            coverage.observe(game);
+            coverage.observe(game, index, trace);
             let completed = index + 1;
             if completed % 10_000 == 0 {
                 let failures = game.VERIFY_FAILURES;

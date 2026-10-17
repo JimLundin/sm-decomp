@@ -528,6 +528,24 @@ Parallel work now separates replay processes, coverage inspection, slope
 implementation and independent arithmetic review; source changes remain
 one focused verified commit at a time. Latest Linux stable build/replays
 are pending at https://github.com/JimLundin/sm-decomp/actions/runs/39074190882.
+Optional verifier tracing added: set `SM_VERIFY_TRACE=1` for console output
+on state/room transitions and every 100 gameplay frames, including Samus
+position, pose and actual timer_status ($0943). It uses the existing CLI/DLL
+path and writes no artifacts. Format, optimized host build, trace-enabled
+600/10,000-frame checks and full any% pass: 129,712 frames, zero failures
+(202.33s). Rust lines +15 add diagnostics; other counters unchanged. Local
+Cargo remains ASR-denied; Linux validation is pending.
+Live geometry resolves DFD7: it is a 256x512 shaft, with an upper-right
+wall at X224 and the outbound exit lower right at Y352..415. Moving left
+off the upper shelf then right reaches E021, E06B and Ridley E0B5 by frame
+13,758. The measured return route reaches DFD7 at frame 17,578, with
+timer_status 8006; the remaining step is ascending its shelves and then
+the elevator shaft. A useful ignored controller input remains at
+target/geometry-probe/boss-return.inputs. No wider gameplay coverage yet.
+Boot investigation also confirms any% starts the intro before its later
+menu inputs; the intended moonwalk setting is missed. Retiming only the
+startup reaches five rooms and is insufficient. Align room transitions,
+using the optional trace, rather than applying a constant movie offset.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
