@@ -658,6 +658,23 @@ All eight trials pass with zero failures (29,462..33,238 frames), but room
 alignment alone does not reproduce the original movement setup. Useful
 inputs and logs remain in target/movie-sync; further unchanged splices are
 deferred. Independent normal-input room and return-route work continues.
+Independent room coverage achieved: target/independent-coverage/map-room.inputs
+branches from the Parlor descent with a fresh left jump at frame 22,708,
+then left/shoot through its lower-left blue door. The standard verifier
+passes 23,463 frames, zero failures (35.89s, independently repeated);
+9A44 enters gameplay at frame 22,986, final X456/Y139. This replay visits
+nine rooms and seven enemy definitions; the union with the verified Morph/
+9F11 route is fourteen rooms and nine enemy definitions. Room entry is
+proved; map-terminal activation is not yet proved. Inputs remain ignored.
+Normal elevator return is also verified: target/return-parlor/elevator-center.inputs
+passes the standard verifier for 31,606 frames, zero failures (68.86s),
+returning to 97B5 with Morph equipped. The worker settles at X1405 and
+uses a fresh Up press; arrival control resumes after the scripted movement.
+Further west input reaches 975C's door at X37/Y139, but shooting has not
+opened it. Read-only probe reports killed/quota 0/0 in this room state, so
+an enemy-quota explanation is unproved. Door behavior needs inspection.
+The nine-screen 96BA ascent is now a separate input worker using a known
+bottom-floor prefix while the return worker resolves the west door.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
