@@ -13,9 +13,11 @@ was never committed privately.
 The existing decomp foundation includes accepted RAM decompression and
 NextRandom comparisons documented in [docs/DECOMP_PIVOT.md](docs/DECOMP_PIVOT.md).
 Full Rust gameplay ownership, original-ROM any% completion and Map Rando are
-unfinished. Six additional complete actor source candidates (120 definitions)
-are in [translations](translations/README.md). They are translated, unverified
-and outside the production workspace; their inclusion is not compilation,
+unfinished. Eight additional complete actor source candidates (159 definitions)
+are in [translations](translations/README.md). They are translated and unverified.
+Six are registered as restart library targets; the newest two remain source-only.
+Library wiring does not provide production runtime dispatch or native adapters.
+Their inclusion is not compilation,
 integration, actual-C, live replay or original-ROM acceptance.
 
 The project pins nightly-2026-09-29, Rust edition 2024. See

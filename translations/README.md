@@ -1,8 +1,9 @@
 # Translated actor source candidates
 
-Six complete actor scopes, 120 definitions, are source-only and unverified.
-They are outside the root workspace and have no production registration or
-default native adapter. The four Cargo manifests are preserved exactly;
+Eight complete actor scopes, 159 definitions, are translated and unverified.
+Six existing sources are registered as restart library targets; Mini Crocomire
+and MiniDraygon/Evir remain source-only pending wiring. No production runtime
+registration or native adapter is provided. The six Cargo manifests are preserved exactly;
 Skree and Rinka are standalone std-only modules without Cargo manifests.
 No compilation, test or native execution verdict is asserted here.
 
@@ -23,6 +24,8 @@ are preserved; original contribution licensing does not replace them.
 | Rinka (26) | Init/Init2/Init3, Rinka_1/2, CallRinkaFunc, Main, Rinka_3/4, B85B/B865, Rinka_6..10, Frozen/Touch/Shot/Powerbomb, B960, Instr_B9A2/B9B3/B9BD/B9C7 | rinka/enemy_rinka.rs |
 | Fireflea (12) | Init, Func_1..6, Main, Touch, Powerbomb, Shot, Common | fireflea/src/lib.rs |
 | Bouncing Goofball (10) | Init, Func1, Main, State0/State1, SamusCloseX, Func2/Func3, Instr_88C5/88C6 | bouncing-goofball/src/lib.rs |
+| Mini Crocomire (14) | Instr_897E/8990/899D, Init, Main, Func1..4, PreInstr5/6, Func7..9 | mini-crocomire/src/lib.rs |
+| MiniDraygon/Evir (25) | Instr_1..4, Init, Main, Func_1..13, CallMiniDraygonFunc, Touch/Powerbomb/Shot, EvirProjectile_Init/Main | minidraygon/src/lib.rs |
 
 Each execute seam uses exact 128KiB canonical WRAM, explicit little-endian
 words and aligned enemy slots, immutable caller-authenticated ROM and typed

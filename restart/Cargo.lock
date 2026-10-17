@@ -382,7 +382,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3a219298ac11a56ea9a6d2120044824d6f01aeb034955e7af7bc16858527deea"
 
 [[package]]
+name = "sm-beetom"
+version = "0.1.0"
+
+[[package]]
 name = "sm-binary-evidence"
+version = "0.1.0"
+
+[[package]]
+name = "sm-bouncing-goofball"
 version = "0.1.0"
 
 [[package]]
@@ -395,6 +403,10 @@ version = "0.1.0"
 
 [[package]]
 name = "sm-door-scrolling"
+version = "0.1.0"
+
+[[package]]
+name = "sm-fireflea"
 version = "0.1.0"
 
 [[package]]
@@ -439,6 +451,10 @@ dependencies = [
 
 [[package]]
 name = "sm-persistence"
+version = "0.1.0"
+
+[[package]]
+name = "sm-platform"
 version = "0.1.0"
 
 [[package]]
@@ -489,6 +505,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "sm-rinka"
+version = "0.1.0"
+
+[[package]]
 name = "sm-rio"
 version = "0.1.0"
 
@@ -510,6 +530,10 @@ version = "0.1.0"
 dependencies = [
  "sha2",
 ]
+
+[[package]]
+name = "sm-skree"
+version = "0.1.0"
 
 [[package]]
 name = "sm-trace"
