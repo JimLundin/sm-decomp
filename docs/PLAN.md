@@ -294,7 +294,7 @@ every step makes the next one easier.
    Linux stable format/release build, smoke and full any% passed on
    `aaa80120`; no failing frames. Final Windows-only CRT source rerun:
    https://github.com/JimLundin/sm-decomp/actions/runs/39067855970.
-4. **Globals ? implementation complete, Linux validation pending.** Gather
+4. **Globals: implementation complete, Linux validation pending.** Gather
    `static mut` game state behind one `Game` struct passed by
    `&mut`, keeping `g_ram` as the 128 KiB array it is (RAM layout must stay
    byte-identical for the oracle comparison and for save states).
@@ -318,7 +318,9 @@ every step makes the next one easier.
    the audio device before releasing it. Existing audio-lock hooks remain.
    Any% completes 129,712 frames with zero failures; final format and real
    frontend/core metadata builds pass. Local Cargo remains denied by ASR;
-   Linux stable release validation is pending on the committed source.
+   Linux stable format/release build and all four replays passed on
+   `73579a81` (any% 129,712 frames, zero failures, 460.59s):
+   https://github.com/JimLundin/sm-decomp/actions/runs/39069476088.
    Raw RAM-offset lines 23,718 -> 23,710; no_mangle 6 -> 5; other ABI/unsafe
    counters unchanged. c_int cast lines 89,830 -> 89,884 and Rust lines
    249,212 -> 259,878 because explicit context expands calls and rustfmt
@@ -338,6 +340,16 @@ every step makes the next one easier.
    https://github.com/JimLundin/sm-decomp/actions/runs/39070035812.
 
 ## Phase 3: readable gameplay, one subsystem at a time
+
+First subsystem: Waver (bank A3). Its four movement/animation functions now
+use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve
+the original `SignExtend8(0x8000)` initialization and the middle-byte velocity
+reversal; every possible middle word (65,536) produces identical reversal
+bytes. Any%: 129,712 frames, zero failures (184.53s); format and core/frontend
+metadata builds pass. Local Cargo remains ASR-denied; Linux validation will
+run on this commit. Raw RAM offsets -6, c_int cast lines -34, Rust lines -41;
+all other counters unchanged. Next: name Waver's RAM fields and accessors,
+then remove its raw-pointer access without holding RAM borrows across calls.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
