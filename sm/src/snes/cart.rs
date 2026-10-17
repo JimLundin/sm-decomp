@@ -1,3 +1,4 @@
+use crate::host::Die;
 extern "C" {
     fn printf(__format: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
@@ -18,7 +19,6 @@ extern "C" {
         __line: ::core::ffi::c_uint,
         __function: *const ::core::ffi::c_char,
     ) -> !;
-    fn Die(error: *const ::core::ffi::c_char);
     fn DumpCpuHistory();
 }
 pub use crate::types::{

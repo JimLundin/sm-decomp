@@ -1,3 +1,4 @@
+use crate::host::{g_debug_flag, g_spc_player, Die, RtlApuLock, RtlApuUnlock};
 pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data};
 extern "C" {
 
@@ -7,7 +8,6 @@ extern "C" {
         __line: ::core::ffi::c_uint,
         __function: *const ::core::ffi::c_char,
     ) -> !;
-    fn Die(error: *const ::core::ffi::c_char);
     fn memcpy(
         __dest: *mut ::core::ffi::c_void,
         __src: *const ::core::ffi::c_void,
@@ -59,12 +59,8 @@ extern "C" {
     fn ftell(__stream: *mut FILE) -> ::core::ffi::c_long;
     static mut snes_frame_counter: ::core::ffi::c_int;
     static mut g_use_my_apu_code: bool;
-    static mut g_debug_flag: bool;
-    fn RtlApuLock();
-    fn RtlApuUnlock();
     fn RtlUpdateSnesPatchForBugfix();
     static mut currently_installed_bug_fix_counter: uint16;
-    static mut g_spc_player: *mut SpcPlayer;
     fn dsp_getSamples(dsp: *mut Dsp, sampleData: *mut int16_t, samplesPerFrame: ::core::ffi::c_int);
     fn apu_cycle(apu: *mut Apu);
     fn ppu_copy(ppu: *mut Ppu, ppu_src: *mut Ppu);

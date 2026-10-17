@@ -1,10 +1,10 @@
+use crate::host::Die;
 pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data};
 extern "C" {
 
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
     fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
-    fn Die(error: *const ::core::ffi::c_char);
     fn fclose(__stream: *mut FILE) -> ::core::ffi::c_int;
     fn fopen(
         __filename: *const ::core::ffi::c_char,

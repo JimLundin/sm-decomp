@@ -10,6 +10,9 @@
 #[allow(unused_imports)]
 use ::sm as _;
 mod verify;
+use sm::host::{
+    g_debug_flag, g_got_mismatch_count, g_new_ppu, g_other_image, g_spc_player, Die, Warning,
+};
 pub use sm::types::{_IO_codecvt, _IO_marker, _IO_wide_data, SDL_Window};
 extern "C" {
 
@@ -1221,21 +1224,11 @@ unsafe extern "C" fn IntMax(
     return if a > b { a } else { b };
 }
 #[no_mangle]
-pub static mut g_debug_flag: bool = false;
-#[no_mangle]
 pub static mut g_is_turbo: bool = false;
 #[no_mangle]
 pub static mut g_want_dump_memmap_flags: bool = false;
-#[no_mangle]
-pub static mut g_new_ppu: bool = true_0 != 0;
-#[no_mangle]
-pub static mut g_other_image: bool = false;
-#[no_mangle]
-pub static mut g_spc_player: *mut SpcPlayer = ::core::ptr::null::<SpcPlayer>() as *mut SpcPlayer;
 static mut g_pixels: [uint8_t; 245760] = [0; 245760];
 static mut g_my_pixels: [uint8_t; 245760] = [0; 245760];
-#[no_mangle]
-pub static mut g_got_mismatch_count: ::core::ffi::c_int = 0;
 static mut kWindowTitle: [::core::ffi::c_char; 9] =
     unsafe { ::core::mem::transmute::<[u8; 9], [::core::ffi::c_char; 9]>(*b"SuperMet\0") };
 static mut g_win_flags: uint32 = SDL_WINDOW_RESIZABLE as ::core::ffi::c_int as uint32;
@@ -1261,8 +1254,7 @@ static mut g_renderer_funcs: RendererFuncs = RendererFuncs {
 };
 static mut g_gamepad_modifiers: uint32 = 0;
 static mut g_gamepad_last_cmd: [uint16; 17] = [0; 17];
-#[no_mangle]
-pub unsafe extern "C" fn Die(mut error: *const ::core::ffi::c_char) {
+unsafe fn host_die(mut error: *const ::core::ffi::c_char) {
     SDL_ShowSimpleMessageBox(
         SDL_MESSAGEBOX_ERROR as ::core::ffi::c_int as Uint32,
         &raw const kWindowTitle as *const ::core::ffi::c_char,
@@ -1276,8 +1268,7 @@ pub unsafe extern "C" fn Die(mut error: *const ::core::ffi::c_char) {
     );
     exit(1 as ::core::ffi::c_int);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Warning(mut error: *const ::core::ffi::c_char) {
+unsafe fn host_warning(mut error: *const ::core::ffi::c_char) {
     SDL_ShowSimpleMessageBox(
         SDL_MESSAGEBOX_WARNING as ::core::ffi::c_int as Uint32,
         &raw const kWindowTitle as *const ::core::ffi::c_char,
@@ -1518,12 +1509,10 @@ unsafe fn finish_verify_audio() {
     SDL_DestroyMutex(g_audio_mutex);
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn RtlApuLock() {
+unsafe fn host_apu_lock() {
     SDL_LockMutex(g_audio_mutex);
 }
-#[no_mangle]
-pub unsafe extern "C" fn RtlApuUnlock() {
+unsafe fn host_apu_unlock() {
     SDL_UnlockMutex(g_audio_mutex);
 }
 unsafe extern "C" fn AudioCallback(
@@ -2690,6 +2679,12 @@ pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
 pub fn main() {
+    sm::host::install_host_hooks(sm::host::HostHooks {
+        die: host_die,
+        warning: host_warning,
+        apu_lock: host_apu_lock,
+        apu_unlock: host_apu_unlock,
+    });
     if std::env::args().nth(1).as_deref() == Some("verify") {
         ::std::process::exit(verify::run());
     }

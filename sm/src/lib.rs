@@ -92,3 +92,6 @@ pub mod tracing;
 pub mod types;
 /// Small helpers (file I/O, strings).
 pub mod util;
+
+/// Runtime globals and callbacks supplied by the frontend.
+pub mod host;

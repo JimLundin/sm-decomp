@@ -6,17 +6,8 @@ use std::ffi::{c_char, c_int, c_void, CStr};
 use std::sync::atomic::{AtomicBool, Ordering};
 
 mod verify;
+use sm::host::{g_debug_flag, g_got_mismatch_count, g_new_ppu, g_other_image, g_spc_player};
 
-#[no_mangle]
-pub static mut g_spc_player: *mut sm::spc_player::SpcPlayer = std::ptr::null_mut();
-#[no_mangle]
-pub static mut g_got_mismatch_count: c_int = 0;
-#[no_mangle]
-pub static mut g_other_image: bool = false;
-#[no_mangle]
-pub static mut g_debug_flag: bool = false;
-#[no_mangle]
-pub static mut g_new_ppu: bool = true;
 static mut g_pixels: [u8; 245760] = [0; 245760];
 static mut g_my_pixels: [u8; 245760] = [0; 245760];
 static STARTED: AtomicBool = AtomicBool::new(false);
@@ -41,19 +32,15 @@ unsafe fn initialize_verify_audio() -> Result<(), String> {
 unsafe fn finish_verify_audio() {}
 
 // No audio thread exists in this host; the shared replay loop is synchronous.
-#[no_mangle]
-pub extern "C" fn RtlApuLock() {}
-#[no_mangle]
-pub extern "C" fn RtlApuUnlock() {}
+unsafe fn host_apu_lock() {}
+unsafe fn host_apu_unlock() {}
 
-#[no_mangle]
-pub unsafe extern "C" fn Die(error: *const c_char) {
+unsafe fn host_die(error: *const c_char) {
     eprintln!("Error: {}", CStr::from_ptr(error).to_string_lossy());
     std::process::exit(2);
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn Warning(error: *const c_char) {
+unsafe fn host_warning(error: *const c_char) {
     eprintln!("Warning: {}", CStr::from_ptr(error).to_string_lossy());
 }
 
@@ -88,6 +75,12 @@ pub unsafe extern "C" fn sm_verify(
         eprintln!("verify: missing ROM or input path");
         return 2;
     }
+    sm::host::install_host_hooks(sm::host::HostHooks {
+            die: host_die,
+            warning: host_warning,
+            apu_lock: host_apu_lock,
+            apu_unlock: host_apu_unlock,
+    });
     stderr = __acrt_iob_func(2);
     let mut args = Vec::new();
     for path in [rom, inputs] {

@@ -1,3 +1,4 @@
+use crate::host::Die;
 pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data, SDL_Window};
 extern "C" {
 
@@ -92,7 +93,6 @@ extern "C" {
     );
     fn SDL_GL_SetSwapInterval(interval: ::core::ffi::c_int) -> ::core::ffi::c_int;
     fn SDL_GL_SwapWindow(window: *mut SDL_Window);
-    fn Die(error: *const ::core::ffi::c_char);
     fn GlslShader_CreateFromFile(filename: *const ::core::ffi::c_char) -> *mut GlslShader;
     fn GlslShader_Render(
         gs: *mut GlslShader,

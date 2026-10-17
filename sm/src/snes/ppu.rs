@@ -1,3 +1,4 @@
+use crate::host::g_new_ppu;
 extern "C" {
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
@@ -17,7 +18,6 @@ extern "C" {
         __line: ::core::ffi::c_uint,
         __function: *const ::core::ffi::c_char,
     ) -> !;
-    static mut g_new_ppu: bool;
 }
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint64_t, __uint8_t, int16_t,

@@ -239,6 +239,13 @@ every step makes the next one easier.
    Any% 129,712 frames, zero failures (181.35s); format, unchanged-body audit
    and library/frontend metadata builds pass. C exports/no_mangle each fall
    by four, Rust lines 271,086 -> 271,083; other counters unchanged.
+   Host ownership seam applied: five formerly binary-owned globals live in
+   the library; frontend/DLL explicitly register Rust error/warning/audio-lock
+   callbacks before startup. Original callback bodies/defaults remain exact.
+   Any% 129,712 frames, zero failures (181.59s); format and library/frontend
+   metadata builds pass. C exports -6, no_mangle -18. Unsafe functions +6 and
+   Rust lines +33 are callback dispatch/registration required to remove the
+   binary symbol hooks, not gameplay changes; other counters unchanged.
 3. Replace the hand-written SDL/OpenGL FFI with the `sdl2` crate (or similar)
    and drop `extern_types`; then move `rust-toolchain.toml` to stable.
 4. Globals: gather `static mut` game state behind one `Game` struct passed by

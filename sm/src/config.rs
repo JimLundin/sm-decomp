@@ -1,3 +1,4 @@
+use crate::host::Die;
 pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data};
 extern "C" {
 
@@ -8,7 +9,6 @@ extern "C" {
     ) -> ::core::ffi::c_long;
     fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
-    fn Die(error: *const ::core::ffi::c_char);
     static mut stderr: *mut FILE;
     fn fprintf(
         __stream: *mut FILE,

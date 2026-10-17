@@ -1,3 +1,4 @@
+use crate::host::{g_debug_flag, g_got_mismatch_count, g_other_image};
 pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data};
 extern "C" {
 
@@ -51,7 +52,6 @@ extern "C" {
     static mut g_ram: [uint8; 131072];
     static mut g_sram: *mut uint8;
     static mut g_rom: *const uint8;
-    static mut g_debug_flag: bool;
     fn RomPtr(addr: uint32_t) -> *const uint8;
     fn WriteReg(reg: uint16, value: uint8);
     fn RtlSetupEmuCallbacks(
@@ -63,8 +63,6 @@ extern "C" {
     fn Vector_IRQ();
     fn ReadWholeFile(name: *const ::core::ffi::c_char, length: *mut size_t) -> *mut uint8;
     fn time(__timer: *mut time_t) -> time_t;
-    static mut g_got_mismatch_count: ::core::ffi::c_int;
-    static mut g_other_image: bool;
 }
 pub use crate::types::{
     _IO_lock_t, __int16_t, __int32_t, __int8_t, __off64_t, __off_t, __time_t, __uint16_t,
