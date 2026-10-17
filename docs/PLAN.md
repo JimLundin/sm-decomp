@@ -491,6 +491,16 @@ RtlRunFrame clears opposite directions used by these TASes, and its forced
 game-yield/NMI timing differs from bsnes movie frame timing. First preserve
 the recorded pads in verify mode, then measure reach and retime inputs if
 needed. Repeating unchanged movies cannot establish broader coverage.
+Square slope/dispatch conversion completed while coverage runs: named live
+BTS access, byte-backed coordinates and explicit near/far quadrant branches
+replace typed pointers and translated jumps. Horizontal dispatch still
+zero-extends the full BTS word at $1E77. Independent comparison covers
+245,760 edge/orientation/span combinations; both nonsquare bodies remain
+unchanged. Format, optimized core/DLL build and any% pass: 129,712 frames,
+zero failures (251.31s under parallel load), with the same six Ceres rooms.
+Raw offsets -17, unsafe functions -2, c_int cast lines -93, Rust lines -133;
+remaining counters unchanged. Local Cargo remains ASR-denied. Low%/100%
+continue in parallel. Defer nonsquare work until input coverage improves.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:

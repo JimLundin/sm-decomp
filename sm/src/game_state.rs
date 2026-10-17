@@ -122,6 +122,11 @@ impl Game {
         self.g_ram[0x16402 + usize::from(self.cur_block_index())]
     }
 
+    /// BTS saved by horizontal nonsquare slope dispatch ($7E:1E77 in ram_map).
+    pub fn set_current_slope_bts(&mut self, bts: u16) {
+        self.g_ram[0x1e77..0x1e79].copy_from_slice(&bts.to_le_bytes());
+    }
+
     /// Live level-data word selected by the collision block index.
     pub fn current_level_block(&self) -> u16 {
         let offset = 0x10002 + usize::from(self.cur_block_index()) * 2;

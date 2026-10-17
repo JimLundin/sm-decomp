@@ -10507,73 +10507,27 @@ unsafe fn EnemyBlockCollReact_Spike(_collision: &mut EnemyBlockCollInfo, game: &
     0
 }
 unsafe fn EnemyBlockCollHorizReact_Slope(
-    mut ebci: &mut EnemyBlockCollInfo,
+    collision: &mut EnemyBlockCollInfo,
     game: &mut Game,
 ) -> uint8 {
-    if *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ) as ::core::ffi::c_int
-        & 0x1f as ::core::ffi::c_int
-        >= 5 as ::core::ffi::c_int
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1e77 as ::core::ffi::c_int as isize)
-            as *mut uint16) = *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x16402 as ::core::ffi::c_int as isize)
-            .offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as isize,
-            ) as uint16;
-        return EnemyBlockCollHorizReact_Slope_NonSquare(ebci, game);
+    let bts = game.current_block_bts();
+    if bts & 0x1f >= 5 {
+        game.set_current_slope_bts(u16::from(bts));
+        EnemyBlockCollHorizReact_Slope_NonSquare(collision, game)
     } else {
-        return EnemyBlockCollHorizReact_Slope_Square(
-            ebci,
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16),
-            (*(&raw mut game.g_ram as *mut uint8)
-                .offset(0x16402 as ::core::ffi::c_int as isize)
-                .offset(
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xdc4 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as isize,
-                ) as ::core::ffi::c_int
-                & 0x1f as ::core::ffi::c_int) as uint16,
-            game,
-        );
-    };
+        EnemyBlockCollHorizReact_Slope_Square(collision, bts, game)
+    }
 }
 unsafe fn EnemyBlockCollVertReact_Slope(
-    mut ebci: &mut EnemyBlockCollInfo,
+    collision: &mut EnemyBlockCollInfo,
     game: &mut Game,
 ) -> uint8 {
-    if *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ) as ::core::ffi::c_int
-        & 0x1f as ::core::ffi::c_int
-        >= 5 as ::core::ffi::c_int
-    {
-        return EnemyBlockCollVertReact_Slope_NonSquare(ebci, game);
+    let bts = game.current_block_bts();
+    if bts & 0x1f >= 5 {
+        EnemyBlockCollVertReact_Slope_NonSquare(collision, game)
     } else {
-        return EnemyBlockCollVertReact_Slope_Square(
-            ebci,
-            (*(&raw mut game.g_ram as *mut uint8)
-                .offset(0x16402 as ::core::ffi::c_int as isize)
-                .offset(
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xdc4 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as isize,
-                ) as ::core::ffi::c_int
-                & 0x1f as ::core::ffi::c_int) as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16),
-            game,
-        );
-    };
+        EnemyBlockCollVertReact_Slope_Square(collision, bts, game)
+    }
 }
 static byte_A0C435: [uint8; 20] = [
     0 as ::core::ffi::c_int as uint8,
@@ -10597,149 +10551,57 @@ static byte_A0C435: [uint8; 20] = [
     0x82 as ::core::ffi::c_int as uint8,
     0x83 as ::core::ffi::c_int as uint8,
 ];
-unsafe fn EnemyBlockCollHorizReact_Slope_Square(
-    mut ebci: &mut EnemyBlockCollInfo,
-    mut k: uint16,
-    mut a: uint16,
+fn EnemyBlockCollHorizReact_Slope_Square(
+    collision: &mut EnemyBlockCollInfo,
+    bts: u8,
     game: &mut Game,
 ) -> uint8 {
-    let mut current_block: u64;
-    let mut E: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    let mut temp_collision_DD4: uint16 =
-        (4 as ::core::ffi::c_int * a as ::core::ffi::c_int) as uint16;
-    let mut temp_collision_DD6: uint16 = (*(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(k as isize) as ::core::ffi::c_int
-        >> 6 as ::core::ffi::c_int) as uint16;
-    let mut i: uint16 = (4 as ::core::ffi::c_int * a as ::core::ffi::c_int
-        + (temp_collision_DD6 as ::core::ffi::c_int
-            ^ (ebci.ebci_r26 as ::core::ffi::c_int & 8 as ::core::ffi::c_int)
-                >> 3 as ::core::ffi::c_int)) as uint16;
-    if ebci.ebci_r28 == 0 {
-        if *(&raw mut (*E).y_height as *mut uint8).offset(0 as ::core::ffi::c_int as isize)
-            as ::core::ffi::c_int
-            + *(&raw mut (*E).y_pos as *mut uint8).offset(0 as ::core::ffi::c_int as isize)
-                as ::core::ffi::c_int
-            - 1 as ::core::ffi::c_int
-            & 8 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int
-        {
-            return ((if byte_A0C435[i as usize] as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int
-                != 0
-            {
-                -(1 as ::core::ffi::c_int)
-            } else {
-                0 as ::core::ffi::c_int
-            }) < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
+    let index = usize::from(bts & 0x1f) * 4
+        + usize::from((bts >> 6) ^ ((collision.ebci_r26 & 8) >> 3) as u8);
+    let enemy_index = game.cur_enemy_index();
+    let enemy = game.enemy_coordinates(enemy_index);
+    let position = enemy.y_pos();
+    let size = enemy.y_height();
+    let near_is_solid = byte_A0C435[index] & 0x80 != 0;
+    if collision.ebci_r28 == 0 {
+        // The original bottom-edge test reads only the low bytes of both fields.
+        let far_edge = (position as u8).wrapping_add(size as u8).wrapping_sub(1);
+        if far_edge & 8 == 0 {
+            return u8::from(near_is_solid);
         }
-        current_block = 71061888979233781;
-    } else if ebci.ebci_r28 as ::core::ffi::c_int != ebci.ebci_r30 as ::core::ffi::c_int
-        || (*E).y_pos as ::core::ffi::c_int - (*E).y_height as ::core::ffi::c_int
-            & 8 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int
-    {
-        current_block = 71061888979233781;
-    } else {
-        current_block = 7351195479953500246;
+    } else if collision.ebci_r28 == collision.ebci_r30 && position.wrapping_sub(size) & 8 != 0 {
+        return u8::from(byte_A0C435[index ^ 2] & 0x80 != 0);
     }
-    match current_block {
-        71061888979233781 => {
-            if (if byte_A0C435[i as usize] as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0 {
-                -(1 as ::core::ffi::c_int)
-            } else {
-                0 as ::core::ffi::c_int
-            }) < 0 as ::core::ffi::c_int
-            {
-                return 1 as uint8;
-            }
-        }
-        _ => {}
+    if near_is_solid {
+        return 1;
     }
-    return ((if byte_A0C435[(i as ::core::ffi::c_int ^ 2 as ::core::ffi::c_int) as usize]
-        as ::core::ffi::c_int
-        & 0x80 as ::core::ffi::c_int
-        != 0
-    {
-        -(1 as ::core::ffi::c_int)
-    } else {
-        0 as ::core::ffi::c_int
-    }) < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
+    u8::from(byte_A0C435[index ^ 2] & 0x80 != 0)
 }
-unsafe fn EnemyBlockCollVertReact_Slope_Square(
-    mut ebci: &mut EnemyBlockCollInfo,
-    mut a: uint16,
-    mut k: uint16,
+fn EnemyBlockCollVertReact_Slope_Square(
+    collision: &mut EnemyBlockCollInfo,
+    bts: u8,
     game: &mut Game,
 ) -> uint8 {
-    let mut current_block: u64;
-    let mut E: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    let mut temp_collision_DD4: uint16 =
-        (4 as ::core::ffi::c_int * a as ::core::ffi::c_int) as uint16;
-    let mut temp_collision_DD6: uint16 = (*(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(k as isize) as ::core::ffi::c_int
-        >> 6 as ::core::ffi::c_int) as uint16;
-    let mut i: uint16 = (4 as ::core::ffi::c_int * a as ::core::ffi::c_int
-        + (temp_collision_DD6 as ::core::ffi::c_int
-            ^ (ebci.ebci_r26 as ::core::ffi::c_int & 8 as ::core::ffi::c_int)
-                >> 2 as ::core::ffi::c_int)) as uint16;
-    if ebci.ebci_r28 == 0 {
-        if *(&raw mut (*E).x_width as *mut uint8).offset(0 as ::core::ffi::c_int as isize)
-            as ::core::ffi::c_int
-            + *(&raw mut (*E).x_pos as *mut uint8).offset(0 as ::core::ffi::c_int as isize)
-                as ::core::ffi::c_int
-            - 1 as ::core::ffi::c_int
-            & 8 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int
-        {
-            return ((if byte_A0C435[i as usize] as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int
-                != 0
-            {
-                -(1 as ::core::ffi::c_int)
-            } else {
-                0 as ::core::ffi::c_int
-            }) < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
+    let index = usize::from(bts & 0x1f) * 4
+        + usize::from((bts >> 6) ^ ((collision.ebci_r26 & 8) >> 2) as u8);
+    let enemy_index = game.cur_enemy_index();
+    let enemy = game.enemy_coordinates(enemy_index);
+    let position = enemy.x_pos();
+    let size = enemy.x_width();
+    let near_is_solid = byte_A0C435[index] & 0x80 != 0;
+    if collision.ebci_r28 == 0 {
+        // The original bottom-edge test reads only the low bytes of both fields.
+        let far_edge = (position as u8).wrapping_add(size as u8).wrapping_sub(1);
+        if far_edge & 8 == 0 {
+            return u8::from(near_is_solid);
         }
-        current_block = 5657398053751573661;
-    } else if ebci.ebci_r28 as ::core::ffi::c_int != ebci.ebci_r30 as ::core::ffi::c_int
-        || (*E).x_pos as ::core::ffi::c_int - (*E).x_width as ::core::ffi::c_int
-            & 8 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int
-    {
-        current_block = 5657398053751573661;
-    } else {
-        current_block = 7351195479953500246;
+    } else if collision.ebci_r28 == collision.ebci_r30 && position.wrapping_sub(size) & 8 != 0 {
+        return u8::from(byte_A0C435[index ^ 1] & 0x80 != 0);
     }
-    match current_block {
-        5657398053751573661 => {
-            if (if byte_A0C435[i as usize] as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0 {
-                -(1 as ::core::ffi::c_int)
-            } else {
-                0 as ::core::ffi::c_int
-            }) < 0 as ::core::ffi::c_int
-            {
-                return 1 as uint8;
-            }
-        }
-        _ => {}
+    if near_is_solid {
+        return 1;
     }
-    return ((if byte_A0C435[(i as ::core::ffi::c_int ^ 1 as ::core::ffi::c_int) as usize]
-        as ::core::ffi::c_int
-        & 0x80 as ::core::ffi::c_int
-        != 0
-    {
-        -(1 as ::core::ffi::c_int)
-    } else {
-        0 as ::core::ffi::c_int
-    }) < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
+    u8::from(byte_A0C435[index ^ 1] & 0x80 != 0)
 }
 unsafe fn EnemyBlockCollHorizReact_Slope_NonSquare(
     mut ebci: &mut EnemyBlockCollInfo,
