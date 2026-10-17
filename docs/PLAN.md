@@ -686,6 +686,18 @@ standing Samus is blocked at X437/Y139 by the X400..431 column; its lower
 passage is only 16 pixels high. map-contact.inputs passes 24,278 frames,
 zero failures (37.60s), without another room. Continue this branch after
 a normal Morph return route exists. No map-terminal pickup was observed.
+Independent 96BA ascent preparation verifies its first ledge:
+target/mother-shaft-ascent/center-right.inputs passes the standard verifier
+for 25,058 frames, zero failures (35.35s, independently repeated), ending
+standing at X411/Y2131. It extends the known bottom-floor prefix at X396/
+Y2187 with neutral 5, jump 25, right/jump 12, left/jump 6, jump/shoot 55,
+neutral 15. The second hop returns to this ledge at X422; next attempt
+needs more right travel to reach the X432/Y2080 shelf. Stop this preparation
+pass here and reuse its suffix after the first-missile return is available.
+All coverage workers in this pass have stopped with their useful ignored
+inputs retained. No gameplay source changed, and progress counters stay
+unchanged. Next focused item remains the short left jump from 9F11
+X133/Y395 into 9F64, followed by a proved first-missile pickup.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
