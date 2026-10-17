@@ -3701,10 +3701,11 @@ pub unsafe extern "C" fn FileSelectMenu_25_FileClearDoClear() {
     LoadMirrorOfExploredMapTiles();
     let mut v3: uint16 = 640 as uint16;
     loop {
-        (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000))
-            .pause_menu_map_tilemap
-            [(v3 as ::core::ffi::c_int + 768 as ::core::ffi::c_int) as usize] = 15 as uint16;
+        // File-clear rows share the full menu tilemap at $3600.
+        *((&raw mut g_ram as *mut uint8)
+            .add(0x3600)
+            .cast::<uint16>()
+            .add(v3 as usize)) = 15 as uint16;
         v3 = v3.wrapping_add(1);
         if !(((v3 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 1856 as ::core::ffi::c_int)
             as int16 as ::core::ffi::c_int)
