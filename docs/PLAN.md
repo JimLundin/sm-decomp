@@ -220,7 +220,7 @@ every step makes the next one easier.
    these dependencies explicitly in a later hardware-type batch. Remaining
    batches: aliases, gameplay data, hardware/music closure, runtime/platform
    types, then a duplicate inventory before marking this item done.
-2. Replace `extern "C" { fn Foo(); }` declarations with `use` of the real
+2. **Rust linkage — done.** Replace `extern "C" { fn Foo(); }` declarations with `use` of the real
    function. Then drop `#[no_mangle]` and `extern "C"` from Rust-to-Rust
    functions. Keep the C ABI only at the SDL boundary.
    After shared types, pilot the three `snes/input.rs` exports and their sole
@@ -259,7 +259,8 @@ every step makes the next one easier.
    failures (186.61s); format and library/frontend metadata builds pass.
    C ABI export counter 5,833 -> 3; no_mangle 6,795 -> 5; Rust lines 269,432
    -> 261,547; other counters unchanged. Final-source Linux validation
-   pending before marking item 2 done.
+   passed on `bd036cd8`: format, release build, smoke and full any% all pass.
+   https://github.com/JimLundin/sm-decomp/actions/runs/39066700833.
 3. Replace the hand-written SDL/OpenGL FFI with the `sdl2` crate (or similar)
    and drop `extern_types`; then move `rust-toolchain.toml` to stable.
    SDL batch applied: handwritten functions/events now use `sdl2-sys` 0.38;
