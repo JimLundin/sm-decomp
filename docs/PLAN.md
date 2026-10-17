@@ -778,6 +778,25 @@ that combined return before proceeding through Parlor toward bombs.
 This pass's workers have finished; tracked source and residue counters are
 unchanged. Linux format/release build and all four original replays remain
 passing on the unchanged source 90889612; local Cargo remains ASR-denied.
+Awake pirate coverage now verified: target/awake-return/west-entry.inputs
+passes the standard oracle for 35,560 frames, zero failures (56.55s),
+with Morph and missiles 5/5. Entering 975C after the pickups loads F353
+wall pirate and F653 walking pirates; this replay sees eleven enemy
+definitions, two more than the preceding route. Coverage across retained
+routes remains fifteen rooms. Read-only probe reports one of five kills;
+an upward-diagonal shooting-jump continuation kills the wall pirate too.
+Three walkers remain; clearing the quota and opening the west door are
+not yet verified. Source/progress counters unchanged.
+Parlor's bomb-route entrance has a measured Morph requirement: the X832
+shaft is roofed at Y160 and entered from the left through Y176..191,
+ball center near184. Dropping from the upper hall cannot reach it.
+Four pre-Morph alignment trials pass but add no rooms and are stopped.
+After the central ascent, use the actual item-bearing prefix for this
+side entrance. Source BTS3 at X1008/Y608..671 selects the 9879 exit;
+9879's right door selects 9804. At the red cap near X736/Y96, select
+missiles with a fresh Select press and use five fresh shoot presses
+roughly30 frames apart; held shoot does not repeat missile fire.
+The independent Parlor climb is preparing its reusable ascent meanwhile.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
